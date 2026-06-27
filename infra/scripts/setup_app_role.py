@@ -29,22 +29,35 @@ def main() -> int:
     app_password = os.environ["APP_DB_PASSWORD"]
 
     role = sql.Identifier(app_user)
+    pw = sql.Literal(app_password)
 
     with psycopg.connect(owner_dsn, autocommit=True) as conn:
+        # Rol var mi? Normal (parametreli) sorgu — DO blogu/placeholder YOK,
+        # boylece "could not determine data type of parameter" hatasi olusmaz.
+        exists = (
+            conn.execute(
+                "SELECT 1 FROM pg_roles WHERE rolname = %s", (app_user,)
+            ).fetchone()
+            is not None
+        )
+
         # Migration rolu zaten olusturmus olmali; emniyet icin yoksa olustur.
+        # Rol adi sabit identifier, parola sql.Literal ile guvenli kacislanir
+        # (CREATE/ALTER ROLE DDL'i placeholder kabul etmedigi icin Literal sart).
+        if not exists:
+            conn.execute(
+                sql.SQL(
+                    "CREATE ROLE {role} LOGIN PASSWORD {pw} NOBYPASSRLS"
+                ).format(role=role, pw=pw)
+            )
+
+        # Idempotent: LOGIN + parola + NOBYPASSRLS'i her calistirmada garanti et.
+        # (Migration rolu NOLOGIN olusturmus olabilir; burada LOGIN'e ceviriyoruz.)
+        # NOBYPASSRLS => app_rw RLS'e TABI kalir (FORCE RLS uygulanir).
         conn.execute(
             sql.SQL(
-                "DO $$ BEGIN "
-                "IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = %s) THEN "
-                "CREATE ROLE {role} NOLOGIN; END IF; END $$;"
-            ).format(role=role),
-            (app_user,),
-        )
-        # LOGIN + parola.
-        conn.execute(
-            sql.SQL("ALTER ROLE {role} WITH LOGIN PASSWORD {pw}").format(
-                role=role, pw=sql.Literal(app_password)
-            )
+                "ALTER ROLE {role} WITH LOGIN PASSWORD {pw} NOBYPASSRLS"
+            ).format(role=role, pw=pw)
         )
         # Sema kullanimi + DML (idempotent).
         conn.execute(sql.SQL("GRANT USAGE ON SCHEMA public TO {role}").format(role=role))
