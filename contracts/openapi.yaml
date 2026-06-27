@@ -620,8 +620,14 @@ components:
     # ----------------------------- auth ---------------------------- #
     LoginRequest:
       type: object
-      required: [email, password]
+      required: [tenant_slug, email, password]
       properties:
+        tenant_slug:
+          type: string
+          description: |
+            Tenant kisa adi (slug). email tenant-ici benzersiz oldugu icin login
+            tenant'i bu alanla belirler. Sadece kucuk harf/rakam/tire.
+          example: "acme-plaza"
         email: { type: string, format: email }
         password: { type: string, format: password, minLength: 8 }
     RefreshRequest:

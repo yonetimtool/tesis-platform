@@ -10,6 +10,9 @@ from sqlalchemy import text
 
 from .config import settings
 from .db import engine
+from .errors import install_error_handlers
+from .routers import auth as auth_router
+from .routers import me as me_router
 
 
 @asynccontextmanager
@@ -29,6 +32,10 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+install_error_handlers(app)
+app.include_router(auth_router.router)
+app.include_router(me_router.router)
 
 
 @app.get("/health", tags=["health"])

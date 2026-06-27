@@ -16,6 +16,26 @@ sozlesmeye gore gelistirir.
   1. **RBAC** (uygulama katmani): rol → endpoint erisimi (bu dosya, §4).
   2. **RLS** (DB katmani): tenant izolasyonu (bkz. `/contracts/db`).
 
+### 1.1 Login'de tenant nasil belirlenir
+
+`app_user.email` **tenant-ici** benzersizdir (`UNIQUE (tenant_id, email)`), yani
+ayni email birden cok tenant'ta bulunabilir. Bu yuzden `POST /auth/login`
+istegi `tenant_slug` + `email` + `password` alir (bkz. `openapi.yaml`
+`LoginRequest`).
+
+Akis:
+1. `tenant_slug` → `tenant_id` cozumu: `tenant` tablosunda **RLS** etkin oldugu
+   ve henuz tenant baglami olmadigi icin, uygulama rolu (`app_rw`) tabloyu
+   dogrudan okuyamaz. Cozum, owner-sahipli **`SECURITY DEFINER`** fonksiyon
+   `public.tenant_id_by_slug(slug)`'tur; yalnizca slug → id eslemesini doner
+   (baska tenant verisi sizmaz), `app_rw`'ye `EXECUTE` verilir.
+2. `tenant_id` bulununca `set_config('app.current_tenant_id', <id>, true)` ile
+   baglam kurulur; kullanici **RLS altinda** `email` ile yuklenir.
+3. Parola ve `is_active` dogrulanir. Basarisiz herhangi bir adim → **401**
+   `invalid_credentials` (hangi adimin patladigi sizdirilmaz).
+
+> `tenant.slug`: kucuk harf/rakam/tire, tenant genelinde benzersiz.
+
 ## 2. Token Yapisi
 
 ### Access token claim'leri

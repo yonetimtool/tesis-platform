@@ -62,6 +62,9 @@ degisecekse once burasi degisir, sonra kod.
 ### Auth
 - JWT `access` (15 dk) + `refresh` (30 gun), refresh rotation. Detay: `auth.md`.
 - Access claim'leri: `sub` (user_id), `tenant_id`, `role`, `exp` (+ `iat`, `jti`, `type`).
+- **Login tenant'i `tenant_slug` ile belirler** (email tenant-ici benzersiz).
+  `tenant.slug` benzersiz; slug→id cozumu RLS bootstrap'i icin owner-sahipli
+  `SECURITY DEFINER` fonksiyon `tenant_id_by_slug` ile yapilir. Detay: `auth.md` §1.1.
 
 ## Veri modeli — ozet kararlar
 

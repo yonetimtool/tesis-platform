@@ -60,14 +60,17 @@ def two_tenants(owner_conn):
     tenant_a = uuid.uuid4()
     tenant_b = uuid.uuid4()
 
+    # slug NOT NULL + benzersiz (bkz. /contracts/auth.md §1.1) — her kosumda essiz.
+    slug_a = f"rls-a-{tenant_a.hex[:8]}"
+    slug_b = f"rls-b-{tenant_b.hex[:8]}"
     with owner_conn.cursor() as cur:
         cur.execute(
-            "INSERT INTO tenant (id, ad, timezone) VALUES (%s, %s, %s)",
-            (tenant_a, "TENANT-A", "Europe/Istanbul"),
+            "INSERT INTO tenant (id, ad, slug, timezone) VALUES (%s, %s, %s, %s)",
+            (tenant_a, "TENANT-A", slug_a, "Europe/Istanbul"),
         )
         cur.execute(
-            "INSERT INTO tenant (id, ad, timezone) VALUES (%s, %s, %s)",
-            (tenant_b, "TENANT-B", "Europe/Istanbul"),
+            "INSERT INTO tenant (id, ad, slug, timezone) VALUES (%s, %s, %s, %s)",
+            (tenant_b, "TENANT-B", slug_b, "Europe/Istanbul"),
         )
         for i in range(2):
             cur.execute(

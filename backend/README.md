@@ -82,6 +82,40 @@ pytest -v
 | `OWNER_DSN` *(test/migrate)* | owner libpq DSN | `postgresql://tesis_owner:***@db:5432/tesis` |
 | `APP_DSN` *(test)* | app_rw libpq DSN | `postgresql://app_rw:***@db:5432/tesis` |
 
+## Auth (Prompt 2)
+
+JWT `access` (15 dk) + `refresh` (30 gun), `/contracts/auth.md`'ye gore.
+
+- **Parola:** bcrypt (`app/security.py`).
+- **Login tenant'i `tenant_slug` ile belirler** (email tenant-ici benzersiz).
+  slug→tenant_id cozumu RLS bootstrap'i icin owner-sahipli `SECURITY DEFINER`
+  fonksiyon `tenant_id_by_slug` ile (bkz. `/contracts/auth.md §1.1`).
+- **Refresh rotation/iptal** Redis'te tutulur (sema'da refresh tablosu yok):
+  her refresh tek kullanimlik; eski jti tekrar gelirse aile iptal edilir.
+- **Dependency'ler** (`app/deps.py`): `get_access_claims` → `get_tenant_db`
+  (token'daki tenant_id ile `SET LOCAL`) → `get_current_user` → `require_role(...)`.
+
+Endpoint'ler:
+| Method/Path | Auth | Not |
+|-------------|------|-----|
+| `POST /auth/login` | public | `{tenant_slug,email,password}` → TokenPair |
+| `POST /auth/refresh` | public | `{refresh_token}` → TokenPair (rotation) |
+| `GET /me` | access | token'daki kullanici |
+| `GET /me/checkpoints` | access | Faz-0 izolasyon dogrulama (diagnostic) |
+| `GET /admin/overview` | access + `admin` | RBAC demo (403 ornegi) |
+
+Hizli deneme:
+```bash
+TOKEN=$(curl -s localhost:8000/auth/login -H 'content-type: application/json' \
+  -d '{"tenant_slug":"acme-plaza","email":"admin@acme.com","password":"..."}' \
+  | python -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
+curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
+```
+
+> **Sema degisikligi (onayli):** Bu prompt'ta `/contracts`'a `tenant.slug` kolonu
+> + `tenant_id_by_slug` fonksiyonu eklendi. Mevcut bir DB varsa migration'i yeniden
+> uygulamak icin volume sifirlanmali: `docker compose down -v && docker compose up --build`.
+
 ## Tenant baglami kullanimi
 
 ```python

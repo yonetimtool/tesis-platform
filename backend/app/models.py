@@ -67,9 +67,14 @@ def _created_at() -> Mapped["str"]:
 # --------------------------------------------------------------------------- #
 class Tenant(Base):
     __tablename__ = "tenant"
+    __table_args__ = (
+        UniqueConstraint("slug", name="uq_tenant_slug"),
+    )
 
     id: Mapped[uuid.UUID] = _pk()
     ad: Mapped[str] = mapped_column(Text, nullable=False)
+    # Login tenant'i bu slug ile belirler (bkz. /contracts/auth.md §1.1).
+    slug: Mapped[str] = mapped_column(Text, nullable=False)
     timezone: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("'Europe/Istanbul'")
     )

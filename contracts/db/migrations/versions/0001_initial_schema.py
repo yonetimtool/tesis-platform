@@ -71,10 +71,39 @@ def upgrade() -> None:
         CREATE TABLE tenant (
             id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             ad          text NOT NULL,
+            -- slug: login'de tenant'i belirleyen kisa, benzersiz, insan-okunur ad.
+            -- (email tenant-ici benzersiz oldugu icin login email tek basina yetmez;
+            --  istemci tenant_slug gonderir -> tenant_id_by_slug ile cozumlenir.)
+            slug        text NOT NULL,
             timezone    text NOT NULL DEFAULT 'Europe/Istanbul',
-            created_at  timestamptz NOT NULL DEFAULT now()
+            created_at  timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_tenant_slug UNIQUE (slug),
+            CONSTRAINT ck_tenant_slug CHECK (slug ~ '^[a-z0-9][a-z0-9-]*$')
         );
         """
+    )
+
+    # Login bootstrap: app_rw RLS'e tabidir ve tenant baglami HENUZ yokken
+    # tenant tablosunu okuyamaz (yumurta-tavuk). Bu SECURITY DEFINER fonksiyon
+    # owner (superuser) yetkisiyle calisir ve YALNIZCA slug -> id eslemesini
+    # doner; baska tenant verisi sizdirmaz. Login bununla tenant_id'yi bulup
+    # set_config('app.current_tenant_id', ...) yapar, sonrasi normal RLS akisi.
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.tenant_id_by_slug(p_slug text)
+        RETURNS uuid
+        LANGUAGE sql
+        STABLE
+        SECURITY DEFINER
+        SET search_path = ''
+        AS $$
+            SELECT id FROM public.tenant WHERE slug = p_slug;
+        $$;
+        """
+    )
+    op.execute("REVOKE ALL ON FUNCTION public.tenant_id_by_slug(text) FROM PUBLIC;")
+    op.execute(
+        f"GRANT EXECUTE ON FUNCTION public.tenant_id_by_slug(text) TO {APP_ROLE};"
     )
 
     # ------------------------------------------------------------------ #
@@ -341,6 +370,7 @@ def _enable_rls(table: str) -> None:
 
 
 def downgrade() -> None:
+    op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     for table in (
         "scan_event",
         "patrol_window",
