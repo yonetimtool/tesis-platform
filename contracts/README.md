@@ -32,6 +32,12 @@ degisecekse once burasi degisir, sonra kod.
 - Backend her istekte: token'dan `tenant_id` → `SET app.current_tenant_id = '<uuid>'`.
 - Istemci **hicbir zaman** `tenant_id` gondermez; her zaman token'dan turetilir.
 - Cross-tenant FK referanslari composite FK `(id, tenant_id)` ile DB'de imkansiz.
+- **Composite FK + `ON DELETE SET NULL` kurali:** Paylasilan `NOT NULL tenant_id`
+  iceren composite FK'lerde duz `ON DELETE SET NULL` *tum* referans kolonlarini
+  (tenant_id dahil) NULL'lamaya calisir ve `NOT NULL` ihlali verir. Bu durumda
+  **kolon-ozel** sozdizimi kullanilir: `ON DELETE SET NULL (<fk_kolonu>)` (PG15+),
+  boylece yalnizca ilgili kolon NULL'lanir, `tenant_id` korunur. (Orn.
+  `fk_patrol_plan_shift` → `(shift_id)`, `fk_scan_window` → `(patrol_window_id)`.)
 
 ### Hata formati (tutarli zarf)
 ```json

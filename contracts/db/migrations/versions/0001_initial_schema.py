@@ -170,9 +170,11 @@ def upgrade() -> None:
             UNIQUE (id, tenant_id),
             CONSTRAINT ck_patrol_plan_periyot CHECK (periyot_dakika > 0),
             -- shift ayni tenant'a ait olmali (cross-tenant FK engeli):
+            -- Kolon-ozel SET NULL: sadece shift_id NULL'lanir; paylasilan NOT NULL
+            -- tenant_id'ye dokunulmaz (PG15+). Bkz. /contracts/README.md.
             CONSTRAINT fk_patrol_plan_shift
                 FOREIGN KEY (shift_id, tenant_id)
-                REFERENCES shift (id, tenant_id) ON DELETE SET NULL
+                REFERENCES shift (id, tenant_id) ON DELETE SET NULL (shift_id)
         );
         """
     )
@@ -270,9 +272,11 @@ def upgrade() -> None:
             CONSTRAINT fk_scan_checkpoint
                 FOREIGN KEY (checkpoint_id, tenant_id)
                 REFERENCES checkpoint (id, tenant_id) ON DELETE RESTRICT,
+            -- Kolon-ozel SET NULL: sadece patrol_window_id NULL'lanir; paylasilan
+            -- NOT NULL tenant_id'ye dokunulmaz (PG15+). Bkz. /contracts/README.md.
             CONSTRAINT fk_scan_window
                 FOREIGN KEY (patrol_window_id, tenant_id)
-                REFERENCES patrol_window (id, tenant_id) ON DELETE SET NULL,
+                REFERENCES patrol_window (id, tenant_id) ON DELETE SET NULL (patrol_window_id),
             -- offline cift gonderim engeli (idempotency):
             CONSTRAINT uq_scan_tenant_idempotency UNIQUE (tenant_id, idempotency_key)
         );
