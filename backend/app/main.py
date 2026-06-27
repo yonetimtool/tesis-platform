@@ -12,7 +12,10 @@ from .config import settings
 from .db import engine
 from .errors import install_error_handlers
 from .routers import auth as auth_router
+from .routers import checkpoints as checkpoints_router
 from .routers import me as me_router
+from .routers import patrol_plans as patrol_plans_router
+from .routers import shifts as shifts_router
 
 
 @asynccontextmanager
@@ -36,6 +39,9 @@ app = FastAPI(
 install_error_handlers(app)
 app.include_router(auth_router.router)
 app.include_router(me_router.router)
+app.include_router(shifts_router.router)
+app.include_router(checkpoints_router.router)
+app.include_router(patrol_plans_router.router)
 
 
 @app.get("/health", tags=["health"])

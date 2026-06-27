@@ -92,3 +92,73 @@ def two_tenants(owner_conn):
         cur.execute(
             "DELETE FROM tenant WHERE id IN (%s, %s)", (tenant_a, tenant_b)
         )
+
+
+# --------------------------------------------------------------------------- #
+# API uzerinden (token'li) testler icin paylasilan fixture'lar.
+# (httpx/app importlari TEMBEL — app-free RLS testleri etkilenmesin.)
+# --------------------------------------------------------------------------- #
+API_URL = os.getenv("API_URL", "http://localhost:8000")
+
+# world kullanicilarinin kimlik bilgileri (admin A ve B AYNI email -> slug ayristirir)
+SHARED_EMAIL = "admin@example.com"
+GUARD_EMAIL = "guard@example.com"
+PW_ADMIN_A = "passwordA1"
+PW_GUARD_A = "guardpassA1"
+PW_ADMIN_B = "passwordB1"
+
+
+@pytest.fixture
+def client():
+    """Calisan API'ye httpx.Client; erisilemezse testi atla."""
+    import httpx
+
+    try:
+        c = httpx.Client(base_url=API_URL, timeout=10)
+        c.get("/health")
+    except Exception as exc:  # pragma: no cover
+        pytest.skip(f"API erisilemiyor ({API_URL}): {exc}")
+    try:
+        yield c
+    finally:
+        c.close()
+
+
+@pytest.fixture
+def world(owner_conn):
+    """A ve B tenant'lari + admin/security kullanicilar (CRUD/RBAC testleri icin)."""
+    from app.security import hash_password
+
+    a = uuid.uuid4()
+    b = uuid.uuid4()
+    slug_a = f"ca-{a.hex[:8]}"
+    slug_b = f"cb-{b.hex[:8]}"
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO tenant (id, ad, slug) VALUES (%s,%s,%s),(%s,%s,%s)",
+            (a, "A", slug_a, b, "B", slug_b),
+        )
+        users = [
+            (a, "Admin A", SHARED_EMAIL, PW_ADMIN_A, "admin"),
+            (a, "Guard A", GUARD_EMAIL, PW_GUARD_A, "security"),
+            (b, "Admin B", SHARED_EMAIL, PW_ADMIN_B, "admin"),
+        ]
+        for tid, ad, email, pw, role in users:
+            cur.execute(
+                "INSERT INTO app_user (tenant_id, ad, email, password_hash, role) "
+                "VALUES (%s,%s,%s,%s,%s::user_role)",
+                (tid, ad, email, hash_password(pw), role),
+            )
+
+    yield {
+        "a": a,
+        "b": b,
+        "slug_a": slug_a,
+        "slug_b": slug_b,
+        "admin_a": {"email": SHARED_EMAIL, "password": PW_ADMIN_A},
+        "guard_a": {"email": GUARD_EMAIL, "password": PW_GUARD_A},
+        "admin_b": {"email": SHARED_EMAIL, "password": PW_ADMIN_B},
+    }
+
+    with owner_conn.cursor() as cur:
+        cur.execute("DELETE FROM tenant WHERE id IN (%s,%s)", (a, b))
