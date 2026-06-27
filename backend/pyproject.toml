@@ -1,0 +1,14 @@
+[project]
+name = "tesis-backend"
+version = "0.1.0"
+description = "Tesis Guvenlik & Operasyon — FastAPI backend (DEV-A)"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

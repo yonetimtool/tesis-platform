@@ -1,0 +1,15 @@
+# --- Runtime ---
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+pydantic-settings==2.3.4
+SQLAlchemy[asyncio]==2.0.31
+asyncpg==0.29.0          # async (app_rw) baglanti surucusu
+psycopg[binary]==3.2.1   # sync — alembic migration + testler (psql binary'sine gerek yok)
+alembic==1.13.2          # /contracts/db migration'larini UYGULAR (yeni migration uretmez)
+redis==5.0.7
+celery==5.4.0
+
+# --- Test ---
+pytest==8.2.2
+pytest-asyncio==0.23.7
+httpx==0.27.0

@@ -1,0 +1,122 @@
+# Tesis Guvenlik & Operasyon — yerel gelistirme ortami (DEV-A).
+#
+# Servisler: db (Postgres+pgcrypto), redis, migrate (one-shot), api (FastAPI),
+# worker (Celery). Migration'lar /contracts/db'deki CANONICAL migration ile
+# uygulanir; burada IKINCI bir migration uretilmez.
+#
+# Kullanim:
+#   cd infra && cp .env.example .env && docker compose up --build
+#   curl localhost:8000/health
+#   docker compose exec api pytest -v          # RLS izolasyon testi dahil
+
+name: tesis
+
+services:
+  db:
+    # postgres:16 — gen_random_uuid() icin pgcrypto eklentisi mevcut
+    # (migration `CREATE EXTENSION IF NOT EXISTS pgcrypto` calistirir).
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # One-shot: CANONICAL migration'lari OWNER ile uygular + app_rw rolunu kurar.
+  migrate:
+    build:
+      context: ../backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # alembic env.py bu URL'i kullanir (owner, sync psycopg surucusu).
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # setup_app_role.py icin owner libpq DSN'i.
+      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      APP_DB_USER: ${APP_DB_USER}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+    volumes:
+      - ../contracts:/contracts:ro
+      - ./scripts:/scripts:ro
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo ">> Migration'lar uygulaniyor (owner)..."
+        alembic -c /contracts/db/alembic.ini upgrade head
+        echo ">> app_rw rolu hazirlaniyor..."
+        python /scripts/setup_app_role.py
+    restart: "no"
+
+  api:
+    build:
+      context: ../backend
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      # Uygulama app_rw (async asyncpg) ile baglanir — RLS'e TABI.
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      # Testlerin (docker compose exec api pytest) kullandigi DSN'ler:
+      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      API_URL: http://localhost:8000
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ../backend
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+    command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
