@@ -116,6 +116,46 @@ curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
 > + `tenant_id_by_slug` fonksiyonu eklendi. Mevcut bir DB varsa migration'i yeniden
 > uygulamak icin volume sifirlanmali: `docker compose down -v && docker compose up --build`.
 
+## Seed (ornek veri)
+
+Gelistirme/test icin **idempotent** seed (`scripts/seed.py`). Olusturur:
+
+| Kayit | Deger |
+|-------|-------|
+| tenant | `slug=acme-plaza`, `ad=Acme Plaza`, `tz=Europe/Istanbul` |
+| admin | `admin@acme.com` / `Admin123!` (rol: admin) |
+| security | `guard@acme.com` / `Guard123!` (rol: security) |
+| cleaning | `cleaner@acme.com` / `Clean123!` (rol: cleaning) |
+
+**RLS:** Yeni tenant olusturmak app_rw ile mumkun olmadigindan (RLS WITH CHECK),
+seed **OWNER** baglantisi (`OWNER_DSN`) ile calisir — migrate servisiyle ayni
+yetki. UPSERT (`ON CONFLICT DO UPDATE`) ile tekrar tekrar guvenle calisir;
+ikinci kosumda hata vermez, hesaplari bilinen dev durumuna (parola dahil) ceker.
+Parolalar `SEED_ADMIN_PASSWORD` / `SEED_GUARD_PASSWORD` / `SEED_CLEANER_PASSWORD`
+env'leri ile override edilebilir.
+
+Calistirma (api ayaktayken — tek komut):
+```bash
+docker compose exec api python -m scripts.seed
+# alternatif (api kapaliyken, profilli servis):
+docker compose --profile seed run --rm seed
+```
+
+Seed sonrasi login + /me:
+```bash
+TOKEN=$(curl -s localhost:8000/auth/login -H 'content-type: application/json' \
+  -d '{"tenant_slug":"acme-plaza","email":"admin@acme.com","password":"Admin123!"}' \
+  | python -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
+curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
+
+# RBAC: security rolu admin-only ucta 403 almali
+GTOKEN=$(curl -s localhost:8000/auth/login -H 'content-type: application/json' \
+  -d '{"tenant_slug":"acme-plaza","email":"guard@acme.com","password":"Guard123!"}' \
+  | python -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
+curl -s -o /dev/null -w '%{http_code}\n' localhost:8000/admin/overview \
+  -H "Authorization: Bearer $GTOKEN"   # -> 403
+```
+
 ## Tenant baglami kullanimi
 
 ```python
