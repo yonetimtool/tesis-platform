@@ -1,0 +1,875 @@
+openapi: 3.0.3
+info:
+  title: Tesis Guvenlik & Operasyon API
+  version: "0.1.0"
+  description: |
+    Multi-tenant tesis guvenlik & operasyon SaaS — v0 sozlesmesi.
+    Backend (FastAPI) ile Mobil (Flutter) ve Panel (Next.js) gelistiricilerinin
+    paralel calismasi icin tek dogruluk kaynagidir.
+
+    Konvansiyonlar (detay: /contracts/README.md):
+      * Tum zamanlar ISO8601 UTC (`...Z`). tenant.timezone ile yorumlanir.
+      * Hata zarfi: `{ "error": { "code": "...", "message": "..." } }`.
+      * Sayfalama: `limit` (varsayilan 50, max 200) + `offset`. Liste yanitlari
+        `PageMeta` icerir.
+      * Auth: JWT Bearer (bkz. /contracts/auth.md). Tenant her zaman token'dan
+        cikarilir — istemci tenant_id gondermez/secemez.
+      * `POST /scans` icin `Idempotency-Key` header zorunlu.
+
+servers:
+  - url: https://api.example.com/v0
+    description: v0
+  - url: http://localhost:8000/v0
+    description: yerel gelistirme
+
+tags:
+  - name: auth
+  - name: shifts
+  - name: checkpoints
+  - name: patrol-plans
+  - name: scans
+  - name: dashboard
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ================================================================= #
+  # AUTH
+  # ================================================================= #
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Email + parola ile giris
+      security: []   # public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Basarili
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: Hatali kimlik bilgisi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh token ile yeni access (+rotated refresh) al
+      security: []   # refresh token govdede tasinir
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: Yeni token cifti
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: Gecersiz / suresi dolmus / iptal edilmis refresh token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  # ================================================================= #
+  # SHIFTS
+  # ================================================================= #
+  /shifts:
+    get:
+      tags: [shifts]
+      summary: Vardiya listesi
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: gun_tipi
+          in: query
+          schema: { $ref: "#/components/schemas/GunTipi" }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Shift" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [shifts]
+      summary: Vardiya olustur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ShiftCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Shift" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /shifts/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [shifts]
+      summary: Vardiya detay
+      responses:
+        "200":
+          description: Detay
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Shift" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [shifts]
+      summary: Vardiya guncelle (kismi)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ShiftUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Shift" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [shifts]
+      summary: Vardiya sil
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  # ================================================================= #
+  # CHECKPOINTS
+  # ================================================================= #
+  /checkpoints:
+    get:
+      tags: [checkpoints]
+      summary: Checkpoint listesi
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+        - name: nfc_tag_uid
+          in: query
+          description: NFC etiket UID ile esleme/arama
+          schema: { type: string }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Checkpoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [checkpoints]
+      summary: Checkpoint olustur (nfc_tag_uid eslemesi dahil)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CheckpointCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Checkpoint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: nfc_tag_uid bu tenant'ta zaten kayitli
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /checkpoints/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [checkpoints]
+      summary: Checkpoint detay
+      responses:
+        "200":
+          description: Detay
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Checkpoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [checkpoints]
+      summary: Checkpoint guncelle (kismi)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CheckpointUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Checkpoint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [checkpoints]
+      summary: Checkpoint sil
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  # ================================================================= #
+  # PATROL PLANS
+  # ================================================================= #
+  /patrol-plans:
+    get:
+      tags: [patrol-plans]
+      summary: Devriye plani listesi
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+        - name: shift_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/PatrolPlan" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [patrol-plans]
+      summary: Devriye plani olustur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PatrolPlanCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PatrolPlan" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /patrol-plans/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [patrol-plans]
+      summary: Devriye plani detay (checkpoint listesi dahil)
+      responses:
+        "200":
+          description: Detay
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PatrolPlanDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [patrol-plans]
+      summary: Devriye plani guncelle (kismi)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PatrolPlanUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PatrolPlan" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [patrol-plans]
+      summary: Devriye plani sil
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /patrol-plans/{id}/checkpoints:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [patrol-plans]
+      summary: Plana atanmis checkpoint listesi (sirali)
+      responses:
+        "200":
+          description: Atanmis noktalar
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PatrolPlanCheckpoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [patrol-plans]
+      summary: Plana checkpoint listesi ata (tam degisim / replace)
+      description: |
+        Gonderilen liste plani tamamen yeniden tanimlar (idempotent set-replace).
+        Listedeki sira, gonderim sirasidir; `sira` alani opsiyoneldir, verilmezse
+        dizideki index kullanilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PatrolPlanCheckpointAssign" }
+      responses:
+        "200":
+          description: Atama guncellendi
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PatrolPlanCheckpoint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
+  # SCANS  (mobil tur kaniti)
+  # ================================================================= #
+  /scans:
+    post:
+      tags: [scans]
+      summary: Tur kaniti gonder (NFC okutma)
+      description: |
+        Mobil istemcinin checkpoint okutma kanitini gonderdigi endpoint.
+        Offline kuyruktan cift gonderimi engellemek icin `Idempotency-Key`
+        header'i ZORUNLUDUR. Ayni key ile ikinci istek 200 + ilk kaydi doner
+        (yeni kayit olusturmaz).
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ScanCreate" }
+      responses:
+        "201":
+          description: Kayit olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScanEvent" }
+        "200":
+          description: Idempotent tekrar — mevcut kayit donduruldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScanEvent" }
+        "400":
+          description: Idempotency-Key eksik veya gecersiz govde
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: nfc_tag_uid hicbir checkpoint ile eslesmedi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: Ayni Idempotency-Key farkli govde ile gonderildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
+  # DASHBOARD
+  # ================================================================= #
+  /dashboard/live:
+    get:
+      tags: [dashboard]
+      summary: Canli panel — aktif turlar + son alarmlar
+      description: |
+        Panel (Next.js) icin ozet. Aktif/bekleyen patrol_window'lar ve son
+        kacirilan turlardan turetilen alarmlar.
+      parameters:
+        - name: alarm_limit
+          in: query
+          description: Donulecek son alarm sayisi
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: Canli ozet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardLive" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+# =================================================================== #
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT access token. `Authorization: Bearer <token>`. Bkz. /contracts/auth.md"
+
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      description: Sayfa boyutu (varsayilan 50, max 200)
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+    Offset:
+      name: offset
+      in: query
+      description: Atlanan kayit sayisi
+      schema: { type: integer, minimum: 0, default: 0 }
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Istemci tarafindan uretilen benzersiz anahtar (UUID onerilir)
+      schema: { type: string, minLength: 8, maxLength: 200 }
+
+  responses:
+    BadRequest:
+      description: Gecersiz istek
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Kimlik dogrulama gerekli / gecersiz token
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Rol bu islem icin yetkili degil
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Kayit bulunamadi (tenant kapsaminda)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: Cakisma (benzersizlik / iliskili kayit)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ValidationError:
+      description: Govde dogrulama hatasi
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      description: Cok fazla istek
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    # ---------------------------- ortak ---------------------------- #
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Makine-okunabilir hata kodu
+              example: validation_error
+            message:
+              type: string
+              description: Insan-okunabilir aciklama
+              example: "baslangic_saat bitis_saat'ten once olmali"
+            details:
+              type: array
+              description: Alan bazli dogrulama hatalari (opsiyonel)
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  message: { type: string }
+
+    Page:
+      type: object
+      required: [meta]
+      properties:
+        meta: { $ref: "#/components/schemas/PageMeta" }
+
+    PageMeta:
+      type: object
+      required: [limit, offset, total]
+      properties:
+        limit: { type: integer, example: 50 }
+        offset: { type: integer, example: 0 }
+        total:
+          type: integer
+          description: Filtreye uyan toplam kayit sayisi
+          example: 137
+
+    GunTipi:
+      type: string
+      enum: [her_gun, hafta_ici, hafta_sonu, resmi_tatil]
+
+    UserRole:
+      type: string
+      enum: [admin, security, cleaning, resident]
+
+    PatrolWindowDurum:
+      type: string
+      enum: [bekliyor, tamamlandi, kacirildi]
+
+    # ----------------------------- auth ---------------------------- #
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 8 }
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token: { type: string }
+    TokenPair:
+      type: object
+      required: [access_token, refresh_token, token_type, expires_in]
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        token_type: { type: string, enum: [Bearer], example: Bearer }
+        expires_in:
+          type: integer
+          description: Access token gecerlilik suresi (saniye)
+          example: 900
+
+    # ---------------------------- shift ---------------------------- #
+    Shift:
+      type: object
+      required: [id, ad, baslangic_saat, bitis_saat, gun_tipi, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, example: "Gece Vardiyasi" }
+        baslangic_saat:
+          type: string
+          description: "Gun-ici saat (HH:MM, tenant.timezone'a gore)"
+          example: "00:00"
+        bitis_saat:
+          type: string
+          description: "HH:MM. bitis < baslangic ise ertesi gune sarkar"
+          example: "08:00"
+        gun_tipi: { $ref: "#/components/schemas/GunTipi" }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ShiftCreate:
+      type: object
+      required: [ad, baslangic_saat, bitis_saat]
+      properties:
+        ad: { type: string }
+        baslangic_saat: { type: string, example: "00:00" }
+        bitis_saat: { type: string, example: "08:00" }
+        gun_tipi: { $ref: "#/components/schemas/GunTipi" }
+    ShiftUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string }
+        baslangic_saat: { type: string }
+        bitis_saat: { type: string }
+        gun_tipi: { $ref: "#/components/schemas/GunTipi" }
+
+    # -------------------------- checkpoint ------------------------- #
+    Checkpoint:
+      type: object
+      required: [id, ad, nfc_tag_uid, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, example: "A Blok Giris" }
+        nfc_tag_uid: { type: string, example: "04:A3:B2:C1:90:00" }
+        gps_lat: { type: number, format: double, nullable: true, example: 41.015137 }
+        gps_lng: { type: number, format: double, nullable: true, example: 28.979530 }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    CheckpointCreate:
+      type: object
+      required: [ad, nfc_tag_uid]
+      properties:
+        ad: { type: string }
+        nfc_tag_uid: { type: string }
+        gps_lat: { type: number, format: double, nullable: true }
+        gps_lng: { type: number, format: double, nullable: true }
+        aktif: { type: boolean, default: true }
+    CheckpointUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string }
+        nfc_tag_uid: { type: string }
+        gps_lat: { type: number, format: double, nullable: true }
+        gps_lng: { type: number, format: double, nullable: true }
+        aktif: { type: boolean }
+
+    # -------------------------- patrol plan ------------------------ #
+    PatrolPlan:
+      type: object
+      required: [id, ad, baslangic_saat, bitis_saat, periyot_dakika, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, example: "Gece Devriyesi" }
+        shift_id: { type: string, format: uuid, nullable: true }
+        baslangic_saat:
+          type: string
+          description: "HH:MM, tenant.timezone'a gore (orn 00:00)"
+          example: "00:00"
+        bitis_saat:
+          type: string
+          example: "06:00"
+        periyot_dakika:
+          type: integer
+          minimum: 1
+          description: "Pencere periyodu (orn 60 => saat basi)"
+          example: 60
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    PatrolPlanDetail:
+      allOf:
+        - $ref: "#/components/schemas/PatrolPlan"
+        - type: object
+          properties:
+            checkpoints:
+              type: array
+              items: { $ref: "#/components/schemas/PatrolPlanCheckpoint" }
+    PatrolPlanCreate:
+      type: object
+      required: [ad, baslangic_saat, bitis_saat, periyot_dakika]
+      properties:
+        ad: { type: string }
+        shift_id: { type: string, format: uuid, nullable: true }
+        baslangic_saat: { type: string, example: "00:00" }
+        bitis_saat: { type: string, example: "06:00" }
+        periyot_dakika: { type: integer, minimum: 1, example: 60 }
+        aktif: { type: boolean, default: true }
+    PatrolPlanUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string }
+        shift_id: { type: string, format: uuid, nullable: true }
+        baslangic_saat: { type: string }
+        bitis_saat: { type: string }
+        periyot_dakika: { type: integer, minimum: 1 }
+        aktif: { type: boolean }
+
+    PatrolPlanCheckpoint:
+      type: object
+      required: [checkpoint_id, sira]
+      properties:
+        checkpoint_id: { type: string, format: uuid }
+        sira: { type: integer, minimum: 0, example: 0 }
+        checkpoint:
+          allOf:
+            - $ref: "#/components/schemas/Checkpoint"
+          nullable: true
+          description: "Detay yanitlarinda genisletilmis checkpoint (opsiyonel)"
+    PatrolPlanCheckpointAssign:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [checkpoint_id]
+            properties:
+              checkpoint_id: { type: string, format: uuid }
+              sira:
+                type: integer
+                minimum: 0
+                description: "Verilmezse dizi index'i kullanilir"
+
+    # ---------------------------- scans ---------------------------- #
+    ScanCreate:
+      type: object
+      required: [nfc_tag_uid, okutma_zamani]
+      properties:
+        nfc_tag_uid:
+          type: string
+          description: "Okutulan NFC etiketi; backend checkpoint'e eslestirir"
+          example: "04:A3:B2:C1:90:00"
+        checkpoint_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Istemci biliyorsa; yoksa nfc_tag_uid ile cozumlenir"
+        patrol_window_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Ad-hoc okutmada bos birakilabilir; backend de eslestirebilir"
+        okutma_zamani:
+          type: string
+          format: date-time
+          description: "Cihazin okuttugu an (UTC). Offline gecikmeli gonderilebilir."
+        gps_lat: { type: number, format: double, nullable: true }
+        gps_lng: { type: number, format: double, nullable: true }
+        foto_url:
+          type: string
+          nullable: true
+          description: "Onceden yuklenmis fotografin URL'i"
+        imza_dogrulandi: { type: boolean, default: false }
+    ScanEvent:
+      type: object
+      required: [id, guard_id, checkpoint_id, nfc_tag_uid, okutma_zamani, imza_dogrulandi, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        guard_id:
+          type: string
+          format: uuid
+          description: "Token'dan turetilir (okutmayi yapan kullanici)"
+        checkpoint_id: { type: string, format: uuid }
+        patrol_window_id: { type: string, format: uuid, nullable: true }
+        nfc_tag_uid: { type: string }
+        okutma_zamani: { type: string, format: date-time }
+        gps_lat: { type: number, format: double, nullable: true }
+        gps_lng: { type: number, format: double, nullable: true }
+        foto_url: { type: string, nullable: true }
+        imza_dogrulandi: { type: boolean }
+        idempotency_key: { type: string }
+        created_at: { type: string, format: date-time }
+
+    # -------------------------- dashboard -------------------------- #
+    DashboardLive:
+      type: object
+      required: [generated_at, aktif_turlar, son_alarmlar]
+      properties:
+        generated_at: { type: string, format: date-time }
+        aktif_turlar:
+          type: array
+          items: { $ref: "#/components/schemas/AktifTur" }
+        son_alarmlar:
+          type: array
+          items: { $ref: "#/components/schemas/Alarm" }
+    AktifTur:
+      type: object
+      required: [patrol_window_id, patrol_plan_id, pencere_baslangic, pencere_bitis, durum]
+      properties:
+        patrol_window_id: { type: string, format: uuid }
+        patrol_plan_id: { type: string, format: uuid }
+        patrol_plan_ad: { type: string }
+        pencere_baslangic: { type: string, format: date-time }
+        pencere_bitis: { type: string, format: date-time }
+        durum: { $ref: "#/components/schemas/PatrolWindowDurum" }
+        beklenen_checkpoint_sayisi: { type: integer }
+        okutulan_checkpoint_sayisi: { type: integer }
+    Alarm:
+      type: object
+      required: [tip, olusma_zamani, mesaj]
+      properties:
+        tip:
+          type: string
+          enum: [kacirilan_tur, eksik_checkpoint, gecikmis_okutma]
+          example: kacirilan_tur
+        olusma_zamani: { type: string, format: date-time }
+        mesaj: { type: string }
+        patrol_window_id: { type: string, format: uuid, nullable: true }
+        checkpoint_id: { type: string, format: uuid, nullable: true }
