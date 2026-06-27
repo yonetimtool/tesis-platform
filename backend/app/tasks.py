@@ -12,3 +12,19 @@ from .celery_app import celery_app
 def ping() -> str:
     """Iskelet/saglik task'i — worker'in calistigini dogrulamak icin."""
     return "pong"
+
+
+@celery_app.task(name="scheduler.generate_patrol_windows")
+def generate_patrol_windows() -> dict:
+    """Beat: aktif planlar icin pencereleri onceden uretir (materialize-ahead)."""
+    from .scheduler.service import materialize_windows
+
+    return {"created": materialize_windows()}
+
+
+@celery_app.task(name="scheduler.detect_missed_tours")
+def detect_missed_tours() -> dict:
+    """Beat: bitmis 'bekliyor' pencereleri tamamlandi/kacirildi olarak isaretler."""
+    from .scheduler.service import detect_missed
+
+    return detect_missed()

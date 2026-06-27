@@ -130,7 +130,28 @@ services:
       DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET}
+      # Scheduler: tenant enumerasyonu (owner) + tenant-scoped is (app_rw, sync).
+      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
+    restart: unless-stopped
+
+  # Celery beat — periyodik scheduler task'larini tetikler.
+  beat:
+    build:
+      context: ../backend
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+    command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
     restart: unless-stopped
 
 volumes:

@@ -32,5 +32,16 @@ class Settings(BaseSettings):
     # SQLAlchemy engine echo (debug).
     sql_echo: bool = False
 
+    # --- Scheduler (Celery beat) ---
+    # OWNER (superuser) libpq DSN — tenant enumerasyonu (RLS bootstrap) icin.
+    owner_dsn: str = "postgresql://tesis_owner:owner_secret_change_me@localhost:5432/tesis"
+    # app_rw libpq DSN (SYNC) — tenant-scoped pencere uretimi/tespiti icin.
+    app_dsn: str = "postgresql://app_rw:app_rw_secret_change_me@localhost:5432/tesis"
+    # Pencereler kac gun ileri uretilsin (bugun + ... => varsayilan bugun+yarin).
+    scheduler_horizon_days: int = 2
+    # Beat periyotlari (saniye).
+    scheduler_generate_interval_seconds: int = 3600   # saat basi
+    scheduler_detect_interval_seconds: int = 300      # 5 dk
+
 
 settings = Settings()

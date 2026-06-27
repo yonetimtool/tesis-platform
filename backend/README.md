@@ -116,6 +116,45 @@ curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
 > + `tenant_id_by_slug` fonksiyonu eklendi. Mevcut bir DB varsa migration'i yeniden
 > uygulamak icin volume sifirlanmali: `docker compose down -v && docker compose up --build`.
 
+## Scheduler (patrol_window uretimi + kacirilan tur tespiti)
+
+Celery beat ile iki periyodik task (`app/scheduler/`):
+
+1. **Pencere uretimi** (`scheduler.generate_patrol_windows`, varsayilan saat basi):
+   Her aktif `patrol_plan` icin, `tenant.timezone`'a gore plan saatlerini
+   (`baslangic_saat`→`bitis_saat`, `periyot_dakika`) **somut UTC** `patrol_window`'lara
+   cevirir, `bekliyor` olarak yazar. **Materialize-ahead** (anlik hesap yok), varsayilan
+   ufuk **bugun+yarin** (`SCHEDULER_HORIZON_DAYS`). DST-guvenli (zoneinfo). `baslangic > bitis`
+   → ertesi gune sarkar. **Idempotent:** `ON CONFLICT (patrol_plan_id, pencere_baslangic)
+   DO NOTHING` — sozlesmedeki `uq_patrol_window_plan_baslangic` dogal anahtari.
+
+2. **Kacirilan tur tespiti** (`scheduler.detect_missed_tours`, varsayilan 5 dk):
+   `pencere_bitis <= now` ve hala `bekliyor` her pencere icin durum belirlenir.
+   - **"tamamlandi" tanimi (v0):** Plana atanmis **TUM AKTIF** checkpoint'ler icin,
+     `okutma_zamani` pencere araliginda `[baslangic, bitis)` en az bir `scan_event`
+     varsa → `tamamlandi`. En az biri eksikse → `kacirildi` + `notify_missed_tour(...)`
+     (bu turda yalnizca yapilandirilmis **log**; gercek push/SMS + Notification tablosu
+     sonraki prompt). Atanmis aktif checkpoint yoksa (bos plan) → vacuously `tamamlandi`.
+   - **Idempotent:** yalnizca `bekliyor` pencereler islenir; `tamamlandi`/`kacirildi`
+     olanlara dokunulmaz (tekrar notify yok).
+
+**RLS uyumu (token yok):** Task'lar HTTP istegi degil. Tenant **listesi** app_rw ile
+okunamaz (`tenant` RLS; baglam yokken satir gorunmez) — bu yuzden tenant enumerasyonu
+**OWNER** (`OWNER_DSN`) ile salt-okuma yapilir (gerekce: RLS bootstrap). Asil is (plan/
+checkpoint/scan okuma, `patrol_window` yazma) her tenant icin **app_rw + `SET LOCAL
+app.current_tenant_id`** ile RLS altinda yurutulur; bir tenant'in verisi digerine sizmaz.
+
+Manuel tetikleme (beat'i beklemeden):
+```bash
+docker compose exec api python -m scripts.run_scheduler --once
+docker compose exec api python -m scripts.run_scheduler --generate --horizon 1
+docker compose exec api python -m scripts.run_scheduler --detect --now 2026-06-27T07:00:00Z
+```
+
+Servisler: `worker` (Celery worker) + `beat` (Celery beat) — `infra/docker-compose.yml`.
+Env: `OWNER_DSN`, `APP_DSN`, `SCHEDULER_HORIZON_DAYS`,
+`SCHEDULER_GENERATE_INTERVAL_SECONDS`, `SCHEDULER_DETECT_INTERVAL_SECONDS`.
+
 ## Seed (ornek veri)
 
 Gelistirme/test icin **idempotent** seed (`scripts/seed.py`). Olusturur:

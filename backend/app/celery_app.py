@@ -22,3 +22,15 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
 )
+
+# Beat: pencere uretimi + kacirilan tur tespiti (periyotlar config'ten).
+celery_app.conf.beat_schedule = {
+    "generate-patrol-windows": {
+        "task": "scheduler.generate_patrol_windows",
+        "schedule": float(settings.scheduler_generate_interval_seconds),
+    },
+    "detect-missed-tours": {
+        "task": "scheduler.detect_missed_tours",
+        "schedule": float(settings.scheduler_detect_interval_seconds),
+    },
+}
