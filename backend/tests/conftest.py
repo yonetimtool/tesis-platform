@@ -103,8 +103,10 @@ API_URL = os.getenv("API_URL", "http://localhost:8000")
 # world kullanicilarinin kimlik bilgileri (admin A ve B AYNI email -> slug ayristirir)
 SHARED_EMAIL = "admin@example.com"
 GUARD_EMAIL = "guard@example.com"
+RESIDENT_EMAIL = "resident@example.com"
 PW_ADMIN_A = "passwordA1"
 PW_GUARD_A = "guardpassA1"
+PW_RESIDENT_A = "residentpassA1"
 PW_ADMIN_B = "passwordB1"
 
 
@@ -141,6 +143,7 @@ def world(owner_conn):
         users = [
             (a, "Admin A", SHARED_EMAIL, PW_ADMIN_A, "admin"),
             (a, "Guard A", GUARD_EMAIL, PW_GUARD_A, "security"),
+            (a, "Resident A", RESIDENT_EMAIL, PW_RESIDENT_A, "resident"),
             (b, "Admin B", SHARED_EMAIL, PW_ADMIN_B, "admin"),
         ]
         for tid, ad, email, pw, role in users:
@@ -157,6 +160,7 @@ def world(owner_conn):
         "slug_b": slug_b,
         "admin_a": {"email": SHARED_EMAIL, "password": PW_ADMIN_A},
         "guard_a": {"email": GUARD_EMAIL, "password": PW_GUARD_A},
+        "resident_a": {"email": RESIDENT_EMAIL, "password": PW_RESIDENT_A},
         "admin_b": {"email": SHARED_EMAIL, "password": PW_ADMIN_B},
     }
 

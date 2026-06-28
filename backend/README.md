@@ -116,6 +116,24 @@ curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
 > + `tenant_id_by_slug` fonksiyonu eklendi. Mevcut bir DB varsa migration'i yeniden
 > uygulamak icin volume sifirlanmali: `docker compose down -v && docker compose up --build`.
 
+## Tur kaniti — POST /scans
+
+Mobil/saha istemcisinin checkpoint okutma kanitini gonderdigi uc (`app/routers/scans.py`).
+- **RBAC:** admin/security/cleaning gonderebilir; resident → 403.
+- **tenant + guard_id token'dan** turetilir (istekten alinmaz).
+- **nfc_tag_uid → checkpoint** RLS ile tenant icinde cozulur; bulunamazsa **404**
+  (capraz-tenant tag da burada 404). `checkpoint_id` verilirse nfc ile tutarliligi dogrulanir.
+- **Idempotency (zorunlu `Idempotency-Key`):** header yoksa **400**. `UNIQUE(tenant_id,
+  idempotency_key)` ile race-safe (SAVEPOINT/`begin_nested`): ayni key + ayni govde →
+  mevcut kayit **200**; ayni key + farkli govde → **409**.
+- **imza_dogrulandi:** govdedeki deger saklanir; **gercek NTAG424 kripto dogrulamasi bu
+  turda YOK** (sonraki is).
+- **Pencere durum gecisi BURADA YAPILMAZ** (tek sorumluluk): scan yalnizca kaydedilir;
+  `patrol_window`'un `tamamlandi`/`kacirildi` gecisi **scheduler'in detect task'inin** isidir
+  (zaman-tabanli eslestirme). `patrol_window_id` verilirse yalnizca varligi dogrulanir.
+
+> Sozlesmede `GET /scans` tanimli degil → eklenmedi.
+
 ## Scheduler (patrol_window uretimi + kacirilan tur tespiti)
 
 Celery beat ile iki periyodik task (`app/scheduler/`):

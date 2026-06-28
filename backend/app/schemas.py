@@ -222,3 +222,33 @@ class PatrolPlanCheckpointItemIn(BaseModel):
 
 class PatrolPlanCheckpointAssign(BaseModel):
     items: list[PatrolPlanCheckpointItemIn]
+
+
+# -------------------------------- scans ------------------------------------ #
+class ScanCreate(BaseModel):
+    nfc_tag_uid: str = Field(..., min_length=1)
+    # istemci biliyorsa verir; yoksa nfc_tag_uid ile cozulur (nfc kaynak-dogru).
+    checkpoint_id: uuid.UUID | None = None
+    patrol_window_id: uuid.UUID | None = None
+    okutma_zamani: datetime
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    foto_url: str | None = None
+    imza_dogrulandi: bool = False
+
+
+class ScanEventOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    guard_id: uuid.UUID
+    checkpoint_id: uuid.UUID
+    patrol_window_id: uuid.UUID | None = None
+    nfc_tag_uid: str
+    okutma_zamani: datetime
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    foto_url: str | None = None
+    imza_dogrulandi: bool
+    idempotency_key: str
+    created_at: datetime
