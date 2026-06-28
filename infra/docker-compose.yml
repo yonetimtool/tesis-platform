@@ -42,6 +42,41 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # MinIO (S3-uyumlu) — foto kanit deposu.
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      # Inline varsayilan (:-) => .env eksik olsa bile "not set" WARN olusmaz.
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin12345}
+    ports:
+      - "9000:9000"   # S3 API (ic ag: http://minio:9000)
+      - "9001:9001"   # Web console
+    volumes:
+      - miniodata:/data
+    restart: unless-stopped
+
+  # One-shot: bucket'i olusturur (mc, minio hazir olana dek bekler).
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin12345}
+      MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"; do
+          echo "minio bekleniyor..."; sleep 1;
+        done
+        mc mb -p "local/$$MINIO_BUCKET" || true
+        echo "bucket hazir: $$MINIO_BUCKET"
+    restart: "no"
+
   # One-shot: CANONICAL migration'lari OWNER ile uygular + app_rw rolunu kurar.
   migrate:
     build:
@@ -89,6 +124,13 @@ services:
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
       API_URL: http://localhost:8000
+      # MinIO: presigned URL host'u PUBLIC adres olmali (tarayici/cihaz erisir).
+      # api->minio sunucu-tarafi cagri YAPMAZ (presign yerel imzalanir; bucket'i
+      # minio-init kurar) — bu yuzden ic ag (http://minio:9000) burada gerekmez.
+      MINIO_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-http://localhost:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin12345}
+      MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
     ports:
       - "8000:8000"
     healthcheck:
@@ -133,6 +175,11 @@ services:
       # Scheduler: tenant enumerasyonu (owner) + tenant-scoped is (app_rw, sync).
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      # MinIO (ileride worker'da foto isleme/temizlik gerekebilir).
+      MINIO_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-http://localhost:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin12345}
+      MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
     restart: unless-stopped
 
@@ -156,3 +203,4 @@ services:
 
 volumes:
   pgdata:
+  miniodata:

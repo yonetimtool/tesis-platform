@@ -76,6 +76,13 @@ degisecekse once burasi degisir, sonra kod.
   `UNIQUE (tenant_id, tip, patrol_window_id)` (ayni kacirilan pencere icin tek kayit).
   FK'ler composite + kolon-ozel `ON DELETE SET NULL`. Erisim: admin + security
   (`GET /notifications`, `PATCH /notifications/{id}` okundu). Gercek push/SMS ayri is.
+- `task` / `task_completion`: esnek gorev sistemi (tip: temizlik/kontrol/ilaclama/
+  bakim/diger). Task CRUD admin; tamamlama (`POST /tasks/{id}/completions`) cleaning+
+  security+admin. Completion `UNIQUE (tenant_id, idempotency_key)` (offline cift
+  gonderim korumasi, scan deseni). Foto kanit: **MinIO** (S3-uyumlu); `POST /uploads/presign`
+  presigned PUT URL + `foto_key` doner, istemci dogrudan MinIO'ya yukler, sonra
+  `foto_key` completion'da saklanir. FK'ler composite + kolon-ozel `ON DELETE SET NULL`.
+  ('not' SQL anahtar kelimesi oldugu icin DB kolonu `notlar').
 - `checkpoint.nfc_tag_uid` tenant icinde benzersiz (NFC eslemesi).
 - `patrol_plan` gun-ici sablon; `patrol_window` scheduler'in urettigi somut
   UTC pencere. `scan_event` mobilin gonderdigi tur kaniti.

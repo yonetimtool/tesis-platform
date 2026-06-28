@@ -52,6 +52,10 @@ NOTIFICATION_TIP = ENUM(
     "kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma",
     name="notification_tip", create_type=False,
 )
+TASK_TIP = ENUM(
+    "temizlik", "kontrol", "ilaclama", "bakim", "diger",
+    name="task_tip", create_type=False,
+)
 
 
 def _pk() -> Mapped[uuid.UUID]:
@@ -366,6 +370,82 @@ class Notification(Base):
     created_at = _created_at()
 
 
+# --------------------------------------------------------------------------- #
+class Task(Base):
+    __tablename__ = "task"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_task_id_tenant"),
+        CheckConstraint(
+            "periyot_dakika IS NULL OR periyot_dakika > 0", name="ck_task_periyot"
+        ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (<kolon>) — tenant_id korunur.
+        ForeignKeyConstraint(
+            ["atanan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_task_atanan",
+        ),
+        ForeignKeyConstraint(
+            ["checkpoint_id", "tenant_id"],
+            ["checkpoint.id", "checkpoint.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_task_checkpoint",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    tip: Mapped[str] = mapped_column(TASK_TIP, nullable=False)
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    atanan_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    checkpoint_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    periyot_dakika: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class TaskCompletion(Base):
+    __tablename__ = "task_completion"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["task_id", "tenant_id"],
+            ["task.id", "task.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_completion_task",
+        ),
+        ForeignKeyConstraint(
+            ["tamamlayan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_completion_user",
+        ),
+        UniqueConstraint(
+            "tenant_id", "idempotency_key", name="uq_completion_tenant_idempotency"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    task_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    tamamlayan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    tamamlanma_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    nfc_tag_uid: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gps_lat = mapped_column(Numeric(9, 6), nullable=True)
+    gps_lng = mapped_column(Numeric(9, 6), nullable=True)
+    foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    foto_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at = _created_at()
+
+
 __all__ = [
     "Base",
     "Tenant",
@@ -377,8 +457,11 @@ __all__ = [
     "PatrolWindow",
     "ScanEvent",
     "Notification",
+    "Task",
+    "TaskCompletion",
     "USER_ROLE",
     "GUN_TIPI",
     "PATROL_WINDOW_DURUM",
     "NOTIFICATION_TIP",
+    "TASK_TIP",
 ]

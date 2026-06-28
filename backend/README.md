@@ -116,6 +116,45 @@ curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
 > + `tenant_id_by_slug` fonksiyonu eklendi. Mevcut bir DB varsa migration'i yeniden
 > uygulamak icin volume sifirlanmali: `docker compose down -v && docker compose up --build`.
 
+## Gorev sistemi + foto kanit (Task / Completion / MinIO)
+
+Esnek **tek `task` modeli** (`tip`: temizlik/kontrol/ilaclama/bakim/diger). Cop topla,
+kamelya kontrol, havuz, bahce vb. hepsi `tip + ad` ile ayrisir (`app/routers/tasks.py`).
+
+- **Task CRUD** (`/tasks`): GET liste (`tip`/`aktif` filtreleri, sayfali) / detay / POST /
+  PATCH / DELETE. **RBAC:** GET admin/security/cleaning; yazma yalniz admin. `atanan_user_id`
+  ve `checkpoint_id` aynı tenant'ta olmali (capraz → 422).
+- **Tamamlama** (`POST /tasks/{id}/completions`): admin/security/cleaning. **Idempotency-Key
+  zorunlu** (scan deseni: aynı key+gövde → 200, farklı → 409, key yok → 400). `tamamlayan_user_id`
+  token'dan. Task'ın `checkpoint_id`'si varsa ve `nfc_tag_uid` gönderilirse o checkpoint'in
+  nfc'siyle eşleşmeli (yoksa 422). Gecmis: `GET /tasks/{id}/completions`.
+
+### Foto kanit akisi (MinIO, presigned)
+1. İstemci `POST /uploads/presign` `{content_type}` → backend **`foto_key`** (tenant ile
+   namespace'li) + **presigned PUT `upload_url`** döner (`app/storage.py`, boto3; URL **yerel
+   imzalanır**, MinIO ayakta olmasa da üretilir).
+2. İstemci dosyayı **doğrudan** `upload_url`'e `PUT` eder (backend'den geçmez).
+3. İstemci completion'da `foto_key`'i gönderir → kalıcı saklanır.
+
+`upload_url` host'u **PUBLIC** endpoint (`MINIO_PUBLIC_ENDPOINT`, dev: `http://localhost:9000`)
+olmalı ki istemci erişebilsin.
+
+### MinIO erisim (dev)
+- S3 API: `http://localhost:9000` · Web console: `http://localhost:9001`
+- Giris: `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` (`.env`).
+- Bucket (`MINIO_BUCKET`, dev `tesis-foto`) compose'taki **`minio-init`** one-shot servisiyle olusur.
+- Env: `MINIO_ENDPOINT` (=PUBLIC), `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`.
+
+Hizli foto denemesi:
+```bash
+P=$(curl -s -X POST localhost:8000/uploads/presign -H "Authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' -d '{"content_type":"image/jpeg"}')
+URL=$(echo "$P" | python -c 'import sys,json;print(json.load(sys.stdin)["upload_url"])')
+KEY=$(echo "$P" | python -c 'import sys,json;print(json.load(sys.stdin)["foto_key"])')
+curl -s -X PUT "$URL" -H 'content-type: image/jpeg' --data-binary @foto.jpg   # MinIO'ya yukle
+# sonra completion'da foto_key=$KEY gonderilir
+```
+
 ## Panel — GET /dashboard/live
 
 Yoneticinin canli ozeti (`app/routers/dashboard.py`).

@@ -43,5 +43,14 @@ class Settings(BaseSettings):
     scheduler_generate_interval_seconds: int = 3600   # saat basi
     scheduler_detect_interval_seconds: int = 300      # 5 dk
 
+    # --- MinIO (S3-uyumlu foto kanit deposu) ---
+    # PUBLIC endpoint: presigned URL host'u (istemci buraya PUT'lar). dev: localhost.
+    minio_endpoint: str = "http://localhost:9000"
+    minio_access_key: str = "minioadmin"
+    minio_secret_key: str = "minioadmin12345"  # compose varsayilani ile ayni (>=8)
+    minio_bucket: str = "tesis-foto"
+    minio_region: str = "us-east-1"
+    minio_url_expire_seconds: int = 900
+
 
 settings = Settings()

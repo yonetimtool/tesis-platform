@@ -67,6 +67,11 @@ def upgrade() -> None:
         "CREATE TYPE notification_tip AS ENUM "
         "('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma');"
     )
+    # task.tip — esnek gorev tipi; ileride genisler.
+    op.execute(
+        "CREATE TYPE task_tip AS ENUM "
+        "('temizlik', 'kontrol', 'ilaclama', 'bakim', 'diger');"
+    )
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -369,6 +374,76 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9c. task  (esnek gorev: temizlik/kontrol/ilaclama... tek modelde)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE task (
+            id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id        uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            tip              task_tip NOT NULL,
+            ad               text NOT NULL,
+            aciklama         text,
+            atanan_user_id   uuid,
+            checkpoint_id    uuid,
+            periyot_dakika   integer,   -- periyodik gorev; tek seferlikse NULL
+            aktif            boolean NOT NULL DEFAULT true,
+            created_at       timestamptz NOT NULL DEFAULT now(),
+            updated_at       timestamptz NOT NULL DEFAULT now(),
+            UNIQUE (id, tenant_id),
+            CONSTRAINT ck_task_periyot CHECK (periyot_dakika IS NULL OR periyot_dakika > 0),
+            -- Kolon-ozel SET NULL: yalnizca ilgili kolon NULL'lanir; tenant_id korunur.
+            CONSTRAINT fk_task_atanan
+                FOREIGN KEY (atanan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (atanan_user_id),
+            CONSTRAINT fk_task_checkpoint
+                FOREIGN KEY (checkpoint_id, tenant_id)
+                REFERENCES checkpoint (id, tenant_id) ON DELETE SET NULL (checkpoint_id)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_task_tenant ON task (tenant_id);")
+    op.execute("CREATE INDEX ix_task_tip ON task (tenant_id, tip);")
+    op.execute("CREATE INDEX ix_task_atanan ON task (atanan_user_id);")
+
+    # ------------------------------------------------------------------ #
+    # 9d. task_completion  (gorev tamamlama kaniti — NFC/GPS/foto)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE task_completion (
+            id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id           uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            task_id             uuid NOT NULL,
+            tamamlayan_user_id  uuid NOT NULL,
+            tamamlanma_zamani   timestamptz NOT NULL,
+            nfc_tag_uid         text,
+            gps_lat             numeric(9, 6),
+            gps_lng             numeric(9, 6),
+            foto_key            text,       -- MinIO obje anahtari
+            foto_url            text,
+            notlar              text,       -- ('not' SQL anahtar kelimesi oldugu icin 'notlar')
+            idempotency_key     text NOT NULL,
+            created_at          timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT fk_completion_task
+                FOREIGN KEY (task_id, tenant_id)
+                REFERENCES task (id, tenant_id) ON DELETE CASCADE,
+            CONSTRAINT fk_completion_user
+                FOREIGN KEY (tamamlayan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- offline cift gonderim korumasi (scan_event ile ayni desen):
+            CONSTRAINT uq_completion_tenant_idempotency UNIQUE (tenant_id, idempotency_key)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_completion_tenant ON task_completion (tenant_id);")
+    op.execute("CREATE INDEX ix_completion_task ON task_completion (task_id);")
+    op.execute(
+        "CREATE INDEX ix_completion_zaman "
+        "ON task_completion (tenant_id, tamamlanma_zamani DESC);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -384,6 +459,8 @@ def upgrade() -> None:
         "patrol_window",
         "scan_event",
         "notification",
+        "task",
+        "task_completion",
     ):
         _enable_rls(table)
 
@@ -421,6 +498,8 @@ def _enable_rls(table: str) -> None:
 def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     for table in (
+        "task_completion",
+        "task",
         "notification",
         "scan_event",
         "patrol_window",
@@ -433,6 +512,7 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS task_tip;")
     op.execute("DROP TYPE IF EXISTS notification_tip;")
     op.execute("DROP TYPE IF EXISTS patrol_window_durum;")
     op.execute("DROP TYPE IF EXISTS gun_tipi;")

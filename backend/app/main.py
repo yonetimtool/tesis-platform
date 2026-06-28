@@ -19,6 +19,8 @@ from .routers import notifications as notifications_router
 from .routers import patrol_plans as patrol_plans_router
 from .routers import scans as scans_router
 from .routers import shifts as shifts_router
+from .routers import tasks as tasks_router
+from .routers import uploads as uploads_router
 
 
 @asynccontextmanager
@@ -48,6 +50,8 @@ app.include_router(patrol_plans_router.router)
 app.include_router(scans_router.router)
 app.include_router(dashboard_router.router)
 app.include_router(notifications_router.router)
+app.include_router(tasks_router.router)
+app.include_router(uploads_router.router)
 
 
 @app.get("/health", tags=["health"])

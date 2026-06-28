@@ -26,6 +26,17 @@ def _pgcode(exc: IntegrityError) -> str | None:
     return getattr(orig, "sqlstate", None) or getattr(orig, "pgcode", None)
 
 
+def is_unique_violation(exc: IntegrityError) -> bool:
+    return _pgcode(exc) == "23505"
+
+
+def coord_eq(a, b) -> bool:
+    """GPS koordinati esitligi (Numeric/float, 6 hane tolerans)."""
+    if a is None or b is None:
+        return a is b
+    return round(float(a), 6) == round(float(b), 6)
+
+
 def translate_integrity(exc: IntegrityError) -> APIError:
     """DB kisit ihlalini sozlesme hata zarfina cevir."""
     code = _pgcode(exc)

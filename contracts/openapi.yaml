@@ -546,6 +546,189 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  # ================================================================= #
+  # TASKS (esnek gorev sistemi) + tamamlama + foto kanit
+  # ================================================================= #
+  /tasks:
+    get:
+      tags: [tasks]
+      summary: Gorev listesi
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: tip
+          in: query
+          schema: { $ref: "#/components/schemas/TaskTip" }
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Task" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [tasks]
+      summary: Gorev olustur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /tasks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [tasks]
+      summary: Gorev detay
+      responses:
+        "200":
+          description: Detay
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [tasks]
+      summary: Gorev guncelle (kismi)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [tasks]
+      summary: Gorev sil
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tasks/{id}/completions:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [tasks]
+      summary: Gorev tamamlama gecmisi
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/TaskCompletion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      tags: [tasks]
+      summary: Gorevi tamamla (kanit gonder)
+      description: |
+        Idempotency-Key header ZORUNLU (offline cift gonderim korumasi, scan deseni).
+        Foto icin: once POST /uploads/presign ile foto_key + PUT URL alinir, dosya
+        dogrudan MinIO'ya yuklenir, sonra burada foto_key gonderilir.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskCompletionCreate" }
+      responses:
+        "201":
+          description: Tamamlama kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskCompletion" }
+        "200":
+          description: Idempotent tekrar — mevcut kayit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskCompletion" }
+        "400":
+          description: Idempotency-Key eksik veya gecersiz govde
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Ayni Idempotency-Key farkli govde ile gonderildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /uploads/presign:
+    post:
+      tags: [uploads]
+      summary: Foto yukleme icin presigned PUT URL uret
+      description: |
+        Backend foto_key uretir ve MinIO icin presigned PUT URL doner. Istemci
+        dosyayi bu URL'e PUT eder, sonra foto_key'i ilgili completion'da gonderir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PresignRequest" }
+      responses:
+        "200":
+          description: Presigned URL
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PresignResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
 # =================================================================== #
 components:
   securitySchemes:
@@ -955,3 +1138,113 @@ components:
       required: [okundu]
       properties:
         okundu: { type: boolean }
+
+    # ----------------------------- tasks --------------------------- #
+    TaskTip:
+      type: string
+      enum: [temizlik, kontrol, ilaclama, bakim, diger]
+    Task:
+      type: object
+      required: [id, tip, ad, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        tip: { $ref: "#/components/schemas/TaskTip" }
+        ad: { type: string, example: "Cop toplama" }
+        aciklama: { type: string, nullable: true }
+        atanan_user_id: { type: string, format: uuid, nullable: true }
+        checkpoint_id: { type: string, format: uuid, nullable: true }
+        periyot_dakika:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: "Periyodik gorev; tek seferlikse null"
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    TaskCreate:
+      type: object
+      required: [tip, ad]
+      properties:
+        tip: { $ref: "#/components/schemas/TaskTip" }
+        ad: { type: string }
+        aciklama: { type: string, nullable: true }
+        atanan_user_id: { type: string, format: uuid, nullable: true }
+        checkpoint_id: { type: string, format: uuid, nullable: true }
+        periyot_dakika: { type: integer, minimum: 1, nullable: true }
+        aktif: { type: boolean, default: true }
+    TaskUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        tip: { $ref: "#/components/schemas/TaskTip" }
+        ad: { type: string }
+        aciklama: { type: string, nullable: true }
+        atanan_user_id: { type: string, format: uuid, nullable: true }
+        checkpoint_id: { type: string, format: uuid, nullable: true }
+        periyot_dakika: { type: integer, minimum: 1, nullable: true }
+        aktif: { type: boolean }
+
+    TaskCompletion:
+      type: object
+      required: [id, task_id, tamamlayan_user_id, tamamlanma_zamani, idempotency_key, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        task_id: { type: string, format: uuid }
+        tamamlayan_user_id:
+          type: string
+          format: uuid
+          description: "Token'dan turetilir"
+        tamamlanma_zamani: { type: string, format: date-time }
+        nfc_tag_uid: { type: string, nullable: true }
+        gps_lat: { type: number, format: double, nullable: true }
+        gps_lng: { type: number, format: double, nullable: true }
+        foto_key: { type: string, nullable: true }
+        foto_url: { type: string, nullable: true }
+        notlar: { type: string, nullable: true }
+        idempotency_key: { type: string }
+        created_at: { type: string, format: date-time }
+    TaskCompletionCreate:
+      type: object
+      required: [tamamlanma_zamani]
+      properties:
+        tamamlanma_zamani: { type: string, format: date-time }
+        nfc_tag_uid:
+          type: string
+          nullable: true
+          description: "Verilirse task.checkpoint_id'nin nfc'si ile eslesmeli"
+        gps_lat: { type: number, format: double, nullable: true }
+        gps_lng: { type: number, format: double, nullable: true }
+        foto_key:
+          type: string
+          nullable: true
+          description: "Once /uploads/presign ile alinan obje anahtari"
+        notlar: { type: string, nullable: true }
+
+    # ---------------------------- uploads -------------------------- #
+    PresignRequest:
+      type: object
+      required: [content_type]
+      properties:
+        content_type:
+          type: string
+          example: "image/jpeg"
+          description: "Yuklenecek dosyanin MIME tipi"
+        dosya_adi:
+          type: string
+          nullable: true
+          description: "Opsiyonel; uzanti foto_key icin kullanilabilir"
+    PresignResponse:
+      type: object
+      required: [foto_key, upload_url, method, expires_in]
+      properties:
+        foto_key:
+          type: string
+          description: "Completion'da gonderilecek obje anahtari (tenant ile namespace'li)"
+        upload_url:
+          type: string
+          description: "Presigned PUT URL — istemci dosyayi buraya PUT eder"
+        method: { type: string, enum: [PUT], example: PUT }
+        expires_in:
+          type: integer
+          description: "URL gecerlilik suresi (saniye)"
+          example: 900

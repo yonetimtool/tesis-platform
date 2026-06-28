@@ -14,6 +14,9 @@ PyJWT==2.8.0
 bcrypt==4.1.3
 email-validator==2.2.0    # pydantic EmailStr icin
 
+# --- Storage (MinIO / S3-uyumlu) ---
+boto3==1.34.131           # presigned URL uretimi (yerel imzalama)
+
 # --- Test ---
 pytest==8.2.2
 pytest-asyncio==0.23.7

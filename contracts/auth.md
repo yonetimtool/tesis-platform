@@ -114,6 +114,13 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `GET  /dashboard/live`                |  ✅   |    ✅    |    ❌    |    ❌    |
 | `GET  /notifications`                 |  ✅   |    ✅    |    ❌    |    ❌    |
 | `PATCH /notifications/{id}`           |  ✅   |    ✅    |    ❌    |    ❌    |
+| `GET  /tasks` (liste/detay)           |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /tasks`                         |  ✅   |    ❌    |    ❌    |    ❌    |
+| `PATCH /tasks/{id}`                   |  ✅   |    ❌    |    ❌    |    ❌    |
+| `DELETE /tasks/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |
+| `GET  /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /uploads/presign`               |  ✅   |    ✅    |    ✅    |    ❌    |
 
 Notlar:
 - **admin**: tenant icindeki tum yonetim islemleri (CRUD) + panel.

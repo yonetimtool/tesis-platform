@@ -304,3 +304,97 @@ class NotificationListResponse(BaseModel):
 
 class NotificationUpdate(BaseModel):
     okundu: bool
+
+
+# -------------------------------- tasks ------------------------------------ #
+TaskTip = Literal["temizlik", "kontrol", "ilaclama", "bakim", "diger"]
+
+
+class TaskOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tip: str
+    ad: str
+    aciklama: str | None = None
+    atanan_user_id: uuid.UUID | None = None
+    checkpoint_id: uuid.UUID | None = None
+    periyot_dakika: int | None = None
+    aktif: bool
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class TaskCreate(BaseModel):
+    tip: TaskTip
+    ad: str = Field(..., min_length=1)
+    aciklama: str | None = None
+    atanan_user_id: uuid.UUID | None = None
+    checkpoint_id: uuid.UUID | None = None
+    periyot_dakika: int | None = Field(None, ge=1)
+    aktif: bool = True
+
+
+class TaskUpdate(BaseModel):
+    tip: TaskTip | None = None
+    ad: str | None = Field(None, min_length=1)
+    aciklama: str | None = None
+    atanan_user_id: uuid.UUID | None = None
+    checkpoint_id: uuid.UUID | None = None
+    periyot_dakika: int | None = Field(None, ge=1)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "TaskUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class TaskListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[TaskOut]
+
+
+class TaskCompletionCreate(BaseModel):
+    tamamlanma_zamani: datetime
+    nfc_tag_uid: str | None = None
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    foto_key: str | None = None
+    notlar: str | None = None
+
+
+class TaskCompletionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    task_id: uuid.UUID
+    tamamlayan_user_id: uuid.UUID
+    tamamlanma_zamani: datetime
+    nfc_tag_uid: str | None = None
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    foto_key: str | None = None
+    foto_url: str | None = None
+    notlar: str | None = None
+    idempotency_key: str
+    created_at: datetime
+
+
+class TaskCompletionListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[TaskCompletionOut]
+
+
+# ------------------------------- uploads ----------------------------------- #
+class PresignRequest(BaseModel):
+    content_type: str = Field(..., min_length=1, examples=["image/jpeg"])
+    dosya_adi: str | None = None
+
+
+class PresignResponse(BaseModel):
+    foto_key: str
+    upload_url: str
+    method: str = "PUT"
+    expires_in: int
