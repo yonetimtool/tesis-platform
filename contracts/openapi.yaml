@@ -706,6 +706,33 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  /landscape/schedule:
+    get:
+      tags: [tasks]
+      summary: Peyzaj bakim takvimi (yaklasan isler, sirali)
+      description: |
+        tip=peyzaj ve sonraki_planlanan dolu aktif gorevler, sonraki_planlanan'a
+        gore ARTAN sirada. (Mevcut Task semasi yeniden kullanilir.)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Takvim
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Task" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /uploads/presign:
     post:
       tags: [uploads]
@@ -1130,6 +1157,7 @@ components:
         patrol_window_id: { type: string, format: uuid, nullable: true }
         patrol_plan_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
+        task_id: { type: string, format: uuid, nullable: true }
         mesaj: { type: string }
         okundu: { type: boolean }
         created_at: { type: string, format: date-time }
@@ -1142,7 +1170,7 @@ components:
     # ----------------------------- tasks --------------------------- #
     TaskTip:
       type: string
-      enum: [temizlik, kontrol, ilaclama, bakim, diger]
+      enum: [temizlik, kontrol, ilaclama, bakim, peyzaj, diger]
     Task:
       type: object
       required: [id, tip, ad, aktif, created_at]
@@ -1157,7 +1185,12 @@ components:
           type: integer
           minimum: 1
           nullable: true
-          description: "Periyodik gorev; tek seferlikse null"
+          description: "Tekrar araligi (dakika); tek seferlikse null"
+        sonraki_planlanan:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Bir sonraki planlanan an (UTC); peyzaj takvimi. Tamamlaninca ilerler."
         aktif: { type: boolean }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
@@ -1171,6 +1204,7 @@ components:
         atanan_user_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
         periyot_dakika: { type: integer, minimum: 1, nullable: true }
+        sonraki_planlanan: { type: string, format: date-time, nullable: true }
         aktif: { type: boolean, default: true }
     TaskUpdate:
       type: object
@@ -1182,6 +1216,7 @@ components:
         atanan_user_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
         periyot_dakika: { type: integer, minimum: 1, nullable: true }
+        sonraki_planlanan: { type: string, format: date-time, nullable: true }
         aktif: { type: boolean }
 
     TaskCompletion:

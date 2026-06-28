@@ -116,6 +116,24 @@ curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
 > + `tenant_id_by_slug` fonksiyonu eklendi. Mevcut bir DB varsa migration'i yeniden
 > uygulamak icin volume sifirlanmali: `docker compose down -v && docker compose up --build`.
 
+## Peyzaj bakim takvimi + hatirlatma
+
+Ayri tablo **YOK** — mevcut task sistemi genisletildi:
+- `task.tip='peyzaj'` + takvim alani **`task.sonraki_planlanan`** (UTC) + tekrar araligi
+  olarak mevcut **`periyot_dakika`**. Yonetim mevcut **Task CRUD** ile (admin).
+- **Takvim:** `GET /landscape/schedule` → aktif peyzaj task'lari `sonraki_planlanan` ARTAN,
+  sayfali, tenant-izole (admin/security/cleaning).
+- **Tamamlama ilerletir:** periyodik task tamamlaninca (`task_completion`)
+  `sonraki_planlanan += periyot_dakika` (`create_completion`, yalnizca yeni kayitta).
+- **Hatirlatma** (`scheduler.landscape_reminders`, beat, varsayilan saat basi):
+  - `peyzaj_yaklasan`: `sonraki_planlanan ∈ [now, now+lead]` (`SCHEDULER_LANDSCAPE_LEAD_HOURS`, vars. 24).
+  - `peyzaj_kacirilan`: `sonraki_planlanan < now` ve o tarihten sonra tamamlama yok.
+  - **Idempotent:** `notification.dedup_key = "<tip>:<task_id>:<planlanan_iso>"` +
+    `UNIQUE(tenant_id, dedup_key)` + `ON CONFLICT DO NOTHING`. Mevcut notify deseni
+    (app_rw + tenant context, RLS) yeniden kullanilir; gercek push hala yok (kanca var).
+- Peyzaj bildirimleri `/notifications` altinda gorulur; **dashboard `son_alarmlar`'a
+  DUSMEZ** (alarm tipi degil) — dashboard yalniz `kacirilan_tur/eksik_checkpoint/gecikmis_okutma`.
+
 ## Gorev sistemi + foto kanit (Task / Completion / MinIO)
 
 Esnek **tek `task` modeli** (`tip`: temizlik/kontrol/ilaclama/bakim/diger). Cop topla,

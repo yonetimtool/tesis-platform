@@ -83,6 +83,13 @@ degisecekse once burasi degisir, sonra kod.
   presigned PUT URL + `foto_key` doner, istemci dogrudan MinIO'ya yukler, sonra
   `foto_key` completion'da saklanir. FK'ler composite + kolon-ozel `ON DELETE SET NULL`.
   ('not' SQL anahtar kelimesi oldugu icin DB kolonu `notlar').
+- **Peyzaj**: ayri tablo YOK — `task.tip='peyzaj'` + takvim alani `task.sonraki_planlanan`
+  (UTC) + tekrar araligi olarak mevcut `periyot_dakika`. Tamamlanma (`task_completion`)
+  periyodik peyzaji bir periyot ilerletir. Takvim: `GET /landscape/schedule` (sonraki_planlanan
+  artan). Hatirlatma: `notification_tip` 'peyzaj_yaklasan' (planlanan yaklasinca) /
+  'peyzaj_kacirilan' (planlanan gecmis + tamamlanmamis); idempotency `notification.dedup_key`
+  (`UNIQUE (tenant_id, dedup_key)`), deger `<tip>:<task_id>:<planlanan_iso>`. Erisim: peyzaj
+  yonetimi admin (Task CRUD), tamamlama+takvim okuma cleaning/security/admin.
 - `checkpoint.nfc_tag_uid` tenant icinde benzersiz (NFC eslemesi).
 - `patrol_plan` gun-ici sablon; `patrol_window` scheduler'in urettigi somut
   UTC pencere. `scan_event` mobilin gonderdigi tur kaniti.

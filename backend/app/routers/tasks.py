@@ -7,7 +7,7 @@ Completion idempotency scan desenini yeniden kullanir (SAVEPOINT).
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, Query, Response
 from fastapi.responses import JSONResponse
@@ -238,6 +238,12 @@ async def create_completion(
             pass
 
     if created:
+        # Periyodik gorev (peyzaj dahil) tamamlaninca bir sonraki planlanan tarihi ilerlet.
+        if task.periyot_dakika and task.sonraki_planlanan is not None:
+            task.sonraki_planlanan = task.sonraki_planlanan + timedelta(
+                minutes=task.periyot_dakika
+            )
+            await db.flush()
         await db.refresh(obj)
         return JSONResponse(
             status_code=201, content=TaskCompletionOut.model_validate(obj).model_dump(mode="json")

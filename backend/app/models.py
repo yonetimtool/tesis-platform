@@ -351,6 +351,7 @@ class Notification(Base):
             "tenant_id", "tip", "patrol_window_id",
             name="uq_notification_tenant_tip_window",
         ),
+        UniqueConstraint("tenant_id", "dedup_key", name="uq_notification_dedup"),
     )
 
     id: Mapped[uuid.UUID] = _pk()
@@ -363,6 +364,8 @@ class Notification(Base):
     patrol_window_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     patrol_plan_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     checkpoint_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    task_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    dedup_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     mesaj: Mapped[str] = mapped_column(Text, nullable=False)
     okundu: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
@@ -403,6 +406,7 @@ class Task(Base):
     atanan_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     checkpoint_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     periyot_dakika: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sonraki_planlanan = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at = _created_at()
     updated_at = _created_at()

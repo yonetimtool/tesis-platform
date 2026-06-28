@@ -292,6 +292,7 @@ class NotificationOut(BaseModel):
     patrol_window_id: uuid.UUID | None = None
     patrol_plan_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
+    task_id: uuid.UUID | None = None
     mesaj: str
     okundu: bool
     created_at: datetime
@@ -307,7 +308,7 @@ class NotificationUpdate(BaseModel):
 
 
 # -------------------------------- tasks ------------------------------------ #
-TaskTip = Literal["temizlik", "kontrol", "ilaclama", "bakim", "diger"]
+TaskTip = Literal["temizlik", "kontrol", "ilaclama", "bakim", "peyzaj", "diger"]
 
 
 class TaskOut(BaseModel):
@@ -320,6 +321,7 @@ class TaskOut(BaseModel):
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
     periyot_dakika: int | None = None
+    sonraki_planlanan: datetime | None = None
     aktif: bool
     created_at: datetime
     updated_at: datetime | None = None
@@ -332,6 +334,7 @@ class TaskCreate(BaseModel):
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
     periyot_dakika: int | None = Field(None, ge=1)
+    sonraki_planlanan: datetime | None = None
     aktif: bool = True
 
 
@@ -342,6 +345,7 @@ class TaskUpdate(BaseModel):
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
     periyot_dakika: int | None = Field(None, ge=1)
+    sonraki_planlanan: datetime | None = None
     aktif: bool | None = None
 
     @model_validator(mode="after")

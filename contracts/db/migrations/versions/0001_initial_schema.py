@@ -62,15 +62,16 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE patrol_window_durum AS ENUM ('bekliyor', 'tamamlandi', 'kacirildi');"
     )
-    # notification.tip — ilk deger 'kacirilan_tur'; ileride genisler (openapi Alarm.tip ile uyumlu).
+    # notification.tip — kacirilan_tur + peyzaj hatirlatma/kacirma; ileride genisler.
     op.execute(
         "CREATE TYPE notification_tip AS ENUM "
-        "('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma');"
+        "('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma', "
+        "'peyzaj_yaklasan', 'peyzaj_kacirilan');"
     )
-    # task.tip — esnek gorev tipi; ileride genisler.
+    # task.tip — esnek gorev tipi (peyzaj dahil); ileride genisler.
     op.execute(
         "CREATE TYPE task_tip AS ENUM "
-        "('temizlik', 'kontrol', 'ilaclama', 'bakim', 'diger');"
+        "('temizlik', 'kontrol', 'ilaclama', 'bakim', 'peyzaj', 'diger');"
     )
 
     # ------------------------------------------------------------------ #
@@ -342,6 +343,12 @@ def upgrade() -> None:
             patrol_window_id  uuid,
             patrol_plan_id    uuid,
             checkpoint_id     uuid,
+            -- task_id: peyzaj/gorev kaynakli bildirim referansi (log; FK YOK — notification
+            -- tablosu task'tan ONCE olusur ve append-only log'dur).
+            task_id           uuid,
+            -- dedup_key: pencere-disi bildirimler icin idempotency anahtari
+            -- (orn. peyzaj: '<tip>:<task_id>:<planlanan_iso>'). UNIQUE asagida.
+            dedup_key         text,
             mesaj             text NOT NULL,
             okundu            boolean NOT NULL DEFAULT false,
             created_at        timestamptz NOT NULL DEFAULT now(),
@@ -360,7 +367,10 @@ def upgrade() -> None:
             -- (patrol_window_id NULL ise NULLS DISTINCT geregi dedup uygulanmaz;
             --  pencere-bazli alarmlar icin window dolu oldugundan calisir.)
             CONSTRAINT uq_notification_tenant_tip_window
-                UNIQUE (tenant_id, tip, patrol_window_id)
+                UNIQUE (tenant_id, tip, patrol_window_id),
+            -- pencere-disi bildirimler icin idempotency (dedup_key NULL => NULLS DISTINCT,
+            -- pencere-bazli kayitlari etkilemez):
+            CONSTRAINT uq_notification_dedup UNIQUE (tenant_id, dedup_key)
         );
         """
     )
@@ -386,7 +396,8 @@ def upgrade() -> None:
             aciklama         text,
             atanan_user_id   uuid,
             checkpoint_id    uuid,
-            periyot_dakika   integer,   -- periyodik gorev; tek seferlikse NULL
+            periyot_dakika   integer,   -- tekrar araligi (periyodik gorev/peyzaj); tek seferlikse NULL
+            sonraki_planlanan timestamptz,  -- bir sonraki planlanan an (UTC); peyzaj takvimi
             aktif            boolean NOT NULL DEFAULT true,
             created_at       timestamptz NOT NULL DEFAULT now(),
             updated_at       timestamptz NOT NULL DEFAULT now(),
@@ -405,6 +416,10 @@ def upgrade() -> None:
     op.execute("CREATE INDEX ix_task_tenant ON task (tenant_id);")
     op.execute("CREATE INDEX ix_task_tip ON task (tenant_id, tip);")
     op.execute("CREATE INDEX ix_task_atanan ON task (atanan_user_id);")
+    # peyzaj takvimi / hatirlatma sorgulari (yaklasan/kacirilan):
+    op.execute(
+        "CREATE INDEX ix_task_takvim ON task (tenant_id, tip, sonraki_planlanan);"
+    )
 
     # ------------------------------------------------------------------ #
     # 9d. task_completion  (gorev tamamlama kaniti — NFC/GPS/foto)
