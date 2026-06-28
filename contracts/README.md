@@ -97,6 +97,13 @@ degisecekse once burasi degisir, sonra kod.
   idempotency_key)`, birakma `UNIQUE(tenant_id, birakma_idempotency_key)` (partial). FK'ler
   composite. Asset CRUD admin; checkout/checkin/history cleaning/security/admin. checkout →
   durum 'zimmetli', checkin → 'musait'.
+- `emergency_alert`: acil durum butonu (saha → yonetim anlik alarm). `durum` (acik|cozuldu).
+  `POST /emergency` (saha+admin) → alarm + yuksek oncelikli `notification_tip='acil_durum'`
+  (dashboard `son_alarmlar`'da en ustte). Idempotency `UNIQUE(tenant_id, idempotency_key)`
+  (panik mukerrer basim). Liste/coz admin. FK composite (cozen kolon-ozel SET NULL).
+- **Yonetim numarasi:** ayri tablo YOK — `tenant.acil_durum_telefon` (tek alan). `GET
+  /tenant/settings` (admin/security/cleaning) ile okunur; mobil acil durumda `tel:` ile arar
+  (backend aramaz). `PATCH /tenant/settings` (admin) ile ayarlanir.
 - `checkpoint.nfc_tag_uid` tenant icinde benzersiz (NFC eslemesi).
 - `patrol_plan` gun-ici sablon; `patrol_window` scheduler'in urettigi somut
   UTC pencere. `scan_event` mobilin gonderdigi tur kaniti.

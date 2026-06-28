@@ -116,6 +116,24 @@ curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
 > + `tenant_id_by_slug` fonksiyonu eklendi. Mevcut bir DB varsa migration'i yeniden
 > uygulamak icin volume sifirlanmali: `docker compose down -v && docker compose up --build`.
 
+## Acil durum (panik butonu) + yonetim numarasi
+
+Saha → yonetim anlik alarm (`app/routers/emergency.py`). Gercek arama mobilde (`tel:`);
+backend yalniz kaydeder + bildirir, **aramaz**.
+- **`POST /emergency`** (admin/security/cleaning): `Idempotency-Key` zorunlu (panik mukerrer
+  basim). `tetikleyen` token'dan. → `emergency_alert` (durum 'acik') + **yuksek oncelikli
+  `notification_tip='acil_durum'`** (idempotent `dedup_key="acil_durum:<id>"`). Idempotency
+  200/409, key yok 400. resident 403.
+- **`GET /emergency`** (admin): liste (durum filtre, sayfali, tenant-izole).
+- **`PATCH /emergency/{id}`** (admin): coz → durum 'cozuldu', `cozen_user_id`+`cozulme_zamani`.
+- **Dashboard:** acil durum `son_alarmlar`'da **en ustte** (oncelik: tip ile ayrim, ayri
+  priority kolonu yok; sira `(tip='acil_durum') DESC, created_at DESC`). `Alarm.tip` setine eklendi.
+
+### Yonetim numarasi (nerede / nasil)
+Ayri tablo YOK — **`tenant.acil_durum_telefon`** (tek alan). Mobil acil durumda bu numarayi
+**`GET /tenant/settings`** ile okur (admin/security/cleaning) ve `tel:` ile arar. Admin
+**`PATCH /tenant/settings`** ile ayarlar. seed `acme-plaza` icin ornek numara yazar.
+
 ## Demirbas envanteri + zimmet (Asset / checkout / checkin)
 
 Demirbas (`asset`) + zimmet (`asset_checkout`) — "kim aldi/birakti" (NFC) (`app/routers/assets.py`).

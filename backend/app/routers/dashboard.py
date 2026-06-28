@@ -56,8 +56,9 @@ _ALARMLAR_SQL = text(
     """
     SELECT tip, patrol_window_id, checkpoint_id, mesaj, created_at
     FROM notification
-    WHERE tip IN ('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma')
-    ORDER BY created_at DESC
+    WHERE tip IN ('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma', 'acil_durum')
+    -- acil_durum yuksek oncelikli => en ustte; sonra en yeni.
+    ORDER BY (tip = 'acil_durum') DESC, created_at DESC
     LIMIT :alarm_limit
     """
 )

@@ -17,7 +17,7 @@ from datetime import datetime
 logger = logging.getLogger("scheduler.notify")
 
 
-def _dispatch_external(message: str) -> None:
+def dispatch_external(message: str) -> None:
     """Soyut gercek-gonderim kancasi (FCM/SMS) — simdilik no-op + log."""
     logger.info("EXTERNAL_NOTIFY (no-op): %s", message)
 
@@ -47,7 +47,7 @@ def notify_missed_tour(
         "MISSED_TOUR tenant=%s plan=%s window=%s missing=%s",
         tenant_id, plan_id, window_id, [str(c) for c in missing_checkpoints],
     )
-    _dispatch_external(mesaj)
+    dispatch_external(mesaj)
 
 
 def notify_landscape(
@@ -72,4 +72,4 @@ def notify_landscape(
         (tenant_id, tip, task_id, dedup_key, mesaj),
     )
     logger.warning("LANDSCAPE_REMINDER tenant=%s task=%s tip=%s", tenant_id, task_id, tip)
-    _dispatch_external(mesaj)
+    dispatch_external(mesaj)

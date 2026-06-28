@@ -129,6 +129,11 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `POST /assets/{id}/checkout`          |  ✅   |    ✅    |    ✅    |    ❌    |
 | `POST /assets/{id}/checkin`           |  ✅   |    ✅    |    ✅    |    ❌    |
 | `GET  /assets/{id}/history`           |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /emergency`                     |  ✅   |    ✅    |    ✅    |    ❌    |
+| `GET  /emergency`                     |  ✅   |    ❌    |    ❌    |    ❌    |
+| `PATCH /emergency/{id}`               |  ✅   |    ❌    |    ❌    |    ❌    |
+| `GET  /tenant/settings`               |  ✅   |    ✅    |    ✅    |    ❌    |
+| `PATCH /tenant/settings`              |  ✅   |    ❌    |    ❌    |    ❌    |
 
 Notlar:
 - **admin**: tenant icindeki tum yonetim islemleri (CRUD) + panel.

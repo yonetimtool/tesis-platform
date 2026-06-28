@@ -65,6 +65,10 @@ ASSET_DURUM = ENUM(
     "musait", "zimmetli", "bakimda",
     name="asset_durum", create_type=False,
 )
+EMERGENCY_DURUM = ENUM(
+    "acik", "cozuldu",
+    name="emergency_durum", create_type=False,
+)
 
 
 def _pk() -> Mapped[uuid.UUID]:
@@ -95,6 +99,8 @@ class Tenant(Base):
     timezone: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("'Europe/Istanbul'")
     )
+    # acil durumda mobilin arayacagi yonetim numarasi.
+    acil_durum_telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
 
 
@@ -525,6 +531,48 @@ class AssetCheckout(Base):
     created_at = _created_at()
 
 
+# --------------------------------------------------------------------------- #
+class EmergencyAlert(Base):
+    __tablename__ = "emergency_alert"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tetikleyen_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_emergency_tetikleyen",
+        ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (cozen_user_id); tenant_id korunur.
+        ForeignKeyConstraint(
+            ["cozen_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_emergency_cozen",
+        ),
+        UniqueConstraint(
+            "tenant_id", "idempotency_key", name="uq_emergency_tenant_idempotency"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    tetikleyen_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    tetiklenme_zamani = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
+    gps_lat = mapped_column(Numeric(9, 6), nullable=True)
+    gps_lng = mapped_column(Numeric(9, 6), nullable=True)
+    durum: Mapped[str] = mapped_column(
+        EMERGENCY_DURUM, nullable=False, server_default=text("'acik'")
+    )
+    cozen_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    cozulme_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at = _created_at()
+
+
 __all__ = [
     "Base",
     "Tenant",
@@ -540,6 +588,7 @@ __all__ = [
     "TaskCompletion",
     "Asset",
     "AssetCheckout",
+    "EmergencyAlert",
     "USER_ROLE",
     "GUN_TIPI",
     "PATROL_WINDOW_DURUM",
@@ -547,4 +596,5 @@ __all__ = [
     "TASK_TIP",
     "ASSET_KATEGORI",
     "ASSET_DURUM",
+    "EMERGENCY_DURUM",
 ]

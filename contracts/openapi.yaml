@@ -958,6 +958,125 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  # ================================================================= #
+  # EMERGENCY (acil durum) + tenant settings (yonetim numarasi)
+  # ================================================================= #
+  /emergency:
+    get:
+      tags: [emergency]
+      summary: Acil durum listesi
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: durum
+          in: query
+          schema: { $ref: "#/components/schemas/EmergencyDurum" }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/EmergencyAlert" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [emergency]
+      summary: Acil durum tetikle (panik butonu)
+      description: |
+        Idempotency-Key ZORUNLU (panik aninda mukerrer basim korumasi). tetikleyen
+        token'dan. Alarm kaydi + yuksek oncelikli 'acil_durum' notification uretir.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmergencyCreate" }
+      responses:
+        "201":
+          description: Alarm olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EmergencyAlert" }
+        "200":
+          description: Idempotent tekrar — mevcut alarm
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EmergencyAlert" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Ayni Idempotency-Key farkli govde ile gonderildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /emergency/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [emergency]
+      summary: Acil durumu coz
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmergencyResolve" }
+      responses:
+        "200":
+          description: Cozuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EmergencyAlert" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /tenant/settings:
+    get:
+      tags: [tenant]
+      summary: Tenant ayarlari (acil durum yonetim numarasi dahil)
+      description: "Mobil, acil durumda aranacak `acil_durum_telefon`'u buradan okur (tel: link)."
+      responses:
+        "200":
+          description: Ayarlar
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    patch:
+      tags: [tenant]
+      summary: Tenant ayarlarini guncelle (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantSettingsUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
 # =================================================================== #
 components:
   securitySchemes:
@@ -1339,7 +1458,7 @@ components:
       properties:
         tip:
           type: string
-          enum: [kacirilan_tur, eksik_checkpoint, gecikmis_okutma]
+          enum: [kacirilan_tur, eksik_checkpoint, gecikmis_okutma, acil_durum]
           example: kacirilan_tur
         olusma_zamani: { type: string, format: date-time }
         mesaj: { type: string }
@@ -1571,3 +1690,57 @@ components:
         gps_lat: { type: number, format: double, nullable: true }
         gps_lng: { type: number, format: double, nullable: true }
         notlar: { type: string, nullable: true }
+
+    # --------------------------- emergency ------------------------- #
+    EmergencyDurum:
+      type: string
+      enum: [acik, cozuldu]
+    EmergencyAlert:
+      type: object
+      required: [id, tetikleyen_user_id, tetiklenme_zamani, durum, idempotency_key, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        tetikleyen_user_id:
+          type: string
+          format: uuid
+          description: "Token'dan turetilir (tetikleyen)"
+        tetiklenme_zamani: { type: string, format: date-time }
+        gps_lat: { type: number, format: double, nullable: true }
+        gps_lng: { type: number, format: double, nullable: true }
+        durum: { $ref: "#/components/schemas/EmergencyDurum" }
+        cozen_user_id: { type: string, format: uuid, nullable: true }
+        cozulme_zamani: { type: string, format: date-time, nullable: true }
+        notlar: { type: string, nullable: true }
+        idempotency_key: { type: string }
+        created_at: { type: string, format: date-time }
+    EmergencyCreate:
+      type: object
+      properties:
+        gps_lat: { type: number, format: double, nullable: true }
+        gps_lng: { type: number, format: double, nullable: true }
+        notlar: { type: string, nullable: true }
+    EmergencyResolve:
+      type: object
+      properties:
+        notlar: { type: string, nullable: true }
+
+    # ------------------------ tenant settings ---------------------- #
+    TenantSettings:
+      type: object
+      required: [tenant_id, ad, slug, timezone]
+      properties:
+        tenant_id: { type: string, format: uuid }
+        ad: { type: string }
+        slug: { type: string }
+        timezone: { type: string }
+        acil_durum_telefon:
+          type: string
+          nullable: true
+          description: "Acil durumda mobilin arayacagi yonetim numarasi (tel:)"
+    TenantSettingsUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        acil_durum_telefon: { type: string, nullable: true }
+        timezone: { type: string }
+        ad: { type: string }

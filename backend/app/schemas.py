@@ -255,7 +255,7 @@ class ScanEventOut(BaseModel):
 
 
 # ------------------------------ dashboard ---------------------------------- #
-AlarmTip = Literal["kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma"]
+AlarmTip = Literal["kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma", "acil_durum"]
 
 
 class AktifTurOut(BaseModel):
@@ -487,3 +487,61 @@ class CheckinRequest(BaseModel):
     gps_lat: float | None = None
     gps_lng: float | None = None
     notlar: str | None = None
+
+
+# ------------------------------ emergency ---------------------------------- #
+EmergencyDurum = Literal["acik", "cozuldu"]
+
+
+class EmergencyCreate(BaseModel):
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    notlar: str | None = None
+
+
+class EmergencyResolve(BaseModel):
+    notlar: str | None = None
+
+
+class EmergencyAlertOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tetikleyen_user_id: uuid.UUID
+    tetiklenme_zamani: datetime
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    durum: str
+    cozen_user_id: uuid.UUID | None = None
+    cozulme_zamani: datetime | None = None
+    notlar: str | None = None
+    idempotency_key: str
+    created_at: datetime
+
+
+class EmergencyListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[EmergencyAlertOut]
+
+
+# --------------------------- tenant settings ------------------------------- #
+class TenantSettings(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    tenant_id: uuid.UUID
+    ad: str
+    slug: str
+    timezone: str
+    acil_durum_telefon: str | None = None
+
+
+class TenantSettingsUpdate(BaseModel):
+    acil_durum_telefon: str | None = None
+    timezone: str | None = None
+    ad: str | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "TenantSettingsUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self

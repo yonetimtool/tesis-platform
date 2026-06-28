@@ -29,7 +29,12 @@ OWNER_DSN = os.getenv(
     "postgresql://tesis_owner:owner_secret_change_me@db:5432/tesis",
 )
 
-TENANT = {"slug": "acme-plaza", "ad": "Acme Plaza", "timezone": "Europe/Istanbul"}
+TENANT = {
+    "slug": "acme-plaza",
+    "ad": "Acme Plaza",
+    "timezone": "Europe/Istanbul",
+    "acil_durum_telefon": "+902120000000",
+}
 
 USERS = [
     {
@@ -58,13 +63,14 @@ def main() -> int:
         # 1) tenant upsert (slug benzersiz).
         tenant_id = conn.execute(
             """
-            INSERT INTO tenant (ad, slug, timezone)
-            VALUES (%s, %s, %s)
+            INSERT INTO tenant (ad, slug, timezone, acil_durum_telefon)
+            VALUES (%s, %s, %s, %s)
             ON CONFLICT (slug) DO UPDATE
-                SET ad = EXCLUDED.ad, timezone = EXCLUDED.timezone
+                SET ad = EXCLUDED.ad, timezone = EXCLUDED.timezone,
+                    acil_durum_telefon = EXCLUDED.acil_durum_telefon
             RETURNING id
             """,
-            (TENANT["ad"], TENANT["slug"], TENANT["timezone"]),
+            (TENANT["ad"], TENANT["slug"], TENANT["timezone"], TENANT["acil_durum_telefon"]),
         ).fetchone()[0]
         print(f"[seed] tenant '{TENANT['slug']}' -> {tenant_id}")
 
