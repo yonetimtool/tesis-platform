@@ -72,6 +72,10 @@ degisecekse once burasi degisir, sonra kod.
   uretim icin guvenli.
 - **Enum'lar** native PostgreSQL tipi: `user_role`, `gun_tipi`, `patrol_window_durum`.
 - `app_user.email` tenant icinde benzersiz (case-insensitive).
+- `notification`: kacirilan tur vb. kalici bildirim. Idempotent dogal anahtar
+  `UNIQUE (tenant_id, tip, patrol_window_id)` (ayni kacirilan pencere icin tek kayit).
+  FK'ler composite + kolon-ozel `ON DELETE SET NULL`. Erisim: admin + security
+  (`GET /notifications`, `PATCH /notifications/{id}` okundu). Gercek push/SMS ayri is.
 - `checkpoint.nfc_tag_uid` tenant icinde benzersiz (NFC eslemesi).
 - `patrol_plan` gun-ici sablon; `patrol_window` scheduler'in urettigi somut
   UTC pencere. `scan_event` mobilin gonderdigi tur kaniti.

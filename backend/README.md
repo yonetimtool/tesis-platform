@@ -116,6 +116,30 @@ curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
 > + `tenant_id_by_slug` fonksiyonu eklendi. Mevcut bir DB varsa migration'i yeniden
 > uygulamak icin volume sifirlanmali: `docker compose down -v && docker compose up --build`.
 
+## Panel — GET /dashboard/live
+
+Yoneticinin canli ozeti (`app/routers/dashboard.py`).
+- **RBAC:** admin + security (cleaning/resident → 403).
+- **aktif_turlar:** tenant-yerel **bugune** ait `patrol_window`'lar + durum +
+  `beklenen_checkpoint_sayisi` (atanmis aktif checkpoint) + `okutulan_checkpoint_sayisi`
+  (pencere araliginda okutulmus, beklenen). Tek set-tabanli sorgu (N+1 yok).
+- **son_alarmlar:** son `kacirildi` pencerelerden **turetilir** (`tip=kacirilan_tur`),
+  `alarm_limit` (1–100, varsayilan 20) ile.
+- tenant token'dan, RLS izole. `generated_at` = sunucu UTC.
+
+### Notification (kalici bildirim) — eklendi
+Sozlesmeye `notification` tablosu + `GET /notifications` + `PATCH /notifications/{id}`
+eklendi (onayli contract degisikligi). Davranis:
+- `notify_missed_tour(...)` kacirilan turu **kalici** `notification` kaydina yazar
+  (`tip=kacirilan_tur`), **idempotent**: `UNIQUE (tenant_id, tip, patrol_window_id)` +
+  `ON CONFLICT DO NOTHING` → ayni pencere icin cift kayit olmaz. Yazma, scheduler'in
+  app_rw + tenant-context (`SET LOCAL`) baglantisi icinde → RLS uyumlu.
+- **Gercek push/SMS hala YOK** — `_dispatch_external(...)` soyut kancasi (no-op/log).
+- **`GET /notifications`** (admin+security): sayfali (`limit/offset`+meta), `okundu`
+  filtresi, tenant-izole. **`PATCH /notifications/{id}`**: `okundu` isaretleme.
+- **Dashboard `son_alarmlar`** artik `notification` tablosundan okunur (response semasi
+  AYNI — `Alarm`).
+
 ## Tur kaniti — POST /scans
 
 Mobil/saha istemcisinin checkpoint okutma kanitini gonderdigi uc (`app/routers/scans.py`).

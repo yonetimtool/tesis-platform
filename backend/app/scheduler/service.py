@@ -145,6 +145,7 @@ def detect_missed(
                             (window_id,),
                         )
                         notify_missed_tour(
+                            conn=conn,
                             tenant_id=tenant_id,
                             plan_id=plan_id,
                             window_id=window_id,

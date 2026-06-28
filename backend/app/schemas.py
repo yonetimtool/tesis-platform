@@ -252,3 +252,55 @@ class ScanEventOut(BaseModel):
     imza_dogrulandi: bool
     idempotency_key: str
     created_at: datetime
+
+
+# ------------------------------ dashboard ---------------------------------- #
+AlarmTip = Literal["kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma"]
+
+
+class AktifTurOut(BaseModel):
+    patrol_window_id: uuid.UUID
+    patrol_plan_id: uuid.UUID
+    patrol_plan_ad: str | None = None
+    pencere_baslangic: datetime
+    pencere_bitis: datetime
+    durum: str
+    beklenen_checkpoint_sayisi: int | None = None
+    okutulan_checkpoint_sayisi: int | None = None
+
+
+class AlarmOut(BaseModel):
+    tip: AlarmTip
+    olusma_zamani: datetime
+    mesaj: str
+    patrol_window_id: uuid.UUID | None = None
+    checkpoint_id: uuid.UUID | None = None
+
+
+class DashboardLiveOut(BaseModel):
+    generated_at: datetime
+    aktif_turlar: list[AktifTurOut]
+    son_alarmlar: list[AlarmOut]
+
+
+# ----------------------------- notifications ------------------------------- #
+class NotificationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tip: str
+    patrol_window_id: uuid.UUID | None = None
+    patrol_plan_id: uuid.UUID | None = None
+    checkpoint_id: uuid.UUID | None = None
+    mesaj: str
+    okundu: bool
+    created_at: datetime
+
+
+class NotificationListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[NotificationOut]
+
+
+class NotificationUpdate(BaseModel):
+    okundu: bool

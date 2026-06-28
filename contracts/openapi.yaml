@@ -492,6 +492,60 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  # ================================================================= #
+  # NOTIFICATIONS
+  # ================================================================= #
+  /notifications:
+    get:
+      tags: [notifications]
+      summary: Bildirim listesi (kacirilan tur vb.)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: okundu
+          in: query
+          description: Okundu durumuna gore filtrele
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Notification" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /notifications/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [notifications]
+      summary: Bildirimi okundu/okunmadi isaretle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NotificationUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Notification" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
 # =================================================================== #
 components:
   securitySchemes:
@@ -879,3 +933,25 @@ components:
         mesaj: { type: string }
         patrol_window_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
+
+    # ------------------------- notifications ----------------------- #
+    Notification:
+      type: object
+      required: [id, tip, mesaj, okundu, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        tip:
+          type: string
+          enum: [kacirilan_tur, eksik_checkpoint, gecikmis_okutma]
+          example: kacirilan_tur
+        patrol_window_id: { type: string, format: uuid, nullable: true }
+        patrol_plan_id: { type: string, format: uuid, nullable: true }
+        checkpoint_id: { type: string, format: uuid, nullable: true }
+        mesaj: { type: string }
+        okundu: { type: boolean }
+        created_at: { type: string, format: date-time }
+    NotificationUpdate:
+      type: object
+      required: [okundu]
+      properties:
+        okundu: { type: boolean }

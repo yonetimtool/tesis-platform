@@ -48,6 +48,10 @@ PATROL_WINDOW_DURUM = ENUM(
     "bekliyor", "tamamlandi", "kacirildi",
     name="patrol_window_durum", create_type=False,
 )
+NOTIFICATION_TIP = ENUM(
+    "kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma",
+    name="notification_tip", create_type=False,
+)
 
 
 def _pk() -> Mapped[uuid.UUID]:
@@ -315,6 +319,53 @@ class ScanEvent(Base):
     created_at = _created_at()
 
 
+# --------------------------------------------------------------------------- #
+class Notification(Base):
+    __tablename__ = "notification"
+    __table_args__ = (
+        # DDL'de kolon-ozel ON DELETE SET NULL (<kolon>) — sadece ilgili FK kolonu
+        # NULL'lanir, paylasilan NOT NULL tenant_id korunur (DDL kaynagi /contracts).
+        ForeignKeyConstraint(
+            ["patrol_window_id", "tenant_id"],
+            ["patrol_window.id", "patrol_window.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_notification_window",
+        ),
+        ForeignKeyConstraint(
+            ["patrol_plan_id", "tenant_id"],
+            ["patrol_plan.id", "patrol_plan.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_notification_plan",
+        ),
+        ForeignKeyConstraint(
+            ["checkpoint_id", "tenant_id"],
+            ["checkpoint.id", "checkpoint.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_notification_checkpoint",
+        ),
+        UniqueConstraint(
+            "tenant_id", "tip", "patrol_window_id",
+            name="uq_notification_tenant_tip_window",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenant.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    tip: Mapped[str] = mapped_column(NOTIFICATION_TIP, nullable=False)
+    patrol_window_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    patrol_plan_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    checkpoint_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    mesaj: Mapped[str] = mapped_column(Text, nullable=False)
+    okundu: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    created_at = _created_at()
+
+
 __all__ = [
     "Base",
     "Tenant",
@@ -325,7 +376,9 @@ __all__ = [
     "PatrolPlanCheckpoint",
     "PatrolWindow",
     "ScanEvent",
+    "Notification",
     "USER_ROLE",
     "GUN_TIPI",
     "PATROL_WINDOW_DURUM",
+    "NOTIFICATION_TIP",
 ]

@@ -13,7 +13,9 @@ from .db import engine
 from .errors import install_error_handlers
 from .routers import auth as auth_router
 from .routers import checkpoints as checkpoints_router
+from .routers import dashboard as dashboard_router
 from .routers import me as me_router
+from .routers import notifications as notifications_router
 from .routers import patrol_plans as patrol_plans_router
 from .routers import scans as scans_router
 from .routers import shifts as shifts_router
@@ -44,6 +46,8 @@ app.include_router(shifts_router.router)
 app.include_router(checkpoints_router.router)
 app.include_router(patrol_plans_router.router)
 app.include_router(scans_router.router)
+app.include_router(dashboard_router.router)
+app.include_router(notifications_router.router)
 
 
 @app.get("/health", tags=["health"])

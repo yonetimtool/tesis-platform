@@ -62,6 +62,11 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE patrol_window_durum AS ENUM ('bekliyor', 'tamamlandi', 'kacirildi');"
     )
+    # notification.tip — ilk deger 'kacirilan_tur'; ileride genisler (openapi Alarm.tip ile uyumlu).
+    op.execute(
+        "CREATE TYPE notification_tip AS ENUM "
+        "('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma');"
+    )
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -321,6 +326,49 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9b. notification  (kacirilan tur vb. kalici bildirim kaydi)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE notification (
+            id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id         uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            tip               notification_tip NOT NULL,
+            patrol_window_id  uuid,
+            patrol_plan_id    uuid,
+            checkpoint_id     uuid,
+            mesaj             text NOT NULL,
+            okundu            boolean NOT NULL DEFAULT false,
+            created_at        timestamptz NOT NULL DEFAULT now(),
+            -- Kolon-ozel SET NULL: yalnizca ilgili FK kolonu NULL'lanir; paylasilan
+            -- NOT NULL tenant_id korunur (PG15+). Bkz. /contracts/README.md.
+            CONSTRAINT fk_notification_window
+                FOREIGN KEY (patrol_window_id, tenant_id)
+                REFERENCES patrol_window (id, tenant_id) ON DELETE SET NULL (patrol_window_id),
+            CONSTRAINT fk_notification_plan
+                FOREIGN KEY (patrol_plan_id, tenant_id)
+                REFERENCES patrol_plan (id, tenant_id) ON DELETE SET NULL (patrol_plan_id),
+            CONSTRAINT fk_notification_checkpoint
+                FOREIGN KEY (checkpoint_id, tenant_id)
+                REFERENCES checkpoint (id, tenant_id) ON DELETE SET NULL (checkpoint_id),
+            -- Idempotent bildirim: ayni kacirilan pencere icin tek kayit.
+            -- (patrol_window_id NULL ise NULLS DISTINCT geregi dedup uygulanmaz;
+            --  pencere-bazli alarmlar icin window dolu oldugundan calisir.)
+            CONSTRAINT uq_notification_tenant_tip_window
+                UNIQUE (tenant_id, tip, patrol_window_id)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_notification_tenant ON notification (tenant_id);")
+    op.execute(
+        "CREATE INDEX ix_notification_list "
+        "ON notification (tenant_id, created_at DESC);"
+    )
+    op.execute(
+        "CREATE INDEX ix_notification_okundu ON notification (tenant_id, okundu);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -335,6 +383,7 @@ def upgrade() -> None:
         "patrol_plan_checkpoint",
         "patrol_window",
         "scan_event",
+        "notification",
     ):
         _enable_rls(table)
 
@@ -372,6 +421,7 @@ def _enable_rls(table: str) -> None:
 def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     for table in (
+        "notification",
         "scan_event",
         "patrol_window",
         "patrol_plan_checkpoint",
@@ -383,6 +433,7 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS notification_tip;")
     op.execute("DROP TYPE IF EXISTS patrol_window_durum;")
     op.execute("DROP TYPE IF EXISTS gun_tipi;")
     op.execute("DROP TYPE IF EXISTS user_role;")

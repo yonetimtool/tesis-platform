@@ -112,6 +112,8 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `PUT  /patrol-plans/{id}/checkpoints` |  ✅   |    ❌    |    ❌    |    ❌    |
 | `POST /scans`                         |  ✅   |    ✅    |    ✅    |    ❌    |
 | `GET  /dashboard/live`                |  ✅   |    ✅    |    ❌    |    ❌    |
+| `GET  /notifications`                 |  ✅   |    ✅    |    ❌    |    ❌    |
+| `PATCH /notifications/{id}`           |  ✅   |    ✅    |    ❌    |    ❌    |
 
 Notlar:
 - **admin**: tenant icindeki tum yonetim islemleri (CRUD) + panel.
