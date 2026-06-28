@@ -90,6 +90,13 @@ degisecekse once burasi degisir, sonra kod.
   'peyzaj_kacirilan' (planlanan gecmis + tamamlanmamis); idempotency `notification.dedup_key`
   (`UNIQUE (tenant_id, dedup_key)`), deger `<tip>:<task_id>:<planlanan_iso>`. Erisim: peyzaj
   yonetimi admin (Task CRUD), tamamlama+takvim okuma cleaning/security/admin.
+- `asset` / `asset_checkout`: demirbas envanteri + zimmet (al/birak, NFC). `asset.nfc_tag_uid`
+  tenant icinde benzersiz (partial unique, NULL haric). `asset.durum` (musait/zimmetli/bakimda).
+  **Tek aktif zimmet**: bir asset icin en fazla bir acik checkout → partial unique
+  `(tenant_id, asset_id) WHERE birakma_zamani IS NULL`. Idempotency: alma `UNIQUE(tenant_id,
+  idempotency_key)`, birakma `UNIQUE(tenant_id, birakma_idempotency_key)` (partial). FK'ler
+  composite. Asset CRUD admin; checkout/checkin/history cleaning/security/admin. checkout →
+  durum 'zimmetli', checkin → 'musait'.
 - `checkpoint.nfc_tag_uid` tenant icinde benzersiz (NFC eslemesi).
 - `patrol_plan` gun-ici sablon; `patrol_window` scheduler'in urettigi somut
   UTC pencere. `scan_event` mobilin gonderdigi tur kaniti.

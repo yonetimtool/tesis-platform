@@ -122,6 +122,13 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `POST /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
 | `GET  /landscape/schedule`            |  ✅   |    ✅    |    ✅    |    ❌    |
 | `POST /uploads/presign`               |  ✅   |    ✅    |    ✅    |    ❌    |
+| `GET  /assets` (liste/detay)          |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /assets`                        |  ✅   |    ❌    |    ❌    |    ❌    |
+| `PATCH /assets/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |
+| `DELETE /assets/{id}`                 |  ✅   |    ❌    |    ❌    |    ❌    |
+| `POST /assets/{id}/checkout`          |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /assets/{id}/checkin`           |  ✅   |    ✅    |    ✅    |    ❌    |
+| `GET  /assets/{id}/history`           |  ✅   |    ✅    |    ✅    |    ❌    |
 
 Notlar:
 - **admin**: tenant icindeki tum yonetim islemleri (CRUD) + panel.

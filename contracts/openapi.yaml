@@ -756,6 +756,208 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  # ================================================================= #
+  # ASSETS (demirbas envanteri) + zimmet (checkout/checkin)
+  # ================================================================= #
+  /assets:
+    get:
+      tags: [assets]
+      summary: Demirbas listesi
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: kategori
+          in: query
+          schema: { $ref: "#/components/schemas/AssetKategori" }
+        - name: durum
+          in: query
+          schema: { $ref: "#/components/schemas/AssetDurum" }
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Asset" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [assets]
+      summary: Demirbas olustur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssetCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Asset" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: nfc_tag_uid bu tenant'ta zaten kayitli
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /assets/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [assets]
+      summary: Demirbas detay
+      responses:
+        "200":
+          description: Detay
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Asset" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [assets]
+      summary: Demirbas guncelle (kismi)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssetUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Asset" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [assets]
+      summary: Demirbas sil
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /assets/{id}/checkout:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [assets]
+      summary: Demirbasi al (zimmetle)
+      description: |
+        Idempotency-Key ZORUNLU (scan deseni). nfc_tag_uid verilirse asset'in
+        nfc'siyle eslesmeli. alan_user_id token'dan. Zaten zimmetliyse 409.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CheckoutRequest" }
+      responses:
+        "201":
+          description: Zimmetlendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssetCheckout" }
+        "200":
+          description: Idempotent tekrar — mevcut kayit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssetCheckout" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Demirbas zaten zimmetli (veya ayni key farkli govde)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /assets/{id}/checkin:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [assets]
+      summary: Demirbasi birak (zimmeti kapat)
+      description: |
+        Acik zimmeti kapatir (birakma_zamani=now). Idempotency-Key ZORUNLU.
+        nfc_tag_uid verilirse asset'in nfc'siyle eslesmeli. Acik zimmet yoksa 409.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CheckinRequest" }
+      responses:
+        "200":
+          description: Birakildi (zimmet kapatildi / idempotent tekrar)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssetCheckout" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Acik zimmet yok (demirbas zaten musait)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /assets/{id}/history:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [assets]
+      summary: Demirbas zimmet gecmisi
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Gecmis
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/AssetCheckout" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
 # =================================================================== #
 components:
   securitySchemes:
@@ -1283,3 +1485,89 @@ components:
           type: integer
           description: "URL gecerlilik suresi (saniye)"
           example: 900
+
+    # ---------------------------- assets --------------------------- #
+    AssetKategori:
+      type: string
+      enum: [ekipman, arac, alet, diger]
+    AssetDurum:
+      type: string
+      enum: [musait, zimmetli, bakimda]
+    Asset:
+      type: object
+      required: [id, ad, durum, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, example: "Cim bicme makinesi" }
+        kategori: { $ref: "#/components/schemas/AssetKategori" }
+        nfc_tag_uid: { type: string, nullable: true }
+        durum: { $ref: "#/components/schemas/AssetDurum" }
+        aciklama: { type: string, nullable: true }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    AssetCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string }
+        kategori: { $ref: "#/components/schemas/AssetKategori" }
+        nfc_tag_uid: { type: string, nullable: true }
+        aciklama: { type: string, nullable: true }
+        aktif: { type: boolean, default: true }
+    AssetUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string }
+        kategori: { $ref: "#/components/schemas/AssetKategori" }
+        nfc_tag_uid: { type: string, nullable: true }
+        durum: { $ref: "#/components/schemas/AssetDurum" }
+        aciklama: { type: string, nullable: true }
+        aktif: { type: boolean }
+
+    AssetCheckout:
+      type: object
+      required: [id, asset_id, alan_user_id, alma_zamani, idempotency_key, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        asset_id: { type: string, format: uuid }
+        alan_user_id:
+          type: string
+          format: uuid
+          description: "Token'dan turetilir (alan kullanici)"
+        alma_zamani: { type: string, format: date-time }
+        birakma_zamani:
+          type: string
+          format: date-time
+          nullable: true
+          description: "NULL => hala uzerinde (acik zimmet)"
+        alma_nfc_tag_uid: { type: string, nullable: true }
+        birakma_nfc_tag_uid: { type: string, nullable: true }
+        alma_gps_lat: { type: number, format: double, nullable: true }
+        alma_gps_lng: { type: number, format: double, nullable: true }
+        birakma_gps_lat: { type: number, format: double, nullable: true }
+        birakma_gps_lng: { type: number, format: double, nullable: true }
+        notlar: { type: string, nullable: true }
+        idempotency_key: { type: string }
+        created_at: { type: string, format: date-time }
+    CheckoutRequest:
+      type: object
+      properties:
+        nfc_tag_uid:
+          type: string
+          nullable: true
+          description: "Okutulan etiket; verilirse asset.nfc_tag_uid ile eslesmeli"
+        gps_lat: { type: number, format: double, nullable: true }
+        gps_lng: { type: number, format: double, nullable: true }
+        notlar: { type: string, nullable: true }
+    CheckinRequest:
+      type: object
+      properties:
+        nfc_tag_uid:
+          type: string
+          nullable: true
+          description: "Okutulan etiket; verilirse asset.nfc_tag_uid ile eslesmeli"
+        gps_lat: { type: number, format: double, nullable: true }
+        gps_lng: { type: number, format: double, nullable: true }
+        notlar: { type: string, nullable: true }

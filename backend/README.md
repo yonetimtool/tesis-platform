@@ -116,6 +116,23 @@ curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
 > + `tenant_id_by_slug` fonksiyonu eklendi. Mevcut bir DB varsa migration'i yeniden
 > uygulamak icin volume sifirlanmali: `docker compose down -v && docker compose up --build`.
 
+## Demirbas envanteri + zimmet (Asset / checkout / checkin)
+
+Demirbas (`asset`) + zimmet (`asset_checkout`) — "kim aldi/birakti" (NFC) (`app/routers/assets.py`).
+- **Asset CRUD** (`/assets`): GET liste (`kategori`/`durum`/`aktif` filtre, sayfali) / detay /
+  POST / PATCH / DELETE. **RBAC:** GET admin/security/cleaning; yazma yalniz admin.
+  `nfc_tag_uid` tenant icinde benzersiz (NULL haric) → cakisma **409**. `durum`:
+  musait/zimmetli/bakimda.
+- **checkout** (`POST /assets/{id}/checkout`, admin/security/cleaning): demirbasi al.
+  `Idempotency-Key` zorunlu (400). `nfc_tag_uid` verilirse asset nfc'siyle eslesmeli (422).
+  `alan_user_id` token'dan. **Tek aktif zimmet**: zaten zimmetliyse **409** (DB'de partial
+  unique `(tenant_id, asset_id) WHERE birakma_zamani IS NULL` ile garanti). Idempotency:
+  ayni key+gövde → 200, farkli → 409 (scan SAVEPOINT deseni). Basarili → asset.durum='zimmetli'.
+- **checkin** (`POST /assets/{id}/checkin`): acik zimmeti kapatir (birakma_zamani=now,
+  durum='musait'). `Idempotency-Key` zorunlu; ayni key ile tekrar → 200 ayni kayit
+  (`birakma_idempotency_key` partial unique). Acik zimmet yoksa **409**.
+- **history** (`GET /assets/{id}/history`): zimmet gecmisi (alma_zamani artan), sayfali, tenant-izole.
+
 ## Peyzaj bakim takvimi + hatirlatma
 
 Ayri tablo **YOK** — mevcut task sistemi genisletildi:

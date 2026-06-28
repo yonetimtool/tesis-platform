@@ -402,3 +402,88 @@ class PresignResponse(BaseModel):
     upload_url: str
     method: str = "PUT"
     expires_in: int
+
+
+# -------------------------------- assets ----------------------------------- #
+AssetKategori = Literal["ekipman", "arac", "alet", "diger"]
+AssetDurum = Literal["musait", "zimmetli", "bakimda"]
+
+
+class AssetOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    kategori: str | None = None
+    nfc_tag_uid: str | None = None
+    durum: str
+    aciklama: str | None = None
+    aktif: bool
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class AssetCreate(BaseModel):
+    ad: str = Field(..., min_length=1)
+    kategori: AssetKategori | None = None
+    nfc_tag_uid: str | None = None
+    aciklama: str | None = None
+    aktif: bool = True
+
+
+class AssetUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1)
+    kategori: AssetKategori | None = None
+    nfc_tag_uid: str | None = None
+    durum: AssetDurum | None = None
+    aciklama: str | None = None
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "AssetUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class AssetListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AssetOut]
+
+
+class AssetCheckoutOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    asset_id: uuid.UUID
+    alan_user_id: uuid.UUID
+    alma_zamani: datetime
+    birakma_zamani: datetime | None = None
+    alma_nfc_tag_uid: str | None = None
+    birakma_nfc_tag_uid: str | None = None
+    alma_gps_lat: float | None = None
+    alma_gps_lng: float | None = None
+    birakma_gps_lat: float | None = None
+    birakma_gps_lng: float | None = None
+    notlar: str | None = None
+    idempotency_key: str
+    created_at: datetime
+
+
+class AssetCheckoutListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AssetCheckoutOut]
+
+
+class CheckoutRequest(BaseModel):
+    nfc_tag_uid: str | None = None
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    notlar: str | None = None
+
+
+class CheckinRequest(BaseModel):
+    nfc_tag_uid: str | None = None
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    notlar: str | None = None

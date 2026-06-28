@@ -1,0 +1,305 @@
+"""Asset (demirbas) CRUD + zimmet (checkout/checkin/history) — /contracts/openapi.yaml.
+
+RBAC: Asset CRUD admin; checkout/checkin/history + GET admin/security/cleaning.
+Idempotency scan desenini (SAVEPOINT) yeniden kullanir. Tek aktif zimmet DB'de
+partial unique ile garanti; uygulama da onceden kontrol eder (anlamli 409).
+"""
+from __future__ import annotations
+
+import uuid
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, Header, Query, Response
+from fastapi.responses import JSONResponse
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..crud_helpers import coord_eq, get_or_404, is_unique_violation, translate_integrity
+from ..deps import get_tenant_db, require_role
+from ..errors import APIError
+from ..models import Asset, AssetCheckout, AppUser
+from ..schemas import (
+    AssetCheckoutListResponse,
+    AssetCheckoutOut,
+    AssetCreate,
+    AssetDurum,
+    AssetKategori,
+    AssetListResponse,
+    AssetOut,
+    AssetUpdate,
+    CheckinRequest,
+    CheckoutRequest,
+)
+
+router = APIRouter(prefix="/assets", tags=["assets"])
+
+_ADMIN = require_role("admin")
+_FIELD = require_role("admin", "security", "cleaning")
+
+
+def _constraint(exc: IntegrityError) -> str | None:
+    return getattr(getattr(exc, "orig", None), "constraint_name", None)
+
+
+def _check_nfc(asset: Asset, nfc: str | None) -> None:
+    if nfc is not None and asset.nfc_tag_uid is not None and nfc != asset.nfc_tag_uid:
+        raise APIError(422, "invalid_reference", "nfc_tag_uid demirbas ile eslesmiyor.")
+
+
+# -------------------------------- CRUD ------------------------------------- #
+@router.get("", response_model=AssetListResponse)
+async def list_assets(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    kategori: AssetKategori | None = Query(None),
+    durum: AssetDurum | None = Query(None),
+    aktif: bool | None = Query(None),
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_FIELD),
+) -> AssetListResponse:
+    where = []
+    if kategori is not None:
+        where.append(Asset.kategori == kategori)
+    if durum is not None:
+        where.append(Asset.durum == durum)
+    if aktif is not None:
+        where.append(Asset.aktif == aktif)
+    total = (await db.execute(select(func.count()).select_from(Asset).where(*where))).scalar_one()
+    rows = (
+        await db.execute(
+            select(Asset).where(*where).order_by(Asset.created_at).limit(limit).offset(offset)
+        )
+    ).scalars().all()
+    return AssetListResponse(meta={"limit": limit, "offset": offset, "total": total}, items=list(rows))
+
+
+@router.get("/{asset_id}", response_model=AssetOut)
+async def get_asset(
+    asset_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_FIELD),
+) -> Asset:
+    return await get_or_404(db, Asset, asset_id)
+
+
+@router.post("", response_model=AssetOut, status_code=201)
+async def create_asset(
+    body: AssetCreate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_ADMIN),
+) -> Asset:
+    obj = Asset(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
+    db.add(obj)
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        if is_unique_violation(exc):
+            raise APIError(409, "conflict", "nfc_tag_uid bu tenant'ta zaten kayitli.")
+        raise translate_integrity(exc)
+    await db.refresh(obj)
+    return obj
+
+
+@router.patch("/{asset_id}", response_model=AssetOut)
+async def update_asset(
+    asset_id: uuid.UUID,
+    body: AssetUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_ADMIN),
+) -> Asset:
+    obj = await get_or_404(db, Asset, asset_id)
+    for key, value in body.model_dump(exclude_unset=True).items():
+        setattr(obj, key, value)
+    obj.updated_at = func.now()
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        if is_unique_violation(exc):
+            raise APIError(409, "conflict", "nfc_tag_uid bu tenant'ta zaten kayitli.")
+        raise translate_integrity(exc)
+    await db.refresh(obj)
+    return obj
+
+
+@router.delete("/{asset_id}", status_code=204)
+async def delete_asset(
+    asset_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_ADMIN),
+) -> Response:
+    obj = await get_or_404(db, Asset, asset_id)
+    await db.delete(obj)
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        raise translate_integrity(exc)
+    return Response(status_code=204)
+
+
+# ------------------------------ zimmet ------------------------------------- #
+def _same_checkout(existing: AssetCheckout, *, asset_id, alan_user_id, nfc, gps_lat, gps_lng, notlar) -> bool:
+    return (
+        existing.asset_id == asset_id
+        and existing.alan_user_id == alan_user_id
+        and existing.alma_nfc_tag_uid == nfc
+        and coord_eq(existing.alma_gps_lat, gps_lat)
+        and coord_eq(existing.alma_gps_lng, gps_lng)
+        and existing.notlar == notlar
+    )
+
+
+async def _open_checkout(db: AsyncSession, asset_id: uuid.UUID) -> AssetCheckout | None:
+    return (
+        await db.execute(
+            select(AssetCheckout).where(
+                AssetCheckout.asset_id == asset_id,
+                AssetCheckout.birakma_zamani.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+
+
+@router.post("/{asset_id}/checkout")
+async def checkout(
+    asset_id: uuid.UUID,
+    body: CheckoutRequest,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_FIELD),
+) -> JSONResponse:
+    if not idempotency_key or not idempotency_key.strip():
+        raise APIError(400, "bad_request", "Idempotency-Key header zorunlu.")
+    asset = await get_or_404(db, Asset, asset_id)
+    _check_nfc(asset, body.nfc_tag_uid)
+
+    # 1) idempotent tekrar
+    existing = (
+        await db.execute(
+            select(AssetCheckout).where(AssetCheckout.idempotency_key == idempotency_key)
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        if _same_checkout(
+            existing, asset_id=asset_id, alan_user_id=user.id, nfc=body.nfc_tag_uid,
+            gps_lat=body.gps_lat, gps_lng=body.gps_lng, notlar=body.notlar,
+        ):
+            return JSONResponse(status_code=200, content=AssetCheckoutOut.model_validate(existing).model_dump(mode="json"))
+        raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
+
+    # 2) zaten zimmetli mi?
+    if await _open_checkout(db, asset_id) is not None:
+        raise APIError(409, "conflict", "Demirbas zaten zimmetli.")
+
+    # 3) yeni zimmet (race-safe SAVEPOINT)
+    obj = AssetCheckout(
+        tenant_id=user.tenant_id,
+        asset_id=asset_id,
+        alan_user_id=user.id,
+        alma_nfc_tag_uid=body.nfc_tag_uid,
+        alma_gps_lat=body.gps_lat,
+        alma_gps_lng=body.gps_lng,
+        notlar=body.notlar,
+        idempotency_key=idempotency_key,
+    )
+    try:
+        async with db.begin_nested():
+            db.add(obj)
+            await db.flush()
+    except IntegrityError as exc:
+        try:
+            db.expunge(obj)
+        except Exception:
+            pass
+        if _constraint(exc) == "uq_asset_open_checkout":
+            raise APIError(409, "conflict", "Demirbas zaten zimmetli.")
+        if is_unique_violation(exc):  # idempotency yarisi
+            again = (
+                await db.execute(
+                    select(AssetCheckout).where(AssetCheckout.idempotency_key == idempotency_key)
+                )
+            ).scalar_one()
+            if _same_checkout(
+                again, asset_id=asset_id, alan_user_id=user.id, nfc=body.nfc_tag_uid,
+                gps_lat=body.gps_lat, gps_lng=body.gps_lng, notlar=body.notlar,
+            ):
+                return JSONResponse(status_code=200, content=AssetCheckoutOut.model_validate(again).model_dump(mode="json"))
+            raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
+        raise translate_integrity(exc)
+
+    asset.durum = "zimmetli"
+    await db.flush()
+    await db.refresh(obj)
+    return JSONResponse(status_code=201, content=AssetCheckoutOut.model_validate(obj).model_dump(mode="json"))
+
+
+@router.post("/{asset_id}/checkin")
+async def checkin(
+    asset_id: uuid.UUID,
+    body: CheckinRequest,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_FIELD),
+) -> JSONResponse:
+    if not idempotency_key or not idempotency_key.strip():
+        raise APIError(400, "bad_request", "Idempotency-Key header zorunlu.")
+    asset = await get_or_404(db, Asset, asset_id)
+    _check_nfc(asset, body.nfc_tag_uid)
+
+    # idempotent tekrar: bu key ile zaten birakilmis mi?
+    prev = (
+        await db.execute(
+            select(AssetCheckout).where(AssetCheckout.birakma_idempotency_key == idempotency_key)
+        )
+    ).scalar_one_or_none()
+    if prev is not None:
+        return JSONResponse(status_code=200, content=AssetCheckoutOut.model_validate(prev).model_dump(mode="json"))
+
+    open_co = await _open_checkout(db, asset_id)
+    if open_co is None:
+        raise APIError(409, "conflict", "Acik zimmet yok (demirbas zaten musait).")
+
+    open_co.birakma_zamani = datetime.now(tz=timezone.utc)
+    open_co.birakma_nfc_tag_uid = body.nfc_tag_uid
+    open_co.birakma_gps_lat = body.gps_lat
+    open_co.birakma_gps_lng = body.gps_lng
+    if body.notlar is not None:
+        open_co.notlar = body.notlar
+    open_co.birakma_idempotency_key = idempotency_key
+    asset.durum = "musait"
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        if is_unique_violation(exc):  # birakma idempotency yarisi
+            again = (
+                await db.execute(
+                    select(AssetCheckout).where(
+                        AssetCheckout.birakma_idempotency_key == idempotency_key
+                    )
+                )
+            ).scalar_one()
+            return JSONResponse(status_code=200, content=AssetCheckoutOut.model_validate(again).model_dump(mode="json"))
+        raise translate_integrity(exc)
+    await db.refresh(open_co)
+    return JSONResponse(status_code=200, content=AssetCheckoutOut.model_validate(open_co).model_dump(mode="json"))
+
+
+@router.get("/{asset_id}/history", response_model=AssetCheckoutListResponse)
+async def asset_history(
+    asset_id: uuid.UUID,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_FIELD),
+) -> AssetCheckoutListResponse:
+    await get_or_404(db, Asset, asset_id)
+    base = AssetCheckout.asset_id == asset_id
+    total = (await db.execute(select(func.count()).select_from(AssetCheckout).where(base))).scalar_one()
+    rows = (
+        await db.execute(
+            select(AssetCheckout).where(base).order_by(AssetCheckout.alma_zamani).limit(limit).offset(offset)
+        )
+    ).scalars().all()
+    return AssetCheckoutListResponse(
+        meta={"limit": limit, "offset": offset, "total": total}, items=list(rows)
+    )

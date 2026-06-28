@@ -73,6 +73,13 @@ def upgrade() -> None:
         "CREATE TYPE task_tip AS ENUM "
         "('temizlik', 'kontrol', 'ilaclama', 'bakim', 'peyzaj', 'diger');"
     )
+    # asset (demirbas) kategori + durum.
+    op.execute(
+        "CREATE TYPE asset_kategori AS ENUM ('ekipman', 'arac', 'alet', 'diger');"
+    )
+    op.execute(
+        "CREATE TYPE asset_durum AS ENUM ('musait', 'zimmetli', 'bakimda');"
+    )
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -459,6 +466,84 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9e. asset  (demirbas envanteri)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE asset (
+            id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id    uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            ad           text NOT NULL,
+            kategori     asset_kategori,
+            nfc_tag_uid  text,                 -- demirbasa yapisik NFC; tenant icinde benzersiz
+            durum        asset_durum NOT NULL DEFAULT 'musait',
+            aciklama     text,
+            aktif        boolean NOT NULL DEFAULT true,
+            created_at   timestamptz NOT NULL DEFAULT now(),
+            updated_at   timestamptz NOT NULL DEFAULT now(),
+            UNIQUE (id, tenant_id)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_asset_tenant ON asset (tenant_id);")
+    op.execute("CREATE INDEX ix_asset_durum ON asset (tenant_id, durum);")
+    # nfc_tag_uid tenant icinde benzersiz (NULL haric — etiketsiz demirbas olabilir):
+    op.execute(
+        "CREATE UNIQUE INDEX uq_asset_tenant_nfc ON asset (tenant_id, nfc_tag_uid) "
+        "WHERE nfc_tag_uid IS NOT NULL;"
+    )
+
+    # ------------------------------------------------------------------ #
+    # 9f. asset_checkout  (zimmet: al/birak; tek aktif zimmet)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE asset_checkout (
+            id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id                uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            asset_id                 uuid NOT NULL,
+            alan_user_id             uuid NOT NULL,
+            alma_zamani              timestamptz NOT NULL DEFAULT now(),
+            birakma_zamani           timestamptz,        -- NULL => hala uzerinde (acik zimmet)
+            alma_nfc_tag_uid         text,
+            birakma_nfc_tag_uid      text,
+            alma_gps_lat             numeric(9, 6),
+            alma_gps_lng             numeric(9, 6),
+            birakma_gps_lat          numeric(9, 6),
+            birakma_gps_lng          numeric(9, 6),
+            notlar                   text,
+            idempotency_key          text NOT NULL,      -- alma (checkout) idempotency
+            birakma_idempotency_key  text,               -- birakma (checkin) idempotency
+            created_at               timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT fk_checkout_asset
+                FOREIGN KEY (asset_id, tenant_id)
+                REFERENCES asset (id, tenant_id) ON DELETE CASCADE,
+            CONSTRAINT fk_checkout_user
+                FOREIGN KEY (alan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- offline cift gonderim korumasi (alma):
+            CONSTRAINT uq_checkout_tenant_idempotency UNIQUE (tenant_id, idempotency_key)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_checkout_tenant ON asset_checkout (tenant_id);")
+    op.execute("CREATE INDEX ix_checkout_asset ON asset_checkout (asset_id);")
+    op.execute(
+        "CREATE INDEX ix_checkout_alma ON asset_checkout (tenant_id, alma_zamani DESC);"
+    )
+    # TEK AKTIF ZIMMET: bir asset icin en fazla bir acik (birakma_zamani NULL) checkout.
+    op.execute(
+        "CREATE UNIQUE INDEX uq_asset_open_checkout "
+        "ON asset_checkout (tenant_id, asset_id) WHERE birakma_zamani IS NULL;"
+    )
+    # birakma (checkin) idempotency:
+    op.execute(
+        "CREATE UNIQUE INDEX uq_checkout_birakma_idem "
+        "ON asset_checkout (tenant_id, birakma_idempotency_key) "
+        "WHERE birakma_idempotency_key IS NOT NULL;"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -476,6 +561,8 @@ def upgrade() -> None:
         "notification",
         "task",
         "task_completion",
+        "asset",
+        "asset_checkout",
     ):
         _enable_rls(table)
 
@@ -513,6 +600,8 @@ def _enable_rls(table: str) -> None:
 def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     for table in (
+        "asset_checkout",
+        "asset",
         "task_completion",
         "task",
         "notification",
@@ -527,6 +616,8 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS asset_durum;")
+    op.execute("DROP TYPE IF EXISTS asset_kategori;")
     op.execute("DROP TYPE IF EXISTS task_tip;")
     op.execute("DROP TYPE IF EXISTS notification_tip;")
     op.execute("DROP TYPE IF EXISTS patrol_window_durum;")

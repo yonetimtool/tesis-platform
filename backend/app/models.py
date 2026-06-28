@@ -57,6 +57,14 @@ TASK_TIP = ENUM(
     "temizlik", "kontrol", "ilaclama", "bakim", "peyzaj", "diger",
     name="task_tip", create_type=False,
 )
+ASSET_KATEGORI = ENUM(
+    "ekipman", "arac", "alet", "diger",
+    name="asset_kategori", create_type=False,
+)
+ASSET_DURUM = ENUM(
+    "musait", "zimmetli", "bakimda",
+    name="asset_durum", create_type=False,
+)
 
 
 def _pk() -> Mapped[uuid.UUID]:
@@ -451,6 +459,72 @@ class TaskCompletion(Base):
     created_at = _created_at()
 
 
+# --------------------------------------------------------------------------- #
+class Asset(Base):
+    __tablename__ = "asset"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_asset_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    kategori: Mapped[str | None] = mapped_column(ASSET_KATEGORI, nullable=True)
+    nfc_tag_uid: Mapped[str | None] = mapped_column(Text, nullable=True)
+    durum: Mapped[str] = mapped_column(
+        ASSET_DURUM, nullable=False, server_default=text("'musait'")
+    )
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class AssetCheckout(Base):
+    __tablename__ = "asset_checkout"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["asset_id", "tenant_id"],
+            ["asset.id", "asset.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_checkout_asset",
+        ),
+        ForeignKeyConstraint(
+            ["alan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_checkout_user",
+        ),
+        UniqueConstraint(
+            "tenant_id", "idempotency_key", name="uq_checkout_tenant_idempotency"
+        ),
+        # Tek aktif zimmet (acik checkout) + birakma idempotency partial-unique index'leri
+        # DDL'de (/contracts) tanimli; burada sadece sorgu aynasi.
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    asset_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    alan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    alma_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+    birakma_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    alma_nfc_tag_uid: Mapped[str | None] = mapped_column(Text, nullable=True)
+    birakma_nfc_tag_uid: Mapped[str | None] = mapped_column(Text, nullable=True)
+    alma_gps_lat = mapped_column(Numeric(9, 6), nullable=True)
+    alma_gps_lng = mapped_column(Numeric(9, 6), nullable=True)
+    birakma_gps_lat = mapped_column(Numeric(9, 6), nullable=True)
+    birakma_gps_lng = mapped_column(Numeric(9, 6), nullable=True)
+    notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
+    birakma_idempotency_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+
+
 __all__ = [
     "Base",
     "Tenant",
@@ -464,9 +538,13 @@ __all__ = [
     "Notification",
     "Task",
     "TaskCompletion",
+    "Asset",
+    "AssetCheckout",
     "USER_ROLE",
     "GUN_TIPI",
     "PATROL_WINDOW_DURUM",
     "NOTIFICATION_TIP",
     "TASK_TIP",
+    "ASSET_KATEGORI",
+    "ASSET_DURUM",
 ]

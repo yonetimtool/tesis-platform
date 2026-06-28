@@ -11,6 +11,7 @@ from sqlalchemy import text
 from .config import settings
 from .db import engine
 from .errors import install_error_handlers
+from .routers import assets as assets_router
 from .routers import auth as auth_router
 from .routers import checkpoints as checkpoints_router
 from .routers import dashboard as dashboard_router
@@ -54,6 +55,7 @@ app.include_router(notifications_router.router)
 app.include_router(tasks_router.router)
 app.include_router(uploads_router.router)
 app.include_router(landscape_router.router)
+app.include_router(assets_router.router)
 
 
 @app.get("/health", tags=["health"])
