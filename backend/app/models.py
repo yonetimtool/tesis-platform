@@ -50,10 +50,11 @@ PATROL_WINDOW_DURUM = ENUM(
 )
 NOTIFICATION_TIP = ENUM(
     "kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma",
+    "peyzaj_yaklasan", "peyzaj_kacirilan",
     name="notification_tip", create_type=False,
 )
 TASK_TIP = ENUM(
-    "temizlik", "kontrol", "ilaclama", "bakim", "diger",
+    "temizlik", "kontrol", "ilaclama", "bakim", "peyzaj", "diger",
     name="task_tip", create_type=False,
 )
 
