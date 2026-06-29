@@ -1,5 +1,13 @@
 import 'package:dio/dio.dart';
 
+/// API hatalarinin kaba siniflandirmasi (tiplenmis hata ele alimi icin).
+///
+///   * [network] — sunucuya ulasilamadi / timeout (hata zarfi yok).
+///   * [auth]    — kimlik/yetki hatasi (401/403; orn. invalid_credentials,
+///                 token_expired). UI login'e yonlendirebilir.
+///   * [api]     — diger sozlesmeli hatalar (400/404/409/422/5xx).
+enum ApiErrorKind { network, auth, api }
+
 /// Sozlesmedeki hata zarfini (`{ "error": { "code", "message" } }`) temsil eden
 /// uygulama-ici istisna. UI bu istisnanin [message] alanini kullaniciya gosterir.
 class ApiException implements Exception {
@@ -52,6 +60,24 @@ class ApiException implements Exception {
 
   static const String _genericMessage =
       'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.';
+
+  /// Hatanin kaba turu — UI'da ayrim icin (orn. ag hatasinda "tekrar dene",
+  /// auth hatasinda login'e donus).
+  ApiErrorKind get kind {
+    if (code == 'network_error') return ApiErrorKind.network;
+    if (statusCode == 401 ||
+        statusCode == 403 ||
+        const {
+          'invalid_credentials',
+          'unauthorized',
+          'forbidden',
+          'token_expired',
+          'invalid_token',
+        }.contains(code)) {
+      return ApiErrorKind.auth;
+    }
+    return ApiErrorKind.api;
+  }
 
   @override
   String toString() => 'ApiException($code, $statusCode): $message';

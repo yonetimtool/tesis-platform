@@ -38,4 +38,43 @@ void main() {
       expect(ex.message, contains('ulasilamadi'));
     });
   });
+
+  group('ApiException.kind (tiplenmis hata)', () {
+    test('baglanti hatasi → network', () {
+      final ex = ApiException.fromDio(
+        DioException(
+          requestOptions: req,
+          type: DioExceptionType.connectionError,
+        ),
+      );
+      expect(ex.kind, ApiErrorKind.network);
+    });
+
+    test('401 invalid_credentials → auth', () {
+      const ex = ApiException(
+        code: 'invalid_credentials',
+        message: 'Hatali',
+        statusCode: 401,
+      );
+      expect(ex.kind, ApiErrorKind.auth);
+    });
+
+    test('403 forbidden → auth', () {
+      const ex = ApiException(
+        code: 'forbidden',
+        message: 'Yetkisiz',
+        statusCode: 403,
+      );
+      expect(ex.kind, ApiErrorKind.auth);
+    });
+
+    test('422 validation_error → api', () {
+      const ex = ApiException(
+        code: 'validation_error',
+        message: 'Gecersiz alan',
+        statusCode: 422,
+      );
+      expect(ex.kind, ApiErrorKind.api);
+    });
+  });
 }

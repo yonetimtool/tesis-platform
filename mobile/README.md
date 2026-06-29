@@ -1,8 +1,9 @@
 # Tesis Güvenlik — Mobil (Flutter)
 
 Multi-tenant tesis güvenlik & operasyon SaaS'in saha mobil uygulaması.
-Backend (DEV-A) hazır olana kadar geliştirme **mock sunucuya** karşı yapılır;
-tek doğruluk kaynağı `/contracts/openapi.yaml`'dir.
+Tek doğruluk kaynağı `/contracts/openapi.yaml` + `/contracts/auth.md`'dir.
+Backend artık hazır; uygulama **gerçek backend'e** bağlanır (base URL dışarıdan
+yapılandırılabilir — mock / yerel / canlı; bkz. §3).
 
 - **Flutter** 3.44.4 · Dart 3.12.x · Android SDK 36 · hedef: Android (kod cross-platform)
 - **Mimari:** Clean Architecture (`data` / `domain` / `presentation`)
@@ -10,7 +11,19 @@ tek doğruluk kaynağı `/contracts/openapi.yaml`'dir.
 - **Güvenli depolama:** `flutter_secure_storage` (Android Keystore destekli)
 
 Bu prompt kapsamı (Faz 0): iskelet + **login** (`tenant_slug` + `email` + `password`
-→ access/refresh token) + token'ların güvenli saklanması + açılışta oturum geri yükleme.
+→ access/refresh token) + token'ların güvenli saklanması + **açılışta oturum geri
+yükleme** + **401'de otomatik token yenileme (refresh rotation)** + logout.
+
+### 🔐 Örnek test girişi (gerçek backend, seed verisi)
+
+| Alan | Değer |
+|------|-------|
+| Tesis kodu (`tenant_slug`) | `acme-plaza` |
+| E-posta | `admin@acme.com` |
+| Parola | `Admin123!` |
+
+> Bu, docker compose ile kalkan yerel backend'in seed kullanıcısıdır; gerçek
+> `POST /auth/login` token çifti döndürür.
 
 ---
 
@@ -37,8 +50,10 @@ Build "Toolchain ... does not provide ... [JAVA_COMPILER]" hatası verirse bu ko
 
 ---
 
-## 2. Mock sunucu (Prism)
+## 2. Mock sunucu (Prism) — *opsiyonel*
 
+Birincil hedef artık gerçek backend'dir (§3). Mock yalnızca backend'siz hızlı UI
+denemesi için gerekir; gerçek backend ile çalışacaksanız bu adımı atlayabilirsiniz.
 Mock, `contracts/openapi.yaml`'den örnek yanıtlar üretir. **Monorepo kökünden** çalıştırın.
 
 ### Seçenek A — Node.js / npx (kurulu değilse: `apt install nodejs npm` ya da nvm)
@@ -84,29 +99,70 @@ curl -s -X POST http://localhost:4010/auth/login \
 
 ---
 
-## 3. Base URL yapılandırması (dev/prod ayrımı)
+## 3. Base URL yapılandırması (mock / yerel / canlı)
 
 Base URL **derleme zamanı** `--dart-define=API_BASE_URL=...` ile verilir
-(`lib/src/core/config/app_config.dart`). Sondaki `/` olmadan yazın.
+(`lib/src/core/config/app_config.dart`). Kod değişmez; aynı APK farklı ortamlara
+yönlendirilebilir. **Sondaki `/` olmadan** yazın.
 
-| Senaryo | API_BASE_URL |
-|---------|--------------|
-| **Mock — Android emülatör** (varsayılan) | `http://10.0.2.2:4010` |
-| Mock — gerçek cihaz (USB/aynı Wi-Fi) | `http://PC-LAN-IP:4010` (ör. `http://192.168.1.20:4010`) |
-| Gerçek backend — local | `http://10.0.2.2:8000/v0` |
-| Prod | `https://api.example.com/v0` |
+**Varsayılan:** `http://10.0.2.2:8000` — Android emülatöründen yerel (docker
+compose) backend'e erişim.
 
-### 🔑 Emülatör/cihazdan localhost'a erişim farkı (önemli)
+| Senaryo | Emülatör | Gerçek cihaz (aynı Wi-Fi) |
+|---------|----------|----------------------------|
+| **Yerel backend** (docker compose) — *varsayılan/birincil* | `http://10.0.2.2:8000` | `http://<PC-LAN-IP>:8000` |
+| Mock (Prism, §2) | `http://10.0.2.2:4010` | `http://<PC-LAN-IP>:4010` |
+| Canlı / uzak sunucu | `http://<sunucu_ip>:8000` veya `https://api.example.com` | (aynı) |
 
-- **Android emülatörü** ana makineyi (`localhost`) **`10.0.2.2`** üzerinden görür.
-  `127.0.0.1`/`localhost` emülatörün **kendisini** işaret eder, mock'a ulaşmaz.
-  Bu yüzden varsayılan base URL `http://10.0.2.2:4010`'dur.
-- **Gerçek cihaz** USB/Wi-Fi'da: bilgisayarınızın LAN IP'sini kullanın
-  (`ip addr` / `ifconfig` → ör. `192.168.x.y`). Mock'u `0.0.0.0`'a bind ettiğinizden
-  emin olun (Docker örneği `-h 0.0.0.0`; Node'da `-p 4010 --host 0.0.0.0`).
+```bash
+# Yerel backend, emülatör (varsayılan — define'sız da çalışır):
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
+
+# Yerel backend, fiziksel telefon (PC'nin LAN IP'si — ip addr / ifconfig):
+flutter run --dart-define=API_BASE_URL=http://192.168.1.20:8000
+
+# Mock'a karşı:
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4010
+
+# Canlı/uzak sunucu:
+flutter run --dart-define=API_BASE_URL=https://api.example.com
+```
+
+### 🔑 `10.0.2.2` vs LAN IP — emülatör/cihazdan host'a erişim (önemli)
+
+- **Android emülatörü** ana makineyi (host'taki `localhost`) **`10.0.2.2`**
+  üzerinden görür. `127.0.0.1`/`localhost` emülatörün **kendisini** işaret eder,
+  host'taki backend'e ulaşmaz. Bu yüzden emülatör varsayılanı `10.0.2.2`'dir.
+- **Gerçek (fiziksel) cihaz** host'u `10.0.2.2` ile göremez; telefon ile backend'i
+  çalıştıran bilgisayar **aynı Wi-Fi/LAN'da** olmalı ve bilgisayarın **LAN IP**'si
+  kullanılmalıdır (`ip addr` / `ifconfig` → ör. `192.168.x.y`). Docker compose
+  portu host'ta `8000:8000` map'lendiği için LAN'dan erişilebilir; gerekirse
+  bilgisayarın güvenlik duvarında 8000 portuna izin verin.
+- **Mock** (Prism) fiziksel cihazdan erişilecekse `0.0.0.0`'a bind edin (Docker
+  örneği `-h 0.0.0.0`).
 - HTTP (cleartext) erişimi yalnızca **debug** build'de açıktır
   (`android/app/src/debug/AndroidManifest.xml` → `usesCleartextTraffic="true"`).
   Release build cleartext'e izin vermez (prod HTTPS bekler).
+
+> ⚠️ **`/v0` yok.** `openapi.yaml`'deki `servers` `/v0` base path içerse de
+> gerçek backend router'ları kök altında (`/auth/login`) sunulur — base URL'e
+> `/v0` **eklemeyin**. Uygulamadaki istek yolları `/auth/login`, `/auth/refresh`
+> şeklindedir. (Sözleşme tutarsızlığı — bkz. §7.)
+
+### Token yenileme (refresh) akışı
+
+`auth.md §3` rotation akışına uygun olarak `lib/src/core/network/auth_interceptor.dart`
+şunu yapar:
+
+1. Login/refresh dışındaki her isteğe `Authorization: Bearer <access>` eklenir.
+2. Bir istek **401** dönerse `POST /auth/refresh` ile yeni `access + refresh` çifti
+   alınır (eski refresh iptal — rotation), token'lar secure storage'a yazılır ve
+   orijinal istek yeni access ile **bir kez** yeniden denenir.
+3. Refresh de geçersizse (401/yok): token'lar silinir, auth state
+   `unauthenticated` olur → uygulama **login'e döner**.
+4. Eşzamanlı 401'lerde tek bir refresh çalışır (single-flight); bekleyenler aynı
+   sonucu paylaşır. Login/refresh public olduğu için bu endpoint'lerde refresh
+   denenmez (sonsuz döngü engellenir).
 
 ---
 
@@ -116,18 +172,19 @@ Base URL **derleme zamanı** `--dart-define=API_BASE_URL=...` ile verilir
 cd mobile
 flutter pub get
 
-# Emülatörde mock'a karşı çalıştır (varsayılan base URL zaten 10.0.2.2:4010):
+# Emülatörde yerel backend'e karşı çalıştır (varsayılan base URL 10.0.2.2:8000):
 flutter run
 
-# Base URL'i açıkça vererek (ör. mock /v0 altındaysa veya gerçek cihazda):
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4010
-flutter run --dart-define=API_BASE_URL=http://192.168.1.20:4010
+# Base URL'i açıkça vererek (fiziksel cihaz / mock / canlı — bkz. §3):
+flutter run --dart-define=API_BASE_URL=http://192.168.1.20:8000
 ```
 
-Akış: login ekranı → mock'a `POST /auth/login` → dönen token çifti
-secure storage'a yazılır → ana ekrana geçilir. Uygulamayı yeniden başlattığınızda
-saklı refresh token varsa **login atlanır**, doğrudan ana ekran açılır
-(çıkış için ana ekrandaki logout ikonu token'ları siler).
+Akış: login ekranı (örnek giriş: `acme-plaza` / `admin@acme.com` / `Admin123!`) →
+`POST /auth/login` → dönen access+refresh çifti secure storage'a yazılır → ana
+ekrana geçilir. Sonraki korunan isteklerde access token otomatik eklenir; 401'de
+arka planda refresh denenir (§3). Uygulamayı yeniden başlattığınızda saklı oturum
+varsa **login atlanır**, doğrudan ana ekran açılır (çıkış için ana ekrandaki
+logout ikonu token'ları siler ve login'e döner).
 
 ---
 
@@ -135,11 +192,13 @@ saklı refresh token varsa **login atlanır**, doğrudan ana ekran açılır
 
 ```bash
 flutter analyze                 # → No issues found!
-flutter test                    # → birim testleri (TokenPair / ApiException) geçer
+flutter test                    # → birim testleri geçer (TokenPair / ApiException / AuthInterceptor)
 flutter build apk --debug       # → build/app/outputs/flutter-apk/app-debug.apk
 ```
 
-Son durum: `flutter analyze` temiz, `flutter test` 4/4 geçer, debug APK üretilir.
+Son durum: `flutter analyze` temiz, `flutter test` **11/11** geçer (refresh akışı
+dahil — `test/auth_interceptor_test.dart`: 401→refresh→retry, refresh ölünce
+logout, public endpoint'lerde refresh denenmemesi), debug APK üretilir.
 
 ---
 
@@ -154,8 +213,10 @@ mobile/
 │  └─ src/
 │     ├─ core/
 │     │  ├─ config/app_config.dart        # API_BASE_URL (--dart-define)
-│     │  ├─ error/api_exception.dart      # { error: { code, message } } parse
-│     │  └─ network/dio_provider.dart     # paylaşılan Dio
+│     │  ├─ error/api_exception.dart      # { error: { code, message } } parse + ApiErrorKind
+│     │  └─ network/
+│     │     ├─ dio_provider.dart          # paylaşılan Dio + ham Dio + interceptor
+│     │     └─ auth_interceptor.dart      # access header + 401→refresh rotation
 │     ├─ features/
 │     │  ├─ auth/
 │     │  │  ├─ data/
@@ -184,10 +245,14 @@ mobile/
 `/contracts/openapi.yaml`'i incelerken görülen küçük tutarsızlıklar (login akışını
 engellemez, bilgi amaçlı):
 
+- **`servers` `/v0` ↔ gerçek backend uyuşmazlığı (önemli):** `openapi.yaml`
+  `servers` girdileri `/v0` base path içeriyor (`http://localhost:8000/v0`), ancak
+  gerçek backend router'ları **kök altında** sunuyor (`backend/app/main.py` →
+  `include_router` global prefix yok; `/auth/login` doğrudan). Yani gerçek
+  backend'de doğru base URL `http://host:8000` (`/v0` **olmadan**). Mobil tarafta
+  varsayılan buna göre `http://10.0.2.2:8000` yapıldı. Sözleşme ile backend'i
+  hizalamak için ya `servers`'tan `/v0` kaldırılmalı ya da backend `/v0` prefix'i
+  ile mount edilmeli (DEV-A kararı).
 - `/notifications` ve `/notifications/{id}` operasyonları `tags: [notifications]`
   kullanıyor ama bu tag, dosyanın üstündeki global `tags` listesinde tanımlı değil
   (yalnızca auth, shifts, checkpoints, patrol-plans, scans, dashboard var).
-- `servers` girdileri `/v0` base path içeriyor; mock (Prism) bu base path'i sürüme
-  göre farklı ele alabildiğinden base URL mobil tarafta `--dart-define` ile
-  esnek bırakıldı (bkz. §3). Gerçek backend'de yolun `/v0` ile mi sunulacağı
-  netleşince varsayılan güncellenebilir.

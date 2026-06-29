@@ -96,6 +96,17 @@ class AuthController extends Notifier<AuthState> {
     await ref.read(authRepositoryProvider).logout();
     state = state.copyWith(status: AuthStatus.unauthenticated);
   }
+
+  /// [AuthInterceptor] refresh'i kurtaramadiginda cagrilir (token'lar zaten
+  /// silinmistir). Auth state'i `unauthenticated` yapar → router login'e doner.
+  void onSessionExpired() {
+    if (state.status == AuthStatus.unauthenticated) return;
+    state = state.copyWith(
+      status: AuthStatus.unauthenticated,
+      submitting: false,
+      errorMessage: 'Oturumunuz sona erdi. Lutfen tekrar giris yapin.',
+    );
+  }
 }
 
 final authControllerProvider =
