@@ -229,7 +229,13 @@ mobile/
 │     │  │  └─ presentation/
 │     │  │     ├─ auth_controller.dart     # Riverpod Notifier (auth state)
 │     │  │     └─ login_screen.dart        # tenant_slug + email + parola
-│     │  └─ home/presentation/home_screen.dart   # placeholder ana ekran
+│     │  ├─ home/presentation/home_screen.dart   # ana ekran + NFC kartı
+│     │  └─ nfc/
+│     │     ├─ data/nfc_service.dart        # nfc_manager 4.x oturum + UID/SDM okuma
+│     │     ├─ domain/nfc_read_result.dart  # NfcReadResult / NfcTagType / NfcSdmData
+│     │     └─ presentation/
+│     │        ├─ nfc_controller.dart       # Riverpod Notifier (hazir/okuyor/sonuc/hata)
+│     │        └─ nfc_screen.dart           # "Etiketi okutun" ekranı
 │     └─ routing/
 │        ├─ app_router.dart                # go_router + auth redirect
 │        └─ splash_screen.dart             # oturum geri yüklenirken
@@ -240,7 +246,108 @@ mobile/
 
 ---
 
-## 7. Sözleşme notları (DEV-A'ya)
+## 7. NFC etiket okuma (Faz 1)
+
+Devriye noktalarındaki NFC etiketlerini okuyup UID'i (ve varsa NTAG424 SDM
+verisini) çıkaran ekran. Paket: `nfc_manager: ^4.2.1` (+ `ndef_record`,
+NDEF tiplerini doğrudan kullandığımız için doğrudan bağımlılık olarak eklendi).
+
+> **nfc_manager 4.x notu:** 3.x'ten tamamen farklı bir API. UID artık platforma
+> özel sınıflardan okunuyor: Android'de `NfcTagAndroid.from(tag).id`, iOS'ta
+> `MiFareIos.from(tag).identifier`. Müsaitlik için `isAvailable()` deprecate
+> oldu; `checkAvailability()` → `NfcAvailability { enabled, disabled, unsupported }`
+> kullanılıyor.
+
+### UID format kararı (sözleşme)
+
+UID **BÜYÜK HARF, AYRAÇSIZ hex** olarak normalize edilir — örn. `04A1B2C3D4`.
+Tek noktadan üretilir: `bytesToHex(Uint8List)` (`nfc_service.dart`). Gerekçe:
+aynı kart her platformda (Android/iOS, byte sırası aynı) aynı string'e indirgenir;
+backend'de eşitlik/arama kolaylaşır. **Backend'e bu string gönderilmeli.**
+
+### Tag tipi tespiti (heuristik — kesin değil)
+
+`NfcTagType { ntag2xx, ntag424, unknown }`:
+
+- **Android** — teknoloji listesinden: `IsoDep` varsa `ntag424` (NTAG424 DNA
+  ISO 14443-4 sunar), yoksa `MifareUltralight` varsa `ntag2xx` (NTAG213/215/216),
+  aksi halde `unknown`.
+- **iOS** — `MiFareFamilyIos`: `ultralight → ntag2xx`, `desfire → ntag424`
+  (NTAG424 iOS'ta DESFire ailesi görünür), diğer → `unknown`.
+
+> Kesin tip için kart üstünde `GET_VERSION` komutu gerekir; bu tahmin yalnızca
+> UI/yönlendirme içindir. Kesin doğrulama **backend** tarafında yapılmalı.
+
+### NTAG424 SDM/SUN bulguları (ne okunabiliyor, backend'e ne gidmeli)
+
+NTAG424, NDEF içindeki bir URL'e dinamik olarak şifreli alanlar gömer
+(PICCData + CMAC — "SUN"/"SDM"). Mobil tarafta yapılan:
+
+- **Okunabilen:** NDEF mesajındaki ilk URI kaydı (well-known `U` veya
+  absolute-URI; `U` kaydında ön-ek byte'ı çözülür). URL'in sorgu parametreleri
+  ayrıştırılıp `NfcSdmData`'ya konur: `piccData` (`picc_data`/`e`),
+  `cmac` (`cmac`/`c`), `encData` (`enc`/`d`) + tüm ham `params`.
+- **Yapılmayan (bilerek):** **kripto yok.** PICCData çözümü, CMAC doğrulama,
+  replay/sayaç kontrolü mobilde **yapılmaz** — anahtar mobile konmaz.
+- **Backend'e gönderilecek:** okunan **ham URL** + ayrıştırılmış alanlar
+  (`piccData`, `cmac`). Doğrulama (anahtarla CMAC kontrolü, UID/sayaç çözümü)
+  **backend'in** işi. Etiket NTAG424 değilse `sdmData` null olur.
+
+Şu an `parseSdm(...)` bir **iskelet**: cached NDEF mesajını parse eder, alan
+adlarını en yaygın SDM kalıplarına göre tarar. Etiketin gerçek SDM ayarı
+(alan adları, mirror konumu) netleştiğinde bu eşleştirme güncellenmeli.
+
+### Hata davranışı
+
+Servis **hiçbir koşulda exception fırlatıp uygulamayı çökertmez**; her zaman
+tiplenmiş sonuç döner:
+
+- NFC yok → "Bu cihaz NFC desteklemiyor."
+- NFC kapalı → "NFC kapalı. Lütfen ayarlardan açın."
+- Okuma hatası / iptal → `NfcReadResult.failure(...)` → ekranda hata kutusu.
+
+### Android yapılandırması
+
+`AndroidManifest.xml` (eklendi):
+
+```xml
+<uses-permission android:name="android.permission.NFC"/>
+<uses-feature android:name="android.hardware.nfc" android:required="false"/>
+```
+
+`required="false"` → NFC'siz cihazlar da uygulamayı kurabilir (okuma denemesi
+"desteklenmiyor" döner). **minSdk:** `flutter.minSdkVersion` kullanılıyor;
+Flutter 3.44 varsayılanı zaten ≥ 21 olduğundan (NFC için 19+ yeterli)
+`build.gradle.kts`'de değişiklik gerekmedi — `flutter_secure_storage` ile de
+uyumlu kalır.
+
+### iOS yapılandırması
+
+`ios/Runner/Info.plist`'e `NFCReaderUsageDescription` eklendi (kullanıcıya
+gösterilen NFC izin metni).
+
+> **Core NFC entitlement (Mac'te yapılacak):** iOS'ta gerçek okuma için Xcode'da
+> Runner hedefine **Near Field Communication Tag Reading** capability'si eklenmeli
+> (Apple Developer hesabı + `Runner.entitlements` içinde
+> `com.apple.developer.nfc.readersession.formats`). Bu adım entitlement/imzalama
+> gerektirdiğinden Linux'ta yapılamaz; iOS build'inden önce eklenmeli.
+
+### Çalıştırma / doğrulama
+
+```bash
+cd mobile
+flutter pub get
+flutter analyze lib/            # temiz olmalı
+flutter build apk --debug       # kabul kriteri: BAŞARILI
+
+# cihazda dene (NFC'li gerçek telefon gerekir; emülatörde NFC yok):
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
+# Giriş → Ana ekran → "NFC etiket okuma" kartı → "Okumayı başlat" → etiketi yaklaştır
+```
+
+---
+
+## 8. Sözleşme notları (DEV-A'ya)
 
 `/contracts/openapi.yaml`'i incelerken görülen küçük tutarsızlıklar (login akışını
 engellemez, bilgi amaçlı):

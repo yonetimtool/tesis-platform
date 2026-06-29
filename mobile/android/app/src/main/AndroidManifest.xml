@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Uygulama ag erisimi gerektirir (login/refresh, scan gonderimi). -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- NFC etiket okuma (devriye noktalari). -->
+    <uses-permission android:name="android.permission.NFC"/>
+    <!-- NFC olmayan cihazlarda da kurulabilsin; donanim zorunlu degil. -->
+    <uses-feature android:name="android.hardware.nfc" android:required="false"/>
     <application
         android:label="Tesis Guvenlik"
         android:name="${applicationName}"

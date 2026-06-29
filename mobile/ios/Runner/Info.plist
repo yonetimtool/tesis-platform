@@ -4,6 +4,9 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Core NFC: kullaniciya gosterilen NFC erisim aciklamasi. -->
+	<key>NFCReaderUsageDescription</key>
+	<string>Devriye noktasi etiketlerini okumak icin NFC kullanilir.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

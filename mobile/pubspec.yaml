@@ -38,6 +38,9 @@ dependencies:
   go_router: ^17.3.0
   flutter_secure_storage: ^10.3.1
   dio: ^5.9.2
+  nfc_manager: ^4.2.1
+  # nfc_manager NDEF tiplerini (NdefMessage/TypeNameFormat) dogrudan kullaniyoruz.
+  ndef_record: ^1.4.2
 
 dev_dependencies:
   flutter_test:
