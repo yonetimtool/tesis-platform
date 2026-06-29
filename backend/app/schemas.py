@@ -255,7 +255,7 @@ class ScanEventOut(BaseModel):
 
 
 # ------------------------------ dashboard ---------------------------------- #
-AlarmTip = Literal["kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma"]
+AlarmTip = Literal["kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma", "acil_durum"]
 
 
 class AktifTurOut(BaseModel):
@@ -292,6 +292,7 @@ class NotificationOut(BaseModel):
     patrol_window_id: uuid.UUID | None = None
     patrol_plan_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
+    task_id: uuid.UUID | None = None
     mesaj: str
     okundu: bool
     created_at: datetime
@@ -307,7 +308,7 @@ class NotificationUpdate(BaseModel):
 
 
 # -------------------------------- tasks ------------------------------------ #
-TaskTip = Literal["temizlik", "kontrol", "ilaclama", "bakim", "diger"]
+TaskTip = Literal["temizlik", "kontrol", "ilaclama", "bakim", "peyzaj", "diger"]
 
 
 class TaskOut(BaseModel):
@@ -320,6 +321,7 @@ class TaskOut(BaseModel):
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
     periyot_dakika: int | None = None
+    sonraki_planlanan: datetime | None = None
     aktif: bool
     created_at: datetime
     updated_at: datetime | None = None
@@ -332,6 +334,7 @@ class TaskCreate(BaseModel):
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
     periyot_dakika: int | None = Field(None, ge=1)
+    sonraki_planlanan: datetime | None = None
     aktif: bool = True
 
 
@@ -342,6 +345,7 @@ class TaskUpdate(BaseModel):
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
     periyot_dakika: int | None = Field(None, ge=1)
+    sonraki_planlanan: datetime | None = None
     aktif: bool | None = None
 
     @model_validator(mode="after")
@@ -398,3 +402,146 @@ class PresignResponse(BaseModel):
     upload_url: str
     method: str = "PUT"
     expires_in: int
+
+
+# -------------------------------- assets ----------------------------------- #
+AssetKategori = Literal["ekipman", "arac", "alet", "diger"]
+AssetDurum = Literal["musait", "zimmetli", "bakimda"]
+
+
+class AssetOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    kategori: str | None = None
+    nfc_tag_uid: str | None = None
+    durum: str
+    aciklama: str | None = None
+    aktif: bool
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class AssetCreate(BaseModel):
+    ad: str = Field(..., min_length=1)
+    kategori: AssetKategori | None = None
+    nfc_tag_uid: str | None = None
+    aciklama: str | None = None
+    aktif: bool = True
+
+
+class AssetUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1)
+    kategori: AssetKategori | None = None
+    nfc_tag_uid: str | None = None
+    durum: AssetDurum | None = None
+    aciklama: str | None = None
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "AssetUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class AssetListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AssetOut]
+
+
+class AssetCheckoutOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    asset_id: uuid.UUID
+    alan_user_id: uuid.UUID
+    alma_zamani: datetime
+    birakma_zamani: datetime | None = None
+    alma_nfc_tag_uid: str | None = None
+    birakma_nfc_tag_uid: str | None = None
+    alma_gps_lat: float | None = None
+    alma_gps_lng: float | None = None
+    birakma_gps_lat: float | None = None
+    birakma_gps_lng: float | None = None
+    notlar: str | None = None
+    idempotency_key: str
+    created_at: datetime
+
+
+class AssetCheckoutListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AssetCheckoutOut]
+
+
+class CheckoutRequest(BaseModel):
+    nfc_tag_uid: str | None = None
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    notlar: str | None = None
+
+
+class CheckinRequest(BaseModel):
+    nfc_tag_uid: str | None = None
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    notlar: str | None = None
+
+
+# ------------------------------ emergency ---------------------------------- #
+EmergencyDurum = Literal["acik", "cozuldu"]
+
+
+class EmergencyCreate(BaseModel):
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    notlar: str | None = None
+
+
+class EmergencyResolve(BaseModel):
+    notlar: str | None = None
+
+
+class EmergencyAlertOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tetikleyen_user_id: uuid.UUID
+    tetiklenme_zamani: datetime
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    durum: str
+    cozen_user_id: uuid.UUID | None = None
+    cozulme_zamani: datetime | None = None
+    notlar: str | None = None
+    idempotency_key: str
+    created_at: datetime
+
+
+class EmergencyListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[EmergencyAlertOut]
+
+
+# --------------------------- tenant settings ------------------------------- #
+class TenantSettings(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    tenant_id: uuid.UUID
+    ad: str
+    slug: str
+    timezone: str
+    acil_durum_telefon: str | None = None
+
+
+class TenantSettingsUpdate(BaseModel):
+    acil_durum_telefon: str | None = None
+    timezone: str | None = None
+    ad: str | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "TenantSettingsUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self

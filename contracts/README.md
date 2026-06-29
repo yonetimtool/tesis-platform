@@ -83,6 +83,27 @@ degisecekse once burasi degisir, sonra kod.
   presigned PUT URL + `foto_key` doner, istemci dogrudan MinIO'ya yukler, sonra
   `foto_key` completion'da saklanir. FK'ler composite + kolon-ozel `ON DELETE SET NULL`.
   ('not' SQL anahtar kelimesi oldugu icin DB kolonu `notlar').
+- **Peyzaj**: ayri tablo YOK — `task.tip='peyzaj'` + takvim alani `task.sonraki_planlanan`
+  (UTC) + tekrar araligi olarak mevcut `periyot_dakika`. Tamamlanma (`task_completion`)
+  periyodik peyzaji bir periyot ilerletir. Takvim: `GET /landscape/schedule` (sonraki_planlanan
+  artan). Hatirlatma: `notification_tip` 'peyzaj_yaklasan' (planlanan yaklasinca) /
+  'peyzaj_kacirilan' (planlanan gecmis + tamamlanmamis); idempotency `notification.dedup_key`
+  (`UNIQUE (tenant_id, dedup_key)`), deger `<tip>:<task_id>:<planlanan_iso>`. Erisim: peyzaj
+  yonetimi admin (Task CRUD), tamamlama+takvim okuma cleaning/security/admin.
+- `asset` / `asset_checkout`: demirbas envanteri + zimmet (al/birak, NFC). `asset.nfc_tag_uid`
+  tenant icinde benzersiz (partial unique, NULL haric). `asset.durum` (musait/zimmetli/bakimda).
+  **Tek aktif zimmet**: bir asset icin en fazla bir acik checkout → partial unique
+  `(tenant_id, asset_id) WHERE birakma_zamani IS NULL`. Idempotency: alma `UNIQUE(tenant_id,
+  idempotency_key)`, birakma `UNIQUE(tenant_id, birakma_idempotency_key)` (partial). FK'ler
+  composite. Asset CRUD admin; checkout/checkin/history cleaning/security/admin. checkout →
+  durum 'zimmetli', checkin → 'musait'.
+- `emergency_alert`: acil durum butonu (saha → yonetim anlik alarm). `durum` (acik|cozuldu).
+  `POST /emergency` (saha+admin) → alarm + yuksek oncelikli `notification_tip='acil_durum'`
+  (dashboard `son_alarmlar`'da en ustte). Idempotency `UNIQUE(tenant_id, idempotency_key)`
+  (panik mukerrer basim). Liste/coz admin. FK composite (cozen kolon-ozel SET NULL).
+- **Yonetim numarasi:** ayri tablo YOK — `tenant.acil_durum_telefon` (tek alan). `GET
+  /tenant/settings` (admin/security/cleaning) ile okunur; mobil acil durumda `tel:` ile arar
+  (backend aramaz). `PATCH /tenant/settings` (admin) ile ayarlanir.
 - `checkpoint.nfc_tag_uid` tenant icinde benzersiz (NFC eslemesi).
 - `patrol_plan` gun-ici sablon; `patrol_window` scheduler'in urettigi somut
   UTC pencere. `scan_event` mobilin gonderdigi tur kaniti.
@@ -104,6 +125,14 @@ alembic upgrade head
 ```
 Migration **owner/superuser** ile calistirilir (RLS'i bypass eder). Uygulama
 dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`.
+
+## API base path
+
+- **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:
+  `/auth/login`, `/scans`, `/tasks`, `/assets`, `/emergency`, `/dashboard/live`,
+  `/notifications`, `/tenant/settings`, `/landscape/schedule` ... Yerel: `http://localhost:8000`.
+  (Onceki `openapi.yaml` `servers` girdileri yanlislikla `/v0` iceriyordu; gercek backend
+  ile hizalamak icin kaldirildi.)
 
 ## Degisiklik politikasi
 

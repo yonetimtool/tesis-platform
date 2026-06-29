@@ -28,3 +28,11 @@ def detect_missed_tours() -> dict:
     from .scheduler.service import detect_missed
 
     return detect_missed()
+
+
+@celery_app.task(name="scheduler.landscape_reminders")
+def landscape_reminders() -> dict:
+    """Beat: peyzaj yaklasan/kacirilan hatirlatmalari (notification)."""
+    from .scheduler.service import landscape_reminders as _run
+
+    return _run()

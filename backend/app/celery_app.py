@@ -33,4 +33,8 @@ celery_app.conf.beat_schedule = {
         "task": "scheduler.detect_missed_tours",
         "schedule": float(settings.scheduler_detect_interval_seconds),
     },
+    "landscape-reminders": {
+        "task": "scheduler.landscape_reminders",
+        "schedule": float(settings.scheduler_landscape_interval_seconds),
+    },
 }

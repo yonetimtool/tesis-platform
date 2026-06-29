@@ -62,16 +62,26 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE patrol_window_durum AS ENUM ('bekliyor', 'tamamlandi', 'kacirildi');"
     )
-    # notification.tip — ilk deger 'kacirilan_tur'; ileride genisler (openapi Alarm.tip ile uyumlu).
+    # notification.tip — tur + peyzaj + acil durum; ileride genisler.
     op.execute(
         "CREATE TYPE notification_tip AS ENUM "
-        "('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma');"
+        "('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma', "
+        "'peyzaj_yaklasan', 'peyzaj_kacirilan', 'acil_durum');"
     )
-    # task.tip — esnek gorev tipi; ileride genisler.
+    # task.tip — esnek gorev tipi (peyzaj dahil); ileride genisler.
     op.execute(
         "CREATE TYPE task_tip AS ENUM "
-        "('temizlik', 'kontrol', 'ilaclama', 'bakim', 'diger');"
+        "('temizlik', 'kontrol', 'ilaclama', 'bakim', 'peyzaj', 'diger');"
     )
+    # asset (demirbas) kategori + durum.
+    op.execute(
+        "CREATE TYPE asset_kategori AS ENUM ('ekipman', 'arac', 'alet', 'diger');"
+    )
+    op.execute(
+        "CREATE TYPE asset_durum AS ENUM ('musait', 'zimmetli', 'bakimda');"
+    )
+    # acil durum alarm durumu.
+    op.execute("CREATE TYPE emergency_durum AS ENUM ('acik', 'cozuldu');")
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -86,6 +96,8 @@ def upgrade() -> None:
             --  istemci tenant_slug gonderir -> tenant_id_by_slug ile cozumlenir.)
             slug        text NOT NULL,
             timezone    text NOT NULL DEFAULT 'Europe/Istanbul',
+            -- acil durumda mobilin arayacagi yonetim numarasi (backend saklar, aramaz).
+            acil_durum_telefon text,
             created_at  timestamptz NOT NULL DEFAULT now(),
             CONSTRAINT uq_tenant_slug UNIQUE (slug),
             CONSTRAINT ck_tenant_slug CHECK (slug ~ '^[a-z0-9][a-z0-9-]*$')
@@ -342,6 +354,12 @@ def upgrade() -> None:
             patrol_window_id  uuid,
             patrol_plan_id    uuid,
             checkpoint_id     uuid,
+            -- task_id: peyzaj/gorev kaynakli bildirim referansi (log; FK YOK — notification
+            -- tablosu task'tan ONCE olusur ve append-only log'dur).
+            task_id           uuid,
+            -- dedup_key: pencere-disi bildirimler icin idempotency anahtari
+            -- (orn. peyzaj: '<tip>:<task_id>:<planlanan_iso>'). UNIQUE asagida.
+            dedup_key         text,
             mesaj             text NOT NULL,
             okundu            boolean NOT NULL DEFAULT false,
             created_at        timestamptz NOT NULL DEFAULT now(),
@@ -360,7 +378,10 @@ def upgrade() -> None:
             -- (patrol_window_id NULL ise NULLS DISTINCT geregi dedup uygulanmaz;
             --  pencere-bazli alarmlar icin window dolu oldugundan calisir.)
             CONSTRAINT uq_notification_tenant_tip_window
-                UNIQUE (tenant_id, tip, patrol_window_id)
+                UNIQUE (tenant_id, tip, patrol_window_id),
+            -- pencere-disi bildirimler icin idempotency (dedup_key NULL => NULLS DISTINCT,
+            -- pencere-bazli kayitlari etkilemez):
+            CONSTRAINT uq_notification_dedup UNIQUE (tenant_id, dedup_key)
         );
         """
     )
@@ -386,7 +407,8 @@ def upgrade() -> None:
             aciklama         text,
             atanan_user_id   uuid,
             checkpoint_id    uuid,
-            periyot_dakika   integer,   -- periyodik gorev; tek seferlikse NULL
+            periyot_dakika   integer,   -- tekrar araligi (periyodik gorev/peyzaj); tek seferlikse NULL
+            sonraki_planlanan timestamptz,  -- bir sonraki planlanan an (UTC); peyzaj takvimi
             aktif            boolean NOT NULL DEFAULT true,
             created_at       timestamptz NOT NULL DEFAULT now(),
             updated_at       timestamptz NOT NULL DEFAULT now(),
@@ -405,6 +427,10 @@ def upgrade() -> None:
     op.execute("CREATE INDEX ix_task_tenant ON task (tenant_id);")
     op.execute("CREATE INDEX ix_task_tip ON task (tenant_id, tip);")
     op.execute("CREATE INDEX ix_task_atanan ON task (atanan_user_id);")
+    # peyzaj takvimi / hatirlatma sorgulari (yaklasan/kacirilan):
+    op.execute(
+        "CREATE INDEX ix_task_takvim ON task (tenant_id, tip, sonraki_planlanan);"
+    )
 
     # ------------------------------------------------------------------ #
     # 9d. task_completion  (gorev tamamlama kaniti — NFC/GPS/foto)
@@ -444,6 +470,121 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9e. asset  (demirbas envanteri)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE asset (
+            id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id    uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            ad           text NOT NULL,
+            kategori     asset_kategori,
+            nfc_tag_uid  text,                 -- demirbasa yapisik NFC; tenant icinde benzersiz
+            durum        asset_durum NOT NULL DEFAULT 'musait',
+            aciklama     text,
+            aktif        boolean NOT NULL DEFAULT true,
+            created_at   timestamptz NOT NULL DEFAULT now(),
+            updated_at   timestamptz NOT NULL DEFAULT now(),
+            UNIQUE (id, tenant_id)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_asset_tenant ON asset (tenant_id);")
+    op.execute("CREATE INDEX ix_asset_durum ON asset (tenant_id, durum);")
+    # nfc_tag_uid tenant icinde benzersiz (NULL haric — etiketsiz demirbas olabilir):
+    op.execute(
+        "CREATE UNIQUE INDEX uq_asset_tenant_nfc ON asset (tenant_id, nfc_tag_uid) "
+        "WHERE nfc_tag_uid IS NOT NULL;"
+    )
+
+    # ------------------------------------------------------------------ #
+    # 9f. asset_checkout  (zimmet: al/birak; tek aktif zimmet)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE asset_checkout (
+            id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id                uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            asset_id                 uuid NOT NULL,
+            alan_user_id             uuid NOT NULL,
+            alma_zamani              timestamptz NOT NULL DEFAULT now(),
+            birakma_zamani           timestamptz,        -- NULL => hala uzerinde (acik zimmet)
+            alma_nfc_tag_uid         text,
+            birakma_nfc_tag_uid      text,
+            alma_gps_lat             numeric(9, 6),
+            alma_gps_lng             numeric(9, 6),
+            birakma_gps_lat          numeric(9, 6),
+            birakma_gps_lng          numeric(9, 6),
+            notlar                   text,
+            idempotency_key          text NOT NULL,      -- alma (checkout) idempotency
+            birakma_idempotency_key  text,               -- birakma (checkin) idempotency
+            created_at               timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT fk_checkout_asset
+                FOREIGN KEY (asset_id, tenant_id)
+                REFERENCES asset (id, tenant_id) ON DELETE CASCADE,
+            CONSTRAINT fk_checkout_user
+                FOREIGN KEY (alan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- offline cift gonderim korumasi (alma):
+            CONSTRAINT uq_checkout_tenant_idempotency UNIQUE (tenant_id, idempotency_key)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_checkout_tenant ON asset_checkout (tenant_id);")
+    op.execute("CREATE INDEX ix_checkout_asset ON asset_checkout (asset_id);")
+    op.execute(
+        "CREATE INDEX ix_checkout_alma ON asset_checkout (tenant_id, alma_zamani DESC);"
+    )
+    # TEK AKTIF ZIMMET: bir asset icin en fazla bir acik (birakma_zamani NULL) checkout.
+    op.execute(
+        "CREATE UNIQUE INDEX uq_asset_open_checkout "
+        "ON asset_checkout (tenant_id, asset_id) WHERE birakma_zamani IS NULL;"
+    )
+    # birakma (checkin) idempotency:
+    op.execute(
+        "CREATE UNIQUE INDEX uq_checkout_birakma_idem "
+        "ON asset_checkout (tenant_id, birakma_idempotency_key) "
+        "WHERE birakma_idempotency_key IS NOT NULL;"
+    )
+
+    # ------------------------------------------------------------------ #
+    # 9g. emergency_alert  (acil durum butonu — saha -> yonetim anlik alarm)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE emergency_alert (
+            id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id           uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            tetikleyen_user_id  uuid NOT NULL,
+            tetiklenme_zamani   timestamptz NOT NULL DEFAULT now(),
+            gps_lat             numeric(9, 6),
+            gps_lng             numeric(9, 6),
+            durum               emergency_durum NOT NULL DEFAULT 'acik',
+            cozen_user_id       uuid,
+            cozulme_zamani      timestamptz,
+            notlar              text,
+            idempotency_key     text NOT NULL,
+            created_at          timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT fk_emergency_tetikleyen
+                FOREIGN KEY (tetikleyen_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- Kolon-ozel SET NULL: yalnizca cozen_user_id NULL'lanir; tenant_id korunur.
+            CONSTRAINT fk_emergency_cozen
+                FOREIGN KEY (cozen_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (cozen_user_id),
+            -- panik aninda mukerrer basim korumasi:
+            CONSTRAINT uq_emergency_tenant_idempotency UNIQUE (tenant_id, idempotency_key)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_emergency_tenant ON emergency_alert (tenant_id);")
+    op.execute("CREATE INDEX ix_emergency_durum ON emergency_alert (tenant_id, durum);")
+    op.execute(
+        "CREATE INDEX ix_emergency_zaman "
+        "ON emergency_alert (tenant_id, tetiklenme_zamani DESC);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -461,6 +602,9 @@ def upgrade() -> None:
         "notification",
         "task",
         "task_completion",
+        "asset",
+        "asset_checkout",
+        "emergency_alert",
     ):
         _enable_rls(table)
 
@@ -498,6 +642,9 @@ def _enable_rls(table: str) -> None:
 def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     for table in (
+        "emergency_alert",
+        "asset_checkout",
+        "asset",
         "task_completion",
         "task",
         "notification",
@@ -512,6 +659,9 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS emergency_durum;")
+    op.execute("DROP TYPE IF EXISTS asset_durum;")
+    op.execute("DROP TYPE IF EXISTS asset_kategori;")
     op.execute("DROP TYPE IF EXISTS task_tip;")
     op.execute("DROP TYPE IF EXISTS notification_tip;")
     op.execute("DROP TYPE IF EXISTS patrol_window_durum;")

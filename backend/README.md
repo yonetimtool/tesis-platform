@@ -116,6 +116,59 @@ curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
 > + `tenant_id_by_slug` fonksiyonu eklendi. Mevcut bir DB varsa migration'i yeniden
 > uygulamak icin volume sifirlanmali: `docker compose down -v && docker compose up --build`.
 
+## Acil durum (panik butonu) + yonetim numarasi
+
+Saha → yonetim anlik alarm (`app/routers/emergency.py`). Gercek arama mobilde (`tel:`);
+backend yalniz kaydeder + bildirir, **aramaz**.
+- **`POST /emergency`** (admin/security/cleaning): `Idempotency-Key` zorunlu (panik mukerrer
+  basim). `tetikleyen` token'dan. → `emergency_alert` (durum 'acik') + **yuksek oncelikli
+  `notification_tip='acil_durum'`** (idempotent `dedup_key="acil_durum:<id>"`). Idempotency
+  200/409, key yok 400. resident 403.
+- **`GET /emergency`** (admin): liste (durum filtre, sayfali, tenant-izole).
+- **`PATCH /emergency/{id}`** (admin): coz → durum 'cozuldu', `cozen_user_id`+`cozulme_zamani`.
+- **Dashboard:** acil durum `son_alarmlar`'da **en ustte** (oncelik: tip ile ayrim, ayri
+  priority kolonu yok; sira `(tip='acil_durum') DESC, created_at DESC`). `Alarm.tip` setine eklendi.
+
+### Yonetim numarasi (nerede / nasil)
+Ayri tablo YOK — **`tenant.acil_durum_telefon`** (tek alan). Mobil acil durumda bu numarayi
+**`GET /tenant/settings`** ile okur (admin/security/cleaning) ve `tel:` ile arar. Admin
+**`PATCH /tenant/settings`** ile ayarlar. seed `acme-plaza` icin ornek numara yazar.
+
+## Demirbas envanteri + zimmet (Asset / checkout / checkin)
+
+Demirbas (`asset`) + zimmet (`asset_checkout`) — "kim aldi/birakti" (NFC) (`app/routers/assets.py`).
+- **Asset CRUD** (`/assets`): GET liste (`kategori`/`durum`/`aktif` filtre, sayfali) / detay /
+  POST / PATCH / DELETE. **RBAC:** GET admin/security/cleaning; yazma yalniz admin.
+  `nfc_tag_uid` tenant icinde benzersiz (NULL haric) → cakisma **409**. `durum`:
+  musait/zimmetli/bakimda.
+- **checkout** (`POST /assets/{id}/checkout`, admin/security/cleaning): demirbasi al.
+  `Idempotency-Key` zorunlu (400). `nfc_tag_uid` verilirse asset nfc'siyle eslesmeli (422).
+  `alan_user_id` token'dan. **Tek aktif zimmet**: zaten zimmetliyse **409** (DB'de partial
+  unique `(tenant_id, asset_id) WHERE birakma_zamani IS NULL` ile garanti). Idempotency:
+  ayni key+gövde → 200, farkli → 409 (scan SAVEPOINT deseni). Basarili → asset.durum='zimmetli'.
+- **checkin** (`POST /assets/{id}/checkin`): acik zimmeti kapatir (birakma_zamani=now,
+  durum='musait'). `Idempotency-Key` zorunlu; ayni key ile tekrar → 200 ayni kayit
+  (`birakma_idempotency_key` partial unique). Acik zimmet yoksa **409**.
+- **history** (`GET /assets/{id}/history`): zimmet gecmisi (alma_zamani artan), sayfali, tenant-izole.
+
+## Peyzaj bakim takvimi + hatirlatma
+
+Ayri tablo **YOK** — mevcut task sistemi genisletildi:
+- `task.tip='peyzaj'` + takvim alani **`task.sonraki_planlanan`** (UTC) + tekrar araligi
+  olarak mevcut **`periyot_dakika`**. Yonetim mevcut **Task CRUD** ile (admin).
+- **Takvim:** `GET /landscape/schedule` → aktif peyzaj task'lari `sonraki_planlanan` ARTAN,
+  sayfali, tenant-izole (admin/security/cleaning).
+- **Tamamlama ilerletir:** periyodik task tamamlaninca (`task_completion`)
+  `sonraki_planlanan += periyot_dakika` (`create_completion`, yalnizca yeni kayitta).
+- **Hatirlatma** (`scheduler.landscape_reminders`, beat, varsayilan saat basi):
+  - `peyzaj_yaklasan`: `sonraki_planlanan ∈ [now, now+lead]` (`SCHEDULER_LANDSCAPE_LEAD_HOURS`, vars. 24).
+  - `peyzaj_kacirilan`: `sonraki_planlanan < now` ve o tarihten sonra tamamlama yok.
+  - **Idempotent:** `notification.dedup_key = "<tip>:<task_id>:<planlanan_iso>"` +
+    `UNIQUE(tenant_id, dedup_key)` + `ON CONFLICT DO NOTHING`. Mevcut notify deseni
+    (app_rw + tenant context, RLS) yeniden kullanilir; gercek push hala yok (kanca var).
+- Peyzaj bildirimleri `/notifications` altinda gorulur; **dashboard `son_alarmlar`'a
+  DUSMEZ** (alarm tipi degil) — dashboard yalniz `kacirilan_tur/eksik_checkpoint/gecikmis_okutma`.
+
 ## Gorev sistemi + foto kanit (Task / Completion / MinIO)
 
 Esnek **tek `task` modeli** (`tip`: temizlik/kontrol/ilaclama/bakim/diger). Cop topla,

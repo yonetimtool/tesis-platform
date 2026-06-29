@@ -49,12 +49,16 @@ _AKTIF_TURLAR_SQL = text(
     """
 )
 
-# son_alarmlar artik KALICI notification tablosundan okunur (response semasi ayni).
+# son_alarmlar KALICI notification tablosundan okunur (response semasi ayni).
+# Yalniz sozlesmedeki Alarm.tip degerleri; peyzaj_* hatirlatmalari panele alarm
+# olarak DUSMEZ (onlar /notifications altinda gorulur).
 _ALARMLAR_SQL = text(
     """
     SELECT tip, patrol_window_id, checkpoint_id, mesaj, created_at
     FROM notification
-    ORDER BY created_at DESC
+    WHERE tip IN ('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma', 'acil_durum')
+    -- acil_durum yuksek oncelikli => en ustte; sonra en yeni.
+    ORDER BY (tip = 'acil_durum') DESC, created_at DESC
     LIMIT :alarm_limit
     """
 )

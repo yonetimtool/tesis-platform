@@ -120,7 +120,20 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `DELETE /tasks/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |
 | `GET  /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
 | `POST /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
+| `GET  /landscape/schedule`            |  ✅   |    ✅    |    ✅    |    ❌    |
 | `POST /uploads/presign`               |  ✅   |    ✅    |    ✅    |    ❌    |
+| `GET  /assets` (liste/detay)          |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /assets`                        |  ✅   |    ❌    |    ❌    |    ❌    |
+| `PATCH /assets/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |
+| `DELETE /assets/{id}`                 |  ✅   |    ❌    |    ❌    |    ❌    |
+| `POST /assets/{id}/checkout`          |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /assets/{id}/checkin`           |  ✅   |    ✅    |    ✅    |    ❌    |
+| `GET  /assets/{id}/history`           |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /emergency`                     |  ✅   |    ✅    |    ✅    |    ❌    |
+| `GET  /emergency`                     |  ✅   |    ❌    |    ❌    |    ❌    |
+| `PATCH /emergency/{id}`               |  ✅   |    ❌    |    ❌    |    ❌    |
+| `GET  /tenant/settings`               |  ✅   |    ✅    |    ✅    |    ❌    |
+| `PATCH /tenant/settings`              |  ✅   |    ❌    |    ❌    |    ❌    |
 
 Notlar:
 - **admin**: tenant icindeki tum yonetim islemleri (CRUD) + panel.
