@@ -126,6 +126,22 @@ alembic upgrade head
 Migration **owner/superuser** ile calistirilir (RLS'i bypass eder). Uygulama
 dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`.
 
+## Aidat (konut/daire bazinda)
+
+- **Borc daireye (`unit`) tahakkuk eder** — kiraci/malik degisse de borc dairededir.
+  `resident` kullanici daireye `unit_resident` ile baglanir (aktif sakin = `bitis IS NULL`).
+- **Tutarlar KURUS (integer minor units).** Para icin **float ASLA** kullanilmaz.
+  Tahakkuk/odeme `tutar_kurus > 0` (CHECK); negatif/sifir reddedilir (422).
+- **Tahakkuk** (`dues_assessment`): `UNIQUE(tenant_id, unit_id, donem)` — ayni daire+donem
+  iki kez tahakkuk olmaz. Tek daire veya toplu donem.
+- **Odeme** (`dues_payment`): manuel kayit (admin); gercek tahsilat **YOK** (soyut
+  `PaymentProvider`). `UNIQUE(tenant_id, idempotency_key)` (cift kayit korumasi).
+- **Bakiye hesabi:** `bakiye_kurus = SUM(tahakkuk.tutar_kurus) - SUM(odeme.tutar_kurus WHERE
+  durum='basarili')`. Pozitif bakiye = borc. Kismi odeme bakiyeyi azaltir.
+- **Erisim:** Unit/tahakkuk/odeme yonetimi yalniz **admin**; `security/cleaning` aidat gormez;
+  `resident` yalniz `GET /me/dues` ile kendi dairelerinin borcunu gorur. Denetlenebilirlik:
+  her odeme `kaydeden_user_id` + `odeme_zamani` + `donem` ile izlenir.
+
 ## API base path
 
 - **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:

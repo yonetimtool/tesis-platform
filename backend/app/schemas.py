@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, time
+from datetime import date, datetime, time
 from typing import Literal
 
 from pydantic import (
@@ -545,3 +545,139 @@ class TenantSettingsUpdate(BaseModel):
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
         return self
+
+
+# -------------------------------- aidat ------------------------------------ #
+ResidentRol = Literal["malik", "kiraci"]
+DuesYontem = Literal["elden", "havale", "kart", "diger"]
+DuesDurum = Literal["basarili", "bekliyor", "iptal"]
+
+
+class UnitOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    no: str
+    blok: str | None = None
+    metrekare: float | None = None
+    aktif: bool
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class UnitCreate(BaseModel):
+    no: str = Field(..., min_length=1)
+    blok: str | None = None
+    metrekare: float | None = None
+    aktif: bool = True
+
+
+class UnitUpdate(BaseModel):
+    no: str | None = Field(None, min_length=1)
+    blok: str | None = None
+    metrekare: float | None = None
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "UnitUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class UnitListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[UnitOut]
+
+
+class UnitResidentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    unit_id: uuid.UUID
+    user_id: uuid.UUID
+    rol_tipi: str | None = None
+    baslangic: datetime | None = None
+    bitis: datetime | None = None
+    created_at: datetime
+
+
+class ResidentAssign(BaseModel):
+    user_id: uuid.UUID
+    rol_tipi: ResidentRol | None = None
+    baslangic: datetime | None = None
+
+
+class DuesAssessmentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    unit_id: uuid.UUID
+    donem: str
+    tutar_kurus: int
+    son_odeme_tarihi: date | None = None
+    aciklama: str | None = None
+    created_at: datetime
+
+
+class DuesAssessmentCreate(BaseModel):
+    donem: str = Field(..., min_length=1)
+    tutar_kurus: int = Field(..., ge=1)  # KURUS; negatif/sifir reddedilir
+    unit_id: uuid.UUID | None = None     # verilirse tek daire
+    unit_ids: list[uuid.UUID] | None = None  # toplu hedef; yoksa tum aktif daireler
+    son_odeme_tarihi: date | None = None
+    aciklama: str | None = None
+
+
+class DuesAssessmentResult(BaseModel):
+    created: list[DuesAssessmentOut]
+    atlanan: int
+
+
+class DuesAssessmentListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[DuesAssessmentOut]
+
+
+class DuesPaymentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    unit_id: uuid.UUID
+    assessment_id: uuid.UUID | None = None
+    tutar_kurus: int
+    odeme_zamani: datetime
+    yontem: str
+    durum: str
+    makbuz_no: str | None = None
+    kaydeden_user_id: uuid.UUID
+    idempotency_key: str
+    created_at: datetime
+
+
+class DuesPaymentCreate(BaseModel):
+    unit_id: uuid.UUID
+    assessment_id: uuid.UUID | None = None
+    tutar_kurus: int = Field(..., ge=1)  # KURUS
+    yontem: DuesYontem
+    makbuz_no: str | None = None
+    odeme_zamani: datetime | None = None
+
+
+class DuesPaymentListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[DuesPaymentOut]
+
+
+class UnitDuesStatus(BaseModel):
+    unit_id: uuid.UUID
+    no: str
+    toplam_tahakkuk_kurus: int
+    toplam_odenen_kurus: int
+    bakiye_kurus: int
+    assessments: list[DuesAssessmentOut] = []
+    payments: list[DuesPaymentOut] = []
+
+
+class MeDuesResponse(BaseModel):
+    items: list[UnitDuesStatus]

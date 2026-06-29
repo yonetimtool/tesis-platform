@@ -134,6 +134,15 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `PATCH /emergency/{id}`               |  ✅   |    ❌    |    ❌    |    ❌    |
 | `GET  /tenant/settings`               |  ✅   |    ✅    |    ✅    |    ❌    |
 | `PATCH /tenant/settings`              |  ✅   |    ❌    |    ❌    |    ❌    |
+| `*/units*` (CRUD + sakin)             |  ✅   |    ❌    |    ❌    |    ❌    |
+| `GET /units/{id}/dues`                |  ✅   |    ❌    |    ❌    |    ❌    |
+| `POST/GET /dues/assessments`          |  ✅   |    ❌    |    ❌    |    ❌    |
+| `POST/GET /dues/payments`             |  ✅   |    ❌    |    ❌    |    ❌    |
+| `GET /me/dues`                        |  ❌   |    ❌    |    ❌    |    ✅    |
+
+> **Aidat:** Unit/tahakkuk/odeme yonetimi yalniz **admin**. **security/cleaning aidat
+> GORMEZ** (403). **resident** yalniz `GET /me/dues` ile **kendi** dairelerinin borcunu gorur;
+> tahakkuk/odeme yapamaz, baska daireyi goremez.
 
 Notlar:
 - **admin**: tenant icindeki tum yonetim islemleri (CRUD) + panel.

@@ -1079,6 +1079,312 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  # ================================================================= #
+  # AIDAT — unit (daire) + sakin + tahakkuk + odeme
+  # ================================================================= #
+  /units:
+    get:
+      tags: [aidat]
+      summary: Daire listesi
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: blok
+          in: query
+          schema: { type: string }
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Unit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [aidat]
+      summary: Daire olustur (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Unit" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Daire no bu tesiste zaten kayitli
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /units/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [aidat]
+      summary: Daire detay
+      responses:
+        "200":
+          description: Detay
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Unit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [aidat]
+      summary: Daire guncelle (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Unit" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [aidat]
+      summary: Daire sil (admin)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /units/{id}/residents:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [aidat]
+      summary: Dairenin sakinleri
+      responses:
+        "200":
+          description: Sakin listesi
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/UnitResident" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      tags: [aidat]
+      summary: Daireye sakin ata (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResidentAssign" }
+      responses:
+        "201":
+          description: Atandi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitResident" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /units/{id}/residents/{user_id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+      - name: user_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    delete:
+      tags: [aidat]
+      summary: Sakini daireden cikar (bitis=now) (admin)
+      responses:
+        "204": { description: Cikarildi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /units/{id}/dues:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [aidat]
+      summary: Dairenin borc durumu (tahakkuk - odeme = bakiye)
+      responses:
+        "200":
+          description: Borc durumu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitDuesStatus" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /dues/assessments:
+    get:
+      tags: [aidat]
+      summary: Tahakkuk listesi
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: unit_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: donem
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/DuesAssessment" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [aidat]
+      summary: Tahakkuk olustur (tek daire veya toplu donem) (admin)
+      description: |
+        `unit_id` verilirse TEK daire (ayni daire+donem ikinci kez → 409). `unit_id`
+        yoksa TOPLU: `unit_ids` (verilmezse tum aktif daireler); mevcut donemler atlanir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DuesAssessmentCreate" }
+      responses:
+        "201":
+          description: "Olusturuldu (toplu modda created + atlanan)"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DuesAssessmentResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Tek daire modunda ayni donem zaten var
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /dues/payments:
+    get:
+      tags: [aidat]
+      summary: Odeme listesi
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: unit_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/DuesPayment" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [aidat]
+      summary: Manuel odeme kaydi (admin)
+      description: |
+        Gercek tahsilat YOK (soyut). Idempotency-Key ZORUNLU (cift kayit korumasi).
+        kaydeden token'dan. Bakiye = toplam tahakkuk - basarili odemeler.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DuesPaymentCreate" }
+      responses:
+        "201":
+          description: Odeme kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DuesPayment" }
+        "200":
+          description: Idempotent tekrar — mevcut kayit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DuesPayment" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Ayni Idempotency-Key farkli govde ile gonderildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /me/dues:
+    get:
+      tags: [aidat]
+      summary: Sakinin kendi dairelerinin borc durumu (resident)
+      responses:
+        "200":
+          description: Borc durumu listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/UnitDuesStatus" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
 # =================================================================== #
 components:
   securitySchemes:
@@ -1746,3 +2052,157 @@ components:
         acil_durum_telefon: { type: string, nullable: true }
         timezone: { type: string }
         ad: { type: string }
+
+    # ----------------------------- aidat --------------------------- #
+    ResidentRol:
+      type: string
+      enum: [malik, kiraci]
+    DuesYontem:
+      type: string
+      enum: [elden, havale, kart, diger]
+    DuesDurum:
+      type: string
+      enum: [basarili, bekliyor, iptal]
+
+    Unit:
+      type: object
+      required: [id, no, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        no: { type: string, example: "A-12" }
+        blok: { type: string, nullable: true }
+        metrekare: { type: number, format: double, nullable: true }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    UnitCreate:
+      type: object
+      required: [no]
+      properties:
+        no: { type: string }
+        blok: { type: string, nullable: true }
+        metrekare: { type: number, format: double, nullable: true }
+        aktif: { type: boolean, default: true }
+    UnitUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        no: { type: string }
+        blok: { type: string, nullable: true }
+        metrekare: { type: number, format: double, nullable: true }
+        aktif: { type: boolean }
+
+    UnitResident:
+      type: object
+      required: [id, unit_id, user_id]
+      properties:
+        id: { type: string, format: uuid }
+        unit_id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        rol_tipi: { $ref: "#/components/schemas/ResidentRol" }
+        baslangic: { type: string, format: date-time, nullable: true }
+        bitis: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    ResidentAssign:
+      type: object
+      required: [user_id]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: "role=resident bir app_user (ayni tenant)"
+        rol_tipi: { $ref: "#/components/schemas/ResidentRol" }
+        baslangic: { type: string, format: date-time, nullable: true }
+
+    DuesAssessment:
+      type: object
+      required: [id, unit_id, donem, tutar_kurus, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        unit_id: { type: string, format: uuid }
+        donem: { type: string, example: "2026-06" }
+        tutar_kurus:
+          type: integer
+          minimum: 1
+          description: "KURUS (minor units); para asla float degil"
+        son_odeme_tarihi: { type: string, format: date, nullable: true }
+        aciklama: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+    DuesAssessmentCreate:
+      type: object
+      required: [donem, tutar_kurus]
+      properties:
+        unit_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Verilirse TEK daire; yoksa toplu"
+        unit_ids:
+          type: array
+          nullable: true
+          description: "Toplu modda hedef daireler; yoksa tum aktif daireler"
+          items: { type: string, format: uuid }
+        donem: { type: string, example: "2026-06" }
+        tutar_kurus: { type: integer, minimum: 1 }
+        son_odeme_tarihi: { type: string, format: date, nullable: true }
+        aciklama: { type: string, nullable: true }
+    DuesAssessmentResult:
+      type: object
+      required: [created, atlanan]
+      properties:
+        created:
+          type: array
+          items: { $ref: "#/components/schemas/DuesAssessment" }
+        atlanan:
+          type: integer
+          description: "Zaten var olan (donem) tahakkuk sayisi (toplu modda atlanan)"
+
+    DuesPayment:
+      type: object
+      required: [id, unit_id, tutar_kurus, odeme_zamani, yontem, durum, kaydeden_user_id, idempotency_key, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        unit_id: { type: string, format: uuid }
+        assessment_id: { type: string, format: uuid, nullable: true }
+        tutar_kurus: { type: integer, minimum: 1 }
+        odeme_zamani: { type: string, format: date-time }
+        yontem: { $ref: "#/components/schemas/DuesYontem" }
+        durum: { $ref: "#/components/schemas/DuesDurum" }
+        makbuz_no: { type: string, nullable: true }
+        kaydeden_user_id: { type: string, format: uuid }
+        idempotency_key: { type: string }
+        created_at: { type: string, format: date-time }
+    DuesPaymentCreate:
+      type: object
+      required: [unit_id, tutar_kurus, yontem]
+      properties:
+        unit_id: { type: string, format: uuid }
+        assessment_id: { type: string, format: uuid, nullable: true }
+        tutar_kurus: { type: integer, minimum: 1 }
+        yontem: { $ref: "#/components/schemas/DuesYontem" }
+        makbuz_no: { type: string, nullable: true }
+        odeme_zamani:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Verilmezse sunucu now()"
+
+    UnitDuesStatus:
+      type: object
+      required: [unit_id, no, toplam_tahakkuk_kurus, toplam_odenen_kurus, bakiye_kurus]
+      properties:
+        unit_id: { type: string, format: uuid }
+        no: { type: string }
+        toplam_tahakkuk_kurus: { type: integer }
+        toplam_odenen_kurus:
+          type: integer
+          description: "Yalniz durum='basarili' odemeler"
+        bakiye_kurus:
+          type: integer
+          description: "toplam_tahakkuk - toplam_odenen (pozitif = borc)"
+        assessments:
+          type: array
+          items: { $ref: "#/components/schemas/DuesAssessment" }
+        payments:
+          type: array
+          items: { $ref: "#/components/schemas/DuesPayment" }

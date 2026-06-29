@@ -116,6 +116,27 @@ curl -s localhost:8000/me -H "Authorization: Bearer $TOKEN"
 > + `tenant_id_by_slug` fonksiyonu eklendi. Mevcut bir DB varsa migration'i yeniden
 > uygulamak icin volume sifirlanmali: `docker compose down -v && docker compose up --build`.
 
+## Aidat (konut/daire + tahakkuk + odeme)
+
+Borc **daireye** (`unit`) tahakkuk eder; `resident` daireye `unit_resident` ile baglanir
+(aktif = `bitis NULL`). **Tutarlar KURUS (integer); para icin float yok.**
+- **Unit CRUD** (`/units`, admin): no tenant-ici benzersiz → 409. Sakin: `POST/GET
+  /units/{id}/residents`, `DELETE /units/{id}/residents/{user_id}` (bitis=now).
+- **Tahakkuk** (`POST /dues/assessments`, admin): tek daire (`unit_id`) veya **toplu**
+  (`unit_ids` ya da tum aktif daireler). `UNIQUE(tenant_id,unit_id,donem)` → tek dairede
+  ikinci kez 409; toplu modda mevcutlar `atlanan` sayilir.
+- **Odeme** (`POST /dues/payments`, admin): **gercek tahsilat YOK** (soyut
+  `PaymentProvider`, `app/payments.py`). `Idempotency-Key` zorunlu (cift kayit; 200/409/400).
+  `kaydeden` token'dan; denetlenebilir.
+- **Bakiye:** `bakiye_kurus = toplam_tahakkuk - toplam_odenen(durum='basarili')` (pozitif=borc).
+  `GET /units/{id}/dues` (admin) ve `GET /me/dues` (resident — yalniz kendi daireleri).
+
+### Soyut odeme akisi
+`get_payment_provider(yontem)` → `PaymentProvider` (`init_payment` + `verify`). Bu turda
+`ManualPaymentProvider` (elden/havale): `verify`→True → `durum='basarili'`; para hareketi yok.
+Gercek iyzico/PayTR (kart) **sonraki prompt** — arayuz sabit, somut provider eklenecek.
+seed: `acme-plaza` icin `A-12` dairesi + `resident@acme.com` baglantisi + `2026-06` tahakkuk (750 TL).
+
 ## Acil durum (panik butonu) + yonetim numarasi
 
 Saha → yonetim anlik alarm (`app/routers/emergency.py`). Gercek arama mobilde (`tel:`);

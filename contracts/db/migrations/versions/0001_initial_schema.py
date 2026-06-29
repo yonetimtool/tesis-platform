@@ -82,6 +82,10 @@ def upgrade() -> None:
     )
     # acil durum alarm durumu.
     op.execute("CREATE TYPE emergency_durum AS ENUM ('acik', 'cozuldu');")
+    # aidat: sakin rol tipi + odeme yontemi + odeme durumu.
+    op.execute("CREATE TYPE resident_rol AS ENUM ('malik', 'kiraci');")
+    op.execute("CREATE TYPE dues_yontem AS ENUM ('elden', 'havale', 'kart', 'diger');")
+    op.execute("CREATE TYPE dues_durum AS ENUM ('basarili', 'bekliyor', 'iptal');")
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -585,6 +589,126 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9h. unit  (konut/daire — aidat bu birime tahakkuk eder)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE unit (
+            id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id   uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            no          text NOT NULL,            -- ornek "A-12"
+            blok        text,
+            metrekare   numeric(8, 2),
+            aktif       boolean NOT NULL DEFAULT true,
+            created_at  timestamptz NOT NULL DEFAULT now(),
+            updated_at  timestamptz NOT NULL DEFAULT now(),
+            UNIQUE (id, tenant_id),
+            CONSTRAINT uq_unit_tenant_no UNIQUE (tenant_id, no)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_unit_tenant ON unit (tenant_id);")
+    op.execute("CREATE INDEX ix_unit_blok ON unit (tenant_id, blok);")
+
+    # ------------------------------------------------------------------ #
+    # 9i. unit_resident  (daire <-> resident kullanici; aktif sakin = bitis NULL)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE unit_resident (
+            id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id   uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            unit_id     uuid NOT NULL,
+            user_id     uuid NOT NULL,
+            rol_tipi    resident_rol,             -- malik | kiraci
+            baslangic   timestamptz,
+            bitis       timestamptz,              -- NULL => aktif sakin
+            created_at  timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT fk_unitresident_unit
+                FOREIGN KEY (unit_id, tenant_id)
+                REFERENCES unit (id, tenant_id) ON DELETE CASCADE,
+            CONSTRAINT fk_unitresident_user
+                FOREIGN KEY (user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE CASCADE
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_unitresident_tenant ON unit_resident (tenant_id);")
+    op.execute("CREATE INDEX ix_unitresident_unit ON unit_resident (unit_id);")
+    op.execute("CREATE INDEX ix_unitresident_user ON unit_resident (user_id);")
+    # Ayni daire+kullanici icin tek aktif baglanti (bitis NULL):
+    op.execute(
+        "CREATE UNIQUE INDEX uq_unitresident_aktif "
+        "ON unit_resident (unit_id, user_id) WHERE bitis IS NULL;"
+    )
+
+    # ------------------------------------------------------------------ #
+    # 9j. dues_assessment  (aidat tahakkuku — daireye/donem)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE dues_assessment (
+            id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id         uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            unit_id           uuid NOT NULL,
+            donem             text NOT NULL,        -- ornek "2026-06"
+            tutar_kurus       integer NOT NULL,     -- KURUS (minor units); float kullanma
+            son_odeme_tarihi  date,
+            aciklama          text,
+            created_at        timestamptz NOT NULL DEFAULT now(),
+            UNIQUE (id, tenant_id),
+            CONSTRAINT ck_assessment_tutar CHECK (tutar_kurus > 0),
+            CONSTRAINT fk_assessment_unit
+                FOREIGN KEY (unit_id, tenant_id)
+                REFERENCES unit (id, tenant_id) ON DELETE CASCADE,
+            -- ayni daireye ayni donem iki kez tahakkuk olmasin:
+            CONSTRAINT uq_assessment_tenant_unit_donem UNIQUE (tenant_id, unit_id, donem)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_assessment_tenant ON dues_assessment (tenant_id);")
+    op.execute("CREATE INDEX ix_assessment_unit ON dues_assessment (unit_id);")
+    op.execute("CREATE INDEX ix_assessment_donem ON dues_assessment (tenant_id, donem);")
+
+    # ------------------------------------------------------------------ #
+    # 9k. dues_payment  (odeme kaydi — manuel/soyut; gercek tahsilat sonraki prompt)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE dues_payment (
+            id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id         uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            unit_id           uuid NOT NULL,
+            assessment_id     uuid,                 -- hangi tahakkuk; serbest/kismi odemede NULL
+            tutar_kurus       integer NOT NULL,     -- KURUS
+            odeme_zamani      timestamptz NOT NULL DEFAULT now(),
+            yontem            dues_yontem NOT NULL,
+            durum             dues_durum NOT NULL DEFAULT 'basarili',
+            makbuz_no         text,
+            kaydeden_user_id  uuid NOT NULL,
+            idempotency_key   text NOT NULL,
+            created_at        timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT ck_payment_tutar CHECK (tutar_kurus > 0),
+            CONSTRAINT fk_payment_unit
+                FOREIGN KEY (unit_id, tenant_id)
+                REFERENCES unit (id, tenant_id) ON DELETE CASCADE,
+            -- Kolon-ozel SET NULL: yalnizca assessment_id NULL'lanir; tenant_id korunur.
+            CONSTRAINT fk_payment_assessment
+                FOREIGN KEY (assessment_id, tenant_id)
+                REFERENCES dues_assessment (id, tenant_id) ON DELETE SET NULL (assessment_id),
+            CONSTRAINT fk_payment_kaydeden
+                FOREIGN KEY (kaydeden_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- cift odeme kaydi korumasi:
+            CONSTRAINT uq_payment_tenant_idempotency UNIQUE (tenant_id, idempotency_key)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_payment_tenant ON dues_payment (tenant_id);")
+    op.execute("CREATE INDEX ix_payment_unit ON dues_payment (unit_id);")
+    op.execute("CREATE INDEX ix_payment_assessment ON dues_payment (assessment_id);")
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -605,6 +729,10 @@ def upgrade() -> None:
         "asset",
         "asset_checkout",
         "emergency_alert",
+        "unit",
+        "unit_resident",
+        "dues_assessment",
+        "dues_payment",
     ):
         _enable_rls(table)
 
@@ -642,6 +770,10 @@ def _enable_rls(table: str) -> None:
 def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     for table in (
+        "dues_payment",
+        "dues_assessment",
+        "unit_resident",
+        "unit",
         "emergency_alert",
         "asset_checkout",
         "asset",
@@ -659,6 +791,9 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS dues_durum;")
+    op.execute("DROP TYPE IF EXISTS dues_yontem;")
+    op.execute("DROP TYPE IF EXISTS resident_rol;")
     op.execute("DROP TYPE IF EXISTS emergency_durum;")
     op.execute("DROP TYPE IF EXISTS asset_durum;")
     op.execute("DROP TYPE IF EXISTS asset_kategori;")
