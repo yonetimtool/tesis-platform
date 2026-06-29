@@ -134,6 +134,22 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `PATCH /emergency/{id}`               |  ✅   |    ❌    |    ❌    |    ❌    |
 | `GET  /tenant/settings`               |  ✅   |    ✅    |    ✅    |    ❌    |
 | `PATCH /tenant/settings`              |  ✅   |    ❌    |    ❌    |    ❌    |
+| `*/units*` (CRUD + sakin)             |  ✅   |    ❌    |    ❌    |    ❌    |
+| `GET /units/{id}/dues`                |  ✅   |    ❌    |    ❌    |    ❌    |
+| `POST/GET /dues/assessments`          |  ✅   |    ❌    |    ❌    |    ❌    |
+| `POST/GET /dues/payments`             |  ✅   |    ❌    |    ❌    |    ❌    |
+| `GET /me/dues`                        |  ❌   |    ❌    |    ❌    |    ✅    |
+
+> **Aidat:** Unit/tahakkuk/odeme yonetimi yalniz **admin**. **security/cleaning aidat
+> GORMEZ** (403). **resident** yalniz `GET /me/dues` ile **kendi** dairelerinin borcunu gorur;
+> tahakkuk/odeme yapamaz, baska daireyi goremez.
+>
+> **Odeme webhook'u** (`POST /webhooks/payments/{provider}`): **PUBLIC** (JWT YOK) — saha
+> disindan saglayici cagirir. Guvenlik **imza/hash** ile saglanir (provider secret; HMAC).
+> Imza gecersizse **401** ve hicbir islem yapilmaz. Tenant, `provider_ref`'ten owner-sahipli
+> `SECURITY DEFINER` `payment_tenant_by_ref` ile RLS-safe cozulur. Odeme durumu **yalnizca**
+> webhook/saglayicidan degisir; istemci "odedim" diyemez. Webhook tutari (kurus) odeme ile
+> karsilastirilir (manipulasyon engeli); olay (provider+event_id) bir kez islenir (idempotent).
 
 Notlar:
 - **admin**: tenant icindeki tum yonetim islemleri (CRUD) + panel.

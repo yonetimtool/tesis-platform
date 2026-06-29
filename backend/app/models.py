@@ -18,6 +18,7 @@ import uuid
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
+    Date,
     ForeignKey,
     ForeignKeyConstraint,
     Integer,
@@ -68,6 +69,18 @@ ASSET_DURUM = ENUM(
 EMERGENCY_DURUM = ENUM(
     "acik", "cozuldu",
     name="emergency_durum", create_type=False,
+)
+RESIDENT_ROL = ENUM(
+    "malik", "kiraci",
+    name="resident_rol", create_type=False,
+)
+DUES_YONTEM = ENUM(
+    "elden", "havale", "kart", "diger",
+    name="dues_yontem", create_type=False,
+)
+DUES_DURUM = ENUM(
+    "basarili", "bekliyor", "iptal",
+    name="dues_durum", create_type=False,
 )
 
 
@@ -573,6 +586,153 @@ class EmergencyAlert(Base):
     created_at = _created_at()
 
 
+# --------------------------------------------------------------------------- #
+class Unit(Base):
+    __tablename__ = "unit"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_unit_id_tenant"),
+        UniqueConstraint("tenant_id", "no", name="uq_unit_tenant_no"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    no: Mapped[str] = mapped_column(Text, nullable=False)
+    blok: Mapped[str | None] = mapped_column(Text, nullable=True)
+    metrekare = mapped_column(Numeric(8, 2), nullable=True)
+    aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class UnitResident(Base):
+    __tablename__ = "unit_resident"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["unit_id", "tenant_id"],
+            ["unit.id", "unit.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_unitresident_unit",
+        ),
+        ForeignKeyConstraint(
+            ["user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_unitresident_user",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    rol_tipi: Mapped[str | None] = mapped_column(RESIDENT_ROL, nullable=True)
+    baslangic = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    bitis = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class DuesAssessment(Base):
+    __tablename__ = "dues_assessment"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_assessment_id_tenant"),
+        CheckConstraint("tutar_kurus > 0", name="ck_assessment_tutar"),
+        ForeignKeyConstraint(
+            ["unit_id", "tenant_id"],
+            ["unit.id", "unit.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_assessment_unit",
+        ),
+        UniqueConstraint(
+            "tenant_id", "unit_id", "donem", name="uq_assessment_tenant_unit_donem"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    donem: Mapped[str] = mapped_column(Text, nullable=False)
+    tutar_kurus: Mapped[int] = mapped_column(Integer, nullable=False)
+    son_odeme_tarihi = mapped_column(Date, nullable=True)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class DuesPayment(Base):
+    __tablename__ = "dues_payment"
+    __table_args__ = (
+        CheckConstraint("tutar_kurus > 0", name="ck_payment_tutar"),
+        ForeignKeyConstraint(
+            ["unit_id", "tenant_id"],
+            ["unit.id", "unit.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_payment_unit",
+        ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (assessment_id); tenant_id korunur.
+        ForeignKeyConstraint(
+            ["assessment_id", "tenant_id"],
+            ["dues_assessment.id", "dues_assessment.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_payment_assessment",
+        ),
+        ForeignKeyConstraint(
+            ["kaydeden_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_payment_kaydeden",
+        ),
+        UniqueConstraint(
+            "tenant_id", "idempotency_key", name="uq_payment_tenant_idempotency"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    assessment_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    tutar_kurus: Mapped[int] = mapped_column(Integer, nullable=False)
+    odeme_zamani = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
+    yontem: Mapped[str] = mapped_column(DUES_YONTEM, nullable=False)
+    durum: Mapped[str] = mapped_column(
+        DUES_DURUM, nullable=False, server_default=text("'basarili'")
+    )
+    makbuz_no: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider_ref: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kaydeden_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class PaymentWebhookEvent(Base):
+    __tablename__ = "payment_webhook_event"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "provider", "event_id", name="uq_webhook_event"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    provider: Mapped[str] = mapped_column(Text, nullable=False)
+    event_id: Mapped[str] = mapped_column(Text, nullable=False)
+    provider_ref: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at = _created_at()
+
+
 __all__ = [
     "Base",
     "Tenant",
@@ -589,6 +749,11 @@ __all__ = [
     "Asset",
     "AssetCheckout",
     "EmergencyAlert",
+    "Unit",
+    "UnitResident",
+    "DuesAssessment",
+    "DuesPayment",
+    "PaymentWebhookEvent",
     "USER_ROLE",
     "GUN_TIPI",
     "PATROL_WINDOW_DURUM",
@@ -597,4 +762,7 @@ __all__ = [
     "ASSET_KATEGORI",
     "ASSET_DURUM",
     "EMERGENCY_DURUM",
+    "RESIDENT_ROL",
+    "DUES_YONTEM",
+    "DUES_DURUM",
 ]

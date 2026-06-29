@@ -55,5 +55,16 @@ class Settings(BaseSettings):
     minio_region: str = "us-east-1"
     minio_url_expire_seconds: int = 900
 
+    # --- Odeme saglayici (kart) ---
+    # manual | iyzico | paytr. GERCEK ANAHTAR YOK — placeholder'lar (sandbox sonra).
+    payment_provider: str = "manual"
+    iyzico_api_key: str = ""
+    iyzico_secret: str = ""
+    iyzico_base_url: str = "https://sandbox-api.iyzipay.com"
+    paytr_merchant_id: str = ""
+    paytr_merchant_key: str = ""
+    paytr_merchant_salt: str = ""
+    paytr_base_url: str = "https://www.paytr.com"
+
 
 settings = Settings()

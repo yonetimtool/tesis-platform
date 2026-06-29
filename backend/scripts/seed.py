@@ -55,6 +55,12 @@ USERS = [
         "role": "cleaning",
         "password": os.getenv("SEED_CLEANER_PASSWORD", "Clean123!"),
     },
+    {
+        "ad": "Acme Sakin",
+        "email": "resident@acme.com",
+        "role": "resident",
+        "password": os.getenv("SEED_RESIDENT_PASSWORD", "Resident123!"),
+    },
 ]
 
 
@@ -90,6 +96,38 @@ def main() -> int:
                 (tenant_id, u["ad"], u["email"], hash_password(u["password"]), u["role"]),
             )
             print(f"[seed] user {u['email']:<18} role={u['role']}")
+
+        # 3) aidat ornegi: daire A-12 + resident baglantisi + 2026-06 tahakkuk.
+        unit_id = conn.execute(
+            """
+            INSERT INTO unit (tenant_id, no, blok)
+            VALUES (%s, 'A-12', 'A')
+            ON CONFLICT (tenant_id, no) DO UPDATE SET blok = EXCLUDED.blok
+            RETURNING id
+            """,
+            (tenant_id,),
+        ).fetchone()[0]
+        resident_id = conn.execute(
+            "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
+            (tenant_id, "resident@acme.com"),
+        ).fetchone()[0]
+        conn.execute(
+            """
+            INSERT INTO unit_resident (tenant_id, unit_id, user_id, rol_tipi)
+            VALUES (%s, %s, %s, 'malik')
+            ON CONFLICT (unit_id, user_id) WHERE bitis IS NULL DO NOTHING
+            """,
+            (tenant_id, unit_id, resident_id),
+        )
+        conn.execute(
+            """
+            INSERT INTO dues_assessment (tenant_id, unit_id, donem, tutar_kurus, aciklama)
+            VALUES (%s, %s, '2026-06', 75000, 'Haziran aidati')
+            ON CONFLICT (tenant_id, unit_id, donem) DO NOTHING
+            """,
+            (tenant_id, unit_id),
+        )
+        print(f"[seed] unit A-12 -> {unit_id} (+ resident baglantisi + 2026-06 tahakkuk 750.00 TL)")
 
     print("[seed] tamamlandi (idempotent).")
     return 0
