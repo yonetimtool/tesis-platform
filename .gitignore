@@ -1,7 +1,29 @@
-node_modules/
+# Python
 __pycache__/
+*.pyc
+.pytest_cache/
+
+# Env / secrets
 .env
-*.log
-.dart_tool/
-build/
-.claude/settings.local.json
+*.env
+!*.env.example
+
+# Docker/terminal cop dosyalari (kazara olusan)
+infra/=
+infra/CACHED
+infra/[*
+infra/exporting
+infra/naming
+infra/reading
+infra/resolve
+infra/transferring
+infra/unpacking
+
+# IDE
+.idea/
+*.iml
+
+# Flutter (mobile kendi .gitignore'una sahip)
+mobile/.flutter-plugins-dependencies
+mobile/.idea/
+mobile/mobile.iml
