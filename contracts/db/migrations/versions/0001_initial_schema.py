@@ -685,6 +685,9 @@ def upgrade() -> None:
             yontem            dues_yontem NOT NULL,
             durum             dues_durum NOT NULL DEFAULT 'basarili',
             makbuz_no         text,
+            -- gercek saglayici (kart): hangi provider + saglayici referansi (token/oid).
+            provider          text,                 -- 'manual'|'iyzico'|'paytr'
+            provider_ref      text,                 -- webhook bu referansla odemeyi bulur
             kaydeden_user_id  uuid NOT NULL,
             idempotency_key   text NOT NULL,
             created_at        timestamptz NOT NULL DEFAULT now(),
@@ -707,6 +710,53 @@ def upgrade() -> None:
     op.execute("CREATE INDEX ix_payment_tenant ON dues_payment (tenant_id);")
     op.execute("CREATE INDEX ix_payment_unit ON dues_payment (unit_id);")
     op.execute("CREATE INDEX ix_payment_assessment ON dues_payment (assessment_id);")
+    # provider_ref GLOBAL benzersiz (webhook tenant'i bundan cozer; RLS-bagimsiz lookup):
+    op.execute(
+        "CREATE UNIQUE INDEX uq_payment_provider_ref "
+        "ON dues_payment (provider, provider_ref) WHERE provider_ref IS NOT NULL;"
+    )
+
+    # ------------------------------------------------------------------ #
+    # 9l. payment_webhook_event  (saglayici webhook idempotency/denetim)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE payment_webhook_event (
+            id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id     uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            provider      text NOT NULL,
+            event_id      text NOT NULL,
+            provider_ref  text NOT NULL,
+            created_at    timestamptz NOT NULL DEFAULT now(),
+            -- ayni webhook olayi bir kez islensin (idempotency):
+            CONSTRAINT uq_webhook_event UNIQUE (tenant_id, provider, event_id)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_webhook_event_tenant ON payment_webhook_event (tenant_id);")
+
+    # Webhook RLS bootstrap: webhook token TASIMAZ; tenant'i provider_ref'ten
+    # owner-sahipli SECURITY DEFINER fonksiyonla cozer (login slug deseni gibi).
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.payment_tenant_by_ref(p_provider text, p_provider_ref text)
+        RETURNS uuid
+        LANGUAGE sql
+        STABLE
+        SECURITY DEFINER
+        SET search_path = ''
+        AS $$
+            SELECT tenant_id FROM public.dues_payment
+            WHERE provider = p_provider AND provider_ref = p_provider_ref;
+        $$;
+        """
+    )
+    op.execute(
+        "REVOKE ALL ON FUNCTION public.payment_tenant_by_ref(text, text) FROM PUBLIC;"
+    )
+    op.execute(
+        f"GRANT EXECUTE ON FUNCTION public.payment_tenant_by_ref(text, text) TO {APP_ROLE};"
+    )
 
     # ------------------------------------------------------------------ #
     # 10. Row-Level Security
@@ -733,6 +783,7 @@ def upgrade() -> None:
         "unit_resident",
         "dues_assessment",
         "dues_payment",
+        "payment_webhook_event",
     ):
         _enable_rls(table)
 
@@ -769,7 +820,9 @@ def _enable_rls(table: str) -> None:
 
 def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
+    op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "payment_webhook_event",
         "dues_payment",
         "dues_assessment",
         "unit_resident",

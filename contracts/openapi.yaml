@@ -1385,6 +1385,54 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  # ================================================================= #
+  # ODEME WEBHOOK (public ama imza-korumali)
+  # ================================================================= #
+  /webhooks/payments/{provider}:
+    post:
+      tags: [webhooks]
+      summary: Saglayici odeme bildirimi (iyzico/paytr)
+      description: |
+        PUBLIC (token YOK) ama IMZA-KORUMALI. Saglayici ode​me sonucunu bildirir.
+        Imza/hash provider secret ile dogrulanir; gecersizse 401 ve hicbir islem
+        yapilmaz. provider_ref'ten tenant guvenli cozulur (SECURITY DEFINER).
+        IDEMPOTENT (provider+event_id). Tutar (kurus) odeme ile karsilastirilir;
+        uyusmazsa 400. Govde/imza formati saglayiciya ozeldir (iyzico: JSON +
+        `x-iyz-signature` header; paytr: form-encoded + `hash` alani).
+      security: []   # public; guvenlik imzayla saglanir
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { type: string, enum: [iyzico, paytr] }
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { type: object } }
+          application/x-www-form-urlencoded: { schema: { type: object } }
+      responses:
+        "200":
+          description: Islendi (veya idempotent tekrar)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  durum: { $ref: "#/components/schemas/DuesDurum" }
+        "400":
+          description: Tutar uyusmazligi / gecersiz govde
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "401":
+          description: Imza gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Saglayici/odeme referansi bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
 # =================================================================== #
 components:
   securitySchemes:
@@ -2169,6 +2217,12 @@ components:
         yontem: { $ref: "#/components/schemas/DuesYontem" }
         durum: { $ref: "#/components/schemas/DuesDurum" }
         makbuz_no: { type: string, nullable: true }
+        provider: { type: string, nullable: true, description: "manual|iyzico|paytr" }
+        provider_ref: { type: string, nullable: true, description: "Saglayici referansi (webhook bunu kullanir)" }
+        odeme_url:
+          type: string
+          nullable: true
+          description: "Yalniz kart akisi init yanitinda: saglayici odeme sayfasi URL'i (kalici degil)"
         kaydeden_user_id: { type: string, format: uuid }
         idempotency_key: { type: string }
         created_at: { type: string, format: date-time }

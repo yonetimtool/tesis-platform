@@ -194,12 +194,12 @@ async def create_payment(
             return JSONResponse(status_code=200, content=DuesPaymentOut.model_validate(existing).model_dump(mode="json"))
         raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
 
-    # Soyut odeme akisi (gercek tahsilat yok): init + verify -> durum.
+    # Odeme baslat: aktif saglayici (env). Manuel -> anlik 'basarili'; kart -> 'bekliyor'
+    # + provider_ref + odeme URL (kullanici saglayiciya yonlenir, otorite WEBHOOK'tan gelir).
     provider = get_payment_provider(body.yontem)
     init = provider.init_payment(
         tutar_kurus=body.tutar_kurus, unit_id=body.unit_id, idempotency_key=idempotency_key
     )
-    durum = "basarili" if provider.verify(init.provider_ref) else "bekliyor"
 
     obj = DuesPayment(
         tenant_id=user.tenant_id,
@@ -207,8 +207,10 @@ async def create_payment(
         assessment_id=body.assessment_id,
         tutar_kurus=body.tutar_kurus,
         yontem=body.yontem,
-        durum=durum,
+        durum=init.durum,
         makbuz_no=body.makbuz_no,
+        provider=provider.name,
+        provider_ref=init.provider_ref,
         kaydeden_user_id=user.id,
         idempotency_key=idempotency_key,
     )
@@ -232,7 +234,10 @@ async def create_payment(
             raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
         raise translate_integrity(exc)
     await db.refresh(obj)
-    return JSONResponse(status_code=201, content=DuesPaymentOut.model_validate(obj).model_dump(mode="json"))
+    content = DuesPaymentOut.model_validate(obj).model_dump(mode="json")
+    if init.redirect_url:  # kart: saglayici odeme sayfasi URL'i
+        content["odeme_url"] = init.redirect_url
+    return JSONResponse(status_code=201, content=content)
 
 
 @router.get("/dues/payments", response_model=DuesPaymentListResponse)

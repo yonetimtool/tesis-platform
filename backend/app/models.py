@@ -709,8 +709,27 @@ class DuesPayment(Base):
         DUES_DURUM, nullable=False, server_default=text("'basarili'")
     )
     makbuz_no: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider_ref: Mapped[str | None] = mapped_column(Text, nullable=True)
     kaydeden_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class PaymentWebhookEvent(Base):
+    __tablename__ = "payment_webhook_event"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "provider", "event_id", name="uq_webhook_event"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    provider: Mapped[str] = mapped_column(Text, nullable=False)
+    event_id: Mapped[str] = mapped_column(Text, nullable=False)
+    provider_ref: Mapped[str] = mapped_column(Text, nullable=False)
     created_at = _created_at()
 
 
@@ -734,6 +753,7 @@ __all__ = [
     "UnitResident",
     "DuesAssessment",
     "DuesPayment",
+    "PaymentWebhookEvent",
     "USER_ROLE",
     "GUN_TIPI",
     "PATROL_WINDOW_DURUM",

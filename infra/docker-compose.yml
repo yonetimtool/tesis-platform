@@ -131,6 +131,13 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin12345}
       MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
+      # Odeme saglayici — GERCEK ANAHTAR YOK (placeholder/sandbox); varsayilan manual.
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-manual}
+      IYZICO_API_KEY: ${IYZICO_API_KEY:-sandbox-iyzico-key}
+      IYZICO_SECRET: ${IYZICO_SECRET:-sandbox-iyzico-secret}
+      PAYTR_MERCHANT_ID: ${PAYTR_MERCHANT_ID:-sandbox-mid}
+      PAYTR_MERCHANT_KEY: ${PAYTR_MERCHANT_KEY:-sandbox-paytr-key}
+      PAYTR_MERCHANT_SALT: ${PAYTR_MERCHANT_SALT:-sandbox-paytr-salt}
     ports:
       - "8000:8000"
     healthcheck:

@@ -650,6 +650,8 @@ class DuesPaymentOut(BaseModel):
     yontem: str
     durum: str
     makbuz_no: str | None = None
+    provider: str | None = None
+    provider_ref: str | None = None
     kaydeden_user_id: uuid.UUID
     idempotency_key: str
     created_at: datetime

@@ -131,10 +131,28 @@ Borc **daireye** (`unit`) tahakkuk eder; `resident` daireye `unit_resident` ile 
 - **Bakiye:** `bakiye_kurus = toplam_tahakkuk - toplam_odenen(durum='basarili')` (pozitif=borc).
   `GET /units/{id}/dues` (admin) ve `GET /me/dues` (resident — yalniz kendi daireleri).
 
-### Soyut odeme akisi
-`get_payment_provider(yontem)` → `PaymentProvider` (`init_payment` + `verify`). Bu turda
-`ManualPaymentProvider` (elden/havale): `verify`→True → `durum='basarili'`; para hareketi yok.
-Gercek iyzico/PayTR (kart) **sonraki prompt** — arayuz sabit, somut provider eklenecek.
+### Odeme saglayici + webhook (iyzico / paytr iskeleti)
+`app/payments.py` — tek arayuz `PaymentProvider` (`init_payment` + `verify` +
+`parse_and_verify_webhook`). `get_payment_provider()` env **`PAYMENT_PROVIDER`** (manual|iyzico|paytr,
+vars. manual) ile secer.
+- **manual** (elden/havale): anlik `basarili`, para hareketi yok (mevcut akis korunur).
+- **iyzico / paytr** (kart): `init_payment` gercek API yapisina gore istek kurar (endpoint,
+  imza/hash — iyzico `IYZWS` sha1, paytr HMAC-SHA256), HTTP `_http_post_json/_http_post_form`
+  arkasinda (test'te mock'lanir). Sonuc: `dues_payment.bekliyor` + `provider`/`provider_ref`
+  + yanitta `odeme_url`. **Anahtar yoksa 503 `payment_unconfigured`** (sessiz cokme yok).
+
+**Webhook** (`POST /webhooks/payments/{provider}`, `app/routers/webhooks.py`) — odeme onayinin
+GUVENLI yolu:
+1. **Imza dogrulama** (DB'den once): provider secret ile HMAC; gecersiz → **401**, islem yok.
+2. **Tenant cozumu**: token yok → `payment_tenant_by_ref(provider, provider_ref)` SECURITY DEFINER
+   (RLS bootstrap) → `set_config`.
+3. **Idempotency**: `payment_webhook_event` UNIQUE(tenant,provider,event_id) — tekrar → no-op 200.
+4. **Tutar kontrolu**: webhook tutari (kurus) `dues_payment.tutar_kurus` ile eslesmeli → degilse
+   **400** (rollback, durum degismez).
+5. Gecerli → `durum=basarili/iptal`, bakiyeye yansir.
+
+**GERCEK ANAHTAR YOK** — sandbox denemesi anahtarlar gelince. Yerel/test secret'lari compose
+`:-` varsayilanlarindan gelir (`PAYTR_MERCHANT_KEY` vb.).
 seed: `acme-plaza` icin `A-12` dairesi + `resident@acme.com` baglantisi + `2026-06` tahakkuk (750 TL).
 
 ## Acil durum (panik butonu) + yonetim numarasi

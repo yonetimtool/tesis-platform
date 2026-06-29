@@ -141,6 +141,12 @@ dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`
 - **Erisim:** Unit/tahakkuk/odeme yonetimi yalniz **admin**; `security/cleaning` aidat gormez;
   `resident` yalniz `GET /me/dues` ile kendi dairelerinin borcunu gorur. Denetlenebilirlik:
   her odeme `kaydeden_user_id` + `odeme_zamani` + `donem` ile izlenir.
+- **Saglayici + webhook (kart):** `PAYMENT_PROVIDER = manual|iyzico|paytr` (env). Kart akisi
+  `init_payment` → `dues_payment.bekliyor` + `provider`/`provider_ref` + yanitta `odeme_url`.
+  Odeme durumunun tek guvenli kaynagi **webhook** (`POST /webhooks/payments/{provider}`, PUBLIC
+  + HMAC imza): imza gecersiz → 401; tenant `payment_tenant_by_ref` (SECURITY DEFINER) ile;
+  idempotent (`payment_webhook_event`); tutar (kurus) eslesmeli. Durum istemciden DEGISMEZ.
+  Gercek anahtar yok (sandbox sonra). `manual` hala anlik `basarili`.
 
 ## API base path
 
