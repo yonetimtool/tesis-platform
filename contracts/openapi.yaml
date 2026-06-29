@@ -17,9 +17,11 @@ info:
       * `POST /scans` icin `Idempotency-Key` header zorunlu.
 
 servers:
-  - url: https://api.example.com/v0
-    description: v0
-  - url: http://localhost:8000/v0
+  # NOT: base path /v0 KALDIRILDI — gercek backend endpoint'leri /v0 ONEKI OLMADAN
+  # sunuyor (orn. /auth/login, /scans). Base = host:port.
+  - url: https://api.example.com
+    description: production
+  - url: http://localhost:8000
     description: yerel gelistirme
 
 tags:

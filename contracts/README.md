@@ -126,6 +126,14 @@ alembic upgrade head
 Migration **owner/superuser** ile calistirilir (RLS'i bypass eder). Uygulama
 dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`.
 
+## API base path
+
+- **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:
+  `/auth/login`, `/scans`, `/tasks`, `/assets`, `/emergency`, `/dashboard/live`,
+  `/notifications`, `/tenant/settings`, `/landscape/schedule` ... Yerel: `http://localhost:8000`.
+  (Onceki `openapi.yaml` `servers` girdileri yanlislikla `/v0` iceriyordu; gercek backend
+  ile hizalamak icin kaldirildi.)
+
 ## Degisiklik politikasi
 
 - Sozlesme degisikligi **once burada** yapilir, PR ile gozden gecirilir, sonra
