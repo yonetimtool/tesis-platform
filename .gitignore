@@ -34,3 +34,8 @@ mobile/build/
 mobile/android/
 mobile/ios/
 mobile/.flutter-plugins-dependencies
+
+# Flutter derleme artiklari (kaynak degil)
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins-dependencies
