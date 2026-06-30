@@ -218,3 +218,74 @@ export interface UserListResponse {
   meta: PageMeta;
   items: UserRow[];
 }
+
+// ------------------------------- assets ------------------------------------ #
+export type AssetKategori = "ekipman" | "arac" | "alet" | "diger";
+export type AssetDurum = "musait" | "zimmetli" | "bakimda";
+
+export interface Asset {
+  id: string;
+  ad: string;
+  kategori?: string | null;
+  nfc_tag_uid?: string | null;
+  durum: string;
+  aciklama?: string | null;
+  aktif: boolean;
+  created_at: string;
+  updated_at?: string | null;
+}
+export interface AssetList {
+  meta: PageMeta;
+  items: Asset[];
+}
+
+export interface AssetCheckout {
+  id: string;
+  asset_id: string;
+  alan_user_id: string;
+  alma_zamani: string;
+  birakma_zamani?: string | null;
+  notlar?: string | null;
+  created_at: string;
+}
+export interface AssetCheckoutList {
+  meta: PageMeta;
+  items: AssetCheckout[];
+}
+
+// -------------------------------- tasks ------------------------------------ #
+export type TaskTip = "temizlik" | "kontrol" | "ilaclama" | "bakim" | "peyzaj" | "diger";
+
+export interface Task {
+  id: string;
+  tip: string;
+  ad: string;
+  aciklama?: string | null;
+  atanan_user_id?: string | null;
+  checkpoint_id?: string | null;
+  periyot_dakika?: number | null;
+  sonraki_planlanan?: string | null;
+  aktif: boolean;
+  created_at: string;
+  updated_at?: string | null;
+}
+export interface TaskList {
+  meta: PageMeta;
+  items: Task[];
+}
+
+export interface TaskCompletion {
+  id: string;
+  task_id: string;
+  tamamlayan_user_id: string;
+  tamamlanma_zamani: string;
+  nfc_tag_uid?: string | null;
+  foto_key?: string | null;
+  foto_url?: string | null;
+  notlar?: string | null;
+  created_at: string;
+}
+export interface TaskCompletionList {
+  meta: PageMeta;
+  items: TaskCompletion[];
+}

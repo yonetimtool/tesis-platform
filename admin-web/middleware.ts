@@ -29,5 +29,7 @@ export const config = {
     "/units/:path*",
     "/dues/:path*",
     "/users/:path*",
+    "/assets/:path*",
+    "/tasks/:path*",
   ],
 };
