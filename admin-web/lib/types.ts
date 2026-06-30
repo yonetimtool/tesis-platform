@@ -59,3 +59,66 @@ export interface NotificationList {
 export interface ApiError {
   error: { code: string; message: string };
 }
+
+// ------------------------------- shift ------------------------------------- #
+export type GunTipi = "her_gun" | "hafta_ici" | "hafta_sonu" | "resmi_tatil";
+
+export interface Shift {
+  id: string;
+  ad: string;
+  baslangic_saat: string; // "HH:MM"
+  bitis_saat: string;
+  gun_tipi: string;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface ShiftList {
+  meta: PageMeta;
+  items: Shift[];
+}
+
+// ----------------------------- checkpoint ---------------------------------- #
+export interface Checkpoint {
+  id: string;
+  ad: string;
+  nfc_tag_uid: string;
+  gps_lat?: number | null;
+  gps_lng?: number | null;
+  aktif: boolean;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface CheckpointList {
+  meta: PageMeta;
+  items: Checkpoint[];
+}
+
+// ----------------------------- patrol plan --------------------------------- #
+export interface PatrolPlan {
+  id: string;
+  ad: string;
+  shift_id?: string | null;
+  baslangic_saat: string;
+  bitis_saat: string;
+  periyot_dakika: number;
+  aktif: boolean;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface PatrolPlanList {
+  meta: PageMeta;
+  items: PatrolPlan[];
+}
+
+export interface PatrolPlanCheckpoint {
+  checkpoint_id: string;
+  sira: number;
+  checkpoint?: Checkpoint | null;
+}
+
+export interface PatrolPlanDetail extends PatrolPlan {
+  checkpoints?: PatrolPlanCheckpoint[];
+}

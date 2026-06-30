@@ -19,5 +19,12 @@ export function middleware(req: NextRequest): NextResponse {
 
 export const config = {
   // /login ve /api/* haric korunan sayfalar:
-  matcher: ["/", "/dashboard/:path*", "/notifications/:path*"],
+  matcher: [
+    "/",
+    "/dashboard/:path*",
+    "/notifications/:path*",
+    "/shifts/:path*",
+    "/checkpoints/:path*",
+    "/patrol-plans/:path*",
+  ],
 };

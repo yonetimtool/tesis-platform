@@ -102,6 +102,15 @@ export function logoutResponse(): NextResponse {
  * refresh (single-flight) + cookie rotasyonu + bir kez tekrar. refresh olunce
  * 401 + cookie temizle (istemci login'e doner).
  */
+async function passthrough(res: Response): Promise<NextResponse> {
+  // 204 / bos govde (orn. DELETE) -> govdesiz yanit.
+  if (res.status === 204 || res.headers.get("content-length") === "0") {
+    return new NextResponse(null, { status: res.status });
+  }
+  const data = await res.json().catch(() => null);
+  return NextResponse.json(data, { status: res.status });
+}
+
 export async function proxyJson(
   path: string,
   method: string,
@@ -124,12 +133,10 @@ export async function proxyJson(
       return out;
     }
     res = await callBackend(path, method, pair.access, body);
-    const data = await res.json().catch(() => null);
-    const out = NextResponse.json(data, { status: res.status });
+    const out = await passthrough(res);
     setAuthCookies(out, pair.access, pair.refresh);
     return out;
   }
 
-  const data = await res.json().catch(() => null);
-  return NextResponse.json(data, { status: res.status });
+  return passthrough(res);
 }

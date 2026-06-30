@@ -5,6 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 
 const LINKS = [
   { href: "/dashboard", label: "Canli Panel" },
+  { href: "/shifts", label: "Vardiyalar" },
+  { href: "/checkpoints", label: "NFC Noktalari" },
+  { href: "/patrol-plans", label: "Devriye Planlari" },
   { href: "/notifications", label: "Bildirimler" },
 ];
 
