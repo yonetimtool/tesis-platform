@@ -35,8 +35,9 @@ async function callBackend(
   method: string,
   accessToken: string | undefined,
   body?: unknown,
+  extraHeaders?: Record<string, string>,
 ): Promise<Response> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...(extraHeaders ?? {}) };
   if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
   if (body !== undefined) headers["Content-Type"] = "application/json";
   return fetch(`${API_BASE}${path}`, {
@@ -115,12 +116,13 @@ export async function proxyJson(
   path: string,
   method: string,
   body?: unknown,
+  extraHeaders?: Record<string, string>,
 ): Promise<NextResponse> {
   const jar = cookies();
   const access = jar.get(ACCESS_COOKIE)?.value;
   const refresh = jar.get(REFRESH_COOKIE)?.value;
 
-  let res = await callBackend(path, method, access, body);
+  let res = await callBackend(path, method, access, body, extraHeaders);
 
   if (res.status === 401 && refresh) {
     const pair = await refreshSingleFlight(refresh);
@@ -132,7 +134,7 @@ export async function proxyJson(
       clearAuthCookies(out);
       return out;
     }
-    res = await callBackend(path, method, pair.access, body);
+    res = await callBackend(path, method, pair.access, body, extraHeaders);
     const out = await passthrough(res);
     setAuthCookies(out, pair.access, pair.refresh);
     return out;

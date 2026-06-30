@@ -5,10 +5,13 @@ export async function apiSend<T = unknown>(
   url: string,
   method: string,
   body?: unknown,
+  headers?: Record<string, string>,
 ): Promise<T> {
+  const h: Record<string, string> = { ...(headers ?? {}) };
+  if (body !== undefined) h["Content-Type"] = "application/json";
   const res = await fetch(url, {
     method,
-    headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
+    headers: Object.keys(h).length ? h : undefined,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (res.status === 401) {
@@ -24,4 +27,11 @@ export async function apiSend<T = unknown>(
     throw new Error(message);
   }
   return data as T;
+}
+
+/** Idempotency-Key uretir (cift odeme kaydi korumasi). */
+export function genIdempotencyKey(): string {
+  const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+  if (c && typeof c.randomUUID === "function") return c.randomUUID();
+  return `k-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }

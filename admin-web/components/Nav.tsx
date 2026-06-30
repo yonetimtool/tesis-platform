@@ -8,6 +8,8 @@ const LINKS = [
   { href: "/shifts", label: "Vardiyalar" },
   { href: "/checkpoints", label: "NFC Noktalari" },
   { href: "/patrol-plans", label: "Devriye Planlari" },
+  { href: "/units", label: "Daireler" },
+  { href: "/dues", label: "Aidat" },
   { href: "/notifications", label: "Bildirimler" },
 ];
 

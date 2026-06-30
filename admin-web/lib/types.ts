@@ -122,3 +122,80 @@ export interface PatrolPlanCheckpoint {
 export interface PatrolPlanDetail extends PatrolPlan {
   checkpoints?: PatrolPlanCheckpoint[];
 }
+
+// -------------------------------- aidat ------------------------------------ #
+export type ResidentRol = "malik" | "kiraci";
+export type DuesYontem = "elden" | "havale" | "kart" | "diger";
+export type DuesDurum = "basarili" | "bekliyor" | "iptal";
+
+export interface Unit {
+  id: string;
+  no: string;
+  blok?: string | null;
+  metrekare?: number | null;
+  aktif: boolean;
+  created_at: string;
+  updated_at?: string | null;
+}
+export interface UnitList {
+  meta: PageMeta;
+  items: Unit[];
+}
+
+export interface UnitResident {
+  id: string;
+  unit_id: string;
+  user_id: string;
+  rol_tipi?: string | null;
+  baslangic?: string | null;
+  bitis?: string | null;
+  created_at: string;
+}
+
+export interface DuesAssessment {
+  id: string;
+  unit_id: string;
+  donem: string;
+  tutar_kurus: number;
+  son_odeme_tarihi?: string | null;
+  aciklama?: string | null;
+  created_at: string;
+}
+export interface DuesAssessmentList {
+  meta: PageMeta;
+  items: DuesAssessment[];
+}
+export interface DuesAssessmentResult {
+  created: DuesAssessment[];
+  atlanan: number;
+}
+
+export interface DuesPayment {
+  id: string;
+  unit_id: string;
+  assessment_id?: string | null;
+  tutar_kurus: number;
+  odeme_zamani: string;
+  yontem: string;
+  durum: string;
+  makbuz_no?: string | null;
+  provider?: string | null;
+  provider_ref?: string | null;
+  kaydeden_user_id: string;
+  idempotency_key: string;
+  created_at: string;
+}
+export interface DuesPaymentList {
+  meta: PageMeta;
+  items: DuesPayment[];
+}
+
+export interface UnitDuesStatus {
+  unit_id: string;
+  no: string;
+  toplam_tahakkuk_kurus: number;
+  toplam_odenen_kurus: number;
+  bakiye_kurus: number;
+  assessments?: DuesAssessment[];
+  payments?: DuesPayment[];
+}

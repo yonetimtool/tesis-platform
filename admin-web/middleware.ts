@@ -26,5 +26,7 @@ export const config = {
     "/shifts/:path*",
     "/checkpoints/:path*",
     "/patrol-plans/:path*",
+    "/units/:path*",
+    "/dues/:path*",
   ],
 };
