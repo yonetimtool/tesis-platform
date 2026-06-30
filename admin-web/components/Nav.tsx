@@ -12,6 +12,7 @@ const LINKS = [
   { href: "/assets", label: "Demirbas" },
   { href: "/units", label: "Daireler" },
   { href: "/dues", label: "Aidat" },
+  { href: "/reports/dues", label: "Raporlar" },
   { href: "/users", label: "Kullanicilar" },
   { href: "/emergency", label: "Acil Durum" },
   { href: "/notifications", label: "Bildirimler" },
