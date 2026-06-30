@@ -199,3 +199,22 @@ export interface UnitDuesStatus {
   assessments?: DuesAssessment[];
   payments?: DuesPayment[];
 }
+
+// -------------------------------- users ------------------------------------ #
+export type UserRole = "admin" | "security" | "cleaning" | "resident";
+
+// password_hash ASLA gelmez (backend User semasinda yok).
+export interface UserRow {
+  id: string;
+  ad: string;
+  email: string;
+  telefon?: string | null;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface UserListResponse {
+  meta: PageMeta;
+  items: UserRow[];
+}

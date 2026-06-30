@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/patrol-plans", label: "Devriye Planlari" },
   { href: "/units", label: "Daireler" },
   { href: "/dues", label: "Aidat" },
+  { href: "/users", label: "Kullanicilar" },
   { href: "/notifications", label: "Bildirimler" },
 ];
 

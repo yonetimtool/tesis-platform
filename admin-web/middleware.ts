@@ -28,5 +28,6 @@ export const config = {
     "/patrol-plans/:path*",
     "/units/:path*",
     "/dues/:path*",
+    "/users/:path*",
   ],
 };

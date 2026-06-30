@@ -13,6 +13,7 @@ import type {
   Unit,
   UnitDuesStatus,
   UnitResident,
+  UserListResponse,
 } from "@/lib/types";
 
 // Manuel tahsilat: elden/havale/diger. (kart = provider/webhook akisi, panelde manuel odak.)
@@ -33,6 +34,11 @@ export function UnitDetail({ unit }: { unit: Unit }) {
   );
   const { data: residents, mutate: mutateRes } = useSWR<UnitResident[]>(
     `/api/units/${unit.id}/residents`,
+    jsonFetcher,
+  );
+  // Sakin picker: resident rolundeki kullanicilar (GET /users?role=resident).
+  const { data: residentUsers } = useSWR<UserListResponse>(
+    "/api/users?role=resident&is_active=true&limit=200&offset=0",
     jsonFetcher,
   );
 
@@ -169,6 +175,8 @@ export function UnitDetail({ unit }: { unit: Unit }) {
 
   const bakiye = dues?.bakiye_kurus ?? 0;
   const aktifSakinler = (residents ?? []).filter((r) => !r.bitis);
+  const atanmisIds = new Set(aktifSakinler.map((r) => r.user_id));
+  const residentChoices = (residentUsers?.items ?? []).filter((u) => !atanmisIds.has(u.id));
 
   return (
     <div className="space-y-5 rounded-xl border border-slate-300 bg-white p-5">
@@ -358,17 +366,20 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         </ul>
         <form onSubmit={addResident} className="flex items-end gap-2">
           <div className="grow">
-            <Field
-              label="Sakin ekle (kullanici ID)"
-              hint="role=resident kullanicinin UUID'si (kullanici listesi ucu sozlesmede yok — bkz. not)."
-            >
-              <input
-                className={`${inputCls} font-mono`}
+            <Field label="Sakin ekle" hint="Kullanicilar ekranindan eklenen resident hesaplari">
+              <select
+                className={inputCls}
                 value={rUser}
                 onChange={(e) => setRUser(e.target.value)}
-                placeholder="00000000-0000-0000-0000-000000000000"
                 required
-              />
+              >
+                <option value="">— sakin sec —</option>
+                {residentChoices.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.ad} ({u.email})
+                  </option>
+                ))}
+              </select>
             </Field>
           </div>
           <div className="w-40">
