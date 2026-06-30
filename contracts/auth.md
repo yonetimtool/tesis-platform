@@ -112,6 +112,7 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `PUT  /patrol-plans/{id}/checkpoints` |  ✅   |    ❌    |    ❌    |    ❌    |
 | `POST /scans`                         |  ✅   |    ✅    |    ✅    |    ❌    |
 | `GET  /dashboard/live`                |  ✅   |    ✅    |    ❌    |    ❌    |
+| `GET  /patrol-windows`                |  ✅   |    ✅    |    ❌    |    ❌    |
 | `GET  /notifications`                 |  ✅   |    ✅    |    ❌    |    ❌    |
 | `PATCH /notifications/{id}`           |  ✅   |    ✅    |    ❌    |    ❌    |
 | `GET  /tasks` (liste/detay)           |  ✅   |    ✅    |    ✅    |    ❌    |

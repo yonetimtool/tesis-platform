@@ -327,6 +327,34 @@ class DashboardLiveOut(BaseModel):
     son_alarmlar: list[AlarmOut]
 
 
+# ---------------------------- patrol-windows ------------------------------- #
+PatrolWindowDurumLiteral = Literal["bekliyor", "tamamlandi", "kacirildi"]
+
+
+class PatrolWindowOut(BaseModel):
+    id: uuid.UUID
+    patrol_plan_id: uuid.UUID
+    plan_adi: str | None = None
+    pencere_baslangic: datetime
+    pencere_bitis: datetime
+    durum: str
+    beklenen_checkpoint_sayisi: int
+    okutulan_checkpoint_sayisi: int
+
+
+class PatrolWindowOzet(BaseModel):
+    toplam: int
+    tamamlandi: int
+    kacirildi: int
+    bekliyor: int
+
+
+class PatrolWindowListResponse(BaseModel):
+    meta: PageMetaOut
+    ozet: PatrolWindowOzet
+    items: list[PatrolWindowOut]
+
+
 # ----------------------------- notifications ------------------------------- #
 class NotificationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

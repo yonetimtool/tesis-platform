@@ -156,6 +156,16 @@ dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`
   **`password_hash` yanitta ASLA donmez** (`User` semasinda yok). Kullanici **silinmez**;
   pasiflestirme `is_active=false` (PATCH). tenant token'dan, RLS izole.
 
+## Tur gecmisi (patrol-windows)
+
+- `GET /patrol-windows` (admin + security): materialize edilmis `patrol_window`'larin
+  **gecmisi** — tarih araligi (`baslangic`/`bitis`, yari-acik: `pencere_baslangic >= baslangic AND
+  < bitis`), `durum` (bekliyor|tamamlandi|kacirildi) ve `patrol_plan_id` filtreleri; `pencere_baslangic`
+  **DESC** sirali; sayfali (limit/offset+meta). `/dashboard/live` anlik bugunku durumu verir, bu uc
+  **gecmise donuk** sorgu icindir. **Yeni tablo YOK** — mevcut `patrol_window` uzerinde okuma.
+  Ozet sayilar (`toplam/tamamlandi/kacirildi/bekliyor`) **filtrelenmis tum kume** uzerinden
+  `response.ozet`'te doner. tenant-izole (RLS).
+
 ## API base path
 
 - **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:

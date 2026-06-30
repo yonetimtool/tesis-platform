@@ -494,6 +494,53 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /patrol-windows:
+    get:
+      tags: [dashboard]
+      summary: Tur penceresi gecmisi (tarih araligi + durum filtreli)
+      description: |
+        Materialize edilmis patrol_window'larin GECMISI. /dashboard/live anlik
+        bugunku durumu verir; bu uc gecmise donuk sorgu icindir ("gecen hafta
+        hangi turlar tamamlandi/kacirildi"). pencere_baslangic DESC sirali.
+        Ozet sayilar (toplam/tamamlandi/kacirildi/bekliyor) FILTRELENMIS TUM
+        kume uzerinden response.ozet alaninda doner (sayfa ile sinirli degil).
+        RBAC: admin + security (dashboard ile tutarli). tenant-izole (RLS).
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: baslangic
+          in: query
+          description: "pencere_baslangic >= bu an (UTC, ISO-8601)"
+          schema: { type: string, format: date-time }
+        - name: bitis
+          in: query
+          description: "pencere_baslangic < bu an (UTC, ISO-8601; yari-acik aralik)"
+          schema: { type: string, format: date-time }
+        - name: durum
+          in: query
+          schema: { $ref: "#/components/schemas/PatrolWindowDurum" }
+        - name: patrol_plan_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Tur penceresi listesi + ozet
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items, ozet]
+                    properties:
+                      ozet: { $ref: "#/components/schemas/PatrolWindowOzet" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/PatrolWindowHistory" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
   # ================================================================= #
   # NOTIFICATIONS
   # ================================================================= #
@@ -1944,6 +1991,30 @@ components:
         durum: { $ref: "#/components/schemas/PatrolWindowDurum" }
         beklenen_checkpoint_sayisi: { type: integer }
         okutulan_checkpoint_sayisi: { type: integer }
+    # Tur penceresi gecmisi (GET /patrol-windows ogesi).
+    PatrolWindowHistory:
+      type: object
+      required:
+        [id, patrol_plan_id, pencere_baslangic, pencere_bitis, durum,
+         beklenen_checkpoint_sayisi, okutulan_checkpoint_sayisi]
+      properties:
+        id: { type: string, format: uuid }
+        patrol_plan_id: { type: string, format: uuid }
+        plan_adi: { type: string, nullable: true }
+        pencere_baslangic: { type: string, format: date-time }
+        pencere_bitis: { type: string, format: date-time }
+        durum: { $ref: "#/components/schemas/PatrolWindowDurum" }
+        beklenen_checkpoint_sayisi: { type: integer }
+        okutulan_checkpoint_sayisi: { type: integer }
+    PatrolWindowOzet:
+      type: object
+      required: [toplam, tamamlandi, kacirildi, bekliyor]
+      description: "Filtrelenmis TUM kume uzerinden sayilar (sayfa ile sinirli degil)."
+      properties:
+        toplam: { type: integer }
+        tamamlandi: { type: integer }
+        kacirildi: { type: integer }
+        bekliyor: { type: integer }
     Alarm:
       type: object
       required: [tip, olusma_zamani, mesaj]
