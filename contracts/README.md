@@ -148,6 +148,14 @@ dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`
   idempotent (`payment_webhook_event`); tutar (kurus) eslesmeli. Durum istemciden DEGISMEZ.
   Gercek anahtar yok (sandbox sonra). `manual` hala anlik `basarili`.
 
+## Kullanici yonetimi (users)
+
+- `GET/POST/PATCH /users` (yalniz **admin**): personel + sakin (resident dahil) olusturma/listeleme/
+  guncelleme. **Yeni tablo YOK** — mevcut `app_user` uzerinde calisir. `email` tenant icinde
+  benzersiz (`UNIQUE(tenant_id,email)`) → cakisma **409**. parola **bcrypt** (`app/security.py`);
+  **`password_hash` yanitta ASLA donmez** (`User` semasinda yok). Kullanici **silinmez**;
+  pasiflestirme `is_active=false` (PATCH). tenant token'dan, RLS izole.
+
 ## API base path
 
 - **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:

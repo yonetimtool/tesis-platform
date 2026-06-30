@@ -26,6 +26,7 @@ from .routers import shifts as shifts_router
 from .routers import tasks as tasks_router
 from .routers import tenant as tenant_router
 from .routers import units as units_router
+from .routers import users as users_router
 from .routers import uploads as uploads_router
 from .routers import webhooks as webhooks_router
 
@@ -65,6 +66,7 @@ app.include_router(emergency_router.router)
 app.include_router(tenant_router.router)
 app.include_router(units_router.router)
 app.include_router(dues_router.router)
+app.include_router(users_router.router)
 app.include_router(webhooks_router.router)
 
 

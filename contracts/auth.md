@@ -139,6 +139,7 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `POST/GET /dues/assessments`          |  ✅   |    ❌    |    ❌    |    ❌    |
 | `POST/GET /dues/payments`             |  ✅   |    ❌    |    ❌    |    ❌    |
 | `GET /me/dues`                        |  ❌   |    ❌    |    ❌    |    ✅    |
+| `GET/POST/PATCH /users*`              |  ✅   |    ❌    |    ❌    |    ❌    |
 
 > **Aidat:** Unit/tahakkuk/odeme yonetimi yalniz **admin**. **security/cleaning aidat
 > GORMEZ** (403). **resident** yalniz `GET /me/dues` ile **kendi** dairelerinin borcunu gorur;

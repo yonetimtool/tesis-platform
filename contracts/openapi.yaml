@@ -1433,6 +1433,110 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
+  # ================================================================= #
+  # USERS (personel + sakin yonetimi) — admin
+  # ================================================================= #
+  /users:
+    get:
+      tags: [users]
+      summary: Kullanici listesi (admin)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: role
+          in: query
+          schema: { $ref: "#/components/schemas/UserRole" }
+        - name: is_active
+          in: query
+          schema: { type: boolean }
+        - name: q
+          in: query
+          description: Ad/email icinde arama (opsiyonel)
+          schema: { type: string }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [users]
+      summary: Kullanici olustur (admin)
+      description: |
+        Her rol (admin/security/cleaning/resident) olusturulabilir. parola bcrypt ile
+        hash'lenir; password_hash YANITTA donmez. email tenant icinde benzersiz.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: email bu tenant'ta zaten kayitli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /users/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [users]
+      summary: Kullanici detay (admin)
+      responses:
+        "200":
+          description: Detay
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [users]
+      summary: Kullanici guncelle (admin)
+      description: |
+        ad/telefon/role/is_active ve opsiyonel email/parola. parola verilirse yeniden
+        hash'lenir. Kullanici SILINMEZ; pasiflestirme icin is_active=false kullanin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: email bu tenant'ta zaten kayitli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
 # =================================================================== #
 components:
   securitySchemes:
@@ -1553,6 +1657,38 @@ components:
     UserRole:
       type: string
       enum: [admin, security, cleaning, resident]
+
+    # password_hash ASLA donmez (guvenlik).
+    User:
+      type: object
+      required: [id, ad, email, role, is_active, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string }
+        email: { type: string, format: email }
+        telefon: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/UserRole" }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+    UserCreate:
+      type: object
+      required: [ad, email, role, password]
+      properties:
+        ad: { type: string }
+        email: { type: string, format: email }
+        telefon: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/UserRole" }
+        password: { type: string, format: password, minLength: 8 }
+    UserUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string }
+        email: { type: string, format: email }
+        telefon: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/UserRole" }
+        is_active: { type: boolean }
+        password: { type: string, format: password, minLength: 8 }
 
     PatrolWindowDurum:
       type: string

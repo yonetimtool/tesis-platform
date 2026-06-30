@@ -54,6 +54,50 @@ class UserOut(BaseModel):
     is_active: bool
 
 
+UserRoleLiteral = Literal["admin", "security", "cleaning", "resident"]
+
+
+# Admin kullanici yonetimi ciktisi — password_hash ASLA yok.
+class UserAdminOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    email: str
+    telefon: str | None = None
+    role: str
+    is_active: bool
+    created_at: datetime
+
+
+class UserCreate(BaseModel):
+    ad: str = Field(..., min_length=1)
+    email: EmailStr
+    telefon: str | None = None
+    role: UserRoleLiteral
+    password: str = Field(..., min_length=8)
+
+
+class UserUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1)
+    email: EmailStr | None = None
+    telefon: str | None = None
+    role: UserRoleLiteral | None = None
+    is_active: bool | None = None
+    password: str | None = Field(None, min_length=8)
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "UserUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class UserAdminListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[UserAdminOut]
+
+
 # ----------------------- Faz-0 dogrulama (diagnostic) ---------------------- #
 # NOT: /me/checkpoints diagnostigi icin (Faz-0). Checkpoint CRUD asagida.
 class CheckpointBrief(BaseModel):
