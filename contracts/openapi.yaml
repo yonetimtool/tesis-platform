@@ -755,6 +755,56 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  /task-completions:
+    get:
+      tags: [tasks]
+      summary: Gorev tamamlama gecmisi (tum gorevler; tarih/tip/atanan filtreli)
+      description: |
+        TUM gorevlerin tamamlanma GECMISI. /tasks/{id}/completions tek gorev
+        icindir; bu uc capraz-gorev gecmise donuk sorgu icindir ("gecen hafta
+        hangi gorevler tamamlandi, kim, hangi tip"). tamamlanma_zamani DESC.
+        /patrol-windows ile ayni desen: ozet sayilar (toplam + tip dagilimi)
+        FILTRELENMIS TUM kume uzerinden response.ozet'te doner.
+        RBAC: admin + security. tenant-izole (RLS).
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: baslangic
+          in: query
+          description: "tamamlanma_zamani >= bu an (UTC, ISO-8601)"
+          schema: { type: string, format: date-time }
+        - name: bitis
+          in: query
+          description: "tamamlanma_zamani < bu an (UTC, ISO-8601; yari-acik)"
+          schema: { type: string, format: date-time }
+        - name: tip
+          in: query
+          schema: { $ref: "#/components/schemas/TaskTip" }
+        - name: task_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: tamamlayan_user_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Tamamlama listesi + ozet
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items, ozet]
+                    properties:
+                      ozet: { $ref: "#/components/schemas/TaskCompletionOzet" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/TaskCompletionHistory" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
   /landscape/schedule:
     get:
       tags: [tasks]
@@ -2122,6 +2172,34 @@ components:
         notlar: { type: string, nullable: true }
         idempotency_key: { type: string }
         created_at: { type: string, format: date-time }
+    # Capraz-gorev tamamlama gecmisi ogesi (GET /task-completions). foto_url/gps
+    # YOK; kanit varligi foto_var/nfc_dogrulandi bool olarak yeter.
+    TaskCompletionHistory:
+      type: object
+      required:
+        [id, task_id, tip, tamamlayan_user_id, tamamlanma_zamani, foto_var, nfc_dogrulandi]
+      properties:
+        id: { type: string, format: uuid }
+        task_id: { type: string, format: uuid }
+        task_adi: { type: string, nullable: true }
+        tip: { $ref: "#/components/schemas/TaskTip" }
+        tamamlayan_user_id: { type: string, format: uuid }
+        tamamlanma_zamani: { type: string, format: date-time }
+        foto_var: { type: boolean, description: "foto_key dolu mu" }
+        nfc_dogrulandi: { type: boolean, description: "nfc_tag_uid okutuldu mu" }
+        notlar: { type: string, nullable: true }
+    TaskCompletionOzet:
+      type: object
+      required: [toplam, temizlik, kontrol, ilaclama, peyzaj]
+      description: |
+        Filtrelenmis TUM kume uzerinden. `toplam` her tipi sayar; ayrik alanlar
+        ana tip dagilimidir (bakim/diger toplama dahil, ayrica kirilmaz).
+      properties:
+        toplam: { type: integer }
+        temizlik: { type: integer }
+        kontrol: { type: integer }
+        ilaclama: { type: integer }
+        peyzaj: { type: integer }
     TaskCompletionCreate:
       type: object
       required: [tamamlanma_zamani]

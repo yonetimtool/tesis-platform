@@ -120,6 +120,7 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `PATCH /tasks/{id}`                   |  ✅   |    ❌    |    ❌    |    ❌    |
 | `DELETE /tasks/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |
 | `GET  /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
+| `GET  /task-completions` (gecmis)     |  ✅   |    ✅    |    ❌    |    ❌    |
 | `POST /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
 | `GET  /landscape/schedule`            |  ✅   |    ✅    |    ✅    |    ❌    |
 | `POST /uploads/presign`               |  ✅   |    ✅    |    ✅    |    ❌    |

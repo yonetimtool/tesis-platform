@@ -156,6 +156,16 @@ dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`
   **`password_hash` yanitta ASLA donmez** (`User` semasinda yok). Kullanici **silinmez**;
   pasiflestirme `is_active=false` (PATCH). tenant token'dan, RLS izole.
 
+## Gorev tamamlama gecmisi (task-completions)
+
+- `GET /task-completions` (admin + security): TUM gorevlerin tamamlanma **gecmisi** —
+  tarih araligi (`baslangic`/`bitis`, yari-acik: `tamamlanma_zamani >= baslangic AND < bitis`),
+  `tip` (task.tip uzerinden join), `task_id`, `tamamlayan_user_id` filtreleri; `tamamlanma_zamani`
+  **DESC**; sayfali. `/tasks/{id}/completions` tek gorev icindir, bu uc **capraz-gorev** sorgudur.
+  **Yeni tablo YOK** — mevcut `task_completion` uzerinde okuma. Ozet (`toplam` + ana tip dagilimi
+  temizlik/kontrol/ilaclama/peyzaj) **filtrelenmis tum kume** uzerinden `response.ozet`'te doner.
+  Kanit varligi `foto_var`/`nfc_dogrulandi` bool olarak verilir (foto_url/gps donmez). tenant-izole (RLS).
+
 ## Tur gecmisi (patrol-windows)
 
 - `GET /patrol-windows` (admin + security): materialize edilmis `patrol_window`'larin

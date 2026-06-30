@@ -24,6 +24,7 @@ from .routers import notifications as notifications_router
 from .routers import patrol_plans as patrol_plans_router
 from .routers import scans as scans_router
 from .routers import shifts as shifts_router
+from .routers import task_completions as task_completions_router
 from .routers import tasks as tasks_router
 from .routers import tenant as tenant_router
 from .routers import units as units_router
@@ -61,6 +62,7 @@ app.include_router(dashboard_router.router)
 app.include_router(patrol_windows_router.router)
 app.include_router(notifications_router.router)
 app.include_router(tasks_router.router)
+app.include_router(task_completions_router.router)
 app.include_router(uploads_router.router)
 app.include_router(landscape_router.router)
 app.include_router(assets_router.router)

@@ -463,6 +463,34 @@ class TaskCompletionListResponse(BaseModel):
     items: list[TaskCompletionOut]
 
 
+# Capraz-gorev tamamlama gecmisi (GET /task-completions). foto_url/gps yok;
+# kanit varligi foto_var/nfc_dogrulandi bool olarak yeter.
+class TaskCompletionHistoryOut(BaseModel):
+    id: uuid.UUID
+    task_id: uuid.UUID
+    task_adi: str | None = None
+    tip: str
+    tamamlayan_user_id: uuid.UUID
+    tamamlanma_zamani: datetime
+    foto_var: bool
+    nfc_dogrulandi: bool
+    notlar: str | None = None
+
+
+class TaskCompletionOzet(BaseModel):
+    toplam: int
+    temizlik: int
+    kontrol: int
+    ilaclama: int
+    peyzaj: int
+
+
+class TaskCompletionHistoryListResponse(BaseModel):
+    meta: PageMetaOut
+    ozet: TaskCompletionOzet
+    items: list[TaskCompletionHistoryOut]
+
+
 # ------------------------------- uploads ----------------------------------- #
 class PresignRequest(BaseModel):
     content_type: str = Field(..., min_length=1, examples=["image/jpeg"])
