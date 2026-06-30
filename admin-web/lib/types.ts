@@ -253,6 +253,29 @@ export interface AssetCheckoutList {
   items: AssetCheckout[];
 }
 
+// --------------------------- patrol windows (gecmis) ----------------------- #
+export interface PatrolWindowRow {
+  id: string;
+  patrol_plan_id: string;
+  plan_adi?: string | null;
+  pencere_baslangic: string;
+  pencere_bitis: string;
+  durum: string;
+  okutulan_checkpoint_sayisi: number;
+  beklenen_checkpoint_sayisi: number;
+}
+export interface PatrolWindowOzet {
+  toplam: number;
+  tamamlandi: number;
+  kacirildi: number;
+  bekliyor: number;
+}
+export interface PatrolWindowListResponse {
+  meta: PageMeta;
+  ozet: PatrolWindowOzet;
+  items: PatrolWindowRow[];
+}
+
 // -------------------------------- tasks ------------------------------------ #
 export type TaskTip = "temizlik" | "kontrol" | "ilaclama" | "bakim" | "peyzaj" | "diger";
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { Field, ErrorBox, inputCls, btnPrimary, btnGhost } from "@/components/form";
+import { ReportsTabs } from "@/components/ReportsTabs";
 import { fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { kurusToTL } from "@/lib/money";
@@ -164,6 +165,7 @@ export default function DuesReportPage() {
 
   return (
     <div className="space-y-6">
+      <ReportsTabs />
       <h1 className="text-2xl font-semibold">Aidat Tahsilat Raporu</h1>
 
       <form onSubmit={run} className="flex items-end gap-3 rounded-xl border border-slate-200 bg-white p-5">
