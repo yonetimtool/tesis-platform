@@ -13,7 +13,9 @@ const LINKS = [
   { href: "/units", label: "Daireler" },
   { href: "/dues", label: "Aidat" },
   { href: "/users", label: "Kullanicilar" },
+  { href: "/emergency", label: "Acil Durum" },
   { href: "/notifications", label: "Bildirimler" },
+  { href: "/settings", label: "Ayarlar" },
 ];
 
 export function Nav() {

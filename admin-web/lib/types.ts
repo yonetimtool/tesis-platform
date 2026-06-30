@@ -289,3 +289,32 @@ export interface TaskCompletionList {
   meta: PageMeta;
   items: TaskCompletion[];
 }
+
+// ------------------------------ emergency ---------------------------------- #
+export type EmergencyDurum = "acik" | "cozuldu";
+
+export interface EmergencyAlert {
+  id: string;
+  tetikleyen_user_id: string;
+  tetiklenme_zamani: string;
+  gps_lat?: number | null;
+  gps_lng?: number | null;
+  durum: string;
+  cozen_user_id?: string | null;
+  cozulme_zamani?: string | null;
+  notlar?: string | null;
+  created_at: string;
+}
+export interface EmergencyList {
+  meta: PageMeta;
+  items: EmergencyAlert[];
+}
+
+// --------------------------- tenant settings ------------------------------- #
+export interface TenantSettings {
+  tenant_id: string;
+  ad: string;
+  slug: string;
+  timezone: string;
+  acil_durum_telefon?: string | null;
+}

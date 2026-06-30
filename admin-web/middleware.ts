@@ -31,5 +31,7 @@ export const config = {
     "/users/:path*",
     "/assets/:path*",
     "/tasks/:path*",
+    "/emergency/:path*",
+    "/settings/:path*",
   ],
 };
