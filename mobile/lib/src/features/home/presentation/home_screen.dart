@@ -1,0 +1,59 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../routing/app_router.dart';
+import '../../auth/presentation/auth_controller.dart';
+
+/// Giris sonrasi placeholder ana ekran. Icerik (vardiya/devriye/scan) sonraki
+/// promptlarda eklenecek.
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Ana ekran'),
+        actions: [
+          IconButton(
+            tooltip: 'Cikis yap',
+            icon: const Icon(Icons.logout),
+            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+          ),
+        ],
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle_outline, size: 64),
+              const SizedBox(height: 16),
+              const Text(
+                'Giris basarili',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Operasyon ekranlari sonraki adimlarda eklenecek.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.nfc),
+                  title: const Text('NFC etiket okuma'),
+                  subtitle: const Text('Devriye noktasi etiketini okut'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(AppRoutes.nfc),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
