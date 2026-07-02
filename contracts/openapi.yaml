@@ -494,6 +494,53 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /patrol-windows:
+    get:
+      tags: [dashboard]
+      summary: Tur penceresi gecmisi (tarih araligi + durum filtreli)
+      description: |
+        Materialize edilmis patrol_window'larin GECMISI. /dashboard/live anlik
+        bugunku durumu verir; bu uc gecmise donuk sorgu icindir ("gecen hafta
+        hangi turlar tamamlandi/kacirildi"). pencere_baslangic DESC sirali.
+        Ozet sayilar (toplam/tamamlandi/kacirildi/bekliyor) FILTRELENMIS TUM
+        kume uzerinden response.ozet alaninda doner (sayfa ile sinirli degil).
+        RBAC: admin + security (dashboard ile tutarli). tenant-izole (RLS).
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: baslangic
+          in: query
+          description: "pencere_baslangic >= bu an (UTC, ISO-8601)"
+          schema: { type: string, format: date-time }
+        - name: bitis
+          in: query
+          description: "pencere_baslangic < bu an (UTC, ISO-8601; yari-acik aralik)"
+          schema: { type: string, format: date-time }
+        - name: durum
+          in: query
+          schema: { $ref: "#/components/schemas/PatrolWindowDurum" }
+        - name: patrol_plan_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Tur penceresi listesi + ozet
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items, ozet]
+                    properties:
+                      ozet: { $ref: "#/components/schemas/PatrolWindowOzet" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/PatrolWindowHistory" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
   # ================================================================= #
   # NOTIFICATIONS
   # ================================================================= #
@@ -706,6 +753,56 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /task-completions:
+    get:
+      tags: [tasks]
+      summary: Gorev tamamlama gecmisi (tum gorevler; tarih/tip/atanan filtreli)
+      description: |
+        TUM gorevlerin tamamlanma GECMISI. /tasks/{id}/completions tek gorev
+        icindir; bu uc capraz-gorev gecmise donuk sorgu icindir ("gecen hafta
+        hangi gorevler tamamlandi, kim, hangi tip"). tamamlanma_zamani DESC.
+        /patrol-windows ile ayni desen: ozet sayilar (toplam + tip dagilimi)
+        FILTRELENMIS TUM kume uzerinden response.ozet'te doner.
+        RBAC: admin + security. tenant-izole (RLS).
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: baslangic
+          in: query
+          description: "tamamlanma_zamani >= bu an (UTC, ISO-8601)"
+          schema: { type: string, format: date-time }
+        - name: bitis
+          in: query
+          description: "tamamlanma_zamani < bu an (UTC, ISO-8601; yari-acik)"
+          schema: { type: string, format: date-time }
+        - name: tip
+          in: query
+          schema: { $ref: "#/components/schemas/TaskTip" }
+        - name: task_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: tamamlayan_user_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Tamamlama listesi + ozet
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items, ozet]
+                    properties:
+                      ozet: { $ref: "#/components/schemas/TaskCompletionOzet" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/TaskCompletionHistory" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
   /landscape/schedule:
@@ -1046,6 +1143,67 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
+  # DEVICES (FCM push token kaydi)
+  # ================================================================= #
+  /devices:
+    post:
+      tags: [devices]
+      summary: Cihaz push token kaydet (kendi cihazi; her rol)
+      description: |
+        Giris yapmis kullanici kendi cihaz FCM token'ini kaydeder. Ayni token
+        (tenant icinde UNIQUE) tekrar gonderilirse guncellenir + aktiflesir
+        (idempotent upsert). user_id token'dan turetilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeviceRegister" }
+      responses:
+        "201":
+          description: Kaydedildi (veya guncellendi)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Device" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    get:
+      tags: [devices]
+      summary: Tenant cihazlari (admin, debug)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Device" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /devices/{fcm_token}:
+    delete:
+      tags: [devices]
+      summary: Kendi cihaz token'ini pasiflestir (logout/uninstall)
+      parameters:
+        - name: fcm_token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: Pasiflestirildi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /tenant/settings:
     get:
@@ -1433,6 +1591,110 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
+  # ================================================================= #
+  # USERS (personel + sakin yonetimi) — admin
+  # ================================================================= #
+  /users:
+    get:
+      tags: [users]
+      summary: Kullanici listesi (admin)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: role
+          in: query
+          schema: { $ref: "#/components/schemas/UserRole" }
+        - name: is_active
+          in: query
+          schema: { type: boolean }
+        - name: q
+          in: query
+          description: Ad/email icinde arama (opsiyonel)
+          schema: { type: string }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [users]
+      summary: Kullanici olustur (admin)
+      description: |
+        Her rol (admin/security/cleaning/resident) olusturulabilir. parola bcrypt ile
+        hash'lenir; password_hash YANITTA donmez. email tenant icinde benzersiz.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: email bu tenant'ta zaten kayitli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /users/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [users]
+      summary: Kullanici detay (admin)
+      responses:
+        "200":
+          description: Detay
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [users]
+      summary: Kullanici guncelle (admin)
+      description: |
+        ad/telefon/role/is_active ve opsiyonel email/parola. parola verilirse yeniden
+        hash'lenir. Kullanici SILINMEZ; pasiflestirme icin is_active=false kullanin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: email bu tenant'ta zaten kayitli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
 # =================================================================== #
 components:
   securitySchemes:
@@ -1553,6 +1815,60 @@ components:
     UserRole:
       type: string
       enum: [admin, security, cleaning, resident]
+
+    # --------------------------- devices --------------------------- #
+    DevicePlatform:
+      type: string
+      enum: [android, ios, web]
+    DeviceRegister:
+      type: object
+      required: [fcm_token, platform]
+      properties:
+        fcm_token: { type: string }
+        platform: { $ref: "#/components/schemas/DevicePlatform" }
+    Device:
+      type: object
+      required: [id, user_id, fcm_token, platform, aktif, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        fcm_token: { type: string }
+        platform: { $ref: "#/components/schemas/DevicePlatform" }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    # password_hash ASLA donmez (guvenlik).
+    User:
+      type: object
+      required: [id, ad, email, role, is_active, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string }
+        email: { type: string, format: email }
+        telefon: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/UserRole" }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+    UserCreate:
+      type: object
+      required: [ad, email, role, password]
+      properties:
+        ad: { type: string }
+        email: { type: string, format: email }
+        telefon: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/UserRole" }
+        password: { type: string, format: password, minLength: 8 }
+    UserUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string }
+        email: { type: string, format: email }
+        telefon: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/UserRole" }
+        is_active: { type: boolean }
+        password: { type: string, format: password, minLength: 8 }
 
     PatrolWindowDurum:
       type: string
@@ -1808,6 +2124,30 @@ components:
         durum: { $ref: "#/components/schemas/PatrolWindowDurum" }
         beklenen_checkpoint_sayisi: { type: integer }
         okutulan_checkpoint_sayisi: { type: integer }
+    # Tur penceresi gecmisi (GET /patrol-windows ogesi).
+    PatrolWindowHistory:
+      type: object
+      required:
+        [id, patrol_plan_id, pencere_baslangic, pencere_bitis, durum,
+         beklenen_checkpoint_sayisi, okutulan_checkpoint_sayisi]
+      properties:
+        id: { type: string, format: uuid }
+        patrol_plan_id: { type: string, format: uuid }
+        plan_adi: { type: string, nullable: true }
+        pencere_baslangic: { type: string, format: date-time }
+        pencere_bitis: { type: string, format: date-time }
+        durum: { $ref: "#/components/schemas/PatrolWindowDurum" }
+        beklenen_checkpoint_sayisi: { type: integer }
+        okutulan_checkpoint_sayisi: { type: integer }
+    PatrolWindowOzet:
+      type: object
+      required: [toplam, tamamlandi, kacirildi, bekliyor]
+      description: "Filtrelenmis TUM kume uzerinden sayilar (sayfa ile sinirli degil)."
+      properties:
+        toplam: { type: integer }
+        tamamlandi: { type: integer }
+        kacirildi: { type: integer }
+        bekliyor: { type: integer }
     Alarm:
       type: object
       required: [tip, olusma_zamani, mesaj]
@@ -1915,6 +2255,34 @@ components:
         notlar: { type: string, nullable: true }
         idempotency_key: { type: string }
         created_at: { type: string, format: date-time }
+    # Capraz-gorev tamamlama gecmisi ogesi (GET /task-completions). foto_url/gps
+    # YOK; kanit varligi foto_var/nfc_dogrulandi bool olarak yeter.
+    TaskCompletionHistory:
+      type: object
+      required:
+        [id, task_id, tip, tamamlayan_user_id, tamamlanma_zamani, foto_var, nfc_dogrulandi]
+      properties:
+        id: { type: string, format: uuid }
+        task_id: { type: string, format: uuid }
+        task_adi: { type: string, nullable: true }
+        tip: { $ref: "#/components/schemas/TaskTip" }
+        tamamlayan_user_id: { type: string, format: uuid }
+        tamamlanma_zamani: { type: string, format: date-time }
+        foto_var: { type: boolean, description: "foto_key dolu mu" }
+        nfc_dogrulandi: { type: boolean, description: "nfc_tag_uid okutuldu mu" }
+        notlar: { type: string, nullable: true }
+    TaskCompletionOzet:
+      type: object
+      required: [toplam, temizlik, kontrol, ilaclama, peyzaj]
+      description: |
+        Filtrelenmis TUM kume uzerinden. `toplam` her tipi sayar; ayrik alanlar
+        ana tip dagilimidir (bakim/diger toplama dahil, ayrica kirilmaz).
+      properties:
+        toplam: { type: integer }
+        temizlik: { type: integer }
+        kontrol: { type: integer }
+        ilaclama: { type: integer }
+        peyzaj: { type: integer }
     TaskCompletionCreate:
       type: object
       required: [tamamlanma_zamani]

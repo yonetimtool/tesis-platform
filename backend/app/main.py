@@ -15,7 +15,9 @@ from .routers import assets as assets_router
 from .routers import auth as auth_router
 from .routers import checkpoints as checkpoints_router
 from .routers import dashboard as dashboard_router
+from .routers import devices as devices_router
 from .routers import dues as dues_router
+from .routers import patrol_windows as patrol_windows_router
 from .routers import emergency as emergency_router
 from .routers import landscape as landscape_router
 from .routers import me as me_router
@@ -23,9 +25,11 @@ from .routers import notifications as notifications_router
 from .routers import patrol_plans as patrol_plans_router
 from .routers import scans as scans_router
 from .routers import shifts as shifts_router
+from .routers import task_completions as task_completions_router
 from .routers import tasks as tasks_router
 from .routers import tenant as tenant_router
 from .routers import units as units_router
+from .routers import users as users_router
 from .routers import uploads as uploads_router
 from .routers import webhooks as webhooks_router
 
@@ -56,8 +60,11 @@ app.include_router(checkpoints_router.router)
 app.include_router(patrol_plans_router.router)
 app.include_router(scans_router.router)
 app.include_router(dashboard_router.router)
+app.include_router(devices_router.router)
+app.include_router(patrol_windows_router.router)
 app.include_router(notifications_router.router)
 app.include_router(tasks_router.router)
+app.include_router(task_completions_router.router)
 app.include_router(uploads_router.router)
 app.include_router(landscape_router.router)
 app.include_router(assets_router.router)
@@ -65,6 +72,7 @@ app.include_router(emergency_router.router)
 app.include_router(tenant_router.router)
 app.include_router(units_router.router)
 app.include_router(dues_router.router)
+app.include_router(users_router.router)
 app.include_router(webhooks_router.router)
 
 

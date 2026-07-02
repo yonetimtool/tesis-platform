@@ -54,6 +54,50 @@ class UserOut(BaseModel):
     is_active: bool
 
 
+UserRoleLiteral = Literal["admin", "security", "cleaning", "resident"]
+
+
+# Admin kullanici yonetimi ciktisi — password_hash ASLA yok.
+class UserAdminOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    email: str
+    telefon: str | None = None
+    role: str
+    is_active: bool
+    created_at: datetime
+
+
+class UserCreate(BaseModel):
+    ad: str = Field(..., min_length=1)
+    email: EmailStr
+    telefon: str | None = None
+    role: UserRoleLiteral
+    password: str = Field(..., min_length=8)
+
+
+class UserUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1)
+    email: EmailStr | None = None
+    telefon: str | None = None
+    role: UserRoleLiteral | None = None
+    is_active: bool | None = None
+    password: str | None = Field(None, min_length=8)
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "UserUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class UserAdminListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[UserAdminOut]
+
+
 # ----------------------- Faz-0 dogrulama (diagnostic) ---------------------- #
 # NOT: /me/checkpoints diagnostigi icin (Faz-0). Checkpoint CRUD asagida.
 class CheckpointBrief(BaseModel):
@@ -283,6 +327,34 @@ class DashboardLiveOut(BaseModel):
     son_alarmlar: list[AlarmOut]
 
 
+# ---------------------------- patrol-windows ------------------------------- #
+PatrolWindowDurumLiteral = Literal["bekliyor", "tamamlandi", "kacirildi"]
+
+
+class PatrolWindowOut(BaseModel):
+    id: uuid.UUID
+    patrol_plan_id: uuid.UUID
+    plan_adi: str | None = None
+    pencere_baslangic: datetime
+    pencere_bitis: datetime
+    durum: str
+    beklenen_checkpoint_sayisi: int
+    okutulan_checkpoint_sayisi: int
+
+
+class PatrolWindowOzet(BaseModel):
+    toplam: int
+    tamamlandi: int
+    kacirildi: int
+    bekliyor: int
+
+
+class PatrolWindowListResponse(BaseModel):
+    meta: PageMetaOut
+    ozet: PatrolWindowOzet
+    items: list[PatrolWindowOut]
+
+
 # ----------------------------- notifications ------------------------------- #
 class NotificationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -389,6 +461,60 @@ class TaskCompletionOut(BaseModel):
 class TaskCompletionListResponse(BaseModel):
     meta: PageMetaOut
     items: list[TaskCompletionOut]
+
+
+# Capraz-gorev tamamlama gecmisi (GET /task-completions). foto_url/gps yok;
+# kanit varligi foto_var/nfc_dogrulandi bool olarak yeter.
+class TaskCompletionHistoryOut(BaseModel):
+    id: uuid.UUID
+    task_id: uuid.UUID
+    task_adi: str | None = None
+    tip: str
+    tamamlayan_user_id: uuid.UUID
+    tamamlanma_zamani: datetime
+    foto_var: bool
+    nfc_dogrulandi: bool
+    notlar: str | None = None
+
+
+class TaskCompletionOzet(BaseModel):
+    toplam: int
+    temizlik: int
+    kontrol: int
+    ilaclama: int
+    peyzaj: int
+
+
+class TaskCompletionHistoryListResponse(BaseModel):
+    meta: PageMetaOut
+    ozet: TaskCompletionOzet
+    items: list[TaskCompletionHistoryOut]
+
+
+# ------------------------------- devices ----------------------------------- #
+DevicePlatform = Literal["android", "ios", "web"]
+
+
+class DeviceRegister(BaseModel):
+    fcm_token: str = Field(..., min_length=1)
+    platform: DevicePlatform
+
+
+class DeviceOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    fcm_token: str
+    platform: str
+    aktif: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class DeviceListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[DeviceOut]
 
 
 # ------------------------------- uploads ----------------------------------- #

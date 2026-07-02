@@ -66,5 +66,13 @@ class Settings(BaseSettings):
     paytr_merchant_salt: str = ""
     paytr_base_url: str = "https://www.paytr.com"
 
+    # --- Push saglayici (FCM) ---
+    # noop | fcm. GERCEK KIMLIK YOK — kimlik bossa FcmProvider unconfigured (no-op).
+    push_provider: str = "noop"
+    fcm_project_id: str = ""
+    # Service account JSON (inline metin ya da dosya yolu); bossa unconfigured.
+    fcm_service_account_json: str = ""
+    fcm_base_url: str = "https://fcm.googleapis.com"
+
 
 settings = Settings()

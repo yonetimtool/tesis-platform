@@ -54,7 +54,14 @@ async def _emit_notification(db: AsyncSession, tenant_id: uuid.UUID, alert: Emer
     await db.execute(
         _NOTIF_SQL, {"t": tenant_id, "d": f"acil_durum:{alert.id}", "m": mesaj}
     )
-    dispatch_external(mesaj)
+    # EK push (in-app notification'i etkilemez; hata bildirim akisini kirmaz).
+    dispatch_external(
+        mesaj,
+        tenant_id=tenant_id,
+        target_roles=("admin", "security"),
+        title="ACIL DURUM",
+        data={"tip": "acil_durum", "alert_id": str(alert.id)},
+    )
 
 
 @router.post("")

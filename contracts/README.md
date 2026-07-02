@@ -148,6 +148,50 @@ dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`
   idempotent (`payment_webhook_event`); tutar (kurus) eslesmeli. Durum istemciden DEGISMEZ.
   Gercek anahtar yok (sandbox sonra). `manual` hala anlik `basarili`.
 
+## Kullanici yonetimi (users)
+
+- `GET/POST/PATCH /users` (yalniz **admin**): personel + sakin (resident dahil) olusturma/listeleme/
+  guncelleme. **Yeni tablo YOK** — mevcut `app_user` uzerinde calisir. `email` tenant icinde
+  benzersiz (`UNIQUE(tenant_id,email)`) → cakisma **409**. parola **bcrypt** (`app/security.py`);
+  **`password_hash` yanitta ASLA donmez** (`User` semasinda yok). Kullanici **silinmez**;
+  pasiflestirme `is_active=false` (PATCH). tenant token'dan, RLS izole.
+
+## Push bildirim (FCM) + cihaz token kaydi
+
+- **GERCEK FIREBASE KIMLIGI YOK.** `FcmProvider` (backend/app/push.py) gercek FCM HTTP v1
+  yapisina gore yazildi (service-account -> OAuth2 access token -> `POST
+  /v1/projects/{project_id}/messages:send`, `message.token/notification/data`) ama HTTP + OAuth
+  cagrisi mock'lanabilir (`_http_post_json` / `_fetch_access_token`). Kimlik (`FCM_PROJECT_ID` +
+  `FCM_SERVICE_ACCOUNT_JSON`) bossa **`push_unconfigured`** (no-op + log; sessiz cokme yok).
+- Saglayici secimi `PUSH_PROVIDER = noop | fcm` (varsayilan **noop**) — odeme (`PAYMENT_PROVIDER`)
+  deseninin AYNISI. `get_push_provider()`.
+- **Cihaz token kaydi:** `POST /devices` (her rol, kendi cihazi; idempotent upsert,
+  `UNIQUE(tenant_id, fcm_token)`), `DELETE /devices/{fcm_token}` (pasiflestir), `GET /devices`
+  (admin, debug). Yeni tablo **`user_device`** (RLS + tenant-izole).
+- **Kanca:** `scheduler/notify.py::dispatch_external` in-app notification'in YANINA push tetikler
+  (kacirilan tur / peyzaj / acil durum -> admin+security cihazlari). Push in-app bildirimi
+  **ETKILEMEZ**; push hatasi bildirim akisini **KIRMAZ** (try/except + log).
+
+## Gorev tamamlama gecmisi (task-completions)
+
+- `GET /task-completions` (admin + security): TUM gorevlerin tamamlanma **gecmisi** —
+  tarih araligi (`baslangic`/`bitis`, yari-acik: `tamamlanma_zamani >= baslangic AND < bitis`),
+  `tip` (task.tip uzerinden join), `task_id`, `tamamlayan_user_id` filtreleri; `tamamlanma_zamani`
+  **DESC**; sayfali. `/tasks/{id}/completions` tek gorev icindir, bu uc **capraz-gorev** sorgudur.
+  **Yeni tablo YOK** — mevcut `task_completion` uzerinde okuma. Ozet (`toplam` + ana tip dagilimi
+  temizlik/kontrol/ilaclama/peyzaj) **filtrelenmis tum kume** uzerinden `response.ozet`'te doner.
+  Kanit varligi `foto_var`/`nfc_dogrulandi` bool olarak verilir (foto_url/gps donmez). tenant-izole (RLS).
+
+## Tur gecmisi (patrol-windows)
+
+- `GET /patrol-windows` (admin + security): materialize edilmis `patrol_window`'larin
+  **gecmisi** — tarih araligi (`baslangic`/`bitis`, yari-acik: `pencere_baslangic >= baslangic AND
+  < bitis`), `durum` (bekliyor|tamamlandi|kacirildi) ve `patrol_plan_id` filtreleri; `pencere_baslangic`
+  **DESC** sirali; sayfali (limit/offset+meta). `/dashboard/live` anlik bugunku durumu verir, bu uc
+  **gecmise donuk** sorgu icindir. **Yeni tablo YOK** — mevcut `patrol_window` uzerinde okuma.
+  Ozet sayilar (`toplam/tamamlandi/kacirildi/bekliyor`) **filtrelenmis tum kume** uzerinden
+  `response.ozet`'te doner. tenant-izole (RLS).
+
 ## API base path
 
 - **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:

@@ -112,6 +112,7 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `PUT  /patrol-plans/{id}/checkpoints` |  ✅   |    ❌    |    ❌    |    ❌    |
 | `POST /scans`                         |  ✅   |    ✅    |    ✅    |    ❌    |
 | `GET  /dashboard/live`                |  ✅   |    ✅    |    ❌    |    ❌    |
+| `GET  /patrol-windows`                |  ✅   |    ✅    |    ❌    |    ❌    |
 | `GET  /notifications`                 |  ✅   |    ✅    |    ❌    |    ❌    |
 | `PATCH /notifications/{id}`           |  ✅   |    ✅    |    ❌    |    ❌    |
 | `GET  /tasks` (liste/detay)           |  ✅   |    ✅    |    ✅    |    ❌    |
@@ -119,9 +120,13 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `PATCH /tasks/{id}`                   |  ✅   |    ❌    |    ❌    |    ❌    |
 | `DELETE /tasks/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |
 | `GET  /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
+| `GET  /task-completions` (gecmis)     |  ✅   |    ✅    |    ❌    |    ❌    |
 | `POST /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
 | `GET  /landscape/schedule`            |  ✅   |    ✅    |    ✅    |    ❌    |
 | `POST /uploads/presign`               |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /devices` (kendi cihazi)        |  ✅   |    ✅    |    ✅    |    ✅    |
+| `DELETE /devices/{fcm_token}`         |  ✅   |    ✅    |    ✅    |    ✅    |
+| `GET  /devices` (liste, debug)        |  ✅   |    ❌    |    ❌    |    ❌    |
 | `GET  /assets` (liste/detay)          |  ✅   |    ✅    |    ✅    |    ❌    |
 | `POST /assets`                        |  ✅   |    ❌    |    ❌    |    ❌    |
 | `PATCH /assets/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |
@@ -139,6 +144,7 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `POST/GET /dues/assessments`          |  ✅   |    ❌    |    ❌    |    ❌    |
 | `POST/GET /dues/payments`             |  ✅   |    ❌    |    ❌    |    ❌    |
 | `GET /me/dues`                        |  ❌   |    ❌    |    ❌    |    ✅    |
+| `GET/POST/PATCH /users*`              |  ✅   |    ❌    |    ❌    |    ❌    |
 
 > **Aidat:** Unit/tahakkuk/odeme yonetimi yalniz **admin**. **security/cleaning aidat
 > GORMEZ** (403). **resident** yalniz `GET /me/dues` ile **kendi** dairelerinin borcunu gorur;
