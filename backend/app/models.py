@@ -51,7 +51,7 @@ PATROL_WINDOW_DURUM = ENUM(
 )
 NOTIFICATION_TIP = ENUM(
     "kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma",
-    "peyzaj_yaklasan", "peyzaj_kacirilan",
+    "peyzaj_yaklasan", "peyzaj_kacirilan", "acil_durum",
     name="notification_tip", create_type=False,
 )
 TASK_TIP = ENUM(
@@ -81,6 +81,10 @@ DUES_YONTEM = ENUM(
 DUES_DURUM = ENUM(
     "basarili", "bekliyor", "iptal",
     name="dues_durum", create_type=False,
+)
+DEVICE_PLATFORM = ENUM(
+    "android", "ios", "web",
+    name="device_platform", create_type=False,
 )
 
 
@@ -733,6 +737,30 @@ class PaymentWebhookEvent(Base):
     created_at = _created_at()
 
 
+class UserDevice(Base):
+    __tablename__ = "user_device"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_user_device_user",
+        ),
+        UniqueConstraint("tenant_id", "fcm_token", name="uq_user_device_tenant_token"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    fcm_token: Mapped[str] = mapped_column(Text, nullable=False)
+    platform: Mapped[str] = mapped_column(DEVICE_PLATFORM, nullable=False)
+    aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
 __all__ = [
     "Base",
     "Tenant",
@@ -754,6 +782,7 @@ __all__ = [
     "DuesAssessment",
     "DuesPayment",
     "PaymentWebhookEvent",
+    "UserDevice",
     "USER_ROLE",
     "GUN_TIPI",
     "PATROL_WINDOW_DURUM",
@@ -765,4 +794,5 @@ __all__ = [
     "RESIDENT_ROL",
     "DUES_YONTEM",
     "DUES_DURUM",
+    "DEVICE_PLATFORM",
 ]

@@ -156,6 +156,22 @@ dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`
   **`password_hash` yanitta ASLA donmez** (`User` semasinda yok). Kullanici **silinmez**;
   pasiflestirme `is_active=false` (PATCH). tenant token'dan, RLS izole.
 
+## Push bildirim (FCM) + cihaz token kaydi
+
+- **GERCEK FIREBASE KIMLIGI YOK.** `FcmProvider` (backend/app/push.py) gercek FCM HTTP v1
+  yapisina gore yazildi (service-account -> OAuth2 access token -> `POST
+  /v1/projects/{project_id}/messages:send`, `message.token/notification/data`) ama HTTP + OAuth
+  cagrisi mock'lanabilir (`_http_post_json` / `_fetch_access_token`). Kimlik (`FCM_PROJECT_ID` +
+  `FCM_SERVICE_ACCOUNT_JSON`) bossa **`push_unconfigured`** (no-op + log; sessiz cokme yok).
+- Saglayici secimi `PUSH_PROVIDER = noop | fcm` (varsayilan **noop**) — odeme (`PAYMENT_PROVIDER`)
+  deseninin AYNISI. `get_push_provider()`.
+- **Cihaz token kaydi:** `POST /devices` (her rol, kendi cihazi; idempotent upsert,
+  `UNIQUE(tenant_id, fcm_token)`), `DELETE /devices/{fcm_token}` (pasiflestir), `GET /devices`
+  (admin, debug). Yeni tablo **`user_device`** (RLS + tenant-izole).
+- **Kanca:** `scheduler/notify.py::dispatch_external` in-app notification'in YANINA push tetikler
+  (kacirilan tur / peyzaj / acil durum -> admin+security cihazlari). Push in-app bildirimi
+  **ETKILEMEZ**; push hatasi bildirim akisini **KIRMAZ** (try/except + log).
+
 ## Gorev tamamlama gecmisi (task-completions)
 
 - `GET /task-completions` (admin + security): TUM gorevlerin tamamlanma **gecmisi** —

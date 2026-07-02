@@ -491,6 +491,32 @@ class TaskCompletionHistoryListResponse(BaseModel):
     items: list[TaskCompletionHistoryOut]
 
 
+# ------------------------------- devices ----------------------------------- #
+DevicePlatform = Literal["android", "ios", "web"]
+
+
+class DeviceRegister(BaseModel):
+    fcm_token: str = Field(..., min_length=1)
+    platform: DevicePlatform
+
+
+class DeviceOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    fcm_token: str
+    platform: str
+    aktif: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class DeviceListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[DeviceOut]
+
+
 # ------------------------------- uploads ----------------------------------- #
 class PresignRequest(BaseModel):
     content_type: str = Field(..., min_length=1, examples=["image/jpeg"])

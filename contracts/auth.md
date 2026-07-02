@@ -124,6 +124,9 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `POST /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
 | `GET  /landscape/schedule`            |  ✅   |    ✅    |    ✅    |    ❌    |
 | `POST /uploads/presign`               |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /devices` (kendi cihazi)        |  ✅   |    ✅    |    ✅    |    ✅    |
+| `DELETE /devices/{fcm_token}`         |  ✅   |    ✅    |    ✅    |    ✅    |
+| `GET  /devices` (liste, debug)        |  ✅   |    ❌    |    ❌    |    ❌    |
 | `GET  /assets` (liste/detay)          |  ✅   |    ✅    |    ✅    |    ❌    |
 | `POST /assets`                        |  ✅   |    ❌    |    ❌    |    ❌    |
 | `PATCH /assets/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |

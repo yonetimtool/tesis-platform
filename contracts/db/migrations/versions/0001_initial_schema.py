@@ -86,6 +86,8 @@ def upgrade() -> None:
     op.execute("CREATE TYPE resident_rol AS ENUM ('malik', 'kiraci');")
     op.execute("CREATE TYPE dues_yontem AS ENUM ('elden', 'havale', 'kart', 'diger');")
     op.execute("CREATE TYPE dues_durum AS ENUM ('basarili', 'bekliyor', 'iptal');")
+    # push: cihaz platformu (FCM device token kaydi).
+    op.execute("CREATE TYPE device_platform AS ENUM ('android', 'ios', 'web');")
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -759,6 +761,34 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9z. user_device  (FCM push token kaydi — kullanici basina cihaz(lar))
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE user_device (
+            id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id   uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            user_id     uuid NOT NULL,
+            fcm_token   text NOT NULL,
+            platform    device_platform NOT NULL,
+            aktif       boolean NOT NULL DEFAULT true,
+            created_at  timestamptz NOT NULL DEFAULT now(),
+            updated_at  timestamptz NOT NULL DEFAULT now(),
+            -- composite FK: cihaz sahibi ayni tenant'ta olmali (RLS ile tutarli).
+            CONSTRAINT fk_user_device_user
+                FOREIGN KEY (user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE CASCADE,
+            -- Ayni token tenant icinde TEK kayit (idempotent upsert anahtari).
+            CONSTRAINT uq_user_device_tenant_token UNIQUE (tenant_id, fcm_token)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_user_device_tenant ON user_device (tenant_id);")
+    op.execute(
+        "CREATE INDEX ix_user_device_user ON user_device (tenant_id, user_id, aktif);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -784,6 +814,7 @@ def upgrade() -> None:
         "dues_assessment",
         "dues_payment",
         "payment_webhook_event",
+        "user_device",
     ):
         _enable_rls(table)
 
@@ -822,6 +853,7 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "user_device",
         "payment_webhook_event",
         "dues_payment",
         "dues_assessment",
@@ -844,6 +876,7 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS device_platform;")
     op.execute("DROP TYPE IF EXISTS dues_durum;")
     op.execute("DROP TYPE IF EXISTS dues_yontem;")
     op.execute("DROP TYPE IF EXISTS resident_rol;")

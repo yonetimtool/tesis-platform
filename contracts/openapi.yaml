@@ -1144,6 +1144,67 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  # ================================================================= #
+  # DEVICES (FCM push token kaydi)
+  # ================================================================= #
+  /devices:
+    post:
+      tags: [devices]
+      summary: Cihaz push token kaydet (kendi cihazi; her rol)
+      description: |
+        Giris yapmis kullanici kendi cihaz FCM token'ini kaydeder. Ayni token
+        (tenant icinde UNIQUE) tekrar gonderilirse guncellenir + aktiflesir
+        (idempotent upsert). user_id token'dan turetilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeviceRegister" }
+      responses:
+        "201":
+          description: Kaydedildi (veya guncellendi)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Device" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    get:
+      tags: [devices]
+      summary: Tenant cihazlari (admin, debug)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Device" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /devices/{fcm_token}:
+    delete:
+      tags: [devices]
+      summary: Kendi cihaz token'ini pasiflestir (logout/uninstall)
+      parameters:
+        - name: fcm_token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: Pasiflestirildi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /tenant/settings:
     get:
       tags: [tenant]
@@ -1754,6 +1815,28 @@ components:
     UserRole:
       type: string
       enum: [admin, security, cleaning, resident]
+
+    # --------------------------- devices --------------------------- #
+    DevicePlatform:
+      type: string
+      enum: [android, ios, web]
+    DeviceRegister:
+      type: object
+      required: [fcm_token, platform]
+      properties:
+        fcm_token: { type: string }
+        platform: { $ref: "#/components/schemas/DevicePlatform" }
+    Device:
+      type: object
+      required: [id, user_id, fcm_token, platform, aktif, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        fcm_token: { type: string }
+        platform: { $ref: "#/components/schemas/DevicePlatform" }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
 
     # password_hash ASLA donmez (guvenlik).
     User:

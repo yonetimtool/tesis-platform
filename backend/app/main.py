@@ -15,6 +15,7 @@ from .routers import assets as assets_router
 from .routers import auth as auth_router
 from .routers import checkpoints as checkpoints_router
 from .routers import dashboard as dashboard_router
+from .routers import devices as devices_router
 from .routers import dues as dues_router
 from .routers import patrol_windows as patrol_windows_router
 from .routers import emergency as emergency_router
@@ -59,6 +60,7 @@ app.include_router(checkpoints_router.router)
 app.include_router(patrol_plans_router.router)
 app.include_router(scans_router.router)
 app.include_router(dashboard_router.router)
+app.include_router(devices_router.router)
 app.include_router(patrol_windows_router.router)
 app.include_router(notifications_router.router)
 app.include_router(tasks_router.router)
