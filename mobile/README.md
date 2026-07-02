@@ -237,15 +237,24 @@ mobile/
 │     │  │     ├─ nfc_controller.dart       # Riverpod Notifier (hazir/okuyor/sonuc/hata)
 │     │  │     └─ nfc_screen.dart           # okuma + "Okutmayı gönder" akışı
 │     │  └─ scan/
-│     │     ├─ data/scan_api.dart           # POST /scans (Idempotency-Key)
-│     │     ├─ domain/scan.dart             # ScanDraft / ScanEvent / ScanSubmitResult
-│     │     └─ presentation/scan_controller.dart  # gönderim durumu (created/duplicate/404/error)
+│     │     ├─ data/
+│     │     │  ├─ scan_api.dart             # POST /scans (Idempotency-Key)
+│     │     │  ├─ scan_outbox.dart          # offline kuyruk motoru + tetikleyiciler (§8)
+│     │     │  └─ scan_outbox_store.dart    # kalıcı JSON depo (atomik yazım)
+│     │     ├─ domain/
+│     │     │  ├─ scan.dart                 # ScanDraft / ScanEvent / ScanSubmitResult
+│     │     │  └─ outbox_entry.dart         # OutboxEntry / OutboxStatus (durum makinesi)
+│     │     └─ presentation/
+│     │        ├─ scan_controller.dart      # (eski manuel gönderim — outbox akışına devredildi)
+│     │        └─ outbox_screen.dart        # kuyruk ekranı: liste + senkron + hata temizleme
 │     └─ routing/
-│        ├─ app_router.dart                # go_router + auth redirect
+│        ├─ app_router.dart                # go_router + auth redirect (+ /outbox)
 │        └─ splash_screen.dart             # oturum geri yüklenirken
 └─ test/
    ├─ token_pair_test.dart
-   └─ api_exception_test.dart
+   ├─ api_exception_test.dart
+   ├─ auth_interceptor_test.dart
+   └─ scan_outbox_test.dart                # outbox durum makinesi + kalıcılık testleri
 ```
 
 ---
@@ -339,8 +348,9 @@ Etiket okunduktan sonra ekranda **"Okutmayı gönder"** butonu çıkar; okutma
 > Checkpoint **adını** göstermek istenirse ileride `GET /checkpoints?nfc_tag_uid`
 > ile zenginleştirilebilir (ScanEvent yalnızca `checkpoint_id` döndürüyor).
 >
-> **Offline kuyruk** bu turda yok (senkron gönderim). Idempotency-Key stratejisi
-> kuyruk eklendiğinde çift gönderimi zaten güvenli kılacak şekilde seçildi.
+> ~~**Offline kuyruk** bu turda yok (senkron gönderim).~~ Offline outbox
+> **eklendi** — bkz. §8. Okutma artık doğrudan gönderilmez; önce kalıcı
+> kuyruğa yazılır, bağlantı varsa arka planda anında gönderilir.
 
 ### Android yapılandırması
 
@@ -384,7 +394,128 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
 
 ---
 
-## 8. Sözleşme notları (DEV-A'ya)
+## 8. Offline outbox — kalıcı scan kuyruğu (Faz 1 / Prompt 2)
+
+Kapsama olmayan yerlerde (bodrum/otopark) okutulan NFC **kaybolmaz**: okutma
+ANINDA kalıcı yerel kuyruğa (outbox) yazılır, bağlantı gelince arka planda
+**sırayla (FIFO)** gönderilir. Kod: `features/scan/data/scan_outbox.dart`
+(motor), `scan_outbox_store.dart` (depo), `domain/outbox_entry.dart` (model),
+`presentation/outbox_screen.dart` (kuyruk ekranı).
+
+### Depo seçimi ve gerekçesi
+
+**Dosya-tabanlı JSON** (`<uygulama-belgeleri>/scan_outbox.json`, `path_provider`
+ile). sqflite/hive/drift yerine bunun seçilme nedeni:
+
+- Kuyruk **küçük** (onlarca kayıt) ve tek-yazarlı; ilişkisel sorgu, indeks,
+  migration altyapısı gerekmiyor — DB bu iş için gereksiz ağırlık.
+- **Atomik yazım**: önce `scan_outbox.json.tmp`'ye yazılır, sonra `rename`
+  edilir. Yazım ortasında uygulama ölse bile eski geçerli dosya bozulmaz.
+  (Eşzamanlı `save` çağrıları da store içinde bir kilit zinciriyle sıralanır.)
+- Bozuk dosya sessizce silinmez: `.corrupt` uzantısıyla kenara alınır, kuyruk
+  boş başlar (teşhis için veri durur).
+- `shared_preferences` bilinçli olarak **kullanılmadı**: liste büyüdükçe tek
+  string'e serileştirme kırılganlaşır ve atomiklik garantisi platforma göre
+  değişir.
+- Liste sırası = FIFO sırası; ayrıca `enqueued_at` alanı teşhis için tutulur.
+
+### Durum makinesi
+
+```
+            enqueue (NFC okuma anında)
+                    │
+                    ▼
+  ┌─► bekliyor ─► gonderiliyor ─► gonderildi   (201 yeni / 200 idempotent)
+  │                   │
+  │   ağ/timeout/5xx/ │ 404 (etiket eşleşmedi), 400/422 (geçersiz gövde)
+  │   auth (refresh   │
+  │   ölü)            ▼
+  └───────────── kalici_hata   ← retry YAPILMAZ; listede görünür, temizlenebilir
+```
+
+- **`gonderiliyor`da çökme kurtarması:** gönderim ortasında uygulama ölürse
+  açılışta kayıt `bekliyor`a geri alınır — sonuç bilinmese de yeniden göndermek
+  güvenlidir (aşağıda "en az bir kez" bölümü).
+- `gonderildi` kayıtların son 20'si UI geri bildirimi için dosyada tutulur,
+  eskileri budanır (dosya sınırsız büyümez).
+
+### Retry stratejisi (pil/veri dostu)
+
+- Geçici hatada (ağ, timeout, 5xx, auth) tur **kesilir** (bağlantı yoksa
+  sıradakiler de başarısız olur; boşa deneme yapılmaz) ve **üstel geri çekilme**
+  ile zamanlanır: `15s × 2^(ardışık hata−1)`, tavan **10 dk**.
+- Bağlantı geri gelince / manuel senkronda sayaç sıfırlanır → beklemeden dener.
+- **401**: mevcut refresh interceptor'ı token'ı arka planda yeniler; refresh de
+  ölürse kayıtlar `bekliyor`da kalır ve **login başarılı olunca** otomatik devam
+  eder (tetikleyiciye bağlı).
+- Kalıcı hatada (404 — etiket sistemde yok; 400/422 — gövde geçersiz, tekrar
+  göndermek aynı sonucu verir) **hiç retry yapılmaz**.
+
+### Tetikleyiciler (pump ne zaman çalışır)
+
+| Tetikleyici | Nerede |
+|---|---|
+| Yeni scan kuyruğa eklenince | `ScanOutbox.enqueue` |
+| Uygulama öne gelince | `AppLifecycleListener.onResume` (`outboxAutoSyncProvider`) |
+| Bağlantı geri gelince | `connectivity_plus` `onConnectivityChanged` akışı |
+| Login başarılı olunca | `authControllerProvider` durum dinleyicisi |
+| Manuel "Şimdi senkronla" | Kuyruk ekranı (`/outbox`) butonu |
+| Zamanlanmış retry | backoff `Timer`'ı |
+
+`outboxAutoSyncProvider` uygulama kökünde (`main.dart`) watch edilir; dinleyiciler
+uygulama boyunca canlı kalır. Paket seçimi: **`connectivity_plus`** (Flutter
+ekosisteminin standart bağlantı-durumu paketi; yalnızca "çevrimiçi olabiliriz"
+sinyali olarak kullanılır, gerçek doğrulama isteğin kendisidir).
+
+### "En az bir kez gönder" + backend idempotency güvencesi
+
+Idempotency-Key **okuma anında sabitlenir**: `"<uid>|<okutma_zamani ISO>"`
+(`ScanDraft.idempotencyKey`). Kuyruk bu anahtarla "en az bir kez gönder"
+(at-least-once) stratejisi uygular: sonucu belirsiz her gönderim (timeout,
+çökme, çift tetik) güvenle **tekrar** gönderilebilir — backend aynı anahtarı
+görünce yeni kayıt açmaz, **200 + mevcut kaydı** döner. Yani çift gönderim
+riski yoktur; kaybolma riski de kalıcı depo sayesinde kapanır.
+
+### Kullanıcıya yansıyan durumlar
+
+- NFC ekranı, okuma biter bitmez kaydı kuyruğa yazar ve durumunu canlı gösterir:
+  - `bekliyor` → "Kaydedildi ✓ — bağlantı gelince otomatik gönderilecek."
+  - `gonderiliyor` → spinner "Kaydedildi ✓ — gönderiliyor..."
+  - `gonderildi` (201) → "Gönderildi ✓ — okutma kaydedildi."
+  - `gonderildi` (200) → "Gönderildi ✓ — bu okutma zaten kayıtlıydı."
+  - `kalici_hata` (404) → "Bu etiket hiçbir checkpoint ile eşleşmiyor."
+- **Rozet:** NFC ekranı AppBar'ında ve ana ekrandaki "Gönderim kuyruğu"
+  kartında bekleyen sayısı (örn. "3").
+- **Kuyruk ekranı** (`/outbox`): tüm kayıtlar durumlarıyla listelenir,
+  "Şimdi senkronla" ve "Kalıcı hataları temizle" aksiyonları.
+
+> Not: eski `scan_controller.dart` (manuel "Okutmayı gönder" akışı) yerini
+> outbox akışına bıraktı; `ScanApi.submit` imzası/davranışı değişmedi — outbox
+> onu kullanır.
+
+### Cihazda doğrulama (kabul senaryosu)
+
+```bash
+cd mobile && flutter pub get && flutter test && flutter build apk --debug
+flutter run --dart-define=API_BASE_URL=http://<PC-LAN-IP>:8000   # gerçek cihaz
+```
+
+1. **Uçak modunu aç** → NFC ekranında etiket okut → anında
+   "Kaydedildi ✓ — bağlantı gelince otomatik gönderilecek" + AppBar rozetinde "1".
+2. Uygulamayı **öldür, yeniden aç** → ana ekranda "Gönderim kuyruğu: 1 okutma
+   gönderim bekliyor" (kayıt kalıcı).
+3. **Uçak modunu kapat** → bağlantı tetikleyicisi pump'ı çalıştırır → rozet
+   düşer, kuyruk ekranında "Gönderildi (yeni kayıt)". (Tetik gecikirse
+   uygulamayı öne getirmek veya "Şimdi senkronla" da yeterli.)
+4. Sistemde olmayan bir etiket okut + gönderilsin → kuyruk ekranında kırmızı
+   "Kalıcı hata: ... eşleşmiyor" satırı; retry yapılmaz, "Kalıcı hataları
+   temizle" ile silinebilir.
+5. Aynı okutma bir şekilde iki kez gönderilirse (örn. timeout sonrası tekrar)
+   backend 200 döner → "zaten kayıtlıydı" (çift kayıt oluşmaz).
+
+---
+
+## 9. Sözleşme notları (DEV-A'ya)
 
 `/contracts/openapi.yaml`'i incelerken görülen küçük tutarsızlıklar (login akışını
 engellemez, bilgi amaçlı):

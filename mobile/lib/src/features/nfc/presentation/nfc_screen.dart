@@ -1,31 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../routing/app_router.dart';
+import '../../scan/data/scan_outbox.dart';
+import '../../scan/domain/outbox_entry.dart';
 import '../../scan/domain/scan.dart';
-import '../../scan/presentation/scan_controller.dart';
 import '../domain/nfc_read_result.dart';
 import 'nfc_controller.dart';
 
-/// "Etiketi okutun" ekrani. Etiketi okur (UID/tag tipi), ardindan okutmayi
-/// `POST /scans` ile backend'e gonderir (Idempotency-Key ile).
-class NfcScreen extends ConsumerWidget {
+/// "Etiketi okutun" ekrani. Etiket okununca okutma ANINDA kalici outbox'a
+/// yazilir (offline'da kaybolmaz); baglanti varsa arka planda hemen gonderilir
+/// ve sonuc (yeni / zaten kayitli / eslesmedi) burada gosterilir.
+class NfcScreen extends ConsumerStatefulWidget {
   const NfcScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NfcScreen> createState() => _NfcScreenState();
+}
+
+class _NfcScreenState extends ConsumerState<NfcScreen> {
+  /// Bu ekranda son okutulan kaydin outbox anahtari — durum kutusu bunu izler.
+  String? _currentKey;
+
+  Future<void> _startNewRead() async {
+    setState(() => _currentKey = null);
+    await ref.read(nfcControllerProvider.notifier).startReading();
+    if (!mounted) return;
+
+    final result = ref.read(nfcControllerProvider).result;
+    if (result == null || !result.isSuccess || result.uid == null) return;
+
+    // Okuma aninda taslak uret: okutma zamani + idempotency-key SABITLENIR.
+    final draft = ScanDraft(
+      nfcTagUid: result.uid!,
+      okutmaZamani: result.readAt ?? DateTime.now().toUtc(),
+    );
+    setState(() => _currentKey = draft.idempotencyKey);
+    await ref.read(scanOutboxProvider.notifier).enqueue(draft);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(nfcControllerProvider);
     final nfc = ref.read(nfcControllerProvider.notifier);
-    final scanState = ref.watch(scanControllerProvider);
-    final scan = ref.read(scanControllerProvider.notifier);
-
-    // Yeni okumaya gecerken onceki gonderim sonucunu temizle.
-    Future<void> startNewRead() async {
-      scan.reset();
-      await nfc.startReading();
-    }
+    final outboxState = ref.watch(scanOutboxProvider);
+    final currentEntry =
+        _currentKey == null ? null : outboxState.byKey(_currentKey!);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('NFC etiket okuma')),
+      appBar: AppBar(
+        title: const Text('NFC etiket okuma'),
+        actions: [
+          _OutboxBadge(
+            pendingCount: outboxState.pendingCount,
+            onTap: () => context.push(AppRoutes.outbox),
+          ),
+        ],
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -46,24 +78,14 @@ class NfcScreen extends ConsumerWidget {
               if (state.status == NfcStatus.success && state.result != null) ...[
                 _ResultCard(result: state.result!),
                 const SizedBox(height: 16),
-                _ScanSection(
-                  result: state.result!,
-                  scanState: scanState,
-                  onSubmit: () => scan.submit(
-                    ScanDraft(
-                      nfcTagUid: state.result!.uid!,
-                      okutmaZamani:
-                          state.result!.readAt ?? DateTime.now().toUtc(),
-                    ),
-                  ),
-                ),
+                _OutboxOutcome(entry: currentEntry),
               ],
               if (state.status == NfcStatus.error)
                 _ErrorBox(message: state.errorMessage ?? 'Hata'),
               const SizedBox(height: 32),
               _ActionButton(
                 status: state.status,
-                onRead: startNewRead,
+                onRead: _startNewRead,
                 onCancel: nfc.cancel,
               ),
             ],
@@ -79,6 +101,83 @@ class NfcScreen extends ConsumerWidget {
       NfcStatus.reading => 'Etiketi telefonun arkasina yaklastirin...',
       NfcStatus.success => 'Etiket okundu.',
       NfcStatus.error => 'Etiket okunamadi.',
+    };
+  }
+}
+
+/// AppBar'daki bekleyen-kayit rozeti ("3 bekliyor" → kuyruk ekrani).
+class _OutboxBadge extends StatelessWidget {
+  const _OutboxBadge({required this.pendingCount, required this.onTap});
+
+  final int pendingCount;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: pendingCount > 0
+          ? '$pendingCount okutma gonderim bekliyor'
+          : 'Gonderim kuyrugu',
+      onPressed: onTap,
+      icon: Badge(
+        isLabelVisible: pendingCount > 0,
+        label: Text('$pendingCount'),
+        child: const Icon(Icons.outbox_outlined),
+      ),
+    );
+  }
+}
+
+/// Okutmanin outbox'taki durumunu kullaniciya anlasilir yansitir:
+/// kaydedildi (gonderilecek) / gonderiliyor / gonderildi / eslesmedi.
+class _OutboxOutcome extends StatelessWidget {
+  const _OutboxOutcome({required this.entry});
+
+  final OutboxEntry? entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final e = entry;
+    if (e == null) return const SizedBox.shrink();
+
+    return switch (e.status) {
+      OutboxStatus.bekliyor => const _ScanOutcome(
+          icon: Icons.check_circle,
+          color: Colors.teal,
+          text:
+              'Kaydedildi ✓ — baglanti gelince otomatik gonderilecek.',
+        ),
+      OutboxStatus.gonderiliyor => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 12),
+              Text('Kaydedildi ✓ — gonderiliyor...'),
+            ],
+          ),
+        ),
+      OutboxStatus.gonderildi => e.outcome == OutboxOutcome.duplicate
+          ? const _ScanOutcome(
+              icon: Icons.info_outline,
+              color: Colors.blueGrey,
+              text: 'Gonderildi ✓ — bu okutma zaten kayitliydi.',
+            )
+          : const _ScanOutcome(
+              icon: Icons.check_circle,
+              color: Colors.green,
+              text: 'Gonderildi ✓ — okutma kaydedildi.',
+            ),
+      OutboxStatus.kaliciHata => _ScanOutcome(
+          icon: Icons.link_off,
+          color: Colors.orange,
+          text: e.lastError ?? 'Bu etiket hicbir checkpoint ile eslesmiyor.',
+        ),
     };
   }
 }
@@ -139,81 +238,6 @@ class _ResultCard extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// Okuma sonrasi gonderim bolumu: "Gonder" butonu, spinner ve sonuc kutusu.
-class _ScanSection extends StatelessWidget {
-  const _ScanSection({
-    required this.result,
-    required this.scanState,
-    required this.onSubmit,
-  });
-
-  final NfcReadResult result;
-  final ScanSubmitState scanState;
-  final VoidCallback onSubmit;
-
-  @override
-  Widget build(BuildContext context) {
-    switch (scanState.status) {
-      case ScanSubmitStatus.submitting:
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              SizedBox(width: 12),
-              Text('Gonderiliyor...'),
-            ],
-          ),
-        );
-      case ScanSubmitStatus.created:
-        return _ScanOutcome(
-          icon: Icons.check_circle,
-          color: Colors.green,
-          text: 'Okutma kaydedildi.',
-        );
-      case ScanSubmitStatus.duplicate:
-        return _ScanOutcome(
-          icon: Icons.info_outline,
-          color: Colors.blueGrey,
-          text: 'Bu okutma zaten kayitliydi.',
-        );
-      case ScanSubmitStatus.notMatched:
-        return _ScanOutcome(
-          icon: Icons.link_off,
-          color: Colors.orange,
-          text: scanState.message ?? 'Eslesme bulunamadi.',
-        );
-      case ScanSubmitStatus.error:
-        return Column(
-          children: [
-            _ScanOutcome(
-              icon: Icons.error_outline,
-              color: Colors.red,
-              text: scanState.message ?? 'Gonderilemedi.',
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: onSubmit,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Tekrar gonder'),
-            ),
-          ],
-        );
-      case ScanSubmitStatus.idle:
-        return FilledButton.icon(
-          onPressed: onSubmit,
-          icon: const Icon(Icons.cloud_upload_outlined),
-          label: const Text('Okutmayi gonder'),
-        );
-    }
   }
 }
 

@@ -41,6 +41,8 @@ dependencies:
   nfc_manager: ^4.2.1
   # nfc_manager NDEF tiplerini (NdefMessage/TypeNameFormat) dogrudan kullaniyoruz.
   ndef_record: ^1.4.2
+  path_provider: ^2.1.6
+  connectivity_plus: ^7.2.0
 
 dev_dependencies:
   flutter_test:

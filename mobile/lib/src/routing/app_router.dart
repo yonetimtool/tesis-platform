@@ -6,6 +6,7 @@ import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
+import '../features/scan/presentation/outbox_screen.dart';
 import 'splash_screen.dart';
 
 class AppRoutes {
@@ -14,6 +15,7 @@ class AppRoutes {
   static const login = '/login';
   static const home = '/home';
   static const nfc = '/nfc';
+  static const outbox = '/outbox';
 }
 
 /// Auth durumundaki degisimleri go_router'a bildiren kopru. `status` her
@@ -50,6 +52,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.nfc,
         builder: (context, state) => const NfcScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.outbox,
+        builder: (context, state) => const OutboxScreen(),
       ),
     ],
     redirect: (context, state) {
