@@ -333,6 +333,31 @@ export interface EmergencyList {
   items: EmergencyAlert[];
 }
 
+// --------------------- task completions (gecmis) --------------------------- #
+export interface TaskCompletionRow {
+  id: string;
+  task_id: string;
+  task_adi?: string | null;
+  tip: string;
+  tamamlayan_user_id: string;
+  tamamlanma_zamani: string;
+  foto_var: boolean;
+  nfc_dogrulandi: boolean;
+  notlar?: string | null;
+}
+export interface TaskCompletionOzet {
+  toplam: number;
+  temizlik: number;
+  kontrol: number;
+  ilaclama: number;
+  peyzaj: number;
+}
+export interface TaskCompletionHistoryResponse {
+  meta: PageMeta;
+  ozet: TaskCompletionOzet;
+  items: TaskCompletionRow[];
+}
+
 // --------------------------- tenant settings ------------------------------- #
 export interface TenantSettings {
   tenant_id: string;
