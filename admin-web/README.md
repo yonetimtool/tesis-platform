@@ -88,3 +88,10 @@ components/Nav.tsx            ust menu + cikis
 ## Notlar
 - Backend ve sozlesme **degistirilmedi** (yalniz `/admin-web`).
 - `npm run build` TypeScript + ESLint (`next/core-web-vitals`) kontrolunu calistirir.
+
+## Güvenlik notu (bağımlılıklar)
+
+- Next.js `14.2.5` → **`14.2.35`** yükseltildi (kritik güvenlik yamaları; App Router uyumlu, build sorunsuz).
+- `npm audit` kalan uyarıları (Next/glob/minimatch/postcss) yalnızca **Next 16 / eslint-config-next 16 major** yükseltmesiyle kapanıyor (`npm audit fix --force`) — bu kırıcı bir değişiklik olduğundan **şimdilik uygulanmadı.**
+- Kalan uyarıların çoğu ya **dev-only** araçlarda (eslint/glob/minimatch — production bundle'a girmez) ya da **kullanılmayan Next özelliklerinde** (next/image Optimizer, Pages Router i18n, beforeInteractive — panel bunları kullanmıyor; App Router + BFF deseni).
+- Production öncesi plan: Next 15/16'ya kontrollü major geçiş ayrı bir görev olarak ele alınacak.
