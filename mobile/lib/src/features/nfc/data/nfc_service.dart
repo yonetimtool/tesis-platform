@@ -9,17 +9,16 @@ import 'package:nfc_manager/nfc_manager_ios.dart';
 
 import '../domain/nfc_read_result.dart';
 
-/// Uint8List UID'i platform/format kararimiza cevirir:
-/// BUYUK HARF, AYRACSIZ hex. Ornek: [0x04, 0xA1, 0xB2] -> "04A1B2".
+/// Uint8List UID'i sozlesme (contracts/openapi.yaml) formatina cevirir:
+/// BUYUK HARF, IKI NOKTA (`:`) AYRACLI. Ornek: [0x04, 0xA3, 0xB2] -> "04:A3:B2".
 ///
-/// Bu format backend ile sozlesmedir; ayni karti her platformda ayni string'e
-/// indirger (toptan kiyas/aramayi kolaylastirir).
+/// Backend `nfc_tag_uid`'i tam string olarak eslestirir (Checkpoint/ScanCreate
+/// ornekleri "04:A3:B2:C1:90:00"); mobil de ayni bicimi uretmezse okutma
+/// hicbir checkpoint ile eslesmez (404).
 String bytesToHex(Uint8List bytes) {
-  final sb = StringBuffer();
-  for (final b in bytes) {
-    sb.write(b.toRadixString(16).padLeft(2, '0').toUpperCase());
-  }
-  return sb.toString();
+  return bytes
+      .map((b) => b.toRadixString(16).padLeft(2, '0').toUpperCase())
+      .join(':');
 }
 
 /// NFC donanimiyla konusan tek nokta. UI'a ham platform nesnesi sizdirmaz;
@@ -137,7 +136,12 @@ class NfcService {
       final ndef = NdefAndroid.from(tag);
       sdm = parseSdm(ndef?.cachedNdefMessage);
     }
-    return NfcReadResult(uid: uid, tagType: tagType, sdmData: sdm);
+    return NfcReadResult(
+      uid: uid,
+      tagType: tagType,
+      sdmData: sdm,
+      readAt: DateTime.now().toUtc(),
+    );
   }
 
   NfcReadResult _parseIos(NfcTag tag) {
@@ -158,7 +162,12 @@ class NfcService {
       final ndef = NdefIos.from(tag);
       sdm = parseSdm(ndef?.cachedNdefMessage);
     }
-    return NfcReadResult(uid: uid, tagType: tagType, sdmData: sdm);
+    return NfcReadResult(
+      uid: uid,
+      tagType: tagType,
+      sdmData: sdm,
+      readAt: DateTime.now().toUtc(),
+    );
   }
 
   /// Android teknoloji listesinden kaba tip tahmini.

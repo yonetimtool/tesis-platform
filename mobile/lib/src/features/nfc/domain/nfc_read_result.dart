@@ -53,16 +53,26 @@ class NfcSdmData {
 /// Tek bir etiket okumasinin sonucu. Basari veya hata; ikisini de tasiyabilir
 /// (orn. UID okundu ama SDM ayristirilamadi).
 class NfcReadResult {
-  const NfcReadResult({this.uid, this.tagType = NfcTagType.unknown, this.sdmData, this.error});
+  const NfcReadResult({
+    this.uid,
+    this.tagType = NfcTagType.unknown,
+    this.sdmData,
+    this.readAt,
+    this.error,
+  });
 
-  /// Etiket UID'i: BUYUK HARF, AYRACSIZ hex (orn. "04A1B2C3D4"). Hata veya
-  /// UID okunamadiginda null.
+  /// Etiket UID'i: BUYUK HARF, IKI NOKTA AYRACLI hex (orn. "04:A3:B2:C1:90:00").
+  /// Hata veya UID okunamadiginda null.
   final String? uid;
 
   final NfcTagType tagType;
 
   /// NTAG424 etiketinde SDM URL'i bulunduysa ayristirilan veri.
   final NfcSdmData? sdmData;
+
+  /// Etiketin okundugu an (UTC). `POST /scans` icin `okutma_zamani` olarak
+  /// kullanilir; okuma aninda sabitlenir (offline gecikmeli gonderim icin).
+  final DateTime? readAt;
 
   /// Kullaniciya gosterilecek hata mesaji. null ise okuma basarili.
   final String? error;

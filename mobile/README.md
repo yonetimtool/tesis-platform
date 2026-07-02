@@ -230,12 +230,16 @@ mobile/
 │     │  │     ├─ auth_controller.dart     # Riverpod Notifier (auth state)
 │     │  │     └─ login_screen.dart        # tenant_slug + email + parola
 │     │  ├─ home/presentation/home_screen.dart   # ana ekran + NFC kartı
-│     │  └─ nfc/
-│     │     ├─ data/nfc_service.dart        # nfc_manager 4.x oturum + UID/SDM okuma
-│     │     ├─ domain/nfc_read_result.dart  # NfcReadResult / NfcTagType / NfcSdmData
-│     │     └─ presentation/
-│     │        ├─ nfc_controller.dart       # Riverpod Notifier (hazir/okuyor/sonuc/hata)
-│     │        └─ nfc_screen.dart           # "Etiketi okutun" ekranı
+│     │  ├─ nfc/
+│     │  │  ├─ data/nfc_service.dart        # nfc_manager 4.x oturum + UID/SDM okuma
+│     │  │  ├─ domain/nfc_read_result.dart  # NfcReadResult / NfcTagType / NfcSdmData
+│     │  │  └─ presentation/
+│     │  │     ├─ nfc_controller.dart       # Riverpod Notifier (hazir/okuyor/sonuc/hata)
+│     │  │     └─ nfc_screen.dart           # okuma + "Okutmayı gönder" akışı
+│     │  └─ scan/
+│     │     ├─ data/scan_api.dart           # POST /scans (Idempotency-Key)
+│     │     ├─ domain/scan.dart             # ScanDraft / ScanEvent / ScanSubmitResult
+│     │     └─ presentation/scan_controller.dart  # gönderim durumu (created/duplicate/404/error)
 │     └─ routing/
 │        ├─ app_router.dart                # go_router + auth redirect
 │        └─ splash_screen.dart             # oturum geri yüklenirken
@@ -260,10 +264,15 @@ NDEF tiplerini doğrudan kullandığımız için doğrudan bağımlılık olarak
 
 ### UID format kararı (sözleşme)
 
-UID **BÜYÜK HARF, AYRAÇSIZ hex** olarak normalize edilir — örn. `04A1B2C3D4`.
-Tek noktadan üretilir: `bytesToHex(Uint8List)` (`nfc_service.dart`). Gerekçe:
-aynı kart her platformda (Android/iOS, byte sırası aynı) aynı string'e indirgenir;
-backend'de eşitlik/arama kolaylaşır. **Backend'e bu string gönderilmeli.**
+UID **BÜYÜK HARF, İKİ NOKTA (`:`) AYRAÇLI hex** olarak üretilir — örn.
+`04:A3:B2:C1:90:00`. Tek noktadan: `bytesToHex(Uint8List)` (`nfc_service.dart`).
+
+> **Karar değişikliği (Faz1/Prompt1 → şimdi):** İlk turda "ayraçsız"
+> (`04A3B2C190`) seçilmişti; ancak `contracts/openapi.yaml`'da `nfc_tag_uid`
+> örnekleri **iki nokta ayraçlı** (`04:A3:B2:C1:90:00` — Checkpoint, ScanCreate).
+> Backend UID'i **tam string** eşleştirdiğinden, ayraçsız gönderim hiçbir
+> checkpoint ile eşleşmez (404). Bu yüzden mobil **sözleşmeye hizalandı**.
+> **Backend'e bu string gönderilir.**
 
 ### Tag tipi tespiti (heuristik — kesin değil)
 
@@ -306,6 +315,33 @@ tiplenmiş sonuç döner:
 - NFC kapalı → "NFC kapalı. Lütfen ayarlardan açın."
 - Okuma hatası / iptal → `NfcReadResult.failure(...)` → ekranda hata kutusu.
 
+### Okutmayı gönderme — `POST /scans` (Faz1 devam)
+
+Etiket okunduktan sonra ekranda **"Okutmayı gönder"** butonu çıkar; okutma
+`POST /scans` ile backend'e gönderilir (`features/scan/`).
+
+- **Gövde (`ScanDraft` → ScanCreate):** `nfc_tag_uid` (sözleşme formatı),
+  `okutma_zamani` (okuma anında sabitlenen UTC — `NfcReadResult.readAt`; offline
+  gecikmeli gönderime uygun). GPS/checkpoint_id opsiyonel.
+- **Idempotency-Key (ZORUNLU):** `"<uid>|<okutma_zamani ISO>"` — okuma anına
+  sabitlendiğinden aynı okutma tekrar gönderilirse backend **aynı kaydı** döner
+  (yeni kayıt oluşmaz). Ekstra paket gerektirmez (uuid'e gerek yok).
+- **Sonuç eşlemesi (ekranda):**
+  - `201` → "Okutma kaydedildi." (created)
+  - `200` → "Bu okutma zaten kayıtlıydı." (idempotent tekrar)
+  - `404` → "Bu etiket hiçbir checkpoint ile eşleşmiyor." (notMatched)
+  - ağ/sunucu hatası → mesaj + "Tekrar gönder"
+
+> **Tasarım kararı — ön `GET /checkpoints` yapılmadı:** ScanCreate'e göre
+> backend `nfc_tag_uid`'i checkpoint'e kendisi çözüyor ve eşleşme yoksa 404
+> dönüyor. Ayrı bir ön-arama (checkpoint adını göstermek için) eklenmedi; bu
+> hem fazladan bir online bağımlılık hem de ikinci bir hata noktası olurdu.
+> Checkpoint **adını** göstermek istenirse ileride `GET /checkpoints?nfc_tag_uid`
+> ile zenginleştirilebilir (ScanEvent yalnızca `checkpoint_id` döndürüyor).
+>
+> **Offline kuyruk** bu turda yok (senkron gönderim). Idempotency-Key stratejisi
+> kuyruk eklendiğinde çift gönderimi zaten güvenli kılacak şekilde seçildi.
+
 ### Android yapılandırması
 
 `AndroidManifest.xml` (eklendi):
@@ -343,6 +379,7 @@ flutter build apk --debug       # kabul kriteri: BAŞARILI
 # cihazda dene (NFC'li gerçek telefon gerekir; emülatörde NFC yok):
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
 # Giriş → Ana ekran → "NFC etiket okuma" kartı → "Okumayı başlat" → etiketi yaklaştır
+# → UID/tip görünür → "Okutmayı gönder" → POST /scans sonucu (kaydedildi / zaten kayıtlı / 404)
 ```
 
 ---
