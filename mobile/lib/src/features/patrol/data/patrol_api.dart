@@ -21,9 +21,12 @@ class PatrolWindowHistoryPage {
 /// Tur ekraninin HTTP istemcisi. Kullanilan uclar (tumune security rolu
 /// erisebilir — bkz. contracts/auth.md §4):
 ///
-///   * `GET /dashboard/live`                → aktif/bekleyen pencereler + sayilar
-///   * `GET /patrol-plans/{id}/checkpoints` → planin sirali nokta listesi
-///   * `GET /checkpoints`                   → nokta adi zenginlestirme (fallback)
+///   * `GET /me/patrol-window`              → aktif pencere(ler) + checkpoint
+///                                            bazinda SUNUCU okutma durumu
+///   * `GET /dashboard/live`                → siradaki (bekleyen) pencere bilgisi
+///   * `GET /patrol-plans/{id}/checkpoints` → nokta NFC UID haritasi (outbox
+///                                            bindirmesi icin) + ad fallback
+///   * `GET /checkpoints`                   → nokta adi/UID zenginlestirme
 ///   * `GET /patrol-windows`                → pencere gecmisi + ozet
 ///
 /// DioException'lar sozlesme hata zarfina gore [ApiException]'a cevrilir.
@@ -31,6 +34,19 @@ class PatrolApi {
   PatrolApi(this._dio);
 
   final Dio _dio;
+
+  /// `GET /me/patrol-window` — aktif pencere(ler) + checkpoint bazinda
+  /// okutma durumu (pencere-geneli; baska elemanin okutmasi dahil).
+  /// Aktif pencere yoksa sunucu `window: null` + 200 doner — hata DEGILDIR,
+  /// yanit oldugu gibi eslenir (retry/hata akisi kurulmaz).
+  Future<MePatrolWindowResponse> fetchMyPatrolWindow() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/me/patrol-window');
+      return MePatrolWindowResponse.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 
   /// `GET /dashboard/live` — aktif/bekleyen patrol_window'lar. Yalnizca
   /// `aktif_turlar` kullanilir (alarmlar panel icindir).

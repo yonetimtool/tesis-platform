@@ -1,14 +1,13 @@
 /// Tur (devriye) ekraninin domain modelleri — `contracts/openapi.yaml`'daki
-/// AktifTur / PatrolWindowHistory / PatrolWindowOzet / PatrolPlanCheckpoint
-/// semalarina uyar.
+/// AktifTur / PatrolWindowHistory / PatrolWindowOzet / PatrolPlanCheckpoint /
+/// MePatrolWindowResponse semalarina uyar.
 ///
-/// ONEMLI SOZLESME NOTU: mevcut uclarin hicbiri "bu pencerede HANGI
-/// checkpoint'ler okutuldu" bilgisini nokta bazinda vermiyor (dashboard/live
-/// ve /patrol-windows yalnizca SAYI dondurur; scan'lerin GET ucu yok). Bu
-/// yuzden nokta bazli durum, plan checkpoint listesi + BU CIHAZIN yerel
-/// okutma kaydinin (outbox) birlesimiyle uretilir — bkz.
-/// [mergeCheckpointStatuses]. Detay: mobile/README.md §9 (eksik uc onerisi
-/// §10'da DEV-A'ya flag'lendi).
+/// VERI AKISI (Faz 2 — README §10 KAPANDI): nokta bazli okutma durumunun
+/// TEK KAYNAGI artik sunucudur (`GET /me/patrol-window`, pencere-geneli —
+/// baska elemanin okutmasi da gorunur). Yerel birlesimin kalan tek rolu, bu
+/// cihazin outbox'ta BEKLEYEN (henuz gonderilmemis) okutmalarini sunucu
+/// verisinin uzerine "gonderiliyor" olarak bindirmektir — bkz.
+/// [mergeCheckpointStatuses].
 library;
 
 import '../../scan/domain/outbox_entry.dart';
@@ -176,13 +175,154 @@ class PlanCheckpoint {
   }
 }
 
-/// Bir noktanin BU CIHAZA gore okutma durumu (yerel birlesim sonucu):
+/// `GET /me/patrol-window` → checkpoints[] ogesi (MePatrolCheckpoint semasi).
+/// `okutuldu` PENCERE-GENELIDIR: herhangi bir elemanin pencere araligindaki
+/// okutmasi sayilir; zaman/kullanici penceredeki ILK scan'den gelir.
+class MePatrolCheckpoint {
+  const MePatrolCheckpoint({
+    required this.checkpointId,
+    required this.ad,
+    required this.sira,
+    required this.okutuldu,
+    this.okutmaZamani,
+    this.okutanUserId,
+  });
+
+  final String checkpointId;
+  final String ad;
+  final int sira;
+  final bool okutuldu;
+  final DateTime? okutmaZamani;
+  final String? okutanUserId;
+
+  factory MePatrolCheckpoint.fromJson(Map<String, dynamic> json) =>
+      MePatrolCheckpoint(
+        checkpointId: json['checkpoint_id'] as String,
+        ad: json['ad'] as String? ?? '',
+        sira: (json['sira'] as num?)?.toInt() ?? 0,
+        okutuldu: json['okutuldu'] as bool? ?? false,
+        okutmaZamani: json['okutma_zamani'] == null
+            ? null
+            : DateTime.parse(json['okutma_zamani'] as String).toUtc(),
+        okutanUserId: json['okutan_user_id'] as String?,
+      );
+}
+
+/// `GET /me/patrol-window` → windows[] ogesi (MePatrolWindowItem semasi):
+/// pencere bilgisi + kendi checkpoint listesi (`sira` ASC).
+class MePatrolWindowItem {
+  const MePatrolWindowItem({
+    required this.id,
+    required this.patrolPlanId,
+    required this.pencereBaslangic,
+    required this.pencereBitis,
+    required this.durum,
+    required this.checkpoints,
+    this.planAdi,
+  });
+
+  final String id;
+  final String patrolPlanId;
+  final String? planAdi;
+  final DateTime pencereBaslangic;
+  final DateTime pencereBitis;
+  final PatrolWindowDurum durum;
+  final List<MePatrolCheckpoint> checkpoints;
+
+  int get okutulanSayisi => checkpoints.where((c) => c.okutuldu).length;
+
+  /// Ekranin mevcut gorunum modeline kopru: sayilar sunucu checkpoint
+  /// listesinden turetilir (scheduler'in "tamamlandi" hesabiyla ayni kaynak).
+  ActivePatrolWindow toActiveWindow() => ActivePatrolWindow(
+        patrolWindowId: id,
+        patrolPlanId: patrolPlanId,
+        patrolPlanAd: planAdi,
+        pencereBaslangic: pencereBaslangic,
+        pencereBitis: pencereBitis,
+        durum: durum,
+        beklenenCheckpointSayisi: checkpoints.length,
+        okutulanCheckpointSayisi: okutulanSayisi,
+      );
+
+  factory MePatrolWindowItem.fromJson(
+    Map<String, dynamic> json, {
+    List<MePatrolCheckpoint>? checkpoints,
+  }) {
+    final rawCps = json['checkpoints'];
+    return MePatrolWindowItem(
+      id: json['id'] as String,
+      patrolPlanId: json['patrol_plan_id'] as String,
+      planAdi: json['plan_adi'] as String?,
+      pencereBaslangic:
+          DateTime.parse(json['pencere_baslangic'] as String).toUtc(),
+      pencereBitis: DateTime.parse(json['pencere_bitis'] as String).toUtc(),
+      durum: patrolWindowDurumFromJson(json['durum'] as String?),
+      checkpoints: checkpoints ??
+          [
+            for (final item in rawCps is List ? rawCps : const [])
+              if (item is Map)
+                MePatrolCheckpoint.fromJson(Map<String, dynamic>.from(item)),
+          ],
+    );
+  }
+}
+
+/// `GET /me/patrol-window` yaniti (MePatrolWindowResponse semasi).
 ///
-///   * [bekliyor]     — bu cihazda pencere icinde okutma kaydi yok. Baska bir
-///                      cihaz okutmus olabilir (sunucu sayisi ayrica gosterilir).
-///   * [gonderiliyor] — okutuldu, kayit outbox'ta gonderim bekliyor/gidiyor
-///                      (offline'da bile kullanici ilerlemesini gorur).
-///   * [okutuldu]     — okutuldu ve backend kabul etti (201/200).
+///   * [window]  — bitisi en yakin (en acil) aktif pencere; ust-duzey
+///                 `checkpoints` alani bu pencerenin listesidir. Aktif
+///                 pencere yoksa null (200 doner, hata DEGIL).
+///   * [windows] — TUM aktif pencereler, `pencere_bitis` ASC (genelde 0-1).
+class MePatrolWindowResponse {
+  const MePatrolWindowResponse({
+    required this.generatedAt,
+    required this.window,
+    required this.windows,
+  });
+
+  final DateTime generatedAt;
+  final MePatrolWindowItem? window;
+  final List<MePatrolWindowItem> windows;
+
+  factory MePatrolWindowResponse.fromJson(Map<String, dynamic> json) {
+    final rawWindow = json['window'];
+    final rawCps = json['checkpoints'];
+    final window = rawWindow is Map
+        ? MePatrolWindowItem.fromJson(
+            Map<String, dynamic>.from(rawWindow),
+            checkpoints: [
+              for (final item in rawCps is List ? rawCps : const [])
+                if (item is Map)
+                  MePatrolCheckpoint.fromJson(Map<String, dynamic>.from(item)),
+            ],
+          )
+        : null;
+    final rawWindows = json['windows'];
+    final windows = [
+      for (final item in rawWindows is List ? rawWindows : const [])
+        if (item is Map)
+          MePatrolWindowItem.fromJson(Map<String, dynamic>.from(item)),
+    ];
+    return MePatrolWindowResponse(
+      generatedAt: json['generated_at'] == null
+          ? DateTime.now().toUtc()
+          : DateTime.parse(json['generated_at'] as String).toUtc(),
+      window: window,
+      // Savunmaci: windows[] bos ama window dolu gelirse tek pencere say.
+      windows: windows.isEmpty && window != null ? [window] : windows,
+    );
+  }
+}
+
+/// Bir noktanin listedeki okutma durumu:
+///
+///   * [bekliyor]     — sunucuda okutma kaydi yok ve bu cihazin outbox'inda
+///                      bekleyen okutmasi yok.
+///   * [gonderiliyor] — bu cihazda okutuldu, kayit outbox'ta gonderim
+///                      bekliyor (sunucuda henuz gorunmez; offline'da bile
+///                      kullanici ilerlemesini gorur).
+///   * [okutuldu]     — SUNUCU kaydi (pencere-geneli): bu cihaz veya baska
+///                      bir elemanin okutmasi backend'e islenmis.
 enum CheckpointScanDurum { bekliyor, gonderiliyor, okutuldu }
 
 /// Liste satirinin gorunum modeli: plan noktasi + yerel okutma durumu.
@@ -204,54 +344,74 @@ class CheckpointStatus {
 
 String _normalizeUid(String uid) => uid.trim().toUpperCase();
 
-/// Plan checkpoint listesi ile bu cihazin okutma kaydini (outbox — bekleyen +
-/// gonderilmis) BIRLESTIRIR. Sozlesmede nokta bazli sunucu verisi olmadigi
-/// icin tek dogruluk kaynagimiz bu yerel kayittir (eksik uc onerisi:
-/// README §10 — DEV-A notu).
+/// SUNUCU checkpoint durumunun (tek dogruluk kaynagi — `GET
+/// /me/patrol-window`) uzerine bu cihazin outbox'ta BEKLEYEN (henuz
+/// gonderilmemis) okutmalarini "gonderiliyor" olarak BINDIRIR.
 ///
-/// Eslestirme kurali: kayit `kaliciHata` degilse ve `okutma_zamani` pencere
-/// icindeyse (`[baslangic, bitis)`), once checkpoint_id ile, yoksa
-/// normalize edilmis NFC UID ile eslesir. Ayni noktaya birden fazla kayit
-/// varsa en "ileri" durum kazanir (okutuldu > gonderiliyor).
+/// Kurallar:
+///   * Sunucu `okutuldu` diyorsa sonuc her zaman [CheckpointScanDurum.okutuldu]
+///     (zaman sunucudan). Yerel kayit bunu degistiremez.
+///   * Bindirme yalnizca BEKLEYEN kayitlar icindir ([OutboxEntry.isPending]);
+///     `gonderildi` kayitlar bindirilmez — gonderilmis scan'lerin kaynagi
+///     sunucudur. `kaliciHata` hicbir zaman sayilmaz.
+///   * Kayit, `okutma_zamani` pencere icindeyse (`[baslangic, bitis)`) once
+///     checkpoint_id ile, yoksa [uidByCheckpointId] uzerinden normalize NFC
+///     UID ile eslesir (outbox kayitlari cogunlukla checkpoint_id tasimaz).
+///
+/// Sonuc `sira` ASC sirali doner.
 List<CheckpointStatus> mergeCheckpointStatuses({
-  required List<PlanCheckpoint> checkpoints,
+  required List<MePatrolCheckpoint> serverCheckpoints,
   required DateTime pencereBaslangic,
   required DateTime pencereBitis,
   required List<OutboxEntry> outboxEntries,
+  Map<String, String> uidByCheckpointId = const {},
 }) {
-  // Pencere icindeki kullanilabilir kayitlari bir kez suz.
-  final inWindow = <OutboxEntry>[
+  // Pencere icindeki BEKLEYEN kayitlari bir kez suz.
+  final pendingInWindow = <OutboxEntry>[
     for (final e in outboxEntries)
-      if (e.status != OutboxStatus.kaliciHata &&
+      if (e.isPending &&
           !e.okutmaZamani.isBefore(pencereBaslangic) &&
           e.okutmaZamani.isBefore(pencereBitis))
         e,
   ];
 
+  final sorted = [...serverCheckpoints]
+    ..sort((a, b) => a.sira.compareTo(b.sira));
+
   return [
-    for (final cp in checkpoints)
+    for (final cp in sorted)
       () {
-        final uid = cp.nfcTagUid == null ? null : _normalizeUid(cp.nfcTagUid!);
-        OutboxEntry? best;
-        for (final e in inWindow) {
-          final matches = e.checkpointId == cp.checkpointId ||
-              (uid != null && _normalizeUid(e.nfcTagUid) == uid);
-          if (!matches) continue;
-          if (best == null ||
-              (e.status == OutboxStatus.gonderildi &&
-                  best.status != OutboxStatus.gonderildi)) {
-            best = e;
+        final rawUid = uidByCheckpointId[cp.checkpointId];
+        final uid = rawUid == null ? null : _normalizeUid(rawUid);
+        final planCp = PlanCheckpoint(
+          checkpointId: cp.checkpointId,
+          sira: cp.sira,
+          ad: cp.ad.isEmpty ? null : cp.ad,
+          nfcTagUid: rawUid,
+        );
+
+        if (cp.okutuldu) {
+          return CheckpointStatus(
+            checkpoint: planCp,
+            durum: CheckpointScanDurum.okutuldu,
+            okutmaZamani: cp.okutmaZamani,
+          );
+        }
+
+        OutboxEntry? pending;
+        for (final e in pendingInWindow) {
+          if (e.checkpointId == cp.checkpointId ||
+              (uid != null && _normalizeUid(e.nfcTagUid) == uid)) {
+            pending = e;
+            break;
           }
         }
-        final durum = switch (best?.status) {
-          null => CheckpointScanDurum.bekliyor,
-          OutboxStatus.gonderildi => CheckpointScanDurum.okutuldu,
-          _ => CheckpointScanDurum.gonderiliyor,
-        };
         return CheckpointStatus(
-          checkpoint: cp,
-          durum: durum,
-          okutmaZamani: best?.okutmaZamani,
+          checkpoint: planCp,
+          durum: pending == null
+              ? CheckpointScanDurum.bekliyor
+              : CheckpointScanDurum.gonderiliyor,
+          okutmaZamani: pending?.okutmaZamani,
         );
       }(),
   ];

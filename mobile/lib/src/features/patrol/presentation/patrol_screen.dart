@@ -14,8 +14,10 @@ import 'patrol_history_controller.dart';
 ///
 ///   * Aktif sekme: aktif pencere karti (plan adi, saat araligi, canli kalan
 ///     sure, ilerleme) + nokta listesi (okutuldu ✓ / gonderiliyor / bekliyor)
-///     + NFC okutmaya gecis. Nokta durumlari sunucu plan verisi + BU CIHAZIN
-///     yerel okutma kaydinin birlesimidir (offline'da bile ilerleme gorunur).
+///     + NFC okutmaya gecis. Nokta durumlari SUNUCUDAN gelir
+///     (GET /me/patrol-window, pencere-geneli — baska elemanin okutmasi da ✓
+///     gorunur); bu cihazin outbox'ta bekleyen okutmalari "gonderiliyor"
+///     olarak uzerine bindirilir (offline'da bile ilerleme gorunur).
 ///   * Gecmis sekme: son pencereler (tamamlandi/kacirildi/bekliyor + sayilar).
 class PatrolScreen extends ConsumerWidget {
   const PatrolScreen({super.key});
@@ -91,6 +93,10 @@ class _ActiveTourTab extends ConsumerWidget {
               onRetry: state.forbidden ? null : controller.refresh,
             ),
           if (state.active != null) ...[
+            if (state.windows.length > 1) ...[
+              _WindowSelector(state: state),
+              const SizedBox(height: 12),
+            ],
             _ActiveWindowCard(state: state),
             const SizedBox(height: 16),
             _CheckpointList(state: state),
@@ -109,6 +115,36 @@ class _ActiveTourTab extends ConsumerWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Birden cok plan ayni anda aktifken pencere secici (`/me/patrol-window` →
+/// `windows[]`). Varsayilan secim sunucunun en acil (bitisi en yakin)
+/// penceresidir; kullanici digerine gecebilir.
+class _WindowSelector extends ConsumerWidget {
+  const _WindowSelector({required this.state});
+
+  final PatrolTourState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        for (final w in state.windows)
+          ChoiceChip(
+            label: Text(
+              '${w.patrolPlanAd ?? 'Devriye turu'} · '
+              'bitis ${_fmtClock(w.pencereBitis.toLocal())}',
+            ),
+            selected: w.patrolWindowId == state.selectedWindowId,
+            onSelected: (_) => ref
+                .read(patrolTourControllerProvider.notifier)
+                .selectWindow(w.patrolWindowId),
+          ),
+      ],
     );
   }
 }
@@ -302,8 +338,9 @@ class _CheckpointList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 8, left: 4, right: 4),
           child: Text(
-            'Nokta durumlari bu cihazin okutmalarina goredir; baska cihazin '
-            'okutmalari yalnizca yukaridaki sunucu sayisina yansir.',
+            'Nokta durumlari sunucudandir; tum gorevlilerin okutmalari ✓ '
+            'gorunur. "Gonderiliyor" satirlar bu cihazin henuz gonderilmemis '
+            'okutmalaridir.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
