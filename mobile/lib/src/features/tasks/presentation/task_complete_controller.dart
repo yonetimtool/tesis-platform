@@ -239,8 +239,17 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
 
   /// `POST /tasks/{id}/completions`. Basarida liste rozetini gunceller;
   /// 201/200 ayrimi [TaskCompleteState.result] uzerinden UI'a yansir.
-  Future<void> submit() async {
+  /// [fotoZorunlu] true iken foto'suz deneme ERKEN uyariyla durdurulur
+  /// (backend 422'si de yakalanir ama kullanici bosuna gonderim beklemesin).
+  Future<void> submit({bool fotoZorunlu = false}) async {
     if (state.submitting || state.result != null) return;
+    if (fotoZorunlu && state.draft.fotoKey == null && !state.fotoBekliyor) {
+      state = state.copyWith(
+        submitError: 'Bu gorev icin FOTO KANITI ZORUNLU. Tamamlamadan once '
+            'fotograf cekip yukleyin.',
+      );
+      return;
+    }
     if (state.fotoBekliyor) {
       state = state.copyWith(
         submitError: 'Fotograf henuz yuklenmedi. Yuklemenin bitmesini '

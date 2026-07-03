@@ -694,6 +694,30 @@ ekleme var:
 
 ## 11. Görev ekranları — "Görevlerim" (Faz 3 / Prompt 1)
 
+### ✅ KAPANDI ✓ — §11 sözleşme bulguları (uyarlama turu)
+
+Aşağıda flag'lenen 3 bulgu backend'de kapandı (DEV-A cevabı:
+`contracts/README.md` → "Birikmiş flag temizliği") ve mobil uyarlandı:
+
+1. **"Bana atananlar" sunucuda ✓:** varsayılan görünüm artık
+   `GET /tasks?atanan_user_id=me` ile TEK istekte yalnız benim görevlerim.
+   İstemcideki "bana atananlar öne" sıralaması kaldırıldı (kalan istemci
+   işi yalnız tarih sırası — `sortTasksByPlan`). "Herkes" chip'i eski
+   tam-liste görünümünü korur (havuz/atanmamış görevler; "Sana atanmış"
+   rozeti yalnız bu görünümde anlamlı olduğundan orada gösterilir). JWT
+   `sub` çözümü bu rozet için duruyor.
+2. **`foto_zorunlu` geldi ✓:** listede ve detayda "Foto zorunlu" rozeti;
+   foto'suz "Tamamla" denemesi İSTEMCİDE erken uyarıyla durdurulur
+   ("bu görev için foto kanıtı zorunlu"), backend 422 mesajı da yakalanır.
+3. **NFC normalize backend'de ✓:** karşılaştırma artık strip+upper —
+   mobil zaten sözleşme formatı ürettiği için davranış değişikliği yok.
+
+**İstek özeti:** "Görevlerim" önce TÜM aktif görevleri çekip istemcide
+sıralıyordu; şimdi varsayılan görünüm sunucu süzmesiyle tek (ve daha
+küçük) istek. Orijinal bulgular tarihçe olarak aşağıda.
+
+---
+
 Temizlik/kontrol personelinin (role=cleaning; security de erişir) görev
 listesi ve NFC + foto kanıtlı tamamlama akışı.
 Kod: `features/tasks/` (data / domain / presentation), rota: `/tasks`
@@ -777,7 +801,7 @@ image_picker (kamera|galeri, maxWidth 1600, quality 80)
 5. Panel (admin) → görev raporları/`GET /task-completions` → tamamlama
    foto/NFC kanıt bayraklarıyla anında görünür.
 
-### 🚩 Sözleşme bulguları (DEV-A'ya — uydurmadık, istemcide çözdük)
+### 🚩 Sözleşme bulguları (tarihçe — TAMAMI KAPANDI ✓, üstteki bloğa bakın)
 
 1. **"Bana atananlar" filtresi yok:** `GET /tasks` yalnızca `tip` + `aktif`
    + sayfa parametreleri sunuyor; `atanan_user_id` filtresi YOK. Mobil tüm

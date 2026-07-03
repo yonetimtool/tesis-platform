@@ -92,6 +92,22 @@ class _TipFilterBar extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
+          // Kapsam: "Bana atanan" sunucuda suzulur (?atanan_user_id=me);
+          // "Herkes" eski tam-liste gorunumudur (havuz gorevleri dahil).
+          ChoiceChip(
+            avatar: const Icon(Icons.person, size: 16),
+            label: const Text('Bana atanan'),
+            selected: state.sadeceBenim,
+            onSelected: (_) => controller.setSadeceBenim(true),
+          ),
+          const SizedBox(width: 8),
+          ChoiceChip(
+            avatar: const Icon(Icons.groups, size: 16),
+            label: const Text('Herkes'),
+            selected: !state.sadeceBenim,
+            onSelected: (_) => controller.setSadeceBenim(false),
+          ),
+          const SizedBox(width: 16),
           ChoiceChip(
             label: const Text('Tumu'),
             selected: state.tipFilter == null,
@@ -144,11 +160,21 @@ class _TaskTile extends StatelessWidget {
                 'Planlanan: '
                 '${_fmtDateTime(task.sonrakiPlanlanan!.toLocal())}',
               ),
-            if (mine)
+            // "Bana atanan" gorunumunde her satir zaten benim — rozet
+            // yalnizca "Herkes" gorunumunde ayirt edicidir.
+            if (mine && !state.sadeceBenim)
               const Text(
                 'Sana atanmis',
                 style: TextStyle(
                   color: Colors.blue,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            if (task.fotoZorunlu)
+              const Text(
+                'Foto zorunlu',
+                style: TextStyle(
+                  color: Colors.deepOrange,
                   fontWeight: FontWeight.w600,
                 ),
               ),

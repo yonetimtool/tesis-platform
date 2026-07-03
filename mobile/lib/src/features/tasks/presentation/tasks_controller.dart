@@ -13,6 +13,7 @@ class TasksState {
     this.forbidden = false,
     this.tasks = const [],
     this.tipFilter,
+    this.sadeceBenim = true,
     this.currentUserId,
     this.completedNow = const {},
     this.refreshedAt,
@@ -24,13 +25,16 @@ class TasksState {
   /// 403 — rol gorev listesine erisemiyor (orn. resident).
   final bool forbidden;
 
-  /// Aktif gorevler — bana atananlar one, sonra sonraki_planlanan ASC
-  /// (siralama istemcide; sunucuda "bana atananlar" filtresi yok —
-  /// sozlesme dogrulandi, bkz. README §11).
+  /// Aktif gorevler, sonraki_planlanan ASC. Varsayilan gorunum SUNUCUDA
+  /// suzulur: `?atanan_user_id=me` (§11 #1 kapandi).
   final List<Task> tasks;
 
   /// Secili tip filtresi (null → tumu). Sunucuya `tip` parametresi gider.
   final TaskTip? tipFilter;
+
+  /// true (varsayilan) → yalniz bana atananlar (`atanan_user_id=me`);
+  /// false → tum aktif gorevler (havuz/atanmamislar dahil, eski gorunum).
+  final bool sadeceBenim;
 
   /// JWT `sub` — "sana atanmis" vurgusu icin.
   final String? currentUserId;
@@ -48,6 +52,7 @@ class TasksState {
     bool? forbidden,
     List<Task>? tasks,
     Object? tipFilter = _sentinel,
+    bool? sadeceBenim,
     Object? currentUserId = _sentinel,
     Map<String, TaskCompletionResult>? completedNow,
     DateTime? refreshedAt,
@@ -61,6 +66,7 @@ class TasksState {
       tasks: tasks ?? this.tasks,
       tipFilter:
           tipFilter == _sentinel ? this.tipFilter : tipFilter as TaskTip?,
+      sadeceBenim: sadeceBenim ?? this.sadeceBenim,
       currentUserId: currentUserId == _sentinel
           ? this.currentUserId
           : currentUserId as String?,
@@ -72,9 +78,10 @@ class TasksState {
   static const Object _sentinel = Object();
 }
 
-/// Gorev listesi controller'i: aktif gorevleri ceker, tip filtresi uygular,
-/// bana atananlari one alir. Tamamlama ekrani basariyla dondugunde
-/// [markCompleted] ile liste rozetini gunceller.
+/// Gorev listesi controller'i: varsayilan "bana atananlar" (sunucu suzmesi,
+/// tek istek), istege bagli "tumu" gorunumu; tip filtresi sunucuya gider.
+/// Tamamlama ekrani basariyla dondugunde [markCompleted] ile liste rozetini
+/// gunceller.
 class TasksController extends Notifier<TasksState> {
   bool _refreshing = false;
 
@@ -91,15 +98,19 @@ class TasksController extends Notifier<TasksState> {
       state = state.copyWith(loading: true, errorMessage: null);
     }
     try {
+      // JWT sub yalnizca "Sana atanmis" rozeti icin ("Tumu" gorunumunde);
+      // suzme artik sunucuda.
       final userId = await ref.read(currentUserIdProvider.future);
-      final tasks =
-          await ref.read(taskApiProvider).fetchTasks(tip: state.tipFilter);
+      final tasks = await ref.read(taskApiProvider).fetchTasks(
+            tip: state.tipFilter,
+            assignedToMe: state.sadeceBenim,
+          );
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
         errorMessage: null,
         forbidden: false,
-        tasks: sortTasksForUser(tasks, userId),
+        tasks: sortTasksByPlan(tasks),
         currentUserId: userId,
         refreshedAt: DateTime.now(),
       );
@@ -124,6 +135,13 @@ class TasksController extends Notifier<TasksState> {
   Future<void> setTipFilter(TaskTip? tip) async {
     if (tip == state.tipFilter) return;
     state = state.copyWith(tipFilter: tip);
+    await refresh();
+  }
+
+  /// "Bana atanan" (sunucu suzmesi) ↔ "Tumu" gorunumu.
+  Future<void> setSadeceBenim(bool value) async {
+    if (value == state.sadeceBenim) return;
+    state = state.copyWith(sadeceBenim: value);
     await refresh();
   }
 

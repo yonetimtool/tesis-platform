@@ -38,7 +38,11 @@ class TaskDetailScreen extends ConsumerWidget {
               _NfcStep(state: state, controller: controller),
               const SizedBox(height: 12),
             ],
-            _PhotoStep(state: state, controller: controller),
+            _PhotoStep(
+              state: state,
+              controller: controller,
+              fotoZorunlu: task.fotoZorunlu,
+            ),
             const SizedBox(height: 12),
             _NoteStep(controller: controller),
             const SizedBox(height: 16),
@@ -53,7 +57,7 @@ class TaskDetailScreen extends ConsumerWidget {
             FilledButton.icon(
               onPressed: state.submitting || state.photoBusy
                   ? null
-                  : controller.submit,
+                  : () => controller.submit(fotoZorunlu: task.fotoZorunlu),
               icon: state.submitting
                   ? const SizedBox(
                       width: 18,
@@ -198,12 +202,19 @@ class _NfcStep extends StatelessWidget {
 }
 
 /// Adim 2 — foto kaniti: cek/sec → presign → PUT → foto_key. Online
-/// gerektirir; baglanti hatasi kullaniciya net soylenir.
+/// gerektirir; baglanti hatasi kullaniciya net soylenir. [fotoZorunlu]
+/// gorevde isaretliyse rozet gosterilir (foto'suz tamamlama backend'de 422;
+/// istemci zaten erken uyarir).
 class _PhotoStep extends StatelessWidget {
-  const _PhotoStep({required this.state, required this.controller});
+  const _PhotoStep({
+    required this.state,
+    required this.controller,
+    required this.fotoZorunlu,
+  });
 
   final TaskCompleteState state;
   final TaskCompleteController controller;
+  final bool fotoZorunlu;
 
   @override
   Widget build(BuildContext context) {
@@ -222,10 +233,21 @@ class _PhotoStep extends StatelessWidget {
                   color: state.fotoYuklendi ? Colors.green : null,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  '2. Foto kaniti (istege bagli)',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  fotoZorunlu
+                      ? '2. Foto kaniti'
+                      : '2. Foto kaniti (istege bagli)',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
+                if (fotoZorunlu) ...[
+                  const SizedBox(width: 8),
+                  const Chip(
+                    label: Text('Foto zorunlu'),
+                    labelStyle:
+                        TextStyle(color: Colors.deepOrange, fontSize: 12),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 8),

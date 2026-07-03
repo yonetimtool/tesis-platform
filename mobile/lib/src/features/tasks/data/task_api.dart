@@ -26,10 +26,15 @@ class TaskApi {
   /// gelir). Content-Type istek basina verilir.
   final Dio _uploadDio;
 
-  /// `GET /tasks` — aktif gorevler, gerekirse tip filtreli. Sayfalari
-  /// dolasarak TUM kumeyi dondurur (limit 200 = sozlesme max; gorev sayisi
-  /// kucuk bir kumedir).
-  Future<List<Task>> fetchTasks({TaskTip? tip, bool aktif = true}) async {
+  /// `GET /tasks` — aktif gorevler; [assignedToMe] true ise SUNUCU
+  /// `?atanan_user_id=me` ile suzer ("Gorevlerim" tek istekte, §11 #1
+  /// kapandi). Sayfalari dolasarak kumeyi dondurur (limit 200 = sozlesme
+  /// max; pratikte tek sayfa).
+  Future<List<Task>> fetchTasks({
+    TaskTip? tip,
+    bool aktif = true,
+    bool assignedToMe = false,
+  }) async {
     final tasks = <Task>[];
     var offset = 0;
     const limit = 200;
@@ -42,6 +47,7 @@ class TaskApi {
             'offset': offset,
             'aktif': aktif,
             if (tip != null && tip != TaskTip.bilinmiyor) 'tip': tip.name,
+            if (assignedToMe) 'atanan_user_id': 'me',
           },
         );
         final items = res.data?['items'];

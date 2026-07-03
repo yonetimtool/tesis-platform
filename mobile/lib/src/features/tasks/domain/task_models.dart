@@ -2,15 +2,15 @@
 /// TaskCompletion / TaskCompletionCreate / PresignRequest / PresignResponse
 /// semalarina uyar.
 ///
-/// SOZLESME NOTLARI (dogrulandi, uydurma yok):
-///   * `GET /tasks` yalnizca `tip` + `aktif` + sayfa filtreleri sunar;
-///     "bana atananlar" filtresi YOK → istemci tarafinda suzulur/siralanir
-///     (bkz. [sortTasksForUser]; DEV-A onerisi README §11'de).
+/// SOZLESME NOTLARI (§11 bulgulari KAPANDI — README §11):
+///   * "Gorevlerim" SUNUCUDA suzulur: `GET /tasks?atanan_user_id=me`
+///     (istemcideki "bana atananlar one" siralamasi kaldirildi; kalan tek
+///     istemci isi tarih sirasi — [sortTasksByPlan]).
+///   * `task.foto_zorunlu` geldi: true iken `foto_key`'siz completion 422 —
+///     mobil erken uyari verir, backend mesaji da yakalanir.
 ///   * `POST /tasks/{id}/completions` Idempotency-Key header ZORUNLU
-///     (yoksa 400); `nfc_tag_uid` verilirse gorevin checkpoint etiketiyle
-///     eslesmeli, aksi halde 422 `invalid_reference` doner.
-///   * Foto zorunlulugu diye bir alan sozlesmede YOK; foto opsiyonel kanittir
-///     (`foto_key` nullable).
+///     (yoksa 400); `nfc_tag_uid` normalize (strip+upper) karsilastirilir,
+///     eslesmezse 422 `invalid_reference`.
 library;
 
 /// TaskTip semasi. [bilinmiyor] sozlesme disi degerler icin guvenli fallback.
@@ -33,6 +33,7 @@ class Task {
     required this.tip,
     required this.ad,
     required this.aktif,
+    this.fotoZorunlu = false,
     this.aciklama,
     this.atananUserId,
     this.checkpointId,
@@ -60,6 +61,10 @@ class Task {
 
   final bool aktif;
 
+  /// true → completion `foto_key` olmadan kabul edilmez (backend 422).
+  /// Detay ekrani rozet gosterir ve gonderim oncesi erken uyari verir.
+  final bool fotoZorunlu;
+
   bool isAssignedTo(String? userId) =>
       userId != null && atananUserId == userId;
 
@@ -75,6 +80,7 @@ class Task {
             ? null
             : DateTime.parse(json['sonraki_planlanan'] as String).toUtc(),
         aktif: json['aktif'] as bool? ?? true,
+        fotoZorunlu: json['foto_zorunlu'] as bool? ?? false,
       );
 }
 
@@ -211,24 +217,17 @@ class PresignTicket {
       );
 }
 
-/// Liste sirasi: bana atananlar one, grup icinde `sonraki_planlanan` ASC
-/// (plansizlar sona), esitlikte ad. Sunucuda "bana atananlar" filtresi
-/// olmadigi icin (sozlesme dogrulandi) siralama istemcidedir.
-List<Task> sortTasksForUser(List<Task> tasks, String? currentUserId) {
-  int byPlan(Task a, Task b) {
-    if (a.sonrakiPlanlanan == null && b.sonrakiPlanlanan == null) {
-      return a.ad.compareTo(b.ad);
-    }
-    if (a.sonrakiPlanlanan == null) return 1;
-    if (b.sonrakiPlanlanan == null) return -1;
-    final cmp = a.sonrakiPlanlanan!.compareTo(b.sonrakiPlanlanan!);
-    return cmp != 0 ? cmp : a.ad.compareTo(b.ad);
-  }
-
+/// Liste sirasi: `sonraki_planlanan` ASC (plansizlar sona), esitlikte ad.
+/// "Bana atananlar one" mantigi KALDIRILDI — suzme artik sunucuda
+/// (`?atanan_user_id=me`, §11 #1 kapandi).
+List<Task> sortTasksByPlan(List<Task> tasks) {
   return [...tasks]..sort((a, b) {
-      final aMine = a.isAssignedTo(currentUserId) ? 0 : 1;
-      final bMine = b.isAssignedTo(currentUserId) ? 0 : 1;
-      if (aMine != bMine) return aMine - bMine;
-      return byPlan(a, b);
+      if (a.sonrakiPlanlanan == null && b.sonrakiPlanlanan == null) {
+        return a.ad.compareTo(b.ad);
+      }
+      if (a.sonrakiPlanlanan == null) return 1;
+      if (b.sonrakiPlanlanan == null) return -1;
+      final cmp = a.sonrakiPlanlanan!.compareTo(b.sonrakiPlanlanan!);
+      return cmp != 0 ? cmp : a.ad.compareTo(b.ad);
     });
 }

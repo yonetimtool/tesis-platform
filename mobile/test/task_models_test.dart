@@ -32,6 +32,21 @@ void main() {
       expect(t.isAssignedTo(null), isFalse);
     });
 
+    test('foto_zorunlu eslenir; eksikse false (eski yanit/guvenli varsayilan)',
+        () {
+      Map<String, dynamic> base(bool? fotoZorunlu) => {
+            'id': 't-f',
+            'tip': 'temizlik',
+            'ad': 'X',
+            'aktif': true,
+            'created_at': '2026-07-01T08:00:00Z',
+            'foto_zorunlu': ?fotoZorunlu,
+          };
+      expect(Task.fromJson(base(true)).fotoZorunlu, isTrue);
+      expect(Task.fromJson(base(false)).fotoZorunlu, isFalse);
+      expect(Task.fromJson(base(null)).fotoZorunlu, isFalse);
+    });
+
     test('opsiyoneller null olabilir; bilinmeyen tip guvenli fallback', () {
       final t = Task.fromJson({
         'id': 't-2',
@@ -130,39 +145,28 @@ void main() {
     expect(p.expiresIn, 300);
   });
 
-  group('sortTasksForUser', () {
-    Task task(String id, {String? atanan, DateTime? planlanan}) => Task(
+  group('sortTasksByPlan', () {
+    // "Bana atananlar one" istemci mantigi KALDIRILDI (§11 #1 kapandi —
+    // suzme artik sunucuda: ?atanan_user_id=me). Kalan tek is: tarih sirasi.
+    Task task(String id, {DateTime? planlanan}) => Task(
           id: id,
           tip: TaskTip.temizlik,
           ad: id,
           aktif: true,
-          atananUserId: atanan,
           sonrakiPlanlanan: planlanan,
         );
 
-    test('bana atananlar one; sonra sonraki_planlanan ASC (null sona)', () {
-      final sorted = sortTasksForUser([
-        task('digerinin', atanan: 'user-2'),
-        task('benim-gec',
-            atanan: 'user-1', planlanan: DateTime.utc(2026, 7, 5)),
-        task('atanmamis-erken', planlanan: DateTime.utc(2026, 7, 4)),
-        task('benim-erken',
-            atanan: 'user-1', planlanan: DateTime.utc(2026, 7, 4)),
-        task('benim-plansiz', atanan: 'user-1'),
-      ], 'user-1');
+    test('sonraki_planlanan ASC; plansizlar sona, esitlikte ad', () {
+      final sorted = sortTasksByPlan([
+        task('plansiz-b'),
+        task('gec', planlanan: DateTime.utc(2026, 7, 5)),
+        task('plansiz-a'),
+        task('erken', planlanan: DateTime.utc(2026, 7, 4)),
+      ]);
       expect(
         [for (final t in sorted) t.id],
-        ['benim-erken', 'benim-gec', 'benim-plansiz', 'atanmamis-erken',
-          'digerinin'],
+        ['erken', 'gec', 'plansiz-a', 'plansiz-b'],
       );
-    });
-
-    test('kullanici id yoksa yalnizca tarih sirasi', () {
-      final sorted = sortTasksForUser([
-        task('plansiz'),
-        task('erken', planlanan: DateTime.utc(2026, 7, 4)),
-      ], null);
-      expect([for (final t in sorted) t.id], ['erken', 'plansiz']);
     });
   });
 }
