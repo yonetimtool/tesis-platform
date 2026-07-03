@@ -138,15 +138,15 @@ class _ScannedCard extends StatelessWidget {
           Icons.person,
           Colors.blue,
           'SENDE — '
-              '${_sinceText(info.openCheckout?.almaZamani)} uzerinde.',
+              '${_sinceText(info.acikZimmet?.alinmaZamani)} uzerinde.',
         ),
       ZimmetVerdict.baskasinda => (
           Icons.person_outline,
           Colors.orange,
-          info.openCheckout == null
+          info.acikZimmet == null
               ? 'Baskasinin uzerinde gorunuyor.'
-              : 'Baskasinda (${_shortId(info.openCheckout!.alanUserId)}) — '
-                  '${_sinceText(info.openCheckout!.almaZamani)}.',
+              : 'Baskasinda: ${_holderName(info.acikZimmet!)} — '
+                  '${_sinceText(info.acikZimmet!.alinmaZamani)} uzerinde.',
         ),
       ZimmetVerdict.bakimda => (
           Icons.build_circle_outlined,
@@ -276,10 +276,10 @@ class _HistoryCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         co.isOpen
-                            ? '${_shortId(co.alanUserId)} aldi — '
+                            ? '${_userLabel(co)} aldi — '
                                 '${_fmtDateTime(co.almaZamani.toLocal())} '
                                 '(hala uzerinde)'
-                            : '${_shortId(co.alanUserId)} · '
+                            : '${_userLabel(co)} · '
                                 '${_fmtDateTime(co.almaZamani.toLocal())} → '
                                 '${_fmtDateTime(co.birakmaZamani!.toLocal())}',
                         style: Theme.of(context).textTheme.bodySmall,
@@ -347,8 +347,8 @@ class _MyItemsTab extends ConsumerWidget {
                 leading: const Icon(Icons.inventory_2_outlined),
                 title: Text(item.asset.ad),
                 subtitle: Text(
-                  'Aldin: ${_fmtDateTime(item.checkout.almaZamani.toLocal())} '
-                  '(${_sinceText(item.checkout.almaZamani)})',
+                  'Aldin: ${_fmtDateTime(item.zimmet.alinmaZamani.toLocal())} '
+                  '(${_sinceText(item.zimmet.alinmaZamani)})',
                 ),
                 trailing: state.quickCheckinBusyId == item.asset.id
                     ? const SizedBox(
@@ -374,8 +374,16 @@ class _MyItemsTab extends ConsumerWidget {
 // ORTAK
 // --------------------------------------------------------------------------
 
-/// Kullanici ADI cozumu mobilde yok (/users admin-only — README §13 flag):
-/// kisa id gosterilir.
+/// Kullanici adi artik sunucudan gelir (§13 #5 kapandi); ad bos gelirse
+/// (eski kayit) kisa id'ye duselim.
+String _holderName(AcikZimmet z) =>
+    z.alanUserAd.trim().isNotEmpty ? z.alanUserAd : _shortId(z.alanUserId);
+
+String _userLabel(AssetCheckout co) =>
+    (co.alanUserAd != null && co.alanUserAd!.trim().isNotEmpty)
+        ? co.alanUserAd!
+        : _shortId(co.alanUserId);
+
 String _shortId(String userId) =>
     userId.length > 8 ? '${userId.substring(0, 8)}…' : userId;
 

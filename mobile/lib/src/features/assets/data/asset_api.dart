@@ -5,22 +5,43 @@ import '../../../core/error/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../domain/asset_models.dart';
 
-/// Demirbas zimmet modulunun HTTP istemcisi (admin + security + cleaning):
+/// Demirbas zimmet modulunun HTTP istemcisi (admin + security + cleaning).
+/// §13 bulgulari kapandiktan sonraki SADE veri yolu:
 ///
-///   * `GET  /assets`               → liste (UID indeksi + uzerimdekiler)
-///   * `GET  /assets/{id}`          → guncel durum (okutma sonrasi tazeleme)
-///   * `GET  /assets/{id}/history`  → zimmet gecmisi (alma_zamani ASC —
-///                                    acik kayit/son hareketler SON sayfada)
-///   * `POST /assets/{id}/checkout` → zimmete al (Idempotency-Key zorunlu)
-///   * `POST /assets/{id}/checkin`  → birak (Idempotency-Key zorunlu)
+///   * `GET  /assets?nfc_tag_uid=...`     → UID→asset TEK istekte (0/1 sonuc;
+///                                          yanit `acik_zimmet` ozetini tasir)
+///   * `GET  /assets?checked_out_by=me`   → uzerimdekiler TEK istekte
+///   * `GET  /assets/{id}`                → taze durum (aksiyon sonrasi)
+///   * `GET  /assets/{id}/history`        → varsayilan DESC → son N dogrudan
+///   * `POST /assets/{id}/checkout|checkin` → Idempotency-Key zorunlu;
+///     checkin artik SAHIPLIK kontrollu (baskasininkini kapatma → 403)
 class AssetApi {
   AssetApi(this._dio);
 
   final Dio _dio;
 
-  /// `GET /assets` — tum sayfalari dolasip listeyi dondurur (limit 200 =
-  /// sozlesme max; demirbas envanteri kucuk bir kumedir).
-  Future<List<Asset>> fetchAssets({AssetDurum? durum, bool aktif = true}) async {
+  /// Okutulan UID'yi tek istekle asset'e cozer (tenant icinde unique →
+  /// 0/1 sonuc). Eslesme yoksa null (etiket kayitsiz).
+  Future<Asset?> findByUid(String uid) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/assets',
+        queryParameters: {'nfc_tag_uid': uid.trim(), 'limit': 1},
+      );
+      final items = res.data?['items'];
+      if (items is! List || items.isEmpty) return null;
+      final first = items.first;
+      return first is Map
+          ? Asset.fromJson(Map<String, dynamic>.from(first))
+          : null;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `GET /assets?checked_out_by=me` — acik zimmeti bende olanlar (tek
+  /// istek; sayfalar dolasilir ama pratikte 1 sayfadir).
+  Future<List<Asset>> fetchMyAssets() async {
     final assets = <Asset>[];
     var offset = 0;
     const limit = 200;
@@ -31,9 +52,7 @@ class AssetApi {
           queryParameters: {
             'limit': limit,
             'offset': offset,
-            'aktif': aktif,
-            if (durum != null && durum != AssetDurum.bilinmiyor)
-              'durum': durum.name,
+            'checked_out_by': 'me',
           },
         );
         final items = res.data?['items'];
@@ -52,8 +71,8 @@ class AssetApi {
     return assets;
   }
 
-  /// `GET /assets/{id}` — guncel durum (okutma karti her zaman taze durumla
-  /// cizilir; liste onbellegi bayat olabilir).
+  /// `GET /assets/{id}` — guncel durum + acik_zimmet (aksiyon sonrasi kart
+  /// her zaman taze sunucu gercegiyle cizilir).
   Future<Asset> fetchAsset(String id) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>('/assets/$id');
@@ -63,26 +82,16 @@ class AssetApi {
     }
   }
 
-  /// Zimmet gecmisinin SON [lastN] kaydini (en yeni en sonda) dondurur.
-  /// Backend `alma_zamani` ASC siraladigi icin once toplami ogrenir, sonra
-  /// son sayfayi ceker (README §13'te DESC onerisi flag'li).
-  Future<List<AssetCheckout>> fetchHistoryTail(
+  /// Son [lastN] hareket — varsayilan siralama DESC (en yeni once)
+  /// oldugundan dogrudan ilk sayfa yeter.
+  Future<List<AssetCheckout>> fetchRecentHistory(
     String assetId, {
     int lastN = 20,
   }) async {
     try {
-      final head = await _dio.get<Map<String, dynamic>>(
-        '/assets/$assetId/history',
-        queryParameters: {'limit': 1, 'offset': 0},
-      );
-      final meta = head.data?['meta'];
-      final total = meta is Map ? (meta['total'] as num?)?.toInt() ?? 0 : 0;
-      if (total == 0) return const [];
-
-      final offset = total > lastN ? total - lastN : 0;
       final res = await _dio.get<Map<String, dynamic>>(
         '/assets/$assetId/history',
-        queryParameters: {'limit': lastN, 'offset': offset},
+        queryParameters: {'limit': lastN, 'offset': 0},
       );
       final items = res.data?['items'];
       return [
@@ -113,8 +122,8 @@ class AssetApi {
     }
   }
 
-  /// `POST /assets/{id}/checkin` — backend kapatma ve idempotent tekrari
-  /// ayni kodla (200) doner; 409 "Acik zimmet yok (demirbas zaten musait)."
+  /// `POST /assets/{id}/checkin` — 200 (kapatma / idempotent tekrar);
+  /// 409 "Acik zimmet yok"; 403 sahiplik (yalniz sahibi veya admin).
   Future<AssetActionResult> checkin(AssetActionDraft draft) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(

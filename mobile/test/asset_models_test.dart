@@ -2,25 +2,47 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/assets/domain/asset_models.dart';
 
 /// Demirbas zimmet modulunun domain modelleri — `contracts/openapi.yaml`
-/// Asset / AssetCheckout / CheckoutRequest / CheckinRequest semalarina uyar.
+/// Asset (acik_zimmet dahil) / AssetCheckout / Checkout-CheckinRequest
+/// semalarina uyar. (§13 bulgulari kapandiktan sonraki SADE akis: UID cozumu
+/// ve acik zimmet SUNUCUDAN gelir; istemci indeksi/history taramasi yok.)
 void main() {
   group('Asset.fromJson', () {
-    test('tum alanlar eslenir', () {
+    test('acik_zimmet null → kimsede degil', () {
       final a = Asset.fromJson({
         'id': 'a-1',
         'ad': 'Cim bicme makinesi',
         'kategori': 'ekipman',
         'nfc_tag_uid': '04:AA:BB:CC:DD:EE',
-        'durum': 'zimmetli',
+        'durum': 'musait',
         'aciklama': 'Depo 2',
         'aktif': true,
+        'acik_zimmet': null,
         'created_at': '2026-07-01T08:00:00Z',
       });
       expect(a.id, 'a-1');
-      expect(a.ad, 'Cim bicme makinesi');
       expect(a.kategori, AssetKategori.ekipman);
-      expect(a.durum, AssetDurum.zimmetli);
-      expect(a.nfcTagUid, '04:AA:BB:CC:DD:EE');
+      expect(a.durum, AssetDurum.musait);
+      expect(a.acikZimmet, isNull);
+    });
+
+    test('acik_zimmet dolu → sahibi ad + id + zamanla gelir (§13 #2/#5)', () {
+      final a = Asset.fromJson({
+        'id': 'a-1',
+        'ad': 'Matkap',
+        'kategori': 'alet',
+        'durum': 'zimmetli',
+        'aktif': true,
+        'acik_zimmet': {
+          'alan_user_id': 'user-2',
+          'alan_user_ad': 'Ahmet',
+          'alinma_zamani': '2026-07-03T08:00:00Z',
+        },
+        'created_at': '2026-07-01T08:00:00Z',
+      });
+      expect(a.acikZimmet, isNotNull);
+      expect(a.acikZimmet!.alanUserId, 'user-2');
+      expect(a.acikZimmet!.alanUserAd, 'Ahmet');
+      expect(a.acikZimmet!.alinmaZamani, DateTime.utc(2026, 7, 3, 8));
     });
 
     test('bilinmeyen kategori/durum guvenli fallback (cokme yok)', () {
@@ -37,19 +59,20 @@ void main() {
     });
   });
 
-  test('AssetCheckout.fromJson: birakma_zamani null → acik zimmet', () {
+  test('AssetCheckout.fromJson: alan_user_ad eslenir; birakma_zamani null → '
+      'acik zimmet', () {
     final acik = AssetCheckout.fromJson({
       'id': 'c-1',
       'asset_id': 'a-1',
       'alan_user_id': 'user-2',
+      'alan_user_ad': 'Ahmet',
       'alma_zamani': '2026-07-03T08:00:00Z',
       'birakma_zamani': null,
       'idempotency_key': 'k',
       'created_at': '2026-07-03T08:00:00Z',
     });
     expect(acik.isOpen, isTrue);
-    expect(acik.alanUserId, 'user-2');
-    expect(acik.almaZamani, DateTime.utc(2026, 7, 3, 8));
+    expect(acik.alanUserAd, 'Ahmet');
 
     final kapali = AssetCheckout.fromJson({
       'id': 'c-2',
@@ -61,7 +84,7 @@ void main() {
       'created_at': '2026-07-03T08:00:00Z',
     });
     expect(kapali.isOpen, isFalse);
-    expect(kapali.birakmaZamani, DateTime.utc(2026, 7, 3, 10));
+    expect(kapali.alanUserAd, isNull); // ad opsiyonel — eski kayitlar
   });
 
   group('AssetActionDraft', () {
@@ -80,7 +103,6 @@ void main() {
         nfcTagUid: '04:AA:BB:CC:DD:EE',
       );
       expect(alma.idempotencyKey, isNot(birakma.idempotencyKey));
-      // Ayni parametrelerle deterministik (retry ayni istegi atar).
       expect(
         AssetActionDraft.checkout(assetId: 'a-1', islemAni: an).idempotencyKey,
         alma.idempotencyKey,
@@ -105,29 +127,7 @@ void main() {
     });
   });
 
-  test('findOpenCheckout: listedeki acik zimmeti bulur (yoksa null)', () {
-    AssetCheckout co(String id, {DateTime? birakma}) => AssetCheckout(
-          id: id,
-          assetId: 'a-1',
-          alanUserId: 'u-1',
-          almaZamani: DateTime.utc(2026, 7, 3, 8),
-          birakmaZamani: birakma,
-        );
-    expect(findOpenCheckout([]), isNull);
-    expect(
-      findOpenCheckout([co('c1', birakma: DateTime.utc(2026, 7, 3, 9))]),
-      isNull,
-    );
-    expect(
-      findOpenCheckout([
-        co('c1', birakma: DateTime.utc(2026, 7, 3, 9)),
-        co('c2'),
-      ])?.id,
-      'c2',
-    );
-  });
-
-  group('zimmetVerdict — durum makinesi', () {
+  group('zimmetVerdict — durum makinesi (acik_zimmet sunucudan)', () {
     final asset = Asset(
       id: 'a-1',
       ad: 'Matkap',
@@ -135,16 +135,15 @@ void main() {
       durum: AssetDurum.musait,
       aktif: true,
     );
-    final open = AssetCheckout(
-      id: 'c-1',
-      assetId: 'a-1',
+    final zimmet = AcikZimmet(
       alanUserId: 'user-1',
-      almaZamani: DateTime.utc(2026, 7, 3, 8),
+      alanUserAd: 'Guard A',
+      alinmaZamani: DateTime.utc(2026, 7, 3, 8),
     );
 
-    test('musait → kimsedeDegil (acik zimmet olmasa da)', () {
+    test('musait → kimsedeDegil', () {
       expect(
-        zimmetVerdict(asset: asset, openCheckout: null, myUserId: 'user-1'),
+        zimmetVerdict(asset: asset, acikZimmet: null, myUserId: 'user-1'),
         ZimmetVerdict.kimsedeDegil,
       );
     });
@@ -153,7 +152,7 @@ void main() {
       expect(
         zimmetVerdict(
           asset: asset.copyWith(durum: AssetDurum.zimmetli),
-          openCheckout: open,
+          acikZimmet: zimmet,
           myUserId: 'user-1',
         ),
         ZimmetVerdict.sende,
@@ -164,18 +163,18 @@ void main() {
       expect(
         zimmetVerdict(
           asset: asset.copyWith(durum: AssetDurum.zimmetli),
-          openCheckout: open,
+          acikZimmet: zimmet,
           myUserId: 'user-99',
         ),
         ZimmetVerdict.baskasinda,
       );
     });
 
-    test('zimmetli ama acik zimmet cozulemedi → baskasinda (temkinli)', () {
+    test('zimmetli ama acik_zimmet null geldi → baskasinda (temkinli)', () {
       expect(
         zimmetVerdict(
           asset: asset.copyWith(durum: AssetDurum.zimmetli),
-          openCheckout: null,
+          acikZimmet: null,
           myUserId: 'user-1',
         ),
         ZimmetVerdict.baskasinda,
@@ -186,36 +185,11 @@ void main() {
       expect(
         zimmetVerdict(
           asset: asset.copyWith(durum: AssetDurum.bakimda),
-          openCheckout: null,
+          acikZimmet: null,
           myUserId: 'user-1',
         ),
         ZimmetVerdict.bakimda,
       );
     });
-  });
-
-  test('buildUidIndex + lookupByUid: buyuk/kucuk harf duyarsiz eslesme', () {
-    final assets = [
-      Asset(
-        id: 'a-1',
-        ad: 'Matkap',
-        kategori: AssetKategori.alet,
-        durum: AssetDurum.musait,
-        aktif: true,
-        nfcTagUid: '04:AA:BB:CC:DD:EE',
-      ),
-      Asset(
-        id: 'a-2',
-        ad: 'UID\'siz',
-        kategori: AssetKategori.diger,
-        durum: AssetDurum.musait,
-        aktif: true,
-      ),
-    ];
-    final index = buildUidIndex(assets);
-    expect(index.length, 1); // UID'siz asset indekse girmez
-    expect(lookupByUid(index, '04:aa:bb:cc:dd:ee')?.id, 'a-1');
-    expect(lookupByUid(index, ' 04:AA:BB:CC:DD:EE '), isNotNull);
-    expect(lookupByUid(index, 'FF:FF'), isNull);
   });
 }

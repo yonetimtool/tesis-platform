@@ -15,24 +15,24 @@ class ScannedAssetInfo {
     required this.asset,
     required this.verdict,
     required this.scannedUid,
-    this.openCheckout,
     this.recentHistory = const [],
   });
 
   final Asset asset;
   final ZimmetVerdict verdict;
 
-  /// Okutulan ham UID (completion'a degil, checkout/checkin govdesine gider).
+  /// Okutulan ham UID (checkout/checkin govdesine gider).
   final String scannedUid;
 
-  final AssetCheckout? openCheckout;
+  /// Acik zimmet ozeti dogrudan sunucu yanitindan (history taramasi yok).
+  AcikZimmet? get acikZimmet => asset.acikZimmet;
 
-  /// Son hareketler (EN YENI ONCE — gecmis karti icin).
+  /// Son hareketler (sunucu varsayilani DESC — en yeni once).
   final List<AssetCheckout> recentHistory;
 }
 
-/// "Uzerimdekiler" satiri: demirbas + acik zimmet (alinma zamani icin).
-typedef MyAssetItem = ({Asset asset, AssetCheckout checkout});
+/// "Uzerimdekiler" satiri: demirbas + acik zimmet ozeti (alinma zamani icin).
+typedef MyAssetItem = ({Asset asset, AcikZimmet zimmet});
 
 class AssetsState {
   const AssetsState({
@@ -118,10 +118,10 @@ class AssetsState {
 
 /// Demirbas zimmet controller'i.
 ///
-///   * NFC-oncelikli akis: mevcut [NfcService] ile etiket okunur → UID,
-///     istemci indeksiyle asset'e cozulur (sunucuda UID aramasi yok) →
-///     taze detay + acik zimmet cekilir → duruma gore karar
-///     ([zimmetVerdict]): kimsede degil / sende / baskasinda / bakimda.
+///   * NFC-oncelikli akis: mevcut [NfcService] ile etiket okunur →
+///     `GET /assets?nfc_tag_uid=` TEK istekle asset + acik zimmet ozeti →
+///     duruma gore karar ([zimmetVerdict]): kimsede degil / sende /
+///     baskasinda / bakimda.
 ///   * Checkout/checkin: Idempotency-Key aksiyon ANINDA sabitlenir;
 ///     409 yarisi (sen okurken baskasi aldi) kibarca gosterilir ve kart
 ///     taze durumla yeniden cizilir.
@@ -168,10 +168,8 @@ class AssetsController extends Notifier<AssetsState> {
 
     state = state.copyWith(scanPhase: AssetScanPhase.resolving);
     try {
-      // UID → asset: sunucuda arama olmadigi icin aktif liste + indeks.
-      // Envanter kucuk oldugu icin her okutmada taze cekilir (bayatlik yok).
-      final index = buildUidIndex(await _api.fetchAssets());
-      final match = lookupByUid(index, result.uid!);
+      // UID → asset: tek istek (§13 #1 kapandi); yanit acik_zimmet tasir.
+      final match = await _api.findByUid(result.uid!);
       if (!ref.mounted) return;
       if (match == null) {
         state = state.copyWith(
@@ -181,7 +179,7 @@ class AssetsController extends Notifier<AssetsState> {
         );
         return;
       }
-      await _resolveAndShow(match.id, result.uid!);
+      await _showScanned(match, result.uid!);
     } on ApiException catch (e) {
       if (!ref.mounted) return;
       state = state.copyWith(
@@ -193,24 +191,28 @@ class AssetsController extends Notifier<AssetsState> {
     }
   }
 
-  /// Taze detay + gecmis kuyrugu ile sonucu kurar (aksiyon sonrasi da
-  /// cagrilir — kart her zaman SUNUCU gercegiyle cizilir).
+  /// Aksiyon sonrasi tazeleme: taze detay (acik_zimmet dahil) + son
+  /// hareketler — kart her zaman SUNUCU gercegiyle cizilir.
   Future<void> _resolveAndShow(String assetId, String scannedUid) async {
     final asset = await _api.fetchAsset(assetId);
-    final tail = await _api.fetchHistoryTail(assetId);
+    await _showScanned(asset, scannedUid);
+  }
+
+  /// Eldeki (taze) asset yanitiyla sonucu kurar; yalnizca son hareketler
+  /// icin ek bir history istegi atilir (DESC → dogrudan ilk sayfa).
+  Future<void> _showScanned(Asset asset, String scannedUid) async {
+    final recent = await _api.fetchRecentHistory(asset.id);
     final myUserId = await ref.read(currentUserIdProvider.future);
     if (!ref.mounted) return;
-    final open = findOpenCheckout(tail);
     state = state.copyWith(
       scanPhase: AssetScanPhase.done,
       scanned: ScannedAssetInfo(
         asset: asset,
         scannedUid: scannedUid,
-        openCheckout: open,
-        recentHistory: tail.reversed.toList(),
+        recentHistory: recent,
         verdict: zimmetVerdict(
           asset: asset,
-          openCheckout: open,
+          acikZimmet: asset.acikZimmet,
           myUserId: myUserId,
         ),
       ),
@@ -285,9 +287,8 @@ class AssetsController extends Notifier<AssetsState> {
     }
   }
 
-  /// "Uzerimdekiler": sunucuda `checked_out_by=me` filtresi YOK (sozlesme
-  /// dogrulandi, README §13'te flag'li) → zimmetli asset'lerin acik
-  /// zimmetleri taranir, benimkiler suzulur.
+  /// "Uzerimdekiler": `GET /assets?checked_out_by=me` TEK istek
+  /// (§13 #3 kapandi — N+1 history suzmesi kaldirildi).
   Future<void> refreshMyItems({bool silent = false}) async {
     if (_refreshingMy) return;
     _refreshingMy = true;
@@ -296,22 +297,16 @@ class AssetsController extends Notifier<AssetsState> {
     }
     try {
       final myUserId = await ref.read(currentUserIdProvider.future);
-      final zimmetli = await _api.fetchAssets(durum: AssetDurum.zimmetli);
-      final tails = await Future.wait(
-        [for (final a in zimmetli) _api.fetchHistoryTail(a.id, lastN: 5)],
-      );
+      final mine = await _api.fetchMyAssets();
       if (!ref.mounted) return;
 
-      final items = <MyAssetItem>[];
-      for (var i = 0; i < zimmetli.length; i++) {
-        final open = findOpenCheckout(tails[i]);
-        if (open != null && myUserId != null && open.alanUserId == myUserId) {
-          items.add((asset: zimmetli[i], checkout: open));
-        }
-      }
-      items.sort((a, b) => b.checkout.almaZamani.compareTo(
-            a.checkout.almaZamani,
-          ));
+      final items = <MyAssetItem>[
+        for (final a in mine)
+          if (a.acikZimmet != null) (asset: a, zimmet: a.acikZimmet!),
+      ];
+      items.sort(
+        (a, b) => b.zimmet.alinmaZamani.compareTo(a.zimmet.alinmaZamani),
+      );
       state = state.copyWith(
         myItems: items,
         myLoading: false,

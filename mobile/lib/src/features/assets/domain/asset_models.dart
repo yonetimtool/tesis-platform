@@ -1,20 +1,18 @@
 /// Demirbas zimmet modulunun domain modelleri — `contracts/openapi.yaml`
-/// Asset / AssetCheckout / CheckoutRequest / CheckinRequest semalarina uyar.
+/// Asset (acik_zimmet dahil) / AcikZimmet / AssetCheckout /
+/// Checkout-CheckinRequest semalarina uyar.
 ///
-/// SOZLESME NOTLARI (dogrulandi, uydurma yok — detay README §13):
-///   * `GET /assets`'ta `nfc_tag_uid` aramasi YOK → UID→asset cozumu
-///     istemcide: aktif liste cekilir, normalize UID indeksiyle eslestirilir
-///     ([buildUidIndex]/[lookupByUid]).
-///   * Asset semasinda "KIMDE" bilgisi YOK (yalnizca durum enum'u) → acik
-///     zimmet `GET /assets/{id}/history`'den bulunur (birakma_zamani NULL).
-///     History `alma_zamani` ASC sirali (backend dogrulandi) → acik kayit
-///     SON sayfadadir.
-///   * "Uzerimdekiler" filtresi YOK (`checked_out_by=me` gibi) → istemcide
-///     zimmetli asset'lerin acik zimmetleri taranarak suzulur.
+/// VERI YOLU (§13 bulgulari KAPANDI — README §13):
+///   * UID→asset: `GET /assets?nfc_tag_uid=...` TEK istek (tenant icinde
+///     unique → 0/1 sonuc). Istemci UID indeksi kaldirildi.
+///   * "Kimde": Asset yanitindaki `acik_zimmet` alanindan (alan_user_id +
+///     alan_user_ad + alinma_zamani). History taramasi kaldirildi.
+///   * "Uzerimdekiler": `GET /assets?checked_out_by=me` TEK istek.
+///   * History varsayilan DESC (en yeni once) → son N dogrudan ilk sayfa.
 ///   * checkout: 201 yeni / 200 idempotent / 409 "zaten zimmetli" (yaris);
-///     checkin: HEP 200 (kapatma + idempotent tekrar ayni kod) / 409 "acik
-///     zimmet yok". Her ikisinde Idempotency-Key ZORUNLU; `nfc_tag_uid`
-///     verilirse asset ile eslesmeli (422).
+///     checkin: 200 / 409 "acik zimmet yok" / 403 sahiplik (yalniz sahibi
+///     veya admin kapatabilir). Idempotency-Key her ikisinde ZORUNLU;
+///     `nfc_tag_uid` verilirse asset ile eslesmeli (422).
 library;
 
 /// AssetKategori semasi. [bilinmiyor] sozlesme disi degerler icin fallback.
@@ -38,6 +36,27 @@ AssetDurum assetDurumFromJson(String? value) => switch (value) {
       _ => AssetDurum.bilinmiyor,
     };
 
+/// Asset yanitindaki ACIK zimmet ozeti (AcikZimmet semasi) — "kimde"
+/// sorusunun tek-istek cevabi (§13 #2/#5 kapanisi).
+class AcikZimmet {
+  const AcikZimmet({
+    required this.alanUserId,
+    required this.alanUserAd,
+    required this.alinmaZamani,
+  });
+
+  final String alanUserId;
+  final String alanUserAd;
+  final DateTime alinmaZamani;
+
+  factory AcikZimmet.fromJson(Map<String, dynamic> json) => AcikZimmet(
+        alanUserId: json['alan_user_id'] as String,
+        alanUserAd: json['alan_user_ad'] as String? ?? '',
+        alinmaZamani:
+            DateTime.parse(json['alinma_zamani'] as String).toUtc(),
+      );
+}
+
 /// `GET /assets` ogesi (Asset semasi).
 class Asset {
   const Asset({
@@ -48,6 +67,7 @@ class Asset {
     required this.aktif,
     this.nfcTagUid,
     this.aciklama,
+    this.acikZimmet,
   });
 
   final String id;
@@ -61,6 +81,9 @@ class Asset {
   final String? aciklama;
   final bool aktif;
 
+  /// Acik zimmet ozeti; zimmetli degilse null.
+  final AcikZimmet? acikZimmet;
+
   Asset copyWith({AssetDurum? durum}) => Asset(
         id: id,
         ad: ad,
@@ -69,6 +92,7 @@ class Asset {
         aktif: aktif,
         nfcTagUid: nfcTagUid,
         aciklama: aciklama,
+        acikZimmet: acikZimmet,
       );
 
   factory Asset.fromJson(Map<String, dynamic> json) => Asset(
@@ -79,6 +103,11 @@ class Asset {
         durum: assetDurumFromJson(json['durum'] as String?),
         aciklama: json['aciklama'] as String?,
         aktif: json['aktif'] as bool? ?? true,
+        acikZimmet: json['acik_zimmet'] is Map
+            ? AcikZimmet.fromJson(
+                Map<String, dynamic>.from(json['acik_zimmet'] as Map),
+              )
+            : null,
       );
 }
 
@@ -90,6 +119,7 @@ class AssetCheckout {
     required this.assetId,
     required this.alanUserId,
     required this.almaZamani,
+    this.alanUserAd,
     this.birakmaZamani,
     this.notlar,
   });
@@ -97,6 +127,10 @@ class AssetCheckout {
   final String id;
   final String assetId;
   final String alanUserId;
+
+  /// Alan kullanicinin adi (§13 #5; eski kayitlarda bos olabilir).
+  final String? alanUserAd;
+
   final DateTime almaZamani;
   final DateTime? birakmaZamani;
   final String? notlar;
@@ -107,6 +141,7 @@ class AssetCheckout {
         id: json['id'] as String,
         assetId: json['asset_id'] as String,
         alanUserId: json['alan_user_id'] as String,
+        alanUserAd: json['alan_user_ad'] as String?,
         almaZamani: DateTime.parse(json['alma_zamani'] as String).toUtc(),
         birakmaZamani: json['birakma_zamani'] == null
             ? null
@@ -179,14 +214,6 @@ class AssetActionResult {
   final bool wasDuplicate;
 }
 
-/// Listedeki ACIK zimmeti dondurur (en fazla bir tane olabilir; yoksa null).
-AssetCheckout? findOpenCheckout(List<AssetCheckout> history) {
-  for (final co in history) {
-    if (co.isOpen) return co;
-  }
-  return null;
-}
-
 /// Okutulan demirbasin kullaniciya gore durumu (durum makinesi).
 enum ZimmetVerdict {
   /// Musait — "Zimmetine al" gosterilir.
@@ -202,12 +229,12 @@ enum ZimmetVerdict {
   bakimda,
 }
 
-/// Sunucu durumu + acik zimmet + benim kimligimden karar uretir.
-/// `zimmetli` ama acik kayit cozulemediyse TEMKINLI davranilir
+/// Sunucu durumu + acik zimmet ozeti + benim kimligimden karar uretir.
+/// `zimmetli` ama `acik_zimmet` null geldiyse TEMKINLI davranilir
 /// (baskasinda say — yanlis "al" butonu gostermekten iyidir).
 ZimmetVerdict zimmetVerdict({
   required Asset asset,
-  required AssetCheckout? openCheckout,
+  required AcikZimmet? acikZimmet,
   required String? myUserId,
 }) {
   switch (asset.durum) {
@@ -217,26 +244,11 @@ ZimmetVerdict zimmetVerdict({
       return ZimmetVerdict.kimsedeDegil;
     case AssetDurum.zimmetli:
     case AssetDurum.bilinmiyor:
-      if (openCheckout != null &&
+      if (acikZimmet != null &&
           myUserId != null &&
-          openCheckout.alanUserId == myUserId) {
+          acikZimmet.alanUserId == myUserId) {
         return ZimmetVerdict.sende;
       }
       return ZimmetVerdict.baskasinda;
   }
 }
-
-String _normalizeUid(String uid) => uid.trim().toUpperCase();
-
-/// Aktif asset listesinden normalize-UID → asset indeksi kurar (UID'siz
-/// asset'ler girmez). `GET /assets`'ta UID aramasi olmadigi icin etiket
-/// cozumu bu indeksle istemcide yapilir.
-Map<String, Asset> buildUidIndex(List<Asset> assets) => {
-      for (final a in assets)
-        if (a.nfcTagUid != null && a.nfcTagUid!.trim().isNotEmpty)
-          _normalizeUid(a.nfcTagUid!): a,
-    };
-
-/// Okutulan UID'yi indekste arar (buyuk/kucuk harf ve bosluk duyarsiz).
-Asset? lookupByUid(Map<String, Asset> index, String uid) =>
-    index[_normalizeUid(uid)];
