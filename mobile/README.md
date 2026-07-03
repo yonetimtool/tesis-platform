@@ -229,13 +229,20 @@ mobile/
 │     │  │  └─ presentation/
 │     │  │     ├─ auth_controller.dart     # Riverpod Notifier (auth state)
 │     │  │     └─ login_screen.dart        # tenant_slug + email + parola
-│     │  ├─ home/presentation/home_screen.dart   # ana ekran + NFC kartı
+│     │  ├─ home/presentation/home_screen.dart   # ana ekran: Turlarım + NFC + kuyruk kartları
 │     │  ├─ nfc/
 │     │  │  ├─ data/nfc_service.dart        # nfc_manager 4.x oturum + UID/SDM okuma
 │     │  │  ├─ domain/nfc_read_result.dart  # NfcReadResult / NfcTagType / NfcSdmData
 │     │  │  └─ presentation/
 │     │  │     ├─ nfc_controller.dart       # Riverpod Notifier (hazir/okuyor/sonuc/hata)
 │     │  │     └─ nfc_screen.dart           # okuma + "Okutmayı gönder" akışı
+│     │  ├─ patrol/                          # Faz 2: tur akışı ekranları (§9)
+│     │  │  ├─ data/patrol_api.dart           # dashboard/live + plan checkpoints + patrol-windows
+│     │  │  ├─ domain/patrol_models.dart      # PatrolWindow/CheckpointStatus + yerel birleşim
+│     │  │  └─ presentation/
+│     │  │     ├─ patrol_controller.dart      # aktif tur state (otomatik yenileme + outbox dinleme)
+│     │  │     ├─ patrol_history_controller.dart
+│     │  │     └─ patrol_screen.dart          # "Turlarım": Aktif + Geçmiş sekmeleri
 │     │  └─ scan/
 │     │     ├─ data/
 │     │     │  ├─ scan_api.dart             # POST /scans (Idempotency-Key)
@@ -254,7 +261,8 @@ mobile/
    ├─ token_pair_test.dart
    ├─ api_exception_test.dart
    ├─ auth_interceptor_test.dart
-   └─ scan_outbox_test.dart                # outbox durum makinesi + kalıcılık testleri
+   ├─ scan_outbox_test.dart                # outbox durum makinesi + kalıcılık testleri
+   └─ patrol_merge_test.dart               # nokta durumu yerel birleşim mantığı (§9)
 ```
 
 ---
@@ -515,7 +523,108 @@ flutter run --dart-define=API_BASE_URL=http://<PC-LAN-IP>:8000   # gerçek cihaz
 
 ---
 
-## 9. Sözleşme notları (DEV-A'ya)
+## 9. Tur akışı ekranları — "Turlarım" (Faz 2 / Prompt 1)
+
+Güvenlik elemanının asıl çalışma ekranı: aktif devriye penceresi + nokta
+ilerlemesi + geçmiş. Kod: `features/patrol/` (data / domain / presentation),
+rota: `/patrol` (ana ekrandaki "Turlarım" kartı).
+
+### Veri kaynakları (sözleşme doğrulaması sonucu)
+
+| Veri | Uç | RBAC (security) |
+|---|---|---|
+| Aktif/sıradaki pencere + okutulan/beklenen **sayıları** | `GET /dashboard/live` → `aktif_turlar[]` (AktifTur) | ✅ |
+| Aktif planın **sıralı nokta listesi** | `GET /patrol-plans/{id}/checkpoints` | ✅ |
+| Nokta adı/UID zenginleştirme (genişletilmiş `checkpoint` gelmezse) | `GET /checkpoints` (sayfalı, 200'lük) | ✅ |
+| Pencere **geçmişi** + özet sayılar | `GET /patrol-windows` (pencere_baslangic DESC) | ✅ |
+
+- **Aktif pencere seçimi:** `aktif_turlar` içinden `durum=bekliyor` ve
+  `pencere_baslangic ≤ şimdi < pencere_bitis` olan (en erken başlayan) pencere.
+  Yoksa "şu an aktif devriye yok" + varsa **sıradaki** pencere bilgisi.
+- **Yenileme:** pull-to-refresh + 60 sn'de bir sessiz otomatik yenileme.
+  Kalan süre sayacı saniyelik yerel `Timer`'dır (ağ çağrısı yapmaz).
+- Plan nokta listesi, plan değişmedikçe tekrar çekilmez (önbellek).
+
+### Nokta bazında durum — YEREL BİRLEŞİM (neden ve nasıl)
+
+**Sözleşme bulgusu (kritik):** mevcut uçların hiçbiri "bu pencerede **hangi**
+checkpoint'ler okutuldu" bilgisini nokta bazında vermiyor:
+
+- `GET /dashboard/live` ve `GET /patrol-windows` yalnızca
+  `okutulan/beklenen_checkpoint_sayisi` **SAYILARINI** döndürür.
+- Scan'lerin GET ucu yok (`/scans` yalnızca POST); `ScanEvent` listelenemez.
+
+Bu yüzden nokta durumu **uydurulmadı**; eldeki veriyle şu birleşim yapılır
+(`domain/patrol_models.dart → mergeCheckpointStatuses`, birim testli):
+
+1. Plan nokta listesi (sunucu) taban alınır.
+2. **Bu cihazın** okutma kaydı (outbox: bekleyen + gönderilmiş kayıtlar)
+   pencere aralığına (`[baslangic, bitis)`) süzülür; `kalici_hata` (404 vb.)
+   sayılmaz.
+3. Eşleştirme: önce `checkpoint_id`, yoksa **normalize edilmiş NFC UID**
+   (büyük/küçük harf duyarsız). Aynı noktaya birden çok kayıtta en "ileri"
+   durum kazanır.
+4. Satır durumu: `gonderildi` → **Okutuldu ✓**, kuyrukta → **"Okutuldu ✓ —
+   gönderiliyor"** (offline'da bile ilerleme görünür), yoksa **Bekliyor**.
+
+Kısıtlar (ekranda da not düşülür):
+
+- Nokta bazlı ✓'ler **yalnızca bu cihazın** okutmalarını gösterir; başka
+  görevlinin okutması sadece sunucu sayısına yansır. Sunucu sayısı yereldan
+  büyükse kart üstünde "sunucuda N okutma kayıtlı (diğer cihazlar dahil
+  olabilir)" bilgisi gösterilir. İlerleme çubuğu `max(sunucu, yerel)` kullanır
+  (offline'da ilerleme geri gitmez).
+- Outbox `gonderildi` kayıtlarının son 20'sini tutar; 1 saatlik pencere için
+  fazlasıyla yeterlidir, ama uygulama verisi silinirse yerel ✓'ler kaybolur
+  (sunucu sayısı kalır).
+
+### Okutma entegrasyonu
+
+Karttaki **"Nokta okut (NFC)"** → mevcut `/nfc` ekranı → okutma **mevcut
+outbox akışıyla** kaydedilir/gönderilir (yeni gönderim yolu YOK). Tur
+controller'ı outbox'ı dinlediği için listeye dönüldüğünde ✓ **anında** görünür
+(201 yeni / 200 zaten / offline kuyrukta → "gönderiliyor"; 404 → sayılmaz,
+NFC ekranı zaten "eşleşmedi" gösterir). NFC dönüşünde ayrıca sessiz bir sunucu
+yenilemesi tetiklenir (sayılar için).
+
+### Rol duyarlılığı
+
+Kart/ekran her role görünür; veri rol iznine göre gelir. `403`'te kibar mesaj
+gösterilir ("Bu ekrandaki veriler için yetkiniz yok — güvenlik rolüne açık").
+`401` mevcut refresh interceptor'ının işidir (gerekirse login'e döner).
+
+---
+
+## 10. Sözleşme notları (DEV-A'ya)
+
+### 🚩 Eksik uç — checkpoint bazında okutma durumu (Faz 2 bulgusu, ÖNEMLİ)
+
+Mobilin "aktif turumda hangi noktaları okuttum" listesi için sözleşmede
+**nokta bazlı sunucu verisi yok**:
+
+- `GET /dashboard/live` (AktifTur) ve `GET /patrol-windows` yalnızca
+  `okutulan/beklenen_checkpoint_sayisi` **sayılarını** döndürüyor.
+- Scan'lerin GET ucu yok (`/scans` yalnızca POST) — pencereye ait ScanEvent'ler
+  listelenemiyor.
+
+Mobil şimdilik plan nokta listesi + **bu cihazın yerel okutma kaydı** (outbox)
+birleşimiyle çalışıyor (bkz. §9), ancak bu **cihaz-yerel** bir görünümdür:
+aynı pencerede başka görevlinin okuttuğu noktalar listede ✓ görünmez (yalnızca
+sunucu sayısına yansır); uygulama verisi silinirse yerel ✓'ler kaybolur.
+
+**Öneri:** şu ikisinden biri eklenirse mobil çok daha sağlam olur:
+
+1. `GET /me/patrol-window` — aktif pencere + checkpoint bazında okutma durumu:
+   `{ window: {...AktifTur}, checkpoints: [{ checkpoint_id, ad, sira,
+   okutuldu: bool, okutma_zamani?, okutan_user_id? }] }` (tercih edilen; tek
+   istekte tüm ekran verisi), **veya**
+2. `GET /patrol-windows/{id}/scans` — pencereye bağlanmış ScanEvent listesi
+   (mobil eşleştirmeyi kendisi yapar).
+
+RBAC: admin + security (dashboard ile tutarlı). Eklendiğinde mobil tarafta tek
+değişiklik `PatrolApi` + birleşim kaynağıdır; UI aynı kalır.
+
+### Önceki notlar
 
 `/contracts/openapi.yaml`'i incelerken görülen küçük tutarsızlıklar (login akışını
 engellemez, bilgi amaçlı):

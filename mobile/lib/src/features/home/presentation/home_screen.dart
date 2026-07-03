@@ -45,6 +45,17 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               Card(
                 child: ListTile(
+                  leading: const Icon(Icons.directions_walk),
+                  title: const Text('Turlarim'),
+                  subtitle: const Text(
+                    'Aktif devriye penceresi ve nokta ilerlemesi',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(AppRoutes.patrol),
+                ),
+              ),
+              Card(
+                child: ListTile(
                   leading: const Icon(Icons.nfc),
                   title: const Text('NFC etiket okuma'),
                   subtitle: const Text('Devriye noktasi etiketini okut'),
