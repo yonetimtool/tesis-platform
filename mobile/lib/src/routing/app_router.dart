@@ -6,6 +6,7 @@ import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
+import '../features/emergency/presentation/emergency_screen.dart';
 import '../features/patrol/presentation/patrol_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
 import '../features/tasks/domain/task_models.dart';
@@ -23,6 +24,7 @@ class AppRoutes {
   static const patrol = '/patrol';
   static const tasks = '/tasks';
   static const taskDetail = '/tasks/detail';
+  static const emergency = '/emergency';
 }
 
 /// Auth durumundaki degisimleri go_router'a bildiren kopru. `status` her
@@ -71,6 +73,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.tasks,
         builder: (context, state) => const TasksScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.emergency,
+        builder: (context, state) => const EmergencyScreen(),
       ),
       GoRoute(
         path: AppRoutes.taskDetail,

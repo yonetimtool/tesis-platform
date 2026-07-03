@@ -43,6 +43,29 @@ class HomeScreen extends ConsumerWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
+              // ACIL DURUM — belirgin (kirmizi) giris; yanlis basmaya karsi
+              // asil koruma ekrandaki ONAY dialogudur.
+              Card(
+                color: Colors.red,
+                child: ListTile(
+                  leading:
+                      const Icon(Icons.sos, color: Colors.white, size: 32),
+                  title: const Text(
+                    'ACIL DURUM',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Panik butonu — yonetime alarm gonder',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  trailing:
+                      const Icon(Icons.chevron_right, color: Colors.white),
+                  onTap: () => context.push(AppRoutes.emergency),
+                ),
+              ),
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.directions_walk),

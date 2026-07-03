@@ -12,6 +12,14 @@
 	<string>Gorev tamamlama kaniti icin fotograf cekilir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Gorev tamamlama kaniti icin galeriden fotograf secilebilir.</string>
+	<!-- geolocator: acil durum alarmina konum eklemek icin (best-effort). -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Acil durum alarmina konumunuzu eklemek icin kullanilir.</string>
+	<!-- url_launcher: tel: linkiyle yonetim numarasini arama. -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

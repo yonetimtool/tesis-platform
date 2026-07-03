@@ -795,3 +795,77 @@ image_picker (kamera|galeri, maxWidth 1600, quality 80)
    formatında (BÜYÜK HARF, `:` ayraçlı) üretir, sorun çıkmaz; ama panelden
    farklı formatta etiket girilirse eşleşme düşer. **Öneri:** backend
    karşılaştırmayı normalize etsin (scan ucundaki davranışla tutarlılık).
+
+---
+
+## 12. Acil durum butonu — panik + yönetimi arama (Faz 3 / Prompt 2)
+
+Küçük ve hayati modül: saha personeli (security **ve cleaning** — RBAC
+sözleşmeden doğrulandı; resident 403) panik butonuna basar → backend'e alarm
+gider (panel `/emergency` listesinde anında görünür + yöneticilere
+`acil_durum` bildirimi) → uygulama yönetim numarasını `tel:` ile aramayı
+önerir. Kod: `features/emergency/`, rota: `/emergency` (ana ekranın en
+üstündeki kırmızı **ACİL DURUM** kartı).
+
+### Akış
+
+1. Ana ekran → kırmızı **ACİL DURUM** kartı → panik ekranı (kısa not
+   opsiyonel).
+2. Büyük kırmızı **"ACİL DURUM BİLDİR"** butonuna basış ANINDA
+   `EmergencyDraft` oluşur ve **Idempotency-Key sabitlenir**
+   (`emergency|{basış-anı}`): çift dokunuş / onay sonrası tekrar / "tekrar
+   dene" hep aynı isteği atar → backend 200-idempotent yutar, çift alarm
+   oluşmaz. (Konum taslağa işlenir ki tekrar denemede gövde değişmesin —
+   aynı key farklı gövde 409 döner.)
+3. **Onay dialogu şart**: "Acil durum bildirilsin mi?" (Vazgeç / BİLDİR).
+   *Tercih: uzun-bas değil dialog* — stres/eldiven altında uzun-bas
+   güvenilmez, keşfedilebilirliği düşük; dialog açık niyet doğrulaması verir.
+4. Onayda **GPS best-effort** (servis kapalı / izin yok / 5 sn zaman aşımı →
+   son bilinen konum → o da yoksa **konumsuz gönder**; ALARM ASLA
+   BEKLETİLMEZ) → `POST /emergency`.
+5. Sonuç: **"Alarm iletildi ✓"** (200 tekrarında "zaten iletilmişti") +
+   **"Yönetimi ara"** kartı → `GET /tenant/settings` → `acil_durum_telefon`
+   → `url_launcher` ile `tel:+90...` (cihazın arama ekranı açılır; arama
+   tuşuna basmak kullanıcıda). Numara alınamazsa/boşsa arama kartı gizlenir —
+   alarm yine de iletilmiştir. Numara oturum boyunca önbelleklenir.
+
+### Offline kararı (README'ye yazılması istendi)
+
+**Alarm gönderilemezse outbox'a ATILMAZ.** Acil durumda sessiz kuyruklama
+YANILTICIDIR: kullanıcı "iletildi" sanır, alarm belki dakikalar sonra gider.
+Bunun yerine ÇOK NET kırmızı hata gösterilir: *"ALARM İLETİLEMEDİ — internet
+bağlantısı yok. Alarm KUYRUĞA ALINMADI; bağlantı gelince 'Tekrar dene'ye
+basın."* + aynı taslakla **Tekrar dene** butonu (aynı Idempotency-Key) +
+yönetim numarası kartı YİNE gösterilir — telefon araması şebeke üzerinden
+çalışabilir (veri bağlantısı gerektirmez).
+
+### Paket seçimleri + gerekçe
+
+- **geolocator**: konum için fiili standart; tek seferlik
+  `getCurrentPosition` + `timeLimit` ve `getLastKnownPosition` fallback'i
+  tam bu iş için. Düşük doğruluk (`LocationAccuracy.low`) yeter — hız önemli.
+- **url_launcher**: `tel:` URI ile cihaz arama ekranını açmanın resmî yolu.
+  Doğrudan arama (CALL_PHONE izni) bilinçli SEÇİLMEDİ: ek tehlikeli izin
+  gerektirir ve yanlış aramaya açıktır; arama kararı kullanıcıda kalır.
+
+### İzin / platform yapılandırması
+
+- **Android** (`AndroidManifest.xml`): `ACCESS_COARSE_LOCATION` +
+  `ACCESS_FINE_LOCATION` (runtime istem gönderim anında; reddedilirse alarm
+  konumsuz gider) ve `<queries>`'e `tel:` için `android.intent.action.DIAL`.
+- **iOS** (`Info.plist`): `NSLocationWhenInUseUsageDescription` +
+  `LSApplicationQueriesSchemes: [tel]`.
+
+### Cihaz doğrulama senaryosu
+
+1. `guard@acme.com / Guard123!` (security) ile login — `cleaner@acme.com`
+   ile de çalışır (RBAC ✅).
+2. Ana ekran → kırmızı **ACİL DURUM** → not yaz (ops.) → **ACİL DURUM
+   BİLDİR** → onay dialogunda **BİLDİR** → (ilk kez konum izni sorulur) →
+   "Alarm iletildi ✓".
+3. Panel (admin) → `/emergency` listesi → kırmızı **açık** alarm; konum
+   izni verildiyse gps_lat/lng dolu; notlar görünür.
+4. **"Yönetimi ara"** → cihaz arama ekranı `+90...` ile açılır (numara
+   panel'den `PATCH /tenant/settings` ile ayarlanır; boşsa kart gizli).
+5. Offline test: uçak modunda (Wi-Fi kapalı) bildir → net kırmızı
+   "İLETİLEMEDİ" + "Tekrar dene"; bağlantı gelince tekrar dene → tek alarm.
