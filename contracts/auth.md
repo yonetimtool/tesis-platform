@@ -133,7 +133,7 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `PATCH /assets/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |
 | `DELETE /assets/{id}`                 |  ✅   |    ❌    |    ❌    |    ❌    |
 | `POST /assets/{id}/checkout`          |  ✅   |    ✅    |    ✅    |    ❌    |
-| `POST /assets/{id}/checkin`           |  ✅   |    ✅    |    ✅    |    ❌    |
+| `POST /assets/{id}/checkin` (sahiplik*)|  ✅   |    ✅*   |    ✅*   |    ❌    |
 | `GET  /assets/{id}/history`           |  ✅   |    ✅    |    ✅    |    ❌    |
 | `POST /emergency`                     |  ✅   |    ✅    |    ✅    |    ❌    |
 | `GET  /emergency`                     |  ✅   |    ❌    |    ❌    |    ❌    |
@@ -147,6 +147,12 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `GET /me/dues`                        |  ❌   |    ❌    |    ❌    |    ✅    |
 | `GET/POST/PATCH /users*`              |  ✅   |    ❌    |    ❌    |    ❌    |
 
+> **Zimmet sahipligi (checkin\*):** rol yetkisi yetmez — acik zimmeti YALNIZ
+> **sahibi** (`alan_user_id == token user`) veya **admin** (yonetici mudahalesi)
+> kapatabilir; baska security/cleaning **403** `forbidden` ("Zimmet baskasinin
+> uzerinde..."). Ayrica `GET /assets?checked_out_by=<uuid>` yalniz **admin**
+> (herkes `checked_out_by=me` kullanabilir).
+>
 > **Aidat:** Unit/tahakkuk/odeme yonetimi yalniz **admin**. **security/cleaning aidat
 > GORMEZ** (403). **resident** yalniz `GET /me/dues` ile **kendi** dairelerinin borcunu gorur;
 > tahakkuk/odeme yapamaz, baska daireyi goremez.

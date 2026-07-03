@@ -1,13 +1,17 @@
 """Asset (demirbas) CRUD + zimmet (checkout/checkin/history) — /contracts/openapi.yaml.
 
 RBAC: Asset CRUD admin; checkout/checkin/history + GET admin/security/cleaning.
-Idempotency scan desenini (SAVEPOINT) yeniden kullanir. Tek aktif zimmet DB'de
-partial unique ile garanti; uygulama da onceden kontrol eder (anlamli 409).
+Checkin SAHIPLIK kontrollu (mobil §13 #6): acik zimmeti yalniz SAHIBI veya admin
+kapatabilir; baskasi 403. Idempotency scan desenini (SAVEPOINT) yeniden kullanir.
+Tek aktif zimmet DB'de partial unique ile garanti; uygulama da onceden kontrol
+eder (anlamli 409). Mobil §13 eklemeleri: ?nfc_tag_uid ve ?checked_out_by
+filtreleri, acik_zimmet ozeti, history'de alan_user_ad + order (varsayilan desc).
 """
 from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, Query, Response
 from fastapi.responses import JSONResponse
@@ -20,6 +24,7 @@ from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import Asset, AssetCheckout, AppUser
 from ..schemas import (
+    AcikZimmetOut,
     AssetCheckoutListResponse,
     AssetCheckoutOut,
     AssetCreate,
@@ -47,6 +52,30 @@ def _check_nfc(asset: Asset, nfc: str | None) -> None:
         raise APIError(422, "invalid_reference", "nfc_tag_uid demirbas ile eslesmiyor.")
 
 
+async def _acik_zimmetler(
+    db: AsyncSession, asset_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, AcikZimmetOut]:
+    """asset_id -> acik zimmet ozeti (alan kullanicinin adiyla)."""
+    if not asset_ids:
+        return {}
+    rows = (
+        await db.execute(
+            select(AssetCheckout.asset_id, AssetCheckout.alan_user_id, AssetCheckout.alma_zamani, AppUser.ad)
+            .join(AppUser, AppUser.id == AssetCheckout.alan_user_id)
+            .where(
+                AssetCheckout.asset_id.in_(asset_ids),
+                AssetCheckout.birakma_zamani.is_(None),
+            )
+        )
+    ).all()
+    return {
+        r.asset_id: AcikZimmetOut(
+            alan_user_id=r.alan_user_id, alan_user_ad=r.ad, alinma_zamani=r.alma_zamani
+        )
+        for r in rows
+    }
+
+
 # -------------------------------- CRUD ------------------------------------- #
 @router.get("", response_model=AssetListResponse)
 async def list_assets(
@@ -55,8 +84,12 @@ async def list_assets(
     kategori: AssetKategori | None = Query(None),
     durum: AssetDurum | None = Query(None),
     aktif: bool | None = Query(None),
+    nfc_tag_uid: str | None = Query(None, description="Tam eslesme (UID -> asset cozumu)"),
+    checked_out_by: str | None = Query(
+        None, description="'me' veya user UUID (UUID yalniz admin) — acik zimmet filtresi"
+    ),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_FIELD),
+    user: AppUser = Depends(_FIELD),
 ) -> AssetListResponse:
     where = []
     if kategori is not None:
@@ -65,13 +98,39 @@ async def list_assets(
         where.append(Asset.durum == durum)
     if aktif is not None:
         where.append(Asset.aktif == aktif)
+    if nfc_tag_uid is not None:
+        where.append(Asset.nfc_tag_uid == nfc_tag_uid)
+    if checked_out_by is not None:
+        if checked_out_by == "me":
+            target = user.id
+        else:
+            try:
+                target = uuid.UUID(checked_out_by)
+            except ValueError:
+                raise APIError(422, "validation_error", "checked_out_by 'me' veya UUID olmali.")
+            if user.role != "admin":
+                raise APIError(403, "forbidden", "checked_out_by=<uuid> yalniz admin; 'me' kullanin.")
+        where.append(
+            Asset.id.in_(
+                select(AssetCheckout.asset_id).where(
+                    AssetCheckout.alan_user_id == target,
+                    AssetCheckout.birakma_zamani.is_(None),
+                )
+            )
+        )
     total = (await db.execute(select(func.count()).select_from(Asset).where(*where))).scalar_one()
     rows = (
         await db.execute(
             select(Asset).where(*where).order_by(Asset.created_at).limit(limit).offset(offset)
         )
     ).scalars().all()
-    return AssetListResponse(meta={"limit": limit, "offset": offset, "total": total}, items=list(rows))
+    acik = await _acik_zimmetler(db, [a.id for a in rows])
+    items = []
+    for a in rows:
+        out = AssetOut.model_validate(a)
+        out.acik_zimmet = acik.get(a.id)
+        items.append(out)
+    return AssetListResponse(meta={"limit": limit, "offset": offset, "total": total}, items=items)
 
 
 @router.get("/{asset_id}", response_model=AssetOut)
@@ -79,8 +138,11 @@ async def get_asset(
     asset_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_FIELD),
-) -> Asset:
-    return await get_or_404(db, Asset, asset_id)
+) -> AssetOut:
+    asset = await get_or_404(db, Asset, asset_id)
+    out = AssetOut.model_validate(asset)
+    out.acik_zimmet = (await _acik_zimmetler(db, [asset.id])).get(asset.id)
+    return out
 
 
 @router.post("", response_model=AssetOut, status_code=201)
@@ -160,6 +222,16 @@ async def _open_checkout(db: AsyncSession, asset_id: uuid.UUID) -> AssetCheckout
     ).scalar_one_or_none()
 
 
+async def _user_ad(db: AsyncSession, user_id: uuid.UUID) -> str | None:
+    return (await db.execute(select(AppUser.ad).where(AppUser.id == user_id))).scalar_one_or_none()
+
+
+async def _co_payload(db: AsyncSession, co: AssetCheckout, alan_user_ad: str | None = None) -> dict:
+    out = AssetCheckoutOut.model_validate(co)
+    out.alan_user_ad = alan_user_ad if alan_user_ad is not None else await _user_ad(db, co.alan_user_id)
+    return out.model_dump(mode="json")
+
+
 @router.post("/{asset_id}/checkout")
 async def checkout(
     asset_id: uuid.UUID,
@@ -184,7 +256,7 @@ async def checkout(
             existing, asset_id=asset_id, alan_user_id=user.id, nfc=body.nfc_tag_uid,
             gps_lat=body.gps_lat, gps_lng=body.gps_lng, notlar=body.notlar,
         ):
-            return JSONResponse(status_code=200, content=AssetCheckoutOut.model_validate(existing).model_dump(mode="json"))
+            return JSONResponse(status_code=200, content=await _co_payload(db, existing))
         raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
 
     # 2) zaten zimmetli mi?
@@ -223,14 +295,14 @@ async def checkout(
                 again, asset_id=asset_id, alan_user_id=user.id, nfc=body.nfc_tag_uid,
                 gps_lat=body.gps_lat, gps_lng=body.gps_lng, notlar=body.notlar,
             ):
-                return JSONResponse(status_code=200, content=AssetCheckoutOut.model_validate(again).model_dump(mode="json"))
+                return JSONResponse(status_code=200, content=await _co_payload(db, again))
             raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
         raise translate_integrity(exc)
 
     asset.durum = "zimmetli"
     await db.flush()
     await db.refresh(obj)
-    return JSONResponse(status_code=201, content=AssetCheckoutOut.model_validate(obj).model_dump(mode="json"))
+    return JSONResponse(status_code=201, content=await _co_payload(db, obj, alan_user_ad=user.ad))
 
 
 @router.post("/{asset_id}/checkin")
@@ -253,11 +325,15 @@ async def checkin(
         )
     ).scalar_one_or_none()
     if prev is not None:
-        return JSONResponse(status_code=200, content=AssetCheckoutOut.model_validate(prev).model_dump(mode="json"))
+        return JSONResponse(status_code=200, content=await _co_payload(db, prev))
 
     open_co = await _open_checkout(db, asset_id)
     if open_co is None:
         raise APIError(409, "conflict", "Acik zimmet yok (demirbas zaten musait).")
+
+    # SAHIPLIK (mobil §13 #6): yalniz zimmetin sahibi veya admin kapatabilir.
+    if open_co.alan_user_id != user.id and user.role != "admin":
+        raise APIError(403, "forbidden", "Zimmet baskasinin uzerinde; yalniz sahibi veya admin birakabilir.")
 
     open_co.birakma_zamani = datetime.now(tz=timezone.utc)
     open_co.birakma_nfc_tag_uid = body.nfc_tag_uid
@@ -278,10 +354,10 @@ async def checkin(
                     )
                 )
             ).scalar_one()
-            return JSONResponse(status_code=200, content=AssetCheckoutOut.model_validate(again).model_dump(mode="json"))
+            return JSONResponse(status_code=200, content=await _co_payload(db, again))
         raise translate_integrity(exc)
     await db.refresh(open_co)
-    return JSONResponse(status_code=200, content=AssetCheckoutOut.model_validate(open_co).model_dump(mode="json"))
+    return JSONResponse(status_code=200, content=await _co_payload(db, open_co))
 
 
 @router.get("/{asset_id}/history", response_model=AssetCheckoutListResponse)
@@ -289,17 +365,29 @@ async def asset_history(
     asset_id: uuid.UUID,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
+    order: Literal["asc", "desc"] = Query("desc", description="alma_zamani sirasi (varsayilan: en yeni ustte)"),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_FIELD),
 ) -> AssetCheckoutListResponse:
     await get_or_404(db, Asset, asset_id)
     base = AssetCheckout.asset_id == asset_id
     total = (await db.execute(select(func.count()).select_from(AssetCheckout).where(base))).scalar_one()
+    sirala = AssetCheckout.alma_zamani.asc() if order == "asc" else AssetCheckout.alma_zamani.desc()
     rows = (
         await db.execute(
-            select(AssetCheckout).where(base).order_by(AssetCheckout.alma_zamani).limit(limit).offset(offset)
+            select(AssetCheckout, AppUser.ad)
+            .join(AppUser, AppUser.id == AssetCheckout.alan_user_id)
+            .where(base)
+            .order_by(sirala)
+            .limit(limit)
+            .offset(offset)
         )
-    ).scalars().all()
+    ).all()
+    items = []
+    for co, alan_ad in rows:
+        out = AssetCheckoutOut.model_validate(co)
+        out.alan_user_ad = alan_ad
+        items.append(out)
     return AssetCheckoutListResponse(
-        meta={"limit": limit, "offset": offset, "total": total}, items=list(rows)
+        meta={"limit": limit, "offset": offset, "total": total}, items=items
     )
