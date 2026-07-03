@@ -47,6 +47,7 @@ interface FormState {
   atanan_user_id: string;
   periyot_dakika: string;
   sonraki_planlanan: string;
+  foto_zorunlu: boolean;
   aktif: boolean;
 }
 const EMPTY: FormState = {
@@ -56,6 +57,7 @@ const EMPTY: FormState = {
   atanan_user_id: "",
   periyot_dakika: "",
   sonraki_planlanan: "",
+  foto_zorunlu: false,
   aktif: true,
 };
 
@@ -63,10 +65,12 @@ export default function TasksPage() {
   const [offset, setOffset] = useState(0);
   const [tip, setTip] = useState("");
   const [aktif, setAktif] = useState("");
+  const [atananFiltre, setAtananFiltre] = useState("");
 
   const qs = new URLSearchParams({ limit: String(LIMIT), offset: String(offset) });
   if (tip) qs.set("tip", tip);
   if (aktif) qs.set("aktif", aktif);
+  if (atananFiltre) qs.set("atanan_user_id", atananFiltre);
   const { data, error, isLoading, mutate } = useSWR<TaskList>(
     `/api/tasks?${qs.toString()}`,
     jsonFetcher,
@@ -108,6 +112,7 @@ export default function TasksPage() {
       atanan_user_id: t.atanan_user_id ?? "",
       periyot_dakika: t.periyot_dakika != null ? String(t.periyot_dakika) : "",
       sonraki_planlanan: isoToLocalInput(t.sonraki_planlanan),
+      foto_zorunlu: t.foto_zorunlu,
       aktif: t.aktif,
     });
     setFormErr(null);
@@ -126,6 +131,7 @@ export default function TasksPage() {
       atanan_user_id: form.atanan_user_id || null,
       periyot_dakika: per ? Number(per) : null,
       sonraki_planlanan: toIso(form.sonraki_planlanan),
+      foto_zorunlu: form.foto_zorunlu,
       aktif: form.aktif,
     };
     try {
@@ -193,6 +199,25 @@ export default function TasksPage() {
               <option value="">Tumu</option>
               <option value="true">Aktif</option>
               <option value="false">Pasif</option>
+            </select>
+          </Field>
+        </div>
+        <div className="w-56">
+          <Field label="Atanan">
+            <select
+              className={inputCls}
+              value={atananFiltre}
+              onChange={(e) => {
+                setAtananFiltre(e.target.value);
+                setOffset(0);
+              }}
+            >
+              <option value="">Tumu</option>
+              {personel.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.ad} ({u.role})
+                </option>
+              ))}
             </select>
           </Field>
         </div>
@@ -265,14 +290,24 @@ export default function TasksPage() {
               />
             </Field>
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.aktif}
-              onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
-            />
-            Aktif
-          </label>
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.foto_zorunlu}
+                onChange={(e) => setForm({ ...form, foto_zorunlu: e.target.checked })}
+              />
+              Foto kaniti zorunlu
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.aktif}
+                onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
+              />
+              Aktif
+            </label>
+          </div>
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
@@ -300,7 +335,14 @@ export default function TasksPage() {
           <tbody>
             {(data?.items ?? []).map((t) => (
               <tr key={t.id} className={`border-t border-slate-100 ${t.aktif ? "" : "opacity-60"}`}>
-                <td className="px-3 py-2">{t.ad}</td>
+                <td className="px-3 py-2">
+                  {t.ad}
+                  {t.foto_zorunlu && (
+                    <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
+                      foto zorunlu
+                    </span>
+                  )}
+                </td>
                 <td className="px-3 py-2 text-slate-600">{tipLabel(t.tip)}</td>
                 <td className="px-3 py-2 text-slate-600">{userName(t.atanan_user_id)}</td>
                 <td className="px-3 py-2 text-slate-600">

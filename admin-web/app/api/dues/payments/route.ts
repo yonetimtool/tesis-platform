@@ -12,6 +12,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   qs.set("offset", sp.get("offset") ?? "0");
   const unitId = sp.get("unit_id");
   if (unitId) qs.set("unit_id", unitId);
+  const donem = sp.get("donem");
+  if (donem) qs.set("donem", donem);
   return proxyJson(`/dues/payments?${qs.toString()}`, "GET");
 }
 

@@ -94,8 +94,13 @@ export function UnitDetail({ unit }: { unit: Unit }) {
   const [pYontem, setPYontem] = useState<DuesYontem>("elden");
   const [pMakbuz, setPMakbuz] = useState("");
   const [pAssessment, setPAssessment] = useState("");
+  const [pDonem, setPDonem] = useState("");
   const [pErr, setPErr] = useState<string | null>(null);
   const [pBusy, setPBusy] = useState(false);
+  // Tahakkuk seciliyse donem ondan turer (backend de ayni kurali uygular).
+  const seciliTahakkukDonem = pAssessment
+    ? (dues?.assessments ?? []).find((a) => a.id === pAssessment)?.donem ?? ""
+    : "";
 
   function openPay() {
     setPOpen(true);
@@ -104,6 +109,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
     setPYontem("elden");
     setPMakbuz("");
     setPAssessment("");
+    setPDonem("");
     setPErr(null);
   }
 
@@ -126,6 +132,8 @@ export function UnitDetail({ unit }: { unit: Unit }) {
           yontem: pYontem,
           makbuz_no: pMakbuz || null,
           assessment_id: pAssessment || null,
+          // tahakkuk seciliyse backend donemi ondan turetir; serbestte kullanici girebilir
+          donem: pAssessment ? null : pDonem.trim() || null,
         },
         { "Idempotency-Key": pKey },
       );
@@ -256,6 +264,22 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                 ))}
               </select>
             </Field>
+            <Field
+              label="Donem (opsiyonel)"
+              hint={
+                pAssessment
+                  ? "Secili tahakkuktan otomatik turetilir"
+                  : "Ornek: 2026-07 — serbest odemeyi rapora atfeder"
+              }
+            >
+              <input
+                className={inputCls}
+                value={pAssessment ? seciliTahakkukDonem : pDonem}
+                onChange={(e) => setPDonem(e.target.value)}
+                placeholder="2026-07"
+                disabled={Boolean(pAssessment)}
+              />
+            </Field>
           </div>
           <ErrorBox message={pErr} />
           <div className="flex gap-2">
@@ -295,6 +319,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               <li key={p.id} className="flex justify-between rounded border border-slate-100 px-2 py-1">
                 <span>
                   {p.yontem} · {p.durum}
+                  {p.donem ? ` · ${p.donem}` : ""}
                 </span>
                 <span className="font-medium">{kurusToTL(p.tutar_kurus)}</span>
               </li>

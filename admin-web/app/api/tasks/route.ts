@@ -14,6 +14,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (tip) qs.set("tip", tip);
   const aktif = sp.get("aktif");
   if (aktif === "true" || aktif === "false") qs.set("aktif", aktif);
+  const atanan = sp.get("atanan_user_id");
+  if (atanan) qs.set("atanan_user_id", atanan);
   return proxyJson(`/tasks?${qs.toString()}`, "GET");
 }
 

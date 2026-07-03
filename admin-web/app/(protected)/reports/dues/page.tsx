@@ -74,8 +74,13 @@ export default function DuesReportPage() {
     }
     setBusy(true);
     try {
-      const [assessments, payments] = await Promise.all([
-        fetchAllItems<DuesAssessment>(`/api/dues/assessments?donem=${encodeURIComponent(donem.trim())}`),
+      const d = donem.trim();
+      // donem'li odemeler SUNUCUDAN suzulur (payment.donem — backend yeni alan);
+      // tum liste yalniz ESKI (donem'i null) kayitlarin tahakkuk uzerinden
+      // atfedilmesi + "donemsiz" uyarisi icin cekilir.
+      const [assessments, donemPayments, allPayments] = await Promise.all([
+        fetchAllItems<DuesAssessment>(`/api/dues/assessments?donem=${encodeURIComponent(d)}`),
+        fetchAllItems<DuesPayment>(`/api/dues/payments?donem=${encodeURIComponent(d)}`),
         fetchAllItems<DuesPayment>("/api/dues/payments"),
       ]);
 
@@ -89,24 +94,34 @@ export default function DuesReportPage() {
         periodAssessmentIds.add(a.id);
       }
 
-      // Basarili odemeler: yalniz bu donemin tahakkuklarina BAGLI olanlar.
-      const odenenByUnit = new Map<string, number>();
-      const odemeler: OdemeRow[] = [];
-      let serbestBasariliSayi = 0;
-      for (const p of payments) {
-        if (p.durum !== "basarili") continue;
+      // Doneme atfedilen basarili odemeler:
+      //  1) payment.donem == secili donem (sunucu suzdu; serbest odemeler DAHIL)
+      //  2) eski kayitlar (donem null) — bu donemin tahakkuguna bagliysa
+      const atfedilen = new Map<string, DuesPayment>();
+      for (const p of donemPayments) {
+        if (p.durum === "basarili") atfedilen.set(p.id, p);
+      }
+      let serbestBasariliSayi = 0; // hala doneme atfedilemeyenler (eski: donem null + tahakkuksuz)
+      for (const p of allPayments) {
+        if (p.durum !== "basarili" || p.donem) continue;
         if (p.assessment_id && periodAssessmentIds.has(p.assessment_id)) {
-          odenenByUnit.set(p.unit_id, (odenenByUnit.get(p.unit_id) ?? 0) + p.tutar_kurus);
-          odemeler.push({
-            id: p.id,
-            no: unitNo(p.unit_id),
-            tutar: p.tutar_kurus,
-            yontem: p.yontem,
-            zaman: p.odeme_zamani,
-          });
+          atfedilen.set(p.id, p);
         } else if (!p.assessment_id) {
           serbestBasariliSayi += 1;
         }
+      }
+
+      const odenenByUnit = new Map<string, number>();
+      const odemeler: OdemeRow[] = [];
+      for (const p of atfedilen.values()) {
+        odenenByUnit.set(p.unit_id, (odenenByUnit.get(p.unit_id) ?? 0) + p.tutar_kurus);
+        odemeler.push({
+          id: p.id,
+          no: unitNo(p.unit_id),
+          tutar: p.tutar_kurus,
+          yontem: p.yontem,
+          zaman: p.odeme_zamani,
+        });
       }
 
       // Toplamlar (kurus tam sayi).
@@ -208,9 +223,9 @@ export default function DuesReportPage() {
 
           {report.serbestBasariliSayi > 0 && (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              Not: {report.serbestBasariliSayi} basarili odeme bir tahakkuga bagli degil
-              (serbest); donem tahsilatina dahil EDILEMEDI. (Backend odemeye donem alani
-              eklerse bu kapanir.)
+              Not: {report.serbestBasariliSayi} basarili odeme DONEMSIZ (eski kayit: donem
+              alani bos ve tahakkuga bagli degil); hicbir donem tahsilatina dahil edilemedi.
+              Yeni odemelerde donem alani dolduruldugu icin bu sayi zamanla erimeli.
             </p>
           )}
 
@@ -280,7 +295,7 @@ export default function DuesReportPage() {
                   {report.odemeler.length === 0 && (
                     <tr>
                       <td className="px-3 py-6 text-center text-muted" colSpan={4}>
-                        Bu donemde tahakkuga bagli basarili odeme yok.
+                        Bu doneme atfedilen basarili odeme yok.
                       </td>
                     </tr>
                   )}

@@ -176,6 +176,7 @@ export interface DuesPayment {
   assessment_id?: string | null;
   tutar_kurus: number;
   odeme_zamani: string;
+  donem?: string | null; // 'YYYY-MM'; serbest odemede null olabilir
   yontem: string;
   durum: string;
   makbuz_no?: string | null;
@@ -288,6 +289,7 @@ export interface Task {
   checkpoint_id?: string | null;
   periyot_dakika?: number | null;
   sonraki_planlanan?: string | null;
+  foto_zorunlu: boolean;
   aktif: boolean;
   created_at: string;
   updated_at?: string | null;
