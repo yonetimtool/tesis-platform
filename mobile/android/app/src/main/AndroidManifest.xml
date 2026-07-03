@@ -47,5 +47,11 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- image_picker: Android 11+ paket gorunurlugu — foto cekimi sistem
+             kamera uygulamasina devredilir (bu yuzden ayrica CAMERA izni
+             GEREKMEZ; galeri secimi sistem picker'i kullanir). -->
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE"/>
+        </intent>
     </queries>
 </manifest>

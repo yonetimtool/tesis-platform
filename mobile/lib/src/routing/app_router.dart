@@ -8,6 +8,9 @@ import '../features/home/presentation/home_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
 import '../features/patrol/presentation/patrol_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
+import '../features/tasks/domain/task_models.dart';
+import '../features/tasks/presentation/task_detail_screen.dart';
+import '../features/tasks/presentation/tasks_screen.dart';
 import 'splash_screen.dart';
 
 class AppRoutes {
@@ -18,6 +21,8 @@ class AppRoutes {
   static const nfc = '/nfc';
   static const outbox = '/outbox';
   static const patrol = '/patrol';
+  static const tasks = '/tasks';
+  static const taskDetail = '/tasks/detail';
 }
 
 /// Auth durumundaki degisimleri go_router'a bildiren kopru. `status` her
@@ -62,6 +67,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.patrol,
         builder: (context, state) => const PatrolScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.tasks,
+        builder: (context, state) => const TasksScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.taskDetail,
+        // Detay, listeden secilen Task nesnesiyle acilir (extra). Dogrudan
+        // URL ile gelinirse (extra yok) listeye yonlendirilir.
+        redirect: (context, state) =>
+            state.extra is Task ? null : AppRoutes.tasks,
+        builder: (context, state) =>
+            TaskDetailScreen(task: state.extra! as Task),
       ),
     ],
     redirect: (context, state) {

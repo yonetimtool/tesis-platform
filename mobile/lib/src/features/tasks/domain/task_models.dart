@@ -1,0 +1,234 @@
+/// Gorev modulunun domain modelleri — `contracts/openapi.yaml`'daki Task /
+/// TaskCompletion / TaskCompletionCreate / PresignRequest / PresignResponse
+/// semalarina uyar.
+///
+/// SOZLESME NOTLARI (dogrulandi, uydurma yok):
+///   * `GET /tasks` yalnizca `tip` + `aktif` + sayfa filtreleri sunar;
+///     "bana atananlar" filtresi YOK → istemci tarafinda suzulur/siralanir
+///     (bkz. [sortTasksForUser]; DEV-A onerisi README §11'de).
+///   * `POST /tasks/{id}/completions` Idempotency-Key header ZORUNLU
+///     (yoksa 400); `nfc_tag_uid` verilirse gorevin checkpoint etiketiyle
+///     eslesmeli, aksi halde 422 `invalid_reference` doner.
+///   * Foto zorunlulugu diye bir alan sozlesmede YOK; foto opsiyonel kanittir
+///     (`foto_key` nullable).
+library;
+
+/// TaskTip semasi. [bilinmiyor] sozlesme disi degerler icin guvenli fallback.
+enum TaskTip { temizlik, kontrol, ilaclama, bakim, peyzaj, diger, bilinmiyor }
+
+TaskTip taskTipFromJson(String? value) => switch (value) {
+      'temizlik' => TaskTip.temizlik,
+      'kontrol' => TaskTip.kontrol,
+      'ilaclama' => TaskTip.ilaclama,
+      'bakim' => TaskTip.bakim,
+      'peyzaj' => TaskTip.peyzaj,
+      'diger' => TaskTip.diger,
+      _ => TaskTip.bilinmiyor,
+    };
+
+/// `GET /tasks` ogesi (Task semasi).
+class Task {
+  const Task({
+    required this.id,
+    required this.tip,
+    required this.ad,
+    required this.aktif,
+    this.aciklama,
+    this.atananUserId,
+    this.checkpointId,
+    this.periyotDakika,
+    this.sonrakiPlanlanan,
+  });
+
+  final String id;
+  final TaskTip tip;
+  final String ad;
+  final String? aciklama;
+
+  /// Gorevin atandigi kullanici (yoksa havuz gorevi).
+  final String? atananUserId;
+
+  /// Gorevin NFC dogrulama noktasi. Doluysa tamamlama akisinda "etiketi
+  /// okutun" adimi gosterilir; okunan UID backend'de bu checkpoint'in
+  /// etiketiyle eslesmek zorundadir (422 doner eslesmezse).
+  final String? checkpointId;
+
+  final int? periyotDakika;
+
+  /// Bir sonraki planlanan an (UTC) — listede tarih olarak gosterilir.
+  final DateTime? sonrakiPlanlanan;
+
+  final bool aktif;
+
+  bool isAssignedTo(String? userId) =>
+      userId != null && atananUserId == userId;
+
+  factory Task.fromJson(Map<String, dynamic> json) => Task(
+        id: json['id'] as String,
+        tip: taskTipFromJson(json['tip'] as String?),
+        ad: json['ad'] as String? ?? '',
+        aciklama: json['aciklama'] as String?,
+        atananUserId: json['atanan_user_id'] as String?,
+        checkpointId: json['checkpoint_id'] as String?,
+        periyotDakika: (json['periyot_dakika'] as num?)?.toInt(),
+        sonrakiPlanlanan: json['sonraki_planlanan'] == null
+            ? null
+            : DateTime.parse(json['sonraki_planlanan'] as String).toUtc(),
+        aktif: json['aktif'] as bool? ?? true,
+      );
+}
+
+/// `POST /tasks/{id}/completions` istek govdesi (TaskCompletionCreate) +
+/// Idempotency-Key ureticisi.
+///
+/// Anahtar, akis BASLATILDIGI anda sabitlenen (taskId, tamamlanma_zamani)
+/// ciftinden deterministik turetilir (scan desenindeki gibi): ag hatasi
+/// sonrasi ayni taslagin tekrar gonderimi backend'de AYNI kaydi dondurur
+/// (200 idempotent tekrar). NFC/foto/not sonradan eklense de anahtar
+/// DEGISMEZ — copyWith yalnizca kanit alanlarini gunceller.
+class TaskCompletionDraft {
+  const TaskCompletionDraft({
+    required this.taskId,
+    required this.tamamlanmaZamani,
+    this.nfcTagUid,
+    this.fotoKey,
+    this.notlar,
+    this.gpsLat,
+    this.gpsLng,
+  });
+
+  final String taskId;
+
+  /// Akisin baslatildigi an (UTC) — anahtarin parcasi, degistirilemez.
+  final DateTime tamamlanmaZamani;
+
+  final String? nfcTagUid;
+  final String? fotoKey;
+  final String? notlar;
+  final double? gpsLat;
+  final double? gpsLng;
+
+  String get idempotencyKey =>
+      'task-completion|$taskId|${tamamlanmaZamani.toUtc().toIso8601String()}';
+
+  TaskCompletionDraft copyWith({
+    Object? nfcTagUid = _sentinel,
+    Object? fotoKey = _sentinel,
+    Object? notlar = _sentinel,
+  }) =>
+      TaskCompletionDraft(
+        taskId: taskId,
+        tamamlanmaZamani: tamamlanmaZamani,
+        nfcTagUid:
+            nfcTagUid == _sentinel ? this.nfcTagUid : nfcTagUid as String?,
+        fotoKey: fotoKey == _sentinel ? this.fotoKey : fotoKey as String?,
+        notlar: notlar == _sentinel ? this.notlar : notlar as String?,
+        gpsLat: gpsLat,
+        gpsLng: gpsLng,
+      );
+
+  static const Object _sentinel = Object();
+
+  Map<String, dynamic> toJson() => {
+        'tamamlanma_zamani': tamamlanmaZamani.toUtc().toIso8601String(),
+        if (nfcTagUid != null) 'nfc_tag_uid': nfcTagUid,
+        if (fotoKey != null) 'foto_key': fotoKey,
+        if (notlar != null) 'notlar': notlar,
+        if (gpsLat != null) 'gps_lat': gpsLat,
+        if (gpsLng != null) 'gps_lng': gpsLng,
+      };
+}
+
+/// `POST/GET /tasks/{id}/completions` yaniti (TaskCompletion semasi).
+class TaskCompletion {
+  const TaskCompletion({
+    required this.id,
+    required this.taskId,
+    required this.tamamlayanUserId,
+    required this.tamamlanmaZamani,
+    this.nfcTagUid,
+    this.fotoKey,
+    this.fotoUrl,
+    this.notlar,
+  });
+
+  final String id;
+  final String taskId;
+  final String tamamlayanUserId;
+  final DateTime tamamlanmaZamani;
+  final String? nfcTagUid;
+  final String? fotoKey;
+  final String? fotoUrl;
+  final String? notlar;
+
+  factory TaskCompletion.fromJson(Map<String, dynamic> json) => TaskCompletion(
+        id: json['id'] as String,
+        taskId: json['task_id'] as String,
+        tamamlayanUserId: json['tamamlayan_user_id'] as String,
+        tamamlanmaZamani:
+            DateTime.parse(json['tamamlanma_zamani'] as String).toUtc(),
+        nfcTagUid: json['nfc_tag_uid'] as String?,
+        fotoKey: json['foto_key'] as String?,
+        fotoUrl: json['foto_url'] as String?,
+        notlar: json['notlar'] as String?,
+      );
+}
+
+/// Tamamlama gonderim sonucu: yanit + yeni kayit mi (201) yoksa idempotent
+/// tekrar mi (200) — kullaniciya "kaydedildi" / "zaten kayitliydi" ayrimi.
+class TaskCompletionResult {
+  const TaskCompletionResult({
+    required this.completion,
+    required this.wasDuplicate,
+  });
+
+  final TaskCompletion completion;
+
+  /// true → backend ayni Idempotency-Key ile mevcut kaydi dondurdu (200).
+  final bool wasDuplicate;
+}
+
+/// `POST /uploads/presign` yaniti (PresignResponse semasi).
+class PresignTicket {
+  const PresignTicket({
+    required this.fotoKey,
+    required this.uploadUrl,
+    required this.expiresIn,
+  });
+
+  /// Completion'da gonderilecek obje anahtari (tenant ile namespace'li).
+  final String fotoKey;
+
+  /// Presigned PUT URL — dosya dogrudan buraya PUT edilir (kisa omurlu).
+  final String uploadUrl;
+
+  final int expiresIn;
+
+  factory PresignTicket.fromJson(Map<String, dynamic> json) => PresignTicket(
+        fotoKey: json['foto_key'] as String,
+        uploadUrl: json['upload_url'] as String,
+        expiresIn: (json['expires_in'] as num?)?.toInt() ?? 0,
+      );
+}
+
+/// Liste sirasi: bana atananlar one, grup icinde `sonraki_planlanan` ASC
+/// (plansizlar sona), esitlikte ad. Sunucuda "bana atananlar" filtresi
+/// olmadigi icin (sozlesme dogrulandi) siralama istemcidedir.
+List<Task> sortTasksForUser(List<Task> tasks, String? currentUserId) {
+  int byPlan(Task a, Task b) {
+    if (a.sonrakiPlanlanan == null && b.sonrakiPlanlanan == null) {
+      return a.ad.compareTo(b.ad);
+    }
+    if (a.sonrakiPlanlanan == null) return 1;
+    if (b.sonrakiPlanlanan == null) return -1;
+    final cmp = a.sonrakiPlanlanan!.compareTo(b.sonrakiPlanlanan!);
+    return cmp != 0 ? cmp : a.ad.compareTo(b.ad);
+  }
+
+  return [...tasks]..sort((a, b) {
+      final aMine = a.isAssignedTo(currentUserId) ? 0 : 1;
+      final bMine = b.isAssignedTo(currentUserId) ? 0 : 1;
+      if (aMine != bMine) return aMine - bMine;
+      return byPlan(a, b);
+    });
+}

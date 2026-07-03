@@ -689,3 +689,109 @@ ekleme var:
 - **RBAC:** admin + security (cleaning/resident 403). Detay:
   `contracts/openapi.yaml` → `/me/patrol-window` ve `contracts/README.md` →
   "Aktif devriye durumu (me/patrol-window)".
+
+---
+
+## 11. Görev ekranları — "Görevlerim" (Faz 3 / Prompt 1)
+
+Temizlik/kontrol personelinin (role=cleaning; security de erişir) görev
+listesi ve NFC + foto kanıtlı tamamlama akışı.
+Kod: `features/tasks/` (data / domain / presentation), rota: `/tasks`
+(ana ekrandaki "Görevlerim" kartı) → detay `/tasks/detail`.
+
+### Veri kaynakları (sözleşme doğrulaması sonucu)
+
+| Veri | Uç | RBAC (cleaning) |
+|---|---|---|
+| Görev listesi (tip/aktif filtreli, sayfalı) | `GET /tasks` | ✅ |
+| Görev tamamlama (kanıt gönderimi) | `POST /tasks/{id}/completions` (**Idempotency-Key zorunlu**) | ✅ |
+| Foto yükleme bileti | `POST /uploads/presign` → `{foto_key, upload_url, method:PUT, expires_in}` | ✅ |
+
+### Görev akışı
+
+1. **Liste:** aktif görevler; tip rozeti renkli (temizlik/kontrol/ilaçlama/
+   bakım/peyzaj/diğer), `sonraki_planlanan` varsa tarih, **bana atananlar
+   önde ve "Sana atanmış" vurgulu**. Tip filtresi chip'leri sunucuya `tip`
+   parametresi olarak gider. Pull-to-refresh. 403'te kibar mesaj.
+2. **Detay/tamamlama:** akış açıldığı anda `tamamlanma_zamani` +
+   **Idempotency-Key sabitlenir** (`task-completion|{taskId}|{zaman}` —
+   scan desenindeki gibi deterministik). Adımlar:
+   - **NFC** (görevde `checkpoint_id` doluysa): mevcut `features/nfc`
+     servisi **yeniden kullanılır** (kopya yok); okunan UID completion'a
+     gider. Eşleşme doğrulaması **backend'dedir**: etiket görevin
+     noktasıyla uyuşmazsa `422 invalid_reference` döner ve mesaj kullanıcıya
+     aynen gösterilir.
+   - **Foto** (opsiyonel kanıt): çek/galeriden seç → aşağıdaki presign akışı
+     → `foto_key` taslağa işlenir. Önizleme + "Yeniden çek" + "Tekrar
+     yükle" + "Kaldır".
+   - **Not** (opsiyonel) → **"Tamamla"** → `POST /tasks/{id}/completions`.
+     **201 → "kayıt oluşturuldu"**, **200 → "zaten kayıtlıydı (çift kayıt
+     oluşmadı)"** ayrımı sonuç kartında ve liste rozetinde görünür.
+
+### Foto / presign akışı
+
+```
+image_picker (kamera|galeri, maxWidth 1600, quality 80)
+   → POST /uploads/presign {content_type, dosya_adi}   (auth'lu ana Dio)
+   → yanıt: {foto_key, upload_url (kısa ömürlü), method: PUT}
+   → HTTP PUT upload_url  (TEMİZ Dio: Authorization YOK — presigned imza
+     bozulmasın; Content-Type presign'daki ile aynı)
+   → foto_key → TaskCompletionDraft.fotoKey → completion gövdesinde gider
+```
+
+### İzin / platform yapılandırması
+
+- **Android** (`AndroidManifest.xml`): ek runtime izni GEREKMEZ —
+  `image_picker` çekimi sistem kamera uygulamasına devreder. Android 11+
+  paket görünürlüğü için `<queries>` içine
+  `android.media.action.IMAGE_CAPTURE` eklendi.
+- **iOS** (`Info.plist`): `NSCameraUsageDescription` +
+  `NSPhotoLibraryUsageDescription` eklendi (kamera + galeri).
+
+### Paket seçimi + gerekçe
+
+- **image_picker** (flutter.dev resmî paketi): kamera + galeri tek API,
+  platform tarafında bakımlı, ek native kod/izin karmaşası yok. `camera`
+  paketi (tam ekran özel kamera) bu iş için gereksiz ağır; kanıt fotosu
+  için sistem kamerası yeterli ve daha az bakım yükü.
+
+### Offline kısıtı (bilinen, bilinçli sade)
+
+- **Fotoğraflı tamamlama ONLINE gerektirir**: presigned URL kısa ömürlü
+  olduğundan foto yüklemesi ertelenemez. Bağlantı yokken foto yükleme /
+  tamamlama denemesi kullanıcıya **net uyarı** gösterir ("internet
+  bağlantısı gerekli"); Idempotency-Key sabit olduğu için bağlantı gelince
+  aynı "Tamamla" güvenle tekrarlanır (çift kayıt oluşmaz).
+- Fotosuz tamamlamanın outbox'a alınıp ertelenmesi **bu turda yok** —
+  sonraki tur adayı (scan outbox deseni birebir uygulanabilir).
+
+### Cihaz doğrulama senaryosu
+
+1. `cleaner@acme.com / Clean123!` ile login (tenant: acme).
+2. Ana ekran → **Görevlerim** → liste tip rozetleriyle gelir; "Sana
+   atanmış" görevler önde.
+3. Göreve gir → (varsa) **Etiketi okut** → **Foto çek** ("Yüklendi ✓"
+   bekle) → not yaz → **Tamamla** → "kayıt oluşturuldu".
+4. Aynı ekranda "Tamamla"nın tekrarı mümkün değil; ağ hatasında tekrar
+   basmak 200 "zaten kayıtlıydı" gösterir.
+5. Panel (admin) → görev raporları/`GET /task-completions` → tamamlama
+   foto/NFC kanıt bayraklarıyla anında görünür.
+
+### 🚩 Sözleşme bulguları (DEV-A'ya — uydurmadık, istemcide çözdük)
+
+1. **"Bana atananlar" filtresi yok:** `GET /tasks` yalnızca `tip` + `aktif`
+   + sayfa parametreleri sunuyor; `atanan_user_id` filtresi YOK. Mobil tüm
+   aktif görevleri çekip **istemcide** sıralıyor (bana atananlar öne; JWT
+   `sub` claim'i yalnızca bu vurgu için çözülür, yetki kararı değil).
+   **Öneri:** `GET /tasks?atanan_user_id=me` (veya `atanan=me` kısayolu)
+   eklenirse büyük tenant'larda liste küçülür.
+2. **Foto zorunluluğu alanı yok:** Task şemasında "foto kanıtı zorunlu"
+   bayrağı yok (`foto_key` nullable). Mobil fotoyu **opsiyonel** kanıt
+   olarak sunuyor. **Öneri:** görev bazında `foto_zorunlu: bool` alanı
+   (panel'de işaretlenebilir) eklenirse saha disiplini kurulabilir.
+3. **NFC eşleşmesi büyük/küçük harfe duyarlı:** backend completion'da
+   `cp.nfc_tag_uid != body.nfc_tag_uid` ile **birebir** karşılaştırıyor
+   (`backend/app/routers/tasks.py`). Mobil UID'yi her zaman sözleşme
+   formatında (BÜYÜK HARF, `:` ayraçlı) üretir, sorun çıkmaz; ama panelden
+   farklı formatta etiket girilirse eşleşme düşer. **Öneri:** backend
+   karşılaştırmayı normalize etsin (scan ucundaki davranışla tutarlılık).

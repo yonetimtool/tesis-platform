@@ -7,6 +7,11 @@
 	<!-- Core NFC: kullaniciya gosterilen NFC erisim aciklamasi. -->
 	<key>NFCReaderUsageDescription</key>
 	<string>Devriye noktasi etiketlerini okumak icin NFC kullanilir.</string>
+	<!-- image_picker: gorev tamamlama foto kaniti (kamera + galeri). -->
+	<key>NSCameraUsageDescription</key>
+	<string>Gorev tamamlama kaniti icin fotograf cekilir.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Gorev tamamlama kaniti icin galeriden fotograf secilebilir.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
