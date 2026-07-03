@@ -176,8 +176,10 @@ Ayri tablo YOK — **`tenant.acil_durum_telefon`** (tek alan). Mobil acil durumd
 ## Demirbas envanteri + zimmet (Asset / checkout / checkin)
 
 Demirbas (`asset`) + zimmet (`asset_checkout`) — "kim aldi/birakti" (NFC) (`app/routers/assets.py`).
-- **Asset CRUD** (`/assets`): GET liste (`kategori`/`durum`/`aktif` filtre, sayfali) / detay /
-  POST / PATCH / DELETE. **RBAC:** GET admin/security/cleaning; yazma yalniz admin.
+- **Asset CRUD** (`/assets`): GET liste (`kategori`/`durum`/`aktif`/`nfc_tag_uid`(tam eslesme)/
+  `checked_out_by`(`me` | uuid — uuid yalniz admin) filtreleri, sayfali) / detay / POST / PATCH /
+  DELETE. **RBAC:** GET admin/security/cleaning; yazma yalniz admin. Liste/detay item'lari
+  `acik_zimmet` ozeti tasir (`null` | `{alan_user_id, alan_user_ad, alinma_zamani}`).
   `nfc_tag_uid` tenant icinde benzersiz (NULL haric) → cakisma **409**. `durum`:
   musait/zimmetli/bakimda.
 - **checkout** (`POST /assets/{id}/checkout`, admin/security/cleaning): demirbasi al.
@@ -186,9 +188,11 @@ Demirbas (`asset`) + zimmet (`asset_checkout`) — "kim aldi/birakti" (NFC) (`ap
   unique `(tenant_id, asset_id) WHERE birakma_zamani IS NULL` ile garanti). Idempotency:
   ayni key+gövde → 200, farkli → 409 (scan SAVEPOINT deseni). Basarili → asset.durum='zimmetli'.
 - **checkin** (`POST /assets/{id}/checkin`): acik zimmeti kapatir (birakma_zamani=now,
-  durum='musait'). `Idempotency-Key` zorunlu; ayni key ile tekrar → 200 ayni kayit
+  durum='musait'). **SAHIPLIK (mobil §13 #6):** yalniz zimmetin sahibi veya admin; baskasi
+  **403** `forbidden`. `Idempotency-Key` zorunlu; ayni key ile tekrar → 200 ayni kayit
   (`birakma_idempotency_key` partial unique). Acik zimmet yoksa **409**.
-- **history** (`GET /assets/{id}/history`): zimmet gecmisi (alma_zamani artan), sayfali, tenant-izole.
+- **history** (`GET /assets/{id}/history`): zimmet gecmisi, `?order=asc|desc`
+  (varsayilan **desc** — en yeni ustte), item'larda `alan_user_ad`, sayfali, tenant-izole.
 
 ## Peyzaj bakim takvimi + hatirlatma
 

@@ -895,6 +895,13 @@ paths:
     get:
       tags: [assets]
       summary: Demirbas listesi
+      description: |
+        Her item ACIK zimmet ozeti tasir: `acik_zimmet` (null | {alan_user_id,
+        alan_user_ad, alinma_zamani}) — mobil history taramadan gosterir
+        (mobil §13 #2/#5). `nfc_tag_uid` TAM eslesme filtresi UID->asset
+        cozumunu tek istege indirir (mobil §13 #1). `checked_out_by` acik
+        zimmet filtresi: `me` = token kullanicisinin uzerindekiler (mobil §13
+        #3); `<uuid>` degeri YALNIZ admin (baskasi 403), gecersiz deger 422.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -907,6 +914,14 @@ paths:
         - name: aktif
           in: query
           schema: { type: boolean }
+        - name: nfc_tag_uid
+          in: query
+          description: Tam eslesme — UID okutup asset'i tek istekle cozmek icin
+          schema: { type: string }
+        - name: checked_out_by
+          in: query
+          description: "'me' veya user UUID (UUID yalniz admin) — acik zimmeti bu kullanicida olanlar"
+          schema: { type: string }
       responses:
         "200":
           description: Liste
@@ -1039,6 +1054,12 @@ paths:
       description: |
         Acik zimmeti kapatir (birakma_zamani=now). Idempotency-Key ZORUNLU.
         nfc_tag_uid verilirse asset'in nfc'siyle eslesmeli. Acik zimmet yoksa 409.
+
+        SAHIPLIK (mobil §13 #6): checkin'i YALNIZ acik zimmetin sahibi
+        (alan_user_id == token user) veya ADMIN (yonetici mudahalesi)
+        yapabilir; baska kullanici 403 `forbidden`
+        ("Zimmet baskasinin uzerinde..."). security/cleaning baskasinin
+        zimmetini KAPATAMAZ.
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -1069,9 +1090,17 @@ paths:
     get:
       tags: [assets]
       summary: Demirbas zimmet gecmisi
+      description: |
+        Siralama `alma_zamani` uzerinden; VARSAYILAN `desc` (en yeni ustte —
+        mobil §13 #4). Eski (en eski ustte) davranis icin `?order=asc`.
+        Item'larda `alan_user_ad` dolu gelir (id + ad birlikte, mobil §13 #5).
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
+        - name: order
+          in: query
+          description: "alma_zamani sirasi (varsayilan: desc = en yeni ustte)"
+          schema: { type: string, enum: [asc, desc], default: desc }
       responses:
         "200":
           description: Gecmis
@@ -2439,8 +2468,19 @@ components:
         durum: { $ref: "#/components/schemas/AssetDurum" }
         aciklama: { type: string, nullable: true }
         aktif: { type: boolean }
+        acik_zimmet:
+          nullable: true
+          allOf: [{ $ref: "#/components/schemas/AcikZimmet" }]
+          description: "Acik zimmet ozeti; zimmetli degilse null (mobil §13 #2/#5)"
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+    AcikZimmet:
+      type: object
+      required: [alan_user_id, alan_user_ad, alinma_zamani]
+      properties:
+        alan_user_id: { type: string, format: uuid }
+        alan_user_ad: { type: string, example: "Guard A" }
+        alinma_zamani: { type: string, format: date-time }
     AssetCreate:
       type: object
       required: [ad]
@@ -2471,6 +2511,10 @@ components:
           type: string
           format: uuid
           description: "Token'dan turetilir (alan kullanici)"
+        alan_user_ad:
+          type: string
+          nullable: true
+          description: "Alan kullanicinin adi (id + ad birlikte; mobil §13 #5)"
         alma_zamani: { type: string, format: date-time }
         birakma_zamani:
           type: string

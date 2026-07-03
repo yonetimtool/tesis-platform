@@ -181,6 +181,180 @@ def test_checkin_missing_key_400(client, world):
     assert r.status_code == 400
 
 
+# ----------------------- checkin sahiplik (mobil §13 #6) ------------------- #
+def _checkout(client, headers, asset_id, **body):
+    r = client.post(
+        f"/assets/{asset_id}/checkout",
+        headers={**headers, "Idempotency-Key": uuid.uuid4().hex},
+        json=body,
+    )
+    assert r.status_code == 201, r.text
+    return r.json()
+
+
+def _checkin(client, headers, asset_id, **body):
+    return client.post(
+        f"/assets/{asset_id}/checkin",
+        headers={**headers, "Idempotency-Key": uuid.uuid4().hex},
+        json=body,
+    )
+
+
+def test_checkin_ownership_other_user_403(client, world):
+    """Acik zimmet baskasindaysa checkin 403; sahibi kapatabilir."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    a = _new_asset(client, admin)
+    _checkout(client, guard, a["id"])
+
+    r = _checkin(client, cleaning, a["id"])
+    assert r.status_code == 403, r.text
+    assert r.json()["error"]["code"] == "forbidden"
+    assert "baskasinin uzerinde" in r.json()["error"]["message"]
+
+    # zimmet hala acik, sahibi kapatabilir
+    assert client.get(f"/assets/{a['id']}", headers=admin).json()["durum"] == "zimmetli"
+    assert _checkin(client, guard, a["id"]).status_code == 200
+
+
+def test_checkin_admin_override_200(client, world):
+    """Admin, baskasinin zimmetini kapatabilir (yonetici mudahalesi)."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    a = _new_asset(client, admin)
+    _checkout(client, guard, a["id"])
+
+    r = _checkin(client, admin, a["id"])
+    assert r.status_code == 200, r.text
+    assert r.json()["birakma_zamani"] is not None
+    assert client.get(f"/assets/{a['id']}", headers=admin).json()["durum"] == "musait"
+
+
+# ----------------------- nfc filtresi (mobil §13 #1) ----------------------- #
+def test_list_assets_nfc_filter(client, world):
+    """?nfc_tag_uid= tam eslesme; bulunamayan bos liste; tenant-izole."""
+    admin_a = _headers(client, world["slug_a"], world["admin_a"])
+    admin_b = _headers(client, world["slug_b"], world["admin_b"])
+    nfc = f"AST-{uuid.uuid4().hex[:8]}"
+    a = _new_asset(client, admin_a, nfc_tag_uid=nfc)
+    _new_asset(client, admin_a, nfc_tag_uid=f"AST-{uuid.uuid4().hex[:8]}")
+
+    body = client.get("/assets", headers=admin_a, params={"nfc_tag_uid": nfc}).json()
+    assert body["meta"]["total"] == 1
+    assert body["items"][0]["id"] == a["id"]
+
+    yok = client.get("/assets", headers=admin_a, params={"nfc_tag_uid": "YOK-BOYLE"}).json()
+    assert yok["meta"]["total"] == 0 and yok["items"] == []
+
+    # B, A'nin nfc'siyle bulamaz (RLS)
+    izole = client.get("/assets", headers=admin_b, params={"nfc_tag_uid": nfc}).json()
+    assert izole["meta"]["total"] == 0
+
+
+# -------------------- acik_zimmet ozeti (mobil §13 #2+#5) ------------------ #
+def test_asset_acik_zimmet_field(client, world):
+    """Detay/listede acik_zimmet: null | {alan_user_id, alan_user_ad, alinma_zamani}."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    guard_id = client.get("/me", headers=guard).json()["id"]
+    a = _new_asset(client, admin)
+
+    # zimmet yokken null
+    assert client.get(f"/assets/{a['id']}", headers=admin).json()["acik_zimmet"] is None
+
+    _checkout(client, guard, a["id"])
+    det = client.get(f"/assets/{a['id']}", headers=admin).json()
+    az = det["acik_zimmet"]
+    assert az is not None
+    assert az["alan_user_id"] == guard_id
+    assert az["alan_user_ad"] == "Guard A"
+    assert az["alinma_zamani"] is not None
+
+    # listede de dolu
+    lst = client.get("/assets", headers=admin, params={"durum": "zimmetli", "limit": 200}).json()
+    item = next(it for it in lst["items"] if it["id"] == a["id"])
+    assert item["acik_zimmet"]["alan_user_ad"] == "Guard A"
+
+    # checkin sonrasi tekrar null
+    _checkin(client, guard, a["id"])
+    assert client.get(f"/assets/{a['id']}", headers=admin).json()["acik_zimmet"] is None
+
+
+# ------------------ checked_out_by=me filtresi (mobil §13 #3) -------------- #
+def test_list_assets_checked_out_by_me(client, world):
+    """?checked_out_by=me -> yalniz token kullanicisinin acik zimmetindekiler."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+
+    mine = _new_asset(client, admin)      # guard alacak
+    theirs = _new_asset(client, admin)    # cleaning alacak
+    _new_asset(client, admin)             # bos kalacak
+    _checkout(client, guard, mine["id"])
+    _checkout(client, cleaning, theirs["id"])
+
+    body = client.get("/assets", headers=guard, params={"checked_out_by": "me", "limit": 200}).json()
+    ids = [it["id"] for it in body["items"]]
+    assert mine["id"] in ids and theirs["id"] not in ids
+    assert all(it["acik_zimmet"] is not None for it in body["items"])
+
+    # iade edince listeden duser
+    _checkin(client, guard, mine["id"])
+    body2 = client.get("/assets", headers=guard, params={"checked_out_by": "me", "limit": 200}).json()
+    assert mine["id"] not in [it["id"] for it in body2["items"]]
+
+
+def test_list_assets_checked_out_by_user_id_admin_only(client, world):
+    """checked_out_by=<uuid>: admin gorebilir; digerleri icin 403."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    guard_id = client.get("/me", headers=guard).json()["id"]
+    a = _new_asset(client, admin)
+    _checkout(client, guard, a["id"])
+
+    body = client.get("/assets", headers=admin, params={"checked_out_by": guard_id}).json()
+    assert a["id"] in [it["id"] for it in body["items"]]
+
+    # security kendi UUID'siyle bile 'me' kullanmali -> 403 (sozlesme: UUID yalniz admin)
+    r = client.get("/assets", headers=guard, params={"checked_out_by": guard_id})
+    assert r.status_code == 403
+
+    # gecersiz deger -> 422
+    r = client.get("/assets", headers=admin, params={"checked_out_by": "bozuk"})
+    assert r.status_code == 422
+
+
+# ------------- history siralama + alan_user_ad (mobil §13 #4+#5) ----------- #
+def test_history_order_default_desc_and_asc_param(client, world):
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    a = _new_asset(client, admin)
+
+    first = _checkout(client, guard, a["id"])
+    _checkin(client, guard, a["id"])
+    second = _checkout(client, guard, a["id"])
+
+    # varsayilan: en yeni ustte (DESC)
+    hist = client.get(f"/assets/{a['id']}/history", headers=admin).json()["items"]
+    assert [h["id"] for h in hist] == [second["id"], first["id"]]
+
+    # ?order=asc eski davranis
+    asc = client.get(f"/assets/{a['id']}/history", headers=admin, params={"order": "asc"}).json()["items"]
+    assert [h["id"] for h in asc] == [first["id"], second["id"]]
+
+
+def test_history_items_include_alan_user_ad(client, world):
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    a = _new_asset(client, admin)
+    _checkout(client, guard, a["id"])
+
+    hist = client.get(f"/assets/{a['id']}/history", headers=admin).json()["items"]
+    assert hist[0]["alan_user_id"] is not None
+    assert hist[0]["alan_user_ad"] == "Guard A"
+
+
 # ------------------------------- history ----------------------------------- #
 def test_history_records_cycle(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])

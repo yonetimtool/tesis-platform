@@ -206,6 +206,25 @@ dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`
   `okutma_zamani`/`okutan_user_id` penceredeki **ilk** scan'den. **Yeni tablo YOK** —
   mevcut `patrol_window`/`scan_event`/`patrol_plan_checkpoint` uzerinde okuma. tenant-izole (RLS).
 
+## Mobil §13 bulgulari kapatildi (demirbas/zimmet)
+
+Mobil ekibin zimmet modulu bulgularina backend cevabi — hepsi uc/sorgu isi,
+**yeni tablo YOK**:
+
+| # | Bulgu | Nasil kapandi |
+|---|-------|---------------|
+| 1 | UID -> asset cozumu cok istekli | `GET /assets?nfc_tag_uid=...` tam-eslesme filtresi (tenant icinde unique -> 0/1 sonuc) |
+| 2 | Acik zimmet icin history taranmasi | Asset liste/detayinda `acik_zimmet` alani: `null` \| `{alan_user_id, alan_user_ad, alinma_zamani}` |
+| 3 | "Uzerimdekiler" listesi yok | `GET /assets?checked_out_by=me` (acik zimmeti bende olanlar); `<uuid>` degeri yalniz admin, gecersiz deger 422 |
+| 4 | History en eski ustte | Varsayilan **`desc`** yapildi (en yeni ustte); eski davranis `?order=asc` ile duruyor. Mevcut tuketiciler siraya bagimli degildi (admin-web acik kaydi `birakma_zamani==null` ile buluyor) |
+| 5 | Yalniz user id, ad yok | `acik_zimmet.alan_user_ad` + history/checkout/checkin item'larinda `alan_user_ad` (id + ad birlikte) |
+| 6 | **KRITIK: checkin sahiplik acigi** | `POST /assets/{id}/checkin` artik SAHIPLIK kontrollu: yalniz zimmet sahibi veya admin; baskasi **403** `forbidden` ("Zimmet baskasinin uzerinde..."). Detay: `openapi.yaml` + `auth.md` |
+
+Not: zimmeti **kapatan** kullanici ayrica kaydedilmiyor (tabloda `birakan_user_id`
+kolonu yok; tablo degisikligi bu turda kapsam disi). Sahiplik kurali sayesinde
+kapatan = sahibi ya da admin'dir; ayri "birakan adi" alani istenirse kolon
+eklemesiyle birlikte planlanmali.
+
 ## API base path
 
 - **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:

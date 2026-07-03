@@ -565,6 +565,14 @@ AssetKategori = Literal["ekipman", "arac", "alet", "diger"]
 AssetDurum = Literal["musait", "zimmetli", "bakimda"]
 
 
+class AcikZimmetOut(BaseModel):
+    """Asset uzerindeki ACIK zimmetin ozeti (mobil §13 #2/#5) — history taramadan."""
+
+    alan_user_id: uuid.UUID
+    alan_user_ad: str
+    alinma_zamani: datetime
+
+
 class AssetOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -575,6 +583,7 @@ class AssetOut(BaseModel):
     durum: str
     aciklama: str | None = None
     aktif: bool
+    acik_zimmet: AcikZimmetOut | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -613,6 +622,7 @@ class AssetCheckoutOut(BaseModel):
     id: uuid.UUID
     asset_id: uuid.UUID
     alan_user_id: uuid.UUID
+    alan_user_ad: str | None = None
     alma_zamani: datetime
     birakma_zamani: datetime | None = None
     alma_nfc_tag_uid: str | None = None
