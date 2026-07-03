@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The INTERNET permission is required for development. Specifically,
+         the Flutter tool needs it to communicate with the running application
+         to allow setting breakpoints, to provide hot reload, etc.
+    -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- DEBUG-ONLY: Prism mock'u HTTP (cleartext) sundugu icin emulator/cihazdan
+         http://10.0.2.2:<port> erisimine izin ver. Bu manifest yalnizca debug
+         build'e merge edilir; release'de cleartext kapali kalir. -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>
