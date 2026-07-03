@@ -15,7 +15,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..crud_helpers import coord_eq, get_or_404, is_unique_violation, translate_integrity
+from ..crud_helpers import coord_eq, get_or_404, is_unique_violation, nfc_eq, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Checkpoint, Task, TaskCompletion
@@ -62,14 +62,26 @@ async def list_tasks(
     offset: int = Query(0, ge=0),
     tip: TaskTip | None = Query(None),
     aktif: bool | None = Query(None),
+    atanan_user_id: str | None = Query(
+        None, description="'me' (token kullanicisi) veya user UUID — atanan filtresi (mobil §11)"
+    ),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_READER),
+    user: AppUser = Depends(_READER),
 ) -> TaskListResponse:
     where = []
     if tip is not None:
         where.append(Task.tip == tip)
     if aktif is not None:
         where.append(Task.aktif == aktif)
+    if atanan_user_id is not None:
+        if atanan_user_id == "me":
+            target = user.id
+        else:
+            try:
+                target = uuid.UUID(atanan_user_id)
+            except ValueError:
+                raise APIError(422, "validation_error", "atanan_user_id 'me' veya UUID olmali.")
+        where.append(Task.atanan_user_id == target)
     total = (await db.execute(select(func.count()).select_from(Task).where(*where))).scalar_one()
     rows = (
         await db.execute(
@@ -199,12 +211,20 @@ async def create_completion(
 
     task = await get_or_404(db, Task, task_id)
 
-    # NFC kaniti: task'in checkpoint'i varsa ve nfc gonderildiyse eslesmeli.
+    # Foto kaniti: gorev foto_zorunlu ise foto_key olmadan tamamlanamaz (mobil §11 #2).
+    if task.foto_zorunlu and body.foto_key is None:
+        raise APIError(
+            422, "validation_error",
+            "Bu gorev icin foto kaniti zorunlu — once /uploads/presign ile yukleyip foto_key gonderin.",
+        )
+
+    # NFC kaniti: task'in checkpoint'i varsa ve nfc gonderildiyse eslesmeli
+    # (normalize karsilastirma — mobil §11 #3).
     if body.nfc_tag_uid is not None and task.checkpoint_id is not None:
         cp = (
             await db.execute(select(Checkpoint).where(Checkpoint.id == task.checkpoint_id))
         ).scalar_one_or_none()
-        if cp is None or cp.nfc_tag_uid != body.nfc_tag_uid:
+        if cp is None or not nfc_eq(cp.nfc_tag_uid, body.nfc_tag_uid):
             raise APIError(422, "invalid_reference", "nfc_tag_uid gorevin checkpoint'i ile eslesmiyor.")
 
     zaman = body.tamamlanma_zamani

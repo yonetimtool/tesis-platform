@@ -19,11 +19,11 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..crud_helpers import translate_integrity
+from ..crud_helpers import norm_nfc, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Checkpoint, PatrolWindow, ScanEvent
@@ -73,8 +73,13 @@ async def create_scan(
         raise APIError(400, "bad_request", "Idempotency-Key header zorunlu.")
 
     # 1) nfc_tag_uid -> checkpoint (RLS ile tenant-scoped). Capraz-tenant/bilinmeyen -> 404.
+    # Eslesme normalize (strip+upper) — task completion / asset ile ayni davranis (mobil §11 #3).
     checkpoint = (
-        await db.execute(select(Checkpoint).where(Checkpoint.nfc_tag_uid == body.nfc_tag_uid))
+        await db.execute(
+            select(Checkpoint).where(
+                func.upper(func.btrim(Checkpoint.nfc_tag_uid)) == norm_nfc(body.nfc_tag_uid)
+            )
+        )
     ).scalar_one_or_none()
     if checkpoint is None:
         raise APIError(404, "not_found", "nfc_tag_uid hicbir checkpoint ile eslesmedi.")

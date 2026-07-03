@@ -369,3 +369,36 @@ def test_history_records_cycle(client, world):
     assert hist["meta"]["total"] == 2
     # tam olarak bir acik zimmet (son checkout)
     assert sum(1 for h in hist["items"] if h["birakma_zamani"] is None) == 1
+
+
+# ------------------- birakan_user_id (demirbas bulgusu) --------------------- #
+def test_checkin_records_birakan_owner_and_admin(client, world):
+    """checkin sonrasi birakan_user_id dolu (sahibi ve admin senaryolari); history'de ad."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    guard_id = client.get("/me", headers=guard).json()["id"]
+    admin_id = client.get("/me", headers=admin).json()["id"]
+
+    # 1) sahibi birakir -> birakan = sahibi
+    a = _new_asset(client, admin)
+    _checkout(client, guard, a["id"])
+    ci = _checkin(client, guard, a["id"])
+    assert ci.status_code == 200, ci.text
+    assert ci.json()["birakan_user_id"] == guard_id
+    assert ci.json()["birakan_user_ad"] == "Guard A"
+
+    # 2) admin mudahalesi -> birakan = admin (alan hala guard)
+    _checkout(client, guard, a["id"])
+    ci2 = _checkin(client, admin, a["id"])
+    assert ci2.json()["birakan_user_id"] == admin_id
+    assert ci2.json()["alan_user_id"] == guard_id
+
+    # acik zimmetteyken birakan alanlari bos
+    b = _new_asset(client, admin)
+    co = _checkout(client, guard, b["id"])
+    assert co["birakan_user_id"] is None and co["birakan_user_ad"] is None
+
+    # history: kapali kayitlarda birakan id+ad birlikte gorunur
+    hist = client.get(f"/assets/{a['id']}/history", headers=admin, params={"order": "asc"}).json()["items"]
+    assert hist[0]["birakan_user_id"] == guard_id and hist[0]["birakan_user_ad"] == "Guard A"
+    assert hist[1]["birakan_user_id"] == admin_id and hist[1]["birakan_user_ad"] == "Admin A"

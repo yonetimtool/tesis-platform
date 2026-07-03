@@ -424,6 +424,7 @@ class TaskOut(BaseModel):
     checkpoint_id: uuid.UUID | None = None
     periyot_dakika: int | None = None
     sonraki_planlanan: datetime | None = None
+    foto_zorunlu: bool
     aktif: bool
     created_at: datetime
     updated_at: datetime | None = None
@@ -437,6 +438,7 @@ class TaskCreate(BaseModel):
     checkpoint_id: uuid.UUID | None = None
     periyot_dakika: int | None = Field(None, ge=1)
     sonraki_planlanan: datetime | None = None
+    foto_zorunlu: bool = False
     aktif: bool = True
 
 
@@ -448,6 +450,7 @@ class TaskUpdate(BaseModel):
     checkpoint_id: uuid.UUID | None = None
     periyot_dakika: int | None = Field(None, ge=1)
     sonraki_planlanan: datetime | None = None
+    foto_zorunlu: bool | None = None
     aktif: bool | None = None
 
     @model_validator(mode="after")
@@ -623,6 +626,8 @@ class AssetCheckoutOut(BaseModel):
     asset_id: uuid.UUID
     alan_user_id: uuid.UUID
     alan_user_ad: str | None = None
+    birakan_user_id: uuid.UUID | None = None
+    birakan_user_ad: str | None = None
     alma_zamani: datetime
     birakma_zamani: datetime | None = None
     alma_nfc_tag_uid: str | None = None
@@ -813,6 +818,7 @@ class DuesPaymentOut(BaseModel):
     assessment_id: uuid.UUID | None = None
     tutar_kurus: int
     odeme_zamani: datetime
+    donem: str | None = None
     yontem: str
     durum: str
     makbuz_no: str | None = None
@@ -830,6 +836,8 @@ class DuesPaymentCreate(BaseModel):
     yontem: DuesYontem
     makbuz_no: str | None = None
     odeme_zamani: datetime | None = None
+    # 'YYYY-MM'; verilmezse assessment'tan turer, o da yoksa NULL kalir.
+    donem: str | None = Field(None, min_length=1)
 
 
 class DuesPaymentListResponse(BaseModel):

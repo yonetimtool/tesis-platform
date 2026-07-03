@@ -151,3 +151,41 @@ def test_dues_tenant_isolation(client, world):
     client.post("/dues/assessments", headers=admin_a, json={"unit_id": u["id"], "donem": "2027-01", "tutar_kurus": 10000})
     # B, A'nin dairesinin borcunu goremez
     assert client.get(f"/units/{u['id']}/dues", headers=admin_b).status_code == 404
+
+
+# ---------------- odeme donem alani (panel aidat raporu bulgusu) ------------ #
+def test_payment_donem_three_paths_and_filter(client, world):
+    """donem: acikca verilen / assessment'tan tureyen / null kalan + ?donem= filtresi."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    u = _new_unit(client, admin)
+    a = client.post(
+        "/dues/assessments", headers=admin,
+        json={"unit_id": u["id"], "donem": "2027-03", "tutar_kurus": 50000},
+    ).json()["created"][0]
+
+    def pay(**body):
+        r = client.post(
+            "/dues/payments",
+            headers={**admin, "Idempotency-Key": uuid.uuid4().hex},
+            json={"unit_id": u["id"], "tutar_kurus": 10000, "yontem": "elden", **body},
+        )
+        assert r.status_code == 201, r.text
+        return r.json()
+
+    # 1) donem acikca verildi
+    p1 = pay(donem="2027-04")
+    assert p1["donem"] == "2027-04"
+
+    # 2) donem yok ama assessment var -> onun doneminden turer
+    p2 = pay(assessment_id=a["id"])
+    assert p2["donem"] == "2027-03"
+
+    # 3) ikisi de yok -> null kalir (serbest odeme)
+    p3 = pay()
+    assert p3["donem"] is None
+
+    # filtre: yalniz o donemin odemeleri
+    lst = client.get("/dues/payments", headers=admin, params={"donem": "2027-03", "limit": 200}).json()
+    ids = [it["id"] for it in lst["items"]]
+    assert p2["id"] in ids and p1["id"] not in ids and p3["id"] not in ids
+    assert all(it["donem"] == "2027-03" for it in lst["items"])

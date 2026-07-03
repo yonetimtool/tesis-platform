@@ -18,8 +18,9 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
-from ..crud_helpers import coord_eq, get_or_404, is_unique_violation, translate_integrity
+from ..crud_helpers import coord_eq, get_or_404, is_unique_violation, nfc_eq, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import Asset, AssetCheckout, AppUser
@@ -48,7 +49,8 @@ def _constraint(exc: IntegrityError) -> str | None:
 
 
 def _check_nfc(asset: Asset, nfc: str | None) -> None:
-    if nfc is not None and asset.nfc_tag_uid is not None and nfc != asset.nfc_tag_uid:
+    # Normalize karsilastirma (strip+upper) — scan/task completion ile ayni davranis.
+    if nfc is not None and asset.nfc_tag_uid is not None and not nfc_eq(nfc, asset.nfc_tag_uid):
         raise APIError(422, "invalid_reference", "nfc_tag_uid demirbas ile eslesmiyor.")
 
 
@@ -229,6 +231,8 @@ async def _user_ad(db: AsyncSession, user_id: uuid.UUID) -> str | None:
 async def _co_payload(db: AsyncSession, co: AssetCheckout, alan_user_ad: str | None = None) -> dict:
     out = AssetCheckoutOut.model_validate(co)
     out.alan_user_ad = alan_user_ad if alan_user_ad is not None else await _user_ad(db, co.alan_user_id)
+    if co.birakan_user_id is not None:
+        out.birakan_user_ad = await _user_ad(db, co.birakan_user_id)
     return out.model_dump(mode="json")
 
 
@@ -335,6 +339,7 @@ async def checkin(
     if open_co.alan_user_id != user.id and user.role != "admin":
         raise APIError(403, "forbidden", "Zimmet baskasinin uzerinde; yalniz sahibi veya admin birakabilir.")
 
+    open_co.birakan_user_id = user.id
     open_co.birakma_zamani = datetime.now(tz=timezone.utc)
     open_co.birakma_nfc_tag_uid = body.nfc_tag_uid
     open_co.birakma_gps_lat = body.gps_lat
@@ -373,10 +378,12 @@ async def asset_history(
     base = AssetCheckout.asset_id == asset_id
     total = (await db.execute(select(func.count()).select_from(AssetCheckout).where(base))).scalar_one()
     sirala = AssetCheckout.alma_zamani.asc() if order == "asc" else AssetCheckout.alma_zamani.desc()
+    birakan = aliased(AppUser)
     rows = (
         await db.execute(
-            select(AssetCheckout, AppUser.ad)
+            select(AssetCheckout, AppUser.ad, birakan.ad)
             .join(AppUser, AppUser.id == AssetCheckout.alan_user_id)
+            .outerjoin(birakan, birakan.id == AssetCheckout.birakan_user_id)
             .where(base)
             .order_by(sirala)
             .limit(limit)
@@ -384,9 +391,10 @@ async def asset_history(
         )
     ).all()
     items = []
-    for co, alan_ad in rows:
+    for co, alan_ad, birakan_ad in rows:
         out = AssetCheckoutOut.model_validate(co)
         out.alan_user_ad = alan_ad
+        out.birakan_user_ad = birakan_ad
         items.append(out)
     return AssetCheckoutListResponse(
         meta={"limit": limit, "offset": offset, "total": total}, items=items

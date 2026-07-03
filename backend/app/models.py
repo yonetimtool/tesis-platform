@@ -439,6 +439,9 @@ class Task(Base):
     checkpoint_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     periyot_dakika: Mapped[int | None] = mapped_column(Integer, nullable=True)
     sonraki_planlanan = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    foto_zorunlu: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at = _created_at()
     updated_at = _created_at()
@@ -521,6 +524,13 @@ class AssetCheckout(Base):
             ondelete="RESTRICT",
             name="fk_checkout_user",
         ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (birakan_user_id) — tenant_id korunur.
+        ForeignKeyConstraint(
+            ["birakan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_checkout_birakan",
+        ),
         UniqueConstraint(
             "tenant_id", "idempotency_key", name="uq_checkout_tenant_idempotency"
         ),
@@ -534,6 +544,7 @@ class AssetCheckout(Base):
     )
     asset_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     alan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    birakan_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     alma_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
     birakma_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     alma_nfc_tag_uid: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -708,6 +719,7 @@ class DuesPayment(Base):
     odeme_zamani = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
+    donem: Mapped[str | None] = mapped_column(Text, nullable=True)
     yontem: Mapped[str] = mapped_column(DUES_YONTEM, nullable=False)
     durum: Mapped[str] = mapped_column(
         DUES_DURUM, nullable=False, server_default=text("'basarili'")

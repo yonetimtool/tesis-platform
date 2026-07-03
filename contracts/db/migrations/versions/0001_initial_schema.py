@@ -415,6 +415,7 @@ def upgrade() -> None:
             checkpoint_id    uuid,
             periyot_dakika   integer,   -- tekrar araligi (periyodik gorev/peyzaj); tek seferlikse NULL
             sonraki_planlanan timestamptz,  -- bir sonraki planlanan an (UTC); peyzaj takvimi
+            foto_zorunlu     boolean NOT NULL DEFAULT false,  -- completion'da foto kaniti sart (mobil §11)
             aktif            boolean NOT NULL DEFAULT true,
             created_at       timestamptz NOT NULL DEFAULT now(),
             updated_at       timestamptz NOT NULL DEFAULT now(),
@@ -513,6 +514,7 @@ def upgrade() -> None:
             tenant_id                uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
             asset_id                 uuid NOT NULL,
             alan_user_id             uuid NOT NULL,
+            birakan_user_id          uuid,               -- zimmeti kapatan (sahibi/admin); acikken NULL
             alma_zamani              timestamptz NOT NULL DEFAULT now(),
             birakma_zamani           timestamptz,        -- NULL => hala uzerinde (acik zimmet)
             alma_nfc_tag_uid         text,
@@ -531,6 +533,10 @@ def upgrade() -> None:
             CONSTRAINT fk_checkout_user
                 FOREIGN KEY (alan_user_id, tenant_id)
                 REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- Kolon-ozel SET NULL: yalnizca birakan_user_id NULL'lanir; tenant_id korunur.
+            CONSTRAINT fk_checkout_birakan
+                FOREIGN KEY (birakan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (birakan_user_id),
             -- offline cift gonderim korumasi (alma):
             CONSTRAINT uq_checkout_tenant_idempotency UNIQUE (tenant_id, idempotency_key)
         );
@@ -684,6 +690,7 @@ def upgrade() -> None:
             assessment_id     uuid,                 -- hangi tahakkuk; serbest/kismi odemede NULL
             tutar_kurus       integer NOT NULL,     -- KURUS
             odeme_zamani      timestamptz NOT NULL DEFAULT now(),
+            donem             text,                 -- 'YYYY-MM'; serbest odemede NULL olabilir (rapor atfi)
             yontem            dues_yontem NOT NULL,
             durum             dues_durum NOT NULL DEFAULT 'basarili',
             makbuz_no         text,
@@ -712,6 +719,8 @@ def upgrade() -> None:
     op.execute("CREATE INDEX ix_payment_tenant ON dues_payment (tenant_id);")
     op.execute("CREATE INDEX ix_payment_unit ON dues_payment (unit_id);")
     op.execute("CREATE INDEX ix_payment_assessment ON dues_payment (assessment_id);")
+    # donem bazli rapor filtresi (assessment'taki ix_assessment_donem ile ayni desen):
+    op.execute("CREATE INDEX ix_payment_donem ON dues_payment (tenant_id, donem);")
     # provider_ref GLOBAL benzersiz (webhook tenant'i bundan cozer; RLS-bagimsiz lookup):
     op.execute(
         "CREATE UNIQUE INDEX uq_payment_provider_ref "

@@ -156,7 +156,7 @@ async def list_assessments(
 
 
 # ------------------------------- odeme ------------------------------------- #
-def _same_payment(existing: DuesPayment, *, unit_id, assessment_id, tutar_kurus, yontem, makbuz_no, kaydeden) -> bool:
+def _same_payment(existing: DuesPayment, *, unit_id, assessment_id, tutar_kurus, yontem, makbuz_no, kaydeden, donem) -> bool:
     return (
         existing.unit_id == unit_id
         and existing.assessment_id == assessment_id
@@ -164,6 +164,7 @@ def _same_payment(existing: DuesPayment, *, unit_id, assessment_id, tutar_kurus,
         and existing.yontem == yontem
         and existing.makbuz_no == makbuz_no
         and existing.kaydeden_user_id == kaydeden
+        and existing.donem == donem
     )
 
 
@@ -178,13 +179,20 @@ async def create_payment(
         raise APIError(400, "bad_request", "Idempotency-Key header zorunlu.")
     if (await db.execute(select(Unit.id).where(Unit.id == body.unit_id))).scalar_one_or_none() is None:
         raise APIError(422, "invalid_reference", "unit_id bu tenant'ta bulunamadi.")
+    assessment_donem: str | None = None
     if body.assessment_id is not None:
-        if (await db.execute(select(DuesAssessment.id).where(DuesAssessment.id == body.assessment_id))).scalar_one_or_none() is None:
+        assessment_donem = (
+            await db.execute(select(DuesAssessment.donem).where(DuesAssessment.id == body.assessment_id))
+        ).scalar_one_or_none()
+        if assessment_donem is None:
             raise APIError(422, "invalid_reference", "assessment_id bu tenant'ta bulunamadi.")
+
+    # donem: acikca verilen > assessment'tan tureyen > NULL (serbest odeme; rapor atfi).
+    donem = body.donem if body.donem is not None else assessment_donem
 
     cmp = dict(
         unit_id=body.unit_id, assessment_id=body.assessment_id, tutar_kurus=body.tutar_kurus,
-        yontem=body.yontem, makbuz_no=body.makbuz_no, kaydeden=user.id,
+        yontem=body.yontem, makbuz_no=body.makbuz_no, kaydeden=user.id, donem=donem,
     )
     existing = (
         await db.execute(select(DuesPayment).where(DuesPayment.idempotency_key == idempotency_key))
@@ -206,6 +214,7 @@ async def create_payment(
         unit_id=body.unit_id,
         assessment_id=body.assessment_id,
         tutar_kurus=body.tutar_kurus,
+        donem=donem,
         yontem=body.yontem,
         durum=init.durum,
         makbuz_no=body.makbuz_no,
@@ -245,10 +254,13 @@ async def list_payments(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     unit_id: uuid.UUID | None = Query(None),
+    donem: str | None = Query(None, description="'YYYY-MM' — donem bazli rapor filtresi"),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_ADMIN),
 ) -> DuesPaymentListResponse:
     where = [] if unit_id is None else [DuesPayment.unit_id == unit_id]
+    if donem is not None:
+        where.append(DuesPayment.donem == donem)
     total = (await db.execute(select(func.count()).select_from(DuesPayment).where(*where))).scalar_one()
     rows = (
         await db.execute(

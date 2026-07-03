@@ -186,3 +186,92 @@ def test_presign_rbac_resident_forbidden(client, world):
     resident = _headers(client, world["slug_a"], world["resident_a"])
     r = client.post("/uploads/presign", headers=resident, json={"content_type": "image/jpeg"})
     assert r.status_code == 403
+
+
+# ------------------- mobil §11 bulgulari (atama/foto/NFC) ------------------- #
+def test_list_tasks_atanan_filter_me_and_uuid(client, world):
+    """?atanan_user_id=me yalniz benimkiler; admin duz UUID ile baskasini suzer."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    cleaning_id = client.get("/me", headers=cleaning).json()["id"]
+    guard_id = client.get("/me", headers=guard).json()["id"]
+
+    mine = _new_task(client, admin, ad="Benimki", atanan_user_id=cleaning_id)
+    other = _new_task(client, admin, ad="Baskasininki", atanan_user_id=guard_id)
+    _new_task(client, admin, ad="Atanmamis")
+
+    body = client.get("/tasks", headers=cleaning, params={"atanan_user_id": "me", "limit": 200}).json()
+    ids = [it["id"] for it in body["items"]]
+    assert mine["id"] in ids and other["id"] not in ids
+    assert all(it["atanan_user_id"] == cleaning_id for it in body["items"])
+
+    # panel: admin duz UUID ile suzer
+    body = client.get("/tasks", headers=admin, params={"atanan_user_id": guard_id, "limit": 200}).json()
+    ids = [it["id"] for it in body["items"]]
+    assert other["id"] in ids and mine["id"] not in ids
+
+    # gecersiz deger -> 422
+    assert client.get("/tasks", headers=admin, params={"atanan_user_id": "bozuk"}).status_code == 422
+
+
+def test_completion_foto_zorunlu(client, world):
+    """foto_zorunlu=true iken foto'suz completion 422; foto'lu 201; false iken serbest."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+
+    t = _new_task(client, admin, ad="Foto sart", foto_zorunlu=True)
+    assert t["foto_zorunlu"] is True
+
+    fotosuz = client.post(
+        f"/tasks/{t['id']}/completions",
+        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        json={"tamamlanma_zamani": "2026-07-03T08:00:00Z"},
+    )
+    assert fotosuz.status_code == 422, fotosuz.text
+    assert "foto" in fotosuz.json()["error"]["message"].lower()
+
+    fotolu = client.post(
+        f"/tasks/{t['id']}/completions",
+        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        json={"tamamlanma_zamani": "2026-07-03T08:00:00Z", "foto_key": "k/x.jpg"},
+    )
+    assert fotolu.status_code == 201, fotolu.text
+
+    # varsayilan false: foto'suz serbest (mevcut davranis)
+    serbest = _new_task(client, admin, ad="Foto serbest")
+    assert serbest["foto_zorunlu"] is False
+    ok = client.post(
+        f"/tasks/{serbest['id']}/completions",
+        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        json={"tamamlanma_zamani": "2026-07-03T08:05:00Z"},
+    )
+    assert ok.status_code == 201
+
+    # PATCH ile acilip kapanabilir
+    p = client.patch(f"/tasks/{serbest['id']}", headers=admin, json={"foto_zorunlu": True})
+    assert p.status_code == 200 and p.json()["foto_zorunlu"] is True
+
+
+def test_completion_nfc_normalized_case_insensitive(client, world):
+    """Kucuk harf / bosluklu UID'li completion normalize edilip eslesir (mobil §11 #3)."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    nfc = f"NFC-{uuid.uuid4().hex[:10].upper()}"
+    cp = client.post("/checkpoints", headers=admin, json={"ad": "CP", "nfc_tag_uid": nfc}).json()
+    t = _new_task(client, admin, checkpoint_id=cp["id"])
+
+    r = client.post(
+        f"/tasks/{t['id']}/completions",
+        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        json={"tamamlanma_zamani": "2026-07-03T09:00:00Z", "nfc_tag_uid": f"  {nfc.lower()} "},
+    )
+    assert r.status_code == 201, r.text
+
+    # yanlis etiket normalize SONRASI da uyusmaz -> 422
+    bad = client.post(
+        f"/tasks/{t['id']}/completions",
+        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        json={"tamamlanma_zamani": "2026-07-03T09:05:00Z", "nfc_tag_uid": "yanlis"},
+    )
+    assert bad.status_code == 422

@@ -434,6 +434,10 @@ paths:
         Offline kuyruktan cift gonderimi engellemek icin `Idempotency-Key`
         header'i ZORUNLUDUR. Ayni key ile ikinci istek 200 + ilk kaydi doner
         (yeni kayit olusturmaz).
+
+        nfc_tag_uid -> checkpoint eslesmesi NORMALIZE edilir (strip + upper;
+        buyuk/kucuk harf ve bas/son bosluk farki eslesmeyi dusurmez) — task
+        completion ve asset checkout/checkin ile ayni davranis (mobil §11 #3).
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -635,6 +639,11 @@ paths:
     get:
       tags: [tasks]
       summary: Gorev listesi
+      description: |
+        `atanan_user_id` filtresi (mobil §11 #1): `me` = token kullanicisina
+        atananlar ("Gorevlerim" tek istekte); duz UUID = o kullaniciya atananlar
+        (panel; tum okuyucu roller kullanabilir — atama bilgisi zaten listede
+        gorunur, yetki siniri degildir). Gecersiz deger 422.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -644,6 +653,10 @@ paths:
         - name: aktif
           in: query
           schema: { type: boolean }
+        - name: atanan_user_id
+          in: query
+          description: "'me' veya user UUID — atanan kullanici filtresi"
+          schema: { type: string }
       responses:
         "200":
           description: Liste
@@ -755,6 +768,13 @@ paths:
         Idempotency-Key header ZORUNLU (offline cift gonderim korumasi, scan deseni).
         Foto icin: once POST /uploads/presign ile foto_key + PUT URL alinir, dosya
         dogrudan MinIO'ya yuklenir, sonra burada foto_key gonderilir.
+
+        FOTO ZORUNLULUGU (mobil §11 #2): gorevde `foto_zorunlu=true` ise
+        `foto_key` OLMADAN tamamlama **422** doner (anlamli mesajla).
+
+        NFC eslesmesi NORMALIZE (mobil §11 #3): gorevin checkpoint'i varsa
+        gonderilen `nfc_tag_uid` strip + upper sonrasi karsilastirilir
+        (buyuk/kucuk harf, bas/son bosluk farki 422 dusurmez).
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -1060,6 +1080,9 @@ paths:
         yapabilir; baska kullanici 403 `forbidden`
         ("Zimmet baskasinin uzerinde..."). security/cleaning baskasinin
         zimmetini KAPATAMAZ.
+
+        Kapatan kullanici `birakan_user_id` olarak kaydedilir (cevapta ve
+        history'de `birakan_user_ad` ile birlikte doner).
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -1535,6 +1558,10 @@ paths:
         - name: unit_id
           in: query
           schema: { type: string, format: uuid }
+        - name: donem
+          in: query
+          description: "'YYYY-MM' — donem bazli rapor filtresi (payment.donem uzerinden)"
+          schema: { type: string }
       responses:
         "200":
           description: Liste
@@ -1557,6 +1584,11 @@ paths:
       description: |
         Gercek tahsilat YOK (soyut). Idempotency-Key ZORUNLU (cift kayit korumasi).
         kaydeden token'dan. Bakiye = toplam tahakkuk - basarili odemeler.
+
+        DONEM ATFI (panel raporu): `donem` ('YYYY-MM') acikca verilebilir;
+        verilmezse `assessment_id` varsa ONUN doneminden turer; ikisi de yoksa
+        NULL kalir (serbest odeme). Rapor `GET /dues/payments?donem=` ile
+        serbest odemeleri de doneme atfedebilir.
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -2311,7 +2343,7 @@ components:
       enum: [temizlik, kontrol, ilaclama, bakim, peyzaj, diger]
     Task:
       type: object
-      required: [id, tip, ad, aktif, created_at]
+      required: [id, tip, ad, foto_zorunlu, aktif, created_at]
       properties:
         id: { type: string, format: uuid }
         tip: { $ref: "#/components/schemas/TaskTip" }
@@ -2329,6 +2361,9 @@ components:
           format: date-time
           nullable: true
           description: "Bir sonraki planlanan an (UTC); peyzaj takvimi. Tamamlaninca ilerler."
+        foto_zorunlu:
+          type: boolean
+          description: "true ise completion foto_key olmadan kabul edilmez (422) — mobil §11 #2"
         aktif: { type: boolean }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
@@ -2343,6 +2378,7 @@ components:
         checkpoint_id: { type: string, format: uuid, nullable: true }
         periyot_dakika: { type: integer, minimum: 1, nullable: true }
         sonraki_planlanan: { type: string, format: date-time, nullable: true }
+        foto_zorunlu: { type: boolean, default: false }
         aktif: { type: boolean, default: true }
     TaskUpdate:
       type: object
@@ -2355,6 +2391,7 @@ components:
         checkpoint_id: { type: string, format: uuid, nullable: true }
         periyot_dakika: { type: integer, minimum: 1, nullable: true }
         sonraki_planlanan: { type: string, format: date-time, nullable: true }
+        foto_zorunlu: { type: boolean }
         aktif: { type: boolean }
 
     TaskCompletion:
@@ -2515,6 +2552,15 @@ components:
           type: string
           nullable: true
           description: "Alan kullanicinin adi (id + ad birlikte; mobil §13 #5)"
+        birakan_user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Zimmeti kapatan (sahibi veya admin); acik zimmette NULL"
+        birakan_user_ad:
+          type: string
+          nullable: true
+          description: "Birakan kullanicinin adi (id + ad birlikte)"
         alma_zamani: { type: string, format: date-time }
         birakma_zamani:
           type: string
@@ -2718,6 +2764,11 @@ components:
         assessment_id: { type: string, format: uuid, nullable: true }
         tutar_kurus: { type: integer, minimum: 1 }
         odeme_zamani: { type: string, format: date-time }
+        donem:
+          type: string
+          nullable: true
+          example: "2026-06"
+          description: "Odemenin atfedildigi donem; serbest odemede NULL olabilir"
         yontem: { $ref: "#/components/schemas/DuesYontem" }
         durum: { $ref: "#/components/schemas/DuesDurum" }
         makbuz_no: { type: string, nullable: true }
@@ -2744,6 +2795,11 @@ components:
           format: date-time
           nullable: true
           description: "Verilmezse sunucu now()"
+        donem:
+          type: string
+          nullable: true
+          example: "2026-06"
+          description: "Verilmezse assessment'tan turer; o da yoksa NULL kalir"
 
     UnitDuesStatus:
       type: object

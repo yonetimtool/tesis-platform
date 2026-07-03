@@ -127,7 +127,9 @@ Borc **daireye** (`unit`) tahakkuk eder; `resident` daireye `unit_resident` ile 
   ikinci kez 409; toplu modda mevcutlar `atlanan` sayilir.
 - **Odeme** (`POST /dues/payments`, admin): **gercek tahsilat YOK** (soyut
   `PaymentProvider`, `app/payments.py`). `Idempotency-Key` zorunlu (cift kayit; 200/409/400).
-  `kaydeden` token'dan; denetlenebilir.
+  `kaydeden` token'dan; denetlenebilir. **`donem`** ('YYYY-MM', nullable): acikca verilir
+  ya da `assessment_id`'nin doneminden turer; ikisi de yoksa NULL (serbest odeme).
+  Liste `GET /dues/payments?donem=` ile donem bazli suzulur (rapor atfi).
 - **Bakiye:** `bakiye_kurus = toplam_tahakkuk - toplam_odenen(durum='basarili')` (pozitif=borc).
   `GET /units/{id}/dues` (admin) ve `GET /me/dues` (resident — yalniz kendi daireleri).
 
@@ -189,10 +191,12 @@ Demirbas (`asset`) + zimmet (`asset_checkout`) — "kim aldi/birakti" (NFC) (`ap
   ayni key+gövde → 200, farkli → 409 (scan SAVEPOINT deseni). Basarili → asset.durum='zimmetli'.
 - **checkin** (`POST /assets/{id}/checkin`): acik zimmeti kapatir (birakma_zamani=now,
   durum='musait'). **SAHIPLIK (mobil §13 #6):** yalniz zimmetin sahibi veya admin; baskasi
-  **403** `forbidden`. `Idempotency-Key` zorunlu; ayni key ile tekrar → 200 ayni kayit
-  (`birakma_idempotency_key` partial unique). Acik zimmet yoksa **409**.
+  **403** `forbidden`. Kapatan **`birakan_user_id`** olarak kaydedilir. `Idempotency-Key`
+  zorunlu; ayni key ile tekrar → 200 ayni kayit (`birakma_idempotency_key` partial unique).
+  Acik zimmet yoksa **409**.
 - **history** (`GET /assets/{id}/history`): zimmet gecmisi, `?order=asc|desc`
-  (varsayilan **desc** — en yeni ustte), item'larda `alan_user_ad`, sayfali, tenant-izole.
+  (varsayilan **desc** — en yeni ustte), item'larda `alan_user_ad` + `birakan_user_id`/
+  `birakan_user_ad`, sayfali, tenant-izole.
 
 ## Peyzaj bakim takvimi + hatirlatma
 
@@ -217,13 +221,17 @@ Ayri tablo **YOK** — mevcut task sistemi genisletildi:
 Esnek **tek `task` modeli** (`tip`: temizlik/kontrol/ilaclama/bakim/diger). Cop topla,
 kamelya kontrol, havuz, bahce vb. hepsi `tip + ad` ile ayrisir (`app/routers/tasks.py`).
 
-- **Task CRUD** (`/tasks`): GET liste (`tip`/`aktif` filtreleri, sayfali) / detay / POST /
-  PATCH / DELETE. **RBAC:** GET admin/security/cleaning; yazma yalniz admin. `atanan_user_id`
-  ve `checkpoint_id` aynı tenant'ta olmali (capraz → 422).
+- **Task CRUD** (`/tasks`): GET liste (`tip`/`aktif`/`atanan_user_id`(`me`|uuid — mobil
+  "Gorevlerim") filtreleri, sayfali) / detay / POST / PATCH / DELETE. **RBAC:** GET
+  admin/security/cleaning; yazma yalniz admin. `atanan_user_id` ve `checkpoint_id` aynı
+  tenant'ta olmali (capraz → 422). **`foto_zorunlu`** (bool, vars. false): true ise
+  completion `foto_key`'siz kabul edilmez.
 - **Tamamlama** (`POST /tasks/{id}/completions`): admin/security/cleaning. **Idempotency-Key
   zorunlu** (scan deseni: aynı key+gövde → 200, farklı → 409, key yok → 400). `tamamlayan_user_id`
   token'dan. Task'ın `checkpoint_id`'si varsa ve `nfc_tag_uid` gönderilirse o checkpoint'in
-  nfc'siyle eşleşmeli (yoksa 422). Gecmis: `GET /tasks/{id}/completions`.
+  nfc'siyle eşleşmeli (yoksa 422; karsilastirma **normalize**: strip+upper, `crud_helpers.norm_nfc`
+  — scan/asset uclariyla ayni). `foto_zorunlu=true` + `foto_key` yok → 422 (anlamli mesaj).
+  Gecmis: `GET /tasks/{id}/completions`.
 
 ### Foto kanit akisi (MinIO, presigned)
 1. İstemci `POST /uploads/presign` `{content_type}` → backend **`foto_key`** (tenant ile

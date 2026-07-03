@@ -220,10 +220,26 @@ Mobil ekibin zimmet modulu bulgularina backend cevabi — hepsi uc/sorgu isi,
 | 5 | Yalniz user id, ad yok | `acik_zimmet.alan_user_ad` + history/checkout/checkin item'larinda `alan_user_ad` (id + ad birlikte) |
 | 6 | **KRITIK: checkin sahiplik acigi** | `POST /assets/{id}/checkin` artik SAHIPLIK kontrollu: yalniz zimmet sahibi veya admin; baskasi **403** `forbidden` ("Zimmet baskasinin uzerinde..."). Detay: `openapi.yaml` + `auth.md` |
 
-Not: zimmeti **kapatan** kullanici ayrica kaydedilmiyor (tabloda `birakan_user_id`
-kolonu yok; tablo degisikligi bu turda kapsam disi). Sahiplik kurali sayesinde
-kapatan = sahibi ya da admin'dir; ayri "birakan adi" alani istenirse kolon
-eklemesiyle birlikte planlanmali.
+~~Not: zimmeti **kapatan** kullanici ayrica kaydedilmiyor.~~ **KAPANDI** —
+`birakan_user_id` kolonu eklendi (asagidaki "birikmis flag temizligi" bolumu).
+
+## Birikmis flag temizligi: mobil §11 + panel aidat raporu + demirbas bulgulari kapatildi
+
+Uc kaynaktan birikmis bulgulara backend cevabi. Bu turda **3 yeni kolon** eklendi
+(canonical migration `0001_initial_schema.py` YERINDE guncellendi — ikinci migration
+uretilmedi; `down -v` ile yeniden uygulanir):
+
+| Kaynak | Bulgu | Nasil kapandi |
+|--------|-------|---------------|
+| mobil §11 #1 | "Bana atananlar" filtresi yok | `GET /tasks?atanan_user_id=me` (token kullanicisi) veya duz UUID (panel; gecersiz deger 422) |
+| mobil §11 #2 | Foto zorunlulugu alani yok | `task.foto_zorunlu boolean NOT NULL DEFAULT false` (YENI KOLON). `foto_zorunlu=true` iken `foto_key`'siz completion **422** (anlamli mesaj); CRUD semalarinda alan |
+| mobil §11 #3 | NFC eslesmesi harfe duyarli | Tek yardimci `norm_nfc` (strip+upper) — task completion, `POST /scans` checkpoint lookup ve asset checkout/checkin NFC karsilastirmalari artik AYNI normalize davranista |
+| panel aidat raporu | Serbest odeme doneme atfedilemiyor | `dues_payment.donem text NULL` (YENI KOLON) + `ix_payment_donem`. POST: acik `donem` > assessment'tan tureyen > NULL. `GET /dues/payments?donem=` filtresi |
+| demirbas turu | Zimmeti kapatan kaydedilmiyor | `asset_checkout.birakan_user_id uuid NULL` (YENI KOLON; app_user composite FK, kolon-ozel SET NULL). checkin'de dolu yazilir; cevap + history'de `birakan_user_id` + `birakan_user_ad` |
+
+Geriye uyumluluk: uc kolon da nullable/default'lu; yeni response alanlari additive —
+eski istemciler etkilenmez. NFC normalizasyonu eslesme kumesini yalniz GENISLETIR
+(birebir eslesenler eslesmeye devam eder).
 
 ## API base path
 

@@ -79,3 +79,16 @@ async def ensure_checkpoints_in_tenant(
             "invalid_reference",
             f"Checkpoint bu tenant'ta bulunamadi: {', '.join(missing)}",
         )
+
+
+def norm_nfc(uid: str | None) -> str | None:
+    """NFC UID normalizasyonu (strip + upper) — tum uclarda AYNI karsilastirma.
+
+    Mobil UID'yi buyuk harf uretir ama panelden farkli formatta girilebilir;
+    eslesme buyuk/kucuk harfe ve bas/son bosluga takilmasin (mobil §11 #3).
+    """
+    return uid.strip().upper() if uid is not None else None
+
+
+def nfc_eq(a: str | None, b: str | None) -> bool:
+    return norm_nfc(a) == norm_nfc(b)
