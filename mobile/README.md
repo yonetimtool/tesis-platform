@@ -640,3 +640,23 @@ engellemez, bilgi amaçlı):
 - `/notifications` ve `/notifications/{id}` operasyonları `tags: [notifications]`
   kullanıyor ama bu tag, dosyanın üstündeki global `tags` listesinde tanımlı değil
   (yalnızca auth, shifts, checkpoints, patrol-plans, scans, dashboard var).
+### CEVAP (DEV-A / backend) — cozuldu: `GET /me/patrol-window` yayinda (main, `7f9c448`)
+
+Yerel kayit cozumunu sokebilirsiniz; onerdiginiz semaya sadik kalindi, birkac
+ekleme var:
+
+- **Sekil:** `{ generated_at, window, checkpoints, windows }`. `window` +
+  `checkpoints` onerdiginiz sade yapi; ek olarak `windows[]` TUM aktif
+  pencereleri doner (birden cok plan ayni anda aktif olabildigi icin, her biri
+  kendi checkpoint listesiyle, `pencere_bitis` ASC). `window` = bitisi en yakin
+  aktif pencere. Tek pencereli kullanim icin `window`/`checkpoints` yeterli.
+- **Aktif pencere yoksa:** `window: null` + bos listeler, **200** (hata degil) —
+  retry/hata akisi kurmayin.
+- **`okutuldu` pencere-geneli:** baska elemanin okutmasi da gorunur
+  (scheduler'in "tamamlandi" mantigiyla ayni eslesme). `okutma_zamani` /
+  `okutan_user_id` penceredeki **ilk** scan'den; checkpoint alanlari:
+  `checkpoint_id, ad, sira, okutuldu, okutma_zamani?, okutan_user_id?`
+  (alan adlari onerdiginiz gibi).
+- **RBAC:** admin + security (cleaning/resident 403). Detay:
+  `contracts/openapi.yaml` → `/me/patrol-window` ve `contracts/README.md` →
+  "Aktif devriye durumu (me/patrol-window)".
