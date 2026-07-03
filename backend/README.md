@@ -271,6 +271,20 @@ eklendi (onayli contract degisikligi). Davranis:
 - **Dashboard `son_alarmlar`** artik `notification` tablosundan okunur (response semasi
   AYNI — `Alarm`).
 
+## Mobil — GET /me/patrol-window
+
+Mobil ekibin bulgusu uzerine eklendi: "aktif turumda hangi noktalari okuttum" listesi
+artik sunucudan alinir — cihaz yerel kaydina gerek yok (`app/routers/me_patrol.py`).
+- **RBAC:** admin + security (cleaning/resident → 403), dashboard ile tutarli.
+- **Aktif pencere:** su an icinde olunan pencere (`pencere_baslangic <= now < pencere_bitis`).
+  Birden cok plan ayni anda aktifse **tum** pencereler `windows[]`'ta (her biri kendi
+  `sira` sirali checkpoint listesiyle, `pencere_bitis` ASC); `window` + `checkpoints` =
+  bitisi en yakin olani. Aktif pencere yoksa `window: null` + bos listeler (**200**).
+- **okutuldu pencere-geneli:** herhangi bir elemanin pencere araligindaki okutmasi sayilir —
+  scheduler'in `tamamlandi` hesabiyla ayni eslesme. `okutma_zamani`/`okutan_user_id`
+  penceredeki **ilk** scan'den (LATERAL, tek set-tabanli sorgu).
+- **Tablo degisikligi YOK** — mevcut tablolar uzerinde salt okuma. tenant token'dan, RLS izole.
+
 ## Tur kaniti — POST /scans
 
 Mobil/saha istemcisinin checkpoint okutma kanitini gonderdigi uc (`app/routers/scans.py`).

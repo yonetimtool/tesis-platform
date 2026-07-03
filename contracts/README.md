@@ -192,6 +192,20 @@ dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`
   Ozet sayilar (`toplam/tamamlandi/kacirildi/bekliyor`) **filtrelenmis tum kume** uzerinden
   `response.ozet`'te doner. tenant-izole (RLS).
 
+## Aktif devriye durumu (me/patrol-window)
+
+- `GET /me/patrol-window` (admin + security): mobil icin "aktif turumda hangi noktalar
+  okutuldu" listesi — cihaz yerel kaydina gerek kalmadan sunucudan. Aktif pencere =
+  **su an icinde olunan** pencere (`pencere_baslangic <= now < pencere_bitis`). Birden cok
+  plan ayni anda aktif olabileceginden **tum** aktif pencereler `windows[]` icinde doner
+  (her biri kendi `sira` ile sirali checkpoint listesiyle, `pencere_bitis` ASC); `window` +
+  `checkpoints` bunlardan **bitisi en yakin** olanin sade gorunumudur. Aktif pencere yoksa
+  `window: null` + bos listeler (**200**, hata degil). `okutuldu` **pencere-geneli**
+  (herhangi bir elemanin okutmasi sayilir) ve scheduler'in `tamamlandi` hesabiyla ayni
+  eslesme: checkpoint + `okutma_zamani` pencere araliginda `[baslangic, bitis)`;
+  `okutma_zamani`/`okutan_user_id` penceredeki **ilk** scan'den. **Yeni tablo YOK** —
+  mevcut `patrol_window`/`scan_event`/`patrol_plan_checkpoint` uzerinde okuma. tenant-izole (RLS).
+
 ## API base path
 
 - **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:
