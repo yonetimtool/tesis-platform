@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/assets/presentation/assets_screen.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/home/presentation/home_screen.dart';
@@ -25,6 +26,7 @@ class AppRoutes {
   static const tasks = '/tasks';
   static const taskDetail = '/tasks/detail';
   static const emergency = '/emergency';
+  static const assets = '/assets';
 }
 
 /// Auth durumundaki degisimleri go_router'a bildiren kopru. `status` her
@@ -77,6 +79,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.emergency,
         builder: (context, state) => const EmergencyScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.assets,
+        builder: (context, state) => const AssetsScreen(),
       ),
       GoRoute(
         path: AppRoutes.taskDetail,

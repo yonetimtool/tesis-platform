@@ -869,3 +869,100 @@ yönetim numarası kartı YİNE gösterilir — telefon araması şebeke üzerin
    panel'den `PATCH /tenant/settings` ile ayarlanır; boşsa kart gizli).
 5. Offline test: uçak modunda (Wi-Fi kapalı) bildir → net kırmızı
    "İLETİLEMEDİ" + "Tekrar dene"; bağlantı gelince tekrar dene → tek alarm.
+
+---
+
+## 13. Demirbaş zimmet — NFC ile checkout/checkin (Faz 3 / Prompt 3)
+
+"Çim biçme makinesini kim aldı?" — saha personeli demirbaşı alırken/bırakırken
+üzerindeki NFC etiketini okutur; panel kimde olduğunu anlık görür.
+Kod: `features/assets/`, rota: `/assets` (ana ekrandaki "Demirbaş" kartı).
+RBAC (auth.md doğrulandı): liste/checkout/checkin/history → admin + security +
+cleaning ✅ (resident ❌).
+
+### Akış ve durum makinesi
+
+Büyük **"Etiket okut"** (mevcut `features/nfc` servisi — kopya yok) → UID →
+asset çözümü → taze `GET /assets/{id}` + geçmiş → karta göre aksiyon:
+
+| Durum | Karar (`zimmetVerdict`) | Kart | Aksiyon |
+|---|---|---|---|
+| `musait` | **kimsedeDegil** | yeşil "Kimsede değil" | **Zimmetine al** (checkout) |
+| `zimmetli` + açık zimmet **bende** | **sende** | mavi "SENDE — X saattir üzerinde" | **Bırak / iade et** (checkin) |
+| `zimmetli` + açık zimmet **başkasında** | **baskasinda** | turuncu "Başkasında (kısa-id) — X saattir" | YOK — "zorla devralma yok, o bırakmalı" |
+| `zimmetli` ama açık kayıt çözülemedi | **baskasinda** (temkinli) | turuncu | YOK (yanlış "al" göstermekten iyidir) |
+| `bakimda` | **bakimda** | gri "Bakımda" | YOK |
+
+Kayıtsız etiket → net mesaj ("etiket kayıtlı bir demirbaşla eşleşmiyor —
+panelden tanımlanmalı"). Kartın altında **son 5 hareket** (kim aldı/bıraktı,
+ne zaman — history ucundan). **Üzerimdekiler** sekmesi: şu an bende olanlar
+(alınma zamanı + "X saattir") + hızlı **Bırak**.
+
+### UID → asset çözümü (sözleşme kısıtı)
+
+`GET /assets`'ta `nfc_tag_uid` araması YOK (filtreler: kategori/durum/aktif).
+Bu yüzden çözüm İSTEMCİDE: aktif asset listesi (200'lük sayfalarla) çekilir,
+normalize UID (BÜYÜK HARF, kırpılmış) → asset indeksi kurulur, okutulan UID
+oradan bulunur; ardından **taze** `GET /assets/{id}` ile güncel durum alınır
+(liste bayat olabilir). Envanter küçük olduğu için her okutmada tazelenir.
+
+### İşlem semantiği (backend'den doğrulandı)
+
+- **Idempotency-Key** her iki işlemde ZORUNLU; mobilde aksiyona **basış
+  anında sabitlenir** (`asset-alma|{assetId}|{an}` / `asset-birakma|...`) —
+  çift dokunuş/tekrar aynı isteği atar; checkout 200-idempotent, checkin'in
+  tekrarı da 200 döner.
+- **409 yarışı** (sen okurken başkası aldı → "Demirbaş zaten zimmetli." /
+  çoktan bırakılmış → "Açık zimmet yok"): kibar mesaj + kart taze durumla
+  otomatik yeniden çizilir.
+- `nfc_tag_uid` gövdede gönderilir (okutmalı akışta) → backend asset
+  etiketiyle eşleşmesini doğrular (422). "Üzerimdekiler"deki hızlı Bırak'ta
+  etiket okutulmaz → alan gönderilmez (sözleşmede opsiyonel).
+
+### Offline kararı (README'ye yazılması istendi)
+
+**Zimmet CANLI durum işidir** — "kimde" bilgisi anlık gerçektir. Bağlantı
+yokken checkout/checkin YAPILMAZ ve kuyruklanmaz: sıraya alınmış bir "aldım"
+kaydı yanıltıcıdır (panel yanlış kişi gösterir) ve yarış riski üretir (aynı
+makineyi iki kişi "almış" olur). Offline'da net uyarı: *"İnternet bağlantısı
+gerekli. Zimmet kimde-olduğu ANLIK bir kayıttır; offline işlem yapılmaz."*
+Scan/görev outbox'ı bu karara KARIŞMAZ (onlar geçmişe dönük kanıt kayıtları).
+
+### 🚩 Sözleşme bulguları (DEV-A'ya — uydurmadık, istemcide çözdük)
+
+1. **UID araması yok:** `GET /assets?nfc_tag_uid=...` (veya
+   `GET /assets/by-tag/{uid}`) eklenirse etiket çözümü tek istek olur;
+   şimdilik tüm liste + istemci indeksi.
+2. **"Kimde" bilgisi Asset'te yok:** durum `zimmetli` ama açık zimmetin
+   sahibi/zamanı için `GET /assets/{id}/history` taranmak zorunda. Öneri:
+   Asset'e `acik_zimmet: {alan_user_id, alan_user_ad?, alma_zamani} | null`
+   gömülsün — "başkasında (Ahmet, 2 saattir)" tek istekle çizilir.
+3. **"Üzerimdekiler" filtresi yok:** `GET /assets?checked_out_by=me`
+   önerilir. Şimdilik: `durum=zimmetli` liste + her asset için history
+   kuyruğu (N+1 istek) + istemcide `alan_user_id == ben` süzmesi.
+4. **History sıralaması ASC:** `alma_zamani` ARTAN sıralı (en yeni SONDA) —
+   mobil "son N hareket" için önce toplamı öğrenip son sayfayı çekiyor.
+   Öneri: DESC (en yeni önce) veya `order` parametresi.
+5. **Kullanıcı adı çözümü yok:** history yalnızca `alan_user_id` veriyor;
+   `/users` admin-only olduğundan saha rolü isim çözemez → "başkasında"
+   kartında kısa id gösteriliyor. Öneri: AssetCheckout'a `alan_user_ad`
+   eklensin.
+6. **Checkin'de sahiplik kontrolü yok (backend):** açık zimmeti HERHANGİ bir
+   saha rolü kapatabiliyor (`assets.py` — alan kullanıcı kontrolü yok).
+   Mobil UX "başkasında → yalnızca bilgi" kuralını koyuyor ama API bunu
+   zorlamıyor. Öneri: checkin'i zimmet sahibi (veya admin) ile sınırla ya da
+   bilinçli "devir" ucu ekle.
+
+### Cihaz doğrulama senaryosu
+
+1. `guard@acme.com / Guard123!` ile login → **Demirbaş** → **Etiket okut** →
+   makinenin NFC'si → yeşil "Kimsede değil" → **Zimmetine al** → "Zimmetine
+   alındı ✓", kart maviye döner ("SENDE").
+2. Panel (admin) → assets ekranı → makine `zimmetli`, guard'ın üzerinde.
+3. Uygulama → **Üzerimdekiler (1)** → makine + "X dakikadır" → **Bırak** →
+   liste boşalır; panel `musait` gösterir.
+4. İkinci kullanıcı (cleaner) aynı etiketi okutursa turuncu "Başkasında
+   (kısa-id) — X dakikadır" görür; al butonu YOK.
+5. Yarış testi: iki cihaz aynı anda "Zimmetine al" → biri 201, diğeri 409
+   "Demirbaş zaten zimmetli." + kart otomatik tazelenir.
+6. Uçak modunda okutma/işlem → net "bağlantı gerekli" uyarısı.

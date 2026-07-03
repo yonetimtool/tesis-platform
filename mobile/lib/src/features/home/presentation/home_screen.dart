@@ -90,6 +90,17 @@ class HomeScreen extends ConsumerWidget {
               ),
               Card(
                 child: ListTile(
+                  leading: const Icon(Icons.inventory_2_outlined),
+                  title: const Text('Demirbas'),
+                  subtitle: const Text(
+                    'NFC ile zimmet al/birak, uzerimdekiler',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(AppRoutes.assets),
+                ),
+              ),
+              Card(
+                child: ListTile(
                   leading: const Icon(Icons.nfc),
                   title: const Text('NFC etiket okuma'),
                   subtitle: const Text('Devriye noktasi etiketini okut'),
