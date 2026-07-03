@@ -355,6 +355,36 @@ class PatrolWindowListResponse(BaseModel):
     items: list[PatrolWindowOut]
 
 
+# --------------------------- me/patrol-window ------------------------------ #
+class MePatrolCheckpointOut(BaseModel):
+    checkpoint_id: uuid.UUID
+    ad: str
+    sira: int
+    okutuldu: bool
+    okutma_zamani: datetime | None = None
+    okutan_user_id: uuid.UUID | None = None
+
+
+class MePatrolWindowInfo(BaseModel):
+    id: uuid.UUID
+    patrol_plan_id: uuid.UUID
+    plan_adi: str | None = None
+    pencere_baslangic: datetime
+    pencere_bitis: datetime
+    durum: str
+
+
+class MePatrolWindowItem(MePatrolWindowInfo):
+    checkpoints: list[MePatrolCheckpointOut]
+
+
+class MePatrolWindowResponse(BaseModel):
+    generated_at: datetime
+    window: MePatrolWindowInfo | None = None
+    checkpoints: list[MePatrolCheckpointOut]
+    windows: list[MePatrolWindowItem]
+
+
 # ----------------------------- notifications ------------------------------- #
 class NotificationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

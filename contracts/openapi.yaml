@@ -31,6 +31,7 @@ tags:
   - name: patrol-plans
   - name: scans
   - name: dashboard
+  - name: me
 
 security:
   - bearerAuth: []
@@ -540,6 +541,38 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+
+  /me/patrol-window:
+    get:
+      tags: [me]
+      summary: Aktif devriye penceresi + checkpoint bazinda okutma durumu (mobil)
+      description: |
+        Mobil icin: "aktif turumda hangi noktalar okutuldu" listesi (cihaz yerel
+        kaydina gerek kalmadan). Aktif pencere = SU AN icinde olunan pencere
+        (pencere_baslangic <= now < pencere_bitis; /dashboard/live'in aktif tur
+        mantigiyla tutarli, tenant-geneli).
+
+        KARAR — birden cok plan ayni anda aktif olabilir: TUM aktif pencereler
+        `windows[]` icinde doner (her biri kendi checkpoint listesiyle,
+        pencere_bitis ASC sirali). `window` + `checkpoints` alanlari bunlardan
+        BITISI EN YAKIN (en acil) olanin sade gorunumudur — tek pencereli
+        kullanim icin yeterlidir. Aktif pencere yoksa `window: null` +
+        `checkpoints: []` + `windows: []` (200, hata DEGIL).
+
+        checkpoints[]: plana atanmis AKTIF checkpoint'ler, `sira` ile sirali.
+        `okutuldu` PENCERE-GENELIDIR — HERHANGI bir elemanin okutmasi sayilir
+        (scheduler'in 'tamamlandi' hesabiyla ayni eslesme: checkpoint eslesir +
+        okutma_zamani pencere araliginda [baslangic, bitis)). okutma_zamani /
+        okutan_user_id o checkpoint'in penceredeki ILK scan'inden gelir.
+        RBAC: admin + security (dashboard ile tutarli). tenant-izole (RLS).
+      responses:
+        "200":
+          description: Aktif pencere(ler) + okutma durumu (yoksa null/bos)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MePatrolWindowResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   # ================================================================= #
   # NOTIFICATIONS
@@ -2148,6 +2181,65 @@ components:
         tamamlandi: { type: integer }
         kacirildi: { type: integer }
         bekliyor: { type: integer }
+    # GET /me/patrol-window — aktif pencere + checkpoint bazinda okutma durumu.
+    MePatrolCheckpoint:
+      type: object
+      required: [checkpoint_id, ad, sira, okutuldu]
+      properties:
+        checkpoint_id: { type: string, format: uuid }
+        ad: { type: string }
+        sira: { type: integer }
+        okutuldu:
+          type: boolean
+          description: "PENCERE-GENELI: herhangi bir elemanin pencere araligindaki okutmasi sayilir."
+        okutma_zamani:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Penceredeki ILK scan'in zamani (okutulmadiysa null)."
+        okutan_user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Penceredeki ILK scan'i yapan kullanici (okutulmadiysa null)."
+    MePatrolWindowInfo:
+      type: object
+      required: [id, patrol_plan_id, pencere_baslangic, pencere_bitis, durum]
+      properties:
+        id: { type: string, format: uuid }
+        patrol_plan_id: { type: string, format: uuid }
+        plan_adi: { type: string, nullable: true }
+        pencere_baslangic: { type: string, format: date-time }
+        pencere_bitis: { type: string, format: date-time }
+        durum: { $ref: "#/components/schemas/PatrolWindowDurum" }
+    MePatrolWindowItem:
+      allOf:
+        - $ref: "#/components/schemas/MePatrolWindowInfo"
+        - type: object
+          required: [checkpoints]
+          properties:
+            checkpoints:
+              type: array
+              description: "Plana atanmis AKTIF checkpoint'ler, sira ASC."
+              items: { $ref: "#/components/schemas/MePatrolCheckpoint" }
+    MePatrolWindowResponse:
+      type: object
+      required: [generated_at, window, checkpoints, windows]
+      properties:
+        generated_at: { type: string, format: date-time }
+        window:
+          nullable: true
+          description: "Bitisi en yakin aktif pencere; aktif pencere yoksa null."
+          allOf:
+            - $ref: "#/components/schemas/MePatrolWindowInfo"
+        checkpoints:
+          type: array
+          description: "window'un checkpoint listesi; window null ise []."
+          items: { $ref: "#/components/schemas/MePatrolCheckpoint" }
+        windows:
+          type: array
+          description: "TUM aktif pencereler (pencere_bitis ASC); genelde 0-1 eleman."
+          items: { $ref: "#/components/schemas/MePatrolWindowItem" }
     Alarm:
       type: object
       required: [tip, olusma_zamani, mesaj]

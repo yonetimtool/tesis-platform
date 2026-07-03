@@ -21,6 +21,7 @@ from .routers import patrol_windows as patrol_windows_router
 from .routers import emergency as emergency_router
 from .routers import landscape as landscape_router
 from .routers import me as me_router
+from .routers import me_patrol as me_patrol_router
 from .routers import notifications as notifications_router
 from .routers import patrol_plans as patrol_plans_router
 from .routers import scans as scans_router
@@ -55,6 +56,7 @@ app = FastAPI(
 install_error_handlers(app)
 app.include_router(auth_router.router)
 app.include_router(me_router.router)
+app.include_router(me_patrol_router.router)
 app.include_router(shifts_router.router)
 app.include_router(checkpoints_router.router)
 app.include_router(patrol_plans_router.router)

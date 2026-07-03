@@ -113,6 +113,7 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `POST /scans`                         |  ✅   |    ✅    |    ✅    |    ❌    |
 | `GET  /dashboard/live`                |  ✅   |    ✅    |    ❌    |    ❌    |
 | `GET  /patrol-windows`                |  ✅   |    ✅    |    ❌    |    ❌    |
+| `GET  /me/patrol-window`              |  ✅   |    ✅    |    ❌    |    ❌    |
 | `GET  /notifications`                 |  ✅   |    ✅    |    ❌    |    ❌    |
 | `PATCH /notifications/{id}`           |  ✅   |    ✅    |    ❌    |    ❌    |
 | `GET  /tasks` (liste/detay)           |  ✅   |    ✅    |    ✅    |    ❌    |
