@@ -9,6 +9,9 @@ alembic==1.13.2          # /contracts/db migration'larini UYGULAR (yeni migratio
 redis==5.0.7
 celery==5.4.0
 
+# --- Kripto (NTAG424 SDM/SUN dogrulamasi: AES-CBC/CMAC/GCM) ---
+cryptography==42.0.8
+
 # --- Auth ---
 PyJWT==2.8.0
 bcrypt==4.1.3

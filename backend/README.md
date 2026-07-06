@@ -307,8 +307,32 @@ Mobil/saha istemcisinin checkpoint okutma kanitini gonderdigi uc (`app/routers/s
 - **Idempotency (zorunlu `Idempotency-Key`):** header yoksa **400**. `UNIQUE(tenant_id,
   idempotency_key)` ile race-safe (SAVEPOINT/`begin_nested`): ayni key + ayni govde →
   mevcut kayit **200**; ayni key + farkli govde → **409**.
-- **imza_dogrulandi:** govdedeki deger saklanir; **gercek NTAG424 kripto dogrulamasi bu
-  turda YOK** (sonraki is).
+- **imza_dogrulandi (NTAG424 SDM/SUN):** deger **yalniz sunucuda** hesaplanir
+  (`app/nfc_sdm.py`, AN12196: AES-CBC PICC cozumu + SV2/KSes CMAC + sabit-zaman
+  karsilastirma); govdedeki `imza_dogrulandi` **deprecated + yok sayilir**. Mobil
+  `sdm_picc_data`(32 hex) + `sdm_cmac`(16 hex) gonderir. Karar tablosu:
+
+  | checkpoint anahtari | SDM alanlari | sonuc |
+  |---|---|---|
+  | yok | yok/var | kayit `false` (gecis donemi) |
+  | var | yok | kayit `false` (zorlama yok) |
+  | var | gecersiz | **422 `invalid_signature`** — kayit olusmaz |
+  | var | sayac ilerlememis | **422 `replay_detected`** — kayit olusmaz |
+  | var | gecerli | kayit `true`; sayac gunceller |
+
+  Replay korumasi `checkpoint.sdm_son_sayac` monotonlugu: kosullu UPDATE
+  (`WHERE sdm_son_sayac < :ctr`) scan insert ile **ayni transaction'da** —
+  0 satirda 422 + tam rollback. **Idempotent tekrar SDM dogrulamasini ATLAR**
+  (once idempotency SELECT) — offline outbox tekrari replay sanilmaz.
+- **SDM anahtar kaydi:** `PUT /checkpoints/{id}/sdm-key` (yalniz admin) —
+  `{key:"<32 hex>"}` yazar + sayaci 0'lar; `{key:null}` kapatir. Anahtar **hicbir
+  response'ta donmez** (`sdm_aktif` bool'u gorunur). Anahtarlar env **`SDM_KEK`**
+  (32+ karakter; `infra/.env.example`) ile **AES-GCM sifreli** saklanir; KEK
+  yapilandirilmamissa kayit **500 `config_error`**. **Fiziksel dogrulama
+  bekliyor:** gercek NTAG424 etiketiyle uctan uca deneme cihaz testinde; kripto
+  dogrulugu AN12196 **yayinli vektorleriyle** kanitli (`tests/test_nfc_sdm.py`).
+  Provisioning varsayimi (v0): UID+CTR aynali, ENCPICCData'li, SDMMAC girdisi bos
+  (AN12196 ornek konfigurasyonu).
 - **Pencere durum gecisi BURADA YAPILMAZ** (tek sorumluluk): scan yalnizca kaydedilir;
   `patrol_window`'un `tamamlandi`/`kacirildi` gecisi **scheduler'in detect task'inin** isidir
   (zaman-tabanli eslestirme). `patrol_window_id` verilirse yalnizca varligi dogrulanir.

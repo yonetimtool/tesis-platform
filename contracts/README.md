@@ -241,6 +241,37 @@ Geriye uyumluluk: uc kolon da nullable/default'lu; yeni response alanlari additi
 eski istemciler etkilenmez. NFC normalizasyonu eslesme kumesini yalniz GENISLETIR
 (birebir eslesenler eslesmeye devam eder).
 
+## NTAG424 DNA SDM/SUN kripto dogrulamasi (POST /scans)
+
+`imza_dogrulandi` artik istemci beyani DEGIL — degeri yalniz SUNUCU, etiketin
+SDM/SUN ciktisini (AN12196: AES-CBC PICC cozumu, SV2/KSes CMAC, sabit-zaman
+karsilastirma) dogrulayarak belirler. Govdedeki `imza_dogrulandi` deprecated +
+yok sayilir (eski mobil kirilmaz). Mobil, etiketin NDEF ciktisindan
+`sdm_picc_data` (32 hex) + `sdm_cmac` (16 hex) gonderir.
+
+| checkpoint anahtari | SDM alanlari | sonuc |
+|---|---|---|
+| yok | yok/var | kayit `imza_dogrulandi=false` (gecis donemi) |
+| var | yok | kayit `false` (zorlama yok) |
+| var | gecersiz | **422 `invalid_signature`** — kayit olusmaz |
+| var | sayac ilerlememis | **422 `replay_detected`** — kayit olusmaz |
+| var | gecerli | kayit `true`; replay sayaci gunceller |
+
+- **Anahtar kaydi:** `PUT /checkpoints/{id}/sdm-key` (yalniz admin) —
+  `{key: "<32 hex>"}` yazar (sayac 0'lanir), `{key: null}` kapatir. Anahtar
+  hicbir response'ta donmez; `Checkpoint.sdm_aktif` bool'u gorunur.
+- **KEK:** anahtarlar env `SDM_KEK` (32+ karakter) ile AES-GCM sifreli saklanir
+  (`checkpoint.sdm_key_sifreli`); KEK yapilandirilmamissa anahtar kaydi **500
+  `config_error`**. Rotasyon v0 kapsam disi.
+- **Replay:** `checkpoint.sdm_son_sayac` (BIGINT) monotonlugu; guncelleme scan
+  insert ile ayni transaction'da kosullu UPDATE (yaris-guvenli). Idempotent
+  tekrar (ayni Idempotency-Key) dogrulamayi ATLAR — replay sanilmaz.
+- **Tablo degisikligi:** yalniz `checkpoint` +2 kolon (`sdm_key_sifreli`,
+  `sdm_son_sayac`) — canonical migration yerinde guncellendi.
+- **Fiziksel dogrulama bekliyor:** gercek NTAG424 etiketiyle uctan uca deneme
+  cihaz testinde yapilacak (kripto dogrulugu AN12196 yayinli vektorleriyle
+  test edildi: `backend/tests/test_nfc_sdm.py`).
+
 ## API base path
 
 - **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:

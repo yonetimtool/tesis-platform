@@ -285,6 +285,51 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /checkpoints/{id}/sdm-key:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    put:
+      tags: [checkpoints]
+      summary: NTAG424 SDM anahtarini kaydet/kapat (yalniz admin)
+      description: |
+        Checkpoint'e yapisik NTAG424 DNA etiketinin SDM (SDMFileRead) AES-128
+        anahtarini kaydeder: `{ "key": "<32 hex>" }`. Anahtar sunucuda `SDM_KEK`
+        (env) ile AES-GCM SIFRELI saklanir ve HICBIR response'ta geri donmez;
+        yalniz `Checkpoint.sdm_aktif` gorunur. Kayit sirasinda replay sayaci
+        (`sdm_son_sayac`) 0'lanir — yeni anahtar = yeni/yeniden provision edilmis
+        etiket varsayimi. `{ "key": null }` SDM'i kapatir.
+
+        `SDM_KEK` yapilandirilmamissa (bos/32 karakterden kisa) **500
+        `config_error`** — anahtar yazma reddedilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key]
+              properties:
+                key:
+                  type: string
+                  nullable: true
+                  description: "AES-128 anahtar, 32 hex karakter; null = SDM kapat"
+                  example: "00112233445566778899AABBCCDDEEFF"
+      responses:
+        "200":
+          description: Kaydedildi/kapatildi (anahtar donmez; sdm_aktif gorunur)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Checkpoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500":
+          description: SDM_KEK yapilandirilmamis (config_error)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
   # ================================================================= #
   # PATROL PLANS
   # ================================================================= #
@@ -438,6 +483,21 @@ paths:
         nfc_tag_uid -> checkpoint eslesmesi NORMALIZE edilir (strip + upper;
         buyuk/kucuk harf ve bas/son bosluk farki eslesmeyi dusurmez) — task
         completion ve asset checkout/checkin ile ayni davranis (mobil §11 #3).
+
+        NTAG424 SDM/SUN dogrulamasi: `imza_dogrulandi` YALNIZ SUNUCUDA hesaplanir
+        (govdedeki alan deprecated + yok sayilir). Etiket SDM ciktisi
+        `sdm_picc_data` (32 hex) + `sdm_cmac` (16 hex) ile gonderilir. Karar:
+
+        | checkpoint anahtari | SDM alanlari | sonuc |
+        |---|---|---|
+        | yok | yok/var | kayit `imza_dogrulandi=false` (gecis donemi) |
+        | var | yok | kayit `false` (zorlama yok) |
+        | var | gecersiz (CMAC/UID/format) | **422 `invalid_signature`** — kayit OLUSMAZ |
+        | var | sayac ilerlememis | **422 `replay_detected`** — kayit OLUSMAZ |
+        | var | gecerli | kayit `true`; replay sayaci gunceller |
+
+        Idempotent tekrar (ayni Idempotency-Key + ayni govde) SDM dogrulamasini
+        ATLAR ve 200 doner — tekrar gonderim replay SANILMAZ.
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -473,7 +533,14 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
-        "422": { $ref: "#/components/responses/ValidationError" }
+        "422":
+          description: >-
+            Dogrulama hatasi; SDM'e ozgu kodlar: `invalid_signature` (CMAC/UID/
+            format gecersiz) ve `replay_detected` (okuma sayaci ilerlememis) —
+            iki durumda da scan kaydi OLUSMAZ.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
 
   # ================================================================= #
   # DASHBOARD
@@ -2044,6 +2111,9 @@ components:
         gps_lat: { type: number, format: double, nullable: true, example: 41.015137 }
         gps_lng: { type: number, format: double, nullable: true, example: 28.979530 }
         aktif: { type: boolean }
+        sdm_aktif:
+          type: boolean
+          description: "NTAG424 SDM anahtari kayitli mi (anahtarin kendisi ASLA donmez)"
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
     CheckpointCreate:
@@ -2173,7 +2243,28 @@ components:
           type: string
           nullable: true
           description: "Onceden yuklenmis fotografin URL'i"
-        imza_dogrulandi: { type: boolean, default: false }
+        imza_dogrulandi:
+          type: boolean
+          default: false
+          deprecated: true
+          description: >-
+            DEPRECATED + YOK SAYILIR: deger artik SUNUCUDA NTAG424 SDM
+            dogrulamasiyla hesaplanir; govdedeki girdi etkisizdir (eski mobil
+            surumler kirilmaz). SDM icin sdm_picc_data + sdm_cmac gonderin.
+        sdm_picc_data:
+          type: string
+          nullable: true
+          minLength: 32
+          maxLength: 32
+          description: "NTAG424 SDM ENCPICCData (16B, hex) — etiketin NDEF ciktisindan"
+          example: "EF963FF7828658A599F3041510671E88"
+        sdm_cmac:
+          type: string
+          nullable: true
+          minLength: 16
+          maxLength: 16
+          description: "NTAG424 SDMMAC (8B, hex) — sdm_picc_data ile BIRLIKTE gonderilir"
+          example: "94EED9EE65337086"
     ScanEvent:
       type: object
       required: [id, guard_id, checkpoint_id, nfc_tag_uid, okutma_zamani, imza_dogrulandi, created_at]
@@ -2190,7 +2281,9 @@ components:
         gps_lat: { type: number, format: double, nullable: true }
         gps_lng: { type: number, format: double, nullable: true }
         foto_url: { type: string, nullable: true }
-        imza_dogrulandi: { type: boolean }
+        imza_dogrulandi:
+          type: boolean
+          description: "SUNUCU hesaplar: NTAG424 SDM dogrulamasi gecerliyse true"
         idempotency_key: { type: string }
         created_at: { type: string, format: date-time }
 

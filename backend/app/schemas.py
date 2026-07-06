@@ -167,8 +167,30 @@ class CheckpointOut(BaseModel):
     gps_lat: float | None = None
     gps_lng: float | None = None
     aktif: bool
+    # NTAG424 SDM provision edildi mi (anahtar HICBIR response'ta donmez).
+    sdm_aktif: bool = False
     created_at: datetime
     updated_at: datetime | None = None
+
+
+class SdmKeyUpdate(BaseModel):
+    """PUT /checkpoints/{id}/sdm-key govdesi — key: 32 hex (AES-128) | null (kapat)."""
+
+    key: str | None
+
+    @field_validator("key")
+    @classmethod
+    def _hex_128bit(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        v = v.strip()
+        if len(v) != 32:
+            raise ValueError("key 32 hex karakter (AES-128) olmali.")
+        try:
+            bytes.fromhex(v)
+        except ValueError:
+            raise ValueError("key gecerli hex olmali.")
+        return v
 
 
 class CheckpointCreate(BaseModel):
@@ -278,7 +300,14 @@ class ScanCreate(BaseModel):
     gps_lat: float | None = None
     gps_lng: float | None = None
     foto_url: str | None = None
+    # DEPRECATED + YOK SAYILIR: deger artik SUNUCUDA SDM dogrulamasiyla belirlenir.
+    # Eski mobil surumler kirilmasin diye govdede kabul edilir ama etkisizdir.
     imza_dogrulandi: bool = False
+    # NTAG424 SDM/SUN ham verisi (etiketin NDEF ciktisindan): 16B ENCPICCData +
+    # 8B SDMMAC, hex. Ikisi birlikte gonderilir; checkpoint'te anahtar varsa
+    # sunucu dogrular (gecersiz -> 422 invalid_signature, tekrar -> replay_detected).
+    sdm_picc_data: str | None = Field(None, min_length=32, max_length=32)
+    sdm_cmac: str | None = Field(None, min_length=16, max_length=16)
 
 
 class ScanEventOut(BaseModel):

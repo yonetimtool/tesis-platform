@@ -196,6 +196,11 @@ def upgrade() -> None:
             gps_lat      numeric(9, 6),
             gps_lng      numeric(9, 6),
             aktif        boolean NOT NULL DEFAULT true,
+            -- NTAG424 SDM: AES-128 etiket anahtari (SDM_KEK ile AES-GCM sifreli,
+            -- base64); NULL = provision edilmemis. sdm_son_sayac = replay korumasi
+            -- (kabul edilen en buyuk okuma sayaci).
+            sdm_key_sifreli  text,
+            sdm_son_sayac    bigint NOT NULL DEFAULT 0,
             created_at   timestamptz NOT NULL DEFAULT now(),
             updated_at   timestamptz NOT NULL DEFAULT now(),
             UNIQUE (id, tenant_id),

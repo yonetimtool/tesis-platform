@@ -32,6 +32,12 @@ class Settings(BaseSettings):
     # SQLAlchemy engine echo (debug).
     sql_echo: bool = False
 
+    # --- NTAG424 SDM/SUN dogrulamasi ---
+    # Checkpoint-basina AES-128 etiket anahtarlarini sifrelemekte kullanilan
+    # KEK (key encryption key). 32+ karakter; bos = SDM anahtar kaydi kapali
+    # (PUT /checkpoints/{id}/sdm-key -> 500 config_error). jwt_secret deseni.
+    sdm_kek: str = ""
+
     # --- Scheduler (Celery beat) ---
     # OWNER (superuser) libpq DSN — tenant enumerasyonu (RLS bootstrap) icin.
     owner_dsn: str = "postgresql://tesis_owner:owner_secret_change_me@localhost:5432/tesis"

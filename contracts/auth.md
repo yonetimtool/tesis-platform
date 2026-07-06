@@ -104,6 +104,7 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 | `POST /checkpoints`                   |  ✅   |    ❌    |    ❌    |    ❌    |
 | `PATCH /checkpoints/{id}`             |  ✅   |    ❌    |    ❌    |    ❌    |
 | `DELETE /checkpoints/{id}`            |  ✅   |    ❌    |    ❌    |    ❌    |
+| `PUT  /checkpoints/{id}/sdm-key`      |  ✅   |    ❌    |    ❌    |    ❌    |
 | `GET  /patrol-plans` (liste/detay)    |  ✅   |    ✅    |    ✅    |    ❌    |
 | `POST /patrol-plans`                  |  ✅   |    ❌    |    ❌    |    ❌    |
 | `PATCH /patrol-plans/{id}`            |  ✅   |    ❌    |    ❌    |    ❌    |

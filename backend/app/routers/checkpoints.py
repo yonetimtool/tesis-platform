@@ -1,7 +1,8 @@
-"""Checkpoint CRUD — /contracts/openapi.yaml (checkpoints) + RBAC (auth.md §4).
+"""Checkpoint CRUD + SDM anahtar kaydi — /contracts/openapi.yaml + RBAC (auth.md §4).
 
 nfc_tag_uid tenant icinde benzersiz (uq_checkpoint_tenant_nfc) — cakismada 409.
-RBAC: GET admin/security/cleaning; POST/PATCH/DELETE yalniz admin.
+RBAC: GET admin/security/cleaning; POST/PATCH/DELETE ve sdm-key yalniz admin.
+SDM anahtari SDM_KEK ile sifreli saklanir ve HICBIR response'ta donmez.
 """
 from __future__ import annotations
 
@@ -12,15 +13,18 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..config import settings
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Checkpoint
+from ..nfc_sdm import encrypt_key
 from ..schemas import (
     CheckpointCreate,
     CheckpointListResponse,
     CheckpointOut,
     CheckpointUpdate,
+    SdmKeyUpdate,
 )
 
 router = APIRouter(prefix="/checkpoints", tags=["checkpoints"])
@@ -99,6 +103,35 @@ async def update_checkpoint(
         await db.flush()
     except IntegrityError as exc:
         raise _conflict_or_translate(exc)
+    await db.refresh(obj)
+    return obj
+
+
+@router.put("/{checkpoint_id}/sdm-key", response_model=CheckpointOut)
+async def set_sdm_key(
+    checkpoint_id: uuid.UUID,
+    body: SdmKeyUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_ADMIN),
+) -> Checkpoint:
+    """NTAG424 SDM anahtarini kaydet ({key: 32 hex}) veya kapat ({key: null}).
+
+    Yeni anahtar = yeni/yeniden provision edilmis etiket varsayimi -> sayac 0'lanir.
+    Anahtar HICBIR response'ta geri donmez (yalniz sdm_aktif gorunur).
+    """
+    obj = await get_or_404(db, Checkpoint, checkpoint_id)
+    if body.key is None:
+        obj.sdm_key_sifreli = None
+    else:
+        if not settings.sdm_kek or len(settings.sdm_kek) < 32:
+            raise APIError(
+                500, "config_error",
+                "SDM_KEK yapilandirilmamis (32+ karakter env) — anahtar kaydi reddedildi.",
+            )
+        obj.sdm_key_sifreli = encrypt_key(bytes.fromhex(body.key), settings.sdm_kek)
+    obj.sdm_son_sayac = 0
+    obj.updated_at = func.now()
+    await db.flush()
     await db.refresh(obj)
     return obj
 

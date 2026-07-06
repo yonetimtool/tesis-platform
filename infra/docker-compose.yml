@@ -120,6 +120,9 @@ services:
       DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET}
+      # NTAG424 SDM anahtar sifreleme KEK'i (32+ karakter). Prod'da .env'den ver;
+      # asagidaki varsayilan YALNIZ gelistirme icindir.
+      SDM_KEK: ${SDM_KEK:-dev-sdm-kek-yalnizca-gelistirme-icin-degistir}
       # Testlerin (docker compose exec api pytest) kullandigi DSN'ler:
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}

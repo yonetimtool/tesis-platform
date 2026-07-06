@@ -16,6 +16,7 @@ from __future__ import annotations
 import uuid
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     CheckConstraint,
     Date,
@@ -192,8 +193,18 @@ class Checkpoint(Base):
     aktif: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    # NTAG424 SDM: AES-128 etiket anahtari (SDM_KEK ile AES-GCM sifreli, base64).
+    # NULL = SDM provision edilmemis. sdm_son_sayac = replay korumasi.
+    sdm_key_sifreli: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sdm_son_sayac: Mapped[int] = mapped_column(
+        BigInteger, nullable=False, server_default=text("0")
+    )
     created_at = _created_at()
     updated_at = _created_at()
+
+    @property
+    def sdm_aktif(self) -> bool:
+        return self.sdm_key_sifreli is not None
 
 
 # --------------------------------------------------------------------------- #
