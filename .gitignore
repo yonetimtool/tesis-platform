@@ -39,3 +39,7 @@ mobile/.flutter-plugins-dependencies
 mobile/.dart_tool/
 mobile/build/
 mobile/.flutter-plugins-dependencies
+
+# Firebase kimlikleri (ASLA commit'lenmez)
+infra/secrets/
+mobile/android/app/google-services.json
