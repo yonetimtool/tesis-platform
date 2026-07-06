@@ -21,6 +21,10 @@ enum NfcTagType {
 /// AYRISTIRILAN ham parametreler. Burada KRIPTO YAPILMAZ; sadece etiketin
 /// yazdigi degerler yapilandirilmis sekilde tasinir. Dogrulama (CMAC kontrolu,
 /// PICCData cozumu) backend'in isidir.
+///
+/// [piccData]/[cmac] yalniz sozlesme formatina uyan degerlerle doldurulur
+/// (32/16 hex, BUYUK harf normalize); format tutmayan deger null kalir ki
+/// backend'e hic gonderilmesin (bozuk alan 422 uretmesin).
 class NfcSdmData {
   const NfcSdmData({
     required this.rawUrl,
@@ -44,6 +48,11 @@ class NfcSdmData {
 
   /// URL'deki tum sorgu parametreleri (ham, dokunulmamis).
   final Map<String, String> params;
+
+  /// `POST /scans` icin gerekli iki alan da gecerli mi? Sozlesme geregi
+  /// `sdm_picc_data` + `sdm_cmac` BIRLIKTE gonderilir; biri eksikse ikisi de
+  /// gonderilmez (scan yine kabul edilir, imza_dogrulandi=false kalir).
+  bool get isComplete => piccData != null && cmac != null;
 
   @override
   String toString() =>

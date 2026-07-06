@@ -173,7 +173,7 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
             _replace(next.copyWith(
               status: OutboxStatus.kaliciHata,
               attemptCount: next.attemptCount + 1,
-              lastError: e.message,
+              lastError: permanentErrorMessage(e),
             ));
             await _persist();
             continue; // siradaki kayit denenebilir
@@ -214,7 +214,9 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
 
   bool _isPermanent(ApiException e) =>
       // 404: etiket eslesmedi. 400/422: govde gecersiz — payload degismeyecegi
-      // icin tekrar denemek de ayni sonucu verir.
+      // icin tekrar denemek de ayni sonucu verir. NTAG424 SDM 422'leri
+      // (invalid_signature/replay_detected) da bu siniftadir: etiket verisi
+      // sabit, tekrar gonderim sonucu degistirmez.
       e.statusCode == 404 || e.statusCode == 400 || e.statusCode == 422;
 
   Future<void> _markRetry(OutboxEntry entry, String message) async {
@@ -271,6 +273,16 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
     }
   }
 }
+
+/// Kalici hatanin kullaniciya gosterilecek Turkce karsiligi. NTAG424 SDM
+/// dogrulama kodlari icin ozel mesajlar; digerlerinde backend mesaji aynen
+/// kalir (404 zaten Turkce donuyor).
+String permanentErrorMessage(ApiException e) => switch (e.code) {
+      'invalid_signature' =>
+        'Etiket imzasi dogrulanamadi — sahte veya yanlis etiket olabilir.',
+      'replay_detected' => 'Bu okutma daha once islendi.',
+      _ => e.message,
+    };
 
 final scanOutboxProvider =
     NotifierProvider<ScanOutbox, ScanOutboxState>(ScanOutbox.new);

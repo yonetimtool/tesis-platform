@@ -243,6 +243,53 @@ void main() {
     expect(container.read(scanOutboxProvider).entries, isEmpty);
   });
 
+  test('422 invalid_signature → kalici_hata + net Turkce mesaj, retry yok',
+      () async {
+    api.handler = (d) async => throw const ApiException(
+          code: 'invalid_signature',
+          message: 'signature verification failed',
+          statusCode: 422,
+        );
+    final container = makeContainer();
+    final outbox = container.read(scanOutboxProvider.notifier);
+
+    await outbox.enqueue(_draft('04:SIG'));
+    // Pump tamamen bitsin (disk persist dahil) ki tearDown temp dizini
+    // silerken yazma yarisi olmasin.
+    await waitFor(() {
+      final s = container.read(scanOutboxProvider);
+      return s.failedCount == 1 && !s.syncing;
+    });
+
+    final entry = container.read(scanOutboxProvider).entries.single;
+    expect(entry.status, OutboxStatus.kaliciHata);
+    expect(entry.attemptCount, 1); // tekrar denenmedi
+    expect(entry.lastError, contains('dogrulanamadi'));
+    expect(entry.lastError, contains('sahte'));
+  });
+
+  test('422 replay_detected → kalici_hata + net Turkce mesaj, retry yok',
+      () async {
+    api.handler = (d) async => throw const ApiException(
+          code: 'replay_detected',
+          message: 'scan counter did not advance',
+          statusCode: 422,
+        );
+    final container = makeContainer();
+    final outbox = container.read(scanOutboxProvider.notifier);
+
+    await outbox.enqueue(_draft('04:RPL'));
+    await waitFor(() {
+      final s = container.read(scanOutboxProvider);
+      return s.failedCount == 1 && !s.syncing;
+    });
+
+    final entry = container.read(scanOutboxProvider).entries.single;
+    expect(entry.status, OutboxStatus.kaliciHata);
+    expect(entry.attemptCount, 1);
+    expect(entry.lastError, contains('daha once islendi'));
+  });
+
   test('OutboxEntry JSON gidis-donus kayipsizdir', () {
     final entry = OutboxEntry.fromDraft(
       ScanDraft(

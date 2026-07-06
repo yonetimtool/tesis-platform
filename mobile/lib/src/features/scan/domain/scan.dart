@@ -11,6 +11,8 @@ class ScanDraft {
     this.checkpointId,
     this.gpsLat,
     this.gpsLng,
+    this.sdmPiccData,
+    this.sdmCmac,
   });
 
   /// Okutulan NFC etiketi (sozlesme formati: "04:A3:B2:C1:90:00").
@@ -23,12 +25,26 @@ class ScanDraft {
   final double? gpsLat;
   final double? gpsLng;
 
+  /// NTAG424 SDM ENCPICCData (32 hex) — etiketin NDEF URL'inden. NTAG21x'te
+  /// veya ayristirilamadiginda null; scan SDM'siz de kabul edilir
+  /// (imza_dogrulandi'yi SUNUCU hesaplar; govdede gonderilmez — deprecated).
+  final String? sdmPiccData;
+
+  /// NTAG424 SDMMAC (16 hex) — [sdmPiccData] ile BIRLIKTE anlamli.
+  final String? sdmCmac;
+
   Map<String, dynamic> toJson() => {
         'nfc_tag_uid': nfcTagUid,
         'okutma_zamani': okutmaZamani.toUtc().toIso8601String(),
         if (checkpointId != null) 'checkpoint_id': checkpointId,
         if (gpsLat != null) 'gps_lat': gpsLat,
         if (gpsLng != null) 'gps_lng': gpsLng,
+        // Sozlesme: iki alan BIRLIKTE gonderilir; biri eksikse ikisi de
+        // atlanir (backend anahtarsiz/alansiz scan'i yine kabul eder).
+        if (sdmPiccData != null && sdmCmac != null) ...{
+          'sdm_picc_data': sdmPiccData,
+          'sdm_cmac': sdmCmac,
+        },
       };
 
   /// Idempotency-Key: ayni (etiket, okutma ani) icin sabit → offline kuyrukta

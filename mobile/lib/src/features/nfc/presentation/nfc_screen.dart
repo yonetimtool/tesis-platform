@@ -32,9 +32,14 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
     if (result == null || !result.isSuccess || result.uid == null) return;
 
     // Okuma aninda taslak uret: okutma zamani + idempotency-key SABITLENIR.
+    // NTAG424 SDM alanlari (varsa) taslaga eklenir; NTAG21x'te null kalir ve
+    // govdeye hic girmez — mevcut akis degismez.
+    final sdm = result.sdmData;
     final draft = ScanDraft(
       nfcTagUid: result.uid!,
       okutmaZamani: result.readAt ?? DateTime.now().toUtc(),
+      sdmPiccData: sdm?.piccData,
+      sdmCmac: sdm?.cmac,
     );
     setState(() => _currentKey = draft.idempotencyKey);
     await ref.read(scanOutboxProvider.notifier).enqueue(draft);

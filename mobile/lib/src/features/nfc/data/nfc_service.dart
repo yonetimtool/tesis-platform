@@ -184,15 +184,19 @@ class NfcService {
     return NfcTagType.unknown;
   }
 
-  /// NTAG424 SDM/SUN URL ISKELETI.
+  /// NTAG424 SDM/SUN NDEF ciktisini `POST /scans` alanlarina ayristirir.
   ///
-  /// NTAG424, NDEF icindeki bir URL'e dinamik olarak sifreli alanlar gomer
-  /// (PICCData + CMAC). Burada GERCEK KRIPTO YOKTUR: yalnizca URL'i bulup
-  /// sorgu parametrelerini yapilandirilmis sekilde dondururuz. Alan adlari
-  /// etiketin SDM ayarina gore degisir; en yaygin adlari tarariz.
+  /// v0 provisioning varsayimi (contracts/README.md + backend AN12196
+  /// konfigurasyonu — UID+CTR aynali, ENCPICCData'li, SDMMAC girdisi bos):
+  /// etiket, NDEF URI kaydindaki URL'e sorgu parametresi olarak
+  /// `picc_data=<32 hex>` (ENCPICCData, 16B) + `cmac=<16 hex>` (SDMMAC, 8B)
+  /// aynalar. Kisa adlar (`e`/`c`, NXP ornekleri) de kabul edilir.
   ///
-  /// Dogrulama (PICCData cozumu, CMAC kontrolu, replay) backend'de yapilir;
-  /// mobil sadece okunan ham URL + alanlari iletir.
+  /// Burada GERCEK KRIPTO YOKTUR: deger yalniz format dogrulamasindan gecer
+  /// (hex + uzunluk, BUYUK harfe normalize) — format tutmayan alan null kalir
+  /// ki backend'e hic gonderilmesin. Dogrulama (PICC cozumu, CMAC, replay)
+  /// backend'in isidir. URI kaydi yoksa (NTAG21x vb.) null doner; scan akisi
+  /// SDM'siz aynen devam eder.
   NfcSdmData? parseSdm(NdefMessage? message) {
     if (message == null) return null;
 
@@ -213,12 +217,22 @@ class NfcService {
 
     return NfcSdmData(
       rawUrl: url,
-      piccData: pick(['picc_data', 'piccdata', 'e']),
-      cmac: pick(['cmac', 'c']),
+      piccData: _validHex(pick(['picc_data', 'piccdata', 'e']), length: 32),
+      cmac: _validHex(pick(['cmac', 'c']), length: 16),
       encData: pick(['enc', 'd']),
       params: params,
     );
   }
+
+  /// Degeri sozlesme formatina (tam [length] hex karakter) gore suzer;
+  /// uyuyorsa BUYUK harfe normalize eder, uymuyorsa null doner.
+  String? _validHex(String? value, {required int length}) {
+    if (value == null || value.length != length) return null;
+    if (!_hexPattern.hasMatch(value)) return null;
+    return value.toUpperCase();
+  }
+
+  static final _hexPattern = RegExp(r'^[0-9a-fA-F]+$');
 
   /// NDEF mesajindan ilk URI'yi cozumler. URI iki bicimde gelebilir:
   /// well-known 'U' kaydi (payload[0] = on-ek kodu) veya absolute URI.

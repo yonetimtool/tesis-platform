@@ -304,24 +304,48 @@ UID **BÜYÜK HARF, İKİ NOKTA (`:`) AYRAÇLI hex** olarak üretilir — örn.
 > Kesin tip için kart üstünde `GET_VERSION` komutu gerekir; bu tahmin yalnızca
 > UI/yönlendirme içindir. Kesin doğrulama **backend** tarafında yapılmalı.
 
-### NTAG424 SDM/SUN bulguları (ne okunabiliyor, backend'e ne gidmeli)
+### NTAG424 SDM/SUN akışı (uçtan uca — mobil ayağı)
 
 NTAG424, NDEF içindeki bir URL'e dinamik olarak şifreli alanlar gömer
-(PICCData + CMAC — "SUN"/"SDM"). Mobil tarafta yapılan:
+(PICCData + CMAC — "SUN"/"SDM"). Backend bunları sunucuda doğrular
+(`contracts/README.md` SDM bölümü); mobilin işi yalnızca **ayrıştırıp
+iletmek**:
 
-- **Okunabilen:** NDEF mesajındaki ilk URI kaydı (well-known `U` veya
-  absolute-URI; `U` kaydında ön-ek byte'ı çözülür). URL'in sorgu parametreleri
-  ayrıştırılıp `NfcSdmData`'ya konur: `piccData` (`picc_data`/`e`),
-  `cmac` (`cmac`/`c`), `encData` (`enc`/`d`) + tüm ham `params`.
+- **v0 provisioning varsayımı** (backend AN12196 konfigürasyonu ile hizalı —
+  UID+CTR aynalı, ENCPICCData'lı, SDMMAC girdisi boş): etiket, NDEF URI
+  kaydındaki URL'e sorgu parametresi olarak `picc_data=<32 hex>` (ENCPICCData,
+  16B) + `cmac=<16 hex>` (SDMMAC, 8B) aynalar. Kısa adlar (`e`/`c`, NXP
+  örnekleri) ve `piccdata` de kabul edilir; anahtar adları büyük/küçük harf
+  duyarsız.
+- **Format süzgeci:** değerler yalnız sözleşme formatına uyuyorsa alınır
+  (tam 32/16 hex karakter; BÜYÜK harfe normalize). Uymayan değer null kalır —
+  bozuk alan backend'e hiç gitmez.
+- **Gövdeye giriş (`ScanDraft`):** `sdm_picc_data` + `sdm_cmac` yalnız **ikisi
+  birlikte** geçerliyse `POST /scans` gövdesine eklenir. Deprecated
+  `imza_dogrulandi` **gönderilmez** — değeri artık yalnız sunucu hesaplar.
+- **NTAG21x / ayrıştırılamayan etiket:** SDM alanları null → gövde eskisiyle
+  birebir aynı; scan yine kabul edilir (`imza_dogrulandi=false`, geçiş dönemi).
+  Mevcut akışta hiçbir değişiklik yok.
+- **Offline:** SDM alanları `OutboxEntry` ile diske yazılır — bekleyen kayıt
+  uygulama yeniden açıldığında da SDM verisiyle gönderilir. Tekrar gönderim
+  güvenli: aynı Idempotency-Key'de backend SDM doğrulamasını atlar
+  (tekrar ≠ replay).
+- **422 SDM hataları (kalıcı — retry YAPILMAZ, 404 ile aynı sınıf):**
+  - `invalid_signature` → "Etiket imzası doğrulanamadı — sahte veya yanlış
+    etiket olabilir."
+  - `replay_detected` → "Bu okutma daha önce işlendi."
 - **Yapılmayan (bilerek):** **kripto yok.** PICCData çözümü, CMAC doğrulama,
   replay/sayaç kontrolü mobilde **yapılmaz** — anahtar mobile konmaz.
-- **Backend'e gönderilecek:** okunan **ham URL** + ayrıştırılmış alanlar
-  (`piccData`, `cmac`). Doğrulama (anahtarla CMAC kontrolü, UID/sayaç çözümü)
-  **backend'in** işi. Etiket NTAG424 değilse `sdmData` null olur.
 
-Şu an `parseSdm(...)` bir **iskelet**: cached NDEF mesajını parse eder, alan
-adlarını en yaygın SDM kalıplarına göre tarar. Etiketin gerçek SDM ayarı
-(alan adları, mirror konumu) netleştiğinde bu eşleştirme güncellenmeli.
+Birim testleri: `test/nfc_sdm_parse_test.dart` (örnek NDEF/URL girdileri,
+AN12196 vektörü), `test/scan_sdm_test.dart` (gövde/outbox kalıcılığı),
+`test/scan_outbox_test.dart` (422 sınıflandırması).
+
+> **Fiziksel doğrulama cihaz testinde:** gerçek NTAG424 etiketiyle uçtan uca
+> deneme (provisioning → okuma → sunucu doğrulaması) henüz yapılmadı; kripto
+> doğruluğu backend'de AN12196 yayınlı vektörleriyle test edildi. Farklı bir
+> SDM konfigürasyonu (örn. farklı mirror/parametre düzeni) gerekirse
+> `parseSdm(...)` eşleştirmesi güncellenmeli.
 
 ### Hata davranışı
 
@@ -339,7 +363,9 @@ Etiket okunduktan sonra ekranda **"Okutmayı gönder"** butonu çıkar; okutma
 
 - **Gövde (`ScanDraft` → ScanCreate):** `nfc_tag_uid` (sözleşme formatı),
   `okutma_zamani` (okuma anında sabitlenen UTC — `NfcReadResult.readAt`; offline
-  gecikmeli gönderime uygun). GPS/checkpoint_id opsiyonel.
+  gecikmeli gönderime uygun). GPS/checkpoint_id opsiyonel; NTAG424 okumasında
+  `sdm_picc_data` + `sdm_cmac` birlikte eklenir (üstteki SDM bölümü).
+  Deprecated `imza_dogrulandi` gönderilmez.
 - **Idempotency-Key (ZORUNLU):** `"<uid>|<okutma_zamani ISO>"` — okuma anına
   sabitlendiğinden aynı okutma tekrar gönderilirse backend **aynı kaydı** döner
   (yeni kayıt oluşmaz). Ekstra paket gerektirmez (uuid'e gerek yok).

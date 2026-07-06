@@ -56,6 +56,8 @@ class OutboxEntry {
     this.checkpointId,
     this.gpsLat,
     this.gpsLng,
+    this.sdmPiccData,
+    this.sdmCmac,
     this.status = OutboxStatus.bekliyor,
     this.attemptCount = 0,
     this.lastError,
@@ -78,6 +80,12 @@ class OutboxEntry {
   final String? checkpointId;
   final double? gpsLat;
   final double? gpsLng;
+
+  /// NTAG424 SDM alanlari (varsa) — offline bekleyen kayitta kaybolmamalari
+  /// icin taslakla birlikte diske yazilir. Tekrar gonderimde ayni Idempotency-
+  /// Key gittiginden backend SDM dogrulamasini atlar (tekrar ≠ replay).
+  final String? sdmPiccData;
+  final String? sdmCmac;
 
   final OutboxStatus status;
 
@@ -102,6 +110,8 @@ class OutboxEntry {
         checkpointId: checkpointId,
         gpsLat: gpsLat,
         gpsLng: gpsLng,
+        sdmPiccData: sdmPiccData,
+        sdmCmac: sdmCmac,
       );
 
   factory OutboxEntry.fromDraft(ScanDraft draft, {required DateTime now}) =>
@@ -113,6 +123,8 @@ class OutboxEntry {
         checkpointId: draft.checkpointId,
         gpsLat: draft.gpsLat,
         gpsLng: draft.gpsLng,
+        sdmPiccData: draft.sdmPiccData,
+        sdmCmac: draft.sdmCmac,
       );
 
   OutboxEntry copyWith({
@@ -129,6 +141,8 @@ class OutboxEntry {
       checkpointId: checkpointId,
       gpsLat: gpsLat,
       gpsLng: gpsLng,
+      sdmPiccData: sdmPiccData,
+      sdmCmac: sdmCmac,
       status: status ?? this.status,
       attemptCount: attemptCount ?? this.attemptCount,
       lastError: lastError == _sentinel ? this.lastError : lastError as String?,
@@ -147,6 +161,8 @@ class OutboxEntry {
         if (checkpointId != null) 'checkpoint_id': checkpointId,
         if (gpsLat != null) 'gps_lat': gpsLat,
         if (gpsLng != null) 'gps_lng': gpsLng,
+        if (sdmPiccData != null) 'sdm_picc_data': sdmPiccData,
+        if (sdmCmac != null) 'sdm_cmac': sdmCmac,
         'status': _statusJson[status],
         'attempt_count': attemptCount,
         if (lastError != null) 'last_error': lastError,
@@ -161,6 +177,8 @@ class OutboxEntry {
         checkpointId: json['checkpoint_id'] as String?,
         gpsLat: (json['gps_lat'] as num?)?.toDouble(),
         gpsLng: (json['gps_lng'] as num?)?.toDouble(),
+        sdmPiccData: json['sdm_picc_data'] as String?,
+        sdmCmac: json['sdm_cmac'] as String?,
         status: _statusFromJson(json['status'] as String?),
         attemptCount: (json['attempt_count'] as num?)?.toInt() ?? 0,
         lastError: json['last_error'] as String?,
