@@ -141,6 +141,10 @@ services:
       PAYTR_MERCHANT_ID: ${PAYTR_MERCHANT_ID:-sandbox-mid}
       PAYTR_MERCHANT_KEY: ${PAYTR_MERCHANT_KEY:-sandbox-paytr-key}
       PAYTR_MERCHANT_SALT: ${PAYTR_MERCHANT_SALT:-sandbox-paytr-salt}
+      # Push: varsayilan noop; gercek FCM icin .env'de PUSH_PROVIDER=fcm +
+      # kimlik mount'u docker-compose.push.yml override'iyla baglanir.
+      PUSH_PROVIDER: ${PUSH_PROVIDER:-noop}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
     ports:
       - "8000:8000"
     healthcheck:
@@ -190,6 +194,9 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin12345}
       MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
+      # Push kancalari worker'da kosar (dispatch_external) — api ile ayni secim.
+      PUSH_PROVIDER: ${PUSH_PROVIDER:-noop}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
     restart: unless-stopped
 

@@ -1,0 +1,26 @@
+# GERCEK FCM kimligini baglayan OPSIYONEL override.
+#
+# Ana docker-compose.yml bu dosya OLMADAN her ortamda ayaga kalkar (mount yok,
+# push varsayilan noop). Kimlik dosyasi (infra/secrets/fcm-service-account.json,
+# .gitignore'da) OLAN ortamda gercek FCM soyle acilir:
+#
+#   1) .env'e:  PUSH_PROVIDER=fcm
+#   2)          docker compose -f docker-compose.yml -f docker-compose.push.yml up -d
+#   3) duman testi (push atmaz, yalniz kimligi dogrular):
+#      docker compose -f docker-compose.yml -f docker-compose.push.yml \
+#        exec api python -m scripts.push_smoke
+#
+# Mount'u ana dosyaya KOYMAMA nedeni: secrets yokken docker eksik host dosyasi
+# icin bos DIZIN olusturur (sessiz kirli durum) — override'i yalniz dosyasi olan
+# calistirir, ana compose her zaman temiz kalir.
+services:
+  api:
+    environment:
+      FCM_SERVICE_ACCOUNT_PATH: /run/secrets/fcm-sa.json
+    volumes:
+      - ./secrets/fcm-service-account.json:/run/secrets/fcm-sa.json:ro
+  worker:
+    environment:
+      FCM_SERVICE_ACCOUNT_PATH: /run/secrets/fcm-sa.json
+    volumes:
+      - ./secrets/fcm-service-account.json:/run/secrets/fcm-sa.json:ro

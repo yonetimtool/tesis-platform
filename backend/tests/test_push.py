@@ -23,6 +23,7 @@ def test_get_push_provider_selection(monkeypatch):
 
 
 def test_fcm_send_message_format(monkeypatch):
+    monkeypatch.setattr(push.settings, "fcm_service_account_path", "")  # inline kimlik yolu
     monkeypatch.setattr(push.settings, "fcm_project_id", "proj-123")
     monkeypatch.setattr(push.settings, "fcm_service_account_json", '{"type":"service_account"}')
     monkeypatch.setattr(push.settings, "fcm_base_url", "https://fcm.googleapis.com")
@@ -49,6 +50,7 @@ def test_fcm_send_message_format(monkeypatch):
 
 
 def test_fcm_unconfigured_no_http_no_raise(monkeypatch):
+    monkeypatch.setattr(push.settings, "fcm_service_account_path", "")
     monkeypatch.setattr(push.settings, "fcm_project_id", "")
     monkeypatch.setattr(push.settings, "fcm_service_account_json", "")
     calls = []
@@ -198,3 +200,117 @@ def test_emergency_push_hook_does_not_break_in_app(client, world):
     # push EK gonderim; in-app acil_durum bildirimi kirilmadan olustu
     notifs = client.get("/notifications", headers=admin).json()["items"]
     assert any(n["tip"] == "acil_durum" for n in notifs)
+
+
+# ---------------- gercek kimlik baglama (path + OAuth2 + cache) ------------- #
+def _fake_sa(tmp_path, project="proj-dosya", email="svc@proj.iam.gserviceaccount.com"):
+    """Diske SAHTE service account yaz (gercek kimlik testlerde KULLANILMAZ)."""
+    import json
+
+    p = tmp_path / "sa.json"
+    p.write_text(json.dumps({
+        "type": "service_account",
+        "project_id": project,
+        "client_email": email,
+        "private_key": "-----BEGIN PRIVATE KEY-----\nFAKE\n-----END PRIVATE KEY-----\n",
+        "token_uri": "https://oauth2.googleapis.com/token",
+    }))
+    return str(p)
+
+
+def test_fcm_path_missing_file_graceful_unconfigured(monkeypatch):
+    monkeypatch.setattr(push.settings, "fcm_service_account_path", "/yok/boyle/dosya.json")
+    monkeypatch.setattr(push.settings, "fcm_service_account_json", "")
+    monkeypatch.setattr(push.settings, "fcm_project_id", "")
+    calls = []
+    monkeypatch.setattr(push, "_http_post_json", lambda *a, **k: calls.append(1))
+    res = push.FcmProvider().send(["T"], title="t", body="b")  # COKME YOK
+    assert res.status == "push_unconfigured" and res.sent == 0 and calls == []
+
+
+def test_fcm_path_broken_json_graceful_unconfigured(monkeypatch, tmp_path):
+    p = tmp_path / "bozuk.json"
+    p.write_text("{bu json degil")
+    monkeypatch.setattr(push.settings, "fcm_service_account_path", str(p))
+    monkeypatch.setattr(push.settings, "fcm_service_account_json", "")
+    monkeypatch.setattr(push.settings, "fcm_project_id", "")
+    res = push.FcmProvider().send(["T"], title="t", body="b")
+    assert res.status == "push_unconfigured"
+
+
+def test_fcm_sa_loaded_from_path_project_id_from_file(monkeypatch, tmp_path):
+    """Path'ten yuklenen service account'in project_id'si URL'e yansir (env gerekmez)."""
+    monkeypatch.setattr(push.settings, "fcm_service_account_path", _fake_sa(tmp_path))
+    monkeypatch.setattr(push.settings, "fcm_service_account_json", "")
+    monkeypatch.setattr(push.settings, "fcm_project_id", "")
+    monkeypatch.setattr(push.settings, "fcm_base_url", "https://fcm.googleapis.com")
+    monkeypatch.setattr(push, "_fetch_access_token", lambda sa: "TKN")
+    captured = {}
+    monkeypatch.setattr(push, "_http_post_json", lambda url, h, b, timeout=20.0: captured.update(url=url) or {})
+
+    res = push.FcmProvider().send(["T1"], title="t", body="b")
+    assert res.status == "sent" and res.sent == 1
+    assert captured["url"] == "https://fcm.googleapis.com/v1/projects/proj-dosya/messages:send"
+
+
+def test_access_token_cached_until_expiry(monkeypatch):
+    """Token expiry'ye kadar onbellekten; sonra yeniden alinir."""
+    sa = {"client_email": "cache@test", "private_key": "PK", "token_uri": "https://t"}
+    saat = {"now": 1_000.0}
+    monkeypatch.setattr(push, "_now", lambda: saat["now"])
+    fetches = []
+
+    def fake_fetch(sa_arg):
+        fetches.append(sa_arg["client_email"])
+        return {"access_token": f"TKN-{len(fetches)}", "expires_in": 3600}
+
+    monkeypatch.setattr(push, "_fetch_token_response", fake_fetch)
+    push._token_cache.clear()
+
+    assert push._fetch_access_token(sa) == "TKN-1"
+    assert push._fetch_access_token(sa) == "TKN-1"  # onbellek
+    assert fetches == ["cache@test"]
+
+    saat["now"] += 3600.0  # expiry (3600-60 marj) gecti
+    assert push._fetch_access_token(sa) == "TKN-2"
+    assert len(fetches) == 2
+
+
+def test_oauth_assertion_is_valid_rs256_jwt(monkeypatch):
+    """_fetch_token_response: RS256 imzali JWT assertion + dogru claim'ler uretir."""
+    import jwt as pyjwt
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    pem = key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    ).decode()
+    sa = {
+        "client_email": "svc@p.iam.gserviceaccount.com",
+        "private_key": pem,
+        "token_uri": "https://oauth2.googleapis.com/token",
+    }
+    captured = {}
+
+    def fake_post_form(url, data, timeout=20.0):
+        captured.update(url=url, data=dict(data))
+        return {"access_token": "T", "expires_in": 3600}
+
+    monkeypatch.setattr(push, "_http_post_form", fake_post_form)
+    resp = push._fetch_token_response(sa)
+    assert resp["access_token"] == "T"
+    assert captured["url"] == sa["token_uri"]
+    assert captured["data"]["grant_type"] == "urn:ietf:params:oauth:grant-type:jwt-bearer"
+
+    claims = pyjwt.decode(
+        captured["data"]["assertion"],
+        key.public_key(),
+        algorithms=["RS256"],
+        audience=sa["token_uri"],
+        options={"verify_exp": True},
+    )
+    assert claims["iss"] == sa["client_email"]
+    assert claims["scope"] == "https://www.googleapis.com/auth/firebase.messaging"

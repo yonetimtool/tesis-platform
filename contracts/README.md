@@ -158,13 +158,24 @@ dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`
 
 ## Push bildirim (FCM) + cihaz token kaydi
 
-- **GERCEK FIREBASE KIMLIGI YOK.** `FcmProvider` (backend/app/push.py) gercek FCM HTTP v1
-  yapisina gore yazildi (service-account -> OAuth2 access token -> `POST
-  /v1/projects/{project_id}/messages:send`, `message.token/notification/data`) ama HTTP + OAuth
-  cagrisi mock'lanabilir (`_http_post_json` / `_fetch_access_token`). Kimlik (`FCM_PROJECT_ID` +
-  `FCM_SERVICE_ACCOUNT_JSON`) bossa **`push_unconfigured`** (no-op + log; sessiz cokme yok).
-- Saglayici secimi `PUSH_PROVIDER = noop | fcm` (varsayilan **noop**) — odeme (`PAYMENT_PROVIDER`)
-  deseninin AYNISI. `get_push_provider()`.
+- **GERCEK KIMLIK BAGLANDI.** `FcmProvider` (backend/app/push.py) gercek FCM HTTP v1
+  akisini kosar: service account (dosyadan, read-only mount) -> OAuth2 access token
+  (RS256 JWT + jwt-bearer grant; PyJWT+cryptography+httpx — google-auth YOK, uc
+  bagimlilik da zaten mevcut) -> `POST /v1/projects/{project_id}/messages:send`.
+  Token expiry'ye 60 sn kala onbellekten yenilenir. HTTP + OAuth katmani hala
+  mock'lanabilir (`_http_post_json` / `_http_post_form` / `_fetch_token_response`)
+  — testler GERCEK kimliksiz, mock'la kosar.
+- **Kimlik dosyasi:** `infra/secrets/fcm-service-account.json` (**.gitignore'da —
+  ASLA repoya girmez; icerigi loglanmaz**). Container'a baglama OPSIYONEL override
+  ile: `docker compose -f docker-compose.yml -f docker-compose.push.yml up -d`
+  (api+worker'a `/run/secrets/fcm-sa.json:ro`). Ana compose secrets'siz her
+  ortamda ayakta kalir. Dosya yok/bozuk -> **`push_unconfigured`** (no-op + log;
+  cokme yok). `project_id` dosyadan okunur (`FCM_PROJECT_ID` istege bagli override).
+- Saglayici secimi `PUSH_PROVIDER = noop | fcm` (varsayilan **noop**; `.env` ile
+  acilir) — odeme (`PAYMENT_PROVIDER`) deseninin AYNISI. `get_push_provider()`.
+- **Duman testi** (push atmaz, yalniz kimligi dogrular; token yazdirilmaz):
+  `... exec api python -m scripts.push_smoke` -> "token alindi, project=..., expiry=...".
+  **Gercek uctan uca push cihaz testinde** (fiziksel cihaz + mobil build gerekir).
 - **Cihaz token kaydi:** `POST /devices` (her rol, kendi cihazi; idempotent upsert,
   `UNIQUE(tenant_id, fcm_token)`), `DELETE /devices/{fcm_token}` (pasiflestir), `GET /devices`
   (admin, debug). Yeni tablo **`user_device`** (RLS + tenant-izole).

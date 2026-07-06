@@ -73,10 +73,12 @@ class Settings(BaseSettings):
     paytr_base_url: str = "https://www.paytr.com"
 
     # --- Push saglayici (FCM) ---
-    # noop | fcm. GERCEK KIMLIK YOK — kimlik bossa FcmProvider unconfigured (no-op).
+    # noop | fcm. Kimlik yoksa FcmProvider unconfigured (no-op) — cokme yok.
     push_provider: str = "noop"
-    fcm_project_id: str = ""
-    # Service account JSON (inline metin ya da dosya yolu); bossa unconfigured.
+    fcm_project_id: str = ""  # bos birakilabilir: dosyadaki project_id kullanilir
+    # Service account: ONCE dosya yolu (compose read-only mount, onerilen)...
+    fcm_service_account_path: str = ""
+    # ...yoksa inline JSON metni (test/gecici). Ikisi de bossa unconfigured.
     fcm_service_account_json: str = ""
     fcm_base_url: str = "https://fcm.googleapis.com"
 

@@ -434,6 +434,27 @@ async with tenant_session(tenant_id) as session:
   uretici (Prompt 2'de token'dan gelecek).
 - `tenant_session(tenant_id)` — worker/servis icin context manager.
 
+## Push (FCM) — gercek kimligi acma
+
+`FcmProvider` (`app/push.py`) gercek FCM HTTP v1 + OAuth2 kosar; **varsayilan
+`PUSH_PROVIDER=noop`** oldugundan test/CI hicbir zaman gercek push atmaz.
+
+1. Kimlik dosyasi: `infra/secrets/fcm-service-account.json` (**.gitignore'da;
+   icerigi asla loglanmaz/yazdirilmaz — yalniz dosya YOLU kullanilir**).
+2. `.env`'e `PUSH_PROVIDER=fcm` yaz.
+3. Kimlik mount'lu kaldir (opsiyonel override — ana compose secrets'siz de calisir):
+   `docker compose -f docker-compose.yml -f docker-compose.push.yml up -d`
+4. **Duman testi** (Google'dan GERCEK OAuth2 token alir; push ATMAZ, token'i
+   YAZDIRMAZ): `... exec api python -m scripts.push_smoke`
+   → `token alindi, project=tesis-platform, expiry=...`
+
+Teknik: OAuth2 icin **google-auth kullanilmadi** — service account JWT'si PyJWT
+(RS256, cryptography backend) ile imzalanip `token_uri`'ye httpx ile POST edilir;
+ucu de zaten bagimlilikta, HTTP katmani mock'lanabilir kaliyor (`_http_post_form`
+/ `_fetch_token_response`). Token, expiry'ye 60 sn kala yenilenen module-ici
+onbellekte tutulur. Dosya yok/bozuk → `push_unconfigured` (no-op + log, COKME
+YOK). **Gercek uctan uca push cihaz testinde** (fiziksel cihaz + mobil build).
+
 ## Sinirlar (DEV-A)
 
 - Sadece `/backend` ve `/infra`. `/mobile`, `/admin-web`'e dokunulmaz.
