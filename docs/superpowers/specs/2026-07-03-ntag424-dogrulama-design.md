@@ -93,8 +93,9 @@ eski mobil sürümler kırılmaz, alan etkisizleşir). Karar tablosu:
   ihlali olursa (eşzamanlı yarış) mevcut idempotent yol çalışır. Not: bugünkü kod önce
   insert deneyip ihlalde karşılaştırıyor; SELECT-önce sırası buna eşdeğer davranışı korur,
   SAVEPOINT'li insert yarış için yine kalır.
-- `_same_request` karşılaştırmasından `imza_dogrulandi` çıkar (artık türetilmiş değer);
-  yerine `sdm_picc_data`/`sdm_cmac` karşılaştırmaya girer.
+- `_same_request` karşılaştırmasından `imza_dogrulandi` çıkar (artık türetilmiş değer).
+  `sdm_picc_data`/`sdm_cmac` persist edilmediğinden karşılaştırmaya GİREMEZ —
+  idempotency gövde karşılaştırması persist edilen alanlarla sınırlıdır (bilinçli sınır).
 
 ### 5) Sözleşme değişiklikleri (/contracts)
 
