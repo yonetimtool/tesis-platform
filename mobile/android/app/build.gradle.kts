@@ -4,6 +4,14 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// FCM: google-services.json .gitignore'da (repoya girmez; her gelistirici kendi
+// kopyasini koyar — bkz. mobile/README.md). Dosya yoksa plugin uygulanmaz ki
+// build kirilmasin; o build'de Firebase calisma zamaninda baslatilamaz ve
+// uygulama push'u sessizce devre disi birakir.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.tesisguvenlik.mobile"
     compileSdk = flutter.compileSdkVersion

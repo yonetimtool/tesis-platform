@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'src/features/push/presentation/push_registrar.dart';
+import 'src/features/push/presentation/push_setup.dart';
 import 'src/features/scan/data/scan_outbox.dart';
 import 'src/routing/app_router.dart';
 
 void main() {
   runApp(const ProviderScope(child: TesisGuvenlikApp()));
 }
+
+/// On plan push bildirimini SnackBar ile gostermek icin kok messenger.
+/// (Arka plan/kapali durumda FCM bildirimi sistem tepsisine kendisi dusurur;
+/// on planda dusurmez — biz gosteririz.)
+final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 class TesisGuvenlikApp extends ConsumerWidget {
   const TesisGuvenlikApp({super.key});
@@ -16,10 +23,25 @@ class TesisGuvenlikApp extends ConsumerWidget {
     // Outbox otomatik senkron tetikleyicileri (baglanti/on plana gelme/login)
     // uygulama boyunca canli kalsin.
     ref.watch(outboxAutoSyncProvider);
+    // Push: login sonrasi FCM token kaydi (Firebase yoksa sessizce devre disi).
+    ref.watch(pushSetupProvider);
+    // On planda gelen push → basit SnackBar (zengin gosterim ileride).
+    ref.listen(pushRegistrarProvider.select((s) => s.sonBildirim),
+        (prev, next) {
+      if (next == null || identical(prev, next)) return;
+      rootScaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text(next.displayText),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    });
+
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: 'Tesis Guvenlik',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1565C0)),
         useMaterial3: true,

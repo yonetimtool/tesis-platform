@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../../push/presentation/push_registrar.dart';
 import '../data/auth_repository_impl.dart';
 
 enum AuthStatus {
@@ -93,6 +94,10 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    // Push cihaz kaydini auth token'lar HENUZ gecerliyken pasiflestir
+    // (DELETE /devices auth ister). Hatalari kendi icinde yutar — push
+    // sorunu logout'u engellemez.
+    await ref.read(pushRegistrarProvider.notifier).onLogout();
     await ref.read(authRepositoryProvider).logout();
     state = state.copyWith(status: AuthStatus.unauthenticated);
   }

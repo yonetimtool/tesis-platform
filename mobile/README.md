@@ -1048,3 +1048,77 @@ Scan/görev outbox'ı bu karara KARIŞMAZ (onlar geçmişe dönük kanıt kayıt
 5. Yarış testi: iki cihaz aynı anda "Zimmetine al" → biri 201, diğeri 409
    "Demirbaş zaten zimmetli." + kart otomatik tazelenir.
 6. Uçak modunda okutma/işlem → net "bağlantı gerekli" uyarısı.
+
+## 14. Push bildirim — FCM entegrasyonu (Faz 4)
+
+Backend gerçek FCM (HTTP v1) ile push atabiliyor (`contracts/README.md`
+"Push bildirim" bölümü); mobil ayağı: **token al → `POST /devices` kaydet →
+bildirimi göster**. Kod: `lib/src/features/push/`.
+
+### google-services.json (repoya GİRMEZ)
+
+Firebase Android uygulaması kayıtlı: `com.tesisguvenlik.mobile`. Yapılandırma
+dosyası **`mobile/android/app/google-services.json`** — kök `.gitignore`'da,
+**commit edilmez**. Locale çeken herkes Firebase Console'dan
+(tesis-platform → Android app) kendi kopyasını indirip aynı yola koyar.
+
+- **Dosya VARSA:** `google-services` Gradle plugin'i uygulanır (app
+  `build.gradle.kts`'de koşullu `apply`), Firebase çalışır.
+- **Dosya YOKSA:** build YİNE geçer (plugin uygulanmaz); çalışma zamanında
+  `Firebase.initializeApp` hata verir, yakalanır → push **sessizce devre
+  dışı** (`PushDurum.devreDisi`), uygulamanın geri kalanı normal çalışır
+  (kabul kriteri — CI/yeni geliştirici senaryosu).
+
+### Token yaşam döngüsü (`push_registrar.dart`)
+
+- **Login/oturum geri yükleme sonrası** (`pushSetupProvider` tetikler):
+  `Firebase.initializeApp` → bildirim izni istemi (Android 13+
+  `POST_NOTIFICATIONS`; manifest'e eklendi) → `getToken()` →
+  `POST /devices {fcm_token, platform:"android"}`. Backend **idempotent
+  upsert** — her açılışta göndermek güvenli; kayıt hatası (ağ vb.) yutulur,
+  sonraki açılışta yeniden denenir.
+- **`onTokenRefresh`:** eski token `DELETE /devices/{token}` ile
+  pasifleştirilir (best-effort), yenisi kaydedilir. Yerel işaret yoksa
+  (logout olmuş) kayıt DENENMEZ (oturumsuz 401 olurdu).
+- **Logout:** `AuthController.logout`, auth token'lar HENÜZ geçerliyken
+  `PushRegistrar.onLogout()` çağırır → `DELETE /devices/{fcm_token}` (404
+  başarı sayılır) + yerel işaret temizlenir. Push hatası logout'u asla
+  engellemez.
+- Kayıtlı token `flutter_secure_storage`'da tutulur
+  (`push.registered_fcm_token`) — uygulama yeniden açılıp logout olsa bile
+  hangi token'ın pasifleştirileceği bilinir.
+- Mimari not: `PushRegistrar` auth'a bağımlı DEĞİLDİR (logout kancası ters
+  yönde bağımlılık kurduğundan, auth→push köprüsü ayrı `pushSetupProvider`
+  glue'sunda — aksi provider döngüsü olurdu).
+
+### Bildirim gösterimi
+
+- **Arka plan / kapalı:** backend `notification` bloğu (title+body) + `data`
+  gönderdiği için (`backend/app/push.py`) FCM bildirimi **sistem tepsisine
+  kendisi düşürür**; ek kod yok. Dokununca uygulama açılır (ana ekran) —
+  şimdilik yeterli.
+- **Ön planda:** `onMessage` yakalanır → kök `ScaffoldMessenger` ile basit
+  **SnackBar** ("başlık — gövde"). Bilinçli dar kapsam:
+  `flutter_local_notifications` EKLENMEDİ; **zengin ön-plan bildirimi
+  ileride**.
+- **İleride (derin-link):** `data.tip` mevcut (`acil_durum`,
+  `kacirilan_tur`, `peyzaj_*`) — bildirime dokununca ilgili ekrana gitme
+  (`onMessageOpenedApp` + go_router) sonraki iş.
+
+### iOS
+
+**Yapılandırılmadı** (bilerek): iOS push, Mac + Apple Developer hesabı +
+APNs anahtarı + `GoogleService-Info.plist` gerektirir — **ayrı iş**. Kod
+tarafı hazır (platform `ios` gönderimi destekli); yalnız yapılandırma eksik.
+
+### Testler
+
+`test/push_registrar_test.dart` (sahte `PushMessaging`/`DeviceApi` ile):
+login→kayıt, restore→kayıt, Firebase yok→devre dışı (çökme yok), token
+null→kayıt yok, kayıt hatası yutulur, refresh→eski pasif + yeni kayıt,
+logout→unregister+temizlik (hata yutulur), logout sonrası refresh kayıt
+denemez, ön plan mesajı state'e yansır, çift abonelik yok.
+
+> **Gerçek uçtan uca push cihaz testinde:** fiziksel cihaz + backend
+> `PUSH_PROVIDER=fcm` ile doğrulanacak (backend duman testi geçti; mobil
+> birim testleri Firebase'i sahteler).
