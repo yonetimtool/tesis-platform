@@ -1,6 +1,6 @@
 """Shift CRUD — /contracts/openapi.yaml (shifts) + RBAC (auth.md §4).
 
-RBAC: GET admin/security/cleaning; POST/PATCH/DELETE yalniz admin.
+RBAC: GET admin/security/tesis_gorevlisi; POST/PATCH/DELETE yalniz admin.
 Tenant token'dan gelir (get_tenant_db + RLS); istekten ASLA alinmaz.
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ from ..schemas import (
 router = APIRouter(prefix="/shifts", tags=["shifts"])
 
 _ADMIN = require_role("admin")
-_READER = require_role("admin", "security", "cleaning")
+_READER = require_role("admin", "security", "tesis_gorevlisi")
 
 
 @router.get("", response_model=ShiftListResponse)

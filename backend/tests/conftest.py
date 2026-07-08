@@ -102,14 +102,17 @@ API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 # world kullanicilarinin kimlik bilgileri (admin A ve B AYNI email -> slug ayristirir)
 SHARED_EMAIL = "admin@example.com"
+YONETICI_EMAIL = "yonetici@example.com"
 GUARD_EMAIL = "guard@example.com"
-CLEANER_EMAIL = "cleaner@example.com"
+GOREVLI_EMAIL = "gorevli@example.com"
 RESIDENT_EMAIL = "resident@example.com"
 PW_ADMIN_A = "passwordA1"
+PW_YONETICI_A = "yoneticipassA1"
 PW_GUARD_A = "guardpassA1"
-PW_CLEANER_A = "cleanerpassA1"
+PW_GOREVLI_A = "gorevlipassA1"
 PW_RESIDENT_A = "residentpassA1"
 PW_ADMIN_B = "passwordB1"
+PW_YONETICI_B = "yoneticipassB1"
 
 
 @pytest.fixture
@@ -144,10 +147,12 @@ def world(owner_conn):
         )
         users = [
             (a, "Admin A", SHARED_EMAIL, PW_ADMIN_A, "admin"),
+            (a, "Yonetici A", YONETICI_EMAIL, PW_YONETICI_A, "yonetici"),
             (a, "Guard A", GUARD_EMAIL, PW_GUARD_A, "security"),
-            (a, "Cleaner A", CLEANER_EMAIL, PW_CLEANER_A, "cleaning"),
+            (a, "Gorevli A", GOREVLI_EMAIL, PW_GOREVLI_A, "tesis_gorevlisi"),
             (a, "Resident A", RESIDENT_EMAIL, PW_RESIDENT_A, "resident"),
             (b, "Admin B", SHARED_EMAIL, PW_ADMIN_B, "admin"),
+            (b, "Yonetici B", YONETICI_EMAIL, PW_YONETICI_B, "yonetici"),
         ]
         for tid, ad, email, pw, role in users:
             cur.execute(
@@ -162,10 +167,12 @@ def world(owner_conn):
         "slug_a": slug_a,
         "slug_b": slug_b,
         "admin_a": {"email": SHARED_EMAIL, "password": PW_ADMIN_A},
+        "yonetici_a": {"email": YONETICI_EMAIL, "password": PW_YONETICI_A},
         "guard_a": {"email": GUARD_EMAIL, "password": PW_GUARD_A},
-        "cleaning_a": {"email": CLEANER_EMAIL, "password": PW_CLEANER_A},
+        "gorevli_a": {"email": GOREVLI_EMAIL, "password": PW_GOREVLI_A},
         "resident_a": {"email": RESIDENT_EMAIL, "password": PW_RESIDENT_A},
         "admin_b": {"email": SHARED_EMAIL, "password": PW_ADMIN_B},
+        "yonetici_b": {"email": YONETICI_EMAIL, "password": PW_YONETICI_B},
     }
 
     with owner_conn.cursor() as cur:

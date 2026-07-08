@@ -46,11 +46,11 @@ def test_asset_crud_and_nfc_conflict(client, world):
 def test_asset_rbac_and_isolation(client, world):
     admin_a = _headers(client, world["slug_a"], world["admin_a"])
     admin_b = _headers(client, world["slug_b"], world["admin_b"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
 
     a = _new_asset(client, admin_a)
-    # cleaning Asset CRUD yapamaz
-    assert client.post("/assets", headers=cleaning, json={"ad": "x"}).status_code == 403
+    # gorevli Asset CRUD yapamaz
+    assert client.post("/assets", headers=gorevli, json={"ad": "x"}).status_code == 403
     # B, A'nin asset'ini goremez
     assert client.get(f"/assets/{a['id']}", headers=admin_b).status_code == 404
 
@@ -87,7 +87,7 @@ def test_checkout_idempotency_and_400(client, world):
 def test_checkout_already_assigned_409_single_open(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     guard = _headers(client, world["slug_a"], world["guard_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     a = _new_asset(client, admin)
 
     assert client.post(
@@ -96,7 +96,7 @@ def test_checkout_already_assigned_409_single_open(client, world):
 
     # baska kullanici/baska key ile tekrar checkout -> 409 (zaten zimmetli)
     second = client.post(
-        f"/assets/{a['id']}/checkout", headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex}, json={}
+        f"/assets/{a['id']}/checkout", headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex}, json={}
     )
     assert second.status_code == 409
 
@@ -204,11 +204,11 @@ def test_checkin_ownership_other_user_403(client, world):
     """Acik zimmet baskasindaysa checkin 403; sahibi kapatabilir."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
     guard = _headers(client, world["slug_a"], world["guard_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     a = _new_asset(client, admin)
     _checkout(client, guard, a["id"])
 
-    r = _checkin(client, cleaning, a["id"])
+    r = _checkin(client, gorevli, a["id"])
     assert r.status_code == 403, r.text
     assert r.json()["error"]["code"] == "forbidden"
     assert "baskasinin uzerinde" in r.json()["error"]["message"]
@@ -286,13 +286,13 @@ def test_list_assets_checked_out_by_me(client, world):
     """?checked_out_by=me -> yalniz token kullanicisinin acik zimmetindekiler."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
     guard = _headers(client, world["slug_a"], world["guard_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
 
     mine = _new_asset(client, admin)      # guard alacak
-    theirs = _new_asset(client, admin)    # cleaning alacak
+    theirs = _new_asset(client, admin)    # gorevli alacak
     _new_asset(client, admin)             # bos kalacak
     _checkout(client, guard, mine["id"])
-    _checkout(client, cleaning, theirs["id"])
+    _checkout(client, gorevli, theirs["id"])
 
     body = client.get("/assets", headers=guard, params={"checked_out_by": "me", "limit": 200}).json()
     ids = [it["id"] for it in body["items"]]

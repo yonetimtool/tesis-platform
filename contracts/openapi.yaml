@@ -1143,9 +1143,9 @@ paths:
         nfc_tag_uid verilirse asset'in nfc'siyle eslesmeli. Acik zimmet yoksa 409.
 
         SAHIPLIK (mobil §13 #6): checkin'i YALNIZ acik zimmetin sahibi
-        (alan_user_id == token user) veya ADMIN (yonetici mudahalesi)
+        (alan_user_id == token user) veya ADMIN (yonetim mudahalesi)
         yapabilir; baska kullanici 403 `forbidden`
-        ("Zimmet baskasinin uzerinde..."). security/cleaning baskasinin
+        ("Zimmet baskasinin uzerinde..."). security/tesis_gorevlisi baskasinin
         zimmetini KAPATAMAZ.
 
         Kapatan kullanici `birakan_user_id` olarak kaydedilir (cevapta ve
@@ -1792,7 +1792,7 @@ paths:
       tags: [users]
       summary: Kullanici olustur (admin)
       description: |
-        Her rol (admin/security/cleaning/resident) olusturulabilir. parola bcrypt ile
+        Her rol (admin/yonetici/security/tesis_gorevlisi/resident) olusturulabilir. parola bcrypt ile
         hash'lenir; password_hash YANITTA donmez. email tenant icinde benzersiz.
       requestBody:
         required: true
@@ -1975,7 +1975,7 @@ components:
 
     UserRole:
       type: string
-      enum: [admin, security, cleaning, resident]
+      enum: [admin, yonetici, security, tesis_gorevlisi, resident]
 
     # --------------------------- devices --------------------------- #
     DevicePlatform:

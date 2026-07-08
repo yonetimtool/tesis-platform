@@ -33,24 +33,24 @@ def _complete(client, completer, task_id, when, **extra):
 
 
 def _world_a_data(client, world):
-    """A tenant'inda 3 tamamlama: temizlik@T1 (cleaning, foto+nfc), kontrol@T2
-    (cleaning), peyzaj@T3 (security/guard). Dondurur: ids + user ids."""
+    """A tenant'inda 3 tamamlama: temizlik@T1 (gorevli, foto+nfc), kontrol@T2
+    (gorevli), peyzaj@T3 (security/guard). Dondurur: ids + user ids."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     guard = _headers(client, world["slug_a"], world["guard_a"])
-    cleaning_id = client.get("/me", headers=cleaning).json()["id"]
+    gorevli_id = client.get("/me", headers=gorevli).json()["id"]
     guard_id = client.get("/me", headers=guard).json()["id"]
 
     t_tem = _new_task(client, admin, "temizlik", "Cop")
     t_kon = _new_task(client, admin, "kontrol", "Kontrol")
     t_pey = _new_task(client, admin, "peyzaj", "Sulama")
 
-    c1 = _complete(client, cleaning, t_tem["id"], T1, foto_key="a/x.jpg", nfc_tag_uid="04AABB")
-    c2 = _complete(client, cleaning, t_kon["id"], T2)
+    c1 = _complete(client, gorevli, t_tem["id"], T1, foto_key="a/x.jpg", nfc_tag_uid="04AABB")
+    c2 = _complete(client, gorevli, t_kon["id"], T2)
     c3 = _complete(client, guard, t_pey["id"], T3)
     return {
-        "admin": admin, "cleaning": cleaning, "guard": guard,
-        "cleaning_id": cleaning_id, "guard_id": guard_id,
+        "admin": admin, "tesis_gorevlisi": gorevli, "guard": guard,
+        "gorevli_id": gorevli_id, "guard_id": guard_id,
         "t_tem": t_tem, "t_kon": t_kon, "t_pey": t_pey,
         "c1": c1["id"], "c2": c2["id"], "c3": c3["id"],
     }
@@ -123,6 +123,6 @@ def test_tenant_isolation(client, world):
 def test_rbac(client, world):
     guard = _headers(client, world["slug_a"], world["guard_a"])
     assert client.get("/task-completions", headers=guard).status_code == 200
-    for role in ("cleaning_a", "resident_a"):
+    for role in ("gorevli_a", "resident_a"):
         h = _headers(client, world["slug_a"], world[role])
         assert client.get("/task-completions", headers=h).status_code == 403

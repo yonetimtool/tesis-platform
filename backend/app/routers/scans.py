@@ -1,6 +1,6 @@
 """POST /scans — tur kaniti alimi (idempotent) + NTAG424 SDM dogrulamasi.
 
-RBAC (auth.md §4): admin/security/cleaning gonderebilir; resident -> 403.
+RBAC (auth.md §4): admin/security/tesis_gorevlisi gonderebilir; resident -> 403.
 tenant + guard_id token'dan turetilir (istekten ALINMAZ).
 
 Idempotency (offline outbox cift gonderimi):
@@ -40,7 +40,7 @@ from ..schemas import ScanCreate, ScanEventOut
 
 router = APIRouter(prefix="/scans", tags=["scans"])
 
-_SCANNER = require_role("admin", "security", "cleaning")
+_SCANNER = require_role("admin", "security", "tesis_gorevlisi")
 
 
 def _is_unique_violation(exc: IntegrityError) -> bool:

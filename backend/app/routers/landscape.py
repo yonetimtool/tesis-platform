@@ -1,7 +1,7 @@
 """GET /landscape/schedule — peyzaj bakim takvimi.
 
 Ayri model YOK: tip='peyzaj' task'lari, sonraki_planlanan'a gore ARTAN sirada.
-Mevcut Task semasi yeniden kullanilir. RBAC: admin/security/cleaning (okuma).
+Mevcut Task semasi yeniden kullanilir. RBAC: admin/security/tesis_gorevlisi (okuma).
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from ..schemas import TaskListResponse
 
 router = APIRouter(prefix="/landscape", tags=["tasks"])
 
-_READER = require_role("admin", "security", "cleaning")
+_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 
 
 @router.get("/schedule", response_model=TaskListResponse)

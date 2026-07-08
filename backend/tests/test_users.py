@@ -41,9 +41,9 @@ def test_list_users_no_password_hash_and_filters(client, world):
 
 def test_list_users_rbac_and_isolation(client, world):
     guard = _headers(client, world["slug_a"], world["guard_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     resident = _headers(client, world["slug_a"], world["resident_a"])
-    for h in (guard, cleaning, resident):
+    for h in (guard, gorevli, resident):
         assert client.get("/users", headers=h).status_code == 403
 
     # tenant izolasyonu: A admin'i B kullanicisini goremez
@@ -81,7 +81,7 @@ def test_create_user_can_login_and_email_conflict(client, world):
     dup = client.post(
         "/users",
         headers=admin,
-        json={"ad": "x", "email": email, "role": "cleaning", "password": "Baska1234"},
+        json={"ad": "x", "email": email, "role": "tesis_gorevlisi", "password": "Baska1234"},
     )
     assert dup.status_code == 409 and dup.json()["error"]["code"] == "conflict"
 
@@ -103,7 +103,7 @@ def test_update_user_role_active_password(client, world):
     created = client.post(
         "/users",
         headers=admin,
-        json={"ad": "Guncellenecek", "email": email, "role": "cleaning", "password": "IlkParola1"},
+        json={"ad": "Guncellenecek", "email": email, "role": "tesis_gorevlisi", "password": "IlkParola1"},
     ).json()
     uid = created["id"]
 

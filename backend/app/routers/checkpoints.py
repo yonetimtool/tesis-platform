@@ -1,7 +1,7 @@
 """Checkpoint CRUD + SDM anahtar kaydi — /contracts/openapi.yaml + RBAC (auth.md §4).
 
 nfc_tag_uid tenant icinde benzersiz (uq_checkpoint_tenant_nfc) — cakismada 409.
-RBAC: GET admin/security/cleaning; POST/PATCH/DELETE ve sdm-key yalniz admin.
+RBAC: GET admin/security/tesis_gorevlisi; POST/PATCH/DELETE ve sdm-key yalniz admin.
 SDM anahtari SDM_KEK ile sifreli saklanir ve HICBIR response'ta donmez.
 """
 from __future__ import annotations
@@ -30,7 +30,7 @@ from ..schemas import (
 router = APIRouter(prefix="/checkpoints", tags=["checkpoints"])
 
 _ADMIN = require_role("admin")
-_READER = require_role("admin", "security", "cleaning")
+_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 
 _NFC_CONFLICT = APIError(409, "conflict", "nfc_tag_uid bu tenant'ta zaten kayitli.")
 

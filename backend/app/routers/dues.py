@@ -1,6 +1,6 @@
 """Aidat — tahakkuk + odeme + bakiye — /contracts/openapi.yaml.
 
-RBAC: tahakkuk/odeme/borc yonetimi admin; resident yalniz GET /me/dues (kendi).
+RBAC: tahakkuk/odeme YAZMA admin; rapor okuma (GET) admin/yonetici; resident yalniz GET /me/dues (kendi).
 Bakiye = SUM(tahakkuk.tutar_kurus) - SUM(odeme.tutar_kurus WHERE durum='basarili').
 Tutarlar KURUS (integer). Odeme idempotent (scan SAVEPOINT deseni). Gercek tahsilat
 yok — soyut PaymentProvider (app/payments.py).
@@ -36,6 +36,7 @@ from ..schemas import (
 router = APIRouter(tags=["aidat"])
 
 _ADMIN = require_role("admin")
+_REPORT = require_role("admin", "yonetici")
 _RESIDENT = require_role("resident")
 
 
@@ -139,7 +140,7 @@ async def list_assessments(
     unit_id: uuid.UUID | None = Query(None),
     donem: str | None = Query(None),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_REPORT),
 ) -> DuesAssessmentListResponse:
     where = []
     if unit_id is not None:
@@ -256,7 +257,7 @@ async def list_payments(
     unit_id: uuid.UUID | None = Query(None),
     donem: str | None = Query(None, description="'YYYY-MM' — donem bazli rapor filtresi"),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_REPORT),
 ) -> DuesPaymentListResponse:
     where = [] if unit_id is None else [DuesPayment.unit_id == unit_id]
     if donem is not None:
@@ -275,7 +276,7 @@ async def list_payments(
 async def unit_dues(
     unit_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_REPORT),
 ) -> UnitDuesStatus:
     unit = await get_or_404(db, Unit, unit_id)
     return await _unit_status(db, unit)

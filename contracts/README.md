@@ -77,7 +77,7 @@ degisecekse once burasi degisir, sonra kod.
   FK'ler composite + kolon-ozel `ON DELETE SET NULL`. Erisim: admin + security
   (`GET /notifications`, `PATCH /notifications/{id}` okundu). Gercek push/SMS ayri is.
 - `task` / `task_completion`: esnek gorev sistemi (tip: temizlik/kontrol/ilaclama/
-  bakim/diger). Task CRUD admin; tamamlama (`POST /tasks/{id}/completions`) cleaning+
+  bakim/diger). Task CRUD admin/yonetici; tamamlama (`POST /tasks/{id}/completions`) tesis_gorevlisi+
   security+admin. Completion `UNIQUE (tenant_id, idempotency_key)` (offline cift
   gonderim korumasi, scan deseni). Foto kanit: **MinIO** (S3-uyumlu); `POST /uploads/presign`
   presigned PUT URL + `foto_key` doner, istemci dogrudan MinIO'ya yukler, sonra
@@ -89,20 +89,21 @@ degisecekse once burasi degisir, sonra kod.
   artan). Hatirlatma: `notification_tip` 'peyzaj_yaklasan' (planlanan yaklasinca) /
   'peyzaj_kacirilan' (planlanan gecmis + tamamlanmamis); idempotency `notification.dedup_key`
   (`UNIQUE (tenant_id, dedup_key)`), deger `<tip>:<task_id>:<planlanan_iso>`. Erisim: peyzaj
-  yonetimi admin (Task CRUD), tamamlama+takvim okuma cleaning/security/admin.
+  yonetimi admin/yonetici (Task CRUD), tamamlama gonderme tesis_gorevlisi/security/admin,
+  takvim okuma + yonetici.
 - `asset` / `asset_checkout`: demirbas envanteri + zimmet (al/birak, NFC). `asset.nfc_tag_uid`
   tenant icinde benzersiz (partial unique, NULL haric). `asset.durum` (musait/zimmetli/bakimda).
   **Tek aktif zimmet**: bir asset icin en fazla bir acik checkout → partial unique
   `(tenant_id, asset_id) WHERE birakma_zamani IS NULL`. Idempotency: alma `UNIQUE(tenant_id,
   idempotency_key)`, birakma `UNIQUE(tenant_id, birakma_idempotency_key)` (partial). FK'ler
-  composite. Asset CRUD admin; checkout/checkin/history cleaning/security/admin. checkout →
+  composite. Asset CRUD admin; checkout/checkin tesis_gorevlisi/security/admin; goruntuleme/history + yonetici. checkout →
   durum 'zimmetli', checkin → 'musait'.
 - `emergency_alert`: acil durum butonu (saha → yonetim anlik alarm). `durum` (acik|cozuldu).
   `POST /emergency` (saha+admin) → alarm + yuksek oncelikli `notification_tip='acil_durum'`
   (dashboard `son_alarmlar`'da en ustte). Idempotency `UNIQUE(tenant_id, idempotency_key)`
-  (panik mukerrer basim). Liste/coz admin. FK composite (cozen kolon-ozel SET NULL).
+  (panik mukerrer basim). Liste/coz admin/yonetici. FK composite (cozen kolon-ozel SET NULL).
 - **Yonetim numarasi:** ayri tablo YOK — `tenant.acil_durum_telefon` (tek alan). `GET
-  /tenant/settings` (admin/security/cleaning) ile okunur; mobil acil durumda `tel:` ile arar
+  /tenant/settings` (admin/yonetici/security/tesis_gorevlisi) ile okunur; mobil acil durumda `tel:` ile arar
   (backend aramaz). `PATCH /tenant/settings` (admin) ile ayarlanir.
 - `checkpoint.nfc_tag_uid` tenant icinde benzersiz (NFC eslemesi).
 - `patrol_plan` gun-ici sablon; `patrol_window` scheduler'in urettigi somut
@@ -113,8 +114,12 @@ degisecekse once burasi degisir, sonra kod.
 
 ## Rol modeli — ozet
 
-`admin` (yonetim/CRUD + panel), `security` & `cleaning` (saha: tanim okur, scan
-gonderir), `resident` (v0'da operasyon erisimi yok). Tam matris: `auth.md` §4.
+`admin` (PLATFORM admini: tum CRUD + panel — panel YALNIZ admin), `yonetici`
+(site yoneticisi — musteri: mobil; gorev atama/takip, devriye/rapor okuma, acil
+durum, demirbas goruntuleme; kendi tenant'iyla sinirli), `security` &
+`tesis_gorevlisi` (saha: tanim okur, scan gonderir; tesis_gorevlisi = eski
+`cleaning`, temizlik+bahcivan+teknik birlesik), `resident` (v0'da operasyon
+erisimi yok). Tam matris: `auth.md` §4.
 
 ## Migration'i calistirma
 
@@ -138,7 +143,8 @@ dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`
   `PaymentProvider`). `UNIQUE(tenant_id, idempotency_key)` (cift kayit korumasi).
 - **Bakiye hesabi:** `bakiye_kurus = SUM(tahakkuk.tutar_kurus) - SUM(odeme.tutar_kurus WHERE
   durum='basarili')`. Pozitif bakiye = borc. Kismi odeme bakiyeyi azaltir.
-- **Erisim:** Unit/tahakkuk/odeme yonetimi yalniz **admin**; `security/cleaning` aidat gormez;
+- **Erisim:** Unit/tahakkuk/odeme YAZMA yalniz **admin**; `yonetici` aidat raporlarini okur;
+  `security/tesis_gorevlisi` aidat gormez;
   `resident` yalniz `GET /me/dues` ile kendi dairelerinin borcunu gorur. Denetlenebilirlik:
   her odeme `kaydeden_user_id` + `odeme_zamani` + `donem` ile izlenir.
 - **Saglayici + webhook (kart):** `PAYMENT_PROVIDER = manual|iyzico|paytr` (env). Kart akisi

@@ -1,6 +1,6 @@
 """Asset (demirbas) CRUD + zimmet (checkout/checkin/history) — /contracts/openapi.yaml.
 
-RBAC: Asset CRUD admin; checkout/checkin/history + GET admin/security/cleaning.
+RBAC: Asset CRUD admin; checkout/checkin/history + GET admin/security/tesis_gorevlisi.
 Checkin SAHIPLIK kontrollu (mobil §13 #6): acik zimmeti yalniz SAHIBI veya admin
 kapatabilir; baskasi 403. Idempotency scan desenini (SAVEPOINT) yeniden kullanir.
 Tek aktif zimmet DB'de partial unique ile garanti; uygulama da onceden kontrol
@@ -41,7 +41,8 @@ from ..schemas import (
 router = APIRouter(prefix="/assets", tags=["assets"])
 
 _ADMIN = require_role("admin")
-_FIELD = require_role("admin", "security", "cleaning")
+_FIELD = require_role("admin", "security", "tesis_gorevlisi")
+_VIEWER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 
 
 def _constraint(exc: IntegrityError) -> str | None:
@@ -91,7 +92,7 @@ async def list_assets(
         None, description="'me' veya user UUID (UUID yalniz admin) — acik zimmet filtresi"
     ),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_FIELD),
+    user: AppUser = Depends(_VIEWER),
 ) -> AssetListResponse:
     where = []
     if kategori is not None:
@@ -139,7 +140,7 @@ async def list_assets(
 async def get_asset(
     asset_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_FIELD),
+    _: AppUser = Depends(_VIEWER),
 ) -> AssetOut:
     asset = await get_or_404(db, Asset, asset_id)
     out = AssetOut.model_validate(asset)
@@ -372,7 +373,7 @@ async def asset_history(
     offset: int = Query(0, ge=0),
     order: Literal["asc", "desc"] = Query("desc", description="alma_zamani sirasi (varsayilan: en yeni ustte)"),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_FIELD),
+    _: AppUser = Depends(_VIEWER),
 ) -> AssetCheckoutListResponse:
     await get_or_404(db, Asset, asset_id)
     base = AssetCheckout.asset_id == asset_id

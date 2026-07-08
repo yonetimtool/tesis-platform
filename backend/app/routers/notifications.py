@@ -17,7 +17,7 @@ from ..schemas import NotificationListResponse, NotificationOut, NotificationUpd
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
-_VIEWER = require_role("admin", "security")
+_VIEWER = require_role("admin", "yonetici", "security")
 
 
 @router.get("", response_model=NotificationListResponse)

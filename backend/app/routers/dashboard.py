@@ -1,6 +1,6 @@
 """GET /dashboard/live — canli panel ozeti — /contracts/openapi.yaml.
 
-RBAC (auth.md §4): admin + security (cleaning/resident degil).
+RBAC (auth.md §4): admin + security (tesis_gorevlisi/resident degil).
 tenant token'dan; RLS ile izole. N+1'den kacinmak icin set-tabanli 3 sorgu:
   1) tenant.timezone (bugunun yerel sinirlarini UTC'ye cevirmek icin)
   2) aktif_turlar: bugunku patrol_window'lar + beklenen/okutulan checkpoint sayilari
@@ -22,7 +22,7 @@ from ..schemas import AktifTurOut, AlarmOut, DashboardLiveOut
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
-_VIEWER = require_role("admin", "security")
+_VIEWER = require_role("admin", "yonetici", "security")
 
 # Bugunku pencereler + beklenen (atanmis aktif checkpoint) ve okutulan
 # (pencere araliginda okutulmus, beklenen) sayilari — tek set-tabanli sorgu.

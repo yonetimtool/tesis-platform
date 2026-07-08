@@ -9,7 +9,7 @@ Endpoint'ler (sozlesmedeki gibi):
   GET    /patrol-plans/{id}/checkpoints  atanmis noktalar (sirali)
   PUT    /patrol-plans/{id}/checkpoints  atamayi tamamen degistir (replace)
 
-RBAC: GET admin/security/cleaning; yazma (POST/PATCH/DELETE/PUT) yalniz admin.
+RBAC: GET admin/security/tesis_gorevlisi; yazma (POST/PATCH/DELETE/PUT) yalniz admin.
 Capraz-tenant shift/checkpoint referansi uygulama katmaninda 422 ile reddedilir.
 """
 from __future__ import annotations
@@ -38,7 +38,7 @@ from ..schemas import (
 router = APIRouter(prefix="/patrol-plans", tags=["patrol-plans"])
 
 _ADMIN = require_role("admin")
-_READER = require_role("admin", "security", "cleaning")
+_READER = require_role("admin", "security", "tesis_gorevlisi")
 
 
 async def _ensure_shift_in_tenant(db: AsyncSession, shift_id: uuid.UUID | None) -> None:

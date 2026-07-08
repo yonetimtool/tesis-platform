@@ -202,10 +202,10 @@ def test_multiple_active_windows_all_returned(client, world, owner_conn):
 
 
 def test_rbac(client, world):
-    """admin + security 200; cleaning/resident 403 (dashboard ile tutarli)."""
+    """admin + security 200; gorevli/resident 403 (dashboard ile tutarli)."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
     sec = _headers(client, world["slug_a"], world["guard_a"])
-    cle = _headers(client, world["slug_a"], world["cleaning_a"])
+    cle = _headers(client, world["slug_a"], world["gorevli_a"])
     res = _headers(client, world["slug_a"], world["resident_a"])
     assert client.get("/me/patrol-window", headers=admin).status_code == 200
     assert client.get("/me/patrol-window", headers=sec).status_code == 200

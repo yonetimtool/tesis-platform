@@ -161,9 +161,9 @@ def test_tenant_isolation(client, world, owner_conn):
 
 
 def test_rbac(client, world):
-    # security (guard) -> 200; cleaning/resident -> 403
+    # security (guard) -> 200; gorevli/resident -> 403
     guard = _headers(client, world["slug_a"], world["guard_a"])
     assert client.get("/patrol-windows", headers=guard).status_code == 200
-    for role in ("cleaning_a", "resident_a"):
+    for role in ("gorevli_a", "resident_a"):
         h = _headers(client, world["slug_a"], world[role])
         assert client.get("/patrol-windows", headers=h).status_code == 403

@@ -161,7 +161,7 @@ seed: `acme-plaza` icin `A-12` dairesi + `resident@acme.com` baglantisi + `2026-
 
 Saha → yonetim anlik alarm (`app/routers/emergency.py`). Gercek arama mobilde (`tel:`);
 backend yalniz kaydeder + bildirir, **aramaz**.
-- **`POST /emergency`** (admin/security/cleaning): `Idempotency-Key` zorunlu (panik mukerrer
+- **`POST /emergency`** (admin/yonetici/security/tesis_gorevlisi): `Idempotency-Key` zorunlu (panik mukerrer
   basim). `tetikleyen` token'dan. → `emergency_alert` (durum 'acik') + **yuksek oncelikli
   `notification_tip='acil_durum'`** (idempotent `dedup_key="acil_durum:<id>"`). Idempotency
   200/409, key yok 400. resident 403.
@@ -172,7 +172,7 @@ backend yalniz kaydeder + bildirir, **aramaz**.
 
 ### Yonetim numarasi (nerede / nasil)
 Ayri tablo YOK — **`tenant.acil_durum_telefon`** (tek alan). Mobil acil durumda bu numarayi
-**`GET /tenant/settings`** ile okur (admin/security/cleaning) ve `tel:` ile arar. Admin
+**`GET /tenant/settings`** ile okur (admin/yonetici/security/tesis_gorevlisi) ve `tel:` ile arar. Admin
 **`PATCH /tenant/settings`** ile ayarlar. seed `acme-plaza` icin ornek numara yazar.
 
 ## Demirbas envanteri + zimmet (Asset / checkout / checkin)
@@ -180,11 +180,11 @@ Ayri tablo YOK — **`tenant.acil_durum_telefon`** (tek alan). Mobil acil durumd
 Demirbas (`asset`) + zimmet (`asset_checkout`) — "kim aldi/birakti" (NFC) (`app/routers/assets.py`).
 - **Asset CRUD** (`/assets`): GET liste (`kategori`/`durum`/`aktif`/`nfc_tag_uid`(tam eslesme)/
   `checked_out_by`(`me` | uuid — uuid yalniz admin) filtreleri, sayfali) / detay / POST / PATCH /
-  DELETE. **RBAC:** GET admin/security/cleaning; yazma yalniz admin. Liste/detay item'lari
+  DELETE. **RBAC:** GET admin/yonetici/security/tesis_gorevlisi; yazma yalniz admin. Liste/detay item'lari
   `acik_zimmet` ozeti tasir (`null` | `{alan_user_id, alan_user_ad, alinma_zamani}`).
   `nfc_tag_uid` tenant icinde benzersiz (NULL haric) → cakisma **409**. `durum`:
   musait/zimmetli/bakimda.
-- **checkout** (`POST /assets/{id}/checkout`, admin/security/cleaning): demirbasi al.
+- **checkout** (`POST /assets/{id}/checkout`, admin/security/tesis_gorevlisi): demirbasi al.
   `Idempotency-Key` zorunlu (400). `nfc_tag_uid` verilirse asset nfc'siyle eslesmeli (422).
   `alan_user_id` token'dan. **Tek aktif zimmet**: zaten zimmetliyse **409** (DB'de partial
   unique `(tenant_id, asset_id) WHERE birakma_zamani IS NULL` ile garanti). Idempotency:
@@ -204,7 +204,7 @@ Ayri tablo **YOK** — mevcut task sistemi genisletildi:
 - `task.tip='peyzaj'` + takvim alani **`task.sonraki_planlanan`** (UTC) + tekrar araligi
   olarak mevcut **`periyot_dakika`**. Yonetim mevcut **Task CRUD** ile (admin).
 - **Takvim:** `GET /landscape/schedule` → aktif peyzaj task'lari `sonraki_planlanan` ARTAN,
-  sayfali, tenant-izole (admin/security/cleaning).
+  sayfali, tenant-izole (admin/yonetici/security/tesis_gorevlisi).
 - **Tamamlama ilerletir:** periyodik task tamamlaninca (`task_completion`)
   `sonraki_planlanan += periyot_dakika` (`create_completion`, yalnizca yeni kayitta).
 - **Hatirlatma** (`scheduler.landscape_reminders`, beat, varsayilan saat basi):
@@ -223,10 +223,11 @@ kamelya kontrol, havuz, bahce vb. hepsi `tip + ad` ile ayrisir (`app/routers/tas
 
 - **Task CRUD** (`/tasks`): GET liste (`tip`/`aktif`/`atanan_user_id`(`me`|uuid — mobil
   "Gorevlerim") filtreleri, sayfali) / detay / POST / PATCH / DELETE. **RBAC:** GET
-  admin/security/cleaning; yazma yalniz admin. `atanan_user_id` ve `checkpoint_id` aynı
+  admin/yonetici/security/tesis_gorevlisi; yazma admin/yonetici (yonetici yalniz
+  security/tesis_gorevlisi'ne atayabilir). `atanan_user_id` ve `checkpoint_id` aynı
   tenant'ta olmali (capraz → 422). **`foto_zorunlu`** (bool, vars. false): true ise
   completion `foto_key`'siz kabul edilmez.
-- **Tamamlama** (`POST /tasks/{id}/completions`): admin/security/cleaning. **Idempotency-Key
+- **Tamamlama** (`POST /tasks/{id}/completions`): admin/security/tesis_gorevlisi. **Idempotency-Key
   zorunlu** (scan deseni: aynı key+gövde → 200, farklı → 409, key yok → 400). `tamamlayan_user_id`
   token'dan. Task'ın `checkpoint_id`'si varsa ve `nfc_tag_uid` gönderilirse o checkpoint'in
   nfc'siyle eşleşmeli (yoksa 422; karsilastirma **normalize**: strip+upper, `crud_helpers.norm_nfc`
@@ -262,7 +263,7 @@ curl -s -X PUT "$URL" -H 'content-type: image/jpeg' --data-binary @foto.jpg   # 
 ## Panel — GET /dashboard/live
 
 Yoneticinin canli ozeti (`app/routers/dashboard.py`).
-- **RBAC:** admin + security (cleaning/resident → 403).
+- **RBAC:** admin/yonetici/security (tesis_gorevlisi/resident → 403).
 - **aktif_turlar:** tenant-yerel **bugune** ait `patrol_window`'lar + durum +
   `beklenen_checkpoint_sayisi` (atanmis aktif checkpoint) + `okutulan_checkpoint_sayisi`
   (pencere araliginda okutulmus, beklenen). Tek set-tabanli sorgu (N+1 yok).
@@ -287,7 +288,7 @@ eklendi (onayli contract degisikligi). Davranis:
 
 Mobil ekibin bulgusu uzerine eklendi: "aktif turumda hangi noktalari okuttum" listesi
 artik sunucudan alinir — cihaz yerel kaydina gerek yok (`app/routers/me_patrol.py`).
-- **RBAC:** admin + security (cleaning/resident → 403), dashboard ile tutarli.
+- **RBAC:** admin + security (yonetici/tesis_gorevlisi/resident → 403) — saha gorevlisinin kendi turu.
 - **Aktif pencere:** su an icinde olunan pencere (`pencere_baslangic <= now < pencere_bitis`).
   Birden cok plan ayni anda aktifse **tum** pencereler `windows[]`'ta (her biri kendi
   `sira` sirali checkpoint listesiyle, `pencere_bitis` ASC); `window` + `checkpoints` =
@@ -300,7 +301,7 @@ artik sunucudan alinir — cihaz yerel kaydina gerek yok (`app/routers/me_patrol
 ## Tur kaniti — POST /scans
 
 Mobil/saha istemcisinin checkpoint okutma kanitini gonderdigi uc (`app/routers/scans.py`).
-- **RBAC:** admin/security/cleaning gonderebilir; resident → 403.
+- **RBAC:** admin/security/tesis_gorevlisi gonderebilir; yonetici/resident → 403.
 - **tenant + guard_id token'dan** turetilir (istekten alinmaz).
 - **nfc_tag_uid → checkpoint** RLS ile tenant icinde cozulur; bulunamazsa **404**
   (capraz-tenant tag da burada 404). `checkpoint_id` verilirse nfc ile tutarliligi dogrulanir.
@@ -385,15 +386,18 @@ Gelistirme/test icin **idempotent** seed (`scripts/seed.py`). Olusturur:
 | Kayit | Deger |
 |-------|-------|
 | tenant | `slug=acme-plaza`, `ad=Acme Plaza`, `tz=Europe/Istanbul` |
-| admin | `admin@acme.com` / `Admin123!` (rol: admin) |
+| admin | `admin@acme.com` / `Admin123!` (rol: admin — platform admini, panel) |
+| yonetici | `yonetici@acme.com` / `Yonetici123!` (rol: yonetici — site yoneticisi, mobil) |
 | security | `guard@acme.com` / `Guard123!` (rol: security) |
-| cleaning | `cleaner@acme.com` / `Clean123!` (rol: cleaning) |
+| tesis_gorevlisi | `cleaner@acme.com` / `Clean123!` (rol: tesis_gorevlisi) |
+| resident | `resident@acme.com` / `Resident123!` (rol: resident) |
 
 **RLS:** Yeni tenant olusturmak app_rw ile mumkun olmadigindan (RLS WITH CHECK),
 seed **OWNER** baglantisi (`OWNER_DSN`) ile calisir — migrate servisiyle ayni
 yetki. UPSERT (`ON CONFLICT DO UPDATE`) ile tekrar tekrar guvenle calisir;
 ikinci kosumda hata vermez, hesaplari bilinen dev durumuna (parola dahil) ceker.
-Parolalar `SEED_ADMIN_PASSWORD` / `SEED_GUARD_PASSWORD` / `SEED_CLEANER_PASSWORD`
+Parolalar `SEED_ADMIN_PASSWORD` / `SEED_YONETICI_PASSWORD` / `SEED_GUARD_PASSWORD` /
+`SEED_CLEANER_PASSWORD` / `SEED_RESIDENT_PASSWORD`
 env'leri ile override edilebilir.
 
 Calistirma (api ayaktayken — tek komut):

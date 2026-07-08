@@ -165,19 +165,19 @@ def test_devices_rbac(client, world):
 def test_fetch_tokens_role_and_tenant_isolation(client, world):
     admin_a = _headers(client, world["slug_a"], world["admin_a"])
     guard_a = _headers(client, world["slug_a"], world["guard_a"])
-    cleaning_a = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli_a = _headers(client, world["slug_a"], world["gorevli_a"])
     admin_b = _headers(client, world["slug_b"], world["admin_b"])
 
     ta = uuid.uuid4().hex[:6]
     _register(client, admin_a, f"ADM-A-{ta}", "android")
     _register(client, guard_a, f"GRD-A-{ta}", "ios")
-    _register(client, cleaning_a, f"CLN-A-{ta}", "web")
+    _register(client, gorevli_a, f"CLN-A-{ta}", "web")
     _register(client, admin_b, f"ADM-B-{ta}", "android")
 
     from app.scheduler.notify import _fetch_device_tokens
 
     toks = set(_fetch_device_tokens(world["a"], ("admin", "security")))
-    # admin + security (guard) A -> VAR; cleaning A ve B tenant -> YOK
+    # admin + security (guard) A -> VAR; gorevli A ve B tenant -> YOK
     assert f"ADM-A-{ta}" in toks and f"GRD-A-{ta}" in toks
     assert f"CLN-A-{ta}" not in toks
     assert f"ADM-B-{ta}" not in toks

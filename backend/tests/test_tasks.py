@@ -51,11 +51,11 @@ def test_task_crud_happy_path(client, world):
 
 def test_task_rbac_and_validation(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
 
     # okuma izinli, yazma yasak
-    assert client.get("/tasks", headers=cleaning).status_code == 200
-    assert client.post("/tasks", headers=cleaning, json={"tip": "temizlik", "ad": "x"}).status_code == 403
+    assert client.get("/tasks", headers=gorevli).status_code == 200
+    assert client.post("/tasks", headers=gorevli, json={"tip": "temizlik", "ad": "x"}).status_code == 403
 
     # gecersiz govde (tip yok) -> 422
     assert client.post("/tasks", headers=admin, json={"ad": "x"}).status_code == 422
@@ -77,16 +77,16 @@ def test_task_tenant_isolation(client, world):
 # ----------------------------- completions --------------------------------- #
 def test_completion_idempotency_and_400(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     t = _new_task(client, admin)
     key = uuid.uuid4().hex
-    hdr = {**cleaning, "Idempotency-Key": key}
+    hdr = {**gorevli, "Idempotency-Key": key}
     payload = {"tamamlanma_zamani": "2026-06-28T08:00:00Z", "notlar": "tamam"}
 
     first = client.post(f"/tasks/{t['id']}/completions", headers=hdr, json=payload)
     assert first.status_code == 201, first.text
     cid = first.json()["id"]
-    assert first.json()["tamamlayan_user_id"] == client.get("/me", headers=cleaning).json()["id"]
+    assert first.json()["tamamlayan_user_id"] == client.get("/me", headers=gorevli).json()["id"]
 
     # ayni key + ayni govde -> 200 ayni kayit
     again = client.post(f"/tasks/{t['id']}/completions", headers=hdr, json=payload)
@@ -101,18 +101,18 @@ def test_completion_idempotency_and_400(client, world):
     assert diff.status_code == 409
 
     # key yok -> 400
-    nokey = client.post(f"/tasks/{t['id']}/completions", headers=cleaning, json=payload)
+    nokey = client.post(f"/tasks/{t['id']}/completions", headers=gorevli, json=payload)
     assert nokey.status_code == 400 and nokey.json()["error"]["code"] == "bad_request"
 
 
 def test_completion_tenant_isolation(client, world):
     admin_a = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning_b = _headers(client, world["slug_b"], world["admin_b"])  # B tarafi
+    gorevli_b = _headers(client, world["slug_b"], world["admin_b"])  # B tarafi
     t = _new_task(client, admin_a)
     # B, A'nin task'ina completion yapamaz -> task gorunmez -> 404
     r = client.post(
         f"/tasks/{t['id']}/completions",
-        headers={**cleaning_b, "Idempotency-Key": uuid.uuid4().hex},
+        headers={**gorevli_b, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-06-28T08:00:00Z"},
     )
     assert r.status_code == 404
@@ -120,14 +120,14 @@ def test_completion_tenant_isolation(client, world):
 
 def test_completion_nfc_mismatch(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     cp = _checkpoint(client, admin)
     t = _new_task(client, admin, checkpoint_id=cp["id"])
 
     # yanlis nfc -> 422
     bad = client.post(
         f"/tasks/{t['id']}/completions",
-        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-06-28T08:00:00Z", "nfc_tag_uid": "YANLIS"},
     )
     assert bad.status_code == 422
@@ -135,7 +135,7 @@ def test_completion_nfc_mismatch(client, world):
     # dogru nfc -> 201
     ok = client.post(
         f"/tasks/{t['id']}/completions",
-        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-06-28T08:00:00Z", "nfc_tag_uid": cp["nfc_tag_uid"]},
     )
     assert ok.status_code == 201
@@ -143,11 +143,11 @@ def test_completion_nfc_mismatch(client, world):
 
 def test_completion_list(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     t = _new_task(client, admin)
     client.post(
         f"/tasks/{t['id']}/completions",
-        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-06-28T08:00:00Z"},
     )
     r = client.get(f"/tasks/{t['id']}/completions", headers=admin)
@@ -158,11 +158,11 @@ def test_completion_list(client, world):
 # ------------------------------ foto akisi --------------------------------- #
 def test_presign_and_completion_with_foto(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
 
-    # presign (cleaning yetkili)
+    # presign (gorevli yetkili)
     pr = client.post(
-        "/uploads/presign", headers=cleaning, json={"content_type": "image/jpeg"}
+        "/uploads/presign", headers=gorevli, json={"content_type": "image/jpeg"}
     )
     assert pr.status_code == 200, pr.text
     body = pr.json()
@@ -175,7 +175,7 @@ def test_presign_and_completion_with_foto(client, world):
     t = _new_task(client, admin)
     comp = client.post(
         f"/tasks/{t['id']}/completions",
-        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-06-28T08:00:00Z", "foto_key": body["foto_key"]},
     )
     assert comp.status_code == 201
@@ -192,19 +192,19 @@ def test_presign_rbac_resident_forbidden(client, world):
 def test_list_tasks_atanan_filter_me_and_uuid(client, world):
     """?atanan_user_id=me yalniz benimkiler; admin duz UUID ile baskasini suzer."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     guard = _headers(client, world["slug_a"], world["guard_a"])
-    cleaning_id = client.get("/me", headers=cleaning).json()["id"]
+    gorevli_id = client.get("/me", headers=gorevli).json()["id"]
     guard_id = client.get("/me", headers=guard).json()["id"]
 
-    mine = _new_task(client, admin, ad="Benimki", atanan_user_id=cleaning_id)
+    mine = _new_task(client, admin, ad="Benimki", atanan_user_id=gorevli_id)
     other = _new_task(client, admin, ad="Baskasininki", atanan_user_id=guard_id)
     _new_task(client, admin, ad="Atanmamis")
 
-    body = client.get("/tasks", headers=cleaning, params={"atanan_user_id": "me", "limit": 200}).json()
+    body = client.get("/tasks", headers=gorevli, params={"atanan_user_id": "me", "limit": 200}).json()
     ids = [it["id"] for it in body["items"]]
     assert mine["id"] in ids and other["id"] not in ids
-    assert all(it["atanan_user_id"] == cleaning_id for it in body["items"])
+    assert all(it["atanan_user_id"] == gorevli_id for it in body["items"])
 
     # panel: admin duz UUID ile suzer
     body = client.get("/tasks", headers=admin, params={"atanan_user_id": guard_id, "limit": 200}).json()
@@ -218,14 +218,14 @@ def test_list_tasks_atanan_filter_me_and_uuid(client, world):
 def test_completion_foto_zorunlu(client, world):
     """foto_zorunlu=true iken foto'suz completion 422; foto'lu 201; false iken serbest."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
 
     t = _new_task(client, admin, ad="Foto sart", foto_zorunlu=True)
     assert t["foto_zorunlu"] is True
 
     fotosuz = client.post(
         f"/tasks/{t['id']}/completions",
-        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-07-03T08:00:00Z"},
     )
     assert fotosuz.status_code == 422, fotosuz.text
@@ -233,7 +233,7 @@ def test_completion_foto_zorunlu(client, world):
 
     fotolu = client.post(
         f"/tasks/{t['id']}/completions",
-        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-07-03T08:00:00Z", "foto_key": "k/x.jpg"},
     )
     assert fotolu.status_code == 201, fotolu.text
@@ -243,7 +243,7 @@ def test_completion_foto_zorunlu(client, world):
     assert serbest["foto_zorunlu"] is False
     ok = client.post(
         f"/tasks/{serbest['id']}/completions",
-        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-07-03T08:05:00Z"},
     )
     assert ok.status_code == 201
@@ -256,14 +256,14 @@ def test_completion_foto_zorunlu(client, world):
 def test_completion_nfc_normalized_case_insensitive(client, world):
     """Kucuk harf / bosluklu UID'li completion normalize edilip eslesir (mobil §11 #3)."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     nfc = f"NFC-{uuid.uuid4().hex[:10].upper()}"
     cp = client.post("/checkpoints", headers=admin, json={"ad": "CP", "nfc_tag_uid": nfc}).json()
     t = _new_task(client, admin, checkpoint_id=cp["id"])
 
     r = client.post(
         f"/tasks/{t['id']}/completions",
-        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-07-03T09:00:00Z", "nfc_tag_uid": f"  {nfc.lower()} "},
     )
     assert r.status_code == 201, r.text
@@ -271,7 +271,7 @@ def test_completion_nfc_normalized_case_insensitive(client, world):
     # yanlis etiket normalize SONRASI da uyusmaz -> 422
     bad = client.post(
         f"/tasks/{t['id']}/completions",
-        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-07-03T09:05:00Z", "nfc_tag_uid": "yanlis"},
     )
     assert bad.status_code == 422

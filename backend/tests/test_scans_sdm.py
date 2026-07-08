@@ -67,7 +67,7 @@ def _scan(client, headers, uid, key=None, **extra):
 def test_sdm_key_admin_only_and_no_leak(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     guard = _headers(client, world["slug_a"], world["guard_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     resident = _headers(client, world["slug_a"], world["resident_a"])
     cp = _checkpoint(client, admin)
     assert cp["sdm_aktif"] is False  # yeni checkpoint'te SDM kapali
@@ -84,7 +84,7 @@ def test_sdm_key_admin_only_and_no_leak(client, world):
     det = client.get(f"/checkpoints/{cp['id']}", headers=guard).json()
     assert det["sdm_aktif"] is True and "sdm_key_sifreli" not in det
 
-    for h in (guard, cleaning, resident):
+    for h in (guard, gorevli, resident):
         assert _set_key(client, h, cp["id"]).status_code == 403
 
     # null ile kapatma

@@ -30,6 +30,8 @@ from ..security import hash_password
 router = APIRouter(prefix="/users", tags=["users"])
 
 _ADMIN = require_role("admin")
+# yonetici gorev atamak icin kullanici listesini OKUR; CRUD admin-only (auth.md §4).
+_READER = require_role("admin", "yonetici")
 _EMAIL_CONFLICT = APIError(409, "conflict", "email bu tenant'ta zaten kayitli.")
 
 
@@ -41,7 +43,7 @@ async def list_users(
     is_active: bool | None = Query(None),
     q: str | None = Query(None),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_READER),
 ) -> UserAdminListResponse:
     where = []
     if role is not None:
@@ -62,7 +64,7 @@ async def list_users(
 async def get_user(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_READER),
 ) -> AppUser:
     return await get_or_404(db, AppUser, user_id)
 

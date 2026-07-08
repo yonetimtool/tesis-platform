@@ -39,7 +39,7 @@ class Base(DeclarativeBase):
 
 # --- native enum tipleri (migration olusturur; SQLAlchemy yeniden olusturmaz) ---
 USER_ROLE = ENUM(
-    "admin", "security", "cleaning", "resident",
+    "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
     name="user_role", create_type=False,
 )
 GUN_TIPI = ENUM(

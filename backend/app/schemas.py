@@ -54,7 +54,7 @@ class UserOut(BaseModel):
     is_active: bool
 
 
-UserRoleLiteral = Literal["admin", "security", "cleaning", "resident"]
+UserRoleLiteral = Literal["admin", "yonetici", "security", "tesis_gorevlisi", "resident"]
 
 
 # Admin kullanici yonetimi ciktisi — password_hash ASLA yok.

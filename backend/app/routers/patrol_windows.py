@@ -31,7 +31,7 @@ from ..schemas import (
 
 router = APIRouter(prefix="/patrol-windows", tags=["dashboard"])
 
-_VIEWER = require_role("admin", "security")
+_VIEWER = require_role("admin", "yonetici", "security")
 
 # Pencere + beklenen (atanmis aktif checkpoint) ve okutulan (pencere araliginda
 # okutulmus, beklenen) sayilari — dashboard/live ile ayni set-tabanli hesap.

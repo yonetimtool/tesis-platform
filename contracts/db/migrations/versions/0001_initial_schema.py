@@ -54,7 +54,8 @@ def upgrade() -> None:
     # 1. Enum tipleri
     # ------------------------------------------------------------------ #
     op.execute(
-        "CREATE TYPE user_role AS ENUM ('admin', 'security', 'cleaning', 'resident');"
+        "CREATE TYPE user_role AS ENUM "
+        "('admin', 'yonetici', 'security', 'tesis_gorevlisi', 'resident');"
     )
     op.execute(
         "CREATE TYPE gun_tipi AS ENUM ('her_gun', 'hafta_ici', 'hafta_sonu', 'resmi_tatil');"

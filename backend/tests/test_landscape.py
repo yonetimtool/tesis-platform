@@ -38,7 +38,7 @@ def _notif_count(owner_conn, task_id, tip):
 # ------------------------------ Task (peyzaj) ------------------------------ #
 def test_peyzaj_task_via_task_api(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
 
     r = client.post(
         "/tasks",
@@ -58,8 +58,8 @@ def test_peyzaj_task_via_task_api(client, world):
     lst = client.get("/tasks", headers=admin, params={"tip": "peyzaj"}).json()
     assert any(it["id"] == r.json()["id"] for it in lst["items"])
 
-    # RBAC: cleaning peyzaj task olusturamaz (Task CRUD admin)
-    assert client.post("/tasks", headers=cleaning, json={"tip": "peyzaj", "ad": "x"}).status_code == 403
+    # RBAC: gorevli peyzaj task olusturamaz (Task CRUD admin)
+    assert client.post("/tasks", headers=gorevli, json={"tip": "peyzaj", "ad": "x"}).status_code == 403
 
 
 # ------------------------------- takvim ------------------------------------ #
@@ -111,7 +111,7 @@ def test_landscape_kacirilan_reminder_idempotent(client, world, owner_conn):
 # --------------------------- tamamlama ilerletir --------------------------- #
 def test_completion_advances_next_planned(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
 
     t = client.post(
         "/tasks",
@@ -126,7 +126,7 @@ def test_completion_advances_next_planned(client, world):
 
     comp = client.post(
         f"/tasks/{t['id']}/completions",
-        headers={**cleaning, "Idempotency-Key": uuid.uuid4().hex},
+        headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2030-06-01T09:00:00Z"},
     )
     assert comp.status_code == 201, comp.text

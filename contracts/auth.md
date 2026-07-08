@@ -44,7 +44,7 @@ Akis:
 |---------|---------|-----------------------------------------------------|
 | `sub`   | string  | user_id (app_user.id, UUID)                         |
 | `tenant_id` | string | Kullanicinin tenant'i (UUID)                    |
-| `role`  | string  | `admin` \| `security` \| `cleaning` \| `resident`   |
+| `role`  | string  | `admin` \| `yonetici` \| `security` \| `tesis_gorevlisi` \| `resident` |
 | `type`  | string  | `access`                                            |
 | `iat`   | number  | Verilis zamani (Unix epoch, UTC)                    |
 | `exp`   | number  | Bitis zamani (Unix epoch, UTC)                      |
@@ -87,76 +87,96 @@ Akis:
 
 ## 4. RBAC Matrisi
 
-Roller: **admin**, **security** (guvenlik gorevlisi), **cleaning** (temizlik
-gorevlisi), **resident** (sakin).
+Roller: **admin** (platform admini — biz/gelistirici; TUM tesisler, panel),
+**yonetici** (site yoneticisi — musteri; KENDI tenant'i, mobil),
+**security** (guvenlik gorevlisi), **tesis_gorevlisi** (temizlik + bahcivan +
+teknik — birlesik saha rolu), **resident** (site sakini).
+
+> **PANEL (admin-web) YALNIZ `admin` icindir.** `yonetici` panele GIRMEZ;
+> tum islerini mobil uygulamadan yapar. `yonetici` kendi tenant'iyla
+> SINIRLIDIR (RLS tenant izolasyonu + token'daki `tenant_id`); cross-tenant
+> hicbir kaynaga erisemez. `admin` platform genelinde calisir.
 
 Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 
-| Endpoint                              | admin | security | cleaning | resident |
-|---------------------------------------|:-----:|:--------:|:--------:|:--------:|
-| `POST /auth/login`                    |  ✅   |    ✅    |    ✅    |    ✅    |
-| `POST /auth/refresh`                  |  ✅   |    ✅    |    ✅    |    ✅    |
-| `GET  /shifts` (liste/detay)          |  ✅   |    ✅    |    ✅    |    ❌    |
-| `POST /shifts`                        |  ✅   |    ❌    |    ❌    |    ❌    |
-| `PATCH /shifts/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |
-| `DELETE /shifts/{id}`                 |  ✅   |    ❌    |    ❌    |    ❌    |
-| `GET  /checkpoints` (liste/detay)     |  ✅   |    ✅    |    ✅    |    ❌    |
-| `POST /checkpoints`                   |  ✅   |    ❌    |    ❌    |    ❌    |
-| `PATCH /checkpoints/{id}`             |  ✅   |    ❌    |    ❌    |    ❌    |
-| `DELETE /checkpoints/{id}`            |  ✅   |    ❌    |    ❌    |    ❌    |
-| `PUT  /checkpoints/{id}/sdm-key`      |  ✅   |    ❌    |    ❌    |    ❌    |
-| `GET  /patrol-plans` (liste/detay)    |  ✅   |    ✅    |    ✅    |    ❌    |
-| `POST /patrol-plans`                  |  ✅   |    ❌    |    ❌    |    ❌    |
-| `PATCH /patrol-plans/{id}`            |  ✅   |    ❌    |    ❌    |    ❌    |
-| `DELETE /patrol-plans/{id}`           |  ✅   |    ❌    |    ❌    |    ❌    |
-| `GET  /patrol-plans/{id}/checkpoints` |  ✅   |    ✅    |    ✅    |    ❌    |
-| `PUT  /patrol-plans/{id}/checkpoints` |  ✅   |    ❌    |    ❌    |    ❌    |
-| `POST /scans`                         |  ✅   |    ✅    |    ✅    |    ❌    |
-| `GET  /dashboard/live`                |  ✅   |    ✅    |    ❌    |    ❌    |
-| `GET  /patrol-windows`                |  ✅   |    ✅    |    ❌    |    ❌    |
-| `GET  /me/patrol-window`              |  ✅   |    ✅    |    ❌    |    ❌    |
-| `GET  /notifications`                 |  ✅   |    ✅    |    ❌    |    ❌    |
-| `PATCH /notifications/{id}`           |  ✅   |    ✅    |    ❌    |    ❌    |
-| `GET  /tasks` (liste/detay)           |  ✅   |    ✅    |    ✅    |    ❌    |
-| `POST /tasks`                         |  ✅   |    ❌    |    ❌    |    ❌    |
-| `PATCH /tasks/{id}`                   |  ✅   |    ❌    |    ❌    |    ❌    |
-| `DELETE /tasks/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |
-| `GET  /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
-| `GET  /task-completions` (gecmis)     |  ✅   |    ✅    |    ❌    |    ❌    |
-| `POST /tasks/{id}/completions`        |  ✅   |    ✅    |    ✅    |    ❌    |
-| `GET  /landscape/schedule`            |  ✅   |    ✅    |    ✅    |    ❌    |
-| `POST /uploads/presign`               |  ✅   |    ✅    |    ✅    |    ❌    |
-| `POST /devices` (kendi cihazi)        |  ✅   |    ✅    |    ✅    |    ✅    |
-| `DELETE /devices/{fcm_token}`         |  ✅   |    ✅    |    ✅    |    ✅    |
-| `GET  /devices` (liste, debug)        |  ✅   |    ❌    |    ❌    |    ❌    |
-| `GET  /assets` (liste/detay)          |  ✅   |    ✅    |    ✅    |    ❌    |
-| `POST /assets`                        |  ✅   |    ❌    |    ❌    |    ❌    |
-| `PATCH /assets/{id}`                  |  ✅   |    ❌    |    ❌    |    ❌    |
-| `DELETE /assets/{id}`                 |  ✅   |    ❌    |    ❌    |    ❌    |
-| `POST /assets/{id}/checkout`          |  ✅   |    ✅    |    ✅    |    ❌    |
-| `POST /assets/{id}/checkin` (sahiplik*)|  ✅   |    ✅*   |    ✅*   |    ❌    |
-| `GET  /assets/{id}/history`           |  ✅   |    ✅    |    ✅    |    ❌    |
-| `POST /emergency`                     |  ✅   |    ✅    |    ✅    |    ❌    |
-| `GET  /emergency`                     |  ✅   |    ❌    |    ❌    |    ❌    |
-| `PATCH /emergency/{id}`               |  ✅   |    ❌    |    ❌    |    ❌    |
-| `GET  /tenant/settings`               |  ✅   |    ✅    |    ✅    |    ❌    |
-| `PATCH /tenant/settings`              |  ✅   |    ❌    |    ❌    |    ❌    |
-| `*/units*` (CRUD + sakin)             |  ✅   |    ❌    |    ❌    |    ❌    |
-| `GET /units/{id}/dues`                |  ✅   |    ❌    |    ❌    |    ❌    |
-| `POST/GET /dues/assessments`          |  ✅   |    ❌    |    ❌    |    ❌    |
-| `POST/GET /dues/payments`             |  ✅   |    ❌    |    ❌    |    ❌    |
-| `GET /me/dues`                        |  ❌   |    ❌    |    ❌    |    ✅    |
-| `GET/POST/PATCH /users*`              |  ✅   |    ❌    |    ❌    |    ❌    |
+Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = resident
+
+| Endpoint                              | admin | yon | sec | tg  | res |
+|---------------------------------------|:-----:|:---:|:---:|:---:|:---:|
+| `POST /auth/login`                    |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `POST /auth/refresh`                  |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `GET  /shifts` (liste/detay)          |  ✅   | ❌  | ✅  | ✅  | ❌  |
+| `POST /shifts`                        |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `PATCH /shifts/{id}`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `DELETE /shifts/{id}`                 |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `GET  /checkpoints` (liste/detay)     |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `POST /checkpoints`                   |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `PATCH /checkpoints/{id}`             |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `DELETE /checkpoints/{id}`            |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `PUT  /checkpoints/{id}/sdm-key`      |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `GET  /patrol-plans` (liste/detay)    |  ✅   | ❌  | ✅  | ✅  | ❌  |
+| `POST /patrol-plans`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `PATCH /patrol-plans/{id}`            |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `DELETE /patrol-plans/{id}`           |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `GET  /patrol-plans/{id}/checkpoints` |  ✅   | ❌  | ✅  | ✅  | ❌  |
+| `PUT  /patrol-plans/{id}/checkpoints` |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `POST /scans`                         |  ✅   | ❌  | ✅  | ✅  | ❌  |
+| `GET  /dashboard/live`                |  ✅   | ✅  | ✅  | ❌  | ❌  |
+| `GET  /patrol-windows`                |  ✅   | ✅  | ✅  | ❌  | ❌  |
+| `GET  /me/patrol-window`              |  ✅   | ❌  | ✅  | ❌  | ❌  |
+| `GET  /notifications`                 |  ✅   | ✅  | ✅  | ❌  | ❌  |
+| `PATCH /notifications/{id}`           |  ✅   | ✅  | ✅  | ❌  | ❌  |
+| `GET  /tasks` (liste/detay)           |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `POST /tasks`                         |  ✅   | ✅* | ❌  | ❌  | ❌  |
+| `PATCH /tasks/{id}`                   |  ✅   | ✅* | ❌  | ❌  | ❌  |
+| `DELETE /tasks/{id}`                  |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET  /tasks/{id}/completions`        |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `GET  /task-completions` (gecmis)     |  ✅   | ✅  | ✅  | ❌  | ❌  |
+| `POST /tasks/{id}/completions`        |  ✅   | ❌  | ✅  | ✅  | ❌  |
+| `GET  /landscape/schedule`            |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `POST /uploads/presign`               |  ✅   | ❌  | ✅  | ✅  | ❌  |
+| `POST /devices` (kendi cihazi)        |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `DELETE /devices/{fcm_token}`         |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `GET  /devices` (liste, debug)        |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `GET  /assets` (liste/detay)          |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `POST /assets`                        |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `PATCH /assets/{id}`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `DELETE /assets/{id}`                 |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `POST /assets/{id}/checkout`          |  ✅   | ❌  | ✅  | ✅  | ❌  |
+| `POST /assets/{id}/checkin` (sahiplik*)|  ✅   | ❌  | ✅* | ✅* | ❌  |
+| `GET  /assets/{id}/history`           |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `POST /emergency`                     |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `GET  /emergency`                     |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `PATCH /emergency/{id}`               |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET  /tenant/settings`               |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `PATCH /tenant/settings`              |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `*/units*` (CRUD + sakin)             |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `GET /units/{id}/dues`                |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `POST /dues/assessments`              |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `GET  /dues/assessments`              |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `POST /dues/payments`                 |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `GET  /dues/payments`                 |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET /me/dues`                        |  ❌   | ❌  | ❌  | ❌  | ✅  |
+| `GET /users` + `GET /users/{id}`      |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `POST/PATCH /users*`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
+
+> **Gorev atama (yonetici ✅\*):** `yonetici` gorev olusturur/gunceller ama
+> `atanan_user_id` YALNIZ `security` veya `tesis_gorevlisi` rolunde bir
+> kullanici olabilir (aksi 422 `invalid_reference`). `admin` icin bu kisit yok.
+> `yonetici`'nin kullanici secebilmesi icin `GET /users` okumasi acik;
+> kullanici olusturma/guncelleme (CRUD) admin-only kalir.
 
 > **Zimmet sahipligi (checkin\*):** rol yetkisi yetmez — acik zimmeti YALNIZ
-> **sahibi** (`alan_user_id == token user`) veya **admin** (yonetici mudahalesi)
-> kapatabilir; baska security/cleaning **403** `forbidden` ("Zimmet baskasinin
+> **sahibi** (`alan_user_id == token user`) veya **admin** (yonetim mudahalesi)
+> kapatabilir; baska security/tesis_gorevlisi **403** `forbidden` ("Zimmet baskasinin
 > uzerinde..."). Ayrica `GET /assets?checked_out_by=<uuid>` yalniz **admin**
 > (herkes `checked_out_by=me` kullanabilir).
 >
-> **Aidat:** Unit/tahakkuk/odeme yonetimi yalniz **admin**. **security/cleaning aidat
-> GORMEZ** (403). **resident** yalniz `GET /me/dues` ile **kendi** dairelerinin borcunu gorur;
-> tahakkuk/odeme yapamaz, baska daireyi goremez.
+> **Aidat:** Unit/tahakkuk/odeme YAZMA yalniz **admin**. **yonetici** aidat
+> raporlarini OKUR (`GET /dues/assessments`, `GET /dues/payments`,
+> `GET /units/{id}/dues`) ama tahakkuk/odeme kaydedemez. **security/tesis_gorevlisi
+> aidat GORMEZ** (403). **resident** yalniz `GET /me/dues` ile **kendi** dairelerinin
+> borcunu gorur; tahakkuk/odeme yapamaz, baska daireyi goremez.
 >
 > **Odeme webhook'u** (`POST /webhooks/payments/{provider}`): **PUBLIC** (JWT YOK) — saha
 > disindan saglayici cagirir. Guvenlik **imza/hash** ile saglanir (provider secret; HMAC).
@@ -166,13 +186,27 @@ Lejant: ✅ izinli · ❌ yasak · 🔵 sadece kendi kayitlari/okuma
 > karsilastirilir (manipulasyon engeli); olay (provider+event_id) bir kez islenir (idempotent).
 
 Notlar:
-- **admin**: tenant icindeki tum yonetim islemleri (CRUD) + panel.
-- **security / cleaning**: operasyonel saha rolleri. Tanimlari **okur**, tur
-  kaniti (`POST /scans`) **gonderir**. Yapilandirmayi (CRUD) degistiremez.
-  `cleaning` panele (dashboard/live) erisemez; saha odakli.
+- **admin**: PLATFORM admini (biz/gelistirici). Tum yonetim islemleri (CRUD) +
+  **panel (admin-web)** — panel yalniz bu role aciktir. Tenant kapsami token'la
+  belirlenir; operasyonel olarak tum tesislere hesap acilabilir.
+- **yonetici**: SITE yoneticisi (musteri). MOBIL kullanicidir, panele girmez.
+  Kendi tenant'inda: gorev olusturur/atar (yalniz security/tesis_gorevlisi'ne)
+  ve takip eder; devriye/NFC takibini okur (patrol-windows, dashboard/live,
+  checkpoints); aylik raporlari okur (task-completions, patrol-windows, aidat);
+  acil durumu tetikler/yonetir; demirbasi goruntuler; kullanici listesini okur.
+  Yapilandirma (shift/checkpoint/patrol-plan/asset/unit/tenant/kullanici CRUD)
+  ve aidat yazma **admin-only** kalir. Saha kaniti uretmez (`POST /scans`,
+  completion, upload, zimmet ❌).
+- **security / tesis_gorevlisi**: operasyonel saha rolleri (tesis_gorevlisi =
+  temizlik + bahcivan + teknik, eski `cleaning`in devami — yetkileri birebir
+  ayni). Tanimlari **okur**, tur kaniti (`POST /scans`) **gonderir**.
+  Yapilandirmayi (CRUD) degistiremez. `tesis_gorevlisi` panele/dashboard'a
+  erisemez; saha odakli.
 - **resident**: v0 kapsaminda operasyon endpoint'lerine erisimi yoktur. Sakin
   ozellikleri (bildirim, talep vb.) sonraki surumde tanimlanacak. Login/refresh
-  yapabilir ama yetkili oldugu kaynak yoktur (her kaynak `403`).
+  + `GET /me/dues` + cihaz kaydi disinda her kaynak `403`.
+- **Duyuru (gelecek tur):** duyuru sistemi ayri turda eklenecek; RBAC karari
+  simdiden sabit — duyuru GONDERME `admin` + `yonetici`, okuma tum roller.
 
 ## 5. Hata Davranisi
 

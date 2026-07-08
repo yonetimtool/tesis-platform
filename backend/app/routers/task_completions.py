@@ -28,7 +28,7 @@ from ..schemas import (
 
 router = APIRouter(prefix="/task-completions", tags=["tasks"])
 
-_VIEWER = require_role("admin", "security")
+_VIEWER = require_role("admin", "yonetici", "security")
 
 # {where} sabit kosul parcalarindan kurulur; degerler her zaman bound param.
 _LIST_SQL = """

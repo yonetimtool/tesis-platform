@@ -1,7 +1,7 @@
 """Acil durum (panik butonu) — POST/GET/PATCH /emergency — /contracts/openapi.yaml.
 
-POST: saha+admin tetikler -> emergency_alert + yuksek oncelikli 'acil_durum'
-notification (idempotent). GET/PATCH(coz): admin. Idempotency scan SAVEPOINT deseni.
+POST: saha+yonetici+admin tetikler -> emergency_alert + yuksek oncelikli 'acil_durum'
+notification (idempotent). GET/PATCH(coz): admin/yonetici. Idempotency scan SAVEPOINT deseni.
 """
 from __future__ import annotations
 
@@ -29,8 +29,8 @@ from ..scheduler.notify import dispatch_external
 
 router = APIRouter(prefix="/emergency", tags=["emergency"])
 
-_FIELD = require_role("admin", "security", "cleaning")
-_ADMIN = require_role("admin")
+_FIELD = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+_MANAGER = require_role("admin", "yonetici")
 
 _NOTIF_SQL = text(
     "INSERT INTO notification (tenant_id, tip, dedup_key, mesaj) "
@@ -123,7 +123,7 @@ async def list_emergency(
     offset: int = Query(0, ge=0),
     durum: EmergencyDurum | None = Query(None),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_MANAGER),
 ) -> EmergencyListResponse:
     where = [] if durum is None else [EmergencyAlert.durum == durum]
     total = (
@@ -146,7 +146,7 @@ async def resolve_emergency(
     alert_id: uuid.UUID,
     body: EmergencyResolve,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_MANAGER),
 ) -> EmergencyAlert:
     obj = await get_or_404(db, EmergencyAlert, alert_id)
     if obj.durum != "cozuldu":

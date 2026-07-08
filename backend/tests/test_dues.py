@@ -37,9 +37,9 @@ def test_unit_crud_and_no_conflict(client, world):
 def test_unit_rbac_and_isolation(client, world):
     admin_a = _headers(client, world["slug_a"], world["admin_a"])
     admin_b = _headers(client, world["slug_b"], world["admin_b"])
-    cleaning = _headers(client, world["slug_a"], world["cleaning_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     u = _new_unit(client, admin_a)
-    assert client.post("/units", headers=cleaning, json={"no": "X-1"}).status_code == 403
+    assert client.post("/units", headers=gorevli, json={"no": "X-1"}).status_code == 403
     assert client.get(f"/units/{u['id']}", headers=admin_b).status_code == 404
 
 

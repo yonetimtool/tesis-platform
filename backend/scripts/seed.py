@@ -1,4 +1,4 @@
-"""Idempotent dev/test seed: ornek tenant + admin/security/cleaning kullanicilar.
+"""Idempotent dev/test seed: ornek tenant + admin/yonetici/security/tesis_gorevlisi/resident kullanicilar.
 
 Calistirma:
     docker compose exec api python -m scripts.seed
@@ -44,6 +44,12 @@ USERS = [
         "password": os.getenv("SEED_ADMIN_PASSWORD", "Admin123!"),
     },
     {
+        "ad": "Acme Yonetici",
+        "email": "yonetici@acme.com",
+        "role": "yonetici",
+        "password": os.getenv("SEED_YONETICI_PASSWORD", "Yonetici123!"),
+    },
+    {
         "ad": "Acme Guard",
         "email": "guard@acme.com",
         "role": "security",
@@ -52,7 +58,7 @@ USERS = [
     {
         "ad": "Acme Cleaner",
         "email": "cleaner@acme.com",
-        "role": "cleaning",
+        "role": "tesis_gorevlisi",
         "password": os.getenv("SEED_CLEANER_PASSWORD", "Clean123!"),
     },
     {

@@ -1,7 +1,8 @@
 """Task CRUD + tamamlama (completion) — /contracts/openapi.yaml.
 
-RBAC (auth.md §4): GET admin/security/cleaning; Task yazma (POST/PATCH/DELETE) admin;
-completion gonderme (POST) admin/security/cleaning. tenant token'dan; RLS izole.
+RBAC (auth.md §4): GET admin/yonetici/security/tesis_gorevlisi; Task yazma
+(POST/PATCH/DELETE) admin/yonetici — yonetici yalniz security/tesis_gorevlisi'ne atar;
+completion gonderme (POST) admin/security/tesis_gorevlisi. tenant token'dan; RLS izole.
 Completion idempotency scan desenini yeniden kullanir (SAVEPOINT).
 """
 from __future__ import annotations
@@ -32,17 +33,29 @@ from ..schemas import (
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
-_ADMIN = require_role("admin")
-_READER = require_role("admin", "security", "cleaning")
-_COMPLETER = require_role("admin", "security", "cleaning")
+_WRITER = require_role("admin", "yonetici")
+_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+_COMPLETER = require_role("admin", "security", "tesis_gorevlisi")
+
+# yonetici gorevleri yalniz saha rollerine atayabilir (auth.md §4).
+_YONETICI_ATANABILIR = {"security", "tesis_gorevlisi"}
 
 
-async def _ensure_user_in_tenant(db: AsyncSession, user_id: uuid.UUID | None) -> None:
+async def _ensure_user_in_tenant(
+    db: AsyncSession, user_id: uuid.UUID | None, actor: AppUser
+) -> None:
     if user_id is None:
         return
-    found = (await db.execute(select(AppUser.id).where(AppUser.id == user_id))).scalar_one_or_none()
-    if found is None:
+    target_role = (
+        await db.execute(select(AppUser.role).where(AppUser.id == user_id))
+    ).scalar_one_or_none()
+    if target_role is None:
         raise APIError(422, "invalid_reference", "atanan_user_id bu tenant'ta bulunamadi.")
+    if actor.role == "yonetici" and target_role not in _YONETICI_ATANABILIR:
+        raise APIError(
+            422, "invalid_reference",
+            "yonetici gorevi yalniz security/tesis_gorevlisi kullanicilara atayabilir.",
+        )
 
 
 async def _ensure_checkpoint_in_tenant(db: AsyncSession, checkpoint_id: uuid.UUID | None) -> None:
@@ -104,9 +117,9 @@ async def get_task(
 async def create_task(
     body: TaskCreate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_WRITER),
 ) -> Task:
-    await _ensure_user_in_tenant(db, body.atanan_user_id)
+    await _ensure_user_in_tenant(db, body.atanan_user_id, user)
     await _ensure_checkpoint_in_tenant(db, body.checkpoint_id)
     obj = Task(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
     db.add(obj)
@@ -123,12 +136,12 @@ async def update_task(
     task_id: uuid.UUID,
     body: TaskUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_WRITER),
 ) -> Task:
     obj = await get_or_404(db, Task, task_id)
     data = body.model_dump(exclude_unset=True)
     if "atanan_user_id" in data:
-        await _ensure_user_in_tenant(db, data["atanan_user_id"])
+        await _ensure_user_in_tenant(db, data["atanan_user_id"], user)
     if "checkpoint_id" in data:
         await _ensure_checkpoint_in_tenant(db, data["checkpoint_id"])
     for key, value in data.items():
@@ -146,7 +159,7 @@ async def update_task(
 async def delete_task(
     task_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_WRITER),
 ) -> Response:
     obj = await get_or_404(db, Task, task_id)
     await db.delete(obj)
