@@ -204,14 +204,17 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.reports),
           ),
         );
-      case HomeMenuEntry.residentInfo:
-        return const Card(
+      case HomeMenuEntry.myDues:
+        // Resident: kendi dairelerinin borc durumu (salt okuma).
+        return Card(
           child: ListTile(
-            leading: Icon(Icons.home_outlined),
-            title: Text('Sakin ozellikleri hazirlaniyor'),
-            subtitle: Text(
-              'Aidat goruntuleme sonraki surumde kullanima acilacak.',
+            leading: const Icon(Icons.account_balance_wallet_outlined),
+            title: const Text('Aidatim'),
+            subtitle: const Text(
+              'Daire borc durumu, tahakkuk ve odeme gecmisi',
             ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.myDues),
           ),
         );
     }

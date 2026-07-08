@@ -630,7 +630,7 @@ Ana menü **role göre bileşir** (`features/home/domain/home_menu.dart`; JWT
 | `security` (Güvenlik) | admin ile aynı |
 | `tesis_gorevlisi` (Tesis Görevlisi — eski `cleaning`) | Turlarım HARİÇ hepsi (`/me/patrol-window` admin+security) |
 | `yonetici` (Yönetici — site yöneticisi) | Acil durum + **Duyurular** (gönder/düzenle/sil) + **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev yönetimi** (oluştur/ata/düzenle/sil — atama yalnız saha personeline; tamamlama akışı detayda gizli) + **Aylık raporlar** (devriye/görev/aidat özeti) |
-| `resident` (Site Sakini) | **Duyurular** (salt okuma — ilk gerçek kaynağı) + bilgi kartı |
+| `resident` (Site Sakini) | **Duyurular** (salt okuma) + **Aidatim** (daire borç durumu + tahakkuk/ödeme geçmişi) |
 
 **Devriye takibi** (`features/patrol/presentation/patrol_tracking_*`):
 yonetici için salt-izleme ekranı — panelin canlı özetinin mobil karşılığı.
@@ -640,6 +640,15 @@ ilerleme çubuğuyla listeler (`trackingOzet` saf fonksiyonu birim testli);
 "Geçmiş" sekmesi Turlarım'ın geçmişiyle AYNI paylaşılan görünümü kullanır
 (`patrol_history_view.dart` — `GET /patrol-windows` özet + son pencereler).
 Okutma/scan bu ekranda yoktur; saha kanıtı Turlarım'ın işidir.
+
+**Aidatim** (`features/dues/`): resident'ın kendi dairelerinin borç durumu
+(`GET /me/dues` — yalnız resident; sunucu sakinin dairelerine süzer). Daire
+kartı: tahakkuk/ödenen/bakiye (sunucu hesabı — istemci yeniden hesaplamaz,
+yalnız görüntüler) + "Borç var/yok" çipi; genişleyen tahakkuk listesi (dönem,
+son ödeme tarihi, açıklama) ve ödeme geçmişi (tarih, yöntem, durum rozeti:
+başarılı/bekliyor/iptal, makbuz no). Birden çok dairede toplam bakiye kartı.
+Ödeme bu ekrandan YAPILAMAZ — durum yalnızca sağlayıcı webhook'uyla değişir
+(ekranda not olarak da yazar). Para biçimi `kurusToTl` (ortak kural).
 
 **Görev yönetimi** (`features/tasks/` — yönetim katmanı): admin + yonetici
 listede "Yeni görev" FAB'ı ve detayda Düzenle/Sil menüsü görür

@@ -36,8 +36,8 @@ enum HomeMenuEntry {
   /// Aylik raporlar — yonetici: devriye/gorev/aidat ozeti (salt okuma).
   reports,
 
-  /// Sakin bilgi karti: sakin ozellikleri (aidat vb.) sonraki surumde.
-  residentInfo,
+  /// Aidatim — resident: kendi dairelerinin borc durumu (salt okuma).
+  myDues,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -74,10 +74,10 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.reports,
       ];
     case UserRole.resident:
-      // v0'da tek operasyon-disi kaynak: duyuru okuma (auth.md §4).
+      // Sakinin kaynaklari: duyuru okuma + kendi aidat durumu (auth.md §4).
       return const [
         HomeMenuEntry.announcements,
-        HomeMenuEntry.residentInfo,
+        HomeMenuEntry.myDues,
       ];
     case UserRole.unknown:
       // Rol cozulmeden (storage okumasi) veya bilinmeyen degerde: bos —

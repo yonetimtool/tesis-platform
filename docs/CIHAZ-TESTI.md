@@ -2,7 +2,7 @@
 
 Bu rehber, tesis platformunun (backend + yönetim paneli + Flutter mobil uygulama)
 **gerçek Android telefon ve gerçek NFC etiketleriyle** uçtan uca denenmesi içindir.
-Kod tarafı tamamlandı (backend 199, mobil 131 test geçiyor); bu rehberdeki hiçbir adım
+Kod tarafı tamamlandı (backend 199, mobil 135 test geçiyor); bu rehberdeki hiçbir adım
 kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerleyin.
 
 > **Kaynak dosyalar:** buradaki her komut/parola repo'daki `backend/README.md`,
@@ -227,7 +227,9 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
     yönetimi** (oluştur/ata — yalnız saha personeline; tamamlama akışı yok) +
     **Aylık raporlar** (devriye/görev/aidat özeti, ay gezinmeli).
     NFC/zimmet/kuyruk görünmez.
-  - `resident` (Site Sakini): **Duyurular** (salt okuma) + bilgi kartı.
+  - `resident` (Site Sakini): **Duyurular** (salt okuma) + **Aidatim**
+    (seed ile giriş yapıldığında `A-12` dairesi ve 2026-06 dönemi **750,00 TL**
+    borç görünmeli — tahakkuk "Haziran aidati" açıklamasıyla listede).
 
 ### S2 — Checkpoint tanımlama (NTAG21x UID eşleme)
 

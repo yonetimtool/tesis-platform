@@ -72,11 +72,26 @@ void main() {
       }
     });
 
-    test('resident: duyurular (ilk gercek kaynagi) + bilgi karti', () {
+    test('resident: duyurular + Aidatim (bilgi kartlari tamamen kalkti)', () {
       expect(homeMenuForRole(UserRole.resident), const [
         HomeMenuEntry.announcements,
-        HomeMenuEntry.residentInfo,
+        HomeMenuEntry.myDues,
       ]);
+    });
+
+    test('Aidatim yalniz resident menusunde (/me/dues resident-only)', () {
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.myDues)),
+          reason: role.wire,
+        );
+      }
     });
 
     test('unknown (rol cozulmeden/eski token) bos menu — yanlis kart yok', () {
