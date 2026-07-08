@@ -15,6 +15,7 @@ const LINKS = [
   { href: "/reports/dues", label: "Raporlar" },
   { href: "/users", label: "Kullanicilar" },
   { href: "/emergency", label: "Acil Durum" },
+  { href: "/announcements", label: "Duyurular" },
   { href: "/notifications", label: "Bildirimler" },
   { href: "/settings", label: "Ayarlar" },
 ];

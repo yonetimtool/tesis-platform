@@ -64,6 +64,7 @@ app/
     layout.tsx                Nav + duzen (oturum middleware'de korunur)
     dashboard/page.tsx        GET /dashboard/live (SWR, 15 sn polling)
     notifications/page.tsx    GET /notifications (filtre + sayfalama + okundu)
+    announcements/page.tsx    duyurular (olustur/duzenle/sil; tum cihazlara push)
   api/                        BFF route handler'lari (backend'e proxy)
     auth/login, auth/logout
     dashboard/live

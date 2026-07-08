@@ -201,6 +201,22 @@ export interface UnitDuesStatus {
   payments?: DuesPayment[];
 }
 
+// ---------------------------- announcements -------------------------------- #
+export interface Announcement {
+  id: string;
+  baslik: string;
+  govde: string;
+  olusturan_user_id: string;
+  olusturan_ad?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AnnouncementList {
+  meta: PageMeta;
+  items: Announcement[];
+}
+
 // -------------------------------- users ------------------------------------ #
 export type UserRole = "admin" | "yonetici" | "security" | "tesis_gorevlisi" | "resident";
 
