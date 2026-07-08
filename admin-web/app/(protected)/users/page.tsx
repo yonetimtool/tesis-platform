@@ -6,24 +6,10 @@ import useSWR from "swr";
 import { Field, ErrorBox, Pager, inputCls, btnPrimary, btnGhost } from "@/components/form";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { ROLE_OPTIONS as ROLES, ROLE_STYLE, roleLabel } from "@/lib/roles";
 import type { UserListResponse, UserRole, UserRow } from "@/lib/types";
 
 const LIMIT = 20;
-const ROLES: { value: UserRole; label: string }[] = [
-  { value: "admin", label: "Yonetici" },
-  { value: "security", label: "Guvenlik" },
-  { value: "cleaning", label: "Temizlik" },
-  { value: "resident", label: "Sakin" },
-];
-const ROLE_STYLE: Record<string, string> = {
-  admin: "bg-violet-100 text-violet-800",
-  security: "bg-blue-100 text-blue-800",
-  cleaning: "bg-teal-100 text-teal-800",
-  resident: "bg-slate-100 text-slate-700",
-};
-function roleLabel(v: string): string {
-  return ROLES.find((r) => r.value === v)?.label ?? v;
-}
 
 interface FormState {
   ad: string;

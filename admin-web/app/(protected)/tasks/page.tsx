@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { Field, ErrorBox, Pager, inputCls, btnPrimary, btnGhost, btnDanger } from "@/components/form";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
+import { SAHA_ROLLERI, roleLabel } from "@/lib/roles";
 import type {
   Task,
   TaskCompletionList,
@@ -75,10 +76,10 @@ export default function TasksPage() {
     `/api/tasks?${qs.toString()}`,
     jsonFetcher,
   );
-  // Atanan picker: saha personeli (cleaning + security).
+  // Atanan picker: saha personeli (security + tesis_gorevlisi — lib/roles SAHA_ROLLERI).
   const { data: users } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
   const personel = (users?.items ?? []).filter(
-    (u) => u.is_active && (u.role === "cleaning" || u.role === "security"),
+    (u) => u.is_active && (SAHA_ROLLERI as string[]).includes(u.role),
   );
   function userName(id?: string | null): string {
     if (!id) return "—";
@@ -215,7 +216,7 @@ export default function TasksPage() {
               <option value="">Tumu</option>
               {personel.map((u) => (
                 <option key={u.id} value={u.id}>
-                  {u.ad} ({u.role})
+                  {u.ad} ({roleLabel(u.role)})
                 </option>
               ))}
             </select>
@@ -267,7 +268,7 @@ export default function TasksPage() {
                 <option value="">— yok —</option>
                 {personel.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.ad} ({u.role})
+                    {u.ad} ({roleLabel(u.role)})
                   </option>
                 ))}
               </select>

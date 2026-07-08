@@ -4,6 +4,12 @@ Multi-tenant tesis operasyon SaaS yonetim paneli. **Next.js 14 (App Router) + Ty
 Tailwind**. Backend'e (FastAPI, `/contracts/openapi.yaml`) **BFF** deseniyle baglanir:
 token'lar **httpOnly cookie**'de tutulur, istemci JS'i ASLA gormez.
 
+> **Panel yalnizca `admin` (platform admini) icindir** (`contracts/auth.md` §4).
+> Login'de BFF, access token'daki `role` claim'ine bakar; `admin` degilse
+> **403** doner ve oturum cookie'si set edilmez — `yonetici` (site yoneticisi)
+> dahil diger tum roller mobil uygulamayi kullanir. Bu UX kapisidir; gercek
+> yetki her istekte backend RBAC'ta zorlanir.
+
 ## Kurulum
 
 ```bash
@@ -32,7 +38,7 @@ Panel calisan bir backend ister. Repo kokunden:
 cd infra && docker compose up -d --build
 docker compose exec api python -m scripts.seed
 ```
-Backend `http://localhost:8000`'de ayaga kalkar (106 test gecer). `/health` 200 doner.
+Backend `http://localhost:8000`'de ayaga kalkar (194 test gecer). `/health` 200 doner.
 
 ## Test giris bilgisi (seed)
 
@@ -41,6 +47,10 @@ Backend `http://localhost:8000`'de ayaga kalkar (106 test gecer). `/health` 200 
 | Tesis (slug) | `acme-plaza` |
 | E-posta | `admin@acme.com` |
 | Parola | `Admin123!` |
+
+> Seed'deki diger hesaplar (`yonetici@acme.com`, `guard@acme.com`,
+> `cleaner@acme.com`, `resident@acme.com`) panele GIREMEZ (403) — rol modeli
+> geregi mobil hesaplaridir.
 
 > Login formu `tenant_slug + email + password` alir (`/contracts` `LoginRequest`'e birebir).
 

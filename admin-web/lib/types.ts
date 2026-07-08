@@ -202,7 +202,7 @@ export interface UnitDuesStatus {
 }
 
 // -------------------------------- users ------------------------------------ #
-export type UserRole = "admin" | "security" | "cleaning" | "resident";
+export type UserRole = "admin" | "yonetici" | "security" | "tesis_gorevlisi" | "resident";
 
 // password_hash ASLA gelmez (backend User semasinda yok).
 export interface UserRow {

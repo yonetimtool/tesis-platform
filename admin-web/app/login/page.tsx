@@ -45,7 +45,7 @@ export default function LoginPage() {
       >
         <div>
           <h1 className="text-xl font-semibold">Yonetim Paneli</h1>
-          <p className="text-sm text-muted">Tesis operasyon SaaS</p>
+          <p className="text-sm text-muted">Tesis operasyon SaaS — yalnizca platform admini girebilir</p>
         </div>
 
         <label className="block text-sm">
