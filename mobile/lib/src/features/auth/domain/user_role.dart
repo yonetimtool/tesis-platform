@@ -51,4 +51,7 @@ enum UserRole {
 
   /// Acil durum tetikleme (`POST /emergency`) — resident haric herkes.
   bool get canTriggerEmergency => isFieldWorker || this == yonetici;
+
+  /// Duyuru gonderme/duzenleme/silme — admin + yonetici (okuma herkese acik).
+  bool get canManageAnnouncements => this == admin || this == yonetici;
 }

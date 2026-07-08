@@ -626,11 +626,18 @@ Ana menü **role göre bileşir** (`features/home/domain/home_menu.dart`; JWT
 
 | Rol | Gördüğü kartlar |
 |---|---|
-| `admin` (Admin — platform) | Acil durum, Turlarım, Görevlerim, Demirbaş, NFC, Kuyruk |
+| `admin` (Admin — platform) | Acil durum, Duyurular, Turlarım, Görevlerim, Demirbaş, NFC, Kuyruk |
 | `security` (Güvenlik) | admin ile aynı |
 | `tesis_gorevlisi` (Tesis Görevlisi — eski `cleaning`) | Turlarım HARİÇ hepsi (`/me/patrol-window` admin+security) |
-| `yonetici` (Yönetici — site yöneticisi) | Acil durum + **Görev takibi** (aynı liste, tamamlama akışı detayda gizli) + "raporlar sonraki sürümde" kartı |
-| `resident` (Site Sakini) | Yalnız bilgi kartı (v0'da operasyon erişimi yok) |
+| `yonetici` (Yönetici — site yöneticisi) | Acil durum + **Duyurular** (gönder/düzenle/sil) + **Görev takibi** (aynı liste, tamamlama akışı detayda gizli) + "raporlar sonraki sürümde" kartı |
+| `resident` (Site Sakini) | **Duyurular** (salt okuma — ilk gerçek kaynağı) + bilgi kartı |
+
+**Duyurular** (`features/announcements/`): tüm roller okur (en yeni önde,
+gönderen adı + tarih + "düzenlendi" rozeti, pull-to-refresh); admin/yonetici
+FAB ile yayınlar, kart menüsünden düzenler/siler (bottom-sheet form,
+başlık ≤200 / gövde ≤5000 — sunucu sınırlarının aynısı). Yayınlama backend'de
+tesisin TÜM kayıtlı cihazlarına push dener (auth.md §4). FAB/menü görünürlüğü
+UX kapısıdır; gerçek yetki backend RBAC'ta.
 
 Menüden ulaşılan ekranlarda kalan `403`'ler için kibar mesaj davranışı
 korunur; `401` mevcut refresh interceptor'ının işidir (gerekirse login'e

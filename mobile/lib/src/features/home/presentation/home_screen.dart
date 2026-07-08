@@ -89,6 +89,16 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.emergency),
           ),
         );
+      case HomeMenuEntry.announcements:
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.campaign_outlined),
+            title: const Text('Duyurular'),
+            subtitle: const Text('Yonetimden tesise duyurular'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.announcements),
+          ),
+        );
       case HomeMenuEntry.patrol:
         return Card(
           child: ListTile(
@@ -174,8 +184,8 @@ class HomeScreen extends ConsumerWidget {
             leading: Icon(Icons.insights_outlined),
             title: Text('Devriye takibi ve raporlar'),
             subtitle: Text(
-              'NFC tur takibi, aylik raporlar ve duyurular sonraki '
-              'surumde bu ekrana eklenecek.',
+              'NFC tur takibi ve aylik raporlar sonraki surumde '
+              'bu ekrana eklenecek.',
             ),
           ),
         );
@@ -185,8 +195,7 @@ class HomeScreen extends ConsumerWidget {
             leading: Icon(Icons.home_outlined),
             title: Text('Sakin ozellikleri hazirlaniyor'),
             subtitle: Text(
-              'Aidat goruntuleme ve duyurular sonraki surumde '
-              'kullanima acilacak.',
+              'Aidat goruntuleme sonraki surumde kullanima acilacak.',
             ),
           ),
         );

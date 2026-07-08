@@ -43,6 +43,14 @@ void main() {
       expect(UserRole.resident.canTriggerEmergency, isFalse);
     });
 
+    test('duyuru yonetimi yalniz admin + yonetici (okuma herkese acik)', () {
+      expect(UserRole.admin.canManageAnnouncements, isTrue);
+      expect(UserRole.yonetici.canManageAnnouncements, isTrue);
+      expect(UserRole.security.canManageAnnouncements, isFalse);
+      expect(UserRole.tesisGorevlisi.canManageAnnouncements, isFalse);
+      expect(UserRole.resident.canManageAnnouncements, isFalse);
+    });
+
     test('TR gorunen adlar', () {
       expect(UserRole.yonetici.label, 'Yonetici');
       expect(UserRole.security.label, 'Guvenlik');

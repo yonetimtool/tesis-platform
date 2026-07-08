@@ -2,7 +2,7 @@
 
 Bu rehber, tesis platformunun (backend + yönetim paneli + Flutter mobil uygulama)
 **gerçek Android telefon ve gerçek NFC etiketleriyle** uçtan uca denenmesi içindir.
-Kod tarafı tamamlandı (backend 194, mobil 106 test geçiyor); bu rehberdeki hiçbir adım
+Kod tarafı tamamlandı (backend 199, mobil 112 test geçiyor); bu rehberdeki hiçbir adım
 kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerleyin.
 
 > **Kaynak dosyalar:** buradaki her komut/parola repo'daki `backend/README.md`,
@@ -19,7 +19,7 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
 - [ ] **NTAG213 / NTAG215 sticker — en az 3-4 adet** (temel akışlar: checkpoint,
   görev, zimmet). NTAG216 da olur; önemli olan NTAG21x ailesi olması.
   25 mm yuvarlak sticker formu pratik.
-- [ ] **NTAG424 DNA — 1-2 adet** (yalnızca S9 imza testi için; diğer 8 senaryo
+- [ ] **NTAG424 DNA — 1-2 adet** (yalnızca S9 imza testi için; diğer 9 senaryo
   NTAG21x ile yapılır. İlk turda atlanabilir).
 - Nereden: yurt içi e-ticaret sitelerinde "NTAG213 sticker" / "NTAG215 kart"
   aramasıyla bulunur; NTAG424 DNA daha nadirdir — elektronik komponent satıcıları
@@ -200,7 +200,7 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
 
 ---
 
-## 4) Saha provası — 9 senaryo
+## 4) Saha provası — 10 senaryo
 
 > Genel notlar:
 > - Mobil, UID'yi her zaman **BÜYÜK HARF, iki nokta ayraçlı hex** üretir
@@ -218,13 +218,14 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
 - [ ] Logout ikonu → login ekranına dönmeli.
 - **Beklenen:** dört rol de girebilir; yanlış parola net hata gösterir. Ana menü
   **role göre bileşir** (ekranda rol adı da yazar):
-  - `guard` (Güvenlik) ve `admin`: tüm kartlar (Acil durum, Turlarım, Görevlerim,
-    Demirbaş, NFC, Kuyruk).
+  - `guard` (Güvenlik) ve `admin`: tüm kartlar (Acil durum, Duyurular, Turlarım,
+    Görevlerim, Demirbaş, NFC, Kuyruk).
   - `cleaner` (Tesis Görevlisi): Turlarım kartı GÖRÜNMEZ (saha turu verisi
     admin+security'ye açık) — diğer kartlar tam.
-  - `yonetici` (Yönetici): Acil durum + **Görev takibi** (tamamlama akışı yok)
-    + "raporlar sonraki sürümde" bilgi kartı. NFC/zimmet/kuyruk görünmez.
-  - `resident` (Site Sakini): yalnız bilgi kartı.
+  - `yonetici` (Yönetici): Acil durum + **Duyurular** (gönderebilir) +
+    **Görev takibi** (tamamlama akışı yok) + "raporlar sonraki sürümde" bilgi
+    kartı. NFC/zimmet/kuyruk görünmez.
+  - `resident` (Site Sakini): **Duyurular** (salt okuma) + bilgi kartı.
 
 ### S2 — Checkpoint tanımlama (NTAG21x UID eşleme)
 
@@ -402,6 +403,22 @@ Project settings → Service accounts → "Generate new private key"; dosya
   **422 `replay_detected`**; telefon "Etiket imzası doğrulanamadı — sahte veya
   yanlış etiket olabilir." / "Bu okutma daha önce işlendi." gösterir ve kayıt oluşmaz.
 
+### S10 — Duyuru (panel ↔ mobil + push)
+
+- [ ] Panel (admin) → **Duyurular** → "Yeni duyuru" → başlık + metin → **Yayınla**.
+- [ ] Telefon → herhangi bir rolle (resident dahil) → **Duyurular** kartı →
+  duyuru en üstte, gönderen adı + tarih ile görünmeli (aşağı çekerek yenile).
+- [ ] Telefon → `yonetici@acme.com` ile → **Duyurular** → sağ alttaki
+  **Yeni duyuru** → başlık + metin → **Yayınla** → listede en üstte; panelde de
+  görünmeli. Aynı duyuruda kart menüsünden **Düzenle** ("düzenlendi" rozeti) ve
+  **Sil** (onay dialogu) çalışmalı.
+- [ ] `guard`/`cleaner`/`resident` ile girildiğinde "Yeni duyuru" butonu ve
+  kart menüsü GÖRÜNMEZ (okuma serbest).
+- [ ] (S8 kurulumu yapıldıysa) duyuru yayınlanınca kayıtlı TÜM cihazlara push
+  düşer — acil durumdan farklı olarak alıcı listesi rol süzgeçsizdir.
+- **Beklenen:** duyuru dakikalar değil saniyeler içinde her rolde görünür;
+  düzenleme/silme yalnız admin (panel) + yonetici (mobil) tarafında mümkündür.
+
 ---
 
 ## 5) Sorun giderme
@@ -484,6 +501,7 @@ Her senaryodan sonra tabloyu doldurun:
 | S7 Zimmet | | | |
 | S8 Push (FCM) | | | |
 | S9 NTAG424 imza | | | |
+| S10 Duyuru | | | |
 
 **Bulgu alışkanlığı:** ❌/⚠️ olan her satır için bir **GitHub issue** açın
 (başlık: `cihaz-testi: S<no> — <kısa özet>`) ve şunları ekleyin: telefon modeli +

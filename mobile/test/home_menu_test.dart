@@ -7,6 +7,7 @@ void main() {
     test('admin ve security tum operasyon kartlarini gorur', () {
       const beklenen = [
         HomeMenuEntry.emergency,
+        HomeMenuEntry.announcements,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -25,6 +26,7 @@ void main() {
         menu,
         containsAll(const [
           HomeMenuEntry.emergency,
+          HomeMenuEntry.announcements,
           HomeMenuEntry.tasks,
           HomeMenuEntry.assets,
           HomeMenuEntry.nfc,
@@ -33,12 +35,14 @@ void main() {
       );
     });
 
-    test('yonetici: acil durum + gorev TAKIBI; saha kaniti kartlari yok', () {
+    test('yonetici: acil durum + duyurular + gorev TAKIBI; saha kartlari yok',
+        () {
       final menu = homeMenuForRole(UserRole.yonetici);
       expect(
         menu,
         const [
           HomeMenuEntry.emergency,
+          HomeMenuEntry.announcements,
           HomeMenuEntry.taskTracking,
           HomeMenuEntry.yoneticiInfo,
         ],
@@ -50,14 +54,31 @@ void main() {
       expect(menu, isNot(contains(HomeMenuEntry.patrol)));
     });
 
-    test('resident yalniz bilgi karti gorur (acil durum POST 403)', () {
+    test('resident: duyurular (ilk gercek kaynagi) + bilgi karti', () {
       expect(homeMenuForRole(UserRole.resident), const [
+        HomeMenuEntry.announcements,
         HomeMenuEntry.residentInfo,
       ]);
     });
 
     test('unknown (rol cozulmeden/eski token) bos menu — yanlis kart yok', () {
       expect(homeMenuForRole(UserRole.unknown), isEmpty);
+    });
+
+    test('duyurulari 5 rolun 5i de gorur (okuma herkese acik)', () {
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.announcements),
+          reason: role.wire,
+        );
+      }
     });
   });
 }

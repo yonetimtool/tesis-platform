@@ -9,6 +9,9 @@ enum HomeMenuEntry {
   /// Kirmizi panik karti (POST /emergency).
   emergency,
 
+  /// Duyurular — okuma TUM roller; admin/yonetici ekranda olusturur/yonetir.
+  announcements,
+
   /// Turlarim — aktif devriye penceresi (admin + security).
   patrol,
 
@@ -30,7 +33,7 @@ enum HomeMenuEntry {
   /// Yonetici bilgi karti: devriye takibi/raporlar sonraki surumde.
   yoneticiInfo,
 
-  /// Sakin bilgi karti: sakin ozellikleri sonraki surumde.
+  /// Sakin bilgi karti: sakin ozellikleri (aidat vb.) sonraki surumde.
   residentInfo,
 }
 
@@ -40,6 +43,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
     case UserRole.security:
       return const [
         HomeMenuEntry.emergency,
+        HomeMenuEntry.announcements,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -50,21 +54,27 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       // Turlarim yok: /me/patrol-window admin+security (auth.md §4).
       return const [
         HomeMenuEntry.emergency,
+        HomeMenuEntry.announcements,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
         HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
       ];
     case UserRole.yonetici:
-      // Saha kaniti uretmez: scan/zimmet/kuyruk gizli. Gorevler salt takip.
+      // Saha kaniti uretmez: scan/zimmet/kuyruk gizli. Gorevler salt takip;
+      // duyuru gonderme/yonetme duyuru ekraninda.
       return const [
         HomeMenuEntry.emergency,
+        HomeMenuEntry.announcements,
         HomeMenuEntry.taskTracking,
         HomeMenuEntry.yoneticiInfo,
       ];
     case UserRole.resident:
-      // v0'da operasyon erisimi yok (acil durum dahil — POST 403).
-      return const [HomeMenuEntry.residentInfo];
+      // v0'da tek operasyon-disi kaynak: duyuru okuma (auth.md §4).
+      return const [
+        HomeMenuEntry.announcements,
+        HomeMenuEntry.residentInfo,
+      ];
     case UserRole.unknown:
       // Rol cozulmeden (storage okumasi) veya bilinmeyen degerde: bos —
       // saniye alti bir durumdur, yanlis karti gostermekten iyidir.
