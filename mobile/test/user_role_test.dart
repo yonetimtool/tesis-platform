@@ -51,6 +51,14 @@ void main() {
       expect(UserRole.resident.canManageAnnouncements, isFalse);
     });
 
+    test('gorev yonetimi (olustur/ata/sil) yalniz admin + yonetici', () {
+      expect(UserRole.admin.canManageTasks, isTrue);
+      expect(UserRole.yonetici.canManageTasks, isTrue);
+      expect(UserRole.security.canManageTasks, isFalse);
+      expect(UserRole.tesisGorevlisi.canManageTasks, isFalse);
+      expect(UserRole.resident.canManageTasks, isFalse);
+    });
+
     test('TR gorunen adlar', () {
       expect(UserRole.yonetici.label, 'Yonetici');
       expect(UserRole.security.label, 'Guvenlik');

@@ -231,3 +231,83 @@ List<Task> sortTasksByPlan(List<Task> tasks) {
       return cmp != 0 ? cmp : a.ad.compareTo(b.ad);
     });
 }
+
+/// `POST /tasks` / `PATCH /tasks/{id}` govdesi — yonetim formu (admin +
+/// yonetici; auth.md §4). TAM-GOVDE semantigi: null alanlar da gonderilir,
+/// boylece PATCH'te atama/aciklama TEMIZLENEBILIR (backend TaskUpdate
+/// exclude_unset — gonderilen null alani null yapar).
+///
+/// KISIT (backend zorlar): yonetici `atanan_user_id`'yi yalniz
+/// security/tesis_gorevlisi kullanicilara verebilir (aksi 422) — form zaten
+/// yalnizca saha personelini listeler.
+class TaskDraft {
+  const TaskDraft({
+    required this.tip,
+    required this.ad,
+    this.aciklama,
+    this.atananUserId,
+    this.periyotDakika,
+    this.fotoZorunlu = false,
+    this.aktif = true,
+  });
+
+  final TaskTip tip;
+  final String ad;
+  final String? aciklama;
+  final String? atananUserId;
+  final int? periyotDakika;
+  final bool fotoZorunlu;
+  final bool aktif;
+
+  Map<String, dynamic> toJson() => {
+        'tip': tip.name,
+        'ad': ad,
+        'aciklama': aciklama,
+        'atanan_user_id': atananUserId,
+        'periyot_dakika': periyotDakika,
+        'foto_zorunlu': fotoZorunlu,
+        'aktif': aktif,
+      };
+
+  /// Duzenleme formunu mevcut gorevle doldurmak icin.
+  factory TaskDraft.fromTask(Task task) => TaskDraft(
+        tip: task.tip,
+        ad: task.ad,
+        aciklama: task.aciklama,
+        atananUserId: task.atananUserId,
+        periyotDakika: task.periyotDakika,
+        fotoZorunlu: task.fotoZorunlu,
+        aktif: task.aktif,
+      );
+}
+
+/// Atama secicisindeki kullanici (`GET /users` ogesinden).
+class AssignableUser {
+  const AssignableUser({required this.id, required this.ad, required this.role});
+
+  final String id;
+  final String ad;
+  final String role;
+}
+
+/// Gorev atanabilir saha rolleri (auth.md §4: yonetici yalniz bunlara atar;
+/// panel SAHA_ROLLERI ile ayni kume).
+const sahaRolleri = {'security', 'tesis_gorevlisi'};
+
+/// `GET /users` item listesinden atanabilir personel — SAF fonksiyon
+/// (birim testli): yalniz AKTIF + saha rolundeki kullanicilar, ada gore.
+List<AssignableUser> assignableFromUsersJson(List<dynamic> items) {
+  final out = <AssignableUser>[
+    for (final item in items)
+      if (item is Map &&
+          item['is_active'] == true &&
+          sahaRolleri.contains(item['role']) &&
+          item['id'] is String)
+        AssignableUser(
+          id: item['id'] as String,
+          ad: item['ad'] as String? ?? '',
+          role: item['role'] as String,
+        ),
+  ]..sort((a, b) => a.ad.compareTo(b.ad));
+  return out;
+}

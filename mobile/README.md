@@ -629,7 +629,7 @@ Ana menü **role göre bileşir** (`features/home/domain/home_menu.dart`; JWT
 | `admin` (Admin — platform) | Acil durum, Duyurular, Turlarım, Görevlerim, Demirbaş, NFC, Kuyruk |
 | `security` (Güvenlik) | admin ile aynı |
 | `tesis_gorevlisi` (Tesis Görevlisi — eski `cleaning`) | Turlarım HARİÇ hepsi (`/me/patrol-window` admin+security) |
-| `yonetici` (Yönetici — site yöneticisi) | Acil durum + **Duyurular** (gönder/düzenle/sil) + **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev takibi** (aynı liste, tamamlama akışı detayda gizli) + **Aylık raporlar** (devriye/görev/aidat özeti) |
+| `yonetici` (Yönetici — site yöneticisi) | Acil durum + **Duyurular** (gönder/düzenle/sil) + **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev yönetimi** (oluştur/ata/düzenle/sil — atama yalnız saha personeline; tamamlama akışı detayda gizli) + **Aylık raporlar** (devriye/görev/aidat özeti) |
 | `resident` (Site Sakini) | **Duyurular** (salt okuma — ilk gerçek kaynağı) + bilgi kartı |
 
 **Devriye takibi** (`features/patrol/presentation/patrol_tracking_*`):
@@ -640,6 +640,17 @@ ilerleme çubuğuyla listeler (`trackingOzet` saf fonksiyonu birim testli);
 "Geçmiş" sekmesi Turlarım'ın geçmişiyle AYNI paylaşılan görünümü kullanır
 (`patrol_history_view.dart` — `GET /patrol-windows` özet + son pencereler).
 Okutma/scan bu ekranda yoktur; saha kanıtı Turlarım'ın işidir.
+
+**Görev yönetimi** (`features/tasks/` — yönetim katmanı): admin + yonetici
+listede "Yeni görev" FAB'ı ve detayda Düzenle/Sil menüsü görür
+(`TasksState.canManage`). Bottom-sheet form: tip, ad, açıklama, **atanan
+personel** (yalnız aktif security/tesis_gorevlisi listelenir —
+`assignableFromUsersJson` saf süzgeci, `GET /users`'tan), periyot, foto
+zorunlu, aktif anahtarı. `TaskDraft` TAM-GÖVDE gönderir (null alanlar dahil →
+PATCH'te atama/açıklama temizlenebilir). Backend kısıtı aynen geçerli:
+yonetici saha dışı role atarsa 422 mesajı formda gösterilir. Saha dışı
+yönetim rollerinde liste varsayılanı "Herkes"tir ("Bana atanan" yonetici için
+boş olurdu).
 
 **Aylık raporlar** (`features/reports/`): yonetici için ay bazlı salt-okuma
 özet — ‹ ay › gezinme (içinde bulunulan aydan ileri gidilmez). Üç bölüm +

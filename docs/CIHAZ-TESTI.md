@@ -2,7 +2,7 @@
 
 Bu rehber, tesis platformunun (backend + yönetim paneli + Flutter mobil uygulama)
 **gerçek Android telefon ve gerçek NFC etiketleriyle** uçtan uca denenmesi içindir.
-Kod tarafı tamamlandı (backend 199, mobil 126 test geçiyor); bu rehberdeki hiçbir adım
+Kod tarafı tamamlandı (backend 199, mobil 131 test geçiyor); bu rehberdeki hiçbir adım
 kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerleyin.
 
 > **Kaynak dosyalar:** buradaki her komut/parola repo'daki `backend/README.md`,
@@ -224,8 +224,9 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
     admin+security'ye açık) — diğer kartlar tam.
   - `yonetici` (Yönetici): Acil durum + **Duyurular** (gönderebilir) +
     **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev
-    takibi** (tamamlama akışı yok) + **Aylık raporlar** (devriye/görev/aidat
-    özeti, ay gezinmeli). NFC/zimmet/kuyruk görünmez.
+    yönetimi** (oluştur/ata — yalnız saha personeline; tamamlama akışı yok) +
+    **Aylık raporlar** (devriye/görev/aidat özeti, ay gezinmeli).
+    NFC/zimmet/kuyruk görünmez.
   - `resident` (Site Sakini): **Duyurular** (salt okuma) + bilgi kartı.
 
 ### S2 — Checkpoint tanımlama (NTAG21x UID eşleme)
@@ -286,7 +287,9 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
 
 - [ ] Panel (admin) → **Tasks** → yeni görev: tip ör. `temizlik`, ad ör. "Lobi temizliği",
   atanan: cleaner kullanıcısı, istersen S2 checkpoint'ini bağla ve **foto zorunlu**
-  işaretle.
+  işaretle. (Alternatif: telefonda `yonetici@acme.com` → **Görev yönetimi** →
+  sağ alttaki **Yeni görev** — atanan seçicisinde yalnız güvenlik/tesis
+  görevlisi listelenir; checkpoint bağlama yalnız panelde.)
 - [ ] Telefon → `cleaner@acme.com` ile → **Görevlerim** → görev listede ("Foto zorunlu"
   rozetiyle) → göreve gir.
 - [ ] (Checkpoint bağladıysan) **Etiketi okut** → doğru etiket.

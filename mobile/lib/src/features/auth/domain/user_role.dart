@@ -54,4 +54,8 @@ enum UserRole {
 
   /// Duyuru gonderme/duzenleme/silme — admin + yonetici (okuma herkese acik).
   bool get canManageAnnouncements => this == admin || this == yonetici;
+
+  /// Gorev olusturma/duzenleme/silme (`POST/PATCH/DELETE /tasks`) —
+  /// admin + yonetici (yonetici yalniz saha rollerine atayabilir; 422).
+  bool get canManageTasks => this == admin || this == yonetici;
 }

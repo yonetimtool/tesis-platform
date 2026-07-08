@@ -133,6 +133,68 @@ class TaskApi {
   }
 }
 
+
+extension TaskManageApi on TaskApi {
+  /// `POST /tasks` — gorev olustur (admin + yonetici; auth.md §4).
+  Future<Task> createTask(TaskDraft draft) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/tasks',
+        data: draft.toJson(),
+      );
+      return Task.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `PATCH /tasks/{id}` — tam-govde guncelleme (TaskDraft semantigi).
+  Future<Task> updateTask(String id, TaskDraft draft) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/tasks/$id',
+        data: draft.toJson(),
+      );
+      return Task.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `DELETE /tasks/{id}`.
+  Future<void> deleteTask(String id) async {
+    try {
+      await _dio.delete<void>('/tasks/$id');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `GET /users` (tum sayfalar) → atama secicisi icin AKTIF saha personeli
+  /// (security + tesis_gorevlisi). Uc admin+yonetici'ye acik (auth.md §4).
+  Future<List<AssignableUser>> fetchAssignableUsers() async {
+    final raw = <dynamic>[];
+    var offset = 0;
+    const limit = 200;
+    try {
+      while (true) {
+        final res = await _dio.get<Map<String, dynamic>>(
+          '/users',
+          queryParameters: {'limit': limit, 'offset': offset, 'is_active': true},
+        );
+        final items = res.data?['items'];
+        if (items is! List || items.isEmpty) break;
+        raw.addAll(items);
+        if (items.length < limit) break;
+        offset += limit;
+      }
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+    return assignableFromUsersJson(raw);
+  }
+}
+
 final taskApiProvider = Provider<TaskApi>((ref) {
   return TaskApi(ref.watch(dioProvider));
 });

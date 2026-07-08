@@ -15,6 +15,7 @@ class TasksState {
     this.tipFilter,
     this.sadeceBenim = true,
     this.currentUserId,
+    this.canManage = false,
     this.completedNow = const {},
     this.refreshedAt,
   });
@@ -39,6 +40,10 @@ class TasksState {
   /// JWT `sub` — "sana atanmis" vurgusu icin.
   final String? currentUserId;
 
+  /// Rol admin/yonetici mi — "Yeni gorev" FAB'i + duzenle/sil menusu.
+  /// Yalniz UX kapisi; gercek yetki backend RBAC'ta.
+  final bool canManage;
+
   /// BU OTURUMDA tamamlanan gorevler (taskId → sonuc): listede ✓ rozeti.
   /// Sunucudaki Task semasinda "tamamlandi" durumu yoktur (gorevler
   /// periyodiktir); kalici gecmis paneldedir.
@@ -54,6 +59,7 @@ class TasksState {
     Object? tipFilter = _sentinel,
     bool? sadeceBenim,
     Object? currentUserId = _sentinel,
+    bool? canManage,
     Map<String, TaskCompletionResult>? completedNow,
     DateTime? refreshedAt,
   }) {
@@ -70,6 +76,7 @@ class TasksState {
       currentUserId: currentUserId == _sentinel
           ? this.currentUserId
           : currentUserId as String?,
+      canManage: canManage ?? this.canManage,
       completedNow: completedNow ?? this.completedNow,
       refreshedAt: refreshedAt ?? this.refreshedAt,
     );
@@ -87,7 +94,15 @@ class TasksController extends Notifier<TasksState> {
 
   @override
   TasksState build() {
-    Future.microtask(refresh);
+    Future.microtask(() async {
+      // Saha disi yonetim rolleri (yonetici) icin varsayilan kapsam
+      // "Herkes": onlara gorev atanmaz, "Bana atanan" bos gorunurdu.
+      final role = await ref.read(currentUserRoleProvider.future);
+      if (!role.isFieldWorker && state.sadeceBenim) {
+        state = state.copyWith(sadeceBenim: false);
+      }
+      await refresh();
+    });
     return const TasksState(loading: true);
   }
 
@@ -101,6 +116,7 @@ class TasksController extends Notifier<TasksState> {
       // JWT sub yalnizca "Sana atanmis" rozeti icin ("Tumu" gorunumunde);
       // suzme artik sunucuda.
       final userId = await ref.read(currentUserIdProvider.future);
+      final role = await ref.read(currentUserRoleProvider.future);
       final tasks = await ref.read(taskApiProvider).fetchTasks(
             tip: state.tipFilter,
             assignedToMe: state.sadeceBenim,
@@ -112,6 +128,7 @@ class TasksController extends Notifier<TasksState> {
         forbidden: false,
         tasks: sortTasksByPlan(tasks),
         currentUserId: userId,
+        canManage: role.canManageTasks,
         refreshedAt: DateTime.now(),
       );
     } on ApiException catch (e) {
@@ -143,6 +160,23 @@ class TasksController extends Notifier<TasksState> {
     if (value == state.sadeceBenim) return;
     state = state.copyWith(sadeceBenim: value);
     await refresh();
+  }
+
+  /// Gorev olustur — basarili olunca liste tazelenir; hata (orn. 422 atama
+  /// kisiti) cagirana firlatilir, form icinde gosterilir.
+  Future<void> createTask(TaskDraft draft) async {
+    await ref.read(taskApiProvider).createTask(draft);
+    await refresh(silent: true);
+  }
+
+  Future<void> updateTask(String id, TaskDraft draft) async {
+    await ref.read(taskApiProvider).updateTask(id, draft);
+    await refresh(silent: true);
+  }
+
+  Future<void> deleteTask(String id) async {
+    await ref.read(taskApiProvider).deleteTask(id);
+    await refresh(silent: true);
   }
 
   /// Tamamlama akisi basarili oldugunda liste rozetini gunceller.

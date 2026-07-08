@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../routing/app_router.dart';
 import '../domain/task_models.dart';
+import 'task_form_sheet.dart';
 import 'task_tip_style.dart';
 import 'tasks_controller.dart';
 
@@ -24,6 +25,22 @@ class TasksScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Gorevlerim')),
+      // Gorev olusturma admin + yonetici (auth.md §4) — UX kapisi; gercek
+      // yetki backend'de.
+      floatingActionButton: state.canManage
+          ? FloatingActionButton.extended(
+              icon: const Icon(Icons.add_task),
+              label: const Text('Yeni gorev'),
+              onPressed: () async {
+                final saved = await showTaskFormSheet(context);
+                if (saved == true && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Gorev olusturuldu ✓')),
+                  );
+                }
+              },
+            )
+          : null,
       body: Column(
         children: [
           _TipFilterBar(state: state),

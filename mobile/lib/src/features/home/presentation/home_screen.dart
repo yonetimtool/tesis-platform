@@ -141,9 +141,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.fact_check_outlined),
-            title: const Text('Gorev takibi'),
+            title: const Text('Gorev yonetimi'),
             subtitle: const Text(
-              'Gorevleri izle — tamamlama saha personelinde',
+              'Gorev olustur, saha personeline ata ve izle',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.tasks),

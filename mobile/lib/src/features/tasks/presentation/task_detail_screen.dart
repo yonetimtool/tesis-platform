@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../domain/task_models.dart';
 import 'task_complete_controller.dart';
+import 'task_form_sheet.dart';
 import 'task_tip_style.dart';
 import 'tasks_controller.dart';
 
@@ -29,9 +31,26 @@ class TaskDetailScreen extends ConsumerWidget {
     // okumasi) akis gosterilir — backend yine de 403 ile korur.
     final role = ref.watch(currentUserRoleProvider).value;
     final canComplete = role == null || role.isFieldWorker;
+    final canManage = role?.canManageTasks ?? false;
 
     return Scaffold(
-      appBar: AppBar(title: Text(task.ad)),
+      appBar: AppBar(
+        title: Text(task.ad),
+        actions: [
+          if (canManage)
+            PopupMenuButton<String>(
+              tooltip: 'Gorev islemleri',
+              onSelected: (v) {
+                if (v == 'edit') _edit(context, ref);
+                if (v == 'delete') _delete(context, ref);
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'edit', child: Text('Duzenle')),
+                PopupMenuItem(value: 'delete', child: Text('Sil')),
+              ],
+            ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -88,6 +107,52 @@ class TaskDetailScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Duzenleme formu; kaydedilirse detay KAPANIR (elimizdeki [task] kopyasi
+  /// bayatladi — guncel hali tazelenmis listededir).
+  Future<void> _edit(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final saved = await showTaskFormSheet(context, edit: task);
+    if (saved == true && context.mounted) {
+      Navigator.pop(context);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Gorev guncellendi ✓')),
+      );
+    }
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Gorev silinsin mi?'),
+        content: Text(task.ad),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Iptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      await ref.read(tasksControllerProvider.notifier).deleteTask(task.id);
+      if (context.mounted) {
+        Navigator.pop(context);
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Gorev silindi ✓')),
+        );
+      }
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 }
 

@@ -169,4 +169,63 @@ void main() {
       );
     });
   });
+
+  group('TaskDraft (gorev olustur/duzenle govdesi)', () {
+    test('toJson TAM-GOVDE: null alanlar da gonderilir (PATCH temizleme)', () {
+      const draft = TaskDraft(tip: TaskTip.kontrol, ad: 'Kapi kontrol');
+      expect(draft.toJson(), {
+        'tip': 'kontrol',
+        'ad': 'Kapi kontrol',
+        'aciklama': null,
+        'atanan_user_id': null,
+        'periyot_dakika': null,
+        'foto_zorunlu': false,
+        'aktif': true,
+      });
+    });
+
+    test('fromTask mevcut gorevi forma tasir', () {
+      final task = Task.fromJson(const {
+        'id': 't-1',
+        'tip': 'peyzaj',
+        'ad': 'Cim bicme',
+        'aciklama': 'Haftalik',
+        'atanan_user_id': 'u-9',
+        'periyot_dakika': 10080,
+        'foto_zorunlu': true,
+        'aktif': true,
+      });
+      final draft = TaskDraft.fromTask(task);
+      expect(draft.tip, TaskTip.peyzaj);
+      expect(draft.atananUserId, 'u-9');
+      expect(draft.periyotDakika, 10080);
+      expect(draft.fotoZorunlu, isTrue);
+    });
+  });
+
+  group('assignableFromUsersJson — atama secicisi suzgeci', () {
+    test('yalniz AKTIF saha personeli (security + tesis_gorevlisi), ada gore',
+        () {
+      final out = assignableFromUsersJson(const [
+        {'id': 'u1', 'ad': 'Zeynep', 'role': 'security', 'is_active': true},
+        {'id': 'u2', 'ad': 'Ali', 'role': 'tesis_gorevlisi', 'is_active': true},
+        {'id': 'u3', 'ad': 'Pasif', 'role': 'security', 'is_active': false},
+        {'id': 'u4', 'ad': 'Yonetici', 'role': 'yonetici', 'is_active': true},
+        {'id': 'u5', 'ad': 'Sakin', 'role': 'resident', 'is_active': true},
+        {'id': 'u6', 'ad': 'Admin', 'role': 'admin', 'is_active': true},
+      ]);
+      expect(out.map((u) => u.ad).toList(), ['Ali', 'Zeynep']);
+      expect(out.map((u) => u.role).toSet(),
+          {'security', 'tesis_gorevlisi'});
+    });
+
+    test('bozuk ogeler sessizce atlanir', () {
+      final out = assignableFromUsersJson(const [
+        null,
+        'sacma',
+        {'ad': 'idsiz', 'role': 'security', 'is_active': true},
+      ]);
+      expect(out, isEmpty);
+    });
+  });
 }
