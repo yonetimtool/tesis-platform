@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../auth/data/current_user_provider.dart';
 import '../domain/task_models.dart';
 import 'task_complete_controller.dart';
 import 'task_tip_style.dart';
@@ -23,6 +24,11 @@ class TaskDetailScreen extends ConsumerWidget {
     final controller =
         ref.read(taskCompleteControllerProvider(task.id).notifier);
     final style = taskTipStyle(task.tip);
+    // Tamamlama akisi yalniz saha rollerinde (auth.md §4: POST completion
+    // admin/security/tesis_gorevlisi). Rol cozulene kadar (kisa storage
+    // okumasi) akis gosterilir — backend yine de 403 ile korur.
+    final role = ref.watch(currentUserRoleProvider).value;
+    final canComplete = role == null || role.isFieldWorker;
 
     return Scaffold(
       appBar: AppBar(title: Text(task.ad)),
@@ -31,7 +37,18 @@ class TaskDetailScreen extends ConsumerWidget {
         children: [
           _InfoCard(task: task, style: style),
           const SizedBox(height: 16),
-          if (state.result != null)
+          if (!canComplete)
+            const Card(
+              child: ListTile(
+                leading: Icon(Icons.visibility_outlined),
+                title: Text('Takip gorunumu'),
+                subtitle: Text(
+                  'Tamamlama saha personeli tarafindan yapilir '
+                  '(guvenlik / tesis gorevlisi). Bu ekran izleme icindir.',
+                ),
+              ),
+            )
+          else if (state.result != null)
             _ResultCard(state: state, onNew: controller.startNew)
           else ...[
             if (task.checkpointId != null) ...[

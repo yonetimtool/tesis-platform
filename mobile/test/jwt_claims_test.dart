@@ -13,11 +13,11 @@ void main() {
   test('gecerli token: sub ve role okunur (imza DOGRULANMAZ — yalnizca '
       'gosterim amacli)', () {
     final claims = decodeJwtClaims(
-      _fakeJwt({'sub': 'user-1', 'role': 'cleaning', 'type': 'access'}),
+      _fakeJwt({'sub': 'user-1', 'role': 'tesis_gorevlisi', 'type': 'access'}),
     );
     expect(claims, isNotNull);
     expect(claims!['sub'], 'user-1');
-    expect(claims['role'], 'cleaning');
+    expect(claims['role'], 'tesis_gorevlisi');
   });
 
   test('base64url padding eksikligi tolere edilir', () {

@@ -620,9 +620,22 @@ yenilemesi tetiklenir (sayılar için).
 
 ### Rol duyarlılığı
 
-Kart/ekran her role görünür; veri rol iznine göre gelir. `403`'te kibar mesaj
-gösterilir ("Bu ekrandaki veriler için yetkiniz yok — güvenlik rolüne açık").
-`401` mevcut refresh interceptor'ının işidir (gerekirse login'e döner).
+Ana menü **role göre bileşir** (`features/home/domain/home_menu.dart`; JWT
+`role` claim'i → `features/auth/domain/user_role.dart`; kurallar
+`contracts/auth.md` §4'ün UX aynasıdır — gerçek yetki backend RBAC'ta):
+
+| Rol | Gördüğü kartlar |
+|---|---|
+| `admin` (Admin — platform) | Acil durum, Turlarım, Görevlerim, Demirbaş, NFC, Kuyruk |
+| `security` (Güvenlik) | admin ile aynı |
+| `tesis_gorevlisi` (Tesis Görevlisi — eski `cleaning`) | Turlarım HARİÇ hepsi (`/me/patrol-window` admin+security) |
+| `yonetici` (Yönetici — site yöneticisi) | Acil durum + **Görev takibi** (aynı liste, tamamlama akışı detayda gizli) + "raporlar sonraki sürümde" kartı |
+| `resident` (Site Sakini) | Yalnız bilgi kartı (v0'da operasyon erişimi yok) |
+
+Menüden ulaşılan ekranlarda kalan `403`'ler için kibar mesaj davranışı
+korunur; `401` mevcut refresh interceptor'ının işidir (gerekirse login'e
+döner). Yönetici için devriye takibi / rapor ekranları sonraki tur işidir
+(backend uçları hazır: `patrol-windows`, `dashboard/live`, raporlar).
 
 ---
 
@@ -909,7 +922,8 @@ yönetim numarası kartı YİNE gösterilir — telefon araması şebeke üzerin
 ### Cihaz doğrulama senaryosu
 
 1. `guard@acme.com / Guard123!` (security) ile login — `cleaner@acme.com`
-   ile de çalışır (RBAC ✅).
+   (tesis_gorevlisi) ve `yonetici@acme.com / Yonetici123!` ile de çalışır
+   (RBAC ✅; resident acil durum gönderemez, kartı da görmez).
 2. Ana ekran → kırmızı **ACİL DURUM** → not yaz (ops.) → **ACİL DURUM
    BİLDİR** → onay dialogunda **BİLDİR** → (ilk kez konum izni sorulur) →
    "Alarm iletildi ✓".

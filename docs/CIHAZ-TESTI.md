@@ -2,7 +2,7 @@
 
 Bu rehber, tesis platformunun (backend + yönetim paneli + Flutter mobil uygulama)
 **gerçek Android telefon ve gerçek NFC etiketleriyle** uçtan uca denenmesi içindir.
-Kod tarafı tamamlandı (backend 194, mobil 95 test geçiyor); bu rehberdeki hiçbir adım
+Kod tarafı tamamlandı (backend 194, mobil 106 test geçiyor); bu rehberdeki hiçbir adım
 kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerleyin.
 
 > **Kaynak dosyalar:** buradaki her komut/parola repo'daki `backend/README.md`,
@@ -216,11 +216,15 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
   `admin@acme.com` ile girip çıkın (tenant hep `acme-plaza`).
 - [ ] Uygulamayı tamamen kapatıp açın → login **atlanmalı** (oturum geri yükleme).
 - [ ] Logout ikonu → login ekranına dönmeli.
-- **Beklenen:** dört rol de girebilir; yanlış parola net hata gösterir. Rol farkları
-  ileriki senaryolarda görülür (ör. Turlarım verisi cleaner/yonetici'de 403 kibar
-  mesajı gösterebilir — bu doğru davranıştır: "Turlarım" saha turu verisidir,
-  admin+security'ye açıktır). Mobil menünün yonetici rolüne göre hizalanması ayrı
-  turda gelecek; bu turda yonetici login olabilir, yetkisiz ekranlar 403 gösterir.
+- **Beklenen:** dört rol de girebilir; yanlış parola net hata gösterir. Ana menü
+  **role göre bileşir** (ekranda rol adı da yazar):
+  - `guard` (Güvenlik) ve `admin`: tüm kartlar (Acil durum, Turlarım, Görevlerim,
+    Demirbaş, NFC, Kuyruk).
+  - `cleaner` (Tesis Görevlisi): Turlarım kartı GÖRÜNMEZ (saha turu verisi
+    admin+security'ye açık) — diğer kartlar tam.
+  - `yonetici` (Yönetici): Acil durum + **Görev takibi** (tamamlama akışı yok)
+    + "raporlar sonraki sürümde" bilgi kartı. NFC/zimmet/kuyruk görünmez.
+  - `resident` (Site Sakini): yalnız bilgi kartı.
 
 ### S2 — Checkpoint tanımlama (NTAG21x UID eşleme)
 
@@ -454,9 +458,9 @@ Project settings → Service accounts → "Generate new private key"; dosya
 **Turlarım boş / "aktif devriye yok"**
 - [ ] Plan saat aralığı ŞU ANI kapsıyor mu? (Tenant saat dilimi Europe/Istanbul.)
 - [ ] Pencereler üretildi mi? `docker compose exec api python -m scripts.run_scheduler --generate`
-- [ ] Login'li rol admin veya security mi? (cleaner/yonetici "Turlarım" göremez —
-  403 beklenir; yonetici devriye TAKİBİNİ panel-benzeri uçlardan okur: patrol-windows,
-  dashboard/live.)
+- [ ] Login'li rol admin veya security mi? (cleaner/yonetici ana menüde "Turlarım"
+  kartını zaten görmez — saha turu admin+security'ye açık; yonetici devriye TAKİBİNİ
+  sonraki sürümde eklenecek ekranla, panel-benzeri uçlardan okuyacak.)
 
 **Panel açılmıyor / login dönmüyor**
 - [ ] Backend `http://localhost:8000/health` 200 mü? Panel BFF ile backend'e sunucu

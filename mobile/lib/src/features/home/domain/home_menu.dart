@@ -1,0 +1,73 @@
+/// Ana ekran menusunun role gore bilesimi — SAF fonksiyon (widget'siz),
+/// birim testle dogrulanir. Gorunurluk kurallari contracts/auth.md §4'un
+/// UX aynasidir; gercek yetki backend RBAC'ta.
+library;
+
+import '../../auth/domain/user_role.dart';
+
+enum HomeMenuEntry {
+  /// Kirmizi panik karti (POST /emergency).
+  emergency,
+
+  /// Turlarim — aktif devriye penceresi (admin + security).
+  patrol,
+
+  /// Gorevlerim — saha personeli: tamamlama akisiyla.
+  tasks,
+
+  /// Gorev takibi — yonetici: ayni liste, tamamlama YOK (salt izleme).
+  taskTracking,
+
+  /// Demirbas zimmet (NFC al/birak) — saha personeli.
+  assets,
+
+  /// Devriye noktasi NFC okutma (POST /scans) — saha personeli.
+  nfc,
+
+  /// Offline gonderim kuyrugu (scan outbox) — saha personeli.
+  outbox,
+
+  /// Yonetici bilgi karti: devriye takibi/raporlar sonraki surumde.
+  yoneticiInfo,
+
+  /// Sakin bilgi karti: sakin ozellikleri sonraki surumde.
+  residentInfo,
+}
+
+List<HomeMenuEntry> homeMenuForRole(UserRole role) {
+  switch (role) {
+    case UserRole.admin:
+    case UserRole.security:
+      return const [
+        HomeMenuEntry.emergency,
+        HomeMenuEntry.patrol,
+        HomeMenuEntry.tasks,
+        HomeMenuEntry.assets,
+        HomeMenuEntry.nfc,
+        HomeMenuEntry.outbox,
+      ];
+    case UserRole.tesisGorevlisi:
+      // Turlarim yok: /me/patrol-window admin+security (auth.md §4).
+      return const [
+        HomeMenuEntry.emergency,
+        HomeMenuEntry.tasks,
+        HomeMenuEntry.assets,
+        HomeMenuEntry.nfc,
+        HomeMenuEntry.outbox,
+      ];
+    case UserRole.yonetici:
+      // Saha kaniti uretmez: scan/zimmet/kuyruk gizli. Gorevler salt takip.
+      return const [
+        HomeMenuEntry.emergency,
+        HomeMenuEntry.taskTracking,
+        HomeMenuEntry.yoneticiInfo,
+      ];
+    case UserRole.resident:
+      // v0'da operasyon erisimi yok (acil durum dahil — POST 403).
+      return const [HomeMenuEntry.residentInfo];
+    case UserRole.unknown:
+      // Rol cozulmeden (storage okumasi) veya bilinmeyen degerde: bos —
+      // saniye alti bir durumdur, yanlis karti gostermekten iyidir.
+      return const [];
+  }
+}
