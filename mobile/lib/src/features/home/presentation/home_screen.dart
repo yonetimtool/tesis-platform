@@ -111,6 +111,19 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.patrol),
           ),
         );
+      case HomeMenuEntry.patrolTracking:
+        // Yonetici: salt izleme — panelin canli ozetinin mobil karsiligi.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.route_outlined),
+            title: const Text('Devriye takibi'),
+            subtitle: const Text(
+              'Bugunun turlari, nokta ilerlemesi ve gecmis',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.patrolTracking),
+          ),
+        );
       case HomeMenuEntry.tasks:
         return Card(
           child: ListTile(
@@ -182,9 +195,9 @@ class HomeScreen extends ConsumerWidget {
         return const Card(
           child: ListTile(
             leading: Icon(Icons.insights_outlined),
-            title: Text('Devriye takibi ve raporlar'),
+            title: Text('Aylik raporlar hazirlaniyor'),
             subtitle: Text(
-              'NFC tur takibi ve aylik raporlar sonraki surumde '
+              'Gorev tamamlama ve aidat raporlari sonraki surumde '
               'bu ekrana eklenecek.',
             ),
           ),

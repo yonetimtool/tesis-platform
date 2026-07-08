@@ -2,7 +2,7 @@
 
 Bu rehber, tesis platformunun (backend + yönetim paneli + Flutter mobil uygulama)
 **gerçek Android telefon ve gerçek NFC etiketleriyle** uçtan uca denenmesi içindir.
-Kod tarafı tamamlandı (backend 199, mobil 112 test geçiyor); bu rehberdeki hiçbir adım
+Kod tarafı tamamlandı (backend 199, mobil 116 test geçiyor); bu rehberdeki hiçbir adım
 kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerleyin.
 
 > **Kaynak dosyalar:** buradaki her komut/parola repo'daki `backend/README.md`,
@@ -223,7 +223,8 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
   - `cleaner` (Tesis Görevlisi): Turlarım kartı GÖRÜNMEZ (saha turu verisi
     admin+security'ye açık) — diğer kartlar tam.
   - `yonetici` (Yönetici): Acil durum + **Duyurular** (gönderebilir) +
-    **Görev takibi** (tamamlama akışı yok) + "raporlar sonraki sürümde" bilgi
+    **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev
+    takibi** (tamamlama akışı yok) + "aylık raporlar sonraki sürümde" bilgi
     kartı. NFC/zimmet/kuyruk görünmez.
   - `resident` (Site Sakini): **Duyurular** (salt okuma) + bilgi kartı.
 
@@ -260,6 +261,9 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
   - Telefonda ilgili nokta **"Okutuldu ✓"** olur (sunucu verisi `GET /me/patrol-window`).
   - Panel → **Dashboard** (15 sn'de bir yenilenir): bugünkü turda
     okutulan/beklenen sayacı artar.
+  - Telefon → `yonetici@acme.com` ile → **Devriye takibi** → "Bugün"
+    sekmesinde aynı pencere "Şimdi aktif" çipi ve artan okutulan/beklenen
+    ilerlemesiyle görünmeli; "Geçmiş" sekmesi özet sayıları gösterir.
   - Pencere bitince (veya `--detect` ile) durum `tamamlandi`/`kacirildi`ya döner;
     kaçırılan tur Dashboard "son alarmlar"a düşer.
 

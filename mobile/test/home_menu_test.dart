@@ -35,14 +35,16 @@ void main() {
       );
     });
 
-    test('yonetici: acil durum + duyurular + gorev TAKIBI; saha kartlari yok',
-        () {
+    test(
+        'yonetici: acil durum + duyurular + devriye TAKIBI + gorev TAKIBI; '
+        'saha kartlari yok', () {
       final menu = homeMenuForRole(UserRole.yonetici);
       expect(
         menu,
         const [
           HomeMenuEntry.emergency,
           HomeMenuEntry.announcements,
+          HomeMenuEntry.patrolTracking,
           HomeMenuEntry.taskTracking,
           HomeMenuEntry.yoneticiInfo,
         ],
@@ -51,7 +53,23 @@ void main() {
       expect(menu, isNot(contains(HomeMenuEntry.nfc)));
       expect(menu, isNot(contains(HomeMenuEntry.assets)));
       expect(menu, isNot(contains(HomeMenuEntry.outbox)));
-      expect(menu, isNot(contains(HomeMenuEntry.patrol)));
+      expect(menu, isNot(contains(HomeMenuEntry.patrol))); // Turlarim degil
+    });
+
+    test('devriye TAKIBI yalniz yonetici menusunde (saha Turlarim kullanir)',
+        () {
+      for (final role in [
+        UserRole.admin,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.patrolTracking)),
+          reason: role.wire,
+        );
+      }
     });
 
     test('resident: duyurular (ilk gercek kaynagi) + bilgi karti', () {

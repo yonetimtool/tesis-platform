@@ -629,8 +629,17 @@ Ana menü **role göre bileşir** (`features/home/domain/home_menu.dart`; JWT
 | `admin` (Admin — platform) | Acil durum, Duyurular, Turlarım, Görevlerim, Demirbaş, NFC, Kuyruk |
 | `security` (Güvenlik) | admin ile aynı |
 | `tesis_gorevlisi` (Tesis Görevlisi — eski `cleaning`) | Turlarım HARİÇ hepsi (`/me/patrol-window` admin+security) |
-| `yonetici` (Yönetici — site yöneticisi) | Acil durum + **Duyurular** (gönder/düzenle/sil) + **Görev takibi** (aynı liste, tamamlama akışı detayda gizli) + "raporlar sonraki sürümde" kartı |
+| `yonetici` (Yönetici — site yöneticisi) | Acil durum + **Duyurular** (gönder/düzenle/sil) + **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev takibi** (aynı liste, tamamlama akışı detayda gizli) + "aylık raporlar sonraki sürümde" kartı |
 | `resident` (Site Sakini) | **Duyurular** (salt okuma — ilk gerçek kaynağı) + bilgi kartı |
+
+**Devriye takibi** (`features/patrol/presentation/patrol_tracking_*`):
+yonetici için salt-izleme ekranı — panelin canlı özetinin mobil karşılığı.
+"Bugün" sekmesi `GET /dashboard/live`den bugünün pencerelerini durum çipi
+(Şimdi aktif / Yaklaşan / Tamamlandı / Kaçırıldı) ve okutulan/beklenen
+ilerleme çubuğuyla listeler (`trackingOzet` saf fonksiyonu birim testli);
+"Geçmiş" sekmesi Turlarım'ın geçmişiyle AYNI paylaşılan görünümü kullanır
+(`patrol_history_view.dart` — `GET /patrol-windows` özet + son pencereler).
+Okutma/scan bu ekranda yoktur; saha kanıtı Turlarım'ın işidir.
 
 **Duyurular** (`features/announcements/`): tüm roller okur (en yeni önde,
 gönderen adı + tarih + "düzenlendi" rozeti, pull-to-refresh); admin/yonetici

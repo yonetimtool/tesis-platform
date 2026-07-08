@@ -15,6 +15,9 @@ enum HomeMenuEntry {
   /// Turlarim — aktif devriye penceresi (admin + security).
   patrol,
 
+  /// Devriye takibi — yonetici: bugunun pencereleri + gecmis (salt izleme).
+  patrolTracking,
+
   /// Gorevlerim — saha personeli: tamamlama akisiyla.
   tasks,
 
@@ -61,11 +64,12 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.outbox,
       ];
     case UserRole.yonetici:
-      // Saha kaniti uretmez: scan/zimmet/kuyruk gizli. Gorevler salt takip;
-      // duyuru gonderme/yonetme duyuru ekraninda.
+      // Saha kaniti uretmez: scan/zimmet/kuyruk gizli. Gorevler ve devriye
+      // salt takip; duyuru gonderme/yonetme duyuru ekraninda.
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.patrolTracking,
         HomeMenuEntry.taskTracking,
         HomeMenuEntry.yoneticiInfo,
       ];

@@ -8,7 +8,7 @@ import '../../../routing/app_router.dart';
 import '../../scan/data/scan_outbox.dart';
 import '../domain/patrol_models.dart';
 import 'patrol_controller.dart';
-import 'patrol_history_controller.dart';
+import 'patrol_history_view.dart';
 
 /// "Turlarim" — guvenlik elemaninin asil calisma ekrani.
 ///
@@ -54,7 +54,7 @@ class PatrolScreen extends ConsumerWidget {
         body: const TabBarView(
           children: [
             _ActiveTourTab(),
-            _HistoryTab(),
+            PatrolHistoryView(),
           ],
         ),
       ),
@@ -85,7 +85,7 @@ class _ActiveTourTab extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           if (state.errorMessage != null)
-            _ErrorBanner(
+            PatrolErrorBanner(
               message: state.forbidden
                   ? 'Bu ekrandaki veriler icin yetkiniz yok. '
                       'Tur takibi guvenlik (ve yonetici) rolune aciktir.'
@@ -107,7 +107,7 @@ class _ActiveTourTab extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text(
-                'Son guncelleme: ${_fmtClock(state.refreshedAt!.toLocal())} '
+                'Son guncelleme: ${fmtClock(state.refreshedAt!.toLocal())} '
                 '(otomatik yenileme: 60 sn)',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
@@ -137,7 +137,7 @@ class _WindowSelector extends ConsumerWidget {
           ChoiceChip(
             label: Text(
               '${w.patrolPlanAd ?? 'Devriye turu'} · '
-              'bitis ${_fmtClock(w.pencereBitis.toLocal())}',
+              'bitis ${fmtClock(w.pencereBitis.toLocal())}',
             ),
             selected: w.patrolWindowId == state.selectedWindowId,
             onSelected: (_) => ref
@@ -186,8 +186,8 @@ class _ActiveWindowCard extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Pencere: ${_fmtClock(active.pencereBaslangic.toLocal())}'
-              ' – ${_fmtClock(active.pencereBitis.toLocal())}',
+              'Pencere: ${fmtClock(active.pencereBaslangic.toLocal())}'
+              ' – ${fmtClock(active.pencereBitis.toLocal())}',
             ),
             const SizedBox(height: 4),
             _CountdownText(until: active.pencereBitis),
@@ -279,8 +279,8 @@ class _NoActiveWindowCard extends StatelessWidget {
             if (n != null)
               Text(
                 'Siradaki: ${n.patrolPlanAd ?? 'Devriye turu'} · '
-                '${_fmtClock(n.pencereBaslangic.toLocal())}'
-                ' – ${_fmtClock(n.pencereBitis.toLocal())}',
+                '${fmtClock(n.pencereBaslangic.toLocal())}'
+                ' – ${fmtClock(n.pencereBitis.toLocal())}',
                 textAlign: TextAlign.center,
               )
             else
@@ -364,7 +364,7 @@ class _CheckpointTile extends StatelessWidget {
           Icons.check_circle,
           Colors.green,
           'Okutuldu ✓'
-              '${status.okutmaZamani != null ? ' · ${_fmtClock(status.okutmaZamani!.toLocal())}' : ''}',
+              '${status.okutmaZamani != null ? ' · ${fmtClock(status.okutmaZamani!.toLocal())}' : ''}',
         ),
       CheckpointScanDurum.gonderiliyor => (
           Icons.cloud_upload_outlined,
@@ -436,7 +436,7 @@ class _CountdownTextState extends State<_CountdownText> {
         ),
         const SizedBox(width: 6),
         Text(
-          'Kalan sure: ${_fmtDuration(remaining)}',
+          'Kalan sure: ${fmtDuration(remaining)}',
           style: TextStyle(
             color: urgent ? Colors.red : null,
             fontWeight: FontWeight.w600,
@@ -448,187 +448,5 @@ class _CountdownTextState extends State<_CountdownText> {
 }
 
 // --------------------------------------------------------------------------
-// GECMIS SEKME
-// --------------------------------------------------------------------------
-
-class _HistoryTab extends ConsumerWidget {
-  const _HistoryTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(patrolHistoryControllerProvider);
-    final controller = ref.read(patrolHistoryControllerProvider.notifier);
-
-    if (state.loading && state.items.isEmpty && state.errorMessage == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return RefreshIndicator(
-      onRefresh: controller.refresh,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (state.errorMessage != null)
-            _ErrorBanner(
-              message: state.forbidden
-                  ? 'Tur gecmisi icin yetkiniz yok. Bu liste guvenlik '
-                      '(ve yonetici) rolune aciktir.'
-                  : state.errorMessage!,
-              onRetry: state.forbidden ? null : controller.refresh,
-            ),
-          if (state.items.isNotEmpty) ...[
-            _HistorySummary(ozet: state.ozet),
-            const SizedBox(height: 12),
-            Card(
-              margin: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  for (var i = 0; i < state.items.length; i++) ...[
-                    if (i > 0) const Divider(height: 1),
-                    _HistoryTile(item: state.items[i]),
-                  ],
-                ],
-              ),
-            ),
-          ] else if (state.errorMessage == null)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Henuz tur penceresi kaydi yok.',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HistorySummary extends StatelessWidget {
-  const _HistorySummary({required this.ozet});
-
-  final PatrolWindowOzet ozet;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget chip(String label, int value, Color color) => Chip(
-          avatar: CircleAvatar(backgroundColor: color, radius: 6),
-          label: Text('$label $value'),
-          visualDensity: VisualDensity.compact,
-        );
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: [
-        chip('Toplam', ozet.toplam, Colors.blueGrey),
-        chip('Tamamlandi', ozet.tamamlandi, Colors.green),
-        chip('Kacirildi', ozet.kacirildi, Colors.red),
-        chip('Bekliyor', ozet.bekliyor, Colors.orange),
-      ],
-    );
-  }
-}
-
-class _HistoryTile extends StatelessWidget {
-  const _HistoryTile({required this.item});
-
-  final PatrolWindowHistoryItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final (icon, color, label) = switch (item.durum) {
-      PatrolWindowDurum.tamamlandi => (
-          Icons.check_circle,
-          Colors.green,
-          'Tamamlandi',
-        ),
-      PatrolWindowDurum.kacirildi => (Icons.cancel, Colors.red, 'Kacirildi'),
-      PatrolWindowDurum.bekliyor => (
-          Icons.hourglass_top,
-          Colors.orange,
-          'Bekliyor',
-        ),
-      PatrolWindowDurum.bilinmiyor => (
-          Icons.help_outline,
-          Colors.grey,
-          'Bilinmiyor',
-        ),
-    };
-    final start = item.pencereBaslangic.toLocal();
-    final end = item.pencereBitis.toLocal();
-    return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(item.planAdi ?? 'Devriye turu'),
-      subtitle: Text(
-        '${_fmtDate(start)} · ${_fmtClock(start)} – ${_fmtClock(end)}',
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(label, style: TextStyle(color: color)),
-          Text(
-            '${item.okutulanCheckpointSayisi}/${item.beklenenCheckpointSayisi}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// --------------------------------------------------------------------------
 // ORTAK PARCALAR
 // --------------------------------------------------------------------------
-
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message, this.onRetry});
-
-  final String message;
-  final Future<void> Function()? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.red.withValues(alpha: 0.08),
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(message, style: const TextStyle(color: Colors.red)),
-            ),
-            if (onRetry != null)
-              TextButton(
-                onPressed: () => onRetry!(),
-                child: const Text('Tekrar dene'),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-String _two(int v) => v.toString().padLeft(2, '0');
-
-String _fmtClock(DateTime local) => '${_two(local.hour)}:${_two(local.minute)}';
-
-String _fmtDate(DateTime local) =>
-    '${_two(local.day)}.${_two(local.month)}.${local.year}';
-
-String _fmtDuration(Duration d) {
-  if (d.inHours >= 1) {
-    return '${d.inHours} sa ${_two(d.inMinutes % 60)} dk';
-  }
-  if (d.inMinutes >= 1) {
-    return '${d.inMinutes} dk ${_two(d.inSeconds % 60)} sn';
-  }
-  return '${d.inSeconds} sn';
-}
