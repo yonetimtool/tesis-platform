@@ -629,7 +629,7 @@ Ana menü **role göre bileşir** (`features/home/domain/home_menu.dart`; JWT
 | `admin` (Admin — platform) | Acil durum, Duyurular, Turlarım, Görevlerim, Demirbaş, NFC, Kuyruk |
 | `security` (Güvenlik) | admin ile aynı |
 | `tesis_gorevlisi` (Tesis Görevlisi — eski `cleaning`) | Turlarım HARİÇ hepsi (`/me/patrol-window` admin+security) |
-| `yonetici` (Yönetici — site yöneticisi) | Acil durum + **Duyurular** (gönder/düzenle/sil) + **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev takibi** (aynı liste, tamamlama akışı detayda gizli) + "aylık raporlar sonraki sürümde" kartı |
+| `yonetici` (Yönetici — site yöneticisi) | Acil durum + **Duyurular** (gönder/düzenle/sil) + **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev takibi** (aynı liste, tamamlama akışı detayda gizli) + **Aylık raporlar** (devriye/görev/aidat özeti) |
 | `resident` (Site Sakini) | **Duyurular** (salt okuma — ilk gerçek kaynağı) + bilgi kartı |
 
 **Devriye takibi** (`features/patrol/presentation/patrol_tracking_*`):
@@ -640,6 +640,17 @@ ilerleme çubuğuyla listeler (`trackingOzet` saf fonksiyonu birim testli);
 "Geçmiş" sekmesi Turlarım'ın geçmişiyle AYNI paylaşılan görünümü kullanır
 (`patrol_history_view.dart` — `GET /patrol-windows` özet + son pencereler).
 Okutma/scan bu ekranda yoktur; saha kanıtı Turlarım'ın işidir.
+
+**Aylık raporlar** (`features/reports/`): yonetici için ay bazlı salt-okuma
+özet — ‹ ay › gezinme (içinde bulunulan aydan ileri gidilmez). Üç bölüm +
+son tamamlamalar: **Devriye** (`GET /patrol-windows?baslangic&bitis`, yalnız
+`ozet` kullanılır — filtrelenmiş tüm küme), **Görev tamamlama**
+(`GET /task-completions?baslangic&bitis` — özet + son 10, NFC/foto rozetli),
+**Aidat** (`GET /dues/assessments|payments?donem` tüm sayfalar toplanır;
+yalnız `durum='basarili'` ödemeler tahsilat sayılır — `aidatOzet` saf
+fonksiyonu birim testli). Para kuruş cinsinden tam sayı aritmetiğiyle
+biçimlenir (`kurusToTl`, panel `money.ts` kuralı); ay sınırları yarı-açık
+(`ayAralik`).
 
 **Duyurular** (`features/announcements/`): tüm roller okur (en yeni önde,
 gönderen adı + tarih + "düzenlendi" rozeti, pull-to-refresh); admin/yonetici

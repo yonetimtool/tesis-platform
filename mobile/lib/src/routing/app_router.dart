@@ -11,6 +11,7 @@ import '../features/nfc/presentation/nfc_screen.dart';
 import '../features/emergency/presentation/emergency_screen.dart';
 import '../features/patrol/presentation/patrol_screen.dart';
 import '../features/patrol/presentation/patrol_tracking_screen.dart';
+import '../features/reports/presentation/reports_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
 import '../features/tasks/domain/task_models.dart';
 import '../features/tasks/presentation/task_detail_screen.dart';
@@ -31,6 +32,7 @@ class AppRoutes {
   static const assets = '/assets';
   static const announcements = '/announcements';
   static const patrolTracking = '/patrol-tracking';
+  static const reports = '/reports';
 }
 
 /// Auth durumundaki degisimleri go_router'a bildiren kopru. `status` her
@@ -95,6 +97,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.patrolTracking,
         builder: (context, state) => const PatrolTrackingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.reports,
+        builder: (context, state) => const ReportsScreen(),
       ),
       GoRoute(
         path: AppRoutes.taskDetail,

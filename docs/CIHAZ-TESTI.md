@@ -2,7 +2,7 @@
 
 Bu rehber, tesis platformunun (backend + yönetim paneli + Flutter mobil uygulama)
 **gerçek Android telefon ve gerçek NFC etiketleriyle** uçtan uca denenmesi içindir.
-Kod tarafı tamamlandı (backend 199, mobil 116 test geçiyor); bu rehberdeki hiçbir adım
+Kod tarafı tamamlandı (backend 199, mobil 126 test geçiyor); bu rehberdeki hiçbir adım
 kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerleyin.
 
 > **Kaynak dosyalar:** buradaki her komut/parola repo'daki `backend/README.md`,
@@ -224,8 +224,8 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
     admin+security'ye açık) — diğer kartlar tam.
   - `yonetici` (Yönetici): Acil durum + **Duyurular** (gönderebilir) +
     **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev
-    takibi** (tamamlama akışı yok) + "aylık raporlar sonraki sürümde" bilgi
-    kartı. NFC/zimmet/kuyruk görünmez.
+    takibi** (tamamlama akışı yok) + **Aylık raporlar** (devriye/görev/aidat
+    özeti, ay gezinmeli). NFC/zimmet/kuyruk görünmez.
   - `resident` (Site Sakini): **Duyurular** (salt okuma) + bilgi kartı.
 
 ### S2 — Checkpoint tanımlama (NTAG21x UID eşleme)
@@ -294,7 +294,9 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
   `MINIO_PUBLIC_ENDPOINT=<LAN-IP>` ayarını gerektirir).
 - [ ] Not yaz (opsiyonel) → **Tamamla**.
 - **Beklenen:** "kayıt oluşturuldu" (201). Panel → görev/tamamlama geçmişinde tamamlama
-  foto işaretiyle görünür. Foto olmadan "Tamamla" denemesi istemcide erken uyarıyla durur.
+  foto işaretiyle görünür. Telefon → `yonetici@acme.com` → **Aylık raporlar** →
+  bu ayda "Görev tamamlama" sayacı artar; tamamlama "Son tamamlamalar"da
+  foto/NFC rozetiyle listelenir. Foto olmadan "Tamamla" denemesi istemcide erken uyarıyla durur.
   Yanlış etiket okutulursa 422 mesajı aynen gösterilir.
 
 ### S6 — Acil durum (panik)

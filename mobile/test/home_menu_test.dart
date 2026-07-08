@@ -46,7 +46,7 @@ void main() {
           HomeMenuEntry.announcements,
           HomeMenuEntry.patrolTracking,
           HomeMenuEntry.taskTracking,
-          HomeMenuEntry.yoneticiInfo,
+          HomeMenuEntry.reports,
         ],
       );
       expect(menu, isNot(contains(HomeMenuEntry.tasks)));

@@ -33,8 +33,8 @@ enum HomeMenuEntry {
   /// Offline gonderim kuyrugu (scan outbox) — saha personeli.
   outbox,
 
-  /// Yonetici bilgi karti: devriye takibi/raporlar sonraki surumde.
-  yoneticiInfo,
+  /// Aylik raporlar — yonetici: devriye/gorev/aidat ozeti (salt okuma).
+  reports,
 
   /// Sakin bilgi karti: sakin ozellikleri (aidat vb.) sonraki surumde.
   residentInfo,
@@ -71,7 +71,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.patrolTracking,
         HomeMenuEntry.taskTracking,
-        HomeMenuEntry.yoneticiInfo,
+        HomeMenuEntry.reports,
       ];
     case UserRole.resident:
       // v0'da tek operasyon-disi kaynak: duyuru okuma (auth.md §4).

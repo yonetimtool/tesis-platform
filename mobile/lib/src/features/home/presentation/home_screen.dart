@@ -191,15 +191,17 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.outbox),
           ),
         );
-      case HomeMenuEntry.yoneticiInfo:
-        return const Card(
+      case HomeMenuEntry.reports:
+        // Yonetici: ay bazli devriye/gorev/aidat ozeti (salt okuma).
+        return Card(
           child: ListTile(
-            leading: Icon(Icons.insights_outlined),
-            title: Text('Aylik raporlar hazirlaniyor'),
-            subtitle: Text(
-              'Gorev tamamlama ve aidat raporlari sonraki surumde '
-              'bu ekrana eklenecek.',
+            leading: const Icon(Icons.insights_outlined),
+            title: const Text('Aylik raporlar'),
+            subtitle: const Text(
+              'Devriye, gorev tamamlama ve aidat ozeti',
             ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.reports),
           ),
         );
       case HomeMenuEntry.residentInfo:
