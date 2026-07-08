@@ -157,6 +157,20 @@ GUVENLI yolu:
 `:-` varsayilanlarindan gelir (`PAYTR_MERCHANT_KEY` vb.).
 seed: `acme-plaza` icin `A-12` dairesi + `resident@acme.com` baglantisi + `2026-06` tahakkuk (750 TL).
 
+## Duyuru (announcement)
+
+Yonetimden tum tesise duyuru (`app/routers/announcements.py`).
+- **RBAC (auth.md §4):** gonderme/duzenleme/silme **admin + yonetici**; okuma
+  **TUM roller** (resident dahil — sakinin ilk operasyon-disi kaynagi).
+- **Uclar:** `GET /announcements` (liste, `created_at DESC`, sayfali; her item
+  `olusturan_ad` tasir) / `GET /announcements/{id}` / `POST` / `PATCH` / `DELETE`.
+- **Push:** olusturmada tenant'in TUM aktif cihazlarina push denenir
+  (`dispatch_external`, emergency ile ayni desen — EK gonderim; hatasi duyuru
+  kaydini KIRMAZ). `data: {tip: "duyuru", announcement_id}`.
+- **Model:** `announcement` (baslik ≤200, govde ≤5000, olusturan composite FK
+  `ON DELETE RESTRICT`); RLS tenant-izole. seed 'Hos geldiniz' ornegi ekler
+  (baslik uzerinden idempotent).
+
 ## Acil durum (panik butonu) + yonetim numarasi
 
 Saha → yonetim anlik alarm (`app/routers/emergency.py`). Gercek arama mobilde (`tel:`);

@@ -700,6 +700,99 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
+  # ANNOUNCEMENTS (duyuru) — gonderme admin+yonetici, okuma tum roller
+  # ================================================================= #
+  /announcements:
+    get:
+      tags: [announcements]
+      summary: Duyuru listesi (created_at DESC)
+      description: OKUMA tum rollere aciktir (resident dahil) — auth.md §4.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Announcement" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [announcements]
+      summary: Duyuru olustur (admin + yonetici)
+      description: |
+        Olusturan token'dan alinir. Kayit sonrasi tenant'in TUM aktif
+        cihazlarina push denenir (EK gonderim — push hatasi kaydi etkilemez;
+        data: tip=duyuru, announcement_id).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnnouncementCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Announcement" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /announcements/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [announcements]
+      summary: Duyuru detayi (tum roller)
+      responses:
+        "200":
+          description: Duyuru
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Announcement" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [announcements]
+      summary: Duyuru guncelle (admin + yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnnouncementUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Announcement" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [announcements]
+      summary: Duyuru sil (admin + yonetici)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ================================================================= #
   # TASKS (esnek gorev sistemi) + tamamlama + foto kanit
   # ================================================================= #
   /tasks:
@@ -2408,6 +2501,32 @@ components:
         checkpoint_id: { type: string, format: uuid, nullable: true }
 
     # ------------------------- notifications ----------------------- #
+    Announcement:
+      type: object
+      required: [id, baslik, govde, olusturan_user_id, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        baslik: { type: string, maxLength: 200 }
+        govde: { type: string, maxLength: 5000 }
+        olusturan_user_id: { type: string, format: uuid }
+        olusturan_ad:
+          type: string
+          nullable: true
+          description: Gonderen kullanicinin adi (liste/detayda join ile)
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    AnnouncementCreate:
+      type: object
+      required: [baslik, govde]
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        govde: { type: string, minLength: 1, maxLength: 5000 }
+    AnnouncementUpdate:
+      type: object
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        govde: { type: string, minLength: 1, maxLength: 5000 }
+
     Notification:
       type: object
       required: [id, tip, mesaj, okundu, created_at]

@@ -126,6 +126,10 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /me/patrol-window`              |  ✅   | ❌  | ✅  | ❌  | ❌  |
 | `GET  /notifications`                 |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `PATCH /notifications/{id}`           |  ✅   | ✅  | ✅  | ❌  | ❌  |
+| `GET  /announcements` (liste/detay)   |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `POST /announcements`                 |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `PATCH /announcements/{id}`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `DELETE /announcements/{id}`          |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /tasks` (liste/detay)           |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /tasks`                         |  ✅   | ✅* | ❌  | ❌  | ❌  |
 | `PATCH /tasks/{id}`                   |  ✅   | ✅* | ❌  | ❌  | ❌  |
@@ -202,11 +206,13 @@ Notlar:
   ayni). Tanimlari **okur**, tur kaniti (`POST /scans`) **gonderir**.
   Yapilandirmayi (CRUD) degistiremez. `tesis_gorevlisi` panele/dashboard'a
   erisemez; saha odakli.
-- **resident**: v0 kapsaminda operasyon endpoint'lerine erisimi yoktur. Sakin
-  ozellikleri (bildirim, talep vb.) sonraki surumde tanimlanacak. Login/refresh
-  + `GET /me/dues` + cihaz kaydi disinda her kaynak `403`.
-- **Duyuru (gelecek tur):** duyuru sistemi ayri turda eklenecek; RBAC karari
-  simdiden sabit — duyuru GONDERME `admin` + `yonetici`, okuma tum roller.
+- **resident**: v0 kapsaminda operasyon endpoint'lerine erisimi yoktur.
+  Login/refresh + `GET /me/dues` + cihaz kaydi + **duyuru okuma**
+  (`GET /announcements`) disinda her kaynak `403`. Diger sakin ozellikleri
+  (talep vb.) sonraki surumde.
+- **Duyuru:** GONDERME/duzenleme/silme `admin` + `yonetici`; OKUMA tum roller.
+  Olusturmada tenant'in tum aktif cihazlarina push denenir (EK gonderim; push
+  hatasi duyuru kaydini etkilemez).
 
 ## 5. Hata Davranisi
 

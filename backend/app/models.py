@@ -760,6 +760,29 @@ class PaymentWebhookEvent(Base):
     created_at = _created_at()
 
 
+class Announcement(Base):
+    __tablename__ = "announcement"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_announcement_id_tenant"),
+        ForeignKeyConstraint(
+            ["olusturan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_announcement_olusturan",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    baslik: Mapped[str] = mapped_column(Text, nullable=False)
+    govde: Mapped[str] = mapped_column(Text, nullable=False)
+    olusturan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
 class UserDevice(Base):
     __tablename__ = "user_device"
     __table_args__ = (
@@ -805,6 +828,7 @@ __all__ = [
     "DuesAssessment",
     "DuesPayment",
     "PaymentWebhookEvent",
+    "Announcement",
     "UserDevice",
     "USER_ROLE",
     "GUN_TIPI",

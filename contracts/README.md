@@ -76,6 +76,10 @@ degisecekse once burasi degisir, sonra kod.
   `UNIQUE (tenant_id, tip, patrol_window_id)` (ayni kacirilan pencere icin tek kayit).
   FK'ler composite + kolon-ozel `ON DELETE SET NULL`. Erisim: admin + security
   (`GET /notifications`, `PATCH /notifications/{id}` okundu). Gercek push/SMS ayri is.
+- `announcement`: duyuru (yonetimden tum tesise). Gonderme/duzenleme/silme
+  **admin + yonetici**; okuma **tum roller** (resident dahil). Olusturan composite FK
+  (`app_user`, ON DELETE RESTRICT); liste `created_at DESC`. Olusturmada tenant'in tum
+  aktif cihazlarina push denenir (EK gonderim — hatasi kaydi etkilemez).
 - `task` / `task_completion`: esnek gorev sistemi (tip: temizlik/kontrol/ilaclama/
   bakim/diger). Task CRUD admin/yonetici; tamamlama (`POST /tasks/{id}/completions`) tesis_gorevlisi+
   security+admin. Completion `UNIQUE (tenant_id, idempotency_key)` (offline cift

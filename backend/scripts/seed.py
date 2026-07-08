@@ -135,6 +135,27 @@ def main() -> int:
         )
         print(f"[seed] unit A-12 -> {unit_id} (+ resident baglantisi + 2026-06 tahakkuk 750.00 TL)")
 
+        # 4) ornek duyuru (yonetici imzali). Dogal benzersiz anahtar yok ->
+        #    ayni baslik varsa eklemeyerek idempotent kalinir.
+        conn.execute(
+            """
+            INSERT INTO announcement (tenant_id, baslik, govde, olusturan_user_id)
+            SELECT %(t)s, %(b)s, %(g)s, u.id
+            FROM app_user u
+            WHERE u.tenant_id = %(t)s AND u.email = 'yonetici@acme.com'
+              AND NOT EXISTS (
+                  SELECT 1 FROM announcement
+                  WHERE tenant_id = %(t)s AND baslik = %(b)s
+              )
+            """,
+            {
+                "t": tenant_id,
+                "b": "Hos geldiniz",
+                "g": "Tesis yonetim sistemi devrede. Duyurular bu ekranda yayinlanacak.",
+            },
+        )
+        print("[seed] duyuru 'Hos geldiniz' (yonetici imzali, idempotent)")
+
     print("[seed] tamamlandi (idempotent).")
     return 0
 

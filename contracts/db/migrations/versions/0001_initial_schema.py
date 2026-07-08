@@ -804,6 +804,34 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9y. announcement  (duyuru — yonetimden tum tesise; auth.md §4:
+    #     gonderme admin+yonetici, okuma TUM roller)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE announcement (
+            id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id          uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            baslik             text NOT NULL,
+            govde              text NOT NULL,
+            olusturan_user_id  uuid NOT NULL,
+            created_at         timestamptz NOT NULL DEFAULT now(),
+            updated_at         timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_announcement_id_tenant UNIQUE (id, tenant_id),
+            -- composite FK: duyuru sahibi ayni tenant'ta olmali (RLS ile tutarli).
+            CONSTRAINT fk_announcement_olusturan
+                FOREIGN KEY (olusturan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_announcement_tenant ON announcement (tenant_id);")
+    op.execute(
+        "CREATE INDEX ix_announcement_tenant_created "
+        "ON announcement (tenant_id, created_at DESC);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -830,6 +858,7 @@ def upgrade() -> None:
         "dues_payment",
         "payment_webhook_event",
         "user_device",
+        "announcement",
     ):
         _enable_rls(table)
 
@@ -868,6 +897,7 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "announcement",
         "user_device",
         "payment_webhook_event",
         "dues_payment",

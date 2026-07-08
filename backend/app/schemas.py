@@ -415,6 +415,35 @@ class MePatrolWindowResponse(BaseModel):
 
 
 # ----------------------------- notifications ------------------------------- #
+# ---------------------------- announcements -------------------------------- #
+class AnnouncementCreate(BaseModel):
+    baslik: str = Field(..., min_length=1, max_length=200)
+    govde: str = Field(..., min_length=1, max_length=5000)
+
+
+class AnnouncementUpdate(BaseModel):
+    baslik: str | None = Field(None, min_length=1, max_length=200)
+    govde: str | None = Field(None, min_length=1, max_length=5000)
+
+
+class AnnouncementOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    baslik: str
+    govde: str
+    olusturan_user_id: uuid.UUID
+    # Liste ekranlarinda "kim gonderdi" icin ad (join ile doldurulur).
+    olusturan_ad: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class AnnouncementListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AnnouncementOut]
+
+
 class NotificationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

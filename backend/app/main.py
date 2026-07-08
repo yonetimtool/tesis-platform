@@ -11,6 +11,7 @@ from sqlalchemy import text
 from .config import settings
 from .db import engine
 from .errors import install_error_handlers
+from .routers import announcements as announcements_router
 from .routers import assets as assets_router
 from .routers import auth as auth_router
 from .routers import checkpoints as checkpoints_router
@@ -65,6 +66,7 @@ app.include_router(dashboard_router.router)
 app.include_router(devices_router.router)
 app.include_router(patrol_windows_router.router)
 app.include_router(notifications_router.router)
+app.include_router(announcements_router.router)
 app.include_router(tasks_router.router)
 app.include_router(task_completions_router.router)
 app.include_router(uploads_router.router)
