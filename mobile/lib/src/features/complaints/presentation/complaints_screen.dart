@@ -61,27 +61,65 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
     // Provider zaten yuklu geldiyse (listen tetiklenmez) mevcut durumu isle.
     _maybeOpenInitial(state);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sikayet / Oneri'),
-        actions: [
-          IconButton(
-            tooltip: 'Yenile',
-            icon: const Icon(Icons.refresh),
-            onPressed: state.loading ? null : controller.refresh,
+    // Sekme ayrimi: "Acik" = acik + inceleniyor (+ bilinmeyen — kaybolmasin),
+    // "Cozulenler" = cozuldu. Yonetici cozuldu isaretleyince kayit sekme
+    // degistirir (refresh sonrasi otomatik).
+    final acik = state.items
+        .where((c) => c.durum != ComplaintDurum.cozuldu)
+        .toList(growable: false);
+    final cozulen = state.items
+        .where((c) => c.durum == ComplaintDurum.cozuldu)
+        .toList(growable: false);
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Sikayet / Oneri'),
+          actions: [
+            IconButton(
+              tooltip: 'Yenile',
+              icon: const Icon(Icons.refresh),
+              onPressed: state.loading ? null : controller.refresh,
+            ),
+          ],
+          bottom: TabBar(
+            tabs: [
+              Tab(text: 'Acik (${acik.length})'),
+              Tab(text: 'Cozulenler (${cozulen.length})'),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: state.canCreate
-          ? FloatingActionButton.extended(
-              icon: const Icon(Icons.rate_review_outlined),
-              label: const Text('Yeni talep'),
-              onPressed: () => _openForm(context),
-            )
-          : null,
-      body: RefreshIndicator(
-        onRefresh: controller.refresh,
-        child: _Body(state: state),
+        ),
+        floatingActionButton: state.canCreate
+            ? FloatingActionButton.extended(
+                icon: const Icon(Icons.rate_review_outlined),
+                label: const Text('Yeni talep'),
+                onPressed: () => _openForm(context),
+              )
+            : null,
+        body: TabBarView(
+          children: [
+            RefreshIndicator(
+              onRefresh: controller.refresh,
+              child: _Body(
+                state: state,
+                items: acik,
+                emptyText: state.canCreate
+                    ? 'Acik talebiniz yok. "Yeni talep" ile '
+                        'sikayet/onerinizi iletebilirsiniz.'
+                    : 'Acik talep yok.',
+              ),
+            ),
+            RefreshIndicator(
+              onRefresh: controller.refresh,
+              child: _Body(
+                state: state,
+                items: cozulen,
+                emptyText: 'Henuz cozulen talep yok.',
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -101,9 +139,17 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
 }
 
 class _Body extends ConsumerWidget {
-  const _Body({required this.state});
+  const _Body({
+    required this.state,
+    required this.items,
+    required this.emptyText,
+  });
 
   final ComplaintsState state;
+
+  /// Bu sekmenin durum-suzgecli kayitlari (Acik / Cozulenler).
+  final List<Complaint> items;
+  final String emptyText;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -122,27 +168,19 @@ class _Body extends ConsumerWidget {
         ],
       );
     }
-    if (state.items.isEmpty) {
+    if (items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Center(
-            child: Text(
-              state.canCreate
-                  ? 'Henuz talebiniz yok. "Yeni talep" ile '
-                      'sikayet/onerinizi iletebilirsiniz.'
-                  : 'Henuz talep yok.',
-              textAlign: TextAlign.center,
-            ),
-          ),
+          Center(child: Text(emptyText, textAlign: TextAlign.center)),
         ],
       );
     }
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-      itemCount: state.items.length,
+      itemCount: items.length,
       itemBuilder: (context, i) => _ComplaintCard(
-        complaint: state.items[i],
+        complaint: items[i],
         canRespond: state.canRespond,
       ),
     );

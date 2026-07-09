@@ -127,7 +127,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /notifications`                 |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `PATCH /notifications/{id}`           |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `GET  /announcements` (liste/detay)   |  ✅   | ✅  | ✅  | ✅  | ✅  |
-| `POST /announcements`                 |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `POST /announcements`                 |  ❌   | ✅  | ❌  | ❌  | ❌  |
 | `PATCH /announcements/{id}`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `DELETE /announcements/{id}`          |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /complaints` (liste/detay)      |  ✅   | ✅  | ❌  | ❌  | ✅° |
@@ -152,7 +152,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /assets/{id}/checkout`          |  ✅   | ❌  | ✅  | ✅  | ❌  |
 | `POST /assets/{id}/checkin` (sahiplik*)|  ✅   | ❌  | ✅* | ✅* | ❌  |
 | `GET  /assets/{id}/history`           |  ✅   | ✅  | ✅  | ✅  | ❌  |
-| `POST /emergency`                     |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `POST /emergency`                     |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET  /emergency`                     |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `PATCH /emergency/{id}`               |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /tenant/settings`               |  ✅   | ✅  | ✅  | ✅  | ❌  |
@@ -212,11 +212,15 @@ Notlar:
   erisemez; saha odakli.
 - **resident**: v0 kapsaminda operasyon endpoint'lerine erisimi yoktur.
   Login/refresh + `GET /me/dues` + cihaz kaydi + **duyuru okuma**
-  (`GET /announcements`; duyuru OLUSTURAMAZ — gonderme admin+yonetici) +
-  **sikayet/oneri** (`POST /complaints` acar, ° `GET /complaints*` YALNIZ
-  kendi actiklarini gorur; PATCH ❌) disinda her kaynak `403`.
+  (`GET /announcements`; duyuru OLUSTURAMAZ) + **sikayet/oneri**
+  (`POST /complaints` acar, ° `GET /complaints*` YALNIZ kendi actiklarini
+  gorur; PATCH ❌) + **acil durum tetikleme** (`POST /emergency` — panik
+  butonu sakinin de hakki; GET/PATCH ❌) disinda her kaynak `403`.
   ‡ `POST /uploads/presign`e yalniz sikayet/oneri gorseli yuklemek icin erisir.
-- **Duyuru:** GONDERME/duzenleme/silme `admin` + `yonetici`; OKUMA tum roller.
+- **Duyuru:** OLUSTURMA **yalniz `yonetici`** — duyuru site yonetiminin
+  agzidir; `admin` platform operatorudur, tesise duyuru YAYINLAMAZ (canli
+  test karari). Duzenleme/silme `admin` + `yonetici` (moderasyon); OKUMA tum
+  roller.
   Olusturmada tenant'in tum aktif cihazlarina push denenir (EK gonderim; push
   hatasi duyuru kaydini etkilemez). Duyuruya OPSIYONEL gorsel eklenebilir
   (`/uploads/presign` → PUT → `foto_key`); okumada `foto_url` (kisa omurlu

@@ -1,6 +1,7 @@
 """Duyuru — yonetimden tum tesise — /contracts/openapi.yaml.
 
-RBAC (auth.md §4): GONDERME/duzenleme/silme admin+yonetici; OKUMA tum roller
+RBAC (auth.md §4): OLUSTURMA yalniz yonetici; duzenleme/silme admin+yonetici;
+OKUMA tum roller
 (resident dahil — sakinin ilk operasyon-disi kaynagi). tenant token'dan; RLS
 izole. Olusturmada tenant'in TUM aktif cihazlarina push denenir (EK gonderim —
 hatasi duyuru kaydini kirmaz, emergency ile ayni desen).
@@ -32,6 +33,10 @@ from ..schemas import (
 
 router = APIRouter(prefix="/announcements", tags=["announcements"])
 
+# OLUSTURMA yalniz yonetici: duyuru site yonetiminin agzi (canli test karari,
+# auth.md §4). admin (platform) OLUSTURAMAZ; duzenleme/silme admin+yonetici
+# kalir (moderasyon).
+_CREATOR = require_role("yonetici")
 _SENDER = require_role("admin", "yonetici")
 _READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi", "resident")
 
@@ -105,7 +110,7 @@ async def get_announcement(
 async def create_announcement(
     body: AnnouncementCreate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_SENDER),
+    user: AppUser = Depends(_CREATOR),
 ) -> AnnouncementOut:
     _validate_foto_key(body.foto_key, user.tenant_id)
     obj = Announcement(

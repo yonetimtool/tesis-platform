@@ -1,7 +1,8 @@
 """Acil durum (panik butonu) — POST/GET/PATCH /emergency — /contracts/openapi.yaml.
 
-POST: saha+yonetici+admin tetikler -> emergency_alert + yuksek oncelikli 'acil_durum'
-notification (idempotent). GET/PATCH(coz): admin/yonetici. Idempotency scan SAVEPOINT deseni.
+POST: TUM roller tetikler (resident dahil — canli test karari, auth.md §4)
+-> emergency_alert + yuksek oncelikli 'acil_durum' notification (idempotent).
+GET/PATCH(coz): admin/yonetici. Idempotency scan SAVEPOINT deseni.
 """
 from __future__ import annotations
 
@@ -29,7 +30,9 @@ from ..scheduler.notify import dispatch_external
 
 router = APIRouter(prefix="/emergency", tags=["emergency"])
 
-_FIELD = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+# Tetikleme HERKESE acik (resident dahil — panik butonu sakinin de hakki);
+# okuma/cozme yonetimde kalir.
+_FIELD = require_role("admin", "yonetici", "security", "tesis_gorevlisi", "resident")
 _MANAGER = require_role("admin", "yonetici")
 
 _NOTIF_SQL = text(

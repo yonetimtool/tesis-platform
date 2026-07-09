@@ -47,11 +47,22 @@ def test_crud_happy_path_yonetici(client, world):
     client.delete(f"/announcements/{b['id']}", headers=yonetici)
 
 
-def test_admin_da_gonderebilir(client, world):
+def test_admin_olusturamaz_ama_moderasyon_yapar(client, world):
+    """Canli test karari (auth.md §4): duyuru site yonetiminin agzi —
+    admin (platform) OLUSTURAMAZ (403); duzenleme/silme (moderasyon) kalir."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    a = _new(client, admin, baslik="Admin duyurusu")
-    assert a["olusturan_ad"] == "Admin A"
-    client.delete(f"/announcements/{a['id']}", headers=admin)
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+
+    assert client.post(
+        "/announcements", headers=admin, json={"baslik": "x", "govde": "y"}
+    ).status_code == 403
+
+    a = _new(client, yonetici, baslik="Yonetici duyurusu")
+    p = client.patch(
+        f"/announcements/{a['id']}", headers=admin, json={"govde": "Moderasyon."}
+    )
+    assert p.status_code == 200 and p.json()["govde"] == "Moderasyon."
+    assert client.delete(f"/announcements/{a['id']}", headers=admin).status_code == 204
 
 
 def test_validation(client, world):

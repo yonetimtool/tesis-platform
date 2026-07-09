@@ -49,11 +49,15 @@ enum UserRole {
   /// Gorev listesi/detayi okuma — saha rolleri + yonetici (takip).
   bool get canViewTasks => isFieldWorker || this == yonetici;
 
-  /// Acil durum tetikleme (`POST /emergency`) — resident haric herkes.
-  bool get canTriggerEmergency => isFieldWorker || this == yonetici;
+  /// Acil durum tetikleme (`POST /emergency`) — TUM roller (resident dahil;
+  /// panik butonu sakinin de hakki — canli test karari, auth.md §4).
+  bool get canTriggerEmergency =>
+      isFieldWorker || this == yonetici || this == resident;
 
-  /// Duyuru gonderme/duzenleme/silme — admin + yonetici (okuma herkese acik).
-  bool get canManageAnnouncements => this == admin || this == yonetici;
+  /// Duyuru olusturma/duzenleme/silme (mobil UX) — YALNIZ yonetici: duyuru
+  /// site yonetiminin agzi (canli test karari). admin mobilde salt okur
+  /// (moderasyonu panelden yapar); okuma herkese acik.
+  bool get canManageAnnouncements => this == yonetici;
 
   /// Gorev olusturma/duzenleme/silme (`POST/PATCH/DELETE /tasks`) —
   /// admin + yonetici (yonetici yalniz saha rollerine atayabilir; 422).

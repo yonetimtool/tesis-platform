@@ -40,12 +40,14 @@ void main() {
       expect(UserRole.yonetici.canViewTasks, isTrue);
       expect(UserRole.resident.canViewTasks, isFalse);
       expect(UserRole.yonetici.canTriggerEmergency, isTrue);
-      expect(UserRole.resident.canTriggerEmergency, isFalse);
+      // Panik butonu sakinin de hakki (canli test karari, auth.md §4).
+      expect(UserRole.resident.canTriggerEmergency, isTrue);
     });
 
-    test('duyuru yonetimi yalniz admin + yonetici (okuma herkese acik)', () {
-      expect(UserRole.admin.canManageAnnouncements, isTrue);
+    test('duyuru yonetimi YALNIZ yonetici — admin mobilde salt okur '
+        '(canli test karari; okuma herkese acik)', () {
       expect(UserRole.yonetici.canManageAnnouncements, isTrue);
+      expect(UserRole.admin.canManageAnnouncements, isFalse);
       expect(UserRole.security.canManageAnnouncements, isFalse);
       expect(UserRole.tesisGorevlisi.canManageAnnouncements, isFalse);
       expect(UserRole.resident.canManageAnnouncements, isFalse);

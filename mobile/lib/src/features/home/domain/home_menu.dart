@@ -90,9 +90,10 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.reports,
       ];
     case UserRole.resident:
-      // Sakinin kaynaklari: duyuru okuma + kendi aidat durumu +
-      // sikayet/oneri kanali (auth.md §4).
+      // Sakinin kaynaklari: acil durum (panik butonu sakinin de hakki) +
+      // duyuru okuma + sikayet/oneri kanali + kendi aidat durumu (auth.md §4).
       return const [
+        HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,

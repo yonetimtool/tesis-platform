@@ -728,7 +728,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [announcements]
-      summary: Duyuru olustur (admin + yonetici)
+      summary: Duyuru olustur (YALNIZ yonetici — admin platform, yayinlamaz)
       description: |
         Olusturan token'dan alinir. Kayit sonrasi tenant'in TUM aktif
         cihazlarina push denenir (EK gonderim — push hatasi kaydi etkilemez;
@@ -1439,10 +1439,11 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [emergency]
-      summary: Acil durum tetikle (panik butonu)
+      summary: Acil durum tetikle (panik butonu — TUM roller, resident dahil)
       description: |
         Idempotency-Key ZORUNLU (panik aninda mukerrer basim korumasi). tetikleyen
         token'dan. Alarm kaydi + yuksek oncelikli 'acil_durum' notification uretir.
+        RBAC: tetikleme TUM rollere acik (resident dahil); liste/cozme admin+yonetici.
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:

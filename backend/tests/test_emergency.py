@@ -56,10 +56,22 @@ def test_trigger_idempotency_and_400(client, world):
     assert nokey.status_code == 400 and nokey.json()["error"]["code"] == "bad_request"
 
 
-def test_trigger_rbac_resident_forbidden(client, world):
+def test_trigger_resident_allowed_read_forbidden(client, world):
+    """Panik butonu sakinin de hakki (canli test karari, auth.md §4):
+    resident TETIKLER (201); liste/cozme yonetimde kalir (403)."""
     resident = _headers(client, world["slug_a"], world["resident_a"])
-    r = _trigger(client, resident, uuid.uuid4().hex, notlar="x")
-    assert r.status_code == 403
+    resident_id = client.get("/me", headers=resident).json()["id"]
+
+    r = _trigger(client, resident, uuid.uuid4().hex, notlar="asansorde mahsur")
+    assert r.status_code == 201, r.text
+    assert r.json()["tetikleyen_user_id"] == resident_id
+    assert r.json()["durum"] == "acik"
+
+    # okuma/cozme hala yonetim isi
+    assert client.get("/emergency", headers=resident).status_code == 403
+    assert client.patch(
+        f"/emergency/{r.json()['id']}", headers=resident, json={"notlar": "x"}
+    ).status_code == 403
 
 
 # --------------------------- liste / izolasyon ----------------------------- #

@@ -88,6 +88,9 @@ void main() {
         items: [_c(durum: ComplaintDurum.cozuldu, yanit: 'Servis cagrildi.')],
       ));
       await tester.pumpAndSettle();
+      // Cozuldu kayit "Cozulenler" sekmesinde.
+      await tester.tap(find.text('Cozulenler (1)'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Asansor arizali'));
       await tester.pumpAndSettle();
       expect(find.byType(SegmentedButton<ComplaintDurum>), findsNothing);
@@ -154,5 +157,48 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.text('Inceleniyor'), findsOneWidget);
+  });
+
+  group('Acik / Cozulenler sekmeleri', () {
+    testWidgets(
+        'acik+inceleniyor "Acik" sekmesinde; cozuldu yalniz "Cozulenler"de',
+        (tester) async {
+      final items = [
+        _c(),
+        Complaint(
+          id: 'c-2',
+          baslik: 'Cozulen talep',
+          mesaj: 'm',
+          durum: ComplaintDurum.cozuldu,
+          acanUserId: 'u-1',
+          yoneticiYaniti: 'Tamam.',
+          createdAt: DateTime.utc(2026, 7, 8),
+          updatedAt: DateTime.utc(2026, 7, 9),
+        ),
+      ];
+      await tester.pumpWidget(_app(UserRole.yonetici, items: items));
+      await tester.pumpAndSettle();
+
+      // Sekme sayaclari dogru
+      expect(find.text('Acik (1)'), findsOneWidget);
+      expect(find.text('Cozulenler (1)'), findsOneWidget);
+      // Varsayilan sekme Acik: acik kayit gorunur, cozulen gorunmez
+      expect(find.text('Asansor arizali'), findsOneWidget);
+      expect(find.text('Cozulen talep'), findsNothing);
+
+      await tester.tap(find.text('Cozulenler (1)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Cozulen talep'), findsOneWidget);
+      expect(find.text('Asansor arizali'), findsNothing);
+    });
+
+    testWidgets('bos Cozulenler sekmesi anlamli mesaj gosterir',
+        (tester) async {
+      await tester.pumpWidget(_app(UserRole.yonetici, items: [_c()]));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cozulenler (0)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Henuz cozulen talep yok.'), findsOneWidget);
+    });
   });
 }

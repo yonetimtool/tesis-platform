@@ -42,15 +42,15 @@ Widget _app(UserRole role, {List<Announcement> items = const []}) =>
 
 void main() {
   group('"Yeni duyuru" butonu rol gorunurlugu (auth.md §4 UX aynasi)', () {
-    for (final role in [UserRole.admin, UserRole.yonetici]) {
-      testWidgets('${role.name}: FAB GORUNUR', (tester) async {
-        await tester.pumpWidget(_app(role, items: [_a()]));
-        await tester.pumpAndSettle();
-        expect(find.text('Yeni duyuru'), findsOneWidget);
-      });
-    }
+    testWidgets('yonetici: FAB GORUNUR (duyuru site yonetiminin agzi)',
+        (tester) async {
+      await tester.pumpWidget(_app(UserRole.yonetici, items: [_a()]));
+      await tester.pumpAndSettle();
+      expect(find.text('Yeni duyuru'), findsOneWidget);
+    });
 
     for (final role in [
+      UserRole.admin, // canli test karari: admin mobilde salt okur
       UserRole.security,
       UserRole.tesisGorevlisi,
       UserRole.resident,

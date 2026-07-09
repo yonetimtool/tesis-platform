@@ -82,12 +82,29 @@ void main() {
       }
     });
 
-    test('resident: duyurular + Sikayet/Oneri + Aidatim', () {
+    test('resident: SOS + duyurular + Sikayet/Oneri + Aidatim', () {
       expect(homeMenuForRole(UserRole.resident), const [
+        HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
       ]);
+    });
+
+    test('Acil Durum karti 5 rolun 5inde de var (panik herkese acik)', () {
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.emergency),
+          reason: role.wire,
+        );
+      }
     });
 
     test('Sikayet/Oneri saha rollerinde YOK (sakin<->yonetim kanali)', () {
