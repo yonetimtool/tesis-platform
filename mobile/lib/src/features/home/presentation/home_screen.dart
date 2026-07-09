@@ -33,28 +33,41 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_circle_outline, size: 64),
-              const SizedBox(height: 16),
-              const Text(
-                'Giris basarili',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+      // Cok kartli rolde (or. guvenlik) icerik kucuk ekrani asabildiginden
+      // liste kaydirilabilir; icerik sigarsa eski gorunum gibi ortali kalir.
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                // 48 = dikey padding (24 ust + 24 alt); negatife dusmesin.
+                minHeight: (constraints.maxHeight - 48).clamp(0, double.infinity).toDouble(),
               ),
-              const SizedBox(height: 8),
-              if (role != UserRole.unknown)
-                Text(
-                  role.label,
-                  style: TextStyle(color: Theme.of(context).hintColor),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle_outline, size: 64),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Giris basarili',
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    if (role != UserRole.unknown)
+                      Text(
+                        role.label,
+                        style: TextStyle(color: Theme.of(context).hintColor),
+                      ),
+                    const SizedBox(height: 24),
+                    for (final entry in entries)
+                      _menuCard(context, entry, outboxState),
+                  ],
                 ),
-              const SizedBox(height: 24),
-              for (final entry in entries)
-                _menuCard(context, entry, outboxState),
-            ],
+              ),
+            ),
           ),
         ),
       ),
