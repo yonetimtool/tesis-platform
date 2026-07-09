@@ -121,8 +121,10 @@ def test_tenant_isolation(client, world):
 
 
 def test_rbac(client, world):
-    guard = _headers(client, world["slug_a"], world["guard_a"])
-    assert client.get("/task-completions", headers=guard).status_code == 200
-    for role in ("gorevli_a", "resident_a"):
+    """Kesin matris: gorev-yonetimi GORUNTULEME (takip gecmisi dahil) —
+    yonetici/security/tesis_gorevlisi/admin 200; resident 403."""
+    for role in ("admin_a", "yonetici_a", "guard_a", "gorevli_a"):
         h = _headers(client, world["slug_a"], world[role])
-        assert client.get("/task-completions", headers=h).status_code == 403
+        assert client.get("/task-completions", headers=h).status_code == 200, role
+    resident = _headers(client, world["slug_a"], world["resident_a"])
+    assert client.get("/task-completions", headers=resident).status_code == 403

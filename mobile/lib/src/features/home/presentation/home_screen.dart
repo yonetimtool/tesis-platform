@@ -150,16 +150,18 @@ class HomeScreen extends ConsumerWidget {
           ),
         );
       case HomeMenuEntry.taskTracking:
-        // Yonetici: ayni gorev listesi, tamamlama akisi detayda gizli.
+        // Gorev-YONETIMI: tum gorev/atama takibi ("Herkes" kapsamiyla
+        // acilir). "Yeni gorev" butonu ekranda rol kapilidir (yonetim).
         return Card(
           child: ListTile(
             leading: const Icon(Icons.fact_check_outlined),
             title: const Text('Gorev yonetimi'),
             subtitle: const Text(
-              'Gorev olustur, saha personeline ata ve izle',
+              'Tum gorevleri ve atamalari izle; atama yonetimde',
             ),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.tasks),
+            onTap: () =>
+                context.push('${AppRoutes.tasks}?gorunum=yonetim'),
           ),
         );
       case HomeMenuEntry.assets:

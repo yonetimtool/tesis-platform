@@ -8,23 +8,51 @@ import 'task_form_sheet.dart';
 import 'task_tip_style.dart';
 import 'tasks_controller.dart';
 
-/// "Gorevlerim" — temizlik/kontrol personelinin gorev listesi.
+/// Gorev listesi — iki giris noktasi, TEK ekran (kesin matris, auth.md §4):
 ///
-///   * Tip rozetli satirlar; bana atananlar one ve "Sana atanmis" vurgulu;
-///     sonraki_planlanan varsa tarih gosterilir.
-///   * Tip filtresi (chip'ler, sunucuya `tip` parametresi gider).
-///   * Pull-to-refresh; 403'te kibar mesaj (liste cleaning + security +
-///     admin'e aciktir).
-class TasksScreen extends ConsumerWidget {
-  const TasksScreen({super.key});
+///   * "Gorevlerim" (varsayilan): kisinin KENDINE atananlar — saha
+///     personelinin mevcut akisi, DEGISMEZ.
+///   * [yonetimGorunumu] (?gorunum=yonetim): Gorev-YONETIMI — tum
+///     gorev/atama takibi, "Herkes" kapsamiyla acilir; goruntuleme
+///     yonetici+security+tesis_gorevlisi(+admin), "Yeni gorev" yalniz
+///     yonetimde (canManage).
+///
+///   * Tip rozetli satirlar; "Sana atanmis" vurgulu; tip filtresi sunucuya
+///     gider; pull-to-refresh; 403'te kibar mesaj.
+class TasksScreen extends ConsumerStatefulWidget {
+  const TasksScreen({super.key, this.yonetimGorunumu = false});
+
+  /// true → Gorev-YONETIMI gorunumu (tum liste); false → "Gorevlerim".
+  final bool yonetimGorunumu;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TasksScreen> createState() => _TasksScreenState();
+}
+
+class _TasksScreenState extends ConsumerState<TasksScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Giris noktasina gore kapsami hizala: yonetim → "Herkes";
+    // Gorevlerim → "Bana atanan". (Controller, saha disi roller icin
+    // "Bana atanan"i zaten "Herkes"e cevirir — cakismaz.)
+    Future.microtask(() {
+      if (!mounted) return;
+      ref
+          .read(tasksControllerProvider.notifier)
+          .setSadeceBenim(!widget.yonetimGorunumu);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(tasksControllerProvider);
     final controller = ref.read(tasksControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Gorevlerim')),
+      appBar: AppBar(
+        title: Text(widget.yonetimGorunumu ? 'Gorev yonetimi' : 'Gorevlerim'),
+      ),
       // Gorev olusturma admin + yonetici (auth.md §4) — UX kapisi; gercek
       // yetki backend'de.
       floatingActionButton: state.canManage

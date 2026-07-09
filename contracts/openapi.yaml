@@ -1084,7 +1084,8 @@ paths:
         hangi gorevler tamamlandi, kim, hangi tip"). tamamlanma_zamani DESC.
         /patrol-windows ile ayni desen: ozet sayilar (toplam + tip dagilimi)
         FILTRELENMIS TUM kume uzerinden response.ozet'te doner.
-        RBAC: admin + security. tenant-izole (RLS).
+        RBAC (gorev-yonetimi goruntuleme): admin + yonetici + security +
+        tesis_gorevlisi; resident 403. tenant-izole (RLS).
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"

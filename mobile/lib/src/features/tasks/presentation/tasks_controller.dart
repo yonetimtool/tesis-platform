@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
@@ -92,6 +94,10 @@ class TasksState {
 class TasksController extends Notifier<TasksState> {
   bool _refreshing = false;
 
+  /// Devam eden yenilemenin bitis isareti — kapsam degisiminde beklenir
+  /// (eski kapsamla kosan fetch'in sonucunu yenisiyle ezmemek icin).
+  Future<void>? _inflight;
+
   @override
   TasksState build() {
     Future.microtask(() async {
@@ -109,6 +115,8 @@ class TasksController extends Notifier<TasksState> {
   Future<void> refresh({bool silent = false}) async {
     if (_refreshing) return;
     _refreshing = true;
+    final done = Completer<void>();
+    _inflight = done.future;
     if (!silent) {
       state = state.copyWith(loading: true, errorMessage: null);
     }
@@ -146,6 +154,8 @@ class TasksController extends Notifier<TasksState> {
       );
     } finally {
       _refreshing = false;
+      _inflight = null;
+      done.complete();
     }
   }
 
@@ -159,6 +169,10 @@ class TasksController extends Notifier<TasksState> {
   Future<void> setSadeceBenim(bool value) async {
     if (value == state.sadeceBenim) return;
     state = state.copyWith(sadeceBenim: value);
+    // Ilk yuklemeyle yaris: devam eden fetch ESKI kapsamla kosuyor olabilir
+    // (giris noktasi kapsami initState'te set eder) — bitmesini bekleyip
+    // yeni kapsamla tekrar cek.
+    await _inflight;
     await refresh();
   }
 

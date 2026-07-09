@@ -21,7 +21,9 @@ enum HomeMenuEntry {
   /// Gorevlerim — saha personeli: tamamlama akisiyla.
   tasks,
 
-  /// Gorev takibi — yonetici: ayni liste, tamamlama YOK (salt izleme).
+  /// Gorev-YONETIMI — tum gorev/atama listesi-takibi (kesin matris):
+  /// goruntuleme yonetici+security+tesis_gorevlisi(+admin); "yeni gorev"
+  /// yalniz yonetimde. "Gorevlerim"den (kisiye atananlar) AYRIDIR.
   taskTracking,
 
   /// Demirbas zimmet (NFC al/birak) — saha personeli.
@@ -66,6 +68,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.complaints,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
+        HomeMenuEntry.taskTracking,
         HomeMenuEntry.assets,
         HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
@@ -77,6 +80,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.tasks,
+        HomeMenuEntry.taskTracking,
         HomeMenuEntry.assets,
         HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,

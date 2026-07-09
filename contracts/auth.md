@@ -138,7 +138,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `PATCH /tasks/{id}`                   |  ✅   | ✅* | ❌  | ❌  | ❌  |
 | `DELETE /tasks/{id}`                  |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /tasks/{id}/completions`        |  ✅   | ✅  | ✅  | ✅  | ❌  |
-| `GET  /task-completions` (gecmis)     |  ✅   | ✅  | ✅  | ❌  | ❌  |
+| `GET  /task-completions` (gecmis)     |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /tasks/{id}/completions`        |  ✅   | ❌  | ✅  | ✅  | ❌  |
 | `GET  /landscape/schedule`            |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /uploads/presign`               |  ✅   | ✅† | ✅  | ✅  | ✅‡ |
@@ -218,6 +218,11 @@ Notlar:
   gorur; PATCH ❌) + **acil durum tetikleme** (`POST /emergency` — panik
   butonu sakinin de hakki; GET/PATCH ❌) disinda her kaynak `403`.
   ‡ `POST /uploads/presign`e yalniz sikayet/oneri gorseli yuklemek icin erisir.
+- **Gorev-YONETIMI vs "Gorevlerim" (kesin matris):** Gorev-YONETIMI =
+  gorev atama + TUM gorev/atama takip ekrani. GORUNTULEME `yonetici` +
+  `tesis_gorevlisi` + `security` (+`admin`); `resident` ❌. ATAMA/olusturma
+  yalniz `yonetici` (+`admin`). "Gorevlerim" (kisinin KENDINE atananlar,
+  `?atanan_user_id=me`) bundan AYRIDIR ve saha rollerinde aynen surer.
 - **Duyuru:** OLUSTURMA `yonetici` (site yonetiminin agzi, mobil) +
   `admin` (platform tarafi, panel) — canli test kesin kurali. Saha rolleri
   ve `resident` olusturamaz. Duzenleme/silme `admin` + `yonetici`; OKUMA

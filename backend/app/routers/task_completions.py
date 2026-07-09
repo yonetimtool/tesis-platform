@@ -4,8 +4,9 @@
 GECMISI icindir ("gecen hafta hangi gorevler tamamlandi, kim, hangi tip").
 /patrol-windows ile BIREBIR ayni desen: tarih araligi + tip/task_id/tamamlayan
 filtresi, DESC, sayfalama, response.ozet (filtrelenmis tum kume uzerinden).
-Mevcut task_completion tablosu uzerinde okuma — yeni tablo yok. RBAC: admin +
-security (raporlama uclariyla tutarli). tenant-izole (RLS).
+Mevcut task_completion tablosu uzerinde okuma — yeni tablo yok. RBAC (kesin
+matris, auth.md §4): gorev-YONETIMI goruntuleme — admin + yonetici + security
++ tesis_gorevlisi; resident 403. tenant-izole (RLS).
 """
 from __future__ import annotations
 
@@ -28,7 +29,7 @@ from ..schemas import (
 
 router = APIRouter(prefix="/task-completions", tags=["tasks"])
 
-_VIEWER = require_role("admin", "yonetici", "security")
+_VIEWER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 
 # {where} sabit kosul parcalarindan kurulur; degerler her zaman bound param.
 _LIST_SQL = """

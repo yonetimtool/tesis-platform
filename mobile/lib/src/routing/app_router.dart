@@ -103,7 +103,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.tasks,
-        builder: (context, state) => const TasksScreen(),
+        // ?gorunum=yonetim → Gorev-YONETIMI gorunumu (tum liste, "Herkes"
+        // kapsami); parametresiz → "Gorevlerim" (bana atananlar).
+        builder: (context, state) => TasksScreen(
+          yonetimGorunumu: state.uri.queryParameters['gorunum'] == 'yonetim',
+        ),
       ),
       GoRoute(
         path: AppRoutes.emergency,

@@ -66,6 +66,31 @@ def test_task_rbac_and_validation(client, world):
     assert r.status_code == 422 and r.json()["error"]["code"] == "invalid_reference"
 
 
+def test_gorev_yonetimi_kesin_matris(client, world):
+    """Kesin matris (auth.md §4) — gorev-YONETIMI:
+    GORUNTULE (tum liste) yonetici/security/tesis_gorevlisi/admin 200,
+    resident 403; YENI ATA yalniz yonetici(+admin) 201, digerleri 403."""
+    # GORUNTULE
+    for role in ("admin_a", "yonetici_a", "guard_a", "gorevli_a"):
+        h = _headers(client, world["slug_a"], world[role])
+        assert client.get("/tasks", headers=h).status_code == 200, role
+    resident = _headers(client, world["slug_a"], world["resident_a"])
+    assert client.get("/tasks", headers=resident).status_code == 403
+
+    # YENI ATA / OLUSTUR
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = client.post(
+        "/tasks", headers=yonetici, json={"tip": "kontrol", "ad": "Matris gorevi"}
+    )
+    assert r.status_code == 201, r.text
+    for role in ("guard_a", "gorevli_a", "resident_a"):
+        h = _headers(client, world["slug_a"], world[role])
+        assert client.post(
+            "/tasks", headers=h, json={"tip": "kontrol", "ad": "x"}
+        ).status_code == 403, role
+    client.delete(f"/tasks/{r.json()['id']}", headers=yonetici)
+
+
 def test_task_tenant_isolation(client, world):
     admin_a = _headers(client, world["slug_a"], world["admin_a"])
     admin_b = _headers(client, world["slug_b"], world["admin_b"])
