@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/error/api_exception.dart';
 import '../domain/auth_repository.dart';
 import 'auth_api.dart';
 import 'token_storage.dart';
@@ -15,6 +16,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String tenantSlug,
     required String email,
     required String password,
+    bool rememberMe = false,
   }) async {
     final tokens = await api.login(
       tenantSlug: tenantSlug,
@@ -22,12 +24,35 @@ class AuthRepositoryImpl implements AuthRepository {
       password: password,
     );
     await storage.save(tokens);
+    await storage.saveRememberMe(rememberMe);
   }
 
   @override
-  Future<bool> hasSession() async {
-    final refresh = await storage.readRefreshToken();
-    return refresh != null && refresh.isNotEmpty;
+  Future<bool> restoreSession() async {
+    if (!await storage.readRememberMe()) {
+      // "Hatirla"siz oturumun kalintilari sonraki acilista tasinmaz.
+      await storage.clear();
+      return false;
+    }
+
+    final refreshToken = await storage.readRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) return false;
+
+    try {
+      final tokens = await api.refresh(refreshToken);
+      await storage.save(tokens);
+      return true;
+    } on ApiException catch (e) {
+      // Gecici ag hatasinda oturumu koru (sonraki acilis tekrar dener);
+      // olu/iptal token'da (auth) kalici oturumu tamamen temizle.
+      if (e.kind != ApiErrorKind.network) {
+        await storage.clear();
+      }
+      return false;
+    } catch (_) {
+      // Beklenmeyen hata acilisi patlatmasin → login ekranina kibar dusus.
+      return false;
+    }
   }
 
   @override

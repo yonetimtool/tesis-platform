@@ -58,19 +58,23 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> _restoreSession() async {
     final repo = ref.read(authRepositoryProvider);
-    final hasSession = await repo.hasSession();
+    // "Beni hatirla" isaretliyse refresh denenir; degilse/basarisizsa login.
+    final restored = await repo.restoreSession();
     state = state.copyWith(
-      status: hasSession
+      status: restored
           ? AuthStatus.authenticated
           : AuthStatus.unauthenticated,
     );
   }
 
   /// Login dener; basari → authenticated, hata → errorMessage doldurulur.
+  /// [rememberMe] true ise oturum kalici saklanir (sonraki acilis dogrudan
+  /// ana ekran).
   Future<void> login({
     required String tenantSlug,
     required String email,
     required String password,
+    bool rememberMe = false,
   }) async {
     state = state.copyWith(submitting: true, errorMessage: null);
     try {
@@ -78,6 +82,7 @@ class AuthController extends Notifier<AuthState> {
             tenantSlug: tenantSlug,
             email: email,
             password: password,
+            rememberMe: rememberMe,
           );
       state = state.copyWith(
         status: AuthStatus.authenticated,

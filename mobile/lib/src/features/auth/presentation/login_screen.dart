@@ -18,6 +18,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
+  bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -34,6 +35,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           tenantSlug: _tenantCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
+          rememberMe: _rememberMe,
         );
   }
 
@@ -132,6 +134,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         }
                         return null;
                       },
+                    ),
+                    const SizedBox(height: 8),
+                    // Isaretliyse oturum kalici saklanir → sonraki acilista
+                    // sifre sorulmadan dogrudan ana ekran.
+                    CheckboxListTile(
+                      key: const Key('remember_me_checkbox'),
+                      value: _rememberMe,
+                      onChanged: submitting
+                          ? null
+                          : (v) => setState(() => _rememberMe = v ?? false),
+                      title: const Text('Beni hatirla'),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
                     ),
                     if (auth.errorMessage != null) ...[
                       const SizedBox(height: 16),

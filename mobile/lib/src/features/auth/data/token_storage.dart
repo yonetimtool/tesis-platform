@@ -12,6 +12,7 @@ class TokenStorage {
 
   static const _kAccess = 'auth.access_token';
   static const _kRefresh = 'auth.refresh_token';
+  static const _kRemember = 'auth.remember_me';
 
   Future<void> save(TokenPair tokens) async {
     await _storage.write(key: _kAccess, value: tokens.accessToken);
@@ -22,9 +23,22 @@ class TokenStorage {
 
   Future<String?> readRefreshToken() => _storage.read(key: _kRefresh);
 
+  /// "Beni hatirla" bayragi: true ise acilista oturum geri yuklenmeye calisilir.
+  Future<void> saveRememberMe(bool value) async {
+    if (value) {
+      await _storage.write(key: _kRemember, value: 'true');
+    } else {
+      await _storage.delete(key: _kRemember);
+    }
+  }
+
+  Future<bool> readRememberMe() async =>
+      await _storage.read(key: _kRemember) == 'true';
+
   Future<void> clear() async {
     await _storage.delete(key: _kAccess);
     await _storage.delete(key: _kRefresh);
+    await _storage.delete(key: _kRemember);
   }
 }
 

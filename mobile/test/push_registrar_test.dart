@@ -104,13 +104,14 @@ class _FakeAuthRepository implements AuthRepository {
   bool sessionExists = false;
 
   @override
-  Future<bool> hasSession() async => sessionExists;
+  Future<bool> restoreSession() async => sessionExists;
 
   @override
   Future<void> login({
     required String tenantSlug,
     required String email,
     required String password,
+    bool rememberMe = false,
   }) async {
     sessionExists = true;
   }
