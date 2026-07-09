@@ -31,18 +31,26 @@ def dispatch_external(
     *,
     tenant_id: uuid.UUID | None = None,
     target_roles: Sequence[str] | None = None,
+    target_user_ids: Sequence[uuid.UUID] | None = None,
     title: str = "Tesis bildirimi",
     data: Mapping[str, str] | None = None,
 ) -> None:
     """Gercek-gonderim kancasi (FCM push) — EK gonderim, in-app'i etkilemez.
 
-    tenant_id/target_roles verilmezse eski no-op davranisi (yalniz log). Push
+    Hedef: `target_user_ids` verilirse YALNIZ o kullanicilarin cihazlari
+    (orn. talep yaniti -> talebi acan sakin); yoksa `target_roles`. Ikisi de
+    yoksa (veya tenant_id yoksa) eski no-op davranisi (yalniz log). Push
     hatasi bildirim akisini KIRMAZ (try/except + log).
     """
     logger.info("EXTERNAL_NOTIFY: %s", message)
     try:
         _push_to_devices(
-            tenant_id=tenant_id, target_roles=target_roles, title=title, body=message, data=data
+            tenant_id=tenant_id,
+            target_roles=target_roles,
+            target_user_ids=target_user_ids,
+            title=title,
+            body=message,
+            data=data,
         )
     except Exception:  # savunma: push cokerse in-app bildirim akisi devam eder
         logger.exception("push gonderimi basarisiz (in-app bildirimi etkilenmez)")
@@ -52,14 +60,18 @@ def _push_to_devices(
     *,
     tenant_id: uuid.UUID | None,
     target_roles: Sequence[str] | None,
+    target_user_ids: Sequence[uuid.UUID] | None = None,
     title: str,
     body: str,
     data: Mapping[str, str] | None,
 ) -> None:
     provider = push.get_push_provider()
-    if tenant_id is None or not target_roles:
+    if tenant_id is None or not (target_roles or target_user_ids):
         return  # hedef bilgisi yok -> gonderim yapma (eski no-op)
-    tokens = _fetch_device_tokens(tenant_id, target_roles)
+    if target_user_ids:
+        tokens = _fetch_device_tokens_for_users(tenant_id, target_user_ids)
+    else:
+        tokens = _fetch_device_tokens(tenant_id, target_roles or ())
     if not tokens:
         return
     provider.send(tokens, title=title, body=body, data=dict(data or {}))
@@ -81,6 +93,29 @@ def _fetch_device_tokens(tenant_id: uuid.UUID, roles: Sequence[str]) -> list[str
                 "JOIN app_user u ON u.id = d.user_id "
                 "WHERE d.aktif = true AND u.is_active = true AND u.role::text = ANY(%s)",
                 (list(roles),),
+            )
+            return [r[0] for r in cur.fetchall()]
+
+
+def _fetch_device_tokens_for_users(
+    tenant_id: uuid.UUID, user_ids: Sequence[uuid.UUID]
+) -> list[str]:
+    """Belirli AKTIF kullanicilarin aktif device token'lari (RLS-safe).
+
+    Rol yerine kisi hedefleme: orn. talep yaniti yalniz talebi acan sakine
+    gider — tenant'taki diger sakinlere sizmaz.
+    """
+    with psycopg.connect(settings.app_dsn, connect_timeout=10) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
+            )
+            cur.execute(
+                "SELECT d.fcm_token FROM user_device d "
+                "JOIN app_user u ON u.id = d.user_id "
+                "WHERE d.aktif = true AND u.is_active = true "
+                "AND u.id = ANY(%s::uuid[])",
+                ([str(u) for u in user_ids],),
             )
             return [r[0] for r in cur.fetchall()]
 

@@ -875,7 +875,9 @@ paths:
       summary: Durum degistir + yonetici yaniti yaz (admin + yonetici)
       description: |
         yonetici_yaniti yazildiginda yanitlayan_user_id ve yanit_zamani
-        otomatik damgalanir. resident bu uca ERISEMEZ (403).
+        otomatik damgalanir ve YALNIZ talebi acan sakinin cihazlarina push
+        denenir (EK gonderim — hatasi kaydi etkilemez; data: tip=talep_yanit,
+        complaint_id). resident bu uca ERISEMEZ (403).
       requestBody:
         required: true
         content:

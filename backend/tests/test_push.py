@@ -80,6 +80,40 @@ def test_dispatch_calls_provider_with_tokens(monkeypatch):
     assert rec == [(["TOKX", "TOKY"], "TT", "mesaj", {"a": "b"})]
 
 
+def test_dispatch_user_targeted_uses_user_fetch(monkeypatch):
+    """target_user_ids verilirse ROL degil KISI hedeflenir (talep yaniti
+    yalniz talebi acan sakine gider)."""
+    uid = uuid.uuid4()
+    fetched = []
+
+    def fake_users_fetch(t, user_ids):
+        fetched.append(list(user_ids))
+        return ["TOK-RESIDENT"]
+
+    monkeypatch.setattr(notify, "_fetch_device_tokens_for_users", fake_users_fetch)
+    # rol bazli fetch CAGRILMAMALI
+    monkeypatch.setattr(
+        notify, "_fetch_device_tokens",
+        lambda t, r: (_ for _ in ()).throw(AssertionError("rol fetch cagrildi")),
+    )
+    rec = []
+
+    class Recorder:
+        def send(self, tokens, *, title, body, data=None):
+            rec.append((list(tokens), title, body, data))
+
+    monkeypatch.setattr(notify.push, "get_push_provider", lambda: Recorder())
+    notify.dispatch_external(
+        "Talebiniz yanitlandi: X",
+        tenant_id=uuid.uuid4(),
+        target_user_ids=(uid,),
+        title="Sikayet/Oneri",
+        data={"tip": "talep_yanit"},
+    )
+    assert fetched == [[uid]]
+    assert rec == [(["TOK-RESIDENT"], "Sikayet/Oneri", "Talebiniz yanitlandi: X", {"tip": "talep_yanit"})]
+
+
 def test_dispatch_without_target_is_noop(monkeypatch):
     calls = []
     monkeypatch.setattr(notify, "_fetch_device_tokens", lambda t, r: calls.append("fetch") or [])

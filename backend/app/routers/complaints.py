@@ -8,8 +8,9 @@ bu bir sakin<->yonetim kanalidir. tenant token'dan; RLS izole.
 Opsiyonel gorsel: acmada /uploads/presign ile yuklenmis foto_key kabul edilir
 (tenant-namespace dogrulamali); okumada presigned GET foto_url doner.
 
-Acmada admin+yonetici cihazlarina push denenir (EK gonderim — hatasi talep
-kaydini kirmaz, duyuru/emergency ile ayni desen).
+Acmada admin+yonetici cihazlarina push denenir; yonetici yanitinda push
+YALNIZ talebi acan sakine gider (kisi hedefli). Ikisi de EK gonderim —
+hatasi talep kaydini kirmaz (duyuru/emergency ile ayni desen).
 """
 from __future__ import annotations
 
@@ -179,6 +180,7 @@ async def update_complaint(
         raise APIError(404, "not_found", "Kayit bulunamadi")
     obj, acan_ad = row
 
+    yanitlandi = False
     if "durum" in payload and payload["durum"] is not None:
         obj.durum = payload["durum"]
     if "yonetici_yaniti" in payload:
@@ -186,10 +188,21 @@ async def update_complaint(
         # Yanit kim tarafindan/ne zaman — otomatik damgalanir.
         obj.yanitlayan_user_id = user.id
         obj.yanit_zamani = func.now()
+        yanitlandi = obj.yonetici_yaniti is not None
     obj.updated_at = func.now()
     try:
         await db.flush()
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    if yanitlandi:
+        # EK push: yanit YALNIZ talebi acan sakine gider (kisi hedefli —
+        # tenant'taki diger sakinlere sizmaz); hatasi kaydi kirmaz.
+        dispatch_external(
+            f"Talebiniz yanitlandi: {obj.baslik}",
+            tenant_id=user.tenant_id,
+            target_user_ids=(obj.acan_user_id,),
+            title="Sikayet/Oneri",
+            data={"tip": "talep_yanit", "complaint_id": str(obj.id)},
+        )
     return _out(obj, acan_ad)

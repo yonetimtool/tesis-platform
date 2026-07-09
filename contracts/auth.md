@@ -226,8 +226,9 @@ Notlar:
   `resident` yalniz KENDI actiklarini (° isareti), `admin`+`yonetici` tenant'taki
   tumunu; DURUM/YANIT (PATCH) yalniz `admin`+`yonetici` (`yanitlayan_user_id`
   + `yanit_zamani` otomatik). `security`/`tesis_gorevlisi` ERISMEZ — kanal
-  onlara kapali. Talep ACILDIGINDA `admin`+`yonetici` cihazlarina push
-  denenir (EK gonderim; hatasi talep kaydini etkilemez).
+  onlara kapali. Talep ACILDIGINDA `admin`+`yonetici` cihazlarina,
+  YANITLANDIGINDA yalniz talebi ACAN sakinin cihazlarina push denenir
+  (kisi hedefli; EK gonderim — hatasi talep kaydini etkilemez).
 
 ## 5. Hata Davranisi
 
