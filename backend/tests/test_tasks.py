@@ -182,10 +182,12 @@ def test_presign_and_completion_with_foto(client, world):
     assert comp.json()["foto_key"] == body["foto_key"]
 
 
-def test_presign_rbac_resident_forbidden(client, world):
+def test_presign_rbac_resident_allowed_for_complaint_foto(client, world):
+    """resident presign'a SIKAYET/ONERI gorseli icin erisir (auth.md §4);
+    saha kanit uclari (scans/completion) resident'a kapali kalir."""
     resident = _headers(client, world["slug_a"], world["resident_a"])
     r = client.post("/uploads/presign", headers=resident, json={"content_type": "image/jpeg"})
-    assert r.status_code == 403
+    assert r.status_code == 200
 
 
 # ------------------- mobil §11 bulgulari (atama/foto/NFC) ------------------- #

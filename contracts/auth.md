@@ -130,6 +130,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /announcements`                 |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `PATCH /announcements/{id}`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `DELETE /announcements/{id}`          |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET  /complaints` (liste/detay)      |  ✅   | ✅  | ❌  | ❌  | ✅° |
+| `POST /complaints`                    |  ❌   | ❌  | ❌  | ❌  | ✅  |
+| `PATCH /complaints/{id}` (durum/yanit)|  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /tasks` (liste/detay)           |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /tasks`                         |  ✅   | ✅* | ❌  | ❌  | ❌  |
 | `PATCH /tasks/{id}`                   |  ✅   | ✅* | ❌  | ❌  | ❌  |
@@ -138,7 +141,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /task-completions` (gecmis)     |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `POST /tasks/{id}/completions`        |  ✅   | ❌  | ✅  | ✅  | ❌  |
 | `GET  /landscape/schedule`            |  ✅   | ✅  | ✅  | ✅  | ❌  |
-| `POST /uploads/presign`               |  ✅   | ✅† | ✅  | ✅  | ❌  |
+| `POST /uploads/presign`               |  ✅   | ✅† | ✅  | ✅  | ✅‡ |
 | `POST /devices` (kendi cihazi)        |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `DELETE /devices/{fcm_token}`         |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET  /devices` (liste, debug)        |  ✅   | ❌  | ❌  | ❌  | ❌  |
@@ -209,13 +212,21 @@ Notlar:
   erisemez; saha odakli.
 - **resident**: v0 kapsaminda operasyon endpoint'lerine erisimi yoktur.
   Login/refresh + `GET /me/dues` + cihaz kaydi + **duyuru okuma**
-  (`GET /announcements`) disinda her kaynak `403`. Diger sakin ozellikleri
-  (talep vb.) sonraki surumde.
+  (`GET /announcements`; duyuru OLUSTURAMAZ — gonderme admin+yonetici) +
+  **sikayet/oneri** (`POST /complaints` acar, ° `GET /complaints*` YALNIZ
+  kendi actiklarini gorur; PATCH ❌) disinda her kaynak `403`.
+  ‡ `POST /uploads/presign`e yalniz sikayet/oneri gorseli yuklemek icin erisir.
 - **Duyuru:** GONDERME/duzenleme/silme `admin` + `yonetici`; OKUMA tum roller.
   Olusturmada tenant'in tum aktif cihazlarina push denenir (EK gonderim; push
   hatasi duyuru kaydini etkilemez). Duyuruya OPSIYONEL gorsel eklenebilir
   (`/uploads/presign` → PUT → `foto_key`); okumada `foto_url` (kisa omurlu
   presigned GET) tum okuyan rollere doner.
+- **Sikayet/Oneri (`/complaints`):** sakin↔yonetim kanali. ACMA yalniz
+  `resident` (acan token'dan, `durum=acik`, opsiyonel `foto_key`); OKUMA
+  `resident` yalniz KENDI actiklarini (° isareti), `admin`+`yonetici` tenant'taki
+  tumunu; DURUM/YANIT (PATCH) yalniz `admin`+`yonetici` (`yanitlayan_user_id`
+  + `yanit_zamani` otomatik). `security`/`tesis_gorevlisi` ERISMEZ — kanal
+  onlara kapali.
 
 ## 5. Hata Davranisi
 

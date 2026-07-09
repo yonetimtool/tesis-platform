@@ -795,6 +795,103 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
   # ================================================================= #
+  # COMPLAINTS (sikayet/oneri) — sakin -> yonetim talep kanali
+  #   acma resident; okuma resident(kendi)+admin+yonetici(tumu);
+  #   yanit/durum admin+yonetici; security/tesis_gorevlisi ERISMEZ
+  # ================================================================= #
+  /complaints:
+    get:
+      tags: [complaints]
+      summary: Talep listesi (created_at DESC)
+      description: |
+        resident YALNIZ kendi actiklarini gorur; admin+yonetici tenant'taki
+        tum talepleri gorur (yonetim gorunumu). Durum ile filtrelenebilir.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: durum
+          in: query
+          required: false
+          schema: { type: string, enum: [acik, inceleniyor, cozuldu] }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Complaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [complaints]
+      summary: Talep ac (resident)
+      description: |
+        Acan token'dan alinir; durum=acik baslar. Opsiyonel gorsel: once
+        POST /uploads/presign ile foto_key + PUT URL alinir, dosya PUT edilir,
+        foto_key burada gonderilir (tenant-namespace dogrulanir). Okumada
+        foto_url (presigned GET) doner.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ComplaintCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Complaint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /complaints/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [complaints]
+      summary: Talep detayi (resident kendininki; admin+yonetici hepsi)
+      responses:
+        "200":
+          description: Talep
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Complaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [complaints]
+      summary: Durum degistir + yonetici yaniti yaz (admin + yonetici)
+      description: |
+        yonetici_yaniti yazildiginda yanitlayan_user_id ve yanit_zamani
+        otomatik damgalanir. resident bu uca ERISEMEZ (403).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ComplaintUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Complaint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
   # TASKS (esnek gorev sistemi) + tamamlama + foto kanit
   # ================================================================= #
   /tasks:
@@ -1053,9 +1150,10 @@ paths:
       summary: Foto yukleme icin presigned PUT URL uret
       description: |
         Backend foto_key uretir ve MinIO icin presigned PUT URL doner. Istemci
-        dosyayi bu URL'e PUT eder, sonra foto_key'i ilgili completion'da (veya
-        duyuru olusturmada) gonderir. RBAC: admin/security/tesis_gorevlisi +
-        yonetici (duyuru gorseli icin).
+        dosyayi bu URL'e PUT eder, sonra foto_key'i ilgili completion'da,
+        duyuru olusturmada veya talep acmada gonderir. RBAC:
+        admin/security/tesis_gorevlisi + yonetici (duyuru gorseli) +
+        resident (sikayet/oneri gorseli).
       requestBody:
         required: true
         content:
@@ -2546,6 +2644,49 @@ components:
           type: string
           nullable: true
           description: Acikca null gonderilirse gorsel kaldirilir; alan yoksa dokunulmaz
+
+    Complaint:
+      type: object
+      required: [id, acan_user_id, baslik, mesaj, durum, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        acan_user_id: { type: string, format: uuid }
+        acan_ad:
+          type: string
+          nullable: true
+          description: Acan sakinin adi (yonetim listesinde join ile)
+        baslik: { type: string, maxLength: 200 }
+        mesaj: { type: string, maxLength: 5000 }
+        foto_key:
+          type: string
+          nullable: true
+          description: Opsiyonel gorsel — /uploads/presign ile alinan obje anahtari
+        foto_url:
+          type: string
+          nullable: true
+          description: Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa)
+        durum: { type: string, enum: [acik, inceleniyor, cozuldu] }
+        yonetici_yaniti: { type: string, nullable: true, maxLength: 5000 }
+        yanitlayan_user_id: { type: string, format: uuid, nullable: true }
+        yanit_zamani: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ComplaintCreate:
+      type: object
+      required: [baslik, mesaj]
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        mesaj: { type: string, minLength: 1, maxLength: 5000 }
+        foto_key:
+          type: string
+          nullable: true
+          description: "Opsiyonel gorsel: once /uploads/presign ile alinan obje anahtari"
+    ComplaintUpdate:
+      type: object
+      description: En az bir alan gerekli (bos govde 422)
+      properties:
+        durum: { type: string, enum: [acik, inceleniyor, cozuldu] }
+        yonetici_yaniti: { type: string, minLength: 1, maxLength: 5000 }
 
     Notification:
       type: object

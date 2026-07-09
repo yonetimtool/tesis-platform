@@ -451,6 +451,49 @@ class AnnouncementListResponse(BaseModel):
     items: list[AnnouncementOut]
 
 
+# ----------------------------- complaints ---------------------------------- #
+ComplaintDurum = Literal["acik", "inceleniyor", "cozuldu"]
+
+
+class ComplaintCreate(BaseModel):
+    baslik: str = Field(..., min_length=1, max_length=200)
+    mesaj: str = Field(..., min_length=1, max_length=5000)
+    # Opsiyonel gorsel: /uploads/presign ile yuklenen obje anahtari.
+    foto_key: str | None = None
+
+
+class ComplaintUpdate(BaseModel):
+    """Yonetim yaniti: durum ve/veya yanit metni (admin+yonetici)."""
+
+    durum: ComplaintDurum | None = None
+    yonetici_yaniti: str | None = Field(None, min_length=1, max_length=5000)
+
+
+class ComplaintOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    acan_user_id: uuid.UUID
+    # Yonetim listesinde "kim acti" icin ad (join ile doldurulur).
+    acan_ad: str | None = None
+    baslik: str
+    mesaj: str
+    foto_key: str | None = None
+    # Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa).
+    foto_url: str | None = None
+    durum: str
+    yonetici_yaniti: str | None = None
+    yanitlayan_user_id: uuid.UUID | None = None
+    yanit_zamani: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ComplaintListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[ComplaintOut]
+
+
 class NotificationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

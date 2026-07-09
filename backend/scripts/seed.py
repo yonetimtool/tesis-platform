@@ -156,6 +156,49 @@ def main() -> int:
         )
         print("[seed] duyuru 'Hos geldiniz' (yonetici imzali, idempotent)")
 
+        # 5) ornek sikayet + oneri (resident acmis). Dogal benzersiz anahtar
+        #    yok -> ayni baslik varsa eklemeyerek idempotent kalinir.
+        #    a) sikayet: yonetici yanitlamis, cozuldu.
+        conn.execute(
+            """
+            INSERT INTO complaint (tenant_id, acan_user_id, baslik, mesaj, durum,
+                                   yonetici_yaniti, yanitlayan_user_id, yanit_zamani)
+            SELECT %(t)s, r.id, %(b)s, %(m)s, 'cozuldu', %(y)s, y.id, now()
+            FROM app_user r, app_user y
+            WHERE r.tenant_id = %(t)s AND r.email = 'resident@acme.com'
+              AND y.tenant_id = %(t)s AND y.email = 'yonetici@acme.com'
+              AND NOT EXISTS (
+                  SELECT 1 FROM complaint
+                  WHERE tenant_id = %(t)s AND baslik = %(b)s
+              )
+            """,
+            {
+                "t": tenant_id,
+                "b": "Asansor ariziliydi",
+                "m": "A blok asansoru iki gundur calismiyor, kontrol edilebilir mi?",
+                "y": "Servis cagrildi, asansor onarildi. Bildiriminiz icin tesekkurler.",
+            },
+        )
+        #    b) oneri: acik, yanitsiz.
+        conn.execute(
+            """
+            INSERT INTO complaint (tenant_id, acan_user_id, baslik, mesaj)
+            SELECT %(t)s, r.id, %(b)s, %(m)s
+            FROM app_user r
+            WHERE r.tenant_id = %(t)s AND r.email = 'resident@acme.com'
+              AND NOT EXISTS (
+                  SELECT 1 FROM complaint
+                  WHERE tenant_id = %(t)s AND baslik = %(b)s
+              )
+            """,
+            {
+                "t": tenant_id,
+                "b": "Oneri: bahceye bank",
+                "m": "Cocuk parkinin yanina birkac bank konulmasini oneriyorum.",
+            },
+        )
+        print("[seed] sikayet 'Asansor ariziliydi' (cozuldu+yanitli) + oneri 'Oneri: bahceye bank' (acik)")
+
     print("[seed] tamamlandi (idempotent).")
     return 0
 

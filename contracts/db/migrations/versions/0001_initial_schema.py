@@ -83,6 +83,10 @@ def upgrade() -> None:
     )
     # acil durum alarm durumu.
     op.execute("CREATE TYPE emergency_durum AS ENUM ('acik', 'cozuldu');")
+
+    op.execute(
+        "CREATE TYPE complaint_durum AS ENUM ('acik', 'inceleniyor', 'cozuldu');"
+    )
     # aidat: sakin rol tipi + odeme yontemi + odeme durumu.
     op.execute("CREATE TYPE resident_rol AS ENUM ('malik', 'kiraci');")
     op.execute("CREATE TYPE dues_yontem AS ENUM ('elden', 'havale', 'kart', 'diger');")
@@ -833,6 +837,51 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9z. complaint  (sikayet/oneri — sakin -> yonetim talep kanali;
+    #     auth.md §4: resident acar + KENDI kayitlarini okur,
+    #     admin+yonetici tumunu okur + durum/yanit yazar,
+    #     security/tesis_gorevlisi ERISMEZ)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE complaint (
+            id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id            uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            acan_user_id         uuid NOT NULL,
+            baslik               text NOT NULL,
+            mesaj                text NOT NULL,
+            foto_key             text,       -- opsiyonel gorsel (MinIO obje anahtari)
+            durum                complaint_durum NOT NULL DEFAULT 'acik',
+            yonetici_yaniti      text,
+            yanitlayan_user_id   uuid,
+            yanit_zamani         timestamptz,
+            created_at           timestamptz NOT NULL DEFAULT now(),
+            updated_at           timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_complaint_id_tenant UNIQUE (id, tenant_id),
+            -- composite FK: acan sakin ayni tenant'ta olmali (RLS ile tutarli).
+            CONSTRAINT fk_complaint_acan
+                FOREIGN KEY (acan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- Kolon-ozel SET NULL: yalnizca yanitlayan_user_id NULL'lanir.
+            CONSTRAINT fk_complaint_yanitlayan
+                FOREIGN KEY (yanitlayan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (yanitlayan_user_id)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_complaint_tenant ON complaint (tenant_id);")
+    op.execute(
+        "CREATE INDEX ix_complaint_tenant_durum ON complaint (tenant_id, durum);"
+    )
+    op.execute(
+        "CREATE INDEX ix_complaint_tenant_acan ON complaint (tenant_id, acan_user_id);"
+    )
+    op.execute(
+        "CREATE INDEX ix_complaint_tenant_created "
+        "ON complaint (tenant_id, created_at DESC);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -860,6 +909,7 @@ def upgrade() -> None:
         "payment_webhook_event",
         "user_device",
         "announcement",
+        "complaint",
     ):
         _enable_rls(table)
 
@@ -898,6 +948,7 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "complaint",
         "announcement",
         "user_device",
         "payment_webhook_event",
@@ -927,6 +978,7 @@ def downgrade() -> None:
     op.execute("DROP TYPE IF EXISTS dues_yontem;")
     op.execute("DROP TYPE IF EXISTS resident_rol;")
     op.execute("DROP TYPE IF EXISTS emergency_durum;")
+    op.execute("DROP TYPE IF EXISTS complaint_durum;")
     op.execute("DROP TYPE IF EXISTS asset_durum;")
     op.execute("DROP TYPE IF EXISTS asset_kategori;")
     op.execute("DROP TYPE IF EXISTS task_tip;")

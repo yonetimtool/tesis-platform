@@ -15,6 +15,7 @@ from .routers import announcements as announcements_router
 from .routers import assets as assets_router
 from .routers import auth as auth_router
 from .routers import checkpoints as checkpoints_router
+from .routers import complaints as complaints_router
 from .routers import dashboard as dashboard_router
 from .routers import devices as devices_router
 from .routers import dues as dues_router
@@ -67,6 +68,7 @@ app.include_router(devices_router.router)
 app.include_router(patrol_windows_router.router)
 app.include_router(notifications_router.router)
 app.include_router(announcements_router.router)
+app.include_router(complaints_router.router)
 app.include_router(tasks_router.router)
 app.include_router(task_completions_router.router)
 app.include_router(uploads_router.router)

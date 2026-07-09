@@ -71,6 +71,10 @@ EMERGENCY_DURUM = ENUM(
     "acik", "cozuldu",
     name="emergency_durum", create_type=False,
 )
+COMPLAINT_DURUM = ENUM(
+    "acik", "inceleniyor", "cozuldu",
+    name="complaint_durum", create_type=False,
+)
 RESIDENT_ROL = ENUM(
     "malik", "kiraci",
     name="resident_rol", create_type=False,
@@ -781,6 +785,49 @@ class Announcement(Base):
     # Opsiyonel gorsel — /uploads/presign ile yuklenen MinIO obje anahtari.
     foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     olusturan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class Complaint(Base):
+    """Sikayet/oneri — sakin -> yonetim talep kanali (auth.md §4)."""
+
+    __tablename__ = "complaint"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_complaint_id_tenant"),
+        ForeignKeyConstraint(
+            ["acan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_complaint_acan",
+        ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (yanitlayan_user_id); tenant_id korunur.
+        ForeignKeyConstraint(
+            ["yanitlayan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_complaint_yanitlayan",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    acan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    baslik: Mapped[str] = mapped_column(Text, nullable=False)
+    mesaj: Mapped[str] = mapped_column(Text, nullable=False)
+    # Opsiyonel gorsel — /uploads/presign ile yuklenen MinIO obje anahtari.
+    foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    durum: Mapped[str] = mapped_column(
+        COMPLAINT_DURUM, nullable=False, server_default=text("'acik'")
+    )
+    yonetici_yaniti: Mapped[str | None] = mapped_column(Text, nullable=True)
+    yanitlayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    yanit_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 
