@@ -778,6 +778,8 @@ class Announcement(Base):
     )
     baslik: Mapped[str] = mapped_column(Text, nullable=False)
     govde: Mapped[str] = mapped_column(Text, nullable=False)
+    # Opsiyonel gorsel — /uploads/presign ile yuklenen MinIO obje anahtari.
+    foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     olusturan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     created_at = _created_at()
     updated_at = _created_at()

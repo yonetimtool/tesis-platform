@@ -99,6 +99,119 @@ def test_rbac_okuma_tum_roller_yazma_yonetim(client, world):
     client.delete(f"/announcements/{a['id']}", headers=yonetici)
 
 
+# -------------------------------- foto ------------------------------------- #
+def test_fotolu_duyuru_olustur_ve_oku(client, world):
+    """Foto'lu duyuru: presign (yonetici erisir) → foto_key ile olustur →
+    okumada foto_key + presigned GET foto_url tum okuyan rollere doner."""
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+
+    pre = client.post(
+        "/uploads/presign", headers=yonetici, json={"content_type": "image/jpeg"}
+    )
+    assert pre.status_code == 200, pre.text
+    foto_key = pre.json()["foto_key"]
+    assert "X-Amz-Signature" in pre.json()["upload_url"]
+
+    a = _new(client, yonetici, baslik="Gorselli duyuru", foto_key=foto_key)
+    assert a["foto_key"] == foto_key
+    assert a["foto_url"] and "X-Amz-Signature" in a["foto_url"]
+
+    # okuyan her rol foto_url'u gorur (liste + detay)
+    for role in ("guard_a", "gorevli_a", "resident_a"):
+        h = _headers(client, world["slug_a"], world[role])
+        d = client.get(f"/announcements/{a['id']}", headers=h)
+        assert d.status_code == 200, f"{role}: {d.text}"
+        assert d.json()["foto_key"] == foto_key
+        assert "X-Amz-Signature" in d.json()["foto_url"]
+        listed = client.get(
+            "/announcements", headers=h, params={"limit": 200}
+        ).json()["items"]
+        item = next(it for it in listed if it["id"] == a["id"])
+        assert item["foto_url"]
+
+    client.delete(f"/announcements/{a['id']}", headers=yonetici)
+
+
+def test_fotosuz_duyuru_geriye_uyumlu(client, world):
+    """foto_key gonderilmeyen duyuru eskisi gibi calisir; foto alanlari null."""
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    a = _new(client, yonetici, baslik="Duz duyuru")
+    assert a["foto_key"] is None and a["foto_url"] is None
+
+    d = client.get(f"/announcements/{a['id']}", headers=yonetici).json()
+    assert d["foto_key"] is None and d["foto_url"] is None
+    client.delete(f"/announcements/{a['id']}", headers=yonetici)
+
+
+def test_foto_patch_ile_kaldirilir(client, world):
+    """PATCH foto_key=null gorseli kaldirir; alan gonderilmezse dokunulmaz."""
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    foto_key = f"{world['a']}/tasks/deadbeef.jpg"
+    a = _new(client, yonetici, foto_key=foto_key)
+
+    # foto_key alani olmayan PATCH gorsele dokunmaz
+    p = client.patch(
+        f"/announcements/{a['id']}", headers=yonetici, json={"baslik": "Yeni baslik"}
+    )
+    assert p.status_code == 200 and p.json()["foto_key"] == foto_key
+
+    # acik null gorseli kaldirir
+    p = client.patch(
+        f"/announcements/{a['id']}", headers=yonetici, json={"foto_key": None}
+    )
+    assert p.status_code == 200 and p.json()["foto_key"] is None
+    client.delete(f"/announcements/{a['id']}", headers=yonetici)
+
+
+def test_fotolu_olusturma_rbac(client, world):
+    """Foto'lu bile olsa olusturma yalniz admin+yonetici; digerleri 403."""
+    for role in ("guard_a", "gorevli_a", "resident_a"):
+        h = _headers(client, world["slug_a"], world[role])
+        assert client.post(
+            "/announcements",
+            headers=h,
+            json={
+                "baslik": "x",
+                "govde": "y",
+                "foto_key": f"{world['a']}/tasks/x.jpg",
+            },
+        ).status_code == 403, role
+
+
+def test_foto_key_tenant_namespace_disina_cikamaz(client, world):
+    """foto_key kendi tenant onekiyle baslamali — okumada sunucu bu anahtara
+    presigned GET imzalar; baska tenant'in anahtari kabul edilirse capraz-tenant
+    gorsel sizar (IDOR). Olusturma + PATCH ikisi de 422."""
+    yonetici_b = _headers(client, world["slug_b"], world["yonetici_b"])
+
+    # B yoneticisi A tenant'inin anahtarini gonderemez
+    r = client.post(
+        "/announcements",
+        headers=yonetici_b,
+        json={
+            "baslik": "x",
+            "govde": "y",
+            "foto_key": f"{world['a']}/tasks/victim.jpg",
+        },
+    )
+    assert r.status_code == 422, r.text
+
+    # PATCH ile de sokulamaz
+    a = _new(client, yonetici_b, baslik="B duyurusu")
+    assert client.patch(
+        f"/announcements/{a['id']}",
+        headers=yonetici_b,
+        json={"foto_key": f"{world['a']}/tasks/victim.jpg"},
+    ).status_code == 422
+    # tenant'siz/serbest anahtar da reddedilir
+    assert client.patch(
+        f"/announcements/{a['id']}",
+        headers=yonetici_b,
+        json={"foto_key": "serbest/anahtar.jpg"},
+    ).status_code == 422
+    client.delete(f"/announcements/{a['id']}", headers=yonetici_b)
+
+
 # ----------------------------- tenant izolasyonu --------------------------- #
 def test_tenant_izolasyonu(client, world):
     yonetici_a = _headers(client, world["slug_a"], world["yonetici_a"])

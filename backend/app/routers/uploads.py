@@ -1,7 +1,7 @@
 """POST /uploads/presign — foto yukleme icin presigned PUT URL.
 
-RBAC: admin/security/tesis_gorevlisi (completion gonderebilenler). tenant token'dan;
-foto_key tenant ile namespace'lenir.
+RBAC: admin/security/tesis_gorevlisi (completion gonderebilenler) + yonetici
+(duyuru gorseli). tenant token'dan; foto_key tenant ile namespace'lenir.
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from ..storage import presign_put
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
-_UPLOADER = require_role("admin", "security", "tesis_gorevlisi")
+_UPLOADER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 
 
 @router.post("/presign", response_model=PresignResponse)

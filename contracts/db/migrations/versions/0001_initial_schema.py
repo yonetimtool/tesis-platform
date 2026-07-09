@@ -814,6 +814,7 @@ def upgrade() -> None:
             tenant_id          uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
             baslik             text NOT NULL,
             govde              text NOT NULL,
+            foto_key           text,       -- opsiyonel gorsel (MinIO obje anahtari)
             olusturan_user_id  uuid NOT NULL,
             created_at         timestamptz NOT NULL DEFAULT now(),
             updated_at         timestamptz NOT NULL DEFAULT now(),

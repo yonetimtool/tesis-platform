@@ -1,7 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/error/api_exception.dart';
+// imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev foto akisiyla
+// ayni saglayici (testlerde tek noktadan override edilir).
+import '../../tasks/presentation/task_complete_controller.dart'
+    show imagePickerProvider;
+import '../data/announcement_api.dart';
 import '../domain/announcement_models.dart';
 import 'announcements_controller.dart';
 
@@ -150,6 +158,10 @@ class _AnnouncementCard extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(a.govde),
+            if (a.fotoUrl != null) ...[
+              const SizedBox(height: 8),
+              _AnnouncementPhoto(url: a.fotoUrl!),
+            ],
             const SizedBox(height: 8),
             Text(
               '${a.olusturanAd ?? 'Yonetim'} · ${_fmtDateTime(a.createdAt.toLocal())}'
@@ -202,8 +214,77 @@ class _AnnouncementCard extends ConsumerWidget {
   }
 }
 
+/// Duyuru gorseli: kartta onizleme; dokununca tam ekran (InteractiveViewer).
+/// URL kisa omurlu presigned GET — yuklenemezse sessizce kirik-gorsel satiri.
+class _AnnouncementPhoto extends StatelessWidget {
+  const _AnnouncementPhoto({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _openFullScreen(context),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          url,
+          height: 160,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, progress) => progress == null
+              ? child
+              : const SizedBox(
+                  height: 160,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+          errorBuilder: (context, _, _) => Container(
+            height: 48,
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: const Row(
+              children: [
+                Icon(Icons.broken_image_outlined, size: 20),
+                SizedBox(width: 8),
+                Text('Gorsel yuklenemedi'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openFullScreen(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(backgroundColor: Colors.black),
+          body: Center(
+            child: InteractiveViewer(
+              maxScale: 5,
+              child: Image.network(
+                url,
+                errorBuilder: (_, _, _) => const Text(
+                  'Gorsel yuklenemedi',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Olustur/duzenle formu (bottom sheet). Sunucu sinirlari istemcide de
 /// uygulanir: baslik <= 200, govde <= 5000, bos deger gonderilmez.
+/// YENI duyuruda opsiyonel gorsel eklenebilir (cek/sec → presign → PUT →
+/// foto_key; gorev foto akisiyla ayni desen). Duzenlemede gorsel alani yok —
+/// mevcut gorsel korunur (foto_key PATCH'e yazilmaz).
 class _AnnouncementForm extends ConsumerStatefulWidget {
   const _AnnouncementForm({this.announcement});
 
@@ -221,6 +302,15 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
   bool _saving = false;
   String? _error;
 
+  /// Secilen fotonun cihaz yolu (onizleme). [_fotoKey] dolu ise yukleme
+  /// tamamlanmistir; secili olup yuklenmemisse gonderim beklemeli.
+  String? _photoPath;
+  bool _photoBusy = false;
+  String? _photoError;
+  String? _fotoKey;
+
+  bool get _fotoBekliyor => _photoPath != null && _fotoKey == null;
+
   @override
   void initState() {
     super.initState();
@@ -235,8 +325,104 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
     super.dispose();
   }
 
+  /// Foto cek/sec → presign → PUT → foto_key (gorev akisinin aynisi).
+  /// Foto OPSIYONEL — vazgecilirse/kaldirilirsa duyuru foto'suz gider.
+  Future<void> _pickAndUploadPhoto(ImageSource source) async {
+    if (_photoBusy) return;
+    setState(() {
+      _photoBusy = true;
+      _photoError = null;
+    });
+    try {
+      final file = await ref.read(imagePickerProvider).pickImage(
+            source: source,
+            // Duyuru gorseli icin cozunurluk/kalite dusurulur (yukleme boyutu).
+            maxWidth: 1600,
+            imageQuality: 80,
+          );
+      if (!mounted) return;
+      if (file == null) {
+        // Kullanici vazgecti — mevcut secim korunur.
+        setState(() => _photoBusy = false);
+        return;
+      }
+      setState(() {
+        _photoPath = file.path;
+        // Eski yukleme gecersiz: yeni foto secildi.
+        _fotoKey = null;
+      });
+      await _uploadPhoto(file);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _photoBusy = false;
+        _photoError = 'Fotograf alinamadi: $e';
+      });
+    }
+  }
+
+  /// Secili fotoyu (yeniden) yukler — presign URL suresi dolmus ya da
+  /// yukleme yarim kalmis olabilir.
+  Future<void> _retryUpload() async {
+    final path = _photoPath;
+    if (path == null || _photoBusy) return;
+    setState(() {
+      _photoBusy = true;
+      _photoError = null;
+    });
+    await _uploadPhoto(XFile(path));
+  }
+
+  Future<void> _uploadPhoto(XFile file) async {
+    final api = ref.read(announcementApiProvider);
+    try {
+      final contentType = _contentTypeFor(file);
+      final ticket = await api.presignUpload(
+        contentType: contentType,
+        dosyaAdi: file.name,
+      );
+      final bytes = await file.readAsBytes();
+      await api.uploadPhoto(
+        ticket: ticket,
+        bytes: bytes,
+        contentType: contentType,
+      );
+      if (!mounted) return;
+      setState(() {
+        _photoBusy = false;
+        _fotoKey = ticket.fotoKey;
+        _photoError = null;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _photoBusy = false;
+        _photoError = e.kind == ApiErrorKind.network
+            ? 'Fotograf yuklemek icin internet baglantisi gerekli '
+                '(yukleme adresi kisa omurlu). Baglanti gelince '
+                '"Tekrar yukle" ile deneyin.'
+            : e.message;
+      });
+    }
+  }
+
+  void _removePhoto() {
+    setState(() {
+      _photoPath = null;
+      _photoError = null;
+      _fotoKey = null;
+    });
+  }
+
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_fotoBekliyor) {
+      setState(() {
+        _error = 'Fotograf henuz yuklenmedi. Yuklemenin bitmesini bekleyin, '
+            '"Tekrar yukle"yi deneyin veya fotoyu kaldirin.';
+      });
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
@@ -244,6 +430,8 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
     final draft = AnnouncementDraft(
       baslik: _baslikCtrl.text.trim(),
       govde: _govdeCtrl.text.trim(),
+      // Duzenlemede foto alani yok; null → JSON'a yazilmaz, mevcut korunur.
+      fotoKey: _fotoKey,
     );
     final controller = ref.read(announcementsControllerProvider.notifier);
     try {
@@ -283,7 +471,9 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
       ),
       child: Form(
         key: _formKey,
-        child: Column(
+        // Gorsel onizleme + klavye ile icerik uzayabilir — tasma yerine kaydir.
+        child: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -316,6 +506,75 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                   ? 'Duyuru metni zorunludur'
                   : null,
             ),
+            // Gorsel yalniz YENI duyuruda eklenir (duzenlemede mevcut korunur).
+            if (!editing) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    _fotoKey != null
+                        ? Icons.check_circle
+                        : Icons.image_outlined,
+                    color: _fotoKey != null ? Colors.green : null,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('Gorsel (opsiyonel)'),
+                ],
+              ),
+              if (_photoPath != null) ...[
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(_photoPath!),
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                if (_photoBusy)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: LinearProgressIndicator(),
+                  ),
+              ],
+              if (_photoError != null) ...[
+                const SizedBox(height: 4),
+                Text(_photoError!, style: const TextStyle(color: Colors.red)),
+              ],
+              Wrap(
+                spacing: 8,
+                children: [
+                  TextButton.icon(
+                    onPressed: _photoBusy || _saving
+                        ? null
+                        : () => _pickAndUploadPhoto(ImageSource.camera),
+                    icon: const Icon(Icons.photo_camera_outlined),
+                    label: Text(_photoPath == null ? 'Foto cek' : 'Yeniden cek'),
+                  ),
+                  TextButton.icon(
+                    onPressed: _photoBusy || _saving
+                        ? null
+                        : () => _pickAndUploadPhoto(ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Galeriden sec'),
+                  ),
+                  if (_photoPath != null && _fotoKey == null)
+                    TextButton.icon(
+                      onPressed: _photoBusy || _saving ? null : _retryUpload,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Tekrar yukle'),
+                    ),
+                  if (_photoPath != null)
+                    TextButton.icon(
+                      onPressed: _photoBusy || _saving ? null : _removePhoto,
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Kaldir'),
+                    ),
+                ],
+              ),
+            ],
             if (_error != null) ...[
               const SizedBox(height: 8),
               Text(_error!, style: const TextStyle(color: Colors.red)),
@@ -342,10 +601,23 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// image_picker mimeType vermezse uzantidan tahmin (gorev akisiyla ayni).
+String _contentTypeFor(XFile file) {
+  if (file.mimeType != null) return file.mimeType!;
+  final lower = file.path.toLowerCase();
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.heic') || lower.endsWith('.heif')) {
+    return 'image/heic';
+  }
+  return 'image/jpeg';
 }
 
 String _fmtDateTime(DateTime dt) {

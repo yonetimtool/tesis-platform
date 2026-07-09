@@ -419,11 +419,15 @@ class MePatrolWindowResponse(BaseModel):
 class AnnouncementCreate(BaseModel):
     baslik: str = Field(..., min_length=1, max_length=200)
     govde: str = Field(..., min_length=1, max_length=5000)
+    # Opsiyonel gorsel: /uploads/presign ile yuklenen obje anahtari.
+    foto_key: str | None = None
 
 
 class AnnouncementUpdate(BaseModel):
     baslik: str | None = Field(None, min_length=1, max_length=200)
     govde: str | None = Field(None, min_length=1, max_length=5000)
+    # Acikca null gonderilirse gorsel kaldirilir; alan hic yoksa dokunulmaz.
+    foto_key: str | None = None
 
 
 class AnnouncementOut(BaseModel):
@@ -432,6 +436,9 @@ class AnnouncementOut(BaseModel):
     id: uuid.UUID
     baslik: str
     govde: str
+    foto_key: str | None = None
+    # Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa).
+    foto_url: str | None = None
     olusturan_user_id: uuid.UUID
     # Liste ekranlarinda "kim gonderdi" icin ad (join ile doldurulur).
     olusturan_ad: str | None = None

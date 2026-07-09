@@ -14,6 +14,8 @@ class Announcement {
     required this.createdAt,
     required this.updatedAt,
     this.olusturanAd,
+    this.fotoKey,
+    this.fotoUrl,
   });
 
   final String id;
@@ -21,6 +23,13 @@ class Announcement {
   final String govde;
   final String olusturanUserId;
   final String? olusturanAd;
+
+  /// Opsiyonel gorsel — MinIO obje anahtari (varligi "foto var" demektir).
+  final String? fotoKey;
+
+  /// Goruntuleme icin kisa omurlu presigned GET URL (sunucu okumada uretir).
+  final String? fotoUrl;
+
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -33,6 +42,8 @@ class Announcement {
         govde: json['govde'] as String? ?? '',
         olusturanUserId: json['olusturan_user_id'] as String? ?? '',
         olusturanAd: json['olusturan_ad'] as String?,
+        fotoKey: json['foto_key'] as String?,
+        fotoUrl: json['foto_url'] as String?,
         createdAt:
             DateTime.tryParse(json['created_at'] as String? ?? '') ??
                 DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
@@ -44,11 +55,22 @@ class Announcement {
 
 /// `POST /announcements` (ve PATCH) govdesi. Sunucu siniri: baslik <= 200,
 /// govde <= 5000 (bos deger 422) — form ayni sinirlari istemcide de uygular.
+/// [fotoKey] opsiyonel gorsel; null ise JSON'a HIC yazilmaz (PATCH'te mevcut
+/// gorsel korunur — sunucu yalniz gonderilen alanlara dokunur).
 class AnnouncementDraft {
-  const AnnouncementDraft({required this.baslik, required this.govde});
+  const AnnouncementDraft({
+    required this.baslik,
+    required this.govde,
+    this.fotoKey,
+  });
 
   final String baslik;
   final String govde;
+  final String? fotoKey;
 
-  Map<String, dynamic> toJson() => {'baslik': baslik, 'govde': govde};
+  Map<String, dynamic> toJson() => {
+        'baslik': baslik,
+        'govde': govde,
+        if (fotoKey != null) 'foto_key': fotoKey,
+      };
 }

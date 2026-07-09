@@ -138,7 +138,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /task-completions` (gecmis)     |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `POST /tasks/{id}/completions`        |  ✅   | ❌  | ✅  | ✅  | ❌  |
 | `GET  /landscape/schedule`            |  ✅   | ✅  | ✅  | ✅  | ❌  |
-| `POST /uploads/presign`               |  ✅   | ❌  | ✅  | ✅  | ❌  |
+| `POST /uploads/presign`               |  ✅   | ✅† | ✅  | ✅  | ❌  |
 | `POST /devices` (kendi cihazi)        |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `DELETE /devices/{fcm_token}`         |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET  /devices` (liste, debug)        |  ✅   | ❌  | ❌  | ❌  | ❌  |
@@ -200,7 +200,8 @@ Notlar:
   acil durumu tetikler/yonetir; demirbasi goruntuler; kullanici listesini okur.
   Yapilandirma (shift/checkpoint/patrol-plan/asset/unit/tenant/kullanici CRUD)
   ve aidat yazma **admin-only** kalir. Saha kaniti uretmez (`POST /scans`,
-  completion, upload, zimmet ❌).
+  completion, zimmet ❌). † `POST /uploads/presign`e yalniz duyuru gorseli
+  yuklemek icin erisir (saha kanit akisi degil).
 - **security / tesis_gorevlisi**: operasyonel saha rolleri (tesis_gorevlisi =
   temizlik + bahcivan + teknik, eski `cleaning`in devami — yetkileri birebir
   ayni). Tanimlari **okur**, tur kaniti (`POST /scans`) **gonderir**.
@@ -212,7 +213,9 @@ Notlar:
   (talep vb.) sonraki surumde.
 - **Duyuru:** GONDERME/duzenleme/silme `admin` + `yonetici`; OKUMA tum roller.
   Olusturmada tenant'in tum aktif cihazlarina push denenir (EK gonderim; push
-  hatasi duyuru kaydini etkilemez).
+  hatasi duyuru kaydini etkilemez). Duyuruya OPSIYONEL gorsel eklenebilir
+  (`/uploads/presign` → PUT → `foto_key`); okumada `foto_url` (kisa omurlu
+  presigned GET) tum okuyan rollere doner.
 
 ## 5. Hata Davranisi
 

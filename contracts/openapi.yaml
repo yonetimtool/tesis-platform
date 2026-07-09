@@ -732,7 +732,9 @@ paths:
       description: |
         Olusturan token'dan alinir. Kayit sonrasi tenant'in TUM aktif
         cihazlarina push denenir (EK gonderim — push hatasi kaydi etkilemez;
-        data: tip=duyuru, announcement_id).
+        data: tip=duyuru, announcement_id). Opsiyonel gorsel: once
+        POST /uploads/presign ile foto_key + PUT URL alinir, dosya PUT edilir,
+        foto_key burada gonderilir. Okumada foto_url (presigned GET) doner.
       requestBody:
         required: true
         content:
@@ -1051,7 +1053,9 @@ paths:
       summary: Foto yukleme icin presigned PUT URL uret
       description: |
         Backend foto_key uretir ve MinIO icin presigned PUT URL doner. Istemci
-        dosyayi bu URL'e PUT eder, sonra foto_key'i ilgili completion'da gonderir.
+        dosyayi bu URL'e PUT eder, sonra foto_key'i ilgili completion'da (veya
+        duyuru olusturmada) gonderir. RBAC: admin/security/tesis_gorevlisi +
+        yonetici (duyuru gorseli icin).
       requestBody:
         required: true
         content:
@@ -2508,6 +2512,14 @@ components:
         id: { type: string, format: uuid }
         baslik: { type: string, maxLength: 200 }
         govde: { type: string, maxLength: 5000 }
+        foto_key:
+          type: string
+          nullable: true
+          description: Opsiyonel gorsel — /uploads/presign ile alinan obje anahtari
+        foto_url:
+          type: string
+          nullable: true
+          description: Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa)
         olusturan_user_id: { type: string, format: uuid }
         olusturan_ad:
           type: string
@@ -2521,11 +2533,19 @@ components:
       properties:
         baslik: { type: string, minLength: 1, maxLength: 200 }
         govde: { type: string, minLength: 1, maxLength: 5000 }
+        foto_key:
+          type: string
+          nullable: true
+          description: "Opsiyonel gorsel: once /uploads/presign ile alinan obje anahtari"
     AnnouncementUpdate:
       type: object
       properties:
         baslik: { type: string, minLength: 1, maxLength: 200 }
         govde: { type: string, minLength: 1, maxLength: 5000 }
+        foto_key:
+          type: string
+          nullable: true
+          description: Acikca null gonderilirse gorsel kaldirilir; alan yoksa dokunulmaz
 
     Notification:
       type: object

@@ -186,7 +186,8 @@ def test_yonetici_yapilandirma_ve_saha_kaniti_403(client, world):
         headers={**yonetici, "Idempotency-Key": uuid.uuid4().hex},
         json={"nfc_tag_uid": "YOK", "okutma_zamani": "2026-07-08T09:00:00Z"},
     ).status_code == 403
-    assert client.post("/uploads/presign", headers=yonetici, json={"content_type": "image/jpeg"}).status_code == 403
+    # presign: yonetici DUYURU GORSELI icin erisir (saha kanit akisi degil) — 200
+    assert client.post("/uploads/presign", headers=yonetici, json={"content_type": "image/jpeg"}).status_code == 200
 
     # panel ucu (admin-only ornek uc) — panele giremez mantigi
     assert client.get("/admin/overview", headers=yonetici).status_code == 403

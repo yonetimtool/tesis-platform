@@ -4,6 +4,9 @@ RBAC (auth.md §4): GONDERME/duzenleme/silme admin+yonetici; OKUMA tum roller
 (resident dahil — sakinin ilk operasyon-disi kaynagi). tenant token'dan; RLS
 izole. Olusturmada tenant'in TUM aktif cihazlarina push denenir (EK gonderim —
 hatasi duyuru kaydini kirmaz, emergency ile ayni desen).
+
+Opsiyonel gorsel: olusturmada /uploads/presign ile yuklenmis foto_key kabul
+edilir; okumada goruntuleme icin kisa omurlu presigned GET foto_url doner.
 """
 from __future__ import annotations
 
@@ -16,8 +19,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
+from ..errors import APIError
 from ..models import Announcement, AppUser
 from ..scheduler.notify import dispatch_external
+from ..storage import presign_get
 from ..schemas import (
     AnnouncementCreate,
     AnnouncementListResponse,
@@ -36,9 +41,25 @@ _ALL_ROLES: tuple[str, ...] = (
 )
 
 
+def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
+    """foto_key kendi tenant namespace'inde olmali (make_foto_key oneki).
+
+    Okumada bu anahtara presigned GET imzalanir — dogrulanmazsa baska
+    tenant'in objesi duyuru gorseli diye sizdirilabilir (IDOR).
+    """
+    if foto_key is not None and not foto_key.startswith(f"{tenant_id}/"):
+        raise APIError(422, "invalid_foto_key", "foto_key tenant alani disinda")
+
+
 def _out(obj: Announcement, olusturan_ad: str | None) -> AnnouncementOut:
     out = AnnouncementOut.model_validate(obj)
     out.olusturan_ad = olusturan_ad
+    if obj.foto_key:
+        try:
+            out.foto_url = presign_get(obj.foto_key)
+        except APIError:
+            # Depo yapilandirilmamissa okuma akisi kirilmasin; foto_url bos kalir.
+            out.foto_url = None
     return out
 
 
@@ -86,10 +107,12 @@ async def create_announcement(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_SENDER),
 ) -> AnnouncementOut:
+    _validate_foto_key(body.foto_key, user.tenant_id)
     obj = Announcement(
         tenant_id=user.tenant_id,
         baslik=body.baslik,
         govde=body.govde,
+        foto_key=body.foto_key,
         olusturan_user_id=user.id,
     )
     db.add(obj)
@@ -114,8 +137,9 @@ async def update_announcement(
     announcement_id: uuid.UUID,
     body: AnnouncementUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_SENDER),
+    user: AppUser = Depends(_SENDER),
 ) -> AnnouncementOut:
+    _validate_foto_key(body.foto_key, user.tenant_id)
     obj = await get_or_404(db, Announcement, announcement_id)
     for key, value in body.model_dump(exclude_unset=True).items():
         setattr(obj, key, value)

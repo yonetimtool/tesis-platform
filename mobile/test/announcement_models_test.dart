@@ -17,6 +17,25 @@ void main() {
       expect(a.baslik, 'Su kesintisi');
       expect(a.olusturanAd, 'Acme Yonetici');
       expect(a.duzenlendi, isFalse);
+      // foto alanlari opsiyonel — eski govde foto'suz gelir (geriye uyumlu)
+      expect(a.fotoKey, isNull);
+      expect(a.fotoUrl, isNull);
+    });
+
+    test('foto_key + foto_url eslenir (gorselli duyuru)', () {
+      final a = Announcement.fromJson(const {
+        'id': 'a-4',
+        'baslik': 'Gorselli',
+        'govde': 'g',
+        'olusturan_user_id': 'u-1',
+        'foto_key': 't1/tasks/abc.jpg',
+        'foto_url':
+            'http://minio.local/bucket/t1/tasks/abc.jpg?X-Amz-Signature=s',
+        'created_at': '2026-07-08T10:00:00Z',
+        'updated_at': '2026-07-08T10:00:00Z',
+      });
+      expect(a.fotoKey, 't1/tasks/abc.jpg');
+      expect(a.fotoUrl, contains('X-Amz-Signature'));
     });
 
     test('updated_at > created_at ise duzenlendi=true', () {
@@ -39,8 +58,14 @@ void main() {
     });
   });
 
-  test('AnnouncementDraft.toJson yalnizca baslik+govde tasir', () {
+  test('AnnouncementDraft.toJson: fotoKey null ise foto_key HIC yazilmaz '
+      '(PATCH mevcut gorsele dokunmaz)', () {
     const d = AnnouncementDraft(baslik: 'B', govde: 'G');
     expect(d.toJson(), {'baslik': 'B', 'govde': 'G'});
+  });
+
+  test('AnnouncementDraft.toJson: fotoKey doluysa foto_key tasinir', () {
+    const d = AnnouncementDraft(baslik: 'B', govde: 'G', fotoKey: 't/x.jpg');
+    expect(d.toJson(), {'baslik': 'B', 'govde': 'G', 'foto_key': 't/x.jpg'});
   });
 }
