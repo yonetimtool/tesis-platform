@@ -150,52 +150,73 @@ void main() {
     });
   });
 
-  testWidgets('durum rozeti dogru etiketle cizilir', (tester) async {
+  testWidgets('durum rozeti dogru etiketle cizilir (Inceleniyor sekmesinde)',
+      (tester) async {
     await tester.pumpWidget(_app(
       UserRole.yonetici,
       items: [_c(durum: ComplaintDurum.inceleniyor)],
     ));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Inceleniyor (1)'));
+    await tester.pumpAndSettle();
+    // Rozet metni tam 'Inceleniyor' (sekme etiketi sayac tasir — karismaz).
     expect(find.text('Inceleniyor'), findsOneWidget);
   });
 
-  group('Acik / Cozulenler sekmeleri', () {
-    testWidgets(
-        'acik+inceleniyor "Acik" sekmesinde; cozuldu yalniz "Cozulenler"de',
-        (tester) async {
-      final items = [
-        _c(),
-        Complaint(
-          id: 'c-2',
-          baslik: 'Cozulen talep',
-          mesaj: 'm',
-          durum: ComplaintDurum.cozuldu,
-          acanUserId: 'u-1',
-          yoneticiYaniti: 'Tamam.',
-          createdAt: DateTime.utc(2026, 7, 8),
-          updatedAt: DateTime.utc(2026, 7, 9),
-        ),
-      ];
+  group('Acik / Inceleniyor / Cozulenler sekmeleri', () {
+    final items = [
+      _c(),
+      Complaint(
+        id: 'c-2',
+        baslik: 'Incelenen talep',
+        mesaj: 'm',
+        durum: ComplaintDurum.inceleniyor,
+        acanUserId: 'u-1',
+        createdAt: DateTime.utc(2026, 7, 8, 12),
+        updatedAt: DateTime.utc(2026, 7, 8, 12),
+      ),
+      Complaint(
+        id: 'c-3',
+        baslik: 'Cozulen talep',
+        mesaj: 'm',
+        durum: ComplaintDurum.cozuldu,
+        acanUserId: 'u-1',
+        yoneticiYaniti: 'Tamam.',
+        createdAt: DateTime.utc(2026, 7, 8),
+        updatedAt: DateTime.utc(2026, 7, 9),
+      ),
+    ];
+
+    testWidgets('her durum yalniz KENDI sekmesinde gorunur', (tester) async {
       await tester.pumpWidget(_app(UserRole.yonetici, items: items));
       await tester.pumpAndSettle();
 
       // Sekme sayaclari dogru
       expect(find.text('Acik (1)'), findsOneWidget);
+      expect(find.text('Inceleniyor (1)'), findsOneWidget);
       expect(find.text('Cozulenler (1)'), findsOneWidget);
-      // Varsayilan sekme Acik: acik kayit gorunur, cozulen gorunmez
+      // Varsayilan sekme Acik: yalniz acik kayit
       expect(find.text('Asansor arizali'), findsOneWidget);
+      expect(find.text('Incelenen talep'), findsNothing);
       expect(find.text('Cozulen talep'), findsNothing);
+
+      await tester.tap(find.text('Inceleniyor (1)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Incelenen talep'), findsOneWidget);
+      expect(find.text('Asansor arizali'), findsNothing);
 
       await tester.tap(find.text('Cozulenler (1)'));
       await tester.pumpAndSettle();
       expect(find.text('Cozulen talep'), findsOneWidget);
-      expect(find.text('Asansor arizali'), findsNothing);
+      expect(find.text('Incelenen talep'), findsNothing);
     });
 
-    testWidgets('bos Cozulenler sekmesi anlamli mesaj gosterir',
-        (tester) async {
+    testWidgets('bos sekmeler anlamli mesaj gosterir', (tester) async {
       await tester.pumpWidget(_app(UserRole.yonetici, items: [_c()]));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Inceleniyor (0)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Incelemede talep yok.'), findsOneWidget);
       await tester.tap(find.text('Cozulenler (0)'));
       await tester.pumpAndSettle();
       expect(find.text('Henuz cozulen talep yok.'), findsOneWidget);

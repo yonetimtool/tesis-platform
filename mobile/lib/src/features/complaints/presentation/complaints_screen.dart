@@ -61,18 +61,23 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
     // Provider zaten yuklu geldiyse (listen tetiklenmez) mevcut durumu isle.
     _maybeOpenInitial(state);
 
-    // Sekme ayrimi: "Acik" = acik + inceleniyor (+ bilinmeyen — kaybolmasin),
-    // "Cozulenler" = cozuldu. Yonetici cozuldu isaretleyince kayit sekme
-    // degistirir (refresh sonrasi otomatik).
+    // Sekme ayrimi durum bazli: "Acik" = acik (+ bilinmeyen — kaybolmasin),
+    // "Inceleniyor" = inceleniyor, "Cozulenler" = cozuldu. Yonetici durumu
+    // degistirince kayit sekme degistirir (refresh sonrasi otomatik).
     final acik = state.items
-        .where((c) => c.durum != ComplaintDurum.cozuldu)
+        .where((c) =>
+            c.durum != ComplaintDurum.cozuldu &&
+            c.durum != ComplaintDurum.inceleniyor)
+        .toList(growable: false);
+    final incelenen = state.items
+        .where((c) => c.durum == ComplaintDurum.inceleniyor)
         .toList(growable: false);
     final cozulen = state.items
         .where((c) => c.durum == ComplaintDurum.cozuldu)
         .toList(growable: false);
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Sikayet / Oneri'),
@@ -84,8 +89,11 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
             ),
           ],
           bottom: TabBar(
+            // Uc sekme dar ekranda sigmayabilir — kaydirilabilir.
+            isScrollable: true,
             tabs: [
               Tab(text: 'Acik (${acik.length})'),
+              Tab(text: 'Inceleniyor (${incelenen.length})'),
               Tab(text: 'Cozulenler (${cozulen.length})'),
             ],
           ),
@@ -108,6 +116,14 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
                     ? 'Acik talebiniz yok. "Yeni talep" ile '
                         'sikayet/onerinizi iletebilirsiniz.'
                     : 'Acik talep yok.',
+              ),
+            ),
+            RefreshIndicator(
+              onRefresh: controller.refresh,
+              child: _Body(
+                state: state,
+                items: incelenen,
+                emptyText: 'Incelemede talep yok.',
               ),
             ),
             RefreshIndicator(
