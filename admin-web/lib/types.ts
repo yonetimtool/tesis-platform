@@ -206,10 +206,21 @@ export interface Announcement {
   id: string;
   baslik: string;
   govde: string;
+  foto_key?: string | null;
+  // Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa).
+  foto_url?: string | null;
   olusturan_user_id: string;
   olusturan_ad?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// `POST /uploads/presign` yaniti — foto yukleme bileti.
+export interface PresignTicket {
+  foto_key: string;
+  upload_url: string;
+  method: string;
+  expires_in: number;
 }
 
 export interface AnnouncementList {

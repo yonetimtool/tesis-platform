@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import useSWR from "swr";
 
 import { Field, ErrorBox, Pager, inputCls, btnPrimary, btnGhost, btnDanger } from "@/components/form";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
-import type { Announcement, AnnouncementList } from "@/lib/types";
+import type { Announcement, AnnouncementList, PresignTicket } from "@/lib/types";
 
 const LIMIT = 20;
 
@@ -15,6 +15,29 @@ interface FormState {
   govde: string;
 }
 const EMPTY: FormState = { baslik: "", govde: "" };
+
+/**
+ * Opsiyonel gorselin form icindeki yasam dongusu (mobil akisla ayni desen):
+ * dosya secilir secilmez presign + dogrudan MinIO'ya PUT; kaydet'te yalniz
+ * `foto_key` gonderilir. `removed` duzenlemede mevcut gorselin acikca
+ * kaldirilmasini isaretler (PATCH foto_key=null).
+ */
+interface PhotoState {
+  uploading: boolean;
+  error: string | null;
+  /// Yeni yuklenen obje anahtari (create/PATCH'te gonderilir).
+  fotoKey: string | null;
+  /// Onizleme icin: yeni secilen dosyanin object URL'i.
+  previewUrl: string | null;
+  removed: boolean;
+}
+const PHOTO_EMPTY: PhotoState = {
+  uploading: false,
+  error: null,
+  fotoKey: null,
+  previewUrl: null,
+  removed: false,
+};
 
 // Duyuru olusturmada backend, tenant'in TUM aktif cihazlarina push dener
 // (auth.md §4) — panelden gonderilen duyuru mobil kullanicilara da duser.
@@ -27,34 +50,97 @@ export default function AnnouncementsPage() {
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Announcement | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [photo, setPhoto] = useState<PhotoState>(PHOTO_EMPTY);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function resetPhoto() {
+    setPhoto((p) => {
+      if (p.previewUrl) URL.revokeObjectURL(p.previewUrl);
+      return PHOTO_EMPTY;
+    });
+    if (fileRef.current) fileRef.current.value = "";
+  }
 
   function openNew() {
     setEditingId(null);
+    setEditing(null);
     setForm(EMPTY);
     setFormErr(null);
+    resetPhoto();
     setOpen(true);
   }
   function openEdit(a: Announcement) {
     setEditingId(a.id);
+    setEditing(a);
     setForm({ baslik: a.baslik, govde: a.govde });
     setFormErr(null);
+    resetPhoto();
     setOpen(true);
+  }
+
+  // Dosya secilir secilmez yukle: presign -> dogrudan MinIO'ya PUT.
+  // Kaydet'e kadar yalniz foto_key bekletilir (mobil akisla ayni).
+  async function pickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhoto((p) => {
+      if (p.previewUrl) URL.revokeObjectURL(p.previewUrl);
+      return {
+        ...PHOTO_EMPTY,
+        uploading: true,
+        previewUrl: URL.createObjectURL(file),
+      };
+    });
+    try {
+      const ticket = await apiSend<PresignTicket>("/api/uploads/presign", "POST", {
+        content_type: file.type || "image/jpeg",
+        dosya_adi: file.name,
+      });
+      const put = await fetch(ticket.upload_url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "image/jpeg" },
+        body: file,
+      });
+      if (!put.ok) throw new Error(`Yukleme basarisiz (HTTP ${put.status}).`);
+      setPhoto((p) => ({ ...p, uploading: false, fotoKey: ticket.foto_key }));
+    } catch (err) {
+      setPhoto((p) => ({
+        ...p,
+        uploading: false,
+        error: err instanceof Error ? err.message : "Gorsel yuklenemedi.",
+      }));
+    }
   }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (photo.uploading) {
+      setFormErr("Gorsel henuz yukleniyor — bitmesini bekleyin veya kaldirin.");
+      return;
+    }
+    if (photo.previewUrl && !photo.fotoKey) {
+      setFormErr("Gorsel yuklenemedi. Tekrar secin veya kaldirin.");
+      return;
+    }
     setSaving(true);
     setFormErr(null);
+    // foto_key yalniz degistiginde govdeye girer: yeni yukleme -> anahtar;
+    // "kaldir" -> null; dokunulmadi -> alan yok (backend mevcut gorseli korur).
+    const body: Record<string, unknown> = { ...form };
+    if (photo.fotoKey) body.foto_key = photo.fotoKey;
+    else if (photo.removed) body.foto_key = null;
     try {
       if (editingId) {
-        await apiSend(`/api/announcements/${editingId}`, "PATCH", form);
+        await apiSend(`/api/announcements/${editingId}`, "PATCH", body);
       } else {
-        await apiSend("/api/announcements", "POST", form);
+        await apiSend("/api/announcements", "POST", body);
       }
       setOpen(false);
+      resetPhoto();
       mutate();
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
@@ -111,6 +197,44 @@ export default function AnnouncementsPage() {
               required
             />
           </Field>
+          <Field label="Gorsel (opsiyonel)" hint="Okuyan herkes duyuruda gorur">
+            <div className="space-y-2">
+              {/* Onizleme: yeni secim > mevcut gorsel (kaldirilmadiysa) */}
+              {(photo.previewUrl || (editing?.foto_url && !photo.removed && !photo.fotoKey)) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={photo.previewUrl ?? editing?.foto_url ?? ""}
+                  alt="Duyuru gorseli"
+                  className="max-h-40 rounded-lg border border-slate-200 object-cover"
+                />
+              )}
+              {photo.uploading && <p className="text-sm text-muted">Yukleniyor...</p>}
+              {photo.error && <ErrorBox message={photo.error} />}
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={pickPhoto}
+                  className="text-sm"
+                  disabled={photo.uploading || saving}
+                />
+                {(photo.fotoKey || (editing?.foto_key && !photo.removed)) && (
+                  <button
+                    type="button"
+                    className={btnGhost}
+                    disabled={photo.uploading || saving}
+                    onClick={() => {
+                      resetPhoto();
+                      setPhoto((p) => ({ ...p, removed: true }));
+                    }}
+                  >
+                    Gorseli kaldir
+                  </button>
+                )}
+              </div>
+            </div>
+          </Field>
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
@@ -130,6 +254,17 @@ export default function AnnouncementsPage() {
               <div className="min-w-0">
                 <h3 className="font-medium">{a.baslik}</h3>
                 <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{a.govde}</p>
+                {a.foto_url && (
+                  // Presigned GET URL kisa omurlu — liste her yenilendiginde taze gelir.
+                  <a href={a.foto_url} target="_blank" rel="noreferrer" className="mt-2 block w-fit">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={a.foto_url}
+                      alt={`${a.baslik} gorseli`}
+                      className="max-h-40 rounded-lg border border-slate-200 object-cover"
+                    />
+                  </a>
+                )}
                 <p className="mt-2 text-xs text-muted">
                   {a.olusturan_ad ?? "—"} · {formatDateTime(a.created_at)}
                   {a.updated_at !== a.created_at && " · duzenlendi"}
