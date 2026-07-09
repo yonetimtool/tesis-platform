@@ -63,16 +63,18 @@ enum UserRole {
   /// admin + yonetici (yonetici yalniz saha rollerine atayabilir; 422).
   bool get canManageTasks => this == admin || this == yonetici;
 
-  /// Sikayet/oneri ekranini gorme — sakin<->yonetim kanali:
-  /// resident (kendi talepleri) + admin/yonetici (yonetim gorunumu).
-  /// security/tesis_gorevlisi ERISMEZ (backend 403).
-  bool get canViewComplaints =>
-      this == resident || this == admin || this == yonetici;
+  /// Sikayet/oneri ekranini gorme — yasayan/calisandan yonetime kanal
+  /// (kesin kural, auth.md §4): acan roller kendi taleplerini, yonetim
+  /// (admin/yonetici) tumunu gorur. Bilinen 5 rolun 5'i de erisir.
+  bool get canViewComplaints => this != unknown;
 
-  /// Talep ACMA (`POST /complaints`) — yalniz resident (kendi adina).
-  bool get canCreateComplaint => this == resident;
+  /// Talep ACMA (`POST /complaints`) — acan roller: security +
+  /// tesis_gorevlisi + resident. yonetici ACAMAZ (kanalin cevaplayan
+  /// tarafi); admin de acmaz (platform operatoru).
+  bool get canCreateComplaint =>
+      this == security || this == tesisGorevlisi || this == resident;
 
   /// Talep yanitla/durum degistir (`PATCH /complaints/{id}`) —
-  /// admin + yonetici.
+  /// admin + yonetici; acan roller cevaplayamaz.
   bool get canRespondComplaints => this == admin || this == yonetici;
 }

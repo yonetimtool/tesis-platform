@@ -1,7 +1,7 @@
 """Duyuru — yonetimden tum tesise — /contracts/openapi.yaml.
 
-RBAC (auth.md §4): OLUSTURMA yalniz yonetici; duzenleme/silme admin+yonetici;
-OKUMA tum roller
+RBAC (auth.md §4): OLUSTURMA yonetici (mobil) + admin (platform/panel);
+duzenleme/silme admin+yonetici; OKUMA tum roller
 (resident dahil — sakinin ilk operasyon-disi kaynagi). tenant token'dan; RLS
 izole. Olusturmada tenant'in TUM aktif cihazlarina push denenir (EK gonderim —
 hatasi duyuru kaydini kirmaz, emergency ile ayni desen).
@@ -33,10 +33,10 @@ from ..schemas import (
 
 router = APIRouter(prefix="/announcements", tags=["announcements"])
 
-# OLUSTURMA yalniz yonetici: duyuru site yonetiminin agzi (canli test karari,
-# auth.md §4). admin (platform) OLUSTURAMAZ; duzenleme/silme admin+yonetici
-# kalir (moderasyon).
-_CREATOR = require_role("yonetici")
+# OLUSTURMA: yonetici (site yonetiminin agzi, mobil) + admin (platform
+# tarafi, panel) — canli test kesin kurali, auth.md §4. Saha rolleri +
+# resident 403. Duzenleme/silme de admin+yonetici.
+_CREATOR = require_role("yonetici", "admin")
 _SENDER = require_role("admin", "yonetici")
 _READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi", "resident")
 

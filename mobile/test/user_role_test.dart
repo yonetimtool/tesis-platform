@@ -61,21 +61,34 @@ void main() {
       expect(UserRole.resident.canManageTasks, isFalse);
     });
 
-    test('sikayet/oneri: acma yalniz resident; yanit admin+yonetici; '
-        'saha rolleri kanala erisemez', () {
+    test('sikayet/oneri kesin kurali: acma saha+sakin; yanit admin+yonetici; '
+        'goruntuleme bilinen 5 rolde', () {
+      // ACMA: security + tesis_gorevlisi + resident
+      expect(UserRole.security.canCreateComplaint, isTrue);
+      expect(UserRole.tesisGorevlisi.canCreateComplaint, isTrue);
       expect(UserRole.resident.canCreateComplaint, isTrue);
-      expect(UserRole.admin.canCreateComplaint, isFalse);
+      // yonetici kanalin cevaplayan tarafi; admin platform operatoru
       expect(UserRole.yonetici.canCreateComplaint, isFalse);
+      expect(UserRole.admin.canCreateComplaint, isFalse);
 
+      // CEVAPLAMA: yalniz yonetim
       expect(UserRole.admin.canRespondComplaints, isTrue);
       expect(UserRole.yonetici.canRespondComplaints, isTrue);
+      expect(UserRole.security.canRespondComplaints, isFalse);
+      expect(UserRole.tesisGorevlisi.canRespondComplaints, isFalse);
       expect(UserRole.resident.canRespondComplaints, isFalse);
 
-      for (final role in [UserRole.admin, UserRole.yonetici, UserRole.resident]) {
+      // GORUNTULEME: bilinen 5 rolun 5'i (acanlar kendi, yonetim tumu)
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
         expect(role.canViewComplaints, isTrue, reason: role.wire);
       }
-      expect(UserRole.security.canViewComplaints, isFalse);
-      expect(UserRole.tesisGorevlisi.canViewComplaints, isFalse);
+      expect(UserRole.unknown.canViewComplaints, isFalse);
     });
 
     test('TR gorunen adlar', () {

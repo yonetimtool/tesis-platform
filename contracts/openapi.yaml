@@ -728,7 +728,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [announcements]
-      summary: Duyuru olustur (YALNIZ yonetici — admin platform, yayinlamaz)
+      summary: Duyuru olustur (yonetici mobilden + admin panelden)
       description: |
         Olusturan token'dan alinir. Kayit sonrasi tenant'in TUM aktif
         cihazlarina push denenir (EK gonderim — push hatasi kaydi etkilemez;
@@ -795,17 +795,19 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
   # ================================================================= #
-  # COMPLAINTS (sikayet/oneri) — sakin -> yonetim talep kanali
-  #   acma resident; okuma resident(kendi)+admin+yonetici(tumu);
-  #   yanit/durum admin+yonetici; security/tesis_gorevlisi ERISMEZ
+  # COMPLAINTS (sikayet/oneri) — yasayan/calisandan yonetime talep kanali
+  #   acma security+tesis_gorevlisi+resident (yonetici/admin ACAMAZ);
+  #   okuma acan roller KENDI + admin+yonetici TUMU;
+  #   yanit/durum yalniz admin+yonetici
   # ================================================================= #
   /complaints:
     get:
       tags: [complaints]
       summary: Talep listesi (created_at DESC)
       description: |
-        resident YALNIZ kendi actiklarini gorur; admin+yonetici tenant'taki
-        tum talepleri gorur (yonetim gorunumu). Durum ile filtrelenebilir.
+        Acan roller (security/tesis_gorevlisi/resident) YALNIZ kendi
+        actiklarini gorur; admin+yonetici tenant'taki tum talepleri gorur
+        (yonetim gorunumu). Durum ile filtrelenebilir.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -831,7 +833,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [complaints]
-      summary: Talep ac (resident)
+      summary: Talep ac (security + tesis_gorevlisi + resident; yonetici/admin 403)
       description: |
         Acan token'dan alinir; durum=acik baslar. Opsiyonel gorsel: once
         POST /uploads/presign ile foto_key + PUT URL alinir, dosya PUT edilir,
@@ -860,7 +862,7 @@ paths:
       - $ref: "#/components/parameters/PathId"
     get:
       tags: [complaints]
-      summary: Talep detayi (resident kendininki; admin+yonetici hepsi)
+      summary: Talep detayi (acan roller kendininki; admin+yonetici hepsi)
       responses:
         "200":
           description: Talep
@@ -877,7 +879,8 @@ paths:
         yonetici_yaniti yazildiginda yanitlayan_user_id ve yanit_zamani
         otomatik damgalanir ve YALNIZ talebi acan sakinin cihazlarina push
         denenir (EK gonderim — hatasi kaydi etkilemez; data: tip=talep_yanit,
-        complaint_id). resident bu uca ERISEMEZ (403).
+        complaint_id). Acan roller (security/tesis_gorevlisi/resident) bu
+        uca ERISEMEZ (403).
       requestBody:
         required: true
         content:

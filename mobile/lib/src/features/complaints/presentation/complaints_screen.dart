@@ -13,10 +13,12 @@ import '../data/complaint_api.dart';
 import '../domain/complaint_models.dart';
 import 'complaints_controller.dart';
 
-/// "Sikayet / Oneri" — sakin<->yonetim kanali (auth.md §4 UX aynasi):
-///   * resident: KENDI talepleri + "Yeni talep" FAB'i; yaniti okur.
-///   * admin/yonetici: tenant'taki TUM talepler; detayda durum+yanit yazar.
-///   * security/tesis_gorevlisi bu ekrana hic gelmez (menude yok; backend 403).
+/// "Sikayet / Oneri" — yasayan/calisandan yonetime kanal (auth.md §4
+/// kesin kurali, UX aynasi):
+///   * acan roller (security/tesis_gorevlisi/resident): KENDI talepleri +
+///     "Yeni talep" FAB'i; yaniti okur, CEVAPLAYAMAZ.
+///   * admin/yonetici: tenant'taki TUM talepler; detayda durum+yanit yazar,
+///     yeni talep ACAMAZ (FAB yok).
 ///
 /// [initialComplaintId] push tiklamasindan gelir (?complaint_id=...): liste
 /// yuklendiginde ilgili talebin detayi BIR KEZ otomatik acilir; kayit
@@ -601,7 +603,7 @@ class _ComplaintPhoto extends StatelessWidget {
   }
 }
 
-/// Yeni talep formu (bottom sheet, yalniz resident). Sunucu sinirlari
+/// Yeni talep formu (bottom sheet, acan roller: saha + sakin). Sunucu sinirlari
 /// istemcide de uygulanir: baslik <= 200, mesaj <= 5000, bos deger
 /// gonderilmez. Opsiyonel gorsel: cek/sec → presign → PUT → foto_key
 /// (gorev/duyuru foto akisiyla ayni desen).

@@ -1,9 +1,9 @@
-"""Sikayet/oneri — sakin -> yonetim talep kanali — /contracts/openapi.yaml.
+"""Sikayet/oneri — tesiste yasayan/calisandan yonetime talep kanali.
 
-RBAC (auth.md §4): ACMA resident (kendi adina, acan token'dan); OKUMA resident
-YALNIZ kendi actiklarini, admin+yonetici tenant'taki TUMUNU (yonetim gorunumu);
-YANIT/DURUM (PATCH) yalniz admin+yonetici. security/tesis_gorevlisi ERISMEZ —
-bu bir sakin<->yonetim kanalidir. tenant token'dan; RLS izole.
+RBAC (auth.md §4, canli test kesin kurali): ACMA security + tesis_gorevlisi +
+resident (acan token'dan); yonetici ve admin ACAMAZ. OKUMA acan roller YALNIZ
+kendi actiklarini, admin+yonetici tenant'taki TUMUNU (yonetim gorunumu);
+YANIT/DURUM (PATCH) yalniz admin+yonetici. tenant token'dan; RLS izole.
 
 Opsiyonel gorsel: acmada /uploads/presign ile yuklenmis foto_key kabul edilir
 (tenant-namespace dogrulamali); okumada presigned GET foto_url doner.
@@ -37,9 +37,17 @@ from ..storage import presign_get
 
 router = APIRouter(prefix="/complaints", tags=["complaints"])
 
-_OPENER = require_role("resident")
-_READER = require_role("admin", "yonetici", "resident")
+# ACMA: saha rolleri + sakin (talebi YASAYAN acar). yonetici ACAMAZ —
+# kanalin cevaplayan tarafi; admin de acmaz (platform operatoru, tesiste
+# yasamaz/calismaz — canli test kesin kurali, auth.md §4).
+_OPENER = require_role("security", "tesis_gorevlisi", "resident")
+_READER = require_role(
+    "admin", "yonetici", "security", "tesis_gorevlisi", "resident"
+)
 _MANAGER = require_role("admin", "yonetici")
+
+# Kendi-kaydi kapsamindaki roller (yonetim DISI): yalniz actiklarini gorur.
+_OWN_SCOPED_ROLES = ("security", "tesis_gorevlisi", "resident")
 
 # Yeni talep push'u YONETIME gider (kanal sakin->yonetim; duyuru deseni).
 _MANAGEMENT_ROLES: tuple[str, ...] = ("admin", "yonetici")
@@ -68,8 +76,9 @@ def _out(obj: Complaint, acan_ad: str | None) -> ComplaintOut:
 
 
 def _own_scope(stmt, user: AppUser):
-    """resident yalniz kendi actiklarini gorur; yonetim tum tenant'i."""
-    if user.role == "resident":
+    """Acan roller (saha + sakin) yalniz KENDI actiklarini gorur;
+    yonetim (admin+yonetici) tum tenant'i."""
+    if user.role in _OWN_SCOPED_ROLES:
         return stmt.where(Complaint.acan_user_id == user.id)
     return stmt
 

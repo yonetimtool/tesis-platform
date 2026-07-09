@@ -1,9 +1,10 @@
 /// Sikayet/oneri modulunun domain modelleri — `contracts/openapi.yaml`
 /// Complaint / ComplaintCreate / ComplaintUpdate semalarina uyar.
 ///
-/// RBAC (auth.md §4): ACMA resident (kendi adina); OKUMA resident yalniz
-/// KENDI actiklarini, admin+yonetici tenant'taki tumunu; DURUM/YANIT (PATCH)
-/// yalniz admin+yonetici. security/tesis_gorevlisi ERISMEZ.
+/// RBAC (auth.md §4, kesin kural): ACMA security + tesis_gorevlisi +
+/// resident (acan token'dan); yonetici/admin ACAMAZ. OKUMA acan roller
+/// yalniz KENDI actiklarini, admin+yonetici tenant'taki tumunu;
+/// DURUM/YANIT (PATCH) yalniz admin+yonetici.
 library;
 
 /// `complaint_durum` enum'unun istemci aynasi.

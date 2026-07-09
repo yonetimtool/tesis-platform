@@ -39,8 +39,9 @@ enum HomeMenuEntry {
   /// Aidatim — resident: kendi dairelerinin borc durumu (salt okuma).
   myDues,
 
-  /// Sikayet/Oneri — sakin<->yonetim kanali: resident acar+kendininkini
-  /// izler; admin/yonetici tumunu gorur+yanitlar. Saha rollerinde YOK.
+  /// Sikayet/Oneri — yasayan/calisandan yonetime kanal: acan roller
+  /// (security/tesis_gorevlisi/resident) acar + kendininkini izler;
+  /// admin/yonetici tumunu gorur + yanitlar (kesin kural, auth.md §4).
   complaints,
 }
 
@@ -62,6 +63,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.complaints,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -73,6 +75,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.complaints,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
         HomeMenuEntry.nfc,

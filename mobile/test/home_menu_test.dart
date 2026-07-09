@@ -19,6 +19,7 @@ void main() {
       expect(homeMenuForRole(UserRole.security), const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.complaints,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -107,17 +108,13 @@ void main() {
       }
     });
 
-    test('Sikayet/Oneri saha rollerinde YOK (sakin<->yonetim kanali)', () {
-      for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
-        expect(
-          homeMenuForRole(role),
-          isNot(contains(HomeMenuEntry.complaints)),
-          reason: role.wire,
-        );
-      }
+    test('Sikayet/Oneri karti bilinen 5 rolun 5inde (acanlar acar+kendini, '
+        'yonetim tumunu gorur+yanitlar)', () {
       for (final role in [
         UserRole.admin,
         UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
         UserRole.resident,
       ]) {
         expect(

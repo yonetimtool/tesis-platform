@@ -51,15 +51,21 @@ Widget _app(
     );
 
 void main() {
-  group('"Yeni talep" butonu rol gorunurlugu (auth.md §4 UX aynasi)', () {
-    testWidgets('resident: FAB GORUNUR', (tester) async {
-      await tester.pumpWidget(_app(UserRole.resident, items: [_c()]));
-      await tester.pumpAndSettle();
-      expect(find.text('Yeni talep'), findsOneWidget);
-    });
+  group('"Yeni talep" butonu rol gorunurlugu (auth.md §4 kesin kurali)', () {
+    for (final role in [
+      UserRole.security,
+      UserRole.tesisGorevlisi,
+      UserRole.resident,
+    ]) {
+      testWidgets('${role.name}: FAB GORUNUR (acan rol)', (tester) async {
+        await tester.pumpWidget(_app(role, items: [_c()]));
+        await tester.pumpAndSettle();
+        expect(find.text('Yeni talep'), findsOneWidget);
+      });
+    }
 
     for (final role in [UserRole.admin, UserRole.yonetici]) {
-      testWidgets('${role.name}: FAB YOK (talep acma sakine ait)',
+      testWidgets('${role.name}: FAB YOK (yonetim acamaz, yalniz yanitlar)',
           (tester) async {
         await tester.pumpWidget(_app(role, items: [_c()]));
         await tester.pumpAndSettle();
@@ -67,6 +73,16 @@ void main() {
         expect(find.byType(FloatingActionButton), findsNothing);
       });
     }
+
+    testWidgets('acan rol (security) detayda yanit formu GORMEZ',
+        (tester) async {
+      await tester.pumpWidget(_app(UserRole.security, items: [_c()]));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Asansor arizali'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SegmentedButton<ComplaintDurum>), findsNothing);
+      expect(find.text('Yaniti kaydet'), findsNothing);
+    });
   });
 
   group('detay + yanit formu', () {

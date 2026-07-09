@@ -19,12 +19,12 @@ class ComplaintsState {
   final bool loading;
   final String? errorMessage;
 
-  /// Sunucu sirasi: created_at DESC (en yeni onde). resident icin sunucu
+  /// Sunucu sirasi: created_at DESC (en yeni onde). Acan roller icin sunucu
   /// zaten YALNIZ kendi actiklarini doner.
   final List<Complaint> items;
 
-  /// Rol resident mi — "Yeni talep" FAB'i. Yalniz UX kapisi; gercek yetki
-  /// backend RBAC'ta.
+  /// Acan rol mu (security/tesis_gorevlisi/resident) — "Yeni talep" FAB'i.
+  /// Yalniz UX kapisi; gercek yetki backend RBAC'ta.
   final bool canCreate;
 
   /// Rol admin/yonetici mi — yanit/durum formu.

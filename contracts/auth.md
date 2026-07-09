@@ -127,11 +127,11 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /notifications`                 |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `PATCH /notifications/{id}`           |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `GET  /announcements` (liste/detay)   |  ✅   | ✅  | ✅  | ✅  | ✅  |
-| `POST /announcements`                 |  ❌   | ✅  | ❌  | ❌  | ❌  |
+| `POST /announcements`                 |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `PATCH /announcements/{id}`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `DELETE /announcements/{id}`          |  ✅   | ✅  | ❌  | ❌  | ❌  |
-| `GET  /complaints` (liste/detay)      |  ✅   | ✅  | ❌  | ❌  | ✅° |
-| `POST /complaints`                    |  ❌   | ❌  | ❌  | ❌  | ✅  |
+| `GET  /complaints` (liste/detay)      |  ✅   | ✅  | ✅° | ✅° | ✅° |
+| `POST /complaints`                    |  ❌   | ❌  | ✅  | ✅  | ✅  |
 | `PATCH /complaints/{id}` (durum/yanit)|  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /tasks` (liste/detay)           |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /tasks`                         |  ✅   | ✅* | ❌  | ❌  | ❌  |
@@ -207,7 +207,8 @@ Notlar:
   yuklemek icin erisir (saha kanit akisi degil).
 - **security / tesis_gorevlisi**: operasyonel saha rolleri (tesis_gorevlisi =
   temizlik + bahcivan + teknik, eski `cleaning`in devami — yetkileri birebir
-  ayni). Tanimlari **okur**, tur kaniti (`POST /scans`) **gonderir**.
+  ayni). Tanimlari **okur**, tur kaniti (`POST /scans`) **gonderir**;
+  **sikayet/oneri ACAR** ve ° yalniz kendi actiklarini izler (PATCH ❌).
   Yapilandirmayi (CRUD) degistiremez. `tesis_gorevlisi` panele/dashboard'a
   erisemez; saha odakli.
 - **resident**: v0 kapsaminda operasyon endpoint'lerine erisimi yoktur.
@@ -217,21 +218,25 @@ Notlar:
   gorur; PATCH ❌) + **acil durum tetikleme** (`POST /emergency` — panik
   butonu sakinin de hakki; GET/PATCH ❌) disinda her kaynak `403`.
   ‡ `POST /uploads/presign`e yalniz sikayet/oneri gorseli yuklemek icin erisir.
-- **Duyuru:** OLUSTURMA **yalniz `yonetici`** — duyuru site yonetiminin
-  agzidir; `admin` platform operatorudur, tesise duyuru YAYINLAMAZ (canli
-  test karari). Duzenleme/silme `admin` + `yonetici` (moderasyon); OKUMA tum
-  roller.
+- **Duyuru:** OLUSTURMA `yonetici` (site yonetiminin agzi, mobil) +
+  `admin` (platform tarafi, panel) — canli test kesin kurali. Saha rolleri
+  ve `resident` olusturamaz. Duzenleme/silme `admin` + `yonetici`; OKUMA
+  tum roller. Mobil UX: "yeni duyuru" butonu YALNIZ yonetici ekraninda
+  (admin panelden yayinlar).
   Olusturmada tenant'in tum aktif cihazlarina push denenir (EK gonderim; push
   hatasi duyuru kaydini etkilemez). Duyuruya OPSIYONEL gorsel eklenebilir
   (`/uploads/presign` → PUT → `foto_key`); okumada `foto_url` (kisa omurlu
   presigned GET) tum okuyan rollere doner.
-- **Sikayet/Oneri (`/complaints`):** sakin↔yonetim kanali. ACMA yalniz
-  `resident` (acan token'dan, `durum=acik`, opsiyonel `foto_key`); OKUMA
-  `resident` yalniz KENDI actiklarini (° isareti), `admin`+`yonetici` tenant'taki
-  tumunu; DURUM/YANIT (PATCH) yalniz `admin`+`yonetici` (`yanitlayan_user_id`
-  + `yanit_zamani` otomatik). `security`/`tesis_gorevlisi` ERISMEZ — kanal
-  onlara kapali. Talep ACILDIGINDA `admin`+`yonetici` cihazlarina,
-  YANITLANDIGINDA yalniz talebi ACAN sakinin cihazlarina push denenir
+- **Sikayet/Oneri (`/complaints`):** tesiste yasayan/calisandan yonetime
+  talep kanali (canli test kesin kurali). ACMA `security` +
+  `tesis_gorevlisi` + `resident` (acan token'dan, `durum=acik`, opsiyonel
+  `foto_key`); `yonetici` ACAMAZ — kanalin CEVAPLAYAN tarafidir; `admin` de
+  acmaz (platform operatoru, tesiste yasamaz/calismaz). OKUMA acan roller
+  yalniz KENDI actiklarini (° isareti), `admin`+`yonetici` tenant'taki
+  tumunu (yonetim gorunumu); DURUM/YANIT (PATCH) yalniz `admin`+`yonetici`
+  (`yanitlayan_user_id` + `yanit_zamani` otomatik) — acan roller
+  cevaplayamaz. Talep ACILDIGINDA `admin`+`yonetici` cihazlarina,
+  YANITLANDIGINDA yalniz talebi ACANIN cihazlarina push denenir
   (kisi hedefli; EK gonderim — hatasi talep kaydini etkilemez).
 
 ## 5. Hata Davranisi

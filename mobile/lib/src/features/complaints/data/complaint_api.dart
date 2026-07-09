@@ -12,8 +12,8 @@ import '../domain/complaint_models.dart';
 
 /// Sikayet/oneri modulunun HTTP istemcisi:
 ///
-///   * `GET   /complaints`        → liste (resident KENDI; yonetim TUMU; DESC)
-///   * `POST  /complaints`        → talep ac (resident)
+///   * `GET   /complaints`        → liste (acan roller KENDI; yonetim TUMU; DESC)
+///   * `POST  /complaints`        → talep ac (security/tesis_gorevlisi/resident)
 ///   * `PATCH /complaints/{id}`   → durum/yanit (admin + yonetici)
 ///   * `POST  /uploads/presign`   → opsiyonel talep gorseli icin PUT URL
 ///   * presigned URL'e HTTP PUT   → dosya dogrudan MinIO'ya
@@ -78,7 +78,7 @@ class ComplaintApi {
   }
 
   /// `POST /uploads/presign` — talep gorseli icin obje anahtari + kisa
-  /// omurlu PUT URL (gorev/duyuru foto akisiyla ayni uc; resident yetkili).
+  /// omurlu PUT URL (gorev/duyuru foto akisiyla ayni uc; acan roller yetkili).
   Future<PresignTicket> presignUpload({
     required String contentType,
     String? dosyaAdi,

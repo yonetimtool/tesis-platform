@@ -1,7 +1,8 @@
 """Sikayet/oneri: acma + kendi/yonetim gorunumu + yanit + RBAC + izolasyon.
 
-RBAC (auth.md §4): ACMA resident; OKUMA resident KENDI + admin/yonetici TUMU;
-PATCH (durum/yanit) admin+yonetici; security/tesis_gorevlisi TUM uclara 403.
+RBAC (auth.md §4, kesin kural): ACMA security+tesis_gorevlisi+resident
+(yonetici/admin 403); OKUMA acan roller KENDI + admin/yonetici TUMU;
+PATCH (durum/yanit) yalniz admin+yonetici (acan roller 403).
 """
 from __future__ import annotations
 
@@ -48,6 +49,14 @@ def test_resident_acar_durum_acik(client, world):
     assert c["acan_ad"] == "Resident A"
     assert c["foto_key"] is None and c["foto_url"] is None
     assert c["yonetici_yaniti"] is None and c["yanit_zamani"] is None
+
+
+def test_saha_rolleri_de_acar(client, world):
+    """Kesin kural: security + tesis_gorevlisi de talep ACAR (201)."""
+    for role, ad in (("guard_a", "Guard A"), ("gorevli_a", "Gorevli A")):
+        h = _headers(client, world["slug_a"], world[role])
+        c = _new(client, h, baslik=f"{ad} talebi")
+        assert c["durum"] == "acik" and c["acan_ad"] == ad, role
 
 
 def test_fotolu_acma_ve_okumada_foto_url(client, world):
@@ -100,31 +109,48 @@ def test_validation(client, world):
 
 
 # --------------------------- kendi / yonetim gorunumu ----------------------- #
-def test_resident_yalniz_kendini_gorur_yonetim_tumunu(client, world):
+def test_acan_roller_yalniz_kendini_gorur_yonetim_tumunu(client, world):
+    """Kesin kural: her acan rol (saha + sakin) YALNIZ kendi actigini gorur —
+    baska acanin kaydini listede goremez, detayda 404; yonetim tumunu gorur."""
     resident1 = _headers(client, world["slug_a"], world["resident_a"])
     resident2 = _second_resident(client, world)
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
 
-    c1 = _new(client, resident1, baslik="Sakin1 talebi")
-    c2 = _new(client, resident2, baslik="Sakin2 talebi")
+    c_res1 = _new(client, resident1, baslik="Sakin1 talebi")
+    c_res2 = _new(client, resident2, baslik="Sakin2 talebi")
+    c_guard = _new(client, guard, baslik="Guard talebi")
+    c_gorevli = _new(client, gorevli, baslik="Gorevli talebi")
 
-    # resident1 listede KENDI talebini gorur, sakin2'ninkini GORMEZ
+    # her acan yalniz KENDI kaydini listeler
+    for h, kendi, yabanci in (
+        (resident1, c_res1, c_guard),
+        (guard, c_guard, c_res1),
+        (gorevli, c_gorevli, c_res2),
+    ):
+        ids = [it["id"] for it in client.get(
+            "/complaints", headers=h, params={"limit": 200}
+        ).json()["items"]]
+        assert kendi["id"] in ids and yabanci["id"] not in ids
+        # detayda baskasinin talebi 404 (varlik sizdirilmaz)
+        assert client.get(f"/complaints/{yabanci['id']}", headers=h).status_code == 404
+        assert client.get(f"/complaints/{kendi['id']}", headers=h).status_code == 200
+
+    # resident1, resident2'ninkini de goremez (ayni rol, farkli kisi)
     ids1 = [it["id"] for it in client.get(
         "/complaints", headers=resident1, params={"limit": 200}
     ).json()["items"]]
-    assert c1["id"] in ids1 and c2["id"] not in ids1
+    assert c_res2["id"] not in ids1
 
-    # detayda da baskasinin talebi 404 (varlik sizdirilmaz)
-    assert client.get(f"/complaints/{c2['id']}", headers=resident1).status_code == 404
-    assert client.get(f"/complaints/{c1['id']}", headers=resident1).status_code == 200
-
-    # yonetici + admin HER IKISINI de gorur
+    # yonetici + admin DORDUNU de gorur
     for role in ("yonetici_a", "admin_a"):
         h = _headers(client, world["slug_a"], world[role])
         ids = [it["id"] for it in client.get(
             "/complaints", headers=h, params={"limit": 200}
         ).json()["items"]]
-        assert c1["id"] in ids and c2["id"] in ids, role
-        assert client.get(f"/complaints/{c1['id']}", headers=h).status_code == 200
+        for c in (c_res1, c_res2, c_guard, c_gorevli):
+            assert c["id"] in ids, role
+        assert client.get(f"/complaints/{c_guard['id']}", headers=h).status_code == 200
 
 
 def test_liste_durum_filtresi_ve_sira(client, world):
@@ -186,33 +212,33 @@ def test_yonetici_durum_ve_yanit_yazar(client, world):
 
 
 # -------------------------------- RBAC -------------------------------------- #
-def test_rbac_resident_patch_403_saha_rolleri_tum_uclara_403(client, world):
-    resident = _headers(client, world["slug_a"], world["resident_a"])
-    c = _new(client, resident, baslik="RBAC talebi")
-
-    # resident PATCH'e ERISEMEZ (kendi talebi olsa bile)
-    assert client.patch(
-        f"/complaints/{c['id']}", headers=resident, json={"durum": "cozuldu"}
-    ).status_code == 403
-
-    # security + tesis_gorevlisi: sakin<->yonetim kanali — TUM uclar 403
-    for role in ("guard_a", "gorevli_a"):
+def test_rbac_acan_roller_patch_403_yonetim_acamaz(client, world):
+    """Kesin kural: CEVAPLAMA/DURUM yalniz yonetim — acan roller
+    (security/tesis_gorevlisi/resident) KENDI talebinde bile PATCH 403;
+    yonetim (yonetici/admin) talep ACAMAZ (403), ama PATCH yapar (200)."""
+    # her acan rol kendi talebini acar; PATCH'i 403
+    for role in ("guard_a", "gorevli_a", "resident_a"):
         h = _headers(client, world["slug_a"], world[role])
-        assert client.get("/complaints", headers=h).status_code == 403, role
-        assert client.get(f"/complaints/{c['id']}", headers=h).status_code == 403, role
-        assert client.post(
-            "/complaints", headers=h, json={"baslik": "x", "mesaj": "y"}
-        ).status_code == 403, role
+        c = _new(client, h, baslik=f"RBAC {role}")
         assert client.patch(
             f"/complaints/{c['id']}", headers=h, json={"durum": "cozuldu"}
         ).status_code == 403, role
+        assert client.patch(
+            f"/complaints/{c['id']}", headers=h,
+            json={"yonetici_yaniti": "kendime yanit"},
+        ).status_code == 403, role
 
-    # yonetim talep ACAMAZ (kanal sakinin agzi; yonetim yanitlar)
+    # yonetim talep ACAMAZ (kanalin cevaplayan tarafi) ama yanitlar
+    resident = _headers(client, world["slug_a"], world["resident_a"])
+    c = _new(client, resident, baslik="Yonetim yanitlar")
     for role in ("yonetici_a", "admin_a"):
         h = _headers(client, world["slug_a"], world[role])
         assert client.post(
             "/complaints", headers=h, json={"baslik": "x", "mesaj": "y"}
         ).status_code == 403, role
+        assert client.patch(
+            f"/complaints/{c['id']}", headers=h, json={"durum": "inceleniyor"}
+        ).status_code == 200, role
 
 
 def test_duyuru_olusturma_resident_403_teyit(client, world):
