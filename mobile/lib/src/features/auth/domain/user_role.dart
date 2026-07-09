@@ -58,4 +58,17 @@ enum UserRole {
   /// Gorev olusturma/duzenleme/silme (`POST/PATCH/DELETE /tasks`) —
   /// admin + yonetici (yonetici yalniz saha rollerine atayabilir; 422).
   bool get canManageTasks => this == admin || this == yonetici;
+
+  /// Sikayet/oneri ekranini gorme — sakin<->yonetim kanali:
+  /// resident (kendi talepleri) + admin/yonetici (yonetim gorunumu).
+  /// security/tesis_gorevlisi ERISMEZ (backend 403).
+  bool get canViewComplaints =>
+      this == resident || this == admin || this == yonetici;
+
+  /// Talep ACMA (`POST /complaints`) — yalniz resident (kendi adina).
+  bool get canCreateComplaint => this == resident;
+
+  /// Talep yanitla/durum degistir (`PATCH /complaints/{id}`) —
+  /// admin + yonetici.
+  bool get canRespondComplaints => this == admin || this == yonetici;
 }

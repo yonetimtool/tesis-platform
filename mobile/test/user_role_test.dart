@@ -59,6 +59,23 @@ void main() {
       expect(UserRole.resident.canManageTasks, isFalse);
     });
 
+    test('sikayet/oneri: acma yalniz resident; yanit admin+yonetici; '
+        'saha rolleri kanala erisemez', () {
+      expect(UserRole.resident.canCreateComplaint, isTrue);
+      expect(UserRole.admin.canCreateComplaint, isFalse);
+      expect(UserRole.yonetici.canCreateComplaint, isFalse);
+
+      expect(UserRole.admin.canRespondComplaints, isTrue);
+      expect(UserRole.yonetici.canRespondComplaints, isTrue);
+      expect(UserRole.resident.canRespondComplaints, isFalse);
+
+      for (final role in [UserRole.admin, UserRole.yonetici, UserRole.resident]) {
+        expect(role.canViewComplaints, isTrue, reason: role.wire);
+      }
+      expect(UserRole.security.canViewComplaints, isFalse);
+      expect(UserRole.tesisGorevlisi.canViewComplaints, isFalse);
+    });
+
     test('TR gorunen adlar', () {
       expect(UserRole.yonetici.label, 'Yonetici');
       expect(UserRole.security.label, 'Guvenlik');

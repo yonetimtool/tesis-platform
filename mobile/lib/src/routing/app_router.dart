@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../features/announcements/presentation/announcements_screen.dart';
 import '../features/assets/presentation/assets_screen.dart';
 import '../features/auth/presentation/auth_controller.dart';
+import '../features/complaints/presentation/complaints_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
@@ -35,6 +36,7 @@ class AppRoutes {
   static const patrolTracking = '/patrol-tracking';
   static const reports = '/reports';
   static const myDues = '/my-dues';
+  static const complaints = '/complaints';
 }
 
 /// Auth durumundaki degisimleri go_router'a bildiren kopru. `status` her
@@ -107,6 +109,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.myDues,
         builder: (context, state) => const MyDuesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.complaints,
+        builder: (context, state) => const ComplaintsScreen(),
       ),
       GoRoute(
         path: AppRoutes.taskDetail,

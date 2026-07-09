@@ -230,6 +230,19 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.myDues),
           ),
         );
+      case HomeMenuEntry.complaints:
+        // Sakin<->yonetim kanali: sakin talep acar, yonetim yanitlar.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.rate_review_outlined),
+            title: const Text('Sikayet / Oneri'),
+            subtitle: const Text(
+              'Yonetime talep ilet, durum ve yaniti izle',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.complaints),
+          ),
+        );
     }
   }
 }

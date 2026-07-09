@@ -38,11 +38,26 @@ enum HomeMenuEntry {
 
   /// Aidatim — resident: kendi dairelerinin borc durumu (salt okuma).
   myDues,
+
+  /// Sikayet/Oneri — sakin<->yonetim kanali: resident acar+kendininkini
+  /// izler; admin/yonetici tumunu gorur+yanitlar. Saha rollerinde YOK.
+  complaints,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
   switch (role) {
     case UserRole.admin:
+      // security ile ayni saha kartlari + talepler (yonetim gorunumu).
+      return const [
+        HomeMenuEntry.emergency,
+        HomeMenuEntry.announcements,
+        HomeMenuEntry.complaints,
+        HomeMenuEntry.patrol,
+        HomeMenuEntry.tasks,
+        HomeMenuEntry.assets,
+        HomeMenuEntry.nfc,
+        HomeMenuEntry.outbox,
+      ];
     case UserRole.security:
       return const [
         HomeMenuEntry.emergency,
@@ -69,14 +84,17 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.complaints,
         HomeMenuEntry.patrolTracking,
         HomeMenuEntry.taskTracking,
         HomeMenuEntry.reports,
       ];
     case UserRole.resident:
-      // Sakinin kaynaklari: duyuru okuma + kendi aidat durumu (auth.md §4).
+      // Sakinin kaynaklari: duyuru okuma + kendi aidat durumu +
+      // sikayet/oneri kanali (auth.md §4).
       return const [
         HomeMenuEntry.announcements,
+        HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
       ];
     case UserRole.unknown:
