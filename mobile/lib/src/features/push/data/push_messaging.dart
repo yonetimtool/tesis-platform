@@ -27,6 +27,13 @@ abstract class PushMessaging {
   /// Uygulama ON PLANDAYKEN gelen mesajlar (sistem tepsisine dusmez;
   /// uygulama ici gosterim bizim isimiz).
   Stream<PushMessageEvent> get onForegroundMessage;
+
+  /// Uygulama ARKA PLANDAYKEN tepsideki bildirime tiklanip acilmasi.
+  Stream<PushMessageEvent> get onMessageOpenedApp;
+
+  /// Uygulama KAPALIYKEN bildirime tiklanarak acildiysa o mesaj (yoksa
+  /// null). Baslatma sonrasi BIR KEZ okunur.
+  Future<PushMessageEvent?> getInitialMessage();
 }
 
 /// Gercek Firebase uyarlamasi. Platform kanali gerektirdigi icin birim
@@ -74,11 +81,26 @@ class FirebasePushMessaging implements PushMessaging {
 
   @override
   Stream<PushMessageEvent> get onForegroundMessage =>
-      FirebaseMessaging.onMessage.map(
-        (RemoteMessage m) => PushMessageEvent(
-          title: m.notification?.title,
-          body: m.notification?.body,
-          data: m.data.map((k, v) => MapEntry(k, v.toString())),
-        ),
+      FirebaseMessaging.onMessage.map(_toEvent);
+
+  @override
+  Stream<PushMessageEvent> get onMessageOpenedApp =>
+      FirebaseMessaging.onMessageOpenedApp.map(_toEvent);
+
+  @override
+  Future<PushMessageEvent?> getInitialMessage() async {
+    try {
+      final m = await FirebaseMessaging.instance.getInitialMessage();
+      return m == null ? null : _toEvent(m);
+    } catch (e) {
+      debugPrint('Acilis bildirimi okunamadi: $e');
+      return null;
+    }
+  }
+
+  static PushMessageEvent _toEvent(RemoteMessage m) => PushMessageEvent(
+        title: m.notification?.title,
+        body: m.notification?.body,
+        data: m.data.map((k, v) => MapEntry(k, v.toString())),
       );
 }

@@ -38,6 +38,7 @@ class PushState {
     this.durum = PushDurum.baslatilmadi,
     this.kayitliToken,
     this.sonBildirim,
+    this.sonTiklanan,
   });
 
   final PushDurum durum;
@@ -48,10 +49,16 @@ class PushState {
   /// On planda yakalanan son mesaj — UI (main) dinleyip SnackBar gosterir.
   final PushMessageEvent? sonBildirim;
 
+  /// Kullanicinin TIKLADIGI son bildirim (sistem tepsisinden — arka plan
+  /// `onMessageOpenedApp` veya kapali durum `getInitialMessage`). UI (main)
+  /// dinleyip data'daki tip'e gore ilgili ekrana yonlendirir.
+  final PushMessageEvent? sonTiklanan;
+
   PushState copyWith({
     PushDurum? durum,
     Object? kayitliToken = _sentinel,
     Object? sonBildirim = _sentinel,
+    Object? sonTiklanan = _sentinel,
   }) {
     return PushState(
       durum: durum ?? this.durum,
@@ -61,6 +68,9 @@ class PushState {
       sonBildirim: sonBildirim == _sentinel
           ? this.sonBildirim
           : sonBildirim as PushMessageEvent?,
+      sonTiklanan: sonTiklanan == _sentinel
+          ? this.sonTiklanan
+          : sonTiklanan as PushMessageEvent?,
     );
   }
 

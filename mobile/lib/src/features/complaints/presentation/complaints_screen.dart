@@ -17,13 +17,49 @@ import 'complaints_controller.dart';
 ///   * resident: KENDI talepleri + "Yeni talep" FAB'i; yaniti okur.
 ///   * admin/yonetici: tenant'taki TUM talepler; detayda durum+yanit yazar.
 ///   * security/tesis_gorevlisi bu ekrana hic gelmez (menude yok; backend 403).
-class ComplaintsScreen extends ConsumerWidget {
-  const ComplaintsScreen({super.key});
+///
+/// [initialComplaintId] push tiklamasindan gelir (?complaint_id=...): liste
+/// yuklendiginde ilgili talebin detayi BIR KEZ otomatik acilir; kayit
+/// listede yoksa (silinmis/yetki disi) sessizce listede kalinir.
+class ComplaintsScreen extends ConsumerStatefulWidget {
+  const ComplaintsScreen({super.key, this.initialComplaintId});
+
+  final String? initialComplaintId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ComplaintsScreen> createState() => _ComplaintsScreenState();
+}
+
+class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
+  bool _initialHandled = false;
+
+  void _maybeOpenInitial(ComplaintsState state) {
+    if (_initialHandled || widget.initialComplaintId == null) return;
+    if (state.loading) return;
+    _initialHandled = true;
+    Complaint? hedef;
+    for (final c in state.items) {
+      if (c.id == widget.initialComplaintId) {
+        hedef = c;
+        break;
+      }
+    }
+    if (hedef == null) return; // listede yok — sessizce listede kal
+    final c = hedef;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _showComplaintDetail(context, c, canRespond: state.canRespond);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(complaintsControllerProvider);
     final controller = ref.read(complaintsControllerProvider.notifier);
+    ref.listen(complaintsControllerProvider, (_, next) => _maybeOpenInitial(next));
+    // Provider zaten yuklu geldiyse (listen tetiklenmez) mevcut durumu isle.
+    _maybeOpenInitial(state);
 
     return Scaffold(
       appBar: AppBar(
@@ -221,17 +257,26 @@ class _ComplaintCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _openDetail(BuildContext context) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _ComplaintDetail(complaint: complaint, canRespond: canRespond),
+  Future<void> _openDetail(BuildContext context) =>
+      _showComplaintDetail(context, complaint, canRespond: canRespond);
+}
+
+/// Talep detay sheet'i — kart dokunusundan ve push tiklamasindan (otomatik
+/// acilis) ayni yoldan cagrilir.
+Future<void> _showComplaintDetail(
+  BuildContext context,
+  Complaint complaint, {
+  required bool canRespond,
+}) async {
+  final saved = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => _ComplaintDetail(complaint: complaint, canRespond: canRespond),
+  );
+  if (saved == true && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Yanit kaydedildi ✓')),
     );
-    if (saved == true && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Yanit kaydedildi ✓')),
-      );
-    }
   }
 }
 

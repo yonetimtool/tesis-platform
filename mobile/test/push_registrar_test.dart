@@ -25,6 +25,10 @@ class _FakeMessaging implements PushMessaging {
 
   final tokenRefresh = StreamController<String>.broadcast();
   final foreground = StreamController<PushMessageEvent>.broadcast();
+  final opened = StreamController<PushMessageEvent>.broadcast();
+
+  /// Uygulama kapaliyken tiklanan bildirim (varsa) — bir kez okunur.
+  PushMessageEvent? initialMessage;
 
   @override
   Future<bool> initialize() async {
@@ -46,6 +50,12 @@ class _FakeMessaging implements PushMessaging {
 
   @override
   Stream<PushMessageEvent> get onForegroundMessage => foreground.stream;
+
+  @override
+  Stream<PushMessageEvent> get onMessageOpenedApp => opened.stream;
+
+  @override
+  Future<PushMessageEvent?> getInitialMessage() async => initialMessage;
 }
 
 /// register/unregister cagrilarini kaydeden, hatasi ayarlanabilen sahte API.
@@ -355,6 +365,36 @@ void main() {
     expect(store.value, isNull);
     expect(container.read(authControllerProvider).status,
         AuthStatus.unauthenticated);
+  });
+
+  test('tepsiden tiklanan bildirim state.sonTiklanan olarak yansir', () async {
+    final container = await loginAndRegister();
+
+    messaging.opened.add(const PushMessageEvent(
+      title: 'Sikayet/Oneri',
+      body: 'Talebiniz yanitlandi: Asansor',
+      data: {'tip': 'talep_yanit', 'complaint_id': 'c-1'},
+    ));
+
+    await waitFor(
+        () => container.read(pushRegistrarProvider).sonTiklanan != null);
+    final tiklanan = container.read(pushRegistrarProvider).sonTiklanan!;
+    expect(tiklanan.data['tip'], 'talep_yanit');
+    expect(tiklanan.data['complaint_id'], 'c-1');
+  });
+
+  test('uygulama kapaliyken tiklanan bildirim (initial message) islenir',
+      () async {
+    messaging.initialMessage = const PushMessageEvent(
+      title: 'Sikayet/Oneri',
+      data: {'tip': 'talep', 'complaint_id': 'c-9'},
+    );
+    final container = await loginAndRegister();
+
+    await waitFor(
+        () => container.read(pushRegistrarProvider).sonTiklanan != null);
+    expect(container.read(pushRegistrarProvider).sonTiklanan!.data['complaint_id'],
+        'c-9');
   });
 
   test('PushMessageEvent.displayText: bos alanlarda makul metin', () {

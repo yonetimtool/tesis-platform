@@ -39,6 +39,25 @@ class AppRoutes {
   static const complaints = '/complaints';
 }
 
+/// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
+/// Bilinmeyen/eksik tip → null (yonlendirme yapilmaz, uygulama oldugu
+/// yerde kalir). Backend data sozlesmesi: contracts/openapi.yaml.
+String? routeForPushData(Map<String, String> data) {
+  switch (data['tip']) {
+    // Yeni talep (yonetime) / talep yaniti (sakine) → ilgili talep acilir.
+    case 'talep':
+    case 'talep_yanit':
+      final id = data['complaint_id'];
+      return id == null || id.isEmpty
+          ? AppRoutes.complaints
+          : '${AppRoutes.complaints}?complaint_id=$id';
+    case 'duyuru':
+      return AppRoutes.announcements;
+    default:
+      return null;
+  }
+}
+
 /// Auth durumundaki degisimleri go_router'a bildiren kopru. `status` her
 /// degistiginde router redirect'i yeniden degerlendirilir.
 class _AuthRouterListenable extends ChangeNotifier {
@@ -112,7 +131,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.complaints,
-        builder: (context, state) => const ComplaintsScreen(),
+        // Push tiklamasindan gelinirse ?complaint_id=... ile ilgili talep
+        // detayi otomatik acilir.
+        builder: (context, state) => ComplaintsScreen(
+          initialComplaintId: state.uri.queryParameters['complaint_id'],
+        ),
       ),
       GoRoute(
         path: AppRoutes.taskDetail,

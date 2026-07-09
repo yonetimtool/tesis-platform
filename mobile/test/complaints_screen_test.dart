@@ -35,13 +35,19 @@ Complaint _c({
       updatedAt: DateTime.utc(2026, 7, 9, 10),
     );
 
-Widget _app(UserRole role, {List<Complaint> items = const []}) =>
+Widget _app(
+  UserRole role, {
+  List<Complaint> items = const [],
+  String? initialComplaintId,
+}) =>
     ProviderScope(
       overrides: [
         complaintApiProvider.overrideWithValue(_FakeComplaintApi(items)),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
-      child: const MaterialApp(home: ComplaintsScreen()),
+      child: MaterialApp(
+        home: ComplaintsScreen(initialComplaintId: initialComplaintId),
+      ),
     );
 
 void main() {
@@ -111,6 +117,34 @@ void main() {
     expect(find.text('Gorsel (opsiyonel)'), findsOneWidget);
     // foto'suz da gonderilebilir — buton aktif
     expect(find.text('Gonder'), findsOneWidget);
+  });
+
+  group('push tiklamasi (initialComplaintId)', () {
+    testWidgets('liste yuklenince ilgili talep detayi OTOMATIK acilir',
+        (tester) async {
+      await tester.pumpWidget(_app(
+        UserRole.resident,
+        items: [_c(yanit: 'Servis cagrildi.')],
+        initialComplaintId: 'c-1',
+      ));
+      await tester.pumpAndSettle();
+      // Detay sheet acildi: yanit metni TAM haliyle gorunur (kart onizlemesi
+      // "Yonetim yaniti: ..." onekiyle tek satirdir — bu bulgu sheet'e ozgu).
+      expect(find.text('Servis cagrildi.'), findsOneWidget);
+      expect(find.textContaining('Yonetim yaniti ·'), findsOneWidget);
+    });
+
+    testWidgets('kayit listede yoksa sessizce listede kalinir (cokme yok)',
+        (tester) async {
+      await tester.pumpWidget(_app(
+        UserRole.resident,
+        items: [_c()],
+        initialComplaintId: 'olmayan-id',
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('Asansor arizali'), findsOneWidget); // liste ekrani
+      expect(tester.takeException(), isNull);
+    });
   });
 
   testWidgets('durum rozeti dogru etiketle cizilir', (tester) async {

@@ -25,19 +25,34 @@ class TesisGuvenlikApp extends ConsumerWidget {
     ref.watch(outboxAutoSyncProvider);
     // Push: login sonrasi FCM token kaydi (Firebase yoksa sessizce devre disi).
     ref.watch(pushSetupProvider);
-    // On planda gelen push → basit SnackBar (zengin gosterim ileride).
+    final router = ref.watch(routerProvider);
+
+    // On planda gelen push → SnackBar; hedefi olan bildirimde "Ac" aksiyonu
+    // ilgili ekrana goturur (on plan mesaji tepsiye dusmez — tiklama bu).
     ref.listen(pushRegistrarProvider.select((s) => s.sonBildirim),
         (prev, next) {
       if (next == null || identical(prev, next)) return;
+      final route = routeForPushData(next.data);
       rootScaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
           content: Text(next.displayText),
           duration: const Duration(seconds: 5),
+          action: route == null
+              ? null
+              : SnackBarAction(label: 'Ac', onPressed: () => router.push(route)),
         ),
       );
     });
 
-    final router = ref.watch(routerProvider);
+    // Tepsideki bildirime tiklama (arka plan/kapali) → ilgili ekran.
+    // Bilinmeyen tip'te yonlendirme yapilmaz. Oturum yoksa router redirect
+    // login'e dusurur (hedef korunmaz — bilinen kisit, giriste ana ekran).
+    ref.listen(pushRegistrarProvider.select((s) => s.sonTiklanan),
+        (prev, next) {
+      if (next == null || identical(prev, next)) return;
+      final route = routeForPushData(next.data);
+      if (route != null) router.push(route);
+    });
     return MaterialApp.router(
       title: 'Tesis Guvenlik',
       debugShowCheckedModeBanner: false,

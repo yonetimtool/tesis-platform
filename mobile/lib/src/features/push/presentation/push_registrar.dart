@@ -22,6 +22,7 @@ import '../domain/push_models.dart';
 class PushRegistrar extends Notifier<PushState> {
   StreamSubscription<String>? _refreshSub;
   StreamSubscription<PushMessageEvent>? _foregroundSub;
+  StreamSubscription<PushMessageEvent>? _openedSub;
 
   /// initialize() tek kez kossun; es zamanli tetiklerde ayni Future paylasilir.
   Future<bool>? _initFuture;
@@ -31,6 +32,7 @@ class PushRegistrar extends Notifier<PushState> {
     ref.onDispose(() {
       _refreshSub?.cancel();
       _foregroundSub?.cancel();
+      _openedSub?.cancel();
     });
     return const PushState();
   }
@@ -55,8 +57,26 @@ class PushRegistrar extends Notifier<PushState> {
       _foregroundSub = _messaging.onForegroundMessage.listen((event) {
         if (ref.mounted) state = state.copyWith(sonBildirim: event);
       });
+      // Arka plandayken tepsiden tiklama → yonlendirme icin state'e yansit.
+      _openedSub = _messaging.onMessageOpenedApp.listen((event) {
+        if (ref.mounted) state = state.copyWith(sonTiklanan: event);
+      });
+      // Uygulama KAPALIYKEN bildirime tiklanarak acildiysa onu da isle
+      // (hazir'a ilk geciste bir kez; hata push akisini kirmaz).
+      unawaited(_consumeInitialMessage());
     }
     return true;
+  }
+
+  Future<void> _consumeInitialMessage() async {
+    try {
+      final initial = await _messaging.getInitialMessage();
+      if (initial != null && ref.mounted) {
+        state = state.copyWith(sonTiklanan: initial);
+      }
+    } catch (e) {
+      debugPrint('Acilis bildirimi islenemedi: $e');
+    }
   }
 
   /// Guncel FCM token'i alip backend'e kaydeder. Login/acilis sonrasi
