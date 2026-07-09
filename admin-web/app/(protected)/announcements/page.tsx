@@ -65,14 +65,6 @@ export default function AnnouncementsPage() {
     if (fileRef.current) fileRef.current.value = "";
   }
 
-  function openNew() {
-    setEditingId(null);
-    setEditing(null);
-    setForm(EMPTY);
-    setFormErr(null);
-    resetPhoto();
-    setOpen(true);
-  }
   function openEdit(a: Announcement) {
     setEditingId(a.id);
     setEditing(a);
@@ -134,11 +126,9 @@ export default function AnnouncementsPage() {
     if (photo.fotoKey) body.foto_key = photo.fotoKey;
     else if (photo.removed) body.foto_key = null;
     try {
-      if (editingId) {
-        await apiSend(`/api/announcements/${editingId}`, "PATCH", body);
-      } else {
-        await apiSend("/api/announcements", "POST", body);
-      }
+      // Panelde yalniz DUZENLEME var: olusturma site yoneticisine ait
+      // (mobil; auth.md §4 — POST /announcements admin'e 403).
+      await apiSend(`/api/announcements/${editingId}`, "PATCH", body);
       setOpen(false);
       resetPhoto();
       mutate();
@@ -161,16 +151,12 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Duyurular</h1>
-        <button className={btnPrimary} onClick={openNew}>
-          Yeni duyuru
-        </button>
-      </div>
+      <h1 className="text-2xl font-semibold">Duyurular</h1>
 
       <p className="text-sm text-muted">
-        Duyurular tum rollere gorunur; yayinlandiginda tesisin kayitli tum
-        cihazlarina bildirim denenir.
+        Duyuruyu SITE YONETICISI mobil uygulamadan olusturur; panel yalniz
+        duzenleme/silme (moderasyon) icindir. Duyurular tum rollere gorunur;
+        yayinlandiginda tesisin kayitli tum cihazlarina bildirim denenir.
       </p>
 
       {error && <ErrorBox message={error.message} />}
@@ -178,7 +164,7 @@ export default function AnnouncementsPage() {
 
       {open && (
         <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="font-medium">{editingId ? "Duyuru duzenle" : "Yeni duyuru"}</h2>
+          <h2 className="font-medium">Duyuru duzenle</h2>
           <Field label="Baslik" hint="En fazla 200 karakter">
             <input
               className={inputCls}
@@ -238,7 +224,7 @@ export default function AnnouncementsPage() {
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? "Kaydediliyor..." : editingId ? "Kaydet" : "Yayinla"}
+              {saving ? "Kaydediliyor..." : "Kaydet"}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
               Iptal

@@ -13,7 +13,5 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   return proxyJson(`/announcements?${qs.toString()}`, "GET");
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  const body = await req.json().catch(() => ({}));
-  return proxyJson("/announcements", "POST", body);
-}
+// POST kaldirildi: duyuru olusturma yalniz yonetici (mobil) — panel admin'i
+// backend'de 403 alir (auth.md §4); panelde olusturma UI'i da yoktur.
