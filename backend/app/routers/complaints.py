@@ -7,6 +7,9 @@ bu bir sakin<->yonetim kanalidir. tenant token'dan; RLS izole.
 
 Opsiyonel gorsel: acmada /uploads/presign ile yuklenmis foto_key kabul edilir
 (tenant-namespace dogrulamali); okumada presigned GET foto_url doner.
+
+Acmada admin+yonetici cihazlarina push denenir (EK gonderim — hatasi talep
+kaydini kirmaz, duyuru/emergency ile ayni desen).
 """
 from __future__ import annotations
 
@@ -21,6 +24,7 @@ from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Complaint
+from ..scheduler.notify import dispatch_external
 from ..schemas import (
     ComplaintCreate,
     ComplaintDurum,
@@ -35,6 +39,9 @@ router = APIRouter(prefix="/complaints", tags=["complaints"])
 _OPENER = require_role("resident")
 _READER = require_role("admin", "yonetici", "resident")
 _MANAGER = require_role("admin", "yonetici")
+
+# Yeni talep push'u YONETIME gider (kanal sakin->yonetim; duyuru deseni).
+_MANAGEMENT_ROLES: tuple[str, ...] = ("admin", "yonetici")
 
 
 def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
@@ -138,6 +145,15 @@ async def create_complaint(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    # EK push: yeni talep yonetime bildirilir (hatasi talep kaydini kirmaz,
+    # duyuru/emergency ile ayni desen).
+    dispatch_external(
+        f"Yeni talep: {body.baslik}",
+        tenant_id=user.tenant_id,
+        target_roles=_MANAGEMENT_ROLES,
+        title="Sikayet/Oneri",
+        data={"tip": "talep", "complaint_id": str(obj.id)},
+    )
     return _out(obj, user.ad)
 
 
