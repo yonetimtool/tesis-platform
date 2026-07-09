@@ -16,6 +16,7 @@ const LINKS = [
   { href: "/users", label: "Kullanicilar" },
   { href: "/emergency", label: "Acil Durum" },
   { href: "/announcements", label: "Duyurular" },
+  { href: "/complaints", label: "Talepler" },
   { href: "/notifications", label: "Bildirimler" },
   { href: "/settings", label: "Ayarlar" },
 ];

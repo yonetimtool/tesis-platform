@@ -217,6 +217,31 @@ export interface AnnouncementList {
   items: Announcement[];
 }
 
+// ----------------------------- complaints ---------------------------------- #
+export type ComplaintDurum = "acik" | "inceleniyor" | "cozuldu";
+
+export interface Complaint {
+  id: string;
+  acan_user_id: string;
+  acan_ad?: string | null;
+  baslik: string;
+  mesaj: string;
+  foto_key?: string | null;
+  // Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa).
+  foto_url?: string | null;
+  durum: ComplaintDurum;
+  yonetici_yaniti?: string | null;
+  yanitlayan_user_id?: string | null;
+  yanit_zamani?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ComplaintList {
+  meta: PageMeta;
+  items: Complaint[];
+}
+
 // -------------------------------- users ------------------------------------ #
 export type UserRole = "admin" | "yonetici" | "security" | "tesis_gorevlisi" | "resident";
 
