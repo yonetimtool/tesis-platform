@@ -2215,6 +2215,9 @@ paths:
       description: |
         bakiye = toplam gelir - toplam gider (NEGATIF olabilir). Tum tutarlar
         integer KURUS. Filtresiz cagri tum zamanlari kapsar.
+        SEFFAFLIK (Wave 2B): AGREGAT oldugu icin TUM rollere aciktir —
+        sakin/saha sitenin toplamlarini gorur; defter satirlari ve kategori
+        yonetimi yonetimde (admin+yonetici) kalir.
       parameters:
         - name: donem
           in: query
@@ -2233,6 +2236,33 @@ paths:
               schema: { $ref: "#/components/schemas/BudgetSummary" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
+  # RAPORLAR (Wave 2B — cepten finansal ozet; salt okuma)
+  # ================================================================= #
+  /reports/financial-summary:
+    get:
+      tags: [reports]
+      summary: Cepten finansal ozet (rol-duyarli icerik)
+      description: |
+        Telefon ekranina uygun kompakt ozet. TUM roller AGREGAT kismi alir:
+        donem geliri/gideri/kasa + en yuksek gider kategorileri (ilk 5).
+        `tahsilat` blogu (donem tahakkuku, tahsilat, tahsilat orani, geciken
+        daire sayisi) YALNIZ yonetimde (admin+yonetici) dolar; sakin/saha
+        icin `null` doner — daire/kisi duzeyinde veri sizdirilmaz.
+        Parametresiz cagri tum zamanlari kapsar. Para integer KURUS.
+      parameters:
+        - name: donem
+          in: query
+          schema: { type: string, example: "2026-07" }
+      responses:
+        "200":
+          description: Ozet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinancialSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
@@ -3719,3 +3749,43 @@ components:
         kategoriler:
           type: array
           items: { $ref: "#/components/schemas/BudgetCategorySummaryItem" }
+
+    # --------------------- finansal ozet (Wave 2B) ------------------ #
+    GiderKalemi:
+      type: object
+      required: [ad, toplam_kurus]
+      properties:
+        ad: { type: string, example: "Elektrik" }
+        toplam_kurus: { type: integer }
+    TahsilatOzet:
+      type: object
+      required: [tahakkuk_kurus, tahsilat_kurus, geciken_daire_sayisi]
+      description: YALNIZ yonetim yanitinda dolar (sakin/saha icin null)
+      properties:
+        tahakkuk_kurus: { type: integer }
+        tahsilat_kurus:
+          type: integer
+          description: Yalniz durum='basarili' odemeler
+        tahsilat_orani_yuzde:
+          type: integer
+          nullable: true
+          description: round(100*tahsilat/tahakkuk); tahakkuk 0 ise null
+        geciken_daire_sayisi:
+          type: integer
+          description: Donem tahakkuku tam odenmemis daire sayisi
+    FinancialSummary:
+      type: object
+      required:
+        [toplam_gelir_kurus, toplam_gider_kurus, bakiye_kurus, en_yuksek_giderler]
+      properties:
+        donem: { type: string, nullable: true, example: "2026-07" }
+        toplam_gelir_kurus: { type: integer }
+        toplam_gider_kurus: { type: integer }
+        bakiye_kurus: { type: integer, description: NEGATIF olabilir }
+        en_yuksek_giderler:
+          type: array
+          description: En yuksek gider kategorileri (ilk 5, buyukten kucuge)
+          items: { $ref: "#/components/schemas/GiderKalemi" }
+        tahsilat:
+          allOf: [{ $ref: "#/components/schemas/TahsilatOzet" }]
+          nullable: true

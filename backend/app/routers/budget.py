@@ -1,7 +1,9 @@
-"""Butce modulu (Wave 2A) — dinamik kategoriler + gelir/gider defteri + ozet.
+"""Butce modulu (Wave 2A+2B) — dinamik kategoriler + gelir/gider defteri + ozet.
 
-RBAC (auth.md §4): yonetim (admin + yonetici) TAM yetkili; saha/sakin 403
-(sakin SEFFAFLIK okumasi Wave 2B'de eklenecek — endpoint'ler ona gore ayrik).
+RBAC (auth.md §4): yonetim (admin + yonetici) TAM yetkili (kategori CRUD,
+defter, ozet). SEFFAFLIK (Wave 2B): `GET /budget/summary` agregat oldugu icin
+TUM rollere aciktir — sakin/saha sitenin toplam gelir/gider/kasasini gorur ama
+defter SATIRLARINI ve kisi/daire bazli veriyi GOREMEZ (403).
 Para HER YERDE integer KURUS (dues deseni; float asla). tenant token'dan; RLS.
 
 Kategori silme stratejisi: SOFT-DELETE (PATCH aktif=false). Hard DELETE ucu
@@ -48,6 +50,11 @@ log = logging.getLogger(__name__)
 router = APIRouter(prefix="/budget", tags=["budget"])
 
 _MANAGER = require_role("admin", "yonetici")
+# Ozet (agregat) Wave 2B'de SEFFAFLIK icin tum rollere acik — satir/kisi
+# verisi icermez; defter + kategori yonetimi _MANAGER'da kalir.
+_SUMMARY_READER = require_role(
+    "admin", "yonetici", "security", "tesis_gorevlisi", "resident"
+)
 
 # Otomatik aidat gelirlerinin toplandigi varsayilan kategori adi (seed'de de
 # olusturulur; yoksa ilk odemede get-or-create ile acilir).
@@ -68,7 +75,7 @@ def _donem_range(donem: str) -> tuple[date, date]:
     return first, last
 
 
-def _date_filters(
+def date_filters(
     donem: str | None, baslangic: date | None, bitis: date | None
 ) -> list:
     """donem VEYA (baslangic/bitis) → tarih kosullari. donem oncelikli."""
@@ -206,7 +213,7 @@ async def list_entries(
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_MANAGER),
 ) -> BudgetEntryListResponse:
-    where = _date_filters(donem, baslangic, bitis)
+    where = date_filters(donem, baslangic, bitis)
     if tip is not None:
         where.append(BudgetEntry.tip == tip)
     if kategori_id is not None:
@@ -300,9 +307,10 @@ async def budget_summary(
     baslangic: date | None = Query(None),
     bitis: date | None = Query(None),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_MANAGER),
+    # Seffaflik (Wave 2B): agregat ozet TUM rollere acik.
+    _: AppUser = Depends(_SUMMARY_READER),
 ) -> BudgetSummary:
-    where = _date_filters(donem, baslangic, bitis)
+    where = date_filters(donem, baslangic, bitis)
 
     # tip toplamlari (KURUS; SUM SQL'de — satirlar cekilmez).
     rows = (

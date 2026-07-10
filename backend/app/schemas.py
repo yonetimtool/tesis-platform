@@ -1141,3 +1141,34 @@ class BudgetSummary(BaseModel):
     toplam_gider_kurus: int
     bakiye_kurus: int
     kategoriler: list[BudgetCategorySummary]
+
+
+# --------------------- finansal ozet raporu (Wave 2B) ---------------------- #
+class GiderKalemi(BaseModel):
+    """En yuksek gider kategorileri (agregat — kisi/daire verisi yok)."""
+
+    ad: str
+    toplam_kurus: int
+
+
+class TahsilatOzet(BaseModel):
+    """Aidat tahsilat blogu — YALNIZ yonetim (admin+yonetici) gorur."""
+
+    tahakkuk_kurus: int
+    tahsilat_kurus: int  # yalniz durum='basarili' odemeler
+    # tahakkuk 0 ise null (oran tanimsiz).
+    tahsilat_orani_yuzde: int | None = None
+    # donem tahakkuku tam odenmemis daire sayisi.
+    geciken_daire_sayisi: int
+
+
+class FinancialSummary(BaseModel):
+    """Cepten hizli finansal ozet. Agregat alanlar TUM rollere; [tahsilat]
+    yalniz yonetimde dolar (sakin/saha icin null — kisi/daire verisi sizmaz)."""
+
+    donem: str | None = None
+    toplam_gelir_kurus: int
+    toplam_gider_kurus: int
+    bakiye_kurus: int
+    en_yuksek_giderler: list[GiderKalemi]
+    tahsilat: TahsilatOzet | None = None

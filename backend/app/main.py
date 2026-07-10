@@ -27,6 +27,7 @@ from .routers import me as me_router
 from .routers import me_patrol as me_patrol_router
 from .routers import notifications as notifications_router
 from .routers import patrol_plans as patrol_plans_router
+from .routers import reports as reports_router
 from .routers import residents as residents_router
 from .routers import scans as scans_router
 from .routers import shifts as shifts_router
@@ -82,6 +83,7 @@ app.include_router(tenant_router.router)
 app.include_router(units_router.router)
 app.include_router(dues_router.router)
 app.include_router(budget_router.router)
+app.include_router(reports_router.router)
 app.include_router(users_router.router)
 app.include_router(webhooks_router.router)
 

@@ -122,6 +122,20 @@ class BudgetApi {
       throw ApiException.fromDio(e);
     }
   }
+
+  /// `GET /reports/financial-summary` — cepten finansal ozet (Wave 2B).
+  /// Sunucu rol-duyarlidir: sakin/saha yanitinda `tahsilat` null gelir.
+  Future<FinancialSummary> fetchFinancialSummary({String? donem}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/reports/financial-summary',
+        queryParameters: {'donem': ?donem},
+      );
+      return FinancialSummary.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }
 
 final budgetApiProvider = Provider<BudgetApi>((ref) {

@@ -9,6 +9,8 @@ import '../features/complaints/presentation/complaints_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/set_password_screen.dart';
 import '../features/budget/presentation/budget_screen.dart';
+import '../features/budget/presentation/financial_summary_screen.dart';
+import '../features/budget/presentation/site_budget_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
 import '../features/dues/presentation/my_dues_screen.dart';
@@ -39,6 +41,8 @@ class AppRoutes {
   static const patrolTracking = '/patrol-tracking';
   static const reports = '/reports';
   static const budget = '/budget';
+  static const financialSummary = '/financial-summary';
+  static const siteBudget = '/site-budget';
   static const myDues = '/my-dues';
   static const complaints = '/complaints';
 }
@@ -141,6 +145,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.budget,
         builder: (context, state) => const BudgetScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.financialSummary,
+        builder: (context, state) => const FinancialSummaryScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.siteBudget,
+        builder: (context, state) => const SiteBudgetScreen(),
       ),
       GoRoute(
         path: AppRoutes.myDues,

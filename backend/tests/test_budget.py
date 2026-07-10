@@ -246,11 +246,12 @@ def test_defter_guncelle_sil_ve_rbac(client, world):
     )
     assert p.status_code == 200 and p.json()["tutar_kurus"] == 12500
 
-    # saha/sakin: defter tamamen kapali
+    # saha/sakin: defter SATIRLARI kapali; OZET Wave 2B'de seffaflik icin
+    # tum rollere acildi (bkz. test_financial_transparency).
     for role in ("guard_a", "gorevli_a", "resident_a"):
         h = _headers(client, world["slug_a"], world[role])
         assert client.get("/budget/entries", headers=h).status_code == 403, role
-        assert client.get("/budget/summary", headers=h).status_code == 403, role
+        assert client.get("/budget/summary", headers=h).status_code == 200, role
 
     # DELETE -> 204, listeden duser
     assert client.delete(f"/budget/entries/{entry['id']}", headers=yon).status_code == 204

@@ -39,8 +39,15 @@ enum HomeMenuEntry {
   reports,
 
   /// Butce (Wave 2A) — yonetici: kategori + defter + kasa ozeti.
-  /// Sakin seffaflik gorunumu Wave 2B'de eklenecek.
   budget,
+
+  /// Finansal ozet (Wave 2B) — yonetici: cepten gunluk/donemsel rapor
+  /// (tahsilat orani, geciken daire, gelir/gider/kasa, en yuksek giderler).
+  financialSummary,
+
+  /// Site Butcesi (Wave 2B) — resident: SALT OKUMA agregat seffaflik
+  /// (toplam gelir/gider/kasa; defter satiri ve kisi/daire verisi yok).
+  siteBudget,
 
   /// Aidatim — resident: kendi dairelerinin borc durumu (salt okuma).
   myDues,
@@ -99,6 +106,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.patrolTracking,
         HomeMenuEntry.taskTracking,
         HomeMenuEntry.budget,
+        HomeMenuEntry.financialSummary,
         HomeMenuEntry.reports,
       ];
     case UserRole.resident:
@@ -109,6 +117,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
+        HomeMenuEntry.siteBudget,
       ];
     case UserRole.unknown:
       // Rol cozulmeden (storage okumasi) veya bilinmeyen degerde: bos —

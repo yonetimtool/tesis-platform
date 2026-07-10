@@ -150,6 +150,15 @@ class _UnitCard extends StatelessWidget {
                 valueColor: Colors.green),
             _row('Bakiye', kurusToTl(unit.bakiyeKurus),
                 valueColor: borc ? Colors.red : Colors.green, bold: true),
+            // Hesap seffaf: bakiye nasil bulundu tek satirda gorunur.
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                'Tahakkuk ${kurusToTl(unit.tahakkukKurus)} - odenen '
+                '${kurusToTl(unit.odenenKurus)} = ${kurusToTl(unit.bakiyeKurus)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
             if (unit.assessments.isNotEmpty) ...[
               const SizedBox(height: 8),
               ExpansionTile(

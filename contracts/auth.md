@@ -216,7 +216,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /dues/payments`                 |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `GET  /dues/payments`                 |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET /me/dues`                        |  ❌   | ❌  | ❌  | ❌  | ✅  |
-| `*/budget/*` (kategori+defter+ozet)   |  ✅   | ✅  | ❌  | ❌  | ❌° |
+| `*/budget/*` (kategori + defter)      |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET /budget/summary` (agregat ozet)  |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `GET /reports/financial-summary`      |  ✅   | ✅  | ✅° | ✅° | ✅° |
 | `GET /users` + `GET /users/{id}`      |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST/PATCH /users*`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
 
@@ -246,13 +248,22 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 > aidat GORMEZ** (403). **resident** yalniz `GET /me/dues` ile **kendi** dairelerinin
 > borcunu gorur; tahakkuk/odeme yapamaz, baska daireyi goremez.
 >
-> **Butce (Wave 2A):** dinamik gelir/gider kategorileri + defter + kasa ozeti
-> — YONETIMI `yonetici` + `admin` (tam yetki: kategori CRUD, manuel kayit,
-> ozet). Saha rolleri erisemez. ° `resident` icin SEFFAFLIK OKUMASI Wave
-> 2B'de eklenecek (endpoint'ler simdiden ayrik tasarlandi; okuma acilinca
-> matris guncellenir). Basarili aidat odemesi OTOMATIK "Aidat" gelir kaydi
-> uretir (kaynak=aidat_odeme, idempotent); bu kayitlar defterden elle
-> duzenlenemez/silinemez. Para her yerde integer KURUS.
+> **Butce (Wave 2A) + seffaflik (Wave 2B):** dinamik gelir/gider kategorileri
+> + defter + kasa ozeti. YONETIM (`yonetici` + `admin`) tam yetkili: kategori
+> CRUD, manuel kayit, defter satirlari. **Seffaflik:** `GET /budget/summary`
+> AGREGAT oldugu icin TUM rollere aciktir (sakin sitenin toplam gelir/gider/
+> kasasini ve kategori toplamlarini gorur); defter SATIRLARI, kategori
+> yonetimi ve kisi/daire bazli veri sakin/saha icin 403 kalir. Sakin kendi
+> aidat detayini yalniz `GET /me/dues`tan okur (`/units/{id}/dues` yonetim
+> raporudur — sakin unit_id vererek ERISEMEZ). Basarili aidat odemesi
+> OTOMATIK "Aidat" gelir kaydi uretir (kaynak=aidat_odeme, idempotent); bu
+> kayitlar defterden elle duzenlenemez/silinemez. Para integer KURUS.
+>
+> **Finansal ozet raporu** (`GET /reports/financial-summary?donem=`): cepten
+> hizli ozet — rol-duyarli TEK uc. Tum roller agregat kismi alir (gelir/
+> gider/kasa + en yuksek gider kategorileri); ° `tahsilat` blogu (tahakkuk,
+> tahsilat, oran, geciken daire sayisi) YALNIZ yonetimde dolar, sakin/saha
+> icin `null` (daire/kisi duzeyi sizmaz). Salt okuma.
 >
 > **Odeme webhook'u** (`POST /webhooks/payments/{provider}`): **PUBLIC** (JWT YOK) — saha
 > disindan saglayici cagirir. Guvenlik **imza/hash** ile saglanir (provider secret; HMAC).

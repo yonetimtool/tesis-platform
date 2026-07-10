@@ -91,6 +91,7 @@ void main() {
           HomeMenuEntry.patrolTracking,
           HomeMenuEntry.taskTracking,
           HomeMenuEntry.budget,
+          HomeMenuEntry.financialSummary,
           HomeMenuEntry.reports,
         ],
       );
@@ -137,13 +138,47 @@ void main() {
       }
     });
 
-    test('resident: SOS + duyurular + Sikayet/Oneri + Aidatim', () {
+    test('resident: SOS + duyurular + Sikayet/Oneri + Aidatim + Site Butcesi',
+        () {
       expect(homeMenuForRole(UserRole.resident), const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
+        HomeMenuEntry.siteBudget,
       ]);
+    });
+
+    test('Wave 2B kartlari: Site Butcesi yalniz resident, Finansal Ozet '
+        'yalniz yonetici', () {
+      expect(
+        homeMenuForRole(UserRole.yonetici),
+        contains(HomeMenuEntry.financialSummary),
+      );
+      for (final role in [
+        UserRole.admin,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.financialSummary)),
+          reason: role.wire,
+        );
+      }
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.siteBudget)),
+          reason: role.wire,
+        );
+      }
     });
 
     test('Acil Durum karti 5 rolun 5inde de var (panik herkese acik)', () {

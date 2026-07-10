@@ -139,6 +139,80 @@ class BudgetSummary {
       );
 }
 
+/// En yuksek gider kalemi (finansal ozet — agregat).
+class GiderKalemi {
+  const GiderKalemi({required this.ad, required this.toplamKurus});
+
+  final String ad;
+  final int toplamKurus;
+
+  factory GiderKalemi.fromJson(Map<String, dynamic> json) => GiderKalemi(
+        ad: json['ad'] as String? ?? '',
+        toplamKurus: (json['toplam_kurus'] as num?)?.toInt() ?? 0,
+      );
+}
+
+/// Aidat tahsilat blogu — yanitin bu kismi YALNIZ yonetimde dolar
+/// (sakin/saha icin sunucu null doner).
+class TahsilatOzet {
+  const TahsilatOzet({
+    required this.tahakkukKurus,
+    required this.tahsilatKurus,
+    required this.gecikenDaireSayisi,
+    this.tahsilatOraniYuzde,
+  });
+
+  final int tahakkukKurus;
+  final int tahsilatKurus;
+
+  /// Tahakkuk 0 ise null (oran tanimsiz).
+  final int? tahsilatOraniYuzde;
+  final int gecikenDaireSayisi;
+
+  factory TahsilatOzet.fromJson(Map<String, dynamic> json) => TahsilatOzet(
+        tahakkukKurus: (json['tahakkuk_kurus'] as num?)?.toInt() ?? 0,
+        tahsilatKurus: (json['tahsilat_kurus'] as num?)?.toInt() ?? 0,
+        tahsilatOraniYuzde: (json['tahsilat_orani_yuzde'] as num?)?.toInt(),
+        gecikenDaireSayisi:
+            (json['geciken_daire_sayisi'] as num?)?.toInt() ?? 0,
+      );
+}
+
+/// `GET /reports/financial-summary` yaniti (Wave 2B) — rol-duyarli:
+/// agregat alanlar herkese, [tahsilat] yalniz yonetime.
+class FinancialSummary {
+  const FinancialSummary({
+    required this.toplamGelirKurus,
+    required this.toplamGiderKurus,
+    required this.bakiyeKurus,
+    required this.enYuksekGiderler,
+    this.donem,
+    this.tahsilat,
+  });
+
+  final String? donem;
+  final int toplamGelirKurus;
+  final int toplamGiderKurus;
+  final int bakiyeKurus;
+  final List<GiderKalemi> enYuksekGiderler;
+  final TahsilatOzet? tahsilat;
+
+  factory FinancialSummary.fromJson(Map<String, dynamic> json) =>
+      FinancialSummary(
+        donem: json['donem'] as String?,
+        toplamGelirKurus: (json['toplam_gelir_kurus'] as num?)?.toInt() ?? 0,
+        toplamGiderKurus: (json['toplam_gider_kurus'] as num?)?.toInt() ?? 0,
+        bakiyeKurus: (json['bakiye_kurus'] as num?)?.toInt() ?? 0,
+        enYuksekGiderler: ((json['en_yuksek_giderler'] as List?) ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(GiderKalemi.fromJson)
+            .toList(),
+        tahsilat: json['tahsilat'] == null
+            ? null
+            : TahsilatOzet.fromJson(json['tahsilat'] as Map<String, dynamic>),
+      );
+}
+
 /// TL girisini (TR bicimi) INTEGER KURUS'a cevirir; gecersiz/sifir/negatif
 /// girdide null. Kurallar:
 ///   * ',' her zaman ondaliktir; '.'lar binlik ayraci sayilir ("1.234,56").

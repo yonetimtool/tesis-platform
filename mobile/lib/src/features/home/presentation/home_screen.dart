@@ -232,6 +232,32 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.budget),
           ),
         );
+      case HomeMenuEntry.financialSummary:
+        // Yonetici: cepten gunluk/donemsel finansal rapor (salt okuma).
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.query_stats_outlined),
+            title: const Text('Finansal ozet'),
+            subtitle: const Text(
+              'Tahsilat orani, gelir/gider/kasa ve en yuksek giderler',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.financialSummary),
+          ),
+        );
+      case HomeMenuEntry.siteBudget:
+        // Resident: site butcesinin agregat ozeti (seffaflik; salt okuma).
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.pie_chart_outline),
+            title: const Text('Site Butcesi'),
+            subtitle: const Text(
+              'Sitenin toplam gelir, gider ve kasa ozeti (seffaflik)',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.siteBudget),
+          ),
+        );
       case HomeMenuEntry.myDues:
         // Resident: kendi dairelerinin borc durumu (salt okuma).
         return Card(
