@@ -29,6 +29,31 @@ enum ComplaintDurum {
       );
 }
 
+/// `complaint_kategori` enum'unun istemci aynasi (opsiyonel talep turu).
+/// null = belirtilmemis (eski kayitlar — geriye uyumlu).
+enum ComplaintKategori {
+  gurultu('gurultu', 'Gurultu kirliligi'),
+  goruntu('goruntu', 'Goruntu kirliligi'),
+  diger('diger', 'Diger');
+
+  const ComplaintKategori(this.wire, this.label);
+
+  /// Backend enum degeri.
+  final String wire;
+
+  /// TR gorunen ad.
+  final String label;
+
+  /// null/bilinmeyen deger → null (kategori alani opsiyonel; durum'un
+  /// aksine "unknown" gostermek yerine etiketsiz birakilir).
+  static ComplaintKategori? fromWire(String? value) {
+    for (final k in ComplaintKategori.values) {
+      if (k.wire == value) return k;
+    }
+    return null;
+  }
+}
+
 class Complaint {
   const Complaint({
     required this.id,
@@ -38,6 +63,7 @@ class Complaint {
     required this.acanUserId,
     required this.createdAt,
     required this.updatedAt,
+    this.kategori,
     this.acanAd,
     this.fotoKey,
     this.fotoUrl,
@@ -50,6 +76,10 @@ class Complaint {
   final String baslik;
   final String mesaj;
   final ComplaintDurum durum;
+
+  /// Opsiyonel tur (gurultu/goruntu kirliligi vb.); null = belirtilmemis.
+  final ComplaintKategori? kategori;
+
   final String acanUserId;
 
   /// Acan sakinin adi (yonetim listesinde join ile doldurulur).
@@ -75,6 +105,7 @@ class Complaint {
         baslik: json['baslik'] as String? ?? '',
         mesaj: json['mesaj'] as String? ?? '',
         durum: ComplaintDurum.fromWire(json['durum'] as String?),
+        kategori: ComplaintKategori.fromWire(json['kategori'] as String?),
         acanUserId: json['acan_user_id'] as String? ?? '',
         acanAd: json['acan_ad'] as String?,
         fotoKey: json['foto_key'] as String?,
@@ -100,16 +131,22 @@ class ComplaintDraft {
   const ComplaintDraft({
     required this.baslik,
     required this.mesaj,
+    this.kategori,
     this.fotoKey,
   });
 
   final String baslik;
   final String mesaj;
+
+  /// Opsiyonel tur; null ise JSON'a HIC yazilmaz (geriye uyumlu).
+  final ComplaintKategori? kategori;
+
   final String? fotoKey;
 
   Map<String, dynamic> toJson() => {
         'baslik': baslik,
         'mesaj': mesaj,
+        if (kategori != null) 'kategori': kategori!.wire,
         if (fotoKey != null) 'foto_key': fotoKey,
       };
 }

@@ -265,3 +265,60 @@ def test_tenant_izolasyonu(client, world):
     assert client.patch(
         f"/complaints/{c['id']}", headers=yonetici_b, json={"durum": "cozuldu"}
     ).status_code == 404
+
+
+# ------------------------ kategori (Wave 1 #3) ------------------------------ #
+def test_kategori_ile_acma_okuma_ve_filtre(client, world):
+    """Opsiyonel kategori: gurultu/goruntu/diger ile acilir, okumada doner,
+    listede ?kategori= ile suzulur; kategorisiz eski davranis calisir."""
+    resident = _headers(client, world["slug_a"], world["resident_a"])
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+
+    gurultu = _new(client, resident, baslik="Gece muzik sesi", kategori="gurultu")
+    assert gurultu["kategori"] == "gurultu"
+    goruntu = _new(client, resident, baslik="Cirkin afisler", kategori="goruntu")
+    assert goruntu["kategori"] == "goruntu"
+    kategorisiz = _new(client, resident, baslik="Genel bir talep")
+    assert kategorisiz["kategori"] is None  # geriye uyumlu: kategori zorunlu degil
+
+    # tekil okuma kategoriyi doner
+    r = client.get(f"/complaints/{gurultu['id']}", headers=resident)
+    assert r.status_code == 200 and r.json()["kategori"] == "gurultu"
+
+    # yonetim listesi kategoriye gore suzer
+    items = client.get(
+        "/complaints", headers=yonetici, params={"kategori": "gurultu", "limit": 200}
+    ).json()["items"]
+    assert any(it["id"] == gurultu["id"] for it in items)
+    assert all(it["kategori"] == "gurultu" for it in items)
+    assert all(it["id"] != goruntu["id"] for it in items)
+
+    # gecersiz kategori degeri -> 422 (hem acmada hem filtrede)
+    bad = client.post(
+        "/complaints",
+        headers=resident,
+        json={"baslik": "x", "mesaj": "y", "kategori": "olmayan-tur"},
+    )
+    assert bad.status_code == 422
+    assert (
+        client.get("/complaints", headers=yonetici, params={"kategori": "olmayan"}).status_code
+        == 422
+    )
+
+
+def test_kategori_diger_ve_kendi_kaydi_kapsami(client, world):
+    """'diger' kategorisi kabul edilir; kategori filtresi kendi-kaydi
+    kapsamini DELMEZ (sakin yalniz kendi taleplerini gorur)."""
+    resident = _headers(client, world["slug_a"], world["resident_a"])
+    other = _second_resident(client, world)
+
+    mine = _new(client, resident, baslik="Benim gurultu talebim", kategori="gurultu")
+    _new(client, other, baslik="Baskasinin gurultu talebi", kategori="gurultu")
+
+    diger = _new(client, resident, baslik="Baska konu", kategori="diger")
+    assert diger["kategori"] == "diger"
+
+    items = client.get(
+        "/complaints", headers=resident, params={"kategori": "gurultu", "limit": 200}
+    ).json()["items"]
+    assert [it["id"] for it in items] == [mine["id"]]

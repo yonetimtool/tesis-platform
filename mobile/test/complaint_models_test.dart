@@ -73,6 +73,53 @@ void main() {
     });
   });
 
+  group('kategori (Wave 1 #3)', () {
+    test('ComplaintKategori.fromWire: bilinen degerler + null/bilinmeyen', () {
+      expect(ComplaintKategori.fromWire('gurultu'), ComplaintKategori.gurultu);
+      expect(ComplaintKategori.fromWire('goruntu'), ComplaintKategori.goruntu);
+      expect(ComplaintKategori.fromWire('diger'), ComplaintKategori.diger);
+      expect(ComplaintKategori.fromWire(null), isNull); // belirtilmemis
+      expect(ComplaintKategori.fromWire('acayip'), isNull);
+    });
+
+    test('TR etiketler: gurultu/goruntu kirliligi', () {
+      expect(ComplaintKategori.gurultu.label, 'Gurultu kirliligi');
+      expect(ComplaintKategori.goruntu.label, 'Goruntu kirliligi');
+      expect(ComplaintKategori.diger.label, 'Diger');
+    });
+
+    test('Complaint.fromJson kategoriyi okur; eski kayitta null', () {
+      final yeni = Complaint.fromJson(const {
+        'id': 'c-9',
+        'baslik': 'Gece muzik',
+        'mesaj': 'Cok ses var.',
+        'durum': 'acik',
+        'acan_user_id': 'u-1',
+        'kategori': 'gurultu',
+        'created_at': '2026-07-10T10:00:00Z',
+        'updated_at': '2026-07-10T10:00:00Z',
+      });
+      expect(yeni.kategori, ComplaintKategori.gurultu);
+
+      final eski = Complaint.fromJson(const {'id': 'c-10', 'durum': 'acik'});
+      expect(eski.kategori, isNull);
+    });
+
+    test('ComplaintDraft.toJson: kategori doluysa yazilir, null ise yazilmaz',
+        () {
+      const kategorili = ComplaintDraft(
+        baslik: 'B',
+        mesaj: 'M',
+        kategori: ComplaintKategori.goruntu,
+      );
+      expect(kategorili.toJson(),
+          {'baslik': 'B', 'mesaj': 'M', 'kategori': 'goruntu'});
+
+      const kategorisiz = ComplaintDraft(baslik: 'B', mesaj: 'M');
+      expect(kategorisiz.toJson(), {'baslik': 'B', 'mesaj': 'M'});
+    });
+  });
+
   group('ComplaintReplyDraft.toJson', () {
     test('yalniz dolu alanlar yazilir (PATCH exclude_unset uyumu)', () {
       const d = ComplaintReplyDraft(durum: ComplaintDurum.inceleniyor);

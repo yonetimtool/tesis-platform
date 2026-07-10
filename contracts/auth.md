@@ -279,10 +279,16 @@ Notlar:
   butonu sakinin de hakki; GET/PATCH ❌) disinda her kaynak `403`.
   ‡ `POST /uploads/presign`e yalniz sikayet/oneri gorseli yuklemek icin erisir.
 - **Gorev-YONETIMI vs "Gorevlerim" (kesin matris):** Gorev-YONETIMI =
-  gorev atama + TUM gorev/atama takip ekrani. GORUNTULEME `yonetici` +
+  gorev atama + gorev/atama takip ekrani. GORUNTULEME `yonetici` +
   `tesis_gorevlisi` + `security` (+`admin`); `resident` ❌. ATAMA/olusturma
   yalniz `yonetici` (+`admin`). "Gorevlerim" (kisinin KENDINE atananlar,
   `?atanan_user_id=me`) bundan AYRIDIR ve saha rollerinde aynen surer.
+  **Atanan izolasyonu (Wave 1):** belirli kullaniciya ATANMIS gorev yalniz
+  o atanana (+`yonetici`/`admin`) gorunur — saha kullanicisi BASKASINA
+  atanmis gorevi liste/detay/completion'da GOREMEZ ve `?atanan_user_id=`
+  filtresiyle bypass EDEMEZ (sunucu tarafinda zorlanir; 404 ile varlik da
+  sizdirilmaz). Atanmamis ("Herkes") gorevler tum saha rollerine aciktir;
+  yonetim tum listeyi gorur.
 - **Duyuru:** OLUSTURMA `yonetici` (site yonetiminin agzi, mobil) +
   `admin` (platform tarafi, panel) — canli test kesin kurali. Saha rolleri
   ve `resident` olusturamaz. Duzenleme/silme `admin` + `yonetici`; OKUMA

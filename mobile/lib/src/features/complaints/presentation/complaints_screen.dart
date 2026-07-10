@@ -238,6 +238,46 @@ class _DurumChip extends StatelessWidget {
   }
 }
 
+/// Opsiyonel talep turu rozeti (kategori null ise HIC cizilmez).
+class _KategoriChip extends StatelessWidget {
+  const _KategoriChip({required this.kategori});
+
+  final ComplaintKategori kategori;
+
+  IconData get _icon => switch (kategori) {
+        ComplaintKategori.gurultu => Icons.volume_up_outlined,
+        ComplaintKategori.goruntu => Icons.visibility_outlined,
+        ComplaintKategori.diger => Icons.category_outlined,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.secondary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            kategori.label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ComplaintCard extends ConsumerWidget {
   const _ComplaintCard({required this.complaint, required this.canRespond});
 
@@ -270,6 +310,10 @@ class _ComplaintCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(c.mesaj, maxLines: 2, overflow: TextOverflow.ellipsis),
+              if (c.kategori != null) ...[
+                const SizedBox(height: 6),
+                _KategoriChip(kategori: c.kategori!),
+              ],
               if (c.yanitli) ...[
                 const SizedBox(height: 6),
                 Row(
@@ -440,6 +484,10 @@ class _ComplaintDetailState extends ConsumerState<_ComplaintDetail> {
               '${_fmtDateTime(c.createdAt.toLocal())}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            if (c.kategori != null) ...[
+              const SizedBox(height: 8),
+              _KategoriChip(kategori: c.kategori!),
+            ],
             const SizedBox(height: 12),
             Text(c.mesaj),
             if (c.fotoUrl != null) ...[
@@ -627,6 +675,8 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
   bool _photoBusy = false;
   String? _photoError;
   String? _fotoKey;
+  // Opsiyonel talep turu; secilmezse gonderilmez (geriye uyumlu).
+  ComplaintKategori? _kategori;
 
   bool get _fotoBekliyor => _photoPath != null && _fotoKey == null;
 
@@ -738,6 +788,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
     final draft = ComplaintDraft(
       baslik: _baslikCtrl.text.trim(),
       mesaj: _mesajCtrl.text.trim(),
+      kategori: _kategori,
       fotoKey: _fotoKey,
     );
     try {
@@ -808,6 +859,26 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                     : null,
               ),
               const SizedBox(height: 8),
+              const Text('Kategori (opsiyonel)'),
+              const SizedBox(height: 4),
+              // Tur secimi: gurultu/goruntu kirliligi + diger. Tekrar
+              // dokunmak secimi kaldirir (kategori zorunlu degil).
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final k in ComplaintKategori.values)
+                    ChoiceChip(
+                      label: Text(k.label),
+                      selected: _kategori == k,
+                      onSelected: _saving
+                          ? null
+                          : (selected) => setState(
+                                () => _kategori = selected ? k : null,
+                              ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Icon(
@@ -850,7 +921,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null ? 'Foto cek' : 'Yeniden cek'),
+                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden cek'),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _saving

@@ -482,11 +482,15 @@ class AnnouncementListResponse(BaseModel):
 
 # ----------------------------- complaints ---------------------------------- #
 ComplaintDurum = Literal["acik", "inceleniyor", "cozuldu"]
+# Talep turu (opsiyonel): gurultu/goruntu kirliligi + genel 'diger'.
+ComplaintKategori = Literal["gurultu", "goruntu", "diger"]
 
 
 class ComplaintCreate(BaseModel):
     baslik: str = Field(..., min_length=1, max_length=200)
     mesaj: str = Field(..., min_length=1, max_length=5000)
+    # Opsiyonel tur; verilmezse NULL (eski davranis — geriye uyumlu).
+    kategori: ComplaintKategori | None = None
     # Opsiyonel gorsel: /uploads/presign ile yuklenen obje anahtari.
     foto_key: str | None = None
 
@@ -507,6 +511,7 @@ class ComplaintOut(BaseModel):
     acan_ad: str | None = None
     baslik: str
     mesaj: str
+    kategori: str | None = None
     foto_key: str | None = None
     # Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa).
     foto_url: str | None = None

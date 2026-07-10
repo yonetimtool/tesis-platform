@@ -101,7 +101,7 @@ void main() {
     await tester.tap(find.text('Yeni duyuru'));
     await tester.pumpAndSettle();
     expect(find.text('Gorsel (opsiyonel)'), findsOneWidget);
-    expect(find.text('Foto cek'), findsOneWidget);
+    expect(find.text('Kamera'), findsOneWidget);
     expect(find.text('Galeriden sec'), findsOneWidget);
     // foto'suz da yayinlanabilir — buton aktif
     expect(find.text('Yayinla'), findsOneWidget);

@@ -75,6 +75,10 @@ COMPLAINT_DURUM = ENUM(
     "acik", "inceleniyor", "cozuldu",
     name="complaint_durum", create_type=False,
 )
+COMPLAINT_KATEGORI = ENUM(
+    "gurultu", "goruntu", "diger",
+    name="complaint_kategori", create_type=False,
+)
 RESIDENT_ROL = ENUM(
     "malik", "kiraci",
     name="resident_rol", create_type=False,
@@ -828,6 +832,9 @@ class Complaint(Base):
     mesaj: Mapped[str] = mapped_column(Text, nullable=False)
     # Opsiyonel gorsel — /uploads/presign ile yuklenen MinIO obje anahtari.
     foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Opsiyonel tur (gurultu/goruntu kirliligi vb.); NULL = belirtilmemis
+    # (eski kayitlar — geriye uyumlu).
+    kategori: Mapped[str | None] = mapped_column(COMPLAINT_KATEGORI, nullable=True)
     durum: Mapped[str] = mapped_column(
         COMPLAINT_DURUM, nullable=False, server_default=text("'acik'")
     )

@@ -242,7 +242,30 @@ def main() -> int:
                 "m": "Cocuk parkinin yanina birkac bank konulmasini oneriyorum.",
             },
         )
-        print("[seed] sikayet 'Asansor ariziliydi' (cozuldu+yanitli) + oneri 'Oneri: bahceye bank' (acik)")
+        #    c) kategorili sikayet: gurultu kirliligi (acik, yanitsiz).
+        #       Kategori alani opsiyonel — a/b kayitlari kategorisiz kalir
+        #       (geriye uyumluluk ornegi).
+        conn.execute(
+            """
+            INSERT INTO complaint (tenant_id, acan_user_id, baslik, mesaj, kategori)
+            SELECT %(t)s, r.id, %(b)s, %(m)s, 'gurultu'::complaint_kategori
+            FROM app_user r
+            WHERE r.tenant_id = %(t)s AND r.email = 'resident@acme.com'
+              AND NOT EXISTS (
+                  SELECT 1 FROM complaint
+                  WHERE tenant_id = %(t)s AND baslik = %(b)s
+              )
+            """,
+            {
+                "t": tenant_id,
+                "b": "Gece gec saatte muzik",
+                "m": "B blok 3. kattan gece yarisindan sonra yuksek sesli muzik geliyor.",
+            },
+        )
+        print(
+            "[seed] sikayet 'Asansor ariziliydi' (cozuldu+yanitli) + oneri 'Oneri: bahceye bank' (acik) "
+            "+ sikayet 'Gece gec saatte muzik' (kategori=gurultu)"
+        )
 
     print("[seed] tamamlandi (idempotent).")
     return 0

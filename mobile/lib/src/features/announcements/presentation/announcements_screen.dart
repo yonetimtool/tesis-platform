@@ -551,7 +551,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null ? 'Foto cek' : 'Yeniden cek'),
+                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden cek'),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _saving

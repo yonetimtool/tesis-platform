@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, Query, Response
 from fastapi.responses import JSONResponse
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,6 +39,27 @@ _COMPLETER = require_role("admin", "security", "tesis_gorevlisi")
 
 # yonetici gorevleri yalniz saha rollerine atayabilir (auth.md §4).
 _YONETICI_ATANABILIR = {"security", "tesis_gorevlisi"}
+
+# Saha rolleri: belirli kisiye atanmis gorev YALNIZ atanana gorunur
+# (yonetim disi roller baskasinin gorevini liste/detay/completion'da goremez).
+_SAHA_ROLLERI = {"security", "tesis_gorevlisi"}
+
+
+def _assignee_visibility(user: AppUser):
+    """Saha kullanicisi icin gorunurluk kosulu: atanmamis ('Herkes') VEYA
+    kendine atanmis. Yonetim (admin/yonetici) kisitsiz (None doner)."""
+    if user.role in _SAHA_ROLLERI:
+        return or_(Task.atanan_user_id.is_(None), Task.atanan_user_id == user.id)
+    return None
+
+
+async def _visible_task_or_404(db: AsyncSession, task_id: uuid.UUID, user: AppUser) -> Task:
+    """Task'i atanan-gorunurluk kurali altinda yukle; gorunmuyorsa 404
+    (baskasina atanmis gorevin VARLIGI da sizdirilmaz)."""
+    task = await get_or_404(db, Task, task_id)
+    if user.role in _SAHA_ROLLERI and task.atanan_user_id not in (None, user.id):
+        raise APIError(404, "not_found", "Kayit bulunamadi")
+    return task
 
 
 async def _ensure_user_in_tenant(
@@ -82,6 +103,11 @@ async def list_tasks(
     user: AppUser = Depends(_READER),
 ) -> TaskListResponse:
     where = []
+    # Saha rolu: baskasina atanmis gorevler listede HIC gorunmez; sonraki
+    # atanan_user_id filtresi bu kosulla KESISIR (bypass edilemez).
+    visibility = _assignee_visibility(user)
+    if visibility is not None:
+        where.append(visibility)
     if tip is not None:
         where.append(Task.tip == tip)
     if aktif is not None:
@@ -108,9 +134,9 @@ async def list_tasks(
 async def get_task(
     task_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_READER),
+    user: AppUser = Depends(_READER),
 ) -> Task:
-    return await get_or_404(db, Task, task_id)
+    return await _visible_task_or_404(db, task_id, user)
 
 
 @router.post("", response_model=TaskOut, status_code=201)
@@ -177,9 +203,10 @@ async def list_completions(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_READER),
+    user: AppUser = Depends(_READER),
 ) -> TaskCompletionListResponse:
-    await get_or_404(db, Task, task_id)  # 404 (yoksa/baska tenant)
+    # 404: yoksa / baska tenant / baskasina atanmis (saha rolu icin).
+    await _visible_task_or_404(db, task_id, user)
     base = TaskCompletion.task_id == task_id
     total = (
         await db.execute(select(func.count()).select_from(TaskCompletion).where(base))
@@ -222,7 +249,8 @@ async def create_completion(
     if not idempotency_key or not idempotency_key.strip():
         raise APIError(400, "bad_request", "Idempotency-Key header zorunlu.")
 
-    task = await get_or_404(db, Task, task_id)
+    # Baskasina atanmis gorevi saha kullanicisi tamamlayamaz (404).
+    task = await _visible_task_or_404(db, task_id, user)
 
     # Foto kaniti: gorev foto_zorunlu ise foto_key olmadan tamamlanamaz (mobil §11 #2).
     if task.foto_zorunlu and body.foto_key is None:

@@ -87,6 +87,11 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE complaint_durum AS ENUM ('acik', 'inceleniyor', 'cozuldu');"
     )
+    # Talep turu (opsiyonel): gurultu/goruntu kirliligi istatistikleri icin
+    # temel; NULL = belirtilmemis (eski kayitlar geriye uyumlu).
+    op.execute(
+        "CREATE TYPE complaint_kategori AS ENUM ('gurultu', 'goruntu', 'diger');"
+    )
     # aidat: sakin rol tipi + odeme yontemi + odeme durumu.
     op.execute("CREATE TYPE resident_rol AS ENUM ('malik', 'kiraci');")
     op.execute("CREATE TYPE dues_yontem AS ENUM ('elden', 'havale', 'kart', 'diger');")
@@ -862,6 +867,7 @@ def upgrade() -> None:
             baslik               text NOT NULL,
             mesaj                text NOT NULL,
             foto_key             text,       -- opsiyonel gorsel (MinIO obje anahtari)
+            kategori             complaint_kategori,  -- opsiyonel tur (NULL = belirtilmemis)
             durum                complaint_durum NOT NULL DEFAULT 'acik',
             yonetici_yaniti      text,
             yanitlayan_user_id   uuid,
@@ -883,6 +889,10 @@ def upgrade() -> None:
     op.execute("CREATE INDEX ix_complaint_tenant ON complaint (tenant_id);")
     op.execute(
         "CREATE INDEX ix_complaint_tenant_durum ON complaint (tenant_id, durum);"
+    )
+    op.execute(
+        "CREATE INDEX ix_complaint_tenant_kategori "
+        "ON complaint (tenant_id, kategori);"
     )
     op.execute(
         "CREATE INDEX ix_complaint_tenant_acan ON complaint (tenant_id, acan_user_id);"
@@ -990,6 +1000,7 @@ def downgrade() -> None:
     op.execute("DROP TYPE IF EXISTS resident_rol;")
     op.execute("DROP TYPE IF EXISTS emergency_durum;")
     op.execute("DROP TYPE IF EXISTS complaint_durum;")
+    op.execute("DROP TYPE IF EXISTS complaint_kategori;")
     op.execute("DROP TYPE IF EXISTS asset_durum;")
     op.execute("DROP TYPE IF EXISTS asset_kategori;")
     op.execute("DROP TYPE IF EXISTS task_tip;")

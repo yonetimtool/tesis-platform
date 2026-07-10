@@ -21,12 +21,14 @@ class _FakeComplaintApi extends ComplaintApi {
 Complaint _c({
   ComplaintDurum durum = ComplaintDurum.acik,
   String? yanit,
+  ComplaintKategori? kategori,
 }) =>
     Complaint(
       id: 'c-1',
       baslik: 'Asansor arizali',
       mesaj: 'A blok asansoru durdu.',
       durum: durum,
+      kategori: kategori,
       acanUserId: 'u-1',
       acanAd: 'Acme Sakin',
       yoneticiYaniti: yanit,
@@ -236,6 +238,45 @@ void main() {
       await tester.tap(find.text('Cozulenler (0)'));
       await tester.pumpAndSettle();
       expect(find.text('Henuz cozulen talep yok.'), findsOneWidget);
+    });
+  });
+
+  group('kategori (Wave 1 #3)', () {
+    testWidgets('kategorili talep listede ve detayda etiketini gosterir',
+        (tester) async {
+      await tester.pumpWidget(_app(
+        UserRole.resident,
+        items: [_c(kategori: ComplaintKategori.gurultu)],
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('Gurultu kirliligi'), findsOneWidget); // kart
+
+      await tester.tap(find.text('Asansor arizali'));
+      await tester.pumpAndSettle();
+      expect(find.text('Gurultu kirliligi'), findsNWidgets(2)); // + detay
+    });
+
+    testWidgets('kategorisiz eski talep etiketsiz calisir', (tester) async {
+      await tester.pumpWidget(_app(UserRole.resident, items: [_c()]));
+      await tester.pumpAndSettle();
+      expect(find.text('Gurultu kirliligi'), findsNothing);
+      expect(find.text('Goruntu kirliligi'), findsNothing);
+      expect(find.text('Asansor arizali'), findsOneWidget);
+    });
+
+    testWidgets('yeni talep formunda kategori secenekleri sunulur',
+        (tester) async {
+      await tester.pumpWidget(_app(UserRole.resident, items: [_c()]));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Yeni talep'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Kategori (opsiyonel)'), findsOneWidget);
+      expect(find.text('Gurultu kirliligi'), findsOneWidget);
+      expect(find.text('Goruntu kirliligi'), findsOneWidget);
+      expect(find.text('Diger'), findsOneWidget);
+      // foto butonu yeni adiyla
+      expect(find.text('Kamera'), findsOneWidget);
     });
   });
 }

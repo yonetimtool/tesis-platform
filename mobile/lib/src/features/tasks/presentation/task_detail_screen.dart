@@ -382,7 +382,7 @@ class _PhotoStep extends StatelessWidget {
                           controller.pickAndUploadPhoto(ImageSource.camera),
                   icon: const Icon(Icons.photo_camera),
                   label: Text(
-                    state.photoPath == null ? 'Foto cek' : 'Yeniden cek',
+                    state.photoPath == null ? 'Kamera' : 'Yeniden cek',
                   ),
                 ),
                 OutlinedButton.icon(

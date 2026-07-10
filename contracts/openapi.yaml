@@ -910,7 +910,7 @@ paths:
       description: |
         Acan roller (security/tesis_gorevlisi/resident) YALNIZ kendi
         actiklarini gorur; admin+yonetici tenant'taki tum talepleri gorur
-        (yonetim gorunumu). Durum ile filtrelenebilir.
+        (yonetim gorunumu). Durum ve kategori ile filtrelenebilir.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -918,6 +918,10 @@ paths:
           in: query
           required: false
           schema: { type: string, enum: [acik, inceleniyor, cozuldu] }
+        - name: kategori
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/ComplaintKategori" }
       responses:
         "200":
           description: Liste
@@ -2837,6 +2841,13 @@ components:
           nullable: true
           description: Acikca null gonderilirse gorsel kaldirilir; alan yoksa dokunulmaz
 
+    ComplaintKategori:
+      type: string
+      enum: [gurultu, goruntu, diger]
+      description: |
+        Talep turu: gurultu (gurultu kirliligi), goruntu (goruntu kirliligi),
+        diger (genel). Opsiyoneldir; eski kayitlarda null (belirtilmemis).
+        Ileriki gurultu-istatistikleri bu alana dayanir.
     Complaint:
       type: object
       required: [id, acan_user_id, baslik, mesaj, durum, created_at, updated_at]
@@ -2849,6 +2860,9 @@ components:
           description: Acan sakinin adi (yonetim listesinde join ile)
         baslik: { type: string, maxLength: 200 }
         mesaj: { type: string, maxLength: 5000 }
+        kategori:
+          allOf: [{ $ref: "#/components/schemas/ComplaintKategori" }]
+          nullable: true
         foto_key:
           type: string
           nullable: true
@@ -2869,6 +2883,10 @@ components:
       properties:
         baslik: { type: string, minLength: 1, maxLength: 200 }
         mesaj: { type: string, minLength: 1, maxLength: 5000 }
+        kategori:
+          allOf: [{ $ref: "#/components/schemas/ComplaintKategori" }]
+          nullable: true
+          description: Opsiyonel tur; verilmezse null (geriye uyumlu)
         foto_key:
           type: string
           nullable: true

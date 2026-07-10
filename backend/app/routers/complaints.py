@@ -29,6 +29,7 @@ from ..scheduler.notify import dispatch_external
 from ..schemas import (
     ComplaintCreate,
     ComplaintDurum,
+    ComplaintKategori,
     ComplaintListResponse,
     ComplaintOut,
     ComplaintUpdate,
@@ -86,6 +87,7 @@ def _own_scope(stmt, user: AppUser):
 @router.get("", response_model=ComplaintListResponse)
 async def list_complaints(
     durum: ComplaintDurum | None = Query(None),
+    kategori: ComplaintKategori | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
@@ -96,6 +98,8 @@ async def list_complaints(
     )
     if durum is not None:
         stmt = stmt.where(Complaint.durum == durum)
+    if kategori is not None:
+        stmt = stmt.where(Complaint.kategori == kategori)
     stmt = _own_scope(stmt, user)
 
     total = (
@@ -147,6 +151,7 @@ async def create_complaint(
         acan_user_id=user.id,
         baslik=body.baslik,
         mesaj=body.mesaj,
+        kategori=body.kategori,
         foto_key=body.foto_key,
     )
     db.add(obj)
