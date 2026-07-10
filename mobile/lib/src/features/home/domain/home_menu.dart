@@ -56,6 +56,11 @@ enum HomeMenuEntry {
   /// (security/tesis_gorevlisi/resident) acar + kendininkini izler;
   /// admin/yonetici tumunu gorur + yanitlar (kesin kural, auth.md §4).
   complaints,
+
+  /// Ziyaretciler — kapi onay akisi: security kaydeder + tum gecmisi izler;
+  /// resident kendi dairesinin kayitlarini gorur + Onayla/Reddet;
+  /// admin/yonetici salt izler; tesis_gorevlisi ERISMEZ (auth.md §4).
+  visitors,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -66,6 +71,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
+        HomeMenuEntry.visitors,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -73,10 +79,12 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.outbox,
       ];
     case UserRole.security:
+      // Ziyaretciler kapi operasyonudur: kayit + canli sonuc guvenlikte.
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
+        HomeMenuEntry.visitors,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.taskTracking,
@@ -103,6 +111,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
+        HomeMenuEntry.visitors,
         HomeMenuEntry.patrolTracking,
         HomeMenuEntry.taskTracking,
         HomeMenuEntry.budget,
@@ -112,8 +121,11 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
     case UserRole.resident:
       // Sakinin kaynaklari: acil durum (panik butonu sakinin de hakki) +
       // duyuru okuma + sikayet/oneri kanali + kendi aidat durumu (auth.md §4).
+      // Ziyaretciler sakinde ust sirada: kapida cevap bekleyen kayit
+      // (push ile gelinen akis) kolay erisilsin.
       return const [
         HomeMenuEntry.emergency,
+        HomeMenuEntry.visitors,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,

@@ -22,6 +22,7 @@ import '../features/scan/presentation/outbox_screen.dart';
 import '../features/tasks/domain/task_models.dart';
 import '../features/tasks/presentation/task_detail_screen.dart';
 import '../features/tasks/presentation/tasks_screen.dart';
+import '../features/visitors/presentation/visitors_screen.dart';
 import 'splash_screen.dart';
 
 class AppRoutes {
@@ -45,6 +46,7 @@ class AppRoutes {
   static const siteBudget = '/site-budget';
   static const myDues = '/my-dues';
   static const complaints = '/complaints';
+  static const visitors = '/visitors';
 }
 
 /// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
@@ -59,6 +61,14 @@ String? routeForPushData(Map<String, String> data) {
       return id == null || id.isEmpty
           ? AppRoutes.complaints
           : '${AppRoutes.complaints}?complaint_id=$id';
+    // Yeni ziyaretci (daire sakinlerine) / sonuc (kaydi acan guvenlige)
+    // → ilgili ziyaretci kaydi acilir.
+    case 'ziyaretci':
+    case 'ziyaretci_sonuc':
+      final id = data['visitor_id'];
+      return id == null || id.isEmpty
+          ? AppRoutes.visitors
+          : '${AppRoutes.visitors}?visitor_id=$id';
     case 'duyuru':
       return AppRoutes.announcements;
     default:
@@ -164,6 +174,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         // detayi otomatik acilir.
         builder: (context, state) => ComplaintsScreen(
           initialComplaintId: state.uri.queryParameters['complaint_id'],
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.visitors,
+        // Push tiklamasindan gelinirse ?visitor_id=... ile ilgili kaydin
+        // detayi otomatik acilir (onay bekleyen kartta Onayla/Reddet).
+        builder: (context, state) => VisitorsScreen(
+          initialVisitorId: state.uri.queryParameters['visitor_id'],
         ),
       ),
       GoRoute(

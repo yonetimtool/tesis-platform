@@ -528,6 +528,64 @@ class ComplaintListResponse(BaseModel):
     items: list[ComplaintOut]
 
 
+# ------------------------------- visitors ---------------------------------- #
+VisitorDurum = Literal["bekliyor", "onaylandi", "reddedildi"]
+# Sakinin verebilecegi yanit — 'bekliyor'a geri donus yok.
+VisitorYanit = Literal["onaylandi", "reddedildi"]
+
+
+class VisitorCreate(BaseModel):
+    """Guvenlik kaydi: daire unit_id VEYA unit_no ile verilir (tam biri).
+
+    Kapidaki guvenlik daire numarasini bilir (unit listesine RBAC'i yoktur);
+    unit_no sunucuda tenant icinde cozulur — bulunamazsa 422.
+    """
+
+    unit_id: uuid.UUID | None = None
+    unit_no: str | None = Field(None, min_length=1, max_length=50)
+    ziyaretci_ad: str = Field(..., min_length=1, max_length=200)
+    # "not" SQL/Python anahtar sozcugu — kolon/alan adi codebase deseniyle
+    # 'notlar' (emergency_alert/asset_checkout ile ayni).
+    notlar: str | None = Field(None, min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def _tek_daire_referansi(self) -> "VisitorCreate":
+        if (self.unit_id is None) == (self.unit_no is None):
+            raise ValueError("unit_id veya unit_no alanlarindan tam biri verilmeli")
+        return self
+
+
+class VisitorUpdate(BaseModel):
+    """Sakin yaniti — yalniz onay/red (yanitlayan + zaman sunucuda damgalanir)."""
+
+    durum: VisitorYanit
+
+
+class VisitorOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    unit_id: uuid.UUID
+    # Daire numarasi (join ile doldurulur — guvenlik/sakin ekrani icin).
+    unit_no: str | None = None
+    ziyaretci_ad: str
+    notlar: str | None = None
+    durum: str
+    kaydeden_user_id: uuid.UUID
+    # Kaydi acan guvenligin adi (join ile).
+    kaydeden_ad: str | None = None
+    yanitlayan_user_id: uuid.UUID | None = None
+    # Yaniti veren sakinin adi (join ile; yanitsizsa null).
+    yanitlayan_ad: str | None = None
+    yanit_zamani: datetime | None = None
+    created_at: datetime
+
+
+class VisitorListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[VisitorOut]
+
+
 class NotificationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

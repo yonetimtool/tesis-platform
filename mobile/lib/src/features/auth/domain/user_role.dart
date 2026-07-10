@@ -77,4 +77,17 @@ enum UserRole {
   /// Talep yanitla/durum degistir (`PATCH /complaints/{id}`) —
   /// admin + yonetici; acan roller cevaplayamaz.
   bool get canRespondComplaints => this == admin || this == yonetici;
+
+  /// Ziyaretci ekranini gorme (`GET /visitors`) — yonetim + guvenlik tum
+  /// gecmis, sakin kendi dairesi; tesis_gorevlisi ERISMEZ (auth.md §4).
+  bool get canViewVisitors =>
+      this == admin || this == yonetici || this == security || this == resident;
+
+  /// Ziyaretci kaydi acma (`POST /visitors`) — YALNIZ security (kapi
+  /// operasyonu; yonetim gecmisi okur ama kayit acmaz).
+  bool get canRegisterVisitor => this == security;
+
+  /// Ziyaretci onay/red (`PATCH /visitors/{id}`) — YALNIZ resident (o
+  /// dairenin aktif sakini olma kosulunu sunucu ayrica zorlar).
+  bool get canAnswerVisitor => this == resident;
 }

@@ -10,6 +10,7 @@ void main() {
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
+        HomeMenuEntry.visitors,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -20,6 +21,7 @@ void main() {
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
+        HomeMenuEntry.visitors,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.taskTracking,
@@ -88,6 +90,7 @@ void main() {
           HomeMenuEntry.emergency,
           HomeMenuEntry.announcements,
           HomeMenuEntry.complaints,
+          HomeMenuEntry.visitors,
           HomeMenuEntry.patrolTracking,
           HomeMenuEntry.taskTracking,
           HomeMenuEntry.budget,
@@ -138,15 +141,36 @@ void main() {
       }
     });
 
-    test('resident: SOS + duyurular + Sikayet/Oneri + Aidatim + Site Butcesi',
-        () {
+    test('resident: SOS + Ziyaretciler + duyurular + Sikayet/Oneri + Aidatim '
+        '+ Site Butcesi', () {
       expect(homeMenuForRole(UserRole.resident), const [
         HomeMenuEntry.emergency,
+        HomeMenuEntry.visitors,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
       ]);
+    });
+
+    test('Ziyaretciler karti (kapi onay akisi): admin+yonetici+security+'
+        'resident VAR; tesis_gorevlisi YOK (auth.md §4 — erisemez)', () {
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.visitors),
+          reason: role.wire,
+        );
+      }
+      expect(
+        homeMenuForRole(UserRole.tesisGorevlisi),
+        isNot(contains(HomeMenuEntry.visitors)),
+      );
     });
 
     test('Wave 2B kartlari: Site Butcesi yalniz resident, Finansal Ozet '

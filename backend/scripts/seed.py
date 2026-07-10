@@ -352,6 +352,30 @@ def main() -> int:
             "+ sikayet 'Gece gec saatte muzik' (kategori=gurultu)"
         )
 
+        # 6) ornek ziyaretci: A-12 icin BEKLEYEN kayit (guvenlik acmis) —
+        #    sakin ekraninda Onayla/Reddet karti, guvenlik ekraninda canli
+        #    durum gorunsun. Ayni ziyaretci adi varsa eklemeyerek idempotent.
+        conn.execute(
+            """
+            INSERT INTO visitor (tenant_id, unit_id, ziyaretci_ad, notlar,
+                                 kaydeden_user_id)
+            SELECT %(t)s, %(u)s, %(ad)s, %(n)s, g.id
+            FROM app_user g
+            WHERE g.tenant_id = %(t)s AND g.email = 'guard@acme.com'
+              AND NOT EXISTS (
+                  SELECT 1 FROM visitor
+                  WHERE tenant_id = %(t)s AND ziyaretci_ad = %(ad)s
+              )
+            """,
+            {
+                "t": tenant_id,
+                "u": unit_id,
+                "ad": "Kurye - Ahmet Yilmaz",
+                "n": "Kargo teslimati (koli)",
+            },
+        )
+        print("[seed] ziyaretci 'Kurye - Ahmet Yilmaz' A-12 (bekliyor, guvenlik kaydi)")
+
     print("[seed] tamamlandi (idempotent).")
     return 0
 

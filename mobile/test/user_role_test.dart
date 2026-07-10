@@ -91,6 +91,45 @@ void main() {
       expect(UserRole.unknown.canViewComplaints, isFalse);
     });
 
+    test('ziyaretci kesin kurali: kayit yalniz security; yanit yalniz '
+        'resident; goruntuleme tesis_gorevlisi DISINDA', () {
+      // KAYIT: yalniz guvenlik (kapi operasyonu)
+      expect(UserRole.security.canRegisterVisitor, isTrue);
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+        UserRole.unknown,
+      ]) {
+        expect(role.canRegisterVisitor, isFalse, reason: role.wire);
+      }
+
+      // YANIT: yalniz sakin (daire kosulunu sunucu ayrica zorlar)
+      expect(UserRole.resident.canAnswerVisitor, isTrue);
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.unknown,
+      ]) {
+        expect(role.canAnswerVisitor, isFalse, reason: role.wire);
+      }
+
+      // GORUNTULEME: tesis_gorevlisi ERISMEZ (auth.md §4)
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.resident,
+      ]) {
+        expect(role.canViewVisitors, isTrue, reason: role.wire);
+      }
+      expect(UserRole.tesisGorevlisi.canViewVisitors, isFalse);
+      expect(UserRole.unknown.canViewVisitors, isFalse);
+    });
+
     test('TR gorunen adlar', () {
       expect(UserRole.yonetici.label, 'Yonetici');
       expect(UserRole.security.label, 'Guvenlik');

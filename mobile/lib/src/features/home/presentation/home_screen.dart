@@ -284,6 +284,19 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.complaints),
           ),
         );
+      case HomeMenuEntry.visitors:
+        // Kapi onay akisi: guvenlik kaydeder, dairenin sakini onaylar/reddeder.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.emoji_people_outlined),
+            title: const Text('Ziyaretciler'),
+            subtitle: const Text(
+              'Kapidaki ziyaretci kaydi, onay/red ve gecmis',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.visitors),
+          ),
+        );
     }
   }
 }

@@ -37,6 +37,7 @@ from .routers import tenant as tenant_router
 from .routers import units as units_router
 from .routers import users as users_router
 from .routers import uploads as uploads_router
+from .routers import visitors as visitors_router
 from .routers import webhooks as webhooks_router
 
 
@@ -73,6 +74,7 @@ app.include_router(patrol_windows_router.router)
 app.include_router(notifications_router.router)
 app.include_router(announcements_router.router)
 app.include_router(complaints_router.router)
+app.include_router(visitors_router.router)
 app.include_router(tasks_router.router)
 app.include_router(task_completions_router.router)
 app.include_router(uploads_router.router)

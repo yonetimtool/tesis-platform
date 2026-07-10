@@ -185,6 +185,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /complaints` (liste/detay)      |  ✅   | ✅  | ✅° | ✅° | ✅° |
 | `POST /complaints`                    |  ❌   | ❌  | ✅  | ✅  | ✅  |
 | `PATCH /complaints/{id}` (durum/yanit)|  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `POST /visitors` (ziyaretci kaydi)    |  ❌   | ❌  | ✅  | ❌  | ❌  |
+| `GET  /visitors` (liste/detay)        |  ✅   | ✅  | ✅  | ❌  | 🔵  |
+| `PATCH /visitors/{id}` (onay/red)     |  ❌   | ❌  | ❌  | ❌  | ✅* |
 | `GET  /tasks` (liste/detay)           |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /tasks`                         |  ✅   | ✅* | ❌  | ❌  | ❌  |
 | `PATCH /tasks/{id}`                   |  ✅   | ✅* | ❌  | ❌  | ❌  |
@@ -318,6 +321,33 @@ Notlar:
   hatasi duyuru kaydini etkilemez). Duyuruya OPSIYONEL gorsel eklenebilir
   (`/uploads/presign` → PUT → `foto_key`); okumada `foto_url` (kisa omurlu
   presigned GET) tum okuyan rollere doner.
+- **Ziyaretci (`/visitors`):** kapi onay akisi — guvenlik kaydeder, dairenin
+  sakini onaylar/reddeder, sonuc guvenlige doner; tam gecmis tutulur.
+  - **KAYIT (`POST`) YALNIZ `security`:** ziyaretci kapida karsilanir; kayit
+    kapi operasyonudur. `yonetici`/`admin` kayit ACMAZ (403) — gecmisi GET
+    ile okur (yonetim gozetimi). Daire `unit_id` VEYA `unit_no` ile verilir
+    (guvenligin unit CRUD yetkisi yoktur; `unit_no` sunucuda cozulur,
+    bulunamazsa 422). Kayitta dairenin **TUM aktif sakinlerinin** cihazlarina
+    ayni anda push denenir (esler dahil; kisi hedefli; EK gonderim — hatasi
+    kaydi etkilemez; `data: tip=ziyaretci, visitor_id`).
+  - **YANIT (`PATCH`, ✅\*) YALNIZ o dairenin AKTIF sakini:** rol yetmez —
+    `unit_resident` (bitis IS NULL) baglantisi sunucuda dogrulanir; BASKA
+    dairenin sakini **404** alir (varlik sizdirilmaz, bypass yolu yok).
+    Personel rolleri (guvenlik dahil) yanitlayamaz — onay yetkisi daire
+    sakinindedir. **ILK yanit gecerli:** zaten yanitlanmis kayda ikinci
+    yanit **409** (atomik `durum='bekliyor'` kosullu UPDATE — esler ayni
+    anda bassa bile ilk kazanir). `yanitlayan_user_id` + `yanit_zamani`
+    otomatik damgalanir; sonuc push'u YALNIZ kaydi acan guvenlige gider
+    (`data: tip=ziyaretci_sonuc, visitor_id`).
+  - **OKUMA:** `admin`+`yonetici`+`security` tenant'in TUM gecmisi
+    (guvenlik ekrani canli sonuc + gecmis; durum/daire/tarih filtresi);
+    🔵 `resident` YALNIZ kendi dairelerinin kayitlarini gorur.
+    `tesis_gorevlisi` ERISMEZ (403) — kapi akisinin tarafi degil.
+  - **GSM'e hazir (ILERIDE, simdi yok):** yanit alanlari kanaldan
+    bagimsizdir; sakin telefonu `app_user.telefon`'da. Gercek arama
+    (Twilio/Netgsm) `visitor_durum`'a deger (orn. `araniyor`) + arama
+    meta'si (ayri kolon/tablo; `uq_visitor_id_tenant` composite-FK hedefi
+    hazir) eklenerek gelir — modelde yeniden tasarim gerekmez.
 - **Sikayet/Oneri (`/complaints`):** tesiste yasayan/calisandan yonetime
   talep kanali (canli test kesin kurali). ACMA `security` +
   `tesis_gorevlisi` + `resident` (acan token'dan, `durum=acik`, opsiyonel

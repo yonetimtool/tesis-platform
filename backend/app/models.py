@@ -103,6 +103,10 @@ DEVICE_PLATFORM = ENUM(
     "android", "ios", "web",
     name="device_platform", create_type=False,
 )
+VISITOR_DURUM = ENUM(
+    "bekliyor", "onaylandi", "reddedildi",
+    name="visitor_durum", create_type=False,
+)
 
 
 def _pk() -> Mapped[uuid.UUID]:
@@ -942,6 +946,56 @@ class Complaint(Base):
     updated_at = _created_at()
 
 
+class Visitor(Base):
+    """Ziyaretci onay akisi — guvenlik kaydeder, dairenin sakinleri yanitlar.
+
+    GSM'e hazir: yanit alanlari (yanitlayan_user_id + yanit_zamani) kanaldan
+    bagimsiz; ileride gercek arama adimi enum degeri + ayri meta ile eklenir
+    (bkz. migration notu). Sakin telefonu app_user.telefon'da.
+    """
+
+    __tablename__ = "visitor"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_visitor_id_tenant"),
+        ForeignKeyConstraint(
+            ["unit_id", "tenant_id"],
+            ["unit.id", "unit.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_visitor_unit",
+        ),
+        ForeignKeyConstraint(
+            ["kaydeden_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_visitor_kaydeden",
+        ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (yanitlayan_user_id); tenant_id korunur.
+        ForeignKeyConstraint(
+            ["yanitlayan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_visitor_yanitlayan",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    ziyaretci_ad: Mapped[str] = mapped_column(Text, nullable=False)
+    notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    durum: Mapped[str] = mapped_column(
+        VISITOR_DURUM, nullable=False, server_default=text("'bekliyor'")
+    )
+    kaydeden_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    yanitlayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    yanit_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()
+
+
 class UserDevice(Base):
     __tablename__ = "user_device"
     __table_args__ = (
@@ -988,6 +1042,7 @@ __all__ = [
     "DuesPayment",
     "PaymentWebhookEvent",
     "Announcement",
+    "Visitor",
     "UserDevice",
     "USER_ROLE",
     "GUN_TIPI",
@@ -1001,4 +1056,5 @@ __all__ = [
     "DUES_YONTEM",
     "DUES_DURUM",
     "DEVICE_PLATFORM",
+    "VISITOR_DURUM",
 ]

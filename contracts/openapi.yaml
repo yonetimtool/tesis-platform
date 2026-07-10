@@ -1006,6 +1006,127 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
+  # VISITORS (ziyaretci onay akisi: guvenlik kaydeder -> daire sakinlerine
+  # push -> ilk yanitlayan sakin onaylar/reddeder -> sonuc guvenlige push)
+  # ================================================================= #
+  /visitors:
+    get:
+      tags: [visitors]
+      summary: Ziyaretci gecmisi (created_at DESC)
+      description: |
+        admin/yonetici/security tenant'in TUM ziyaretci gecmisini gorur
+        (guvenlik ekrani + yonetim gorunumu); resident YALNIZ kendi
+        dairelerinin kayitlarini gorur (baska daire sizmaz);
+        tesis_gorevlisi ERISMEZ (403). durum/daire/tarih ile filtrelenir.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: durum
+          in: query
+          required: false
+          schema: { type: string, enum: [bekliyor, onaylandi, reddedildi] }
+        - name: unit_id
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+        - name: baslangic
+          in: query
+          required: false
+          description: created_at >= (tarih filtresi)
+          schema: { type: string, format: date-time }
+        - name: bitis
+          in: query
+          required: false
+          description: created_at < (tarih filtresi)
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Visitor" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [visitors]
+      summary: Ziyaretci kaydi ac (YALNIZ security)
+      description: |
+        Kapidaki guvenlik ziyaretciyi kaydeder; durum=bekliyor baslar. Daire
+        unit_id VEYA unit_no ile verilir (tam biri; bulunamazsa 422). Kayit
+        sonrasi dairenin TUM aktif sakinlerinin cihazlarina push denenir
+        (esler dahil; EK gonderim — push hatasi kaydi etkilemez;
+        data: tip=ziyaretci, visitor_id). yonetici/admin kayit ACMAZ (403) —
+        kapi operasyonu guvenligindir; gecmisi GET ile okurlar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VisitorCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Visitor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /visitors/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [visitors]
+      summary: Ziyaretci detayi (resident yalniz kendi dairesininki)
+      responses:
+        "200":
+          description: Ziyaretci
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Visitor" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [visitors]
+      summary: Ziyaretciyi onayla/reddet (YALNIZ o dairenin aktif sakini)
+      description: |
+        Sakin yaniti: durum=onaylandi|reddedildi. yanitlayan_user_id +
+        yanit_zamani sunucuda damgalanir. ILK yanit gecerli — zaten
+        yanitlanmis kayda ikinci yanit 409 (esler ayni anda bassa bile
+        atomik; ilk kazanir). BASKA dairenin sakini 404 alir (varlik
+        sizdirilmaz; bypass yolu yok). Yanit sonrasi kaydi acan guvenligin
+        cihazlarina sonuc push'u denenir (EK gonderim — hatasi kaydi
+        etkilemez; data: tip=ziyaretci_sonuc, visitor_id). Personel rolleri
+        bu uca ERISEMEZ (403) — onay yetkisi daire sakinindedir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VisitorUpdate" }
+      responses:
+        "200":
+          description: Yanitlandi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Visitor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
   # TASKS (esnek gorev sistemi) + tamamlama + foto kanit
   # ================================================================= #
   /tasks:
@@ -3147,6 +3268,61 @@ components:
       properties:
         durum: { type: string, enum: [acik, inceleniyor, cozuldu] }
         yonetici_yaniti: { type: string, minLength: 1, maxLength: 5000 }
+
+    Visitor:
+      type: object
+      description: |
+        Ziyaretci kaydi + tam gecmis satiri. GSM'e hazir model: yanit
+        alanlari (yanitlayan_user_id, yanit_zamani) kanaldan bagimsizdir;
+        ileride gercek arama adimi durum enum'una deger eklenerek
+        (orn. araniyor) ve arama meta'siyla genisler — yeniden tasarim yok.
+      required: [id, unit_id, ziyaretci_ad, durum, kaydeden_user_id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        unit_id: { type: string, format: uuid }
+        unit_no:
+          type: string
+          nullable: true
+          description: Daire numarasi (join ile — guvenlik/sakin ekrani icin)
+        ziyaretci_ad: { type: string, maxLength: 200 }
+        notlar:
+          type: string
+          nullable: true
+          description: Opsiyonel not ("not" SQL anahtar sozcugu; alan adi notlar)
+        durum: { type: string, enum: [bekliyor, onaylandi, reddedildi] }
+        kaydeden_user_id:
+          type: string
+          format: uuid
+          description: Kaydi acan guvenlik (sonuc push'unun hedefi)
+        kaydeden_ad: { type: string, nullable: true }
+        yanitlayan_user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Yaniti veren sakin (ilk yanit kazanir; yanitsizsa null)
+        yanitlayan_ad: { type: string, nullable: true }
+        yanit_zamani: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    VisitorCreate:
+      type: object
+      description: unit_id VEYA unit_no alanlarindan TAM BiRi verilmeli (aksi 422)
+      required: [ziyaretci_ad]
+      properties:
+        unit_id: { type: string, format: uuid, nullable: true }
+        unit_no:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 50
+          description: Daire numarasi (orn. A-12) — sunucuda tenant icinde cozulur
+        ziyaretci_ad: { type: string, minLength: 1, maxLength: 200 }
+        notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
+    VisitorUpdate:
+      type: object
+      description: Sakin yaniti — yalniz onay/red ('bekliyor'a geri donus yok)
+      required: [durum]
+      properties:
+        durum: { type: string, enum: [onaylandi, reddedildi] }
 
     Notification:
       type: object

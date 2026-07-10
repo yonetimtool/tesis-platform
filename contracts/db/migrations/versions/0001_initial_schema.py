@@ -98,6 +98,12 @@ def upgrade() -> None:
     op.execute("CREATE TYPE dues_durum AS ENUM ('basarili', 'bekliyor', 'iptal');")
     # push: cihaz platformu (FCM device token kaydi).
     op.execute("CREATE TYPE device_platform AS ENUM ('android', 'ios', 'web');")
+    # ziyaretci onay akisi durumu. GSM'e hazir: ileride gercek telefon
+    # aramasi eklendiginde ALTER TYPE ... ADD VALUE (orn. 'araniyor') ile
+    # genisler — mevcut degerler/kayitlar etkilenmez.
+    op.execute(
+        "CREATE TYPE visitor_durum AS ENUM ('bekliyor', 'onaylandi', 'reddedildi');"
+    )
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -973,6 +979,54 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9z2. visitor  (ziyaretci onay akisi — guvenlik kaydeder, dairenin TUM
+    #     aktif sakinlerine push gider, ILK yanitlayan sakin onaylar/reddeder,
+    #     sonuc kaydi yapan guvenlige doner; tam gecmis bu tabloda tutulur.
+    #
+    #     GSM'E HAZIR (ileride Twilio/Netgsm ile gercek arama): yanit alanlari
+    #     (yanitlayan_user_id + yanit_zamani) kanaldan BAGIMSIZDIR; sakin
+    #     telefonu zaten app_user.telefon'da. Arama adimi eklenirken
+    #     visitor_durum'a deger (orn. 'araniyor') ve arama meta'si icin ayri
+    #     kolon/tablo (composite FK hedefi uq_visitor_id_tenant hazir) yeter —
+    #     bu tabloda yeniden tasarim gerekmez.)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE visitor (
+            id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id            uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            unit_id              uuid NOT NULL,
+            ziyaretci_ad         text NOT NULL,
+            notlar               text,       -- opsiyonel not ("not" SQL anahtar sozcugu; emergency/asset deseni)
+            durum                visitor_durum NOT NULL DEFAULT 'bekliyor',
+            kaydeden_user_id     uuid NOT NULL,   -- kaydi acan guvenlik (sonuc push'unun hedefi)
+            yanitlayan_user_id   uuid,            -- yaniti veren sakin (ilk yanit kazanir)
+            yanit_zamani         timestamptz,
+            created_at           timestamptz NOT NULL DEFAULT now(),
+            -- composite FK hedefi (ileride arama/meta tablolari icin de hazir).
+            CONSTRAINT uq_visitor_id_tenant UNIQUE (id, tenant_id),
+            -- composite FK: daire ayni tenant'ta olmali (RLS ile tutarli).
+            CONSTRAINT fk_visitor_unit
+                FOREIGN KEY (unit_id, tenant_id)
+                REFERENCES unit (id, tenant_id) ON DELETE CASCADE,
+            CONSTRAINT fk_visitor_kaydeden
+                FOREIGN KEY (kaydeden_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- Kolon-ozel SET NULL: yalnizca yanitlayan_user_id NULL'lanir.
+            CONSTRAINT fk_visitor_yanitlayan
+                FOREIGN KEY (yanitlayan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (yanitlayan_user_id)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_visitor_tenant ON visitor (tenant_id);")
+    op.execute("CREATE INDEX ix_visitor_tenant_unit ON visitor (tenant_id, unit_id);")
+    op.execute("CREATE INDEX ix_visitor_tenant_durum ON visitor (tenant_id, durum);")
+    op.execute(
+        "CREATE INDEX ix_visitor_tenant_created ON visitor (tenant_id, created_at DESC);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -1003,6 +1057,7 @@ def upgrade() -> None:
         "user_device",
         "announcement",
         "complaint",
+        "visitor",
     ):
         _enable_rls(table)
 
@@ -1041,6 +1096,7 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "visitor",
         "complaint",
         "announcement",
         "user_device",
@@ -1068,6 +1124,7 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS visitor_durum;")
     op.execute("DROP TYPE IF EXISTS device_platform;")
     op.execute("DROP TYPE IF EXISTS budget_kaynak;")
     op.execute("DROP TYPE IF EXISTS budget_tip;")
