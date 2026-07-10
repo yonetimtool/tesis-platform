@@ -3,8 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'auth_controller.dart';
 
-/// tenant_slug + email + parola alan login ekrani.
-/// LoginRequest semasina (tenant_slug ZORUNLU) birebir uyar.
+/// Giris modu: personel (email) vs sakin (daire no) — auth.md §1.1/§1.2.
+enum _LoginMode { personel, sakin }
+
+/// Iki modlu login ekrani:
+///   * Personel: tenant_slug + email + parola (LoginRequest — mevcut akis).
+///   * Sakin: tenant_slug + daire no + parola/gecici kod
+///     (ResidentLoginRequest; ilk giriste parola belirleme ekranina gecilir).
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -16,14 +21,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _tenantCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _unitNoCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
   bool _rememberMe = false;
+  _LoginMode _mode = _LoginMode.personel;
 
   @override
   void dispose() {
     _tenantCtrl.dispose();
     _emailCtrl.dispose();
+    _unitNoCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
   }
@@ -31,12 +39,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
-    await ref.read(authControllerProvider.notifier).login(
-          tenantSlug: _tenantCtrl.text.trim(),
-          email: _emailCtrl.text.trim(),
-          password: _passwordCtrl.text,
-          rememberMe: _rememberMe,
-        );
+    final auth = ref.read(authControllerProvider.notifier);
+    if (_mode == _LoginMode.sakin) {
+      await auth.loginResident(
+        tenantSlug: _tenantCtrl.text.trim(),
+        unitNo: _unitNoCtrl.text.trim(),
+        password: _passwordCtrl.text,
+        rememberMe: _rememberMe,
+      );
+    } else {
+      await auth.login(
+        tenantSlug: _tenantCtrl.text.trim(),
+        email: _emailCtrl.text.trim(),
+        password: _passwordCtrl.text,
+        rememberMe: _rememberMe,
+      );
+    }
   }
 
   @override
@@ -64,7 +82,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
+                    // Personel (email) / Sakin (daire no) giris modu secimi.
+                    SegmentedButton<_LoginMode>(
+                      key: const Key('login_mode_toggle'),
+                      segments: const [
+                        ButtonSegment(
+                          value: _LoginMode.personel,
+                          label: Text('Personel'),
+                          icon: Icon(Icons.badge_outlined),
+                        ),
+                        ButtonSegment(
+                          value: _LoginMode.sakin,
+                          label: Text('Sakin'),
+                          icon: Icon(Icons.home_outlined),
+                        ),
+                      ],
+                      selected: {_mode},
+                      onSelectionChanged: submitting
+                          ? null
+                          : (selection) =>
+                              setState(() => _mode = selection.single),
+                    ),
+                    const SizedBox(height: 24),
                     TextFormField(
                       controller: _tenantCtrl,
                       enabled: !submitting,
@@ -86,26 +126,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _emailCtrl,
-                      enabled: !submitting,
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.emailAddress,
-                      autocorrect: false,
-                      decoration: const InputDecoration(
-                        labelText: 'E-posta',
-                        prefixIcon: Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(),
+                    if (_mode == _LoginMode.personel)
+                      TextFormField(
+                        controller: _emailCtrl,
+                        enabled: !submitting,
+                        textInputAction: TextInputAction.next,
+                        keyboardType: TextInputType.emailAddress,
+                        autocorrect: false,
+                        decoration: const InputDecoration(
+                          labelText: 'E-posta',
+                          prefixIcon: Icon(Icons.email_outlined),
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (v) {
+                          final value = v?.trim() ?? '';
+                          if (value.isEmpty) return 'E-posta zorunludur';
+                          if (!value.contains('@') || !value.contains('.')) {
+                            return 'Gecerli bir e-posta girin';
+                          }
+                          return null;
+                        },
+                      )
+                    else
+                      TextFormField(
+                        controller: _unitNoCtrl,
+                        enabled: !submitting,
+                        textInputAction: TextInputAction.next,
+                        autocorrect: false,
+                        decoration: const InputDecoration(
+                          labelText: 'Daire no',
+                          hintText: 'orn. A-12',
+                          prefixIcon: Icon(Icons.door_front_door_outlined),
+                          border: OutlineInputBorder(),
+                          helperText:
+                              'Ilk giriste yonetimden aldiginiz gecici kodu '
+                              'parola alanina yazin.',
+                          helperMaxLines: 2,
+                        ),
+                        validator: (v) {
+                          if ((v?.trim() ?? '').isEmpty) {
+                            return 'Daire no zorunludur';
+                          }
+                          return null;
+                        },
                       ),
-                      validator: (v) {
-                        final value = v?.trim() ?? '';
-                        if (value.isEmpty) return 'E-posta zorunludur';
-                        if (!value.contains('@') || !value.contains('.')) {
-                          return 'Gecerli bir e-posta girin';
-                        }
-                        return null;
-                      },
-                    ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordCtrl,
@@ -114,7 +178,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
                       decoration: InputDecoration(
-                        labelText: 'Parola',
+                        labelText: _mode == _LoginMode.sakin
+                            ? 'Parola veya gecici kod'
+                            : 'Parola',
                         prefixIcon: const Icon(Icons.lock_outline),
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(

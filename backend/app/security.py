@@ -8,6 +8,7 @@
 """
 from __future__ import annotations
 
+import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -26,12 +27,32 @@ def hash_password(plain: str) -> str:
     return bcrypt.hashpw(plain.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
-def verify_password(plain: str, password_hash: str) -> bool:
-    """Parolayi hash ile karsilastir (sabit-zaman, bcrypt)."""
+def verify_password(plain: str, password_hash: str | None) -> bool:
+    """Parolayi hash ile karsilastir (sabit-zaman, bcrypt).
+
+    password_hash NULL olabilir (parolasini henuz belirlememis resident) —
+    bu durumda her zaman False.
+    """
+    if not password_hash:
+        return False
     try:
         return bcrypt.checkpw(plain.encode("utf-8"), password_hash.encode("utf-8"))
     except (ValueError, TypeError):
         return False
+
+
+# Okunakli tek seferlik kod: karisan karakterler yok (I/L/O/0/1).
+_TEMP_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
+
+def generate_temp_code() -> str:
+    """Sakin icin tek seferlik gecici giris kodu uret (orn. 'K7MR-2QWX').
+
+    Kod yalnizca OLUSTURMA yanitinda bir kez duz metin doner (yonetici sakine
+    iletir); DB'de bcrypt hash'i saklanir. Parola belirlenince gecersizlesir.
+    """
+    chars = "".join(secrets.choice(_TEMP_CODE_ALPHABET) for _ in range(8))
+    return f"{chars[:4]}-{chars[4:]}"
 
 
 # --------------------------------------------------------------------------- #
@@ -83,6 +104,29 @@ def create_refresh_token(
         "fam": fam,
     }
     return _encode(claims), jti, fam
+
+
+#: Gecici kodla girisin ardindan parola belirleme icin verilen kisa omurlu
+#: token'in suresi (dakika). API erisimi VERMEZ; yalniz /auth/set-password'de gecer.
+SETUP_TOKEN_EXPIRE_MINUTES = 10
+
+
+def create_setup_token(*, user_id: uuid.UUID | str, tenant_id: uuid.UUID | str) -> str:
+    """Parola-kurulum token'i (type=pwd_setup) uret.
+
+    Gecici kod dogrulaninca doner; sakin bununla YALNIZCA parola belirleyebilir
+    (access degildir, kaynak endpoint'lerinde gecmez — `type` kontrolu).
+    """
+    now = _now()
+    claims = {
+        "sub": str(user_id),
+        "tenant_id": str(tenant_id),
+        "type": "pwd_setup",
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(minutes=SETUP_TOKEN_EXPIRE_MINUTES)).timestamp()),
+        "jti": str(uuid.uuid4()),
+    }
+    return _encode(claims)
 
 
 def decode_token(token: str, *, expected_type: str) -> dict[str, Any]:

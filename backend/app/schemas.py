@@ -33,6 +33,35 @@ class LoginRequest(BaseModel):
     password: str = Field(..., min_length=8)
 
 
+class ResidentLoginRequest(BaseModel):
+    """Sakin girisi: daire no + (gecici kod VEYA kalici parola)."""
+
+    tenant_slug: str = Field(..., examples=["acme-plaza"])
+    unit_no: str = Field(..., min_length=1, examples=["A-12"])
+    password: str = Field(..., min_length=8)
+
+
+class ResidentLoginResponse(BaseModel):
+    """Sakin giris yaniti — iki durum:
+
+    * Kalici parola ile giris: `password_setup_required=false` + tam token cifti.
+    * Gecici kod ile ILK giris: `password_setup_required=true` + `setup_token`
+      (yalniz /auth/set-password'de gecer; oturum token'i VERILMEZ).
+    """
+
+    password_setup_required: bool
+    setup_token: str | None = None
+    access_token: str | None = None
+    refresh_token: str | None = None
+    token_type: str | None = None
+    expires_in: int | None = None
+
+
+class SetPasswordRequest(BaseModel):
+    setup_token: str
+    new_password: str = Field(..., min_length=8)
+
+
 class RefreshRequest(BaseModel):
     refresh_token: str
 
@@ -49,7 +78,7 @@ class UserOut(BaseModel):
     id: uuid.UUID
     tenant_id: uuid.UUID
     ad: str
-    email: str
+    email: str | None = None  # resident'ta opsiyonel
     role: str
     is_active: bool
 
@@ -63,7 +92,7 @@ class UserAdminOut(BaseModel):
 
     id: uuid.UUID
     ad: str
-    email: str
+    email: str | None = None  # resident'ta opsiyonel
     telefon: str | None = None
     role: str
     is_active: bool
@@ -885,6 +914,30 @@ class ResidentAssign(BaseModel):
     user_id: uuid.UUID
     rol_tipi: ResidentRol | None = None
     baslangic: datetime | None = None
+
+
+# ------------------- sakin olusturma (yonetici, gecici kod) ---------------- #
+class ResidentCreate(BaseModel):
+    """Yonetici daire + sakin hesabini tek adimda acar; gecici kod uretilir."""
+
+    unit_no: str = Field(..., min_length=1, examples=["A-12"])
+    blok: str | None = None  # yalniz YENI acilan unit'e islenir
+    ad: str = Field(..., min_length=1)
+    email: EmailStr | None = None  # sakinde opsiyonel
+    telefon: str | None = None
+    rol_tipi: ResidentRol | None = None
+
+
+class ResidentCreatedOut(BaseModel):
+    """`temp_code` YALNIZ bu yanitta bir kez duz metin doner (yonetici sakine
+    iletir); sunucuda hash'i saklanir ve parola belirlenince gecersizlesir."""
+
+    user_id: uuid.UUID
+    unit_id: uuid.UUID
+    unit_no: str
+    ad: str
+    email: str | None = None
+    temp_code: str
 
 
 class DuesAssessmentOut(BaseModel):

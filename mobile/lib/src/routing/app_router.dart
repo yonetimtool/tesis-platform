@@ -7,6 +7,7 @@ import '../features/assets/presentation/assets_screen.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/complaints/presentation/complaints_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/set_password_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
 import '../features/dues/presentation/my_dues_screen.dart';
@@ -24,6 +25,7 @@ class AppRoutes {
   const AppRoutes._();
   static const splash = '/splash';
   static const login = '/login';
+  static const setPassword = '/set-password';
   static const home = '/home';
   static const nfc = '/nfc';
   static const outbox = '/outbox';
@@ -63,7 +65,8 @@ String? routeForPushData(Map<String, String> data) {
 class _AuthRouterListenable extends ChangeNotifier {
   _AuthRouterListenable(Ref ref) {
     ref.listen(
-      authControllerProvider.select((s) => s.status),
+      // Parola-kurulum akisina giris/cikis da yonlendirme gerektirir.
+      authControllerProvider.select((s) => (s.status, s.setupToken)),
       (_, _) => notifyListeners(),
     );
   }
@@ -84,6 +87,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.setPassword,
+        builder: (context, state) => const SetPasswordScreen(),
       ),
       GoRoute(
         path: AppRoutes.home,
@@ -152,7 +159,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
-      final status = ref.read(authControllerProvider).status;
+      final auth = ref.read(authControllerProvider);
+      final status = auth.status;
       final location = state.matchedLocation;
 
       // Oturum henuz cozulmedi → splash'ta bekle.
@@ -161,11 +169,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       final loggedIn = status == AuthStatus.authenticated;
-      final onAuthFlow =
-          location == AppRoutes.login || location == AppRoutes.splash;
+      final onAuthFlow = location == AppRoutes.login ||
+          location == AppRoutes.splash ||
+          location == AppRoutes.setPassword;
 
       if (loggedIn) {
         return onAuthFlow ? AppRoutes.home : null;
+      }
+      // Sakinin gecici kodla ilk girisi → zorunlu parola belirleme ekrani.
+      if (auth.setupToken != null) {
+        return location == AppRoutes.setPassword ? null : AppRoutes.setPassword;
       }
       // Oturum yok → login disindaki her yerden login'e.
       return location == AppRoutes.login ? null : AppRoutes.login;

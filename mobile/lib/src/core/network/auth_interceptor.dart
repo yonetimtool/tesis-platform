@@ -113,8 +113,11 @@ class AuthInterceptor extends Interceptor {
     await onSessionExpired();
   }
 
-  /// `/auth/login` ve `/auth/refresh` public'tir (header eklenmez, 401'de
-  /// refresh denenmez). Path tam veya goreli olabilir.
+  /// `/auth/login`, `/auth/login-resident`, `/auth/set-password` ve
+  /// `/auth/refresh` public'tir (header eklenmez, 401'de refresh denenmez).
+  /// Path tam veya goreli olabilir.
   bool _isAuthEndpoint(String path) =>
-      path.contains('/auth/login') || path.contains('/auth/refresh');
+      path.contains('/auth/login') ||
+      path.contains('/auth/set-password') ||
+      path.contains('/auth/refresh');
 }

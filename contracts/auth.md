@@ -16,7 +16,13 @@ sozlesmeye gore gelistirir.
   1. **RBAC** (uygulama katmani): rol → endpoint erisimi (bu dosya, §4).
   2. **RLS** (DB katmani): tenant izolasyonu (bkz. `/contracts/db`).
 
-### 1.1 Login'de tenant nasil belirlenir
+### 1.1 Login'de tenant nasil belirlenir (PERSONEL — email ile)
+
+> **Iki ayri giris yolu vardir:** PERSONEL (admin/yonetici/security/
+> tesis_gorevlisi) **email + parola** ile `POST /auth/login`'den girer (bu
+> bolum); SAKIN (resident) **daire no + parola** ile
+> `POST /auth/login-resident`'ten girer (§1.2). Personel akisi sakin
+> modelinden ETKILENMEZ.
 
 `app_user.email` **tenant-ici** benzersizdir (`UNIQUE (tenant_id, email)`), yani
 ayni email birden cok tenant'ta bulunabilir. Bu yuzden `POST /auth/login`
@@ -35,6 +41,49 @@ Akis:
    `invalid_credentials` (hangi adimin patladigi sizdirilmaz).
 
 > `tenant.slug`: kucuk harf/rakam/tire, tenant genelinde benzersiz.
+
+### 1.2 Sakin (resident) girisi — daire no + parola
+
+Sakinler email ile DEGIL, **`tenant_slug + unit_no + password`** ile girer
+(`POST /auth/login-resident`, bkz. `openapi.yaml`). Kimlik modeli:
+
+- `app_user.email` sakinde **opsiyoneldir** (personelde zorunlu —
+  `ck_app_user_staff_email`). Sakin hesabi daireye `unit_resident`
+  (aktif = `bitis IS NULL`) ile baglidir.
+- **Ayni dairede birden fazla sakin** olabilir (orn. esler): ayni `unit_no`,
+  ayri hesaplar. Login'de hesap, girilen parolanin/kodun HANGI sakinin
+  hash'iyle eslestigine gore cozulur; belirsizligi onlemek icin her sakinin
+  KENDI parolasi + KENDI tek seferlik gecici kodu vardir.
+
+**Ilk giris (gecici kod → zorunlu parola belirleme):**
+
+1. Yonetici sakini `POST /residents` ile acar (daire yoksa ortulu olusur).
+   Sunucu **tek seferlik gecici kod** uretir (orn. `K7MR-2QWX`); kod YALNIZ
+   bu yanitta duz metin doner, yonetici sakine iletir. DB'de **bcrypt hash'i**
+   saklanir (`app_user.temp_code_hash`); `password_set=false`,
+   `password_hash=NULL`.
+2. Sakin `login-resident`'a daire no + gecici kodla gelir. Kod dogruysa
+   **oturum verilmez**; kisa omurlu (~10 dk, `type=pwd_setup`) `setup_token`
+   doner (`password_setup_required=true`). Bu token API erisimi SAGLAMAZ;
+   yalniz `POST /auth/set-password`'de gecer.
+3. `POST /auth/set-password` (setup_token + yeni parola): parola bcrypt ile
+   kaydedilir, `password_set=true`, `temp_code_hash=NULL` (**kod tek
+   kullanimlik** — bir daha gecmez) ve tam `TokenPair` doner.
+4. Sonraki girisler: daire no + sakinin KENDI parolasi → normal oturum.
+
+Akis kurallari:
+
+- Basarisiz her adim → **401** `invalid_credentials`; hangi adimin patladigi
+  (daire var mi, kod mu parola mi yanlis) sizdirilmaz — personel akisiyla
+  ayni ilke.
+- Aktif olmayan (`is_active=false`) veya daireden cikarilmis
+  (`unit_resident.bitis` dolu) sakin giremez.
+- **Gecici kod omru:** kod, sakin kalici parolasini belirleyene kadar (veya
+  yonetici yeni kod uretene kadar) gecerlidir; zaman asimi yoktur ama tek
+  kullanimliktir ve `setup_token` ~10 dk ile sinirlidir. Kod ele gecerse
+  yalniz o hesabin ILK girisini acar; parola belirlenmisse tamamen olur.
+- Token'lar (access/refresh) ve `role=resident` claim'i personelle AYNIDIR
+  (§2); refresh rotation aynen gecerlidir.
 
 ## 2. Token Yapisi
 
@@ -103,7 +152,10 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 
 | Endpoint                              | admin | yon | sec | tg  | res |
 |---------------------------------------|:-----:|:---:|:---:|:---:|:---:|
-| `POST /auth/login`                    |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `POST /auth/login` (personel, email)  |  ✅   | ✅  | ✅  | ✅  | ✅° |
+| `POST /auth/login-resident` (daire no)|  ❌   | ❌  | ❌  | ❌  | ✅  |
+| `POST /auth/set-password` (ilk giris) |  ❌   | ❌  | ❌  | ❌  | ✅  |
+| `POST /residents` (sakin ac + kod)    |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /auth/refresh`                  |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET  /shifts` (liste/detay)          |  ✅   | ❌  | ✅  | ✅  | ❌  |
 | `POST /shifts`                        |  ✅   | ❌  | ❌  | ❌  | ❌  |
@@ -167,6 +219,14 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET /users` + `GET /users/{id}`      |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST/PATCH /users*`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
 
+> **Giris yollari:** `login`/`login-resident`/`set-password` PUBLIC
+> endpoint'lerdir; matris "hangi rol bu yolu kullanir"i gosterir. Sakinin
+> BEKLENEN yolu daire girisidir; ° email'i TANIMLI eski sakin hesaplari icin
+> email girisi geriye-uyumluluk olarak calismaya devam eder (email'siz sakin
+> zaten giremez). `POST /residents` yoneticinin sakin acma/gecici kod uretme
+> ucudur (§1.2) — unit CRUD'un admin-only olmasindan ayridir; ayni `unit_no`
+> varsa yeni daire acilmaz, mevcuda baglanir.
+>
 > **Gorev atama (yonetici ✅\*):** `yonetici` gorev olusturur/gunceller ama
 > `atanan_user_id` YALNIZ `security` veya `tesis_gorevlisi` rolunde bir
 > kullanici olabilir (aksi 422 `invalid_reference`). `admin` icin bu kisit yok.

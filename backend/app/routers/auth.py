@@ -19,19 +19,33 @@ from ..config import settings
 from ..db import SessionLocal, set_tenant
 from ..deps import get_redis
 from ..errors import APIError
-from ..models import AppUser
-from ..schemas import LoginRequest, RefreshRequest, TokenPair
+from ..models import AppUser, Unit, UnitResident
+from ..schemas import (
+    LoginRequest,
+    RefreshRequest,
+    ResidentLoginRequest,
+    ResidentLoginResponse,
+    SetPasswordRequest,
+    TokenPair,
+)
 from ..security import (
     access_token_ttl_seconds,
     create_access_token,
     create_refresh_token,
+    create_setup_token,
     decode_token,
+    hash_password,
     verify_password,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 _INVALID_CREDS = APIError(401, "invalid_credentials", "Email, parola veya tenant hatali.")
+# Sakin girisinde de hangi adimin patladigi sizdirilmaz (daire var mi, kod mu
+# parola mi yanlis vb. ayirt ettirilmez) — personel akisiyla ayni ilke.
+_INVALID_RESIDENT_CREDS = APIError(
+    401, "invalid_credentials", "Daire no, kod/parola veya tesis hatali."
+)
 
 
 def _refresh_ttl() -> int:
@@ -98,6 +112,140 @@ async def login(
         token_type="Bearer",
         expires_in=access_token_ttl_seconds(),
     )
+
+
+async def _issue_token_pair(redis: aioredis.Redis, user: AppUser) -> TokenPair:
+    """Dogrulanmis kullanici icin access+refresh cifti uret ve refresh'i kaydet."""
+    access = create_access_token(
+        user_id=user.id, tenant_id=user.tenant_id, role=user.role
+    )
+    refresh_token, jti, fam = create_refresh_token(
+        user_id=user.id, tenant_id=user.tenant_id
+    )
+    await _store_refresh(redis, jti, fam)
+    return TokenPair(
+        access_token=access,
+        refresh_token=refresh_token,
+        token_type="Bearer",
+        expires_in=access_token_ttl_seconds(),
+    )
+
+
+async def _resolve_tenant_id(session: AsyncSession, slug: str):
+    """slug -> tenant_id (RLS bootstrap: SECURITY DEFINER fonksiyon)."""
+    return (
+        await session.execute(
+            text("SELECT public.tenant_id_by_slug(:slug)"), {"slug": slug}
+        )
+    ).scalar_one_or_none()
+
+
+@router.post("/login-resident", response_model=ResidentLoginResponse)
+async def login_resident(
+    body: ResidentLoginRequest,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> ResidentLoginResponse:
+    """Sakin girisi: tenant_slug + unit_no + (gecici kod VEYA kalici parola).
+
+    Ayni dairede birden fazla sakin olabilir; hesap, girilen parolanin/kodun
+    HANGI sakinin hash'iyle eslestigine gore cozulur (her sakinin kendi
+    parolasi + kendi tek seferlik kodu vardir — /contracts/auth.md §1.2).
+
+    * Kalici parola eslesirse -> normal oturum (token cifti).
+    * Gecici kod eslesirse (password_set=false) -> oturum YOK; kisa omurlu
+      `setup_token` doner, sakin /auth/set-password ile parolasini belirlemek
+      ZORUNDADIR (kod tek kullanimlik: parola belirlenince silinir).
+    """
+    async with SessionLocal() as session:
+        async with session.begin():
+            tenant_id = await _resolve_tenant_id(session, body.tenant_slug)
+            if tenant_id is None:
+                raise _INVALID_RESIDENT_CREDS
+
+            await set_tenant(session, tenant_id)
+            # Dairenin AKTIF sakinleri (bitis IS NULL) RLS altinda yuklenir.
+            candidates = (
+                await session.execute(
+                    select(AppUser)
+                    .join(UnitResident, UnitResident.user_id == AppUser.id)
+                    .join(Unit, Unit.id == UnitResident.unit_id)
+                    .where(
+                        Unit.no == body.unit_no,
+                        UnitResident.bitis.is_(None),
+                        AppUser.role == "resident",
+                        AppUser.is_active.is_(True),
+                    )
+                )
+            ).scalars().unique().all()
+
+            # Once kalici parolalar (normal giris), sonra gecici kodlar (ilk
+            # giris). Yanlis girdide hangi asamanin patladigi sizdirilmaz.
+            for candidate in candidates:
+                if candidate.password_set and verify_password(
+                    body.password, candidate.password_hash
+                ):
+                    user = candidate
+                    break
+            else:
+                for candidate in candidates:
+                    if not candidate.password_set and verify_password(
+                        body.password, candidate.temp_code_hash
+                    ):
+                        # Gecici kod dogru -> parola kurulumu zorunlu; oturum
+                        # token'i VERILMEZ (kod API erisimi saglamaz).
+                        return ResidentLoginResponse(
+                            password_setup_required=True,
+                            setup_token=create_setup_token(
+                                user_id=candidate.id, tenant_id=candidate.tenant_id
+                            ),
+                        )
+                raise _INVALID_RESIDENT_CREDS
+
+    tokens = await _issue_token_pair(redis, user)
+    return ResidentLoginResponse(
+        password_setup_required=False, **tokens.model_dump()
+    )
+
+
+@router.post("/set-password", response_model=TokenPair)
+async def set_password(
+    body: SetPasswordRequest,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> TokenPair:
+    """Ilk giristeki zorunlu parola belirleme (setup_token ile).
+
+    Basarida: parola kaydedilir (bcrypt), gecici kod SILINIR (tek kullanimlik),
+    password_set=true olur ve tam oturum (token cifti) doner.
+    """
+    try:
+        claims = decode_token(body.setup_token, expected_type="pwd_setup")
+    except jwt.PyJWTError:
+        raise APIError(401, "invalid_token", "Gecersiz veya suresi dolmus kurulum token'i.")
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            await set_tenant(session, claims["tenant_id"])
+            user: AppUser | None = (
+                await session.execute(
+                    select(AppUser).where(AppUser.id == claims.get("sub"))
+                )
+            ).scalar_one_or_none()
+            # Token gecerli olsa da durum degismis olabilir (pasif, parola
+            # zaten belirlenmis => token tek kullanimliktir).
+            if (
+                user is None
+                or not user.is_active
+                or user.password_set
+                or user.temp_code_hash is None
+            ):
+                raise APIError(401, "invalid_token", "Kurulum token'i artik gecerli degil.")
+
+            user.password_hash = hash_password(body.new_password)
+            user.password_set = True
+            user.temp_code_hash = None
+            user.updated_at = func.now()
+
+    return await _issue_token_pair(redis, user)
 
 
 @router.post("/refresh", response_model=TokenPair)

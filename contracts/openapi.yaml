@@ -66,6 +66,109 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
 
+  /auth/login-resident:
+    post:
+      tags: [auth]
+      summary: Sakin girisi — daire no + (gecici kod VEYA kalici parola)
+      description: |
+        SAKIN (resident) girisi personelden AYRIDIR: email yerine
+        `tenant_slug + unit_no + password` alinir. Ayni dairede birden fazla
+        sakin olabilir; hesap, girilen degerin hangi sakinin parola/kod
+        hash'iyle eslestigine gore cozulur (her sakinin kendi parolasi +
+        kendi tek seferlik gecici kodu vardir).
+
+        * Kalici parola eslesirse: `password_setup_required=false` + tam
+          token cifti (personel TokenPair ile ayni alanlar).
+        * GECICI KOD eslesirse (ilk giris): `password_setup_required=true` +
+          `setup_token` doner; oturum token'i VERILMEZ. Istemci
+          `POST /auth/set-password` ile kalici parolayi belirlemek ZORUNDADIR.
+      security: []   # public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResidentLoginRequest"
+      responses:
+        "200":
+          description: Basarili (normal oturum VEYA parola kurulumu gerekli)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResidentLoginResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: Hatali daire no / kod / parola / tesis
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /auth/set-password:
+    post:
+      tags: [auth]
+      summary: Ilk giris sonrasi ZORUNLU kalici parola belirleme (sakin)
+      description: |
+        `login-resident`'in gecici kodla dondurdugu kisa omurlu `setup_token`
+        (~10 dk) ile cagirilir. Basarida parola kaydedilir (bcrypt), gecici
+        kod SILINIR (tek kullanimlik) ve tam oturum (TokenPair) doner —
+        sakin tekrar giris yapmak zorunda kalmaz.
+      security: []   # setup_token govdede tasinir
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetPasswordRequest"
+      responses:
+        "200":
+          description: Parola belirlendi; oturum acildi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: Gecersiz/suresi dolmus/kullanilmis setup_token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /residents:
+    post:
+      tags: [auth]
+      summary: Sakin hesabi olustur (yonetici) — daire + gecici kod
+      description: |
+        Yonetici (veya admin) daire + sakin hesabini tek adimda acar. Ayni
+        `unit_no` varsa YENI daire acilmaz, mevcuta baglanir (ayni dairede
+        coklu sakin). Yanittaki `temp_code` YALNIZ BU YANITTA bir kez duz
+        metin doner — yonetici sakine iletir; sunucuda bcrypt hash'i saklanir
+        ve sakin kalici parolasini belirleyince gecersizlesir.
+        RBAC: admin + yonetici (unit CRUD'un admin-only olmasindan ayri,
+        sakin acma akisidir).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResidentCreate"
+      responses:
+        "201":
+          description: Sakin olusturuldu (gecici kod bir kez gosterilir)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResidentCreated"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: email bu tenant'ta zaten kayitli
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
   /auth/refresh:
     post:
       tags: [auth]
@@ -2206,11 +2309,15 @@ components:
     # password_hash ASLA donmez (guvenlik).
     User:
       type: object
-      required: [id, ad, email, role, is_active, created_at]
+      required: [id, ad, role, is_active, created_at]
       properties:
         id: { type: string, format: uuid }
         ad: { type: string }
-        email: { type: string, format: email }
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: Personelde zorunlu; resident'ta opsiyonel (daire ile girer)
         telefon: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/UserRole" }
         is_active: { type: boolean }
@@ -2242,6 +2349,9 @@ components:
     # ----------------------------- auth ---------------------------- #
     LoginRequest:
       type: object
+      description: |
+        PERSONEL girisi (admin/yonetici/security/tesis_gorevlisi — email ile).
+        Sakin (resident) girisi icin `POST /auth/login-resident` kullanilir.
       required: [tenant_slug, email, password]
       properties:
         tenant_slug:
@@ -2252,6 +2362,79 @@ components:
           example: "acme-plaza"
         email: { type: string, format: email }
         password: { type: string, format: password, minLength: 8 }
+    ResidentLoginRequest:
+      type: object
+      required: [tenant_slug, unit_no, password]
+      properties:
+        tenant_slug:
+          type: string
+          example: "acme-plaza"
+        unit_no:
+          type: string
+          description: Daire no (unit.no; tenant-ici benzersiz)
+          example: "A-12"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: Sakinin kalici parolasi VEYA ilk giriste gecici kod
+    ResidentLoginResponse:
+      type: object
+      required: [password_setup_required]
+      properties:
+        password_setup_required:
+          type: boolean
+          description: |
+            true => gecici kodla ilk giris; `setup_token` ile
+            `POST /auth/set-password` ZORUNLU (oturum token'i verilmedi).
+            false => normal oturum; TokenPair alanlari dolu.
+        setup_token:
+          type: string
+          nullable: true
+          description: Kisa omurlu (~10 dk) parola-kurulum token'i
+        access_token: { type: string, nullable: true }
+        refresh_token: { type: string, nullable: true }
+        token_type: { type: string, nullable: true, example: Bearer }
+        expires_in: { type: integer, nullable: true, example: 900 }
+    SetPasswordRequest:
+      type: object
+      required: [setup_token, new_password]
+      properties:
+        setup_token: { type: string }
+        new_password: { type: string, format: password, minLength: 8 }
+    ResidentCreate:
+      type: object
+      required: [unit_no, ad]
+      properties:
+        unit_no: { type: string, example: "A-12" }
+        blok:
+          type: string
+          nullable: true
+          description: Yalniz YENI acilan daireye islenir
+        ad: { type: string, example: "Ayse Yilmaz" }
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: Sakinde OPSIYONEL (giris anahtari degildir)
+        telefon: { type: string, nullable: true }
+        rol_tipi: { $ref: "#/components/schemas/ResidentRol" }
+    ResidentCreated:
+      type: object
+      required: [user_id, unit_id, unit_no, ad, temp_code]
+      properties:
+        user_id: { type: string, format: uuid }
+        unit_id: { type: string, format: uuid }
+        unit_no: { type: string, example: "A-12" }
+        ad: { type: string }
+        email: { type: string, nullable: true }
+        temp_code:
+          type: string
+          example: "K7MR-2QWX"
+          description: |
+            TEK SEFERLIK gecici giris kodu — YALNIZ bu yanitta duz metin
+            doner (yonetici sakine iletir). Sunucuda bcrypt hash'i saklanir;
+            sakin kalici parolasini belirleyince silinir.
     RefreshRequest:
       type: object
       required: [refresh_token]

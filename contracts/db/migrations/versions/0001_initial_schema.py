@@ -148,17 +148,28 @@ def upgrade() -> None:
             id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id      uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
             ad             text NOT NULL,
-            email          text NOT NULL,
+            -- personel icin zorunlu (login anahtari); resident icin OPSIYONEL
+            -- (sakin daire no + parola ile girer — bkz. /contracts/auth.md §1.2).
+            email          text,
             telefon        text,
-            password_hash  text NOT NULL,
+            -- resident ilk giriste parola belirleyene kadar NULL olabilir.
+            password_hash  text,
+            -- yonetici'nin sakine ilettigi TEK SEFERLIK gecici kod (bcrypt hash;
+            -- duz metin ASLA saklanmaz). Parola belirlenince NULL'lanir.
+            temp_code_hash text,
+            -- sakin kendi kalici parolasini belirledi mi? (ilk giris akisi)
+            password_set   boolean NOT NULL DEFAULT false,
             role           user_role NOT NULL,
             is_active      boolean NOT NULL DEFAULT true,
             created_at     timestamptz NOT NULL DEFAULT now(),
             updated_at     timestamptz NOT NULL DEFAULT now(),
             -- composite FK hedefi olabilmesi icin:
             UNIQUE (id, tenant_id),
-            -- email tenant icinde benzersiz (case-insensitive):
-            CONSTRAINT uq_app_user_tenant_email UNIQUE (tenant_id, email)
+            -- email tenant icinde benzersiz (case-insensitive; NULL'lar serbest):
+            CONSTRAINT uq_app_user_tenant_email UNIQUE (tenant_id, email),
+            -- personel email'siz olamaz; resident'ta serbest:
+            CONSTRAINT ck_app_user_staff_email
+                CHECK (role = 'resident' OR email IS NOT NULL)
         );
         """
     )

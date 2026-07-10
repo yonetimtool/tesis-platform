@@ -26,6 +26,7 @@ from .routers import me as me_router
 from .routers import me_patrol as me_patrol_router
 from .routers import notifications as notifications_router
 from .routers import patrol_plans as patrol_plans_router
+from .routers import residents as residents_router
 from .routers import scans as scans_router
 from .routers import shifts as shifts_router
 from .routers import task_completions as task_completions_router
@@ -57,6 +58,7 @@ app = FastAPI(
 
 install_error_handlers(app)
 app.include_router(auth_router.router)
+app.include_router(residents_router.router)
 app.include_router(me_router.router)
 app.include_router(me_patrol_router.router)
 app.include_router(shifts_router.router)

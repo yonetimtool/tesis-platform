@@ -24,6 +24,11 @@ import psycopg
 
 from app.security import hash_password
 
+# Ikinci sakinin (henuz parola belirlememis) tek seferlik gecici kodu.
+# Dev/test icin sabittir; sakin girisinde "ilk giris" akisini denemek icin:
+#   unit_no=A-12 + bu kod -> parola belirleme zorunlu.
+RESIDENT2_TEMP_CODE = os.getenv("SEED_RESIDENT2_TEMP_CODE", "K7MR-2QWX")
+
 OWNER_DSN = os.getenv(
     "OWNER_DSN",
     "postgresql://tesis_owner:owner_secret_change_me@db:5432/tesis",
@@ -62,6 +67,8 @@ USERS = [
         "password": os.getenv("SEED_CLEANER_PASSWORD", "Clean123!"),
     },
     {
+        # Parolasi BELIRLENMIS sakin: daire girisi unit_no=A-12 + parola.
+        # (email yalniz seed idempotency anahtari; sakin email ile girmez.)
         "ad": "Acme Sakin",
         "email": "resident@acme.com",
         "role": "resident",
@@ -86,15 +93,19 @@ def main() -> int:
         ).fetchone()[0]
         print(f"[seed] tenant '{TENANT['slug']}' -> {tenant_id}")
 
-        # 2) kullanici upsert ((tenant_id, email) benzersiz).
+        # 2) kullanici upsert ((tenant_id, email) benzersiz). Parolasi belli
+        #    hesaplarda password_set=true (gecici kod akisi disi).
         for u in USERS:
             conn.execute(
                 """
-                INSERT INTO app_user (tenant_id, ad, email, password_hash, role, is_active)
-                VALUES (%s, %s, %s, %s, %s::user_role, true)
+                INSERT INTO app_user (tenant_id, ad, email, password_hash,
+                                      password_set, temp_code_hash, role, is_active)
+                VALUES (%s, %s, %s, %s, true, NULL, %s::user_role, true)
                 ON CONFLICT (tenant_id, email) DO UPDATE
                     SET ad = EXCLUDED.ad,
                         password_hash = EXCLUDED.password_hash,
+                        password_set = true,
+                        temp_code_hash = NULL,
                         role = EXCLUDED.role,
                         is_active = true,
                         updated_at = now()
@@ -102,6 +113,34 @@ def main() -> int:
                 (tenant_id, u["ad"], u["email"], hash_password(u["password"]), u["role"]),
             )
             print(f"[seed] user {u['email']:<18} role={u['role']}")
+
+        # 2b) ikinci sakin: gecici kod BEKLEYEN hesap (ilk giris akisi testi).
+        #     Ayni daireye (A-12) baglanir -> ayni dairede coklu sakin ornegi.
+        conn.execute(
+            """
+            INSERT INTO app_user (tenant_id, ad, email, password_hash,
+                                  password_set, temp_code_hash, role, is_active)
+            VALUES (%s, %s, %s, NULL, false, %s, 'resident'::user_role, true)
+            ON CONFLICT (tenant_id, email) DO UPDATE
+                SET ad = EXCLUDED.ad,
+                    password_hash = NULL,
+                    password_set = false,
+                    temp_code_hash = EXCLUDED.temp_code_hash,
+                    role = 'resident'::user_role,
+                    is_active = true,
+                    updated_at = now()
+            """,
+            (
+                tenant_id,
+                "Acme Sakin Es",
+                "resident2@acme.com",
+                hash_password(RESIDENT2_TEMP_CODE),
+            ),
+        )
+        print(
+            "[seed] user resident2@acme.com  role=resident "
+            f"(gecici kod bekliyor: {RESIDENT2_TEMP_CODE})"
+        )
 
         # 3) aidat ornegi: daire A-12 + resident baglantisi + 2026-06 tahakkuk.
         unit_id = conn.execute(
@@ -113,18 +152,24 @@ def main() -> int:
             """,
             (tenant_id,),
         ).fetchone()[0]
-        resident_id = conn.execute(
-            "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
-            (tenant_id, "resident@acme.com"),
-        ).fetchone()[0]
-        conn.execute(
-            """
-            INSERT INTO unit_resident (tenant_id, unit_id, user_id, rol_tipi)
-            VALUES (%s, %s, %s, 'malik')
-            ON CONFLICT (unit_id, user_id) WHERE bitis IS NULL DO NOTHING
-            """,
-            (tenant_id, unit_id, resident_id),
-        )
+        # Iki sakin de A-12'ye baglanir (ayni dairede coklu sakin — her biri
+        # kendi parolasi/koduyla girer).
+        for email, rol_tipi in [
+            ("resident@acme.com", "malik"),
+            ("resident2@acme.com", "malik"),
+        ]:
+            resident_id = conn.execute(
+                "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
+                (tenant_id, email),
+            ).fetchone()[0]
+            conn.execute(
+                """
+                INSERT INTO unit_resident (tenant_id, unit_id, user_id, rol_tipi)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (unit_id, user_id) WHERE bitis IS NULL DO NOTHING
+                """,
+                (tenant_id, unit_id, resident_id, rol_tipi),
+            )
         conn.execute(
             """
             INSERT INTO dues_assessment (tenant_id, unit_id, donem, tutar_kurus, aciklama)

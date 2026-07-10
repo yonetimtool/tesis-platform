@@ -81,6 +81,8 @@ async def create_user(
         email=str(body.email),
         telefon=body.telefon,
         password_hash=hash_password(body.password),
+        # parola admin tarafindan belirlendi (gecici kod akisi disinda).
+        password_set=True,
         role=body.role,
         is_active=True,
     )
@@ -111,6 +113,7 @@ async def update_user(
         setattr(obj, key, value)
     if new_password is not None:
         obj.password_hash = hash_password(new_password)
+        obj.password_set = True
     obj.updated_at = func.now()
     try:
         await db.flush()

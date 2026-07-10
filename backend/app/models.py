@@ -141,9 +141,17 @@ class AppUser(Base):
         nullable=False,
     )
     ad: Mapped[str] = mapped_column(Text, nullable=False)
-    email: Mapped[str] = mapped_column(Text, nullable=False)
+    # personel icin zorunlu (login anahtari); resident icin opsiyonel.
+    email: Mapped[str | None] = mapped_column(Text, nullable=True)
     telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
-    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    # resident ilk giriste parola belirleyene kadar NULL.
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # sakinin tek seferlik gecici giris kodu (bcrypt hash; duz metin yok).
+    temp_code_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # sakin kalici parolasini belirledi mi (ilk giris akisi tamamlandi mi)?
+    password_set: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     role: Mapped[str] = mapped_column(USER_ROLE, nullable=False)
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")

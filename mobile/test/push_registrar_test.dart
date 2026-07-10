@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:mobile/src/features/auth/data/auth_repository_impl.dart';
 import 'package:mobile/src/features/auth/domain/auth_repository.dart';
+import 'package:mobile/src/features/auth/domain/resident_login_result.dart';
 import 'package:mobile/src/features/auth/presentation/auth_controller.dart';
 import 'package:mobile/src/features/push/data/device_api.dart';
 import 'package:mobile/src/features/push/data/push_messaging.dart';
@@ -111,6 +112,26 @@ class _FakeAuthRepository implements AuthRepository {
     required String tenantSlug,
     required String email,
     required String password,
+    bool rememberMe = false,
+  }) async {
+    sessionExists = true;
+  }
+
+  @override
+  Future<ResidentLoginResult> loginResident({
+    required String tenantSlug,
+    required String unitNo,
+    required String password,
+    bool rememberMe = false,
+  }) async {
+    sessionExists = true;
+    return const ResidentLoginResult(passwordSetupRequired: false);
+  }
+
+  @override
+  Future<void> setPassword({
+    required String setupToken,
+    required String newPassword,
     bool rememberMe = false,
   }) async {
     sessionExists = true;
