@@ -87,6 +87,14 @@ DUES_YONTEM = ENUM(
     "elden", "havale", "kart", "diger",
     name="dues_yontem", create_type=False,
 )
+BUDGET_TIP = ENUM(
+    "gelir", "gider",
+    name="budget_tip", create_type=False,
+)
+BUDGET_KAYNAK = ENUM(
+    "manuel", "aidat_odeme",
+    name="budget_kaynak", create_type=False,
+)
 DUES_DURUM = ENUM(
     "basarili", "bekliyor", "iptal",
     name="dues_durum", create_type=False,
@@ -734,6 +742,8 @@ class DuesPayment(Base):
         UniqueConstraint(
             "tenant_id", "idempotency_key", name="uq_payment_tenant_idempotency"
         ),
+        # composite FK hedefi (budget_entry.ilgili_payment_id).
+        UniqueConstraint("id", "tenant_id", name="uq_payment_id_tenant"),
     )
 
     id: Mapped[uuid.UUID] = _pk()
@@ -757,6 +767,91 @@ class DuesPayment(Base):
     kaydeden_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
     created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class BudgetCategory(Base):
+    """Dinamik gelir/gider kategorisi (butce — Wave 2A).
+
+    Silme = SOFT-DELETE (aktif=false): hareketi olan kategori hard-delete
+    edilemez (budget_entry FK RESTRICT) — gecmis kayitlar kategorisini korur.
+    """
+
+    __tablename__ = "budget_category"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_budgetcat_id_tenant"),
+        UniqueConstraint("tenant_id", "tip", "ad", name="uq_budgetcat_tenant_tip_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    tip: Mapped[str] = mapped_column(BUDGET_TIP, nullable=False)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class BudgetEntry(Base):
+    """Butce defteri kaydi. Para INTEGER KURUS (dues ile ayni desen).
+
+    kaynak='aidat_odeme' kayitlari basarili aidat odemesinden OTOMATIK uretilir
+    ve ilgili_payment_id tasir; UNIQUE (tenant_id, ilgili_payment_id) ayni
+    odemeden ikinci kaydi engeller (idempotency).
+    """
+
+    __tablename__ = "budget_entry"
+    __table_args__ = (
+        CheckConstraint("tutar_kurus > 0", name="ck_budget_entry_tutar"),
+        UniqueConstraint("id", "tenant_id", name="uq_budget_entry_id_tenant"),
+        UniqueConstraint(
+            "tenant_id", "ilgili_payment_id", name="uq_budget_entry_payment"
+        ),
+        ForeignKeyConstraint(
+            ["kategori_id", "tenant_id"],
+            ["budget_category.id", "budget_category.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_budget_entry_kategori",
+        ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (ilgili_payment_id).
+        ForeignKeyConstraint(
+            ["ilgili_payment_id", "tenant_id"],
+            ["dues_payment.id", "dues_payment.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_budget_entry_payment",
+        ),
+        ForeignKeyConstraint(
+            ["created_by", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_budget_entry_created_by",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    kategori_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    # Kategoriden kopyalanir (denormalize) — bkz. migration notu.
+    tip: Mapped[str] = mapped_column(BUDGET_TIP, nullable=False)
+    tutar_kurus: Mapped[int] = mapped_column(Integer, nullable=False)
+    tarih = mapped_column(Date, nullable=False)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kaynak: Mapped[str] = mapped_column(
+        BUDGET_KAYNAK, nullable=False, server_default=text("'manuel'")
+    )
+    ilgili_payment_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    created_at = _created_at()
+    updated_at = _created_at()
 
 
 # --------------------------------------------------------------------------- #

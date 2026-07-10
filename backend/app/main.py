@@ -14,6 +14,7 @@ from .errors import install_error_handlers
 from .routers import announcements as announcements_router
 from .routers import assets as assets_router
 from .routers import auth as auth_router
+from .routers import budget as budget_router
 from .routers import checkpoints as checkpoints_router
 from .routers import complaints as complaints_router
 from .routers import dashboard as dashboard_router
@@ -80,6 +81,7 @@ app.include_router(emergency_router.router)
 app.include_router(tenant_router.router)
 app.include_router(units_router.router)
 app.include_router(dues_router.router)
+app.include_router(budget_router.router)
 app.include_router(users_router.router)
 app.include_router(webhooks_router.router)
 

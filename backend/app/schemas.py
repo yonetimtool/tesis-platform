@@ -1023,3 +1023,121 @@ class UnitDuesStatus(BaseModel):
 
 class MeDuesResponse(BaseModel):
     items: list[UnitDuesStatus]
+
+
+# ------------------------------- budget ------------------------------------ #
+# Butce (Wave 2A): para HER YERDE integer KURUS (dues deseni; float ASLA).
+BudgetTip = Literal["gelir", "gider"]
+BudgetKaynak = Literal["manuel", "aidat_odeme"]
+
+
+class BudgetCategoryCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=100)
+    tip: BudgetTip
+
+
+class BudgetCategoryUpdate(BaseModel):
+    """aktif=false = soft-delete (kayitli hareketler kategorisini korur)."""
+
+    ad: str | None = Field(None, min_length=1, max_length=100)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "BudgetCategoryUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class BudgetCategoryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    tip: str
+    aktif: bool
+    created_at: datetime
+
+
+class BudgetCategoryListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[BudgetCategoryOut]
+
+
+class BudgetEntryCreate(BaseModel):
+    """Manuel defter kaydi. `tip` ISTEMCIDEN ALINMAZ — kategoriden turetilir
+    (kategori-tip uyusmazligi imkansiz olsun)."""
+
+    kategori_id: uuid.UUID
+    tutar_kurus: int = Field(..., ge=1)  # KURUS; sifir/negatif reddedilir
+    tarih: date
+    aciklama: str | None = Field(None, max_length=1000)
+
+    @field_validator("tutar_kurus", mode="before")
+    @classmethod
+    def _tam_kurus(cls, v: object) -> object:
+        # 10.5 gibi float'lar sessizce yuvarlanmasin — para integer kurus.
+        if isinstance(v, float):
+            raise ValueError("tutar_kurus tam sayi (kurus) olmali")
+        return v
+
+
+class BudgetEntryUpdate(BaseModel):
+    """Yalniz MANUEL kayitlar duzenlenebilir (aidat_odeme kayitlari aidat
+    modulunun yetkisindedir)."""
+
+    kategori_id: uuid.UUID | None = None
+    tutar_kurus: int | None = Field(None, ge=1)
+    tarih: date | None = None
+    aciklama: str | None = Field(None, max_length=1000)
+
+    @field_validator("tutar_kurus", mode="before")
+    @classmethod
+    def _tam_kurus(cls, v: object) -> object:
+        if isinstance(v, float):
+            raise ValueError("tutar_kurus tam sayi (kurus) olmali")
+        return v
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "BudgetEntryUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class BudgetEntryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    kategori_id: uuid.UUID
+    # Liste/rapor icin kategori adi (join ile doldurulur).
+    kategori_ad: str | None = None
+    tip: str
+    tutar_kurus: int
+    tarih: date
+    aciklama: str | None = None
+    kaynak: str
+    ilgili_payment_id: uuid.UUID | None = None
+    created_by: uuid.UUID
+    created_at: datetime
+
+
+class BudgetEntryListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[BudgetEntryOut]
+
+
+class BudgetCategorySummary(BaseModel):
+    kategori_id: uuid.UUID
+    ad: str
+    tip: str
+    toplam_kurus: int
+
+
+class BudgetSummary(BaseModel):
+    """Kasa ozeti: bakiye = gelir - gider (negatif olabilir). KURUS."""
+
+    toplam_gelir_kurus: int
+    toplam_gider_kurus: int
+    bakiye_kurus: int
+    kategoriler: list[BudgetCategorySummary]

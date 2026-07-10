@@ -21,6 +21,7 @@ from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, DuesAssessment, DuesPayment, Unit, UnitResident
 from ..payments import get_payment_provider
+from .budget import ensure_dues_income_entry
 from ..schemas import (
     DuesAssessmentCreate,
     DuesAssessmentListResponse,
@@ -244,6 +245,10 @@ async def create_payment(
             raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
         raise translate_integrity(exc)
     await db.refresh(obj)
+    # OTOMATIK butce entegrasyonu: basarili odeme 'Aidat' gelir kaydi uretir
+    # (ayni transaction; idempotent; butce aksakligi odemeyi DUSURMEZ).
+    # Kartli odeme 'bekliyor' baslar — geliri webhook 'basarili' yapinca yazilir.
+    await ensure_dues_income_entry(db, obj)
     content = DuesPaymentOut.model_validate(obj).model_dump(mode="json")
     if init.redirect_url:  # kart: saglayici odeme sayfasi URL'i
         content["odeme_url"] = init.redirect_url

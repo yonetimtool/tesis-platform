@@ -20,6 +20,7 @@ from ..db import SessionLocal, set_tenant
 from ..errors import APIError
 from ..models import DuesPayment
 from ..payments import get_named_provider
+from .budget import ensure_dues_income_entry
 
 router = APIRouter(prefix="/webhooks/payments", tags=["webhooks"])
 
@@ -78,5 +79,8 @@ async def payment_webhook(provider: str, request: Request) -> dict:
                 raise APIError(400, "amount_mismatch", "Webhook tutari odeme ile uyusmuyor.")
 
             payment.durum = event.durum
+            # Kartli odeme webhook'la 'basarili' oldugunda otomatik butce
+            # gelir kaydi (idempotent; hata webhook islemesini dusurmez).
+            await ensure_dues_income_entry(session, payment)
 
     return {"status": "ok", "durum": event.durum}

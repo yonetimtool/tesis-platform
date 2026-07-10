@@ -738,7 +738,9 @@ def upgrade() -> None:
                 FOREIGN KEY (kaydeden_user_id, tenant_id)
                 REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
             -- cift odeme kaydi korumasi:
-            CONSTRAINT uq_payment_tenant_idempotency UNIQUE (tenant_id, idempotency_key)
+            CONSTRAINT uq_payment_tenant_idempotency UNIQUE (tenant_id, idempotency_key),
+            -- composite FK hedefi olabilmesi icin (butce otomatik gelir kaydi):
+            CONSTRAINT uq_payment_id_tenant UNIQUE (id, tenant_id)
         );
         """
     )
@@ -794,6 +796,74 @@ def upgrade() -> None:
     op.execute(
         f"GRANT EXECUTE ON FUNCTION public.payment_tenant_by_ref(text, text) TO {APP_ROLE};"
     )
+
+    # ------------------------------------------------------------------ #
+    # 9m. budget_category + budget_entry  (butce modulu — Wave 2A)
+    #     Dinamik gelir/gider kategorileri + defter. Para INTEGER KURUS.
+    #     Kategori silme = SOFT-DELETE (aktif=false): hareketi olan kategori
+    #     hard-delete edilemez (ON DELETE RESTRICT) — gecmis kayitlar
+    #     kategorisini korur.
+    # ------------------------------------------------------------------ #
+    op.execute("CREATE TYPE budget_tip AS ENUM ('gelir', 'gider');")
+    # kaynak: manuel (elle girilen) | aidat_odeme (basarili aidat odemesinden
+    # otomatik uretilen gelir kaydi — ilgili_payment_id ile baglanir).
+    op.execute("CREATE TYPE budget_kaynak AS ENUM ('manuel', 'aidat_odeme');")
+    op.execute(
+        """
+        CREATE TABLE budget_category (
+            id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id   uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            ad          text NOT NULL,
+            tip         budget_tip NOT NULL,
+            aktif       boolean NOT NULL DEFAULT true,
+            created_at  timestamptz NOT NULL DEFAULT now(),
+            updated_at  timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_budgetcat_id_tenant UNIQUE (id, tenant_id),
+            -- ayni tip icinde ad tekrari yok (tenant-ici):
+            CONSTRAINT uq_budgetcat_tenant_tip_ad UNIQUE (tenant_id, tip, ad)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_budgetcat_tenant ON budget_category (tenant_id);")
+    op.execute(
+        """
+        CREATE TABLE budget_entry (
+            id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id          uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            kategori_id        uuid NOT NULL,
+            -- tip kategoriden kopyalanir (denormalize): ozet toplamlari
+            -- join'siz ve kategori tip'i sonradan degisse bile tutarli kalir.
+            tip                budget_tip NOT NULL,
+            tutar_kurus        integer NOT NULL,     -- KURUS; float ASLA
+            tarih              date NOT NULL,
+            aciklama           text,
+            kaynak             budget_kaynak NOT NULL DEFAULT 'manuel',
+            -- otomatik aidat kaydinin kaynagi; odeme silinirse kayit kalir (SET NULL).
+            ilgili_payment_id  uuid,
+            created_by         uuid NOT NULL,
+            created_at         timestamptz NOT NULL DEFAULT now(),
+            updated_at         timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT ck_budget_entry_tutar CHECK (tutar_kurus > 0),
+            CONSTRAINT uq_budget_entry_id_tenant UNIQUE (id, tenant_id),
+            -- hareketi olan kategori silinemez (soft-delete'e zorlar):
+            CONSTRAINT fk_budget_entry_kategori
+                FOREIGN KEY (kategori_id, tenant_id)
+                REFERENCES budget_category (id, tenant_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_budget_entry_payment
+                FOREIGN KEY (ilgili_payment_id, tenant_id)
+                REFERENCES dues_payment (id, tenant_id) ON DELETE SET NULL (ilgili_payment_id),
+            CONSTRAINT fk_budget_entry_created_by
+                FOREIGN KEY (created_by, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- IDEMPOTENCY: ayni odemeden IKINCI gelir kaydi uretilmez.
+            CONSTRAINT uq_budget_entry_payment UNIQUE (tenant_id, ilgili_payment_id)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_budget_entry_tenant ON budget_entry (tenant_id);")
+    op.execute("CREATE INDEX ix_budget_entry_tarih ON budget_entry (tenant_id, tarih);")
+    op.execute("CREATE INDEX ix_budget_entry_tip ON budget_entry (tenant_id, tip);")
+    op.execute("CREATE INDEX ix_budget_entry_kategori ON budget_entry (kategori_id);")
 
     # ------------------------------------------------------------------ #
     # 9z. user_device  (FCM push token kaydi — kullanici basina cihaz(lar))
@@ -928,6 +998,8 @@ def upgrade() -> None:
         "dues_assessment",
         "dues_payment",
         "payment_webhook_event",
+        "budget_category",
+        "budget_entry",
         "user_device",
         "announcement",
         "complaint",
@@ -972,6 +1044,8 @@ def downgrade() -> None:
         "complaint",
         "announcement",
         "user_device",
+        "budget_entry",
+        "budget_category",
         "payment_webhook_event",
         "dues_payment",
         "dues_assessment",
@@ -995,6 +1069,8 @@ def downgrade() -> None:
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
     op.execute("DROP TYPE IF EXISTS device_platform;")
+    op.execute("DROP TYPE IF EXISTS budget_kaynak;")
+    op.execute("DROP TYPE IF EXISTS budget_tip;")
     op.execute("DROP TYPE IF EXISTS dues_durum;")
     op.execute("DROP TYPE IF EXISTS dues_yontem;")
     op.execute("DROP TYPE IF EXISTS resident_rol;")

@@ -219,6 +219,19 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.reports),
           ),
         );
+      case HomeMenuEntry.budget:
+        // Yonetici: butce — kategoriler, gelir/gider defteri, kasa ozeti.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.savings_outlined),
+            title: const Text('Butce'),
+            subtitle: const Text(
+              'Gelir/gider defteri, kategoriler ve kasa ozeti',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.budget),
+          ),
+        );
       case HomeMenuEntry.myDues:
         // Resident: kendi dairelerinin borc durumu (salt okuma).
         return Card(

@@ -38,6 +38,10 @@ enum HomeMenuEntry {
   /// Aylik raporlar — yonetici: devriye/gorev/aidat ozeti (salt okuma).
   reports,
 
+  /// Butce (Wave 2A) — yonetici: kategori + defter + kasa ozeti.
+  /// Sakin seffaflik gorunumu Wave 2B'de eklenecek.
+  budget,
+
   /// Aidatim — resident: kendi dairelerinin borc durumu (salt okuma).
   myDues,
 
@@ -94,6 +98,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.complaints,
         HomeMenuEntry.patrolTracking,
         HomeMenuEntry.taskTracking,
+        HomeMenuEntry.budget,
         HomeMenuEntry.reports,
       ];
     case UserRole.resident:

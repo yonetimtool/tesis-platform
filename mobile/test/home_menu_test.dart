@@ -90,6 +90,7 @@ void main() {
           HomeMenuEntry.complaints,
           HomeMenuEntry.patrolTracking,
           HomeMenuEntry.taskTracking,
+          HomeMenuEntry.budget,
           HomeMenuEntry.reports,
         ],
       );
@@ -98,6 +99,26 @@ void main() {
       expect(menu, isNot(contains(HomeMenuEntry.assets)));
       expect(menu, isNot(contains(HomeMenuEntry.outbox)));
       expect(menu, isNot(contains(HomeMenuEntry.patrol))); // Turlarim degil
+    });
+
+    test('Butce karti (Wave 2A) YALNIZ yonetici menusunde — sakin okumasi '
+        'Wave 2B', () {
+      expect(
+        homeMenuForRole(UserRole.yonetici),
+        contains(HomeMenuEntry.budget),
+      );
+      for (final role in [
+        UserRole.admin, // admin butceyi panelden yonetir
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.budget)),
+          reason: role.wire,
+        );
+      }
     });
 
     test('devriye TAKIBI yalniz yonetici menusunde (saha Turlarim kullanir)',

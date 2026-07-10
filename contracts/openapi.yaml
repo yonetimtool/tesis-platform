@@ -2016,6 +2016,226 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
 
   # ================================================================= #
+  # BUTCE (Wave 2A — yonetim tarafi; sakin seffafligi Wave 2B)
+  # Para HER YERDE integer KURUS (float asla).
+  # ================================================================= #
+  /budget/categories:
+    get:
+      tags: [budget]
+      summary: Butce kategorileri (yonetim)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: tip
+          in: query
+          schema: { $ref: "#/components/schemas/BudgetTip" }
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste (ad ASC)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/BudgetCategory" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [budget]
+      summary: Kategori olustur (dinamik; yonetici/admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BudgetCategoryCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetCategory" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Ayni tip icinde ayni ad zaten var
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /budget/categories/{category_id}:
+    patch:
+      tags: [budget]
+      summary: Kategori guncelle — aktif=false SOFT-DELETE'tir
+      description: |
+        Hard DELETE ucu bilincli olarak YOK: hareketi olan kategori
+        silinemez (FK RESTRICT); pasiflestirilen (aktif=false) kategoriye
+        YENI kayit yazilamaz ama eski kayitlar kategorisini korur.
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BudgetCategoryUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetCategory" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Ayni tip icinde ayni ad zaten var
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /budget/entries:
+    get:
+      tags: [budget]
+      summary: Defter kayitlari (tarih DESC; yonetim)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: tip
+          in: query
+          schema: { $ref: "#/components/schemas/BudgetTip" }
+        - name: kategori_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: kaynak
+          in: query
+          schema: { $ref: "#/components/schemas/BudgetKaynak" }
+        - name: donem
+          in: query
+          description: "'YYYY-MM' ay filtresi (baslangic/bitis'e gore oncelikli)"
+          schema: { type: string, example: "2026-07" }
+        - name: baslangic
+          in: query
+          schema: { type: string, format: date }
+        - name: bitis
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/BudgetEntry" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [budget]
+      summary: Manuel gelir/gider kaydi (yonetici/admin)
+      description: |
+        `tip` GONDERILMEZ — secilen kategoriden turetilir. Pasif kategoriye
+        yeni kayit yazilamaz (422). kaynak her zaman 'manuel' olur
+        (aidat_odeme kayitlarini sistem uretir).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BudgetEntryCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetEntry" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /budget/entries/{entry_id}:
+    patch:
+      tags: [budget]
+      summary: Manuel kaydi duzenle (aidat_odeme kayitlari duzenlenemez)
+      parameters:
+        - name: entry_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BudgetEntryUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetEntry" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [budget]
+      summary: Manuel kaydi sil (aidat_odeme kayitlari silinemez → 422)
+      parameters:
+        - name: entry_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /budget/summary:
+    get:
+      tags: [budget]
+      summary: "Kasa ozeti: gelir, gider, bakiye (+kategori kirilimi)"
+      description: |
+        bakiye = toplam gelir - toplam gider (NEGATIF olabilir). Tum tutarlar
+        integer KURUS. Filtresiz cagri tum zamanlari kapsar.
+      parameters:
+        - name: donem
+          in: query
+          schema: { type: string, example: "2026-07" }
+        - name: baslangic
+          in: query
+          schema: { type: string, format: date }
+        - name: bitis
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Ozet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
   # ODEME WEBHOOK (public ama imza-korumali)
   # ================================================================= #
   /webhooks/payments/{provider}:
@@ -3403,3 +3623,99 @@ components:
         payments:
           type: array
           items: { $ref: "#/components/schemas/DuesPayment" }
+
+    # ---------------------------- butce ----------------------------- #
+    BudgetTip:
+      type: string
+      enum: [gelir, gider]
+    BudgetKaynak:
+      type: string
+      enum: [manuel, aidat_odeme]
+      description: |
+        manuel = elle girilen kayit; aidat_odeme = basarili aidat odemesinden
+        OTOMATIK uretilen gelir kaydi (ilgili_payment_id dolu; duzenlenemez/
+        silinemez — idempotent: ayni odemeden ikinci kayit uretilmez).
+    BudgetCategory:
+      type: object
+      required: [id, ad, tip, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, example: "Elektrik" }
+        tip: { $ref: "#/components/schemas/BudgetTip" }
+        aktif:
+          type: boolean
+          description: false = soft-delete (yeni kayit yazilamaz; eskiler korunur)
+        created_at: { type: string, format: date-time }
+    BudgetCategoryCreate:
+      type: object
+      required: [ad, tip]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        tip: { $ref: "#/components/schemas/BudgetTip" }
+    BudgetCategoryUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        aktif: { type: boolean }
+    BudgetEntry:
+      type: object
+      required: [id, kategori_id, tip, tutar_kurus, tarih, kaynak, created_by, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kategori_id: { type: string, format: uuid }
+        kategori_ad: { type: string, nullable: true }
+        tip: { $ref: "#/components/schemas/BudgetTip" }
+        tutar_kurus:
+          type: integer
+          minimum: 1
+          description: KURUS (integer; float ASLA)
+          example: 120000
+        tarih: { type: string, format: date }
+        aciklama: { type: string, nullable: true }
+        kaynak: { $ref: "#/components/schemas/BudgetKaynak" }
+        ilgili_payment_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: kaynak=aidat_odeme ise kaynak odeme (dues_payment.id)
+        created_by: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+    BudgetEntryCreate:
+      type: object
+      required: [kategori_id, tutar_kurus, tarih]
+      description: "`tip` gonderilmez — kategoriden turetilir."
+      properties:
+        kategori_id: { type: string, format: uuid }
+        tutar_kurus: { type: integer, minimum: 1, description: KURUS }
+        tarih: { type: string, format: date }
+        aciklama: { type: string, nullable: true, maxLength: 1000 }
+    BudgetEntryUpdate:
+      type: object
+      minProperties: 1
+      description: Yalniz kaynak=manuel kayitlar (aidat_odeme → 422)
+      properties:
+        kategori_id: { type: string, format: uuid }
+        tutar_kurus: { type: integer, minimum: 1 }
+        tarih: { type: string, format: date }
+        aciklama: { type: string, nullable: true, maxLength: 1000 }
+    BudgetCategorySummaryItem:
+      type: object
+      required: [kategori_id, ad, tip, toplam_kurus]
+      properties:
+        kategori_id: { type: string, format: uuid }
+        ad: { type: string }
+        tip: { $ref: "#/components/schemas/BudgetTip" }
+        toplam_kurus: { type: integer }
+    BudgetSummary:
+      type: object
+      required: [toplam_gelir_kurus, toplam_gider_kurus, bakiye_kurus, kategoriler]
+      properties:
+        toplam_gelir_kurus: { type: integer }
+        toplam_gider_kurus: { type: integer }
+        bakiye_kurus:
+          type: integer
+          description: gelir - gider (kasa; NEGATIF olabilir)
+        kategoriler:
+          type: array
+          items: { $ref: "#/components/schemas/BudgetCategorySummaryItem" }

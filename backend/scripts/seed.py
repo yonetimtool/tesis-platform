@@ -180,6 +180,91 @@ def main() -> int:
         )
         print(f"[seed] unit A-12 -> {unit_id} (+ resident baglantisi + 2026-06 tahakkuk 750.00 TL)")
 
+        # 3b) BUTCE (Wave 2A): kategoriler + ornek defter + otomatik aidat→gelir.
+        #     Para INTEGER KURUS. 'Aidat' otomatik gelir kategorisidir (basarili
+        #     odeme kaydi burada toplanir).
+        kategoriler = [
+            ("Aidat", "gelir"),      # otomatik aidat gelirlerinin varsayilan kategorisi
+            ("Ek odeme", "gelir"),
+            ("Elektrik", "gider"),
+            ("Temizlik", "gider"),
+        ]
+        kat_ids: dict[tuple[str, str], str] = {}
+        for ad, tip in kategoriler:
+            kat_ids[(ad, tip)] = conn.execute(
+                """
+                INSERT INTO budget_category (tenant_id, ad, tip)
+                VALUES (%s, %s, %s::budget_tip)
+                ON CONFLICT ON CONSTRAINT uq_budgetcat_tenant_tip_ad
+                    DO UPDATE SET aktif = true, updated_at = now()
+                RETURNING id
+                """,
+                (tenant_id, ad, tip),
+            ).fetchone()[0]
+        print(f"[seed] butce kategorileri: {', '.join(f'{a}/{t}' for a, t in kategoriler)}")
+
+        yonetici_id = conn.execute(
+            "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
+            (tenant_id, "yonetici@acme.com"),
+        ).fetchone()[0]
+
+        # Ornek MANUEL defter kayitlari (aciklama dogal anahtar — idempotent).
+        ornek_kayitlar = [
+            ("Elektrik", "gider", 245000, "2026-06-20", "Ortak alan elektrik faturasi (Haziran)"),
+            ("Temizlik", "gider", 180000, "2026-07-01", "Temizlik hizmeti (Temmuz)"),
+            ("Ek odeme", "gelir", 50000, "2026-07-05", "Otopark kira geliri"),
+        ]
+        for ad, tip, kurus, tarih, aciklama in ornek_kayitlar:
+            conn.execute(
+                """
+                INSERT INTO budget_entry (tenant_id, kategori_id, tip, tutar_kurus,
+                                          tarih, aciklama, kaynak, created_by)
+                SELECT %(t)s, %(k)s, %(tip)s::budget_tip, %(kurus)s, %(tarih)s,
+                       %(a)s, 'manuel'::budget_kaynak, %(u)s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM budget_entry
+                    WHERE tenant_id = %(t)s AND aciklama = %(a)s
+                )
+                """,
+                {
+                    "t": tenant_id, "k": kat_ids[(ad, tip)], "tip": tip,
+                    "kurus": kurus, "tarih": tarih, "a": aciklama, "u": yonetici_id,
+                },
+            )
+        print("[seed] ornek defter: Elektrik 2450.00 TL gider, Temizlik 1800.00 TL gider, Ek odeme 500.00 TL gelir")
+
+        # Ornek AIDAT ODEMESI + otomatik gelir kaydi (API'nin urettigiyle ayni
+        # sekil: kaynak=aidat_odeme + ilgili_payment_id; UNIQUE ile idempotent).
+        payment_id = conn.execute(
+            """
+            INSERT INTO dues_payment (tenant_id, unit_id, tutar_kurus, donem,
+                                      yontem, durum, kaydeden_user_id, idempotency_key,
+                                      odeme_zamani)
+            VALUES (%s, %s, 75000, '2026-06', 'elden'::dues_yontem,
+                    'basarili'::dues_durum, %s, 'seed-a12-2026-06', '2026-06-25T10:00:00Z')
+            ON CONFLICT (tenant_id, idempotency_key) DO UPDATE SET donem = EXCLUDED.donem
+            RETURNING id
+            """,
+            (tenant_id, unit_id, yonetici_id),
+        ).fetchone()[0]
+        conn.execute(
+            """
+            INSERT INTO budget_entry (tenant_id, kategori_id, tip, tutar_kurus, tarih,
+                                      aciklama, kaynak, ilgili_payment_id, created_by)
+            VALUES (%s, %s, 'gelir'::budget_tip, 75000, '2026-06-25',
+                    'Aidat odemesi 2026-06 (otomatik)', 'aidat_odeme'::budget_kaynak, %s, %s)
+            ON CONFLICT ON CONSTRAINT uq_budget_entry_payment DO NOTHING
+            """,
+            (tenant_id, kat_ids[("Aidat", "gelir")], payment_id, yonetici_id),
+        )
+        # Dogrulama: odemenin TEK otomatik gelir kaydi var mi?
+        auto_count = conn.execute(
+            "SELECT count(*) FROM budget_entry WHERE ilgili_payment_id = %s",
+            (payment_id,),
+        ).fetchone()[0]
+        assert auto_count == 1, f"aidat->gelir kaydi bekleniyordu, bulunan: {auto_count}"
+        print("[seed] aidat odemesi A-12 750.00 TL (2026-06) -> otomatik 'Aidat' gelir kaydi OK (tek, idempotent)")
+
         # 4) ornek duyuru (yonetici imzali). Dogal benzersiz anahtar yok ->
         #    ayni baslik varsa eklemeyerek idempotent kalinir.
         conn.execute(
