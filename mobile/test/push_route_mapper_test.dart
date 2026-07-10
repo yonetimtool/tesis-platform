@@ -88,6 +88,21 @@ void main() {
       );
     });
 
+    test('tip=etkinlik -> ilgili etkinlik (sakine yeni-etkinlik push\'u)', () {
+      expect(
+        routeForPushData(const {'tip': 'etkinlik', 'etkinlik_id': 'e-1'}),
+        '/etkinlik?etkinlik_id=e-1',
+      );
+    });
+
+    test('etkinlik_id yoksa/bossa etkinlik LISTESI acilir', () {
+      expect(routeForPushData(const {'tip': 'etkinlik'}), '/etkinlik');
+      expect(
+        routeForPushData(const {'tip': 'etkinlik', 'etkinlik_id': ''}),
+        '/etkinlik',
+      );
+    });
+
     test('bilinmeyen/eksik tip -> null (yonlendirme yok)', () {
       expect(routeForPushData(const {'tip': 'acil_durum'}), isNull);
       expect(routeForPushData(const {}), isNull);

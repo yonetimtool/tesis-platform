@@ -196,6 +196,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /reservations` (talep)          |  ❌   | ❌  | ❌  | ❌  | ✅  |
 | `GET  /reservations` (liste/detay)    |  ✅   | ✅  | ❌  | ❌  | 🔵  |
 | `PATCH /reservations/{id}` (onay/red) |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET  /events` (liste/detay + sayilar)|  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `POST/PATCH/DELETE /events*`          |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `PUT  /events/{id}/rsvp`              |  ❌   | ❌  | ❌  | ❌  | ✅  |
 | `GET  /tasks` (liste/detay)           |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /tasks`                         |  ✅   | ✅* | ❌  | ❌  | ❌  |
 | `PATCH /tasks/{id}`                   |  ✅   | ✅* | ❌  | ❌  | ❌  |
@@ -411,6 +414,22 @@ Notlar:
   - **Push:** talep → yonetim cihazlari (`data: tip=rezervasyon`); karar →
     YALNIZ talebi acan sakin (`tip=rezervasyon_karar`). EK gonderim — hatasi
     kaydi etkilemez.
+- **Etkinlik + RSVP (`/events`):** yonetici etkinlik duyurur (cenaze, mac
+  izleme vb.), sakinler katilim beyan eder; sayilar herkese seffaf.
+  - **OLUSTUR/DUZENLE/SIL `admin`+`yonetici`** (duyuru deseni). Olusturmada
+    **TUM SAKINLERIN** cihazlarina push denenir (hedef kitle sakinler —
+    personel etkinligi OKUR ama push almaz; karar). `data: tip=etkinlik,
+    etkinlik_id`. Silmede RSVP'ler CASCADE.
+  - **OKUMA TUM roller** — liste/detay **SEFFAF SAYILARLA** doner:
+    `katiliyorum_sayisi` + `katilmiyorum_sayisi` herkese acik.
+    **Kim-katiliyor listesi URUN GEREGI YOK** — kimlik degil yalniz sayi
+    paylasilir; `benim_durumum` yalniz istekteki kullanicinin KENDI beyani.
+  - **RSVP (`PUT /events/{id}/rsvp`) YALNIZ `resident`:** etkinligin
+    muhatabi site sakinleri — personel beyan vermez (karar). Kullanici
+    basina **TEK kayit** (`UNIQUE (tenant_id, etkinlik_id, user_id)`);
+    tekrar PUT beyani **DEGISTIRIR** (ON CONFLICT upsert — cift kayit
+    imkansiz, es zamanli PUT guvenli). Yanit guncel sayilarla etkinliktir.
+    RSVP'de ek push YOK (urun karari).
 - **Sikayet/Oneri (`/complaints`):** tesiste yasayan/calisandan yonetime
   talep kanali (canli test kesin kurali). ACMA `security` +
   `tesis_gorevlisi` + `resident` (acan token'dan, `durum=acik`, opsiyonel

@@ -113,6 +113,10 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE rezervasyon_durum AS ENUM ('bekliyor', 'onaylandi', 'reddedildi');"
     )
+    # etkinlik RSVP durumu (sakin katilim beyani; degistirilebilir).
+    op.execute(
+        "CREATE TYPE katilim_durum AS ENUM ('katiliyorum', 'katilmiyorum');"
+    )
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -1174,6 +1178,67 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9z6. etkinlik + etkinlik_katilim  (etkinlik + RSVP: yonetici etkinlik
+    #     olusturur (cenaze/mac izleme vb.) -> tum sakinlere push -> sakin
+    #     katiliyorum/katilmiyorum beyan eder (degistirilebilir; kullanici
+    #     basina TEK kayit — UNIQUE + upsert). SAYILAR SEFFAF: katilim
+    #     sayisini herkes gorur; kim-katiliyor listesi URUN GEREGI YOK —
+    #     kimlik degil, yalniz sayi paylasilir.)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE etkinlik (
+            id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id           uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            baslik              text NOT NULL,
+            aciklama            text NOT NULL,
+            tarih               timestamptz NOT NULL,   -- etkinlik zamani
+            konum               text,                   -- opsiyonel yer bilgisi
+            olusturan_user_id   uuid NOT NULL,
+            created_at          timestamptz NOT NULL DEFAULT now(),
+            updated_at          timestamptz NOT NULL DEFAULT now(),
+            -- composite FK hedefi (etkinlik_katilim.etkinlik_id).
+            CONSTRAINT uq_etkinlik_id_tenant UNIQUE (id, tenant_id),
+            CONSTRAINT fk_etkinlik_olusturan
+                FOREIGN KEY (olusturan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_etkinlik_tenant ON etkinlik (tenant_id);")
+    op.execute(
+        "CREATE INDEX ix_etkinlik_tenant_tarih ON etkinlik (tenant_id, tarih DESC);"
+    )
+
+    op.execute(
+        """
+        CREATE TABLE etkinlik_katilim (
+            id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id     uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            etkinlik_id   uuid NOT NULL,
+            user_id       uuid NOT NULL,
+            durum         katilim_durum NOT NULL,
+            created_at    timestamptz NOT NULL DEFAULT now(),
+            updated_at    timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT fk_katilim_etkinlik
+                FOREIGN KEY (etkinlik_id, tenant_id)
+                REFERENCES etkinlik (id, tenant_id) ON DELETE CASCADE,
+            CONSTRAINT fk_katilim_user
+                FOREIGN KEY (user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE CASCADE,
+            -- kullanici basina TEK RSVP (degisiklik = upsert; cift kayit yok).
+            CONSTRAINT uq_katilim_tenant_etkinlik_user
+                UNIQUE (tenant_id, etkinlik_id, user_id)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_katilim_tenant ON etkinlik_katilim (tenant_id);")
+    op.execute(
+        "CREATE INDEX ix_katilim_etkinlik "
+        "ON etkinlik_katilim (tenant_id, etkinlik_id, durum);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -1208,6 +1273,8 @@ def upgrade() -> None:
         "kargo",
         "ortak_alan",
         "rezervasyon",
+        "etkinlik",
+        "etkinlik_katilim",
     ):
         _enable_rls(table)
 
@@ -1246,6 +1313,8 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "etkinlik_katilim",
+        "etkinlik",
         "rezervasyon",
         "ortak_alan",
         "kargo",
@@ -1277,6 +1346,7 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS katilim_durum;")
     op.execute("DROP TYPE IF EXISTS rezervasyon_durum;")
     op.execute("DROP TYPE IF EXISTS kargo_durum;")
     op.execute("DROP TYPE IF EXISTS visitor_durum;")

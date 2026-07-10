@@ -215,6 +215,46 @@ void main() {
       }
     });
 
+    test('etkinlik kesin kurali: yonetim olusturur; RSVP yalniz resident; '
+        'okuma (seffaf sayilar) bilinen 5 rolde', () {
+      // OLUSTUR/DUZENLE/SIL: yalniz yonetim
+      for (final role in [UserRole.admin, UserRole.yonetici]) {
+        expect(role.canManageEvents, isTrue, reason: role.wire);
+      }
+      for (final role in [
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+        UserRole.unknown,
+      ]) {
+        expect(role.canManageEvents, isFalse, reason: role.wire);
+      }
+
+      // RSVP: yalniz sakin (etkinligin muhatabi)
+      expect(UserRole.resident.canRsvpEvents, isTrue);
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.unknown,
+      ]) {
+        expect(role.canRsvpEvents, isFalse, reason: role.wire);
+      }
+
+      // OKUMA + SEFFAF SAYILAR: bilinen 5 rolun 5'i
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
+        expect(role.canViewEvents, isTrue, reason: role.wire);
+      }
+      expect(UserRole.unknown.canViewEvents, isFalse);
+    });
+
     test('TR gorunen adlar', () {
       expect(UserRole.yonetici.label, 'Yonetici');
       expect(UserRole.security.label, 'Guvenlik');

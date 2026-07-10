@@ -323,6 +323,20 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.rezervasyon),
           ),
         );
+      case HomeMenuEntry.etkinlik:
+        // Etkinlik + RSVP: yonetim duyurur, sakin katilim beyan eder;
+        // sayilar herkese seffaf.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.celebration_outlined),
+            title: const Text('Etkinlikler'),
+            subtitle: const Text(
+              'Site etkinlikleri; katilim beyani ve seffaf sayilar',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.etkinlik),
+          ),
+        );
     }
   }
 }

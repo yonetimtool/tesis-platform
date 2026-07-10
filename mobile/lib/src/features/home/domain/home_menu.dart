@@ -72,6 +72,11 @@ enum HomeMenuEntry {
   /// onaylar/reddeder (+takvim); resident aktif alanlara slot talep eder +
   /// kendi dairesinin taleplerini izler; saha rolleri ERISMEZ (auth.md §4).
   rezervasyon,
+
+  /// Etkinlikler — yonetim olusturur/duzenler (RSVP sayilarini izler);
+  /// resident Katiliyorum/Katilmiyorum beyani verir; OKUMA + seffaf
+  /// sayilar TUM roller (auth.md §4).
+  etkinlik,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -81,6 +86,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.etkinlik,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -96,6 +102,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.etkinlik,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -111,6 +118,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.etkinlik,
         HomeMenuEntry.complaints,
         HomeMenuEntry.tasks,
         HomeMenuEntry.taskTracking,
@@ -124,6 +132,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.etkinlik,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -145,6 +154,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.kargo,
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.etkinlik,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,

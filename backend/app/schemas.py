@@ -747,6 +747,62 @@ class RezervasyonListResponse(BaseModel):
     items: list[RezervasyonOut]
 
 
+# ------------------------------- etkinlik ----------------------------------- #
+KatilimDurum = Literal["katiliyorum", "katilmiyorum"]
+
+
+class EtkinlikCreate(BaseModel):
+    baslik: str = Field(..., min_length=1, max_length=200)
+    aciklama: str = Field(..., min_length=1, max_length=5000)
+    # Etkinlik zamani (timestamptz — ISO8601 UTC).
+    tarih: datetime
+    konum: str | None = Field(None, min_length=1, max_length=500)
+
+
+class EtkinlikUpdate(BaseModel):
+    baslik: str | None = Field(None, min_length=1, max_length=200)
+    aciklama: str | None = Field(None, min_length=1, max_length=5000)
+    tarih: datetime | None = None
+    konum: str | None = Field(None, max_length=500)
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "EtkinlikUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class EtkinlikRsvp(BaseModel):
+    """Sakin RSVP'si — kullanici basina TEK kayit; tekrar PUT ile degisir."""
+
+    durum: KatilimDurum
+
+
+class EtkinlikOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    baslik: str
+    aciklama: str
+    tarih: datetime
+    konum: str | None = None
+    olusturan_user_id: uuid.UUID
+    # Olusturan yoneticinin adi (join ile).
+    olusturan_ad: str | None = None
+    # SEFFAF SAYILAR: herkes gorur; kim-katiliyor listesi URUN GEREGI YOK.
+    katiliyorum_sayisi: int = 0
+    katilmiyorum_sayisi: int = 0
+    # Istekteki kullanicinin kendi RSVP'si (yoksa null) — UI secim gosterimi.
+    benim_durumum: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class EtkinlikListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[EtkinlikOut]
+
+
 class NotificationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

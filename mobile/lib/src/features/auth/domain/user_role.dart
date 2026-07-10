@@ -117,4 +117,15 @@ enum UserRole {
 
   /// Rezervasyon karari (`PATCH /reservations/{id}`) — admin + yonetici.
   bool get canDecideReservations => this == admin || this == yonetici;
+
+  /// Etkinlik olustur/duzenle/sil (`POST/PATCH/DELETE /events`) —
+  /// admin + yonetici (duyuru deseni).
+  bool get canManageEvents => this == admin || this == yonetici;
+
+  /// Etkinlik RSVP (`PUT /events/{id}/rsvp`) — YALNIZ resident (etkinligin
+  /// muhatabi sakinler; personel beyan vermez — auth.md §4).
+  bool get canRsvpEvents => this == resident;
+
+  /// Etkinlik okuma + SEFFAF sayilar — bilinen 5 rolun 5'i.
+  bool get canViewEvents => this != unknown;
 }

@@ -444,6 +444,54 @@ def main() -> int:
         )
         print("[seed] rezervasyon Havuz 2026-07-15 10:00-12:00 A-12 (onayli, 4 kisi)")
 
+        # 9) etkinlikler + ornek RSVP'ler: yaklasan "Mac izleme" (2 katiliyor)
+        #    + gecmis "Site genel kurulu" — sayac/ekranlar veriyle denensin.
+        #    Etkinlik (tenant, baslik) ile idempotent; RSVP UNIQUE ile.
+        etkinlikler = [
+            ("Mac izleme aksami", "Buyuk ekranda milli mac — ikramlar yonetimden.",
+             "2026-07-20T18:00:00Z", "Sosyal tesis salonu"),
+            ("Site genel kurulu", "Yillik olagan genel kurul toplantisi.",
+             "2026-06-15T17:00:00Z", "Toplanti Odasi"),
+        ]
+        etkinlik_ids: dict[str, str] = {}
+        for baslik, aciklama, tarih, konum in etkinlikler:
+            etkinlik_ids[baslik] = conn.execute(
+                """
+                WITH yeni AS (
+                    INSERT INTO etkinlik (tenant_id, baslik, aciklama, tarih,
+                                          konum, olusturan_user_id)
+                    SELECT %(t)s, %(b)s, %(a)s, %(tarih)s, %(k)s, %(y)s
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM etkinlik
+                        WHERE tenant_id = %(t)s AND baslik = %(b)s
+                    )
+                    RETURNING id
+                )
+                SELECT id FROM yeni
+                UNION ALL
+                SELECT id FROM etkinlik WHERE tenant_id = %(t)s AND baslik = %(b)s
+                LIMIT 1
+                """,
+                {"t": tenant_id, "b": baslik, "a": aciklama,
+                 "tarih": tarih, "k": konum, "y": yonetici_id},
+            ).fetchone()[0]
+        print("[seed] etkinlikler: 'Mac izleme aksami' (yaklasan) + 'Site genel kurulu' (gecmis)")
+
+        # RSVP'ler: iki sakin de mac izlemeye katiliyor (sayi=2 gorunsun).
+        for email in ("resident@acme.com", "resident2@acme.com"):
+            conn.execute(
+                """
+                INSERT INTO etkinlik_katilim (tenant_id, etkinlik_id, user_id, durum)
+                SELECT %(t)s, %(e)s, u.id, 'katiliyorum'::katilim_durum
+                FROM app_user u
+                WHERE u.tenant_id = %(t)s AND u.email = %(m)s
+                ON CONFLICT ON CONSTRAINT uq_katilim_tenant_etkinlik_user
+                    DO NOTHING
+                """,
+                {"t": tenant_id, "e": etkinlik_ids["Mac izleme aksami"], "m": email},
+            )
+        print("[seed] RSVP: 2 sakin 'Mac izleme aksami' icin katiliyorum (seffaf sayi=2)")
+
     print("[seed] tamamlandi (idempotent).")
     return 0
 

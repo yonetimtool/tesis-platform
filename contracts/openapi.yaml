@@ -1445,6 +1445,134 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
+  # ETKINLIK + RSVP (yonetici olusturur -> sakinlere push -> sakin
+  # katiliyorum/katilmiyorum beyani -> SAYILAR HERKESE SEFFAF)
+  # ================================================================= #
+  /events:
+    get:
+      tags: [etkinlik]
+      summary: Etkinlik listesi (tarih DESC) + seffaf katilim sayilari
+      description: |
+        TUM roller okur. Her etkinlik SEFFAF sayilarla doner
+        (katiliyorum_sayisi + katilmiyorum_sayisi — herkes gorur) ve
+        istekteki kullanicinin KENDI beyani (benim_durumum; yoksa null) ile
+        gelir. Kim-katiliyor listesi URUN GEREGI donmez — kimlik degil,
+        yalniz sayi. Yaklasan/gecmis ayrimini istemci tarih'e gore yapar.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Etkinlik" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      tags: [etkinlik]
+      summary: Etkinlik olustur (admin + yonetici)
+      description: |
+        Site yonetimi etkinligi duyurur (orn. cenaze, mac izleme). Kayit
+        sonrasi TUM SAKINLERIN cihazlarina push denenir (hedef kitle
+        sakinler; personel okur ama push almaz — EK gonderim, hatasi kaydi
+        etkilemez; data: tip=etkinlik, etkinlik_id).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EtkinlikCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Etkinlik" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /events/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [etkinlik]
+      summary: Etkinlik detayi + seffaf sayilar + kendi beyanim
+      responses:
+        "200":
+          description: Etkinlik
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Etkinlik" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [etkinlik]
+      summary: Etkinlik duzenle (admin + yonetici; en az bir alan)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EtkinlikUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Etkinlik" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [etkinlik]
+      summary: Etkinlik sil (admin + yonetici; RSVP'ler CASCADE)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /events/{id}/rsvp:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    put:
+      tags: [etkinlik]
+      summary: RSVP ver/degistir (YALNIZ resident; kullanici basina TEK kayit)
+      description: |
+        Sakin katilim beyani: katiliyorum | katilmiyorum. Kullanici basina
+        TEK kayit — tekrar PUT beyani DEGISTIRIR (ON CONFLICT upsert; cift
+        kayit imkansiz, es zamanli PUT'lar guvenli). Yanit guncel SEFFAF
+        sayilarla etkinligin kendisidir (UI sayiyi aninda gorur). Personel
+        rolleri RSVP veremez (403) — etkinligin muhatabi sakinler; RSVP'de
+        ek push YOK (urun karari).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EtkinlikRsvp" }
+      responses:
+        "200":
+          description: Beyan kaydedildi/guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Etkinlik" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
   # TASKS (esnek gorev sistemi) + tamamlama + foto kanit
   # ================================================================= #
   /tasks:
@@ -3782,6 +3910,54 @@ components:
       required: [durum]
       properties:
         durum: { type: string, enum: [onaylandi, reddedildi] }
+
+    Etkinlik:
+      type: object
+      description: |
+        Etkinlik + SEFFAF katilim sayilari. Sayilar herkese acik;
+        kim-katiliyor listesi URUN GEREGI donmez (kimlik degil yalniz sayi).
+        benim_durumum istekteki kullanicinin KENDI beyanidir.
+      required: [id, baslik, aciklama, tarih, olusturan_user_id,
+                 katiliyorum_sayisi, katilmiyorum_sayisi, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        baslik: { type: string, maxLength: 200, example: Mac izleme aksami }
+        aciklama: { type: string, maxLength: 5000 }
+        tarih: { type: string, format: date-time, description: Etkinlik zamani }
+        konum: { type: string, nullable: true, maxLength: 500 }
+        olusturan_user_id: { type: string, format: uuid }
+        olusturan_ad: { type: string, nullable: true }
+        katiliyorum_sayisi: { type: integer, minimum: 0 }
+        katilmiyorum_sayisi: { type: integer, minimum: 0 }
+        benim_durumum:
+          type: string
+          enum: [katiliyorum, katilmiyorum]
+          nullable: true
+          description: Istekteki kullanicinin kendi RSVP'si (beyan yoksa null)
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    EtkinlikCreate:
+      type: object
+      required: [baslik, aciklama, tarih]
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        aciklama: { type: string, minLength: 1, maxLength: 5000 }
+        tarih: { type: string, format: date-time }
+        konum: { type: string, nullable: true, minLength: 1, maxLength: 500 }
+    EtkinlikUpdate:
+      type: object
+      description: En az bir alan gerekli
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        aciklama: { type: string, minLength: 1, maxLength: 5000 }
+        tarih: { type: string, format: date-time }
+        konum: { type: string, nullable: true, maxLength: 500 }
+    EtkinlikRsvp:
+      type: object
+      description: Kullanici basina TEK kayit; tekrar PUT beyani degistirir
+      required: [durum]
+      properties:
+        durum: { type: string, enum: [katiliyorum, katilmiyorum] }
 
     Notification:
       type: object

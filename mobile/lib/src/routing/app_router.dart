@@ -16,6 +16,7 @@ import '../features/kargo/presentation/kargo_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
 import '../features/dues/presentation/my_dues_screen.dart';
 import '../features/emergency/presentation/emergency_screen.dart';
+import '../features/etkinlik/presentation/etkinlik_screen.dart';
 import '../features/patrol/presentation/patrol_screen.dart';
 import '../features/patrol/presentation/patrol_tracking_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
@@ -51,6 +52,7 @@ class AppRoutes {
   static const visitors = '/visitors';
   static const kargo = '/kargo';
   static const rezervasyon = '/rezervasyon';
+  static const etkinlik = '/etkinlik';
 }
 
 /// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
@@ -86,6 +88,12 @@ String? routeForPushData(Map<String, String> data) {
       return id == null || id.isEmpty
           ? AppRoutes.rezervasyon
           : '${AppRoutes.rezervasyon}?rezervasyon_id=$id';
+    // Yeni etkinlik duyurusu (sakinlere) → ilgili etkinlik acilir.
+    case 'etkinlik':
+      final id = data['etkinlik_id'];
+      return id == null || id.isEmpty
+          ? AppRoutes.etkinlik
+          : '${AppRoutes.etkinlik}?etkinlik_id=$id';
     case 'duyuru':
       return AppRoutes.announcements;
     default:
@@ -215,6 +223,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         // detayi otomatik acilir (yonetimde Onayla/Reddet ile).
         builder: (context, state) => RezervasyonScreen(
           initialRezervasyonId: state.uri.queryParameters['rezervasyon_id'],
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.etkinlik,
+        // Push tiklamasindan gelinirse ?etkinlik_id=... ile ilgili etkinligin
+        // detayi otomatik acilir (sakinde Katiliyorum/Katilmiyorum ile).
+        builder: (context, state) => EtkinlikScreen(
+          initialEtkinlikId: state.uri.queryParameters['etkinlik_id'],
         ),
       ),
       GoRoute(

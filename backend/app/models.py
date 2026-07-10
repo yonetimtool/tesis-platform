@@ -115,6 +115,10 @@ REZERVASYON_DURUM = ENUM(
     "bekliyor", "onaylandi", "reddedildi",
     name="rezervasyon_durum", create_type=False,
 )
+KATILIM_DURUM = ENUM(
+    "katiliyorum", "katilmiyorum",
+    name="katilim_durum", create_type=False,
+)
 
 
 def _pk() -> Mapped[uuid.UUID]:
@@ -1149,6 +1153,75 @@ class Rezervasyon(Base):
     created_at = _created_at()
 
 
+class Etkinlik(Base):
+    """Etkinlik (cenaze/mac izleme vb.) — yonetici olusturur, sakinler RSVP.
+
+    Katilim SAYISI seffaftir (herkes gorur); kim-katiliyor listesi URUN
+    GEREGI paylasilmaz — yalniz sayi (bkz. routers/events.py).
+    """
+
+    __tablename__ = "etkinlik"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_etkinlik_id_tenant"),
+        ForeignKeyConstraint(
+            ["olusturan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_etkinlik_olusturan",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    baslik: Mapped[str] = mapped_column(Text, nullable=False)
+    aciklama: Mapped[str] = mapped_column(Text, nullable=False)
+    tarih = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    konum: Mapped[str | None] = mapped_column(Text, nullable=True)
+    olusturan_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class EtkinlikKatilim(Base):
+    """Etkinlik RSVP'si — kullanici basina TEK kayit (UNIQUE), degistirilebilir
+    (upsert). Etkinlik silinince RSVP'ler CASCADE ile gider."""
+
+    __tablename__ = "etkinlik_katilim"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["etkinlik_id", "tenant_id"],
+            ["etkinlik.id", "etkinlik.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_katilim_etkinlik",
+        ),
+        ForeignKeyConstraint(
+            ["user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_katilim_user",
+        ),
+        UniqueConstraint(
+            "tenant_id", "etkinlik_id", "user_id",
+            name="uq_katilim_tenant_etkinlik_user",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    etkinlik_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    durum: Mapped[str] = mapped_column(KATILIM_DURUM, nullable=False)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
 class UserDevice(Base):
     __tablename__ = "user_device"
     __table_args__ = (
@@ -1199,6 +1272,8 @@ __all__ = [
     "Kargo",
     "OrtakAlan",
     "Rezervasyon",
+    "Etkinlik",
+    "EtkinlikKatilim",
     "UserDevice",
     "USER_ROLE",
     "GUN_TIPI",
@@ -1215,4 +1290,5 @@ __all__ = [
     "VISITOR_DURUM",
     "KARGO_DURUM",
     "REZERVASYON_DURUM",
+    "KATILIM_DURUM",
 ]

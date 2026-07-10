@@ -9,6 +9,7 @@ void main() {
       expect(homeMenuForRole(UserRole.admin), const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.etkinlik,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -22,6 +23,7 @@ void main() {
       expect(homeMenuForRole(UserRole.security), const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.etkinlik,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -92,6 +94,7 @@ void main() {
         const [
           HomeMenuEntry.emergency,
           HomeMenuEntry.announcements,
+          HomeMenuEntry.etkinlik,
           HomeMenuEntry.complaints,
           HomeMenuEntry.visitors,
           HomeMenuEntry.kargo,
@@ -154,6 +157,7 @@ void main() {
         HomeMenuEntry.kargo,
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.announcements,
+        HomeMenuEntry.etkinlik,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
@@ -200,6 +204,23 @@ void main() {
         homeMenuForRole(UserRole.tesisGorevlisi),
         isNot(contains(HomeMenuEntry.kargo)),
       );
+    });
+
+    test('Etkinlikler karti bilinen 5 rolun 5inde (okuma + seffaf sayilar '
+        'herkese acik; RSVP yalniz sakinde, yonetim olusturur)', () {
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.etkinlik),
+          reason: role.wire,
+        );
+      }
     });
 
     test('Ziyaretciler karti (kapi onay akisi): admin+yonetici+security+'
