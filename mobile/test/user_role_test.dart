@@ -255,6 +255,21 @@ void main() {
       expect(UserRole.unknown.canViewEvents, isFalse);
     });
 
+    test('site kurallari kesin kurali: CRUD yalniz yonetim (okuma herkese)',
+        () {
+      for (final role in [UserRole.admin, UserRole.yonetici]) {
+        expect(role.canManageSiteRules, isTrue, reason: role.wire);
+      }
+      for (final role in [
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+        UserRole.unknown,
+      ]) {
+        expect(role.canManageSiteRules, isFalse, reason: role.wire);
+      }
+    });
+
     test('TR gorunen adlar', () {
       expect(UserRole.yonetici.label, 'Yonetici');
       expect(UserRole.security.label, 'Guvenlik');

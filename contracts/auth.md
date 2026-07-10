@@ -199,6 +199,8 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /events` (liste/detay + sayilar)|  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `POST/PATCH/DELETE /events*`          |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `PUT  /events/{id}/rsvp`              |  ❌   | ❌  | ❌  | ❌  | ✅  |
+| `GET  /site-rules` (liste/detay + ?q=)|  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `POST/PATCH/DELETE /site-rules*`      |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /tasks` (liste/detay)           |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /tasks`                         |  ✅   | ✅* | ❌  | ❌  | ❌  |
 | `PATCH /tasks/{id}`                   |  ✅   | ✅* | ❌  | ❌  | ❌  |
@@ -430,6 +432,20 @@ Notlar:
     tekrar PUT beyani **DEGISTIRIR** (ON CONFLICT upsert — cift kayit
     imkansiz, es zamanli PUT guvenli). Yanit guncel sayilarla etkinliktir.
     RSVP'de ek push YOK (urun karari).
+- **Site kurallari (`/site-rules`):** blog-tarzi kural icerigi — yonetici
+  liste tutar (ekle/duzenle/sil), TUM roller okur.
+  - **CRUD `admin`+`yonetici`** (duyuru deseni); **OKUMA TUM roller** —
+    liste `sira` ASC (esitlikte eski once) siralanir.
+  - **ARAMA:** `?q=` basligi **SUNUCU tarafinda ILIKE** ile suzer (karar) —
+    buyuk/kucuk harf duyarsiz; `%`/`_` joker karakterleri kacislanir (arama
+    literal metin); RLS ile tenant-kapsamli — baska tenant'in kurali
+    aramaya SIZMAZ.
+  - **Silme HARD DELETE** (karar): salt icerik — operasyonel gecmis/FK
+    tasimaz; soft-delete karmasasi gereksiz.
+  - **Foto MEVCUT presign akisiyla** (`/uploads/presign` → PUT → `foto_key`;
+    yeni upload yolu YOK); `foto_key` tenant-namespace dogrulanir (IDOR),
+    okumada kisa omurlu `foto_url`. PATCH'te acik `foto_key=null` gorseli
+    kaldirir. **Push YOK** — kurallar duyuru degil basvuru icerigi (karar).
 - **Sikayet/Oneri (`/complaints`):** tesiste yasayan/calisandan yonetime
   talep kanali (canli test kesin kurali). ACMA `security` +
   `tesis_gorevlisi` + `resident` (acan token'dan, `durum=acik`, opsiyonel

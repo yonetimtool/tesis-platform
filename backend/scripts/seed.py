@@ -492,6 +492,37 @@ def main() -> int:
             )
         print("[seed] RSVP: 2 sakin 'Mac izleme aksami' icin katiliyorum (seffaf sayi=2)")
 
+        # 10) site kurallari: 3 ornek kural (sira ile) — liste + baslik
+        #     aramasi veriyle denensin. (tenant, baslik) ile idempotent;
+        #     fotosuz (foto gercek akista presign ile yuklenir).
+        kurallar = [
+            (1, "Otopark Kullanimi",
+             "Her daireye bir otopark yeri ayrilmistir. Misafir araclari "
+             "yalniz misafir otoparkini kullanabilir; yer degisimi yonetim "
+             "onayina tabidir."),
+            (2, "Havuz Saatleri",
+             "Havuz 08:00-22:00 arasi acik; 12 yas alti cocuklar veli "
+             "gozetiminde girebilir. Havuz alanina cam esya sokulmaz."),
+            (3, "Gurultu Kurallari",
+             "Hafta ici 22:00-08:00, hafta sonu 24:00-10:00 arasi gurultu "
+             "yasaktir. Tadilat yalniz hafta ici 09:00-18:00 arasi yapilabilir."),
+        ]
+        for sira, baslik, icerik in kurallar:
+            conn.execute(
+                """
+                INSERT INTO site_kurali (tenant_id, baslik, icerik, sira,
+                                         olusturan_user_id)
+                SELECT %(t)s, %(b)s, %(i)s, %(s)s, %(y)s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM site_kurali
+                    WHERE tenant_id = %(t)s AND baslik = %(b)s
+                )
+                """,
+                {"t": tenant_id, "b": baslik, "i": icerik, "s": sira,
+                 "y": yonetici_id},
+            )
+        print("[seed] site kurallari: Otopark Kullanimi (1), Havuz Saatleri (2), Gurultu Kurallari (3)")
+
     print("[seed] tamamlandi (idempotent).")
     return 0
 

@@ -1222,6 +1222,42 @@ class EtkinlikKatilim(Base):
     updated_at = _created_at()
 
 
+class SiteKurali(Base):
+    """Site kurali — blog-tarzi icerik (yonetici CRUD, herkes okur).
+
+    sira ile siralanir; baslikta ILIKE arama (router). Silme HARD DELETE:
+    salt icerik — operasyonel gecmis/FK tasimaz (karar, bkz. migration 9z7).
+    """
+
+    __tablename__ = "site_kurali"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_site_kurali_id_tenant"),
+        CheckConstraint("sira >= 0", name="ck_site_kurali_sira"),
+        ForeignKeyConstraint(
+            ["olusturan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_site_kurali_olusturan",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    baslik: Mapped[str] = mapped_column(Text, nullable=False)
+    icerik: Mapped[str] = mapped_column(Text, nullable=False)
+    foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sira: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    olusturan_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
 class UserDevice(Base):
     __tablename__ = "user_device"
     __table_args__ = (
@@ -1274,6 +1310,7 @@ __all__ = [
     "Rezervasyon",
     "Etkinlik",
     "EtkinlikKatilim",
+    "SiteKurali",
     "UserDevice",
     "USER_ROLE",
     "GUN_TIPI",

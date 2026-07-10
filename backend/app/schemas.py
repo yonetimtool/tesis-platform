@@ -803,6 +803,53 @@ class EtkinlikListResponse(BaseModel):
     items: list[EtkinlikOut]
 
 
+# ------------------------------ site kurallari ------------------------------ #
+class SiteKuraliCreate(BaseModel):
+    baslik: str = Field(..., min_length=1, max_length=200)
+    icerik: str = Field(..., min_length=1, max_length=10000)
+    # Opsiyonel gorsel: /uploads/presign ile yuklenen obje anahtari.
+    foto_key: str | None = None
+    # Liste sirasi (kucuk once); verilmezse sona (0 varsayilanla en basa
+    # dusmemesi icin istemci genelde mevcut-en-buyuk+1 gonderir).
+    sira: int = Field(0, ge=0)
+
+
+class SiteKuraliUpdate(BaseModel):
+    baslik: str | None = Field(None, min_length=1, max_length=200)
+    icerik: str | None = Field(None, min_length=1, max_length=10000)
+    # Acikca null gonderilirse gorsel kaldirilir; alan yoksa dokunulmaz.
+    foto_key: str | None = None
+    sira: int | None = Field(None, ge=0)
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "SiteKuraliUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class SiteKuraliOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    baslik: str
+    icerik: str
+    foto_key: str | None = None
+    # Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa).
+    foto_url: str | None = None
+    sira: int
+    olusturan_user_id: uuid.UUID
+    # Olusturan yoneticinin adi (join ile).
+    olusturan_ad: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class SiteKuraliListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[SiteKuraliOut]
+
+
 class NotificationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

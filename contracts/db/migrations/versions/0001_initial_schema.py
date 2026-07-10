@@ -1239,6 +1239,37 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9z7. site_kurali  (site kurallari — blog-tarzi icerik: yonetici
+    #     ekler/duzenler/siler, TUM roller okur; sira ile siralanir, baslikta
+    #     ILIKE arama. Silme = HARD DELETE (karar): salt icerik — operasyonel
+    #     gecmis/FK tasimaz, soft-delete karmasasi gereksiz.)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE site_kurali (
+            id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id           uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            baslik              text NOT NULL,
+            icerik              text NOT NULL,
+            foto_key            text,       -- opsiyonel gorsel (MinIO obje anahtari, presign akisi)
+            sira                integer NOT NULL DEFAULT 0,  -- liste sirasi (kucuk once)
+            olusturan_user_id   uuid NOT NULL,
+            created_at          timestamptz NOT NULL DEFAULT now(),
+            updated_at          timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_site_kurali_id_tenant UNIQUE (id, tenant_id),
+            CONSTRAINT ck_site_kurali_sira CHECK (sira >= 0),
+            CONSTRAINT fk_site_kurali_olusturan
+                FOREIGN KEY (olusturan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_site_kurali_tenant ON site_kurali (tenant_id);")
+    op.execute(
+        "CREATE INDEX ix_site_kurali_tenant_sira ON site_kurali (tenant_id, sira);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -1275,6 +1306,7 @@ def upgrade() -> None:
         "rezervasyon",
         "etkinlik",
         "etkinlik_katilim",
+        "site_kurali",
     ):
         _enable_rls(table)
 
@@ -1313,6 +1345,7 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "site_kurali",
         "etkinlik_katilim",
         "etkinlik",
         "rezervasyon",

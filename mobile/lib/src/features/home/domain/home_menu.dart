@@ -77,6 +77,10 @@ enum HomeMenuEntry {
   /// resident Katiliyorum/Katilmiyorum beyani verir; OKUMA + seffaf
   /// sayilar TUM roller (auth.md §4).
   etkinlik,
+
+  /// Site Kurallari — blog-tarzi kural listesi (baslik aramali): yonetim
+  /// ekler/duzenler/siler, TUM roller okur (auth.md §4).
+  siteKurallari,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -87,6 +91,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -103,6 +108,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -119,6 +125,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
         HomeMenuEntry.tasks,
         HomeMenuEntry.taskTracking,
@@ -133,6 +140,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -155,6 +163,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,

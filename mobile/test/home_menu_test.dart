@@ -10,6 +10,7 @@ void main() {
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -24,6 +25,7 @@ void main() {
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -95,6 +97,7 @@ void main() {
           HomeMenuEntry.emergency,
           HomeMenuEntry.announcements,
           HomeMenuEntry.etkinlik,
+          HomeMenuEntry.siteKurallari,
           HomeMenuEntry.complaints,
           HomeMenuEntry.visitors,
           HomeMenuEntry.kargo,
@@ -158,6 +161,7 @@ void main() {
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
@@ -218,6 +222,23 @@ void main() {
         expect(
           homeMenuForRole(role),
           contains(HomeMenuEntry.etkinlik),
+          reason: role.wire,
+        );
+      }
+    });
+
+    test('Site Kurallari karti bilinen 5 rolun 5inde (okuma herkese acik; '
+        'CRUD yalniz yonetimde)', () {
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.siteKurallari),
           reason: role.wire,
         );
       }

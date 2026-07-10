@@ -337,6 +337,19 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.etkinlik),
           ),
         );
+      case HomeMenuEntry.siteKurallari:
+        // Blog-tarzi kural listesi: yonetim yazar, herkes okur; baslik arama.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.gavel_outlined),
+            title: const Text('Site Kurallari'),
+            subtitle: const Text(
+              'Site yasam kurallari; baslikta arama',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.siteKurallari),
+          ),
+        );
     }
   }
 }

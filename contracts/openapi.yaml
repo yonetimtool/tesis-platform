@@ -1573,6 +1573,110 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
+  # SITE KURALLARI (blog-tarzi: yonetici CRUD, herkes okur; sira ile
+  # siralanir, baslikta ?q= ILIKE aramasi)
+  # ================================================================= #
+  /site-rules:
+    get:
+      tags: [site-kurallari]
+      summary: Kural listesi (sira ASC, esitlikte eski once) + baslik aramasi
+      description: |
+        TUM roller okur. `?q=` basligi SUNUCU tarafinda ILIKE ile suzer
+        (buyuk/kucuk harf duyarsiz; % ve _ joker karakterleri kacislanir —
+        arama literal metin uzerinedir; RLS ile tenant-kapsamli, sizinti
+        yok). foto_key varsa okumada foto_url (presigned GET) doner.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: q
+          in: query
+          required: false
+          description: Baslik aramasi (ILIKE)
+          schema: { type: string, minLength: 1, maxLength: 200 }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/SiteKurali" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      tags: [site-kurallari]
+      summary: Kural ekle (admin + yonetici)
+      description: |
+        Opsiyonel gorsel MEVCUT akisla: once POST /uploads/presign ile
+        foto_key + PUT URL alinir, dosya PUT edilir, foto_key burada
+        gonderilir (tenant-namespace dogrulanir; gorev/talep/duyuru/kargo
+        ile ayni desen — yeni upload yolu YOK). Push YOK — kurallar basvuru
+        icerigidir (urun karari).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SiteKuraliCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SiteKurali" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /site-rules/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [site-kurallari]
+      summary: Kural detayi (tum roller)
+      responses:
+        "200":
+          description: Kural
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SiteKurali" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [site-kurallari]
+      summary: Kural duzenle (admin + yonetici; en az bir alan)
+      description: foto_key acikca null gonderilirse gorsel kaldirilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SiteKuraliUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SiteKurali" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [site-kurallari]
+      summary: Kural sil (admin + yonetici; HARD DELETE — salt icerik)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ================================================================= #
   # TASKS (esnek gorev sistemi) + tamamlama + foto kanit
   # ================================================================= #
   /tasks:
@@ -3958,6 +4062,50 @@ components:
       required: [durum]
       properties:
         durum: { type: string, enum: [katiliyorum, katilmiyorum] }
+
+    SiteKurali:
+      type: object
+      required: [id, baslik, icerik, sira, olusturan_user_id,
+                 created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        baslik: { type: string, maxLength: 200, example: Havuz Saatleri }
+        icerik: { type: string, maxLength: 10000 }
+        foto_key:
+          type: string
+          nullable: true
+          description: Opsiyonel gorsel — /uploads/presign ile alinan obje anahtari
+        foto_url:
+          type: string
+          nullable: true
+          description: Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa)
+        sira: { type: integer, minimum: 0, description: Liste sirasi (kucuk once) }
+        olusturan_user_id: { type: string, format: uuid }
+        olusturan_ad: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    SiteKuraliCreate:
+      type: object
+      required: [baslik, icerik]
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        icerik: { type: string, minLength: 1, maxLength: 10000 }
+        foto_key:
+          type: string
+          nullable: true
+          description: "Opsiyonel gorsel: once /uploads/presign ile alinan obje anahtari"
+        sira: { type: integer, minimum: 0, default: 0 }
+    SiteKuraliUpdate:
+      type: object
+      description: En az bir alan gerekli
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        icerik: { type: string, minLength: 1, maxLength: 10000 }
+        foto_key:
+          type: string
+          nullable: true
+          description: Acikca null gonderilirse gorsel kaldirilir; alan yoksa dokunulmaz
+        sira: { type: integer, minimum: 0 }
 
     Notification:
       type: object

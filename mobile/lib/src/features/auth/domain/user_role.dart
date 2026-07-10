@@ -128,4 +128,8 @@ enum UserRole {
 
   /// Etkinlik okuma + SEFFAF sayilar — bilinen 5 rolun 5'i.
   bool get canViewEvents => this != unknown;
+
+  /// Site kurali ekle/duzenle/sil (`POST/PATCH/DELETE /site-rules`) —
+  /// admin + yonetici; okuma bilinen tum rollerde (auth.md §4).
+  bool get canManageSiteRules => this == admin || this == yonetici;
 }

@@ -22,6 +22,7 @@ import '../features/patrol/presentation/patrol_tracking_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
 import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
+import '../features/site_kurali/presentation/site_kurali_screen.dart';
 import '../features/tasks/domain/task_models.dart';
 import '../features/tasks/presentation/task_detail_screen.dart';
 import '../features/tasks/presentation/tasks_screen.dart';
@@ -53,6 +54,7 @@ class AppRoutes {
   static const kargo = '/kargo';
   static const rezervasyon = '/rezervasyon';
   static const etkinlik = '/etkinlik';
+  static const siteKurallari = '/site-kurallari';
 }
 
 /// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
@@ -232,6 +234,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => EtkinlikScreen(
           initialEtkinlikId: state.uri.queryParameters['etkinlik_id'],
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.siteKurallari,
+        builder: (context, state) => const SiteKuraliScreen(),
       ),
       GoRoute(
         path: AppRoutes.taskDetail,
