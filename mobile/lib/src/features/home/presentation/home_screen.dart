@@ -310,6 +310,19 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.kargo),
           ),
         );
+      case HomeMenuEntry.rezervasyon:
+        // Ortak alan rezervasyonu: sakin slot ister, yonetim onaylar.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.event_available_outlined),
+            title: const Text('Rezervasyon'),
+            subtitle: const Text(
+              'Ortak alan (havuz, toplanti odasi) slot talebi ve onay',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.rezervasyon),
+          ),
+        );
     }
   }
 }

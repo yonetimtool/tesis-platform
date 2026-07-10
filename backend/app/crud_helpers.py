@@ -30,6 +30,11 @@ def is_unique_violation(exc: IntegrityError) -> bool:
     return _pgcode(exc) == "23505"
 
 
+def is_exclusion_violation(exc: IntegrityError) -> bool:
+    """EXCLUDE constraint ihlali (23P01) — orn. rezervasyon cakisma kisiti."""
+    return _pgcode(exc) == "23P01"
+
+
 def coord_eq(a, b) -> bool:
     """GPS koordinati esitligi (Numeric/float, 6 hane tolerans)."""
     if a is None or b is None:

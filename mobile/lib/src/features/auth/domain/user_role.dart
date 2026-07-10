@@ -102,4 +102,19 @@ enum UserRole {
   /// Kargo teslim alma (`PATCH /kargo/{id}`) — YALNIZ resident (o dairenin
   /// aktif sakini olma kosulunu sunucu ayrica zorlar).
   bool get canReceiveKargo => this == resident;
+
+  /// Ortak alan yonetimi (`POST/PATCH /common-areas`) — admin + yonetici.
+  bool get canManageCommonAreas => this == admin || this == yonetici;
+
+  /// Rezervasyon ekranini gorme (`GET /reservations`) — yonetim tumu, sakin
+  /// kendi dairesi; saha rolleri ERISMEZ (auth.md §4).
+  bool get canViewReservations =>
+      this == admin || this == yonetici || this == resident;
+
+  /// Rezervasyon talebi (`POST /reservations`) — YALNIZ resident (yonetim
+  /// karar veren taraf; talep acmaz).
+  bool get canRequestReservation => this == resident;
+
+  /// Rezervasyon karari (`PATCH /reservations/{id}`) — admin + yonetici.
+  bool get canDecideReservations => this == admin || this == yonetici;
 }

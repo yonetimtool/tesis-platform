@@ -19,6 +19,7 @@ import '../features/emergency/presentation/emergency_screen.dart';
 import '../features/patrol/presentation/patrol_screen.dart';
 import '../features/patrol/presentation/patrol_tracking_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
+import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
 import '../features/tasks/domain/task_models.dart';
 import '../features/tasks/presentation/task_detail_screen.dart';
@@ -49,6 +50,7 @@ class AppRoutes {
   static const complaints = '/complaints';
   static const visitors = '/visitors';
   static const kargo = '/kargo';
+  static const rezervasyon = '/rezervasyon';
 }
 
 /// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
@@ -77,6 +79,13 @@ String? routeForPushData(Map<String, String> data) {
       return id == null || id.isEmpty
           ? AppRoutes.kargo
           : '${AppRoutes.kargo}?kargo_id=$id';
+    // Yeni talep (yonetime) / karar (talep eden sakine) → ilgili rezervasyon.
+    case 'rezervasyon':
+    case 'rezervasyon_karar':
+      final id = data['rezervasyon_id'];
+      return id == null || id.isEmpty
+          ? AppRoutes.rezervasyon
+          : '${AppRoutes.rezervasyon}?rezervasyon_id=$id';
     case 'duyuru':
       return AppRoutes.announcements;
     default:
@@ -198,6 +207,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         // detayi otomatik acilir (bekleyen pakette "Teslim aldim").
         builder: (context, state) => KargoScreen(
           initialKargoId: state.uri.queryParameters['kargo_id'],
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.rezervasyon,
+        // Push tiklamasindan gelinirse ?rezervasyon_id=... ile ilgili kaydin
+        // detayi otomatik acilir (yonetimde Onayla/Reddet ile).
+        builder: (context, state) => RezervasyonScreen(
+          initialRezervasyonId: state.uri.queryParameters['rezervasyon_id'],
         ),
       ),
       GoRoute(

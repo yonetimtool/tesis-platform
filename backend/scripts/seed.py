@@ -399,6 +399,51 @@ def main() -> int:
         )
         print("[seed] kargo 'Aras Kargo' A-12 (bekliyor, guvenlik kaydi)")
 
+        # 8) ortak alanlar + ornek rezervasyon: Havuz'da A-12 icin ONAYLI slot
+        #    (cakisma kisiti/ekranlar veriyle denensin). Alan upsert (tenant+ad
+        #    benzersiz); rezervasyon (alan, tarih, baslangic) uzerinden idempotent.
+        alan_ids: dict[str, str] = {}
+        for ad, aciklama in [
+            ("Havuz", "Acik yuzme havuzu (yaz sezonu)"),
+            ("Toplanti Odasi", "12 kisilik toplanti odasi (projektorlu)"),
+        ]:
+            alan_ids[ad] = conn.execute(
+                """
+                INSERT INTO ortak_alan (tenant_id, ad, aciklama)
+                VALUES (%s, %s, %s)
+                ON CONFLICT ON CONSTRAINT uq_ortak_alan_tenant_ad
+                    DO UPDATE SET aciklama = EXCLUDED.aciklama, aktif = true
+                RETURNING id
+                """,
+                (tenant_id, ad, aciklama),
+            ).fetchone()[0]
+        print("[seed] ortak alanlar: Havuz, Toplanti Odasi")
+
+        resident_id = conn.execute(
+            "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
+            (tenant_id, "resident@acme.com"),
+        ).fetchone()[0]
+        conn.execute(
+            """
+            INSERT INTO rezervasyon (tenant_id, alan_id, unit_id, talep_eden_user_id,
+                                     tarih, baslangic, bitis, kisi_sayisi, notlar,
+                                     durum, onaylayan_user_id, karar_zamani)
+            SELECT %(t)s, %(alan)s, %(u)s, %(r)s, %(tarih)s, %(bas)s, %(bit)s,
+                   4, 'Aile yuzme saati', 'onaylandi'::rezervasyon_durum, %(y)s, now()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM rezervasyon
+                WHERE tenant_id = %(t)s AND alan_id = %(alan)s
+                  AND tarih = %(tarih)s AND baslangic = %(bas)s
+            )
+            """,
+            {
+                "t": tenant_id, "alan": alan_ids["Havuz"], "u": unit_id,
+                "r": resident_id, "y": yonetici_id,
+                "tarih": "2026-07-15", "bas": "10:00", "bit": "12:00",
+            },
+        )
+        print("[seed] rezervasyon Havuz 2026-07-15 10:00-12:00 A-12 (onayli, 4 kisi)")
+
     print("[seed] tamamlandi (idempotent).")
     return 0
 

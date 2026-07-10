@@ -644,6 +644,109 @@ class KargoListResponse(BaseModel):
     items: list[KargoOut]
 
 
+# ---------------------------- ortak alan / rezervasyon ---------------------- #
+RezervasyonDurum = Literal["bekliyor", "onaylandi", "reddedildi"]
+# Yoneticinin verebilecegi karar — 'bekliyor'a geri donus yok.
+RezervasyonKarar = Literal["onaylandi", "reddedildi"]
+
+
+class OrtakAlanCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=200)
+    aciklama: str | None = Field(None, min_length=1, max_length=1000)
+
+
+class OrtakAlanUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=200)
+    aciklama: str | None = Field(None, min_length=1, max_length=1000)
+    # Alan kaldirma = aktif=false (soft-delete; rezervasyon gecmisi korunur).
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "OrtakAlanUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class OrtakAlanOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    aciklama: str | None = None
+    aktif: bool
+    created_at: datetime
+
+
+class OrtakAlanListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[OrtakAlanOut]
+
+
+class RezervasyonCreate(BaseModel):
+    """Sakin talebi: alan + tarih + saat araligi + kisi sayisi.
+
+    Daire token'daki sakinin AKTIF dairesinden turetilir; birden fazla
+    dairesi olan sakin unit_id ile secebilir (kendi dairesi olmali).
+    """
+
+    alan_id: uuid.UUID
+    tarih: date
+    # "HH:MM" / "HH:MM:SS" kabul edilir; bitis > baslangic (ayni gun icinde).
+    baslangic: time
+    bitis: time
+    kisi_sayisi: int = Field(..., gt=0, le=1000)
+    # Opsiyonel; sakinin BIRDEN FAZLA aktif dairesi varsa secim icin.
+    unit_id: uuid.UUID | None = None
+    # "not" SQL/Python anahtar sozcugu — alan adi codebase deseniyle 'notlar'.
+    notlar: str | None = Field(None, min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def _aralik(self) -> "RezervasyonCreate":
+        if self.bitis <= self.baslangic:
+            raise ValueError("bitis baslangictan sonra olmali")
+        return self
+
+
+class RezervasyonUpdate(BaseModel):
+    """Yonetici karari — onay/red (onaylayan + zaman sunucuda damgalanir)."""
+
+    durum: RezervasyonKarar
+
+
+class RezervasyonOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    alan_id: uuid.UUID
+    # Alan/daire adlari join ile doldurulur (liste/karti icin).
+    alan_ad: str | None = None
+    unit_id: uuid.UUID
+    unit_no: str | None = None
+    tarih: date
+    baslangic: str
+    bitis: str
+    kisi_sayisi: int
+    notlar: str | None = None
+    durum: str
+    talep_eden_user_id: uuid.UUID
+    talep_eden_ad: str | None = None
+    onaylayan_user_id: uuid.UUID | None = None
+    onaylayan_ad: str | None = None
+    karar_zamani: datetime | None = None
+    created_at: datetime
+
+    @field_validator("baslangic", "bitis", mode="before")
+    @classmethod
+    def _fmt_saat(cls, v: object) -> object:
+        return _hhmm(v)
+
+
+class RezervasyonListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[RezervasyonOut]
+
+
 class NotificationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

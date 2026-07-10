@@ -1250,6 +1250,201 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
+  # REZERVASYON (ortak alan: yonetici alan tanimlar -> sakin slot talep
+  # eder -> yonetici onaylar/reddeder; onayli slotlar CAKISAMAZ)
+  # ================================================================= #
+  /common-areas:
+    get:
+      tags: [rezervasyon]
+      summary: Ortak alan listesi (ada gore)
+      description: |
+        TUM roller okur (sakin neyin rezerve edilebilir oldugunu gormeli).
+        Yonetim (admin+yonetici) PASIF alanlari da gorur (duzenleme icin);
+        diger roller YALNIZ aktif alanlari gorur.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/OrtakAlan" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [rezervasyon]
+      summary: Ortak alan olustur (admin + yonetici)
+      description: Ayni adla ikinci alan 409. Silme yok — kaldirma PATCH aktif=false.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrtakAlanCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrtakAlan" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /common-areas/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [rezervasyon]
+      summary: Ortak alan duzenle / aktiflik degistir (admin + yonetici)
+      description: |
+        aktif=false = soft-delete (rezervasyon gecmisi korunur; alan_id FK
+        RESTRICT hard-delete'i zaten engeller). En az bir alan gerekli.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrtakAlanUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrtakAlan" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /reservations:
+    get:
+      tags: [rezervasyon]
+      summary: Rezervasyon listesi (created_at DESC)
+      description: |
+        admin/yonetici tenant'in TUM rezervasyonlarini gorur (bekleyenler
+        karar icin); resident YALNIZ kendi dairelerinin rezervasyonlarini
+        gorur (daire bazli — es de gorur); security/tesis_gorevlisi ERISMEZ
+        (403). alan/durum/tarih ile filtrelenir (alan+tarih = gun gorunumu).
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: durum
+          in: query
+          required: false
+          schema: { type: string, enum: [bekliyor, onaylandi, reddedildi] }
+        - name: alan_id
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+        - name: tarih
+          in: query
+          required: false
+          description: Gun filtresi (YYYY-MM-DD)
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Rezervasyon" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [rezervasyon]
+      summary: Rezervasyon talebi ac (YALNIZ resident)
+      description: |
+        Sakin talebi: alan + tarih + saat araligi (bitis > baslangic, ayni
+        gun) + kisi_sayisi (>0). Daire sakinin AKTIF dairesinden turetilir
+        (birden fazla dairesi varsa unit_id ile secer — kendi dairesi olmali).
+        durum=bekliyor baslar + yonetim cihazlarina push denenir (EK gonderim;
+        data: tip=rezervasyon, rezervasyon_id). CAKISMA: ayni alanin ONAYLI
+        bir rezervasyonuyla kesisen talep ANINDA 409 alir (bosuna bekletilmez);
+        BEKLEYEN taleplerle kesisme serbesttir — nihai guvence onay anindaki
+        DB EXCLUDE kisiti. Pasif/olmayan alan 422. Yonetim talep ACMAZ (403).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RezervasyonCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Rezervasyon" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /reservations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [rezervasyon]
+      summary: Rezervasyon detayi (resident yalniz kendi dairesininki)
+      responses:
+        "200":
+          description: Rezervasyon
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Rezervasyon" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [rezervasyon]
+      summary: Onayla/Reddet (admin + yonetici)
+      description: |
+        Yonetici karari: durum=onaylandi|reddedildi. onaylayan_user_id +
+        karar_zamani sunucuda damgalanir; zaten karara baglanmis kayda ikinci
+        karar 409. ONAY ATOMIKTIR: DB'deki partial EXCLUDE kisiti (btree_gist,
+        tsrange &&, WHERE durum='onaylandi') ayni alanin onayli rezervasyonuyla
+        kesisen onayi 409 ile engeller — es zamanli iki cakisan bekleyenden
+        YALNIZ BIRI onaylanabilir (yaris durumu DB'de cozulur). Bitisik slot
+        (bitis == diger.baslangic) cakisma sayilmaz. Karar sonrasi YALNIZ
+        talebi acan sakinin cihazlarina push denenir (data:
+        tip=rezervasyon_karar, rezervasyon_id). Sakin/saha bu uca ERISEMEZ.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RezervasyonUpdate" }
+      responses:
+        "200":
+          description: Karara baglandi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Rezervasyon" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
   # TASKS (esnek gorev sistemi) + tamamlama + foto kanit
   # ================================================================= #
   /tasks:
@@ -3509,6 +3704,84 @@ components:
       required: [durum]
       properties:
         durum: { type: string, enum: [teslim_alindi] }
+
+    OrtakAlan:
+      type: object
+      required: [id, ad, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, maxLength: 200, example: Havuz }
+        aciklama: { type: string, nullable: true, maxLength: 1000 }
+        aktif:
+          type: boolean
+          description: false = kaldirilmis (soft-delete; rezerve edilemez)
+        created_at: { type: string, format: date-time }
+    OrtakAlanCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 200 }
+        aciklama: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
+    OrtakAlanUpdate:
+      type: object
+      description: En az bir alan gerekli
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 200 }
+        aciklama: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
+        aktif: { type: boolean }
+
+    Rezervasyon:
+      type: object
+      required: [id, alan_id, unit_id, tarih, baslangic, bitis, kisi_sayisi,
+                 durum, talep_eden_user_id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        alan_id: { type: string, format: uuid }
+        alan_ad: { type: string, nullable: true, description: Alan adi (join ile) }
+        unit_id: { type: string, format: uuid }
+        unit_no: { type: string, nullable: true, description: Daire numarasi (join ile) }
+        tarih: { type: string, format: date }
+        baslangic: { type: string, example: "10:00", description: '"HH:MM"' }
+        bitis: { type: string, example: "12:00", description: '"HH:MM" — baslangictan sonra' }
+        kisi_sayisi: { type: integer, minimum: 1 }
+        notlar:
+          type: string
+          nullable: true
+          description: Opsiyonel not ("not" SQL anahtar sozcugu; alan adi notlar)
+        durum: { type: string, enum: [bekliyor, onaylandi, reddedildi] }
+        talep_eden_user_id: { type: string, format: uuid }
+        talep_eden_ad: { type: string, nullable: true }
+        onaylayan_user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Karari veren yonetici (karar verilmediyse null)
+        onaylayan_ad: { type: string, nullable: true }
+        karar_zamani: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    RezervasyonCreate:
+      type: object
+      required: [alan_id, tarih, baslangic, bitis, kisi_sayisi]
+      properties:
+        alan_id: { type: string, format: uuid }
+        tarih: { type: string, format: date }
+        baslangic: { type: string, example: "10:00" }
+        bitis: { type: string, example: "12:00", description: baslangictan sonra olmali }
+        kisi_sayisi: { type: integer, minimum: 1, maximum: 1000 }
+        unit_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Opsiyonel — sakinin birden fazla aktif dairesi varsa secim;
+            kendi dairesi olmali (aksi 422). Verilmezse ilk aktif daire.
+        notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
+    RezervasyonUpdate:
+      type: object
+      description: Yonetici karari — onay/red ('bekliyor'a geri donus yok)
+      required: [durum]
+      properties:
+        durum: { type: string, enum: [onaylandi, reddedildi] }
 
     Notification:
       type: object

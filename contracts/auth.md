@@ -191,6 +191,11 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /kargo` (paket kaydi)           |  ❌   | ❌  | ✅  | ❌  | ❌  |
 | `GET  /kargo` (liste/detay)           |  ✅   | ✅  | ✅  | ❌  | 🔵  |
 | `PATCH /kargo/{id}` (teslim aldim)    |  ❌   | ❌  | ❌  | ❌  | ✅* |
+| `GET  /common-areas`                  |  ✅   | ✅  | ✅  | ✅  | ✅° |
+| `POST/PATCH /common-areas*`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `POST /reservations` (talep)          |  ❌   | ❌  | ❌  | ❌  | ✅  |
+| `GET  /reservations` (liste/detay)    |  ✅   | ✅  | ❌  | ❌  | 🔵  |
+| `PATCH /reservations/{id}` (onay/red) |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /tasks` (liste/detay)           |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /tasks`                         |  ✅   | ✅* | ❌  | ❌  | ❌  |
 | `PATCH /tasks/{id}`                   |  ✅   | ✅* | ❌  | ❌  | ❌  |
@@ -374,6 +379,38 @@ Notlar:
   - **OKUMA:** `admin`+`yonetici`+`security` tenant'in TUM gecmisi
     (durum/daire/tarih filtresi); 🔵 `resident` YALNIZ kendi dairelerinin
     paketleri. `tesis_gorevlisi` ERISMEZ (403).
+- **Ortak alan rezervasyonu (`/common-areas` + `/reservations`):** yonetici
+  alan tanimlar (havuz/teras/toplanti odasi), sakin slot talep eder, yonetici
+  onaylar/reddeder; tam gecmis tutulur.
+  - **Alanlar:** OLUSTURMA/DUZENLEME `admin`+`yonetici`; OKUMA TUM roller
+    (° yonetim disi roller YALNIZ aktif alanlari gorur — sakin neyin rezerve
+    edilebilir oldugunu bilmeli). Silme YOK: kaldirma = `aktif=false`
+    (soft-delete; rezervasyon gecmisi korunur, FK RESTRICT).
+  - **TALEP (`POST /reservations`) YALNIZ `resident`:** alan + tarih + saat
+    araligi (bitis > baslangic, ayni gun) + kisi_sayisi (>0). Daire sakinin
+    AKTIF dairesinden turetilir (coklu dairede `unit_id` ile secim — kendi
+    dairesi olmali, aksi 422). Yonetim talep ACMAZ (403) — karar veren taraf
+    (complaints kanal ilkesi). Talep aninda ONAYLI bir rezervasyonla kesisen
+    aralik **409** ile reddedilir (bosuna bekletilmez).
+  - **CAKISMA ENGELI (kesin mekanizma):** DB-duzeyi **partial EXCLUDE
+    constraint** (`btree_gist`; `alan_id WITH =`, `tsrange(tarih+baslangic,
+    tarih+bitis) WITH &&`, `WHERE durum='onaylandi'`). BEKLEYEN talepler ust
+    uste binebilir (karar yonetimde); onaya kaldirma **UPDATE'inde** kisit
+    devreye girer — es zamanli iki cakisan onaydan YALNIZ BIRI basarir,
+    digeri 23P01 → **409** (yaris durumu DB'de cozulur, uygulama kontrolune
+    guvenilmez). Yari-acik aralik `[)`: bitisik slot (bitis ==
+    diger.baslangic) cakisma SAYILMAZ. Overlap tanimi:
+    `baslangic < diger.bitis AND bitis > diger.baslangic`.
+  - **KARAR (`PATCH`) yalniz `admin`+`yonetici`:** `onaylayan_user_id` +
+    `karar_zamani` otomatik damgalanir; zaten karara baglanmis kayda ikinci
+    karar **409** (atomik `durum='bekliyor'` kosullu UPDATE).
+  - **OKUMA:** yonetim tenant'in tumu (bekleyenler karar kuyrugu; alan+tarih
+    filtresi = gun gorunumu); 🔵 `resident` YALNIZ kendi dairelerinin
+    rezervasyonlari (daire bazli — es de gorur); `security`/`tesis_gorevlisi`
+    ERISMEZ (403) — sakin↔yonetim akisi.
+  - **Push:** talep → yonetim cihazlari (`data: tip=rezervasyon`); karar →
+    YALNIZ talebi acan sakin (`tip=rezervasyon_karar`). EK gonderim — hatasi
+    kaydi etkilemez.
 - **Sikayet/Oneri (`/complaints`):** tesiste yasayan/calisandan yonetime
   talep kanali (canli test kesin kurali). ACMA `security` +
   `tesis_gorevlisi` + `resident` (acan token'dan, `durum=acik`, opsiyonel

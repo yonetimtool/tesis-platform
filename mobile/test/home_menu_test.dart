@@ -12,6 +12,7 @@ void main() {
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
+        HomeMenuEntry.rezervasyon,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -94,6 +95,7 @@ void main() {
           HomeMenuEntry.complaints,
           HomeMenuEntry.visitors,
           HomeMenuEntry.kargo,
+          HomeMenuEntry.rezervasyon,
           HomeMenuEntry.patrolTracking,
           HomeMenuEntry.taskTracking,
           HomeMenuEntry.budget,
@@ -144,17 +146,40 @@ void main() {
       }
     });
 
-    test('resident: SOS + Ziyaretciler + Kargo + duyurular + Sikayet/Oneri '
-        '+ Aidatim + Site Butcesi', () {
+    test('resident: SOS + Ziyaretciler + Kargo + Rezervasyon + duyurular '
+        '+ Sikayet/Oneri + Aidatim + Site Butcesi', () {
       expect(homeMenuForRole(UserRole.resident), const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
+        HomeMenuEntry.rezervasyon,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
       ]);
+    });
+
+    test('Rezervasyon karti (ortak alan): admin+yonetici+resident VAR; '
+        'saha rolleri (security+tesis_gorevlisi) YOK (auth.md §4)', () {
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.rezervasyon),
+          reason: role.wire,
+        );
+      }
+      for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.rezervasyon)),
+          reason: role.wire,
+        );
+      }
     });
 
     test('Kargo karti (paket takibi, ziyaretci matrisi): admin+yonetici+'

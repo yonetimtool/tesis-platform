@@ -169,6 +169,52 @@ void main() {
       expect(UserRole.unknown.canViewKargo, isFalse);
     });
 
+    test('rezervasyon kesin kurali: talep yalniz resident; alan yonetimi + '
+        'karar admin+yonetici; goruntuleme saha DISINDA', () {
+      // TALEP: yalniz sakin (yonetim karar veren taraf)
+      expect(UserRole.resident.canRequestReservation, isTrue);
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.unknown,
+      ]) {
+        expect(role.canRequestReservation, isFalse, reason: role.wire);
+      }
+
+      // ALAN YONETIMI + KARAR: yalniz yonetim
+      for (final role in [UserRole.admin, UserRole.yonetici]) {
+        expect(role.canManageCommonAreas, isTrue, reason: role.wire);
+        expect(role.canDecideReservations, isTrue, reason: role.wire);
+      }
+      for (final role in [
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+        UserRole.unknown,
+      ]) {
+        expect(role.canManageCommonAreas, isFalse, reason: role.wire);
+        expect(role.canDecideReservations, isFalse, reason: role.wire);
+      }
+
+      // GORUNTULEME: saha rolleri ERISMEZ
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.resident,
+      ]) {
+        expect(role.canViewReservations, isTrue, reason: role.wire);
+      }
+      for (final role in [
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.unknown,
+      ]) {
+        expect(role.canViewReservations, isFalse, reason: role.wire);
+      }
+    });
+
     test('TR gorunen adlar', () {
       expect(UserRole.yonetici.label, 'Yonetici');
       expect(UserRole.security.label, 'Guvenlik');

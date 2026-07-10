@@ -16,6 +16,7 @@ from .routers import assets as assets_router
 from .routers import auth as auth_router
 from .routers import budget as budget_router
 from .routers import checkpoints as checkpoints_router
+from .routers import common_areas as common_areas_router
 from .routers import complaints as complaints_router
 from .routers import dashboard as dashboard_router
 from .routers import devices as devices_router
@@ -29,6 +30,7 @@ from .routers import me_patrol as me_patrol_router
 from .routers import notifications as notifications_router
 from .routers import patrol_plans as patrol_plans_router
 from .routers import reports as reports_router
+from .routers import reservations as reservations_router
 from .routers import residents as residents_router
 from .routers import scans as scans_router
 from .routers import shifts as shifts_router
@@ -77,6 +79,8 @@ app.include_router(announcements_router.router)
 app.include_router(complaints_router.router)
 app.include_router(visitors_router.router)
 app.include_router(kargo_router.router)
+app.include_router(common_areas_router.router)
+app.include_router(reservations_router.router)
 app.include_router(tasks_router.router)
 app.include_router(task_completions_router.router)
 app.include_router(uploads_router.router)

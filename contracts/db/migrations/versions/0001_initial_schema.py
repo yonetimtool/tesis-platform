@@ -37,6 +37,9 @@ def upgrade() -> None:
     # 0. Eklentiler ve uygulama rolu
     # ------------------------------------------------------------------ #
     op.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")  # gen_random_uuid()
+    # rezervasyon cakisma engeli: EXCLUDE USING gist icinde uuid '=' operatoru
+    # icin gerekli (bkz. 9z5 rezervasyon — ex_rezervasyon_onayli_cakisma).
+    op.execute("CREATE EXTENSION IF NOT EXISTS btree_gist;")
 
     op.execute(
         f"""
@@ -106,6 +109,10 @@ def upgrade() -> None:
     )
     # kargo/paket takibi durumu: kapida teslim alinmayi bekler -> sakin alir.
     op.execute("CREATE TYPE kargo_durum AS ENUM ('bekliyor', 'teslim_alindi');")
+    # ortak alan rezervasyon talebi durumu (yonetici karar verir).
+    op.execute(
+        "CREATE TYPE rezervasyon_durum AS ENUM ('bekliyor', 'onaylandi', 'reddedildi');"
+    )
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -1071,6 +1078,102 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9z4. ortak_alan  (rezerve edilebilir ortak alan: havuz/teras/toplanti
+    #     odasi — yonetici tanimlar; silme = SOFT-DELETE (aktif=false):
+    #     rezervasyon gecmisi alanini korur, FK RESTRICT hard-delete engeller)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE ortak_alan (
+            id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id   uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            ad          text NOT NULL,
+            aciklama    text,
+            aktif       boolean NOT NULL DEFAULT true,
+            created_at  timestamptz NOT NULL DEFAULT now(),
+            -- composite FK hedefi (rezervasyon.alan_id).
+            CONSTRAINT uq_ortak_alan_id_tenant UNIQUE (id, tenant_id),
+            -- ayni tenant'ta ayni adla iki alan olmasin (yanlis secim onlenir).
+            CONSTRAINT uq_ortak_alan_tenant_ad UNIQUE (tenant_id, ad)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_ortak_alan_tenant ON ortak_alan (tenant_id);")
+
+    # ------------------------------------------------------------------ #
+    # 9z5. rezervasyon  (ortak alan rezervasyonu: sakin talep eder ->
+    #     yonetici onaylar/reddeder; tam gecmis bu tabloda.
+    #
+    #     CAKISMA ENGELI (DB-duzeyi, yaris-durumu-guvenli): partial EXCLUDE
+    #     constraint — ayni alanin ONAYLI iki rezervasyonu zaman araliginda
+    #     kesisemez. tsrange '[)' oldugu icin bitis == diger.baslangic (bitisik
+    #     slot) CAKISMA SAYILMAZ. bekliyor/reddedildi satirlar kisita dahil
+    #     DEGIL (WHERE durum='onaylandi') => ust uste birden cok BEKLEYEN
+    #     talep serbest; onaya kaldirma aninda (UPDATE) kisit devreye girer,
+    #     es zamanli iki cakisan onaydan YALNIZ BIRI basarir (digerine 23P01
+    #     -> API 409). uuid '=' gist icin btree_gist eklentisi gerekli.
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE rezervasyon (
+            id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id           uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            alan_id             uuid NOT NULL,
+            unit_id             uuid NOT NULL,   -- talep eden daire
+            talep_eden_user_id  uuid NOT NULL,   -- talebi acan sakin
+            tarih               date NOT NULL,
+            baslangic           time NOT NULL,
+            bitis               time NOT NULL,
+            kisi_sayisi         integer NOT NULL,
+            notlar              text,       -- opsiyonel not ("not" SQL anahtar sozcugu)
+            durum               rezervasyon_durum NOT NULL DEFAULT 'bekliyor',
+            onaylayan_user_id   uuid,            -- karari veren yonetici
+            karar_zamani        timestamptz,
+            created_at          timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_rezervasyon_id_tenant UNIQUE (id, tenant_id),
+            CONSTRAINT ck_rezervasyon_aralik CHECK (bitis > baslangic),
+            CONSTRAINT ck_rezervasyon_kisi CHECK (kisi_sayisi > 0),
+            -- RESTRICT: rezervasyon gecmisi olan alan hard-delete edilemez
+            -- (alan kaldirma = aktif=false).
+            CONSTRAINT fk_rezervasyon_alan
+                FOREIGN KEY (alan_id, tenant_id)
+                REFERENCES ortak_alan (id, tenant_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_rezervasyon_unit
+                FOREIGN KEY (unit_id, tenant_id)
+                REFERENCES unit (id, tenant_id) ON DELETE CASCADE,
+            CONSTRAINT fk_rezervasyon_talep_eden
+                FOREIGN KEY (talep_eden_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- Kolon-ozel SET NULL: yalnizca onaylayan_user_id NULL'lanir.
+            CONSTRAINT fk_rezervasyon_onaylayan
+                FOREIGN KEY (onaylayan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (onaylayan_user_id),
+            -- Ayni alanin ONAYLI rezervasyonlari kesisemez (tarih+saat).
+            CONSTRAINT ex_rezervasyon_onayli_cakisma
+                EXCLUDE USING gist (
+                    alan_id WITH =,
+                    tsrange((tarih + baslangic)::timestamp,
+                            (tarih + bitis)::timestamp) WITH &&
+                ) WHERE (durum = 'onaylandi')
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_rezervasyon_tenant ON rezervasyon (tenant_id);")
+    op.execute(
+        "CREATE INDEX ix_rezervasyon_tenant_alan ON rezervasyon (tenant_id, alan_id);"
+    )
+    op.execute(
+        "CREATE INDEX ix_rezervasyon_tenant_durum ON rezervasyon (tenant_id, durum);"
+    )
+    op.execute(
+        "CREATE INDEX ix_rezervasyon_tenant_tarih ON rezervasyon (tenant_id, tarih);"
+    )
+    op.execute(
+        "CREATE INDEX ix_rezervasyon_tenant_created "
+        "ON rezervasyon (tenant_id, created_at DESC);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -1103,6 +1206,8 @@ def upgrade() -> None:
         "complaint",
         "visitor",
         "kargo",
+        "ortak_alan",
+        "rezervasyon",
     ):
         _enable_rls(table)
 
@@ -1141,6 +1246,8 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "rezervasyon",
+        "ortak_alan",
         "kargo",
         "visitor",
         "complaint",
@@ -1170,6 +1277,7 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS rezervasyon_durum;")
     op.execute("DROP TYPE IF EXISTS kargo_durum;")
     op.execute("DROP TYPE IF EXISTS visitor_durum;")
     op.execute("DROP TYPE IF EXISTS device_platform;")

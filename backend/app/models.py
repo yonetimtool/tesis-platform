@@ -111,6 +111,10 @@ KARGO_DURUM = ENUM(
     "bekliyor", "teslim_alindi",
     name="kargo_durum", create_type=False,
 )
+REZERVASYON_DURUM = ENUM(
+    "bekliyor", "onaylandi", "reddedildi",
+    name="rezervasyon_durum", create_type=False,
+)
 
 
 def _pk() -> Mapped[uuid.UUID]:
@@ -1051,6 +1055,100 @@ class Kargo(Base):
     created_at = _created_at()
 
 
+class OrtakAlan(Base):
+    """Rezerve edilebilir ortak alan (havuz/teras/toplanti odasi).
+
+    Silme = SOFT-DELETE (aktif=false): rezervasyon gecmisi alanini korur
+    (rezervasyon.alan_id FK RESTRICT hard-delete'i engeller).
+    """
+
+    __tablename__ = "ortak_alan"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_ortak_alan_id_tenant"),
+        UniqueConstraint("tenant_id", "ad", name="uq_ortak_alan_tenant_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class Rezervasyon(Base):
+    """Ortak alan rezervasyonu — sakin talep eder, yonetici karar verir.
+
+    Cakisma engeli DB'de: partial EXCLUDE (gist) — ayni alanin ONAYLI iki
+    rezervasyonu zaman araliginda kesisemez (bkz. migration 9z5). Kisit
+    yalniz durum='onaylandi' satirlara uygulanir: bekleyen talepler ust uste
+    binebilir, onaya kaldirma aninda es zamanli iki cakisan onaydan yalniz
+    biri basarir (digeri 23P01 -> API 409).
+    """
+
+    __tablename__ = "rezervasyon"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_rezervasyon_id_tenant"),
+        CheckConstraint("bitis > baslangic", name="ck_rezervasyon_aralik"),
+        CheckConstraint("kisi_sayisi > 0", name="ck_rezervasyon_kisi"),
+        ForeignKeyConstraint(
+            ["alan_id", "tenant_id"],
+            ["ortak_alan.id", "ortak_alan.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_rezervasyon_alan",
+        ),
+        ForeignKeyConstraint(
+            ["unit_id", "tenant_id"],
+            ["unit.id", "unit.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_rezervasyon_unit",
+        ),
+        ForeignKeyConstraint(
+            ["talep_eden_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_rezervasyon_talep_eden",
+        ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (onaylayan_user_id); tenant_id korunur.
+        ForeignKeyConstraint(
+            ["onaylayan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_rezervasyon_onaylayan",
+        ),
+        # EXCLUDE USING gist kisiti DDL'de (/contracts); SQLAlchemy'de yalniz
+        # dokumantasyon — sorgu katmani kisiti uretmez.
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    alan_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    talep_eden_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
+    tarih = mapped_column(Date, nullable=False)
+    baslangic = mapped_column(Time, nullable=False)
+    bitis = mapped_column(Time, nullable=False)
+    kisi_sayisi: Mapped[int] = mapped_column(Integer, nullable=False)
+    notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    durum: Mapped[str] = mapped_column(
+        REZERVASYON_DURUM, nullable=False, server_default=text("'bekliyor'")
+    )
+    onaylayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    karar_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()
+
+
 class UserDevice(Base):
     __tablename__ = "user_device"
     __table_args__ = (
@@ -1099,6 +1197,8 @@ __all__ = [
     "Announcement",
     "Visitor",
     "Kargo",
+    "OrtakAlan",
+    "Rezervasyon",
     "UserDevice",
     "USER_ROLE",
     "GUN_TIPI",
@@ -1114,4 +1214,5 @@ __all__ = [
     "DEVICE_PLATFORM",
     "VISITOR_DURUM",
     "KARGO_DURUM",
+    "REZERVASYON_DURUM",
 ]

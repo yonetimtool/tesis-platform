@@ -68,6 +68,26 @@ void main() {
       );
     });
 
+    test('tip=rezervasyon / rezervasyon_karar -> ilgili rezervasyon', () {
+      expect(
+        routeForPushData(const {'tip': 'rezervasyon', 'rezervasyon_id': 'r-1'}),
+        '/rezervasyon?rezervasyon_id=r-1',
+      );
+      expect(
+        routeForPushData(
+            const {'tip': 'rezervasyon_karar', 'rezervasyon_id': 'r-2'}),
+        '/rezervasyon?rezervasyon_id=r-2',
+      );
+    });
+
+    test('rezervasyon_id yoksa/bossa rezervasyon LISTESI acilir', () {
+      expect(routeForPushData(const {'tip': 'rezervasyon'}), '/rezervasyon');
+      expect(
+        routeForPushData(const {'tip': 'rezervasyon_karar', 'rezervasyon_id': ''}),
+        '/rezervasyon',
+      );
+    });
+
     test('bilinmeyen/eksik tip -> null (yonlendirme yok)', () {
       expect(routeForPushData(const {'tip': 'acil_durum'}), isNull);
       expect(routeForPushData(const {}), isNull);

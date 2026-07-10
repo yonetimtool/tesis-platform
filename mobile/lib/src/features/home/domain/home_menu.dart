@@ -67,6 +67,11 @@ enum HomeMenuEntry {
   /// paketlerini gorur + "Teslim aldim"; admin/yonetici salt izler;
   /// tesis_gorevlisi ERISMEZ (auth.md §4).
   kargo,
+
+  /// Rezervasyon — ortak alan: yonetim alan tanimlar + bekleyenleri
+  /// onaylar/reddeder (+takvim); resident aktif alanlara slot talep eder +
+  /// kendi dairesinin taleplerini izler; saha rolleri ERISMEZ (auth.md §4).
+  rezervasyon,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -79,6 +84,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
+        HomeMenuEntry.rezervasyon,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -121,6 +127,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
+        HomeMenuEntry.rezervasyon,
         HomeMenuEntry.patrolTracking,
         HomeMenuEntry.taskTracking,
         HomeMenuEntry.budget,
@@ -136,6 +143,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.emergency,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
+        HomeMenuEntry.rezervasyon,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
