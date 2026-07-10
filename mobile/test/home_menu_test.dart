@@ -11,6 +11,7 @@ void main() {
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
+        HomeMenuEntry.kargo,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -22,6 +23,7 @@ void main() {
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
+        HomeMenuEntry.kargo,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.taskTracking,
@@ -91,6 +93,7 @@ void main() {
           HomeMenuEntry.announcements,
           HomeMenuEntry.complaints,
           HomeMenuEntry.visitors,
+          HomeMenuEntry.kargo,
           HomeMenuEntry.patrolTracking,
           HomeMenuEntry.taskTracking,
           HomeMenuEntry.budget,
@@ -141,16 +144,37 @@ void main() {
       }
     });
 
-    test('resident: SOS + Ziyaretciler + duyurular + Sikayet/Oneri + Aidatim '
-        '+ Site Butcesi', () {
+    test('resident: SOS + Ziyaretciler + Kargo + duyurular + Sikayet/Oneri '
+        '+ Aidatim + Site Butcesi', () {
       expect(homeMenuForRole(UserRole.resident), const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.visitors,
+        HomeMenuEntry.kargo,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
       ]);
+    });
+
+    test('Kargo karti (paket takibi, ziyaretci matrisi): admin+yonetici+'
+        'security+resident VAR; tesis_gorevlisi YOK (auth.md §4)', () {
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.kargo),
+          reason: role.wire,
+        );
+      }
+      expect(
+        homeMenuForRole(UserRole.tesisGorevlisi),
+        isNot(contains(HomeMenuEntry.kargo)),
+      );
     });
 
     test('Ziyaretciler karti (kapi onay akisi): admin+yonetici+security+'

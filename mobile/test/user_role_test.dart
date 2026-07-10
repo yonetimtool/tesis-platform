@@ -130,6 +130,45 @@ void main() {
       expect(UserRole.unknown.canViewVisitors, isFalse);
     });
 
+    test('kargo kesin kurali (ziyaretci matrisi): kayit yalniz security; '
+        'teslim yalniz resident; goruntuleme tesis_gorevlisi DISINDA', () {
+      // KAYIT: yalniz guvenlik (kapi operasyonu)
+      expect(UserRole.security.canRegisterKargo, isTrue);
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+        UserRole.unknown,
+      ]) {
+        expect(role.canRegisterKargo, isFalse, reason: role.wire);
+      }
+
+      // TESLIM: yalniz sakin (daire kosulunu sunucu ayrica zorlar)
+      expect(UserRole.resident.canReceiveKargo, isTrue);
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.unknown,
+      ]) {
+        expect(role.canReceiveKargo, isFalse, reason: role.wire);
+      }
+
+      // GORUNTULEME: tesis_gorevlisi ERISMEZ (ziyaretci ile ayni)
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.resident,
+      ]) {
+        expect(role.canViewKargo, isTrue, reason: role.wire);
+      }
+      expect(UserRole.tesisGorevlisi.canViewKargo, isFalse);
+      expect(UserRole.unknown.canViewKargo, isFalse);
+    });
+
     test('TR gorunen adlar', () {
       expect(UserRole.yonetici.label, 'Yonetici');
       expect(UserRole.security.label, 'Guvenlik');

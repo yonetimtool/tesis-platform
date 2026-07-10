@@ -297,6 +297,19 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.visitors),
           ),
         );
+      case HomeMenuEntry.kargo:
+        // Paket takibi: guvenlik kaydeder (foto ile), sakin teslim alir.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.local_shipping_outlined),
+            title: const Text('Kargo'),
+            subtitle: const Text(
+              'Gelen paket kaydi, teslim durumu ve gecmis',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.kargo),
+          ),
+        );
     }
   }
 }

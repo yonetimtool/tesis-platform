@@ -586,6 +586,64 @@ class VisitorListResponse(BaseModel):
     items: list[VisitorOut]
 
 
+# -------------------------------- kargo ------------------------------------- #
+KargoDurum = Literal["bekliyor", "teslim_alindi"]
+
+
+class KargoCreate(BaseModel):
+    """Guvenlik kaydi: daire unit_id VEYA unit_no ile verilir (tam biri —
+    visitor ile ayni desen). foto_key /uploads/presign akisindan gelir."""
+
+    unit_id: uuid.UUID | None = None
+    unit_no: str | None = Field(None, min_length=1, max_length=50)
+    firma: str = Field(..., min_length=1, max_length=200)
+    # Opsiyonel paket fotografi: /uploads/presign ile yuklenen obje anahtari.
+    foto_key: str | None = None
+    # "not" SQL/Python anahtar sozcugu — alan adi codebase deseniyle 'notlar'.
+    notlar: str | None = Field(None, min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def _tek_daire_referansi(self) -> "KargoCreate":
+        if (self.unit_id is None) == (self.unit_no is None):
+            raise ValueError("unit_id veya unit_no alanlarindan tam biri verilmeli")
+        return self
+
+
+class KargoUpdate(BaseModel):
+    """Sakin teslim isareti — tek gecerli hedef durum (geri donus yok);
+    teslim alan + zaman sunucuda damgalanir."""
+
+    durum: Literal["teslim_alindi"]
+
+
+class KargoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    unit_id: uuid.UUID
+    # Daire numarasi (join ile doldurulur).
+    unit_no: str | None = None
+    firma: str
+    foto_key: str | None = None
+    # Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa).
+    foto_url: str | None = None
+    notlar: str | None = None
+    durum: str
+    kaydeden_user_id: uuid.UUID
+    # Kaydi acan guvenligin adi (join ile).
+    kaydeden_ad: str | None = None
+    teslim_alan_user_id: uuid.UUID | None = None
+    # Teslim alan sakinin adi (join ile; teslim alinmadiysa null).
+    teslim_alan_ad: str | None = None
+    teslim_zamani: datetime | None = None
+    created_at: datetime
+
+
+class KargoListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[KargoOut]
+
+
 class NotificationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

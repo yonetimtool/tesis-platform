@@ -107,6 +107,10 @@ VISITOR_DURUM = ENUM(
     "bekliyor", "onaylandi", "reddedildi",
     name="visitor_durum", create_type=False,
 )
+KARGO_DURUM = ENUM(
+    "bekliyor", "teslim_alindi",
+    name="kargo_durum", create_type=False,
+)
 
 
 def _pk() -> Mapped[uuid.UUID]:
@@ -996,6 +1000,57 @@ class Visitor(Base):
     created_at = _created_at()
 
 
+class Kargo(Base):
+    """Kargo/paket takibi — guvenlik kaydeder, dairenin sakini teslim alir.
+
+    visitor ile ayni desen (unit-bazli, push, tam gecmis); akis onay/red degil
+    TESLIM: bekliyor -> teslim_alindi. Opsiyonel paket fotografi mevcut
+    presign akisiyla yuklenir (foto_key; task/complaint/announcement deseni).
+    """
+
+    __tablename__ = "kargo"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_kargo_id_tenant"),
+        ForeignKeyConstraint(
+            ["unit_id", "tenant_id"],
+            ["unit.id", "unit.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_kargo_unit",
+        ),
+        ForeignKeyConstraint(
+            ["kaydeden_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_kargo_kaydeden",
+        ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (teslim_alan_user_id); tenant_id korunur.
+        ForeignKeyConstraint(
+            ["teslim_alan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_kargo_teslim_alan",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    firma: Mapped[str] = mapped_column(Text, nullable=False)
+    foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    durum: Mapped[str] = mapped_column(
+        KARGO_DURUM, nullable=False, server_default=text("'bekliyor'")
+    )
+    kaydeden_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    teslim_alan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    teslim_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()
+
+
 class UserDevice(Base):
     __tablename__ = "user_device"
     __table_args__ = (
@@ -1043,6 +1098,7 @@ __all__ = [
     "PaymentWebhookEvent",
     "Announcement",
     "Visitor",
+    "Kargo",
     "UserDevice",
     "USER_ROLE",
     "GUN_TIPI",
@@ -1057,4 +1113,5 @@ __all__ = [
     "DUES_DURUM",
     "DEVICE_PLATFORM",
     "VISITOR_DURUM",
+    "KARGO_DURUM",
 ]

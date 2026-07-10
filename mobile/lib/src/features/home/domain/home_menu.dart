@@ -61,6 +61,12 @@ enum HomeMenuEntry {
   /// resident kendi dairesinin kayitlarini gorur + Onayla/Reddet;
   /// admin/yonetici salt izler; tesis_gorevlisi ERISMEZ (auth.md §4).
   visitors,
+
+  /// Kargo — paket takibi (ziyaretci ile ayni matris): security kaydeder
+  /// (daire+firma+foto) + tum gecmisi izler; resident kendi dairesinin
+  /// paketlerini gorur + "Teslim aldim"; admin/yonetici salt izler;
+  /// tesis_gorevlisi ERISMEZ (auth.md §4).
+  kargo,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -72,6 +78,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
+        HomeMenuEntry.kargo,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -85,6 +92,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
+        HomeMenuEntry.kargo,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.taskTracking,
@@ -112,6 +120,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
+        HomeMenuEntry.kargo,
         HomeMenuEntry.patrolTracking,
         HomeMenuEntry.taskTracking,
         HomeMenuEntry.budget,
@@ -126,6 +135,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.visitors,
+        HomeMenuEntry.kargo,
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,

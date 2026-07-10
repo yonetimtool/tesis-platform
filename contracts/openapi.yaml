@@ -1127,6 +1127,129 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
+  # KARGO (paket takibi: guvenlik kaydeder (daire+firma+opsiyonel foto)
+  # -> daire sakinlerine push -> sakin "teslim aldim" isaretler)
+  # ================================================================= #
+  /kargo:
+    get:
+      tags: [kargo]
+      summary: Kargo gecmisi (created_at DESC)
+      description: |
+        admin/yonetici/security tenant'in TUM kargo gecmisini gorur;
+        resident YALNIZ kendi dairelerinin paketlerini gorur (baska daire
+        sizmaz); tesis_gorevlisi ERISMEZ (403). durum/daire/tarih ile
+        filtrelenir. foto_key varsa okumada foto_url (presigned GET) doner.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: durum
+          in: query
+          required: false
+          schema: { type: string, enum: [bekliyor, teslim_alindi] }
+        - name: unit_id
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+        - name: baslangic
+          in: query
+          required: false
+          description: created_at >= (tarih filtresi)
+          schema: { type: string, format: date-time }
+        - name: bitis
+          in: query
+          required: false
+          description: created_at < (tarih filtresi)
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Kargo" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [kargo]
+      summary: Kargo kaydi ac (YALNIZ security)
+      description: |
+        Kapidaki guvenlik gelen paketi kaydeder; durum=bekliyor baslar.
+        Daire unit_id VEYA unit_no ile verilir (tam biri; bulunamazsa 422).
+        Opsiyonel paket fotografi MEVCUT akisla yuklenir: once
+        POST /uploads/presign ile foto_key + PUT URL alinir, dosya PUT edilir,
+        foto_key burada gonderilir (tenant-namespace dogrulanir; gorev/talep/
+        duyuru ile ayni desen — yeni upload yolu YOK). Kayit sonrasi dairenin
+        TUM aktif sakinlerine push denenir ("Kargonuz geldi — <firma>";
+        EK gonderim — hatasi kaydi etkilemez; data: tip=kargo, kargo_id).
+        yonetici/admin kayit ACMAZ (403) — kapi operasyonu guvenligindir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KargoCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Kargo" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /kargo/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [kargo]
+      summary: Kargo detayi (resident yalniz kendi dairesininki)
+      responses:
+        "200":
+          description: Kargo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Kargo" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [kargo]
+      summary: Teslim aldim isaretle (YALNIZ o dairenin aktif sakini)
+      description: |
+        Sakin teslim isareti: durum=teslim_alindi (tek gecerli deger).
+        teslim_alan_user_id + teslim_zamani sunucuda damgalanir. Atomik
+        durum='bekliyor' kosullu UPDATE: zaten teslim alinmis kayda ikinci
+        isaret 409 — kimin teslim aldigi DEGISMEZ (ayni dairede coklu sakin
+        guvenli). BASKA dairenin sakini 404 alir (varlik sizdirilmaz).
+        Personel rolleri bu uca ERISEMEZ (403). Teslimde geri-push YOK
+        (urun karari — kayit-push'u yeterli).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KargoUpdate" }
+      responses:
+        "200":
+          description: Teslim alindi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Kargo" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
   # TASKS (esnek gorev sistemi) + tamamlama + foto kanit
   # ================================================================= #
   /tasks:
@@ -3323,6 +3446,69 @@ components:
       required: [durum]
       properties:
         durum: { type: string, enum: [onaylandi, reddedildi] }
+
+    Kargo:
+      type: object
+      description: Kargo/paket kaydi + tam gecmis satiri (visitor deseni)
+      required: [id, unit_id, firma, durum, kaydeden_user_id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        unit_id: { type: string, format: uuid }
+        unit_no:
+          type: string
+          nullable: true
+          description: Daire numarasi (join ile)
+        firma: { type: string, maxLength: 200, description: Kargo firmasi/tasiyici }
+        foto_key:
+          type: string
+          nullable: true
+          description: Opsiyonel paket fotografi — /uploads/presign ile alinan obje anahtari
+        foto_url:
+          type: string
+          nullable: true
+          description: Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa)
+        notlar:
+          type: string
+          nullable: true
+          description: Opsiyonel not ("not" SQL anahtar sozcugu; alan adi notlar)
+        durum: { type: string, enum: [bekliyor, teslim_alindi] }
+        kaydeden_user_id:
+          type: string
+          format: uuid
+          description: Kaydi acan guvenlik
+        kaydeden_ad: { type: string, nullable: true }
+        teslim_alan_user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Teslim alan sakin (teslim alinmadiysa null)
+        teslim_alan_ad: { type: string, nullable: true }
+        teslim_zamani: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    KargoCreate:
+      type: object
+      description: unit_id VEYA unit_no alanlarindan TAM BiRi verilmeli (aksi 422)
+      required: [firma]
+      properties:
+        unit_id: { type: string, format: uuid, nullable: true }
+        unit_no:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 50
+          description: Daire numarasi (orn. A-12) — sunucuda tenant icinde cozulur
+        firma: { type: string, minLength: 1, maxLength: 200 }
+        foto_key:
+          type: string
+          nullable: true
+          description: "Opsiyonel paket fotografi: once /uploads/presign ile alinan obje anahtari"
+        notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
+    KargoUpdate:
+      type: object
+      description: Sakin teslim isareti — tek gecerli deger (geri donus yok)
+      required: [durum]
+      properties:
+        durum: { type: string, enum: [teslim_alindi] }
 
     Notification:
       type: object

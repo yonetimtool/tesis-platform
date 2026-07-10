@@ -376,6 +376,29 @@ def main() -> int:
         )
         print("[seed] ziyaretci 'Kurye - Ahmet Yilmaz' A-12 (bekliyor, guvenlik kaydi)")
 
+        # 7) ornek kargo: A-12 icin BEKLEYEN paket (guvenlik kaydi, fotosuz —
+        #    foto gercek akista presign ile yuklenir; seed depoya obje
+        #    yazmaz). Ayni firma+not varsa eklemeyerek idempotent.
+        conn.execute(
+            """
+            INSERT INTO kargo (tenant_id, unit_id, firma, notlar, kaydeden_user_id)
+            SELECT %(t)s, %(u)s, %(f)s, %(n)s, g.id
+            FROM app_user g
+            WHERE g.tenant_id = %(t)s AND g.email = 'guard@acme.com'
+              AND NOT EXISTS (
+                  SELECT 1 FROM kargo
+                  WHERE tenant_id = %(t)s AND firma = %(f)s AND notlar = %(n)s
+              )
+            """,
+            {
+                "t": tenant_id,
+                "u": unit_id,
+                "f": "Aras Kargo",
+                "n": "Orta boy koli — kapida teslim alindi",
+            },
+        )
+        print("[seed] kargo 'Aras Kargo' A-12 (bekliyor, guvenlik kaydi)")
+
     print("[seed] tamamlandi (idempotent).")
     return 0
 

@@ -90,4 +90,16 @@ enum UserRole {
   /// Ziyaretci onay/red (`PATCH /visitors/{id}`) — YALNIZ resident (o
   /// dairenin aktif sakini olma kosulunu sunucu ayrica zorlar).
   bool get canAnswerVisitor => this == resident;
+
+  /// Kargo ekranini gorme (`GET /kargo`) — ziyaretci ile ayni matris:
+  /// yonetim + guvenlik tum gecmis, sakin kendi dairesi;
+  /// tesis_gorevlisi ERISMEZ (auth.md §4).
+  bool get canViewKargo => canViewVisitors;
+
+  /// Kargo kaydi acma (`POST /kargo`) — YALNIZ security (kapi operasyonu).
+  bool get canRegisterKargo => this == security;
+
+  /// Kargo teslim alma (`PATCH /kargo/{id}`) — YALNIZ resident (o dairenin
+  /// aktif sakini olma kosulunu sunucu ayrica zorlar).
+  bool get canReceiveKargo => this == resident;
 }

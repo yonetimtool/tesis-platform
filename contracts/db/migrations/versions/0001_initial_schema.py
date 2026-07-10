@@ -104,6 +104,8 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE visitor_durum AS ENUM ('bekliyor', 'onaylandi', 'reddedildi');"
     )
+    # kargo/paket takibi durumu: kapida teslim alinmayi bekler -> sakin alir.
+    op.execute("CREATE TYPE kargo_durum AS ENUM ('bekliyor', 'teslim_alindi');")
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -1027,6 +1029,48 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9z3. kargo  (kargo/paket takibi — guvenlik gelen paketi kaydeder
+    #     (daire + firma + opsiyonel foto/not), dairenin TUM aktif sakinlerine
+    #     push gider, sakin "teslim aldim" isaretler; tam gecmis bu tabloda.
+    #     visitor ile ayni RBAC/izolasyon deseni; akis onay degil TESLIM.)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE kargo (
+            id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id            uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            unit_id              uuid NOT NULL,
+            firma                text NOT NULL,   -- kargo firmasi/tasiyici
+            foto_key             text,       -- opsiyonel paket fotografi (MinIO obje anahtari, presign akisi)
+            notlar               text,       -- opsiyonel not ("not" SQL anahtar sozcugu; visitor/emergency deseni)
+            durum                kargo_durum NOT NULL DEFAULT 'bekliyor',
+            kaydeden_user_id     uuid NOT NULL,   -- kaydi acan guvenlik
+            teslim_alan_user_id  uuid,            -- teslim alan sakin
+            teslim_zamani        timestamptz,
+            created_at           timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_kargo_id_tenant UNIQUE (id, tenant_id),
+            -- composite FK: daire ayni tenant'ta olmali (RLS ile tutarli).
+            CONSTRAINT fk_kargo_unit
+                FOREIGN KEY (unit_id, tenant_id)
+                REFERENCES unit (id, tenant_id) ON DELETE CASCADE,
+            CONSTRAINT fk_kargo_kaydeden
+                FOREIGN KEY (kaydeden_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- Kolon-ozel SET NULL: yalnizca teslim_alan_user_id NULL'lanir.
+            CONSTRAINT fk_kargo_teslim_alan
+                FOREIGN KEY (teslim_alan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (teslim_alan_user_id)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_kargo_tenant ON kargo (tenant_id);")
+    op.execute("CREATE INDEX ix_kargo_tenant_unit ON kargo (tenant_id, unit_id);")
+    op.execute("CREATE INDEX ix_kargo_tenant_durum ON kargo (tenant_id, durum);")
+    op.execute(
+        "CREATE INDEX ix_kargo_tenant_created ON kargo (tenant_id, created_at DESC);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -1058,6 +1102,7 @@ def upgrade() -> None:
         "announcement",
         "complaint",
         "visitor",
+        "kargo",
     ):
         _enable_rls(table)
 
@@ -1096,6 +1141,7 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "kargo",
         "visitor",
         "complaint",
         "announcement",
@@ -1124,6 +1170,7 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS kargo_durum;")
     op.execute("DROP TYPE IF EXISTS visitor_durum;")
     op.execute("DROP TYPE IF EXISTS device_platform;")
     op.execute("DROP TYPE IF EXISTS budget_kaynak;")

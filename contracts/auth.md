@@ -188,6 +188,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /visitors` (ziyaretci kaydi)    |  ❌   | ❌  | ✅  | ❌  | ❌  |
 | `GET  /visitors` (liste/detay)        |  ✅   | ✅  | ✅  | ❌  | 🔵  |
 | `PATCH /visitors/{id}` (onay/red)     |  ❌   | ❌  | ❌  | ❌  | ✅* |
+| `POST /kargo` (paket kaydi)           |  ❌   | ❌  | ✅  | ❌  | ❌  |
+| `GET  /kargo` (liste/detay)           |  ✅   | ✅  | ✅  | ❌  | 🔵  |
+| `PATCH /kargo/{id}` (teslim aldim)    |  ❌   | ❌  | ❌  | ❌  | ✅* |
 | `GET  /tasks` (liste/detay)           |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /tasks`                         |  ✅   | ✅* | ❌  | ❌  | ❌  |
 | `PATCH /tasks/{id}`                   |  ✅   | ✅* | ❌  | ❌  | ❌  |
@@ -348,6 +351,29 @@ Notlar:
     (Twilio/Netgsm) `visitor_durum`'a deger (orn. `araniyor`) + arama
     meta'si (ayri kolon/tablo; `uq_visitor_id_tenant` composite-FK hedefi
     hazir) eklenerek gelir — modelde yeniden tasarim gerekmez.
+- **Kargo (`/kargo`):** paket takibi — guvenlik gelen paketi kaydeder
+  (daire + firma + opsiyonel foto/not), dairenin sakini "teslim aldim"
+  isaretler; tam gecmis tutulur. Ziyaretci modulunun RBAC/izolasyon
+  deseninin AYNISI; akis onay/red degil TESLIM (bekliyor → teslim_alindi).
+  - **KAYIT (`POST`) YALNIZ `security`** (kapi operasyonu; `yonetici`/`admin`
+    403 — gecmisi GET ile okur). Daire `unit_id` VEYA `unit_no` (sunucuda
+    cozulur; yoksa 422). **Foto MEVCUT presign akisiyla** (`/uploads/presign`
+    → PUT → `foto_key`; gorev/talep/duyuru ile ayni desen, yeni upload yolu
+    YOK); `foto_key` tenant-namespace dogrulanir (IDOR korumasi), okumada
+    kisa omurlu `foto_url` doner. Kayitta dairenin **TUM aktif sakinlerine**
+    push denenir ("Kargonuz geldi — <firma>"; EK gonderim — hatasi kaydi
+    etkilemez; `data: tip=kargo, kargo_id`).
+  - **TESLIM (`PATCH`, ✅\*) YALNIZ o dairenin AKTIF sakini:** rol yetmez —
+    `unit_resident` (bitis IS NULL) sunucuda dogrulanir; BASKA dairenin
+    sakini **404** (varlik sizdirilmaz). Atomik `durum='bekliyor'` kosullu
+    UPDATE: zaten teslim alinmis kayda ikinci isaret **409** — kimin teslim
+    aldigi DEGISMEZ (ayni dairede coklu sakin guvenli).
+    `teslim_alan_user_id` + `teslim_zamani` otomatik damgalanir.
+    **Teslimde geri-push YOK** (urun karari — kayit-push'u yeterli;
+    guvenlik/yonetim guncel durumu listeden gorur).
+  - **OKUMA:** `admin`+`yonetici`+`security` tenant'in TUM gecmisi
+    (durum/daire/tarih filtresi); 🔵 `resident` YALNIZ kendi dairelerinin
+    paketleri. `tesis_gorevlisi` ERISMEZ (403).
 - **Sikayet/Oneri (`/complaints`):** tesiste yasayan/calisandan yonetime
   talep kanali (canli test kesin kurali). ACMA `security` +
   `tesis_gorevlisi` + `resident` (acan token'dan, `durum=acik`, opsiyonel

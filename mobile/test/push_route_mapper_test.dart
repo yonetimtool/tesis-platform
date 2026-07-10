@@ -45,6 +45,21 @@ void main() {
       );
     });
 
+    test('tip=kargo -> ilgili kargo (sakine kargonuz-geldi push\'u)', () {
+      expect(
+        routeForPushData(const {'tip': 'kargo', 'kargo_id': 'k-1'}),
+        '/kargo?kargo_id=k-1',
+      );
+    });
+
+    test('kargo_id yoksa/bossa kargo LISTESI acilir', () {
+      expect(routeForPushData(const {'tip': 'kargo'}), '/kargo');
+      expect(
+        routeForPushData(const {'tip': 'kargo', 'kargo_id': ''}),
+        '/kargo',
+      );
+    });
+
     test('visitor_id yoksa/bossa ziyaretci LISTESI acilir', () {
       expect(routeForPushData(const {'tip': 'ziyaretci'}), '/visitors');
       expect(

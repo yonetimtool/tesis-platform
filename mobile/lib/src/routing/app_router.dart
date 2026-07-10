@@ -12,6 +12,7 @@ import '../features/budget/presentation/budget_screen.dart';
 import '../features/budget/presentation/financial_summary_screen.dart';
 import '../features/budget/presentation/site_budget_screen.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/kargo/presentation/kargo_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
 import '../features/dues/presentation/my_dues_screen.dart';
 import '../features/emergency/presentation/emergency_screen.dart';
@@ -47,6 +48,7 @@ class AppRoutes {
   static const myDues = '/my-dues';
   static const complaints = '/complaints';
   static const visitors = '/visitors';
+  static const kargo = '/kargo';
 }
 
 /// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
@@ -69,6 +71,12 @@ String? routeForPushData(Map<String, String> data) {
       return id == null || id.isEmpty
           ? AppRoutes.visitors
           : '${AppRoutes.visitors}?visitor_id=$id';
+    // Gelen paket (daire sakinlerine) → ilgili kargo kaydi acilir.
+    case 'kargo':
+      final id = data['kargo_id'];
+      return id == null || id.isEmpty
+          ? AppRoutes.kargo
+          : '${AppRoutes.kargo}?kargo_id=$id';
     case 'duyuru':
       return AppRoutes.announcements;
     default:
@@ -182,6 +190,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         // detayi otomatik acilir (onay bekleyen kartta Onayla/Reddet).
         builder: (context, state) => VisitorsScreen(
           initialVisitorId: state.uri.queryParameters['visitor_id'],
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.kargo,
+        // Push tiklamasindan gelinirse ?kargo_id=... ile ilgili kaydin
+        // detayi otomatik acilir (bekleyen pakette "Teslim aldim").
+        builder: (context, state) => KargoScreen(
+          initialKargoId: state.uri.queryParameters['kargo_id'],
         ),
       ),
       GoRoute(
