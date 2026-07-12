@@ -186,11 +186,14 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /complaints`                    |  ❌   | ❌  | ✅  | ✅  | ✅  |
 | `PATCH /complaints/{id}` (durum/yanit)|  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /visitors` (ziyaretci kaydi)    |  ❌   | ❌  | ✅  | ❌  | ❌  |
-| `GET  /visitors` (liste/detay)        |  ✅   | ✅  | ✅  | ❌  | 🔵  |
-| `PATCH /visitors/{id}` (onay/red)     |  ❌   | ❌  | ❌  | ❌  | ✅* |
+| `GET  /visitors` (liste/detay)        |  🔒   | 🔒  | ✅  | ❌  | 🎯  |
+| `PATCH /visitors/{id}` (onay/red)     |  ❌   | ❌  | ❌  | ❌  | ✅🎯|
 | `POST /kargo` (paket kaydi)           |  ❌   | ❌  | ✅  | ❌  | ❌  |
-| `GET  /kargo` (liste/detay)           |  ✅   | ✅  | ✅  | ❌  | 🔵  |
+| `GET  /kargo` (liste/detay)           |  🔒   | 🔒  | ✅  | ❌  | 🔵  |
 | `PATCH /kargo/{id}` (teslim aldim)    |  ❌   | ❌  | ❌  | ❌  | ✅* |
+| `POST /unit-access-request`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET  /unit-access-request`           |  ✅   | 👤  | ❌  | ❌  | 🏠  |
+| `PATCH /unit-access-request/{id}`     |  ❌   | ❌  | ❌  | ❌  | ✅🏠|
 | `GET  /common-areas`                  |  ✅   | ✅  | ✅  | ✅  | ✅° |
 | `POST/PATCH /common-areas*`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /reservations` (talep)          |  ❌   | ❌  | ❌  | ❌  | ✅  |
@@ -340,28 +343,37 @@ Notlar:
   hatasi duyuru kaydini etkilemez). Duyuruya OPSIYONEL gorsel eklenebilir
   (`/uploads/presign` → PUT → `foto_key`); okumada `foto_url` (kisa omurlu
   presigned GET) tum okuyan rollere doner.
-- **Ziyaretci (`/visitors`):** kapi onay akisi — guvenlik kaydeder, dairenin
-  sakini onaylar/reddeder, sonuc guvenlige doner; tam gecmis tutulur.
+> **GIZLILIK (ziyaretci + kargo, kesin kural — KVKK):** ziyaretci ve kargo
+> kayitlari **OZEL**dir — VARSAYILAN olarak yalniz (1) o kaydin **hedef/dairesi
+> olan sakini** ve (2) **kaydeden guvenlik** (kapi ops, vardiya devri) gorebilir.
+> **`yonetici` VE `admin` ikisi de VARSAYILAN KAPALI** (🔒): platform operatoru
+> (`admin`) dahil hicbir yonetim rolu sakinin ozel ziyaretci/paket verisini
+> varsayilan olarak goremez. Gormek icin `unit-access-request` ile **sakin
+> onayli tek-seferlik izin** alinir (bir okumada tuketilir). Bu, gizliligi
+> uniform kilar: yalniz guvenlik (ops) + hedef sakin varsayilan gorur.
+
+- **Ziyaretci (`/visitors`):** kapi onay akisi — guvenlik kaydeder, **secilen
+  TEK hedef sakin** onaylar/reddeder, sonuc guvenlige doner; tam gecmis tutulur.
   - **KAYIT (`POST`) YALNIZ `security`:** ziyaretci kapida karsilanir; kayit
-    kapi operasyonudur. `yonetici`/`admin` kayit ACMAZ (403) — gecmisi GET
-    ile okur (yonetim gozetimi). Daire `unit_id` VEYA `unit_no` ile verilir
-    (guvenligin unit CRUD yetkisi yoktur; `unit_no` sunucuda cozulur,
-    bulunamazsa 422). Kayitta dairenin **TUM aktif sakinlerinin** cihazlarina
-    ayni anda push denenir (esler dahil; kisi hedefli; EK gonderim — hatasi
-    kaydi etkilemez; `data: tip=ziyaretci, visitor_id`).
-  - **YANIT (`PATCH`, ✅\*) YALNIZ o dairenin AKTIF sakini:** rol yetmez —
-    `unit_resident` (bitis IS NULL) baglantisi sunucuda dogrulanir; BASKA
-    dairenin sakini **404** alir (varlik sizdirilmaz, bypass yolu yok).
-    Personel rolleri (guvenlik dahil) yanitlayamaz — onay yetkisi daire
-    sakinindedir. **ILK yanit gecerli:** zaten yanitlanmis kayda ikinci
-    yanit **409** (atomik `durum='bekliyor'` kosullu UPDATE — esler ayni
-    anda bassa bile ilk kazanir). `yanitlayan_user_id` + `yanit_zamani`
-    otomatik damgalanir; sonuc push'u YALNIZ kaydi acan guvenlige gider
-    (`data: tip=ziyaretci_sonuc, visitor_id`).
-  - **OKUMA:** `admin`+`yonetici`+`security` tenant'in TUM gecmisi
-    (guvenlik ekrani canli sonuc + gecmis; durum/daire/tarih filtresi);
-    🔵 `resident` YALNIZ kendi dairelerinin kayitlarini gorur.
-    `tesis_gorevlisi` ERISMEZ (403) — kapi akisinin tarafi degil.
+    kapi operasyonudur. `yonetici`/`admin` kayit ACMAZ (403). Daire `unit_id`
+    VEYA `unit_no` ile verilir (bulunamazsa 422). **TEK HEDEF MODELI:** guvenlik
+    `target_resident_user_id` ile dairenin **AKTIF bir sakinini** secer (baska
+    dairenin/rolun id'si 422). Push YALNIZ **o hedef sakine** gider (esler dahil
+    degil; kisi hedefli; EK gonderim — hatasi kaydi etkilemez;
+    `data: tip=ziyaretci, visitor_id`).
+  - **YANIT (`PATCH`, ✅🎯) YALNIZ HEDEF sakin:** rol yetmez — `target_resident
+    _user_id == user` VE `unit_resident` (bitis IS NULL) sunucuda dogrulanir;
+    hedef DISI (ayni dairedeki es dahil) veya baska daire **404** (varlik
+    sizdirilmaz). Pasiflesen hedef de yanitlayamaz (404). **ILK yanit gecerli:**
+    zaten yanitlanmis kayda ikinci yanit **409** (atomik `durum='bekliyor'`
+    kosullu UPDATE). `yanitlayan_user_id` + `yanit_zamani` damgalanir; sonuc
+    push'u YALNIZ kaydi acan guvenlige (`data: tip=ziyaretci_sonuc`).
+  - **OKUMA:** YALNIZ `security` tenant'in TUM gecmisi (guvenlik canli sonuc +
+    gecmis; durum/daire/tarih filtresi); 🎯 `resident` YALNIZ **kendine
+    hedeflenen** kayitlari gorur (ayni dairedeki es'in kaydini GORMEZ); 🔒
+    `yonetici` VE `admin` VARSAYILAN 403 — yalniz izinli daireyi `?unit_id=`
+    ile bir kez gorur (izin tuketilir; KVKK — platform operatoru dahil).
+    `tesis_gorevlisi` ERISMEZ (403).
   - **GSM'e hazir (ILERIDE, simdi yok):** yanit alanlari kanaldan
     bagimsizdir; sakin telefonu `app_user.telefon`'da. Gercek arama
     (Twilio/Netgsm) `visitor_durum`'a deger (orn. `araniyor`) + arama
@@ -386,10 +398,36 @@ Notlar:
     aldigi DEGISMEZ (ayni dairede coklu sakin guvenli).
     `teslim_alan_user_id` + `teslim_zamani` otomatik damgalanir.
     **Teslimde geri-push YOK** (urun karari — kayit-push'u yeterli;
-    guvenlik/yonetim guncel durumu listeden gorur).
-  - **OKUMA:** `admin`+`yonetici`+`security` tenant'in TUM gecmisi
-    (durum/daire/tarih filtresi); 🔵 `resident` YALNIZ kendi dairelerinin
-    paketleri. `tesis_gorevlisi` ERISMEZ (403).
+    guvenlik/yonetim guncel durumu listeden gorur). Kargo `TUM aktif
+    sakinler` modelini korur (ziyaretci gibi tek-hedefe gecmedi — teslimi
+    dairenin herhangi bir sakini alabilir; coklu sakin guvenli).
+  - **OKUMA:** YALNIZ `security` tenant'in TUM gecmisi (durum/daire/tarih
+    filtresi); 🔵 `resident` YALNIZ kendi **dairelerinin** paketleri (es de
+    gorur — kargo unit-bazli); 🔒 `yonetici` VE `admin` VARSAYILAN 403 —
+    yalniz izinli daireyi `?unit_id=` ile bir kez gorur (ziyaretci ile ayni
+    izin mekanizmasi). `tesis_gorevlisi` ERISMEZ (403).
+- **Tek-seferlik erisim izni (`/unit-access-request`):** ziyaretci/kargo hem
+  yonetici'ye hem admin'e varsayilan kapali oldugundan, talep eden bir dairenin
+  kayitlarini gormek icin izin TALEBI acar; dairenin sakini onaylar/reddeder.
+  - **TALEP (`POST`) `admin` VEYA `yonetici`:** `unit_id`/`unit_no` (yoksa 422)
+    -> `durum=bekliyor`. Dairenin **AKTIF sakinlerine** push (`data:
+    tip=erisim_talebi, request_id`). Diger roller 403. (`granted_to_yonetici
+    _user_id` kolonu talebi acan yonetici VEYA admin id'sini tutar.)
+  - **KARAR (`PATCH`, ✅🏠) YALNIZ o dairenin AKTIF sakini:** baska daire
+    **404**; ILK karar gecerli (ikinci **409**). `onaylandi` -> TEK-KULLANIMLIK
+    izin (`used=false`). Sonuc push'u talebi acan yonetici'ye (`data:
+    tip=erisim_sonuc`).
+  - **TUKETIM (one-shot, SURESIZ):** onayli izin, talep eden (yonetici/admin)
+    o dairenin ziyaretci/kargo kaydini **ILK okudugunda** tuketilir (`used=true`,
+    atomik) — sonraki okuma **403**; tekrar gormek yeni talep ister. Tek izin
+    hem ziyaretci hem kargo icin gecerlidir ve ilk okumada (hangisi olursa)
+    tuketilir. Sureye bagli DEGIL (deterministik; TTL gelecekte eklenebilir).
+  - **OKUMA (`GET`):** 👤 `yonetici` kendi talepleri; 🏠 `resident` kendi
+    dairelerine gelen talepler; `admin` tenant tumu.
+
+> Matris isaretleri: 🔒 varsayilan kapali (tek-seferlik izinle acilir) · 🎯
+> yalniz hedef sakin · 🔵 kendi dairesi (es dahil) · 👤 kendi talepleri · 🏠
+> kendi dairesine gelen talepler.
 - **Ortak alan rezervasyonu (`/common-areas` + `/reservations`):** yonetici
   alan tanimlar (havuz/teras/toplanti odasi), sakin slot talep eder, yonetici
   onaylar/reddeder; tam gecmis tutulur.

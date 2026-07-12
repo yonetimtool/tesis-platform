@@ -43,6 +43,7 @@ from .routers import tenant as tenant_router
 from .routers import units as units_router
 from .routers import users as users_router
 from .routers import uploads as uploads_router
+from .routers import unit_access as unit_access_router
 from .routers import visitors as visitors_router
 from .routers import webhooks as webhooks_router
 
@@ -82,6 +83,7 @@ app.include_router(announcements_router.router)
 app.include_router(complaints_router.router)
 app.include_router(visitors_router.router)
 app.include_router(kargo_router.router)
+app.include_router(unit_access_router.router)
 app.include_router(common_areas_router.router)
 app.include_router(reservations_router.router)
 app.include_router(events_router.router)

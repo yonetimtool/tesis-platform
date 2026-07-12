@@ -36,6 +36,7 @@ from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Unit, UnitResident, Visitor
+from ..permissions import try_consume_unit_permission
 from ..scheduler.notify import dispatch_external
 from ..schemas import (
     VisitorCreate,
@@ -50,32 +51,40 @@ router = APIRouter(prefix="/visitors", tags=["visitors"])
 # KAYIT yalniz guvenlik: ziyaretci kapida karsilanir (yonetici/admin gecmisi
 # okur ama kayit acmaz — kapi operasyonu; karar auth.md §4'te belirtildi).
 _REGISTRAR = require_role("security")
-# OKUMA: yonetim + guvenlik tum gecmis; sakin kendi dairesi (asagida daralir).
-# tesis_gorevlisi ERISMEZ (403) — kapi/ziyaretci akisinin tarafi degil.
+# OKUMA rol kapisi: security TUM gecmis (kapi ops/vardiya devri); resident
+# kendi HEDEFLENEN kayitlari; admin VE yonetici VARSAYILAN KAPALI — yalniz
+# tek-seferlik izinli daire (handler'da 403/izin tuketimi; KVKK — platform
+# operatoru dahil kimse varsayilan olarak sakinin ozel verisini gormez).
+# tesis_gorevlisi ERISMEZ (403).
 _READER = require_role("admin", "yonetici", "security", "resident")
-# YANIT yalniz sakin (o dairenin aktif sakini oldugu ayrica dogrulanir).
+# Varsayilan kapali roller (izinle acilir): admin + yonetici.
+_IZIN_GEREKEN = {"admin", "yonetici"}
+# YANIT yalniz sakin (kaydin HEDEF sakini oldugu ayrica dogrulanir).
 _RESIDENT = require_role("resident")
 
 _KAYDEDEN = aliased(AppUser)
 _YANITLAYAN = aliased(AppUser)
+_TARGET = aliased(AppUser)
 
 
 def _out(row) -> VisitorOut:
-    obj, unit_no, kaydeden_ad, yanitlayan_ad = row
+    obj, unit_no, kaydeden_ad, yanitlayan_ad, target_ad = row
     out = VisitorOut.model_validate(obj)
     out.unit_no = unit_no
     out.kaydeden_ad = kaydeden_ad
     out.yanitlayan_ad = yanitlayan_ad
+    out.target_resident_ad = target_ad
     return out
 
 
 def _base_stmt():
-    """Liste/detay ortak SELECT'i: daire no + kaydeden/yanitlayan adlari join'li."""
+    """Liste/detay ortak SELECT'i: daire no + kaydeden/yanitlayan/hedef adlari."""
     return (
-        select(Visitor, Unit.no, _KAYDEDEN.ad, _YANITLAYAN.ad)
+        select(Visitor, Unit.no, _KAYDEDEN.ad, _YANITLAYAN.ad, _TARGET.ad)
         .join(Unit, Unit.id == Visitor.unit_id)
         .join(_KAYDEDEN, _KAYDEDEN.id == Visitor.kaydeden_user_id)
         .outerjoin(_YANITLAYAN, _YANITLAYAN.id == Visitor.yanitlayan_user_id)
+        .join(_TARGET, _TARGET.id == Visitor.target_resident_user_id)
     )
 
 
@@ -93,11 +102,15 @@ async def _aktif_daire_ids(db: AsyncSession, user: AppUser) -> list[uuid.UUID]:
 
 
 def _scope(stmt, user: AppUser, unit_ids: list[uuid.UUID] | None):
-    """resident yalniz KENDI dairelerinin kayitlarini gorur; yonetim + guvenlik
-    tenant'in tumunu (RLS zaten tenant'i daraltir)."""
+    """resident YALNIZ KENDINE HEDEFLENEN kayitlari gorur (tek hedef modeli, A);
+    aktif dairesi olmayan/hedefsiz hicbirini gormez. admin + security tenant'in
+    tumunu (RLS zaten tenant'i daraltir); yonetici bu fonksiyona ulasmadan once
+    handler'da izinle daraltilir."""
     if user.role == "resident":
-        # Aktif dairesi olmayan sakin hicbir kayit gormez (bos liste/404).
-        return stmt.where(Visitor.unit_id.in_(unit_ids or []))
+        return stmt.where(
+            Visitor.target_resident_user_id == user.id,
+            Visitor.unit_id.in_(unit_ids or []),
+        )
     return stmt
 
 
@@ -121,12 +134,33 @@ async def create_visitor(
     if unit is None:
         raise APIError(422, "invalid_reference", "Daire bu tenant'ta bulunamadi.")
 
+    # Hedef sakin O dairenin AKTIF sakini olmali (guvenlik hangi sakine
+    # bildirilecegini secer; degilse 422 — baska daireye/role sizmaz).
+    target_ad = (
+        await db.execute(
+            select(AppUser.ad)
+            .join(
+                UnitResident,
+                (UnitResident.user_id == AppUser.id)
+                & (UnitResident.unit_id == unit.id)
+                & (UnitResident.bitis.is_(None)),
+            )
+            .where(AppUser.id == body.target_resident_user_id)
+        )
+    ).scalar_one_or_none()
+    if target_ad is None:
+        raise APIError(
+            422, "invalid_reference",
+            "target_resident_user_id bu dairenin aktif sakini degil.",
+        )
+
     obj = Visitor(
         tenant_id=user.tenant_id,
         unit_id=unit.id,
         ziyaretci_ad=body.ziyaretci_ad,
         notlar=body.notlar,
         kaydeden_user_id=user.id,
+        target_resident_user_id=body.target_resident_user_id,
     )
     db.add(obj)
     try:
@@ -135,24 +169,16 @@ async def create_visitor(
         raise translate_integrity(exc)
     await db.refresh(obj)
 
-    # EK push: dairenin TUM aktif sakinlerine ayni anda (esler dahil, kisi
-    # hedefli — tenant'taki diger sakinlere sizmaz); hatasi kaydi kirmaz.
-    sakinler = (
-        await db.execute(
-            select(UnitResident.user_id).where(
-                UnitResident.unit_id == unit.id, UnitResident.bitis.is_(None)
-            )
-        )
-    ).scalars().all()
-    if sakinler:
-        dispatch_external(
-            f"Ziyaretci: {body.ziyaretci_ad} — {unit.no} kapida. Onayla/Reddet",
-            tenant_id=user.tenant_id,
-            target_user_ids=tuple(dict.fromkeys(sakinler)),
-            title="Ziyaretci",
-            data={"tip": "ziyaretci", "visitor_id": str(obj.id)},
-        )
-    return _out((obj, unit.no, user.ad, None))
+    # EK push: YALNIZ secilen hedef sakine (kisi hedefli; dairenin diger
+    # sakinlerine/tenant'a sizmaz); hatasi kaydi kirmaz.
+    dispatch_external(
+        f"Ziyaretci: {body.ziyaretci_ad} — {unit.no} kapida. Onayla/Reddet",
+        tenant_id=user.tenant_id,
+        target_user_ids=(body.target_resident_user_id,),
+        title="Ziyaretci",
+        data={"tip": "ziyaretci", "visitor_id": str(obj.id)},
+    )
+    return _out((obj, unit.no, user.ad, None, target_ad))
 
 
 # ------------------------------- okuma -------------------------------------- #
@@ -167,6 +193,23 @@ async def list_visitors(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> VisitorListResponse:
+    # admin + yonetici VARSAYILAN KAPALI: yalniz tek-seferlik izinli daireyi
+    # gorur. unit_id zorunlu; gecerli kullanilmamis izin TUKETILIR (one-shot),
+    # yoksa 403. Gizlilik (KVKK): kayit yalniz hedef sakin + izinli yonetim +
+    # kaydeden guvenlik.
+    if user.role in _IZIN_GEREKEN:
+        if unit_id is None:
+            raise APIError(
+                403, "forbidden",
+                "Ziyaretci kayitlari yonetime kapali; bir daire icin "
+                "tek-seferlik izin alin (unit_id gerekli).",
+            )
+        if not await try_consume_unit_permission(db, unit_id, user.id):
+            raise APIError(
+                403, "forbidden",
+                "Bu daire icin gecerli (kullanilmamis) goruntuleme izniniz yok.",
+            )
+
     stmt = _base_stmt()
     if durum is not None:
         stmt = stmt.where(Visitor.durum == durum)
@@ -199,6 +242,21 @@ async def get_visitor(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> VisitorOut:
+    # admin + yonetici: kaydin dairesine tek-seferlik izin gerektirir
+    # (varsayilan kapali). Izin yoksa/tukendiyse 403 — kaydin varligini da
+    # sizdirmaz.
+    if user.role in _IZIN_GEREKEN:
+        v_unit = (
+            await db.execute(select(Visitor.unit_id).where(Visitor.id == visitor_id))
+        ).scalar_one_or_none()
+        if v_unit is None or not await try_consume_unit_permission(
+            db, v_unit, user.id
+        ):
+            raise APIError(
+                403, "forbidden",
+                "Bu kayit yonetime kapali; daire icin tek-seferlik izin alin.",
+            )
+
     unit_ids = await _aktif_daire_ids(db, user) if user.role == "resident" else None
     row = (
         await db.execute(
@@ -230,9 +288,13 @@ async def answer_visitor(
         raise APIError(404, "not_found", "Kayit bulunamadi")
     obj, unit_no = row
 
-    # Yalniz O dairenin AKTIF sakini yanitlar; digerine 404 (varlik sizdirilmaz,
-    # ?unit_id= benzeri bir bypass yolu yok — sunucu tarafinda zorlanir).
-    if obj.unit_id not in await _aktif_daire_ids(db, user):
+    # Yalniz HEDEF sakin yanitlar (tek hedef modeli, A) ve o dairenin AKTIF
+    # sakini olmali (pasiflesen hedef yanitlayamaz); digerine 404 (varlik
+    # sizdirilmaz, ?unit_id= benzeri bypass yolu yok — sunucu tarafinda).
+    if (
+        obj.target_resident_user_id != user.id
+        or obj.unit_id not in await _aktif_daire_ids(db, user)
+    ):
         raise APIError(404, "not_found", "Kayit bulunamadi")
 
     # ILK yanit kazanir: durum='bekliyor' kosullu atomik UPDATE — es zamanli
@@ -266,4 +328,5 @@ async def answer_visitor(
     kaydeden_ad = (
         await db.execute(select(AppUser.ad).where(AppUser.id == obj.kaydeden_user_id))
     ).scalar_one_or_none()
-    return _out((obj, unit_no, kaydeden_ad, user.ad))
+    # Hedef sakin = yanitlayan (tek hedef modeli): target_ad == user.ad.
+    return _out((obj, unit_no, kaydeden_ad, user.ad, user.ad))

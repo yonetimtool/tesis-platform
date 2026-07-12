@@ -1014,10 +1014,13 @@ paths:
       tags: [visitors]
       summary: Ziyaretci gecmisi (created_at DESC)
       description: |
-        admin/yonetici/security tenant'in TUM ziyaretci gecmisini gorur
-        (guvenlik ekrani + yonetim gorunumu); resident YALNIZ kendi
-        dairelerinin kayitlarini gorur (baska daire sizmaz);
-        tesis_gorevlisi ERISMEZ (403). durum/daire/tarih ile filtrelenir.
+        GIZLILIK (kesin kural, KVKK): YALNIZ security tenant'in TUM ziyaretci
+        gecmisini gorur; resident YALNIZ KENDINE HEDEFLENEN kayitlari (tek
+        hedef modeli — ayni dairedeki es'inkini gormez); tesis_gorevlisi
+        ERISMEZ (403). yonetici VE admin VARSAYILAN KAPALI (403): bir daireyi
+        gormek icin once /unit-access-request ile tek-seferlik izin alir,
+        sonra ?unit_id= ile BiR KEZ gorur (izin o okumada tuketilir). durum/
+        daire/tarih ile filtrelenir.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -1135,10 +1138,13 @@ paths:
       tags: [kargo]
       summary: Kargo gecmisi (created_at DESC)
       description: |
-        admin/yonetici/security tenant'in TUM kargo gecmisini gorur;
-        resident YALNIZ kendi dairelerinin paketlerini gorur (baska daire
-        sizmaz); tesis_gorevlisi ERISMEZ (403). durum/daire/tarih ile
-        filtrelenir. foto_key varsa okumada foto_url (presigned GET) doner.
+        GIZLILIK (ziyaretci ile ayni, KVKK): YALNIZ security tenant'in TUM
+        kargo gecmisini gorur; resident YALNIZ kendi DAIRELERININ paketlerini
+        (es de gorur — kargo unit-bazli); tesis_gorevlisi ERISMEZ (403).
+        yonetici VE admin VARSAYILAN KAPALI (403): /unit-access-request ile
+        tek-seferlik izin alip ?unit_id= ile bir kez gorur (izin tuketilir).
+        durum/daire/tarih ile filtrelenir. foto_key varsa okumada foto_url
+        (presigned GET) doner.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -1242,6 +1248,97 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Kargo" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
+  # UNIT-ACCESS-REQUEST (yonetici TEK-SEFERLIK ziyaretci/kargo goruntuleme
+  # izni: yonetici talep acar -> dairenin sakini onaylar/reddeder -> onay
+  # tek-kullanimlik izin; yonetici o dairenin kaydini ILK okudugunda tukenir)
+  # ================================================================= #
+  /unit-access-request:
+    post:
+      tags: [unit-access]
+      summary: Goruntuleme izni talebi ac (admin VEYA yonetici)
+      description: |
+        yonetici VEYA admin (ikisi de ziyaretci/kargo icin varsayilan kapali)
+        bir dairenin kayitlarini gormek icin izin talebi acar (durum=bekliyor).
+        unit_id VEYA unit_no (tam biri; yoksa 422). Dairenin AKTIF sakinlerine
+        push (tip=erisim_talebi). Diger roller 403.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitAccessRequestCreate" }
+      responses:
+        "201":
+          description: Talep acildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitAccessRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    get:
+      tags: [unit-access]
+      summary: Izin talepleri (requested_at DESC)
+      description: |
+        Kapsam: yonetici kendi talepleri; resident kendi dairelerine gelen
+        talepler; admin tenant tumu. security/tesis_gorevlisi ERISMEZ (403).
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: durum
+          in: query
+          required: false
+          schema: { type: string, enum: [bekliyor, onaylandi, reddedildi] }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/UnitAccessRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /unit-access-request/{id}:
+    patch:
+      tags: [unit-access]
+      summary: Talebi onayla/reddet (YALNIZ o dairenin aktif sakini)
+      description: |
+        Sakin karari: durum=onaylandi|reddedildi. granted_by_resident_user_id
+        + decided_at damgalanir. Atomik durum='bekliyor' kosullu UPDATE: ILK
+        karar gecerli, ikinci 409. BASKA dairenin sakini 404 (varlik
+        sizdirilmaz); personel/yonetici/admin rol kapisinda 403. onaylandi ->
+        TEK-KULLANIMLIK izin (used=false). Sonuc push'u talebi acan yonetici'ye
+        (tip=erisim_sonuc).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitAccessRequestDecision" }
+      responses:
+        "200":
+          description: Karar verildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitAccessRequest" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3894,7 +3991,7 @@ components:
         alanlari (yanitlayan_user_id, yanit_zamani) kanaldan bagimsizdir;
         ileride gercek arama adimi durum enum'una deger eklenerek
         (orn. araniyor) ve arama meta'siyla genisler — yeniden tasarim yok.
-      required: [id, unit_id, ziyaretci_ad, durum, kaydeden_user_id, created_at]
+      required: [id, unit_id, ziyaretci_ad, durum, kaydeden_user_id, target_resident_user_id, created_at]
       properties:
         id: { type: string, format: uuid }
         unit_id: { type: string, format: uuid }
@@ -3913,6 +4010,14 @@ components:
           format: uuid
           description: Kaydi acan guvenlik (sonuc push'unun hedefi)
         kaydeden_ad: { type: string, nullable: true }
+        target_resident_user_id:
+          type: string
+          format: uuid
+          description: >
+            TEK hedef sakin — push + gorunurluk + karar YALNIZ onda (tek hedef
+            modeli). Ayni dairedeki diger sakinler (es) bu kaydi gormez/karar
+            vermez.
+        target_resident_ad: { type: string, nullable: true }
         yanitlayan_user_id:
           type: string
           format: uuid
@@ -3923,8 +4028,11 @@ components:
         created_at: { type: string, format: date-time }
     VisitorCreate:
       type: object
-      description: unit_id VEYA unit_no alanlarindan TAM BiRi verilmeli (aksi 422)
-      required: [ziyaretci_ad]
+      description: >
+        unit_id VEYA unit_no alanlarindan TAM BiRi verilmeli (aksi 422).
+        target_resident_user_id o dairenin AKTIF sakini olmali (aksi 422
+        invalid_reference).
+      required: [ziyaretci_ad, target_resident_user_id]
       properties:
         unit_id: { type: string, format: uuid, nullable: true }
         unit_no:
@@ -3934,6 +4042,12 @@ components:
           maxLength: 50
           description: Daire numarasi (orn. A-12) — sunucuda tenant icinde cozulur
         ziyaretci_ad: { type: string, minLength: 1, maxLength: 200 }
+        target_resident_user_id:
+          type: string
+          format: uuid
+          description: >
+            Guvenligin sectigi TEK hedef sakin (o dairenin aktif sakini). Push +
+            gorunurluk + karar YALNIZ bu sakinde.
         notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
     VisitorUpdate:
       type: object
@@ -4004,6 +4118,55 @@ components:
       required: [durum]
       properties:
         durum: { type: string, enum: [teslim_alindi] }
+
+    UnitAccessRequest:
+      type: object
+      description: >
+        Yonetici tek-seferlik daire erisim izni (talep+izin tek satirda).
+        onaylandi & used=false => gecerli izin; yonetici o dairenin ziyaretci/
+        kargo kaydini ILK okudugunda used=true olur (one-shot, suresiz).
+      required: [id, unit_id, granted_to_yonetici_user_id, durum, used, requested_at]
+      properties:
+        id: { type: string, format: uuid }
+        unit_id: { type: string, format: uuid }
+        unit_no: { type: string, nullable: true, description: Daire no (join ile) }
+        granted_to_yonetici_user_id:
+          type: string
+          format: uuid
+          description: >
+            Talebi acan yonetici VEYA admin (izin ona verilir; isim tarihsel —
+            admin de erisim talebi acabilir).
+        yonetici_ad: { type: string, nullable: true }
+        granted_by_resident_user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Karari veren sakin (karara kadar null)
+        resident_ad: { type: string, nullable: true }
+        durum: { type: string, enum: [bekliyor, onaylandi, reddedildi] }
+        used:
+          type: boolean
+          description: true = izin tuketildi (yonetici bir kez gordu); tekrar 403
+        requested_at: { type: string, format: date-time }
+        decided_at: { type: string, format: date-time, nullable: true }
+        used_at: { type: string, format: date-time, nullable: true }
+    UnitAccessRequestCreate:
+      type: object
+      description: unit_id VEYA unit_no alanlarindan TAM BiRi verilmeli (aksi 422)
+      properties:
+        unit_id: { type: string, format: uuid, nullable: true }
+        unit_no:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 50
+          description: Daire numarasi (orn. A-12) — sunucuda tenant icinde cozulur
+    UnitAccessRequestDecision:
+      type: object
+      description: Sakin karari — onay/red ('bekliyor'a geri donus yok)
+      required: [durum]
+      properties:
+        durum: { type: string, enum: [onaylandi, reddedildi] }
 
     OrtakAlan:
       type: object

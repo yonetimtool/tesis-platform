@@ -2,9 +2,10 @@
 
 RBAC (auth.md §4, visitor deseni): KAYIT yalniz security; TESLIM yalniz O
 dairenin AKTIF sakini (baska daire 404; ikinci isaret 409 — teslim alan
-degismez); OKUMA admin/yonetici/security TUM gecmis, resident yalniz KENDI
-daireleri, tesis_gorevlisi 403. Foto mevcut presign akisiyla (roundtrip +
-IDOR korumasi). Tenant izolasyonu RLS ile.
+degismez); OKUMA admin+security TUM gecmis, resident yalniz KENDI daireleri
+(es dahil — kargo unit-bazli); yonetici VARSAYILAN KAPALI (403 — tek-seferlik
+izinle acilir, bkz. test_unit_access); tesis_gorevlisi 403. Foto mevcut presign
+akisiyla (roundtrip + IDOR korumasi). Tenant izolasyonu RLS ile.
 """
 from __future__ import annotations
 
@@ -38,6 +39,18 @@ def _mk_resident(owner_conn, tenant_id, email, pw):
             "INSERT INTO app_user (tenant_id, ad, email, password_hash, role) "
             "VALUES (%s,%s,%s,%s,'resident'::user_role) RETURNING id",
             (tenant_id, f"Sakin {email.split('@')[0]}", email, hash_password(pw)),
+        )
+        return cur.fetchone()[0]
+
+
+def _mk_security(owner_conn, tenant_id, email, pw):
+    from app.security import hash_password
+
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO app_user (tenant_id, ad, email, password_hash, role) "
+            "VALUES (%s,%s,%s,%s,'security'::user_role) RETURNING id",
+            (tenant_id, f"Guard {email.split('@')[0]}", email, hash_password(pw)),
         )
         return cur.fetchone()[0]
 
@@ -81,6 +94,10 @@ def kworld(client, world, owner_conn):
         resident_a_id = cur.fetchone()[0]
     es_id = _mk_resident(owner_conn, a, es_email, pw)
     diger_id = _mk_resident(owner_conn, a, diger_email, pw)
+    # B tenant guvenligi: cross-tenant okuma izolasyonu (admin+yonetici artik
+    # varsayilan kapali; security okuyabilen tek rol).
+    guard_b_email = f"kguardb-{suffix}@acme.com"
+    _mk_security(owner_conn, world["b"], guard_b_email, pw)
 
     unit1 = _mk_unit(owner_conn, a, f"K-101-{suffix}")
     unit2 = _mk_unit(owner_conn, a, f"K-202-{suffix}")
@@ -98,6 +115,7 @@ def kworld(client, world, owner_conn):
         "es_id": str(es_id),
         "es": {"email": es_email, "password": pw},
         "diger": {"email": diger_email, "password": pw},
+        "guard_b": {"email": guard_b_email, "password": pw},
     }
     # temizlik world fixture'inda: tenant silinince CASCADE.
 
@@ -313,17 +331,27 @@ def test_sakin_yalniz_kendi_dairesinin_paketlerini_gorur(client, kworld):
     assert client.get(f"/kargo/{k1['id']}", headers=resident).status_code == 200
 
 
-def test_guvenlik_ve_yonetim_tum_gecmisi_gorur(client, kworld):
+def test_guvenlik_tum_gecmisi_gorur_yonetim_403(client, kworld):
+    """A (KVKK): YALNIZ guvenlik (kapi ops) TUM gecmisi gorur; YONETICI VE
+    ADMIN VARSAYILAN KAPALI -> 403 (ziyaretci ile ayni gizlilik)."""
     guard = _headers(client, kworld["slug_a"], kworld["guard_a"])
     k1 = _register_kargo(client, guard, unit_no=kworld["unit1_no"])
     k2 = _register_kargo(client, guard, unit_no=kworld["unit2_no"])
-    for role in ("guard_a", "yonetici_a", "admin_a"):
+    ids = [it["id"] for it in client.get(
+        "/kargo", headers=guard, params={"limit": 200}
+    ).json()["items"]]
+    assert k1["id"] in ids and k2["id"] in ids
+    assert client.get(f"/kargo/{k1['id']}", headers=guard).status_code == 200
+    # yonetici VE admin: izinsiz 403 (liste + unit_id'li liste + detay)
+    for role in ("yonetici_a", "admin_a"):
         h = _headers(client, kworld["slug_a"], kworld[role])
-        ids = [it["id"] for it in client.get(
+        assert client.get(
             "/kargo", headers=h, params={"limit": 200}
-        ).json()["items"]]
-        assert k1["id"] in ids and k2["id"] in ids, role
-        assert client.get(f"/kargo/{k1['id']}", headers=h).status_code == 200, role
+        ).status_code == 403, role
+        assert client.get(
+            "/kargo", headers=h, params={"unit_id": kworld["unit1"]}
+        ).status_code == 403, role
+        assert client.get(f"/kargo/{k1['id']}", headers=h).status_code == 403, role
 
 
 def test_okuma_rbac_gorevli_403(client, kworld):
@@ -375,12 +403,15 @@ def test_tenant_izolasyonu(client, kworld):
     guard = _headers(client, kworld["slug_a"], kworld["guard_a"])
     k = _register_kargo(client, guard, unit_no=kworld["unit1_no"])
 
-    yonetici_b = _headers(client, kworld["slug_b"], kworld["yonetici_b"])
+    # Okuma icin guard_b (admin+yonetici artik varsayilan kapali — izolasyonu
+    # gosteremez). RLS: B guvenligi A'nin kaydini goremez.
+    guard_b = _headers(client, kworld["slug_b"], kworld["guard_b"])
     b_ids = [it["id"] for it in client.get(
-        "/kargo", headers=yonetici_b, params={"limit": 200}
+        "/kargo", headers=guard_b, params={"limit": 200}
     ).json()["items"]]
     assert k["id"] not in b_ids
-    assert client.get(f"/kargo/{k['id']}", headers=yonetici_b).status_code == 404
+    assert client.get(f"/kargo/{k['id']}", headers=guard_b).status_code == 404
+    yonetici_b = _headers(client, kworld["slug_b"], kworld["yonetici_b"])
     assert client.patch(
         f"/kargo/{k['id']}", headers=yonetici_b, json={"durum": "teslim_alindi"}
     ).status_code == 403  # rol zaten yetkisiz; kayit da B'den gorunmez

@@ -109,6 +109,13 @@ def upgrade() -> None:
     )
     # kargo/paket takibi durumu: kapida teslim alinmayi bekler -> sakin alir.
     op.execute("CREATE TYPE kargo_durum AS ENUM ('bekliyor', 'teslim_alindi');")
+    # yonetici tek-seferlik ziyaretci/paket goruntuleme izin talebi durumu:
+    # bekliyor -> sakin onaylar/reddeder; onaylandi ise TEK KULLANIMLIK izin
+    # (ilk okumada tuketilir — bkz. unit_access_permission.used).
+    op.execute(
+        "CREATE TYPE access_request_durum AS ENUM "
+        "('bekliyor', 'onaylandi', 'reddedildi');"
+    )
     # ortak alan rezervasyon talebi durumu (yonetici karar verir).
     op.execute(
         "CREATE TYPE rezervasyon_durum AS ENUM ('bekliyor', 'onaylandi', 'reddedildi');"
@@ -1039,7 +1046,8 @@ def upgrade() -> None:
             notlar               text,       -- opsiyonel not ("not" SQL anahtar sozcugu; emergency/asset deseni)
             durum                visitor_durum NOT NULL DEFAULT 'bekliyor',
             kaydeden_user_id     uuid NOT NULL,   -- kaydi acan guvenlik (sonuc push'unun hedefi)
-            yanitlayan_user_id   uuid,            -- yaniti veren sakin (ilk yanit kazanir)
+            target_resident_user_id uuid NOT NULL, -- guvenligin sectigi TEK sakin: push + gorunurluk + karar YALNIZ onda
+            yanitlayan_user_id   uuid,            -- yaniti veren sakin (= hedef sakin; ilk yanit kazanir)
             yanit_zamani         timestamptz,
             created_at           timestamptz NOT NULL DEFAULT now(),
             -- composite FK hedefi (ileride arama/meta tablolari icin de hazir).
@@ -1051,6 +1059,10 @@ def upgrade() -> None:
             CONSTRAINT fk_visitor_kaydeden
                 FOREIGN KEY (kaydeden_user_id, tenant_id)
                 REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- Hedef sakin: bildirim/gorunurluk/karar sahibi; silinemez (RESTRICT).
+            CONSTRAINT fk_visitor_target
+                FOREIGN KEY (target_resident_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
             -- Kolon-ozel SET NULL: yalnizca yanitlayan_user_id NULL'lanir.
             CONSTRAINT fk_visitor_yanitlayan
                 FOREIGN KEY (yanitlayan_user_id, tenant_id)
@@ -1061,6 +1073,10 @@ def upgrade() -> None:
     op.execute("CREATE INDEX ix_visitor_tenant ON visitor (tenant_id);")
     op.execute("CREATE INDEX ix_visitor_tenant_unit ON visitor (tenant_id, unit_id);")
     op.execute("CREATE INDEX ix_visitor_tenant_durum ON visitor (tenant_id, durum);")
+    op.execute(
+        "CREATE INDEX ix_visitor_tenant_target "
+        "ON visitor (tenant_id, target_resident_user_id);"
+    )
     op.execute(
         "CREATE INDEX ix_visitor_tenant_created ON visitor (tenant_id, created_at DESC);"
     )
@@ -1105,6 +1121,63 @@ def upgrade() -> None:
     op.execute("CREATE INDEX ix_kargo_tenant_durum ON kargo (tenant_id, durum);")
     op.execute(
         "CREATE INDEX ix_kargo_tenant_created ON kargo (tenant_id, created_at DESC);"
+    )
+
+    # ------------------------------------------------------------------ #
+    # 9z3b. unit_access_permission  (yonetici TEK-SEFERLIK ziyaretci/paket
+    #     goruntuleme izni). Gizlilik: ziyaretci/kargo VARSAYILAN olarak
+    #     yonetici'ye KAPALI (yonetici gecmisi goremez). Yonetici bir daireye
+    #     izin TALEBI acar -> dairenin sakini onaylar/reddeder. Onay = TEK
+    #     KULLANIMLIK izin (used=false); yonetici o dairenin kayitlarini ILK
+    #     okudugunda tuketilir (used=true). Sureye bagli DEGIL (one-shot);
+    #     tekrar gormek yeni talep gerektirir. durum tek satirda talep+izin
+    #     yasam dongusunu tutar.
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE unit_access_permission (
+            id                          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id                   uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            unit_id                     uuid NOT NULL,
+            granted_to_yonetici_user_id uuid NOT NULL,  -- talebi acan yonetici (izin ona verilir)
+            granted_by_resident_user_id uuid,           -- karari veren sakin (karara kadar NULL)
+            durum                       access_request_durum NOT NULL DEFAULT 'bekliyor',
+            used                        boolean NOT NULL DEFAULT false,  -- ilk okumada true (one-shot)
+            requested_at                timestamptz NOT NULL DEFAULT now(),
+            decided_at                  timestamptz,
+            used_at                     timestamptz,
+            created_at                  timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_uap_id_tenant UNIQUE (id, tenant_id),
+            CONSTRAINT fk_uap_unit
+                FOREIGN KEY (unit_id, tenant_id)
+                REFERENCES unit (id, tenant_id) ON DELETE CASCADE,
+            CONSTRAINT fk_uap_yonetici
+                FOREIGN KEY (granted_to_yonetici_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
+            -- Kolon-ozel SET NULL: yalnizca granted_by_resident_user_id NULL'lanir.
+            CONSTRAINT fk_uap_resident
+                FOREIGN KEY (granted_by_resident_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id)
+                ON DELETE SET NULL (granted_by_resident_user_id)
+        );
+        """
+    )
+    op.execute(
+        "CREATE INDEX ix_uap_tenant ON unit_access_permission (tenant_id);"
+    )
+    op.execute(
+        "CREATE INDEX ix_uap_tenant_unit "
+        "ON unit_access_permission (tenant_id, unit_id);"
+    )
+    # Izin dogrulama sorgusu: (tenant, unit, yonetici, durum, used) — gecerli
+    # kullanilmamis onay hizli bulunur.
+    op.execute(
+        "CREATE INDEX ix_uap_lookup ON unit_access_permission "
+        "(tenant_id, unit_id, granted_to_yonetici_user_id, durum, used);"
+    )
+    op.execute(
+        "CREATE INDEX ix_uap_tenant_created "
+        "ON unit_access_permission (tenant_id, created_at DESC);"
     )
 
     # ------------------------------------------------------------------ #
@@ -1329,6 +1402,7 @@ def upgrade() -> None:
         "complaint",
         "visitor",
         "kargo",
+        "unit_access_permission",
         "ortak_alan",
         "rezervasyon",
         "etkinlik",
@@ -1377,6 +1451,7 @@ def downgrade() -> None:
         "etkinlik",
         "rezervasyon",
         "ortak_alan",
+        "unit_access_permission",
         "kargo",
         "visitor",
         "complaint",
@@ -1409,6 +1484,7 @@ def downgrade() -> None:
 
     op.execute("DROP TYPE IF EXISTS katilim_durum;")
     op.execute("DROP TYPE IF EXISTS rezervasyon_durum;")
+    op.execute("DROP TYPE IF EXISTS access_request_durum;")
     op.execute("DROP TYPE IF EXISTS kargo_durum;")
     op.execute("DROP TYPE IF EXISTS visitor_durum;")
     op.execute("DROP TYPE IF EXISTS device_platform;")

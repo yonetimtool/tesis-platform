@@ -544,6 +544,9 @@ class VisitorCreate(BaseModel):
     unit_id: uuid.UUID | None = None
     unit_no: str | None = Field(None, min_length=1, max_length=50)
     ziyaretci_ad: str = Field(..., min_length=1, max_length=200)
+    # Guvenligin sectigi TEK hedef sakin: bildirim + gorunurluk + karar YALNIZ
+    # onda. O dairenin AKTIF sakini olmali (sunucu dogrular; degilse 422).
+    target_resident_user_id: uuid.UUID
     # "not" SQL/Python anahtar sozcugu — kolon/alan adi codebase deseniyle
     # 'notlar' (emergency_alert/asset_checkout ile ayni).
     notlar: str | None = Field(None, min_length=1, max_length=1000)
@@ -574,6 +577,9 @@ class VisitorOut(BaseModel):
     kaydeden_user_id: uuid.UUID
     # Kaydi acan guvenligin adi (join ile).
     kaydeden_ad: str | None = None
+    # Hedef sakin (bildirim/gorunurluk/karar sahibi) + adi (join ile).
+    target_resident_user_id: uuid.UUID
+    target_resident_ad: str | None = None
     yanitlayan_user_id: uuid.UUID | None = None
     # Yaniti veren sakinin adi (join ile; yanitsizsa null).
     yanitlayan_ad: str | None = None
@@ -642,6 +648,56 @@ class KargoOut(BaseModel):
 class KargoListResponse(BaseModel):
     meta: PageMetaOut
     items: list[KargoOut]
+
+
+# --------------------- unit access permission (yonetici) -------------------- #
+AccessRequestDurum = Literal["bekliyor", "onaylandi", "reddedildi"]
+# Sakinin verebilecegi karar — 'bekliyor'a geri donus yok.
+AccessRequestKarar = Literal["onaylandi", "reddedildi"]
+
+
+class UnitAccessRequestCreate(BaseModel):
+    """Yonetici izin talebi: bir dairenin ziyaretci/paket kayitlarini TEK
+    SEFERLIK gormek icin. Daire unit_id VEYA unit_no ile verilir (tam biri)."""
+
+    unit_id: uuid.UUID | None = None
+    unit_no: str | None = Field(None, min_length=1, max_length=50)
+
+    @model_validator(mode="after")
+    def _tek_daire_referansi(self) -> "UnitAccessRequestCreate":
+        if (self.unit_id is None) == (self.unit_no is None):
+            raise ValueError("unit_id veya unit_no alanlarindan tam biri verilmeli")
+        return self
+
+
+class UnitAccessRequestDecision(BaseModel):
+    """Sakin karari — onay/red (karar veren + zaman sunucuda damgalanir)."""
+
+    durum: AccessRequestKarar
+
+
+class UnitAccessRequestOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    unit_id: uuid.UUID
+    unit_no: str | None = None
+    granted_to_yonetici_user_id: uuid.UUID
+    # Talebi acan yoneticinin adi (join ile).
+    yonetici_ad: str | None = None
+    granted_by_resident_user_id: uuid.UUID | None = None
+    # Karari veren sakinin adi (join ile; karar verilmemisse null).
+    resident_ad: str | None = None
+    durum: str
+    used: bool
+    requested_at: datetime
+    decided_at: datetime | None = None
+    used_at: datetime | None = None
+
+
+class UnitAccessRequestListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[UnitAccessRequestOut]
 
 
 # ---------------------------- ortak alan / rezervasyon ---------------------- #

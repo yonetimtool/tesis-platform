@@ -1,9 +1,11 @@
-"""Ziyaretci onay akisi: kayit + push hedefleri + onay/red + RBAC + izolasyon.
+"""Ziyaretci onay akisi: kayit + tek-hedef push + onay/red + RBAC + izolasyon.
 
-RBAC (auth.md §4, kesin kural): KAYIT yalniz security; YANIT yalniz O dairenin
-AKTIF sakini (baska daire 404; ikinci yanit 409 — ilk kazanir); OKUMA
-admin/yonetici/security TUM gecmis, resident yalniz KENDI daireleri,
-tesis_gorevlisi 403. Tenant izolasyonu RLS ile.
+RBAC/GIZLILIK (auth.md §4, A guncel): KAYIT yalniz security + TEK hedef sakin
+secer (target_resident_user_id, dairenin aktif sakini olmali). Push/gorunurluk/
+karar YALNIZ hedef sakinde (ayni dairedeki es GORMEZ/karar VERMEZ). OKUMA:
+admin+security TUM gecmis; resident yalniz KENDINE HEDEFLENEN; yonetici
+VARSAYILAN KAPALI (403 — tek-seferlik izinle acilir, bkz. test_unit_access);
+tesis_gorevlisi 403. ILK yanit gecerli (ikinci 409). Tenant izolasyonu RLS ile.
 """
 from __future__ import annotations
 
@@ -21,8 +23,13 @@ def _headers(client, slug, cred):
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
 
-def _register_visitor(client, headers, **over):
-    body = {"ziyaretci_ad": f"Ziyaretci {uuid.uuid4().hex[:6]}"}
+def _register_visitor(client, headers, target, **over):
+    """Guvenlik ziyaretci kaydeder. `target` = HEDEF sakin user id (tek hedef
+    modeli, A): push + gorunurluk + karar YALNIZ onda."""
+    body = {
+        "ziyaretci_ad": f"Ziyaretci {uuid.uuid4().hex[:6]}",
+        "target_resident_user_id": target,
+    }
     body.update(over)
     r = client.post("/visitors", headers=headers, json=body)
     assert r.status_code == 201, r.text
@@ -37,6 +44,18 @@ def _mk_resident(owner_conn, tenant_id, email, pw):
             "INSERT INTO app_user (tenant_id, ad, email, password_hash, role) "
             "VALUES (%s,%s,%s,%s,'resident'::user_role) RETURNING id",
             (tenant_id, f"Sakin {email.split('@')[0]}", email, hash_password(pw)),
+        )
+        return cur.fetchone()[0]
+
+
+def _mk_security(owner_conn, tenant_id, email, pw):
+    from app.security import hash_password
+
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO app_user (tenant_id, ad, email, password_hash, role) "
+            "VALUES (%s,%s,%s,%s,'security'::user_role) RETURNING id",
+            (tenant_id, f"Guard {email.split('@')[0]}", email, hash_password(pw)),
         )
         return cur.fetchone()[0]
 
@@ -81,6 +100,10 @@ def vworld(client, world, owner_conn):
         resident_a_id = cur.fetchone()[0]
     es_id = _mk_resident(owner_conn, a, es_email, pw)
     diger_id = _mk_resident(owner_conn, a, diger_email, pw)
+    # B tenant guvenligi: cross-tenant okuma izolasyonunu gostermek icin
+    # (admin+yonetici artik varsayilan kapali; security okuyabilen tek rol).
+    guard_b_email = f"guardb-{suffix}@acme.com"
+    _mk_security(owner_conn, world["b"], guard_b_email, pw)
 
     unit1 = _mk_unit(owner_conn, a, f"V-101-{suffix}")
     unit2 = _mk_unit(owner_conn, a, f"V-202-{suffix}")
@@ -96,8 +119,10 @@ def vworld(client, world, owner_conn):
         "unit2_no": f"V-202-{suffix}",
         "resident_a_id": str(resident_a_id),
         "es_id": str(es_id),
+        "diger_id": str(diger_id),
         "es": {"email": es_email, "password": pw},
         "diger": {"email": diger_email, "password": pw},
+        "guard_b": {"email": guard_b_email, "password": pw},
     }
     # temizlik world fixture'inda: tenant silinince CASCADE.
 
@@ -106,7 +131,7 @@ def vworld(client, world, owner_conn):
 def test_guvenlik_unit_no_ile_kaydeder_bekliyor(client, vworld):
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
     v = _register_visitor(
-        client, guard,
+        client, guard, vworld["resident_a_id"],
         ziyaretci_ad="Kurye Mehmet", unit_no=vworld["unit1_no"], notlar="Koli teslimati",
     )
     assert v["durum"] == "bekliyor"
@@ -114,38 +139,75 @@ def test_guvenlik_unit_no_ile_kaydeder_bekliyor(client, vworld):
     assert v["unit_no"] == vworld["unit1_no"]
     assert v["kaydeden_ad"] == "Guard A"
     assert v["notlar"] == "Koli teslimati"
+    # Tek hedef modeli (A): kayit HEDEF sakini tasir (ad join'li).
+    assert v["target_resident_user_id"] == vworld["resident_a_id"]
+    assert v["target_resident_ad"] == "Resident A"
     assert v["yanitlayan_user_id"] is None and v["yanit_zamani"] is None
 
 
 def test_guvenlik_unit_id_ile_de_kaydeder(client, vworld):
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v = _register_visitor(client, guard, unit_id=vworld["unit1"])
+    v = _register_visitor(
+        client, guard, vworld["resident_a_id"], unit_id=vworld["unit1"]
+    )
     assert v["durum"] == "bekliyor" and v["unit_id"] == vworld["unit1"]
+
+
+def test_kayit_hedef_daire_sakini_degilse_422(client, vworld):
+    """Hedef sakin O dairenin AKTIF sakini olmali; baska dairenin sakinini
+    (veya rastgele id) hedef gostermek -> 422 invalid_reference."""
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    # diger unit2'nin sakini — unit1 icin gecersiz hedef
+    r = client.post(
+        "/visitors", headers=guard,
+        json={
+            "ziyaretci_ad": "X", "unit_no": vworld["unit1_no"],
+            "target_resident_user_id": vworld["diger_id"],
+        },
+    )
+    assert r.status_code == 422 and r.json()["error"]["code"] == "invalid_reference"
+    # rastgele id de gecersiz
+    assert client.post(
+        "/visitors", headers=guard,
+        json={
+            "ziyaretci_ad": "X", "unit_no": vworld["unit1_no"],
+            "target_resident_user_id": str(uuid.uuid4()),
+        },
+    ).status_code == 422
 
 
 def test_kayit_dogrulama(client, vworld):
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    tgt = vworld["resident_a_id"]
     # daire referansi: ikisi birden / hicbiri -> 422
     for body in (
-        {"ziyaretci_ad": "X"},
-        {"ziyaretci_ad": "X", "unit_id": vworld["unit1"], "unit_no": vworld["unit1_no"]},
+        {"ziyaretci_ad": "X", "target_resident_user_id": tgt},
+        {"ziyaretci_ad": "X", "target_resident_user_id": tgt,
+         "unit_id": vworld["unit1"], "unit_no": vworld["unit1_no"]},
     ):
         assert client.post("/visitors", headers=guard, json=body).status_code == 422, body
+    # hedef sakin eksik -> 422
+    assert client.post(
+        "/visitors", headers=guard,
+        json={"ziyaretci_ad": "X", "unit_no": vworld["unit1_no"]},
+    ).status_code == 422
     # olmayan daire -> 422 invalid_reference
     r = client.post(
         "/visitors", headers=guard,
-        json={"ziyaretci_ad": "X", "unit_no": "YOK-999"},
+        json={"ziyaretci_ad": "X", "unit_no": "YOK-999", "target_resident_user_id": tgt},
     )
     assert r.status_code == 422
     assert r.json()["error"]["code"] == "invalid_reference"
     assert client.post(
         "/visitors", headers=guard,
-        json={"ziyaretci_ad": "X", "unit_id": str(uuid.uuid4())},
+        json={"ziyaretci_ad": "X", "unit_id": str(uuid.uuid4()),
+              "target_resident_user_id": tgt},
     ).status_code == 422
     # bos ziyaretci adi -> 422
     assert client.post(
         "/visitors", headers=guard,
-        json={"ziyaretci_ad": "", "unit_no": vworld["unit1_no"]},
+        json={"ziyaretci_ad": "", "unit_no": vworld["unit1_no"],
+              "target_resident_user_id": tgt},
     ).status_code == 422
 
 
@@ -155,13 +217,15 @@ def test_kayit_rbac_yalniz_guvenlik(client, vworld):
         h = _headers(client, vworld["slug_a"], vworld[role])
         assert client.post(
             "/visitors", headers=h,
-            json={"ziyaretci_ad": "X", "unit_no": vworld["unit1_no"]},
+            json={"ziyaretci_ad": "X", "unit_no": vworld["unit1_no"],
+                  "target_resident_user_id": vworld["resident_a_id"]},
         ).status_code == 403, role
 
 
-def test_kayit_push_tum_daire_sakinlerine_denenir(client, vworld):
-    """Dairenin TUM aktif sakinlerinin cihaz token'lari push hedefidir
-    (esler dahil); baska dairenin sakini hedef degildir."""
+def test_kayit_push_yalniz_hedef_sakine(client, vworld):
+    """Tek hedef modeli (A): push YALNIZ secilen hedef sakine gider — ayni
+    dairedeki es hedef DEGILSE bildirilmez. Kayit hedef sakini tasir; hedefin
+    cihaz token'i cozulur (RLS-safe), es'inki hedef listesinde degildir."""
     resident1 = _headers(client, vworld["slug_a"], vworld["resident_a"])
     es = _headers(client, vworld["slug_a"], vworld["es"])
     tag = uuid.uuid4().hex[:6]
@@ -171,24 +235,22 @@ def test_kayit_push_tum_daire_sakinlerine_denenir(client, vworld):
         ).status_code in (200, 201)
 
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    _register_visitor(client, guard, unit_no=vworld["unit1_no"])  # push denenir (noop)
+    v = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
+    # Kayit tek hedefi tasir (push hedefi = bu tek sakin).
+    assert v["target_resident_user_id"] == vworld["resident_a_id"]
 
-    # Router'in hedef secimi dispatch_external(target_user_ids=<daire sakinleri>);
-    # ayni secim fonksiyonuyla iki sakinin de token'i cozulur (RLS-safe).
     from app.scheduler.notify import _fetch_device_tokens_for_users
 
-    toks = set(
-        _fetch_device_tokens_for_users(
-            vworld["a"], [vworld["resident_a_id"], vworld["es_id"]]
-        )
-    )
-    assert {f"RES1-{tag}", f"ES-{tag}"} <= toks
+    hedef_toks = set(_fetch_device_tokens_for_users(vworld["a"], [vworld["resident_a_id"]]))
+    assert f"RES1-{tag}" in hedef_toks
+    # es hedef degil: onun token'i hedef kumesinde yok.
+    assert f"ES-{tag}" not in hedef_toks
 
 
 # ------------------------------- yanit -------------------------------------- #
-def test_sakin_onaylar_yanitlayan_ve_zaman_damgalanir(client, vworld):
+def test_hedef_sakin_onaylar_yanitlayan_ve_zaman_damgalanir(client, vworld):
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
+    v = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
 
     resident = _headers(client, vworld["slug_a"], vworld["resident_a"])
     p = client.patch(f"/visitors/{v['id']}", headers=resident, json={"durum": "onaylandi"})
@@ -204,31 +266,51 @@ def test_sakin_onaylar_yanitlayan_ve_zaman_damgalanir(client, vworld):
     assert d["durum"] == "onaylandi" and d["yanitlayan_ad"] == "Resident A"
 
 
-def test_sakin_reddeder(client, vworld):
+def test_hedef_sakin_reddeder(client, vworld):
+    """Tek hedef modeli (A): karar YALNIZ hedef sakinde. Hedef = es ise es
+    reddeder."""
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
+    v = _register_visitor(client, guard, vworld["es_id"], unit_no=vworld["unit1_no"])
     es = _headers(client, vworld["slug_a"], vworld["es"])
     p = client.patch(f"/visitors/{v['id']}", headers=es, json={"durum": "reddedildi"})
     assert p.status_code == 200 and p.json()["durum"] == "reddedildi"
     assert p.json()["yanitlayan_user_id"] == vworld["es_id"]
 
 
-def test_cifte_yanit_409_ilk_kazanir(client, vworld):
-    """Ayni dairenin IKI sakini: ilk yanit gecerli, ikincisi 409; durum degismez."""
+def test_hedef_disi_ayni_daire_sakini_yanitlayamaz_404(client, vworld):
+    """Tek hedef modeli (A): kayit resident_a'ya hedeflenmisse ayni dairedeki
+    es (hedef DEGIL) yanitlayamaz -> 404; kaydi da GORMEZ."""
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
+    v = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
+    es = _headers(client, vworld["slug_a"], vworld["es"])
+    assert client.patch(
+        f"/visitors/{v['id']}", headers=es, json={"durum": "onaylandi"}
+    ).status_code == 404
+    es_ids = [it["id"] for it in client.get(
+        "/visitors", headers=es, params={"limit": 200}
+    ).json()["items"]]
+    assert v["id"] not in es_ids
+
+
+def test_cifte_yanit_409_ilk_kazanir(client, vworld):
+    """Tek hedef modeli (A): hedef sakin bir kez yanitlar; AYNI hedefin ikinci
+    yaniti 409 (durum degismez). Hedef disi sakin zaten 404 alir."""
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    v = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
 
     resident = _headers(client, vworld["slug_a"], vworld["resident_a"])
     es = _headers(client, vworld["slug_a"], vworld["es"])
     assert client.patch(
         f"/visitors/{v['id']}", headers=resident, json={"durum": "onaylandi"}
     ).status_code == 200
-    r2 = client.patch(f"/visitors/{v['id']}", headers=es, json={"durum": "reddedildi"})
-    assert r2.status_code == 409, r2.text
-    # ayni sakin tekrar da yanitlayamaz
+    # hedef sakin tekrar yanitlayamaz -> 409
     assert client.patch(
         f"/visitors/{v['id']}", headers=resident, json={"durum": "reddedildi"}
     ).status_code == 409
+    # hedef disi es -> 404 (varlik sizdirilmaz)
+    assert client.patch(
+        f"/visitors/{v['id']}", headers=es, json={"durum": "reddedildi"}
+    ).status_code == 404
     d = client.get(f"/visitors/{v['id']}", headers=guard).json()
     assert d["durum"] == "onaylandi"
     assert d["yanitlayan_user_id"] == vworld["resident_a_id"]
@@ -237,7 +319,7 @@ def test_cifte_yanit_409_ilk_kazanir(client, vworld):
 def test_baska_dairenin_sakini_yanitlayamaz_404(client, vworld):
     """Kesin kural: BASKA dairenin sakini 404 (varlik sizdirilmaz, bypass yok)."""
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
+    v = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
     diger = _headers(client, vworld["slug_a"], vworld["diger"])
     r = client.patch(f"/visitors/{v['id']}", headers=diger, json={"durum": "onaylandi"})
     assert r.status_code == 404, r.text
@@ -248,7 +330,7 @@ def test_baska_dairenin_sakini_yanitlayamaz_404(client, vworld):
 def test_yanit_rbac_personel_yanitlayamaz(client, vworld):
     """Onay yetkisi daire sakininde: guvenlik/gorevli/yonetici/admin PATCH 403."""
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
+    v = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
     for role in ("guard_a", "gorevli_a", "yonetici_a", "admin_a"):
         h = _headers(client, vworld["slug_a"], vworld[role])
         assert client.patch(
@@ -258,7 +340,7 @@ def test_yanit_rbac_personel_yanitlayamaz(client, vworld):
 
 def test_yanit_dogrulama(client, vworld):
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
+    v = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
     resident = _headers(client, vworld["slug_a"], vworld["resident_a"])
     # 'bekliyor'a geri donus / bilinmeyen durum / bos govde -> 422
     for body in ({"durum": "bekliyor"}, {"durum": "belki"}, {}):
@@ -268,43 +350,54 @@ def test_yanit_dogrulama(client, vworld):
 
 
 # ------------------------------- okuma -------------------------------------- #
-def test_sakin_yalniz_kendi_dairesinin_kayitlarini_gorur(client, vworld):
+def test_sakin_yalniz_kendine_hedeflenen_kayitlari_gorur(client, vworld):
+    """Tek hedef modeli (A): sakin YALNIZ kendine hedeflenen kaydi gorur —
+    ayni dairedeki es'e hedeflenmis kaydi GORMEZ; baska dairenin kaydini da."""
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v1 = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
-    v2 = _register_visitor(client, guard, unit_no=vworld["unit2_no"])
+    v_a = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
+    v_es = _register_visitor(client, guard, vworld["es_id"], unit_no=vworld["unit1_no"])
+    v2 = _register_visitor(client, guard, vworld["diger_id"], unit_no=vworld["unit2_no"])
 
     resident = _headers(client, vworld["slug_a"], vworld["resident_a"])
     ids = [it["id"] for it in client.get(
         "/visitors", headers=resident, params={"limit": 200}
     ).json()["items"]]
-    assert v1["id"] in ids and v2["id"] not in ids
-    # es de ayni dairenin kaydini gorur (coklu sakin)
-    es = _headers(client, vworld["slug_a"], vworld["es"])
-    es_ids = [it["id"] for it in client.get(
-        "/visitors", headers=es, params={"limit": 200}
-    ).json()["items"]]
-    assert v1["id"] in es_ids
-    # detay: baska dairenin kaydi 404 (varlik sizdirilmaz)
+    # kendine hedefli gorunur; es'e hedefli ve baska daire GORUNMEZ
+    assert v_a["id"] in ids
+    assert v_es["id"] not in ids and v2["id"] not in ids
+    # detay: hedef disi kayit 404 (varlik sizdirilmaz)
+    assert client.get(f"/visitors/{v_es['id']}", headers=resident).status_code == 404
     assert client.get(f"/visitors/{v2['id']}", headers=resident).status_code == 404
-    assert client.get(f"/visitors/{v1['id']}", headers=resident).status_code == 200
+    assert client.get(f"/visitors/{v_a['id']}", headers=resident).status_code == 200
 
 
-def test_guvenlik_ve_yonetim_tum_gecmisi_gorur(client, vworld):
+def test_guvenlik_tum_gecmisi_gorur_yonetim_403(client, vworld):
+    """A (KVKK): YALNIZ guvenlik (kapi ops — vardiya devri) TUM gecmisi gorur;
+    YONETICI VE ADMIN VARSAYILAN KAPALI -> 403 (izin almadan goremez)."""
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v1 = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
-    v2 = _register_visitor(client, guard, unit_no=vworld["unit2_no"])
-    for role in ("guard_a", "yonetici_a", "admin_a"):
+    v1 = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
+    v2 = _register_visitor(client, guard, vworld["diger_id"], unit_no=vworld["unit2_no"])
+    # guvenlik: tum gecmis
+    ids = [it["id"] for it in client.get(
+        "/visitors", headers=guard, params={"limit": 200}
+    ).json()["items"]]
+    assert v1["id"] in ids and v2["id"] in ids
+    assert client.get(f"/visitors/{v1['id']}", headers=guard).status_code == 200
+    # yonetici VE admin: izinsiz 403 (liste + unit_id'li liste + detay)
+    for role in ("yonetici_a", "admin_a"):
         h = _headers(client, vworld["slug_a"], vworld[role])
-        ids = [it["id"] for it in client.get(
+        assert client.get(
             "/visitors", headers=h, params={"limit": 200}
-        ).json()["items"]]
-        assert v1["id"] in ids and v2["id"] in ids, role
-        assert client.get(f"/visitors/{v1['id']}", headers=h).status_code == 200, role
+        ).status_code == 403, role
+        assert client.get(
+            "/visitors", headers=h, params={"unit_id": vworld["unit1"]}
+        ).status_code == 403, role
+        assert client.get(f"/visitors/{v1['id']}", headers=h).status_code == 403, role
 
 
 def test_okuma_rbac_gorevli_403(client, vworld):
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
+    v = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
     gorevli = _headers(client, vworld["slug_a"], vworld["gorevli_a"])
     assert client.get("/visitors", headers=gorevli).status_code == 403
     assert client.get(f"/visitors/{v['id']}", headers=gorevli).status_code == 403
@@ -313,8 +406,8 @@ def test_okuma_rbac_gorevli_403(client, vworld):
 def test_liste_filtre_ve_sira(client, vworld):
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
     resident = _headers(client, vworld["slug_a"], vworld["resident_a"])
-    a = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
-    b = _register_visitor(client, guard, unit_no=vworld["unit2_no"])
+    a = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
+    b = _register_visitor(client, guard, vworld["diger_id"], unit_no=vworld["unit2_no"])
     client.patch(f"/visitors/{a['id']}", headers=resident, json={"durum": "onaylandi"})
 
     # durum filtresi
@@ -349,26 +442,31 @@ def test_liste_filtre_ve_sira(client, vworld):
 # ----------------------------- tenant izolasyonu ---------------------------- #
 def test_tenant_izolasyonu(client, vworld):
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
+    v = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
 
-    # B tenant yonetimi A'nin kaydini goremez/degistiremez (RLS -> 404)
-    yonetici_b = _headers(client, vworld["slug_b"], vworld["yonetici_b"])
+    # B tenant guvenligi A'nin kaydini goremez (RLS -> listede yok, detay 404).
+    # (Okuma icin guard_b: admin+yonetici artik varsayilan kapali, izolasyonu
+    # gosteremez.)
+    guard_b = _headers(client, vworld["slug_b"], vworld["guard_b"])
     b_ids = [it["id"] for it in client.get(
-        "/visitors", headers=yonetici_b, params={"limit": 200}
+        "/visitors", headers=guard_b, params={"limit": 200}
     ).json()["items"]]
     assert v["id"] not in b_ids
-    assert client.get(f"/visitors/{v['id']}", headers=yonetici_b).status_code == 404
+    assert client.get(f"/visitors/{v['id']}", headers=guard_b).status_code == 404
+    # B yoneticisi zaten karar rolu degil + kayit B'den gorunmez -> 403
+    yonetici_b = _headers(client, vworld["slug_b"], vworld["yonetici_b"])
     assert client.patch(
         f"/visitors/{v['id']}", headers=yonetici_b, json={"durum": "onaylandi"}
-    ).status_code == 403  # rol zaten yetkisiz; kayit da B'den gorunmez
+    ).status_code == 403
 
 
-def test_pasif_sakin_baglantisi_yanitlayamaz(client, vworld, owner_conn):
-    """Daireden cikarilmis (bitis dolu) sakin YANITLAYAMAZ ve kayitlari GOREMEZ."""
+def test_pasif_hedef_sakin_yanitlayamaz(client, vworld, owner_conn):
+    """Tek hedef modeli (A): kayit es'e hedeflenmis; es daireden cikarilinca
+    (bitis dolu) HEDEF olsa bile YANITLAYAMAZ ve kaydi GOREMEZ."""
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
-    v = _register_visitor(client, guard, unit_no=vworld["unit1_no"])
+    v = _register_visitor(client, guard, vworld["es_id"], unit_no=vworld["unit1_no"])
 
-    # es'in baglantisini pasiflestir
+    # hedef es'in baglantisini pasiflestir
     with owner_conn.cursor() as cur:
         cur.execute(
             "UPDATE unit_resident SET bitis = now() WHERE unit_id=%s AND user_id=%s",

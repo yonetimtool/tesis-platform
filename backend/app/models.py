@@ -111,6 +111,10 @@ KARGO_DURUM = ENUM(
     "bekliyor", "teslim_alindi",
     name="kargo_durum", create_type=False,
 )
+ACCESS_REQUEST_DURUM = ENUM(
+    "bekliyor", "onaylandi", "reddedildi",
+    name="access_request_durum", create_type=False,
+)
 REZERVASYON_DURUM = ENUM(
     "bekliyor", "onaylandi", "reddedildi",
     name="rezervasyon_durum", create_type=False,
@@ -1008,6 +1012,12 @@ class Visitor(Base):
             ondelete="RESTRICT",
             name="fk_visitor_kaydeden",
         ),
+        ForeignKeyConstraint(
+            ["target_resident_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_visitor_target",
+        ),
         # DDL'de kolon-ozel ON DELETE SET NULL (yanitlayan_user_id); tenant_id korunur.
         ForeignKeyConstraint(
             ["yanitlayan_user_id", "tenant_id"],
@@ -1028,6 +1038,10 @@ class Visitor(Base):
         VISITOR_DURUM, nullable=False, server_default=text("'bekliyor'")
     )
     kaydeden_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    # Guvenligin sectigi TEK hedef sakin: bildirim + gorunurluk + karar YALNIZ onda.
+    target_resident_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
     yanitlayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
@@ -1083,6 +1097,63 @@ class Kargo(Base):
         UUID(as_uuid=True), nullable=True
     )
     teslim_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()
+
+
+class UnitAccessPermission(Base):
+    """Yonetici TEK-SEFERLIK ziyaretci/paket goruntuleme izni.
+
+    Gizlilik: ziyaretci/kargo VARSAYILAN olarak yonetici'ye kapali. Yonetici
+    bir daireye izin TALEBI acar -> dairenin sakini onaylar/reddeder. Onay =
+    tek-kullanimlik izin (used=false); yonetici o dairenin kayitlarini ILK
+    okudugunda tuketilir (used=true). Sureye bagli DEGIL (one-shot).
+    Tek satir talep+izin yasam dongusunu tutar (durum).
+    """
+
+    __tablename__ = "unit_access_permission"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_uap_id_tenant"),
+        ForeignKeyConstraint(
+            ["unit_id", "tenant_id"],
+            ["unit.id", "unit.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_uap_unit",
+        ),
+        ForeignKeyConstraint(
+            ["granted_to_yonetici_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_uap_yonetici",
+        ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (granted_by_resident_user_id).
+        ForeignKeyConstraint(
+            ["granted_by_resident_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_uap_resident",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    granted_to_yonetici_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
+    granted_by_resident_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    durum: Mapped[str] = mapped_column(
+        ACCESS_REQUEST_DURUM, nullable=False, server_default=text("'bekliyor'")
+    )
+    used: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    requested_at = _created_at()
+    decided_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    used_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
 
 

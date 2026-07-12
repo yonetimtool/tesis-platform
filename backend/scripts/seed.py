@@ -352,29 +352,45 @@ def main() -> int:
             "+ sikayet 'Gece gec saatte muzik' (kategori=gurultu)"
         )
 
-        # 6) ornek ziyaretci: A-12 icin BEKLEYEN kayit (guvenlik acmis) —
-        #    sakin ekraninda Onayla/Reddet karti, guvenlik ekraninda canli
-        #    durum gorunsun. Ayni ziyaretci adi varsa eklemeyerek idempotent.
-        conn.execute(
-            """
-            INSERT INTO visitor (tenant_id, unit_id, ziyaretci_ad, notlar,
-                                 kaydeden_user_id)
-            SELECT %(t)s, %(u)s, %(ad)s, %(n)s, g.id
-            FROM app_user g
-            WHERE g.tenant_id = %(t)s AND g.email = 'guard@acme.com'
-              AND NOT EXISTS (
-                  SELECT 1 FROM visitor
-                  WHERE tenant_id = %(t)s AND ziyaretci_ad = %(ad)s
-              )
-            """,
-            {
-                "t": tenant_id,
-                "u": unit_id,
-                "ad": "Kurye - Ahmet Yilmaz",
-                "n": "Kargo teslimati (koli)",
-            },
+        # 6) ornek ziyaretci: A-12 icin (guvenlik acmis) — HEDEF sakin
+        #    resident@acme.com. Bir BEKLEYEN (Onayla/Reddet karti) + bir
+        #    ONAYLANMIS (sonuc gorunsun) kayit. Push/gorunurluk/karar YALNIZ
+        #    hedef sakinde (tek hedef modeli, A). Ziyaretci adiyla idempotent.
+        guard_id = conn.execute(
+            "SELECT id FROM app_user WHERE tenant_id=%s AND email='guard@acme.com'",
+            (tenant_id,),
+        ).fetchone()[0]
+        target_id = conn.execute(
+            "SELECT id FROM app_user WHERE tenant_id=%s AND email='resident@acme.com'",
+            (tenant_id,),
+        ).fetchone()[0]
+        for ad, notlar, durum in (
+            ("Kurye - Ahmet Yilmaz", "Kargo teslimati (koli)", "bekliyor"),
+            ("Misafir - Ayse Kaya", "Aksam yemegi misafiri", "onaylandi"),
+        ):
+            yanitlayan = target_id if durum == "onaylandi" else None
+            conn.execute(
+                """
+                INSERT INTO visitor (tenant_id, unit_id, ziyaretci_ad, notlar,
+                                     kaydeden_user_id, target_resident_user_id,
+                                     durum, yanitlayan_user_id, yanit_zamani)
+                SELECT %(t)s, %(u)s, %(ad)s, %(n)s, %(g)s, %(r)s,
+                       %(d)s::visitor_durum, %(y)s,
+                       CASE WHEN %(d)s = 'onaylandi' THEN now() END
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM visitor
+                    WHERE tenant_id = %(t)s AND ziyaretci_ad = %(ad)s
+                )
+                """,
+                {
+                    "t": tenant_id, "u": unit_id, "ad": ad, "n": notlar,
+                    "g": guard_id, "r": target_id, "d": durum, "y": yanitlayan,
+                },
+            )
+        print(
+            "[seed] ziyaretci 'Kurye - Ahmet Yilmaz' (bekliyor) + "
+            "'Misafir - Ayse Kaya' (onaylandi) A-12 -> hedef resident@acme.com"
         )
-        print("[seed] ziyaretci 'Kurye - Ahmet Yilmaz' A-12 (bekliyor, guvenlik kaydi)")
 
         # 7) ornek kargo: A-12 icin BEKLEYEN paket (guvenlik kaydi, fotosuz —
         #    foto gercek akista presign ile yuklenir; seed depoya obje

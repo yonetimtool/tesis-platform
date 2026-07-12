@@ -32,6 +32,7 @@ from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Kargo, Unit, UnitResident
+from ..permissions import try_consume_unit_permission
 from ..scheduler.notify import dispatch_external
 from ..schemas import (
     KargoCreate,
@@ -47,9 +48,13 @@ router = APIRouter(prefix="/kargo", tags=["kargo"])
 # KAYIT yalniz guvenlik: paket kapida teslim alinir (visitor ile ayni karar —
 # yonetici/admin gecmisi okur ama kayit acmaz; auth.md §4).
 _REGISTRAR = require_role("security")
-# OKUMA: yonetim + guvenlik tum gecmis; sakin kendi dairesi (asagida daralir).
-# tesis_gorevlisi ERISMEZ (403) — kapi/paket akisinin tarafi degil.
+# OKUMA rol kapisi: security TUM gecmis; sakin kendi dairesi (asagida daralir);
+# admin VE yonetici VARSAYILAN KAPALI — yalniz tek-seferlik izinli daire
+# (handler'da 403/izin tuketimi; ziyaretci ile ayni gizlilik/KVKK).
+# tesis_gorevlisi ERISMEZ (403).
 _READER = require_role("admin", "yonetici", "security", "resident")
+# Varsayilan kapali roller (izinle acilir): admin + yonetici.
+_IZIN_GEREKEN = {"admin", "yonetici"}
 # TESLIM yalniz sakin (o dairenin aktif sakini oldugu ayrica dogrulanir).
 _RESIDENT = require_role("resident")
 
@@ -180,6 +185,21 @@ async def list_kargo(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> KargoListResponse:
+    # admin + yonetici VARSAYILAN KAPALI: unit_id + tek-seferlik izin gerekir
+    # (one-shot tuketim), yoksa 403. Ziyaretci ile ayni gizlilik deseni.
+    if user.role in _IZIN_GEREKEN:
+        if unit_id is None:
+            raise APIError(
+                403, "forbidden",
+                "Kargo kayitlari yonetime kapali; bir daire icin "
+                "tek-seferlik izin alin (unit_id gerekli).",
+            )
+        if not await try_consume_unit_permission(db, unit_id, user.id):
+            raise APIError(
+                403, "forbidden",
+                "Bu daire icin gecerli (kullanilmamis) goruntuleme izniniz yok.",
+            )
+
     stmt = _base_stmt()
     if durum is not None:
         stmt = stmt.where(Kargo.durum == durum)
@@ -212,6 +232,20 @@ async def get_kargo(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> KargoOut:
+    # admin + yonetici: kaydin dairesine tek-seferlik izin gerektirir
+    # (varsayilan kapali). Izin yoksa/tukendiyse 403 — varligini da sizdirmaz.
+    if user.role in _IZIN_GEREKEN:
+        k_unit = (
+            await db.execute(select(Kargo.unit_id).where(Kargo.id == kargo_id))
+        ).scalar_one_or_none()
+        if k_unit is None or not await try_consume_unit_permission(
+            db, k_unit, user.id
+        ):
+            raise APIError(
+                403, "forbidden",
+                "Bu kayit yonetime kapali; daire icin tek-seferlik izin alin.",
+            )
+
     unit_ids = await _aktif_daire_ids(db, user) if user.role == "resident" else None
     row = (
         await db.execute(
