@@ -8,14 +8,15 @@ import 'task_form_sheet.dart';
 import 'task_tip_style.dart';
 import 'tasks_controller.dart';
 
-/// Gorev listesi — iki giris noktasi, TEK ekran (kesin matris, auth.md §4):
+/// Gorev listesi — iki giris noktasi, TEK ekran (A4 kesin matris, auth.md §4):
 ///
-///   * "Gorevlerim" (varsayilan): kisinin KENDINE atananlar — saha
-///     personelinin mevcut akisi, DEGISMEZ.
-///   * [yonetimGorunumu] (?gorunum=yonetim): Gorev-YONETIMI — tum
-///     gorev/atama takibi, "Herkes" kapsamiyla acilir; goruntuleme
-///     yonetici+security+tesis_gorevlisi(+admin), "Yeni gorev" yalniz
-///     yonetimde (canManage).
+///   * "Gorevlerim" (saha rolleri): kendi ROL GRUBUNA (guvenlik + tesis
+///     gorevlisi) atanan + atanmamis ("havuz") gorevlerin TAMAMI acilir;
+///     "Bana atanan" cipiyle yalniz kendine atananlara daraltilabilir.
+///     Tamamlama YALNIZ kendine atanan (veya havuz) gorevde yapilir —
+///     backend zorlar (baskasininki 403).
+///   * [yonetimGorunumu] (?gorunum=yonetim): Gorev-YONETIMI — YALNIZ
+///     yonetici(+admin); tum gorev/atama takibi + "Yeni gorev" (canManage).
 ///
 ///   * Tip rozetli satirlar; "Sana atanmis" vurgulu; tip filtresi sunucuya
 ///     gider; pull-to-refresh; 403'te kibar mesaj.
@@ -33,14 +34,13 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   @override
   void initState() {
     super.initState();
-    // Giris noktasina gore kapsami hizala: yonetim → "Herkes";
-    // Gorevlerim → "Bana atanan". (Controller, saha disi roller icin
-    // "Bana atanan"i zaten "Herkes"e cevirir — cakismaz.)
+    // Her iki giris noktasi da genis kapsamla acilir: saha rolu icin
+    // "Gorevlerim" = kendi rol grubu + havuz (backend A4 boyle suzer);
+    // yonetim gorunumu = tum liste. Kullanici "Bana atanan" cipiyle
+    // kendine atananlara daraltabilir.
     Future.microtask(() {
       if (!mounted) return;
-      ref
-          .read(tasksControllerProvider.notifier)
-          .setSadeceBenim(!widget.yonetimGorunumu);
+      ref.read(tasksControllerProvider.notifier).setSadeceBenim(false);
     });
   }
 
@@ -51,19 +51,29 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.yonetimGorunumu ? 'Gorev yonetimi' : 'Gorevlerim'),
+        title: Text(widget.yonetimGorunumu ? 'Görev yönetimi' : 'Görevlerim'),
+        actions: [
+          // Kategori yönetimi (A6) — yalnız yönetim görünümünde ve
+          // yetkili rolde (canManage); backend RBAC yazmayı ayrıca zorlar.
+          if (widget.yonetimGorunumu && state.canManage)
+            IconButton(
+              tooltip: 'Kategoriler',
+              icon: const Icon(Icons.label_outline),
+              onPressed: () => context.push(AppRoutes.taskCategories),
+            ),
+        ],
       ),
       // Gorev olusturma admin + yonetici (auth.md §4) — UX kapisi; gercek
       // yetki backend'de.
       floatingActionButton: state.canManage
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.add_task),
-              label: const Text('Yeni gorev'),
+              label: const Text('Yeni görev'),
               onPressed: () async {
                 final saved = await showTaskFormSheet(context);
                 if (saved == true && context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Gorev olusturuldu ✓')),
+                    const SnackBar(content: Text('Görev oluşturuldu ✓')),
                   );
                 }
               },
@@ -85,8 +95,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                         if (state.errorMessage != null)
                           _ErrorBanner(
                             message: state.forbidden
-                                ? 'Gorev listesi icin yetkiniz yok. Bu ekran '
-                                    'temizlik ve guvenlik rollerine aciktir.'
+                                ? 'Görev listesi için yetkiniz yok. Bu ekran '
+                                    'temizlik ve güvenlik rollerine açıktır.'
                                 : state.errorMessage!,
                             onRetry:
                                 state.forbidden ? null : controller.refresh,
@@ -98,7 +108,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                             child: Padding(
                               padding: EdgeInsets.all(24),
                               child: Text(
-                                'Bu filtreyle aktif gorev yok.',
+                                'Bu filtreyle aktif görev yok.',
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -138,7 +148,8 @@ class _TipFilterBar extends ConsumerWidget {
       child: Row(
         children: [
           // Kapsam: "Bana atanan" sunucuda suzulur (?atanan_user_id=me);
-          // "Herkes" eski tam-liste gorunumudur (havuz gorevleri dahil).
+          // "Tum gorevler" saha rolu icin rol grubu + havuz (backend A4),
+          // yonetim icin tam liste.
           ChoiceChip(
             avatar: const Icon(Icons.person, size: 16),
             label: const Text('Bana atanan'),
@@ -148,13 +159,13 @@ class _TipFilterBar extends ConsumerWidget {
           const SizedBox(width: 8),
           ChoiceChip(
             avatar: const Icon(Icons.groups, size: 16),
-            label: const Text('Herkes'),
+            label: const Text('Tüm görevler'),
             selected: !state.sadeceBenim,
             onSelected: (_) => controller.setSadeceBenim(false),
           ),
           const SizedBox(width: 16),
           ChoiceChip(
-            label: const Text('Tumu'),
+            label: const Text('Tümü'),
             selected: state.tipFilter == null,
             onSelected: (_) => controller.setTipFilter(null),
           ),
@@ -209,7 +220,7 @@ class _TaskTile extends StatelessWidget {
             // yalnizca "Herkes" gorunumunde ayirt edicidir.
             if (mine && !state.sadeceBenim)
               const Text(
-                'Sana atanmis',
+                'Sana atanmış',
                 style: TextStyle(
                   color: Colors.blue,
                   fontWeight: FontWeight.w600,
@@ -226,8 +237,8 @@ class _TaskTile extends StatelessWidget {
             if (completed != null)
               Text(
                 completed.wasDuplicate
-                    ? 'Tamamlandi ✓ (zaten kayitliydi)'
-                    : 'Tamamlandi ✓ (bu oturumda)',
+                    ? 'Tamamlandı ✓ (zaten kayıtlıydı)'
+                    : 'Tamamlandı ✓ (bu oturumda)',
                 style: const TextStyle(
                   color: Colors.green,
                   fontWeight: FontWeight.w600,

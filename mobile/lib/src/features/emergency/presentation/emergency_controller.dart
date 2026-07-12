@@ -173,9 +173,9 @@ class EmergencyController extends Notifier<EmergencyState> {
         phase: EmergencyPhase.failed,
         offline: offline,
         errorMessage: offline
-            ? 'ALARM ILETILEMEDI — internet baglantisi yok. Alarm '
-                'KUYRUGA ALINMADI; baglanti gelince "Tekrar dene"ye basin. '
-                'Yonetimi telefonla aramak sebeke uzerinden CALISABILIR.'
+            ? 'ALARM İLETİLEMEDİ — internet bağlantısı yok. Alarm '
+                'KUYRUĞA ALINMADI; bağlantı gelince "Tekrar dene"ye basın. '
+                'Yönetimi telefonla aramak şebeke üzerinden ÇALIŞABİLİR.'
             : e.message,
       );
     } catch (_) {
@@ -183,7 +183,7 @@ class EmergencyController extends Notifier<EmergencyState> {
       state = state.copyWith(
         phase: EmergencyPhase.failed,
         errorMessage:
-            'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+            'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
       );
     }
   }

@@ -24,6 +24,7 @@ import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
 import '../features/site_kurali/presentation/site_kurali_screen.dart';
 import '../features/tasks/domain/task_models.dart';
+import '../features/tasks/presentation/task_categories_screen.dart';
 import '../features/tasks/presentation/task_detail_screen.dart';
 import '../features/tasks/presentation/tasks_screen.dart';
 import '../features/visitors/presentation/visitors_screen.dart';
@@ -40,6 +41,7 @@ class AppRoutes {
   static const patrol = '/patrol';
   static const tasks = '/tasks';
   static const taskDetail = '/tasks/detail';
+  static const taskCategories = '/tasks/categories';
   static const emergency = '/emergency';
   static const assets = '/assets';
   static const announcements = '/announcements';
@@ -247,6 +249,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             state.extra is Task ? null : AppRoutes.tasks,
         builder: (context, state) =>
             TaskDetailScreen(task: state.extra! as Task),
+      ),
+      GoRoute(
+        // Gorev kategorisi yonetimi (A6) — yonetici; giris "Gorev yonetimi"
+        // ekranindaki AppBar aksiyonundan. Backend RBAC yazmayi zorlar.
+        path: AppRoutes.taskCategories,
+        builder: (context, state) => const TaskCategoriesScreen(),
       ),
     ],
     redirect: (context, state) {

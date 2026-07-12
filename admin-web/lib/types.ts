@@ -339,6 +339,7 @@ export interface Task {
   aciklama?: string | null;
   atanan_user_id?: string | null;
   checkpoint_id?: string | null;
+  kategori_id?: string | null;
   periyot_dakika?: number | null;
   sonraki_planlanan?: string | null;
   foto_zorunlu: boolean;
@@ -349,6 +350,18 @@ export interface Task {
 export interface TaskList {
   meta: PageMeta;
   items: Task[];
+}
+
+export interface TaskCategory {
+  id: string;
+  ad: string;
+  aktif: boolean;
+  created_at: string;
+  updated_at?: string | null;
+}
+export interface TaskCategoryList {
+  meta: PageMeta;
+  items: TaskCategory[];
 }
 
 export interface TaskCompletion {

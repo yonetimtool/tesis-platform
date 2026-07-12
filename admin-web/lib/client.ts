@@ -16,14 +16,14 @@ export async function apiSend<T = unknown>(
   });
   if (res.status === 401) {
     if (typeof window !== "undefined") window.location.href = "/login";
-    throw new Error("Oturum suresi doldu.");
+    throw new Error("Oturum süresi doldu.");
   }
   if (res.status === 204) return undefined as T;
   const data: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const message =
       (data as { error?: { message?: string } } | null)?.error?.message ??
-      "Bir hata olustu.";
+      "Bir hata oluştu.";
     throw new Error(message);
   }
   return data as T;
@@ -38,7 +38,7 @@ export async function fetchAllItems<T>(baseUrl: string, pageSize = 200): Promise
     const res = await fetch(`${baseUrl}${sep}limit=${pageSize}&offset=${offset}`);
     if (res.status === 401) {
       if (typeof window !== "undefined") window.location.href = "/login";
-      throw new Error("Oturum suresi doldu.");
+      throw new Error("Oturum süresi doldu.");
     }
     const data: unknown = await res.json().catch(() => null);
     if (!res.ok) {

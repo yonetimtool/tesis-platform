@@ -18,9 +18,9 @@ const LIMIT = 20;
 const NFC_PLACEHOLDER = "04A1B2C3D4";
 const KATEGORI: { value: AssetKategori; label: string }[] = [
   { value: "ekipman", label: "Ekipman" },
-  { value: "arac", label: "Arac" },
+  { value: "arac", label: "Araç" },
   { value: "alet", label: "Alet" },
-  { value: "diger", label: "Diger" },
+  { value: "diger", label: "Diğer" },
 ];
 const DURUM_STYLE: Record<string, string> = {
   musait: "bg-emerald-100 text-emerald-800",
@@ -104,7 +104,7 @@ export default function AssetsPage() {
       mutate();
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
-      setFormErr(/nfc/i.test(m) ? "Bu NFC etiketi baska bir demirbasta kullaniliyor." : m);
+      setFormErr(/nfc/i.test(m) ? "Bu NFC etiketi başka bir demirbaşta kullanılıyor." : m);
     } finally {
       setSaving(false);
     }
@@ -115,7 +115,7 @@ export default function AssetsPage() {
       await apiSend(`/api/assets/${a.id}`, "PATCH", { aktif: active });
       mutate();
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Guncellenemedi.");
+      window.alert(err instanceof Error ? err.message : "Güncellenemedi.");
     }
   }
 
@@ -124,9 +124,9 @@ export default function AssetsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Demirbas</h1>
+        <h1 className="text-2xl font-semibold">Demirbaş</h1>
         <button className={btnPrimary} onClick={openNew}>
-          Yeni demirbas
+          Yeni demirbaş
         </button>
       </div>
 
@@ -141,7 +141,7 @@ export default function AssetsPage() {
                 setOffset(0);
               }}
             >
-              <option value="">Tumu</option>
+              <option value="">Tümü</option>
               {KATEGORI.map((k) => (
                 <option key={k.value} value={k.value}>
                   {k.label}
@@ -160,21 +160,21 @@ export default function AssetsPage() {
                 setOffset(0);
               }}
             >
-              <option value="">Tumu</option>
-              <option value="musait">Musait</option>
+              <option value="">Tümü</option>
+              <option value="musait">Müsait</option>
               <option value="zimmetli">Zimmetli</option>
-              <option value="bakimda">Bakimda</option>
+              <option value="bakimda">Bakımda</option>
             </select>
           </Field>
         </div>
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
         <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="font-medium">{editingId ? "Demirbas duzenle" : "Yeni demirbas"}</h2>
+          <h2 className="font-medium">{editingId ? "Demirbaş düzenle" : "Yeni demirbaş"}</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Ad">
               <input
@@ -200,7 +200,7 @@ export default function AssetsPage() {
             </Field>
             <Field
               label="NFC etiket UID (opsiyonel)"
-              hint="Buyuk harf hex, ayracsiz. Ornek: 04A1B2C3D4 (mobil ile tutarli)."
+              hint="Büyük harf hex, ayraçsız. Örnek: 04A1B2C3D4 (mobil ile tutarlı)."
             >
               <input
                 className={`${inputCls} font-mono uppercase`}
@@ -209,7 +209,7 @@ export default function AssetsPage() {
                 onChange={(e) => setForm({ ...form, nfc_tag_uid: e.target.value.toUpperCase() })}
               />
             </Field>
-            <Field label="Aciklama (opsiyonel)">
+            <Field label="Açıklama (opsiyonel)">
               <input
                 className={inputCls}
                 value={form.aciklama}
@@ -231,7 +231,7 @@ export default function AssetsPage() {
               {saving ? "Kaydediliyor..." : "Kaydet"}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              Iptal
+              İptal
             </button>
           </div>
         </form>
@@ -262,7 +262,7 @@ export default function AssetsPage() {
                     {a.durum}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-slate-600">{a.aktif ? "evet" : "hayir"}</td>
+                <td className="px-3 py-2 text-slate-600">{a.aktif ? "evet" : "hayır"}</td>
                 <td className="px-3 py-2 text-right">
                   <div className="flex justify-end gap-2">
                     <button
@@ -272,10 +272,10 @@ export default function AssetsPage() {
                       {detail?.id === a.id ? "Kapat" : "Zimmet"}
                     </button>
                     <button className={btnGhost} onClick={() => openEdit(a)}>
-                      Duzenle
+                      Düzenle
                     </button>
                     <button className={btnGhost} onClick={() => setActive(a, !a.aktif)}>
-                      {a.aktif ? "Pasiflestir" : "Aktiflestir"}
+                      {a.aktif ? "Pasifleştir" : "Aktifleştir"}
                     </button>
                   </div>
                 </td>
@@ -284,7 +284,7 @@ export default function AssetsPage() {
             {data && data.items.length === 0 && (
               <tr>
                 <td className="px-3 py-6 text-center text-muted" colSpan={6}>
-                  Demirbas yok.
+                  Demirbaş yok.
                 </td>
               </tr>
             )}
@@ -298,15 +298,15 @@ export default function AssetsPage() {
           <p className="text-sm">
             {openCheckout ? (
               <span className="text-amber-700">
-                Su an <strong>{userName(openCheckout.alan_user_id)}</strong> uzerinde (alindi:{" "}
+                Şu an <strong>{userName(openCheckout.alan_user_id)}</strong> üzerinde (alındı:{" "}
                 {formatDateTime(openCheckout.alma_zamani)})
               </span>
             ) : (
-              <span className="text-emerald-700">Su an kimsede degil (musait).</span>
+              <span className="text-emerald-700">Şu an kimsede değil (müsait).</span>
             )}
           </p>
           <p className="text-xs text-muted">
-            Zimmet al/birak sahada NFC ile mobilde yapilir; panel yalnizca goruntuler.
+            Zimmet al/bırak sahada NFC ile mobilde yapılır; panel yalnızca görüntüler.
           </p>
           <div className="overflow-hidden rounded-lg border border-slate-200">
             <table className="w-full text-sm">
@@ -314,7 +314,7 @@ export default function AssetsPage() {
                 <tr>
                   <th className="px-3 py-2 font-medium">Alan</th>
                   <th className="px-3 py-2 font-medium">Alma</th>
-                  <th className="px-3 py-2 font-medium">Birakma</th>
+                  <th className="px-3 py-2 font-medium">Bırakma</th>
                 </tr>
               </thead>
               <tbody>
@@ -323,14 +323,14 @@ export default function AssetsPage() {
                     <td className="px-3 py-2">{userName(h.alan_user_id)}</td>
                     <td className="px-3 py-2 text-slate-600">{formatDateTime(h.alma_zamani)}</td>
                     <td className="px-3 py-2 text-slate-600">
-                      {h.birakma_zamani ? formatDateTime(h.birakma_zamani) : "— acik —"}
+                      {h.birakma_zamani ? formatDateTime(h.birakma_zamani) : "— açık —"}
                     </td>
                   </tr>
                 ))}
                 {history && history.items.length === 0 && (
                   <tr>
                     <td className="px-3 py-4 text-center text-muted" colSpan={3}>
-                      Zimmet kaydi yok.
+                      Zimmet kaydı yok.
                     </td>
                   </tr>
                 )}

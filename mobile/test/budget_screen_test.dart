@@ -166,7 +166,7 @@ void main() {
     await tester.tap(find.text('Yeni kategori'));
     await tester.pumpAndSettle();
     await tester.enterText(
-        find.widgetWithText(TextFormField, 'Kategori adi'), 'Bahce');
+        find.widgetWithText(TextFormField, 'Kategori adı'), 'Bahce');
     await tester.tap(find.text('Gider').last); // tip secimi
     await tester.pump();
     await tester.tap(find.text('Kaydet'));
@@ -219,7 +219,7 @@ void main() {
     await tester.tap(find.text('Kaydet'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Gecerli bir tutar girin (orn. 1.250,50)'), findsOneWidget);
+    expect(find.text('Geçerli bir tutar girin (örn. 1.250,50)'), findsOneWidget);
     expect(api.createdEntries, isEmpty);
   });
 }

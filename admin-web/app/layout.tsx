@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tesis Yonetim Paneli",
-  description: "Multi-tenant tesis operasyon SaaS — yonetim paneli",
+  title: "Tesis Yönetim Paneli",
+  description: "Multi-tenant tesis operasyon SaaS — yönetim paneli",
 };
 
 export default function RootLayout({

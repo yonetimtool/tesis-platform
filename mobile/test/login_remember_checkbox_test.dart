@@ -84,7 +84,7 @@ void main() {
     await pumpLogin(tester);
     await fillForm(tester);
 
-    await tester.tap(find.text('Giris yap'));
+    await tester.tap(find.text('Giriş yap'));
     await tester.pumpAndSettle();
 
     expect(repo.logins.single.rememberMe, isFalse);
@@ -96,7 +96,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('remember_me_checkbox')));
     await tester.pump();
-    await tester.tap(find.text('Giris yap'));
+    await tester.tap(find.text('Giriş yap'));
     await tester.pumpAndSettle();
 
     expect(repo.logins.single.rememberMe, isTrue);

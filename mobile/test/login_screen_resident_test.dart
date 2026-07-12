@@ -113,12 +113,12 @@ void main() {
     await tester.enterText(
         find.widgetWithText(TextFormField, 'Daire no'), 'A-12');
     await tester.enterText(
-        find.widgetWithText(TextFormField, 'Parola veya gecici kod'),
+        find.widgetWithText(TextFormField, 'Parola veya geçici kod'),
         'K7MR-2QWX');
     await tester.tap(find.byKey(const Key('remember_me_checkbox')));
     await tester.pump();
 
-    await tester.tap(find.text('Giris yap'));
+    await tester.tap(find.text('Giriş yap'));
     await tester.pumpAndSettle();
 
     expect(repo.staffLogins, isEmpty);
@@ -138,7 +138,7 @@ void main() {
         find.widgetWithText(TextFormField, 'E-posta'), 'a@b.com');
     await tester.enterText(
         find.widgetWithText(TextFormField, 'Parola'), 'sifre-123');
-    await tester.tap(find.text('Giris yap'));
+    await tester.tap(find.text('Giriş yap'));
     await tester.pumpAndSettle();
 
     expect(repo.residentLogins, isEmpty);

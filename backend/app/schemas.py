@@ -877,6 +877,25 @@ class NotificationUpdate(BaseModel):
 TaskTip = Literal["temizlik", "kontrol", "ilaclama", "bakim", "peyzaj", "diger"]
 
 
+class TaskCategoryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    aktif: bool
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class TaskCategoryCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=100)
+
+
+class TaskCategoryListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[TaskCategoryOut]
+
+
 class TaskOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -886,6 +905,7 @@ class TaskOut(BaseModel):
     aciklama: str | None = None
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
+    kategori_id: uuid.UUID | None = None
     periyot_dakika: int | None = None
     sonraki_planlanan: datetime | None = None
     foto_zorunlu: bool
@@ -900,6 +920,7 @@ class TaskCreate(BaseModel):
     aciklama: str | None = None
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
+    kategori_id: uuid.UUID | None = None
     periyot_dakika: int | None = Field(None, ge=1)
     sonraki_planlanan: datetime | None = None
     foto_zorunlu: bool = False
@@ -912,6 +933,7 @@ class TaskUpdate(BaseModel):
     aciklama: str | None = None
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
+    kategori_id: uuid.UUID | None = None
     periyot_dakika: int | None = Field(None, ge=1)
     sonraki_planlanan: datetime | None = None
     foto_zorunlu: bool | None = None
@@ -1200,15 +1222,20 @@ class UnitOut(BaseModel):
     updated_at: datetime | None = None
 
 
+# Daire no: harf + sayi + tire serbest kombinasyon ("A-12", "B3", "12");
+# bosluk/ozel karakter kabul edilmez (A5).
+_UNIT_NO_PATTERN = r"^[A-Za-z0-9-]+$"
+
+
 class UnitCreate(BaseModel):
-    no: str = Field(..., min_length=1)
+    no: str = Field(..., min_length=1, max_length=50, pattern=_UNIT_NO_PATTERN)
     blok: str | None = None
     metrekare: float | None = None
     aktif: bool = True
 
 
 class UnitUpdate(BaseModel):
-    no: str | None = Field(None, min_length=1)
+    no: str | None = Field(None, min_length=1, max_length=50, pattern=_UNIT_NO_PATTERN)
     blok: str | None = None
     metrekare: float | None = None
     aktif: bool | None = None

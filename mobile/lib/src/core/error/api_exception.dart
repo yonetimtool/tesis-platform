@@ -46,9 +46,9 @@ class ApiException implements Exception {
       DioExceptionType.connectionTimeout ||
       DioExceptionType.sendTimeout ||
       DioExceptionType.receiveTimeout =>
-        'Sunucuya baglanirken zaman asimi olustu.',
+        'Sunucuya bağlanırken zaman aşımı oluştu.',
       DioExceptionType.connectionError =>
-        'Sunucuya ulasilamadi. Ag baglantinizi ve sunucu adresini kontrol edin.',
+        'Sunucuya ulaşılamadı. Ağ bağlantınızı ve sunucu adresini kontrol edin.',
       _ => _genericMessage,
     };
     return ApiException(
@@ -59,7 +59,7 @@ class ApiException implements Exception {
   }
 
   static const String _genericMessage =
-      'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.';
+      'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
 
   /// Hatanin kaba turu — UI'da ayrim icin (orn. ag hatasinda "tekrar dene",
   /// auth hatasinda login'e donus).

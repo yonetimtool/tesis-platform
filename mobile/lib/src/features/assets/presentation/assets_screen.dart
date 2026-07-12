@@ -23,11 +23,11 @@ class AssetsScreen extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Demirbas'),
+          title: const Text('Demirbaş'),
           bottom: TabBar(
             tabs: [
               const Tab(text: 'Etiket okut'),
-              Tab(text: 'Uzerimdekiler${myCount > 0 ? ' ($myCount)' : ''}'),
+              Tab(text: 'Üzerimdekiler${myCount > 0 ? ' ($myCount)' : ''}'),
             ],
           ),
         ),
@@ -64,8 +64,8 @@ class _ScanTab extends ConsumerWidget {
             child: Padding(
               padding: EdgeInsets.all(16),
               child: Text(
-                'Demirbasi alirken veya birakirken uzerindeki NFC etiketini '
-                'okutun. Uygulama demirbasi tanir ve kimde oldugunu gosterir.',
+                'Demirbaşı alırken veya bırakırken üzerindeki NFC etiketini '
+                'okutun. Uygulama demirbaşı tanır ve kimde olduğunu gösterir.',
               ),
             ),
           ),
@@ -106,9 +106,9 @@ class _ScanTab extends ConsumerWidget {
             label: Text(
               switch (state.scanPhase) {
                 AssetScanPhase.reading => 'Etiket bekleniyor...',
-                AssetScanPhase.resolving => 'Demirbas taniniyor...',
+                AssetScanPhase.resolving => 'Demirbaş tanınıyor...',
                 _ =>
-                  state.scanned == null ? 'Etiket okut' : 'Baska etiket okut',
+                  state.scanned == null ? 'Etiket okut' : 'Başka etiket okut',
               },
             ),
           ),
@@ -132,26 +132,26 @@ class _ScannedCard extends StatelessWidget {
       ZimmetVerdict.kimsedeDegil => (
           Icons.lock_open,
           Colors.green,
-          'Kimsede degil — alinabilir.',
+          'Kimsede değil — alınabilir.',
         ),
       ZimmetVerdict.sende => (
           Icons.person,
           Colors.blue,
           'SENDE — '
-              '${_sinceText(info.acikZimmet?.alinmaZamani)} uzerinde.',
+              '${_sinceText(info.acikZimmet?.alinmaZamani)} üzerinde.',
         ),
       ZimmetVerdict.baskasinda => (
           Icons.person_outline,
           Colors.orange,
           info.acikZimmet == null
-              ? 'Baskasinin uzerinde gorunuyor.'
-              : 'Baskasinda: ${_holderName(info.acikZimmet!)} — '
-                  '${_sinceText(info.acikZimmet!.alinmaZamani)} uzerinde.',
+              ? 'Başkasının üzerinde görünüyor.'
+              : 'Başkasında: ${_holderName(info.acikZimmet!)} — '
+                  '${_sinceText(info.acikZimmet!.alinmaZamani)} üzerinde.',
         ),
       ZimmetVerdict.bakimda => (
           Icons.build_circle_outlined,
           Colors.grey,
-          'Bakimda — su an zimmetlenemez.',
+          'Bakımda — şu an zimmetlenemez.',
         ),
     };
 
@@ -191,8 +191,8 @@ class _ScannedCard extends StatelessWidget {
             if (info.verdict == ZimmetVerdict.baskasinda) ...[
               const SizedBox(height: 4),
               Text(
-                'Zorla devralma yok — demirbasi su anki kullanicisi '
-                'birakmali.',
+                'Zorla devralma yok — demirbaşı şu anki kullanıcısı '
+                'bırakmalı.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -226,7 +226,7 @@ class _ScannedCard extends StatelessWidget {
                 onPressed:
                     state.actionBusy ? null : controller.checkinScanned,
                 icon: _actionIcon(state.actionBusy, Icons.upload),
-                label: const Text('Birak / iade et'),
+                label: const Text('Bırak / iade et'),
               ),
           ],
         ),
@@ -276,9 +276,9 @@ class _HistoryCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         co.isOpen
-                            ? '${_userLabel(co)} aldi — '
+                            ? '${_userLabel(co)} aldı — '
                                 '${_fmtDateTime(co.almaZamani.toLocal())} '
-                                '(hala uzerinde)'
+                                '(hala üzerinde)'
                             : '${_userLabel(co)} · '
                                 '${_fmtDateTime(co.almaZamani.toLocal())} → '
                                 '${_fmtDateTime(co.birakmaZamani!.toLocal())}',
@@ -324,7 +324,7 @@ class _MyItemsTab extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 child: Text(
                   state.forbidden
-                      ? 'Demirbas listesi icin yetkiniz yok.'
+                      ? 'Demirbaş listesi için yetkiniz yok.'
                       : state.myError!,
                   style: const TextStyle(color: Colors.red),
                 ),
@@ -335,7 +335,7 @@ class _MyItemsTab extends ConsumerWidget {
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  'Su an uzerinde demirbas gorunmuyor.',
+                  'Şu an üzerinde demirbaş görünmüyor.',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -347,7 +347,7 @@ class _MyItemsTab extends ConsumerWidget {
                 leading: const Icon(Icons.inventory_2_outlined),
                 title: Text(item.asset.ad),
                 subtitle: Text(
-                  'Aldin: ${_fmtDateTime(item.zimmet.alinmaZamani.toLocal())} '
+                  'Aldın: ${_fmtDateTime(item.zimmet.alinmaZamani.toLocal())} '
                   '(${_sinceText(item.zimmet.alinmaZamani)})',
                 ),
                 trailing: state.quickCheckinBusyId == item.asset.id
@@ -360,7 +360,7 @@ class _MyItemsTab extends ConsumerWidget {
                         onPressed: state.quickCheckinBusyId != null
                             ? null
                             : () => controller.quickCheckin(item),
-                        child: const Text('Birak'),
+                        child: const Text('Bırak'),
                       ),
               ),
             ),
@@ -388,12 +388,12 @@ String _shortId(String userId) =>
     userId.length > 8 ? '${userId.substring(0, 8)}…' : userId;
 
 String _sinceText(DateTime? since) {
-  if (since == null) return 'bir suredir';
+  if (since == null) return 'bir süredir';
   final d = DateTime.now().toUtc().difference(since.toUtc());
-  if (d.inMinutes < 1) return 'az once alindi, o zamandan beri';
-  if (d.inMinutes < 60) return '${d.inMinutes} dakikadir';
+  if (d.inMinutes < 1) return 'az önce alındı, o zamandan beri';
+  if (d.inMinutes < 60) return '${d.inMinutes} dakikadır';
   if (d.inHours < 24) return '${d.inHours} saattir';
-  return '${d.inDays} gundur';
+  return '${d.inDays} gündür';
 }
 
 String _two(int v) => v.toString().padLeft(2, '0');

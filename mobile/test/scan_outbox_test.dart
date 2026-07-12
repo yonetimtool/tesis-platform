@@ -264,7 +264,7 @@ void main() {
     final entry = container.read(scanOutboxProvider).entries.single;
     expect(entry.status, OutboxStatus.kaliciHata);
     expect(entry.attemptCount, 1); // tekrar denenmedi
-    expect(entry.lastError, contains('dogrulanamadi'));
+    expect(entry.lastError, contains('doğrulanamadı'));
     expect(entry.lastError, contains('sahte'));
   });
 
@@ -287,7 +287,7 @@ void main() {
     final entry = container.read(scanOutboxProvider).entries.single;
     expect(entry.status, OutboxStatus.kaliciHata);
     expect(entry.attemptCount, 1);
-    expect(entry.lastError, contains('daha once islendi'));
+    expect(entry.lastError, contains('daha önce işlendi'));
   });
 
   test('OutboxEntry JSON gidis-donus kayipsizdir', () {

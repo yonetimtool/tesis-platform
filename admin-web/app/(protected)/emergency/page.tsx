@@ -35,13 +35,13 @@ export default function EmergencyPage() {
   const acikSayi = sorted.filter((a) => a.durum === "acik").length;
 
   async function resolve(a: EmergencyAlert) {
-    const note = window.prompt("Cozum notu (opsiyonel):", a.notlar ?? "");
+    const note = window.prompt("Çözüm notu (opsiyonel):", a.notlar ?? "");
     if (note === null) return; // iptal
     try {
       await apiSend(`/api/emergency/${a.id}`, "PATCH", { notlar: note || null });
       mutate();
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Guncellenemedi.");
+      window.alert(err instanceof Error ? err.message : "Güncellenemedi.");
     }
   }
 
@@ -52,7 +52,7 @@ export default function EmergencyPage() {
           Acil Durum
           {acikSayi > 0 && (
             <span className="ml-2 rounded-full bg-red-600 px-2 py-0.5 text-sm font-medium text-white">
-              {acikSayi} acik
+              {acikSayi} açık
             </span>
           )}
         </h1>
@@ -66,16 +66,16 @@ export default function EmergencyPage() {
                 setOffset(0);
               }}
             >
-              <option value="">Tumu</option>
-              <option value="acik">Acik</option>
-              <option value="cozuldu">Cozuldu</option>
+              <option value="">Tümü</option>
+              <option value="acik">Açık</option>
+              <option value="cozuldu">Çözüldü</option>
             </select>
           </Field>
         </div>
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       <ul className="space-y-3">
         {sorted.map((a) => {
@@ -95,7 +95,7 @@ export default function EmergencyPage() {
                         acik ? "bg-red-600 text-white" : "bg-emerald-100 text-emerald-800"
                       }`}
                     >
-                      {acik ? "ACIK" : "cozuldu"}
+                      {acik ? "AÇIK" : "çözüldü"}
                     </span>
                     <span className="text-sm font-medium">{userName(a.tetikleyen_user_id)}</span>
                     <span className="text-xs text-muted">{formatDateTime(a.tetiklenme_zamani)}</span>
@@ -113,14 +113,14 @@ export default function EmergencyPage() {
                   )}
                   {!acik && a.cozen_user_id && (
                     <p className="text-xs text-muted">
-                      Cozen: {userName(a.cozen_user_id)}
+                      Çözen: {userName(a.cozen_user_id)}
                       {a.cozulme_zamani ? ` · ${formatDateTime(a.cozulme_zamani)}` : ""}
                     </p>
                   )}
                 </div>
                 {acik && (
                   <button className={btnPrimary} onClick={() => resolve(a)}>
-                    Cozuldu isaretle
+                    Çözüldü işaretle
                   </button>
                 )}
               </div>
@@ -129,7 +129,7 @@ export default function EmergencyPage() {
         })}
         {data && sorted.length === 0 && (
           <li className="rounded-xl border border-slate-200 bg-white px-3 py-6 text-center text-muted">
-            Acil durum kaydi yok.
+            Acil durum kaydı yok.
           </li>
         )}
       </ul>

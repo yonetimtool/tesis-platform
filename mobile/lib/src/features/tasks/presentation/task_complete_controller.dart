@@ -122,7 +122,7 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
     } else {
       state = state.copyWith(
         nfcReading: false,
-        nfcError: result.error ?? 'Etiket okunamadi.',
+        nfcError: result.error ?? 'Etiket okunamadı.',
       );
     }
   }
@@ -173,16 +173,16 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
       state = state.copyWith(
         photoBusy: false,
         photoError: e.kind == ApiErrorKind.network
-            ? 'Fotograf yuklemek icin internet baglantisi gerekli '
-                '(yukleme adresi kisa omurlu). Baglanti gelince '
-                '"Tekrar yukle" ile deneyin.'
+            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli '
+                '(yükleme adresi kısa ömürlü). Bağlantı gelince '
+                '"Tekrar yükle" ile deneyin.'
             : e.message,
       );
     } catch (e) {
       if (!ref.mounted) return;
       state = state.copyWith(
         photoBusy: false,
-        photoError: 'Fotograf alinamadi: $e',
+        photoError: 'Fotoğraf alınamadı: $e',
       );
     }
   }
@@ -216,7 +216,7 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
       state = state.copyWith(
         photoBusy: false,
         photoError: e.kind == ApiErrorKind.network
-            ? 'Fotograf yuklemek icin internet baglantisi gerekli.'
+            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli.'
             : e.message,
       );
     }
@@ -245,15 +245,15 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
     if (state.submitting || state.result != null) return;
     if (fotoZorunlu && state.draft.fotoKey == null && !state.fotoBekliyor) {
       state = state.copyWith(
-        submitError: 'Bu gorev icin FOTO KANITI ZORUNLU. Tamamlamadan once '
-            'fotograf cekip yukleyin.',
+        submitError: 'Bu görev için FOTO KANITI ZORUNLU. Tamamlamadan önce '
+            'fotoğraf çekip yükleyin.',
       );
       return;
     }
     if (state.fotoBekliyor) {
       state = state.copyWith(
-        submitError: 'Fotograf henuz yuklenmedi. Yuklemenin bitmesini '
-            'bekleyin, "Tekrar yukle"yi deneyin veya fotoyu kaldirin.',
+        submitError: 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini '
+            'bekleyin, "Tekrar yükle"yi deneyin veya fotoyu kaldırın.',
       );
       return;
     }
@@ -270,17 +270,17 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
       state = state.copyWith(
         submitting: false,
         submitError: e.kind == ApiErrorKind.network
-            ? 'Tamamlama gonderilemedi — internet baglantisi gerekli. '
-                'Baglanti gelince tekrar "Tamamla"ya basin; ayni kayit '
-                'cift olusmaz (Idempotency-Key sabit). Fotografli '
-                'tamamlama offline desteklenmez (bilinen kisit).'
+            ? 'Tamamlama gönderilemedi — internet bağlantısı gerekli. '
+                'Bağlantı gelince tekrar "Tamamla"ya basın; aynı kayıt '
+                'çift oluşmaz (Idempotency-Key sabit). Fotoğraflı '
+                'tamamlama offline desteklenmez (bilinen kısıt).'
             : e.message,
       );
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         submitting: false,
-        submitError: 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+        submitError: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
       );
     }
   }

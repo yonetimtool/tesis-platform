@@ -19,11 +19,11 @@ class OutboxScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gonderim kuyrugu'),
+        title: const Text('Gönderim kuyruğu'),
         actions: [
           if (state.failedCount > 0)
             IconButton(
-              tooltip: 'Kalici hatalari temizle',
+              tooltip: 'Kalıcı hataları temizle',
               icon: const Icon(Icons.delete_sweep_outlined),
               onPressed: () => outbox.clearFailed(),
             ),
@@ -35,7 +35,7 @@ class OutboxScreen extends ConsumerWidget {
           const Divider(height: 1),
           Expanded(
             child: entries.isEmpty
-                ? const Center(child: Text('Kuyruk bos.'))
+                ? const Center(child: Text('Kuyruk boş.'))
                 : ListView.separated(
                     itemCount: entries.length,
                     separatorBuilder: (_, _) => const Divider(height: 1),
@@ -63,7 +63,7 @@ class _SyncBar extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              '${state.pendingCount} bekliyor · ${state.failedCount} kalici hata',
+              '${state.pendingCount} bekliyor · ${state.failedCount} kalıcı hata',
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
@@ -80,7 +80,7 @@ class _SyncBar extends StatelessWidget {
             FilledButton.tonalIcon(
               onPressed: state.pendingCount > 0 ? onSync : null,
               icon: const Icon(Icons.sync),
-              label: const Text('Simdi senkronla'),
+              label: const Text('Şimdi senkronla'),
             ),
         ],
       ),
@@ -104,19 +104,19 @@ class _EntryTile extends StatelessWidget {
       OutboxStatus.gonderiliyor => (
           Icons.sync,
           Colors.blue,
-          'Gonderiliyor...',
+          'Gönderiliyor...',
         ),
       OutboxStatus.gonderildi => (
           Icons.check_circle_outline,
           Colors.green,
           entry.outcome == OutboxOutcome.duplicate
-              ? 'Gonderildi (zaten kayitliydi)'
-              : 'Gonderildi (yeni kayit)',
+              ? 'Gönderildi (zaten kayıtlıydı)'
+              : 'Gönderildi (yeni kayıt)',
         ),
       OutboxStatus.kaliciHata => (
           Icons.link_off,
           Colors.red,
-          'Kalici hata: ${entry.lastError ?? 'etiket eslesmedi'}',
+          'Kalıcı hata: ${entry.lastError ?? 'etiket eşleşmedi'}',
         ),
     };
 

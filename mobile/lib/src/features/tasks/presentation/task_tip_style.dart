@@ -18,12 +18,12 @@ import '../domain/task_models.dart';
       TaskTip.ilaclama => (
           color: Colors.orange,
           icon: Icons.pest_control_outlined,
-          label: 'Ilaclama',
+          label: 'İlaçlama',
         ),
       TaskTip.bakim => (
           color: Colors.brown,
           icon: Icons.build_outlined,
-          label: 'Bakim',
+          label: 'Bakım',
         ),
       TaskTip.peyzaj => (
           color: Colors.green,
@@ -33,7 +33,7 @@ import '../domain/task_models.dart';
       TaskTip.diger => (
           color: Colors.blueGrey,
           icon: Icons.task_alt_outlined,
-          label: 'Diger',
+          label: 'Diğer',
         ),
       TaskTip.bilinmiyor => (
           color: Colors.grey,

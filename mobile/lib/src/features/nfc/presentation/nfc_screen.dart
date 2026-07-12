@@ -102,10 +102,10 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
 
   String _statusLabel(NfcStatus status) {
     return switch (status) {
-      NfcStatus.ready => 'Okumaya hazir. Baslat\'a dokunun.',
-      NfcStatus.reading => 'Etiketi telefonun arkasina yaklastirin...',
+      NfcStatus.ready => 'Okumaya hazır. Başlat\'a dokunun.',
+      NfcStatus.reading => 'Etiketi telefonun arkasına yaklaştırın...',
       NfcStatus.success => 'Etiket okundu.',
-      NfcStatus.error => 'Etiket okunamadi.',
+      NfcStatus.error => 'Etiket okunamadı.',
     };
   }
 }
@@ -121,8 +121,8 @@ class _OutboxBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: pendingCount > 0
-          ? '$pendingCount okutma gonderim bekliyor'
-          : 'Gonderim kuyrugu',
+          ? '$pendingCount okutma gönderim bekliyor'
+          : 'Gönderim kuyruğu',
       onPressed: onTap,
       icon: Badge(
         isLabelVisible: pendingCount > 0,
@@ -150,7 +150,7 @@ class _OutboxOutcome extends StatelessWidget {
           icon: Icons.check_circle,
           color: Colors.teal,
           text:
-              'Kaydedildi ✓ — baglanti gelince otomatik gonderilecek.',
+              'Kaydedildi ✓ — bağlantı gelince otomatik gönderilecek.',
         ),
       OutboxStatus.gonderiliyor => const Padding(
           padding: EdgeInsets.symmetric(vertical: 8),
@@ -163,7 +163,7 @@ class _OutboxOutcome extends StatelessWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
               SizedBox(width: 12),
-              Text('Kaydedildi ✓ — gonderiliyor...'),
+              Text('Kaydedildi ✓ — gönderiliyor...'),
             ],
           ),
         ),
@@ -171,17 +171,17 @@ class _OutboxOutcome extends StatelessWidget {
           ? const _ScanOutcome(
               icon: Icons.info_outline,
               color: Colors.blueGrey,
-              text: 'Gonderildi ✓ — bu okutma zaten kayitliydi.',
+              text: 'Gönderildi ✓ — bu okutma zaten kayıtlıydı.',
             )
           : const _ScanOutcome(
               icon: Icons.check_circle,
               color: Colors.green,
-              text: 'Gonderildi ✓ — okutma kaydedildi.',
+              text: 'Gönderildi ✓ — okutma kaydedildi.',
             ),
       OutboxStatus.kaliciHata => _ScanOutcome(
           icon: Icons.link_off,
           color: Colors.orange,
-          text: e.lastError ?? 'Bu etiket hicbir checkpoint ile eslesmiyor.',
+          text: e.lastError ?? 'Bu etiket hiçbir checkpoint ile eşleşmiyor.',
         ),
     };
   }
@@ -231,7 +231,7 @@ class _ResultCard extends StatelessWidget {
             if (sdm != null) ...[
               const Divider(height: 24),
               const Text(
-                'SDM (ham, dogrulanmamis)',
+                'SDM (ham, doğrulanmamış)',
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
@@ -338,13 +338,13 @@ class _ActionButton extends StatelessWidget {
         return OutlinedButton.icon(
           onPressed: onCancel,
           icon: const Icon(Icons.close),
-          label: const Text('Vazgec'),
+          label: const Text('Vazgeç'),
         );
       case NfcStatus.ready:
         return FilledButton.icon(
           onPressed: onRead,
           icon: const Icon(Icons.nfc),
-          label: const Text('Okumayi baslat'),
+          label: const Text('Okumayı başlat'),
         );
       case NfcStatus.success:
       case NfcStatus.error:

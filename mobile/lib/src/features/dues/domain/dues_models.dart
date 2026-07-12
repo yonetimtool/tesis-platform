@@ -113,13 +113,13 @@ String yontemLabel(String yontem) => switch (yontem) {
       'elden' => 'Elden',
       'havale' => 'Havale/EFT',
       'kart' => 'Kart',
-      'diger' => 'Diger',
+      'diger' => 'Diğer',
       _ => yontem,
     };
 
 String durumLabel(String durum) => switch (durum) {
-      'basarili' => 'Basarili',
+      'basarili' => 'Başarılı',
       'bekliyor' => 'Bekliyor',
-      'iptal' => 'Iptal',
+      'iptal' => 'İptal',
       _ => durum,
     };

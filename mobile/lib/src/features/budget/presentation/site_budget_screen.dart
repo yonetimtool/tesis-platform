@@ -37,7 +37,7 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Beklenmeyen bir hata olustu. Tekrar deneyin.');
+        setState(() => _error = 'Beklenmeyen bir hata oluştu. Tekrar deneyin.');
       }
     }
   }
@@ -45,7 +45,7 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
   List<DropdownMenuItem<String?>> _donemItems() {
     final now = DateTime.now();
     return [
-      const DropdownMenuItem<String?>(value: null, child: Text('Tum zamanlar')),
+      const DropdownMenuItem<String?>(value: null, child: Text('Tüm zamanlar')),
       for (var i = 0; i < 12; i++)
         () {
           final d = DateTime(now.year, now.month - i);
@@ -59,7 +59,7 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
   Widget build(BuildContext context) {
     final s = _summary;
     return Scaffold(
-      appBar: AppBar(title: const Text('Site Butcesi')),
+      appBar: AppBar(title: const Text('Site Bütçesi')),
       body: _error != null
           ? Center(
               child: Padding(
@@ -92,7 +92,7 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
                           _load();
                         },
                         decoration: const InputDecoration(
-                          labelText: 'Donem',
+                          labelText: 'Dönem',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.calendar_month_outlined),
                         ),
@@ -121,7 +121,7 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
                       if (s.kategoriler.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         Text(
-                          'Kategori toplamlari',
+                          'Kategori toplamları',
                           style: Theme.of(context).textTheme.titleSmall,
                         ),
                         const SizedBox(height: 4),
@@ -147,10 +147,10 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
                       ],
                       const SizedBox(height: 12),
                       Text(
-                        'Bu ekran site yonetiminin gelir ve giderlerini '
-                        'seffaflik amaciyla ozet olarak gosterir. Kisi ve '
-                        'daire bazli detaylar goruntulenmez; sorulariniz '
-                        'icin yonetiminize basvurun.',
+                        'Bu ekran site yönetiminin gelir ve giderlerini '
+                        'şeffaflık amacıyla özet olarak gösterir. Kişi ve '
+                        'daire bazlı detaylar görüntülenmez; sorularınız '
+                        'için yönetiminize başvurun.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

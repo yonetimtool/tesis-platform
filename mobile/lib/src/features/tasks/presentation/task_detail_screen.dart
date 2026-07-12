@@ -39,13 +39,13 @@ class TaskDetailScreen extends ConsumerWidget {
         actions: [
           if (canManage)
             PopupMenuButton<String>(
-              tooltip: 'Gorev islemleri',
+              tooltip: 'Görev işlemleri',
               onSelected: (v) {
                 if (v == 'edit') _edit(context, ref);
                 if (v == 'delete') _delete(context, ref);
               },
               itemBuilder: (_) => const [
-                PopupMenuItem(value: 'edit', child: Text('Duzenle')),
+                PopupMenuItem(value: 'edit', child: Text('Düzenle')),
                 PopupMenuItem(value: 'delete', child: Text('Sil')),
               ],
             ),
@@ -60,10 +60,10 @@ class TaskDetailScreen extends ConsumerWidget {
             const Card(
               child: ListTile(
                 leading: Icon(Icons.visibility_outlined),
-                title: Text('Takip gorunumu'),
+                title: Text('Takip görünümü'),
                 subtitle: Text(
-                  'Tamamlama saha personeli tarafindan yapilir '
-                  '(guvenlik / tesis gorevlisi). Bu ekran izleme icindir.',
+                  'Tamamlama saha personeli tarafından yapılır '
+                  '(güvenlik / tesis görevlisi). Bu ekran izleme içindir.',
                 ),
               ),
             )
@@ -101,7 +101,7 @@ class TaskDetailScreen extends ConsumerWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.check),
-              label: Text(state.submitting ? 'Gonderiliyor...' : 'Tamamla'),
+              label: Text(state.submitting ? 'Gönderiliyor...' : 'Tamamla'),
             ),
           ],
         ],
@@ -117,7 +117,7 @@ class TaskDetailScreen extends ConsumerWidget {
     if (saved == true && context.mounted) {
       Navigator.pop(context);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Gorev guncellendi ✓')),
+        const SnackBar(content: Text('Görev güncellendi ✓')),
       );
     }
   }
@@ -127,12 +127,12 @@ class TaskDetailScreen extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Gorev silinsin mi?'),
+        title: const Text('Görev silinsin mi?'),
         content: Text(task.ad),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Iptal'),
+            child: const Text('İptal'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -147,7 +147,7 @@ class TaskDetailScreen extends ConsumerWidget {
       if (context.mounted) {
         Navigator.pop(context);
         messenger.showSnackBar(
-          const SnackBar(content: Text('Gorev silindi ✓')),
+          const SnackBar(content: Text('Görev silindi ✓')),
         );
       }
     } on ApiException catch (e) {
@@ -185,7 +185,7 @@ class _InfoCard extends ConsumerWidget {
                 const Spacer(),
                 if (task.isAssignedTo(currentUserId))
                   const Chip(
-                    label: Text('Sana atanmis'),
+                    label: Text('Sana atanmış'),
                     visualDensity: VisualDensity.compact,
                   ),
               ],
@@ -205,8 +205,8 @@ class _InfoCard extends ConsumerWidget {
             if (task.checkpointId != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Bu gorev NFC dogrulamali: tamamlamadan once gorev '
-                'noktasindaki etiketi okutun.',
+                'Bu görev NFC doğrulamalı: tamamlamadan önce görev '
+                'noktasındaki etiketi okutun.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -317,8 +317,8 @@ class _PhotoStep extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   fotoZorunlu
-                      ? '2. Foto kaniti'
-                      : '2. Foto kaniti (istege bagli)',
+                      ? '2. Foto kanıtı'
+                      : '2. Foto kanıtı (isteğe bağlı)',
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 if (fotoZorunlu) ...[
@@ -353,12 +353,12 @@ class _PhotoStep extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                     SizedBox(width: 8),
-                    Text('Yukleniyor...'),
+                    Text('Yükleniyor...'),
                   ],
                 )
               else if (state.fotoYuklendi)
                 const Text(
-                  'Yuklendi ✓',
+                  'Yüklendi ✓',
                   style: TextStyle(color: Colors.green),
                 ),
             ],
@@ -382,7 +382,7 @@ class _PhotoStep extends StatelessWidget {
                           controller.pickAndUploadPhoto(ImageSource.camera),
                   icon: const Icon(Icons.photo_camera),
                   label: Text(
-                    state.photoPath == null ? 'Kamera' : 'Yeniden cek',
+                    state.photoPath == null ? 'Kamera' : 'Yeniden çek',
                   ),
                 ),
                 OutlinedButton.icon(
@@ -391,21 +391,21 @@ class _PhotoStep extends StatelessWidget {
                       : () =>
                           controller.pickAndUploadPhoto(ImageSource.gallery),
                   icon: const Icon(Icons.photo_library_outlined),
-                  label: const Text('Galeriden sec'),
+                  label: const Text('Galeriden seç'),
                 ),
                 if (state.photoPath != null && !state.fotoYuklendi)
                   OutlinedButton.icon(
                     onPressed:
                         state.photoBusy ? null : controller.retryUpload,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Tekrar yukle'),
+                    label: const Text('Tekrar yükle'),
                   ),
                 if (state.photoPath != null)
                   TextButton.icon(
                     onPressed:
                         state.photoBusy ? null : controller.removePhoto,
                     icon: const Icon(Icons.delete_outline),
-                    label: const Text('Kaldir'),
+                    label: const Text('Kaldır'),
                   ),
               ],
             ),
@@ -431,7 +431,7 @@ class _NoteStep extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '3. Not (istege bagli)',
+              '3. Not (isteğe bağlı)',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
@@ -440,7 +440,7 @@ class _NoteStep extends StatelessWidget {
               maxLines: 3,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: 'Orn. cop konteynerleri bosaltildi',
+                hintText: 'Örn. çöp konteynerleri boşaltıldı',
               ),
             ),
           ],
@@ -471,9 +471,9 @@ class _ResultCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               result.wasDuplicate
-                  ? 'Bu tamamlama zaten kayitliydi (tekrar gonderim — '
-                      'cift kayit olusmadi).'
-                  : 'Gorev tamamlandi — kayit olusturuldu.',
+                  ? 'Bu tamamlama zaten kayıtlıydı (tekrar gönderim — '
+                      'çift kayıt oluşmadı).'
+                  : 'Görev tamamlandı — kayıt oluşturuldu.',
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
@@ -481,15 +481,15 @@ class _ResultCard extends StatelessWidget {
             Text(
               'Zaman: '
               '${_fmtDateTime(result.completion.tamamlanmaZamani.toLocal())}'
-              '${result.completion.fotoKey != null ? ' · foto kaniti var' : ''}'
-              '${result.completion.nfcTagUid != null ? ' · NFC dogrulandi' : ''}',
+              '${result.completion.fotoKey != null ? ' · foto kanıtı var' : ''}'
+              '${result.completion.nfcTagUid != null ? ' · NFC doğrulandı' : ''}',
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: onNew,
-              child: const Text('Yeni tamamlama baslat'),
+              child: const Text('Yeni tamamlama başlat'),
             ),
           ],
         ),

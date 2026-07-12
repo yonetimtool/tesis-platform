@@ -37,6 +37,7 @@ from .routers import scans as scans_router
 from .routers import shifts as shifts_router
 from .routers import site_rules as site_rules_router
 from .routers import task_completions as task_completions_router
+from .routers import task_categories as task_categories_router
 from .routers import tasks as tasks_router
 from .routers import tenant as tenant_router
 from .routers import units as units_router
@@ -86,6 +87,7 @@ app.include_router(reservations_router.router)
 app.include_router(events_router.router)
 app.include_router(site_rules_router.router)
 app.include_router(tasks_router.router)
+app.include_router(task_categories_router.router)
 app.include_router(task_completions_router.router)
 app.include_router(uploads_router.router)
 app.include_router(landscape_router.router)

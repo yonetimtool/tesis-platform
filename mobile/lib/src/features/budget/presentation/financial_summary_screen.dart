@@ -42,7 +42,7 @@ class _FinancialSummaryScreenState
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Beklenmeyen bir hata olustu. Tekrar deneyin.');
+        setState(() => _error = 'Beklenmeyen bir hata oluştu. Tekrar deneyin.');
       }
     }
   }
@@ -50,7 +50,7 @@ class _FinancialSummaryScreenState
   List<DropdownMenuItem<String?>> _donemItems() {
     final now = DateTime.now();
     return [
-      const DropdownMenuItem<String?>(value: null, child: Text('Tum zamanlar')),
+      const DropdownMenuItem<String?>(value: null, child: Text('Tüm zamanlar')),
       for (var i = 0; i < 12; i++)
         () {
           final d = DateTime(now.year, now.month - i);
@@ -64,7 +64,7 @@ class _FinancialSummaryScreenState
   Widget build(BuildContext context) {
     final s = _summary;
     return Scaffold(
-      appBar: AppBar(title: const Text('Finansal ozet')),
+      appBar: AppBar(title: const Text('Finansal özet')),
       body: _error != null
           ? Center(
               child: Padding(
@@ -97,7 +97,7 @@ class _FinancialSummaryScreenState
                           _load();
                         },
                         decoration: const InputDecoration(
-                          labelText: 'Donem',
+                          labelText: 'Dönem',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.calendar_month_outlined),
                         ),
@@ -105,12 +105,12 @@ class _FinancialSummaryScreenState
                       if (s.tahsilat != null) ...[
                         const SizedBox(height: 16),
                         _sectionTitle(context, Icons.payments_outlined,
-                            'Aidat tahsilati'),
+                            'Aidat tahsilatı'),
                         _TahsilatCard(tahsilat: s.tahsilat!),
                       ],
                       const SizedBox(height: 16),
                       _sectionTitle(
-                          context, Icons.savings_outlined, 'Butce'),
+                          context, Icons.savings_outlined, 'Bütçe'),
                       Card(
                         margin: EdgeInsets.zero,
                         child: Padding(
@@ -138,7 +138,7 @@ class _FinancialSummaryScreenState
                       if (s.enYuksekGiderler.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         _sectionTitle(context, Icons.leaderboard_outlined,
-                            'En yuksek giderler'),
+                            'En yüksek giderler'),
                         Card(
                           margin: EdgeInsets.zero,
                           child: Column(
@@ -258,7 +258,7 @@ class _TahsilatCard extends StatelessWidget {
             ] else
               const Padding(
                 padding: EdgeInsets.only(top: 8),
-                child: Text('Bu donem icin tahakkuk kaydi yok.'),
+                child: Text('Bu dönem için tahakkuk kaydı yok.'),
               ),
           ],
         ),

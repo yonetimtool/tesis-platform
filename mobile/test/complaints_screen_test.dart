@@ -95,8 +95,8 @@ void main() {
       await tester.tap(find.text('Asansor arizali'));
       await tester.pumpAndSettle();
       expect(find.byType(SegmentedButton<ComplaintDurum>), findsOneWidget);
-      expect(find.text('Yonetim yaniti'), findsOneWidget);
-      expect(find.text('Yaniti kaydet'), findsOneWidget);
+      expect(find.text('Yönetim yanıtı'), findsOneWidget);
+      expect(find.text('Yanıtı kaydet'), findsOneWidget);
     });
 
     testWidgets('resident detayda yanit formu GORMEZ; mevcut yaniti okur',
@@ -107,7 +107,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
       // Cozuldu kayit "Cozulenler" sekmesinde.
-      await tester.tap(find.text('Cozulenler (1)'));
+      await tester.tap(find.text('Çözülenler (1)'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Asansor arizali'));
       await tester.pumpAndSettle();
@@ -122,7 +122,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Asansor arizali'));
       await tester.pumpAndSettle();
-      expect(find.text('Yonetim yaniti bekleniyor.'), findsOneWidget);
+      expect(find.text('Yönetim yanıtı bekleniyor.'), findsOneWidget);
     });
   });
 
@@ -132,12 +132,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Yeni talep'));
     await tester.pumpAndSettle();
-    expect(find.text('Yeni sikayet / oneri'), findsOneWidget);
-    expect(find.text('Baslik'), findsOneWidget);
-    expect(find.text('Mesajiniz'), findsOneWidget);
-    expect(find.text('Gorsel (opsiyonel)'), findsOneWidget);
+    expect(find.text('Yeni şikayet / öneri'), findsOneWidget);
+    expect(find.text('Başlık'), findsOneWidget);
+    expect(find.text('Mesajınız'), findsOneWidget);
+    expect(find.text('Görsel (opsiyonel)'), findsOneWidget);
     // foto'suz da gonderilebilir — buton aktif
-    expect(find.text('Gonder'), findsOneWidget);
+    expect(find.text('Gönder'), findsOneWidget);
   });
 
   group('push tiklamasi (initialComplaintId)', () {
@@ -152,7 +152,7 @@ void main() {
       // Detay sheet acildi: yanit metni TAM haliyle gorunur (kart onizlemesi
       // "Yonetim yaniti: ..." onekiyle tek satirdir — bu bulgu sheet'e ozgu).
       expect(find.text('Servis cagrildi.'), findsOneWidget);
-      expect(find.textContaining('Yonetim yaniti ·'), findsOneWidget);
+      expect(find.textContaining('Yönetim yanıtı ·'), findsOneWidget);
     });
 
     testWidgets('kayit listede yoksa sessizce listede kalinir (cokme yok)',
@@ -175,10 +175,10 @@ void main() {
       items: [_c(durum: ComplaintDurum.inceleniyor)],
     ));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Inceleniyor (1)'));
+    await tester.tap(find.text('İnceleniyor (1)'));
     await tester.pumpAndSettle();
     // Rozet metni tam 'Inceleniyor' (sekme etiketi sayac tasir — karismaz).
-    expect(find.text('Inceleniyor'), findsOneWidget);
+    expect(find.text('İnceleniyor'), findsOneWidget);
   });
 
   group('Acik / Inceleniyor / Cozulenler sekmeleri', () {
@@ -210,20 +210,20 @@ void main() {
       await tester.pumpAndSettle();
 
       // Sekme sayaclari dogru
-      expect(find.text('Acik (1)'), findsOneWidget);
-      expect(find.text('Inceleniyor (1)'), findsOneWidget);
-      expect(find.text('Cozulenler (1)'), findsOneWidget);
+      expect(find.text('Açık (1)'), findsOneWidget);
+      expect(find.text('İnceleniyor (1)'), findsOneWidget);
+      expect(find.text('Çözülenler (1)'), findsOneWidget);
       // Varsayilan sekme Acik: yalniz acik kayit
       expect(find.text('Asansor arizali'), findsOneWidget);
       expect(find.text('Incelenen talep'), findsNothing);
       expect(find.text('Cozulen talep'), findsNothing);
 
-      await tester.tap(find.text('Inceleniyor (1)'));
+      await tester.tap(find.text('İnceleniyor (1)'));
       await tester.pumpAndSettle();
       expect(find.text('Incelenen talep'), findsOneWidget);
       expect(find.text('Asansor arizali'), findsNothing);
 
-      await tester.tap(find.text('Cozulenler (1)'));
+      await tester.tap(find.text('Çözülenler (1)'));
       await tester.pumpAndSettle();
       expect(find.text('Cozulen talep'), findsOneWidget);
       expect(find.text('Incelenen talep'), findsNothing);
@@ -232,12 +232,12 @@ void main() {
     testWidgets('bos sekmeler anlamli mesaj gosterir', (tester) async {
       await tester.pumpWidget(_app(UserRole.yonetici, items: [_c()]));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Inceleniyor (0)'));
+      await tester.tap(find.text('İnceleniyor (0)'));
       await tester.pumpAndSettle();
-      expect(find.text('Incelemede talep yok.'), findsOneWidget);
-      await tester.tap(find.text('Cozulenler (0)'));
+      expect(find.text('İncelemede talep yok.'), findsOneWidget);
+      await tester.tap(find.text('Çözülenler (0)'));
       await tester.pumpAndSettle();
-      expect(find.text('Henuz cozulen talep yok.'), findsOneWidget);
+      expect(find.text('Henüz çözülen talep yok.'), findsOneWidget);
     });
   });
 
@@ -249,18 +249,18 @@ void main() {
         items: [_c(kategori: ComplaintKategori.gurultu)],
       ));
       await tester.pumpAndSettle();
-      expect(find.text('Gurultu kirliligi'), findsOneWidget); // kart
+      expect(find.text('Gürültü kirliliği'), findsOneWidget); // kart
 
       await tester.tap(find.text('Asansor arizali'));
       await tester.pumpAndSettle();
-      expect(find.text('Gurultu kirliligi'), findsNWidgets(2)); // + detay
+      expect(find.text('Gürültü kirliliği'), findsNWidgets(2)); // + detay
     });
 
     testWidgets('kategorisiz eski talep etiketsiz calisir', (tester) async {
       await tester.pumpWidget(_app(UserRole.resident, items: [_c()]));
       await tester.pumpAndSettle();
-      expect(find.text('Gurultu kirliligi'), findsNothing);
-      expect(find.text('Goruntu kirliligi'), findsNothing);
+      expect(find.text('Gürültü kirliliği'), findsNothing);
+      expect(find.text('Görüntü kirliliği'), findsNothing);
       expect(find.text('Asansor arizali'), findsOneWidget);
     });
 
@@ -272,9 +272,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Kategori (opsiyonel)'), findsOneWidget);
-      expect(find.text('Gurultu kirliligi'), findsOneWidget);
-      expect(find.text('Goruntu kirliligi'), findsOneWidget);
-      expect(find.text('Diger'), findsOneWidget);
+      expect(find.text('Gürültü kirliliği'), findsOneWidget);
+      expect(find.text('Görüntü kirliliği'), findsOneWidget);
+      expect(find.text('Diğer'), findsOneWidget);
       // foto butonu yeni adiyla
       expect(find.text('Kamera'), findsOneWidget);
     });

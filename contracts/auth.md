@@ -314,17 +314,23 @@ Notlar:
   gorur; PATCH ❌) + **acil durum tetikleme** (`POST /emergency` — panik
   butonu sakinin de hakki; GET/PATCH ❌) disinda her kaynak `403`.
   ‡ `POST /uploads/presign`e yalniz sikayet/oneri gorseli yuklemek icin erisir.
-- **Gorev-YONETIMI vs "Gorevlerim" (kesin matris):** Gorev-YONETIMI =
-  gorev atama + gorev/atama takip ekrani. GORUNTULEME `yonetici` +
-  `tesis_gorevlisi` + `security` (+`admin`); `resident` ❌. ATAMA/olusturma
-  yalniz `yonetici` (+`admin`). "Gorevlerim" (kisinin KENDINE atananlar,
-  `?atanan_user_id=me`) bundan AYRIDIR ve saha rollerinde aynen surer.
-  **Atanan izolasyonu (Wave 1):** belirli kullaniciya ATANMIS gorev yalniz
-  o atanana (+`yonetici`/`admin`) gorunur — saha kullanicisi BASKASINA
-  atanmis gorevi liste/detay/completion'da GOREMEZ ve `?atanan_user_id=`
-  filtresiyle bypass EDEMEZ (sunucu tarafinda zorlanir; 404 ile varlik da
-  sizdirilmaz). Atanmamis ("Herkes") gorevler tum saha rollerine aciktir;
-  yonetim tum listeyi gorur.
+- **Gorev-YONETIMI vs "Gorevlerim" (kesin matris — A4 guncel):**
+  Gorev-YONETIMI = gorev atama + olusturma/duzenleme ekrani — YALNIZ
+  `yonetici` (+`admin`); saha rolleri (`security`/`tesis_gorevlisi`) ve
+  `resident` gormez. Saha rolleri yalniz "Gorevlerim" ekranini kullanir.
+  **Grup gorunurlugu (A4):** saha rolu "Gorevlerim"de KENDI ROL GRUBUNA
+  (`security` + `tesis_gorevlisi`) atanan TUM gorevleri + atanmamislari
+  ("Herkes") OKUR; saha-disi kisiye atanmis gorev gorunmez (404 ile varlik
+  da sizdirilmaz). **Tamamlama bypass-proof:** saha rolu YALNIZ kendine
+  atanan veya atanmamis (havuz) gorevi tamamlar; grubun baska uyesine
+  atanmis gorev okunur ama tamamlanamaz — `403 forbidden` (sunucu
+  tarafinda zorlanir). Yonetim tum listeyi gorur.
+- **Gorev kategorisi (`/task-categories`, A6):** yonetici-tanimli,
+  tenant'a ozel kategori seti. YAZMA (POST/DELETE) `admin` + `yonetici`;
+  OKUMA gorev goren roller (`admin`/`yonetici`/`security`/
+  `tesis_gorevlisi`); `resident` ❌. DELETE SOFT-DELETE'tir (aktif=false);
+  pasif kategoriye yeni gorev yazilamaz (422). Gorev olustururken
+  opsiyonel `kategori_id` ile secilir.
 - **Duyuru:** OLUSTURMA `yonetici` (site yonetiminin agzi, mobil) +
   `admin` (platform tarafi, panel) — canli test kesin kurali. Saha rolleri
   ve `resident` olusturamaz. Duzenleme/silme `admin` + `yonetici`; OKUMA

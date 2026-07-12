@@ -42,9 +42,9 @@ export default function NotificationsPage() {
 
       <div className="flex items-center gap-2">
         {([
-          ["", "Tumu"],
-          ["false", "Okunmamis"],
-          ["true", "Okunmus"],
+          ["", "Tümü"],
+          ["false", "Okunmamış"],
+          ["true", "Okunmuş"],
         ] as [OkunduFiltre, string][]).map(([v, label]) => (
           <button
             key={label}
@@ -61,7 +61,7 @@ export default function NotificationsPage() {
       {error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error.message}</p>
       )}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       <ul className="space-y-2">
         {(data?.items ?? []).map((n: AppNotification) => (
@@ -108,7 +108,7 @@ export default function NotificationsPage() {
             onClick={() => setOffset(Math.max(0, offset - LIMIT))}
             className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-50"
           >
-            Onceki
+            Önceki
           </button>
           <button
             disabled={!canNext}

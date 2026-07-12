@@ -304,58 +304,78 @@ def test_completion_nfc_normalized_case_insensitive(client, world):
     assert bad.status_code == 422
 
 
-# --------------------- atanan izolasyonu (Wave 1 #2) ------------------------ #
-def test_atanana_ozel_gorev_yalniz_atanana_gorunur(client, world):
-    """Belirli kullaniciya ATANMIS gorev yalniz o atanana (+yonetime) gorunur.
-
-    Saha kullanicisi baskasina atanmis gorevi liste/detay/completion'da
-    GOREMEZ; atanmamis ('Herkes') gorevler tum saha rollerine aciktir.
-    ?atanan_user_id filtresiyle de bypass edilemez.
+# ---------------- Gorevlerim: rol grubu gorunurlugu (A4) -------------------- #
+def test_saha_rolu_grup_gorevlerini_okur(client, world):
+    """Saha rolu (security/tesis_gorevlisi) 'Gorevlerim'de KENDI ROL GRUBUNA
+    (guvenlik VE tesis gorevlisi) atanan TUM gorevleri okur; atanmamis
+    ('Herkes') gorevler de aciktir. Yonetim kisitsiz gorur.
     """
     admin = _headers(client, world["slug_a"], world["admin_a"])
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
     guard = _headers(client, world["slug_a"], world["guard_a"])
     gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     guard_id = client.get("/me", headers=guard).json()["id"]
+    gorevli_id = client.get("/me", headers=gorevli).json()["id"]
 
     ortak = _new_task(client, admin, ad="Herkes gorevi")
+    guard_gorevi = _new_task(client, admin, ad="Guard gorevi", atanan_user_id=guard_id)
+    gorevli_gorevi = _new_task(client, admin, ad="Gorevli gorevi", atanan_user_id=gorevli_id)
+
+    hepsi = {ortak["id"], guard_gorevi["id"], gorevli_gorevi["id"]}
+
+    # her iki saha kullanicisi da grubun TUM gorevlerini listede gorur
+    for h in (guard, gorevli):
+        ids = {
+            it["id"]
+            for it in client.get("/tasks", headers=h, params={"limit": 200}).json()["items"]
+        }
+        assert hepsi <= ids
+
+    # detay + completion listesi de okunur (grup gorunurlugu)
+    assert client.get(f"/tasks/{guard_gorevi['id']}", headers=gorevli).status_code == 200
+    assert (
+        client.get(f"/tasks/{guard_gorevi['id']}/completions", headers=gorevli).status_code
+        == 200
+    )
+
+    # atanan filtresi grup icinde calisir: gorevli, guard'in UUID'siyle suzebilir
+    body = client.get(
+        "/tasks", headers=gorevli, params={"atanan_user_id": guard_id, "limit": 200}
+    ).json()
+    ids = {it["id"] for it in body["items"]}
+    assert guard_gorevi["id"] in ids and gorevli_gorevi["id"] not in ids
+
+    # yonetim (yonetici/admin) tum listede hepsini gorur
+    for h in (yonetici, admin):
+        ids = {
+            it["id"]
+            for it in client.get("/tasks", headers=h, params={"limit": 200}).json()["items"]
+        }
+        assert hepsi <= ids
+
+
+def test_tamamlama_yalniz_kendine_atanan(client, world):
+    """Tamamlama BYPASS-PROOF: saha kullanicisi yalniz KENDINE atanan (veya
+    atanmamis havuz) gorevini tamamlar; baskasina atanmis gorev okunur ama
+    tamamlanamaz -> 403. Atama/olusturma yalniz yonetici(+admin) — mevcut.
+    """
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
+    guard_id = client.get("/me", headers=guard).json()["id"]
+
     ozel = _new_task(client, admin, ad="Guard ozel", atanan_user_id=guard_id)
 
-    # atanan (guard): ikisini de gorur
-    guard_ids = {
-        it["id"]
-        for it in client.get("/tasks", headers=guard, params={"limit": 200}).json()["items"]
-    }
-    assert {ortak["id"], ozel["id"]} <= guard_ids
-
-    # baska saha kullanicisi (gorevli): ortak gorunur, OZEL GORUNMEZ
-    gorevli_ids = {
-        it["id"]
-        for it in client.get("/tasks", headers=gorevli, params={"limit": 200}).json()["items"]
-    }
-    assert ortak["id"] in gorevli_ids
-    assert ozel["id"] not in gorevli_ids
-
-    # detay + completion listesi + tamamlama da 404 (varlik sizdirilmaz)
-    assert client.get(f"/tasks/{ozel['id']}", headers=gorevli).status_code == 404
-    assert (
-        client.get(f"/tasks/{ozel['id']}/completions", headers=gorevli).status_code == 404
-    )
+    # baska saha kullanicisi gorevi GORUR ama TAMAMLAYAMAZ -> 403
+    assert client.get(f"/tasks/{ozel['id']}", headers=gorevli).status_code == 200
     r = client.post(
         f"/tasks/{ozel['id']}/completions",
         headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-07-05T08:00:00Z"},
     )
-    assert r.status_code == 404
+    assert r.status_code == 403, r.text
 
-    # filtre bypass edilemez: gorevli, guard'in UUID'siyle suzse de BOS doner
-    body = client.get(
-        "/tasks", headers=gorevli, params={"atanan_user_id": guard_id, "limit": 200}
-    ).json()
-    assert body["items"] == []
-
-    # atanan kendi gorevini acar ve tamamlar
-    assert client.get(f"/tasks/{ozel['id']}", headers=guard).status_code == 200
+    # atanan kendi gorevini tamamlar -> 201
     ok = client.post(
         f"/tasks/{ozel['id']}/completions",
         headers={**guard, "Idempotency-Key": uuid.uuid4().hex},
@@ -363,10 +383,11 @@ def test_atanana_ozel_gorev_yalniz_atanana_gorunur(client, world):
     )
     assert ok.status_code == 201, ok.text
 
-    # yonetim (yonetici/admin) tum listede her ikisini de gorur
-    for h in (yonetici, admin):
-        ids = {
-            it["id"]
-            for it in client.get("/tasks", headers=h, params={"limit": 200}).json()["items"]
-        }
-        assert {ortak["id"], ozel["id"]} <= ids
+    # atanmamis havuz gorevi her saha kullanicisina acik kalir (mevcut davranis)
+    havuz = _new_task(client, admin, ad="Havuz gorevi")
+    ok2 = client.post(
+        f"/tasks/{havuz['id']}/completions",
+        headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
+        json={"tamamlanma_zamani": "2026-07-05T09:00:00Z"},
+    )
+    assert ok2.status_code == 201, ok2.text

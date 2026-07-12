@@ -13,16 +13,16 @@ const LIMIT = 20;
 // Durum rozetleri — mobil ile ayni renk kodu: acik=mavi,
 // inceleniyor=turuncu, cozuldu=yesil.
 const DURUM_META: Record<ComplaintDurum, { label: string; cls: string }> = {
-  acik: { label: "Acik", cls: "bg-blue-100 text-blue-700" },
-  inceleniyor: { label: "Inceleniyor", cls: "bg-orange-100 text-orange-700" },
-  cozuldu: { label: "Cozuldu", cls: "bg-green-100 text-green-700" },
+  acik: { label: "Açık", cls: "bg-blue-100 text-blue-700" },
+  inceleniyor: { label: "İnceleniyor", cls: "bg-orange-100 text-orange-700" },
+  cozuldu: { label: "Çözüldü", cls: "bg-green-100 text-green-700" },
 };
 
 const FILTERS: Array<{ value: ComplaintDurum | ""; label: string }> = [
-  { value: "", label: "Tumu" },
-  { value: "acik", label: "Acik" },
-  { value: "inceleniyor", label: "Inceleniyor" },
-  { value: "cozuldu", label: "Cozuldu" },
+  { value: "", label: "Tümü" },
+  { value: "acik", label: "Açık" },
+  { value: "inceleniyor", label: "İnceleniyor" },
+  { value: "cozuldu", label: "Çözüldü" },
 ];
 
 function DurumBadge({ durum }: { durum: ComplaintDurum }) {
@@ -46,7 +46,7 @@ export default function ComplaintsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Sikayet / Oneri</h1>
+        <h1 className="text-2xl font-semibold">Şikayet / Öneri</h1>
         <div className="flex gap-1">
           {FILTERS.map((f) => (
             <button
@@ -68,12 +68,12 @@ export default function ComplaintsPage() {
       </div>
 
       <p className="text-sm text-muted">
-        Sakinlerin yonetime ilettigi talepler. Durumu guncelleyin ve yanit
-        yazin — sakin, yaniti mobil uygulamada kendi talebinde gorur.
+        Sakinlerin yönetime ilettiği talepler. Durumu güncelleyin ve yanıt
+        yazın — sakin, yanıtı mobil uygulamada kendi talebinde görür.
       </p>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       <ul className="space-y-3">
         {(data?.items ?? []).map((c) => (
@@ -81,7 +81,7 @@ export default function ComplaintsPage() {
         ))}
         {data && data.items.length === 0 && (
           <li className="rounded-xl border border-slate-200 bg-white p-6 text-center text-muted">
-            {durum ? "Bu durumda talep yok." : "Henuz talep yok."}
+            {durum ? "Bu durumda talep yok." : "Henüz talep yok."}
           </li>
         )}
       </ul>
@@ -121,7 +121,7 @@ function ComplaintCard({
     const trimmed = yanit.trim();
     if (trimmed && trimmed !== (c.yonetici_yaniti ?? "")) body.yonetici_yaniti = trimmed;
     if (Object.keys(body).length === 0) {
-      setErr("Degisiklik yok: durum secin veya yanit yazin.");
+      setErr("Değişiklik yok: durum seçin veya yanıt yazın.");
       return;
     }
     setSaving(true);
@@ -152,7 +152,7 @@ function ComplaintCard({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={c.foto_url}
-                alt={`${c.baslik} gorseli`}
+                alt={`${c.baslik} görseli`}
                 className="max-h-40 rounded-lg border border-slate-200 object-cover"
               />
             </a>
@@ -163,7 +163,7 @@ function ComplaintCard({
           {c.yonetici_yaniti && (
             <div className="mt-3 rounded-lg bg-green-50 p-3 text-sm">
               <p className="text-xs text-muted">
-                Yonetim yaniti
+                Yönetim yanıtı
                 {c.yanit_zamani && ` · ${formatDateTime(c.yanit_zamani)}`}
               </p>
               <p className="mt-1 whitespace-pre-wrap">{c.yonetici_yaniti}</p>
@@ -171,7 +171,7 @@ function ComplaintCard({
           )}
         </div>
         <button className={btnGhost} onClick={() => setOpen(!open)}>
-          {open ? "Kapat" : c.yonetici_yaniti ? "Yaniti duzenle" : "Yanitla"}
+          {open ? "Kapat" : c.yonetici_yaniti ? "Yanıtı düzenle" : "Yanıtla"}
         </button>
       </div>
 
@@ -183,12 +183,12 @@ function ComplaintCard({
               value={durum}
               onChange={(e) => setDurum(e.target.value as ComplaintDurum)}
             >
-              <option value="acik">Acik</option>
-              <option value="inceleniyor">Inceleniyor</option>
-              <option value="cozuldu">Cozuldu</option>
+              <option value="acik">Açık</option>
+              <option value="inceleniyor">İnceleniyor</option>
+              <option value="cozuldu">Çözüldü</option>
             </select>
           </Field>
-          <Field label="Yonetim yaniti" hint="En fazla 5000 karakter — sakin mobilde gorur">
+          <Field label="Yönetim yanıtı" hint="En fazla 5000 karakter — sakin mobilde görür">
             <textarea
               className={`${inputCls} min-h-24`}
               value={yanit}
@@ -202,7 +202,7 @@ function ComplaintCard({
               {saving ? "Kaydediliyor..." : "Kaydet"}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              Iptal
+              İptal
             </button>
           </div>
         </form>

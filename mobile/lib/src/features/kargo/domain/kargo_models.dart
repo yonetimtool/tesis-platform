@@ -12,7 +12,7 @@ library;
 /// `kargo_durum` enum'unun istemci aynasi.
 enum KargoDurum {
   bekliyor('bekliyor', 'Bekliyor'),
-  teslimAlindi('teslim_alindi', 'Teslim alindi'),
+  teslimAlindi('teslim_alindi', 'Teslim alındı'),
   unknown('unknown', 'Bilinmeyen');
 
   const KargoDurum(this.wire, this.label);

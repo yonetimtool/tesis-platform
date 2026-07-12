@@ -31,43 +31,43 @@ void main() {
         HomeMenuEntry.kargo,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
-        HomeMenuEntry.taskTracking,
         HomeMenuEntry.assets,
         HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
       ]);
     });
 
-    test('Gorev-YONETIMI karti (kesin matris): yonetici+security+'
-        'tesis_gorevlisi VAR, resident YOK; "Gorevlerim" saha rollerinde '
-        'AYRICA durur (korundu)', () {
+    test('Gorev-YONETIMI karti (A4 kesin matris): YALNIZ yonetici; saha '
+        'rolleri (security/tesis_gorevlisi) ve resident GORMEZ — onlar yalniz '
+        '"Gorevlerim" kullanir', () {
+      expect(
+        homeMenuForRole(UserRole.yonetici),
+        contains(HomeMenuEntry.taskTracking),
+      );
       for (final role in [
-        UserRole.yonetici,
+        UserRole.admin,
         UserRole.security,
         UserRole.tesisGorevlisi,
+        UserRole.resident,
       ]) {
         expect(
           homeMenuForRole(role),
-          contains(HomeMenuEntry.taskTracking),
+          isNot(contains(HomeMenuEntry.taskTracking)),
           reason: role.wire,
         );
       }
-      expect(
-        homeMenuForRole(UserRole.resident),
-        isNot(contains(HomeMenuEntry.taskTracking)),
-      );
+      // "Gorevlerim" saha rollerinde durur; yonetim/gorev-YONETIMI ayridir.
+      for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.tasks),
+          reason: role.wire,
+        );
+      }
       expect(
         homeMenuForRole(UserRole.resident),
         isNot(contains(HomeMenuEntry.tasks)),
       );
-      // "Gorevlerim" saha rollerinde ayrica durur — iki kart birlikte.
-      for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
-        expect(
-          homeMenuForRole(role),
-          containsAll(const [HomeMenuEntry.tasks, HomeMenuEntry.taskTracking]),
-          reason: role.wire,
-        );
-      }
     });
 
     test('tesis_gorevlisi Turlarim GORMEZ (me/patrol-window admin+security)',

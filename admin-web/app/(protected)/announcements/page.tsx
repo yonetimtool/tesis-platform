@@ -97,13 +97,13 @@ export default function AnnouncementsPage() {
         headers: { "Content-Type": file.type || "image/jpeg" },
         body: file,
       });
-      if (!put.ok) throw new Error(`Yukleme basarisiz (HTTP ${put.status}).`);
+      if (!put.ok) throw new Error(`Yükleme başarısız (HTTP ${put.status}).`);
       setPhoto((p) => ({ ...p, uploading: false, fotoKey: ticket.foto_key }));
     } catch (err) {
       setPhoto((p) => ({
         ...p,
         uploading: false,
-        error: err instanceof Error ? err.message : "Gorsel yuklenemedi.",
+        error: err instanceof Error ? err.message : "Görsel yüklenemedi.",
       }));
     }
   }
@@ -111,11 +111,11 @@ export default function AnnouncementsPage() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (photo.uploading) {
-      setFormErr("Gorsel henuz yukleniyor — bitmesini bekleyin veya kaldirin.");
+      setFormErr("Görsel henüz yükleniyor — bitmesini bekleyin veya kaldırın.");
       return;
     }
     if (photo.previewUrl && !photo.fotoKey) {
-      setFormErr("Gorsel yuklenemedi. Tekrar secin veya kaldirin.");
+      setFormErr("Görsel yüklenemedi. Tekrar seçin veya kaldırın.");
       return;
     }
     setSaving(true);
@@ -154,18 +154,18 @@ export default function AnnouncementsPage() {
       <h1 className="text-2xl font-semibold">Duyurular</h1>
 
       <p className="text-sm text-muted">
-        Duyuruyu SITE YONETICISI mobil uygulamadan olusturur; panel yalniz
-        duzenleme/silme (moderasyon) icindir. Duyurular tum rollere gorunur;
-        yayinlandiginda tesisin kayitli tum cihazlarina bildirim denenir.
+        Duyuruyu SİTE YÖNETİCİSİ mobil uygulamadan oluşturur; panel yalnız
+        düzenleme/silme (moderasyon) içindir. Duyurular tüm rollere görünür;
+        yayınlandığında tesisin kayıtlı tüm cihazlarına bildirim denenir.
       </p>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
         <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="font-medium">Duyuru duzenle</h2>
-          <Field label="Baslik" hint="En fazla 200 karakter">
+          <h2 className="font-medium">Duyuru düzenle</h2>
+          <Field label="Başlık" hint="En fazla 200 karakter">
             <input
               className={inputCls}
               value={form.baslik}
@@ -183,18 +183,18 @@ export default function AnnouncementsPage() {
               required
             />
           </Field>
-          <Field label="Gorsel (opsiyonel)" hint="Okuyan herkes duyuruda gorur">
+          <Field label="Görsel (opsiyonel)" hint="Okuyan herkes duyuruda görür">
             <div className="space-y-2">
               {/* Onizleme: yeni secim > mevcut gorsel (kaldirilmadiysa) */}
               {(photo.previewUrl || (editing?.foto_url && !photo.removed && !photo.fotoKey)) && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={photo.previewUrl ?? editing?.foto_url ?? ""}
-                  alt="Duyuru gorseli"
+                  alt="Duyuru görseli"
                   className="max-h-40 rounded-lg border border-slate-200 object-cover"
                 />
               )}
-              {photo.uploading && <p className="text-sm text-muted">Yukleniyor...</p>}
+              {photo.uploading && <p className="text-sm text-muted">Yükleniyor...</p>}
               {photo.error && <ErrorBox message={photo.error} />}
               <div className="flex items-center gap-2">
                 <input
@@ -215,7 +215,7 @@ export default function AnnouncementsPage() {
                       setPhoto((p) => ({ ...p, removed: true }));
                     }}
                   >
-                    Gorseli kaldir
+                    Görseli kaldır
                   </button>
                 )}
               </div>
@@ -227,7 +227,7 @@ export default function AnnouncementsPage() {
               {saving ? "Kaydediliyor..." : "Kaydet"}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              Iptal
+              İptal
             </button>
           </div>
         </form>
@@ -246,19 +246,19 @@ export default function AnnouncementsPage() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={a.foto_url}
-                      alt={`${a.baslik} gorseli`}
+                      alt={`${a.baslik} görseli`}
                       className="max-h-40 rounded-lg border border-slate-200 object-cover"
                     />
                   </a>
                 )}
                 <p className="mt-2 text-xs text-muted">
                   {a.olusturan_ad ?? "—"} · {formatDateTime(a.created_at)}
-                  {a.updated_at !== a.created_at && " · duzenlendi"}
+                  {a.updated_at !== a.created_at && " · düzenlendi"}
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
                 <button className={btnGhost} onClick={() => openEdit(a)}>
-                  Duzenle
+                  Düzenle
                 </button>
                 <button className={btnDanger} onClick={() => remove(a)}>
                   Sil
@@ -269,7 +269,7 @@ export default function AnnouncementsPage() {
         ))}
         {data && data.items.length === 0 && (
           <li className="rounded-xl border border-slate-200 bg-white p-6 text-center text-muted">
-            Henuz duyuru yok.
+            Henüz duyuru yok.
           </li>
         )}
       </ul>

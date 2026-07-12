@@ -96,7 +96,7 @@ class SiteKuraliController extends Notifier<SiteKuraliState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
       );
     } finally {
       _refreshing = false;

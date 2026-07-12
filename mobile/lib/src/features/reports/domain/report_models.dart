@@ -20,8 +20,8 @@ String donemStr(int yil, int ay) => '$yil-${ay.toString().padLeft(2, '0')}';
 
 /// TR ay adi ('Temmuz 2026' gibi baslik icin).
 const _ayAdlari = [
-  'Ocak', 'Subat', 'Mart', 'Nisan', 'Mayis', 'Haziran',
-  'Temmuz', 'Agustos', 'Eylul', 'Ekim', 'Kasim', 'Aralik',
+  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
 ];
 
 String ayBaslik(int yil, int ay) => '${_ayAdlari[ay - 1]} $yil';

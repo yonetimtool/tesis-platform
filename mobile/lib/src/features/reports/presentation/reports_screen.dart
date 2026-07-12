@@ -20,7 +20,7 @@ class ReportsScreen extends ConsumerWidget {
     final controller = ref.read(reportsControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Aylik raporlar')),
+      appBar: AppBar(title: const Text('Aylık raporlar')),
       body: Column(
         children: [
           _MonthBar(state: state, controller: controller),
@@ -50,7 +50,7 @@ class _MonthBar extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Onceki ay',
+            tooltip: 'Önceki ay',
             icon: const Icon(Icons.chevron_left),
             onPressed: state.loading ? null : controller.prevMonth,
           ),
@@ -92,8 +92,8 @@ class _Body extends StatelessWidget {
         if (state.errorMessage != null)
           PatrolErrorBanner(
             message: state.forbidden
-                ? 'Aylik raporlar icin yetkiniz yok. Bu ekran yonetici '
-                    'rolune aciktir.'
+                ? 'Aylık raporlar için yetkiniz yok. Bu ekran yönetici '
+                    'rolüne açıktır.'
                 : state.errorMessage!,
             onRetry: state.forbidden ? null : controller.refresh,
           ),
@@ -101,7 +101,7 @@ class _Body extends StatelessWidget {
           _SectionTitle(icon: Icons.route_outlined, title: 'Devriye'),
           _DevriyeCard(rapor: rapor),
           const SizedBox(height: 16),
-          _SectionTitle(icon: Icons.task_alt, title: 'Gorev tamamlama'),
+          _SectionTitle(icon: Icons.task_alt, title: 'Görev tamamlama'),
           _GorevCard(rapor: rapor),
           const SizedBox(height: 16),
           _SectionTitle(icon: Icons.payments_outlined, title: 'Aidat'),
@@ -183,12 +183,12 @@ class _DevriyeCard extends StatelessWidget {
           children: [
             _StatRow(label: 'Planlanan pencere', value: '${rapor.devriyeToplam}'),
             _StatRow(
-              label: 'Tamamlandi',
+              label: 'Tamamlandı',
               value: '${rapor.devriyeTamamlandi}',
               valueColor: Colors.green,
             ),
             _StatRow(
-              label: 'Kacirildi',
+              label: 'Kaçırıldı',
               value: '${rapor.devriyeKacirildi}',
               valueColor: rapor.devriyeKacirildi > 0 ? Colors.red : null,
             ),
@@ -214,7 +214,7 @@ class _DevriyeCard extends StatelessWidget {
             ] else
               const Padding(
                 padding: EdgeInsets.only(top: 8),
-                child: Text('Bu ay planlanmis devriye penceresi yok.'),
+                child: Text('Bu ay planlanmış devriye penceresi yok.'),
               ),
           ],
         ),
@@ -236,7 +236,7 @@ class _GorevCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: g.toplam == 0
-            ? const Text('Bu ay gorev tamamlamasi yok.')
+            ? const Text('Bu ay görev tamamlaması yok.')
             : Column(
                 children: [
                   _StatRow(label: 'Toplam tamamlama', value: '${g.toplam}'),
@@ -245,11 +245,11 @@ class _GorevCard extends StatelessWidget {
                   if (g.kontrol > 0)
                     _StatRow(label: 'Kontrol', value: '${g.kontrol}'),
                   if (g.ilaclama > 0)
-                    _StatRow(label: 'Ilaclama', value: '${g.ilaclama}'),
+                    _StatRow(label: 'İlaçlama', value: '${g.ilaclama}'),
                   if (g.peyzaj > 0)
                     _StatRow(label: 'Peyzaj', value: '${g.peyzaj}'),
                   if (g.diger > 0)
-                    _StatRow(label: 'Bakim/diger', value: '${g.diger}'),
+                    _StatRow(label: 'Bakım/diğer', value: '${g.diger}'),
                 ],
               ),
       ),
@@ -270,7 +270,7 @@ class _AidatCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: ozet.tahakkukAdet == 0 && ozet.tahsilatAdet == 0
-            ? const Text('Bu donem icin tahakkuk/odeme kaydi yok.')
+            ? const Text('Bu dönem için tahakkuk/ödeme kaydı yok.')
             : Column(
                 children: [
                   _StatRow(
@@ -278,7 +278,7 @@ class _AidatCard extends StatelessWidget {
                     value: kurusToTl(ozet.tahakkukKurus),
                   ),
                   _StatRow(
-                    label: 'Tahsilat (${ozet.tahsilatAdet} odeme)',
+                    label: 'Tahsilat (${ozet.tahsilatAdet} ödeme)',
                     value: kurusToTl(ozet.tahsilatKurus),
                     valueColor: Colors.green,
                   ),

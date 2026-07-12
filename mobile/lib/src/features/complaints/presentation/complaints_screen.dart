@@ -82,7 +82,7 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Sikayet / Oneri'),
+          title: const Text('Şikayet / Öneri'),
           actions: [
             IconButton(
               tooltip: 'Yenile',
@@ -94,9 +94,9 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
             // Uc sekme dar ekranda sigmayabilir — kaydirilabilir.
             isScrollable: true,
             tabs: [
-              Tab(text: 'Acik (${acik.length})'),
-              Tab(text: 'Inceleniyor (${incelenen.length})'),
-              Tab(text: 'Cozulenler (${cozulen.length})'),
+              Tab(text: 'Açık (${acik.length})'),
+              Tab(text: 'İnceleniyor (${incelenen.length})'),
+              Tab(text: 'Çözülenler (${cozulen.length})'),
             ],
           ),
         ),
@@ -115,9 +115,9 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
                 state: state,
                 items: acik,
                 emptyText: state.canCreate
-                    ? 'Acik talebiniz yok. "Yeni talep" ile '
-                        'sikayet/onerinizi iletebilirsiniz.'
-                    : 'Acik talep yok.',
+                    ? 'Açık talebiniz yok. "Yeni talep" ile '
+                        'şikayet/önerinizi iletebilirsiniz.'
+                    : 'Açık talep yok.',
               ),
             ),
             RefreshIndicator(
@@ -125,7 +125,7 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
               child: _Body(
                 state: state,
                 items: incelenen,
-                emptyText: 'Incelemede talep yok.',
+                emptyText: 'İncelemede talep yok.',
               ),
             ),
             RefreshIndicator(
@@ -133,7 +133,7 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
               child: _Body(
                 state: state,
                 items: cozulen,
-                emptyText: 'Henuz cozulen talep yok.',
+                emptyText: 'Henüz çözülen talep yok.',
               ),
             ),
           ],
@@ -322,7 +322,7 @@ class _ComplaintCard extends ConsumerWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        'Yonetim yaniti: ${c.yoneticiYaniti}',
+                        'Yönetim yanıtı: ${c.yoneticiYaniti}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall,
@@ -375,7 +375,7 @@ Future<void> _showComplaintDetail(
   );
   if (saved == true && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Yanit kaydedildi ✓')),
+      const SnackBar(content: Text('Yanıt kaydedildi ✓')),
     );
   }
 }
@@ -423,7 +423,7 @@ class _ComplaintDetailState extends ConsumerState<_ComplaintDetail> {
           yanit.isEmpty || yanit == c.yoneticiYaniti ? null : yanit,
     );
     if (draft.bos) {
-      setState(() => _error = 'Degisiklik yok: durum secin veya yanit yazin.');
+      setState(() => _error = 'Değişiklik yok: durum seçin veya yanıt yazın.');
       return;
     }
     setState(() {
@@ -446,7 +446,7 @@ class _ComplaintDetailState extends ConsumerState<_ComplaintDetail> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.';
+          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
         });
       }
     }
@@ -508,7 +508,7 @@ class _ComplaintDetailState extends ConsumerState<_ComplaintDetail> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Yonetim yaniti'
+                      'Yönetim yanıtı'
                       '${c.yanitZamani != null ? ' · ${_fmtDateTime(c.yanitZamani!.toLocal())}' : ''}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -520,7 +520,7 @@ class _ComplaintDetailState extends ConsumerState<_ComplaintDetail> {
             ],
             if (!c.yanitli && !widget.canRespond)
               Text(
-                'Yonetim yaniti bekleniyor.',
+                'Yönetim yanıtı bekleniyor.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             if (widget.canRespond) ...[
@@ -531,15 +531,15 @@ class _ComplaintDetailState extends ConsumerState<_ComplaintDetail> {
                 segments: const [
                   ButtonSegment(
                     value: ComplaintDurum.acik,
-                    label: Text('Acik'),
+                    label: Text('Açık'),
                   ),
                   ButtonSegment(
                     value: ComplaintDurum.inceleniyor,
-                    label: Text('Inceleniyor'),
+                    label: Text('İnceleniyor'),
                   ),
                   ButtonSegment(
                     value: ComplaintDurum.cozuldu,
-                    label: Text('Cozuldu'),
+                    label: Text('Çözüldü'),
                   ),
                 ],
                 selected: {_durum},
@@ -554,7 +554,7 @@ class _ComplaintDetailState extends ConsumerState<_ComplaintDetail> {
                 minLines: 2,
                 maxLines: 6,
                 decoration: const InputDecoration(
-                  labelText: 'Yonetim yaniti',
+                  labelText: 'Yönetim yanıtı',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -574,7 +574,7 @@ class _ComplaintDetailState extends ConsumerState<_ComplaintDetail> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.reply),
-                  label: Text(_saving ? 'Kaydediliyor...' : 'Yaniti kaydet'),
+                  label: Text(_saving ? 'Kaydediliyor...' : 'Yanıtı kaydet'),
                 ),
               ),
             ],
@@ -618,7 +618,7 @@ class _ComplaintPhoto extends StatelessWidget {
               children: [
                 Icon(Icons.broken_image_outlined, size: 20),
                 SizedBox(width: 8),
-                Text('Gorsel yuklenemedi'),
+                Text('Görsel yüklenemedi'),
               ],
             ),
           ),
@@ -639,7 +639,7 @@ class _ComplaintPhoto extends StatelessWidget {
               child: Image.network(
                 url,
                 errorBuilder: (_, _, _) => const Text(
-                  'Gorsel yuklenemedi',
+                  'Görsel yüklenemedi',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -716,7 +716,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
       if (!mounted) return;
       setState(() {
         _photoBusy = false;
-        _photoError = 'Fotograf alinamadi: $e';
+        _photoError = 'Fotoğraf alınamadı: $e';
       });
     }
   }
@@ -756,9 +756,9 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
       setState(() {
         _photoBusy = false;
         _photoError = e.kind == ApiErrorKind.network
-            ? 'Fotograf yuklemek icin internet baglantisi gerekli '
-                '(yukleme adresi kisa omurlu). Baglanti gelince '
-                '"Tekrar yukle" ile deneyin.'
+            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli '
+                '(yükleme adresi kısa ömürlü). Bağlantı gelince '
+                '"Tekrar yükle" ile deneyin.'
             : e.message;
       });
     }
@@ -776,8 +776,8 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_fotoBekliyor) {
       setState(() {
-        _error = 'Fotograf henuz yuklenmedi. Yuklemenin bitmesini bekleyin, '
-            '"Tekrar yukle"yi deneyin veya fotoyu kaldirin.';
+        _error = 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin, '
+            '"Tekrar yükle"yi deneyin veya fotoyu kaldırın.';
       });
       return;
     }
@@ -805,7 +805,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.';
+          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
         });
       }
     }
@@ -830,7 +830,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Yeni sikayet / oneri',
+                'Yeni şikayet / öneri',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
@@ -838,11 +838,11 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                 controller: _baslikCtrl,
                 maxLength: 200,
                 decoration: const InputDecoration(
-                  labelText: 'Baslik',
+                  labelText: 'Başlık',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Baslik zorunludur' : null,
+                    (v == null || v.trim().isEmpty) ? 'Başlık zorunludur' : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -851,7 +851,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                 minLines: 3,
                 maxLines: 8,
                 decoration: const InputDecoration(
-                  labelText: 'Mesajiniz',
+                  labelText: 'Mesajınız',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty)
@@ -889,7 +889,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  const Text('Gorsel (opsiyonel)'),
+                  const Text('Görsel (opsiyonel)'),
                 ],
               ),
               if (_photoPath != null) ...[
@@ -921,26 +921,26 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden cek'),
+                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden çek'),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _saving
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Galeriden sec'),
+                    label: const Text('Galeriden seç'),
                   ),
                   if (_photoPath != null && _fotoKey == null)
                     TextButton.icon(
                       onPressed: _photoBusy || _saving ? null : _retryUpload,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Tekrar yukle'),
+                      label: const Text('Tekrar yükle'),
                     ),
                   if (_photoPath != null)
                     TextButton.icon(
                       onPressed: _photoBusy || _saving ? null : _removePhoto,
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Kaldir'),
+                      label: const Text('Kaldır'),
                     ),
                 ],
               ),
@@ -960,7 +960,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.send_outlined),
-                  label: Text(_saving ? 'Gonderiliyor...' : 'Gonder'),
+                  label: Text(_saving ? 'Gönderiliyor...' : 'Gönder'),
                 ),
               ),
             ],

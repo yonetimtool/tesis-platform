@@ -446,6 +446,28 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9c-0. task_category  (yonetici-tanimli gorev kategorileri — A6)
+    # ------------------------------------------------------------------ #
+    # Sabit task_tip enum'unun yaninda tenant'a ozel, yonetici CRUD'lu
+    # kategori seti. SOFT-DELETE (aktif=false): gorev gecmisi kategori
+    # adina referans verebilir, hard silme kaydi koparir.
+    op.execute(
+        """
+        CREATE TABLE task_category (
+            id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id   uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            ad          text NOT NULL,
+            aktif       boolean NOT NULL DEFAULT true,
+            created_at  timestamptz NOT NULL DEFAULT now(),
+            updated_at  timestamptz,
+            UNIQUE (id, tenant_id),
+            CONSTRAINT uq_task_category_tenant_ad UNIQUE (tenant_id, ad)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_task_category_tenant ON task_category (tenant_id);")
+
+    # ------------------------------------------------------------------ #
     # 9c. task  (esnek gorev: temizlik/kontrol/ilaclama... tek modelde)
     # ------------------------------------------------------------------ #
     op.execute(
@@ -458,6 +480,7 @@ def upgrade() -> None:
             aciklama         text,
             atanan_user_id   uuid,
             checkpoint_id    uuid,
+            kategori_id      uuid,      -- yonetici-tanimli kategori (A6); NULL = kategorisiz
             periyot_dakika   integer,   -- tekrar araligi (periyodik gorev/peyzaj); tek seferlikse NULL
             sonraki_planlanan timestamptz,  -- bir sonraki planlanan an (UTC); peyzaj takvimi
             foto_zorunlu     boolean NOT NULL DEFAULT false,  -- completion'da foto kaniti sart (mobil §11)
@@ -472,7 +495,10 @@ def upgrade() -> None:
                 REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (atanan_user_id),
             CONSTRAINT fk_task_checkpoint
                 FOREIGN KEY (checkpoint_id, tenant_id)
-                REFERENCES checkpoint (id, tenant_id) ON DELETE SET NULL (checkpoint_id)
+                REFERENCES checkpoint (id, tenant_id) ON DELETE SET NULL (checkpoint_id),
+            CONSTRAINT fk_task_kategori
+                FOREIGN KEY (kategori_id, tenant_id)
+                REFERENCES task_category (id, tenant_id) ON DELETE SET NULL (kategori_id)
         );
         """
     )
@@ -1285,6 +1311,7 @@ def upgrade() -> None:
         "patrol_window",
         "scan_event",
         "notification",
+        "task_category",
         "task",
         "task_completion",
         "asset",
@@ -1367,6 +1394,7 @@ def downgrade() -> None:
         "asset",
         "task_completion",
         "task",
+        "task_category",
         "notification",
         "scan_event",
         "patrol_window",

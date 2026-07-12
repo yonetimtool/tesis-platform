@@ -84,7 +84,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
             isScrollable: true,
             tabs: [
               Tab(text: 'Bekleyen (${bekleyen.length})'),
-              Tab(text: 'Sonuclanan (${sonuclanan.length})'),
+              Tab(text: 'Sonuçlanan (${sonuclanan.length})'),
               Tab(text: 'Takvim (${onayli.length})'),
               Tab(text: 'Alanlar (${state.alanlar.length})'),
             ],
@@ -100,7 +100,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
                 items: bekleyen,
                 emptyText: state.canRequest
                     ? 'Bekleyen talebiniz yok. "Yeni rezervasyon" ile '
-                        'ortak alan icin slot isteyin.'
+                        'ortak alan için slot isteyin.'
                     : 'Bekleyen talep yok.',
               ),
             ),
@@ -109,7 +109,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
               child: _ReservationList(
                 state: state,
                 items: sonuclanan,
-                emptyText: 'Henuz sonuclanan talep yok.',
+                emptyText: 'Henüz sonuçlanan talep yok.',
               ),
             ),
             RefreshIndicator(
@@ -117,7 +117,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
               child: _ReservationList(
                 state: state,
                 items: onayli,
-                emptyText: 'Onayli rezervasyon yok.',
+                emptyText: 'Onaylı rezervasyon yok.',
                 takvim: true,
               ),
             ),
@@ -160,7 +160,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
     );
     if (saved == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Talebiniz iletildi — yonetim onayi bekleniyor ✓')),
+        const SnackBar(content: Text('Talebiniz iletildi — yönetim onayı bekleniyor ✓')),
       );
     }
   }
@@ -333,7 +333,7 @@ class _ReservationCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${r.tarih} · ${r.baslangic}-${r.bitis} · ${r.kisiSayisi} kisi'
+                '${r.tarih} · ${r.baslangic}-${r.bitis} · ${r.kisiSayisi} kişi'
                 '${r.unitNo != null ? ' · Daire: ${r.unitNo}' : ''}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -407,7 +407,7 @@ class _DecideButtonsState extends ConsumerState<_DecideButtons> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            onayla ? 'Rezervasyon onaylandi ✓' : 'Rezervasyon reddedildi',
+            onayla ? 'Rezervasyon onaylandı ✓' : 'Rezervasyon reddedildi',
           ),
         ),
       );
@@ -418,7 +418,7 @@ class _DecideButtonsState extends ConsumerState<_DecideButtons> {
       widget.onDecided?.call();
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Karar gonderilemedi. Tekrar deneyin.')),
+        const SnackBar(content: Text('Karar gönderilemedi. Tekrar deneyin.')),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -483,7 +483,7 @@ void _showDetail(BuildContext context, Rezervasyon r,
             const SizedBox(height: 12),
             Text('Tarih: ${r.tarih} · ${r.baslangic}-${r.bitis}'),
             const SizedBox(height: 4),
-            Text('Kisi sayisi: ${r.kisiSayisi}'
+            Text('Kişi sayısı: ${r.kisiSayisi}'
                 '${r.unitNo != null ? ' · Daire: ${r.unitNo}' : ''}'),
             const SizedBox(height: 4),
             Text('Talep: ${_fmtDateTime(r.createdAt.toLocal())}'
@@ -532,7 +532,7 @@ class _AreaList extends ConsumerWidget {
           Center(
             child: Text(
               state.canManageAreas
-                  ? 'Henuz ortak alan yok. "Yeni alan" ile ekleyin.'
+                  ? 'Henüz ortak alan yok. "Yeni alan" ile ekleyin.'
                   : 'Rezerve edilebilir alan yok.',
               textAlign: TextAlign.center,
             ),
@@ -659,18 +659,18 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
               controller: _ad,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(
-                labelText: 'Alan adi * (orn. Havuz)',
+                labelText: 'Alan adı * (örn. Havuz)',
                 border: OutlineInputBorder(),
               ),
               maxLength: 200,
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Alan adi gerekli' : null,
+                  (v == null || v.trim().isEmpty) ? 'Alan adı gerekli' : null,
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _aciklama,
               decoration: const InputDecoration(
-                labelText: 'Aciklama (opsiyonel)',
+                labelText: 'Açıklama (opsiyonel)',
                 border: OutlineInputBorder(),
               ),
               maxLength: 1000,
@@ -691,7 +691,7 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.add_home_outlined),
-                label: const Text('Alani ekle'),
+                label: const Text('Alanı ekle'),
                 onPressed: _busy ? null : _submit,
               ),
             ),
@@ -773,7 +773,7 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
     if (_busy) return;
     if (!_aralikGecerli) {
       // Sunucu da 422 doner; istemcide erken ve acik uyari.
-      setState(() => _hata = 'Bitis saati baslangictan sonra olmali.');
+      setState(() => _hata = 'Bitiş saati başlangıçtan sonra olmalı.');
       return;
     }
     setState(() {
@@ -853,7 +853,7 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.schedule, size: 18),
-                      label: Text('Baslangic: ${_hhmm(_baslangic)}'),
+                      label: Text('Başlangıç: ${_hhmm(_baslangic)}'),
                       onPressed: _busy ? null : () => _pickTime(true),
                     ),
                   ),
@@ -861,7 +861,7 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.schedule, size: 18),
-                      label: Text('Bitis: ${_hhmm(_bitis)}'),
+                      label: Text('Bitiş: ${_hhmm(_bitis)}'),
                       onPressed: _busy ? null : () => _pickTime(false),
                     ),
                   ),
@@ -871,14 +871,14 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
                 const Padding(
                   padding: EdgeInsets.only(top: 4),
                   child: Text(
-                    'Bitis saati baslangictan sonra olmali.',
+                    'Bitiş saati başlangıçtan sonra olmalı.',
                     style: TextStyle(color: Colors.red, fontSize: 12),
                   ),
                 ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Text('Kisi sayisi:'),
+                  const Text('Kişi sayısı:'),
                   IconButton(
                     icon: const Icon(Icons.remove_circle_outline),
                     onPressed: _busy || _kisi <= 1
@@ -917,7 +917,7 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.event_available_outlined),
-                  label: const Text('Talep gonder'),
+                  label: const Text('Talep gönder'),
                   onPressed: _busy ? null : _submit,
                 ),
               ),

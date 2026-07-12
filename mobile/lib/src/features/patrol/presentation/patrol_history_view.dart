@@ -28,8 +28,8 @@ class PatrolHistoryView extends ConsumerWidget {
           if (state.errorMessage != null)
             PatrolErrorBanner(
               message: state.forbidden
-                  ? 'Tur gecmisi icin yetkiniz yok. Bu liste guvenlik '
-                      've yonetici rollerine aciktir.'
+                  ? 'Tur geçmişi için yetkiniz yok. Bu liste güvenlik '
+                      've yönetici rollerine açıktır.'
                   : state.errorMessage!,
               onRetry: state.forbidden ? null : controller.refresh,
             ),
@@ -52,7 +52,7 @@ class PatrolHistoryView extends ConsumerWidget {
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  'Henuz tur penceresi kaydi yok.',
+                  'Henüz tur penceresi kaydı yok.',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -80,8 +80,8 @@ class PatrolHistorySummary extends StatelessWidget {
       runSpacing: 4,
       children: [
         chip('Toplam', ozet.toplam, Colors.blueGrey),
-        chip('Tamamlandi', ozet.tamamlandi, Colors.green),
-        chip('Kacirildi', ozet.kacirildi, Colors.red),
+        chip('Tamamlandı', ozet.tamamlandi, Colors.green),
+        chip('Kaçırıldı', ozet.kacirildi, Colors.red),
         chip('Bekliyor', ozet.bekliyor, Colors.orange),
       ],
     );
@@ -99,9 +99,9 @@ class PatrolHistoryTile extends StatelessWidget {
       PatrolWindowDurum.tamamlandi => (
           Icons.check_circle,
           Colors.green,
-          'Tamamlandi',
+          'Tamamlandı',
         ),
-      PatrolWindowDurum.kacirildi => (Icons.cancel, Colors.red, 'Kacirildi'),
+      PatrolWindowDurum.kacirildi => (Icons.cancel, Colors.red, 'Kaçırıldı'),
       PatrolWindowDurum.bekliyor => (
           Icons.hourglass_top,
           Colors.orange,

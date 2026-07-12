@@ -89,7 +89,7 @@ export default function CheckpointsPage() {
       // nfc cakismasi (409) -> anlamli mesaj
       setFormErr(
         /nfc/i.test(msg)
-          ? "Bu NFC etiketi baska bir noktada kullaniliyor."
+          ? "Bu NFC etiketi başka bir noktada kullanılıyor."
           : msg,
       );
     } finally {
@@ -110,21 +110,21 @@ export default function CheckpointsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">NFC Noktalari</h1>
+        <h1 className="text-2xl font-semibold">NFC Noktaları</h1>
         <button className={btnPrimary} onClick={openNew}>
           Yeni nokta
         </button>
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
         <form
           onSubmit={save}
           className="space-y-4 rounded-xl border border-slate-200 bg-white p-5"
         >
-          <h2 className="font-medium">{editingId ? "Nokta duzenle" : "Yeni nokta"}</h2>
+          <h2 className="font-medium">{editingId ? "Nokta düzenle" : "Yeni nokta"}</h2>
           <Field label="Ad">
             <input
               className={inputCls}
@@ -135,7 +135,7 @@ export default function CheckpointsPage() {
           </Field>
           <Field
             label="NFC etiket UID"
-            hint="Buyuk harf hex, ayracsiz. Ornek: 04A1B2C3D4 (mobil okuyucu bu formatta gonderir)."
+            hint="Büyük harf hex, ayraçsız. Örnek: 04A1B2C3D4 (mobil okuyucu bu formatta gönderir)."
           >
             <input
               className={`${inputCls} font-mono uppercase`}
@@ -181,7 +181,7 @@ export default function CheckpointsPage() {
               {saving ? "Kaydediliyor..." : "Kaydet"}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              Iptal
+              İptal
             </button>
           </div>
         </form>
@@ -220,7 +220,7 @@ export default function CheckpointsPage() {
                 <td className="px-3 py-2 text-right">
                   <div className="flex justify-end gap-2">
                     <button className={btnGhost} onClick={() => openEdit(c)}>
-                      Duzenle
+                      Düzenle
                     </button>
                     <button className={btnDanger} onClick={() => remove(c)}>
                       Sil

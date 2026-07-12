@@ -270,10 +270,11 @@ void main() {
       }
     });
 
-    test('TR gorunen adlar', () {
-      expect(UserRole.yonetici.label, 'Yonetici');
-      expect(UserRole.security.label, 'Guvenlik');
-      expect(UserRole.tesisGorevlisi.label, 'Tesis Gorevlisi');
+    test('TR gorunen adlar (dogru diyakritikli, tutarli set)', () {
+      expect(UserRole.admin.label, 'Platform Admin');
+      expect(UserRole.yonetici.label, 'Yönetici');
+      expect(UserRole.security.label, 'Güvenlik');
+      expect(UserRole.tesisGorevlisi.label, 'Tesis Görevlisi');
       expect(UserRole.resident.label, 'Site Sakini');
     });
   });

@@ -279,8 +279,8 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
 /// kalir (404 zaten Turkce donuyor).
 String permanentErrorMessage(ApiException e) => switch (e.code) {
       'invalid_signature' =>
-        'Etiket imzasi dogrulanamadi — sahte veya yanlis etiket olabilir.',
-      'replay_detected' => 'Bu okutma daha once islendi.',
+        'Etiket imzası doğrulanamadı — sahte veya yanlış etiket olabilir.',
+      'replay_detected' => 'Bu okutma daha önce işlendi.',
       _ => e.message,
     };
 

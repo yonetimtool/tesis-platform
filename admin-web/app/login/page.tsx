@@ -25,13 +25,13 @@ export default function LoginPage() {
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as ApiError | null;
-        setError(data?.error?.message ?? "Giris basarisiz.");
+        setError(data?.error?.message ?? "Giriş başarısız.");
         return;
       }
       router.replace("/dashboard");
       router.refresh();
     } catch {
-      setError("Sunucuya ulasilamadi.");
+      setError("Sunucuya ulaşılamadı.");
     } finally {
       setLoading(false);
     }
@@ -44,8 +44,8 @@ export default function LoginPage() {
         className="w-full max-w-sm space-y-4 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm"
       >
         <div>
-          <h1 className="text-xl font-semibold">Yonetim Paneli</h1>
-          <p className="text-sm text-muted">Tesis operasyon SaaS — yalnizca platform admini girebilir</p>
+          <h1 className="text-xl font-semibold">Yönetim Paneli</h1>
+          <p className="text-sm text-muted">Tesis operasyon SaaS — yalnızca platform admini girebilir</p>
         </div>
 
         <label className="block text-sm">
@@ -93,7 +93,7 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full rounded-lg bg-ink py-2 font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
         >
-          {loading ? "Giris yapiliyor..." : "Giris yap"}
+          {loading ? "Giriş yapılıyor..." : "Giriş yap"}
         </button>
       </form>
     </main>

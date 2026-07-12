@@ -65,7 +65,7 @@ class ScanController extends Notifier<ScanSubmitState> {
       if (e.statusCode == 404) {
         state = ScanSubmitState(
           status: ScanSubmitStatus.notMatched,
-          message: 'Bu etiket hicbir checkpoint ile eslesmiyor.',
+          message: 'Bu etiket hiçbir checkpoint ile eşleşmiyor.',
         );
       } else {
         state = ScanSubmitState(
@@ -76,7 +76,7 @@ class ScanController extends Notifier<ScanSubmitState> {
     } catch (_) {
       state = const ScanSubmitState(
         status: ScanSubmitStatus.error,
-        message: 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+        message: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
       );
     }
   }

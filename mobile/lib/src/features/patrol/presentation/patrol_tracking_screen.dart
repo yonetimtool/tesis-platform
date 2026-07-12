@@ -35,8 +35,8 @@ class PatrolTrackingScreen extends ConsumerWidget {
           ],
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Bugun'),
-              Tab(text: 'Gecmis'),
+              Tab(text: 'Bugün'),
+              Tab(text: 'Geçmiş'),
             ],
           ),
         ),
@@ -75,8 +75,8 @@ class _TodayTab extends ConsumerWidget {
           if (state.errorMessage != null)
             PatrolErrorBanner(
               message: state.forbidden
-                  ? 'Devriye takibi icin yetkiniz yok. Bu ekran yonetici '
-                      've guvenlik rollerine aciktir.'
+                  ? 'Devriye takibi için yetkiniz yok. Bu ekran yönetici '
+                      've güvenlik rollerine açıktır.'
                   : state.errorMessage!,
               onRetry: state.forbidden ? null : controller.refresh,
             ),
@@ -89,7 +89,7 @@ class _TodayTab extends ConsumerWidget {
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  'Bugun icin planlanmis devriye penceresi yok.',
+                  'Bugün için planlanmış devriye penceresi yok.',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -116,10 +116,10 @@ class _TodaySummary extends StatelessWidget {
       spacing: 8,
       runSpacing: 4,
       children: [
-        chip('Simdi aktif', ozet.aktif, Colors.blue),
-        chip('Yaklasan', ozet.yaklasan, Colors.blueGrey),
-        chip('Tamamlandi', ozet.tamamlandi, Colors.green),
-        chip('Kacirildi', ozet.kacirildi, Colors.red),
+        chip('Şimdi aktif', ozet.aktif, Colors.blue),
+        chip('Yaklaşan', ozet.yaklasan, Colors.blueGrey),
+        chip('Tamamlandı', ozet.tamamlandi, Colors.green),
+        chip('Kaçırıldı', ozet.kacirildi, Colors.red),
       ],
     );
   }
@@ -135,13 +135,13 @@ class _WindowCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final w = window;
     final (color, label) = switch (w.durum) {
-      PatrolWindowDurum.tamamlandi => (Colors.green, 'Tamamlandi'),
-      PatrolWindowDurum.kacirildi => (Colors.red, 'Kacirildi'),
+      PatrolWindowDurum.tamamlandi => (Colors.green, 'Tamamlandı'),
+      PatrolWindowDurum.kacirildi => (Colors.red, 'Kaçırıldı'),
       _ => w.isActiveAt(now)
-          ? (Colors.blue, 'Simdi aktif')
+          ? (Colors.blue, 'Şimdi aktif')
           : w.isUpcomingAt(now)
-              ? (Colors.blueGrey, 'Yaklasan')
-              : (Colors.red, 'Suresi gecti'),
+              ? (Colors.blueGrey, 'Yaklaşan')
+              : (Colors.red, 'Süresi geçti'),
     };
     final start = w.pencereBaslangic.toLocal();
     final end = w.pencereBitis.toLocal();

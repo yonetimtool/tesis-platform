@@ -52,7 +52,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Beklenmeyen bir hata olustu. Tekrar deneyin.');
+        setState(() => _error = 'Beklenmeyen bir hata oluştu. Tekrar deneyin.');
       }
     }
   }
@@ -61,7 +61,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
   List<DropdownMenuItem<String?>> _donemItems() {
     final now = DateTime.now();
     return [
-      const DropdownMenuItem<String?>(value: null, child: Text('Tum zamanlar')),
+      const DropdownMenuItem<String?>(value: null, child: Text('Tüm zamanlar')),
       for (var i = 0; i < 12; i++)
         () {
           final d = DateTime(now.year, now.month - i);
@@ -77,10 +77,10 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Butce'),
+          title: const Text('Bütçe'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Ozet'),
+              Tab(text: 'Özet'),
               Tab(text: 'Hareketler'),
               Tab(text: 'Kategoriler'),
             ],
@@ -167,7 +167,7 @@ class _SummaryTab extends StatelessWidget {
           items: donemItems,
           onChanged: onDonemChanged,
           decoration: const InputDecoration(
-            labelText: 'Donem',
+            labelText: 'Dönem',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.calendar_month_outlined),
           ),
@@ -195,7 +195,7 @@ class _SummaryTab extends StatelessWidget {
         ),
         if (summary.kategoriler.isNotEmpty) ...[
           const SizedBox(height: 16),
-          Text('Kategori kirilimi',
+          Text('Kategori kırılımı',
               style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
           for (final k in summary.kategoriler)
@@ -283,7 +283,7 @@ class _EntriesTab extends ConsumerWidget {
         label: const Text('Yeni hareket'),
       ),
       body: entries.isEmpty
-          ? const Center(child: Text('Henuz hareket yok.'))
+          ? const Center(child: Text('Henüz hareket yok.'))
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
               itemCount: entries.length,
@@ -388,7 +388,7 @@ class _EntryFormState extends ConsumerState<_EntryForm> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.';
+          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
         });
       }
     }
@@ -429,7 +429,7 @@ class _EntryFormState extends ConsumerState<_EntryForm> {
                   labelText: 'Kategori',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) => v == null ? 'Kategori secin' : null,
+                validator: (v) => v == null ? 'Kategori seçin' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -439,12 +439,12 @@ class _EntryFormState extends ConsumerState<_EntryForm> {
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   labelText: 'Tutar (TL)',
-                  hintText: 'orn. 1.250,50',
+                  hintText: 'örn. 1.250,50',
                   border: OutlineInputBorder(),
                   suffixText: 'TL',
                 ),
                 validator: (v) => parseTlToKurus(v ?? '') == null
-                    ? 'Gecerli bir tutar girin (orn. 1.250,50)'
+                    ? 'Geçerli bir tutar girin (örn. 1.250,50)'
                     : null,
               ),
               const SizedBox(height: 12),
@@ -471,7 +471,7 @@ class _EntryFormState extends ConsumerState<_EntryForm> {
                 enabled: !_saving,
                 maxLength: 1000,
                 decoration: const InputDecoration(
-                  labelText: 'Aciklama (opsiyonel)',
+                  labelText: 'Açıklama (opsiyonel)',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -516,7 +516,7 @@ class _CategoriesTab extends ConsumerWidget {
         label: const Text('Yeni kategori'),
       ),
       body: categories.isEmpty
-          ? const Center(child: Text('Henuz kategori yok.'))
+          ? const Center(child: Text('Henüz kategori yok.'))
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
               itemCount: categories.length,
@@ -532,7 +532,7 @@ class _CategoriesTab extends ConsumerWidget {
                     ),
                     title: Text(c.ad),
                     subtitle: Text(
-                      '${c.tip.label}${c.aktif ? '' : ' · pasif (yeni kayit kapali)'}',
+                      '${c.tip.label}${c.aktif ? '' : ' · pasif (yeni kayıt kapalı)'}',
                     ),
                     value: c.aktif,
                     // Kapatmak = soft-delete: eski kayitlar korunur.
@@ -600,7 +600,7 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.';
+          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
         });
       }
     }
@@ -629,8 +629,8 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
               enabled: !_saving,
               maxLength: 100,
               decoration: const InputDecoration(
-                labelText: 'Kategori adi',
-                hintText: 'orn. Bahce bakimi',
+                labelText: 'Kategori adı',
+                hintText: 'örn. Bahçe bakımı',
                 border: OutlineInputBorder(),
               ),
               validator: (v) =>

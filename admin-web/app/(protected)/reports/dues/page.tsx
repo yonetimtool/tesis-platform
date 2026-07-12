@@ -69,7 +69,7 @@ export default function DuesReportPage() {
     setErr(null);
     setReport(null);
     if (!donem.trim()) {
-      setErr("Lutfen bir donem girin (orn. 2026-06).");
+      setErr("Lütfen bir dönem girin (örn. 2026-06).");
       return;
     }
     setBusy(true);
@@ -157,7 +157,7 @@ export default function DuesReportPage() {
         serbestBasariliSayi,
       });
     } catch (e2) {
-      setErr(e2 instanceof Error ? e2.message : "Rapor olusturulamadi.");
+      setErr(e2 instanceof Error ? e2.message : "Rapor oluşturulamadı.");
     } finally {
       setBusy(false);
     }
@@ -185,7 +185,7 @@ export default function DuesReportPage() {
 
       <form onSubmit={run} className="flex items-end gap-3 rounded-xl border border-slate-200 bg-white p-5">
         <div className="w-56">
-          <Field label="Donem" hint="Ornek: 2026-06">
+          <Field label="Dönem" hint="Örnek: 2026-06">
             <input
               className={inputCls}
               value={donem}
@@ -195,14 +195,14 @@ export default function DuesReportPage() {
           </Field>
         </div>
         <button type="submit" className={btnPrimary} disabled={busy}>
-          {busy ? "Hesaplaniyor..." : "Raporu getir"}
+          {busy ? "Hesaplanıyor..." : "Raporu getir"}
         </button>
       </form>
 
       {err && <ErrorBox message={err} />}
       {unitTruncated && (
         <p className="text-xs text-amber-700">
-          Not: 200 daireden fazla var; daire adlari bir kismi icin kisaltilmis ID gosterebilir.
+          Not: 200 daireden fazla var; daire adları bir kısmı için kısaltılmış ID gösterebilir.
         </p>
       )}
 
@@ -212,27 +212,27 @@ export default function DuesReportPage() {
           <div className="grid gap-3 md:grid-cols-4">
             <Card baslik="Toplam tahakkuk" deger={kurusToTL(report.toplamTahakkuk)} />
             <Card baslik="Toplam tahsilat" deger={kurusToTL(report.toplamTahsilat)} tone="emerald" />
-            <Card baslik="Bakiye (borc)" deger={kurusToTL(report.bakiye)} tone={report.bakiye > 0 ? "red" : "emerald"} />
-            <Card baslik="Tahsilat orani" deger={`% ${report.oranYuzde}`} />
+            <Card baslik="Bakiye (borç)" deger={kurusToTL(report.bakiye)} tone={report.bakiye > 0 ? "red" : "emerald"} />
+            <Card baslik="Tahsilat oranı" deger={`% ${report.oranYuzde}`} />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <Card baslik="Tahakkuk edilen daire" deger={String(report.daireTahakkuk)} />
-            <Card baslik="Tam odeyen daire" deger={String(report.daireTamOdeyen)} tone="emerald" />
-            <Card baslik="Borclu daire" deger={String(report.daireBorclu)} tone={report.daireBorclu > 0 ? "red" : "emerald"} />
+            <Card baslik="Tam ödeyen daire" deger={String(report.daireTamOdeyen)} tone="emerald" />
+            <Card baslik="Borçlu daire" deger={String(report.daireBorclu)} tone={report.daireBorclu > 0 ? "red" : "emerald"} />
           </div>
 
           {report.serbestBasariliSayi > 0 && (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              Not: {report.serbestBasariliSayi} basarili odeme DONEMSIZ (eski kayit: donem
-              alani bos ve tahakkuga bagli degil); hicbir donem tahsilatina dahil edilemedi.
-              Yeni odemelerde donem alani dolduruldugu icin bu sayi zamanla erimeli.
+              Not: {report.serbestBasariliSayi} başarılı ödeme DÖNEMSİZ (eski kayıt: dönem
+              alanı boş ve tahakkuğa bağlı değil); hiçbir dönem tahsilatına dahil edilemedi.
+              Yeni ödemelerde dönem alanı doldurulduğu için bu sayı zamanla erimeli.
             </p>
           )}
 
           {/* Borclu daireler */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Borclu daireler</h2>
+              <h2 className="text-lg font-medium">Borçlu daireler</h2>
               <button className={btnGhost} onClick={exportBorclular} disabled={report.borclular.length === 0}>
                 CSV indir
               </button>
@@ -243,9 +243,9 @@ export default function DuesReportPage() {
                   <tr>
                     <th className="px-3 py-2 font-medium">Daire</th>
                     <th className="px-3 py-2 font-medium">Tahakkuk</th>
-                    <th className="px-3 py-2 font-medium">Odenen</th>
-                    <th className="px-3 py-2 font-medium">Kalan borc</th>
-                    <th className="px-3 py-2 font-medium">Son odeme</th>
+                    <th className="px-3 py-2 font-medium">Ödenen</th>
+                    <th className="px-3 py-2 font-medium">Kalan borç</th>
+                    <th className="px-3 py-2 font-medium">Son ödeme</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -261,7 +261,7 @@ export default function DuesReportPage() {
                   {report.borclular.length === 0 && (
                     <tr>
                       <td className="px-3 py-6 text-center text-muted" colSpan={5}>
-                        Borclu daire yok.
+                        Borçlu daire yok.
                       </td>
                     </tr>
                   )}
@@ -272,14 +272,14 @@ export default function DuesReportPage() {
 
           {/* Odemeler */}
           <section className="space-y-2">
-            <h2 className="text-lg font-medium">Donem tahsilatlari (basarili)</h2>
+            <h2 className="text-lg font-medium">Dönem tahsilatları (başarılı)</h2>
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-left text-slate-500">
                   <tr>
                     <th className="px-3 py-2 font-medium">Daire</th>
                     <th className="px-3 py-2 font-medium">Tutar</th>
-                    <th className="px-3 py-2 font-medium">Yontem</th>
+                    <th className="px-3 py-2 font-medium">Yöntem</th>
                     <th className="px-3 py-2 font-medium">Zaman</th>
                   </tr>
                 </thead>
@@ -295,7 +295,7 @@ export default function DuesReportPage() {
                   {report.odemeler.length === 0 && (
                     <tr>
                       <td className="px-3 py-6 text-center text-muted" colSpan={4}>
-                        Bu doneme atfedilen basarili odeme yok.
+                        Bu döneme atfedilen başarılı ödeme yok.
                       </td>
                     </tr>
                   )}

@@ -82,7 +82,7 @@ class NfcController extends Notifier<NfcState> {
       state = state.copyWith(
         status: NfcStatus.error,
         result: null,
-        errorMessage: result.error ?? 'Bilinmeyen bir hata olustu.',
+        errorMessage: result.error ?? 'Bilinmeyen bir hata oluştu.',
       );
     }
   }

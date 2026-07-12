@@ -21,9 +21,9 @@ enum HomeMenuEntry {
   /// Gorevlerim — saha personeli: tamamlama akisiyla.
   tasks,
 
-  /// Gorev-YONETIMI — tum gorev/atama listesi-takibi (kesin matris):
-  /// goruntuleme yonetici+security+tesis_gorevlisi(+admin); "yeni gorev"
-  /// yalniz yonetimde. "Gorevlerim"den (kisiye atananlar) AYRIDIR.
+  /// Gorev-YONETIMI — gorev olusturma/atama + takip (A4 kesin matris):
+  /// YALNIZ yonetici (+admin). Saha rolleri gormez; onlar "Gorevlerim"i
+  /// kullanir (kendi rol grubuna atanan + atanmamis gorevler).
   taskTracking,
 
   /// Demirbas zimmet (NFC al/birak) — saha personeli.
@@ -104,6 +104,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       ];
     case UserRole.security:
       // Ziyaretciler kapi operasyonudur: kayit + canli sonuc guvenlikte.
+      // Gorev-YONETIMI YOK (A4): saha rolu yalniz "Gorevlerim" gorur.
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
@@ -114,13 +115,13 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.kargo,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
-        HomeMenuEntry.taskTracking,
         HomeMenuEntry.assets,
         HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
       ];
     case UserRole.tesisGorevlisi:
       // Turlarim yok: /me/patrol-window admin+security (auth.md §4).
+      // Gorev-YONETIMI YOK (A4): saha rolu yalniz "Gorevlerim" gorur.
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
@@ -128,7 +129,6 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
         HomeMenuEntry.tasks,
-        HomeMenuEntry.taskTracking,
         HomeMenuEntry.assets,
         HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,

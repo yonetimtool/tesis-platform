@@ -83,9 +83,9 @@ void main() {
     });
 
     test('TR etiketler: gurultu/goruntu kirliligi', () {
-      expect(ComplaintKategori.gurultu.label, 'Gurultu kirliligi');
-      expect(ComplaintKategori.goruntu.label, 'Goruntu kirliligi');
-      expect(ComplaintKategori.diger.label, 'Diger');
+      expect(ComplaintKategori.gurultu.label, 'Gürültü kirliliği');
+      expect(ComplaintKategori.goruntu.label, 'Görüntü kirliliği');
+      expect(ComplaintKategori.diger.label, 'Diğer');
     });
 
     test('Complaint.fromJson kategoriyi okur; eski kayitta null', () {

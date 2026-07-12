@@ -1,8 +1,11 @@
 """Task CRUD + tamamlama (completion) — /contracts/openapi.yaml.
 
-RBAC (auth.md §4): GET admin/yonetici/security/tesis_gorevlisi; Task yazma
-(POST/PATCH/DELETE) admin/yonetici — yonetici yalniz security/tesis_gorevlisi'ne atar;
-completion gonderme (POST) admin/security/tesis_gorevlisi. tenant token'dan; RLS izole.
+RBAC (auth.md §4): GET admin/yonetici/security/tesis_gorevlisi — saha rolleri
+kendi ROL GRUBUNA (security + tesis_gorevlisi) atanan + atanmamis gorevleri okur;
+Task yazma (POST/PATCH/DELETE) admin/yonetici — yonetici yalniz
+security/tesis_gorevlisi'ne atar; completion gonderme (POST)
+admin/security/tesis_gorevlisi — saha rolu yalniz KENDINE atanan veya atanmamis
+gorevi tamamlar (aksi 403). tenant token'dan; RLS izole.
 Completion idempotency scan desenini yeniden kullanir (SAVEPOINT).
 """
 from __future__ import annotations
@@ -19,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..crud_helpers import coord_eq, get_or_404, is_unique_violation, nfc_eq, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Checkpoint, Task, TaskCompletion
+from ..models import AppUser, Checkpoint, Task, TaskCategory, TaskCompletion
 from ..schemas import (
     TaskCompletionCreate,
     TaskCompletionListResponse,
@@ -40,25 +43,44 @@ _COMPLETER = require_role("admin", "security", "tesis_gorevlisi")
 # yonetici gorevleri yalniz saha rollerine atayabilir (auth.md §4).
 _YONETICI_ATANABILIR = {"security", "tesis_gorevlisi"}
 
-# Saha rolleri: belirli kisiye atanmis gorev YALNIZ atanana gorunur
-# (yonetim disi roller baskasinin gorevini liste/detay/completion'da goremez).
+# Saha rolleri: 'Gorevlerim' kendi ROL GRUBUNA (guvenlik + tesis gorevlisi)
+# atanan tum gorevleri OKUR; saha-disi kisiye (orn. admin) atanmis gorevler
+# gorunmez. Tamamlama ayrica kisiye baglidir (bkz. create_completion).
 _SAHA_ROLLERI = {"security", "tesis_gorevlisi"}
+
+
+def _saha_atananlar_subq():
+    """Ayni tenant'taki (RLS) saha rolu kullanici id'leri — grup gorunurlugu."""
+    return select(AppUser.id).where(AppUser.role.in_(_SAHA_ROLLERI)).scalar_subquery()
 
 
 def _assignee_visibility(user: AppUser):
     """Saha kullanicisi icin gorunurluk kosulu: atanmamis ('Herkes') VEYA
-    kendine atanmis. Yonetim (admin/yonetici) kisitsiz (None doner)."""
+    rol grubundan birine (security/tesis_gorevlisi) atanmis. Yonetim
+    (admin/yonetici) kisitsiz (None doner)."""
     if user.role in _SAHA_ROLLERI:
-        return or_(Task.atanan_user_id.is_(None), Task.atanan_user_id == user.id)
+        return or_(
+            Task.atanan_user_id.is_(None),
+            Task.atanan_user_id.in_(_saha_atananlar_subq()),
+        )
     return None
 
 
 async def _visible_task_or_404(db: AsyncSession, task_id: uuid.UUID, user: AppUser) -> Task:
     """Task'i atanan-gorunurluk kurali altinda yukle; gorunmuyorsa 404
-    (baskasina atanmis gorevin VARLIGI da sizdirilmaz)."""
+    (grup disina atanmis gorevin VARLIGI da sizdirilmaz)."""
     task = await get_or_404(db, Task, task_id)
-    if user.role in _SAHA_ROLLERI and task.atanan_user_id not in (None, user.id):
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+    if (
+        user.role in _SAHA_ROLLERI
+        and task.atanan_user_id not in (None, user.id)
+    ):
+        atanan_rol = (
+            await db.execute(
+                select(AppUser.role).where(AppUser.id == task.atanan_user_id)
+            )
+        ).scalar_one_or_none()
+        if atanan_rol not in _SAHA_ROLLERI:
+            raise APIError(404, "not_found", "Kayit bulunamadi")
     return task
 
 
@@ -76,6 +98,23 @@ async def _ensure_user_in_tenant(
         raise APIError(
             422, "invalid_reference",
             "yonetici gorevi yalniz security/tesis_gorevlisi kullanicilara atayabilir.",
+        )
+
+
+async def _ensure_kategori_in_tenant(db: AsyncSession, kategori_id: uuid.UUID | None) -> None:
+    """Kategori ayni tenant'ta (RLS) ve AKTIF olmali; pasif kategoriye yeni
+    gorev yazilamaz (soft-delete sozlesmesi, A6)."""
+    if kategori_id is None:
+        return
+    aktif = (
+        await db.execute(select(TaskCategory.aktif).where(TaskCategory.id == kategori_id))
+    ).scalar_one_or_none()
+    if aktif is None:
+        raise APIError(422, "invalid_reference", "kategori_id bu tenant'ta bulunamadi.")
+    if not aktif:
+        raise APIError(
+            422, "invalid_reference",
+            "Pasif kategoriye gorev yazilamaz (kategori silinmis).",
         )
 
 
@@ -147,6 +186,7 @@ async def create_task(
 ) -> Task:
     await _ensure_user_in_tenant(db, body.atanan_user_id, user)
     await _ensure_checkpoint_in_tenant(db, body.checkpoint_id)
+    await _ensure_kategori_in_tenant(db, body.kategori_id)
     obj = Task(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
     db.add(obj)
     try:
@@ -170,6 +210,8 @@ async def update_task(
         await _ensure_user_in_tenant(db, data["atanan_user_id"], user)
     if "checkpoint_id" in data:
         await _ensure_checkpoint_in_tenant(db, data["checkpoint_id"])
+    if "kategori_id" in data:
+        await _ensure_kategori_in_tenant(db, data["kategori_id"])
     for key, value in data.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()
@@ -249,8 +291,16 @@ async def create_completion(
     if not idempotency_key or not idempotency_key.strip():
         raise APIError(400, "bad_request", "Idempotency-Key header zorunlu.")
 
-    # Baskasina atanmis gorevi saha kullanicisi tamamlayamaz (404).
+    # Gorunurluk: grup disi / baska tenant -> 404 (varlik sizdirilmaz).
     task = await _visible_task_or_404(db, task_id, user)
+
+    # Tamamlama BYPASS-PROOF: saha kullanicisi yalniz KENDINE atanan veya
+    # atanmamis (havuz) gorevi tamamlar; grubun baska uyesine atanmis gorev
+    # okunur ama tamamlanamaz -> 403.
+    if user.role in _SAHA_ROLLERI and task.atanan_user_id not in (None, user.id):
+        raise APIError(
+            403, "forbidden", "Bu gorevi yalniz atanan kullanici tamamlayabilir."
+        )
 
     # Foto kaniti: gorev foto_zorunlu ise foto_key olmadan tamamlanamaz (mobil §11 #2).
     if task.foto_zorunlu and body.foto_key is None:

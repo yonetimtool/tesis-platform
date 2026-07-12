@@ -1685,9 +1685,13 @@ paths:
       summary: Gorev listesi
       description: |
         `atanan_user_id` filtresi (mobil §11 #1): `me` = token kullanicisina
-        atananlar ("Gorevlerim" tek istekte); duz UUID = o kullaniciya atananlar
-        (panel; tum okuyucu roller kullanabilir — atama bilgisi zaten listede
-        gorunur, yetki siniri degildir). Gecersiz deger 422.
+        atananlar; duz UUID = o kullaniciya atananlar (panel; tum okuyucu
+        roller kullanabilir — atama bilgisi zaten listede gorunur, yetki
+        siniri degildir). Gecersiz deger 422.
+
+        Gorunurluk (A4): saha rolleri (`security`/`tesis_gorevlisi`) kendi
+        ROL GRUBUNA atanan gorevleri + atanmamislari ("Herkes") okur;
+        saha-disi kisiye atanmis gorevler gorunmez. Yonetim kisitsiz.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -1929,6 +1933,70 @@ paths:
                         items: { $ref: "#/components/schemas/Task" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+
+  /task-categories:
+    get:
+      tags: [tasks]
+      summary: Gorev kategorileri (yonetici-tanimli, A6)
+      description: |
+        Tenant'a ozel kategori seti. OKUMA gorev goren roller
+        (admin/yonetici/security/tesis_gorevlisi); resident 403.
+        Varsayilan yalniz aktif kategoriler (`aktif=false` ile pasifler).
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean, default: true }
+      responses:
+        "200":
+          description: Liste (ad sirali)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/TaskCategory" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [tasks]
+      summary: Kategori olustur (admin + yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskCategoryCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskCategory" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /task-categories/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    delete:
+      tags: [tasks]
+      summary: Kategori sil — SOFT-DELETE (admin + yonetici)
+      description: |
+        aktif=false yapar (gorev gecmisi kategoriye referans verebilir; hard
+        silme kaydi koparir). Pasif kategoriye yeni gorev yazilamaz (422).
+      responses:
+        "204": { description: Pasiflestirildi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /uploads/presign:
     post:
@@ -4143,6 +4211,11 @@ components:
         aciklama: { type: string, nullable: true }
         atanan_user_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
+        kategori_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Yonetici-tanimli kategori (A6); null = kategorisiz"
         periyot_dakika:
           type: integer
           minimum: 1
@@ -4168,6 +4241,7 @@ components:
         aciklama: { type: string, nullable: true }
         atanan_user_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
+        kategori_id: { type: string, format: uuid, nullable: true }
         periyot_dakika: { type: integer, minimum: 1, nullable: true }
         sonraki_planlanan: { type: string, format: date-time, nullable: true }
         foto_zorunlu: { type: boolean, default: false }
@@ -4181,10 +4255,26 @@ components:
         aciklama: { type: string, nullable: true }
         atanan_user_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
+        kategori_id: { type: string, format: uuid, nullable: true }
         periyot_dakika: { type: integer, minimum: 1, nullable: true }
         sonraki_planlanan: { type: string, format: date-time, nullable: true }
         foto_zorunlu: { type: boolean }
         aktif: { type: boolean }
+
+    TaskCategory:
+      type: object
+      required: [id, ad, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, example: "Havuz bakimi" }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time, nullable: true }
+    TaskCategoryCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
 
     TaskCompletion:
       type: object

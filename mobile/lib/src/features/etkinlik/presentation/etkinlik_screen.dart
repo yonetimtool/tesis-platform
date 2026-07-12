@@ -76,8 +76,8 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
           ],
           bottom: TabBar(
             tabs: [
-              Tab(text: 'Yaklasan (${yaklasan.length})'),
-              Tab(text: 'Gecmis (${gecmis.length})'),
+              Tab(text: 'Yaklaşan (${yaklasan.length})'),
+              Tab(text: 'Geçmiş (${gecmis.length})'),
             ],
           ),
         ),
@@ -96,8 +96,8 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
                 state: state,
                 items: yaklasan,
                 emptyText: state.canManage
-                    ? 'Yaklasan etkinlik yok. "Yeni etkinlik" ile duyurun.'
-                    : 'Yaklasan etkinlik yok.',
+                    ? 'Yaklaşan etkinlik yok. "Yeni etkinlik" ile duyurun.'
+                    : 'Yaklaşan etkinlik yok.',
               ),
             ),
             RefreshIndicator(
@@ -105,7 +105,7 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
               child: _Body(
                 state: state,
                 items: gecmis,
-                emptyText: 'Gecmis etkinlik yok.',
+                emptyText: 'Geçmiş etkinlik yok.',
               ),
             ),
           ],
@@ -125,7 +125,7 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
         SnackBar(
           content: Text(mevcut == null
               ? 'Etkinlik duyuruldu — sakinlere bildirildi ✓'
-              : 'Etkinlik guncellendi ✓'),
+              : 'Etkinlik güncellendi ✓'),
         ),
       );
     }
@@ -192,12 +192,12 @@ class _SayacRow extends StatelessWidget {
       children: [
         const Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
         const SizedBox(width: 4),
-        Text('${etkinlik.katiliyorumSayisi} katiliyor',
+        Text('${etkinlik.katiliyorumSayisi} katılıyor',
             style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(width: 12),
         const Icon(Icons.cancel_outlined, size: 16, color: Colors.red),
         const SizedBox(width: 4),
-        Text('${etkinlik.katilmiyorumSayisi} katilmiyor',
+        Text('${etkinlik.katilmiyorumSayisi} katılmıyor',
             style: Theme.of(context).textTheme.bodySmall),
       ],
     );
@@ -315,14 +315,14 @@ class _RsvpButtonsState extends ConsumerState<_RsvpButtons> {
           .read(etkinlikControllerProvider.notifier)
           .rsvp(widget.etkinlik.id, durum);
       messenger.showSnackBar(
-        SnackBar(content: Text('Beyaniniz kaydedildi: ${durum.label} ✓')),
+        SnackBar(content: Text('Beyanınız kaydedildi: ${durum.label} ✓')),
       );
       widget.onAnswered?.call();
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Beyan gonderilemedi. Tekrar deneyin.')),
+        const SnackBar(content: Text('Beyan gönderilemedi. Tekrar deneyin.')),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -339,14 +339,14 @@ class _RsvpButtonsState extends ConsumerState<_RsvpButtons> {
               ? FilledButton.icon(
                   style: FilledButton.styleFrom(backgroundColor: Colors.green),
                   icon: const Icon(Icons.check),
-                  label: const Text('Katiliyorum'),
+                  label: const Text('Katılıyorum'),
                   onPressed: _busy
                       ? null
                       : () => _beyan(KatilimDurum.katiliyorum),
                 )
               : OutlinedButton.icon(
                   icon: const Icon(Icons.check, color: Colors.green),
-                  label: const Text('Katiliyorum'),
+                  label: const Text('Katılıyorum'),
                   onPressed: _busy
                       ? null
                       : () => _beyan(KatilimDurum.katiliyorum),
@@ -358,14 +358,14 @@ class _RsvpButtonsState extends ConsumerState<_RsvpButtons> {
               ? FilledButton.icon(
                   style: FilledButton.styleFrom(backgroundColor: Colors.red),
                   icon: const Icon(Icons.close),
-                  label: const Text('Katilmiyorum'),
+                  label: const Text('Katılmıyorum'),
                   onPressed: _busy
                       ? null
                       : () => _beyan(KatilimDurum.katilmiyorum),
                 )
               : OutlinedButton.icon(
                   icon: const Icon(Icons.close, color: Colors.red),
-                  label: const Text('Katilmiyorum'),
+                  label: const Text('Katılmıyorum'),
                   onPressed: _busy
                       ? null
                       : () => _beyan(KatilimDurum.katilmiyorum),
@@ -443,7 +443,7 @@ void _showDetail(
                     Expanded(
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.edit_outlined),
-                        label: const Text('Duzenle'),
+                        label: const Text('Düzenle'),
                         onPressed: () async {
                           Navigator.of(sheetContext).pop();
                           await showModalBottomSheet<bool>(
@@ -492,12 +492,12 @@ class _DeleteButton extends ConsumerWidget {
           builder: (dctx) => AlertDialog(
             title: const Text('Etkinlik silinsin mi?'),
             content: Text(
-              '"${etkinlik.baslik}" ve tum katilim beyanlari silinecek.',
+              '"${etkinlik.baslik}" ve tüm katılım beyanları silinecek.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dctx).pop(false),
-                child: const Text('Vazgec'),
+                child: const Text('Vazgeç'),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: Colors.red),
@@ -622,7 +622,7 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.mevcut == null ? 'Yeni etkinlik' : 'Etkinligi duzenle',
+                widget.mevcut == null ? 'Yeni etkinlik' : 'Etkinliği düzenle',
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
@@ -631,25 +631,25 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                 controller: _baslik,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
-                  labelText: 'Baslik * (orn. Mac izleme aksami)',
+                  labelText: 'Başlık * (örn. Maç izleme akşamı)',
                   border: OutlineInputBorder(),
                 ),
                 maxLength: 200,
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Baslik gerekli' : null,
+                    (v == null || v.trim().isEmpty) ? 'Başlık gerekli' : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _aciklama,
                 decoration: const InputDecoration(
-                  labelText: 'Aciklama *',
+                  labelText: 'Açıklama *',
                   border: OutlineInputBorder(),
                 ),
                 maxLength: 5000,
                 minLines: 2,
                 maxLines: 5,
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Aciklama gerekli'
+                    ? 'Açıklama gerekli'
                     : null,
               ),
               const SizedBox(height: 8),

@@ -6,7 +6,7 @@ import 'package:mobile/src/features/budget/data/budget_api.dart';
 import 'package:mobile/src/features/budget/domain/budget_models.dart';
 import 'package:mobile/src/features/budget/presentation/site_budget_screen.dart';
 
-/// Sakin seffaflik ekrani icin sahte istemci — yalniz OZET cagrilir.
+/// Sakin şeffaflık ekrani icin sahte istemci — yalniz OZET cagrilir.
 class _FakeBudgetApi extends BudgetApi {
   _FakeBudgetApi() : super(Dio());
 
@@ -54,7 +54,7 @@ void main() {
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
 
-    expect(find.text('Site Butcesi'), findsOneWidget);
+    expect(find.text('Site Bütçesi'), findsOneWidget);
     expect(find.text('2.000,00 TL'), findsOneWidget); // gelir
     expect(find.text('4.250,00 TL'), findsOneWidget); // gider
     expect(find.text('-2.250,00 TL'), findsOneWidget); // kasa (negatif)
@@ -70,7 +70,7 @@ void main() {
     expect(find.text('Yeni kategori'), findsNothing);
     expect(find.byType(FloatingActionButton), findsNothing);
     expect(api.entriesCalled, isFalse);
-    // seffaflik notu
-    expect(find.textContaining('seffaflik'), findsOneWidget);
+    // şeffaflık notu
+    expect(find.textContaining('şeffaflık'), findsOneWidget);
   });
 }

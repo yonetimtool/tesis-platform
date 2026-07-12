@@ -186,21 +186,21 @@ export default function PatrolPlansPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Devriye Planlari</h1>
+        <h1 className="text-2xl font-semibold">Devriye Planları</h1>
         <button className={btnPrimary} onClick={openNew}>
           Yeni plan
         </button>
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
         <form
           onSubmit={save}
           className="space-y-4 rounded-xl border border-slate-200 bg-white p-5"
         >
-          <h2 className="font-medium">{editingId ? "Plan duzenle" : "Yeni plan"}</h2>
+          <h2 className="font-medium">{editingId ? "Plan düzenle" : "Yeni plan"}</h2>
           <Field label="Ad">
             <input
               className={inputCls}
@@ -224,7 +224,7 @@ export default function PatrolPlansPage() {
             </select>
           </Field>
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Baslangic" hint="HH:MM">
+            <Field label="Başlangıç" hint="HH:MM">
               <input
                 type="time"
                 className={inputCls}
@@ -233,7 +233,7 @@ export default function PatrolPlansPage() {
                 required
               />
             </Field>
-            <Field label="Bitis" hint="HH:MM">
+            <Field label="Bitiş" hint="HH:MM">
               <input
                 type="time"
                 className={inputCls}
@@ -254,7 +254,7 @@ export default function PatrolPlansPage() {
             </Field>
           </div>
           <p className="text-xs text-muted">
-            Onizleme: bu plan gunde yaklasik {previewWindows} pencere uretir.
+            Önizleme: bu plan günde yaklaşık {previewWindows} pencere üretir.
           </p>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -270,7 +270,7 @@ export default function PatrolPlansPage() {
               {saving ? "Kaydediliyor..." : "Kaydet"}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              Iptal
+              İptal
             </button>
           </div>
         </form>
@@ -280,7 +280,7 @@ export default function PatrolPlansPage() {
         <div className="space-y-4 rounded-xl border border-slate-300 bg-white p-5">
           <h2 className="font-medium">Noktalar: {assignPlan.ad}</h2>
           <p className="text-xs text-muted">
-            Sirali liste; kaydedince planin noktalari tamamen bununla degisir.
+            Sıralı liste; kaydedince planın noktaları tamamen bununla değişir.
           </p>
 
           <ol className="space-y-2">
@@ -295,27 +295,27 @@ export default function PatrolPlansPage() {
                 </span>
                 <span className="flex gap-1">
                   <button className={btnGhost} onClick={() => move(i, -1)} disabled={i === 0}>
-                    Yukari
+                    Yukarı
                   </button>
                   <button
                     className={btnGhost}
                     onClick={() => move(i, 1)}
                     disabled={i === selected.length - 1}
                   >
-                    Asagi
+                    Aşağı
                   </button>
                   <button
                     className={btnDanger}
                     onClick={() => setSelected(selected.filter((x) => x !== cid))}
                   >
-                    Cikar
+                    Çıkar
                   </button>
                 </span>
               </li>
             ))}
             {selected.length === 0 && (
               <li className="rounded-lg border border-dashed border-slate-300 px-3 py-4 text-center text-muted">
-                Henuz nokta eklenmedi.
+                Henüz nokta eklenmedi.
               </li>
             )}
           </ol>
@@ -328,7 +328,7 @@ export default function PatrolPlansPage() {
                   value={addPick}
                   onChange={(e) => setAddPick(e.target.value)}
                 >
-                  <option value="">— sec —</option>
+                  <option value="">— seç —</option>
                   {available.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.ad} ({c.nfc_tag_uid})
@@ -352,7 +352,7 @@ export default function PatrolPlansPage() {
           <ErrorBox message={assignErr} />
           <div className="flex gap-2">
             <button className={btnPrimary} onClick={saveAssign} disabled={assignSaving}>
-              {assignSaving ? "Kaydediliyor..." : "Atamayi kaydet"}
+              {assignSaving ? "Kaydediliyor..." : "Atamayı kaydet"}
             </button>
             <button className={btnGhost} onClick={() => setAssignPlan(null)}>
               Kapat
@@ -395,7 +395,7 @@ export default function PatrolPlansPage() {
                       Noktalar
                     </button>
                     <button className={btnGhost} onClick={() => openEdit(p)}>
-                      Duzenle
+                      Düzenle
                     </button>
                     <button className={btnDanger} onClick={() => remove(p)}>
                       Sil

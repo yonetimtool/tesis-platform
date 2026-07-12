@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../../auth/domain/user_role.dart';
 import '../data/task_api.dart';
+import '../data/task_category_api.dart';
+import '../domain/task_category_models.dart';
 import '../domain/task_models.dart';
 import 'task_tip_style.dart';
 import 'tasks_controller.dart';
@@ -36,6 +39,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
   late final TextEditingController _periyotCtrl;
   late TaskTip _tip;
   String? _atananUserId;
+  String? _kategoriId;
   late bool _fotoZorunlu;
   late bool _aktif;
 
@@ -45,6 +49,9 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
   /// Atanabilir personel (bir kez yuklenir); null → yukleniyor.
   List<AssignableUser>? _personel;
   String? _personelError;
+
+  /// Aktif gorev kategorileri (A6; bir kez yuklenir); null → yukleniyor.
+  List<TaskCategory>? _kategoriler;
 
   @override
   void initState() {
@@ -57,9 +64,36 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
     );
     _tip = t?.tip ?? TaskTip.temizlik;
     _atananUserId = t?.atananUserId;
+    _kategoriId = t?.kategoriId;
     _fotoZorunlu = t?.fotoZorunlu ?? false;
     _aktif = t?.aktif ?? true;
     _loadPersonel();
+    _loadKategoriler();
+  }
+
+  Future<void> _loadKategoriler() async {
+    try {
+      final list = await ref.read(taskCategoryApiProvider).fetchAll();
+      if (!mounted) return;
+      setState(() {
+        _kategoriler = list;
+        // Duzenlemede secili kategori pasiflestiyse listede olmayabilir —
+        // secimi koru ama secenege "(silinmis)" olarak ekle.
+        if (_kategoriId != null && !list.any((k) => k.id == _kategoriId)) {
+          _kategoriler = [
+            ...list,
+            TaskCategory(
+              id: _kategoriId!,
+              ad: 'Kategori (silinmiş)',
+              aktif: false,
+            ),
+          ];
+        }
+      });
+    } on ApiException catch (_) {
+      if (!mounted) return;
+      setState(() => _kategoriler = const []);
+    }
   }
 
   Future<void> _loadPersonel() async {
@@ -76,7 +110,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
             ...users,
             AssignableUser(
               id: _atananUserId!,
-              ad: 'Atanan kullanici (listede degil)',
+              ad: 'Atanan kullanıcı (listede değil)',
               role: '',
             ),
           ];
@@ -113,6 +147,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
           ? null
           : _aciklamaCtrl.text.trim(),
       atananUserId: _atananUserId,
+      kategoriId: _kategoriId,
       periyotDakika: periyotText.isEmpty ? null : int.parse(periyotText),
       fotoZorunlu: _fotoZorunlu,
       aktif: _aktif,
@@ -136,7 +171,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.';
+          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
         });
       }
     }
@@ -169,7 +204,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                editing ? 'Gorev duzenle' : 'Yeni gorev',
+                editing ? 'Görev düzenle' : 'Yeni görev',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
@@ -202,11 +237,11 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
               TextFormField(
                 controller: _adCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'Gorev adi',
+                  labelText: 'Görev adı',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Gorev adi zorunludur'
+                    ? 'Görev adı zorunludur'
                     : null,
               ),
               const SizedBox(height: 8),
@@ -215,7 +250,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                 minLines: 2,
                 maxLines: 4,
                 decoration: const InputDecoration(
-                  labelText: 'Aciklama (opsiyonel)',
+                  labelText: 'Açıklama (opsiyonel)',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -231,7 +266,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                       SizedBox(width: 8),
-                      Text('Personel listesi yukleniyor...'),
+                      Text('Personel listesi yükleniyor...'),
                     ],
                   ),
                 )
@@ -245,7 +280,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                   items: [
                     const DropdownMenuItem<String?>(
                       value: null,
-                      child: Text('— atanmamis (havuz gorevi) —'),
+                      child: Text('— atanmamış (havuz görevi) —'),
                     ),
                     for (final u in _personel!)
                       DropdownMenuItem<String?>(
@@ -253,7 +288,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                         child: Text(
                           u.role.isEmpty
                               ? u.ad
-                              : '${u.ad} (${u.role == 'security' ? 'Guvenlik' : 'Tesis Gorevlisi'})',
+                              : '${u.ad} (${UserRole.fromClaim(u.role).label})',
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -264,18 +299,55 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      'Personel listesi alinamadi: $_personelError',
+                      'Personel listesi alınamadı: $_personelError',
                       style: const TextStyle(color: Colors.orange),
                     ),
                   ),
               ],
+              const SizedBox(height: 8),
+              // Kategori seçimi (A6) — yönetici-tanımlı aktif kategoriler.
+              if (_kategoriler == null)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text('Kategoriler yükleniyor...'),
+                    ],
+                  ),
+                )
+              else if (_kategoriler!.isNotEmpty)
+                DropdownButtonFormField<String?>(
+                  initialValue: _kategoriId,
+                  decoration: const InputDecoration(
+                    labelText: 'Kategori (opsiyonel)',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('— kategorisiz —'),
+                    ),
+                    for (final k in _kategoriler!)
+                      DropdownMenuItem<String?>(
+                        value: k.id,
+                        child: Text(k.ad, overflow: TextOverflow.ellipsis),
+                      ),
+                  ],
+                  onChanged: (v) => setState(() => _kategoriId = v),
+                ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _periyotCtrl,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: 'Periyot dakika (opsiyonel)',
-                  helperText: 'Periyodik gorevler icin; bos = tek seferlik',
+                  helperText: 'Periyodik görevler için; boş = tek seferlik',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
@@ -283,13 +355,13 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                   if (t.isEmpty) return null;
                   final n = int.tryParse(t);
                   return (n == null || n <= 0)
-                      ? 'Pozitif tam sayi girin'
+                      ? 'Pozitif tam sayı girin'
                       : null;
                 },
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Foto kaniti zorunlu'),
+                title: const Text('Foto kanıtı zorunlu'),
                 subtitle: const Text(
                   'Tamamlama foto olmadan kabul edilmez',
                 ),
@@ -300,7 +372,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Aktif'),
-                  subtitle: const Text('Pasif gorev listede gorunmez'),
+                  subtitle: const Text('Pasif görev listede görünmez'),
                   value: _aktif,
                   onChanged: (v) => setState(() => _aktif = v),
                 ),
@@ -325,7 +397,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                         ? 'Kaydediliyor...'
                         : editing
                             ? 'Kaydet'
-                            : 'Olustur',
+                            : 'Oluştur',
                   ),
                 ),
               ),

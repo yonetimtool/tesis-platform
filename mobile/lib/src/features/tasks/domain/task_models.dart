@@ -37,6 +37,7 @@ class Task {
     this.aciklama,
     this.atananUserId,
     this.checkpointId,
+    this.kategoriId,
     this.periyotDakika,
     this.sonrakiPlanlanan,
   });
@@ -48,6 +49,9 @@ class Task {
 
   /// Gorevin atandigi kullanici (yoksa havuz gorevi).
   final String? atananUserId;
+
+  /// Yonetici-tanimli kategori (A6); null = kategorisiz.
+  final String? kategoriId;
 
   /// Gorevin NFC dogrulama noktasi. Doluysa tamamlama akisinda "etiketi
   /// okutun" adimi gosterilir; okunan UID backend'de bu checkpoint'in
@@ -75,6 +79,7 @@ class Task {
         aciklama: json['aciklama'] as String?,
         atananUserId: json['atanan_user_id'] as String?,
         checkpointId: json['checkpoint_id'] as String?,
+        kategoriId: json['kategori_id'] as String?,
         periyotDakika: (json['periyot_dakika'] as num?)?.toInt(),
         sonrakiPlanlanan: json['sonraki_planlanan'] == null
             ? null
@@ -246,6 +251,7 @@ class TaskDraft {
     required this.ad,
     this.aciklama,
     this.atananUserId,
+    this.kategoriId,
     this.periyotDakika,
     this.fotoZorunlu = false,
     this.aktif = true,
@@ -255,6 +261,7 @@ class TaskDraft {
   final String ad;
   final String? aciklama;
   final String? atananUserId;
+  final String? kategoriId;
   final int? periyotDakika;
   final bool fotoZorunlu;
   final bool aktif;
@@ -264,6 +271,7 @@ class TaskDraft {
         'ad': ad,
         'aciklama': aciklama,
         'atanan_user_id': atananUserId,
+        'kategori_id': kategoriId,
         'periyot_dakika': periyotDakika,
         'foto_zorunlu': fotoZorunlu,
         'aktif': aktif,
@@ -275,6 +283,7 @@ class TaskDraft {
         ad: task.ad,
         aciklama: task.aciklama,
         atananUserId: task.atananUserId,
+        kategoriId: task.kategoriId,
         periyotDakika: task.periyotDakika,
         fotoZorunlu: task.fotoZorunlu,
         aktif: task.aktif,

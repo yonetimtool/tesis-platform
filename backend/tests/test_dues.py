@@ -34,6 +34,32 @@ def test_unit_crud_and_no_conflict(client, world):
     assert client.get(f"/units/{u['id']}", headers=admin).status_code == 404
 
 
+def test_unit_no_alfanumerik_kabul_gecersiz_red(client, world):
+    """Daire no harf+sayi+tire kabul eder (A-12, B3, 12); bosluk/ozel
+    karakter 422 ile reddedilir (A5)."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    ek = uuid.uuid4().hex[:4]
+
+    # gecerli formatlar: harf+tire+sayi / harf+sayi / yalniz sayi
+    for no in (f"A-{ek}12", f"B{ek}3", f"9{ek}"):
+        r = client.post("/units", headers=admin, json={"no": no})
+        assert r.status_code == 201, f"{no}: {r.text}"
+        assert r.json()["no"] == no
+        client.delete(f"/units/{r.json()['id']}", headers=admin)
+
+    # gecersiz formatlar -> 422 (bosluk, ozel karakter, bos)
+    for no in ("A 12", "A#12", "12!", " ", ""):
+        r = client.post("/units", headers=admin, json={"no": no})
+        assert r.status_code == 422, f"{no!r}: {r.status_code} {r.text}"
+
+    # guncellemede de ayni kural
+    u = _new_unit(client, admin)
+    assert (
+        client.patch(f"/units/{u['id']}", headers=admin, json={"no": "B 7"}).status_code
+        == 422
+    )
+
+
 def test_unit_rbac_and_isolation(client, world):
     admin_a = _headers(client, world["slug_a"], world["admin_a"])
     admin_b = _headers(client, world["slug_b"], world["admin_b"])

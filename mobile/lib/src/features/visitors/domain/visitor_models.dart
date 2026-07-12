@@ -12,7 +12,7 @@ library;
 /// adimi eklenirse yeni deger [unknown]'a duser (eski surum COKMEZ).
 enum VisitorDurum {
   bekliyor('bekliyor', 'Bekliyor'),
-  onaylandi('onaylandi', 'Onaylandi'),
+  onaylandi('onaylandi', 'Onaylandı'),
   reddedildi('reddedildi', 'Reddedildi'),
   unknown('unknown', 'Bilinmeyen');
 

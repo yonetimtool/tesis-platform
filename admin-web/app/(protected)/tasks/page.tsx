@@ -9,6 +9,7 @@ import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { SAHA_ROLLERI, roleLabel } from "@/lib/roles";
 import type {
   Task,
+  TaskCategoryList,
   TaskCompletionList,
   TaskList,
   TaskTip,
@@ -19,10 +20,10 @@ const LIMIT = 20;
 const TIPLER: { value: TaskTip; label: string }[] = [
   { value: "temizlik", label: "Temizlik" },
   { value: "kontrol", label: "Kontrol" },
-  { value: "ilaclama", label: "Ilaclama" },
-  { value: "bakim", label: "Bakim" },
+  { value: "ilaclama", label: "İlaçlama" },
+  { value: "bakim", label: "Bakım" },
   { value: "peyzaj", label: "Peyzaj" },
-  { value: "diger", label: "Diger" },
+  { value: "diger", label: "Diğer" },
 ];
 function tipLabel(v: string): string {
   return TIPLER.find((t) => t.value === v)?.label ?? v;
@@ -46,6 +47,7 @@ interface FormState {
   ad: string;
   aciklama: string;
   atanan_user_id: string;
+  kategori_id: string;
   periyot_dakika: string;
   sonraki_planlanan: string;
   foto_zorunlu: boolean;
@@ -56,6 +58,7 @@ const EMPTY: FormState = {
   ad: "",
   aciklama: "",
   atanan_user_id: "",
+  kategori_id: "",
   periyot_dakika: "",
   sonraki_planlanan: "",
   foto_zorunlu: false,
@@ -78,6 +81,12 @@ export default function TasksPage() {
   );
   // Atanan picker: saha personeli (security + tesis_gorevlisi — lib/roles SAHA_ROLLERI).
   const { data: users } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
+  // Kategori picker: yonetici-tanimli aktif kategoriler (A6).
+  const { data: kategoriler } = useSWR<TaskCategoryList>("/api/task-categories", jsonFetcher);
+  function kategoriAd(id?: string | null): string {
+    if (!id) return "—";
+    return kategoriler?.items.find((k) => k.id === id)?.ad ?? id.slice(0, 8);
+  }
   const personel = (users?.items ?? []).filter(
     (u) => u.is_active && (SAHA_ROLLERI as string[]).includes(u.role),
   );
@@ -111,6 +120,7 @@ export default function TasksPage() {
       ad: t.ad,
       aciklama: t.aciklama ?? "",
       atanan_user_id: t.atanan_user_id ?? "",
+      kategori_id: t.kategori_id ?? "",
       periyot_dakika: t.periyot_dakika != null ? String(t.periyot_dakika) : "",
       sonraki_planlanan: isoToLocalInput(t.sonraki_planlanan),
       foto_zorunlu: t.foto_zorunlu,
@@ -130,6 +140,7 @@ export default function TasksPage() {
       ad: form.ad,
       aciklama: form.aciklama || null,
       atanan_user_id: form.atanan_user_id || null,
+      kategori_id: form.kategori_id || null,
       periyot_dakika: per ? Number(per) : null,
       sonraki_planlanan: toIso(form.sonraki_planlanan),
       foto_zorunlu: form.foto_zorunlu,
@@ -161,9 +172,9 @@ export default function TasksPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Gorevler</h1>
+        <h1 className="text-2xl font-semibold">Görevler</h1>
         <button className={btnPrimary} onClick={openNew}>
-          Yeni gorev
+          Yeni görev
         </button>
       </div>
 
@@ -178,7 +189,7 @@ export default function TasksPage() {
                 setOffset(0);
               }}
             >
-              <option value="">Tumu</option>
+              <option value="">Tümü</option>
               {TIPLER.map((t) => (
                 <option key={t.value} value={t.value}>
                   {t.label}
@@ -197,7 +208,7 @@ export default function TasksPage() {
                 setOffset(0);
               }}
             >
-              <option value="">Tumu</option>
+              <option value="">Tümü</option>
               <option value="true">Aktif</option>
               <option value="false">Pasif</option>
             </select>
@@ -213,7 +224,7 @@ export default function TasksPage() {
                 setOffset(0);
               }}
             >
-              <option value="">Tumu</option>
+              <option value="">Tümü</option>
               {personel.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.ad} ({roleLabel(u.role)})
@@ -225,11 +236,11 @@ export default function TasksPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
         <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="font-medium">{editingId ? "Gorev duzenle" : "Yeni gorev"}</h2>
+          <h2 className="font-medium">{editingId ? "Görev düzenle" : "Yeni görev"}</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Tip">
               <select
@@ -244,7 +255,7 @@ export default function TasksPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Baslik">
+            <Field label="Başlık">
               <input
                 className={inputCls}
                 value={form.ad}
@@ -252,7 +263,7 @@ export default function TasksPage() {
                 required
               />
             </Field>
-            <Field label="Aciklama (opsiyonel)">
+            <Field label="Açıklama (opsiyonel)">
               <input
                 className={inputCls}
                 value={form.aciklama}
@@ -273,7 +284,21 @@ export default function TasksPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Periyot dakika (opsiyonel)" hint="Periyodik/peyzaj gorevi icin">
+            <Field label="Kategori (opsiyonel)" hint="Yönetici tanımlı kategoriler">
+              <select
+                className={inputCls}
+                value={form.kategori_id}
+                onChange={(e) => setForm({ ...form, kategori_id: e.target.value })}
+              >
+                <option value="">— yok —</option>
+                {(kategoriler?.items ?? []).map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.ad}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Periyot dakika (opsiyonel)" hint="Periyodik/peyzaj görevi için">
               <input
                 type="number"
                 min={1}
@@ -298,7 +323,7 @@ export default function TasksPage() {
                 checked={form.foto_zorunlu}
                 onChange={(e) => setForm({ ...form, foto_zorunlu: e.target.checked })}
               />
-              Foto kaniti zorunlu
+              Foto kanıtı zorunlu
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -315,7 +340,7 @@ export default function TasksPage() {
               {saving ? "Kaydediliyor..." : "Kaydet"}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              Iptal
+              İptal
             </button>
           </div>
         </form>
@@ -325,8 +350,9 @@ export default function TasksPage() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
-              <th className="px-3 py-2 font-medium">Baslik</th>
+              <th className="px-3 py-2 font-medium">Başlık</th>
               <th className="px-3 py-2 font-medium">Tip</th>
+              <th className="px-3 py-2 font-medium">Kategori</th>
               <th className="px-3 py-2 font-medium">Atanan</th>
               <th className="px-3 py-2 font-medium">Sonraki</th>
               <th className="px-3 py-2 font-medium">Aktif</th>
@@ -345,21 +371,22 @@ export default function TasksPage() {
                   )}
                 </td>
                 <td className="px-3 py-2 text-slate-600">{tipLabel(t.tip)}</td>
+                <td className="px-3 py-2 text-slate-600">{kategoriAd(t.kategori_id)}</td>
                 <td className="px-3 py-2 text-slate-600">{userName(t.atanan_user_id)}</td>
                 <td className="px-3 py-2 text-slate-600">
                   {t.sonraki_planlanan ? formatDateTime(t.sonraki_planlanan) : "—"}
                 </td>
-                <td className="px-3 py-2 text-slate-600">{t.aktif ? "evet" : "hayir"}</td>
+                <td className="px-3 py-2 text-slate-600">{t.aktif ? "evet" : "hayır"}</td>
                 <td className="px-3 py-2 text-right">
                   <div className="flex justify-end gap-2">
                     <button
                       className={btnGhost}
                       onClick={() => setDetail(detail?.id === t.id ? null : t)}
                     >
-                      {detail?.id === t.id ? "Kapat" : "Kayitlar"}
+                      {detail?.id === t.id ? "Kapat" : "Kayıtlar"}
                     </button>
                     <button className={btnGhost} onClick={() => openEdit(t)}>
-                      Duzenle
+                      Düzenle
                     </button>
                     <button className={btnDanger} onClick={() => remove(t)}>
                       Sil
@@ -370,8 +397,8 @@ export default function TasksPage() {
             ))}
             {data && data.items.length === 0 && (
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={6}>
-                  Gorev yok.
+                <td className="px-3 py-6 text-center text-muted" colSpan={7}>
+                  Görev yok.
                 </td>
               </tr>
             )}
@@ -381,7 +408,7 @@ export default function TasksPage() {
 
       {detail && (
         <div className="space-y-3 rounded-xl border border-slate-300 bg-white p-5">
-          <h2 className="text-lg font-medium">Tamamlanma kayitlari — {detail.ad}</h2>
+          <h2 className="text-lg font-medium">Tamamlanma kayıtları — {detail.ad}</h2>
           <div className="overflow-hidden rounded-lg border border-slate-200">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
@@ -412,7 +439,7 @@ export default function TasksPage() {
                 {completions && completions.items.length === 0 && (
                   <tr>
                     <td className="px-3 py-4 text-center text-muted" colSpan={4}>
-                      Kayit yok.
+                      Kayıt yok.
                     </td>
                   </tr>
                 )}

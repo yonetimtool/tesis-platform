@@ -64,7 +64,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Ziyaretciler'),
+          title: const Text('Ziyaretçiler'),
           actions: [
             IconButton(
               tooltip: 'Yenile',
@@ -75,14 +75,14 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
           bottom: TabBar(
             tabs: [
               Tab(text: 'Bekleyen (${bekleyen.length})'),
-              Tab(text: 'Gecmis (${gecmis.length})'),
+              Tab(text: 'Geçmiş (${gecmis.length})'),
             ],
           ),
         ),
         floatingActionButton: state.canRegister
             ? FloatingActionButton.extended(
                 icon: const Icon(Icons.person_add_alt_1),
-                label: const Text('Yeni ziyaretci'),
+                label: const Text('Yeni ziyaretçi'),
                 onPressed: () => _openForm(context),
               )
             : null,
@@ -94,8 +94,8 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
                 state: state,
                 items: bekleyen,
                 emptyText: state.canAnswer
-                    ? 'Onay bekleyen ziyaretciniz yok.'
-                    : 'Onay bekleyen ziyaretci yok.',
+                    ? 'Onay bekleyen ziyaretçiniz yok.'
+                    : 'Onay bekleyen ziyaretçi yok.',
               ),
             ),
             RefreshIndicator(
@@ -103,7 +103,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
               child: _Body(
                 state: state,
                 items: gecmis,
-                emptyText: 'Henuz sonuclanan ziyaretci kaydi yok.',
+                emptyText: 'Henüz sonuçlanan ziyaretçi kaydı yok.',
               ),
             ),
           ],
@@ -121,7 +121,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
     if (saved == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ziyaretci kaydedildi — daire sakinlerine bildirildi ✓'),
+          content: Text('Ziyaretçi kaydedildi — daire sakinlerine bildirildi ✓'),
         ),
       );
     }
@@ -326,7 +326,7 @@ class _AnswerButtonsState extends ConsumerState<_AnswerButtons> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            onayla ? 'Ziyaretci onaylandi ✓' : 'Ziyaretci reddedildi',
+            onayla ? 'Ziyaretçi onaylandı ✓' : 'Ziyaretçi reddedildi',
           ),
         ),
       );
@@ -336,7 +336,7 @@ class _AnswerButtonsState extends ConsumerState<_AnswerButtons> {
       widget.onAnswered?.call();
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Yanit gonderilemedi. Tekrar deneyin.')),
+        const SnackBar(content: Text('Yanıt gönderilemedi. Tekrar deneyin.')),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -401,7 +401,7 @@ void _showDetail(BuildContext context, Visitor v, {required bool canAnswer}) {
             const SizedBox(height: 12),
             Text('Daire: ${v.unitNo ?? '-'}'),
             const SizedBox(height: 4),
-            Text('Kayit: ${_fmtDateTime(v.createdAt.toLocal())}'
+            Text('Kayıt: ${_fmtDateTime(v.createdAt.toLocal())}'
                 '${v.kaydedenAd != null ? ' — ${v.kaydedenAd}' : ''}'),
             if (v.notlar != null && v.notlar!.isNotEmpty) ...[
               const SizedBox(height: 4),
@@ -410,7 +410,7 @@ void _showDetail(BuildContext context, Visitor v, {required bool canAnswer}) {
             if (!v.bekliyor) ...[
               const SizedBox(height: 4),
               Text(
-                'Sonuc: ${v.durum.label}'
+                'Sonuç: ${v.durum.label}'
                 '${v.yanitlayanAd != null ? ' — ${v.yanitlayanAd}' : ''}'
                 '${v.yanitZamani != null ? ' · ${_fmtDateTime(v.yanitZamani!.toLocal())}' : ''}',
               ),
@@ -473,7 +473,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
       if (mounted) setState(() => _hata = e.message);
     } catch (_) {
       if (mounted) {
-        setState(() => _hata = 'Kayit gonderilemedi. Tekrar deneyin.');
+        setState(() => _hata = 'Kayıt gönderilemedi. Tekrar deneyin.');
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -493,7 +493,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Yeni ziyaretci',
+              'Yeni ziyaretçi',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 16),
@@ -501,18 +501,18 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
               controller: _ad,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(
-                labelText: 'Ziyaretci adi *',
+                labelText: 'Ziyaretçi adı *',
                 border: OutlineInputBorder(),
               ),
               maxLength: 200,
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Ziyaretci adi gerekli' : null,
+                  (v == null || v.trim().isEmpty) ? 'Ziyaretçi adı gerekli' : null,
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _unitNo,
               decoration: const InputDecoration(
-                labelText: 'Daire no * (orn. A-12)',
+                labelText: 'Daire no * (örn. A-12)',
                 border: OutlineInputBorder(),
               ),
               maxLength: 50,

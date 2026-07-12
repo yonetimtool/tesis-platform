@@ -42,18 +42,18 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
         icon: const Icon(Icons.warning_amber, color: Colors.red, size: 40),
         title: const Text('Acil durum bildirilsin mi?'),
         content: const Text(
-          'Yonetim paneline yuksek oncelikli alarm gonderilecek ve '
-          'yoneticilere bildirim gidecek.',
+          'Yönetim paneline yüksek öncelikli alarm gönderilecek ve '
+          'yöneticilere bildirim gidecek.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Vazgec'),
+            child: const Text('Vazgeç'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('BILDIR'),
+            child: const Text('BİLDİR'),
           ),
         ],
       ),
@@ -94,9 +94,9 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Alarm, yonetim panelinde ANINDA gorunur ve '
-                            'yoneticilere bildirim gider. Konumunuz '
-                            'alinabiliyorsa eklenir (alinamazsa alarm '
+                            'Alarm, yönetim panelinde ANINDA görünür ve '
+                            'yöneticilere bildirim gider. Konumunuz '
+                            'alınabiliyorsa eklenir (alınamazsa alarm '
                             'beklemez).',
                           ),
                         ),
@@ -109,8 +109,8 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
                       maxLines: 2,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        labelText: 'Kisa not (istege bagli)',
-                        hintText: 'Orn. B blok otopark girisi',
+                        labelText: 'Kısa not (isteğe bağlı)',
+                        hintText: 'Örn. B blok otopark girişi',
                       ),
                     ),
                   ],
@@ -140,7 +140,7 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
                       )
                     : const Icon(Icons.sos, size: 32),
                 label: Text(
-                  sending ? 'ALARM GONDERILIYOR...' : 'ACIL DURUM BILDIR',
+                  sending ? 'ALARM GÖNDERİLİYOR...' : 'ACİL DURUM BİLDİR',
                 ),
               ),
             ),
@@ -167,7 +167,7 @@ class _CallTile extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: const Icon(Icons.call, color: Colors.green),
-        title: const Text('Yonetimi ara'),
+        title: const Text('Yönetimi ara'),
         subtitle: Text(phone),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => launchUrl(uri),
@@ -195,15 +195,15 @@ class _SentCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               result.wasDuplicate
-                  ? 'Alarm ZATEN iletilmisti ✓ (tekrar gonderim — cift '
-                      'alarm olusmadi)'
+                  ? 'Alarm ZATEN iletilmişti ✓ (tekrar gönderim — çift '
+                      'alarm oluşmadı)'
                   : 'Alarm iletildi ✓',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Text(
-              'Yonetim paneli bilgilendirildi'
+              'Yönetim paneli bilgilendirildi'
               '${result.alert.gpsLat != null ? ' · konum eklendi' : ''}.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,

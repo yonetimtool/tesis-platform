@@ -78,7 +78,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const Icon(Icons.shield_outlined, size: 64),
                     const SizedBox(height: 16),
                     Text(
-                      'Tesis Guvenlik',
+                      'Tesis Güvenlik',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
@@ -112,7 +112,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       autocorrect: false,
                       decoration: const InputDecoration(
                         labelText: 'Tesis kodu (tenant)',
-                        hintText: 'orn. acme-plaza',
+                        hintText: 'örn. acme-plaza',
                         prefixIcon: Icon(Icons.apartment_outlined),
                         border: OutlineInputBorder(),
                       ),
@@ -120,7 +120,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         final value = v?.trim() ?? '';
                         if (value.isEmpty) return 'Tesis kodu zorunludur';
                         if (!RegExp(r'^[a-z0-9-]+$').hasMatch(value)) {
-                          return 'Yalnizca kucuk harf, rakam ve tire';
+                          return 'Yalnızca küçük harf, rakam ve tire';
                         }
                         return null;
                       },
@@ -142,7 +142,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           final value = v?.trim() ?? '';
                           if (value.isEmpty) return 'E-posta zorunludur';
                           if (!value.contains('@') || !value.contains('.')) {
-                            return 'Gecerli bir e-posta girin';
+                            return 'Geçerli bir e-posta girin';
                           }
                           return null;
                         },
@@ -155,12 +155,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         autocorrect: false,
                         decoration: const InputDecoration(
                           labelText: 'Daire no',
-                          hintText: 'orn. A-12',
+                          hintText: 'örn. A-12',
                           prefixIcon: Icon(Icons.door_front_door_outlined),
                           border: OutlineInputBorder(),
                           helperText:
-                              'Ilk giriste yonetimden aldiginiz gecici kodu '
-                              'parola alanina yazin.',
+                              'İlk girişte yönetimden aldığınız geçici kodu '
+                              'parola alanına yazın.',
                           helperMaxLines: 2,
                         ),
                         validator: (v) {
@@ -179,7 +179,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onFieldSubmitted: (_) => _submit(),
                       decoration: InputDecoration(
                         labelText: _mode == _LoginMode.sakin
-                            ? 'Parola veya gecici kod'
+                            ? 'Parola veya geçici kod'
                             : 'Parola',
                         prefixIcon: const Icon(Icons.lock_outline),
                         border: const OutlineInputBorder(),
@@ -196,7 +196,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         final value = v ?? '';
                         if (value.isEmpty) return 'Parola zorunludur';
                         if (value.length < 8) {
-                          return 'Parola en az 8 karakter olmali';
+                          return 'Parola en az 8 karakter olmalı';
                         }
                         return null;
                       },
@@ -210,7 +210,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onChanged: submitting
                           ? null
                           : (v) => setState(() => _rememberMe = v ?? false),
-                      title: const Text('Beni hatirla'),
+                      title: const Text('Beni hatırla'),
                       controlAffinity: ListTileControlAffinity.leading,
                       contentPadding: EdgeInsets.zero,
                       dense: true,
@@ -231,7 +231,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               width: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.5),
                             )
-                          : const Text('Giris yap'),
+                          : const Text('Giriş yap'),
                     ),
                   ],
                 ),

@@ -118,6 +118,37 @@ def test_update_user_role_active_password(client, world):
     assert _login_status(client, world["slug_a"], email, "IlkParola1") == 401
 
 
+def test_update_user_email_and_conflict(client, world):
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    pw = "MailParola1"
+    eski = f"mail-eski-{uuid.uuid4().hex[:8]}@acme.com"
+    uid = client.post(
+        "/users",
+        headers=admin,
+        json={"ad": "Mail Sahibi", "email": eski, "role": "security", "password": pw},
+    ).json()["id"]
+
+    # email guncelle -> 200, yanit yeni email'i tasir
+    yeni = f"mail-yeni-{uuid.uuid4().hex[:8]}@acme.com"
+    r = client.patch(f"/users/{uid}", headers=admin, json={"email": yeni})
+    assert r.status_code == 200, r.text
+    assert r.json()["email"] == yeni
+
+    # yeni email ile login olur, eski email artik taninmaz
+    assert _login_status(client, world["slug_a"], yeni, pw) == 200
+    assert _login_status(client, world["slug_a"], eski, pw) == 401
+
+    # baska kullanicinin email'ine guncelleme -> 409 conflict (anlasilir hata)
+    digeri = f"mail-diger-{uuid.uuid4().hex[:8]}@acme.com"
+    client.post(
+        "/users",
+        headers=admin,
+        json={"ad": "Diger", "email": digeri, "role": "tesis_gorevlisi", "password": "Parola123"},
+    )
+    dup = client.patch(f"/users/{uid}", headers=admin, json={"email": digeri})
+    assert dup.status_code == 409 and dup.json()["error"]["code"] == "conflict"
+
+
 def test_update_user_tenant_isolation(client, world):
     admin_a = _headers(client, world["slug_a"], world["admin_a"])
     admin_b = _headers(client, world["slug_b"], world["admin_b"])

@@ -77,7 +77,7 @@ export default function UnitsPage() {
       mutate();
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
-      setFormErr(/zaten kayitli|conflict|no /i.test(m) ? "Bu daire no zaten kayitli." : m);
+      setFormErr(/zaten kayitli|conflict|no /i.test(m) ? "Bu daire no zaten kayıtlı." : m);
     } finally {
       setSaving(false);
     }
@@ -120,18 +120,20 @@ export default function UnitsPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
         <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="font-medium">{editingId ? "Daire duzenle" : "Yeni daire"}</h2>
+          <h2 className="font-medium">{editingId ? "Daire düzenle" : "Yeni daire"}</h2>
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Daire no" hint="Tesiste benzersiz">
+            <Field label="Daire no" hint="Tesiste benzersiz; harf + sayı + tire (örn. A-12, B3, 12)">
               <input
                 className={inputCls}
                 value={form.no}
                 onChange={(e) => setForm({ ...form, no: e.target.value })}
                 placeholder="A-12"
+                pattern="[A-Za-z0-9-]+"
+                title="Yalnızca harf, sayı ve tire kullanın (örn. A-12, B3, 12)"
                 required
               />
             </Field>
@@ -165,7 +167,7 @@ export default function UnitsPage() {
               {saving ? "Kaydediliyor..." : "Kaydet"}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              Iptal
+              İptal
             </button>
           </div>
         </form>
@@ -206,7 +208,7 @@ export default function UnitsPage() {
                       {detail?.id === u.id ? "Kapat" : "Detay / Aidat"}
                     </button>
                     <button className={btnGhost} onClick={() => openEdit(u)}>
-                      Duzenle
+                      Düzenle
                     </button>
                     <button className={btnDanger} onClick={() => remove(u)}>
                       Sil

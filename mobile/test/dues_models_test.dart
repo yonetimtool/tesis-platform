@@ -49,8 +49,8 @@ void main() {
   test('yontem/durum TR etiketleri (bilinmeyen deger oldugu gibi doner)', () {
     expect(yontemLabel('elden'), 'Elden');
     expect(yontemLabel('havale'), 'Havale/EFT');
-    expect(durumLabel('basarili'), 'Basarili');
-    expect(durumLabel('iptal'), 'Iptal');
+    expect(durumLabel('basarili'), 'Başarılı');
+    expect(durumLabel('iptal'), 'İptal');
     expect(durumLabel('acayip'), 'acayip');
   });
 }

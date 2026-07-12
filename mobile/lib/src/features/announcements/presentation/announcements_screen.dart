@@ -62,7 +62,7 @@ class AnnouncementsScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            edit == null ? 'Duyuru yayinlandi ✓' : 'Duyuru guncellendi ✓',
+            edit == null ? 'Duyuru yayınlandı ✓' : 'Duyuru güncellendi ✓',
           ),
         ),
       );
@@ -97,7 +97,7 @@ class _Body extends ConsumerWidget {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: const [
-          Center(child: Text('Henuz duyuru yok.')),
+          Center(child: Text('Henüz duyuru yok.')),
         ],
       );
     }
@@ -144,13 +144,13 @@ class _AnnouncementCard extends ConsumerWidget {
                 ),
                 if (canManage)
                   PopupMenuButton<String>(
-                    tooltip: 'Islemler',
+                    tooltip: 'İşlemler',
                     onSelected: (v) async {
                       if (v == 'edit') onEdit(a);
                       if (v == 'delete') await _confirmDelete(context, ref, a);
                     },
                     itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'edit', child: Text('Duzenle')),
+                      PopupMenuItem(value: 'edit', child: Text('Düzenle')),
                       PopupMenuItem(value: 'delete', child: Text('Sil')),
                     ],
                   ),
@@ -164,8 +164,8 @@ class _AnnouncementCard extends ConsumerWidget {
             ],
             const SizedBox(height: 8),
             Text(
-              '${a.olusturanAd ?? 'Yonetim'} · ${_fmtDateTime(a.createdAt.toLocal())}'
-              '${a.duzenlendi ? ' · duzenlendi' : ''}',
+              '${a.olusturanAd ?? 'Yönetim'} · ${_fmtDateTime(a.createdAt.toLocal())}'
+              '${a.duzenlendi ? ' · düzenlendi' : ''}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -187,7 +187,7 @@ class _AnnouncementCard extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Iptal'),
+            child: const Text('İptal'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -247,7 +247,7 @@ class _AnnouncementPhoto extends StatelessWidget {
               children: [
                 Icon(Icons.broken_image_outlined, size: 20),
                 SizedBox(width: 8),
-                Text('Gorsel yuklenemedi'),
+                Text('Görsel yüklenemedi'),
               ],
             ),
           ),
@@ -268,7 +268,7 @@ class _AnnouncementPhoto extends StatelessWidget {
               child: Image.network(
                 url,
                 errorBuilder: (_, _, _) => const Text(
-                  'Gorsel yuklenemedi',
+                  'Görsel yüklenemedi',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -356,7 +356,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
       if (!mounted) return;
       setState(() {
         _photoBusy = false;
-        _photoError = 'Fotograf alinamadi: $e';
+        _photoError = 'Fotoğraf alınamadı: $e';
       });
     }
   }
@@ -398,9 +398,9 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
       setState(() {
         _photoBusy = false;
         _photoError = e.kind == ApiErrorKind.network
-            ? 'Fotograf yuklemek icin internet baglantisi gerekli '
-                '(yukleme adresi kisa omurlu). Baglanti gelince '
-                '"Tekrar yukle" ile deneyin.'
+            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli '
+                '(yükleme adresi kısa ömürlü). Bağlantı gelince '
+                '"Tekrar yükle" ile deneyin.'
             : e.message;
       });
     }
@@ -418,8 +418,8 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_fotoBekliyor) {
       setState(() {
-        _error = 'Fotograf henuz yuklenmedi. Yuklemenin bitmesini bekleyin, '
-            '"Tekrar yukle"yi deneyin veya fotoyu kaldirin.';
+        _error = 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin, '
+            '"Tekrar yükle"yi deneyin veya fotoyu kaldırın.';
       });
       return;
     }
@@ -452,7 +452,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.';
+          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
         });
       }
     }
@@ -478,7 +478,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              editing ? 'Duyuru duzenle' : 'Yeni duyuru',
+              editing ? 'Duyuru düzenle' : 'Yeni duyuru',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
@@ -486,11 +486,11 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
               controller: _baslikCtrl,
               maxLength: 200,
               decoration: const InputDecoration(
-                labelText: 'Baslik',
+                labelText: 'Başlık',
                 border: OutlineInputBorder(),
               ),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Baslik zorunludur' : null,
+                  (v == null || v.trim().isEmpty) ? 'Başlık zorunludur' : null,
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -519,7 +519,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  const Text('Gorsel (opsiyonel)'),
+                  const Text('Görsel (opsiyonel)'),
                 ],
               ),
               if (_photoPath != null) ...[
@@ -551,26 +551,26 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden cek'),
+                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden çek'),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _saving
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Galeriden sec'),
+                    label: const Text('Galeriden seç'),
                   ),
                   if (_photoPath != null && _fotoKey == null)
                     TextButton.icon(
                       onPressed: _photoBusy || _saving ? null : _retryUpload,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Tekrar yukle'),
+                      label: const Text('Tekrar yükle'),
                     ),
                   if (_photoPath != null)
                     TextButton.icon(
                       onPressed: _photoBusy || _saving ? null : _removePhoto,
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Kaldir'),
+                      label: const Text('Kaldır'),
                     ),
                 ],
               ),
@@ -593,10 +593,10 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                     : const Icon(Icons.campaign_outlined),
                 label: Text(
                   _saving
-                      ? 'Gonderiliyor...'
+                      ? 'Gönderiliyor...'
                       : editing
                           ? 'Kaydet'
-                          : 'Yayinla',
+                          : 'Yayınla',
                 ),
               ),
             ),

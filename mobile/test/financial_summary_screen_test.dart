@@ -71,7 +71,7 @@ void main() {
     // "Tum zamanlar" secilince donem'siz cagrilir
     await tester.tap(find.byKey(const Key('fs_donem_dropdown')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Tum zamanlar').last);
+    await tester.tap(find.text('Tüm zamanlar').last);
     await tester.pumpAndSettle();
     expect(api.lastDonem, isNull);
   });

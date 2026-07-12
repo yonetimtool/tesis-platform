@@ -71,7 +71,7 @@ void main() {
       final (_, app) = _app(UserRole.security, items: [_v()]);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.text('Yeni ziyaretci'), findsOneWidget);
+      expect(find.text('Yeni ziyaretçi'), findsOneWidget);
     });
 
     for (final role in [
@@ -84,7 +84,7 @@ void main() {
         final (_, app) = _app(role, items: [_v()]);
         await tester.pumpWidget(app);
         await tester.pumpAndSettle();
-        expect(find.text('Yeni ziyaretci'), findsNothing);
+        expect(find.text('Yeni ziyaretçi'), findsNothing);
         expect(find.byType(FloatingActionButton), findsNothing);
       });
     }
@@ -137,7 +137,7 @@ void main() {
       );
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Gecmis (1)'));
+      await tester.tap(find.text('Geçmiş (1)'));
       await tester.pumpAndSettle();
       expect(find.text('Onayla'), findsNothing);
       // sonuc satiri: kim yanitladi gorunur
@@ -158,10 +158,10 @@ void main() {
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
       expect(find.text('Bekleyen (1)'), findsOneWidget);
-      expect(find.text('Gecmis (1)'), findsOneWidget);
+      expect(find.text('Geçmiş (1)'), findsOneWidget);
       // Varsayilan sekme Bekleyen: rozet 'Bekliyor'
       expect(find.text('Bekliyor'), findsOneWidget);
-      await tester.tap(find.text('Gecmis (1)'));
+      await tester.tap(find.text('Geçmiş (1)'));
       await tester.pumpAndSettle();
       expect(find.text('Reddedildi'), findsWidgets);
     });
@@ -170,11 +170,11 @@ void main() {
       final (_, app) = _app(UserRole.security);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.text('Onay bekleyen ziyaretci yok.'), findsOneWidget);
-      await tester.tap(find.text('Gecmis (0)'));
+      expect(find.text('Onay bekleyen ziyaretçi yok.'), findsOneWidget);
+      await tester.tap(find.text('Geçmiş (0)'));
       await tester.pumpAndSettle();
       expect(
-        find.text('Henuz sonuclanan ziyaretci kaydi yok.'),
+        find.text('Henüz sonuçlanan ziyaretçi kaydı yok.'),
         findsOneWidget,
       );
     });
@@ -185,10 +185,10 @@ void main() {
     final (_, app) = _app(UserRole.security);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Yeni ziyaretci'));
+    await tester.tap(find.text('Yeni ziyaretçi'));
     await tester.pumpAndSettle();
-    expect(find.text('Ziyaretci adi *'), findsOneWidget);
-    expect(find.text('Daire no * (orn. A-12)'), findsOneWidget);
+    expect(find.text('Ziyaretçi adı *'), findsOneWidget);
+    expect(find.text('Daire no * (örn. A-12)'), findsOneWidget);
     expect(find.text('Not (opsiyonel)'), findsOneWidget);
     expect(find.text('Kaydet ve sakinlere bildir'), findsOneWidget);
   });

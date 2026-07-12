@@ -128,7 +128,7 @@ export async function proxyJson(
     const pair = await refreshSingleFlight(refresh);
     if (!pair) {
       const out = NextResponse.json(
-        { error: { code: "unauthorized", message: "Oturum suresi doldu." } },
+        { error: { code: "unauthorized", message: "Oturum süresi doldu." } },
         { status: 401 },
       );
       clearAuthCookies(out);

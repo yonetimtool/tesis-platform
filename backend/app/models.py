@@ -457,6 +457,26 @@ class Notification(Base):
 
 
 # --------------------------------------------------------------------------- #
+class TaskCategory(Base):
+    """Yonetici-tanimli gorev kategorisi (A6) — tenant'a ozel, soft-delete."""
+
+    __tablename__ = "task_category"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_task_category_id_tenant"),
+        UniqueConstraint("tenant_id", "ad", name="uq_task_category_tenant_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    created_at = _created_at()
+    updated_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+
+# --------------------------------------------------------------------------- #
 class Task(Base):
     __tablename__ = "task"
     __table_args__ = (
@@ -477,6 +497,12 @@ class Task(Base):
             ondelete="SET NULL",
             name="fk_task_checkpoint",
         ),
+        ForeignKeyConstraint(
+            ["kategori_id", "tenant_id"],
+            ["task_category.id", "task_category.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_task_kategori",
+        ),
     )
 
     id: Mapped[uuid.UUID] = _pk()
@@ -488,6 +514,7 @@ class Task(Base):
     aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
     atanan_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     checkpoint_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    kategori_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     periyot_dakika: Mapped[int | None] = mapped_column(Integer, nullable=True)
     sonraki_planlanan = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     foto_zorunlu: Mapped[bool] = mapped_column(

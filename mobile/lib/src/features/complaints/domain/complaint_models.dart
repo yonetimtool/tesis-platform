@@ -9,9 +9,9 @@ library;
 
 /// `complaint_durum` enum'unun istemci aynasi.
 enum ComplaintDurum {
-  acik('acik', 'Acik'),
-  inceleniyor('inceleniyor', 'Inceleniyor'),
-  cozuldu('cozuldu', 'Cozuldu'),
+  acik('acik', 'Açık'),
+  inceleniyor('inceleniyor', 'İnceleniyor'),
+  cozuldu('cozuldu', 'Çözüldü'),
   unknown('unknown', 'Bilinmeyen');
 
   const ComplaintDurum(this.wire, this.label);
@@ -32,9 +32,9 @@ enum ComplaintDurum {
 /// `complaint_kategori` enum'unun istemci aynasi (opsiyonel talep turu).
 /// null = belirtilmemis (eski kayitlar — geriye uyumlu).
 enum ComplaintKategori {
-  gurultu('gurultu', 'Gurultu kirliligi'),
-  goruntu('goruntu', 'Goruntu kirliligi'),
-  diger('diger', 'Diger');
+  gurultu('gurultu', 'Gürültü kirliliği'),
+  goruntu('goruntu', 'Görüntü kirliliği'),
+  diger('diger', 'Diğer');
 
   const ComplaintKategori(this.wire, this.label);
 

@@ -38,7 +38,7 @@ export default function SettingsPage() {
     setOk(null);
     const tel = telefon.trim();
     if (tel && !/^[+0-9 ()-]{7,}$/.test(tel)) {
-      setFormErr("Telefon formati gecersiz (orn. +905551234567).");
+      setFormErr("Telefon formatı geçersiz (örn. +905551234567).");
       return;
     }
     setSaving(true);
@@ -62,7 +62,7 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-semibold">Ayarlar</h1>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {data && (
         <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
@@ -77,11 +77,11 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <Field label="Tesis adi">
+          <Field label="Tesis adı">
             <input className={inputCls} value={ad} onChange={(e) => setAd(e.target.value)} required />
           </Field>
 
-          <Field label="Zaman dilimi (timezone)" hint="Orn: Europe/Istanbul">
+          <Field label="Zaman dilimi (timezone)" hint="Örn: Europe/Istanbul">
             <input
               className={inputCls}
               value={timezone}
@@ -91,8 +91,8 @@ export default function SettingsPage() {
           </Field>
 
           <Field
-            label="Acil durum yonetim telefonu"
-            hint="Saha guvenligi panik bastiginda mobil bu numarayi tel: ile arar. Orn: +905551234567"
+            label="Acil durum yönetim telefonu"
+            hint="Saha güvenliği panik bastığında mobil bu numarayı tel: ile arar. Örn: +905551234567"
           >
             <input
               className={inputCls}

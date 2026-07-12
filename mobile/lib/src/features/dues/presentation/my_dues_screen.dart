@@ -21,7 +21,7 @@ class MyDuesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Aidatim'),
+        title: const Text('Aidatım'),
         actions: [
           IconButton(
             tooltip: 'Yenile',
@@ -56,7 +56,7 @@ class _Body extends StatelessWidget {
         if (state.errorMessage != null)
           PatrolErrorBanner(
             message: state.forbidden
-                ? 'Aidat bilgisi yalnizca site sakini hesabina aciktir.'
+                ? 'Aidat bilgisi yalnızca site sakini hesabına açıktır.'
                 : state.errorMessage!,
             onRetry: state.forbidden ? null : controller.refresh,
           ),
@@ -65,8 +65,8 @@ class _Body extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.all(24),
               child: Text(
-                'Uzerinize kayitli daire bulunamadi. Yonetiminizle '
-                'iletisime gecin.',
+                'Üzerinize kayıtlı daire bulunamadı. Yönetiminizle '
+                'iletişime geçin.',
                 textAlign: TextAlign.center,
               ),
             ),
@@ -96,7 +96,7 @@ class _ToplamBakiyeCard extends StatelessWidget {
           borc ? Icons.account_balance_wallet_outlined : Icons.check_circle,
           color: borc ? Colors.red : Colors.green,
         ),
-        title: const Text('Toplam bakiye (tum daireler)'),
+        title: const Text('Toplam bakiye (tüm daireler)'),
         trailing: Text(
           kurusToTl(bakiyeKurus),
           style: TextStyle(
@@ -135,7 +135,7 @@ class _UnitCard extends StatelessWidget {
                   ),
                 ),
                 Chip(
-                  label: Text(borc ? 'Borc var' : 'Borc yok'),
+                  label: Text(borc ? 'Borç var' : 'Borç yok'),
                   labelStyle:
                       TextStyle(color: borc ? Colors.red : Colors.green),
                   backgroundColor: (borc ? Colors.red : Colors.green)
@@ -146,7 +146,7 @@ class _UnitCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             _row('Toplam tahakkuk', kurusToTl(unit.tahakkukKurus)),
-            _row('Toplam odenen', kurusToTl(unit.odenenKurus),
+            _row('Toplam ödenen', kurusToTl(unit.odenenKurus),
                 valueColor: Colors.green),
             _row('Bakiye', kurusToTl(unit.bakiyeKurus),
                 valueColor: borc ? Colors.red : Colors.green, bold: true),
@@ -154,7 +154,7 @@ class _UnitCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
-                'Tahakkuk ${kurusToTl(unit.tahakkukKurus)} - odenen '
+                'Tahakkuk ${kurusToTl(unit.tahakkukKurus)} - ödenen '
                 '${kurusToTl(unit.odenenKurus)} = ${kurusToTl(unit.bakiyeKurus)}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -178,7 +178,7 @@ class _UnitCard extends StatelessWidget {
                       subtitle: a.sonOdemeTarihi == null
                           ? null
                           : Text(
-                              'Son odeme: ${fmtDate(a.sonOdemeTarihi!)}',
+                              'Son ödeme: ${fmtDate(a.sonOdemeTarihi!)}',
                             ),
                       trailing: Text(
                         kurusToTl(a.tutarKurus),
@@ -192,7 +192,7 @@ class _UnitCard extends StatelessWidget {
               ExpansionTile(
                 tilePadding: EdgeInsets.zero,
                 title: Text(
-                  'Odemeler (${unit.payments.length})',
+                  'Ödemeler (${unit.payments.length})',
                   style: const TextStyle(fontSize: 14),
                 ),
                 children: [
@@ -201,8 +201,8 @@ class _UnitCard extends StatelessWidget {
               ),
             const SizedBox(height: 4),
             Text(
-              'Odeme durumu yalnizca odeme saglayicisindan gelen onayla '
-              'guncellenir; sorulariniz icin yonetiminize basvurun.',
+              'Ödeme durumu yalnızca ödeme sağlayıcısından gelen onayla '
+              'güncellenir; sorularınız için yönetiminize başvurun.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],

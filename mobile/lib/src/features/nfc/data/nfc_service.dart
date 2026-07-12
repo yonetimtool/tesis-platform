@@ -46,7 +46,7 @@ class NfcService {
         break;
       case NfcAvailability.disabled:
         return NfcReadResult.failure(
-          'NFC kapali. Lutfen cihaz ayarlarindan NFC\'yi acin.',
+          'NFC kapalı. Lütfen cihaz ayarlarından NFC\'yi açın.',
         );
       case NfcAvailability.unsupported:
         return NfcReadResult.failure('Bu cihaz NFC desteklemiyor.');
@@ -63,7 +63,7 @@ class NfcService {
           NfcPollingOption.iso15693,
           NfcPollingOption.iso18092,
         },
-        alertMessageIos: 'Etiketi telefonun arkasina yaklastirin.',
+        alertMessageIos: 'Etiketi telefonun arkasına yaklaştırın.',
         onDiscovered: (tag) async {
           final result = _parseTag(tag);
           await _safeStop(
@@ -92,7 +92,7 @@ class NfcService {
   }
 
   /// Devam eden okuma oturumunu iptal eder (kullanici "vazgec" dediginde).
-  Future<void> cancel() => _safeStop(errorIos: 'Iptal edildi');
+  Future<void> cancel() => _safeStop(errorIos: 'İptal edildi');
 
   Future<void> _safeStop({String? successIos, String? errorIos}) async {
     if (!_sessionActive) return;
@@ -119,14 +119,14 @@ class NfcService {
       }
       return NfcReadResult.failure('Desteklenmeyen platform.');
     } catch (e) {
-      return NfcReadResult.failure('Etiket cozumlenemedi: $e');
+      return NfcReadResult.failure('Etiket çözümlenemedi: $e');
     }
   }
 
   NfcReadResult _parseAndroid(NfcTag tag) {
     final androidTag = NfcTagAndroid.from(tag);
     if (androidTag == null || androidTag.id.isEmpty) {
-      return NfcReadResult.failure('Etiket UID okunamadi.');
+      return NfcReadResult.failure('Etiket UID okunamadı.');
     }
     final uid = bytesToHex(androidTag.id);
     final tagType = _tagTypeFromTechList(androidTag.techList);
@@ -147,7 +147,7 @@ class NfcService {
   NfcReadResult _parseIos(NfcTag tag) {
     final mifare = MiFareIos.from(tag);
     if (mifare == null || mifare.identifier.isEmpty) {
-      return NfcReadResult.failure('Etiket UID okunamadi.');
+      return NfcReadResult.failure('Etiket UID okunamadı.');
     }
     final uid = bytesToHex(mifare.identifier);
     final tagType = switch (mifare.mifareFamily) {

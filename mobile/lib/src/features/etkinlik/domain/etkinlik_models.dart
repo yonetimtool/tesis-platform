@@ -10,8 +10,8 @@ library;
 
 /// `katilim_durum` enum'unun istemci aynasi (RSVP beyani).
 enum KatilimDurum {
-  katiliyorum('katiliyorum', 'Katiliyorum'),
-  katilmiyorum('katilmiyorum', 'Katilmiyorum');
+  katiliyorum('katiliyorum', 'Katılıyorum'),
+  katilmiyorum('katilmiyorum', 'Katılmıyorum');
 
   const KatilimDurum(this.wire, this.label);
 

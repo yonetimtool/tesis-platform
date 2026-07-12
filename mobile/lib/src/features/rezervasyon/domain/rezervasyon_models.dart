@@ -13,7 +13,7 @@ library;
 /// `rezervasyon_durum` enum'unun istemci aynasi.
 enum RezervasyonDurum {
   bekliyor('bekliyor', 'Bekliyor'),
-  onaylandi('onaylandi', 'Onaylandi'),
+  onaylandi('onaylandi', 'Onaylandı'),
   reddedildi('reddedildi', 'Reddedildi'),
   unknown('unknown', 'Bilinmeyen');
 

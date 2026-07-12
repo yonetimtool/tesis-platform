@@ -86,7 +86,7 @@ void main() {
       // Test ortaminda ag yok — Image.network errorBuilder'a duser; onemli
       // olan gorsel alaninin CIZILMESI ve cokme olmamasi.
       expect(
-        find.text('Gorsel yuklenemedi').evaluate().isNotEmpty ||
+        find.text('Görsel yüklenemedi').evaluate().isNotEmpty ||
             find.byType(Image).evaluate().isNotEmpty,
         isTrue,
       );
@@ -100,10 +100,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Yeni duyuru'));
     await tester.pumpAndSettle();
-    expect(find.text('Gorsel (opsiyonel)'), findsOneWidget);
+    expect(find.text('Görsel (opsiyonel)'), findsOneWidget);
     expect(find.text('Kamera'), findsOneWidget);
-    expect(find.text('Galeriden sec'), findsOneWidget);
+    expect(find.text('Galeriden seç'), findsOneWidget);
     // foto'suz da yayinlanabilir — buton aktif
-    expect(find.text('Yayinla'), findsOneWidget);
+    expect(find.text('Yayınla'), findsOneWidget);
   });
 }

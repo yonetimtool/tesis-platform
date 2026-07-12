@@ -81,7 +81,7 @@ class _KargoScreenState extends ConsumerState<KargoScreen> {
           bottom: TabBar(
             tabs: [
               Tab(text: 'Bekleyen (${bekleyen.length})'),
-              Tab(text: 'Teslim alinan (${teslim.length})'),
+              Tab(text: 'Teslim alınan (${teslim.length})'),
             ],
           ),
         ),
@@ -109,7 +109,7 @@ class _KargoScreenState extends ConsumerState<KargoScreen> {
               child: _Body(
                 state: state,
                 items: teslim,
-                emptyText: 'Henuz teslim alinan kargo kaydi yok.',
+                emptyText: 'Henüz teslim alınan kargo kaydı yok.',
               ),
             ),
           ],
@@ -292,7 +292,7 @@ class _KargoCard extends ConsumerWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        'Teslim alindi'
+                        'Teslim alındı'
                         '${k.teslimAlanAd != null ? ' — ${k.teslimAlanAd}' : ''}'
                         '${k.teslimZamani != null ? ' · ${_fmtDateTime(k.teslimZamani!.toLocal())}' : ''}',
                         style: Theme.of(context).textTheme.bodySmall,
@@ -340,7 +340,7 @@ class _ReceiveButtonState extends ConsumerState<_ReceiveButton> {
           .read(kargoControllerProvider.notifier)
           .markReceived(widget.kargoId);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Kargo teslim alindi ✓')),
+        const SnackBar(content: Text('Kargo teslim alındı ✓')),
       );
       widget.onReceived?.call();
     } on ApiException catch (e) {
@@ -348,7 +348,7 @@ class _ReceiveButtonState extends ConsumerState<_ReceiveButton> {
       widget.onReceived?.call();
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Isaretlenemedi. Tekrar deneyin.')),
+        const SnackBar(content: Text('İşaretlenemedi. Tekrar deneyin.')),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -362,7 +362,7 @@ class _ReceiveButtonState extends ConsumerState<_ReceiveButton> {
       child: FilledButton.icon(
         style: FilledButton.styleFrom(backgroundColor: Colors.green),
         icon: const Icon(Icons.check),
-        label: const Text('Teslim aldim'),
+        label: const Text('Teslim aldım'),
         onPressed: _busy ? null : _receive,
       ),
     );
@@ -402,7 +402,7 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
               const SizedBox(height: 12),
               Text('Daire: ${k.unitNo ?? '-'}'),
               const SizedBox(height: 4),
-              Text('Kayit: ${_fmtDateTime(k.createdAt.toLocal())}'
+              Text('Kayıt: ${_fmtDateTime(k.createdAt.toLocal())}'
                   '${k.kaydedenAd != null ? ' — ${k.kaydedenAd}' : ''}'),
               if (k.notlar != null && k.notlar!.isNotEmpty) ...[
                 const SizedBox(height: 4),
@@ -411,7 +411,7 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
               if (!k.bekliyor) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Teslim alindi'
+                  'Teslim alındı'
                   '${k.teslimAlanAd != null ? ' — ${k.teslimAlanAd}' : ''}'
                   '${k.teslimZamani != null ? ' · ${_fmtDateTime(k.teslimZamani!.toLocal())}' : ''}',
                 ),
@@ -445,7 +445,7 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
                         children: [
                           Icon(Icons.broken_image_outlined, size: 20),
                           SizedBox(width: 8),
-                          Text('Gorsel yuklenemedi'),
+                          Text('Görsel yüklenemedi'),
                         ],
                       ),
                     ),
@@ -531,7 +531,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
       if (!mounted) return;
       setState(() {
         _photoBusy = false;
-        _photoError = 'Fotograf alinamadi: $e';
+        _photoError = 'Fotoğraf alınamadı: $e';
       });
     }
   }
@@ -571,9 +571,9 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
       setState(() {
         _photoBusy = false;
         _photoError = e.kind == ApiErrorKind.network
-            ? 'Fotograf yuklemek icin internet baglantisi gerekli '
-                '(yukleme adresi kisa omurlu). Baglanti gelince '
-                '"Tekrar yukle" ile deneyin.'
+            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli '
+                '(yükleme adresi kısa ömürlü). Bağlantı gelince '
+                '"Tekrar yükle" ile deneyin.'
             : e.message;
       });
     }
@@ -591,8 +591,8 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
     if (_busy || !(_formKey.currentState?.validate() ?? false)) return;
     if (_fotoBekliyor) {
       setState(() {
-        _hata = 'Fotograf henuz yuklenmedi. Yuklemenin bitmesini bekleyin, '
-            '"Tekrar yukle"yi deneyin veya fotoyu kaldirin.';
+        _hata = 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin, '
+            '"Tekrar yükle"yi deneyin veya fotoyu kaldırın.';
       });
       return;
     }
@@ -622,7 +622,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = 'Kayit gonderilemedi. Tekrar deneyin.';
+          _hata = 'Kayıt gönderilemedi. Tekrar deneyin.';
         });
       }
     }
@@ -650,7 +650,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
               TextFormField(
                 controller: _unitNo,
                 decoration: const InputDecoration(
-                  labelText: 'Daire no * (orn. A-12)',
+                  labelText: 'Daire no * (örn. A-12)',
                   border: OutlineInputBorder(),
                 ),
                 maxLength: 50,
@@ -662,12 +662,12 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
                 controller: _firma,
                 textCapitalization: TextCapitalization.words,
                 decoration: const InputDecoration(
-                  labelText: 'Kargo firmasi *',
+                  labelText: 'Kargo firması *',
                   border: OutlineInputBorder(),
                 ),
                 maxLength: 200,
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Kargo firmasi gerekli'
+                    ? 'Kargo firması gerekli'
                     : null,
               ),
               const SizedBox(height: 8),
@@ -691,7 +691,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  const Text('Paket fotografi (opsiyonel)'),
+                  const Text('Paket fotoğrafı (opsiyonel)'),
                 ],
               ),
               if (_photoPath != null) ...[
@@ -723,26 +723,26 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden cek'),
+                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden çek'),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _busy
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Galeriden sec'),
+                    label: const Text('Galeriden seç'),
                   ),
                   if (_photoPath != null && _fotoKey == null)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _retryUpload,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Tekrar yukle'),
+                      label: const Text('Tekrar yükle'),
                     ),
                   if (_photoPath != null)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _removePhoto,
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Kaldir'),
+                      label: const Text('Kaldır'),
                     ),
                 ],
               ),

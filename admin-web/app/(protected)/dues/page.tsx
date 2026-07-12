@@ -46,7 +46,7 @@ export default function DuesPage() {
     setBRes(null);
     const k = tlToKurus(tl);
     if (k === null || k <= 0) {
-      setBErr("Gecerli bir tutar girin (sifirdan buyuk).");
+      setBErr("Geçerli bir tutar girin (sıfırdan büyük).");
       return;
     }
     setBBusy(true);
@@ -61,7 +61,7 @@ export default function DuesPage() {
       setBRes({ created: res.created.length, atlanan: res.atlanan });
       mutateA();
     } catch (err) {
-      setBErr(err instanceof Error ? err.message : "Tahakkuk olusturulamadi.");
+      setBErr(err instanceof Error ? err.message : "Tahakkuk oluşturulamadı.");
     } finally {
       setBBusy(false);
     }
@@ -73,9 +73,9 @@ export default function DuesPage() {
 
       {/* Toplu tahakkuk */}
       <form onSubmit={bulk} className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="font-medium">Toplu tahakkuk (tum aktif daireler)</h2>
+        <h2 className="font-medium">Toplu tahakkuk (tüm aktif daireler)</h2>
         <div className="grid grid-cols-4 gap-3">
-          <Field label="Donem" hint="Ornek: 2026-07">
+          <Field label="Dönem" hint="Örnek: 2026-07">
             <input
               className={inputCls}
               value={donem}
@@ -94,21 +94,21 @@ export default function DuesPage() {
               required
             />
           </Field>
-          <Field label="Son odeme (opsiyonel)">
+          <Field label="Son ödeme (opsiyonel)">
             <input type="date" className={inputCls} value={son} onChange={(e) => setSon(e.target.value)} />
           </Field>
-          <Field label="Aciklama (opsiyonel)">
+          <Field label="Açıklama (opsiyonel)">
             <input className={inputCls} value={desc} onChange={(e) => setDesc(e.target.value)} />
           </Field>
         </div>
         <ErrorBox message={bErr} />
         {bRes && (
           <p className="text-sm text-emerald-700">
-            {bRes.created} tahakkuk olusturuldu · {bRes.atlanan} atlandi (zaten vardi).
+            {bRes.created} tahakkuk oluşturuldu · {bRes.atlanan} atlandı (zaten vardı).
           </p>
         )}
         <button type="submit" className={btnPrimary} disabled={bBusy}>
-          {bBusy ? "Olusturuluyor..." : "Toplu tahakkuk olustur"}
+          {bBusy ? "Oluşturuluyor..." : "Toplu tahakkuk oluştur"}
         </button>
       </form>
 
@@ -117,7 +117,7 @@ export default function DuesPage() {
         <div className="flex items-end justify-between">
           <h2 className="text-lg font-medium">Tahakkuklar</h2>
           <div className="w-48">
-            <Field label="Donem filtresi">
+            <Field label="Dönem filtresi">
               <input
                 className={inputCls}
                 value={aDonem}
@@ -135,9 +135,9 @@ export default function DuesPage() {
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
                 <th className="px-3 py-2 font-medium">Daire</th>
-                <th className="px-3 py-2 font-medium">Donem</th>
+                <th className="px-3 py-2 font-medium">Dönem</th>
                 <th className="px-3 py-2 font-medium">Tutar</th>
-                <th className="px-3 py-2 font-medium">Son odeme</th>
+                <th className="px-3 py-2 font-medium">Son ödeme</th>
               </tr>
             </thead>
             <tbody>
@@ -172,13 +172,13 @@ export default function DuesPage() {
 
       {/* Odeme listesi */}
       <section className="space-y-3">
-        <h2 className="text-lg font-medium">Odemeler</h2>
+        <h2 className="text-lg font-medium">Ödemeler</h2>
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
                 <th className="px-3 py-2 font-medium">Daire</th>
-                <th className="px-3 py-2 font-medium">Yontem</th>
+                <th className="px-3 py-2 font-medium">Yöntem</th>
                 <th className="px-3 py-2 font-medium">Durum</th>
                 <th className="px-3 py-2 font-medium">Tutar</th>
                 <th className="px-3 py-2 font-medium">Zaman</th>
@@ -209,7 +209,7 @@ export default function DuesPage() {
               {payments && payments.items.length === 0 && (
                 <tr>
                   <td className="px-3 py-6 text-center text-muted" colSpan={5}>
-                    Odeme yok.
+                    Ödeme yok.
                   </td>
                 </tr>
               )}

@@ -36,13 +36,13 @@ void main() {
     expect(tester.takeException(), isNull);
 
     // Ust baslik gorunur, listenin sonundaki kart kaydirilarak erisilebilir.
-    expect(find.text('Giris basarili'), findsOneWidget);
+    expect(find.text('Giriş başarılı'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Gonderim kuyrugu'),
+      find.text('Gönderim kuyruğu'),
       200,
       scrollable: find.byType(Scrollable),
     );
-    expect(find.text('Gonderim kuyrugu'), findsOneWidget);
+    expect(find.text('Gönderim kuyruğu'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -55,7 +55,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Giris basarili'), findsOneWidget);
-    expect(find.text('Gonderim kuyrugu'), findsOneWidget);
+    expect(find.text('Giriş başarılı'), findsOneWidget);
+    expect(find.text('Gönderim kuyruğu'), findsOneWidget);
   });
 }

@@ -13,7 +13,7 @@ const LIMIT = 20;
 const TIPLER = [
   { value: "temizlik", label: "Temizlik" },
   { value: "kontrol", label: "Kontrol" },
-  { value: "ilaclama", label: "Ilaclama" },
+  { value: "ilaclama", label: "İlaçlama" },
   { value: "peyzaj", label: "Peyzaj" },
 ];
 const TIP_STYLE: Record<string, string> = {
@@ -105,23 +105,23 @@ export default function TaskReportPage() {
   return (
     <div className="space-y-6">
       <ReportsTabs />
-      <h1 className="text-2xl font-semibold">Gorev Gecmisi Raporu</h1>
+      <h1 className="text-2xl font-semibold">Görev Geçmişi Raporu</h1>
 
       <form onSubmit={submit} className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-5">
         <div className="w-52">
-          <Field label="Baslangic" hint="Yerel saat (opsiyonel)">
+          <Field label="Başlangıç" hint="Yerel saat (opsiyonel)">
             <input type="datetime-local" className={inputCls} value={bas} onChange={(e) => setBas(e.target.value)} />
           </Field>
         </div>
         <div className="w-52">
-          <Field label="Bitis" hint="Yerel saat (opsiyonel)">
+          <Field label="Bitiş" hint="Yerel saat (opsiyonel)">
             <input type="datetime-local" className={inputCls} value={bit} onChange={(e) => setBit(e.target.value)} />
           </Field>
         </div>
         <div className="w-44">
           <Field label="Tip">
             <select className={inputCls} value={tip} onChange={(e) => setTip(e.target.value)}>
-              <option value="">Tumu</option>
+              <option value="">Tümü</option>
               {TIPLER.map((t) => (
                 <option key={t.value} value={t.value}>
                   {t.label}
@@ -133,7 +133,7 @@ export default function TaskReportPage() {
         <div className="w-52">
           <Field label="Tamamlayan (opsiyonel)">
             <select className={inputCls} value={tamamlayan} onChange={(e) => setTamamlayan(e.target.value)}>
-              <option value="">Tumu</option>
+              <option value="">Tümü</option>
               {(users?.items ?? []).map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.ad}
@@ -149,9 +149,9 @@ export default function TaskReportPage() {
 
       {error && <ErrorBox message={error.message} />}
       {committed === null && (
-        <p className="text-sm text-muted">Filtre secip Raporu getir butonuna basin.</p>
+        <p className="text-sm text-muted">Filtre seçip Raporu getir butonuna basın.</p>
       )}
-      {isLoading && committed !== null && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && committed !== null && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {data && (
         <>
@@ -159,7 +159,7 @@ export default function TaskReportPage() {
             <Card baslik="Toplam tamamlama" deger={String(data.ozet.toplam)} />
             <Card baslik="Temizlik" deger={String(data.ozet.temizlik)} tone="teal" />
             <Card baslik="Kontrol" deger={String(data.ozet.kontrol)} tone="blue" />
-            <Card baslik="Ilaclama" deger={String(data.ozet.ilaclama)} tone="violet" />
+            <Card baslik="İlaçlama" deger={String(data.ozet.ilaclama)} tone="violet" />
             <Card baslik="Peyzaj" deger={String(data.ozet.peyzaj)} tone="emerald" />
           </div>
 
@@ -174,7 +174,7 @@ export default function TaskReportPage() {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-left text-slate-500">
                   <tr>
-                    <th className="px-3 py-2 font-medium">Gorev</th>
+                    <th className="px-3 py-2 font-medium">Görev</th>
                     <th className="px-3 py-2 font-medium">Tip</th>
                     <th className="px-3 py-2 font-medium">Tamamlayan</th>
                     <th className="px-3 py-2 font-medium">Zaman</th>

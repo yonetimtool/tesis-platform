@@ -76,6 +76,7 @@ export default function UsersPage() {
         // PATCH: parola yalniz doluysa gonderilir (bossa degismez)
         const body: Record<string, unknown> = {
           ad: form.ad,
+          email: form.email,
           telefon: form.telefon || null,
           role: form.role,
         };
@@ -94,7 +95,7 @@ export default function UsersPage() {
       mutate();
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
-      setFormErr(/email|e-posta|zaten kayitli|conflict/i.test(m) ? "Bu e-posta zaten kayitli." : m);
+      setFormErr(/email|e-posta|zaten kayitli|conflict/i.test(m) ? "Bu e-posta zaten kayıtlı." : m);
     } finally {
       setSaving(false);
     }
@@ -105,16 +106,16 @@ export default function UsersPage() {
       await apiSend(`/api/users/${u.id}`, "PATCH", { is_active: active });
       mutate();
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Guncellenemedi.");
+      window.alert(err instanceof Error ? err.message : "Güncellenemedi.");
     }
   }
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Kullanicilar</h1>
+        <h1 className="text-2xl font-semibold">Kullanıcılar</h1>
         <button className={btnPrimary} onClick={openNew}>
-          Yeni kullanici
+          Yeni kullanıcı
         </button>
       </div>
 
@@ -122,7 +123,7 @@ export default function UsersPage() {
         <div className="w-44">
           <Field label="Rol">
             <select className={inputCls} value={role} onChange={(e) => resetFilters({ role: e.target.value })}>
-              <option value="">Tumu</option>
+              <option value="">Tümü</option>
               {ROLES.map((r) => (
                 <option key={r.value} value={r.value}>
                   {r.label}
@@ -134,7 +135,7 @@ export default function UsersPage() {
         <div className="w-44">
           <Field label="Durum">
             <select className={inputCls} value={aktif} onChange={(e) => resetFilters({ aktif: e.target.value })}>
-              <option value="">Tumu</option>
+              <option value="">Tümü</option>
               <option value="true">Aktif</option>
               <option value="false">Pasif</option>
             </select>
@@ -153,11 +154,11 @@ export default function UsersPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
         <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="font-medium">{editingId ? "Kullanici duzenle" : "Yeni kullanici"}</h2>
+          <h2 className="font-medium">{editingId ? "Kullanıcı düzenle" : "Yeni kullanıcı"}</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Ad">
               <input
@@ -167,14 +168,13 @@ export default function UsersPage() {
                 required
               />
             </Field>
-            <Field label="E-posta" hint={editingId ? "Degistirmek isterseniz guncelleyin" : undefined}>
+            <Field label="E-posta" hint={editingId ? "Değiştirmek isterseniz güncelleyin" : undefined}>
               <input
                 type="email"
                 className={inputCls}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required={!editingId}
-                disabled={Boolean(editingId)}
+                required
               />
             </Field>
             <Field label="Telefon (opsiyonel)">
@@ -208,7 +208,7 @@ export default function UsersPage() {
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 minLength={8}
                 required={!editingId}
-                placeholder={editingId ? "Bos birakirsaniz degismez" : ""}
+                placeholder={editingId ? "Boş bırakırsanız değişmez" : ""}
               />
             </Field>
           </div>
@@ -218,7 +218,7 @@ export default function UsersPage() {
               {saving ? "Kaydediliyor..." : "Kaydet"}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              Iptal
+              İptal
             </button>
           </div>
         </form>
@@ -261,15 +261,15 @@ export default function UsersPage() {
                 <td className="px-3 py-2 text-right">
                   <div className="flex justify-end gap-2">
                     <button className={btnGhost} onClick={() => openEdit(u)}>
-                      Duzenle
+                      Düzenle
                     </button>
                     {u.is_active ? (
                       <button className={btnGhost} onClick={() => setActive(u, false)}>
-                        Pasiflestir
+                        Pasifleştir
                       </button>
                     ) : (
                       <button className={btnGhost} onClick={() => setActive(u, true)}>
-                        Aktiflestir
+                        Aktifleştir
                       </button>
                     )}
                   </div>
@@ -279,7 +279,7 @@ export default function UsersPage() {
             {data && data.items.length === 0 && (
               <tr>
                 <td className="px-3 py-6 text-center text-muted" colSpan={6}>
-                  Kullanici yok.
+                  Kullanıcı yok.
                 </td>
               </tr>
             )}

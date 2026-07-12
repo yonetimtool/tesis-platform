@@ -101,7 +101,7 @@ class AuthController extends Notifier<AuthState> {
     } catch (_) {
       state = state.copyWith(
         submitting: false,
-        errorMessage: 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
       );
     }
   }
@@ -141,7 +141,7 @@ class AuthController extends Notifier<AuthState> {
     } catch (_) {
       state = state.copyWith(
         submitting: false,
-        errorMessage: 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
       );
     }
   }
@@ -175,7 +175,7 @@ class AuthController extends Notifier<AuthState> {
     } catch (_) {
       state = state.copyWith(
         submitting: false,
-        errorMessage: 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
       );
     }
   }
@@ -205,7 +205,7 @@ class AuthController extends Notifier<AuthState> {
     state = state.copyWith(
       status: AuthStatus.unauthenticated,
       submitting: false,
-      errorMessage: 'Oturumunuz sona erdi. Lutfen tekrar giris yapin.',
+      errorMessage: 'Oturumunuz sona erdi. Lütfen tekrar giriş yapın.',
     );
   }
 }

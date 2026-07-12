@@ -178,26 +178,39 @@ void main() {
         'ad': 'Kapi kontrol',
         'aciklama': null,
         'atanan_user_id': null,
+        'kategori_id': null,
         'periyot_dakika': null,
         'foto_zorunlu': false,
         'aktif': true,
       });
     });
 
-    test('fromTask mevcut gorevi forma tasir', () {
+    test('toJson: secili kategori_id gonderilir (A6)', () {
+      const draft = TaskDraft(
+        tip: TaskTip.temizlik,
+        ad: 'Havuz',
+        kategoriId: 'kat-1',
+      );
+      expect(draft.toJson()['kategori_id'], 'kat-1');
+    });
+
+    test('fromTask mevcut gorevi forma tasir (kategori dahil)', () {
       final task = Task.fromJson(const {
         'id': 't-1',
         'tip': 'peyzaj',
         'ad': 'Cim bicme',
         'aciklama': 'Haftalik',
         'atanan_user_id': 'u-9',
+        'kategori_id': 'kat-2',
         'periyot_dakika': 10080,
         'foto_zorunlu': true,
         'aktif': true,
       });
+      expect(task.kategoriId, 'kat-2');
       final draft = TaskDraft.fromTask(task);
       expect(draft.tip, TaskTip.peyzaj);
       expect(draft.atananUserId, 'u-9');
+      expect(draft.kategoriId, 'kat-2');
       expect(draft.periyotDakika, 10080);
       expect(draft.fotoZorunlu, isTrue);
     });

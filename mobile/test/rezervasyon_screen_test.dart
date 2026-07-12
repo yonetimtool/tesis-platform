@@ -144,7 +144,7 @@ void main() {
       );
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Sonuclanan (1)'));
+      await tester.tap(find.text('Sonuçlanan (1)'));
       await tester.pumpAndSettle();
       expect(find.text('Onayla'), findsNothing);
       expect(find.textContaining('Acme Yonetici'), findsOneWidget);
@@ -166,7 +166,7 @@ void main() {
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
       expect(find.text('Bekleyen (1)'), findsOneWidget);
-      expect(find.text('Sonuclanan (2)'), findsOneWidget);
+      expect(find.text('Sonuçlanan (2)'), findsOneWidget);
       expect(find.text('Takvim (1)'), findsOneWidget); // yalniz onayli
       expect(find.text('Alanlar (1)'), findsOneWidget);
     });
@@ -221,12 +221,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ortak alan'), findsOneWidget);
     expect(find.textContaining('Tarih: '), findsOneWidget);
-    expect(find.textContaining('Baslangic: 10:00'), findsOneWidget);
-    expect(find.textContaining('Bitis: 12:00'), findsOneWidget);
-    expect(find.text('Kisi sayisi:'), findsOneWidget);
+    expect(find.textContaining('Başlangıç: 10:00'), findsOneWidget);
+    expect(find.textContaining('Bitiş: 12:00'), findsOneWidget);
+    expect(find.text('Kişi sayısı:'), findsOneWidget);
     expect(find.text('Not (opsiyonel)'), findsOneWidget);
 
-    await tester.tap(find.text('Talep gonder'));
+    await tester.tap(find.text('Talep gönder'));
     await tester.pumpAndSettle();
     expect(api.requested, hasLength(1));
     expect(api.requested.single.alanId, 'a-1');
@@ -241,9 +241,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Yeni alan'));
     await tester.pumpAndSettle();
-    expect(find.text('Alan adi * (orn. Havuz)'), findsOneWidget);
-    expect(find.text('Aciklama (opsiyonel)'), findsOneWidget);
-    expect(find.text('Alani ekle'), findsOneWidget);
+    expect(find.text('Alan adı * (örn. Havuz)'), findsOneWidget);
+    expect(find.text('Açıklama (opsiyonel)'), findsOneWidget);
+    expect(find.text('Alanı ekle'), findsOneWidget);
   });
 
   group('push tiklamasi (initialRezervasyonId)', () {
@@ -258,7 +258,7 @@ void main() {
       await tester.pumpAndSettle();
       // Detay sheet'e ozgu satirlar: talep eden + kisi sayisi detayi.
       expect(find.textContaining('Acme Sakin'), findsOneWidget);
-      expect(find.textContaining('Kisi sayisi: 4'), findsOneWidget);
+      expect(find.textContaining('Kişi sayısı: 4'), findsOneWidget);
       // Yonetim icin sheet'te de Onayla/Reddet (kart + sheet).
       expect(find.text('Onayla'), findsNWidgets(2));
     });

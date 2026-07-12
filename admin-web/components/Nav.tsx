@@ -4,16 +4,16 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 const LINKS = [
-  { href: "/dashboard", label: "Canli Panel" },
+  { href: "/dashboard", label: "Canlı Panel" },
   { href: "/shifts", label: "Vardiyalar" },
-  { href: "/checkpoints", label: "NFC Noktalari" },
-  { href: "/patrol-plans", label: "Devriye Planlari" },
-  { href: "/tasks", label: "Gorevler" },
-  { href: "/assets", label: "Demirbas" },
+  { href: "/checkpoints", label: "NFC Noktaları" },
+  { href: "/patrol-plans", label: "Devriye Planları" },
+  { href: "/tasks", label: "Görevler" },
+  { href: "/assets", label: "Demirbaş" },
   { href: "/units", label: "Daireler" },
   { href: "/dues", label: "Aidat" },
   { href: "/reports/dues", label: "Raporlar" },
-  { href: "/users", label: "Kullanicilar" },
+  { href: "/users", label: "Kullanıcılar" },
   { href: "/emergency", label: "Acil Durum" },
   { href: "/announcements", label: "Duyurular" },
   { href: "/complaints", label: "Talepler" },
@@ -59,7 +59,7 @@ export function Nav() {
           onClick={logout}
           className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
         >
-          Cikis
+          Çıkış
         </button>
       </div>
     </header>

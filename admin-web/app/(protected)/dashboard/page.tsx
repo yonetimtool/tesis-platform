@@ -30,7 +30,7 @@ function AlarmSatir({ alarm }: { alarm: Alarm }) {
       <div>
         <div className="flex items-center gap-2">
           <span className={`text-xs font-semibold ${acil ? "text-red-700" : "text-slate-500"}`}>
-            {acil ? "ACIL DURUM" : alarm.tip}
+            {acil ? "ACİL DURUM" : alarm.tip}
           </span>
         </div>
         <p className="text-sm text-slate-800">{alarm.mesaj}</p>
@@ -50,10 +50,10 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Canli Panel</h1>
+        <h1 className="text-2xl font-semibold">Canlı Panel</h1>
         {data && (
           <span className="text-xs text-muted">
-            Guncellendi: {formatDateTime(data.generated_at)} · otomatik yenilenir (15 sn)
+            Güncellendi: {formatDateTime(data.generated_at)} · otomatik yenilenir (15 sn)
           </span>
         )}
       </div>
@@ -61,10 +61,10 @@ export default function DashboardPage() {
       {error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error.message}</p>
       )}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-medium">Bugunku Turlar</h2>
+        <h2 className="text-lg font-medium">Bugünkü Turlar</h2>
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
@@ -93,7 +93,7 @@ export default function DashboardPage() {
               {data && data.aktif_turlar.length === 0 && (
                 <tr>
                   <td className="px-3 py-6 text-center text-muted" colSpan={4}>
-                    Bugun icin tur yok.
+                    Bugün için tur yok.
                   </td>
                 </tr>
               )}

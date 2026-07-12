@@ -108,8 +108,8 @@ void main() {
         final (_, app) = _app(role, items: [_e()]);
         await tester.pumpWidget(app);
         await tester.pumpAndSettle();
-        expect(find.text('5 katiliyor'), findsOneWidget);
-        expect(find.text('2 katilmiyor'), findsOneWidget);
+        expect(find.text('5 katılıyor'), findsOneWidget);
+        expect(find.text('2 katılmıyor'), findsOneWidget);
       });
     }
   });
@@ -120,10 +120,10 @@ void main() {
       final (api, app) = _app(UserRole.resident, items: [_e()]);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.text('Katiliyorum'), findsOneWidget);
-      expect(find.text('Katilmiyorum'), findsOneWidget);
+      expect(find.text('Katılıyorum'), findsOneWidget);
+      expect(find.text('Katılmıyorum'), findsOneWidget);
 
-      await tester.tap(find.text('Katiliyorum'));
+      await tester.tap(find.text('Katılıyorum'));
       await tester.pumpAndSettle();
       expect(api.rsvps, [('e-1', KatilimDurum.katiliyorum)]);
     });
@@ -137,7 +137,7 @@ void main() {
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
       // mevcut secim rozet olarak da gorunur
-      await tester.tap(find.text('Katilmiyorum').first);
+      await tester.tap(find.text('Katılmıyorum').first);
       await tester.pumpAndSettle();
       expect(api.rsvps, [('e-1', KatilimDurum.katilmiyorum)]);
     });
@@ -153,8 +153,8 @@ void main() {
         final (_, app) = _app(role, items: [_e()]);
         await tester.pumpWidget(app);
         await tester.pumpAndSettle();
-        expect(find.text('Katiliyorum'), findsNothing);
-        expect(find.text('Katilmiyorum'), findsNothing);
+        expect(find.text('Katılıyorum'), findsNothing);
+        expect(find.text('Katılmıyorum'), findsNothing);
       });
     }
 
@@ -165,10 +165,10 @@ void main() {
       );
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Gecmis (1)'));
+      await tester.tap(find.text('Geçmiş (1)'));
       await tester.pumpAndSettle();
       expect(find.text('Mac izleme aksami'), findsOneWidget);
-      expect(find.text('Katiliyorum'), findsNothing);
+      expect(find.text('Katılıyorum'), findsNothing);
     });
   });
 
@@ -180,18 +180,18 @@ void main() {
       ]);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.text('Yaklasan (1)'), findsOneWidget);
-      expect(find.text('Gecmis (1)'), findsOneWidget);
+      expect(find.text('Yaklaşan (1)'), findsOneWidget);
+      expect(find.text('Geçmiş (1)'), findsOneWidget);
     });
 
     testWidgets('bos sekmeler anlamli mesaj gosterir', (tester) async {
       final (_, app) = _app(UserRole.resident);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.text('Yaklasan etkinlik yok.'), findsOneWidget);
-      await tester.tap(find.text('Gecmis (0)'));
+      expect(find.text('Yaklaşan etkinlik yok.'), findsOneWidget);
+      await tester.tap(find.text('Geçmiş (0)'));
       await tester.pumpAndSettle();
-      expect(find.text('Gecmis etkinlik yok.'), findsOneWidget);
+      expect(find.text('Geçmiş etkinlik yok.'), findsOneWidget);
     });
   });
 
@@ -202,8 +202,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Yeni etkinlik'));
     await tester.pumpAndSettle();
-    expect(find.text('Baslik * (orn. Mac izleme aksami)'), findsOneWidget);
-    expect(find.text('Aciklama *'), findsOneWidget);
+    expect(find.text('Başlık * (örn. Maç izleme akşamı)'), findsOneWidget);
+    expect(find.text('Açıklama *'), findsOneWidget);
     expect(find.textContaining('Zaman: '), findsOneWidget);
     expect(find.text('Yer (opsiyonel)'), findsOneWidget);
     expect(find.text('Duyur ve sakinlere bildir'), findsOneWidget);
@@ -215,7 +215,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Mac izleme aksami'));
     await tester.pumpAndSettle();
-    expect(find.text('Duzenle'), findsOneWidget);
+    expect(find.text('Düzenle'), findsOneWidget);
     expect(find.text('Sil'), findsOneWidget);
   });
 
@@ -232,7 +232,7 @@ void main() {
       // Detay sheet'e ozgu satirlar: duyuran + tam aciklama gorunur.
       expect(find.textContaining('Duyuran: Acme Yonetici'), findsOneWidget);
       // Sakin icin sheet'te de beyan butonlari (kart + sheet).
-      expect(find.text('Katiliyorum'), findsNWidgets(2));
+      expect(find.text('Katılıyorum'), findsNWidgets(2));
     });
 
     testWidgets('kayit listede yoksa sessizce listede kalinir (cokme yok)',

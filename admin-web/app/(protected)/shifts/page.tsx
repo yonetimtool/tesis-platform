@@ -18,8 +18,8 @@ import type { GunTipi, Shift, ShiftList } from "@/lib/types";
 
 const LIMIT = 20;
 const GUN_TIPI_OPTS: { value: GunTipi; label: string }[] = [
-  { value: "her_gun", label: "Her gun" },
-  { value: "hafta_ici", label: "Hafta ici" },
+  { value: "her_gun", label: "Her gün" },
+  { value: "hafta_ici", label: "Hafta içi" },
   { value: "hafta_sonu", label: "Hafta sonu" },
   { value: "resmi_tatil", label: "Resmi tatil" },
 ];
@@ -110,14 +110,14 @@ export default function ShiftsPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
         <form
           onSubmit={save}
           className="space-y-4 rounded-xl border border-slate-200 bg-white p-5"
         >
-          <h2 className="font-medium">{editingId ? "Vardiya duzenle" : "Yeni vardiya"}</h2>
+          <h2 className="font-medium">{editingId ? "Vardiya düzenle" : "Yeni vardiya"}</h2>
           <Field label="Ad">
             <input
               className={inputCls}
@@ -127,7 +127,7 @@ export default function ShiftsPage() {
             />
           </Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Baslangic" hint="24 saat (HH:MM)">
+            <Field label="Başlangıç" hint="24 saat (HH:MM)">
               <input
                 type="time"
                 className={inputCls}
@@ -136,7 +136,7 @@ export default function ShiftsPage() {
                 required
               />
             </Field>
-            <Field label="Bitis" hint="24 saat (HH:MM)">
+            <Field label="Bitiş" hint="24 saat (HH:MM)">
               <input
                 type="time"
                 className={inputCls}
@@ -148,10 +148,10 @@ export default function ShiftsPage() {
           </div>
           {overnight && (
             <p className="text-xs text-amber-700">
-              Bilgi: baslangic bitisten sonra; gece vardiyasi (ertesi gune sarkar).
+              Bilgi: başlangıç bitişten sonra; gece vardiyası (ertesi güne sarkar).
             </p>
           )}
-          <Field label="Gun tipi">
+          <Field label="Gün tipi">
             <select
               className={inputCls}
               value={form.gun_tipi}
@@ -170,7 +170,7 @@ export default function ShiftsPage() {
               {saving ? "Kaydediliyor..." : "Kaydet"}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              Iptal
+              İptal
             </button>
           </div>
         </form>
@@ -182,7 +182,7 @@ export default function ShiftsPage() {
             <tr>
               <th className="px-3 py-2 font-medium">Ad</th>
               <th className="px-3 py-2 font-medium">Saat</th>
-              <th className="px-3 py-2 font-medium">Gun tipi</th>
+              <th className="px-3 py-2 font-medium">Gün tipi</th>
               <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
@@ -197,7 +197,7 @@ export default function ShiftsPage() {
                 <td className="px-3 py-2 text-right">
                   <div className="flex justify-end gap-2">
                     <button className={btnGhost} onClick={() => openEdit(s)}>
-                      Duzenle
+                      Düzenle
                     </button>
                     <button className={btnDanger} onClick={() => remove(s)}>
                       Sil

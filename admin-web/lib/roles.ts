@@ -3,10 +3,10 @@
 import type { UserRole } from "./types";
 
 export const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: "admin", label: "Admin (platform)" },
-  { value: "yonetici", label: "Yonetici" },
-  { value: "security", label: "Guvenlik" },
-  { value: "tesis_gorevlisi", label: "Tesis Gorevlisi" },
+  { value: "admin", label: "Platform Admin" },
+  { value: "yonetici", label: "Yönetici" },
+  { value: "security", label: "Güvenlik" },
+  { value: "tesis_gorevlisi", label: "Tesis Görevlisi" },
   { value: "resident", label: "Site Sakini" },
 ];
 

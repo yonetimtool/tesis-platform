@@ -58,7 +58,7 @@ export function Pager({
       </span>
       <div className="flex gap-2">
         <button disabled={!canPrev} onClick={onPrev} className={`${btnGhost} disabled:opacity-50`}>
-          Onceki
+          Önceki
         </button>
         <button disabled={!canNext} onClick={onNext} className={`${btnGhost} disabled:opacity-50`}>
           Sonraki

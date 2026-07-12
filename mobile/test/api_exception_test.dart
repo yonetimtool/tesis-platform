@@ -35,7 +35,7 @@ void main() {
 
       final ex = ApiException.fromDio(e);
       expect(ex.code, 'network_error');
-      expect(ex.message, contains('ulasilamadi'));
+      expect(ex.message, contains('ulaşılamadı'));
     });
   });
 

@@ -7,17 +7,17 @@ library;
 
 enum UserRole {
   /// Platform admini (biz) — panel + tum operasyon uclari.
-  admin('admin', 'Admin (platform)'),
+  admin('admin', 'Platform Admin'),
 
   /// Site yoneticisi (musteri) — mobil; gorev atama/takip, rapor okuma,
   /// acil durum. Saha kaniti uretmez (scan/tamamlama/zimmet yok).
-  yonetici('yonetici', 'Yonetici'),
+  yonetici('yonetici', 'Yönetici'),
 
   /// Guvenlik gorevlisi — devriye + saha operasyonu.
-  security('security', 'Guvenlik'),
+  security('security', 'Güvenlik'),
 
   /// Tesis gorevlisi (temizlik + bahcivan + teknik; eski `cleaning`).
-  tesisGorevlisi('tesis_gorevlisi', 'Tesis Gorevlisi'),
+  tesisGorevlisi('tesis_gorevlisi', 'Tesis Görevlisi'),
 
   /// Site sakini — v0'da operasyon erisimi yok.
   resident('resident', 'Site Sakini'),

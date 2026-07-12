@@ -55,15 +55,15 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                     const Icon(Icons.password_outlined, size: 64),
                     const SizedBox(height: 16),
                     Text(
-                      'Parolanizi belirleyin',
+                      'Parolanızı belirleyin',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Gecici kodla ilk girisinizi yaptiniz. Devam etmek icin '
-                      'kendi kalici parolanizi olusturun; sonraki girislerde '
-                      'daire no + bu parolayi kullanacaksiniz.',
+                      'Geçici kodla ilk girişinizi yaptınız. Devam etmek için '
+                      'kendi kalıcı parolanızı oluşturun; sonraki girişlerde '
+                      'daire no + bu parolayı kullanacaksınız.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -90,7 +90,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                         final value = v ?? '';
                         if (value.isEmpty) return 'Parola zorunludur';
                         if (value.length < 8) {
-                          return 'Parola en az 8 karakter olmali';
+                          return 'Parola en az 8 karakter olmalı';
                         }
                         return null;
                       },
@@ -108,7 +108,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                         border: OutlineInputBorder(),
                       ),
                       validator: (v) =>
-                          v == _passwordCtrl.text ? null : 'Parolalar eslesmiyor',
+                          v == _passwordCtrl.text ? null : 'Parolalar eşleşmiyor',
                     ),
                     if (auth.errorMessage != null) ...[
                       const SizedBox(height: 16),
@@ -126,7 +126,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                               width: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.5),
                             )
-                          : const Text('Parolayi belirle'),
+                          : const Text('Parolayı belirle'),
                     ),
                     const SizedBox(height: 8),
                     TextButton(
@@ -135,7 +135,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                           : () => ref
                               .read(authControllerProvider.notifier)
                               .cancelPasswordSetup(),
-                      child: const Text('Girise don'),
+                      child: const Text('Girişe dön'),
                     ),
                   ],
                 ),

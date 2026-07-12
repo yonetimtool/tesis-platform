@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/reports/dues", label: "Aidat Tahsilat" },
-  { href: "/reports/patrols", label: "Tur Gecmisi" },
-  { href: "/reports/tasks", label: "Gorev Gecmisi" },
+  { href: "/reports/patrols", label: "Tur Geçmişi" },
+  { href: "/reports/tasks", label: "Görev Geçmişi" },
 ];
 
 export function ReportsTabs() {

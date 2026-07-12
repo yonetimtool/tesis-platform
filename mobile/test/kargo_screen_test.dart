@@ -99,9 +99,9 @@ void main() {
       final (api, app) = _app(UserRole.resident, items: [_k()]);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.text('Teslim aldim'), findsOneWidget);
+      expect(find.text('Teslim aldım'), findsOneWidget);
 
-      await tester.tap(find.text('Teslim aldim'));
+      await tester.tap(find.text('Teslim aldım'));
       await tester.pumpAndSettle();
       expect(api.received, ['k-1']);
     });
@@ -116,7 +116,7 @@ void main() {
         final (_, app) = _app(role, items: [_k()]);
         await tester.pumpWidget(app);
         await tester.pumpAndSettle();
-        expect(find.text('Teslim aldim'), findsNothing);
+        expect(find.text('Teslim aldım'), findsNothing);
       });
     }
 
@@ -130,9 +130,9 @@ void main() {
       );
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Teslim alinan (1)'));
+      await tester.tap(find.text('Teslim alınan (1)'));
       await tester.pumpAndSettle();
-      expect(find.text('Teslim aldim'), findsNothing);
+      expect(find.text('Teslim aldım'), findsNothing);
       expect(find.textContaining('Acme Sakin'), findsOneWidget);
     });
   });
@@ -150,12 +150,12 @@ void main() {
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
       expect(find.text('Bekleyen (1)'), findsOneWidget);
-      expect(find.text('Teslim alinan (1)'), findsOneWidget);
+      expect(find.text('Teslim alınan (1)'), findsOneWidget);
       // Varsayilan sekme Bekleyen: rozet 'Bekliyor'
       expect(find.text('Bekliyor'), findsOneWidget);
-      await tester.tap(find.text('Teslim alinan (1)'));
+      await tester.tap(find.text('Teslim alınan (1)'));
       await tester.pumpAndSettle();
-      expect(find.text('Teslim alindi'), findsWidgets);
+      expect(find.text('Teslim alındı'), findsWidgets);
     });
 
     testWidgets('bos sekmeler anlamli mesaj gosterir', (tester) async {
@@ -163,10 +163,10 @@ void main() {
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
       expect(find.text('Teslim bekleyen kargo yok.'), findsOneWidget);
-      await tester.tap(find.text('Teslim alinan (0)'));
+      await tester.tap(find.text('Teslim alınan (0)'));
       await tester.pumpAndSettle();
       expect(
-        find.text('Henuz teslim alinan kargo kaydi yok.'),
+        find.text('Henüz teslim alınan kargo kaydı yok.'),
         findsOneWidget,
       );
     });
@@ -179,13 +179,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Yeni kargo'));
     await tester.pumpAndSettle();
-    expect(find.text('Daire no * (orn. A-12)'), findsOneWidget);
-    expect(find.text('Kargo firmasi *'), findsOneWidget);
+    expect(find.text('Daire no * (örn. A-12)'), findsOneWidget);
+    expect(find.text('Kargo firması *'), findsOneWidget);
     expect(find.text('Not (opsiyonel)'), findsOneWidget);
-    expect(find.text('Paket fotografi (opsiyonel)'), findsOneWidget);
+    expect(find.text('Paket fotoğrafı (opsiyonel)'), findsOneWidget);
     // foto butonlari mevcut akisin adlariyla (complaints/gorev ile ayni)
     expect(find.text('Kamera'), findsOneWidget);
-    expect(find.text('Galeriden sec'), findsOneWidget);
+    expect(find.text('Galeriden seç'), findsOneWidget);
     expect(find.text('Kaydet ve sakinlere bildir'), findsOneWidget);
   });
 
@@ -202,7 +202,7 @@ void main() {
       // Detay sheet'e ozgu satir: kaydeden guvenlik adiyla "Kayit: ..." satiri.
       expect(find.textContaining('Acme Guard'), findsOneWidget);
       // Sakin icin sheet'te de "Teslim aldim" sunulur (kart + sheet).
-      expect(find.text('Teslim aldim'), findsNWidgets(2));
+      expect(find.text('Teslim aldım'), findsNWidgets(2));
     });
 
     testWidgets('kayit listede yoksa sessizce listede kalinir (cokme yok)',

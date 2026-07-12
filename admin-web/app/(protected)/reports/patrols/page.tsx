@@ -96,25 +96,25 @@ export default function PatrolReportPage() {
   return (
     <div className="space-y-6">
       <ReportsTabs />
-      <h1 className="text-2xl font-semibold">Tur Gecmisi Raporu</h1>
+      <h1 className="text-2xl font-semibold">Tur Geçmişi Raporu</h1>
 
       <form onSubmit={submit} className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-5">
         <div className="w-52">
-          <Field label="Baslangic" hint="Yerel saat (opsiyonel)">
+          <Field label="Başlangıç" hint="Yerel saat (opsiyonel)">
             <input type="datetime-local" className={inputCls} value={bas} onChange={(e) => setBas(e.target.value)} />
           </Field>
         </div>
         <div className="w-52">
-          <Field label="Bitis" hint="Yerel saat (opsiyonel)">
+          <Field label="Bitiş" hint="Yerel saat (opsiyonel)">
             <input type="datetime-local" className={inputCls} value={bit} onChange={(e) => setBit(e.target.value)} />
           </Field>
         </div>
         <div className="w-44">
           <Field label="Durum">
             <select className={inputCls} value={durum} onChange={(e) => setDurum(e.target.value)}>
-              <option value="">Tumu</option>
-              <option value="tamamlandi">Tamamlandi</option>
-              <option value="kacirildi">Kacirildi</option>
+              <option value="">Tümü</option>
+              <option value="tamamlandi">Tamamlandı</option>
+              <option value="kacirildi">Kaçırıldı</option>
               <option value="bekliyor">Bekliyor</option>
             </select>
           </Field>
@@ -122,7 +122,7 @@ export default function PatrolReportPage() {
         <div className="w-52">
           <Field label="Plan (opsiyonel)">
             <select className={inputCls} value={planId} onChange={(e) => setPlanId(e.target.value)}>
-              <option value="">Tumu</option>
+              <option value="">Tümü</option>
               {(plans?.items ?? []).map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.ad}
@@ -138,18 +138,18 @@ export default function PatrolReportPage() {
 
       {error && <ErrorBox message={error.message} />}
       {committed === null && (
-        <p className="text-sm text-muted">Filtre secip Raporu getir butonuna basin.</p>
+        <p className="text-sm text-muted">Filtre seçip Raporu getir butonuna basın.</p>
       )}
-      {isLoading && committed !== null && !data && <p className="text-sm text-muted">Yukleniyor...</p>}
+      {isLoading && committed !== null && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {data && (
         <>
           <div className="grid gap-3 md:grid-cols-5">
             <Card baslik="Toplam pencere" deger={String(data.ozet.toplam)} />
             <Card baslik="Tamamlanan" deger={String(data.ozet.tamamlandi)} tone="emerald" />
-            <Card baslik="Kacirilan" deger={String(data.ozet.kacirildi)} tone="red" />
+            <Card baslik="Kaçırılan" deger={String(data.ozet.kacirildi)} tone="red" />
             <Card baslik="Bekleyen" deger={String(data.ozet.bekliyor)} tone="amber" />
-            <Card baslik="Tamamlanma orani" deger={oran} />
+            <Card baslik="Tamamlanma oranı" deger={oran} />
           </div>
 
           <section className="space-y-2">
@@ -164,8 +164,8 @@ export default function PatrolReportPage() {
                 <thead className="bg-slate-50 text-left text-slate-500">
                   <tr>
                     <th className="px-3 py-2 font-medium">Plan</th>
-                    <th className="px-3 py-2 font-medium">Baslangic</th>
-                    <th className="px-3 py-2 font-medium">Bitis</th>
+                    <th className="px-3 py-2 font-medium">Başlangıç</th>
+                    <th className="px-3 py-2 font-medium">Bitiş</th>
                     <th className="px-3 py-2 font-medium">Durum</th>
                     <th className="px-3 py-2 font-medium">Checkpoint</th>
                   </tr>

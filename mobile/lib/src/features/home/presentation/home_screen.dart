@@ -27,7 +27,7 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('Ana ekran'),
         actions: [
           IconButton(
-            tooltip: 'Cikis yap',
+            tooltip: 'Çıkış yap',
             icon: const Icon(Icons.logout),
             onPressed: () => ref.read(authControllerProvider.notifier).logout(),
           ),
@@ -51,7 +51,7 @@ class HomeScreen extends ConsumerWidget {
                     const Icon(Icons.check_circle_outline, size: 64),
                     const SizedBox(height: 16),
                     const Text(
-                      'Giris basarili',
+                      'Giriş başarılı',
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                     ),
@@ -88,14 +88,14 @@ class HomeScreen extends ConsumerWidget {
           child: ListTile(
             leading: const Icon(Icons.sos, color: Colors.white, size: 32),
             title: const Text(
-              'ACIL DURUM',
+              'ACİL DURUM',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
               ),
             ),
             subtitle: const Text(
-              'Panik butonu — yonetime alarm gonder',
+              'Panik butonu — yönetime alarm gönder',
               style: TextStyle(color: Colors.white70),
             ),
             trailing: const Icon(Icons.chevron_right, color: Colors.white),
@@ -107,7 +107,7 @@ class HomeScreen extends ConsumerWidget {
           child: ListTile(
             leading: const Icon(Icons.campaign_outlined),
             title: const Text('Duyurular'),
-            subtitle: const Text('Yonetimden tesise duyurular'),
+            subtitle: const Text('Yönetimden tesise duyurular'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.announcements),
           ),
@@ -116,7 +116,7 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.directions_walk),
-            title: const Text('Turlarim'),
+            title: const Text('Turlarım'),
             subtitle: const Text(
               'Aktif devriye penceresi ve nokta ilerlemesi',
             ),
@@ -131,7 +131,7 @@ class HomeScreen extends ConsumerWidget {
             leading: const Icon(Icons.route_outlined),
             title: const Text('Devriye takibi'),
             subtitle: const Text(
-              'Bugunun turlari, nokta ilerlemesi ve gecmis',
+              'Bugünün turları, nokta ilerlemesi ve geçmiş',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.patrolTracking),
@@ -141,9 +141,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.task_alt),
-            title: const Text('Gorevlerim'),
+            title: const Text('Görevlerim'),
             subtitle: const Text(
-              'Gorev listesi ve foto kanitli tamamlama',
+              'Görev listesi ve foto kanıtlı tamamlama',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.tasks),
@@ -155,9 +155,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.fact_check_outlined),
-            title: const Text('Gorev yonetimi'),
+            title: const Text('Görev yönetimi'),
             subtitle: const Text(
-              'Tum gorevleri ve atamalari izle; atama yonetimde',
+              'Tüm görevleri ve atamaları izle; atama yönetimde',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () =>
@@ -168,9 +168,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.inventory_2_outlined),
-            title: const Text('Demirbas'),
+            title: const Text('Demirbaş'),
             subtitle: const Text(
-              'NFC ile zimmet al/birak, uzerimdekiler',
+              'NFC ile zimmet al/bırak, üzerimdekiler',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.assets),
@@ -181,7 +181,7 @@ class HomeScreen extends ConsumerWidget {
           child: ListTile(
             leading: const Icon(Icons.nfc),
             title: const Text('NFC etiket okuma'),
-            subtitle: const Text('Devriye noktasi etiketini okut'),
+            subtitle: const Text('Devriye noktası etiketini okut'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.nfc),
           ),
@@ -194,12 +194,12 @@ class HomeScreen extends ConsumerWidget {
               label: Text('${outboxState.pendingCount}'),
               child: const Icon(Icons.outbox_outlined),
             ),
-            title: const Text('Gonderim kuyrugu'),
+            title: const Text('Gönderim kuyruğu'),
             subtitle: Text(
               outboxState.pendingCount > 0
-                  ? '${outboxState.pendingCount} okutma gonderim bekliyor'
+                  ? '${outboxState.pendingCount} okutma gönderim bekliyor'
                   : outboxState.failedCount > 0
-                      ? '${outboxState.failedCount} kalici hata var'
+                      ? '${outboxState.failedCount} kalıcı hata var'
                       : 'Bekleyen okutma yok',
             ),
             trailing: const Icon(Icons.chevron_right),
@@ -211,9 +211,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.insights_outlined),
-            title: const Text('Aylik raporlar'),
+            title: const Text('Aylık raporlar'),
             subtitle: const Text(
-              'Devriye, gorev tamamlama ve aidat ozeti',
+              'Devriye, görev tamamlama ve aidat özeti',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.reports),
@@ -224,9 +224,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.savings_outlined),
-            title: const Text('Butce'),
+            title: const Text('Bütçe'),
             subtitle: const Text(
-              'Gelir/gider defteri, kategoriler ve kasa ozeti',
+              'Gelir/gider defteri, kategoriler ve kasa özeti',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.budget),
@@ -237,9 +237,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.query_stats_outlined),
-            title: const Text('Finansal ozet'),
+            title: const Text('Finansal özet'),
             subtitle: const Text(
-              'Tahsilat orani, gelir/gider/kasa ve en yuksek giderler',
+              'Tahsilat oranı, gelir/gider/kasa ve en yüksek giderler',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.financialSummary),
@@ -250,9 +250,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.pie_chart_outline),
-            title: const Text('Site Butcesi'),
+            title: const Text('Site Bütçesi'),
             subtitle: const Text(
-              'Sitenin toplam gelir, gider ve kasa ozeti (seffaflik)',
+              'Sitenin toplam gelir, gider ve kasa özeti (şeffaflık)',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.siteBudget),
@@ -263,9 +263,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.account_balance_wallet_outlined),
-            title: const Text('Aidatim'),
+            title: const Text('Aidatım'),
             subtitle: const Text(
-              'Daire borc durumu, tahakkuk ve odeme gecmisi',
+              'Daire borç durumu, tahakkuk ve ödeme geçmişi',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.myDues),
@@ -276,9 +276,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.rate_review_outlined),
-            title: const Text('Sikayet / Oneri'),
+            title: const Text('Şikayet / Öneri'),
             subtitle: const Text(
-              'Yonetime talep ilet, durum ve yaniti izle',
+              'Yönetime talep ilet, durum ve yanıtı izle',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.complaints),
@@ -289,9 +289,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.emoji_people_outlined),
-            title: const Text('Ziyaretciler'),
+            title: const Text('Ziyaretçiler'),
             subtitle: const Text(
-              'Kapidaki ziyaretci kaydi, onay/red ve gecmis',
+              'Kapıdaki ziyaretçi kaydı, onay/red ve geçmiş',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.visitors),
@@ -304,7 +304,7 @@ class HomeScreen extends ConsumerWidget {
             leading: const Icon(Icons.local_shipping_outlined),
             title: const Text('Kargo'),
             subtitle: const Text(
-              'Gelen paket kaydi, teslim durumu ve gecmis',
+              'Gelen paket kaydı, teslim durumu ve geçmiş',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.kargo),
@@ -317,7 +317,7 @@ class HomeScreen extends ConsumerWidget {
             leading: const Icon(Icons.event_available_outlined),
             title: const Text('Rezervasyon'),
             subtitle: const Text(
-              'Ortak alan (havuz, toplanti odasi) slot talebi ve onay',
+              'Ortak alan (havuz, toplantı odası) slot talebi ve onay',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.rezervasyon),
@@ -331,7 +331,7 @@ class HomeScreen extends ConsumerWidget {
             leading: const Icon(Icons.celebration_outlined),
             title: const Text('Etkinlikler'),
             subtitle: const Text(
-              'Site etkinlikleri; katilim beyani ve seffaf sayilar',
+              'Site etkinlikleri; katılım beyanı ve şeffaf sayılar',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.etkinlik),
@@ -342,9 +342,9 @@ class HomeScreen extends ConsumerWidget {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.gavel_outlined),
-            title: const Text('Site Kurallari'),
+            title: const Text('Site Kuralları'),
             subtitle: const Text(
-              'Site yasam kurallari; baslikta arama',
+              'Site yaşam kuralları; başlıkta arama',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.siteKurallari),

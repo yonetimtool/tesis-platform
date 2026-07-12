@@ -107,7 +107,7 @@ void main() {
       // eslesme yoksa anlamli mesaj
       await tester.enterText(find.byType(TextField), 'asansor');
       await tester.pumpAndSettle();
-      expect(find.text('Aramayla eslesen kural yok.'), findsOneWidget);
+      expect(find.text('Aramayla eşleşen kural yok.'), findsOneWidget);
 
       // temizlenince tum liste geri gelir
       await tester.enterText(find.byType(TextField), '');
@@ -126,7 +126,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Havuz Saatleri'));
       await tester.pumpAndSettle();
-      expect(find.text('Duzenle'), findsOneWidget);
+      expect(find.text('Düzenle'), findsOneWidget);
       expect(find.text('Sil'), findsOneWidget);
 
       await tester.tap(find.text('Sil'));
@@ -146,7 +146,7 @@ void main() {
       await tester.pumpAndSettle();
       // tam metin sheet'te gorunur; yonetim butonlari yok
       expect(find.text('Havuz 08:00-22:00 arasi aciktir.'), findsWidgets);
-      expect(find.text('Duzenle'), findsNothing);
+      expect(find.text('Düzenle'), findsNothing);
       expect(find.text('Sil'), findsNothing);
     });
   });
@@ -158,14 +158,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Yeni kural'));
     await tester.pumpAndSettle();
-    expect(find.text('Baslik * (orn. Havuz Saatleri)'), findsOneWidget);
+    expect(find.text('Başlık * (örn. Havuz Saatleri)'), findsOneWidget);
     expect(find.text('Kural metni *'), findsOneWidget);
-    expect(find.text('Sira (kucuk once)'), findsOneWidget);
-    expect(find.text('Gorsel (opsiyonel)'), findsOneWidget);
+    expect(find.text('Sıra (küçük önce)'), findsOneWidget);
+    expect(find.text('Görsel (opsiyonel)'), findsOneWidget);
     // foto butonlari mevcut akisin adlariyla
     expect(find.text('Kamera'), findsOneWidget);
-    expect(find.text('Galeriden sec'), findsOneWidget);
-    expect(find.text('Kurali ekle'), findsOneWidget);
+    expect(find.text('Galeriden seç'), findsOneWidget);
+    expect(find.text('Kuralı ekle'), findsOneWidget);
   });
 
   testWidgets('bos liste: yonetimde yonlendirme, sakinde bilgi mesaji',
@@ -174,7 +174,7 @@ void main() {
     await tester.pumpWidget(appY);
     await tester.pumpAndSettle();
     expect(
-      find.text('Henuz kural yok. "Yeni kural" ile ekleyin.'),
+      find.text('Henüz kural yok. "Yeni kural" ile ekleyin.'),
       findsOneWidget,
     );
   });

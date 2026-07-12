@@ -139,8 +139,8 @@ class AssetsController extends Notifier<AssetsState> {
   AssetApi get _api => ref.read(assetApiProvider);
 
   static const _offlineMessage =
-      'Internet baglantisi gerekli. Zimmet kimde-oldugu ANLIK bir kayittir; '
-      'offline islem yapilmaz (kuyruklamak yaniltici olurdu).';
+      'İnternet bağlantısı gerekli. Zimmet kimde-olduğu ANLIK bir kayıttır; '
+      'offline işlem yapılmaz (kuyruklamak yanıltıcı olurdu).';
 
   /// Buyuk "Etiket okut" akisi: NFC oku → asset'i coz → durumu getir.
   Future<void> scanTag() async {
@@ -161,7 +161,7 @@ class AssetsController extends Notifier<AssetsState> {
     if (!result.isSuccess) {
       state = state.copyWith(
         scanPhase: AssetScanPhase.idle,
-        scanError: result.error ?? 'Etiket okunamadi.',
+        scanError: result.error ?? 'Etiket okunamadı.',
       );
       return;
     }
@@ -174,8 +174,8 @@ class AssetsController extends Notifier<AssetsState> {
       if (match == null) {
         state = state.copyWith(
           scanPhase: AssetScanPhase.idle,
-          scanError: 'Bu etiket (${result.uid}) kayitli bir demirbasla '
-              'eslesmiyor. Etiket panelden bir demirbasa tanimlanmali.',
+          scanError: 'Bu etiket (${result.uid}) kayıtlı bir demirbaşla '
+              'eşleşmiyor. Etiket panelden bir demirbaşa tanımlanmalı.',
         );
         return;
       }
@@ -256,9 +256,9 @@ class AssetsController extends Notifier<AssetsState> {
       state = state.copyWith(
         actionMessage: tip == AssetActionTip.alma
             ? (result.wasDuplicate
-                ? 'Zaten zimmetindeydi ✓ (tekrar gonderim — cift kayit yok)'
-                : 'Zimmetine alindi ✓')
-            : 'Birakildi ✓ — zimmet kapatildi.',
+                ? 'Zaten zimmetindeydi ✓ (tekrar gönderim — çift kayıt yok)'
+                : 'Zimmetine alındı ✓')
+            : 'Bırakıldı ✓ — zimmet kapatıldı.',
       );
       await _resolveAndShow(scanned.asset.id, scanned.scannedUid);
       await refreshMyItems(silent: true);
@@ -271,8 +271,8 @@ class AssetsController extends Notifier<AssetsState> {
         actionError: offline
             ? _offlineMessage
             : e.statusCode == 409
-                ? 'Islem yapilamadi: ${e.message} Durum guncellendi — '
-                    'karta tekrar bakin.'
+                ? 'İşlem yapılamadı: ${e.message} Durum güncellendi — '
+                    'karta tekrar bakın.'
                 : e.message,
       );
       if (!offline && e.statusCode == 409) {
@@ -326,7 +326,7 @@ class AssetsController extends Notifier<AssetsState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         myLoading: false,
-        myError: 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+        myError: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
       );
     } finally {
       _refreshingMy = false;
