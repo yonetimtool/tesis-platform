@@ -479,3 +479,46 @@ export interface IntegrationTriggerResult {
   status?: number | null;
   error?: string | null;
 }
+
+// ---------------- bina semasi / sikayet haritasi (D-viz-2) ---------------- #
+// GET /unit-complaints/building-map — renk API'den gelir (yesil/sari/kirmizi =
+// 0-2/3-4/5+); istemci ESIK HESAPLAMAZ.
+export type DensityRenk = "yesil" | "sari" | "kirmizi";
+
+export interface BuildingMapUnit {
+  unit_id: string;
+  unit_no: string;
+  blok?: string | null;
+  kat?: number | null;
+  sira?: number | null;
+  complaint_count: number;
+  color: DensityRenk;
+}
+export interface BuildingMapKat {
+  kat: number;
+  units: BuildingMapUnit[];
+}
+export interface BuildingMapBlok {
+  blok: string;
+  katlar: BuildingMapKat[];
+}
+export interface BuildingMap {
+  bloklar: BuildingMapBlok[];
+  unplaced: BuildingMapUnit[];
+}
+
+// GET /unit-complaints?target_unit_id= — ANONIM (complainant YOK); notlar
+// yalniz admin/yonetici icin dolu.
+export interface UnitComplaint {
+  id: string;
+  target_unit_id: string;
+  unit_no?: string | null;
+  kategori: string;
+  notlar?: string | null;
+  durum: string;
+  created_at: string;
+}
+export interface UnitComplaintList {
+  meta: PageMeta;
+  items: UnitComplaint[];
+}

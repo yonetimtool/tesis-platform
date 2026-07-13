@@ -392,6 +392,20 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.binaYerlesimi),
           ),
         );
+      case HomeMenuEntry.sikayetHaritasi:
+        // D-viz-2: 2D bina semasi (kat plani) — renkli daire hucreleri.
+        // Tum roller gorur; sakin daireyi anonim sikayet edebilir.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.grid_view_outlined),
+            title: const Text('Şikayet Haritası'),
+            subtitle: const Text(
+              'Bina şeması — daire yoğunluğu (yeşil/sarı/kırmızı)',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.sikayetHaritasi),
+          ),
+        );
     }
   }
 }

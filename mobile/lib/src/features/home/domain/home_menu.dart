@@ -96,6 +96,11 @@ enum HomeMenuEntry {
   /// ANONIM yogunluk onizlemesi (blok->kat->daire renk). Mobilde YONETICI
   /// yonetir; yazma backend'de admin+yonetici ile sinirli.
   binaYerlesimi,
+
+  /// Sikayet Haritasi (D-viz-2) — 2D bina semasi: blok->kat->renkli daire
+  /// hucreleri (ANONIM yogunluk). TUM roller gorur; SAKIN daireyi sikayet
+  /// edebilir (mevcut POST /unit-complaints). Renk API'den (0-2/3-4/5+).
+  sikayetHaritasi,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -108,6 +113,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.unitAccess,
         HomeMenuEntry.rezervasyon,
@@ -125,6 +131,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -142,6 +149,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -156,6 +164,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.unitAccess,
         HomeMenuEntry.rezervasyon,
@@ -181,6 +190,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,

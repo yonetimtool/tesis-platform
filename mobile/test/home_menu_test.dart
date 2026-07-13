@@ -11,6 +11,7 @@ void main() {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.unitAccess,
         HomeMenuEntry.rezervasyon,
@@ -25,6 +26,7 @@ void main() {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -97,6 +99,7 @@ void main() {
           HomeMenuEntry.announcements,
           HomeMenuEntry.etkinlik,
           HomeMenuEntry.siteKurallari,
+          HomeMenuEntry.sikayetHaritasi,
           HomeMenuEntry.complaints,
           HomeMenuEntry.unitAccess,
           HomeMenuEntry.rezervasyon,
@@ -186,6 +189,7 @@ void main() {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
@@ -287,6 +291,23 @@ void main() {
         expect(
           homeMenuForRole(role),
           contains(HomeMenuEntry.siteKurallari),
+          reason: role.wire,
+        );
+      }
+    });
+
+    test('Sikayet Haritasi karti (D-viz-2) bilinen 5 rolun 5inde (anonim '
+        'harita herkese acik; sikayet etme yalniz sakinde — ekranda)', () {
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.sikayetHaritasi),
           reason: role.wire,
         );
       }

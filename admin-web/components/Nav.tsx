@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/tasks", label: "Görevler" },
   { href: "/assets", label: "Demirbaş" },
   { href: "/units", label: "Daireler" },
+  { href: "/schematic", label: "Şikayet Haritası" },
   { href: "/dues", label: "Aidat" },
   { href: "/reports/dues", label: "Raporlar" },
   { href: "/users", label: "Kullanıcılar" },
