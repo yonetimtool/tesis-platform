@@ -41,6 +41,7 @@ from .routers import task_categories as task_categories_router
 from .routers import tasks as tasks_router
 from .routers import tenant as tenant_router
 from .routers import units as units_router
+from .routers import call_targets as call_targets_router
 from .routers import users as users_router
 from .routers import uploads as uploads_router
 from .routers import unit_access as unit_access_router
@@ -101,6 +102,7 @@ app.include_router(dues_router.router)
 app.include_router(budget_router.router)
 app.include_router(reports_router.router)
 app.include_router(users_router.router)
+app.include_router(call_targets_router.router)
 app.include_router(webhooks_router.router)
 
 

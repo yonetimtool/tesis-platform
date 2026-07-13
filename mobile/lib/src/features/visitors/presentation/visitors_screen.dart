@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../../call/presentation/call_button.dart';
 import '../data/visitor_api.dart';
 import '../domain/visitor_models.dart';
 import 'visitors_controller.dart';
@@ -44,7 +45,14 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
     if (hedef == null) return; // listede yok — sessizce listede kal
     final v = hedef;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _showDetail(context, v, canAnswer: state.canAnswer);
+      if (mounted) {
+        _showDetail(
+          context,
+          v,
+          canAnswer: state.canAnswer,
+          canRegister: state.canRegister,
+        );
+      }
     });
   }
 
@@ -173,6 +181,7 @@ class _Body extends ConsumerWidget {
       itemBuilder: (context, i) => _VisitorCard(
         visitor: items[i],
         canAnswer: state.canAnswer,
+        canRegister: state.canRegister,
       ),
     );
   }
@@ -213,10 +222,15 @@ class _DurumChip extends StatelessWidget {
 }
 
 class _VisitorCard extends ConsumerWidget {
-  const _VisitorCard({required this.visitor, required this.canAnswer});
+  const _VisitorCard({
+    required this.visitor,
+    required this.canAnswer,
+    required this.canRegister,
+  });
 
   final Visitor visitor;
   final bool canAnswer;
+  final bool canRegister;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -233,7 +247,12 @@ class _VisitorCard extends ConsumerWidget {
           : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _showDetail(context, v, canAnswer: canAnswer),
+        onTap: () => _showDetail(
+          context,
+          v,
+          canAnswer: canAnswer,
+          canRegister: canRegister,
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -379,7 +398,12 @@ class _AnswerButtonsState extends ConsumerState<_AnswerButtons> {
 
 /// Detay alt sayfasi — push tiklamasi ve kart dokunusuyla acilir. Sakin +
 /// bekleyen kayitta Onayla/Reddet burada da sunulur (belirgin akis).
-void _showDetail(BuildContext context, Visitor v, {required bool canAnswer}) {
+void _showDetail(
+  BuildContext context,
+  Visitor v, {
+  required bool canAnswer,
+  required bool canRegister,
+}) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -422,6 +446,17 @@ void _showDetail(BuildContext context, Visitor v, {required bool canAnswer}) {
                 '${v.yanitlayanAd != null ? ' — ${v.yanitlayanAd}' : ''}'
                 '${v.yanitZamani != null ? ' · ${_fmtDateTime(v.yanitZamani!.toLocal())}' : ''}',
               ),
+            ],
+            // Rol-bazli arama (C1a): güvenlik → HEDEF sakini arar; sakin →
+            // kaydı açan GÜVENLİĞİ arar. Buton yalnız aranabilir (rıza) ise
+            // etkinleşir; numara ekranda gösterilmez (/call-target kapısı).
+            if (canRegister && v.targetResidentUserId.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              CallButton(userId: v.targetResidentUserId, label: 'Sakini ara'),
+            ],
+            if (canAnswer && v.kaydedenUserId.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              CallButton(userId: v.kaydedenUserId, label: 'Güvenliği ara'),
             ],
             if (v.bekliyor && canAnswer) ...[
               const SizedBox(height: 20),

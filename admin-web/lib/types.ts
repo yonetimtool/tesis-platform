@@ -257,14 +257,21 @@ export interface ComplaintList {
 export type UserRole = "admin" | "yonetici" | "security" | "tesis_gorevlisi" | "resident";
 
 // password_hash ASLA gelmez (backend User semasinda yok).
+// Liste ogesi — telefon YOK (KVKK: numaralar toplu listelenmez). aranabilir
+// (riza bayragi) yonetim gorunurlugu icin doner.
 export interface UserRow {
   id: string;
   ad: string;
   email: string;
-  telefon?: string | null;
+  aranabilir?: boolean;
   role: string;
   is_active: boolean;
   created_at: string;
+}
+
+// Tek-kayit yonetim gorunumu (GET /users/{id}) — telefon + aranabilir burada.
+export interface UserDetail extends UserRow {
+  telefon?: string | null;
 }
 
 export interface UserListResponse {

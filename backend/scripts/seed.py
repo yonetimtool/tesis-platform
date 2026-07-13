@@ -53,12 +53,18 @@ USERS = [
         "email": "yonetici@acme.com",
         "role": "yonetici",
         "password": os.getenv("SEED_YONETICI_PASSWORD", "Yonetici123!"),
+        # Rol-bazli arama (C1a): security yoneticiyi arayabilir (rizali).
+        "telefon": "+905321112201",
+        "aranabilir": True,
     },
     {
         "ad": "Acme Guard",
         "email": "guard@acme.com",
         "role": "security",
         "password": os.getenv("SEED_GUARD_PASSWORD", "Guard123!"),
+        # resident guvenligi arayabilir (rizali).
+        "telefon": "+905321112202",
+        "aranabilir": True,
     },
     {
         "ad": "Acme Cleaner",
@@ -73,6 +79,9 @@ USERS = [
         "email": "resident@acme.com",
         "role": "resident",
         "password": os.getenv("SEED_RESIDENT_PASSWORD", "Resident123!"),
+        # security sakini arayabilir (rizali; C1a).
+        "telefon": "+905321112203",
+        "aranabilir": True,
     },
 ]
 
@@ -99,8 +108,9 @@ def main() -> int:
             conn.execute(
                 """
                 INSERT INTO app_user (tenant_id, ad, email, password_hash,
-                                      password_set, temp_code_hash, role, is_active)
-                VALUES (%s, %s, %s, %s, true, NULL, %s::user_role, true)
+                                      password_set, temp_code_hash, role, is_active,
+                                      telefon, aranabilir)
+                VALUES (%s, %s, %s, %s, true, NULL, %s::user_role, true, %s, %s)
                 ON CONFLICT (tenant_id, email) DO UPDATE
                     SET ad = EXCLUDED.ad,
                         password_hash = EXCLUDED.password_hash,
@@ -108,9 +118,12 @@ def main() -> int:
                         temp_code_hash = NULL,
                         role = EXCLUDED.role,
                         is_active = true,
+                        telefon = EXCLUDED.telefon,
+                        aranabilir = EXCLUDED.aranabilir,
                         updated_at = now()
                 """,
-                (tenant_id, u["ad"], u["email"], hash_password(u["password"]), u["role"]),
+                (tenant_id, u["ad"], u["email"], hash_password(u["password"]), u["role"],
+                 u.get("telefon"), u.get("aranabilir", False)),
             )
             print(f"[seed] user {u['email']:<18} role={u['role']}")
 

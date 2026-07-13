@@ -2,11 +2,50 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:mobile/src/features/auth/data/current_user_provider.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
+import 'package:mobile/src/features/call/data/call_api.dart';
+import 'package:mobile/src/features/call/data/call_launcher.dart';
+import 'package:mobile/src/features/call/domain/call_models.dart';
 import 'package:mobile/src/features/visitors/data/visitor_api.dart';
 import 'package:mobile/src/features/visitors/domain/visitor_models.dart';
 import 'package:mobile/src/features/visitors/presentation/visitors_screen.dart';
+
+/// Sahte call API — detay ekranindaki CallButton gercek aga cikmasin diye.
+/// Varsayilan: aranamiyor (404). callable=true ise hedef doner.
+class _FakeCallApi extends CallApi {
+  _FakeCallApi({this.callable = false}) : super(Dio());
+  final bool callable;
+
+  @override
+  Future<CallTarget> resolve(String userId) async {
+    if (!callable) {
+      throw const ApiException(
+        code: 'not_found',
+        message: 'aranamiyor',
+        statusCode: 404,
+      );
+    }
+    return CallTarget(
+      userId: userId,
+      ad: 'Hedef',
+      role: 'resident',
+      channel: 'phone',
+      telefon: '+905550000000',
+      telUri: 'tel:+905550000000',
+    );
+  }
+}
+
+class _FakeLauncher implements CallLauncher {
+  final List<String> dialed = [];
+  @override
+  Future<bool> dial(String telUri) async {
+    dialed.add(telUri);
+    return true;
+  }
+}
 
 /// Aga cikmayan sahte istemci — liste sabit doner; yanit cagrilari kaydedilir
 /// (widget testi).
@@ -51,6 +90,8 @@ Visitor _v({
   UserRole role, {
   List<Visitor> items = const [],
   String? initialVisitorId,
+  bool callable = false,
+  _FakeLauncher? launcher,
 }) {
   final api = _FakeVisitorApi(items);
   return (
@@ -59,6 +100,8 @@ Visitor _v({
       overrides: [
         visitorApiProvider.overrideWithValue(api),
         currentUserRoleProvider.overrideWith((ref) async => role),
+        callApiProvider.overrideWithValue(_FakeCallApi(callable: callable)),
+        callLauncherProvider.overrideWithValue(launcher ?? _FakeLauncher()),
       ],
       child: MaterialApp(
         home: VisitorsScreen(initialVisitorId: initialVisitorId),
@@ -179,6 +222,40 @@ void main() {
         find.text('Henüz sonuçlanan ziyaretçi kaydı yok.'),
         findsOneWidget,
       );
+    });
+  });
+
+  group('rol-bazli arama (C1a) — ziyaretci detayinda', () {
+    testWidgets('security: aranabilir hedef sakine "Sakini ara" gorunur',
+        (tester) async {
+      final (_, app) = _app(UserRole.security, items: [_v()], callable: true);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kurye Mehmet'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sakini ara'), findsOneWidget); // security -> resident
+      expect(find.text('Güvenliği ara'), findsNothing);
+    });
+
+    testWidgets('resident: kaydi acan guvenlige "Güvenliği ara" gorunur',
+        (tester) async {
+      final (_, app) = _app(UserRole.resident, items: [_v()], callable: true);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kurye Mehmet'));
+      await tester.pumpAndSettle();
+      expect(find.text('Güvenliği ara'), findsOneWidget); // resident -> security
+      expect(find.text('Sakini ara'), findsNothing);
+    });
+
+    testWidgets('riza yoksa "Aranamıyor" — numara/buton yok', (tester) async {
+      final (_, app) = _app(UserRole.security, items: [_v()]); // callable=false
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kurye Mehmet'));
+      await tester.pumpAndSettle();
+      expect(find.text('Aranamıyor'), findsOneWidget);
+      expect(find.text('Sakini ara'), findsNothing);
     });
   });
 

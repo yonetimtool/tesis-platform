@@ -7,7 +7,7 @@ import { Field, ErrorBox, Pager, inputCls, btnPrimary, btnGhost } from "@/compon
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { ROLE_OPTIONS as ROLES, ROLE_STYLE, roleLabel } from "@/lib/roles";
-import type { UserListResponse, UserRole, UserRow } from "@/lib/types";
+import type { UserDetail, UserListResponse, UserRole, UserRow } from "@/lib/types";
 
 const LIMIT = 20;
 
@@ -15,10 +15,18 @@ interface FormState {
   ad: string;
   email: string;
   telefon: string;
+  aranabilir: boolean;
   role: UserRole;
   password: string;
 }
-const EMPTY: FormState = { ad: "", email: "", telefon: "", role: "security", password: "" };
+const EMPTY: FormState = {
+  ad: "",
+  email: "",
+  telefon: "",
+  aranabilir: false,
+  role: "security",
+  password: "",
+};
 
 export default function UsersPage() {
   const [offset, setOffset] = useState(0);
@@ -54,17 +62,29 @@ export default function UsersPage() {
     setFormErr(null);
     setOpen(true);
   }
-  function openEdit(u: UserRow) {
+  async function openEdit(u: UserRow) {
     setEditingId(u.id);
+    // Numara listede DONMEZ (KVKK); tek-kayit detayindan cekilir.
     setForm({
       ad: u.ad,
       email: u.email,
-      telefon: u.telefon ?? "",
+      telefon: "",
+      aranabilir: u.aranabilir ?? false,
       role: (u.role as UserRole) ?? "security",
       password: "",
     });
     setFormErr(null);
     setOpen(true);
+    try {
+      const d = await jsonFetcher<UserDetail>(`/api/users/${u.id}`);
+      setForm((f) => ({
+        ...f,
+        telefon: d.telefon ?? "",
+        aranabilir: d.aranabilir ?? false,
+      }));
+    } catch {
+      // Detay cekilemezse form yine acik kalir (telefon bos); kaydetmeye engel yok.
+    }
   }
 
   async function save(e: React.FormEvent) {
@@ -78,6 +98,7 @@ export default function UsersPage() {
           ad: form.ad,
           email: form.email,
           telefon: form.telefon || null,
+          aranabilir: form.aranabilir,
           role: form.role,
         };
         if (form.password) body.password = form.password;
@@ -87,6 +108,7 @@ export default function UsersPage() {
           ad: form.ad,
           email: form.email,
           telefon: form.telefon || null,
+          aranabilir: form.aranabilir,
           role: form.role,
           password: form.password,
         });
@@ -177,12 +199,25 @@ export default function UsersPage() {
                 required
               />
             </Field>
-            <Field label="Telefon (opsiyonel)">
+            <Field
+              label="Telefon (opsiyonel)"
+              hint="Rol-bazlı arama için; yalnızca rıza açıkken paylaşılır"
+            >
               <input
                 className={inputCls}
                 value={form.telefon}
                 onChange={(e) => setForm({ ...form, telefon: e.target.value })}
               />
+            </Field>
+            <Field label="Aranabilir (rıza)" hint="Numara aramaya izin verildi mi?">
+              <label className="flex h-10 items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.aranabilir}
+                  onChange={(e) => setForm({ ...form, aranabilir: e.target.checked })}
+                />
+                Telefonla aranmaya izin ver
+              </label>
             </Field>
             <Field label="Rol">
               <select
@@ -230,7 +265,7 @@ export default function UsersPage() {
             <tr>
               <th className="px-3 py-2 font-medium">Ad</th>
               <th className="px-3 py-2 font-medium">E-posta</th>
-              <th className="px-3 py-2 font-medium">Telefon</th>
+              <th className="px-3 py-2 font-medium">Aranabilir</th>
               <th className="px-3 py-2 font-medium">Rol</th>
               <th className="px-3 py-2 font-medium">Durum</th>
               <th className="px-3 py-2 font-medium" />
@@ -241,7 +276,9 @@ export default function UsersPage() {
               <tr key={u.id} className={`border-t border-slate-100 ${u.is_active ? "" : "opacity-60"}`}>
                 <td className="px-3 py-2">{u.ad}</td>
                 <td className="px-3 py-2 text-slate-600">{u.email}</td>
-                <td className="px-3 py-2 text-slate-600">{u.telefon ?? "—"}</td>
+                <td className="px-3 py-2 text-slate-600">
+                  {u.aranabilir ? "Evet" : "—"}
+                </td>
                 <td className="px-3 py-2">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_STYLE[u.role] ?? "bg-slate-100 text-slate-700"}`}

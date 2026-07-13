@@ -176,6 +176,11 @@ class AppUser(Base):
     # personel icin zorunlu (login anahtari); resident icin opsiyonel.
     email: Mapped[str | None] = mapped_column(Text, nullable=True)
     telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Rol-bazli arama rizasi (C1a): numara YALNIZ riza=true iken ve yetkili
+    # arayan role /call-target ile aciklanir (KVKK — amaç-sınırlı).
+    aranabilir: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     # resident ilk giriste parola belirleyene kadar NULL.
     password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
     # sakinin tek seferlik gecici giris kodu (bcrypt hash; duz metin yok).

@@ -86,7 +86,9 @@ class UserOut(BaseModel):
 UserRoleLiteral = Literal["admin", "yonetici", "security", "tesis_gorevlisi", "resident"]
 
 
-# Admin kullanici yonetimi ciktisi — password_hash ASLA yok.
+# Admin kullanici yonetimi ciktisi (TEK kayit) — password_hash ASLA yok.
+# telefon burada doner (tek-kayit yonetim gorunumu); LISTEDE donmez (KVKK —
+# numaralar TOPLU listelenmez, bkz. UserAdminListItem).
 class UserAdminOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -94,6 +96,21 @@ class UserAdminOut(BaseModel):
     ad: str
     email: str | None = None  # resident'ta opsiyonel
     telefon: str | None = None
+    aranabilir: bool = False
+    role: str
+    is_active: bool
+    created_at: datetime
+
+
+# Liste ogesi — telefon YOK (data-minimization: numaralar toplu listelenmez).
+# aranabilir (riza bayragi; PII degil) yonetim gorunurlugu icin doner.
+class UserAdminListItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    email: str | None = None
+    aranabilir: bool = False
     role: str
     is_active: bool
     created_at: datetime
@@ -103,6 +120,7 @@ class UserCreate(BaseModel):
     ad: str = Field(..., min_length=1)
     email: EmailStr
     telefon: str | None = None
+    aranabilir: bool = False
     role: UserRoleLiteral
     password: str = Field(..., min_length=8)
 
@@ -111,6 +129,7 @@ class UserUpdate(BaseModel):
     ad: str | None = Field(None, min_length=1)
     email: EmailStr | None = None
     telefon: str | None = None
+    aranabilir: bool | None = None
     role: UserRoleLiteral | None = None
     is_active: bool | None = None
     password: str | None = Field(None, min_length=8)
@@ -122,9 +141,35 @@ class UserUpdate(BaseModel):
         return self
 
 
+# Rol-bazli arama iletisim ayari (C1a) — YALNIZ telefon + riza; admin+yonetici
+# yonetir (rol/parola gibi hassas alanlara dokunmadan — yetki yukseltme yok).
+class UserContactUpdate(BaseModel):
+    telefon: str | None = Field(None, max_length=40)
+    aranabilir: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "UserContactUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
 class UserAdminListResponse(BaseModel):
     meta: PageMetaOut
-    items: list[UserAdminOut]
+    items: list[UserAdminListItem]
+
+
+# Rol-bazli arama hedefi (C1a) — numara YALNIZ burada, yetki+riza kapisindan
+# gecince aciklanir. channel alani C1b (megafon/akilli-ev) icin genisletilebilir.
+class CallTargetOut(BaseModel):
+    user_id: uuid.UUID
+    ad: str
+    role: str
+    # Kanal turu — C1a yalniz 'phone'; C1b baska kanallar ekleyecek.
+    channel: str = "phone"
+    telefon: str
+    # Cihaz cevirici icin hazir tel: URI (istemci dogrudan baslatir).
+    tel_uri: str
 
 
 # ----------------------- Faz-0 dogrulama (diagnostic) ---------------------- #

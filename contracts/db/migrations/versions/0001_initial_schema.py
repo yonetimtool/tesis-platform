@@ -183,6 +183,11 @@ def upgrade() -> None:
             -- (sakin daire no + parola ile girer — bkz. /contracts/auth.md §1.2).
             email          text,
             telefon        text,
+            -- Rol-bazli arama (C1a): kullanici telefonuyla ARANMAYA riza verdi mi?
+            -- Numara YALNIZ riza=true iken ve yetkili arayan role /call-target
+            -- ile aciklanir (KVKK — amaç-sınırlı, riza-kapili). Yonetim tarafindan
+            -- girilir; kullanici bu turda kendi yonetmez.
+            aranabilir     boolean NOT NULL DEFAULT false,
             -- resident ilk giriste parola belirleyene kadar NULL olabilir.
             password_hash  text,
             -- yonetici'nin sakine ilettigi TEK SEFERLIK gecici kod (bcrypt hash;

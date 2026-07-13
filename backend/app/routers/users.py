@@ -21,6 +21,7 @@ from ..models import AppUser
 from ..schemas import (
     UserAdminListResponse,
     UserAdminOut,
+    UserContactUpdate,
     UserCreate,
     UserRoleLiteral,
     UserUpdate,
@@ -32,6 +33,9 @@ router = APIRouter(prefix="/users", tags=["users"])
 _ADMIN = require_role("admin")
 # yonetici gorev atamak icin kullanici listesini OKUR; CRUD admin-only (auth.md §4).
 _READER = require_role("admin", "yonetici")
+# Iletisim ayari (telefon + arama rizasi) admin + yonetici yonetir (rol/parola
+# gibi hassas alanlara dokunmadan — yetki yukseltme yok).
+_CONTACT_MANAGER = require_role("admin", "yonetici")
 _EMAIL_CONFLICT = APIError(409, "conflict", "email bu tenant'ta zaten kayitli.")
 
 
@@ -80,6 +84,7 @@ async def create_user(
         ad=body.ad,
         email=str(body.email),
         telefon=body.telefon,
+        aranabilir=body.aranabilir,
         password_hash=hash_password(body.password),
         # parola admin tarafindan belirlendi (gecici kod akisi disinda).
         password_set=True,
@@ -121,5 +126,29 @@ async def update_user(
         if is_unique_violation(exc):
             raise _EMAIL_CONFLICT
         raise translate_integrity(exc)
+    await db.refresh(obj)
+    return obj
+
+
+@router.patch("/{user_id}/contact", response_model=UserAdminOut)
+async def update_user_contact(
+    user_id: uuid.UUID,
+    body: UserContactUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_CONTACT_MANAGER),
+) -> AppUser:
+    """Rol-bazli arama iletisim ayari (C1a): telefon + arama rizasi.
+
+    admin + yonetici yonetir — rol/parola/is_active gibi hassas alanlara
+    DOKUNMADAN (tam PATCH admin-only kalir; yonetici burada yalniz iletisim
+    ayarini gunceller — yetki yukseltme yok). Numara yonetim tarafindan girilir;
+    kullanici bu turda kendi yonetmez.
+    """
+    obj = await get_or_404(db, AppUser, user_id)
+    data = body.model_dump(exclude_unset=True)
+    for key, value in data.items():
+        setattr(obj, key, value)
+    obj.updated_at = func.now()
+    await db.flush()
     await db.refresh(obj)
     return obj

@@ -240,7 +240,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET /budget/summary` (agregat ozet)  |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET /reports/financial-summary`      |  ✅   | ✅  | ✅° | ✅° | ✅° |
 | `GET /users` + `GET /users/{id}`      |  ✅   | ✅  | ❌  | ❌  | ❌  |
-| `POST/PATCH /users*`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `POST/PATCH /users*` (tam)            |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `PATCH /users/{id}/contact`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET /call-target/{id}`               |  ❌   | ❌  | 📞  | ❌  | 📞  |
 
 > **Giris yollari:** `login`/`login-resident`/`set-password` PUBLIC
 > endpoint'lerdir; matris "hangi rol bu yolu kullanir"i gosterir. Sakinin
@@ -430,7 +432,28 @@ Notlar:
 
 > Matris isaretleri: 🔒 varsayilan kapali (tek-seferlik izinle acilir) · 🎯
 > yalniz hedef sakin · 🔵 kendi dairesi (es dahil) · 👤 kendi talepleri · 🏠
-> kendi dairesine gelen talepler.
+> kendi dairesine gelen talepler · 📞 yon+riza kapisiyla (bkz. rol-bazli arama).
+
+- **Rol-bazli arama (`/call-target`, C1a — telefon numarasi GIZLILIGI):**
+  sahadaki roller birbirine cihaz ceviricisiyle (tel:, ucretsiz — Twilio yok)
+  ulasir. Numara **PII**dir; asagidaki UC kapi hepsi saglanmadan ASLA aciklanmaz:
+  1. **YON (rol-bazli, tam dizin DEGIL):** `security` → `yonetici`/`resident`;
+     `resident` → `security`. Diger arayan roller (admin/yonetici/tesis_gorevlisi)
+     bu turda arama BASLATMAZ (403). Yon disi cift (orn. resident→resident) 403.
+  2. **RIZA:** callee `aranabilir=true` olmali (yonetim girer). Riza yoksa 404 —
+     numara donmez.
+  3. **NUMARA VARLIGI:** callee `telefon` dolu olmali; yoksa 404.
+  - **AMAÇ-SINIRLI + DATA-MINIMIZATION:** numara YALNIZ `GET /call-target/{id}`
+    yanitinda (yalniz arama amaci), yalniz yetkili+rizali cift icin doner.
+    **Listede (`GET /users`) numara YOK** (`UserListItem` telefon tasimaz);
+    tek-kayit yonetim gorunumu (`GET /users/{id}`) yonetime numarayi gosterir.
+  - **ILETISIM AYARI (`PATCH /users/{id}/contact`):** telefon + riza YALNIZ
+    `admin`+`yonetici` tarafindan girilir — rol/parola/is_active gibi hassas
+    alanlara DOKUNMADAN (tam PATCH `admin`-only kalir; yetki yukseltme yok).
+  - **Kanal soyutlamasi (C1b'ye hazir):** yanit `channel` alani tasir; C1a yalniz
+    `phone` (tel:). C1b (megafon/akilli-ev HTTP adaptorleri) yeni kanal + resolver
+    ekler — sema/kapi yeniden yazilmaz. (Teknik data-minimization; hukuki tavsiye
+    degil.)
 - **Ortak alan rezervasyonu (`/common-areas` + `/reservations`):** yonetici
   alan tanimlar (havuz/teras/toplanti odasi), sakin slot talep eder, yonetici
   onaylar/reddeder; tam gecmis tutulur.

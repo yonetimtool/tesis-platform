@@ -3209,7 +3209,7 @@ paths:
                     properties:
                       items:
                         type: array
-                        items: { $ref: "#/components/schemas/User" }
+                        items: { $ref: "#/components/schemas/UserListItem" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
@@ -3279,6 +3279,56 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "422": { $ref: "#/components/responses/ValidationError" }
+
+  /users/{id}/contact:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [users]
+      summary: Iletisim ayari — telefon + arama rizasi (admin + yonetici)
+      description: |
+        Rol-bazli arama (C1a) icin YALNIZ telefon + aranabilir (riza) gunceller.
+        admin + yonetici yetkili; rol/parola/is_active gibi hassas alanlara
+        DOKUNMAZ (tam PATCH admin-only kalir — yetki yukseltme yok). Numara
+        yonetim tarafindan girilir; kullanici bu turda kendi yonetmez.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserContactUpdate" }
+      responses:
+        "200":
+          description: Guncellendi (tek-kayit yonetim gorunumu — telefon doner)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /call-target/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [call-target]
+      summary: Rol-bazli arama hedefi cozumu (numara-gizlilik kapisi)
+      description: |
+        Callee'nin telefonu YALNIZ (1) arayan rol o callee rolunu arayabiliyorsa
+        (security->yonetici/resident; resident->security) VE (2) callee.aranabilir
+        = true iken aciklanir. Aksi halde numara ASLA donmez: yetkisiz yon 403,
+        rizasiz/numarasiz 404. Arayan roller: security + resident (digerleri 403).
+        Amaç-sınırlı (yalniz arama), toplu listelenmez (KVKK). Kanal C1a'da 'phone'
+        (cihaz ceviricisi, tel:); C1b baska kanallar ekleyecek.
+      responses:
+        "200":
+          description: Cozuldu — numara + tel: URI (yalniz burada aciklanir)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CallTarget" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
 # =================================================================== #
 components:
@@ -3435,7 +3485,30 @@ components:
           format: email
           nullable: true
           description: Personelde zorunlu; resident'ta opsiyonel (daire ile girer)
-        telefon: { type: string, nullable: true }
+        telefon:
+          type: string
+          nullable: true
+          description: >
+            Rol-bazli arama numarasi. YALNIZ tek-kayit yonetim gorunumunde
+            (bu sema) doner; LISTEDE donmez (KVKK — bkz. UserListItem). Arayanlara
+            yalniz /call-target ile riza+yetki kapisindan gecince aciklanir.
+        aranabilir:
+          type: boolean
+          description: Telefonla aranmaya riza (C1a). Yonetim girer; /call-target kapisi.
+        role: { $ref: "#/components/schemas/UserRole" }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+    UserListItem:
+      type: object
+      description: >
+        Kullanici LISTE ogesi — telefon YOK (data-minimization: numaralar toplu
+        listelenmez). aranabilir (riza bayragi, PII degil) yonetim gorunurlugu icin.
+      required: [id, ad, role, is_active, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string }
+        email: { type: string, format: email, nullable: true }
+        aranabilir: { type: boolean }
         role: { $ref: "#/components/schemas/UserRole" }
         is_active: { type: boolean }
         created_at: { type: string, format: date-time }
@@ -3446,6 +3519,7 @@ components:
         ad: { type: string }
         email: { type: string, format: email }
         telefon: { type: string, nullable: true }
+        aranabilir: { type: boolean, default: false }
         role: { $ref: "#/components/schemas/UserRole" }
         password: { type: string, format: password, minLength: 8 }
     UserUpdate:
@@ -3455,9 +3529,30 @@ components:
         ad: { type: string }
         email: { type: string, format: email }
         telefon: { type: string, nullable: true }
+        aranabilir: { type: boolean }
         role: { $ref: "#/components/schemas/UserRole" }
         is_active: { type: boolean }
         password: { type: string, format: password, minLength: 8 }
+    UserContactUpdate:
+      type: object
+      description: Rol-bazli arama iletisim ayari (admin+yonetici) — en az bir alan
+      minProperties: 1
+      properties:
+        telefon: { type: string, nullable: true, maxLength: 40 }
+        aranabilir: { type: boolean }
+    CallTarget:
+      type: object
+      description: >
+        Cozulmus arama hedefi (C1a). Numara YALNIZ burada, yetki+riza kapisindan
+        gecince doner. channel C1a'da 'phone'; C1b baska kanallar ekleyecek.
+      required: [user_id, ad, role, channel, telefon, tel_uri]
+      properties:
+        user_id: { type: string, format: uuid }
+        ad: { type: string }
+        role: { $ref: "#/components/schemas/UserRole" }
+        channel: { type: string, enum: [phone], description: "C1a: phone; C1b genisletir" }
+        telefon: { type: string }
+        tel_uri: { type: string, example: "tel:+905321112203" }
 
     PatrolWindowDurum:
       type: string
