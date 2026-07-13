@@ -171,6 +171,75 @@ def test_building_map_resident_yapi_only_own_block(mapworld, client):
         assert u["complaint_count"] is None and u["color"] is None
 
 
+def test_building_map_resident_kendi_sikayeti_isaretli(mapworld, client):
+    """FIX (Rev-1.1): resident KENDI sikayet ettigi daireyi harita uzerinde
+    isaretli gorur (benim_sikayetim + benim_acik_sayisi=KENDI acik sayim);
+    sikayet etmedigi daire noturr. Genel yogunluk (sayi/renk) YINE gizli."""
+    slug = mapworld["slug_a"]
+    sfx = mapworld["suffix"]
+    ua = _create_unit(client, slug, mapworld["admin_a"], f"OWN-{sfx}", blok="A", kat=1, sira=1)
+    ub = _create_unit(client, slug, mapworld["admin_a"], f"OTH-{sfx}", blok="A", kat=1, sira=2)
+    r0 = mapworld["residents"][0]
+    # 1 POST = 1 kayit -> benim_acik_sayisi TAM 1 (cift sayim yok)
+    assert _file(client, slug, r0, ua["id"]).status_code == 201
+
+    body = client.get(
+        "/unit-complaints/building-map", headers=_headers(client, slug, r0)
+    ).json()
+    assert body["shows_density"] is False
+    by_id = {u["unit_id"]: u for u in _all_units(body)}
+    own, oth = by_id[ua["id"]], by_id[ub["id"]]
+    # KENDI sikayet ettigi daire isaretli; genel yogunluk YINE gizli
+    assert own["benim_sikayetim"] is True and own["benim_acik_sayisi"] == 1
+    assert own["complaint_count"] is None and own["color"] is None
+    # Sikayet etmedigi daire noturr
+    assert oth["benim_sikayetim"] is False and oth["benim_acik_sayisi"] == 0
+
+
+def test_building_map_resident_baskasinin_sikayetini_gormez(mapworld, client):
+    """GIZLILIK: resident YALNIZ KENDI sikayetini isaretli gorur. Baska sakinin
+    ayni daireye actigi sikayet ona benim_sikayetim=True YAPMAZ ve sayiya
+    SIZMAZ (own-scope)."""
+    slug = mapworld["slug_a"]
+    sfx = mapworld["suffix"]
+    ua = _create_unit(client, slug, mapworld["admin_a"], f"SHR-{sfx}", blok="A", kat=1, sira=1)
+    r0, r1 = mapworld["residents"][0], mapworld["residents"][1]
+    # r1 sikayet acar; r0 ACMAZ
+    assert _file(client, slug, r1, ua["id"]).status_code == 201
+
+    # r0 acisindan: kendi sikayeti YOK -> isaret yok; r1'in kaydi SIZMAZ
+    body0 = client.get(
+        "/unit-complaints/building-map", headers=_headers(client, slug, r0)
+    ).json()
+    own0 = next(u for u in _all_units(body0) if u["unit_id"] == ua["id"])
+    assert own0["benim_sikayetim"] is False and own0["benim_acik_sayisi"] == 0
+    assert own0["complaint_count"] is None
+
+    # r1 acisindan: KENDI sikayeti isaretli
+    body1 = client.get(
+        "/unit-complaints/building-map", headers=_headers(client, slug, r1)
+    ).json()
+    own1 = next(u for u in _all_units(body1) if u["unit_id"] == ua["id"])
+    assert own1["benim_sikayetim"] is True and own1["benim_acik_sayisi"] == 1
+
+
+def test_building_map_yonetim_benim_isareti_kullanmaz(mapworld, client):
+    """Yonetim gorunumu benim_sikayetim isareti KULLANMAZ (denetim sayim/renk
+    kullanir): benim_sikayetim False, benim_acik_sayisi None. Sayim 1 dosya =
+    1 kayit (2 degil)."""
+    slug = mapworld["slug_a"]
+    sfx = mapworld["suffix"]
+    ua = _create_unit(client, slug, mapworld["admin_a"], f"MGF-{sfx}", blok="A", kat=1, sira=1)
+    assert _file(client, slug, mapworld["residents"][0], ua["id"]).status_code == 201
+    for cred in (mapworld["admin_a"], mapworld["yonetici_a"]):
+        body = client.get(
+            "/unit-complaints/building-map", headers=_headers(client, slug, cred)
+        ).json()
+        u = next(u for u in _all_units(body) if u["unit_id"] == ua["id"])
+        assert u["benim_sikayetim"] is False and u["benim_acik_sayisi"] is None
+        assert u["complaint_count"] == 1  # 1 dosya = 1 kayit
+
+
 def test_building_map_security_gorevli_yapi_only_tum_bina(mapworld, client):
     slug = mapworld["slug_a"]
     sfx = mapworld["suffix"]

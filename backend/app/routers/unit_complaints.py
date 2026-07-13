@@ -235,14 +235,34 @@ async def building_map(
 ) -> BuildingMapResponse:
     """ROL-FARKINDA bina semasi (blok -> kat -> daire):
       * yonetici/admin: sayim + renk dolu (shows_density=True).
-      * resident: YALNIZ KENDI blogundaki daireler; sayim/renk NULL (yapi —
-        sikayet secici).
+      * resident: YALNIZ KENDI blogundaki daireler; genel sayim/renk NULL (yapi —
+        sikayet secici). AYRICA KENDI sikayet ettigi daireler isaretlenir
+        (benim_sikayetim + benim_acik_sayisi — YALNIZ kendi kayitlarindan turer).
       * security/tesis_gorevlisi: TUM yapi; sayim/renk NULL.
-    Sikayet eden verisi bu uctan ASLA donmez."""
+    Sikayet eden verisi (baskalarinin) bu uctan ASLA donmez; genel yogunluk
+    residenta sizmaz."""
     is_mgmt = user.role in _MANAGEMENT
+    is_resident = user.role == "resident"
     resident_blocks: set[str | None] | None = None
-    if user.role == "resident":
+    # resident: KENDI acik sikayetlerinin daire-basi sayisi (yalniz kendi
+    # kayitlarindan; complainant == kendisi). Baskalarinin verisi ASLA girmez.
+    own_open: dict[uuid.UUID, int] = {}
+    if is_resident:
         resident_blocks = await _resident_blocks(db, user)
+        own_rows = (
+            await db.execute(
+                select(
+                    UnitComplaint.target_unit_id,
+                    func.count(UnitComplaint.id),
+                )
+                .where(
+                    UnitComplaint.complainant_user_id == user.id,
+                    UnitComplaint.durum == "acik",
+                )
+                .group_by(UnitComplaint.target_unit_id)
+            )
+        ).all()
+        own_open = {uid: n for uid, n in own_rows}
 
     rows = (
         await db.execute(
@@ -273,6 +293,8 @@ async def building_map(
         # resident: yalniz kendi blogu (own-block picker kapsami).
         if resident_blocks is not None and blok not in resident_blocks:
             continue
+        # resident: KENDI acik sikayet sayim (0 dahil); diger rollerde None.
+        benim_acik = own_open.get(uid, 0) if is_resident else None
         item = BuildingMapUnit(
             unit_id=uid,
             unit_no=no,
@@ -282,6 +304,9 @@ async def building_map(
             # Sayim + renk YALNIZ yonetime; digerinde None (yapi gorunumu).
             complaint_count=count if is_mgmt else None,
             color=_color(count) if is_mgmt else None,
+            # KENDI sikayet isareti — yalniz resident icin (kendi kayitlarindan).
+            benim_sikayetim=bool(benim_acik) if is_resident else False,
+            benim_acik_sayisi=benim_acik,
         )
         if blok is None or kat is None:
             unplaced.append(item)

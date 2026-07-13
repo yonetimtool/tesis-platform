@@ -233,7 +233,12 @@ class _KatRow extends StatelessWidget {
   }
 }
 
-/// Tek daire hucresi — yonetimde renk+sayi; digerinde noturr (yapi).
+/// Resident'in KENDI sikayet ettigi daireyi vurgulayan aksan rengi (yogunluk
+/// DEGIL — yalniz kendi kaydinin isareti).
+const Color _ownComplaintColor = Color(0xFF3949AB); // indigo
+
+/// Tek daire hucresi — yonetimde renk+sayi; resident'ta KENDI sikayeti varsa
+/// vurgulu + "iletildi" isareti; digerinde noturr (yapi).
 class _UnitCell extends StatelessWidget {
   const _UnitCell({required this.unit, required this.map, required this.isResident});
 
@@ -244,7 +249,22 @@ class _UnitCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final density = map.showsDensity;
-    final color = density ? densityColor(unit.color) : Colors.blueGrey.shade300;
+    // resident: KENDI sikayet ettigi daire vurgulanir (genel yogunluk DEGIL —
+    // yalniz kendi kaydi). Diger daireler noturr kalir.
+    final own = isResident && unit.benimSikayetim;
+    final Color color;
+    if (density) {
+      color = densityColor(unit.color);
+    } else if (own) {
+      color = _ownComplaintColor;
+    } else {
+      color = Colors.blueGrey.shade300;
+    }
+    final Color fill = density
+        ? color.withValues(alpha: 0.85)
+        : own
+            ? color.withValues(alpha: 0.12)
+            : Colors.white;
     return InkWell(
       onTap: () => showUnitDetailSheet(context, unit, map: map, isResident: isResident),
       borderRadius: BorderRadius.circular(8),
@@ -252,7 +272,7 @@ class _UnitCell extends StatelessWidget {
         width: 58,
         height: 46,
         decoration: BoxDecoration(
-          color: density ? color.withValues(alpha: 0.85) : Colors.white,
+          color: fill,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color, width: density ? 1 : 1.5),
         ),
@@ -263,18 +283,25 @@ class _UnitCell extends StatelessWidget {
             Text(
               unit.unitNo,
               style: TextStyle(
-                color: density ? Colors.white : Colors.black87,
+                color: density
+                    ? Colors.white
+                    : own
+                        ? _ownComplaintColor
+                        : Colors.black87,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
               overflow: TextOverflow.ellipsis,
             ),
-            // Sayi YALNIZ yonetimde (resident/saha yogunlugu gormez).
+            // Sayi YALNIZ yonetimde (resident/saha genel yogunlugu gormez).
             if (density)
               Text(
                 '${unit.complaintCount ?? 0}',
                 style: const TextStyle(color: Colors.white, fontSize: 11),
-              ),
+              )
+            // resident: KENDI sikayeti iletildi isareti (genel yogunluk yok).
+            else if (own)
+              const Icon(Icons.check_circle, size: 13, color: _ownComplaintColor),
           ],
         ),
       ),
@@ -362,20 +389,38 @@ class _UnitDetailSheet extends ConsumerStatefulWidget {
 class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
   Future<List<UnitComplaint>>? _future;
 
+  /// Bu daire icin KENDI sikayetlerimi (resident) gosterecek miyiz?
+  bool get _showsOwn => widget.isResident && widget.unit.benimSikayetim;
+
   @override
   void initState() {
     super.initState();
-    // Sikayet listesi YALNIZ yonetim gorunumunde cekilir (backend 403 verir
-    // digerlerine — bosuna cagirmayiz).
-    if (widget.showsDensity) _future = _load();
+    // Yonetim: dairenin ACIK sikayet listesi (denetim). resident: YALNIZ KENDI
+    // sikayetlerim (benim_sikayetim isaretli daire). Digerinde cekmeyiz.
+    if (widget.showsDensity) {
+      _future = _loadMgmt();
+    } else if (_showsOwn) {
+      _future = _loadOwn();
+    }
   }
 
-  Future<List<UnitComplaint>> _load() => ref
+  Future<List<UnitComplaint>> _loadMgmt() => ref
       .read(unitComplaintApiProvider)
       .fetchForUnit(widget.unit.unitId, acikOnly: true);
 
+  /// KENDI sikayetlerim (GET /mine) bu daireye filtrelenir — baskalarinin
+  /// kaydi ASLA gelmez (uc yalniz complainant==kendisi doner).
+  Future<List<UnitComplaint>> _loadOwn() async {
+    final mine = await ref.read(unitComplaintApiProvider).fetchMine();
+    return mine.where((c) => c.targetUnitId == widget.unit.unitId).toList();
+  }
+
   void _reload() {
-    if (widget.showsDensity) setState(() => _future = _load());
+    if (widget.showsDensity) {
+      setState(() => _future = _loadMgmt());
+    } else if (_showsOwn) {
+      setState(() => _future = _loadOwn());
+    }
   }
 
   @override
@@ -414,7 +459,13 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
             // Sikayet listesi YALNIZ yonetim (denetim: sikayet eden + not).
             if (widget.showsDensity)
               SizedBox(height: 220, child: _ComplaintList(future: _future))
-            else
+            // resident: bu daireye KENDI ilettigi sikayetler (kategori/tarih/durum).
+            else if (_showsOwn) ...[
+              const Text('Bu daire için şikayetleriniz',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 6),
+              SizedBox(height: 160, child: _OwnComplaintList(future: _future)),
+            ] else
               const Text(
                 'Şikayet yoğunluğu yalnızca yönetime gösterilir.',
                 style: TextStyle(color: Colors.black54),
@@ -444,11 +495,10 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
       builder: (_) => _FileComplaintForm(unit: widget.unit),
     );
     if (filed == true) {
-      // Gitti mi geri bildirimi: "Şikayetlerim"den durumu izlenebilir.
+      // Gitti mi geri bildirimi: harita uzerinde daire artik "iletildi" olarak
+      // isaretlenir; ayri sayfaya gitmeye gerek yok.
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Şikayetiniz alındı — "Şikayetlerim"den takip edebilirsiniz.'),
-        ),
+        const SnackBar(content: Text('Şikayetiniz iletildi.')),
       );
       await ref.read(buildingMapControllerProvider.notifier).refresh();
       if (mounted) _reload();
@@ -502,6 +552,56 @@ class _ComplaintList extends StatelessWidget {
   }
 }
 
+/// resident gorunumu: bu daireye KENDI ilettigi sikayetler (kategori + tarih +
+/// durum). Baskalarinin kaydi/kimligi/yogunlugu YOKTUR (uc yalniz kendi
+/// kayitlarini doner). Acik = "yönetime iletildi", kapali = "kapatıldı".
+class _OwnComplaintList extends StatelessWidget {
+  const _OwnComplaintList({required this.future});
+
+  final Future<List<UnitComplaint>>? future;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<UnitComplaint>>(
+      future: future,
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          return const Center(child: Text('Şikayetleriniz yüklenemedi.'));
+        }
+        final items = snap.data ?? const [];
+        if (items.isEmpty) {
+          return const Center(child: Text('Bu daireye şikayetiniz yok.'));
+        }
+        return ListView.separated(
+          itemCount: items.length,
+          separatorBuilder: (_, _) => const Divider(height: 1),
+          itemBuilder: (context, i) {
+            final c = items[i];
+            final durumLabel = c.acik ? 'Yönetime iletildi' : 'Kapatıldı';
+            return ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(
+                c.acik ? Icons.check_circle_outline : Icons.task_alt,
+                color: c.acik ? _ownComplaintColor : Colors.green,
+              ),
+              title: Text(c.kategori.label),
+              subtitle: Text(
+                '${_fmtDate(c.createdAt.toLocal())} · $durumLabel'
+                '${c.notlar != null ? '\n${c.notlar}' : ''}',
+              ),
+              isThreeLine: c.notlar != null,
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
 /// Daire sikayeti formu (YALNIZ resident) — kategori + opsiyonel not.
 class _FileComplaintForm extends ConsumerStatefulWidget {
   const _FileComplaintForm({required this.unit});
@@ -525,6 +625,10 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
   }
 
   Future<void> _submit() async {
+    // Cift-gonderim korumasi: hizli cift-dokunusta (setState bir sonraki
+    // frame'de etki eder) _submit iki kez cagrilip 2 POST atmasin (1 dosya =
+    // 1 kayit). Buton da _busy'de pasif; bu ust-guard esas emniyettir.
+    if (_busy) return;
     setState(() {
       _busy = true;
       _error = null;

@@ -301,10 +301,12 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 > - **`GET /unit-complaints/building-map`** ROL-FARKINDADIR (`shows_density`
 >   bayragi): **yonetici/admin** her daire icin ACIK sikayet **sayisi + renk**
 >   (0-2 yeşil / 3-4 sarı / 5+ kırmızı) görür; **resident** YALNIZ **kendi
->   bloğunun** yapısını görür (sayı/renk `null` — hangi dairenin kaç şikayeti
->   olduğunu **bilemez**; haritayı yalnız şikayet edilecek daireyi SEÇMEK için
->   kullanır); **security/tesis_gorevlisi** TÜM bina yapısını görür ama
->   sayı/renk `null`.
+>   bloğunun** yapısını görür (genel sayı/renk `null` — hangi dairenin kaç
+>   şikayeti olduğunu **bilemez**; haritayı yalnız şikayet edilecek daireyi
+>   SEÇMEK için kullanır) + **KENDI sikayet ettigi daireler isaretli**
+>   (`benim_sikayetim` + `benim_acik_sayisi`, yalnız kendi kayıtlarından;
+>   Rev-1.1 — ayrı "Şikayetlerim" ekranı yerine harita üzerinde); **security/
+>   tesis_gorevlisi** TÜM bina yapısını görür ama sayı/renk `null`.
 > - **Own-block:** resident yalnız kendi bloğundaki daireyi şikayet edebilir
 >   (`POST /unit-complaints` blok dışı hedef → **403**). Blok-suz sitede blok
 >   `null`'dur (tek örtük blok). Aktif dairesi olmayan sakin hiçbir yere açamaz.
@@ -524,6 +526,11 @@ Notlar:
     sakin YALNIZ kendi actigi sikayetleri gorur (gitti mi geri bildirimi) —
     hedef `unit_no` + `kategori` + `tarih` + `durum` (+ kendi notu). Baska
     sakinlerin kayitlari, yogunluk/renk ve complainant (kendisi) YOKTUR.
+    **Rev-1.1 fix — AYRI EKRAN YOK (mobil):** sakin kendi sikayetlerini artik
+    **Şikayet Haritası uzerinde** gorur (kendi ilettigi daireler harita
+    hucresinde isaretli; dokununca `/mine`'dan o daireye ait kendi kayitlari).
+    Mobilde ayri "Şikayetlerim" menu girisi KALDIRILDI; `/mine` ucu (harita
+    detayini besler) ve kural aynen gecerli.
   - **SPAM KORUMASI (Rev-1.1 — HAFTALIK + KATEGORI-BAZLI, YARISSIZ):** ayni sakin
     ayni hedef daireye **ayni KATEGORIDE 7 günde en fazla 1** sikayet acabilir
     (**farklı kategori serbest**; kural durumdan **bağımsız** — kapalı kayıt da
@@ -534,10 +541,17 @@ Notlar:
   - **HARITA (`GET /building-map`, TUM roller) — ROL-FARKINDA (`shows_density`):**
     **yonetici/admin** daire-basi ACIK sayi + renk (**0-2 yeşil / 3-4 sarı / 5+
     kırmızı**) gorur; **resident** YALNIZ **kendi bloğunun** yapisini gorur
-    (sayi/renk `null` — hangi dairenin kaç şikayeti olduğunu **bilemez**;
+    (genel sayi/renk `null` — hangi dairenin kaç şikayeti olduğunu **bilemez**;
     haritayı sikayet edilecek daireyi SEÇMEK için kullanır); **security/
     tesis_gorevlisi** TÜM yapıyı gorur ama sayi/renk `null`. Harita hiçbir role
     complainant döndürmez.
+    **Rev-1.1 — resident KENDI sikayet isareti:** resident yanitinda her daire
+    icin `benim_sikayetim` (bool) + `benim_acik_sayisi` (KENDI acik sikayet
+    sayim) doner; **YALNIZ kendi kayitlarindan** (`complainant == kendisi`)
+    turer. Boylece sakin haritada KENDI sikayet ettigi daireleri isaretli gorur
+    ("iletildi"). Genel yogunluk, baskalarinin sayisi/kaydi/kimligi **ASLA**
+    sizmaz; sikayet etmedigi daire `benim_sikayetim=false`. Yonetim yanitinda bu
+    alanlar `false`/`null` (yonetim sayim/renk kullanir).
   - **DENETIM GORUNUMU (`GET /density` + liste `GET /unit-complaints`) — YALNIZ
     YONETIM:** sayilar + kategori + tarih + **not** + **complainant kimliği**
     (`complainant_user_id` + `complainant_ad`) admin/yonetici'ye doner (denetim/

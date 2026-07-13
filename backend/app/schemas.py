@@ -1912,10 +1912,16 @@ class UnitDensityResponse(BaseModel):
 # ROL-FARKINDA (Rev-1): yonetici/admin sayim+renk gorur; resident/security/
 # tesis_gorevlisi YALNIZ yapi (sayim+renk NULL). Renk esikleri: 0-2/3-4/5+.
 class BuildingMapUnit(BaseModel):
-    """Haritada tek daire — yerlesim + (yonetim icin) sayim/renk.
+    """Haritada tek daire — yerlesim + (yonetim icin) sayim/renk + (resident icin)
+    KENDI sikayet isareti.
 
     complaint_count/color YALNIZ yonetim (admin+yonetici) icin doludur; diger
     roller icin None (residentlar hangi dairenin kac sikayeti oldugunu bilemez).
+
+    benim_sikayetim/benim_acik_sayisi YALNIZ resident icin anlamlidir ve
+    TAMAMEN kendi kayitlarindan (complainant == kendisi) turetilir: bu daireye
+    KENDI sikayeti var mi (isaretleme) + KENDI acik sikayet sayisi. Genel
+    yogunluk/baskalarinin verisi ASLA sizmaz (digerinin sayisi hep None/False).
     """
 
     unit_id: uuid.UUID
@@ -1925,6 +1931,9 @@ class BuildingMapUnit(BaseModel):
     sira: int | None = None
     complaint_count: int | None = None  # yalniz yonetim; digerinde None
     color: DensityRenk | None = None    # yalniz yonetim; digerinde None
+    # resident'in KENDI sikayet isareti (kendi kayitlarindan; baskasi icin False/None).
+    benim_sikayetim: bool = False       # bu daireye KENDI sikayetim var mi
+    benim_acik_sayisi: int | None = None  # KENDI acik sikayet sayim (yalniz resident)
 
 
 class BuildingMapKat(BaseModel):

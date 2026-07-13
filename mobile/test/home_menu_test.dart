@@ -179,7 +179,8 @@ void main() {
     });
 
     test('resident: SOS + Ziyaretciler + Kargo + Goruntuleme izni + '
-        'Rezervasyon + duyurular + Sikayet/Oneri + Aidatim + Site Butcesi', () {
+        'Rezervasyon + duyurular + Sikayet Haritasi + Sikayet/Oneri + Aidatim + '
+        'Site Butcesi (ayri "Sikayetlerim" sayfasi YOK — harita uzerinde)', () {
       expect(homeMenuForRole(UserRole.resident), const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.visitors,
@@ -190,24 +191,21 @@ void main() {
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.sikayetHaritasi,
-        HomeMenuEntry.sikayetlerim,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
       ]);
     });
 
-    test('Sikayetlerim karti (Rev-1.1) YALNIZ resident menusunde (kendi '
-        'sikayetleri); yonetim/saha YOK', () {
-      expect(
-        homeMenuForRole(UserRole.resident),
-        contains(HomeMenuEntry.sikayetlerim),
-      );
+    test('Sikayetlerim karti KALDIRILDI (D-viz Rev-1.1 fix): resident kendi '
+        'sikayetlerini Sikayet Haritasi uzerinde gorur — HICBIR rol menusunde '
+        'ayri "Sikayetlerim" sayfasi YOK', () {
       for (final role in [
         UserRole.admin,
         UserRole.yonetici,
         UserRole.security,
         UserRole.tesisGorevlisi,
+        UserRole.resident,
       ]) {
         expect(
           homeMenuForRole(role),
