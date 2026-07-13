@@ -26,25 +26,14 @@ class BinaDuzenlemeScreen extends ConsumerStatefulWidget {
 const String _blocklessKey = '';
 
 class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
-  /// null → mod otomatik (veriye gore); aksi halde kullanici secimi.
-  bool? _blockModeOverride;
-
   /// Acik blok: null = kutucuk listesi; '' = bloksuz kova; aksi = o blok.
+  /// Bloklu ve bloksuz (blok=null) daireler AYNI akista: kutucuk listesi + bir
+  /// "Bloksuz" kovasi (mod anahtari yok).
   String? _openBlock;
 
   /// Onizlemede daire eklenmeden gorunen bos katlar (yerel; daire eklenince
-  /// kalicilasir). Acik blok/mod degisince sifirlanir.
+  /// kalicilasir). Acik blok degisince sifirlanir.
   final Set<int> _pendingFloors = {};
-
-  bool _effectiveBlockMode(BinaDuzenlemeState s) {
-    final o = _blockModeOverride;
-    if (o != null) return o;
-    // Oto: kayitli/etiketli blok varsa bloklu; yoksa bloksuz daire varsa
-    // bloksuz; hicbiri yoksa (bos) bloklu (ekleme akisi bloklu baslar).
-    if (s.blockLabels.isNotEmpty) return true;
-    if (s.blocklessUnits.isNotEmpty) return false;
-    return true;
-  }
 
   void _openBlockTile(String label) {
     setState(() {
@@ -60,27 +49,16 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
     });
   }
 
-  void _setMode(bool blockMode) {
-    setState(() {
-      _blockModeOverride = blockMode;
-      _openBlock = null;
-      _pendingFloors.clear();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(binaDuzenlemeControllerProvider);
     final controller = ref.read(binaDuzenlemeControllerProvider.notifier);
-    final blockMode = _effectiveBlockMode(state);
-    final drilledIn = blockMode && _openBlock != null;
+    final drilledIn = _openBlock != null;
 
     return Scaffold(
       appBar: AppBar(
-        leading: drilledIn
-            ? BackButton(onPressed: _closeBlock)
-            : null,
-        title: Text(_titleFor(blockMode)),
+        leading: drilledIn ? BackButton(onPressed: _closeBlock) : null,
+        title: Text(_titleFor()),
         actions: [
           IconButton(
             tooltip: 'Yenile',
@@ -91,13 +69,13 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: controller.refresh,
-        child: _body(state, blockMode),
+        child: _body(state),
       ),
     );
   }
 
-  String _titleFor(bool blockMode) {
-    if (blockMode && _openBlock != null) {
+  String _titleFor() {
+    if (_openBlock != null) {
       return _openBlock == _blocklessKey
           ? 'Bloksuz daireler'
           : 'Blok $_openBlock';
@@ -105,7 +83,7 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
     return 'Bina Düzenleme';
   }
 
-  Widget _body(BinaDuzenlemeState state, bool blockMode) {
+  Widget _body(BinaDuzenlemeState state) {
     if (state.loading && state.bos) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -118,20 +96,7 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
       );
     }
 
-    // Bloksuz mod: dogrudan implicit blok (blok=null) icerigi.
-    if (!blockMode) {
-      return _BlockDetail(
-        key: const ValueKey('blockless'),
-        label: _blocklessKey,
-        state: state,
-        pendingFloors: _pendingFloors,
-        onAddFloor: _addFloor,
-        modeSwitcher: _modeSwitcher(blockMode),
-        errorBanner: _errorBanner(state),
-      );
-    }
-
-    // Bloklu mod, bir bloga girildi.
+    // Bir bloga (veya bloksuz kovaya) girildi → kat plani.
     if (_openBlock != null) {
       return _BlockDetail(
         key: ValueKey('block-$_openBlock'),
@@ -143,10 +108,9 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
       );
     }
 
-    // Bloklu mod, kutucuk listesi.
+    // Ust seviye: blok kutucuklari (+ gerekliyse Bloksuz kovasi).
     return _BlockList(
       state: state,
-      modeSwitcher: _modeSwitcher(blockMode),
       errorBanner: _errorBanner(state),
       onOpen: _openBlockTile,
     );
@@ -163,25 +127,11 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
     );
   }
 
-  Widget _modeSwitcher(bool blockMode) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: SegmentedButton<bool>(
-        segments: const [
-          ButtonSegment(value: true, label: Text('Bloklu'), icon: Icon(Icons.apartment)),
-          ButtonSegment(value: false, label: Text('Bloksuz'), icon: Icon(Icons.tag)),
-        ],
-        selected: {blockMode},
-        onSelectionChanged: (s) => _setMode(s.first),
-      ),
-    );
-  }
-
   void _addFloor() {
     setState(() {
       // Var olan en ust katin ustune yeni bos kat ekle (yoksa 1'den basla).
       final state = ref.read(binaDuzenlemeControllerProvider);
-      final units = _openBlock == _blocklessKey || !_effectiveBlockMode(state)
+      final units = _openBlock == _blocklessKey
           ? state.blocklessUnits
           : state.unitsForBlock(_openBlock!);
       final kats = <int>{
@@ -196,34 +146,34 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// Kutucuk listesi (bloklu mod, ust seviye).
+// Kutucuk listesi (ust seviye).
 // ---------------------------------------------------------------------------
 
 class _BlockList extends ConsumerWidget {
   const _BlockList({
     required this.state,
-    required this.modeSwitcher,
     required this.errorBanner,
     required this.onOpen,
   });
 
   final BinaDuzenlemeState state;
-  final Widget modeSwitcher;
   final Widget? errorBanner;
   final void Function(String label) onOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final labels = state.blockLabels;
-    final hasBlockless = state.blocklessUnits.isNotEmpty;
+    // Bloksuz kova: bloksuz daire varken VEYA hic blok yokken erisilebilir
+    // (mod anahtari olmadan bloksuz siteler de bu kovadan daire ekleyebilsin).
+    final showBlockless = state.blocklessUnits.isNotEmpty || labels.isEmpty;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         ?errorBanner,
-        modeSwitcher,
         const Text(
           'Blok ekleyin, kutucuğa dokunup içine kat ve daire yerleştirin. '
+          'Blok kullanmıyorsanız "Bloksuz" kutusundan düz numarayla daire ekleyin. '
           'Şikayet Haritası bu yapıyı yansıtır.',
           style: TextStyle(fontSize: 13, color: Colors.black54),
         ),
@@ -242,7 +192,7 @@ class _BlockList extends ConsumerWidget {
                     ? null
                     : () => _manageBlock(context, ref, state.blockByLabel(label)!),
               ),
-            if (hasBlockless)
+            if (showBlockless)
               _BlockTile(
                 label: 'Bloksuz',
                 unitCount: state.blocklessUnits.length,
@@ -253,16 +203,6 @@ class _BlockList extends ConsumerWidget {
             _AddTile(onTap: () => _addBlock(context, ref)),
           ],
         ),
-        if (labels.isEmpty && !hasBlockless) ...[
-          const SizedBox(height: 24),
-          const Center(
-            child: Text(
-              'Henüz blok yok. "+ Blok" ile başlayın veya Bloksuz moda geçin.',
-              style: TextStyle(color: Colors.black54),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -367,7 +307,6 @@ class _BlockDetail extends ConsumerWidget {
     required this.state,
     required this.pendingFloors,
     required this.onAddFloor,
-    this.modeSwitcher,
     this.errorBanner,
   });
 
@@ -375,7 +314,6 @@ class _BlockDetail extends ConsumerWidget {
   final BinaDuzenlemeState state;
   final Set<int> pendingFloors;
   final VoidCallback onAddFloor;
-  final Widget? modeSwitcher;
   final Widget? errorBanner;
 
   bool get _blockless => label == _blocklessKey;
@@ -398,36 +336,28 @@ class _BlockDetail extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         ?errorBanner,
-        ?modeSwitcher,
         Text(
           _blockless
-              ? 'Bloksuz daireler — düz numaralandırma. Kat ekleyip daireleri yerleştirin.'
-              : 'Blok $label — kat ekleyip daireleri yerleştirin. Aynı kattakiler yan yana dizilir.',
+              ? 'Bloksuz daireler — düz numaralandırma. Kat ekleyip her katın "+" düğmesiyle daire ekleyin.'
+              : 'Blok $label — kat ekleyip her katın "+" düğmesiyle daire ekleyin. Aynı kattakiler yan yana dizilir.',
           style: const TextStyle(fontSize: 13, color: Colors.black54),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            OutlinedButton.icon(
-              onPressed: onAddFloor,
-              icon: const Icon(Icons.add),
-              label: const Text('Kat ekle'),
-            ),
-            const SizedBox(width: 12),
-            FilledButton.icon(
-              onPressed: () => _openUnitForm(context, ref),
-              icon: const Icon(Icons.add_home_work_outlined),
-              label: const Text('Daire ekle'),
-            ),
-          ],
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: onAddFloor,
+            icon: const Icon(Icons.add),
+            label: const Text('Kat ekle'),
+          ),
         ),
         const SizedBox(height: 12),
         if (floors.isEmpty && katsizUnits.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
-              child: Text('Henüz daire yok. "Daire ekle" ile başlayın.',
-                  style: TextStyle(color: Colors.black54)),
+              child: Text('Henüz kat yok. "Kat ekle" ile başlayın, sonra kattaki "+" ile daire ekleyin.',
+                  style: TextStyle(color: Colors.black54), textAlign: TextAlign.center),
             ),
           ),
         for (final kat in floors)

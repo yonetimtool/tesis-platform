@@ -109,17 +109,28 @@ void main() {
     expect(find.text('Blok A'), findsOneWidget);
   });
 
-  testWidgets('bloksuz mod: daire ekle → daire hucresi belirir (blok=null)',
+  testWidgets(
+      'bloksuz kova: kat ekle → kattaki "+" ile daire ekle (blok=null); '
+      'mod anahtari YOK, ayri "daire ekle" butonu YOK',
       (tester) async {
     final api = _FakeApi();
     await tester.pumpWidget(_app(api));
     await tester.pumpAndSettle();
 
-    // Bloksuz moda gec.
+    // Mod anahtari kaldirildi (Bloklu/Bloksuz segmenti yok).
+    expect(find.widgetWithText(SegmentedButton<bool>, 'Bloklu'), findsNothing);
+
+    // Bos site: "Bloksuz" kovasi kutucugu gorunur → icine gir.
     await tester.tap(find.text('Bloksuz'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Daire ekle'));
+    // Blok icinde ayri ust "Daire ekle" butonu YOK; yalniz "Kat ekle".
+    expect(find.text('Daire ekle'), findsNothing);
+    await tester.tap(find.text('Kat ekle'));
+    await tester.pumpAndSettle();
+
+    // Kattaki "+" hucresi daire formunu acar (son eklenen add ikonu).
+    await tester.tap(find.byIcon(Icons.add).last);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, '12'); // daire no
     await tester.tap(find.text('Kaydet'));

@@ -92,11 +92,6 @@ enum HomeMenuEntry {
   /// SSRF-korumali tetik. Mobilde YONETICI yonetir (admin panelden).
   integrations,
 
-  /// Bina Yerlesimi (D-viz-1) — daire yerlesimi (blok/kat/sira) girisi +
-  /// ANONIM yogunluk onizlemesi (blok->kat->daire renk). Mobilde YONETICI
-  /// yonetir; yazma backend'de admin+yonetici ile sinirli.
-  binaYerlesimi,
-
   /// Bina Duzenleme (D-viz Rev-2) — GORSEL editor: blok ekle → kutucuk → icine
   /// gir → kat + daire ekle (blok/kat/sira). Blok-suz mod (blok=null) destegi.
   /// Mobilde YONETICI kurar; yazma backend'de admin+yonetici (RBAC). Ayni CRUD
@@ -186,7 +181,6 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.reports,
         HomeMenuEntry.integrations,
         HomeMenuEntry.binaDuzenleme,
-        HomeMenuEntry.binaYerlesimi,
       ];
     case UserRole.resident:
       // Sakinin kaynaklari: acil durum (panik butonu sakinin de hakki) +
