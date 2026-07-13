@@ -247,6 +247,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET /call-target/{id}`               |  ❌   | ❌  | 📞  | ❌  | 📞  |
 | `*/integrations*` (CRUD + tetik)      |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /unit-complaints` (kendi bloğu) |  ❌   | ❌  | ❌  | ❌  | ✅  |
+| `GET /unit-complaints/mine` (kendi)   |  ❌   | ❌  | ❌  | ❌  | ✅  |
 | `GET /unit-complaints/building-map`   |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET /unit-complaints[/density]` (liste)|  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `PATCH /unit-complaints/{id}` (kapat) |  ✅   | ✅  | ❌  | ❌  | ❌  |
@@ -519,9 +520,17 @@ Notlar:
     olmali (aksi 422) VE sakinin KENDI blogunda olmali (blok disi → **403**).
     Blok-suz sitede blok `null` (tek ortuk blok). complainant token'dan alinir,
     resident'a echo EDILMEZ (kendi kaydinda da `null` gorur).
-  - **SPAM KORUMASI (DB-zorlamali):** ayni sakin ayni hedef daireye AYNI ANDA
-    yalniz **BIR ACIK** sikayet (partial-unique `WHERE durum='acik'`) → **409**;
-    kapatilinca yeniden acilabilir.
+  - **KENDI SIKAYETLERIM (`GET /unit-complaints/mine`, YALNIZ `resident`):**
+    sakin YALNIZ kendi actigi sikayetleri gorur (gitti mi geri bildirimi) —
+    hedef `unit_no` + `kategori` + `tarih` + `durum` (+ kendi notu). Baska
+    sakinlerin kayitlari, yogunluk/renk ve complainant (kendisi) YOKTUR.
+  - **SPAM KORUMASI (Rev-1.1 — HAFTALIK + KATEGORI-BAZLI, YARISSIZ):** ayni sakin
+    ayni hedef daireye **ayni KATEGORIDE 7 günde en fazla 1** sikayet acabilir
+    (**farklı kategori serbest**; kural durumdan **bağımsız** — kapalı kayıt da
+    sayılır) → tekrar **409** ("Bu daire için bu konuda haftada en fazla 1
+    şikayet açabilirsiniz."). Sliding 7-gün penceresi, `(complainant,unit,
+    kategori)` için `pg_advisory_xact_lock` + pencere sorgusuyla **race-safe**
+    zorlanır (eski `WHERE durum='acik'` partial-unique kaldırıldı).
   - **HARITA (`GET /building-map`, TUM roller) — ROL-FARKINDA (`shows_density`):**
     **yonetici/admin** daire-basi ACIK sayi + renk (**0-2 yeşil / 3-4 sarı / 5+
     kırmızı**) gorur; **resident** YALNIZ **kendi bloğunun** yapisini gorur

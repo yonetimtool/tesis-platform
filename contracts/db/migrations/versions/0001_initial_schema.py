@@ -1480,12 +1480,16 @@ def upgrade() -> None:
         "CREATE INDEX ix_unit_complaint_target "
         "ON unit_complaint (tenant_id, target_unit_id, durum);"
     )
-    # SPAM KORUMASI (DB-zorlamali, yarissiz): ayni sikayetci ayni hedef daireye
-    # AYNI ANDA yalniz BIR ACIK sikayet acabilir. Kapatilinca yeniden acilabilir.
+    # SPAM KORUMASI (Rev-1.1 — HAFTALIK + KATEGORI-BAZLI): ayni sikayetci ayni
+    # hedef daireye ayni KATEGORIDE 7 gunde en fazla 1 sikayet acar; FARKLI
+    # kategori serbest (durumdan BAGIMSIZ — kapali kayit da sayilir). Sliding
+    # 7-gun penceresi servis katmaninda pg_advisory_xact_lock ile YARISSIZ
+    # zorlanir (bkz. routers/unit_complaints.file_unit_complaint). Bu indeks
+    # pencere + "sikayetlerim" sorgusunu hizlandirir (UNIQUE DEGIL).
     op.execute(
-        "CREATE UNIQUE INDEX uq_unit_complaint_open "
-        "ON unit_complaint (tenant_id, target_unit_id, complainant_user_id) "
-        "WHERE durum = 'acik';"
+        "CREATE INDEX ix_unit_complaint_spam "
+        "ON unit_complaint "
+        "(tenant_id, complainant_user_id, target_unit_id, kategori, created_at DESC);"
     )
 
     # ------------------------------------------------------------------ #

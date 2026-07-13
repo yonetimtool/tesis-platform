@@ -3611,8 +3611,9 @@ paths:
       description: >
         Sakin bir HEDEF daireyi bildirir. Hedef daire sakinin KENDI blogunda
         olmali (blok disi -> 403). complainant_user_id token'dan alinir, spam
-        korumasi + denetim icin saklanir; resident'a DONMEZ. Spam: ayni sakin
-        ayni daireye ayni anda 1 ACIK sikayet (aksi 409).
+        korumasi + denetim icin saklanir; resident'a DONMEZ. Spam (Rev-1.1):
+        ayni daireye ayni KATEGORIDE 7 gunde en fazla 1 (farkli kategori
+        serbest; durumdan bagimsiz) -> aksi 409.
       requestBody:
         required: true
         content:
@@ -3627,10 +3628,43 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409":
-          description: Bu daire icin zaten acik sikayetiniz var (spam korumasi)
+          description: >
+            Haftalik spam limiti: bu daire icin bu KATEGORIDE 7 gunde 1 sikayet
+            (farkli kategori serbest).
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /unit-complaints/mine:
+    get:
+      tags: [unit-complaints]
+      summary: Kendi sikayetlerim (YALNIZ resident) — gitti mi geri bildirimi
+      description: >
+        Sakin YALNIZ kendi actigi sikayetleri gorur: hedef unit_no + kategori +
+        tarih + durum (+ kendi notu). Baska sakinlerin kayitlari, yogunluk/renk,
+        ve complainant (kendisi) YOKTUR. Diger roller 403.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: durum
+          in: query
+          required: false
+          schema: { type: string, enum: [acik, kapali] }
+      responses:
+        "200":
+          description: Kendi sikayet listem
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/UnitComplaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /unit-complaints/density:
     get:
       tags: [unit-complaints]

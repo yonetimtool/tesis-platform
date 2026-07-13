@@ -43,8 +43,28 @@ class UnitComplaintApi {
     }
   }
 
-  /// Daire sikayeti ac (YALNIZ resident). Ayni daireye zaten acik sikayeti
-  /// olan sakin -> 409 (ApiException statusCode=409).
+  /// Sakinin KENDI actigi sikayetler (GET /unit-complaints/mine) — "gitti mi"
+  /// geri bildirimi. Yalniz resident; unit_no + kategori + tarih + durum
+  /// (yogunluk/renk/complainant YOK).
+  Future<List<UnitComplaint>> fetchMine() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/unit-complaints/mine',
+        queryParameters: {'limit': 200},
+      );
+      final items = res.data?['items'];
+      if (items is! List) return const [];
+      return items
+          .whereType<Map>()
+          .map((m) => UnitComplaint.fromJson(Map<String, dynamic>.from(m)))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Daire sikayeti ac (YALNIZ resident). Ayni daireye ayni KATEGORIDE 7 gunde
+  /// 2. kez -> 409; kendi blogun disi -> 403.
   Future<UnitComplaint> file(UnitComplaintDraft draft) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(

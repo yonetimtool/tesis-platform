@@ -132,32 +132,88 @@ def test_bloksuz_sakin_hicbir_yere_acamaz_403(ucworld, client, owner_conn):
     assert r.status_code == 403
 
 
-# --------------------------------- spam ------------------------------------- #
-def test_spam_korumasi_ayni_sakin_ayni_daire_409(ucworld, client):
+# ------------------- spam: HAFTALIK + KATEGORI-BAZLI (Rev-1.1) --------------- #
+def test_spam_haftalik_kategori_bazli(ucworld, client):
+    """Ayni daire + ayni KATEGORI 7 gunde 1 (409); FARKLI kategori serbest;
+    baska daire / baska sakin serbest."""
     slug = ucworld["slug_a"]
     r0 = ucworld["residents"][0]
-    assert _file(client, slug, r0, ucworld["unit1"]).status_code == 201
-    dup = _file(client, slug, r0, ucworld["unit1"])
+    # ayni daire + ayni kategori (gurultu) tekrar -> 409 (haftalik)
+    assert _file(client, slug, r0, ucworld["unit1"], kategori="gurultu").status_code == 201
+    dup = _file(client, slug, r0, ucworld["unit1"], kategori="gurultu")
     assert dup.status_code == 409 and dup.json()["error"]["code"] == "conflict"
-    # ayni blok BASKA daireye acabilir
-    assert _file(client, slug, r0, ucworld["unit2"]).status_code == 201
-    # BASKA sakin ayni daireye acabilir
-    assert _file(client, slug, ucworld["residents"][1], ucworld["unit1"]).status_code == 201
+    assert "haftada" in dup.json()["error"]["message"].lower()
+    # ayni daire FARKLI kategori -> serbest (201)
+    assert _file(client, slug, r0, ucworld["unit1"], kategori="zarar_verme").status_code == 201
+    assert _file(client, slug, r0, ucworld["unit1"], kategori="kapi_onu_ayakkabi").status_code == 201
+    # BASKA daire ayni kategori -> 201
+    assert _file(client, slug, r0, ucworld["unit2"], kategori="gurultu").status_code == 201
+    # BASKA sakin ayni daire+kategori -> 201
+    assert _file(client, slug, ucworld["residents"][1], ucworld["unit1"], kategori="gurultu").status_code == 201
 
 
-def test_kapatinca_yeniden_acilabilir(ucworld, client):
+def test_spam_ayni_kategori_7gun_sonra_yeniden(ucworld, client, owner_conn):
+    """Ayni daire+kategori kaydi 7 GUNDEN eskiyse yeniden acilabilir (sliding
+    pencere); yeni kayittan sonra tekrar 7 gun kilitli."""
     slug = ucworld["slug_a"]
     r0 = ucworld["residents"][0]
-    assert _file(client, slug, r0, ucworld["unit1"]).status_code == 201
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO unit_complaint "
+            "(tenant_id, target_unit_id, complainant_user_id, kategori, created_at) "
+            "VALUES (%s,%s,%s,'gurultu'::unit_complaint_kategori, now() - interval '8 days')",
+            (ucworld["a"], ucworld["unit1"], r0["id"]),
+        )
+    # 8 gun onceki kayit pencere DISI -> yeni sikayet 201
+    assert _file(client, slug, r0, ucworld["unit1"], kategori="gurultu").status_code == 201
+    # simdi taze kayit pencerede -> tekrar 409
+    assert _file(client, slug, r0, ucworld["unit1"], kategori="gurultu").status_code == 409
+
+
+def test_kapatma_haftalik_limiti_sifirlamaz(ucworld, client):
+    """Kapatma weekly limiti SIFIRLAMAZ (durumdan bagimsiz): kapali kayit da
+    pencerede sayilir. Ayni kategori 7 gun icinde -> 409; farkli kategori 201."""
+    slug = ucworld["slug_a"]
+    r0 = ucworld["residents"][0]
+    assert _file(client, slug, r0, ucworld["unit1"], kategori="gurultu").status_code == 201
     yon = _headers(client, slug, ucworld["yonetici_a"])
-    lst = client.get(
+    cid = client.get(
         "/unit-complaints", headers=yon, params={"target_unit_id": ucworld["unit1"]}
-    ).json()["items"]
-    cid = lst[0]["id"]
-    pc = client.patch(f"/unit-complaints/{cid}", headers=yon, json={"durum": "kapali"})
-    assert pc.status_code == 200 and pc.json()["durum"] == "kapali"
-    # kapali oldugundan ayni sakin yeniden acabilir
-    assert _file(client, slug, r0, ucworld["unit1"]).status_code == 201
+    ).json()["items"][0]["id"]
+    assert client.patch(
+        f"/unit-complaints/{cid}", headers=yon, json={"durum": "kapali"}
+    ).status_code == 200
+    # kapali olsa da ayni kategori 7 gun icinde -> 409
+    assert _file(client, slug, r0, ucworld["unit1"], kategori="gurultu").status_code == 409
+    # farkli kategori -> 201
+    assert _file(client, slug, r0, ucworld["unit1"], kategori="diger").status_code == 201
+
+
+# ------------------------- sikayetlerim (GET /mine) ------------------------- #
+def test_sikayetlerim_yalniz_kendi_kayitlari(ucworld, client):
+    """resident /mine YALNIZ kendi actiklarini gorur (unit_no+kategori+durum+
+    tarih); baska sakin YOK; yogunluk/renk YOK; complainant (kendisi) omitted.
+    RBAC: yalniz resident (yonetim/saha 403)."""
+    slug = ucworld["slug_a"]
+    r0, r1 = ucworld["residents"][0], ucworld["residents"][1]
+    assert _file(client, slug, r0, ucworld["unit1"], kategori="gurultu").status_code == 201
+    assert _file(client, slug, r0, ucworld["unit2"], kategori="zarar_verme").status_code == 201
+    assert _file(client, slug, r1, ucworld["unit1"], kategori="gurultu").status_code == 201  # baska sakin
+
+    mine = client.get("/unit-complaints/mine", headers=_headers(client, slug, r0))
+    assert mine.status_code == 200
+    body = mine.json()
+    assert body["meta"]["total"] == 2  # YALNIZ r0'nun ikisi (r1'inki YOK)
+    for it in body["items"]:
+        assert it["unit_no"] and it["kategori"] and it["durum"] and it["created_at"]
+        # complainant (kendisi) donmez; yogunluk/renk alani da yok
+        assert it["complainant_user_id"] is None and it["complainant_ad"] is None
+        assert "renk" not in it and "acik_sayisi" not in it
+    # RBAC: /mine yalniz resident
+    for cred in (ucworld["admin_a"], ucworld["yonetici_a"], ucworld["guard_a"], ucworld["gorevli_a"]):
+        assert client.get(
+            "/unit-complaints/mine", headers=_headers(client, slug, cred)
+        ).status_code == 403
 
 
 # ------------------------------ renk esikleri ------------------------------- #

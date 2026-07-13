@@ -7,9 +7,12 @@ GIZLILIK KADEMESI (Rev-1, auth.md §4):
     sikayeti oldugunu bilemez). Yalniz KENDI BLOGUNDAKI daireleri secip sikayet
     eder (blok disi -> 403). Sikayet eden kimligi resident'a ASLA gosterilmez.
   * security/tesis_gorevlisi: YALNIZ blok/kat yapisi (sayi/renk/sikayet yok).
+  * resident KENDI sikayetlerini GET /mine ile gorur (gitti mi geri bildirimi;
+    yogunluk/renk/complainant YOK, yalniz kendi kayitlari).
 
-Spam korumasi: ayni sakin ayni hedef daireye AYNI ANDA yalniz BIR ACIK sikayet
-(DB partial-unique; kapatilinca yeniden) -> 409.
+Spam korumasi (Rev-1.1 — HAFTALIK + KATEGORI-BAZLI): ayni sakin ayni daireye
+ayni KATEGORIDE 7 gunde en fazla 1 sikayet (farkli kategori serbest; durumdan
+bagimsiz). advisory xact-lock + sliding 7-gun penceresi ile YARISSIZ -> 409.
 Renk (ACIK sikayet sayisi): 0-2 yesil, 3-4 sari, 5+ kirmizi.
 """
 from __future__ import annotations
@@ -17,12 +20,12 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
+from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Unit, UnitComplaint, UnitResident
@@ -100,6 +103,32 @@ async def file_unit_complaint(
             "Yalnizca kendi blogunuzdaki daireleri sikayet edebilirsiniz.",
         )
 
+    # SPAM KORUMASI (Rev-1.1 — HAFTALIK + KATEGORI-BAZLI, YARISSIZ):
+    # ayni sikayetci ayni daireye ayni KATEGORIDE 7 gunde en fazla 1 (farkli
+    # kategori serbest; durumdan bagimsiz). Es zamanli iki istek yarissa
+    # cift kayit olusmasin diye (complainant,unit,kategori) icin transaction-
+    # kapsamli advisory lock alinir; ardindan sliding 7-gun penceresi kontrol
+    # edilir. Kilit transaction bitince (commit/rollback) otomatik birakilir.
+    await db.execute(
+        text("SELECT pg_advisory_xact_lock(hashtext(:k)::bigint)"),
+        {"k": f"uc:{user.id}:{unit.id}:{body.kategori}"},
+    )
+    son = (
+        await db.execute(
+            select(UnitComplaint.id).where(
+                UnitComplaint.complainant_user_id == user.id,
+                UnitComplaint.target_unit_id == unit.id,
+                UnitComplaint.kategori == body.kategori,
+                UnitComplaint.created_at >= text("now() - interval '7 days'"),
+            ).limit(1)
+        )
+    ).scalar_one_or_none()
+    if son is not None:
+        raise APIError(
+            409, "conflict",
+            "Bu daire icin bu konuda haftada en fazla 1 sikayet acabilirsiniz.",
+        )
+
     obj = UnitComplaint(
         tenant_id=user.tenant_id,
         target_unit_id=unit.id,
@@ -111,12 +140,6 @@ async def file_unit_complaint(
     try:
         await db.flush()
     except IntegrityError as exc:
-        # partial-unique (tenant,target,complainant) WHERE durum='acik' -> spam.
-        if is_unique_violation(exc):
-            raise APIError(
-                409, "conflict",
-                "Bu daire icin zaten acik bir sikayetiniz var.",
-            )
         raise translate_integrity(exc)
     await db.refresh(obj)
     # Sikayet acan kendi kaydini gorur (kendi notu) — complainant kimligini
@@ -163,6 +186,45 @@ async def unit_density(
         for r in rows
     ]
     return UnitDensityResponse(items=items)
+
+
+# --------------------------- sikayetlerim (resident) ------------------------ #
+@router.get("/mine", response_model=UnitComplaintListResponse)
+async def my_unit_complaints(
+    durum: UnitComplaintDurum | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_FILER),
+) -> UnitComplaintListResponse:
+    """Sakinin KENDI actigi sikayetler (sikayet gitti mi geri bildirimi) —
+    YALNIZ resident. Alanlar: hedef unit_no + kategori + tarih + durum. Baska
+    sakinlerin kayitlari YOK; yogunluk/renk YOK; complainant (kendisi) OMITTED.
+    Kendi notunu gorur."""
+    base = (
+        select(UnitComplaint, Unit.no)
+        .join(Unit, Unit.id == UnitComplaint.target_unit_id)
+        .where(UnitComplaint.complainant_user_id == user.id)
+    )
+    if durum is not None:
+        base = base.where(UnitComplaint.durum == durum)
+
+    total = (
+        await db.execute(select(func.count()).select_from(base.subquery()))
+    ).scalar_one()
+    rows = (
+        await db.execute(
+            base.order_by(UnitComplaint.created_at.desc()).limit(limit).offset(offset)
+        )
+    ).all()
+    return UnitComplaintListResponse(
+        meta={"limit": limit, "offset": offset, "total": total},
+        items=[
+            # complainant OMITTED (kendisi) — include_complainant=False.
+            UnitComplaintOut.from_model(obj, unit_no=no, include_note=True)
+            for obj, no in rows
+        ],
+    )
 
 
 # ------------------------------ bina haritasi ------------------------------- #

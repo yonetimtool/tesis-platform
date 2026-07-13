@@ -498,16 +498,23 @@ def main() -> int:
             (b2_id, "resident2@acme.com", "gurultu"),
             (b2_id, "resident3@acme.com", "diger"),
         ]
+        # Rev-1.1: spam kurali artik haftalik+kategori-bazli (partial-unique index
+        # kaldirildi). Idempotentlik icin ayni (daire,sikayetci,kategori) kaydi
+        # zaten varsa ekleme (WHERE NOT EXISTS).
         for tgt, email, kat in _uc:
             conn.execute(
                 """
                 INSERT INTO unit_complaint
                     (tenant_id, target_unit_id, complainant_user_id, kategori, notlar)
-                VALUES (%s, %s, %s, %s::unit_complaint_kategori, %s)
-                ON CONFLICT (tenant_id, target_unit_id, complainant_user_id)
-                    WHERE durum = 'acik' DO NOTHING
+                SELECT %(t)s, %(u)s, %(c)s, %(k)s::unit_complaint_kategori, %(n)s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM unit_complaint
+                    WHERE tenant_id = %(t)s AND target_unit_id = %(u)s
+                      AND complainant_user_id = %(c)s AND kategori = %(k)s::unit_complaint_kategori
+                )
                 """,
-                (tenant_id, tgt, _res_ids[email], kat, "Örnek daire şikayeti"),
+                {"t": tenant_id, "u": tgt, "c": _res_ids[email], "k": kat,
+                 "n": "Örnek daire şikayeti"},
             )
         print(
             "[seed] daire-sikayeti (D1 anonim): A-12 yesil (2 acik, blok A/kat 1), "

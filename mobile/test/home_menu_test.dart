@@ -190,10 +190,31 @@ void main() {
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.sikayetHaritasi,
+        HomeMenuEntry.sikayetlerim,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
       ]);
+    });
+
+    test('Sikayetlerim karti (Rev-1.1) YALNIZ resident menusunde (kendi '
+        'sikayetleri); yonetim/saha YOK', () {
+      expect(
+        homeMenuForRole(UserRole.resident),
+        contains(HomeMenuEntry.sikayetlerim),
+      );
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.sikayetlerim)),
+          reason: role.wire,
+        );
+      }
     });
 
     test('Goruntuleme izni karti (unitAccess): admin+yonetici (talep) + '

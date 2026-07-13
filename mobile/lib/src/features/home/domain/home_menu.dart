@@ -101,6 +101,10 @@ enum HomeMenuEntry {
   /// hucreleri (ANONIM yogunluk). TUM roller gorur; SAKIN daireyi sikayet
   /// edebilir (mevcut POST /unit-complaints). Renk API'den (0-2/3-4/5+).
   sikayetHaritasi,
+
+  /// Sikayetlerim (D-viz Rev-1.1) — YALNIZ resident: kendi actigi daire
+  /// sikayetleri (gitti mi geri bildirimi + durum). Yogunluk/renk YOK.
+  sikayetlerim,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -191,6 +195,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.sikayetHaritasi,
+        HomeMenuEntry.sikayetlerim,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,

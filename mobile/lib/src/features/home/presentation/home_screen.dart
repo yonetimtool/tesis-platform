@@ -406,6 +406,17 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.sikayetHaritasi),
           ),
         );
+      case HomeMenuEntry.sikayetlerim:
+        // Rev-1.1: sakin kendi actigi sikayetleri + durum gorur.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.feedback_outlined),
+            title: const Text('Şikayetlerim'),
+            subtitle: const Text('Açtığınız daire şikayetleri ve durumları'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.sikayetlerim),
+          ),
+        );
     }
   }
 }

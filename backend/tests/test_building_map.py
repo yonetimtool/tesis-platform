@@ -206,6 +206,31 @@ def test_building_map_complainant_hicbir_rolde_sizmaz(mapworld, client):
         assert "complainant" not in resp.text
 
 
+def test_building_map_yonetici_sayim_renk_ve_complainant_detay(mapworld, client):
+    """FIX (Rev-1.1): YONETICI de (admin gibi) sayim+renk gorur; daire
+    detayinda (liste) complainant kimligi + not doner. Bu test yonetici
+    gorunumunu ACIKCA egzersiz eder (regresyon korumasi)."""
+    slug = mapworld["slug_a"]
+    sfx = mapworld["suffix"]
+    ua = _create_unit(client, slug, mapworld["admin_a"], f"YM-{sfx}", blok="A", kat=1, sira=1)
+    r0 = mapworld["residents"][0]  # blok A sakini
+    assert _file(client, slug, r0, ua["id"]).status_code == 201
+
+    yon = _headers(client, slug, mapworld["yonetici_a"])
+    # 1) YONETICI building-map: shows_density + sayim + renk DOLU
+    body = client.get("/unit-complaints/building-map", headers=yon).json()
+    assert body["shows_density"] is True
+    u = next(u for u in _all_units(body) if u["unit_id"] == ua["id"])
+    assert u["complaint_count"] == 1 and u["color"] == "yesil"
+
+    # 2) YONETICI daire detayi (liste): complainant kimligi + adi + not doner
+    lst = client.get(
+        "/unit-complaints", headers=yon, params={"target_unit_id": ua["id"]}
+    ).json()["items"]
+    assert lst and lst[0]["complainant_user_id"] == r0["id"]
+    assert lst[0]["complainant_ad"]
+
+
 def test_building_map_tenant_izolasyonu(mapworld, client):
     slug_a, slug_b, sfx = mapworld["slug_a"], mapworld["slug_b"], mapworld["suffix"]
     ua = _create_unit(client, slug_a, mapworld["admin_a"], f"TA-{sfx}", blok="A", kat=1, sira=1)

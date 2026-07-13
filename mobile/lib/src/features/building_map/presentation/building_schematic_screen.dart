@@ -437,12 +437,19 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
   }
 
   Future<void> _openFileForm(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
     final filed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       builder: (_) => _FileComplaintForm(unit: widget.unit),
     );
     if (filed == true) {
+      // Gitti mi geri bildirimi: "Şikayetlerim"den durumu izlenebilir.
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Şikayetiniz alındı — "Şikayetlerim"den takip edebilirsiniz.'),
+        ),
+      );
       await ref.read(buildingMapControllerProvider.notifier).refresh();
       if (mounted) _reload();
     }
@@ -535,9 +542,9 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        // 409: zaten acik sikayet; 403: kendi blogun disi.
+        // 409: haftalik kategori limiti; 403: kendi blogun disi.
         _error = switch (e.statusCode) {
-          409 => 'Bu daire için zaten açık bir şikayetiniz var.',
+          409 => 'Bu daire için bu konuda haftada en fazla 1 şikayet açabilirsiniz.',
           403 => 'Yalnızca kendi bloğunuzdaki daireleri şikayet edebilirsiniz.',
           _ => e.message,
         };
