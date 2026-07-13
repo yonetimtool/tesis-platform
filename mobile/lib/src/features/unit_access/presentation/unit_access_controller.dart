@@ -11,6 +11,7 @@ class UnitAccessState {
     this.loading = false,
     this.errorMessage,
     this.items = const [],
+    this.grantedUnits = const [],
     this.canRequest = false,
     this.canDecide = false,
     this.refreshedAt,
@@ -20,7 +21,11 @@ class UnitAccessState {
   final String? errorMessage;
   final List<UnitAccessRequest> items;
 
-  /// admin/yonetici — "Yeni istek" (talep acma).
+  /// Talep edenin (admin/yonetici) SU AN goruntuleyebilecegi daireler
+  /// (onayli + kullanilmamis) — bulk sonrasi "hangi daireler acildi" gorunumu.
+  final List<GrantedUnit> grantedUnits;
+
+  /// admin/yonetici — "Yeni istek" (talep acma) + "Tüm dairelere izin iste".
   final bool canRequest;
 
   /// resident — gelen talebi Onayla/Reddet.
@@ -38,6 +43,7 @@ class UnitAccessState {
     bool? loading,
     Object? errorMessage = _sentinel,
     List<UnitAccessRequest>? items,
+    List<GrantedUnit>? grantedUnits,
     bool? canRequest,
     bool? canDecide,
     DateTime? refreshedAt,
@@ -48,6 +54,7 @@ class UnitAccessState {
           ? this.errorMessage
           : errorMessage as String?,
       items: items ?? this.items,
+      grantedUnits: grantedUnits ?? this.grantedUnits,
       canRequest: canRequest ?? this.canRequest,
       canDecide: canDecide ?? this.canDecide,
       refreshedAt: refreshedAt ?? this.refreshedAt,
@@ -72,12 +79,24 @@ class UnitAccessController extends Notifier<UnitAccessState> {
     state = state.copyWith(loading: true, errorMessage: null);
     try {
       final role = await ref.read(currentUserRoleProvider.future);
-      final items = await ref.read(unitAccessApiProvider).fetchAll();
+      final api = ref.read(unitAccessApiProvider);
+      final items = await api.fetchAll();
+      // Talep eden (admin/yonetici) icin "acilan daireler" gorunumu; sakin
+      // icin bos (o uca 403 — cagirmayiz). Hata olursa liste yine gosterilir.
+      var granted = const <GrantedUnit>[];
+      if (role.canRequestUnitAccess) {
+        try {
+          granted = await api.fetchGrantedUnits();
+        } on ApiException {
+          granted = const [];
+        }
+      }
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
         errorMessage: null,
         items: items,
+        grantedUnits: granted,
         canRequest: role.canRequestUnitAccess,
         canDecide: role.canDecideUnitAccess,
         refreshedAt: DateTime.now(),
@@ -100,6 +119,14 @@ class UnitAccessController extends Notifier<UnitAccessState> {
   Future<void> createRequest(String unitNo) async {
     await ref.read(unitAccessApiProvider).createRequest(unitNo);
     await refresh();
+  }
+
+  /// Toplu talep (admin/yonetici): TUM sakinli daireler icin bekleyen talep.
+  /// Sonuc (created/skipped) cagirana doner (SnackBar gosterir); liste tazelenir.
+  Future<BulkAccessRequestResult> createBulkRequest() async {
+    final res = await ref.read(unitAccessApiProvider).createBulkRequest();
+    await refresh();
+    return res;
   }
 
   Future<void> decide(String id, {required bool onayla}) async {

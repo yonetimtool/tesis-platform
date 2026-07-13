@@ -105,17 +105,7 @@ void main() {
         expect(role.canRegisterVisitor, isFalse, reason: role.wire);
       }
 
-      // YANIT: yalniz sakin (daire kosulunu sunucu ayrica zorlar)
-      expect(UserRole.resident.canAnswerVisitor, isTrue);
-      for (final role in [
-        UserRole.admin,
-        UserRole.yonetici,
-        UserRole.security,
-        UserRole.tesisGorevlisi,
-        UserRole.unknown,
-      ]) {
-        expect(role.canAnswerVisitor, isFalse, reason: role.wire);
-      }
+      // (Ziyaretci LOG-ONLY: onay/red kaldirildi — canAnswerVisitor yok.)
 
       // GORUNTULEME (KVKK): YALNIZ security + resident dogrudan gorur;
       // admin+yonetici VARSAYILAN KAPALI (tek-seferlik izinle); saha yok.

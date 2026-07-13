@@ -163,7 +163,7 @@ class _VisitorTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (v.targetResidentAd != null) Text('Hedef: ${v.targetResidentAd}'),
-            Text('Durum: ${v.durum.label}'),
+            if (v.kaydedenAd != null) Text('Kaydeden: ${v.kaydedenAd}'),
             if (v.notlar != null && v.notlar!.isNotEmpty) Text(v.notlar!),
           ],
         ),

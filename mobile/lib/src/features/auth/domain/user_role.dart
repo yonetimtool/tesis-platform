@@ -86,12 +86,9 @@ enum UserRole {
   bool get canViewVisitors => this == security || this == resident;
 
   /// Ziyaretci kaydi acma (`POST /visitors`) — YALNIZ security (kapi
-  /// operasyonu). Hedef sakini secer (target_resident_user_id).
+  /// operasyonu). Hedef sakini secer (target_resident_user_id). Ziyaretci
+  /// artik LOG-ONLY: onay/red YOK (sakin yaniti kaldirildi).
   bool get canRegisterVisitor => this == security;
-
-  /// Ziyaretci onay/red (`PATCH /visitors/{id}`) — YALNIZ resident; sunucu
-  /// ayrica kaydin HEDEF sakini oldugunu zorlar (tek hedef modeli).
-  bool get canAnswerVisitor => this == resident;
 
   /// Kargo LISTESINI dogrudan gorme (`GET /kargo`) — ziyaretci ile ayni
   /// gizlilik: security + resident (kendi dairesi); admin+yonetici varsayilan

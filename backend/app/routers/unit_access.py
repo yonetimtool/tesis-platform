@@ -25,7 +25,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -36,6 +36,9 @@ from ..errors import APIError
 from ..models import AppUser, Unit, UnitAccessPermission, UnitResident
 from ..scheduler.notify import dispatch_external
 from ..schemas import (
+    BulkAccessRequestResult,
+    GrantedUnitOut,
+    GrantedUnitsResponse,
     UnitAccessRequestCreate,
     UnitAccessRequestDecision,
     UnitAccessRequestListResponse,
@@ -141,6 +144,134 @@ async def create_request(
             data={"tip": "erisim_talebi", "request_id": str(obj.id)},
         )
     return _out((obj, unit.no, user.ad, None))
+
+
+# ---------------------------- toplu talep (bulk) ---------------------------- #
+@router.post("/bulk", response_model=BulkAccessRequestResult, status_code=201)
+async def create_bulk_request(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_REQUESTER),
+) -> BulkAccessRequestResult:
+    """Tenant'taki SAKINLI TUM daireler icin ayni anda bekleyen izin talebi
+    acar -> her dairenin AKTIF sakinlerine push. Per-daire karar sakinde kalir:
+    toplu talep hicbir onayi BAYPAS ETMEZ (yonetici yalniz ONAYLAYAN dairelerin
+    kayitlarini gorur; one-shot tuketim tek-daire ile ayni).
+
+    Mukerrer bildirim spam'ini onlemek icin: bu talebi acanin zaten ACIK
+    (bekleyen) ya da KULLANILMAMIS ONAYLI izni olan daireler ATLANIR. RBAC:
+    admin + yonetici (tek-daire talep ile ayni). Push EK gonderim — hatasi
+    talebi kirmaz."""
+    # 1) Aktif sakinleri olan daireler + sakin id'leri (unit_id -> [user_id]).
+    res_rows = (
+        await db.execute(
+            select(UnitResident.unit_id, UnitResident.user_id).where(
+                UnitResident.bitis.is_(None)
+            )
+        )
+    ).all()
+    sakinler: dict[uuid.UUID, list[uuid.UUID]] = {}
+    for unit_id, user_id in res_rows:
+        sakinler.setdefault(unit_id, []).append(user_id)
+
+    if not sakinler:
+        return BulkAccessRequestResult(created=0, skipped=0, items=[])
+
+    # 2) Daire numaralari (yaniti zenginlestirir).
+    unit_nos = dict(
+        (
+            await db.execute(
+                select(Unit.id, Unit.no).where(Unit.id.in_(list(sakinler.keys())))
+            )
+        ).all()
+    )
+
+    # 3) Bu talebi acanin ZATEN acik (bekleyen) veya kullanilmamis onayli izni
+    #    olan daireleri atla (mukerrer talep/push olusturma).
+    aktif_ids = set(
+        (
+            await db.execute(
+                select(UnitAccessPermission.unit_id).where(
+                    UnitAccessPermission.granted_to_yonetici_user_id == user.id,
+                    or_(
+                        UnitAccessPermission.durum == "bekliyor",
+                        and_(
+                            UnitAccessPermission.durum == "onaylandi",
+                            UnitAccessPermission.used.is_(False),
+                        ),
+                    ),
+                )
+            )
+        ).scalars().all()
+    )
+
+    created: list[UnitAccessRequestOut] = []
+    skipped = 0
+    for unit_id in sorted(sakinler, key=lambda u: unit_nos.get(u, "")):
+        if unit_id in aktif_ids:
+            skipped += 1
+            continue
+        obj = UnitAccessPermission(
+            tenant_id=user.tenant_id,
+            unit_id=unit_id,
+            granted_to_yonetici_user_id=user.id,
+        )
+        db.add(obj)
+        try:
+            await db.flush()
+        except IntegrityError as exc:
+            raise translate_integrity(exc)
+        await db.refresh(obj)
+        created.append(_out((obj, unit_nos.get(unit_id), user.ad, None)))
+
+        # EK push: dairenin aktif sakinlerine (karar onlarda); hatasi kirmaz.
+        hedefler = tuple(dict.fromkeys(sakinler[unit_id]))
+        dispatch_external(
+            f"{user.ad} {unit_nos.get(unit_id)} ziyaretci/kargo kayitlarini gormek "
+            "istiyor. Onayla/Reddet",
+            tenant_id=user.tenant_id,
+            target_user_ids=hedefler,
+            title="Goruntuleme izni talebi",
+            data={"tip": "erisim_talebi", "request_id": str(obj.id)},
+        )
+
+    return BulkAccessRequestResult(created=len(created), skipped=skipped, items=created)
+
+
+# ------------------------- verilen (onayli) daireler ------------------------ #
+@router.get("/granted-units", response_model=GrantedUnitsResponse)
+async def list_granted_units(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_REQUESTER),
+) -> GrantedUnitsResponse:
+    """Talebi acanin (admin/yonetici) SU AN goruntuleyebilecegi daireler:
+    onaylandi + kullanilmamis izinler. Ilk okumada tuketilecek (one-shot)
+    dairelerin listesi — 'hangi daireler acildi' gorunumu (bulk sonrasi
+    yonetici bunu izler; bekleyen/reddedilenler burada YOKTUR)."""
+    rows = (
+        await db.execute(
+            select(
+                UnitAccessPermission.id,
+                UnitAccessPermission.unit_id,
+                Unit.no,
+                UnitAccessPermission.decided_at,
+            )
+            .join(Unit, Unit.id == UnitAccessPermission.unit_id)
+            .where(
+                UnitAccessPermission.granted_to_yonetici_user_id == user.id,
+                UnitAccessPermission.durum == "onaylandi",
+                UnitAccessPermission.used.is_(False),
+            )
+            .order_by(UnitAccessPermission.decided_at.desc())
+        )
+    ).all()
+    return GrantedUnitsResponse(
+        items=[
+            GrantedUnitOut(
+                request_id=r[0], unit_id=r[1], unit_no=r[2], decided_at=r[3]
+            )
+            for r in rows
+        ]
+    )
 
 
 # ------------------------------- okuma -------------------------------------- #

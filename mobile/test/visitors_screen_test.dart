@@ -13,7 +13,6 @@ import 'package:mobile/src/features/visitors/domain/visitor_models.dart';
 import 'package:mobile/src/features/visitors/presentation/visitors_screen.dart';
 
 /// Sahte call API — detay ekranindaki CallButton gercek aga cikmasin diye.
-/// Varsayilan: aranamiyor (404). callable=true ise hedef doner.
 class _FakeCallApi extends CallApi {
   _FakeCallApi({this.callable = false}) : super(Dio());
   final bool callable;
@@ -47,42 +46,26 @@ class _FakeLauncher implements CallLauncher {
   }
 }
 
-/// Aga cikmayan sahte istemci — liste sabit doner; yanit cagrilari kaydedilir
-/// (widget testi).
+/// Aga cikmayan sahte istemci — LOG listesi sabit doner (widget testi).
 class _FakeVisitorApi extends VisitorApi {
   _FakeVisitorApi(this._items) : super(Dio());
 
   final List<Visitor> _items;
-  final List<(String, bool)> answered = [];
 
   @override
   Future<List<Visitor>> fetchAll({String? unitId}) async => _items;
-
-  @override
-  Future<Visitor> answer(String id, {required bool onayla}) async {
-    answered.add((id, onayla));
-    return _items.first;
-  }
 }
 
-Visitor _v({
-  String id = 'v-1',
-  VisitorDurum durum = VisitorDurum.bekliyor,
-  String? yanitlayanAd,
-}) =>
-    Visitor(
+Visitor _v({String id = 'v-1'}) => Visitor(
       id: id,
       unitId: 'u-1',
       unitNo: 'A-12',
       ziyaretciAd: 'Kurye Mehmet',
       notlar: 'Koli teslimati',
-      durum: durum,
       kaydedenUserId: 'g-1',
       kaydedenAd: 'Acme Guard',
       targetResidentUserId: 'r-1',
       targetResidentAd: 'Hedef Sakin',
-      yanitlayanAd: yanitlayanAd,
-      yanitZamani: yanitlayanAd == null ? null : DateTime.utc(2026, 7, 10, 10),
       createdAt: DateTime.utc(2026, 7, 10, 9),
     );
 
@@ -135,93 +118,33 @@ void main() {
     }
   });
 
-  group('Onayla/Reddet butonlari (yalniz sakin + bekleyen kayit)', () {
-    testWidgets('resident bekleyen kartta butonlari gorur; Onayla API cagirir',
+  group('LOG-ONLY: onay/red UI YOK', () {
+    testWidgets('hicbir rolde Onayla/Reddet butonu yok (log kaydi)',
         (tester) async {
-      final (api, app) = _app(UserRole.resident, items: [_v()]);
-      await tester.pumpWidget(app);
-      await tester.pumpAndSettle();
-      expect(find.text('Onayla'), findsOneWidget);
-      expect(find.text('Reddet'), findsOneWidget);
-
-      await tester.tap(find.text('Onayla'));
-      await tester.pumpAndSettle();
-      expect(api.answered, [('v-1', true)]);
-    });
-
-    testWidgets('resident Reddet -> API reddedildi ile cagrilir',
-        (tester) async {
-      final (api, app) = _app(UserRole.resident, items: [_v()]);
-      await tester.pumpWidget(app);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Reddet'));
-      await tester.pumpAndSettle();
-      expect(api.answered, [('v-1', false)]);
-    });
-
-    for (final role in [
-      UserRole.security,
-      UserRole.yonetici,
-      UserRole.admin,
-    ]) {
-      testWidgets('${role.name}: bekleyen kartta buton YOK (salt izleme)',
-          (tester) async {
+      for (final role in [UserRole.resident, UserRole.security]) {
         final (_, app) = _app(role, items: [_v()]);
         await tester.pumpWidget(app);
         await tester.pumpAndSettle();
-        expect(find.text('Onayla'), findsNothing);
-        expect(find.text('Reddet'), findsNothing);
-      });
-    }
-
-    testWidgets('sonuclanmis kayitta buton YOK (Gecmis sekmesi)',
-        (tester) async {
-      final (_, app) = _app(
-        UserRole.resident,
-        items: [_v(durum: VisitorDurum.onaylandi, yanitlayanAd: 'Acme Sakin')],
-      );
-      await tester.pumpWidget(app);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Geçmiş (1)'));
-      await tester.pumpAndSettle();
-      expect(find.text('Onayla'), findsNothing);
-      // sonuc satiri: kim yanitladi gorunur
-      expect(find.textContaining('Acme Sakin'), findsOneWidget);
-    });
-  });
-
-  group('Bekleyen / Gecmis sekmeleri', () {
-    testWidgets('kayitlar durumuna gore dogru sekmede', (tester) async {
-      final (_, app) = _app(UserRole.security, items: [
-        _v(),
-        _v(
-          id: 'v-2',
-          durum: VisitorDurum.reddedildi,
-          yanitlayanAd: 'Acme Sakin',
-        ),
-      ]);
-      await tester.pumpWidget(app);
-      await tester.pumpAndSettle();
-      expect(find.text('Bekleyen (1)'), findsOneWidget);
-      expect(find.text('Geçmiş (1)'), findsOneWidget);
-      // Varsayilan sekme Bekleyen: rozet 'Bekliyor'
-      expect(find.text('Bekliyor'), findsOneWidget);
-      await tester.tap(find.text('Geçmiş (1)'));
-      await tester.pumpAndSettle();
-      expect(find.text('Reddedildi'), findsWidgets);
+        expect(find.text('Onayla'), findsNothing, reason: role.name);
+        expect(find.text('Reddet'), findsNothing, reason: role.name);
+        // Durum rozeti de yok (bekliyor/onaylandi/reddedildi)
+        expect(find.text('Bekliyor'), findsNothing, reason: role.name);
+      }
     });
 
-    testWidgets('bos sekmeler anlamli mesaj gosterir', (tester) async {
+    testWidgets('kayit karti ziyaretci + daire + tarih gosterir', (tester) async {
+      final (_, app) = _app(UserRole.security, items: [_v()]);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      expect(find.text('Kurye Mehmet'), findsOneWidget);
+      expect(find.textContaining('A-12'), findsWidgets);
+    });
+
+    testWidgets('bos liste anlamli mesaj gosterir', (tester) async {
       final (_, app) = _app(UserRole.security);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.text('Onay bekleyen ziyaretçi yok.'), findsOneWidget);
-      await tester.tap(find.text('Geçmiş (0)'));
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Henüz sonuçlanan ziyaretçi kaydı yok.'),
-        findsOneWidget,
-      );
+      expect(find.text('Henüz ziyaretçi kaydı yok.'), findsOneWidget);
     });
   });
 
@@ -268,7 +191,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ziyaretçi adı *'), findsOneWidget);
     expect(find.text('Daire no * (örn. A-12)'), findsOneWidget);
-    // Hedef sakin secicisi: daire girip "Sakinleri getir" ile sakinler cekilir.
     expect(find.text('Sakinleri getir'), findsOneWidget);
     expect(find.text('Not (opsiyonel)'), findsOneWidget);
     expect(find.text('Kaydet ve sakine bildir'), findsOneWidget);
@@ -286,8 +208,6 @@ void main() {
       await tester.pumpAndSettle();
       // Detay sheet'e ozgu satir: kaydeden guvenlik adiyla "Kayit: ..." satiri.
       expect(find.textContaining('Acme Guard'), findsOneWidget);
-      // Sakin icin sheet'te de Onayla/Reddet sunulur (kart + sheet).
-      expect(find.text('Onayla'), findsNWidgets(2));
     });
 
     testWidgets('kayit listede yoksa sessizce listede kalinir (cokme yok)',

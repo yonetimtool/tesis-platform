@@ -7,10 +7,14 @@ import '../domain/unit_access_models.dart';
 
 /// Tek-seferlik daire erisim izni HTTP istemcisi:
 ///
-///   * `POST  /unit-access-request`        → talep ac (admin/yonetici)
-///   * `GET   /unit-access-request`        → talepler (yonetici kendi;
-///                                            resident kendi dairesine gelen)
-///   * `PATCH /unit-access-request/{id}`   → onayla/reddet (dairenin sakini)
+///   * `POST  /unit-access-request`               → talep ac (admin/yonetici)
+///   * `POST  /unit-access-request/bulk`          → TUM sakinli daireler icin
+///                                                   toplu talep (admin/yonetici)
+///   * `GET   /unit-access-request/granted-units` → su an gorunur (onayli+
+///                                                   kullanilmamis) daireler
+///   * `GET   /unit-access-request`               → talepler (yonetici kendi;
+///                                                   resident kendi dairesine gelen)
+///   * `PATCH /unit-access-request/{id}`          → onayla/reddet (dairenin sakini)
 class UnitAccessApi {
   UnitAccessApi(this._dio);
 
@@ -52,6 +56,38 @@ class UnitAccessApi {
         data: {'unit_no': unitNo},
       );
       return UnitAccessRequest.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Toplu talep — tenant'taki SAKINLI TUM daireler icin bekleyen talep acar
+  /// (per-daire sakin rizasini baypas etmeden). Zaten acik/onayli daireler
+  /// atlanir; sonuc created/skipped sayilarini + olusan talepleri doner.
+  Future<BulkAccessRequestResult> createBulkRequest() async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/unit-access-request/bulk',
+      );
+      return BulkAccessRequestResult.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Su an goruntulenebilir (onayli + kullanilmamis) daireler — bulk sonrasi
+  /// "hangi daireler acildi" gorunumu.
+  Future<List<GrantedUnit>> fetchGrantedUnits() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/unit-access-request/granted-units',
+      );
+      final items = res.data?['items'];
+      if (items is! List) return const [];
+      return items
+          .whereType<Map>()
+          .map((m) => GrantedUnit.fromJson(Map<String, dynamic>.from(m)))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

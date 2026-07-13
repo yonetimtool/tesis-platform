@@ -8,8 +8,9 @@ import '../domain/unit_access_models.dart';
 import 'unit_access_controller.dart';
 
 /// Tek-seferlik daire goruntuleme izni ekrani (rol-uyarlamali, KVKK):
-///   * admin/yonetici: "Yeni istek" ile daire icin izin talep eder; onaylanan
-///     taleplerde ziyaretci/kargo kayitlarini BiR KEZ goruntuler.
+///   * admin/yonetici: "Yeni istek" ile TEK daire; "Tüm daireler" ile TOPLU
+///     izin ister; onaylanan taleplerde ziyaretci/kargo kayitlarini BiR KEZ
+///     goruntuler. Toplu istek per-daire sakin RIZASINI baypas ETMEZ.
 ///   * resident: kendi dairesine gelen talepleri Onayla/Reddet eder.
 class UnitAccessScreen extends ConsumerWidget {
   const UnitAccessScreen({super.key});
@@ -20,7 +21,17 @@ class UnitAccessScreen extends ConsumerWidget {
     final controller = ref.read(unitAccessControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Görüntüleme izni')),
+      appBar: AppBar(
+        title: const Text('Görüntüleme izni'),
+        actions: [
+          if (state.canRequest)
+            IconButton(
+              tooltip: 'Tüm dairelere izin iste',
+              icon: const Icon(Icons.apartment_outlined),
+              onPressed: () => _bulkRequest(context, ref),
+            ),
+        ],
+      ),
       floatingActionButton: state.canRequest
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.add),
@@ -47,14 +58,19 @@ class UnitAccessScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                  // Talep edenin SU AN goruntuleyebilecegi (onayli+kullanilmamis)
+                  // daireler — bulk sonrasi "hangi daireler acildi" ozeti.
+                  if (state.canRequest && state.grantedUnits.isNotEmpty)
+                    _GrantedUnitsCard(units: state.grantedUnits),
                   if (state.items.isEmpty && state.errorMessage == null)
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
                           state.canRequest
-                              ? 'Henüz izin isteğiniz yok. "Yeni istek" ile '
-                                  'bir dairenin kayıtları için izin isteyin.'
+                              ? 'Henüz izin isteğiniz yok. "Yeni istek" ile bir '
+                                  'daire, üstteki "Tüm daireler" ile tümü için '
+                                  'izin isteyin.'
                               : 'Dairenize gelen görüntüleme isteği yok.',
                           textAlign: TextAlign.center,
                         ),
@@ -66,6 +82,52 @@ class UnitAccessScreen extends ConsumerWidget {
               ),
       ),
     );
+  }
+
+  Future<void> _bulkRequest(BuildContext context, WidgetRef ref) async {
+    final onay = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tüm dairelere izin iste'),
+        content: const Text(
+          'Sakini olan tüm daireler için görüntüleme izni isteği gönderilecek. '
+          'Her daire kendi sakininin onayına bağlıdır — yalnızca onaylayan '
+          'dairelerin kayıtlarını görebilirsiniz.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Gönder'),
+          ),
+        ],
+      ),
+    );
+    if (onay != true) return;
+    try {
+      final res =
+          await ref.read(unitAccessControllerProvider.notifier).createBulkRequest();
+      if (context.mounted) {
+        final atlandi = res.skipped > 0 ? ' (${res.skipped} zaten açık)' : '';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${res.created} daire için istek gönderildi$atlandi — '
+              'sakin onayları bekleniyor',
+            ),
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gönderilemedi: ${e.message}')),
+        );
+      }
+    }
   }
 
   Future<void> _newRequest(BuildContext context, WidgetRef ref) async {
@@ -192,6 +254,53 @@ class _RequestCard extends ConsumerWidget {
     context.push(
       '${AppRoutes.unitAccessRecords}?unit_id=${r.unitId}'
       '&unit_no=${r.unitNo ?? ''}&kind=$kind',
+    );
+  }
+}
+
+/// Talep edenin SU AN goruntuleyebilecegi daireler (onayli + kullanilmamis).
+/// Bulk sonrasi "hangi daireler acildi" gorunumu — bir daire okununca (izin
+/// tuketilince) listeden duser.
+class _GrantedUnitsCard extends StatelessWidget {
+  const _GrantedUnitsCard({required this.units});
+
+  final List<GrantedUnit> units;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.green.withValues(alpha: 0.08),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.lock_open_outlined, size: 18, color: Colors.green),
+                const SizedBox(width: 6),
+                Text(
+                  'Görüntülenebilir daireler (${units.length})',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final u in units)
+                  Chip(
+                    label: Text(u.unitNo ?? u.unitId.substring(0, 6)),
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

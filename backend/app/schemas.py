@@ -574,9 +574,8 @@ class ComplaintListResponse(BaseModel):
 
 
 # ------------------------------- visitors ---------------------------------- #
-VisitorDurum = Literal["bekliyor", "onaylandi", "reddedildi"]
-# Sakinin verebilecegi yanit — 'bekliyor'a geri donus yok.
-VisitorYanit = Literal["onaylandi", "reddedildi"]
+# Ziyaretci artik LOG-ONLY kayittir (onay/red akisi kaldirildi): durum yok,
+# sakin yaniti yok. Guvenlik kaydeder + hedef sakine BILGILENDIRME push'u gider.
 
 
 class VisitorCreate(BaseModel):
@@ -603,12 +602,6 @@ class VisitorCreate(BaseModel):
         return self
 
 
-class VisitorUpdate(BaseModel):
-    """Sakin yaniti — yalniz onay/red (yanitlayan + zaman sunucuda damgalanir)."""
-
-    durum: VisitorYanit
-
-
 class VisitorOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -618,17 +611,12 @@ class VisitorOut(BaseModel):
     unit_no: str | None = None
     ziyaretci_ad: str
     notlar: str | None = None
-    durum: str
     kaydeden_user_id: uuid.UUID
     # Kaydi acan guvenligin adi (join ile).
     kaydeden_ad: str | None = None
-    # Hedef sakin (bildirim/gorunurluk/karar sahibi) + adi (join ile).
+    # Hedef sakin (bilgilendirme/gorunurluk sahibi) + adi (join ile).
     target_resident_user_id: uuid.UUID
     target_resident_ad: str | None = None
-    yanitlayan_user_id: uuid.UUID | None = None
-    # Yaniti veren sakinin adi (join ile; yanitsizsa null).
-    yanitlayan_ad: str | None = None
-    yanit_zamani: datetime | None = None
     created_at: datetime
 
 
@@ -753,6 +741,30 @@ class UnitAccessRequestOut(BaseModel):
 class UnitAccessRequestListResponse(BaseModel):
     meta: PageMetaOut
     items: list[UnitAccessRequestOut]
+
+
+class BulkAccessRequestResult(BaseModel):
+    """Toplu izin talebi sonucu: her sakinli daire icin bekleyen talep olusur.
+    Zaten acik (bekleyen) veya kullanilmamis onayli izni olan daireler atlanir
+    (mukerrer bildirim spam'ini onler). Per-daire sakin RIZASI korunur — toplu
+    talep hicbir onayi baypas etmez."""
+
+    created: int  # yeni acilan bekleyen talep sayisi
+    skipped: int  # zaten acik/onayli oldugu icin atlanan daire sayisi
+    items: list[UnitAccessRequestOut]  # yeni acilan talepler (daire adiyla)
+
+
+class GrantedUnitOut(BaseModel):
+    """Talebi acanin SU AN goruntuleyebilecegi daire (onaylandi + kullanilmamis)."""
+
+    request_id: uuid.UUID  # izin (talep) kaydinin id'si
+    unit_id: uuid.UUID
+    unit_no: str | None = None
+    decided_at: datetime | None = None
+
+
+class GrantedUnitsResponse(BaseModel):
+    items: list[GrantedUnitOut]
 
 
 # ---------------------------- ortak alan / rezervasyon ---------------------- #

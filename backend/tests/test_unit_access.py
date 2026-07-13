@@ -103,6 +103,12 @@ def _open_request(client, yonetici, unit_no):
     return r.json()
 
 
+def _bulk(client, requester):
+    r = client.post("/unit-access-request/bulk", headers=requester)
+    assert r.status_code == 201, r.text
+    return r.json()
+
+
 # ------------------------------- talep -------------------------------------- #
 def test_talep_yonetici_ve_admin(client, uaworld):
     """TALEP acma yonetici VEYA admin (ikisi de varsayilan kapali; scoped
@@ -343,3 +349,102 @@ def test_tenant_izolasyonu(client, uaworld):
         "/unit-access-request", headers=yonetici_b, params={"limit": 200}
     ).json()["items"]]
     assert req["id"] not in b_ids
+
+
+# ------------------------------ toplu talep (bulk) -------------------------- #
+def test_bulk_sakinli_tum_daireler_icin_bekleyen_olusur(client, uaworld):
+    """Toplu talep: sakini olan TUM daireler (unit1 + unit2) icin bekleyen
+    talep olusur. RBAC: admin VEYA yonetici; security/gorevli/resident 403."""
+    # RBAC kapisi
+    for role in ("guard_a", "gorevli_a", "resident_a"):
+        h = _headers(client, uaworld["slug_a"], uaworld[role])
+        assert client.post(
+            "/unit-access-request/bulk", headers=h
+        ).status_code == 403, role
+
+    yonetici = _headers(client, uaworld["slug_a"], uaworld["yonetici_a"])
+    res = _bulk(client, yonetici)
+    assert res["created"] == 2 and res["skipped"] == 0
+    unit_ids = {it["unit_id"] for it in res["items"]}
+    assert unit_ids == {uaworld["unit1"], uaworld["unit2"]}
+    assert all(it["durum"] == "bekliyor" and it["used"] is False for it in res["items"])
+
+
+def test_bulk_admin_da_yapar(client, uaworld):
+    admin = _headers(client, uaworld["slug_a"], uaworld["admin_a"])
+    res = _bulk(client, admin)
+    assert res["created"] == 2
+    assert {it["unit_id"] for it in res["items"]} == {uaworld["unit1"], uaworld["unit2"]}
+
+
+def test_bulk_zaten_acik_veya_onayli_daireyi_atlar(client, uaworld):
+    """Mukerrer bildirim spam'i olmasin: talebi acanin zaten acik (bekleyen)
+    talebi olan daire ATLANIR."""
+    yonetici = _headers(client, uaworld["slug_a"], uaworld["yonetici_a"])
+    # unit1 icin tek-daire talep zaten acik
+    _open_request(client, yonetici, uaworld["unit1_no"])
+    res = _bulk(client, yonetici)
+    assert res["created"] == 1 and res["skipped"] == 1
+    assert {it["unit_id"] for it in res["items"]} == {uaworld["unit2"]}
+
+
+def test_bulk_per_daire_riza_baypas_edilmez(client, uaworld):
+    """KRITIK gizlilik: toplu talep hicbir onayi baypas ETMEZ. yonetici yalniz
+    ONAYLAYAN dairenin (unit1) ziyaretcilerini gorur; onaylanmayan daire
+    (unit2, bekliyor) icin hala 403."""
+    guard = _headers(client, uaworld["slug_a"], uaworld["guard_a"])
+    yonetici = _headers(client, uaworld["slug_a"], uaworld["yonetici_a"])
+    resident = _headers(client, uaworld["slug_a"], uaworld["resident_a"])
+    v1 = _register_visitor(client, guard, uaworld["resident_a_id"], uaworld["unit1_no"])
+
+    res = _bulk(client, yonetici)
+    # unit1 talebini bul + resident_a onaylar (unit2 bekliyor kalir)
+    req_unit1 = next(it for it in res["items"] if it["unit_id"] == uaworld["unit1"])
+    assert client.patch(
+        f"/unit-access-request/{req_unit1['id']}", headers=resident,
+        json={"durum": "onaylandi"},
+    ).status_code == 200
+
+    # unit1: onaylandi -> gorunur (bir kez)
+    r1 = client.get("/visitors", headers=yonetici, params={"unit_id": uaworld["unit1"]})
+    assert r1.status_code == 200
+    assert any(it["id"] == v1["id"] for it in r1.json()["items"])
+    # unit2: bekliyor (baypas YOK) -> 403
+    assert client.get(
+        "/visitors", headers=yonetici, params={"unit_id": uaworld["unit2"]}
+    ).status_code == 403
+
+
+def test_granted_units_yalniz_onayli_kullanilmamis(client, uaworld):
+    """granted-units: talebi acanin SU AN goruntuleyebilecegi (onaylandi +
+    kullanilmamis) daireler. Bekleyen daire listede yok; tuketilince duser.
+    RBAC: resident 403 (talep eden gorunumu)."""
+    guard = _headers(client, uaworld["slug_a"], uaworld["guard_a"])
+    yonetici = _headers(client, uaworld["slug_a"], uaworld["yonetici_a"])
+    resident = _headers(client, uaworld["slug_a"], uaworld["resident_a"])
+    _register_visitor(client, guard, uaworld["resident_a_id"], uaworld["unit1_no"])
+
+    res = _bulk(client, yonetici)
+    req_unit1 = next(it for it in res["items"] if it["unit_id"] == uaworld["unit1"])
+    client.patch(
+        f"/unit-access-request/{req_unit1['id']}", headers=resident,
+        json={"durum": "onaylandi"},
+    )
+
+    # onayli + kullanilmamis: yalniz unit1
+    g = client.get("/unit-access-request/granted-units", headers=yonetici)
+    assert g.status_code == 200
+    granted_units = {it["unit_id"] for it in g.json()["items"]}
+    assert granted_units == {uaworld["unit1"]}
+
+    # tuketince (ILK okuma) listeden duser
+    assert client.get(
+        "/visitors", headers=yonetici, params={"unit_id": uaworld["unit1"]}
+    ).status_code == 200
+    g2 = client.get("/unit-access-request/granted-units", headers=yonetici).json()
+    assert uaworld["unit1"] not in {it["unit_id"] for it in g2["items"]}
+
+    # RBAC: resident granted-units GORMEZ (talep eden gorunumu)
+    assert client.get(
+        "/unit-access-request/granted-units", headers=resident
+    ).status_code == 403

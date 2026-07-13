@@ -15,6 +15,10 @@ class _FakeUnitAccessApi extends UnitAccessApi {
   final List<UnitAccessRequest> _items;
   final List<(String, bool)> decided = [];
   final List<String> requested = [];
+  int bulkCalls = 0;
+  BulkAccessRequestResult bulkResult =
+      const BulkAccessRequestResult(created: 2, skipped: 0, items: []);
+  List<GrantedUnit> granted = const [];
 
   @override
   Future<List<UnitAccessRequest>> fetchAll() async => _items;
@@ -30,6 +34,15 @@ class _FakeUnitAccessApi extends UnitAccessApi {
     requested.add(unitNo);
     return _items.isEmpty ? _r() : _items.first;
   }
+
+  @override
+  Future<BulkAccessRequestResult> createBulkRequest() async {
+    bulkCalls++;
+    return bulkResult;
+  }
+
+  @override
+  Future<List<GrantedUnit>> fetchGrantedUnits() async => granted;
 }
 
 UnitAccessRequest _r({
@@ -141,6 +154,48 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('İzin kullanıldı'), findsOneWidget);
       expect(find.text('Ziyaretçiler'), findsNothing);
+    });
+  });
+
+  group('Toplu izin (bulk) — CHANGE 2', () {
+    testWidgets('yonetici: "Tüm dairelere izin iste" -> onay -> api.bulk cagirir',
+        (tester) async {
+      final (api, app) = _app(UserRole.yonetici, items: [_r()]);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      // AppBar aksiyonu (tooltip ile bulunur)
+      await tester.tap(find.byTooltip('Tüm dairelere izin iste'));
+      await tester.pumpAndSettle();
+      // Onay dialogu -> Gönder
+      expect(find.text('Tüm dairelere izin iste'), findsWidgets);
+      await tester.tap(find.text('Gönder'));
+      await tester.pumpAndSettle();
+      expect(api.bulkCalls, 1);
+    });
+
+    testWidgets('resident: bulk aksiyonu YOK (talep edemez)', (tester) async {
+      final (_, app) = _app(UserRole.resident, items: [_r()]);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Tüm dairelere izin iste'), findsNothing);
+    });
+
+    testWidgets('granted-units karti: gorunur daireler listelenir', (tester) async {
+      final api = _FakeUnitAccessApi([_r()]);
+      api.granted = const [
+        GrantedUnit(requestId: 'q-9', unitId: 'u-9', unitNo: 'B-2'),
+      ];
+      final app = ProviderScope(
+        overrides: [
+          unitAccessApiProvider.overrideWithValue(api),
+          currentUserRoleProvider.overrideWith((ref) async => UserRole.yonetici),
+        ],
+        child: const MaterialApp(home: UnitAccessScreen()),
+      );
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Görüntülenebilir daireler'), findsOneWidget);
+      expect(find.text('B-2'), findsOneWidget);
     });
   });
 }

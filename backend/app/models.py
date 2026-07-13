@@ -103,10 +103,7 @@ DEVICE_PLATFORM = ENUM(
     "android", "ios", "web",
     name="device_platform", create_type=False,
 )
-VISITOR_DURUM = ENUM(
-    "bekliyor", "onaylandi", "reddedildi",
-    name="visitor_durum", create_type=False,
-)
+# (visitor_durum kaldirildi — ziyaretci artik LOG-ONLY, onay/red akisi yok.)
 KARGO_DURUM = ENUM(
     "bekliyor", "teslim_alindi",
     name="kargo_durum", create_type=False,
@@ -1011,11 +1008,11 @@ class Complaint(Base):
 
 
 class Visitor(Base):
-    """Ziyaretci onay akisi — guvenlik kaydeder, dairenin sakinleri yanitlar.
+    """Ziyaretci LOG kaydi — guvenlik kaydeder, dairenin TEK hedef sakinine
+    BILGILENDIRME push'u gider. Onay/red YOKTUR; kayit bir gunluk girisidir.
 
-    GSM'e hazir: yanit alanlari (yanitlayan_user_id + yanit_zamani) kanaldan
-    bagimsiz; ileride gercek arama adimi enum degeri + ayri meta ile eklenir
-    (bkz. migration notu). Sakin telefonu app_user.telefon'da.
+    GSM'e hazir: hedef sakinin telefonu app_user.telefon'da; ileride gercek
+    arama adimi ayri kolon/tablo ile eklenebilir (bkz. migration notu).
     """
 
     __tablename__ = "visitor"
@@ -1039,13 +1036,6 @@ class Visitor(Base):
             ondelete="RESTRICT",
             name="fk_visitor_target",
         ),
-        # DDL'de kolon-ozel ON DELETE SET NULL (yanitlayan_user_id); tenant_id korunur.
-        ForeignKeyConstraint(
-            ["yanitlayan_user_id", "tenant_id"],
-            ["app_user.id", "app_user.tenant_id"],
-            ondelete="SET NULL",
-            name="fk_visitor_yanitlayan",
-        ),
     )
 
     id: Mapped[uuid.UUID] = _pk()
@@ -1055,18 +1045,11 @@ class Visitor(Base):
     unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     ziyaretci_ad: Mapped[str] = mapped_column(Text, nullable=False)
     notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
-    durum: Mapped[str] = mapped_column(
-        VISITOR_DURUM, nullable=False, server_default=text("'bekliyor'")
-    )
     kaydeden_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    # Guvenligin sectigi TEK hedef sakin: bildirim + gorunurluk + karar YALNIZ onda.
+    # Guvenligin sectigi TEK hedef sakin: bilgilendirme push'u + gorunurluk YALNIZ onda.
     target_resident_user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), nullable=False
     )
-    yanitlayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True
-    )
-    yanit_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
 
 
@@ -1530,7 +1513,6 @@ __all__ = [
     "DUES_YONTEM",
     "DUES_DURUM",
     "DEVICE_PLATFORM",
-    "VISITOR_DURUM",
     "KARGO_DURUM",
     "REZERVASYON_DURUM",
     "KATILIM_DURUM",

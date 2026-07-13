@@ -29,7 +29,7 @@ void main() {
       expect(routeForPushData(const {'tip': 'duyuru'}), '/announcements');
     });
 
-    test('tip=ziyaretci -> ilgili ziyaretci (sakine kapida-ziyaretci push\'u)',
+    test('tip=ziyaretci -> ilgili ziyaretci (sakine bilgilendirme push\'u)',
         () {
       expect(
         routeForPushData(const {'tip': 'ziyaretci', 'visitor_id': 'v-1'}),
@@ -37,11 +37,11 @@ void main() {
       );
     });
 
-    test('tip=ziyaretci_sonuc -> ilgili ziyaretci (guvenlige sonuc push\'u)',
+    test('tip=ziyaretci_sonuc KALDIRILDI -> null (artik onay/red push\'u yok)',
         () {
       expect(
         routeForPushData(const {'tip': 'ziyaretci_sonuc', 'visitor_id': 'v-2'}),
-        '/visitors?visitor_id=v-2',
+        isNull,
       );
     });
 
@@ -63,7 +63,7 @@ void main() {
     test('visitor_id yoksa/bossa ziyaretci LISTESI acilir', () {
       expect(routeForPushData(const {'tip': 'ziyaretci'}), '/visitors');
       expect(
-        routeForPushData(const {'tip': 'ziyaretci_sonuc', 'visitor_id': ''}),
+        routeForPushData(const {'tip': 'ziyaretci', 'visitor_id': ''}),
         '/visitors',
       );
     });

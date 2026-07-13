@@ -79,10 +79,9 @@ String? routeForPushData(Map<String, String> data) {
       return id == null || id.isEmpty
           ? AppRoutes.complaints
           : '${AppRoutes.complaints}?complaint_id=$id';
-    // Yeni ziyaretci (daire sakinlerine) / sonuc (kaydi acan guvenlige)
-    // → ilgili ziyaretci kaydi acilir.
+    // Ziyaretci LOG kaydi (hedef sakine bilgilendirme) → ilgili kayit acilir.
+    // (Onay/red kaldirildi; 'ziyaretci_sonuc' push'u artik yok.)
     case 'ziyaretci':
-    case 'ziyaretci_sonuc':
       final id = data['visitor_id'];
       return id == null || id.isEmpty
           ? AppRoutes.visitors

@@ -1012,22 +1012,18 @@ paths:
   /visitors:
     get:
       tags: [visitors]
-      summary: Ziyaretci gecmisi (created_at DESC)
+      summary: Ziyaretci LOG gecmisi (created_at DESC)
       description: |
-        GIZLILIK (kesin kural, KVKK): YALNIZ security tenant'in TUM ziyaretci
-        gecmisini gorur; resident YALNIZ KENDINE HEDEFLENEN kayitlari (tek
-        hedef modeli — ayni dairedeki es'inkini gormez); tesis_gorevlisi
-        ERISMEZ (403). yonetici VE admin VARSAYILAN KAPALI (403): bir daireyi
-        gormek icin once /unit-access-request ile tek-seferlik izin alir,
-        sonra ?unit_id= ile BiR KEZ gorur (izin o okumada tuketilir). durum/
-        daire/tarih ile filtrelenir.
+        Ziyaretci LOG-ONLY kayittir (onay/red YOK). GIZLILIK (kesin kural,
+        KVKK): YALNIZ security tenant'in TUM ziyaretci gecmisini gorur;
+        resident YALNIZ KENDINE HEDEFLENEN kayitlari (tek hedef modeli — ayni
+        dairedeki es'inkini gormez); tesis_gorevlisi ERISMEZ (403). yonetici VE
+        admin VARSAYILAN KAPALI (403): bir daireyi gormek icin once
+        /unit-access-request ile tek-seferlik izin alir, sonra ?unit_id= ile
+        BiR KEZ gorur (izin o okumada tuketilir). daire/tarih ile filtrelenir.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
-        - name: durum
-          in: query
-          required: false
-          schema: { type: string, enum: [bekliyor, onaylandi, reddedildi] }
         - name: unit_id
           in: query
           required: false
@@ -1060,14 +1056,15 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [visitors]
-      summary: Ziyaretci kaydi ac (YALNIZ security)
+      summary: Ziyaretci LOG kaydi ac (YALNIZ security)
       description: |
-        Kapidaki guvenlik ziyaretciyi kaydeder; durum=bekliyor baslar. Daire
-        unit_id VEYA unit_no ile verilir (tam biri; bulunamazsa 422). Kayit
-        sonrasi dairenin TUM aktif sakinlerinin cihazlarina push denenir
-        (esler dahil; EK gonderim — push hatasi kaydi etkilemez;
-        data: tip=ziyaretci, visitor_id). yonetici/admin kayit ACMAZ (403) —
-        kapi operasyonu guvenligindir; gecmisi GET ile okurlar.
+        Kapidaki guvenlik ziyaretciyi kaydeder (LOG-ONLY — onay/red YOK). Daire
+        unit_id VEYA unit_no ile verilir (tam biri; bulunamazsa 422); HEDEF
+        sakin (target_resident_user_id) o dairenin aktif sakini olmali (degilse
+        422). Kayit sonrasi YALNIZ hedef sakine BILGILENDIRME push'u denenir
+        (EK gonderim — push hatasi kaydi etkilemez; data: tip=ziyaretci,
+        visitor_id). yonetici/admin kayit ACMAZ (403) — kapi operasyonu
+        guvenligindir; gecmisi izinle GET ile okurlar.
       requestBody:
         required: true
         content:
@@ -1089,7 +1086,10 @@ paths:
       - $ref: "#/components/parameters/PathId"
     get:
       tags: [visitors]
-      summary: Ziyaretci detayi (resident yalniz kendi dairesininki)
+      summary: Ziyaretci LOG detayi (resident yalniz kendine hedeflenen)
+      description: |
+        Ziyaretci LOG-ONLY kayittir; onay/red (PATCH) YOKTUR. Detay yalniz
+        okumadir.
       responses:
         "200":
           description: Ziyaretci
@@ -1099,35 +1099,6 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
-    patch:
-      tags: [visitors]
-      summary: Ziyaretciyi onayla/reddet (YALNIZ o dairenin aktif sakini)
-      description: |
-        Sakin yaniti: durum=onaylandi|reddedildi. yanitlayan_user_id +
-        yanit_zamani sunucuda damgalanir. ILK yanit gecerli — zaten
-        yanitlanmis kayda ikinci yanit 409 (esler ayni anda bassa bile
-        atomik; ilk kazanir). BASKA dairenin sakini 404 alir (varlik
-        sizdirilmaz; bypass yolu yok). Yanit sonrasi kaydi acan guvenligin
-        cihazlarina sonuc push'u denenir (EK gonderim — hatasi kaydi
-        etkilemez; data: tip=ziyaretci_sonuc, visitor_id). Personel rolleri
-        bu uca ERISEMEZ (403) — onay yetkisi daire sakinindedir.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/VisitorUpdate" }
-      responses:
-        "200":
-          description: Yanitlandi
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Visitor" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
   # KARGO (paket takibi: guvenlik kaydeder (daire+firma+opsiyonel foto)
@@ -1310,6 +1281,41 @@ paths:
                       items:
                         type: array
                         items: { $ref: "#/components/schemas/UnitAccessRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /unit-access-request/bulk:
+    post:
+      tags: [unit-access]
+      summary: Tum sakinli daireler icin TOPLU izin talebi (admin/yonetici)
+      description: |
+        Tenant'taki SAKINLI TUM daireler icin ayni anda bekleyen talep acar ->
+        her dairenin AKTIF sakinlerine push (tip=erisim_talebi). PER-DAIRE karar
+        sakinde kalir: toplu talep hicbir onayi BAYPAS ETMEZ. Mukerrer bildirim
+        spam'ini onlemek icin talebi acanin zaten acik (bekleyen) ya da
+        kullanilmamis onayli izni olan daireler ATLANIR. Diger roller 403.
+      responses:
+        "201":
+          description: Toplu talep sonucu (olusan + atlanan)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BulkAccessRequestResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /unit-access-request/granted-units:
+    get:
+      tags: [unit-access]
+      summary: Su an goruntulenebilir (onayli+kullanilmamis) daireler (admin/yonetici)
+      description: |
+        Talebi acanin ILK okumada tuketebilecegi daireler (durum=onaylandi,
+        used=false) — 'hangi daireler acildi' gorunumu (bulk sonrasi izlenir).
+        Bekleyen/reddedilen daireler burada YOKTUR; bir daire okununca (izin
+        tuketilince) listeden duser. Diger roller 403.
+      responses:
+        "200":
+          description: Goruntulenebilir daireler
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GrantedUnitsResponse" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
   /unit-access-request/{id}:
@@ -4575,11 +4581,10 @@ components:
     Visitor:
       type: object
       description: |
-        Ziyaretci kaydi + tam gecmis satiri. GSM'e hazir model: yanit
-        alanlari (yanitlayan_user_id, yanit_zamani) kanaldan bagimsizdir;
-        ileride gercek arama adimi durum enum'una deger eklenerek
-        (orn. araniyor) ve arama meta'siyla genisler — yeniden tasarim yok.
-      required: [id, unit_id, ziyaretci_ad, durum, kaydeden_user_id, target_resident_user_id, created_at]
+        Ziyaretci LOG kaydi + tam gecmis satiri (onay/red YOK). GSM'e hazir:
+        hedef sakinin telefonu app_user.telefon'da; ileride gercek arama adimi
+        ayri kolon/tablo ile eklenebilir — yeniden tasarim yok.
+      required: [id, unit_id, ziyaretci_ad, kaydeden_user_id, target_resident_user_id, created_at]
       properties:
         id: { type: string, format: uuid }
         unit_id: { type: string, format: uuid }
@@ -4592,27 +4597,19 @@ components:
           type: string
           nullable: true
           description: Opsiyonel not ("not" SQL anahtar sozcugu; alan adi notlar)
-        durum: { type: string, enum: [bekliyor, onaylandi, reddedildi] }
         kaydeden_user_id:
           type: string
           format: uuid
-          description: Kaydi acan guvenlik (sonuc push'unun hedefi)
+          description: Kaydi acan guvenlik
         kaydeden_ad: { type: string, nullable: true }
         target_resident_user_id:
           type: string
           format: uuid
           description: >
-            TEK hedef sakin — push + gorunurluk + karar YALNIZ onda (tek hedef
-            modeli). Ayni dairedeki diger sakinler (es) bu kaydi gormez/karar
-            vermez.
+            TEK hedef sakin — bilgilendirme push'u + gorunurluk YALNIZ onda
+            (tek hedef modeli). Ayni dairedeki diger sakinler (es) bu kaydi
+            gormez.
         target_resident_ad: { type: string, nullable: true }
-        yanitlayan_user_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: Yaniti veren sakin (ilk yanit kazanir; yanitsizsa null)
-        yanitlayan_ad: { type: string, nullable: true }
-        yanit_zamani: { type: string, format: date-time, nullable: true }
         created_at: { type: string, format: date-time }
     VisitorCreate:
       type: object
@@ -4637,12 +4634,6 @@ components:
             Guvenligin sectigi TEK hedef sakin (o dairenin aktif sakini). Push +
             gorunurluk + karar YALNIZ bu sakinde.
         notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
-    VisitorUpdate:
-      type: object
-      description: Sakin yaniti — yalniz onay/red ('bekliyor'a geri donus yok)
-      required: [durum]
-      properties:
-        durum: { type: string, enum: [onaylandi, reddedildi] }
 
     Kargo:
       type: object
@@ -4755,6 +4746,35 @@ components:
       required: [durum]
       properties:
         durum: { type: string, enum: [onaylandi, reddedildi] }
+    BulkAccessRequestResult:
+      type: object
+      description: >
+        Toplu izin talebi sonucu. created = yeni acilan bekleyen talep sayisi;
+        skipped = zaten acik/onayli oldugu icin atlanan daire sayisi; items =
+        yeni acilan talepler. Per-daire sakin RIZASI korunur (baypas yok).
+      required: [created, skipped, items]
+      properties:
+        created: { type: integer }
+        skipped: { type: integer }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/UnitAccessRequest" }
+    GrantedUnit:
+      type: object
+      description: Talebi acanin SU AN goruntuleyebilecegi daire (onayli+kullanilmamis)
+      required: [request_id, unit_id]
+      properties:
+        request_id: { type: string, format: uuid, description: Izin (talep) kaydinin id'si }
+        unit_id: { type: string, format: uuid }
+        unit_no: { type: string, nullable: true }
+        decided_at: { type: string, format: date-time, nullable: true }
+    GrantedUnitsResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/GrantedUnit" }
 
     OrtakAlan:
       type: object

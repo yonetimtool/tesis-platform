@@ -101,12 +101,8 @@ def upgrade() -> None:
     op.execute("CREATE TYPE dues_durum AS ENUM ('basarili', 'bekliyor', 'iptal');")
     # push: cihaz platformu (FCM device token kaydi).
     op.execute("CREATE TYPE device_platform AS ENUM ('android', 'ios', 'web');")
-    # ziyaretci onay akisi durumu. GSM'e hazir: ileride gercek telefon
-    # aramasi eklendiginde ALTER TYPE ... ADD VALUE (orn. 'araniyor') ile
-    # genisler — mevcut degerler/kayitlar etkilenmez.
-    op.execute(
-        "CREATE TYPE visitor_durum AS ENUM ('bekliyor', 'onaylandi', 'reddedildi');"
-    )
+    # (ziyaretci artik LOG-ONLY kayittir: onay/red akisi kaldirildi — durum
+    #  enum'u yok; guvenlik kaydeder + hedef sakine BILGILENDIRME push'u gider.)
     # kargo/paket takibi durumu: kapida teslim alinmayi bekler -> sakin alir.
     op.execute("CREATE TYPE kargo_durum AS ENUM ('bekliyor', 'teslim_alindi');")
     # yonetici tek-seferlik ziyaretci/paket goruntuleme izin talebi durumu:
@@ -1047,16 +1043,14 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
-    # 9z2. visitor  (ziyaretci onay akisi — guvenlik kaydeder, dairenin TUM
-    #     aktif sakinlerine push gider, ILK yanitlayan sakin onaylar/reddeder,
-    #     sonuc kaydi yapan guvenlige doner; tam gecmis bu tabloda tutulur.
+    # 9z2. visitor  (ziyaretci LOG kaydi — guvenlik kaydeder + dairenin TEK
+    #     hedef sakinine BILGILENDIRME push'u gider; onay/red YOKTUR. Kayit bir
+    #     gunluk (log) girisidir; tam gecmis bu tabloda tutulur.
     #
-    #     GSM'E HAZIR (ileride Twilio/Netgsm ile gercek arama): yanit alanlari
-    #     (yanitlayan_user_id + yanit_zamani) kanaldan BAGIMSIZDIR; sakin
-    #     telefonu zaten app_user.telefon'da. Arama adimi eklenirken
-    #     visitor_durum'a deger (orn. 'araniyor') ve arama meta'si icin ayri
-    #     kolon/tablo (composite FK hedefi uq_visitor_id_tenant hazir) yeter —
-    #     bu tabloda yeniden tasarim gerekmez.)
+    #     GSM'E HAZIR (ileride Twilio/Netgsm ile gercek arama): hedef sakinin
+    #     telefonu zaten app_user.telefon'da; arama adimi ayri kolon/tablo ile
+    #     eklenebilir (composite FK hedefi uq_visitor_id_tenant hazir) — bu
+    #     tabloda yeniden tasarim gerekmez.)
     # ------------------------------------------------------------------ #
     op.execute(
         """
@@ -1066,11 +1060,8 @@ def upgrade() -> None:
             unit_id              uuid NOT NULL,
             ziyaretci_ad         text NOT NULL,
             notlar               text,       -- opsiyonel not ("not" SQL anahtar sozcugu; emergency/asset deseni)
-            durum                visitor_durum NOT NULL DEFAULT 'bekliyor',
-            kaydeden_user_id     uuid NOT NULL,   -- kaydi acan guvenlik (sonuc push'unun hedefi)
-            target_resident_user_id uuid NOT NULL, -- guvenligin sectigi TEK sakin: push + gorunurluk + karar YALNIZ onda
-            yanitlayan_user_id   uuid,            -- yaniti veren sakin (= hedef sakin; ilk yanit kazanir)
-            yanit_zamani         timestamptz,
+            kaydeden_user_id     uuid NOT NULL,   -- kaydi acan guvenlik
+            target_resident_user_id uuid NOT NULL, -- guvenligin sectigi TEK sakin: bilgilendirme push'u + gorunurluk YALNIZ onda
             created_at           timestamptz NOT NULL DEFAULT now(),
             -- composite FK hedefi (ileride arama/meta tablolari icin de hazir).
             CONSTRAINT uq_visitor_id_tenant UNIQUE (id, tenant_id),
@@ -1081,20 +1072,15 @@ def upgrade() -> None:
             CONSTRAINT fk_visitor_kaydeden
                 FOREIGN KEY (kaydeden_user_id, tenant_id)
                 REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
-            -- Hedef sakin: bildirim/gorunurluk/karar sahibi; silinemez (RESTRICT).
+            -- Hedef sakin: bilgilendirme/gorunurluk sahibi; silinemez (RESTRICT).
             CONSTRAINT fk_visitor_target
                 FOREIGN KEY (target_resident_user_id, tenant_id)
-                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
-            -- Kolon-ozel SET NULL: yalnizca yanitlayan_user_id NULL'lanir.
-            CONSTRAINT fk_visitor_yanitlayan
-                FOREIGN KEY (yanitlayan_user_id, tenant_id)
-                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (yanitlayan_user_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT
         );
         """
     )
     op.execute("CREATE INDEX ix_visitor_tenant ON visitor (tenant_id);")
     op.execute("CREATE INDEX ix_visitor_tenant_unit ON visitor (tenant_id, unit_id);")
-    op.execute("CREATE INDEX ix_visitor_tenant_durum ON visitor (tenant_id, durum);")
     op.execute(
         "CREATE INDEX ix_visitor_tenant_target "
         "ON visitor (tenant_id, target_resident_user_id);"
@@ -1598,7 +1584,7 @@ def downgrade() -> None:
     op.execute("DROP TYPE IF EXISTS rezervasyon_durum;")
     op.execute("DROP TYPE IF EXISTS access_request_durum;")
     op.execute("DROP TYPE IF EXISTS kargo_durum;")
-    op.execute("DROP TYPE IF EXISTS visitor_durum;")
+    # (visitor_durum kaldirildi — ziyaretci artik LOG-ONLY, enum yok.)
     op.execute("DROP TYPE IF EXISTS device_platform;")
     op.execute("DROP TYPE IF EXISTS budget_kaynak;")
     op.execute("DROP TYPE IF EXISTS budget_tip;")

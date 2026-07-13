@@ -7,11 +7,11 @@ import '../domain/visitor_models.dart';
 
 /// Ziyaretci modulunun HTTP istemcisi:
 ///
-///   * `GET   /visitors`        → gecmis (security TUMU; resident kendine
+///   * `GET   /visitors`        → LOG gecmisi (security TUMU; resident kendine
 ///                                 hedeflenen; admin/yonetici ?unit_id ile
 ///                                 tek-seferlik izinle — sunucu created_at DESC)
-///   * `POST  /visitors`        → ziyaretci kaydi (YALNIZ security; hedef sakin)
-///   * `PATCH /visitors/{id}`   → onay/red (YALNIZ hedef sakin; ikinci 409)
+///   * `POST  /visitors`        → ziyaretci LOG kaydi (YALNIZ security; hedef
+///                                 sakine bilgilendirme push'u — onay/red YOK)
 ///   * `GET   /units/by-no/{no}/residents` → hedef sakin secicisi
 class VisitorApi {
   VisitorApi(this._dio);
@@ -72,19 +72,6 @@ class VisitorApi {
       final res = await _dio.post<Map<String, dynamic>>(
         '/visitors',
         data: draft.toJson(),
-      );
-      return Visitor.fromJson(res.data ?? const {});
-    } on DioException catch (e) {
-      throw ApiException.fromDio(e);
-    }
-  }
-
-  /// Sakin yaniti: onayla=true → onaylandi, false → reddedildi.
-  Future<Visitor> answer(String id, {required bool onayla}) async {
-    try {
-      final res = await _dio.patch<Map<String, dynamic>>(
-        '/visitors/$id',
-        data: {'durum': onayla ? 'onaylandi' : 'reddedildi'},
       );
       return Visitor.fromJson(res.data ?? const {});
     } on DioException catch (e) {

@@ -12,40 +12,28 @@ class VisitorsState {
     this.errorMessage,
     this.items = const [],
     this.canRegister = false,
-    this.canAnswer = false,
     this.refreshedAt,
   });
 
   final bool loading;
   final String? errorMessage;
 
-  /// Sunucu sirasi: created_at DESC (en yeni onde). Sakin icin sunucu zaten
-  /// YALNIZ kendi dairesinin kayitlarini doner.
+  /// Sunucu sirasi: created_at DESC (en yeni onde). Ziyaretci LOG kayitlaridir
+  /// (onay/red yok). Sakin icin sunucu zaten YALNIZ kendine hedeflenen
+  /// kayitlari doner.
   final List<Visitor> items;
 
   /// Rol security mi — "Yeni ziyaretci" FAB'i. Yalniz UX kapisi; gercek
   /// yetki backend RBAC'ta.
   final bool canRegister;
 
-  /// Rol resident mi — bekleyen kartta Onayla/Reddet butonlari (dairenin
-  /// sakini olma kosulunu sunucu ayrica zorlar).
-  final bool canAnswer;
-
   final DateTime? refreshedAt;
-
-  /// Bekleyenler one alinir (kapida cevap bekleyen kayit gomulmesin);
-  /// gruplar kendi icinde sunucu sirasini (DESC) korur.
-  List<Visitor> get sirali => [
-        ...items.where((v) => v.bekliyor),
-        ...items.where((v) => !v.bekliyor),
-      ];
 
   VisitorsState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
     List<Visitor>? items,
     bool? canRegister,
-    bool? canAnswer,
     DateTime? refreshedAt,
   }) {
     return VisitorsState(
@@ -55,7 +43,6 @@ class VisitorsState {
           : errorMessage as String?,
       items: items ?? this.items,
       canRegister: canRegister ?? this.canRegister,
-      canAnswer: canAnswer ?? this.canAnswer,
       refreshedAt: refreshedAt ?? this.refreshedAt,
     );
   }
@@ -63,9 +50,8 @@ class VisitorsState {
   static const Object _sentinel = Object();
 }
 
-/// Ziyaretci listesi controller'i. Kayit/yanit eylemleri basarili olunca
-/// listeyi tazeler; hata mesaji EYLEMI cagiran ekranda gosterilir
-/// (ApiException yukari firlatilir — orn. ikinci yanit 409'u).
+/// Ziyaretci LOG listesi controller'i. Kayit basarili olunca listeyi tazeler;
+/// hata mesaji EYLEMI cagiran ekranda gosterilir (ApiException yukari firlatilir).
 class VisitorsController extends Notifier<VisitorsState> {
   bool _refreshing = false;
 
@@ -88,7 +74,6 @@ class VisitorsController extends Notifier<VisitorsState> {
         errorMessage: null,
         items: items,
         canRegister: role.canRegisterVisitor,
-        canAnswer: role.canAnswerVisitor,
         refreshedAt: DateTime.now(),
       );
     } on ApiException catch (e) {
@@ -108,16 +93,6 @@ class VisitorsController extends Notifier<VisitorsState> {
   Future<void> register(VisitorDraft draft) async {
     await ref.read(visitorApiProvider).create(draft);
     await refresh();
-  }
-
-  Future<void> answer(String id, {required bool onayla}) async {
-    try {
-      await ref.read(visitorApiProvider).answer(id, onayla: onayla);
-    } finally {
-      // 409 (baska sakin once yanitladi) durumunda da guncel durumu cek —
-      // kartta dogru sonuc gorunsun; hata yine cagirana firlar.
-      await refresh();
-    }
   }
 }
 
