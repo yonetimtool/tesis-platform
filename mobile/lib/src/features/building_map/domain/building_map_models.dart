@@ -45,9 +45,12 @@ class BuildingMapUnit {
   final int? kat;
   final int? sira;
 
-  /// ACIK sikayet sayisi (kapatilanlar renge etki etmez).
-  final int complaintCount;
-  final DensityRenk color;
+  /// ACIK sikayet sayisi — YALNIZ yonetim (shows_density) icin dolu; digerinde
+  /// null (resident/saha hangi dairenin kac sikayeti oldugunu bilemez, Rev-1).
+  final int? complaintCount;
+
+  /// Yogunluk rengi — YALNIZ yonetim icin dolu; digerinde null (yapi gorunumu).
+  final DensityRenk? color;
 
   /// Yerlesim tam mi (blok + kat girilmis)? Haritada cizilebilir demektir.
   bool get yerlesik => blok != null && kat != null;
@@ -58,8 +61,11 @@ class BuildingMapUnit {
         blok: json['blok'] as String?,
         kat: (json['kat'] as num?)?.toInt(),
         sira: (json['sira'] as num?)?.toInt(),
-        complaintCount: (json['complaint_count'] as num?)?.toInt() ?? 0,
-        color: DensityRenk.fromWire(json['color'] as String?),
+        // null (yapi gorunumu) korunur — 0 ile karistirilmaz.
+        complaintCount: (json['complaint_count'] as num?)?.toInt(),
+        color: json['color'] == null
+            ? null
+            : DensityRenk.fromWire(json['color'] as String?),
       );
 }
 
@@ -95,17 +101,27 @@ class BuildingMapBlok {
       );
 }
 
-/// Cizilebilir bina yapisi: blok -> kat -> daire (+ renk) ve yerlesimsizler.
+/// Cizilebilir bina yapisi: blok -> kat -> daire ve yerlesimsizler.
+/// ROL-FARKINDA (Rev-1): [showsDensity] yonetimde true (sayim+renk dolu);
+/// resident/security/gorevli icin false (yalniz yapi).
 class BuildingMap {
-  const BuildingMap({required this.bloklar, required this.unplaced});
+  const BuildingMap({
+    required this.bloklar,
+    required this.unplaced,
+    this.showsDensity = false,
+  });
 
   final List<BuildingMapBlok> bloklar;
   final List<BuildingMapUnit> unplaced;
+
+  /// true: complaint_count/color dolu (yonetim gorunumu); false: yalniz yapi.
+  final bool showsDensity;
 
   /// Tenant'ta hic daire var mi (yerlesik veya degil)?
   bool get bos => bloklar.isEmpty && unplaced.isEmpty;
 
   factory BuildingMap.fromJson(Map<String, dynamic> json) => BuildingMap(
+        showsDensity: json['shows_density'] as bool? ?? false,
         bloklar: (json['bloklar'] as List? ?? const [])
             .whereType<Map>()
             .map((m) => BuildingMapBlok.fromJson(Map<String, dynamic>.from(m)))

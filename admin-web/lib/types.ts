@@ -491,8 +491,9 @@ export interface BuildingMapUnit {
   blok?: string | null;
   kat?: number | null;
   sira?: number | null;
-  complaint_count: number;
-  color: DensityRenk;
+  // ROL-FARKINDA (Rev-1): YALNIZ yonetim (shows_density) icin dolu; digerinde null.
+  complaint_count?: number | null;
+  color?: DensityRenk | null;
 }
 export interface BuildingMapKat {
   kat: number;
@@ -503,12 +504,14 @@ export interface BuildingMapBlok {
   katlar: BuildingMapKat[];
 }
 export interface BuildingMap {
+  // ROL-FARKINDA: yonetimde true (sayim+renk dolu); digerinde false (yapi).
+  shows_density: boolean;
   bloklar: BuildingMapBlok[];
   unplaced: BuildingMapUnit[];
 }
 
-// GET /unit-complaints?target_unit_id= — ANONIM (complainant YOK); notlar
-// yalniz admin/yonetici icin dolu.
+// GET /unit-complaints?target_unit_id= — YALNIZ yonetim (Rev-1). complainant +
+// notlar admin/yonetici icin dolu (denetim).
 export interface UnitComplaint {
   id: string;
   target_unit_id: string;
@@ -517,6 +520,8 @@ export interface UnitComplaint {
   notlar?: string | null;
   durum: string;
   created_at: string;
+  complainant_user_id?: string | null;
+  complainant_ad?: string | null;
 }
 export interface UnitComplaintList {
   meta: PageMeta;

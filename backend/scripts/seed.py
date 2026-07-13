@@ -224,6 +224,19 @@ def main() -> int:
             )
         print("[seed] yerlesim ornek daireleri: A-5, A-9 (blok A), B-7 (blok B) — yesil")
 
+        # Bina bloklari (D-viz Rev-1): yonetici/admin blok tanimlar (Rev-2
+        # editor iskeleti). A: 3 kat, B: 2 kat. Etiket unit.blok ile eslesir.
+        for _ad, _kat in (("A", 3), ("B", 2)):
+            conn.execute(
+                """
+                INSERT INTO building_block (tenant_id, ad, kat_sayisi)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (tenant_id, ad) DO UPDATE SET kat_sayisi = EXCLUDED.kat_sayisi
+                """,
+                (tenant_id, _ad, _kat),
+            )
+        print("[seed] bina bloklari: A (3 kat), B (2 kat)")
+
         # 3b) BUTCE (Wave 2A): kategoriler + ornek defter + otomatik aidat→gelir.
         #     Para INTEGER KURUS. 'Aidat' otomatik gelir kategorisidir (basarili
         #     odeme kaydi burada toplanir).
@@ -480,7 +493,7 @@ def main() -> int:
         # (hedef_unit, sikayetci_email, kategori) — A-12 x2 (yesil), B-2 x3 (sari)
         _uc = [
             (unit_id, "resident@acme.com", "gurultu"),
-            (unit_id, "resident2@acme.com", "ayakkabi"),
+            (unit_id, "resident2@acme.com", "kapi_onu_ayakkabi"),
             (b2_id, "resident@acme.com", "gurultu"),
             (b2_id, "resident2@acme.com", "gurultu"),
             (b2_id, "resident3@acme.com", "diger"),

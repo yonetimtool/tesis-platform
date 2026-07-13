@@ -20,13 +20,17 @@ const RENK_CLS: Record<DensityRenk, { cell: string; dot: string; text: string }>
   kirmizi: { cell: "bg-red-500 border-red-600", dot: "bg-red-500", text: "text-red-700" },
 };
 
-function cls(renk: DensityRenk) {
-  return RENK_CLS[renk] ?? RENK_CLS.yesil;
+// Renk API'den gelir; null (yapi gorunumu) -> notr. admin/yonetici panelinde
+// harita hep yonetim modundadir (shows_density=true), yine de savunmaci.
+const NEUTRAL = { cell: "bg-slate-300 border-slate-400", dot: "bg-slate-300", text: "text-slate-600" };
+function cls(renk: DensityRenk | null | undefined) {
+  return renk ? (RENK_CLS[renk] ?? RENK_CLS.yesil) : NEUTRAL;
 }
 
 const KATEGORI_LABEL: Record<string, string> = {
   gurultu: "Gürültü",
-  ayakkabi: "Kapı önü / ayakkabı",
+  kapi_onu_ayakkabi: "Kapı önü / ayakkabı",
+  zarar_verme: "Zarar verme",
   diger: "Diğer",
 };
 
@@ -48,13 +52,13 @@ function UnitCell({
   return (
     <button
       onClick={() => onSelect(unit)}
-      title={`${unit.unit_no} — ${unit.complaint_count} açık şikayet`}
+      title={`${unit.unit_no} — ${unit.complaint_count ?? 0} açık şikayet`}
       className={`flex h-16 w-20 flex-col items-center justify-center rounded-lg border text-white transition ${c.cell} ${
         selected ? "ring-2 ring-ink ring-offset-2" : "hover:opacity-90"
       }`}
     >
       <span className="text-sm font-semibold">{unit.unit_no}</span>
-      <span className="text-xs opacity-90">{unit.complaint_count}</span>
+      <span className="text-xs opacity-90">{unit.complaint_count ?? 0}</span>
     </button>
   );
 }
@@ -77,8 +81,8 @@ function Legend() {
 }
 
 function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
-  // ANONIM sikayet listesi (durum=acik — sayimla tutarli). notlar admin/yonetici
-  // icin dolu (backend zorlar); complainant ASLA gelmez.
+  // Sikayet listesi (durum=acik — sayimla tutarli). Rev-1: yonetim gorunumunde
+  // notlar + complainant (sikayet eden) DOLU gelir (denetim; backend zorlar).
   const { data, error, isLoading } = useSWR<UnitComplaintList>(
     `/api/unit-complaints?target_unit_id=${unit.unit_id}&durum=acik`,
     jsonFetcher,
@@ -92,7 +96,7 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
         <span className={`inline-block h-4 w-4 rounded ${c.dot}`} />
         <h2 className="text-lg font-medium">Daire {unit.unit_no}</h2>
         <span className={`ml-auto font-semibold ${c.text}`}>
-          {unit.complaint_count} açık şikayet
+          {unit.complaint_count ?? 0} açık şikayet
         </span>
       </div>
       {unit.blok != null && (
@@ -116,12 +120,17 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
               </span>
               <span className="text-muted">{fmtDate(it.created_at)}</span>
             </div>
+            {/* Rev-1: sikayet eden kimligi YALNIZ yonetime (denetim). */}
+            {it.complainant_ad && (
+              <p className="mt-0.5 text-xs text-slate-500">Şikayet eden: {it.complainant_ad}</p>
+            )}
             {it.notlar && <p className="mt-1 text-slate-600">{it.notlar}</p>}
           </li>
         ))}
       </ul>
       <p className="text-xs text-muted">
-        Şikayetler anonimdir — şikayet edenin kimliği hiçbir yerde gösterilmez.
+        Şikayet eden kimliği yalnızca yönetime (denetim) gösterilir; sakinlere ve
+        sahaya kapalıdır.
       </p>
     </div>
   );

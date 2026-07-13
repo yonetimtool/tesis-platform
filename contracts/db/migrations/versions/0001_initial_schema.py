@@ -128,9 +128,15 @@ def upgrade() -> None:
         "CREATE TYPE katilim_durum AS ENUM ('katiliyorum', 'katilmiyorum');"
     )
     # Daire-sikayeti (D1) turu ve durumu — yonetim 'complaint'inden AYRI.
+    # Rev-1 kategori genislemesi (eski -> yeni esleme):
+    #   gurultu  -> gurultu (ayni)
+    #   ayakkabi -> kapi_onu_ayakkabi (yeniden adlandirma)
+    #   diger    -> diger (ayni)
+    #   (yeni)   -> zarar_verme
+    # down -v ile taze DB uygulandigindan canli ALTER gerekmez; eski veri yoktur.
     op.execute(
         "CREATE TYPE unit_complaint_kategori AS ENUM "
-        "('gurultu', 'ayakkabi', 'diger');"
+        "('gurultu', 'kapi_onu_ayakkabi', 'zarar_verme', 'diger');"
     )
     op.execute(
         "CREATE TYPE unit_complaint_durum AS ENUM ('acik', 'kapali');"
@@ -713,6 +719,29 @@ def upgrade() -> None:
     )
     op.execute("CREATE INDEX ix_unit_tenant ON unit (tenant_id);")
     op.execute("CREATE INDEX ix_unit_blok ON unit (tenant_id, blok);")
+
+    # ------------------------------------------------------------------ #
+    # 9h2. building_block  (bina blok kaydi — D-viz Rev-1: yonetici/admin blok
+    #      tanimlar; Rev-2 gorsel editoru bu bloklara kat/daire yerlestirir.
+    #      Blok-suz siteler bu tabloyu kullanmaz (unit.blok NULL kalir). blok
+    #      etiketi unit.blok (serbest metin) ile eslesir — zayif baglanti,
+    #      hard FK yok: blok-suz ve blok-tabanli siteler birlikte desteklenir.)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE building_block (
+            id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id   uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            ad          text NOT NULL,            -- blok etiketi ("A", "1")
+            kat_sayisi  integer,                  -- opsiyonel kat sayisi (editor iskeleti)
+            created_at  timestamptz NOT NULL DEFAULT now(),
+            updated_at  timestamptz NOT NULL DEFAULT now(),
+            UNIQUE (id, tenant_id),
+            CONSTRAINT uq_building_block_tenant_ad UNIQUE (tenant_id, ad)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_building_block_tenant ON building_block (tenant_id);")
 
     # ------------------------------------------------------------------ #
     # 9i. unit_resident  (daire <-> resident kullanici; aktif sakin = bitis NULL)
@@ -1482,6 +1511,7 @@ def upgrade() -> None:
         "asset_checkout",
         "emergency_alert",
         "unit",
+        "building_block",
         "unit_resident",
         "dues_assessment",
         "dues_payment",
@@ -1558,6 +1588,7 @@ def downgrade() -> None:
         "dues_payment",
         "dues_assessment",
         "unit_resident",
+        "building_block",
         "unit",
         "emergency_alert",
         "asset_checkout",

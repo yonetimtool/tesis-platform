@@ -9,14 +9,16 @@ import '../../unit_complaints/domain/unit_complaint_models.dart';
 import '../domain/building_map_models.dart';
 import 'building_map_controller.dart';
 
-/// "Şikayet Haritası" (D-viz-2) — 2D bina semasi (kat plani). GET /building-map
-/// verisini cizer: blok -> kat (ust kat yukarida) -> sira'ya gore renkli daire
-/// hucreleri. Renk API'den gelir (yesil/sari/kirmizi — 0-2/3-4/5+); istemci
-/// ESIK HESAPLAMAZ. Hucreye dokun -> daire detayi (anonim sikayet listesi +
-/// yalniz SAKIN icin "Bu daireyi sikayet et").
+/// "Şikayet Haritası" (D-viz Rev-1) — 2D bina semasi (kat plani), ROL-FARKINDA.
+/// GET /building-map verisini cizer: blok -> kat (ust kat yukarida) -> daire
+/// hucreleri.
+///   * yonetici/admin (shows_density=true): hucreler RENKLI + sayi; detayda
+///     ANONIM-OLMAYAN sikayet listesi (sikayet eden kimligi + not — denetim).
+///   * resident: YALNIZ kendi blogu; hucreler RENKSIZ + sayisiz (yogunlugu
+///     GORMEZ); detayda yalniz "Bu daireyi sikayet et" (own-block).
+///   * security/tesis_gorevlisi: tum yapi, renksiz/sayisiz; detay salt yapi.
 ///
-/// TUM roller gorur (tenant-ici anonim harita). Hafif: dogal widget'lar
-/// (Wrap + kaydirma), 3D/agir kutuphane YOK.
+/// Renk API'den gelir; istemci ESIK HESAPLAMAZ. Hafif: Wrap + ListView.
 class BuildingSchematicScreen extends ConsumerWidget {
   const BuildingSchematicScreen({super.key});
 
@@ -47,16 +49,17 @@ class BuildingSchematicScreen extends ConsumerWidget {
 }
 
 /// Yogunluk rengini Flutter rengine cevirir (API'nin dondurdugu renk).
-Color densityColor(DensityRenk renk) {
+Color densityColor(DensityRenk? renk) {
   switch (renk) {
     case DensityRenk.yesil:
-      return const Color(0xFF43A047); // green 600
+      return const Color(0xFF43A047);
     case DensityRenk.sari:
-      return const Color(0xFFF9A825); // amber 800
+      return const Color(0xFFF9A825);
     case DensityRenk.kirmizi:
-      return const Color(0xFFE53935); // red 600
+      return const Color(0xFFE53935);
     case DensityRenk.unknown:
-      return Colors.grey;
+    case null:
+      return Colors.blueGrey; // yapi gorunumu (yogunluk yok)
   }
 }
 
@@ -89,18 +92,22 @@ class _Body extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        const _Legend(),
+        if (map.showsDensity)
+          const _Legend()
+        else
+          const _StructureNote(),
         const SizedBox(height: 12),
         for (final blok in map.bloklar)
-          _BlokSchematic(blok: blok, isResident: isResident),
+          _BlokSchematic(blok: blok, map: map, isResident: isResident),
         if (map.unplaced.isNotEmpty)
-          _UnplacedList(units: map.unplaced, isResident: isResident),
+          _UnplacedList(units: map.unplaced, map: map, isResident: isResident),
       ],
     );
   }
 }
 
-/// Renk esiklerini aciklayan gosterge (0-2 yesil, 3-4 sari, 5+ kirmizi).
+/// Renk esiklerini aciklayan gosterge (0-2 yesil, 3-4 sari, 5+ kirmizi) —
+/// yalniz yonetim gorunumunde.
 class _Legend extends StatelessWidget {
   const _Legend();
 
@@ -139,16 +146,38 @@ class _Legend extends StatelessWidget {
   }
 }
 
-/// Bir blok — katlar UST KAT YUKARIDA olacak sekilde (kat azalan) dizilir.
+/// Yapi gorunumunde (resident/saha) yogunluk gizlidir — kisa bilgi notu.
+class _StructureNote extends StatelessWidget {
+  const _StructureNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.all(12),
+        child: Text(
+          'Bina yerleşimi. Şikayet yoğunluğu yalnızca yönetime gösterilir.',
+          style: TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bir blok — katlar UST KAT YUKARIDA (kat azalan) dizilir.
 class _BlokSchematic extends StatelessWidget {
-  const _BlokSchematic({required this.blok, required this.isResident});
+  const _BlokSchematic({
+    required this.blok,
+    required this.map,
+    required this.isResident,
+  });
 
   final BuildingMapBlok blok;
+  final BuildingMap map;
   final bool isResident;
 
   @override
   Widget build(BuildContext context) {
-    // building-map kat'i ARTAN doner; kat plani icin AZALAN (ust kat ustte).
     final katlar = blok.katlar.reversed.toList(growable: false);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -160,7 +189,8 @@ class _BlokSchematic extends StatelessWidget {
             Text('Blok ${blok.blok}',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            for (final kat in katlar) _KatRow(kat: kat, isResident: isResident),
+            for (final kat in katlar)
+              _KatRow(kat: kat, map: map, isResident: isResident),
           ],
         ),
       ),
@@ -168,11 +198,11 @@ class _BlokSchematic extends StatelessWidget {
   }
 }
 
-/// Bir kat — sira'ya gore renkli daire hucreleri (Wrap ile sarar).
 class _KatRow extends StatelessWidget {
-  const _KatRow({required this.kat, required this.isResident});
+  const _KatRow({required this.kat, required this.map, required this.isResident});
 
   final BuildingMapKat kat;
+  final BuildingMap map;
   final bool isResident;
 
   @override
@@ -193,7 +223,7 @@ class _KatRow extends StatelessWidget {
               runSpacing: 6,
               children: [
                 for (final u in kat.units)
-                  _UnitCell(unit: u, isResident: isResident),
+                  _UnitCell(unit: u, map: map, isResident: isResident),
               ],
             ),
           ),
@@ -203,26 +233,28 @@ class _KatRow extends StatelessWidget {
   }
 }
 
-/// Tek daire hucresi — renk = yogunluk; dokununca detay acilir.
+/// Tek daire hucresi — yonetimde renk+sayi; digerinde noturr (yapi).
 class _UnitCell extends StatelessWidget {
-  const _UnitCell({required this.unit, required this.isResident});
+  const _UnitCell({required this.unit, required this.map, required this.isResident});
 
   final BuildingMapUnit unit;
+  final BuildingMap map;
   final bool isResident;
 
   @override
   Widget build(BuildContext context) {
-    final color = densityColor(unit.color);
+    final density = map.showsDensity;
+    final color = density ? densityColor(unit.color) : Colors.blueGrey.shade300;
     return InkWell(
-      onTap: () => showUnitDetailSheet(context, unit, isResident: isResident),
+      onTap: () => showUnitDetailSheet(context, unit, map: map, isResident: isResident),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         width: 58,
         height: 46,
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.85),
+          color: density ? color.withValues(alpha: 0.85) : Colors.white,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color),
+          border: Border.all(color: color, width: density ? 1 : 1.5),
         ),
         alignment: Alignment.center,
         child: Column(
@@ -230,17 +262,19 @@ class _UnitCell extends StatelessWidget {
           children: [
             Text(
               unit.unitNo,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: density ? Colors.white : Colors.black87,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
               overflow: TextOverflow.ellipsis,
             ),
-            Text(
-              '${unit.complaintCount}',
-              style: const TextStyle(color: Colors.white, fontSize: 11),
-            ),
+            // Sayi YALNIZ yonetimde (resident/saha yogunlugu gormez).
+            if (density)
+              Text(
+                '${unit.complaintCount ?? 0}',
+                style: const TextStyle(color: Colors.white, fontSize: 11),
+              ),
           ],
         ),
       ),
@@ -248,12 +282,15 @@ class _UnitCell extends StatelessWidget {
   }
 }
 
-/// Yerlesimi (blok/kat) eksik daireler — semanin altinda basit liste (ayni
-/// renk + dokunma davranisi).
 class _UnplacedList extends StatelessWidget {
-  const _UnplacedList({required this.units, required this.isResident});
+  const _UnplacedList({
+    required this.units,
+    required this.map,
+    required this.isResident,
+  });
 
   final List<BuildingMapUnit> units;
+  final BuildingMap map;
   final bool isResident;
 
   @override
@@ -274,7 +311,7 @@ class _UnplacedList extends StatelessWidget {
               runSpacing: 6,
               children: [
                 for (final u in units)
-                  _UnitCell(unit: u, isResident: isResident),
+                  _UnitCell(unit: u, map: map, isResident: isResident),
               ],
             ),
           ],
@@ -284,11 +321,13 @@ class _UnplacedList extends StatelessWidget {
   }
 }
 
-/// Daire detay alt sayfasi — sayim + renk + ANONIM sikayet listesi; SAKIN icin
-/// "Bu daireyi sikayet et" (mevcut POST /unit-complaints akisi).
+/// Daire detay alt sayfasi — ROL-FARKINDA: yonetimde sayim + renk + sikayet
+/// listesi (sikayet eden kimligi); resident'ta yalniz "sikayet et"; sahada
+/// salt yapi.
 void showUnitDetailSheet(
   BuildContext context,
   BuildingMapUnit unit, {
+  required BuildingMap map,
   required bool isResident,
 }) {
   showModalBottomSheet<void>(
@@ -296,15 +335,24 @@ void showUnitDetailSheet(
     isScrollControlled: true,
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-      child: _UnitDetailSheet(unit: unit, isResident: isResident),
+      child: _UnitDetailSheet(
+        unit: unit,
+        showsDensity: map.showsDensity,
+        isResident: isResident,
+      ),
     ),
   );
 }
 
 class _UnitDetailSheet extends ConsumerStatefulWidget {
-  const _UnitDetailSheet({required this.unit, required this.isResident});
+  const _UnitDetailSheet({
+    required this.unit,
+    required this.showsDensity,
+    required this.isResident,
+  });
 
   final BuildingMapUnit unit;
+  final bool showsDensity;
   final bool isResident;
 
   @override
@@ -312,22 +360,22 @@ class _UnitDetailSheet extends ConsumerStatefulWidget {
 }
 
 class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
-  late Future<List<UnitComplaint>> _future;
+  Future<List<UnitComplaint>>? _future;
 
   @override
   void initState() {
     super.initState();
-    _future = ref
-        .read(unitComplaintApiProvider)
-        .fetchForUnit(widget.unit.unitId, acikOnly: true);
+    // Sikayet listesi YALNIZ yonetim gorunumunde cekilir (backend 403 verir
+    // digerlerine — bosuna cagirmayiz).
+    if (widget.showsDensity) _future = _load();
   }
 
+  Future<List<UnitComplaint>> _load() => ref
+      .read(unitComplaintApiProvider)
+      .fetchForUnit(widget.unit.unitId, acikOnly: true);
+
   void _reload() {
-    setState(() {
-      _future = ref
-          .read(unitComplaintApiProvider)
-          .fetchForUnit(widget.unit.unitId, acikOnly: true);
-    });
+    if (widget.showsDensity) setState(() => _future = _load());
   }
 
   @override
@@ -343,61 +391,34 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
           children: [
             Row(
               children: [
-                Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(4),
+                if (widget.showsDensity) ...[
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
+                  const SizedBox(width: 8),
+                ],
                 Text('Daire ${u.unitNo}',
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                 const Spacer(),
-                Text('${u.complaintCount} açık şikayet',
-                    style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+                if (widget.showsDensity)
+                  Text('${u.complaintCount ?? 0} açık şikayet',
+                      style: TextStyle(color: color, fontWeight: FontWeight.w600)),
               ],
             ),
             const SizedBox(height: 12),
-            // ANONIM sikayet listesi — kategori + tarih (+ yonetim notu).
-            SizedBox(
-              height: 220,
-              child: FutureBuilder<List<UnitComplaint>>(
-                future: _future,
-                builder: (context, snap) {
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snap.hasError) {
-                    return const Center(child: Text('Şikayetler yüklenemedi.'));
-                  }
-                  final items = snap.data ?? const [];
-                  if (items.isEmpty) {
-                    return const Center(
-                      child: Text('Bu daire için açık şikayet yok.'),
-                    );
-                  }
-                  return ListView.separated(
-                    itemCount: items.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1),
-                    itemBuilder: (context, i) {
-                      final c = items[i];
-                      return ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.report_gmailerrorred_outlined),
-                        title: Text(c.kategori.label),
-                        subtitle: Text(
-                          '${_fmtDate(c.createdAt.toLocal())}'
-                          '${c.notlar != null ? ' · ${c.notlar}' : ''}',
-                        ),
-                      );
-                    },
-                  );
-                },
+            // Sikayet listesi YALNIZ yonetim (denetim: sikayet eden + not).
+            if (widget.showsDensity)
+              SizedBox(height: 220, child: _ComplaintList(future: _future))
+            else
+              const Text(
+                'Şikayet yoğunluğu yalnızca yönetime gösterilir.',
+                style: TextStyle(color: Colors.black54),
               ),
-            ),
             if (widget.isResident) ...[
               const Divider(),
               SizedBox(
@@ -422,15 +443,59 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
       builder: (_) => _FileComplaintForm(unit: widget.unit),
     );
     if (filed == true) {
-      // Renk/sayim tazelensin (harita) + detay listesi yenilensin.
       await ref.read(buildingMapControllerProvider.notifier).refresh();
       if (mounted) _reload();
     }
   }
 }
 
+/// Yonetim gorunumu: bir dairenin ACIK sikayetleri (kategori + tarih + sikayet
+/// eden adi + not — DENETIM). resident/saha bu listeye erisemez (403).
+class _ComplaintList extends StatelessWidget {
+  const _ComplaintList({required this.future});
+
+  final Future<List<UnitComplaint>>? future;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<UnitComplaint>>(
+      future: future,
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          return const Center(child: Text('Şikayetler yüklenemedi.'));
+        }
+        final items = snap.data ?? const [];
+        if (items.isEmpty) {
+          return const Center(child: Text('Bu daire için açık şikayet yok.'));
+        }
+        return ListView.separated(
+          itemCount: items.length,
+          separatorBuilder: (_, _) => const Divider(height: 1),
+          itemBuilder: (context, i) {
+            final c = items[i];
+            final kimlik = c.complainantAd != null ? ' · ${c.complainantAd}' : '';
+            return ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.report_gmailerrorred_outlined),
+              title: Text(c.kategori.label),
+              subtitle: Text(
+                '${_fmtDate(c.createdAt.toLocal())}$kimlik'
+                '${c.notlar != null ? '\n${c.notlar}' : ''}',
+              ),
+              isThreeLine: c.notlar != null,
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
 /// Daire sikayeti formu (YALNIZ resident) — kategori + opsiyonel not.
-/// Mevcut POST /unit-complaints akisini kullanir (yeni uc/duplikasyon yok).
 class _FileComplaintForm extends ConsumerStatefulWidget {
   const _FileComplaintForm({required this.unit});
 
@@ -468,12 +533,14 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       if (!mounted) return;
-      // 409: bu daire icin zaten acik sikayetiniz var.
       setState(() {
         _busy = false;
-        _error = e.statusCode == 409
-            ? 'Bu daire için zaten açık bir şikayetiniz var.'
-            : e.message;
+        // 409: zaten acik sikayet; 403: kendi blogun disi.
+        _error = switch (e.statusCode) {
+          409 => 'Bu daire için zaten açık bir şikayetiniz var.',
+          403 => 'Yalnızca kendi bloğunuzdaki daireleri şikayet edebilirsiniz.',
+          _ => e.message,
+        };
       });
     } catch (_) {
       if (!mounted) return;
@@ -501,7 +568,7 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
           const Text(
-            'Şikayetiniz ANONİMDİR; kimliğiniz kimseye gösterilmez.',
+            'Şikayetiniz yönetime iletilir; komşularınıza gösterilmez.',
             style: TextStyle(fontSize: 12, color: Colors.black54),
           ),
           const SizedBox(height: 12),

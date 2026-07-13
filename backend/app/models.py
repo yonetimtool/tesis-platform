@@ -125,7 +125,7 @@ INTEGRATION_CHANNEL = ENUM(
     name="integration_channel", create_type=False,
 )
 UNIT_COMPLAINT_KATEGORI = ENUM(
-    "gurultu", "ayakkabi", "diger",
+    "gurultu", "kapi_onu_ayakkabi", "zarar_verme", "diger",
     name="unit_complaint_kategori", create_type=False,
 )
 UNIT_COMPLAINT_DURUM = ENUM(
@@ -717,6 +717,29 @@ class Unit(Base):
     sira: Mapped[int | None] = mapped_column(Integer, nullable=True)  # kattaki sira/konum
     metrekare = mapped_column(Numeric(8, 2), nullable=True)
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class BuildingBlock(Base):
+    """Bina blok kaydi (D-viz Rev-1) — yonetici/admin blok tanimlar; Rev-2
+    gorsel editoru bu bloklara kat/daire yerlestirir. Blok-suz siteler bu
+    tabloyu kullanmaz (unit.blok NULL). Etiket unit.blok ile eslesir (zayif
+    baglanti; hard FK yok — blok-suz + blok-tabanli siteler birlikte)."""
+
+    __tablename__ = "building_block"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_building_block_id_tenant"),
+        UniqueConstraint("tenant_id", "ad", name="uq_building_block_tenant_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)  # blok etiketi
+    kat_sayisi: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 
@@ -1488,6 +1511,7 @@ __all__ = [
     "AssetCheckout",
     "EmergencyAlert",
     "Unit",
+    "BuildingBlock",
     "UnitResident",
     "DuesAssessment",
     "DuesPayment",

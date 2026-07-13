@@ -7,10 +7,11 @@
 /// Renk daire-basidir (yogunluk), tek sikayette degil — bkz. building-map.
 library;
 
-/// `unit_complaint_kategori` enum'unun istemci aynasi.
+/// `unit_complaint_kategori` enum'unun istemci aynasi (Rev-1 genisleme).
 enum UnitComplaintKategori {
   gurultu('gurultu', 'Gürültü'),
-  ayakkabi('ayakkabi', 'Kapı önü / ayakkabı'),
+  kapiOnuAyakkabi('kapi_onu_ayakkabi', 'Kapı önü / ayakkabı'),
+  zararVerme('zarar_verme', 'Zarar verme'),
   diger('diger', 'Diğer');
 
   const UnitComplaintKategori(this.wire, this.label);
@@ -34,6 +35,8 @@ class UnitComplaint {
     required this.createdAt,
     this.unitNo,
     this.notlar,
+    this.complainantUserId,
+    this.complainantAd,
   });
 
   final String id;
@@ -41,13 +44,18 @@ class UnitComplaint {
   final String? unitNo;
   final UnitComplaintKategori kategori;
 
-  /// Serbest metin — YALNIZ yonetim icin dolu (anonimlik); diger roller null.
+  /// Serbest metin — YALNIZ yonetim icin dolu (Rev-1); diger roller null.
   final String? notlar;
 
   /// 'acik' | 'kapali'.
   final String durum;
 
   final DateTime createdAt;
+
+  /// Sikayet eden (complainant) — YALNIZ yonetim (denetim) icin dolu; resident/
+  /// saha ASLA gormez (liste onlara 403). Rev-1 kademeli gizlilik.
+  final String? complainantUserId;
+  final String? complainantAd;
 
   bool get acik => durum == 'acik';
 
@@ -58,6 +66,8 @@ class UnitComplaint {
         kategori: UnitComplaintKategori.fromWire(json['kategori'] as String?),
         notlar: json['notlar'] as String?,
         durum: json['durum'] as String? ?? 'acik',
+        complainantUserId: json['complainant_user_id'] as String?,
+        complainantAd: json['complainant_ad'] as String?,
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       );

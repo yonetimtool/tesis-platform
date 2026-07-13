@@ -1,4 +1,9 @@
-"""Unit (daire) CRUD + sakin atama — /contracts/openapi.yaml. RBAC: admin."""
+"""Unit (daire) CRUD + sakin atama — /contracts/openapi.yaml.
+
+RBAC (D-viz Rev-1): daire CRUD + yerlesim (list/get/create/update/delete/layout)
+admin + YONETICI (bina yerlesimi yonetimi). Sakin atama (residents alt-kaynagi)
+ile aidat YALNIZ admin (yonetim/muhasebe islemi).
+"""
 from __future__ import annotations
 
 import uuid
@@ -42,7 +47,7 @@ async def list_units(
     blok: str | None = Query(None),
     aktif: bool | None = Query(None),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_LAYOUT_EDITOR),
 ) -> UnitListResponse:
     where = []
     if blok is not None:
@@ -60,7 +65,7 @@ async def list_units(
 async def get_unit(
     unit_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_LAYOUT_EDITOR),
 ) -> Unit:
     return await get_or_404(db, Unit, unit_id)
 
@@ -97,7 +102,7 @@ async def list_unit_residents_by_no(
 async def create_unit(
     body: UnitCreate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_LAYOUT_EDITOR),
 ) -> Unit:
     obj = Unit(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
     db.add(obj)
@@ -116,7 +121,7 @@ async def update_unit(
     unit_id: uuid.UUID,
     body: UnitUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_LAYOUT_EDITOR),
 ) -> Unit:
     obj = await get_or_404(db, Unit, unit_id)
     for key, value in body.model_dump(exclude_unset=True).items():
@@ -154,7 +159,7 @@ async def update_unit_layout(
 async def delete_unit(
     unit_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_LAYOUT_EDITOR),
 ) -> Response:
     obj = await get_or_404(db, Unit, unit_id)
     await db.delete(obj)

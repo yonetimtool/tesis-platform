@@ -1405,6 +1405,42 @@ class UnitListResponse(BaseModel):
     items: list[UnitOut]
 
 
+# --------------------------- building block (Rev-1) ------------------------- #
+class BlockCreate(BaseModel):
+    """Bina blogu — yonetici/admin tanimlar (Rev-2 editoru iskeleti). `ad`
+    kisa alfanumerik (blok etiketi); kat_sayisi opsiyonel."""
+
+    ad: str = Field(..., min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    kat_sayisi: int | None = Field(None, ge=0, le=_KAT_MAX)
+
+
+class BlockUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    kat_sayisi: int | None = Field(None, ge=0, le=_KAT_MAX)
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "BlockUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class BlockOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    kat_sayisi: int | None = None
+    # Bu blogu kullanan daire sayisi (silme guvenligi + editor icin).
+    unit_sayisi: int = 0
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class BlockListResponse(BaseModel):
+    items: list[BlockOut]
+
+
 class UnitResidentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -1793,7 +1829,7 @@ class IntegrationPresetOut(BaseModel):
 # ------------------- unit complaints (D1 — daire sikayeti) ------------------ #
 # TAM ANONIM: hicbir semada complainant_user_id YOKTUR (kasitli). Yonetimin
 # ayri 'complaint' modulunden bagimsizdir.
-UnitComplaintKategori = Literal["gurultu", "ayakkabi", "diger"]
+UnitComplaintKategori = Literal["gurultu", "kapi_onu_ayakkabi", "zarar_verme", "diger"]
 UnitComplaintDurum = Literal["acik", "kapali"]
 DensityRenk = Literal["yesil", "sari", "kirmizi"]
 
@@ -1811,10 +1847,12 @@ class UnitComplaintDecision(BaseModel):
 
 
 class UnitComplaintOut(BaseModel):
-    """Daire sikayeti ciktisi — complainant ALANI YOKTUR (anonimlik).
+    """Daire sikayeti ciktisi.
 
-    `notlar` YALNIZ yonetim (admin+yonetici) icin doldurulur; diger roller icin
-    None (serbest metin deanonimlestirme riskini sinirlar)."""
+    Rev-1 GIZLILIK KADEMESI: `complainant_user_id` + `complainant_ad` YALNIZ
+    yonetim (admin+yonetici) icin doldurulur (denetim/oversight); resident/
+    security/tesis_gorevlisi bu listeye ERISEMEZ (403) ve kimlik ASLA sizmaz.
+    `notlar` da yalniz yonetim icin doludur."""
 
     id: uuid.UUID
     target_unit_id: uuid.UUID
@@ -1823,9 +1861,21 @@ class UnitComplaintOut(BaseModel):
     notlar: str | None = None
     durum: str
     created_at: datetime
+    # YALNIZ yonetim icin doldurulur (denetim); digerinde None. resident kendi
+    # actigi kaydin yanitinda da None gorur (kendi kimligini tekrar donmeye gerek yok).
+    complainant_user_id: uuid.UUID | None = None
+    complainant_ad: str | None = None
 
     @classmethod
-    def from_model(cls, obj, *, unit_no: str | None, include_note: bool) -> "UnitComplaintOut":
+    def from_model(
+        cls,
+        obj,
+        *,
+        unit_no: str | None,
+        include_note: bool,
+        include_complainant: bool = False,
+        complainant_ad: str | None = None,
+    ) -> "UnitComplaintOut":
         return cls(
             id=obj.id,
             target_unit_id=obj.target_unit_id,
@@ -1834,6 +1884,8 @@ class UnitComplaintOut(BaseModel):
             notlar=obj.notlar if include_note else None,
             durum=obj.durum,
             created_at=obj.created_at,
+            complainant_user_id=obj.complainant_user_id if include_complainant else None,
+            complainant_ad=complainant_ad if include_complainant else None,
         )
 
 
@@ -1856,19 +1908,23 @@ class UnitDensityResponse(BaseModel):
     items: list[UnitDensityItem]
 
 
-# ------------------- building map (D-viz-1 — bina semasi) -------------------- #
-# Yerlesim (blok/kat/sira) + ANONIM yogunluk (sayim + renk). Sonraki tur bunu
-# 2D kat plani cizmek icin dogrudan kullanir. complainant verisi YOKTUR.
+# ------------------- building map (D-viz — bina semasi) --------------------- #
+# ROL-FARKINDA (Rev-1): yonetici/admin sayim+renk gorur; resident/security/
+# tesis_gorevlisi YALNIZ yapi (sayim+renk NULL). Renk esikleri: 0-2/3-4/5+.
 class BuildingMapUnit(BaseModel):
-    """Haritada tek daire — yerlesim + anonim sayim/renk."""
+    """Haritada tek daire — yerlesim + (yonetim icin) sayim/renk.
+
+    complaint_count/color YALNIZ yonetim (admin+yonetici) icin doludur; diger
+    roller icin None (residentlar hangi dairenin kac sikayeti oldugunu bilemez).
+    """
 
     unit_id: uuid.UUID
     unit_no: str
     blok: str | None = None
     kat: int | None = None
     sira: int | None = None
-    complaint_count: int  # ACIK sikayet sayisi (kapatilanlar renge etki etmez)
-    color: DensityRenk
+    complaint_count: int | None = None  # yalniz yonetim; digerinde None
+    color: DensityRenk | None = None    # yalniz yonetim; digerinde None
 
 
 class BuildingMapKat(BaseModel):
@@ -1886,8 +1942,11 @@ class BuildingMapBlok(BaseModel):
 
 
 class BuildingMapResponse(BaseModel):
-    """Cizilebilir yapi: blok -> kat -> daire + renk; yerlesimi eksik daireler
-    'unplaced' kovada. Tum roller okur (tenant-ici harita), tam anonim."""
+    """Cizilebilir yapi: blok -> kat -> daire; yerlesimi eksik daireler
+    'unplaced' kovada. ROL-FARKINDA: `shows_density` yonetimde True (sayim+renk
+    dolu); resident/security/gorevli icin False (yalniz yapi). resident YALNIZ
+    KENDI blogunu gorur (sikayet secici)."""
 
+    shows_density: bool  # True: complaint_count/color dolu (yonetim); False: yapi
     bloklar: list[BuildingMapBlok]
     unplaced: list[BuildingMapUnit]

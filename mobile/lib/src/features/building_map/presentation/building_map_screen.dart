@@ -150,7 +150,7 @@ class _UnplacedCard extends StatelessWidget {
   }
 }
 
-Color _renkColor(DensityRenk renk) {
+Color _renkColor(DensityRenk? renk) {
   switch (renk) {
     case DensityRenk.yesil:
       return Colors.green;
@@ -159,7 +159,8 @@ Color _renkColor(DensityRenk renk) {
     case DensityRenk.kirmizi:
       return Colors.red;
     case DensityRenk.unknown:
-      return Colors.grey;
+    case null:
+      return Colors.grey; // yapi gorunumu (yogunluk yok)
   }
 }
 
@@ -181,7 +182,7 @@ class _UnitTile extends ConsumerWidget {
         backgroundColor: _renkColor(unit.color),
       ),
       title: Text('Daire ${unit.unitNo}'),
-      subtitle: Text('$konum · ${unit.complaintCount} açık'),
+      subtitle: Text('$konum · ${unit.complaintCount ?? 0} açık'),
       trailing: IconButton(
         tooltip: 'Yerleşimi düzenle',
         icon: const Icon(Icons.edit_location_alt_outlined),

@@ -167,7 +167,8 @@ def test_yonetici_yapilandirma_ve_saha_kaniti_403(client, world):
     assert client.post("/shifts", headers=yonetici, json={"ad": "x", "baslangic_saat": "08:00", "bitis_saat": "16:00"}).status_code == 403
     assert client.post("/patrol-plans", headers=yonetici, json={"ad": "x", "baslangic_saat": "08:00", "bitis_saat": "16:00", "periyot_dakika": 60}).status_code == 403
     assert client.post("/assets", headers=yonetici, json={"ad": "x"}).status_code == 403
-    assert client.post("/units", headers=yonetici, json={"no": "X-9"}).status_code == 403
+    # NOT: daire (unit) CRUD artik admin+YONETICI (D-viz Rev-1 bina yerlesimi);
+    # bkz. test_blocks.py + test_building_map.py. Burada admin-only olanlar kalir.
     assert client.patch("/tenant/settings", headers=yonetici, json={"acil_durum_telefon": "+900"}).status_code == 403
     assert client.post(
         "/users", headers=yonetici,

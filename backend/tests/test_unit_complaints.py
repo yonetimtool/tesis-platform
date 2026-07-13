@@ -1,8 +1,11 @@
-"""Daire sikayeti (D1) — TAM ANONIM + spam korumasi + renk esikleri + RBAC.
+"""Daire sikayeti (D1 + D-viz Rev-1) — kademeli gizlilik + own-block + kategori.
 
-HARD KURAL: complainant_user_id HICBIR yanitta (density/liste/detay/olusturma/
-kapatma) GORUNMEZ — yonetici/admin dahil. Yonetimin ayri /complaints modulunden
-bagimsizdir.
+Rev-1 KURALLARI:
+  * complainant (sikayet eden) kimligi YALNIZ yonetim (admin+yonetici) icin
+    donuyor (denetim); resident/security/gorevli LISTEYE ERISEMEZ (403).
+  * density + liste YALNIZ yonetim (residentlar sayilari goremez).
+  * resident YALNIZ KENDI blogundaki daireyi sikayet eder (blok disi -> 403).
+  * kategori: gurultu / kapi_onu_ayakkabi / zarar_verme / diger.
 """
 from __future__ import annotations
 
@@ -32,35 +35,47 @@ def _mk_resident(owner_conn, tenant_id, email, pw):
         return cur.fetchone()[0]
 
 
-def _mk_unit(owner_conn, tenant_id, no):
+def _mk_unit(owner_conn, tenant_id, no, blok=None):
     with owner_conn.cursor() as cur:
         cur.execute(
-            "INSERT INTO unit (tenant_id, no) VALUES (%s,%s) RETURNING id",
-            (tenant_id, no),
+            "INSERT INTO unit (tenant_id, no, blok) VALUES (%s,%s,%s) RETURNING id",
+            (tenant_id, no, blok),
         )
         return cur.fetchone()[0]
 
 
+def _link(owner_conn, tenant_id, unit_id, user_id):
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO unit_resident (tenant_id, unit_id, user_id) VALUES (%s,%s,%s)",
+            (tenant_id, unit_id, user_id),
+        )
+
+
 @pytest.fixture
 def ucworld(client, world, owner_conn):
-    """world + hedef daireler + 6 sakin (renk esiklerini asmak icin coklu
-    sikayetci — spam korumasi sakin-basi 1 acik ile sinirlar)."""
+    """world + blok A (unit1, unit2) + blok B (unit_b) + 6 sakin (blok A'ya
+    bagli — own-block ile A dairelerini sikayet edebilirler; B disi)."""
     a = world["a"]
     suffix = uuid.uuid4().hex[:6]
     pw = "UcPass1!"
-    residents = []  # (email, id, creds)
+    unit1 = _mk_unit(owner_conn, a, f"UC-1-{suffix}", blok="A")
+    unit2 = _mk_unit(owner_conn, a, f"UC-2-{suffix}", blok="A")
+    unit_b = _mk_unit(owner_conn, a, f"UC-B-{suffix}", blok="B")
+    residents = []
     for i in range(6):
         email = f"uc{i}-{suffix}@acme.com"
         rid = _mk_resident(owner_conn, a, email, pw)
+        _link(owner_conn, a, unit1, rid)  # hepsi blok A sakini
         residents.append({"email": email, "password": pw, "id": str(rid)})
 
-    unit1 = _mk_unit(owner_conn, a, f"UC-1-{suffix}")
-    unit2 = _mk_unit(owner_conn, a, f"UC-2-{suffix}")
     return {
         **world,
         "unit1": str(unit1),
         "unit1_no": f"UC-1-{suffix}",
         "unit2": str(unit2),
+        "unit_b": str(unit_b),
+        "unit_b_no": f"UC-B-{suffix}",
         "residents": residents,
     }
 
@@ -80,43 +95,41 @@ def _density_for(client, headers, unit_id):
     return next((it for it in d if it["target_unit_id"] == unit_id), None)
 
 
-# ------------------------------- kayit + anonimlik -------------------------- #
-def test_sakin_acar_ve_complainant_donmez(ucworld, client):
+# ------------------------------- kayit -------------------------------------- #
+def test_sakin_acar_kendi_kaydini_gorur_complainant_donmez(ucworld, client):
     slug = ucworld["slug_a"]
     r0 = ucworld["residents"][0]
     r = _file(client, slug, r0, ucworld["unit1"], notlar="Gece gurultu")
     assert r.status_code == 201, r.text
     body = r.json()
-    # complainant HICBIR sekilde donmez
-    assert "complainant_user_id" not in body
-    assert r0["id"] not in str(body)
+    # resident kendi kaydini gorur ama complainant kimligi DONMEZ (None)
+    assert body["complainant_user_id"] is None and body["complainant_ad"] is None
     assert body["target_unit_id"] == ucworld["unit1"]
     assert body["kategori"] == "gurultu" and body["durum"] == "acik"
 
 
-def test_complainant_hicbir_uctan_sizmaz(ucworld, client):
-    """density + liste + (tum roller) — complainant_user_id ASLA gorunmez."""
+# ------------------------------ own-block ----------------------------------- #
+def test_own_block_ic_201_dis_403(ucworld, client):
+    """resident YALNIZ kendi blogundaki (A) daireyi sikayet eder; baska blok
+    (B) -> 403. Blok kapsami sunucuda zorlanir."""
     slug = ucworld["slug_a"]
     r0 = ucworld["residents"][0]
-    assert _file(client, slug, r0, ucworld["unit1"], notlar="X").status_code == 201
-    cid = r0["id"]
+    # blok A daireleri (unit1, unit2) -> 201
+    assert _file(client, slug, r0, ucworld["unit1"]).status_code == 201
+    assert _file(client, slug, r0, ucworld["unit2"]).status_code == 201
+    # blok B (unit_b) -> 403 (own-block disi)
+    rb = _file(client, slug, r0, ucworld["unit_b"])
+    assert rb.status_code == 403 and rb.json()["error"]["code"] == "forbidden"
 
-    for role_cred in (
-        ucworld["admin_a"],
-        ucworld["yonetici_a"],
-        ucworld["guard_a"],
-        ucworld["gorevli_a"],
-        r0,
-    ):
-        h = _headers(client, slug, role_cred)
-        dens = client.get("/unit-complaints/density", headers=h)
-        assert dens.status_code == 200
-        assert "complainant_user_id" not in dens.text and cid not in dens.text
-        lst = client.get(
-            "/unit-complaints", headers=h, params={"target_unit_id": ucworld["unit1"]}
-        )
-        assert lst.status_code == 200
-        assert "complainant_user_id" not in lst.text and cid not in lst.text
+
+def test_bloksuz_sakin_hicbir_yere_acamaz_403(ucworld, client, owner_conn):
+    """Aktif dairesi olmayan sakin -> blok kumesi bos -> her hedefe 403."""
+    slug = ucworld["slug_a"]
+    pw = "UcPass1!"
+    email = f"bagsiz-{uuid.uuid4().hex[:6]}@acme.com"
+    _mk_resident(owner_conn, ucworld["a"], email, pw)  # daireye BAGLI DEGIL
+    r = _file(client, slug, {"email": email, "password": pw}, ucworld["unit1"])
+    assert r.status_code == 403
 
 
 # --------------------------------- spam ------------------------------------- #
@@ -124,10 +137,9 @@ def test_spam_korumasi_ayni_sakin_ayni_daire_409(ucworld, client):
     slug = ucworld["slug_a"]
     r0 = ucworld["residents"][0]
     assert _file(client, slug, r0, ucworld["unit1"]).status_code == 201
-    # ayni sakin ayni daireye tekrar -> 409
     dup = _file(client, slug, r0, ucworld["unit1"])
     assert dup.status_code == 409 and dup.json()["error"]["code"] == "conflict"
-    # BASKA daireye acabilir
+    # ayni blok BASKA daireye acabilir
     assert _file(client, slug, r0, ucworld["unit2"]).status_code == 201
     # BASKA sakin ayni daireye acabilir
     assert _file(client, slug, ucworld["residents"][1], ucworld["unit1"]).status_code == 201
@@ -137,7 +149,6 @@ def test_kapatinca_yeniden_acilabilir(ucworld, client):
     slug = ucworld["slug_a"]
     r0 = ucworld["residents"][0]
     assert _file(client, slug, r0, ucworld["unit1"]).status_code == 201
-    # yonetim kapatir (sikayet edeni gormeden)
     yon = _headers(client, slug, ucworld["yonetici_a"])
     lst = client.get(
         "/unit-complaints", headers=yon, params={"target_unit_id": ucworld["unit1"]}
@@ -145,7 +156,6 @@ def test_kapatinca_yeniden_acilabilir(ucworld, client):
     cid = lst[0]["id"]
     pc = client.patch(f"/unit-complaints/{cid}", headers=yon, json={"durum": "kapali"})
     assert pc.status_code == 200 and pc.json()["durum"] == "kapali"
-    assert "complainant_user_id" not in pc.text
     # kapali oldugundan ayni sakin yeniden acabilir
     assert _file(client, slug, r0, ucworld["unit1"]).status_code == 201
 
@@ -157,24 +167,18 @@ def test_renk_esikleri_ve_kapatma_feedback(ucworld, client):
     unit = ucworld["unit1"]
     res = ucworld["residents"]
 
-    # 0 -> yesil
     assert _density_for(client, admin, unit)["renk"] == "yesil"
-    # 2 -> yesil (sinir)
     for i in range(2):
         assert _file(client, slug, res[i], unit).status_code == 201
     d = _density_for(client, admin, unit)
     assert d["acik_sayisi"] == 2 and d["renk"] == "yesil"
-    # 3 -> sari
     assert _file(client, slug, res[2], unit).status_code == 201
     assert _density_for(client, admin, unit)["renk"] == "sari"
-    # 4 -> sari (sinir)
     assert _file(client, slug, res[3], unit).status_code == 201
     assert _density_for(client, admin, unit)["renk"] == "sari"
-    # 5 -> kirmizi
     assert _file(client, slug, res[4], unit).status_code == 201
     assert _density_for(client, admin, unit)["renk"] == "kirmizi"
 
-    # kapatma ACIK sayimi dusurur -> renk feedback (5->4 -> sari)
     yon = _headers(client, slug, ucworld["yonetici_a"])
     cid = client.get(
         "/unit-complaints", headers=yon, params={"target_unit_id": unit}
@@ -186,8 +190,23 @@ def test_renk_esikleri_ve_kapatma_feedback(ucworld, client):
     assert d2["acik_sayisi"] == 4 and d2["renk"] == "sari"
 
 
+# ------------------------- kategori (Rev-1 genisleme) ----------------------- #
+def test_kategori_yeni_degerler_ve_eski_ret(ucworld, client):
+    slug = ucworld["slug_a"]
+    res = ucworld["residents"]
+    # yeni gecerli degerler
+    assert _file(client, slug, res[0], ucworld["unit1"], kategori="kapi_onu_ayakkabi").status_code == 201
+    assert _file(client, slug, res[1], ucworld["unit1"], kategori="zarar_verme").status_code == 201
+    assert _file(client, slug, res[2], ucworld["unit1"], kategori="diger").status_code == 201
+    # eski/gecersiz degerler -> 422
+    for bad in ("ayakkabi", "goruntu", "yok"):
+        assert _file(
+            client, slug, res[3], ucworld["unit1"], kategori=bad
+        ).status_code == 422, bad
+
+
 # -------------------------------- RBAC -------------------------------------- #
-def test_rbac(ucworld, client):
+def test_rbac_kademeli(ucworld, client):
     slug = ucworld["slug_a"]
     # ACMA yalniz sakin
     for cred in (ucworld["admin_a"], ucworld["yonetici_a"], ucworld["guard_a"], ucworld["gorevli_a"]):
@@ -197,12 +216,15 @@ def test_rbac(ucworld, client):
             json={"target_unit_id": ucworld["unit1"], "kategori": "diger"},
         ).status_code == 403
 
-    # density + liste tum rollerde 200
-    for cred in (ucworld["admin_a"], ucworld["yonetici_a"], ucworld["guard_a"],
-                 ucworld["gorevli_a"], ucworld["residents"][0]):
+    # density + liste YALNIZ yonetim (200); digerleri 403 (Rev-1 kademesi)
+    for cred in (ucworld["admin_a"], ucworld["yonetici_a"]):
         h = _headers(client, slug, cred)
         assert client.get("/unit-complaints/density", headers=h).status_code == 200
         assert client.get("/unit-complaints", headers=h).status_code == 200
+    for cred in (ucworld["guard_a"], ucworld["gorevli_a"], ucworld["residents"][0]):
+        h = _headers(client, slug, cred)
+        assert client.get("/unit-complaints/density", headers=h).status_code == 403
+        assert client.get("/unit-complaints", headers=h).status_code == 403
 
     # kapatma yalniz yonetim
     r0 = ucworld["residents"][0]
@@ -218,30 +240,30 @@ def test_rbac(ucworld, client):
         ).status_code == 403
 
 
-# --------------------------- not gizliligi ---------------------------------- #
-def test_not_yalniz_yonetime_gorunur(ucworld, client):
+# ------------------ complainant: yonetime gorunur, digerine kapali ---------- #
+def test_complainant_yonetime_gorunur_digerine_403(ucworld, client):
     slug = ucworld["slug_a"]
     r0 = ucworld["residents"][0]
     assert _file(client, slug, r0, ucworld["unit1"], notlar="Gizli not").status_code == 201
 
-    # yonetim: not DOLU
+    # yonetim: complainant kimligi + adi + not DOLU (denetim)
     for cred in (ucworld["admin_a"], ucworld["yonetici_a"]):
         h = _headers(client, slug, cred)
         item = client.get(
             "/unit-complaints", headers=h, params={"target_unit_id": ucworld["unit1"]}
         ).json()["items"][0]
+        assert item["complainant_user_id"] == r0["id"]
+        assert item["complainant_ad"]  # ad dolu
         assert item["notlar"] == "Gizli not"
 
-    # digerleri (security/gorevli/resident): not NULL
+    # digerleri LISTEYE ERISEMEZ -> 403 (complainant/not hicbir sekilde sizmaz)
     for cred in (ucworld["guard_a"], ucworld["gorevli_a"], ucworld["residents"][1]):
         h = _headers(client, slug, cred)
-        item = client.get(
+        resp = client.get(
             "/unit-complaints", headers=h, params={"target_unit_id": ucworld["unit1"]}
-        ).json()["items"][0]
-        assert item["notlar"] is None
-        assert "Gizli not" not in client.get(
-            "/unit-complaints", headers=h, params={"target_unit_id": ucworld["unit1"]}
-        ).text
+        )
+        assert resp.status_code == 403
+        assert r0["id"] not in resp.text and "Gizli not" not in resp.text
 
 
 # --------------------------- tenant izolasyonu ------------------------------ #
@@ -249,7 +271,6 @@ def test_tenant_izolasyonu(ucworld, client):
     slug = ucworld["slug_a"]
     assert _file(client, slug, ucworld["residents"][0], ucworld["unit1"]).status_code == 201
 
-    # B admini A'nin sikayetini/dairesini goremez (RLS): density'de A dairesi yok
     admin_b = _headers(client, ucworld["slug_b"], ucworld["admin_b"])
     dens_b = client.get("/unit-complaints/density", headers=admin_b).json()["items"]
     assert all(it["target_unit_id"] != ucworld["unit1"] for it in dens_b)
@@ -257,16 +278,3 @@ def test_tenant_izolasyonu(ucworld, client):
         "/unit-complaints", headers=admin_b, params={"target_unit_id": ucworld["unit1"]}
     ).json()["items"]
     assert lst_b == []
-
-
-# ------------------- yonetim modulunden AYRI oldugu ------------------------- #
-def test_yonetim_complaint_modulunden_ayri(ucworld, client):
-    """/unit-complaints ile /complaints AYRI uclardir (karismaz)."""
-    slug = ucworld["slug_a"]
-    _file(client, slug, ucworld["residents"][0], ucworld["unit1"])
-    # /complaints (yonetim modulu) daire-sikayeti dondurmez; /unit-complaints doner.
-    yon = _headers(client, slug, ucworld["yonetici_a"])
-    uc = client.get(
-        "/unit-complaints", headers=yon, params={"target_unit_id": ucworld["unit1"]}
-    ).json()
-    assert uc["meta"]["total"] >= 1

@@ -16,8 +16,9 @@ void main() {
   });
 
   group('BuildingMap.fromJson', () {
-    test('gruplu yapi + unplaced parse edilir; yerlesim + renk okunur', () {
+    test('yonetim (shows_density=true): yapi + unplaced + sayim/renk okunur', () {
       final map = BuildingMap.fromJson(const {
+        'shows_density': true,
         'bloklar': [
           {
             'blok': 'A',
@@ -52,6 +53,7 @@ void main() {
         ],
       });
 
+      expect(map.showsDensity, isTrue);
       expect(map.bos, isFalse);
       final u1 = map.bloklar.single.katlar.single.units.single;
       expect(u1.unitNo, 'A-12');
@@ -68,8 +70,43 @@ void main() {
       expect(unp.color, DensityRenk.yesil);
     });
 
-    test('bos yanit -> bos harita (COKMEZ)', () {
-      expect(BuildingMap.fromJson(const {}).bos, isTrue);
+    test('yapi gorunumu (shows_density=false): sayim/renk NULL (Rev-1)', () {
+      final map = BuildingMap.fromJson(const {
+        'shows_density': false,
+        'bloklar': [
+          {
+            'blok': 'A',
+            'katlar': [
+              {
+                'kat': 1,
+                'units': [
+                  {
+                    'unit_id': 'u-1',
+                    'unit_no': 'A-1',
+                    'blok': 'A',
+                    'kat': 1,
+                    'sira': 1,
+                    'complaint_count': null,
+                    'color': null,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        'unplaced': [],
+      });
+      expect(map.showsDensity, isFalse);
+      final u = map.bloklar.single.katlar.single.units.single;
+      // resident/saha hangi dairenin kac sikayeti oldugunu BILEMEZ.
+      expect(u.complaintCount, isNull);
+      expect(u.color, isNull);
+    });
+
+    test('bos yanit -> bos harita, showsDensity false (COKMEZ)', () {
+      final m = BuildingMap.fromJson(const {});
+      expect(m.bos, isTrue);
+      expect(m.showsDensity, isFalse);
     });
   });
 

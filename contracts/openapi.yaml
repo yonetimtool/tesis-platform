@@ -3505,14 +3505,79 @@ paths:
   # UNIT-COMPLAINTS (D1 — sakin -> HEDEF DAIRE; TAM ANONIM. Yonetimin ayri
   # /complaints modulunden BAGIMSIZ. complainant_user_id HICBIR yanitta YOK.)
   # ================================================================= #
+  /blocks:
+    get:
+      tags: [building]
+      summary: Bina bloklari (admin+yonetici)
+      description: >
+        Bina bloklari + her blogu kullanan daire sayisi (unit_sayisi). D-viz
+        Rev-1 bina yerlesimi yonetimi; Rev-2 gorsel editoru bunu kullanir.
+      responses:
+        "200":
+          description: Blok listesi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BlockList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [building]
+      summary: Bina blogu olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BlockCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Block" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /blocks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [building]
+      summary: Bina blogu guncelle (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BlockUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Block" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [building]
+      summary: Bina blogu sil (admin+yonetici) — kullanan daire varsa 409
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
   /unit-complaints:
     get:
       tags: [unit-complaints]
-      summary: Daire sikayetleri (kategori+tarih+durum; complainant ASLA yok)
+      summary: Daire sikayetleri (YALNIZ yonetim — denetim, complainant dolu)
       description: >
-        Tum roller okur. `notlar` YALNIZ yonetim (admin+yonetici) icin dolu;
-        digerleri null (deanonimlestirme riskini sinirlar). complainant hicbir
-        rolde gorunmez.
+        Rev-1 KADEME: YALNIZ admin+yonetici (denetim). kategori+tarih+durum +
+        `notlar` + `complainant_user_id`/`complainant_ad` doner. resident/
+        security/tesis_gorevlisi ERISEMEZ (403); kimlik onlara asla sizmaz.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -3542,10 +3607,11 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [unit-complaints]
-      summary: Daire sikayeti ac (YALNIZ resident) — ANONIM
+      summary: Daire sikayeti ac (YALNIZ resident, KENDI blogu) — anonim
       description: >
-        Sakin bir HEDEF daireyi bildirir. complainant_user_id token'dan alinir,
-        YALNIZ ic spam korumasi icin saklanir, ASLA donmez. Spam: ayni sakin
+        Sakin bir HEDEF daireyi bildirir. Hedef daire sakinin KENDI blogunda
+        olmali (blok disi -> 403). complainant_user_id token'dan alinir, spam
+        korumasi + denetim icin saklanir; resident'a DONMEZ. Spam: ayni sakin
         ayni daireye ayni anda 1 ACIK sikayet (aksi 409).
       requestBody:
         required: true
@@ -3568,10 +3634,11 @@ paths:
   /unit-complaints/density:
     get:
       tags: [unit-complaints]
-      summary: Daire-basi ANONIM yogunluk (sayi + renk) — tum roller
+      summary: Daire-basi yogunluk (sayi + renk) — YALNIZ yonetim
       description: >
-        Her daire icin ACIK sikayet sayisi + renk (0-2 yesil, 3-4 sari, 5+
-        kirmizi). Sikayet eden verisi YOKTUR. Ileride 2D bina haritasini besler.
+        Rev-1: YALNIZ admin+yonetici. Her daire icin ACIK sikayet sayisi + renk
+        (0-2 yesil, 3-4 sari, 5+ kirmizi). residentlar sayilari GOREMEZ (403);
+        yapi gorunumu icin /building-map (rol-farkinda) kullanilir.
       responses:
         "200":
           description: Yogunluk
@@ -3583,12 +3650,13 @@ paths:
   /unit-complaints/building-map:
     get:
       tags: [unit-complaints]
-      summary: Cizilebilir bina semasi (blok->kat->daire + renk) — tum roller
+      summary: Cizilebilir bina semasi (ROL-FARKINDA) — tum roller
       description: >
-        Yerlesim (blok/kat/sira) + ANONIM yogunluk (acik sayim + renk) gruplu
-        yapida: blok -> kat -> daire. Yerlesimi (blok+kat) eksik daireler
-        'unplaced' kovasinda. Sonraki tur bunu 2D kat plani cizmek icin
-        kullanir. Sikayet eden verisi YOKTUR. Tum roller okur (tenant-ici).
+        blok -> kat -> daire yapisi (2D kat plani). ROL-FARKINDA
+        (shows_density): yonetici/admin sayim+renk gorur; resident YALNIZ kendi
+        blogunun yapisini (sayim/renk null — sikayet secici); security/
+        tesis_gorevlisi tum yapiyi (sayim/renk null). Yerlesimi eksik daireler
+        'unplaced'. complainant hicbir role donmez.
       responses:
         "200":
           description: Bina haritasi
@@ -3939,26 +4007,40 @@ components:
     UnitComplaint:
       type: object
       description: >
-        Daire sikayeti ciktisi — TAM ANONIM. complainant_user_id ALANI YOKTUR
-        (kasitli; hicbir rol goremez). `notlar` yalniz yonetim icin dolu.
+        Daire sikayeti ciktisi (Rev-1 KADEMELI). complainant_user_id +
+        complainant_ad + notlar YALNIZ yonetim (admin+yonetici) icin dolu
+        (denetim); resident/security/gorevli liste/density'ye ERISEMEZ (403).
       required: [id, target_unit_id, kategori, durum, created_at]
       properties:
         id: { type: string, format: uuid }
         target_unit_id: { type: string, format: uuid }
         unit_no: { type: string, nullable: true }
-        kategori: { type: string, enum: [gurultu, ayakkabi, diger] }
+        kategori: { type: string, enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, diger] }
         notlar:
           type: string
           nullable: true
           description: YALNIZ admin+yonetici icin dolu; diger rollerde null
         durum: { type: string, enum: [acik, kapali] }
         created_at: { type: string, format: date-time }
+        complainant_user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: YALNIZ yonetim (denetim) icin dolu; resident/saha icin null
+        complainant_ad: { type: string, nullable: true, description: Sikayet edenin adi (yalniz yonetim) }
     UnitComplaintCreate:
       type: object
       required: [target_unit_id]
       properties:
-        target_unit_id: { type: string, format: uuid, description: Bildirilen HEDEF daire }
-        kategori: { type: string, enum: [gurultu, ayakkabi, diger], default: diger }
+        target_unit_id:
+          type: string
+          format: uuid
+          description: >
+            Bildirilen HEDEF daire — sakinin KENDI blogunda olmali (blok disi 403).
+        kategori:
+          type: string
+          enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, diger]
+          default: diger
         notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
     UnitComplaintDecision:
       type: object
@@ -3983,19 +4065,28 @@ components:
           type: array
           items: { $ref: "#/components/schemas/UnitDensityItem" }
 
-    # ---------------- bina semasi (D-viz-1) ---------------- #
+    # ---------------- bina semasi (D-viz Rev-1 — ROL-FARKINDA) ------------- #
     BuildingMapUnit:
       type: object
-      description: Haritada tek daire — yerlesim + ANONIM sayim/renk (sikayet eden YOK)
-      required: [unit_id, unit_no, complaint_count, color]
+      description: >
+        Haritada tek daire. complaint_count/color YALNIZ yonetim (admin+
+        yonetici) icin dolu; resident/security/gorevli icin null (yapi gorunumu).
+      required: [unit_id, unit_no]
       properties:
         unit_id: { type: string, format: uuid }
         unit_no: { type: string }
         blok: { type: string, nullable: true }
         kat: { type: integer, nullable: true }
         sira: { type: integer, nullable: true }
-        complaint_count: { type: integer, description: ACIK sikayet sayisi }
-        color: { type: string, enum: [yesil, sari, kirmizi] }
+        complaint_count:
+          type: integer
+          nullable: true
+          description: ACIK sikayet sayisi — yalniz yonetim; digerinde null
+        color:
+          type: string
+          enum: [yesil, sari, kirmizi]
+          nullable: true
+          description: Yogunluk rengi — yalniz yonetim; digerinde null
     BuildingMapKat:
       type: object
       required: [kat, units]
@@ -4015,16 +4106,52 @@ components:
     BuildingMap:
       type: object
       description: >
-        Cizilebilir yapi: blok -> kat -> daire (+renk); yerlesimi eksik daireler
-        'unplaced' kovada. Tam anonim.
-      required: [bloklar, unplaced]
+        Cizilebilir yapi: blok -> kat -> daire; yerlesimi eksik daireler
+        'unplaced' kovada. ROL-FARKINDA: shows_density yonetimde true (sayim+
+        renk dolu); resident/security/gorevli icin false (yalniz yapi). resident
+        YALNIZ kendi blogunu gorur. complainant hicbir role donmez.
+      required: [shows_density, bloklar, unplaced]
       properties:
+        shows_density:
+          type: boolean
+          description: true = complaint_count/color dolu (yonetim); false = yapi
         bloklar:
           type: array
           items: { $ref: "#/components/schemas/BuildingMapBlok" }
         unplaced:
           type: array
           items: { $ref: "#/components/schemas/BuildingMapUnit" }
+
+    # ---------------- bina blok (D-viz Rev-1) ---------------- #
+    Block:
+      type: object
+      required: [id, ad, unit_sayisi, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, description: Blok etiketi (kisa alfanumerik) }
+        kat_sayisi: { type: integer, nullable: true }
+        unit_sayisi: { type: integer, description: Bu blogu kullanan daire sayisi }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    BlockCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 8, pattern: "^[A-Za-z0-9]+$" }
+        kat_sayisi: { type: integer, nullable: true, minimum: 0, maximum: 200 }
+    BlockUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 8, pattern: "^[A-Za-z0-9]+$" }
+        kat_sayisi: { type: integer, nullable: true, minimum: 0, maximum: 200 }
+    BlockList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Block" }
 
     PatrolWindowDurum:
       type: string

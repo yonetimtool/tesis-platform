@@ -10,7 +10,7 @@ import 'package:mobile/src/features/building_map/presentation/building_schematic
 import 'package:mobile/src/features/unit_complaints/data/unit_complaint_api.dart';
 import 'package:mobile/src/features/unit_complaints/domain/unit_complaint_models.dart';
 
-/// Aga cikmayan sahte building-map istemcisi — sabit sema doner.
+/// Sahte building-map istemcisi — sabit sema doner (rol-farkinda: showsDensity).
 class _FakeMapApi extends BuildingMapApi {
   _FakeMapApi(this._map) : super(Dio());
   final BuildingMap _map;
@@ -19,7 +19,6 @@ class _FakeMapApi extends BuildingMapApi {
   Future<BuildingMap> fetchMap() async => _map;
 }
 
-/// Sahte sikayet istemcisi — liste sabit; file cagrilari kaydedilir.
 class _FakeComplaintApi extends UnitComplaintApi {
   _FakeComplaintApi(this._items) : super(Dio());
   final List<UnitComplaint> _items;
@@ -33,48 +32,54 @@ class _FakeComplaintApi extends UnitComplaintApi {
   @override
   Future<UnitComplaint> file(UnitComplaintDraft draft) async {
     filed.add(draft);
-    return _items.isEmpty
-        ? UnitComplaint.fromJson(const {})
-        : _items.first;
+    return _items.isEmpty ? UnitComplaint.fromJson(const {}) : _items.first;
   }
 }
 
-BuildingMapUnit _u(String no, int count, DensityRenk color,
-        {String? blok, int? kat, int? sira}) =>
-    BuildingMapUnit(
+BuildingMapUnit _u(String no, {int? count, DensityRenk? color}) => BuildingMapUnit(
       unitId: 'id-$no',
       unitNo: no,
-      blok: blok,
-      kat: kat,
-      sira: sira,
+      blok: 'A',
+      kat: 1,
+      sira: no == 'A-1' ? 1 : 2,
       complaintCount: count,
       color: color,
     );
 
-BuildingMap _sampleMap() => BuildingMap(
+/// showsDensity=true (yonetim): renk + sayi dolu.
+BuildingMap _mgmtMap() => BuildingMap(
+      showsDensity: true,
       bloklar: [
-        BuildingMapBlok(
-          blok: 'A',
-          katlar: [
-            BuildingMapKat(kat: 1, units: [
-              _u('A-1', 0, DensityRenk.yesil, blok: 'A', kat: 1, sira: 1),
-              _u('A-2', 6, DensityRenk.kirmizi, blok: 'A', kat: 1, sira: 2),
-            ]),
-          ],
-        ),
+        BuildingMapBlok(blok: 'A', katlar: [
+          BuildingMapKat(kat: 1, units: [
+            _u('A-1', count: 0, color: DensityRenk.yesil),
+            _u('A-2', count: 6, color: DensityRenk.kirmizi),
+          ]),
+        ]),
       ],
-      unplaced: [_u('C-9', 3, DensityRenk.sari)],
+      unplaced: const [],
+    );
+
+/// showsDensity=false (resident/saha): yapi; sayi/renk null.
+BuildingMap _structureMap() => BuildingMap(
+      showsDensity: false,
+      bloklar: [
+        BuildingMapBlok(blok: 'A', katlar: [
+          BuildingMapKat(kat: 1, units: [_u('A-1'), _u('A-2')]),
+        ]),
+      ],
+      unplaced: const [],
     );
 
 Widget _app(
   UserRole role, {
-  BuildingMap? map,
+  required BuildingMap map,
   List<UnitComplaint> complaints = const [],
   _FakeComplaintApi? complaintApi,
 }) {
   return ProviderScope(
     overrides: [
-      buildingMapApiProvider.overrideWithValue(_FakeMapApi(map ?? _sampleMap())),
+      buildingMapApiProvider.overrideWithValue(_FakeMapApi(map)),
       unitComplaintApiProvider
           .overrideWithValue(complaintApi ?? _FakeComplaintApi(complaints)),
       currentUserRoleProvider.overrideWith((ref) async => role),
@@ -83,63 +88,73 @@ Widget _app(
   );
 }
 
-UnitComplaint _c(UnitComplaintKategori k) => UnitComplaint(
+UnitComplaint _c() => UnitComplaint(
       id: 'c-1',
       targetUnitId: 'id-A-2',
-      kategori: k,
+      kategori: UnitComplaintKategori.zararVerme,
       durum: 'acik',
+      complainantUserId: 'r-9',
+      complainantAd: 'Ayşe Sakin',
       createdAt: DateTime.utc(2026, 7, 12),
     );
 
 void main() {
-  group('Şikayet Haritası — render', () {
-    testWidgets('building-map verisinden renkli hucreler + legend cizilir',
-        (tester) async {
-      await tester.pumpWidget(_app(UserRole.resident));
+  group('YONETIM gorunumu (shows_density=true)', () {
+    testWidgets('legend + hucre sayilari gorunur', (tester) async {
+      await tester.pumpWidget(_app(UserRole.yonetici, map: _mgmtMap()));
       await tester.pumpAndSettle();
-      // Blok + kat baslegi
-      expect(find.text('Blok A'), findsOneWidget);
-      expect(find.text('Kat 1'), findsOneWidget);
-      // Daire hucreleri (unit_no)
+      expect(find.text('0–2'), findsOneWidget); // legend
+      expect(find.text('5+'), findsOneWidget);
       expect(find.text('A-1'), findsOneWidget);
       expect(find.text('A-2'), findsOneWidget);
-      // Legend esikleri (renk kaynagi: API — istemci esik hesaplamaz)
-      expect(find.text('0–2'), findsOneWidget);
-      expect(find.text('3–4'), findsOneWidget);
-      expect(find.text('5+'), findsOneWidget);
-      // Unplaced bolumu
-      expect(find.text('Haritada yerleşimi girilmemiş'), findsOneWidget);
-      expect(find.text('C-9'), findsOneWidget);
+      // sayi hucrede gorunur (yonetim)
+      expect(find.text('6'), findsOneWidget);
     });
-  });
 
-  group('Detay + rol gorunurlugu', () {
-    testWidgets('hucreye dokun -> detay: sayim + anonim sikayet listesi',
+    testWidgets('detay: sayim + sikayet listesi (sikayet eden KIMLIGI — denetim)',
         (tester) async {
       await tester.pumpWidget(
-        _app(UserRole.resident, complaints: [_c(UnitComplaintKategori.gurultu)]),
+        _app(UserRole.admin, map: _mgmtMap(), complaints: [_c()]),
       );
       await tester.pumpAndSettle();
       await tester.tap(find.text('A-2'));
       await tester.pumpAndSettle();
-      expect(find.text('Daire A-2'), findsOneWidget);
       expect(find.textContaining('6 açık şikayet'), findsOneWidget);
-      // Anonim sikayet listesi: kategori gorunur (complainant YOK)
-      expect(find.text('Gürültü'), findsOneWidget);
+      expect(find.text('Zarar verme'), findsOneWidget); // yeni kategori
+      // Rev-1: sikayet eden kimligi yonetime gorunur
+      expect(find.textContaining('Ayşe Sakin'), findsOneWidget);
+      // yonetim sikayet ETMEZ -> buton yok
+      expect(find.text('Bu daireyi şikayet et'), findsNothing);
+    });
+  });
+
+  group('YAPI gorunumu (shows_density=false)', () {
+    testWidgets('resident: sayi/renk YOK; yapi notu; hucreler var', (tester) async {
+      await tester.pumpWidget(_app(UserRole.resident, map: _structureMap()));
+      await tester.pumpAndSettle();
+      // Legend yok (yogunluk gizli); yapi notu var
+      expect(find.text('0–2'), findsNothing);
+      expect(find.textContaining('yalnızca yönetime'), findsWidgets);
+      expect(find.text('A-1'), findsOneWidget);
+      // sayi hucrede YOK (resident yogunlugu bilemez)
+      expect(find.text('6'), findsNothing);
     });
 
-    testWidgets('SAKIN detayda "Bu daireyi şikayet et" gorur', (tester) async {
-      await tester.pumpWidget(_app(UserRole.resident));
+    testWidgets('resident detayda "Bu daireyi şikayet et" gorur; liste YOK',
+        (tester) async {
+      await tester.pumpWidget(_app(UserRole.resident, map: _structureMap()));
       await tester.pumpAndSettle();
       await tester.tap(find.text('A-1'));
       await tester.pumpAndSettle();
       expect(find.text('Bu daireyi şikayet et'), findsOneWidget);
+      // yogunluk/sikayet listesi gosterilmez
+      expect(find.textContaining('açık şikayet'), findsNothing);
     });
 
-    for (final role in [UserRole.security, UserRole.admin, UserRole.yonetici]) {
-      testWidgets('${role.name}: "şikayet et" butonu YOK (yalniz sakin)',
+    for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
+      testWidgets('${role.name}: "şikayet et" YOK + liste YOK (salt yapi)',
           (tester) async {
-        await tester.pumpWidget(_app(role));
+        await tester.pumpWidget(_app(role, map: _structureMap()));
         await tester.pumpAndSettle();
         await tester.tap(find.text('A-1'));
         await tester.pumpAndSettle();
@@ -147,10 +162,12 @@ void main() {
       });
     }
 
-    testWidgets('sakin sikayet formu gonderir -> api.file cagrilir',
+    testWidgets('sakin sikayet formu gonderir -> api.file (yeni kategori secilebilir)',
         (tester) async {
       final capi = _FakeComplaintApi(const []);
-      await tester.pumpWidget(_app(UserRole.resident, complaintApi: capi));
+      await tester.pumpWidget(
+        _app(UserRole.resident, map: _structureMap(), complaintApi: capi),
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.text('A-2'));
       await tester.pumpAndSettle();

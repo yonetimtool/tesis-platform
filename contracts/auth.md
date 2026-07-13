@@ -229,7 +229,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `PATCH /emergency/{id}`               |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /tenant/settings`               |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `PATCH /tenant/settings`              |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| `*/units*` (CRUD + sakin)             |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| daire CRUD + yerlesim (`/units*`,layout)|  ✅   | ✅  | ❌  | ❌  | ❌  |
+| daire sakin atama (`/units/{id}/residents`)| ✅ | ❌  | ❌  | ❌  | ❌  |
+| bina blok CRUD (`/blocks*`)           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET /units/{id}/dues`                |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /dues/assessments`              |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `GET  /dues/assessments`              |  ✅   | ✅  | ❌  | ❌  | ❌  |
@@ -244,8 +246,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `PATCH /users/{id}/contact`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET /call-target/{id}`               |  ❌   | ❌  | 📞  | ❌  | 📞  |
 | `*/integrations*` (CRUD + tetik)      |  ✅   | ✅  | ❌  | ❌  | ❌  |
-| `POST /unit-complaints` (daire sik.)  |  ❌   | ❌  | ❌  | ❌  | ✅  |
-| `GET /unit-complaints[/density]`      |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `POST /unit-complaints` (kendi bloğu) |  ❌   | ❌  | ❌  | ❌  | ✅  |
+| `GET /unit-complaints/building-map`   |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `GET /unit-complaints[/density]` (liste)|  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `PATCH /unit-complaints/{id}` (kapat) |  ✅   | ✅  | ❌  | ❌  | ❌  |
 
 > **Giris yollari:** `login`/`login-resident`/`set-password` PUBLIC
@@ -290,6 +293,29 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 > gider/kasa + en yuksek gider kategorileri); ° `tahsilat` blogu (tahakkuk,
 > tahsilat, oran, geciken daire sayisi) YALNIZ yonetimde dolar, sakin/saha
 > icin `null` (daire/kisi duzeyi sizmaz). Salt okuma.
+>
+> **Daire sikayeti + bina semasi (D-viz Rev-1) — KADEMELI GORUNURLUK:**
+> Sakin YONETIME degil, bir HEDEF DAIREYE anonim sikayet acar (kategori:
+> `gurultu` / `kapi_onu_ayakkabi` / `zarar_verme` / `diger` + opsiyonel not).
+> - **`GET /unit-complaints/building-map`** ROL-FARKINDADIR (`shows_density`
+>   bayragi): **yonetici/admin** her daire icin ACIK sikayet **sayisi + renk**
+>   (0-2 yeşil / 3-4 sarı / 5+ kırmızı) görür; **resident** YALNIZ **kendi
+>   bloğunun** yapısını görür (sayı/renk `null` — hangi dairenin kaç şikayeti
+>   olduğunu **bilemez**; haritayı yalnız şikayet edilecek daireyi SEÇMEK için
+>   kullanır); **security/tesis_gorevlisi** TÜM bina yapısını görür ama
+>   sayı/renk `null`.
+> - **Own-block:** resident yalnız kendi bloğundaki daireyi şikayet edebilir
+>   (`POST /unit-complaints` blok dışı hedef → **403**). Blok-suz sitede blok
+>   `null`'dur (tek örtük blok). Aktif dairesi olmayan sakin hiçbir yere açamaz.
+> - **complainant (şikayet eden) kimliği:** Rev-1'de YALNIZ **yönetim**
+>   (admin+yonetici) için, DENETİM amacıyla `GET /unit-complaints` (+ `/density`,
+>   kapatma) yanıtlarında döner (`complainant_user_id` + `complainant_ad` + not).
+>   resident/security/tesis_gorevlisi bu listeye **erişemez** (403) ve kimlik
+>   onlara **asla** sızmaz. Şikayet açan sakin kendi kaydında da complainant
+>   `null` görür (kendisi zaten bilir). `building-map` hiçbir role complainant döndürmez.
+> - **Bina blok CRUD (`/blocks*`)** ve daire CRUD/yerleşim (`/units*`,
+>   `/units/{id}/layout`) admin **+ yonetici**'dir (Rev-2 görsel editörü bu
+>   uçları kullanacak; blok-suz + blok-tabanlı siteler birlikte desteklenir).
 >
 > **Odeme webhook'u** (`POST /webhooks/payments/{provider}`): **PUBLIC** (JWT YOK) — saha
 > disindan saglayici cagirir. Guvenlik **imza/hash** ile saglanir (provider secret; HMAC).
@@ -481,32 +507,39 @@ Notlar:
     (public dogrulanip private'a baglanma) engellenir; URL host degismez, TLS
     SNI/sertifika orijinal hostname'e gore dogrulanir. Engellenen tetik
     `{ok:false, error}` doner (istek ic aga CIKMAZ).
-- **Daire sikayeti (`/unit-complaints`, D1 — TAM ANONIM, `/complaints`DEN AYRI):**
-  sakin YONETIME degil, bir HEDEF DAIREYE sikayet acar (gurultu/ayakkabi/diger);
-  daire-basi ANONIM yogunluk + renk uretilir (ileride 2D bina haritasi). Bu,
-  var olan yonetim-sikayeti (`/complaints`) modulunden **BAGIMSIZ** bir tablodur.
-  - **⚠️ HARD ANONIMLIK KURALI:** `complainant_user_id` YALNIZ ic spam korumasi +
-    RLS icin saklanir; **HICBIR uctan/serializer'dan DONMEZ** — `yonetici`/`admin`
-    dahil kimse sikayet edeni goremez. `UnitComplaintOut` semasinda complainant
-    ALANI YOKTUR (kasitli). Denetlenen tek serializer budur; olusturma/liste/
-    detay/kapatma yanitlarinin HEPSI complainant tasimaz (explicit testlerle
-    dogrulanir).
-  - **ACMA (`POST`) YALNIZ `resident`:** `target_unit_id` (tenant'ta olmali, aksi
-    422) + kategori + opsiyonel not. complainant token'dan alinir, echo EDILMEZ.
-  - **SPAM KORUMASI (DB-zorlamali, yarissiz):** ayni sakin ayni hedef daireye
-    AYNI ANDA yalniz **BIR ACIK** sikayet acabilir (partial-unique
-    `WHERE durum='acik'`) -> tekrar **409**. Kapatilinca yeniden acilabilir
-    (surekli engel degil; yonetim-kontrollu).
-  - **YOGUNLUK/RENK (`GET /density`, tum roller):** her daire icin **ACIK**
-    sikayet sayisi + renk — **0-2 yesil, 3-4 sari, 5+ kirmizi**. Kapatma ACIK
-    sayimi dusurur (renk feedback). Sikayet eden verisi YOKTUR ("harita"
-    tenant-ici herkese acik).
-  - **NOT GIZLILIGI:** serbest metin `notlar` YALNIZ yonetim (admin+yonetici)
-    yanitinda dolu; `security`/`tesis_gorevlisi`/`resident` icin **null** —
-    deanonimlestirme / target-shaming riskini sinirlar. (Sayilar/kategori/tarih/
-    renk tum rollere acik.)
-  - **KAPATMA (`PATCH`, admin+yonetici):** yalniz durumu degistirir (kapali);
-    sikayet edeni GORMEZ.
+- **Daire sikayeti + bina semasi (`/unit-complaints` + `/building-map`, D1 →
+  D-viz Rev-1 — KADEMELI GORUNURLUK, `/complaints`DEN AYRI):** sakin YONETIME
+  degil, bir HEDEF DAIREYE sikayet acar (kategori: `gurultu` /
+  `kapi_onu_ayakkabi` / `zarar_verme` / `diger` + opsiyonel not). Bu, var olan
+  yonetim-sikayeti (`/complaints`) modulunden **BAGIMSIZ** bir tablodur.
+  - **KATEGORI GECISI (Rev-1):** `ayakkabi` → `kapi_onu_ayakkabi` (yeniden
+    adlandirma); `gurultu`/`diger` aynen; **yeni** `zarar_verme`. (down -v ile
+    taze DB uygulandigindan canli ALTER yoktur; eski `ayakkabi`/`goruntu` → 422.)
+  - **ACMA (`POST`) YALNIZ `resident` + OWN-BLOCK:** `target_unit_id` tenant'ta
+    olmali (aksi 422) VE sakinin KENDI blogunda olmali (blok disi → **403**).
+    Blok-suz sitede blok `null` (tek ortuk blok). complainant token'dan alinir,
+    resident'a echo EDILMEZ (kendi kaydinda da `null` gorur).
+  - **SPAM KORUMASI (DB-zorlamali):** ayni sakin ayni hedef daireye AYNI ANDA
+    yalniz **BIR ACIK** sikayet (partial-unique `WHERE durum='acik'`) → **409**;
+    kapatilinca yeniden acilabilir.
+  - **HARITA (`GET /building-map`, TUM roller) — ROL-FARKINDA (`shows_density`):**
+    **yonetici/admin** daire-basi ACIK sayi + renk (**0-2 yeşil / 3-4 sarı / 5+
+    kırmızı**) gorur; **resident** YALNIZ **kendi bloğunun** yapisini gorur
+    (sayi/renk `null` — hangi dairenin kaç şikayeti olduğunu **bilemez**;
+    haritayı sikayet edilecek daireyi SEÇMEK için kullanır); **security/
+    tesis_gorevlisi** TÜM yapıyı gorur ama sayi/renk `null`. Harita hiçbir role
+    complainant döndürmez.
+  - **DENETIM GORUNUMU (`GET /density` + liste `GET /unit-complaints`) — YALNIZ
+    YONETIM:** sayilar + kategori + tarih + **not** + **complainant kimliği**
+    (`complainant_user_id` + `complainant_ad`) admin/yonetici'ye doner (denetim/
+    oversight). `security`/`tesis_gorevlisi`/`resident` bu liste/density'ye
+    **erişemez (403)**; kimlik onlara **asla** sızmaz. `building-map` bu
+    daraltmadan bağımsızdır (yapı herkese açık).
+  - **KAPATMA (`PATCH`, admin+yonetici):** durumu degistirir (kapali); ACIK
+    sayimi dusurur (renk feedback). Yanit complainant + not tasir (denetim).
+  - **Bina blok CRUD (`/blocks*`) + daire CRUD/yerlesim (`/units*`, layout)
+    admin + YONETICI** (Rev-2 gorsel editoru bu uclari kullanacak). Sakin atama
+    (`/units/{id}/residents`) ve aidat admin-only kalir.
 - **Ortak alan rezervasyonu (`/common-areas` + `/reservations`):** yonetici
   alan tanimlar (havuz/teras/toplanti odasi), sakin slot talep eder, yonetici
   onaylar/reddeder; tam gecmis tutulur.

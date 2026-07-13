@@ -1,16 +1,16 @@
-"""Daire sikayeti (D1) — sakin -> HEDEF DAIRE, TAM ANONIM.
+"""Daire sikayeti (D1 + D-viz Rev-1) — sakin -> HEDEF DAIRE.
 
-HARD ANONIMLIK KURALI (auth.md §4): `complainant_user_id` YALNIZ ic spam
-korumasi + RLS icindir; HICBIR uctan/serializer'dan DONMEZ — yonetici/admin
-dahil kimse sikayet edeni goremez. Herkes yalniz daire-basi ACIK sayilar + renk
-gorur. Yonetimin ayri `/complaints` (yonetime sikayet) modulunden BAGIMSIZDIR.
+GIZLILIK KADEMESI (Rev-1, auth.md §4):
+  * yonetici/admin (YONETIM): denetim gorunumu — daire-basi ACIK sayi + renk
+    (harita) + daire detayinda SIKAYET EDEN kimligi (complainant) + not gorur.
+  * resident: bina yerlesimini gorur ama SAYI/RENK GORMEZ (hangi dairenin kac
+    sikayeti oldugunu bilemez). Yalniz KENDI BLOGUNDAKI daireleri secip sikayet
+    eder (blok disi -> 403). Sikayet eden kimligi resident'a ASLA gosterilmez.
+  * security/tesis_gorevlisi: YALNIZ blok/kat yapisi (sayi/renk/sikayet yok).
 
 Spam korumasi: ayni sakin ayni hedef daireye AYNI ANDA yalniz BIR ACIK sikayet
-acabilir (DB partial-unique; kapatilinca yeniden acilabilir) -> 409.
-
+(DB partial-unique; kapatilinca yeniden) -> 409.
 Renk (ACIK sikayet sayisi): 0-2 yesil, 3-4 sari, 5+ kirmizi.
-Not gizliligi: `notlar` serbest metni YALNIZ yonetim (admin+yonetici) icin
-doner (deanonimlestirme/target-shaming riskini sinirlar); diger roller null gorur.
 """
 from __future__ import annotations
 
@@ -20,11 +20,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import and_, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Unit, UnitComplaint
+from ..models import AppUser, Unit, UnitComplaint, UnitResident
 from ..schemas import (
     BuildingMapBlok,
     BuildingMapKat,
@@ -41,14 +42,14 @@ from ..schemas import (
 
 router = APIRouter(prefix="/unit-complaints", tags=["unit-complaints"])
 
-# Sikayet ACMA yalniz sakin (baska daireyi bildirir).
+# Sikayet ACMA yalniz sakin (kendi blogundaki daireyi bildirir).
 _FILER = require_role("resident")
-# Yogunluk/liste OKUMA — tum roller (tenant-ici "harita" herkese acik).
+# Bina yapisi (harita) OKUMA — tum roller (yapi herkese; sayi/renk yalniz yonetim).
 _READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi", "resident")
-# Kapatma — yonetim (sikayet edeni GORMEDEN yalniz durum degistirir).
+# Yogunluk/liste/kapatma — YONETIM (sayi/renk/complainant denetim gorunumu).
 _MANAGER = require_role("admin", "yonetici")
-# Not (serbest metin) YALNIZ yonetime doner.
-_NOTE_ROLES = {"admin", "yonetici"}
+# Yonetim rolleri: sayi + renk + complainant + not gorur.
+_MANAGEMENT = {"admin", "yonetici"}
 
 
 def _color(count: int) -> str:
@@ -57,6 +58,24 @@ def _color(count: int) -> str:
     if count <= 4:
         return "sari"
     return "kirmizi"
+
+
+async def _resident_blocks(db: AsyncSession, user: AppUser) -> set[str | None]:
+    """Sakinin AKTIF dairelerinin blok etiketleri (None dahil — blok-suz site).
+    Own-block kurali: sakin yalniz bu bloklardaki daireleri gorebilir/sikayet
+    edebilir. Aktif dairesi yoksa bos kume (hicbir yere sikayet edemez)."""
+    rows = await db.execute(
+        select(Unit.blok)
+        .join(
+            UnitResident,
+            and_(
+                UnitResident.unit_id == Unit.id,
+                UnitResident.user_id == user.id,
+                UnitResident.bitis.is_(None),
+            ),
+        )
+    )
+    return set(rows.scalars().all())
 
 
 # ------------------------------- kayit -------------------------------------- #
@@ -73,10 +92,18 @@ async def file_unit_complaint(
     if unit is None:
         raise APIError(422, "invalid_reference", "Hedef daire bu tenant'ta bulunamadi.")
 
+    # OWN-BLOCK (Rev-1): sakin yalniz KENDI blogundaki daireyi sikayet edebilir.
+    my_blocks = await _resident_blocks(db, user)
+    if unit.blok not in my_blocks:
+        raise APIError(
+            403, "forbidden",
+            "Yalnizca kendi blogunuzdaki daireleri sikayet edebilirsiniz.",
+        )
+
     obj = UnitComplaint(
         tenant_id=user.tenant_id,
         target_unit_id=unit.id,
-        complainant_user_id=user.id,  # IC — asla donmez
+        complainant_user_id=user.id,  # IC — resident'a donmez
         kategori=body.kategori,
         notlar=body.notlar,
     )
@@ -92,7 +119,8 @@ async def file_unit_complaint(
             )
         raise translate_integrity(exc)
     await db.refresh(obj)
-    # Sikayet acan kendi kaydini gorur (kendi notunu — deanonimlestirme degil).
+    # Sikayet acan kendi kaydini gorur (kendi notu) — complainant kimligini
+    # tekrar donmeye gerek yok (kendisi zaten biliyor; residentta hep None).
     return UnitComplaintOut.from_model(obj, unit_no=unit.no, include_note=True)
 
 
@@ -100,10 +128,10 @@ async def file_unit_complaint(
 @router.get("/density", response_model=UnitDensityResponse)
 async def unit_density(
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_READER),
+    _: AppUser = Depends(_MANAGER),
 ) -> UnitDensityResponse:
-    """Daire-basi ANONIM yogunluk: TUM daireler + ACIK sikayet sayisi + renk.
-    Sikayet eden verisi YOKTUR. (Ileride 2D bina haritasini besler.)"""
+    """Daire-basi ACIK sikayet sayisi + renk — YALNIZ YONETIM (denetim).
+    residentlar sayilari GOREMEZ (Rev-1); bkz. /building-map (rol-farkinda)."""
     rows = (
         await db.execute(
             select(
@@ -141,11 +169,19 @@ async def unit_density(
 @router.get("/building-map", response_model=BuildingMapResponse)
 async def building_map(
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_READER),
+    user: AppUser = Depends(_READER),
 ) -> BuildingMapResponse:
-    """Cizilebilir bina semasi: blok -> kat -> daire (yerlesim + ANONIM sayim +
-    renk). Yerlesimi (blok/kat/sira uclusu) eksik daireler 'unplaced' kovada.
-    Tum roller okur (tenant-ici harita). Sikayet eden verisi YOKTUR."""
+    """ROL-FARKINDA bina semasi (blok -> kat -> daire):
+      * yonetici/admin: sayim + renk dolu (shows_density=True).
+      * resident: YALNIZ KENDI blogundaki daireler; sayim/renk NULL (yapi —
+        sikayet secici).
+      * security/tesis_gorevlisi: TUM yapi; sayim/renk NULL.
+    Sikayet eden verisi bu uctan ASLA donmez."""
+    is_mgmt = user.role in _MANAGEMENT
+    resident_blocks: set[str | None] | None = None
+    if user.role == "resident":
+        resident_blocks = await _resident_blocks(db, user)
+
     rows = (
         await db.execute(
             select(
@@ -170,19 +206,21 @@ async def building_map(
     ).all()
 
     unplaced: list[BuildingMapUnit] = []
-    # blok -> kat -> [BuildingMapUnit]; sirali insert icin dict + sonda sort.
     grouped: dict[str, dict[int, list[BuildingMapUnit]]] = {}
     for uid, no, blok, kat, sira, count in rows:
+        # resident: yalniz kendi blogu (own-block picker kapsami).
+        if resident_blocks is not None and blok not in resident_blocks:
+            continue
         item = BuildingMapUnit(
             unit_id=uid,
             unit_no=no,
             blok=blok,
             kat=kat,
             sira=sira,
-            complaint_count=count,
-            color=_color(count),
+            # Sayim + renk YALNIZ yonetime; digerinde None (yapi gorunumu).
+            complaint_count=count if is_mgmt else None,
+            color=_color(count) if is_mgmt else None,
         )
-        # Yerlesim TAM olmali (blok + kat) — biri eksikse cizilemez -> unplaced.
         if blok is None or kat is None:
             unplaced.append(item)
         else:
@@ -194,18 +232,17 @@ async def building_map(
             katlar=[
                 BuildingMapKat(
                     kat=kat,
-                    # sira NULL ise sona; ayni sira'da unit_no ile kararli sirala.
                     units=sorted(
                         units,
                         key=lambda u: (u.sira is None, u.sira or 0, u.unit_no),
                     ),
                 )
-                for kat, units in sorted(katlar.items())  # kat artan (0=zemin altta)
+                for kat, units in sorted(katlar.items())
             ],
         )
         for blok, katlar in sorted(grouped.items())
     ]
-    return BuildingMapResponse(bloklar=bloklar, unplaced=unplaced)
+    return BuildingMapResponse(shows_density=is_mgmt, bloklar=bloklar, unplaced=unplaced)
 
 
 # ------------------------------- liste -------------------------------------- #
@@ -216,12 +253,16 @@ async def list_unit_complaints(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_READER),
+    _: AppUser = Depends(_MANAGER),
 ) -> UnitComplaintListResponse:
-    """Daire sikayetleri (kategori + tarih + durum). complainant ASLA yok;
-    `notlar` YALNIZ yonetim icin dolu."""
-    base = select(UnitComplaint, Unit.no).join(
-        Unit, Unit.id == UnitComplaint.target_unit_id
+    """Daire sikayetleri — YALNIZ YONETIM (denetim). kategori + tarih + durum +
+    SIKAYET EDEN kimligi (complainant) + not. residentlar bu uca ERISEMEZ (403);
+    kimlik yalnizca yonetime, denetim amaciyla acilir (Rev-1)."""
+    _COMPLAINANT = aliased(AppUser)
+    base = (
+        select(UnitComplaint, Unit.no, _COMPLAINANT.ad)
+        .join(Unit, Unit.id == UnitComplaint.target_unit_id)
+        .join(_COMPLAINANT, _COMPLAINANT.id == UnitComplaint.complainant_user_id)
     )
     if target_unit_id is not None:
         base = base.where(UnitComplaint.target_unit_id == target_unit_id)
@@ -236,12 +277,17 @@ async def list_unit_complaints(
             base.order_by(UnitComplaint.created_at.desc()).limit(limit).offset(offset)
         )
     ).all()
-    include_note = user.role in _NOTE_ROLES
     return UnitComplaintListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
         items=[
-            UnitComplaintOut.from_model(obj, unit_no=no, include_note=include_note)
-            for obj, no in rows
+            UnitComplaintOut.from_model(
+                obj,
+                unit_no=no,
+                include_note=True,
+                include_complainant=True,
+                complainant_ad=cad,
+            )
+            for obj, no, cad in rows
         ],
     )
 
@@ -254,14 +300,28 @@ async def close_unit_complaint(
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_MANAGER),
 ) -> UnitComplaintOut:
-    """Yonetim durumu degistirir (kapali) — sikayet edeni GORMEDEN. Kapatma
-    ACIK sayimi dusurur (renk feedback). Sikayet acan alani yine DONMEZ."""
+    """Yonetim durumu degistirir (kapali). Kapatma ACIK sayimi dusurur (renk
+    feedback). Denetim: complainant + not doner (yonetime)."""
     obj = await get_or_404(db, UnitComplaint, complaint_id)
     obj.durum = body.durum
     obj.updated_at = func.now()
     await db.flush()
     await db.refresh(obj)
-    unit_no = (
-        await db.execute(select(Unit.no).where(Unit.id == obj.target_unit_id))
-    ).scalar_one_or_none()
-    return UnitComplaintOut.from_model(obj, unit_no=unit_no, include_note=True)
+    row = (
+        await db.execute(
+            select(Unit.no, AppUser.ad)
+            .select_from(UnitComplaint)
+            .join(Unit, Unit.id == UnitComplaint.target_unit_id)
+            .join(AppUser, AppUser.id == UnitComplaint.complainant_user_id)
+            .where(UnitComplaint.id == obj.id)
+        )
+    ).first()
+    unit_no = row[0] if row else None
+    complainant_ad = row[1] if row else None
+    return UnitComplaintOut.from_model(
+        obj,
+        unit_no=unit_no,
+        include_note=True,
+        include_complainant=True,
+        complainant_ad=complainant_ad,
+    )

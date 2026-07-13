@@ -42,6 +42,7 @@ from .routers import task_categories as task_categories_router
 from .routers import tasks as tasks_router
 from .routers import tenant as tenant_router
 from .routers import units as units_router
+from .routers import blocks as blocks_router
 from .routers import call_targets as call_targets_router
 from .routers import integrations as integrations_router
 from .routers import users as users_router
@@ -101,6 +102,7 @@ app.include_router(assets_router.router)
 app.include_router(emergency_router.router)
 app.include_router(tenant_router.router)
 app.include_router(units_router.router)
+app.include_router(blocks_router.router)
 app.include_router(dues_router.router)
 app.include_router(budget_router.router)
 app.include_router(reports_router.router)
