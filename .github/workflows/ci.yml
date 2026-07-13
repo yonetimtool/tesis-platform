@@ -1,0 +1,67 @@
+name: CI
+
+# Backend pytest (docker-compose stack — Postgres+RLS app-role+migration) ve
+# mobile `flutter test`. Ikisi paralel calisir.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Ayni ref icin eski calismayi iptal et (yeni push gelince).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: backend (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Testler docker-compose yiginini kullanir: db (Postgres) + migrate
+      # (kanonik alembic migration + app_rw RLS rolu) + api. pytest api
+      # container'inin ICINDE calisir (db:5432'ye baglanir) — yerel akisin
+      # (docker compose exec -T api pytest) birebir aynisi.
+      - name: Prepare env
+        working-directory: infra
+        run: cp .env.example .env
+
+      - name: Build & start stack (db + migrate + api)
+        working-directory: infra
+        run: docker compose up -d --build api
+
+      - name: Run pytest
+        working-directory: infra
+        run: docker compose exec -T api pytest -q
+
+      - name: Dump logs on failure
+        if: failure()
+        working-directory: infra
+        run: docker compose logs --no-color --tail=200 db migrate api
+
+      - name: Tear down
+        if: always()
+        working-directory: infra
+        run: docker compose down -v
+
+  mobile:
+    name: mobile (flutter test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.4
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Run flutter test
+        working-directory: mobile
+        run: flutter test
