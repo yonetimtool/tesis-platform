@@ -703,7 +703,9 @@ def upgrade() -> None:
             id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id   uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
             no          text NOT NULL,            -- ornek "A-12"
-            blok        text,
+            blok        text,                     -- blok etiketi ("A")
+            kat         integer,                  -- kat (0=zemin) — bina semasi
+            sira        integer,                  -- kattaki sira/konum
             metrekare   numeric(8, 2),
             aktif       boolean NOT NULL DEFAULT true,
             created_at  timestamptz NOT NULL DEFAULT now(),

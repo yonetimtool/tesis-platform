@@ -16,6 +16,7 @@ from ..models import AppUser, Unit, UnitResident
 from ..schemas import (
     ResidentAssign,
     UnitCreate,
+    UnitLayoutUpdate,
     UnitListResponse,
     UnitOut,
     UnitResidentBriefOut,
@@ -26,6 +27,9 @@ from ..schemas import (
 router = APIRouter(prefix="/units", tags=["aidat"])
 
 _ADMIN = require_role("admin")
+# Fiziksel yerlesim (blok/kat/sira) girisi — yonetim: admin + yonetici.
+# (Genel daire CRUD admin-only kalir; yalniz yerlesim yonetici'ye acilir.)
+_LAYOUT_EDITOR = require_role("admin", "yonetici")
 # Hedef sakin secicisi (guvenlik ziyaretci kaydinda kullanir) — okuma
 # guvenlik + yonetim; sakin komsularini LISTELEYEMEZ (403).
 _RESIDENT_LISTER = require_role("security", "admin", "yonetici")
@@ -124,6 +128,24 @@ async def update_unit(
         if is_unique_violation(exc):
             raise APIError(409, "conflict", "Daire no bu tesiste zaten kayitli.")
         raise translate_integrity(exc)
+    await db.refresh(obj)
+    return obj
+
+
+@router.patch("/{unit_id}/layout", response_model=UnitOut)
+async def update_unit_layout(
+    unit_id: uuid.UUID,
+    body: UnitLayoutUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_LAYOUT_EDITOR),
+) -> Unit:
+    """Daire fiziksel yerlesimini (blok/kat/sira) gunceller — bina semasi girisi.
+    RBAC: admin + yonetici (digerleri 403). Yerlesim anonimligi etkilemez."""
+    obj = await get_or_404(db, Unit, unit_id)
+    for key, value in body.model_dump(exclude_unset=True).items():
+        setattr(obj, key, value)
+    obj.updated_at = func.now()
+    await db.flush()
     await db.refresh(obj)
     return obj
 

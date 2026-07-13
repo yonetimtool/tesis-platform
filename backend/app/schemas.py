@@ -1327,6 +1327,10 @@ class UnitOut(BaseModel):
     id: uuid.UUID
     no: str
     blok: str | None = None
+    # Fiziksel yerlesim (bina semasi) — nullable; girilmemis daire haritada
+    # "yerlesimsiz" kovaya duser.
+    kat: int | None = None
+    sira: int | None = None
     metrekare: float | None = None
     aktif: bool
     created_at: datetime
@@ -1336,23 +1340,49 @@ class UnitOut(BaseModel):
 # Daire no: harf + sayi + tire serbest kombinasyon ("A-12", "B3", "12");
 # bosluk/ozel karakter kabul edilmez (A5).
 _UNIT_NO_PATTERN = r"^[A-Za-z0-9-]+$"
+# Blok etiketi: kisa alfanumerik ("A", "B1"); tire/bosluk yok.
+_BLOK_PATTERN = r"^[A-Za-z0-9]+$"
+# Yerlesim sinirlari (makul araliklar): kat -5 (bodrum) .. 200; sira 0 .. 999.
+_KAT_MIN, _KAT_MAX = -5, 200
+_SIRA_MIN, _SIRA_MAX = 0, 999
 
 
 class UnitCreate(BaseModel):
     no: str = Field(..., min_length=1, max_length=50, pattern=_UNIT_NO_PATTERN)
-    blok: str | None = None
+    blok: str | None = Field(None, min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    kat: int | None = Field(None, ge=_KAT_MIN, le=_KAT_MAX)
+    sira: int | None = Field(None, ge=_SIRA_MIN, le=_SIRA_MAX)
     metrekare: float | None = None
     aktif: bool = True
 
 
 class UnitUpdate(BaseModel):
     no: str | None = Field(None, min_length=1, max_length=50, pattern=_UNIT_NO_PATTERN)
-    blok: str | None = None
+    blok: str | None = Field(None, min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    kat: int | None = Field(None, ge=_KAT_MIN, le=_KAT_MAX)
+    sira: int | None = Field(None, ge=_SIRA_MIN, le=_SIRA_MAX)
     metrekare: float | None = None
     aktif: bool | None = None
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "UnitUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class UnitLayoutUpdate(BaseModel):
+    """Daire fiziksel yerlesimi (blok/kat/sira) — yonetim (admin+yonetici)
+    tarafindan girilir; PATCH /units/{id}/layout. Alanlar bagimsiz gonderilebilir
+    (null = 'yerlesimden cikar'); en az bir alan gerekir. Anonimlik: yerlesim
+    hicbir sikayetci verisi tasimaz."""
+
+    blok: str | None = Field(None, min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    kat: int | None = Field(None, ge=_KAT_MIN, le=_KAT_MAX)
+    sira: int | None = Field(None, ge=_SIRA_MIN, le=_SIRA_MAX)
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "UnitLayoutUpdate":
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
         return self
@@ -1812,3 +1842,40 @@ class UnitDensityItem(BaseModel):
 
 class UnitDensityResponse(BaseModel):
     items: list[UnitDensityItem]
+
+
+# ------------------- building map (D-viz-1 — bina semasi) -------------------- #
+# Yerlesim (blok/kat/sira) + ANONIM yogunluk (sayim + renk). Sonraki tur bunu
+# 2D kat plani cizmek icin dogrudan kullanir. complainant verisi YOKTUR.
+class BuildingMapUnit(BaseModel):
+    """Haritada tek daire — yerlesim + anonim sayim/renk."""
+
+    unit_id: uuid.UUID
+    unit_no: str
+    blok: str | None = None
+    kat: int | None = None
+    sira: int | None = None
+    complaint_count: int  # ACIK sikayet sayisi (kapatilanlar renge etki etmez)
+    color: DensityRenk
+
+
+class BuildingMapKat(BaseModel):
+    """Bir bloktaki tek kat — sira'ya gore sirali daireler."""
+
+    kat: int
+    units: list[BuildingMapUnit]
+
+
+class BuildingMapBlok(BaseModel):
+    """Tek blok — kat'a gore sirali (0=zemin altta)."""
+
+    blok: str
+    katlar: list[BuildingMapKat]
+
+
+class BuildingMapResponse(BaseModel):
+    """Cizilebilir yapi: blok -> kat -> daire + renk; yerlesimi eksik daireler
+    'unplaced' kovada. Tum roller okur (tenant-ici harita), tam anonim."""
+
+    bloklar: list[BuildingMapBlok]
+    unplaced: list[BuildingMapUnit]

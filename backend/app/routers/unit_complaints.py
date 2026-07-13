@@ -26,6 +26,10 @@ from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Unit, UnitComplaint
 from ..schemas import (
+    BuildingMapBlok,
+    BuildingMapKat,
+    BuildingMapResponse,
+    BuildingMapUnit,
     UnitComplaintCreate,
     UnitComplaintDecision,
     UnitComplaintDurum,
@@ -131,6 +135,77 @@ async def unit_density(
         for r in rows
     ]
     return UnitDensityResponse(items=items)
+
+
+# ------------------------------ bina haritasi ------------------------------- #
+@router.get("/building-map", response_model=BuildingMapResponse)
+async def building_map(
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_READER),
+) -> BuildingMapResponse:
+    """Cizilebilir bina semasi: blok -> kat -> daire (yerlesim + ANONIM sayim +
+    renk). Yerlesimi (blok/kat/sira uclusu) eksik daireler 'unplaced' kovada.
+    Tum roller okur (tenant-ici harita). Sikayet eden verisi YOKTUR."""
+    rows = (
+        await db.execute(
+            select(
+                Unit.id,
+                Unit.no,
+                Unit.blok,
+                Unit.kat,
+                Unit.sira,
+                func.count(UnitComplaint.id),
+            )
+            .select_from(Unit)
+            .outerjoin(
+                UnitComplaint,
+                and_(
+                    UnitComplaint.target_unit_id == Unit.id,
+                    UnitComplaint.durum == "acik",
+                ),
+            )
+            .group_by(Unit.id, Unit.no, Unit.blok, Unit.kat, Unit.sira)
+            .order_by(Unit.no)
+        )
+    ).all()
+
+    unplaced: list[BuildingMapUnit] = []
+    # blok -> kat -> [BuildingMapUnit]; sirali insert icin dict + sonda sort.
+    grouped: dict[str, dict[int, list[BuildingMapUnit]]] = {}
+    for uid, no, blok, kat, sira, count in rows:
+        item = BuildingMapUnit(
+            unit_id=uid,
+            unit_no=no,
+            blok=blok,
+            kat=kat,
+            sira=sira,
+            complaint_count=count,
+            color=_color(count),
+        )
+        # Yerlesim TAM olmali (blok + kat) — biri eksikse cizilemez -> unplaced.
+        if blok is None or kat is None:
+            unplaced.append(item)
+        else:
+            grouped.setdefault(blok, {}).setdefault(kat, []).append(item)
+
+    bloklar = [
+        BuildingMapBlok(
+            blok=blok,
+            katlar=[
+                BuildingMapKat(
+                    kat=kat,
+                    # sira NULL ise sona; ayni sira'da unit_no ile kararli sirala.
+                    units=sorted(
+                        units,
+                        key=lambda u: (u.sira is None, u.sira or 0, u.unit_no),
+                    ),
+                )
+                for kat, units in sorted(katlar.items())  # kat artan (0=zemin altta)
+            ],
+        )
+        for blok, katlar in sorted(grouped.items())
+    ]
+    return BuildingMapResponse(bloklar=bloklar, unplaced=unplaced)
 
 
 # ------------------------------- liste -------------------------------------- #

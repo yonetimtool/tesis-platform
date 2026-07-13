@@ -2636,6 +2636,33 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /units/{id}/layout:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [aidat]
+      summary: Daire yerlesimini guncelle (admin+yonetici)
+      description: |
+        Daire fiziksel yerlesimini (blok/kat/sira) girer/gunceller — bina
+        semasi verisi. RBAC: admin + yonetici (digerleri 403). Yerlesim
+        anonimligi etkilemez (sikayetci verisi tasimaz). Yonetici mobilden
+        yonetebilsin diye genel daire CRUD (admin-only) disinda ayri uctur.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitLayoutUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Unit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
   /units/by-no/{unit_no}/residents:
     parameters:
       - name: unit_no
@@ -3547,6 +3574,23 @@ paths:
               schema: { $ref: "#/components/schemas/UnitDensity" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /unit-complaints/building-map:
+    get:
+      tags: [unit-complaints]
+      summary: Cizilebilir bina semasi (blok->kat->daire + renk) — tum roller
+      description: >
+        Yerlesim (blok/kat/sira) + ANONIM yogunluk (acik sayim + renk) gruplu
+        yapida: blok -> kat -> daire. Yerlesimi (blok+kat) eksik daireler
+        'unplaced' kovasinda. Sonraki tur bunu 2D kat plani cizmek icin
+        kullanir. Sikayet eden verisi YOKTUR. Tum roller okur (tenant-ici).
+      responses:
+        "200":
+          description: Bina haritasi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BuildingMap" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /unit-complaints/{id}:
     parameters:
       - $ref: "#/components/parameters/PathId"
@@ -3932,6 +3976,49 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/UnitDensityItem" }
+
+    # ---------------- bina semasi (D-viz-1) ---------------- #
+    BuildingMapUnit:
+      type: object
+      description: Haritada tek daire — yerlesim + ANONIM sayim/renk (sikayet eden YOK)
+      required: [unit_id, unit_no, complaint_count, color]
+      properties:
+        unit_id: { type: string, format: uuid }
+        unit_no: { type: string }
+        blok: { type: string, nullable: true }
+        kat: { type: integer, nullable: true }
+        sira: { type: integer, nullable: true }
+        complaint_count: { type: integer, description: ACIK sikayet sayisi }
+        color: { type: string, enum: [yesil, sari, kirmizi] }
+    BuildingMapKat:
+      type: object
+      required: [kat, units]
+      properties:
+        kat: { type: integer }
+        units:
+          type: array
+          items: { $ref: "#/components/schemas/BuildingMapUnit" }
+    BuildingMapBlok:
+      type: object
+      required: [blok, katlar]
+      properties:
+        blok: { type: string }
+        katlar:
+          type: array
+          items: { $ref: "#/components/schemas/BuildingMapKat" }
+    BuildingMap:
+      type: object
+      description: >
+        Cizilebilir yapi: blok -> kat -> daire (+renk); yerlesimi eksik daireler
+        'unplaced' kovada. Tam anonim.
+      required: [bloklar, unplaced]
+      properties:
+        bloklar:
+          type: array
+          items: { $ref: "#/components/schemas/BuildingMapBlok" }
+        unplaced:
+          type: array
+          items: { $ref: "#/components/schemas/BuildingMapUnit" }
 
     PatrolWindowDurum:
       type: string
@@ -5214,7 +5301,10 @@ components:
       properties:
         id: { type: string, format: uuid }
         no: { type: string, example: "A-12" }
-        blok: { type: string, nullable: true }
+        blok: { type: string, nullable: true, description: "Blok etiketi (kisa alfanumerik)" }
+        # Fiziksel yerlesim (bina semasi) — nullable; girilmemis daire haritada "yerlesimsiz".
+        kat: { type: integer, nullable: true, description: "Kat (0=zemin)" }
+        sira: { type: integer, nullable: true, description: "Kattaki sira/konum" }
         metrekare: { type: number, format: double, nullable: true }
         aktif: { type: boolean }
         created_at: { type: string, format: date-time }
@@ -5224,7 +5314,9 @@ components:
       required: [no]
       properties:
         no: { type: string }
-        blok: { type: string, nullable: true }
+        blok: { type: string, nullable: true, maxLength: 8, pattern: "^[A-Za-z0-9]+$" }
+        kat: { type: integer, nullable: true, minimum: -5, maximum: 200 }
+        sira: { type: integer, nullable: true, minimum: 0, maximum: 999 }
         metrekare: { type: number, format: double, nullable: true }
         aktif: { type: boolean, default: true }
     UnitUpdate:
@@ -5232,9 +5324,22 @@ components:
       minProperties: 1
       properties:
         no: { type: string }
-        blok: { type: string, nullable: true }
+        blok: { type: string, nullable: true, maxLength: 8, pattern: "^[A-Za-z0-9]+$" }
+        kat: { type: integer, nullable: true, minimum: -5, maximum: 200 }
+        sira: { type: integer, nullable: true, minimum: 0, maximum: 999 }
         metrekare: { type: number, format: double, nullable: true }
         aktif: { type: boolean }
+    UnitLayoutUpdate:
+      type: object
+      minProperties: 1
+      description: |
+        Daire fiziksel yerlesimi (blok/kat/sira) — bina semasi girisi. YALNIZ
+        admin+yonetici (PATCH /units/{id}/layout). Alan null gonderilirse
+        yerlesimden cikarilir; en az bir alan gerekir.
+      properties:
+        blok: { type: string, nullable: true, maxLength: 8, pattern: "^[A-Za-z0-9]+$" }
+        kat: { type: integer, nullable: true, minimum: -5, maximum: 200 }
+        sira: { type: integer, nullable: true, minimum: 0, maximum: 999 }
 
     UnitResident:
       type: object

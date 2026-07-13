@@ -132,6 +132,10 @@ export interface Unit {
   id: string;
   no: string;
   blok?: string | null;
+  // Fiziksel yerlesim (bina semasi) — nullable; yerlesimi girilmemis daire
+  // sonraki turdaki haritada "yerlesimsiz" kovaya duser.
+  kat?: number | null;
+  sira?: number | null;
   metrekare?: number | null;
   aktif: boolean;
   created_at: string;

@@ -91,6 +91,11 @@ enum HomeMenuEntry {
   /// Entegrasyonlar (C1b) — dis sistem (megafon/akilli-ev/webhook) konfig +
   /// SSRF-korumali tetik. Mobilde YONETICI yonetir (admin panelden).
   integrations,
+
+  /// Bina Yerlesimi (D-viz-1) — daire yerlesimi (blok/kat/sira) girisi +
+  /// ANONIM yogunluk onizlemesi (blok->kat->daire renk). Mobilde YONETICI
+  /// yonetir; yazma backend'de admin+yonetici ile sinirli.
+  binaYerlesimi,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -160,6 +165,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.financialSummary,
         HomeMenuEntry.reports,
         HomeMenuEntry.integrations,
+        HomeMenuEntry.binaYerlesimi,
       ];
     case UserRole.resident:
       // Sakinin kaynaklari: acil durum (panik butonu sakinin de hakki) +

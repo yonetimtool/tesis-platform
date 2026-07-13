@@ -106,6 +106,7 @@ void main() {
           HomeMenuEntry.financialSummary,
           HomeMenuEntry.reports,
           HomeMenuEntry.integrations,
+          HomeMenuEntry.binaYerlesimi,
         ],
       );
       // ziyaretci/kargo DOGRUDAN GORMEZ (KVKK — varsayilan kapali)

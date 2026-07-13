@@ -714,6 +714,10 @@ class Unit(Base):
     )
     no: Mapped[str] = mapped_column(Text, nullable=False)
     blok: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Fiziksel yerlesim (bina semasi / yogunluk haritasi icin) — hepsi
+    # nullable; yerlesimi girilmemis daire haritada "yerlesimsiz" kovadadir.
+    kat: Mapped[int | None] = mapped_column(Integer, nullable=True)  # kat (0=zemin)
+    sira: Mapped[int | None] = mapped_column(Integer, nullable=True)  # kattaki sira/konum
     metrekare = mapped_column(Numeric(8, 2), nullable=True)
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at = _created_at()

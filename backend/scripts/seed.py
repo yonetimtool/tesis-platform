@@ -163,11 +163,13 @@ def main() -> int:
         )
 
         # 3) aidat ornegi: daire A-12 + resident baglantisi + 2026-06 tahakkuk.
+        # Yerlesim (D-viz-1): A-12 -> blok A, kat 1, sira 2 (bina semasi verisi).
         unit_id = conn.execute(
             """
-            INSERT INTO unit (tenant_id, no, blok)
-            VALUES (%s, 'A-12', 'A')
-            ON CONFLICT (tenant_id, no) DO UPDATE SET blok = EXCLUDED.blok
+            INSERT INTO unit (tenant_id, no, blok, kat, sira)
+            VALUES (%s, 'A-12', 'A', 1, 2)
+            ON CONFLICT (tenant_id, no) DO UPDATE
+                SET blok = EXCLUDED.blok, kat = EXCLUDED.kat, sira = EXCLUDED.sira
             RETURNING id
             """,
             (tenant_id,),
@@ -198,7 +200,29 @@ def main() -> int:
             """,
             (tenant_id, unit_id),
         )
-        print(f"[seed] unit A-12 -> {unit_id} (+ resident baglantisi + 2026-06 tahakkuk 750.00 TL)")
+        print(
+            f"[seed] unit A-12 -> {unit_id} (blok A/kat 1/sira 2 + resident "
+            "baglantisi + 2026-06 tahakkuk 750.00 TL)"
+        )
+
+        # Yerlesim ornekleri (D-viz-1): sikayetsiz (yesil) birkac daire ki
+        # sonraki tur cizecegi harita dolu gorunsun. blok A: kat 1 (sira 1) +
+        # kat 2 (sira 1); blok B: kat 1 (sira 1).
+        for _no, _blok, _kat, _sira in [
+            ("A-5", "A", 1, 1),
+            ("A-9", "A", 2, 1),
+            ("B-7", "B", 1, 1),
+        ]:
+            conn.execute(
+                """
+                INSERT INTO unit (tenant_id, no, blok, kat, sira)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (tenant_id, no) DO UPDATE
+                    SET blok = EXCLUDED.blok, kat = EXCLUDED.kat, sira = EXCLUDED.sira
+                """,
+                (tenant_id, _no, _blok, _kat, _sira),
+            )
+        print("[seed] yerlesim ornek daireleri: A-5, A-9 (blok A), B-7 (blok B) — yesil")
 
         # 3b) BUTCE (Wave 2A): kategoriler + ornek defter + otomatik aidat→gelir.
         #     Para INTEGER KURUS. 'Aidat' otomatik gelir kategorisidir (basarili
@@ -438,10 +462,13 @@ def main() -> int:
         # 7b) ornek DAIRE-SIKAYETI (D1 — ANONIM yogunluk): A-12 YESIL (2 acik),
         #     yeni daire B-2 SARI (3 acik). Sikayet edenler ASLA gorunmez; bu
         #     yalniz renk/harita verisi uretir. complainant_user_id ic alandir.
+        # Yerlesim (D-viz-1): B-2 -> blok B, kat 0 (zemin), sira 2.
         conn.execute(
             """
-            INSERT INTO unit (tenant_id, no, blok) VALUES (%s, 'B-2', 'B')
-            ON CONFLICT (tenant_id, no) DO NOTHING
+            INSERT INTO unit (tenant_id, no, blok, kat, sira)
+            VALUES (%s, 'B-2', 'B', 0, 2)
+            ON CONFLICT (tenant_id, no) DO UPDATE
+                SET blok = EXCLUDED.blok, kat = EXCLUDED.kat, sira = EXCLUDED.sira
             """,
             (tenant_id,),
         )
@@ -473,7 +500,10 @@ def main() -> int:
                 """,
                 (tenant_id, tgt, _res_ids[email], kat, "Örnek daire şikayeti"),
             )
-        print("[seed] daire-sikayeti (D1 anonim): A-12 yesil (2 acik), B-2 sari (3 acik)")
+        print(
+            "[seed] daire-sikayeti (D1 anonim): A-12 yesil (2 acik, blok A/kat 1), "
+            "B-2 sari (3 acik, blok B/kat 0)"
+        )
 
         # 8) ortak alanlar + ornek rezervasyon: Havuz'da A-12 icin ONAYLI slot
         #    (cakisma kisiti/ekranlar veriyle denensin). Alan upsert (tenant+ad

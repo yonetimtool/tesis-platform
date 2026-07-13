@@ -14,16 +14,26 @@ const LIMIT = 20;
 interface FormState {
   no: string;
   blok: string;
+  kat: string;
+  sira: string;
   metrekare: string;
   aktif: boolean;
 }
-const EMPTY: FormState = { no: "", blok: "", metrekare: "", aktif: true };
+const EMPTY: FormState = { no: "", blok: "", kat: "", sira: "", metrekare: "", aktif: true };
 
 function numOrNull(s: string): number | null {
   const t = s.trim();
   if (t === "") return null;
   const n = Number(t);
   return Number.isFinite(n) ? n : null;
+}
+
+// Yerlesim: kat/sira tam sayi olmali (ondalik girilirse null -> gonderilmez).
+function intOrNull(s: string): number | null {
+  const t = s.trim();
+  if (t === "") return null;
+  const n = Number(t);
+  return Number.isInteger(n) ? n : null;
 }
 
 export default function UnitsPage() {
@@ -53,6 +63,8 @@ export default function UnitsPage() {
     setForm({
       no: u.no,
       blok: u.blok ?? "",
+      kat: u.kat != null ? String(u.kat) : "",
+      sira: u.sira != null ? String(u.sira) : "",
       metrekare: u.metrekare != null ? String(u.metrekare) : "",
       aktif: u.aktif,
     });
@@ -67,6 +79,8 @@ export default function UnitsPage() {
     const body = {
       no: form.no.trim(),
       blok: form.blok.trim() || null,
+      kat: intOrNull(form.kat),
+      sira: intOrNull(form.sira),
       metrekare: numOrNull(form.metrekare),
       aktif: form.aktif,
     };
@@ -137,11 +151,15 @@ export default function UnitsPage() {
                 required
               />
             </Field>
-            <Field label="Blok (opsiyonel)">
+            <Field label="Blok (opsiyonel)" hint="Kısa alfanumerik (örn. A, B1) — bina şeması">
               <input
                 className={inputCls}
                 value={form.blok}
                 onChange={(e) => setForm({ ...form, blok: e.target.value })}
+                pattern="[A-Za-z0-9]+"
+                maxLength={8}
+                title="Yalnızca harf ve sayı (örn. A, B1)"
+                placeholder="A"
               />
             </Field>
             <Field label="Metrekare (opsiyonel)">
@@ -150,6 +168,24 @@ export default function UnitsPage() {
                 inputMode="decimal"
                 value={form.metrekare}
                 onChange={(e) => setForm({ ...form, metrekare: e.target.value })}
+              />
+            </Field>
+            <Field label="Kat (opsiyonel)" hint="0 = zemin — bina şeması için">
+              <input
+                className={inputCls}
+                inputMode="numeric"
+                value={form.kat}
+                onChange={(e) => setForm({ ...form, kat: e.target.value })}
+                placeholder="1"
+              />
+            </Field>
+            <Field label="Sıra (opsiyonel)" hint="Kattaki konum/sıra (örn. 1, 2)">
+              <input
+                className={inputCls}
+                inputMode="numeric"
+                value={form.sira}
+                onChange={(e) => setForm({ ...form, sira: e.target.value })}
+                placeholder="2"
               />
             </Field>
           </div>
@@ -179,6 +215,7 @@ export default function UnitsPage() {
             <tr>
               <th className="px-3 py-2 font-medium">No</th>
               <th className="px-3 py-2 font-medium">Blok</th>
+              <th className="px-3 py-2 font-medium">Kat/Sıra</th>
               <th className="px-3 py-2 font-medium">m²</th>
               <th className="px-3 py-2 font-medium">Durum</th>
               <th className="px-3 py-2 font-medium" />
@@ -189,6 +226,9 @@ export default function UnitsPage() {
               <tr key={u.id} className="border-t border-slate-100">
                 <td className="px-3 py-2">{u.no}</td>
                 <td className="px-3 py-2 text-slate-600">{u.blok ?? "—"}</td>
+                <td className="px-3 py-2 text-slate-600">
+                  {u.kat != null || u.sira != null ? `${u.kat ?? "—"} / ${u.sira ?? "—"}` : "—"}
+                </td>
                 <td className="px-3 py-2 text-slate-600">{u.metrekare ?? "—"}</td>
                 <td className="px-3 py-2">
                   <span
@@ -219,7 +259,7 @@ export default function UnitsPage() {
             ))}
             {data && data.items.length === 0 && (
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={5}>
+                <td className="px-3 py-6 text-center text-muted" colSpan={6}>
                   Daire yok.
                 </td>
               </tr>

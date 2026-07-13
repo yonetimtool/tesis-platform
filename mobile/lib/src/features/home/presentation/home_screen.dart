@@ -378,6 +378,20 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.integrations),
           ),
         );
+      case HomeMenuEntry.binaYerlesimi:
+        // D-viz-1: daire yerlesimi (blok/kat/sira) girisi + anonim yogunluk
+        // onizlemesi. Yonetici yonetir; cizim (2D sema) sonraki tur.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.apartment_outlined),
+            title: const Text('Bina Yerleşimi'),
+            subtitle: const Text(
+              'Daire blok/kat/sıra girişi — şikayet yoğunluğu haritası',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.binaYerlesimi),
+          ),
+        );
     }
   }
 }
