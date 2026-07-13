@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'src/core/theme/app_theme.dart';
+import 'src/core/theme/theme_controller.dart';
 import 'src/features/push/presentation/push_registrar.dart';
 import 'src/features/push/presentation/push_setup.dart';
 import 'src/features/scan/data/scan_outbox.dart';
@@ -26,6 +28,7 @@ class TesisGuvenlikApp extends ConsumerWidget {
     // Push: login sonrasi FCM token kaydi (Firebase yoksa sessizce devre disi).
     ref.watch(pushSetupProvider);
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     // On planda gelen push → SnackBar; hedefi olan bildirimde "Ac" aksiyonu
     // ilgili ekrana goturur (on plan mesaji tepsiye dusmez — tiklama bu).
@@ -57,10 +60,9 @@ class TesisGuvenlikApp extends ConsumerWidget {
       title: 'Tesis Güvenlik',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1565C0)),
-        useMaterial3: true,
-      ),
+      theme: buildLightTheme(),
+      darkTheme: buildDarkTheme(),
+      themeMode: themeMode,
       routerConfig: router,
     );
   }

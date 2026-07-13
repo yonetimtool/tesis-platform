@@ -152,12 +152,15 @@ class _StructureNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Card(
+    return Card(
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Text(
           'Bina yerleşimi. Şikayet yoğunluğu yalnızca yönetime gösterilir.',
-          style: TextStyle(fontSize: 13, color: Colors.black54),
+          style: TextStyle(
+            fontSize: 13,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );
@@ -215,7 +218,9 @@ class _KatRow extends StatelessWidget {
           SizedBox(
             width: 52,
             child: Text('Kat ${kat.kat}',
-                style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ),
           Expanded(
             child: Wrap(
@@ -252,6 +257,8 @@ class _UnitCell extends StatelessWidget {
     // resident: KENDI sikayet ettigi daire vurgulanir (genel yogunluk DEGIL —
     // yalniz kendi kaydi). Diger daireler noturr kalir.
     final own = isResident && unit.benimSikayetim;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     final Color color;
     if (density) {
       color = densityColor(unit.color);
@@ -260,11 +267,14 @@ class _UnitCell extends StatelessWidget {
     } else {
       color = Colors.blueGrey.shade300;
     }
+    // Notr (yapi) hucre koyu modda beyaz yerine yuzey rengiyle harmanlanir;
+    // "kendi sikayetim" tinti koyu modda daha belirgin olur (seffaf dolgu koyu
+    // zeminde kaybolmasin).
     final Color fill = density
         ? color.withValues(alpha: 0.85)
         : own
-            ? color.withValues(alpha: 0.12)
-            : Colors.white;
+            ? color.withValues(alpha: isDark ? 0.30 : 0.12)
+            : (isDark ? scheme.surfaceContainerHighest : Colors.white);
     return InkWell(
       onTap: () => showUnitDetailSheet(context, unit, map: map, isResident: isResident),
       borderRadius: BorderRadius.circular(8),
@@ -286,8 +296,8 @@ class _UnitCell extends StatelessWidget {
                 color: density
                     ? Colors.white
                     : own
-                        ? _ownComplaintColor
-                        : Colors.black87,
+                        ? (isDark ? const Color(0xFF9FA8DA) : _ownComplaintColor)
+                        : (isDark ? scheme.onSurface : Colors.black87),
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
@@ -301,7 +311,9 @@ class _UnitCell extends StatelessWidget {
               )
             // resident: KENDI sikayeti iletildi isareti (genel yogunluk yok).
             else if (own)
-              const Icon(Icons.check_circle, size: 13, color: _ownComplaintColor),
+              Icon(Icons.check_circle,
+                  size: 13,
+                  color: isDark ? const Color(0xFF9FA8DA) : _ownComplaintColor),
           ],
         ),
       ),
@@ -322,8 +334,11 @@ class _UnplacedList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
-      color: Colors.amber.shade50,
+      // Uyari tonu: koyu modda seffaf amber (metin yuzey rengiyle okunur kalir),
+      // acik modda acik amber.
+      color: isDark ? const Color(0x33FFB300) : Colors.amber.shade50,
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -466,9 +481,10 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
               const SizedBox(height: 6),
               SizedBox(height: 160, child: _OwnComplaintList(future: _future)),
             ] else
-              const Text(
+              Text(
                 'Şikayet yoğunluğu yalnızca yönetime gösterilir.',
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             if (widget.isResident) ...[
               const Divider(),
@@ -678,9 +694,11 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
           Text('Daire ${widget.unit.unitNo} — şikayet et',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Şikayetiniz yönetime iletilir; komşularınıza gösterilmez.',
-            style: TextStyle(fontSize: 12, color: Colors.black54),
+            style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<UnitComplaintKategori>(

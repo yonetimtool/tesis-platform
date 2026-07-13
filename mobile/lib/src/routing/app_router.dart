@@ -25,6 +25,7 @@ import '../features/patrol/presentation/patrol_tracking_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
 import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
+import '../features/settings/presentation/settings_screen.dart';
 import '../features/site_kurali/presentation/site_kurali_screen.dart';
 import '../features/tasks/domain/task_models.dart';
 import '../features/tasks/presentation/task_categories_screen.dart';
@@ -69,6 +70,7 @@ class AppRoutes {
   static const binaDuzenleme = '/bina-duzenleme';
   static const sikayetHaritasi = '/sikayet-haritasi';
   static const sikayetlerim = '/sikayetlerim';
+  static const settings = '/settings';
 }
 
 /// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
@@ -307,6 +309,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         // ekranindaki AppBar aksiyonundan. Backend RBAC yazmayi zorlar.
         path: AppRoutes.taskCategories,
         builder: (context, state) => const TaskCategoriesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (context, state) => const SettingsScreen(),
       ),
     ],
     redirect: (context, state) {

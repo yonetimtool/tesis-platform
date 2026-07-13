@@ -31,7 +31,7 @@ class _FakeApi extends BinaDuzenlemeApi {
 
   @override
   Future<BuildingBlock> createBlock(BlockDraft draft) async {
-    final b = BuildingBlock(id: 'b${_seq++}', ad: draft.ad, katSayisi: draft.katSayisi);
+    final b = BuildingBlock(id: 'b${_seq++}', ad: draft.ad);
     _blocks.add(b);
     return b;
   }
@@ -39,7 +39,7 @@ class _FakeApi extends BinaDuzenlemeApi {
   @override
   Future<BuildingBlock> updateBlock(String blockId, BlockDraft draft) async {
     final i = _blocks.indexWhere((b) => b.id == blockId);
-    final updated = BuildingBlock(id: blockId, ad: draft.ad, katSayisi: draft.katSayisi);
+    final updated = BuildingBlock(id: blockId, ad: draft.ad);
     if (i >= 0) _blocks[i] = updated;
     return updated;
   }

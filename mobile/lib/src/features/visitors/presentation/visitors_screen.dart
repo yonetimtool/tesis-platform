@@ -371,9 +371,11 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Sakine yalnızca bilgilendirme gider (onay istenmez).',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             TextFormField(

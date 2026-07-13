@@ -23,12 +23,11 @@ interface BlockFormState {
   open: boolean;
   editingId: string | null;
   ad: string;
-  katSayisi: string;
   err: string | null;
   saving: boolean;
 }
 const EMPTY_BLOCK: BlockFormState = {
-  open: false, editingId: null, ad: "", katSayisi: "", err: null, saving: false,
+  open: false, editingId: null, ad: "", err: null, saving: false,
 };
 
 interface UnitFormState {
@@ -90,7 +89,7 @@ export default function BuildingEditorPage() {
   async function saveBlock(e: React.FormEvent) {
     e.preventDefault();
     setBlockForm((f) => ({ ...f, saving: true, err: null }));
-    const body = { ad: blockForm.ad.trim(), kat_sayisi: intOrNull(blockForm.katSayisi) };
+    const body = { ad: blockForm.ad.trim() };
     try {
       if (blockForm.editingId) await apiSend(`/api/blocks/${blockForm.editingId}`, "PATCH", body);
       else await apiSend("/api/blocks", "POST", body);
@@ -160,7 +159,6 @@ export default function BuildingEditorPage() {
   function openEditBlock(b: Block) {
     setBlockForm({
       open: true, editingId: b.id, ad: b.ad,
-      katSayisi: b.kat_sayisi != null ? String(b.kat_sayisi) : "",
       err: null, saving: false,
     });
   }
@@ -222,7 +220,7 @@ export default function BuildingEditorPage() {
       {blockForm.open && (
         <form onSubmit={saveBlock} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
           <h2 className="font-medium">{blockForm.editingId ? "Blok düzenle" : "Yeni blok"}</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:max-w-xs">
             <Field label="Blok etiketi" hint="Kısa alfanumerik (örn. A, B1) — tire yok">
               <input
                 className={inputCls}
@@ -233,15 +231,6 @@ export default function BuildingEditorPage() {
                 title="Yalnızca harf ve sayı (örn. A, B1)"
                 placeholder="A"
                 required
-              />
-            </Field>
-            <Field label="Kat sayısı (opsiyonel)" hint="Bilgi amaçlı ipucu">
-              <input
-                className={inputCls}
-                inputMode="numeric"
-                value={blockForm.katSayisi}
-                onChange={(e) => setBlockForm({ ...blockForm, katSayisi: e.target.value })}
-                placeholder="5"
               />
             </Field>
           </div>

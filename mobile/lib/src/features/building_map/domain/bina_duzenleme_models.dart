@@ -18,19 +18,16 @@ class BuildingBlock {
   const BuildingBlock({
     required this.id,
     required this.ad,
-    this.katSayisi,
     this.unitSayisi = 0,
   });
 
   final String id;
   final String ad;
-  final int? katSayisi;
   final int unitSayisi;
 
   factory BuildingBlock.fromJson(Map<String, dynamic> json) => BuildingBlock(
         id: json['id'] as String? ?? '',
         ad: json['ad'] as String? ?? '',
-        katSayisi: (json['kat_sayisi'] as num?)?.toInt(),
         unitSayisi: (json['unit_sayisi'] as num?)?.toInt() ?? 0,
       );
 }
@@ -63,17 +60,15 @@ class EditorUnit {
       );
 }
 
-/// `POST/PATCH /blocks` govdesi — blok etiketi (kisa alfanumerik, tire YOK) +
-/// opsiyonel kat sayisi ipucu.
+/// `POST/PATCH /blocks` govdesi — blok etiketi (kisa alfanumerik, tire YOK).
+/// Katlar blok kurulumunda degil, kat "+" akisinda eklenir.
 class BlockDraft {
-  const BlockDraft({required this.ad, this.katSayisi});
+  const BlockDraft({required this.ad});
 
   final String ad;
-  final int? katSayisi;
 
   Map<String, dynamic> toJson() => {
         'ad': ad,
-        if (katSayisi != null) 'kat_sayisi': katSayisi,
       };
 }
 

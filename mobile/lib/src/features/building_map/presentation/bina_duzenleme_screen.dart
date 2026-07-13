@@ -171,11 +171,13 @@ class _BlockList extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         ?errorBanner,
-        const Text(
+        Text(
           'Blok ekleyin, kutucuğa dokunup içine kat ve daire yerleştirin. '
           'Blok kullanmıyorsanız "Bloksuz" kutusundan düz numarayla daire ekleyin. '
           'Şikayet Haritası bu yapıyı yansıtır.',
-          style: TextStyle(fontSize: 13, color: Colors.black54),
+          style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -227,6 +229,14 @@ class _BlockTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    const accent = Color(0xFF3949AB);
+    final Color tileFill =
+        isDark ? accent.withValues(alpha: 0.22) : const Color(0xFFE8EAF6);
+    final Color iconColor = isDark ? const Color(0xFF9FA8DA) : accent;
+    final Color titleColor =
+        isDark ? const Color(0xFFC5CAE9) : const Color(0xFF283593);
     return InkWell(
       onTap: onTap,
       onLongPress: onManage,
@@ -235,26 +245,27 @@ class _BlockTile extends StatelessWidget {
         width: 104,
         height: 104,
         decoration: BoxDecoration(
-          color: const Color(0xFFE8EAF6),
+          color: tileFill,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF3949AB), width: 1.2),
+          border: Border.all(color: accent, width: 1.2),
         ),
         padding: const EdgeInsets.all(8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon ?? Icons.domain, color: const Color(0xFF3949AB)),
+            Icon(icon ?? Icons.domain, color: iconColor),
             const SizedBox(height: 4),
             Text(
               icon == null ? 'Blok $label' : label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF283593),
+                color: titleColor,
               ),
               overflow: TextOverflow.ellipsis,
             ),
             Text('$unitCount daire',
-                style: const TextStyle(fontSize: 11, color: Colors.black54)),
+                style: TextStyle(
+                    fontSize: 11, color: scheme.onSurfaceVariant)),
             if (!registered)
               const Text('kayıtsız',
                   style: TextStyle(fontSize: 10, color: Colors.orange)),
@@ -272,6 +283,11 @@ class _AddTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final Color fill =
+        isDark ? scheme.surfaceContainerHighest : Colors.blueGrey.shade50;
+    final Color fg = isDark ? scheme.onSurfaceVariant : Colors.blueGrey;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -281,14 +297,14 @@ class _AddTile extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.blueGrey.shade300, width: 1.2, style: BorderStyle.solid),
-          color: Colors.blueGrey.shade50,
+          color: fill,
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add, color: Colors.blueGrey),
-            SizedBox(height: 4),
-            Text('Blok', style: TextStyle(color: Colors.blueGrey)),
+            Icon(Icons.add, color: fg),
+            const SizedBox(height: 4),
+            Text('Blok', style: TextStyle(color: fg)),
           ],
         ),
       ),
@@ -340,7 +356,9 @@ class _BlockDetail extends ConsumerWidget {
           _blockless
               ? 'Bloksuz daireler — düz numaralandırma. Kat ekleyip her katın "+" düğmesiyle daire ekleyin.'
               : 'Blok $label — kat ekleyip her katın "+" düğmesiyle daire ekleyin. Aynı kattakiler yan yana dizilir.',
-          style: const TextStyle(fontSize: 13, color: Colors.black54),
+          style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 12),
         Align(
@@ -353,11 +371,13 @@ class _BlockDetail extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         if (floors.isEmpty && katsizUnits.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: Text('Henüz kat yok. "Kat ekle" ile başlayın, sonra kattaki "+" ile daire ekleyin.',
-                  style: TextStyle(color: Colors.black54), textAlign: TextAlign.center),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  textAlign: TextAlign.center),
             ),
           ),
         for (final kat in floors)
@@ -477,7 +497,14 @@ class _UnitCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = unit.aktif;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     final color = active ? const Color(0xFF3949AB) : Colors.blueGrey;
+    // Seffaf dolgu koyu zeminde kaybolmasin diye koyu modda tinti belirginlestir;
+    // etiket rengini de aciga cek (koyu indigo/blueGrey koyu modda okunmaz).
+    final Color labelColor = active
+        ? (isDark ? const Color(0xFFC5CAE9) : const Color(0xFF283593))
+        : (isDark ? Colors.blueGrey.shade200 : Colors.blueGrey);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -485,7 +512,7 @@ class _UnitCell extends StatelessWidget {
         width: 58,
         height: 46,
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
+          color: color.withValues(alpha: isDark ? 0.28 : 0.10),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color, width: 1.5),
         ),
@@ -496,7 +523,7 @@ class _UnitCell extends StatelessWidget {
             Text(
               unit.no,
               style: TextStyle(
-                color: active ? const Color(0xFF283593) : Colors.blueGrey,
+                color: labelColor,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
@@ -504,7 +531,9 @@ class _UnitCell extends StatelessWidget {
             ),
             if (unit.sira != null)
               Text('#${unit.sira}',
-                  style: const TextStyle(fontSize: 10, color: Colors.black45)),
+                  style: TextStyle(
+                      fontSize: 10,
+                      color: scheme.onSurfaceVariant)),
           ],
         ),
       ),
@@ -625,15 +654,12 @@ class _BlockForm extends ConsumerStatefulWidget {
 class _BlockFormState extends ConsumerState<_BlockForm> {
   late final TextEditingController _ad =
       TextEditingController(text: widget.existing?.ad ?? '');
-  late final TextEditingController _katSayisi = TextEditingController(
-      text: widget.existing?.katSayisi?.toString() ?? '');
   bool _busy = false;
   String? _error;
 
   @override
   void dispose() {
     _ad.dispose();
-    _katSayisi.dispose();
     super.dispose();
   }
 
@@ -644,17 +670,11 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
       setState(() => _error = 'Blok etiketi gerekli (örn. A, B1).');
       return;
     }
-    final katText = _katSayisi.text.trim();
-    final katSayisi = katText.isEmpty ? null : int.tryParse(katText);
-    if (katText.isNotEmpty && katSayisi == null) {
-      setState(() => _error = 'Kat sayısı tam sayı olmalı.');
-      return;
-    }
     setState(() {
       _busy = true;
       _error = null;
     });
-    final draft = BlockDraft(ad: ad, katSayisi: katSayisi);
+    final draft = BlockDraft(ad: ad);
     final controller = ref.read(binaDuzenlemeControllerProvider.notifier);
     try {
       if (widget.existing != null) {
@@ -702,16 +722,6 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
               labelText: 'Blok etiketi',
               hintText: 'A',
               helperText: 'Kısa alfanumerik (örn. A, B1) — tire yok',
-            ),
-          ),
-          TextField(
-            controller: _katSayisi,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(
-              labelText: 'Kat sayısı (opsiyonel)',
-              hintText: '5',
-              helperText: 'Bilgi amaçlı ipucu',
             ),
           ),
           if (_error != null) ...[

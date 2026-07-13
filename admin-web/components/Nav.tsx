@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
+import { ThemeToggle } from "@/components/ThemeToggle";
+
 const LINKS = [
   { href: "/dashboard", label: "Canlı Panel" },
   { href: "/shifts", label: "Vardiyalar" },
@@ -58,12 +60,15 @@ export function Nav() {
             })}
           </nav>
         </div>
-        <button
-          onClick={logout}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
-        >
-          Çıkış
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            onClick={logout}
+            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+          >
+            Çıkış
+          </button>
+        </div>
       </div>
     </header>
   );
