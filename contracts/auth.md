@@ -243,6 +243,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST/PATCH /users*` (tam)            |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `PATCH /users/{id}/contact`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET /call-target/{id}`               |  ❌   | ❌  | 📞  | ❌  | 📞  |
+| `*/integrations*` (CRUD + tetik)      |  ✅   | ✅  | ❌  | ❌  | ❌  |
 
 > **Giris yollari:** `login`/`login-resident`/`set-password` PUBLIC
 > endpoint'lerdir; matris "hangi rol bu yolu kullanir"i gosterir. Sakinin
@@ -454,6 +455,29 @@ Notlar:
     `phone` (tel:). C1b (megafon/akilli-ev HTTP adaptorleri) yeni kanal + resolver
     ekler — sema/kapi yeniden yazilmaz. (Teknik data-minimization; hukuki tavsiye
     degil.)
+- **Dis sistem entegrasyonlari (`/integrations`, C1b — SSRF-KORUMALI TETIK):**
+  admin/yonetici bir dis ucu (megafon/akilli-ev/generic webhook) API detaylariyla
+  tanimlar; tetiklenince sistem gercek HTTP istegi gonderir. C1a kanal
+  soyutlamasini genisletir (`channel_type`: webhook/megaphone/smarthome — phone'un
+  yaninda; kod yeniden yazilmaz).
+  - **RBAC:** CRUD + tetik YALNIZ `admin`+`yonetici`; digerleri **403**.
+  - **PRESET'ler (`GET /integrations/presets`):** generic webhook uzerinde makul
+    varsayilanlar (marka-bagimsiz sablonlar — gercek cihaz surucusu DEGIL);
+    form on-doldurur, kullanici duzenler.
+  - **SIR (`auth_secret`) — WRITE-ONLY:** KEK ile AES-GCM sifreli saklanir
+    (NTAG SDM deseni), GET'te **ASLA donmez** (`auth_secret_set` bool doner).
+  - **⚠️ SSRF KAPISI (non-negotiable, `POST /integrations/{id}/trigger`):**
+    numara/ic-hedef gizliligi degil, **ic ag erisimi** riski. Kapi: (1) yalniz
+    `http(s)`; (2) host **DNS ile cozulur ve DONEN HER IP denetlenir** —
+    hostname'e guvenilmez (DNS-rebinding: public gorunup private'a cozulen adres
+    de reddedilir); (3) engellenenler: `127.0.0.0/8`, `10/8`, `172.16/12`,
+    `192.168/16`, `169.254/16` (bulut metadata), `::1`, `fc00::/7`, `fe80::/10`,
+    reserved/multicast/unspecified; (4) **redirect TAKIP EDILMEZ**; (5) timeout +
+    yanit-boyutu siniri; (6) **IP-PIN (TOCTOU/rebind kapatma):** cozulen IP'ler
+    baglantida sabitlenir — dogrula-sonra-baglan araligindaki DNS-rebinding
+    (public dogrulanip private'a baglanma) engellenir; URL host degismez, TLS
+    SNI/sertifika orijinal hostname'e gore dogrulanir. Engellenen tetik
+    `{ok:false, error}` doner (istek ic aga CIKMAZ).
 - **Ortak alan rezervasyonu (`/common-areas` + `/reservations`):** yonetici
   alan tanimlar (havuz/teras/toplanti odasi), sakin slot talep eder, yonetici
   onaylar/reddeder; tam gecmis tutulur.

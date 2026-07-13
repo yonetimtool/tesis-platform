@@ -1632,3 +1632,117 @@ class FinancialSummary(BaseModel):
     bakiye_kurus: int
     en_yuksek_giderler: list[GiderKalemi]
     tahsilat: TahsilatOzet | None = None
+
+
+# --------------------- integrations (C1b — entegrasyon) --------------------- #
+IntegrationChannel = Literal["webhook", "megaphone", "smarthome"]
+HttpMethod = Literal["GET", "POST", "PUT", "PATCH"]
+AuthType = Literal["none", "bearer", "api_key"]
+
+
+def _validate_public_scheme(url: str) -> str:
+    # Sema kapisi (tam SSRF kapisi TETIK aninda — DNS cozumu + IP denetimi).
+    if not (url.startswith("http://") or url.startswith("https://")):
+        raise ValueError("endpoint_url http(s) olmali")
+    return url
+
+
+class IntegrationCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=200)
+    channel_type: IntegrationChannel = "webhook"
+    endpoint_url: str = Field(..., min_length=1, max_length=2000)
+    http_method: HttpMethod = "POST"
+    headers_json: dict[str, str] = Field(default_factory=dict)
+    auth_type: AuthType = "none"
+    # Write-only: yalniz yazilir, GET'te ASLA donmez. KEK ile sifreli saklanir.
+    auth_secret: str | None = Field(None, max_length=4000)
+    payload_template: str = Field("", max_length=8000)
+    aktif: bool = True
+
+    @field_validator("endpoint_url")
+    @classmethod
+    def _scheme(cls, v: str) -> str:
+        return _validate_public_scheme(v)
+
+
+class IntegrationUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=200)
+    channel_type: IntegrationChannel | None = None
+    endpoint_url: str | None = Field(None, min_length=1, max_length=2000)
+    http_method: HttpMethod | None = None
+    headers_json: dict[str, str] | None = None
+    auth_type: AuthType | None = None
+    auth_secret: str | None = Field(None, max_length=4000)
+    payload_template: str | None = Field(None, max_length=8000)
+    aktif: bool | None = None
+
+    @field_validator("endpoint_url")
+    @classmethod
+    def _scheme(cls, v: str | None) -> str | None:
+        return None if v is None else _validate_public_scheme(v)
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "IntegrationUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class IntegrationOut(BaseModel):
+    """GET ciktisi — SIR ASLA donmez; yerine auth_secret_set (bool)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    channel_type: str
+    endpoint_url: str
+    http_method: str
+    headers_json: dict[str, str] = Field(default_factory=dict)
+    auth_type: str
+    # Sirrin VARLIGI bildirilir; sirrin KENDISI donmez (write-only).
+    auth_secret_set: bool = False
+    payload_template: str
+    aktif: bool
+    created_at: datetime
+
+    @classmethod
+    def from_model(cls, obj) -> "IntegrationOut":
+        return cls(
+            id=obj.id,
+            ad=obj.ad,
+            channel_type=obj.channel_type,
+            endpoint_url=obj.endpoint_url,
+            http_method=obj.http_method,
+            headers_json=obj.headers_json or {},
+            auth_type=obj.auth_type,
+            auth_secret_set=bool(obj.auth_secret_enc),
+            payload_template=obj.payload_template,
+            aktif=obj.aktif,
+            created_at=obj.created_at,
+        )
+
+
+class IntegrationListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[IntegrationOut]
+
+
+class IntegrationTriggerIn(BaseModel):
+    # Opsiyonel: payload_template yer tutucularini doldurur.
+    message: str = Field("", max_length=2000)
+    title: str = Field("", max_length=500)
+
+
+class IntegrationTriggerOut(BaseModel):
+    ok: bool
+    status: int | None = None
+    error: str | None = None
+
+
+class IntegrationPresetOut(BaseModel):
+    key: str
+    channel_type: str
+    http_method: str
+    headers_json: dict[str, str]
+    payload_template: str

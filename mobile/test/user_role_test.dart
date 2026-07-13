@@ -298,6 +298,20 @@ void main() {
       }
     });
 
+    test('entegrasyon yonetimi (C1b): admin+yonetici; digerleri YOK', () {
+      for (final role in [UserRole.admin, UserRole.yonetici]) {
+        expect(role.canManageIntegrations, isTrue, reason: role.wire);
+      }
+      for (final role in [
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+        UserRole.unknown,
+      ]) {
+        expect(role.canManageIntegrations, isFalse, reason: role.wire);
+      }
+    });
+
     test('TR gorunen adlar (dogru diyakritikli, tutarli set)', () {
       expect(UserRole.admin.label, 'Platform Admin');
       expect(UserRole.yonetici.label, 'Yönetici');

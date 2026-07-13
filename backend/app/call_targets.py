@@ -22,8 +22,22 @@ CALL_DIRECTIONS: dict[str, set[str]] = {
     "resident": {"security"},
 }
 
-# Bu turda uygulanan tek kanal. C1b yeni deger + resolver ekler.
+# C1a kanali: cihaz ceviricisi (tel:).
 CHANNEL_PHONE = "phone"
+
+# C1b entegrasyon kanallari — call/notify soyutlamasini GENISLETIR (phone'a
+# dokunmadan). Bir Integration'in channel_type'i dogrudan bir kanal degeridir;
+# tetikleme app.routers.integrations (SSRF-korumali) uzerinden yapilir. Boylece
+# "yeni kanal" eklemek = yeni Integration tanimlamak, kod yeniden yazmak DEGIL.
+CHANNEL_INTEGRATION = frozenset({"webhook", "megaphone", "smarthome"})
+
+# Sistemin tanidigi tum kanallar (C1a phone + C1b entegrasyon kanallari).
+KNOWN_CHANNELS = frozenset({CHANNEL_PHONE}) | CHANNEL_INTEGRATION
+
+
+def is_integration_channel(channel: str) -> bool:
+    """Kanal bir C1b entegrasyon kanali mi (Integration ile cozulur)?"""
+    return channel in CHANNEL_INTEGRATION
 
 
 @dataclass(frozen=True)

@@ -120,6 +120,13 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE rezervasyon_durum AS ENUM ('bekliyor', 'onaylandi', 'reddedildi');"
     )
+    # Entegrasyon kanal turu (C1b): generic webhook temel; megafon/akilli-ev
+    # PRESET'leri de generic webhook uzerinde calisir (marka-bagimsiz). C1a
+    # 'phone' kanalinin yanina eklenir (call/notify soyutlamasi genisler).
+    op.execute(
+        "CREATE TYPE integration_channel AS ENUM "
+        "('webhook', 'megaphone', 'smarthome');"
+    )
     # etkinlik RSVP durumu (sakin katilim beyani; degistirilebilir).
     op.execute(
         "CREATE TYPE katilim_durum AS ENUM ('katiliyorum', 'katilmiyorum');"
@@ -1374,6 +1381,42 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9z9. integration  (C1b — dis sistem entegrasyon konfigurasyonu:
+    #     admin/yonetici bir dis ucu (megafon/akilli-ev/generic webhook)
+    #     tanimlar; tetiklenince SSRF-korumali HTTP istegi gonderilir.
+    #     auth_secret KEK ile sifreli saklanir; GET'te ASLA donmez (write-only).
+    #     tenant izole (RLS). channel_type C1a kanal soyutlamasini genisletir.)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE integration (
+            id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id        uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            ad               text NOT NULL,
+            channel_type     integration_channel NOT NULL DEFAULT 'webhook',
+            endpoint_url     text NOT NULL,       -- YALNIZ public http(s); SSRF kapisi tetikte
+            http_method      text NOT NULL DEFAULT 'POST',
+            headers_json     jsonb NOT NULL DEFAULT '{}'::jsonb,  -- gizli OLMAYAN ek header'lar
+            auth_type        text NOT NULL DEFAULT 'none',        -- none | bearer | api_key
+            auth_secret_enc  text,                -- KEK ile sifreli; GET'te donmez (write-only)
+            payload_template text NOT NULL DEFAULT '',            -- {{message}}/{{title}} placeholder
+            aktif            boolean NOT NULL DEFAULT true,
+            created_at       timestamptz NOT NULL DEFAULT now(),
+            updated_at       timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_integration_id_tenant UNIQUE (id, tenant_id),
+            CONSTRAINT ck_integration_method
+                CHECK (http_method IN ('GET', 'POST', 'PUT', 'PATCH')),
+            CONSTRAINT ck_integration_auth
+                CHECK (auth_type IN ('none', 'bearer', 'api_key'))
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_integration_tenant ON integration (tenant_id);")
+    op.execute(
+        "CREATE INDEX ix_integration_tenant_aktif ON integration (tenant_id, aktif);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -1413,6 +1456,7 @@ def upgrade() -> None:
         "etkinlik",
         "etkinlik_katilim",
         "site_kurali",
+        "integration",
     ):
         _enable_rls(table)
 
@@ -1451,6 +1495,7 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "integration",
         "site_kurali",
         "etkinlik_katilim",
         "etkinlik",
@@ -1487,6 +1532,7 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS integration_channel;")
     op.execute("DROP TYPE IF EXISTS katilim_durum;")
     op.execute("DROP TYPE IF EXISTS rezervasyon_durum;")
     op.execute("DROP TYPE IF EXISTS access_request_durum;")

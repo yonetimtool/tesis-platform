@@ -440,3 +440,38 @@ export interface TenantSettings {
   timezone: string;
   acil_durum_telefon?: string | null;
 }
+
+// --------------------------- integrations (C1b) ---------------------------- #
+export type IntegrationChannel = "webhook" | "megaphone" | "smarthome";
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH";
+export type AuthType = "none" | "bearer" | "api_key";
+
+export interface Integration {
+  id: string;
+  ad: string;
+  channel_type: IntegrationChannel;
+  endpoint_url: string;
+  http_method: HttpMethod;
+  headers_json: Record<string, string>;
+  auth_type: AuthType;
+  auth_secret_set: boolean; // sir kendisi ASLA donmez (write-only)
+  payload_template: string;
+  aktif: boolean;
+  created_at: string;
+}
+export interface IntegrationList {
+  meta: PageMeta;
+  items: Integration[];
+}
+export interface IntegrationPreset {
+  key: string;
+  channel_type: IntegrationChannel;
+  http_method: HttpMethod;
+  headers_json: Record<string, string>;
+  payload_template: string;
+}
+export interface IntegrationTriggerResult {
+  ok: boolean;
+  status?: number | null;
+  error?: string | null;
+}

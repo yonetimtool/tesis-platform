@@ -143,4 +143,8 @@ enum UserRole {
   /// Site kurali ekle/duzenle/sil (`POST/PATCH/DELETE /site-rules`) —
   /// admin + yonetici; okuma bilinen tum rollerde (auth.md §4).
   bool get canManageSiteRules => this == admin || this == yonetici;
+
+  /// Dis sistem entegrasyonlari (`/integrations`, C1b — CRUD + tetik) —
+  /// admin + yonetici. admin panelden, yonetici mobilden yonetir (auth.md §4).
+  bool get canManageIntegrations => this == admin || this == yonetici;
 }

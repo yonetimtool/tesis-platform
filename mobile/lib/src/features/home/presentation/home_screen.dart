@@ -364,6 +364,20 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.siteKurallari),
           ),
         );
+      case HomeMenuEntry.integrations:
+        // C1b: dis sistem entegrasyonlari (megafon/akilli-ev/webhook) — konfig
+        // + SSRF-korumali tetik. Yonetici yonetir.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.hub_outlined),
+            title: const Text('Entegrasyonlar'),
+            subtitle: const Text(
+              'Dış sistemler (megafon/akıllı ev/webhook) — kur, tetikle',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.integrations),
+          ),
+        );
     }
   }
 }

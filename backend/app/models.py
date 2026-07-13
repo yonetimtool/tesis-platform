@@ -29,7 +29,7 @@ from sqlalchemy import (
     UniqueConstraint,
     text,
 )
-from sqlalchemy.dialects.postgresql import ENUM, TIMESTAMP, UUID
+from sqlalchemy.dialects.postgresql import ENUM, JSONB, TIMESTAMP, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -122,6 +122,10 @@ REZERVASYON_DURUM = ENUM(
 KATILIM_DURUM = ENUM(
     "katiliyorum", "katilmiyorum",
     name="katilim_durum", create_type=False,
+)
+INTEGRATION_CHANNEL = ENUM(
+    "webhook", "megaphone", "smarthome",
+    name="integration_channel", create_type=False,
 )
 
 
@@ -1385,6 +1389,48 @@ class UserDevice(Base):
     updated_at = _created_at()
 
 
+class Integration(Base):
+    """Dis sistem entegrasyon konfigurasyonu (C1b).
+
+    admin/yonetici bir dis ucu (megafon/akilli-ev/generic webhook) tanimlar;
+    tetiklenince SSRF-korumali HTTP istegi gonderilir. `auth_secret_enc` KEK ile
+    sifreli saklanir ve GET'te ASLA donmez (write-only). channel_type C1a kanal
+    soyutlamasini genisletir (phone + webhook/megaphone/smarthome).
+    """
+
+    __tablename__ = "integration"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_integration_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    channel_type: Mapped[str] = mapped_column(
+        INTEGRATION_CHANNEL, nullable=False, server_default=text("'webhook'")
+    )
+    endpoint_url: Mapped[str] = mapped_column(Text, nullable=False)
+    http_method: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'POST'")
+    )
+    headers_json: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    auth_type: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'none'")
+    )
+    # KEK ile sifreli auth sirri (write-only); GET yanitinda donmez.
+    auth_secret_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
+    payload_template: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("''")
+    )
+    aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
 __all__ = [
     "Base",
     "Tenant",
@@ -1431,4 +1477,6 @@ __all__ = [
     "KARGO_DURUM",
     "REZERVASYON_DURUM",
     "KATILIM_DURUM",
+    "Integration",
+    "INTEGRATION_CHANNEL",
 ]

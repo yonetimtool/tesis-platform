@@ -105,6 +105,7 @@ void main() {
           HomeMenuEntry.budget,
           HomeMenuEntry.financialSummary,
           HomeMenuEntry.reports,
+          HomeMenuEntry.integrations,
         ],
       );
       // ziyaretci/kargo DOGRUDAN GORMEZ (KVKK — varsayilan kapali)
@@ -115,6 +116,26 @@ void main() {
       expect(menu, isNot(contains(HomeMenuEntry.assets)));
       expect(menu, isNot(contains(HomeMenuEntry.outbox)));
       expect(menu, isNot(contains(HomeMenuEntry.patrol))); // Turlarim degil
+    });
+
+    test('Entegrasyonlar karti (C1b): YALNIZ yonetici mobil menusunde; '
+        'admin panelden yonetir, saha/sakin YOK', () {
+      expect(
+        homeMenuForRole(UserRole.yonetici),
+        contains(HomeMenuEntry.integrations),
+      );
+      for (final role in [
+        UserRole.admin,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.integrations)),
+          reason: role.wire,
+        );
+      }
     });
 
     test('Butce karti (Wave 2A) YALNIZ yonetici menusunde — sakin okumasi '

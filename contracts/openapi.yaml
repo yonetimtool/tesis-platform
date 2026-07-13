@@ -3322,10 +3322,148 @@ paths:
         (cihaz ceviricisi, tel:); C1b baska kanallar ekleyecek.
       responses:
         "200":
-          description: Cozuldu — numara + tel: URI (yalniz burada aciklanir)
+          description: "Cozuldu — numara + tel: URI (yalniz burada aciklanir)"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CallTarget" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ================================================================= #
+  # INTEGRATIONS (C1b — dis sistem entegrasyon konfig + SSRF-korumali tetik;
+  # admin+yonetici yonetir; sir write-only; tetik ic/ozel hedefleri reddeder)
+  # ================================================================= #
+  /integrations:
+    get:
+      tags: [integrations]
+      summary: Entegrasyon listesi (admin+yonetici)
+      description: Sir (auth_secret) DONMEZ; yerine auth_secret_set (bool).
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          required: false
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Integration" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [integrations]
+      summary: Entegrasyon olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IntegrationCreate" }
+      responses:
+        "201":
+          description: Olusturuldu (sir DONMEZ)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Integration" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /integrations/presets:
+    get:
+      tags: [integrations]
+      summary: Preset sablonlari (form on-doldurma; admin+yonetici)
+      description: >
+        Generic webhook uzerinde makul varsayilanlar (webhook/megaphone/
+        smarthome). Gercek cihaz surucusu DEGIL — duzenlenebilir sablonlar.
+      responses:
+        "200":
+          description: Preset listesi
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/IntegrationPreset" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /integrations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [integrations]
+      summary: Entegrasyon detay (admin+yonetici; sir DONMEZ)
+      responses:
+        "200":
+          description: Detay
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Integration" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [integrations]
+      summary: Entegrasyon guncelle (admin+yonetici)
+      description: >
+        auth_secret WRITE-ONLY (verilirse yeniden sifrelenir; auth_type=none ise
+        temizlenir). endpoint_url http(s) olmali (tam SSRF kapisi tetikte).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IntegrationUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Integration" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [integrations]
+      summary: Entegrasyon sil (admin+yonetici)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /integrations/{id}/trigger:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [integrations]
+      summary: Entegrasyonu tetikle — SSRF-korumali HTTP gonderir (admin+yonetici)
+      description: |
+        payload_template ({{message}}/{{title}}) render edilir; auth siri (varsa)
+        header'a eklenir; **SSRF kapisindan gecen** URL'e HTTP istegi gonderilir.
+        Ic/ozel/metadata/loopback/link-local hedefler REDDEDILIR (DNS cozulup
+        IP denetlenir — DNS-rebinding korumasi). Redirect TAKIP EDILMEZ. Donen
+        {ok, status, error}: 2xx -> ok=true; SSRF engeli / ag / HTTP hatasi ->
+        ok=false + error.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IntegrationTrigger" }
+      responses:
+        "200":
+          description: Tetik sonucu (ok/status/error)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntegrationTriggerResult" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -3553,6 +3691,95 @@ components:
         channel: { type: string, enum: [phone], description: "C1a: phone; C1b genisletir" }
         telefon: { type: string }
         tel_uri: { type: string, example: "tel:+905321112203" }
+
+    # ----------------------- integrations (C1b) -------------------- #
+    Integration:
+      type: object
+      description: >
+        Entegrasyon konfig CIKTISI — auth_secret ASLA donmez (write-only);
+        yerine auth_secret_set (bool). channel_type C1a kanal soyutlamasini
+        genisletir.
+      required: [id, ad, channel_type, endpoint_url, http_method, auth_type, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string }
+        channel_type: { type: string, enum: [webhook, megaphone, smarthome] }
+        endpoint_url: { type: string, description: "Public http(s); SSRF kapisi tetikte" }
+        http_method: { type: string, enum: [GET, POST, PUT, PATCH] }
+        headers_json:
+          type: object
+          additionalProperties: { type: string }
+          description: Gizli OLMAYAN ek header'lar
+        auth_type: { type: string, enum: [none, bearer, api_key] }
+        auth_secret_set:
+          type: boolean
+          description: Sirrin VARLIGI (sir kendisi donmez — write-only)
+        payload_template:
+          type: string
+          description: "{{message}} / {{title}} yer tutuculu govde sablonu"
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+    IntegrationCreate:
+      type: object
+      required: [ad, endpoint_url]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 200 }
+        channel_type: { type: string, enum: [webhook, megaphone, smarthome], default: webhook }
+        endpoint_url:
+          type: string
+          maxLength: 2000
+          description: http(s) olmali (tam SSRF kapisi tetik aninda)
+        http_method: { type: string, enum: [GET, POST, PUT, PATCH], default: POST }
+        headers_json:
+          type: object
+          additionalProperties: { type: string }
+        auth_type: { type: string, enum: [none, bearer, api_key], default: none }
+        auth_secret:
+          type: string
+          maxLength: 4000
+          writeOnly: true
+          description: WRITE-ONLY — KEK ile sifreli saklanir; GET'te donmez
+        payload_template: { type: string, maxLength: 8000, default: "" }
+        aktif: { type: boolean, default: true }
+    IntegrationUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 200 }
+        channel_type: { type: string, enum: [webhook, megaphone, smarthome] }
+        endpoint_url: { type: string, maxLength: 2000 }
+        http_method: { type: string, enum: [GET, POST, PUT, PATCH] }
+        headers_json:
+          type: object
+          additionalProperties: { type: string }
+        auth_type: { type: string, enum: [none, bearer, api_key] }
+        auth_secret: { type: string, maxLength: 4000, writeOnly: true }
+        payload_template: { type: string, maxLength: 8000 }
+        aktif: { type: boolean }
+    IntegrationPreset:
+      type: object
+      required: [key, channel_type, http_method, headers_json, payload_template]
+      properties:
+        key: { type: string, example: webhook-generic }
+        channel_type: { type: string, enum: [webhook, megaphone, smarthome] }
+        http_method: { type: string, enum: [GET, POST, PUT, PATCH] }
+        headers_json:
+          type: object
+          additionalProperties: { type: string }
+        payload_template: { type: string }
+    IntegrationTrigger:
+      type: object
+      description: Opsiyonel — payload_template yer tutucularini doldurur
+      properties:
+        message: { type: string, maxLength: 2000 }
+        title: { type: string, maxLength: 500 }
+    IntegrationTriggerResult:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean, description: 2xx ise true }
+        status: { type: integer, nullable: true, description: HTTP durum (ag hatasinda null) }
+        error: { type: string, nullable: true, description: SSRF engeli / ag / HTTP hatasi }
 
     PatrolWindowDurum:
       type: string

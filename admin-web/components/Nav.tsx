@@ -18,6 +18,7 @@ const LINKS = [
   { href: "/announcements", label: "Duyurular" },
   { href: "/complaints", label: "Talepler" },
   { href: "/notifications", label: "Bildirimler" },
+  { href: "/integrations", label: "Entegrasyonlar" },
   { href: "/settings", label: "Ayarlar" },
 ];
 

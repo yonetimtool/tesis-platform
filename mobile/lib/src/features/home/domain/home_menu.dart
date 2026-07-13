@@ -87,6 +87,10 @@ enum HomeMenuEntry {
   /// Site Kurallari — blog-tarzi kural listesi (baslik aramali): yonetim
   /// ekler/duzenler/siler, TUM roller okur (auth.md §4).
   siteKurallari,
+
+  /// Entegrasyonlar (C1b) — dis sistem (megafon/akilli-ev/webhook) konfig +
+  /// SSRF-korumali tetik. Mobilde YONETICI yonetir (admin panelden).
+  integrations,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -155,6 +159,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.budget,
         HomeMenuEntry.financialSummary,
         HomeMenuEntry.reports,
+        HomeMenuEntry.integrations,
       ];
     case UserRole.resident:
       // Sakinin kaynaklari: acil durum (panik butonu sakinin de hakki) +
