@@ -101,6 +101,61 @@ void main() {
       // resident/saha hangi dairenin kac sikayeti oldugunu BILEMEZ.
       expect(u.complaintCount, isNull);
       expect(u.color, isNull);
+      // Isaret alanlari yoksa varsayilan: KENDI sikayeti yok.
+      expect(u.benimSikayetim, isFalse);
+      expect(u.benimAcikSayisi, isNull);
+    });
+
+    test('resident KENDI sikayet isareti okunur (benim_sikayetim + '
+        'benim_acik_sayisi) — genel yogunluk yine NULL', () {
+      final map = BuildingMap.fromJson(const {
+        'shows_density': false,
+        'bloklar': [
+          {
+            'blok': 'A',
+            'katlar': [
+              {
+                'kat': 1,
+                'units': [
+                  {
+                    'unit_id': 'u-own',
+                    'unit_no': 'A-3',
+                    'blok': 'A',
+                    'kat': 1,
+                    'sira': 1,
+                    'complaint_count': null,
+                    'color': null,
+                    'benim_sikayetim': true,
+                    'benim_acik_sayisi': 2,
+                  },
+                  {
+                    'unit_id': 'u-other',
+                    'unit_no': 'A-4',
+                    'blok': 'A',
+                    'kat': 1,
+                    'sira': 2,
+                    'complaint_count': null,
+                    'color': null,
+                    'benim_sikayetim': false,
+                    'benim_acik_sayisi': 0,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        'unplaced': [],
+      });
+      final units = map.bloklar.single.katlar.single.units;
+      final own = units.firstWhere((u) => u.unitId == 'u-own');
+      final other = units.firstWhere((u) => u.unitId == 'u-other');
+      // KENDI sikayet ettigi daire isaretli; genel yogunluk yine gizli.
+      expect(own.benimSikayetim, isTrue);
+      expect(own.benimAcikSayisi, 2);
+      expect(own.complaintCount, isNull);
+      // Sikayet etmedigi daire noturr — isaret yok.
+      expect(other.benimSikayetim, isFalse);
+      expect(other.benimAcikSayisi, 0);
     });
 
     test('bos yanit -> bos harita, showsDensity false (COKMEZ)', () {

@@ -4105,6 +4105,9 @@ components:
       description: >
         Haritada tek daire. complaint_count/color YALNIZ yonetim (admin+
         yonetici) icin dolu; resident/security/gorevli icin null (yapi gorunumu).
+        benim_sikayetim/benim_acik_sayisi YALNIZ resident icin anlamli — kendi
+        kayitlarindan turer (Rev-1.1: sakin KENDI sikayet ettigi daireleri
+        harita uzerinde isaretli gorur; genel yogunluk sizmaz).
       required: [unit_id, unit_no]
       properties:
         unit_id: { type: string, format: uuid }
@@ -4121,6 +4124,18 @@ components:
           enum: [yesil, sari, kirmizi]
           nullable: true
           description: Yogunluk rengi — yalniz yonetim; digerinde null
+        benim_sikayetim:
+          type: boolean
+          default: false
+          description: >
+            resident: bu daireye KENDI (oturum acmis sakin) sikayeti var mi
+            (yalniz kendi kayitlarindan). Diger rollerde false.
+        benim_acik_sayisi:
+          type: integer
+          nullable: true
+          description: >
+            resident: KENDI acik sikayet sayim (0 dahil). Genel sayim DEGIL;
+            diger rollerde null.
     BuildingMapKat:
       type: object
       required: [kat, units]

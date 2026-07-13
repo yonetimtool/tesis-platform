@@ -37,6 +37,8 @@ class BuildingMapUnit {
     this.blok,
     this.kat,
     this.sira,
+    this.benimSikayetim = false,
+    this.benimAcikSayisi,
   });
 
   final String unitId;
@@ -52,6 +54,14 @@ class BuildingMapUnit {
   /// Yogunluk rengi — YALNIZ yonetim icin dolu; digerinde null (yapi gorunumu).
   final DensityRenk? color;
 
+  /// Bu daireye KENDI (oturum acmis resident) sikayetim var mi? YALNIZ kendi
+  /// kayitlarindan turetilir; genel yogunluk DEGILDIR. Digerlerinde false.
+  final bool benimSikayetim;
+
+  /// KENDI acik sikayet sayim (yalniz resident; digerinde null). Genel sayim
+  /// DEGILDIR — yalniz oturum acmis sakinin kendi kayitlari.
+  final int? benimAcikSayisi;
+
   /// Yerlesim tam mi (blok + kat girilmis)? Haritada cizilebilir demektir.
   bool get yerlesik => blok != null && kat != null;
 
@@ -66,6 +76,8 @@ class BuildingMapUnit {
         color: json['color'] == null
             ? null
             : DensityRenk.fromWire(json['color'] as String?),
+        benimSikayetim: json['benim_sikayetim'] as bool? ?? false,
+        benimAcikSayisi: (json['benim_acik_sayisi'] as num?)?.toInt(),
       );
 }
 

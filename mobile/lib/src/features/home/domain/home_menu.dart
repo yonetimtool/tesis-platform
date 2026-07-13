@@ -102,8 +102,9 @@ enum HomeMenuEntry {
   /// edebilir (mevcut POST /unit-complaints). Renk API'den (0-2/3-4/5+).
   sikayetHaritasi,
 
-  /// Sikayetlerim (D-viz Rev-1.1) — YALNIZ resident: kendi actigi daire
-  /// sikayetleri (gitti mi geri bildirimi + durum). Yogunluk/renk YOK.
+  /// Sikayetlerim (D-viz Rev-1.1) — ARTIK menude DEGIL: resident kendi
+  /// sikayetlerini Sikayet Haritasi uzerinde (isaretli daireler) gorur; ayri
+  /// sayfaya yonlendirilmez. Enum + rota ekran yeniden kullanim icin korunur.
   sikayetlerim,
 }
 
@@ -194,8 +195,10 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        // Sikayet Haritasi: resident KENDI sikayetlerini de HARITA uzerinde
+        // gorur (kendi ilettigi daireler isaretli) — ayri "Sikayetlerim"
+        // sayfasina yonlendirilmez (D-viz Rev-1.1 fix).
         HomeMenuEntry.sikayetHaritasi,
-        HomeMenuEntry.sikayetlerim,
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,

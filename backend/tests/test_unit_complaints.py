@@ -216,6 +216,32 @@ def test_sikayetlerim_yalniz_kendi_kayitlari(ucworld, client):
         ).status_code == 403
 
 
+# --------------------------- 1 dosya = 1 kayit ------------------------------ #
+def test_bir_dosya_bir_kayit_sayim_tam_bir_artar(ucworld, client):
+    """1 POST = 1 satir = ACIK sayim TAM 1 artar (cift sayim YOK). Yonetim ayni
+    daireyi 1 (2 degil) gorur — hem /density hem building-map."""
+    slug = ucworld["slug_a"]
+    r0 = ucworld["residents"][0]
+    admin = _headers(client, slug, ucworld["admin_a"])
+    unit = ucworld["unit1"]
+
+    before = _density_for(client, admin, unit)
+    assert before["acik_sayisi"] == 0
+
+    # TEK dosya
+    assert _file(client, slug, r0, unit, kategori="gurultu").status_code == 201
+
+    after = _density_for(client, admin, unit)
+    assert after["acik_sayisi"] == 1  # +1, 2 DEGIL
+
+    # Yonetim building-map de ayni daireyi TAM 1 gorur (cift sayim yok)
+    body = client.get("/unit-complaints/building-map", headers=admin).json()
+    flat = [u for b in body["bloklar"] for k in b["katlar"] for u in k["units"]]
+    flat += list(body["unplaced"])
+    u = next(u for u in flat if u["unit_id"] == unit)
+    assert u["complaint_count"] == 1
+
+
 # ------------------------------ renk esikleri ------------------------------- #
 def test_renk_esikleri_ve_kapatma_feedback(ucworld, client):
     slug = ucworld["slug_a"]

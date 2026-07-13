@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,9 +22,16 @@ class _FakeMapApi extends BuildingMapApi {
 }
 
 class _FakeComplaintApi extends UnitComplaintApi {
-  _FakeComplaintApi(this._items) : super(Dio());
+  _FakeComplaintApi(List<UnitComplaint> items, {List<UnitComplaint>? mine})
+      : _items = items,
+        _mine = mine ?? items,
+        super(Dio());
   final List<UnitComplaint> _items;
+  final List<UnitComplaint> _mine;
   final List<UnitComplaintDraft> filed = [];
+
+  /// Gecikmeli file() icin acilinca cozulen kapi (cift-dokunus testi).
+  Completer<void>? gate;
 
   @override
   Future<List<UnitComplaint>> fetchForUnit(String unitId,
@@ -30,13 +39,24 @@ class _FakeComplaintApi extends UnitComplaintApi {
       _items;
 
   @override
+  Future<List<UnitComplaint>> fetchMine() async => _mine;
+
+  @override
   Future<UnitComplaint> file(UnitComplaintDraft draft) async {
     filed.add(draft);
+    if (gate != null) await gate!.future; // in-flight tut (cift-dokunus)
     return _items.isEmpty ? UnitComplaint.fromJson(const {}) : _items.first;
   }
 }
 
-BuildingMapUnit _u(String no, {int? count, DensityRenk? color}) => BuildingMapUnit(
+BuildingMapUnit _u(
+  String no, {
+  int? count,
+  DensityRenk? color,
+  bool benimSikayetim = false,
+  int? benimAcikSayisi,
+}) =>
+    BuildingMapUnit(
       unitId: 'id-$no',
       unitNo: no,
       blok: 'A',
@@ -44,6 +64,8 @@ BuildingMapUnit _u(String no, {int? count, DensityRenk? color}) => BuildingMapUn
       sira: no == 'A-1' ? 1 : 2,
       complaintCount: count,
       color: color,
+      benimSikayetim: benimSikayetim,
+      benimAcikSayisi: benimAcikSayisi,
     );
 
 /// showsDensity=true (yonetim): renk + sayi dolu.
@@ -177,6 +199,86 @@ void main() {
       await tester.pumpAndSettle();
       expect(capi.filed.length, 1);
       expect(capi.filed.first.targetUnitId, 'id-A-2');
+    });
+
+    testWidgets('cift-dokunus KORUMASI: hizli iki dokunus -> file YALNIZ 1 kez '
+        '(1 dosya = 1 kayit)', (tester) async {
+      final capi = _FakeComplaintApi(const [])..gate = Completer<void>();
+      await tester.pumpWidget(
+        _app(UserRole.resident, map: _structureMap(), complaintApi: capi),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('A-2'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bu daireyi şikayet et'));
+      await tester.pumpAndSettle();
+      // Ilk dokunus _submit'i baslatir (busy=true, file() kapida bekler); ikinci
+      // dokunus REBUILD'DEN ONCE gelir -> _submit ust-guard'i onu reddetmeli.
+      await tester.tap(find.text('Şikayeti gönder'));
+      await tester.tap(find.text('Şikayeti gönder'));
+      capi.gate!.complete();
+      await tester.pumpAndSettle();
+      expect(capi.filed.length, 1); // cift kayit YOK
+    });
+  });
+
+  group('RESIDENT KENDI sikayet isareti (harita uzerinde)', () {
+    // resident: A-2'ye KENDI sikayeti var (isaretli); A-1 noturr.
+    BuildingMap ownMap() => BuildingMap(
+          showsDensity: false,
+          bloklar: [
+            BuildingMapBlok(blok: 'A', katlar: [
+              BuildingMapKat(kat: 1, units: [
+                _u('A-1'),
+                _u('A-2', benimSikayetim: true, benimAcikSayisi: 1),
+              ]),
+            ]),
+          ],
+          unplaced: const [],
+        );
+
+    UnitComplaint ownComplaint() => UnitComplaint(
+          id: 'c-own',
+          targetUnitId: 'id-A-2',
+          kategori: UnitComplaintKategori.gurultu,
+          durum: 'acik',
+          createdAt: DateTime.utc(2026, 7, 12),
+        );
+
+    testWidgets('KENDI sikayet ettigi daire vurgulu (iletildi isareti); genel '
+        'yogunluk YOK', (tester) async {
+      await tester.pumpWidget(_app(UserRole.resident, map: ownMap()));
+      await tester.pumpAndSettle();
+      // Yapi gorunumu: genel sayi/renk yok.
+      expect(find.text('0–2'), findsNothing);
+      // KENDI sikayeti olan dairede "iletildi" isareti (check_circle).
+      expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    });
+
+    testWidgets('KENDI isaretli daireye dokun -> kendi sikayet(ler)i (kategori + '
+        'durum "Yönetime iletildi") + sikayet et butonu', (tester) async {
+      await tester.pumpWidget(
+        _app(UserRole.resident, map: ownMap(), complaints: [ownComplaint()]),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('A-2'));
+      await tester.pumpAndSettle();
+      expect(find.text('Bu daire için şikayetleriniz'), findsOneWidget);
+      expect(find.text('Gürültü'), findsOneWidget);
+      expect(find.textContaining('Yönetime iletildi'), findsOneWidget);
+      // Yine sikayet edebilir; yonetim yogunluk listesi YOK.
+      expect(find.text('Bu daireyi şikayet et'), findsOneWidget);
+      expect(find.textContaining('açık şikayet'), findsNothing);
+    });
+
+    testWidgets('sikayet ETMEDIGI daireye dokun -> kendi listesi YOK, yalniz '
+        'sikayet et', (tester) async {
+      await tester.pumpWidget(_app(UserRole.resident, map: ownMap()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('A-1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Bu daire için şikayetleriniz'), findsNothing);
+      expect(find.text('Bu daireyi şikayet et'), findsOneWidget);
     });
   });
 }
