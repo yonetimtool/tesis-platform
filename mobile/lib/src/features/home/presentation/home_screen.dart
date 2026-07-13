@@ -310,6 +310,20 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.kargo),
           ),
         );
+      case HomeMenuEntry.unitAccess:
+        // Tek-seferlik daire goruntuleme izni (KVKK): admin/yonetici talep
+        // acar + onaylananlari bir kez gorur; resident gelenleri onaylar.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.key_outlined),
+            title: const Text('Görüntüleme izni'),
+            subtitle: const Text(
+              'Daire ziyaretçi/kargo kayıtları için tek seferlik erişim',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.unitAccess),
+          ),
+        );
       case HomeMenuEntry.rezervasyon:
         // Ortak alan rezervasyonu: sakin slot ister, yonetim onaylar.
         return Card(

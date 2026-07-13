@@ -185,6 +185,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /complaints` (liste/detay)      |  ✅   | ✅  | ✅° | ✅° | ✅° |
 | `POST /complaints`                    |  ❌   | ❌  | ✅  | ✅  | ✅  |
 | `PATCH /complaints/{id}` (durum/yanit)|  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET /units/by-no/{no}/residents`     |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `POST /visitors` (ziyaretci kaydi)    |  ❌   | ❌  | ✅  | ❌  | ❌  |
 | `GET  /visitors` (liste/detay)        |  🔒   | 🔒  | ✅  | ❌  | 🎯  |
 | `PATCH /visitors/{id}` (onay/red)     |  ❌   | ❌  | ❌  | ❌  | ✅🎯|
@@ -358,9 +359,11 @@ Notlar:
     kapi operasyonudur. `yonetici`/`admin` kayit ACMAZ (403). Daire `unit_id`
     VEYA `unit_no` ile verilir (bulunamazsa 422). **TEK HEDEF MODELI:** guvenlik
     `target_resident_user_id` ile dairenin **AKTIF bir sakinini** secer (baska
-    dairenin/rolun id'si 422). Push YALNIZ **o hedef sakine** gider (esler dahil
-    degil; kisi hedefli; EK gonderim — hatasi kaydi etkilemez;
-    `data: tip=ziyaretci, visitor_id`).
+    dairenin/rolun id'si 422). Guvenlik hedef listesini
+    **`GET /units/by-no/{unit_no}/residents`** ile ceker (security+admin+yonetici
+    okur; resident 403 — komsularini listeleyemez). Push YALNIZ **o hedef
+    sakine** gider (esler dahil degil; kisi hedefli; EK gonderim — hatasi kaydi
+    etkilemez; `data: tip=ziyaretci, visitor_id`).
   - **YANIT (`PATCH`, ✅🎯) YALNIZ HEDEF sakin:** rol yetmez — `target_resident
     _user_id == user` VE `unit_resident` (bitis IS NULL) sunucuda dogrulanir;
     hedef DISI (ayni dairedeki es dahil) veya baska daire **404** (varlik

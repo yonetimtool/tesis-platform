@@ -7,17 +7,21 @@ import '../domain/visitor_models.dart';
 
 /// Ziyaretci modulunun HTTP istemcisi:
 ///
-///   * `GET   /visitors`        → gecmis (yonetim+guvenlik TUMU; sakin KENDI
-///                                 dairesi; sunucu created_at DESC siralar)
-///   * `POST  /visitors`        → ziyaretci kaydi (YALNIZ security)
-///   * `PATCH /visitors/{id}`   → onay/red (o dairenin aktif sakini; ikinci
-///                                 yanit 409 — ilk kazanir)
+///   * `GET   /visitors`        → gecmis (security TUMU; resident kendine
+///                                 hedeflenen; admin/yonetici ?unit_id ile
+///                                 tek-seferlik izinle — sunucu created_at DESC)
+///   * `POST  /visitors`        → ziyaretci kaydi (YALNIZ security; hedef sakin)
+///   * `PATCH /visitors/{id}`   → onay/red (YALNIZ hedef sakin; ikinci 409)
+///   * `GET   /units/by-no/{no}/residents` → hedef sakin secicisi
 class VisitorApi {
   VisitorApi(this._dio);
 
   final Dio _dio;
 
-  Future<List<Visitor>> fetchAll() async {
+  /// [unitId] verilirse yalniz o dairenin kayitlari cekilir — admin/yonetici
+  /// tek-seferlik izin gorunumu (?unit_id). Izin YOKSA/tukendiyse sunucu 403
+  /// doner (ApiException statusCode=403).
+  Future<List<Visitor>> fetchAll({String? unitId}) async {
     final out = <Visitor>[];
     var offset = 0;
     const limit = 200;
@@ -25,7 +29,11 @@ class VisitorApi {
       while (true) {
         final res = await _dio.get<Map<String, dynamic>>(
           '/visitors',
-          queryParameters: {'limit': limit, 'offset': offset},
+          queryParameters: {
+            'limit': limit,
+            'offset': offset,
+            'unit_id': ?unitId,
+          },
         );
         final items = res.data?['items'];
         if (items is! List || items.isEmpty) break;
@@ -38,6 +46,22 @@ class VisitorApi {
         offset += limit;
       }
       return out;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Hedef sakin secicisi: dairenin AKTIF sakinleri (user_id + ad).
+  /// `GET /units/by-no/{unit_no}/residents` — security+admin+yonetici okur.
+  Future<List<UnitResidentBrief>> fetchUnitResidents(String unitNo) async {
+    try {
+      final res = await _dio.get<List<dynamic>>(
+        '/units/by-no/$unitNo/residents',
+      );
+      return (res.data ?? const [])
+          .whereType<Map>()
+          .map((m) => UnitResidentBrief.fromJson(Map<String, dynamic>.from(m)))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

@@ -27,6 +27,8 @@ void main() {
         'durum': 'onaylandi',
         'kaydeden_user_id': 'g-1',
         'kaydeden_ad': 'Acme Guard',
+        'target_resident_user_id': 'r-1',
+        'target_resident_ad': 'Acme Sakin',
         'yanitlayan_user_id': 'r-1',
         'yanitlayan_ad': 'Acme Sakin',
         'yanit_zamani': '2026-07-10T09:30:00Z',
@@ -39,6 +41,9 @@ void main() {
       expect(v.durum, VisitorDurum.onaylandi);
       expect(v.bekliyor, isFalse);
       expect(v.kaydedenAd, 'Acme Guard');
+      // Tek hedef modeli: hedef sakin alanlari parse edilir.
+      expect(v.targetResidentUserId, 'r-1');
+      expect(v.targetResidentAd, 'Acme Sakin');
       expect(v.yanitlayanAd, 'Acme Sakin');
       expect(v.yanitZamani, DateTime.utc(2026, 7, 10, 9, 30));
       expect(v.createdAt, DateTime.utc(2026, 7, 10, 9));
@@ -71,27 +76,59 @@ void main() {
   });
 
   group('VisitorDraft.toJson', () {
-    test('notlar dolu ise yazilir', () {
+    test('hedef sakin (target_resident_user_id) + notlar dolu ise yazilir', () {
       expect(
         const VisitorDraft(
           ziyaretciAd: 'Kurye',
           unitNo: 'A-12',
+          targetResidentUserId: 'r-1',
           notlar: 'Koli',
         ).toJson(),
-        {'ziyaretci_ad': 'Kurye', 'unit_no': 'A-12', 'notlar': 'Koli'},
+        {
+          'ziyaretci_ad': 'Kurye',
+          'unit_no': 'A-12',
+          'target_resident_user_id': 'r-1',
+          'notlar': 'Koli',
+        },
       );
     });
 
-    test('notlar null/bos ise JSON\'a HIC yazilmaz (sunucu minLength 1)', () {
+    test('notlar null/bos ise JSON\'a HIC yazilmaz; hedef sakin HEP yazilir',
+        () {
       expect(
-        const VisitorDraft(ziyaretciAd: 'Kurye', unitNo: 'A-12').toJson(),
-        {'ziyaretci_ad': 'Kurye', 'unit_no': 'A-12'},
+        const VisitorDraft(
+          ziyaretciAd: 'Kurye',
+          unitNo: 'A-12',
+          targetResidentUserId: 'r-1',
+        ).toJson(),
+        {
+          'ziyaretci_ad': 'Kurye',
+          'unit_no': 'A-12',
+          'target_resident_user_id': 'r-1',
+        },
       );
       expect(
-        const VisitorDraft(ziyaretciAd: 'Kurye', unitNo: 'A-12', notlar: '')
-            .toJson(),
-        {'ziyaretci_ad': 'Kurye', 'unit_no': 'A-12'},
+        const VisitorDraft(
+          ziyaretciAd: 'Kurye',
+          unitNo: 'A-12',
+          targetResidentUserId: 'r-1',
+          notlar: '',
+        ).toJson(),
+        {
+          'ziyaretci_ad': 'Kurye',
+          'unit_no': 'A-12',
+          'target_resident_user_id': 'r-1',
+        },
       );
+    });
+
+    test('UnitResidentBrief.fromJson (hedef sakin secicisi)', () {
+      final b = UnitResidentBrief.fromJson(const {
+        'user_id': 'r-9',
+        'ad': 'Zeynep Kaya',
+      });
+      expect(b.userId, 'r-9');
+      expect(b.ad, 'Zeynep Kaya');
     });
   });
 }

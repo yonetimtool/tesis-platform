@@ -17,7 +17,7 @@ class _FakeKargoApi extends KargoApi {
   final List<String> received = [];
 
   @override
-  Future<List<Kargo>> fetchAll() async => _items;
+  Future<List<Kargo>> fetchAll({String? unitId}) async => _items;
 
   @override
   Future<Kargo> markReceived(String id) async {

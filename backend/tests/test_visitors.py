@@ -127,6 +127,49 @@ def vworld(client, world, owner_conn):
     # temizlik world fixture'inda: tenant silinince CASCADE.
 
 
+# ----------------- hedef sakin secicisi (GET unit residents) ---------------- #
+def test_daire_sakinleri_listesi_guvenlik_gorur(client, vworld):
+    """GET /units/by-no/{unit_no}/residents: guvenlik dairenin AKTIF
+    sakinlerini (user_id + ad) gorur — hedef sakin secicisi icin."""
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    r = client.get(
+        f"/units/by-no/{vworld['unit1_no']}/residents", headers=guard
+    )
+    assert r.status_code == 200, r.text
+    ids = {it["user_id"] for it in r.json()}
+    assert {vworld["resident_a_id"], vworld["es_id"]} <= ids
+    # ad alanlari dolu (secici etiketleri)
+    assert all(it["ad"] for it in r.json())
+    # admin + yonetici de okuyabilir
+    for role in ("admin_a", "yonetici_a"):
+        h = _headers(client, vworld["slug_a"], vworld[role])
+        assert client.get(
+            f"/units/by-no/{vworld['unit1_no']}/residents", headers=h
+        ).status_code == 200, role
+
+
+def test_daire_sakinleri_listesi_rbac_ve_404(client, vworld):
+    """resident komsularini LISTELEYEMEZ (403); tesis_gorevlisi 403; olmayan
+    daire 404."""
+    for role in ("resident_a", "gorevli_a"):
+        h = _headers(client, vworld["slug_a"], vworld[role])
+        assert client.get(
+            f"/units/by-no/{vworld['unit1_no']}/residents", headers=h
+        ).status_code == 403, role
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    assert client.get(
+        "/units/by-no/YOK-999/residents", headers=guard
+    ).status_code == 404
+
+
+def test_daire_sakinleri_listesi_tenant_izolasyonu(client, vworld):
+    """B tenant guvenligi A'nin dairesinin sakinlerini goremez (RLS -> 404)."""
+    guard_b = _headers(client, vworld["slug_b"], vworld["guard_b"])
+    assert client.get(
+        f"/units/by-no/{vworld['unit1_no']}/residents", headers=guard_b
+    ).status_code == 404
+
+
 # ------------------------------- kayit -------------------------------------- #
 def test_guvenlik_unit_no_ile_kaydeder_bekliyor(client, vworld):
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])

@@ -1,11 +1,12 @@
 /// Ziyaretci modulunun domain modelleri — `contracts/openapi.yaml`
 /// Visitor / VisitorCreate / VisitorUpdate semalarina uyar.
 ///
-/// Akis (urun sahibi sabit): guvenlik kaydeder -> dairenin TUM aktif
-/// sakinlerine push -> ILK yanitlayan sakin onaylar/reddeder (ikinci 409) ->
-/// sonuc kaydi acan guvenlige push + ekranda. RBAC (auth.md §4): KAYIT yalniz
-/// security; YANIT yalniz o dairenin aktif sakini; OKUMA yonetim+guvenlik
-/// tum gecmis, sakin kendi dairesi; tesis_gorevlisi erisemez.
+/// Akis (TEK HEDEF modeli, KVKK): guvenlik kaydeder + dairenin AKTIF bir
+/// sakinini HEDEF secer -> YALNIZ o sakine push -> hedef sakin onaylar/reddeder
+/// -> sonuc kaydi acan guvenlige. RBAC (auth.md §4): KAYIT yalniz security;
+/// YANIT yalniz HEDEF sakin; OKUMA security tum gecmis + resident kendine
+/// hedeflenen; admin/yonetici varsayilan kapali (tek-seferlik izinle);
+/// tesis_gorevlisi erisemez.
 library;
 
 /// `visitor_durum` enum'unun istemci aynasi. GSM'e hazir: ileride arama
@@ -37,10 +38,12 @@ class Visitor {
     required this.ziyaretciAd,
     required this.durum,
     required this.kaydedenUserId,
+    required this.targetResidentUserId,
     required this.createdAt,
     this.unitNo,
     this.notlar,
     this.kaydedenAd,
+    this.targetResidentAd,
     this.yanitlayanUserId,
     this.yanitlayanAd,
     this.yanitZamani,
@@ -60,6 +63,10 @@ class Visitor {
   final String kaydedenUserId;
   final String? kaydedenAd;
 
+  /// HEDEF sakin (bildirim/gorunurluk/karar sahibi — tek hedef modeli).
+  final String targetResidentUserId;
+  final String? targetResidentAd;
+
   /// Yaniti veren sakin (ilk yanit kazanir; yanitsizsa null).
   final String? yanitlayanUserId;
   final String? yanitlayanAd;
@@ -78,6 +85,8 @@ class Visitor {
         durum: VisitorDurum.fromWire(json['durum'] as String?),
         kaydedenUserId: json['kaydeden_user_id'] as String? ?? '',
         kaydedenAd: json['kaydeden_ad'] as String?,
+        targetResidentUserId: json['target_resident_user_id'] as String? ?? '',
+        targetResidentAd: json['target_resident_ad'] as String?,
         yanitlayanUserId: json['yanitlayan_user_id'] as String?,
         yanitlayanAd: json['yanitlayan_ad'] as String?,
         yanitZamani: json['yanit_zamani'] == null
@@ -88,18 +97,23 @@ class Visitor {
       );
 }
 
-/// `POST /visitors` govdesi (yalniz guvenlik). Kapidaki guvenlik daireyi
-/// NUMARASIYLA girer (unit listesine RBAC'i yok); sunucu tenant icinde
-/// cozer, bulunamazsa 422.
+/// `POST /visitors` govdesi (yalniz guvenlik). Guvenlik daireyi NUMARASIYLA
+/// girer; ardindan `GET /units/by-no/{unit_no}/residents` ile o dairenin AKTIF
+/// sakinlerinden HEDEF sakini secer (target_resident_user_id — zorunlu). Sunucu
+/// hedefin o dairenin aktif sakini oldugunu dogrular (aksi 422).
 class VisitorDraft {
   const VisitorDraft({
     required this.ziyaretciAd,
     required this.unitNo,
+    required this.targetResidentUserId,
     this.notlar,
   });
 
   final String ziyaretciAd;
   final String unitNo;
+
+  /// Guvenligin sectigi hedef sakin (bildirilecek + karar verecek tek sakin).
+  final String targetResidentUserId;
 
   /// Opsiyonel not; bos/null ise JSON'a HIC yazilmaz (sunucu minLength 1).
   final String? notlar;
@@ -107,6 +121,21 @@ class VisitorDraft {
   Map<String, dynamic> toJson() => {
         'ziyaretci_ad': ziyaretciAd,
         'unit_no': unitNo,
+        'target_resident_user_id': targetResidentUserId,
         if (notlar != null && notlar!.isNotEmpty) 'notlar': notlar,
       };
+}
+
+/// `GET /units/by-no/{unit_no}/residents` ogesi — hedef sakin secicisi.
+class UnitResidentBrief {
+  const UnitResidentBrief({required this.userId, required this.ad});
+
+  final String userId;
+  final String ad;
+
+  factory UnitResidentBrief.fromJson(Map<String, dynamic> json) =>
+      UnitResidentBrief(
+        userId: json['user_id'] as String? ?? '',
+        ad: json['ad'] as String? ?? '',
+      );
 }

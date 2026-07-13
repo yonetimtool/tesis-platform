@@ -57,16 +57,22 @@ enum HomeMenuEntry {
   /// admin/yonetici tumunu gorur + yanitlar (kesin kural, auth.md §4).
   complaints,
 
-  /// Ziyaretciler — kapi onay akisi: security kaydeder + tum gecmisi izler;
-  /// resident kendi dairesinin kayitlarini gorur + Onayla/Reddet;
-  /// admin/yonetici salt izler; tesis_gorevlisi ERISMEZ (auth.md §4).
+  /// Ziyaretciler — kapi onay akisi: security kaydeder (hedef sakin secer) +
+  /// tum gecmisi izler; resident YALNIZ kendine hedeflenen kayitlari gorur +
+  /// Onayla/Reddet. admin/yonetici DOGRUDAN GORMEZ (izinle — bkz. unitAccess);
+  /// tesis_gorevlisi ERISMEZ (auth.md §4, KVKK).
   visitors,
 
-  /// Kargo — paket takibi (ziyaretci ile ayni matris): security kaydeder
-  /// (daire+firma+foto) + tum gecmisi izler; resident kendi dairesinin
-  /// paketlerini gorur + "Teslim aldim"; admin/yonetici salt izler;
-  /// tesis_gorevlisi ERISMEZ (auth.md §4).
+  /// Kargo — paket takibi: security kaydeder (daire+firma+foto) + tum gecmisi
+  /// izler; resident kendi dairesinin paketlerini gorur + "Teslim aldim".
+  /// admin/yonetici DOGRUDAN GORMEZ (izinle); tesis_gorevlisi ERISMEZ.
   kargo,
+
+  /// Goruntuleme izni — tek-seferlik daire erisim akisi (KVKK):
+  /// admin/yonetici bir daire icin izin TALEBI acar + onaylananlari bir kez
+  /// goruntuler; resident kendi dairesine gelen talepleri Onayla/Reddet eder
+  /// (auth.md §4).
+  unitAccess,
 
   /// Rezervasyon — ortak alan: yonetim alan tanimlar + bekleyenleri
   /// onaylar/reddeder (+takvim); resident aktif alanlara slot talep eder +
@@ -86,15 +92,15 @@ enum HomeMenuEntry {
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
   switch (role) {
     case UserRole.admin:
-      // security ile ayni saha kartlari + talepler (yonetim gorunumu).
+      // Ziyaretci/kargo DOGRUDAN GORMEZ (KVKK — varsayilan kapali); yerine
+      // "Goruntuleme izni" ile tek-seferlik izin alir.
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
-        HomeMenuEntry.visitors,
-        HomeMenuEntry.kargo,
+        HomeMenuEntry.unitAccess,
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
@@ -142,8 +148,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
-        HomeMenuEntry.visitors,
-        HomeMenuEntry.kargo,
+        HomeMenuEntry.unitAccess,
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.patrolTracking,
         HomeMenuEntry.taskTracking,
@@ -160,6 +165,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.emergency,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
+        HomeMenuEntry.unitAccess,
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,

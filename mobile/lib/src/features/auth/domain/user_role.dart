@@ -78,23 +78,34 @@ enum UserRole {
   /// admin + yonetici; acan roller cevaplayamaz.
   bool get canRespondComplaints => this == admin || this == yonetici;
 
-  /// Ziyaretci ekranini gorme (`GET /visitors`) — yonetim + guvenlik tum
-  /// gecmis, sakin kendi dairesi; tesis_gorevlisi ERISMEZ (auth.md §4).
-  bool get canViewVisitors =>
-      this == admin || this == yonetici || this == security || this == resident;
+  /// Ziyaretci LISTESINI dogrudan gorme (`GET /visitors`) — GIZLILIK/KVKK
+  /// (auth.md §4): YALNIZ security (kapi ops/vardiya devri) + resident (kendine
+  /// HEDEFLENEN kayitlar). admin VE yonetici VARSAYILAN KAPALI (403) — daireyi
+  /// gormek icin tek-seferlik izin alirlar (bkz. canRequestUnitAccess).
+  /// tesis_gorevlisi ERISMEZ.
+  bool get canViewVisitors => this == security || this == resident;
 
   /// Ziyaretci kaydi acma (`POST /visitors`) — YALNIZ security (kapi
-  /// operasyonu; yonetim gecmisi okur ama kayit acmaz).
+  /// operasyonu). Hedef sakini secer (target_resident_user_id).
   bool get canRegisterVisitor => this == security;
 
-  /// Ziyaretci onay/red (`PATCH /visitors/{id}`) — YALNIZ resident (o
-  /// dairenin aktif sakini olma kosulunu sunucu ayrica zorlar).
+  /// Ziyaretci onay/red (`PATCH /visitors/{id}`) — YALNIZ resident; sunucu
+  /// ayrica kaydin HEDEF sakini oldugunu zorlar (tek hedef modeli).
   bool get canAnswerVisitor => this == resident;
 
-  /// Kargo ekranini gorme (`GET /kargo`) — ziyaretci ile ayni matris:
-  /// yonetim + guvenlik tum gecmis, sakin kendi dairesi;
-  /// tesis_gorevlisi ERISMEZ (auth.md §4).
+  /// Kargo LISTESINI dogrudan gorme (`GET /kargo`) — ziyaretci ile ayni
+  /// gizlilik: security + resident (kendi dairesi); admin+yonetici varsayilan
+  /// kapali. tesis_gorevlisi ERISMEZ (auth.md §4).
   bool get canViewKargo => canViewVisitors;
+
+  /// Tek-seferlik daire goruntuleme izni TALEBI acma
+  /// (`POST /unit-access-request`) — admin + yonetici (ziyaretci/kargo onlara
+  /// varsayilan kapali; sakin-onayli scoped erisim icin talep acar).
+  bool get canRequestUnitAccess => this == admin || this == yonetici;
+
+  /// Gelen erisim talebini onaylama/reddetme (`PATCH /unit-access-request/{id}`)
+  /// — YALNIZ resident (talebin ait oldugu dairenin aktif sakini; sunucu zorlar).
+  bool get canDecideUnitAccess => this == resident;
 
   /// Kargo kaydi acma (`POST /kargo`) — YALNIZ security (kapi operasyonu).
   bool get canRegisterKargo => this == security;

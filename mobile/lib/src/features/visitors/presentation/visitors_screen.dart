@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../data/visitor_api.dart';
 import '../domain/visitor_models.dart';
 import 'visitors_controller.dart';
 
@@ -256,6 +257,13 @@ class _VisitorCard extends ConsumerWidget {
                 'Daire: ${v.unitNo ?? '-'} · ${_fmtDateTime(v.createdAt.toLocal())}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              if (v.targetResidentAd != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  'Bildirilen sakin: ${v.targetResidentAd}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
               if (v.notlar != null && v.notlar!.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(v.notlar!, maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -445,6 +453,12 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
   bool _busy = false;
   String? _hata;
 
+  /// Hedef sakin secicisi (tek hedef modeli): once daire sakinleri cekilir.
+  List<UnitResidentBrief>? _residents;
+  bool _loadingResidents = false;
+  String? _residentsError;
+  String? _targetId;
+
   @override
   void dispose() {
     _ad.dispose();
@@ -453,8 +467,45 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
     super.dispose();
   }
 
+  /// Girilen daire NO'su icin AKTIF sakinleri getir (hedef secicisini doldur).
+  Future<void> _loadResidents() async {
+    final unitNo = _unitNo.text.trim();
+    if (unitNo.isEmpty) {
+      setState(() => _residentsError = 'Önce daire no girin');
+      return;
+    }
+    setState(() {
+      _loadingResidents = true;
+      _residentsError = null;
+      _residents = null;
+      _targetId = null;
+    });
+    try {
+      final list =
+          await ref.read(visitorApiProvider).fetchUnitResidents(unitNo);
+      if (!mounted) return;
+      setState(() {
+        _residents = list;
+        if (list.isEmpty) {
+          _residentsError = 'Bu dairede aktif sakin yok';
+        } else if (list.length == 1) {
+          _targetId = list.first.userId; // tek sakin -> otomatik secili
+        }
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _residentsError = e.message);
+    } finally {
+      if (mounted) setState(() => _loadingResidents = false);
+    }
+  }
+
   Future<void> _submit() async {
     if (_busy || !(_formKey.currentState?.validate() ?? false)) return;
+    if (_targetId == null) {
+      setState(() => _hata = 'Bildirilecek sakini seçin');
+      return;
+    }
     setState(() {
       _busy = true;
       _hata = null;
@@ -464,12 +515,13 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
             VisitorDraft(
               ziyaretciAd: _ad.text.trim(),
               unitNo: _unitNo.text.trim(),
+              targetResidentUserId: _targetId!,
               notlar: _notlar.text.trim().isEmpty ? null : _notlar.text.trim(),
             ),
           );
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
-      // 422 invalid_reference: daire numarasi bu tesiste yok — formda goster.
+      // 422 invalid_reference: daire yok / hedef o dairenin sakini degil.
       if (mounted) setState(() => _hata = e.message);
     } catch (_) {
       if (mounted) {
@@ -509,16 +561,60 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
                   (v == null || v.trim().isEmpty) ? 'Ziyaretçi adı gerekli' : null,
             ),
             const SizedBox(height: 8),
-            TextFormField(
-              controller: _unitNo,
-              decoration: const InputDecoration(
-                labelText: 'Daire no * (örn. A-12)',
-                border: OutlineInputBorder(),
-              ),
-              maxLength: 50,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Daire no gerekli' : null,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _unitNo,
+                    decoration: const InputDecoration(
+                      labelText: 'Daire no * (örn. A-12)',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLength: 50,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Daire no gerekli'
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: OutlinedButton(
+                    onPressed: _loadingResidents ? null : _loadResidents,
+                    child: _loadingResidents
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Sakinleri getir'),
+                  ),
+                ),
+              ],
             ),
+            // Hedef sakin secicisi — daire sakinleri cekilince gorunur.
+            if (_residentsError != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  _residentsError!,
+                  style: const TextStyle(color: Colors.orange),
+                ),
+              ),
+            if (_residents != null && _residents!.isNotEmpty)
+              DropdownButtonFormField<String>(
+                initialValue: _targetId,
+                decoration: const InputDecoration(
+                  labelText: 'Bildirilecek sakin *',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final r in _residents!)
+                    DropdownMenuItem(value: r.userId, child: Text(r.ad)),
+                ],
+                onChanged: (v) => setState(() => _targetId = v),
+              ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _notlar,
@@ -544,7 +640,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.person_add_alt_1),
-                label: const Text('Kaydet ve sakinlere bildir'),
+                label: const Text('Kaydet ve sakine bildir'),
                 onPressed: _busy ? null : _submit,
               ),
             ),

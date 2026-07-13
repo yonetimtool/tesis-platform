@@ -17,7 +17,7 @@ class _FakeVisitorApi extends VisitorApi {
   final List<(String, bool)> answered = [];
 
   @override
-  Future<List<Visitor>> fetchAll() async => _items;
+  Future<List<Visitor>> fetchAll({String? unitId}) async => _items;
 
   @override
   Future<Visitor> answer(String id, {required bool onayla}) async {
@@ -40,6 +40,8 @@ Visitor _v({
       durum: durum,
       kaydedenUserId: 'g-1',
       kaydedenAd: 'Acme Guard',
+      targetResidentUserId: 'r-1',
+      targetResidentAd: 'Hedef Sakin',
       yanitlayanAd: yanitlayanAd,
       yanitZamani: yanitlayanAd == null ? null : DateTime.utc(2026, 7, 10, 10),
       createdAt: DateTime.utc(2026, 7, 10, 9),
@@ -180,7 +182,7 @@ void main() {
     });
   });
 
-  testWidgets('guvenlik formu acar: ad + daire no + not alanlari',
+  testWidgets('guvenlik formu acar: ad + daire no + sakin secici + not',
       (tester) async {
     final (_, app) = _app(UserRole.security);
     await tester.pumpWidget(app);
@@ -189,8 +191,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ziyaretçi adı *'), findsOneWidget);
     expect(find.text('Daire no * (örn. A-12)'), findsOneWidget);
+    // Hedef sakin secicisi: daire girip "Sakinleri getir" ile sakinler cekilir.
+    expect(find.text('Sakinleri getir'), findsOneWidget);
     expect(find.text('Not (opsiyonel)'), findsOneWidget);
-    expect(find.text('Kaydet ve sakinlere bildir'), findsOneWidget);
+    expect(find.text('Kaydet ve sakine bildir'), findsOneWidget);
   });
 
   group('push tiklamasi (initialVisitorId)', () {

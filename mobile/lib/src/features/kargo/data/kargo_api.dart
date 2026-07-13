@@ -29,7 +29,9 @@ class KargoApi {
   /// gelir). Gorev/duyuru/talep foto akisiyla ayni desen.
   final Dio _uploadDio;
 
-  Future<List<Kargo>> fetchAll() async {
+  /// [unitId] verilirse yalniz o dairenin paketleri — admin/yonetici
+  /// tek-seferlik izin gorunumu (?unit_id); izin yoksa/tukendiyse sunucu 403.
+  Future<List<Kargo>> fetchAll({String? unitId}) async {
     final out = <Kargo>[];
     var offset = 0;
     const limit = 200;
@@ -37,7 +39,11 @@ class KargoApi {
       while (true) {
         final res = await _dio.get<Map<String, dynamic>>(
           '/kargo',
-          queryParameters: {'limit': limit, 'offset': offset},
+          queryParameters: {
+            'limit': limit,
+            'offset': offset,
+            'unit_id': ?unitId,
+          },
         );
         final items = res.data?['items'];
         if (items is! List || items.isEmpty) break;

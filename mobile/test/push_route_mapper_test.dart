@@ -68,6 +68,18 @@ void main() {
       );
     });
 
+    test('tip=erisim_talebi (sakine) / erisim_sonuc (talep edene) -> '
+        'goruntuleme izni ekrani', () {
+      expect(
+        routeForPushData(const {'tip': 'erisim_talebi', 'request_id': 'q-1'}),
+        '/unit-access',
+      );
+      expect(
+        routeForPushData(const {'tip': 'erisim_sonuc', 'request_id': 'q-1'}),
+        '/unit-access',
+      );
+    });
+
     test('tip=rezervasyon / rezervasyon_karar -> ilgili rezervasyon', () {
       expect(
         routeForPushData(const {'tip': 'rezervasyon', 'rezervasyon_id': 'r-1'}),

@@ -2636,6 +2636,33 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /units/by-no/{unit_no}/residents:
+    parameters:
+      - name: unit_no
+        in: path
+        required: true
+        description: Daire numarasi (orn. A-12) — guvenlik daire NO'sunu bilir
+        schema: { type: string, minLength: 1, maxLength: 50 }
+    get:
+      tags: [visitors]
+      summary: Dairenin AKTIF sakinleri (hedef sakin secicisi)
+      description: |
+        Ziyaretci kaydinda guvenligin HEDEF sakini secmesi icin dairenin AKTIF
+        sakinlerini (user_id + ad) doner. RBAC: security + admin + yonetici;
+        resident 403 (komsularini listeleyemez). unit_no tenant icinde
+        cozulur; bulunamazsa 404. RLS ile tenant izole.
+      responses:
+        "200":
+          description: Aktif sakin listesi (ad'a gore sirali)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/UnitResidentBrief" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /units/{id}/residents:
     parameters:
       - $ref: "#/components/parameters/PathId"
@@ -4746,6 +4773,13 @@ components:
         baslangic: { type: string, format: date-time, nullable: true }
         bitis: { type: string, format: date-time, nullable: true }
         created_at: { type: string, format: date-time }
+    UnitResidentBrief:
+      type: object
+      description: Dairenin aktif sakini (hedef sakin secicisi — user_id + ad)
+      required: [user_id, ad]
+      properties:
+        user_id: { type: string, format: uuid }
+        ad: { type: string, description: Sakinin gorunen adi }
     ResidentAssign:
       type: object
       required: [user_id]

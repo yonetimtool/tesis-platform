@@ -27,6 +27,8 @@ import '../features/tasks/domain/task_models.dart';
 import '../features/tasks/presentation/task_categories_screen.dart';
 import '../features/tasks/presentation/task_detail_screen.dart';
 import '../features/tasks/presentation/tasks_screen.dart';
+import '../features/unit_access/presentation/unit_access_records_screen.dart';
+import '../features/unit_access/presentation/unit_access_screen.dart';
 import '../features/visitors/presentation/visitors_screen.dart';
 import 'splash_screen.dart';
 
@@ -54,6 +56,8 @@ class AppRoutes {
   static const complaints = '/complaints';
   static const visitors = '/visitors';
   static const kargo = '/kargo';
+  static const unitAccess = '/unit-access';
+  static const unitAccessRecords = '/unit-access/records';
   static const rezervasyon = '/rezervasyon';
   static const etkinlik = '/etkinlik';
   static const siteKurallari = '/site-kurallari';
@@ -85,6 +89,12 @@ String? routeForPushData(Map<String, String> data) {
       return id == null || id.isEmpty
           ? AppRoutes.kargo
           : '${AppRoutes.kargo}?kargo_id=$id';
+    // Tek-seferlik erisim talebi (dairenin sakinine, Onayla/Reddet) VEYA
+    // sonuc (talebi acan yonetici/admin'e) → izin ekrani acilir. Liste zaten
+    // ilgili kaydi one alir; ekran icinde deep-link id'ye gerek yok.
+    case 'erisim_talebi':
+    case 'erisim_sonuc':
+      return AppRoutes.unitAccess;
     // Yeni talep (yonetime) / karar (talep eden sakine) → ilgili rezervasyon.
     case 'rezervasyon':
     case 'rezervasyon_karar':
@@ -219,6 +229,25 @@ final routerProvider = Provider<GoRouter>((ref) {
         // detayi otomatik acilir (bekleyen pakette "Teslim aldim").
         builder: (context, state) => KargoScreen(
           initialKargoId: state.uri.queryParameters['kargo_id'],
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.unitAccess,
+        builder: (context, state) => const UnitAccessScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.unitAccessRecords,
+        // Onaylanan tek-seferlik izinle bir dairenin ziyaretci/kargo kayitlari
+        // (?unit_id=&unit_no=&kind=visitor|kargo). unit_id yoksa izin ekranina
+        // geri don.
+        redirect: (context, state) =>
+            (state.uri.queryParameters['unit_id'] ?? '').isEmpty
+                ? AppRoutes.unitAccess
+                : null,
+        builder: (context, state) => UnitAccessRecordsScreen(
+          unitId: state.uri.queryParameters['unit_id']!,
+          unitNo: state.uri.queryParameters['unit_no'],
+          kind: state.uri.queryParameters['kind'] ?? 'visitor',
         ),
       ),
       GoRoute(

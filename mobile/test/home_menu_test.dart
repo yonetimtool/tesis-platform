@@ -4,16 +4,15 @@ import 'package:mobile/src/features/home/domain/home_menu.dart';
 
 void main() {
   group('homeMenuForRole (auth.md §4 UX aynasi)', () {
-    test('admin ve security tum operasyon kartlarini gorur '
-        '(admin ek olarak talepleri)', () {
+    test('admin: ziyaretci/kargo DOGRUDAN GORMEZ (KVKK) — yerine unitAccess; '
+        'security saha kartlarini (ziyaretci+kargo dahil) gorur', () {
       expect(homeMenuForRole(UserRole.admin), const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
-        HomeMenuEntry.visitors,
-        HomeMenuEntry.kargo,
+        HomeMenuEntry.unitAccess,
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
@@ -99,8 +98,7 @@ void main() {
           HomeMenuEntry.etkinlik,
           HomeMenuEntry.siteKurallari,
           HomeMenuEntry.complaints,
-          HomeMenuEntry.visitors,
-          HomeMenuEntry.kargo,
+          HomeMenuEntry.unitAccess,
           HomeMenuEntry.rezervasyon,
           HomeMenuEntry.patrolTracking,
           HomeMenuEntry.taskTracking,
@@ -109,6 +107,9 @@ void main() {
           HomeMenuEntry.reports,
         ],
       );
+      // ziyaretci/kargo DOGRUDAN GORMEZ (KVKK — varsayilan kapali)
+      expect(menu, isNot(contains(HomeMenuEntry.visitors)));
+      expect(menu, isNot(contains(HomeMenuEntry.kargo)));
       expect(menu, isNot(contains(HomeMenuEntry.tasks)));
       expect(menu, isNot(contains(HomeMenuEntry.nfc)));
       expect(menu, isNot(contains(HomeMenuEntry.assets)));
@@ -152,12 +153,13 @@ void main() {
       }
     });
 
-    test('resident: SOS + Ziyaretciler + Kargo + Rezervasyon + duyurular '
-        '+ Sikayet/Oneri + Aidatim + Site Butcesi', () {
+    test('resident: SOS + Ziyaretciler + Kargo + Goruntuleme izni + '
+        'Rezervasyon + duyurular + Sikayet/Oneri + Aidatim + Site Butcesi', () {
       expect(homeMenuForRole(UserRole.resident), const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
+        HomeMenuEntry.unitAccess,
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
@@ -166,6 +168,28 @@ void main() {
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
       ]);
+    });
+
+    test('Goruntuleme izni karti (unitAccess): admin+yonetici (talep) + '
+        'resident (karar) VAR; security+tesis_gorevlisi YOK (KVKK)', () {
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.unitAccess),
+          reason: role.wire,
+        );
+      }
+      for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.unitAccess)),
+          reason: role.wire,
+        );
+      }
     });
 
     test('Rezervasyon karti (ortak alan): admin+yonetici+resident VAR; '
@@ -190,24 +214,26 @@ void main() {
       }
     });
 
-    test('Kargo karti (paket takibi, ziyaretci matrisi): admin+yonetici+'
-        'security+resident VAR; tesis_gorevlisi YOK (auth.md §4)', () {
-      for (final role in [
-        UserRole.admin,
-        UserRole.yonetici,
-        UserRole.security,
-        UserRole.resident,
-      ]) {
+    test('Kargo karti (KVKK): YALNIZ security+resident dogrudan gorur; '
+        'admin+yonetici (varsayilan kapali) ve tesis_gorevlisi YOK', () {
+      for (final role in [UserRole.security, UserRole.resident]) {
         expect(
           homeMenuForRole(role),
           contains(HomeMenuEntry.kargo),
           reason: role.wire,
         );
       }
-      expect(
-        homeMenuForRole(UserRole.tesisGorevlisi),
-        isNot(contains(HomeMenuEntry.kargo)),
-      );
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.tesisGorevlisi,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.kargo)),
+          reason: role.wire,
+        );
+      }
     });
 
     test('Etkinlikler karti bilinen 5 rolun 5inde (okuma + seffaf sayilar '
@@ -244,24 +270,26 @@ void main() {
       }
     });
 
-    test('Ziyaretciler karti (kapi onay akisi): admin+yonetici+security+'
-        'resident VAR; tesis_gorevlisi YOK (auth.md §4 — erisemez)', () {
-      for (final role in [
-        UserRole.admin,
-        UserRole.yonetici,
-        UserRole.security,
-        UserRole.resident,
-      ]) {
+    test('Ziyaretciler karti (KVKK): YALNIZ security+resident dogrudan gorur; '
+        'admin+yonetici (varsayilan kapali) ve tesis_gorevlisi YOK', () {
+      for (final role in [UserRole.security, UserRole.resident]) {
         expect(
           homeMenuForRole(role),
           contains(HomeMenuEntry.visitors),
           reason: role.wire,
         );
       }
-      expect(
-        homeMenuForRole(UserRole.tesisGorevlisi),
-        isNot(contains(HomeMenuEntry.visitors)),
-      );
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.tesisGorevlisi,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.visitors)),
+          reason: role.wire,
+        );
+      }
     });
 
     test('Wave 2B kartlari: Site Butcesi yalniz resident, Finansal Ozet '

@@ -18,6 +18,7 @@ from ..schemas import (
     UnitCreate,
     UnitListResponse,
     UnitOut,
+    UnitResidentBriefOut,
     UnitResidentOut,
     UnitUpdate,
 )
@@ -25,6 +26,9 @@ from ..schemas import (
 router = APIRouter(prefix="/units", tags=["aidat"])
 
 _ADMIN = require_role("admin")
+# Hedef sakin secicisi (guvenlik ziyaretci kaydinda kullanir) — okuma
+# guvenlik + yonetim; sakin komsularini LISTELEYEMEZ (403).
+_RESIDENT_LISTER = require_role("security", "admin", "yonetici")
 
 
 @router.get("", response_model=UnitListResponse)
@@ -55,6 +59,34 @@ async def get_unit(
     _: AppUser = Depends(_ADMIN),
 ) -> Unit:
     return await get_or_404(db, Unit, unit_id)
+
+
+@router.get("/by-no/{unit_no}/residents", response_model=list[UnitResidentBriefOut])
+async def list_unit_residents_by_no(
+    unit_no: str,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_RESIDENT_LISTER),
+) -> list[UnitResidentBriefOut]:
+    """Bir dairenin AKTIF sakinleri (user_id + ad) — hedef sakin secicisi.
+
+    Guvenlik daire NUMARASINI bilir (unit_id yetkisi yok); unit_no tenant
+    icinde cozulur (RLS), bulunamazsa 404. Yalniz AKTIF baglantilar
+    (bitis IS NULL). RBAC: security + admin + yonetici; resident 403.
+    """
+    unit = (
+        await db.execute(select(Unit).where(Unit.no == unit_no))
+    ).scalar_one_or_none()
+    if unit is None:
+        raise APIError(404, "not_found", "Daire bu tenant'ta bulunamadi.")
+    rows = (
+        await db.execute(
+            select(AppUser.id, AppUser.ad)
+            .join(UnitResident, UnitResident.user_id == AppUser.id)
+            .where(UnitResident.unit_id == unit.id, UnitResident.bitis.is_(None))
+            .order_by(AppUser.ad)
+        )
+    ).all()
+    return [UnitResidentBriefOut(user_id=r.id, ad=r.ad) for r in rows]
 
 
 @router.post("", response_model=UnitOut, status_code=201)

@@ -587,6 +587,16 @@ class VisitorOut(BaseModel):
     created_at: datetime
 
 
+class UnitResidentBriefOut(BaseModel):
+    """Bir dairenin AKTIF sakini — hedef sakin secicisi icin (user_id + ad).
+
+    Guvenlik ziyaretci kaydinda hangi sakine bildirilecegini secer; bu uc o
+    listeyi verir (auth.md §4). Sakin komsularini listeleyemez (403)."""
+
+    user_id: uuid.UUID
+    ad: str
+
+
 class VisitorListResponse(BaseModel):
     meta: PageMetaOut
     items: list[VisitorOut]

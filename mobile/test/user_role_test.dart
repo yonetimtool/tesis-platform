@@ -117,17 +117,44 @@ void main() {
         expect(role.canAnswerVisitor, isFalse, reason: role.wire);
       }
 
-      // GORUNTULEME: tesis_gorevlisi ERISMEZ (auth.md §4)
+      // GORUNTULEME (KVKK): YALNIZ security + resident dogrudan gorur;
+      // admin+yonetici VARSAYILAN KAPALI (tek-seferlik izinle); saha yok.
+      expect(UserRole.security.canViewVisitors, isTrue);
+      expect(UserRole.resident.canViewVisitors, isTrue);
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.tesisGorevlisi,
+        UserRole.unknown,
+      ]) {
+        expect(role.canViewVisitors, isFalse, reason: role.wire);
+      }
+    });
+
+    test('tek-seferlik erisim izni: TALEP admin+yonetici; KARAR yalniz '
+        'resident (auth.md §4, KVKK)', () {
+      // TALEP acma (POST /unit-access-request): admin + yonetici
+      expect(UserRole.admin.canRequestUnitAccess, isTrue);
+      expect(UserRole.yonetici.canRequestUnitAccess, isTrue);
+      for (final role in [
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+        UserRole.unknown,
+      ]) {
+        expect(role.canRequestUnitAccess, isFalse, reason: role.wire);
+      }
+      // KARAR (PATCH): yalniz resident (dairenin sakini; sunucu zorlar)
+      expect(UserRole.resident.canDecideUnitAccess, isTrue);
       for (final role in [
         UserRole.admin,
         UserRole.yonetici,
         UserRole.security,
-        UserRole.resident,
+        UserRole.tesisGorevlisi,
+        UserRole.unknown,
       ]) {
-        expect(role.canViewVisitors, isTrue, reason: role.wire);
+        expect(role.canDecideUnitAccess, isFalse, reason: role.wire);
       }
-      expect(UserRole.tesisGorevlisi.canViewVisitors, isFalse);
-      expect(UserRole.unknown.canViewVisitors, isFalse);
     });
 
     test('kargo kesin kurali (ziyaretci matrisi): kayit yalniz security; '
@@ -156,17 +183,18 @@ void main() {
         expect(role.canReceiveKargo, isFalse, reason: role.wire);
       }
 
-      // GORUNTULEME: tesis_gorevlisi ERISMEZ (ziyaretci ile ayni)
+      // GORUNTULEME (ziyaretci ile ayni, KVKK): YALNIZ security + resident;
+      // admin+yonetici VARSAYILAN KAPALI.
+      expect(UserRole.security.canViewKargo, isTrue);
+      expect(UserRole.resident.canViewKargo, isTrue);
       for (final role in [
         UserRole.admin,
         UserRole.yonetici,
-        UserRole.security,
-        UserRole.resident,
+        UserRole.tesisGorevlisi,
+        UserRole.unknown,
       ]) {
-        expect(role.canViewKargo, isTrue, reason: role.wire);
+        expect(role.canViewKargo, isFalse, reason: role.wire);
       }
-      expect(UserRole.tesisGorevlisi.canViewKargo, isFalse);
-      expect(UserRole.unknown.canViewKargo, isFalse);
     });
 
     test('rezervasyon kesin kurali: talep yalniz resident; alan yonetimi + '
