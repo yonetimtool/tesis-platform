@@ -244,6 +244,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `PATCH /users/{id}/contact`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET /call-target/{id}`               |  ❌   | ❌  | 📞  | ❌  | 📞  |
 | `*/integrations*` (CRUD + tetik)      |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `POST /unit-complaints` (daire sik.)  |  ❌   | ❌  | ❌  | ❌  | ✅  |
+| `GET /unit-complaints[/density]`      |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `PATCH /unit-complaints/{id}` (kapat) |  ✅   | ✅  | ❌  | ❌  | ❌  |
 
 > **Giris yollari:** `login`/`login-resident`/`set-password` PUBLIC
 > endpoint'lerdir; matris "hangi rol bu yolu kullanir"i gosterir. Sakinin
@@ -478,6 +481,32 @@ Notlar:
     (public dogrulanip private'a baglanma) engellenir; URL host degismez, TLS
     SNI/sertifika orijinal hostname'e gore dogrulanir. Engellenen tetik
     `{ok:false, error}` doner (istek ic aga CIKMAZ).
+- **Daire sikayeti (`/unit-complaints`, D1 — TAM ANONIM, `/complaints`DEN AYRI):**
+  sakin YONETIME degil, bir HEDEF DAIREYE sikayet acar (gurultu/ayakkabi/diger);
+  daire-basi ANONIM yogunluk + renk uretilir (ileride 2D bina haritasi). Bu,
+  var olan yonetim-sikayeti (`/complaints`) modulunden **BAGIMSIZ** bir tablodur.
+  - **⚠️ HARD ANONIMLIK KURALI:** `complainant_user_id` YALNIZ ic spam korumasi +
+    RLS icin saklanir; **HICBIR uctan/serializer'dan DONMEZ** — `yonetici`/`admin`
+    dahil kimse sikayet edeni goremez. `UnitComplaintOut` semasinda complainant
+    ALANI YOKTUR (kasitli). Denetlenen tek serializer budur; olusturma/liste/
+    detay/kapatma yanitlarinin HEPSI complainant tasimaz (explicit testlerle
+    dogrulanir).
+  - **ACMA (`POST`) YALNIZ `resident`:** `target_unit_id` (tenant'ta olmali, aksi
+    422) + kategori + opsiyonel not. complainant token'dan alinir, echo EDILMEZ.
+  - **SPAM KORUMASI (DB-zorlamali, yarissiz):** ayni sakin ayni hedef daireye
+    AYNI ANDA yalniz **BIR ACIK** sikayet acabilir (partial-unique
+    `WHERE durum='acik'`) -> tekrar **409**. Kapatilinca yeniden acilabilir
+    (surekli engel degil; yonetim-kontrollu).
+  - **YOGUNLUK/RENK (`GET /density`, tum roller):** her daire icin **ACIK**
+    sikayet sayisi + renk — **0-2 yesil, 3-4 sari, 5+ kirmizi**. Kapatma ACIK
+    sayimi dusurur (renk feedback). Sikayet eden verisi YOKTUR ("harita"
+    tenant-ici herkese acik).
+  - **NOT GIZLILIGI:** serbest metin `notlar` YALNIZ yonetim (admin+yonetici)
+    yanitinda dolu; `security`/`tesis_gorevlisi`/`resident` icin **null** —
+    deanonimlestirme / target-shaming riskini sinirlar. (Sayilar/kategori/tarih/
+    renk tum rollere acik.)
+  - **KAPATMA (`PATCH`, admin+yonetici):** yalniz durumu degistirir (kapali);
+    sikayet edeni GORMEZ.
 - **Ortak alan rezervasyonu (`/common-areas` + `/reservations`):** yonetici
   alan tanimlar (havuz/teras/toplanti odasi), sakin slot talep eder, yonetici
   onaylar/reddeder; tam gecmis tutulur.

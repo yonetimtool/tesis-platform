@@ -18,6 +18,7 @@ from .routers import budget as budget_router
 from .routers import checkpoints as checkpoints_router
 from .routers import common_areas as common_areas_router
 from .routers import complaints as complaints_router
+from .routers import unit_complaints as unit_complaints_router
 from .routers import dashboard as dashboard_router
 from .routers import devices as devices_router
 from .routers import dues as dues_router
@@ -83,6 +84,7 @@ app.include_router(patrol_windows_router.router)
 app.include_router(notifications_router.router)
 app.include_router(announcements_router.router)
 app.include_router(complaints_router.router)
+app.include_router(unit_complaints_router.router)
 app.include_router(visitors_router.router)
 app.include_router(kargo_router.router)
 app.include_router(unit_access_router.router)

@@ -3468,6 +3468,110 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  # ================================================================= #
+  # UNIT-COMPLAINTS (D1 — sakin -> HEDEF DAIRE; TAM ANONIM. Yonetimin ayri
+  # /complaints modulunden BAGIMSIZ. complainant_user_id HICBIR yanitta YOK.)
+  # ================================================================= #
+  /unit-complaints:
+    get:
+      tags: [unit-complaints]
+      summary: Daire sikayetleri (kategori+tarih+durum; complainant ASLA yok)
+      description: >
+        Tum roller okur. `notlar` YALNIZ yonetim (admin+yonetici) icin dolu;
+        digerleri null (deanonimlestirme riskini sinirlar). complainant hicbir
+        rolde gorunmez.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: target_unit_id
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+        - name: durum
+          in: query
+          required: false
+          schema: { type: string, enum: [acik, kapali] }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/UnitComplaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [unit-complaints]
+      summary: Daire sikayeti ac (YALNIZ resident) — ANONIM
+      description: >
+        Sakin bir HEDEF daireyi bildirir. complainant_user_id token'dan alinir,
+        YALNIZ ic spam korumasi icin saklanir, ASLA donmez. Spam: ayni sakin
+        ayni daireye ayni anda 1 ACIK sikayet (aksi 409).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitComplaintCreate" }
+      responses:
+        "201":
+          description: Acildi (complainant DONMEZ)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitComplaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Bu daire icin zaten acik sikayetiniz var (spam korumasi)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /unit-complaints/density:
+    get:
+      tags: [unit-complaints]
+      summary: Daire-basi ANONIM yogunluk (sayi + renk) — tum roller
+      description: >
+        Her daire icin ACIK sikayet sayisi + renk (0-2 yesil, 3-4 sari, 5+
+        kirmizi). Sikayet eden verisi YOKTUR. Ileride 2D bina haritasini besler.
+      responses:
+        "200":
+          description: Yogunluk
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitDensity" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /unit-complaints/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [unit-complaints]
+      summary: Sikayeti kapat (admin+yonetici) — sikayet edeni GORMEDEN
+      description: >
+        Yonetim yalniz durumu degistirir (kapali); ACIK sayimi duser (renk
+        feedback). complainant yine DONMEZ.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitComplaintDecision" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitComplaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
 # =================================================================== #
 components:
   securitySchemes:
@@ -3780,6 +3884,54 @@ components:
         ok: { type: boolean, description: 2xx ise true }
         status: { type: integer, nullable: true, description: HTTP durum (ag hatasinda null) }
         error: { type: string, nullable: true, description: SSRF engeli / ag / HTTP hatasi }
+
+    # ---------------------- unit-complaints (D1) ------------------- #
+    UnitComplaint:
+      type: object
+      description: >
+        Daire sikayeti ciktisi — TAM ANONIM. complainant_user_id ALANI YOKTUR
+        (kasitli; hicbir rol goremez). `notlar` yalniz yonetim icin dolu.
+      required: [id, target_unit_id, kategori, durum, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        target_unit_id: { type: string, format: uuid }
+        unit_no: { type: string, nullable: true }
+        kategori: { type: string, enum: [gurultu, ayakkabi, diger] }
+        notlar:
+          type: string
+          nullable: true
+          description: YALNIZ admin+yonetici icin dolu; diger rollerde null
+        durum: { type: string, enum: [acik, kapali] }
+        created_at: { type: string, format: date-time }
+    UnitComplaintCreate:
+      type: object
+      required: [target_unit_id]
+      properties:
+        target_unit_id: { type: string, format: uuid, description: Bildirilen HEDEF daire }
+        kategori: { type: string, enum: [gurultu, ayakkabi, diger], default: diger }
+        notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
+    UnitComplaintDecision:
+      type: object
+      required: [durum]
+      properties:
+        durum: { type: string, enum: [acik, kapali] }
+    UnitDensityItem:
+      type: object
+      description: Daire-basi ANONIM yogunluk (sikayet eden YOK)
+      required: [target_unit_id, unit_no, acik_sayisi, renk]
+      properties:
+        target_unit_id: { type: string, format: uuid }
+        unit_no: { type: string }
+        blok: { type: string, nullable: true }
+        acik_sayisi: { type: integer, description: ACIK sikayet sayisi }
+        renk: { type: string, enum: [yesil, sari, kirmizi] }
+    UnitDensity:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/UnitDensityItem" }
 
     PatrolWindowDurum:
       type: string

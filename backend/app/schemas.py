@@ -1746,3 +1746,69 @@ class IntegrationPresetOut(BaseModel):
     http_method: str
     headers_json: dict[str, str]
     payload_template: str
+
+
+# ------------------- unit complaints (D1 — daire sikayeti) ------------------ #
+# TAM ANONIM: hicbir semada complainant_user_id YOKTUR (kasitli). Yonetimin
+# ayri 'complaint' modulunden bagimsizdir.
+UnitComplaintKategori = Literal["gurultu", "ayakkabi", "diger"]
+UnitComplaintDurum = Literal["acik", "kapali"]
+DensityRenk = Literal["yesil", "sari", "kirmizi"]
+
+
+class UnitComplaintCreate(BaseModel):
+    target_unit_id: uuid.UUID
+    kategori: UnitComplaintKategori = "diger"
+    notlar: str | None = Field(None, min_length=1, max_length=1000)
+
+
+class UnitComplaintDecision(BaseModel):
+    """Yonetim kapatma karari — YALNIZ durum (sikayet edeni GORMEDEN)."""
+
+    durum: UnitComplaintDurum
+
+
+class UnitComplaintOut(BaseModel):
+    """Daire sikayeti ciktisi — complainant ALANI YOKTUR (anonimlik).
+
+    `notlar` YALNIZ yonetim (admin+yonetici) icin doldurulur; diger roller icin
+    None (serbest metin deanonimlestirme riskini sinirlar)."""
+
+    id: uuid.UUID
+    target_unit_id: uuid.UUID
+    unit_no: str | None = None
+    kategori: str
+    notlar: str | None = None
+    durum: str
+    created_at: datetime
+
+    @classmethod
+    def from_model(cls, obj, *, unit_no: str | None, include_note: bool) -> "UnitComplaintOut":
+        return cls(
+            id=obj.id,
+            target_unit_id=obj.target_unit_id,
+            unit_no=unit_no,
+            kategori=obj.kategori,
+            notlar=obj.notlar if include_note else None,
+            durum=obj.durum,
+            created_at=obj.created_at,
+        )
+
+
+class UnitComplaintListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[UnitComplaintOut]
+
+
+class UnitDensityItem(BaseModel):
+    """Daire-basi ANONIM yogunluk — sayilar + renk (sikayet eden YOK)."""
+
+    target_unit_id: uuid.UUID
+    unit_no: str
+    blok: str | None = None
+    acik_sayisi: int  # ACIK sikayet sayisi (kapatilanlar renge etki etmez)
+    renk: DensityRenk
+
+
+class UnitDensityResponse(BaseModel):
+    items: list[UnitDensityItem]

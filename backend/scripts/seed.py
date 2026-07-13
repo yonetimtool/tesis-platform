@@ -83,6 +83,13 @@ USERS = [
         "telefon": "+905321112203",
         "aranabilir": True,
     },
+    {
+        # Ek sakin (D1 daire-sikayeti yogunlugu icin coklu sikayetci ornegi).
+        "ad": "Acme Sakin 3",
+        "email": "resident3@acme.com",
+        "role": "resident",
+        "password": os.getenv("SEED_RESIDENT3_PASSWORD", "Resident123!"),
+    },
 ]
 
 
@@ -427,6 +434,46 @@ def main() -> int:
             },
         )
         print("[seed] kargo 'Aras Kargo' A-12 (bekliyor, guvenlik kaydi)")
+
+        # 7b) ornek DAIRE-SIKAYETI (D1 — ANONIM yogunluk): A-12 YESIL (2 acik),
+        #     yeni daire B-2 SARI (3 acik). Sikayet edenler ASLA gorunmez; bu
+        #     yalniz renk/harita verisi uretir. complainant_user_id ic alandir.
+        conn.execute(
+            """
+            INSERT INTO unit (tenant_id, no, blok) VALUES (%s, 'B-2', 'B')
+            ON CONFLICT (tenant_id, no) DO NOTHING
+            """,
+            (tenant_id,),
+        )
+        b2_id = conn.execute(
+            "SELECT id FROM unit WHERE tenant_id=%s AND no='B-2'", (tenant_id,)
+        ).fetchone()[0]
+        _res_ids = {
+            e: conn.execute(
+                "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s", (tenant_id, e)
+            ).fetchone()[0]
+            for e in ("resident@acme.com", "resident2@acme.com", "resident3@acme.com")
+        }
+        # (hedef_unit, sikayetci_email, kategori) — A-12 x2 (yesil), B-2 x3 (sari)
+        _uc = [
+            (unit_id, "resident@acme.com", "gurultu"),
+            (unit_id, "resident2@acme.com", "ayakkabi"),
+            (b2_id, "resident@acme.com", "gurultu"),
+            (b2_id, "resident2@acme.com", "gurultu"),
+            (b2_id, "resident3@acme.com", "diger"),
+        ]
+        for tgt, email, kat in _uc:
+            conn.execute(
+                """
+                INSERT INTO unit_complaint
+                    (tenant_id, target_unit_id, complainant_user_id, kategori, notlar)
+                VALUES (%s, %s, %s, %s::unit_complaint_kategori, %s)
+                ON CONFLICT (tenant_id, target_unit_id, complainant_user_id)
+                    WHERE durum = 'acik' DO NOTHING
+                """,
+                (tenant_id, tgt, _res_ids[email], kat, "Örnek daire şikayeti"),
+            )
+        print("[seed] daire-sikayeti (D1 anonim): A-12 yesil (2 acik), B-2 sari (3 acik)")
 
         # 8) ortak alanlar + ornek rezervasyon: Havuz'da A-12 icin ONAYLI slot
         #    (cakisma kisiti/ekranlar veriyle denensin). Alan upsert (tenant+ad

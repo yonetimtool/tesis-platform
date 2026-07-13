@@ -131,6 +131,14 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE katilim_durum AS ENUM ('katiliyorum', 'katilmiyorum');"
     )
+    # Daire-sikayeti (D1) turu ve durumu — yonetim 'complaint'inden AYRI.
+    op.execute(
+        "CREATE TYPE unit_complaint_kategori AS ENUM "
+        "('gurultu', 'ayakkabi', 'diger');"
+    )
+    op.execute(
+        "CREATE TYPE unit_complaint_durum AS ENUM ('acik', 'kapali');"
+    )
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -1417,6 +1425,53 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9z10. unit_complaint  (D1 — sakin -> HEDEF DAIRE sikayeti; yonetime
+    #     degil, daireye. TAM ANONIM: complainant_user_id YALNIZ ic spam
+    #     korumasi icin saklanir, HICBIR uctan/serializer'dan donmez. Yonetici/
+    #     admin dahil kimse SIKAYET EDENI goremez — herkes yalniz daire-basi
+    #     sayilari + renk gorur. Yonetimin var olan 'complaint' modulunden
+    #     AYRIDIR. tenant izole (RLS).)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE unit_complaint (
+            id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id             uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            target_unit_id        uuid NOT NULL,
+            -- IC ALAN: yalniz spam korumasi + RLS; ASLA serialize edilmez.
+            complainant_user_id   uuid NOT NULL,
+            kategori              unit_complaint_kategori NOT NULL DEFAULT 'diger',
+            notlar                text,
+            durum                 unit_complaint_durum NOT NULL DEFAULT 'acik',
+            created_at            timestamptz NOT NULL DEFAULT now(),
+            updated_at            timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_unit_complaint_id_tenant UNIQUE (id, tenant_id),
+            CONSTRAINT fk_unit_complaint_target
+                FOREIGN KEY (target_unit_id, tenant_id)
+                REFERENCES unit (id, tenant_id) ON DELETE CASCADE,
+            CONSTRAINT fk_unit_complaint_complainant
+                FOREIGN KEY (complainant_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE CASCADE
+        );
+        """
+    )
+    op.execute(
+        "CREATE INDEX ix_unit_complaint_tenant ON unit_complaint (tenant_id);"
+    )
+    # Yogunluk/renk sorgusu: (tenant, hedef daire, durum) — ACIK sayimi hizli.
+    op.execute(
+        "CREATE INDEX ix_unit_complaint_target "
+        "ON unit_complaint (tenant_id, target_unit_id, durum);"
+    )
+    # SPAM KORUMASI (DB-zorlamali, yarissiz): ayni sikayetci ayni hedef daireye
+    # AYNI ANDA yalniz BIR ACIK sikayet acabilir. Kapatilinca yeniden acilabilir.
+    op.execute(
+        "CREATE UNIQUE INDEX uq_unit_complaint_open "
+        "ON unit_complaint (tenant_id, target_unit_id, complainant_user_id) "
+        "WHERE durum = 'acik';"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -1457,6 +1512,7 @@ def upgrade() -> None:
         "etkinlik_katilim",
         "site_kurali",
         "integration",
+        "unit_complaint",
     ):
         _enable_rls(table)
 
@@ -1495,6 +1551,7 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "unit_complaint",
         "integration",
         "site_kurali",
         "etkinlik_katilim",
@@ -1532,6 +1589,8 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS unit_complaint_durum;")
+    op.execute("DROP TYPE IF EXISTS unit_complaint_kategori;")
     op.execute("DROP TYPE IF EXISTS integration_channel;")
     op.execute("DROP TYPE IF EXISTS katilim_durum;")
     op.execute("DROP TYPE IF EXISTS rezervasyon_durum;")

@@ -127,6 +127,14 @@ INTEGRATION_CHANNEL = ENUM(
     "webhook", "megaphone", "smarthome",
     name="integration_channel", create_type=False,
 )
+UNIT_COMPLAINT_KATEGORI = ENUM(
+    "gurultu", "ayakkabi", "diger",
+    name="unit_complaint_kategori", create_type=False,
+)
+UNIT_COMPLAINT_DURUM = ENUM(
+    "acik", "kapali",
+    name="unit_complaint_durum", create_type=False,
+)
 
 
 def _pk() -> Mapped[uuid.UUID]:
@@ -1431,6 +1439,51 @@ class Integration(Base):
     updated_at = _created_at()
 
 
+class UnitComplaint(Base):
+    """Sakin -> HEDEF DAIRE sikayeti (D1). TAM ANONIM.
+
+    `complainant_user_id` YALNIZ ic spam korumasi + RLS icindir; HICBIR
+    serializer/uc bu alani DONDURMEZ (yonetici/admin dahil kimse sikayet edeni
+    goremez). Yonetimin ayri `Complaint` modulunden BAGIMSIZDIR.
+    """
+
+    __tablename__ = "unit_complaint"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_unit_complaint_id_tenant"),
+        ForeignKeyConstraint(
+            ["target_unit_id", "tenant_id"],
+            ["unit.id", "unit.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_unit_complaint_target",
+        ),
+        ForeignKeyConstraint(
+            ["complainant_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_unit_complaint_complainant",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    target_unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    # IC ALAN — asla serialize edilmez (bkz. schemas.UnitComplaintOut).
+    complainant_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
+    kategori: Mapped[str] = mapped_column(
+        UNIT_COMPLAINT_KATEGORI, nullable=False, server_default=text("'diger'")
+    )
+    notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    durum: Mapped[str] = mapped_column(
+        UNIT_COMPLAINT_DURUM, nullable=False, server_default=text("'acik'")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
 __all__ = [
     "Base",
     "Tenant",
@@ -1479,4 +1532,7 @@ __all__ = [
     "KATILIM_DURUM",
     "Integration",
     "INTEGRATION_CHANNEL",
+    "UnitComplaint",
+    "UNIT_COMPLAINT_KATEGORI",
+    "UNIT_COMPLAINT_DURUM",
 ]
