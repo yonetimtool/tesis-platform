@@ -146,6 +146,21 @@ export interface UnitList {
   items: Unit[];
 }
 
+// Bina blogu (D-viz Rev-2 gorsel editor) — `GET/POST/PATCH/DELETE /blocks`.
+// Etiket (`ad`) daire.blok ile zayif eslesir; `unit_sayisi` o etiketi tasiyan
+// daire sayisi (silme guvenligi: >0 ise DELETE 409 doner).
+export interface Block {
+  id: string;
+  ad: string;
+  kat_sayisi?: number | null;
+  unit_sayisi: number;
+  created_at: string;
+  updated_at?: string | null;
+}
+export interface BlockList {
+  items: Block[];
+}
+
 export interface UnitResident {
   id: string;
   unit_id: string;

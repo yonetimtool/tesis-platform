@@ -109,6 +109,7 @@ void main() {
           HomeMenuEntry.financialSummary,
           HomeMenuEntry.reports,
           HomeMenuEntry.integrations,
+          HomeMenuEntry.binaDuzenleme,
           HomeMenuEntry.binaYerlesimi,
         ],
       );
@@ -137,6 +138,26 @@ void main() {
         expect(
           homeMenuForRole(role),
           isNot(contains(HomeMenuEntry.integrations)),
+          reason: role.wire,
+        );
+      }
+    });
+
+    test('Bina Duzenleme karti (D-viz Rev-2) YALNIZ yonetici mobil menusunde; '
+        'admin panelden yonetir, saha/sakin YOK', () {
+      expect(
+        homeMenuForRole(UserRole.yonetici),
+        contains(HomeMenuEntry.binaDuzenleme),
+      );
+      for (final role in [
+        UserRole.admin,
+        UserRole.security,
+        UserRole.tesisGorevlisi,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.binaDuzenleme)),
           reason: role.wire,
         );
       }

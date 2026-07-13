@@ -1,0 +1,1015 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/error/api_exception.dart';
+import '../domain/bina_duzenleme_models.dart';
+import 'bina_duzenleme_controller.dart';
+
+/// "Bina Düzenleme" (D-viz Rev-2) — yonetim GORSEL olarak binayi kurar:
+/// blok ekle → blok kutucugu belirir → icine gir → kat + daire ekle. Daireler
+/// katina yerlesir, ayni kattakiler yan yana (Sikayet Haritasi semasini yansitir).
+/// Blok-suz siteler: mod anahtariyla duz numaralandirma (blok=null).
+///
+/// Mevcut CRUD uclarini kullanir (yeni backend YOK): /blocks + /units + layout.
+/// Yazma admin+yonetici (backend RBAC zorlar). Blok silme, daire varsa 409 doner
+/// — mesaj acikca gosterilir.
+class BinaDuzenlemeScreen extends ConsumerStatefulWidget {
+  const BinaDuzenlemeScreen({super.key});
+
+  @override
+  ConsumerState<BinaDuzenlemeScreen> createState() =>
+      _BinaDuzenlemeScreenState();
+}
+
+/// Blok-suz kova icin sentinel etiket (gercek blok etiketi min 1 karakter).
+const String _blocklessKey = '';
+
+class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
+  /// null → mod otomatik (veriye gore); aksi halde kullanici secimi.
+  bool? _blockModeOverride;
+
+  /// Acik blok: null = kutucuk listesi; '' = bloksuz kova; aksi = o blok.
+  String? _openBlock;
+
+  /// Onizlemede daire eklenmeden gorunen bos katlar (yerel; daire eklenince
+  /// kalicilasir). Acik blok/mod degisince sifirlanir.
+  final Set<int> _pendingFloors = {};
+
+  bool _effectiveBlockMode(BinaDuzenlemeState s) {
+    final o = _blockModeOverride;
+    if (o != null) return o;
+    // Oto: kayitli/etiketli blok varsa bloklu; yoksa bloksuz daire varsa
+    // bloksuz; hicbiri yoksa (bos) bloklu (ekleme akisi bloklu baslar).
+    if (s.blockLabels.isNotEmpty) return true;
+    if (s.blocklessUnits.isNotEmpty) return false;
+    return true;
+  }
+
+  void _openBlockTile(String label) {
+    setState(() {
+      _openBlock = label;
+      _pendingFloors.clear();
+    });
+  }
+
+  void _closeBlock() {
+    setState(() {
+      _openBlock = null;
+      _pendingFloors.clear();
+    });
+  }
+
+  void _setMode(bool blockMode) {
+    setState(() {
+      _blockModeOverride = blockMode;
+      _openBlock = null;
+      _pendingFloors.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(binaDuzenlemeControllerProvider);
+    final controller = ref.read(binaDuzenlemeControllerProvider.notifier);
+    final blockMode = _effectiveBlockMode(state);
+    final drilledIn = blockMode && _openBlock != null;
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: drilledIn
+            ? BackButton(onPressed: _closeBlock)
+            : null,
+        title: Text(_titleFor(blockMode)),
+        actions: [
+          IconButton(
+            tooltip: 'Yenile',
+            icon: const Icon(Icons.refresh),
+            onPressed: state.loading ? null : controller.refresh,
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: controller.refresh,
+        child: _body(state, blockMode),
+      ),
+    );
+  }
+
+  String _titleFor(bool blockMode) {
+    if (blockMode && _openBlock != null) {
+      return _openBlock == _blocklessKey
+          ? 'Bloksuz daireler'
+          : 'Blok $_openBlock';
+    }
+    return 'Bina Düzenleme';
+  }
+
+  Widget _body(BinaDuzenlemeState state, bool blockMode) {
+    if (state.loading && state.bos) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.errorMessage != null && state.bos) {
+      return ListView(
+        children: [
+          const SizedBox(height: 120),
+          Center(child: Text(state.errorMessage!)),
+        ],
+      );
+    }
+
+    // Bloksuz mod: dogrudan implicit blok (blok=null) icerigi.
+    if (!blockMode) {
+      return _BlockDetail(
+        key: const ValueKey('blockless'),
+        label: _blocklessKey,
+        state: state,
+        pendingFloors: _pendingFloors,
+        onAddFloor: _addFloor,
+        modeSwitcher: _modeSwitcher(blockMode),
+        errorBanner: _errorBanner(state),
+      );
+    }
+
+    // Bloklu mod, bir bloga girildi.
+    if (_openBlock != null) {
+      return _BlockDetail(
+        key: ValueKey('block-$_openBlock'),
+        label: _openBlock!,
+        state: state,
+        pendingFloors: _pendingFloors,
+        onAddFloor: _addFloor,
+        errorBanner: _errorBanner(state),
+      );
+    }
+
+    // Bloklu mod, kutucuk listesi.
+    return _BlockList(
+      state: state,
+      modeSwitcher: _modeSwitcher(blockMode),
+      errorBanner: _errorBanner(state),
+      onOpen: _openBlockTile,
+    );
+  }
+
+  Widget? _errorBanner(BinaDuzenlemeState state) {
+    if (state.errorMessage == null || state.bos) return null;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        state.errorMessage!,
+        style: TextStyle(color: Theme.of(context).colorScheme.error),
+      ),
+    );
+  }
+
+  Widget _modeSwitcher(bool blockMode) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SegmentedButton<bool>(
+        segments: const [
+          ButtonSegment(value: true, label: Text('Bloklu'), icon: Icon(Icons.apartment)),
+          ButtonSegment(value: false, label: Text('Bloksuz'), icon: Icon(Icons.tag)),
+        ],
+        selected: {blockMode},
+        onSelectionChanged: (s) => _setMode(s.first),
+      ),
+    );
+  }
+
+  void _addFloor() {
+    setState(() {
+      // Var olan en ust katin ustune yeni bos kat ekle (yoksa 1'den basla).
+      final state = ref.read(binaDuzenlemeControllerProvider);
+      final units = _openBlock == _blocklessKey || !_effectiveBlockMode(state)
+          ? state.blocklessUnits
+          : state.unitsForBlock(_openBlock!);
+      final kats = <int>{
+        for (final u in units)
+          if (u.kat != null) u.kat!,
+        ..._pendingFloors,
+      };
+      final next = kats.isEmpty ? 1 : (kats.reduce((a, b) => a > b ? a : b) + 1);
+      _pendingFloors.add(next);
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Kutucuk listesi (bloklu mod, ust seviye).
+// ---------------------------------------------------------------------------
+
+class _BlockList extends ConsumerWidget {
+  const _BlockList({
+    required this.state,
+    required this.modeSwitcher,
+    required this.errorBanner,
+    required this.onOpen,
+  });
+
+  final BinaDuzenlemeState state;
+  final Widget modeSwitcher;
+  final Widget? errorBanner;
+  final void Function(String label) onOpen;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final labels = state.blockLabels;
+    final hasBlockless = state.blocklessUnits.isNotEmpty;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      children: [
+        ?errorBanner,
+        modeSwitcher,
+        const Text(
+          'Blok ekleyin, kutucuğa dokunup içine kat ve daire yerleştirin. '
+          'Şikayet Haritası bu yapıyı yansıtır.',
+          style: TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final label in labels)
+              _BlockTile(
+                label: label,
+                unitCount: state.unitsForBlock(label).length,
+                registered: state.blockByLabel(label) != null,
+                onTap: () => onOpen(label),
+                onManage: state.blockByLabel(label) == null
+                    ? null
+                    : () => _manageBlock(context, ref, state.blockByLabel(label)!),
+              ),
+            if (hasBlockless)
+              _BlockTile(
+                label: 'Bloksuz',
+                unitCount: state.blocklessUnits.length,
+                registered: true,
+                icon: Icons.tag,
+                onTap: () => onOpen(_blocklessKey),
+              ),
+            _AddTile(onTap: () => _addBlock(context, ref)),
+          ],
+        ),
+        if (labels.isEmpty && !hasBlockless) ...[
+          const SizedBox(height: 24),
+          const Center(
+            child: Text(
+              'Henüz blok yok. "+ Blok" ile başlayın veya Bloksuz moda geçin.',
+              style: TextStyle(color: Colors.black54),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _BlockTile extends StatelessWidget {
+  const _BlockTile({
+    required this.label,
+    required this.unitCount,
+    required this.registered,
+    required this.onTap,
+    this.onManage,
+    this.icon,
+  });
+
+  final String label;
+  final int unitCount;
+  final bool registered;
+  final VoidCallback onTap;
+  final VoidCallback? onManage;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      onLongPress: onManage,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 104,
+        height: 104,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8EAF6),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF3949AB), width: 1.2),
+        ),
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon ?? Icons.domain, color: const Color(0xFF3949AB)),
+            const SizedBox(height: 4),
+            Text(
+              icon == null ? 'Blok $label' : label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF283593),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text('$unitCount daire',
+                style: const TextStyle(fontSize: 11, color: Colors.black54)),
+            if (!registered)
+              const Text('kayıtsız',
+                  style: TextStyle(fontSize: 10, color: Colors.orange)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AddTile extends StatelessWidget {
+  const _AddTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 104,
+        height: 104,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.blueGrey.shade300, width: 1.2, style: BorderStyle.solid),
+          color: Colors.blueGrey.shade50,
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add, color: Colors.blueGrey),
+            SizedBox(height: 4),
+            Text('Blok', style: TextStyle(color: Colors.blueGrey)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Blok detayi (kat plani + kat/daire ekleme). label='' → bloksuz kova.
+// ---------------------------------------------------------------------------
+
+class _BlockDetail extends ConsumerWidget {
+  const _BlockDetail({
+    super.key,
+    required this.label,
+    required this.state,
+    required this.pendingFloors,
+    required this.onAddFloor,
+    this.modeSwitcher,
+    this.errorBanner,
+  });
+
+  final String label;
+  final BinaDuzenlemeState state;
+  final Set<int> pendingFloors;
+  final VoidCallback onAddFloor;
+  final Widget? modeSwitcher;
+  final Widget? errorBanner;
+
+  bool get _blockless => label == _blocklessKey;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final units =
+        _blockless ? state.blocklessUnits : state.unitsForBlock(label);
+
+    // Kat gruplama: daire katlari + bekleyen bos katlar; UST KAT YUKARIDA.
+    final floorSet = <int>{
+      for (final u in units)
+        if (u.kat != null) u.kat!,
+      ...pendingFloors,
+    };
+    final floors = floorSet.toList()..sort((a, b) => b.compareTo(a));
+    final katsizUnits = units.where((u) => u.kat == null).toList();
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      children: [
+        ?errorBanner,
+        ?modeSwitcher,
+        Text(
+          _blockless
+              ? 'Bloksuz daireler — düz numaralandırma. Kat ekleyip daireleri yerleştirin.'
+              : 'Blok $label — kat ekleyip daireleri yerleştirin. Aynı kattakiler yan yana dizilir.',
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: onAddFloor,
+              icon: const Icon(Icons.add),
+              label: const Text('Kat ekle'),
+            ),
+            const SizedBox(width: 12),
+            FilledButton.icon(
+              onPressed: () => _openUnitForm(context, ref),
+              icon: const Icon(Icons.add_home_work_outlined),
+              label: const Text('Daire ekle'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (floors.isEmpty && katsizUnits.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text('Henüz daire yok. "Daire ekle" ile başlayın.',
+                  style: TextStyle(color: Colors.black54)),
+            ),
+          ),
+        for (final kat in floors)
+          _FloorRow(
+            kat: kat,
+            units: (units.where((u) => u.kat == kat).toList()
+              ..sort(_bySira)),
+            onAddUnit: () => _openUnitForm(context, ref, kat: kat),
+            onUnit: (u) => _openUnitForm(context, ref, existing: u),
+          ),
+        if (katsizUnits.isNotEmpty)
+          _FloorRow(
+            kat: null,
+            units: katsizUnits..sort(_bySira),
+            onAddUnit: () => _openUnitForm(context, ref),
+            onUnit: (u) => _openUnitForm(context, ref, existing: u),
+          ),
+      ],
+    );
+  }
+
+  static int _bySira(EditorUnit a, EditorUnit b) {
+    final sa = a.sira ?? 1 << 30;
+    final sb = b.sira ?? 1 << 30;
+    if (sa != sb) return sa.compareTo(sb);
+    return a.no.compareTo(b.no);
+  }
+
+  /// Yeni/duzenleme daire formu. [kat] verilirse yeni daire o kata; [existing]
+  /// verilirse duzenleme. Bloksuz kova → blok=null.
+  Future<void> _openUnitForm(
+    BuildContext context,
+    WidgetRef ref, {
+    int? kat,
+    EditorUnit? existing,
+  }) async {
+    final blok = _blockless ? null : label;
+    // Yeni daire icin sira onerisi: bu blok+kattaki en yuksek sira + 1.
+    int? siraSuggestion;
+    if (existing == null) {
+      final target = _blockless ? state.blocklessUnits : state.unitsForBlock(label);
+      final onKat = target.where((u) => u.kat == kat).toList();
+      final maxSira = onKat.fold<int>(
+          0, (m, u) => (u.sira ?? 0) > m ? (u.sira ?? 0) : m);
+      siraSuggestion = maxSira + 1;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: _UnitForm(
+          blok: blok,
+          initialKat: existing?.kat ?? kat,
+          initialSira: existing?.sira ?? siraSuggestion,
+          existing: existing,
+        ),
+      ),
+    );
+  }
+}
+
+class _FloorRow extends StatelessWidget {
+  const _FloorRow({
+    required this.kat,
+    required this.units,
+    required this.onAddUnit,
+    required this.onUnit,
+  });
+
+  final int? kat;
+  final List<EditorUnit> units;
+  final VoidCallback onAddUnit;
+  final void Function(EditorUnit) onUnit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 60,
+              child: Text(
+                kat == null ? 'Kat yok' : 'Kat $kat',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            ),
+            Expanded(
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final u in units)
+                    _UnitCell(unit: u, onTap: () => onUnit(u)),
+                  _AddUnitCell(onTap: onAddUnit),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Sikayet Haritasi hucre stilini yansitir (58x46, yuvarlak, etiket).
+class _UnitCell extends StatelessWidget {
+  const _UnitCell({required this.unit, required this.onTap});
+
+  final EditorUnit unit;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = unit.aktif;
+    final color = active ? const Color(0xFF3949AB) : Colors.blueGrey;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 58,
+        height: 46,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color, width: 1.5),
+        ),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              unit.no,
+              style: TextStyle(
+                color: active ? const Color(0xFF283593) : Colors.blueGrey,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (unit.sira != null)
+              Text('#${unit.sira}',
+                  style: const TextStyle(fontSize: 10, color: Colors.black45)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AddUnitCell extends StatelessWidget {
+  const _AddUnitCell({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 58,
+        height: 46,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blueGrey.shade300, width: 1.2),
+          color: Colors.blueGrey.shade50,
+        ),
+        child: const Icon(Icons.add, size: 20, color: Colors.blueGrey),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Blok ekle/duzenle/sil.
+// ---------------------------------------------------------------------------
+
+Future<void> _addBlock(BuildContext context, WidgetRef ref) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+      child: const _BlockForm(),
+    ),
+  );
+}
+
+Future<void> _manageBlock(
+    BuildContext context, WidgetRef ref, BuildingBlock block) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.edit_outlined),
+            title: Text('Blok ${block.ad} — düzenle'),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                builder: (c2) => Padding(
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(c2).viewInsets.bottom),
+                  child: _BlockForm(existing: block),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete_outline, color: Colors.red),
+            title: const Text('Bloğu sil', style: TextStyle(color: Colors.red)),
+            subtitle: block.unitSayisi > 0
+                ? Text('${block.unitSayisi} daire var — önce taşıyın/silin')
+                : null,
+            onTap: () async {
+              Navigator.of(ctx).pop();
+              await _deleteBlock(context, ref, block);
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Future<void> _deleteBlock(
+    BuildContext context, WidgetRef ref, BuildingBlock block) async {
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    await ref
+        .read(binaDuzenlemeControllerProvider.notifier)
+        .deleteBlock(block.id);
+    messenger.showSnackBar(SnackBar(content: Text('Blok ${block.ad} silindi.')));
+  } on ApiException catch (e) {
+    // 409: blogu kullanan daire var → net mesaj.
+    messenger.showSnackBar(SnackBar(
+      content: Text(e.statusCode == 409
+          ? e.message
+          : 'Blok silinemedi: ${e.message}'),
+    ));
+  } catch (_) {
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Blok silinemedi. Lütfen tekrar deneyin.')),
+    );
+  }
+}
+
+class _BlockForm extends ConsumerStatefulWidget {
+  const _BlockForm({this.existing});
+
+  final BuildingBlock? existing;
+
+  @override
+  ConsumerState<_BlockForm> createState() => _BlockFormState();
+}
+
+class _BlockFormState extends ConsumerState<_BlockForm> {
+  late final TextEditingController _ad =
+      TextEditingController(text: widget.existing?.ad ?? '');
+  late final TextEditingController _katSayisi = TextEditingController(
+      text: widget.existing?.katSayisi?.toString() ?? '');
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _ad.dispose();
+    _katSayisi.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_busy) return;
+    final ad = _ad.text.trim();
+    if (ad.isEmpty) {
+      setState(() => _error = 'Blok etiketi gerekli (örn. A, B1).');
+      return;
+    }
+    final katText = _katSayisi.text.trim();
+    final katSayisi = katText.isEmpty ? null : int.tryParse(katText);
+    if (katText.isNotEmpty && katSayisi == null) {
+      setState(() => _error = 'Kat sayısı tam sayı olmalı.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final draft = BlockDraft(ad: ad, katSayisi: katSayisi);
+    final controller = ref.read(binaDuzenlemeControllerProvider.notifier);
+    try {
+      if (widget.existing != null) {
+        await controller.updateBlock(widget.existing!.id, draft);
+      } else {
+        await controller.createBlock(draft);
+      }
+      if (mounted) Navigator.of(context).pop();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = e.statusCode == 409
+            ? 'Bu blok etiketi zaten kayıtlı.'
+            : e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = 'Kaydedilemedi. Lütfen tekrar deneyin.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.existing != null ? 'Blok düzenle' : 'Yeni blok',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _ad,
+            maxLength: 8,
+            textCapitalization: TextCapitalization.characters,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+            ],
+            decoration: const InputDecoration(
+              labelText: 'Blok etiketi',
+              hintText: 'A',
+              helperText: 'Kısa alfanumerik (örn. A, B1) — tire yok',
+            ),
+          ),
+          TextField(
+            controller: _katSayisi,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: const InputDecoration(
+              labelText: 'Kat sayısı (opsiyonel)',
+              hintText: '5',
+              helperText: 'Bilgi amaçlı ipucu',
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ],
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: _busy ? null : _save,
+                  child: Text(_busy ? 'Kaydediliyor...' : 'Kaydet'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              TextButton(
+                onPressed: _busy ? null : () => Navigator.of(context).pop(),
+                child: const Text('İptal'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Daire ekle/duzenle/sil.
+// ---------------------------------------------------------------------------
+
+class _UnitForm extends ConsumerStatefulWidget {
+  const _UnitForm({
+    required this.blok,
+    this.initialKat,
+    this.initialSira,
+    this.existing,
+  });
+
+  /// null → bloksuz (blok gonderilmez); aksi halde bu blok.
+  final String? blok;
+  final int? initialKat;
+  final int? initialSira;
+  final EditorUnit? existing;
+
+  @override
+  ConsumerState<_UnitForm> createState() => _UnitFormState();
+}
+
+class _UnitFormState extends ConsumerState<_UnitForm> {
+  late final TextEditingController _no =
+      TextEditingController(text: widget.existing?.no ?? '');
+  late final TextEditingController _kat = TextEditingController(
+      text: (widget.existing?.kat ?? widget.initialKat)?.toString() ?? '');
+  late final TextEditingController _sira = TextEditingController(
+      text: (widget.existing?.sira ?? widget.initialSira)?.toString() ?? '');
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _no.dispose();
+    _kat.dispose();
+    _sira.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_busy) return;
+    final no = _no.text.trim();
+    if (no.isEmpty) {
+      setState(() => _error = 'Daire no gerekli (örn. A-12, 12).');
+      return;
+    }
+    final katText = _kat.text.trim();
+    final siraText = _sira.text.trim();
+    final kat = katText.isEmpty ? null : int.tryParse(katText);
+    final sira = siraText.isEmpty ? null : int.tryParse(siraText);
+    if ((katText.isNotEmpty && kat == null) ||
+        (siraText.isNotEmpty && sira == null)) {
+      setState(() => _error = 'Kat ve sıra tam sayı olmalı.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final draft = EditorUnitDraft(no: no, blok: widget.blok, kat: kat, sira: sira);
+    final controller = ref.read(binaDuzenlemeControllerProvider.notifier);
+    try {
+      if (widget.existing != null) {
+        await controller.updateUnit(widget.existing!.id, draft);
+      } else {
+        await controller.createUnit(draft);
+      }
+      if (mounted) Navigator.of(context).pop();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = e.statusCode == 409
+            ? 'Bu daire no zaten kayıtlı.'
+            : e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = 'Kaydedilemedi. Lütfen tekrar deneyin.';
+      });
+    }
+  }
+
+  Future<void> _delete() async {
+    if (_busy || widget.existing == null) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(binaDuzenlemeControllerProvider.notifier)
+          .deleteUnit(widget.existing!.id);
+      if (mounted) Navigator.of(context).pop();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = 'Silinemedi. Lütfen tekrar deneyin.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final blokLabel = widget.blok == null ? 'Bloksuz' : 'Blok ${widget.blok}';
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.existing != null
+                ? 'Daire ${widget.existing!.no} — düzenle'
+                : 'Yeni daire · $blokLabel',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _no,
+            maxLength: 50,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9-]')),
+            ],
+            decoration: const InputDecoration(
+              labelText: 'Daire no',
+              hintText: 'A-12',
+              helperText: 'Alfanumerik + tire (örn. A-12, B3, 12)',
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _kat,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Kat',
+                    hintText: '1',
+                    helperText: '0 = zemin',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _sira,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    labelText: 'Sıra',
+                    hintText: '1',
+                    helperText: 'Kattaki konum',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ],
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: _busy ? null : _save,
+                  child: Text(_busy ? 'Kaydediliyor...' : 'Kaydet'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (widget.existing != null)
+                TextButton(
+                  onPressed: _busy ? null : _delete,
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  child: const Text('Sil'),
+                )
+              else
+                TextButton(
+                  onPressed: _busy ? null : () => Navigator.of(context).pop(),
+                  child: const Text('İptal'),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}

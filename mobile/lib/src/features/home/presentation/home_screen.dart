@@ -392,6 +392,20 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.binaYerlesimi),
           ),
         );
+      case HomeMenuEntry.binaDuzenleme:
+        // D-viz Rev-2: gorsel bina editoru — blok/kat/daire olustur/duzenle.
+        // Yonetici kurar; Sikayet Haritasi bu yapiyi yansitir.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.edit_location_alt_outlined),
+            title: const Text('Bina Düzenleme'),
+            subtitle: const Text(
+              'Blok, kat ve daireleri görsel olarak oluştur/düzenle',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.binaDuzenleme),
+          ),
+        );
       case HomeMenuEntry.sikayetHaritasi:
         // D-viz-2: 2D bina semasi (kat plani) — renkli daire hucreleri.
         // Tum roller gorur; sakin daireyi anonim sikayet edebilir.

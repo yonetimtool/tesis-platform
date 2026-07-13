@@ -97,6 +97,12 @@ enum HomeMenuEntry {
   /// yonetir; yazma backend'de admin+yonetici ile sinirli.
   binaYerlesimi,
 
+  /// Bina Duzenleme (D-viz Rev-2) — GORSEL editor: blok ekle → kutucuk → icine
+  /// gir → kat + daire ekle (blok/kat/sira). Blok-suz mod (blok=null) destegi.
+  /// Mobilde YONETICI kurar; yazma backend'de admin+yonetici (RBAC). Ayni CRUD
+  /// uclarini kullanir; Sikayet Haritasi bu yapiyi yansitir.
+  binaDuzenleme,
+
   /// Sikayet Haritasi (D-viz-2) — 2D bina semasi: blok->kat->renkli daire
   /// hucreleri (ANONIM yogunluk). TUM roller gorur; SAKIN daireyi sikayet
   /// edebilir (mevcut POST /unit-complaints). Renk API'den (0-2/3-4/5+).
@@ -179,6 +185,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.financialSummary,
         HomeMenuEntry.reports,
         HomeMenuEntry.integrations,
+        HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.binaYerlesimi,
       ];
     case UserRole.resident:

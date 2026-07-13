@@ -9,6 +9,7 @@ import '../features/complaints/presentation/complaints_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/set_password_screen.dart';
 import '../features/budget/presentation/budget_screen.dart';
+import '../features/building_map/presentation/bina_duzenleme_screen.dart';
 import '../features/building_map/presentation/building_map_screen.dart';
 import '../features/building_map/presentation/building_schematic_screen.dart';
 import '../features/unit_complaints/presentation/my_complaints_screen.dart';
@@ -67,6 +68,7 @@ class AppRoutes {
   static const siteKurallari = '/site-kurallari';
   static const integrations = '/integrations';
   static const binaYerlesimi = '/bina-yerlesimi';
+  static const binaDuzenleme = '/bina-duzenleme';
   static const sikayetHaritasi = '/sikayet-haritasi';
   static const sikayetlerim = '/sikayetlerim';
 }
@@ -284,6 +286,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.binaYerlesimi,
         builder: (context, state) => const BuildingMapScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.binaDuzenleme,
+        builder: (context, state) => const BinaDuzenlemeScreen(),
       ),
       GoRoute(
         path: AppRoutes.sikayetHaritasi,
