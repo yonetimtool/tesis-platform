@@ -553,12 +553,15 @@ class _AreaList extends ConsumerWidget {
               color: alan.aktif ? null : Colors.grey,
             ),
             title: Text(alan.ad),
-            subtitle: alan.aciklama == null && alan.aktif
-                ? null
-                : Text(
-                    '${alan.aciklama ?? ''}'
-                    '${alan.aktif ? '' : '${alan.aciklama == null ? '' : ' · '}Pasif (rezerve edilemez)'}',
-                  ),
+            subtitle: Text(
+              [
+                if (alan.aciklama != null && alan.aciklama!.isNotEmpty)
+                  alan.aciklama!,
+                alan.aktif
+                    ? 'Müsait: ${alan.musaitlikOzeti}'
+                    : 'Pasif (rezerve edilemez)',
+              ].join('\n'),
+            ),
             // Yonetim: aktiflik anahtari (soft-delete / yeniden aktive).
             trailing: state.canManageAreas
                 ? Switch(
@@ -596,8 +599,14 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
   final _formKey = GlobalKey<FormState>();
   final _ad = TextEditingController();
   final _aciklama = TextEditingController();
+  // Musaitlik: her gun [acilis, kapanis) araligi, _slot dk slot uzunlugu.
+  TimeOfDay _acilis = const TimeOfDay(hour: 8, minute: 0);
+  TimeOfDay _kapanis = const TimeOfDay(hour: 22, minute: 0);
+  int _slot = 60;
   bool _busy = false;
   String? _hata;
+
+  static const _slotSecenekleri = [30, 45, 60, 90, 120];
 
   @override
   void dispose() {
@@ -606,8 +615,35 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
     super.dispose();
   }
 
+  static String _hhmm(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  bool get _saatGecerli =>
+      _kapanis.hour * 60 + _kapanis.minute >
+      _acilis.hour * 60 + _acilis.minute;
+
+  Future<void> _pickSaat(bool acilis) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: acilis ? _acilis : _kapanis,
+    );
+    if (picked != null) {
+      setState(() {
+        if (acilis) {
+          _acilis = picked;
+        } else {
+          _kapanis = picked;
+        }
+      });
+    }
+  }
+
   Future<void> _submit() async {
     if (_busy || !(_formKey.currentState?.validate() ?? false)) return;
+    if (!_saatGecerli) {
+      setState(() => _hata = 'Kapanış saati açılıştan sonra olmalı.');
+      return;
+    }
     setState(() {
       _busy = true;
       _hata = null;
@@ -618,6 +654,9 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
               ad: _ad.text.trim(),
               aciklama:
                   _aciklama.text.trim().isEmpty ? null : _aciklama.text.trim(),
+              acilis: _hhmm(_acilis),
+              kapanis: _hhmm(_kapanis),
+              slotDakika: _slot,
             ),
           );
       if (mounted) Navigator.of(context).pop(true);
@@ -646,56 +685,107 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
       padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + viewInsets.bottom),
       child: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Yeni ortak alan',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _ad,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Alan adı * (örn. Havuz)',
-                border: OutlineInputBorder(),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Yeni ortak alan',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
-              maxLength: 200,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Alan adı gerekli' : null,
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _aciklama,
-              decoration: const InputDecoration(
-                labelText: 'Açıklama (opsiyonel)',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _ad,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Alan adı * (örn. Havuz)',
+                  border: OutlineInputBorder(),
+                ),
+                maxLength: 200,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Alan adı gerekli' : null,
               ),
-              maxLength: 1000,
-              maxLines: 2,
-            ),
-            if (_hata != null) ...[
               const SizedBox(height: 8),
-              Text(_hata!, style: const TextStyle(color: Colors.red)),
-            ],
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                icon: _busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add_home_outlined),
-                label: const Text('Alanı ekle'),
-                onPressed: _busy ? null : _submit,
+              TextFormField(
+                controller: _aciklama,
+                decoration: const InputDecoration(
+                  labelText: 'Açıklama (opsiyonel)',
+                  border: OutlineInputBorder(),
+                ),
+                maxLength: 1000,
+                maxLines: 2,
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              // Musaitlik: acilis/kapanis + slot uzunlugu (slotlar bundan uretilir).
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Müsaitlik (her gün)',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.wb_sunny_outlined, size: 18),
+                      label: Text('Açılış: ${_hhmm(_acilis)}'),
+                      onPressed: _busy ? null : () => _pickSaat(true),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.nightlight_outlined, size: 18),
+                      label: Text('Kapanış: ${_hhmm(_kapanis)}'),
+                      onPressed: _busy ? null : () => _pickSaat(false),
+                    ),
+                  ),
+                ],
+              ),
+              if (!_saatGecerli)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Kapanış saati açılıştan sonra olmalı.',
+                    style: TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<int>(
+                initialValue: _slot,
+                decoration: const InputDecoration(
+                  labelText: 'Slot uzunluğu',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final s in _slotSecenekleri)
+                    DropdownMenuItem(value: s, child: Text('$s dakika')),
+                ],
+                onChanged:
+                    _busy ? null : (v) => setState(() => _slot = v ?? _slot),
+              ),
+              if (_hata != null) ...[
+                const SizedBox(height: 8),
+                Text(_hata!, style: const TextStyle(color: Colors.red)),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add_home_outlined),
+                  label: const Text('Alanı ekle'),
+                  onPressed: _busy ? null : _submit,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -719,11 +809,21 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
   final _notlar = TextEditingController();
   late String _alanId = widget.alanlar.first.id;
   DateTime _tarih = DateTime.now().add(const Duration(days: 1));
-  TimeOfDay _baslangic = const TimeOfDay(hour: 10, minute: 0);
-  TimeOfDay _bitis = const TimeOfDay(hour: 12, minute: 0);
   int _kisi = 2;
   bool _busy = false;
   String? _hata;
+
+  // Slot izgarasi (secili alan+gun): sakin BOS bir slot secer (dolu secilemez).
+  List<Slot> _slots = const [];
+  bool _slotYukleniyor = false;
+  String? _slotHata;
+  Slot? _secili;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_loadSlots);
+  }
 
   @override
   void dispose() {
@@ -734,13 +834,40 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
   String get _tarihStr =>
       '${_tarih.year}-${_tarih.month.toString().padLeft(2, '0')}-${_tarih.day.toString().padLeft(2, '0')}';
 
-  static String _hhmm(TimeOfDay t) =>
-      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+  OrtakAlan get _alan =>
+      widget.alanlar.firstWhere((a) => a.id == _alanId,
+          orElse: () => widget.alanlar.first);
 
-  bool get _aralikGecerli {
-    final b = _baslangic.hour * 60 + _baslangic.minute;
-    final e = _bitis.hour * 60 + _bitis.minute;
-    return e > b;
+  /// Secili alan+gun icin slotlari (dolu/bos) yeniden yukler; secimi sifirlar.
+  Future<void> _loadSlots() async {
+    setState(() {
+      _slotYukleniyor = true;
+      _slotHata = null;
+      _secili = null;
+      _slots = const [];
+    });
+    try {
+      final slots = await ref
+          .read(rezervasyonControllerProvider.notifier)
+          .slots(_alanId, _tarihStr);
+      if (!mounted) return;
+      setState(() {
+        _slots = slots;
+        _slotYukleniyor = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _slotYukleniyor = false;
+        _slotHata = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _slotYukleniyor = false;
+        _slotHata = 'Slotlar yüklenemedi. Tekrar deneyin.';
+      });
+    }
   }
 
   Future<void> _pickDate() async {
@@ -750,30 +877,16 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
-    if (picked != null) setState(() => _tarih = picked);
-  }
-
-  Future<void> _pickTime(bool baslangic) async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: baslangic ? _baslangic : _bitis,
-    );
-    if (picked != null) {
-      setState(() {
-        if (baslangic) {
-          _baslangic = picked;
-        } else {
-          _bitis = picked;
-        }
-      });
+    if (picked != null && picked != _tarih) {
+      setState(() => _tarih = picked);
+      await _loadSlots();
     }
   }
 
   Future<void> _submit() async {
     if (_busy) return;
-    if (!_aralikGecerli) {
-      // Sunucu da 422 doner; istemcide erken ve acik uyari.
-      setState(() => _hata = 'Bitiş saati başlangıçtan sonra olmalı.');
+    if (_secili == null) {
+      setState(() => _hata = 'Lütfen boş bir slot seçin.');
       return;
     }
     setState(() {
@@ -785,20 +898,21 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
             RezervasyonDraft(
               alanId: _alanId,
               tarih: _tarihStr,
-              baslangic: _hhmm(_baslangic),
-              bitis: _hhmm(_bitis),
+              baslangic: _secili!.baslangic,
+              bitis: _secili!.bitis,
               kisiSayisi: _kisi,
               notlar: _notlar.text.trim().isEmpty ? null : _notlar.text.trim(),
             ),
           );
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
-      // 409: onayli rezervasyonla cakisma — kullaniciya acikca gosterilir.
+      // 409: onayli rezervasyonla cakisma (yaris) — slotlari tazele + goster.
       if (mounted) {
         setState(() {
           _busy = false;
           _hata = e.message;
         });
+        await _loadSlots();
       }
     } catch (_) {
       if (mounted) {
@@ -808,6 +922,42 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
         });
       }
     }
+  }
+
+  Widget _slotAlani() {
+    if (_slotYukleniyor) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_slotHata != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(_slotHata!, style: const TextStyle(color: Colors.red)),
+      );
+    }
+    if (_slots.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text('Bu alan için tanımlı slot yok.'),
+      );
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final s in _slots)
+          ChoiceChip(
+            label: Text('${s.baslangic}–${s.bitis}${s.dolu ? ' · dolu' : ''}'),
+            selected: identical(_secili, s),
+            // Dolu slot secilemez (onDialog null) — gorsel olarak da soluk.
+            onSelected: (_busy || s.dolu)
+                ? null
+                : (sel) => setState(() => _secili = sel ? s : null),
+          ),
+      ],
+    );
   }
 
   @override
@@ -839,42 +989,29 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
                 ],
                 onChanged: _busy
                     ? null
-                    : (v) => setState(() => _alanId = v ?? _alanId),
+                    : (v) {
+                        if (v == null || v == _alanId) return;
+                        setState(() => _alanId = v);
+                        _loadSlots();
+                      },
               ),
+              const SizedBox(height: 6),
+              Text('Müsaitlik: ${_alan.musaitlikOzeti}',
+                  style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 12),
-              // Tarih + saat secimleri (yerel picker'lar).
               OutlinedButton.icon(
                 icon: const Icon(Icons.calendar_today_outlined, size: 18),
                 label: Text('Tarih: $_tarihStr'),
                 onPressed: _busy ? null : _pickDate,
               ),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.schedule, size: 18),
-                      label: Text('Başlangıç: ${_hhmm(_baslangic)}'),
-                      onPressed: _busy ? null : () => _pickTime(true),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.schedule, size: 18),
-                      label: Text('Bitiş: ${_hhmm(_bitis)}'),
-                      onPressed: _busy ? null : () => _pickTime(false),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 12),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Slot seç (boş)',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
               ),
-              if (!_aralikGecerli)
-                const Padding(
-                  padding: EdgeInsets.only(top: 4),
-                  child: Text(
-                    'Bitiş saati başlangıçtan sonra olmalı.',
-                    style: TextStyle(color: Colors.red, fontSize: 12),
-                  ),
-                ),
+              const SizedBox(height: 6),
+              _slotAlani(),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -918,7 +1055,7 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
                         )
                       : const Icon(Icons.event_available_outlined),
                   label: const Text('Talep gönder'),
-                  onPressed: _busy ? null : _submit,
+                  onPressed: (_busy || _secili == null) ? null : _submit,
                 ),
               ),
             ],

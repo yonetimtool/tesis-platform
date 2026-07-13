@@ -127,6 +127,10 @@ class RezervasyonController extends Notifier<RezervasyonState> {
     await refresh();
   }
 
+  /// Alanin secili gunune ait slot izgarasi (dolu/bos) — talep formu kullanir.
+  Future<List<Slot>> slots(String alanId, String date) =>
+      ref.read(rezervasyonApiProvider).fetchSlots(alanId, date);
+
   Future<void> decide(String id, {required bool onayla}) async {
     try {
       await ref.read(rezervasyonApiProvider).decide(id, onayla: onayla);

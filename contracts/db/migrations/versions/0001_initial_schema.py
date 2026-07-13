@@ -1230,11 +1230,23 @@ def upgrade() -> None:
             ad          text NOT NULL,
             aciklama    text,
             aktif       boolean NOT NULL DEFAULT true,
+            -- MUSAITLIK (basit, gunler-arasi tekbicim): alan her gun
+            -- [acilis, kapanis) araliginda, slot_dakika uzunlugunda slotlarla
+            -- rezerve edilebilir. slots ucu bu tanimdan gun-ici slot izgarasi
+            -- uretir; talep dogrulamasi araligin bu pencerede olmasini arar
+            -- (izgara hizasi istemci/UX isi — cakismasizligi EXCLUDE saglar).
+            -- Varsayilan tum-gun (00:00-23:59:59, 60 dk): saat girilmemis alan
+            -- da rezerve edilebilir kalir.
+            acilis      time NOT NULL DEFAULT '00:00',
+            kapanis     time NOT NULL DEFAULT '23:59:59',
+            slot_dakika integer NOT NULL DEFAULT 60,
             created_at  timestamptz NOT NULL DEFAULT now(),
             -- composite FK hedefi (rezervasyon.alan_id).
             CONSTRAINT uq_ortak_alan_id_tenant UNIQUE (id, tenant_id),
             -- ayni tenant'ta ayni adla iki alan olmasin (yanlis secim onlenir).
-            CONSTRAINT uq_ortak_alan_tenant_ad UNIQUE (tenant_id, ad)
+            CONSTRAINT uq_ortak_alan_tenant_ad UNIQUE (tenant_id, ad),
+            CONSTRAINT ck_ortak_alan_saat CHECK (kapanis > acilis),
+            CONSTRAINT ck_ortak_alan_slot CHECK (slot_dakika > 0 AND slot_dakika <= 1440)
         );
         """
     )

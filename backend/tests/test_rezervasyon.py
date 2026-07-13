@@ -402,3 +402,97 @@ def test_tenant_izolasyonu(client, rworld):
         "/common-areas", headers=yonetici_b, params={"limit": 200}
     ).json()["items"]]
     assert rworld["alan1"] not in b_alan_ids
+
+
+# ------------------------------ musaitlik / slotlar ------------------------- #
+def test_alan_musaitlik_create_ve_okuma(client, rworld):
+    yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
+    alan = _mk_area(client, yonetici, ad=f"Salon-{uuid.uuid4().hex[:6]}",
+                    acilis="10:00", kapanis="14:00", slot_dakika=60)
+    assert alan["acilis"] == "10:00" and alan["kapanis"] == "14:00"
+    assert alan["slot_dakika"] == 60
+    # kapanis <= acilis -> 422
+    assert client.post(
+        "/common-areas", headers=yonetici,
+        json={"ad": f"X-{uuid.uuid4().hex[:6]}", "acilis": "14:00", "kapanis": "10:00"},
+    ).status_code == 422
+    # saat verilmezse tum-gun varsayilan (00:00, 60 dk) — mevcut davranis korunur
+    d = _mk_area(client, yonetici, ad=f"Def-{uuid.uuid4().hex[:6]}")
+    assert d["acilis"] == "00:00" and d["slot_dakika"] == 60
+    # kismi guncelleme: yalniz slot_dakika
+    p = client.patch(f"/common-areas/{alan['id']}", headers=yonetici,
+                     json={"slot_dakika": 30})
+    assert p.status_code == 200 and p.json()["slot_dakika"] == 30
+    # tutarsiz saat guncellemesi (kapanis mevcut acilisten once) -> 422
+    assert client.patch(f"/common-areas/{alan['id']}", headers=yonetici,
+                        json={"kapanis": "09:00"}).status_code == 422
+
+
+def test_slots_dolu_bos_ve_kimlik_yok(client, rworld):
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
+    alan = _mk_area(client, yonetici, ad=f"Slot-{uuid.uuid4().hex[:6]}",
+                    acilis="10:00", kapanis="14:00", slot_dakika=60)
+    tarih = "2026-09-01"
+
+    def _slots(headers):
+        r = client.get(f"/common-areas/{alan['id']}/slots", headers=headers,
+                       params={"date": tarih})
+        assert r.status_code == 200, r.text
+        return r.json()["items"]
+
+    # baslangicta izgara tam ve hepsi BOS: 10-11, 11-12, 12-13, 13-14
+    s0 = _slots(resident)
+    assert [it["baslangic"] for it in s0] == ["10:00", "11:00", "12:00", "13:00"]
+    assert [it["bitis"] for it in s0] == ["11:00", "12:00", "13:00", "14:00"]
+    assert all(it["dolu"] is False for it in s0)
+
+    # BEKLEYEN talep slotu DOLDURMAZ (yalniz onayli doldurur)
+    r = _request(client, resident, alan["id"], tarih=tarih,
+                 baslangic="11:00", bitis="12:00")
+    assert all(it["dolu"] is False for it in _slots(resident))
+
+    # ONAYLANINCA yalniz o slot DOLU; kesismeyen bitisik slotlar BOS kalir
+    assert client.patch(f"/reservations/{r['id']}", headers=yonetici,
+                        json={"durum": "onaylandi"}).status_code == 200
+    s1 = _slots(resident)
+    assert {it["baslangic"]: it["dolu"] for it in s1} == {
+        "10:00": False, "11:00": True, "12:00": False, "13:00": False,
+    }
+    # GIZLILIK: slot yalniz saat + dolu tasir, kim rezerve etmis SIZMAZ
+    for it in s1:
+        assert set(it.keys()) == {"baslangic", "bitis", "dolu"}
+
+    # TUM roller slotlari okuyabilir (sakin secebilsin, saha da gorebilir)
+    for role in ("resident_a", "guard_a", "gorevli_a", "yonetici_a", "admin_a"):
+        _slots(_headers(client, rworld["slug_a"], rworld[role]))
+
+
+def test_slots_pasif_alan_sakine_404(client, rworld):
+    yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    alan = _mk_area(client, yonetici, ad=f"Pasif-{uuid.uuid4().hex[:6]}",
+                    acilis="10:00", kapanis="12:00")
+    client.patch(f"/common-areas/{alan['id']}", headers=yonetici,
+                 json={"aktif": False})
+    # pasif alan sakine gorunmez (rezerve edilemez -> varlik sizdirilmaz)
+    assert client.get(f"/common-areas/{alan['id']}/slots", headers=resident,
+                      params={"date": "2026-09-02"}).status_code == 404
+    # yonetim pasif alanin slotlarini gorur (duzenleme baglami)
+    assert client.get(f"/common-areas/{alan['id']}/slots", headers=yonetici,
+                      params={"date": "2026-09-02"}).status_code == 200
+
+
+def test_talep_musaitlik_penceresi_disi_422(client, rworld):
+    yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    alan = _mk_area(client, yonetici, ad=f"Pencere-{uuid.uuid4().hex[:6]}",
+                    acilis="10:00", kapanis="14:00", slot_dakika=60)
+    # acilis oncesi / kapanis sonrasi -> 422 (musaitlik disi)
+    _request(client, resident, alan["id"], tarih="2026-09-03",
+             baslangic="09:00", bitis="10:00", expect=422)
+    _request(client, resident, alan["id"], tarih="2026-09-03",
+             baslangic="14:00", bitis="15:00", expect=422)
+    # pencere ici -> 201
+    _request(client, resident, alan["id"], tarih="2026-09-03",
+             baslangic="10:00", bitis="11:00", expect=201)

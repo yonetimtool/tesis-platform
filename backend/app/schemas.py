@@ -773,9 +773,26 @@ RezervasyonDurum = Literal["bekliyor", "onaylandi", "reddedildi"]
 RezervasyonKarar = Literal["onaylandi", "reddedildi"]
 
 
+# Musaitlik: alan her gun [acilis, kapanis) araliginda, slot_dakika slot
+# uzunluguyla rezerve edilebilir. Varsayilan tum-gun (00:00-23:59:59, 60 dk).
+_ACILIS_VARSAYILAN = time(0, 0)
+_KAPANIS_VARSAYILAN = time(23, 59, 59)
+_SLOT_VARSAYILAN = 60
+
+
 class OrtakAlanCreate(BaseModel):
     ad: str = Field(..., min_length=1, max_length=200)
     aciklama: str | None = Field(None, min_length=1, max_length=1000)
+    # "HH:MM"/"HH:MM:SS"; kapanis > acilis. Girilmezse tum-gun rezerve edilebilir.
+    acilis: time = _ACILIS_VARSAYILAN
+    kapanis: time = _KAPANIS_VARSAYILAN
+    slot_dakika: int = Field(_SLOT_VARSAYILAN, gt=0, le=1440)
+
+    @model_validator(mode="after")
+    def _saat(self) -> "OrtakAlanCreate":
+        if self.kapanis <= self.acilis:
+            raise ValueError("kapanis acilistan sonra olmali")
+        return self
 
 
 class OrtakAlanUpdate(BaseModel):
@@ -783,11 +800,22 @@ class OrtakAlanUpdate(BaseModel):
     aciklama: str | None = Field(None, min_length=1, max_length=1000)
     # Alan kaldirma = aktif=false (soft-delete; rezervasyon gecmisi korunur).
     aktif: bool | None = None
+    acilis: time | None = None
+    kapanis: time | None = None
+    slot_dakika: int | None = Field(None, gt=0, le=1440)
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "OrtakAlanUpdate":
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
+        # Ikisi de verildiyse tutarli olmali (biri verildiyse router mevcut
+        # deger ile birlikte dogrular; DB CHECK son guvence).
+        if (
+            self.acilis is not None
+            and self.kapanis is not None
+            and self.kapanis <= self.acilis
+        ):
+            raise ValueError("kapanis acilistan sonra olmali")
         return self
 
 
@@ -798,12 +826,36 @@ class OrtakAlanOut(BaseModel):
     ad: str
     aciklama: str | None = None
     aktif: bool
+    acilis: str
+    kapanis: str
+    slot_dakika: int
     created_at: datetime
+
+    @field_validator("acilis", "kapanis", mode="before")
+    @classmethod
+    def _fmt_saat(cls, v: object) -> object:
+        return _hhmm(v)
 
 
 class OrtakAlanListResponse(BaseModel):
     meta: PageMetaOut
     items: list[OrtakAlanOut]
+
+
+class SlotOut(BaseModel):
+    """Bir gunun tek slotu — kimlik YOK, yalniz dolu/bos (gizlilik)."""
+
+    baslangic: str
+    bitis: str
+    # dolu = bu slotla kesisen ONAYLI bir rezervasyon var (kim oldugu paylasilmaz).
+    dolu: bool
+
+
+class AlanSlotResponse(BaseModel):
+    alan_id: uuid.UUID
+    tarih: date
+    slot_dakika: int
+    items: list[SlotOut]
 
 
 class RezervasyonCreate(BaseModel):

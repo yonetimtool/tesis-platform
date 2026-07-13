@@ -70,6 +70,25 @@ class RezervasyonApi {
     }
   }
 
+  /// `GET /common-areas/{id}/slots?date=` — o gunun slot izgarasi (dolu/bos).
+  /// GIZLILIK: kim rezerve etmis DONMEZ. Pasif alan sakine 404 → bos liste.
+  Future<List<Slot>> fetchSlots(String alanId, String date) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/common-areas/$alanId/slots',
+        queryParameters: {'date': date},
+      );
+      final items = res.data?['items'];
+      if (items is! List) return const [];
+      return [
+        for (final it in items)
+          if (it is Map) Slot.fromJson(Map<String, dynamic>.from(it)),
+      ];
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<List<Rezervasyon>> fetchReservations() async {
     final out = <Rezervasyon>[];
     var offset = 0;

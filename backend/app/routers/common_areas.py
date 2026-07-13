@@ -9,6 +9,8 @@ rezervasyon gecmisi korunur (FK RESTRICT hard-delete'i zaten engeller).
 from __future__ import annotations
 
 import uuid
+from datetime import date as date_type
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
@@ -18,12 +20,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..crud_helpers import is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, OrtakAlan
+from ..models import AppUser, OrtakAlan, Rezervasyon
 from ..schemas import (
+    AlanSlotResponse,
     OrtakAlanCreate,
     OrtakAlanListResponse,
     OrtakAlanOut,
     OrtakAlanUpdate,
+    SlotOut,
 )
 
 router = APIRouter(prefix="/common-areas", tags=["rezervasyon"])
@@ -65,7 +69,14 @@ async def create_area(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_MANAGER),
 ) -> OrtakAlan:
-    obj = OrtakAlan(tenant_id=user.tenant_id, ad=body.ad, aciklama=body.aciklama)
+    obj = OrtakAlan(
+        tenant_id=user.tenant_id,
+        ad=body.ad,
+        aciklama=body.aciklama,
+        acilis=body.acilis,
+        kapanis=body.kapanis,
+        slot_dakika=body.slot_dakika,
+    )
     db.add(obj)
     try:
         await db.flush()
@@ -92,6 +103,12 @@ async def update_area(
     payload = body.model_dump(exclude_unset=True)
     for k, v in payload.items():
         setattr(obj, k, v)
+    # Kismi saat guncellemesi (yalniz biri verildi) mevcut deger ile tutarli
+    # olmali — DB CHECK son guvence, ama once anlamli 422 verelim.
+    if obj.kapanis <= obj.acilis:
+        raise APIError(
+            422, "validation_error", "kapanis acilistan sonra olmali."
+        )
     try:
         await db.flush()
     except IntegrityError as exc:
@@ -100,3 +117,53 @@ async def update_area(
         raise translate_integrity(exc)
     await db.refresh(obj)
     return obj
+
+
+# ------------------------------- slotlar ------------------------------------ #
+@router.get("/{area_id}/slots", response_model=AlanSlotResponse)
+async def area_slots(
+    area_id: uuid.UUID,
+    tarih: date_type = Query(..., alias="date", description="Gun (YYYY-MM-DD)"),
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_READER),
+) -> AlanSlotResponse:
+    """Bir gunun slot izgarasi + dolu/bos (GIZLILIK: kim rezerve etmis YOK).
+
+    Slotlar alanin musaitliginden uretilir: [acilis, kapanis) araligi,
+    slot_dakika uzunlugunda TAM slotlar. Bir slot 'dolu' = o gun bu alanda o
+    slotla kesisen ONAYLI bir rezervasyon var (yari-acik kesisim; bitisik slot
+    dolu SAYILMAZ — EXCLUDE kisitiyla birebir). Bekleyen/reddedilen talepler
+    slotu doldurmaz. Sakin bu ucu slot secmek icin kullanir; pasif alan
+    sakine/sahaya gorunmez (rezerve edilemez -> 404, varlik sizdirilmaz)."""
+    alan = (
+        await db.execute(select(OrtakAlan).where(OrtakAlan.id == area_id))
+    ).scalar_one_or_none()
+    if alan is None or (not alan.aktif and user.role not in _MANAGEMENT_ROLES):
+        raise APIError(404, "not_found", "Kayit bulunamadi")
+
+    # O gunun ONAYLI rezervasyon araliklari — kimlik CEKILMEZ (yalniz saatler).
+    onayli = (
+        await db.execute(
+            select(Rezervasyon.baslangic, Rezervasyon.bitis).where(
+                Rezervasyon.alan_id == area_id,
+                Rezervasyon.tarih == tarih,
+                Rezervasyon.durum == "onaylandi",
+            )
+        )
+    ).all()
+
+    items: list[SlotOut] = []
+    step = timedelta(minutes=alan.slot_dakika)
+    cur = datetime.combine(tarih, alan.acilis)
+    kapanis_dt = datetime.combine(tarih, alan.kapanis)
+    while cur + step <= kapanis_dt:
+        s, e = cur.time(), (cur + step).time()
+        # dolu: yari-acik kesisim (s < bitis_onayli AND e > baslangic_onayli).
+        dolu = any(s < ob_bitis and e > ob_bas for ob_bas, ob_bitis in onayli)
+        items.append(
+            SlotOut(baslangic=s.strftime("%H:%M"), bitis=e.strftime("%H:%M"), dolu=dolu)
+        )
+        cur += step
+    return AlanSlotResponse(
+        alan_id=area_id, tarih=tarih, slot_dakika=alan.slot_dakika, items=items
+    )

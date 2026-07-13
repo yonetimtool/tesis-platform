@@ -525,21 +525,28 @@ def main() -> int:
         #    (cakisma kisiti/ekranlar veriyle denensin). Alan upsert (tenant+ad
         #    benzersiz); rezervasyon (alan, tarih, baslangic) uzerinden idempotent.
         alan_ids: dict[str, str] = {}
-        for ad, aciklama in [
-            ("Havuz", "Acik yuzme havuzu (yaz sezonu)"),
-            ("Toplanti Odasi", "12 kisilik toplanti odasi (projektorlu)"),
+        # (ad, aciklama, acilis, kapanis, slot_dakika) — musaitlik: her gun
+        # [acilis, kapanis) araligi, slot_dakika slot uzunlugu.
+        for ad, aciklama, acilis, kapanis, slot in [
+            ("Havuz", "Acik yuzme havuzu (yaz sezonu)", "08:00", "22:00", 60),
+            ("Toplanti Odasi", "12 kisilik toplanti odasi (projektorlu)",
+             "09:00", "18:00", 60),
         ]:
             alan_ids[ad] = conn.execute(
                 """
-                INSERT INTO ortak_alan (tenant_id, ad, aciklama)
-                VALUES (%s, %s, %s)
+                INSERT INTO ortak_alan
+                    (tenant_id, ad, aciklama, acilis, kapanis, slot_dakika)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 ON CONFLICT ON CONSTRAINT uq_ortak_alan_tenant_ad
-                    DO UPDATE SET aciklama = EXCLUDED.aciklama, aktif = true
+                    DO UPDATE SET aciklama = EXCLUDED.aciklama, aktif = true,
+                                  acilis = EXCLUDED.acilis,
+                                  kapanis = EXCLUDED.kapanis,
+                                  slot_dakika = EXCLUDED.slot_dakika
                 RETURNING id
                 """,
-                (tenant_id, ad, aciklama),
+                (tenant_id, ad, aciklama, acilis, kapanis, slot),
             ).fetchone()[0]
-        print("[seed] ortak alanlar: Havuz, Toplanti Odasi")
+        print("[seed] ortak alanlar: Havuz (08-22), Toplanti Odasi (09-18)")
 
         resident_id = conn.execute(
             "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
@@ -565,6 +572,29 @@ def main() -> int:
             },
         )
         print("[seed] rezervasyon Havuz 2026-07-15 10:00-12:00 A-12 (onayli, 4 kisi)")
+
+        # BEKLEYEN talep (Toplanti Odasi): onay ekranlari/rozetleri veriyle
+        # denensin — karar verilmemis (onaylayan_user_id NULL).
+        conn.execute(
+            """
+            INSERT INTO rezervasyon (tenant_id, alan_id, unit_id, talep_eden_user_id,
+                                     tarih, baslangic, bitis, kisi_sayisi, notlar,
+                                     durum)
+            SELECT %(t)s, %(alan)s, %(u)s, %(r)s, %(tarih)s, %(bas)s, %(bit)s,
+                   6, 'Aidat toplantisi', 'bekliyor'::rezervasyon_durum
+            WHERE NOT EXISTS (
+                SELECT 1 FROM rezervasyon
+                WHERE tenant_id = %(t)s AND alan_id = %(alan)s
+                  AND tarih = %(tarih)s AND baslangic = %(bas)s
+            )
+            """,
+            {
+                "t": tenant_id, "alan": alan_ids["Toplanti Odasi"], "u": unit_id,
+                "r": resident_id,
+                "tarih": "2026-07-20", "bas": "14:00", "bit": "15:00",
+            },
+        )
+        print("[seed] rezervasyon Toplanti Odasi 2026-07-20 14:00-15:00 A-12 (bekliyor)")
 
         # 9) etkinlikler + ornek RSVP'ler: yaklasan "Mac izleme" (2 katiliyor)
         #    + gecmis "Site genel kurulu" — sayac/ekranlar veriyle denensin.

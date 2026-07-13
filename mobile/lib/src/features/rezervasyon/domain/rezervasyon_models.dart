@@ -39,6 +39,9 @@ class OrtakAlan {
     required this.ad,
     required this.aktif,
     required this.createdAt,
+    this.acilis = '00:00',
+    this.kapanis = '23:59',
+    this.slotDakika = 60,
     this.aciklama,
   });
 
@@ -49,15 +52,46 @@ class OrtakAlan {
   /// false = kaldirilmis (soft-delete; rezerve edilemez — yalniz yonetim gorur).
   final bool aktif;
 
+  /// Musaitlik: her gun [acilis, kapanis) araligi, slotDakika slot uzunlugu.
+  /// "HH:MM".
+  final String acilis;
+  final String kapanis;
+  final int slotDakika;
+
   final DateTime createdAt;
+
+  /// "HH:MM · HH:MM (N dk)" — alan kartinda musaitlik ozeti.
+  String get musaitlikOzeti => '$acilis–$kapanis · $slotDakika dk slot';
 
   factory OrtakAlan.fromJson(Map<String, dynamic> json) => OrtakAlan(
         id: json['id'] as String? ?? '',
         ad: json['ad'] as String? ?? '',
         aciklama: json['aciklama'] as String?,
         aktif: json['aktif'] as bool? ?? true,
+        acilis: json['acilis'] as String? ?? '00:00',
+        kapanis: json['kapanis'] as String? ?? '23:59',
+        slotDakika: (json['slot_dakika'] as num?)?.toInt() ?? 60,
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      );
+}
+
+/// Bir gunun tek slotu (`GET /common-areas/{id}/slots`). GIZLILIK: kim rezerve
+/// etmis alani YOK — yalniz saat + dolu/bos.
+class Slot {
+  const Slot({required this.baslangic, required this.bitis, required this.dolu});
+
+  /// "HH:MM".
+  final String baslangic;
+  final String bitis;
+
+  /// true = bu slotla kesisen ONAYLI rezervasyon var (secilemez).
+  final bool dolu;
+
+  factory Slot.fromJson(Map<String, dynamic> json) => Slot(
+        baslangic: json['baslangic'] as String? ?? '',
+        bitis: json['bitis'] as String? ?? '',
+        dolu: json['dolu'] as bool? ?? false,
       );
 }
 
@@ -177,7 +211,14 @@ class RezervasyonDraft {
 
 /// `POST /common-areas` / `PATCH /common-areas/{id}` govdesi (yonetim).
 class OrtakAlanDraft {
-  const OrtakAlanDraft({required this.ad, this.aciklama, this.aktif});
+  const OrtakAlanDraft({
+    required this.ad,
+    this.aciklama,
+    this.aktif,
+    this.acilis,
+    this.kapanis,
+    this.slotDakika,
+  });
 
   final String ad;
   final String? aciklama;
@@ -185,9 +226,17 @@ class OrtakAlanDraft {
   /// Yalniz PATCH'te anlamli (soft-delete/aktive); null ise gonderilmez.
   final bool? aktif;
 
+  /// Musaitlik ("HH:MM"). null ise gonderilmez (sunucu varsayilani/mevcut).
+  final String? acilis;
+  final String? kapanis;
+  final int? slotDakika;
+
   Map<String, dynamic> toJson() => {
         'ad': ad,
         if (aciklama != null && aciklama!.isNotEmpty) 'aciklama': aciklama,
         if (aktif != null) 'aktif': aktif,
+        if (acilis != null) 'acilis': acilis,
+        if (kapanis != null) 'kapanis': kapanis,
+        if (slotDakika != null) 'slot_dakika': slotDakika,
       };
 }

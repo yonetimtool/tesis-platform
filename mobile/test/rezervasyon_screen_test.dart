@@ -18,6 +18,16 @@ class _FakeRezervasyonApi extends RezervasyonApi {
   final List<(String, bool)> decided = [];
   final List<RezervasyonDraft> requested = [];
 
+  /// Sabit slot izgarasi: 10-11 bos, 11-12 DOLU, 12-13 bos (talep formu testi).
+  final List<Slot> slots = const [
+    Slot(baslangic: '10:00', bitis: '11:00', dolu: false),
+    Slot(baslangic: '11:00', bitis: '12:00', dolu: true),
+    Slot(baslangic: '12:00', bitis: '13:00', dolu: false),
+  ];
+
+  @override
+  Future<List<Slot>> fetchSlots(String alanId, String date) async => slots;
+
   @override
   Future<List<OrtakAlan>> fetchAreas() async => _alanlar;
 
@@ -212,8 +222,8 @@ void main() {
     });
   });
 
-  testWidgets('sakin talep formu: alan secimi + tarih/saat + kisi + not; '
-      'gonderim API cagirir', (tester) async {
+  testWidgets('sakin talep formu: alan + tarih + BOS slot secimi + kisi; '
+      'gonderim secili slotu API\'ye tasir', (tester) async {
     final (api, app) = _app(UserRole.resident);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
@@ -221,17 +231,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ortak alan'), findsOneWidget);
     expect(find.textContaining('Tarih: '), findsOneWidget);
-    expect(find.textContaining('Başlangıç: 10:00'), findsOneWidget);
-    expect(find.textContaining('Bitiş: 12:00'), findsOneWidget);
+    expect(find.text('Slot seç (boş)'), findsOneWidget);
     expect(find.text('Kişi sayısı:'), findsOneWidget);
     expect(find.text('Not (opsiyonel)'), findsOneWidget);
+    // Slot chip'leri: bos secilebilir, DOLU olan "· dolu" etiketli (secilemez).
+    expect(find.text('10:00–11:00'), findsOneWidget);
+    expect(find.text('11:00–12:00 · dolu'), findsOneWidget);
 
+    // Slot secmeden gonderim engelli (buton pasif) -> API cagrilmaz.
+    await tester.tap(find.text('Talep gönder'));
+    await tester.pumpAndSettle();
+    expect(api.requested, isEmpty);
+
+    // Bos slot secilince gonderim o slotu tasir.
+    await tester.tap(find.text('12:00–13:00'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Talep gönder'));
     await tester.pumpAndSettle();
     expect(api.requested, hasLength(1));
     expect(api.requested.single.alanId, 'a-1');
-    expect(api.requested.single.baslangic, '10:00');
-    expect(api.requested.single.bitis, '12:00');
+    expect(api.requested.single.baslangic, '12:00');
+    expect(api.requested.single.bitis, '13:00');
     expect(api.requested.single.kisiSayisi, 2);
   });
 

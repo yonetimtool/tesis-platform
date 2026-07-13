@@ -130,6 +130,14 @@ async def create_reservation(
     if alan is None or not alan.aktif:
         raise APIError(422, "invalid_reference", "Alan bulunamadi veya aktif degil.")
 
+    # MUSAITLIK: talep edilen aralik alanin [acilis, kapanis] penceresinde
+    # olmali (slot izgara hizasi UX isi; cakismasizligi EXCLUDE saglar).
+    if body.baslangic < alan.acilis or body.bitis > alan.kapanis:
+        raise APIError(
+            422, "validation_error",
+            "Secilen aralik alanin musaitlik saatleri (acilis-kapanis) disinda.",
+        )
+
     # Daire: sakinin aktif dairelerinden; unit_id verildiyse KENDI dairesi
     # olmali (baska daire adina talep acilamaz), verilmediyse tek/ilk daire.
     unit_ids = await _aktif_daire_ids(db, user)

@@ -196,6 +196,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /unit-access-request`           |  ✅   | 👤  | ❌  | ❌  | 🏠  |
 | `PATCH /unit-access-request/{id}`     |  ❌   | ❌  | ❌  | ❌  | ✅🏠|
 | `GET  /common-areas`                  |  ✅   | ✅  | ✅  | ✅  | ✅° |
+| `GET  /common-areas/{id}/slots`       |  ✅   | ✅  | ✅  | ✅  | ✅° |
 | `POST/PATCH /common-areas*`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /reservations` (talep)          |  ❌   | ❌  | ❌  | ❌  | ✅  |
 | `GET  /reservations` (liste/detay)    |  ✅   | ✅  | ❌  | ❌  | 🔵  |
@@ -570,6 +571,17 @@ Notlar:
     (° yonetim disi roller YALNIZ aktif alanlari gorur — sakin neyin rezerve
     edilebilir oldugunu bilmeli). Silme YOK: kaldirma = `aktif=false`
     (soft-delete; rezervasyon gecmisi korunur, FK RESTRICT).
+  - **MUSAITLIK (basit, gunler-arasi tekbicim):** alan `acilis`/`kapanis` +
+    `slot_dakika` tasir; her gun `[acilis, kapanis)` araliginda `slot_dakika`
+    uzunlugunda slotlarla rezerve edilebilir (saat girilmezse tum-gun
+    varsayilan). Talep dogrulamasi araligin bu pencerede olmasini arar (slot
+    izgara hizasi UX/istemci isi; cakismasizligi EXCLUDE saglar).
+  - **SLOTLAR (`GET /common-areas/{id}/slots?date=`) TUM roller:** o gunun
+    TAM slot izgarasini + her slot icin dolu/bos doner. **dolu** = o slotla
+    kesisen ONAYLI rezervasyon var; bekleyen/reddedilen DOLDURMAZ.
+    **GIZLILIK:** kim rezerve etmis PAYLASILMAZ (yalniz saat + dolu). Pasif
+    alan sakine/sahaya **404** (rezerve edilemez, varlik sizdirilmaz); yonetim
+    pasif alan slotlarini gorur (° duzenleme baglami).
   - **TALEP (`POST /reservations`) YALNIZ `resident`:** alan + tarih + saat
     araligi (bitis > baslangic, ayni gun) + kisi_sayisi (>0). Daire sakinin
     AKTIF dairesinden turetilir (coklu dairede `unit_id` ile secim — kendi

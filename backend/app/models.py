@@ -1195,6 +1195,10 @@ class OrtakAlan(Base):
     __table_args__ = (
         UniqueConstraint("id", "tenant_id", name="uq_ortak_alan_id_tenant"),
         UniqueConstraint("tenant_id", "ad", name="uq_ortak_alan_tenant_ad"),
+        CheckConstraint("kapanis > acilis", name="ck_ortak_alan_saat"),
+        CheckConstraint(
+            "slot_dakika > 0 AND slot_dakika <= 1440", name="ck_ortak_alan_slot"
+        ),
     )
 
     id: Mapped[uuid.UUID] = _pk()
@@ -1205,6 +1209,13 @@ class OrtakAlan(Base):
     aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
     aktif: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
+    )
+    # MUSAITLIK: her gun [acilis, kapanis) araligi, slot_dakika slot uzunlugu.
+    # Varsayilan tum-gun (saat girilmemis alan da rezerve edilebilir).
+    acilis = mapped_column(Time, nullable=False, server_default=text("'00:00'"))
+    kapanis = mapped_column(Time, nullable=False, server_default=text("'23:59:59'"))
+    slot_dakika: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("60")
     )
     created_at = _created_at()
 

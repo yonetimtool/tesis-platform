@@ -1431,6 +1431,37 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  /common-areas/{id}/slots:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [rezervasyon]
+      summary: Bir gunun slot izgarasi (dolu/bos) — TUM roller
+      description: |
+        Alanin musaitliginden (acilis/kapanis/slot_dakika) o gunun TAM slot
+        izgarasini uretir; her slot dolu/bos. **dolu** = o slotla kesisen
+        ONAYLI bir rezervasyon var (yari-acik kesisim; bitisik slot dolu
+        SAYILMAZ). Bekleyen/reddedilen talepler slotu DOLDURMAZ.
+        GIZLILIK: kim rezerve etmis PAYLASILMAZ (yalniz saat + dolu). Sakin
+        slot secmek icin kullanir; pasif alan sakine/sahaya 404 (rezerve
+        edilemez, varlik sizdirilmaz), yonetim pasif alan slotlarini gorur.
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema: { type: string, format: date }
+          description: Gun (YYYY-MM-DD)
+      responses:
+        "200":
+          description: Slot listesi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AlanSlotResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
   /reservations:
     get:
       tags: [rezervasyon]
@@ -1483,7 +1514,9 @@ paths:
         data: tip=rezervasyon, rezervasyon_id). CAKISMA: ayni alanin ONAYLI
         bir rezervasyonuyla kesisen talep ANINDA 409 alir (bosuna bekletilmez);
         BEKLEYEN taleplerle kesisme serbesttir — nihai guvence onay anindaki
-        DB EXCLUDE kisiti. Pasif/olmayan alan 422. Yonetim talep ACMAZ (403).
+        DB EXCLUDE kisiti. MUSAITLIK: talep edilen aralik alanin
+        [acilis, kapanis] penceresinde olmali — disi 422. Pasif/olmayan alan
+        422. Yonetim talep ACMAZ (403).
       requestBody:
         required: true
         content:
@@ -4954,7 +4987,7 @@ components:
 
     OrtakAlan:
       type: object
-      required: [id, ad, aktif, created_at]
+      required: [id, ad, aktif, acilis, kapanis, slot_dakika, created_at]
       properties:
         id: { type: string, format: uuid }
         ad: { type: string, maxLength: 200, example: Havuz }
@@ -4962,6 +4995,17 @@ components:
         aktif:
           type: boolean
           description: false = kaldirilmis (soft-delete; rezerve edilemez)
+        acilis:
+          type: string
+          example: "08:00"
+          description: >-
+            Musaitlik acilis saati ("HH:MM"). Alan her gun [acilis, kapanis)
+            araliginda rezerve edilebilir.
+        kapanis: { type: string, example: "22:00", description: 'Kapanis ("HH:MM"), > acilis' }
+        slot_dakika:
+          type: integer
+          example: 60
+          description: Slot izgara uzunlugu (dk) — GET /common-areas/{id}/slots buradan uretir
         created_at: { type: string, format: date-time }
     OrtakAlanCreate:
       type: object
@@ -4969,6 +5013,9 @@ components:
       properties:
         ad: { type: string, minLength: 1, maxLength: 200 }
         aciklama: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
+        acilis: { type: string, default: "00:00", description: 'Verilmezse tum-gun ("HH:MM")' }
+        kapanis: { type: string, default: "23:59:59", description: '> acilis olmali' }
+        slot_dakika: { type: integer, default: 60, minimum: 1, maximum: 1440 }
     OrtakAlanUpdate:
       type: object
       description: En az bir alan gerekli
@@ -4976,6 +5023,27 @@ components:
         ad: { type: string, minLength: 1, maxLength: 200 }
         aciklama: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
         aktif: { type: boolean }
+        acilis: { type: string, description: '"HH:MM"; kapanis ile birlikte > acilis olmali' }
+        kapanis: { type: string, description: '"HH:MM"' }
+        slot_dakika: { type: integer, minimum: 1, maximum: 1440 }
+    Slot:
+      type: object
+      required: [baslangic, bitis, dolu]
+      description: Bir gunun tek slotu — GIZLILIK: kim rezerve etmis alani YOK.
+      properties:
+        baslangic: { type: string, example: "10:00" }
+        bitis: { type: string, example: "11:00" }
+        dolu:
+          type: boolean
+          description: true = bu slotla kesisen ONAYLI rezervasyon var (kimlik paylasilmaz)
+    AlanSlotResponse:
+      type: object
+      required: [alan_id, tarih, slot_dakika, items]
+      properties:
+        alan_id: { type: string, format: uuid }
+        tarih: { type: string, format: date }
+        slot_dakika: { type: integer }
+        items: { type: array, items: { $ref: "#/components/schemas/Slot" } }
 
     Rezervasyon:
       type: object
