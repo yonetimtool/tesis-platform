@@ -195,7 +195,7 @@ def main() -> int:
         conn.execute(
             """
             INSERT INTO dues_assessment (tenant_id, unit_id, donem, tutar_kurus, aciklama)
-            VALUES (%s, %s, '2026-06', 75000, 'Haziran aidati')
+            VALUES (%s, %s, '2026-06', 75000, 'Haziran aidatı')
             ON CONFLICT (tenant_id, unit_id, donem) DO NOTHING
             """,
             (tenant_id, unit_id),
@@ -242,7 +242,7 @@ def main() -> int:
         #     odeme kaydi burada toplanir).
         kategoriler = [
             ("Aidat", "gelir"),      # otomatik aidat gelirlerinin varsayilan kategorisi
-            ("Ek odeme", "gelir"),
+            ("Ek ödeme", "gelir"),
             ("Elektrik", "gider"),
             ("Temizlik", "gider"),
         ]
@@ -267,9 +267,9 @@ def main() -> int:
 
         # Ornek MANUEL defter kayitlari (aciklama dogal anahtar — idempotent).
         ornek_kayitlar = [
-            ("Elektrik", "gider", 245000, "2026-06-20", "Ortak alan elektrik faturasi (Haziran)"),
+            ("Elektrik", "gider", 245000, "2026-06-20", "Ortak alan elektrik faturası (Haziran)"),
             ("Temizlik", "gider", 180000, "2026-07-01", "Temizlik hizmeti (Temmuz)"),
-            ("Ek odeme", "gelir", 50000, "2026-07-05", "Otopark kira geliri"),
+            ("Ek ödeme", "gelir", 50000, "2026-07-05", "Otopark kira geliri"),
         ]
         for ad, tip, kurus, tarih, aciklama in ornek_kayitlar:
             conn.execute(
@@ -309,7 +309,7 @@ def main() -> int:
             INSERT INTO budget_entry (tenant_id, kategori_id, tip, tutar_kurus, tarih,
                                       aciklama, kaynak, ilgili_payment_id, created_by)
             VALUES (%s, %s, 'gelir'::budget_tip, 75000, '2026-06-25',
-                    'Aidat odemesi 2026-06 (otomatik)', 'aidat_odeme'::budget_kaynak, %s, %s)
+                    'Aidat ödemesi 2026-06 (otomatik)', 'aidat_odeme'::budget_kaynak, %s, %s)
             ON CONFLICT ON CONSTRAINT uq_budget_entry_payment DO NOTHING
             """,
             (tenant_id, kat_ids[("Aidat", "gelir")], payment_id, yonetici_id),
@@ -337,11 +337,11 @@ def main() -> int:
             """,
             {
                 "t": tenant_id,
-                "b": "Hos geldiniz",
-                "g": "Tesis yonetim sistemi devrede. Duyurular bu ekranda yayinlanacak.",
+                "b": "Hoş geldiniz",
+                "g": "Tesis yönetim sistemi devrede. Duyurular bu ekranda yayınlanacak.",
             },
         )
-        print("[seed] duyuru 'Hos geldiniz' (yonetici imzali, idempotent)")
+        print("[seed] duyuru 'Hoş geldiniz' (yonetici imzali, idempotent)")
 
         # 5) ornek sikayet + oneri (resident acmis). Dogal benzersiz anahtar
         #    yok -> ayni baslik varsa eklemeyerek idempotent kalinir.
@@ -361,9 +361,9 @@ def main() -> int:
             """,
             {
                 "t": tenant_id,
-                "b": "Asansor ariziliydi",
-                "m": "A blok asansoru iki gundur calismiyor, kontrol edilebilir mi?",
-                "y": "Servis cagrildi, asansor onarildi. Bildiriminiz icin tesekkurler.",
+                "b": "Asansör arızalıydı",
+                "m": "A blok asansörü iki gündür çalışmıyor, kontrol edilebilir mi?",
+                "y": "Servis çağrıldı, asansör onarıldı. Bildiriminiz için teşekkürler.",
             },
         )
         #    b) oneri: acik, yanitsiz.
@@ -380,8 +380,8 @@ def main() -> int:
             """,
             {
                 "t": tenant_id,
-                "b": "Oneri: bahceye bank",
-                "m": "Cocuk parkinin yanina birkac bank konulmasini oneriyorum.",
+                "b": "Öneri: bahçeye bank",
+                "m": "Çocuk parkının yanına birkaç bank konulmasını öneriyorum.",
             },
         )
         #    c) kategorili sikayet: gurultu kirliligi (acik, yanitsiz).
@@ -400,13 +400,13 @@ def main() -> int:
             """,
             {
                 "t": tenant_id,
-                "b": "Gece gec saatte muzik",
-                "m": "B blok 3. kattan gece yarisindan sonra yuksek sesli muzik geliyor.",
+                "b": "Gece geç saatte müzik",
+                "m": "B blok 3. kattan gece yarısından sonra yüksek sesli müzik geliyor.",
             },
         )
         print(
-            "[seed] sikayet 'Asansor ariziliydi' (cozuldu+yanitli) + oneri 'Oneri: bahceye bank' (acik) "
-            "+ sikayet 'Gece gec saatte muzik' (kategori=gurultu)"
+            "[seed] sikayet 'Asansör arızalıydı' (cozuldu+yanitli) + oneri 'Öneri: bahçeye bank' (acik) "
+            "+ sikayet 'Gece geç saatte müzik' (kategori=gurultu)"
         )
 
         # 6) ornek ziyaretci: A-12 icin (guvenlik kaydetmis) — HEDEF sakin
@@ -422,8 +422,8 @@ def main() -> int:
             (tenant_id,),
         ).fetchone()[0]
         for ad, notlar in (
-            ("Kurye - Ahmet Yilmaz", "Kargo teslimati (koli)"),
-            ("Misafir - Ayse Kaya", "Aksam yemegi misafiri"),
+            ("Kurye - Ahmet Yılmaz", "Kargo teslimatı (koli)"),
+            ("Misafir - Ayşe Kaya", "Akşam yemeği misafiri"),
         ):
             conn.execute(
                 """
@@ -441,7 +441,7 @@ def main() -> int:
                 },
             )
         print(
-            "[seed] ziyaretci (LOG) 'Kurye - Ahmet Yilmaz' + 'Misafir - Ayse Kaya' "
+            "[seed] ziyaretci (LOG) 'Kurye - Ahmet Yılmaz' + 'Misafir - Ayşe Kaya' "
             "A-12 -> hedef resident@acme.com (onay/red yok)"
         )
 
@@ -463,7 +463,7 @@ def main() -> int:
                 "t": tenant_id,
                 "u": unit_id,
                 "f": "Aras Kargo",
-                "n": "Orta boy koli — kapida teslim alindi",
+                "n": "Orta boy koli — kapıda teslim alındı",
             },
         )
         print("[seed] kargo 'Aras Kargo' A-12 (bekliyor, guvenlik kaydi)")
@@ -528,8 +528,8 @@ def main() -> int:
         # (ad, aciklama, acilis, kapanis, slot_dakika) — musaitlik: her gun
         # [acilis, kapanis) araligi, slot_dakika slot uzunlugu.
         for ad, aciklama, acilis, kapanis, slot in [
-            ("Havuz", "Acik yuzme havuzu (yaz sezonu)", "08:00", "22:00", 60),
-            ("Toplanti Odasi", "12 kisilik toplanti odasi (projektorlu)",
+            ("Havuz", "Açık yüzme havuzu (yaz sezonu)", "08:00", "22:00", 60),
+            ("Toplantı Odası", "12 kişilik toplantı odası (projektörlü)",
              "09:00", "18:00", 60),
         ]:
             alan_ids[ad] = conn.execute(
@@ -546,7 +546,7 @@ def main() -> int:
                 """,
                 (tenant_id, ad, aciklama, acilis, kapanis, slot),
             ).fetchone()[0]
-        print("[seed] ortak alanlar: Havuz (08-22), Toplanti Odasi (09-18)")
+        print("[seed] ortak alanlar: Havuz (08-22), Toplantı Odası (09-18)")
 
         resident_id = conn.execute(
             "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
@@ -559,7 +559,7 @@ def main() -> int:
                                      tarih, baslangic, bitis, kisi_sayisi, notlar,
                                      durum)
             SELECT %(t)s, %(alan)s, %(u)s, %(r)s, %(tarih)s, %(bas)s, %(bit)s,
-                   4, 'Aile yuzme saati', 'onaylandi'::rezervasyon_durum
+                   4, 'Aile yüzme saati', 'onaylandi'::rezervasyon_durum
             WHERE NOT EXISTS (
                 SELECT 1 FROM rezervasyon
                 WHERE tenant_id = %(t)s AND alan_id = %(alan)s
@@ -572,7 +572,7 @@ def main() -> int:
                 "tarih": "2026-07-15", "bas": "10:00", "bit": "12:00",
             },
         )
-        print("[seed] rezervasyon Havuz 2026-07-15 10:00-12:00 A-12 (onayli, 4 kisi)")
+        print("[seed] rezervasyon Havuz 2026-07-15 10:00-12:00 A-12 (onaylı, 4 kişi)")
 
         # IPTAL ornegi (Toplanti Odasi): iptal rozeti/gecmisi veriyle denensin
         # (iptal_eden = sakinin kendisi).
@@ -582,7 +582,7 @@ def main() -> int:
                                      tarih, baslangic, bitis, kisi_sayisi, notlar,
                                      durum, iptal_eden_user_id, iptal_zamani)
             SELECT %(t)s, %(alan)s, %(u)s, %(r)s, %(tarih)s, %(bas)s, %(bit)s,
-                   6, 'Aidat toplantisi', 'iptal'::rezervasyon_durum, %(r)s, now()
+                   6, 'Aidat toplantısı', 'iptal'::rezervasyon_durum, %(r)s, now()
             WHERE NOT EXISTS (
                 SELECT 1 FROM rezervasyon
                 WHERE tenant_id = %(t)s AND alan_id = %(alan)s
@@ -590,21 +590,21 @@ def main() -> int:
             )
             """,
             {
-                "t": tenant_id, "alan": alan_ids["Toplanti Odasi"], "u": unit_id,
+                "t": tenant_id, "alan": alan_ids["Toplantı Odası"], "u": unit_id,
                 "r": resident_id,
                 "tarih": "2026-07-20", "bas": "14:00", "bit": "15:00",
             },
         )
-        print("[seed] rezervasyon Toplanti Odasi 2026-07-20 14:00-15:00 A-12 (iptal)")
+        print("[seed] rezervasyon Toplantı Odası 2026-07-20 14:00-15:00 A-12 (iptal)")
 
         # 9) etkinlikler + ornek RSVP'ler: yaklasan "Mac izleme" (2 katiliyor)
         #    + gecmis "Site genel kurulu" — sayac/ekranlar veriyle denensin.
         #    Etkinlik (tenant, baslik) ile idempotent; RSVP UNIQUE ile.
         etkinlikler = [
-            ("Mac izleme aksami", "Buyuk ekranda milli mac — ikramlar yonetimden.",
+            ("Maç izleme akşamı", "Büyük ekranda milli maç — ikramlar yönetimden.",
              "2026-07-20T18:00:00Z", "Sosyal tesis salonu"),
-            ("Site genel kurulu", "Yillik olagan genel kurul toplantisi.",
-             "2026-06-15T17:00:00Z", "Toplanti Odasi"),
+            ("Site genel kurulu", "Yıllık olağan genel kurul toplantısı.",
+             "2026-06-15T17:00:00Z", "Toplantı Odası"),
         ]
         etkinlik_ids: dict[str, str] = {}
         for baslik, aciklama, tarih, konum in etkinlikler:
@@ -628,7 +628,7 @@ def main() -> int:
                 {"t": tenant_id, "b": baslik, "a": aciklama,
                  "tarih": tarih, "k": konum, "y": yonetici_id},
             ).fetchone()[0]
-        print("[seed] etkinlikler: 'Mac izleme aksami' (yaklasan) + 'Site genel kurulu' (gecmis)")
+        print("[seed] etkinlikler: 'Maç izleme akşamı' (yaklasan) + 'Site genel kurulu' (gecmis)")
 
         # RSVP'ler: iki sakin de mac izlemeye katiliyor (sayi=2 gorunsun).
         for email in ("resident@acme.com", "resident2@acme.com"):
@@ -641,24 +641,24 @@ def main() -> int:
                 ON CONFLICT ON CONSTRAINT uq_katilim_tenant_etkinlik_user
                     DO NOTHING
                 """,
-                {"t": tenant_id, "e": etkinlik_ids["Mac izleme aksami"], "m": email},
+                {"t": tenant_id, "e": etkinlik_ids["Maç izleme akşamı"], "m": email},
             )
-        print("[seed] RSVP: 2 sakin 'Mac izleme aksami' icin katiliyorum (seffaf sayi=2)")
+        print("[seed] RSVP: 2 sakin 'Maç izleme akşamı' icin katiliyorum (seffaf sayi=2)")
 
         # 10) site kurallari: 3 ornek kural (sira ile) — liste + baslik
         #     aramasi veriyle denensin. (tenant, baslik) ile idempotent;
         #     fotosuz (foto gercek akista presign ile yuklenir).
         kurallar = [
-            (1, "Otopark Kullanimi",
-             "Her daireye bir otopark yeri ayrilmistir. Misafir araclari "
-             "yalniz misafir otoparkini kullanabilir; yer degisimi yonetim "
-             "onayina tabidir."),
+            (1, "Otopark Kullanımı",
+             "Her daireye bir otopark yeri ayrılmıştır. Misafir araçları "
+             "yalnız misafir otoparkını kullanabilir; yer değişimi yönetim "
+             "onayına tabidir."),
             (2, "Havuz Saatleri",
-             "Havuz 08:00-22:00 arasi acik; 12 yas alti cocuklar veli "
-             "gozetiminde girebilir. Havuz alanina cam esya sokulmaz."),
-            (3, "Gurultu Kurallari",
-             "Hafta ici 22:00-08:00, hafta sonu 24:00-10:00 arasi gurultu "
-             "yasaktir. Tadilat yalniz hafta ici 09:00-18:00 arasi yapilabilir."),
+             "Havuz 08:00-22:00 arası açık; 12 yaş altı çocuklar veli "
+             "gözetiminde girebilir. Havuz alanına cam eşya sokulmaz."),
+            (3, "Gürültü Kuralları",
+             "Hafta içi 22:00-08:00, hafta sonu 24:00-10:00 arası gürültü "
+             "yasaktır. Tadilat yalnız hafta içi 09:00-18:00 arası yapılabilir."),
         ]
         for sira, baslik, icerik in kurallar:
             conn.execute(
@@ -674,7 +674,7 @@ def main() -> int:
                 {"t": tenant_id, "b": baslik, "i": icerik, "s": sira,
                  "y": yonetici_id},
             )
-        print("[seed] site kurallari: Otopark Kullanimi (1), Havuz Saatleri (2), Gurultu Kurallari (3)")
+        print("[seed] site kurallari: Otopark Kullanımı (1), Havuz Saatleri (2), Gürültü Kuralları (3)")
 
     print("[seed] tamamlandi (idempotent).")
     return 0
