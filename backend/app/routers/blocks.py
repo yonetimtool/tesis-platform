@@ -25,8 +25,11 @@ from ..schemas import BlockCreate, BlockListResponse, BlockOut, BlockUpdate
 
 router = APIRouter(prefix="/blocks", tags=["building"])
 
-# Bina yerlesimi yonetimi: admin + yonetici (digerleri okuyamaz/yazamaz).
+# Bina yerlesimi YAZMA: admin + yonetici (blok ekle/duzenle/sil).
 _MANAGER = require_role("admin", "yonetici")
+# Bina yerlesimi OKUMA: yonetim + saha (security/tesis_gorevlisi) — saha
+# rolleri "Bina Duzenleme" ekranini SALT-OKUMA gorur (yazma yine 403).
+_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 
 
 async def _unit_counts(db: AsyncSession) -> dict[str, int]:
@@ -50,7 +53,7 @@ def _out(obj: BuildingBlock, unit_sayisi: int) -> BlockOut:
 @router.get("", response_model=BlockListResponse)
 async def list_blocks(
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_MANAGER),
+    _: AppUser = Depends(_READER),
 ) -> BlockListResponse:
     counts = await _unit_counts(db)
     rows = (

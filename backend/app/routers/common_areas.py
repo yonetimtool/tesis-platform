@@ -17,10 +17,11 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import reservations_timing as rtiming
 from ..crud_helpers import is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, OrtakAlan, Rezervasyon
+from ..models import AppUser, OrtakAlan, Rezervasyon, Tenant, UnitResident
 from ..schemas import (
     AlanSlotResponse,
     OrtakAlanCreate,
@@ -152,6 +153,28 @@ async def area_slots(
         )
     ).all()
 
+    # Rezerve edilebilirlik yalniz SAKIN icin anlamli (yonetim rezerve etmez).
+    # Sakinin bu gune (slot-gunu) denk AKTIF rezervasyonu varsa gunluk kota dolu.
+    is_resident = user.role == "resident"
+    tzname = (
+        await db.execute(select(Tenant.timezone).where(Tenant.id == user.tenant_id))
+    ).scalar_one_or_none() or "Europe/Istanbul"
+    kota_dolu = False
+    if is_resident:
+        kota_dolu = (
+            await db.execute(
+                select(Rezervasyon.id)
+                .join(UnitResident, UnitResident.unit_id == Rezervasyon.unit_id)
+                .where(
+                    Rezervasyon.talep_eden_user_id == user.id,
+                    Rezervasyon.tarih == tarih,
+                    Rezervasyon.durum == "onaylandi",
+                )
+                .limit(1)
+            )
+        ).scalar_one_or_none() is not None
+    now = rtiming.now_utc()
+
     items: list[SlotOut] = []
     step = timedelta(minutes=alan.slot_dakika)
     cur = datetime.combine(tarih, alan.acilis)
@@ -160,8 +183,24 @@ async def area_slots(
         s, e = cur.time(), (cur + step).time()
         # dolu: yari-acik kesisim (s < bitis_onayli AND e > baslangic_onayli).
         dolu = any(s < ob_bitis and e > ob_bas for ob_bas, ob_bitis in onayli)
+        # Sakin icin rezerve edilebilirlik (24s/gunluk/son-dakika); yonetimde False.
+        sebep: str | None = None
+        rezerve = False
+        if is_resident:
+            sebep = rtiming.booking_reason(
+                tzname, tarih, s, dolu=dolu, kota_dolu=kota_dolu, now=now
+            )
+            rezerve = sebep is None
+        elif dolu:
+            sebep = "dolu"
         items.append(
-            SlotOut(baslangic=s.strftime("%H:%M"), bitis=e.strftime("%H:%M"), dolu=dolu)
+            SlotOut(
+                baslangic=s.strftime("%H:%M"),
+                bitis=e.strftime("%H:%M"),
+                dolu=dolu,
+                rezerve_edilebilir=rezerve,
+                sebep=sebep,
+            )
         )
         cur += step
     return AlanSlotResponse(

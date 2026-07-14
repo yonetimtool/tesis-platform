@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../../auth/data/current_user_provider.dart';
+import '../../auth/domain/user_role.dart';
 import '../domain/bina_duzenleme_models.dart';
 import 'bina_duzenleme_controller.dart';
 
@@ -14,6 +16,11 @@ import 'bina_duzenleme_controller.dart';
 /// Mevcut CRUD uclarini kullanir (yeni backend YOK): /blocks + /units + layout.
 /// Yazma admin+yonetici (backend RBAC zorlar). Blok silme, daire varsa 409 doner
 /// — mesaj acikca gosterilir.
+///
+/// SALT-OKUMA: security + tesis_gorevlisi ayni ekrani GORUR ama TUM duzenleme
+/// eylemleri (blok/kat/daire ekle-duzenle-sil, yerlesim) gizlenir/kapalidir —
+/// yalniz mevcut yapiyi referans olarak gorurler. Backend zaten yazmalarini
+/// 403 ile reddeder; bu istemci kapisi UX aynasidir.
 class BinaDuzenlemeScreen extends ConsumerStatefulWidget {
   const BinaDuzenlemeScreen({super.key});
 
@@ -54,11 +61,16 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
     final state = ref.watch(binaDuzenlemeControllerProvider);
     final controller = ref.read(binaDuzenlemeControllerProvider.notifier);
     final drilledIn = _openBlock != null;
+    // SALT-OKUMA: yazma yalniz admin+yonetici; diger roller (security/
+    // tesis_gorevlisi) duzenleme eylemlerini gormez. Rol cozulene kadar
+    // (null) guvenli taraf: salt-okuma kabul et.
+    final role = ref.watch(currentUserRoleProvider).value;
+    final readOnly = !(role == UserRole.admin || role == UserRole.yonetici);
 
     return Scaffold(
       appBar: AppBar(
         leading: drilledIn ? BackButton(onPressed: _closeBlock) : null,
-        title: Text(_titleFor()),
+        title: Text(_titleFor(readOnly)),
         actions: [
           IconButton(
             tooltip: 'Yenile',
@@ -69,21 +81,22 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: controller.refresh,
-        child: _body(state),
+        child: _body(state, readOnly),
       ),
     );
   }
 
-  String _titleFor() {
+  String _titleFor(bool readOnly) {
     if (_openBlock != null) {
       return _openBlock == _blocklessKey
           ? 'Bloksuz daireler'
           : 'Blok $_openBlock';
     }
-    return 'Bina Düzenleme';
+    // Salt-okuma rollerinde baslik "Bina Yapisi" (duzenleme cagrismasi olmasin).
+    return readOnly ? 'Bina Yapısı' : 'Bina Düzenleme';
   }
 
-  Widget _body(BinaDuzenlemeState state) {
+  Widget _body(BinaDuzenlemeState state, bool readOnly) {
     if (state.loading && state.bos) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -105,6 +118,7 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
         pendingFloors: _pendingFloors,
         onAddFloor: _addFloor,
         errorBanner: _errorBanner(state),
+        readOnly: readOnly,
       );
     }
 
@@ -113,6 +127,7 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
       state: state,
       errorBanner: _errorBanner(state),
       onOpen: _openBlockTile,
+      readOnly: readOnly,
     );
   }
 
@@ -154,11 +169,13 @@ class _BlockList extends ConsumerWidget {
     required this.state,
     required this.errorBanner,
     required this.onOpen,
+    required this.readOnly,
   });
 
   final BinaDuzenlemeState state;
   final Widget? errorBanner;
   final void Function(String label) onOpen;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -172,9 +189,12 @@ class _BlockList extends ConsumerWidget {
       children: [
         ?errorBanner,
         Text(
-          'Blok ekleyin, kutucuğa dokunup içine kat ve daire yerleştirin. '
-          'Blok kullanmıyorsanız "Bloksuz" kutusundan düz numarayla daire ekleyin. '
-          'Şikayet Haritası bu yapıyı yansıtır.',
+          readOnly
+              ? 'Bina yapısı (salt görüntüleme). Blok kutucuğuna dokunup '
+                  'kat ve daire yerleşimini görebilirsiniz.'
+              : 'Blok ekleyin, kutucuğa dokunup içine kat ve daire yerleştirin. '
+                  'Blok kullanmıyorsanız "Bloksuz" kutusundan düz numarayla daire ekleyin. '
+                  'Şikayet Haritası bu yapıyı yansıtır.',
           style: TextStyle(
               fontSize: 13,
               color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -190,7 +210,8 @@ class _BlockList extends ConsumerWidget {
                 unitCount: state.unitsForBlock(label).length,
                 registered: state.blockByLabel(label) != null,
                 onTap: () => onOpen(label),
-                onManage: state.blockByLabel(label) == null
+                // Salt-okuma: blok yonet (duzenle/sil) kapali.
+                onManage: readOnly || state.blockByLabel(label) == null
                     ? null
                     : () => _manageBlock(context, ref, state.blockByLabel(label)!),
               ),
@@ -202,7 +223,8 @@ class _BlockList extends ConsumerWidget {
                 icon: Icons.tag,
                 onTap: () => onOpen(_blocklessKey),
               ),
-            _AddTile(onTap: () => _addBlock(context, ref)),
+            // Salt-okuma: "Blok ekle" kutusu gizli.
+            if (!readOnly) _AddTile(onTap: () => _addBlock(context, ref)),
           ],
         ),
       ],
@@ -323,6 +345,7 @@ class _BlockDetail extends ConsumerWidget {
     required this.state,
     required this.pendingFloors,
     required this.onAddFloor,
+    required this.readOnly,
     this.errorBanner,
   });
 
@@ -330,6 +353,7 @@ class _BlockDetail extends ConsumerWidget {
   final BinaDuzenlemeState state;
   final Set<int> pendingFloors;
   final VoidCallback onAddFloor;
+  final bool readOnly;
   final Widget? errorBanner;
 
   bool get _blockless => label == _blocklessKey;
@@ -353,28 +377,38 @@ class _BlockDetail extends ConsumerWidget {
       children: [
         ?errorBanner,
         Text(
-          _blockless
-              ? 'Bloksuz daireler — düz numaralandırma. Kat ekleyip her katın "+" düğmesiyle daire ekleyin.'
-              : 'Blok $label — kat ekleyip her katın "+" düğmesiyle daire ekleyin. Aynı kattakiler yan yana dizilir.',
+          readOnly
+              ? (_blockless
+                  ? 'Bloksuz daireler (salt görüntüleme).'
+                  : 'Blok $label — kat ve daire yerleşimi (salt görüntüleme).')
+              : (_blockless
+                  ? 'Bloksuz daireler — düz numaralandırma. Kat ekleyip her katın "+" düğmesiyle daire ekleyin.'
+                  : 'Blok $label — kat ekleyip her katın "+" düğmesiyle daire ekleyin. Aynı kattakiler yan yana dizilir.'),
           style: TextStyle(
               fontSize: 13,
               color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: OutlinedButton.icon(
-            onPressed: onAddFloor,
-            icon: const Icon(Icons.add),
-            label: const Text('Kat ekle'),
+        // Salt-okuma: "Kat ekle" gizli.
+        if (!readOnly) ...[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: onAddFloor,
+              icon: const Icon(Icons.add),
+              label: const Text('Kat ekle'),
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 12),
+        ],
         if (floors.isEmpty && katsizUnits.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Center(
-              child: Text('Henüz kat yok. "Kat ekle" ile başlayın, sonra kattaki "+" ile daire ekleyin.',
+              child: Text(
+                  readOnly
+                      ? 'Bu blokta henüz daire yok.'
+                      : 'Henüz kat yok. "Kat ekle" ile başlayın, sonra kattaki "+" ile daire ekleyin.',
                   style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant),
                   textAlign: TextAlign.center),
@@ -385,6 +419,7 @@ class _BlockDetail extends ConsumerWidget {
             kat: kat,
             units: (units.where((u) => u.kat == kat).toList()
               ..sort(_bySira)),
+            readOnly: readOnly,
             onAddUnit: () => _openUnitForm(context, ref, kat: kat),
             onUnit: (u) => _openUnitForm(context, ref, existing: u),
           ),
@@ -392,6 +427,7 @@ class _BlockDetail extends ConsumerWidget {
           _FloorRow(
             kat: null,
             units: katsizUnits..sort(_bySira),
+            readOnly: readOnly,
             onAddUnit: () => _openUnitForm(context, ref),
             onUnit: (u) => _openUnitForm(context, ref, existing: u),
           ),
@@ -446,12 +482,14 @@ class _FloorRow extends StatelessWidget {
     required this.units,
     required this.onAddUnit,
     required this.onUnit,
+    required this.readOnly,
   });
 
   final int? kat;
   final List<EditorUnit> units;
   final VoidCallback onAddUnit;
   final void Function(EditorUnit) onUnit;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -474,9 +512,11 @@ class _FloorRow extends StatelessWidget {
                 spacing: 6,
                 runSpacing: 6,
                 children: [
+                  // Salt-okuma: daireye dokunmak duzenleme formu ACMAZ.
                   for (final u in units)
-                    _UnitCell(unit: u, onTap: () => onUnit(u)),
-                  _AddUnitCell(onTap: onAddUnit),
+                    _UnitCell(unit: u, onTap: readOnly ? null : () => onUnit(u)),
+                  // Salt-okuma: "daire ekle" hucresi gizli.
+                  if (!readOnly) _AddUnitCell(onTap: onAddUnit),
                 ],
               ),
             ),
@@ -492,7 +532,8 @@ class _UnitCell extends StatelessWidget {
   const _UnitCell({required this.unit, required this.onTap});
 
   final EditorUnit unit;
-  final VoidCallback onTap;
+  // null → salt-okuma (dokunma etkisiz; duzenleme formu acilmaz).
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/error/api_exception.dart';
+import 'package:mobile/src/features/auth/data/current_user_provider.dart';
+import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/building_map/data/bina_duzenleme_api.dart';
 import 'package:mobile/src/features/building_map/domain/bina_duzenleme_models.dart';
 import 'package:mobile/src/features/building_map/presentation/bina_duzenleme_screen.dart';
@@ -83,9 +85,12 @@ class _FakeApi extends BinaDuzenlemeApi {
   }
 }
 
-Widget _app(_FakeApi api) {
+Widget _app(_FakeApi api, {UserRole role = UserRole.yonetici}) {
   return ProviderScope(
-    overrides: [binaDuzenlemeApiProvider.overrideWithValue(api)],
+    overrides: [
+      binaDuzenlemeApiProvider.overrideWithValue(api),
+      currentUserRoleProvider.overrideWith((ref) async => role),
+    ],
     child: const MaterialApp(home: BinaDuzenlemeScreen()),
   );
 }
@@ -167,4 +172,42 @@ void main() {
     expect(find.textContaining('daire var'), findsOneWidget);
     expect(find.text('Blok A'), findsOneWidget);
   });
+
+  // ------------------------- SALT-OKUMA (saha rolleri) ---------------------- #
+  for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
+    testWidgets(
+        '${role.name}: SALT-OKUMA — yapiyi gorur, TUM duzenleme eylemleri yok',
+        (tester) async {
+      final api = _FakeApi(
+        blocks: const [BuildingBlock(id: 'b-A', ad: 'A', unitSayisi: 1)],
+        units: const [EditorUnit(id: 'u-1', no: 'A-1', blok: 'A', kat: 1, sira: 1)],
+      );
+      await tester.pumpWidget(_app(api, role: role));
+      await tester.pumpAndSettle();
+
+      // Baslik salt-okuma modunda "Bina Yapisi".
+      expect(find.text('Bina Yapısı'), findsOneWidget);
+      // Yapi gorunur (blok kutucugu), ama "+ Blok" ekleme kutusu YOK.
+      expect(find.text('Blok A'), findsOneWidget);
+      expect(find.text('Blok'), findsNothing); // ekleme kutucugu gizli
+
+      // Blok kutucuguna uzun bas → yonetim menusu (duzenle/sil) ACILMAZ.
+      await tester.longPress(find.text('Blok A'));
+      await tester.pumpAndSettle();
+      expect(find.text('Bloğu sil'), findsNothing);
+
+      // Bloga gir → kat plani gorunur ama "Kat ekle" ve "+" daire ekle YOK.
+      await tester.tap(find.text('Blok A'));
+      await tester.pumpAndSettle();
+      expect(find.text('A-1'), findsOneWidget); // daire yapisi gorunur
+      expect(find.text('Kat ekle'), findsNothing);
+      expect(find.byIcon(Icons.add), findsNothing); // "+" daire ekle hucresi yok
+
+      // Daireye dokunmak duzenleme formu ACMAZ.
+      await tester.tap(find.text('A-1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Kaydet'), findsNothing);
+      expect(find.text('Sil'), findsNothing);
+    });
+  }
 }

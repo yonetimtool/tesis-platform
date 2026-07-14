@@ -112,9 +112,10 @@ def upgrade() -> None:
         "CREATE TYPE access_request_durum AS ENUM "
         "('bekliyor', 'onaylandi', 'reddedildi');"
     )
-    # ortak alan rezervasyon talebi durumu (yonetici karar verir).
+    # ortak alan rezervasyonu durumu. ONAY AKISI KALDIRILDI: bos slot talebi
+    # aninda onaylanir (durum='onaylandi'); iptal slotu bosaltir.
     op.execute(
-        "CREATE TYPE rezervasyon_durum AS ENUM ('bekliyor', 'onaylandi', 'reddedildi');"
+        "CREATE TYPE rezervasyon_durum AS ENUM ('onaylandi', 'iptal');"
     )
     # Entegrasyon kanal turu (C1b): generic webhook temel; megafon/akilli-ev
     # PRESET'leri de generic webhook uzerinde calisir (marka-bagimsiz). C1a
@@ -1253,17 +1254,21 @@ def upgrade() -> None:
     op.execute("CREATE INDEX ix_ortak_alan_tenant ON ortak_alan (tenant_id);")
 
     # ------------------------------------------------------------------ #
-    # 9z5. rezervasyon  (ortak alan rezervasyonu: sakin talep eder ->
-    #     yonetici onaylar/reddeder; tam gecmis bu tabloda.
+    # 9z5. rezervasyon  (ortak alan rezervasyonu: sakin BOS slotu ANINDA
+    #     rezerve eder — ONAY AKISI YOK; tam gecmis bu tabloda.
     #
     #     CAKISMA ENGELI (DB-duzeyi, yaris-durumu-guvenli): partial EXCLUDE
     #     constraint — ayni alanin ONAYLI iki rezervasyonu zaman araliginda
     #     kesisemez. tsrange '[)' oldugu icin bitis == diger.baslangic (bitisik
-    #     slot) CAKISMA SAYILMAZ. bekliyor/reddedildi satirlar kisita dahil
-    #     DEGIL (WHERE durum='onaylandi') => ust uste birden cok BEKLEYEN
-    #     talep serbest; onaya kaldirma aninda (UPDATE) kisit devreye girer,
-    #     es zamanli iki cakisan onaydan YALNIZ BIRI basarir (digerine 23P01
+    #     slot) CAKISMA SAYILMAZ. iptal satirlar kisita dahil DEGIL (WHERE
+    #     durum='onaylandi') => iptal slotu bosaltir. Talep dogrudan
+    #     durum='onaylandi' INSERT eder; kisit INSERT aninda devreye girer, es
+    #     zamanli iki cakisan talepten YALNIZ BIRI basarir (digerine 23P01
     #     -> API 409). uuid '=' gist icin btree_gist eklentisi gerekli.
+    #
+    #     ZAMANLAMA KURALLARI uygulama katmaninda (app/reservations_timing.py):
+    #     slot baslangicina <24s kala acilir; sakin gunde slot-gunune 1 aktif
+    #     rezervasyon tutar; <10 dk kala bos slot kotayi baypas eder.
     # ------------------------------------------------------------------ #
     op.execute(
         """
@@ -1271,16 +1276,16 @@ def upgrade() -> None:
             id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id           uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
             alan_id             uuid NOT NULL,
-            unit_id             uuid NOT NULL,   -- talep eden daire
-            talep_eden_user_id  uuid NOT NULL,   -- talebi acan sakin
+            unit_id             uuid NOT NULL,   -- rezerve eden daire
+            talep_eden_user_id  uuid NOT NULL,   -- rezervasyonu yapan sakin
             tarih               date NOT NULL,
             baslangic           time NOT NULL,
             bitis               time NOT NULL,
             kisi_sayisi         integer NOT NULL,
             notlar              text,       -- opsiyonel not ("not" SQL anahtar sozcugu)
-            durum               rezervasyon_durum NOT NULL DEFAULT 'bekliyor',
-            onaylayan_user_id   uuid,            -- karari veren yonetici
-            karar_zamani        timestamptz,
+            durum               rezervasyon_durum NOT NULL DEFAULT 'onaylandi',
+            iptal_eden_user_id  uuid,            -- iptal eden (sakin/yonetim)
+            iptal_zamani        timestamptz,
             created_at          timestamptz NOT NULL DEFAULT now(),
             CONSTRAINT uq_rezervasyon_id_tenant UNIQUE (id, tenant_id),
             CONSTRAINT ck_rezervasyon_aralik CHECK (bitis > baslangic),
@@ -1296,10 +1301,10 @@ def upgrade() -> None:
             CONSTRAINT fk_rezervasyon_talep_eden
                 FOREIGN KEY (talep_eden_user_id, tenant_id)
                 REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
-            -- Kolon-ozel SET NULL: yalnizca onaylayan_user_id NULL'lanir.
-            CONSTRAINT fk_rezervasyon_onaylayan
-                FOREIGN KEY (onaylayan_user_id, tenant_id)
-                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (onaylayan_user_id),
+            -- Kolon-ozel SET NULL: yalnizca iptal_eden_user_id NULL'lanir.
+            CONSTRAINT fk_rezervasyon_iptal_eden
+                FOREIGN KEY (iptal_eden_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (iptal_eden_user_id),
             -- Ayni alanin ONAYLI rezervasyonlari kesisemez (tarih+saat).
             CONSTRAINT ex_rezervasyon_onayli_cakisma
                 EXCLUDE USING gist (

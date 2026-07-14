@@ -552,13 +552,14 @@ def main() -> int:
             "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
             (tenant_id, "resident@acme.com"),
         ).fetchone()[0]
+        # ONAY AKISI YOK: rezervasyon dogrudan onaylandi (iptal_eden NULL).
         conn.execute(
             """
             INSERT INTO rezervasyon (tenant_id, alan_id, unit_id, talep_eden_user_id,
                                      tarih, baslangic, bitis, kisi_sayisi, notlar,
-                                     durum, onaylayan_user_id, karar_zamani)
+                                     durum)
             SELECT %(t)s, %(alan)s, %(u)s, %(r)s, %(tarih)s, %(bas)s, %(bit)s,
-                   4, 'Aile yuzme saati', 'onaylandi'::rezervasyon_durum, %(y)s, now()
+                   4, 'Aile yuzme saati', 'onaylandi'::rezervasyon_durum
             WHERE NOT EXISTS (
                 SELECT 1 FROM rezervasyon
                 WHERE tenant_id = %(t)s AND alan_id = %(alan)s
@@ -567,21 +568,21 @@ def main() -> int:
             """,
             {
                 "t": tenant_id, "alan": alan_ids["Havuz"], "u": unit_id,
-                "r": resident_id, "y": yonetici_id,
+                "r": resident_id,
                 "tarih": "2026-07-15", "bas": "10:00", "bit": "12:00",
             },
         )
         print("[seed] rezervasyon Havuz 2026-07-15 10:00-12:00 A-12 (onayli, 4 kisi)")
 
-        # BEKLEYEN talep (Toplanti Odasi): onay ekranlari/rozetleri veriyle
-        # denensin — karar verilmemis (onaylayan_user_id NULL).
+        # IPTAL ornegi (Toplanti Odasi): iptal rozeti/gecmisi veriyle denensin
+        # (iptal_eden = sakinin kendisi).
         conn.execute(
             """
             INSERT INTO rezervasyon (tenant_id, alan_id, unit_id, talep_eden_user_id,
                                      tarih, baslangic, bitis, kisi_sayisi, notlar,
-                                     durum)
+                                     durum, iptal_eden_user_id, iptal_zamani)
             SELECT %(t)s, %(alan)s, %(u)s, %(r)s, %(tarih)s, %(bas)s, %(bit)s,
-                   6, 'Aidat toplantisi', 'bekliyor'::rezervasyon_durum
+                   6, 'Aidat toplantisi', 'iptal'::rezervasyon_durum, %(r)s, now()
             WHERE NOT EXISTS (
                 SELECT 1 FROM rezervasyon
                 WHERE tenant_id = %(t)s AND alan_id = %(alan)s
@@ -594,7 +595,7 @@ def main() -> int:
                 "tarih": "2026-07-20", "bas": "14:00", "bit": "15:00",
             },
         )
-        print("[seed] rezervasyon Toplanti Odasi 2026-07-20 14:00-15:00 A-12 (bekliyor)")
+        print("[seed] rezervasyon Toplanti Odasi 2026-07-20 14:00-15:00 A-12 (iptal)")
 
         # 9) etkinlikler + ornek RSVP'ler: yaklasan "Mac izleme" (2 katiliyor)
         #    + gecmis "Site genel kurulu" — sayac/ekranlar veriyle denensin.

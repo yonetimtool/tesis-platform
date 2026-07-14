@@ -26,8 +26,8 @@ void main() {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
-        // Sikayet Haritasi (yogunluk) YOK; yerine salt-okuma Bina Yapisi.
-        HomeMenuEntry.binaYapisi,
+        // Sikayet Haritasi (yogunluk) YOK; yerine salt-okuma Bina Duzenleme.
+        HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -143,18 +143,22 @@ void main() {
       }
     });
 
-    test('Bina Duzenleme karti (D-viz Rev-2) YALNIZ yonetici mobil menusunde; '
-        'admin panelden yonetir, saha/sakin YOK', () {
-      expect(
-        homeMenuForRole(UserRole.yonetici),
-        contains(HomeMenuEntry.binaDuzenleme),
-      );
+    test('Bina Duzenleme karti: yonetici (duzenler) + security/tesis_gorevlisi '
+        '(SALT-OKUMA); admin panelden yonetir, resident YOK', () {
+      // yonetici + saha rolleri kartI gorur (saha salt-okuma; ekran kilitler).
       for (final role in [
-        UserRole.admin,
+        UserRole.yonetici,
         UserRole.security,
         UserRole.tesisGorevlisi,
-        UserRole.resident,
       ]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.binaDuzenleme),
+          reason: role.wire,
+        );
+      }
+      // admin (panelden) + resident GORMEZ.
+      for (final role in [UserRole.admin, UserRole.resident]) {
         expect(
           homeMenuForRole(role),
           isNot(contains(HomeMenuEntry.binaDuzenleme)),
@@ -358,29 +362,17 @@ void main() {
       }
     });
 
-    test('Bina Yapisi karti (salt okuma): YALNIZ security+tesis_gorevlisi '
-        '(Sikayet Haritasi yerine); digerlerinde YOK', () {
+    test('security/tesis_gorevlisi: Sikayet Haritasi yerine Bina Duzenleme '
+        '(salt-okuma) — yogunluk haritasi GORMEZ, yapiyi gorur', () {
       for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
         expect(
           homeMenuForRole(role),
-          contains(HomeMenuEntry.binaYapisi),
+          contains(HomeMenuEntry.binaDuzenleme),
           reason: role.wire,
         );
-        // Bu roller yogunluk haritasini GORMEZ (yalniz yapi).
         expect(
           homeMenuForRole(role),
           isNot(contains(HomeMenuEntry.sikayetHaritasi)),
-          reason: role.wire,
-        );
-      }
-      for (final role in [
-        UserRole.admin,
-        UserRole.yonetici,
-        UserRole.resident,
-      ]) {
-        expect(
-          homeMenuForRole(role),
-          isNot(contains(HomeMenuEntry.binaYapisi)),
           reason: role.wire,
         );
       }

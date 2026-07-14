@@ -318,8 +318,12 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 >   onlara **asla** sızmaz. Şikayet açan sakin kendi kaydında da complainant
 >   `null` görür (kendisi zaten bilir). `building-map` hiçbir role complainant döndürmez.
 > - **Bina blok CRUD (`/blocks*`)** ve daire CRUD/yerleşim (`/units*`,
->   `/units/{id}/layout`) admin **+ yonetici**'dir (Rev-2 görsel editörü bu
->   uçları kullanacak; blok-suz + blok-tabanlı siteler birlikte desteklenir).
+>   `/units/{id}/layout`) **YAZMA** admin **+ yonetici**'dir (Rev-2 görsel editörü
+>   bu uçları kullanır; blok-suz + blok-tabanlı siteler birlikte desteklenir).
+>   **OKUMA** (`GET /blocks`, `GET /units`) admin+yonetici **+
+>   security/tesis_gorevlisi**: saha rolleri "Bina Düzenleme" ekranını
+>   **SALT-OKUMA** görür (blok/kat/daire yapısını referans olarak; tüm düzenleme
+>   eylemleri istemcide gizli, backend yazmayı yine 403'ler). `resident` erişmez.
 >
 > **Odeme webhook'u** (`POST /webhooks/payments/{provider}`): **PUBLIC** (JWT YOK) — saha
 > disindan saglayici cagirir. Guvenlik **imza/hash** ile saglanir (provider secret; HMAC).
@@ -565,8 +569,9 @@ Notlar:
     admin + YONETICI** (Rev-2 gorsel editoru bu uclari kullanacak). Sakin atama
     (`/units/{id}/residents`) ve aidat admin-only kalir.
 - **Ortak alan rezervasyonu (`/common-areas` + `/reservations`):** yonetici
-  alan tanimlar (havuz/teras/toplanti odasi), sakin slot talep eder, yonetici
-  onaylar/reddeder; tam gecmis tutulur.
+  alan tanimlar (havuz/teras/toplanti odasi), sakin bos slotu ANINDA rezerve
+  eder (**ONAY AKISI YOK**); tam gecmis tutulur. `durum` yalniz
+  `onaylandi`|`iptal`.
   - **Alanlar:** OLUSTURMA/DUZENLEME `admin`+`yonetici`; OKUMA TUM roller
     (° yonetim disi roller YALNIZ aktif alanlari gorur — sakin neyin rezerve
     edilebilir oldugunu bilmeli). Silme YOK: kaldirma = `aktif=false`
@@ -576,37 +581,46 @@ Notlar:
     uzunlugunda slotlarla rezerve edilebilir (saat girilmezse tum-gun
     varsayilan). Talep dogrulamasi araligin bu pencerede olmasini arar (slot
     izgara hizasi UX/istemci isi; cakismasizligi EXCLUDE saglar).
-  - **SLOTLAR (`GET /common-areas/{id}/slots?date=`) TUM roller:** o gunun
-    TAM slot izgarasini + her slot icin dolu/bos doner. **dolu** = o slotla
-    kesisen ONAYLI rezervasyon var; bekleyen/reddedilen DOLDURMAZ.
-    **GIZLILIK:** kim rezerve etmis PAYLASILMAZ (yalniz saat + dolu). Pasif
-    alan sakine/sahaya **404** (rezerve edilemez, varlik sizdirilmaz); yonetim
-    pasif alan slotlarini gorur (° duzenleme baglami).
-  - **TALEP (`POST /reservations`) YALNIZ `resident`:** alan + tarih + saat
-    araligi (bitis > baslangic, ayni gun) + kisi_sayisi (>0). Daire sakinin
-    AKTIF dairesinden turetilir (coklu dairede `unit_id` ile secim — kendi
-    dairesi olmali, aksi 422). Yonetim talep ACMAZ (403) — karar veren taraf
-    (complaints kanal ilkesi). Talep aninda ONAYLI bir rezervasyonla kesisen
-    aralik **409** ile reddedilir (bosuna bekletilmez).
+  - **ZAMANLAMA KURALLARI (backend zorlar; slot baslangicina gore, tenant tz
+    `tenant.timezone` — varsayilan Europe/Istanbul; sunucu UTC "now"a cevirir):**
+    - **24 SAAT PENCERESI:** slota **<24s kala** rezerve edilir; 24s'ten erken
+      → **422** ("Rezervasyon en erken 24 saat kala yapilabilir."); baslangici
+      gecmis slot → **422**.
+    - **GUNDE BIR:** sakin, rezerve edilen slotun takvim gunune denk **en fazla
+      1 aktif** (`onaylandi`) rezervasyon tutar; ikincisi → **409** ("Bu gun
+      icin zaten bir rezervasyonunuz var.").
+    - **SON DAKIKA ISTISNASI:** slota **<10 dk kala** BOS slot gunluk kotayi
+      **baypas eder** (bos slot bosa gitmesin); yalniz gunluk kurali gecersiz
+      kilar, 24s ust siniri zaten saglanmistir.
+  - **SLOTLAR (`GET /common-areas/{id}/slots?date=`) TUM roller:** o gunun TAM
+    slot izgarasini + her slot icin `dolu` + `rezerve_edilebilir` + `sebep`
+    (`dolu`|`gecti`|`cok_erken`|`gunluk`|null) doner. **dolu** = o slotla
+    kesisen ONAYLI rezervasyon var; iptal DOLDURMAZ. **rezerve_edilebilir**
+    yalniz SAKIN icin hesaplanir (24s + gunluk kota + son-dakika); yonetimde
+    daima false (rezerve etmez). **GIZLILIK:** kim rezerve etmis PAYLASILMAZ.
+    Pasif alan sakine/sahaya **404**; yonetim pasif alan slotlarini gorur.
+  - **REZERVE ET (`POST /reservations`) YALNIZ `resident`:** alan + tarih +
+    saat araligi (bitis > baslangic, ayni gun) + kisi_sayisi (>0). Daire
+    sakinin AKTIF dairesinden turetilir (coklu dairede `unit_id` ile secim —
+    kendi dairesi olmali, aksi 422). ONAY YOK: kayit dogrudan
+    `durum='onaylandi'`. Yonetim rezerve ETMEZ (403).
   - **CAKISMA ENGELI (kesin mekanizma):** DB-duzeyi **partial EXCLUDE
     constraint** (`btree_gist`; `alan_id WITH =`, `tsrange(tarih+baslangic,
-    tarih+bitis) WITH &&`, `WHERE durum='onaylandi'`). BEKLEYEN talepler ust
-    uste binebilir (karar yonetimde); onaya kaldirma **UPDATE'inde** kisit
-    devreye girer — es zamanli iki cakisan onaydan YALNIZ BIRI basarir,
-    digeri 23P01 → **409** (yaris durumu DB'de cozulur, uygulama kontrolune
-    guvenilmez). Yari-acik aralik `[)`: bitisik slot (bitis ==
-    diger.baslangic) cakisma SAYILMAZ. Overlap tanimi:
+    tarih+bitis) WITH &&`, `WHERE durum='onaylandi'`). Kisit **INSERT aninda**
+    devreye girer — es zamanli iki cakisan talepten YALNIZ BIRI basarir,
+    digeri 23P01 → **409** (yaris durumu DB'de cozulur). Yari-acik aralik `[)`:
+    bitisik slot (bitis == diger.baslangic) cakisma SAYILMAZ. Overlap tanimi:
     `baslangic < diger.bitis AND bitis > diger.baslangic`.
-  - **KARAR (`PATCH`) yalniz `admin`+`yonetici`:** `onaylayan_user_id` +
-    `karar_zamani` otomatik damgalanir; zaten karara baglanmis kayda ikinci
-    karar **409** (atomik `durum='bekliyor'` kosullu UPDATE).
-  - **OKUMA:** yonetim tenant'in tumu (bekleyenler karar kuyrugu; alan+tarih
-    filtresi = gun gorunumu); 🔵 `resident` YALNIZ kendi dairelerinin
-    rezervasyonlari (daire bazli — es de gorur); `security`/`tesis_gorevlisi`
-    ERISMEZ (403) — sakin↔yonetim akisi.
-  - **Push:** talep → yonetim cihazlari (`data: tip=rezervasyon`); karar →
-    YALNIZ talebi acan sakin (`tip=rezervasyon_karar`). EK gonderim — hatasi
-    kaydi etkilemez.
+  - **IPTAL (`POST /reservations/{id}/cancel`):** rezerve eden `resident`
+    (YALNIZ kendi — baskasininki 404) + `admin`+`yonetici` (herhangi biri).
+    `durum='iptal'` + `iptal_eden_user_id`/`iptal_zamani` damgalanir; slot
+    bosalir (EXCLUDE disi). Zaten iptal → **409**. `security`/`tesis_gorevlisi`
+    ERISMEZ (403).
+  - **OKUMA:** yonetim tenant'in tumu (alan+tarih filtresi = gun gorunumu);
+    🔵 `resident` YALNIZ kendi dairelerinin rezervasyonlari (daire bazli — es
+    de gorur); `security`/`tesis_gorevlisi` ERISMEZ (403) — sakin↔yonetim akisi.
+  - **Push:** rezerve sonrasi → rezerve eden sakinin cihazlari (`data:
+    tip=rezervasyon`). EK gonderim — hatasi kaydi etkilemez.
 - **Etkinlik + RSVP (`/events`):** yonetici etkinlik duyurur (cenaze, mac
   izleme vb.), sakinler katilim beyan eder; sayilar herkese seffaf.
   - **OLUSTUR/DUZENLE/SIL `admin`+`yonetici`** (duyuru deseni). Olusturmada

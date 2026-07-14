@@ -3,17 +3,15 @@ import 'package:mobile/src/features/rezervasyon/domain/rezervasyon_models.dart';
 
 void main() {
   group('RezervasyonDurum.fromWire', () {
-    test('bilinen degerler eslesir', () {
-      expect(RezervasyonDurum.fromWire('bekliyor'), RezervasyonDurum.bekliyor);
+    test('bilinen degerler eslesir (onay akisi yok: onaylandi/iptal)', () {
       expect(
           RezervasyonDurum.fromWire('onaylandi'), RezervasyonDurum.onaylandi);
-      expect(RezervasyonDurum.fromWire('reddedildi'),
-          RezervasyonDurum.reddedildi);
+      expect(RezervasyonDurum.fromWire('iptal'), RezervasyonDurum.iptal);
     });
 
     test('null/bilinmeyen deger unknown (ileri surum COKMEZ)', () {
       expect(RezervasyonDurum.fromWire(null), RezervasyonDurum.unknown);
-      expect(RezervasyonDurum.fromWire('iptal'), RezervasyonDurum.unknown);
+      expect(RezervasyonDurum.fromWire('bekliyor'), RezervasyonDurum.unknown);
     });
   });
 
@@ -40,7 +38,7 @@ void main() {
   });
 
   group('Rezervasyon.fromJson', () {
-    test('tam kayit (onaylanmis) parse edilir', () {
+    test('tam kayit (onayli, aktif) parse edilir', () {
       final r = Rezervasyon.fromJson(const {
         'id': 'r-1',
         'alan_id': 'a-1',
@@ -55,9 +53,6 @@ void main() {
         'durum': 'onaylandi',
         'talep_eden_user_id': 'res-1',
         'talep_eden_ad': 'Acme Sakin',
-        'onaylayan_user_id': 'yon-1',
-        'onaylayan_ad': 'Acme Yonetici',
-        'karar_zamani': '2026-07-11T08:00:00Z',
         'created_at': '2026-07-10T09:00:00Z',
       });
       expect(r.id, 'r-1');
@@ -68,13 +63,15 @@ void main() {
       expect(r.bitis, '12:00');
       expect(r.kisiSayisi, 4);
       expect(r.durum, RezervasyonDurum.onaylandi);
-      expect(r.bekliyor, isFalse);
+      expect(r.onayli, isTrue);
+      expect(r.iptalEdildi, isFalse);
       expect(r.talepEdenAd, 'Acme Sakin');
-      expect(r.onaylayanAd, 'Acme Yonetici');
-      expect(r.kararZamani, DateTime.utc(2026, 7, 11, 8));
+      // aktif kayitta iptal alanlari bos
+      expect(r.iptalEdenUserId, isNull);
+      expect(r.iptalZamani, isNull);
     });
 
-    test('bekleyen kayit: karar alanlari null', () {
+    test('iptal kaydi: iptal alanlari dolu', () {
       final r = Rezervasyon.fromJson(const {
         'id': 'r-2',
         'alan_id': 'a-1',
@@ -83,15 +80,17 @@ void main() {
         'baslangic': '10:00',
         'bitis': '12:00',
         'kisi_sayisi': 2,
-        'durum': 'bekliyor',
+        'durum': 'iptal',
         'talep_eden_user_id': 'res-1',
+        'iptal_eden_user_id': 'res-1',
+        'iptal_eden_ad': 'Acme Sakin',
+        'iptal_zamani': '2026-07-11T08:00:00Z',
         'created_at': '2026-07-10T09:00:00Z',
       });
-      expect(r.bekliyor, isTrue);
-      expect(r.onaylayanUserId, isNull);
-      expect(r.onaylayanAd, isNull);
-      expect(r.kararZamani, isNull);
-      expect(r.notlar, isNull);
+      expect(r.iptalEdildi, isTrue);
+      expect(r.onayli, isFalse);
+      expect(r.iptalEdenAd, 'Acme Sakin');
+      expect(r.iptalZamani, DateTime.utc(2026, 7, 11, 8));
     });
 
     test('eksik/bozuk alanlarda COKMEZ (savunmaci parse)', () {
@@ -99,6 +98,29 @@ void main() {
       expect(r.id, '');
       expect(r.durum, RezervasyonDurum.unknown);
       expect(r.kisiSayisi, 0);
+    });
+  });
+
+  group('Slot.fromJson (rezerve edilebilirlik)', () {
+    test('rezerve_edilebilir + sebep parse edilir', () {
+      final s = Slot.fromJson(const {
+        'baslangic': '10:00',
+        'bitis': '11:00',
+        'dolu': false,
+        'rezerve_edilebilir': false,
+        'sebep': 'cok_erken',
+      });
+      expect(s.dolu, isFalse);
+      expect(s.rezerveEdilebilir, isFalse);
+      expect(s.sebep, 'cok_erken');
+      expect(s.sebepEtiketi, '24s içinde açılır');
+    });
+
+    test('eksik alanlarda varsayilan (rezerve_edilebilir=false, sebep=null)', () {
+      final s = Slot.fromJson(const {'baslangic': '10:00', 'bitis': '11:00'});
+      expect(s.rezerveEdilebilir, isFalse);
+      expect(s.sebep, isNull);
+      expect(s.sebepEtiketi, isNull);
     });
   });
 

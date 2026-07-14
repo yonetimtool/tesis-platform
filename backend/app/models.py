@@ -113,7 +113,7 @@ ACCESS_REQUEST_DURUM = ENUM(
     name="access_request_durum", create_type=False,
 )
 REZERVASYON_DURUM = ENUM(
-    "bekliyor", "onaylandi", "reddedildi",
+    "onaylandi", "iptal",
     name="rezervasyon_durum", create_type=False,
 )
 KATILIM_DURUM = ENUM(
@@ -1222,13 +1222,13 @@ class OrtakAlan(Base):
 
 # --------------------------------------------------------------------------- #
 class Rezervasyon(Base):
-    """Ortak alan rezervasyonu — sakin talep eder, yonetici karar verir.
+    """Ortak alan rezervasyonu — sakin bos slotu ANINDA rezerve eder (onay yok).
 
     Cakisma engeli DB'de: partial EXCLUDE (gist) — ayni alanin ONAYLI iki
-    rezervasyonu zaman araliginda kesisemez (bkz. migration 9z5). Kisit
-    yalniz durum='onaylandi' satirlara uygulanir: bekleyen talepler ust uste
-    binebilir, onaya kaldirma aninda es zamanli iki cakisan onaydan yalniz
-    biri basarir (digeri 23P01 -> API 409).
+    rezervasyonu zaman araliginda kesisemez (bkz. migration 9z5). Kisit yalniz
+    durum='onaylandi' satirlara uygulanir; INSERT aninda devreye girer, es
+    zamanli iki cakisan talepten yalniz biri basarir (digeri 23P01 -> API 409).
+    Iptal (durum='iptal') slotu bosaltir (kisit disi kalir).
     """
 
     __tablename__ = "rezervasyon"
@@ -1254,12 +1254,12 @@ class Rezervasyon(Base):
             ondelete="RESTRICT",
             name="fk_rezervasyon_talep_eden",
         ),
-        # DDL'de kolon-ozel ON DELETE SET NULL (onaylayan_user_id); tenant_id korunur.
+        # DDL'de kolon-ozel ON DELETE SET NULL (iptal_eden_user_id); tenant_id korunur.
         ForeignKeyConstraint(
-            ["onaylayan_user_id", "tenant_id"],
+            ["iptal_eden_user_id", "tenant_id"],
             ["app_user.id", "app_user.tenant_id"],
             ondelete="SET NULL",
-            name="fk_rezervasyon_onaylayan",
+            name="fk_rezervasyon_iptal_eden",
         ),
         # EXCLUDE USING gist kisiti DDL'de (/contracts); SQLAlchemy'de yalniz
         # dokumantasyon — sorgu katmani kisiti uretmez.
@@ -1280,12 +1280,12 @@ class Rezervasyon(Base):
     kisi_sayisi: Mapped[int] = mapped_column(Integer, nullable=False)
     notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
     durum: Mapped[str] = mapped_column(
-        REZERVASYON_DURUM, nullable=False, server_default=text("'bekliyor'")
+        REZERVASYON_DURUM, nullable=False, server_default=text("'onaylandi'")
     )
-    onaylayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+    iptal_eden_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
-    karar_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    iptal_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
 
 

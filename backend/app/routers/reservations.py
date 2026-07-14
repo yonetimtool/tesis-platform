@@ -1,26 +1,26 @@
-"""Ortak alan rezervasyonu — sakin talep eder, yonetici onaylar/reddeder.
+"""Ortak alan rezervasyonu — sakin BOS slotu ANINDA rezerve eder (onay YOK).
 
 Akis (urun sahibi sabit):
   1. Yonetici ortak alanlari tanimlar (bkz. common_areas.py).
-  2. Sakin talep acar: alan + tarih + saat araligi + kisi sayisi (+not);
-     daire kimliginden turetilir. durum=bekliyor + yonetime push.
-  3. CAKISMA ENGELI: ayni alanin ONAYLI rezervasyonuyla kesisen YENI TALEP
-     daha talep aninda 409 ile reddedilir (bosuna beklemesin). BEKLEYEN
-     talepler ust uste binebilir (karar yonetimde) — yalniz BIRI onaylanabilir.
-  4. Onay ATOMIK: DB'deki partial EXCLUDE kisiti (migration 9z5 —
-     btree_gist, tsrange &&, WHERE durum='onaylandi') onaya kaldirma
-     UPDATE'inde devreye girer; es zamanli iki cakisan onaydan yalniz biri
-     basarir, digeri 23P01 -> 409 (yaris durumu DB'de cozulur, uygulama
-     kontrolune guvenilmez). Bitisik slotlar (bitis == diger.baslangic)
+  2. Sakin bos bir slotu rezerve eder: alan + tarih + saat araligi + kisi (+not);
+     daire kimliginden turetilir. ONAY YOK — talep dogrudan durum='onaylandi'.
+  3. CAKISMA ENGELI: ayni alanin ONAYLI rezervasyonuyla kesisen slot alinamaz.
+     Nihai guvence INSERT anindaki DB EXCLUDE kisiti (migration 9z5 — btree_gist,
+     tsrange &&, WHERE durum='onaylandi'): es zamanli iki cakisan talepten yalniz
+     biri basarir, digeri 23P01 -> 409. Bitisik slotlar (bitis == diger.baslangic)
      cakisma SAYILMAZ (tsrange '[)').
-  5. Push: talep -> yonetim (admin+yonetici); karar -> talebi acan sakin.
-  6. Tam gecmis: alan, tarih/saat, daire, kisi, durum, talep eden, karar veren.
+  4. ZAMANLAMA (app/reservations_timing.py — slot baslangicina gore, tenant tz):
+       (a) 24s penceresi: slota <24s kala rezerve edilebilir (erken -> 422).
+       (b) gunde bir: sakin, slot-gunune denk 1 aktif rezervasyon tutar (2. -> 409).
+       (c) son dakika: <10 dk kala BOS slot gunluk kotayi baypas eder.
+  5. Iptal: sakin KENDI rezervasyonunu, yonetim herhangi birini iptal eder
+     (durum='iptal'); slot bosalir (EXCLUDE disi). Push: rezerve edene onay
+     bildirimi (kendi cihazi); iptalde ek push yok.
 
-RBAC (auth.md §4): TALEP yalniz resident (yonetim talep ACMAZ — karar veren
-taraf; complaints kanal deseni). KARAR yalniz admin+yonetici; zaten karar
-verilmis kayda ikinci karar 409. OKUMA yonetim tenant'in tumu; resident
-YALNIZ kendi dairelerinin rezervasyonlari (es de gorur — daire bazli);
-security/tesis_gorevlisi ERISMEZ (403) — rezervasyon sakin<->yonetim akisi.
+RBAC (auth.md §4): REZERVE ETME yalniz resident. IPTAL: rezerve eden sakin
+(kendi) + admin+yonetici. OKUMA yonetim tenant'in tumu; resident YALNIZ kendi
+dairelerinin rezervasyonlari (es de gorur — daire bazli); security/tesis_gorevlisi
+ERISMEZ (403) — rezervasyon sakin<->yonetim alani.
 """
 from __future__ import annotations
 
@@ -28,59 +28,64 @@ import uuid
 from datetime import date as date_type
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from .. import reservations_timing as rtiming
 from ..crud_helpers import is_exclusion_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, OrtakAlan, Rezervasyon, Unit, UnitResident
+from ..models import AppUser, OrtakAlan, Rezervasyon, Tenant, Unit, UnitResident
 from ..scheduler.notify import dispatch_external
 from ..schemas import (
     RezervasyonCreate,
     RezervasyonDurum,
     RezervasyonListResponse,
     RezervasyonOut,
-    RezervasyonUpdate,
 )
 
 router = APIRouter(prefix="/reservations", tags=["rezervasyon"])
 
-# TALEP yalniz sakin: rezervasyon dairenin hakki; yonetim karar veren taraf.
+# REZERVE ETME yalniz sakin: ortak alan dairenin hakki.
 _REQUESTER = require_role("resident")
-# KARAR yalniz yonetim.
-_MANAGER = require_role("admin", "yonetici")
+# IPTAL: rezerve eden sakin (kendi) + yonetim.
+_CANCELLER = require_role("resident", "admin", "yonetici")
 # OKUMA: yonetim tumu; sakin kendi daireleri. Saha rolleri ERISMEZ (403).
 _READER = require_role("admin", "yonetici", "resident")
 
-# Yeni talep push'u YONETIME gider (complaints kanal deseni).
-_MANAGEMENT_ROLES: tuple[str, ...] = ("admin", "yonetici")
-
 _TALEP_EDEN = aliased(AppUser)
-_ONAYLAYAN = aliased(AppUser)
+_IPTAL_EDEN = aliased(AppUser)
 
 
 def _out(row) -> RezervasyonOut:
-    obj, alan_ad, unit_no, talep_eden_ad, onaylayan_ad = row
+    obj, alan_ad, unit_no, talep_eden_ad, iptal_eden_ad = row
     out = RezervasyonOut.model_validate(obj)
     out.alan_ad = alan_ad
     out.unit_no = unit_no
     out.talep_eden_ad = talep_eden_ad
-    out.onaylayan_ad = onaylayan_ad
+    out.iptal_eden_ad = iptal_eden_ad
     return out
 
 
 def _base_stmt():
     """Liste/detay ortak SELECT'i: alan adi + daire no + kisi adlari join'li."""
     return (
-        select(Rezervasyon, OrtakAlan.ad, Unit.no, _TALEP_EDEN.ad, _ONAYLAYAN.ad)
+        select(Rezervasyon, OrtakAlan.ad, Unit.no, _TALEP_EDEN.ad, _IPTAL_EDEN.ad)
         .join(OrtakAlan, OrtakAlan.id == Rezervasyon.alan_id)
         .join(Unit, Unit.id == Rezervasyon.unit_id)
         .join(_TALEP_EDEN, _TALEP_EDEN.id == Rezervasyon.talep_eden_user_id)
-        .outerjoin(_ONAYLAYAN, _ONAYLAYAN.id == Rezervasyon.onaylayan_user_id)
+        .outerjoin(_IPTAL_EDEN, _IPTAL_EDEN.id == Rezervasyon.iptal_eden_user_id)
     )
+
+
+async def _tenant_tz(db: AsyncSession, tenant_id: uuid.UUID) -> str:
+    """Tenant yerel saat dilimi (zamanlama kurallari bu tz'de olculur)."""
+    tz = (
+        await db.execute(select(Tenant.timezone).where(Tenant.id == tenant_id))
+    ).scalar_one_or_none()
+    return tz or "Europe/Istanbul"
 
 
 async def _aktif_daire_ids(db: AsyncSession, user: AppUser) -> list[uuid.UUID]:
@@ -117,7 +122,18 @@ def _cakisma_kosulu(alan_id: uuid.UUID, tarih, baslangic, bitis):
     )
 
 
-# ------------------------------- talep -------------------------------------- #
+# Zamanlama sebep kodu -> (status, code, message).
+_REASON_ERRORS: dict[str, tuple[int, str, str]] = {
+    "dolu": (409, "conflict",
+             "Secilen aralik bu alanda onaylanmis bir rezervasyonla cakisiyor."),
+    "gecti": (422, "validation_error", "Slot baslangic saati gecti."),
+    "cok_erken": (422, "validation_error",
+                  "Rezervasyon en erken 24 saat kala yapilabilir."),
+    "gunluk": (409, "conflict", "Bu gun icin zaten bir rezervasyonunuz var."),
+}
+
+
+# ------------------------------- rezerve et -------------------------------- #
 @router.post("", response_model=RezervasyonOut, status_code=201)
 async def create_reservation(
     body: RezervasyonCreate,
@@ -150,21 +166,35 @@ async def create_reservation(
     else:
         unit_id = unit_ids[0]
 
-    # Talep aninda cakisma uyarisi/engeli: ONAYLI bir rezervasyonla kesisen
-    # talep bosuna kuyruga girmesin — 409. (Bekleyenlerle kesisme SERBEST;
-    # nihai guvence onay anindaki DB EXCLUDE kisiti.)
-    onayli_cakisan = (
+    # Cakisma (dolu) on-kontrolu: ONAYLI bir rezervasyonla kesisiyor mu.
+    dolu = (
         await db.execute(
             select(Rezervasyon.id).where(
                 _cakisma_kosulu(body.alan_id, body.tarih, body.baslangic, body.bitis)
             ).limit(1)
         )
-    ).scalar_one_or_none()
-    if onayli_cakisan is not None:
-        raise APIError(
-            409, "conflict",
-            "Secilen aralik bu alanda onaylanmis bir rezervasyonla cakisiyor.",
+    ).scalar_one_or_none() is not None
+
+    # Gunluk kota: sakinin AYNI slot-gunune denk AKTIF (onayli) rezervasyonu var mi.
+    kota_dolu = (
+        await db.execute(
+            select(Rezervasyon.id).where(
+                Rezervasyon.talep_eden_user_id == user.id,
+                Rezervasyon.tarih == body.tarih,
+                Rezervasyon.durum == "onaylandi",
+            ).limit(1)
         )
+    ).scalar_one_or_none() is not None
+
+    # Zamanlama + cakisma + kota kurallari TEK kaynaktan (reservations_timing):
+    # dolu -> gecti -> cok_erken -> gunluk (son-dakika istisnasi kotayi baypas eder).
+    tzname = await _tenant_tz(db, user.tenant_id)
+    sebep = rtiming.booking_reason(
+        tzname, body.tarih, body.baslangic, dolu=dolu, kota_dolu=kota_dolu
+    )
+    if sebep is not None:
+        status_code, code, message = _REASON_ERRORS[sebep]
+        raise APIError(status_code, code, message)
 
     obj = Rezervasyon(
         tenant_id=user.tenant_id,
@@ -176,23 +206,31 @@ async def create_reservation(
         bitis=body.bitis,
         kisi_sayisi=body.kisi_sayisi,
         notlar=body.notlar,
+        durum="onaylandi",
     )
     db.add(obj)
+    # INSERT aninda DB EXCLUDE kisiti: es zamanli iki cakisan talepten yalniz
+    # biri basarir; kaybeden 23P01 -> 409 (yaris DB'de cozulur).
     try:
         await db.flush()
     except IntegrityError as exc:
+        if is_exclusion_violation(exc):
+            raise APIError(
+                409, "conflict",
+                "Secilen aralik bu alanda onaylanmis bir rezervasyonla cakisiyor.",
+            )
         raise translate_integrity(exc)
     await db.refresh(obj)
 
     unit_no = (
         await db.execute(select(Unit.no).where(Unit.id == unit_id))
     ).scalar_one()
-    # EK push: yeni talep yonetime bildirilir (hatasi kaydi kirmaz).
+    # EK push: rezerve edene onay bildirimi (hatasi kaydi kirmaz).
     dispatch_external(
-        f"Rezervasyon talebi: {alan.ad} — {body.tarih.isoformat()} "
+        f"Rezervasyonunuz onaylandi: {alan.ad} — {body.tarih.isoformat()} "
         f"{body.baslangic.strftime('%H:%M')}-{body.bitis.strftime('%H:%M')} ({unit_no})",
         tenant_id=user.tenant_id,
-        target_roles=_MANAGEMENT_ROLES,
+        target_user_ids=(user.id,),
         title="Rezervasyon",
         data={"tip": "rezervasyon", "rezervasyon_id": str(obj.id)},
     )
@@ -252,14 +290,16 @@ async def get_reservation(
     return _out(row)
 
 
-# ------------------------------- karar -------------------------------------- #
-@router.patch("/{reservation_id}", response_model=RezervasyonOut)
-async def decide_reservation(
+# ------------------------------- iptal -------------------------------------- #
+@router.post("/{reservation_id}/cancel", response_model=RezervasyonOut)
+async def cancel_reservation(
     reservation_id: uuid.UUID,
-    body: RezervasyonUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_MANAGER),
+    user: AppUser = Depends(_CANCELLER),
 ) -> RezervasyonOut:
+    """Rezervasyonu iptal eder (durum='iptal'); slot bosalir. Sakin YALNIZ
+    KENDI rezervasyonunu, yonetim herhangi birini iptal edebilir. Zaten
+    iptal edilmis kayda ikinci iptal 409."""
     row = (
         await db.execute(
             select(Rezervasyon, OrtakAlan.ad, Unit.no)
@@ -272,42 +312,17 @@ async def decide_reservation(
         raise APIError(404, "not_found", "Kayit bulunamadi")
     obj, alan_ad, unit_no = row
 
-    # Tek karar: durum='bekliyor' kosullu atomik UPDATE. ONAY yolunda ayrica
-    # DB EXCLUDE kisiti calisir — ayni alanin onayli rezervasyonuyla kesisen
-    # onay 23P01 firlatir (es zamanli iki cakisan bekleyenden yalniz biri
-    # onaylanabilir; yaris durumu DB'de cozulur).
-    try:
-        res = await db.execute(
-            update(Rezervasyon)
-            .where(Rezervasyon.id == reservation_id, Rezervasyon.durum == "bekliyor")
-            .values(
-                durum=body.durum,
-                onaylayan_user_id=user.id,
-                karar_zamani=func.now(),
-            )
-        )
-    except IntegrityError as exc:
-        if is_exclusion_violation(exc):
-            raise APIError(
-                409, "conflict",
-                "Onaylanamadi: aralik bu alanda onaylanmis baska bir "
-                "rezervasyonla cakisiyor.",
-            )
-        raise translate_integrity(exc)
-    if res.rowcount == 0:
-        raise APIError(409, "conflict", "Talep zaten karara baglanmis.")
-    await db.refresh(obj)
+    # Sakin yalniz KENDI rezervasyonunu iptal eder (varligi sizdirmadan 404).
+    if user.role == "resident" and obj.talep_eden_user_id != user.id:
+        raise APIError(404, "not_found", "Kayit bulunamadi")
+    if obj.durum != "onaylandi":
+        raise APIError(409, "conflict", "Rezervasyon zaten iptal edilmis.")
 
-    # EK push: karar YALNIZ talebi acan sakine gider (kisi hedefli).
-    karar = "onaylandi" if body.durum == "onaylandi" else "reddedildi"
-    dispatch_external(
-        f"Rezervasyonunuz {karar}: {alan_ad} — {obj.tarih.isoformat()} "
-        f"{obj.baslangic.strftime('%H:%M')}-{obj.bitis.strftime('%H:%M')}",
-        tenant_id=user.tenant_id,
-        target_user_ids=(obj.talep_eden_user_id,),
-        title="Rezervasyon karari",
-        data={"tip": "rezervasyon_karar", "rezervasyon_id": str(obj.id)},
-    )
+    obj.durum = "iptal"
+    obj.iptal_eden_user_id = user.id
+    obj.iptal_zamani = func.now()
+    await db.flush()
+    await db.refresh(obj)
 
     talep_eden_ad = (
         await db.execute(

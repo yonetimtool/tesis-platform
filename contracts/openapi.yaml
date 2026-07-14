@@ -1436,15 +1436,18 @@ paths:
       - $ref: "#/components/parameters/PathId"
     get:
       tags: [rezervasyon]
-      summary: Bir gunun slot izgarasi (dolu/bos) — TUM roller
+      summary: Bir gunun slot izgarasi (dolu/bos + rezerve edilebilirlik) — TUM roller
       description: |
         Alanin musaitliginden (acilis/kapanis/slot_dakika) o gunun TAM slot
-        izgarasini uretir; her slot dolu/bos. **dolu** = o slotla kesisen
-        ONAYLI bir rezervasyon var (yari-acik kesisim; bitisik slot dolu
-        SAYILMAZ). Bekleyen/reddedilen talepler slotu DOLDURMAZ.
-        GIZLILIK: kim rezerve etmis PAYLASILMAZ (yalniz saat + dolu). Sakin
-        slot secmek icin kullanir; pasif alan sakine/sahaya 404 (rezerve
-        edilemez, varlik sizdirilmaz), yonetim pasif alan slotlarini gorur.
+        izgarasini uretir; her slot dolu/bos + rezerve_edilebilir + sebep.
+        **dolu** = o slotla kesisen ONAYLI bir rezervasyon var (yari-acik
+        kesisim; bitisik slot dolu SAYILMAZ). GIZLILIK: kim rezerve etmis
+        PAYLASILMAZ (yalniz saat + dolu). **rezerve_edilebilir** yalniz SAKIN
+        icin hesaplanir (yonetimde her zaman false — yonetim rezerve etmez):
+        zamanlama kurallarina uyan (24s penceresi + gunluk kota + son-dakika
+        istisnasi) BOS slot true; degilse false + **sebep**
+        (dolu|gecti|cok_erken|gunluk). Pasif alan sakine/sahaya 404, yonetim
+        pasif alan slotlarini gorur.
       parameters:
         - name: date
           in: query
@@ -1467,17 +1470,18 @@ paths:
       tags: [rezervasyon]
       summary: Rezervasyon listesi (created_at DESC)
       description: |
-        admin/yonetici tenant'in TUM rezervasyonlarini gorur (bekleyenler
-        karar icin); resident YALNIZ kendi dairelerinin rezervasyonlarini
-        gorur (daire bazli — es de gorur); security/tesis_gorevlisi ERISMEZ
-        (403). alan/durum/tarih ile filtrelenir (alan+tarih = gun gorunumu).
+        admin/yonetici tenant'in TUM rezervasyonlarini gorur; resident YALNIZ
+        kendi dairelerinin rezervasyonlarini gorur (daire bazli — es de gorur);
+        security/tesis_gorevlisi ERISMEZ (403). alan/durum/tarih ile
+        filtrelenir (alan+tarih = gun gorunumu). Onay akisi YOK — durum yalniz
+        onaylandi|iptal.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - name: durum
           in: query
           required: false
-          schema: { type: string, enum: [bekliyor, onaylandi, reddedildi] }
+          schema: { type: string, enum: [onaylandi, iptal] }
         - name: alan_id
           in: query
           required: false
@@ -1505,18 +1509,23 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [rezervasyon]
-      summary: Rezervasyon talebi ac (YALNIZ resident)
+      summary: Bos slotu rezerve et (YALNIZ resident) — ONAY YOK, aninda onaylandi
       description: |
-        Sakin talebi: alan + tarih + saat araligi (bitis > baslangic, ayni
-        gun) + kisi_sayisi (>0). Daire sakinin AKTIF dairesinden turetilir
-        (birden fazla dairesi varsa unit_id ile secer — kendi dairesi olmali).
-        durum=bekliyor baslar + yonetim cihazlarina push denenir (EK gonderim;
-        data: tip=rezervasyon, rezervasyon_id). CAKISMA: ayni alanin ONAYLI
-        bir rezervasyonuyla kesisen talep ANINDA 409 alir (bosuna bekletilmez);
-        BEKLEYEN taleplerle kesisme serbesttir — nihai guvence onay anindaki
-        DB EXCLUDE kisiti. MUSAITLIK: talep edilen aralik alanin
-        [acilis, kapanis] penceresinde olmali — disi 422. Pasif/olmayan alan
-        422. Yonetim talep ACMAZ (403).
+        Sakin bos slotu rezerve eder: alan + tarih + saat araligi (bitis >
+        baslangic, ayni gun) + kisi_sayisi (>0). Daire sakinin AKTIF dairesinden
+        turetilir (birden fazla dairesi varsa unit_id ile secer — kendi dairesi
+        olmali). ONAY AKISI YOK: kayit dogrudan durum=onaylandi olusur + rezerve
+        edene onay push'u denenir (data: tip=rezervasyon, rezervasyon_id).
+        CAKISMA: ayni alanin ONAYLI rezervasyonuyla kesisen slot 409 — nihai
+        guvence INSERT anindaki DB EXCLUDE kisiti (yaris-guvenli).
+        ZAMANLAMA (slot baslangicina gore, tenant tz):
+          * 24 saat penceresi: slota <24s kala rezerve edilir; erken -> 422
+            "Rezervasyon en erken 24 saat kala yapilabilir."; gecmis slot -> 422.
+          * gunde bir: sakin, slot-gunune denk 1 aktif rezervasyon tutar;
+            ikincisi -> 409 "Bu gun icin zaten bir rezervasyonunuz var."
+          * son dakika: slota <10 dk kala BOS slot gunluk kotayi baypas eder.
+        MUSAITLIK: aralik alanin [acilis, kapanis] penceresinde olmali — disi
+        422. Pasif/olmayan alan 422. Yonetim rezerve ETMEZ (403).
       requestBody:
         required: true
         content:
@@ -1549,36 +1558,28 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
-    patch:
+  /reservations/{id}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
       tags: [rezervasyon]
-      summary: Onayla/Reddet (admin + yonetici)
+      summary: Rezervasyonu iptal et (rezerve eden sakin + admin/yonetici)
       description: |
-        Yonetici karari: durum=onaylandi|reddedildi. onaylayan_user_id +
-        karar_zamani sunucuda damgalanir; zaten karara baglanmis kayda ikinci
-        karar 409. ONAY ATOMIKTIR: DB'deki partial EXCLUDE kisiti (btree_gist,
-        tsrange &&, WHERE durum='onaylandi') ayni alanin onayli rezervasyonuyla
-        kesisen onayi 409 ile engeller — es zamanli iki cakisan bekleyenden
-        YALNIZ BIRI onaylanabilir (yaris durumu DB'de cozulur). Bitisik slot
-        (bitis == diger.baslangic) cakisma sayilmaz. Karar sonrasi YALNIZ
-        talebi acan sakinin cihazlarina push denenir (data:
-        tip=rezervasyon_karar, rezervasyon_id). Sakin/saha bu uca ERISEMEZ.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/RezervasyonUpdate" }
+        Rezervasyonu iptal eder (durum='iptal'); slot bosalir (EXCLUDE disi).
+        Sakin YALNIZ KENDI rezervasyonunu (baskasininki 404 — varlik
+        sizdirilmaz), yonetim herhangi birini iptal eder. iptal_eden_user_id +
+        iptal_zamani damgalanir. Zaten iptal edilmis kayda ikinci iptal 409.
+        security/tesis_gorevlisi ERISEMEZ (403).
       responses:
         "200":
-          description: Karara baglandi
+          description: Iptal edildi
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Rezervasyon" }
-        "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
-        "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
   # ETKINLIK + RSVP (yonetici olusturur -> sakinlere push -> sakin
@@ -5036,6 +5037,17 @@ components:
         dolu:
           type: boolean
           description: true = bu slotla kesisen ONAYLI rezervasyon var (kimlik paylasilmaz)
+        rezerve_edilebilir:
+          type: boolean
+          default: false
+          description: >-
+            Istekteki SAKIN bu slotu SIMDI rezerve edebilir mi (24s penceresi +
+            gunluk kota + son-dakika istisnasi). Yonetimde her zaman false.
+        sebep:
+          type: string
+          nullable: true
+          enum: [dolu, gecti, cok_erken, gunluk]
+          description: Rezerve edilemme sebebi (rezerve_edilebilir=false iken)
     AlanSlotResponse:
       type: object
       required: [alan_id, tarih, slot_dakika, items]
@@ -5063,16 +5075,16 @@ components:
           type: string
           nullable: true
           description: Opsiyonel not ("not" SQL anahtar sozcugu; alan adi notlar)
-        durum: { type: string, enum: [bekliyor, onaylandi, reddedildi] }
+        durum: { type: string, enum: [onaylandi, iptal] }
         talep_eden_user_id: { type: string, format: uuid }
         talep_eden_ad: { type: string, nullable: true }
-        onaylayan_user_id:
+        iptal_eden_user_id:
           type: string
           format: uuid
           nullable: true
-          description: Karari veren yonetici (karar verilmediyse null)
-        onaylayan_ad: { type: string, nullable: true }
-        karar_zamani: { type: string, format: date-time, nullable: true }
+          description: Iptal eden (sakin/yonetim); yalniz durum='iptal'de dolu
+        iptal_eden_ad: { type: string, nullable: true }
+        iptal_zamani: { type: string, format: date-time, nullable: true }
         created_at: { type: string, format: date-time }
     RezervasyonCreate:
       type: object
@@ -5091,12 +5103,6 @@ components:
             Opsiyonel — sakinin birden fazla aktif dairesi varsa secim;
             kendi dairesi olmali (aksi 422). Verilmezse ilk aktif daire.
         notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
-    RezervasyonUpdate:
-      type: object
-      description: Yonetici karari — onay/red ('bekliyor'a geri donus yok)
-      required: [durum]
-      properties:
-        durum: { type: string, enum: [onaylandi, reddedildi] }
 
     Etkinlik:
       type: object

@@ -6,12 +6,13 @@ import '../domain/rezervasyon_models.dart';
 import 'rezervasyon_controller.dart';
 
 /// "Rezervasyon" — ortak alan rezervasyonu (auth.md §4 kesin kurali, UX aynasi):
-///   * resident: aktif alanlari gorur, "Yeni rezervasyon" ile slot talep eder
-///     (alan + tarih + saat araligi + kisi + not); kendi dairesinin taleplerini
-///     durumlariyla izler. Cakisma 409'u formda acikca gosterilir.
-///   * admin/yonetici: alan olustur/duzenle/pasiflestir; bekleyen talepleri
-///     Onayla/Reddet (cakisan onay 409 — DB kisiti); "Takvim" sekmesi alan
-///     bazli ONAYLI slotlarin gun-sirali listesi (gun gorunumu).
+///   * resident: aktif alanlari gorur, "Yeni rezervasyon" ile BOS slotu ANINDA
+///     rezerve eder (onay YOK). Slot secimi rezerve-edilebilirligi yansitir
+///     (24s penceresi + gunluk kota + son-dakika istisnasi; sunucu hesaplar).
+///     Kendi rezervasyonlarini gorur ve KENDI rezervasyonunu iptal edebilir.
+///   * admin/yonetici: alan olustur/duzenle/pasiflestir; tum rezervasyonlari
+///     gorur (onay YOK — yalniz izleme) ve gerekirse iptal eder; "Takvim"
+///     sekmesi alan bazli ONAYLI slotlarin gun-sirali listesi.
 ///
 /// [initialRezervasyonId] push tiklamasindan gelir (?rezervasyon_id=...):
 /// liste yuklendiginde ilgili kaydin detayi BIR KEZ otomatik acilir; kayit
@@ -42,7 +43,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
     if (hedef == null) return; // listede yok — sessizce listede kal
     final r = hedef;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _showDetail(context, r, canDecide: state.canDecide);
+      if (mounted) _showDetail(context, r, canCancel: state.canCancel(r));
     });
   }
 
@@ -55,13 +56,9 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
     // Provider zaten yuklu geldiyse (listen tetiklenmez) mevcut durumu isle.
     _maybeOpenInitial(state);
 
-    final bekleyen =
-        state.items.where((r) => r.bekliyor).toList(growable: false);
-    final sonuclanan =
-        state.items.where((r) => !r.bekliyor).toList(growable: false);
     // "Takvim": ONAYLI slotlar gun + saat sirali (gun gorunumu listesi).
     final onayli = state.items
-        .where((r) => r.durum == RezervasyonDurum.onaylandi)
+        .where((r) => r.onayli)
         .toList(growable: false)
       ..sort((a, b) {
         final gun = a.tarih.compareTo(b.tarih);
@@ -69,7 +66,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
       });
 
     return DefaultTabController(
-      length: 4,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Rezervasyon'),
@@ -83,8 +80,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
           bottom: TabBar(
             isScrollable: true,
             tabs: [
-              Tab(text: 'Bekleyen (${bekleyen.length})'),
-              Tab(text: 'Sonuçlanan (${sonuclanan.length})'),
+              Tab(text: 'Rezervasyonlar (${state.items.length})'),
               Tab(text: 'Takvim (${onayli.length})'),
               Tab(text: 'Alanlar (${state.alanlar.length})'),
             ],
@@ -97,19 +93,11 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
               onRefresh: controller.refresh,
               child: _ReservationList(
                 state: state,
-                items: bekleyen,
+                items: state.items,
                 emptyText: state.canRequest
-                    ? 'Bekleyen talebiniz yok. "Yeni rezervasyon" ile '
-                        'ortak alan için slot isteyin.'
-                    : 'Bekleyen talep yok.',
-              ),
-            ),
-            RefreshIndicator(
-              onRefresh: controller.refresh,
-              child: _ReservationList(
-                state: state,
-                items: sonuclanan,
-                emptyText: 'Henüz sonuçlanan talep yok.',
+                    ? 'Rezervasyonunuz yok. "Yeni rezervasyon" ile boş bir '
+                        'slotu hemen ayırtın.'
+                    : 'Rezervasyon yok.',
               ),
             ),
             RefreshIndicator(
@@ -160,7 +148,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
     );
     if (saved == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Talebiniz iletildi — yönetim onayı bekleniyor ✓')),
+        const SnackBar(content: Text('Rezervasyonunuz onaylandı ✓')),
       );
     }
   }
@@ -226,7 +214,7 @@ class _ReservationList extends ConsumerWidget {
         itemCount: items.length,
         itemBuilder: (context, i) => _ReservationCard(
           rezervasyon: items[i],
-          canDecide: state.canDecide,
+          canCancel: state.canCancel(items[i]),
         ),
       );
     }
@@ -248,7 +236,7 @@ class _ReservationList extends ConsumerWidget {
         ));
       }
       children.add(
-        _ReservationCard(rezervasyon: r, canDecide: state.canDecide),
+        _ReservationCard(rezervasyon: r, canCancel: state.canCancel(r)),
       );
     }
     return ListView(
@@ -258,16 +246,15 @@ class _ReservationList extends ConsumerWidget {
   }
 }
 
-/// Durum rozeti — bekliyor=turuncu, onaylandi=yesil, reddedildi=kirmizi.
+/// Durum rozeti — onaylandi=yesil, iptal=gri.
 class _DurumChip extends StatelessWidget {
   const _DurumChip({required this.durum});
 
   final RezervasyonDurum durum;
 
   Color get _color => switch (durum) {
-        RezervasyonDurum.bekliyor => Colors.orange,
         RezervasyonDurum.onaylandi => Colors.green,
-        RezervasyonDurum.reddedildi => Colors.red,
+        RezervasyonDurum.iptal => Colors.grey,
         RezervasyonDurum.unknown => Colors.grey,
       };
 
@@ -292,27 +279,19 @@ class _DurumChip extends StatelessWidget {
 }
 
 class _ReservationCard extends ConsumerWidget {
-  const _ReservationCard({required this.rezervasyon, required this.canDecide});
+  const _ReservationCard({required this.rezervasyon, required this.canCancel});
 
   final Rezervasyon rezervasyon;
-  final bool canDecide;
+  final bool canCancel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final r = rezervasyon;
-    // Yonetim icin BEKLEYEN talep belirgin: karar kuyrugu.
-    final vurgulu = r.bekliyor && canDecide;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: vurgulu
-          ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.orange.shade400, width: 2),
-            )
-          : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _showDetail(context, r, canDecide: canDecide),
+        onTap: () => _showDetail(context, r, canCancel: canCancel),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -341,34 +320,27 @@ class _ReservationCard extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(r.notlar!, maxLines: 2, overflow: TextOverflow.ellipsis),
               ],
-              if (!r.bekliyor) ...[
+              if (r.iptalEdildi) ...[
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Icon(
-                      r.durum == RezervasyonDurum.onaylandi
-                          ? Icons.check_circle_outline
-                          : Icons.cancel_outlined,
-                      size: 16,
-                      color: r.durum == RezervasyonDurum.onaylandi
-                          ? Colors.green
-                          : Colors.red,
-                    ),
+                    const Icon(Icons.cancel_outlined,
+                        size: 16, color: Colors.grey),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        '${r.durum.label}'
-                        '${r.onaylayanAd != null ? ' — ${r.onaylayanAd}' : ''}'
-                        '${r.kararZamani != null ? ' · ${_fmtDateTime(r.kararZamani!.toLocal())}' : ''}',
+                        'İptal edildi'
+                        '${r.iptalEdenAd != null ? ' — ${r.iptalEdenAd}' : ''}'
+                        '${r.iptalZamani != null ? ' · ${_fmtDateTime(r.iptalZamani!.toLocal())}' : ''}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
                   ],
                 ),
               ],
-              if (vurgulu) ...[
+              if (canCancel) ...[
                 const SizedBox(height: 12),
-                _DecideButtons(rezervasyonId: r.id),
+                _CancelButton(rezervasyonId: r.id),
               ],
             ],
           ),
@@ -378,47 +350,61 @@ class _ReservationCard extends ConsumerWidget {
   }
 }
 
-/// Onayla/Reddet butonlari — yonetimin bekleyen kartinda ve detayda.
-/// Cakisma 409'u (DB kisiti) mesajiyla SnackBar'da gosterilir; liste
-/// guncel duruma tazelenir (controller).
-class _DecideButtons extends ConsumerStatefulWidget {
-  const _DecideButtons({required this.rezervasyonId, this.onDecided});
+/// İptal butonu — rezerve eden sakinin (kendi) ve yonetimin kartinda/detayinda.
+/// 409 (zaten iptal) mesajla gosterilir; liste guncel duruma tazelenir.
+class _CancelButton extends ConsumerStatefulWidget {
+  const _CancelButton({required this.rezervasyonId, this.onCancelled});
 
   final String rezervasyonId;
 
-  /// Detay sheet'inden cagrildiginda karar sonrasi sheet'i kapatmak icin.
-  final VoidCallback? onDecided;
+  /// Detay sheet'inden cagrildiginda iptal sonrasi sheet'i kapatmak icin.
+  final VoidCallback? onCancelled;
 
   @override
-  ConsumerState<_DecideButtons> createState() => _DecideButtonsState();
+  ConsumerState<_CancelButton> createState() => _CancelButtonState();
 }
 
-class _DecideButtonsState extends ConsumerState<_DecideButtons> {
+class _CancelButtonState extends ConsumerState<_CancelButton> {
   bool _busy = false;
 
-  Future<void> _decide(bool onayla) async {
+  Future<void> _cancel() async {
     if (_busy) return;
-    setState(() => _busy = true);
     final messenger = ScaffoldMessenger.of(context);
+    final onay = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        title: const Text('Rezervasyon iptal edilsin mi?'),
+        content: const Text('Slot yeniden boşa çıkar; bu işlem geri alınamaz.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(dctx).pop(true),
+            child: const Text('Evet, iptal et'),
+          ),
+        ],
+      ),
+    );
+    if (onay != true) return;
+    setState(() => _busy = true);
     try {
       await ref
           .read(rezervasyonControllerProvider.notifier)
-          .decide(widget.rezervasyonId, onayla: onayla);
+          .cancel(widget.rezervasyonId);
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            onayla ? 'Rezervasyon onaylandı ✓' : 'Rezervasyon reddedildi',
-          ),
-        ),
+        const SnackBar(content: Text('Rezervasyon iptal edildi')),
       );
-      widget.onDecided?.call();
+      widget.onCancelled?.call();
     } on ApiException catch (e) {
-      // 409: cakisan onay (DB kisiti) veya zaten karara baglandi.
+      // 409: zaten iptal edilmis.
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
-      widget.onDecided?.call();
+      widget.onCancelled?.call();
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Karar gönderilemedi. Tekrar deneyin.')),
+        const SnackBar(content: Text('İptal gönderilemedi. Tekrar deneyin.')),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -427,33 +413,21 @@ class _DecideButtonsState extends ConsumerState<_DecideButtons> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: FilledButton.icon(
-            style: FilledButton.styleFrom(backgroundColor: Colors.green),
-            icon: const Icon(Icons.check),
-            label: const Text('Onayla'),
-            onPressed: _busy ? null : () => _decide(true),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: FilledButton.icon(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            icon: const Icon(Icons.close),
-            label: const Text('Reddet'),
-            onPressed: _busy ? null : () => _decide(false),
-          ),
-        ),
-      ],
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+        icon: const Icon(Icons.cancel_outlined),
+        label: const Text('İptal et'),
+        onPressed: _busy ? null : _cancel,
+      ),
     );
   }
 }
 
 /// Detay alt sayfasi — push tiklamasi ve kart dokunusuyla acilir.
 void _showDetail(BuildContext context, Rezervasyon r,
-    {required bool canDecide}) {
+    {required bool canCancel}) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -486,25 +460,25 @@ void _showDetail(BuildContext context, Rezervasyon r,
             Text('Kişi sayısı: ${r.kisiSayisi}'
                 '${r.unitNo != null ? ' · Daire: ${r.unitNo}' : ''}'),
             const SizedBox(height: 4),
-            Text('Talep: ${_fmtDateTime(r.createdAt.toLocal())}'
+            Text('Rezerve: ${_fmtDateTime(r.createdAt.toLocal())}'
                 '${r.talepEdenAd != null ? ' — ${r.talepEdenAd}' : ''}'),
             if (r.notlar != null && r.notlar!.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text('Not: ${r.notlar}'),
             ],
-            if (!r.bekliyor) ...[
+            if (r.iptalEdildi) ...[
               const SizedBox(height: 4),
               Text(
-                'Karar: ${r.durum.label}'
-                '${r.onaylayanAd != null ? ' — ${r.onaylayanAd}' : ''}'
-                '${r.kararZamani != null ? ' · ${_fmtDateTime(r.kararZamani!.toLocal())}' : ''}',
+                'İptal'
+                '${r.iptalEdenAd != null ? ' — ${r.iptalEdenAd}' : ''}'
+                '${r.iptalZamani != null ? ' · ${_fmtDateTime(r.iptalZamani!.toLocal())}' : ''}',
               ),
             ],
-            if (r.bekliyor && canDecide) ...[
+            if (canCancel) ...[
               const SizedBox(height: 20),
-              _DecideButtons(
+              _CancelButton(
                 rezervasyonId: r.id,
-                onDecided: () => Navigator.of(sheetContext).pop(),
+                onCancelled: () => Navigator.of(sheetContext).pop(),
               ),
             ],
           ],
@@ -886,7 +860,7 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
   Future<void> _submit() async {
     if (_busy) return;
     if (_secili == null) {
-      setState(() => _hata = 'Lütfen boş bir slot seçin.');
+      setState(() => _hata = 'Lütfen rezerve edilebilir bir slot seçin.');
       return;
     }
     setState(() {
@@ -949,10 +923,13 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
       children: [
         for (final s in _slots)
           ChoiceChip(
-            label: Text('${s.baslangic}–${s.bitis}${s.dolu ? ' · dolu' : ''}'),
+            // Rezerve edilemeyen slotta sebep etiketi (dolu / 24s / gunluk / gecti).
+            label: Text('${s.baslangic}–${s.bitis}'
+                '${!s.rezerveEdilebilir && s.sebepEtiketi != null ? ' · ${s.sebepEtiketi}' : ''}'),
             selected: identical(_secili, s),
-            // Dolu slot secilemez (onDialog null) — gorsel olarak da soluk.
-            onSelected: (_busy || s.dolu)
+            // Yalniz sunucunun "rezerve edilebilir" dedigi slot secilebilir
+            // (24s penceresi + gunluk kota + son-dakika istisnasi zaten hesapli).
+            onSelected: (_busy || !s.rezerveEdilebilir)
                 ? null
                 : (sel) => setState(() => _secili = sel ? s : null),
           ),
@@ -1007,8 +984,16 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
               const SizedBox(height: 12),
               const Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Slot seç (boş)',
+                child: Text('Slot seç',
                     style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Slot yalnızca başlangıcına 24 saatten az kala açılır; '
+                  'günde en fazla bir rezervasyon yapabilirsiniz.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
               ),
               const SizedBox(height: 6),
               _slotAlani(),

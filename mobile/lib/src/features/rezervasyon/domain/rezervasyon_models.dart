@@ -1,20 +1,20 @@
 /// Rezervasyon modulunun domain modelleri — `contracts/openapi.yaml`
 /// OrtakAlan / Rezervasyon / *Create / *Update semalarina uyar.
 ///
-/// Akis (urun sahibi sabit): yonetici ortak alan tanimlar -> sakin slot
-/// talep eder (alan + tarih + saat araligi + kisi) -> yonetici onaylar/
-/// reddeder. CAKISMA ENGELI DB'de: ayni alanin ONAYLI iki rezervasyonu
-/// kesisemez — es zamanli iki cakisan onaydan yalniz biri basarir (409).
-/// RBAC (auth.md §4): alan yonetimi admin+yonetici; talep yalniz resident;
-/// karar yalniz yonetim; okuma yonetim tumu / sakin kendi dairesi;
-/// saha rolleri erisemez.
+/// Akis (urun sahibi sabit): yonetici ortak alan tanimlar -> sakin BOS slotu
+/// ANINDA rezerve eder (ONAY YOK; durum=onaylandi). Zamanlama: slota <24s kala
+/// acilir, sakin gunde 1 aktif rezervasyon tutar, <10 dk kala bos slot kotayi
+/// baypas eder. Sakin/yonetim iptal edebilir (durum=iptal; slot bosalir).
+/// CAKISMA ENGELI DB'de: ayni alanin ONAYLI iki rezervasyonu kesisemez —
+/// cakisan ikinci talep 409. RBAC (auth.md §4): alan yonetimi admin+yonetici;
+/// rezerve etme yalniz resident; iptal rezerve eden sakin + yonetim; okuma
+/// yonetim tumu / sakin kendi dairesi; saha rolleri erisemez.
 library;
 
-/// `rezervasyon_durum` enum'unun istemci aynasi.
+/// `rezervasyon_durum` enum'unun istemci aynasi (onay akisi YOK).
 enum RezervasyonDurum {
-  bekliyor('bekliyor', 'Bekliyor'),
-  onaylandi('onaylandi', 'Onaylandı'),
-  reddedildi('reddedildi', 'Reddedildi'),
+  onaylandi('onaylandi', 'Onaylı'),
+  iptal('iptal', 'İptal'),
   unknown('unknown', 'Bilinmeyen');
 
   const RezervasyonDurum(this.wire, this.label);
@@ -77,9 +77,15 @@ class OrtakAlan {
 }
 
 /// Bir gunun tek slotu (`GET /common-areas/{id}/slots`). GIZLILIK: kim rezerve
-/// etmis alani YOK — yalniz saat + dolu/bos.
+/// etmis alani YOK — yalniz saat + dolu/bos + rezerve edilebilirlik.
 class Slot {
-  const Slot({required this.baslangic, required this.bitis, required this.dolu});
+  const Slot({
+    required this.baslangic,
+    required this.bitis,
+    required this.dolu,
+    this.rezerveEdilebilir = false,
+    this.sebep,
+  });
 
   /// "HH:MM".
   final String baslangic;
@@ -88,10 +94,28 @@ class Slot {
   /// true = bu slotla kesisen ONAYLI rezervasyon var (secilemez).
   final bool dolu;
 
+  /// Sakin bu slotu SIMDI rezerve edebilir mi (24s penceresi + gunluk kota +
+  /// son-dakika istisnasi; sunucu hesaplar). Yonetimde daima false.
+  final bool rezerveEdilebilir;
+
+  /// Rezerve edilemme sebebi: 'dolu' | 'gecti' | 'cok_erken' | 'gunluk' | null.
+  final String? sebep;
+
+  /// Sakine gosterilecek kisa sebep etiketi (sebep koduna gore).
+  String? get sebepEtiketi => switch (sebep) {
+        'dolu' => 'dolu',
+        'gecti' => 'geçti',
+        'cok_erken' => '24s içinde açılır',
+        'gunluk' => 'günlük hakkınız dolu',
+        _ => null,
+      };
+
   factory Slot.fromJson(Map<String, dynamic> json) => Slot(
         baslangic: json['baslangic'] as String? ?? '',
         bitis: json['bitis'] as String? ?? '',
         dolu: json['dolu'] as bool? ?? false,
+        rezerveEdilebilir: json['rezerve_edilebilir'] as bool? ?? false,
+        sebep: json['sebep'] as String?,
       );
 }
 
@@ -111,9 +135,9 @@ class Rezervasyon {
     this.unitNo,
     this.notlar,
     this.talepEdenAd,
-    this.onaylayanUserId,
-    this.onaylayanAd,
-    this.kararZamani,
+    this.iptalEdenUserId,
+    this.iptalEdenAd,
+    this.iptalZamani,
   });
 
   final String id;
@@ -141,14 +165,15 @@ class Rezervasyon {
   final String talepEdenUserId;
   final String? talepEdenAd;
 
-  /// Karari veren yonetici (karar verilmediyse null).
-  final String? onaylayanUserId;
-  final String? onaylayanAd;
-  final DateTime? kararZamani;
+  /// Iptal eden (sakin/yonetim) + zamani — yalniz durum=iptal'de dolu.
+  final String? iptalEdenUserId;
+  final String? iptalEdenAd;
+  final DateTime? iptalZamani;
 
   final DateTime createdAt;
 
-  bool get bekliyor => durum == RezervasyonDurum.bekliyor;
+  bool get onayli => durum == RezervasyonDurum.onaylandi;
+  bool get iptalEdildi => durum == RezervasyonDurum.iptal;
 
   factory Rezervasyon.fromJson(Map<String, dynamic> json) => Rezervasyon(
         id: json['id'] as String? ?? '',
@@ -164,11 +189,11 @@ class Rezervasyon {
         durum: RezervasyonDurum.fromWire(json['durum'] as String?),
         talepEdenUserId: json['talep_eden_user_id'] as String? ?? '',
         talepEdenAd: json['talep_eden_ad'] as String?,
-        onaylayanUserId: json['onaylayan_user_id'] as String?,
-        onaylayanAd: json['onaylayan_ad'] as String?,
-        kararZamani: json['karar_zamani'] == null
+        iptalEdenUserId: json['iptal_eden_user_id'] as String?,
+        iptalEdenAd: json['iptal_eden_ad'] as String?,
+        iptalZamani: json['iptal_zamani'] == null
             ? null
-            : DateTime.tryParse(json['karar_zamani'] as String? ?? ''),
+            : DateTime.tryParse(json['iptal_zamani'] as String? ?? ''),
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       );

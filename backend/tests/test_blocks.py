@@ -44,12 +44,24 @@ def test_blok_crud_yonetici_ve_admin(bworld, client):
         assert client.delete(f"/blocks/{bid}", headers=h).status_code == 204
 
 
-def test_blok_crud_rbac_digerleri_403(bworld, client):
+def test_blok_yazma_digerleri_403(bworld, client):
+    """Blok YAZMA yalniz admin+yonetici; digerleri 403."""
     slug = bworld["slug_a"]
     for role in ("guard_a", "gorevli_a", "resident_a"):
         h = _headers(client, slug, bworld[role])
         assert client.post("/blocks", headers=h, json={"ad": "Z1"}).status_code == 403
-        assert client.get("/blocks", headers=h).status_code == 403
+
+
+def test_blok_okuma_saha_salt_okuma(bworld, client):
+    """OKUMA: security + tesis_gorevlisi "Bina Duzenleme"yi SALT-OKUMA gorur
+    (GET 200); resident editore erisemez (403)."""
+    slug = bworld["slug_a"]
+    for role in ("guard_a", "gorevli_a"):
+        h = _headers(client, slug, bworld[role])
+        assert client.get("/blocks", headers=h).status_code == 200, role
+    assert client.get(
+        "/blocks", headers=_headers(client, slug, bworld["resident_a"])
+    ).status_code == 403
 
 
 def test_blok_dup_ad_409(bworld, client):
@@ -106,7 +118,14 @@ def test_unit_crud_yonetici_yapabilir(bworld, client):
     assert client.get("/units", headers=yon).status_code == 200
     assert client.patch(f"/units/{uid}", headers=yon, json={"sira": 2}).json()["sira"] == 2
     assert client.delete(f"/units/{uid}", headers=yon).status_code == 204
-    # saha rolleri + resident yapamaz
+    # saha rolleri + resident YAZAMAZ
     for role in ("guard_a", "gorevli_a", "resident_a"):
         h = _headers(client, slug, bworld[role])
         assert client.post("/units", headers=h, json={"no": "X-1"}).status_code == 403
+    # OKUMA: saha rolleri daireleri SALT-OKUMA gorur (read-only editor); resident 403
+    for role in ("guard_a", "gorevli_a"):
+        h = _headers(client, slug, bworld[role])
+        assert client.get("/units", headers=h).status_code == 200, role
+    assert client.get(
+        "/units", headers=_headers(client, slug, bworld["resident_a"])
+    ).status_code == 403

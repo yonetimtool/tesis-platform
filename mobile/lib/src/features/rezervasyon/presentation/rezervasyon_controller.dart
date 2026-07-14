@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
-import '../../auth/data/current_user_provider.dart';
+import '../../auth/data/current_user_provider.dart'
+    show currentUserRoleProvider, currentUserIdProvider;
 import '../data/rezervasyon_api.dart';
 import '../domain/rezervasyon_models.dart';
 
@@ -14,7 +15,8 @@ class RezervasyonState {
     this.items = const [],
     this.canManageAreas = false,
     this.canRequest = false,
-    this.canDecide = false,
+    this.isManager = false,
+    this.currentUserId,
     this.refreshedAt,
   });
 
@@ -36,10 +38,21 @@ class RezervasyonState {
   /// Rol resident mi — "Yeni rezervasyon" talebi.
   final bool canRequest;
 
-  /// Rol admin/yonetici mi — bekleyen kartta Onayla/Reddet.
-  final bool canDecide;
+  /// Rol admin/yonetici mi — herhangi bir rezervasyonu iptal edebilir.
+  final bool isManager;
+
+  /// Oturumdaki kullanicinin id'si — sakin YALNIZ KENDI rezervasyonunu iptal
+  /// eder (talep_eden == kendisi). Yonetimde iptal her kayitta acik.
+  final String? currentUserId;
 
   final DateTime? refreshedAt;
+
+  /// Bu rezervasyon icin iptal butonu gosterilsin mi (aktif + yetki).
+  bool canCancel(Rezervasyon r) {
+    if (!r.onayli) return false;
+    if (isManager) return true;
+    return canRequest && r.talepEdenUserId == currentUserId;
+  }
 
   /// Sakinin secebilecegi (aktif) alanlar.
   List<OrtakAlan> get aktifAlanlar =>
@@ -52,7 +65,8 @@ class RezervasyonState {
     List<Rezervasyon>? items,
     bool? canManageAreas,
     bool? canRequest,
-    bool? canDecide,
+    bool? isManager,
+    Object? currentUserId = _sentinel,
     DateTime? refreshedAt,
   }) {
     return RezervasyonState(
@@ -64,7 +78,10 @@ class RezervasyonState {
       items: items ?? this.items,
       canManageAreas: canManageAreas ?? this.canManageAreas,
       canRequest: canRequest ?? this.canRequest,
-      canDecide: canDecide ?? this.canDecide,
+      isManager: isManager ?? this.isManager,
+      currentUserId: currentUserId == _sentinel
+          ? this.currentUserId
+          : currentUserId as String?,
       refreshedAt: refreshedAt ?? this.refreshedAt,
     );
   }
@@ -90,6 +107,7 @@ class RezervasyonController extends Notifier<RezervasyonState> {
     state = state.copyWith(loading: true, errorMessage: null);
     try {
       final role = await ref.read(currentUserRoleProvider.future);
+      final userId = await ref.read(currentUserIdProvider.future);
       final api = ref.read(rezervasyonApiProvider);
       final alanlar = await api.fetchAreas();
       // Saha rolleri /reservations goremez (403) — bu ekran zaten menude yok;
@@ -105,7 +123,9 @@ class RezervasyonController extends Notifier<RezervasyonState> {
         items: items,
         canManageAreas: role.canManageCommonAreas,
         canRequest: role.canRequestReservation,
-        canDecide: role.canDecideReservations,
+        // Yonetim (admin/yonetici) herhangi bir rezervasyonu iptal edebilir.
+        isManager: role.canDecideReservations,
+        currentUserId: userId,
         refreshedAt: DateTime.now(),
       );
     } on ApiException catch (e) {
@@ -131,12 +151,12 @@ class RezervasyonController extends Notifier<RezervasyonState> {
   Future<List<Slot>> slots(String alanId, String date) =>
       ref.read(rezervasyonApiProvider).fetchSlots(alanId, date);
 
-  Future<void> decide(String id, {required bool onayla}) async {
+  Future<void> cancel(String id) async {
     try {
-      await ref.read(rezervasyonApiProvider).decide(id, onayla: onayla);
+      await ref.read(rezervasyonApiProvider).cancel(id);
     } finally {
-      // 409 (cakisma / zaten karara baglandi) durumunda da guncel durumu
-      // cek; hata yine cagirana firlar (mesaj ekranda gosterilir).
+      // 409 (zaten iptal) durumunda da guncel durumu cek; hata yine cagirana
+      // firlar (mesaj ekranda gosterilir).
       await refresh();
     }
   }

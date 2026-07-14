@@ -8,21 +8,25 @@ import 'package:mobile/src/features/rezervasyon/data/rezervasyon_api.dart';
 import 'package:mobile/src/features/rezervasyon/domain/rezervasyon_models.dart';
 import 'package:mobile/src/features/rezervasyon/presentation/rezervasyon_screen.dart';
 
-/// Aga cikmayan sahte istemci — listeler sabit doner; karar/talep cagrilari
-/// kaydedilir (widget testi).
+/// Aga cikmayan sahte istemci — listeler sabit doner; iptal/rezerve cagrilari
+/// kaydedilir (widget testi). ONAY AKISI YOK: karar yerine iptal.
 class _FakeRezervasyonApi extends RezervasyonApi {
   _FakeRezervasyonApi(this._alanlar, this._items) : super(Dio());
 
   final List<OrtakAlan> _alanlar;
   final List<Rezervasyon> _items;
-  final List<(String, bool)> decided = [];
+  final List<String> cancelled = [];
   final List<RezervasyonDraft> requested = [];
 
-  /// Sabit slot izgarasi: 10-11 bos, 11-12 DOLU, 12-13 bos (talep formu testi).
+  /// Sabit slot izgarasi: 10-11 rezerve edilebilir, 11-12 DOLU (secilemez),
+  /// 12-13 rezerve edilebilir (talep formu testi).
   final List<Slot> slots = const [
-    Slot(baslangic: '10:00', bitis: '11:00', dolu: false),
-    Slot(baslangic: '11:00', bitis: '12:00', dolu: true),
-    Slot(baslangic: '12:00', bitis: '13:00', dolu: false),
+    Slot(baslangic: '10:00', bitis: '11:00', dolu: false,
+        rezerveEdilebilir: true),
+    Slot(baslangic: '11:00', bitis: '12:00', dolu: true,
+        rezerveEdilebilir: false, sebep: 'dolu'),
+    Slot(baslangic: '12:00', bitis: '13:00', dolu: false,
+        rezerveEdilebilir: true),
   ];
 
   @override
@@ -35,8 +39,8 @@ class _FakeRezervasyonApi extends RezervasyonApi {
   Future<List<Rezervasyon>> fetchReservations() async => _items;
 
   @override
-  Future<Rezervasyon> decide(String id, {required bool onayla}) async {
-    decided.add((id, onayla));
+  Future<Rezervasyon> cancel(String id) async {
+    cancelled.add(id);
     return _items.first;
   }
 
@@ -54,8 +58,9 @@ OrtakAlan _alan({String id = 'a-1', String ad = 'Havuz', bool aktif = true}) =>
 
 Rezervasyon _r({
   String id = 'r-1',
-  RezervasyonDurum durum = RezervasyonDurum.bekliyor,
-  String? onaylayanAd,
+  RezervasyonDurum durum = RezervasyonDurum.onaylandi,
+  String talepEdenUserId = 'res-1',
+  String? iptalEdenAd,
   String tarih = '2026-07-15',
 }) =>
     Rezervasyon(
@@ -70,11 +75,10 @@ Rezervasyon _r({
       kisiSayisi: 4,
       notlar: 'Aile yuzme saati',
       durum: durum,
-      talepEdenUserId: 'res-1',
+      talepEdenUserId: talepEdenUserId,
       talepEdenAd: 'Acme Sakin',
-      onaylayanAd: onaylayanAd,
-      kararZamani:
-          onaylayanAd == null ? null : DateTime.utc(2026, 7, 11, 8),
+      iptalEdenAd: iptalEdenAd,
+      iptalZamani: iptalEdenAd == null ? null : DateTime.utc(2026, 7, 11, 8),
       createdAt: DateTime.utc(2026, 7, 10, 9),
     );
 
@@ -83,6 +87,7 @@ Rezervasyon _r({
   List<OrtakAlan>? alanlar,
   List<Rezervasyon> items = const [],
   String? initialRezervasyonId,
+  String userId = 'res-1',
 }) {
   final api = _FakeRezervasyonApi(alanlar ?? [_alan()], items);
   return (
@@ -91,6 +96,7 @@ Rezervasyon _r({
       overrides: [
         rezervasyonApiProvider.overrideWithValue(api),
         currentUserRoleProvider.overrideWith((ref) async => role),
+        currentUserIdProvider.overrideWith((ref) async => userId),
       ],
       child: MaterialApp(
         home: RezervasyonScreen(initialRezervasyonId: initialRezervasyonId),
@@ -110,7 +116,7 @@ void main() {
     });
 
     for (final role in [UserRole.admin, UserRole.yonetici]) {
-      testWidgets('${role.name}: "Yeni alan" GORUNUR (talep acamaz)',
+      testWidgets('${role.name}: "Yeni alan" GORUNUR (rezerve edemez)',
           (tester) async {
         final (_, app) = _app(role, items: [_r()]);
         await tester.pumpWidget(app);
@@ -121,62 +127,80 @@ void main() {
     }
   });
 
-  group('Onayla/Reddet butonlari (yalniz yonetim + bekleyen talep)', () {
-    testWidgets('yonetici bekleyen kartta butonlari gorur; Onayla API cagirir',
-        (tester) async {
-      final (api, app) = _app(UserRole.yonetici, items: [_r()]);
+  group('Onay akisi YOK: karar butonlari hicbir rolde YOK', () {
+    for (final role in [
+      UserRole.yonetici,
+      UserRole.admin,
+      UserRole.resident,
+    ]) {
+      testWidgets('${role.name}: Onayla/Reddet YOK (aninda onaylandi)',
+          (tester) async {
+        final (_, app) = _app(role, items: [_r()]);
+        await tester.pumpWidget(app);
+        await tester.pumpAndSettle();
+        expect(find.text('Onayla'), findsNothing);
+        expect(find.text('Reddet'), findsNothing);
+      });
+    }
+  });
+
+  group('İptal butonu (rezerve eden sakin + yonetim)', () {
+    testWidgets('resident KENDI onayli rezervasyonunda İptal gorur; onaylayinca '
+        'API cagirir', (tester) async {
+      final (api, app) = _app(UserRole.resident,
+          items: [_r(talepEdenUserId: 'res-1')], userId: 'res-1');
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.text('Onayla'), findsOneWidget);
-      expect(find.text('Reddet'), findsOneWidget);
+      expect(find.text('İptal et'), findsOneWidget);
 
-      await tester.tap(find.text('Onayla'));
+      await tester.tap(find.text('İptal et'));
       await tester.pumpAndSettle();
-      expect(api.decided, [('r-1', true)]);
+      // onay dialogu -> Evet
+      await tester.tap(find.text('Evet, iptal et'));
+      await tester.pumpAndSettle();
+      expect(api.cancelled, ['r-1']);
     });
 
-    testWidgets('resident kendi bekleyen talebinde buton GORMEZ',
+    testWidgets('resident BASKASININ rezervasyonunda İptal GORMEZ',
         (tester) async {
-      final (_, app) = _app(UserRole.resident, items: [_r()]);
+      final (_, app) = _app(UserRole.resident,
+          items: [_r(talepEdenUserId: 'res-2')], userId: 'res-1');
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.text('Onayla'), findsNothing);
-      expect(find.text('Reddet'), findsNothing);
+      expect(find.text('İptal et'), findsNothing);
     });
 
-    testWidgets('sonuclanan talepte buton YOK; karar bilgisi gorunur',
+    testWidgets('yonetici herhangi onayli rezervasyonu iptal edebilir',
+        (tester) async {
+      final (_, app) = _app(UserRole.yonetici,
+          items: [_r(talepEdenUserId: 'res-9')]);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      expect(find.text('İptal et'), findsOneWidget);
+    });
+
+    testWidgets('zaten iptal edilmis rezervasyonda İptal YOK; iptal bilgisi var',
         (tester) async {
       final (_, app) = _app(
         UserRole.yonetici,
-        items: [
-          _r(durum: RezervasyonDurum.onaylandi, onaylayanAd: 'Acme Yonetici'),
-        ],
+        items: [_r(durum: RezervasyonDurum.iptal, iptalEdenAd: 'Acme Sakin')],
       );
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Sonuçlanan (1)'));
-      await tester.pumpAndSettle();
-      expect(find.text('Onayla'), findsNothing);
-      expect(find.textContaining('Acme Yonetici'), findsOneWidget);
+      expect(find.text('İptal et'), findsNothing);
+      expect(find.textContaining('İptal edildi'), findsOneWidget);
     });
   });
 
   group('sekmeler', () {
-    testWidgets('bekleyen/sonuclanan/takvim sayaclari dogru', (tester) async {
+    testWidgets('Rezervasyonlar/Takvim/Alanlar sayaclari dogru', (tester) async {
       final (_, app) = _app(UserRole.yonetici, items: [
         _r(),
-        _r(
-          id: 'r-2',
-          durum: RezervasyonDurum.onaylandi,
-          onaylayanAd: 'Acme Yonetici',
-        ),
-        _r(id: 'r-3', durum: RezervasyonDurum.reddedildi,
-            onaylayanAd: 'Acme Yonetici'),
+        _r(id: 'r-2', durum: RezervasyonDurum.iptal, iptalEdenAd: 'Acme Sakin'),
       ]);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.text('Bekleyen (1)'), findsOneWidget);
-      expect(find.text('Sonuçlanan (2)'), findsOneWidget);
+      expect(find.text('Rezervasyonlar (2)'), findsOneWidget);
       expect(find.text('Takvim (1)'), findsOneWidget); // yalniz onayli
       expect(find.text('Alanlar (1)'), findsOneWidget);
     });
@@ -184,12 +208,7 @@ void main() {
     testWidgets('Takvim sekmesi onayli slotu gun basligiyla listeler',
         (tester) async {
       final (_, app) = _app(UserRole.yonetici, items: [
-        _r(
-          id: 'r-2',
-          durum: RezervasyonDurum.onaylandi,
-          onaylayanAd: 'Acme Yonetici',
-          tarih: '2026-07-20',
-        ),
+        _r(id: 'r-2', tarih: '2026-07-20'),
       ]);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
@@ -222,7 +241,7 @@ void main() {
     });
   });
 
-  testWidgets('sakin talep formu: alan + tarih + BOS slot secimi + kisi; '
+  testWidgets('sakin rezerve formu: alan + tarih + slot secimi + kisi; '
       'gonderim secili slotu API\'ye tasir', (tester) async {
     final (api, app) = _app(UserRole.resident);
     await tester.pumpWidget(app);
@@ -231,10 +250,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ortak alan'), findsOneWidget);
     expect(find.textContaining('Tarih: '), findsOneWidget);
-    expect(find.text('Slot seç (boş)'), findsOneWidget);
+    expect(find.text('Slot seç'), findsOneWidget);
     expect(find.text('Kişi sayısı:'), findsOneWidget);
     expect(find.text('Not (opsiyonel)'), findsOneWidget);
-    // Slot chip'leri: bos secilebilir, DOLU olan "· dolu" etiketli (secilemez).
+    // Slot chip'leri: rezerve edilebilir secilebilir, DOLU olan "· dolu" etiketli.
     expect(find.text('10:00–11:00'), findsOneWidget);
     expect(find.text('11:00–12:00 · dolu'), findsOneWidget);
 
@@ -243,9 +262,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(api.requested, isEmpty);
 
-    // Bos slot secilince gonderim o slotu tasir.
+    // Rezerve edilebilir slot secilince gonderim o slotu tasir.
     await tester.tap(find.text('12:00–13:00'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Talep gönder'));
     await tester.tap(find.text('Talep gönder'));
     await tester.pumpAndSettle();
     expect(api.requested, hasLength(1));
@@ -279,8 +299,8 @@ void main() {
       // Detay sheet'e ozgu satirlar: talep eden + kisi sayisi detayi.
       expect(find.textContaining('Acme Sakin'), findsOneWidget);
       expect(find.textContaining('Kişi sayısı: 4'), findsOneWidget);
-      // Yonetim icin sheet'te de Onayla/Reddet (kart + sheet).
-      expect(find.text('Onayla'), findsNWidgets(2));
+      // Yonetim icin sheet'te de İptal (kart + sheet).
+      expect(find.text('İptal et'), findsNWidgets(2));
     });
 
     testWidgets('kayit listede yoksa sessizce listede kalinir (cokme yok)',

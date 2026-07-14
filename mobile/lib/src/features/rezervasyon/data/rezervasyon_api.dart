@@ -11,10 +11,9 @@ import '../domain/rezervasyon_models.dart';
 ///   * `POST  /common-areas`        → alan olustur (admin + yonetici)
 ///   * `PATCH /common-areas/{id}`   → alan duzenle / aktiflik (soft-delete)
 ///   * `GET   /reservations`        → liste (yonetim TUMU; sakin KENDI dairesi)
-///   * `POST  /reservations`        → talep (YALNIZ resident; onayli ile
-///                                     cakisan aralik aninda 409)
-///   * `PATCH /reservations/{id}`   → onay/red (yonetim; cakisan onay 409 —
-///                                     DB EXCLUDE kisiti, yaris-guvenli)
+///   * `POST  /reservations`        → rezerve et (YALNIZ resident; ONAY YOK —
+///                                     aninda onaylandi; cakisma/24s/kota 409-422)
+///   * `POST  /reservations/{id}/cancel` → iptal (rezerve eden sakin + yonetim)
 class RezervasyonApi {
   RezervasyonApi(this._dio);
 
@@ -127,12 +126,12 @@ class RezervasyonApi {
     }
   }
 
-  /// Yonetici karari: onayla=true → onaylandi, false → reddedildi.
-  Future<Rezervasyon> decide(String id, {required bool onayla}) async {
+  /// Rezervasyonu iptal et (rezerve eden sakin KENDI, yonetim herhangi biri).
+  /// durum=iptal; slot bosalir. Zaten iptal ise 409.
+  Future<Rezervasyon> cancel(String id) async {
     try {
-      final res = await _dio.patch<Map<String, dynamic>>(
-        '/reservations/$id',
-        data: {'durum': onayla ? 'onaylandi' : 'reddedildi'},
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/reservations/$id/cancel',
       );
       return Rezervasyon.fromJson(res.data ?? const {});
     } on DioException catch (e) {

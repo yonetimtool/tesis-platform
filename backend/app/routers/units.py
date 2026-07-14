@@ -35,6 +35,9 @@ _ADMIN = require_role("admin")
 # Fiziksel yerlesim (blok/kat/sira) girisi — yonetim: admin + yonetici.
 # (Genel daire CRUD admin-only kalir; yalniz yerlesim yonetici'ye acilir.)
 _LAYOUT_EDITOR = require_role("admin", "yonetici")
+# Yerlesim OKUMA: yonetim + saha (security/tesis_gorevlisi) — "Bina Duzenleme"
+# ekranini SALT-OKUMA gorurler (yazma yine _LAYOUT_EDITOR = 403).
+_LAYOUT_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 # Hedef sakin secicisi (guvenlik ziyaretci kaydinda kullanir) — okuma
 # guvenlik + yonetim; sakin komsularini LISTELEYEMEZ (403).
 _RESIDENT_LISTER = require_role("security", "admin", "yonetici")
@@ -47,7 +50,7 @@ async def list_units(
     blok: str | None = Query(None),
     aktif: bool | None = Query(None),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_LAYOUT_EDITOR),
+    _: AppUser = Depends(_LAYOUT_READER),
 ) -> UnitListResponse:
     where = []
     if blok is not None:
@@ -65,7 +68,7 @@ async def list_units(
 async def get_unit(
     unit_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_LAYOUT_EDITOR),
+    _: AppUser = Depends(_LAYOUT_READER),
 ) -> Unit:
     return await get_or_404(db, Unit, unit_id)
 

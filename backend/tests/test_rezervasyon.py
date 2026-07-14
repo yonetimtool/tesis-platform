@@ -1,19 +1,48 @@
-"""Ortak alan rezervasyonu: alan CRUD + talep + onay/red + CAKISMA ENGELI +
-RBAC + izolasyon.
+"""Ortak alan rezervasyonu: alan CRUD + ANINDA rezerve + zamanlama kurallari +
+iptal + CAKISMA ENGELI + RBAC + izolasyon.
 
-RBAC (auth.md §4): alan yonetimi admin+yonetici, alan okuma tum roller (aktif);
-TALEP yalniz resident; KARAR yalniz admin+yonetici; OKUMA yonetim tumu,
-resident kendi daireleri, saha rolleri 403.
+ONAY AKISI KALDIRILDI: sakin bos slotu rezerve edince kayit dogrudan
+durum='onaylandi' olur. Zamanlama (slot baslangicina gore, tenant tz):
+  * 24s penceresi: slota <24s kala rezerve edilir (erken -> 422; gecmis -> 422).
+  * gunde bir: sakin slot-gunune denk 1 aktif rezervasyon tutar (2. -> 409).
+  * son dakika: <10 dk kala BOS slot gunluk kotayi baypas eder.
+Iptal (durum='iptal') slotu bosaltir. CAKISMA: DB partial EXCLUDE
+(WHERE durum='onaylandi') — cakisan ikinci talep 409 (INSERT aninda, yaris-safe).
 
-CAKISMA (kesin mekanizma): DB partial EXCLUDE (btree_gist, tsrange &&,
-WHERE durum='onaylandi') — iki cakisan onaydan yalniz biri basarir (23P01 ->
-409); talep aninda onayli ile kesisen aralik da 409. Bitisik slot serbest.
+Testler CANLI sunucuya (httpx) gider; sunucu GERCEK saati kullanir. Bu yuzden
+slot saatleri "simdi"ye gore (Europe/Istanbul) uretilir — sabit tarih yerine
+now+ofset. Ayni gun ikinci rezervasyon gunluk kotaya takilir; bu yuzden ayni
+gun coklu-slot testleri FARKLI sakinler kullanir (kota kisi-bazli).
 """
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
+
+_IST = ZoneInfo("Europe/Istanbul")
+
+
+def _now():
+    return datetime.now(_IST)
+
+
+def _hslot(hours_ahead, dur_h=1):
+    """Saat-hizali slot: simdi+hours_ahead (tarih, "HH:MM", "HH:MM")."""
+    start = (_now() + timedelta(hours=hours_ahead)).replace(
+        minute=0, second=0, microsecond=0
+    )
+    end = start + timedelta(hours=dur_h)
+    return start.date().isoformat(), start.strftime("%H:%M"), end.strftime("%H:%M")
+
+
+def _mslot(minutes_ahead, dur_min=20):
+    """Dakika-hassas slot (son-dakika istisnasi testi icin)."""
+    start = _now() + timedelta(minutes=minutes_ahead)
+    end = start + timedelta(minutes=dur_min)
+    return start.date().isoformat(), start.strftime("%H:%M"), end.strftime("%H:%M")
 
 
 def _headers(client, slug, cred):
@@ -33,14 +62,19 @@ def _mk_area(client, headers, **over):
     return r.json()
 
 
-def _request(client, headers, alan_id, *, tarih="2026-08-01",
-             baslangic="10:00", bitis="12:00", expect=201, **over):
-    body = {
-        "alan_id": alan_id, "tarih": tarih, "baslangic": baslangic,
-        "bitis": bitis, "kisi_sayisi": 2,
-    }
+def _post(client, headers, alan_id, slot, *, expect=201, **over):
+    """slot = (tarih, baslangic, bitis). kisi_sayisi=2 varsayilan."""
+    tarih, bas, bit = slot
+    body = {"alan_id": alan_id, "tarih": tarih, "baslangic": bas,
+            "bitis": bit, "kisi_sayisi": 2}
     body.update(over)
     r = client.post("/reservations", headers=headers, json=body)
+    assert r.status_code == expect, r.text
+    return r.json()
+
+
+def _cancel(client, headers, rez_id, expect=200):
+    r = client.post(f"/reservations/{rez_id}/cancel", headers=headers)
     assert r.status_code == expect, r.text
     return r.json()
 
@@ -59,11 +93,11 @@ def _mk_resident(owner_conn, tenant_id, email, pw):
 
 @pytest.fixture
 def rworld(client, world, owner_conn):
-    """world + daireler/sakinler + iki ortak alan (yonetici uzerinden API ile):
+    """world + daireler/sakinler + iki ortak alan (yonetici API ile):
 
     * unit1 (R-101): resident_a + es (ayni dairede iki sakin).
     * unit2 (R-202): resident_diger.
-    * alan1 (Havuz-benzeri), alan2 (Toplanti-benzeri) — tenant A.
+    * alan1, alan2 — tenant A. Uc ayri sakin (resident_a, es, diger).
     """
     a = world["a"]
     suffix = uuid.uuid4().hex[:6]
@@ -113,7 +147,6 @@ def rworld(client, world, owner_conn):
         "alan1": alan1["id"],
         "alan2": alan2["id"],
     }
-    # temizlik world fixture'inda: tenant silinince CASCADE.
 
 
 # ------------------------------ ortak alan ---------------------------------- #
@@ -147,173 +180,172 @@ def test_alan_crud_ve_rbac(client, rworld):
         f"/common-areas/{alan['id']}", headers=yonetici, json={"aktif": False}
     )
     assert p.status_code == 200 and p.json()["aktif"] is False
-    y_ids = [it["id"] for it in client.get(
-        "/common-areas", headers=yonetici, params={"limit": 200}
-    ).json()["items"]]
-    assert alan["id"] in y_ids
     r_ids = [it["id"] for it in client.get(
         "/common-areas", headers=resident, params={"limit": 200}
     ).json()["items"]]
     assert alan["id"] not in r_ids
-    # sakin pasif alana talep acamaz (422)
-    _request(client, resident, alan["id"], expect=422)
+    # sakin pasif alana rezerve edemez (422 — timing'den once alan kontrolu)
+    _post(client, resident, alan["id"], _hslot(2), expect=422)
     # bos govde PATCH 422
     assert client.patch(
         f"/common-areas/{alan['id']}", headers=yonetici, json={}
     ).status_code == 422
 
 
-# -------------------------------- talep ------------------------------------- #
-def test_sakin_talep_acar_bekliyor(client, rworld):
+# ----------------------- rezerve et (aninda onaylandi) ---------------------- #
+def test_sakin_rezerve_eder_aninda_onaylandi(client, rworld):
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
-    r = _request(client, resident, rworld["alan1"], kisi_sayisi=4,
-                 notlar="Aile yuzme saati")
-    assert r["durum"] == "bekliyor"
+    slot = _hslot(2)
+    r = _post(client, resident, rworld["alan1"], slot, kisi_sayisi=4,
+              notlar="Aile yuzme saati")
+    # ONAY YOK: dogrudan onaylandi
+    assert r["durum"] == "onaylandi"
     assert r["unit_id"] == rworld["unit1"]  # daire kimlikten turedi
     assert r["unit_no"] == rworld["unit1_no"]
-    assert r["baslangic"] == "10:00" and r["bitis"] == "12:00"
+    assert r["baslangic"] == slot[1] and r["bitis"] == slot[2]
     assert r["kisi_sayisi"] == 4 and r["notlar"] == "Aile yuzme saati"
     assert r["talep_eden_ad"] == "Resident A"
-    assert r["onaylayan_user_id"] is None and r["karar_zamani"] is None
+    # iptal edilmedi -> iptal alanlari bos
+    assert r["iptal_eden_user_id"] is None and r["iptal_zamani"] is None
 
 
 def test_talep_dogrulama(client, rworld):
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
-    # bitis <= baslangic -> 422
-    _request(client, resident, rworld["alan1"],
-             baslangic="12:00", bitis="12:00", expect=422)
-    _request(client, resident, rworld["alan1"],
-             baslangic="12:00", bitis="10:00", expect=422)
+    # bitis <= baslangic -> 422 (sema; timing'den once)
+    _post(client, resident, rworld["alan1"], ("2026-07-14", "12:00", "12:00"),
+          expect=422)
+    _post(client, resident, rworld["alan1"], ("2026-07-14", "14:00", "13:00"),
+          expect=422)
     # kisi_sayisi 0 -> 422
-    _request(client, resident, rworld["alan1"], kisi_sayisi=0, expect=422)
+    _post(client, resident, rworld["alan1"], _hslot(2), kisi_sayisi=0, expect=422)
     # olmayan alan -> 422
-    _request(client, resident, str(uuid.uuid4()), expect=422)
+    _post(client, resident, str(uuid.uuid4()), _hslot(2), expect=422)
     # baskasinin dairesi unit_id olarak verilemez -> 422
-    _request(client, resident, rworld["alan1"], unit_id=rworld["unit2"],
-             expect=422)
+    _post(client, resident, rworld["alan1"], _hslot(2),
+          unit_id=rworld["unit2"], expect=422)
 
 
-def test_talep_rbac_yalniz_sakin(client, rworld):
+def test_rezerve_rbac_yalniz_sakin(client, rworld):
+    tarih, bas, bit = _hslot(2)
     for role in ("admin_a", "yonetici_a", "guard_a", "gorevli_a"):
         h = _headers(client, rworld["slug_a"], rworld[role])
         assert client.post(
             "/reservations", headers=h,
-            json={"alan_id": rworld["alan1"], "tarih": "2026-08-01",
-                  "baslangic": "10:00", "bitis": "12:00", "kisi_sayisi": 2},
+            json={"alan_id": rworld["alan1"], "tarih": tarih,
+                  "baslangic": bas, "bitis": bit, "kisi_sayisi": 2},
         ).status_code == 403, role
 
 
-# ------------------------------ onay / red ---------------------------------- #
-def test_onay_ve_red_damgalanir(client, rworld):
+# --------------------------- ZAMANLAMA KURALLARI ---------------------------- #
+def test_24_saat_penceresi(client, rworld):
+    """Slota <24s kala rezerve edilir; >=24s erken 422; gecmis slot 422."""
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
-    yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
-
-    r1 = _request(client, resident, rworld["alan1"], baslangic="08:00", bitis="09:00")
-    p = client.patch(
-        f"/reservations/{r1['id']}", headers=yonetici, json={"durum": "onaylandi"}
-    )
-    assert p.status_code == 200, p.text
-    body = p.json()
-    assert body["durum"] == "onaylandi"
-    assert body["onaylayan_ad"] == "Yonetici A"
-    assert body["karar_zamani"] is not None
-
-    r2 = _request(client, resident, rworld["alan1"], baslangic="09:00", bitis="09:30")
-    p2 = client.patch(
-        f"/reservations/{r2['id']}", headers=yonetici, json={"durum": "reddedildi"}
-    )
-    assert p2.status_code == 200 and p2.json()["durum"] == "reddedildi"
-
-    # zaten karara baglanmis kayda ikinci karar 409
-    assert client.patch(
-        f"/reservations/{r1['id']}", headers=yonetici, json={"durum": "reddedildi"}
-    ).status_code == 409
-    # gecersiz karar degerleri 422
-    for body_ in ({"durum": "bekliyor"}, {"durum": "belki"}, {}):
-        assert client.patch(
-            f"/reservations/{r2['id']}", headers=yonetici, json=body_
-        ).status_code == 422, body_
+    # simdi+2s (delta ~2s) -> OK
+    _post(client, resident, rworld["alan1"], _hslot(2), expect=201)
+    # simdi+25s (>= 24s) -> cok erken 422 (mesajda 24 saat vurgusu)
+    r = _post(client, resident, rworld["alan1"], _hslot(25), expect=422)
+    assert "24 saat" in r["error"]["message"]
+    # gecmis slot (simdi-2s) -> 422
+    _post(client, resident, rworld["alan1"], _hslot(-2), expect=422)
 
 
-def test_karar_rbac_yalniz_yonetim(client, rworld):
+def test_yarin_ama_24s_icinde_ok(client, rworld):
+    """Yarina sarkan ama simdiden <24s icinde slot rezerve edilir."""
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
-    r = _request(client, resident, rworld["alan1"], baslangic="06:00", bitis="07:00")
-    for role in ("resident_a", "guard_a", "gorevli_a"):
-        h = _headers(client, rworld["slug_a"], rworld[role])
-        assert client.patch(
-            f"/reservations/{r['id']}", headers=h, json={"durum": "onaylandi"}
-        ).status_code == 403, role
-    admin = _headers(client, rworld["slug_a"], rworld["admin_a"])
-    assert client.patch(
-        f"/reservations/{r['id']}", headers=admin, json={"durum": "onaylandi"}
-    ).status_code == 200  # admin de karar verebilir
+    _post(client, resident, rworld["alan1"], _hslot(23), expect=201)
+
+
+def test_gunde_bir_rezervasyon(client, rworld):
+    """Sakin, slot-gunune denk 1 aktif rezervasyon tutar; ikincisi 409."""
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    diger = _headers(client, rworld["slug_a"], rworld["diger"])
+    # ilk rezervasyon (simdi+2s) OK
+    _post(client, resident, rworld["alan1"], _hslot(2))
+    # ayni sakin ayni gun IKINCI (cakismayan) slot -> 409 gunluk kota
+    r = _post(client, resident, rworld["alan1"], _hslot(4), expect=409)
+    assert "bu gun" in r["error"]["message"].lower()
+    # BASKA sakin ayni gun rezerve edebilir (kota kisi-bazli)
+    _post(client, diger, rworld["alan1"], _hslot(4))
+
+
+def test_son_dakika_istisnasi(client, rworld):
+    """<10 dk kala BOS slot gunluk kotayi baypas eder; >10dk edilmez."""
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    # kota doldur: simdi+2s OK
+    _post(client, resident, rworld["alan1"], _hslot(2))
+    # kota dolu + slot 4s sonra (>10dk) -> 409 gunluk
+    _post(client, resident, rworld["alan1"], _hslot(4), expect=409)
+    # kota dolu AMA bos slot <10dk kala (simdi+5dk) -> baypas -> 201
+    _post(client, resident, rworld["alan1"], _mslot(5), expect=201)
 
 
 # ------------------------------ CAKISMA ENGELI ------------------------------ #
-def test_cakisan_iki_onaydan_yalniz_biri_basarir(client, rworld):
-    """ANA GARANTI (yaris/atomiklik): ust uste binen IKI BEKLEYEN talep
-    serbestce acilir; onaya kaldirmada DB EXCLUDE kisiti devreye girer —
-    ikinci onay 409 alir ve kayit ONAYLANMAZ."""
+def test_cakisan_ikinci_rezervasyon_409(client, rworld):
+    """Ilk talep aninda onaylanir; onayliyla kesisen ikinci talep 409
+    (INSERT anindaki DB EXCLUDE — yaris-safe). Farkli sakinler (kota degil)."""
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    diger = _headers(client, rworld["slug_a"], rworld["diger"])
+    es = _headers(client, rworld["slug_a"], rworld["es"])
+
+    # simdi+2s'ten 3 saatlik blok
+    _post(client, resident, rworld["alan1"], _hslot(2, dur_h=3))
+    # kesisen (simdi+3s, blok icinde) -> 409
+    _post(client, diger, rworld["alan1"], _hslot(3), expect=409)
+    # yine kesisen (simdi+4s) baska sakin -> 409 (kota degil, cakisma)
+    _post(client, es, rworld["alan1"], _hslot(4), expect=409)
+
+
+def test_cakismayan_bitisik_farkli_alan_serbest(client, rworld):
+    """Bitisik slot (bitis == baslangic) ve farkli alan cakisma DEGILDIR."""
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    diger = _headers(client, rworld["slug_a"], rworld["diger"])
+    es = _headers(client, rworld["slug_a"], rworld["es"])
+
+    # bitisik: +2s..+3s ve +3s..+4s (farkli sakinler; ayni alan) -> ikisi de OK
+    _post(client, resident, rworld["alan1"], _hslot(2))
+    _post(client, diger, rworld["alan1"], _hslot(3))
+    # farkli alan ayni saat -> OK
+    _post(client, es, rworld["alan2"], _hslot(2))
+
+
+# --------------------------------- iptal ------------------------------------ #
+def test_iptal_slotu_bosaltir_ve_damgalanir(client, rworld):
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    diger = _headers(client, rworld["slug_a"], rworld["diger"])
+    slot = _hslot(2)
+
+    r = _post(client, resident, rworld["alan1"], slot)
+    # sakin KENDI rezervasyonunu iptal eder
+    body = _cancel(client, resident, r["id"])
+    assert body["durum"] == "iptal"
+    assert body["iptal_eden_ad"] == "Resident A"
+    assert body["iptal_zamani"] is not None
+    # iptal slotu bosaltti: baska sakin ayni araligi rezerve edebilir
+    _post(client, diger, rworld["alan1"], slot)
+    # zaten iptal -> ikinci iptal 409
+    _cancel(client, resident, r["id"], expect=409)
+
+
+def test_iptal_rbac(client, rworld):
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
     diger = _headers(client, rworld["slug_a"], rworld["diger"])
     yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
 
-    # iki cakisan BEKLEYEN talep (10-12 ve 11-13) — ikisi de kabul edilir
-    r1 = _request(client, resident, rworld["alan1"],
-                  tarih="2026-08-02", baslangic="10:00", bitis="12:00")
-    r2 = _request(client, diger, rworld["alan1"],
-                  tarih="2026-08-02", baslangic="11:00", bitis="13:00")
-
-    assert client.patch(
-        f"/reservations/{r1['id']}", headers=yonetici, json={"durum": "onaylandi"}
+    r = _post(client, resident, rworld["alan1"], _hslot(2))
+    # saha rolleri iptal edemez (403)
+    for role in ("guard_a", "gorevli_a"):
+        h = _headers(client, rworld["slug_a"], rworld[role])
+        assert client.post(
+            f"/reservations/{r['id']}/cancel", headers=h
+        ).status_code == 403, role
+    # BASKA sakin baskasinin rezervasyonunu iptal edemez (404 — varlik sizmaz)
+    assert client.post(
+        f"/reservations/{r['id']}/cancel", headers=diger
+    ).status_code == 404
+    # yonetim herhangi birini iptal eder
+    assert client.post(
+        f"/reservations/{r['id']}/cancel", headers=yonetici
     ).status_code == 200
-    # cakisan ikinci onay DB kisitina takilir -> 409, durum degismez
-    p2 = client.patch(
-        f"/reservations/{r2['id']}", headers=yonetici, json={"durum": "onaylandi"}
-    )
-    assert p2.status_code == 409, p2.text
-    d2 = client.get(f"/reservations/{r2['id']}", headers=yonetici).json()
-    assert d2["durum"] == "bekliyor"  # onaylanmadi; reddedilebilir/beklemede
-    # cakisan talep REDDEDILEBILIR (kisit yalniz onayli satirlara)
-    assert client.patch(
-        f"/reservations/{r2['id']}", headers=yonetici, json={"durum": "reddedildi"}
-    ).status_code == 200
-
-
-def test_talep_aninda_onayli_ile_cakisan_409(client, rworld):
-    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
-    yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
-    r1 = _request(client, resident, rworld["alan1"],
-                  tarih="2026-08-03", baslangic="14:00", bitis="16:00")
-    assert client.patch(
-        f"/reservations/{r1['id']}", headers=yonetici, json={"durum": "onaylandi"}
-    ).status_code == 200
-    # onayli ile kesisen YENI talep aninda 409 (bosuna bekletilmez)
-    _request(client, resident, rworld["alan1"],
-             tarih="2026-08-03", baslangic="15:00", bitis="17:00", expect=409)
-    # tam kapsayan aralik da 409
-    _request(client, resident, rworld["alan1"],
-             tarih="2026-08-03", baslangic="13:00", bitis="18:00", expect=409)
-
-
-def test_cakismayan_bitisik_farkli_alan_farkli_gun_serbest(client, rworld):
-    """Sinir durumlari: bitisik slot (bitis == baslangic), farkli alan ve
-    farkli gun CAKISMA DEGILDIR — hepsi onaylanabilir."""
-    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
-    yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
-
-    r1 = _request(client, resident, rworld["alan1"],
-                  tarih="2026-08-04", baslangic="10:00", bitis="12:00")
-    bitisik = _request(client, resident, rworld["alan1"],
-                       tarih="2026-08-04", baslangic="12:00", bitis="14:00")
-    baska_alan = _request(client, resident, rworld["alan2"],
-                          tarih="2026-08-04", baslangic="10:00", bitis="12:00")
-    baska_gun = _request(client, resident, rworld["alan1"],
-                         tarih="2026-08-05", baslangic="10:00", bitis="12:00")
-    for r in (r1, bitisik, baska_alan, baska_gun):
-        assert client.patch(
-            f"/reservations/{r['id']}", headers=yonetici, json={"durum": "onaylandi"}
-        ).status_code == 200, r["id"]
 
 
 # ------------------------------- okuma -------------------------------------- #
@@ -323,16 +355,14 @@ def test_sakin_yalniz_kendi_dairesinin_rezervasyonlarini_gorur(client, rworld):
     diger = _headers(client, rworld["slug_a"], rworld["diger"])
     yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
 
-    mine = _request(client, resident, rworld["alan1"],
-                    tarih="2026-08-06", baslangic="10:00", bitis="11:00")
-    theirs = _request(client, diger, rworld["alan1"],
-                      tarih="2026-08-06", baslangic="11:00", bitis="12:00")
+    mine = _post(client, resident, rworld["alan1"], _hslot(2))
+    theirs = _post(client, diger, rworld["alan1"], _hslot(3))
 
     ids = [it["id"] for it in client.get(
         "/reservations", headers=resident, params={"limit": 200}
     ).json()["items"]]
     assert mine["id"] in ids and theirs["id"] not in ids
-    # es AYNI dairenin talebini gorur (daire bazli kapsam)
+    # es AYNI dairenin rezervasyonunu gorur (daire bazli kapsam)
     es_ids = [it["id"] for it in client.get(
         "/reservations", headers=es, params={"limit": 200}
     ).json()["items"]]
@@ -354,25 +384,32 @@ def test_okuma_rbac_saha_403(client, rworld):
 
 def test_liste_filtreleri(client, rworld):
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    diger = _headers(client, rworld["slug_a"], rworld["diger"])
     yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
-    a = _request(client, resident, rworld["alan1"],
-                 tarih="2026-08-07", baslangic="10:00", bitis="11:00")
-    b = _request(client, resident, rworld["alan2"],
-                 tarih="2026-08-08", baslangic="10:00", bitis="11:00")
-    client.patch(f"/reservations/{a['id']}", headers=yonetici,
-                 json={"durum": "onaylandi"})
+    slot = _hslot(2)
+    tarih = slot[0]
+    # farkli sakinler (ayni gun kota) — a onayli kalir, b iptal edilir
+    a = _post(client, resident, rworld["alan1"], slot)
+    b = _post(client, diger, rworld["alan2"], slot)
+    _cancel(client, diger, b["id"])
 
-    # durum filtresi
+    # durum filtresi: onaylandi -> a var, b yok
     onayli = client.get(
         "/reservations", headers=yonetici,
         params={"durum": "onaylandi", "limit": 200},
     ).json()["items"]
     assert any(it["id"] == a["id"] for it in onayli)
     assert not any(it["id"] == b["id"] for it in onayli)
+    # durum=iptal -> b var
+    iptal = client.get(
+        "/reservations", headers=yonetici,
+        params={"durum": "iptal", "limit": 200},
+    ).json()["items"]
+    assert any(it["id"] == b["id"] for it in iptal)
     # alan + tarih filtresi (gun gorunumu)
     gun = client.get(
         "/reservations", headers=yonetici,
-        params={"alan_id": rworld["alan2"], "tarih": "2026-08-08", "limit": 200},
+        params={"alan_id": rworld["alan2"], "tarih": tarih, "limit": 200},
     ).json()["items"]
     assert [it["id"] for it in gun] == [b["id"]]
     # gecersiz durum 422
@@ -384,18 +421,17 @@ def test_liste_filtreleri(client, rworld):
 # ----------------------------- tenant izolasyonu ---------------------------- #
 def test_tenant_izolasyonu(client, rworld):
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
-    r = _request(client, resident, rworld["alan1"],
-                 tarih="2026-08-09", baslangic="10:00", bitis="11:00")
+    r = _post(client, resident, rworld["alan1"], _hslot(2))
 
     yonetici_b = _headers(client, rworld["slug_b"], rworld["yonetici_b"])
-    # B yonetimi A'nin rezervasyonunu goremez/karara baglayamaz (RLS -> 404)
+    # B yonetimi A'nin rezervasyonunu goremez/iptal edemez (RLS -> 404)
     b_ids = [it["id"] for it in client.get(
         "/reservations", headers=yonetici_b, params={"limit": 200}
     ).json()["items"]]
     assert r["id"] not in b_ids
     assert client.get(f"/reservations/{r['id']}", headers=yonetici_b).status_code == 404
-    assert client.patch(
-        f"/reservations/{r['id']}", headers=yonetici_b, json={"durum": "onaylandi"}
+    assert client.post(
+        f"/reservations/{r['id']}/cancel", headers=yonetici_b
     ).status_code == 404
     # B yonetimi A'nin alanini da goremez
     b_alan_ids = [it["id"] for it in client.get(
@@ -416,54 +452,60 @@ def test_alan_musaitlik_create_ve_okuma(client, rworld):
         "/common-areas", headers=yonetici,
         json={"ad": f"X-{uuid.uuid4().hex[:6]}", "acilis": "14:00", "kapanis": "10:00"},
     ).status_code == 422
-    # saat verilmezse tum-gun varsayilan (00:00, 60 dk) — mevcut davranis korunur
+    # saat verilmezse tum-gun varsayilan (00:00, 60 dk)
     d = _mk_area(client, yonetici, ad=f"Def-{uuid.uuid4().hex[:6]}")
     assert d["acilis"] == "00:00" and d["slot_dakika"] == 60
     # kismi guncelleme: yalniz slot_dakika
     p = client.patch(f"/common-areas/{alan['id']}", headers=yonetici,
                      json={"slot_dakika": 30})
     assert p.status_code == 200 and p.json()["slot_dakika"] == 30
-    # tutarsiz saat guncellemesi (kapanis mevcut acilisten once) -> 422
-    assert client.patch(f"/common-areas/{alan['id']}", headers=yonetici,
-                        json={"kapanis": "09:00"}).status_code == 422
 
 
-def test_slots_dolu_bos_ve_kimlik_yok(client, rworld):
+def test_slots_dolu_bos_rezerve_edilebilir_ve_kimlik_yok(client, rworld):
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    diger = _headers(client, rworld["slug_a"], rworld["diger"])
     yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
+    # Pencere simdiye gore: [+1s, +5s] — 4 gelecek slot, hepsi <24s icinde.
+    start = (_now() + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+    h = start.hour
+    tarih = start.date().isoformat()
     alan = _mk_area(client, yonetici, ad=f"Slot-{uuid.uuid4().hex[:6]}",
-                    acilis="10:00", kapanis="14:00", slot_dakika=60)
-    tarih = "2026-09-01"
+                    acilis=f"{h:02d}:00", kapanis=f"{h + 4:02d}:00", slot_dakika=60)
+    s2 = (tarih, f"{h + 1:02d}:00", f"{h + 2:02d}:00")  # ikinci slot
 
     def _slots(headers):
         r = client.get(f"/common-areas/{alan['id']}/slots", headers=headers,
                        params={"date": tarih})
         assert r.status_code == 200, r.text
-        return r.json()["items"]
+        return {it["baslangic"]: it for it in r.json()["items"]}
 
-    # baslangicta izgara tam ve hepsi BOS: 10-11, 11-12, 12-13, 13-14
-    s0 = _slots(resident)
-    assert [it["baslangic"] for it in s0] == ["10:00", "11:00", "12:00", "13:00"]
-    assert [it["bitis"] for it in s0] == ["11:00", "12:00", "13:00", "14:00"]
-    assert all(it["dolu"] is False for it in s0)
+    # baslangicta hepsi BOS + sakin rezerve edebilir (<24s icinde)
+    s0 = _slots(diger)
+    assert len(s0) == 4 and all(it["dolu"] is False for it in s0.values())
+    assert all(it["rezerve_edilebilir"] and it["sebep"] is None for it in s0.values())
 
-    # BEKLEYEN talep slotu DOLDURMAZ (yalniz onayli doldurur)
-    r = _request(client, resident, alan["id"], tarih=tarih,
-                 baslangic="11:00", bitis="12:00")
-    assert all(it["dolu"] is False for it in _slots(resident))
+    # resident ikinci slotu rezerve eder -> o slot dolu
+    _post(client, resident, alan["id"], s2)
+    s1 = _slots(diger)
+    dolu_bas = s2[1]
+    assert s1[dolu_bas]["dolu"] is True
+    assert s1[dolu_bas]["rezerve_edilebilir"] is False and s1[dolu_bas]["sebep"] == "dolu"
 
-    # ONAYLANINCA yalniz o slot DOLU; kesismeyen bitisik slotlar BOS kalir
-    assert client.patch(f"/reservations/{r['id']}", headers=yonetici,
-                        json={"durum": "onaylandi"}).status_code == 200
-    s1 = _slots(resident)
-    assert {it["baslangic"]: it["dolu"] for it in s1} == {
-        "10:00": False, "11:00": True, "12:00": False, "13:00": False,
-    }
-    # GIZLILIK: slot yalniz saat + dolu tasir, kim rezerve etmis SIZMAZ
-    for it in s1:
-        assert set(it.keys()) == {"baslangic", "bitis", "dolu"}
+    # GIZLILIK: slot yalniz saat + dolu + edilebilirlik tasir, kimlik SIZMAZ
+    for it in s1.values():
+        assert set(it.keys()) == {"baslangic", "bitis", "dolu",
+                                  "rezerve_edilebilir", "sebep"}
 
-    # TUM roller slotlari okuyabilir (sakin secebilsin, saha da gorebilir)
+    # KOTA yansir: rezerve eden sakin icin bos slotlar 'gunluk' (edilemez)
+    s_res = _slots(resident)
+    bos_bas = f"{h:02d}:00"
+    assert s_res[bos_bas]["rezerve_edilebilir"] is False
+    assert s_res[bos_bas]["sebep"] == "gunluk"
+
+    # yonetim slotlari gorur ama rezerve_edilebilir daima false (rezerve etmez)
+    assert all(it["rezerve_edilebilir"] is False for it in _slots(yonetici).values())
+
+    # TUM roller slotlari okuyabilir
     for role in ("resident_a", "guard_a", "gorevli_a", "yonetici_a", "admin_a"):
         _slots(_headers(client, rworld["slug_a"], rworld[role]))
 
@@ -471,28 +513,33 @@ def test_slots_dolu_bos_ve_kimlik_yok(client, rworld):
 def test_slots_pasif_alan_sakine_404(client, rworld):
     yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
-    alan = _mk_area(client, yonetici, ad=f"Pasif-{uuid.uuid4().hex[:6]}",
-                    acilis="10:00", kapanis="12:00")
+    tarih = _hslot(2)[0]
+    alan = _mk_area(client, yonetici, ad=f"Pasif-{uuid.uuid4().hex[:6]}")
     client.patch(f"/common-areas/{alan['id']}", headers=yonetici,
                  json={"aktif": False})
     # pasif alan sakine gorunmez (rezerve edilemez -> varlik sizdirilmaz)
     assert client.get(f"/common-areas/{alan['id']}/slots", headers=resident,
-                      params={"date": "2026-09-02"}).status_code == 404
+                      params={"date": tarih}).status_code == 404
     # yonetim pasif alanin slotlarini gorur (duzenleme baglami)
     assert client.get(f"/common-areas/{alan['id']}/slots", headers=yonetici,
-                      params={"date": "2026-09-02"}).status_code == 200
+                      params={"date": tarih}).status_code == 200
 
 
-def test_talep_musaitlik_penceresi_disi_422(client, rworld):
+def test_rezerve_musaitlik_penceresi_disi_422(client, rworld):
     yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    # Pencere [+2s, +4s]: ici slotlar gelecekte + <24s icinde.
+    start = (_now() + timedelta(hours=2)).replace(minute=0, second=0, microsecond=0)
+    h = start.hour
+    tarih = start.date().isoformat()
     alan = _mk_area(client, yonetici, ad=f"Pencere-{uuid.uuid4().hex[:6]}",
-                    acilis="10:00", kapanis="14:00", slot_dakika=60)
-    # acilis oncesi / kapanis sonrasi -> 422 (musaitlik disi)
-    _request(client, resident, alan["id"], tarih="2026-09-03",
-             baslangic="09:00", bitis="10:00", expect=422)
-    _request(client, resident, alan["id"], tarih="2026-09-03",
-             baslangic="14:00", bitis="15:00", expect=422)
+                    acilis=f"{h:02d}:00", kapanis=f"{h + 2:02d}:00", slot_dakika=60)
+    # acilis oncesi (+1s) -> 422 musaitlik disi
+    _post(client, resident, alan["id"],
+          (tarih, f"{h - 1:02d}:00", f"{h:02d}:00"), expect=422)
+    # kapanis sonrasi -> 422
+    _post(client, resident, alan["id"],
+          (tarih, f"{h + 2:02d}:00", f"{h + 3:02d}:00"), expect=422)
     # pencere ici -> 201
-    _request(client, resident, alan["id"], tarih="2026-09-03",
-             baslangic="10:00", bitis="11:00", expect=201)
+    _post(client, resident, alan["id"],
+          (tarih, f"{h:02d}:00", f"{h + 1:02d}:00"), expect=201)

@@ -384,14 +384,15 @@ class HomeScreen extends ConsumerWidget {
           ),
         );
       case HomeMenuEntry.binaDuzenleme:
-        // D-viz Rev-2: gorsel bina editoru — blok/kat/daire olustur/duzenle.
-        // Yonetici kurar; Sikayet Haritasi bu yapiyi yansitir.
+        // D-viz Rev-2: gorsel bina yapisi — blok/kat/daire. Yonetim (admin/
+        // yonetici) olusturur/duzenler; security + tesis_gorevlisi SALT-OKUMA
+        // gorur (duzenleme yok). Ekran role gore kilitlenir.
         return Card(
           child: ListTile(
-            leading: const Icon(Icons.edit_location_alt_outlined),
-            title: const Text('Bina Düzenleme'),
+            leading: const Icon(Icons.apartment_outlined),
+            title: const Text('Bina Yapısı'),
             subtitle: const Text(
-              'Blok, kat ve daireleri görsel olarak oluştur/düzenle',
+              'Blok, kat ve daire yerleşimi (yönetim düzenler)',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.binaDuzenleme),
@@ -409,20 +410,6 @@ class HomeScreen extends ConsumerWidget {
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.sikayetHaritasi),
-          ),
-        );
-      case HomeMenuEntry.binaYapisi:
-        // Salt-okuma bina yapisi (security + tesis_gorevlisi): yogunluk/renk
-        // yok, referans amacli blok/kat/daire yerlesimi.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.apartment_outlined),
-            title: const Text('Bina Yapısı'),
-            subtitle: const Text(
-              'Blok, kat ve daire yerleşimi (salt görüntüleme)',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.binaYapisi),
           ),
         );
       case HomeMenuEntry.sikayetlerim:

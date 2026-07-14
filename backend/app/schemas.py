@@ -768,9 +768,9 @@ class GrantedUnitsResponse(BaseModel):
 
 
 # ---------------------------- ortak alan / rezervasyon ---------------------- #
-RezervasyonDurum = Literal["bekliyor", "onaylandi", "reddedildi"]
-# Yoneticinin verebilecegi karar — 'bekliyor'a geri donus yok.
-RezervasyonKarar = Literal["onaylandi", "reddedildi"]
+# Onay akisi KALDIRILDI: bos slot talebi ANINDA onaylanir (durum='onaylandi').
+# Tek gecis 'onaylandi' -> 'iptal' (sakin/yonetim iptali; slotu bosaltir).
+RezervasyonDurum = Literal["onaylandi", "iptal"]
 
 
 # Musaitlik: alan her gun [acilis, kapanis) araliginda, slot_dakika slot
@@ -843,12 +843,18 @@ class OrtakAlanListResponse(BaseModel):
 
 
 class SlotOut(BaseModel):
-    """Bir gunun tek slotu — kimlik YOK, yalniz dolu/bos (gizlilik)."""
+    """Bir gunun tek slotu — kimlik YOK, yalniz dolu/bos + rezerve edilebilirlik."""
 
     baslangic: str
     bitis: str
     # dolu = bu slotla kesisen ONAYLI bir rezervasyon var (kim oldugu paylasilmaz).
     dolu: bool
+    # rezerve_edilebilir: istekteki sakin bu slotu SIMDI rezerve edebilir mi
+    # (24s penceresi + gunluk kota + son-dakika istisnasi; yonetimde her zaman
+    # False — yonetim rezerve etmez). sebep None ise edilebilir.
+    rezerve_edilebilir: bool = False
+    # Neden edilemedigi: 'dolu' | 'gecti' | 'cok_erken' | 'gunluk' | None.
+    sebep: str | None = None
 
 
 class AlanSlotResponse(BaseModel):
@@ -883,12 +889,6 @@ class RezervasyonCreate(BaseModel):
         return self
 
 
-class RezervasyonUpdate(BaseModel):
-    """Yonetici karari — onay/red (onaylayan + zaman sunucuda damgalanir)."""
-
-    durum: RezervasyonKarar
-
-
 class RezervasyonOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -906,9 +906,10 @@ class RezervasyonOut(BaseModel):
     durum: str
     talep_eden_user_id: uuid.UUID
     talep_eden_ad: str | None = None
-    onaylayan_user_id: uuid.UUID | None = None
-    onaylayan_ad: str | None = None
-    karar_zamani: datetime | None = None
+    # Iptal eden (sakin/yonetim) + zamani — yalniz durum='iptal'de dolu.
+    iptal_eden_user_id: uuid.UUID | None = None
+    iptal_eden_ad: str | None = None
+    iptal_zamani: datetime | None = None
     created_at: datetime
 
     @field_validator("baslangic", "bitis", mode="before")

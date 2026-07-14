@@ -98,7 +98,6 @@ Widget _app(
   required BuildingMap map,
   List<UnitComplaint> complaints = const [],
   _FakeComplaintApi? complaintApi,
-  String title = 'Şikayet Haritası',
 }) {
   return ProviderScope(
     overrides: [
@@ -107,7 +106,7 @@ Widget _app(
           .overrideWithValue(complaintApi ?? _FakeComplaintApi(complaints)),
       currentUserRoleProvider.overrideWith((ref) async => role),
     ],
-    child: MaterialApp(home: BuildingSchematicScreen(title: title)),
+    child: const MaterialApp(home: BuildingSchematicScreen()),
   );
 }
 
@@ -182,20 +181,6 @@ void main() {
         await tester.tap(find.text('A-1'));
         await tester.pumpAndSettle();
         expect(find.text('Bu daireyi şikayet et'), findsNothing);
-      });
-
-      testWidgets(
-          '${role.name}: "Bina Yapısı" basligiyla salt yapi (renk/sayi YOK)',
-          (tester) async {
-        await tester.pumpWidget(
-          _app(role, map: _structureMap(), title: 'Bina Yapısı'),
-        );
-        await tester.pumpAndSettle();
-        // Baslik override edilir; yogunluk gostergesi/sayisi yok (yapi-only).
-        expect(find.text('Bina Yapısı'), findsOneWidget);
-        expect(find.text('0–2'), findsNothing); // legend yok
-        expect(find.text('6'), findsNothing); // hucre sayisi yok
-        expect(find.text('A-1'), findsOneWidget); // yapi gorunur
       });
     }
 
