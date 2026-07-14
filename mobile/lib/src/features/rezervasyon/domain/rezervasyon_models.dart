@@ -87,6 +87,7 @@ class Slot {
     this.sebep,
     this.unitNo,
     this.kisiSayisi,
+    this.benim = false,
   });
 
   /// "HH:MM".
@@ -110,6 +111,10 @@ class Slot {
   /// YALNIZ yonetim + dolu slot: rezerve edilen kisi sayisi (resident: null).
   final int? kisiSayisi;
 
+  /// YALNIZ resident: bu dolu slot KENDI rezervasyonu mu (yesil/kirmizi rengi
+  /// icin). Baskasinin dolu slotu benim=false + kimlik/kisi null (gizlilik).
+  final bool benim;
+
   /// Sakine gosterilecek kisa sebep etiketi (sebep koduna gore).
   String? get sebepEtiketi => switch (sebep) {
         'dolu' => 'dolu',
@@ -127,6 +132,7 @@ class Slot {
         sebep: json['sebep'] as String?,
         unitNo: json['unit_no'] as String?,
         kisiSayisi: (json['kisi_sayisi'] as num?)?.toInt(),
+        benim: json['benim'] as bool? ?? false,
       );
 }
 

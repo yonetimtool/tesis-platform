@@ -597,12 +597,15 @@ Notlar:
     `sebep` (`dolu`|`gecti`|`cok_erken`|`gunluk`|null) doner. **dolu** = o slotla
     kesisen ONAYLI rezervasyon var; iptal DOLDURMAZ. **rezerve_edilebilir**
     yalniz SAKIN icin hesaplanir (24s + gunluk kota + son-dakika); yonetimde
-    daima false. **GORUNURLUK KADEMESI:** 🔵 `resident`/saha dolu slotta YALNIZ
-    "dolu" gorur (kim + kac kisi GIZLI — `unit_no`/`kisi_sayisi` = null); ✅
-    `admin`/`yonetici` dolu slotta ayrica rezerve eden **daire (`unit_no`) +
-    `kisi_sayisi`** gorur (denetim). Pasif alan sakine/sahaya **404**; yonetim
-    pasif alan slotlarini gorur. Sakin bu uctan gunun bos slotlarini secip
-    rezerve eder (uygulama "alanlar-once": alani sec → gunun slotlarini gor).
+    daima false. **GUNLUK KOTA SLOT-GUNUNE gore** olculur (`Rezervasyon.tarih ==
+    goruntulenen/talep gunu`; rezervasyon/bugun gunu DEGIL) → farkli gun serbest.
+    **GORUNURLUK KADEMESI:** 🔵 `resident` dolu slotta: KENDI rezervasyonu ise
+    `benim=true` (istemci baslangic/bitis+simdi ile aktif=YESIL / gecmis=KIRMIZI
+    secer); BASKASININ ise anonim "dolu" (`benim=false`, `unit_no`/`kisi_sayisi`
+    = null — kimlik/kac kisi SIZMAZ). ✅ `admin`/`yonetici` dolu slotta rezerve
+    eden **daire (`unit_no`) + `kisi_sayisi`** gorur (denetim; `benim` yok).
+    Pasif alan sakine/sahaya **404**; yonetim pasif alan slotlarini gorur. Tum
+    roller "alanlar-once" akisla: alani sec → gunun slot izgarasini gor.
   - **REZERVE ET (`POST /reservations`) YALNIZ `resident`:** alan + tarih +
     saat araligi (bitis > baslangic, ayni gun) + kisi_sayisi (>0). Daire
     sakinin AKTIF dairesinden turetilir (coklu dairede `unit_id` ile secim —

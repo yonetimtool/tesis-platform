@@ -305,6 +305,43 @@ void main() {
       expect(api.requested.single.bitis, '11:00');
       expect(api.requested.single.kisiSayisi, 3);
     });
+
+    testWidgets('resident KENDI dolu slotunu gorur: aktif "Rezervasyonunuz" + '
+        'gecmis "(geçti)"; BASKASININKI anonim "Dolu"', (tester) async {
+      // Sunucu resident'a benim=true doner (kendi rezervasyonu). Aktif/gecmis
+      // ayrimini istemci bitis+simdi ile yapar; gunun sonu (23:59) aktif,
+      // basi (00:30) gecmis kabul edilir (test ortami gun-ici saatte kosar).
+      final ownSlots = <Slot>[
+        const Slot(
+            baslangic: '23:00',
+            bitis: '23:59',
+            dolu: true,
+            benim: true), // aktif -> yesil "Rezervasyonunuz"
+        const Slot(
+            baslangic: '00:00',
+            bitis: '00:30',
+            dolu: true,
+            benim: true), // gecmis -> kirmizi "Rezervasyonunuz (geçti)"
+        const Slot(
+            baslangic: '12:00',
+            bitis: '13:00',
+            dolu: true,
+            benim: false), // baskasi -> anonim "Dolu"
+      ];
+      final (_, app) = _app(UserRole.resident, slots: ownSlots);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Alanlar (1)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Havuz'));
+      await tester.pumpAndSettle();
+      // Kendi rezervasyonu isaretli (kimlik degil — yalniz "sizin").
+      expect(find.text('Rezervasyonunuz'), findsOneWidget);
+      expect(find.text('Rezervasyonunuz (geçti)'), findsOneWidget);
+      // Baskasinin dolu slotu anonim "Dolu" (kimlik/kisi YOK).
+      expect(find.text('Dolu'), findsOneWidget);
+      expect(find.textContaining('Daire'), findsNothing);
+    });
   });
 
   group('Alanlar sekmesi aktiflik anahtari', () {

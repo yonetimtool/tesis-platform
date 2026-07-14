@@ -864,6 +864,10 @@ class SlotOut(BaseModel):
     # (denetim). resident/saha icin DAIMA None (gizlilik).
     unit_no: str | None = None
     kisi_sayisi: int | None = None
+    # YALNIZ resident: bu dolu slot KENDI rezervasyonu mu (yesil/kirmizi renk
+    # kararini istemci baslangic/bitis + simdi ile verir). Baskalarinin dolu
+    # slotu benim=False + kimlik/kisi None kalir (gizlilik).
+    benim: bool = False
 
 
 class AlanSlotResponse(BaseModel):

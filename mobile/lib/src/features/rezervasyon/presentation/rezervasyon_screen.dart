@@ -794,18 +794,28 @@ class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
     }
   }
 
-  /// Slotun durum etiketi (rol-farkinda; unit_no/kisi_sayisi yalniz yonetime
-  /// gelir — sunucu resident'a null doner, bu yuzden burada da gizli kalir).
-  String _durumEtiketi(Slot s) {
-    if (s.dolu) {
-      if (s.unitNo != null) {
-        final kisi = s.kisiSayisi != null ? ' · ${s.kisiSayisi} kişi' : '';
-        return 'Dolu · Daire ${s.unitNo}$kisi';
-      }
-      return 'Dolu';
+  /// Slotun bu tarih icin BITIS anini yerel DateTime'a cevirir (gecmis karari).
+  /// tenant yerel saati cihaz yerel saati kabul edilir (renk UX; sunucu benim
+  /// isaretini verir, gecmis/aktif ayrimini istemci yapar).
+  DateTime? _bitisAni(Slot s) {
+    final g = _tarihStr.split('-');
+    final t = s.bitis.split(':');
+    if (g.length != 3 || t.length < 2) return null;
+    final y = int.tryParse(g[0]);
+    final mo = int.tryParse(g[1]);
+    final d = int.tryParse(g[2]);
+    final h = int.tryParse(t[0]);
+    final mi = int.tryParse(t[1]);
+    if (y == null || mo == null || d == null || h == null || mi == null) {
+      return null;
     }
-    if (s.rezerveEdilebilir) return 'Boş';
-    return s.sebepEtiketi ?? 'Boş';
+    return DateTime(y, mo, d, h, mi);
+  }
+
+  /// Kendi (benim) rezervasyonu gecmis mi (bitis simdiyi gecti mi) → kirmizi.
+  bool _gecti(Slot s) {
+    final end = _bitisAni(s);
+    return end != null && DateTime.now().isAfter(end);
   }
 
   @override
@@ -875,34 +885,158 @@ class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
         child: Text('Bu alan için tanımlı slot yok.'),
       );
     }
-    return ListView.separated(
-      shrinkWrap: true,
-      itemCount: _slots.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (context, i) {
-        final s = _slots[i];
-        // Sakin YALNIZ bos + rezerve edilebilir slotu ayirtabilir.
-        final ayirtilabilir = canRequest && !s.dolu && s.rezerveEdilebilir;
-        return ListTile(
-          dense: true,
-          contentPadding: EdgeInsets.zero,
-          leading: Icon(
-            s.dolu ? Icons.event_busy : Icons.event_available,
-            color: s.dolu
-                ? Colors.grey
-                : (s.rezerveEdilebilir ? Colors.green : Colors.grey),
+    // Slot IZGARASI: renkli hucreler. Renk kademesi rol-farkinda (_SlotCell).
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (canRequest) const _SlotLegend(),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final s in _slots)
+                _SlotCell(
+                  slot: s,
+                  canRequest: canRequest,
+                  gecti: _gecti(s),
+                  onBook: () => _book(s),
+                ),
+            ],
           ),
-          title: Text('${s.baslangic} – ${s.bitis}'),
-          subtitle: Text(_durumEtiketi(s)),
-          trailing: ayirtilabilir
-              ? FilledButton(
-                  onPressed: () => _book(s),
-                  child: const Text('Seç'),
-                )
-              : null,
-          onTap: ayirtilabilir ? () => _book(s) : null,
+        ],
+      ),
+    );
+  }
+}
+
+// Slot renkleri (yesil=benim aktif, kirmizi=benim gecti; blueGrey=baskasi/dolu).
+const Color _slotYesil = Color(0xFF2E7D32);
+const Color _slotKirmizi = Color(0xFFC62828);
+const Color _slotAmber = Color(0xFFF9A825); // yonetim: dolu (denetim)
+
+/// Resident icin renk gostergesi (yesil=aktif rezervasyonum, kirmizi=gecmis).
+class _SlotLegend extends StatelessWidget {
+  const _SlotLegend();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget item(Color c, String label) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                  color: c.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(3)),
+            ),
+            const SizedBox(width: 4),
+            Text(label, style: const TextStyle(fontSize: 11)),
+          ],
         );
-      },
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Wrap(spacing: 12, runSpacing: 4, children: [
+        item(_slotYesil, 'Rezervasyonum (aktif)'),
+        item(_slotKirmizi, 'Rezervasyonum (geçti)'),
+        item(Colors.blueGrey, 'Dolu (başkası)'),
+      ]),
+    );
+  }
+}
+
+/// Tek slot hucresi — ROL-FARKINDA renk kademesi:
+///   * resident bos+rezerve edilebilir → "Boş" (yesil kenar, dokunulur → Seç)
+///   * resident bos+edilemez → gri + sebep (24s/kota/geçti)
+///   * resident KENDI aktif → YESIL dolgu "Rezervasyonunuz"
+///   * resident KENDI gecmis → KIRMIZI dolgu "Rezervasyonunuz (geçti)"
+///   * resident BASKASI → notr gri "Dolu" (kimlik/kisi YOK — gizlilik)
+///   * yonetim dolu → amber "Dolu · Daire X · n kişi" (denetim)
+class _SlotCell extends StatelessWidget {
+  const _SlotCell({
+    required this.slot,
+    required this.canRequest,
+    required this.gecti,
+    required this.onBook,
+  });
+
+  final Slot slot;
+  final bool canRequest;
+  final bool gecti;
+  final VoidCallback onBook;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = slot;
+    Color renk;
+    String durum;
+    bool secilebilir = false;
+
+    if (s.dolu) {
+      if (canRequest && s.benim) {
+        renk = gecti ? _slotKirmizi : _slotYesil;
+        durum = gecti ? 'Rezervasyonunuz (geçti)' : 'Rezervasyonunuz';
+      } else if (s.unitNo != null) {
+        // Yonetim: rezerve eden daire + kisi (denetim).
+        renk = _slotAmber;
+        final kisi = s.kisiSayisi != null ? ' · ${s.kisiSayisi} kişi' : '';
+        durum = 'Dolu · Daire ${s.unitNo}$kisi';
+      } else {
+        // Resident: baskasinin rezervasyonu — ANONIM (kimlik/kisi yok).
+        renk = Colors.blueGrey;
+        durum = 'Dolu';
+      }
+    } else if (canRequest && s.rezerveEdilebilir) {
+      renk = _slotYesil;
+      durum = 'Boş';
+      secilebilir = true;
+    } else {
+      renk = Colors.blueGrey;
+      durum = s.sebepEtiketi ?? 'Boş';
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cell = Container(
+      width: 150,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: renk.withValues(alpha: isDark ? 0.28 : 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: renk, width: 1.4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('${s.baslangic} – ${s.bitis}',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              Expanded(
+                child: Text(durum,
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? null : renk,
+                        fontWeight: FontWeight.w600)),
+              ),
+              if (secilebilir)
+                const Text('Seç',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _slotYesil)),
+            ],
+          ),
+        ],
+      ),
+    );
+    if (!secilebilir) return cell;
+    return InkWell(
+      onTap: onBook,
+      borderRadius: BorderRadius.circular(10),
+      child: cell,
     );
   }
 }

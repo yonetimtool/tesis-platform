@@ -256,15 +256,21 @@ def test_yarin_ama_24s_icinde_ok(client, rworld):
 
 
 def test_gunde_bir_rezervasyon(client, rworld):
-    """Sakin, slot-gunune denk 1 aktif rezervasyon tutar; ikincisi 409."""
+    """Gunluk kota SLOT-GUNUNE gore: ayni gun 2. slot 409; FARKLI gun serbest.
+
+    (Regresyon: bir gunun slotunu almak baska GUNU bloke ETMEMELI — kota
+    rezervasyon/bugun gunune degil, SLOTUN takvim gunune baglidir.)"""
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
     diger = _headers(client, rworld["slug_a"], rworld["diger"])
-    # ilk rezervasyon (simdi+2s) OK
+    # ilk rezervasyon (bugun +2s) OK
     _post(client, resident, rworld["alan1"], _hslot(2))
-    # ayni sakin ayni gun IKINCI (cakismayan) slot -> 409 gunluk kota
+    # ayni sakin AYNI gun IKINCI (cakismayan) slot -> 409 gunluk kota
     r = _post(client, resident, rworld["alan1"], _hslot(4), expect=409)
     assert "bu gun" in r["error"]["message"].lower()
-    # BASKA sakin ayni gun rezerve edebilir (kota kisi-bazli)
+    # ayni sakin FARKLI gun (yarin, 24s icinde) rezerve EDEBILIR — kota slot-gunu
+    # bazli; bugunku rezervasyon yarini bloke ETMEZ.
+    _post(client, resident, rworld["alan1"], _hslot(23))
+    # BASKA sakin ayni gun de rezerve edebilir (kota kisi-bazli)
     _post(client, diger, rworld["alan1"], _hslot(4))
 
 
@@ -506,21 +512,24 @@ def test_slots_dolu_bos_ve_gorunurluk_kademesi(client, rworld):
     _post(client, resident, alan["id"], s2, kisi_sayisi=3)
     dolu_bas = s2[1]
 
-    # RESIDENT (diger) gorunumu: dolu slotta kimlik + kisi GIZLI (None)
+    # RESIDENT (diger) gorunumu: BASKASININ dolu slotu ANONIM — kimlik/kisi
+    # GIZLI (None) VE benim=False (kimlik SIZMAZ).
     s1 = _slots(diger)
     assert s1[dolu_bas]["dolu"] is True
     assert s1[dolu_bas]["rezerve_edilebilir"] is False and s1[dolu_bas]["sebep"] == "dolu"
     for it in s1.values():
-        # alanlar mevcut (sema) ama resident'a kimlik/kisi DAIMA None
         assert set(it.keys()) == {"baslangic", "bitis", "dolu",
                                   "rezerve_edilebilir", "sebep",
-                                  "unit_no", "kisi_sayisi"}
+                                  "unit_no", "kisi_sayisi", "benim"}
         assert it["unit_no"] is None and it["kisi_sayisi"] is None
+    # diger baskasinin (resident_a) slotunu KENDI slotu SANMAZ
+    assert s1[dolu_bas]["benim"] is False
 
-    # YONETIM gorunumu: dolu slotta rezerve eden DAIRE + kisi sayisi
+    # YONETIM gorunumu: dolu slotta rezerve eden DAIRE + kisi sayisi (benim yok)
     s_y = _slots(yonetici)
     assert s_y[dolu_bas]["unit_no"] == rworld["unit1_no"]
     assert s_y[dolu_bas]["kisi_sayisi"] == 3
+    assert s_y[dolu_bas]["benim"] is False
     # bos slotta yonetimde de unit/kisi None
     assert s_y[bos_bas]["unit_no"] is None and s_y[bos_bas]["kisi_sayisi"] is None
     # yonetim rezerve_edilemez (rezerve etmez)
@@ -531,6 +540,10 @@ def test_slots_dolu_bos_ve_gorunurluk_kademesi(client, rworld):
     assert s_res[bos_bas]["rezerve_edilebilir"] is False
     assert s_res[bos_bas]["sebep"] == "gunluk"
     assert s_res[bos_bas]["unit_no"] is None  # kendi gorununde de kimlik yok
+    # KENDI dolu slotu: benim=True (yesil/kirmizi rengi buradan) — ama kimlik
+    # alani yine None (renk karari baslangic/bitis+simdi ile).
+    assert s_res[dolu_bas]["benim"] is True
+    assert s_res[dolu_bas]["unit_no"] is None and s_res[dolu_bas]["kisi_sayisi"] is None
 
     # TUM roller slotlari okuyabilir
     for role in ("resident_a", "guard_a", "gorevli_a", "yonetici_a", "admin_a"):

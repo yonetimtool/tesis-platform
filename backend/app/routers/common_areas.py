@@ -21,7 +21,7 @@ from .. import reservations_timing as rtiming
 from ..crud_helpers import is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, OrtakAlan, Rezervasyon, Tenant, Unit, UnitResident
+from ..models import AppUser, OrtakAlan, Rezervasyon, Tenant, Unit
 from ..schemas import (
     AlanSlotResponse,
     OrtakAlanCreate,
@@ -142,8 +142,9 @@ async def area_slots(
     if alan is None or (not alan.aktif and user.role not in _MANAGEMENT_ROLES):
         raise APIError(404, "not_found", "Kayit bulunamadi")
 
-    # O gunun ONAYLI rezervasyon araliklari. Daire no + kisi sayisi da cekilir
-    # ama YALNIZ yonetime aciklanir (gizlilik — asagida is_mgmt kapisi).
+    # O gunun ONAYLI rezervasyon araliklari. Daire no + kisi sayisi YALNIZ
+    # yonetime aciklanir; talep_eden_user_id yalniz "benim mi" kararinda
+    # kullanilir (resident'a kimlik SIZDIRILMAZ — asagidaki kapilar).
     onayli = (
         await db.execute(
             select(
@@ -151,6 +152,7 @@ async def area_slots(
                 Rezervasyon.bitis,
                 Unit.no,
                 Rezervasyon.kisi_sayisi,
+                Rezervasyon.talep_eden_user_id,
             )
             .join(Unit, Unit.id == Rezervasyon.unit_id)
             .where(
@@ -161,25 +163,22 @@ async def area_slots(
         )
     ).all()
 
-    # Rezerve edilebilirlik yalniz SAKIN icin anlamli (yonetim rezerve etmez).
-    # Sakinin bu gune (slot-gunu) denk AKTIF rezervasyonu varsa gunluk kota dolu.
     is_resident = user.role == "resident"
     is_mgmt = user.role in _MANAGEMENT_ROLES
     tzname = (
         await db.execute(select(Tenant.timezone).where(Tenant.id == user.tenant_id))
     ).scalar_one_or_none() or "Europe/Istanbul"
+    # GUNLUK KOTA — SLOT-GUNUNE gore (tarih = goruntulenen slot-gunu; DEGIL
+    # rezervasyon/bugun gunu). Sakinin bu gune denk AKTIF rezervasyonu var mi.
     kota_dolu = False
     if is_resident:
         kota_dolu = (
             await db.execute(
-                select(Rezervasyon.id)
-                .join(UnitResident, UnitResident.unit_id == Rezervasyon.unit_id)
-                .where(
+                select(Rezervasyon.id).where(
                     Rezervasyon.talep_eden_user_id == user.id,
                     Rezervasyon.tarih == tarih,
                     Rezervasyon.durum == "onaylandi",
-                )
-                .limit(1)
+                ).limit(1)
             )
         ).scalar_one_or_none() is not None
     now = rtiming.now_utc()
@@ -206,6 +205,10 @@ async def area_slots(
             rezerve = sebep is None
         elif dolu:
             sebep = "dolu"
+        # benim: YALNIZ resident + dolu slot KENDI rezervasyonu (yesil/kirmizi
+        # rengi istemci baslangic/bitis + simdi ile secer). Baskasinin dolu
+        # slotu benim=False + kimlik/kisi None (gizlilik — kimlik SIZMAZ).
+        benim = bool(is_resident and match and match.talep_eden_user_id == user.id)
         items.append(
             SlotOut(
                 baslangic=s.strftime("%H:%M"),
@@ -217,6 +220,7 @@ async def area_slots(
                 # resident/saha icin DAIMA None (gizlilik).
                 unit_no=match.no if (is_mgmt and match) else None,
                 kisi_sayisi=match.kisi_sayisi if (is_mgmt and match) else None,
+                benim=benim,
             )
         )
         cur += step

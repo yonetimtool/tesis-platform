@@ -5065,6 +5065,13 @@ components:
           type: integer
           nullable: true
           description: YALNIZ admin/yonetici + dolu slot: rezerve edilen kisi sayisi
+        benim:
+          type: boolean
+          default: false
+          description: >-
+            YALNIZ resident: bu dolu slot istekteki sakinin KENDI rezervasyonu
+            mu. Istemci baslangic/bitis + simdi ile aktif(yesil)/gecmis(kirmizi)
+            rengini secer. Baskasinin dolu slotu benim=false + kimlik/kisi null.
     AlanSlotResponse:
       type: object
       required: [alan_id, tarih, slot_dakika, items]
