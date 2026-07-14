@@ -62,6 +62,13 @@ class SetPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8)
 
 
+# Self-servis parola degisimi (PATCH /me/password) — kullanici KENDI parolasini
+# gunceller; mevcut parola zorunlu (auth.md self-servis profil).
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8)
+
+
 class RefreshRequest(BaseModel):
     refresh_token: str
 
@@ -152,6 +159,20 @@ class UserContactUpdate(BaseModel):
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
         return self
+
+
+# Self-servis profil ciktisi (GET /me/profile, PATCH /me/contact) — kullanici
+# KENDI kimlik + iletisim alanlarini gorur. password_hash ASLA yok.
+class MeProfileOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    email: str | None = None  # resident'ta opsiyonel
+    telefon: str | None = None
+    aranabilir: bool = False
+    role: str
+    is_active: bool
 
 
 class UserAdminListResponse(BaseModel):

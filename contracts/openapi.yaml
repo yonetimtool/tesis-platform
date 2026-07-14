@@ -195,6 +195,54 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
 
   # ================================================================= #
+  # SELF-SERVIS PROFIL (/me/*) — tum roller, yalniz kendi kaydi
+  # ================================================================= #
+  /me/profile:
+    get:
+      tags: [me]
+      summary: Kendi profilim (kimlik + iletisim)
+      responses:
+        "200":
+          description: Profil
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeProfileOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /me/password:
+    patch:
+      tags: [me]
+      summary: Kendi parolami degistir (mevcut parola zorunlu)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordChangeRequest" }
+      responses:
+        "204": { description: Parola guncellendi }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /me/contact:
+    patch:
+      tags: [me]
+      summary: Kendi telefon + arama rizami guncelle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserContactUpdate" }
+      responses:
+        "200":
+          description: Guncellenmis profil
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeProfileOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
   # SHIFTS
   # ================================================================= #
   /shifts:
@@ -3967,11 +4015,33 @@ components:
         password: { type: string, format: password, minLength: 8 }
     UserContactUpdate:
       type: object
-      description: Rol-bazli arama iletisim ayari (admin+yonetici) — en az bir alan
+      description: >
+        Iletisim ayari (telefon + arama rizasi) — en az bir alan. Yonetim ucunda
+        (PATCH /users/{id}/contact, admin+yonetici -> baskasi) VE self-servis
+        ucunda (PATCH /me/contact, kullanici kendi) ayni govde.
       minProperties: 1
       properties:
         telefon: { type: string, nullable: true, maxLength: 40 }
         aranabilir: { type: boolean }
+    PasswordChangeRequest:
+      type: object
+      description: Self-servis parola degisimi (PATCH /me/password) — mevcut parola zorunlu
+      required: [current_password, new_password]
+      properties:
+        current_password: { type: string, format: password, minLength: 1 }
+        new_password: { type: string, format: password, minLength: 8 }
+    MeProfileOut:
+      type: object
+      description: Self-servis profil (GET /me/profile, PATCH /me/contact) — password_hash yok
+      required: [id, ad, role, is_active, aranabilir]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string }
+        email: { type: string, nullable: true }
+        telefon: { type: string, nullable: true }
+        aranabilir: { type: boolean }
+        role: { $ref: "#/components/schemas/UserRole" }
+        is_active: { type: boolean }
     CallTarget:
       type: object
       description: >

@@ -41,6 +41,11 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('Ana ekran'),
         actions: [
           IconButton(
+            tooltip: 'Profil',
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => context.push(AppRoutes.profile),
+          ),
+          IconButton(
             tooltip: 'Ayarlar',
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => context.push(AppRoutes.settings),

@@ -157,6 +157,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /auth/set-password` (ilk giris) |  ❌   | ❌  | ❌  | ❌  | ✅  |
 | `POST /residents` (sakin ac + kod)    |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /auth/refresh`                  |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `GET  /me/profile` (kendi)            |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `PATCH /me/password` (kendi)          |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `PATCH /me/contact` (kendi tel/riza)  |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET  /shifts` (liste/detay)          |  ✅   | ❌  | ✅  | ✅  | ❌  |
 | `POST /shifts`                        |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `PATCH /shifts/{id}`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
@@ -488,6 +491,20 @@ Notlar:
   - **ILETISIM AYARI (`PATCH /users/{id}/contact`):** telefon + riza YALNIZ
     `admin`+`yonetici` tarafindan girilir — rol/parola/is_active gibi hassas
     alanlara DOKUNMADAN (tam PATCH `admin`-only kalir; yetki yukseltme yok).
+- **Self-servis profil (`/me/profile`, `/me/password`, `/me/contact`) — TUM
+  roller, YALNIZ kendi kaydi:** giris yapmis kullanici kendi profilini gorur ve
+  gunceller (mobil sag-ust profil ikonu).
+  - **`GET /me/profile`:** kimlik + iletisim alanlari (`ad`/`email`/`telefon`/
+    `aranabilir`/`role`/`is_active`); `password_hash` ASLA donmez.
+  - **`PATCH /me/password`:** `current_password` + `new_password` (min 8).
+    Mevcut parola dogrulanir; hatali → **400** `invalid_credentials` ("Mevcut
+    parola hatali."). Basarida yeni bcrypt hash; **204**. Oturum (refresh)
+    devam eder (token iptali yok). Parolasiz sakin (temp-kod bekleyen) zaten
+    access token tasimaz → uc implicit kapali.
+  - **`PATCH /me/contact`:** kullanici KENDI `telefon` + `aranabilir` rizasini
+    yonetir (en az bir alan). Numara **OTP'siz dogrudan** kaydedilir (SMS
+    altyapisi ileride). Yonetim ucu (`PATCH /users/{id}/contact`, baskasi icin)
+    ayri kalir; bu onun kendi-kaydi karsiligidir.
   - **Kanal soyutlamasi (C1b'ye hazir):** yanit `channel` alani tasir; C1a yalniz
     `phone` (tel:). C1b (megafon/akilli-ev HTTP adaptorleri) yeni kanal + resolver
     ekler — sema/kapi yeniden yazilmaz. (Teknik data-minimization; hukuki tavsiye
