@@ -75,52 +75,19 @@ class AuthController extends Notifier<AuthState> {
     );
   }
 
-  /// Login dener; basari → authenticated, hata → errorMessage doldurulur.
-  /// [rememberMe] true ise oturum kalici saklanir (sonraki acilis dogrudan
-  /// ana ekran).
-  Future<void> login({
-    required String tenantSlug,
-    required String email,
-    required String password,
-    bool rememberMe = false,
-  }) async {
-    state = state.copyWith(submitting: true, errorMessage: null);
-    try {
-      await ref.read(authRepositoryProvider).login(
-            tenantSlug: tenantSlug,
-            email: email,
-            password: password,
-            rememberMe: rememberMe,
-          );
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        submitting: false,
-      );
-    } on ApiException catch (e) {
-      state = state.copyWith(submitting: false, errorMessage: e.message);
-    } catch (_) {
-      state = state.copyWith(
-        submitting: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
-      );
-    }
-  }
-
-  /// Sakin girisi (daire no + kod|parola). Kalici parolayla giriste dogrudan
-  /// authenticated olur; GECICI kodla ilk giriste [AuthState.setupToken]
+  /// Mobil giris (cep telefonu + kod|parola). Kalici parolayla giriste
+  /// dogrudan authenticated olur; GECICI kodla ilk giriste [AuthState.setupToken]
   /// dolar ve parola belirleme ekranina gecilir (oturum henuz yoktur).
   /// [rememberMe] tercihi kurulum akisi boyunca korunur.
-  Future<void> loginResident({
-    required String tenantSlug,
-    required String unitNo,
+  Future<void> loginPhone({
+    required String phone,
     required String password,
     bool rememberMe = false,
   }) async {
     state = state.copyWith(submitting: true, errorMessage: null);
     try {
-      final result = await ref.read(authRepositoryProvider).loginResident(
-            tenantSlug: tenantSlug,
-            unitNo: unitNo,
+      final result = await ref.read(authRepositoryProvider).loginPhone(
+            phone: phone,
             password: password,
             rememberMe: rememberMe,
           );

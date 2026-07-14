@@ -66,19 +66,19 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
 
-  /auth/login-resident:
+  /auth/login-phone:
     post:
       tags: [auth]
-      summary: Sakin girisi — daire no + (gecici kod VEYA kalici parola)
+      summary: Mobil giris — cep telefonu (global benzersiz) + (gecici kod VEYA parola)
       description: |
-        SAKIN (resident) girisi personelden AYRIDIR: email yerine
-        `tenant_slug + unit_no + password` alinir. Ayni dairede birden fazla
-        sakin olabilir; hesap, girilen degerin hangi sakinin parola/kod
-        hash'iyle eslestigine gore cozulur (her sakinin kendi parolasi +
-        kendi tek seferlik gecici kodu vardir).
+        MOBIL roller (yonetici/security/tesis_gorevlisi/resident) girisi: e-posta/
+        daire no/tenant_slug YERINE `phone + password` alinir. Telefon GLOBAL
+        benzersiz oldugundan tenant NUMARADAN otomatik cozulur
+        (`tenant_id_by_phone`, SECURITY DEFINER). Numara E.164 normalize edilir.
+        (Admin paneli e-posta ile `POST /auth/login` kullanir.)
 
         * Kalici parola eslesirse: `password_setup_required=false` + tam
-          token cifti (personel TokenPair ile ayni alanlar).
+          token cifti (TokenPair ile ayni alanlar).
         * GECICI KOD eslesirse (ilk giris): `password_setup_required=true` +
           `setup_token` doner; oturum token'i VERILMEZ. Istemci
           `POST /auth/set-password` ile kalici parolayi belirlemek ZORUNDADIR.
@@ -88,17 +88,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ResidentLoginRequest"
+              $ref: "#/components/schemas/PhoneLoginRequest"
       responses:
         "200":
           description: Basarili (normal oturum VEYA parola kurulumu gerekli)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResidentLoginResponse"
+                $ref: "#/components/schemas/PhoneLoginResponse"
         "400": { $ref: "#/components/responses/BadRequest" }
         "401":
-          description: Hatali daire no / kod / parola / tesis
+          description: Hatali telefon / kod / parola
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
@@ -3335,8 +3335,10 @@ paths:
       tags: [users]
       summary: Kullanici olustur (admin)
       description: |
-        Her rol (admin/yonetici/security/tesis_gorevlisi/resident) olusturulabilir. parola bcrypt ile
-        hash'lenir; password_hash YANITTA donmez. email tenant icinde benzersiz.
+        Her rol olusturulabilir. telefon GLOBAL benzersiz LOGIN anahtaridir
+        (zorunlu). password verilmezse TEK SEFERLIK gecici kod uretilir ve
+        yanitta `temp_code` bir kez doner (temp password first). password_hash
+        YANITTA donmez.
       requestBody:
         required: true
         content:
@@ -3344,15 +3346,15 @@ paths:
             schema: { $ref: "#/components/schemas/UserCreate" }
       responses:
         "201":
-          description: Olusturuldu
+          description: Olusturuldu (parola verilmediyse `temp_code` doner)
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/User" }
+              schema: { $ref: "#/components/schemas/UserCreatedOut" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409":
-          description: email bu tenant'ta zaten kayitli
+          description: telefon (global) veya email (tenant) zaten kayitli
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "422": { $ref: "#/components/responses/ValidationError" }
@@ -3994,14 +3996,42 @@ components:
         created_at: { type: string, format: date-time }
     UserCreate:
       type: object
-      required: [ad, email, role, password]
+      description: |
+        telefon GLOBAL benzersiz LOGIN anahtaridir (zorunlu; E.164 normalize).
+        email opsiyonel (girise girmez). password verilmezse TEK SEFERLIK gecici
+        kod uretilir (yanitta `temp_code` bir kez doner — UserCreatedOut).
+      required: [ad, telefon, role]
       properties:
         ad: { type: string }
-        email: { type: string, format: email }
-        telefon: { type: string, nullable: true }
+        telefon:
+          type: string
+          description: GLOBAL benzersiz giris anahtari (E.164 normalize)
+          example: "+905321112204"
+        email: { type: string, format: email, nullable: true }
         aranabilir: { type: boolean, default: false }
         role: { $ref: "#/components/schemas/UserRole" }
-        password: { type: string, format: password, minLength: 8 }
+        password:
+          type: string
+          format: password
+          minLength: 8
+          nullable: true
+          description: Verilmezse gecici kod uretilir (temp password first)
+    UserCreatedOut:
+      type: object
+      description: >
+        Kullanici olusturma yaniti — `temp_code` YALNIZ parola verilmeyip gecici
+        kod uretildiginde ve bir kez duz metin doner.
+      required: [id, ad, role, is_active, aranabilir, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string }
+        email: { type: string, nullable: true }
+        telefon: { type: string, nullable: true }
+        aranabilir: { type: boolean }
+        role: { $ref: "#/components/schemas/UserRole" }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+        temp_code: { type: string, nullable: true, example: "K7MR-2QWX" }
     UserUpdate:
       type: object
       minProperties: 1
@@ -4318,8 +4348,8 @@ components:
     LoginRequest:
       type: object
       description: |
-        PERSONEL girisi (admin/yonetici/security/tesis_gorevlisi — email ile).
-        Sakin (resident) girisi icin `POST /auth/login-resident` kullanilir.
+        PANEL girisi (admin — e-posta + tenant_slug). Mobil roller telefon ile
+        `POST /auth/login-phone` kullanir.
       required: [tenant_slug, email, password]
       properties:
         tenant_slug:
@@ -4330,23 +4360,22 @@ components:
           example: "acme-plaza"
         email: { type: string, format: email }
         password: { type: string, format: password, minLength: 8 }
-    ResidentLoginRequest:
+    PhoneLoginRequest:
       type: object
-      required: [tenant_slug, unit_no, password]
+      description: |
+        Mobil giris — cep telefonu (GLOBAL benzersiz) + parola/gecici kod.
+        Tenant numaradan otomatik cozulur (tenant_slug YOK). Numara E.164
+        normalize edilir (0->+90).
+      required: [phone, password]
       properties:
-        tenant_slug:
+        phone:
           type: string
-          example: "acme-plaza"
-        unit_no:
-          type: string
-          description: Daire no (unit.no; tenant-ici benzersiz)
-          example: "A-12"
+          description: Cep telefonu (global benzersiz login anahtari)
+          example: "+905321112203"
         password:
           type: string
-          format: password
-          minLength: 8
-          description: Sakinin kalici parolasi VEYA ilk giriste gecici kod
-    ResidentLoginResponse:
+          description: Kalici parola VEYA ilk giriste gecici kod
+    PhoneLoginResponse:
       type: object
       required: [password_setup_required]
       properties:
@@ -4372,7 +4401,7 @@ components:
         new_password: { type: string, format: password, minLength: 8 }
     ResidentCreate:
       type: object
-      required: [unit_no, ad]
+      required: [unit_no, ad, telefon]
       properties:
         unit_no: { type: string, example: "A-12" }
         blok:
@@ -4380,12 +4409,15 @@ components:
           nullable: true
           description: Yalniz YENI acilan daireye islenir
         ad: { type: string, example: "Ayse Yilmaz" }
+        telefon:
+          type: string
+          description: GLOBAL benzersiz giris anahtari (E.164 normalize)
+          example: "+905321112203"
         email:
           type: string
           format: email
           nullable: true
-          description: Sakinde OPSIYONEL (giris anahtari degildir)
-        telefon: { type: string, nullable: true }
+          description: OPSIYONEL (giris anahtari degildir; bildirim/yedek)
         rol_tipi: { $ref: "#/components/schemas/ResidentRol" }
     ResidentCreated:
       type: object

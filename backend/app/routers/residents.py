@@ -64,7 +64,9 @@ async def create_resident(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "email bu tenant'ta zaten kayitli.")
+            # telefon global benzersiz; email tenant-ici benzersiz — hangisi
+            # oldugu ayirt edilmeden tek mesaj (numara/e-posta cakismasi).
+            raise APIError(409, "conflict", "Bu telefon veya e-posta zaten kayitli.")
         raise translate_integrity(exc)
 
     # 3) aktif daire-sakin baglantisi.

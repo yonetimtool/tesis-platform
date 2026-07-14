@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile/src/features/auth/domain/resident_login_result.dart';
+import 'package:mobile/src/features/auth/domain/phone_login_result.dart';
 
 void main() {
-  group('ResidentLoginResult.fromJson', () {
+  group('PhoneLoginResult.fromJson', () {
     test('normal giris: token cifti dolu, kurulum gerekmez', () {
-      final result = ResidentLoginResult.fromJson({
+      final result = PhoneLoginResult.fromJson({
         'password_setup_required': false,
         'setup_token': null,
         'access_token': 'a.b.c',
@@ -21,7 +21,7 @@ void main() {
     });
 
     test('ilk giris (gecici kod): setup_token dolu, token cifti yok', () {
-      final result = ResidentLoginResult.fromJson({
+      final result = PhoneLoginResult.fromJson({
         'password_setup_required': true,
         'setup_token': 'setup.jwt.token',
       });

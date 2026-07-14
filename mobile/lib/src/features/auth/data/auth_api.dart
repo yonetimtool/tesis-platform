@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
-import '../domain/resident_login_result.dart';
+import '../domain/phone_login_result.dart';
 import '../domain/token_pair.dart';
 
 /// Auth endpoint'lerinin ince HTTP istemcisi. DioException'lari sozlesme hata
@@ -13,43 +13,19 @@ class AuthApi {
 
   final Dio _dio;
 
-  /// `POST /auth/login` — LoginRequest semasina birebir uyar.
-  Future<TokenPair> login({
-    required String tenantSlug,
-    required String email,
+  /// `POST /auth/login-phone` — mobil giris: cep telefonu (global benzersiz) +
+  /// (kod|parola). Tenant numaradan otomatik cozulur (tenant_slug YOK). Gecici
+  /// kodla ilk giriste `password_setup_required=true` + `setup_token` doner.
+  Future<PhoneLoginResult> loginPhone({
+    required String phone,
     required String password,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        '/auth/login',
-        data: {
-          'tenant_slug': tenantSlug,
-          'email': email,
-          'password': password,
-        },
+        '/auth/login-phone',
+        data: {'phone': phone, 'password': password},
       );
-      return TokenPair.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDio(e);
-    }
-  }
-
-  /// `POST /auth/login-resident` — sakin girisi: daire no + (kod|parola).
-  Future<ResidentLoginResult> loginResident({
-    required String tenantSlug,
-    required String unitNo,
-    required String password,
-  }) async {
-    try {
-      final res = await _dio.post<Map<String, dynamic>>(
-        '/auth/login-resident',
-        data: {
-          'tenant_slug': tenantSlug,
-          'unit_no': unitNo,
-          'password': password,
-        },
-      );
-      return ResidentLoginResult.fromJson(res.data!);
+      return PhoneLoginResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:mobile/src/features/auth/data/auth_repository_impl.dart';
 import 'package:mobile/src/features/auth/domain/auth_repository.dart';
-import 'package:mobile/src/features/auth/domain/resident_login_result.dart';
+import 'package:mobile/src/features/auth/domain/phone_login_result.dart';
 import 'package:mobile/src/features/auth/presentation/auth_controller.dart';
 import 'package:mobile/src/features/push/data/device_api.dart';
 import 'package:mobile/src/features/push/data/push_messaging.dart';
@@ -108,24 +108,13 @@ class _FakeAuthRepository implements AuthRepository {
   Future<bool> restoreSession() async => sessionExists;
 
   @override
-  Future<void> login({
-    required String tenantSlug,
-    required String email,
+  Future<PhoneLoginResult> loginPhone({
+    required String phone,
     required String password,
     bool rememberMe = false,
   }) async {
     sessionExists = true;
-  }
-
-  @override
-  Future<ResidentLoginResult> loginResident({
-    required String tenantSlug,
-    required String unitNo,
-    required String password,
-    bool rememberMe = false,
-  }) async {
-    sessionExists = true;
-    return const ResidentLoginResult(passwordSetupRequired: false);
+    return const PhoneLoginResult(passwordSetupRequired: false);
   }
 
   @override
@@ -184,9 +173,8 @@ void main() {
   Future<ProviderContainer> loginAndRegister() async {
     final container = makeContainer();
     container.read(pushSetupProvider); // auth→push tetikleyicisini canlandir
-    await container.read(authControllerProvider.notifier).login(
-          tenantSlug: 't',
-          email: 'e@x',
+    await container.read(authControllerProvider.notifier).loginPhone(
+          phone: '+905321112203',
           password: 'p',
         );
     await waitFor(
@@ -226,9 +214,8 @@ void main() {
     messaging.initResult = false;
     final container = makeContainer();
     container.read(pushSetupProvider);
-    await container.read(authControllerProvider.notifier).login(
-          tenantSlug: 't',
-          email: 'e@x',
+    await container.read(authControllerProvider.notifier).loginPhone(
+          phone: '+905321112203',
           password: 'p',
         );
 
@@ -244,9 +231,8 @@ void main() {
     messaging.token = null;
     final container = makeContainer();
     container.read(pushSetupProvider);
-    await container.read(authControllerProvider.notifier).login(
-          tenantSlug: 't',
-          email: 'e@x',
+    await container.read(authControllerProvider.notifier).loginPhone(
+          phone: '+905321112203',
           password: 'p',
         );
 
@@ -263,9 +249,8 @@ void main() {
     );
     final container = makeContainer();
     container.read(pushSetupProvider);
-    await container.read(authControllerProvider.notifier).login(
-          tenantSlug: 't',
-          email: 'e@x',
+    await container.read(authControllerProvider.notifier).loginPhone(
+          phone: '+905321112203',
           password: 'p',
         );
 
@@ -346,9 +331,8 @@ void main() {
 
     await container.read(pushRegistrarProvider.notifier).onLogout();
     await container.read(authControllerProvider.notifier).logout();
-    await container.read(authControllerProvider.notifier).login(
-          tenantSlug: 't',
-          email: 'e@x',
+    await container.read(authControllerProvider.notifier).loginPhone(
+          phone: '+905321112203',
           password: 'p',
         );
     await waitFor(

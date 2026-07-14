@@ -16,74 +16,71 @@ sozlesmeye gore gelistirir.
   1. **RBAC** (uygulama katmani): rol → endpoint erisimi (bu dosya, §4).
   2. **RLS** (DB katmani): tenant izolasyonu (bkz. `/contracts/db`).
 
-### 1.1 Login'de tenant nasil belirlenir (PERSONEL — email ile)
+### 1.1 Mobil giris — telefon ile (tenant OTOMATIK, `POST /auth/login-phone`)
 
-> **Iki ayri giris yolu vardir:** PERSONEL (admin/yonetici/security/
-> tesis_gorevlisi) **email + parola** ile `POST /auth/login`'den girer (bu
-> bolum); SAKIN (resident) **daire no + parola** ile
-> `POST /auth/login-resident`'ten girer (§1.2). Personel akisi sakin
-> modelinden ETKILENMEZ.
+> **Iki ayri giris yolu vardir:** MOBIL roller (yonetici/security/
+> tesis_gorevlisi/resident) **cep telefonu + parola** ile
+> `POST /auth/login-phone`'dan girer (bu bolum); tenant **numaradan otomatik**
+> cozulur — istemci `tenant_slug`/e-posta/daire no GIRMEZ. ADMIN paneli
+> (admin-web) ayri kalir: `POST /auth/login` ile **e-posta + tenant_slug**
+> (§1.2).
 
-`app_user.email` **tenant-ici** benzersizdir (`UNIQUE (tenant_id, email)`), yani
-ayni email birden cok tenant'ta bulunabilir. Bu yuzden `POST /auth/login`
-istegi `tenant_slug` + `email` + `password` alir (bkz. `openapi.yaml`
-`LoginRequest`).
+`app_user.telefon` **GLOBAL benzersizdir** (tenant'lar arasi; kismi indeks
+`uq_app_user_telefon`, NULL serbest) ve login anahtaridir. Numara **E.164**
+normalize edilir (`normalize_phone`: bosluk/tire silinir, `0`→`+90`).
+`POST /auth/login-phone` istegi `phone` + `password` alir (bkz. `openapi.yaml`
+`PhoneLoginRequest`).
 
 Akis:
-1. `tenant_slug` → `tenant_id` cozumu: `tenant` tablosunda **RLS** etkin oldugu
-   ve henuz tenant baglami olmadigi icin, uygulama rolu (`app_rw`) tabloyu
-   dogrudan okuyamaz. Cozum, owner-sahipli **`SECURITY DEFINER`** fonksiyon
-   `public.tenant_id_by_slug(slug)`'tur; yalnizca slug → id eslemesini doner
-   (baska tenant verisi sizmaz), `app_rw`'ye `EXECUTE` verilir.
+1. `phone` → `tenant_id` cozumu: `app_user` **RLS** altinda oldugu ve henuz
+   tenant baglami olmadigi icin, uygulama rolu tabloyu dogrudan okuyamaz.
+   Cozum, owner-sahipli **`SECURITY DEFINER`** fonksiyon
+   `public.tenant_id_by_phone(phone)`'dur; yalnizca telefon → tenant_id
+   eslemesini doner (baska veri sizmaz; global benzersiz indeks tek satiri
+   garanti eder), `app_rw`'ye `EXECUTE` verilir.
 2. `tenant_id` bulununca `set_config('app.current_tenant_id', <id>, true)` ile
-   baglam kurulur; kullanici **RLS altinda** `email` ile yuklenir.
-3. Parola ve `is_active` dogrulanir. Basarisiz herhangi bir adim → **401**
-   `invalid_credentials` (hangi adimin patladigi sizdirilmaz).
+   baglam kurulur; kullanici **RLS altinda** telefonla yuklenir.
+3. Kalici parola (`password_set=true`) eslesirse → tam `TokenPair`. Gecici kod
+   (`password_set=false`) eslesirse → oturum YOK, `setup_token`
+   (`password_setup_required=true`; §1.3). Basarisiz her adim (numara/parola/
+   kod) → **401** `invalid_credentials` (hangi adimin patladigi sizdirilmaz).
 
-> `tenant.slug`: kucuk harf/rakam/tire, tenant genelinde benzersiz.
+- **Ayni dairede birden fazla sakin** (orn. esler): her birinin KENDI telefonu +
+  KENDI parolasi vardir; telefon global benzersiz oldugundan hesap dogrudan
+  cozulur (daire no login KALDIRILDI).
+- Aktif olmayan (`is_active=false`) kullanici giremez.
 
-### 1.2 Sakin (resident) girisi — daire no + parola
+### 1.2 Panel girisi — e-posta + tenant_slug (`POST /auth/login`, admin)
 
-Sakinler email ile DEGIL, **`tenant_slug + unit_no + password`** ile girer
-(`POST /auth/login-resident`, bkz. `openapi.yaml`). Kimlik modeli:
+Admin paneli (admin-web) `tenant_slug` + `email` + `password` ile girer
+(`LoginRequest`). `tenant.slug` → `tenant_id` cozumu owner-sahipli
+`public.tenant_id_by_slug(slug)` SECURITY DEFINER ile yapilir; kullanici RLS
+altinda `email` ile yuklenir, parola + `is_active` dogrulanir (basarisiz → 401).
+`app_user.email` **opsiyoneldir** ve **tenant-ici** benzersizdir
+(`UNIQUE (tenant_id, email)`); girise girmez, bildirim/yedek amaclidir. `tenant.
+slug`: kucuk harf/rakam/tire, benzersiz.
 
-- `app_user.email` sakinde **opsiyoneldir** (personelde zorunlu —
-  `ck_app_user_staff_email`). Sakin hesabi daireye `unit_resident`
-  (aktif = `bitis IS NULL`) ile baglidir.
-- **Ayni dairede birden fazla sakin** olabilir (orn. esler): ayni `unit_no`,
-  ayri hesaplar. Login'de hesap, girilen parolanin/kodun HANGI sakinin
-  hash'iyle eslestigine gore cozulur; belirsizligi onlemek icin her sakinin
-  KENDI parolasi + KENDI tek seferlik gecici kodu vardir.
+### 1.3 Ilk giris — gecici parola → zorunlu parola belirleme
 
-**Ilk giris (gecici kod → zorunlu parola belirleme):**
+Kullanici olusturulurken **tek seferlik gecici kod** uretilir (temp password
+first); kullanici telefonla girip kalici parolasini belirler.
 
-1. Yonetici sakini `POST /residents` ile acar (daire yoksa ortulu olusur).
-   Sunucu **tek seferlik gecici kod** uretir (orn. `K7MR-2QWX`); kod YALNIZ
-   bu yanitta duz metin doner, yonetici sakine iletir. DB'de **bcrypt hash'i**
-   saklanir (`app_user.temp_code_hash`); `password_set=false`,
-   `password_hash=NULL`.
-2. Sakin `login-resident`'a daire no + gecici kodla gelir. Kod dogruysa
+1. Yonetici sakini `POST /residents` (telefon zorunlu), admin personeli
+   `POST /users` (telefon zorunlu; `password` verilmezse) ile acar. Sunucu
+   **tek seferlik gecici kod** uretir (orn. `K7MR-2QWX`); kod YALNIZ olusturma
+   yanitinda duz metin doner (`temp_code`), yonetim kullaniciya iletir. DB'de
+   **bcrypt hash** saklanir (`temp_code_hash`); `password_set=false`.
+2. Kullanici `login-phone`'a telefon + gecici kodla gelir. Kod dogruysa
    **oturum verilmez**; kisa omurlu (~10 dk, `type=pwd_setup`) `setup_token`
-   doner (`password_setup_required=true`). Bu token API erisimi SAGLAMAZ;
-   yalniz `POST /auth/set-password`'de gecer.
+   doner (`password_setup_required=true`). Token API erisimi SAGLAMAZ; yalniz
+   `POST /auth/set-password`'de gecer.
 3. `POST /auth/set-password` (setup_token + yeni parola): parola bcrypt ile
-   kaydedilir, `password_set=true`, `temp_code_hash=NULL` (**kod tek
-   kullanimlik** — bir daha gecmez) ve tam `TokenPair` doner.
-4. Sonraki girisler: daire no + sakinin KENDI parolasi → normal oturum.
+   kaydedilir, `password_set=true`, `temp_code_hash=NULL` (**tek kullanimlik**)
+   ve tam `TokenPair` doner.
+4. Sonraki girisler: telefon + kalici parola → normal oturum.
 
-Akis kurallari:
-
-- Basarisiz her adim → **401** `invalid_credentials`; hangi adimin patladigi
-  (daire var mi, kod mu parola mi yanlis) sizdirilmaz — personel akisiyla
-  ayni ilke.
-- Aktif olmayan (`is_active=false`) veya daireden cikarilmis
-  (`unit_resident.bitis` dolu) sakin giremez.
-- **Gecici kod omru:** kod, sakin kalici parolasini belirleyene kadar (veya
-  yonetici yeni kod uretene kadar) gecerlidir; zaman asimi yoktur ama tek
-  kullanimliktir ve `setup_token` ~10 dk ile sinirlidir. Kod ele gecerse
-  yalniz o hesabin ILK girisini acar; parola belirlenmisse tamamen olur.
-- Token'lar (access/refresh) ve `role=resident` claim'i personelle AYNIDIR
-  (§2); refresh rotation aynen gecerlidir.
+- Token'lar (access/refresh) ve rol claim'i tum rollerde AYNIDIR (§2); refresh
+  rotation aynen gecerlidir. `setup_token` ~10 dk; gecici kod tek kullanimlik.
 
 ## 2. Token Yapisi
 
@@ -152,8 +149,8 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 
 | Endpoint                              | admin | yon | sec | tg  | res |
 |---------------------------------------|:-----:|:---:|:---:|:---:|:---:|
-| `POST /auth/login` (personel, email)  |  ✅   | ✅  | ✅  | ✅  | ✅° |
-| `POST /auth/login-resident` (daire no)|  ❌   | ❌  | ❌  | ❌  | ✅  |
+| `POST /auth/login` (panel, email)     |  ✅   | ✅° | ✅° | ✅° | ✅° |
+| `POST /auth/login-phone` (mobil, tel) |  ❌   | ✅  | ✅  | ✅  | ✅  |
 | `POST /auth/set-password` (ilk giris) |  ❌   | ❌  | ❌  | ❌  | ✅  |
 | `POST /residents` (sakin ac + kod)    |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /auth/refresh`                  |  ✅   | ✅  | ✅  | ✅  | ✅  |

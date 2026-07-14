@@ -1,13 +1,13 @@
 import 'token_pair.dart';
 
-/// `POST /auth/login-resident` yaniti (openapi ResidentLoginResponse).
+/// `POST /auth/login-phone` yaniti (openapi PhoneLoginResponse).
 ///
 /// Iki durum tasir:
 ///   * Normal giris: [passwordSetupRequired] false, [tokens] dolu.
 ///   * Gecici kodla ILK giris: [passwordSetupRequired] true, [setupToken]
 ///     dolu (oturum token'i YOK) — parola belirleme zorunlu.
-class ResidentLoginResult {
-  const ResidentLoginResult({
+class PhoneLoginResult {
+  const PhoneLoginResult({
     required this.passwordSetupRequired,
     this.setupToken,
     this.tokens,
@@ -17,9 +17,9 @@ class ResidentLoginResult {
   final String? setupToken;
   final TokenPair? tokens;
 
-  factory ResidentLoginResult.fromJson(Map<String, dynamic> json) {
+  factory PhoneLoginResult.fromJson(Map<String, dynamic> json) {
     final setupRequired = json['password_setup_required'] == true;
-    return ResidentLoginResult(
+    return PhoneLoginResult(
       passwordSetupRequired: setupRequired,
       setupToken: json['setup_token'] as String?,
       tokens: setupRequired ? null : TokenPair.fromJson(json),

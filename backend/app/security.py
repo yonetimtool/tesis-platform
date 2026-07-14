@@ -8,6 +8,7 @@
 """
 from __future__ import annotations
 
+import re
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -17,6 +18,32 @@ import bcrypt
 import jwt
 
 from .config import settings
+
+
+# --------------------------------------------------------------------------- #
+# Telefon (global benzersiz login anahtari — E.164 tekbicim)
+# --------------------------------------------------------------------------- #
+_PHONE_RE = re.compile(r"^\+\d{8,15}$")
+
+
+def normalize_phone(raw: str) -> str:
+    """Telefonu E.164'e normalize et (global benzersizlik icin tekbicim).
+
+    - Bosluk/tire/parantez/nokta silinir.
+    - Basta '00' -> '+'; basta tek '0' -> '+90' (TR varsayilan); '+' yoksa ve
+      rakamla basliyorsa -> '+90' eklenir (ulke kodsuz TR numarasi).
+    - Sonuc `+<8-15 rakam>` degilse ValueError (login'de 401, create'te 422).
+    """
+    s = re.sub(r"[\s\-().]", "", raw or "")
+    if s.startswith("00"):
+        s = "+" + s[2:]
+    elif s.startswith("0"):
+        s = "+90" + s[1:]
+    elif not s.startswith("+"):
+        s = "+90" + s
+    if not _PHONE_RE.match(s):
+        raise ValueError("Gecersiz telefon numarasi.")
+    return s
 
 
 # --------------------------------------------------------------------------- #

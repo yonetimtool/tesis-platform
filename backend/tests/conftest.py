@@ -145,20 +145,25 @@ def world(owner_conn):
             "INSERT INTO tenant (id, ad, slug) VALUES (%s,%s,%s),(%s,%s,%s)",
             (a, "A", slug_a, b, "B", slug_b),
         )
+        # telefon = GLOBAL benzersiz login anahtari; password_set=true (kalici
+        # parola belli). email-login (/auth/login) VE telefon-login (/auth/
+        # login-phone) ikisi de bu hesaplarla calisir. Numaralar seed'inkiyle
+        # (+9053211122xx) cakismaz.
         users = [
-            (a, "Admin A", SHARED_EMAIL, PW_ADMIN_A, "admin"),
-            (a, "Yonetici A", YONETICI_EMAIL, PW_YONETICI_A, "yonetici"),
-            (a, "Guard A", GUARD_EMAIL, PW_GUARD_A, "security"),
-            (a, "Gorevli A", GOREVLI_EMAIL, PW_GOREVLI_A, "tesis_gorevlisi"),
-            (a, "Resident A", RESIDENT_EMAIL, PW_RESIDENT_A, "resident"),
-            (b, "Admin B", SHARED_EMAIL, PW_ADMIN_B, "admin"),
-            (b, "Yonetici B", YONETICI_EMAIL, PW_YONETICI_B, "yonetici"),
+            (a, "Admin A", SHARED_EMAIL, PW_ADMIN_A, "admin", "+905000000001"),
+            (a, "Yonetici A", YONETICI_EMAIL, PW_YONETICI_A, "yonetici", "+905000000002"),
+            (a, "Guard A", GUARD_EMAIL, PW_GUARD_A, "security", "+905000000003"),
+            (a, "Gorevli A", GOREVLI_EMAIL, PW_GOREVLI_A, "tesis_gorevlisi", "+905000000004"),
+            (a, "Resident A", RESIDENT_EMAIL, PW_RESIDENT_A, "resident", "+905000000005"),
+            (b, "Admin B", SHARED_EMAIL, PW_ADMIN_B, "admin", "+905000000006"),
+            (b, "Yonetici B", YONETICI_EMAIL, PW_YONETICI_B, "yonetici", "+905000000007"),
         ]
-        for tid, ad, email, pw, role in users:
+        for tid, ad, email, pw, role, tel in users:
             cur.execute(
-                "INSERT INTO app_user (tenant_id, ad, email, password_hash, role) "
-                "VALUES (%s,%s,%s,%s,%s::user_role)",
-                (tid, ad, email, hash_password(pw), role),
+                "INSERT INTO app_user "
+                "(tenant_id, ad, email, telefon, password_hash, password_set, role) "
+                "VALUES (%s,%s,%s,%s,%s,true,%s::user_role)",
+                (tid, ad, email, tel, hash_password(pw), role),
             )
 
     yield {
@@ -166,13 +171,13 @@ def world(owner_conn):
         "b": b,
         "slug_a": slug_a,
         "slug_b": slug_b,
-        "admin_a": {"email": SHARED_EMAIL, "password": PW_ADMIN_A},
-        "yonetici_a": {"email": YONETICI_EMAIL, "password": PW_YONETICI_A},
-        "guard_a": {"email": GUARD_EMAIL, "password": PW_GUARD_A},
-        "gorevli_a": {"email": GOREVLI_EMAIL, "password": PW_GOREVLI_A},
-        "resident_a": {"email": RESIDENT_EMAIL, "password": PW_RESIDENT_A},
-        "admin_b": {"email": SHARED_EMAIL, "password": PW_ADMIN_B},
-        "yonetici_b": {"email": YONETICI_EMAIL, "password": PW_YONETICI_B},
+        "admin_a": {"email": SHARED_EMAIL, "password": PW_ADMIN_A, "phone": "+905000000001"},
+        "yonetici_a": {"email": YONETICI_EMAIL, "password": PW_YONETICI_A, "phone": "+905000000002"},
+        "guard_a": {"email": GUARD_EMAIL, "password": PW_GUARD_A, "phone": "+905000000003"},
+        "gorevli_a": {"email": GOREVLI_EMAIL, "password": PW_GOREVLI_A, "phone": "+905000000004"},
+        "resident_a": {"email": RESIDENT_EMAIL, "password": PW_RESIDENT_A, "phone": "+905000000005"},
+        "admin_b": {"email": SHARED_EMAIL, "password": PW_ADMIN_B, "phone": "+905000000006"},
+        "yonetici_b": {"email": YONETICI_EMAIL, "password": PW_YONETICI_B, "phone": "+905000000007"},
     }
 
     with owner_conn.cursor() as cur:

@@ -3,31 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/data/auth_repository_impl.dart';
 import 'package:mobile/src/features/auth/domain/auth_repository.dart';
-import 'package:mobile/src/features/auth/domain/resident_login_result.dart';
+import 'package:mobile/src/features/auth/domain/phone_login_result.dart';
 import 'package:mobile/src/features/auth/presentation/login_screen.dart';
 
-/// login cagrilarini kaydeden sahte auth deposu (HTTP/storage'a inmez).
+/// loginPhone cagrilarini kaydeden sahte auth deposu (HTTP/storage'a inmez).
 class _RecordingAuthRepository implements AuthRepository {
-  final logins = <({String tenant, String email, bool rememberMe})>[];
+  final logins = <({String phone, bool rememberMe})>[];
 
   @override
-  Future<void> login({
-    required String tenantSlug,
-    required String email,
+  Future<PhoneLoginResult> loginPhone({
+    required String phone,
     required String password,
     bool rememberMe = false,
   }) async {
-    logins.add((tenant: tenantSlug, email: email, rememberMe: rememberMe));
-  }
-
-  @override
-  Future<ResidentLoginResult> loginResident({
-    required String tenantSlug,
-    required String unitNo,
-    required String password,
-    bool rememberMe = false,
-  }) async {
-    return const ResidentLoginResult(passwordSetupRequired: false);
+    logins.add((phone: phone, rememberMe: rememberMe));
+    return const PhoneLoginResult(passwordSetupRequired: false);
   }
 
   @override
@@ -61,11 +51,10 @@ void main() {
 
   Future<void> fillForm(WidgetTester tester) async {
     await tester.enterText(
-        find.widgetWithText(TextFormField, 'Tesis kodu (tenant)'), 'acme');
+        find.widgetWithText(TextFormField, 'Cep telefonu'), '05321112203');
     await tester.enterText(
-        find.widgetWithText(TextFormField, 'E-posta'), 'a@b.com');
-    await tester.enterText(
-        find.widgetWithText(TextFormField, 'Parola'), 'sifre-123');
+        find.widgetWithText(TextFormField, 'Parola veya geçici kod'),
+        'sifre-123');
   }
 
   testWidgets('"Beni hatirla" kutusu vardir ve varsayilan ISARETSIZDIR',

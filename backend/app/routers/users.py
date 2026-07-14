@@ -23,10 +23,11 @@ from ..schemas import (
     UserAdminOut,
     UserContactUpdate,
     UserCreate,
+    UserCreatedOut,
     UserRoleLiteral,
     UserUpdate,
 )
-from ..security import hash_password
+from ..security import generate_temp_code, hash_password
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -36,7 +37,9 @@ _READER = require_role("admin", "yonetici")
 # Iletisim ayari (telefon + arama rizasi) admin + yonetici yonetir (rol/parola
 # gibi hassas alanlara dokunmadan — yetki yukseltme yok).
 _CONTACT_MANAGER = require_role("admin", "yonetici")
-_EMAIL_CONFLICT = APIError(409, "conflict", "email bu tenant'ta zaten kayitli.")
+# telefon global benzersiz; email tenant-ici benzersiz — hangisi cakisti
+# ayirt edilmeden tek mesaj.
+_CONTACT_CONFLICT = APIError(409, "conflict", "Bu telefon veya e-posta zaten kayitli.")
 
 
 @router.get("", response_model=UserAdminListResponse)
@@ -73,21 +76,35 @@ async def get_user(
     return await get_or_404(db, AppUser, user_id)
 
 
-@router.post("", response_model=UserAdminOut, status_code=201)
+@router.post("", response_model=UserCreatedOut, status_code=201)
 async def create_user(
     body: UserCreate,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADMIN),
-) -> AppUser:
+) -> UserCreatedOut:
+    # password verilirse admin parolayi dogrudan belirler (password_set=true);
+    # verilmezse TEK SEFERLIK gecici kod uretilir (temp password first) —
+    # kod yanitta bir kez doner, kullanici telefonla girip parola belirler.
+    temp_code: str | None = None
+    if body.password is not None:
+        password_hash = hash_password(body.password)
+        password_set = True
+        temp_code_hash = None
+    else:
+        temp_code = generate_temp_code()
+        password_hash = None
+        password_set = False
+        temp_code_hash = hash_password(temp_code)
+
     obj = AppUser(
         tenant_id=user.tenant_id,
         ad=body.ad,
-        email=str(body.email),
+        email=str(body.email) if body.email else None,
         telefon=body.telefon,
         aranabilir=body.aranabilir,
-        password_hash=hash_password(body.password),
-        # parola admin tarafindan belirlendi (gecici kod akisi disinda).
-        password_set=True,
+        password_hash=password_hash,
+        password_set=password_set,
+        temp_code_hash=temp_code_hash,
         role=body.role,
         is_active=True,
     )
@@ -96,10 +113,20 @@ async def create_user(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise _EMAIL_CONFLICT
+            raise _CONTACT_CONFLICT
         raise translate_integrity(exc)
     await db.refresh(obj)
-    return obj
+    return UserCreatedOut(
+        id=obj.id,
+        ad=obj.ad,
+        email=obj.email,
+        telefon=obj.telefon,
+        aranabilir=obj.aranabilir,
+        role=obj.role,
+        is_active=obj.is_active,
+        created_at=obj.created_at,
+        temp_code=temp_code,
+    )
 
 
 @router.patch("/{user_id}", response_model=UserAdminOut)
@@ -124,7 +151,7 @@ async def update_user(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise _EMAIL_CONFLICT
+            raise _CONTACT_CONFLICT
         raise translate_integrity(exc)
     await db.refresh(obj)
     return obj

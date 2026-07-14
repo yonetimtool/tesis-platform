@@ -13,18 +13,17 @@ import jwt
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
 from ..db import SessionLocal, set_tenant
 from ..deps import get_redis
 from ..errors import APIError
-from ..models import AppUser, Unit, UnitResident
+from ..models import AppUser
 from ..schemas import (
     LoginRequest,
+    PhoneLoginRequest,
+    PhoneLoginResponse,
     RefreshRequest,
-    ResidentLoginRequest,
-    ResidentLoginResponse,
     SetPasswordRequest,
     TokenPair,
 )
@@ -35,16 +34,17 @@ from ..security import (
     create_setup_token,
     decode_token,
     hash_password,
+    normalize_phone,
     verify_password,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 _INVALID_CREDS = APIError(401, "invalid_credentials", "Email, parola veya tenant hatali.")
-# Sakin girisinde de hangi adimin patladigi sizdirilmaz (daire var mi, kod mu
+# Telefon girisinde de hangi adimin patladigi sizdirilmaz (numara var mi, kod mu
 # parola mi yanlis vb. ayirt ettirilmez) — personel akisiyla ayni ilke.
-_INVALID_RESIDENT_CREDS = APIError(
-    401, "invalid_credentials", "Daire no, kod/parola veya tesis hatali."
+_INVALID_PHONE_CREDS = APIError(
+    401, "invalid_credentials", "Telefon veya parola hatali."
 )
 
 
@@ -131,78 +131,67 @@ async def _issue_token_pair(redis: aioredis.Redis, user: AppUser) -> TokenPair:
     )
 
 
-async def _resolve_tenant_id(session: AsyncSession, slug: str):
-    """slug -> tenant_id (RLS bootstrap: SECURITY DEFINER fonksiyon)."""
-    return (
-        await session.execute(
-            text("SELECT public.tenant_id_by_slug(:slug)"), {"slug": slug}
-        )
-    ).scalar_one_or_none()
-
-
-@router.post("/login-resident", response_model=ResidentLoginResponse)
-async def login_resident(
-    body: ResidentLoginRequest,
+@router.post("/login-phone", response_model=PhoneLoginResponse)
+async def login_phone(
+    body: PhoneLoginRequest,
     redis: aioredis.Redis = Depends(get_redis),
-) -> ResidentLoginResponse:
-    """Sakin girisi: tenant_slug + unit_no + (gecici kod VEYA kalici parola).
+) -> PhoneLoginResponse:
+    """Telefonla giris: cep telefonu (global benzersiz) + (gecici kod VEYA
+    kalici parola). Tenant TELEFONDAN otomatik cozulur (tenant_slug YOK).
 
-    Ayni dairede birden fazla sakin olabilir; hesap, girilen parolanin/kodun
-    HANGI sakinin hash'iyle eslestigine gore cozulur (her sakinin kendi
-    parolasi + kendi tek seferlik kodu vardir — /contracts/auth.md §1.2).
+    Telefon global benzersiz oldugundan `tenant_id_by_phone` (SECURITY DEFINER,
+    RLS bootstrap) ile tenant bulunur; kullanici tenant baglaminda telefonla
+    yuklenir. Mobil roller (yonetici/security/tesis_gorevlisi/resident) bu yolu
+    kullanir; admin paneli e-posta ile `POST /auth/login` kullanir.
 
     * Kalici parola eslesirse -> normal oturum (token cifti).
     * Gecici kod eslesirse (password_set=false) -> oturum YOK; kisa omurlu
-      `setup_token` doner, sakin /auth/set-password ile parolasini belirlemek
+      `setup_token` doner, kullanici /auth/set-password ile parolasini belirlemek
       ZORUNDADIR (kod tek kullanimlik: parola belirlenince silinir).
+    * Basarisiz her adim (numara/parola/kod) -> 401 (adim sizdirilmaz).
     """
+    try:
+        phone = normalize_phone(body.phone)
+    except ValueError:
+        raise _INVALID_PHONE_CREDS
+
     async with SessionLocal() as session:
         async with session.begin():
-            tenant_id = await _resolve_tenant_id(session, body.tenant_slug)
+            tenant_id = (
+                await session.execute(
+                    text("SELECT public.tenant_id_by_phone(:p)"), {"p": phone}
+                )
+            ).scalar_one_or_none()
             if tenant_id is None:
-                raise _INVALID_RESIDENT_CREDS
+                raise _INVALID_PHONE_CREDS
 
             await set_tenant(session, tenant_id)
-            # Dairenin AKTIF sakinleri (bitis IS NULL) RLS altinda yuklenir.
-            candidates = (
+            user: AppUser | None = (
                 await session.execute(
-                    select(AppUser)
-                    .join(UnitResident, UnitResident.user_id == AppUser.id)
-                    .join(Unit, Unit.id == UnitResident.unit_id)
-                    .where(
-                        Unit.no == body.unit_no,
-                        UnitResident.bitis.is_(None),
-                        AppUser.role == "resident",
-                        AppUser.is_active.is_(True),
-                    )
+                    select(AppUser).where(AppUser.telefon == phone)
                 )
-            ).scalars().unique().all()
+            ).scalar_one_or_none()
+            if user is None or not user.is_active:
+                raise _INVALID_PHONE_CREDS
 
-            # Once kalici parolalar (normal giris), sonra gecici kodlar (ilk
-            # giris). Yanlis girdide hangi asamanin patladigi sizdirilmaz.
-            for candidate in candidates:
-                if candidate.password_set and verify_password(
-                    body.password, candidate.password_hash
-                ):
-                    user = candidate
-                    break
+            if user.password_set:
+                if not verify_password(body.password, user.password_hash):
+                    raise _INVALID_PHONE_CREDS
+                # Token'lar transaction disinda uretilir (asagida).
             else:
-                for candidate in candidates:
-                    if not candidate.password_set and verify_password(
-                        body.password, candidate.temp_code_hash
-                    ):
-                        # Gecici kod dogru -> parola kurulumu zorunlu; oturum
-                        # token'i VERILMEZ (kod API erisimi saglamaz).
-                        return ResidentLoginResponse(
-                            password_setup_required=True,
-                            setup_token=create_setup_token(
-                                user_id=candidate.id, tenant_id=candidate.tenant_id
-                            ),
-                        )
-                raise _INVALID_RESIDENT_CREDS
+                if not verify_password(body.password, user.temp_code_hash):
+                    raise _INVALID_PHONE_CREDS
+                # Gecici kod dogru -> parola kurulumu zorunlu; oturum token'i
+                # VERILMEZ (kod API erisimi saglamaz).
+                return PhoneLoginResponse(
+                    password_setup_required=True,
+                    setup_token=create_setup_token(
+                        user_id=user.id, tenant_id=user.tenant_id
+                    ),
+                )
 
     tokens = await _issue_token_pair(redis, user)
-    return ResidentLoginResponse(
+    return PhoneLoginResponse(
         password_setup_required=False, **tokens.model_dump()
     )
 

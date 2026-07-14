@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../domain/auth_repository.dart';
-import '../domain/resident_login_result.dart';
+import '../domain/phone_login_result.dart';
 import 'auth_api.dart';
 import 'token_storage.dart';
 
@@ -13,33 +13,12 @@ class AuthRepositoryImpl implements AuthRepository {
   final TokenStorage storage;
 
   @override
-  Future<void> login({
-    required String tenantSlug,
-    required String email,
+  Future<PhoneLoginResult> loginPhone({
+    required String phone,
     required String password,
     bool rememberMe = false,
   }) async {
-    final tokens = await api.login(
-      tenantSlug: tenantSlug,
-      email: email,
-      password: password,
-    );
-    await storage.save(tokens);
-    await storage.saveRememberMe(rememberMe);
-  }
-
-  @override
-  Future<ResidentLoginResult> loginResident({
-    required String tenantSlug,
-    required String unitNo,
-    required String password,
-    bool rememberMe = false,
-  }) async {
-    final result = await api.loginResident(
-      tenantSlug: tenantSlug,
-      unitNo: unitNo,
-      password: password,
-    );
+    final result = await api.loginPhone(phone: phone, password: password);
     // Gecici kodla ilk giriste oturum yok — saklanacak token da yok.
     if (result.tokens != null) {
       await storage.save(result.tokens!);

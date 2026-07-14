@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:mobile/src/features/auth/data/auth_repository_impl.dart';
 import 'package:mobile/src/features/auth/domain/auth_repository.dart';
-import 'package:mobile/src/features/auth/domain/resident_login_result.dart';
+import 'package:mobile/src/features/auth/domain/phone_login_result.dart';
 import 'package:mobile/src/features/auth/domain/token_pair.dart';
 import 'package:mobile/src/features/auth/presentation/auth_controller.dart';
 
@@ -16,33 +16,24 @@ const _tokens = TokenPair(
 
 /// Cagrilari kaydeden, davranisi ayarlanabilen sahte auth deposu.
 class _FakeAuthRepository implements AuthRepository {
-  ResidentLoginResult residentResult =
-      const ResidentLoginResult(passwordSetupRequired: false, tokens: _tokens);
+  PhoneLoginResult phoneResult =
+      const PhoneLoginResult(passwordSetupRequired: false, tokens: _tokens);
   ApiException? setPasswordError;
 
-  final residentLogins = <({String unitNo, bool rememberMe})>[];
+  final phoneLogins = <({String phone, bool rememberMe})>[];
   final setPasswords = <({String setupToken, bool rememberMe})>[];
 
   @override
   Future<bool> restoreSession() async => false;
 
   @override
-  Future<void> login({
-    required String tenantSlug,
-    required String email,
-    required String password,
-    bool rememberMe = false,
-  }) async {}
-
-  @override
-  Future<ResidentLoginResult> loginResident({
-    required String tenantSlug,
-    required String unitNo,
+  Future<PhoneLoginResult> loginPhone({
+    required String phone,
     required String password,
     bool rememberMe = false,
   }) async {
-    residentLogins.add((unitNo: unitNo, rememberMe: rememberMe));
-    return residentResult;
+    phoneLogins.add((phone: phone, rememberMe: rememberMe));
+    return phoneResult;
   }
 
   @override
@@ -72,11 +63,10 @@ void main() {
     return container;
   }
 
-  test('sakin girisi (kalici parola) → authenticated', () async {
+  test('telefon girisi (kalici parola) → authenticated', () async {
     final container = makeContainer();
-    await container.read(authControllerProvider.notifier).loginResident(
-          tenantSlug: 'acme',
-          unitNo: 'A-12',
+    await container.read(authControllerProvider.notifier).loginPhone(
+          phone: '+905321112203',
           password: 'parola123',
           rememberMe: true,
         );
@@ -84,19 +74,18 @@ void main() {
     final state = container.read(authControllerProvider);
     expect(state.status, AuthStatus.authenticated);
     expect(state.setupToken, isNull);
-    expect(repo.residentLogins.single.rememberMe, isTrue);
+    expect(repo.phoneLogins.single.rememberMe, isTrue);
   });
 
   test('gecici kodla ilk giris → setupToken state\'e yazilir (oturum yok)',
       () async {
-    repo.residentResult = const ResidentLoginResult(
+    repo.phoneResult = const PhoneLoginResult(
       passwordSetupRequired: true,
       setupToken: 'setup-1',
     );
     final container = makeContainer();
-    await container.read(authControllerProvider.notifier).loginResident(
-          tenantSlug: 'acme',
-          unitNo: 'A-12',
+    await container.read(authControllerProvider.notifier).loginPhone(
+          phone: '+905321112203',
           password: 'K7MR-2QWX',
           rememberMe: true,
         );
@@ -108,15 +97,14 @@ void main() {
 
   test('parola belirleme → authenticated + rememberMe korunur + setup temiz',
       () async {
-    repo.residentResult = const ResidentLoginResult(
+    repo.phoneResult = const PhoneLoginResult(
       passwordSetupRequired: true,
       setupToken: 'setup-1',
     );
     final container = makeContainer();
     final controller = container.read(authControllerProvider.notifier);
-    await controller.loginResident(
-      tenantSlug: 'acme',
-      unitNo: 'A-12',
+    await controller.loginPhone(
+      phone: '+905321112203',
       password: 'K7MR-2QWX',
       rememberMe: true,
     );
@@ -132,7 +120,7 @@ void main() {
   });
 
   test('setup token olu (401) → kurulum iptal, login\'e kibar donus', () async {
-    repo.residentResult = const ResidentLoginResult(
+    repo.phoneResult = const PhoneLoginResult(
       passwordSetupRequired: true,
       setupToken: 'setup-1',
     );
@@ -143,9 +131,8 @@ void main() {
     );
     final container = makeContainer();
     final controller = container.read(authControllerProvider.notifier);
-    await controller.loginResident(
-      tenantSlug: 'acme',
-      unitNo: 'A-12',
+    await controller.loginPhone(
+      phone: '+905321112203',
       password: 'K7MR-2QWX',
     );
 
@@ -158,15 +145,14 @@ void main() {
   });
 
   test('cancelPasswordSetup → setupToken temizlenir', () async {
-    repo.residentResult = const ResidentLoginResult(
+    repo.phoneResult = const PhoneLoginResult(
       passwordSetupRequired: true,
       setupToken: 'setup-1',
     );
     final container = makeContainer();
     final controller = container.read(authControllerProvider.notifier);
-    await controller.loginResident(
-      tenantSlug: 'acme',
-      unitNo: 'A-12',
+    await controller.loginPhone(
+      phone: '+905321112203',
       password: 'K7MR-2QWX',
     );
 
@@ -175,18 +161,15 @@ void main() {
     expect(container.read(authControllerProvider).setupToken, isNull);
   });
 
-  test('sakin girisinde hata → errorMessage dolar, submitting biter', () async {
+  test('giriste hata sonrasi submitting biter', () async {
     final container = makeContainer();
     final controller = container.read(authControllerProvider.notifier);
-    repo.residentResult = const ResidentLoginResult(
+    repo.phoneResult = const PhoneLoginResult(
       passwordSetupRequired: true,
       setupToken: 'x',
     );
-    // ApiException yolunu ayrica dogrula:
-    repo.setPasswordError = null;
-    await controller.loginResident(
-      tenantSlug: 'acme',
-      unitNo: 'A-12',
+    await controller.loginPhone(
+      phone: '+905321112203',
       password: 'K7MR-2QWX',
     );
     expect(container.read(authControllerProvider).submitting, isFalse);

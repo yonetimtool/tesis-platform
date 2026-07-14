@@ -6,6 +6,7 @@ import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:mobile/src/features/auth/data/auth_api.dart';
 import 'package:mobile/src/features/auth/data/auth_repository_impl.dart';
 import 'package:mobile/src/features/auth/data/token_storage.dart';
+import 'package:mobile/src/features/auth/domain/phone_login_result.dart';
 import 'package:mobile/src/features/auth/domain/token_pair.dart';
 
 /// Davranisi test basina ayarlanabilen sahte auth API'si (HTTP'ye inmez).
@@ -30,12 +31,11 @@ class _FakeAuthApi extends AuthApi {
   final refreshedWith = <String>[];
 
   @override
-  Future<TokenPair> login({
-    required String tenantSlug,
-    required String email,
+  Future<PhoneLoginResult> loginPhone({
+    required String phone,
     required String password,
   }) async {
-    return loginResult;
+    return PhoneLoginResult(passwordSetupRequired: false, tokens: loginResult);
   }
 
   @override
@@ -120,9 +120,8 @@ void main() {
       final storage = newStorage();
       final repo = AuthRepositoryImpl(api: _FakeAuthApi(), storage: storage);
 
-      await repo.login(
-        tenantSlug: 't',
-        email: 'e@x.com',
+      await repo.loginPhone(
+        phone: '+905321112203',
         password: 'p',
         rememberMe: true,
       );
@@ -135,9 +134,8 @@ void main() {
       final storage = newStorage();
       final repo = AuthRepositoryImpl(api: _FakeAuthApi(), storage: storage);
 
-      await repo.login(
-        tenantSlug: 't',
-        email: 'e@x.com',
+      await repo.loginPhone(
+        phone: '+905321112203',
         password: 'p',
         rememberMe: false,
       );
@@ -237,9 +235,8 @@ void main() {
     test('token\'lar VE hatirla bayragi temizlenir', () async {
       final storage = newStorage();
       final repo = AuthRepositoryImpl(api: _FakeAuthApi(), storage: storage);
-      await repo.login(
-        tenantSlug: 't',
-        email: 'e@x.com',
+      await repo.loginPhone(
+        phone: '+905321112203',
         password: 'p',
         rememberMe: true,
       );

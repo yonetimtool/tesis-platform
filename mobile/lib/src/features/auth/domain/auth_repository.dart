@@ -1,26 +1,15 @@
-import 'resident_login_result.dart';
+import 'phone_login_result.dart';
 
 /// Auth is mantigi icin domain sozlesmesi. Presentation katmani yalnizca bu
 /// soyutlamayi bilir; HTTP/storage detaylari data katmaninda gizlidir.
 abstract interface class AuthRepository {
-  /// PERSONEL girisi: `POST /auth/login` cagirir ve donen token cifti'ni
-  /// guvenli depoya yazar. [rememberMe] true ise "beni hatirla" bayragi da
-  /// kalici saklanir; sonraki acilista [restoreSession] oturumu geri
-  /// yuklemeye calisir. Hata durumunda [ApiException] firlatir.
-  Future<void> login({
-    required String tenantSlug,
-    required String email,
-    required String password,
-    bool rememberMe = false,
-  });
-
-  /// SAKIN girisi: `POST /auth/login-resident` (daire no + kod|parola).
-  /// Normal giriste token'lar saklanir (personel girisiyle ayni sekilde);
+  /// MOBIL giris: `POST /auth/login-phone` (cep telefonu + kod|parola).
+  /// Tenant numaradan otomatik cozulur. Normal giriste token'lar saklanir;
   /// gecici kodla ilk giriste HICBIR sey saklanmaz — donen `setupToken` ile
-  /// [setPassword] cagrilmalidir. Hata durumunda [ApiException] firlatir.
-  Future<ResidentLoginResult> loginResident({
-    required String tenantSlug,
-    required String unitNo,
+  /// [setPassword] cagrilmalidir. [rememberMe] true ise "beni hatirla" bayragi
+  /// kalici saklanir. Hata durumunda [ApiException] firlatir.
+  Future<PhoneLoginResult> loginPhone({
+    required String phone,
     required String password,
     bool rememberMe = false,
   });

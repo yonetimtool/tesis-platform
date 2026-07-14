@@ -93,10 +93,10 @@ export default function UsersPage() {
     setFormErr(null);
     try {
       if (editingId) {
-        // PATCH: parola yalniz doluysa gonderilir (bossa degismez)
+        // PATCH: parola yalniz doluysa gonderilir (bossa degismez).
         const body: Record<string, unknown> = {
           ad: form.ad,
-          email: form.email,
+          email: form.email || null,
           telefon: form.telefon || null,
           aranabilir: form.aranabilir,
           role: form.role,
@@ -104,20 +104,38 @@ export default function UsersPage() {
         if (form.password) body.password = form.password;
         await apiSend(`/api/users/${editingId}`, "PATCH", body);
       } else {
-        await apiSend("/api/users", "POST", {
+        // Telefon = global benzersiz giris anahtari (zorunlu). E-posta opsiyonel.
+        // Parola bossa backend TEK SEFERLIK gecici kod uretir (temp_code).
+        const body: Record<string, unknown> = {
           ad: form.ad,
-          email: form.email,
-          telefon: form.telefon || null,
+          telefon: form.telefon,
           aranabilir: form.aranabilir,
           role: form.role,
-          password: form.password,
-        });
+        };
+        if (form.email) body.email = form.email;
+        if (form.password) body.password = form.password;
+        const created = await apiSend<{ temp_code?: string | null }>(
+          "/api/users",
+          "POST",
+          body,
+        );
+        if (created?.temp_code) {
+          window.alert(
+            `Kullanıcı oluşturuldu.\nGeçici giriş kodu: ${created.temp_code}\n\n` +
+              `Bu kod yalnızca bir kez gösterilir; kullanıcıya iletin. ` +
+              `Kullanıcı cep telefonu + bu kod ile girip kalıcı parolasını belirler.`,
+          );
+        }
       }
       setOpen(false);
       mutate();
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
-      setFormErr(/email|e-posta|zaten kayitli|conflict/i.test(m) ? "Bu e-posta zaten kayıtlı." : m);
+      setFormErr(
+        /email|e-posta|telefon|zaten kayitli|conflict/i.test(m)
+          ? "Bu e-posta veya telefon zaten kayıtlı."
+          : m,
+      );
     } finally {
       setSaving(false);
     }
@@ -190,23 +208,24 @@ export default function UsersPage() {
                 required
               />
             </Field>
-            <Field label="E-posta" hint={editingId ? "Değiştirmek isterseniz güncelleyin" : undefined}>
+            <Field label="E-posta (opsiyonel)" hint="Girişte kullanılmaz; bildirim/yedek">
               <input
                 type="email"
                 className={inputCls}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
               />
             </Field>
             <Field
-              label="Telefon (opsiyonel)"
-              hint="Rol-bazlı arama için; yalnızca rıza açıkken paylaşılır"
+              label="Cep telefonu (giriş anahtarı)"
+              hint="Global benzersiz; kullanıcı telefonla giriş yapar"
             >
               <input
                 className={inputCls}
                 value={form.telefon}
                 onChange={(e) => setForm({ ...form, telefon: e.target.value })}
+                placeholder="örn. 0532 111 22 03"
+                required
               />
             </Field>
             <Field label="Aranabilir (rıza)" hint="Numara aramaya izin verildi mi?">
@@ -233,8 +252,12 @@ export default function UsersPage() {
               </select>
             </Field>
             <Field
-              label={editingId ? "Yeni parola (opsiyonel)" : "Parola"}
-              hint="En az 8 karakter"
+              label={editingId ? "Yeni parola (opsiyonel)" : "Parola (opsiyonel)"}
+              hint={
+                editingId
+                  ? "En az 8 karakter"
+                  : "Boş bırakırsanız tek seferlik geçici kod üretilir"
+              }
             >
               <input
                 type="password"
@@ -242,8 +265,9 @@ export default function UsersPage() {
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 minLength={8}
-                required={!editingId}
-                placeholder={editingId ? "Boş bırakırsanız değişmez" : ""}
+                placeholder={
+                  editingId ? "Boş bırakırsanız değişmez" : "Boş: geçici kod"
+                }
               />
             </Field>
           </div>

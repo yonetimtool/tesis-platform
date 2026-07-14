@@ -71,6 +71,8 @@ USERS = [
         "email": "cleaner@acme.com",
         "role": "tesis_gorevlisi",
         "password": os.getenv("SEED_CLEANER_PASSWORD", "Clean123!"),
+        # Telefon = global benzersiz login anahtari (mobil giris).
+        "telefon": "+905321112204",
     },
     {
         # Parolasi BELIRLENMIS sakin: daire girisi unit_no=A-12 + parola.
@@ -89,6 +91,7 @@ USERS = [
         "email": "resident3@acme.com",
         "role": "resident",
         "password": os.getenv("SEED_RESIDENT3_PASSWORD", "Resident123!"),
+        "telefon": "+905321112205",
     },
 ]
 
@@ -138,11 +141,12 @@ def main() -> int:
         #     Ayni daireye (A-12) baglanir -> ayni dairede coklu sakin ornegi.
         conn.execute(
             """
-            INSERT INTO app_user (tenant_id, ad, email, password_hash,
+            INSERT INTO app_user (tenant_id, ad, email, telefon, password_hash,
                                   password_set, temp_code_hash, role, is_active)
-            VALUES (%s, %s, %s, NULL, false, %s, 'resident'::user_role, true)
+            VALUES (%s, %s, %s, %s, NULL, false, %s, 'resident'::user_role, true)
             ON CONFLICT (tenant_id, email) DO UPDATE
                 SET ad = EXCLUDED.ad,
+                    telefon = EXCLUDED.telefon,
                     password_hash = NULL,
                     password_set = false,
                     temp_code_hash = EXCLUDED.temp_code_hash,
@@ -154,6 +158,7 @@ def main() -> int:
                 tenant_id,
                 "Acme Sakin Es",
                 "resident2@acme.com",
+                "+905321112206",
                 hash_password(RESIDENT2_TEMP_CODE),
             ),
         )

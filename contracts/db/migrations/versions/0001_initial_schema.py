@@ -187,6 +187,9 @@ def upgrade() -> None:
     op.execute(
         f"GRANT EXECUTE ON FUNCTION public.tenant_id_by_slug(text) TO {APP_ROLE};"
     )
+    # NOT: tenant_id_by_phone fonksiyonu app_user'a atifta bulundugu icin O
+    # TABLO OLUSTURULDUKTAN SONRA (asagida, uq_app_user_telefon indeksinin
+    # yaninda) tanimlanir.
 
     # ------------------------------------------------------------------ #
     # 3. app_user
@@ -197,14 +200,16 @@ def upgrade() -> None:
             id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id      uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
             ad             text NOT NULL,
-            -- personel icin zorunlu (login anahtari); resident icin OPSIYONEL
-            -- (sakin daire no + parola ile girer — bkz. /contracts/auth.md §1.2).
+            -- OPSIYONEL: girise GIRMEZ (login anahtari telefondur). Bildirim/
+            -- yedek amacli; tenant-ici benzersiz (NULL'lar serbest).
             email          text,
+            -- LOGIN anahtari: cep telefonu, GLOBAL benzersiz (tenant'lar arasi;
+            -- uq_app_user_telefon). Giris telefonla yapilir, tenant numaradan
+            -- cozulur (tenant_id_by_phone). E.164 normalize edilerek yazilir.
+            -- Ayrica rol-bazli arama (C1a): aranabilir=true iken /call-target ile
+            -- yetkili arayan role aciklanir (KVKK — amac-sinirli).
             telefon        text,
-            -- Rol-bazli arama (C1a): kullanici telefonuyla ARANMAYA riza verdi mi?
-            -- Numara YALNIZ riza=true iken ve yetkili arayan role /call-target
-            -- ile aciklanir (KVKK — amaç-sınırlı, riza-kapili). Yonetim tarafindan
-            -- girilir; kullanici bu turda kendi yonetmez.
+            -- Kullanici telefonuyla ARANMAYA riza verdi mi? (C1a arama kapisi)
             aranabilir     boolean NOT NULL DEFAULT false,
             -- resident ilk giriste parola belirleyene kadar NULL olabilir.
             password_hash  text,
@@ -220,10 +225,7 @@ def upgrade() -> None:
             -- composite FK hedefi olabilmesi icin:
             UNIQUE (id, tenant_id),
             -- email tenant icinde benzersiz (case-insensitive; NULL'lar serbest):
-            CONSTRAINT uq_app_user_tenant_email UNIQUE (tenant_id, email),
-            -- personel email'siz olamaz; resident'ta serbest:
-            CONSTRAINT ck_app_user_staff_email
-                CHECK (role = 'resident' OR email IS NOT NULL)
+            CONSTRAINT uq_app_user_tenant_email UNIQUE (tenant_id, email)
         );
         """
     )
@@ -231,6 +233,38 @@ def upgrade() -> None:
     op.execute(
         "CREATE UNIQUE INDEX uq_app_user_tenant_email_lower "
         "ON app_user (tenant_id, lower(email));"
+    )
+    # telefon GLOBAL benzersiz (tenant'lar arasi; login anahtari). Kismi indeks:
+    # NULL telefonlar serbest (orn. panel-only admin). RLS bu benzersizligi
+    # gevsetmez — cakisan numara farkli tenant'ta olsa da INSERT reddedilir.
+    op.execute(
+        "CREATE UNIQUE INDEX uq_app_user_telefon "
+        "ON app_user (telefon) WHERE telefon IS NOT NULL;"
+    )
+
+    # Telefon global benzersiz LOGIN anahtaridir; giris tenant_slug ISTEMEZ,
+    # numaradan tenant'i cozeriz. app_user RLS altinda oldugundan (henuz tenant
+    # baglami yok) bu SECURITY DEFINER fonksiyon owner yetkisiyle YALNIZCA
+    # telefon -> tenant_id eslemesini doner (baska veri sizdirmaz). Login
+    # bununla tenant_id'yi bulup set_config(...) yapar, sonrasi normal RLS.
+    # (Global benzersiz kismi indeks tek satiri garanti eder.) Tablo yukarida
+    # olustugundan fonksiyon govdesi artik cozulur.
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.tenant_id_by_phone(p_phone text)
+        RETURNS uuid
+        LANGUAGE sql
+        STABLE
+        SECURITY DEFINER
+        SET search_path = ''
+        AS $$
+            SELECT tenant_id FROM public.app_user WHERE telefon = p_phone;
+        $$;
+        """
+    )
+    op.execute("REVOKE ALL ON FUNCTION public.tenant_id_by_phone(text) FROM PUBLIC;")
+    op.execute(
+        f"GRANT EXECUTE ON FUNCTION public.tenant_id_by_phone(text) TO {APP_ROLE};"
     )
 
     # ------------------------------------------------------------------ #
@@ -1588,6 +1622,7 @@ def _enable_rls(table: str) -> None:
 
 def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
+    op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_phone(text);")
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
         "unit_complaint",

@@ -14,6 +14,8 @@ from pydantic import (
     model_validator,
 )
 
+from .security import normalize_phone
+
 GunTipi = Literal["her_gun", "hafta_ici", "hafta_sonu", "resmi_tatil"]
 
 
@@ -33,16 +35,16 @@ class LoginRequest(BaseModel):
     password: str = Field(..., min_length=8)
 
 
-class ResidentLoginRequest(BaseModel):
-    """Sakin girisi: daire no + (gecici kod VEYA kalici parola)."""
+class PhoneLoginRequest(BaseModel):
+    """Telefonla giris: cep telefonu (global benzersiz) + (gecici kod VEYA
+    kalici parola). Tenant, telefondan otomatik cozulur (tenant_slug YOK)."""
 
-    tenant_slug: str = Field(..., examples=["acme-plaza"])
-    unit_no: str = Field(..., min_length=1, examples=["A-12"])
-    password: str = Field(..., min_length=8)
+    phone: str = Field(..., min_length=1, examples=["+905321112203"])
+    password: str = Field(..., min_length=1)
 
 
-class ResidentLoginResponse(BaseModel):
-    """Sakin giris yaniti — iki durum:
+class PhoneLoginResponse(BaseModel):
+    """Telefon giris yaniti — iki durum:
 
     * Kalici parola ile giris: `password_setup_required=false` + tam token cifti.
     * Gecici kod ile ILK giris: `password_setup_required=true` + `setup_token`
@@ -124,12 +126,40 @@ class UserAdminListItem(BaseModel):
 
 
 class UserCreate(BaseModel):
+    # Telefon global benzersiz LOGIN anahtaridir (E.164 normalize). email
+    # opsiyoneldir (girise girmez; yalniz bildirim/yedek). password verilmezse
+    # tek seferlik gecici kod uretilir (temp_code yanitta bir kez doner).
     ad: str = Field(..., min_length=1)
-    email: EmailStr
-    telefon: str | None = None
+    telefon: str = Field(..., min_length=1, examples=["+905321112203"])
+    email: EmailStr | None = None
     aranabilir: bool = False
     role: UserRoleLiteral
-    password: str = Field(..., min_length=8)
+    password: str | None = Field(None, min_length=8)
+
+    @field_validator("telefon")
+    @classmethod
+    def _normalize_telefon(cls, v: str) -> str:
+        try:
+            return normalize_phone(v)
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
+
+
+class UserCreatedOut(BaseModel):
+    """Kullanici olusturma yaniti — `temp_code` YALNIZ parola verilmeyip gecici
+    kod uretildiginde ve bir kez duz metin doner (yonetim kullaniciya iletir)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    email: str | None = None
+    telefon: str | None = None
+    aranabilir: bool = False
+    role: str
+    is_active: bool
+    created_at: datetime
+    temp_code: str | None = None
 
 
 class UserUpdate(BaseModel):
@@ -1548,14 +1578,25 @@ class ResidentAssign(BaseModel):
 
 # ------------------- sakin olusturma (yonetici, gecici kod) ---------------- #
 class ResidentCreate(BaseModel):
-    """Yonetici daire + sakin hesabini tek adimda acar; gecici kod uretilir."""
+    """Yonetici daire + sakin hesabini tek adimda acar; gecici kod uretilir.
+
+    telefon global benzersiz LOGIN anahtaridir (E.164 normalize); sakin
+    telefonla girer (daire no login KALDIRILDI). email opsiyonel."""
 
     unit_no: str = Field(..., min_length=1, examples=["A-12"])
     blok: str | None = None  # yalniz YENI acilan unit'e islenir
     ad: str = Field(..., min_length=1)
+    telefon: str = Field(..., min_length=1, examples=["+905321112203"])
     email: EmailStr | None = None  # sakinde opsiyonel
-    telefon: str | None = None
     rol_tipi: ResidentRol | None = None
+
+    @field_validator("telefon")
+    @classmethod
+    def _normalize_telefon(cls, v: str) -> str:
+        try:
+            return normalize_phone(v)
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
 
 
 class ResidentCreatedOut(BaseModel):
