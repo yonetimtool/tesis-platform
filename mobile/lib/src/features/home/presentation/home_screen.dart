@@ -12,8 +12,18 @@ import '../domain/home_menu.dart';
 /// Giris sonrasi ana ekran — menu, role gore bilesir (home_menu.dart;
 /// contracts/auth.md §4 UX aynasi). Rol cozulene kadar (storage okumasi,
 /// saniye alti) yalnizca baslik gorunur.
+///
+/// Gorunum: ACIL DURUM (varsa) ustte tam-genislik banner; kalan menuler
+/// 2 sutunlu kompakt ikon-izgara (buyuk ikon + BUYUK HARF baslik).
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
+
+  /// Turkce-dogru buyuk harf. Dart'in `toUpperCase()`'i 'i' -> 'I' cevirir;
+  /// biz 'i' -> 'İ' ve 'ı' -> 'I' isteriz. Diger harfleri (ç/ğ/ö/ş/ü)
+  /// `toUpperCase` zaten dogru cevirir. Once 'ı' donusturulur ki sonraki
+  /// adimda dokunulmasin.
+  static String _trUpper(String s) =>
+      s.replaceAll('ı', 'I').replaceAll('i', 'İ').toUpperCase();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,6 +31,10 @@ class HomeScreen extends ConsumerWidget {
     final role =
         ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
     final entries = homeMenuForRole(role);
+
+    final hasEmergency = entries.contains(HomeMenuEntry.emergency);
+    final gridEntries =
+        entries.where((e) => e != HomeMenuEntry.emergency).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -38,390 +52,341 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      // Cok kartli rolde (or. guvenlik) icerik kucuk ekrani asabildiginden
-      // liste kaydirilabilir; icerik sigarsa eski gorunum gibi ortali kalir.
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                // 48 = dikey padding (24 ust + 24 alt); negatife dusmesin.
-                minHeight: (constraints.maxHeight - 48).clamp(0, double.infinity).toDouble(),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.check_circle_outline, size: 64),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Giriş başarılı',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    if (role != UserRole.unknown)
-                      Text(
-                        role.label,
-                        style: TextStyle(color: Theme.of(context).hintColor),
-                      ),
-                    const SizedBox(height: 24),
-                    for (final entry in entries)
-                      _menuCard(context, entry, outboxState),
-                  ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (role != UserRole.unknown) ...[
+                Text(
+                  role.label,
+                  style: TextStyle(
+                    color: Theme.of(context).hintColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
+                const SizedBox(height: 16),
+              ],
+              if (hasEmergency) ...[
+                _emergencyBanner(context),
+                const SizedBox(height: 16),
+              ],
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.0,
+                children: [
+                  for (final entry in gridEntries)
+                    _gridTile(context, entry, outboxState),
+                ],
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _menuCard(
+  /// Belirgin (kirmizi) ACIL DURUM girisi — tam genislik; yanlis basmaya
+  /// karsi asil koruma ekrandaki ONAY dialogudur.
+  Widget _emergencyBanner(BuildContext context) {
+    return Card(
+      color: Colors.red,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push(AppRoutes.emergency),
+        child: const Padding(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(Icons.sos, color: Colors.white, size: 32),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'ACİL DURUM',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Panik butonu — yönetime alarm gönder',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Colors.white),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Kompakt izgara kutucugu: ortada buyuk ikon + BUYUK HARF baslik.
+  /// Gonderim kuyrugu kutucugu bekleyen sayiyi ikon uzerinde rozetler.
+  Widget _gridTile(
+    BuildContext context,
+    HomeMenuEntry entry,
+    ScanOutboxState outboxState,
+  ) {
+    final data = _tileData(context, entry, outboxState);
+    final iconColor = Theme.of(context).colorScheme.primary;
+    Widget icon = Icon(data.icon, size: 34, color: iconColor);
+    if (data.badge != null && data.badge! > 0) {
+      icon = Badge(label: Text('${data.badge}'), child: icon);
+    }
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: data.onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              icon,
+              const SizedBox(height: 12),
+              Text(
+                _trUpper(data.title),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  letterSpacing: 0.3,
+                  height: 1.15,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Menu girisi -> kutucuk verisi (ikon, baslik, dokunma, opsiyonel rozet).
+  /// Rota ve rol-kapisi mantigi degismedi; yalniz gorunum sadelesti.
+  ({IconData icon, String title, VoidCallback onTap, int? badge}) _tileData(
     BuildContext context,
     HomeMenuEntry entry,
     ScanOutboxState outboxState,
   ) {
     switch (entry) {
       case HomeMenuEntry.emergency:
-        // Belirgin (kirmizi) giris; yanlis basmaya karsi asil koruma
-        // ekrandaki ONAY dialogudur.
-        return Card(
-          color: Colors.red,
-          child: ListTile(
-            leading: const Icon(Icons.sos, color: Colors.white, size: 32),
-            title: const Text(
-              'ACİL DURUM',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            subtitle: const Text(
-              'Panik butonu — yönetime alarm gönder',
-              style: TextStyle(color: Colors.white70),
-            ),
-            trailing: const Icon(Icons.chevron_right, color: Colors.white),
-            onTap: () => context.push(AppRoutes.emergency),
-          ),
+        // Banner olarak cizilir; butunluk (exhaustive switch) icin burada da var.
+        return (
+          icon: Icons.sos,
+          title: 'ACİL DURUM',
+          onTap: () => context.push(AppRoutes.emergency),
+          badge: null,
         );
       case HomeMenuEntry.announcements:
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.campaign_outlined),
-            title: const Text('Duyurular'),
-            subtitle: const Text('Yönetimden tesise duyurular'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.announcements),
-          ),
+        return (
+          icon: Icons.campaign_outlined,
+          title: 'Duyurular',
+          onTap: () => context.push(AppRoutes.announcements),
+          badge: null,
         );
       case HomeMenuEntry.patrol:
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.directions_walk),
-            title: const Text('Turlarım'),
-            subtitle: const Text(
-              'Aktif devriye penceresi ve nokta ilerlemesi',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.patrol),
-          ),
+        return (
+          icon: Icons.directions_walk,
+          title: 'Turlarım',
+          onTap: () => context.push(AppRoutes.patrol),
+          badge: null,
         );
       case HomeMenuEntry.patrolTracking:
         // Yonetici: salt izleme — panelin canli ozetinin mobil karsiligi.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.route_outlined),
-            title: const Text('Devriye takibi'),
-            subtitle: const Text(
-              'Bugünün turları, nokta ilerlemesi ve geçmiş',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.patrolTracking),
-          ),
+        return (
+          icon: Icons.route_outlined,
+          title: 'Devriye takibi',
+          onTap: () => context.push(AppRoutes.patrolTracking),
+          badge: null,
         );
       case HomeMenuEntry.tasks:
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.task_alt),
-            title: const Text('Görevlerim'),
-            subtitle: const Text(
-              'Görev listesi ve foto kanıtlı tamamlama',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.tasks),
-          ),
+        return (
+          icon: Icons.task_alt,
+          title: 'Görevlerim',
+          onTap: () => context.push(AppRoutes.tasks),
+          badge: null,
         );
       case HomeMenuEntry.taskTracking:
-        // Gorev-YONETIMI: tum gorev/atama takibi ("Herkes" kapsamiyla
-        // acilir). "Yeni gorev" butonu ekranda rol kapilidir (yonetim).
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.fact_check_outlined),
-            title: const Text('Görev yönetimi'),
-            subtitle: const Text(
-              'Tüm görevleri ve atamaları izle; atama yönetimde',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () =>
-                context.push('${AppRoutes.tasks}?gorunum=yonetim'),
-          ),
+        // Gorev-YONETIMI: tum gorev/atama takibi ("Herkes" kapsamiyla acilir).
+        // "Yeni gorev" butonu ekranda rol kapilidir (yonetim).
+        return (
+          icon: Icons.fact_check_outlined,
+          title: 'Görev yönetimi',
+          onTap: () => context.push('${AppRoutes.tasks}?gorunum=yonetim'),
+          badge: null,
         );
       case HomeMenuEntry.assets:
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.inventory_2_outlined),
-            title: const Text('Demirbaş'),
-            subtitle: const Text(
-              'NFC ile zimmet al/bırak, üzerimdekiler',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.assets),
-          ),
+        return (
+          icon: Icons.inventory_2_outlined,
+          title: 'Demirbaş',
+          onTap: () => context.push(AppRoutes.assets),
+          badge: null,
         );
       case HomeMenuEntry.nfc:
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.nfc),
-            title: const Text('NFC etiket okuma'),
-            subtitle: const Text('Devriye noktası etiketini okut'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.nfc),
-          ),
+        return (
+          icon: Icons.nfc,
+          title: 'NFC etiket okuma',
+          onTap: () => context.push(AppRoutes.nfc),
+          badge: null,
         );
       case HomeMenuEntry.outbox:
-        return Card(
-          child: ListTile(
-            leading: Badge(
-              isLabelVisible: outboxState.pendingCount > 0,
-              label: Text('${outboxState.pendingCount}'),
-              child: const Icon(Icons.outbox_outlined),
-            ),
-            title: const Text('Gönderim kuyruğu'),
-            subtitle: Text(
-              outboxState.pendingCount > 0
-                  ? '${outboxState.pendingCount} okutma gönderim bekliyor'
-                  : outboxState.failedCount > 0
-                      ? '${outboxState.failedCount} kalıcı hata var'
-                      : 'Bekleyen okutma yok',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.outbox),
-          ),
+        return (
+          icon: Icons.outbox_outlined,
+          title: 'Gönderim kuyruğu',
+          onTap: () => context.push(AppRoutes.outbox),
+          badge: outboxState.pendingCount,
         );
       case HomeMenuEntry.reports:
         // Yonetici: ay bazli devriye/gorev/aidat ozeti (salt okuma).
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.insights_outlined),
-            title: const Text('Aylık raporlar'),
-            subtitle: const Text(
-              'Devriye, görev tamamlama ve aidat özeti',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.reports),
-          ),
+        return (
+          icon: Icons.insights_outlined,
+          title: 'Aylık raporlar',
+          onTap: () => context.push(AppRoutes.reports),
+          badge: null,
         );
       case HomeMenuEntry.budget:
         // Yonetici: butce — kategoriler, gelir/gider defteri, kasa ozeti.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.savings_outlined),
-            title: const Text('Bütçe'),
-            subtitle: const Text(
-              'Gelir/gider defteri, kategoriler ve kasa özeti',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.budget),
-          ),
+        return (
+          icon: Icons.savings_outlined,
+          title: 'Bütçe',
+          onTap: () => context.push(AppRoutes.budget),
+          badge: null,
         );
       case HomeMenuEntry.financialSummary:
         // Yonetici: cepten gunluk/donemsel finansal rapor (salt okuma).
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.query_stats_outlined),
-            title: const Text('Finansal özet'),
-            subtitle: const Text(
-              'Tahsilat oranı, gelir/gider/kasa ve en yüksek giderler',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.financialSummary),
-          ),
+        return (
+          icon: Icons.query_stats_outlined,
+          title: 'Finansal özet',
+          onTap: () => context.push(AppRoutes.financialSummary),
+          badge: null,
         );
       case HomeMenuEntry.siteBudget:
         // Resident: site butcesinin agregat ozeti (seffaflik; salt okuma).
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.pie_chart_outline),
-            title: const Text('Site Bütçesi'),
-            subtitle: const Text(
-              'Sitenin toplam gelir, gider ve kasa özeti (şeffaflık)',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.siteBudget),
-          ),
+        return (
+          icon: Icons.pie_chart_outline,
+          title: 'Site Bütçesi',
+          onTap: () => context.push(AppRoutes.siteBudget),
+          badge: null,
         );
       case HomeMenuEntry.myDues:
         // Resident: kendi dairelerinin borc durumu (salt okuma).
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.account_balance_wallet_outlined),
-            title: const Text('Aidatım'),
-            subtitle: const Text(
-              'Daire borç durumu, tahakkuk ve ödeme geçmişi',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.myDues),
-          ),
+        return (
+          icon: Icons.account_balance_wallet_outlined,
+          title: 'Aidatım',
+          onTap: () => context.push(AppRoutes.myDues),
+          badge: null,
         );
       case HomeMenuEntry.complaints:
         // Sakin<->yonetim kanali: sakin talep acar, yonetim yanitlar.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.rate_review_outlined),
-            title: const Text('Şikayet / Öneri'),
-            subtitle: const Text(
-              'Yönetime talep ilet, durum ve yanıtı izle',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.complaints),
-          ),
+        return (
+          icon: Icons.rate_review_outlined,
+          title: 'Şikayet / Öneri',
+          onTap: () => context.push(AppRoutes.complaints),
+          badge: null,
         );
       case HomeMenuEntry.visitors:
         // Kapi onay akisi: guvenlik kaydeder, dairenin sakini onaylar/reddeder.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.emoji_people_outlined),
-            title: const Text('Ziyaretçiler'),
-            subtitle: const Text(
-              'Kapıdaki ziyaretçi kaydı, onay/red ve geçmiş',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.visitors),
-          ),
+        return (
+          icon: Icons.emoji_people_outlined,
+          title: 'Ziyaretçiler',
+          onTap: () => context.push(AppRoutes.visitors),
+          badge: null,
         );
       case HomeMenuEntry.kargo:
         // Paket takibi: guvenlik kaydeder (foto ile), sakin teslim alir.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.local_shipping_outlined),
-            title: const Text('Kargo'),
-            subtitle: const Text(
-              'Gelen paket kaydı, teslim durumu ve geçmiş',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.kargo),
-          ),
+        return (
+          icon: Icons.local_shipping_outlined,
+          title: 'Kargo',
+          onTap: () => context.push(AppRoutes.kargo),
+          badge: null,
         );
       case HomeMenuEntry.unitAccess:
         // Tek-seferlik daire goruntuleme izni (KVKK): admin/yonetici talep
         // acar + onaylananlari bir kez gorur; resident gelenleri onaylar.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.key_outlined),
-            title: const Text('Görüntüleme izni'),
-            subtitle: const Text(
-              'Daire ziyaretçi/kargo kayıtları için tek seferlik erişim',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.unitAccess),
-          ),
+        return (
+          icon: Icons.key_outlined,
+          title: 'Görüntüleme izni',
+          onTap: () => context.push(AppRoutes.unitAccess),
+          badge: null,
         );
       case HomeMenuEntry.rezervasyon:
         // Ortak alan rezervasyonu: sakin slot ister, yonetim onaylar.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.event_available_outlined),
-            title: const Text('Rezervasyon'),
-            subtitle: const Text(
-              'Ortak alan (havuz, toplantı odası) slot talebi ve onay',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.rezervasyon),
-          ),
+        return (
+          icon: Icons.event_available_outlined,
+          title: 'Rezervasyon',
+          onTap: () => context.push(AppRoutes.rezervasyon),
+          badge: null,
         );
       case HomeMenuEntry.etkinlik:
         // Etkinlik + RSVP: yonetim duyurur, sakin katilim beyan eder;
         // sayilar herkese seffaf.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.celebration_outlined),
-            title: const Text('Etkinlikler'),
-            subtitle: const Text(
-              'Site etkinlikleri; katılım beyanı ve şeffaf sayılar',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.etkinlik),
-          ),
+        return (
+          icon: Icons.celebration_outlined,
+          title: 'Etkinlikler',
+          onTap: () => context.push(AppRoutes.etkinlik),
+          badge: null,
         );
       case HomeMenuEntry.siteKurallari:
         // Blog-tarzi kural listesi: yonetim yazar, herkes okur; baslik arama.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.gavel_outlined),
-            title: const Text('Site Kuralları'),
-            subtitle: const Text(
-              'Site yaşam kuralları; başlıkta arama',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.siteKurallari),
-          ),
+        return (
+          icon: Icons.gavel_outlined,
+          title: 'Site Kuralları',
+          onTap: () => context.push(AppRoutes.siteKurallari),
+          badge: null,
         );
       case HomeMenuEntry.integrations:
         // C1b: dis sistem entegrasyonlari (megafon/akilli-ev/webhook) — konfig
         // + SSRF-korumali tetik. Yonetici yonetir.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.hub_outlined),
-            title: const Text('Entegrasyonlar'),
-            subtitle: const Text(
-              'Dış sistemler (megafon/akıllı ev/webhook) — kur, tetikle',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.integrations),
-          ),
+        return (
+          icon: Icons.hub_outlined,
+          title: 'Entegrasyonlar',
+          onTap: () => context.push(AppRoutes.integrations),
+          badge: null,
         );
       case HomeMenuEntry.binaDuzenleme:
         // D-viz Rev-2: gorsel bina yapisi — blok/kat/daire. Yonetim (admin/
         // yonetici) olusturur/duzenler; security + tesis_gorevlisi SALT-OKUMA
         // gorur (duzenleme yok). Ekran role gore kilitlenir.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.apartment_outlined),
-            title: const Text('Bina Yapısı'),
-            subtitle: const Text(
-              'Blok, kat ve daire yerleşimi (yönetim düzenler)',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.binaDuzenleme),
-          ),
+        return (
+          icon: Icons.apartment_outlined,
+          title: 'Bina Yapısı',
+          onTap: () => context.push(AppRoutes.binaDuzenleme),
+          badge: null,
         );
       case HomeMenuEntry.sikayetHaritasi:
         // D-viz-2: 2D bina semasi (kat plani) — renkli daire hucreleri.
         // Tum roller gorur; sakin daireyi anonim sikayet edebilir.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.grid_view_outlined),
-            title: const Text('Şikayet Haritası'),
-            subtitle: const Text(
-              'Bina şeması — daire yoğunluğu (yeşil/sarı/kırmızı)',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.sikayetHaritasi),
-          ),
+        return (
+          icon: Icons.grid_view_outlined,
+          title: 'Şikayet Haritası',
+          onTap: () => context.push(AppRoutes.sikayetHaritasi),
+          badge: null,
         );
       case HomeMenuEntry.sikayetlerim:
         // Rev-1.1: sakin kendi actigi sikayetleri + durum gorur.
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.feedback_outlined),
-            title: const Text('Şikayetlerim'),
-            subtitle: const Text('Açtığınız daire şikayetleri ve durumları'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.sikayetlerim),
-          ),
+        return (
+          icon: Icons.feedback_outlined,
+          title: 'Şikayetlerim',
+          onTap: () => context.push(AppRoutes.sikayetlerim),
+          badge: null,
         );
     }
   }
