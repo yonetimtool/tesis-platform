@@ -26,7 +26,8 @@ void main() {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
-        HomeMenuEntry.sikayetHaritasi,
+        // Sikayet Haritasi (yogunluk) YOK; yerine salt-okuma Bina Yapisi.
+        HomeMenuEntry.binaYapisi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -335,18 +336,51 @@ void main() {
       }
     });
 
-    test('Sikayet Haritasi karti (D-viz-2) bilinen 5 rolun 5inde (anonim '
-        'harita herkese acik; sikayet etme yalniz sakinde — ekranda)', () {
+    test('Sikayet Haritasi karti (yogunluk): admin+yonetici+resident VAR; '
+        'security+tesis_gorevlisi YOK (yogunluk yonetim/sakin konusu)', () {
       for (final role in [
         UserRole.admin,
         UserRole.yonetici,
-        UserRole.security,
-        UserRole.tesisGorevlisi,
         UserRole.resident,
       ]) {
         expect(
           homeMenuForRole(role),
           contains(HomeMenuEntry.sikayetHaritasi),
+          reason: role.wire,
+        );
+      }
+      for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.sikayetHaritasi)),
+          reason: role.wire,
+        );
+      }
+    });
+
+    test('Bina Yapisi karti (salt okuma): YALNIZ security+tesis_gorevlisi '
+        '(Sikayet Haritasi yerine); digerlerinde YOK', () {
+      for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
+        expect(
+          homeMenuForRole(role),
+          contains(HomeMenuEntry.binaYapisi),
+          reason: role.wire,
+        );
+        // Bu roller yogunluk haritasini GORMEZ (yalniz yapi).
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.sikayetHaritasi)),
+          reason: role.wire,
+        );
+      }
+      for (final role in [
+        UserRole.admin,
+        UserRole.yonetici,
+        UserRole.resident,
+      ]) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.binaYapisi)),
           reason: role.wire,
         );
       }

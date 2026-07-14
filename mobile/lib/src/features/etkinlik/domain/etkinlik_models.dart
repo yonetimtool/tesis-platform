@@ -3,7 +3,8 @@
 ///
 /// Akis (urun sahibi sabit): yonetici etkinlik olusturur (cenaze/mac izleme
 /// vb.) -> tum sakinlere push -> sakin katiliyorum/katilmiyorum beyan eder
-/// (kullanici basina TEK kayit, degistirilebilir). SAYILAR SEFFAF: katilim
+/// (kullanici basina TEK kayit, KILITLI — ilk beyandan sonra degistirilemez;
+/// backend tekrar PUT'a 409 doner). SAYILAR SEFFAF: katilim
 /// sayisini herkes gorur; kim-katiliyor listesi URUN GEREGI YOK — yalniz
 /// sayi + kullanicinin KENDI beyani (benimDurumum).
 library;

@@ -3,8 +3,8 @@ RBAC + izolasyon.
 
 RBAC (auth.md §4): olustur/duzenle/sil admin+yonetici; OKUMA (sayilar dahil)
 TUM roller — seffaflik; RSVP YALNIZ resident, kullanici basina TEK kayit
-(UNIQUE + ON CONFLICT upsert — degistirilebilir, cift kayit imkansiz).
-Kim-katiliyor listesi DONMEZ — yalniz sayi + kendi beyanim.
+(UNIQUE, KILITLI — ilk beyandan sonra degistirilemez; tekrar PUT 409, cift
+kayit imkansiz). Kim-katiliyor listesi DONMEZ — yalniz sayi + kendi beyanim.
 """
 from __future__ import annotations
 
@@ -132,9 +132,10 @@ def test_tum_roller_okur_ve_sayilari_gorur(client, world):
 
 
 # --------------------------------- RSVP ------------------------------------- #
-def test_rsvp_sayaci_yansitir_ve_degistirilebilir_cift_kayit_yok(client, world):
-    """ANA AKIS: katiliyorum -> sayi 1; ikinci sakin -> 2; beyan degisince
-    sayilar guncellenir, TOPLAM degismez (upsert — cift kayit yok)."""
+def test_rsvp_sayaci_yansitir_ve_beyan_kilitli_cift_kayit_yok(client, world):
+    """ANA AKIS: katiliyorum -> sayi 1; ikinci sakin -> 2. Beyan KILITLI:
+    ilk beyandan sonra tekrar PUT (farkli VEYA ayni durum) 409 doner; sayilar
+    degismez, cift kayit olusmaz (secim kesin)."""
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
     resident1 = _headers(client, world["slug_a"], world["resident_a"])
     resident2 = _second_resident(client, world)
@@ -150,20 +151,22 @@ def test_rsvp_sayaci_yansitir_ve_degistirilebilir_cift_kayit_yok(client, world):
                     json={"durum": "katiliyorum"})
     assert r2.json()["katiliyorum_sayisi"] == 2
 
-    # resident1 beyanini DEGISTIRIR: katiliyor 1'e duser, katilmiyor 1 olur
+    # resident1 beyanini DEGISTIREMEZ: kilit -> 409, sayilar sabit kalir
     r3 = client.put(f"/events/{e['id']}/rsvp", headers=resident1,
                     json={"durum": "katilmiyorum"})
-    assert r3.status_code == 200
-    body = r3.json()
-    assert body["katiliyorum_sayisi"] == 1
-    assert body["katilmiyorum_sayisi"] == 1
-    assert body["benim_durumum"] == "katilmiyorum"
+    assert r3.status_code == 409, r3.text
+    assert r3.json()["error"]["code"] == "already_answered"
 
-    # ayni beyani tekrar PUT: idempotent, sayilar sabit (cift kayit yok)
+    # ayni durumu tekrar PUT etmek de KILITLI (idempotent degil — 409)
     r4 = client.put(f"/events/{e['id']}/rsvp", headers=resident1,
-                    json={"durum": "katilmiyorum"})
-    assert r4.json()["katiliyorum_sayisi"] == 1
-    assert r4.json()["katilmiyorum_sayisi"] == 1
+                    json={"durum": "katiliyorum"})
+    assert r4.status_code == 409, r4.text
+
+    # sayilar hic degismedi: resident1 katiliyor + resident2 katiliyor = 2/0
+    body = client.get(f"/events/{e['id']}", headers=resident1).json()
+    assert body["katiliyorum_sayisi"] == 2
+    assert body["katilmiyorum_sayisi"] == 0
+    assert body["benim_durumum"] == "katiliyorum"
 
 
 def test_rsvp_rbac_ve_dogrulama(client, world):

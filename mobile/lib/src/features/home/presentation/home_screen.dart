@@ -411,6 +411,20 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.sikayetHaritasi),
           ),
         );
+      case HomeMenuEntry.binaYapisi:
+        // Salt-okuma bina yapisi (security + tesis_gorevlisi): yogunluk/renk
+        // yok, referans amacli blok/kat/daire yerlesimi.
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.apartment_outlined),
+            title: const Text('Bina Yapısı'),
+            subtitle: const Text(
+              'Blok, kat ve daire yerleşimi (salt görüntüleme)',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.binaYapisi),
+          ),
+        );
       case HomeMenuEntry.sikayetlerim:
         // Rev-1.1: sakin kendi actigi sikayetleri + durum gorur.
         return Card(

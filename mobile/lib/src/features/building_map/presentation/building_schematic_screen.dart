@@ -17,10 +17,15 @@ import 'building_map_controller.dart';
 ///   * resident: YALNIZ kendi blogu; hucreler RENKSIZ + sayisiz (yogunlugu
 ///     GORMEZ); detayda yalniz "Bu daireyi sikayet et" (own-block).
 ///   * security/tesis_gorevlisi: tum yapi, renksiz/sayisiz; detay salt yapi.
+///     Onlara "Bina Yapisi" basligiyla acilir (Sikayet Haritasi menude yok).
 ///
 /// Renk API'den gelir; istemci ESIK HESAPLAMAZ. Hafif: Wrap + ListView.
 class BuildingSchematicScreen extends ConsumerWidget {
-  const BuildingSchematicScreen({super.key});
+  const BuildingSchematicScreen({super.key, this.title = 'Şikayet Haritası'});
+
+  /// AppBar basligi — yonetim/sakinde "Sikayet Haritasi"; salt-yapi gorunumunde
+  /// (security/tesis_gorevlisi) "Bina Yapisi". Icerik yine role gore API'den.
+  final String title;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,7 +36,7 @@ class BuildingSchematicScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Şikayet Haritası'),
+        title: Text(title),
         actions: [
           IconButton(
             tooltip: 'Yenile',

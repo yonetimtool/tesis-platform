@@ -8,8 +8,10 @@ import 'etkinlik_controller.dart';
 /// "Etkinlikler" — etkinlik + RSVP (auth.md §4 kesin kurali, UX aynasi):
 ///   * yonetim (admin/yonetici): "Yeni etkinlik" FAB'i + detayda duzenle/sil;
 ///     seffaf katilim sayilarini izler.
-///   * resident: Katiliyorum/Katilmiyorum beyani (degistirilebilir; secim
-///     vurgulu gosterilir), sayac beyan sonrasi ANINDA guncellenir.
+///   * resident: Katiliyorum/Katilmiyorum beyani — beyan KILITLI: bir kez
+///     verilince butonlar gizlenir, yerine kayitli yanit ("Katiliminiz: ...")
+///     gosterilir (secim kesin, degistirilemez). Sayac beyan sonrasi ANINDA
+///     guncellenir.
 ///   * herkes: yaklasan/gecmis listeleri + SEFFAF sayilar (kim-katiliyor
 ///     listesi yok — urun karari; yalniz sayi).
 ///
@@ -255,7 +257,12 @@ class _EtkinlikCard extends ConsumerWidget {
               _SayacRow(etkinlik: e),
               if (canRsvp && !e.gecmis) ...[
                 const SizedBox(height: 12),
-                _RsvpButtons(etkinlik: e),
+                // Beyan KILITLI: cevaplanmamissa butonlar; cevaplanmissa
+                // yalniz kayitli yanit (tekrar oy yok).
+                if (e.benimDurumum == null)
+                  _RsvpButtons(etkinlik: e)
+                else
+                  _RecordedAnswer(durum: e.benimDurumum!),
               ],
             ],
           ),
@@ -289,8 +296,43 @@ class _BeyanChip extends StatelessWidget {
   }
 }
 
-/// Katiliyorum/Katilmiyorum beyan butonlari — mevcut secim VURGULU; tekrar
-/// basmak beyani degistirir (upsert; sayac aninda guncellenir).
+/// Kullanicinin kayitli (kilitli) yaniti — beyan verildikten sonra butonlarin
+/// yerine gosterilir; tekrar oy YOK (secim kesin).
+class _RecordedAnswer extends StatelessWidget {
+  const _RecordedAnswer({required this.durum});
+
+  final KatilimDurum durum;
+
+  @override
+  Widget build(BuildContext context) {
+    final katiliyor = durum == KatilimDurum.katiliyorum;
+    final renk = katiliyor ? Colors.green : Colors.red;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: renk.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: renk.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Icon(katiliyor ? Icons.check_circle : Icons.cancel, color: renk, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Katılımınız: ${durum.label}',
+              style: TextStyle(color: renk, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Katiliyorum/Katilmiyorum beyan butonlari — YALNIZ henuz cevaplanmamis
+/// etkinlikte gosterilir (beyan kilitli; verildikten sonra butonlar gizlenir).
 class _RsvpButtons extends ConsumerStatefulWidget {
   const _RsvpButtons({required this.etkinlik, this.onAnswered});
 
@@ -331,45 +373,24 @@ class _RsvpButtonsState extends ConsumerState<_RsvpButtons> {
 
   @override
   Widget build(BuildContext context) {
-    final secim = widget.etkinlik.benimDurumum;
+    // Butonlar yalniz cevaplanmamis etkinlikte cikar (parent kosulu); bu yuzden
+    // ikisi de noturr (secili-vurgulu hali yoktur — kilitten once tek karar).
     return Row(
       children: [
         Expanded(
-          child: secim == KatilimDurum.katiliyorum
-              ? FilledButton.icon(
-                  style: FilledButton.styleFrom(backgroundColor: Colors.green),
-                  icon: const Icon(Icons.check),
-                  label: const Text('Katılıyorum'),
-                  onPressed: _busy
-                      ? null
-                      : () => _beyan(KatilimDurum.katiliyorum),
-                )
-              : OutlinedButton.icon(
-                  icon: const Icon(Icons.check, color: Colors.green),
-                  label: const Text('Katılıyorum'),
-                  onPressed: _busy
-                      ? null
-                      : () => _beyan(KatilimDurum.katiliyorum),
-                ),
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.check, color: Colors.green),
+            label: const Text('Katılıyorum'),
+            onPressed: _busy ? null : () => _beyan(KatilimDurum.katiliyorum),
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: secim == KatilimDurum.katilmiyorum
-              ? FilledButton.icon(
-                  style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                  icon: const Icon(Icons.close),
-                  label: const Text('Katılmıyorum'),
-                  onPressed: _busy
-                      ? null
-                      : () => _beyan(KatilimDurum.katilmiyorum),
-                )
-              : OutlinedButton.icon(
-                  icon: const Icon(Icons.close, color: Colors.red),
-                  label: const Text('Katılmıyorum'),
-                  onPressed: _busy
-                      ? null
-                      : () => _beyan(KatilimDurum.katilmiyorum),
-                ),
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.close, color: Colors.red),
+            label: const Text('Katılmıyorum'),
+            onPressed: _busy ? null : () => _beyan(KatilimDurum.katilmiyorum),
+          ),
         ),
       ],
     );
@@ -431,10 +452,15 @@ void _showDetail(
               ],
               if (canRsvp && !e.gecmis) ...[
                 const SizedBox(height: 20),
-                _RsvpButtons(
-                  etkinlik: e,
-                  onAnswered: () => Navigator.of(sheetContext).pop(),
-                ),
+                // Beyan KILITLI: cevaplanmamissa butonlar; cevaplanmissa
+                // yalniz kayitli yanit (tekrar oy yok).
+                if (e.benimDurumum == null)
+                  _RsvpButtons(
+                    etkinlik: e,
+                    onAnswered: () => Navigator.of(sheetContext).pop(),
+                  )
+                else
+                  _RecordedAnswer(durum: e.benimDurumum!),
               ],
               if (canManage) ...[
                 const Divider(height: 24),

@@ -103,6 +103,13 @@ enum HomeMenuEntry {
   /// edebilir (mevcut POST /unit-complaints). Renk API'den (0-2/3-4/5+).
   sikayetHaritasi,
 
+  /// Bina Yapisi (salt okuma) — security + tesis_gorevlisi icin: ayni bina
+  /// semasi, YAPI-ONLY (renk/sayi YOK, sikayet aksiyonu YOK, duzenleme YOK).
+  /// Sikayet Haritasi bu rollerden gizlenir; referans amacli blok/kat/daire
+  /// yerlesimini gormek icin bu giris kullanilir. Backend zaten bu rollere
+  /// shows_density=false + resident-only isaretler=false doner (rol-farkinda).
+  binaYapisi,
+
   /// Sikayetlerim (D-viz Rev-1.1) — ARTIK menude DEGIL: resident kendi
   /// sikayetlerini Sikayet Haritasi uzerinde (isaretli daireler) gorur; ayri
   /// sayfaya yonlendirilmez. Enum + rota ekran yeniden kullanim icin korunur.
@@ -132,12 +139,14 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
     case UserRole.security:
       // Ziyaretciler kapi operasyonudur: kayit + canli sonuc guvenlikte.
       // Gorev-YONETIMI YOK (A4): saha rolu yalniz "Gorevlerim" gorur.
+      // Sikayet Haritasi (yogunluk) YOK — yonetim/sakin konusu; yerine
+      // salt-okuma "Bina Yapisi" (renk/sayi/duzenleme yok).
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
-        HomeMenuEntry.sikayetHaritasi,
+        HomeMenuEntry.binaYapisi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -150,12 +159,13 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
     case UserRole.tesisGorevlisi:
       // Turlarim yok: /me/patrol-window admin+security (auth.md §4).
       // Gorev-YONETIMI YOK (A4): saha rolu yalniz "Gorevlerim" gorur.
+      // Sikayet Haritasi (yogunluk) YOK; yerine salt-okuma "Bina Yapisi".
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
-        HomeMenuEntry.sikayetHaritasi,
+        HomeMenuEntry.binaYapisi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,

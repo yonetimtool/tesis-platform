@@ -69,6 +69,8 @@ class AppRoutes {
   static const integrations = '/integrations';
   static const binaDuzenleme = '/bina-duzenleme';
   static const sikayetHaritasi = '/sikayet-haritasi';
+  // Salt-okuma bina yapisi (security + tesis_gorevlisi) — ayni sema, yapi-only.
+  static const binaYapisi = '/bina-yapisi';
   static const sikayetlerim = '/sikayetlerim';
   static const settings = '/settings';
 }
@@ -290,6 +292,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.sikayetHaritasi,
         builder: (context, state) => const BuildingSchematicScreen(),
+      ),
+      GoRoute(
+        // Ayni sema; security/tesis_gorevlisi icin baslik "Bina Yapisi".
+        // Backend bu rollere zaten shows_density=false (renk/sayi yok) doner;
+        // ekranda duzenleme/sikayet aksiyonu yoktur (salt okuma).
+        path: AppRoutes.binaYapisi,
+        builder: (context, state) =>
+            const BuildingSchematicScreen(title: 'Bina Yapısı'),
       ),
       GoRoute(
         path: AppRoutes.sikayetlerim,

@@ -619,10 +619,12 @@ Notlar:
     paylasilir; `benim_durumum` yalniz istekteki kullanicinin KENDI beyani.
   - **RSVP (`PUT /events/{id}/rsvp`) YALNIZ `resident`:** etkinligin
     muhatabi site sakinleri — personel beyan vermez (karar). Kullanici
-    basina **TEK kayit** (`UNIQUE (tenant_id, etkinlik_id, user_id)`);
-    tekrar PUT beyani **DEGISTIRIR** (ON CONFLICT upsert — cift kayit
-    imkansiz, es zamanli PUT guvenli). Yanit guncel sayilarla etkinliktir.
-    RSVP'de ek push YOK (urun karari).
+    basina **TEK kayit** (`UNIQUE (tenant_id, etkinlik_id, user_id)`) ve
+    **KILITLI**: ilk beyandan sonra **DEGISTIRILEMEZ** (secim kesin —
+    urun karari). Mevcut beyan varsa tekrar PUT **409 `already_answered`**
+    doner; ilk beyanda ON CONFLICT DO NOTHING ile es zamanli iki PUT'ta da
+    cift kayit imkansiz (ilki kazanir). Ilk beyanin yaniti guncel sayilarla
+    etkinliktir. RSVP'de ek push YOK (urun karari).
 - **Site kurallari (`/site-rules`):** blog-tarzi kural icerigi — yonetici
   liste tutar (ekle/duzenle/sil), TUM roller okur.
   - **CRUD `admin`+`yonetici`** (duyuru deseni); **OKUMA TUM roller** —

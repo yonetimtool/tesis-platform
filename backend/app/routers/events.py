@@ -7,8 +7,9 @@ Akis (urun sahibi sabit):
      (etkinlik site topluluguna yonelik; personel push almaz ama OKUR — karar
      auth.md §4'te belirtildi).
   3. Sakin RSVP verir: katiliyorum | katilmiyorum. Kullanici basina TEK kayit
-     (UNIQUE) — tekrar PUT ile DEGISTIRILIR (ON CONFLICT upsert; cift kayit
-     imkansiz, es zamanli PUT'lar da guvenli).
+     (UNIQUE) ve KILITLI — ilk beyandan sonra DEGISTIRILEMEZ (secim kesin).
+     Mevcut beyan varsa tekrar PUT 409 doner; ON CONFLICT DO NOTHING ile
+     es zamanli iki ilk-PUT'ta da cift kayit imkansiz (ilki kazanir).
   4. SAYILAR SEFFAF: katiliyorum/katilmiyorum sayilarini TUM roller gorur.
      Kim-katiliyor listesi URUN GEREGI paylasilmaz — kimlik degil yalniz sayi
      (benim_durumum yalniz istekteki kullanicinin KENDI beyanidir).
@@ -228,16 +229,33 @@ async def rsvp_event(
     if exists is None:
         raise APIError(404, "not_found", "Kayit bulunamadi")
 
-    # Upsert: kullanici basina TEK kayit — ON CONFLICT ile atomik; es zamanli
-    # iki PUT'ta da cift kayit olusamaz, son beyan gecerli olur.
+    # Beyan KILITLI: kullanici basina etkinlik icin TEK kayit, DEGISTIRILEMEZ.
+    # Mevcut beyan varsa 409 — tekrar oy yok (secim kesin, urun karari).
+    already = (
+        await db.execute(
+            select(EtkinlikKatilim.durum).where(
+                EtkinlikKatilim.etkinlik_id == event_id,
+                EtkinlikKatilim.user_id == user.id,
+            )
+        )
+    ).scalar_one_or_none()
+    if already is not None:
+        raise APIError(
+            409,
+            "already_answered",
+            "Katilim beyaniniz kaydedildi; degistirilemez.",
+        )
+
+    # Ilk beyan: ON CONFLICT DO NOTHING — es zamanli iki ilk-PUT yarissa da
+    # cift kayit olusmaz (ilki kazanir; kaybeden beyani sessizce yok sayilir,
+    # kilit yine korunur). Sonrasi hep 409 yukaridaki kontrolle doner.
     stmt = pg_insert(EtkinlikKatilim).values(
         tenant_id=user.tenant_id,
         etkinlik_id=event_id,
         user_id=user.id,
         durum=body.durum,
-    ).on_conflict_do_update(
+    ).on_conflict_do_nothing(
         constraint="uq_katilim_tenant_etkinlik_user",
-        set_={"durum": body.durum, "updated_at": func.now()},
     )
     try:
         await db.execute(stmt)

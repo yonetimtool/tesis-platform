@@ -128,7 +128,8 @@ void main() {
       expect(api.rsvps, [('e-1', KatilimDurum.katiliyorum)]);
     });
 
-    testWidgets('beyan degistirilebilir: Katilmiyorum da API cagirir',
+    testWidgets(
+        'beyan KILITLI: cevaplanmis etkinlikte butonlar YOK, kayitli yanit var',
         (tester) async {
       final (api, app) = _app(
         UserRole.resident,
@@ -136,10 +137,20 @@ void main() {
       );
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      // mevcut secim rozet olarak da gorunur
-      await tester.tap(find.text('Katılmıyorum').first);
+      // Beyan butonlari gizli (tekrar oy yok) — yalniz kayitli yanit gorunur.
+      expect(find.byType(OutlinedButton), findsNothing);
+      expect(find.text('Katılımınız: Katılıyorum'), findsOneWidget);
+      // API'ye hicbir RSVP gitmez (buton yok).
+      expect(api.rsvps, isEmpty);
+    });
+
+    testWidgets('cevaplanmamis etkinlikte kayitli-yanit satiri YOK (butonlar '
+        'gorunur)', (tester) async {
+      final (_, app) = _app(UserRole.resident, items: [_e()]);
+      await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(api.rsvps, [('e-1', KatilimDurum.katilmiyorum)]);
+      expect(find.textContaining('Katılımınız:'), findsNothing);
+      expect(find.text('Katılıyorum'), findsOneWidget);
     });
 
     for (final role in [
