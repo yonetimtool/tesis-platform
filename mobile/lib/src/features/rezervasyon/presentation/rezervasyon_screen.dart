@@ -5,14 +5,18 @@ import '../../../core/error/api_exception.dart';
 import '../domain/rezervasyon_models.dart';
 import 'rezervasyon_controller.dart';
 
-/// "Rezervasyon" — ortak alan rezervasyonu (auth.md §4 kesin kurali, UX aynasi):
-///   * resident: aktif alanlari gorur, "Yeni rezervasyon" ile BOS slotu ANINDA
-///     rezerve eder (onay YOK). Slot secimi rezerve-edilebilirligi yansitir
-///     (24s penceresi + gunluk kota + son-dakika istisnasi; sunucu hesaplar).
-///     Kendi rezervasyonlarini gorur ve KENDI rezervasyonunu iptal edebilir.
-///   * admin/yonetici: alan olustur/duzenle/pasiflestir; tum rezervasyonlari
-///     gorur (onay YOK — yalniz izleme) ve gerekirse iptal eder; "Takvim"
-///     sekmesi alan bazli ONAYLI slotlarin gun-sirali listesi.
+/// "Rezervasyon" — ortak alan rezervasyonu (auth.md §4 kesin kurali, UX aynasi).
+/// Iki sekme; ICERIK role gore degisir (slot izgarasi paylasilan bilesen):
+///
+///   * resident (DEGISMEDI):
+///       - "Rezervasyonlar": KENDI rezervasyonlarinin listesi (iptal buradan).
+///       - "Alanlar": aktif alanlara dokun → gunun slotlari → BOS slotu ANINDA
+///         rezerve et (onay YOK; 24s/gunluk-kota/son-dakika sunucuda).
+///   * admin/yonetici:
+///       - "Rezervasyonlar": alanlar tile olarak; dokun → o gunun slot izgarasi
+///         (SALT-IZLEME — dolu slotta rezerve eden daire + kisi; rezerve etmez).
+///       - "Alanlar": YALNIZ alan yonetimi — yeni alan, duzenle (dokun) ve
+///         acik/kapali anahtari. Slot/rezervasyon goruntusu BURADA YOK.
 ///
 /// [initialRezervasyonId] push tiklamasindan gelir (?rezervasyon_id=...):
 /// liste yuklendiginde ilgili kaydin detayi BIR KEZ otomatik acilir; kayit
@@ -56,9 +60,12 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
     // Provider zaten yuklu geldiyse (listen tetiklenmez) mevcut durumu isle.
     _maybeOpenInitial(state);
 
-    // Iki sekme: "Rezervasyonlar" (kendi/tum kayitlar) + "Alanlar" (alan-once
-    // rezervasyon akisi). "Takvim" sekmesi kaldirildi (alan-detay slotlari onun
-    // yerini alir).
+    // Iki sekme. "Rezervasyonlar": resident=kendi kayitlari; yonetim=alanlar
+    // (dokun → salt-izleme slot izgarasi). "Alanlar": resident=alan-once rezerve;
+    // yonetim=alan YONETIMI (yeni/duzenle/anahtar, slot goruntusu YOK).
+    // Yonetimde "Rezervasyonlar" sayisi alan sayisidir (icerik alan tile'lari).
+    final ilkSekmeSayi =
+        state.canManageAreas ? state.alanlar.length : state.items.length;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -73,7 +80,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
           ],
           bottom: TabBar(
             tabs: [
-              Tab(text: 'Rezervasyonlar (${state.items.length})'),
+              Tab(text: 'Rezervasyonlar ($ilkSekmeSayi)'),
               Tab(text: 'Alanlar (${state.alanlar.length})'),
             ],
           ),
@@ -83,18 +90,29 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
           children: [
             RefreshIndicator(
               onRefresh: controller.refresh,
-              child: _ReservationList(
-                state: state,
-                items: state.items,
-                emptyText: state.canRequest
-                    ? 'Rezervasyonunuz yok. "Alanlar" sekmesinden bir alan '
-                        'seçip boş bir slotu ayırtın.'
-                    : 'Rezervasyon yok.',
-              ),
+              // Yonetim: alanlar tile → salt-izleme slot izgarasi. Resident:
+              // kendi rezervasyon listesi (DEGISMEDI).
+              child: state.canManageAreas
+                  ? _AreaList(state: state, mode: _AreaListMode.slots)
+                  : _ReservationList(
+                      state: state,
+                      items: state.items,
+                      emptyText: state.canRequest
+                          ? 'Rezervasyonunuz yok. "Alanlar" sekmesinden bir alan '
+                              'seçip boş bir slotu ayırtın.'
+                          : 'Rezervasyon yok.',
+                    ),
             ),
             RefreshIndicator(
               onRefresh: controller.refresh,
-              child: _AreaList(state: state),
+              // Yonetim: alan YONETIMI (yeni/duzenle/anahtar). Resident:
+              // alan-once rezerve akisi (dokun → slot → rezerve; DEGISMEDI).
+              child: _AreaList(
+                state: state,
+                mode: state.canManageAreas
+                    ? _AreaListMode.manage
+                    : _AreaListMode.slots,
+              ),
             ),
           ],
         ),
@@ -115,17 +133,24 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
     return null;
   }
 
-  Future<void> _openAreaForm(BuildContext context) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => const _AreaForm(),
+  Future<void> _openAreaForm(BuildContext context) =>
+      _showAreaForm(context); // yeni alan (FAB)
+}
+
+/// Alan formunu (yeni/duzenle) alt sayfada acar; kaydedilirse snackbar gosterir.
+/// [alan] null → yeni alan; dolu → o alani duzenle (yonetim).
+Future<void> _showAreaForm(BuildContext context, {OrtakAlan? alan}) async {
+  final saved = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => _AreaForm(alan: alan),
+  );
+  if (saved == true && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(alan == null ? 'Ortak alan eklendi ✓' : 'Alan güncellendi ✓'),
+      ),
     );
-    if (saved == true && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ortak alan eklendi ✓')),
-      );
-    }
   }
 }
 
@@ -420,10 +445,18 @@ void _showDetail(BuildContext context, Rezervasyon r,
 }
 
 // ------------------------------ alan listesi ------------------------------- //
+/// Alan listesi iki kilikta calisir:
+///   * [slots]  → alana dokun → gunun slot izgarasi. Resident BOS slotu rezerve
+///     eder; yonetim (Rezervasyonlar sekmesi) SALT-IZLER. Trailing: chevron.
+///   * [manage] → YALNIZ yonetim (Alanlar sekmesi): alan yonetimi. Dokun →
+///     duzenle formu; trailing → acik/kapali anahtari. Slot goruntusu YOK.
+enum _AreaListMode { slots, manage }
+
 class _AreaList extends ConsumerWidget {
-  const _AreaList({required this.state});
+  const _AreaList({required this.state, required this.mode});
 
   final RezervasyonState state;
+  final _AreaListMode mode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -431,18 +464,15 @@ class _AreaList extends ConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.alanlar.isEmpty) {
+      final bos = switch (mode) {
+        _AreaListMode.manage => 'Henüz ortak alan yok. "Yeni alan" ile ekleyin.',
+        _AreaListMode.slots => state.canManageAreas
+            ? 'Görüntülenecek ortak alan yok.'
+            : 'Rezerve edilebilir alan yok.',
+      };
       return ListView(
         padding: const EdgeInsets.all(24),
-        children: [
-          Center(
-            child: Text(
-              state.canManageAreas
-                  ? 'Henüz ortak alan yok. "Yeni alan" ile ekleyin.'
-                  : 'Rezerve edilebilir alan yok.',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
+        children: [Center(child: Text(bos, textAlign: TextAlign.center))],
       );
     }
     return ListView.builder(
@@ -450,6 +480,7 @@ class _AreaList extends ConsumerWidget {
       itemCount: state.alanlar.length,
       itemBuilder: (context, i) {
         final alan = state.alanlar[i];
+        final manage = mode == _AreaListMode.manage;
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
@@ -458,20 +489,14 @@ class _AreaList extends ConsumerWidget {
               color: alan.aktif ? null : Colors.grey,
             ),
             title: Text(alan.ad),
-            subtitle: Text(
-              [
-                if (alan.aciklama != null && alan.aciklama!.isNotEmpty)
-                  alan.aciklama!,
-                alan.aktif
-                    ? 'Müsait: ${alan.musaitlikOzeti} · dokunup slotları gör'
-                    : 'Pasif (rezerve edilemez)',
-              ].join('\n'),
-            ),
-            // ALANLAR-ONCE: alana dokun → o alanin gunluk slotlari (dolu/bos);
-            // sakin bos slotu buradan rezerve eder.
-            onTap: () => _openAmenitySlots(context, alan),
-            // Yonetim: aktiflik anahtari (soft-delete / yeniden aktive).
-            trailing: state.canManageAreas
+            subtitle: Text(_altBaslik(alan, manage)),
+            // manage: dokun → duzenle formu (yonetim). slots: dokun → slot
+            // izgarasi (resident rezerve / yonetim izler).
+            onTap: manage
+                ? () => _showAreaForm(context, alan: alan)
+                : () => _openAmenitySlots(context, alan),
+            // manage: acik/kapali anahtari. slots: chevron (detaya git).
+            trailing: manage
                 ? Switch(
                     value: alan.aktif,
                     onChanged: (v) async {
@@ -493,11 +518,34 @@ class _AreaList extends ConsumerWidget {
       },
     );
   }
+
+  /// Tile alt basligi: yonetim yonetim-kipinde acik/kapali + "düzenle"; slot
+  /// kipinde musaitlik ozeti + "dokunup slotları gör" (aktif) / pasif uyarisi.
+  static String _altBaslik(OrtakAlan alan, bool manage) {
+    final satirlar = <String>[
+      if (alan.aciklama != null && alan.aciklama!.isNotEmpty) alan.aciklama!,
+    ];
+    if (manage) {
+      satirlar.add('Müsait: ${alan.musaitlikOzeti}');
+      satirlar.add(alan.aktif
+          ? 'Açık · düzenlemek için dokun'
+          : 'Kapalı · düzenlemek için dokun');
+    } else {
+      satirlar.add(alan.aktif
+          ? 'Müsait: ${alan.musaitlikOzeti} · dokunup slotları gör'
+          : 'Pasif (rezerve edilemez)');
+    }
+    return satirlar.join('\n');
+  }
 }
 
-/// Yeni alan formu (yonetim): ad + opsiyonel aciklama.
+/// Alan formu (yonetim): ad + opsiyonel aciklama + musaitlik. [_AreaForm.alan]
+/// null ise YENI alan olusturur; dolu ise o alani DUZENLER (PATCH — aktiflik
+/// degismez, o ayri anahtarla yonetilir).
 class _AreaForm extends ConsumerStatefulWidget {
-  const _AreaForm();
+  const _AreaForm({this.alan});
+
+  final OrtakAlan? alan;
 
   @override
   ConsumerState<_AreaForm> createState() => _AreaFormState();
@@ -515,6 +563,32 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
   String? _hata;
 
   static const _slotSecenekleri = [30, 45, 60, 90, 120];
+
+  bool get _duzenle => widget.alan != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final a = widget.alan;
+    if (a != null) {
+      // Mevcut alanin degerlerini forma yukle (duzenleme).
+      _ad.text = a.ad;
+      _aciklama.text = a.aciklama ?? '';
+      _acilis = _parseSaat(a.acilis) ?? _acilis;
+      _kapanis = _parseSaat(a.kapanis) ?? _kapanis;
+      _slot = a.slotDakika;
+    }
+  }
+
+  /// "HH:MM" → TimeOfDay (bozuksa null).
+  static TimeOfDay? _parseSaat(String hhmm) {
+    final p = hhmm.split(':');
+    if (p.length < 2) return null;
+    final h = int.tryParse(p[0]);
+    final m = int.tryParse(p[1]);
+    if (h == null || m == null) return null;
+    return TimeOfDay(hour: h, minute: m);
+  }
 
   @override
   void dispose() {
@@ -557,16 +631,19 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
       _hata = null;
     });
     try {
-      await ref.read(rezervasyonControllerProvider.notifier).createArea(
-            OrtakAlanDraft(
-              ad: _ad.text.trim(),
-              aciklama:
-                  _aciklama.text.trim().isEmpty ? null : _aciklama.text.trim(),
-              acilis: _hhmm(_acilis),
-              kapanis: _hhmm(_kapanis),
-              slotDakika: _slot,
-            ),
-          );
+      final draft = OrtakAlanDraft(
+        ad: _ad.text.trim(),
+        aciklama: _aciklama.text.trim().isEmpty ? null : _aciklama.text.trim(),
+        acilis: _hhmm(_acilis),
+        kapanis: _hhmm(_kapanis),
+        slotDakika: _slot,
+      );
+      final controller = ref.read(rezervasyonControllerProvider.notifier);
+      if (_duzenle) {
+        await controller.editArea(widget.alan!.id, draft);
+      } else {
+        await controller.createArea(draft);
+      }
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       // 409: ayni adla alan zaten var.
@@ -598,9 +675,10 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Yeni ortak alan',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              Text(
+                _duzenle ? 'Alanı düzenle' : 'Yeni ortak alan',
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -666,8 +744,10 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
                   labelText: 'Slot uzunluğu',
                   border: OutlineInputBorder(),
                 ),
+                // Duzenlemede alanin mevcut slot degeri listede olmayabilir —
+                // secenege ekle (aksi halde Dropdown deger uyusmazligi atar).
                 items: [
-                  for (final s in _slotSecenekleri)
+                  for (final s in {..._slotSecenekleri, _slot}.toList()..sort())
                     DropdownMenuItem(value: s, child: Text('$s dakika')),
                 ],
                 onChanged:
@@ -687,8 +767,10 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.add_home_outlined),
-                  label: const Text('Alanı ekle'),
+                      : Icon(_duzenle
+                          ? Icons.save_outlined
+                          : Icons.add_home_outlined),
+                  label: Text(_duzenle ? 'Kaydet' : 'Alanı ekle'),
                   onPressed: _busy ? null : _submit,
                 ),
               ),

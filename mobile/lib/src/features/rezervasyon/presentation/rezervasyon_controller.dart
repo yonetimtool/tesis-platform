@@ -179,6 +179,14 @@ class RezervasyonController extends Notifier<RezervasyonState> {
     await refresh();
   }
 
+  /// Mevcut alani duzenle (ad/aciklama/musaitlik) — yalniz yonetim. Aktiflik
+  /// icin ayri [setAreaActive] kullanilir (anahtar); bu PATCH aktifligi
+  /// degistirmez (draft.aktif=null → govdeye yazilmaz).
+  Future<void> editArea(String id, OrtakAlanDraft draft) async {
+    await ref.read(rezervasyonApiProvider).updateArea(id, draft.toJson());
+    await refresh();
+  }
+
   Future<void> setAreaActive(String id, bool aktif) async {
     await ref.read(rezervasyonApiProvider).updateArea(id, {'aktif': aktif});
     await refresh();

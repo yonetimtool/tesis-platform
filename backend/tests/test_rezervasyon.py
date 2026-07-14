@@ -45,6 +45,25 @@ def _mslot(minutes_ahead, dur_min=20):
     return start.date().isoformat(), start.strftime("%H:%M"), end.strftime("%H:%M")
 
 
+def _iki_bitisik_slot_ayni_gun():
+    """AYNI takvim gunune denk, 24s penceresi icinde, cakismayan iki BITISIK
+    saat slotu -> ((tarih,s,e), (tarih,s,e)). Kural her gun bagimsiz 1 oldugundan
+    MUMKUNSE gelecek bir gun (yarin) secilir; gece yarisina yakin saatlerde (0-1)
+    bugune duser — iki durumda da 2. slot ayni gune denk gelir (kota testi)."""
+    now = _now()
+    if now.hour >= 2:  # yarin: (simdi-2s) ve (simdi-1s) saatleri hala <24s icinde
+        day = (now + timedelta(days=1)).date()
+        h1 = now.hour - 2
+    else:  # gece yarisi kenar durumu: bugun ileri iki saat
+        day = now.date()
+        h1 = now.hour + 1
+    d = day.isoformat()
+    return (
+        (d, f"{h1:02d}:00", f"{h1 + 1:02d}:00"),
+        (d, f"{h1 + 1:02d}:00", f"{h1 + 2:02d}:00"),
+    )
+
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -272,6 +291,26 @@ def test_gunde_bir_rezervasyon(client, rworld):
     _post(client, resident, rworld["alan1"], _hslot(23))
     # BASKA sakin ayni gun de rezerve edebilir (kota kisi-bazli)
     _post(client, diger, rworld["alan1"], _hslot(4))
+
+
+def test_gunde_bir_her_gun_bagimsiz(client, rworld):
+    """Gunluk kota HER takvim gunu icin BAGIMSIZ 1'dir — yalniz "bugun" degil.
+
+    Regresyon: gelecek bir gunun (yarin) ilk slotu alininca AYNI yarin gunune
+    ikinci (cakismayan/bitisik) slot da 409 gunluk kotaya takilmali; kota
+    slot-gunune baglidir, bugune ozel degildir. Baska sakin ayni gune rezerve
+    edebilir (kota kisi-bazli)."""
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    diger = _headers(client, rworld["slug_a"], rworld["diger"])
+    s1, s2 = _iki_bitisik_slot_ayni_gun()
+    assert s1[0] == s2[0]  # iki slot da ayni takvim gunu
+    # ilk slot (o gunun ilk rezervasyonu) OK
+    _post(client, resident, rworld["alan1"], s1)
+    # AYNI gun IKINCI (bitisik -> cakisma DEGIL) slot -> 409 gunluk kota
+    r = _post(client, resident, rworld["alan1"], s2, expect=409)
+    assert "bu gun" in r["error"]["message"].lower()
+    # BASKA sakin ayni gune rezerve edebilir (kota kisi-bazli, cakisma yok)
+    _post(client, diger, rworld["alan1"], s2)
 
 
 def test_son_dakika_istisnasi(client, rworld):

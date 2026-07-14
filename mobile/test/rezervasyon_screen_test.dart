@@ -23,9 +23,23 @@ class _FakeRezervasyonApi extends RezervasyonApi {
   final List<Slot> _slots;
   final List<String> cancelled = [];
   final List<RezervasyonDraft> requested = [];
+  final List<OrtakAlanDraft> createdAreas = [];
+  final List<({String id, Map<String, dynamic> patch})> patchedAreas = [];
 
   @override
   Future<List<Slot>> fetchSlots(String alanId, String date) async => _slots;
+
+  @override
+  Future<OrtakAlan> createArea(OrtakAlanDraft draft) async {
+    createdAreas.add(draft);
+    return _alanlar.isEmpty ? _alan() : _alanlar.first;
+  }
+
+  @override
+  Future<OrtakAlan> updateArea(String id, Map<String, dynamic> patch) async {
+    patchedAreas.add((id: id, patch: patch));
+    return _alanlar.firstWhere((a) => a.id == id, orElse: () => _alan());
+  }
 
   @override
   Future<List<OrtakAlan>> fetchAreas() async => _alanlar;
@@ -126,15 +140,26 @@ void main() {
   group('sekmeler', () {
     testWidgets('YALNIZ Rezervasyonlar + Alanlar (Takvim sekmesi KALDIRILDI)',
         (tester) async {
+      // Yonetimde "Rezervasyonlar" sayisi alan sayisidir (icerik alan tile'lari
+      // — slot izleme); 1 alan → "Rezervasyonlar (1)".
       final (_, app) = _app(UserRole.yonetici, items: [
         _r(),
         _r(id: 'r-2', durum: RezervasyonDurum.iptal, iptalEdenAd: 'Acme Sakin'),
       ]);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.text('Rezervasyonlar (2)'), findsOneWidget);
+      expect(find.text('Rezervasyonlar (1)'), findsOneWidget);
       expect(find.text('Alanlar (1)'), findsOneWidget);
       expect(find.textContaining('Takvim'), findsNothing);
+    });
+
+    testWidgets('resident: "Rezervasyonlar" sayisi KENDI kayit sayisi (DEGISMEDI)',
+        (tester) async {
+      final (_, app) = _app(UserRole.resident, items: [_r()]);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      expect(find.text('Rezervasyonlar (1)'), findsOneWidget);
+      expect(find.text('Alanlar (1)'), findsOneWidget);
     });
   });
 
@@ -173,8 +198,10 @@ void main() {
 
     testWidgets('zaten iptal edilmis rezervasyonda İptal YOK; iptal bilgisi var',
         (tester) async {
+      // Rezervasyon KART listesi (iptal bilgisiyle) resident'in "Rezervasyonlar"
+      // sekmesindedir; yonetim rezervasyonlari slot izgarasindan izler.
       final (_, app) = _app(
-        UserRole.yonetici,
+        UserRole.resident,
         items: [_r(durum: RezervasyonDurum.iptal, iptalEdenAd: 'Acme Sakin')],
       );
       await tester.pumpWidget(app);
@@ -263,15 +290,15 @@ void main() {
       expect(find.text('Seç'), findsOneWidget);
     });
 
-    testWidgets('yonetici: dolu slotta rezerve eden DAIRE + kisi sayisi; '
-        '"Seç" YOK (rezerve etmez)', (tester) async {
+    testWidgets('yonetici: slot izleme REZERVASYONLAR sekmesinde — dolu slotta '
+        'rezerve eden DAIRE + kisi; "Seç" YOK (rezerve etmez)', (tester) async {
+      // REORG: yonetici slot izleme "Rezervasyonlar" (ilk/varsayilan) sekmesinde;
+      // "Alanlar" sekmesine GECMEDEN alana dokunup izgarayi acar.
       final (_, app) = _app(UserRole.yonetici,
           slots: slots(busyUnit: 'A-12', busyKisi: 4));
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Alanlar (1)'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Havuz'));
+      await tester.tap(find.text('Havuz')); // Rezervasyonlar sekmesindeki tile
       await tester.pumpAndSettle();
       expect(find.textContaining('Daire A-12'), findsOneWidget);
       expect(find.textContaining('4 kişi'), findsOneWidget);
@@ -364,6 +391,79 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Havuz'), findsOneWidget);
       expect(find.byType(Switch), findsNothing);
+    });
+  });
+
+  group('YONETICI sekme reorg (slot izleme → Rezervasyonlar; yonetim → Alanlar)',
+      () {
+    testWidgets('Rezervasyonlar sekmesi: alan tile\'lari (rezervasyon KARTI DEGIL)',
+        (tester) async {
+      // Ilk sekme yonetici icin alan tile listesi; duz rezervasyon kart listesi
+      // DEGIL (o slot izgarasina tasindi).
+      final (_, app) = _app(UserRole.yonetici, items: [_r()]);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('dokunup slotları gör'), findsOneWidget);
+      // Rezervasyon kartina ozgu icerik (not) ILK sekmede YOK.
+      expect(find.text('Aile yuzme saati'), findsNothing);
+    });
+
+    testWidgets('Alanlar sekmesi: alana dokun → DUZENLE formu (slot izgarasi YOK)',
+        (tester) async {
+      final (_, app) = _app(
+        UserRole.yonetici,
+        alanlar: [_alan(ad: 'Havuz')],
+        slots: const [
+          Slot(
+              baslangic: '10:00',
+              bitis: '11:00',
+              dolu: false,
+              rezerveEdilebilir: true),
+        ],
+      );
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Alanlar (1)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Havuz'));
+      await tester.pumpAndSettle();
+      // Yonetim Alanlar sekmesinde alana dokununca DUZENLE formu acilir.
+      expect(find.text('Alanı düzenle'), findsOneWidget);
+      expect(find.text('Kaydet'), findsOneWidget);
+      // Slot izgarasi BURADA acilmaz (Boş/Seç yok).
+      expect(find.text('Boş'), findsNothing);
+      expect(find.text('Seç'), findsNothing);
+    });
+
+    testWidgets('Alanlar duzenle: Kaydet → updateArea alan id ile (aktiflik HARIC)',
+        (tester) async {
+      final (api, app) =
+          _app(UserRole.yonetici, alanlar: [_alan(ad: 'Havuz')]);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Alanlar (1)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Havuz'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.widgetWithText(FilledButton, 'Kaydet'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Kaydet'));
+      await tester.pumpAndSettle();
+      expect(api.patchedAreas, hasLength(1));
+      expect(api.patchedAreas.single.id, 'a-1');
+      expect(api.patchedAreas.single.patch['ad'], 'Havuz');
+      // Aktiflik ayri anahtarla yonetilir — duzenleme PATCH'i onu tasimaz.
+      expect(api.patchedAreas.single.patch.containsKey('aktif'), isFalse);
+    });
+
+    testWidgets('yonetim "Yeni alan" FAB: create formu (slot izgarasi degil)',
+        (tester) async {
+      final (_, app) = _app(UserRole.yonetici);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Yeni alan'));
+      await tester.pumpAndSettle();
+      expect(find.text('Yeni ortak alan'), findsOneWidget);
+      expect(find.text('Alanı ekle'), findsOneWidget);
     });
   });
 
