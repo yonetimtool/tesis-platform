@@ -85,6 +85,8 @@ class Slot {
     required this.dolu,
     this.rezerveEdilebilir = false,
     this.sebep,
+    this.unitNo,
+    this.kisiSayisi,
   });
 
   /// "HH:MM".
@@ -101,6 +103,13 @@ class Slot {
   /// Rezerve edilemme sebebi: 'dolu' | 'gecti' | 'cok_erken' | 'gunluk' | null.
   final String? sebep;
 
+  /// YALNIZ yonetim (admin/yonetici) + dolu slot: rezerve eden daire no.
+  /// resident/saha icin sunucu DAIMA null doner (gizlilik).
+  final String? unitNo;
+
+  /// YALNIZ yonetim + dolu slot: rezerve edilen kisi sayisi (resident: null).
+  final int? kisiSayisi;
+
   /// Sakine gosterilecek kisa sebep etiketi (sebep koduna gore).
   String? get sebepEtiketi => switch (sebep) {
         'dolu' => 'dolu',
@@ -116,6 +125,8 @@ class Slot {
         dolu: json['dolu'] as bool? ?? false,
         rezerveEdilebilir: json['rezerve_edilebilir'] as bool? ?? false,
         sebep: json['sebep'] as String?,
+        unitNo: json['unit_no'] as String?,
+        kisiSayisi: (json['kisi_sayisi'] as num?)?.toInt(),
       );
 }
 

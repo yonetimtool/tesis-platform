@@ -592,13 +592,17 @@ Notlar:
     - **SON DAKIKA ISTISNASI:** slota **<10 dk kala** BOS slot gunluk kotayi
       **baypas eder** (bos slot bosa gitmesin); yalniz gunluk kurali gecersiz
       kilar, 24s ust siniri zaten saglanmistir.
-  - **SLOTLAR (`GET /common-areas/{id}/slots?date=`) TUM roller:** o gunun TAM
-    slot izgarasini + her slot icin `dolu` + `rezerve_edilebilir` + `sebep`
-    (`dolu`|`gecti`|`cok_erken`|`gunluk`|null) doner. **dolu** = o slotla
+  - **SLOTLAR (`GET /common-areas/{id}/slots?date=`) TUM roller — ROL-FARKINDA:**
+    o gunun TAM slot izgarasini + her slot icin `dolu` + `rezerve_edilebilir` +
+    `sebep` (`dolu`|`gecti`|`cok_erken`|`gunluk`|null) doner. **dolu** = o slotla
     kesisen ONAYLI rezervasyon var; iptal DOLDURMAZ. **rezerve_edilebilir**
     yalniz SAKIN icin hesaplanir (24s + gunluk kota + son-dakika); yonetimde
-    daima false (rezerve etmez). **GIZLILIK:** kim rezerve etmis PAYLASILMAZ.
-    Pasif alan sakine/sahaya **404**; yonetim pasif alan slotlarini gorur.
+    daima false. **GORUNURLUK KADEMESI:** 🔵 `resident`/saha dolu slotta YALNIZ
+    "dolu" gorur (kim + kac kisi GIZLI — `unit_no`/`kisi_sayisi` = null); ✅
+    `admin`/`yonetici` dolu slotta ayrica rezerve eden **daire (`unit_no`) +
+    `kisi_sayisi`** gorur (denetim). Pasif alan sakine/sahaya **404**; yonetim
+    pasif alan slotlarini gorur. Sakin bu uctan gunun bos slotlarini secip
+    rezerve eder (uygulama "alanlar-once": alani sec → gunun slotlarini gor).
   - **REZERVE ET (`POST /reservations`) YALNIZ `resident`:** alan + tarih +
     saat araligi (bitis > baslangic, ayni gun) + kisi_sayisi (>0). Daire
     sakinin AKTIF dairesinden turetilir (coklu dairede `unit_id` ile secim —
@@ -611,11 +615,13 @@ Notlar:
     digeri 23P01 → **409** (yaris durumu DB'de cozulur). Yari-acik aralik `[)`:
     bitisik slot (bitis == diger.baslangic) cakisma SAYILMAZ. Overlap tanimi:
     `baslangic < diger.bitis AND bitis > diger.baslangic`.
-  - **IPTAL (`POST /reservations/{id}/cancel`):** rezerve eden `resident`
-    (YALNIZ kendi — baskasininki 404) + `admin`+`yonetici` (herhangi biri).
-    `durum='iptal'` + `iptal_eden_user_id`/`iptal_zamani` damgalanir; slot
-    bosalir (EXCLUDE disi). Zaten iptal → **409**. `security`/`tesis_gorevlisi`
-    ERISMEZ (403).
+  - **IPTAL (`POST /reservations/{id}/cancel`) YALNIZ rezerve eden `resident`:**
+    KENDI rezervasyonu (baskasininki 404). Yonetim iptal ETMEZ (403) — onay
+    akisi yok, yalniz izler. **10 DK KURALI:** slot baslangicina <10 dk kala
+    (veya baslamis) iptal EDILEMEZ → **422** ("Rezervasyon baslangicina 10
+    dakikadan az kaldi, iptal edilemez."). `durum='iptal'` +
+    `iptal_eden_user_id`/`iptal_zamani` damgalanir; slot bosalir. Zaten iptal
+    → **409**. `security`/`tesis_gorevlisi` ERISMEZ (403).
   - **OKUMA:** yonetim tenant'in tumu (alan+tarih filtresi = gun gorunumu);
     🔵 `resident` YALNIZ kendi dairelerinin rezervasyonlari (daire bazli — es
     de gorur); `security`/`tesis_gorevlisi` ERISMEZ (403) — sakin↔yonetim akisi.

@@ -50,8 +50,10 @@ router = APIRouter(prefix="/reservations", tags=["rezervasyon"])
 
 # REZERVE ETME yalniz sakin: ortak alan dairenin hakki.
 _REQUESTER = require_role("resident")
-# IPTAL: rezerve eden sakin (kendi) + yonetim.
-_CANCELLER = require_role("resident", "admin", "yonetici")
+# IPTAL: YALNIZ rezerve eden sakin (kendi rezervasyonu). Yonetim iptal ETMEZ —
+# onay akisi yok, yonetim yalniz izler (403). Sakin de slot baslangicina
+# 10 dakikadan az kala iptal EDEMEZ (422).
+_CANCELLER = require_role("resident")
 # OKUMA: yonetim tumu; sakin kendi daireleri. Saha rolleri ERISMEZ (403).
 _READER = require_role("admin", "yonetici", "resident")
 
@@ -297,9 +299,10 @@ async def cancel_reservation(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_CANCELLER),
 ) -> RezervasyonOut:
-    """Rezervasyonu iptal eder (durum='iptal'); slot bosalir. Sakin YALNIZ
-    KENDI rezervasyonunu, yonetim herhangi birini iptal edebilir. Zaten
-    iptal edilmis kayda ikinci iptal 409."""
+    """Rezervasyonu iptal eder (durum='iptal'); slot bosalir. YALNIZ rezerve
+    eden sakin KENDI rezervasyonunu iptal eder (baskasininki 404). Slot
+    baslangicina 10 dakikadan az kala (veya baslamis) iptal EDILEMEZ (422).
+    Zaten iptal edilmis kayda ikinci iptal 409."""
     row = (
         await db.execute(
             select(Rezervasyon, OrtakAlan.ad, Unit.no)
@@ -313,10 +316,19 @@ async def cancel_reservation(
     obj, alan_ad, unit_no = row
 
     # Sakin yalniz KENDI rezervasyonunu iptal eder (varligi sizdirmadan 404).
-    if user.role == "resident" and obj.talep_eden_user_id != user.id:
+    if obj.talep_eden_user_id != user.id:
         raise APIError(404, "not_found", "Kayit bulunamadi")
     if obj.durum != "onaylandi":
         raise APIError(409, "conflict", "Rezervasyon zaten iptal edilmis.")
+
+    # 10 DAKIKA KURALI: slot baslangicina <10 dk kala (veya baslamis) iptal yok.
+    tzname = await _tenant_tz(db, user.tenant_id)
+    kalan = rtiming.slot_start_utc(tzname, obj.tarih, obj.baslangic) - rtiming.now_utc()
+    if kalan < rtiming.LAST_MINUTE:
+        raise APIError(
+            422, "too_late",
+            "Rezervasyon baslangicina 10 dakikadan az kaldi, iptal edilemez.",
+        )
 
     obj.durum = "iptal"
     obj.iptal_eden_user_id = user.id

@@ -1563,12 +1563,15 @@ paths:
       - $ref: "#/components/parameters/PathId"
     post:
       tags: [rezervasyon]
-      summary: Rezervasyonu iptal et (rezerve eden sakin + admin/yonetici)
+      summary: Rezervasyonu iptal et (YALNIZ rezerve eden sakin — 10 dk kurali)
       description: |
         Rezervasyonu iptal eder (durum='iptal'); slot bosalir (EXCLUDE disi).
-        Sakin YALNIZ KENDI rezervasyonunu (baskasininki 404 — varlik
-        sizdirilmaz), yonetim herhangi birini iptal eder. iptal_eden_user_id +
-        iptal_zamani damgalanir. Zaten iptal edilmis kayda ikinci iptal 409.
+        YALNIZ rezerve eden `resident` KENDI rezervasyonunu iptal eder
+        (baskasininki 404 — varlik sizdirilmaz). Yonetim (admin/yonetici) iptal
+        ETMEZ — onay akisi yok, yalniz izler (403). Slot baslangicina **10
+        dakikadan az kala** (veya baslamis) iptal EDILEMEZ (422 "Rezervasyon
+        baslangicina 10 dakikadan az kaldi, iptal edilemez."). iptal_eden_user_id
+        + iptal_zamani damgalanir. Zaten iptal edilmis kayda ikinci iptal 409.
         security/tesis_gorevlisi ERISEMEZ (403).
       responses:
         "200":
@@ -1580,6 +1583,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
   # ETKINLIK + RSVP (yonetici olusturur -> sakinlere push -> sakin
@@ -5030,13 +5034,16 @@ components:
     Slot:
       type: object
       required: [baslangic, bitis, dolu]
-      description: Bir gunun tek slotu — GIZLILIK: kim rezerve etmis alani YOK.
+      description: >-
+        Bir gunun tek slotu — ROL-FARKINDA. resident/saha: yalniz dolu/bos
+        (kimlik + kisi sayisi YOK). admin/yonetici: dolu slotta ayrica rezerve
+        eden daire (unit_no) + kisi_sayisi (denetim).
       properties:
         baslangic: { type: string, example: "10:00" }
         bitis: { type: string, example: "11:00" }
         dolu:
           type: boolean
-          description: true = bu slotla kesisen ONAYLI rezervasyon var (kimlik paylasilmaz)
+          description: true = bu slotla kesisen ONAYLI rezervasyon var
         rezerve_edilebilir:
           type: boolean
           default: false
@@ -5048,6 +5055,16 @@ components:
           nullable: true
           enum: [dolu, gecti, cok_erken, gunluk]
           description: Rezerve edilemme sebebi (rezerve_edilebilir=false iken)
+        unit_no:
+          type: string
+          nullable: true
+          description: >-
+            YALNIZ admin/yonetici + dolu slot: rezerve eden daire no
+            (resident/saha icin DAIMA null — gizlilik).
+        kisi_sayisi:
+          type: integer
+          nullable: true
+          description: YALNIZ admin/yonetici + dolu slot: rezerve edilen kisi sayisi
     AlanSlotResponse:
       type: object
       required: [alan_id, tarih, slot_dakika, items]

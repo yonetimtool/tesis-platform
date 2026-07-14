@@ -56,17 +56,11 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
     // Provider zaten yuklu geldiyse (listen tetiklenmez) mevcut durumu isle.
     _maybeOpenInitial(state);
 
-    // "Takvim": ONAYLI slotlar gun + saat sirali (gun gorunumu listesi).
-    final onayli = state.items
-        .where((r) => r.onayli)
-        .toList(growable: false)
-      ..sort((a, b) {
-        final gun = a.tarih.compareTo(b.tarih);
-        return gun != 0 ? gun : a.baslangic.compareTo(b.baslangic);
-      });
-
+    // Iki sekme: "Rezervasyonlar" (kendi/tum kayitlar) + "Alanlar" (alan-once
+    // rezervasyon akisi). "Takvim" sekmesi kaldirildi (alan-detay slotlari onun
+    // yerini alir).
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Rezervasyon'),
@@ -78,10 +72,8 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
             ),
           ],
           bottom: TabBar(
-            isScrollable: true,
             tabs: [
               Tab(text: 'Rezervasyonlar (${state.items.length})'),
-              Tab(text: 'Takvim (${onayli.length})'),
               Tab(text: 'Alanlar (${state.alanlar.length})'),
             ],
           ),
@@ -95,18 +87,9 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
                 state: state,
                 items: state.items,
                 emptyText: state.canRequest
-                    ? 'Rezervasyonunuz yok. "Yeni rezervasyon" ile boş bir '
-                        'slotu hemen ayırtın.'
+                    ? 'Rezervasyonunuz yok. "Alanlar" sekmesinden bir alan '
+                        'seçip boş bir slotu ayırtın.'
                     : 'Rezervasyon yok.',
-              ),
-            ),
-            RefreshIndicator(
-              onRefresh: controller.refresh,
-              child: _ReservationList(
-                state: state,
-                items: onayli,
-                emptyText: 'Onaylı rezervasyon yok.',
-                takvim: true,
               ),
             ),
             RefreshIndicator(
@@ -119,16 +102,9 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
     );
   }
 
+  // Rezervasyon "alanlar-once" akisla yapilir (alan sec → slot sec); ayri
+  // "Yeni rezervasyon" FAB yok. Yalniz yonetim "Yeni alan" ekler.
   Widget? _fab(BuildContext context, RezervasyonState state) {
-    if (state.canRequest) {
-      return FloatingActionButton.extended(
-        icon: const Icon(Icons.event_available_outlined),
-        label: const Text('Yeni rezervasyon'),
-        onPressed: state.aktifAlanlar.isEmpty
-            ? null
-            : () => _openRequestForm(context, state.aktifAlanlar),
-      );
-    }
     if (state.canManageAreas) {
       return FloatingActionButton.extended(
         icon: const Icon(Icons.add_home_outlined),
@@ -137,20 +113,6 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
       );
     }
     return null;
-  }
-
-  Future<void> _openRequestForm(
-      BuildContext context, List<OrtakAlan> alanlar) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _RequestForm(alanlar: alanlar),
-    );
-    if (saved == true && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rezervasyonunuz onaylandı ✓')),
-      );
-    }
   }
 
   Future<void> _openAreaForm(BuildContext context) async {
@@ -173,15 +135,11 @@ class _ReservationList extends ConsumerWidget {
     required this.state,
     required this.items,
     required this.emptyText,
-    this.takvim = false,
   });
 
   final RezervasyonState state;
   final List<Rezervasyon> items;
   final String emptyText;
-
-  /// Takvim gorunumu: gun basliklariyla gruplu (onayli slotlar).
-  final bool takvim;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -208,40 +166,13 @@ class _ReservationList extends ConsumerWidget {
         ],
       );
     }
-    if (!takvim) {
-      return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-        itemCount: items.length,
-        itemBuilder: (context, i) => _ReservationCard(
-          rezervasyon: items[i],
-          canCancel: state.canCancel(items[i]),
-        ),
-      );
-    }
-    // Takvim: gun basligi + o gunun slotlari (items zaten gun+saat sirali).
-    final children = <Widget>[];
-    String? gun;
-    for (final r in items) {
-      if (r.tarih != gun) {
-        gun = r.tarih;
-        children.add(Padding(
-          padding: const EdgeInsets.only(top: 12, bottom: 4),
-          child: Text(
-            gun,
-            style: Theme.of(context)
-                .textTheme
-                .titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-        ));
-      }
-      children.add(
-        _ReservationCard(rezervasyon: r, canCancel: state.canCancel(r)),
-      );
-    }
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
-      children: children,
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+      itemCount: items.length,
+      itemBuilder: (context, i) => _ReservationCard(
+        rezervasyon: items[i],
+        canCancel: state.canCancel(items[i]),
+      ),
     );
   }
 }
@@ -532,10 +463,13 @@ class _AreaList extends ConsumerWidget {
                 if (alan.aciklama != null && alan.aciklama!.isNotEmpty)
                   alan.aciklama!,
                 alan.aktif
-                    ? 'Müsait: ${alan.musaitlikOzeti}'
+                    ? 'Müsait: ${alan.musaitlikOzeti} · dokunup slotları gör'
                     : 'Pasif (rezerve edilemez)',
               ].join('\n'),
             ),
+            // ALANLAR-ONCE: alana dokun → o alanin gunluk slotlari (dolu/bos);
+            // sakin bos slotu buradan rezerve eder.
+            onTap: () => _openAmenitySlots(context, alan),
             // Yonetim: aktiflik anahtari (soft-delete / yeniden aktive).
             trailing: state.canManageAreas
                 ? Switch(
@@ -553,7 +487,7 @@ class _AreaList extends ConsumerWidget {
                       }
                     },
                   )
-                : null,
+                : const Icon(Icons.chevron_right),
           ),
         );
       },
@@ -766,80 +700,69 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
   }
 }
 
-/// Yeni rezervasyon formu (sakin): alan secimi + tarih + saat araligi +
-/// kisi sayisi + opsiyonel not. Cakisma 409'u formda gosterilir.
-class _RequestForm extends ConsumerStatefulWidget {
-  const _RequestForm({required this.alanlar});
-
-  /// Secilebilir (aktif) alanlar.
-  final List<OrtakAlan> alanlar;
-
-  @override
-  ConsumerState<_RequestForm> createState() => _RequestFormState();
+/// Alan-detay slot listesi (ALANLAR-ONCE akisin merkezi): secilen alanin bir
+/// gunune ait slotlari dolu/bos gosterir. Sunucu ROL-FARKINDA doner —
+///   * resident: dolu slot yalniz "Dolu" (kim/kac kisi GIZLI); bos + rezerve
+///     edilebilir slotu buradan rezerve eder (kisi sayisi + not).
+///   * admin/yonetici: dolu slotta rezerve eden DAIRE + kisi sayisi (denetim);
+///     rezerve etmez (yalniz izler).
+void _openAmenitySlots(BuildContext context, OrtakAlan alan) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => _AmenitySlotsSheet(alan: alan),
+  );
 }
 
-class _RequestFormState extends ConsumerState<_RequestForm> {
-  final _formKey = GlobalKey<FormState>();
-  final _notlar = TextEditingController();
-  late String _alanId = widget.alanlar.first.id;
-  DateTime _tarih = DateTime.now().add(const Duration(days: 1));
-  int _kisi = 2;
-  bool _busy = false;
-  String? _hata;
+class _AmenitySlotsSheet extends ConsumerStatefulWidget {
+  const _AmenitySlotsSheet({required this.alan});
 
-  // Slot izgarasi (secili alan+gun): sakin BOS bir slot secer (dolu secilemez).
+  final OrtakAlan alan;
+
+  @override
+  ConsumerState<_AmenitySlotsSheet> createState() => _AmenitySlotsSheetState();
+}
+
+class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
+  DateTime _tarih = DateTime.now();
   List<Slot> _slots = const [];
-  bool _slotYukleniyor = false;
-  String? _slotHata;
-  Slot? _secili;
+  bool _yukleniyor = false;
+  String? _hata;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(_loadSlots);
-  }
-
-  @override
-  void dispose() {
-    _notlar.dispose();
-    super.dispose();
+    Future.microtask(_load);
   }
 
   String get _tarihStr =>
       '${_tarih.year}-${_tarih.month.toString().padLeft(2, '0')}-${_tarih.day.toString().padLeft(2, '0')}';
 
-  OrtakAlan get _alan =>
-      widget.alanlar.firstWhere((a) => a.id == _alanId,
-          orElse: () => widget.alanlar.first);
-
-  /// Secili alan+gun icin slotlari (dolu/bos) yeniden yukler; secimi sifirlar.
-  Future<void> _loadSlots() async {
+  Future<void> _load() async {
     setState(() {
-      _slotYukleniyor = true;
-      _slotHata = null;
-      _secili = null;
-      _slots = const [];
+      _yukleniyor = true;
+      _hata = null;
     });
     try {
       final slots = await ref
           .read(rezervasyonControllerProvider.notifier)
-          .slots(_alanId, _tarihStr);
+          .slots(widget.alan.id, _tarihStr);
       if (!mounted) return;
       setState(() {
         _slots = slots;
-        _slotYukleniyor = false;
+        _yukleniyor = false;
       });
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
-        _slotYukleniyor = false;
-        _slotHata = e.message;
+        _yukleniyor = false;
+        _hata = e.message;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _slotYukleniyor = false;
-        _slotHata = 'Slotlar yüklenemedi. Tekrar deneyin.';
+        _yukleniyor = false;
+        _hata = 'Slotlar yüklenemedi. Tekrar deneyin.';
       });
     }
   }
@@ -851,18 +774,170 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
-    if (picked != null && picked != _tarih) {
+    if (picked != null) {
       setState(() => _tarih = picked);
-      await _loadSlots();
+      await _load();
     }
+  }
+
+  Future<void> _book(Slot s) async {
+    final booked = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _BookSlotSheet(alan: widget.alan, tarih: _tarihStr, slot: s),
+    );
+    if (booked == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rezervasyonunuz onaylandı ✓')),
+      );
+      await _load(); // slot artik dolu — izgarayi tazele
+    }
+  }
+
+  /// Slotun durum etiketi (rol-farkinda; unit_no/kisi_sayisi yalniz yonetime
+  /// gelir — sunucu resident'a null doner, bu yuzden burada da gizli kalir).
+  String _durumEtiketi(Slot s) {
+    if (s.dolu) {
+      if (s.unitNo != null) {
+        final kisi = s.kisiSayisi != null ? ' · ${s.kisiSayisi} kişi' : '';
+        return 'Dolu · Daire ${s.unitNo}$kisi';
+      }
+      return 'Dolu';
+    }
+    if (s.rezerveEdilebilir) return 'Boş';
+    return s.sebepEtiketi ?? 'Boş';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final canRequest =
+        ref.watch(rezervasyonControllerProvider).canRequest;
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+            20, 16, 20, 20 + MediaQuery.of(context).viewInsets.bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.meeting_room_outlined),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(widget.alan.ad,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text('Müsait: ${widget.alan.musaitlikOzeti}',
+                style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.calendar_today_outlined, size: 18),
+              label: Text('Tarih: $_tarihStr'),
+              onPressed: _yukleniyor ? null : _pickDate,
+            ),
+            if (canRequest) ...[
+              const SizedBox(height: 4),
+              const Text(
+                'Slot yalnızca başlangıcına 24 saatten az kala açılır; '
+                'günde en fazla bir rezervasyon yapabilirsiniz.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Flexible(child: _slotListesi(canRequest)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _slotListesi(bool canRequest) {
+    if (_yukleniyor) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_hata != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Text(_hata!, style: const TextStyle(color: Colors.red)),
+      );
+    }
+    if (_slots.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Text('Bu alan için tanımlı slot yok.'),
+      );
+    }
+    return ListView.separated(
+      shrinkWrap: true,
+      itemCount: _slots.length,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (context, i) {
+        final s = _slots[i];
+        // Sakin YALNIZ bos + rezerve edilebilir slotu ayirtabilir.
+        final ayirtilabilir = canRequest && !s.dolu && s.rezerveEdilebilir;
+        return ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(
+            s.dolu ? Icons.event_busy : Icons.event_available,
+            color: s.dolu
+                ? Colors.grey
+                : (s.rezerveEdilebilir ? Colors.green : Colors.grey),
+          ),
+          title: Text('${s.baslangic} – ${s.bitis}'),
+          subtitle: Text(_durumEtiketi(s)),
+          trailing: ayirtilabilir
+              ? FilledButton(
+                  onPressed: () => _book(s),
+                  child: const Text('Seç'),
+                )
+              : null,
+          onTap: ayirtilabilir ? () => _book(s) : null,
+        );
+      },
+    );
+  }
+}
+
+/// Bos slotu rezerve etme formu (sakin): kisi sayisi + opsiyonel not.
+/// Cakisma/24s/kota hatasi (409/422) formda gosterilir.
+class _BookSlotSheet extends ConsumerStatefulWidget {
+  const _BookSlotSheet({
+    required this.alan,
+    required this.tarih,
+    required this.slot,
+  });
+
+  final OrtakAlan alan;
+  final String tarih;
+  final Slot slot;
+
+  @override
+  ConsumerState<_BookSlotSheet> createState() => _BookSlotSheetState();
+}
+
+class _BookSlotSheetState extends ConsumerState<_BookSlotSheet> {
+  final _notlar = TextEditingController();
+  int _kisi = 2;
+  bool _busy = false;
+  String? _hata;
+
+  @override
+  void dispose() {
+    _notlar.dispose();
+    super.dispose();
   }
 
   Future<void> _submit() async {
     if (_busy) return;
-    if (_secili == null) {
-      setState(() => _hata = 'Lütfen rezerve edilebilir bir slot seçin.');
-      return;
-    }
     setState(() {
       _busy = true;
       _hata = null;
@@ -870,182 +945,95 @@ class _RequestFormState extends ConsumerState<_RequestForm> {
     try {
       await ref.read(rezervasyonControllerProvider.notifier).request(
             RezervasyonDraft(
-              alanId: _alanId,
-              tarih: _tarihStr,
-              baslangic: _secili!.baslangic,
-              bitis: _secili!.bitis,
+              alanId: widget.alan.id,
+              tarih: widget.tarih,
+              baslangic: widget.slot.baslangic,
+              bitis: widget.slot.bitis,
               kisiSayisi: _kisi,
               notlar: _notlar.text.trim().isEmpty ? null : _notlar.text.trim(),
             ),
           );
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
-      // 409: onayli rezervasyonla cakisma (yaris) — slotlari tazele + goster.
+      // 409 (cakisma/kota) veya 422 (24s/pencere) — net mesaj formda.
       if (mounted) {
         setState(() {
           _busy = false;
           _hata = e.message;
         });
-        await _loadSlots();
       }
     } catch (_) {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = 'Talep gonderilemedi. Tekrar deneyin.';
+          _hata = 'Gönderilemedi. Tekrar deneyin.';
         });
       }
     }
   }
 
-  Widget _slotAlani() {
-    if (_slotYukleniyor) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    if (_slotHata != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(_slotHata!, style: const TextStyle(color: Colors.red)),
-      );
-    }
-    if (_slots.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text('Bu alan için tanımlı slot yok.'),
-      );
-    }
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final s in _slots)
-          ChoiceChip(
-            // Rezerve edilemeyen slotta sebep etiketi (dolu / 24s / gunluk / gecti).
-            label: Text('${s.baslangic}–${s.bitis}'
-                '${!s.rezerveEdilebilir && s.sebepEtiketi != null ? ' · ${s.sebepEtiketi}' : ''}'),
-            selected: identical(_secili, s),
-            // Yalniz sunucunun "rezerve edilebilir" dedigi slot secilebilir
-            // (24s penceresi + gunluk kota + son-dakika istisnasi zaten hesapli).
-            onSelected: (_busy || !s.rezerveEdilebilir)
-                ? null
-                : (sel) => setState(() => _secili = sel ? s : null),
-          ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final viewInsets = MediaQuery.of(context).viewInsets;
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + viewInsets.bottom),
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+      padding: EdgeInsets.fromLTRB(
+          24, 16, 24, 24 + MediaQuery.of(context).viewInsets.bottom),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('${widget.alan.ad} — rezerve et',
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Text('${widget.tarih} · ${widget.slot.baslangic}–${widget.slot.bitis}',
+              style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 12),
+          Row(
             children: [
-              const Text(
-                'Yeni rezervasyon',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _alanId,
-                decoration: const InputDecoration(
-                  labelText: 'Ortak alan',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  for (final a in widget.alanlar)
-                    DropdownMenuItem(value: a.id, child: Text(a.ad)),
-                ],
-                onChanged: _busy
+              const Text('Kişi sayısı:'),
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                onPressed: _busy || _kisi <= 1
                     ? null
-                    : (v) {
-                        if (v == null || v == _alanId) return;
-                        setState(() => _alanId = v);
-                        _loadSlots();
-                      },
+                    : () => setState(() => _kisi--),
               ),
-              const SizedBox(height: 6),
-              Text('Müsaitlik: ${_alan.musaitlikOzeti}',
-                  style: Theme.of(context).textTheme.bodySmall),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.calendar_today_outlined, size: 18),
-                label: Text('Tarih: $_tarihStr'),
-                onPressed: _busy ? null : _pickDate,
-              ),
-              const SizedBox(height: 12),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Slot seç',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-              ),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Slot yalnızca başlangıcına 24 saatten az kala açılır; '
-                  'günde en fazla bir rezervasyon yapabilirsiniz.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ),
-              const SizedBox(height: 6),
-              _slotAlani(),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Text('Kişi sayısı:'),
-                  IconButton(
-                    icon: const Icon(Icons.remove_circle_outline),
-                    onPressed: _busy || _kisi <= 1
-                        ? null
-                        : () => setState(() => _kisi--),
-                  ),
-                  Text('$_kisi',
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle_outline),
-                    onPressed: _busy ? null : () => setState(() => _kisi++),
-                  ),
-                ],
-              ),
-              TextFormField(
-                controller: _notlar,
-                decoration: const InputDecoration(
-                  labelText: 'Not (opsiyonel)',
-                  border: OutlineInputBorder(),
-                ),
-                maxLength: 1000,
-                maxLines: 2,
-              ),
-              if (_hata != null) ...[
-                const SizedBox(height: 8),
-                Text(_hata!, style: const TextStyle(color: Colors.red)),
-              ],
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.event_available_outlined),
-                  label: const Text('Talep gönder'),
-                  onPressed: (_busy || _secili == null) ? null : _submit,
-                ),
+              Text('$_kisi',
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                onPressed: _busy ? null : () => setState(() => _kisi++),
               ),
             ],
           ),
-        ),
+          TextField(
+            controller: _notlar,
+            maxLength: 1000,
+            maxLines: 2,
+            decoration: const InputDecoration(
+              labelText: 'Not (opsiyonel)',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          if (_hata != null) ...[
+            const SizedBox(height: 8),
+            Text(_hata!, style: const TextStyle(color: Colors.red)),
+          ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              icon: _busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.event_available_outlined),
+              label: const Text('Rezerve et'),
+              onPressed: _busy ? null : _submit,
+            ),
+          ),
+        ],
       ),
     );
   }

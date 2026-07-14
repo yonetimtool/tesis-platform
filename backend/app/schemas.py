@@ -843,11 +843,16 @@ class OrtakAlanListResponse(BaseModel):
 
 
 class SlotOut(BaseModel):
-    """Bir gunun tek slotu — kimlik YOK, yalniz dolu/bos + rezerve edilebilirlik."""
+    """Bir gunun tek slotu — ROL-FARKINDA gorunurluk.
+
+    resident/saha: yalniz dolu/bos (kimlik/kisi sayisi YOK — gizlilik).
+    admin/yonetici: dolu slotta ayrica hangi DAIRE rezerve etti + kisi sayisi
+    (yonetim denetimi). unit_no/kisi_sayisi yalniz yonetime + dolu slotta dolar.
+    """
 
     baslangic: str
     bitis: str
-    # dolu = bu slotla kesisen ONAYLI bir rezervasyon var (kim oldugu paylasilmaz).
+    # dolu = bu slotla kesisen ONAYLI bir rezervasyon var.
     dolu: bool
     # rezerve_edilebilir: istekteki sakin bu slotu SIMDI rezerve edebilir mi
     # (24s penceresi + gunluk kota + son-dakika istisnasi; yonetimde her zaman
@@ -855,6 +860,10 @@ class SlotOut(BaseModel):
     rezerve_edilebilir: bool = False
     # Neden edilemedigi: 'dolu' | 'gecti' | 'cok_erken' | 'gunluk' | None.
     sebep: str | None = None
+    # YALNIZ admin/yonetici + dolu slot: rezerve eden daire no + kisi sayisi
+    # (denetim). resident/saha icin DAIMA None (gizlilik).
+    unit_no: str | None = None
+    kisi_sayisi: int | None = None
 
 
 class AlanSlotResponse(BaseModel):

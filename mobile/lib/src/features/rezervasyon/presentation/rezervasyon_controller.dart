@@ -15,7 +15,6 @@ class RezervasyonState {
     this.items = const [],
     this.canManageAreas = false,
     this.canRequest = false,
-    this.isManager = false,
     this.currentUserId,
     this.refreshedAt,
   });
@@ -35,23 +34,41 @@ class RezervasyonState {
   /// gercek yetki backend RBAC'ta.
   final bool canManageAreas;
 
-  /// Rol resident mi — "Yeni rezervasyon" talebi.
+  /// Rol resident mi — rezerve eder + KENDI rezervasyonunu iptal edebilir.
   final bool canRequest;
 
-  /// Rol admin/yonetici mi — herhangi bir rezervasyonu iptal edebilir.
-  final bool isManager;
-
   /// Oturumdaki kullanicinin id'si — sakin YALNIZ KENDI rezervasyonunu iptal
-  /// eder (talep_eden == kendisi). Yonetimde iptal her kayitta acik.
+  /// eder (talep_eden == kendisi).
   final String? currentUserId;
 
   final DateTime? refreshedAt;
 
-  /// Bu rezervasyon icin iptal butonu gosterilsin mi (aktif + yetki).
+  /// Bu rezervasyon icin iptal butonu gosterilsin mi. Kurallar (backend zorlar,
+  /// bu istemci kapisi UX aynasi): (1) aktif (onayli), (2) YALNIZ rezerve eden
+  /// sakinin kendisi (yonetim iptal ETMEZ), (3) slot baslangicina >=10 dk kala.
   bool canCancel(Rezervasyon r) {
     if (!r.onayli) return false;
-    if (isManager) return true;
-    return canRequest && r.talepEdenUserId == currentUserId;
+    if (!canRequest || r.talepEdenUserId != currentUserId) return false;
+    final start = _slotStart(r);
+    if (start == null) return true; // parse edilemedi -> backend karar verir
+    return start.difference(DateTime.now()) >= const Duration(minutes: 10);
+  }
+
+  /// Rezervasyonun slot baslangicini yerel DateTime'a cevirir (tarih + saat).
+  /// tenant yerel saati cihaz yerel saati kabul edilir (backend nihai otorite).
+  static DateTime? _slotStart(Rezervasyon r) {
+    final g = r.tarih.split('-');
+    final s = r.baslangic.split(':');
+    if (g.length != 3 || s.length < 2) return null;
+    final y = int.tryParse(g[0]);
+    final mo = int.tryParse(g[1]);
+    final d = int.tryParse(g[2]);
+    final h = int.tryParse(s[0]);
+    final mi = int.tryParse(s[1]);
+    if (y == null || mo == null || d == null || h == null || mi == null) {
+      return null;
+    }
+    return DateTime(y, mo, d, h, mi);
   }
 
   /// Sakinin secebilecegi (aktif) alanlar.
@@ -65,7 +82,6 @@ class RezervasyonState {
     List<Rezervasyon>? items,
     bool? canManageAreas,
     bool? canRequest,
-    bool? isManager,
     Object? currentUserId = _sentinel,
     DateTime? refreshedAt,
   }) {
@@ -78,7 +94,6 @@ class RezervasyonState {
       items: items ?? this.items,
       canManageAreas: canManageAreas ?? this.canManageAreas,
       canRequest: canRequest ?? this.canRequest,
-      isManager: isManager ?? this.isManager,
       currentUserId: currentUserId == _sentinel
           ? this.currentUserId
           : currentUserId as String?,
@@ -123,8 +138,6 @@ class RezervasyonController extends Notifier<RezervasyonState> {
         items: items,
         canManageAreas: role.canManageCommonAreas,
         canRequest: role.canRequestReservation,
-        // Yonetim (admin/yonetici) herhangi bir rezervasyonu iptal edebilir.
-        isManager: role.canDecideReservations,
         currentUserId: userId,
         refreshedAt: DateTime.now(),
       );

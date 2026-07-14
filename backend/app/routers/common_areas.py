@@ -21,7 +21,7 @@ from .. import reservations_timing as rtiming
 from ..crud_helpers import is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, OrtakAlan, Rezervasyon, Tenant, UnitResident
+from ..models import AppUser, OrtakAlan, Rezervasyon, Tenant, Unit, UnitResident
 from ..schemas import (
     AlanSlotResponse,
     OrtakAlanCreate,
@@ -142,10 +142,18 @@ async def area_slots(
     if alan is None or (not alan.aktif and user.role not in _MANAGEMENT_ROLES):
         raise APIError(404, "not_found", "Kayit bulunamadi")
 
-    # O gunun ONAYLI rezervasyon araliklari — kimlik CEKILMEZ (yalniz saatler).
+    # O gunun ONAYLI rezervasyon araliklari. Daire no + kisi sayisi da cekilir
+    # ama YALNIZ yonetime aciklanir (gizlilik — asagida is_mgmt kapisi).
     onayli = (
         await db.execute(
-            select(Rezervasyon.baslangic, Rezervasyon.bitis).where(
+            select(
+                Rezervasyon.baslangic,
+                Rezervasyon.bitis,
+                Unit.no,
+                Rezervasyon.kisi_sayisi,
+            )
+            .join(Unit, Unit.id == Rezervasyon.unit_id)
+            .where(
                 Rezervasyon.alan_id == area_id,
                 Rezervasyon.tarih == tarih,
                 Rezervasyon.durum == "onaylandi",
@@ -156,6 +164,7 @@ async def area_slots(
     # Rezerve edilebilirlik yalniz SAKIN icin anlamli (yonetim rezerve etmez).
     # Sakinin bu gune (slot-gunu) denk AKTIF rezervasyonu varsa gunluk kota dolu.
     is_resident = user.role == "resident"
+    is_mgmt = user.role in _MANAGEMENT_ROLES
     tzname = (
         await db.execute(select(Tenant.timezone).where(Tenant.id == user.tenant_id))
     ).scalar_one_or_none() or "Europe/Istanbul"
@@ -181,8 +190,12 @@ async def area_slots(
     kapanis_dt = datetime.combine(tarih, alan.kapanis)
     while cur + step <= kapanis_dt:
         s, e = cur.time(), (cur + step).time()
-        # dolu: yari-acik kesisim (s < bitis_onayli AND e > baslangic_onayli).
-        dolu = any(s < ob_bitis and e > ob_bas for ob_bas, ob_bitis in onayli)
+        # Bu slotla kesisen ONAYLI rezervasyon (yari-acik kesisim); onayli'lar
+        # cakismadigindan en cok biri esler.
+        match = next(
+            (r for r in onayli if s < r.bitis and e > r.baslangic), None
+        )
+        dolu = match is not None
         # Sakin icin rezerve edilebilirlik (24s/gunluk/son-dakika); yonetimde False.
         sebep: str | None = None
         rezerve = False
@@ -200,6 +213,10 @@ async def area_slots(
                 dolu=dolu,
                 rezerve_edilebilir=rezerve,
                 sebep=sebep,
+                # Kimlik + kisi sayisi YALNIZ yonetime + dolu slotta (denetim);
+                # resident/saha icin DAIMA None (gizlilik).
+                unit_no=match.no if (is_mgmt and match) else None,
+                kisi_sayisi=match.kisi_sayisi if (is_mgmt and match) else None,
             )
         )
         cur += step

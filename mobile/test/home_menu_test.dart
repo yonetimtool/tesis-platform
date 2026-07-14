@@ -26,8 +26,6 @@ void main() {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
-        // Sikayet Haritasi (yogunluk) YOK; yerine salt-okuma Bina Duzenleme.
-        HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -36,6 +34,8 @@ void main() {
         HomeMenuEntry.assets,
         HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
+        // Sikayet Haritasi (yogunluk) YOK; salt-okuma Bina Duzenleme EN ALTTA.
+        HomeMenuEntry.binaDuzenleme,
       ]);
     });
 
@@ -363,18 +363,14 @@ void main() {
     });
 
     test('security/tesis_gorevlisi: Sikayet Haritasi yerine Bina Duzenleme '
-        '(salt-okuma) — yogunluk haritasi GORMEZ, yapiyi gorur', () {
+        '(salt-okuma, EN ALTTA) — yogunluk haritasi GORMEZ, yapiyi gorur', () {
       for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
-        expect(
-          homeMenuForRole(role),
-          contains(HomeMenuEntry.binaDuzenleme),
-          reason: role.wire,
-        );
-        expect(
-          homeMenuForRole(role),
-          isNot(contains(HomeMenuEntry.sikayetHaritasi)),
-          reason: role.wire,
-        );
+        final menu = homeMenuForRole(role);
+        expect(menu, contains(HomeMenuEntry.binaDuzenleme), reason: role.wire);
+        expect(menu, isNot(contains(HomeMenuEntry.sikayetHaritasi)),
+            reason: role.wire);
+        // Salt-okuma girisi menunun EN ALTINDA (yonetici konumuyla ayni).
+        expect(menu.last, HomeMenuEntry.binaDuzenleme, reason: role.wire);
       }
     });
 

@@ -133,13 +133,13 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       // Ziyaretciler kapi operasyonudur: kayit + canli sonuc guvenlikte.
       // Gorev-YONETIMI YOK (A4): saha rolu yalniz "Gorevlerim" gorur.
       // Sikayet Haritasi (yogunluk) YOK — yonetim/sakin konusu; yerine
-      // "Bina Duzenleme" SALT-OKUMA (blok/kat/daire yapisi; yazma yok).
+      // "Bina Duzenleme" SALT-OKUMA (blok/kat/daire yapisi; yazma yok). Bu
+      // salt-okuma girisi menunun EN ALTINDA durur (yonetici'deki konumuyla ayni).
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
-        HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -148,22 +148,24 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.assets,
         HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
+        HomeMenuEntry.binaDuzenleme,
       ];
     case UserRole.tesisGorevlisi:
       // Turlarim yok: /me/patrol-window admin+security (auth.md §4).
       // Gorev-YONETIMI YOK (A4): saha rolu yalniz "Gorevlerim" gorur.
-      // Sikayet Haritasi (yogunluk) YOK; yerine "Bina Duzenleme" SALT-OKUMA.
+      // Sikayet Haritasi (yogunluk) YOK; yerine "Bina Duzenleme" SALT-OKUMA
+      // (menunun EN ALTINDA — yonetici'deki konumuyla ayni).
       return const [
         HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
-        HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.complaints,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
         HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
+        HomeMenuEntry.binaDuzenleme,
       ];
     case UserRole.yonetici:
       // Saha kaniti uretmez: scan/zimmet/kuyruk gizli. Gorevler ve devriye

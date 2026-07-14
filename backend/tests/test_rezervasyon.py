@@ -329,11 +329,10 @@ def test_iptal_slotu_bosaltir_ve_damgalanir(client, rworld):
 def test_iptal_rbac(client, rworld):
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
     diger = _headers(client, rworld["slug_a"], rworld["diger"])
-    yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
 
     r = _post(client, resident, rworld["alan1"], _hslot(2))
-    # saha rolleri iptal edemez (403)
-    for role in ("guard_a", "gorevli_a"):
+    # saha rolleri VE YONETIM iptal edemez (403) — yonetim yalniz izler
+    for role in ("guard_a", "gorevli_a", "yonetici_a", "admin_a"):
         h = _headers(client, rworld["slug_a"], rworld[role])
         assert client.post(
             f"/reservations/{r['id']}/cancel", headers=h
@@ -342,10 +341,24 @@ def test_iptal_rbac(client, rworld):
     assert client.post(
         f"/reservations/{r['id']}/cancel", headers=diger
     ).status_code == 404
-    # yonetim herhangi birini iptal eder
+    # rezerve eden sakin KENDI rezervasyonunu iptal eder (>=10 dk kala)
     assert client.post(
-        f"/reservations/{r['id']}/cancel", headers=yonetici
+        f"/reservations/{r['id']}/cancel", headers=resident
     ).status_code == 200
+
+
+def test_iptal_10_dakika_kurali(client, rworld):
+    """Slot baslangicina <10 dk kala (son-dakika rezervasyonu) iptal edilemez."""
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    # simdi+5 dk bos slot (son-dakika; kota bos oldugundan zaten rezerve edilir)
+    r = _post(client, resident, rworld["alan1"], _mslot(5))
+    resp = client.post(f"/reservations/{r['id']}/cancel", headers=resident)
+    assert resp.status_code == 422, resp.text
+    assert "10 dakika" in resp.json()["error"]["message"]
+    # kayit hala onayli (iptal edilmedi)
+    assert client.get(
+        f"/reservations/{r['id']}", headers=resident
+    ).json()["durum"] == "onaylandi"
 
 
 # ------------------------------- okuma -------------------------------------- #
@@ -424,15 +437,17 @@ def test_tenant_izolasyonu(client, rworld):
     r = _post(client, resident, rworld["alan1"], _hslot(2))
 
     yonetici_b = _headers(client, rworld["slug_b"], rworld["yonetici_b"])
-    # B yonetimi A'nin rezervasyonunu goremez/iptal edemez (RLS -> 404)
+    # B yonetimi A'nin rezervasyonunu goremez (RLS -> 404)
     b_ids = [it["id"] for it in client.get(
         "/reservations", headers=yonetici_b, params={"limit": 200}
     ).json()["items"]]
     assert r["id"] not in b_ids
     assert client.get(f"/reservations/{r['id']}", headers=yonetici_b).status_code == 404
+    # Iptal zaten YALNIZ sakin (yonetim rolu 403) — B yonetimi de A'nin kaydini
+    # iptal edemez (rol kapisi; ayrica RLS/ownership).
     assert client.post(
         f"/reservations/{r['id']}/cancel", headers=yonetici_b
-    ).status_code == 404
+    ).status_code == 403
     # B yonetimi A'nin alanini da goremez
     b_alan_ids = [it["id"] for it in client.get(
         "/common-areas", headers=yonetici_b, params={"limit": 200}
@@ -461,7 +476,9 @@ def test_alan_musaitlik_create_ve_okuma(client, rworld):
     assert p.status_code == 200 and p.json()["slot_dakika"] == 30
 
 
-def test_slots_dolu_bos_rezerve_edilebilir_ve_kimlik_yok(client, rworld):
+def test_slots_dolu_bos_ve_gorunurluk_kademesi(client, rworld):
+    """Slot izgarasi + ROL-FARKINDA gorunurluk: resident dolu slotta yalniz
+    'dolu' (kimlik/kisi GIZLI); yonetim dolu slotta rezerve eden daire + kisi."""
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
     diger = _headers(client, rworld["slug_a"], rworld["diger"])
     yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
@@ -472,6 +489,7 @@ def test_slots_dolu_bos_rezerve_edilebilir_ve_kimlik_yok(client, rworld):
     alan = _mk_area(client, yonetici, ad=f"Slot-{uuid.uuid4().hex[:6]}",
                     acilis=f"{h:02d}:00", kapanis=f"{h + 4:02d}:00", slot_dakika=60)
     s2 = (tarih, f"{h + 1:02d}:00", f"{h + 2:02d}:00")  # ikinci slot
+    bos_bas = f"{h:02d}:00"
 
     def _slots(headers):
         r = client.get(f"/common-areas/{alan['id']}/slots", headers=headers,
@@ -484,26 +502,35 @@ def test_slots_dolu_bos_rezerve_edilebilir_ve_kimlik_yok(client, rworld):
     assert len(s0) == 4 and all(it["dolu"] is False for it in s0.values())
     assert all(it["rezerve_edilebilir"] and it["sebep"] is None for it in s0.values())
 
-    # resident ikinci slotu rezerve eder -> o slot dolu
-    _post(client, resident, alan["id"], s2)
-    s1 = _slots(diger)
+    # resident kisi_sayisi=3 ile ikinci slotu rezerve eder -> o slot dolu
+    _post(client, resident, alan["id"], s2, kisi_sayisi=3)
     dolu_bas = s2[1]
+
+    # RESIDENT (diger) gorunumu: dolu slotta kimlik + kisi GIZLI (None)
+    s1 = _slots(diger)
     assert s1[dolu_bas]["dolu"] is True
     assert s1[dolu_bas]["rezerve_edilebilir"] is False and s1[dolu_bas]["sebep"] == "dolu"
-
-    # GIZLILIK: slot yalniz saat + dolu + edilebilirlik tasir, kimlik SIZMAZ
     for it in s1.values():
+        # alanlar mevcut (sema) ama resident'a kimlik/kisi DAIMA None
         assert set(it.keys()) == {"baslangic", "bitis", "dolu",
-                                  "rezerve_edilebilir", "sebep"}
+                                  "rezerve_edilebilir", "sebep",
+                                  "unit_no", "kisi_sayisi"}
+        assert it["unit_no"] is None and it["kisi_sayisi"] is None
+
+    # YONETIM gorunumu: dolu slotta rezerve eden DAIRE + kisi sayisi
+    s_y = _slots(yonetici)
+    assert s_y[dolu_bas]["unit_no"] == rworld["unit1_no"]
+    assert s_y[dolu_bas]["kisi_sayisi"] == 3
+    # bos slotta yonetimde de unit/kisi None
+    assert s_y[bos_bas]["unit_no"] is None and s_y[bos_bas]["kisi_sayisi"] is None
+    # yonetim rezerve_edilemez (rezerve etmez)
+    assert all(it["rezerve_edilebilir"] is False for it in s_y.values())
 
     # KOTA yansir: rezerve eden sakin icin bos slotlar 'gunluk' (edilemez)
     s_res = _slots(resident)
-    bos_bas = f"{h:02d}:00"
     assert s_res[bos_bas]["rezerve_edilebilir"] is False
     assert s_res[bos_bas]["sebep"] == "gunluk"
-
-    # yonetim slotlari gorur ama rezerve_edilebilir daima false (rezerve etmez)
-    assert all(it["rezerve_edilebilir"] is False for it in _slots(yonetici).values())
+    assert s_res[bos_bas]["unit_no"] is None  # kendi gorununde de kimlik yok
 
     # TUM roller slotlari okuyabilir
     for role in ("resident_a", "guard_a", "gorevli_a", "yonetici_a", "admin_a"):
