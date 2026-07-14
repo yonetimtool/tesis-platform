@@ -267,6 +267,59 @@ def upgrade() -> None:
         f"GRANT EXECUTE ON FUNCTION public.tenant_id_by_phone(text) TO {APP_ROLE};"
     )
 
+    # Tenant self-signup (Ozellik 3): yonetici mobilden tesis + kendi hesabini
+    # tek adimda acar. tenant tablosu RLS FORCE oldugundan app_rw dogrudan INSERT
+    # edemez (yumurta-tavuk). Bu owner-sahipli SECURITY DEFINER fonksiyon (owner
+    # superuser -> RLS bypass) tenant + ilk yonetici satirini ATOMIK yaratir;
+    # app_rw'ye EXECUTE verilir. Slug/telefon benzersizlik ihlali fonksiyondan
+    # raise olur (tek transaction -> ikisi de geri alinir), API 409'a cevirir.
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.create_tenant_with_yonetici(
+            p_tenant_ad    text,
+            p_slug         text,
+            p_timezone     text,
+            p_yonetici_ad  text,
+            p_telefon      text,
+            p_password_hash text
+        )
+        RETURNS TABLE(tenant_id uuid, user_id uuid)
+        LANGUAGE plpgsql
+        SECURITY DEFINER
+        SET search_path = ''
+        AS $$
+        DECLARE
+            v_tenant uuid;
+            v_user uuid;
+        BEGIN
+            INSERT INTO public.tenant (ad, slug, timezone)
+            VALUES (p_tenant_ad, p_slug, p_timezone)
+            RETURNING id INTO v_tenant;
+
+            INSERT INTO public.app_user
+                (tenant_id, ad, telefon, password_hash, password_set,
+                 role, is_active)
+            VALUES
+                (v_tenant, p_yonetici_ad, p_telefon, p_password_hash, true,
+                 'yonetici'::public.user_role, true)
+            RETURNING id INTO v_user;
+
+            tenant_id := v_tenant;
+            user_id := v_user;
+            RETURN NEXT;
+        END;
+        $$;
+        """
+    )
+    op.execute(
+        "REVOKE ALL ON FUNCTION public.create_tenant_with_yonetici"
+        "(text, text, text, text, text, text) FROM PUBLIC;"
+    )
+    op.execute(
+        "GRANT EXECUTE ON FUNCTION public.create_tenant_with_yonetici"
+        f"(text, text, text, text, text, text) TO {APP_ROLE};"
+    )
+
     # ------------------------------------------------------------------ #
     # 4. shift  (tekrar eden gun-ici vardiya tanimi)
     # ------------------------------------------------------------------ #
@@ -1623,6 +1676,10 @@ def _enable_rls(table: str) -> None:
 def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_phone(text);")
+    op.execute(
+        "DROP FUNCTION IF EXISTS public.create_tenant_with_yonetici"
+        "(text, text, text, text, text, text);"
+    )
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
         "unit_complaint",

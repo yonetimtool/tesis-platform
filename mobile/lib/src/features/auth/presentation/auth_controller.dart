@@ -113,6 +113,38 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  /// Tenant self-signup: yonetici tesis + kendi hesabini acar. Basarida
+  /// dogrudan authenticated (auto-login).
+  Future<void> signup({
+    required String tenantAd,
+    required String yoneticiAd,
+    required String phone,
+    required String password,
+    bool rememberMe = false,
+  }) async {
+    state = state.copyWith(submitting: true, errorMessage: null);
+    try {
+      await ref.read(authRepositoryProvider).signup(
+            tenantAd: tenantAd,
+            yoneticiAd: yoneticiAd,
+            phone: phone,
+            password: password,
+            rememberMe: rememberMe,
+          );
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        submitting: false,
+      );
+    } on ApiException catch (e) {
+      state = state.copyWith(submitting: false, errorMessage: e.message);
+    } catch (_) {
+      state = state.copyWith(
+        submitting: false,
+        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+      );
+    }
+  }
+
   /// Ilk giristeki zorunlu kalici parola belirleme. Basarida oturum acilir;
   /// setup token'i olmusse (401) kurulum iptal edilip login'e donulur.
   Future<void> submitNewPassword(String newPassword) async {

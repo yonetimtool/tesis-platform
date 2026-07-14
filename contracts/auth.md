@@ -82,6 +82,29 @@ first); kullanici telefonla girip kalici parolasini belirler.
 - Token'lar (access/refresh) ve rol claim'i tum rollerde AYNIDIR (§2); refresh
   rotation aynen gecerlidir. `setup_token` ~10 dk; gecici kod tek kullanimlik.
 
+### 1.4 Tenant self-signup — `POST /auth/signup` (PUBLIC, Ozellik 3)
+
+Yonetici mobilden **tesis + kendi hesabini** tek adimda acar; kimlik gerektirmez.
+Govde: `{ tenant_ad, yonetici_ad, phone, password }`. Akis:
+
+1. **Rate-limit:** IP basina saatlik ust sinir (varsayilan 5); asimda **429**
+   `rate_limited` (Redis sabit-pencere).
+2. Telefon `normalize_phone` (E.164; gecersiz → 422). Slug tesis adindan turetilir
+   (Turkce→ascii + rastgele ek; login telefonla oldugu icin slug ic detaydir).
+3. `tenant` tablosu **RLS FORCE** oldugundan app_rw dogrudan INSERT edemez; owner-
+   sahipli **`SECURITY DEFINER`** `create_tenant_with_yonetici(...)` tenant + ilk
+   `yonetici` (password_set=true) satirini ATOMIK yaratir. Telefon global benzersiz
+   → cakisma **409** `conflict`.
+4. Basarida **auto-login**: `TokenPair` (role=yonetici) doner; kurucu kendi
+   parolasini belirledigi icin gecici kod adimi YOKTUR.
+
+> **`POST /users` — yonetici saha personeli acar (Ozellik 3):** self-signup ile
+> tesis acan yonetici, KENDI tenant'inda `security`/`tesis_gorevlisi` hesabi
+> olusturur (telefon + gecici kod / parola — §1.3 ile ayni). `yonetici`,
+> `admin`/`yonetici`/`resident` rolu ACAMAZ → **403** (yetki yukseltme yok;
+> resident'lar `POST /residents` ile acilir). `admin` her rolu acar. Tenant
+> olusturan kullanicidan alinir (RLS).
+
 ## 2. Token Yapisi
 
 ### Access token claim'leri
@@ -151,6 +174,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 |---------------------------------------|:-----:|:---:|:---:|:---:|:---:|
 | `POST /auth/login` (panel, email)     |  ✅   | ✅° | ✅° | ✅° | ✅° |
 | `POST /auth/login-phone` (mobil, tel) |  ❌   | ✅  | ✅  | ✅  | ✅  |
+| `POST /auth/signup` (public — tesis kur)| ➖  | ➖ | ➖ | ➖ | ➖ |
 | `POST /auth/set-password` (ilk giris) |  ❌   | ❌  | ❌  | ❌  | ✅  |
 | `POST /residents` (sakin ac + kod)    |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /auth/refresh`                  |  ✅   | ✅  | ✅  | ✅  | ✅  |
@@ -243,7 +267,8 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET /budget/summary` (agregat ozet)  |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET /reports/financial-summary`      |  ✅   | ✅  | ✅° | ✅° | ✅° |
 | `GET /users` + `GET /users/{id}`      |  ✅   | ✅  | ❌  | ❌  | ❌  |
-| `POST/PATCH /users*` (tam)            |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `POST /users` (admin: her rol; yon: saha)| ✅ | ✅* | ❌ | ❌  | ❌  |
+| `PATCH /users/{id}` (tam)             |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `PATCH /users/{id}/contact`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET /call-target/{id}`               |  ❌   | ❌  | 📞  | ❌  | 📞  |
 | `*/integrations*` (CRUD + tetik)      |  ✅   | ✅  | ❌  | ❌  | ❌  |

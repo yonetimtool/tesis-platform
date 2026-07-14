@@ -35,7 +35,9 @@ def _second_resident(client, world):
     r = client.post(
         "/users",
         headers=admin,
-        json={"ad": "Sakin Iki", "email": email, "role": "resident", "password": pw},
+        json={"ad": "Sakin Iki", "email": email,
+              "telefon": "+90" + str(uuid.uuid4().int)[:10],
+              "role": "resident", "password": pw},
     )
     assert r.status_code == 201, r.text
     return _headers(client, world["slug_a"], {"email": email, "password": pw})

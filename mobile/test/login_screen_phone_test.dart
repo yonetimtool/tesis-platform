@@ -33,6 +33,15 @@ class _RecordingAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> signup({
+    required String tenantAd,
+    required String yoneticiAd,
+    required String phone,
+    required String password,
+    bool rememberMe = false,
+  }) async {}
+
+  @override
   Future<void> setPassword({
     required String setupToken,
     required String newPassword,

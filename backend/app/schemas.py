@@ -43,6 +43,18 @@ class PhoneLoginRequest(BaseModel):
     password: str = Field(..., min_length=1)
 
 
+class SignupRequest(BaseModel):
+    """Tenant self-signup (Ozellik 3): yonetici tesis + kendi hesabini acar.
+
+    Telefon global benzersiz login anahtaridir (E.164 normalize). Kurucu kendi
+    parolasini belirler (gecici kod yok); basarida auto-login (TokenPair)."""
+
+    tenant_ad: str = Field(..., min_length=2, max_length=120, examples=["Acme Plaza"])
+    yonetici_ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
+    phone: str = Field(..., min_length=1, examples=["+905321112203"])
+    password: str = Field(..., min_length=8)
+
+
 class PhoneLoginResponse(BaseModel):
     """Telefon giris yaniti — iki durum:
 

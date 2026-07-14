@@ -92,6 +92,12 @@ enum HomeMenuEntry {
   /// SSRF-korumali tetik. Mobilde YONETICI yonetir (admin panelden).
   integrations,
 
+  /// Saha Personeli (Ozellik 3) — YALNIZ yonetici mobil menusunde: guvenlik +
+  /// tesis gorevlisi hesaplarini listeler ve ekler (telefon + gecici kod).
+  /// yonetici backend'de YALNIZ saha personeli acabilir (RBAC zorlar); admin
+  /// tum kullanicilari PANELDEN yonetir (mobil menude yok).
+  personel,
+
   /// Bina Duzenleme (D-viz Rev-2) — GORSEL editor: blok ekle → kutucuk → icine
   /// gir → kat + daire ekle (blok/kat/sira). Blok-suz mod (blok=null) destegi.
   /// Mobilde YONETICI kurar; yazma backend'de admin+yonetici (RBAC). Ayni CRUD
@@ -184,6 +190,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.budget,
         HomeMenuEntry.financialSummary,
         HomeMenuEntry.reports,
+        HomeMenuEntry.personel,
         HomeMenuEntry.integrations,
         HomeMenuEntry.binaDuzenleme,
       ];

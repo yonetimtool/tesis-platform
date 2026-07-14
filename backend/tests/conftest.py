@@ -116,6 +116,26 @@ PW_YONETICI_B = "yoneticipassB1"
 
 
 @pytest.fixture
+def redis_client():
+    """Calisan Redis'e sync baglanti (signup rate-limit testleri icin).
+
+    Rate-limit sabit-pencere IP anahtarlarini (`signup:*`) deterministik
+    yapmak icin testler bu fixture ile temizler."""
+    import redis as _redis
+
+    url = os.getenv("REDIS_URL", "redis://redis:6379/0")
+    try:
+        r = _redis.Redis.from_url(url, socket_connect_timeout=3)
+        r.ping()
+    except Exception as exc:  # pragma: no cover - ortam yoksa atla
+        pytest.skip(f"Redis erisilemiyor ({url}): {exc}")
+    try:
+        yield r
+    finally:
+        r.close()
+
+
+@pytest.fixture
 def client():
     """Calisan API'ye httpx.Client; erisilemezse testi atla."""
     import httpx

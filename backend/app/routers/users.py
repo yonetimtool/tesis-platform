@@ -34,6 +34,12 @@ router = APIRouter(prefix="/users", tags=["users"])
 _ADMIN = require_role("admin")
 # yonetici gorev atamak icin kullanici listesini OKUR; CRUD admin-only (auth.md §4).
 _READER = require_role("admin", "yonetici")
+# Kullanici OLUSTURMA: admin (her rol) + yonetici (YALNIZ saha personeli).
+_USER_CREATOR = require_role("admin", "yonetici")
+# yonetici self-signup ile tesis acabildiginden (Ozellik 3), kendi tenant'inda
+# saha personeli (security/tesis_gorevlisi) acar; admin/yonetici/resident ACAMAZ
+# (yetki yukseltme yok — resident'lar POST /residents ile acilir).
+_YONETICI_CREATABLE_ROLES = frozenset({"security", "tesis_gorevlisi"})
 # Iletisim ayari (telefon + arama rizasi) admin + yonetici yonetir (rol/parola
 # gibi hassas alanlara dokunmadan — yetki yukseltme yok).
 _CONTACT_MANAGER = require_role("admin", "yonetici")
@@ -80,8 +86,14 @@ async def get_user(
 async def create_user(
     body: UserCreate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_USER_CREATOR),
 ) -> UserCreatedOut:
+    # yonetici YALNIZ saha personeli acabilir (yetki yukseltme yok).
+    if user.role == "yonetici" and body.role not in _YONETICI_CREATABLE_ROLES:
+        raise APIError(
+            403, "forbidden",
+            "Bu rolu olusturamazsiniz (yalniz guvenlik/tesis gorevlisi).",
+        )
     # password verilirse admin parolayi dogrudan belirler (password_set=true);
     # verilmezse TEK SEFERLIK gecici kod uretilir (temp password first) —
     # kod yanitta bir kez doner, kullanici telefonla girip parola belirler.
@@ -176,6 +188,12 @@ async def update_user_contact(
     for key, value in data.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        # telefon GLOBAL benzersiz -> baska kullanicinin numarasi verilirse cakisir.
+        if is_unique_violation(exc):
+            raise _CONTACT_CONFLICT
+        raise translate_integrity(exc)
     await db.refresh(obj)
     return obj

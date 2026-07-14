@@ -126,9 +126,10 @@ def test_yetkisiz_yon_403(client, world):
     yon_id, _ = _uid(client, world["slug_a"], world["yonetici_a"])
     guard_id, guard = _uid(client, world["slug_a"], world["guard_a"])
     res_id, resident = _uid(client, world["slug_a"], world["resident_a"])
-    # herkes rizali olsun ki 403 SADECE yon'den gelsin
-    for uid in (admin_id, yon_id, guard_id, res_id):
-        _set_contact(client, admin, uid, telefon="+905559999999", aranabilir=True)
+    # herkes rizali olsun ki 403 SADECE yon'den gelsin. Telefon GLOBAL benzersiz
+    # oldugundan her kullaniciya AYRI numara verilir (ayni numara -> 409).
+    for i, uid in enumerate((admin_id, yon_id, guard_id, res_id)):
+        _set_contact(client, admin, uid, telefon=f"+90555999900{i}", aranabilir=True)
 
     # resident yonetici/baska rolu arayamaz
     assert client.get(f"/call-target/{yon_id}", headers=resident).status_code == 403

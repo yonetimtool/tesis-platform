@@ -28,6 +28,24 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> signup({
+    required String tenantAd,
+    required String yoneticiAd,
+    required String phone,
+    required String password,
+    bool rememberMe = false,
+  }) async {
+    final tokens = await api.signup(
+      tenantAd: tenantAd,
+      yoneticiAd: yoneticiAd,
+      phone: phone,
+      password: password,
+    );
+    await storage.save(tokens);
+    await storage.saveRememberMe(rememberMe);
+  }
+
+  @override
   Future<void> setPassword({
     required String setupToken,
     required String newPassword,

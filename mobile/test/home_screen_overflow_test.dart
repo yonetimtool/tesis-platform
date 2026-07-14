@@ -36,13 +36,14 @@ void main() {
     expect(tester.takeException(), isNull);
 
     // Ust baslik gorunur, listenin sonundaki kart kaydirilarak erisilebilir.
-    expect(find.text('Giriş başarılı'), findsOneWidget);
+    expect(find.text('Güvenlik'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Gönderim kuyruğu'),
+      find.text('GÖNDERİM KUYRUĞU'),
       200,
-      scrollable: find.byType(Scrollable),
+      // Dis SingleChildScrollView (grid ic Scrollable'i de var — ilki dis olan).
+      scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Gönderim kuyruğu'), findsOneWidget);
+    expect(find.text('GÖNDERİM KUYRUĞU'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -55,7 +56,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Giriş başarılı'), findsOneWidget);
-    expect(find.text('Gönderim kuyruğu'), findsOneWidget);
+    expect(find.text('Güvenlik'), findsOneWidget);
+    expect(find.text('GÖNDERİM KUYRUĞU'), findsOneWidget);
   });
 }

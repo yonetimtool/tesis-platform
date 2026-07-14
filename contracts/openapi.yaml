@@ -104,6 +104,35 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
 
+  /auth/signup:
+    post:
+      tags: [auth]
+      summary: Tenant self-signup — yonetici tesis + kendi hesabini acar (public)
+      description: |
+        Yonetici mobilden tesis + kendi hesabini TEK ADIMDA acar (kimlik yok).
+        tenant tablosu RLS FORCE oldugundan owner-sahipli SECURITY DEFINER
+        fonksiyon tenant + ilk yonetici satirini atomik yaratir. Telefon global
+        benzersiz; cakisma -> 409. Basarida auto-login (TokenPair, role=yonetici).
+        IP basina saatlik rate-limit (asimda 429).
+      security: []   # public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SignupRequest" }
+      responses:
+        "200":
+          description: Tesis olusturuldu; auto-login token cifti
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "409":
+          description: Bu telefon zaten kayitli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
   /auth/set-password:
     post:
       tags: [auth]
@@ -3333,12 +3362,13 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [users]
-      summary: Kullanici olustur (admin)
+      summary: Kullanici olustur (admin her rol; yonetici saha personeli)
       description: |
-        Her rol olusturulabilir. telefon GLOBAL benzersiz LOGIN anahtaridir
-        (zorunlu). password verilmezse TEK SEFERLIK gecici kod uretilir ve
-        yanitta `temp_code` bir kez doner (temp password first). password_hash
-        YANITTA donmez.
+        admin HER rolu olusturur. yonetici (Ozellik 3) KENDI tenant'inda YALNIZ
+        saha personeli (security/tesis_gorevlisi) acar; admin/yonetici/resident
+        rolu -> 403 (resident'lar POST /residents ile). telefon GLOBAL benzersiz
+        LOGIN anahtaridir (zorunlu). password verilmezse TEK SEFERLIK gecici kod
+        uretilir ve yanitta `temp_code` bir kez doner. password_hash YANITTA donmez.
       requestBody:
         required: true
         content:
@@ -4359,6 +4389,18 @@ components:
             tenant'i bu alanla belirler. Sadece kucuk harf/rakam/tire.
           example: "acme-plaza"
         email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 8 }
+    SignupRequest:
+      type: object
+      description: |
+        Tenant self-signup (Ozellik 3) — yonetici tesis + kendi hesabini acar.
+        Telefon global benzersiz login anahtaridir (E.164 normalize). Kurucu kendi
+        parolasini belirler (gecici kod yok); basarida auto-login.
+      required: [tenant_ad, yonetici_ad, phone, password]
+      properties:
+        tenant_ad: { type: string, minLength: 2, maxLength: 120, example: "Acme Plaza" }
+        yonetici_ad: { type: string, minLength: 2, maxLength: 120, example: "Ayse Yilmaz" }
+        phone: { type: string, example: "+905321112203" }
         password: { type: string, format: password, minLength: 8 }
     PhoneLoginRequest:
       type: object

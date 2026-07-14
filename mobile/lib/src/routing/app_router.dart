@@ -8,6 +8,7 @@ import '../features/auth/presentation/auth_controller.dart';
 import '../features/complaints/presentation/complaints_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/set_password_screen.dart';
+import '../features/auth/presentation/signup_screen.dart';
 import '../features/budget/presentation/budget_screen.dart';
 import '../features/building_map/presentation/bina_duzenleme_screen.dart';
 import '../features/building_map/presentation/building_schematic_screen.dart';
@@ -27,6 +28,7 @@ import '../features/reports/presentation/reports_screen.dart';
 import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
+import '../features/staff/presentation/staff_screen.dart';
 import '../features/site_kurali/presentation/site_kurali_screen.dart';
 import '../features/tasks/domain/task_models.dart';
 import '../features/tasks/presentation/task_categories_screen.dart';
@@ -42,6 +44,7 @@ class AppRoutes {
   const AppRoutes._();
   static const splash = '/splash';
   static const login = '/login';
+  static const signup = '/signup';
   static const setPassword = '/set-password';
   static const home = '/home';
   static const nfc = '/nfc';
@@ -73,6 +76,7 @@ class AppRoutes {
   static const sikayetlerim = '/sikayetlerim';
   static const settings = '/settings';
   static const profile = '/profile';
+  static const personel = '/personel';
 }
 
 /// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
@@ -153,6 +157,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.signup,
+        builder: (context, state) => const SignupScreen(),
       ),
       GoRoute(
         path: AppRoutes.setPassword,
@@ -320,6 +328,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.profile,
         builder: (context, state) => const ProfileScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.personel,
+        builder: (context, state) => const StaffScreen(),
+      ),
     ],
     redirect: (context, state) {
       final auth = ref.read(authControllerProvider);
@@ -333,6 +345,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final loggedIn = status == AuthStatus.authenticated;
       final onAuthFlow = location == AppRoutes.login ||
+          location == AppRoutes.signup ||
           location == AppRoutes.splash ||
           location == AppRoutes.setPassword;
 
@@ -343,8 +356,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (auth.setupToken != null) {
         return location == AppRoutes.setPassword ? null : AppRoutes.setPassword;
       }
-      // Oturum yok → login disindaki her yerden login'e.
-      return location == AppRoutes.login ? null : AppRoutes.login;
+      // Oturum yok → login/signup disindaki her yerden login'e.
+      return (location == AppRoutes.login || location == AppRoutes.signup)
+          ? null
+          : AppRoutes.login;
     },
   );
 });

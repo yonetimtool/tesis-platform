@@ -366,6 +366,15 @@ class HomeScreen extends ConsumerWidget {
           onTap: () => context.push(AppRoutes.integrations),
           badge: null,
         );
+      case HomeMenuEntry.personel:
+        // Ozellik 3: yonetici/admin saha personeli (guvenlik/tesis gorevlisi)
+        // listeler + ekler. yonetici YALNIZ saha personeli acar (backend RBAC).
+        return (
+          icon: Icons.badge_outlined,
+          title: 'Saha Personeli',
+          onTap: () => context.push(AppRoutes.personel),
+          badge: null,
+        );
       case HomeMenuEntry.binaDuzenleme:
         // D-viz Rev-2: gorsel bina yapisi — blok/kat/daire. Yonetim (admin/
         // yonetici) olusturur/duzenler; security + tesis_gorevlisi SALT-OKUMA

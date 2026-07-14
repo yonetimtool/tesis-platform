@@ -118,6 +118,17 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> signup({
+    required String tenantAd,
+    required String yoneticiAd,
+    required String phone,
+    required String password,
+    bool rememberMe = false,
+  }) async {
+    sessionExists = true;
+  }
+
+  @override
   Future<void> setPassword({
     required String setupToken,
     required String newPassword,

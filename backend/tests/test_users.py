@@ -102,6 +102,38 @@ def test_create_user_rbac(client, world):
     assert r.status_code == 403
 
 
+# ------------------- yonetici saha personeli acar (Ozellik 3) -------------- #
+def test_yonetici_creates_field_staff(client, world):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    # parola verilmezse -> gecici kod doner (temp password first)
+    r = client.post(
+        "/users",
+        headers=yon,
+        json={"ad": "Yeni Guard", "telefon": _uphone(), "role": "security"},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["temp_code"]
+    # tesis_gorevlisi de acilabilir
+    r2 = client.post(
+        "/users",
+        headers=yon,
+        json={"ad": "Yeni Temizlik", "telefon": _uphone(), "role": "tesis_gorevlisi"},
+    )
+    assert r2.status_code == 201, r2.text
+
+
+def test_yonetici_cannot_create_admin_yonetici_or_resident(client, world):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    for role in ("admin", "yonetici", "resident"):
+        r = client.post(
+            "/users",
+            headers=yon,
+            json={"ad": "x", "telefon": _uphone(), "role": role, "password": "Parola123"},
+        )
+        assert r.status_code == 403, (role, r.text)
+        assert r.json()["error"]["code"] == "forbidden"
+
+
 # ------------------------------ guncelle ----------------------------------- #
 def test_update_user_role_active_password(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
