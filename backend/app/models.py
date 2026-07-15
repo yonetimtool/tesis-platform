@@ -160,6 +160,10 @@ class Tenant(Base):
     )
     # acil durumda mobilin arayacagi yonetim numarasi.
     acil_durum_telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Onboarding: admin acinca false; yonetici ilk giriste adlandirinca true.
+    kurulum_tamamlandi: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     created_at = _created_at()
 
 

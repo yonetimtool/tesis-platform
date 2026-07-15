@@ -101,6 +101,7 @@ class TenantSettings {
     required this.tenantId,
     required this.ad,
     this.acilDurumTelefon,
+    this.kurulumTamamlandi = true,
   });
 
   final String tenantId;
@@ -110,10 +111,15 @@ class TenantSettings {
   /// ayarlar; bos olabilir → arama butonu gizlenir.
   final String? acilDurumTelefon;
 
+  /// false ise yonetici ILK GIRISTE tesisi adlandirmali (mobil setup ekrani).
+  /// Eski/adlandirilmis tesislerde true.
+  final bool kurulumTamamlandi;
+
   factory TenantSettings.fromJson(Map<String, dynamic> json) => TenantSettings(
         tenantId: json['tenant_id'] as String,
         ad: json['ad'] as String? ?? '',
         acilDurumTelefon: json['acil_durum_telefon'] as String?,
+        kurulumTamamlandi: json['kurulum_tamamlandi'] as bool? ?? true,
       );
 }
 

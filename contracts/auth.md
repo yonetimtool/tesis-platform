@@ -88,24 +88,28 @@ first); kullanici telefonla girip kalici parolasini belirler.
 - Token'lar (access/refresh) ve rol claim'i tum rollerde AYNIDIR (§2); refresh
   rotation aynen gecerlidir. `setup_token` ~10 dk; gecici kod tek kullanimlik.
 
-### 1.4 Tenant self-signup — `POST /auth/signup` (PUBLIC, Ozellik 3)
+### 1.4 Onboarding (Model A) — admin tesis acar, yonetici ilk giriste adlandirir
 
-Yonetici mobilden **tesis + kendi hesabini** tek adimda acar; kimlik gerektirmez.
-Govde: `{ tenant_ad, yonetici_ad, phone, password }`. Akis:
+Mobil self-signup KALDIRILDI (mobil giris yalniz telefon+parola). Yeni akis:
 
-1. **Rate-limit:** IP basina saatlik ust sinir (varsayilan 5); asimda **429**
-   `rate_limited` (Redis sabit-pencere).
-2. Telefon `normalize_phone` (E.164; gecersiz → 422). Slug tesis adindan turetilir
-   (Turkce→ascii + rastgele ek; login telefonla oldugu icin slug ic detaydir).
-3. `tenant` tablosu **RLS FORCE** oldugundan app_rw dogrudan INSERT edemez; owner-
-   sahipli **`SECURITY DEFINER`** `create_tenant_with_yonetici(...)` tenant + ilk
-   `yonetici` (password_set=true) satirini ATOMIK yaratir. Telefon global benzersiz
-   → cakisma **409** `conflict`.
-4. Basarida **auto-login**: `TokenPair` (role=yonetici) doner; kurucu kendi
-   parolasini belirledigi icin gecici kod adimi YOKTUR.
+1. **`POST /tenants` (ADMIN, cross-tenant):** admin bir tenant (isimsiz — yer
+   tutucu ad "(Kurulum bekliyor)", `kurulum_tamamlandi=false`, slug rastgele) +
+   ilk `yonetici` hesabini BIRLIKTE acar. Govde `{ yonetici_ad, phone, password? }`
+   — parola verilirse dogrudan belirlenir, verilmezse **gecici kod** (bir kez
+   `temp_code` doner, admin yoneticiye iletir). `tenant` RLS FORCE oldugundan
+   owner-sahipli **`SECURITY DEFINER`** `create_tenant_with_yonetici(...)` ile
+   atomik. Telefon global benzersiz → **409**. Donus `{ tenant_id, yonetici_user_id,
+   temp_code? }`; **`tenant_id` GIZLI kimliktir** (yalniz admin gorur).
+2. **`GET /tenants` (ADMIN):** tum tesisleri listeler `{ id, ad, kurulum_tamamlandi,
+   created_at }` (owner-sahipli `list_all_tenants()`; baska tenant verisi donmez).
+3. Yonetici telefonla girer (gecici kodla ise §1.3 set-password). Ardindan tenant
+   `kurulum_tamamlandi=false` oldugundan mobil **"Tesisinizi adlandirin"** ekranini
+   gosterir (`GET /tenant/settings.kurulum_tamamlandi`).
+4. **`POST /tenant/setup` (YONETICI):** `{ ad }` → tenant.ad + `kurulum_tamamlandi
+   =true`. Zaten kuruluysa **409**. Sonrasi normal ana ekran.
 
-> **`POST /users` — yonetici saha personeli acar (Ozellik 3):** self-signup ile
-> tesis acan yonetici, KENDI tenant'inda `security`/`tesis_gorevlisi` hesabi
+> **`POST /users` — yonetici saha personeli acar (Ozellik 3):** yonetici (tenant'i
+> admin acti — §1.4) KENDI tenant'inda `security`/`tesis_gorevlisi` hesabi
 > olusturur (telefon + gecici kod / parola — §1.3 ile ayni). `yonetici`,
 > `admin`/`yonetici`/`resident` rolu ACAMAZ → **403** (yetki yukseltme yok;
 > resident'lar `POST /residents` ile acilir). `admin` her rolu acar. Tenant
@@ -193,7 +197,6 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 |---------------------------------------|:-----:|:---:|:---:|:---:|:---:|
 | `POST /auth/login` (panel, email)     |  ✅   | ✅° | ✅° | ✅° | ✅° |
 | `POST /auth/login-phone` (mobil, tel) |  ❌   | ✅  | ✅  | ✅  | ✅  |
-| `POST /auth/signup` (public — tesis kur)| ➖  | ➖ | ➖ | ➖ | ➖ |
 | `POST /auth/set-password` (ilk giris) |  ❌   | ❌  | ❌  | ❌  | ✅  |
 | `POST /residents` (sakin ac + kod)    |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /residents` (site sakin listesi)|  ✅   | ✅  | ❌  | ❌  | ❌  |
@@ -276,6 +279,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `PATCH /emergency/{id}`               |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /tenant/settings`               |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `PATCH /tenant/settings`              |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `POST /tenants` (admin tesis+yonetici)|  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `GET  /tenants` (admin tum tesisler)  |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `POST /tenant/setup` (ilk-giris adlandir)| ❌ | ✅ | ❌  | ❌  | ❌  |
 | daire CRUD + yerlesim (`/units*`,layout)|  ✅   | ✅  | ❌  | ❌  | ❌  |
 | daire sakin atama (`/units/{id}/residents`)| ✅ | ❌  | ❌  | ❌  | ❌  |
 | bina blok CRUD (`/blocks*`)           |  ✅   | ✅  | ❌  | ❌  | ❌  |

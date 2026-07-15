@@ -63,23 +63,6 @@ class PhoneLoginRequest(BaseModel):
     password: str = Field(..., min_length=1)
 
 
-class SignupRequest(BaseModel):
-    """Tenant self-signup (Ozellik 3): yonetici tesis + kendi hesabini acar.
-
-    Telefon global benzersiz login anahtaridir (E.164 normalize). Kurucu kendi
-    parolasini belirler (gecici kod yok); basarida auto-login (TokenPair)."""
-
-    tenant_ad: str = Field(..., min_length=2, max_length=120, examples=["Örnek Sitesi"])
-    yonetici_ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
-    phone: str = Field(..., min_length=1, examples=["+905321112203"])
-    password: str = Field(..., min_length=8)
-
-    @field_validator("password")
-    @classmethod
-    def _strong(cls, v: str) -> str:
-        return validate_password_strength(v)
-
-
 class PhoneLoginResponse(BaseModel):
     """Telefon giris yaniti — iki durum:
 
@@ -1488,6 +1471,8 @@ class TenantSettings(BaseModel):
     slug: str
     timezone: str
     acil_durum_telefon: str | None = None
+    # false ise yonetici ILK GIRISTE tesisi adlandirmalidir (mobil setup ekrani).
+    kurulum_tamamlandi: bool = True
 
 
 class TenantSettingsUpdate(BaseModel):
@@ -1500,6 +1485,48 @@ class TenantSettingsUpdate(BaseModel):
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
         return self
+
+
+# Admin (platform) tesis olusturma/listeleme (cross-tenant) + yonetici ilk-giris
+# adlandirma (onboarding, Model A).
+class TenantAdminCreate(BaseModel):
+    """Admin bir tenant (isimsiz, kurulum_tamamlandi=false) + yonetici acar.
+    password verilirse dogrudan belirlenir; verilmezse gecici kod uretilir."""
+
+    yonetici_ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
+    phone: str = Field(..., min_length=1, examples=["+905321112203"])
+    password: str | None = Field(None, min_length=8)
+
+    @field_validator("password")
+    @classmethod
+    def _strong(cls, v: str | None) -> str | None:
+        return v if v is None else validate_password_strength(v)
+
+
+class TenantAdminCreatedOut(BaseModel):
+    """temp_code YALNIZ parola verilmediginde ve bir kez doner (admin yoneticiye
+    iletir). tenant_id GIZLI kimliktir (yalniz admin gorur)."""
+
+    tenant_id: uuid.UUID
+    yonetici_user_id: uuid.UUID
+    temp_code: str | None = None
+
+
+class TenantAdminListItem(BaseModel):
+    id: uuid.UUID
+    ad: str
+    kurulum_tamamlandi: bool
+    created_at: datetime
+
+
+class TenantAdminListResponse(BaseModel):
+    items: list[TenantAdminListItem]
+
+
+class TenantSetupRequest(BaseModel):
+    """Yonetici ilk giriste tesisini adlandirir (kurulum_tamamlandi=true olur)."""
+
+    ad: str = Field(..., min_length=2, max_length=120)
 
 
 # -------------------------------- aidat ------------------------------------ #

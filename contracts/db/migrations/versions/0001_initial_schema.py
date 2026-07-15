@@ -155,6 +155,10 @@ def upgrade() -> None:
             timezone    text NOT NULL DEFAULT 'Europe/Istanbul',
             -- acil durumda mobilin arayacagi yonetim numarasi (backend saklar, aramaz).
             acil_durum_telefon text,
+            -- Onboarding: admin tenant+yonetici acar (kurulum_tamamlandi=false);
+            -- yonetici ILK GIRISTE tesisi adlandirinca true olur (mobil "Tesisinizi
+            -- adlandirin" ekrani). Seed/mevcut tenant'lar HAZIR (default true).
+            kurulum_tamamlandi boolean NOT NULL DEFAULT true,
             created_at  timestamptz NOT NULL DEFAULT now(),
             CONSTRAINT uq_tenant_slug UNIQUE (slug),
             CONSTRAINT ck_tenant_slug CHECK (slug ~ '^[a-z0-9][a-z0-9-]*$')
@@ -273,12 +277,15 @@ def upgrade() -> None:
     op.execute(
         """
         CREATE OR REPLACE FUNCTION public.create_tenant_with_yonetici(
-            p_tenant_ad    text,
-            p_slug         text,
-            p_timezone     text,
-            p_yonetici_ad  text,
-            p_telefon      text,
-            p_password_hash text
+            p_tenant_ad     text,
+            p_slug          text,
+            p_timezone      text,
+            p_yonetici_ad   text,
+            p_telefon       text,
+            p_password_hash text,
+            p_password_set  boolean,
+            p_temp_code_hash text,
+            p_kurulum       boolean
         )
         RETURNS TABLE(tenant_id uuid, user_id uuid)
         LANGUAGE plpgsql
@@ -289,15 +296,16 @@ def upgrade() -> None:
             v_tenant uuid;
             v_user uuid;
         BEGIN
-            INSERT INTO public.tenant (ad, slug, timezone)
-            VALUES (p_tenant_ad, p_slug, p_timezone)
+            INSERT INTO public.tenant (ad, slug, timezone, kurulum_tamamlandi)
+            VALUES (p_tenant_ad, p_slug, p_timezone, p_kurulum)
             RETURNING id INTO v_tenant;
 
             INSERT INTO public.app_user
-                (tenant_id, ad, telefon, password_hash, password_set,
-                 role, is_active)
+                (tenant_id, ad, telefon, password_hash, temp_code_hash,
+                 password_set, role, is_active)
             VALUES
-                (v_tenant, p_yonetici_ad, p_telefon, p_password_hash, true,
+                (v_tenant, p_yonetici_ad, p_telefon, p_password_hash,
+                 p_temp_code_hash, p_password_set,
                  'yonetici'::public.user_role, true)
             RETURNING id INTO v_user;
 
@@ -310,11 +318,35 @@ def upgrade() -> None:
     )
     op.execute(
         "REVOKE ALL ON FUNCTION public.create_tenant_with_yonetici"
-        "(text, text, text, text, text, text) FROM PUBLIC;"
+        "(text, text, text, text, text, text, boolean, text, boolean) FROM PUBLIC;"
     )
     op.execute(
         "GRANT EXECUTE ON FUNCTION public.create_tenant_with_yonetici"
-        f"(text, text, text, text, text, text) TO {APP_ROLE};"
+        f"(text, text, text, text, text, text, boolean, text, boolean) TO {APP_ROLE};"
+    )
+
+    # Admin (platform) cross-tenant tesis listesi: tenant RLS FORCE oldugundan
+    # app_rw yalniz kendi tenant'ini gorur. Bu owner-sahipli SECURITY DEFINER
+    # fonksiyon TUM tenant'larin (id, ad, kurulum, tarih) ozetini doner; API
+    # yalniz admin'e acar (RBAC). Baska tenant VERISI (kullanici vb.) donmez.
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.list_all_tenants()
+        RETURNS TABLE(id uuid, ad text, kurulum_tamamlandi boolean,
+                      created_at timestamptz)
+        LANGUAGE sql
+        STABLE
+        SECURITY DEFINER
+        SET search_path = ''
+        AS $$
+            SELECT id, ad, kurulum_tamamlandi, created_at
+            FROM public.tenant ORDER BY created_at DESC;
+        $$;
+        """
+    )
+    op.execute("REVOKE ALL ON FUNCTION public.list_all_tenants() FROM PUBLIC;")
+    op.execute(
+        f"GRANT EXECUTE ON FUNCTION public.list_all_tenants() TO {APP_ROLE};"
     )
 
     # ------------------------------------------------------------------ #
@@ -1672,9 +1704,10 @@ def _enable_rls(table: str) -> None:
 def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_phone(text);")
+    op.execute("DROP FUNCTION IF EXISTS public.list_all_tenants();")
     op.execute(
         "DROP FUNCTION IF EXISTS public.create_tenant_with_yonetici"
-        "(text, text, text, text, text, text);"
+        "(text, text, text, text, text, text, boolean, text, boolean);"
     )
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (

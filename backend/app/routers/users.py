@@ -36,8 +36,8 @@ _ADMIN = require_role("admin")
 _READER = require_role("admin", "yonetici")
 # Kullanici OLUSTURMA: admin (her rol) + yonetici (YALNIZ saha personeli).
 _USER_CREATOR = require_role("admin", "yonetici")
-# yonetici self-signup ile tesis acabildiginden (Ozellik 3), kendi tenant'inda
-# saha personeli (security/tesis_gorevlisi) acar; admin/yonetici/resident ACAMAZ
+# yonetici kendi tenant'inda saha personeli (security/tesis_gorevlisi) acar;
+# admin/yonetici/resident ACAMAZ
 # (yetki yukseltme yok — resident'lar POST /residents ile acilir).
 _YONETICI_CREATABLE_ROLES = frozenset({"security", "tesis_gorevlisi"})
 # Iletisim ayari (telefon + arama rizasi) admin + yonetici yonetir (rol/parola

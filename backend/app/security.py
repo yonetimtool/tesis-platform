@@ -26,6 +26,20 @@ from .config import settings
 _PHONE_RE = re.compile(r"^\+\d{8,15}$")
 
 
+# Tesis adindan benzersiz slug (login telefonla oldugu icin slug ic detaydir;
+# rastgele ek cakismayi pratikte imkansiz kilar).
+_TR_ASCII = str.maketrans(
+    {"ç": "c", "ğ": "g", "ı": "i", "ö": "o", "ş": "s", "ü": "u", "İ": "i",
+     "Ç": "c", "Ğ": "g", "Ö": "o", "Ş": "s", "Ü": "u"}
+)
+
+
+def slugify_tenant(ad: str) -> str:
+    base = ad.translate(_TR_ASCII).lower()
+    base = re.sub(r"[^a-z0-9]+", "-", base).strip("-")[:40] or "tesis"
+    return f"{base}-{secrets.token_hex(3)}"
+
+
 def normalize_phone(raw: str) -> str:
     """Telefonu E.164'e normalize et (global benzersizlik icin tekbicim).
 

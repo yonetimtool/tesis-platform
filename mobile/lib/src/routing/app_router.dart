@@ -8,14 +8,13 @@ import '../features/auth/presentation/auth_controller.dart';
 import '../features/complaints/presentation/complaints_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/set_password_screen.dart';
-import '../features/auth/presentation/signup_screen.dart';
 import '../features/budget/presentation/budget_screen.dart';
 import '../features/building_map/presentation/bina_duzenleme_screen.dart';
 import '../features/building_map/presentation/building_schematic_screen.dart';
 import '../features/unit_complaints/presentation/my_complaints_screen.dart';
 import '../features/budget/presentation/financial_summary_screen.dart';
 import '../features/budget/presentation/site_budget_screen.dart';
-import '../features/home/presentation/home_screen.dart';
+import '../features/home/presentation/home_gate.dart';
 import '../features/kargo/presentation/kargo_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
 import '../features/dues/presentation/my_dues_screen.dart';
@@ -45,7 +44,6 @@ class AppRoutes {
   const AppRoutes._();
   static const splash = '/splash';
   static const login = '/login';
-  static const signup = '/signup';
   static const setPassword = '/set-password';
   static const home = '/home';
   static const nfc = '/nfc';
@@ -161,16 +159,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        path: AppRoutes.signup,
-        builder: (context, state) => const SignupScreen(),
-      ),
-      GoRoute(
         path: AppRoutes.setPassword,
         builder: (context, state) => const SetPasswordScreen(),
       ),
       GoRoute(
+        // Onboarding Model A: yonetici ilk giriste tesisi adlandirmamissa
+        // kapi once kurulum ekranini gosterir (bkz. HomeGate).
         path: AppRoutes.home,
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const HomeGate(),
       ),
       GoRoute(
         path: AppRoutes.nfc,
@@ -351,7 +347,6 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final loggedIn = status == AuthStatus.authenticated;
       final onAuthFlow = location == AppRoutes.login ||
-          location == AppRoutes.signup ||
           location == AppRoutes.splash ||
           location == AppRoutes.setPassword;
 
@@ -362,10 +357,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (auth.setupToken != null) {
         return location == AppRoutes.setPassword ? null : AppRoutes.setPassword;
       }
-      // Oturum yok → login/signup disindaki her yerden login'e.
-      return (location == AppRoutes.login || location == AppRoutes.signup)
-          ? null
-          : AppRoutes.login;
+      // Oturum yok → login disindaki her yerden login'e.
+      return location == AppRoutes.login ? null : AppRoutes.login;
     },
   );
 });

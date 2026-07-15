@@ -9,14 +9,10 @@ tum aile iptal edilir.
 """
 from __future__ import annotations
 
-import re
-import secrets
-
 import jwt
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from sqlalchemy import func, select, text
-from sqlalchemy.exc import IntegrityError
 
 from ..config import settings
 from ..db import SessionLocal, set_tenant
@@ -29,7 +25,6 @@ from ..schemas import (
     PhoneLoginResponse,
     RefreshRequest,
     SetPasswordRequest,
-    SignupRequest,
     TokenPair,
 )
 from ..security import (
@@ -51,38 +46,6 @@ _INVALID_CREDS = APIError(401, "invalid_credentials", "Email, parola veya tenant
 _INVALID_PHONE_CREDS = APIError(
     401, "invalid_credentials", "Telefon veya parola hatali."
 )
-
-
-# Tenant self-signup (Ozellik 3) rate-limit: IP basina saatlik ust sinir.
-SIGNUP_RATE_PER_HOUR = 5
-
-# Turkce -> ascii (slug uretimi icin).
-_TR_ASCII = str.maketrans(
-    {"ç": "c", "ğ": "g", "ı": "i", "ö": "o", "ş": "s", "ü": "u", "İ": "i",
-     "Ç": "c", "Ğ": "g", "Ö": "o", "Ş": "s", "Ü": "u"}
-)
-
-
-def _slugify(ad: str) -> str:
-    """Tesis adindan benzersiz slug: Turkce->ascii, [a-z0-9-], + rastgele ek.
-
-    Login telefonla oldugu icin slug ic detaydir; rastgele ek cakismayi
-    pratikte imkansiz kilar (uniq kisiti yine de son savunma)."""
-    base = ad.translate(_TR_ASCII).lower()
-    base = re.sub(r"[^a-z0-9]+", "-", base).strip("-")[:40] or "tesis"
-    return f"{base}-{secrets.token_hex(3)}"
-
-
-async def _check_signup_rate(redis: aioredis.Redis, ip: str) -> None:
-    key = f"signup:ip:{ip}"
-    count = await redis.incr(key)
-    if count == 1:
-        await redis.expire(key, 3600)
-    if count > SIGNUP_RATE_PER_HOUR:
-        raise APIError(
-            429, "rate_limited",
-            "Cok fazla tesis olusturma denemesi. Lutfen bir sure sonra tekrar deneyin.",
-        )
 
 
 def _refresh_ttl() -> int:
@@ -230,67 +193,6 @@ async def login_phone(
     tokens = await _issue_token_pair(redis, user)
     return PhoneLoginResponse(
         password_setup_required=False, **tokens.model_dump()
-    )
-
-
-@router.post("/signup", response_model=TokenPair)
-async def signup(
-    body: SignupRequest,
-    request: Request,
-    redis: aioredis.Redis = Depends(get_redis),
-) -> TokenPair:
-    """Tenant self-signup (Ozellik 3): yonetici tesis + kendi hesabini tek adimda
-    acar; basarida auto-login (TokenPair, role=yonetici). Public + IP rate-limit.
-
-    tenant tablosu RLS FORCE oldugundan owner-sahipli SECURITY DEFINER fonksiyon
-    (create_tenant_with_yonetici) tenant + ilk yoneticiyi atomik yaratir. Telefon
-    global benzersiz; cakisma -> 409.
-    """
-    ip = request.client.host if request.client else "unknown"
-    await _check_signup_rate(redis, ip)
-
-    try:
-        phone = normalize_phone(body.phone)
-    except ValueError:
-        raise APIError(422, "validation_error", "Gecersiz telefon numarasi.")
-
-    password_hash = hash_password(body.password)
-    async with SessionLocal() as session:
-        async with session.begin():
-            try:
-                row = (
-                    await session.execute(
-                        text(
-                            "SELECT tenant_id, user_id FROM "
-                            "public.create_tenant_with_yonetici("
-                            ":ad, :slug, :tz, :yad, :tel, :ph)"
-                        ),
-                        {
-                            "ad": body.tenant_ad,
-                            "slug": _slugify(body.tenant_ad),
-                            "tz": "Europe/Istanbul",
-                            "yad": body.yonetici_ad,
-                            "tel": phone,
-                            "ph": password_hash,
-                        },
-                    )
-                ).one()
-            except IntegrityError:
-                # slug rastgele ekli -> pratikte yalniz telefon (global) cakisir.
-                raise APIError(409, "conflict", "Bu telefon zaten kayitli.")
-
-    access = create_access_token(
-        user_id=row.user_id, tenant_id=row.tenant_id, role="yonetici"
-    )
-    refresh, jti, fam = create_refresh_token(
-        user_id=row.user_id, tenant_id=row.tenant_id
-    )
-    await _store_refresh(redis, jti, fam)
-    return TokenPair(
-        access_token=access,
-        refresh_token=refresh,
-        token_type="Bearer",
-        expires_in=access_token_ttl_seconds(),
     )
 
 

@@ -13,18 +13,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Tenant
-from ..schemas import TenantSettings, TenantSettingsUpdate
+from ..schemas import TenantSettings, TenantSettingsUpdate, TenantSetupRequest
 
 router = APIRouter(prefix="/tenant", tags=["tenant"])
 
 _READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 _ADMIN = require_role("admin")
+_YONETICI = require_role("yonetici")
 
 
 def _to_settings(t: Tenant) -> TenantSettings:
     return TenantSettings(
         tenant_id=t.id, ad=t.ad, slug=t.slug, timezone=t.timezone,
         acil_durum_telefon=t.acil_durum_telefon,
+        kurulum_tamamlandi=t.kurulum_tamamlandi,
     )
 
 
@@ -53,6 +55,25 @@ async def update_settings(
     t = await _current_tenant(db)
     for key, value in body.model_dump(exclude_unset=True).items():
         setattr(t, key, value)
+    await db.flush()
+    await db.refresh(t)
+    return _to_settings(t)
+
+
+@router.post("/setup", response_model=TenantSettings)
+async def setup_tenant(
+    body: TenantSetupRequest,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_YONETICI),
+) -> TenantSettings:
+    """Yonetici ILK GIRISTE tesisini adlandirir (onboarding Model A):
+    admin isimsiz tenant + yonetici acmisti; yonetici burada adi belirler ve
+    kurulum_tamamlandi=true olur. Zaten kuruluysa 409."""
+    t = await _current_tenant(db)
+    if t.kurulum_tamamlandi:
+        raise APIError(409, "conflict", "Tesis zaten kuruldu.")
+    t.ad = body.ad
+    t.kurulum_tamamlandi = True
     await db.flush()
     await db.refresh(t)
     return _to_settings(t)

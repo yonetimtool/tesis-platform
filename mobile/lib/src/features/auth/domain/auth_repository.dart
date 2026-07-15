@@ -14,17 +14,6 @@ abstract interface class AuthRepository {
     bool rememberMe = false,
   });
 
-  /// Tenant self-signup: `POST /auth/signup` (yonetici tesis + kendi hesabini
-  /// acar). Basarida donen token cifti saklanir (auto-login) ve [rememberMe]
-  /// uygulanir. Hata durumunda [ApiException] firlatir.
-  Future<void> signup({
-    required String tenantAd,
-    required String yoneticiAd,
-    required String phone,
-    required String password,
-    bool rememberMe = false,
-  });
-
   /// Ilk giristeki zorunlu kalici parola belirleme: `POST /auth/set-password`.
   /// Basarida donen token cifti saklanir (oturum acilir) ve [rememberMe]
   /// tercihi uygulanir. Hata durumunda [ApiException] firlatir.

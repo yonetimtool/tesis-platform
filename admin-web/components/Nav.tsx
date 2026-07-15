@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 
 const LINKS = [
   { href: "/dashboard", label: "Canlı Panel" },
+  { href: "/tenants", label: "Tesisler" },
   { href: "/shifts", label: "Vardiyalar" },
   { href: "/checkpoints", label: "NFC Noktaları" },
   { href: "/patrol-plans", label: "Devriye Planları" },

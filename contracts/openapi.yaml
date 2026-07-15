@@ -104,35 +104,6 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
 
-  /auth/signup:
-    post:
-      tags: [auth]
-      summary: Tenant self-signup — yonetici tesis + kendi hesabini acar (public)
-      description: |
-        Yonetici mobilden tesis + kendi hesabini TEK ADIMDA acar (kimlik yok).
-        tenant tablosu RLS FORCE oldugundan owner-sahipli SECURITY DEFINER
-        fonksiyon tenant + ilk yonetici satirini atomik yaratir. Telefon global
-        benzersiz; cakisma -> 409. Basarida auto-login (TokenPair, role=yonetici).
-        IP basina saatlik rate-limit (asimda 429).
-      security: []   # public
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/SignupRequest" }
-      responses:
-        "200":
-          description: Tesis olusturuldu; auto-login token cifti
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/TokenPair" }
-        "409":
-          description: Bu telefon zaten kayitli
-          content:
-            application/json: { schema: { $ref: "#/components/schemas/Error" } }
-        "422": { $ref: "#/components/responses/ValidationError" }
-        "429": { $ref: "#/components/responses/RateLimited" }
-
   /auth/set-password:
     post:
       tags: [auth]
@@ -2706,6 +2677,71 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /tenant/setup:
+    post:
+      tags: [tenant]
+      summary: Yonetici ILK GIRISTE tesisi adlandirir (onboarding Model A)
+      description: |
+        Admin isimsiz tenant + yonetici acmisti (kurulum_tamamlandi=false).
+        Yonetici burada tesis adini belirler; kurulum_tamamlandi=true olur.
+        Zaten kuruluysa 409. Path: POST /tenant/setup.
+      operationId: setupTenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantSetupRequest" }
+      responses:
+        "200":
+          description: Tesis adlandirildi (kurulum tamam)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Tesis zaten kuruldu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /tenants:
+    post:
+      tags: [tenant]
+      summary: Admin — yeni tesis (isimsiz) + yonetici acar (cross-tenant)
+      description: |
+        Admin bir tenant (kurulum_tamamlandi=false, yer tutucu ad) + ilk yonetici
+        hesabini birlikte acar. Parola verilmezse gecici kod doner (bir kez).
+        tenant_id GIZLI kimliktir (yalniz admin gorur). Telefon global benzersiz -> 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantAdminCreate" }
+      responses:
+        "201":
+          description: Tesis + yonetici olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantAdminCreatedOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Bu telefon zaten kayitli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    get:
+      tags: [tenant]
+      summary: Admin — tum tesisler (id + ad + kurulum durumu)
+      responses:
+        "200":
+          description: Tesis listesi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantAdminListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   # ================================================================= #
   # AIDAT — unit (daire) + sakin + tahakkuk + odeme
@@ -4440,18 +4476,41 @@ components:
           example: "acme-plaza"
         email: { type: string, format: email }
         password: { type: string, format: password, minLength: 8 }
-    SignupRequest:
+    TenantAdminCreate:
       type: object
-      description: |
-        Tenant self-signup (Ozellik 3) — yonetici tesis + kendi hesabini acar.
-        Telefon global benzersiz login anahtaridir (E.164 normalize). Kurucu kendi
-        parolasini belirler (gecici kod yok); basarida auto-login.
-      required: [tenant_ad, yonetici_ad, phone, password]
+      description: Admin yeni tesis (isimsiz) + yonetici acar. password verilmezse gecici kod.
+      required: [yonetici_ad, phone]
       properties:
-        tenant_ad: { type: string, minLength: 2, maxLength: 120, example: "Acme Plaza" }
         yonetici_ad: { type: string, minLength: 2, maxLength: 120, example: "Ayse Yilmaz" }
         phone: { type: string, example: "+905321112203" }
-        password: { type: string, format: password, minLength: 8 }
+        password: { type: string, format: password, minLength: 8, nullable: true }
+    TenantAdminCreatedOut:
+      type: object
+      required: [tenant_id, yonetici_user_id]
+      properties:
+        tenant_id: { type: string, format: uuid, description: "GIZLI kimlik (yalniz admin)" }
+        yonetici_user_id: { type: string, format: uuid }
+        temp_code: { type: string, nullable: true, example: "K7MR-2QWX" }
+    TenantAdminListItem:
+      type: object
+      required: [id, ad, kurulum_tamamlandi, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, example: "(Kurulum bekliyor)" }
+        kurulum_tamamlandi: { type: boolean }
+        created_at: { type: string, format: date-time }
+    TenantAdminListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TenantAdminListItem" }
+    TenantSetupRequest:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 2, maxLength: 120, example: "Örnek Sitesi" }
     PhoneLoginRequest:
       type: object
       description: |
@@ -5814,6 +5873,10 @@ components:
           type: string
           nullable: true
           description: "Acil durumda mobilin arayacagi yonetim numarasi (tel:)"
+        kurulum_tamamlandi:
+          type: boolean
+          default: true
+          description: "false ise yonetici ILK GIRISTE tesisi adlandirmali (mobil setup ekrani)"
     TenantSettingsUpdate:
       type: object
       minProperties: 1

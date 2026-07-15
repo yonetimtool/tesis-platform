@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../routing/app_router.dart';
 import 'auth_controller.dart';
 
 /// Telefonla giris ekrani (contracts/auth.md §1): cep telefonu (global
@@ -138,24 +136,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2.5),
                             )
                           : const Text('Giriş yap'),
-                    ),
-                    const SizedBox(height: 8),
-                    // Tenant self-signup: yeni tesis kaydi (Ozellik 3). Giris
-                    // oncesi rol bilinmedigi icin herkese gorunur; etiket bunun
-                    // yalniz site yoneticileri icin oldugunu belirtir (sakin/
-                    // gorevli mevcut hesabiyla giris yapar).
-                    TextButton(
-                      onPressed:
-                          submitting ? null : () => context.push(AppRoutes.signup),
-                      child: const Text('Tesisiniz yok mu? Tesis oluştur'),
-                    ),
-                    Text(
-                      'Yalnızca site yöneticileri için',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
                     ),
                   ],
                 ),

@@ -31,30 +31,6 @@ class AuthApi {
     }
   }
 
-  /// `POST /auth/signup` — tenant self-signup: yonetici tesis + kendi hesabini
-  /// tek adimda acar; basarida auto-login (TokenPair, role=yonetici).
-  Future<TokenPair> signup({
-    required String tenantAd,
-    required String yoneticiAd,
-    required String phone,
-    required String password,
-  }) async {
-    try {
-      final res = await _dio.post<Map<String, dynamic>>(
-        '/auth/signup',
-        data: {
-          'tenant_ad': tenantAd,
-          'yonetici_ad': yoneticiAd,
-          'phone': phone,
-          'password': password,
-        },
-      );
-      return TokenPair.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDio(e);
-    }
-  }
-
   /// `POST /auth/set-password` — ilk giristeki zorunlu parola belirleme.
   /// Basarida tam oturum (TokenPair) doner; gecici kod sunucuda silinir.
   Future<TokenPair> setPassword({
