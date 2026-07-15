@@ -4511,9 +4511,18 @@ components:
           nullable: true
           description: OPSIYONEL (giris anahtari degildir; bildirim/yedek)
         rol_tipi: { $ref: "#/components/schemas/ResidentRol" }
+        password:
+          type: string
+          format: password
+          minLength: 8
+          nullable: true
+          description: >
+            VERILIRSE dogrudan belirlenir (gecici kod URETILMEZ, temp_code null);
+            verilmezse gecici kod uretilir. Parola politikasi: 8+ karakter,
+            buyuk harf + rakam + sembol (ihlal 422).
     ResidentCreated:
       type: object
-      required: [user_id, unit_id, unit_no, ad, temp_code]
+      required: [user_id, unit_id, unit_no, ad]
       properties:
         user_id: { type: string, format: uuid }
         unit_id: { type: string, format: uuid }
@@ -4522,11 +4531,12 @@ components:
         email: { type: string, nullable: true }
         temp_code:
           type: string
+          nullable: true
           example: "K7MR-2QWX"
           description: |
-            TEK SEFERLIK gecici giris kodu — YALNIZ bu yanitta duz metin
-            doner (yonetici sakine iletir). Sunucuda bcrypt hash'i saklanir;
-            sakin kalici parolasini belirleyince silinir.
+            TEK SEFERLIK gecici giris kodu — parola VERILMEDIYSE bir kez doner
+            (parola verildiyse null). Sunucuda bcrypt hash'i saklanir; sakin
+            kalici parolasini belirleyince silinir.
     ResidentListItem:
       type: object
       description: Site sakin listesi ogesi — telefon KVKK geregi YOK.

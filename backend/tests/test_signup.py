@@ -28,7 +28,7 @@ def _signup(client, **over):
         "tenant_ad": "Test Tesis",
         "yonetici_ad": "Test Yonetici",
         "phone": _uphone(),
-        "password": "YoneticiParola1",
+        "password": "YoneticiParola1!",
     }
     body.update(over)
     return client.post("/auth/signup", json=body)
@@ -44,7 +44,7 @@ def test_signup_creates_tenant_and_auto_login(client):
     # Ayni telefon+parola ile login-phone calisir (tenant numaradan cozulur).
     lr = client.post(
         "/auth/login-phone",
-        json={"phone": phone, "password": "YoneticiParola1"},
+        json={"phone": phone, "password": "YoneticiParola1!"},
     )
     assert lr.status_code == 200, lr.text
     assert lr.json()["password_setup_required"] is False
@@ -61,6 +61,11 @@ def test_signup_duplicate_phone_409(client):
 def test_signup_invalid_phone_422(client):
     r = _signup(client, phone="abc")
     assert r.status_code == 422, r.text
+
+
+def test_signup_weak_password_422(client):
+    # sembolsuz parola -> 422 (buyuk harf + rakam + sembol kurali).
+    assert _signup(client, password="YoneticiParola1").status_code == 422
 
 
 def test_signup_rate_limited_429(client):

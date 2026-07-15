@@ -46,6 +46,28 @@ def test_add_and_list_resident(client, world):
     assert "telefon" not in mine  # KVKK
 
 
+def test_add_resident_with_password_skips_temp_code(client, world):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    phone = _uphone()
+    r = client.post(
+        "/residents",
+        headers=yon,
+        json={"ad": "Parolali", "telefon": phone, "unit_no": "P-9", "password": "Sakin1234!"},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["temp_code"] is None  # parola verildi -> gecici kod YOK
+    # dogrudan parola ile telefon-login (kurulum gerekmez)
+    lp = client.post("/auth/login-phone", json={"phone": phone, "password": "Sakin1234!"})
+    assert lp.status_code == 200 and lp.json()["password_setup_required"] is False
+    # zayif parola -> 422
+    weak = client.post(
+        "/residents",
+        headers=yon,
+        json={"ad": "x", "telefon": _uphone(), "unit_no": "P-7", "password": "zayifparola"},
+    )
+    assert weak.status_code == 422
+
+
 # --------------------------------- duzenle -------------------------------- #
 def test_edit_resident_and_phone_freed(client, world):
     yon = _headers(client, world["slug_a"], world["yonetici_a"])

@@ -140,11 +140,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           : const Text('Giriş yap'),
                     ),
                     const SizedBox(height: 8),
-                    // Tenant self-signup: yeni tesis kaydi (Ozellik 3).
+                    // Tenant self-signup: yeni tesis kaydi (Ozellik 3). Giris
+                    // oncesi rol bilinmedigi icin herkese gorunur; etiket bunun
+                    // yalniz site yoneticileri icin oldugunu belirtir (sakin/
+                    // gorevli mevcut hesabiyla giris yapar).
                     TextButton(
                       onPressed:
                           submitting ? null : () => context.push(AppRoutes.signup),
                       child: const Text('Tesisiniz yok mu? Tesis oluştur'),
+                    ),
+                    Text(
+                      'Yalnızca site yöneticileri için',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),

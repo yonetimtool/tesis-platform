@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../../../core/validators/password_rule.dart';
 import '../../auth/domain/user_role.dart';
 import '../data/profile_api.dart';
 import '../domain/profile.dart';
@@ -174,12 +175,8 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                   prefixIcon: Icon(Icons.lock_reset_outlined),
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) {
-                  final value = v ?? '';
-                  if (value.isEmpty) return 'Yeni parola zorunludur';
-                  if (value.length < 8) return 'En az 8 karakter olmalı';
-                  return null;
-                },
+                validator: (v) =>
+                    (v ?? '').isEmpty ? 'Yeni parola zorunludur' : passwordError(v),
               ),
               const SizedBox(height: 12),
               TextFormField(

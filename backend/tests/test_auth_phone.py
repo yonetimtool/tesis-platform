@@ -94,7 +94,7 @@ def test_first_login_temp_code_then_set_password(client, world):
     # set-password -> tam oturum.
     r = client.post(
         "/auth/set-password",
-        json={"setup_token": body["setup_token"], "new_password": "YeniSakin123"},
+        json={"setup_token": body["setup_token"], "new_password": "YeniSakin123!"},
     )
     assert r.status_code == 200, r.text
     assert r.json()["access_token"]
@@ -102,7 +102,7 @@ def test_first_login_temp_code_then_set_password(client, world):
     # Artık kalıcı parola ile telefon-login çalışır; geçici kod geçmez.
     assert client.post(
         "/auth/login-phone",
-        json={"phone": "+905000001001", "password": "YeniSakin123"},
+        json={"phone": "+905000001001", "password": "YeniSakin123!"},
     ).status_code == 200
     assert client.post(
         "/auth/login-phone",

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/validators/password_rule.dart';
 import 'auth_controller.dart';
 
 /// Sakinin gecici kodla ILK girisinden sonraki ZORUNLU kalici parola
@@ -86,14 +87,8 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
-                      validator: (v) {
-                        final value = v ?? '';
-                        if (value.isEmpty) return 'Parola zorunludur';
-                        if (value.length < 8) {
-                          return 'Parola en az 8 karakter olmalı';
-                        }
-                        return null;
-                      },
+                      validator: (v) =>
+                          (v ?? '').isEmpty ? 'Parola zorunludur' : passwordError(v),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(

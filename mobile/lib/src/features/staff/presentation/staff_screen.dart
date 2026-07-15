@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../../../core/ui/temp_code_dialog.dart';
+import '../../../core/validators/password_rule.dart';
 import '../../auth/domain/user_role.dart';
 import '../data/staff_api.dart';
 
@@ -124,7 +126,12 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
       if (!mounted) return;
       navigator.pop('ok');
       if (tempCode != null && tempCode.isNotEmpty) {
-        await _showTempCodeDialog(navigator.context, tempCode);
+        await showTempCodeDialog(
+          navigator.context,
+          code: tempCode,
+          message: 'Personel eklendi. Bu kodu personele iletin; telefon + bu '
+              'kod ile girip parolasını belirler.',
+        );
       } else {
         messenger.showSnackBar(
           const SnackBar(content: Text('Personel eklendi ✓')),
@@ -135,26 +142,6 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
       setState(() => _submitting = false);
     }
-  }
-
-  Future<void> _showTempCodeDialog(BuildContext context, String code) {
-    return showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Geçici giriş kodu'),
-        content: Text(
-          'Personel eklendi. Geçici kod:\n\n$code\n\n'
-          'Bu kod yalnızca bir kez gösterilir; personele iletin. '
-          'Telefon + bu kod ile girip parolasını belirler.',
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tamam'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -225,13 +212,8 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
                 prefixIcon: Icon(Icons.lock_outline),
                 border: OutlineInputBorder(),
               ),
-              validator: (v) {
-                final value = v ?? '';
-                if (value.isNotEmpty && value.length < 8) {
-                  return 'En az 8 karakter olmalı';
-                }
-                return null;
-              },
+              validator: (v) =>
+                  (v ?? '').isEmpty ? null : passwordError(v),
             ),
             const SizedBox(height: 16),
             FilledButton(

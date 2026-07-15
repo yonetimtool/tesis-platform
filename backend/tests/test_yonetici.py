@@ -173,7 +173,7 @@ def test_yonetici_yapilandirma_ve_saha_kaniti_403(client, world):
     # (Ozellik 3), ama admin/yonetici/resident rolu ACAMAZ (yetki yukseltme yok).
     assert client.post(
         "/users", headers=yonetici,
-        json={"ad": "x", "telefon": "+905557778899", "role": "admin", "password": "Parola123"},
+        json={"ad": "x", "telefon": "+905557778899", "role": "admin", "password": "Parola123!"},
     ).status_code == 403
     assert client.get("/devices", headers=yonetici).status_code == 403
 

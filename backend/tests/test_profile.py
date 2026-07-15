@@ -38,7 +38,7 @@ def test_me_profile_returns_identity_and_contact(client, world):
 def test_change_password_happy_path(client, world):
     slug, cred = world["slug_a"], world["guard_a"]
     h = _headers(client, slug, cred)
-    new_pw = "yeniGuard123"
+    new_pw = "yeniGuard123!"
     r = client.patch(
         "/me/password",
         headers=h,
@@ -56,7 +56,7 @@ def test_change_password_wrong_current_is_400(client, world):
     r = client.patch(
         "/me/password",
         headers=h,
-        json={"current_password": "yanlisMevcut1", "new_password": "yeterinceUzun1"},
+        json={"current_password": "yanlisMevcut1", "new_password": "yeterinceUzun1!"},
     )
     assert r.status_code == 400, r.text
     assert r.json()["error"]["code"] == "invalid_credentials"
@@ -75,7 +75,7 @@ def test_change_password_short_new_is_422(client, world):
 def test_resident_can_change_own_password(client, world):
     slug, cred = world["slug_a"], world["resident_a"]
     h = _headers(client, slug, cred)  # resident email-login (geriye uyumlu)
-    new_pw = "yeniResident123"
+    new_pw = "yeniResident123!"
     r = client.patch(
         "/me/password",
         headers=h,

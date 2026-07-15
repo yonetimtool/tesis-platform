@@ -60,6 +60,12 @@ altinda `email` ile yuklenir, parola + `is_active` dogrulanir (basarisiz → 401
 (`UNIQUE (tenant_id, email)`); girise girmez, bildirim/yedek amaclidir. `tenant.
 slug`: kucuk harf/rakam/tire, benzersiz.
 
+> **PAROLA POLITIKASI (tum parola olusturma/belirleme/degistirme uclari):** en az
+> **8 karakter + ≥1 buyuk harf + ≥1 rakam + ≥1 sembol** (Turkce harfler dahil).
+> Backend `validate_password_strength` ile zorlar (`SetPasswordRequest`,
+> `SignupRequest`, `PasswordChangeRequest`, `UserCreate/UserUpdate.password`,
+> `ResidentCreate.password`); ihlal → **422**. Login parolayi yeniden dogrulamaz.
+
 ### 1.3 Ilk giris — gecici parola → zorunlu parola belirleme
 
 Kullanici olusturulurken **tek seferlik gecici kod** uretilir (temp password

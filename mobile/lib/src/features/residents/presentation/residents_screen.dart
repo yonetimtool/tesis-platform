@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../../../core/ui/temp_code_dialog.dart';
+import '../../../core/validators/password_rule.dart';
 import '../data/residents_api.dart';
 
 /// Site Sakinleri — yonetici/admin: sakinleri listeler, yeni tasinani ekler
@@ -133,7 +135,12 @@ class _ResidentTile extends StatelessWidget {
     try {
       final code = await ref.read(residentsApiProvider).resetPassword(member.userId);
       if (!context.mounted) return;
-      await _showResidentTempCode(context, code, member.ad);
+      await showTempCodeDialog(
+        context,
+        code: code,
+        message: '"${member.ad}" için yeni geçici kod. Sakine iletin; telefon + '
+            'bu kod ile girip parolasını belirler.',
+      );
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
@@ -179,28 +186,6 @@ class _ResidentTile extends StatelessWidget {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
-}
-
-/// Geçici kod dialog'u (ekle + parola sıfırla ortak).
-Future<void> _showResidentTempCode(
-    BuildContext context, String code, String ad) {
-  return showDialog<void>(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: const Text('Geçici giriş kodu'),
-      content: Text(
-        '"$ad" için geçici kod:\n\n$code\n\n'
-        'Bu kod yalnızca bir kez gösterilir; sakine iletin. '
-        'Telefon + bu kod ile girip parolasını belirler.',
-      ),
-      actions: [
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Tamam'),
-        ),
-      ],
-    ),
-  );
 }
 
 /// Sakin düzenle alt sayfası — Ad + (opsiyonel) yeni cep telefonu.
@@ -347,7 +332,12 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
       if (!mounted) return;
       navigator.pop('ok');
       if (tempCode != null && tempCode.isNotEmpty) {
-        await _showTempCodeDialog(navigator.context, tempCode);
+        await showTempCodeDialog(
+          navigator.context,
+          code: tempCode,
+          message: 'Sakin eklendi. Bu kodu sakine iletin; telefon + bu kod ile '
+              'girip parolasını belirler.',
+        );
       } else {
         messenger.showSnackBar(const SnackBar(content: Text('Sakin eklendi ✓')));
       }
@@ -356,26 +346,6 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
       setState(() => _submitting = false);
     }
-  }
-
-  Future<void> _showTempCodeDialog(BuildContext context, String code) {
-    return showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Geçici giriş kodu'),
-        content: Text(
-          'Sakin eklendi. Geçici kod:\n\n$code\n\n'
-          'Bu kod yalnızca bir kez gösterilir; sakine iletin. '
-          'Telefon + bu kod ile girip parolasını belirler.',
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tamam'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -441,13 +411,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
                 prefixIcon: Icon(Icons.lock_outline),
                 border: OutlineInputBorder(),
               ),
-              validator: (v) {
-                final value = v ?? '';
-                if (value.isNotEmpty && value.length < 8) {
-                  return 'En az 8 karakter olmalı';
-                }
-                return null;
-              },
+              validator: (v) => (v ?? '').isEmpty ? null : passwordError(v),
             ),
             const SizedBox(height: 16),
             FilledButton(

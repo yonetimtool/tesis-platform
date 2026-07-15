@@ -58,17 +58,27 @@ async def create_resident(
         except IntegrityError as exc:
             raise translate_integrity(exc)
 
-    # 2) sakin hesabi: parolasiz, tek seferlik gecici kod hash'i ile.
-    temp_code = generate_temp_code()
+    # 2) sakin hesabi. Parola VERILDIYSE dogrudan belirlenir (gecici kod YOK);
+    #    verilmediyse tek seferlik gecici kod uretilir.
+    if body.password is not None:
+        temp_code = None
+        password_hash = hash_password(body.password)
+        password_set = True
+        temp_code_hash = None
+    else:
+        temp_code = generate_temp_code()
+        password_hash = None
+        password_set = False
+        temp_code_hash = hash_password(temp_code)
     resident = AppUser(
         tenant_id=user.tenant_id,
         ad=body.ad,
         email=str(body.email) if body.email else None,
         telefon=body.telefon,
         role="resident",
-        password_hash=None,
-        temp_code_hash=hash_password(temp_code),
-        password_set=False,
+        password_hash=password_hash,
+        temp_code_hash=temp_code_hash,
+        password_set=password_set,
     )
     db.add(resident)
     try:

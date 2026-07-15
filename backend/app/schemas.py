@@ -1,6 +1,7 @@
 """Pydantic request/response semalari — openapi.yaml ile uyumlu."""
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import date, datetime, time
 from typing import Literal
@@ -17,6 +18,25 @@ from pydantic import (
 from .security import normalize_phone
 
 GunTipi = Literal["her_gun", "hafta_ici", "hafta_sonu", "resmi_tatil"]
+
+
+# Parola politikasi (kayit/tesis-olustur/parola-belirle/degistir/personel-sakin
+# ekle): en az 8 karakter + buyuk harf + rakam + sembol (Turkce harfler dahil).
+_PW_UPPER = re.compile(r"[A-ZÇĞİÖŞÜ]")
+_PW_DIGIT = re.compile(r"[0-9]")
+_PW_SYMBOL = re.compile(r"[^0-9A-Za-zÇĞİÖŞÜçğıöşü\s]")
+
+
+def validate_password_strength(v: str) -> str:
+    if len(v) < 8:
+        raise ValueError("Parola en az 8 karakter olmalı.")
+    if not _PW_UPPER.search(v):
+        raise ValueError("Parola en az bir büyük harf içermeli.")
+    if not _PW_DIGIT.search(v):
+        raise ValueError("Parola en az bir rakam içermeli.")
+    if not _PW_SYMBOL.search(v):
+        raise ValueError("Parola en az bir sembol içermeli (örn. ! ? @ # . -).")
+    return v
 
 
 def _hhmm(v: object) -> object:
@@ -49,10 +69,15 @@ class SignupRequest(BaseModel):
     Telefon global benzersiz login anahtaridir (E.164 normalize). Kurucu kendi
     parolasini belirler (gecici kod yok); basarida auto-login (TokenPair)."""
 
-    tenant_ad: str = Field(..., min_length=2, max_length=120, examples=["Acme Plaza"])
+    tenant_ad: str = Field(..., min_length=2, max_length=120, examples=["Örnek Sitesi"])
     yonetici_ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
     phone: str = Field(..., min_length=1, examples=["+905321112203"])
     password: str = Field(..., min_length=8)
+
+    @field_validator("password")
+    @classmethod
+    def _strong(cls, v: str) -> str:
+        return validate_password_strength(v)
 
 
 class PhoneLoginResponse(BaseModel):
@@ -75,12 +100,22 @@ class SetPasswordRequest(BaseModel):
     setup_token: str
     new_password: str = Field(..., min_length=8)
 
+    @field_validator("new_password")
+    @classmethod
+    def _strong(cls, v: str) -> str:
+        return validate_password_strength(v)
+
 
 # Self-servis parola degisimi (PATCH /me/password) — kullanici KENDI parolasini
 # gunceller; mevcut parola zorunlu (auth.md self-servis profil).
 class PasswordChangeRequest(BaseModel):
     current_password: str = Field(..., min_length=1)
     new_password: str = Field(..., min_length=8)
+
+    @field_validator("new_password")
+    @classmethod
+    def _strong(cls, v: str) -> str:
+        return validate_password_strength(v)
 
 
 class RefreshRequest(BaseModel):
@@ -156,6 +191,11 @@ class UserCreate(BaseModel):
         except ValueError as exc:
             raise ValueError(str(exc)) from exc
 
+    @field_validator("password")
+    @classmethod
+    def _strong(cls, v: str | None) -> str | None:
+        return v if v is None else validate_password_strength(v)
+
 
 class UserCreatedOut(BaseModel):
     """Kullanici olusturma yaniti — `temp_code` YALNIZ parola verilmeyip gecici
@@ -182,6 +222,11 @@ class UserUpdate(BaseModel):
     role: UserRoleLiteral | None = None
     is_active: bool | None = None
     password: str | None = Field(None, min_length=8)
+
+    @field_validator("password")
+    @classmethod
+    def _strong(cls, v: str | None) -> str | None:
+        return v if v is None else validate_password_strength(v)
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "UserUpdate":
@@ -1602,6 +1647,9 @@ class ResidentCreate(BaseModel):
     telefon: str = Field(..., min_length=1, examples=["+905321112203"])
     email: EmailStr | None = None  # sakinde opsiyonel
     rol_tipi: ResidentRol | None = None
+    # Parola VERILIRSE dogrudan belirlenir (gecici kod URETILMEZ); verilmezse
+    # tek seferlik gecici kod uretilir.
+    password: str | None = Field(None, min_length=8)
 
     @field_validator("telefon")
     @classmethod
@@ -1610,6 +1658,11 @@ class ResidentCreate(BaseModel):
             return normalize_phone(v)
         except ValueError as exc:
             raise ValueError(str(exc)) from exc
+
+    @field_validator("password")
+    @classmethod
+    def _strong(cls, v: str | None) -> str | None:
+        return v if v is None else validate_password_strength(v)
 
 
 class ResidentCreatedOut(BaseModel):
@@ -1621,7 +1674,8 @@ class ResidentCreatedOut(BaseModel):
     unit_no: str
     ad: str
     email: str | None = None
-    temp_code: str
+    # Parola verilmediyse gecici kod doner; parola verildiyse null.
+    temp_code: str | None = None
 
 
 # Site sakini yonetimi (yonetici) — liste ogesi. Telefon KVKK geregi DONMEZ.

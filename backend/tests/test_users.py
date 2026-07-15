@@ -67,7 +67,7 @@ def test_list_users_rbac_and_isolation(client, world):
 def test_create_user_can_login_and_email_conflict(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     email = f"yeni-{uuid.uuid4().hex[:8]}@acme.com"
-    pw = "YeniParola1"
+    pw = "YeniParola1!"
 
     r = client.post(
         "/users",
@@ -87,7 +87,7 @@ def test_create_user_can_login_and_email_conflict(client, world):
     dup = client.post(
         "/users",
         headers=admin,
-        json={"ad": "x", "email": email, "telefon": _uphone(), "role": "tesis_gorevlisi", "password": "Baska1234"},
+        json={"ad": "x", "email": email, "telefon": _uphone(), "role": "tesis_gorevlisi", "password": "Baska1234!"},
     )
     assert dup.status_code == 409 and dup.json()["error"]["code"] == "conflict"
 
@@ -97,7 +97,7 @@ def test_create_user_rbac(client, world):
     r = client.post(
         "/users",
         headers=guard,
-        json={"ad": "x", "email": f"x-{uuid.uuid4().hex[:6]}@a.com", "telefon": _uphone(), "role": "resident", "password": "Parola123"},
+        json={"ad": "x", "email": f"x-{uuid.uuid4().hex[:6]}@a.com", "telefon": _uphone(), "role": "resident", "password": "Parola123!"},
     )
     assert r.status_code == 403
 
@@ -128,7 +128,7 @@ def test_yonetici_cannot_create_admin_yonetici_or_resident(client, world):
         r = client.post(
             "/users",
             headers=yon,
-            json={"ad": "x", "telefon": _uphone(), "role": role, "password": "Parola123"},
+            json={"ad": "x", "telefon": _uphone(), "role": role, "password": "Parola123!"},
         )
         assert r.status_code == 403, (role, r.text)
         assert r.json()["error"]["code"] == "forbidden"
@@ -141,7 +141,7 @@ def test_update_user_role_active_password(client, world):
     created = client.post(
         "/users",
         headers=admin,
-        json={"ad": "Guncellenecek", "email": email, "telefon": _uphone(), "role": "tesis_gorevlisi", "password": "IlkParola1"},
+        json={"ad": "Guncellenecek", "email": email, "telefon": _uphone(), "role": "tesis_gorevlisi", "password": "IlkParola1!"},
     ).json()
     uid = created["id"]
 
@@ -151,14 +151,14 @@ def test_update_user_role_active_password(client, world):
     assert pr.json()["role"] == "security" and pr.json()["is_active"] is False
 
     # parola degistir -> yeni parola ile login olur (ama is_active False -> login reddedilir)
-    client.patch(f"/users/{uid}", headers=admin, json={"is_active": True, "password": "YeniParola9"})
-    assert _login_status(client, world["slug_a"], email, "YeniParola9") == 200
-    assert _login_status(client, world["slug_a"], email, "IlkParola1") == 401
+    client.patch(f"/users/{uid}", headers=admin, json={"is_active": True, "password": "YeniParola9!"})
+    assert _login_status(client, world["slug_a"], email, "YeniParola9!") == 200
+    assert _login_status(client, world["slug_a"], email, "IlkParola1!") == 401
 
 
 def test_update_user_email_and_conflict(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    pw = "MailParola1"
+    pw = "MailParola1!"
     eski = f"mail-eski-{uuid.uuid4().hex[:8]}@acme.com"
     uid = client.post(
         "/users",
@@ -181,7 +181,7 @@ def test_update_user_email_and_conflict(client, world):
     client.post(
         "/users",
         headers=admin,
-        json={"ad": "Diger", "email": digeri, "telefon": _uphone(), "role": "tesis_gorevlisi", "password": "Parola123"},
+        json={"ad": "Diger", "email": digeri, "telefon": _uphone(), "role": "tesis_gorevlisi", "password": "Parola123!"},
     )
     dup = client.patch(f"/users/{uid}", headers=admin, json={"email": digeri})
     assert dup.status_code == 409 and dup.json()["error"]["code"] == "conflict"
@@ -194,7 +194,7 @@ def test_update_user_tenant_isolation(client, world):
     uid = client.post(
         "/users",
         headers=admin_a,
-        json={"ad": "A user", "email": f"a-{uuid.uuid4().hex[:8]}@acme.com", "telefon": _uphone(), "role": "resident", "password": "Parola123"},
+        json={"ad": "A user", "email": f"a-{uuid.uuid4().hex[:8]}@acme.com", "telefon": _uphone(), "role": "resident", "password": "Parola123!"},
     ).json()["id"]
     # B admin goremez / degistiremez -> 404 (RLS)
     assert client.get(f"/users/{uid}", headers=admin_b).status_code == 404
