@@ -30,6 +30,9 @@ from ..schemas import (
 router = APIRouter(prefix="/checkpoints", tags=["checkpoints"])
 
 _ADMIN = require_role("admin")
+# Checkpoint CRUD (tanim) admin + yonetici (Parca D: yonetici uygulamada
+# kontrol noktasi tanimlar). SDM-key provizyonu (NTAG424 kripto) admin-only kalir.
+_WRITER = require_role("admin", "yonetici")
 _READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 
 _NFC_CONFLICT = APIError(409, "conflict", "nfc_tag_uid bu tenant'ta zaten kayitli.")
@@ -76,7 +79,7 @@ async def get_checkpoint(
 async def create_checkpoint(
     body: CheckpointCreate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_WRITER),
 ) -> Checkpoint:
     obj = Checkpoint(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
     db.add(obj)
@@ -93,7 +96,7 @@ async def update_checkpoint(
     checkpoint_id: uuid.UUID,
     body: CheckpointUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_WRITER),
 ) -> Checkpoint:
     obj = await get_or_404(db, Checkpoint, checkpoint_id)
     for key, value in body.model_dump(exclude_unset=True).items():
@@ -140,7 +143,7 @@ async def set_sdm_key(
 async def delete_checkpoint(
     checkpoint_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_WRITER),
 ) -> Response:
     obj = await get_or_404(db, Checkpoint, checkpoint_id)
     await db.delete(obj)

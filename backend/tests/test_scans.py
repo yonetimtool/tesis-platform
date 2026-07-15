@@ -179,3 +179,64 @@ def test_e2e_scan_completes_window_and_missing_is_missed(client, world, owner_co
 
     assert _durum(w1) == "tamamlandi"   # tum checkpoint'ler okutuldu
     assert _durum(w2) == "kacirildi"    # scan yok
+
+
+# ------------------- gun-gun tarama raporu (Parca D) ----------------------- #
+def test_checkpoint_crud_by_yonetici(client, world):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    # yonetici artik checkpoint OLUSTURUR/DUZENLER/SILER (Parca D)
+    cp = _new_checkpoint(client, yon)
+    pr = client.patch(f"/checkpoints/{cp['id']}", headers=yon, json={"ad": "Yeni CP"})
+    assert pr.status_code == 200 and pr.json()["ad"] == "Yeni CP"
+    # SDM-key YINE admin-only -> yonetici 403
+    assert client.put(
+        f"/checkpoints/{cp['id']}/sdm-key", headers=yon, json={"key": None}
+    ).status_code == 403
+    assert client.delete(f"/checkpoints/{cp['id']}", headers=yon).status_code == 204
+    # saha/resident checkpoint olusturamaz -> 403
+    for role in ("guard_a", "gorevli_a", "resident_a"):
+        h = _headers(client, world["slug_a"], world[role])
+        assert client.post(
+            "/checkpoints", headers=h, json={"ad": "X", "nfc_tag_uid": f"N{uuid.uuid4().hex[:8]}"}
+        ).status_code == 403, role
+
+
+def test_scans_report_yonetici_sees_who_what_when(client, world):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    cp = _new_checkpoint(client, yon)  # yonetici tanimlar
+    when = datetime(2029, 12, 31, 9, 30, tzinfo=UTC)  # 12:30 Istanbul, 2029-12-31
+    r = client.post(
+        "/scans", headers={**guard, "Idempotency-Key": uuid.uuid4().hex},
+        json=_scan_body(cp["nfc_tag_uid"], when=when),
+    )
+    assert r.status_code == 201, r.text
+    guard_id = client.get("/me", headers=guard).json()["id"]
+
+    rep = client.get("/scans", headers=yon, params={"tarih": "2029-12-31"})
+    assert rep.status_code == 200, rep.text
+    body = rep.json()
+    assert body["tarih"] == "2029-12-31"
+    match = [it for it in body["items"] if it["checkpoint_id"] == cp["id"]]
+    assert len(match) == 1, body
+    it = match[0]
+    assert it["checkpoint_ad"] == "CP"               # hangi nokta
+    assert it["guard_id"] == guard_id and it["guard_ad"]  # kim
+    assert it["okutma_zamani"].startswith("2029-12-31T09:30")  # ne zaman
+
+    # baska gun -> o kayit yok
+    empty = client.get("/scans", headers=yon, params={"tarih": "2029-12-30"}).json()
+    assert all(it["checkpoint_id"] != cp["id"] for it in empty["items"])
+
+
+def test_scans_report_rbac(client, world):
+    # saha/resident tarama raporunu GOREMEZ -> 403
+    for role in ("guard_a", "gorevli_a", "resident_a"):
+        h = _headers(client, world["slug_a"], world[role])
+        assert client.get(
+            "/scans", headers=h, params={"tarih": "2029-12-31"}
+        ).status_code == 403, role
+    # admin + yonetici -> 200
+    for role in ("admin_a", "yonetici_a"):
+        h = _headers(client, world["slug_a"], world[role])
+        assert client.get("/scans", headers=h).status_code == 200, role

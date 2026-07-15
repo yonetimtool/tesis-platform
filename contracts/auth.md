@@ -232,17 +232,18 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `PATCH /shifts/{id}`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `DELETE /shifts/{id}`                 |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `GET  /checkpoints` (liste/detay)     |  ✅   | ✅  | ✅  | ✅  | ❌  |
-| `POST /checkpoints`                   |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| `PATCH /checkpoints/{id}`             |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| `DELETE /checkpoints/{id}`            |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| `PUT  /checkpoints/{id}/sdm-key`      |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `POST /checkpoints` (tanim)           |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `PATCH /checkpoints/{id}`             |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `DELETE /checkpoints/{id}`            |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `PUT  /checkpoints/{id}/sdm-key` (kripto)| ✅ | ❌  | ❌  | ❌  | ❌  |
 | `GET  /patrol-plans` (liste/detay)    |  ✅   | ❌  | ✅  | ✅  | ❌  |
 | `POST /patrol-plans`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `PATCH /patrol-plans/{id}`            |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `DELETE /patrol-plans/{id}`           |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `GET  /patrol-plans/{id}/checkpoints` |  ✅   | ❌  | ✅  | ✅  | ❌  |
 | `PUT  /patrol-plans/{id}/checkpoints` |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| `POST /scans`                         |  ✅   | ❌  | ✅  | ✅  | ❌  |
+| `POST /scans` (okutma)                |  ✅   | ❌  | ✅  | ✅  | ❌  |
+| `GET  /scans` (gun-gun tarama raporu) |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /dashboard/live`                |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `GET  /patrol-windows`                |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `GET  /me/patrol-window`              |  ✅   | ❌  | ✅  | ❌  | ❌  |

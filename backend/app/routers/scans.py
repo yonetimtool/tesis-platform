@@ -22,25 +22,88 @@ dogrulanir, verilmediyse scheduler zaman-tabanli eslestirir (bkz. README schedul
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from ..config import settings
 from ..crud_helpers import norm_nfc, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Checkpoint, PatrolWindow, ScanEvent
+from ..models import AppUser, Checkpoint, PatrolWindow, ScanEvent, Tenant
 from ..nfc_sdm import decrypt_key, verify_sdm
-from ..schemas import ScanCreate, ScanEventOut
+from ..schemas import (
+    ScanCreate,
+    ScanEventOut,
+    ScanReportItem,
+    ScanReportResponse,
+)
 
 router = APIRouter(prefix="/scans", tags=["scans"])
 
 _SCANNER = require_role("admin", "security", "tesis_gorevlisi")
+# Gun-gun tarama raporu (yonetici takibi) — okuma admin + yonetici.
+_REPORT_READER = require_role("admin", "yonetici")
+
+
+@router.get("", response_model=ScanReportResponse)
+async def list_scans(
+    tarih: date | None = Query(
+        None, description="YYYY-MM-DD (tenant timezone); verilmezse bugun"
+    ),
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_REPORT_READER),
+) -> ScanReportResponse:
+    """Gun-gun tarama raporu (yonetici takibi): secilen gunun (tenant tz) TUM
+    taramalari — KIM (guard_ad), HANGI NOKTA (checkpoint_ad), NE ZAMAN
+    (okutma_zamani). Okutma zamanina gore sirali. RBAC admin + yonetici."""
+    tz_name = (
+        await db.execute(select(Tenant.timezone))
+    ).scalar_one_or_none() or "Europe/Istanbul"
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = ZoneInfo("Europe/Istanbul")
+    day = tarih or datetime.now(tz).date()
+    start = datetime(day.year, day.month, day.day, tzinfo=tz)
+    end = start + timedelta(days=1)
+
+    guard = aliased(AppUser)
+    rows = (
+        await db.execute(
+            select(ScanEvent, Checkpoint.ad, guard.ad)
+            .join(Checkpoint, Checkpoint.id == ScanEvent.checkpoint_id)
+            .join(guard, guard.id == ScanEvent.guard_id)
+            .where(
+                ScanEvent.okutma_zamani >= start,
+                ScanEvent.okutma_zamani < end,
+            )
+            .order_by(ScanEvent.okutma_zamani)
+        )
+    ).all()
+    return ScanReportResponse(
+        tarih=day,
+        items=[
+            ScanReportItem(
+                id=s.id,
+                checkpoint_id=s.checkpoint_id,
+                checkpoint_ad=cad,
+                guard_id=s.guard_id,
+                guard_ad=gad,
+                okutma_zamani=s.okutma_zamani,
+                gps_lat=float(s.gps_lat) if s.gps_lat is not None else None,
+                gps_lng=float(s.gps_lng) if s.gps_lng is not None else None,
+                imza_dogrulandi=s.imza_dogrulandi,
+            )
+            for s, cad, gad in rows
+        ],
+    )
 
 
 def _is_unique_violation(exc: IntegrityError) -> bool:

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/error/api_exception.dart';
 import '../../../core/text/tr_upper.dart';
+import '../../checkpoints/presentation/checkpoints_screen.dart';
+import '../data/scan_report_api.dart';
 import '../domain/patrol_models.dart';
 import '../domain/tracking_ozet.dart';
 import 'patrol_history_view.dart';
@@ -23,11 +26,18 @@ class PatrolTrackingScreen extends ConsumerWidget {
         ref.watch(patrolTrackingControllerProvider.select((s) => s.loading));
     final controller = ref.read(patrolTrackingControllerProvider.notifier);
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text(trUpper('Devriye takibi')),
           actions: [
+            IconButton(
+              tooltip: 'Kontrol noktaları',
+              icon: const Icon(Icons.add_location_alt_outlined),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CheckpointsScreen()),
+              ),
+            ),
             IconButton(
               tooltip: 'Yenile',
               icon: const Icon(Icons.refresh),
@@ -35,9 +45,11 @@ class PatrolTrackingScreen extends ConsumerWidget {
             ),
           ],
           bottom: const TabBar(
+            isScrollable: true,
             tabs: [
               Tab(text: 'Bugün'),
               Tab(text: 'Geçmiş'),
+              Tab(text: 'Tarama günlüğü'),
             ],
           ),
         ),
@@ -45,6 +57,7 @@ class PatrolTrackingScreen extends ConsumerWidget {
           children: [
             _TodayTab(),
             PatrolHistoryView(),
+            _ScanLogTab(),
           ],
         ),
       ),
@@ -197,6 +210,140 @@ class _WindowCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Tarama gunlugu (Parca D) — yonetici gun secer; o gunun (tenant tz) TUM
+/// taramalari: KIM (guardAd) · HANGI NOKTA (checkpointAd) · NE ZAMAN (saat).
+class _ScanLogTab extends ConsumerStatefulWidget {
+  const _ScanLogTab();
+
+  @override
+  ConsumerState<_ScanLogTab> createState() => _ScanLogTabState();
+}
+
+class _ScanLogTabState extends ConsumerState<_ScanLogTab> {
+  late DateTime _day = _today();
+
+  static DateTime _today() {
+    final n = DateTime.now();
+    return DateTime(n.year, n.month, n.day);
+  }
+
+  void _shift(int days) =>
+      setState(() => _day = _day.add(Duration(days: days)));
+
+  Future<void> _pick() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _day,
+      firstDate: DateTime(2024),
+      lastDate: _today().add(const Duration(days: 1)),
+    );
+    if (picked != null) {
+      setState(() => _day = DateTime(picked.year, picked.month, picked.day));
+    }
+  }
+
+  String _fmtDay(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+
+  String _fmtTime(DateTime utc) {
+    final l = utc.toLocal();
+    return '${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(scanReportProvider(_day));
+    return Column(
+      children: [
+        // Gun secici: onceki / gun / sonraki + takvim.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: () => _shift(-1),
+              ),
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.calendar_today, size: 16),
+                  label: Text(_fmtDay(_day)),
+                  onPressed: _pick,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                // Bugunden ileri gitme.
+                onPressed: _day.isBefore(_today()) ? () => _shift(1) : null,
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: async.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => _Message(
+              e is ApiException ? e.message : 'Tarama günlüğü alınamadı.',
+              onRetry: () => ref.invalidate(scanReportProvider(_day)),
+            ),
+            data: (items) => items.isEmpty
+                ? const _Message('Bu gün için okutma yok.')
+                : RefreshIndicator(
+                    onRefresh: () async =>
+                        ref.invalidate(scanReportProvider(_day)),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                      itemCount: items.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 6),
+                      itemBuilder: (context, i) {
+                        final it = items[i];
+                        return Card(
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              child: Text(_fmtTime(it.okutmaZamani),
+                                  style: const TextStyle(fontSize: 12)),
+                            ),
+                            title: Text(it.checkpointAd),
+                            subtitle: Text('${it.guardAd}'
+                                '${it.imzaDogrulandi ? ' · imzalı ✓' : ''}'),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Message extends StatelessWidget {
+  const _Message(this.text, {this.onRetry});
+
+  final String text;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 48),
+        Center(child: Text(text, textAlign: TextAlign.center)),
+        if (onRetry != null) ...[
+          const SizedBox(height: 16),
+          Center(
+            child: FilledButton.tonal(
+                onPressed: onRetry, child: const Text('Tekrar dene')),
+          ),
+        ],
+      ],
     );
   }
 }

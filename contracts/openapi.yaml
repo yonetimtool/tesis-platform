@@ -698,6 +698,27 @@ paths:
   # SCANS  (mobil tur kaniti)
   # ================================================================= #
   /scans:
+    get:
+      tags: [scans]
+      summary: Gun-gun tarama raporu (admin + yonetici)
+      description: |
+        Secilen gunun (tenant timezone) TUM taramalari — KIM (guard_ad), HANGI
+        NOKTA (checkpoint_ad), NE ZAMAN (okutma_zamani). okutma_zamani'na gore
+        sirali. RBAC: admin + yonetici (saha/resident 403).
+      parameters:
+        - name: tarih
+          in: query
+          required: false
+          schema: { type: string, format: date }
+          description: "YYYY-MM-DD (tenant tz); verilmezse bugun"
+      responses:
+        "200":
+          description: Gunun taramalari
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScanReportResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [scans]
       summary: Tur kaniti gonder (NFC okutma)
@@ -4996,6 +5017,28 @@ components:
                 description: "Verilmezse dizi index'i kullanilir"
 
     # ---------------------------- scans ---------------------------- #
+    ScanReportItem:
+      type: object
+      description: "Gun-gun tarama raporu satiri: kim, hangi nokta, ne zaman."
+      required: [id, checkpoint_id, checkpoint_ad, guard_id, guard_ad, okutma_zamani, imza_dogrulandi]
+      properties:
+        id: { type: string, format: uuid }
+        checkpoint_id: { type: string, format: uuid }
+        checkpoint_ad: { type: string }
+        guard_id: { type: string, format: uuid }
+        guard_ad: { type: string }
+        okutma_zamani: { type: string, format: date-time }
+        gps_lat: { type: number, format: double, nullable: true }
+        gps_lng: { type: number, format: double, nullable: true }
+        imza_dogrulandi: { type: boolean }
+    ScanReportResponse:
+      type: object
+      required: [tarih, items]
+      properties:
+        tarih: { type: string, format: date }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ScanReportItem" }
     ScanCreate:
       type: object
       required: [nfc_tag_uid, okutma_zamani]

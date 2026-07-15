@@ -492,6 +492,28 @@ class ScanEventOut(BaseModel):
     created_at: datetime
 
 
+class ScanReportItem(BaseModel):
+    """Gun-gun tarama raporu satiri (Parca D): kim, hangi nokta, ne zaman.
+    checkpoint_ad + guard_ad join ile doldurulur (yonetici takibi)."""
+
+    id: uuid.UUID
+    checkpoint_id: uuid.UUID
+    checkpoint_ad: str
+    guard_id: uuid.UUID
+    guard_ad: str
+    okutma_zamani: datetime
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+    imza_dogrulandi: bool
+
+
+class ScanReportResponse(BaseModel):
+    """Bir gunun (tenant timezone) taramalari — okutma zamanina gore sirali."""
+
+    tarih: date
+    items: list[ScanReportItem]
+
+
 # ------------------------------ dashboard ---------------------------------- #
 AlarmTip = Literal["kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma", "acil_durum"]
 
