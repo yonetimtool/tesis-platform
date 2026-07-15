@@ -29,10 +29,16 @@ def _checkpoint(client, headers, ad="CP"):
 
 
 def _plan_with_checkpoints(client, headers, cp_ids, ad="Devriye"):
+    # periyot (1440dk) > plan suresi (6s) => TAM pencere sigmaz => plan olusunca
+    # _regen_windows (celery) HICBIR pencere URETMEZ. Bu testler pencereleri elle
+    # (_ins_window) ekler; boylece gece saatlerinde (yerel 00:00-06:00) uretimin
+    # gercek aktif pencere olusturup elle eklenen pencerelerle CAKISMASI (odak/
+    # sayim flake'i) engellenir. Uretim yolu ayrica test_scan_generated_window'da
+    # ayrica dogrulanir.
     plan = client.post(
         "/patrol-plans",
         headers=headers,
-        json={"ad": ad, "baslangic_saat": "00:00", "bitis_saat": "06:00", "periyot_dakika": 60},
+        json={"ad": ad, "baslangic_saat": "00:00", "bitis_saat": "06:00", "periyot_dakika": 1440},
     ).json()
     client.put(
         f"/patrol-plans/{plan['id']}/checkpoints",
@@ -149,8 +155,16 @@ def test_no_active_window_returns_null_200(client, world, owner_conn):
     cp = _checkpoint(client, admin)
     plan = _plan_with_checkpoints(client, admin, [cp["id"]])
     now = datetime.now(tz=UTC)
-    # gecmiste kalmis pencere — su an aktif DEGIL
-    _ins_window(owner_conn, world["a"], plan["id"], now - timedelta(hours=3), now - timedelta(hours=2))
+    # DUN kalmis pencere — su an aktif DEGIL ve BUGUNUN listesinde de degil.
+    # (now-3h/now-2h kullanmak gece-yarisi civari (yerel 02:00-06:00) pencereyi
+    # bugune sarkitip windows[]'a sizdirir -> saat-flake; net dun kullaniyoruz.)
+    _ins_window(
+        owner_conn,
+        world["a"],
+        plan["id"],
+        now - timedelta(days=1, hours=2),
+        now - timedelta(days=1, hours=1),
+    )
 
     r = client.get("/me/patrol-window", headers=guard)
     assert r.status_code == 200, r.text
