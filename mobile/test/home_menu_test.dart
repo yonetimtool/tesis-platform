@@ -19,7 +19,6 @@ void main() {
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
-        HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
       ]);
       expect(homeMenuForRole(UserRole.security), const [
@@ -34,7 +33,6 @@ void main() {
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
-        HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
         // Sikayet Haritasi (yogunluk) YOK; salt-okuma Bina Duzenleme EN ALTTA.
         HomeMenuEntry.binaDuzenleme,
@@ -85,7 +83,6 @@ void main() {
           HomeMenuEntry.announcements,
           HomeMenuEntry.tasks,
           HomeMenuEntry.assets,
-          HomeMenuEntry.nfc,
           HomeMenuEntry.outbox,
         ]),
       );
@@ -143,6 +140,17 @@ void main() {
         expect(
           homeMenuForRole(role),
           isNot(contains(HomeMenuEntry.integrations)),
+          reason: role.wire,
+        );
+      }
+    });
+
+    test('NFC etiket okutma tile\'i HICBIR rolde menude YOK — okutma Turlarim '
+        've Gorevlerim icinden yapilir (enum/rota reuse icin korunur)', () {
+      for (final role in UserRole.values) {
+        expect(
+          homeMenuForRole(role),
+          isNot(contains(HomeMenuEntry.nfc)),
           reason: role.wire,
         );
       }

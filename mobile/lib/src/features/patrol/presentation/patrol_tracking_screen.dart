@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,11 +20,42 @@ import 'patrol_tracking_controller.dart';
 ///                     okutulan/beklenen ilerleme.
 ///   * Gecmis sekmesi: `GET /patrol-windows` — ozet + son pencereler
 ///                     (Turlarim "Gecmis" ile AYNI paylasilan gorunum).
-class PatrolTrackingScreen extends ConsumerWidget {
+class PatrolTrackingScreen extends ConsumerStatefulWidget {
   const PatrolTrackingScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PatrolTrackingScreen> createState() =>
+      _PatrolTrackingScreenState();
+}
+
+class _PatrolTrackingScreenState extends ConsumerState<PatrolTrackingScreen> {
+  // Canli panel: "Bugun" okutuldukca (baska cihazdan gelen taramalar dahil)
+  // kendiliginden ilerlesin diye periyodik tazeleme. Kullanicinin pull-to-
+  // refresh / "Yenile" dugmesine basmasi gerekmez.
+  static const _pollAralik = Duration(seconds: 15);
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ekran her acildiginda ( or. NFC okutmadan donunce) taze veri.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(patrolTrackingControllerProvider.notifier).refresh();
+    });
+    _timer = Timer.periodic(
+      _pollAralik,
+      (_) => ref.read(patrolTrackingControllerProvider.notifier).refresh(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final loading =
         ref.watch(patrolTrackingControllerProvider.select((s) => s.loading));
     final controller = ref.read(patrolTrackingControllerProvider.notifier);

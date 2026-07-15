@@ -24,6 +24,7 @@ from ..schemas import (
     TenantAdminDetail,
     TenantAdminListItem,
     TenantAdminListResponse,
+    TenantAdminUpdate,
     TenantYoneticiOut,
     TenantYoneticiResetOut,
     TenantYoneticiUpdate,
@@ -171,6 +172,28 @@ async def get_tenant(
     """Admin: tek tesis detayi + yoneticisi (ad, telefon, durum, kurulum)."""
     async with SessionLocal() as session:
         async with session.begin():
+            row = await _detail_or_404(session, tenant_id)
+    return _to_detail(row)
+
+
+@router.patch("/{tenant_id}", response_model=TenantAdminDetail)
+async def update_tenant(
+    tenant_id: uuid.UUID,
+    body: TenantAdminUpdate,
+    _: AppUser = Depends(_ADMIN),
+) -> TenantAdminDetail:
+    """Admin: tesis ADINI degistirir (rename/duzeltme). kurulum_tamamlandi=true
+    olur. Bilinmeyen tesis 404."""
+    async with SessionLocal() as session:
+        async with session.begin():
+            updated = (
+                await session.execute(
+                    text("SELECT public.update_tenant_ad(:tid, :ad)"),
+                    {"tid": tenant_id, "ad": body.ad},
+                )
+            ).scalar()
+            if updated is None:
+                raise APIError(404, "not_found", "Tesis bulunamadi.")
             row = await _detail_or_404(session, tenant_id)
     return _to_detail(row)
 

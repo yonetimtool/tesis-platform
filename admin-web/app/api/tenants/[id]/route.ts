@@ -13,6 +13,13 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<NextResponse> {
   return proxyJson(`/tenants/${id}`, "GET");
 }
 
+// Tesis adini degistir (rename). Admin-only.
+export async function PATCH(req: NextRequest, ctx: Ctx): Promise<NextResponse> {
+  const { id } = await ctx.params;
+  const body = await req.json().catch(() => ({}));
+  return proxyJson(`/tenants/${id}`, "PATCH", body);
+}
+
 // Tesisi + TUM verisini siler (cascade, geri alinamaz).
 export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<NextResponse> {
   const { id } = await ctx.params;

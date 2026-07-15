@@ -427,6 +427,32 @@ def upgrade() -> None:
         f"(uuid, uuid, text, text, boolean) TO {APP_ROLE};"
     )
 
+    # Admin tesis ADINI degistirir (yonetici ilk-giriste adlandirmisti; admin
+    # override/duzeltme). tenant RLS FORCE oldugundan owner-sahipli SECURITY
+    # DEFINER; kurulum_tamamlandi=true de yapilir (adlandirilmis sayilir).
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.update_tenant_ad(
+            p_tenant_id uuid,
+            p_ad        text
+        )
+        RETURNS uuid
+        LANGUAGE sql
+        SECURITY DEFINER
+        SET search_path = ''
+        AS $$
+            UPDATE public.tenant
+            SET ad = p_ad, kurulum_tamamlandi = true
+            WHERE id = p_tenant_id
+            RETURNING id;
+        $$;
+        """
+    )
+    op.execute("REVOKE ALL ON FUNCTION public.update_tenant_ad(uuid, text) FROM PUBLIC;")
+    op.execute(
+        f"GRANT EXECUTE ON FUNCTION public.update_tenant_ad(uuid, text) TO {APP_ROLE};"
+    )
+
     # Yonetici credential sifirla: parolayi sil + yeni TEK SEFERLIK gecici kod (hash)
     # ata → yonetici tekrar ilk-giris (parola belirleme) akisina duser.
     op.execute(
@@ -1895,6 +1921,7 @@ def downgrade() -> None:
         "DROP FUNCTION IF EXISTS public.update_tenant_yonetici"
         "(uuid, uuid, text, text, boolean);"
     )
+    op.execute("DROP FUNCTION IF EXISTS public.update_tenant_ad(uuid, text);")
     op.execute(
         "DROP FUNCTION IF EXISTS public.reset_tenant_yonetici_credential"
         "(uuid, uuid, text);"

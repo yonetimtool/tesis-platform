@@ -113,6 +113,8 @@ bir tesise girip yoneticisini yonetir + tenant'i siler. Hepsi owner-sahipli
 SECURITY DEFINER (`tenant_detail` / `update_tenant_yonetici` /
 `reset_tenant_yonetici_credential` / `delete_tenant`), yalniz admin:
 - **`GET /tenants/{id}`** → tenant + yoneticisi (ad, telefon, is_active, password_set).
+- **`PATCH /tenants/{id}`** `{ ad }` → tesis ADINI degistirir (rename/duzeltme);
+  `kurulum_tamamlandi=true` olur. Bilinmeyen tesis **404**; `ad` < 2 karakter **422**.
 - **`PATCH /tenants/{id}/yonetici`** `{ ad?, phone?, is_active? }` (kismi). Telefon
   global benzersiz → **409**; yonetici yoksa **404**.
 - **`POST /tenants/{id}/yonetici/reset-credential`** → parola silinir + yeni tek
@@ -306,6 +308,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /tenants` (admin tum tesisler)  |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `POST /tenant/setup` (ilk-giris adlandir)| ❌ | ✅ | ❌  | ❌  | ❌  |
 | `GET  /tenants/{id}` (tesis detay)     |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `PATCH /tenants/{id}` (tesis adi)      |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `PATCH /tenants/{id}/yonetici`         |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `POST /tenants/{id}/yonetici/reset-credential`| ✅ | ❌ | ❌ | ❌ | ❌ |
 | `DELETE /tenants/{id}` (tesisi sil)    |  ✅   | ❌  | ❌  | ❌  | ❌  |

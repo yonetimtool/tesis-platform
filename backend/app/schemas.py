@@ -1641,6 +1641,12 @@ class TenantAdminDetail(BaseModel):
     yonetici: TenantYoneticiOut | None = None
 
 
+class TenantAdminUpdate(BaseModel):
+    """Admin tesis adini degistirir (rename/duzeltme)."""
+
+    ad: str = Field(..., min_length=2, max_length=120)
+
+
 class TenantYoneticiUpdate(BaseModel):
     """Yonetici ad/telefon/aktiflik guncelleme (kismi; verilmeyen alan degismez)."""
 

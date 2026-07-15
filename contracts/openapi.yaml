@@ -2884,6 +2884,27 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [tenant]
+      summary: Admin — tesis ADINI degistirir (rename/duzeltme)
+      description: |
+        Yalniz tesis adini gunceller; kurulum_tamamlandi=true olur. Yalniz
+        admin. Bilinmeyen tesis 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantAdminUpdate" }
+      responses:
+        "200":
+          description: Guncellendi (tesis detayi)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantAdminDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
     delete:
       tags: [tenant]
       summary: Admin — tesisi ve TUM verisini siler (cascade, GERI ALINAMAZ)
@@ -4792,6 +4813,12 @@ components:
         yonetici:
           allOf: [ { $ref: "#/components/schemas/TenantYoneticiOut" } ]
           nullable: true
+    TenantAdminUpdate:
+      type: object
+      description: Admin tesis adini degistirir (rename/duzeltme).
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 2, maxLength: 120 }
     TenantYoneticiUpdate:
       type: object
       description: Kismi guncelleme — verilmeyen alan degismez.

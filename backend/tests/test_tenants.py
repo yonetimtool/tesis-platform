@@ -153,6 +153,44 @@ def test_get_tenant_detail_404(client, world):
     assert client.get(f"/tenants/{uuid.uuid4()}", headers=admin).status_code == 404
 
 
+def test_admin_renames_tenant(client, world):
+    """PATCH /tenants/{id} tesis adini degistirir + kurulum_tamamlandi=true;
+    bilinmeyen tesis 404, cok kisa ad 422."""
+    admin = _admin(client, world)
+    created, _phone = _create_tenant(client, admin)
+    tid = created["tenant_id"]
+    # baslangicta isimsiz (kurulum bekliyor)
+    assert client.get(f"/tenants/{tid}", headers=admin).json()["kurulum_tamamlandi"] is False
+
+    r = client.patch(f"/tenants/{tid}", headers=admin, json={"ad": "Yeni Tesis Adi"})
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert d["ad"] == "Yeni Tesis Adi"
+    assert d["kurulum_tamamlandi"] is True
+    # kalici
+    assert client.get(f"/tenants/{tid}", headers=admin).json()["ad"] == "Yeni Tesis Adi"
+
+    # bilinmeyen tesis -> 404
+    assert (
+        client.patch(f"/tenants/{uuid.uuid4()}", headers=admin, json={"ad": "XY"}).status_code
+        == 404
+    )
+    # cok kisa ad (min_length=2) -> 422
+    assert client.patch(f"/tenants/{tid}", headers=admin, json={"ad": "X"}).status_code == 422
+
+
+def test_rename_tenant_admin_only(client, world):
+    """Yonetici/saha/resident tesis adini degistiremez (403)."""
+    admin = _admin(client, world)
+    created, _ = _create_tenant(client, admin)
+    tid = created["tenant_id"]
+    for role in ("yonetici_a", "guard_a", "gorevli_a", "resident_a"):
+        h = _headers(client, world["slug_a"], world[role])
+        assert (
+            client.patch(f"/tenants/{tid}", headers=h, json={"ad": "Hack"}).status_code == 403
+        ), role
+
+
 def test_update_yonetici_and_phone_conflict(client, world):
     admin = _admin(client, world)
     created, _phone = _create_tenant(client, admin)

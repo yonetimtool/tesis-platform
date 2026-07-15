@@ -47,8 +47,34 @@ export default function TenantDetailPage() {
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmAd, setConfirmAd] = useState("");
+  const [nameEditing, setNameEditing] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [nameErr, setNameErr] = useState<string | null>(null);
+  const [nameSaving, setNameSaving] = useState(false);
 
   const y = data?.yonetici ?? null;
+
+  function openNameEdit() {
+    if (!data) return;
+    setNameInput(data.ad);
+    setNameErr(null);
+    setNameEditing(true);
+  }
+
+  async function saveName(e: React.FormEvent) {
+    e.preventDefault();
+    setNameSaving(true);
+    setNameErr(null);
+    try {
+      await apiSend(`/api/tenants/${id}`, "PATCH", { ad: nameInput.trim() });
+      setNameEditing(false);
+      mutate();
+    } catch (err) {
+      setNameErr(err instanceof Error ? err.message : "Kaydedilemedi.");
+    } finally {
+      setNameSaving(false);
+    }
+  }
 
   function openEdit() {
     if (!y) return;
@@ -136,24 +162,63 @@ export default function TenantDetailPage() {
       {data && (
         <>
           <div className="rounded-xl border border-slate-200 bg-white p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold">{data.ad}</h1>
-                <p className="mt-1 font-mono text-xs text-slate-500">{data.tenant_id}</p>
-              </div>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  data.kurulum_tamamlandi
-                    ? "bg-emerald-100 text-emerald-800"
-                    : "bg-amber-100 text-amber-800"
-                }`}
-              >
-                {data.kurulum_tamamlandi ? "kurulum tamamlandı" : "kurulum bekliyor"}
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-slate-600">
-              Oluşturulma: {fmtDate(data.created_at)}
-            </p>
+            {!nameEditing && (
+              <>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h1 className="text-2xl font-semibold">{data.ad}</h1>
+                    <p className="mt-1 font-mono text-xs text-slate-500">{data.tenant_id}</p>
+                  </div>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      data.kurulum_tamamlandi
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    {data.kurulum_tamamlandi ? "kurulum tamamlandı" : "kurulum bekliyor"}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-sm text-slate-600">
+                    Oluşturulma: {fmtDate(data.created_at)}
+                  </p>
+                  <button className={btnGhost} onClick={openNameEdit}>
+                    Adı düzenle
+                  </button>
+                </div>
+              </>
+            )}
+
+            {nameEditing && (
+              <form onSubmit={saveName} className="space-y-3">
+                <Field label="Tesis adı">
+                  <input
+                    className={inputCls}
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    minLength={2}
+                    maxLength={120}
+                    required
+                    autoFocus
+                  />
+                </Field>
+                {nameErr && <ErrorBox message={nameErr} />}
+                <div className="flex gap-2">
+                  <button type="submit" className={btnPrimary} disabled={nameSaving}>
+                    {nameSaving ? "Kaydediliyor..." : "Kaydet"}
+                  </button>
+                  <button
+                    type="button"
+                    className={btnGhost}
+                    onClick={() => setNameEditing(false)}
+                    disabled={nameSaving}
+                  >
+                    Vazgeç
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-5">

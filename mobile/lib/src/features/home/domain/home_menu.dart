@@ -29,7 +29,10 @@ enum HomeMenuEntry {
   /// Demirbas zimmet (NFC al/birak) — saha personeli.
   assets,
 
-  /// Devriye noktasi NFC okutma (POST /scans) — saha personeli.
+  /// Devriye noktasi NFC okutma (POST /scans) — ARTIK menude DEGIL: okutma
+  /// "Turlarim" (devriye penceresi → Nokta okut) ve "Gorevlerim" (NFC'li gorev
+  /// adimi) icinden yapilir; ayri "NFC etiket okutma" tile'i kaldirildi. Enum +
+  /// rota (AppRoutes.nfc) Turlarim'in okutma ekranini actigi icin KORUNUR.
   nfc,
 
   /// Offline gonderim kuyrugu (scan outbox) — saha personeli.
@@ -142,7 +145,6 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
-        HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
       ];
     case UserRole.security:
@@ -163,7 +165,6 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
-        HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
         HomeMenuEntry.binaDuzenleme,
       ];
@@ -181,7 +182,6 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.complaints,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
-        HomeMenuEntry.nfc,
         HomeMenuEntry.outbox,
         HomeMenuEntry.binaDuzenleme,
       ];
