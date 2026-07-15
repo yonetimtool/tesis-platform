@@ -211,7 +211,7 @@ void main() {
     });
   });
 
-  group('RezervasyonState.canCancel (10 dk kurali — saf mantik)', () {
+  group('RezervasyonState.canCancel (kendi + onayli — saf mantik)', () {
     RezervasyonState st({bool canRequest = true, String? userId = 'res-1'}) =>
         RezervasyonState(canRequest: canRequest, currentUserId: userId);
 
@@ -233,11 +233,12 @@ void main() {
       );
     }
 
-    test('kendi + onayli + >10 dk kala -> iptal edilebilir', () {
+    test('kendi + onayli -> iptal butonu gorunur', () {
       expect(st().canCancel(at(const Duration(hours: 2))), isTrue);
     });
-    test('kendi + onayli + <10 dk kala -> iptal EDILEMEZ', () {
-      expect(st().canCancel(at(const Duration(minutes: 5))), isFalse);
+    test('kendi + onayli + slota <10 dk kala -> buton YINE gorunur '
+        '(zamanlamayi backend zorlar; 422 + mesaj)', () {
+      expect(st().canCancel(at(const Duration(minutes: 5))), isTrue);
     });
     test('baskasinin rezervasyonu -> iptal edilemez', () {
       expect(st().canCancel(at(const Duration(hours: 2), owner: 'res-2')),

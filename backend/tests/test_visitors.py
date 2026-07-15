@@ -285,16 +285,22 @@ def test_kayit_bilgilendirme_push_yalniz_hedef_sakine(client, vworld):
     assert f"ES-{tag}" not in hedef_toks
 
 
-# ------------------------- onay/red kaldirildi (PATCH yok) ------------------ #
-def test_yanit_ucu_kaldirildi_405(client, vworld):
-    """Onay/red akisi KALDIRILDI: PATCH /visitors/{id} artik YOK -> 405
-    (method not allowed). Hicbir rol ziyaretci 'yanitlayamaz'."""
+# ------------- onay/red YOK; PATCH = yalniz guvenlik DUZENLEMESI ------------- #
+def test_onay_red_yok_patch_yalniz_guvenlik(client, vworld):
+    """Ziyaretci LOG kayittir: onay/red akisi YOK (durum gibi onay alani yok).
+    PATCH /visitors/{id} yalniz GUVENLIK duzenlemesidir (ad/daire/hedef/not);
+    saha disi roller edit ETMEZ (403)."""
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
     v = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
-    for role in ("resident_a", "es", "guard_a", "yonetici_a", "admin_a"):
+    # sakin/es/yonetici/admin PATCH edemez (yalniz guvenlik)
+    for role in ("resident_a", "es", "yonetici_a", "admin_a"):
         h = _headers(client, vworld["slug_a"], vworld[role])
-        r = client.patch(f"/visitors/{v['id']}", headers=h, json={"durum": "onaylandi"})
-        assert r.status_code == 405, (role, r.status_code)
+        assert client.patch(
+            f"/visitors/{v['id']}", headers=h, json={"ziyaretci_ad": "X"}
+        ).status_code == 403, role
+    # 'durum' gibi onay alani yok: guvenlik gonderse de yok sayilir, cevapta yok
+    r = client.patch(f"/visitors/{v['id']}", headers=guard, json={"durum": "onaylandi"})
+    assert r.status_code == 200 and "durum" not in r.json()
 
 
 # ------------------------------- okuma -------------------------------------- #
@@ -384,3 +390,82 @@ def test_tenant_izolasyonu(client, vworld):
     ).json()["items"]]
     assert v["id"] not in b_ids
     assert client.get(f"/visitors/{v['id']}", headers=guard_b).status_code == 404
+
+
+# ------------------------------- duzenleme ---------------------------------- #
+def _patch(client, headers, vid, **body):
+    return client.patch(f"/visitors/{vid}", headers=headers, json=body)
+
+
+def test_guvenlik_ad_ve_not_duzenler(client, vworld):
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    v = _register_visitor(
+        client, guard, vworld["resident_a_id"],
+        unit_no=vworld["unit1_no"], notlar="ilk not",
+    )
+    r = _patch(client, guard, v["id"], ziyaretci_ad="Duzeltilmis Ad", notlar="yeni not")
+    assert r.status_code == 200, r.text
+    assert r.json()["ziyaretci_ad"] == "Duzeltilmis Ad"
+    assert r.json()["notlar"] == "yeni not"
+    # daire/hedef degismedi
+    assert r.json()["unit_no"] == vworld["unit1_no"]
+    assert r.json()["target_resident_user_id"] == vworld["resident_a_id"]
+
+
+def test_guvenlik_notu_temizler(client, vworld):
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    v = _register_visitor(
+        client, guard, vworld["resident_a_id"],
+        unit_no=vworld["unit1_no"], notlar="silinecek",
+    )
+    r = _patch(client, guard, v["id"], notlar=None)
+    assert r.status_code == 200, r.text
+    assert r.json()["notlar"] is None
+
+
+def test_guvenlik_hedef_sakini_degistirir(client, vworld):
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    v = _register_visitor(
+        client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"],
+    )
+    # es_id AYNI dairenin (unit1) aktif sakini -> gecerli
+    ok = _patch(client, guard, v["id"], target_resident_user_id=vworld["es_id"])
+    assert ok.status_code == 200, ok.text
+    assert ok.json()["target_resident_user_id"] == vworld["es_id"]
+    # diger_id BASKA dairenin (unit2) sakini -> 422 (unit1'in sakini degil)
+    bad = _patch(client, guard, v["id"], target_resident_user_id=vworld["diger_id"])
+    assert bad.status_code == 422, bad.text
+
+
+def test_guvenlik_daireyi_degistirir_hedef_tutarli_olmali(client, vworld):
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    v = _register_visitor(
+        client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"],
+    )
+    # yalniz daireyi unit2'ye cekmek -> mevcut hedef (resident_a) unit2'nin
+    # sakini DEGIL -> 422
+    bad = _patch(client, guard, v["id"], unit_no=vworld["unit2_no"])
+    assert bad.status_code == 422, bad.text
+    # daire + o dairenin sakini birlikte -> 200
+    ok = _patch(
+        client, guard, v["id"],
+        unit_no=vworld["unit2_no"], target_resident_user_id=vworld["diger_id"],
+    )
+    assert ok.status_code == 200, ok.text
+    assert ok.json()["unit_no"] == vworld["unit2_no"]
+    assert ok.json()["target_resident_user_id"] == vworld["diger_id"]
+
+
+def test_ziyaretci_duzenle_rbac_yalniz_guvenlik(client, vworld):
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    v = _register_visitor(
+        client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"],
+    )
+    for role in ("admin_a", "yonetici_a", "resident_a", "gorevli_a"):
+        h = _headers(client, vworld["slug_a"], vworld[role])
+        assert _patch(client, h, v["id"], ziyaretci_ad="X").status_code == 403, role
+
+
+def test_ziyaretci_duzenle_404(client, vworld):
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    assert _patch(client, guard, str(uuid.uuid4()), ziyaretci_ad="X").status_code == 404

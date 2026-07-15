@@ -78,6 +78,31 @@ class VisitorApi {
       throw ApiException.fromDio(e);
     }
   }
+
+  /// `PATCH /visitors/{id}` — guvenlik kaydi duzenler (ad/daire/hedef/not).
+  /// notlar bos ise ACIKCA null gonderilir (sunucuda temizlenir).
+  Future<Visitor> update(
+    String id, {
+    required String ziyaretciAd,
+    required String unitNo,
+    required String targetResidentUserId,
+    String? notlar,
+  }) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/visitors/$id',
+        data: {
+          'ziyaretci_ad': ziyaretciAd,
+          'unit_no': unitNo,
+          'target_resident_user_id': targetResidentUserId,
+          'notlar': (notlar != null && notlar.isNotEmpty) ? notlar : null,
+        },
+      );
+      return Visitor.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }
 
 final visitorApiProvider = Provider<VisitorApi>((ref) {

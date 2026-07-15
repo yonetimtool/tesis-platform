@@ -39,6 +39,7 @@ from ..schemas import (
     VisitorCreate,
     VisitorListResponse,
     VisitorOut,
+    VisitorUpdate,
 )
 
 router = APIRouter(prefix="/visitors", tags=["visitors"])
@@ -170,6 +171,88 @@ async def create_visitor(
         data={"tip": "ziyaretci", "visitor_id": str(obj.id)},
     )
     return _out((obj, unit.no, user.ad, target_ad))
+
+
+# ------------------------------- duzenleme ---------------------------------- #
+@router.patch("/{visitor_id}", response_model=VisitorOut)
+async def update_visitor(
+    visitor_id: uuid.UUID,
+    body: VisitorUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_REGISTRAR),
+) -> VisitorOut:
+    """Guvenlik ziyaretci kaydini duzenler (ad/not/hedef sakin/daire). Yalniz
+    guvenlik (kapida karsilar, vardiya devrinde de duzeltir). RLS ile kendi
+    tenant'inda; kayit yoksa 404. Daire VEYA hedef degisirse hedef, (nihai)
+    dairenin AKTIF sakini olarak yeniden dogrulanir (degilse 422)."""
+    obj = (
+        await db.execute(select(Visitor).where(Visitor.id == visitor_id))
+    ).scalar_one_or_none()
+    if obj is None:
+        raise APIError(404, "not_found", "Kayit bulunamadi")
+
+    fields = body.model_fields_set
+
+    # Nihai daireyi coz: yeni referans verildiyse (unit_id|unit_no), yoksa mevcut.
+    unit_id = obj.unit_id
+    if "unit_id" in fields or "unit_no" in fields:
+        if body.unit_id is not None:
+            unit = (
+                await db.execute(select(Unit).where(Unit.id == body.unit_id))
+            ).scalar_one_or_none()
+        elif body.unit_no is not None:
+            unit = (
+                await db.execute(select(Unit).where(Unit.no == body.unit_no))
+            ).scalar_one_or_none()
+        else:
+            unit = None
+        if unit is None:
+            raise APIError(422, "invalid_reference", "Daire bu tenant'ta bulunamadi.")
+        unit_id = unit.id
+
+    # Nihai hedef sakin: yeni verildiyse o, yoksa mevcut.
+    target_id = (
+        body.target_resident_user_id
+        if "target_resident_user_id" in fields
+        else obj.target_resident_user_id
+    )
+
+    # Daire VEYA hedef degistiyse hedefi (nihai) dairenin AKTIF sakini olarak
+    # yeniden dogrula — baska daireye/role sizmasin (create ile ayni kural).
+    if unit_id != obj.unit_id or target_id != obj.target_resident_user_id:
+        ok = (
+            await db.execute(
+                select(AppUser.id)
+                .join(
+                    UnitResident,
+                    (UnitResident.user_id == AppUser.id)
+                    & (UnitResident.unit_id == unit_id)
+                    & (UnitResident.bitis.is_(None)),
+                )
+                .where(AppUser.id == target_id)
+            )
+        ).scalar_one_or_none()
+        if ok is None:
+            raise APIError(
+                422, "invalid_reference",
+                "target_resident_user_id bu dairenin aktif sakini degil.",
+            )
+
+    obj.unit_id = unit_id
+    obj.target_resident_user_id = target_id
+    if "ziyaretci_ad" in fields and body.ziyaretci_ad is not None:
+        obj.ziyaretci_ad = body.ziyaretci_ad
+    if "notlar" in fields:  # acikca null -> temizle
+        obj.notlar = body.notlar
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        raise translate_integrity(exc)
+
+    row = (
+        await db.execute(_base_stmt().where(Visitor.id == visitor_id))
+    ).first()
+    return _out(row)
 
 
 # ------------------------------- okuma -------------------------------------- #

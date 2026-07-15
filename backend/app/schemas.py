@@ -693,6 +693,25 @@ class VisitorCreate(BaseModel):
         return self
 
 
+class VisitorUpdate(BaseModel):
+    """Guvenlik ziyaretci kaydini duzenler (kismi — yalniz verilen alan degisir).
+    Daire referansi verilecekse unit_id VEYA unit_no (ikisi birlikte olmaz);
+    daire/hedef degisirse hedef, dairenin AKTIF sakini olarak yeniden dogrulanir.
+    notlar ACIKCA null gonderilirse temizlenir; alan hic yoksa dokunulmaz."""
+
+    unit_id: uuid.UUID | None = None
+    unit_no: str | None = Field(None, min_length=1, max_length=50)
+    ziyaretci_ad: str | None = Field(None, min_length=1, max_length=200)
+    target_resident_user_id: uuid.UUID | None = None
+    notlar: str | None = Field(None, min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def _tek_daire_referansi(self) -> "VisitorUpdate":
+        if self.unit_id is not None and self.unit_no is not None:
+            raise ValueError("unit_id ve unit_no birlikte verilemez")
+        return self
+
+
 class VisitorOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

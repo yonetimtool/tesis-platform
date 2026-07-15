@@ -235,19 +235,19 @@ export default function TenantDetailPage() {
             <p className="mt-1 text-sm text-rose-700">
               Tesisi silmek yöneticiyi, duyuruları, daireleri, sakinleri ve tüm site
               verisini kalıcı olarak siler. Bu işlem geri alınamaz. Onaylamak için
-              tesis adını yazın: <span className="font-semibold">{data.ad}</span>
+              aşağıya <span className="font-semibold">SİL</span> yazın.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <input
                 className={`${inputCls} max-w-xs`}
                 value={confirmAd}
                 onChange={(e) => setConfirmAd(e.target.value)}
-                placeholder="Tesis adını yazın"
+                placeholder="SİL"
               />
               <button
                 className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-50"
                 onClick={deleteTenant}
-                disabled={busy || confirmAd.trim() !== data.ad}
+                disabled={busy || confirmAd.trim().toLocaleUpperCase("tr") !== "SİL"}
               >
                 Tesisi kalıcı olarak sil
               </button>

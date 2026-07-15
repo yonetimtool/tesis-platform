@@ -56,18 +56,14 @@ export default function TenantsPage() {
   }
 
   async function removeTenant(t: TenantRow) {
-    // Tesisi + TUM verisini kalici siler (geri alinamaz). Yanlis tesisi silmeye
-    // karsi ad-yazarak onay.
-    const typed = window.prompt(
+    // Tesisi + TUM verisini kalici siler (geri alinamaz). Tek adimli net onay
+    // (yeni tesisin adi "(Kurulum bekliyor)" yer tutucu oldugundan ad-yazdirma
+    // pratik degil).
+    const ok = window.confirm(
       `"${t.ad}" tesisini ve TÜM verisini (yönetici, duyuru, daire, sakin...) ` +
-        `kalıcı olarak silmek üzeresiniz. Bu işlem GERİ ALINAMAZ.\n\n` +
-        `Onaylamak için tesis adını birebir yazın:`,
+        `kalıcı olarak silmek üzeresiniz.\n\nBu işlem GERİ ALINAMAZ. Silinsin mi?`,
     );
-    if (typed === null) return;
-    if (typed.trim() !== t.ad) {
-      window.alert("Tesis adı eşleşmedi; silme iptal edildi.");
-      return;
-    }
+    if (!ok) return;
     try {
       await apiSend(`/api/tenants/${t.id}`, "DELETE");
       mutate();

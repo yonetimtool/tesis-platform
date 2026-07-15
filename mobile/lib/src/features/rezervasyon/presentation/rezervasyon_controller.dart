@@ -43,32 +43,16 @@ class RezervasyonState {
 
   final DateTime? refreshedAt;
 
-  /// Bu rezervasyon icin iptal butonu gosterilsin mi. Kurallar (backend zorlar,
-  /// bu istemci kapisi UX aynasi): (1) aktif (onayli), (2) YALNIZ rezerve eden
-  /// sakinin kendisi (yonetim iptal ETMEZ), (3) slot baslangicina >=10 dk kala.
+  /// Bu rezervasyon icin iptal butonu gosterilsin mi. Kurallar: (1) aktif
+  /// (onayli), (2) YALNIZ rezerve eden sakinin kendisi (yonetim iptal ETMEZ).
+  ///
+  /// Zamanlama (slot baslangicina >=10 dk kala) kurali NIHAI olarak BACKEND'de
+  /// zorlanir (gec kalinca 422 + mesaj). Istemci burada 10-dk on-kontrolu
+  /// YAPMAZ: aksi halde slota yakin/gecmis kayitlarda buton sessizce gizlenir
+  /// ("neden iptal edemiyorum?"). Buton kendi aktif rezervasyonunda hep gorunur.
   bool canCancel(Rezervasyon r) {
     if (!r.onayli) return false;
-    if (!canRequest || r.talepEdenUserId != currentUserId) return false;
-    final start = _slotStart(r);
-    if (start == null) return true; // parse edilemedi -> backend karar verir
-    return start.difference(DateTime.now()) >= const Duration(minutes: 10);
-  }
-
-  /// Rezervasyonun slot baslangicini yerel DateTime'a cevirir (tarih + saat).
-  /// tenant yerel saati cihaz yerel saati kabul edilir (backend nihai otorite).
-  static DateTime? _slotStart(Rezervasyon r) {
-    final g = r.tarih.split('-');
-    final s = r.baslangic.split(':');
-    if (g.length != 3 || s.length < 2) return null;
-    final y = int.tryParse(g[0]);
-    final mo = int.tryParse(g[1]);
-    final d = int.tryParse(g[2]);
-    final h = int.tryParse(s[0]);
-    final mi = int.tryParse(s[1]);
-    if (y == null || mo == null || d == null || h == null || mi == null) {
-      return null;
-    }
-    return DateTime(y, mo, d, h, mi);
+    return canRequest && r.talepEdenUserId == currentUserId;
   }
 
   /// Sakinin secebilecegi (aktif) alanlar.

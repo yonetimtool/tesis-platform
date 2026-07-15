@@ -1212,8 +1212,8 @@ paths:
       tags: [visitors]
       summary: Ziyaretci LOG detayi (resident yalniz kendine hedeflenen)
       description: |
-        Ziyaretci LOG-ONLY kayittir; onay/red (PATCH) YOKTUR. Detay yalniz
-        okumadir.
+        Ziyaretci LOG kayittir; onay/red YOKTUR. Guvenlik kaydi PATCH ile
+        DUZENLEYEBILIR (asagi); diger roller icin detay yalniz okumadir.
       responses:
         "200":
           description: Ziyaretci
@@ -1223,6 +1223,30 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [visitors]
+      summary: Ziyaretci kaydini duzenle (YALNIZ guvenlik)
+      description: |
+        Guvenlik kendi tenant'inda ziyaretci kaydini duzenler: ziyaretci_ad,
+        not, hedef sakin (target_resident_user_id) ve daire (unit_id|unit_no).
+        Kismi — yalniz verilen alan degisir; notlar acikca null gonderilirse
+        temizlenir. Daire VEYA hedef degisirse hedef, (nihai) dairenin AKTIF
+        sakini olarak yeniden dogrulanir (degilse 422). Kayit yoksa 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VisitorUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Visitor" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
   # KARGO (paket takibi: guvenlik kaydeder (daire+firma+opsiyonel foto)
@@ -5265,6 +5289,19 @@ components:
           description: >
             Guvenligin sectigi TEK hedef sakin (o dairenin aktif sakini). Push +
             gorunurluk + karar YALNIZ bu sakinde.
+        notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
+    VisitorUpdate:
+      type: object
+      description: >
+        Guvenlik ziyaretci kaydini duzenler (kismi — yalniz verilen alan degisir).
+        Daire referansi verilecekse unit_id VEYA unit_no (ikisi birlikte olmaz).
+        Daire/hedef degisirse hedef, (nihai) dairenin AKTIF sakini olarak yeniden
+        dogrulanir. notlar acikca null gonderilirse temizlenir.
+      properties:
+        unit_id: { type: string, format: uuid, nullable: true }
+        unit_no: { type: string, nullable: true, minLength: 1, maxLength: 50 }
+        ziyaretci_ad: { type: string, minLength: 1, maxLength: 200 }
+        target_resident_user_id: { type: string, format: uuid }
         notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
 
     Kargo:

@@ -250,7 +250,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET /units/by-no/{no}/residents`     |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `POST /visitors` (ziyaretci kaydi)    |  ❌   | ❌  | ✅  | ❌  | ❌  |
 | `GET  /visitors` (liste/detay)        |  🔒   | 🔒  | ✅  | ❌  | 🎯  |
-| `PATCH /visitors/{id}` (onay/red)     |  ❌   | ❌  | ❌  | ❌  | ✅🎯|
+| `PATCH /visitors/{id}` (guvenlik duzenler: ad/daire/hedef/not)| ❌ | ❌ | ✅ | ❌ | ❌ |
 | `POST /kargo` (paket kaydi)           |  ❌   | ❌  | ✅  | ❌  | ❌  |
 | `GET  /kargo` (liste/detay)           |  🔒   | 🔒  | ✅  | ❌  | 🔵  |
 | `PATCH /kargo/{id}` (teslim aldim)    |  ❌   | ❌  | ❌  | ❌  | ✅* |

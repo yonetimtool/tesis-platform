@@ -94,6 +94,24 @@ class VisitorsController extends Notifier<VisitorsState> {
     await ref.read(visitorApiProvider).create(draft);
     await refresh();
   }
+
+  /// Guvenlik mevcut ziyaretci kaydini duzenler (ad/daire/hedef/not).
+  Future<void> update(
+    String id, {
+    required String ziyaretciAd,
+    required String unitNo,
+    required String targetResidentUserId,
+    String? notlar,
+  }) async {
+    await ref.read(visitorApiProvider).update(
+          id,
+          ziyaretciAd: ziyaretciAd,
+          unitNo: unitNo,
+          targetResidentUserId: targetResidentUserId,
+          notlar: notlar,
+        );
+    await refresh();
+  }
 }
 
 final visitorsControllerProvider =

@@ -83,12 +83,8 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
   }
 
   Future<void> _openForm(BuildContext context) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => const _VisitorForm(),
-    );
-    if (saved == true && context.mounted) {
+    final saved = await _showVisitorForm(context);
+    if (saved && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Ziyaretçi kaydedildi — daire sakinine bildirildi ✓'),
@@ -96,6 +92,17 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
       );
     }
   }
+}
+
+/// Ziyaretci formunu alt sayfada acar (yeni veya [existing] duzenleme).
+/// Kaydedildiyse true doner.
+Future<bool> _showVisitorForm(BuildContext context, {Visitor? existing}) async {
+  final saved = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => _VisitorForm(existing: existing),
+  );
+  return saved == true;
 }
 
 class _Body extends ConsumerWidget {
@@ -253,6 +260,28 @@ void _showDetail(
               const SizedBox(height: 12),
               CallButton(userId: v.kaydedenUserId, label: 'Güvenliği ara'),
             ],
+            // Guvenlik kaydi duzenler (ad/daire/hedef/not).
+            if (canRegister) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Bilgileri düzenle'),
+                  onPressed: () async {
+                    Navigator.of(sheetContext).pop();
+                    final saved =
+                        await _showVisitorForm(context, existing: v);
+                    if (saved && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Ziyaretçi bilgileri güncellendi ✓')),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -260,9 +289,12 @@ void _showDetail(
   );
 }
 
-/// Yeni ziyaretci formu (yalniz guvenlik): ad + daire no + hedef sakin + not.
+/// Ziyaretci formu (yalniz guvenlik): ad + daire no + hedef sakin + not.
+/// [existing] null → yeni kayit; dolu → o kaydi DUZENLE (ad/daire/hedef/not).
 class _VisitorForm extends ConsumerStatefulWidget {
-  const _VisitorForm();
+  const _VisitorForm({this.existing});
+
+  final Visitor? existing;
 
   @override
   ConsumerState<_VisitorForm> createState() => _VisitorFormState();
@@ -282,6 +314,25 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
   String? _residentsError;
   String? _targetId;
 
+  bool get _isEdit => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.existing;
+    if (e != null) {
+      _ad.text = e.ziyaretciAd;
+      _unitNo.text = e.unitNo ?? '';
+      _notlar.text = e.notlar ?? '';
+      _targetId = e.targetResidentUserId;
+      // Mevcut dairenin sakinlerini getir ki hedef acilir-menusu dolsun
+      // (secili hedef korunur).
+      if ((e.unitNo ?? '').isNotEmpty) {
+        Future.microtask(() => _loadResidents(keepTarget: e.targetResidentUserId));
+      }
+    }
+  }
+
   @override
   void dispose() {
     _ad.dispose();
@@ -291,7 +342,8 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
   }
 
   /// Girilen daire NO'su icin AKTIF sakinleri getir (hedef secicisini doldur).
-  Future<void> _loadResidents() async {
+  /// [keepTarget] verilirse (duzenleme on-yuklemesi) o hedef korunur.
+  Future<void> _loadResidents({String? keepTarget}) async {
     final unitNo = _unitNo.text.trim();
     if (unitNo.isEmpty) {
       setState(() => _residentsError = 'Önce daire no girin');
@@ -301,7 +353,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
       _loadingResidents = true;
       _residentsError = null;
       _residents = null;
-      _targetId = null;
+      _targetId = keepTarget;
     });
     try {
       final list =
@@ -311,6 +363,9 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
         _residents = list;
         if (list.isEmpty) {
           _residentsError = 'Bu dairede aktif sakin yok';
+        } else if (keepTarget != null &&
+            list.any((r) => r.userId == keepTarget)) {
+          _targetId = keepTarget; // duzenlemede mevcut hedef korunur
         } else if (list.length == 1) {
           _targetId = list.first.userId; // tek sakin -> otomatik secili
         }
@@ -334,14 +389,27 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
       _hata = null;
     });
     try {
-      await ref.read(visitorsControllerProvider.notifier).register(
-            VisitorDraft(
-              ziyaretciAd: _ad.text.trim(),
-              unitNo: _unitNo.text.trim(),
-              targetResidentUserId: _targetId!,
-              notlar: _notlar.text.trim().isEmpty ? null : _notlar.text.trim(),
-            ),
-          );
+      final notlar =
+          _notlar.text.trim().isEmpty ? null : _notlar.text.trim();
+      final ctrl = ref.read(visitorsControllerProvider.notifier);
+      if (_isEdit) {
+        await ctrl.update(
+          widget.existing!.id,
+          ziyaretciAd: _ad.text.trim(),
+          unitNo: _unitNo.text.trim(),
+          targetResidentUserId: _targetId!,
+          notlar: notlar,
+        );
+      } else {
+        await ctrl.register(
+          VisitorDraft(
+            ziyaretciAd: _ad.text.trim(),
+            unitNo: _unitNo.text.trim(),
+            targetResidentUserId: _targetId!,
+            notlar: notlar,
+          ),
+        );
+      }
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       // 422 invalid_reference: daire yok / hedef o dairenin sakini degil.
@@ -367,13 +435,16 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Yeni ziyaretçi',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            Text(
+              _isEdit ? 'Ziyaretçi düzenle' : 'Yeni ziyaretçi',
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Text(
-              'Sakine yalnızca bilgilendirme gider (onay istenmez).',
+              _isEdit
+                  ? 'Ad, daire, bildirilen sakin ve notu güncelleyebilirsiniz.'
+                  : 'Sakine yalnızca bilgilendirme gider (onay istenmez).',
               style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -469,8 +540,8 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.person_add_alt_1),
-                label: const Text('Kaydet ve sakine bildir'),
+                    : Icon(_isEdit ? Icons.save_outlined : Icons.person_add_alt_1),
+                label: Text(_isEdit ? 'Güncelle' : 'Kaydet ve sakine bildir'),
                 onPressed: _busy ? null : _submit,
               ),
             ),
