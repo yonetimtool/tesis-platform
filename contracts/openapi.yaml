@@ -192,11 +192,41 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409":
-          description: email bu tenant'ta zaten kayitli
+          description: telefon (global) veya email (tenant) zaten kayitli
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
         "422": { $ref: "#/components/responses/ValidationError" }
+    get:
+      tags: [auth]
+      summary: Site sakin listesi (yonetici/admin) — ad + daire no + durum
+      description: |
+        Tenant'taki sakinler (role=resident): ad + aktif daire no (bitis IS NULL)
+        + is_active. Telefon KVKK geregi DONMEZ. Saha/sakin roller 403.
+      responses:
+        "200":
+          description: Sakin listesi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResidentListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /residents/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    delete:
+      tags: [auth]
+      summary: Sakini siteden cikar (yonetici/admin) — pasiflestir + daire bagini bitir
+      description: |
+        Aktif unit_resident baglarini bitirir (bitis=now) + app_user.is_active=
+        false (giris yapamaz). Idempotent. role=resident degilse 404. Saha/sakin
+        roller 403.
+      responses:
+        "204": { description: Sakin siteden cikarildi (pasif) }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /auth/refresh:
     post:
@@ -4477,6 +4507,26 @@ components:
             TEK SEFERLIK gecici giris kodu — YALNIZ bu yanitta duz metin
             doner (yonetici sakine iletir). Sunucuda bcrypt hash'i saklanir;
             sakin kalici parolasini belirleyince silinir.
+    ResidentListItem:
+      type: object
+      description: Site sakin listesi ogesi — telefon KVKK geregi YOK.
+      required: [user_id, ad, is_active]
+      properties:
+        user_id: { type: string, format: uuid }
+        ad: { type: string }
+        unit_no:
+          type: string
+          nullable: true
+          description: Aktif daire(ler); coklu ise virgulle birlesir, yoksa null
+          example: "A-12"
+        is_active: { type: boolean }
+    ResidentListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ResidentListItem" }
     RefreshRequest:
       type: object
       required: [refresh_token]

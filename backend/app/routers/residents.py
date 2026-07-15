@@ -11,8 +11,11 @@ yoneticinin sakin acma akisidir ve unit'i gerekirse ortulu olusturur).
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import select
+import uuid
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, Response
+from sqlalchemy import and_, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +23,12 @@ from ..crud_helpers import is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Unit, UnitResident
-from ..schemas import ResidentCreate, ResidentCreatedOut
+from ..schemas import (
+    ResidentCreate,
+    ResidentCreatedOut,
+    ResidentListItem,
+    ResidentListResponse,
+)
 from ..security import generate_temp_code, hash_password
 
 router = APIRouter(prefix="/residents", tags=["auth"])
@@ -91,3 +99,82 @@ async def create_resident(
         email=resident.email,
         temp_code=temp_code,
     )
+
+
+@router.get("", response_model=ResidentListResponse)
+async def list_residents(
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_YONETIM),
+) -> ResidentListResponse:
+    """Site sakinleri (yonetici/admin) — ad + aktif daire no + durum.
+
+    Telefon KVKK geregi DONMEZ. unit_no aktif (bitis IS NULL) daire baglarindan
+    turer; coklu daire virgulle birlesir, yoksa null. RLS ile tenant-kapsamli.
+    """
+    rows = (
+        await db.execute(
+            select(
+                AppUser.id,
+                AppUser.ad,
+                AppUser.is_active,
+                func.string_agg(Unit.no, ", ").label("unit_no"),
+            )
+            .outerjoin(
+                UnitResident,
+                and_(
+                    UnitResident.user_id == AppUser.id,
+                    UnitResident.bitis.is_(None),
+                ),
+            )
+            .outerjoin(Unit, Unit.id == UnitResident.unit_id)
+            .where(AppUser.role == "resident")
+            .group_by(AppUser.id, AppUser.ad, AppUser.is_active)
+            .order_by(AppUser.ad)
+        )
+    ).all()
+    return ResidentListResponse(
+        items=[
+            ResidentListItem(
+                user_id=r.id, ad=r.ad, unit_no=r.unit_no, is_active=r.is_active
+            )
+            for r in rows
+        ]
+    )
+
+
+@router.delete("/{user_id}", status_code=204)
+async def remove_resident_from_site(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_YONETIM),
+) -> Response:
+    """Sakini SITEDEN CIKAR (yonetici/admin): aktif daire baglarini bitirir
+    (bitis=now) + hesabi pasiflestirir (is_active=false -> giris yapamaz).
+
+    Idempotent (zaten pasif sakin tekrar cikarilinca yine 204). Tenant'ta
+    role=resident degilse -> 404 (varlik sizmaz)."""
+    resident = (
+        await db.execute(
+            select(AppUser).where(
+                AppUser.id == user_id, AppUser.role == "resident"
+            )
+        )
+    ).scalar_one_or_none()
+    if resident is None:
+        raise APIError(404, "not_found", "Sakin bulunamadi.")
+
+    now = datetime.now(tz=timezone.utc)
+    bindings = (
+        await db.execute(
+            select(UnitResident).where(
+                UnitResident.user_id == user_id,
+                UnitResident.bitis.is_(None),
+            )
+        )
+    ).scalars().all()
+    for binding in bindings:
+        binding.bitis = now
+    resident.is_active = False
+    resident.updated_at = func.now()
+    await db.flush()
+    return Response(status_code=204)

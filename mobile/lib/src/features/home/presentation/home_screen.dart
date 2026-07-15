@@ -375,6 +375,15 @@ class HomeScreen extends ConsumerWidget {
           onTap: () => context.push(AppRoutes.personel),
           badge: null,
         );
+      case HomeMenuEntry.sakinler:
+        // Site sakini yonetimi: yonetici/admin sakinleri listeler, ekler
+        // (daire + gecici kod), cikarir (pasiflestir). Sakin kendi kayit olamaz.
+        return (
+          icon: Icons.people_alt_outlined,
+          title: 'Site Sakinleri',
+          onTap: () => context.push(AppRoutes.sakinler),
+          badge: null,
+        );
       case HomeMenuEntry.binaDuzenleme:
         // D-viz Rev-2: gorsel bina yapisi — blok/kat/daire. Yonetim (admin/
         // yonetici) olusturur/duzenler; security + tesis_gorevlisi SALT-OKUMA

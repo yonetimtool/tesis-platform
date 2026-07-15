@@ -110,6 +110,7 @@ void main() {
           HomeMenuEntry.financialSummary,
           HomeMenuEntry.reports,
           HomeMenuEntry.personel,
+          HomeMenuEntry.sakinler,
           HomeMenuEntry.integrations,
           HomeMenuEntry.binaDuzenleme,
         ],

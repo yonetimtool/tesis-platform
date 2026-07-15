@@ -98,6 +98,11 @@ enum HomeMenuEntry {
   /// tum kullanicilari PANELDEN yonetir (mobil menude yok).
   personel,
 
+  /// Site Sakinleri — YALNIZ yonetici mobil menusunde: sakinleri listeler, yeni
+  /// tasinani ekler (daire + gecici kod), ayrilani cikarir (pasiflestir). Sakin
+  /// KENDI kayit olamaz; yonetici/admin ekler. admin panelden de yonetir.
+  sakinler,
+
   /// Bina Duzenleme (D-viz Rev-2) — GORSEL editor: blok ekle → kutucuk → icine
   /// gir → kat + daire ekle (blok/kat/sira). Blok-suz mod (blok=null) destegi.
   /// Mobilde YONETICI kurar; yazma backend'de admin+yonetici (RBAC). Ayni CRUD
@@ -191,6 +196,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.financialSummary,
         HomeMenuEntry.reports,
         HomeMenuEntry.personel,
+        HomeMenuEntry.sakinler,
         HomeMenuEntry.integrations,
         HomeMenuEntry.binaDuzenleme,
       ];

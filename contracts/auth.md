@@ -104,6 +104,15 @@ Govde: `{ tenant_ad, yonetici_ad, phone, password }`. Akis:
 > `admin`/`yonetici`/`resident` rolu ACAMAZ → **403** (yetki yukseltme yok;
 > resident'lar `POST /residents` ile acilir). `admin` her rolu acar. Tenant
 > olusturan kullanicidan alinir (RLS).
+>
+> **Site sakini yonetimi (yonetici):** sakin KENDI kayit OLAMAZ; yonetici (+admin)
+> ekler/cikarir. `POST /residents` (ad + telefon + daire no -> gecici kod).
+> `GET /residents` sakin listesi (ad + aktif daire no + durum; **telefon KVKK
+> geregi donmez**). `DELETE /residents/{id}` sakini SITEDEN CIKARIR: aktif
+> `unit_resident` baglarini bitirir (`bitis=now`) + `is_active=false` (giris
+> yapamaz); idempotent, role=resident degilse 404. Saha/sakin roller erisemez
+> (403). (Daire-bazli `/units/{id}/residents` atama/cikarma admin-only kalir;
+> bu sakin-merkezli site yonetimidir.)
 
 ## 2. Token Yapisi
 
@@ -177,6 +186,8 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /auth/signup` (public — tesis kur)| ➖  | ➖ | ➖ | ➖ | ➖ |
 | `POST /auth/set-password` (ilk giris) |  ❌   | ❌  | ❌  | ❌  | ✅  |
 | `POST /residents` (sakin ac + kod)    |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET  /residents` (site sakin listesi)|  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `DELETE /residents/{id}` (siteden cikar)| ✅  | ✅  | ❌  | ❌  | ❌  |
 | `POST /auth/refresh`                  |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET  /me/profile` (kendi)            |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /me/password` (kendi)          |  ✅   | ✅  | ✅  | ✅  | ✅  |

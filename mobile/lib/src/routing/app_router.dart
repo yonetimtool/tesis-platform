@@ -23,6 +23,7 @@ import '../features/emergency/presentation/emergency_screen.dart';
 import '../features/etkinlik/presentation/etkinlik_screen.dart';
 import '../features/patrol/presentation/patrol_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
+import '../features/residents/presentation/residents_screen.dart';
 import '../features/patrol/presentation/patrol_tracking_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
 import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
@@ -77,6 +78,7 @@ class AppRoutes {
   static const settings = '/settings';
   static const profile = '/profile';
   static const personel = '/personel';
+  static const sakinler = '/sakinler';
 }
 
 /// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
@@ -331,6 +333,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.personel,
         builder: (context, state) => const StaffScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.sakinler,
+        builder: (context, state) => const ResidentsScreen(),
       ),
     ],
     redirect: (context, state) {

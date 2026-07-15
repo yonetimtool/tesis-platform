@@ -1623,6 +1623,18 @@ class ResidentCreatedOut(BaseModel):
     temp_code: str
 
 
+# Site sakini yonetimi (yonetici) — liste ogesi. Telefon KVKK geregi DONMEZ.
+class ResidentListItem(BaseModel):
+    user_id: uuid.UUID
+    ad: str
+    unit_no: str | None = None  # aktif daire(ler); coklu ise virgulle birlesir
+    is_active: bool
+
+
+class ResidentListResponse(BaseModel):
+    items: list[ResidentListItem]
+
+
 class DuesAssessmentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
