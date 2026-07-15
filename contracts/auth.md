@@ -106,13 +106,17 @@ Govde: `{ tenant_ad, yonetici_ad, phone, password }`. Akis:
 > olusturan kullanicidan alinir (RLS).
 >
 > **Site sakini yonetimi (yonetici):** sakin KENDI kayit OLAMAZ; yonetici (+admin)
-> ekler/cikarir. `POST /residents` (ad + telefon + daire no -> gecici kod).
-> `GET /residents` sakin listesi (ad + aktif daire no + durum; **telefon KVKK
-> geregi donmez**). `DELETE /residents/{id}` sakini SITEDEN CIKARIR: aktif
-> `unit_resident` baglarini bitirir (`bitis=now`) + `is_active=false` (giris
-> yapamaz); idempotent, role=resident degilse 404. Saha/sakin roller erisemez
-> (403). (Daire-bazli `/units/{id}/residents` atama/cikarma admin-only kalir;
-> bu sakin-merkezli site yonetimidir.)
+> ekler/listeler/duzenler/siler/parola-sifirlar. `POST /residents` (ad + telefon
+> + daire no -> gecici kod). `GET /residents` sakin listesi (ad + aktif daire no
+> + durum; **telefon KVKK geregi donmez**). `PATCH /residents/{id}` ad ve/veya
+> telefon (global benzersiz; cakisma 409). `POST /residents/{id}/reset-password`
+> yeni gecici kod uretir (bir kez doner; kilitlenme/parola unutma).
+> **`DELETE /residents/{id}` AKILLI sil — telefon HER DURUMDA serbest kalir:**
+> gecmissiz sakin (yeni/hatali kayit) TAMAMEN silinir (`deleted=true`); gecmisi
+> olan sakin (FK RESTRICT: sikayet/rezervasyon vb.) silinemez -> pasiflestirilir
+> + `telefon=NULL` (`deleted=false`). Boylece ayni numarayla yeniden kayit her
+> zaman mumkun. role=resident degilse 404. Saha/sakin roller erisemez (403).
+> (Daire-bazli `/units/{id}/residents` atama/cikarma admin-only kalir.)
 
 ## 2. Token Yapisi
 
@@ -187,7 +191,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /auth/set-password` (ilk giris) |  ❌   | ❌  | ❌  | ❌  | ✅  |
 | `POST /residents` (sakin ac + kod)    |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /residents` (site sakin listesi)|  ✅   | ✅  | ❌  | ❌  | ❌  |
-| `DELETE /residents/{id}` (siteden cikar)| ✅  | ✅  | ❌  | ❌  | ❌  |
+| `PATCH /residents/{id}` (ad/telefon)  |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `POST /residents/{id}/reset-password` |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `DELETE /residents/{id}` (akilli sil) |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /auth/refresh`                  |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET  /me/profile` (kendi)            |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /me/password` (kendi)          |  ✅   | ✅  | ✅  | ✅  | ✅  |

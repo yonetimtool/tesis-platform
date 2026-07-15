@@ -15,7 +15,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Response
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, delete as sa_delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,8 +26,11 @@ from ..models import AppUser, Unit, UnitResident
 from ..schemas import (
     ResidentCreate,
     ResidentCreatedOut,
+    ResidentDeleteOut,
     ResidentListItem,
     ResidentListResponse,
+    ResidentResetPasswordOut,
+    ResidentUpdate,
 )
 from ..security import generate_temp_code, hash_password
 
@@ -142,17 +145,7 @@ async def list_residents(
     )
 
 
-@router.delete("/{user_id}", status_code=204)
-async def remove_resident_from_site(
-    user_id: uuid.UUID,
-    db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_YONETIM),
-) -> Response:
-    """Sakini SITEDEN CIKAR (yonetici/admin): aktif daire baglarini bitirir
-    (bitis=now) + hesabi pasiflestirir (is_active=false -> giris yapamaz).
-
-    Idempotent (zaten pasif sakin tekrar cikarilinca yine 204). Tenant'ta
-    role=resident degilse -> 404 (varlik sizmaz)."""
+async def _resident_or_404(db: AsyncSession, user_id: uuid.UUID) -> AppUser:
     resident = (
         await db.execute(
             select(AppUser).where(
@@ -162,19 +155,85 @@ async def remove_resident_from_site(
     ).scalar_one_or_none()
     if resident is None:
         raise APIError(404, "not_found", "Sakin bulunamadi.")
+    return resident
 
-    now = datetime.now(tz=timezone.utc)
-    bindings = (
-        await db.execute(
-            select(UnitResident).where(
-                UnitResident.user_id == user_id,
-                UnitResident.bitis.is_(None),
-            )
-        )
-    ).scalars().all()
-    for binding in bindings:
-        binding.bitis = now
-    resident.is_active = False
+
+@router.patch("/{user_id}", status_code=204)
+async def update_resident(
+    user_id: uuid.UUID,
+    body: ResidentUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_YONETIM),
+) -> Response:
+    """Sakini duzenle (yonetici/admin): ad ve/veya cep telefonu. telefon global
+    benzersiz (cakisma 409). Numarayi bos birakmak = degismez."""
+    resident = await _resident_or_404(db, user_id)
+    for key, value in body.model_dump(exclude_unset=True).items():
+        setattr(resident, key, value)
+    resident.updated_at = func.now()
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        if is_unique_violation(exc):
+            raise APIError(409, "conflict", "Bu telefon zaten kayitli.")
+        raise translate_integrity(exc)
+    return Response(status_code=204)
+
+
+@router.post("/{user_id}/reset-password", response_model=ResidentResetPasswordOut)
+async def reset_resident_password(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_YONETIM),
+) -> ResidentResetPasswordOut:
+    """Sakin parolasini sifirla (yonetici/admin): yeni TEK SEFERLIK gecici kod
+    uretir. Sakin telefon + bu kodla girip yeni parolasini belirler (§1.3).
+    Kod YALNIZ bu yanitta duz metin doner."""
+    resident = await _resident_or_404(db, user_id)
+    temp_code = generate_temp_code()
+    resident.password_hash = None
+    resident.password_set = False
+    resident.temp_code_hash = hash_password(temp_code)
     resident.updated_at = func.now()
     await db.flush()
-    return Response(status_code=204)
+    return ResidentResetPasswordOut(temp_code=temp_code)
+
+
+@router.delete("/{user_id}", response_model=ResidentDeleteOut)
+async def remove_resident_from_site(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_YONETIM),
+) -> ResidentDeleteOut:
+    """Sakini SIL (akilli, yonetici/admin) — telefon HER DURUMDA serbest kalir.
+
+    Gecmissiz sakin (yeni/hatali kayit) TAMAMEN silinir (unit_resident/rsvp/
+    device CASCADE ile gider) -> deleted=true. Gecmisi olan sakin (FK RESTRICT:
+    sikayet/rezervasyon vb.) silinemez; SAVEPOINT geri alinir ve pasiflestirilir
+    + telefon NULL yapilir (kayit denetim icin kalir) -> deleted=false. Tenant'ta
+    role=resident degilse 404."""
+    resident = await _resident_or_404(db, user_id)
+
+    try:
+        async with db.begin_nested():
+            await db.execute(sa_delete(AppUser).where(AppUser.id == user_id))
+        return ResidentDeleteOut(deleted=True)
+    except IntegrityError:
+        # Gecmis kayitlari var (RESTRICT) -> savepoint geri alindi; pasiflestir
+        # + telefonu bosalt (numara yeniden kullanilabilsin).
+        now = datetime.now(tz=timezone.utc)
+        bindings = (
+            await db.execute(
+                select(UnitResident).where(
+                    UnitResident.user_id == user_id,
+                    UnitResident.bitis.is_(None),
+                )
+            )
+        ).scalars().all()
+        for binding in bindings:
+            binding.bitis = now
+        resident.is_active = False
+        resident.telefon = None
+        resident.updated_at = func.now()
+        await db.flush()
+        return ResidentDeleteOut(deleted=False)

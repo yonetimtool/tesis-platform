@@ -1636,6 +1636,42 @@ class ResidentListResponse(BaseModel):
     items: list[ResidentListItem]
 
 
+# Sakin duzenleme (PATCH /residents/{id}) — en az bir alan. telefon normalize +
+# global benzersiz. Numara bos birakmak = degismez (exclude_unset).
+class ResidentUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1)
+    telefon: str | None = Field(None, min_length=1)
+
+    @field_validator("telefon")
+    @classmethod
+    def _normalize_telefon(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        try:
+            return normalize_phone(v)
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "ResidentUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class ResidentResetPasswordOut(BaseModel):
+    """Parola sifirlama — yeni gecici kod YALNIZ burada bir kez doner."""
+
+    temp_code: str
+
+
+class ResidentDeleteOut(BaseModel):
+    """Akilli sil sonucu: deleted=true tamamen silindi (gecmissiz);
+    deleted=false gecmis nedeniyle pasiflestirildi (telefon yine serbest)."""
+
+    deleted: bool
+
+
 class DuesAssessmentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

@@ -215,15 +215,61 @@ paths:
   /residents/{id}:
     parameters:
       - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [auth]
+      summary: Sakini duzenle (yonetici/admin) — ad ve/veya telefon
+      description: |
+        telefon global benzersiz (cakisma 409); normalize edilir. Numarayi bos
+        birakmak = degismez (en az bir alan). role=resident degilse 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResidentUpdate" }
+      responses:
+        "204": { description: Guncellendi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Bu telefon zaten kayitli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
     delete:
       tags: [auth]
-      summary: Sakini siteden cikar (yonetici/admin) — pasiflestir + daire bagini bitir
+      summary: Sakini SIL (akilli, yonetici/admin) — telefon her durumda serbest
       description: |
-        Aktif unit_resident baglarini bitirir (bitis=now) + app_user.is_active=
-        false (giris yapamaz). Idempotent. role=resident degilse 404. Saha/sakin
-        roller 403.
+        Gecmissiz sakin TAMAMEN silinir (deleted=true; unit_resident/rsvp/device
+        CASCADE). Gecmisi olan sakin (FK RESTRICT) silinemez -> pasiflestirilir +
+        telefon=NULL (deleted=false). Boylece ayni numarayla yeniden kayit her
+        zaman mumkun. role=resident degilse 404. Saha/sakin roller 403.
       responses:
-        "204": { description: Sakin siteden cikarildi (pasif) }
+        "200":
+          description: Silme sonucu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResidentDeleteOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /residents/{id}/reset-password:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [auth]
+      summary: Sakin parolasini sifirla (yonetici/admin) — yeni gecici kod
+      description: |
+        Yeni TEK SEFERLIK gecici kod uretir (password_set=false); sakin telefon +
+        bu kodla girip yeni parola belirler. Kod YALNIZ bu yanitta doner.
+        role=resident degilse 404.
+      responses:
+        "200":
+          description: Yeni gecici kod
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResidentResetPasswordOut" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -4501,6 +4547,25 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/ResidentListItem" }
+    ResidentUpdate:
+      type: object
+      description: Sakin duzenle — en az bir alan; telefon global benzersiz (normalize)
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1 }
+        telefon: { type: string, minLength: 1, example: "+905321112203" }
+    ResidentResetPasswordOut:
+      type: object
+      required: [temp_code]
+      properties:
+        temp_code: { type: string, example: "K7MR-2QWX" }
+    ResidentDeleteOut:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          type: boolean
+          description: true=tamamen silindi (gecmissiz); false=pasiflestirildi (gecmis var)
     RefreshRequest:
       type: object
       required: [refresh_token]

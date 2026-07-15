@@ -69,23 +69,74 @@ class _ResidentTile extends StatelessWidget {
         ),
         title: Text(member.ad),
         subtitle: Text(subtitle),
-        trailing: member.isActive
-            ? TextButton.icon(
-                onPressed: () => _confirmRemove(context),
-                icon: const Icon(Icons.logout, size: 18),
-                label: const Text('Çıkar'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
-              )
-            : Chip(
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!member.isActive)
+              Chip(
                 label: const Text('Pasif'),
                 visualDensity: VisualDensity.compact,
                 backgroundColor:
                     Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
+            PopupMenuButton<String>(
+              tooltip: 'Sakin işlemleri',
+              onSelected: (v) {
+                if (v == 'edit') _edit(context);
+                if (v == 'reset') _resetPassword(context);
+                if (v == 'delete') _confirmRemove(context);
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'edit', child: Text('Düzenle')),
+                PopupMenuItem(value: 'reset', child: Text('Parola sıfırla')),
+                PopupMenuItem(value: 'delete', child: Text('Sil')),
+              ],
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _edit(BuildContext context) async {
+    final changed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _EditResidentSheet(member: member),
+    );
+    if (changed == true) ref.invalidate(residentsProvider);
+  }
+
+  Future<void> _resetPassword(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Parola sıfırlansın mı?'),
+        content: Text(
+          '"${member.ad}" için yeni geçici kod üretilir; eski parolası geçersiz '
+          'olur. Kullanıcı telefon + yeni kod ile girip parolasını belirler.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Sıfırla'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      final code = await ref.read(residentsApiProvider).resetPassword(member.userId);
+      if (!context.mounted) return;
+      await _showResidentTempCode(context, code, member.ad);
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 
   Future<void> _confirmRemove(BuildContext context) async {
@@ -93,10 +144,11 @@ class _ResidentTile extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Sakini çıkar?'),
+        title: const Text('Sakini sil?'),
         content: Text(
-          '"${member.ad}" siteden çıkarılır: daire bağı sonlanır ve hesabı '
-          'pasifleşir (artık giriş yapamaz).',
+          '"${member.ad}" silinir. Geçmiş kaydı yoksa tamamen silinir; varsa '
+          'pasifleşir. Her durumda telefon numarası serbest kalır '
+          '(aynı numarayla yeniden kayıt yapılabilir).',
         ),
         actions: [
           TextButton(
@@ -108,21 +160,150 @@ class _ResidentTile extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Çıkar'),
+            child: const Text('Sil'),
           ),
         ],
       ),
     );
     if (ok != true) return;
     try {
-      await ref.read(residentsApiProvider).removeResident(member.userId);
+      final deleted =
+          await ref.read(residentsApiProvider).removeResident(member.userId);
       ref.invalidate(residentsProvider);
-      messenger.showSnackBar(
-        SnackBar(content: Text('"${member.ad}" çıkarıldı')),
-      );
+      messenger.showSnackBar(SnackBar(
+        content: Text(deleted
+            ? '"${member.ad}" silindi (numara serbest)'
+            : '"${member.ad}" pasifleştirildi — geçmişi var (numara serbest)'),
+      ));
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
+  }
+}
+
+/// Geçici kod dialog'u (ekle + parola sıfırla ortak).
+Future<void> _showResidentTempCode(
+    BuildContext context, String code, String ad) {
+  return showDialog<void>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Geçici giriş kodu'),
+      content: Text(
+        '"$ad" için geçici kod:\n\n$code\n\n'
+        'Bu kod yalnızca bir kez gösterilir; sakine iletin. '
+        'Telefon + bu kod ile girip parolasını belirler.',
+      ),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Tamam'),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Sakin düzenle alt sayfası — Ad + (opsiyonel) yeni cep telefonu.
+class _EditResidentSheet extends ConsumerStatefulWidget {
+  const _EditResidentSheet({required this.member});
+
+  final ResidentMember member;
+
+  @override
+  ConsumerState<_EditResidentSheet> createState() => _EditResidentSheetState();
+}
+
+class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _adCtrl =
+      TextEditingController(text: widget.member.ad);
+  final _phoneCtrl = TextEditingController();
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _adCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    setState(() => _submitting = true);
+    try {
+      await ref.read(residentsApiProvider).updateResident(
+            widget.member.userId,
+            ad: _adCtrl.text.trim(),
+            telefon: _phoneCtrl.text.trim(),
+          );
+      if (!mounted) return;
+      navigator.pop(true);
+      messenger.showSnackBar(const SnackBar(content: Text('Güncellendi ✓')));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Sakini düzenle',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _adCtrl,
+              enabled: !_submitting,
+              decoration: const InputDecoration(
+                labelText: 'Ad Soyad',
+                prefixIcon: Icon(Icons.person_outline),
+                border: OutlineInputBorder(),
+              ),
+              validator: (v) =>
+                  (v?.trim() ?? '').length < 2 ? 'Ad zorunludur' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _phoneCtrl,
+              enabled: !_submitting,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Yeni cep telefonu',
+                hintText: 'örn. 0532 111 22 03',
+                helperText: 'Boş bırakırsanız değişmez',
+                prefixIcon: Icon(Icons.phone_outlined),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: _submitting ? null : _submit,
+              style:
+                  FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              child: _submitting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    )
+                  : const Text('Kaydet'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

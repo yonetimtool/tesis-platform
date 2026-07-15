@@ -63,10 +63,40 @@ class ResidentsApi {
     }
   }
 
-  /// Sakini SITEDEN CIKAR (pasiflestir + daire bagini bitir).
-  Future<void> removeResident(String userId) async {
+  /// Sakini duzenle: ad ve/veya cep telefonu (bos alanlar gonderilmez).
+  Future<void> updateResident(
+    String userId, {
+    String? ad,
+    String? telefon,
+  }) async {
+    final data = <String, dynamic>{};
+    if (ad != null && ad.isNotEmpty) data['ad'] = ad;
+    if (telefon != null && telefon.isNotEmpty) data['telefon'] = telefon;
     try {
-      await _dio.delete<void>('/residents/$userId');
+      await _dio.patch<void>('/residents/$userId', data: data);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Sakin parolasini sifirla — yeni gecici kod doner (bir kez).
+  Future<String> resetPassword(String userId) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/residents/$userId/reset-password',
+      );
+      return res.data!['temp_code'] as String;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Sakini SIL (akilli) — telefon her durumda serbest kalir. Donus: tamamen
+  /// silindi mi (true) yoksa pasiflestirildi mi (false, gecmisi var).
+  Future<bool> removeResident(String userId) async {
+    try {
+      final res = await _dio.delete<Map<String, dynamic>>('/residents/$userId');
+      return (res.data?['deleted'] as bool?) ?? true;
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

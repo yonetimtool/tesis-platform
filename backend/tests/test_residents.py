@@ -1,8 +1,8 @@
-"""Site sakini yonetimi — POST/GET/DELETE /residents (yonetici/admin).
+"""Site sakini yonetimi — POST/GET/PATCH/DELETE /residents + reset-password.
 
-Sakin KENDI kayit olamaz; yonetici ekler (daire + gecici kod), listeler ve
-siteden cikarir (pasiflestir + daire bagini bitir). Telefon KVKK geregi listede
-donmez. Canli API'ye vurur.
+Sakin KENDI kayit olamaz; yonetici ekler/listeler/duzenler/siler/parola-sifirlar.
+DELETE AKILLI: gecmissiz sakin tamamen silinir; gecmisi olan pasiflestirilir;
+telefon HER DURUMDA serbest kalir (yeniden kayit mumkun). Canli API'ye vurur.
 """
 from __future__ import annotations
 
@@ -22,65 +22,114 @@ def _uphone() -> str:
     return "+90" + str(uuid.uuid4().int)[:10]
 
 
-def test_add_list_remove_resident(client, world):
-    yon = _headers(client, world["slug_a"], world["yonetici_a"])
-    phone = _uphone()
-
-    # EKLE -> 201 + gecici kod + daire olusur
+def _add(client, yon, telefon, ad="Sakin", unit="R-1"):
     r = client.post(
-        "/residents",
-        headers=yon,
-        json={"ad": "Yeni Sakin", "telefon": phone, "unit_no": "R-1"},
+        "/residents", headers=yon, json={"ad": ad, "telefon": telefon, "unit_no": unit}
     )
     assert r.status_code == 201, r.text
-    temp = r.json()["temp_code"]
-    uid = r.json()["user_id"]
+    return r.json()
 
-    # LISTELE -> ad + daire no; telefon YOK
-    lst = client.get("/residents", headers=yon)
-    assert lst.status_code == 200, lst.text
-    mine = next(i for i in lst.json()["items"] if i["user_id"] == uid)
-    assert mine["ad"] == "Yeni Sakin"
-    assert mine["unit_no"] == "R-1"
-    assert mine["is_active"] is True
-    assert "telefon" not in mine
 
-    # Ilk giris (gecici kod) calisir -> parola kurulumu
-    lp = client.post("/auth/login-phone", json={"phone": phone, "password": temp})
-    assert lp.status_code == 200 and lp.json()["password_setup_required"] is True
+# ------------------------------ ekle / listele ---------------------------- #
+def test_add_and_list_resident(client, world):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    phone = _uphone()
+    res = _add(client, yon, phone, ad="Yeni Sakin", unit="R-1")
+    uid = res["user_id"]
 
-    # CIKAR -> 204, pasiflesir
-    assert client.delete(f"/residents/{uid}", headers=yon).status_code == 204
-
-    # Artik o telefonla giris YAPILAMAZ (is_active=false)
-    assert client.post(
-        "/auth/login-phone", json={"phone": phone, "password": temp}
-    ).status_code == 401
-
-    # Listede is_active=false
-    mine2 = next(
+    mine = next(
         i for i in client.get("/residents", headers=yon).json()["items"]
         if i["user_id"] == uid
     )
-    assert mine2["is_active"] is False
+    assert mine["ad"] == "Yeni Sakin" and mine["unit_no"] == "R-1"
+    assert mine["is_active"] is True
+    assert "telefon" not in mine  # KVKK
 
-    # Idempotent: tekrar cikar -> yine 204
-    assert client.delete(f"/residents/{uid}", headers=yon).status_code == 204
 
-
-def test_remove_nonexistent_resident_404(client, world):
+# --------------------------------- duzenle -------------------------------- #
+def test_edit_resident_and_phone_freed(client, world):
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
-    assert client.delete(f"/residents/{uuid.uuid4()}", headers=yon).status_code == 404
+    phone_a = _uphone()
+    phone_b = _uphone()
+    uid = _add(client, yon, phone_a, ad="Ali")["user_id"]
+
+    # ad + telefon guncelle
+    r = client.patch(f"/residents/{uid}", headers=yon, json={"ad": "Ali Veli", "telefon": phone_b})
+    assert r.status_code == 204, r.text
+    mine = next(i for i in client.get("/residents", headers=yon).json()["items"] if i["user_id"] == uid)
+    assert mine["ad"] == "Ali Veli"
+
+    # eski numara serbest -> yeni sakin acilir; yeni numara dolu -> cakisma 409
+    assert _add(client, yon, phone_a, unit="R-2")  # 201
+    dup = client.post("/residents", headers=yon, json={"ad": "x", "telefon": phone_b, "unit_no": "R-3"})
+    assert dup.status_code == 409
+
+    # bos govde 422; olmayan sakin 404
+    assert client.patch(f"/residents/{uid}", headers=yon, json={}).status_code == 422
+    assert client.patch(f"/residents/{uuid.uuid4()}", headers=yon, json={"ad": "z"}).status_code == 404
 
 
+# ----------------------------- parola sifirla ----------------------------- #
+def test_reset_password(client, world):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    phone = _uphone()
+    uid = _add(client, yon, phone)["user_id"]
+
+    r = client.post(f"/residents/{uid}/reset-password", headers=yon)
+    assert r.status_code == 200, r.text
+    code = r.json()["temp_code"]
+
+    # yeni kod ile telefon-login -> parola kurulumu gerekli
+    lp = client.post("/auth/login-phone", json={"phone": phone, "password": code})
+    assert lp.status_code == 200 and lp.json()["password_setup_required"] is True
+
+    assert client.post(f"/residents/{uuid.uuid4()}/reset-password", headers=yon).status_code == 404
+
+
+# ------------------------------- akilli sil ------------------------------- #
+def test_smart_delete_no_history_removes_and_frees_phone(client, world):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    phone = _uphone()
+    uid = _add(client, yon, phone)["user_id"]
+
+    d = client.delete(f"/residents/{uid}", headers=yon)
+    assert d.status_code == 200 and d.json()["deleted"] is True
+
+    # tamamen silindi -> listede yok; ayni numarayla yeniden kayit 201
+    assert all(i["user_id"] != uid for i in client.get("/residents", headers=yon).json()["items"])
+    assert _add(client, yon, phone, unit="R-9")  # numara serbest
+
+
+def test_smart_delete_with_history_deactivates_and_frees_phone(client, world, owner_conn):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    phone = _uphone()
+    uid = _add(client, yon, phone, ad="Gecmisli")["user_id"]
+
+    # RESTRICT bagimlilik: sakin bir sikayet acmis (owner ile dogrudan, RLS bypass)
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO complaint (tenant_id, acan_user_id, baslik, mesaj) VALUES (%s,%s,%s,%s)",
+            (world["a"], uid, "gecmis", "kayit"),
+        )
+
+    d = client.delete(f"/residents/{uid}", headers=yon)
+    assert d.status_code == 200 and d.json()["deleted"] is False  # pasiflestirildi
+
+    # pasif + telefon serbest: listede is_active=false, ayni numarayla yeniden 201
+    mine = next(i for i in client.get("/residents", headers=yon).json()["items"] if i["user_id"] == uid)
+    assert mine["is_active"] is False
+    assert _add(client, yon, phone, unit="R-8")  # numara serbest
+
+
+# --------------------------------- RBAC ----------------------------------- #
 def test_residents_rbac(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     assert client.get("/residents", headers=admin).status_code == 200
 
-    # saha rolleri + sakin: GET + DELETE 403 (rol kapisi handler'dan once)
+    rid = uuid.uuid4()
     for role in ("guard_a", "gorevli_a", "resident_a"):
         h = _headers(client, world["slug_a"], world[role])
         assert client.get("/residents", headers=h).status_code == 403, role
-        assert client.delete(
-            f"/residents/{uuid.uuid4()}", headers=h
-        ).status_code == 403, role
+        assert client.delete(f"/residents/{rid}", headers=h).status_code == 403, role
+        assert client.patch(f"/residents/{rid}", headers=h, json={"ad": "x"}).status_code == 403, role
+        assert client.post(f"/residents/{rid}/reset-password", headers=h).status_code == 403, role
