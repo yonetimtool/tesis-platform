@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_category_models.dart';
@@ -129,7 +130,7 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
   Widget build(BuildContext context) {
     final liste = _kategoriler;
     return Scaffold(
-      appBar: AppBar(title: const Text('Görev kategorileri')),
+      appBar: AppBar(title: Text(trUpper('Görev kategorileri'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _ekle,
         icon: const Icon(Icons.add),

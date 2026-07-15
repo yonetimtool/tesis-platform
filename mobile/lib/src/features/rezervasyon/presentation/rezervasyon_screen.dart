@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../domain/rezervasyon_models.dart';
 import 'rezervasyon_controller.dart';
@@ -70,7 +71,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Rezervasyon'),
+          title: Text(trUpper('Rezervasyon')),
           actions: [
             IconButton(
               tooltip: 'Yenile',

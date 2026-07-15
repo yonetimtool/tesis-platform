@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/budget_api.dart';
 import '../domain/budget_models.dart';
@@ -59,7 +60,7 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
   Widget build(BuildContext context) {
     final s = _summary;
     return Scaffold(
-      appBar: AppBar(title: const Text('Site Bütçesi')),
+      appBar: AppBar(title: Text(trUpper('Site Bütçesi'))),
       body: _error != null
           ? Center(
               child: Padding(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 // imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev/duyuru/talep
 // foto akisiyla ayni saglayici (testlerde tek noktadan override edilir).
@@ -70,7 +71,7 @@ class _KargoScreenState extends ConsumerState<KargoScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Kargo'),
+          title: Text(trUpper('Kargo')),
           actions: [
             IconButton(
               tooltip: 'Yenile',

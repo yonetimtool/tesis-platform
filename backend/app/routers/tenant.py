@@ -2,7 +2,8 @@
 
 Acil durumda mobilin arayacagi `acil_durum_telefon` buradan okunur. RLS sayesinde
 yalnizca token'daki tenant'in satiri gorunur (id = current_tenant).
-RBAC: okuma admin/security/tesis_gorevlisi; guncelleme admin.
+RBAC: okuma tum roller (herkes kendi sitesinin adini gorur — ana ekran basligi);
+guncelleme admin; ilk-giris adlandirma (setup) yonetici.
 """
 from __future__ import annotations
 
@@ -17,7 +18,9 @@ from ..schemas import TenantSettings, TenantSettingsUpdate, TenantSetupRequest
 
 router = APIRouter(prefix="/tenant", tags=["tenant"])
 
-_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+_READER = require_role(
+    "admin", "yonetici", "security", "tesis_gorevlisi", "resident"
+)
 _ADMIN = require_role("admin")
 _YONETICI = require_role("yonetici")
 

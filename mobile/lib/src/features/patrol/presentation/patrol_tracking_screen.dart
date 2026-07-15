@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../domain/patrol_models.dart';
 import '../domain/tracking_ozet.dart';
 import 'patrol_history_view.dart';
@@ -25,7 +26,7 @@ class PatrolTrackingScreen extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Devriye takibi'),
+          title: Text(trUpper('Devriye takibi')),
           actions: [
             IconButton(
               tooltip: 'Yenile',

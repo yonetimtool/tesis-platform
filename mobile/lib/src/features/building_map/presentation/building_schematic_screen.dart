@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
@@ -32,7 +33,7 @@ class BuildingSchematicScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Şikayet Haritası'),
+        title: Text(trUpper('Şikayet Haritası')),
         actions: [
           IconButton(
             tooltip: 'Yenile',

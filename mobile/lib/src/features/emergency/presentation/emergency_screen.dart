@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../domain/emergency_models.dart';
 import 'emergency_controller.dart';
 
@@ -73,7 +74,7 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
     final sending = state.phase == EmergencyPhase.sending;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Acil durum')),
+      appBar: AppBar(title: Text(trUpper('Acil durum'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

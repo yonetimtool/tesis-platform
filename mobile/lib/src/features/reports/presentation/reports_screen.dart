@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../patrol/presentation/patrol_history_view.dart'
     show PatrolErrorBanner, fmtClock, fmtDate;
 import '../../tasks/presentation/task_tip_style.dart';
@@ -19,7 +20,7 @@ class ReportsScreen extends ConsumerWidget {
     final controller = ref.read(reportsControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Aylık raporlar')),
+      appBar: AppBar(title: Text(trUpper('Aylık raporlar'))),
       body: Column(
         children: [
           _MonthBar(state: state, controller: controller),

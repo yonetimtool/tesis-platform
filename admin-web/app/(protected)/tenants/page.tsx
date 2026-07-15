@@ -55,6 +55,27 @@ export default function TenantsPage() {
     setOpen(true);
   }
 
+  async function removeTenant(t: TenantRow) {
+    // Tesisi + TUM verisini kalici siler (geri alinamaz). Yanlis tesisi silmeye
+    // karsi ad-yazarak onay.
+    const typed = window.prompt(
+      `"${t.ad}" tesisini ve TÜM verisini (yönetici, duyuru, daire, sakin...) ` +
+        `kalıcı olarak silmek üzeresiniz. Bu işlem GERİ ALINAMAZ.\n\n` +
+        `Onaylamak için tesis adını birebir yazın:`,
+    );
+    if (typed === null) return;
+    if (typed.trim() !== t.ad) {
+      window.alert("Tesis adı eşleşmedi; silme iptal edildi.");
+      return;
+    }
+    try {
+      await apiSend(`/api/tenants/${t.id}`, "DELETE");
+      mutate();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Silinemedi.");
+    }
+  }
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -198,9 +219,17 @@ export default function TenantsPage() {
                 </td>
                 <td className="px-3 py-2 text-slate-600">{fmtDate(t.created_at)}</td>
                 <td className="px-3 py-2 text-right">
-                  <Link href={`/tenants/${t.id}`} className={btnGhost}>
-                    Yönet
-                  </Link>
+                  <div className="flex justify-end gap-2">
+                    <Link href={`/tenants/${t.id}`} className={btnGhost}>
+                      Yönet
+                    </Link>
+                    <button
+                      className="rounded-lg px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+                      onClick={() => removeTenant(t)}
+                    >
+                      Sil
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

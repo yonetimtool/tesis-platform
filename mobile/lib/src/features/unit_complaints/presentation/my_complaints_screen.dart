@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../domain/unit_complaint_models.dart';
 import 'my_complaints_controller.dart';
 
@@ -17,7 +18,7 @@ class MyComplaintsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Şikayetlerim'),
+        title: Text(trUpper('Şikayetlerim')),
         actions: [
           IconButton(
             tooltip: 'Yenile',

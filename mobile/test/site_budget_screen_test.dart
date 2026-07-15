@@ -54,7 +54,7 @@ void main() {
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
 
-    expect(find.text('Site Bütçesi'), findsOneWidget);
+    expect(find.text('SİTE BÜTÇESİ'), findsOneWidget); // AppBar basligi buyuk harf
     expect(find.text('2.000,00 TL'), findsOneWidget); // gelir
     expect(find.text('4.250,00 TL'), findsOneWidget); // gider
     expect(find.text('-2.250,00 TL'), findsOneWidget); // kasa (negatif)

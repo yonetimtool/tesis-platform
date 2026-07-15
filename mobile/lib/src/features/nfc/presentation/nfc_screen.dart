@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../routing/app_router.dart';
 import '../../scan/data/scan_outbox.dart';
 import '../../scan/domain/outbox_entry.dart';
@@ -55,7 +56,7 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('NFC etiket okuma'),
+        title: Text(trUpper('NFC etiket okuma')),
         actions: [
           _OutboxBadge(
             pendingCount: outboxState.pendingCount,

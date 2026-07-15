@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 // imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev/duyuru/talep/
 // kargo foto akisiyla ayni saglayici (testlerde tek noktadan override).
@@ -29,7 +30,7 @@ class SiteKuraliScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Site Kuralları'),
+        title: Text(trUpper('Site Kuralları')),
         actions: [
           IconButton(
             tooltip: 'Yenile',

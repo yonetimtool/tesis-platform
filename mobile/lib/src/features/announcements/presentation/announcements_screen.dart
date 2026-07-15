@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 // imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev foto akisiyla
 // ayni saglayici (testlerde tek noktadan override edilir).
@@ -25,7 +26,7 @@ class AnnouncementsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Duyurular'),
+        title: Text(trUpper('Duyurular')),
         actions: [
           IconButton(
             tooltip: 'Yenile',

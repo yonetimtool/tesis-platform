@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/theme/theme_controller.dart';
 
 /// Ayarlar — kullanici tercihleri. Su an: tema modu (acik/koyu/sistem).
@@ -12,7 +13,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Ayarlar')),
+      appBar: AppBar(title: Text(trUpper('Ayarlar'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

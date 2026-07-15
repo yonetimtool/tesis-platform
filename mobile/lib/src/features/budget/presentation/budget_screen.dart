@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/budget_api.dart';
 import '../domain/budget_models.dart';
@@ -77,7 +78,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Bütçe'),
+          title: Text(trUpper('Bütçe')),
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Özet'),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../../call/presentation/call_button.dart';
 import '../data/visitor_api.dart';
@@ -58,7 +59,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ziyaretçiler'),
+        title: Text(trUpper('Ziyaretçiler')),
         actions: [
           IconButton(
             tooltip: 'Yenile',

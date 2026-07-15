@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../patrol/presentation/patrol_history_view.dart'
     show PatrolErrorBanner, fmtClock, fmtDate;
 import '../../reports/domain/report_models.dart' show kurusToTl;
@@ -21,7 +22,7 @@ class MyDuesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Aidatım'),
+        title: Text(trUpper('Aidatım')),
         actions: [
           IconButton(
             tooltip: 'Yenile',

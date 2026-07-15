@@ -289,7 +289,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /emergency`                     |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET  /emergency`                     |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `PATCH /emergency/{id}`               |  ✅   | ✅  | ❌  | ❌  | ❌  |
-| `GET  /tenant/settings`               |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `GET  /tenant/settings` (site adi dahil)|  ✅  | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /tenant/settings`              |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `POST /tenants` (admin tesis+yonetici)|  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `GET  /tenants` (admin tum tesisler)  |  ✅   | ❌  | ❌  | ❌  | ❌  |

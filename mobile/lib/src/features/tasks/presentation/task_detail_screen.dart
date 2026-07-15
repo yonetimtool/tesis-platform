@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../data/task_category_api.dart';
@@ -42,7 +43,7 @@ class TaskDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(task.ad),
+        title: Text(trUpper(task.ad)),
         actions: [
           if (canManage)
             PopupMenuButton<String>(

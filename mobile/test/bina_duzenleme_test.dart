@@ -185,20 +185,21 @@ void main() {
       await tester.pumpWidget(_app(api, role: role));
       await tester.pumpAndSettle();
 
-      // Baslik salt-okuma modunda "Bina Yapisi".
-      expect(find.text('Bina Yapısı'), findsOneWidget);
+      // Baslik salt-okuma modunda "Bina Yapisi" (AppBar buyuk harf).
+      expect(find.text('BİNA YAPISI'), findsOneWidget);
       // Yapi gorunur (blok kutucugu), ama "+ Blok" ekleme kutusu YOK.
       expect(find.text('Blok A'), findsOneWidget);
       expect(find.text('Blok'), findsNothing); // ekleme kutucugu gizli
 
       // Blok kutucuguna uzun bas → yonetim menusu (duzenle/sil) ACILMAZ.
+      // (Salt-okumada tile'in onLongPress'i yok; uzun bas onTap'i tetikler,
+      // yani bloga GIRER — ayri bir tap'a gerek yok.)
       await tester.longPress(find.text('Blok A'));
       await tester.pumpAndSettle();
       expect(find.text('Bloğu sil'), findsNothing);
 
-      // Bloga gir → kat plani gorunur ama "Kat ekle" ve "+" daire ekle YOK.
-      await tester.tap(find.text('Blok A'));
-      await tester.pumpAndSettle();
+      // Artik blok icindeyiz: kat plani gorunur ama "Kat ekle" ve "+" daire
+      // ekle hucresi YOK.
       expect(find.text('A-1'), findsOneWidget); // daire yapisi gorunur
       expect(find.text('Kat ekle'), findsNothing);
       expect(find.byIcon(Icons.add), findsNothing); // "+" daire ekle hucresi yok

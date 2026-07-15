@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../data/scan_outbox.dart';
 import '../domain/outbox_entry.dart';
 
@@ -19,7 +20,7 @@ class OutboxScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gönderim kuyruğu'),
+        title: Text(trUpper('Gönderim kuyruğu')),
         actions: [
           if (state.failedCount > 0)
             IconButton(

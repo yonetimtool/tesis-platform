@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../routing/app_router.dart';
 import '../domain/unit_access_models.dart';
@@ -22,7 +23,7 @@ class UnitAccessScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Görüntüleme izni'),
+        title: Text(trUpper('Görüntüleme izni')),
         actions: [
           if (state.canRequest)
             IconButton(

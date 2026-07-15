@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../domain/etkinlik_models.dart';
 import 'etkinlik_controller.dart';
@@ -68,7 +69,7 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Etkinlikler'),
+          title: Text(trUpper('Etkinlikler')),
           actions: [
             IconButton(
               tooltip: 'Yenile',

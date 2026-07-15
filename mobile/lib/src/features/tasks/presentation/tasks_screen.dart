@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../routing/app_router.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_models.dart';
@@ -52,7 +53,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.yonetimGorunumu ? 'Görev yönetimi' : 'Görevlerim'),
+        title: Text(trUpper(widget.yonetimGorunumu ? 'Görev yönetimi' : 'Görevlerim')),
         actions: [
           // Kategori yönetimi (A6) — yalnız yönetim görünümünde ve
           // yetkili rolde (canManage); backend RBAC yazmayı ayrıca zorlar.

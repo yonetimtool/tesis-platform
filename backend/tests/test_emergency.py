@@ -142,6 +142,8 @@ def test_tenant_settings_phone_read_write(client, world):
     assert got.status_code == 200 and got.json()["acil_durum_telefon"] == "+902120001122"
     assert got.json()["tenant_id"] == str(world["a"])
 
-    # resident okuyamaz; security yazamaz
-    assert client.get("/tenant/settings", headers=resident).status_code == 403
+    # resident de OKUYABILIR (ana ekran basligi icin site adi — tum roller);
+    # ama security YAZAMAZ (guncelleme admin-only)
+    r = client.get("/tenant/settings", headers=resident)
+    assert r.status_code == 200 and r.json()["tenant_id"] == str(world["a"])
     assert client.patch("/tenant/settings", headers=guard, json={"acil_durum_telefon": "x"}).status_code == 403

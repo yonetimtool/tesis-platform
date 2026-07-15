@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../../kargo/data/kargo_api.dart';
 import '../../kargo/domain/kargo_models.dart';
@@ -82,7 +83,7 @@ class _UnitAccessRecordsScreenState
         ? ''
         : ' — ${widget.unitNo}';
     return Scaffold(
-      appBar: AppBar(title: Text('$baslik$daire')),
+      appBar: AppBar(title: Text(trUpper('$baslik$daire'))),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _loading

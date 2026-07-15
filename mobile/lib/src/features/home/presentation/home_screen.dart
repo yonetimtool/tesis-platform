@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../routing/app_router.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../scan/data/scan_outbox.dart';
+import '../../tenant/data/tenant_api.dart';
 import '../domain/home_menu.dart';
 
 /// Giris sonrasi ana ekran — menu, role gore bilesir (home_menu.dart;
@@ -17,13 +19,6 @@ import '../domain/home_menu.dart';
 /// 2 sutunlu kompakt ikon-izgara (buyuk ikon + BUYUK HARF baslik).
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
-
-  /// Turkce-dogru buyuk harf. Dart'in `toUpperCase()`'i 'i' -> 'I' cevirir;
-  /// biz 'i' -> 'İ' ve 'ı' -> 'I' isteriz. Diger harfleri (ç/ğ/ö/ş/ü)
-  /// `toUpperCase` zaten dogru cevirir. Once 'ı' donusturulur ki sonraki
-  /// adimda dokunulmasin.
-  static String _trUpper(String s) =>
-      s.replaceAll('ı', 'I').replaceAll('i', 'İ').toUpperCase();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,9 +31,16 @@ class HomeScreen extends ConsumerWidget {
     final gridEntries =
         entries.where((e) => e != HomeMenuEntry.emergency).toList();
 
+    // Sol ustte tesis (site) adi — herkes kendi sitesini gorur. Kurulum
+    // tamamlanana / yuklenene kadar notr baslik.
+    final siteAd = ref.watch(tenantSettingsProvider).value?.ad;
+    final baslik = (siteAd != null && siteAd.trim().isNotEmpty)
+        ? siteAd
+        : 'Ana ekran';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ana ekran'),
+        title: Text(baslik),
         actions: [
           IconButton(
             tooltip: 'Profil',
@@ -166,7 +168,7 @@ class HomeScreen extends ConsumerWidget {
               icon,
               const SizedBox(height: 12),
               Text(
-                _trUpper(data.title),
+                trUpper(data.title),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

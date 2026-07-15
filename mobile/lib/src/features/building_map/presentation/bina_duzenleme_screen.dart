@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
@@ -70,7 +71,7 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: drilledIn ? BackButton(onPressed: _closeBlock) : null,
-        title: Text(_titleFor(readOnly)),
+        title: Text(trUpper(_titleFor(readOnly))),
         actions: [
           IconButton(
             tooltip: 'Yenile',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/ui/temp_code_dialog.dart';
 import '../../../core/validators/password_rule.dart';
@@ -17,7 +18,7 @@ class StaffScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final staffAsync = ref.watch(fieldStaffProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Saha Personeli')),
+      appBar: AppBar(title: Text(trUpper('Saha Personeli'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddSheet(context, ref),
         icon: const Icon(Icons.person_add_alt_1),

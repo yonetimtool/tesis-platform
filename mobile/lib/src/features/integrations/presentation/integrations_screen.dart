@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../domain/integration_models.dart';
 import 'integrations_controller.dart';
@@ -16,7 +17,7 @@ class IntegrationsScreen extends ConsumerWidget {
     final controller = ref.read(integrationsControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Entegrasyonlar')),
+      appBar: AppBar(title: Text(trUpper('Entegrasyonlar'))),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: const Text('Yeni'),

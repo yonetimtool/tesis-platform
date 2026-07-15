@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/text/tr_upper.dart';
 import '../domain/asset_models.dart';
 import 'assets_controller.dart';
 
@@ -23,7 +24,7 @@ class AssetsScreen extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Demirbaş'),
+          title: Text(trUpper('Demirbaş')),
           bottom: TabBar(
             tabs: [
               const Tab(text: 'Etiket okut'),
