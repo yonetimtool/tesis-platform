@@ -22,6 +22,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..celery_app import celery_app
 from ..crud_helpers import ensure_checkpoints_in_tenant, get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -43,6 +44,17 @@ router = APIRouter(prefix="/patrol-plans", tags=["patrol-plans"])
 # rolleri yalniz OKUR.
 _WRITER = require_role("admin", "yonetici")
 _READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+
+
+def _regen_windows() -> None:
+    """Plan/checkpoint degisikligi sonrasi patrol_window'lari HEMEN uret (saatlik
+    beat'i beklemeden -> yonetici "Bugun"de + saha "Turlarim"da aninda gorsun).
+    Kisa countdown ile: istek transaction'i commit'lenene kadar bekler (yarissiz).
+    Best-effort: broker erisilemezse sessizce gec (beat fallback zaten var)."""
+    try:
+        celery_app.send_task("scheduler.generate_patrol_windows", countdown=3)
+    except Exception:
+        pass
 
 
 async def _ensure_shift_in_tenant(db: AsyncSession, shift_id: uuid.UUID | None) -> None:
@@ -127,6 +139,7 @@ async def create_plan(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    _regen_windows()
     return obj
 
 
@@ -149,6 +162,7 @@ async def update_plan(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    _regen_windows()
     return obj
 
 
@@ -225,4 +239,5 @@ async def assign_plan_checkpoints(
     except IntegrityError as exc:
         raise translate_integrity(exc)
 
+    _regen_windows()
     return await _checkpoints_for(db, plan_id)
