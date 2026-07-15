@@ -5,6 +5,7 @@ import '../../../core/error/api_exception.dart';
 import '../../../core/text/tr_upper.dart';
 import '../../checkpoints/presentation/checkpoints_screen.dart';
 import '../data/scan_report_api.dart';
+import 'patrol_plans_screen.dart';
 import '../domain/patrol_models.dart';
 import '../domain/tracking_ozet.dart';
 import 'patrol_history_view.dart';
@@ -31,6 +32,13 @@ class PatrolTrackingScreen extends ConsumerWidget {
         appBar: AppBar(
           title: Text(trUpper('Devriye takibi')),
           actions: [
+            IconButton(
+              tooltip: 'Devriye planları',
+              icon: const Icon(Icons.route_outlined),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PatrolPlansScreen()),
+              ),
+            ),
             IconButton(
               tooltip: 'Kontrol noktaları',
               icon: const Icon(Icons.add_location_alt_outlined),

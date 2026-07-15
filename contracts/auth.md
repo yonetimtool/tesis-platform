@@ -236,12 +236,12 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `PATCH /checkpoints/{id}`             |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `DELETE /checkpoints/{id}`            |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `PUT  /checkpoints/{id}/sdm-key` (kripto)| ✅ | ❌  | ❌  | ❌  | ❌  |
-| `GET  /patrol-plans` (liste/detay)    |  ✅   | ❌  | ✅  | ✅  | ❌  |
-| `POST /patrol-plans`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| `PATCH /patrol-plans/{id}`            |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| `DELETE /patrol-plans/{id}`           |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| `GET  /patrol-plans/{id}/checkpoints` |  ✅   | ❌  | ✅  | ✅  | ❌  |
-| `PUT  /patrol-plans/{id}/checkpoints` |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `GET  /patrol-plans` (liste/detay)    |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `POST /patrol-plans` (yonetici tanimlar)| ✅  | ✅  | ❌  | ❌  | ❌  |
+| `PATCH /patrol-plans/{id}`            |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `DELETE /patrol-plans/{id}`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET  /patrol-plans/{id}/checkpoints` |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `PUT  /patrol-plans/{id}/checkpoints` |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /scans` (okutma)                |  ✅   | ❌  | ✅  | ✅  | ❌  |
 | `GET  /scans` (gun-gun tarama raporu) |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /dashboard/live`                |  ✅   | ✅  | ✅  | ❌  | ❌  |

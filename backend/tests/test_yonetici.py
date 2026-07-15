@@ -165,7 +165,8 @@ def test_yonetici_yapilandirma_ve_saha_kaniti_403(client, world):
     # NOT: checkpoint CRUD artik admin+YONETICI (Parca D — yonetici uygulamada
     # kontrol noktasi tanimlar); bkz. test_scans.py::test_checkpoint_crud_by_yonetici.
     assert client.post("/shifts", headers=yonetici, json={"ad": "x", "baslangic_saat": "08:00", "bitis_saat": "16:00"}).status_code == 403
-    assert client.post("/patrol-plans", headers=yonetici, json={"ad": "x", "baslangic_saat": "08:00", "bitis_saat": "16:00", "periyot_dakika": 60}).status_code == 403
+    # NOT: patrol-plan CRUD artik admin+YONETICI (yonetici uygulamada devriye
+    # plani tanimlar); bkz. test_patrol_plans.py.
     assert client.post("/assets", headers=yonetici, json={"ad": "x"}).status_code == 403
     # NOT: daire (unit) CRUD artik admin+YONETICI (D-viz Rev-1 bina yerlesimi);
     # bkz. test_blocks.py + test_building_map.py. Burada admin-only olanlar kalir.
@@ -180,7 +181,8 @@ def test_yonetici_yapilandirma_ve_saha_kaniti_403(client, world):
 
     # tanim okumalari yonetici'ye kapali olanlar (saha rollerine ozel)
     assert client.get("/shifts", headers=yonetici).status_code == 403
-    assert client.get("/patrol-plans", headers=yonetici).status_code == 403
+    # NOT: patrol-plans OKUMA artik yonetici'ye ACIK (devriye plani yonetimi).
+    assert client.get("/patrol-plans", headers=yonetici).status_code == 200
     assert client.get("/me/patrol-window", headers=yonetici).status_code == 403
 
     # saha kaniti uretemez

@@ -9,8 +9,9 @@ Endpoint'ler (sozlesmedeki gibi):
   GET    /patrol-plans/{id}/checkpoints  atanmis noktalar (sirali)
   PUT    /patrol-plans/{id}/checkpoints  atamayi tamamen degistir (replace)
 
-RBAC: GET admin/security/tesis_gorevlisi; yazma (POST/PATCH/DELETE/PUT) yalniz admin.
-Capraz-tenant shift/checkpoint referansi uygulama katmaninda 422 ile reddedilir.
+RBAC: GET admin/yonetici/security/tesis_gorevlisi; yazma (POST/PATCH/DELETE/PUT)
+admin + yonetici (yonetici uygulamada devriye plani tanimlar). Capraz-tenant
+shift/checkpoint referansi uygulama katmaninda 422 ile reddedilir.
 """
 from __future__ import annotations
 
@@ -37,8 +38,11 @@ from ..schemas import (
 
 router = APIRouter(prefix="/patrol-plans", tags=["patrol-plans"])
 
-_ADMIN = require_role("admin")
-_READER = require_role("admin", "security", "tesis_gorevlisi")
+# Devriye plani CRUD + checkpoint atama: admin + yonetici (yonetici uygulamada
+# devriye plani tanimlar — checkpoint kumesi + saatler + tur sikligi). Saha
+# rolleri yalniz OKUR.
+_WRITER = require_role("admin", "yonetici")
+_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 
 
 async def _ensure_shift_in_tenant(db: AsyncSession, shift_id: uuid.UUID | None) -> None:
@@ -113,7 +117,7 @@ async def get_plan(
 async def create_plan(
     body: PatrolPlanCreate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_WRITER),
 ) -> PatrolPlan:
     await _ensure_shift_in_tenant(db, body.shift_id)
     obj = PatrolPlan(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
@@ -131,7 +135,7 @@ async def update_plan(
     plan_id: uuid.UUID,
     body: PatrolPlanUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_WRITER),
 ) -> PatrolPlan:
     obj = await get_or_404(db, PatrolPlan, plan_id)
     data = body.model_dump(exclude_unset=True)
@@ -152,7 +156,7 @@ async def update_plan(
 async def delete_plan(
     plan_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_WRITER),
 ) -> Response:
     obj = await get_or_404(db, PatrolPlan, plan_id)
     await db.delete(obj)
@@ -179,7 +183,7 @@ async def assign_plan_checkpoints(
     plan_id: uuid.UUID,
     body: PatrolPlanCheckpointAssign,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_WRITER),
 ) -> list[PatrolPlanCheckpoint]:
     await get_or_404(db, PatrolPlan, plan_id)
 
