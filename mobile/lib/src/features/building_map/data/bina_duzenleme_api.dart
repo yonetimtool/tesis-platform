@@ -114,6 +114,48 @@ class BinaDuzenlemeApi {
       throw ApiException.fromDio(e);
     }
   }
+
+  /// `POST /units/bulk` — toplu daire olustur. Sunucu ardisik numaralandirir
+  /// (kat kat); var olan no'lar atlanir.
+  Future<BulkUnitResult> bulkCreateUnits({
+    String? blok,
+    required int katSayisi,
+    required int katBasiDaire,
+    required int baslangicNo,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/units/bulk',
+        data: {
+          if (blok != null && blok.isNotEmpty) 'blok': blok,
+          'kat_sayisi': katSayisi,
+          'kat_basi_daire': katBasiDaire,
+          'baslangic_no': baslangicNo,
+        },
+      );
+      final d = res.data ?? const {};
+      return BulkUnitResult(
+        olusturulanSayi: (d['olusturulan'] as List?)?.length ?? 0,
+        atlanan: ((d['atlanan'] as List?) ?? const <dynamic>[]).cast<String>(),
+        bitisNo: (d['bitis_no'] as num?)?.toInt() ?? 0,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+}
+
+/// `POST /units/bulk` sonucu — kac daire olustu, hangileri atlandi, bitis no.
+class BulkUnitResult {
+  const BulkUnitResult({
+    required this.olusturulanSayi,
+    required this.atlanan,
+    required this.bitisNo,
+  });
+
+  final int olusturulanSayi;
+  final List<String> atlanan;
+  final int bitisNo;
 }
 
 final binaDuzenlemeApiProvider = Provider<BinaDuzenlemeApi>((ref) {

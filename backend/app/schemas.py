@@ -1624,6 +1624,45 @@ class UnitCreate(BaseModel):
     aktif: bool = True
 
 
+_BULK_MAX = 500  # tek istekte en fazla daire
+
+
+class UnitBulkCreate(BaseModel):
+    """Toplu daire olusturma: bir blok icin kat_sayisi × kat_basi_daire adet
+    daire, baslangic_no'dan itibaren ARDISIK numaralandirilir (kat kat dolar:
+    kat 1 baslangic..+M-1, kat 2 devam eder). Daire no = blok varsa '{blok}-{n}',
+    yoksa '{n}'. Zaten var olan no'lar atlanir. Katlar 1..kat_sayisi; sira
+    1..kat_basi_daire. En fazla 500 daire/istek."""
+
+    blok: str | None = Field(None, min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    kat_sayisi: int = Field(..., ge=1, le=_KAT_MAX)
+    kat_basi_daire: int = Field(..., ge=1, le=_SIRA_MAX)
+    baslangic_no: int = Field(..., ge=0, le=999999)
+
+    @model_validator(mode="after")
+    def _cap(self) -> "UnitBulkCreate":
+        if self.kat_sayisi * self.kat_basi_daire > _BULK_MAX:
+            raise ValueError(f"Tek seferde en fazla {_BULK_MAX} daire olusturulabilir.")
+        return self
+
+    @property
+    def toplam(self) -> int:
+        return self.kat_sayisi * self.kat_basi_daire
+
+    @property
+    def bitis_no(self) -> int:
+        return self.baslangic_no + self.toplam - 1
+
+
+class UnitBulkResult(BaseModel):
+    """Toplu olusturma sonucu: olusturulan daireler + atlanan (zaten var olan)
+    no'lar + hesaplanan bitis_no."""
+
+    olusturulan: list[UnitOut]
+    atlanan: list[str]
+    bitis_no: int
+
+
 class UnitUpdate(BaseModel):
     no: str | None = Field(None, min_length=1, max_length=50, pattern=_UNIT_NO_PATTERN)
     blok: str | None = Field(None, min_length=1, max_length=8, pattern=_BLOK_PATTERN)

@@ -390,15 +390,27 @@ class _BlockDetail extends ConsumerWidget {
               color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 12),
-        // Salt-okuma: "Kat ekle" gizli.
+        // Salt-okuma: "Kat ekle" + "Toplu daire ekle" gizli.
         if (!readOnly) ...[
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: onAddFloor,
-              icon: const Icon(Icons.add),
-              label: const Text('Kat ekle'),
-            ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onAddFloor,
+                icon: const Icon(Icons.add),
+                label: const Text('Kat ekle'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _showBulkUnitForm(
+                  context,
+                  ref,
+                  blok: _blockless ? null : label,
+                ),
+                icon: const Icon(Icons.grid_view),
+                label: const Text('Toplu daire ekle'),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
         ],
@@ -989,6 +1001,206 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
                   child: const Text('İptal'),
                 ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Toplu daire ekleme (Parca B): blok + kat sayisi + kat basi daire + baslangic
+// no -> sunucu ardisik uretir (kat kat). Canli onizleme; var olan no atlanir.
+// ---------------------------------------------------------------------------
+Future<void> _showBulkUnitForm(
+  BuildContext context,
+  WidgetRef ref, {
+  required String? blok,
+}) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+      child: _BulkUnitForm(blok: blok),
+    ),
+  );
+}
+
+class _BulkUnitForm extends ConsumerStatefulWidget {
+  const _BulkUnitForm({required this.blok});
+
+  final String? blok;
+
+  @override
+  ConsumerState<_BulkUnitForm> createState() => _BulkUnitFormState();
+}
+
+class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
+  final _katSayisi = TextEditingController();
+  final _katBasi = TextEditingController();
+  final _baslangic = TextEditingController(text: '1');
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _katSayisi.dispose();
+    _katBasi.dispose();
+    _baslangic.dispose();
+    super.dispose();
+  }
+
+  int? get _kat => int.tryParse(_katSayisi.text.trim());
+  int? get _mDaire => int.tryParse(_katBasi.text.trim());
+  int? get _bas => int.tryParse(_baslangic.text.trim());
+
+  String get _no0 => widget.blok != null ? '${widget.blok}-' : '';
+
+  /// Canli onizleme metni (gecersiz girdide bos).
+  String get _onizleme {
+    final k = _kat, m = _mDaire, b = _bas;
+    if (k == null || m == null || b == null || k < 1 || m < 1 || b < 0) {
+      return '';
+    }
+    final toplam = k * m;
+    if (toplam > 500) return 'En fazla 500 daire (şu an $toplam).';
+    final bitis = b + toplam - 1;
+    return '$_no0$b … $_no0$bitis  ($toplam daire, $k kat × $m)';
+  }
+
+  Future<void> _submit() async {
+    final k = _kat, m = _mDaire, b = _bas;
+    if (k == null || m == null || b == null || k < 1 || m < 1 || b < 0) {
+      setState(() => _error = 'Kat sayısı, kat başına daire ve başlangıç no gerekli.');
+      return;
+    }
+    if (k * m > 500) {
+      setState(() => _error = 'Tek seferde en fazla 500 daire.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final res =
+          await ref.read(binaDuzenlemeControllerProvider.notifier).bulkCreateUnits(
+                blok: widget.blok,
+                katSayisi: k,
+                katBasiDaire: m,
+                baslangicNo: b,
+              );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      final atl = res.atlanan.isEmpty
+          ? ''
+          : ' (${res.atlanan.length} zaten vardı, atlandı)';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${res.olusturulanSayi} daire eklendi ✓$atl')),
+      );
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Eklenemedi. Tekrar deneyin.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final onizleme = _onizleme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.blok != null
+                ? 'Toplu daire ekle — Blok ${widget.blok}'
+                : 'Toplu daire ekle — Bloksuz',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Numaralar başlangıçtan itibaren ardışık, kat kat dolar. Var olan '
+            'daire no\'ları atlanır.',
+            style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _katSayisi,
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    labelText: 'Kat sayısı',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _katBasi,
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    labelText: 'Kat başına daire',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _baslangic,
+            keyboardType: TextInputType.number,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              labelText: 'Başlangıç no',
+              hintText: 'örn. 101',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          if (onizleme.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(onizleme,
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ],
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+          ],
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              icon: _busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.grid_view),
+              label: const Text('Daireleri oluştur'),
+              onPressed: _busy ? null : _submit,
+            ),
           ),
         ],
       ),

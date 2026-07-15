@@ -298,7 +298,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `PATCH /tenants/{id}/yonetici`         |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `POST /tenants/{id}/yonetici/reset-credential`| ✅ | ❌ | ❌ | ❌ | ❌ |
 | `DELETE /tenants/{id}` (tesisi sil)    |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| daire CRUD + yerlesim (`/units*`,layout)|  ✅   | ✅  | ❌  | ❌  | ❌  |
+| daire CRUD + yerlesim + TOPLU (`/units*`,layout,bulk)| ✅ | ✅ | ❌ | ❌ | ❌ |
 | daire sakin atama (`/units/{id}/residents`)| ✅ | ❌  | ❌  | ❌  | ❌  |
 | bina blok CRUD (`/blocks*`)           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET /units/{id}/dues`                |  ✅   | ✅  | ❌  | ❌  | ❌  |
@@ -388,8 +388,10 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 >   geriye-uyum için şemada durur). `building-map` de hiçbir role complainant
 >   döndürmez. Kimlik yalnız sunucuda spam-koruması için tutulur.
 > - **Bina blok CRUD (`/blocks*`)** ve daire CRUD/yerleşim (`/units*`,
->   `/units/{id}/layout`) **YAZMA** admin **+ yonetici**'dir (Rev-2 görsel editörü
->   bu uçları kullanır; blok-suz + blok-tabanlı siteler birlikte desteklenir).
+>   `/units/{id}/layout`, **`POST /units/bulk` toplu ekleme**) **YAZMA** admin
+>   **+ yonetici**'dir (Rev-2 görsel editörü bu uçları kullanır; blok-suz +
+>   blok-tabanlı siteler birlikte desteklenir). Toplu ekleme: blok + kat sayısı
+>   + kat başına daire + başlangıç no → ardışık üretir; var olan no atlanır.
 >   **OKUMA** (`GET /blocks`, `GET /units`) admin+yonetici **+
 >   security/tesis_gorevlisi**: saha rolleri "Bina Düzenleme" ekranını
 >   **SALT-OKUMA** görür (blok/kat/daire yapısını referans olarak; tüm düzenleme

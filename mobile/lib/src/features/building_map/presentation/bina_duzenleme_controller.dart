@@ -137,6 +137,23 @@ class BinaDuzenlemeController extends Notifier<BinaDuzenlemeState> {
     await ref.read(binaDuzenlemeApiProvider).deleteUnit(unitId);
     await refresh();
   }
+
+  /// Toplu daire ekle; sonuc (olusturulan/atlanan/bitis) cagirana doner.
+  Future<BulkUnitResult> bulkCreateUnits({
+    String? blok,
+    required int katSayisi,
+    required int katBasiDaire,
+    required int baslangicNo,
+  }) async {
+    final res = await ref.read(binaDuzenlemeApiProvider).bulkCreateUnits(
+          blok: blok,
+          katSayisi: katSayisi,
+          katBasiDaire: katBasiDaire,
+          baslangicNo: baslangicNo,
+        );
+    await refresh();
+    return res;
+  }
 }
 
 final binaDuzenlemeControllerProvider =

@@ -20,6 +20,8 @@ from ..errors import APIError
 from ..models import AppUser, Unit, UnitResident
 from ..schemas import (
     ResidentAssign,
+    UnitBulkCreate,
+    UnitBulkResult,
     UnitCreate,
     UnitLayoutUpdate,
     UnitListResponse,
@@ -117,6 +119,58 @@ async def create_unit(
         raise translate_integrity(exc)
     await db.refresh(obj)
     return obj
+
+
+@router.post("/bulk", response_model=UnitBulkResult, status_code=201)
+async def bulk_create_units(
+    body: UnitBulkCreate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_LAYOUT_EDITOR),
+) -> UnitBulkResult:
+    """Toplu daire olustur: kat_sayisi × kat_basi_daire adet, baslangic_no'dan
+    ARDISIK (kat kat dolar). no = blok varsa '{blok}-{n}' yoksa '{n}'; zaten var
+    olan no'lar ATLANIR (kalanlar olusturulur). Katlar 1..kat_sayisi, sira
+    1..kat_basi_daire. RBAC admin+yonetici (create ile ayni)."""
+    # Plani kur: (no, kat, sira) — kat kat, ardisik numaralandirma.
+    plan: list[tuple[str, int, int]] = []
+    n = body.baslangic_no
+    for kat in range(1, body.kat_sayisi + 1):
+        for sira in range(1, body.kat_basi_daire + 1):
+            no = f"{body.blok}-{n}" if body.blok else str(n)
+            plan.append((no, kat, sira))
+            n += 1
+
+    # Zaten var olan no'lari bul (RLS -> tenant-ici); onlari atla.
+    nolar = [p[0] for p in plan]
+    mevcut = set(
+        (await db.execute(select(Unit.no).where(Unit.no.in_(nolar)))).scalars().all()
+    )
+
+    olusturulan: list[Unit] = []
+    atlanan: list[str] = []
+    for no, kat, sira in plan:
+        if no in mevcut:
+            atlanan.append(no)
+            continue
+        obj = Unit(tenant_id=user.tenant_id, no=no, blok=body.blok, kat=kat, sira=sira)
+        db.add(obj)
+        olusturulan.append(obj)
+
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        if is_unique_violation(exc):
+            # es zamanli baska istek ayni no'lari eklemis olabilir.
+            raise APIError(409, "conflict", "Daire no cakismasi (es zamanli ekleme).")
+        raise translate_integrity(exc)
+    for obj in olusturulan:
+        await db.refresh(obj)
+
+    return UnitBulkResult(
+        olusturulan=[UnitOut.model_validate(o) for o in olusturulan],
+        atlanan=atlanan,
+        bitis_no=body.bitis_no,
+    )
 
 
 @router.patch("/{unit_id}", response_model=UnitOut)
