@@ -14,7 +14,7 @@ class TasksState {
     this.errorMessage,
     this.forbidden = false,
     this.tasks = const [],
-    this.tipFilter,
+    this.kategoriFilter,
     this.sadeceBenim = true,
     this.currentUserId,
     this.canManage = false,
@@ -32,8 +32,9 @@ class TasksState {
   /// suzulur: `?atanan_user_id=me` (§11 #1 kapandi).
   final List<Task> tasks;
 
-  /// Secili tip filtresi (null → tumu). Sunucuya `tip` parametresi gider.
-  final TaskTip? tipFilter;
+  /// Secili kategori filtresi (null → tumu; kategori UUID; ya da 'diger' =
+  /// kategorisiz/"Diğer"). Sunucuya `kategori_id` parametresi gider.
+  final String? kategoriFilter;
 
   /// true (varsayilan) → yalniz bana atananlar (`atanan_user_id=me`);
   /// false → tum aktif gorevler (havuz/atanmamislar dahil, eski gorunum).
@@ -58,7 +59,7 @@ class TasksState {
     Object? errorMessage = _sentinel,
     bool? forbidden,
     List<Task>? tasks,
-    Object? tipFilter = _sentinel,
+    Object? kategoriFilter = _sentinel,
     bool? sadeceBenim,
     Object? currentUserId = _sentinel,
     bool? canManage,
@@ -72,8 +73,9 @@ class TasksState {
           : errorMessage as String?,
       forbidden: forbidden ?? this.forbidden,
       tasks: tasks ?? this.tasks,
-      tipFilter:
-          tipFilter == _sentinel ? this.tipFilter : tipFilter as TaskTip?,
+      kategoriFilter: kategoriFilter == _sentinel
+          ? this.kategoriFilter
+          : kategoriFilter as String?,
       sadeceBenim: sadeceBenim ?? this.sadeceBenim,
       currentUserId: currentUserId == _sentinel
           ? this.currentUserId
@@ -126,7 +128,7 @@ class TasksController extends Notifier<TasksState> {
       final userId = await ref.read(currentUserIdProvider.future);
       final role = await ref.read(currentUserRoleProvider.future);
       final tasks = await ref.read(taskApiProvider).fetchTasks(
-            tip: state.tipFilter,
+            kategoriFilter: state.kategoriFilter,
             assignedToMe: state.sadeceBenim,
           );
       if (!ref.mounted) return;
@@ -159,9 +161,10 @@ class TasksController extends Notifier<TasksState> {
     }
   }
 
-  Future<void> setTipFilter(TaskTip? tip) async {
-    if (tip == state.tipFilter) return;
-    state = state.copyWith(tipFilter: tip);
+  /// [kategoriFilter]: null → tumu; kategori UUID; ya da 'diger' (kategorisiz).
+  Future<void> setKategoriFilter(String? kategoriFilter) async {
+    if (kategoriFilter == state.kategoriFilter) return;
+    state = state.copyWith(kategoriFilter: kategoriFilter);
     await refresh();
   }
 

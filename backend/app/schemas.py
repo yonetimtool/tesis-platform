@@ -1126,9 +1126,6 @@ class NotificationUpdate(BaseModel):
 
 
 # -------------------------------- tasks ------------------------------------ #
-TaskTip = Literal["temizlik", "kontrol", "ilaclama", "bakim", "peyzaj", "diger"]
-
-
 class TaskCategoryOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -1152,11 +1149,12 @@ class TaskOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    tip: str
     ad: str
     aciklama: str | None = None
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
+    # Gorev tipi = yonetici-tanimli kategori; NULL = "Diger" (sabit tip enum'u
+    # kaldirildi). Istemci kategori_id'yi kategori listesinden ad'a cozer.
     kategori_id: uuid.UUID | None = None
     periyot_dakika: int | None = None
     sonraki_planlanan: datetime | None = None
@@ -1167,12 +1165,11 @@ class TaskOut(BaseModel):
 
 
 class TaskCreate(BaseModel):
-    tip: TaskTip
     ad: str = Field(..., min_length=1)
     aciklama: str | None = None
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
-    kategori_id: uuid.UUID | None = None
+    kategori_id: uuid.UUID | None = None  # NULL = "Diger"
     periyot_dakika: int | None = Field(None, ge=1)
     sonraki_planlanan: datetime | None = None
     foto_zorunlu: bool = False
@@ -1180,7 +1177,6 @@ class TaskCreate(BaseModel):
 
 
 class TaskUpdate(BaseModel):
-    tip: TaskTip | None = None
     ad: str | None = Field(None, min_length=1)
     aciklama: str | None = None
     atanan_user_id: uuid.UUID | None = None
@@ -1240,7 +1236,8 @@ class TaskCompletionHistoryOut(BaseModel):
     id: uuid.UUID
     task_id: uuid.UUID
     task_adi: str | None = None
-    tip: str
+    # Gorevin kategorisi (yonetici-tanimli); NULL kategori -> "Diğer".
+    kategori_ad: str = "Diğer"
     tamamlayan_user_id: uuid.UUID
     tamamlanma_zamani: datetime
     foto_var: bool
@@ -1248,12 +1245,16 @@ class TaskCompletionHistoryOut(BaseModel):
     notlar: str | None = None
 
 
+class TaskCompletionKategoriSayi(BaseModel):
+    kategori_ad: str
+    sayi: int
+
+
 class TaskCompletionOzet(BaseModel):
     toplam: int
-    temizlik: int
-    kontrol: int
-    ilaclama: int
-    peyzaj: int
+    # Kategori bazli tamamlanma sayimlari (sabit tip kirilimi kaldirildi);
+    # NULL kategori "Diğer" altinda toplanir. sayi'ya gore azalan.
+    kalemler: list[TaskCompletionKategoriSayi]
 
 
 class TaskCompletionHistoryListResponse(BaseModel):

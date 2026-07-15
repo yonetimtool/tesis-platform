@@ -76,11 +76,18 @@ void main() {
   });
 
   group('GorevOzet / AylikRapor turetilmis alanlar', () {
-    test('diger = toplam - sayilan tipler', () {
+    test('GorevOzet kategori bazli kalemleri esler (NULL -> Diğer)', () {
       final g = GorevOzet.fromJson(const {
-        'toplam': 10, 'temizlik': 4, 'kontrol': 2, 'ilaclama': 1, 'peyzaj': 1,
+        'toplam': 10,
+        'kalemler': [
+          {'kategori_ad': 'Temizlik', 'sayi': 6},
+          {'kategori_ad': 'Diğer', 'sayi': 4},
+        ],
       });
-      expect(g.diger, 2);
+      expect(g.toplam, 10);
+      expect(g.kalemler.length, 2);
+      expect(g.kalemler.first.kategoriAd, 'Temizlik');
+      expect(g.kalemler.first.sayi, 6);
     });
 
     test('devriyeYuzde: pencere yoksa null, varsa tam sayi oran', () {

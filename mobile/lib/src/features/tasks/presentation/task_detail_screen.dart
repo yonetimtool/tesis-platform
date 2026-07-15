@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
+import '../data/task_category_api.dart';
 import '../domain/task_models.dart';
 import 'task_complete_controller.dart';
 import 'task_form_sheet.dart';
@@ -25,7 +26,13 @@ class TaskDetailScreen extends ConsumerWidget {
     final state = ref.watch(taskCompleteControllerProvider(task.id));
     final controller =
         ref.read(taskCompleteControllerProvider(task.id).notifier);
-    final style = taskTipStyle(task.tip);
+    // Gorev tipi = kategori adi (kategori_id -> ad, listeden cozulur); null = Diğer.
+    final kategoriler = ref.watch(taskCategoriesProvider).value;
+    final adlar = (kategoriler ?? const [])
+        .where((k) => k.id == task.kategoriId)
+        .map((k) => k.ad);
+    final style = taskKategoriStyle(
+        task.kategoriId == null || adlar.isEmpty ? null : adlar.first);
     // Tamamlama akisi yalniz saha rollerinde (auth.md §4: POST completion
     // admin/security/tesis_gorevlisi). Rol cozulene kadar (kisa storage
     // okumasi) akis gosterilir — backend yine de 403 ile korur.

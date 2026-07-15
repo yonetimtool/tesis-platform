@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../routing/app_router.dart';
+import '../data/task_category_api.dart';
 import '../domain/task_models.dart';
 import 'task_form_sheet.dart';
 import 'task_tip_style.dart';
@@ -125,7 +126,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   }
 }
 
-/// Tip filtresi: "Tumu" + sozlesmedeki tipler. Secim sunucu sorgusuna gider.
+/// Kategori (gorev tipi) filtresi: "Tumu" + yonetici kategorileri + "Diğer".
+/// Secim sunucuya `kategori_id` (UUID | 'diger') olarak gider.
 class _TipFilterBar extends ConsumerWidget {
   const _TipFilterBar({required this.state});
 
@@ -134,14 +136,7 @@ class _TipFilterBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(tasksControllerProvider.notifier);
-    const tipler = [
-      TaskTip.temizlik,
-      TaskTip.kontrol,
-      TaskTip.ilaclama,
-      TaskTip.bakim,
-      TaskTip.peyzaj,
-      TaskTip.diger,
-    ];
+    final kategoriler = ref.watch(taskCategoriesProvider).value ?? const [];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -166,36 +161,47 @@ class _TipFilterBar extends ConsumerWidget {
           const SizedBox(width: 16),
           ChoiceChip(
             label: const Text('Tümü'),
-            selected: state.tipFilter == null,
-            onSelected: (_) => controller.setTipFilter(null),
+            selected: state.kategoriFilter == null,
+            onSelected: (_) => controller.setKategoriFilter(null),
           ),
-          for (final tip in tipler) ...[
+          for (final k in kategoriler) ...[
             const SizedBox(width: 8),
             ChoiceChip(
               avatar: CircleAvatar(
-                backgroundColor: taskTipStyle(tip).color,
+                backgroundColor: taskKategoriStyle(k.ad).color,
                 radius: 6,
               ),
-              label: Text(taskTipStyle(tip).label),
-              selected: state.tipFilter == tip,
-              onSelected: (_) => controller.setTipFilter(tip),
+              label: Text(k.ad),
+              selected: state.kategoriFilter == k.id,
+              onSelected: (_) => controller.setKategoriFilter(k.id),
             ),
           ],
+          const SizedBox(width: 8),
+          ChoiceChip(
+            label: const Text('Diğer'),
+            selected: state.kategoriFilter == 'diger',
+            onSelected: (_) => controller.setKategoriFilter('diger'),
+          ),
         ],
       ),
     );
   }
 }
 
-class _TaskTile extends StatelessWidget {
+class _TaskTile extends ConsumerWidget {
   const _TaskTile({required this.task, required this.state});
 
   final Task task;
   final TasksState state;
 
   @override
-  Widget build(BuildContext context) {
-    final style = taskTipStyle(task.tip);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final kategoriler = ref.watch(taskCategoriesProvider).value;
+    final adlar = (kategoriler ?? const [])
+        .where((k) => k.id == task.kategoriId)
+        .map((k) => k.ad);
+    final style = taskKategoriStyle(
+        task.kategoriId == null || adlar.isEmpty ? null : adlar.first);
     final mine = task.isAssignedTo(state.currentUserId);
     final completed = state.completedNow[task.id];
 

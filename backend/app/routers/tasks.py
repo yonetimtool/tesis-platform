@@ -30,7 +30,6 @@ from ..schemas import (
     TaskCreate,
     TaskListResponse,
     TaskOut,
-    TaskTip,
     TaskUpdate,
 )
 
@@ -133,7 +132,9 @@ async def _ensure_checkpoint_in_tenant(db: AsyncSession, checkpoint_id: uuid.UUI
 async def list_tasks(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    tip: TaskTip | None = Query(None),
+    kategori_id: str | None = Query(
+        None, description="kategori UUID veya 'diger' (kategorisiz/Diğer)"
+    ),
     aktif: bool | None = Query(None),
     atanan_user_id: str | None = Query(
         None, description="'me' (token kullanicisi) veya user UUID — atanan filtresi (mobil §11)"
@@ -147,8 +148,16 @@ async def list_tasks(
     visibility = _assignee_visibility(user)
     if visibility is not None:
         where.append(visibility)
-    if tip is not None:
-        where.append(Task.tip == tip)
+    if kategori_id is not None:
+        if kategori_id == "diger":
+            where.append(Task.kategori_id.is_(None))
+        else:
+            try:
+                where.append(Task.kategori_id == uuid.UUID(kategori_id))
+            except ValueError:
+                raise APIError(
+                    422, "validation_error", "kategori_id UUID veya 'diger' olmali."
+                )
     if aktif is not None:
         where.append(Task.aktif == aktif)
     if atanan_user_id is not None:

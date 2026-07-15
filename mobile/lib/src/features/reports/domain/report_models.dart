@@ -43,31 +43,33 @@ String kurusToTl(int kurus) {
   return '${neg ? '-' : ''}$buf,$kr TL';
 }
 
+/// Kategori bazli tamamlanma sayimi (GorevOzet kalemi).
+class KategoriSayi {
+  const KategoriSayi({required this.kategoriAd, required this.sayi});
+
+  final String kategoriAd;
+  final int sayi;
+
+  factory KategoriSayi.fromJson(Map<String, dynamic> json) => KategoriSayi(
+        kategoriAd: json['kategori_ad'] as String? ?? 'Diğer',
+        sayi: (json['sayi'] as num?)?.toInt() ?? 0,
+      );
+}
+
 /// `GET /task-completions` → `ozet` (filtrelenmis TUM kume uzerinden).
+/// Sabit tip kirilimi kaldirildi; KATEGORI bazli sayim (NULL kategori "Diğer").
 class GorevOzet {
-  const GorevOzet({
-    this.toplam = 0,
-    this.temizlik = 0,
-    this.kontrol = 0,
-    this.ilaclama = 0,
-    this.peyzaj = 0,
-  });
+  const GorevOzet({this.toplam = 0, this.kalemler = const []});
 
   final int toplam;
-  final int temizlik;
-  final int kontrol;
-  final int ilaclama;
-  final int peyzaj;
-
-  /// Ozette ayri sayilmayan tipler (bakim/diger).
-  int get diger => toplam - temizlik - kontrol - ilaclama - peyzaj;
+  final List<KategoriSayi> kalemler;
 
   factory GorevOzet.fromJson(Map<String, dynamic> json) => GorevOzet(
         toplam: (json['toplam'] as num?)?.toInt() ?? 0,
-        temizlik: (json['temizlik'] as num?)?.toInt() ?? 0,
-        kontrol: (json['kontrol'] as num?)?.toInt() ?? 0,
-        ilaclama: (json['ilaclama'] as num?)?.toInt() ?? 0,
-        peyzaj: (json['peyzaj'] as num?)?.toInt() ?? 0,
+        kalemler: [
+          for (final k in (json['kalemler'] as List? ?? const []))
+            if (k is Map) KategoriSayi.fromJson(Map<String, dynamic>.from(k)),
+        ],
       );
 }
 
@@ -75,7 +77,7 @@ class GorevOzet {
 class SonTamamlama {
   const SonTamamlama({
     required this.id,
-    required this.tip,
+    required this.kategoriAd,
     required this.tamamlanmaZamani,
     this.taskAdi,
     this.fotoVar = false,
@@ -83,7 +85,7 @@ class SonTamamlama {
   });
 
   final String id;
-  final String tip;
+  final String kategoriAd;
   final String? taskAdi;
   final DateTime tamamlanmaZamani;
   final bool fotoVar;
@@ -91,7 +93,7 @@ class SonTamamlama {
 
   factory SonTamamlama.fromJson(Map<String, dynamic> json) => SonTamamlama(
         id: json['id'] as String? ?? '',
-        tip: json['tip'] as String? ?? '',
+        kategoriAd: json['kategori_ad'] as String? ?? 'Diğer',
         taskAdi: json['task_adi'] as String?,
         tamamlanmaZamani:
             DateTime.tryParse(json['tamamlanma_zamani'] as String? ?? '')

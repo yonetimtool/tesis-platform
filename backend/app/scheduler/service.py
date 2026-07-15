@@ -27,7 +27,7 @@ from datetime import datetime, timedelta, timezone
 import psycopg
 
 from ..config import settings
-from .notify import notify_landscape, notify_missed_tour
+from .notify import notify_missed_tour
 from .windows import plan_windows
 
 
@@ -163,68 +163,3 @@ def detect_missed(
                         summary["tamamlandi"] += 1
     return summary
 
-
-def landscape_reminders(
-    *,
-    now: datetime | None = None,
-    lead_hours: int | None = None,
-    owner_dsn: str | None = None,
-    app_dsn: str | None = None,
-) -> dict[str, int]:
-    """Peyzaj hatirlatmalari: yaklasan + kacirilan (idempotent, RLS-uyumlu).
-
-    yaklasan: tip=peyzaj, aktif, sonraki_planlanan in [now, now+lead] -> peyzaj_yaklasan.
-    kacirilan: tip=peyzaj, aktif, sonraki_planlanan < now ve o tarihten sonra
-               tamamlama YOK -> peyzaj_kacirilan.
-    Donus: {"yaklasan": n, "kacirilan": m}.
-    """
-    now = _now(now)
-    lead = lead_hours if lead_hours is not None else settings.scheduler_landscape_lead_hours
-    horizon = now + timedelta(hours=lead)
-    owner_dsn = owner_dsn or settings.owner_dsn
-    app_dsn = app_dsn or settings.app_dsn
-
-    summary = {"yaklasan": 0, "kacirilan": 0}
-    tenants = _list_tenants(owner_dsn)
-    with psycopg.connect(app_dsn, connect_timeout=10) as conn:
-        for tenant_id, _tz in tenants:
-            with conn.transaction():
-                conn.execute(
-                    "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
-                )
-                # yaklasan
-                for task_id, planlanan in conn.execute(
-                    "SELECT id, sonraki_planlanan FROM task "
-                    "WHERE tip = 'peyzaj' AND aktif = true AND sonraki_planlanan IS NOT NULL "
-                    "AND sonraki_planlanan >= %s AND sonraki_planlanan <= %s",
-                    (now, horizon),
-                ).fetchall():
-                    notify_landscape(
-                        conn=conn,
-                        tenant_id=tenant_id,
-                        task_id=task_id,
-                        tip="peyzaj_yaklasan",
-                        planlanan=planlanan,
-                        mesaj=f"Yaklasan peyzaj bakimi: {planlanan.isoformat()}",
-                    )
-                    summary["yaklasan"] += 1
-                # kacirilan (planlanan gecmis + o tarihten sonra tamamlama yok)
-                for task_id, planlanan in conn.execute(
-                    "SELECT t.id, t.sonraki_planlanan FROM task t "
-                    "WHERE t.tip = 'peyzaj' AND t.aktif = true AND t.sonraki_planlanan IS NOT NULL "
-                    "AND t.sonraki_planlanan < %s "
-                    "AND NOT EXISTS ("
-                    "  SELECT 1 FROM task_completion c "
-                    "  WHERE c.task_id = t.id AND c.tamamlanma_zamani >= t.sonraki_planlanan)",
-                    (now,),
-                ).fetchall():
-                    notify_landscape(
-                        conn=conn,
-                        tenant_id=tenant_id,
-                        task_id=task_id,
-                        tip="peyzaj_kacirilan",
-                        planlanan=planlanan,
-                        mesaj=f"Kacirilan peyzaj bakimi: {planlanan.isoformat()}",
-                    )
-                    summary["kacirilan"] += 1
-    return summary

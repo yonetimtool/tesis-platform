@@ -55,10 +55,6 @@ NOTIFICATION_TIP = ENUM(
     "peyzaj_yaklasan", "peyzaj_kacirilan", "acil_durum",
     name="notification_tip", create_type=False,
 )
-TASK_TIP = ENUM(
-    "temizlik", "kontrol", "ilaclama", "bakim", "peyzaj", "diger",
-    name="task_tip", create_type=False,
-)
 ASSET_KATEGORI = ENUM(
     "ekipman", "arac", "alet", "diger",
     name="asset_kategori", create_type=False,
@@ -527,7 +523,6 @@ class Task(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
     )
-    tip: Mapped[str] = mapped_column(TASK_TIP, nullable=False)
     ad: Mapped[str] = mapped_column(Text, nullable=False)
     aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
     atanan_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
@@ -1540,7 +1535,6 @@ __all__ = [
     "GUN_TIPI",
     "PATROL_WINDOW_DURUM",
     "NOTIFICATION_TIP",
-    "TASK_TIP",
     "ASSET_KATEGORI",
     "ASSET_DURUM",
     "EMERGENCY_DURUM",

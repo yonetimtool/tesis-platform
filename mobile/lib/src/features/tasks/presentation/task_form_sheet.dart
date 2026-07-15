@@ -7,7 +7,6 @@ import '../data/task_api.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_category_models.dart';
 import '../domain/task_models.dart';
-import 'task_tip_style.dart';
 import 'tasks_controller.dart';
 
 /// Gorev olustur/duzenle formu (bottom sheet) — admin + yonetici.
@@ -37,7 +36,6 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
   late final TextEditingController _adCtrl;
   late final TextEditingController _aciklamaCtrl;
   late final TextEditingController _periyotCtrl;
-  late TaskTip _tip;
   String? _atananUserId;
   String? _kategoriId;
   late bool _fotoZorunlu;
@@ -62,7 +60,6 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
     _periyotCtrl = TextEditingController(
       text: t?.periyotDakika == null ? '' : '${t!.periyotDakika}',
     );
-    _tip = t?.tip ?? TaskTip.temizlik;
     _atananUserId = t?.atananUserId;
     _kategoriId = t?.kategoriId;
     _fotoZorunlu = t?.fotoZorunlu ?? false;
@@ -141,7 +138,6 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
     });
     final periyotText = _periyotCtrl.text.trim();
     final draft = TaskDraft(
-      tip: _tip,
       ad: _adCtrl.text.trim(),
       aciklama: _aciklamaCtrl.text.trim().isEmpty
           ? null
@@ -180,14 +176,6 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
   @override
   Widget build(BuildContext context) {
     final editing = widget.task != null;
-    const tipler = [
-      TaskTip.temizlik,
-      TaskTip.kontrol,
-      TaskTip.ilaclama,
-      TaskTip.bakim,
-      TaskTip.peyzaj,
-      TaskTip.diger,
-    ];
     return Padding(
       // Klavye acildiginda formun gorunur kalmasi icin.
       padding: EdgeInsets.only(
@@ -208,31 +196,54 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<TaskTip>(
-                initialValue: _tip,
-                decoration: const InputDecoration(
-                  labelText: 'Tip',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  for (final tip in tipler)
-                    DropdownMenuItem(
-                      value: tip,
-                      child: Row(
-                        children: [
-                          Icon(
-                            taskTipStyle(tip).icon,
-                            size: 18,
-                            color: taskTipStyle(tip).color,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(taskTipStyle(tip).label),
-                        ],
+              // Gorev TIPI = yonetici-tanimli kategori; "Diğer" = tipsiz.
+              // Sabit tip listesi kaldirildi (yonetici kendi tiplerini tanimlar).
+              if (_kategoriler == null)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
+                      SizedBox(width: 8),
+                      Text('Görev tipleri yükleniyor...'),
+                    ],
+                  ),
+                )
+              else ...[
+                DropdownButtonFormField<String?>(
+                  initialValue: _kategoriId,
+                  decoration: const InputDecoration(
+                    labelText: 'Görev tipi',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('Diğer'),
                     ),
-                ],
-                onChanged: (v) => setState(() => _tip = v ?? _tip),
-              ),
+                    for (final k in _kategoriler!)
+                      DropdownMenuItem<String?>(
+                        value: k.id,
+                        child: Text(k.ad, overflow: TextOverflow.ellipsis),
+                      ),
+                  ],
+                  onChanged: (v) => setState(() => _kategoriId = v),
+                ),
+                if (_kategoriler!.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      'Henüz görev tipi tanımlamadınız. Üstteki "Kategoriler" '
+                      'ekranından kendi tiplerinizi ekleyebilirsiniz; şimdilik '
+                      '"Diğer" kullanılır.',
+                      style: TextStyle(fontSize: 12, color: Colors.orange),
+                    ),
+                  ),
+              ],
               const SizedBox(height: 8),
               TextFormField(
                 controller: _adCtrl,
@@ -304,43 +315,6 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                     ),
                   ),
               ],
-              const SizedBox(height: 8),
-              // Kategori seçimi (A6) — yönetici-tanımlı aktif kategoriler.
-              if (_kategoriler == null)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                      SizedBox(width: 8),
-                      Text('Kategoriler yükleniyor...'),
-                    ],
-                  ),
-                )
-              else if (_kategoriler!.isNotEmpty)
-                DropdownButtonFormField<String?>(
-                  initialValue: _kategoriId,
-                  decoration: const InputDecoration(
-                    labelText: 'Kategori (opsiyonel)',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    const DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text('— kategorisiz —'),
-                    ),
-                    for (final k in _kategoriler!)
-                      DropdownMenuItem<String?>(
-                        value: k.id,
-                        child: Text(k.ad, overflow: TextOverflow.ellipsis),
-                      ),
-                  ],
-                  onChanged: (v) => setState(() => _kategoriId = v),
-                ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _periyotCtrl,

@@ -19,7 +19,6 @@ void main() {
         'created_at': '2026-07-01T08:00:00Z',
       });
       expect(t.id, 't-1');
-      expect(t.tip, TaskTip.temizlik);
       expect(t.ad, 'Cop toplama');
       expect(t.aciklama, 'A blok cevresi');
       expect(t.atananUserId, 'user-1');
@@ -47,15 +46,14 @@ void main() {
       expect(Task.fromJson(base(null)).fotoZorunlu, isFalse);
     });
 
-    test('opsiyoneller null olabilir; bilinmeyen tip guvenli fallback', () {
+    test('opsiyoneller null olabilir; kategorisiz gorev = Diğer', () {
       final t = Task.fromJson({
         'id': 't-2',
-        'tip': 'yeni_tip', // sozlesme disi deger — cokme yok
-        'ad': 'Bilinmeyen',
+        'ad': 'Kategorisiz',
         'aktif': false,
         'created_at': '2026-07-01T08:00:00Z',
       });
-      expect(t.tip, TaskTip.bilinmiyor);
+      expect(t.kategoriId, isNull); // kategori_id null -> "Diğer"
       expect(t.aciklama, isNull);
       expect(t.atananUserId, isNull);
       expect(t.checkpointId, isNull);
@@ -150,7 +148,6 @@ void main() {
     // suzme artik sunucuda: ?atanan_user_id=me). Kalan tek is: tarih sirasi.
     Task task(String id, {DateTime? planlanan}) => Task(
           id: id,
-          tip: TaskTip.temizlik,
           ad: id,
           aktif: true,
           sonrakiPlanlanan: planlanan,
@@ -172,9 +169,8 @@ void main() {
 
   group('TaskDraft (gorev olustur/duzenle govdesi)', () {
     test('toJson TAM-GOVDE: null alanlar da gonderilir (PATCH temizleme)', () {
-      const draft = TaskDraft(tip: TaskTip.kontrol, ad: 'Kapi kontrol');
+      const draft = TaskDraft(ad: 'Kapi kontrol');
       expect(draft.toJson(), {
-        'tip': 'kontrol',
         'ad': 'Kapi kontrol',
         'aciklama': null,
         'atanan_user_id': null,
@@ -186,18 +182,13 @@ void main() {
     });
 
     test('toJson: secili kategori_id gonderilir (A6)', () {
-      const draft = TaskDraft(
-        tip: TaskTip.temizlik,
-        ad: 'Havuz',
-        kategoriId: 'kat-1',
-      );
+      const draft = TaskDraft(ad: 'Havuz', kategoriId: 'kat-1');
       expect(draft.toJson()['kategori_id'], 'kat-1');
     });
 
     test('fromTask mevcut gorevi forma tasir (kategori dahil)', () {
       final task = Task.fromJson(const {
         'id': 't-1',
-        'tip': 'peyzaj',
         'ad': 'Cim bicme',
         'aciklama': 'Haftalik',
         'atanan_user_id': 'u-9',
@@ -208,7 +199,6 @@ void main() {
       });
       expect(task.kategoriId, 'kat-2');
       final draft = TaskDraft.fromTask(task);
-      expect(draft.tip, TaskTip.peyzaj);
       expect(draft.atananUserId, 'u-9');
       expect(draft.kategoriId, 'kat-2');
       expect(draft.periyotDakika, 10080);

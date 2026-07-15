@@ -248,7 +248,6 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /tasks/{id}/completions`        |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `GET  /task-completions` (gecmis)     |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /tasks/{id}/completions`        |  ✅   | ❌  | ✅  | ✅  | ❌  |
-| `GET  /landscape/schedule`            |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /uploads/presign`               |  ✅   | ✅† | ✅  | ✅  | ✅‡ |
 | `POST /devices` (kendi cihazi)        |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `DELETE /devices/{fcm_token}`         |  ✅   | ✅  | ✅  | ✅  | ✅  |

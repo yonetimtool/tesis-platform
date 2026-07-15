@@ -13,24 +13,10 @@
 ///     eslesmezse 422 `invalid_reference`.
 library;
 
-/// TaskTip semasi. [bilinmiyor] sozlesme disi degerler icin guvenli fallback.
-enum TaskTip { temizlik, kontrol, ilaclama, bakim, peyzaj, diger, bilinmiyor }
-
-TaskTip taskTipFromJson(String? value) => switch (value) {
-      'temizlik' => TaskTip.temizlik,
-      'kontrol' => TaskTip.kontrol,
-      'ilaclama' => TaskTip.ilaclama,
-      'bakim' => TaskTip.bakim,
-      'peyzaj' => TaskTip.peyzaj,
-      'diger' => TaskTip.diger,
-      _ => TaskTip.bilinmiyor,
-    };
-
 /// `GET /tasks` ogesi (Task semasi).
 class Task {
   const Task({
     required this.id,
-    required this.tip,
     required this.ad,
     required this.aktif,
     this.fotoZorunlu = false,
@@ -43,14 +29,14 @@ class Task {
   });
 
   final String id;
-  final TaskTip tip;
   final String ad;
   final String? aciklama;
 
   /// Gorevin atandigi kullanici (yoksa havuz gorevi).
   final String? atananUserId;
 
-  /// Yonetici-tanimli kategori (A6); null = kategorisiz.
+  /// Gorev TIPI = yonetici-tanimli kategori (task_category); null = "Diğer".
+  /// Sabit tip enum'u kaldirildi; ad, kategori listesinden cozulur.
   final String? kategoriId;
 
   /// Gorevin NFC dogrulama noktasi. Doluysa tamamlama akisinda "etiketi
@@ -74,7 +60,6 @@ class Task {
 
   factory Task.fromJson(Map<String, dynamic> json) => Task(
         id: json['id'] as String,
-        tip: taskTipFromJson(json['tip'] as String?),
         ad: json['ad'] as String? ?? '',
         aciklama: json['aciklama'] as String?,
         atananUserId: json['atanan_user_id'] as String?,
@@ -247,7 +232,6 @@ List<Task> sortTasksByPlan(List<Task> tasks) {
 /// yalnizca saha personelini listeler.
 class TaskDraft {
   const TaskDraft({
-    required this.tip,
     required this.ad,
     this.aciklama,
     this.atananUserId,
@@ -257,17 +241,17 @@ class TaskDraft {
     this.aktif = true,
   });
 
-  final TaskTip tip;
   final String ad;
   final String? aciklama;
   final String? atananUserId;
+
+  /// Gorev tipi = kategori; null = "Diğer".
   final String? kategoriId;
   final int? periyotDakika;
   final bool fotoZorunlu;
   final bool aktif;
 
   Map<String, dynamic> toJson() => {
-        'tip': tip.name,
         'ad': ad,
         'aciklama': aciklama,
         'atanan_user_id': atananUserId,
@@ -279,7 +263,6 @@ class TaskDraft {
 
   /// Duzenleme formunu mevcut gorevle doldurmak icin.
   factory TaskDraft.fromTask(Task task) => TaskDraft(
-        tip: task.tip,
         ad: task.ad,
         aciklama: task.aciklama,
         atananUserId: task.atananUserId,

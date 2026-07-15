@@ -1943,9 +1943,10 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
-        - name: tip
+        - name: kategori_id
           in: query
-          schema: { $ref: "#/components/schemas/TaskTip" }
+          description: kategori UUID veya 'diger' (kategorisiz/Diğer)
+          schema: { type: string }
         - name: aktif
           in: query
           schema: { type: boolean }
@@ -2127,9 +2128,9 @@ paths:
           in: query
           description: "tamamlanma_zamani < bu an (UTC, ISO-8601; yari-acik)"
           schema: { type: string, format: date-time }
-        - name: tip
+        - name: kategori_id
           in: query
-          schema: { $ref: "#/components/schemas/TaskTip" }
+          schema: { type: string, format: uuid }
         - name: task_id
           in: query
           schema: { type: string, format: uuid }
@@ -2154,33 +2155,6 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
-
-  /landscape/schedule:
-    get:
-      tags: [tasks]
-      summary: Peyzaj bakim takvimi (yaklasan isler, sirali)
-      description: |
-        tip=peyzaj ve sonraki_planlanan dolu aktif gorevler, sonraki_planlanan'a
-        gore ARTAN sirada. (Mevcut Task semasi yeniden kullanilir.)
-      parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-      responses:
-        "200":
-          description: Takvim
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/Page"
-                  - type: object
-                    required: [items]
-                    properties:
-                      items:
-                        type: array
-                        items: { $ref: "#/components/schemas/Task" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
 
   /task-categories:
     get:
@@ -5437,15 +5411,13 @@ components:
         okundu: { type: boolean }
 
     # ----------------------------- tasks --------------------------- #
-    TaskTip:
-      type: string
-      enum: [temizlik, kontrol, ilaclama, bakim, peyzaj, diger]
+    # Gorev tipi = yonetici-tanimli kategori (task_category); kategori_id null =
+    # "Diğer". Sabit task_tip enum'u KALDIRILDI.
     Task:
       type: object
-      required: [id, tip, ad, foto_zorunlu, aktif, created_at]
+      required: [id, ad, foto_zorunlu, aktif, created_at]
       properties:
         id: { type: string, format: uuid }
-        tip: { $ref: "#/components/schemas/TaskTip" }
         ad: { type: string, example: "Cop toplama" }
         aciklama: { type: string, nullable: true }
         atanan_user_id: { type: string, format: uuid, nullable: true }
@@ -5454,7 +5426,7 @@ components:
           type: string
           format: uuid
           nullable: true
-          description: "Yonetici-tanimli kategori (A6); null = kategorisiz"
+          description: "Gorev tipi = yonetici-tanimli kategori; null = Diğer"
         periyot_dakika:
           type: integer
           minimum: 1
@@ -5473,14 +5445,13 @@ components:
         updated_at: { type: string, format: date-time }
     TaskCreate:
       type: object
-      required: [tip, ad]
+      required: [ad]
       properties:
-        tip: { $ref: "#/components/schemas/TaskTip" }
         ad: { type: string }
         aciklama: { type: string, nullable: true }
         atanan_user_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
-        kategori_id: { type: string, format: uuid, nullable: true }
+        kategori_id: { type: string, format: uuid, nullable: true, description: "null = Diğer" }
         periyot_dakika: { type: integer, minimum: 1, nullable: true }
         sonraki_planlanan: { type: string, format: date-time, nullable: true }
         foto_zorunlu: { type: boolean, default: false }
@@ -5489,7 +5460,6 @@ components:
       type: object
       minProperties: 1
       properties:
-        tip: { $ref: "#/components/schemas/TaskTip" }
         ad: { type: string }
         aciklama: { type: string, nullable: true }
         atanan_user_id: { type: string, format: uuid, nullable: true }
@@ -5539,29 +5509,34 @@ components:
     TaskCompletionHistory:
       type: object
       required:
-        [id, task_id, tip, tamamlayan_user_id, tamamlanma_zamani, foto_var, nfc_dogrulandi]
+        [id, task_id, kategori_ad, tamamlayan_user_id, tamamlanma_zamani, foto_var, nfc_dogrulandi]
       properties:
         id: { type: string, format: uuid }
         task_id: { type: string, format: uuid }
         task_adi: { type: string, nullable: true }
-        tip: { $ref: "#/components/schemas/TaskTip" }
+        kategori_ad: { type: string, description: "Gorevin kategorisi; null kategori -> Diğer" }
         tamamlayan_user_id: { type: string, format: uuid }
         tamamlanma_zamani: { type: string, format: date-time }
         foto_var: { type: boolean, description: "foto_key dolu mu" }
         nfc_dogrulandi: { type: boolean, description: "nfc_tag_uid okutuldu mu" }
         notlar: { type: string, nullable: true }
+    TaskCompletionKategoriSayi:
+      type: object
+      required: [kategori_ad, sayi]
+      properties:
+        kategori_ad: { type: string }
+        sayi: { type: integer }
     TaskCompletionOzet:
       type: object
-      required: [toplam, temizlik, kontrol, ilaclama, peyzaj]
+      required: [toplam, kalemler]
       description: |
-        Filtrelenmis TUM kume uzerinden. `toplam` her tipi sayar; ayrik alanlar
-        ana tip dagilimidir (bakim/diger toplama dahil, ayrica kirilmaz).
+        Filtrelenmis TUM kume uzerinden KATEGORI bazli sayim (sabit tip kirilimi
+        kaldirildi). NULL kategori "Diğer" altinda; sayi'ya gore azalan.
       properties:
         toplam: { type: integer }
-        temizlik: { type: integer }
-        kontrol: { type: integer }
-        ilaclama: { type: integer }
-        peyzaj: { type: integer }
+        kalemler:
+          type: array
+          items: { $ref: "#/components/schemas/TaskCompletionKategoriSayi" }
     TaskCompletionCreate:
       type: object
       required: [tamamlanma_zamani]

@@ -72,11 +72,8 @@ def upgrade() -> None:
         "('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma', "
         "'peyzaj_yaklasan', 'peyzaj_kacirilan', 'acil_durum');"
     )
-    # task.tip — esnek gorev tipi (peyzaj dahil); ileride genisler.
-    op.execute(
-        "CREATE TYPE task_tip AS ENUM "
-        "('temizlik', 'kontrol', 'ilaclama', 'bakim', 'peyzaj', 'diger');"
-    )
+    # Gorev tipi = yonetici-tanimli kategori (task_category, A6). Sabit task_tip
+    # enum'u KALDIRILDI; siniflandirma task.kategori_id ile (NULL = "Diğer").
     # asset (demirbas) kategori + durum.
     op.execute(
         "CREATE TYPE asset_kategori AS ENUM ('ekipman', 'arac', 'alet', 'diger');"
@@ -565,9 +562,9 @@ def upgrade() -> None:
     # ------------------------------------------------------------------ #
     # 9c-0. task_category  (yonetici-tanimli gorev kategorileri — A6)
     # ------------------------------------------------------------------ #
-    # Sabit task_tip enum'unun yaninda tenant'a ozel, yonetici CRUD'lu
-    # kategori seti. SOFT-DELETE (aktif=false): gorev gecmisi kategori
-    # adina referans verebilir, hard silme kaydi koparir.
+    # Gorev tipi = tenant'a ozel, yonetici CRUD'lu kategori seti (sabit tip
+    # enum'u YOK). SOFT-DELETE (aktif=false): gorev gecmisi kategori adina
+    # referans verebilir, hard silme kaydi koparir.
     op.execute(
         """
         CREATE TABLE task_category (
@@ -592,7 +589,6 @@ def upgrade() -> None:
         CREATE TABLE task (
             id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id        uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
-            tip              task_tip NOT NULL,
             ad               text NOT NULL,
             aciklama         text,
             atanan_user_id   uuid,
@@ -620,11 +616,11 @@ def upgrade() -> None:
         """
     )
     op.execute("CREATE INDEX ix_task_tenant ON task (tenant_id);")
-    op.execute("CREATE INDEX ix_task_tip ON task (tenant_id, tip);")
+    op.execute("CREATE INDEX ix_task_kategori ON task (tenant_id, kategori_id);")
     op.execute("CREATE INDEX ix_task_atanan ON task (atanan_user_id);")
-    # peyzaj takvimi / hatirlatma sorgulari (yaklasan/kacirilan):
+    # tekrar/hatirlatma sorgulari (yaklasan/kacirilan periyodik gorevler):
     op.execute(
-        "CREATE INDEX ix_task_takvim ON task (tenant_id, tip, sonraki_planlanan);"
+        "CREATE INDEX ix_task_takvim ON task (tenant_id, sonraki_planlanan);"
     )
 
     # ------------------------------------------------------------------ #
@@ -1740,7 +1736,6 @@ def downgrade() -> None:
     op.execute("DROP TYPE IF EXISTS complaint_kategori;")
     op.execute("DROP TYPE IF EXISTS asset_durum;")
     op.execute("DROP TYPE IF EXISTS asset_kategori;")
-    op.execute("DROP TYPE IF EXISTS task_tip;")
     op.execute("DROP TYPE IF EXISTS notification_tip;")
     op.execute("DROP TYPE IF EXISTS patrol_window_durum;")
     op.execute("DROP TYPE IF EXISTS gun_tipi;")

@@ -48,9 +48,6 @@ class Settings(BaseSettings):
     # Beat periyotlari (saniye).
     scheduler_generate_interval_seconds: int = 3600   # saat basi
     scheduler_detect_interval_seconds: int = 300      # 5 dk
-    # Peyzaj hatirlatma: "yaklasan" penceresi (saat) + beat periyodu (saniye).
-    scheduler_landscape_lead_hours: int = 24
-    scheduler_landscape_interval_seconds: int = 3600
 
     # --- MinIO (S3-uyumlu foto kanit deposu) ---
     # PUBLIC endpoint: presigned URL host'u (istemci buraya PUT'lar). dev: localhost.

@@ -1,6 +1,7 @@
-"""GET /task-completions — capraz-gorev tamamlama gecmisi: tarih/tip/task_id/
-tamamlayan filtresi, DESC, sayfalama, ozet (tip dagilimi), tenant izolasyon,
-RBAC, bos aralik. Veri /tasks/{id}/completions POST ile uretilir (test_tasks deseni)."""
+"""GET /task-completions — capraz-gorev tamamlama gecmisi: tarih/kategori/task_id/
+tamamlayan filtresi, DESC, sayfalama, ozet (KATEGORI dagilimi; NULL -> "Diğer"),
+tenant izolasyon, RBAC, bos aralik. Sabit tip kaldirildi; gorev tipi = yonetici-
+tanimli kategori. Veri /tasks/{id}/completions POST ile uretilir."""
 from __future__ import annotations
 
 import uuid
@@ -19,8 +20,17 @@ def _headers(client, slug, cred):
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
 
-def _new_task(client, headers, tip, ad):
-    r = client.post("/tasks", headers=headers, json={"tip": tip, "ad": ad})
+def _new_category(client, admin, ad):
+    r = client.post("/task-categories", headers=admin, json={"ad": ad})
+    assert r.status_code == 201, r.text
+    return r.json()
+
+
+def _new_task(client, headers, ad, kategori_id=None):
+    body = {"ad": ad}
+    if kategori_id is not None:
+        body["kategori_id"] = kategori_id
+    r = client.post("/tasks", headers=headers, json=body)
     assert r.status_code == 201, r.text
     return r.json()
 
@@ -33,17 +43,19 @@ def _complete(client, completer, task_id, when, **extra):
 
 
 def _world_a_data(client, world):
-    """A tenant'inda 3 tamamlama: temizlik@T1 (gorevli, foto+nfc), kontrol@T2
-    (gorevli), peyzaj@T3 (security/guard). Dondurur: ids + user ids."""
+    """A tenant'inda 3 tamamlama: 'Temizlik' kategorili @T1 (gorevli, foto+nfc),
+    'Kontrol' kategorili @T2 (gorevli), KATEGORISIZ (Diğer) @T3 (guard)."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
     gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     guard = _headers(client, world["slug_a"], world["guard_a"])
     gorevli_id = client.get("/me", headers=gorevli).json()["id"]
     guard_id = client.get("/me", headers=guard).json()["id"]
 
-    t_tem = _new_task(client, admin, "temizlik", "Cop")
-    t_kon = _new_task(client, admin, "kontrol", "Kontrol")
-    t_pey = _new_task(client, admin, "peyzaj", "Sulama")
+    cat_tem = _new_category(client, admin, "Temizlik")
+    cat_kon = _new_category(client, admin, "Kontrol")
+    t_tem = _new_task(client, admin, "Cop", cat_tem["id"])
+    t_kon = _new_task(client, admin, "Kontrol", cat_kon["id"])
+    t_pey = _new_task(client, admin, "Sulama")  # kategorisiz -> "Diğer"
 
     c1 = _complete(client, gorevli, t_tem["id"], T1, foto_key="a/x.jpg", nfc_tag_uid="04AABB")
     c2 = _complete(client, gorevli, t_kon["id"], T2)
@@ -51,9 +63,14 @@ def _world_a_data(client, world):
     return {
         "admin": admin, "tesis_gorevlisi": gorevli, "guard": guard,
         "gorevli_id": gorevli_id, "guard_id": guard_id,
+        "cat_tem": cat_tem, "cat_kon": cat_kon,
         "t_tem": t_tem, "t_kon": t_kon, "t_pey": t_pey,
         "c1": c1["id"], "c2": c2["id"], "c3": c3["id"],
     }
+
+
+def _ozet_map(body):
+    return {k["kategori_ad"]: k["sayi"] for k in body["ozet"]["kalemler"]}
 
 
 # ----------------------- DESC + ozet + foto/nfc bool ------------------------ #
@@ -64,28 +81,30 @@ def test_list_order_ozet_and_flags(client, world):
     body = r.json()
     assert [it["id"] for it in body["items"]] == [d["c3"], d["c2"], d["c1"]]  # DESC by zaman
     assert body["meta"]["total"] == 3
-    assert body["ozet"] == {"toplam": 3, "temizlik": 1, "kontrol": 1, "ilaclama": 0, "peyzaj": 1}
+    assert body["ozet"]["toplam"] == 3
+    assert _ozet_map(body) == {"Temizlik": 1, "Kontrol": 1, "Diğer": 1}
 
     by_id = {it["id"]: it for it in body["items"]}
     assert by_id[d["c1"]]["foto_var"] is True and by_id[d["c1"]]["nfc_dogrulandi"] is True
     assert by_id[d["c2"]]["foto_var"] is False and by_id[d["c2"]]["nfc_dogrulandi"] is False
-    assert by_id[d["c1"]]["task_adi"] == "Cop" and by_id[d["c1"]]["tip"] == "temizlik"
+    assert by_id[d["c1"]]["task_adi"] == "Cop" and by_id[d["c1"]]["kategori_ad"] == "Temizlik"
+    assert by_id[d["c3"]]["kategori_ad"] == "Diğer"  # kategorisiz
 
 
-def test_filters_tip_task_tamamlayan_and_range(client, world):
+def test_filters_kategori_task_tamamlayan_and_range(client, world):
     d = _world_a_data(client, world)
     admin = d["admin"]
 
-    # tip filtresi
-    r = client.get("/task-completions", headers=admin, params={"tip": "temizlik"})
+    # kategori filtresi
+    r = client.get("/task-completions", headers=admin, params={"kategori_id": d["cat_tem"]["id"]})
     assert [it["id"] for it in r.json()["items"]] == [d["c1"]]
-    assert r.json()["ozet"] == {"toplam": 1, "temizlik": 1, "kontrol": 0, "ilaclama": 0, "peyzaj": 0}
+    assert _ozet_map(r.json()) == {"Temizlik": 1}
 
     # task_id filtresi
     r = client.get("/task-completions", headers=admin, params={"task_id": d["t_kon"]["id"]})
     assert [it["id"] for it in r.json()["items"]] == [d["c2"]]
 
-    # tamamlayan filtresi (guard -> sadece peyzaj)
+    # tamamlayan filtresi (guard -> sadece kategorisiz)
     r = client.get("/task-completions", headers=admin, params={"tamamlayan_user_id": d["guard_id"]})
     assert [it["id"] for it in r.json()["items"]] == [d["c3"]]
 
@@ -110,7 +129,7 @@ def test_empty_range_is_empty(client, world):
     assert r.status_code == 200
     assert r.json()["items"] == []
     assert r.json()["meta"]["total"] == 0
-    assert r.json()["ozet"] == {"toplam": 0, "temizlik": 0, "kontrol": 0, "ilaclama": 0, "peyzaj": 0}
+    assert r.json()["ozet"] == {"toplam": 0, "kalemler": []}
 
 
 def test_tenant_isolation(client, world):

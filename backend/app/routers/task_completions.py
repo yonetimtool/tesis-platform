@@ -23,31 +23,36 @@ from ..schemas import (
     PageMetaOut,
     TaskCompletionHistoryListResponse,
     TaskCompletionHistoryOut,
+    TaskCompletionKategoriSayi,
     TaskCompletionOzet,
-    TaskTip,
 )
 
 router = APIRouter(prefix="/task-completions", tags=["tasks"])
 
 _VIEWER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 
+# Gorev tipi = yonetici-tanimli kategori (NULL -> "Diğer"); sabit tip kaldirildi.
 # {where} sabit kosul parcalarindan kurulur; degerler her zaman bound param.
 _LIST_SQL = """
-    SELECT tc.id, tc.task_id, t.ad AS task_adi, t.tip,
+    SELECT tc.id, tc.task_id, t.ad AS task_adi,
+           COALESCE(cat.ad, 'Diğer') AS kategori_ad,
            tc.tamamlayan_user_id, tc.tamamlanma_zamani,
            (tc.foto_key IS NOT NULL)    AS foto_var,
            (tc.nfc_tag_uid IS NOT NULL) AS nfc_dogrulandi,
            tc.notlar
     FROM task_completion tc
     JOIN task t ON t.id = tc.task_id
+    LEFT JOIN task_category cat ON cat.id = t.kategori_id
     {where}
     ORDER BY tc.tamamlanma_zamani DESC
     LIMIT :limit OFFSET :offset
 """
 _COUNT_SQL = "SELECT count(*) FROM task_completion tc JOIN task t ON t.id = tc.task_id {where}"
 _OZET_SQL = (
-    "SELECT t.tip, count(*) AS n FROM task_completion tc "
-    "JOIN task t ON t.id = tc.task_id {where} GROUP BY t.tip"
+    "SELECT COALESCE(cat.ad, 'Diğer') AS kategori_ad, count(*) AS n "
+    "FROM task_completion tc JOIN task t ON t.id = tc.task_id "
+    "LEFT JOIN task_category cat ON cat.id = t.kategori_id "
+    "{where} GROUP BY COALESCE(cat.ad, 'Diğer') ORDER BY n DESC, kategori_ad"
 )
 
 
@@ -57,7 +62,7 @@ async def list_task_completions(
     offset: int = Query(0, ge=0),
     baslangic: datetime | None = Query(None, description="tamamlanma_zamani >= bu an"),
     bitis: datetime | None = Query(None, description="tamamlanma_zamani < bu an (yari-acik)"),
-    tip: TaskTip | None = Query(None),
+    kategori_id: uuid.UUID | None = Query(None, description="kategori filtresi"),
     task_id: uuid.UUID | None = Query(None),
     tamamlayan_user_id: uuid.UUID | None = Query(None),
     db: AsyncSession = Depends(get_tenant_db),
@@ -71,9 +76,9 @@ async def list_task_completions(
     if bitis is not None:
         conds.append("tc.tamamlanma_zamani < :bitis")
         params["bitis"] = bitis
-    if tip is not None:
-        conds.append("t.tip = :tip")
-        params["tip"] = tip
+    if kategori_id is not None:
+        conds.append("t.kategori_id = :kategori_id")
+        params["kategori_id"] = kategori_id
     if task_id is not None:
         conds.append("tc.task_id = :task_id")
         params["task_id"] = task_id
@@ -89,13 +94,12 @@ async def list_task_completions(
     ozet_rows = (
         await db.execute(text(_OZET_SQL.format(where=where)), params)
     ).all()
-    sayac = {r[0]: int(r[1]) for r in ozet_rows}
     ozet = TaskCompletionOzet(
         toplam=int(total),
-        temizlik=sayac.get("temizlik", 0),
-        kontrol=sayac.get("kontrol", 0),
-        ilaclama=sayac.get("ilaclama", 0),
-        peyzaj=sayac.get("peyzaj", 0),
+        kalemler=[
+            TaskCompletionKategoriSayi(kategori_ad=r[0], sayi=int(r[1]))
+            for r in ozet_rows
+        ],
     )
 
     rows = (
@@ -109,7 +113,7 @@ async def list_task_completions(
             id=r["id"],
             task_id=r["task_id"],
             task_adi=r["task_adi"],
-            tip=r["tip"],
+            kategori_ad=r["kategori_ad"],
             tamamlayan_user_id=r["tamamlayan_user_id"],
             tamamlanma_zamani=r["tamamlanma_zamani"],
             foto_var=bool(r["foto_var"]),

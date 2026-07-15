@@ -66,3 +66,8 @@ class TaskCategoryApi {
 final taskCategoryApiProvider = Provider<TaskCategoryApi>((ref) {
   return TaskCategoryApi(ref.watch(dioProvider));
 });
+
+/// Aktif gorev kategorileri (gorev tipi listesi) — filtre + kategori adi cozumu.
+final taskCategoriesProvider = FutureProvider.autoDispose<List<TaskCategory>>(
+  (ref) => ref.watch(taskCategoryApiProvider).fetchAll(),
+);

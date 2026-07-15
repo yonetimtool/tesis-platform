@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../patrol/presentation/patrol_history_view.dart'
     show PatrolErrorBanner, fmtClock, fmtDate;
-import '../../tasks/domain/task_models.dart' show taskTipFromJson;
 import '../../tasks/presentation/task_tip_style.dart';
 import '../domain/report_models.dart';
 import 'reports_controller.dart';
@@ -240,16 +239,9 @@ class _GorevCard extends StatelessWidget {
             : Column(
                 children: [
                   _StatRow(label: 'Toplam tamamlama', value: '${g.toplam}'),
-                  if (g.temizlik > 0)
-                    _StatRow(label: 'Temizlik', value: '${g.temizlik}'),
-                  if (g.kontrol > 0)
-                    _StatRow(label: 'Kontrol', value: '${g.kontrol}'),
-                  if (g.ilaclama > 0)
-                    _StatRow(label: 'İlaçlama', value: '${g.ilaclama}'),
-                  if (g.peyzaj > 0)
-                    _StatRow(label: 'Peyzaj', value: '${g.peyzaj}'),
-                  if (g.diger > 0)
-                    _StatRow(label: 'Bakım/diğer', value: '${g.diger}'),
+                  // Kategori (görev tipi) bazlı kırılım; NULL kategori "Diğer".
+                  for (final k in g.kalemler)
+                    _StatRow(label: k.kategoriAd, value: '${k.sayi}'),
                 ],
               ),
       ),
@@ -343,7 +335,7 @@ class _SonTamamlamaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = taskTipStyle(taskTipFromJson(item.tip));
+    final style = taskKategoriStyle(item.kategoriAd);
     final local = item.tamamlanmaZamani.toLocal();
     return ListTile(
       dense: true,

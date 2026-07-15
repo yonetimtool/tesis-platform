@@ -152,34 +152,3 @@ def notify_missed_tour(
         title="Kacirilan tur",
         data={"tip": "kacirilan_tur", "patrol_window_id": str(window_id)},
     )
-
-
-def notify_landscape(
-    *,
-    conn,
-    tenant_id: uuid.UUID,
-    task_id: uuid.UUID,
-    tip: str,
-    planlanan: datetime,
-    mesaj: str,
-) -> None:
-    """Peyzaj hatirlatma bildirimi (idempotent: dedup_key = <tip>:<task_id>:<planlanan_iso>).
-
-    tip: 'peyzaj_yaklasan' | 'peyzaj_kacirilan'. Yazma cagiranin tenant-context'li
-    psycopg baglantisi icinde yapilir (RLS WITH CHECK).
-    """
-    dedup_key = f"{tip}:{task_id}:{planlanan.isoformat()}"
-    conn.execute(
-        "INSERT INTO notification (tenant_id, tip, task_id, dedup_key, mesaj) "
-        "VALUES (%s, %s::notification_tip, %s, %s, %s) "
-        "ON CONFLICT (tenant_id, dedup_key) DO NOTHING",
-        (tenant_id, tip, task_id, dedup_key, mesaj),
-    )
-    logger.warning("LANDSCAPE_REMINDER tenant=%s task=%s tip=%s", tenant_id, task_id, tip)
-    dispatch_external(
-        mesaj,
-        tenant_id=tenant_id,
-        target_roles=_ALARM_ROLES,
-        title="Peyzaj hatirlatma",
-        data={"tip": tip, "task_id": str(task_id)},
-    )

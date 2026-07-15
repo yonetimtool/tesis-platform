@@ -31,7 +31,7 @@ class TaskApi {
   /// kapandi). Sayfalari dolasarak kumeyi dondurur (limit 200 = sozlesme
   /// max; pratikte tek sayfa).
   Future<List<Task>> fetchTasks({
-    TaskTip? tip,
+    String? kategoriFilter,
     bool aktif = true,
     bool assignedToMe = false,
   }) async {
@@ -46,7 +46,8 @@ class TaskApi {
             'limit': limit,
             'offset': offset,
             'aktif': aktif,
-            if (tip != null && tip != TaskTip.bilinmiyor) 'tip': tip.name,
+            // kategori UUID veya 'diger' (kategorisiz/Diğer).
+            'kategori_id': ?kategoriFilter,
             if (assignedToMe) 'atanan_user_id': 'me',
           },
         );

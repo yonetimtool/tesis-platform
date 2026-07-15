@@ -14,7 +14,7 @@ def _headers(client, slug, cred):
 
 
 def _new_task(client, headers, **over):
-    body = {"tip": "temizlik", "ad": "Cop topla"}
+    body = {"ad": "Cop topla"}  # gorev tipi = kategori (opsiyonel; null = "Diğer")
     body.update(over)
     r = client.post("/tasks", headers=headers, json=body)
     assert r.status_code == 201, r.text
@@ -29,18 +29,19 @@ def _checkpoint(client, headers):
 # -------------------------------- CRUD ------------------------------------- #
 def test_task_crud_happy_path(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    t = _new_task(client, admin, tip="kontrol", ad="Kamelya kontrol", periyot_dakika=120)
+    t = _new_task(client, admin, ad="Kamelya kontrol", periyot_dakika=120)
     tid = t["id"]
-    assert t["tip"] == "kontrol" and t["periyot_dakika"] == 120
+    assert t["kategori_id"] is None and t["periyot_dakika"] == 120
 
     assert client.get(f"/tasks/{tid}", headers=admin).status_code == 200
 
-    lr = client.get("/tasks", headers=admin, params={"tip": "kontrol", "limit": 10})
+    # kategorisiz gorevler "diger" filtresiyle listelenir (kategori_id IS NULL).
+    lr = client.get("/tasks", headers=admin, params={"kategori_id": "diger", "limit": 10})
     assert lr.status_code == 200
     body = lr.json()
     assert body["meta"]["limit"] == 10
     assert any(it["id"] == tid for it in body["items"])
-    assert all(it["tip"] == "kontrol" for it in body["items"])
+    assert all(it["kategori_id"] is None for it in body["items"])
 
     pr = client.patch(f"/tasks/{tid}", headers=admin, json={"ad": "Kamelya-2", "aktif": False})
     assert pr.status_code == 200 and pr.json()["ad"] == "Kamelya-2" and pr.json()["aktif"] is False
@@ -55,13 +56,13 @@ def test_task_rbac_and_validation(client, world):
 
     # okuma izinli, yazma yasak
     assert client.get("/tasks", headers=gorevli).status_code == 200
-    assert client.post("/tasks", headers=gorevli, json={"tip": "temizlik", "ad": "x"}).status_code == 403
+    assert client.post("/tasks", headers=gorevli, json={"ad": "x"}).status_code == 403
 
-    # gecersiz govde (tip yok) -> 422
-    assert client.post("/tasks", headers=admin, json={"ad": "x"}).status_code == 422
+    # gecersiz govde (ad yok) -> 422
+    assert client.post("/tasks", headers=admin, json={}).status_code == 422
     # capraz-tenant atanan_user -> 422
     r = client.post(
-        "/tasks", headers=admin, json={"tip": "temizlik", "ad": "x", "atanan_user_id": str(uuid.uuid4())}
+        "/tasks", headers=admin, json={"ad": "x", "atanan_user_id": str(uuid.uuid4())}
     )
     assert r.status_code == 422 and r.json()["error"]["code"] == "invalid_reference"
 
@@ -80,7 +81,7 @@ def test_gorev_yonetimi_kesin_matris(client, world):
     # YENI ATA / OLUSTUR
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
     r = client.post(
-        "/tasks", headers=yonetici, json={"tip": "kontrol", "ad": "Matris gorevi"}
+        "/tasks", headers=yonetici, json={"ad": "Matris gorevi"}
     )
     assert r.status_code == 201, r.text
     for role in ("guard_a", "gorevli_a", "resident_a"):

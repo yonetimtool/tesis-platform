@@ -26,7 +26,6 @@ from .routers import patrol_windows as patrol_windows_router
 from .routers import emergency as emergency_router
 from .routers import events as events_router
 from .routers import kargo as kargo_router
-from .routers import landscape as landscape_router
 from .routers import me as me_router
 from .routers import me_patrol as me_patrol_router
 from .routers import notifications as notifications_router
@@ -97,7 +96,6 @@ app.include_router(tasks_router.router)
 app.include_router(task_categories_router.router)
 app.include_router(task_completions_router.router)
 app.include_router(uploads_router.router)
-app.include_router(landscape_router.router)
 app.include_router(assets_router.router)
 app.include_router(emergency_router.router)
 app.include_router(tenant_router.router)

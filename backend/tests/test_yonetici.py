@@ -27,7 +27,7 @@ def test_yonetici_gorev_olusturur_ve_saha_rollerine_atar(client, world):
     # security'ye atama
     r = client.post(
         "/tasks", headers=yonetici,
-        json={"tip": "kontrol", "ad": "Kapi kontrol", "atanan_user_id": _me_id(client, guard)},
+        json={"ad": "Kapi kontrol", "atanan_user_id": _me_id(client, guard)},
     )
     assert r.status_code == 201, r.text
     tid = r.json()["id"]
@@ -54,7 +54,7 @@ def test_yonetici_saha_disi_role_atayamaz(client, world):
     for hedef in (_me_id(client, resident), _me_id(client, admin), _me_id(client, yonetici)):
         r = client.post(
             "/tasks", headers=yonetici,
-            json={"tip": "temizlik", "ad": "x", "atanan_user_id": hedef},
+            json={"ad": "x", "atanan_user_id": hedef},
         )
         assert r.status_code == 422, r.text
         assert r.json()["error"]["code"] == "invalid_reference"
@@ -62,7 +62,7 @@ def test_yonetici_saha_disi_role_atayamaz(client, world):
     # admin icin atama kisiti yok (resident'e bile atayabilir — mevcut davranis)
     r = client.post(
         "/tasks", headers=admin,
-        json={"tip": "temizlik", "ad": "y", "atanan_user_id": _me_id(client, resident)},
+        json={"ad": "y", "atanan_user_id": _me_id(client, resident)},
     )
     assert r.status_code == 201, r.text
     client.delete(f"/tasks/{r.json()['id']}", headers=admin)
@@ -76,7 +76,7 @@ def test_gorevli_atanan_gorevi_tamamlar(client, world):
 
     t = client.post(
         "/tasks", headers=yonetici,
-        json={"tip": "temizlik", "ad": "Lobi", "atanan_user_id": gorevli_id},
+        json={"ad": "Lobi", "atanan_user_id": gorevli_id},
     ).json()
     r = client.post(
         f"/tasks/{t['id']}/completions",
@@ -105,7 +105,6 @@ def test_yonetici_takip_ve_rapor_okur(client, world):
         "/checkpoints",
         "/notifications",
         "/task-completions",
-        "/landscape/schedule",
         "/tenant/settings",
         "/assets",
         "/users",
@@ -204,7 +203,7 @@ def test_yonetici_kendi_tenantiyla_sinirli(client, world):
 
     t = client.post(
         "/tasks", headers=yonetici_a,
-        json={"tip": "kontrol", "ad": "A-gizli", "atanan_user_id": guard_a_id},
+        json={"ad": "A-gizli", "atanan_user_id": guard_a_id},
     ).json()
 
     # B yoneticisi A'nin gorevini goremez/degistiremez/silemez (RLS -> 404)
@@ -217,7 +216,7 @@ def test_yonetici_kendi_tenantiyla_sinirli(client, world):
     # A tenant'indaki kullaniciya B'den atama yapilamaz (RLS -> 422 invalid_reference)
     r = client.post(
         "/tasks", headers=yonetici_b,
-        json={"tip": "kontrol", "ad": "capraz", "atanan_user_id": guard_a_id},
+        json={"ad": "capraz", "atanan_user_id": guard_a_id},
     )
     assert r.status_code == 422 and r.json()["error"]["code"] == "invalid_reference"
 
