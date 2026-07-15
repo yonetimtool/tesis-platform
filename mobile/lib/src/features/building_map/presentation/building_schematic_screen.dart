@@ -551,14 +551,14 @@ class _ComplaintList extends StatelessWidget {
           separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (context, i) {
             final c = items[i];
-            final kimlik = c.complainantAd != null ? ' · ${c.complainantAd}' : '';
+            // F4 gizlilik: sikayet eden kimligi ARTIK gosterilmez (yonetim dahil).
             return ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.report_gmailerrorred_outlined),
               title: Text(c.kategori.label),
               subtitle: Text(
-                '${_fmtDate(c.createdAt.toLocal())}$kimlik'
+                '${_fmtDate(c.createdAt.toLocal())}'
                 '${c.notlar != null ? '\n${c.notlar}' : ''}',
               ),
               isThreeLine: c.notlar != null,

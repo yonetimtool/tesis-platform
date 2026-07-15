@@ -12,11 +12,9 @@ import 'tasks_controller.dart';
 
 /// Gorev listesi — iki giris noktasi, TEK ekran (A4 kesin matris, auth.md §4):
 ///
-///   * "Gorevlerim" (saha rolleri): kendi ROL GRUBUNA (guvenlik + tesis
-///     gorevlisi) atanan + atanmamis ("havuz") gorevlerin TAMAMI acilir;
-///     "Bana atanan" cipiyle yalniz kendine atananlara daraltilabilir.
-///     Tamamlama YALNIZ kendine atanan (veya havuz) gorevde yapilir —
-///     backend zorlar (baskasininki 403).
+///   * "Gorevlerim" (saha rolleri): YALNIZ kendine atanan gorevler (F4 kati —
+///     havuz/grup gorunurlugu YOK; kapsam cipleri saha'da gizli). Tamamlama da
+///     yalniz kendine atanan gorevde — backend zorlar (digeri 404).
 ///   * [yonetimGorunumu] (?gorunum=yonetim): Gorev-YONETIMI — YALNIZ
 ///     yonetici(+admin); tum gorev/atama takibi + "Yeni gorev" (canManage).
 ///
@@ -83,7 +81,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           : null,
       body: Column(
         children: [
-          _TipFilterBar(state: state),
+          _TipFilterBar(state: state, yonetim: widget.yonetimGorunumu),
           const Divider(height: 1),
           Expanded(
             child: state.loading && state.tasks.isEmpty
@@ -130,9 +128,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 /// Kategori (gorev tipi) filtresi: "Tumu" + yonetici kategorileri + "Diğer".
 /// Secim sunucuya `kategori_id` (UUID | 'diger') olarak gider.
 class _TipFilterBar extends ConsumerWidget {
-  const _TipFilterBar({required this.state});
+  const _TipFilterBar({required this.state, required this.yonetim});
 
   final TasksState state;
+
+  /// Yonetim gorunumu mu — kapsam cipleri ("Bana atanan/Tum gorevler") YALNIZ
+  /// burada anlamli. Saha rolu (F4 kati) yalniz kendine atanani gordugunden
+  /// ciplerin ikisi de ayni sonucu verir → saha'da gizlenir.
+  final bool yonetim;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -143,23 +146,25 @@ class _TipFilterBar extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
-          // Kapsam: "Bana atanan" sunucuda suzulur (?atanan_user_id=me);
-          // "Tum gorevler" saha rolu icin rol grubu + havuz (backend A4),
-          // yonetim icin tam liste.
-          ChoiceChip(
-            avatar: const Icon(Icons.person, size: 16),
-            label: const Text('Bana atanan'),
-            selected: state.sadeceBenim,
-            onSelected: (_) => controller.setSadeceBenim(true),
-          ),
-          const SizedBox(width: 8),
-          ChoiceChip(
-            avatar: const Icon(Icons.groups, size: 16),
-            label: const Text('Tüm görevler'),
-            selected: !state.sadeceBenim,
-            onSelected: (_) => controller.setSadeceBenim(false),
-          ),
-          const SizedBox(width: 16),
+          // Kapsam cipleri YALNIZ yonetim gorunumunde: "Bana atanan" (kendi) vs
+          // "Tum gorevler" (tam liste). Saha rolu yalniz kendine atanani gorur
+          // (F4 kati) → cipler gizli.
+          if (yonetim) ...[
+            ChoiceChip(
+              avatar: const Icon(Icons.person, size: 16),
+              label: const Text('Bana atanan'),
+              selected: state.sadeceBenim,
+              onSelected: (_) => controller.setSadeceBenim(true),
+            ),
+            const SizedBox(width: 8),
+            ChoiceChip(
+              avatar: const Icon(Icons.groups, size: 16),
+              label: const Text('Tüm görevler'),
+              selected: !state.sadeceBenim,
+              onSelected: (_) => controller.setSadeceBenim(false),
+            ),
+            const SizedBox(width: 16),
+          ],
           ChoiceChip(
             label: const Text('Tümü'),
             selected: state.kategoriFilter == null,

@@ -2173,10 +2173,10 @@ class UnitComplaintDecision(BaseModel):
 class UnitComplaintOut(BaseModel):
     """Daire sikayeti ciktisi.
 
-    Rev-1 GIZLILIK KADEMESI: `complainant_user_id` + `complainant_ad` YALNIZ
-    yonetim (admin+yonetici) icin doldurulur (denetim/oversight); resident/
-    security/tesis_gorevlisi bu listeye ERISEMEZ (403) ve kimlik ASLA sizmaz.
-    `notlar` da yalniz yonetim icin doludur."""
+    Rev-2 GIZLILIK: `complainant_user_id` + `complainant_ad` ARTIK HICBIR uctan
+    DOLDURULMAZ (her zaman None) — yonetim dahil kimse sikayet edenin kimligini
+    gormez. Alanlar geriye-uyum icin sema'da kalir (hep null). `notlar` yalniz
+    kendi kaydini goren sakine + yonetime doludur."""
 
     id: uuid.UUID
     target_unit_id: uuid.UUID

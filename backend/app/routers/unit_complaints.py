@@ -1,11 +1,12 @@
 """Daire sikayeti (D1 + D-viz Rev-1) — sakin -> HEDEF DAIRE.
 
-GIZLILIK KADEMESI (Rev-1, auth.md §4):
-  * yonetici/admin (YONETIM): denetim gorunumu — daire-basi ACIK sayi + renk
-    (harita) + daire detayinda SIKAYET EDEN kimligi (complainant) + not gorur.
+GIZLILIK KADEMESI (Rev-2, auth.md §4):
+  * yonetici/admin (YONETIM): daire-basi ACIK sayi + renk (harita) + daire
+    detayinda kategori + not + durum gorur. SIKAYET EDEN kimligini (complainant)
+    ARTIK GORMEZ — yalniz 'sikayet edildigini' gorur, KIMIN ettigini degil.
   * resident: bina yerlesimini gorur ama SAYI/RENK GORMEZ (hangi dairenin kac
     sikayeti oldugunu bilemez). Yalniz KENDI BLOGUNDAKI daireleri secip sikayet
-    eder (blok disi -> 403). Sikayet eden kimligi resident'a ASLA gosterilmez.
+    eder (blok disi -> 403). Sikayet eden kimligi hicbir role gosterilmez.
   * security/tesis_gorevlisi: YALNIZ blok/kat yapisi (sayi/renk/sikayet yok).
   * resident KENDI sikayetlerini GET /mine ile gorur (gitti mi geri bildirimi;
     yogunluk/renk/complainant YOK, yalniz kendi kayitlari).
@@ -23,7 +24,6 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import and_, func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased
 
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
@@ -342,14 +342,13 @@ async def list_unit_complaints(
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_MANAGER),
 ) -> UnitComplaintListResponse:
-    """Daire sikayetleri — YALNIZ YONETIM (denetim). kategori + tarih + durum +
-    SIKAYET EDEN kimligi (complainant) + not. residentlar bu uca ERISEMEZ (403);
-    kimlik yalnizca yonetime, denetim amaciyla acilir (Rev-1)."""
-    _COMPLAINANT = aliased(AppUser)
+    """Daire sikayetleri — YALNIZ YONETIM. kategori + tarih + durum + not.
+    SIKAYET EDEN kimligi (complainant) ARTIK DONMEZ (gizlilik: yonetim yalniz
+    'sikayet edildigini' gorur, KIMIN ettigini degil). residentlar bu uca
+    ERISEMEZ (403)."""
     base = (
-        select(UnitComplaint, Unit.no, _COMPLAINANT.ad)
+        select(UnitComplaint, Unit.no)
         .join(Unit, Unit.id == UnitComplaint.target_unit_id)
-        .join(_COMPLAINANT, _COMPLAINANT.id == UnitComplaint.complainant_user_id)
     )
     if target_unit_id is not None:
         base = base.where(UnitComplaint.target_unit_id == target_unit_id)
@@ -367,14 +366,9 @@ async def list_unit_complaints(
     return UnitComplaintListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
         items=[
-            UnitComplaintOut.from_model(
-                obj,
-                unit_no=no,
-                include_note=True,
-                include_complainant=True,
-                complainant_ad=cad,
-            )
-            for obj, no, cad in rows
+            # complainant ARTIK DONMEZ (include_complainant=False, gizlilik).
+            UnitComplaintOut.from_model(obj, unit_no=no, include_note=True)
+            for obj, no in rows
         ],
     )
 
@@ -388,27 +382,17 @@ async def close_unit_complaint(
     _: AppUser = Depends(_MANAGER),
 ) -> UnitComplaintOut:
     """Yonetim durumu degistirir (kapali). Kapatma ACIK sayimi dusurur (renk
-    feedback). Denetim: complainant + not doner (yonetime)."""
+    feedback). Not doner; complainant kimligi ARTIK DONMEZ (gizlilik)."""
     obj = await get_or_404(db, UnitComplaint, complaint_id)
     obj.durum = body.durum
     obj.updated_at = func.now()
     await db.flush()
     await db.refresh(obj)
-    row = (
+    unit_no = (
         await db.execute(
-            select(Unit.no, AppUser.ad)
-            .select_from(UnitComplaint)
-            .join(Unit, Unit.id == UnitComplaint.target_unit_id)
-            .join(AppUser, AppUser.id == UnitComplaint.complainant_user_id)
-            .where(UnitComplaint.id == obj.id)
+            select(Unit.no).where(Unit.id == obj.target_unit_id)
         )
-    ).first()
-    unit_no = row[0] if row else None
-    complainant_ad = row[1] if row else None
+    ).scalar_one_or_none()
     return UnitComplaintOut.from_model(
-        obj,
-        unit_no=unit_no,
-        include_note=True,
-        include_complainant=True,
-        complainant_ad=complainant_ad,
+        obj, unit_no=unit_no, include_note=True
     )

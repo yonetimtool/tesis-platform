@@ -52,8 +52,8 @@ class UnitComplaint {
 
   final DateTime createdAt;
 
-  /// Sikayet eden (complainant) — YALNIZ yonetim (denetim) icin dolu; resident/
-  /// saha ASLA gormez (liste onlara 403). Rev-1 kademeli gizlilik.
+  /// Sikayet eden (complainant) — Rev-2 gizlilik: ARTIK HICBIR uctan donmez
+  /// (yonetim dahil hep null). Alanlar geriye-uyum icin durur; gosterilmez.
   final String? complainantUserId;
   final String? complainantAd;
 

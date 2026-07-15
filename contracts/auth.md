@@ -380,12 +380,13 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 > - **Own-block:** resident yalnız kendi bloğundaki daireyi şikayet edebilir
 >   (`POST /unit-complaints` blok dışı hedef → **403**). Blok-suz sitede blok
 >   `null`'dur (tek örtük blok). Aktif dairesi olmayan sakin hiçbir yere açamaz.
-> - **complainant (şikayet eden) kimliği:** Rev-1'de YALNIZ **yönetim**
->   (admin+yonetici) için, DENETİM amacıyla `GET /unit-complaints` (+ `/density`,
->   kapatma) yanıtlarında döner (`complainant_user_id` + `complainant_ad` + not).
->   resident/security/tesis_gorevlisi bu listeye **erişemez** (403) ve kimlik
->   onlara **asla** sızmaz. Şikayet açan sakin kendi kaydında da complainant
->   `null` görür (kendisi zaten bilir). `building-map` hiçbir role complainant döndürmez.
+> - **complainant (şikayet eden) kimliği (Rev-2 — GİZLİ):** ARTIK **hiçbir**
+>   role dönmez — **yönetim dahil**. `GET /unit-complaints` (+ kapatma) yalnız
+>   yönetime açık (diğerleri 403) ve yönetim "şikayet edildiğini" + kategori +
+>   not + durum + daire-başı **sayı/renk** görür, ancak **KİMİN** ettiğini
+>   göremez (`complainant_user_id`/`complainant_ad` her zaman `null`; alanlar
+>   geriye-uyum için şemada durur). `building-map` de hiçbir role complainant
+>   döndürmez. Kimlik yalnız sunucuda spam-koruması için tutulur.
 > - **Bina blok CRUD (`/blocks*`)** ve daire CRUD/yerleşim (`/units*`,
 >   `/units/{id}/layout`) **YAZMA** admin **+ yonetici**'dir (Rev-2 görsel editörü
 >   bu uçları kullanır; blok-suz + blok-tabanlı siteler birlikte desteklenir).
@@ -431,13 +432,12 @@ Notlar:
   Gorev-YONETIMI = gorev atama + olusturma/duzenleme ekrani — YALNIZ
   `yonetici` (+`admin`); saha rolleri (`security`/`tesis_gorevlisi`) ve
   `resident` gormez. Saha rolleri yalniz "Gorevlerim" ekranini kullanir.
-  **Grup gorunurlugu (A4):** saha rolu "Gorevlerim"de KENDI ROL GRUBUNA
-  (`security` + `tesis_gorevlisi`) atanan TUM gorevleri + atanmamislari
-  ("Herkes") OKUR; saha-disi kisiye atanmis gorev gorunmez (404 ile varlik
-  da sizdirilmaz). **Tamamlama bypass-proof:** saha rolu YALNIZ kendine
-  atanan veya atanmamis (havuz) gorevi tamamlar; grubun baska uyesine
-  atanmis gorev okunur ama tamamlanamaz — `403 forbidden` (sunucu
-  tarafinda zorlanir). Yonetim tum listeyi gorur.
+  **KATI bireysel gorunurluk (F4, Rev-2):** saha rolu "Gorevlerim"de YALNIZ
+  KENDINE atanan gorevleri OKUR. Havuz (atanmamis) ve grup (baska saha
+  uyesine atanmis) gorevler saha'ya GORUNMEZ (404 ile varlik da sizdirilmaz);
+  yalniz yonetim gorur ve atar. **Tamamlama bypass-proof:** saha rolu YALNIZ
+  kendine atanan gorevi tamamlar; digerini goremedigi icin tamamlayamaz
+  (`404`). Yonetim tum listeyi gorur (havuz dahil, atamak icin).
 - **Gorev kategorisi (`/task-categories`, A6):** yonetici-tanimli,
   tenant'a ozel kategori seti. YAZMA (POST/DELETE) `admin` + `yonetici`;
   OKUMA gorev goren roller (`admin`/`yonetici`/`security`/

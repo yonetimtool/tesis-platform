@@ -1,8 +1,10 @@
 """Daire sikayeti (D1 + D-viz Rev-1) — kademeli gizlilik + own-block + kategori.
 
-Rev-1 KURALLARI:
-  * complainant (sikayet eden) kimligi YALNIZ yonetim (admin+yonetici) icin
-    donuyor (denetim); resident/security/gorevli LISTEYE ERISEMEZ (403).
+Rev-2 KURALLARI:
+  * complainant (sikayet eden) kimligi ARTIK HICBIR role donmez (yonetim dahil);
+    yonetim yalniz 'sikayet edildigini' + not + durum gorur, KIMIN ettigini degil.
+    density + liste yine YALNIZ yonetim; resident/security/gorevli LISTEYE
+    ERISEMEZ (403).
   * density + liste YALNIZ yonetim (residentlar sayilari goremez).
   * resident YALNIZ KENDI blogundaki daireyi sikayet eder (blok disi -> 403).
   * kategori: gurultu / kapi_onu_ayakkabi / zarar_verme / diger.
@@ -322,23 +324,26 @@ def test_rbac_kademeli(ucworld, client):
         ).status_code == 403
 
 
-# ------------------ complainant: yonetime gorunur, digerine kapali ---------- #
-def test_complainant_yonetime_gorunur_digerine_403(ucworld, client):
+# ---------- complainant: yonetime bile GORUNMEZ (gizlilik, Rev-2) ------------ #
+def test_complainant_yonetime_bile_gorunmez_digerine_403(ucworld, client):
     slug = ucworld["slug_a"]
     r0 = ucworld["residents"][0]
     assert _file(client, slug, r0, ucworld["unit1"], notlar="Gizli not").status_code == 201
 
-    # yonetim: complainant kimligi + adi + not DOLU (denetim)
+    # yonetim: not + durum gorur ama complainant kimligi ARTIK DONMEZ (gizlilik)
     for cred in (ucworld["admin_a"], ucworld["yonetici_a"]):
         h = _headers(client, slug, cred)
-        item = client.get(
+        resp = client.get(
             "/unit-complaints", headers=h, params={"target_unit_id": ucworld["unit1"]}
-        ).json()["items"][0]
-        assert item["complainant_user_id"] == r0["id"]
-        assert item["complainant_ad"]  # ad dolu
-        assert item["notlar"] == "Gizli not"
+        )
+        assert resp.status_code == 200
+        item = resp.json()["items"][0]
+        assert item["complainant_user_id"] is None and item["complainant_ad"] is None
+        assert item["notlar"] == "Gizli not"  # not gorunur, kimlik gorunmez
+        # sikayet edenin id'si yanit govdesinde HICBIR yerde sizmasin
+        assert r0["id"] not in resp.text
 
-    # digerleri LISTEYE ERISEMEZ -> 403 (complainant/not hicbir sekilde sizmaz)
+    # digerleri LISTEYE ERISEMEZ -> 403
     for cred in (ucworld["guard_a"], ucworld["gorevli_a"], ucworld["residents"][1]):
         h = _headers(client, slug, cred)
         resp = client.get(

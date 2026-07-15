@@ -133,7 +133,7 @@ void main() {
       expect(find.text('6'), findsOneWidget);
     });
 
-    testWidgets('detay: sayim + sikayet listesi (sikayet eden KIMLIGI — denetim)',
+    testWidgets('detay: sayim + sikayet listesi (sikayet eden KIMLIGI GIZLI)',
         (tester) async {
       await tester.pumpWidget(
         _app(UserRole.admin, map: _mgmtMap(), complaints: [_c()]),
@@ -143,8 +143,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('6 açık şikayet'), findsOneWidget);
       expect(find.text('Zarar verme'), findsOneWidget); // yeni kategori
-      // Rev-1: sikayet eden kimligi yonetime gorunur
-      expect(find.textContaining('Ayşe Sakin'), findsOneWidget);
+      // F4 gizlilik: sikayet eden kimligi yonetime bile GORUNMEZ
+      expect(find.textContaining('Ayşe Sakin'), findsNothing);
       // yonetim sikayet ETMEZ -> buton yok
       expect(find.text('Bu daireyi şikayet et'), findsNothing);
     });

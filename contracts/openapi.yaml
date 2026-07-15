@@ -3885,11 +3885,12 @@ paths:
   /unit-complaints:
     get:
       tags: [unit-complaints]
-      summary: Daire sikayetleri (YALNIZ yonetim — denetim, complainant dolu)
+      summary: Daire sikayetleri (YALNIZ yonetim; complainant GIZLI)
       description: >
-        Rev-1 KADEME: YALNIZ admin+yonetici (denetim). kategori+tarih+durum +
-        `notlar` + `complainant_user_id`/`complainant_ad` doner. resident/
-        security/tesis_gorevlisi ERISEMEZ (403); kimlik onlara asla sizmaz.
+        Rev-2 GIZLILIK: YALNIZ admin+yonetici. kategori+tarih+durum+`notlar`
+        doner ama `complainant_user_id`/`complainant_ad` ARTIK DONMEZ (her zaman
+        null) — yonetim yalniz 'sikayet edildigini' gorur, KIMIN ettigini degil.
+        resident/security/tesis_gorevlisi ERISEMEZ (403).
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -4403,9 +4404,10 @@ components:
     UnitComplaint:
       type: object
       description: >
-        Daire sikayeti ciktisi (Rev-1 KADEMELI). complainant_user_id +
-        complainant_ad + notlar YALNIZ yonetim (admin+yonetici) icin dolu
-        (denetim); resident/security/gorevli liste/density'ye ERISEMEZ (403).
+        Daire sikayeti ciktisi (Rev-2 GIZLILIK). complainant_user_id +
+        complainant_ad ARTIK HICBIR uctan DONMEZ (yonetim dahil, hep null;
+        alanlar geriye-uyum icin durur). notlar yalniz yonetime + kendi kaydini
+        goren sakine dolu. resident/security/gorevli liste/density'ye ERISEMEZ.
       required: [id, target_unit_id, kategori, durum, created_at]
       properties:
         id: { type: string, format: uuid }

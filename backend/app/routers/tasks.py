@@ -1,11 +1,11 @@
 """Task CRUD + tamamlama (completion) — /contracts/openapi.yaml.
 
 RBAC (auth.md §4): GET admin/yonetici/security/tesis_gorevlisi — saha rolleri
-kendi ROL GRUBUNA (security + tesis_gorevlisi) atanan + atanmamis gorevleri okur;
+YALNIZ KENDINE atanan gorevleri okur (kati: havuz/grup gorunurlugu YOK);
 Task yazma (POST/PATCH/DELETE) admin/yonetici — yonetici yalniz
 security/tesis_gorevlisi'ne atar; completion gonderme (POST)
-admin/security/tesis_gorevlisi — saha rolu yalniz KENDINE atanan veya atanmamis
-gorevi tamamlar (aksi 403). tenant token'dan; RLS izole.
+admin/security/tesis_gorevlisi — saha rolu yalniz KENDINE atanan gorevi
+tamamlar (aksi 403/404). tenant token'dan; RLS izole.
 Completion idempotency scan desenini yeniden kullanir (SAVEPOINT).
 """
 from __future__ import annotations
@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, Query, Response
 from fastapi.responses import JSONResponse
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,44 +42,27 @@ _COMPLETER = require_role("admin", "security", "tesis_gorevlisi")
 # yonetici gorevleri yalniz saha rollerine atayabilir (auth.md §4).
 _YONETICI_ATANABILIR = {"security", "tesis_gorevlisi"}
 
-# Saha rolleri: 'Gorevlerim' kendi ROL GRUBUNA (guvenlik + tesis gorevlisi)
-# atanan tum gorevleri OKUR; saha-disi kisiye (orn. admin) atanmis gorevler
-# gorunmez. Tamamlama ayrica kisiye baglidir (bkz. create_completion).
+# Saha rolleri: 'Gorevlerim' YALNIZ KENDINE atanan gorevleri OKUR (kati — havuz
+# ve grup gorunurlugu YOK). Baskasina atanmis ya da atanmamis gorevler saha'ya
+# gorunmez; yalniz yonetim gorur (ve atar). Tamamlama da kisiye baglidir.
 _SAHA_ROLLERI = {"security", "tesis_gorevlisi"}
 
 
-def _saha_atananlar_subq():
-    """Ayni tenant'taki (RLS) saha rolu kullanici id'leri — grup gorunurlugu."""
-    return select(AppUser.id).where(AppUser.role.in_(_SAHA_ROLLERI)).scalar_subquery()
-
-
 def _assignee_visibility(user: AppUser):
-    """Saha kullanicisi icin gorunurluk kosulu: atanmamis ('Herkes') VEYA
-    rol grubundan birine (security/tesis_gorevlisi) atanmis. Yonetim
-    (admin/yonetici) kisitsiz (None doner)."""
+    """Saha kullanicisi icin gorunurluk kosulu: YALNIZ kendine atanan gorev.
+    Havuz (atanmamis) + grup gorunurlugu YOK. Yonetim (admin/yonetici) kisitsiz
+    (None doner)."""
     if user.role in _SAHA_ROLLERI:
-        return or_(
-            Task.atanan_user_id.is_(None),
-            Task.atanan_user_id.in_(_saha_atananlar_subq()),
-        )
+        return Task.atanan_user_id == user.id
     return None
 
 
 async def _visible_task_or_404(db: AsyncSession, task_id: uuid.UUID, user: AppUser) -> Task:
-    """Task'i atanan-gorunurluk kurali altinda yukle; gorunmuyorsa 404
-    (grup disina atanmis gorevin VARLIGI da sizdirilmaz)."""
+    """Task'i atanan-gorunurluk kurali altinda yukle; saha kullanicisi YALNIZ
+    kendine atanan gorevi gorur (aksi 404 — varligi da sizdirilmaz)."""
     task = await get_or_404(db, Task, task_id)
-    if (
-        user.role in _SAHA_ROLLERI
-        and task.atanan_user_id not in (None, user.id)
-    ):
-        atanan_rol = (
-            await db.execute(
-                select(AppUser.role).where(AppUser.id == task.atanan_user_id)
-            )
-        ).scalar_one_or_none()
-        if atanan_rol not in _SAHA_ROLLERI:
-            raise APIError(404, "not_found", "Kayit bulunamadi")
+    if user.role in _SAHA_ROLLERI and task.atanan_user_id != user.id:
+        raise APIError(404, "not_found", "Kayit bulunamadi")
     return task
 
 
@@ -303,10 +286,10 @@ async def create_completion(
     # Gorunurluk: grup disi / baska tenant -> 404 (varlik sizdirilmaz).
     task = await _visible_task_or_404(db, task_id, user)
 
-    # Tamamlama BYPASS-PROOF: saha kullanicisi yalniz KENDINE atanan veya
-    # atanmamis (havuz) gorevi tamamlar; grubun baska uyesine atanmis gorev
-    # okunur ama tamamlanamaz -> 403.
-    if user.role in _SAHA_ROLLERI and task.atanan_user_id not in (None, user.id):
+    # Tamamlama BYPASS-PROOF: saha kullanicisi YALNIZ KENDINE atanan gorevi
+    # tamamlar. (_visible_task_or_404 zaten kendine-ait olmayani 404'ler; bu
+    # ek kontrol savunmacidir.)
+    if user.role in _SAHA_ROLLERI and task.atanan_user_id != user.id:
         raise APIError(
             403, "forbidden", "Bu gorevi yalniz atanan kullanici tamamlayabilir."
         )
