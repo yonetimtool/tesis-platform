@@ -15,14 +15,15 @@ security (dashboard ile tutarli). tenant token'dan; RLS ile izole.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..deps import get_tenant_db, require_role
-from ..models import AppUser
+from ..models import AppUser, Tenant
 from ..schemas import (
     MePatrolCheckpointOut,
     MePatrolWindowInfo,
@@ -63,8 +64,10 @@ _AKTIF_PENCERE_SQL = text(
         ORDER BY se.okutma_zamani
         LIMIT 1
     ) s ON true
-    WHERE w.pencere_baslangic <= :now AND w.pencere_bitis > :now
-    ORDER BY w.pencere_bitis, w.id, ppc.sira
+    -- BUGUN'e ait (tenant tz gun sinirini asan) TUM pencereler; aktif olmayan
+    -- (gecmis-bugun/yaklasan) dahil. Aktiflik istemcide saatle hesaplanir.
+    WHERE w.pencere_bitis > :day_start AND w.pencere_baslangic < :day_end
+    ORDER BY w.pencere_baslangic, w.id, ppc.sira
     """
 )
 
@@ -75,8 +78,20 @@ async def my_patrol_window(
     _: AppUser = Depends(_VIEWER),
 ) -> MePatrolWindowResponse:
     now = datetime.now(tz=timezone.utc)
+    tz_name = (
+        await db.execute(select(Tenant.timezone))
+    ).scalar_one_or_none() or "Europe/Istanbul"
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = ZoneInfo("Europe/Istanbul")
+    today = now.astimezone(tz).date()
+    day_start = datetime(today.year, today.month, today.day, tzinfo=tz)
+    day_end = day_start + timedelta(days=1)
     rows = (
-        await db.execute(_AKTIF_PENCERE_SQL, {"now": now})
+        await db.execute(
+            _AKTIF_PENCERE_SQL, {"day_start": day_start, "day_end": day_end}
+        )
     ).mappings().all()
 
     windows: list[MePatrolWindowItem] = []
@@ -106,11 +121,15 @@ async def my_patrol_window(
                 )
             )
 
-    # window/checkpoints = bitisi en yakin aktif pencere (siralama SQL'de)
-    ilk = windows[0] if windows else None
+    # window/checkpoints (tarama ODAGI) = SU AN aktif pencere; yoksa null.
+    # windows[] bugunun TUM pencerelerini tasir (istemci listede gosterir).
+    odak = next(
+        (w for w in windows if w.pencere_baslangic <= now < w.pencere_bitis),
+        None,
+    )
     return MePatrolWindowResponse(
         generated_at=now,
-        window=MePatrolWindowInfo.model_validate(ilk, from_attributes=True) if ilk else None,
-        checkpoints=ilk.checkpoints if ilk else [],
+        window=MePatrolWindowInfo.model_validate(odak, from_attributes=True) if odak else None,
+        checkpoints=odak.checkpoints if odak else [],
         windows=windows,
     )

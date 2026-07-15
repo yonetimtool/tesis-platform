@@ -93,17 +93,20 @@ class _ActiveTourTab extends ConsumerWidget {
                   : state.errorMessage!,
               onRetry: state.forbidden ? null : controller.refresh,
             ),
+          // Su an AKTIF pencere (varsa): genisletilmis kart + nokta listesi
+          // (taranabilir). Birden cok aktif pencerede secici.
           if (state.active != null) ...[
-            if (state.windows.length > 1) ...[
+            if (state.windows.where((w) => w.isActiveAt(DateTime.now().toUtc())).length > 1) ...[
               _WindowSelector(state: state),
               const SizedBox(height: 12),
             ],
             _ActiveWindowCard(state: state),
             const SizedBox(height: 16),
             _CheckpointList(state: state),
-          ] else if (!state.forbidden) ...[
-            _NoActiveWindowCard(next: state.next),
+            const SizedBox(height: 16),
           ],
+          // Bugunun turlari (ozet, durum rozetleriyle) — aktif olmayanlar da.
+          if (!state.forbidden) _TodayWindows(state: state),
           if (state.refreshedAt != null)
             Padding(
               padding: const EdgeInsets.only(top: 16),
@@ -255,40 +258,94 @@ Future<void> _goScan(BuildContext context, WidgetRef ref) async {
   );
 }
 
-/// Aktif pencere yokken gosterilen kart (+ varsa siradaki pencere bilgisi).
-class _NoActiveWindowCard extends StatelessWidget {
-  const _NoActiveWindowCard({required this.next});
+/// Bugunun turlari (ozet liste) — her pencere: plan + saat + X/N + durum rozeti.
+/// Su an AKTIF pencere yukarida genisletilmis gosterildiginden burada ATLANIR
+/// (yalniz digerleri: yaklasan / bitmis / tamamlanmis / kacirilan).
+class _TodayWindows extends StatelessWidget {
+  const _TodayWindows({required this.state});
 
-  final ActivePatrolWindow? next;
+  final PatrolTourState state;
 
   @override
   Widget build(BuildContext context) {
-    final n = next;
+    if (state.windows.isEmpty) return const _NoWindowsToday();
+    final now = DateTime.now().toUtc();
+    final activeId = state.active?.patrolWindowId;
+    final list =
+        state.windows.where((w) => w.patrolWindowId != activeId).toList();
+    if (list.isEmpty) return const SizedBox.shrink(); // yalnizca aktif vardi
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            state.active != null ? 'Bugünün diğer turları' : 'Bugünün turları',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+        ),
+        for (final w in list) _TodayWindowTile(window: w, now: now),
+      ],
+    );
+  }
+}
+
+class _TodayWindowTile extends StatelessWidget {
+  const _TodayWindowTile({required this.window, required this.now});
+
+  final ActivePatrolWindow window;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final w = window;
+    final beklenen = w.beklenenCheckpointSayisi;
+    final okutulan = w.okutulanCheckpointSayisi;
+    final (color, label) = switch (w.durum) {
+      PatrolWindowDurum.tamamlandi => (Colors.green, 'Tamamlandı'),
+      PatrolWindowDurum.kacirildi => (Colors.red, 'Kaçırıldı'),
+      _ => w.isActiveAt(now)
+          ? (Colors.blue, 'Şimdi aktif')
+          : w.isUpcomingAt(now)
+              ? (Colors.blueGrey, 'Yaklaşan')
+              : (Colors.grey, 'Bitti'),
+    };
     return Card(
+      child: ListTile(
+        dense: true,
+        title: Text(w.patrolPlanAd ?? 'Devriye turu'),
+        subtitle: Text(
+          '${fmtClock(w.pencereBaslangic.toLocal())} – ${fmtClock(w.pencereBitis.toLocal())}'
+          '${beklenen > 0 ? ' · $okutulan/$beklenen nokta' : ''}',
+        ),
+        trailing: Chip(
+          label: Text(label),
+          labelStyle: TextStyle(color: color),
+          backgroundColor: color.withValues(alpha: 0.12),
+          visualDensity: VisualDensity.compact,
+        ),
+      ),
+    );
+  }
+}
+
+class _NoWindowsToday extends StatelessWidget {
+  const _NoWindowsToday();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           children: [
-            const Icon(Icons.nightlight_outlined, size: 48),
-            const SizedBox(height: 12),
-            const Text(
-              'Şu an aktif devriye penceresi yok.',
+            Icon(Icons.event_busy_outlined, size: 48),
+            SizedBox(height: 12),
+            Text(
+              'Bugün için devriye turu yok.',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
-            if (n != null)
-              Text(
-                'Sıradaki: ${n.patrolPlanAd ?? 'Devriye turu'} · '
-                '${fmtClock(n.pencereBaslangic.toLocal())}'
-                ' – ${fmtClock(n.pencereBitis.toLocal())}',
-                textAlign: TextAlign.center,
-              )
-            else
-              const Text(
-                'Bugün için planlanmış başka pencere görünmüyor.',
-                textAlign: TextAlign.center,
-              ),
           ],
         ),
       ),

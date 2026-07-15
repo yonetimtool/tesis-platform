@@ -1,4 +1,4 @@
-"""GET /me/patrol-window testleri — aktif pencere + checkpoint bazinda okutma durumu.
+"""GET /me/patrol-window testleri — BUGUNUN pencereleri + checkpoint okutma durumu + aninda tamamlanma.
 
 Mobil bulgusu: "aktif turumda hangi noktalari okuttum" listesi sunucudan
 alinabilmeli. okutuldu PENCERE-GENELI (herhangi bir elemanin okutmasi sayilir) —
@@ -228,3 +228,57 @@ def test_tenant_isolation(client, world, owner_conn):
     body_b = client.get("/me/patrol-window", headers=admin_b).json()
     assert all(w["id"] != str(wid) for w in body_b["windows"])
     assert body_b["window"] is None or body_b["window"]["id"] != str(wid)
+
+
+def _scan(client, guard, nfc, when):
+    return client.post(
+        "/scans",
+        headers={**guard, "Idempotency-Key": uuid.uuid4().hex},
+        json={"nfc_tag_uid": nfc, "okutma_zamani": when.isoformat(), "gps_lat": 41.0, "gps_lng": 29.0},
+    )
+
+
+def test_bugun_pencereleri_aktif_olmayan_dahil(client, world, owner_conn):
+    """Bugune ait pencereler (aktif olmayan YAKLASAN dahil) windows[] icinde
+    doner; window (ODAK) yalniz SU AN aktif olandir."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    cp = _checkpoint(client, admin)
+    plan = _plan_with_checkpoints(client, admin, [cp["id"]])
+    now = datetime.now(tz=UTC)
+    aktif = _ins_window(
+        owner_conn, world["a"], plan["id"], now - timedelta(minutes=5), now + timedelta(minutes=30)
+    )
+    yaklasan = _ins_window(
+        owner_conn, world["a"], plan["id"], now + timedelta(hours=1), now + timedelta(hours=2)
+    )
+    body = client.get("/me/patrol-window", headers=guard).json()
+    ids = {w["id"] for w in body["windows"]}
+    assert str(aktif) in ids and str(yaklasan) in ids  # ikisi de BUGUN listesinde
+    assert body["window"] is not None and body["window"]["id"] == str(aktif)  # odak=aktif
+
+
+def test_scan_pencereyi_aninda_tamamlar(client, world, owner_conn):
+    """Aktif pencerede TUM checkpoint'ler POST /scans ile okutulunca pencere
+    HEMEN 'tamamlandi' olur (bitisini beklemeden); eksikken 'bekliyor' kalir."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    cp1 = _checkpoint(client, admin, ad="A")
+    cp2 = _checkpoint(client, admin, ad="B")
+    plan = _plan_with_checkpoints(client, admin, [cp1["id"], cp2["id"]])
+    now = datetime.now(tz=UTC)
+    wid = _ins_window(
+        owner_conn, world["a"], plan["id"], now - timedelta(minutes=5), now + timedelta(hours=1)
+    )
+
+    def _durum():
+        d = client.get("/me/patrol-window", headers=guard).json()
+        return next(w for w in d["windows"] if w["id"] == str(wid))["durum"]
+
+    # cp1 tara -> hala bekliyor (1/2)
+    assert _scan(client, guard, cp1["nfc_tag_uid"], now).status_code == 201
+    assert _durum() == "bekliyor"
+
+    # cp2 tara -> HEMEN tamamlandi (2/2)
+    assert _scan(client, guard, cp2["nfc_tag_uid"], now).status_code == 201
+    assert _durum() == "tamamlandi"

@@ -864,19 +864,16 @@ paths:
   /me/patrol-window:
     get:
       tags: [me]
-      summary: Aktif devriye penceresi + checkpoint bazinda okutma durumu (mobil)
+      summary: Bugunun devriye pencereleri + checkpoint bazinda okutma durumu (mobil)
       description: |
-        Mobil icin: "aktif turumda hangi noktalar okutuldu" listesi (cihaz yerel
-        kaydina gerek kalmadan). Aktif pencere = SU AN icinde olunan pencere
-        (pencere_baslangic <= now < pencere_bitis; /dashboard/live'in aktif tur
-        mantigiyla tutarli, tenant-geneli).
-
-        KARAR — birden cok plan ayni anda aktif olabilir: TUM aktif pencereler
-        `windows[]` icinde doner (her biri kendi checkpoint listesiyle,
-        pencere_bitis ASC sirali). `window` + `checkpoints` alanlari bunlardan
-        BITISI EN YAKIN (en acil) olanin sade gorunumudur — tek pencereli
-        kullanim icin yeterlidir. Aktif pencere yoksa `window: null` +
-        `checkpoints: []` + `windows: []` (200, hata DEGIL).
+        Mobil "Turlarim > Aktif" icin: BUGUN'e ait (tenant tz gun sinirini asan)
+        TUM pencereler `windows[]` icinde doner — aktif olmayan (yaklasan/
+        bitmis-bugun/tamamlanmis) dahil, her biri kendi checkpoint listesiyle,
+        pencere_baslangic ASC sirali. Boylece tur o dakika aktif olmasa da
+        gorunur. `window` + `checkpoints` = SU AN aktif olan pencere (odak;
+        pencere_baslangic <= now < pencere_bitis) — tarama odagi; aktif pencere
+        yoksa `window: null` + `checkpoints: []` (200). Bugun hic pencere yoksa
+        `windows: []`.
 
         checkpoints[]: plana atanmis AKTIF checkpoint'ler, `sira` ile sirali.
         `okutuldu` PENCERE-GENELIDIR — HERHANGI bir elemanin okutmasi sayilir

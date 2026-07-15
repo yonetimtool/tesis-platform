@@ -57,9 +57,14 @@ class PatrolHistoryController extends Notifier<PatrolHistoryState> {
   Future<void> refresh() async {
     state = state.copyWith(loading: true, errorMessage: null);
     try {
-      final page = await ref
-          .read(patrolApiProvider)
-          .fetchWindowHistory(limit: _pageSize);
+      // Gecmis = YALNIZ gecmis: bugunun turlari "Aktif"/"Bugun"da; burada
+      // yalniz bugunden ONCE baslayan pencereler.
+      final now = DateTime.now();
+      final bugunBasi = DateTime(now.year, now.month, now.day);
+      final page = await ref.read(patrolApiProvider).fetchWindowHistory(
+            limit: _pageSize,
+            bitisBefore: bugunBasi,
+          );
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,

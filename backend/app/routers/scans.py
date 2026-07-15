@@ -27,7 +27,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Header, Query
 from fastapi.responses import JSONResponse
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -116,6 +116,45 @@ def _coord_eq(a, b) -> bool:
     if a is None or b is None:
         return a is b
     return round(float(a), 6) == round(float(b), 6)
+
+
+# Aninda tamamlanma: taranan checkpoint'in planlarina ait, taramanin zaman
+# araligini iceren AKTIF ('bekliyor') pencereler icin — planin TUM aktif
+# checkpoint'leri o pencerede taranmissa pencere HEMEN 'tamamlandi' olur.
+# Bos plan (aktif checkpoint yok) dokunulmaz (scheduler bitiste vacuously yapar).
+_COMPLETE_WINDOWS_SQL = text(
+    """
+    UPDATE patrol_window w
+    SET durum = 'tamamlandi', updated_at = now()
+    WHERE w.durum = 'bekliyor'
+      AND :okutma >= w.pencere_baslangic AND :okutma < w.pencere_bitis
+      AND w.patrol_plan_id IN (
+          SELECT patrol_plan_id FROM patrol_plan_checkpoint WHERE checkpoint_id = :cp_id
+      )
+      AND EXISTS (
+          SELECT 1 FROM patrol_plan_checkpoint ppc
+          JOIN checkpoint c ON c.id = ppc.checkpoint_id AND c.aktif = true
+          WHERE ppc.patrol_plan_id = w.patrol_plan_id
+      )
+      AND NOT EXISTS (
+          SELECT 1 FROM patrol_plan_checkpoint ppc
+          JOIN checkpoint c ON c.id = ppc.checkpoint_id AND c.aktif = true
+          WHERE ppc.patrol_plan_id = w.patrol_plan_id
+            AND NOT EXISTS (
+                SELECT 1 FROM scan_event se
+                WHERE se.checkpoint_id = ppc.checkpoint_id
+                  AND se.okutma_zamani >= w.pencere_baslangic
+                  AND se.okutma_zamani <  w.pencere_bitis
+            )
+      )
+    """
+)
+
+
+async def _mark_completed_windows(db: AsyncSession, checkpoint_id, okutma) -> None:
+    """Bu tarama bir aktif pencerenin son eksik noktasiysa pencereyi 'tamamlandi'
+    yapar (RLS ile tenant-ici). Yeni scan ile ayni transaction'da calisir."""
+    await db.execute(_COMPLETE_WINDOWS_SQL, {"cp_id": checkpoint_id, "okutma": okutma})
 
 
 def _same_request(existing: ScanEvent, *, guard_id, checkpoint_id, patrol_window_id,
@@ -279,6 +318,10 @@ async def create_scan(
             )
             if upd.rowcount == 0:
                 raise APIError(422, "replay_detected", "SDM okuma sayaci ilerlememis (tekrar oynatma).")
+        # 7) ANINDA TAMAMLANMA: bu tarama bir aktif ('bekliyor') pencerenin SON
+        # eksik noktasiysa pencere HEMEN 'tamamlandi' olur (scheduler'in bitiste
+        # yaptigi tamamlandi tanimiyla ayni; ama pencere-bitisini beklemez).
+        await _mark_completed_windows(db, checkpoint.id, okutma)
         await db.refresh(obj)
         return JSONResponse(
             status_code=201, content=ScanEventOut.model_validate(obj).model_dump(mode="json")
