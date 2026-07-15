@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/text/tr_upper.dart';
 import '../../../routing/app_router.dart';
+import '../../checkpoints/data/checkpoint_api.dart';
 import '../../scan/data/scan_outbox.dart';
 import '../../scan/domain/outbox_entry.dart';
 import '../../scan/domain/scan.dart';
@@ -41,6 +43,59 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
       okutmaZamani: result.readAt ?? DateTime.now().toUtc(),
       sdmPiccData: sdm?.piccData,
       sdmCmac: sdm?.cmac,
+    );
+    setState(() => _currentKey = draft.idempotencyKey);
+    await ref.read(scanOutboxProvider.notifier).enqueue(draft);
+  }
+
+  /// TEST (yalniz debug): fiziksel etiket olmadan bir kontrol noktasini secip
+  /// okutmayi simule eder — ayni akis (outbox -> POST /scans) calisir. Release
+  /// derlemesinde GORUNMEZ (NFC "fiziksel varlik" kaniti korunur).
+  Future<void> _manualTestScan() async {
+    final messenger = ScaffoldMessenger.of(context);
+    List<Checkpoint> checkpoints;
+    try {
+      checkpoints = await ref.read(checkpointsProvider.future);
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Noktalar alınamadı: $e')),
+      );
+      return;
+    }
+    final aktif = checkpoints.where((c) => c.aktif).toList();
+    if (!mounted) return;
+    final secilen = await showModalBottomSheet<Checkpoint>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            const ListTile(
+              title: Text('TEST: hangi noktayı okutalım?',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Text('Fiziksel etiket olmadan okutmayı simüle eder.'),
+            ),
+            if (aktif.isEmpty)
+              const ListTile(
+                title: Text('Aktif kontrol noktası yok.'),
+                subtitle: Text('Önce "Kontrol noktaları"ndan ekleyin.'),
+              )
+            else
+              for (final c in aktif)
+                ListTile(
+                  leading: const Icon(Icons.nfc),
+                  title: Text(c.ad),
+                  subtitle: Text('UID: ${c.nfcTagUid}'),
+                  onTap: () => Navigator.of(context).pop(c),
+                ),
+          ],
+        ),
+      ),
+    );
+    if (secilen == null) return;
+    final draft = ScanDraft(
+      nfcTagUid: secilen.nfcTagUid,
+      okutmaZamani: DateTime.now().toUtc(),
     );
     setState(() => _currentKey = draft.idempotencyKey);
     await ref.read(scanOutboxProvider.notifier).enqueue(draft);
@@ -94,6 +149,21 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
                 onRead: _startNewRead,
                 onCancel: nfc.cancel,
               ),
+              // TEST (yalniz debug): fiziksel etiket olmadan okutma simulasyonu.
+              if (kDebugMode) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: state.status == NfcStatus.reading
+                      ? null
+                      : _manualTestScan,
+                  icon: const Icon(Icons.science_outlined),
+                  label: const Text('Manuel okut (test)'),
+                ),
+                Text(
+                  'Yalnızca test derlemesinde görünür.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ],
           ),
         ),
