@@ -19,6 +19,7 @@ from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser
 from ..schemas import (
+    ResidentResetPasswordOut,
     UserAdminListResponse,
     UserAdminOut,
     UserContactUpdate,
@@ -146,9 +147,21 @@ async def update_user(
     user_id: uuid.UUID,
     body: UserUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_USER_CREATOR),
 ) -> AppUser:
     obj = await get_or_404(db, AppUser, user_id)
+    # yonetici YALNIZ saha personelini (guvenlik/tesis gorevlisi) duzenler ve
+    # rolu saha disina cekemez (yetki yukseltme yok); admin herkesi duzenler.
+    if user.role == "yonetici":
+        if obj.role not in _YONETICI_CREATABLE_ROLES:
+            raise APIError(
+                403, "forbidden", "Yalniz saha personelini duzenleyebilirsiniz."
+            )
+        if body.role is not None and body.role not in _YONETICI_CREATABLE_ROLES:
+            raise APIError(
+                403, "forbidden",
+                "Rolu yalniz guvenlik/tesis gorevlisi yapabilirsiniz.",
+            )
     data = body.model_dump(exclude_unset=True)
     new_password = data.pop("password", None)
     if "email" in data and data["email"] is not None:
@@ -167,6 +180,31 @@ async def update_user(
         raise translate_integrity(exc)
     await db.refresh(obj)
     return obj
+
+
+@router.post("/{user_id}/reset-password", response_model=ResidentResetPasswordOut)
+async def reset_user_password(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_USER_CREATOR),
+) -> "ResidentResetPasswordOut":
+    """Personel parolasini sifirla (admin + yonetici): yeni TEK SEFERLIK gecici
+    kod uretir; personel telefon + bu kodla girip yeni parolasini belirler. Kod
+    yalniz bu yanitta doner. yonetici YALNIZ saha personeli (guvenlik/tesis
+    gorevlisi) icin sifirlar."""
+    obj = await get_or_404(db, AppUser, user_id)
+    if user.role == "yonetici" and obj.role not in _YONETICI_CREATABLE_ROLES:
+        raise APIError(
+            403, "forbidden",
+            "Yalniz saha personelinin parolasini sifirlayabilirsiniz.",
+        )
+    temp_code = generate_temp_code()
+    obj.password_hash = None
+    obj.password_set = False
+    obj.temp_code_hash = hash_password(temp_code)
+    obj.updated_at = func.now()
+    await db.flush()
+    return ResidentResetPasswordOut(temp_code=temp_code)
 
 
 @router.patch("/{user_id}/contact", response_model=UserAdminOut)

@@ -127,6 +127,14 @@ SECURITY DEFINER (`tenant_detail` / `update_tenant_yonetici` /
 > resident'lar `POST /residents` ile acilir). `admin` her rolu acar. Tenant
 > olusturan kullanicidan alinir (RLS).
 >
+> **Saha personeli DUZENLEME/pasiflestirme/parola-sifirlama (Parca C):** yonetici
+> (+admin) `PATCH /users/{id}` ile saha personelini duzenler (ad/telefon/rol —
+> yon rolu YALNIZ `security`↔`tesis_gorevlisi` yapabilir, saha disina cekemez →
+> **403**; admin herkesi duzenler), `is_active=false` ile **pasiflestirir**
+> ("cikar" = giris engellenir, gecmis korunur), `POST /users/{id}/reset-password`
+> ile yeni gecici kod uretir (bir kez). yonetici saha-disi (admin/yonetici/
+> resident) kullaniciya bu uclarda dokunamaz → **403**.
+>
 > **Site sakini yonetimi (yonetici):** sakin KENDI kayit OLAMAZ; yonetici (+admin)
 > ekler/listeler/duzenler/siler/parola-sifirlar. `POST /residents` (ad + telefon
 > + daire no -> gecici kod). `GET /residents` sakin listesi (ad + aktif daire no
@@ -312,7 +320,8 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET /reports/financial-summary`      |  ✅   | ✅  | ✅° | ✅° | ✅° |
 | `GET /users` + `GET /users/{id}`      |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /users` (admin: her rol; yon: saha)| ✅ | ✅* | ❌ | ❌  | ❌  |
-| `PATCH /users/{id}` (tam)             |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `PATCH /users/{id}` (admin: her; yon: saha)| ✅ | ✅* | ❌ | ❌ | ❌ |
+| `POST /users/{id}/reset-password` (admin: her; yon: saha)| ✅ | ✅* | ❌ | ❌ | ❌ |
 | `PATCH /users/{id}/contact`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET /call-target/{id}`               |  ❌   | ❌  | 📞  | ❌  | 📞  |
 | `*/integrations*` (CRUD + tetik)      |  ✅   | ✅  | ❌  | ❌  | ❌  |

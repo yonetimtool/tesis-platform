@@ -199,3 +199,78 @@ def test_update_user_tenant_isolation(client, world):
     # B admin goremez / degistiremez -> 404 (RLS)
     assert client.get(f"/users/{uid}", headers=admin_b).status_code == 404
     assert client.patch(f"/users/{uid}", headers=admin_b, json={"ad": "x"}).status_code == 404
+
+
+# ------------ yonetici saha personeli yonetimi (Parca C) -------------------- #
+def _me_id(client, h):
+    return client.get("/me", headers=h).json()["id"]
+
+
+def test_yonetici_updates_and_resets_field_staff(client, world):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    phone = _uphone()
+    created = client.post(
+        "/users", headers=yon,
+        json={"ad": "Saha X", "telefon": phone, "role": "security"},
+    ).json()
+    uid = created["id"]
+
+    # yonetici ad/telefon/rol duzenler (saha ici)
+    newphone = _uphone()
+    pr = client.patch(
+        f"/users/{uid}", headers=yon,
+        json={"ad": "Saha Y", "telefon": newphone, "role": "tesis_gorevlisi"},
+    )
+    assert pr.status_code == 200, pr.text
+    assert pr.json()["ad"] == "Saha Y" and pr.json()["role"] == "tesis_gorevlisi"
+
+    # rolu saha disina cekemez -> 403 (yetki yukseltme yok)
+    assert client.patch(
+        f"/users/{uid}", headers=yon, json={"role": "yonetici"}
+    ).status_code == 403
+
+    # parola sifirla -> temp_code; personel telefon + kod ile ilk-giris akisi
+    rr = client.post(f"/users/{uid}/reset-password", headers=yon)
+    assert rr.status_code == 200 and rr.json()["temp_code"]
+    lp = client.post(
+        "/auth/login-phone", json={"phone": newphone, "password": rr.json()["temp_code"]}
+    )
+    assert lp.status_code == 200 and lp.json()["password_setup_required"] is True
+
+    # pasiflestir -> login reddedilir (is_active False)
+    client.patch(f"/users/{uid}", headers=yon, json={"is_active": False})
+    lp2 = client.post(
+        "/auth/login-phone", json={"phone": newphone, "password": rr.json()["temp_code"]}
+    )
+    assert lp2.status_code == 401
+
+
+def test_yonetici_cannot_manage_non_saha(client, world):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    for cred in ("resident_a", "admin_a", "yonetici_a"):
+        h = _headers(client, world["slug_a"], world[cred])
+        uid = _me_id(client, h)
+        assert client.patch(
+            f"/users/{uid}", headers=yon, json={"ad": "X"}
+        ).status_code == 403, cred
+        assert client.post(
+            f"/users/{uid}/reset-password", headers=yon
+        ).status_code == 403, cred
+
+
+def test_reset_password_rbac_yonetim_only(client, world):
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    created = client.post(
+        "/users", headers=admin,
+        json={"ad": "R", "telefon": _uphone(), "role": "security"},
+    ).json()
+    # admin herhangi personeli sifirlar
+    assert client.post(
+        f"/users/{created['id']}/reset-password", headers=admin
+    ).status_code == 200
+    # saha/resident sifirlayamaz -> 403
+    for role in ("guard_a", "gorevli_a", "resident_a"):
+        h = _headers(client, world["slug_a"], world[role])
+        assert client.post(
+            f"/users/{created['id']}/reset-password", headers=h
+        ).status_code == 403, role

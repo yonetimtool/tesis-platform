@@ -3629,10 +3629,12 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
       tags: [users]
-      summary: Kullanici guncelle (admin)
+      summary: Kullanici guncelle (admin: her; yonetici: YALNIZ saha personeli)
       description: |
         ad/telefon/role/is_active ve opsiyonel email/parola. parola verilirse yeniden
         hash'lenir. Kullanici SILINMEZ; pasiflestirme icin is_active=false kullanin.
+        RBAC: admin herkesi duzenler; yonetici YALNIZ saha personelini
+        (security/tesis_gorevlisi) duzenler ve rolu saha disina cekemez (403).
       requestBody:
         required: true
         content:
@@ -3653,6 +3655,27 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "422": { $ref: "#/components/responses/ValidationError" }
+
+  /users/{id}/reset-password:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [users]
+      summary: Personel parolasini sifirla (admin: her; yonetici: saha) — gecici kod
+      description: |
+        Yeni TEK SEFERLIK gecici kod uretir (password_set=false); personel telefon
+        + bu kodla girip yeni parola belirler. Kod YALNIZ bu yanitta doner. RBAC:
+        admin herkesi; yonetici YALNIZ saha personelini (security/tesis_gorevlisi)
+        sifirlar (aksi 403).
+      responses:
+        "200":
+          description: Yeni gecici kod
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResidentResetPasswordOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /users/{id}/contact:
     parameters:

@@ -68,6 +68,48 @@ class StaffApi {
       throw ApiException.fromDio(e);
     }
   }
+
+  /// `PATCH /users/{id}` — saha personeli duzenle (ad/rol; telefon opsiyonel,
+  /// bos ise degismez). Yonetici backend'de YALNIZ saha personelini duzenler.
+  Future<void> updateStaff(
+    String id, {
+    required String ad,
+    required String role,
+    String? telefon,
+  }) async {
+    final data = <String, dynamic>{'ad': ad, 'role': role};
+    if (telefon != null && telefon.isNotEmpty) data['telefon'] = telefon;
+    try {
+      await _dio.patch<Map<String, dynamic>>('/users/$id', data: data);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `PATCH /users/{id}` — aktif/pasif (pasif = personeli listeden cikar; gecmis
+  /// korunur, giris engellenir).
+  Future<void> setActive(String id, bool active) async {
+    try {
+      await _dio.patch<Map<String, dynamic>>(
+        '/users/$id',
+        data: {'is_active': active},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `POST /users/{id}/reset-password` — parolayi sifirla, yeni TEK SEFERLIK
+  /// gecici kod doner (bir kez).
+  Future<String> resetPassword(String id) async {
+    try {
+      final res =
+          await _dio.post<Map<String, dynamic>>('/users/$id/reset-password');
+      return res.data!['temp_code'] as String;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }
 
 final staffApiProvider =
