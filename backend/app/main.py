@@ -25,6 +25,7 @@ from .routers import dues as dues_router
 from .routers import patrol_windows as patrol_windows_router
 from .routers import emergency as emergency_router
 from .routers import events as events_router
+from .routers import external_services as external_services_router
 from .routers import kargo as kargo_router
 from .routers import me as me_router
 from .routers import me_patrol as me_patrol_router
@@ -99,6 +100,7 @@ app.include_router(task_completions_router.router)
 app.include_router(uploads_router.router)
 app.include_router(assets_router.router)
 app.include_router(emergency_router.router)
+app.include_router(external_services_router.router)
 app.include_router(tenant_router.router)
 app.include_router(tenants_router.router)
 app.include_router(units_router.router)

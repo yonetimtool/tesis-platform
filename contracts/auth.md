@@ -277,6 +277,8 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `PUT  /events/{id}/rsvp`              |  ❌   | ❌  | ❌  | ❌  | ✅  |
 | `GET  /site-rules` (liste/detay + ?q=)|  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `POST/PATCH/DELETE /site-rules*`      |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET  /external-services` (dis hizmetler + not)| ✅ | ✅ | ✅ | ✅ | ✅ |
+| `POST/PATCH/DELETE /external-services*` + `PUT /note`| ✅ | ✅ | ❌ | ❌ | ❌ |
 | `GET  /tasks` (liste/detay)           |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /tasks`                         |  ✅   | ✅* | ❌  | ❌  | ❌  |
 | `PATCH /tasks/{id}`                   |  ✅   | ✅* | ❌  | ❌  | ❌  |

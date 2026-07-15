@@ -1171,6 +1171,56 @@ class SiteKuraliListResponse(BaseModel):
     items: list[SiteKuraliOut]
 
 
+# ---------------------------- dis hizmetler -------------------------------- #
+class DisHizmetCreate(BaseModel):
+    """Guvenilir esnaf/hizmet kisisi — yonetici ekler. tur: Cilingir/Elektrik/..."""
+
+    tur: str = Field(..., min_length=1, max_length=80, examples=["Çilingir"])
+    ad: str = Field(..., min_length=1, max_length=120)
+    soyad: str = Field(..., min_length=1, max_length=120)
+    telefon: str = Field(..., min_length=1, max_length=40)
+    aciklama: str | None = Field(None, max_length=1000)
+
+
+class DisHizmetUpdate(BaseModel):
+    """Kismi guncelleme — verilmeyen alan degismez; en az bir alan gerekir."""
+
+    tur: str | None = Field(None, min_length=1, max_length=80)
+    ad: str | None = Field(None, min_length=1, max_length=120)
+    soyad: str | None = Field(None, min_length=1, max_length=120)
+    telefon: str | None = Field(None, min_length=1, max_length=40)
+    aciklama: str | None = Field(None, max_length=1000)
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "DisHizmetUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class DisHizmetOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tur: str
+    ad: str
+    soyad: str
+    telefon: str
+    aciklama: str | None = None
+    created_at: datetime
+
+
+class DisHizmetListResponse(BaseModel):
+    """Dis Hizmetler: bolum notu (yonetici) + kisiler (ture/ada gore sirali)."""
+
+    note: str | None = None
+    items: list[DisHizmetOut]
+
+
+class DisHizmetNoteUpdate(BaseModel):
+    note: str | None = Field(None, max_length=2000)
+
+
 class NotificationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

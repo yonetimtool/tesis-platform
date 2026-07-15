@@ -164,6 +164,8 @@ class Tenant(Base):
     kurulum_tamamlandi: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    # Dis Hizmetler bolumu notu (yonetici serbest metni; tum roller okur).
+    dis_hizmet_notu: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
 
 
@@ -1389,6 +1391,29 @@ class SiteKurali(Base):
     olusturan_user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), nullable=False
     )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class DisHizmet(Base):
+    """Dis Hizmetler — site yoneticisinin girdigi guvenilir esnaf/hizmet kisisi
+    (cilingir/elektrik/tesisat...). Yonetici CRUD; tum roller okur. app_user FK
+    YOK — tenant CASCADE ile temiz silinir. Bolum notu tenant.dis_hizmet_notu."""
+
+    __tablename__ = "dis_hizmet"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_dis_hizmet_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    tur: Mapped[str] = mapped_column(Text, nullable=False)
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    soyad: Mapped[str] = mapped_column(Text, nullable=False)
+    telefon: Mapped[str] = mapped_column(Text, nullable=False)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 

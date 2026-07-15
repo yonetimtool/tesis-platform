@@ -359,6 +359,14 @@ class HomeScreen extends ConsumerWidget {
           onTap: () => context.push(AppRoutes.siteKurallari),
           badge: null,
         );
+      case HomeMenuEntry.disHizmet:
+        // Guvenilir esnaf/hizmet kisileri + yonetici notu; yonetim yazar, okur.
+        return (
+          icon: Icons.handyman_outlined,
+          title: 'Dış Hizmetler',
+          onTap: () => context.push(AppRoutes.disHizmet),
+          badge: null,
+        );
       case HomeMenuEntry.integrations:
         // C1b: dis sistem entegrasyonlari (megafon/akilli-ev/webhook) — konfig
         // + SSRF-korumali tetik. Yonetici yonetir.

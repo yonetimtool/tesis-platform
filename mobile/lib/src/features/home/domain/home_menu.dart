@@ -88,6 +88,10 @@ enum HomeMenuEntry {
   /// ekler/duzenler/siler, TUM roller okur (auth.md §4).
   siteKurallari,
 
+  /// Dis Hizmetler — guvenilir esnaf/hizmet kisileri (cilingir/elektrik...) +
+  /// yonetici notu. Yonetici ekler/duzenler/siler; yonetici+guvenlik+sakin okur.
+  disHizmet,
+
   /// Entegrasyonlar (C1b) — dis sistem (megafon/akilli-ev/webhook) konfig +
   /// SSRF-korumali tetik. Mobilde YONETICI yonetir (admin panelden).
   integrations,
@@ -130,6 +134,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.disHizmet,
         HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.unitAccess,
@@ -151,6 +156,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.disHizmet,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -171,6 +177,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.disHizmet,
         HomeMenuEntry.complaints,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -186,6 +193,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.disHizmet,
         HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.unitAccess,
@@ -214,6 +222,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.disHizmet,
         // Sikayet Haritasi: resident KENDI sikayetlerini de HARITA uzerinde
         // gorur (kendi ilettigi daireler isaretli) — ayri "Sikayetlerim"
         // sayfasina yonlendirilmez (D-viz Rev-1.1 fix).

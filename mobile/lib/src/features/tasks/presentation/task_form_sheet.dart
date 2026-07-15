@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../auth/domain/user_role.dart';
+import '../../checkpoints/data/checkpoint_api.dart';
 import '../data/task_api.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_category_models.dart';
@@ -38,6 +39,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
   late final TextEditingController _periyotCtrl;
   String? _atananUserId;
   String? _kategoriId;
+  String? _checkpointId;
   late bool _fotoZorunlu;
   late bool _aktif;
 
@@ -62,6 +64,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
     );
     _atananUserId = t?.atananUserId;
     _kategoriId = t?.kategoriId;
+    _checkpointId = t?.checkpointId;
     _fotoZorunlu = t?.fotoZorunlu ?? false;
     _aktif = t?.aktif ?? true;
     _loadPersonel();
@@ -144,6 +147,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
           : _aciklamaCtrl.text.trim(),
       atananUserId: _atananUserId,
       kategoriId: _kategoriId,
+      checkpointId: _checkpointId,
       periyotDakika: periyotText.isEmpty ? null : int.parse(periyotText),
       fotoZorunlu: _fotoZorunlu,
       aktif: _aktif,
@@ -315,6 +319,42 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                     ),
                   ),
               ],
+              const SizedBox(height: 8),
+              // NFC kontrol noktasi (opsiyonel): baglanirsa gorev, atanan saha
+              // calisani tarafindan ETIKET OKUTULARAK tamamlanir (backend zorlar).
+              Builder(builder: (context) {
+                final all =
+                    ref.watch(checkpointsProvider).value ?? const <Checkpoint>[];
+                final items = all.where((c) => c.aktif).toList();
+                // Secili nokta pasiflestiyse listede olmayabilir -> koru.
+                if (_checkpointId != null &&
+                    !items.any((c) => c.id == _checkpointId)) {
+                  final sel = all.where((c) => c.id == _checkpointId);
+                  if (sel.isNotEmpty) items.add(sel.first);
+                }
+                return DropdownButtonFormField<String?>(
+                  initialValue:
+                      items.any((c) => c.id == _checkpointId) ? _checkpointId : null,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Kontrol noktası (NFC) — opsiyonel',
+                    helperText: 'Bağlanırsa görev NFC okutularak tamamlanır',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('— NFC yok —'),
+                    ),
+                    for (final c in items)
+                      DropdownMenuItem<String?>(
+                        value: c.id,
+                        child: Text(c.ad, overflow: TextOverflow.ellipsis),
+                      ),
+                  ],
+                  onChanged: (v) => setState(() => _checkpointId = v),
+                );
+              }),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _periyotCtrl,

@@ -2691,6 +2691,87 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /external-services:
+    get:
+      tags: [external-services]
+      summary: Dis Hizmetler — bolum notu + kisiler (TUM roller)
+      description: |
+        Guvenilir esnaf/hizmet kisileri (cilingir/elektrik/tesisat...) + yonetici
+        bolum notu (tenant.dis_hizmet_notu). OKUMA tum roller; ture/ada gore sirali.
+      responses:
+        "200":
+          description: Not + kisiler
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DisHizmetListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [external-services]
+      summary: Dis hizmet kisisi ekle (admin + yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DisHizmetCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DisHizmetOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /external-services/note:
+    put:
+      tags: [external-services]
+      summary: Bolum notunu ayarla (admin + yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DisHizmetNoteUpdate" }
+      responses:
+        "200":
+          description: Guncel not + kisiler
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DisHizmetListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /external-services/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [external-services]
+      summary: Dis hizmet kisisi duzenle (admin + yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DisHizmetUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DisHizmetOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [external-services]
+      summary: Dis hizmet kisisi sil (admin + yonetici)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /tenant/settings:
     get:
       tags: [tenant]
@@ -5749,6 +5830,49 @@ components:
         olusturan_ad: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+    DisHizmetCreate:
+      type: object
+      description: Guvenilir esnaf/hizmet kisisi. tur: Cilingir/Elektrik/Tesisat...
+      required: [tur, ad, soyad, telefon]
+      properties:
+        tur: { type: string, minLength: 1, maxLength: 80, example: "Çilingir" }
+        ad: { type: string, minLength: 1, maxLength: 120 }
+        soyad: { type: string, minLength: 1, maxLength: 120 }
+        telefon: { type: string, minLength: 1, maxLength: 40 }
+        aciklama: { type: string, nullable: true, maxLength: 1000 }
+    DisHizmetUpdate:
+      type: object
+      description: Kismi guncelleme (en az bir alan).
+      minProperties: 1
+      properties:
+        tur: { type: string, minLength: 1, maxLength: 80 }
+        ad: { type: string, minLength: 1, maxLength: 120 }
+        soyad: { type: string, minLength: 1, maxLength: 120 }
+        telefon: { type: string, minLength: 1, maxLength: 40 }
+        aciklama: { type: string, nullable: true, maxLength: 1000 }
+    DisHizmetOut:
+      type: object
+      required: [id, tur, ad, soyad, telefon, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        tur: { type: string }
+        ad: { type: string }
+        soyad: { type: string }
+        telefon: { type: string }
+        aciklama: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+    DisHizmetListResponse:
+      type: object
+      required: [items]
+      properties:
+        note: { type: string, nullable: true, description: "Bolum notu (yonetici)" }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/DisHizmetOut" }
+    DisHizmetNoteUpdate:
+      type: object
+      properties:
+        note: { type: string, nullable: true, maxLength: 2000 }
     SiteKuraliCreate:
       type: object
       required: [baslik, icerik]

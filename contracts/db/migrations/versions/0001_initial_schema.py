@@ -159,6 +159,9 @@ def upgrade() -> None:
             -- yonetici ILK GIRISTE tesisi adlandirinca true olur (mobil "Tesisinizi
             -- adlandirin" ekrani). Seed/mevcut tenant'lar HAZIR (default true).
             kurulum_tamamlandi boolean NOT NULL DEFAULT true,
+            -- Dis Hizmetler bolumu notu (yonetici serbest metin: "yillardir
+            -- guvendigimiz esnaflar; yabanci sokmayin" gibi). Tum roller okur.
+            dis_hizmet_notu text,
             created_at  timestamptz NOT NULL DEFAULT now(),
             CONSTRAINT uq_tenant_slug UNIQUE (slug),
             CONSTRAINT ck_tenant_slug CHECK (slug ~ '^[a-z0-9][a-z0-9-]*$')
@@ -1694,6 +1697,31 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9z8. dis_hizmet  (Dis Hizmetler — guvenilir esnaf/hizmet kisileri:
+    #     yonetici ekler/duzenler/siler, TUM roller (yonetici/guvenlik/sakin)
+    #     okur. Kisi: tur (Cilingir/Elektrik/Tesisat...) + ad + soyad + telefon
+    #     + opsiyonel aciklama. app_user FK YOK -> tenant CASCADE ile temiz siler.
+    #     Bolum notu tenant.dis_hizmet_notu'nda.)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE dis_hizmet (
+            id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id   uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            tur         text NOT NULL,       -- hizmet turu (Cilingir/Elektrik/...)
+            ad          text NOT NULL,
+            soyad       text NOT NULL,
+            telefon     text NOT NULL,
+            aciklama    text,                -- opsiyonel not
+            created_at  timestamptz NOT NULL DEFAULT now(),
+            updated_at  timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_dis_hizmet_id_tenant UNIQUE (id, tenant_id)
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_dis_hizmet_tenant ON dis_hizmet (tenant_id);")
+
+    # ------------------------------------------------------------------ #
     # 9z9. integration  (C1b — dis sistem entegrasyon konfigurasyonu:
     #     admin/yonetici bir dis ucu (megafon/akilli-ev/generic webhook)
     #     tanimlar; tetiklenince SSRF-korumali HTTP istegi gonderilir.
@@ -1821,6 +1849,7 @@ def upgrade() -> None:
         "etkinlik",
         "etkinlik_katilim",
         "site_kurali",
+        "dis_hizmet",
         "integration",
         "unit_complaint",
     ):
@@ -1879,6 +1908,7 @@ def downgrade() -> None:
     for table in (
         "unit_complaint",
         "integration",
+        "dis_hizmet",
         "site_kurali",
         "etkinlik_katilim",
         "etkinlik",

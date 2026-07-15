@@ -175,6 +175,7 @@ void main() {
         'aciklama': null,
         'atanan_user_id': null,
         'kategori_id': null,
+        'checkpoint_id': null,
         'periyot_dakika': null,
         'foto_zorunlu': false,
         'aktif': true,

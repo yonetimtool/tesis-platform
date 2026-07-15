@@ -29,6 +29,7 @@ import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/staff/presentation/staff_screen.dart';
+import '../features/dis_hizmet/presentation/dis_hizmet_screen.dart';
 import '../features/site_kurali/presentation/site_kurali_screen.dart';
 import '../features/tasks/domain/task_models.dart';
 import '../features/tasks/presentation/task_categories_screen.dart';
@@ -69,6 +70,7 @@ class AppRoutes {
   static const rezervasyon = '/rezervasyon';
   static const etkinlik = '/etkinlik';
   static const siteKurallari = '/site-kurallari';
+  static const disHizmet = '/dis-hizmetler';
   static const integrations = '/integrations';
   static const binaDuzenleme = '/bina-duzenleme';
   static const sikayetHaritasi = '/sikayet-haritasi';
@@ -286,6 +288,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.siteKurallari,
         builder: (context, state) => const SiteKuraliScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.disHizmet,
+        builder: (context, state) => const DisHizmetScreen(),
       ),
       GoRoute(
         path: AppRoutes.integrations,

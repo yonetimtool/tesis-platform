@@ -236,6 +236,7 @@ class TaskDraft {
     this.aciklama,
     this.atananUserId,
     this.kategoriId,
+    this.checkpointId,
     this.periyotDakika,
     this.fotoZorunlu = false,
     this.aktif = true,
@@ -247,6 +248,10 @@ class TaskDraft {
 
   /// Gorev tipi = kategori; null = "Diğer".
   final String? kategoriId;
+
+  /// Bagli NFC kontrol noktasi; doluysa gorev NFC-dogrulamalidir (tamamlarken
+  /// etiket okutulur). null = NFC gerektirmez.
+  final String? checkpointId;
   final int? periyotDakika;
   final bool fotoZorunlu;
   final bool aktif;
@@ -256,6 +261,7 @@ class TaskDraft {
         'aciklama': aciklama,
         'atanan_user_id': atananUserId,
         'kategori_id': kategoriId,
+        'checkpoint_id': checkpointId,
         'periyot_dakika': periyotDakika,
         'foto_zorunlu': fotoZorunlu,
         'aktif': aktif,
@@ -267,6 +273,7 @@ class TaskDraft {
         aciklama: task.aciklama,
         atananUserId: task.atananUserId,
         kategoriId: task.kategoriId,
+        checkpointId: task.checkpointId,
         periyotDakika: task.periyotDakika,
         fotoZorunlu: task.fotoZorunlu,
         aktif: task.aktif,
