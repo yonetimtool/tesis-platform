@@ -2743,6 +2743,90 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /tenants/{tenant_id}:
+    parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [tenant]
+      summary: Admin — tek tesis detayi + yoneticisi (cross-tenant)
+      responses:
+        "200":
+          description: Tesis detayi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantAdminDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [tenant]
+      summary: Admin — tesisi ve TUM verisini siler (cascade, GERI ALINAMAZ)
+      description: |
+        tenant ON DELETE CASCADE ile yonetici + duyuru + daire + sakin... hepsi
+        silinir. Yalniz admin. Bilinmeyen tesis 404.
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tenants/{tenant_id}/yonetici:
+    parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [tenant]
+      summary: Admin — tesis yoneticisinin ad/telefon/aktifligini gunceller
+      description: |
+        Kismi guncelleme (verilmeyen alan degismez). Telefon global benzersiz ->
+        cakisma 409. Yonetici yoksa 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantYoneticiUpdate" }
+      responses:
+        "200":
+          description: Guncellendi (tesis detayi)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantAdminDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Bu telefon zaten kayitli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /tenants/{tenant_id}/yonetici/reset-credential:
+    parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [tenant]
+      summary: Admin — yonetici parolasini sifirlar + yeni gecici kod uretir
+      description: |
+        Parola silinir, yeni TEK SEFERLIK gecici kod (bir kez) doner; yonetici
+        tekrar ilk-giris (parola belirleme) akisina duser. Yonetici yoksa 404.
+      responses:
+        "200":
+          description: Yeni gecici kod
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantYoneticiResetOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   # ================================================================= #
   # AIDAT — unit (daire) + sakin + tahakkuk + odeme
   # ================================================================= #
@@ -4511,6 +4595,38 @@ components:
       required: [ad]
       properties:
         ad: { type: string, minLength: 2, maxLength: 120, example: "Örnek Sitesi" }
+    TenantYoneticiOut:
+      type: object
+      required: [id, ad, is_active, password_set]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string }
+        telefon: { type: string, nullable: true, description: "Giris anahtari (E.164)" }
+        is_active: { type: boolean }
+        password_set: { type: boolean, description: "false: henuz gecici kod asamasinda" }
+    TenantAdminDetail:
+      type: object
+      required: [tenant_id, ad, kurulum_tamamlandi, created_at]
+      properties:
+        tenant_id: { type: string, format: uuid, description: "GIZLI kimlik (yalniz admin)" }
+        ad: { type: string, example: "(Kurulum bekliyor)" }
+        kurulum_tamamlandi: { type: boolean }
+        created_at: { type: string, format: date-time }
+        yonetici:
+          allOf: [ { $ref: "#/components/schemas/TenantYoneticiOut" } ]
+          nullable: true
+    TenantYoneticiUpdate:
+      type: object
+      description: Kismi guncelleme — verilmeyen alan degismez.
+      properties:
+        ad: { type: string, minLength: 2, maxLength: 120 }
+        phone: { type: string, minLength: 1, example: "+905321112203" }
+        is_active: { type: boolean }
+    TenantYoneticiResetOut:
+      type: object
+      required: [temp_code]
+      properties:
+        temp_code: { type: string, example: "K7MR-2QWX", description: "Yeni tek-seferlik kod" }
     PhoneLoginRequest:
       type: object
       description: |

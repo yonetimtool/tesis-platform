@@ -108,6 +108,18 @@ Mobil self-signup KALDIRILDI (mobil giris yalniz telefon+parola). Yeni akis:
 4. **`POST /tenant/setup` (YONETICI):** `{ ad }` → tenant.ad + `kurulum_tamamlandi
    =true`. Zaten kuruluysa **409**. Sonrasi normal ana ekran.
 
+**Tesis detay & yonetici konfigurasyonu (ADMIN, cross-tenant — admin-web):** admin
+bir tesise girip yoneticisini yonetir + tenant'i siler. Hepsi owner-sahipli
+SECURITY DEFINER (`tenant_detail` / `update_tenant_yonetici` /
+`reset_tenant_yonetici_credential` / `delete_tenant`), yalniz admin:
+- **`GET /tenants/{id}`** → tenant + yoneticisi (ad, telefon, is_active, password_set).
+- **`PATCH /tenants/{id}/yonetici`** `{ ad?, phone?, is_active? }` (kismi). Telefon
+  global benzersiz → **409**; yonetici yoksa **404**.
+- **`POST /tenants/{id}/yonetici/reset-credential`** → parola silinir + yeni tek
+  seferlik gecici kod (**bir kez** doner); yonetici tekrar ilk-giris akisina duser.
+- **`DELETE /tenants/{id}`** → tenant + TUM verisi (yonetici + duyuru + daire +
+  sakin...) `ON DELETE CASCADE` ile silinir (GERI ALINAMAZ). Bilinmeyen tesis **404**.
+
 > **`POST /users` — yonetici saha personeli acar (Ozellik 3):** yonetici (tenant'i
 > admin acti — §1.4) KENDI tenant'inda `security`/`tesis_gorevlisi` hesabi
 > olusturur (telefon + gecici kod / parola — §1.3 ile ayni). `yonetici`,
@@ -282,6 +294,10 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /tenants` (admin tesis+yonetici)|  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `GET  /tenants` (admin tum tesisler)  |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `POST /tenant/setup` (ilk-giris adlandir)| ❌ | ✅ | ❌  | ❌  | ❌  |
+| `GET  /tenants/{id}` (tesis detay)     |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `PATCH /tenants/{id}/yonetici`         |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `POST /tenants/{id}/yonetici/reset-credential`| ✅ | ❌ | ❌ | ❌ | ❌ |
+| `DELETE /tenants/{id}` (tesisi sil)    |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | daire CRUD + yerlesim (`/units*`,layout)|  ✅   | ✅  | ❌  | ❌  | ❌  |
 | daire sakin atama (`/units/{id}/residents`)| ✅ | ❌  | ❌  | ❌  | ❌  |
 | bina blok CRUD (`/blocks*`)           |  ✅   | ✅  | ❌  | ❌  | ❌  |

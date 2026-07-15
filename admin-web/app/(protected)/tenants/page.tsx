@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -172,12 +173,17 @@ export default function TenantsPage() {
               <th className="px-3 py-2 font-medium">Kimlik (ID)</th>
               <th className="px-3 py-2 font-medium">Kurulum</th>
               <th className="px-3 py-2 font-medium">Oluşturulma</th>
+              <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
           <tbody>
             {(data?.items ?? []).map((t) => (
-              <tr key={t.id} className="border-t border-slate-100">
-                <td className="px-3 py-2">{t.ad}</td>
+              <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
+                <td className="px-3 py-2">
+                  <Link href={`/tenants/${t.id}`} className="font-medium text-ink hover:underline">
+                    {t.ad}
+                  </Link>
+                </td>
                 <td className="px-3 py-2 font-mono text-xs text-slate-500">{t.id}</td>
                 <td className="px-3 py-2">
                   <span
@@ -191,11 +197,16 @@ export default function TenantsPage() {
                   </span>
                 </td>
                 <td className="px-3 py-2 text-slate-600">{fmtDate(t.created_at)}</td>
+                <td className="px-3 py-2 text-right">
+                  <Link href={`/tenants/${t.id}`} className={btnGhost}>
+                    Yönet
+                  </Link>
+                </td>
               </tr>
             ))}
             {data && data.items.length === 0 && (
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={4}>
+                <td className="px-3 py-6 text-center text-muted" colSpan={5}>
                   Henüz tesis yok.
                 </td>
               </tr>

@@ -349,6 +349,162 @@ def upgrade() -> None:
         f"GRANT EXECUTE ON FUNCTION public.list_all_tenants() TO {APP_ROLE};"
     )
 
+    # Admin (platform) cross-tenant TESIS DETAY + YONETICI yonetimi. tenant/app_user
+    # RLS altinda oldugundan owner-sahipli SECURITY DEFINER ile yapilir; API yalniz
+    # admin'e acar. "Bir tenant = bir yonetici" (en erken olusturulan role=yonetici).
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.tenant_detail(p_tenant_id uuid)
+        RETURNS TABLE(
+            tenant_id uuid, tenant_ad text, kurulum_tamamlandi boolean,
+            tenant_created_at timestamptz, yonetici_id uuid, yonetici_ad text,
+            telefon text, is_active boolean, password_set boolean)
+        LANGUAGE sql
+        STABLE
+        SECURITY DEFINER
+        SET search_path = ''
+        AS $$
+            SELECT t.id, t.ad, t.kurulum_tamamlandi, t.created_at,
+                   u.id, u.ad, u.telefon, u.is_active, u.password_set
+            FROM public.tenant t
+            LEFT JOIN LATERAL (
+                SELECT id, ad, telefon, is_active, password_set
+                FROM public.app_user
+                WHERE tenant_id = t.id
+                  AND role = 'yonetici'::public.user_role
+                ORDER BY created_at ASC
+                LIMIT 1
+            ) u ON true
+            WHERE t.id = p_tenant_id;
+        $$;
+        """
+    )
+    op.execute(
+        "REVOKE ALL ON FUNCTION public.tenant_detail(uuid) FROM PUBLIC;"
+    )
+    op.execute(
+        f"GRANT EXECUTE ON FUNCTION public.tenant_detail(uuid) TO {APP_ROLE};"
+    )
+
+    # Yonetici ad/telefon/aktiflik guncelle (NULL param = degismez). Telefon global
+    # benzersiz → cakisma unique_violation (API 409'a cevirir). Guncellenen id doner
+    # (satir yoksa bos → API 404).
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.update_tenant_yonetici(
+            p_tenant_id uuid,
+            p_user_id   uuid,
+            p_ad        text,
+            p_telefon   text,
+            p_is_active boolean
+        )
+        RETURNS uuid
+        LANGUAGE sql
+        SECURITY DEFINER
+        SET search_path = ''
+        AS $$
+            UPDATE public.app_user
+            SET ad = COALESCE(p_ad, ad),
+                telefon = COALESCE(p_telefon, telefon),
+                is_active = COALESCE(p_is_active, is_active),
+                updated_at = now()
+            WHERE tenant_id = p_tenant_id
+              AND id = p_user_id
+              AND role = 'yonetici'::public.user_role
+            RETURNING id;
+        $$;
+        """
+    )
+    op.execute(
+        "REVOKE ALL ON FUNCTION public.update_tenant_yonetici"
+        "(uuid, uuid, text, text, boolean) FROM PUBLIC;"
+    )
+    op.execute(
+        "GRANT EXECUTE ON FUNCTION public.update_tenant_yonetici"
+        f"(uuid, uuid, text, text, boolean) TO {APP_ROLE};"
+    )
+
+    # Yonetici credential sifirla: parolayi sil + yeni TEK SEFERLIK gecici kod (hash)
+    # ata → yonetici tekrar ilk-giris (parola belirleme) akisina duser.
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.reset_tenant_yonetici_credential(
+            p_tenant_id uuid,
+            p_user_id   uuid,
+            p_temp_code_hash text
+        )
+        RETURNS uuid
+        LANGUAGE sql
+        SECURITY DEFINER
+        SET search_path = ''
+        AS $$
+            UPDATE public.app_user
+            SET password_hash = NULL,
+                password_set = false,
+                temp_code_hash = p_temp_code_hash,
+                updated_at = now()
+            WHERE tenant_id = p_tenant_id
+              AND id = p_user_id
+              AND role = 'yonetici'::public.user_role
+            RETURNING id;
+        $$;
+        """
+    )
+    op.execute(
+        "REVOKE ALL ON FUNCTION public.reset_tenant_yonetici_credential"
+        "(uuid, uuid, text) FROM PUBLIC;"
+    )
+    op.execute(
+        "GRANT EXECUTE ON FUNCTION public.reset_tenant_yonetici_credential"
+        f"(uuid, uuid, text) TO {APP_ROLE};"
+    )
+
+    # Tenant'i (ve ON DELETE CASCADE ile TUM verisini: yonetici + duyuru + daire +
+    # sakin...) siler. app_user'a RESTRICT ile bagli tablolari (scan/gorev
+    # tamamlama/demirbas/talep) cascade sirasi RESTRICT'e takilmasin diye ONCE
+    # temizler; sonra tenant'i siler. Silinen tenant id doner (yoksa bos → 404).
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.delete_tenant(p_tenant_id uuid)
+        RETURNS uuid
+        LANGUAGE plpgsql
+        SECURITY DEFINER
+        SET search_path = ''
+        AS $$
+        DECLARE
+            v_id uuid;
+        BEGIN
+            -- app_user'a (ve checkpoint/budget_category/ortak_alan'a) ON DELETE
+            -- RESTRICT ile bagli tablolar: tenant cascade sirasinda RESTRICT HEMEN
+            -- kontrol edildiginden, bu referans-veren satirlar ONCE silinmeli.
+            -- Bunlar temizlenince RESTRICT'in korudugu hedeflerin referrer'i kalmaz
+            -- ve DELETE FROM tenant cascade geri kalan her seyi guvenle siler.
+            DELETE FROM public.scan_event WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.task_completion WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.asset_checkout WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.emergency_alert WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.dues_payment WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.budget_entry WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.announcement WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.complaint WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.visitor WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.kargo WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.unit_access_permission WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.rezervasyon WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.etkinlik WHERE tenant_id = p_tenant_id;
+            DELETE FROM public.site_kurali WHERE tenant_id = p_tenant_id;
+
+            DELETE FROM public.tenant WHERE id = p_tenant_id RETURNING id INTO v_id;
+            RETURN v_id;
+        END;
+        $$;
+        """
+    )
+    op.execute("REVOKE ALL ON FUNCTION public.delete_tenant(uuid) FROM PUBLIC;")
+    op.execute(
+        f"GRANT EXECUTE ON FUNCTION public.delete_tenant(uuid) TO {APP_ROLE};"
+    )
+
     # ------------------------------------------------------------------ #
     # 4. shift  (tekrar eden gun-ici vardiya tanimi)
     # ------------------------------------------------------------------ #
@@ -1705,6 +1861,16 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_slug(text);")
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_phone(text);")
     op.execute("DROP FUNCTION IF EXISTS public.list_all_tenants();")
+    op.execute("DROP FUNCTION IF EXISTS public.tenant_detail(uuid);")
+    op.execute(
+        "DROP FUNCTION IF EXISTS public.update_tenant_yonetici"
+        "(uuid, uuid, text, text, boolean);"
+    )
+    op.execute(
+        "DROP FUNCTION IF EXISTS public.reset_tenant_yonetici_credential"
+        "(uuid, uuid, text);"
+    )
+    op.execute("DROP FUNCTION IF EXISTS public.delete_tenant(uuid);")
     op.execute(
         "DROP FUNCTION IF EXISTS public.create_tenant_with_yonetici"
         "(text, text, text, text, text, text, boolean, text, boolean);"

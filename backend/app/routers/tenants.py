@@ -8,7 +8,9 @@ list_all_tenants); YALNIZ admin'e acilir (RBAC). tenant_id GIZLI kimliktir.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+import uuid
+
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
@@ -19,8 +21,12 @@ from ..models import AppUser
 from ..schemas import (
     TenantAdminCreate,
     TenantAdminCreatedOut,
+    TenantAdminDetail,
     TenantAdminListItem,
     TenantAdminListResponse,
+    TenantYoneticiOut,
+    TenantYoneticiResetOut,
+    TenantYoneticiUpdate,
 )
 from ..security import (
     generate_temp_code,
@@ -121,3 +127,148 @@ async def list_tenants(
             for r in rows
         ]
     )
+
+
+_DETAIL_SQL = text(
+    "SELECT tenant_id, tenant_ad, kurulum_tamamlandi, tenant_created_at, "
+    "yonetici_id, yonetici_ad, telefon, is_active, password_set "
+    "FROM public.tenant_detail(:tid)"
+)
+
+
+def _to_detail(row) -> TenantAdminDetail:
+    yonetici = None
+    if row.yonetici_id is not None:
+        yonetici = TenantYoneticiOut(
+            id=row.yonetici_id,
+            ad=row.yonetici_ad,
+            telefon=row.telefon,
+            is_active=row.is_active,
+            password_set=row.password_set,
+        )
+    return TenantAdminDetail(
+        tenant_id=row.tenant_id,
+        ad=row.tenant_ad,
+        kurulum_tamamlandi=row.kurulum_tamamlandi,
+        created_at=row.tenant_created_at,
+        yonetici=yonetici,
+    )
+
+
+async def _detail_or_404(session, tenant_id: uuid.UUID):
+    """tenant_detail satirini doner; tenant yoksa 404."""
+    row = (await session.execute(_DETAIL_SQL, {"tid": tenant_id})).one_or_none()
+    if row is None:
+        raise APIError(404, "not_found", "Tesis bulunamadi.")
+    return row
+
+
+@router.get("/{tenant_id}", response_model=TenantAdminDetail)
+async def get_tenant(
+    tenant_id: uuid.UUID,
+    _: AppUser = Depends(_ADMIN),
+) -> TenantAdminDetail:
+    """Admin: tek tesis detayi + yoneticisi (ad, telefon, durum, kurulum)."""
+    async with SessionLocal() as session:
+        async with session.begin():
+            row = await _detail_or_404(session, tenant_id)
+    return _to_detail(row)
+
+
+@router.patch("/{tenant_id}/yonetici", response_model=TenantAdminDetail)
+async def update_yonetici(
+    tenant_id: uuid.UUID,
+    body: TenantYoneticiUpdate,
+    _: AppUser = Depends(_ADMIN),
+) -> TenantAdminDetail:
+    """Admin: tesis yoneticisinin ad/telefon/aktifligini gunceller (kismi).
+    Telefon global benzersiz -> cakisma 409. Yonetici yoksa 404."""
+    phone = None
+    if body.phone is not None:
+        try:
+            phone = normalize_phone(body.phone)
+        except ValueError:
+            raise APIError(422, "validation_error", "Gecersiz telefon numarasi.")
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            row = await _detail_or_404(session, tenant_id)
+            if row.yonetici_id is None:
+                raise APIError(404, "not_found", "Tesiste yonetici yok.")
+            try:
+                updated = (
+                    await session.execute(
+                        text(
+                            "SELECT public.update_tenant_yonetici"
+                            "(:tid, :uid, :ad, :tel, :act)"
+                        ),
+                        {
+                            "tid": tenant_id,
+                            "uid": row.yonetici_id,
+                            "ad": body.ad,
+                            "tel": phone,
+                            "act": body.is_active,
+                        },
+                    )
+                ).scalar()
+            except IntegrityError:
+                raise APIError(409, "conflict", "Bu telefon zaten kayitli.")
+            if updated is None:
+                raise APIError(404, "not_found", "Tesiste yonetici yok.")
+            row = await _detail_or_404(session, tenant_id)
+    return _to_detail(row)
+
+
+@router.post(
+    "/{tenant_id}/yonetici/reset-credential",
+    response_model=TenantYoneticiResetOut,
+)
+async def reset_yonetici_credential(
+    tenant_id: uuid.UUID,
+    _: AppUser = Depends(_ADMIN),
+) -> TenantYoneticiResetOut:
+    """Admin: yonetici parolasini sifirlar + yeni TEK SEFERLIK gecici kod uretir
+    (bir kez doner; admin yoneticiye iletir). Yonetici tekrar ilk-giris akisina
+    duser. Yonetici yoksa 404."""
+    temp_code = generate_temp_code()
+    async with SessionLocal() as session:
+        async with session.begin():
+            row = await _detail_or_404(session, tenant_id)
+            if row.yonetici_id is None:
+                raise APIError(404, "not_found", "Tesiste yonetici yok.")
+            updated = (
+                await session.execute(
+                    text(
+                        "SELECT public.reset_tenant_yonetici_credential"
+                        "(:tid, :uid, :tch)"
+                    ),
+                    {
+                        "tid": tenant_id,
+                        "uid": row.yonetici_id,
+                        "tch": hash_password(temp_code),
+                    },
+                )
+            ).scalar()
+            if updated is None:
+                raise APIError(404, "not_found", "Tesiste yonetici yok.")
+    return TenantYoneticiResetOut(temp_code=temp_code)
+
+
+@router.delete("/{tenant_id}", status_code=204)
+async def delete_tenant_endpoint(
+    tenant_id: uuid.UUID,
+    _: AppUser = Depends(_ADMIN),
+) -> Response:
+    """Admin: tesisi ve ON DELETE CASCADE ile TUM verisini (yonetici + duyuru +
+    daire + sakin...) siler. GERI ALINAMAZ. Bilinmeyen tesis 404."""
+    async with SessionLocal() as session:
+        async with session.begin():
+            deleted = (
+                await session.execute(
+                    text("SELECT public.delete_tenant(:tid)"),
+                    {"tid": tenant_id},
+                )
+            ).scalar()
+            if deleted is None:
+                raise APIError(404, "not_found", "Tesis bulunamadi.")
+    return Response(status_code=204)

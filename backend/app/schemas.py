@@ -1529,6 +1529,41 @@ class TenantSetupRequest(BaseModel):
     ad: str = Field(..., min_length=2, max_length=120)
 
 
+class TenantYoneticiOut(BaseModel):
+    """Bir tesisin yonetici hesabi (admin detay gorunumu)."""
+
+    id: uuid.UUID
+    ad: str
+    telefon: str | None = None
+    is_active: bool
+    password_set: bool
+
+
+class TenantAdminDetail(BaseModel):
+    """Admin tesis detayi: tenant + (varsa) yoneticisi. yonetici None ise tesiste
+    henuz yonetici yok (beklenmez — Model A tenant+yonetici birlikte acar)."""
+
+    tenant_id: uuid.UUID
+    ad: str
+    kurulum_tamamlandi: bool
+    created_at: datetime
+    yonetici: TenantYoneticiOut | None = None
+
+
+class TenantYoneticiUpdate(BaseModel):
+    """Yonetici ad/telefon/aktiflik guncelleme (kismi; verilmeyen alan degismez)."""
+
+    ad: str | None = Field(None, min_length=2, max_length=120)
+    phone: str | None = Field(None, min_length=1)
+    is_active: bool | None = None
+
+
+class TenantYoneticiResetOut(BaseModel):
+    """Credential sifirlama sonucu: yeni tek-seferlik gecici kod (bir kez doner)."""
+
+    temp_code: str
+
+
 # -------------------------------- aidat ------------------------------------ #
 ResidentRol = Literal["malik", "kiraci"]
 DuesYontem = Literal["elden", "havale", "kart", "diger"]
