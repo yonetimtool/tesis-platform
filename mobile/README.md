@@ -626,11 +626,11 @@ Ana menü **role göre bileşir** (`features/home/domain/home_menu.dart`; JWT
 
 | Rol | Gördüğü kartlar |
 |---|---|
-| `admin` (Admin — platform) | Acil durum, Duyurular, Turlarım, Görevlerim, Demirbaş, NFC, Kuyruk |
-| `security` (Güvenlik) | admin ile aynı |
-| `tesis_gorevlisi` (Tesis Görevlisi — eski `cleaning`) | Turlarım HARİÇ hepsi (`/me/patrol-window` admin+security) |
-| `yonetici` (Yönetici — site yöneticisi) | Acil durum + **Duyurular** (gönder/düzenle/sil) + **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev yönetimi** (oluştur/ata/düzenle/sil — atama yalnız saha personeline; tamamlama akışı detayda gizli) + **Aylık raporlar** (devriye/görev/aidat özeti) |
-| `resident` (Site Sakini) | **Duyurular** (salt okuma) + **Aidatim** (daire borç durumu + tahakkuk/ödeme geçmişi) |
+| `admin` (Admin — platform) | Duyurular, Turlarım, Görevlerim, Demirbaş, NFC, Kuyruk (**Yönetici İletişim YOK** — yönetimin kendisi) |
+| `security` (Güvenlik) | admin ile aynı + **Yönetici İletişim** (menüde EN ALTTA) |
+| `tesis_gorevlisi` (Tesis Görevlisi — eski `cleaning`) | Turlarım HARİÇ hepsi (`/me/patrol-window` admin+security) + **Yönetici İletişim** (EN ALTTA) |
+| `yonetici` (Yönetici — site yöneticisi) | **Duyurular** (gönder/düzenle/sil) + **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev yönetimi** (oluştur/ata/düzenle/sil — atama yalnız saha personeline; tamamlama akışı detayda gizli) + **Aylık raporlar** (devriye/görev/aidat özeti). **Yönetici İletişim YOK** — kendisi yönetimdir |
+| `resident` (Site Sakini) | **Duyurular** (salt okuma) + **Aidatim** (daire borç durumu + tahakkuk/ödeme geçmişi) + **Yönetici İletişim** (menüde EN ALTTA) |
 
 **Devriye takibi** (`features/patrol/presentation/patrol_tracking_*`):
 yonetici için salt-izleme ekranı — panelin canlı özetinin mobil karşılığı.
@@ -908,84 +908,9 @@ image_picker (kamera|galeri, maxWidth 1600, quality 80)
 
 ---
 
-## 12. Acil durum butonu — panik + yönetimi arama (Faz 3 / Prompt 2)
+## 12. Demirbaş zimmet — NFC ile checkout/checkin (Faz 3 / Prompt 3)
 
-Küçük ve hayati modül: saha personeli (security **ve cleaning** — RBAC
-sözleşmeden doğrulandı; resident 403) panik butonuna basar → backend'e alarm
-gider (panel `/emergency` listesinde anında görünür + yöneticilere
-`acil_durum` bildirimi) → uygulama yönetim numarasını `tel:` ile aramayı
-önerir. Kod: `features/emergency/`, rota: `/emergency` (ana ekranın en
-üstündeki kırmızı **ACİL DURUM** kartı).
-
-### Akış
-
-1. Ana ekran → kırmızı **ACİL DURUM** kartı → panik ekranı (kısa not
-   opsiyonel).
-2. Büyük kırmızı **"ACİL DURUM BİLDİR"** butonuna basış ANINDA
-   `EmergencyDraft` oluşur ve **Idempotency-Key sabitlenir**
-   (`emergency|{basış-anı}`): çift dokunuş / onay sonrası tekrar / "tekrar
-   dene" hep aynı isteği atar → backend 200-idempotent yutar, çift alarm
-   oluşmaz. (Konum taslağa işlenir ki tekrar denemede gövde değişmesin —
-   aynı key farklı gövde 409 döner.)
-3. **Onay dialogu şart**: "Acil durum bildirilsin mi?" (Vazgeç / BİLDİR).
-   *Tercih: uzun-bas değil dialog* — stres/eldiven altında uzun-bas
-   güvenilmez, keşfedilebilirliği düşük; dialog açık niyet doğrulaması verir.
-4. Onayda **GPS best-effort** (servis kapalı / izin yok / 5 sn zaman aşımı →
-   son bilinen konum → o da yoksa **konumsuz gönder**; ALARM ASLA
-   BEKLETİLMEZ) → `POST /emergency`.
-5. Sonuç: **"Alarm iletildi ✓"** (200 tekrarında "zaten iletilmişti") +
-   **"Yönetimi ara"** kartı → `GET /tenant/settings` → `acil_durum_telefon`
-   → `url_launcher` ile `tel:+90...` (cihazın arama ekranı açılır; arama
-   tuşuna basmak kullanıcıda). Numara alınamazsa/boşsa arama kartı gizlenir —
-   alarm yine de iletilmiştir. Numara oturum boyunca önbelleklenir.
-
-### Offline kararı (README'ye yazılması istendi)
-
-**Alarm gönderilemezse outbox'a ATILMAZ.** Acil durumda sessiz kuyruklama
-YANILTICIDIR: kullanıcı "iletildi" sanır, alarm belki dakikalar sonra gider.
-Bunun yerine ÇOK NET kırmızı hata gösterilir: *"ALARM İLETİLEMEDİ — internet
-bağlantısı yok. Alarm KUYRUĞA ALINMADI; bağlantı gelince 'Tekrar dene'ye
-basın."* + aynı taslakla **Tekrar dene** butonu (aynı Idempotency-Key) +
-yönetim numarası kartı YİNE gösterilir — telefon araması şebeke üzerinden
-çalışabilir (veri bağlantısı gerektirmez).
-
-### Paket seçimleri + gerekçe
-
-- **geolocator**: konum için fiili standart; tek seferlik
-  `getCurrentPosition` + `timeLimit` ve `getLastKnownPosition` fallback'i
-  tam bu iş için. Düşük doğruluk (`LocationAccuracy.low`) yeter — hız önemli.
-- **url_launcher**: `tel:` URI ile cihaz arama ekranını açmanın resmî yolu.
-  Doğrudan arama (CALL_PHONE izni) bilinçli SEÇİLMEDİ: ek tehlikeli izin
-  gerektirir ve yanlış aramaya açıktır; arama kararı kullanıcıda kalır.
-
-### İzin / platform yapılandırması
-
-- **Android** (`AndroidManifest.xml`): `ACCESS_COARSE_LOCATION` +
-  `ACCESS_FINE_LOCATION` (runtime istem gönderim anında; reddedilirse alarm
-  konumsuz gider) ve `<queries>`'e `tel:` için `android.intent.action.DIAL`.
-- **iOS** (`Info.plist`): `NSLocationWhenInUseUsageDescription` +
-  `LSApplicationQueriesSchemes: [tel]`.
-
-### Cihaz doğrulama senaryosu
-
-1. `guard@acme.com / Guard123!` (security) ile login — `cleaner@acme.com`
-   (tesis_gorevlisi) ve `yonetici@acme.com / Yonetici123!` ile de çalışır
-   (RBAC ✅; resident acil durum gönderemez, kartı da görmez).
-2. Ana ekran → kırmızı **ACİL DURUM** → not yaz (ops.) → **ACİL DURUM
-   BİLDİR** → onay dialogunda **BİLDİR** → (ilk kez konum izni sorulur) →
-   "Alarm iletildi ✓".
-3. Panel (admin) → `/emergency` listesi → kırmızı **açık** alarm; konum
-   izni verildiyse gps_lat/lng dolu; notlar görünür.
-4. **"Yönetimi ara"** → cihaz arama ekranı `+90...` ile açılır (numara
-   panel'den `PATCH /tenant/settings` ile ayarlanır; boşsa kart gizli).
-5. Offline test: uçak modunda (Wi-Fi kapalı) bildir → net kırmızı
-   "İLETİLEMEDİ" + "Tekrar dene"; bağlantı gelince tekrar dene → tek alarm.
-
----
-
-## 13. Demirbaş zimmet — NFC ile checkout/checkin (Faz 3 / Prompt 3)
-
-### ✅ KAPANDI ✓ — §13 sözleşme bulguları (Faz 3 / Prompt 4 sadeleştirmesi)
+### ✅ KAPANDI ✓ — §12 sözleşme bulguları (Faz 3 / Prompt 4 sadeleştirmesi)
 
 **Durum:** Aşağıda flag'lenen 6 bulgunun tamamı backend'de kapandı (DEV-A
 cevabı: `contracts/README.md` → "Mobil §13 bulguları kapatıldı") ve mobil
@@ -1110,7 +1035,7 @@ Scan/görev outbox'ı bu karara KARIŞMAZ (onlar geçmişe dönük kanıt kayıt
    "Demirbaş zaten zimmetli." + kart otomatik tazelenir.
 6. Uçak modunda okutma/işlem → net "bağlantı gerekli" uyarısı.
 
-## 14. Push bildirim — FCM entegrasyonu (Faz 4)
+## 13. Push bildirim — FCM entegrasyonu (Faz 4)
 
 Backend gerçek FCM (HTTP v1) ile push atabiliyor (`contracts/README.md`
 "Push bildirim" bölümü); mobil ayağı: **token al → `POST /devices` kaydet →
@@ -1162,9 +1087,9 @@ dosyası **`mobile/android/app/google-services.json`** — kök `.gitignore`'da,
   **SnackBar** ("başlık — gövde"). Bilinçli dar kapsam:
   `flutter_local_notifications` EKLENMEDİ; **zengin ön-plan bildirimi
   ileride**.
-- **İleride (derin-link):** `data.tip` mevcut (`acil_durum`,
-  `kacirilan_tur`, `peyzaj_*`) — bildirime dokununca ilgili ekrana gitme
-  (`onMessageOpenedApp` + go_router) sonraki iş.
+- **İleride (derin-link):** `data.tip` mevcut (`duyuru`, `kacirilan_tur`) —
+  bildirime dokununca ilgili ekrana gitme (`onMessageOpenedApp` + go_router)
+  sonraki iş.
 
 ### iOS
 

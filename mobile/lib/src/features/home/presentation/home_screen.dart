@@ -16,8 +16,7 @@ import '../domain/home_menu.dart';
 /// contracts/auth.md §4 UX aynasi). Rol cozulene kadar (storage okumasi,
 /// saniye alti) yalnizca baslik gorunur.
 ///
-/// Gorunum: ACIL DURUM (varsa) ustte tam-genislik banner; kalan menuler
-/// 2 sutunlu kompakt ikon-izgara (buyuk ikon + BUYUK HARF baslik).
+/// Gorunum: 2 sutunlu kompakt ikon-izgara (buyuk ikon + BUYUK HARF baslik).
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -26,11 +25,7 @@ class HomeScreen extends ConsumerWidget {
     final outboxState = ref.watch(scanOutboxProvider);
     final role =
         ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
-    final entries = homeMenuForRole(role);
-
-    final hasEmergency = entries.contains(HomeMenuEntry.emergency);
-    final gridEntries =
-        entries.where((e) => e != HomeMenuEntry.emergency).toList();
+    final gridEntries = homeMenuForRole(role);
 
     // Sol ustte tesis (site) adi — herkes kendi sitesini gorur. Kurulum
     // tamamlanana / yuklenene kadar notr baslik.
@@ -86,10 +81,6 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
               ],
-              if (hasEmergency) ...[
-                _emergencyBanner(context),
-                const SizedBox(height: 16),
-              ],
               GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
@@ -102,50 +93,6 @@ class HomeScreen extends ConsumerWidget {
                     _gridTile(context, entry, outboxState),
                 ],
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Belirgin (kirmizi) ACIL DURUM girisi — tam genislik; yanlis basmaya
-  /// karsi asil koruma ekrandaki ONAY dialogudur.
-  Widget _emergencyBanner(BuildContext context) {
-    return Card(
-      color: Colors.red,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.push(AppRoutes.emergency),
-        child: const Padding(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(Icons.sos, color: Colors.white, size: 32),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'ACİL DURUM',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Panik butonu — yönetime alarm gönder',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: Colors.white),
             ],
           ),
         ),
@@ -204,12 +151,11 @@ class HomeScreen extends ConsumerWidget {
     ScanOutboxState outboxState,
   ) {
     switch (entry) {
-      case HomeMenuEntry.emergency:
-        // Banner olarak cizilir; butunluk (exhaustive switch) icin burada da var.
+      case HomeMenuEntry.yoneticiIletisim:
         return (
-          icon: Icons.sos,
-          title: 'ACİL DURUM',
-          onTap: () => context.push(AppRoutes.emergency),
+          icon: Icons.contact_phone,
+          title: 'Yönetici İletişim',
+          onTap: () => context.push(AppRoutes.yoneticiIletisim),
           badge: null,
         );
       case HomeMenuEntry.announcements:

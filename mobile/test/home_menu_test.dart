@@ -7,7 +7,6 @@ void main() {
     test('admin: ziyaretci/kargo DOGRUDAN GORMEZ (KVKK) — yerine unitAccess; '
         'security saha kartlarini (ziyaretci+kargo dahil) gorur', () {
       expect(homeMenuForRole(UserRole.admin), const [
-        HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
@@ -22,7 +21,6 @@ void main() {
         HomeMenuEntry.outbox,
       ]);
       expect(homeMenuForRole(UserRole.security), const [
-        HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
@@ -36,6 +34,7 @@ void main() {
         HomeMenuEntry.outbox,
         // Sikayet Haritasi (yogunluk) YOK; salt-okuma Bina Duzenleme EN ALTTA.
         HomeMenuEntry.binaDuzenleme,
+        HomeMenuEntry.yoneticiIletisim,
       ]);
     });
 
@@ -79,7 +78,6 @@ void main() {
       expect(
         menu,
         containsAll(const [
-          HomeMenuEntry.emergency,
           HomeMenuEntry.announcements,
           HomeMenuEntry.tasks,
           HomeMenuEntry.assets,
@@ -89,13 +87,12 @@ void main() {
     });
 
     test(
-        'yonetici: acil durum + duyurular + devriye TAKIBI + gorev TAKIBI; '
+        'yonetici: duyurular + devriye TAKIBI + gorev TAKIBI; '
         'saha kartlari yok', () {
       final menu = homeMenuForRole(UserRole.yonetici);
       expect(
         menu,
         const [
-          HomeMenuEntry.emergency,
           HomeMenuEntry.announcements,
           HomeMenuEntry.etkinlik,
           HomeMenuEntry.siteKurallari,
@@ -216,11 +213,10 @@ void main() {
       }
     });
 
-    test('resident: SOS + Ziyaretciler + Kargo + Goruntuleme izni + '
+    test('resident: Ziyaretciler + Kargo + Goruntuleme izni + '
         'Rezervasyon + duyurular + Sikayet Haritasi + Sikayet/Oneri + Aidatim + '
         'Site Butcesi (ayri "Sikayetlerim" sayfasi YOK — harita uzerinde)', () {
       expect(homeMenuForRole(UserRole.resident), const [
-        HomeMenuEntry.emergency,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
         HomeMenuEntry.unitAccess,
@@ -233,6 +229,7 @@ void main() {
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
+        HomeMenuEntry.yoneticiIletisim,
       ]);
     });
 
@@ -383,8 +380,11 @@ void main() {
         expect(menu, contains(HomeMenuEntry.binaDuzenleme), reason: role.wire);
         expect(menu, isNot(contains(HomeMenuEntry.sikayetHaritasi)),
             reason: role.wire);
-        // Salt-okuma girisi menunun EN ALTINDA (yonetici konumuyla ayni).
-        expect(menu.last, HomeMenuEntry.binaDuzenleme, reason: role.wire);
+        // Salt-okuma girisi saha kartlarinin EN ALTINDA; ardindan yalnizca
+        // Yonetici Iletisim gelir (o her zaman en son).
+        final sonSalt =
+            menu.where((e) => e != HomeMenuEntry.yoneticiIletisim).last;
+        expect(sonSalt, HomeMenuEntry.binaDuzenleme, reason: role.wire);
       }
     });
 
@@ -442,19 +442,33 @@ void main() {
       }
     });
 
-    test('Acil Durum karti 5 rolun 5inde de var (panik herkese acik)', () {
+    test('Acil durum girisi hicbir rolde YOK (SOS kaldirildi)', () {
+      for (final role in UserRole.values) {
+        final entries = homeMenuForRole(role);
+        expect(
+          entries.map((e) => e.name),
+          isNot(contains('emergency')),
+          reason: '$role menusunde emergency kalmis',
+        );
+      }
+    });
+
+    test('Yonetici Iletisim yalniz saha rolleri + sakinde, EN SONDA', () {
       for (final role in [
-        UserRole.admin,
-        UserRole.yonetici,
         UserRole.security,
         UserRole.tesisGorevlisi,
         UserRole.resident,
       ]) {
-        expect(
-          homeMenuForRole(role),
-          contains(HomeMenuEntry.emergency),
-          reason: role.wire,
-        );
+        final entries = homeMenuForRole(role);
+        expect(entries, contains(HomeMenuEntry.yoneticiIletisim),
+            reason: '$role');
+        expect(entries.last, HomeMenuEntry.yoneticiIletisim,
+            reason: '$role sonda degil');
+      }
+      for (final role in [UserRole.yonetici, UserRole.admin]) {
+        expect(homeMenuForRole(role),
+            isNot(contains(HomeMenuEntry.yoneticiIletisim)),
+            reason: '$role gormemeli');
       }
     });
 

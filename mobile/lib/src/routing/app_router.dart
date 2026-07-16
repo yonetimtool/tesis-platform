@@ -18,7 +18,7 @@ import '../features/home/presentation/home_gate.dart';
 import '../features/kargo/presentation/kargo_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
 import '../features/dues/presentation/my_dues_screen.dart';
-import '../features/emergency/presentation/emergency_screen.dart';
+import '../features/yonetici_iletisim/presentation/yonetici_iletisim_screen.dart';
 import '../features/etkinlik/presentation/etkinlik_screen.dart';
 import '../features/patrol/presentation/patrol_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
@@ -53,7 +53,7 @@ class AppRoutes {
   static const tasks = '/tasks';
   static const taskDetail = '/tasks/detail';
   static const taskCategories = '/tasks/categories';
-  static const emergency = '/emergency';
+  static const yoneticiIletisim = '/yonetici-iletisim';
   static const assets = '/assets';
   static const announcements = '/announcements';
   static const patrolTracking = '/patrol-tracking';
@@ -191,8 +191,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: AppRoutes.emergency,
-        builder: (context, state) => const EmergencyScreen(),
+        path: AppRoutes.yoneticiIletisim,
+        builder: (context, state) => const YoneticiIletisimScreen(),
       ),
       GoRoute(
         path: AppRoutes.assets,

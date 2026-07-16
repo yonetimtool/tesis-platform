@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../auth/presentation/auth_controller.dart';
-import '../../emergency/domain/emergency_models.dart';
+import '../domain/tenant_models.dart';
 
 /// Tesis (tenant) ayarlari + ilk-giris kurulumu icin ince HTTP istemcisi.
 /// Onboarding Model A: admin isimsiz tesis + yonetici acar; yonetici ILK
@@ -31,6 +31,20 @@ class TenantApi {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/tenant/setup',
+        data: {'ad': ad},
+      );
+      return TenantSettings.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `PATCH /tenant/settings` — yonetici tesis adini degistirir (yalniz `ad`;
+  /// baska alan gonderilirse backend 403 doner). slug DEGISMEZ.
+  Future<TenantSettings> updateAd(String ad) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/tenant/settings',
         data: {'ad': ad},
       );
       return TenantSettings.fromJson(res.data!);

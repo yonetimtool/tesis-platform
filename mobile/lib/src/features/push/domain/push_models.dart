@@ -22,7 +22,7 @@ class PushMessageEvent {
   final String? title;
   final String? body;
 
-  /// FCM data payload (string→string; orn. {"tip": "acil_durum"}).
+  /// FCM data payload (string→string; orn. {"tip": "duyuru"}).
   final Map<String, String> data;
 
   /// SnackBar/banner icin tek satirlik metin.

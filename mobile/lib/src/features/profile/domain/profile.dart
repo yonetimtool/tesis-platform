@@ -7,6 +7,7 @@ class Profile {
     required this.role,
     this.telefon,
     required this.aranabilir,
+    this.birincil = false,
   });
 
   final String ad;
@@ -15,11 +16,16 @@ class Profile {
   final String? telefon;
   final bool aranabilir;
 
+  /// Tenant'in birincil yoneticisi mi? Tesisi ilk giriste adlandirma kapisi
+  /// yalniz buna acilir (yonetici disi rollerde daima false).
+  final bool birincil;
+
   factory Profile.fromJson(Map<String, dynamic> json) => Profile(
         ad: json['ad'] as String,
         email: json['email'] as String?,
         role: json['role'] as String,
         telefon: json['telefon'] as String?,
         aranabilir: (json['aranabilir'] as bool?) ?? false,
+        birincil: json['birincil'] as bool? ?? false,
       );
 }

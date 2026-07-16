@@ -36,12 +36,9 @@ void main() {
       expect(UserRole.unknown.isFieldWorker, isFalse);
     });
 
-    test('gorev okuma saha rolleri + yonetici; acil durum resident haric', () {
+    test('gorev okuma saha rolleri + yonetici', () {
       expect(UserRole.yonetici.canViewTasks, isTrue);
       expect(UserRole.resident.canViewTasks, isFalse);
-      expect(UserRole.yonetici.canTriggerEmergency, isTrue);
-      // Panik butonu sakinin de hakki (canli test karari, auth.md §4).
-      expect(UserRole.resident.canTriggerEmergency, isTrue);
     });
 
     test('duyuru yonetimi YALNIZ yonetici — admin mobilde salt okur '

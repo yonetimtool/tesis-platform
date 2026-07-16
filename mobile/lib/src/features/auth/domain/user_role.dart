@@ -9,8 +9,8 @@ enum UserRole {
   /// Platform admini (biz) — panel + tum operasyon uclari.
   admin('admin', 'Platform Admin'),
 
-  /// Site yoneticisi (musteri) — mobil; gorev atama/takip, rapor okuma,
-  /// acil durum. Saha kaniti uretmez (scan/tamamlama/zimmet yok).
+  /// Site yoneticisi (musteri) — mobil; gorev atama/takip, rapor okuma.
+  /// Saha kaniti uretmez (scan/tamamlama/zimmet yok).
   yonetici('yonetici', 'Yönetici'),
 
   /// Guvenlik gorevlisi — devriye + saha operasyonu.
@@ -48,11 +48,6 @@ enum UserRole {
 
   /// Gorev listesi/detayi okuma — saha rolleri + yonetici (takip).
   bool get canViewTasks => isFieldWorker || this == yonetici;
-
-  /// Acil durum tetikleme (`POST /emergency`) — TUM roller (resident dahil;
-  /// panik butonu sakinin de hakki — canli test karari, auth.md §4).
-  bool get canTriggerEmergency =>
-      isFieldWorker || this == yonetici || this == resident;
 
   /// Duyuru olusturma/duzenleme/silme (mobil UX) — YALNIZ yonetici: duyuru
   /// site yonetiminin agzi (canli test karari). admin mobilde salt okur

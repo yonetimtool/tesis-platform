@@ -116,7 +116,7 @@ void main() {
     });
 
     test('bilinmeyen/eksik tip -> null (yonlendirme yok)', () {
-      expect(routeForPushData(const {'tip': 'acil_durum'}), isNull);
+      expect(routeForPushData(const {'tip': 'bilinmeyen_tip'}), isNull);
       expect(routeForPushData(const {}), isNull);
     });
   });

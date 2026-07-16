@@ -16,8 +16,19 @@ class SetupTenantScreen extends ConsumerStatefulWidget {
 }
 
 class _SetupTenantScreenState extends ConsumerState<SetupTenantScreen> {
+  /// Admin tesisi adsiz acarken yazilan sunucu-tarafi yer tutucu. Kullaniciya
+  /// ASLA gosterilmez — alan bos baslar.
+  static const _placeholder = '(Kurulum bekliyor)';
+
   final _formKey = GlobalKey<FormState>();
-  final _adCtrl = TextEditingController();
+
+  /// Mevcut ad on-doldurulur (yeniden adlandirma senaryosu); yer tutucu ise bos.
+  late final TextEditingController _adCtrl = TextEditingController(
+    text: () {
+      final ad = ref.read(tenantSettingsProvider).value?.ad ?? '';
+      return ad == _placeholder ? '' : ad;
+    }(),
+  );
   bool _submitting = false;
   String? _errorMessage;
 

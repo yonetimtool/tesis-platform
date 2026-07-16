@@ -6,9 +6,6 @@ library;
 import '../../auth/domain/user_role.dart';
 
 enum HomeMenuEntry {
-  /// Kirmizi panik karti (POST /emergency).
-  emergency,
-
   /// Duyurular — okuma TUM roller; admin/yonetici ekranda olusturur/yonetir.
   announcements,
 
@@ -125,6 +122,10 @@ enum HomeMenuEntry {
   /// sikayetlerini Sikayet Haritasi uzerinde (isaretli daireler) gorur; ayri
   /// sayfaya yonlendirilmez. Enum + rota ekran yeniden kullanim icin korunur.
   sikayetlerim,
+
+  /// Yonetici Iletisim — tenant'in yoneticileri (ad + telefon + arama) +
+  /// yonetim maili. Saha rolleri + sakin gorur; YONETICI kendisi GORMEZ.
+  yoneticiIletisim,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -133,7 +134,6 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       // Ziyaretci/kargo DOGRUDAN GORMEZ (KVKK — varsayilan kapali); yerine
       // "Goruntuleme izni" ile tek-seferlik izin alir.
       return const [
-        HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
@@ -154,7 +154,6 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       // "Bina Duzenleme" SALT-OKUMA (blok/kat/daire yapisi; yazma yok). Bu
       // salt-okuma girisi menunun EN ALTINDA durur (yonetici'deki konumuyla ayni).
       return const [
-        HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
@@ -167,6 +166,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.assets,
         HomeMenuEntry.outbox,
         HomeMenuEntry.binaDuzenleme,
+        HomeMenuEntry.yoneticiIletisim,
       ];
     case UserRole.tesisGorevlisi:
       // Turlarim yok: /me/patrol-window admin+security (auth.md §4).
@@ -174,7 +174,6 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       // Sikayet Haritasi (yogunluk) YOK; yerine "Bina Duzenleme" SALT-OKUMA
       // (menunun EN ALTINDA — yonetici'deki konumuyla ayni).
       return const [
-        HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
@@ -184,12 +183,12 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.assets,
         HomeMenuEntry.outbox,
         HomeMenuEntry.binaDuzenleme,
+        HomeMenuEntry.yoneticiIletisim,
       ];
     case UserRole.yonetici:
       // Saha kaniti uretmez: scan/zimmet/kuyruk gizli. Gorevler ve devriye
       // salt takip; duyuru gonderme/yonetme duyuru ekraninda.
       return const [
-        HomeMenuEntry.emergency,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.siteKurallari,
@@ -209,12 +208,10 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.binaDuzenleme,
       ];
     case UserRole.resident:
-      // Sakinin kaynaklari: acil durum (panik butonu sakinin de hakki) +
-      // duyuru okuma + sikayet/oneri kanali + kendi aidat durumu (auth.md §4).
-      // Ziyaretciler sakinde ust sirada: kapida cevap bekleyen kayit
-      // (push ile gelinen akis) kolay erisilsin.
+      // Sakinin kaynaklari: duyuru okuma + sikayet/oneri kanali + kendi aidat
+      // durumu (auth.md §4). Ziyaretciler sakinde ust sirada: kapida cevap
+      // bekleyen kayit (push ile gelinen akis) kolay erisilsin.
       return const [
-        HomeMenuEntry.emergency,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
         HomeMenuEntry.unitAccess,
@@ -230,6 +227,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
+        HomeMenuEntry.yoneticiIletisim,
       ];
     case UserRole.unknown:
       // Rol cozulmeden (storage okumasi) veya bilinmeyen degerde: bos —
