@@ -1,36 +1,39 @@
 /**
- * Yönetio marka isareti (Concept 15) — inline SVG (harici asset/font yok).
- * Mobil `YonetioLogoPainter` ve `assets/branding/logo.svg` ile birebir ayni
- * geometri. Nav header'da ikon + kelime isareti kullanilir.
+ * Yönetio marka isareti — BASITLESTIRILMIS turev, inline SVG (harici
+ * asset/font yok).
+ *
+ * Neden tam master logo degil: saglanan logo (mavi→teal gradyan zemin + uc
+ * bina + insanlar + yay) ~32px altinda okunmuyor — 32px'te render edilip
+ * gozle bakildi, detaylar bulaniyor. Nav header'daki 28px bu esigin altinda.
+ * Bu yuzden burada mobildeki `YonetioSimpleMarkPainter` ile BIREBIR ayni
+ * geometri kullanilir: merkez bina (egik cati) + chevron/cati ucgeni.
+ *
+ * Geometri 0..1 normalize edilip 100 ile olceklenmistir (viewBox 0 0 100 100)
+ * — mobil painter'daki sayilarla ayni.
  */
 
-export function YonetioMark({ size = 28 }: { size?: number }) {
+export function YonetioMark({
+  size = 28,
+  className = "text-[#0E3C91] dark:text-white",
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 512 512"
+      viewBox="0 0 100 100"
       role="img"
       aria-label="Yönetio"
+      className={className}
+      fill="currentColor"
     >
-      <rect x="0" y="0" width="512" height="512" rx="113" ry="113" fill="#1E3A5F" />
-      <rect x="117.8" y="194.6" width="112.6" height="215.0" rx="15" ry="15" fill="#FFFFFF" />
-      <rect x="281.6" y="133.1" width="112.6" height="276.5" rx="15" ry="15" fill="#7FD1C9" />
-      <g fill="#1E3A5F">
-        <rect x="140.3" y="220.4" width="27" height="27" />
-        <rect x="180.8" y="220.4" width="27" height="27" />
-        <rect x="140.3" y="268.9" width="27" height="27" />
-        <rect x="180.8" y="268.9" width="27" height="27" />
-        <rect x="304.1" y="166.3" width="27" height="27" />
-        <rect x="344.7" y="166.3" width="27" height="27" />
-        <rect x="304.1" y="221.0" width="27" height="27" />
-        <rect x="344.7" y="221.0" width="27" height="27" />
-      </g>
-      <g fill="none" stroke="#0E9594" strokeWidth="23" strokeLinecap="round">
-        <path d="M 207.2 212.5 A 56.3 56.3 0 0 1 304.8 212.5" />
-        <path d="M 182.8 198.4 A 84.5 84.5 0 0 1 329.2 198.4" />
-      </g>
-      <circle cx="256" cy="230.4" r="14.3" fill="#0E9594" />
+      {/* Merkez bina — egik cati cizgisi sol-ustten saga yukselir. */}
+      <path d="M35 24 L58 9 L66 9 L66 50 L35 50 Z" />
+      {/* Chevron/cati — DOLU ucgen; cizgi olarak "ayrik bacaklar" gibi
+          okunuyordu. */}
+      <path d="M9 78 L50 44 L91 78 Z" />
     </svg>
   );
 }
@@ -40,7 +43,7 @@ export function YonetioLogo({ size = 28 }: { size?: number }) {
   return (
     <span className="flex items-center gap-2">
       <YonetioMark size={size} />
-      <span className="text-lg font-semibold tracking-tight text-[#1E3A5F] dark:text-white">
+      <span className="text-lg font-semibold tracking-tight text-[#0E3C91] dark:text-white">
         yönetio
       </span>
     </span>

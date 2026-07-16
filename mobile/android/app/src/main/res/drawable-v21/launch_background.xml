@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Acilis ekrani (Yönetio) — API21+ varyanti; gercekte calisan budur.
+     Marka lacivert zemin + ortada master logo. Zemin sabit lacivert: acik/koyu
+     temada ayni marka karsilamasi (onceki ?android:colorBackground beyaz
+     parliyordu). -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="?android:colorBackground" />
-
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
+    <item android:drawable="@color/yonetio_navy" />
+    <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+            android:src="@drawable/splash_logo" />
+    </item>
 </layer-list>

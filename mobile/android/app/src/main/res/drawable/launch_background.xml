@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Acilis ekrani (Yönetio): marka lacivert zemin + ortada master logo.
+     Flutter ilk kareyi cizene kadar gorunur; onceki beyaz parlamayi kaldirir.
+     NOT: drawable-v21/launch_background.xml API21+ cihazlarda BUNUN yerine
+     kullanilir — ikisi BIRLIKTE guncellenmeli (min sdk 21 oldugundan pratikte
+     v21 varyanti calisir; bu dosya yedek olarak ayni kalir). -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white" />
-
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
+    <item android:drawable="@color/yonetio_navy" />
+    <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+            android:src="@drawable/splash_logo" />
+    </item>
 </layer-list>

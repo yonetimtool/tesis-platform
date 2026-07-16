@@ -1,53 +1,79 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
-/// Yönetio marka kimligi — "Concept 15" (sinyal yayan site) logosu + kelime
-/// isareti. Vektorel (CustomPainter) oldugu icin 28px (app-bar) ile 100px+
-/// (giris) arasi her olcekte net; ekstra bagimlilik (flutter_svg) gerektirmez.
+/// Yönetio marka kimligi.
 ///
-/// Ayni geometri `assets/branding/logo.svg` ve admin-web'deki inline SVG ile
-/// birebir eslesir. Launcher PNG'leri de bu painter'dan uretilir
+/// TEK kaynak: `assets/branding/icon_master.png` — saglanan hazir logo
+/// (mavi→teal gradyan yuvarlak-kare; beyaz isaret: uc bina + chevron/cati +
+/// kucuk ev + insanlar + yay). OLDUGU GIBI kullanilir, yeniden cizilmez.
+/// `logo_master.png`'den beyaz kenar boslugu kirpilarak uretilir
 /// (test/tools/generate_branding_assets.dart).
+///
+/// Master ~32px altinda okunmaz (insanlar/yay/yan bloklar bulanir). Bu yuzden
+/// kucuk boyutlar icin BASITLESTIRILMIS tek-renk turev kullanilir
+/// ([YonetioSimpleMark]) — yalniz merkez bina + chevron/cati silueti.
+///
+/// | Yuzey                  | Surum                |
+/// |------------------------|----------------------|
+/// | launcher, giris, splash| master (tam)         |
+/// | app-bar, bildirim, favicon | basitlestirilmis |
 class YonetioColors {
   const YonetioColors._();
 
-  /// Ikon zemini + acik-baglamda kelime isareti.
-  static const navy = Color(0xFF1E3A5F);
+  /// Kelime isareti (acik tema) + splash zemini — master gradyaninin KOYU ucu.
+  /// Deger elle secilmedi: logonun kose pikselinden orneklendi
+  /// (test/tools/generate_branding_assets.dart). android values/colors.xml
+  /// (`yonetio_navy`) ve admin-web ile ayni.
+  static const navy = Color(0xFF0E3C91);
 
-  /// Kisa (sol) blok.
-  static const white = Color(0xFFFFFFFF);
-
-  /// Uzun (sag) blok.
-  static const mint = Color(0xFF7FD1C9);
-
-  /// Sinyal yaylari + kaynak nokta.
-  static const teal = Color(0xFF0E9594);
+  /// Gradyanin ACIK ucu (teal) — ayni sekilde orneklendi (`yonetio_teal`).
+  static const teal = Color(0xFF1DB2B6);
 }
 
-/// Logo ikonu (yalniz isaret; yuvarlak-kare navy zemin + iki blok + sinyal).
-/// [background] false ise seffaf zemin (adaptive icon foreground katmani icin).
-class YonetioLogoMark extends StatelessWidget {
-  const YonetioLogoMark({super.key, this.size = 40, this.background = true});
+/// Tam master logo (gradyan zemin dahil). Giris ekrani ve ~40px ustu yuzeyler.
+class YonetioMasterLogo extends StatelessWidget {
+  const YonetioMasterLogo({super.key, this.size = 120});
 
   final double size;
-  final bool background;
 
   @override
   Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/branding/icon_master.png',
+      width: size,
+      height: size,
+      // Master zaten yuvarlak-kare; ek kirpma/koseleme YOK.
+      filterQuality: FilterQuality.medium,
+      semanticLabel: 'Yönetio',
+    );
+  }
+}
+
+/// Basitlestirilmis tek-renk isaret — merkez bina + chevron/cati silueti.
+/// Master'in kucuk-boyut turevi: app-bar (~28-32px), bildirim kucuk ikonu
+/// (Android monokrom zorunlulugu) ve favicon.
+class YonetioSimpleMark extends StatelessWidget {
+  const YonetioSimpleMark({super.key, this.size = 30, this.color});
+
+  final double size;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return SizedBox.square(
       dimension: size,
       child: CustomPaint(
-        painter: YonetioLogoPainter(background: background),
+        painter: YonetioSimpleMarkPainter(
+          color: color ?? scheme.onSurface,
+        ),
         isComplex: false,
       ),
     );
   }
 }
 
-/// Kelime isareti — kucuk harf "yönetio", geometrik sans (Roboto — projede
-/// zaten var; yeni font bagimliligi yok), orta agirlik. Acik baglamda navy,
-/// koyu baglamda beyaz.
+/// Kelime isareti — kucuk harf "yönetio", Roboto (projede zaten var; yeni font
+/// bagimliligi yok). Acik baglamda navy, koyu baglamda beyaz.
 class YonetioWordmark extends StatelessWidget {
   const YonetioWordmark({super.key, this.fontSize = 26, this.color});
 
@@ -62,7 +88,7 @@ class YonetioWordmark extends StatelessWidget {
       style: TextStyle(
         fontSize: fontSize,
         fontWeight: FontWeight.w500,
-        letterSpacing: fontSize * 0.005,
+        letterSpacing: fontSize * 0.01,
         height: 1.0,
         color: color ?? (dark ? Colors.white : YonetioColors.navy),
       ),
@@ -70,9 +96,9 @@ class YonetioWordmark extends StatelessWidget {
   }
 }
 
-/// Dikey yerlesim (giris ekrani): ikon ustte, kelime isareti altta.
+/// Dikey yerlesim (giris ekrani): tam master ustte, kelime isareti altta.
 class YonetioLogoVertical extends StatelessWidget {
-  const YonetioLogoVertical({super.key, this.iconSize = 100});
+  const YonetioLogoVertical({super.key, this.iconSize = 120});
 
   final double iconSize;
 
@@ -81,113 +107,59 @@ class YonetioLogoVertical extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        YonetioLogoMark(size: iconSize),
-        SizedBox(height: iconSize * 0.16),
-        YonetioWordmark(fontSize: iconSize * 0.30),
+        YonetioMasterLogo(size: iconSize),
+        SizedBox(height: iconSize * 0.14),
+        YonetioWordmark(fontSize: iconSize * 0.26),
       ],
     );
   }
 }
 
-/// Yatay yerlesim (ikon + kelime isareti yan yana).
-class YonetioLogoHorizontal extends StatelessWidget {
-  const YonetioLogoHorizontal({super.key, this.iconSize = 32, this.color});
+/// Basitlestirilmis isaretin geometrisi — 0..1 normalize, [size] ile olceklenir.
+/// Master'in merkez binasi (egik cati cizgisi) + uzerine binen chevron/cati.
+/// Yan bloklar, insanlar ve yay ATILIR: 32px altinda bulaniyorlar.
+///
+/// Ayni geometri admin-web'de inline SVG olarak aynalanir
+/// (admin-web/components/YonetioLogo.tsx).
+class YonetioSimpleMarkPainter extends CustomPainter {
+  const YonetioSimpleMarkPainter({required this.color});
 
-  final double iconSize;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        YonetioLogoMark(size: iconSize),
-        SizedBox(width: iconSize * 0.28),
-        YonetioWordmark(fontSize: iconSize * 0.72, color: color),
-      ],
-    );
-  }
-}
-
-/// Logonun tum geometrisi 0..1 normalize edilip [size] ile olceklenir; boylece
-/// tek kaynak her boyutta ayni orani korur.
-class YonetioLogoPainter extends CustomPainter {
-  const YonetioLogoPainter({this.background = true});
-
-  final bool background;
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.shortestSide;
-    double u(double v) => v * s; // normalize -> piksel
+    double u(double v) => v * s;
 
-    // 1) Yuvarlak-kare navy zemin (flat; golge/gradyan yok).
-    if (background) {
-      final bg = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, s, s),
-        Radius.circular(u(0.22)),
-      );
-      canvas.drawRRect(bg, Paint()..color = YonetioColors.navy);
-    }
+    final paint = Paint()
+      ..color = color
+      ..isAntiAlias = true;
 
-    // 2) Iki blok — ortak taban cizgisi 0.80.
-    final leftBlock = RRect.fromRectAndRadius(
-      Rect.fromLTRB(u(0.23), u(0.38), u(0.45), u(0.80)),
-      Radius.circular(u(0.03)),
-    );
-    final rightBlock = RRect.fromRectAndRadius(
-      Rect.fromLTRB(u(0.55), u(0.26), u(0.77), u(0.80)),
-      Radius.circular(u(0.03)),
-    );
-    canvas.drawRRect(leftBlock, Paint()..color = YonetioColors.white);
-    canvas.drawRRect(rightBlock, Paint()..color = YonetioColors.mint);
+    // 1) Merkez bina — TIKNAZ blok, egik cati cizgisi sol-ustten saga
+    //    yukselir. Master'daki uzun binanin silueti. Blogun tiknaz olmasi
+    //    sart: ince olursa cati ile birlikte "tripod" gibi okunuyor.
+    final tower = Path()
+      ..moveTo(u(0.35), u(0.24))
+      ..lineTo(u(0.58), u(0.09)) // egik cati
+      ..lineTo(u(0.66), u(0.09))
+      ..lineTo(u(0.66), u(0.50))
+      ..lineTo(u(0.35), u(0.50))
+      ..close();
+    canvas.drawPath(tower, paint);
 
-    // 3) 2x2 navy pencereler (her blogun ust yarisinda) — basit kareler.
-    final winPaint = Paint()..color = YonetioColors.navy;
-    _windows(canvas, leftBlock.outerRect, winPaint);
-    _windows(canvas, rightBlock.outerRect, winPaint);
-
-    // 4) Sinyal: iki es-merkezli yay + altta kaynak nokta (bosluk ustunde).
-    final teal = Paint()
-      ..color = YonetioColors.teal
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = u(0.045)
-      ..strokeCap = StrokeCap.round;
-    final center = Offset(u(0.5), u(0.47));
-    // yukari acilan yay: -90° (yukari) etrafinda 120° kavis.
-    const start = -math.pi / 2 - math.pi / 3; // -150°
-    const sweep = 2 * math.pi / 3; // 120°
-    for (final r in [0.11, 0.165]) {
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: u(r)),
-        start,
-        sweep,
-        false,
-        teal,
-      );
-    }
-    canvas.drawCircle(
-      Offset(u(0.5), u(0.45)),
-      u(0.028),
-      Paint()..color = YonetioColors.teal,
-    );
-  }
-
-  void _windows(Canvas canvas, Rect block, Paint paint) {
-    final win = block.width * 0.24;
-    final marginX = block.width * 0.20;
-    final x0 = block.left + marginX;
-    final x1 = block.right - marginX - win;
-    final y0 = block.top + block.height * 0.12;
-    final y1 = y0 + win + block.height * 0.10;
-    for (final x in [x0, x1]) {
-      for (final y in [y0, y1]) {
-        canvas.drawRect(Rect.fromLTWH(x, y, win, win), paint);
-      }
-    }
+    // 2) Chevron/cati — DOLU ucgen, tabani duz. Cizgi (stroke + yuvarlak uc)
+    //    olarak denendi: 24px'te cati degil "ayrik bacaklar" gibi okunuyordu.
+    //    Dolu ve genis-yayvan ucgen (~21:8) cati olarak net okunuyor; bina
+    //    tepesinden disari tasar.
+    final roof = Path()
+      ..moveTo(u(0.09), u(0.78))
+      ..lineTo(u(0.50), u(0.44))
+      ..lineTo(u(0.91), u(0.78))
+      ..close();
+    canvas.drawPath(roof, paint);
   }
 
   @override
-  bool shouldRepaint(YonetioLogoPainter oldDelegate) =>
-      oldDelegate.background != background;
+  bool shouldRepaint(YonetioSimpleMarkPainter oldDelegate) =>
+      oldDelegate.color != color;
 }

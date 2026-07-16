@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Yönetio marka renkleri (Android kaynak tarafi). Degerler ELLE SECILMEDI —
+     master logonun kose piksellerinden orneklendi
+     (test/tools/generate_branding_assets.dart): gradyanin koyu ucu #0E3C91,
+     acik ucu #1DB2B6. -->
 <resources>
-    <color name="ic_launcher_background">#1E3A5F</color>
+    <!-- Acilis (splash) zemini — gradyanin koyu ucu. -->
+    <color name="yonetio_navy">#0E3C91</color>
+    <!-- Bildirim vurgu rengi: kucuk ikon monokrom cizilir, sistem onu bu
+         renkle boyar. -->
+    <color name="yonetio_teal">#1DB2B6</color>
 </resources>

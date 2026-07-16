@@ -1,20 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Yönetio">
-  <rect x="0" y="0" width="512" height="512" rx="113" ry="113" fill="#1E3A5F"/>
-  <rect x="117.8" y="194.6" width="112.6" height="215.0" rx="15" ry="15" fill="#FFFFFF"/>
-  <rect x="281.6" y="133.1" width="112.6" height="276.5" rx="15" ry="15" fill="#7FD1C9"/>
-  <g fill="#1E3A5F">
-    <rect x="140.3" y="220.4" width="27" height="27"/>
-    <rect x="180.8" y="220.4" width="27" height="27"/>
-    <rect x="140.3" y="268.9" width="27" height="27"/>
-    <rect x="180.8" y="268.9" width="27" height="27"/>
-    <rect x="304.1" y="166.3" width="27" height="27"/>
-    <rect x="344.7" y="166.3" width="27" height="27"/>
-    <rect x="304.1" y="221.0" width="27" height="27"/>
-    <rect x="344.7" y="221.0" width="27" height="27"/>
+<!-- Yönetio favicon.
+     KARAR: tam master logo DEGIL, basitlestirilmis isaret kullanilir. Master
+     16/32px'e indirilip gozle bakildi (uc bina + insanlar + yay birbirine
+     karisiyor, okunmuyor). Burada launcher ikonuyla bagi korumak icin ayni
+     mavi→teal gradyan yuvarlak-kare zemin + uzerinde beyaz basitlestirilmis
+     isaret (merkez bina + chevron/cati) var.
+     Gradyan uclari master'in kose piksellerinden orneklendi. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" role="img" aria-label="Yönetio">
+  <defs>
+    <linearGradient id="yonetio-bg" x1="0" y1="100" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0E3C91"/>
+      <stop offset="1" stop-color="#1DB2B6"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="100" height="100" rx="22" ry="22" fill="url(#yonetio-bg)"/>
+  <!-- Isaret %74 olcekte ortalanir; mobil YonetioSimpleMarkPainter geometrisi. -->
+  <g transform="translate(13 13) scale(0.74)" fill="#FFFFFF">
+    <path d="M35 24 L58 9 L66 9 L66 50 L35 50 Z"/>
+    <path d="M9 78 L50 44 L91 78 Z"/>
   </g>
-  <g fill="none" stroke="#0E9594" stroke-width="23" stroke-linecap="round">
-    <path d="M 207.2 212.5 A 56.3 56.3 0 0 1 304.8 212.5"/>
-    <path d="M 182.8 198.4 A 84.5 84.5 0 0 1 329.2 198.4"/>
-  </g>
-  <circle cx="256" cy="230.4" r="14.3" fill="#0E9594"/>
 </svg>
