@@ -90,7 +90,7 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
 
   `.env` içinde en azından şunları düzenle:
   - `JWT_SECRET` ve `SDM_KEK`: 32+ karakter rastgele değerler
-    (`SDM_KEK` boş/varsayılan kalırsa S9'daki anahtar kaydı çalışmaz).
+    (`SDM_KEK` boş/varsayılan kalırsa S8'deki anahtar kaydı çalışmaz).
   - **`MINIO_PUBLIC_ENDPOINT=http://<LAN-IP>:9000`** ← **ÖNEMLİ.** Varsayılan
     `http://localhost:9000`'dır; bu değer presigned foto yükleme URL'lerinin
     host'u olur ve telefon `localhost`'a erişemez. Bilgisayarın LAN IP'sini yazın
@@ -132,10 +132,9 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
 
   > Rol modeli notu: **panel (admin-web) yalnız `admin` içindir**; `yonetici`
   > mobil kullanır ve kendi tesisiyle sınırlıdır (görev atama/takip, rapor okuma,
-  > acil durum, demirbaş görüntüleme). Tam RBAC matrisi: `contracts/auth.md` §4.
+  > demirbaş görüntüleme). Tam RBAC matrisi: `contracts/auth.md` §4.
 
-  Ayrıca: `A-12` dairesi + 2026-06 dönemi 750 TL tahakkuk + acil durum telefonu
-  `+902120000000` (panelden değiştirilebilir).
+  Ayrıca: `A-12` dairesi + 2026-06 dönemi 750 TL tahakkuk.
 
 - [ ] **Login duman testi (curl):**
 
@@ -218,18 +217,20 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
 - [ ] Logout ikonu → login ekranına dönmeli.
 - **Beklenen:** dört rol de girebilir; yanlış parola net hata gösterir. Ana menü
   **role göre bileşir** (ekranda rol adı da yazar):
-  - `guard` (Güvenlik) ve `admin`: tüm kartlar (Acil durum, Duyurular, Turlarım,
-    Görevlerim, Demirbaş, NFC, Kuyruk).
+  - `guard` (Güvenlik) ve `admin`: tüm kartlar (Duyurular, Turlarım,
+    Görevlerim, Demirbaş, NFC, Kuyruk). `guard`'da ayrıca **Yönetici İletişim**
+    (EN ALTTA); `admin`'de YOK.
   - `cleaner` (Tesis Görevlisi): Turlarım kartı GÖRÜNMEZ (saha turu verisi
-    admin+security'ye açık) — diğer kartlar tam.
-  - `yonetici` (Yönetici): Acil durum + **Duyurular** (gönderebilir) +
+    admin+security'ye açık) — diğer kartlar tam + **Yönetici İletişim** (EN ALTTA).
+  - `yonetici` (Yönetici): **Duyurular** (gönderebilir) +
     **Devriye takibi** (bugünün turları + geçmiş, salt izleme) + **Görev
     yönetimi** (oluştur/ata — yalnız saha personeline; tamamlama akışı yok) +
     **Aylık raporlar** (devriye/görev/aidat özeti, ay gezinmeli).
-    NFC/zimmet/kuyruk görünmez.
+    NFC/zimmet/kuyruk ve **Yönetici İletişim** görünmez (kendisi yönetimdir).
   - `resident` (Site Sakini): **Duyurular** (salt okuma) + **Aidatim**
     (seed ile giriş yapıldığında `A-12` dairesi ve 2026-06 dönemi **750,00 TL**
-    borç görünmeli — tahakkuk "Haziran aidati" açıklamasıyla listede).
+    borç görünmeli — tahakkuk "Haziran aidati" açıklamasıyla listede) +
+    **Yönetici İletişim** (EN ALTTA).
 
 ### S2 — Checkpoint tanımlama (NTAG21x UID eşleme)
 
@@ -304,21 +305,7 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
   foto/NFC rozetiyle listelenir. Foto olmadan "Tamamla" denemesi istemcide erken uyarıyla durur.
   Yanlış etiket okutulursa 422 mesajı aynen gösterilir.
 
-### S6 — Acil durum (panik)
-
-- [ ] Telefon → `guard@acme.com` (veya cleaner) → ana ekrandaki kırmızı **ACİL DURUM**
-  kartı → not (opsiyonel) → **ACİL DURUM BİLDİR** → onay dialogunda **BİLDİR**
-  (ilk kez konum izni sorulur; reddedilirse alarm konumsuz gider — yine iletilir).
-- **Beklenen:**
-  - Telefonda "Alarm iletildi ✓" + **"Yönetimi ara"** kartı → dokununca cihazın arama
-    ekranı `+902120000000` ile açılır (numara panel → **Settings**'ten değiştirilebilir).
-  - Panel → **Emergency** sayfası: kırmızı "açık" alarm, not + (izin verildiyse)
-    GPS koordinatları. Admin alarmı "çözüldü" yapabilir.
-- [ ] Offline varyant: uçak modunda bildir → NET kırmızı "ALARM İLETİLEMEDİ" uyarısı
-  (sessiz kuyruklama YOK — bilinçli tasarım); bağlantı gelince "Tekrar dene" → tek alarm
-  (çift kayıt oluşmaz).
-
-### S7 — Demirbaş zimmet (checkout/checkin + sahiplik)
+### S6 — Demirbaş zimmet (checkout/checkin + sahiplik)
 
 - [ ] Boş bir NTAG21x etiketi daha okutup UID'sini not al (S2'deki gibi NFC ekranından).
 - [ ] Panel (admin) → **Assets** → yeni demirbaş (ör. "Çim biçme makinesi") +
@@ -336,7 +323,7 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
 - [ ] Uçak modunda zimmet işlemi dene → "internet bağlantısı gerekli" uyarısı
   (zimmet bilinçli olarak offline kuyruklanmaz — canlı durum işi).
 
-### S8 — PUSH bildirimi (gerçek FCM)
+### S7 — PUSH bildirimi (gerçek FCM)
 
 Ön koşullar: telefondaki APK `google-services.json` **ile** derlenmiş olmalı (§2) ve
 `infra/secrets/fcm-service-account.json` mevcut olmalı (Firebase Console →
@@ -361,8 +348,9 @@ Project settings → Service accounts → "Generate new private key"; dosya
 
 - [ ] Telefonda `guard@acme.com` ile login ol (login sonrası bildirim izni istenir —
   **izin ver**; token otomatik `POST /devices` ile kaydolur).
-- [ ] Acil durum tetikle (S6'daki gibi telefondan; acil durum push'u admin+security
-  rollerinin kayıtlı cihazlarına gider — guard security olduğundan bu telefona düşer).
+- [ ] Push tetikle: panel (admin) → **Duyurular** → "Yeni duyuru" → **Yayınla**
+  (S9'daki gibi; duyuru push'u tenant'ın kayıtlı TÜM aktif cihazlarına gider —
+  rol süzgeci yoktur, bu telefona da düşer).
 - **Beklenen:**
   - Uygulama **ön plandayken**: alt tarafta SnackBar ("başlık — gövde").
   - Uygulama **arka planda/kapalıyken**: sistem bildirim tepsisine düşer; dokununca
@@ -370,7 +358,7 @@ Project settings → Service accounts → "Generate new private key"; dosya
 - [ ] Test bitince normale dönmek isterseniz: `.env`'de `PUSH_PROVIDER=noop` +
   `docker compose up -d`.
 
-### S9 — NTAG424 DNA imza doğrulaması (İLERİ SEVİYE)
+### S8 — NTAG424 DNA imza doğrulaması (İLERİ SEVİYE)
 
 > **Dürüst not:** NTAG424 etikete SDM anahtarı yazma (provisioning) bu repo'nun
 > kapsamı DIŞINDA ayrı bir iştir — NXP **TagWriter** (Android) veya **TagXplorer**
@@ -414,7 +402,7 @@ Project settings → Service accounts → "Generate new private key"; dosya
   **422 `replay_detected`**; telefon "Etiket imzası doğrulanamadı — sahte veya
   yanlış etiket olabilir." / "Bu okutma daha önce işlendi." gösterir ve kayıt oluşmaz.
 
-### S10 — Duyuru (panel ↔ mobil + push)
+### S9 — Duyuru (panel ↔ mobil + push)
 
 - [ ] Panel (admin) → **Duyurular** → "Yeni duyuru" → başlık + metin → **Yayınla**.
 - [ ] Telefon → herhangi bir rolle (resident dahil) → **Duyurular** kartı →
@@ -425,8 +413,8 @@ Project settings → Service accounts → "Generate new private key"; dosya
   **Sil** (onay dialogu) çalışmalı.
 - [ ] `guard`/`cleaner`/`resident` ile girildiğinde "Yeni duyuru" butonu ve
   kart menüsü GÖRÜNMEZ (okuma serbest).
-- [ ] (S8 kurulumu yapıldıysa) duyuru yayınlanınca kayıtlı TÜM cihazlara push
-  düşer — acil durumdan farklı olarak alıcı listesi rol süzgeçsizdir.
+- [ ] (S7 kurulumu yapıldıysa) duyuru yayınlanınca kayıtlı TÜM cihazlara push
+  düşer — alıcı listesi rol süzgeçsizdir (tenant'ın her aktif cihazı).
 - **Beklenen:** duyuru dakikalar değil saniyeler içinde her rolde görünür;
   düzenleme/silme yalnız admin (panel) + yonetici (mobil) tarafında mümkündür.
 
@@ -454,7 +442,7 @@ Project settings → Service accounts → "Generate new private key"; dosya
 - [ ] Telefonda bildirim izni verildi mi? (Android 13+ login sonrası sorar;
   Ayarlar → Uygulamalar → bildirim izni.)
 - [ ] APK `google-services.json` İLE mi derlendi? (Dosya yokken push sessizce devre dışı.)
-- [ ] Backend `PUSH_PROVIDER=fcm` + override compose ile mi ayakta? Duman testi geçiyor mu? (S8.)
+- [ ] Backend `PUSH_PROVIDER=fcm` + override compose ile mi ayakta? Duman testi geçiyor mu? (S7.)
 - [ ] Token kaydoldu mu?
 
   ```bash
@@ -465,8 +453,9 @@ Project settings → Service accounts → "Generate new private key"; dosya
 
   Kayıt yoksa: telefonda çıkıp yeniden login olun (kayıt login sonrası tetiklenir;
   ağ hatası sonraki açılışta yeniden denenir).
-- [ ] Alıcı rol doğru mu? Acil durum push'u **admin+security** cihazlarına gider —
-  cleaner ile login'li telefona düşmez.
+- [ ] Alıcı kitlesi doğru mu? Duyuru push'u tenant'ın **TÜM aktif cihazlarına**
+  gider (rol süzgeci yok); kaçırılan tur bildirimi ise **admin+security**
+  cihazlarına gider — cleaner ile login'li telefona düşmez.
 - [ ] `docker compose logs api worker | grep -i push` çıktısına bakın
   (`push_unconfigured` görünüyorsa kimlik dosyası mount edilmemiş demektir).
 
@@ -508,11 +497,10 @@ Her senaryodan sonra tabloyu doldurun:
 | S3 Devriye turu | | | |
 | S4 Offline outbox | | | |
 | S5 Görev + foto | | | |
-| S6 Acil durum | | | |
-| S7 Zimmet | | | |
-| S8 Push (FCM) | | | |
-| S9 NTAG424 imza | | | |
-| S10 Duyuru | | | |
+| S6 Zimmet | | | |
+| S7 Push (FCM) | | | |
+| S8 NTAG424 imza | | | |
+| S9 Duyuru | | | |
 
 **Bulgu alışkanlığı:** ❌/⚠️ olan her satır için bir **GitHub issue** açın
 (başlık: `cihaz-testi: S<no> — <kısa özet>`) ve şunları ekleyin: telefon modeli +

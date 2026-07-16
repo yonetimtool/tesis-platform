@@ -299,14 +299,12 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /assets/{id}/checkout`          |  ✅   | ❌  | ✅  | ✅  | ❌  |
 | `POST /assets/{id}/checkin` (sahiplik*)|  ✅   | ❌  | ✅* | ✅* | ❌  |
 | `GET  /assets/{id}/history`           |  ✅   | ✅  | ✅  | ✅  | ❌  |
-| `POST /emergency`                     |  ✅   | ✅  | ✅  | ✅  | ✅  |
-| `GET  /emergency`                     |  ✅   | ✅  | ❌  | ❌  | ❌  |
-| `PATCH /emergency/{id}`               |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET  /yonetici-iletisim` (yonetici dizini)| ✅ | ✅ | ✅  | ✅  | ✅  |
 | `GET  /tenant/settings` (site adi dahil)|  ✅  | ✅  | ✅  | ✅  | ✅  |
-| `PATCH /tenant/settings`              |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `PATCH /tenant/settings` (admin: hepsi / yonetici: YALNIZ `ad`)| ✅ | ✅ | ❌ | ❌ | ❌ |
 | `POST /tenants` (admin tesis+yonetici)|  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `GET  /tenants` (admin tum tesisler)  |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| `POST /tenant/setup` (ilk-giris adlandir)| ❌ | ✅ | ❌  | ❌  | ❌  |
+| `POST /tenant/setup` (ilk-giris adlandir — YALNIZ **BIRINCIL** yonetici)| ❌ | ✅ | ❌ | ❌ | ❌ |
 | `GET  /tenants/{id}` (tesis detay)     |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `PATCH /tenants/{id}` (tesis adi)      |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `PATCH /tenants/{id}/yonetici`         |  ✅   | ❌  | ❌  | ❌  | ❌  |
@@ -345,6 +343,17 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 > ucudur (§1.2) — unit CRUD'un admin-only olmasindan ayridir; ayni `unit_no`
 > varsa yeni daire acilmaz, mevcuda baglanir.
 >
+> **Tesis adi + kurulum:** `PATCH /tenant/settings` govdesinde **admin** TUM
+> alanlari (`ad` + `timezone` + `yonetim_email`) gonderebilir; **yonetici**
+> YALNIZ `ad` gonderebilir — baska alan gonderirse **403**. `POST /tenant/setup`
+> (ilk-giris adlandirma) YALNIZ **BIRINCIL** yoneticiye acilir; birincil olmayan
+> yonetici **403**, zaten kurulmus tesis **409**. `slug` ve tenant `id` bu
+> uclarin HICBIRINDE degismez.
+>
+> **`GET /yonetici-iletisim`:** rol kapisi YOKTUR — tenant'in HERHANGI bir
+> kimlikli uyesi (bes rolun besi de) gorur; izolasyon RLS ile. Numara aciklamasi
+> bilincli bir gizlilik istisnasidir — bkz. §C1a.
+
 > **Gorev atama (yonetici ✅\*):** `yonetici` gorev olusturur/gunceller ama
 > `atanan_user_id` YALNIZ `security` veya `tesis_gorevlisi` rolunde bir
 > kullanici olabilir (aksi 422 `invalid_reference`). `admin` icin bu kisit yok.
@@ -427,11 +436,24 @@ Notlar:
   Kendi tenant'inda: gorev olusturur/atar (yalniz security/tesis_gorevlisi'ne)
   ve takip eder; devriye/NFC takibini okur (patrol-windows, dashboard/live,
   checkpoints); aylik raporlari okur (task-completions, patrol-windows, aidat);
-  acil durumu tetikler/yonetir; demirbasi goruntuler; kullanici listesini okur.
+  demirbasi goruntuler; kullanici listesini okur.
   Yapilandirma (shift/checkpoint/patrol-plan/asset/unit/tenant/kullanici CRUD)
   ve aidat yazma **admin-only** kalir. Saha kaniti uretmez (`POST /scans`,
   completion, zimmet ❌). † `POST /uploads/presign`e yalniz duyuru gorseli
   yuklemek icin erisir (saha kanit akisi degil).
+  - **BIRINCIL yonetici (`app_user.birincil`):** tenant olusturulurken girilen
+    ILK yonetici birincildir (`uq_app_user_birincil` kismi unique index: tenant
+    basina EN FAZLA bir). Tesisi ILK GIRISTE adlandirma kapisi (`POST
+    /tenant/setup`) YALNIZ ona acilir (digeri 403); mobil kapi da yalniz ona
+    gosterilir. Birincil olmayan yonetici, tesis adsizken ana ekrani gorur
+    (engelleyici ekran YOK — bilincli).
+  - **Tesis adini degistirme:** TUM yoneticiler `PATCH /tenant/settings {ad}`
+    ile yeniden adlandirabilir (admin de). `timezone`/`yonetim_email` admin'de
+    kalir — yonetici gonderirse 403. **`slug` ve tenant `id` ASLA degismez.**
+  - **Bireysel kullanici silme ucu YOKTUR** (yalniz `DELETE /tenants/{id}` tum
+    tenant'i siler; kullanici pasiflestirilir). Bu yuzden "birincil silinince
+    terfi" senaryosu olusmaz; pasiflestirme birincil bayragini DEGISTIRMEZ.
+    (Pasif yonetici `GET /yonetici-iletisim` dizininde listelenmez.)
 - **security / tesis_gorevlisi**: operasyonel saha rolleri (tesis_gorevlisi =
   temizlik + bahcivan + teknik, eski `cleaning`in devami — yetkileri birebir
   ayni). Tanimlari **okur**, tur kaniti (`POST /scans`) **gonderir**;
@@ -442,8 +464,7 @@ Notlar:
   Login/refresh + `GET /me/dues` + cihaz kaydi + **duyuru okuma**
   (`GET /announcements`; duyuru OLUSTURAMAZ) + **sikayet/oneri**
   (`POST /complaints` acar, ° `GET /complaints*` YALNIZ kendi actiklarini
-  gorur; PATCH ❌) + **acil durum tetikleme** (`POST /emergency` — panik
-  butonu sakinin de hakki; GET/PATCH ❌) disinda her kaynak `403`.
+  gorur; PATCH ❌) disinda her kaynak `403`.
   ‡ `POST /uploads/presign`e yalniz sikayet/oneri gorseli yuklemek icin erisir.
 - **Gorev-YONETIMI vs "Gorevlerim" (kesin matris — A4 guncel):**
   Gorev-YONETIMI = gorev atama + olusturma/duzenleme ekrani — YALNIZ
@@ -574,11 +595,32 @@ Notlar:
   - **ILETISIM AYARI (`PATCH /users/{id}/contact`):** telefon + riza YALNIZ
     `admin`+`yonetici` tarafindan girilir — rol/parola/is_active gibi hassas
     alanlara DOKUNMADAN (tam PATCH `admin`-only kalir; yetki yukseltme yok).
+  - **YONETICI ILETISIM KARTI (`GET /yonetici-iletisim`) — BILINCLI C1a
+    ISTISNASI:** bu uc, yukaridaki UC KAPIYI (YON + RIZA + NUMARA VARLIGI) ve
+    "listede numara YOK" kuralini YALNIZ yonetici kartlari icin deler: tenant'in
+    HERHANGI bir kimlikli uyesi tum aktif yoneticilerin `ad_soyad` + `telefon`
+    bilgisini ve tenant'in `yonetim_email`ini gorur.
+    - **GEREKCE:** `yonetici` bir HIZMET rolüdür (kisisel iletisim degil);
+      numarayi admin, tesis olusturulurken BILEREK girer; sahadaki personelin ve
+      sakinin yonetime ulasabilmesi urun geregidir.
+    - **KAPSAM (dar):** YALNIZ bu uc, YALNIZ `role='yonetici'` kullanicilar,
+      YALNIZ `ad_soyad`+`telefon`. `aranabilir` rizasi bu ucta YOKSAYILIR —
+      yonetici rizayi kaldirsa bile kartta listelenir. Pasif (`is_active=false`)
+      yonetici listelenmez. Numara girilmemisse `telefon` null doner.
+    - **DEGISMEYENLER:** C1a modeli baska HER SEY icin aynen gecerlidir —
+      `/call-target` uc kapili kalir; `GET /users` numara tasimaz; `PATCH
+      /me/contact` rizasi diger roller icin baglayicidir. Yoneticilere kayitta
+      `aranabilir=true` verilir ki `/call-target` de tutarli calissin.
+    - **UX:** mobil kartta numara METIN olarak gorunur ve `tel:` ile aranir
+      (`CallButton` DEGIL — o numarayi kasten gizler; paylasilan parca
+      `CallLauncher`dir).
 - **Self-servis profil (`/me/profile`, `/me/password`, `/me/contact`) — TUM
   roller, YALNIZ kendi kaydi:** giris yapmis kullanici kendi profilini gorur ve
   gunceller (mobil sag-ust profil ikonu).
   - **`GET /me/profile`:** kimlik + iletisim alanlari (`ad`/`email`/`telefon`/
-    `aranabilir`/`role`/`is_active`); `password_hash` ASLA donmez.
+    `aranabilir`/`role`/`is_active`/`birincil`); `password_hash` ASLA donmez.
+    (`birincil` = tenant'in birincil yoneticisi mi — mobil ilk-giris adlandirma
+    kapisi yalniz buna acilir; yonetici disi rollerde daima `false`.)
   - **`PATCH /me/password`:** `current_password` + `new_password` (min 8).
     Mevcut parola dogrulanir; hatali → **400** `invalid_credentials` ("Mevcut
     parola hatali."). Basarida yeni bcrypt hash; **204**. Oturum (refresh)

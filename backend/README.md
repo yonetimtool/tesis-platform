@@ -165,29 +165,11 @@ Yonetimden tum tesise duyuru (`app/routers/announcements.py`).
 - **Uclar:** `GET /announcements` (liste, `created_at DESC`, sayfali; her item
   `olusturan_ad` tasir) / `GET /announcements/{id}` / `POST` / `PATCH` / `DELETE`.
 - **Push:** olusturmada tenant'in TUM aktif cihazlarina push denenir
-  (`dispatch_external`, emergency ile ayni desen — EK gonderim; hatasi duyuru
-  kaydini KIRMAZ). `data: {tip: "duyuru", announcement_id}`.
+  (`dispatch_external` — EK gonderim; hatasi duyuru kaydini KIRMAZ).
+  `data: {tip: "duyuru", announcement_id}`.
 - **Model:** `announcement` (baslik ≤200, govde ≤5000, olusturan composite FK
   `ON DELETE RESTRICT`); RLS tenant-izole. seed 'Hos geldiniz' ornegi ekler
   (baslik uzerinden idempotent).
-
-## Acil durum (panik butonu) + yonetim numarasi
-
-Saha → yonetim anlik alarm (`app/routers/emergency.py`). Gercek arama mobilde (`tel:`);
-backend yalniz kaydeder + bildirir, **aramaz**.
-- **`POST /emergency`** (admin/yonetici/security/tesis_gorevlisi): `Idempotency-Key` zorunlu (panik mukerrer
-  basim). `tetikleyen` token'dan. → `emergency_alert` (durum 'acik') + **yuksek oncelikli
-  `notification_tip='acil_durum'`** (idempotent `dedup_key="acil_durum:<id>"`). Idempotency
-  200/409, key yok 400. resident 403.
-- **`GET /emergency`** (admin): liste (durum filtre, sayfali, tenant-izole).
-- **`PATCH /emergency/{id}`** (admin): coz → durum 'cozuldu', `cozen_user_id`+`cozulme_zamani`.
-- **Dashboard:** acil durum `son_alarmlar`'da **en ustte** (oncelik: tip ile ayrim, ayri
-  priority kolonu yok; sira `(tip='acil_durum') DESC, created_at DESC`). `Alarm.tip` setine eklendi.
-
-### Yonetim numarasi (nerede / nasil)
-Ayri tablo YOK — **`tenant.acil_durum_telefon`** (tek alan). Mobil acil durumda bu numarayi
-**`GET /tenant/settings`** ile okur (admin/yonetici/security/tesis_gorevlisi) ve `tel:` ile arar. Admin
-**`PATCH /tenant/settings`** ile ayarlar. seed `acme-plaza` icin ornek numara yazar.
 
 ## Demirbas envanteri + zimmet (Asset / checkout / checkin)
 

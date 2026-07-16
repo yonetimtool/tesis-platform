@@ -2540,94 +2540,6 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
   # ================================================================= #
-  # EMERGENCY (acil durum) + tenant settings (yonetim numarasi)
-  # ================================================================= #
-  /emergency:
-    get:
-      tags: [emergency]
-      summary: Acil durum listesi
-      parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - name: durum
-          in: query
-          schema: { $ref: "#/components/schemas/EmergencyDurum" }
-      responses:
-        "200":
-          description: Liste
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/Page"
-                  - type: object
-                    required: [items]
-                    properties:
-                      items:
-                        type: array
-                        items: { $ref: "#/components/schemas/EmergencyAlert" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-    post:
-      tags: [emergency]
-      summary: Acil durum tetikle (panik butonu — TUM roller, resident dahil)
-      description: |
-        Idempotency-Key ZORUNLU (panik aninda mukerrer basim korumasi). tetikleyen
-        token'dan. Alarm kaydi + yuksek oncelikli 'acil_durum' notification uretir.
-        RBAC: tetikleme TUM rollere acik (resident dahil); liste/cozme admin+yonetici.
-      parameters:
-        - $ref: "#/components/parameters/IdempotencyKey"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/EmergencyCreate" }
-      responses:
-        "201":
-          description: Alarm olusturuldu
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/EmergencyAlert" }
-        "200":
-          description: Idempotent tekrar — mevcut alarm
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/EmergencyAlert" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409":
-          description: Ayni Idempotency-Key farkli govde ile gonderildi
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Error" }
-        "422": { $ref: "#/components/responses/ValidationError" }
-
-  /emergency/{id}:
-    parameters:
-      - $ref: "#/components/parameters/PathId"
-    patch:
-      tags: [emergency]
-      summary: Acil durumu coz
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/EmergencyResolve" }
-      responses:
-        "200":
-          description: Cozuldu
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/EmergencyAlert" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "422": { $ref: "#/components/responses/ValidationError" }
-
-  # ================================================================= #
   # DEVICES (FCM push token kaydi)
   # ================================================================= #
   /devices:
@@ -2769,11 +2681,44 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  # ================================================================= #
+  # YONETICI ILETISIM (tenant'in yonetici dizini)
+  # ================================================================= #
+  /yonetici-iletisim:
+    get:
+      tags: [yonetici-iletisim]
+      summary: Tesisin yonetici iletisim dizini (tenant'in HER uyesi)
+      description: |
+        Tenant'in TUM aktif yoneticileri (BIRINCIL ilk, sonra created_at ASC) +
+        tenant'in `yonetim_email`i.
+
+        RBAC: tenant'in HERHANGI bir kimlikli uyesi — rol kapisi YOK (bes rolun
+        besi de); izolasyon RLS ile.
+
+        GIZLILIK ISTISNASI (bkz. contracts/auth.md §C1a): bu uc, rol-bazli
+        aramanin UC KAPISINI (YON + RIZA + NUMARA VARLIGI) ve "listede numara YOK"
+        kuralini YALNIZ yonetici kartlari icin BILINCLI olarak deler. `aranabilir`
+        rizasi bu ucta YOKSAYILIR — yonetici rizayi kaldirsa bile kartta listelenir.
+        Kapsam dar: yalniz bu uc, yalniz role='yonetici', yalniz ad_soyad+telefon.
+      operationId: yoneticiIletisim
+      responses:
+        "200":
+          description: Yonetici kartlari + yonetim maili
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/YoneticiIletisimOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /tenant/settings:
     get:
       tags: [tenant]
-      summary: Tenant ayarlari (acil durum yonetim numarasi dahil)
-      description: "Mobil, acil durumda aranacak `acil_durum_telefon`'u buradan okur (tel: link)."
+      summary: Tenant ayarlari (tesis adi + timezone + yonetim maili)
+      description: >
+        Tesisin adi, slug'i, timezone'u, kurulum durumu ve yonetim maili. Mobil
+        `ad`i ana ekran basliginda gosterir; `kurulum_tamamlandi=false` ise
+        BIRINCIL yonetici tesisi ILK GIRISTE adlandirmalidir. RBAC: okuma TUM
+        rollere acik (herkes kendi tesisinin adini gorur).
       responses:
         "200":
           description: Ayarlar
@@ -2784,7 +2729,11 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     patch:
       tags: [tenant]
-      summary: Tenant ayarlarini guncelle (admin)
+      summary: "Tenant ayarlarini guncelle (admin: tum alanlar / yonetici: yalniz ad)"
+      description: >
+        admin `ad` + `timezone` + `yonetim_email` gonderebilir. `yonetici` YALNIZ
+        `ad` gonderebilir (tesisini yeniden adlandirir) — baska alan gonderirse
+        403. Diger roller 403. `slug` ve tenant `id` ASLA degismez.
       requestBody:
         required: true
         content:
@@ -2803,11 +2752,14 @@ paths:
   /tenant/setup:
     post:
       tags: [tenant]
-      summary: Yonetici ILK GIRISTE tesisi adlandirir (onboarding Model A)
+      summary: BIRINCIL yonetici ILK GIRISTE tesisi adlandirir (onboarding Model A)
       description: |
-        Admin isimsiz tenant + yonetici acmisti (kurulum_tamamlandi=false).
-        Yonetici burada tesis adini belirler; kurulum_tamamlandi=true olur.
-        Zaten kuruluysa 409. Path: POST /tenant/setup.
+        Admin tenant + N yonetici acmisti (kurulum_tamamlandi=false, yer tutucu
+        ya da admin'in girdigi ad). YALNIZ BIRINCIL yonetici (`app_user.birincil`)
+        burada tesis adini belirler/onaylar; kurulum_tamamlandi=true olur.
+        Birincil OLMAYAN yonetici (ve yonetici disi roller) 403 — mobil kapi da
+        yalniz birincile gosterilir, uc de eslesir. Zaten kuruluysa 409.
+        Path: POST /tenant/setup.
       operationId: setupTenant
       requestBody:
         required: true
@@ -2831,11 +2783,16 @@ paths:
   /tenants:
     post:
       tags: [tenant]
-      summary: Admin — yeni tesis (isimsiz) + yonetici acar (cross-tenant)
+      summary: Admin — yeni tesis + N yonetici acar (cross-tenant)
       description: |
-        Admin bir tenant (kurulum_tamamlandi=false, yer tutucu ad) + ilk yonetici
-        hesabini birlikte acar. Parola verilmezse gecici kod doner (bir kez).
-        tenant_id GIZLI kimliktir (yalniz admin gorur). Telefon global benzersiz -> 409.
+        Admin bir tenant + EN AZ BIR yonetici hesabini birlikte acar; listedeki
+        ILK yonetici BIRINCIL'dir (tesisi ilk giriste adlandirir/onaylar).
+        `ad` verilmezse yer tutucu ad + rastgele slug uretilir; `ad` verilse bile
+        kurulum_tamamlandi=false kalir (birincil ONAYLAR). Yonetici basina parola
+        verilmezse tek seferlik gecici kod doner (bir kez). tenant_id GIZLI
+        kimliktir (yalniz admin gorur). Telefon GLOBAL benzersiz -> cakisma 409
+        (tenant olusmaz; tek transaction). Ayni telefon govde icinde tekrar
+        ederse 422.
       requestBody:
         required: true
         content:
@@ -2843,7 +2800,7 @@ paths:
             schema: { $ref: "#/components/schemas/TenantAdminCreate" }
       responses:
         "201":
-          description: Tesis + yonetici olusturuldu
+          description: Tesis + yonetici(ler) olusturuldu
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TenantAdminCreatedOut" }
@@ -3749,7 +3706,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
       tags: [users]
-      summary: Kullanici guncelle (admin: her; yonetici: YALNIZ saha personeli)
+      summary: "Kullanici guncelle (admin: her; yonetici: YALNIZ saha personeli)"
       description: |
         ad/telefon/role/is_active ve opsiyonel email/parola. parola verilirse yeniden
         hash'lenir. Kullanici SILINMEZ; pasiflestirme icin is_active=false kullanin.
@@ -3781,7 +3738,7 @@ paths:
       - $ref: "#/components/parameters/PathId"
     post:
       tags: [users]
-      summary: Personel parolasini sifirla (admin: her; yonetici: saha) — gecici kod
+      summary: "Personel parolasini sifirla (admin: her; yonetici: saha) — gecici kod"
       description: |
         Yeni TEK SEFERLIK gecici kod uretir (password_set=false); personel telefon
         + bu kodla girip yeni parola belirler. Kod YALNIZ bu yanitta doner. RBAC:
@@ -4469,6 +4426,12 @@ components:
         aranabilir: { type: boolean }
         role: { $ref: "#/components/schemas/UserRole" }
         is_active: { type: boolean }
+        birincil:
+          type: boolean
+          default: false
+          description: >
+            Tenant'in BIRINCIL yoneticisi mi? Mobil ilk-giris adlandirma kapisi
+            (POST /tenant/setup) yalniz buna acilir; yonetici disi rollerde daima false.
     CallTarget:
       type: object
       description: >
@@ -4758,21 +4721,60 @@ components:
           example: "acme-plaza"
         email: { type: string, format: email }
         password: { type: string, format: password, minLength: 8 }
+    YoneticiCreate:
+      type: object
+      description: >
+        Tenant olusturmada TEK bir yonetici satiri. Telefon = giris anahtari
+        (GLOBAL benzersiz). E-posta ALINMAZ: mobil giris telefonladir ve yonetici
+        e-postasini hicbir uc okumaz — tenant seviyesindeki `yonetim_email`
+        ayridir. password verilmezse tek seferlik gecici kod uretilir.
+      required: [ad, phone]
+      properties:
+        ad: { type: string, minLength: 2, maxLength: 120, example: "Ayse Yilmaz" }
+        phone: { type: string, minLength: 1, example: "+905321112203" }
+        password: { type: string, format: password, minLength: 8, nullable: true }
     TenantAdminCreate:
       type: object
-      description: Admin yeni tesis (isimsiz) + yonetici acar. password verilmezse gecici kod.
-      required: [yonetici_ad, phone]
+      description: >
+        Admin bir tenant + N yonetici acar. `yoneticiler` listesindeki ILK eleman
+        BIRINCIL'dir (tesisi ilk giriste adlandirir). `ad` verilmezse yer tutucu
+        ad + rastgele slug; her durumda kurulum_tamamlandi=false (birincil ONAYLAR).
+        Ayni telefon birden fazla yoneticide kullanilamaz (422).
+      required: [yoneticiler]
       properties:
-        yonetici_ad: { type: string, minLength: 2, maxLength: 120, example: "Ayse Yilmaz" }
-        phone: { type: string, example: "+905321112203" }
-        password: { type: string, format: password, minLength: 8, nullable: true }
+        ad: { type: string, minLength: 2, maxLength: 160, nullable: true, example: "Acme Plaza" }
+        yonetim_email:
+          type: string
+          nullable: true
+          example: "yonetim@acme.com"
+          description: "Tesisin yonetim maili (tenant seviyesi); bos gonderilirse null"
+        yoneticiler:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/YoneticiCreate" }
+    YoneticiCreatedOut:
+      type: object
+      required: [user_id, ad, birincil]
+      properties:
+        user_id: { type: string, format: uuid }
+        ad: { type: string }
+        birincil: { type: boolean, description: "Listedeki ILK yonetici true (tenant basina en fazla bir)" }
+        temp_code:
+          type: string
+          nullable: true
+          example: "K7MR-2QWX"
+          description: "YALNIZ parola verilmeyen yonetici icin; BIR KEZ doner"
     TenantAdminCreatedOut:
       type: object
-      required: [tenant_id, yonetici_user_id]
+      description: >
+        temp_code YALNIZ parola verilmeyen yonetici icin ve BIR KEZ doner (admin
+        ilgili yoneticiye iletir). tenant_id GIZLI kimliktir (yalniz admin gorur).
+      required: [tenant_id, yoneticiler]
       properties:
         tenant_id: { type: string, format: uuid, description: "GIZLI kimlik (yalniz admin)" }
-        yonetici_user_id: { type: string, format: uuid }
-        temp_code: { type: string, nullable: true, example: "K7MR-2QWX" }
+        yoneticiler:
+          type: array
+          items: { $ref: "#/components/schemas/YoneticiCreatedOut" }
     TenantAdminListItem:
       type: object
       required: [id, ad, kurulum_tamamlandi, created_at]
@@ -5329,7 +5331,7 @@ components:
       properties:
         tip:
           type: string
-          enum: [kacirilan_tur, eksik_checkpoint, gecikmis_okutma, acil_durum]
+          enum: [kacirilan_tur, eksik_checkpoint, gecikmis_okutma]
           example: kacirilan_tur
         olusma_zamani: { type: string, format: date-time }
         mesaj: { type: string }
@@ -5721,7 +5723,7 @@ components:
         kisi_sayisi:
           type: integer
           nullable: true
-          description: YALNIZ admin/yonetici + dolu slot: rezerve edilen kisi sayisi
+          description: "YALNIZ admin/yonetici + dolu slot: rezerve edilen kisi sayisi"
         benim:
           type: boolean
           default: false
@@ -5856,7 +5858,7 @@ components:
         updated_at: { type: string, format: date-time }
     DisHizmetCreate:
       type: object
-      description: Guvenilir esnaf/hizmet kisisi. tur: Cilingir/Elektrik/Tesisat...
+      description: "Guvenilir esnaf/hizmet kisisi. tur: Cilingir/Elektrik/Tesisat..."
       required: [tur, ad, soyad, telefon]
       properties:
         tur: { type: string, minLength: 1, maxLength: 80, example: "Çilingir" }
@@ -6225,39 +6227,6 @@ components:
         gps_lng: { type: number, format: double, nullable: true }
         notlar: { type: string, nullable: true }
 
-    # --------------------------- emergency ------------------------- #
-    EmergencyDurum:
-      type: string
-      enum: [acik, cozuldu]
-    EmergencyAlert:
-      type: object
-      required: [id, tetikleyen_user_id, tetiklenme_zamani, durum, idempotency_key, created_at]
-      properties:
-        id: { type: string, format: uuid }
-        tetikleyen_user_id:
-          type: string
-          format: uuid
-          description: "Token'dan turetilir (tetikleyen)"
-        tetiklenme_zamani: { type: string, format: date-time }
-        gps_lat: { type: number, format: double, nullable: true }
-        gps_lng: { type: number, format: double, nullable: true }
-        durum: { $ref: "#/components/schemas/EmergencyDurum" }
-        cozen_user_id: { type: string, format: uuid, nullable: true }
-        cozulme_zamani: { type: string, format: date-time, nullable: true }
-        notlar: { type: string, nullable: true }
-        idempotency_key: { type: string }
-        created_at: { type: string, format: date-time }
-    EmergencyCreate:
-      type: object
-      properties:
-        gps_lat: { type: number, format: double, nullable: true }
-        gps_lng: { type: number, format: double, nullable: true }
-        notlar: { type: string, nullable: true }
-    EmergencyResolve:
-      type: object
-      properties:
-        notlar: { type: string, nullable: true }
-
     # ------------------------ tenant settings ---------------------- #
     TenantSettings:
       type: object
@@ -6267,21 +6236,52 @@ components:
         ad: { type: string }
         slug: { type: string }
         timezone: { type: string }
-        acil_durum_telefon:
-          type: string
-          nullable: true
-          description: "Acil durumda mobilin arayacagi yonetim numarasi (tel:)"
         kurulum_tamamlandi:
           type: boolean
           default: true
-          description: "false ise yonetici ILK GIRISTE tesisi adlandirmali (mobil setup ekrani)"
+          description: "false ise BIRINCIL yonetici ILK GIRISTE tesisi adlandirmali (mobil setup ekrani)"
+        yonetim_email:
+          type: string
+          nullable: true
+          description: "Tesisin yonetim maili (tenant seviyesi) — yonetici iletisim kartinda gosterilir"
     TenantSettingsUpdate:
       type: object
+      description: >
+        En az bir alan gerekli. admin TUM alanlari gonderebilir; `yonetici` YALNIZ
+        `ad` gonderebilir (baska alan gonderirse 403). `slug` ve tenant `id` bu
+        uctan ASLA degismez.
       minProperties: 1
       properties:
-        acil_durum_telefon: { type: string, nullable: true }
         timezone: { type: string }
         ad: { type: string }
+        yonetim_email: { type: string, nullable: true }
+
+    # ---------------------- yonetici iletisim ---------------------- #
+    YoneticiKart:
+      type: object
+      description: >
+        Yonetici iletisim karti. GIZLILIK ISTISNASI (contracts/auth.md §C1a):
+        `telefon` burada tenant'in TUM uyelerine acilir — C1a'nin yon/riza
+        kapilari BU UC icin gecerli DEGILDIR (yonetici = HIZMET rolu; numarayi
+        admin bilerek girer). Istisna YALNIZ role='yonetici' icindir.
+      required: [user_id, ad_soyad]
+      properties:
+        user_id: { type: string, format: uuid }
+        ad_soyad: { type: string, example: "Ayse Yilmaz" }
+        telefon:
+          type: string
+          nullable: true
+          example: "+905321112203"
+          description: "Mobil kartta METIN olarak gorunur ve tel: ile aranir"
+    YoneticiIletisimOut:
+      type: object
+      required: [yoneticiler]
+      properties:
+        yoneticiler:
+          type: array
+          description: "BIRINCIL ilk, sonra created_at ASC. Pasif yoneticiler listelenmez."
+          items: { $ref: "#/components/schemas/YoneticiKart" }
+        yonetim_email: { type: string, nullable: true }
 
     # ----------------------------- aidat --------------------------- #
     ResidentRol:

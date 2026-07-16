@@ -81,7 +81,7 @@ def _fetch_device_tokens(tenant_id: uuid.UUID, roles: Sequence[str]) -> list[str
     """Tenant'ta hedef rollerdeki AKTIF kullanicilarin aktif device token'lari.
 
     Kendi kisa-omurlu app_rw baglantisini acar + tenant context set eder (RLS-safe);
-    boylece hem sync (scheduler) hem async (emergency) cagiran icin ayni kod calisir.
+    boylece hem sync (scheduler) hem async cagiran icin ayni kod calisir.
     """
     with psycopg.connect(settings.app_dsn, connect_timeout=10) as conn:
         with conn.cursor() as cur:

@@ -102,13 +102,19 @@ degisecekse once burasi degisir, sonra kod.
   idempotency_key)`, birakma `UNIQUE(tenant_id, birakma_idempotency_key)` (partial). FK'ler
   composite. Asset CRUD admin; checkout/checkin tesis_gorevlisi/security/admin; goruntuleme/history + yonetici. checkout →
   durum 'zimmetli', checkin → 'musait'.
-- `emergency_alert`: acil durum butonu (saha → yonetim anlik alarm). `durum` (acik|cozuldu).
-  `POST /emergency` (saha+admin) → alarm + yuksek oncelikli `notification_tip='acil_durum'`
-  (dashboard `son_alarmlar`'da en ustte). Idempotency `UNIQUE(tenant_id, idempotency_key)`
-  (panik mukerrer basim). Liste/coz admin/yonetici. FK composite (cozen kolon-ozel SET NULL).
-- **Yonetim numarasi:** ayri tablo YOK — `tenant.acil_durum_telefon` (tek alan). `GET
-  /tenant/settings` (admin/yonetici/security/tesis_gorevlisi) ile okunur; mobil acil durumda `tel:` ile arar
-  (backend aramaz). `PATCH /tenant/settings` (admin) ile ayarlanir.
+- **Yonetim maili:** ayri tablo YOK — `tenant.yonetim_email` (tek alan, nullable;
+  kisisel veya ortak olabilir — anlamsal kisit yok). Admin tesis acarken girer
+  (`POST /tenants`), `PATCH /tenant/settings` (admin) ile degistirir. `GET
+  /tenant/settings` (TUM roller) ve `GET /yonetici-iletisim` (tenant'in her
+  uyesi) ile okunur.
+- **Birincil yonetici:** `app_user.birincil boolean NOT NULL DEFAULT false`.
+  Tenant olusturulurken verilen ILK yonetici `true` alir. `uq_app_user_birincil`
+  **kismi unique index** (`ON app_user (tenant_id) WHERE birincil`) tenant basina
+  EN FAZLA BIR birincil'i YAPISAL olarak garanti eder (`birincil=false` satirlar
+  kisitlanmaz). Tesisi ilk giriste adlandirma kapisi (`POST /tenant/setup`)
+  YALNIZ birincil'e acilir; `tenant_detail` fonksiyonu da tekil yonetici olarak
+  birincil'i doner. Bireysel kullanici silme ucu olmadigindan "birincil silinince
+  terfi" senaryosu yoktur; pasiflestirme bayragi degistirmez.
 - `checkpoint.nfc_tag_uid` tenant icinde benzersiz (NFC eslemesi).
 - `patrol_plan` gun-ici sablon; `patrol_window` scheduler'in urettigi somut
   UTC pencere. `scan_event` mobilin gonderdigi tur kaniti.
@@ -119,8 +125,9 @@ degisecekse once burasi degisir, sonra kod.
 ## Rol modeli — ozet
 
 `admin` (PLATFORM admini: tum CRUD + panel — panel YALNIZ admin), `yonetici`
-(site yoneticisi — musteri: mobil; gorev atama/takip, devriye/rapor okuma, acil
-durum, demirbas goruntuleme; kendi tenant'iyla sinirli), `security` &
+(site yoneticisi — musteri: mobil; gorev atama/takip, devriye/rapor okuma,
+demirbas goruntuleme, tesisi yeniden adlandirma; kendi tenant'iyla sinirli),
+`security` &
 `tesis_gorevlisi` (saha: tanim okur, scan gonderir; tesis_gorevlisi = eski
 `cleaning`, temizlik+bahcivan+teknik birlesik), `resident` (v0'da operasyon
 erisimi yok). Tam matris: `auth.md` §4.
@@ -190,7 +197,7 @@ dusuk-yetkili `app_rw` rolu ile baglanir ve RLS'e tabidir. Detay: `db/README.md`
   `UNIQUE(tenant_id, fcm_token)`), `DELETE /devices/{fcm_token}` (pasiflestir), `GET /devices`
   (admin, debug). Yeni tablo **`user_device`** (RLS + tenant-izole).
 - **Kanca:** `scheduler/notify.py::dispatch_external` in-app notification'in YANINA push tetikler
-  (kacirilan tur / peyzaj / acil durum -> admin+security cihazlari). Push in-app bildirimi
+  (kacirilan tur -> admin+security cihazlari). Push in-app bildirimi
   **ETKILEMEZ**; push hatasi bildirim akisini **KIRMAZ** (try/except + log).
 
 ## Gorev tamamlama gecmisi (task-completions)
@@ -296,8 +303,8 @@ yok sayilir (eski mobil kirilmaz). Mobil, etiketin NDEF ciktisindan
 ## API base path
 
 - **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:
-  `/auth/login`, `/scans`, `/tasks`, `/assets`, `/emergency`, `/dashboard/live`,
-  `/notifications`, `/tenant/settings`, `/landscape/schedule` ... Yerel: `http://localhost:8000`.
+  `/auth/login`, `/scans`, `/tasks`, `/assets`, `/dashboard/live`,
+  `/notifications`, `/tenant/settings`, `/yonetici-iletisim` ... Yerel: `http://localhost:8000`.
   (Onceki `openapi.yaml` `servers` girdileri yanlislikla `/v0` iceriyordu; gercek backend
   ile hizalamak icin kaldirildi.)
 
