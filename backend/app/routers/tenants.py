@@ -1,13 +1,14 @@
 """POST/GET /tenants — admin (platform) cross-tenant tesis olusturma/listeleme.
 
-Onboarding Model A: admin bir tenant (isimsiz, kurulum_tamamlandi=false) +
-yonetici hesabini birlikte acar; yonetici ILK GIRISTE POST /tenant/setup ile
-adlandirir. tenant RLS FORCE oldugundan cross-tenant islem owner-sahipli
-SECURITY DEFINER fonksiyonlarla yapilir (create_tenant_with_yonetici /
+Onboarding Model A: admin bir tenant + N yonetici hesabini birlikte acar;
+BIRINCIL yonetici (listedeki ilk) ILK GIRISTE POST /tenant/setup ile tesisi
+adlandirir/onaylar. tenant RLS FORCE oldugundan cross-tenant islem owner-sahipli
+SECURITY DEFINER fonksiyonlarla yapilir (create_tenant_with_yoneticis /
 list_all_tenants); YALNIZ admin'e acilir (RBAC). tenant_id GIZLI kimliktir.
 """
 from __future__ import annotations
 
+import json
 import uuid
 
 from fastapi import APIRouter, Depends, Response
@@ -28,6 +29,7 @@ from ..schemas import (
     TenantYoneticiOut,
     TenantYoneticiResetOut,
     TenantYoneticiUpdate,
+    YoneticiCreatedOut,
 )
 from ..security import (
     generate_temp_code,
@@ -49,55 +51,87 @@ async def create_tenant(
     body: TenantAdminCreate,
     _: AppUser = Depends(_ADMIN),
 ) -> TenantAdminCreatedOut:
-    """Admin: yeni tenant (isimsiz, kurulum_tamamlandi=false) + yonetici acar.
-    Parola verilirse dogrudan belirlenir; verilmezse gecici kod uretilir (bir
-    kez doner). Telefon global benzersiz -> cakisma 409."""
-    try:
-        phone = normalize_phone(body.phone)
-    except ValueError:
-        raise APIError(422, "validation_error", "Gecersiz telefon numarasi.")
+    """Admin: yeni tenant + N yonetici acar (listedeki ILK yonetici BIRINCIL).
 
-    temp_code: str | None = None
-    if body.password is not None:
-        password_hash = hash_password(body.password)
-        password_set = True
-        temp_code_hash = None
-    else:
-        temp_code = generate_temp_code()
-        password_hash = None
-        password_set = False
-        temp_code_hash = hash_password(temp_code)
+    Yonetici basina parola verilirse dogrudan belirlenir; verilmezse tek
+    seferlik gecici kod uretilir (bir kez doner). `ad` verilmezse yer tutucu +
+    rastgele slug; her durumda kurulum_tamamlandi=false (birincil ONAYLAR).
+    Telefon GLOBAL benzersiz -> cakisma 409 (tenant olusmaz; tek transaction).
+    """
+    hazir: list[dict] = []
+    for y in body.yoneticiler:
+        try:
+            phone = normalize_phone(y.phone)
+        except ValueError:
+            raise APIError(422, "validation_error", "Gecersiz telefon numarasi.")
+        if y.password is not None:
+            hazir.append({
+                "ad": y.ad, "telefon": phone,
+                "password_hash": hash_password(y.password),
+                "temp_code_hash": None, "password_set": True, "temp_code": None,
+            })
+        else:
+            code = generate_temp_code()
+            hazir.append({
+                "ad": y.ad, "telefon": phone, "password_hash": None,
+                "temp_code_hash": hash_password(code), "password_set": False,
+                "temp_code": code,
+            })
+
+    # Sema tekrari ham girdiye bakar; normalize SONRASI da cakisabilir
+    # (orn. "0532..." ve "+90532..." ayni numaraya coker).
+    phones = [h["telefon"] for h in hazir]
+    if len(phones) != len(set(phones)):
+        raise APIError(
+            422, "validation_error",
+            "Ayni telefon birden fazla yoneticide kullanilamaz.",
+        )
+
+    ad = body.ad or _PLACEHOLDER_AD
+    payload = [
+        {k: h[k] for k in
+         ("ad", "telefon", "password_hash", "temp_code_hash", "password_set")}
+        for h in hazir
+    ]
 
     async with SessionLocal() as session:
         async with session.begin():
             try:
-                row = (
+                rows = (
                     await session.execute(
                         text(
-                            "SELECT tenant_id, user_id FROM "
-                            "public.create_tenant_with_yonetici("
-                            ":ad, :slug, :tz, :yad, :tel, :ph, :pset, :tch, :kur)"
+                            "SELECT tenant_id, user_id, telefon, birincil FROM "
+                            "public.create_tenant_with_yoneticis("
+                            ":ad, :slug, :tz, :kur, :yem, CAST(:yon AS jsonb))"
                         ),
                         {
-                            "ad": _PLACEHOLDER_AD,
-                            "slug": slugify_tenant(_PLACEHOLDER_AD),
+                            "ad": ad,
+                            "slug": slugify_tenant(ad),
                             "tz": "Europe/Istanbul",
-                            "yad": body.yonetici_ad,
-                            "tel": phone,
-                            "ph": password_hash,
-                            "pset": password_set,
-                            "tch": temp_code_hash,
                             "kur": False,
+                            "yem": body.yonetim_email,
+                            "yon": json.dumps(payload),
                         },
                     )
-                ).one()
+                ).all()
             except IntegrityError:
                 raise APIError(409, "conflict", "Bu telefon zaten kayitli.")
 
+    # INSERT ... RETURNING satir SIRASINI garanti etmez -> TELEFONLA esle.
+    # (Yanlis esleme = yanlis kisiye gecici kod.)
+    by_phone = {r.telefon: r for r in rows}
+
     return TenantAdminCreatedOut(
-        tenant_id=row.tenant_id,
-        yonetici_user_id=row.user_id,
-        temp_code=temp_code,
+        tenant_id=rows[0].tenant_id,
+        yoneticiler=[
+            YoneticiCreatedOut(
+                user_id=by_phone[h["telefon"]].user_id,
+                ad=h["ad"],
+                birincil=by_phone[h["telefon"]].birincil,
+                temp_code=h["temp_code"],
+            )
+            for h in hazir
+        ],
     )
 
 

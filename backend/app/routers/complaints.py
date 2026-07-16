@@ -10,7 +10,7 @@ Opsiyonel gorsel: acmada /uploads/presign ile yuklenmis foto_key kabul edilir
 
 Acmada admin+yonetici cihazlarina push denenir; yonetici yanitinda push
 YALNIZ talebi acan sakine gider (kisi hedefli). Ikisi de EK gonderim —
-hatasi talep kaydini kirmaz (duyuru/emergency ile ayni desen).
+hatasi talep kaydini kirmaz (duyuru ile ayni desen).
 """
 from __future__ import annotations
 
@@ -161,7 +161,7 @@ async def create_complaint(
         raise translate_integrity(exc)
     await db.refresh(obj)
     # EK push: yeni talep yonetime bildirilir (hatasi talep kaydini kirmaz,
-    # duyuru/emergency ile ayni desen).
+    # duyuru ile ayni desen).
     dispatch_external(
         f"Yeni talep: {body.baslik}",
         tenant_id=user.tenant_id,

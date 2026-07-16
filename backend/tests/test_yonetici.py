@@ -138,25 +138,6 @@ def test_yonetici_aidat_raporu_okur_yazamaz(client, world):
     ).status_code == 403
 
 
-# ------------------------------- acil durum -------------------------------- #
-def test_yonetici_acil_durum_tetikler_ve_yonetir(client, world):
-    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
-
-    r = client.post(
-        "/emergency",
-        headers={**yonetici, "Idempotency-Key": uuid.uuid4().hex},
-        json={"notlar": "asansor arizasi"},
-    )
-    assert r.status_code == 201, r.text
-    alert_id = r.json()["id"]
-
-    assert client.get("/emergency", headers=yonetici).status_code == 200
-    solved = client.patch(
-        f"/emergency/{alert_id}", headers=yonetici, json={"notlar": "cozuldu"}
-    )
-    assert solved.status_code == 200 and solved.json()["durum"] == "cozuldu"
-
-
 # --------------------------- admin-only sinirlar --------------------------- #
 def test_yonetici_yapilandirma_ve_saha_kaniti_403(client, world):
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
@@ -170,7 +151,8 @@ def test_yonetici_yapilandirma_ve_saha_kaniti_403(client, world):
     assert client.post("/assets", headers=yonetici, json={"ad": "x"}).status_code == 403
     # NOT: daire (unit) CRUD artik admin+YONETICI (D-viz Rev-1 bina yerlesimi);
     # bkz. test_blocks.py + test_building_map.py. Burada admin-only olanlar kalir.
-    assert client.patch("/tenant/settings", headers=yonetici, json={"acil_durum_telefon": "+900"}).status_code == 403
+    # Yonetici tesis ADINI degistirebilir ama yapilandirmayi (timezone) DEGIL.
+    assert client.patch("/tenant/settings", headers=yonetici, json={"timezone": "UTC"}).status_code == 403
     # POST /users: yonetici artik KENDI tenant'inda saha personeli acabilir
     # (Ozellik 3), ama admin/yonetici/resident rolu ACAMAZ (yetki yukseltme yok).
     assert client.post(

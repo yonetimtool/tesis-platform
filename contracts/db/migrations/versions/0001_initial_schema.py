@@ -66,11 +66,11 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE patrol_window_durum AS ENUM ('bekliyor', 'tamamlandi', 'kacirildi');"
     )
-    # notification.tip — tur + peyzaj + acil durum; ileride genisler.
+    # notification.tip — tur + peyzaj; ileride genisler.
     op.execute(
         "CREATE TYPE notification_tip AS ENUM "
         "('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma', "
-        "'peyzaj_yaklasan', 'peyzaj_kacirilan', 'acil_durum');"
+        "'peyzaj_yaklasan', 'peyzaj_kacirilan');"
     )
     # Gorev tipi = yonetici-tanimli kategori (task_category, A6). Sabit task_tip
     # enum'u KALDIRILDI; siniflandirma task.kategori_id ile (NULL = "Diğer").
@@ -81,9 +81,6 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE asset_durum AS ENUM ('musait', 'zimmetli', 'bakimda');"
     )
-    # acil durum alarm durumu.
-    op.execute("CREATE TYPE emergency_durum AS ENUM ('acik', 'cozuldu');")
-
     op.execute(
         "CREATE TYPE complaint_durum AS ENUM ('acik', 'inceleniyor', 'cozuldu');"
     )
@@ -153,12 +150,13 @@ def upgrade() -> None:
             --  istemci tenant_slug gonderir -> tenant_id_by_slug ile cozumlenir.)
             slug        text NOT NULL,
             timezone    text NOT NULL DEFAULT 'Europe/Istanbul',
-            -- acil durumda mobilin arayacagi yonetim numarasi (backend saklar, aramaz).
-            acil_durum_telefon text,
-            -- Onboarding: admin tenant+yonetici acar (kurulum_tamamlandi=false);
-            -- yonetici ILK GIRISTE tesisi adlandirinca true olur (mobil "Tesisinizi
-            -- adlandirin" ekrani). Seed/mevcut tenant'lar HAZIR (default true).
+            -- Onboarding: admin tenant+yonetici(ler) acar (kurulum_tamamlandi=false);
+            -- BIRINCIL yonetici ILK GIRISTE tesisi adlandirinca true olur (mobil
+            -- "Tesisinizi adlandirin" ekrani). Seed/mevcut tenant'lar HAZIR (true).
             kurulum_tamamlandi boolean NOT NULL DEFAULT true,
+            -- Tesisin yonetim maili (tenant seviyesi; kisisel veya ortak olabilir —
+            -- anlamsal kisit YOK). Yonetici iletisim kartinda tum uyelere gorunur.
+            yonetim_email text,
             -- Dis Hizmetler bolumu notu (yonetici serbest metin: "yillardir
             -- guvendigimiz esnaflar; yabanci sokmayin" gibi). Tum roller okur.
             dis_hizmet_notu text,
@@ -214,7 +212,13 @@ def upgrade() -> None:
             -- yetkili arayan role aciklanir (KVKK — amac-sinirli).
             telefon        text,
             -- Kullanici telefonuyla ARANMAYA riza verdi mi? (C1a arama kapisi)
+            -- NOT: yonetici iletisim karti (GET /yonetici-iletisim) bu bayragi
+            -- YOKSAYAR — bilincli gizlilik istisnasi, bkz. contracts/auth.md.
             aranabilir     boolean NOT NULL DEFAULT false,
+            -- Tenant'in BIRINCIL yoneticisi mi? Tesisi ilk giriste adlandirma
+            -- kapisi (POST /tenant/setup) YALNIZ buna acilir. Tenant basina en
+            -- fazla bir true — uq_app_user_birincil kismi indeksi zorlar.
+            birincil       boolean NOT NULL DEFAULT false,
             -- resident ilk giriste parola belirleyene kadar NULL olabilir.
             password_hash  text,
             -- yonetici'nin sakine ilettigi TEK SEFERLIK gecici kod (bcrypt hash;
@@ -237,6 +241,13 @@ def upgrade() -> None:
     op.execute(
         "CREATE UNIQUE INDEX uq_app_user_tenant_email_lower "
         "ON app_user (tenant_id, lower(email));"
+    )
+    # Tenant basina EN FAZLA BIR birincil yonetici — yapisal garanti (kismi
+    # unique index: birincil=false satirlar kisitlanmaz). Bireysel kullanici
+    # silme ucu YOKTUR (yalniz tenant silinir; kullanici pasiflestirilir), bu
+    # yuzden "birincil silinince terfi" senaryosu olusmaz.
+    op.execute(
+        "CREATE UNIQUE INDEX uq_app_user_birincil ON app_user (tenant_id) WHERE birincil;"
     )
     # telefon GLOBAL benzersiz (tenant'lar arasi; login anahtari). Kismi indeks:
     # NULL telefonlar serbest (orn. panel-only admin). RLS bu benzersizligi
@@ -279,53 +290,64 @@ def upgrade() -> None:
     # raise olur (tek transaction -> ikisi de geri alinir), API 409'a cevirir.
     op.execute(
         """
-        CREATE OR REPLACE FUNCTION public.create_tenant_with_yonetici(
-            p_tenant_ad     text,
+        CREATE OR REPLACE FUNCTION public.create_tenant_with_yoneticis(
+            p_ad            text,
             p_slug          text,
             p_timezone      text,
-            p_yonetici_ad   text,
-            p_telefon       text,
-            p_password_hash text,
-            p_password_set  boolean,
-            p_temp_code_hash text,
-            p_kurulum       boolean
+            p_kurulum       boolean,
+            p_yonetim_email text,
+            p_yoneticiler   jsonb
         )
-        RETURNS TABLE(tenant_id uuid, user_id uuid)
+        RETURNS TABLE(tenant_id uuid, user_id uuid, telefon text, birincil boolean)
         LANGUAGE plpgsql
         SECURITY DEFINER
         SET search_path = ''
         AS $$
         DECLARE
             v_tenant uuid;
-            v_user uuid;
         BEGIN
-            INSERT INTO public.tenant (ad, slug, timezone, kurulum_tamamlandi)
-            VALUES (p_tenant_ad, p_slug, p_timezone, p_kurulum)
+            INSERT INTO public.tenant (ad, slug, timezone, kurulum_tamamlandi,
+                                       yonetim_email)
+            VALUES (p_ad, p_slug, p_timezone, p_kurulum, p_yonetim_email)
             RETURNING id INTO v_tenant;
 
+            -- p_yoneticiler = [{ad, telefon, password_hash, temp_code_hash,
+            -- password_set}, ...]. ILK eleman BIRINCIL (ordinality = 1).
+            -- Hepsi aranabilir=true: yonetici iletisim karti numarayi tenant'a
+            -- acar (auth.md gizlilik istisnasi) ve /call-target tutarli kalir.
+            RETURN QUERY
             INSERT INTO public.app_user
                 (tenant_id, ad, telefon, password_hash, temp_code_hash,
-                 password_set, role, is_active)
-            VALUES
-                (v_tenant, p_yonetici_ad, p_telefon, p_password_hash,
-                 p_temp_code_hash, p_password_set,
-                 'yonetici'::public.user_role, true)
-            RETURNING id INTO v_user;
-
-            tenant_id := v_tenant;
-            user_id := v_user;
-            RETURN NEXT;
+                 password_set, role, is_active, aranabilir, birincil)
+            SELECT
+                v_tenant,
+                y.value ->> 'ad',
+                y.value ->> 'telefon',
+                y.value ->> 'password_hash',
+                y.value ->> 'temp_code_hash',
+                (y.value ->> 'password_set')::boolean,
+                'yonetici'::public.user_role,
+                true,
+                true,
+                (y.ordinality = 1)
+            FROM jsonb_array_elements(p_yoneticiler)
+                 WITH ORDINALITY AS y(value, ordinality)
+            -- telefon + birincil GERI DONER: cagiran, yoneticileri telefonla
+            -- esler. INSERT ... RETURNING satir SIRASINI garanti etmez, ve
+            -- ikinci bir okuma RLS'e takilirdi (tenant context yok).
+            RETURNING v_tenant, public.app_user.id, public.app_user.telefon,
+                      public.app_user.birincil;
         END;
         $$;
         """
     )
     op.execute(
-        "REVOKE ALL ON FUNCTION public.create_tenant_with_yonetici"
-        "(text, text, text, text, text, text, boolean, text, boolean) FROM PUBLIC;"
+        "REVOKE ALL ON FUNCTION public.create_tenant_with_yoneticis"
+        "(text, text, text, boolean, text, jsonb) FROM PUBLIC;"
     )
     op.execute(
-        "GRANT EXECUTE ON FUNCTION public.create_tenant_with_yonetici"
-        f"(text, text, text, text, text, text, boolean, text, boolean) TO {APP_ROLE};"
+        "GRANT EXECUTE ON FUNCTION public.create_tenant_with_yoneticis"
+        f"(text, text, text, boolean, text, jsonb) TO {APP_ROLE};"
     )
 
     # Admin (platform) cross-tenant tesis listesi: tenant RLS FORCE oldugundan
@@ -370,12 +392,16 @@ def upgrade() -> None:
             SELECT t.id, t.ad, t.kurulum_tamamlandi, t.created_at,
                    u.id, u.ad, u.telefon, u.is_active, u.password_set
             FROM public.tenant t
+            -- Tekil admin gorunumu BIRINCIL yoneticiyi gosterir (tenant basina
+            -- en fazla bir; uq_app_user_birincil). Eskiden "en eski yonetici"
+            -- (ORDER BY created_at LIMIT 1) varsayimiydi — coklu yoneticide
+            -- yanlis kisiyi secerdi.
             LEFT JOIN LATERAL (
                 SELECT id, ad, telefon, is_active, password_set
                 FROM public.app_user
                 WHERE tenant_id = t.id
                   AND role = 'yonetici'::public.user_role
-                ORDER BY created_at ASC
+                  AND birincil
                 LIMIT 1
             ) u ON true
             WHERE t.id = p_tenant_id;
@@ -511,7 +537,6 @@ def upgrade() -> None:
             DELETE FROM public.scan_event WHERE tenant_id = p_tenant_id;
             DELETE FROM public.task_completion WHERE tenant_id = p_tenant_id;
             DELETE FROM public.asset_checkout WHERE tenant_id = p_tenant_id;
-            DELETE FROM public.emergency_alert WHERE tenant_id = p_tenant_id;
             DELETE FROM public.dues_payment WHERE tenant_id = p_tenant_id;
             DELETE FROM public.budget_entry WHERE tenant_id = p_tenant_id;
             DELETE FROM public.announcement WHERE tenant_id = p_tenant_id;
@@ -961,43 +986,6 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
-    # 9g. emergency_alert  (acil durum butonu — saha -> yonetim anlik alarm)
-    # ------------------------------------------------------------------ #
-    op.execute(
-        """
-        CREATE TABLE emergency_alert (
-            id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id           uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
-            tetikleyen_user_id  uuid NOT NULL,
-            tetiklenme_zamani   timestamptz NOT NULL DEFAULT now(),
-            gps_lat             numeric(9, 6),
-            gps_lng             numeric(9, 6),
-            durum               emergency_durum NOT NULL DEFAULT 'acik',
-            cozen_user_id       uuid,
-            cozulme_zamani      timestamptz,
-            notlar              text,
-            idempotency_key     text NOT NULL,
-            created_at          timestamptz NOT NULL DEFAULT now(),
-            CONSTRAINT fk_emergency_tetikleyen
-                FOREIGN KEY (tetikleyen_user_id, tenant_id)
-                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
-            -- Kolon-ozel SET NULL: yalnizca cozen_user_id NULL'lanir; tenant_id korunur.
-            CONSTRAINT fk_emergency_cozen
-                FOREIGN KEY (cozen_user_id, tenant_id)
-                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (cozen_user_id),
-            -- panik aninda mukerrer basim korumasi:
-            CONSTRAINT uq_emergency_tenant_idempotency UNIQUE (tenant_id, idempotency_key)
-        );
-        """
-    )
-    op.execute("CREATE INDEX ix_emergency_tenant ON emergency_alert (tenant_id);")
-    op.execute("CREATE INDEX ix_emergency_durum ON emergency_alert (tenant_id, durum);")
-    op.execute(
-        "CREATE INDEX ix_emergency_zaman "
-        "ON emergency_alert (tenant_id, tetiklenme_zamani DESC);"
-    )
-
-    # ------------------------------------------------------------------ #
     # 9h. unit  (konut/daire — aidat bu birime tahakkuk eder)
     # ------------------------------------------------------------------ #
     op.execute(
@@ -1389,7 +1377,7 @@ def upgrade() -> None:
             tenant_id            uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
             unit_id              uuid NOT NULL,
             ziyaretci_ad         text NOT NULL,
-            notlar               text,       -- opsiyonel not ("not" SQL anahtar sozcugu; emergency/asset deseni)
+            notlar               text,       -- opsiyonel not ("not" SQL anahtar sozcugu; asset deseni)
             kaydeden_user_id     uuid NOT NULL,   -- kaydi acan guvenlik
             target_resident_user_id uuid NOT NULL, -- guvenligin sectigi TEK sakin: bilgilendirme push'u + gorunurluk YALNIZ onda
             created_at           timestamptz NOT NULL DEFAULT now(),
@@ -1433,7 +1421,7 @@ def upgrade() -> None:
             unit_id              uuid NOT NULL,
             firma                text NOT NULL,   -- kargo firmasi/tasiyici
             foto_key             text,       -- opsiyonel paket fotografi (MinIO obje anahtari, presign akisi)
-            notlar               text,       -- opsiyonel not ("not" SQL anahtar sozcugu; visitor/emergency deseni)
+            notlar               text,       -- opsiyonel not ("not" SQL anahtar sozcugu; visitor deseni)
             durum                kargo_durum NOT NULL DEFAULT 'bekliyor',
             kaydeden_user_id     uuid NOT NULL,   -- kaydi acan guvenlik
             teslim_alan_user_id  uuid,            -- teslim alan sakin
@@ -1855,7 +1843,6 @@ def upgrade() -> None:
         "task_completion",
         "asset",
         "asset_checkout",
-        "emergency_alert",
         "unit",
         "building_block",
         "unit_resident",
@@ -1928,8 +1915,8 @@ def downgrade() -> None:
     )
     op.execute("DROP FUNCTION IF EXISTS public.delete_tenant(uuid);")
     op.execute(
-        "DROP FUNCTION IF EXISTS public.create_tenant_with_yonetici"
-        "(text, text, text, text, text, text, boolean, text, boolean);"
+        "DROP FUNCTION IF EXISTS public.create_tenant_with_yoneticis"
+        "(text, text, text, boolean, text, jsonb);"
     )
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
@@ -1955,7 +1942,6 @@ def downgrade() -> None:
         "unit_resident",
         "building_block",
         "unit",
-        "emergency_alert",
         "asset_checkout",
         "asset",
         "task_completion",
@@ -1987,7 +1973,6 @@ def downgrade() -> None:
     op.execute("DROP TYPE IF EXISTS dues_durum;")
     op.execute("DROP TYPE IF EXISTS dues_yontem;")
     op.execute("DROP TYPE IF EXISTS resident_rol;")
-    op.execute("DROP TYPE IF EXISTS emergency_durum;")
     op.execute("DROP TYPE IF EXISTS complaint_durum;")
     op.execute("DROP TYPE IF EXISTS complaint_kategori;")
     op.execute("DROP TYPE IF EXISTS asset_durum;")

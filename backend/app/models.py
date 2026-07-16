@@ -52,7 +52,7 @@ PATROL_WINDOW_DURUM = ENUM(
 )
 NOTIFICATION_TIP = ENUM(
     "kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma",
-    "peyzaj_yaklasan", "peyzaj_kacirilan", "acil_durum",
+    "peyzaj_yaklasan", "peyzaj_kacirilan",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -62,10 +62,6 @@ ASSET_KATEGORI = ENUM(
 ASSET_DURUM = ENUM(
     "musait", "zimmetli", "bakimda",
     name="asset_durum", create_type=False,
-)
-EMERGENCY_DURUM = ENUM(
-    "acik", "cozuldu",
-    name="emergency_durum", create_type=False,
 )
 COMPLAINT_DURUM = ENUM(
     "acik", "inceleniyor", "cozuldu",
@@ -158,12 +154,14 @@ class Tenant(Base):
     timezone: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("'Europe/Istanbul'")
     )
-    # acil durumda mobilin arayacagi yonetim numarasi.
-    acil_durum_telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
-    # Onboarding: admin acinca false; yonetici ilk giriste adlandirinca true.
+    # Onboarding: admin acinca false; BIRINCIL yonetici ilk giriste
+    # adlandirinca true.
     kurulum_tamamlandi: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    # Tesisin yonetim maili (tenant seviyesi; kisisel veya ortak olabilir —
+    # anlamsal kisit yok). Yonetici iletisim kartinda tum uyelere gorunur.
+    yonetim_email: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Dis Hizmetler bolumu notu (yonetici serbest metni; tum roller okur).
     dis_hizmet_notu: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
@@ -190,6 +188,12 @@ class AppUser(Base):
     # Rol-bazli arama rizasi (C1a): numara YALNIZ riza=true iken ve yetkili
     # arayan role /call-target ile aciklanir (KVKK — amaç-sınırlı).
     aranabilir: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    # Tenant'in BIRINCIL yoneticisi mi? Tesisi ilk giriste adlandirma kapisi
+    # (POST /tenant/setup) YALNIZ buna acilir. Kismi unique index
+    # (uq_app_user_birincil) tenant basina en fazla bir true garantiler.
+    birincil: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
     # resident ilk giriste parola belirleyene kadar NULL.
@@ -656,46 +660,6 @@ class AssetCheckout(Base):
     created_at = _created_at()
 
 
-# --------------------------------------------------------------------------- #
-class EmergencyAlert(Base):
-    __tablename__ = "emergency_alert"
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ["tetikleyen_user_id", "tenant_id"],
-            ["app_user.id", "app_user.tenant_id"],
-            ondelete="RESTRICT",
-            name="fk_emergency_tetikleyen",
-        ),
-        # DDL'de kolon-ozel ON DELETE SET NULL (cozen_user_id); tenant_id korunur.
-        ForeignKeyConstraint(
-            ["cozen_user_id", "tenant_id"],
-            ["app_user.id", "app_user.tenant_id"],
-            ondelete="SET NULL",
-            name="fk_emergency_cozen",
-        ),
-        UniqueConstraint(
-            "tenant_id", "idempotency_key", name="uq_emergency_tenant_idempotency"
-        ),
-    )
-
-    id: Mapped[uuid.UUID] = _pk()
-    tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
-    )
-    tetikleyen_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    tetiklenme_zamani = mapped_column(
-        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
-    )
-    gps_lat = mapped_column(Numeric(9, 6), nullable=True)
-    gps_lng = mapped_column(Numeric(9, 6), nullable=True)
-    durum: Mapped[str] = mapped_column(
-        EMERGENCY_DURUM, nullable=False, server_default=text("'acik'")
-    )
-    cozen_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    cozulme_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
-    notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
-    idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at = _created_at()
 
 
 # --------------------------------------------------------------------------- #
@@ -1544,7 +1508,6 @@ __all__ = [
     "TaskCompletion",
     "Asset",
     "AssetCheckout",
-    "EmergencyAlert",
     "Unit",
     "BuildingBlock",
     "UnitResident",
@@ -1566,7 +1529,6 @@ __all__ = [
     "NOTIFICATION_TIP",
     "ASSET_KATEGORI",
     "ASSET_DURUM",
-    "EMERGENCY_DURUM",
     "RESIDENT_ROL",
     "DUES_YONTEM",
     "DUES_DURUM",

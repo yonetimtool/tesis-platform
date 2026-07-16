@@ -38,7 +38,7 @@ TENANT = {
     "slug": "acme-plaza",
     "ad": "Acme Plaza",
     "timezone": "Europe/Istanbul",
-    "acil_durum_telefon": "+902120000000",
+    "yonetim_email": "yonetim@acme.com",
 }
 
 USERS = [
@@ -56,6 +56,21 @@ USERS = [
         # Rol-bazli arama (C1a): security yoneticiyi arayabilir (rizali).
         "telefon": "+905321112201",
         "aranabilir": True,
+        # Tesisi ilk giriste adlandiran yonetici (kapi YALNIZ buna acilir).
+        "birincil": True,
+    },
+    {
+        # Ikinci yonetici: "Yonetici Iletisim" sekmesindeki COKLU listeyi
+        # gosterir. NOT: telefon GLOBAL benzersiz — 201-206 zaten dolu
+        # (201 yonetici, 202 guard, 203 sakin, 204 cleaner, 205 sakin-3,
+        # 206 sakin-es asagida ayri INSERT'te) -> 207.
+        "ad": "Acme Yonetici 2",
+        "email": "yonetici2@acme.com",
+        "role": "yonetici",
+        "password": os.getenv("SEED_YONETICI2_PASSWORD", "Yonetici123!"),
+        "telefon": "+905321112207",
+        "aranabilir": True,
+        "birincil": False,
     },
     {
         "ad": "Acme Guard",
@@ -101,14 +116,14 @@ def main() -> int:
         # 1) tenant upsert (slug benzersiz).
         tenant_id = conn.execute(
             """
-            INSERT INTO tenant (ad, slug, timezone, acil_durum_telefon)
+            INSERT INTO tenant (ad, slug, timezone, yonetim_email)
             VALUES (%s, %s, %s, %s)
             ON CONFLICT (slug) DO UPDATE
                 SET ad = EXCLUDED.ad, timezone = EXCLUDED.timezone,
-                    acil_durum_telefon = EXCLUDED.acil_durum_telefon
+                    yonetim_email = EXCLUDED.yonetim_email
             RETURNING id
             """,
-            (TENANT["ad"], TENANT["slug"], TENANT["timezone"], TENANT["acil_durum_telefon"]),
+            (TENANT["ad"], TENANT["slug"], TENANT["timezone"], TENANT["yonetim_email"]),
         ).fetchone()[0]
         print(f"[seed] tenant '{TENANT['slug']}' -> {tenant_id}")
 
@@ -119,8 +134,8 @@ def main() -> int:
                 """
                 INSERT INTO app_user (tenant_id, ad, email, password_hash,
                                       password_set, temp_code_hash, role, is_active,
-                                      telefon, aranabilir)
-                VALUES (%s, %s, %s, %s, true, NULL, %s::user_role, true, %s, %s)
+                                      telefon, aranabilir, birincil)
+                VALUES (%s, %s, %s, %s, true, NULL, %s::user_role, true, %s, %s, %s)
                 ON CONFLICT (tenant_id, email) DO UPDATE
                     SET ad = EXCLUDED.ad,
                         password_hash = EXCLUDED.password_hash,
@@ -130,10 +145,11 @@ def main() -> int:
                         is_active = true,
                         telefon = EXCLUDED.telefon,
                         aranabilir = EXCLUDED.aranabilir,
+                        birincil = EXCLUDED.birincil,
                         updated_at = now()
                 """,
                 (tenant_id, u["ad"], u["email"], hash_password(u["password"]), u["role"],
-                 u.get("telefon"), u.get("aranabilir", False)),
+                 u.get("telefon"), u.get("aranabilir", False), u.get("birincil", False)),
             )
             print(f"[seed] user {u['email']:<18} role={u['role']}")
 

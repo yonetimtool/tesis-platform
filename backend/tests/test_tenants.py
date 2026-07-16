@@ -1,8 +1,9 @@
 """Onboarding Model A — admin cross-tenant tesis olusturma/listeleme +
 yonetici ilk-giris adlandirma (POST/GET /tenants, POST /tenant/setup).
 
-Admin isimsiz tenant (kurulum_tamamlandi=false) + yonetici acar; yonetici ilk
-giriste tesisi adlandirir (kurulum_tamamlandi=true). Mobil self-signup KALDIRILDI.
+Admin tenant (opsiyonel ad; kurulum_tamamlandi=false) + N yonetici acar;
+listedeki ILK yonetici BIRINCIL'dir ve ilk giriste tesisi adlandirir/onaylar
+(kurulum_tamamlandi=true). Mobil self-signup KALDIRILDI.
 """
 from __future__ import annotations
 
@@ -27,11 +28,16 @@ def test_admin_creates_tenant_yonetici_then_first_login_setup(client, world):
     phone = _uphone()
 
     # 1) admin: tenant (isimsiz) + yonetici (parolasiz -> gecici kod)
-    r = client.post("/tenants", headers=admin, json={"yonetici_ad": "Yeni Yonetici", "phone": phone})
+    r = client.post(
+        "/tenants",
+        headers=admin,
+        json={"yoneticiler": [{"ad": "Yeni Yonetici", "phone": phone}]},
+    )
     assert r.status_code == 201, r.text
     body = r.json()
-    assert body["tenant_id"] and body["yonetici_user_id"]
-    temp = body["temp_code"]
+    assert body["tenant_id"] and len(body["yoneticiler"]) == 1
+    assert body["yoneticiler"][0]["birincil"] is True  # tek yonetici = birincil
+    temp = body["yoneticiler"][0]["temp_code"]
     assert temp  # parola verilmedi -> gecici kod
 
     # 2) yonetici telefonla ilk giris -> parola kurulumu gerekir
@@ -63,10 +69,14 @@ def test_admin_creates_tenant_with_password_skips_temp_code(client, world):
     r = client.post(
         "/tenants",
         headers=admin,
-        json={"yonetici_ad": "Parolali", "phone": phone, "password": "YonParola1!"},
+        json={
+            "yoneticiler": [
+                {"ad": "Parolali", "phone": phone, "password": "YonParola1!"}
+            ]
+        },
     )
     assert r.status_code == 201, r.text
-    assert r.json()["temp_code"] is None
+    assert r.json()["yoneticiler"][0]["temp_code"] is None
     lp = client.post("/auth/login-phone", json={"phone": phone, "password": "YonParola1!"})
     assert lp.status_code == 200 and lp.json()["password_setup_required"] is False
 
@@ -87,12 +97,21 @@ def test_tenants_admin_only(client, world):
         h = _headers(client, world["slug_a"], world[role])
         assert client.get("/tenants", headers=h).status_code == 403, role
         assert client.post(
-            "/tenants", headers=h, json={"yonetici_ad": "x", "phone": _uphone()}
+            "/tenants",
+            headers=h,
+            json={"yoneticiler": [{"ad": "xy", "phone": _uphone()}]},
         ).status_code == 403, role
 
 
-def test_tenant_setup_rbac_and_already_done(client, world):
-    # world tenant_a HAZIR (kurulum_tamamlandi default true) -> setup 409
+def test_tenant_setup_rbac_and_already_done(client, world, owner_conn):
+    # BIRINCIL yonetici + tenant HAZIR (kurulum_tamamlandi default true) -> 409.
+    # NOT: birincil kapisi kurulum kapisindan ONCE gelir; birincil isaretlenmezse
+    # 403 donerdi (bkz. test_tenant_ad.test_birincil_olmayan_yonetici_setup_403).
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE app_user SET birincil = true WHERE tenant_id = %s AND ad = %s",
+            (world["a"], "Yonetici A"),
+        )
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     assert client.post("/tenant/setup", headers=yon, json={"ad": "XY"}).status_code == 409
     # yonetici disi roller -> 403
@@ -109,14 +128,26 @@ def _admin(client, world):
     return _headers(client, world["slug_a"], world["admin_a"])
 
 
-def _create_tenant(client, admin, password=None):
+def _create_tenant(client, admin, password=None, ad=None, yonetim_email=None):
+    """Tek yoneticili tenant (o yonetici BIRINCIL olur). Geriye donuk yardimci:
+    donen sozluge duz `temp_code`/`yonetici_user_id` eklenir ki mevcut testler
+    coklu-yonetici yanitini elle acmasin."""
     phone = _uphone()
-    body = {"yonetici_ad": "Detay Yon", "phone": phone}
+    yon = {"ad": "Detay Yon", "phone": phone}
     if password:
-        body["password"] = password
+        yon["password"] = password
+    body: dict = {"yoneticiler": [yon]}
+    if ad:
+        body["ad"] = ad
+    if yonetim_email:
+        body["yonetim_email"] = yonetim_email
     r = client.post("/tenants", headers=admin, json=body)
     assert r.status_code == 201, r.text
-    return r.json(), phone
+    out = r.json()
+    birincil = out["yoneticiler"][0]
+    out["temp_code"] = birincil["temp_code"]
+    out["yonetici_user_id"] = birincil["user_id"]
+    return out, phone
 
 
 def _login_phone(client, phone, pw):
@@ -268,3 +299,179 @@ def test_tenant_detail_rbac(client, world):
             f"/tenants/{tid}/yonetici/reset-credential", headers=h
         ).status_code == 403, role
         assert client.delete(f"/tenants/{tid}", headers=h).status_code == 403, role
+
+
+# --------------------------------------------------------------------------- #
+# Coklu yonetici + yonetim maili + opsiyonel tesis adi
+# --------------------------------------------------------------------------- #
+
+def _tenant_sil(owner_conn, tid):
+    with owner_conn.cursor() as cur:
+        cur.execute("DELETE FROM tenant WHERE id = %s", (tid,))
+
+
+def test_coklu_yonetici_olusturma_birincil_isaretlenir(client, world, owner_conn):
+    admin = _admin(client, world)
+    p1, p2, p3 = _uphone(), _uphone(), _uphone()
+    r = client.post(
+        "/tenants",
+        headers=admin,
+        json={
+            "ad": "Coklu Sitesi",
+            "yonetim_email": "yonetim@coklu.com",
+            "yoneticiler": [
+                {"ad": "Birinci Yonetici", "phone": p1},
+                {"ad": "Ikinci Yonetici", "phone": p2, "password": "Yonetici123!"},
+                {"ad": "Ucuncu Yonetici", "phone": p3},
+            ],
+        },
+    )
+    assert r.status_code == 201, r.text
+    body = r.json()
+    tid = body["tenant_id"]
+    try:
+        assert len(body["yoneticiler"]) == 3
+
+        birinciler = [y for y in body["yoneticiler"] if y["birincil"]]
+        assert len(birinciler) == 1
+        assert birinciler[0]["ad"] == "Birinci Yonetici", "ILK giren birincil olmali"
+
+        # Parolasiz olanlar gecici kod alir; parolali olan almaz. Eslemenin
+        # dogrulugu kritik: yanlis kisiye kod gitmemeli.
+        by_ad = {y["ad"]: y for y in body["yoneticiler"]}
+        assert by_ad["Birinci Yonetici"]["temp_code"]
+        assert by_ad["Ikinci Yonetici"]["temp_code"] is None
+        assert by_ad["Ucuncu Yonetici"]["temp_code"]
+
+        with owner_conn.cursor() as cur:
+            cur.execute(
+                "SELECT ad, birincil, aranabilir, role, telefon FROM app_user "
+                "WHERE tenant_id = %s ORDER BY birincil DESC, ad",
+                (tid,),
+            )
+            rows = cur.fetchall()
+        assert len(rows) == 3
+        assert all(r[3] == "yonetici" for r in rows)
+        # Hepsi aranabilir=true: iletisim karti + /call-target tutarliligi.
+        assert all(r[2] is True for r in rows)
+        assert [r[1] for r in rows] == [True, False, False]
+
+        # Gecici kodun DOGRU kisiye gittigi: birincil'in telefonu p1 olmali.
+        assert rows[0][4] == p1
+
+        with owner_conn.cursor() as cur:
+            cur.execute(
+                "SELECT ad, yonetim_email, kurulum_tamamlandi FROM tenant WHERE id = %s",
+                (tid,),
+            )
+            t = cur.fetchone()
+        assert t[0] == "Coklu Sitesi"
+        assert t[1] == "yonetim@coklu.com"
+        # ad verildi ama birincil yine ONAYLAR.
+        assert t[2] is False
+    finally:
+        _tenant_sil(owner_conn, tid)
+
+
+def test_ad_verilmezse_placeholder(client, world, owner_conn):
+    admin = _admin(client, world)
+    r = client.post(
+        "/tenants",
+        headers=admin,
+        json={"yoneticiler": [{"ad": "Tek Yonetici", "phone": _uphone()}]},
+    )
+    assert r.status_code == 201, r.text
+    tid = r.json()["tenant_id"]
+    try:
+        with owner_conn.cursor() as cur:
+            cur.execute(
+                "SELECT ad, kurulum_tamamlandi FROM tenant WHERE id = %s", (tid,)
+            )
+            t = cur.fetchone()
+        assert t[0] == "(Kurulum bekliyor)"
+        assert t[1] is False
+    finally:
+        _tenant_sil(owner_conn, tid)
+
+
+def test_yonetim_email_opsiyonel(client, world, owner_conn):
+    admin = _admin(client, world)
+    r = client.post(
+        "/tenants",
+        headers=admin,
+        json={"yoneticiler": [{"ad": "Mailsiz Yon", "phone": _uphone()}]},
+    )
+    assert r.status_code == 201, r.text
+    tid = r.json()["tenant_id"]
+    try:
+        with owner_conn.cursor() as cur:
+            cur.execute("SELECT yonetim_email FROM tenant WHERE id = %s", (tid,))
+            assert cur.fetchone()[0] is None
+    finally:
+        _tenant_sil(owner_conn, tid)
+
+
+def test_payload_ici_telefon_tekrari_422(client, world):
+    admin = _admin(client, world)
+    p = _uphone()
+    r = client.post(
+        "/tenants",
+        headers=admin,
+        json={"yoneticiler": [{"ad": "Aaa", "phone": p}, {"ad": "Bbb", "phone": p}]},
+    )
+    assert r.status_code == 422, r.text
+
+
+def test_bos_yonetici_listesi_422(client, world):
+    admin = _admin(client, world)
+    assert client.post("/tenants", headers=admin, json={"yoneticiler": []}).status_code == 422
+
+
+def test_yoneticiler_alani_zorunlu_422(client, world):
+    admin = _admin(client, world)
+    assert client.post("/tenants", headers=admin, json={"ad": "Yonetsiz"}).status_code == 422
+
+
+def test_mevcut_telefon_409_ve_tenant_olusmaz(client, world, owner_conn):
+    """Cakisma tek transaction'da geri alinir -> yarim tenant kalmaz."""
+    admin = _admin(client, world)
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM tenant")
+        once = cur.fetchone()[0]
+
+    r = client.post(
+        "/tenants",
+        headers=admin,
+        json={
+            "ad": "Catisan Tesis",
+            "yoneticiler": [{"ad": "Catisan", "phone": world["yonetici_a"]["phone"]}],
+        },
+    )
+    assert r.status_code == 409, r.text
+
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM tenant")
+        assert cur.fetchone()[0] == once, "409'dan sonra tenant OLUSMAMALI"
+
+
+def test_ikinci_yonetici_telefon_cakismasi_409_tenant_olusmaz(client, world, owner_conn):
+    """Cakisma LISTENIN ORTASINDA olsa da tenant olusmamali."""
+    admin = _admin(client, world)
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM tenant")
+        once = cur.fetchone()[0]
+
+    r = client.post(
+        "/tenants",
+        headers=admin,
+        json={
+            "yoneticiler": [
+                {"ad": "Saglam Yon", "phone": _uphone()},
+                {"ad": "Catisan Yon", "phone": world["guard_a"]["phone"]},
+            ]
+        },
+    )
+    assert r.status_code == 409, r.text
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM tenant")
+        assert cur.fetchone()[0] == once

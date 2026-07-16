@@ -220,22 +220,6 @@ def test_fetch_tokens_role_and_tenant_isolation(client, world):
     assert f"ADM-B-{ta}" in toks_b and f"ADM-A-{ta}" not in toks_b
 
 
-def test_emergency_push_hook_does_not_break_in_app(client, world):
-    """Acil durum -> push kancasi tetiklenir (server noop) AMA in-app notification yine yazilir."""
-    admin = _headers(client, world["slug_a"], world["admin_a"])
-    guard = _headers(client, world["slug_a"], world["guard_a"])
-    _register(client, admin, f"ADM-DEV-{uuid.uuid4().hex[:6]}", "android")
-
-    key = uuid.uuid4().hex
-    r = client.post(
-        "/emergency", headers={**guard, "Idempotency-Key": key}, json={"notlar": "yangin"}
-    )
-    assert r.status_code == 201, r.text
-    # push EK gonderim; in-app acil_durum bildirimi kirilmadan olustu
-    notifs = client.get("/notifications", headers=admin).json()["items"]
-    assert any(n["tip"] == "acil_durum" for n in notifs)
-
-
 # ---------------- gercek kimlik baglama (path + OAuth2 + cache) ------------- #
 def _fake_sa(tmp_path, project="proj-dosya", email="svc@proj.iam.gserviceaccount.com"):
     """Diske SAHTE service account yaz (gercek kimlik testlerde KULLANILMAZ)."""

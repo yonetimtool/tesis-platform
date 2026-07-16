@@ -4,7 +4,7 @@ RBAC (auth.md §4): OLUSTURMA yonetici (mobil) + admin (platform/panel);
 duzenleme/silme admin+yonetici; OKUMA tum roller
 (resident dahil — sakinin ilk operasyon-disi kaynagi). tenant token'dan; RLS
 izole. Olusturmada tenant'in TUM aktif cihazlarina push denenir (EK gonderim —
-hatasi duyuru kaydini kirmaz, emergency ile ayni desen).
+hatasi duyuru kaydini kirmaz).
 
 Opsiyonel gorsel: olusturmada /uploads/presign ile yuklenmis foto_key kabul
 edilir; okumada goruntuleme icin kisa omurlu presigned GET foto_url doner.

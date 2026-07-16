@@ -138,6 +138,9 @@ class UserAdminOut(BaseModel):
     aranabilir: bool = False
     role: str
     is_active: bool
+    # Tenant'in birincil yoneticisi mi? Mobil ilk-giris adlandirma kapisi
+    # yalniz buna acilir (yonetici disi rollerde daima false).
+    birincil: bool = False
     created_at: datetime
 
 
@@ -152,6 +155,9 @@ class UserAdminListItem(BaseModel):
     aranabilir: bool = False
     role: str
     is_active: bool
+    # Tenant'in birincil yoneticisi mi? Mobil ilk-giris adlandirma kapisi
+    # yalniz buna acilir (yonetici disi rollerde daima false).
+    birincil: bool = False
     created_at: datetime
 
 
@@ -193,6 +199,9 @@ class UserCreatedOut(BaseModel):
     aranabilir: bool = False
     role: str
     is_active: bool
+    # Tenant'in birincil yoneticisi mi? Mobil ilk-giris adlandirma kapisi
+    # yalniz buna acilir (yonetici disi rollerde daima false).
+    birincil: bool = False
     created_at: datetime
     temp_code: str | None = None
 
@@ -243,6 +252,9 @@ class MeProfileOut(BaseModel):
     aranabilir: bool = False
     role: str
     is_active: bool
+    # Tenant'in birincil yoneticisi mi? Mobil ilk-giris adlandirma kapisi
+    # yalniz buna acilir (yonetici disi rollerde daima false).
+    birincil: bool = False
 
 
 class UserAdminListResponse(BaseModel):
@@ -515,7 +527,7 @@ class ScanReportResponse(BaseModel):
 
 
 # ------------------------------ dashboard ---------------------------------- #
-AlarmTip = Literal["kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma", "acil_durum"]
+AlarmTip = Literal["kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma"]
 
 
 class AktifTurOut(BaseModel):
@@ -705,7 +717,7 @@ class VisitorCreate(BaseModel):
     # onda. O dairenin AKTIF sakini olmali (sunucu dogrular; degilse 422).
     target_resident_user_id: uuid.UUID
     # "not" SQL/Python anahtar sozcugu — kolon/alan adi codebase deseniyle
-    # 'notlar' (emergency_alert/asset_checkout ile ayni).
+    # 'notlar' (asset_checkout ile ayni).
     notlar: str | None = Field(None, min_length=1, max_length=1000)
 
     @model_validator(mode="after")
@@ -1518,41 +1530,6 @@ class CheckinRequest(BaseModel):
     notlar: str | None = None
 
 
-# ------------------------------ emergency ---------------------------------- #
-EmergencyDurum = Literal["acik", "cozuldu"]
-
-
-class EmergencyCreate(BaseModel):
-    gps_lat: float | None = None
-    gps_lng: float | None = None
-    notlar: str | None = None
-
-
-class EmergencyResolve(BaseModel):
-    notlar: str | None = None
-
-
-class EmergencyAlertOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    tetikleyen_user_id: uuid.UUID
-    tetiklenme_zamani: datetime
-    gps_lat: float | None = None
-    gps_lng: float | None = None
-    durum: str
-    cozen_user_id: uuid.UUID | None = None
-    cozulme_zamani: datetime | None = None
-    notlar: str | None = None
-    idempotency_key: str
-    created_at: datetime
-
-
-class EmergencyListResponse(BaseModel):
-    meta: PageMetaOut
-    items: list[EmergencyAlertOut]
-
-
 # --------------------------- tenant settings ------------------------------- #
 class TenantSettings(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -1561,15 +1538,18 @@ class TenantSettings(BaseModel):
     ad: str
     slug: str
     timezone: str
-    acil_durum_telefon: str | None = None
-    # false ise yonetici ILK GIRISTE tesisi adlandirmalidir (mobil setup ekrani).
+    # false ise BIRINCIL yonetici ILK GIRISTE tesisi adlandirmalidir.
     kurulum_tamamlandi: bool = True
+    # Tesisin yonetim maili — yonetici iletisim kartinda gosterilir.
+    yonetim_email: str | None = None
 
 
 class TenantSettingsUpdate(BaseModel):
-    acil_durum_telefon: str | None = None
+    """admin: hepsi. yonetici: YALNIZ `ad` (digerleri 403 — bkz. router)."""
+
     timezone: str | None = None
     ad: str | None = None
+    yonetim_email: str | None = None
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "TenantSettingsUpdate":
@@ -1578,13 +1558,39 @@ class TenantSettingsUpdate(BaseModel):
         return self
 
 
+# --------------------------- yonetici iletisim ----------------------------- #
+class YoneticiKart(BaseModel):
+    """Yonetici iletisim karti.
+
+    GIZLILIK ISTISNASI (contracts/auth.md): `telefon` burada tenant'in TUM
+    uyelerine acilir — C1a'nin yon/riza kapilari BU UC icin gecerli DEGILDIR
+    (yonetici = HIZMET rolu; numarayi admin bilerek girer). Istisna YALNIZ
+    role='yonetici' icindir; C1a modeli baska her seyde korunur.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: uuid.UUID
+    ad_soyad: str
+    telefon: str | None = None
+
+
+class YoneticiIletisimOut(BaseModel):
+    yoneticiler: list[YoneticiKart]
+    yonetim_email: str | None = None
+
+
 # Admin (platform) tesis olusturma/listeleme (cross-tenant) + yonetici ilk-giris
 # adlandirma (onboarding, Model A).
-class TenantAdminCreate(BaseModel):
-    """Admin bir tenant (isimsiz, kurulum_tamamlandi=false) + yonetici acar.
-    password verilirse dogrudan belirlenir; verilmezse gecici kod uretilir."""
+class YoneticiCreate(BaseModel):
+    """Tenant olusturmada TEK bir yonetici satiri.
 
-    yonetici_ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
+    E-posta ALINMAZ: mobil giris TELEFONLADIR (email login anahtari degil) ve
+    yonetici e-postasini hicbir uc okumaz. Tenant seviyesindeki `yonetim_email`
+    ayridir (iletisim kartinda gosterilir).
+    """
+
+    ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
     phone: str = Field(..., min_length=1, examples=["+905321112203"])
     password: str | None = Field(None, min_length=8)
 
@@ -1594,13 +1600,41 @@ class TenantAdminCreate(BaseModel):
         return v if v is None else validate_password_strength(v)
 
 
+class TenantAdminCreate(BaseModel):
+    """Admin bir tenant + N yonetici acar. ILK yonetici BIRINCIL'dir (tesisi
+    ilk giriste adlandirir). `ad` verilmezse yer tutucu + rastgele slug; her
+    durumda kurulum_tamamlandi=false — birincil adi ONAYLAR."""
+
+    ad: str | None = Field(None, min_length=2, max_length=160, examples=["Acme Plaza"])
+    yonetim_email: str | None = Field(None, examples=["yonetim@acme.com"])
+    yoneticiler: list[YoneticiCreate] = Field(..., min_length=1)
+
+    @field_validator("yonetim_email")
+    @classmethod
+    def _bos_ise_none(cls, v: str | None) -> str | None:
+        return (v.strip() or None) if v is not None else None
+
+    @model_validator(mode="after")
+    def _telefon_tekrari_yok(self) -> "TenantAdminCreate":
+        phones = [y.phone for y in self.yoneticiler]
+        if len(phones) != len(set(phones)):
+            raise ValueError("Ayni telefon birden fazla yoneticide kullanilamaz.")
+        return self
+
+
+class YoneticiCreatedOut(BaseModel):
+    user_id: uuid.UUID
+    ad: str
+    birincil: bool
+    temp_code: str | None = None
+
+
 class TenantAdminCreatedOut(BaseModel):
-    """temp_code YALNIZ parola verilmediginde ve bir kez doner (admin yoneticiye
-    iletir). tenant_id GIZLI kimliktir (yalniz admin gorur)."""
+    """temp_code YALNIZ parola verilmeyen yonetici icin ve BIR KEZ doner (admin
+    ilgili yoneticiye iletir). tenant_id GIZLI kimliktir (yalniz admin gorur)."""
 
     tenant_id: uuid.UUID
-    yonetici_user_id: uuid.UUID
-    temp_code: str | None = None
+    yoneticiler: list[YoneticiCreatedOut]
 
 
 class TenantAdminListItem(BaseModel):
