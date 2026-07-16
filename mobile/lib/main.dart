@@ -57,7 +57,7 @@ class TesisGuvenlikApp extends ConsumerWidget {
       if (route != null) router.push(route);
     });
     return MaterialApp.router(
-      title: 'Tesis Güvenlik',
+      title: 'Yönetio',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       theme: buildLightTheme(),

@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tesis Yönetim Paneli",
-  description: "Multi-tenant tesis operasyon SaaS — yönetim paneli",
+  title: "Yönetio Panel",
+  description: "Yönetio — çok kiracılı tesis operasyon SaaS yönetim paneli",
+  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({

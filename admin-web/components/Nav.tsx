@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { YonetioLogo } from "@/components/YonetioLogo";
 
 const LINKS = [
   { href: "/dashboard", label: "Canlı Panel" },
@@ -41,7 +42,9 @@ export function Nav() {
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-6">
-          <span className="font-semibold">Tesis Paneli</span>
+          <Link href="/dashboard" aria-label="Yönetio">
+            <YonetioLogo size={28} />
+          </Link>
           <nav className="flex gap-1">
             {LINKS.map((l) => {
               const active = pathname === l.href;

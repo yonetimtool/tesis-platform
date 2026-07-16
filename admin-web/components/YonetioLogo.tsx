@@ -1,0 +1,48 @@
+/**
+ * Yönetio marka isareti (Concept 15) — inline SVG (harici asset/font yok).
+ * Mobil `YonetioLogoPainter` ve `assets/branding/logo.svg` ile birebir ayni
+ * geometri. Nav header'da ikon + kelime isareti kullanilir.
+ */
+
+export function YonetioMark({ size = 28 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 512 512"
+      role="img"
+      aria-label="Yönetio"
+    >
+      <rect x="0" y="0" width="512" height="512" rx="113" ry="113" fill="#1E3A5F" />
+      <rect x="117.8" y="194.6" width="112.6" height="215.0" rx="15" ry="15" fill="#FFFFFF" />
+      <rect x="281.6" y="133.1" width="112.6" height="276.5" rx="15" ry="15" fill="#7FD1C9" />
+      <g fill="#1E3A5F">
+        <rect x="140.3" y="220.4" width="27" height="27" />
+        <rect x="180.8" y="220.4" width="27" height="27" />
+        <rect x="140.3" y="268.9" width="27" height="27" />
+        <rect x="180.8" y="268.9" width="27" height="27" />
+        <rect x="304.1" y="166.3" width="27" height="27" />
+        <rect x="344.7" y="166.3" width="27" height="27" />
+        <rect x="304.1" y="221.0" width="27" height="27" />
+        <rect x="344.7" y="221.0" width="27" height="27" />
+      </g>
+      <g fill="none" stroke="#0E9594" strokeWidth="23" strokeLinecap="round">
+        <path d="M 207.2 212.5 A 56.3 56.3 0 0 1 304.8 212.5" />
+        <path d="M 182.8 198.4 A 84.5 84.5 0 0 1 329.2 198.4" />
+      </g>
+      <circle cx="256" cy="230.4" r="14.3" fill="#0E9594" />
+    </svg>
+  );
+}
+
+/** Ikon + kelime isareti. Kelime navy (acik) / beyaz (koyu) — .dark uzerinden. */
+export function YonetioLogo({ size = 28 }: { size?: number }) {
+  return (
+    <span className="flex items-center gap-2">
+      <YonetioMark size={size} />
+      <span className="text-lg font-semibold tracking-tight text-[#1E3A5F] dark:text-white">
+        yönetio
+      </span>
+    </span>
+  );
+}

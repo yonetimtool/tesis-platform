@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/branding/yonetio_logo.dart';
 import 'auth_controller.dart';
 
 /// Telefonla giris ekrani (contracts/auth.md §1): cep telefonu (global
@@ -56,14 +57,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(Icons.shield_outlined, size: 64),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Tesis Güvenlik',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 24),
+                    const Center(child: YonetioLogoVertical(iconSize: 100)),
+                    const SizedBox(height: 28),
                     TextFormField(
                       controller: _phoneCtrl,
                       enabled: !submitting,

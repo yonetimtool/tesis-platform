@@ -14,7 +14,7 @@
     <!-- NFC olmayan cihazlarda da kurulabilsin; donanim zorunlu degil. -->
     <uses-feature android:name="android.hardware.nfc" android:required="false"/>
     <application
-        android:label="Tesis Guvenlik"
+        android:label="Yönetio"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

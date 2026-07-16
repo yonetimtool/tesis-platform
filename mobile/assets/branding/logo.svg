@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Yönetio">
+  <!-- Concept 15: sinyal yayan site. Flat — gradyan/golge yok. -->
+  <rect x="0" y="0" width="512" height="512" rx="113" ry="113" fill="#1E3A5F"/>
+
+  <!-- Sol blok (kisa, beyaz) -->
+  <rect x="117.8" y="194.6" width="112.6" height="215.0" rx="15" ry="15" fill="#FFFFFF"/>
+  <!-- Sag blok (uzun, mint) -->
+  <rect x="281.6" y="133.1" width="112.6" height="276.5" rx="15" ry="15" fill="#7FD1C9"/>
+
+  <!-- 2x2 navy pencereler -->
+  <g fill="#1E3A5F">
+    <rect x="140.3" y="220.4" width="27" height="27"/>
+    <rect x="180.8" y="220.4" width="27" height="27"/>
+    <rect x="140.3" y="268.9" width="27" height="27"/>
+    <rect x="180.8" y="268.9" width="27" height="27"/>
+    <rect x="304.1" y="166.3" width="27" height="27"/>
+    <rect x="344.7" y="166.3" width="27" height="27"/>
+    <rect x="304.1" y="221.0" width="27" height="27"/>
+    <rect x="344.7" y="221.0" width="27" height="27"/>
+  </g>
+
+  <!-- Sinyal: iki es-merkezli yay (yukari acilir) + kaynak nokta -->
+  <g fill="none" stroke="#0E9594" stroke-width="23" stroke-linecap="round">
+    <path d="M 207.2 212.5 A 56.3 56.3 0 0 1 304.8 212.5"/>
+    <path d="M 182.8 198.4 A 84.5 84.5 0 0 1 329.2 198.4"/>
+  </g>
+  <circle cx="256" cy="230.4" r="14.3" fill="#0E9594"/>
+</svg>
