@@ -8,14 +8,25 @@ import 'package:flutter/material.dart';
 /// `logo_master.png`'den beyaz kenar boslugu kirpilarak uretilir
 /// (test/tools/generate_branding_assets.dart).
 ///
-/// Master ~32px altinda okunmaz (insanlar/yay/yan bloklar bulanir). Bu yuzden
-/// kucuk boyutlar icin BASITLESTIRILMIS tek-renk turev kullanilir
-/// ([YonetioSimpleMark]) — yalniz merkez bina + chevron/cati silueti.
+/// Master ~32px FIZIKSEL piksel altinda okunmaz (insanlar/yay/yan bloklar
+/// bulanir). Bu esigin ALTINA dusen yuzeylerde BASITLESTIRILMIS tek-renk turev
+/// kullanilir ([YonetioSimpleMark]) — yalniz merkez bina + chevron/cati
+/// silueti.
 ///
-/// | Yuzey                  | Surum                |
-/// |------------------------|----------------------|
-/// | launcher, giris, splash| master (tam)         |
-/// | app-bar, bildirim, favicon | basitlestirilmis |
+/// | Yuzey                        | Surum            |
+/// |------------------------------|------------------|
+/// | launcher, giris, splash      | master (tam)     |
+/// | ana ekran app-bar (30dp)     | master (tam)     |
+/// | bildirim kucuk ikonu         | basitlestirilmis |
+/// | favicon (16-32px)            | basitlestirilmis |
+///
+/// App-bar neden master: 30dp modern cihazda 60-90 FIZIKSEL px eder, yani esik
+/// asilir ve master net cikar. Basitlestirilmis turev orada "baska bir logo"
+/// gibi algilaniyordu (kullanici geri bildirimi).
+///
+/// Bildirim ikonu neden HER ZAMAN basitlestirilmis: Android kucuk ikonu alfa
+/// maskesi olarak cizer (renk atilir) — master beyaz lekeye donerdi. Bu bir
+/// tercih degil, platform zorunlulugu.
 class YonetioColors {
   const YonetioColors._();
 

@@ -42,11 +42,12 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         // Yönetio marka isareti sol ustte (yalniz ana ekran app-bar'i); site
-        // adi baslik olarak kalir. Bu boyutta tam master okunmaz →
-        // basitlestirilmis tek-renk turev.
+        // adi baslik olarak kalir. Giris ekrani/launcher ile AYNI master
+        // kullanilir: basitlestirilmis turev burada "baska bir logo" gibi
+        // algilaniyordu. 30dp modern cihazda 60-90 fiziksel px → master net.
         leading: const Padding(
           padding: EdgeInsets.only(left: 12),
-          child: Center(child: YonetioSimpleMark(size: 30)),
+          child: Center(child: YonetioMasterLogo(size: 30)),
         ),
         leadingWidth: 54,
         title: Text(baslik),

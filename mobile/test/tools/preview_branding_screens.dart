@@ -83,7 +83,7 @@ void main() {
     await _shoot(tester, 'preview_login_dark');
   });
 
-  testWidgets('ana ekran app-bar — basitlestirilmis isaret', (tester) async {
+  testWidgets('ana ekran app-bar — tam master', (tester) async {
     tester.view.physicalSize = const Size(420, 120);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
