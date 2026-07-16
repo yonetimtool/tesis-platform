@@ -242,8 +242,10 @@ class TenantAdminCreatedOut(BaseModel):
   tarafı bir kısıt olarak kalırdı.) Zaten kuruluysa 409 davranışı korunur.
 - **İki uç `tenant.ad` yazar — bilinçli:** `POST /tenant/setup` tek-seferlik kurulum kapısıdır
   (`kurulum_tamamlandi=false` iken, birincil, 409 ile korunur); `PATCH /tenant/settings {ad}`
-  ise kurulum sonrası sürekli yeniden adlandırmadır (tüm yöneticiler). İkisi de
-  `update_tenant_ad` üzerinden yazar → slug davranışı tek noktada.
+  ise kurulum sonrası sürekli yeniden adlandırmadır (tüm yöneticiler). İkisi de tenant-kapsamlı
+  RLS oturumunda **ORM ile `t.ad`** yazar (`update_tenant_ad` SECURITY DEFINER fonksiyonu
+  admin'in cross-tenant `PATCH /tenants/{id}` ucuna aittir; bu uçlar onu kullanmaz).
+  Hiçbiri `slug`a dokunmaz → değişmezlik üç uçta da korunur.
 - `PATCH /tenant/settings` RBAC genişler:
   - `admin`: `ad`, `timezone`, `yonetim_email`
   - `yonetici`: **YALNIZ `ad`** — başka alan gönderirse **403** (`forbidden`)
@@ -278,7 +280,9 @@ class TenantAdminCreatedOut(BaseModel):
   buna göre.
 - Mevcut yönetici (`Acme Yonetici`, `+905321112201`, `aranabilir=True`) → **`birincil=True`**.
 - **İkinci yönetici eklenir** (çoklu listeyi göstermek için):
-  `Acme Yonetici 2`, `yonetici2@acme.com`, `+905321112204`, `aranabilir=True`, `birincil=False`.
+  `Acme Yonetici 2`, `yonetici2@acme.com`, **`+905321112206`**, `aranabilir=True`, `birincil=False`.
+  > `telefon` GLOBAL benzersiz (`uq_app_user_telefon`). Seed'de 201-205 zaten dolu
+  > (201 yönetici, 202 guard, 203 sakin, **204 cleaner**, 205 sakin-3) → yeni numara **206**.
 - `app_user` upsert'ü `birincil` kolonunu taşır.
 
 ---
