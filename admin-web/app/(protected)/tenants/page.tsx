@@ -7,6 +7,7 @@ import useSWR from "swr";
 import { Field, ErrorBox, btnPrimary, btnGhost, inputCls } from "@/components/form";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
 
 interface TenantRow {
   id: string;
@@ -17,18 +18,23 @@ interface TenantRow {
 interface TenantListResponse {
   items: TenantRow[];
 }
-interface CreatedOut {
-  tenant_id: string;
-  yonetici_user_id: string;
-  temp_code?: string | null;
-}
 
-interface FormState {
-  yonetici_ad: string;
+// Formdaki tek yonetici satiri. Parola bos string = "verilmedi" (govdeye hic
+// konmaz) -> backend tek seferlik gecici kod uretir.
+interface YoneticiForm {
+  ad: string;
   phone: string;
   password: string;
 }
-const EMPTY: FormState = { yonetici_ad: "", phone: "", password: "" };
+interface FormState {
+  ad: string;
+  yonetim_email: string;
+  yoneticiler: YoneticiForm[];
+}
+const BOS_YONETICI: YoneticiForm = { ad: "", phone: "", password: "" };
+// Ilk satir HER ZAMAN vardir ve BIRINCIL'dir (kaldirilamaz) — backend en az bir
+// yonetici bekler ve listenin ilkini birincil isaretler.
+const EMPTY: FormState = { ad: "", yonetim_email: "", yoneticiler: [{ ...BOS_YONETICI }] };
 
 function fmtDate(iso: string): string {
   try {
@@ -72,29 +78,44 @@ export default function TenantsPage() {
     }
   }
 
+  function setYonetici(i: number, patch: Partial<YoneticiForm>) {
+    setForm({
+      ...form,
+      yoneticiler: form.yoneticiler.map((y, j) => (j === i ? { ...y, ...patch } : y)),
+    });
+  }
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setFormErr(null);
     try {
-      // Parola bossa backend TEK SEFERLIK gecici kod uretir (temp_code).
-      const body: Record<string, unknown> = {
-        yonetici_ad: form.yonetici_ad,
-        phone: form.phone,
+      const body: TenantAdminCreate = {
+        yoneticiler: form.yoneticiler.map((y) => ({
+          ad: y.ad,
+          phone: y.phone,
+          ...(y.password ? { password: y.password } : {}),
+        })),
       };
-      if (form.password) body.password = form.password;
-      const created = await apiSend<CreatedOut>("/api/tenants", "POST", body);
-      if (created?.temp_code) {
+      if (form.ad.trim()) body.ad = form.ad.trim();
+      if (form.yonetim_email.trim()) body.yonetim_email = form.yonetim_email.trim();
+
+      const created = await apiSend<TenantAdminCreatedOut>("/api/tenants", "POST", body);
+
+      // Gecici kod YALNIZ parolasiz acilan yonetici icin ve BIR KEZ doner —
+      // her kod kendi yoneticisinin adiyla listelenir ki yanlis kisiye gitmesin.
+      const kodlar = (created?.yoneticiler ?? []).filter((y) => y.temp_code);
+      if (kodlar.length) {
         window.alert(
-          `Tesis + yönetici oluşturuldu.\nGeçici giriş kodu: ${created.temp_code}\n\n` +
-            `Bu kod yalnızca bir kez gösterilir; yöneticiye iletin. Yönetici cep ` +
-            `telefonu + bu kod ile girip kalıcı parolasını belirler, sonra ilk ` +
-            `girişte tesisini adlandırır.`,
+          "Tesis + yöneticiler oluşturuldu.\n\nGeçici giriş kodları:\n" +
+            kodlar
+              .map((y) => `• ${y.ad}${y.birincil ? " (birincil)" : ""}: ${y.temp_code}`)
+              .join("\n") +
+            "\n\nHer yönetici telefonu + kendi kodu ile girip kalıcı parolasını belirler.",
         );
       } else {
         window.alert(
-          `Tesis + yönetici oluşturuldu.\nYönetici belirlediğiniz parola ile giriş ` +
-            `yapıp ilk girişte tesisini adlandırır.`,
+          "Tesis + yöneticiler oluşturuldu.\nYöneticiler belirlediğiniz parola ile giriş yapar.",
         );
       }
       setOpen(false);
@@ -132,44 +153,108 @@ export default function TenantsPage() {
         <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
           <h2 className="font-medium">Yeni tesis + yönetici</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Yönetici adı">
+            <Field
+              label="Tesis adı (opsiyonel)"
+              hint="Boş bırakırsanız yönetici ilk girişte kendisi belirler."
+            >
               <input
                 className={inputCls}
-                value={form.yonetici_ad}
-                onChange={(e) => setForm({ ...form, yonetici_ad: e.target.value })}
-                required
+                value={form.ad}
+                onChange={(e) => setForm({ ...form, ad: e.target.value })}
                 minLength={2}
+                placeholder="örn. Acme Plaza"
               />
             </Field>
             <Field
-              label="Cep telefonu (giriş anahtarı)"
-              hint="Global benzersiz; yönetici telefonla giriş yapar"
+              label="Yönetim maili (opsiyonel)"
+              hint="Yönetici iletişim kartında herkese görünür."
             >
               <input
+                type="email"
                 className={inputCls}
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="örn. 0532 111 22 03"
-                required
-              />
-            </Field>
-            <Field
-              label="Parola (opsiyonel)"
-              hint="Boş bırakırsanız tek seferlik geçici kod üretilir"
-            >
-              <input
-                type="password"
-                className={inputCls}
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                minLength={8}
-                placeholder="Boş: geçici kod"
+                value={form.yonetim_email}
+                onChange={(e) => setForm({ ...form, yonetim_email: e.target.value })}
+                placeholder="örn. yonetim@acme.com"
               />
             </Field>
           </div>
-          <p className="text-xs text-muted">
-            Tesis adı burada girilmez — yönetici uygulamaya ilk girişte kendisi belirler.
-          </p>
+
+          <div className="space-y-4">
+            {form.yoneticiler.map((y, i) => (
+              <div key={i} className="rounded-lg border border-slate-200 p-4">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-medium">
+                      {i === 0 ? "Birincil yönetici" : `Yönetici ${i + 1}`}
+                    </h3>
+                    {i === 0 && (
+                      <p className="text-xs text-muted">Tesisi ilk girişte adlandırır.</p>
+                    )}
+                  </div>
+                  {i > 0 && (
+                    <button
+                      type="button"
+                      className="rounded-lg px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          yoneticiler: form.yoneticiler.filter((_, j) => j !== i),
+                        })
+                      }
+                    >
+                      Kaldır
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Ad soyad">
+                    <input
+                      className={inputCls}
+                      value={y.ad}
+                      onChange={(e) => setYonetici(i, { ad: e.target.value })}
+                      required
+                      minLength={2}
+                    />
+                  </Field>
+                  <Field
+                    label="Cep telefonu (giriş anahtarı)"
+                    hint="Global benzersiz; yönetici telefonla giriş yapar"
+                  >
+                    <input
+                      className={inputCls}
+                      value={y.phone}
+                      onChange={(e) => setYonetici(i, { phone: e.target.value })}
+                      placeholder="örn. 0532 111 22 03"
+                      required
+                    />
+                  </Field>
+                  <Field
+                    label="Parola (opsiyonel)"
+                    hint="Boş bırakırsanız tek seferlik geçici kod üretilir"
+                  >
+                    <input
+                      type="password"
+                      className={inputCls}
+                      value={y.password}
+                      onChange={(e) => setYonetici(i, { password: e.target.value })}
+                      minLength={8}
+                      placeholder="Boş: geçici kod"
+                    />
+                  </Field>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              className={btnGhost}
+              onClick={() =>
+                setForm({ ...form, yoneticiler: [...form.yoneticiler, { ...BOS_YONETICI }] })
+              }
+            >
+              + Yönetici ekle
+            </button>
+          </div>
+
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>

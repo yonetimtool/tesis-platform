@@ -20,7 +20,6 @@ const LINKS = [
   { href: "/dues", label: "Aidat" },
   { href: "/reports/dues", label: "Raporlar" },
   { href: "/users", label: "Kullanıcılar" },
-  { href: "/emergency", label: "Acil Durum" },
   { href: "/announcements", label: "Duyurular" },
   { href: "/complaints", label: "Talepler" },
   { href: "/notifications", label: "Bildirimler" },

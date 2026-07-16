@@ -4,8 +4,7 @@ export type PatrolWindowDurum = "bekliyor" | "tamamlandi" | "kacirildi";
 export type AlarmTip =
   | "kacirilan_tur"
   | "eksik_checkpoint"
-  | "gecikmis_okutma"
-  | "acil_durum";
+  | "gecikmis_okutma";
 
 export interface AktifTur {
   patrol_window_id: string;
@@ -406,26 +405,6 @@ export interface TaskCompletionList {
   items: TaskCompletion[];
 }
 
-// ------------------------------ emergency ---------------------------------- #
-export type EmergencyDurum = "acik" | "cozuldu";
-
-export interface EmergencyAlert {
-  id: string;
-  tetikleyen_user_id: string;
-  tetiklenme_zamani: string;
-  gps_lat?: number | null;
-  gps_lng?: number | null;
-  durum: string;
-  cozen_user_id?: string | null;
-  cozulme_zamani?: string | null;
-  notlar?: string | null;
-  created_at: string;
-}
-export interface EmergencyList {
-  meta: PageMeta;
-  items: EmergencyAlert[];
-}
-
 // --------------------- task completions (gecmis) --------------------------- #
 export interface TaskCompletionRow {
   id: string;
@@ -457,8 +436,37 @@ export interface TenantSettings {
   ad: string;
   slug: string;
   timezone: string;
-  acil_durum_telefon?: string | null;
+  // false ise tesisi BIRINCIL yonetici ilk giriste adlandirir (mobil kapisi).
+  kurulum_tamamlandi: boolean;
+  // Tesis yonetim maili (tenant seviyesi) — yonetici iletisim kartinda gorunur.
+  yonetim_email?: string | null;
 }
+
+// ------------------------ tenant olusturma (admin) ------------------------- #
+/** `POST /tenants` govdesindeki tek yonetici satiri. Telefon = giris anahtari
+ *  (global benzersiz). Parola bos ise backend tek seferlik gecici kod uretir. */
+export type YoneticiCreate = { ad: string; phone: string; password?: string };
+
+/** ILK yonetici BIRINCIL'dir (tesisi ilk giriste adlandirir). `ad` verilmezse
+ *  backend yer tutucu ad + rastgele slug atar. */
+export type TenantAdminCreate = {
+  ad?: string;
+  yonetim_email?: string;
+  yoneticiler: YoneticiCreate[];
+};
+
+export type YoneticiCreatedOut = {
+  user_id: string;
+  ad: string;
+  birincil: boolean;
+  /** YALNIZ parolasiz acilan yonetici icin ve BIR KEZ doner. */
+  temp_code: string | null;
+};
+
+export type TenantAdminCreatedOut = {
+  tenant_id: string;
+  yoneticiler: YoneticiCreatedOut[];
+};
 
 // --------------------------- integrations (C1b) ---------------------------- #
 export type IntegrationChannel = "webhook" | "megaphone" | "smarthome";

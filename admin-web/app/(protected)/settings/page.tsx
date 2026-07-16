@@ -16,7 +16,6 @@ export default function SettingsPage() {
 
   const [ad, setAd] = useState("");
   const [timezone, setTimezone] = useState("");
-  const [telefon, setTelefon] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -27,7 +26,6 @@ export default function SettingsPage() {
     if (data && !loaded) {
       setAd(data.ad);
       setTimezone(data.timezone);
-      setTelefon(data.acil_durum_telefon ?? "");
       setLoaded(true);
     }
   }, [data, loaded]);
@@ -36,18 +34,9 @@ export default function SettingsPage() {
     e.preventDefault();
     setFormErr(null);
     setOk(null);
-    const tel = telefon.trim();
-    if (tel && !/^[+0-9 ()-]{7,}$/.test(tel)) {
-      setFormErr("Telefon formatı geçersiz (örn. +905551234567).");
-      return;
-    }
     setSaving(true);
     try {
-      await apiSend("/api/tenant/settings", "PATCH", {
-        ad,
-        timezone,
-        acil_durum_telefon: tel || null,
-      });
+      await apiSend("/api/tenant/settings", "PATCH", { ad, timezone });
       setOk("Ayarlar kaydedildi.");
       mutate();
     } catch (err) {
@@ -87,19 +76,6 @@ export default function SettingsPage() {
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
               required
-            />
-          </Field>
-
-          <Field
-            label="Acil durum yönetim telefonu"
-            hint="Saha güvenliği panik bastığında mobil bu numarayı tel: ile arar. Örn: +905551234567"
-          >
-            <input
-              className={inputCls}
-              value={telefon}
-              onChange={(e) => setTelefon(e.target.value)}
-              placeholder="+905551234567"
-              inputMode="tel"
             />
           </Field>
 

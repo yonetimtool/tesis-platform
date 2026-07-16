@@ -91,7 +91,7 @@ components/Nav.tsx            ust menu + cikis
 ## Sayfalar
 
 - **Canli Panel** (`/dashboard`): bugunku turlar (bekliyor/tamamlandi/kacirildi rozetli) +
-  okutulan/beklenen sayilari + son alarmlar (acil durum kirmizi ve en ustte — backend siralar).
+  okutulan/beklenen sayilari + son alarmlar (`created_at DESC` — backend siralar).
   15 sn'de bir otomatik yenilenir.
 - **Bildirimler** (`/notifications`): liste, okundu/okunmamis filtresi, sayfalama (limit/offset),
   `PATCH /notifications/{id}` ile okundu isaretleme.

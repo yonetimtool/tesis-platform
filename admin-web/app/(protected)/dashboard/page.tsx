@@ -20,18 +20,11 @@ function DurumRozet({ durum }: { durum: string }) {
 }
 
 function AlarmSatir({ alarm }: { alarm: Alarm }) {
-  const acil = alarm.tip === "acil_durum";
   return (
-    <li
-      className={`flex items-start justify-between gap-3 rounded-lg border px-3 py-2 ${
-        acil ? "border-red-300 bg-red-50" : "border-slate-200 bg-white"
-      }`}
-    >
+    <li className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
       <div>
         <div className="flex items-center gap-2">
-          <span className={`text-xs font-semibold ${acil ? "text-red-700" : "text-slate-500"}`}>
-            {acil ? "ACİL DURUM" : alarm.tip}
-          </span>
+          <span className="text-xs font-semibold text-slate-500">{alarm.tip}</span>
         </div>
         <p className="text-sm text-slate-800">{alarm.mesaj}</p>
       </div>
