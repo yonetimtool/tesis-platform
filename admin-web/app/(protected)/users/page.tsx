@@ -1,9 +1,12 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, Pager, inputCls, btnPrimary, btnGhost } from "@/components/form";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { ROLE_OPTIONS as ROLES, ROLE_STYLE, roleLabel } from "@/lib/roles";
@@ -29,6 +32,7 @@ const EMPTY: FormState = {
 };
 
 export default function UsersPage() {
+  const toast = useToast();
   const [offset, setOffset] = useState(0);
   const [role, setRole] = useState<string>("");
   const [aktif, setAktif] = useState<string>("");
@@ -129,6 +133,7 @@ export default function UsersPage() {
       }
       setOpen(false);
       mutate();
+      toast.success(editingId ? "Kullanıcı güncellendi." : "Kullanıcı oluşturuldu.");
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
       setFormErr(
@@ -145,19 +150,22 @@ export default function UsersPage() {
     try {
       await apiSend(`/api/users/${u.id}`, "PATCH", { is_active: active });
       mutate();
+      toast.success(active ? "Kullanıcı aktifleştirildi." : "Kullanıcı pasifleştirildi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Güncellenemedi.");
+      toast.error(err instanceof Error ? err.message : "Güncellenemedi.");
     }
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Kullanıcılar</h1>
-        <button className={btnPrimary} onClick={openNew}>
-          Yeni kullanıcı
-        </button>
-      </div>
+      <PageHeader
+        title="Kullanıcılar"
+        action={
+          <button className={btnPrimary} onClick={openNew}>
+            Yeni kullanıcı
+          </button>
+        }
+      />
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-44">
@@ -197,7 +205,7 @@ export default function UsersPage() {
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
-        <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{editingId ? "Kullanıcı düzenle" : "Yeni kullanıcı"}</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Ad">
@@ -280,72 +288,74 @@ export default function UsersPage() {
               İptal
             </button>
           </div>
-        </form>
+        </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-3 py-2 font-medium">Ad</th>
-              <th className="px-3 py-2 font-medium">E-posta</th>
-              <th className="px-3 py-2 font-medium">Aranabilir</th>
-              <th className="px-3 py-2 font-medium">Rol</th>
-              <th className="px-3 py-2 font-medium">Durum</th>
-              <th className="px-3 py-2 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {(data?.items ?? []).map((u) => (
-              <tr key={u.id} className={`border-t border-slate-100 ${u.is_active ? "" : "opacity-60"}`}>
-                <td className="px-3 py-2">{u.ad}</td>
-                <td className="px-3 py-2 text-slate-600">{u.email}</td>
-                <td className="px-3 py-2 text-slate-600">
-                  {u.aranabilir ? "Evet" : "—"}
-                </td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_STYLE[u.role] ?? "bg-slate-100 text-slate-700"}`}
-                  >
-                    {roleLabel(u.role)}
-                  </span>
-                </td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      u.is_active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-600"
-                    }`}
-                  >
-                    {u.is_active ? "aktif" : "pasif"}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button className={btnGhost} onClick={() => openEdit(u)}>
-                      Düzenle
-                    </button>
-                    {u.is_active ? (
-                      <button className={btnGhost} onClick={() => setActive(u, false)}>
-                        Pasifleştir
-                      </button>
-                    ) : (
-                      <button className={btnGhost} onClick={() => setActive(u, true)}>
-                        Aktifleştir
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {data && data.items.length === 0 && (
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={6}>
-                  Kullanıcı yok.
-                </td>
+                <th className="px-4 py-2.5 font-medium">Ad</th>
+                <th className="px-4 py-2.5 font-medium">E-posta</th>
+                <th className="px-4 py-2.5 font-medium">Aranabilir</th>
+                <th className="px-4 py-2.5 font-medium">Rol</th>
+                <th className="px-4 py-2.5 font-medium">Durum</th>
+                <th className="px-4 py-2.5 font-medium" />
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(data?.items ?? []).map((u) => (
+                <tr key={u.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${u.is_active ? "" : "opacity-60"}`}>
+                  <td className="px-4 py-2.5">{u.ad}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{u.email}</td>
+                  <td className="px-4 py-2.5 text-slate-600">
+                    {u.aranabilir ? "Evet" : "—"}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_STYLE[u.role] ?? "bg-slate-100 text-slate-700"}`}
+                    >
+                      {roleLabel(u.role)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        u.is_active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-600"
+                      }`}
+                    >
+                      {u.is_active ? "aktif" : "pasif"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button className={btnGhost} onClick={() => openEdit(u)}>
+                        Düzenle
+                      </button>
+                      {u.is_active ? (
+                        <button className={btnGhost} onClick={() => setActive(u, false)}>
+                          Pasifleştir
+                        </button>
+                      ) : (
+                        <button className={btnGhost} onClick={() => setActive(u, true)}>
+                          Aktifleştir
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {data && data.items.length === 0 && (
+                <tr>
+                  <td colSpan={6}>
+                    <EmptyState title="Kullanıcı yok" description="Filtreyi değiştirin ya da yeni bir kullanıcı ekleyin." />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {data && (

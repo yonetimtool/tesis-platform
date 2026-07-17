@@ -1,9 +1,12 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useRef, useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, Pager, inputCls, btnPrimary, btnGhost, btnDanger } from "@/components/form";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, cardCls, panelCls, panelMotion } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type { Announcement, AnnouncementList, PresignTicket } from "@/lib/types";
@@ -42,6 +45,7 @@ const PHOTO_EMPTY: PhotoState = {
 // Duyuru olusturmada backend, tenant'in TUM aktif cihazlarina push dener
 // (auth.md §4) — panelden gonderilen duyuru mobil kullanicilara da duser.
 export default function AnnouncementsPage() {
+  const toast = useToast();
   const [offset, setOffset] = useState(0);
   const { data, error, isLoading, mutate } = useSWR<AnnouncementList>(
     `/api/announcements?limit=${LIMIT}&offset=${offset}`,
@@ -132,6 +136,7 @@ export default function AnnouncementsPage() {
       setOpen(false);
       resetPhoto();
       mutate();
+      toast.success("Duyuru güncellendi.");
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -144,14 +149,15 @@ export default function AnnouncementsPage() {
     try {
       await apiSend(`/api/announcements/${a.id}`, "DELETE");
       mutate();
+      toast.success("Duyuru silindi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }
   }
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-semibold">Duyurular</h1>
+      <PageHeader title="Duyurular" />
 
       <p className="text-sm text-muted">
         Duyuruyu SİTE YÖNETİCİSİ mobil uygulamadan oluşturur; panel yalnız
@@ -163,7 +169,7 @@ export default function AnnouncementsPage() {
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
-        <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">Duyuru düzenle</h2>
           <Field label="Başlık" hint="En fazla 200 karakter">
             <input
@@ -230,12 +236,12 @@ export default function AnnouncementsPage() {
               İptal
             </button>
           </div>
-        </form>
+        </motion.form>
       )}
 
       <ul className="space-y-3">
         {(data?.items ?? []).map((a) => (
-          <li key={a.id} className="rounded-xl border border-slate-200 bg-white p-5">
+          <li key={a.id} className={`${cardCls} p-5`}>
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <h3 className="font-medium">{a.baslik}</h3>
@@ -268,9 +274,10 @@ export default function AnnouncementsPage() {
           </li>
         ))}
         {data && data.items.length === 0 && (
-          <li className="rounded-xl border border-slate-200 bg-white p-6 text-center text-muted">
-            Henüz duyuru yok.
-          </li>
+          <EmptyState
+            title="Henüz duyuru yok"
+            description="Duyurular site yöneticisi tarafından mobil uygulamadan oluşturulur."
+          />
         )}
       </ul>
 

@@ -1,17 +1,23 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
+import { EmptyState } from "@/components/EmptyState";
 import {
   Field,
   ErrorBox,
   Pager,
+  PageHeader,
   inputCls,
   btnPrimary,
   btnGhost,
   btnDanger,
+  panelCls,
+  panelMotion,
 } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { GunTipi, Shift, ShiftList } from "@/lib/types";
@@ -42,6 +48,7 @@ function gunTipiLabel(v: string): string {
 }
 
 export default function ShiftsPage() {
+  const toast = useToast();
   const [offset, setOffset] = useState(0);
   const { data, error, isLoading, mutate } = useSWR<ShiftList>(
     `/api/shifts?limit=${LIMIT}&offset=${offset}`,
@@ -81,6 +88,7 @@ export default function ShiftsPage() {
       else await apiSend("/api/shifts", "POST", form);
       setOpen(false);
       mutate();
+      toast.success(editingId ? "Vardiya güncellendi." : "Vardiya oluşturuldu.");
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -93,8 +101,9 @@ export default function ShiftsPage() {
     try {
       await apiSend(`/api/shifts/${s.id}`, "DELETE");
       mutate();
+      toast.success("Vardiya silindi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }
   }
 
@@ -102,21 +111,20 @@ export default function ShiftsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Vardiyalar</h1>
-        <button className={btnPrimary} onClick={openNew}>
-          Yeni vardiya
-        </button>
-      </div>
+      <PageHeader
+        title="Vardiyalar"
+        action={
+          <button className={btnPrimary} onClick={openNew}>
+            Yeni vardiya
+          </button>
+        }
+      />
 
       {error && <ErrorBox message={error.message} />}
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
-        <form
-          onSubmit={save}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-5"
-        >
+        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{editingId ? "Vardiya düzenle" : "Yeni vardiya"}</h2>
           <Field label="Ad">
             <input
@@ -173,48 +181,50 @@ export default function ShiftsPage() {
               İptal
             </button>
           </div>
-        </form>
+        </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-3 py-2 font-medium">Ad</th>
-              <th className="px-3 py-2 font-medium">Saat</th>
-              <th className="px-3 py-2 font-medium">Gün tipi</th>
-              <th className="px-3 py-2 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {(data?.items ?? []).map((s) => (
-              <tr key={s.id} className="border-t border-slate-100">
-                <td className="px-3 py-2">{s.ad}</td>
-                <td className="px-3 py-2 text-slate-600">
-                  {s.baslangic_saat} – {s.bitis_saat}
-                </td>
-                <td className="px-3 py-2 text-slate-600">{gunTipiLabel(s.gun_tipi)}</td>
-                <td className="px-3 py-2 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button className={btnGhost} onClick={() => openEdit(s)}>
-                      Düzenle
-                    </button>
-                    <button className={btnDanger} onClick={() => remove(s)}>
-                      Sil
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {data && data.items.length === 0 && (
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={4}>
-                  Vardiya yok.
-                </td>
+                <th className="px-4 py-2.5 font-medium">Ad</th>
+                <th className="px-4 py-2.5 font-medium">Saat</th>
+                <th className="px-4 py-2.5 font-medium">Gün tipi</th>
+                <th className="px-4 py-2.5 font-medium" />
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(data?.items ?? []).map((s) => (
+                <tr key={s.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                  <td className="px-4 py-2.5">{s.ad}</td>
+                  <td className="px-4 py-2.5 text-slate-600 tabular-nums">
+                    {s.baslangic_saat} – {s.bitis_saat}
+                  </td>
+                  <td className="px-4 py-2.5 text-slate-600">{gunTipiLabel(s.gun_tipi)}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button className={btnGhost} onClick={() => openEdit(s)}>
+                        Düzenle
+                      </button>
+                      <button className={btnDanger} onClick={() => remove(s)}>
+                        Sil
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {data && data.items.length === 0 && (
+                <tr>
+                  <td colSpan={4}>
+                    <EmptyState title="Vardiya yok" description="İlk vardiyayı ekleyerek başlayın." />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {data && (

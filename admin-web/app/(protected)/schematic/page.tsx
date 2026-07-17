@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { ErrorBox } from "@/components/form";
+import { ErrorBox, PageHeader, cardCls } from "@/components/form";
 import { jsonFetcher } from "@/lib/fetcher";
 import type {
   BuildingMap,
@@ -71,7 +71,7 @@ function Legend() {
     </span>
   );
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-3">
+    <div className={`flex flex-wrap items-center gap-4 ${cardCls} p-3`}>
       <span className="text-sm font-medium">Yoğunluk:</span>
       {item("yesil", "0–2 (yeşil)")}
       {item("sari", "3–4 (sarı)")}
@@ -91,7 +91,7 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
   const items: UnitComplaint[] = data?.items ?? [];
 
   return (
-    <div className="space-y-3 rounded-xl border border-slate-300 bg-white p-5">
+    <div className={`space-y-3 ${cardCls} p-5`}>
       <div className="flex items-center gap-2">
         <span className={`inline-block h-4 w-4 rounded ${c.dot}`} />
         <h2 className="text-lg font-medium">Daire {unit.unit_no}</h2>
@@ -142,9 +142,7 @@ export default function SchematicPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Şikayet Haritası</h1>
-      </div>
+      <PageHeader title="Şikayet Haritası" />
 
       <Legend />
 
@@ -157,7 +155,7 @@ export default function SchematicPage() {
           {(data?.bloklar ?? []).map((blok) => (
             <div
               key={blok.blok}
-              className="space-y-3 rounded-xl border border-slate-200 bg-white p-5"
+              className={`space-y-3 ${cardCls} p-5`}
             >
               <h2 className="font-medium">Blok {blok.blok}</h2>
               {/* building-map kat'i ARTAN doner; kat plani icin AZALAN goster */}
@@ -203,7 +201,7 @@ export default function SchematicPage() {
           )}
 
           {data && data.bloklar.length === 0 && (data.unplaced?.length ?? 0) === 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-muted">
+            <div className={`${cardCls} p-8 text-center text-muted`}>
               Henüz daire yok.
             </div>
           )}

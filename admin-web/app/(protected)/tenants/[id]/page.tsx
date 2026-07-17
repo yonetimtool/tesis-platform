@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, btnPrimary, btnGhost, inputCls } from "@/components/form";
+import { Field, ErrorBox, btnPrimary, btnGhost, inputCls, cardCls } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 
@@ -33,6 +34,7 @@ function fmtDate(iso: string): string {
 }
 
 export default function TenantDetailPage() {
+  const toast = useToast();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data, error, isLoading, mutate } = useSWR<TenantDetail>(
@@ -69,6 +71,7 @@ export default function TenantDetailPage() {
       await apiSend(`/api/tenants/${id}`, "PATCH", { ad: nameInput.trim() });
       setNameEditing(false);
       mutate();
+      toast.success("Tesis adı güncellendi.");
     } catch (err) {
       setNameErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -94,6 +97,7 @@ export default function TenantDetailPage() {
       await apiSend(`/api/tenants/${id}/yonetici`, "PATCH", body);
       setEditing(false);
       mutate();
+      toast.success("Yönetici güncellendi.");
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
       setFormErr(/telefon|zaten kay/i.test(m) ? "Bu telefon zaten kayıtlı." : m);
@@ -110,8 +114,9 @@ export default function TenantDetailPage() {
     try {
       await apiSend(`/api/tenants/${id}/yonetici`, "PATCH", { is_active: next });
       mutate();
+      toast.success(next ? "Yönetici aktifleştirildi." : "Yönetici pasifleştirildi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Güncellenemedi.");
+      toast.error(err instanceof Error ? err.message : "Güncellenemedi.");
     } finally {
       setBusy(false);
     }
@@ -131,7 +136,7 @@ export default function TenantDetailPage() {
       );
       mutate();
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Sıfırlanamadı.");
+      toast.error(err instanceof Error ? err.message : "Sıfırlanamadı.");
     } finally {
       setBusy(false);
     }
@@ -143,7 +148,7 @@ export default function TenantDetailPage() {
       await apiSend(`/api/tenants/${id}`, "DELETE");
       router.push("/tenants");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : "Silinemedi.");
       setBusy(false);
     }
   }
@@ -161,7 +166,7 @@ export default function TenantDetailPage() {
 
       {data && (
         <>
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className={`${cardCls} p-5`}>
             {!nameEditing && (
               <>
                 <div className="flex items-start justify-between">
@@ -221,7 +226,7 @@ export default function TenantDetailPage() {
             )}
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className={`${cardCls} p-5`}>
             <h2 className="mb-3 font-medium">Yönetici</h2>
             {!y && <p className="text-sm text-muted">Bu tesiste yönetici yok.</p>}
 

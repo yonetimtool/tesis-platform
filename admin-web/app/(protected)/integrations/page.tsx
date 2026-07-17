@@ -1,9 +1,12 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, inputCls, btnPrimary, btnGhost, btnDanger } from "@/components/form";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type {
@@ -44,6 +47,7 @@ const METHODS: HttpMethod[] = ["POST", "PUT", "PATCH", "GET"];
 const AUTH_TYPES: AuthType[] = ["none", "bearer", "api_key"];
 
 export default function IntegrationsPage() {
+  const toast = useToast();
   const { data, error, isLoading, mutate } = useSWR<IntegrationList>(
     "/api/integrations?limit=200",
     jsonFetcher,
@@ -129,6 +133,7 @@ export default function IntegrationsPage() {
       else await apiSend("/api/integrations", "POST", base);
       setOpen(false);
       mutate();
+      toast.success(editingId ? "Entegrasyon güncellendi." : "Entegrasyon oluşturuldu.");
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -141,8 +146,9 @@ export default function IntegrationsPage() {
     try {
       await apiSend(`/api/integrations/${it.id}`, "DELETE");
       mutate();
+      toast.success("Entegrasyon silindi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }
   }
 
@@ -167,24 +173,21 @@ export default function IntegrationsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Entegrasyonlar</h1>
-          <p className="text-sm text-muted">
-            Dış sistemler (megafon / akıllı ev / genel webhook) — API bilgisi girin,
-            tetikleyin. Giden istekler SSRF korumasından geçer.
-          </p>
-        </div>
-        <button className={btnPrimary} onClick={openNew}>
-          Yeni entegrasyon
-        </button>
-      </div>
+      <PageHeader
+        title="Entegrasyonlar"
+        subtitle="Dış sistemler (megafon / akıllı ev / genel webhook) — API bilgisi girin, tetikleyin. Giden istekler SSRF korumasından geçer."
+        action={
+          <button className={btnPrimary} onClick={openNew}>
+            Yeni entegrasyon
+          </button>
+        }
+      />
 
       {error && <ErrorBox message={error.message} />}
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
-        <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{editingId ? "Entegrasyon düzenle" : "Yeni entegrasyon"}</h2>
           {!editingId && presets && presets.length > 0 && (
             <Field label="Hazır şablon (preset)" hint="Doldurur; düzenlenebilir">
@@ -312,37 +315,38 @@ export default function IntegrationsPage() {
               İptal
             </button>
           </div>
-        </form>
+        </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-3 py-2 font-medium">Ad</th>
-              <th className="px-3 py-2 font-medium">Kanal</th>
-              <th className="px-3 py-2 font-medium">Endpoint</th>
-              <th className="px-3 py-2 font-medium">Kimlik</th>
-              <th className="px-3 py-2 font-medium">Aktif</th>
-              <th className="px-3 py-2 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-slate-500">
+              <tr>
+                <th className="px-4 py-2.5 font-medium">Ad</th>
+                <th className="px-4 py-2.5 font-medium">Kanal</th>
+                <th className="px-4 py-2.5 font-medium">Endpoint</th>
+                <th className="px-4 py-2.5 font-medium">Kimlik</th>
+                <th className="px-4 py-2.5 font-medium">Aktif</th>
+                <th className="px-4 py-2.5 font-medium" />
+              </tr>
+            </thead>
+            <tbody>
             {(data?.items ?? []).map((it) => {
               const tr = testResult[it.id];
               return (
-                <tr key={it.id} className={`border-t border-slate-100 ${it.aktif ? "" : "opacity-60"}`}>
-                  <td className="px-3 py-2">{it.ad}</td>
-                  <td className="px-3 py-2 text-slate-600">{it.channel_type}</td>
-                  <td className="px-3 py-2 text-slate-600 max-w-[280px] truncate">
+                <tr key={it.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${it.aktif ? "" : "opacity-60"}`}>
+                  <td className="px-4 py-2.5">{it.ad}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{it.channel_type}</td>
+                  <td className="px-4 py-2.5 text-slate-600 max-w-[280px] truncate">
                     {it.http_method} {it.endpoint_url}
                   </td>
-                  <td className="px-3 py-2 text-slate-600">
+                  <td className="px-4 py-2.5 text-slate-600">
                     {it.auth_type}
                     {it.auth_secret_set ? " 🔒" : ""}
                   </td>
-                  <td className="px-3 py-2">{it.aktif ? "Evet" : "—"}</td>
-                  <td className="px-3 py-2 text-right">
+                  <td className="px-4 py-2.5">{it.aktif ? "Evet" : "—"}</td>
+                  <td className="px-4 py-2.5 text-right">
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex justify-end gap-2">
                         <button
@@ -375,13 +379,14 @@ export default function IntegrationsPage() {
             })}
             {data && data.items.length === 0 && (
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={6}>
-                  Entegrasyon yok.
+                <td colSpan={6}>
+                  <EmptyState title="Entegrasyon yok." description="İlk entegrasyonu ekleyerek başlayın." />
                 </td>
               </tr>
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

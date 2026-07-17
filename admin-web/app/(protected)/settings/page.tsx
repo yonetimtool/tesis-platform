@@ -1,14 +1,17 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, inputCls, btnPrimary } from "@/components/form";
+import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, panelCls, panelMotion } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { TenantSettings } from "@/lib/types";
 
 export default function SettingsPage() {
+  const toast = useToast();
   const { data, error, isLoading, mutate } = useSWR<TenantSettings>(
     "/api/tenant/settings",
     jsonFetcher,
@@ -39,6 +42,7 @@ export default function SettingsPage() {
       await apiSend("/api/tenant/settings", "PATCH", { ad, timezone });
       setOk("Ayarlar kaydedildi.");
       mutate();
+      toast.success("Ayarlar kaydedildi.");
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -48,13 +52,13 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-xl space-y-5">
-      <h1 className="text-2xl font-semibold">Ayarlar</h1>
+      <PageHeader title="Ayarlar" />
 
       {error && <ErrorBox message={error.message} />}
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {data && (
-        <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <div className="grid grid-cols-2 gap-3 text-sm text-muted">
             <div>
               <span className="block font-medium text-slate-700">Tesis kodu (slug)</span>
@@ -85,7 +89,7 @@ export default function SettingsPage() {
           <button type="submit" className={btnPrimary} disabled={saving}>
             {saving ? "Kaydediliyor..." : "Kaydet"}
           </button>
-        </form>
+        </motion.form>
       )}
     </div>
   );

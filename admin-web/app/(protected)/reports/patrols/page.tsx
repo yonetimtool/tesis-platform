@@ -1,9 +1,11 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, Pager, inputCls, btnPrimary, btnGhost } from "@/components/form";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
@@ -96,9 +98,9 @@ export default function PatrolReportPage() {
   return (
     <div className="space-y-6">
       <ReportsTabs />
-      <h1 className="text-2xl font-semibold">Tur Geçmişi Raporu</h1>
+      <PageHeader title="Tur Geçmişi Raporu" />
 
-      <form onSubmit={submit} className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-5">
+      <motion.form {...panelMotion} onSubmit={submit} className={`flex flex-wrap items-end gap-3 ${panelCls}`}>
         <div className="w-52">
           <Field label="Başlangıç" hint="Yerel saat (opsiyonel)">
             <input type="datetime-local" className={inputCls} value={bas} onChange={(e) => setBas(e.target.value)} />
@@ -134,7 +136,7 @@ export default function PatrolReportPage() {
         <button type="submit" className={btnPrimary}>
           Raporu getir
         </button>
-      </form>
+      </motion.form>
 
       {error && <ErrorBox message={error.message} />}
       {committed === null && (
@@ -159,44 +161,46 @@ export default function PatrolReportPage() {
                 CSV indir
               </button>
             </div>
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-left text-slate-500">
-                  <tr>
-                    <th className="px-3 py-2 font-medium">Plan</th>
-                    <th className="px-3 py-2 font-medium">Başlangıç</th>
-                    <th className="px-3 py-2 font-medium">Bitiş</th>
-                    <th className="px-3 py-2 font-medium">Durum</th>
-                    <th className="px-3 py-2 font-medium">Checkpoint</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((w) => (
-                    <tr key={w.id} className="border-t border-slate-100">
-                      <td className="px-3 py-2">{w.plan_adi ?? "—"}</td>
-                      <td className="px-3 py-2 text-slate-600">{formatDateTime(w.pencere_baslangic)}</td>
-                      <td className="px-3 py-2 text-slate-600">{formatDateTime(w.pencere_bitis)}</td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[w.durum] ?? "bg-slate-100 text-slate-700"}`}
-                        >
-                          {w.durum}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-slate-600">
-                        {w.okutulan_checkpoint_sayisi}/{w.beklenen_checkpoint_sayisi}
-                      </td>
-                    </tr>
-                  ))}
-                  {data.items.length === 0 && (
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
-                      <td className="px-3 py-6 text-center text-muted" colSpan={5}>
-                        Pencere yok.
-                      </td>
+                      <th className="px-4 py-2.5 font-medium">Plan</th>
+                      <th className="px-4 py-2.5 font-medium">Başlangıç</th>
+                      <th className="px-4 py-2.5 font-medium">Bitiş</th>
+                      <th className="px-4 py-2.5 font-medium">Durum</th>
+                      <th className="px-4 py-2.5 font-medium">Checkpoint</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {data.items.map((w) => (
+                      <tr key={w.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                        <td className="px-4 py-2.5">{w.plan_adi ?? "—"}</td>
+                        <td className="px-4 py-2.5 text-slate-600">{formatDateTime(w.pencere_baslangic)}</td>
+                        <td className="px-4 py-2.5 text-slate-600">{formatDateTime(w.pencere_bitis)}</td>
+                        <td className="px-4 py-2.5">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[w.durum] ?? "bg-slate-100 text-slate-700"}`}
+                          >
+                            {w.durum}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-slate-600 tabular-nums">
+                          {w.okutulan_checkpoint_sayisi}/{w.beklenen_checkpoint_sayisi}
+                        </td>
+                      </tr>
+                    ))}
+                    {data.items.length === 0 && (
+                      <tr>
+                        <td colSpan={5}>
+                          <EmptyState title="Pencere yok" description="Seçili filtrelerde tur penceresi bulunmuyor." />
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
             <Pager
               offset={offset}

@@ -21,8 +21,8 @@ export function ReportsTabs() {
             href={t.href}
             className={`-mb-px border-b-2 px-3 py-2 text-sm transition ${
               active
-                ? "border-ink font-medium text-ink"
-                : "border-transparent text-slate-500 hover:text-slate-700"
+                ? "border-brand-teal font-medium text-brand-teal"
+                : "border-transparent text-slate-600 hover:text-ink"
             }`}
           >
             {t.label}

@@ -1,17 +1,23 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
+import { EmptyState } from "@/components/EmptyState";
 import {
   Field,
   ErrorBox,
   Pager,
+  PageHeader,
   inputCls,
   btnPrimary,
   btnGhost,
   btnDanger,
+  panelCls,
+  panelMotion,
 } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { Checkpoint, CheckpointList } from "@/lib/types";
@@ -37,6 +43,7 @@ function numOrNull(s: string): number | null {
 }
 
 export default function CheckpointsPage() {
+  const toast = useToast();
   const [offset, setOffset] = useState(0);
   const { data, error, isLoading, mutate } = useSWR<CheckpointList>(
     `/api/checkpoints?limit=${LIMIT}&offset=${offset}`,
@@ -84,6 +91,7 @@ export default function CheckpointsPage() {
       else await apiSend("/api/checkpoints", "POST", body);
       setOpen(false);
       mutate();
+      toast.success(editingId ? "Nokta güncellendi." : "Nokta oluşturuldu.");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Kaydedilemedi.";
       // nfc cakismasi (409) -> anlamli mesaj
@@ -102,28 +110,28 @@ export default function CheckpointsPage() {
     try {
       await apiSend(`/api/checkpoints/${c.id}`, "DELETE");
       mutate();
+      toast.success("Nokta silindi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">NFC Noktaları</h1>
-        <button className={btnPrimary} onClick={openNew}>
-          Yeni nokta
-        </button>
-      </div>
+      <PageHeader
+        title="NFC Noktaları"
+        action={
+          <button className={btnPrimary} onClick={openNew}>
+            Yeni nokta
+          </button>
+        }
+      />
 
       {error && <ErrorBox message={error.message} />}
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
-        <form
-          onSubmit={save}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-5"
-        >
+        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{editingId ? "Nokta düzenle" : "Yeni nokta"}</h2>
           <Field label="Ad">
             <input
@@ -184,60 +192,62 @@ export default function CheckpointsPage() {
               İptal
             </button>
           </div>
-        </form>
+        </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-3 py-2 font-medium">Ad</th>
-              <th className="px-3 py-2 font-medium">NFC UID</th>
-              <th className="px-3 py-2 font-medium">GPS</th>
-              <th className="px-3 py-2 font-medium">Durum</th>
-              <th className="px-3 py-2 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {(data?.items ?? []).map((c) => (
-              <tr key={c.id} className="border-t border-slate-100">
-                <td className="px-3 py-2">{c.ad}</td>
-                <td className="px-3 py-2 font-mono text-slate-600">{c.nfc_tag_uid}</td>
-                <td className="px-3 py-2 text-slate-600">
-                  {c.gps_lat != null && c.gps_lng != null
-                    ? `${c.gps_lat}, ${c.gps_lng}`
-                    : "—"}
-                </td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      c.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {c.aktif ? "aktif" : "pasif"}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button className={btnGhost} onClick={() => openEdit(c)}>
-                      Düzenle
-                    </button>
-                    <button className={btnDanger} onClick={() => remove(c)}>
-                      Sil
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {data && data.items.length === 0 && (
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={5}>
-                  Nokta yok.
-                </td>
+                <th className="px-4 py-2.5 font-medium">Ad</th>
+                <th className="px-4 py-2.5 font-medium">NFC UID</th>
+                <th className="px-4 py-2.5 font-medium">GPS</th>
+                <th className="px-4 py-2.5 font-medium">Durum</th>
+                <th className="px-4 py-2.5 font-medium" />
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(data?.items ?? []).map((c) => (
+                <tr key={c.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                  <td className="px-4 py-2.5">{c.ad}</td>
+                  <td className="px-4 py-2.5 font-mono text-slate-600">{c.nfc_tag_uid}</td>
+                  <td className="px-4 py-2.5 text-slate-600">
+                    {c.gps_lat != null && c.gps_lng != null
+                      ? `${c.gps_lat}, ${c.gps_lng}`
+                      : "—"}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        c.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {c.aktif ? "aktif" : "pasif"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button className={btnGhost} onClick={() => openEdit(c)}>
+                        Düzenle
+                      </button>
+                      <button className={btnDanger} onClick={() => remove(c)}>
+                        Sil
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {data && data.items.length === 0 && (
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyState title="Nokta yok" description="İlk NFC noktasını ekleyerek başlayın." />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {data && (

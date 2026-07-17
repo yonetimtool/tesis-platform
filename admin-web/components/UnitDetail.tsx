@@ -3,7 +3,8 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { ErrorBox, Field, btnDanger, btnGhost, btnPrimary, inputCls } from "@/components/form";
+import { ErrorBox, Field, btnDanger, btnGhost, btnPrimary, cardCls, inputCls } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { kurusToTL, tlToKurus } from "@/lib/money";
@@ -28,6 +29,7 @@ const ROL: { value: ResidentRol; label: string }[] = [
 ];
 
 export function UnitDetail({ unit }: { unit: Unit }) {
+  const toast = useToast();
   const { data: dues, mutate: mutateDues } = useSWR<UnitDuesStatus>(
     `/api/units/${unit.id}/dues`,
     jsonFetcher,
@@ -176,8 +178,9 @@ export function UnitDetail({ unit }: { unit: Unit }) {
     try {
       await apiSend(`/api/units/${unit.id}/residents/${userId}`, "DELETE");
       mutateRes();
+      toast.success("Sakin daireden çıkarıldı.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Hata");
+      toast.error(err instanceof Error ? err.message : "Çıkarılamadı.");
     }
   }
 
@@ -187,7 +190,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
   const residentChoices = (residentUsers?.items ?? []).filter((u) => !atanmisIds.has(u.id));
 
   return (
-    <div className="space-y-5 rounded-xl border border-slate-300 bg-white p-5">
+    <div className={`space-y-5 p-5 ${cardCls}`}>
       <h2 className="text-lg font-medium">Daire {unit.no} — borç durumu</h2>
 
       {/* Bakiye ozeti */}

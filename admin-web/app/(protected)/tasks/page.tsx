@@ -1,9 +1,12 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, Pager, inputCls, btnPrimary, btnGhost, btnDanger } from "@/components/form";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { SAHA_ROLLERI, roleLabel } from "@/lib/roles";
@@ -66,6 +69,7 @@ const EMPTY: FormState = {
 };
 
 export default function TasksPage() {
+  const toast = useToast();
   const [offset, setOffset] = useState(0);
   const [tip, setTip] = useState("");
   const [aktif, setAktif] = useState("");
@@ -151,6 +155,7 @@ export default function TasksPage() {
       else await apiSend("/api/tasks", "POST", body);
       setOpen(false);
       mutate();
+      toast.success(editingId ? "Görev güncellendi." : "Görev oluşturuldu.");
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -164,19 +169,22 @@ export default function TasksPage() {
       await apiSend(`/api/tasks/${t.id}`, "DELETE");
       if (detail?.id === t.id) setDetail(null);
       mutate();
+      toast.success("Görev silindi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Görevler</h1>
-        <button className={btnPrimary} onClick={openNew}>
-          Yeni görev
-        </button>
-      </div>
+      <PageHeader
+        title="Görevler"
+        action={
+          <button className={btnPrimary} onClick={openNew}>
+            Yeni görev
+          </button>
+        }
+      />
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-44">
@@ -239,7 +247,7 @@ export default function TasksPage() {
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
-        <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{editingId ? "Görev düzenle" : "Yeni görev"}</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Tip">
@@ -343,26 +351,27 @@ export default function TasksPage() {
               İptal
             </button>
           </div>
-        </form>
+        </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
-              <th className="px-3 py-2 font-medium">Başlık</th>
-              <th className="px-3 py-2 font-medium">Tip</th>
-              <th className="px-3 py-2 font-medium">Kategori</th>
-              <th className="px-3 py-2 font-medium">Atanan</th>
-              <th className="px-3 py-2 font-medium">Sonraki</th>
-              <th className="px-3 py-2 font-medium">Aktif</th>
-              <th className="px-3 py-2 font-medium" />
+              <th className="px-4 py-2.5 font-medium">Başlık</th>
+              <th className="px-4 py-2.5 font-medium">Tip</th>
+              <th className="px-4 py-2.5 font-medium">Kategori</th>
+              <th className="px-4 py-2.5 font-medium">Atanan</th>
+              <th className="px-4 py-2.5 font-medium">Sonraki</th>
+              <th className="px-4 py-2.5 font-medium">Aktif</th>
+              <th className="px-4 py-2.5 font-medium" />
             </tr>
           </thead>
           <tbody>
             {(data?.items ?? []).map((t) => (
-              <tr key={t.id} className={`border-t border-slate-100 ${t.aktif ? "" : "opacity-60"}`}>
-                <td className="px-3 py-2">
+              <tr key={t.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${t.aktif ? "" : "opacity-60"}`}>
+                <td className="px-4 py-2.5">
                   {t.ad}
                   {t.foto_zorunlu && (
                     <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
@@ -370,14 +379,14 @@ export default function TasksPage() {
                     </span>
                   )}
                 </td>
-                <td className="px-3 py-2 text-slate-600">{tipLabel(t.tip)}</td>
-                <td className="px-3 py-2 text-slate-600">{kategoriAd(t.kategori_id)}</td>
-                <td className="px-3 py-2 text-slate-600">{userName(t.atanan_user_id)}</td>
-                <td className="px-3 py-2 text-slate-600">
+                <td className="px-4 py-2.5 text-slate-600">{tipLabel(t.tip)}</td>
+                <td className="px-4 py-2.5 text-slate-600">{kategoriAd(t.kategori_id)}</td>
+                <td className="px-4 py-2.5 text-slate-600">{userName(t.atanan_user_id)}</td>
+                <td className="px-4 py-2.5 text-slate-600">
                   {t.sonraki_planlanan ? formatDateTime(t.sonraki_planlanan) : "—"}
                 </td>
-                <td className="px-3 py-2 text-slate-600">{t.aktif ? "evet" : "hayır"}</td>
-                <td className="px-3 py-2 text-right">
+                <td className="px-4 py-2.5 text-slate-600">{t.aktif ? "evet" : "hayır"}</td>
+                <td className="px-4 py-2.5 text-right">
                   <div className="flex justify-end gap-2">
                     <button
                       className={btnGhost}
@@ -397,34 +406,36 @@ export default function TasksPage() {
             ))}
             {data && data.items.length === 0 && (
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={7}>
-                  Görev yok.
+                <td colSpan={7}>
+                  <EmptyState title="Görev yok" description="Filtreyi değiştirin ya da yeni bir görev ekleyin." />
                 </td>
               </tr>
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       {detail && (
-        <div className="space-y-3 rounded-xl border border-slate-300 bg-white p-5">
+        <motion.div {...panelMotion} className={`space-y-3 ${panelCls}`}>
           <h2 className="text-lg font-medium">Tamamlanma kayıtları — {detail.ad}</h2>
           <div className="overflow-hidden rounded-lg border border-slate-200">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
-                  <th className="px-3 py-2 font-medium">Zaman</th>
-                  <th className="px-3 py-2 font-medium">Tamamlayan</th>
-                  <th className="px-3 py-2 font-medium">Foto</th>
-                  <th className="px-3 py-2 font-medium">Not</th>
+                  <th className="px-4 py-2.5 font-medium">Zaman</th>
+                  <th className="px-4 py-2.5 font-medium">Tamamlayan</th>
+                  <th className="px-4 py-2.5 font-medium">Foto</th>
+                  <th className="px-4 py-2.5 font-medium">Not</th>
                 </tr>
               </thead>
               <tbody>
                 {(completions?.items ?? []).map((c) => (
-                  <tr key={c.id} className="border-t border-slate-100">
-                    <td className="px-3 py-2 text-slate-600">{formatDateTime(c.tamamlanma_zamani)}</td>
-                    <td className="px-3 py-2">{userName(c.tamamlayan_user_id)}</td>
-                    <td className="px-3 py-2">
+                  <tr key={c.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                    <td className="px-4 py-2.5 text-slate-600">{formatDateTime(c.tamamlanma_zamani)}</td>
+                    <td className="px-4 py-2.5">{userName(c.tamamlayan_user_id)}</td>
+                    <td className="px-4 py-2.5">
                       {c.foto_key ? (
                         <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">
                           foto var
@@ -433,20 +444,21 @@ export default function TasksPage() {
                         <span className="text-muted">yok</span>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-slate-600">{c.notlar ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-slate-600">{c.notlar ?? "—"}</td>
                   </tr>
                 ))}
                 {completions && completions.items.length === 0 && (
                   <tr>
-                    <td className="px-3 py-4 text-center text-muted" colSpan={4}>
-                      Kayıt yok.
+                    <td colSpan={4}>
+                      <EmptyState title="Kayıt yok" />
                     </td>
                   </tr>
                 )}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {data && (

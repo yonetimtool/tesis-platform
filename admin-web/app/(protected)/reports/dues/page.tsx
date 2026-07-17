@@ -1,9 +1,11 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, inputCls, btnPrimary, btnGhost } from "@/components/form";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
@@ -181,9 +183,9 @@ export default function DuesReportPage() {
   return (
     <div className="space-y-6">
       <ReportsTabs />
-      <h1 className="text-2xl font-semibold">Aidat Tahsilat Raporu</h1>
+      <PageHeader title="Aidat Tahsilat Raporu" />
 
-      <form onSubmit={run} className="flex items-end gap-3 rounded-xl border border-slate-200 bg-white p-5">
+      <motion.form {...panelMotion} onSubmit={run} className={`flex items-end gap-3 ${panelCls}`}>
         <div className="w-56">
           <Field label="Dönem" hint="Örnek: 2026-06">
             <input
@@ -197,7 +199,7 @@ export default function DuesReportPage() {
         <button type="submit" className={btnPrimary} disabled={busy}>
           {busy ? "Hesaplanıyor..." : "Raporu getir"}
         </button>
-      </form>
+      </motion.form>
 
       {err && <ErrorBox message={err} />}
       {unitTruncated && (
@@ -237,70 +239,74 @@ export default function DuesReportPage() {
                 CSV indir
               </button>
             </div>
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-left text-slate-500">
-                  <tr>
-                    <th className="px-3 py-2 font-medium">Daire</th>
-                    <th className="px-3 py-2 font-medium">Tahakkuk</th>
-                    <th className="px-3 py-2 font-medium">Ödenen</th>
-                    <th className="px-3 py-2 font-medium">Kalan borç</th>
-                    <th className="px-3 py-2 font-medium">Son ödeme</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.borclular.map((b) => (
-                    <tr key={b.unit_id} className="border-t border-slate-100">
-                      <td className="px-3 py-2">{b.no}</td>
-                      <td className="px-3 py-2 text-slate-600">{kurusToTL(b.tahakkuk)}</td>
-                      <td className="px-3 py-2 text-slate-600">{kurusToTL(b.odenen)}</td>
-                      <td className="px-3 py-2 font-medium text-red-700">{kurusToTL(b.kalan)}</td>
-                      <td className="px-3 py-2 text-slate-600">{b.son_odeme ?? "—"}</td>
-                    </tr>
-                  ))}
-                  {report.borclular.length === 0 && (
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
-                      <td className="px-3 py-6 text-center text-muted" colSpan={5}>
-                        Borçlu daire yok.
-                      </td>
+                      <th className="px-4 py-2.5 font-medium">Daire</th>
+                      <th className="px-4 py-2.5 font-medium">Tahakkuk</th>
+                      <th className="px-4 py-2.5 font-medium">Ödenen</th>
+                      <th className="px-4 py-2.5 font-medium">Kalan borç</th>
+                      <th className="px-4 py-2.5 font-medium">Son ödeme</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {report.borclular.map((b) => (
+                      <tr key={b.unit_id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                        <td className="px-4 py-2.5">{b.no}</td>
+                        <td className="px-4 py-2.5 text-slate-600 tabular-nums">{kurusToTL(b.tahakkuk)}</td>
+                        <td className="px-4 py-2.5 text-slate-600 tabular-nums">{kurusToTL(b.odenen)}</td>
+                        <td className="px-4 py-2.5 font-medium text-red-700 tabular-nums">{kurusToTL(b.kalan)}</td>
+                        <td className="px-4 py-2.5 text-slate-600">{b.son_odeme ?? "—"}</td>
+                      </tr>
+                    ))}
+                    {report.borclular.length === 0 && (
+                      <tr>
+                        <td colSpan={5}>
+                          <EmptyState title="Borçlu daire yok" description="Bu dönemde tüm daireler tam ödeme yapmış." />
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
 
           {/* Odemeler */}
           <section className="space-y-2">
             <h2 className="text-lg font-medium">Dönem tahsilatları (başarılı)</h2>
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-left text-slate-500">
-                  <tr>
-                    <th className="px-3 py-2 font-medium">Daire</th>
-                    <th className="px-3 py-2 font-medium">Tutar</th>
-                    <th className="px-3 py-2 font-medium">Yöntem</th>
-                    <th className="px-3 py-2 font-medium">Zaman</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.odemeler.map((o) => (
-                    <tr key={o.id} className="border-t border-slate-100">
-                      <td className="px-3 py-2">{o.no}</td>
-                      <td className="px-3 py-2 font-medium">{kurusToTL(o.tutar)}</td>
-                      <td className="px-3 py-2 text-slate-600">{o.yontem}</td>
-                      <td className="px-3 py-2 text-slate-600">{formatDateTime(o.zaman)}</td>
-                    </tr>
-                  ))}
-                  {report.odemeler.length === 0 && (
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
-                      <td className="px-3 py-6 text-center text-muted" colSpan={4}>
-                        Bu döneme atfedilen başarılı ödeme yok.
-                      </td>
+                      <th className="px-4 py-2.5 font-medium">Daire</th>
+                      <th className="px-4 py-2.5 font-medium">Tutar</th>
+                      <th className="px-4 py-2.5 font-medium">Yöntem</th>
+                      <th className="px-4 py-2.5 font-medium">Zaman</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {report.odemeler.map((o) => (
+                      <tr key={o.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                        <td className="px-4 py-2.5">{o.no}</td>
+                        <td className="px-4 py-2.5 font-medium tabular-nums">{kurusToTL(o.tutar)}</td>
+                        <td className="px-4 py-2.5 text-slate-600">{o.yontem}</td>
+                        <td className="px-4 py-2.5 text-slate-600">{formatDateTime(o.zaman)}</td>
+                      </tr>
+                    ))}
+                    {report.odemeler.length === 0 && (
+                      <tr>
+                        <td colSpan={4}>
+                          <EmptyState title="Ödeme yok" description="Bu döneme atfedilen başarılı ödeme bulunmuyor." />
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
         </>

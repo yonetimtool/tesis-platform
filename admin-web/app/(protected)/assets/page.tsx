@@ -1,9 +1,12 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, Pager, inputCls, btnPrimary, btnGhost } from "@/components/form";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type {
@@ -38,6 +41,7 @@ interface FormState {
 const EMPTY: FormState = { ad: "", kategori: "", nfc_tag_uid: "", aciklama: "", aktif: true };
 
 export default function AssetsPage() {
+  const toast = useToast();
   const [offset, setOffset] = useState(0);
   const [kategori, setKategori] = useState("");
   const [durum, setDurum] = useState("");
@@ -102,6 +106,7 @@ export default function AssetsPage() {
       else await apiSend("/api/assets", "POST", body);
       setOpen(false);
       mutate();
+      toast.success(editingId ? "Demirbaş güncellendi." : "Demirbaş oluşturuldu.");
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
       setFormErr(/nfc/i.test(m) ? "Bu NFC etiketi başka bir demirbaşta kullanılıyor." : m);
@@ -114,8 +119,9 @@ export default function AssetsPage() {
     try {
       await apiSend(`/api/assets/${a.id}`, "PATCH", { aktif: active });
       mutate();
+      toast.success(active ? "Demirbaş aktifleştirildi." : "Demirbaş pasifleştirildi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Güncellenemedi.");
+      toast.error(err instanceof Error ? err.message : "Güncellenemedi.");
     }
   }
 
@@ -123,12 +129,14 @@ export default function AssetsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Demirbaş</h1>
-        <button className={btnPrimary} onClick={openNew}>
-          Yeni demirbaş
-        </button>
-      </div>
+      <PageHeader
+        title="Demirbaş"
+        action={
+          <button className={btnPrimary} onClick={openNew}>
+            Yeni demirbaş
+          </button>
+        }
+      />
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-44">
@@ -173,7 +181,7 @@ export default function AssetsPage() {
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
-        <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{editingId ? "Demirbaş düzenle" : "Yeni demirbaş"}</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Ad">
@@ -234,36 +242,37 @@ export default function AssetsPage() {
               İptal
             </button>
           </div>
-        </form>
+        </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
-              <th className="px-3 py-2 font-medium">Ad</th>
-              <th className="px-3 py-2 font-medium">Kategori</th>
-              <th className="px-3 py-2 font-medium">NFC</th>
-              <th className="px-3 py-2 font-medium">Durum</th>
-              <th className="px-3 py-2 font-medium">Aktif</th>
-              <th className="px-3 py-2 font-medium" />
+              <th className="px-4 py-2.5 font-medium">Ad</th>
+              <th className="px-4 py-2.5 font-medium">Kategori</th>
+              <th className="px-4 py-2.5 font-medium">NFC</th>
+              <th className="px-4 py-2.5 font-medium">Durum</th>
+              <th className="px-4 py-2.5 font-medium">Aktif</th>
+              <th className="px-4 py-2.5 font-medium" />
             </tr>
           </thead>
           <tbody>
             {(data?.items ?? []).map((a) => (
-              <tr key={a.id} className={`border-t border-slate-100 ${a.aktif ? "" : "opacity-60"}`}>
-                <td className="px-3 py-2">{a.ad}</td>
-                <td className="px-3 py-2 text-slate-600">{a.kategori ?? "—"}</td>
-                <td className="px-3 py-2 font-mono text-slate-600">{a.nfc_tag_uid ?? "—"}</td>
-                <td className="px-3 py-2">
+              <tr key={a.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${a.aktif ? "" : "opacity-60"}`}>
+                <td className="px-4 py-2.5">{a.ad}</td>
+                <td className="px-4 py-2.5 text-slate-600">{a.kategori ?? "—"}</td>
+                <td className="px-4 py-2.5 font-mono text-slate-600">{a.nfc_tag_uid ?? "—"}</td>
+                <td className="px-4 py-2.5">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[a.durum] ?? "bg-slate-100 text-slate-700"}`}
                   >
                     {a.durum}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-slate-600">{a.aktif ? "evet" : "hayır"}</td>
-                <td className="px-3 py-2 text-right">
+                <td className="px-4 py-2.5 text-slate-600">{a.aktif ? "evet" : "hayır"}</td>
+                <td className="px-4 py-2.5 text-right">
                   <div className="flex justify-end gap-2">
                     <button
                       className={btnGhost}
@@ -283,17 +292,18 @@ export default function AssetsPage() {
             ))}
             {data && data.items.length === 0 && (
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={6}>
-                  Demirbaş yok.
+                <td colSpan={6}>
+                  <EmptyState title="Demirbaş yok" description="Filtreyi değiştirin ya da yeni bir demirbaş ekleyin." />
                 </td>
               </tr>
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       {detail && (
-        <div className="space-y-3 rounded-xl border border-slate-300 bg-white p-5">
+        <motion.div {...panelMotion} className={`space-y-3 ${panelCls}`}>
           <h2 className="text-lg font-medium">Zimmet — {detail.ad}</h2>
           <p className="text-sm">
             {openCheckout ? (
@@ -309,35 +319,37 @@ export default function AssetsPage() {
             Zimmet al/bırak sahada NFC ile mobilde yapılır; panel yalnızca görüntüler.
           </p>
           <div className="overflow-hidden rounded-lg border border-slate-200">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
-                  <th className="px-3 py-2 font-medium">Alan</th>
-                  <th className="px-3 py-2 font-medium">Alma</th>
-                  <th className="px-3 py-2 font-medium">Bırakma</th>
+                  <th className="px-4 py-2.5 font-medium">Alan</th>
+                  <th className="px-4 py-2.5 font-medium">Alma</th>
+                  <th className="px-4 py-2.5 font-medium">Bırakma</th>
                 </tr>
               </thead>
               <tbody>
                 {(history?.items ?? []).map((h) => (
-                  <tr key={h.id} className="border-t border-slate-100">
-                    <td className="px-3 py-2">{userName(h.alan_user_id)}</td>
-                    <td className="px-3 py-2 text-slate-600">{formatDateTime(h.alma_zamani)}</td>
-                    <td className="px-3 py-2 text-slate-600">
+                  <tr key={h.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                    <td className="px-4 py-2.5">{userName(h.alan_user_id)}</td>
+                    <td className="px-4 py-2.5 text-slate-600">{formatDateTime(h.alma_zamani)}</td>
+                    <td className="px-4 py-2.5 text-slate-600">
                       {h.birakma_zamani ? formatDateTime(h.birakma_zamani) : "— açık —"}
                     </td>
                   </tr>
                 ))}
                 {history && history.items.length === 0 && (
                   <tr>
-                    <td className="px-3 py-4 text-center text-muted" colSpan={3}>
-                      Zimmet kaydı yok.
+                    <td colSpan={3}>
+                      <EmptyState title="Zimmet kaydı yok" />
                     </td>
                   </tr>
                 )}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {data && (

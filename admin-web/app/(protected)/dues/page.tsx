@@ -1,9 +1,12 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, Pager, inputCls, btnPrimary } from "@/components/form";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, panelCls, panelMotion } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { kurusToTL, tlToKurus } from "@/lib/money";
@@ -16,6 +19,7 @@ import type {
 const LIMIT = 20;
 
 export default function DuesPage() {
+  const toast = useToast();
   // --- toplu tahakkuk ---
   const [donem, setDonem] = useState("");
   const [tl, setTl] = useState("");
@@ -60,6 +64,7 @@ export default function DuesPage() {
       });
       setBRes({ created: res.created.length, atlanan: res.atlanan });
       mutateA();
+      toast.success("Toplu tahakkuk oluşturuldu.");
     } catch (err) {
       setBErr(err instanceof Error ? err.message : "Tahakkuk oluşturulamadı.");
     } finally {
@@ -69,10 +74,10 @@ export default function DuesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Aidat</h1>
+      <PageHeader title="Aidat" />
 
       {/* Toplu tahakkuk */}
-      <form onSubmit={bulk} className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
+      <motion.form {...panelMotion} onSubmit={bulk} className={`space-y-3 ${panelCls}`}>
         <h2 className="font-medium">Toplu tahakkuk (tüm aktif daireler)</h2>
         <div className="grid grid-cols-4 gap-3">
           <Field label="Dönem" hint="Örnek: 2026-07">
@@ -110,7 +115,7 @@ export default function DuesPage() {
         <button type="submit" className={btnPrimary} disabled={bBusy}>
           {bBusy ? "Oluşturuluyor..." : "Toplu tahakkuk oluştur"}
         </button>
-      </form>
+      </motion.form>
 
       {/* Tahakkuk listesi */}
       <section className="space-y-3">
@@ -130,34 +135,36 @@ export default function DuesPage() {
             </Field>
           </div>
         </div>
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
-              <tr>
-                <th className="px-3 py-2 font-medium">Daire</th>
-                <th className="px-3 py-2 font-medium">Dönem</th>
-                <th className="px-3 py-2 font-medium">Tutar</th>
-                <th className="px-3 py-2 font-medium">Son ödeme</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(assessments?.items ?? []).map((a) => (
-                <tr key={a.id} className="border-t border-slate-100">
-                  <td className="px-3 py-2 font-mono text-slate-600">{a.unit_id.slice(0, 8)}</td>
-                  <td className="px-3 py-2">{a.donem}</td>
-                  <td className="px-3 py-2 font-medium">{kurusToTL(a.tutar_kurus)}</td>
-                  <td className="px-3 py-2 text-slate-600">{a.son_odeme_tarihi ?? "—"}</td>
-                </tr>
-              ))}
-              {assessments && assessments.items.length === 0 && (
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
-                  <td className="px-3 py-6 text-center text-muted" colSpan={4}>
-                    Tahakkuk yok.
-                  </td>
+                  <th className="px-4 py-2.5 font-medium">Daire</th>
+                  <th className="px-4 py-2.5 font-medium">Dönem</th>
+                  <th className="px-4 py-2.5 font-medium">Tutar</th>
+                  <th className="px-4 py-2.5 font-medium">Son ödeme</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(assessments?.items ?? []).map((a) => (
+                  <tr key={a.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                    <td className="px-4 py-2.5 font-mono text-slate-600">{a.unit_id.slice(0, 8)}</td>
+                    <td className="px-4 py-2.5">{a.donem}</td>
+                    <td className="px-4 py-2.5 font-medium tabular-nums">{kurusToTL(a.tutar_kurus)}</td>
+                    <td className="px-4 py-2.5 text-slate-600">{a.son_odeme_tarihi ?? "—"}</td>
+                  </tr>
+                ))}
+                {assessments && assessments.items.length === 0 && (
+                  <tr>
+                    <td colSpan={4}>
+                      <EmptyState title="Tahakkuk yok" description="Dönem filtresini değiştirin ya da yukarıdan toplu tahakkuk oluşturun." />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
         {assessments && (
           <Pager
@@ -173,48 +180,50 @@ export default function DuesPage() {
       {/* Odeme listesi */}
       <section className="space-y-3">
         <h2 className="text-lg font-medium">Ödemeler</h2>
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
-              <tr>
-                <th className="px-3 py-2 font-medium">Daire</th>
-                <th className="px-3 py-2 font-medium">Yöntem</th>
-                <th className="px-3 py-2 font-medium">Durum</th>
-                <th className="px-3 py-2 font-medium">Tutar</th>
-                <th className="px-3 py-2 font-medium">Zaman</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(payments?.items ?? []).map((p) => (
-                <tr key={p.id} className="border-t border-slate-100">
-                  <td className="px-3 py-2 font-mono text-slate-600">{p.unit_id.slice(0, 8)}</td>
-                  <td className="px-3 py-2">{p.yontem}</td>
-                  <td className="px-3 py-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        p.durum === "basarili"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : p.durum === "bekliyor"
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {p.durum}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 font-medium">{kurusToTL(p.tutar_kurus)}</td>
-                  <td className="px-3 py-2 text-slate-600">{formatDateTime(p.odeme_zamani)}</td>
-                </tr>
-              ))}
-              {payments && payments.items.length === 0 && (
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
-                  <td className="px-3 py-6 text-center text-muted" colSpan={5}>
-                    Ödeme yok.
-                  </td>
+                  <th className="px-4 py-2.5 font-medium">Daire</th>
+                  <th className="px-4 py-2.5 font-medium">Yöntem</th>
+                  <th className="px-4 py-2.5 font-medium">Durum</th>
+                  <th className="px-4 py-2.5 font-medium">Tutar</th>
+                  <th className="px-4 py-2.5 font-medium">Zaman</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(payments?.items ?? []).map((p) => (
+                  <tr key={p.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                    <td className="px-4 py-2.5 font-mono text-slate-600">{p.unit_id.slice(0, 8)}</td>
+                    <td className="px-4 py-2.5">{p.yontem}</td>
+                    <td className="px-4 py-2.5">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          p.durum === "basarili"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : p.durum === "bekliyor"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {p.durum}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 font-medium tabular-nums">{kurusToTL(p.tutar_kurus)}</td>
+                    <td className="px-4 py-2.5 text-slate-600">{formatDateTime(p.odeme_zamani)}</td>
+                  </tr>
+                ))}
+                {payments && payments.items.length === 0 && (
+                  <tr>
+                    <td colSpan={5}>
+                      <EmptyState title="Ödeme yok" description="Henüz kayıtlı ödeme bulunmuyor." />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
         {payments && (
           <Pager

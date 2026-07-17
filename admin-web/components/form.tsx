@@ -18,6 +18,45 @@ export const btnDanger =
 export const cardCls =
   "rounded-2xl border border-slate-200 bg-white shadow-card";
 
+// Satir-ici form/panel yuzeyi (kart + ic bosluk). Overlay DEGIL — mevcut akis
+// korunur; yalnizca yuzey Faz-1 sistemine gecer.
+export const panelCls =
+  "rounded-2xl border border-slate-200 bg-white p-5 shadow-card";
+
+// Tablo kart cercevesi (dashboard tablo deseni). Icine `overflow-x-auto` sarmali
+// + <table> gelir.
+export const tableCardCls =
+  "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card";
+
+// Panel giris hareketi — hizli fade + kucuk olcek/kayma (~250ms). motion.form /
+// motion.div ile yayilir: {...panelMotion}. reducedMotion="user" global saygi.
+export const panelMotion = {
+  initial: { opacity: 0, y: 8, scale: 0.985 },
+  animate: { opacity: 1, y: 0, scale: 1 },
+  transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as const },
+};
+
+// Sayfa basligi + istege bagli eylem satiri. Tight heading, tutarli ritim.
+export function PageHeader({
+  title,
+  subtitle,
+  action,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
+      </div>
+      {action}
+    </div>
+  );
+}
+
 export function Field({
   label,
   children,

@@ -1,9 +1,12 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, Pager, inputCls, btnPrimary, btnGhost, btnDanger } from "@/components/form";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { UnitDetail } from "@/components/UnitDetail";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -37,6 +40,7 @@ function intOrNull(s: string): number | null {
 }
 
 export default function UnitsPage() {
+  const toast = useToast();
   const [offset, setOffset] = useState(0);
   const [blok, setBlok] = useState("");
   const blokQs = blok ? `&blok=${encodeURIComponent(blok)}` : "";
@@ -89,6 +93,7 @@ export default function UnitsPage() {
       else await apiSend("/api/units", "POST", body);
       setOpen(false);
       mutate();
+      toast.success(editingId ? "Daire güncellendi." : "Daire oluşturuldu.");
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
       setFormErr(/zaten kayitli|conflict|no /i.test(m) ? "Bu daire no zaten kayıtlı." : m);
@@ -103,19 +108,22 @@ export default function UnitsPage() {
       await apiSend(`/api/units/${u.id}`, "DELETE");
       if (detail?.id === u.id) setDetail(null);
       mutate();
+      toast.success("Daire silindi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Daireler</h1>
-        <button className={btnPrimary} onClick={openNew}>
-          Yeni daire
-        </button>
-      </div>
+      <PageHeader
+        title="Daireler"
+        action={
+          <button className={btnPrimary} onClick={openNew}>
+            Yeni daire
+          </button>
+        }
+      />
 
       <div className="flex items-end gap-2">
         <div className="w-48">
@@ -137,7 +145,7 @@ export default function UnitsPage() {
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
-        <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{editingId ? "Daire düzenle" : "Yeni daire"}</h2>
           <div className="grid grid-cols-3 gap-4">
             <Field label="Daire no" hint="Tesiste benzersiz; harf + sayı + tire (örn. A-12, B3, 12)">
@@ -206,66 +214,68 @@ export default function UnitsPage() {
               İptal
             </button>
           </div>
-        </form>
+        </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-3 py-2 font-medium">No</th>
-              <th className="px-3 py-2 font-medium">Blok</th>
-              <th className="px-3 py-2 font-medium">Kat/Sıra</th>
-              <th className="px-3 py-2 font-medium">m²</th>
-              <th className="px-3 py-2 font-medium">Durum</th>
-              <th className="px-3 py-2 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {(data?.items ?? []).map((u) => (
-              <tr key={u.id} className="border-t border-slate-100">
-                <td className="px-3 py-2">{u.no}</td>
-                <td className="px-3 py-2 text-slate-600">{u.blok ?? "—"}</td>
-                <td className="px-3 py-2 text-slate-600">
-                  {u.kat != null || u.sira != null ? `${u.kat ?? "—"} / ${u.sira ?? "—"}` : "—"}
-                </td>
-                <td className="px-3 py-2 text-slate-600">{u.metrekare ?? "—"}</td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      u.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {u.aktif ? "aktif" : "pasif"}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      className={btnGhost}
-                      onClick={() => setDetail(detail?.id === u.id ? null : u)}
-                    >
-                      {detail?.id === u.id ? "Kapat" : "Detay / Aidat"}
-                    </button>
-                    <button className={btnGhost} onClick={() => openEdit(u)}>
-                      Düzenle
-                    </button>
-                    <button className={btnDanger} onClick={() => remove(u)}>
-                      Sil
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {data && data.items.length === 0 && (
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={6}>
-                  Daire yok.
-                </td>
+                <th className="px-4 py-2.5 font-medium">No</th>
+                <th className="px-4 py-2.5 font-medium">Blok</th>
+                <th className="px-4 py-2.5 font-medium">Kat/Sıra</th>
+                <th className="px-4 py-2.5 font-medium">m²</th>
+                <th className="px-4 py-2.5 font-medium">Durum</th>
+                <th className="px-4 py-2.5 font-medium" />
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(data?.items ?? []).map((u) => (
+                <tr key={u.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                  <td className="px-4 py-2.5">{u.no}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{u.blok ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-slate-600 tabular-nums">
+                    {u.kat != null || u.sira != null ? `${u.kat ?? "—"} / ${u.sira ?? "—"}` : "—"}
+                  </td>
+                  <td className="px-4 py-2.5 text-slate-600 tabular-nums">{u.metrekare ?? "—"}</td>
+                  <td className="px-4 py-2.5">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        u.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {u.aktif ? "aktif" : "pasif"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        className={btnGhost}
+                        onClick={() => setDetail(detail?.id === u.id ? null : u)}
+                      >
+                        {detail?.id === u.id ? "Kapat" : "Detay / Aidat"}
+                      </button>
+                      <button className={btnGhost} onClick={() => openEdit(u)}>
+                        Düzenle
+                      </button>
+                      <button className={btnDanger} onClick={() => remove(u)}>
+                        Sil
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {data && data.items.length === 0 && (
+                <tr>
+                  <td colSpan={6}>
+                    <EmptyState title="Daire yok" description="Blok filtresini değiştirin ya da yeni bir daire ekleyin." />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {detail && <UnitDetail unit={detail} />}

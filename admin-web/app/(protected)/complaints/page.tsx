@@ -3,7 +3,9 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, Pager, inputCls, btnPrimary, btnGhost } from "@/components/form";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, cardCls } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type { Complaint, ComplaintDurum, ComplaintList } from "@/lib/types";
@@ -45,27 +47,29 @@ export default function ComplaintsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Şikayet / Öneri</h1>
-        <div className="flex gap-1">
-          {FILTERS.map((f) => (
-            <button
-              key={f.value}
-              className={`rounded-lg px-3 py-1.5 text-sm transition ${
-                durum === f.value
-                  ? "bg-ink text-white"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
-              onClick={() => {
-                setDurum(f.value);
-                setOffset(0);
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <PageHeader
+        title="Şikayet / Öneri"
+        action={
+          <div className="flex gap-1">
+            {FILTERS.map((f) => (
+              <button
+                key={f.value}
+                className={`rounded-lg px-3 py-1.5 text-sm transition ${
+                  durum === f.value
+                    ? "bg-ink text-white"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+                onClick={() => {
+                  setDurum(f.value);
+                  setOffset(0);
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
       <p className="text-sm text-muted">
         Sakinlerin yönetime ilettiği talepler. Durumu güncelleyin ve yanıt
@@ -80,9 +84,14 @@ export default function ComplaintsPage() {
           <ComplaintCard key={c.id} complaint={c} onSaved={() => mutate()} />
         ))}
         {data && data.items.length === 0 && (
-          <li className="rounded-xl border border-slate-200 bg-white p-6 text-center text-muted">
-            {durum ? "Bu durumda talep yok." : "Henüz talep yok."}
-          </li>
+          <EmptyState
+            title={durum ? "Bu durumda talep yok." : "Henüz talep yok."}
+            description={
+              durum
+                ? "Filtreyi değiştirerek diğer talepleri görebilirsiniz."
+                : "Sakinler mobil uygulamadan talep açtığında burada listelenir."
+            }
+          />
         )}
       </ul>
 
@@ -106,6 +115,7 @@ function ComplaintCard({
   complaint: Complaint;
   onSaved: () => void;
 }) {
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [durum, setDurum] = useState<ComplaintDurum>(c.durum);
   const [yanit, setYanit] = useState(c.yonetici_yaniti ?? "");
@@ -130,6 +140,7 @@ function ComplaintCard({
       await apiSend(`/api/complaints/${c.id}`, "PATCH", body);
       setOpen(false);
       onSaved();
+      toast.success("Talep güncellendi.");
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : "Kaydedilemedi.");
     } finally {
@@ -138,7 +149,7 @@ function ComplaintCard({
   }
 
   return (
-    <li className="rounded-xl border border-slate-200 bg-white p-5">
+    <li className={`${cardCls} p-5`}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">

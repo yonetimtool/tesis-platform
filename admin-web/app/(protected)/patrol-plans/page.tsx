@@ -1,17 +1,23 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
+import { EmptyState } from "@/components/EmptyState";
 import {
   Field,
   ErrorBox,
   Pager,
+  PageHeader,
   inputCls,
   btnPrimary,
   btnGhost,
   btnDanger,
+  panelCls,
+  panelMotion,
 } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type {
@@ -51,6 +57,7 @@ function windowCount(bas: string, bit: string, per: number): number {
 }
 
 export default function PatrolPlansPage() {
+  const toast = useToast();
   const [offset, setOffset] = useState(0);
   const { data, error, isLoading, mutate } = useSWR<PatrolPlanList>(
     `/api/patrol-plans?limit=${LIMIT}&offset=${offset}`,
@@ -112,6 +119,7 @@ export default function PatrolPlansPage() {
       else await apiSend("/api/patrol-plans", "POST", body);
       setOpen(false);
       mutate();
+      toast.success(editingId ? "Plan güncellendi." : "Plan oluşturuldu.");
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -124,8 +132,9 @@ export default function PatrolPlansPage() {
     try {
       await apiSend(`/api/patrol-plans/${p.id}`, "DELETE");
       mutate();
+      toast.success("Plan silindi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }
   }
 
@@ -154,6 +163,7 @@ export default function PatrolPlansPage() {
         items: selected.map((cid, i) => ({ checkpoint_id: cid, sira: i })),
       });
       setAssignPlan(null);
+      toast.success("Atama kaydedildi.");
     } catch (err) {
       setAssignErr(err instanceof Error ? err.message : "Atama kaydedilemedi.");
     } finally {
@@ -185,20 +195,23 @@ export default function PatrolPlansPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Devriye Planları</h1>
-        <button className={btnPrimary} onClick={openNew}>
-          Yeni plan
-        </button>
-      </div>
+      <PageHeader
+        title="Devriye Planları"
+        action={
+          <button className={btnPrimary} onClick={openNew}>
+            Yeni plan
+          </button>
+        }
+      />
 
       {error && <ErrorBox message={error.message} />}
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
-        <form
+        <motion.form
+          {...panelMotion}
           onSubmit={save}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-5"
+          className={`space-y-4 ${panelCls}`}
         >
           <h2 className="font-medium">{editingId ? "Plan düzenle" : "Yeni plan"}</h2>
           <Field label="Ad">
@@ -273,11 +286,11 @@ export default function PatrolPlansPage() {
               İptal
             </button>
           </div>
-        </form>
+        </motion.form>
       )}
 
       {assignPlan && (
-        <div className="space-y-4 rounded-xl border border-slate-300 bg-white p-5">
+        <motion.div {...panelMotion} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">Noktalar: {assignPlan.ad}</h2>
           <p className="text-xs text-muted">
             Sıralı liste; kaydedince planın noktaları tamamen bununla değişir.
@@ -358,61 +371,63 @@ export default function PatrolPlansPage() {
               Kapat
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-3 py-2 font-medium">Ad</th>
-              <th className="px-3 py-2 font-medium">Vardiya</th>
-              <th className="px-3 py-2 font-medium">Saat / Periyot</th>
-              <th className="px-3 py-2 font-medium">Durum</th>
-              <th className="px-3 py-2 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {(data?.items ?? []).map((p) => (
-              <tr key={p.id} className="border-t border-slate-100">
-                <td className="px-3 py-2">{p.ad}</td>
-                <td className="px-3 py-2 text-slate-600">{shiftName(p.shift_id)}</td>
-                <td className="px-3 py-2 text-slate-600">
-                  {p.baslangic_saat}–{p.bitis_saat} · {p.periyot_dakika} dk
-                </td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      p.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {p.aktif ? "aktif" : "pasif"}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button className={btnGhost} onClick={() => openAssign(p)}>
-                      Noktalar
-                    </button>
-                    <button className={btnGhost} onClick={() => openEdit(p)}>
-                      Düzenle
-                    </button>
-                    <button className={btnDanger} onClick={() => remove(p)}>
-                      Sil
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {data && data.items.length === 0 && (
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={5}>
-                  Plan yok.
-                </td>
+                <th className="px-4 py-2.5 font-medium">Ad</th>
+                <th className="px-4 py-2.5 font-medium">Vardiya</th>
+                <th className="px-4 py-2.5 font-medium">Saat / Periyot</th>
+                <th className="px-4 py-2.5 font-medium">Durum</th>
+                <th className="px-4 py-2.5 font-medium" />
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(data?.items ?? []).map((p) => (
+                <tr key={p.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                  <td className="px-4 py-2.5">{p.ad}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{shiftName(p.shift_id)}</td>
+                  <td className="px-4 py-2.5 text-slate-600">
+                    {p.baslangic_saat}–{p.bitis_saat} · {p.periyot_dakika} dk
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        p.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {p.aktif ? "aktif" : "pasif"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button className={btnGhost} onClick={() => openAssign(p)}>
+                        Noktalar
+                      </button>
+                      <button className={btnGhost} onClick={() => openEdit(p)}>
+                        Düzenle
+                      </button>
+                      <button className={btnDanger} onClick={() => remove(p)}>
+                        Sil
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {data && data.items.length === 0 && (
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyState title="Plan yok" description="İlk devriye planını oluşturarak başlayın." />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {data && (

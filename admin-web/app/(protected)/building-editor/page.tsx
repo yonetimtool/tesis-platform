@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, inputCls, btnPrimary, btnGhost } from "@/components/form";
+import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, cardCls } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { Block, BlockList, Unit, UnitList } from "@/lib/types";
@@ -45,6 +46,7 @@ const EMPTY_UNIT: UnitFormState = {
 };
 
 export default function BuildingEditorPage() {
+  const toast = useToast();
   const blocks = useSWR<BlockList>("/api/blocks", jsonFetcher);
   const units = useSWR<UnitList>("/api/units?limit=200&offset=0", jsonFetcher);
 
@@ -95,6 +97,7 @@ export default function BuildingEditorPage() {
       else await apiSend("/api/blocks", "POST", body);
       setBlockForm(EMPTY_BLOCK);
       refresh();
+      toast.success(blockForm.editingId ? "Blok güncellendi." : "Blok oluşturuldu.");
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
       setBlockForm((f) => ({
@@ -111,9 +114,10 @@ export default function BuildingEditorPage() {
       await apiSend(`/api/blocks/${b.id}`, "DELETE");
       if (openBlock === b.ad) closeDetail();
       refresh();
+      toast.success("Blok silindi.");
     } catch (err) {
       // 409: blogu kullanan daire var → net mesaj (backend zarfindan gelir).
-      window.alert(err instanceof Error ? err.message : "Blok silinemedi.");
+      toast.error(err instanceof Error ? err.message : "Blok silinemedi.");
     }
   }
 
@@ -133,6 +137,7 @@ export default function BuildingEditorPage() {
       else await apiSend("/api/units", "POST", body);
       setUnitForm(EMPTY_UNIT);
       refresh();
+      toast.success(unitForm.editingId ? "Daire güncellendi." : "Daire oluşturuldu.");
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
       setUnitForm((f) => ({
@@ -148,8 +153,9 @@ export default function BuildingEditorPage() {
     try {
       await apiSend(`/api/units/${u.id}`, "DELETE");
       refresh();
+      toast.success("Daire silindi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }
   }
 
@@ -196,17 +202,15 @@ export default function BuildingEditorPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Bina Düzenleme</h1>
-          <p className="text-sm text-muted">
-            Blok, kat ve daireleri görsel olarak oluşturun. Şikayet Haritası bu yapıyı yansıtır.
-          </p>
-        </div>
-        {drilledIn ? (
-          <button className={btnGhost} onClick={closeDetail}>← Bloklara dön</button>
-        ) : null}
-      </div>
+      <PageHeader
+        title="Bina Düzenleme"
+        subtitle="Blok, kat ve daireleri görsel olarak oluşturun. Şikayet Haritası bu yapıyı yansıtır."
+        action={
+          drilledIn ? (
+            <button className={btnGhost} onClick={closeDetail}>← Bloklara dön</button>
+          ) : undefined
+        }
+      />
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600">
         Bu düzenleyici panelde yalnızca platform adminine açıktır; site yöneticileri (yönetici)
@@ -218,7 +222,7 @@ export default function BuildingEditorPage() {
 
       {/* Blok ekle/duzenle formu */}
       {blockForm.open && (
-        <form onSubmit={saveBlock} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+        <form onSubmit={saveBlock} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{blockForm.editingId ? "Blok düzenle" : "Yeni blok"}</h2>
           <div className="grid grid-cols-1 gap-4 sm:max-w-xs">
             <Field label="Blok etiketi" hint="Kısa alfanumerik (örn. A, B1) — tire yok">
@@ -248,7 +252,7 @@ export default function BuildingEditorPage() {
 
       {/* Daire ekle/duzenle formu */}
       {unitForm.open && (
-        <form onSubmit={saveUnit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+        <form onSubmit={saveUnit} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">
             {unitForm.editingId ? "Daire düzenle" : "Yeni daire"}
             <span className="ml-2 text-sm text-muted">
@@ -414,7 +418,7 @@ function BlockDetail({
   const bySira = (a: Unit, b: Unit) => (a.sira ?? 1e9) - (b.sira ?? 1e9) || a.no.localeCompare(b.no);
 
   return (
-    <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
+    <div className={`space-y-3 ${cardCls} p-5`}>
       <div className="flex items-center justify-between">
         <h2 className="font-medium">{blockless ? "Bloksuz daireler" : `Blok ${label}`}</h2>
         {/* Ust "+ Daire" kaldirildi: her katin kendi "+" dugmesi daire ekler. */}

@@ -3,6 +3,9 @@
 import { useState } from "react";
 import useSWR from "swr";
 
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorBox, PageHeader, cardCls } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AppNotification, NotificationList } from "@/lib/types";
 
@@ -10,6 +13,7 @@ type OkunduFiltre = "" | "true" | "false";
 const LIMIT = 20;
 
 export default function NotificationsPage() {
+  const toast = useToast();
   const [okundu, setOkundu] = useState<OkunduFiltre>("");
   const [offset, setOffset] = useState(0);
 
@@ -25,6 +29,7 @@ export default function NotificationsPage() {
       body: JSON.stringify({ okundu: true }),
     });
     mutate();
+    toast.success("Bildirim okundu olarak işaretlendi.");
   }
 
   function setFilter(v: OkunduFiltre) {
@@ -38,7 +43,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-semibold">Bildirimler</h1>
+      <PageHeader title="Bildirimler" />
 
       <div className="flex items-center gap-2">
         {([
@@ -58,16 +63,14 @@ export default function NotificationsPage() {
         ))}
       </div>
 
-      {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error.message}</p>
-      )}
+      {error && <ErrorBox message={error.message} />}
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       <ul className="space-y-2">
         {(data?.items ?? []).map((n: AppNotification) => (
           <li
             key={n.id}
-            className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2"
+            className={`flex items-start justify-between gap-3 ${cardCls} px-3 py-2`}
           >
             <div>
               <div className="flex items-center gap-2">
@@ -92,8 +95,8 @@ export default function NotificationsPage() {
           </li>
         ))}
         {data && data.items.length === 0 && (
-          <li className="rounded-lg border border-slate-200 bg-white px-3 py-6 text-center text-muted">
-            Bildirim yok.
+          <li className={cardCls}>
+            <EmptyState title="Bildirim yok." />
           </li>
         )}
       </ul>

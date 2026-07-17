@@ -1,10 +1,13 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, btnPrimary, btnGhost, inputCls } from "@/components/form";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, ErrorBox, PageHeader, btnPrimary, btnGhost, btnDanger, inputCls, panelCls, panelMotion } from "@/components/form";
+import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
@@ -45,6 +48,7 @@ function fmtDate(iso: string): string {
 }
 
 export default function TenantsPage() {
+  const toast = useToast();
   const { data, error, isLoading, mutate } = useSWR<TenantListResponse>(
     "/api/tenants",
     jsonFetcher,
@@ -73,8 +77,9 @@ export default function TenantsPage() {
     try {
       await apiSend(`/api/tenants/${t.id}`, "DELETE");
       mutate();
+      toast.success("Tesis silindi.");
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }
   }
 
@@ -134,23 +139,21 @@ export default function TenantsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Tesisler</h1>
-          <p className="text-sm text-muted">
-            Yeni tesis + yöneticisini burada açarsınız. Yönetici ilk girişte tesisi adlandırır.
-          </p>
-        </div>
-        <button className={btnPrimary} onClick={openNew}>
-          Yeni tesis + yönetici
-        </button>
-      </div>
+      <PageHeader
+        title="Tesisler"
+        subtitle="Yeni tesis + yöneticisini burada açarsınız. Yönetici ilk girişte tesisi adlandırır."
+        action={
+          <button className={btnPrimary} onClick={openNew}>
+            Yeni tesis + yönetici
+          </button>
+        }
+      />
 
       {error && <ErrorBox message={error.message} />}
       {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
 
       {open && (
-        <form onSubmit={save} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">Yeni tesis + yönetici</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field
@@ -264,65 +267,64 @@ export default function TenantsPage() {
               İptal
             </button>
           </div>
-        </form>
+        </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-3 py-2 font-medium">Tesis adı</th>
-              <th className="px-3 py-2 font-medium">Kimlik (ID)</th>
-              <th className="px-3 py-2 font-medium">Kurulum</th>
-              <th className="px-3 py-2 font-medium">Oluşturulma</th>
-              <th className="px-3 py-2 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {(data?.items ?? []).map((t) => (
-              <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
-                <td className="px-3 py-2">
-                  <Link href={`/tenants/${t.id}`} className="font-medium text-ink hover:underline">
-                    {t.ad}
-                  </Link>
-                </td>
-                <td className="px-3 py-2 font-mono text-xs text-slate-500">{t.id}</td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      t.kurulum_tamamlandi
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-amber-100 text-amber-800"
-                    }`}
-                  >
-                    {t.kurulum_tamamlandi ? "tamamlandı" : "bekliyor"}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-slate-600">{fmtDate(t.created_at)}</td>
-                <td className="px-3 py-2 text-right">
-                  <div className="flex justify-end gap-2">
-                    <Link href={`/tenants/${t.id}`} className={btnGhost}>
-                      Yönet
-                    </Link>
-                    <button
-                      className="rounded-lg px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
-                      onClick={() => removeTenant(t)}
-                    >
-                      Sil
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {data && data.items.length === 0 && (
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <td className="px-3 py-6 text-center text-muted" colSpan={5}>
-                  Henüz tesis yok.
-                </td>
+                <th className="px-4 py-2.5 font-medium">Tesis adı</th>
+                <th className="px-4 py-2.5 font-medium">Kimlik (ID)</th>
+                <th className="px-4 py-2.5 font-medium">Kurulum</th>
+                <th className="px-4 py-2.5 font-medium">Oluşturulma</th>
+                <th className="px-4 py-2.5 font-medium" />
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(data?.items ?? []).map((t) => (
+                <tr key={t.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                  <td className="px-4 py-2.5">
+                    <Link href={`/tenants/${t.id}`} className="font-medium text-ink hover:underline">
+                      {t.ad}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{t.id}</td>
+                  <td className="px-4 py-2.5">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        t.kurulum_tamamlandi
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {t.kurulum_tamamlandi ? "tamamlandı" : "bekliyor"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-slate-600">{fmtDate(t.created_at)}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <div className="flex justify-end gap-2">
+                      <Link href={`/tenants/${t.id}`} className={btnGhost}>
+                        Yönet
+                      </Link>
+                      <button className={btnDanger} onClick={() => removeTenant(t)}>
+                        Sil
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {data && data.items.length === 0 && (
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyState title="Henüz tesis yok" description="İlk tesisi ve yöneticisini oluşturarak başlayın." />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
