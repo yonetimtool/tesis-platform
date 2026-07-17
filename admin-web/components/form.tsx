@@ -2,14 +2,21 @@
 
 import type { ReactNode } from "react";
 
+// Ortak form/dugme token'lari (Faz 1). Teal odak halkasi + yumusak golge/hover
+// kaldirmasi. Ic sayfalar bu siniflari import ederek "bedava" cilalanir.
 export const inputCls =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500";
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/25 disabled:opacity-60";
 export const btnPrimary =
-  "rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-lg bg-brand-teal px-4 py-2 text-sm font-medium text-white shadow-soft transition-all hover:bg-[#0c8382] hover:shadow-lift active:translate-y-px disabled:opacity-60 disabled:shadow-none";
 export const btnGhost =
-  "rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100";
+  "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-slate-100";
 export const btnDanger =
-  "rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-700 transition hover:bg-red-50";
+  "rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm text-red-700 transition hover:bg-red-50";
+
+// Kart yuzeyi — yumusak katmanli golge + 16px radius (dashboard vb. yeniden
+// kullanir; koyu modda .dark .bg-white → slate-900).
+export const cardCls =
+  "rounded-2xl border border-slate-200 bg-white shadow-card";
 
 export function Field({
   label,
@@ -32,7 +39,9 @@ export function Field({
 export function ErrorBox({ message }: { message?: string | null }) {
   if (!message) return null;
   return (
-    <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>
+    <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+      {message}
+    </p>
   );
 }
 
