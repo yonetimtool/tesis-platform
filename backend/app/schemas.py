@@ -651,44 +651,49 @@ class AnnouncementListResponse(BaseModel):
 
 
 # ----------------------------- complaints ---------------------------------- #
-ComplaintDurum = Literal["acik", "inceleniyor", "cozuldu"]
-# Talep turu (opsiyonel): gurultu/goruntu kirliligi + genel 'diger'.
-ComplaintKategori = Literal["gurultu", "goruntu", "diger"]
+ComplaintDurum = Literal["acik", "is_emri", "cozuldu", "reddedildi"]
+TaskOncelik = Literal["dusuk", "orta", "yuksek"]
+
+
+class ComplaintPhotoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    foto_key: str
+    sira: int
+    foto_url: str | None = None
+
+
+class ComplaintStatusHistoryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    durum: str
+    actor_role: str
+    sebep: str | None = None
+    created_at: datetime
 
 
 class ComplaintCreate(BaseModel):
     baslik: str = Field(..., min_length=1, max_length=200)
     mesaj: str = Field(..., min_length=1, max_length=5000)
-    # Opsiyonel tur; verilmezse NULL (eski davranis — geriye uyumlu).
-    kategori: ComplaintKategori | None = None
-    # Opsiyonel gorsel: /uploads/presign ile yuklenen obje anahtari.
-    foto_key: str | None = None
-
-
-class ComplaintUpdate(BaseModel):
-    """Yonetim yaniti: durum ve/veya yanit metni (admin+yonetici)."""
-
-    durum: ComplaintDurum | None = None
-    yonetici_yaniti: str | None = Field(None, min_length=1, max_length=5000)
+    kategori_id: uuid.UUID | None = None
+    # En fazla 3 gorsel; her biri /uploads/presign obje anahtari.
+    foto_keys: list[str] = Field(default_factory=list, max_length=3)
 
 
 class ComplaintOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     id: uuid.UUID
     acan_user_id: uuid.UUID
-    # Yonetim listesinde "kim acti" icin ad (join ile doldurulur).
     acan_ad: str | None = None
     baslik: str
     mesaj: str
-    kategori: str | None = None
-    foto_key: str | None = None
-    # Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa).
-    foto_url: str | None = None
+    kategori_id: uuid.UUID | None = None
+    kategori_ad: str | None = None
     durum: str
-    yonetici_yaniti: str | None = None
-    yanitlayan_user_id: uuid.UUID | None = None
-    yanit_zamani: datetime | None = None
+    fotograflar: list[ComplaintPhotoOut] = Field(default_factory=list)
+    gecmis: list[ComplaintStatusHistoryOut] = Field(default_factory=list)
+    # Bagli is emri (varsa): task ozeti.
+    is_emri_id: uuid.UUID | None = None
+    is_emri_durum: str | None = None  # 'acik' (atandi) | 'tamamlandi'
     created_at: datetime
     updated_at: datetime
 
@@ -696,6 +701,25 @@ class ComplaintOut(BaseModel):
 class ComplaintListResponse(BaseModel):
     meta: PageMetaOut
     items: list[ComplaintOut]
+
+
+class ComplaintConvertRequest(BaseModel):
+    """Talebi is emrine donustur (yonetici)."""
+    kategori_id: uuid.UUID | None = None       # onaylanan/degistirilen kategori
+    oncelik: TaskOncelik = "orta"
+    atanan_user_id: uuid.UUID = Field(...)
+    not_: str | None = Field(None, alias="not", max_length=2000)
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ComplaintResolveRequest(BaseModel):
+    """Dogrudan coz (yonetici) — opsiyonel cozum notu timeline'a yazilir."""
+    cozum_notu: str | None = Field(None, max_length=2000)
+
+
+class ComplaintDeclineRequest(BaseModel):
+    """Reddet (yonetici) — sebep ZORUNLU."""
+    sebep: str = Field(..., min_length=1, max_length=2000)
 
 
 # ------------------------------- visitors ---------------------------------- #
@@ -1421,9 +1445,29 @@ class DeviceListResponse(BaseModel):
 
 
 # ------------------------------- uploads ----------------------------------- #
+# İzin verilen gorsel MIME'lari — content_type imzali URL'e baglanir (airtight).
+_ALLOWED_UPLOAD_CT = {"image/jpeg", "image/png", "image/webp", "image/heic"}
+_MAX_UPLOAD_BYTES = 8 * 1024 * 1024  # ~8 MB, client-declared (best-effort)
+
+
 class PresignRequest(BaseModel):
     content_type: str = Field(..., min_length=1, examples=["image/jpeg"])
     dosya_adi: str | None = None
+    boyut: int | None = Field(None, ge=1, description="Client-declared byte size")
+
+    @field_validator("content_type")
+    @classmethod
+    def _ct_allow(cls, v: str) -> str:
+        if v.lower() not in _ALLOWED_UPLOAD_CT:
+            raise ValueError("content_type gorsel olmali (jpeg/png/webp/heic)")
+        return v.lower()
+
+    @field_validator("boyut")
+    @classmethod
+    def _size_cap(cls, v: int | None) -> int | None:
+        if v is not None and v > _MAX_UPLOAD_BYTES:
+            raise ValueError("dosya cok buyuk (max 8MB)")
+        return v
 
 
 class PresignResponse(BaseModel):

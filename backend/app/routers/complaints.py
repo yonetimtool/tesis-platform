@@ -15,8 +15,10 @@ hatasi talep kaydini kirmaz (duyuru ile ayni desen).
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,14 +31,25 @@ from ..scheduler.notify import dispatch_external
 from ..schemas import (
     ComplaintCreate,
     ComplaintDurum,
-    ComplaintKategori,
     ComplaintListResponse,
     ComplaintOut,
-    ComplaintUpdate,
 )
 from ..storage import presign_get
 
 router = APIRouter(prefix="/complaints", tags=["complaints"])
+
+# Task 3 removed ComplaintKategori/ComplaintUpdate from app.schemas (Complaint
+# reshape). This whole router is rewritten in Task 5 against the new model
+# (kategori_id, foto_keys, durum lifecycle, convert/resolve/decline). These
+# local stubs exist ONLY so the app keeps booting until then — do not build on
+# them.
+ComplaintKategori = Literal["gurultu", "goruntu", "diger"]
+
+
+class ComplaintUpdate(BaseModel):
+    durum: ComplaintDurum | None = None
+    yonetici_yaniti: str | None = None
+
 
 # ACMA: saha rolleri + sakin (talebi YASAYAN acar). yonetici ACAMAZ —
 # kanalin cevaplayan tarafi; admin de acmaz (platform operatoru, tesiste
