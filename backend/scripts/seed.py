@@ -366,15 +366,18 @@ def main() -> int:
 
         # 5) ornek sikayet + oneri (resident acmis). Dogal benzersiz anahtar
         #    yok -> ayni baslik varsa eklemeyerek idempotent kalinir.
-        #    a) sikayet: yonetici yanitlamis, cozuldu.
+        #    a) sikayet: cozuldu.
+        #    NOT (ticketing reshape, Task 1): complaint.yonetici_yaniti/
+        #    yanitlayan_user_id/yanit_zamani kolonlari kaldirildi (yanit artik
+        #    complaint_status_history.sebep uzerinden). Demo ticket/history
+        #    verisi Task 9'da eklenecek — burada yalnizca eski kolonlara
+        #    referans birakmamak icin minimal duzeltme yapildi.
         conn.execute(
             """
-            INSERT INTO complaint (tenant_id, acan_user_id, baslik, mesaj, durum,
-                                   yonetici_yaniti, yanitlayan_user_id, yanit_zamani)
-            SELECT %(t)s, r.id, %(b)s, %(m)s, 'cozuldu', %(y)s, y.id, now()
-            FROM app_user r, app_user y
+            INSERT INTO complaint (tenant_id, acan_user_id, baslik, mesaj, durum)
+            SELECT %(t)s, r.id, %(b)s, %(m)s, 'cozuldu'
+            FROM app_user r
             WHERE r.tenant_id = %(t)s AND r.email = 'resident@acme.com'
-              AND y.tenant_id = %(t)s AND y.email = 'yonetici@acme.com'
               AND NOT EXISTS (
                   SELECT 1 FROM complaint
                   WHERE tenant_id = %(t)s AND baslik = %(b)s
@@ -384,7 +387,6 @@ def main() -> int:
                 "t": tenant_id,
                 "b": "Asansör arızalıydı",
                 "m": "A blok asansörü iki gündür çalışmıyor, kontrol edilebilir mi?",
-                "y": "Servis çağrıldı, asansör onarıldı. Bildiriminiz için teşekkürler.",
             },
         )
         #    b) oneri: acik, yanitsiz.
@@ -405,13 +407,13 @@ def main() -> int:
                 "m": "Çocuk parkının yanına birkaç bank konulmasını öneriyorum.",
             },
         )
-        #    c) kategorili sikayet: gurultu kirliligi (acik, yanitsiz).
-        #       Kategori alani opsiyonel — a/b kayitlari kategorisiz kalir
-        #       (geriye uyumluluk ornegi).
+        #    c) ucuncu sikayet (acik, yanitsiz). kategori_id dinamik
+        #       task_category FK'idir (Task 9'da demo kategori/ticket verisi
+        #       eklenecek); burada kategorisiz (NULL = "Diğer") birakilir.
         conn.execute(
             """
-            INSERT INTO complaint (tenant_id, acan_user_id, baslik, mesaj, kategori)
-            SELECT %(t)s, r.id, %(b)s, %(m)s, 'gurultu'::complaint_kategori
+            INSERT INTO complaint (tenant_id, acan_user_id, baslik, mesaj)
+            SELECT %(t)s, r.id, %(b)s, %(m)s
             FROM app_user r
             WHERE r.tenant_id = %(t)s AND r.email = 'resident@acme.com'
               AND NOT EXISTS (
@@ -426,8 +428,8 @@ def main() -> int:
             },
         )
         print(
-            "[seed] sikayet 'Asansör arızalıydı' (cozuldu+yanitli) + oneri 'Öneri: bahçeye bank' (acik) "
-            "+ sikayet 'Gece geç saatte müzik' (kategori=gurultu)"
+            "[seed] sikayet 'Asansör arızalıydı' (cozuldu) + oneri 'Öneri: bahçeye bank' (acik) "
+            "+ sikayet 'Gece geç saatte müzik' (acik)"
         )
 
         # 6) ornek ziyaretci: A-12 icin (guvenlik kaydetmis) — HEDEF sakin

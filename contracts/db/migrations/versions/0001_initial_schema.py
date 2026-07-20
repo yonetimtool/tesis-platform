@@ -66,11 +66,12 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE patrol_window_durum AS ENUM ('bekliyor', 'tamamlandi', 'kacirildi');"
     )
-    # notification.tip — tur + peyzaj; ileride genisler.
+    # notification.tip — tur + peyzaj + ticketing; ileride genisler.
     op.execute(
         "CREATE TYPE notification_tip AS ENUM "
         "('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma', "
-        "'peyzaj_yaklasan', 'peyzaj_kacirilan');"
+        "'peyzaj_yaklasan', 'peyzaj_kacirilan', "
+        "'talep_is_emri', 'talep_cozuldu', 'talep_reddedildi', 'is_emri_atandi');"
     )
     # Gorev tipi = yonetici-tanimli kategori (task_category, A6). Sabit task_tip
     # enum'u KALDIRILDI; siniflandirma task.kategori_id ile (NULL = "Diğer").
@@ -82,12 +83,13 @@ def upgrade() -> None:
         "CREATE TYPE asset_durum AS ENUM ('musait', 'zimmetli', 'bakimda');"
     )
     op.execute(
-        "CREATE TYPE complaint_durum AS ENUM ('acik', 'inceleniyor', 'cozuldu');"
+        "CREATE TYPE complaint_durum AS ENUM "
+        "('acik', 'is_emri', 'cozuldu', 'reddedildi');"
     )
-    # Talep turu (opsiyonel): gurultu/goruntu kirliligi istatistikleri icin
-    # temel; NULL = belirtilmemis (eski kayitlar geriye uyumlu).
+    # NOT: complaint_kategori enum'u KALDIRILDI — talep kategorisi artik dinamik
+    # task_category tablosuna FK (elektrik/tesisat/asansor...). Tek taksonomi.
     op.execute(
-        "CREATE TYPE complaint_kategori AS ENUM ('gurultu', 'goruntu', 'diger');"
+        "CREATE TYPE task_oncelik AS ENUM ('dusuk', 'orta', 'yuksek');"
     )
     # aidat: sakin rol tipi + odeme yontemi + odeme durumu.
     op.execute("CREATE TYPE resident_rol AS ENUM ('malik', 'kiraci');")
@@ -839,6 +841,8 @@ def upgrade() -> None:
             periyot_dakika   integer,   -- tekrar araligi (periyodik gorev/peyzaj); tek seferlikse NULL
             sonraki_planlanan timestamptz,  -- bir sonraki planlanan an (UTC); peyzaj takvimi
             foto_zorunlu     boolean NOT NULL DEFAULT false,  -- completion'da foto kaniti sart (mobil §11)
+            oncelik          task_oncelik,   -- is emri onceligi (ticket->task); normal gorevde NULL
+            ticket_id        uuid,           -- bagli talep (complaint); NULL = normal gorev
             aktif            boolean NOT NULL DEFAULT true,
             created_at       timestamptz NOT NULL DEFAULT now(),
             updated_at       timestamptz NOT NULL DEFAULT now(),
@@ -864,6 +868,7 @@ def upgrade() -> None:
     op.execute(
         "CREATE INDEX ix_task_takvim ON task (tenant_id, sonraki_planlanan);"
     )
+    op.execute("CREATE INDEX ix_task_ticket ON task (tenant_id, ticket_id);")
 
     # ------------------------------------------------------------------ #
     # 9d. task_completion  (gorev tamamlama kaniti — NFC/GPS/foto)
@@ -1324,23 +1329,17 @@ def upgrade() -> None:
             acan_user_id         uuid NOT NULL,
             baslik               text NOT NULL,
             mesaj                text NOT NULL,
-            foto_key             text,       -- opsiyonel gorsel (MinIO obje anahtari)
-            kategori             complaint_kategori,  -- opsiyonel tur (NULL = belirtilmemis)
+            kategori_id          uuid,        -- dinamik task_category FK; NULL = "Diğer"
             durum                complaint_durum NOT NULL DEFAULT 'acik',
-            yonetici_yaniti      text,
-            yanitlayan_user_id   uuid,
-            yanit_zamani         timestamptz,
             created_at           timestamptz NOT NULL DEFAULT now(),
             updated_at           timestamptz NOT NULL DEFAULT now(),
             CONSTRAINT uq_complaint_id_tenant UNIQUE (id, tenant_id),
-            -- composite FK: acan sakin ayni tenant'ta olmali (RLS ile tutarli).
             CONSTRAINT fk_complaint_acan
                 FOREIGN KEY (acan_user_id, tenant_id)
                 REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT,
-            -- Kolon-ozel SET NULL: yalnizca yanitlayan_user_id NULL'lanir.
-            CONSTRAINT fk_complaint_yanitlayan
-                FOREIGN KEY (yanitlayan_user_id, tenant_id)
-                REFERENCES app_user (id, tenant_id) ON DELETE SET NULL (yanitlayan_user_id)
+            CONSTRAINT fk_complaint_kategori
+                FOREIGN KEY (kategori_id, tenant_id)
+                REFERENCES task_category (id, tenant_id) ON DELETE SET NULL (kategori_id)
         );
         """
     )
@@ -1350,7 +1349,7 @@ def upgrade() -> None:
     )
     op.execute(
         "CREATE INDEX ix_complaint_tenant_kategori "
-        "ON complaint (tenant_id, kategori);"
+        "ON complaint (tenant_id, kategori_id);"
     )
     op.execute(
         "CREATE INDEX ix_complaint_tenant_acan ON complaint (tenant_id, acan_user_id);"
@@ -1358,6 +1357,60 @@ def upgrade() -> None:
     op.execute(
         "CREATE INDEX ix_complaint_tenant_created "
         "ON complaint (tenant_id, created_at DESC);"
+    )
+
+    # task.ticket_id -> complaint (complaint task'tan SONRA yaratildigi icin ALTER ile).
+    op.execute(
+        """
+        ALTER TABLE task
+            ADD CONSTRAINT fk_task_ticket
+            FOREIGN KEY (ticket_id, tenant_id)
+            REFERENCES complaint (id, tenant_id) ON DELETE SET NULL (ticket_id);
+        """
+    )
+    # complaint_photo — talep basina <=3 gorsel (MinIO obje anahtari, tenant-onekli).
+    op.execute(
+        """
+        CREATE TABLE complaint_photo (
+            id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id     uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            complaint_id  uuid NOT NULL,
+            foto_key      text NOT NULL,
+            sira          smallint NOT NULL DEFAULT 0,
+            created_at    timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_complaint_photo_id_tenant UNIQUE (id, tenant_id),
+            CONSTRAINT fk_complaint_photo_complaint
+                FOREIGN KEY (complaint_id, tenant_id)
+                REFERENCES complaint (id, tenant_id) ON DELETE CASCADE
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_complaint_photo_tenant ON complaint_photo (tenant_id);")
+    op.execute(
+        "CREATE INDEX ix_complaint_photo_complaint "
+        "ON complaint_photo (tenant_id, complaint_id, sira);"
+    )
+    # complaint_status_history — timeline kaynagi. actor_role YALNIZ (user_id ASLA).
+    op.execute(
+        """
+        CREATE TABLE complaint_status_history (
+            id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id     uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            complaint_id  uuid NOT NULL,
+            durum         complaint_durum NOT NULL,
+            actor_role    user_role NOT NULL,
+            sebep         text,       -- reddetme gerekcesi / donusturme notu / cozum notu
+            created_at    timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_complaint_history_id_tenant UNIQUE (id, tenant_id),
+            CONSTRAINT fk_complaint_history_complaint
+                FOREIGN KEY (complaint_id, tenant_id)
+                REFERENCES complaint (id, tenant_id) ON DELETE CASCADE
+        );
+        """
+    )
+    op.execute(
+        "CREATE INDEX ix_complaint_history_complaint "
+        "ON complaint_status_history (tenant_id, complaint_id, created_at);"
     )
 
     # ------------------------------------------------------------------ #
@@ -1854,6 +1907,8 @@ def upgrade() -> None:
         "user_device",
         "announcement",
         "complaint",
+        "complaint_photo",
+        "complaint_status_history",
         "visitor",
         "kargo",
         "unit_access_permission",
@@ -1931,6 +1986,8 @@ def downgrade() -> None:
         "unit_access_permission",
         "kargo",
         "visitor",
+        "complaint_status_history",
+        "complaint_photo",
         "complaint",
         "announcement",
         "user_device",
@@ -1974,7 +2031,7 @@ def downgrade() -> None:
     op.execute("DROP TYPE IF EXISTS dues_yontem;")
     op.execute("DROP TYPE IF EXISTS resident_rol;")
     op.execute("DROP TYPE IF EXISTS complaint_durum;")
-    op.execute("DROP TYPE IF EXISTS complaint_kategori;")
+    op.execute("DROP TYPE IF EXISTS task_oncelik;")
     op.execute("DROP TYPE IF EXISTS asset_durum;")
     op.execute("DROP TYPE IF EXISTS asset_kategori;")
     op.execute("DROP TYPE IF EXISTS notification_tip;")
