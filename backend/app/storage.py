@@ -76,7 +76,17 @@ def make_foto_key(tenant_id: uuid.UUID | str, content_type: str, dosya_adi: str 
 def presign_put(
     tenant_id: uuid.UUID | str, content_type: str, dosya_adi: str | None = None
 ) -> tuple[str, str, int]:
-    """(foto_key, presigned_put_url, expires_in) doner."""
+    """(foto_key, presigned_put_url, expires_in) doner.
+
+    content_type burada zaten guvenilir: cagiran router `PresignRequest`
+    (schemas.py) uzerinden gecer, orada gorsel allow-list'ine (jpeg/png/webp/
+    heic) ve 8MB boyut tavanina karsi dogrulanmistir — bu fonksiyon tekrar
+    dogrulamaz. content_type imzalanan URL'e (`ContentType` param'i) baglanir,
+    yani istemci PUT sirasinda farkli bir Content-Type header'i gonderirse
+    imza uyusmaz ve MinIO reddeder. Boyut tavani ise yalnizca istemcinin
+    BEYAN ETTIGI `boyut` alanina karsi (best-effort): gercek PUT govdesinin
+    boyutunu bu fonksiyon (veya MinIO) ayrica dogrulamaz.
+    """
     key = make_foto_key(tenant_id, content_type, dosya_adi)
     url = _client().generate_presigned_url(
         "put_object",
