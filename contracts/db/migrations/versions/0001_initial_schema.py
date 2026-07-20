@@ -1409,6 +1409,9 @@ def upgrade() -> None:
         """
     )
     op.execute(
+        "CREATE INDEX ix_complaint_history_tenant ON complaint_status_history (tenant_id);"
+    )
+    op.execute(
         "CREATE INDEX ix_complaint_history_complaint "
         "ON complaint_status_history (tenant_id, complaint_id, created_at);"
     )
