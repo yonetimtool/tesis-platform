@@ -24,6 +24,7 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     Integer,
     Numeric,
+    SmallInteger,
     Text,
     Time,
     UniqueConstraint,
@@ -53,6 +54,7 @@ PATROL_WINDOW_DURUM = ENUM(
 NOTIFICATION_TIP = ENUM(
     "kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma",
     "peyzaj_yaklasan", "peyzaj_kacirilan",
+    "talep_is_emri", "talep_cozuldu", "talep_reddedildi", "is_emri_atandi",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -64,12 +66,12 @@ ASSET_DURUM = ENUM(
     name="asset_durum", create_type=False,
 )
 COMPLAINT_DURUM = ENUM(
-    "acik", "inceleniyor", "cozuldu",
+    "acik", "is_emri", "cozuldu", "reddedildi",
     name="complaint_durum", create_type=False,
 )
-COMPLAINT_KATEGORI = ENUM(
-    "gurultu", "goruntu", "diger",
-    name="complaint_kategori", create_type=False,
+# COMPLAINT_KATEGORI KALDIRILDI (kategori artik task_category FK).
+TASK_ONCELIK = ENUM(
+    "dusuk", "orta", "yuksek", name="task_oncelik", create_type=False,
 )
 RESIDENT_ROL = ENUM(
     "malik", "kiraci",
@@ -527,6 +529,12 @@ class Task(Base):
             ondelete="SET NULL",
             name="fk_task_kategori",
         ),
+        ForeignKeyConstraint(
+            ["ticket_id", "tenant_id"],
+            ["complaint.id", "complaint.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_task_ticket",
+        ),
     )
 
     id: Mapped[uuid.UUID] = _pk()
@@ -543,6 +551,8 @@ class Task(Base):
     foto_zorunlu: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
+    oncelik: Mapped[str | None] = mapped_column(TASK_ONCELIK, nullable=True)
+    ticket_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at = _created_at()
     updated_at = _created_at()
@@ -962,12 +972,11 @@ class Complaint(Base):
             ondelete="RESTRICT",
             name="fk_complaint_acan",
         ),
-        # DDL'de kolon-ozel ON DELETE SET NULL (yanitlayan_user_id); tenant_id korunur.
         ForeignKeyConstraint(
-            ["yanitlayan_user_id", "tenant_id"],
-            ["app_user.id", "app_user.tenant_id"],
+            ["kategori_id", "tenant_id"],
+            ["task_category.id", "task_category.tenant_id"],
             ondelete="SET NULL",
-            name="fk_complaint_yanitlayan",
+            name="fk_complaint_kategori",
         ),
     )
 
@@ -978,21 +987,61 @@ class Complaint(Base):
     acan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     baslik: Mapped[str] = mapped_column(Text, nullable=False)
     mesaj: Mapped[str] = mapped_column(Text, nullable=False)
-    # Opsiyonel gorsel — /uploads/presign ile yuklenen MinIO obje anahtari.
-    foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
-    # Opsiyonel tur (gurultu/goruntu kirliligi vb.); NULL = belirtilmemis
-    # (eski kayitlar — geriye uyumlu).
-    kategori: Mapped[str | None] = mapped_column(COMPLAINT_KATEGORI, nullable=True)
+    kategori_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     durum: Mapped[str] = mapped_column(
         COMPLAINT_DURUM, nullable=False, server_default=text("'acik'")
     )
-    yonetici_yaniti: Mapped[str | None] = mapped_column(Text, nullable=True)
-    yanitlayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True
-    )
-    yanit_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
+
+
+class ComplaintPhoto(Base):
+    """Talep gorseli (<=3/talep) — MinIO obje anahtari, tenant-onekli."""
+
+    __tablename__ = "complaint_photo"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_complaint_photo_id_tenant"),
+        ForeignKeyConstraint(
+            ["complaint_id", "tenant_id"],
+            ["complaint.id", "complaint.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_complaint_photo_complaint",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    complaint_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    foto_key: Mapped[str] = mapped_column(Text, nullable=False)
+    sira: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default=text("0"))
+    created_at = _created_at()
+
+
+class ComplaintStatusHistory(Base):
+    """Talep durum gecmisi (timeline). actor_role YALNIZ — user_id ASLA."""
+
+    __tablename__ = "complaint_status_history"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_complaint_history_id_tenant"),
+        ForeignKeyConstraint(
+            ["complaint_id", "tenant_id"],
+            ["complaint.id", "complaint.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_complaint_history_complaint",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    complaint_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    durum: Mapped[str] = mapped_column(COMPLAINT_DURUM, nullable=False)
+    actor_role: Mapped[str] = mapped_column(USER_ROLE, nullable=False)
+    sebep: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
 
 
 class Visitor(Base):
