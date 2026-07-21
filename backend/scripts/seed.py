@@ -432,6 +432,244 @@ def main() -> int:
             "+ sikayet 'Gece geç saatte müzik' (acik)"
         )
 
+        # 5b) talep timeline'lari (Task 9 — ticketing reshape): yukaridaki 3
+        #     eski-sekil sikayetin GECMISI yoktu (bkz. 5. yorum); yeni modelde
+        #     her talep en az [acik] satiri tasimalidir, aksi taktirde
+        #     timeline bos gorunur (celiskili/eksik veri). Burada tamamlanir.
+        def _add_hist(baslik: str, durum: str, actor_role: str, sebep: str | None) -> None:
+            """complaint_status_history satiri — (complaint,durum) ciftine
+            gore idempotent (WHERE NOT EXISTS)."""
+            conn.execute(
+                """
+                INSERT INTO complaint_status_history
+                    (tenant_id, complaint_id, durum, actor_role, sebep)
+                SELECT %(t)s, c.id, %(d)s::complaint_durum, %(r)s::user_role, %(s)s
+                FROM complaint c
+                WHERE c.tenant_id = %(t)s AND c.baslik = %(b)s
+                  AND NOT EXISTS (
+                      SELECT 1 FROM complaint_status_history
+                      WHERE tenant_id = %(t)s AND complaint_id = c.id
+                        AND durum = %(d)s::complaint_durum
+                  )
+                """,
+                {"t": tenant_id, "b": baslik, "d": durum, "r": actor_role, "s": sebep},
+            )
+
+        _add_hist("Asansör arızalıydı", "acik", "resident", None)
+        _add_hist(
+            "Asansör arızalıydı", "cozuldu", "yonetici", "Asansör bakım firması onardı."
+        )
+        _add_hist("Öneri: bahçeye bank", "acik", "resident", None)
+        _add_hist("Gece geç saatte müzik", "acik", "resident", None)
+        print(
+            "[seed] talep gecmisi (timeline) tamamlandi: Asansör [acik,cozuldu], "
+            "Öneri [acik], Gece geç saatte müzik [acik]"
+        )
+
+        # 5c) demo talep kategorisi (task_category, A6) — talep/is-emri
+        #     ornekleri icin. Ad benzersiz (tenant_id, ad) -> ON CONFLICT upsert.
+        tesisat_kat_id = conn.execute(
+            """
+            INSERT INTO task_category (tenant_id, ad)
+            VALUES (%s, 'Tesisat')
+            ON CONFLICT ON CONSTRAINT uq_task_category_tenant_ad
+                DO UPDATE SET aktif = true, updated_at = now()
+            RETURNING id
+            """,
+            (tenant_id,),
+        ).fetchone()[0]
+        print(f"[seed] talep kategorisi 'Tesisat' -> {tesisat_kat_id}")
+
+        # 5d) 4 demo talep (Task 9 — durum makinesinin TUM asamalarini kapsar,
+        #     frontend/kabul testleri icin): acik (fotosuz), acik (fotolu),
+        #     is_emri (bagli gorev), cozuldu (tamamlama kanitiyla oto-coz).
+        #     Atanan saha personeli: guard@acme.com (security) + cleaner@acme.com
+        #     (tesis_gorevlisi) — is-emri atamasinin iki saha rolunu de gostersin.
+        guard_id = conn.execute(
+            "SELECT id FROM app_user WHERE tenant_id=%s AND email='guard@acme.com'",
+            (tenant_id,),
+        ).fetchone()[0]
+        cleaner_id = conn.execute(
+            "SELECT id FROM app_user WHERE tenant_id=%s AND email='cleaner@acme.com'",
+            (tenant_id,),
+        ).fetchone()[0]
+
+        def _upsert_complaint(
+            baslik: str, mesaj: str, kategori_id: str | None
+        ) -> str:
+            """INSERT ... WHERE NOT EXISTS + var olani SELECT (etkinlik ile
+            ayni CTE deseni) — her zaman complaint.id doner, idempotent."""
+            return conn.execute(
+                """
+                WITH yeni AS (
+                    INSERT INTO complaint
+                        (tenant_id, acan_user_id, baslik, mesaj, kategori_id)
+                    SELECT %(t)s, r.id, %(b)s, %(m)s, %(k)s
+                    FROM app_user r
+                    WHERE r.tenant_id = %(t)s AND r.email = 'resident@acme.com'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM complaint WHERE tenant_id = %(t)s AND baslik = %(b)s
+                      )
+                    RETURNING id
+                )
+                SELECT id FROM yeni
+                UNION ALL
+                SELECT id FROM complaint WHERE tenant_id = %(t)s AND baslik = %(b)s
+                LIMIT 1
+                """,
+                {"t": tenant_id, "b": baslik, "m": mesaj, "k": kategori_id},
+            ).fetchone()[0]
+
+        def _add_photo(complaint_id: str, foto_key: str, sira: int) -> None:
+            conn.execute(
+                """
+                INSERT INTO complaint_photo (tenant_id, complaint_id, foto_key, sira)
+                SELECT %(t)s, %(c)s, %(k)s, %(s)s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM complaint_photo
+                    WHERE tenant_id = %(t)s AND complaint_id = %(c)s AND foto_key = %(k)s
+                )
+                """,
+                {"t": tenant_id, "c": complaint_id, "k": foto_key, "s": sira},
+            )
+
+        # -- Demo 1: acik, fotosuz, kategorisiz ("Diğer").
+        demo1_id = _upsert_complaint(
+            "Demo talep 1: Bahçe musluğu damlatıyor",
+            "Bahçe musluğu sürekli damlatıyor, contası değişebilir mi?",
+            None,
+        )
+        conn.execute(
+            "INSERT INTO complaint_status_history "
+            "(tenant_id, complaint_id, durum, actor_role, sebep) "
+            "SELECT %(t)s, %(c)s, 'acik', 'resident'::user_role, NULL "
+            "WHERE NOT EXISTS (SELECT 1 FROM complaint_status_history "
+            "WHERE tenant_id=%(t)s AND complaint_id=%(c)s AND durum='acik')",
+            {"t": tenant_id, "c": demo1_id},
+        )
+
+        # -- Demo 2: acik, 2 foto (tenant-onekli MinIO anahtari), kategorili.
+        demo2_id = _upsert_complaint(
+            "Demo talep 2: Otopark bariyeri kırık (fotoğraflı)",
+            "Otopark girişindeki bariyer kırıldı, araçlar giriş yapamıyor.",
+            tesisat_kat_id,
+        )
+        _add_photo(demo2_id, f"{tenant_id}/tasks/seed-foto-1.jpg", 0)
+        _add_photo(demo2_id, f"{tenant_id}/tasks/seed-foto-2.jpg", 1)
+        conn.execute(
+            "INSERT INTO complaint_status_history "
+            "(tenant_id, complaint_id, durum, actor_role, sebep) "
+            "SELECT %(t)s, %(c)s, 'acik', 'resident'::user_role, NULL "
+            "WHERE NOT EXISTS (SELECT 1 FROM complaint_status_history "
+            "WHERE tenant_id=%(t)s AND complaint_id=%(c)s AND durum='acik')",
+            {"t": tenant_id, "c": demo2_id},
+        )
+
+        # -- Demo 3: is_emri — donusturuldu (convert_complaint ile ayni sekil:
+        #    bagli task, oncelik=orta, atanan=security).
+        demo3_id = _upsert_complaint(
+            "Demo talep 3: Kombi arızası (iş emri)",
+            "B blok kazan dairesindeki kombi ısıtma yapmıyor.",
+            tesisat_kat_id,
+        )
+        conn.execute(
+            """
+            INSERT INTO task (tenant_id, ad, aciklama, atanan_user_id, kategori_id,
+                              oncelik, ticket_id, foto_zorunlu)
+            SELECT %(t)s, c.baslik, c.mesaj, %(a)s, %(k)s, 'orta'::task_oncelik,
+                   c.id, false
+            FROM complaint c
+            WHERE c.id = %(c)s
+              AND NOT EXISTS (SELECT 1 FROM task WHERE tenant_id = %(t)s AND ticket_id = %(c)s)
+            """,
+            {"t": tenant_id, "c": demo3_id, "a": guard_id, "k": tesisat_kat_id},
+        )
+        conn.execute(
+            "UPDATE complaint SET durum='is_emri', updated_at=now() "
+            "WHERE tenant_id=%(t)s AND id=%(c)s AND durum <> 'is_emri'",
+            {"t": tenant_id, "c": demo3_id},
+        )
+        for durum, role, sebep in (
+            ("acik", "resident", None),
+            ("is_emri", "yonetici", "Kombi ustasına iş emri açıldı."),
+        ):
+            conn.execute(
+                "INSERT INTO complaint_status_history "
+                "(tenant_id, complaint_id, durum, actor_role, sebep) "
+                "SELECT %(t)s, %(c)s, %(d)s::complaint_durum, %(r)s::user_role, %(s)s "
+                "WHERE NOT EXISTS (SELECT 1 FROM complaint_status_history "
+                "WHERE tenant_id=%(t)s AND complaint_id=%(c)s AND durum=%(d)s::complaint_durum)",
+                {"t": tenant_id, "c": demo3_id, "d": durum, "r": role, "s": sebep},
+            )
+
+        # -- Demo 4: is_emri -> cozuldu (task_completion kaniti ile OTO-COZ —
+        #    tasks router'daki /completions ile ayni sekil: foto_key kaniti,
+        #    complaint.durum=cozuldu, actor_role=tamamlayanin rolu).
+        demo4_id = _upsert_complaint(
+            "Demo talep 4: Su sızıntısı onarıldı (tamamlanmış, kanıtlı)",
+            "A blok zemin kat tavanından su sızıyor, acil kontrol gerekiyor.",
+            tesisat_kat_id,
+        )
+        demo4_task_id = conn.execute(
+            """
+            WITH yeni AS (
+                INSERT INTO task (tenant_id, ad, aciklama, atanan_user_id, kategori_id,
+                                  oncelik, ticket_id, foto_zorunlu)
+                SELECT %(t)s, c.baslik, c.mesaj, %(a)s, %(k)s, 'orta'::task_oncelik,
+                       c.id, false
+                FROM complaint c
+                WHERE c.id = %(c)s
+                  AND NOT EXISTS (SELECT 1 FROM task WHERE tenant_id = %(t)s AND ticket_id = %(c)s)
+                RETURNING id
+            )
+            SELECT id FROM yeni
+            UNION ALL
+            SELECT id FROM task WHERE tenant_id = %(t)s AND ticket_id = %(c)s
+            LIMIT 1
+            """,
+            {"t": tenant_id, "c": demo4_id, "a": cleaner_id, "k": tesisat_kat_id},
+        ).fetchone()[0]
+        conn.execute(
+            """
+            INSERT INTO task_completion
+                (tenant_id, task_id, tamamlayan_user_id, tamamlanma_zamani,
+                 foto_key, notlar, idempotency_key)
+            VALUES (%s, %s, %s, now(), %s, %s, %s)
+            ON CONFLICT ON CONSTRAINT uq_completion_tenant_idempotency DO NOTHING
+            """,
+            (
+                tenant_id, demo4_task_id, cleaner_id,
+                f"{tenant_id}/tasks/seed-completion-1.jpg",
+                "Sızıntı contası değiştirildi, kanıt fotoğrafı eklendi.",
+                "seed-demo-talep-4-completion",
+            ),
+        )
+        conn.execute(
+            "UPDATE complaint SET durum='cozuldu', updated_at=now() "
+            "WHERE tenant_id=%(t)s AND id=%(c)s AND durum <> 'cozuldu'",
+            {"t": tenant_id, "c": demo4_id},
+        )
+        for durum, role, sebep in (
+            ("acik", "resident", None),
+            ("is_emri", "yonetici", "Tesis görevlisine iş emri açıldı."),
+            ("cozuldu", "tesis_gorevlisi", "Sızıntı contası değiştirildi (kanıt fotoğraflı)."),
+        ):
+            conn.execute(
+                "INSERT INTO complaint_status_history "
+                "(tenant_id, complaint_id, durum, actor_role, sebep) "
+                "SELECT %(t)s, %(c)s, %(d)s::complaint_durum, %(r)s::user_role, %(s)s "
+                "WHERE NOT EXISTS (SELECT 1 FROM complaint_status_history "
+                "WHERE tenant_id=%(t)s AND complaint_id=%(c)s AND durum=%(d)s::complaint_durum)",
+                {"t": tenant_id, "c": demo4_id, "d": durum, "r": role, "s": sebep},
+            )
+
+        print(
+            "[seed] 4 demo talep: 'Demo talep 1' (acik, fotosuz) + "
+            "'Demo talep 2' (acik, 2 foto) + 'Demo talep 3' (is_emri, "
+            "atanan=guard) + 'Demo talep 4' (cozuldu, tamamlama-kanitli, "
+            "atanan=cleaner) — hepsi tam timeline ile"
+        )
+
         # 6) ornek ziyaretci: A-12 icin (guvenlik kaydetmis) — HEDEF sakin
         #    resident@acme.com. Ziyaretci artik LOG-ONLY: onay/red YOK, yalniz
         #    kayit + bilgilendirme. Iki gunluk (log) kaydi. Gorunurluk/bildirim
