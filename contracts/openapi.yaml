@@ -1040,10 +1040,12 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
   # ================================================================= #
-  # COMPLAINTS (sikayet/oneri) — yasayan/calisandan yonetime talep kanali
+  # COMPLAINTS (Talep/Ariza -> Is Emri) — yasayan/calisandan yonetime
+  #   uctan uca talep kanali (auth.md §4):
   #   acma security+tesis_gorevlisi+resident (yonetici/admin ACAMAZ);
   #   okuma acan roller KENDI + admin+yonetici TUMU;
-  #   yanit/durum yalniz admin+yonetici
+  #   convert/resolve/decline yalniz admin+yonetici. Anonimlik YOK — anonim
+  #   kanal /unit-complaints'tir (bu modulden BAGIMSIZ).
   # ================================================================= #
   /complaints:
     get:
@@ -1052,18 +1054,14 @@ paths:
       description: |
         Acan roller (security/tesis_gorevlisi/resident) YALNIZ kendi
         actiklarini gorur; admin+yonetici tenant'taki tum talepleri gorur
-        (yonetim gorunumu). Durum ve kategori ile filtrelenebilir.
+        (yonetim gorunumu). Durum ile filtrelenebilir.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - name: durum
           in: query
           required: false
-          schema: { type: string, enum: [acik, inceleniyor, cozuldu] }
-        - name: kategori
-          in: query
-          required: false
-          schema: { $ref: "#/components/schemas/ComplaintKategori" }
+          schema: { type: string, enum: [acik, is_emri, cozuldu, reddedildi] }
       responses:
         "200":
           description: Liste
@@ -1084,12 +1082,14 @@ paths:
       tags: [complaints]
       summary: Talep ac (security + tesis_gorevlisi + resident; yonetici/admin 403)
       description: |
-        Acan token'dan alinir; durum=acik baslar. Opsiyonel gorsel: once
-        POST /uploads/presign ile foto_key + PUT URL alinir, dosya PUT edilir,
-        foto_key burada gonderilir (tenant-namespace dogrulanir). Okumada
-        foto_url (presigned GET) doner. Kayit sonrasi admin+yonetici
-        cihazlarina push denenir (EK gonderim — push hatasi kaydi etkilemez;
-        data: tip=talep, complaint_id).
+        Acan token'dan alinir; durum=acik baslar (ilk timeline satiri
+        acilista yazilir). Opsiyonel gorseller (en fazla 3): once her biri
+        icin POST /uploads/presign ile foto_key + PUT URL alinir, dosya PUT
+        edilir, foto_key'ler foto_keys dizisinde gonderilir (tenant-namespace
+        dogrulanir — aksi 422 invalid_foto_key). Okumada fotograflar[]
+        icinde foto_url (kisa omurlu presigned GET) doner. Kayit sonrasi
+        admin+yonetici cihazlarina push denenir (EK gonderim — push hatasi
+        kaydi etkilemez; data: tip=talep, complaint_id).
       requestBody:
         required: true
         content:
@@ -1112,6 +1112,10 @@ paths:
     get:
       tags: [complaints]
       summary: Talep detayi (acan roller kendininki; admin+yonetici hepsi)
+      description: |
+        Baskasinin talebini acan-kapsamli role 404 doner (varligi da
+        sizdirilmaz). fotograflar[], gecmis[] (timeline, created_at ASC) ve
+        bagli is emri varsa is_emri_id/is_emri_durum ile birlikte doner.
       responses:
         "200":
           description: Talep
@@ -1121,27 +1125,91 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
-    patch:
+
+  /complaints/{id}/convert:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
       tags: [complaints]
-      summary: Durum degistir + yonetici yaniti yaz (admin + yonetici)
+      summary: Talebi is emrine donustur (admin + yonetici)
       description: |
-        yonetici_yaniti yazildiginda yanitlayan_user_id ve yanit_zamani
-        otomatik damgalanir ve YALNIZ talebi acan sakinin cihazlarina push
-        denenir (EK gonderim — hatasi kaydi etkilemez; data: tip=talep_yanit,
-        complaint_id). Acan roller (security/tesis_gorevlisi/resident) bu
-        uca ERISEMEZ (403).
+        Gecerli gecis YALNIZ acik -> is_emri (bkz. "Talep durum makinesi");
+        aksi durumdan cagrilirsa 422 invalid_transition. atanan_user_id
+        security veya tesis_gorevlisi rolunde olmali (aksi 422
+        invalid_assignee). Bagli bir Task olusturulur (ticket_id=bu talep,
+        kategori_id/oncelik govdeden; atanan_user_id atanir). history'e
+        is_emri satiri eklenir (sebep = opsiyonel `not`). Talebi acana
+        (tip=talep_is_emri) + atanan saha personeline (tip=is_emri_atandi)
+        EK push denenir (hatasi kaydi etkilemez).
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/ComplaintUpdate" }
+            schema: { $ref: "#/components/schemas/ComplaintConvertRequest" }
       responses:
         "200":
-          description: Guncellendi
+          description: Is emrine donusturuldu
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Complaint" }
-        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /complaints/{id}/resolve:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [complaints]
+      summary: Talebi dogrudan coz (admin + yonetici)
+      description: |
+        Gecerli gecis acik -> cozuldu VEYA is_emri -> cozuldu (bkz. "Talep
+        durum makinesi"); aksi durumdan (orn. zaten cozuldu/reddedildi)
+        cagrilirsa 422 invalid_transition. Opsiyonel cozum_notu timeline'a
+        sebep olarak yazilir. Talebi acana (tip=talep_cozuldu) EK push
+        denenir (hatasi kaydi etkilemez). Not: is_emri durumundaki bir talep,
+        bagli is emri (Task) tamamlandiginda da OTOMATIK cozuldu'ya gecer
+        (bkz. `POST /tasks/{id}/completions`); bu uc MANUEL/erken kapanis
+        icindir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ComplaintResolveRequest" }
+      responses:
+        "200":
+          description: Cozuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Complaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /complaints/{id}/decline:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [complaints]
+      summary: Talebi reddet (admin + yonetici)
+      description: |
+        Gecerli gecis YALNIZ acik -> reddedildi (bkz. "Talep durum
+        makinesi"); is_emri veya terminal bir durumdan cagrilirsa 422
+        invalid_transition. sebep ZORUNLU, timeline'a yazilir. Talebi acana
+        (tip=talep_reddedildi) EK push denenir (hatasi kaydi etkilemez).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ComplaintDeclineRequest" }
+      responses:
+        "200":
+          description: Reddedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Complaint" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -5381,40 +5449,69 @@ components:
           nullable: true
           description: Acikca null gonderilirse gorsel kaldirilir; alan yoksa dokunulmaz
 
-    ComplaintKategori:
-      type: string
-      enum: [gurultu, goruntu, diger]
-      description: |
-        Talep turu: gurultu (gurultu kirliligi), goruntu (goruntu kirliligi),
-        diger (genel). Opsiyoneldir; eski kayitlarda null (belirtilmemis).
-        Ileriki gurultu-istatistikleri bu alana dayanir.
+    ComplaintPhoto:
+      type: object
+      required: [id, foto_key, sira]
+      properties:
+        id: { type: string, format: uuid }
+        foto_key: { type: string }
+        sira: { type: integer, description: "Gorunum sirasi (0-index)" }
+        foto_url:
+          type: string
+          nullable: true
+          description: Goruntuleme icin kisa omurlu presigned GET URL
+    ComplaintStatusHistory:
+      type: object
+      description: Durum gecis timeline'i satiri — user_id ASLA tutulmaz, YALNIZ actor_role.
+      required: [durum, actor_role, created_at]
+      properties:
+        durum: { type: string, enum: [acik, is_emri, cozuldu, reddedildi] }
+        actor_role:
+          type: string
+          enum: [admin, yonetici, security, tesis_gorevlisi, resident]
+        sebep:
+          type: string
+          nullable: true
+          description: "Opsiyonel not (convert.not / resolve.cozum_notu / decline.sebep)"
+        created_at: { type: string, format: date-time }
     Complaint:
       type: object
-      required: [id, acan_user_id, baslik, mesaj, durum, created_at, updated_at]
+      required: [id, acan_user_id, baslik, mesaj, durum, fotograflar, gecmis, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         acan_user_id: { type: string, format: uuid }
         acan_ad:
           type: string
           nullable: true
-          description: Acan sakinin adi (yonetim listesinde join ile)
+          description: Acan kullanicinin adi (yonetim listesinde join ile)
         baslik: { type: string, maxLength: 200 }
         mesaj: { type: string, maxLength: 5000 }
-        kategori:
-          allOf: [{ $ref: "#/components/schemas/ComplaintKategori" }]
+        kategori_id:
+          type: string
+          format: uuid
           nullable: true
-        foto_key:
+          description: "Talep kategorisi = yonetici-tanimli gorev kategorisi (task_category); null = belirtilmemis"
+        kategori_ad:
           type: string
           nullable: true
-          description: Opsiyonel gorsel — /uploads/presign ile alinan obje anahtari
-        foto_url:
+          description: Kategori adi (join ile doldurulur)
+        durum: { type: string, enum: [acik, is_emri, cozuldu, reddedildi] }
+        fotograflar:
+          type: array
+          items: { $ref: "#/components/schemas/ComplaintPhoto" }
+        gecmis:
+          type: array
+          description: Durum gecis timeline'i (created_at ASC)
+          items: { $ref: "#/components/schemas/ComplaintStatusHistory" }
+        is_emri_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Bagli is emri (Task) — talep donusturulmusse dolu
+        is_emri_durum:
           type: string
           nullable: true
-          description: Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa)
-        durum: { type: string, enum: [acik, inceleniyor, cozuldu] }
-        yonetici_yaniti: { type: string, nullable: true, maxLength: 5000 }
-        yanitlayan_user_id: { type: string, format: uuid, nullable: true }
-        yanit_zamani: { type: string, format: date-time, nullable: true }
+          description: "Bagli is emrinin ozet durumu: 'acik' (atandi) | 'tamamlandi'; is_emri_id null ise null"
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
     ComplaintCreate:
@@ -5423,20 +5520,51 @@ components:
       properties:
         baslik: { type: string, minLength: 1, maxLength: 200 }
         mesaj: { type: string, minLength: 1, maxLength: 5000 }
-        kategori:
-          allOf: [{ $ref: "#/components/schemas/ComplaintKategori" }]
+        kategori_id:
+          type: string
+          format: uuid
           nullable: true
-          description: Opsiyonel tur; verilmezse null (geriye uyumlu)
-        foto_key:
+          description: Opsiyonel talep kategorisi (task_category); verilmezse null
+        foto_keys:
+          type: array
+          items: { type: string }
+          maxItems: 3
+          default: []
+          description: "Opsiyonel gorseller (en fazla 3); her biri /uploads/presign ile alinan obje anahtari"
+    ComplaintConvertRequest:
+      type: object
+      description: Talebi is emrine donustur (admin + yonetici)
+      required: [atanan_user_id]
+      properties:
+        kategori_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Onaylanan/degistirilen kategori; verilmezse talebin mevcut kategorisi kullanilir
+        oncelik:
+          type: string
+          enum: [dusuk, orta, yuksek]
+          default: orta
+        atanan_user_id:
+          type: string
+          format: uuid
+          description: Atanan security veya tesis_gorevlisi (aksi 422 invalid_assignee)
+        not:
           type: string
           nullable: true
-          description: "Opsiyonel gorsel: once /uploads/presign ile alinan obje anahtari"
-    ComplaintUpdate:
+          maxLength: 2000
+          description: "Opsiyonel not; history satirinin sebep alanina yazilir (govde alani adi 'not' — Python tarafinda 'not_' + alias)"
+    ComplaintResolveRequest:
       type: object
-      description: En az bir alan gerekli (bos govde 422)
+      description: Dogrudan coz (admin + yonetici) — opsiyonel cozum notu timeline'a yazilir
       properties:
-        durum: { type: string, enum: [acik, inceleniyor, cozuldu] }
-        yonetici_yaniti: { type: string, minLength: 1, maxLength: 5000 }
+        cozum_notu: { type: string, nullable: true, maxLength: 2000 }
+    ComplaintDeclineRequest:
+      type: object
+      description: Reddet (admin + yonetici) — sebep ZORUNLU
+      required: [sebep]
+      properties:
+        sebep: { type: string, minLength: 1, maxLength: 2000 }
 
     Visitor:
       type: object
@@ -6096,11 +6224,19 @@ components:
         content_type:
           type: string
           example: "image/jpeg"
-          description: "Yuklenecek dosyanin MIME tipi"
+          description: >
+            Yuklenecek dosyanin MIME tipi — YALNIZ gorsel: image/jpeg,
+            image/png, image/webp, image/heic (aksi 422); imzali PUT URL bu
+            content-type'a baglanir (airtight — baska tip ile yuklenemez).
         dosya_adi:
           type: string
           nullable: true
           description: "Opsiyonel; uzanti foto_key icin kullanilabilir"
+        boyut:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: "Istemci-beyanli dosya boyutu (byte); max ~8MB (asarsa 422). Best-effort — sunucu dosyayi bizzat olcmez."
     PresignResponse:
       type: object
       required: [foto_key, upload_url, method, expires_in]

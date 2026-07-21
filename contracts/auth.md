@@ -255,9 +255,11 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /announcements`                 |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `PATCH /announcements/{id}`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `DELETE /announcements/{id}`          |  ✅   | ✅  | ❌  | ❌  | ❌  |
-| `GET  /complaints` (liste/detay)      |  ✅   | ✅  | ✅° | ✅° | ✅° |
-| `POST /complaints`                    |  ❌   | ❌  | ✅  | ✅  | ✅  |
-| `PATCH /complaints/{id}` (durum/yanit)|  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `GET  /complaints` (liste/detay, talep)|  ✅   | ✅  | ✅° | ✅° | ✅° |
+| `POST /complaints` (talep ac)         |  ❌   | ❌  | ✅  | ✅  | ✅  |
+| `POST /complaints/{id}/convert` (is emrine donustur)| ✅ | ✅ | ❌ | ❌ | ❌ |
+| `POST /complaints/{id}/resolve` (dogrudan coz)| ✅ | ✅ | ❌ | ❌ | ❌ |
+| `POST /complaints/{id}/decline` (reddet)| ✅ | ✅ | ❌ | ❌ | ❌ |
 | `GET /units/by-no/{no}/residents`     |  ✅   | ✅  | ✅  | ❌  | ❌  |
 | `POST /visitors` (ziyaretci kaydi)    |  ❌   | ❌  | ✅  | ❌  | ❌  |
 | `GET  /visitors` (liste/detay)        |  🔒   | 🔒  | ✅  | ❌  | 🎯  |
@@ -457,15 +459,17 @@ Notlar:
 - **security / tesis_gorevlisi**: operasyonel saha rolleri (tesis_gorevlisi =
   temizlik + bahcivan + teknik, eski `cleaning`in devami — yetkileri birebir
   ayni). Tanimlari **okur**, tur kaniti (`POST /scans`) **gonderir**;
-  **sikayet/oneri ACAR** ve ° yalniz kendi actiklarini izler (PATCH ❌).
-  Yapilandirmayi (CRUD) degistiremez. `tesis_gorevlisi` panele/dashboard'a
-  erisemez; saha odakli.
+  **talep/ariza ACAR** (`POST /complaints`) ve ° yalniz kendi actiklarini
+  izler; convert/resolve/decline ❌ (yonetim isi). Kendine atanan is emrini
+  (`POST /tasks/{id}/completions`) tamamlayarak talebi dolayli olarak
+  cozer (bkz. "Talep durum makinesi"). Yapilandirmayi (CRUD) degistiremez.
+  `tesis_gorevlisi` panele/dashboard'a erisemez; saha odakli.
 - **resident**: v0 kapsaminda operasyon endpoint'lerine erisimi yoktur.
   Login/refresh + `GET /me/dues` + cihaz kaydi + **duyuru okuma**
-  (`GET /announcements`; duyuru OLUSTURAMAZ) + **sikayet/oneri**
+  (`GET /announcements`; duyuru OLUSTURAMAZ) + **talep/ariza**
   (`POST /complaints` acar, ° `GET /complaints*` YALNIZ kendi actiklarini
-  gorur; PATCH ❌) disinda her kaynak `403`.
-  ‡ `POST /uploads/presign`e yalniz sikayet/oneri gorseli yuklemek icin erisir.
+  gorur; convert/resolve/decline ❌) disinda her kaynak `403`.
+  ‡ `POST /uploads/presign`e yalniz talep/ariza gorseli yuklemek icin erisir.
 - **Gorev-YONETIMI vs "Gorevlerim" (kesin matris — A4 guncel):**
   Gorev-YONETIMI = gorev atama + olusturma/duzenleme ekrani — YALNIZ
   `yonetici` (+`admin`); saha rolleri (`security`/`tesis_gorevlisi`) ve
@@ -661,7 +665,8 @@ Notlar:
   D-viz Rev-1 — KADEMELI GORUNURLUK, `/complaints`DEN AYRI):** sakin YONETIME
   degil, bir HEDEF DAIREYE sikayet acar (kategori: `gurultu` /
   `kapi_onu_ayakkabi` / `zarar_verme` / `diger` + opsiyonel not). Bu, var olan
-  yonetim-sikayeti (`/complaints`) modulunden **BAGIMSIZ** bir tablodur.
+  talep/ariza (`/complaints`) modulunden **BAGIMSIZ** bir tablodur —
+  anonimlik YALNIZ bu modulde vardir; `/complaints` HER ZAMAN kimliklidir.
   - **KATEGORI GECISI (Rev-1):** `ayakkabi` → `kapi_onu_ayakkabi` (yeniden
     adlandirma); `gurultu`/`diger` aynen; **yeni** `zarar_verme`. (down -v ile
     taze DB uygulandigindan canli ALTER yoktur; eski `ayakkabi`/`goruntu` → 422.)
@@ -804,17 +809,71 @@ Notlar:
     yeni upload yolu YOK); `foto_key` tenant-namespace dogrulanir (IDOR),
     okumada kisa omurlu `foto_url`. PATCH'te acik `foto_key=null` gorseli
     kaldirir. **Push YOK** — kurallar duyuru degil basvuru icerigi (karar).
-- **Sikayet/Oneri (`/complaints`):** tesiste yasayan/calisandan yonetime
-  talep kanali (canli test kesin kurali). ACMA `security` +
-  `tesis_gorevlisi` + `resident` (acan token'dan, `durum=acik`, opsiyonel
-  `foto_key`); `yonetici` ACAMAZ — kanalin CEVAPLAYAN tarafidir; `admin` de
-  acmaz (platform operatoru, tesiste yasamaz/calismaz). OKUMA acan roller
-  yalniz KENDI actiklarini (° isareti), `admin`+`yonetici` tenant'taki
-  tumunu (yonetim gorunumu); DURUM/YANIT (PATCH) yalniz `admin`+`yonetici`
-  (`yanitlayan_user_id` + `yanit_zamani` otomatik) — acan roller
-  cevaplayamaz. Talep ACILDIGINDA `admin`+`yonetici` cihazlarina,
-  YANITLANDIGINDA yalniz talebi ACANIN cihazlarina push denenir
-  (kisi hedefli; EK gonderim — hatasi talep kaydini etkilemez).
+- **Talep/Ariza → Is Emri (`/complaints`):** tesiste yasayan/calisandan
+  yonetime uctan uca talep kanali (eski "sikayet/oneri" modulunun
+  yeniden amaçlandırılmış hali — ayni path, yeni sema). ACMA `security` +
+  `tesis_gorevlisi` + `resident` (acan token'dan, `durum=acik` baslar, ilk
+  timeline satiri yazilir); `yonetici` ACAMAZ — kanalin CEVAPLAYAN
+  tarafidir; `admin` de acmaz (platform operatoru, tesiste yasamaz/
+  calismaz). OKUMA bes rol de erisir; acan roller (`security`/
+  `tesis_gorevlisi`/`resident`, ° isareti) YALNIZ KENDI actiklarini gorur
+  (baskasinin talebi 404 — varligi da sizdirilmaz); `admin`+`yonetici`
+  tenant'taki tumunu gorur (yonetim gorunumu).
+  - **ANONIMLIK YOK:** talepler HER ZAMAN kimlikli acilir (`acan_user_id`
+    her yanitta doner); `/complaints` anonim DEGILDIR. Anonim/hedef-daire
+    kanali AYRI bir modul olan `/unit-complaints`'tir (bkz. asagidaki
+    "Daire sikayeti + bina semasi" bolumu) — ikisi karistirilmamalidir.
+  - **Talep durum makinesi:** gecisler backend'de tek yerde
+    (`ticketing.assert_transition`) zorlanir; gecersiz gecis **422**
+    `invalid_transition` doner. `cozuldu` ve `reddedildi` TERMINALDIR (geri
+    donus yok).
+    ```
+    acik ──convert──> is_emri ──(is emri tamamlanir | resolve)──> cozuldu
+      │                                                              ▲
+      ├──resolve────────────────────────────────────────────────────┘
+      └──decline──> reddedildi
+    ```
+    - `acik` → `is_emri` (**`POST /complaints/{id}/convert`**, admin+yonetici):
+      talebi bir is emrine (Task, `ticket_id`=talep) donusturur; atanan
+      YALNIZ `security`/`tesis_gorevlisi` olabilir (aksi 422
+      `invalid_assignee`).
+    - `acik` → `cozuldu` (**`POST /complaints/{id}/resolve`**, admin+yonetici):
+      is emri acmadan dogrudan kapatma (orn. telefonla cozuldu).
+    - `acik` → `reddedildi` (**`POST /complaints/{id}/decline`**,
+      admin+yonetici, `sebep` ZORUNLU).
+    - `is_emri` → `cozuldu`: ILE IKI YOLDAN biri: (1) yine
+      `POST /complaints/{id}/resolve` (manuel/erken kapanis) VEYA (2) bagli
+      is emri (Task) saha personeli tarafindan
+      `POST /tasks/{id}/completions` ile tamamlandiginda **OTOMATIK**
+      (backend tetikler; ayri bir talep-kapatma cagrisi GEREKMEZ). `is_emri`
+      durumundan `reddedildi`'ye gecis YOKTUR (donusturulmus is artik geri
+      reddedilemez).
+    - Her gecis `gecmis[]` (timeline) satirina yazilir: `durum` +
+      `actor_role` (YALNIZ rol — `user_id` ASLA tutulmaz) + opsiyonel
+      `sebep` (`convert.not` / `resolve.cozum_notu` / `decline.sebep`) +
+      `created_at`.
+  - **Talep fotografları:** acilista en fazla **3** gorsel eklenebilir
+    (`foto_keys`, `ComplaintCreate`) — MEVCUT presign akisiyla
+    (`/uploads/presign` → PUT → `foto_key`; duyuru/gorev/site-kurali ile
+    ayni desen, yeni upload yolu YOK); `content_type` **YALNIZ gorsel**
+    olmali (jpeg/png/webp/heic, aksi 422) ve imzali URL bu tipe baglanir.
+    Her `foto_key` **tenant-namespace dogrulanir** (`<tenant_id>/...`
+    onekiyle baslamali, aksi 422 `invalid_foto_key` — IDOR korumasi).
+    Okumada `fotograflar[]` icinde her fotograf icin kisa omurlu
+    `foto_url` (presigned GET) doner; depo yapilandirilmamissa `foto_url`
+    sessizce `null` kalir (okuma kirilmaz).
+  - **Push:** talep ACILDIGINDA `admin`+`yonetici` cihazlarina
+    (`data: tip=talep`); `is_emri`'ye DONUSTURULDUGUNDE talebi acana
+    (`tip=talep_is_emri`) VE atanan saha personeline
+    (`tip=is_emri_atandi`) EK push denenir; `cozuldu`/`reddedildi`
+    olduğunda YALNIZ talebi ACANIN cihazlarina (`tip=talep_cozuldu` /
+    `talep_reddedildi`) push denenir. Tumu EK gonderim — push hatasi talep
+    kaydini etkilemez.
+  - **Kategori:** sabit `ComplaintKategori` enum'u KALDIRILDI; talep
+    kategorisi artik dinamik `task_category`'e FK'lidir (`kategori_id`,
+    opsiyonel; `kategori_ad` join ile doldurulur) — Gorev kategorisiyle
+    (`/task-categories`) AYNI havuzu paylasir, boylece `convert` sirasinda
+    kategori is emrine dogrudan tasınır.
 
 ## 5. Hata Davranisi
 
