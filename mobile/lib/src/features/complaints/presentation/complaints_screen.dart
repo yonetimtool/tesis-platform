@@ -7,6 +7,12 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/domain/user_role.dart';
+// Atanabilir personel (aktif security/tesis_gorevlisi) listesi gorev
+// atama akisiyla AYNI kaynaktan gelir — kopya yok.
+import '../../tasks/data/task_api.dart';
+import '../../tasks/domain/task_models.dart' show AssignableUser;
+import '../../tasks/domain/task_category_models.dart' show TaskCategory;
+import '../data/complaint_api.dart' show complaintApiProvider;
 import '../domain/complaint_models.dart';
 import 'complaints_controller.dart';
 
@@ -362,10 +368,8 @@ class _ComplaintCard extends ConsumerWidget {
 }
 
 /// Talep detay sheet'i — kart dokunusundan ve push tiklamasindan (otomatik
-/// acilis) ayni yoldan cagrilir.
-///
-/// TODO(Task 12): foto galerisi + durum gecis timeline'i (gecmis[]).
-/// TODO(Task 13): yonetici donustur/coz/reddet eylem sheet'leri.
+/// acilis) ayni yoldan cagrilir. Yonetici (canRespond) + durum==acik iken
+/// altta donustur/coz/reddet eylem cubugu ([_YoneticiActionBar]) gosterilir.
 Future<void> _showComplaintDetail(
   BuildContext context,
   Complaint complaint, {
@@ -379,17 +383,16 @@ Future<void> _showComplaintDetail(
   );
 }
 
-/// Salt-okunur detay sheet'i: baslik + durum + meta + mesaj + kategori +
-/// foto galerisi (buyutulebilir) + dikey durum timeline'i (gecmis[]) + bagli
-/// is emri durumu. Yonetici donustur/coz/reddet eylemleri (Task 13) BURADA
-/// DEGIL — bilerek stub birakildi.
+/// Detay sheet'i: baslik + durum + meta + mesaj + kategori + foto galerisi
+/// (buyutulebilir) + dikey durum timeline'i (gecmis[]) + bagli is emri
+/// durumu. Yonetici (canRespond) + durum==acik iken altta donustur/coz/reddet
+/// eylem cubugu ([_YoneticiActionBar]).
 class _ComplaintDetail extends StatelessWidget {
   const _ComplaintDetail({required this.complaint, required this.canRespond});
 
   final Complaint complaint;
 
-  /// admin/yonetici mi — su an yalniz "eylemler yakinda" ipucu; gercek
-  /// donustur/coz/reddet Task 13'te eklenecek.
+  /// admin/yonetici mi — eylem cubugunun gorunurlugunu belirler.
   final bool canRespond;
 
   @override
@@ -445,13 +448,13 @@ class _ComplaintDetail extends StatelessWidget {
               const SizedBox(height: 8),
               _StatusTimeline(gecmis: c.gecmis),
             ],
-            // TODO(Task 13): admin/yonetici donustur/coz/reddet eylemleri.
-            if (canRespond) ...[
+            // Yonetici eylemleri YALNIZ acik talepte anlamli (durum makinesi:
+            // convert/decline yalniz acik'ten; resolve acik VEYA is_emri'den).
+            // Non-acik durumlarda eylem cubugu hic cizilmez (backend zaten 422
+            // invalid_transition ile korur; UX bunu onceden gizler).
+            if (canRespond && c.durum == TalepDurum.acik) ...[
               const Divider(height: 24),
-              Text(
-                'Yönetici işlemleri (dönüştür / çöz / reddet) yakında.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              _YoneticiActionBar(complaint: c),
             ],
           ],
         ),
@@ -1100,6 +1103,598 @@ class _AddPhotoTile extends StatelessWidget {
               Text('Ekle', style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Yonetici eylem cubugu (detay sheet'inin altinda; yalniz canRespond +
+/// durum==acik iken cizilir). Uc eylem: "İş Emrine Dönüştür" (birincil),
+/// "Çöz", "Reddet". Her biri kendi bottom-sheet'ini acar; islem basarili
+/// olursa detay sheet'i KAPANIR (elimizdeki [complaint] kopyasi bayatladi —
+/// guncel hali tazelenmis listededir) ve bir SnackBar gosterilir.
+class _YoneticiActionBar extends ConsumerWidget {
+  const _YoneticiActionBar({required this.complaint});
+
+  final Complaint complaint;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          trUpper('Yönetici işlemleri'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          onPressed: () => _open(
+            context,
+            const Text('Talep iş emrine dönüştürüldü ✓'),
+            (_) => _ConvertSheet(complaint: complaint),
+          ),
+          icon: const Icon(Icons.assignment_turned_in_outlined),
+          label: const Text('İş Emrine Dönüştür'),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _open(
+                  context,
+                  const Text('Talep çözüldü ✓'),
+                  (_) => _ResolveSheet(complaint: complaint),
+                ),
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text('Çöz'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                onPressed: () => _open(
+                  context,
+                  const Text('Talep reddedildi ✓'),
+                  (_) => _DeclineSheet(complaint: complaint),
+                ),
+                icon: const Icon(Icons.cancel_outlined),
+                label: const Text('Reddet'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Ortak akis: eylem sheet'ini ac, `true` donerse detay sheet'ini kapat +
+  /// SnackBar. Messenger pop'tan ONCE yakalanir (pop sonrasi bu context'in
+  /// alt-agaci soker).
+  Future<void> _open(
+    BuildContext context,
+    Widget successMessage,
+    WidgetBuilder builder,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: builder,
+    );
+    if (ok != true) return;
+    navigator.pop(); // detay sheet'ini kapat (durum degisti, kopya bayat)
+    messenger.showSnackBar(SnackBar(content: successMessage));
+  }
+}
+
+/// "İş Emrine Dönüştür" sheet'i — kategori (talepten on-dolu, degistirilebilir),
+/// oncelik (SegmentedButton dusuk|orta|yuksek), atanan personel (ZORUNLU;
+/// aktif security/tesis_gorevlisi) + opsiyonel not. Gonderim
+/// [ComplaintsController.convert] uzerinden; basari `true` ile kapanir.
+class _ConvertSheet extends ConsumerStatefulWidget {
+  const _ConvertSheet({required this.complaint});
+
+  final Complaint complaint;
+
+  @override
+  ConsumerState<_ConvertSheet> createState() => _ConvertSheetState();
+}
+
+class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
+  final _notCtrl = TextEditingController();
+  TalepOncelik _oncelik = TalepOncelik.orta;
+  late String? _kategoriId = widget.complaint.kategoriId;
+  String? _atananUserId;
+
+  /// Atanabilir personel (bir kez yuklenir); null → yukleniyor.
+  List<AssignableUser>? _personel;
+  String? _personelError;
+
+  /// Aktif gorev kategorileri (talep kategorisiyle ayni kaynak); null → yukleniyor.
+  List<TaskCategory>? _kategoriler;
+
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPersonel();
+    _loadKategoriler();
+  }
+
+  @override
+  void dispose() {
+    _notCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadPersonel() async {
+    try {
+      final users = await ref.read(taskApiProvider).fetchAssignableUsers();
+      if (!mounted) return;
+      setState(() => _personel = users);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _personel = const [];
+        _personelError = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _personel = const [];
+        _personelError = 'Personel listesi alınamadı.';
+      });
+    }
+  }
+
+  Future<void> _loadKategoriler() async {
+    try {
+      final cats = await ref.read(complaintApiProvider).listTaskCategories();
+      if (!mounted) return;
+      final aktifler = cats.where((c) => c.aktif).toList(growable: false);
+      setState(() {
+        // On-dolu kategori pasiflestiyse/silindiyse listede olmayabilir —
+        // secimi koru ama secenege "(silinmiş)" olarak ekle.
+        if (_kategoriId != null && !aktifler.any((k) => k.id == _kategoriId)) {
+          _kategoriler = [
+            ...aktifler,
+            TaskCategory(id: _kategoriId!, ad: 'Kategori (silinmiş)', aktif: false),
+          ];
+        } else {
+          _kategoriler = aktifler;
+        }
+      });
+    } on ApiException catch (_) {
+      if (!mounted) return;
+      setState(() => _kategoriler = const []);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _kategoriler = const []);
+    }
+  }
+
+  Future<void> _submit() async {
+    final atanan = _atananUserId;
+    if (atanan == null) return; // buton zaten pasif; savunmaci
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    final not = _notCtrl.text.trim();
+    final draft = ComplaintConvertDraft(
+      atananUserId: atanan,
+      oncelik: _oncelik,
+      kategoriId: _kategoriId,
+      not_: not.isEmpty ? null : not,
+    );
+    try {
+      await ref
+          .read(complaintsControllerProvider.notifier)
+          .convert(widget.complaint.id, draft);
+      if (mounted) Navigator.pop(context, true);
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = e.message;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loading = _personel == null || _kategoriler == null;
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'İş emrine dönüştür',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            if (loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else ...[
+              // Kategori — talepten on-dolu, degistirilebilir; "Diğer" = null.
+              DropdownButtonFormField<String?>(
+                initialValue: _kategoriler!.any((k) => k.id == _kategoriId)
+                    ? _kategoriId
+                    : null,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Kategori',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('Diğer'),
+                  ),
+                  for (final k in _kategoriler!)
+                    DropdownMenuItem<String?>(
+                      value: k.id,
+                      child: Text(k.ad, overflow: TextOverflow.ellipsis),
+                    ),
+                ],
+                onChanged: _saving
+                    ? null
+                    : (v) => setState(() => _kategoriId = v),
+              ),
+              const SizedBox(height: 16),
+              const Text('Öncelik'),
+              const SizedBox(height: 4),
+              SegmentedButton<TalepOncelik>(
+                segments: const [
+                  ButtonSegment(
+                    value: TalepOncelik.dusuk,
+                    label: Text('Düşük'),
+                  ),
+                  ButtonSegment(
+                    value: TalepOncelik.orta,
+                    label: Text('Orta'),
+                  ),
+                  ButtonSegment(
+                    value: TalepOncelik.yuksek,
+                    label: Text('Yüksek'),
+                  ),
+                ],
+                selected: {_oncelik},
+                onSelectionChanged: _saving
+                    ? null
+                    : (s) => setState(() => _oncelik = s.first),
+              ),
+              const SizedBox(height: 16),
+              // Atanan — ZORUNLU (convert atanansiz 422). Yalniz aktif
+              // security/tesis_gorevlisi listelenir.
+              DropdownButtonFormField<String?>(
+                initialValue: _atananUserId,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Atanan personel',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final u in _personel!)
+                    DropdownMenuItem<String?>(
+                      value: u.id,
+                      child: Text(
+                        u.role.isEmpty
+                            ? u.ad
+                            : '${u.ad} (${UserRole.fromClaim(u.role).label})',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+                onChanged: _saving
+                    ? null
+                    : (v) => setState(() => _atananUserId = v),
+              ),
+              if (_personelError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Personel listesi alınamadı: $_personelError',
+                    style: const TextStyle(color: Colors.orange),
+                  ),
+                )
+              else if (_personel!.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Atanabilir aktif saha personeli yok. Dönüştürmek için '
+                    'önce security/tesis görevlisi ekleyin.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _notCtrl,
+                minLines: 2,
+                maxLines: 4,
+                enabled: !_saving,
+                decoration: const InputDecoration(
+                  labelText: 'Not (opsiyonel)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 8),
+                Text(_error!, style: const TextStyle(color: Colors.red)),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  // Atanan secilene kadar pasif (convert atanan ZORUNLU).
+                  onPressed: (_saving || _atananUserId == null) ? null : _submit,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.assignment_turned_in_outlined),
+                  label: Text(_saving ? 'Dönüştürülüyor...' : 'Dönüştür'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Reddet" sheet'i — `sebep` ZORUNLU; buton sebep bosken pasif. Gonderim
+/// [ComplaintsController.decline] uzerinden.
+class _DeclineSheet extends ConsumerStatefulWidget {
+  const _DeclineSheet({required this.complaint});
+
+  final Complaint complaint;
+
+  @override
+  ConsumerState<_DeclineSheet> createState() => _DeclineSheetState();
+}
+
+class _DeclineSheetState extends ConsumerState<_DeclineSheet> {
+  final _sebepCtrl = TextEditingController();
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _sebepCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final sebep = _sebepCtrl.text.trim();
+    if (sebep.isEmpty) return; // buton zaten pasif; savunmaci
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(complaintsControllerProvider.notifier)
+          .decline(widget.complaint.id, ComplaintDeclineDraft(sebep: sebep));
+      if (mounted) Navigator.pop(context, true);
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = e.message;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Talebi reddet',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Ret sebebi talebi açan kişiye durum geçmişinde görünür.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _sebepCtrl,
+              autofocus: true,
+              minLines: 2,
+              maxLines: 4,
+              enabled: !_saving,
+              // Sebep degisince buton aktifligi guncellenmeli.
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
+                labelText: 'Ret sebebi',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!, style: const TextStyle(color: Colors.red)),
+            ],
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                // Sebep bosken pasif.
+                onPressed: (_saving || _sebepCtrl.text.trim().isEmpty)
+                    ? null
+                    : _submit,
+                icon: _saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.cancel_outlined),
+                label: Text(_saving ? 'Reddediliyor...' : 'Reddet'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Çöz" sheet'i — cozum notu OPSIYONEL. Gonderim
+/// [ComplaintsController.resolve] uzerinden.
+class _ResolveSheet extends ConsumerStatefulWidget {
+  const _ResolveSheet({required this.complaint});
+
+  final Complaint complaint;
+
+  @override
+  ConsumerState<_ResolveSheet> createState() => _ResolveSheetState();
+}
+
+class _ResolveSheetState extends ConsumerState<_ResolveSheet> {
+  final _notCtrl = TextEditingController();
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _notCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    final not = _notCtrl.text.trim();
+    try {
+      await ref.read(complaintsControllerProvider.notifier).resolve(
+            widget.complaint.id,
+            ComplaintResolveDraft(cozumNotu: not.isEmpty ? null : not),
+          );
+      if (mounted) Navigator.pop(context, true);
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = e.message;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Talebi çöz',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Talep iş emri açmadan doğrudan çözüldü olarak işaretlenir.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _notCtrl,
+              minLines: 2,
+              maxLines: 4,
+              enabled: !_saving,
+              decoration: const InputDecoration(
+                labelText: 'Çözüm notu (opsiyonel)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!, style: const TextStyle(color: Colors.red)),
+            ],
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _saving ? null : _submit,
+                icon: _saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.check_circle_outline),
+                label: Text(_saving ? 'Kaydediliyor...' : 'Çöz'),
+              ),
+            ),
+          ],
         ),
       ),
     );

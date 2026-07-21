@@ -7,32 +7,42 @@ import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/complaints/data/complaint_api.dart';
 import 'package:mobile/src/features/complaints/domain/complaint_models.dart';
 import 'package:mobile/src/features/complaints/presentation/complaints_screen.dart';
+import 'package:mobile/src/features/tasks/data/task_category_api.dart';
+import 'package:mobile/src/features/tasks/domain/task_category_models.dart';
 
-/// Aga cikmayan sahte istemci — liste sabit doner (widget testi).
+/// Aga cikmayan sahte istemci — liste sabit doner, kategori bos (widget
+/// testleri ag beklemez). ComplaintApi Task 10'da ikinci pozisyonel
+/// bagimlilik (TaskCategoryApi) kazandi; super cagrisi buna uyar.
 class _FakeComplaintApi extends ComplaintApi {
-  _FakeComplaintApi(this._items) : super(Dio());
+  _FakeComplaintApi(this._items) : super(Dio(), TaskCategoryApi(Dio()));
 
   final List<Complaint> _items;
 
   @override
-  Future<List<Complaint>> fetchAll() async => _items;
+  Future<List<Complaint>> fetchAll({TalepDurum? durum}) async => _items;
+
+  @override
+  Future<List<TaskCategory>> listTaskCategories() async => const [];
 }
 
 Complaint _c({
-  ComplaintDurum durum = ComplaintDurum.acik,
-  String? yanit,
-  ComplaintKategori? kategori,
+  String id = 'c-1',
+  String baslik = 'Asansor arizali',
+  String mesaj = 'A blok asansoru durdu.',
+  TalepDurum durum = TalepDurum.acik,
+  String? kategoriAd,
+  List<ComplaintHistory> gecmis = const [],
 }) =>
     Complaint(
-      id: 'c-1',
-      baslik: 'Asansor arizali',
-      mesaj: 'A blok asansoru durdu.',
-      durum: durum,
-      kategori: kategori,
+      id: id,
       acanUserId: 'u-1',
       acanAd: 'Acme Sakin',
-      yoneticiYaniti: yanit,
-      yanitZamani: yanit == null ? null : DateTime.utc(2026, 7, 9, 11),
+      baslik: baslik,
+      mesaj: mesaj,
+      kategoriAd: kategoriAd,
+      durum: durum,
+      fotograflar: const [],
+      gecmis: gecmis,
       createdAt: DateTime.utc(2026, 7, 9, 10),
       updatedAt: DateTime.utc(2026, 7, 9, 10),
     );
@@ -53,7 +63,7 @@ Widget _app(
     );
 
 void main() {
-  group('"Yeni talep" butonu rol gorunurlugu (auth.md §4 kesin kurali)', () {
+  group('"Yeni talep" FAB rol gorunurlugu (auth.md §4 kesin kurali)', () {
     for (final role in [
       UserRole.security,
       UserRole.tesisGorevlisi,
@@ -67,7 +77,7 @@ void main() {
     }
 
     for (final role in [UserRole.admin, UserRole.yonetici]) {
-      testWidgets('${role.name}: FAB YOK (yonetim acamaz, yalniz yanitlar)',
+      testWidgets('${role.name}: FAB YOK (yonetim talep acamaz)',
           (tester) async {
         await tester.pumpWidget(_app(role, items: [_c()]));
         await tester.pumpAndSettle();
@@ -75,84 +85,176 @@ void main() {
         expect(find.byType(FloatingActionButton), findsNothing);
       });
     }
+  });
 
-    testWidgets('acan rol (security) detayda yanit formu GORMEZ',
+  group('durum sekmeleri (Açık / İş Emri / Çözülen / Reddedilen)', () {
+    final items = [
+      _c(),
+      _c(id: 'c-2', baslik: 'Is emri talebi', durum: TalepDurum.isEmri),
+      _c(id: 'c-3', baslik: 'Cozulen talep', durum: TalepDurum.cozuldu),
+      _c(id: 'c-4', baslik: 'Reddedilen talep', durum: TalepDurum.reddedildi),
+    ];
+
+    testWidgets('sayaclar dogru; her kayit yalniz KENDI sekmesinde',
+        (tester) async {
+      await tester.pumpWidget(_app(UserRole.yonetici, items: items));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Açık (1)'), findsOneWidget);
+      expect(find.text('İş Emri (1)'), findsOneWidget);
+      expect(find.text('Çözülen (1)'), findsOneWidget);
+      expect(find.text('Reddedilen (1)'), findsOneWidget);
+
+      // Varsayilan sekme Acik.
+      expect(find.text('Asansor arizali'), findsOneWidget);
+      expect(find.text('Is emri talebi'), findsNothing);
+
+      await tester.tap(find.text('İş Emri (1)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Is emri talebi'), findsOneWidget);
+      expect(find.text('Asansor arizali'), findsNothing);
+
+      await tester.tap(find.text('Reddedilen (1)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Reddedilen talep'), findsOneWidget);
+    });
+
+    testWidgets('bos sekme anlamli mesaj gosterir', (tester) async {
+      await tester.pumpWidget(_app(UserRole.yonetici, items: [_c()]));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('İş Emri (0)'));
+      await tester.pumpAndSettle();
+      expect(find.text('İş emrine dönüşen talep yok.'), findsOneWidget);
+    });
+  });
+
+  group('detay + yonetici eylem cubugu (Task 13)', () {
+    testWidgets('yonetici + acik talep: uc eylem GORUNUR', (tester) async {
+      await tester.pumpWidget(_app(UserRole.yonetici, items: [_c()]));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Asansor arizali'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('İş Emrine Dönüştür'), findsOneWidget);
+      expect(find.text('Çöz'), findsOneWidget);
+      expect(find.text('Reddet'), findsOneWidget);
+    });
+
+    testWidgets('acan rol (security) detayda eylem cubugu GORMEZ',
         (tester) async {
       await tester.pumpWidget(_app(UserRole.security, items: [_c()]));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Asansor arizali'));
       await tester.pumpAndSettle();
-      expect(find.byType(SegmentedButton<ComplaintDurum>), findsNothing);
-      expect(find.text('Yaniti kaydet'), findsNothing);
-    });
-  });
 
-  group('detay + yanit formu', () {
-    testWidgets('yonetici karta dokununca durum secimi + yanit alani gorur',
+      expect(find.text('İş Emrine Dönüştür'), findsNothing);
+      expect(find.text('Çöz'), findsNothing);
+      expect(find.text('Reddet'), findsNothing);
+    });
+
+    testWidgets('yonetici + NON-acik (cozuldu) talep: eylem cubugu GIZLI',
+        (tester) async {
+      await tester.pumpWidget(_app(
+        UserRole.yonetici,
+        items: [_c(durum: TalepDurum.cozuldu)],
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Çözülen (1)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Asansor arizali'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('İş Emrine Dönüştür'), findsNothing);
+      expect(find.text('Reddet'), findsNothing);
+    });
+
+    testWidgets('reddet sheet acilir; sebep bosken buton PASIF, dolunca AKTIF',
         (tester) async {
       await tester.pumpWidget(_app(UserRole.yonetici, items: [_c()]));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Asansor arizali'));
       await tester.pumpAndSettle();
-      expect(find.byType(SegmentedButton<ComplaintDurum>), findsOneWidget);
-      expect(find.text('Yönetim yanıtı'), findsOneWidget);
-      expect(find.text('Yanıtı kaydet'), findsOneWidget);
+      await tester.tap(find.text('Reddet'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Talebi reddet'), findsOneWidget);
+      // Sheet acikken submit butonu (ikinci "Reddet") sebep bosken pasif.
+      final submit = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Reddet'),
+      );
+      expect(submit.onPressed, isNull);
+
+      await tester.enterText(find.byType(TextField), 'Mükerrer talep.');
+      await tester.pumpAndSettle();
+      final submit2 = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Reddet'),
+      );
+      expect(submit2.onPressed, isNotNull);
     });
 
-    testWidgets('resident detayda yanit formu GORMEZ; mevcut yaniti okur',
+    testWidgets('coz sheet acilir; cozum notu opsiyonel (buton aktif)',
+        (tester) async {
+      await tester.pumpWidget(_app(UserRole.yonetici, items: [_c()]));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Asansor arizali'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Çöz'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Talebi çöz'), findsOneWidget);
+      // Notsuz bile "Çöz" submit butonu aktif.
+      final submit = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Çöz'),
+      );
+      expect(submit.onPressed, isNotNull);
+    });
+  });
+
+  group('detay icerigi + push tiklamasi', () {
+    testWidgets('kategorili talep listede ve detayda etiketini gosterir',
         (tester) async {
       await tester.pumpWidget(_app(
         UserRole.resident,
-        items: [_c(durum: ComplaintDurum.cozuldu, yanit: 'Servis cagrildi.')],
+        items: [_c(kategoriAd: 'Arıza')],
       ));
       await tester.pumpAndSettle();
-      // Cozuldu kayit "Cozulenler" sekmesinde.
-      await tester.tap(find.text('Çözülenler (1)'));
+      expect(find.text('Arıza'), findsOneWidget); // kart
+
+      await tester.tap(find.text('Asansor arizali'));
+      await tester.pumpAndSettle();
+      expect(find.text('Arıza'), findsNWidgets(2)); // + detay
+    });
+
+    testWidgets('durum gecmisi (timeline) detayda gorunur', (tester) async {
+      await tester.pumpWidget(_app(
+        UserRole.yonetici,
+        items: [
+          _c(gecmis: [
+            ComplaintHistory(
+              durum: TalepDurum.acik,
+              actorRole: 'resident',
+              createdAt: DateTime.utc(2026, 7, 9, 10),
+            ),
+          ]),
+        ],
+      ));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Asansor arizali'));
       await tester.pumpAndSettle();
-      expect(find.byType(SegmentedButton<ComplaintDurum>), findsNothing);
-      expect(find.text('Yaniti kaydet'), findsNothing);
-      expect(find.textContaining('Servis cagrildi.'), findsWidgets);
+      expect(find.text('DURUM GEÇMİŞİ'), findsOneWidget);
     });
 
-    testWidgets('resident yanitsiz talepte "yanit bekleniyor" gorur',
-        (tester) async {
-      await tester.pumpWidget(_app(UserRole.resident, items: [_c()]));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Asansor arizali'));
-      await tester.pumpAndSettle();
-      expect(find.text('Yönetim yanıtı bekleniyor.'), findsOneWidget);
-    });
-  });
-
-  testWidgets('resident formu acar: baslik/mesaj + opsiyonel gorsel alani',
-      (tester) async {
-    await tester.pumpWidget(_app(UserRole.resident));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Yeni talep'));
-    await tester.pumpAndSettle();
-    expect(find.text('Yeni şikayet / öneri'), findsOneWidget);
-    expect(find.text('Başlık'), findsOneWidget);
-    expect(find.text('Mesajınız'), findsOneWidget);
-    expect(find.text('Görsel (opsiyonel)'), findsOneWidget);
-    // foto'suz da gonderilebilir — buton aktif
-    expect(find.text('Gönder'), findsOneWidget);
-  });
-
-  group('push tiklamasi (initialComplaintId)', () {
-    testWidgets('liste yuklenince ilgili talep detayi OTOMATIK acilir',
+    testWidgets('initialComplaintId ile ilgili talep detayi OTOMATIK acilir',
         (tester) async {
       await tester.pumpWidget(_app(
         UserRole.resident,
-        items: [_c(yanit: 'Servis cagrildi.')],
+        items: [_c(mesaj: 'A blok asansoru durdu.')],
         initialComplaintId: 'c-1',
       ));
       await tester.pumpAndSettle();
-      // Detay sheet acildi: yanit metni TAM haliyle gorunur (kart onizlemesi
-      // "Yonetim yaniti: ..." onekiyle tek satirdir — bu bulgu sheet'e ozgu).
-      expect(find.text('Servis cagrildi.'), findsOneWidget);
-      expect(find.textContaining('Yönetim yanıtı ·'), findsOneWidget);
+      // Detay sheet acildi: tam mesaj gorunur (kart onizlemesi de ayni metni
+      // tasir; sheet + kart = 2 bulgu).
+      expect(find.text('A blok asansoru durdu.'), findsNWidgets(2));
     });
 
     testWidgets('kayit listede yoksa sessizce listede kalinir (cokme yok)',
@@ -163,120 +265,8 @@ void main() {
         initialComplaintId: 'olmayan-id',
       ));
       await tester.pumpAndSettle();
-      expect(find.text('Asansor arizali'), findsOneWidget); // liste ekrani
+      expect(find.text('Asansor arizali'), findsOneWidget);
       expect(tester.takeException(), isNull);
-    });
-  });
-
-  testWidgets('durum rozeti dogru etiketle cizilir (Inceleniyor sekmesinde)',
-      (tester) async {
-    await tester.pumpWidget(_app(
-      UserRole.yonetici,
-      items: [_c(durum: ComplaintDurum.inceleniyor)],
-    ));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('İnceleniyor (1)'));
-    await tester.pumpAndSettle();
-    // Rozet metni tam 'Inceleniyor' (sekme etiketi sayac tasir — karismaz).
-    expect(find.text('İnceleniyor'), findsOneWidget);
-  });
-
-  group('Acik / Inceleniyor / Cozulenler sekmeleri', () {
-    final items = [
-      _c(),
-      Complaint(
-        id: 'c-2',
-        baslik: 'Incelenen talep',
-        mesaj: 'm',
-        durum: ComplaintDurum.inceleniyor,
-        acanUserId: 'u-1',
-        createdAt: DateTime.utc(2026, 7, 8, 12),
-        updatedAt: DateTime.utc(2026, 7, 8, 12),
-      ),
-      Complaint(
-        id: 'c-3',
-        baslik: 'Cozulen talep',
-        mesaj: 'm',
-        durum: ComplaintDurum.cozuldu,
-        acanUserId: 'u-1',
-        yoneticiYaniti: 'Tamam.',
-        createdAt: DateTime.utc(2026, 7, 8),
-        updatedAt: DateTime.utc(2026, 7, 9),
-      ),
-    ];
-
-    testWidgets('her durum yalniz KENDI sekmesinde gorunur', (tester) async {
-      await tester.pumpWidget(_app(UserRole.yonetici, items: items));
-      await tester.pumpAndSettle();
-
-      // Sekme sayaclari dogru
-      expect(find.text('Açık (1)'), findsOneWidget);
-      expect(find.text('İnceleniyor (1)'), findsOneWidget);
-      expect(find.text('Çözülenler (1)'), findsOneWidget);
-      // Varsayilan sekme Acik: yalniz acik kayit
-      expect(find.text('Asansor arizali'), findsOneWidget);
-      expect(find.text('Incelenen talep'), findsNothing);
-      expect(find.text('Cozulen talep'), findsNothing);
-
-      await tester.tap(find.text('İnceleniyor (1)'));
-      await tester.pumpAndSettle();
-      expect(find.text('Incelenen talep'), findsOneWidget);
-      expect(find.text('Asansor arizali'), findsNothing);
-
-      await tester.tap(find.text('Çözülenler (1)'));
-      await tester.pumpAndSettle();
-      expect(find.text('Cozulen talep'), findsOneWidget);
-      expect(find.text('Incelenen talep'), findsNothing);
-    });
-
-    testWidgets('bos sekmeler anlamli mesaj gosterir', (tester) async {
-      await tester.pumpWidget(_app(UserRole.yonetici, items: [_c()]));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('İnceleniyor (0)'));
-      await tester.pumpAndSettle();
-      expect(find.text('İncelemede talep yok.'), findsOneWidget);
-      await tester.tap(find.text('Çözülenler (0)'));
-      await tester.pumpAndSettle();
-      expect(find.text('Henüz çözülen talep yok.'), findsOneWidget);
-    });
-  });
-
-  group('kategori (Wave 1 #3)', () {
-    testWidgets('kategorili talep listede ve detayda etiketini gosterir',
-        (tester) async {
-      await tester.pumpWidget(_app(
-        UserRole.resident,
-        items: [_c(kategori: ComplaintKategori.gurultu)],
-      ));
-      await tester.pumpAndSettle();
-      expect(find.text('Gürültü kirliliği'), findsOneWidget); // kart
-
-      await tester.tap(find.text('Asansor arizali'));
-      await tester.pumpAndSettle();
-      expect(find.text('Gürültü kirliliği'), findsNWidgets(2)); // + detay
-    });
-
-    testWidgets('kategorisiz eski talep etiketsiz calisir', (tester) async {
-      await tester.pumpWidget(_app(UserRole.resident, items: [_c()]));
-      await tester.pumpAndSettle();
-      expect(find.text('Gürültü kirliliği'), findsNothing);
-      expect(find.text('Görüntü kirliliği'), findsNothing);
-      expect(find.text('Asansor arizali'), findsOneWidget);
-    });
-
-    testWidgets('yeni talep formunda kategori secenekleri sunulur',
-        (tester) async {
-      await tester.pumpWidget(_app(UserRole.resident, items: [_c()]));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Yeni talep'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Kategori (opsiyonel)'), findsOneWidget);
-      expect(find.text('Gürültü kirliliği'), findsOneWidget);
-      expect(find.text('Görüntü kirliliği'), findsOneWidget);
-      expect(find.text('Diğer'), findsOneWidget);
-      // foto butonu yeni adiyla
-      expect(find.text('Kamera'), findsOneWidget);
     });
   });
 }

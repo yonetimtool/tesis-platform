@@ -107,6 +107,26 @@ class ComplaintsController extends Notifier<ComplaintsState> {
     await ref.read(complaintApiProvider).create(draft);
     await refresh();
   }
+
+  /// Talebi is emrine donustur (admin + yonetici). Basari sonrasi listeyi
+  /// tazeler (durum acik -> is_emri; yeni timeline satiri gorunur). Hata
+  /// ([ApiException]) EYLEMI acan sheet'e yukari firlatilir (orada gosterilir).
+  Future<void> convert(String id, ComplaintConvertDraft draft) async {
+    await ref.read(complaintApiProvider).convert(id, draft);
+    await refresh();
+  }
+
+  /// Talebi dogrudan coz (admin + yonetici). Basari sonrasi tazeler.
+  Future<void> resolve(String id, ComplaintResolveDraft draft) async {
+    await ref.read(complaintApiProvider).resolve(id, draft);
+    await refresh();
+  }
+
+  /// Talebi reddet (admin + yonetici; `sebep` zorunlu). Basari sonrasi tazeler.
+  Future<void> decline(String id, ComplaintDeclineDraft draft) async {
+    await ref.read(complaintApiProvider).decline(id, draft);
+    await refresh();
+  }
 }
 
 final complaintsControllerProvider =
