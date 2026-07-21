@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..crud_helpers import coord_eq, get_or_404, is_unique_violation, nfc_eq, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Checkpoint, Task, TaskCategory, TaskCompletion
+from ..models import AppUser, Checkpoint, Complaint, Task, TaskCategory, TaskCompletion
 from ..schemas import (
     TaskCompletionCreate,
     TaskCompletionListResponse,
@@ -32,6 +32,7 @@ from ..schemas import (
     TaskOut,
     TaskUpdate,
 )
+from ..ticketing import add_history, notify_opener
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -347,6 +348,28 @@ async def create_completion(
                 minutes=task.periyot_dakika
             )
             await db.flush()
+        # Ticket-linked gorev tamamlaninca bagli talebi oto-coz (YALNIZ taze
+        # insert'te — idempotent replay'de degil; aksi halde yonetici tekrar
+        # actigi talebi ezip mukerrer history/push uretebilir).
+        if task.ticket_id is not None:
+            complaint = (
+                await db.execute(
+                    select(Complaint).where(Complaint.id == task.ticket_id)
+                )
+            ).scalars().first()
+            if complaint is not None and complaint.durum == "is_emri":
+                complaint.durum = "cozuldu"
+                complaint.updated_at = func.now()
+                add_history(
+                    db, complaint=complaint, durum="cozuldu",
+                    actor_role=user.role, sebep=None,
+                )
+                await db.flush()
+                notify_opener(
+                    complaint=complaint, tenant_id=user.tenant_id,
+                    tip="talep_cozuldu",
+                    mesaj=f"Talebiniz cozuldu: {complaint.baslik}",
+                )
         await db.refresh(obj)
         return JSONResponse(
             status_code=201, content=TaskCompletionOut.model_validate(obj).model_dump(mode="json")
