@@ -26,10 +26,14 @@ def _new_category(client, admin, ad):
     return r.json()
 
 
-def _new_task(client, headers, ad, kategori_id=None):
+def _new_task(client, headers, ad, kategori_id=None, atanan_user_id=None):
     body = {"ad": ad}
     if kategori_id is not None:
         body["kategori_id"] = kategori_id
+    # Saha kullanicisi YALNIZ kendine atanan gorevi tamamlayabilir (aksi 404 —
+    # _assignee_visibility). Tamamlayacak kullaniciya atayarak kurala uyuyoruz.
+    if atanan_user_id is not None:
+        body["atanan_user_id"] = atanan_user_id
     r = client.post("/tasks", headers=headers, json=body)
     assert r.status_code == 201, r.text
     return r.json()
@@ -53,9 +57,9 @@ def _world_a_data(client, world):
 
     cat_tem = _new_category(client, admin, "Temizlik")
     cat_kon = _new_category(client, admin, "Kontrol")
-    t_tem = _new_task(client, admin, "Cop", cat_tem["id"])
-    t_kon = _new_task(client, admin, "Kontrol", cat_kon["id"])
-    t_pey = _new_task(client, admin, "Sulama")  # kategorisiz -> "Diğer"
+    t_tem = _new_task(client, admin, "Cop", cat_tem["id"], atanan_user_id=gorevli_id)
+    t_kon = _new_task(client, admin, "Kontrol", cat_kon["id"], atanan_user_id=gorevli_id)
+    t_pey = _new_task(client, admin, "Sulama", atanan_user_id=guard_id)  # kategorisiz -> "Diğer"
 
     c1 = _complete(client, gorevli, t_tem["id"], T1, foto_key="a/x.jpg", nfc_tag_uid="04AABB")
     c2 = _complete(client, gorevli, t_kon["id"], T2)

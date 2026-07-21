@@ -1,8 +1,15 @@
-"""Sikayet/oneri: acma + kendi/yonetim gorunumu + yanit + RBAC + izolasyon.
+"""Talep/Ariza acma + kendi/yonetim gorunumu + RBAC + izolasyon + kategori.
 
-RBAC (auth.md §4, kesin kural): ACMA security+tesis_gorevlisi+resident
-(yonetici/admin 403); OKUMA acan roller KENDI + admin/yonetici TUMU;
-PATCH (durum/yanit) yalniz admin+yonetici (acan roller 403).
+Durum gecisleri (convert/resolve/decline) + timeline uctan uca test_ticketing.py'de;
+burada ACMA sekli, gorunurluk kapsami, RBAC ve tenant izolasyonu dogrulanir.
+
+RBAC (auth.md §4): ACMA security+tesis_gorevlisi+resident (yonetici/admin 403);
+OKUMA acan roller KENDI + admin/yonetici TUMU; durum gecisleri (convert/resolve/
+decline) yalniz admin+yonetici (acan roller 403).
+
+Sema: gorseller `foto_keys` (liste) ile acilir, okumada `fotograflar[].foto_url`
+kisa-omurlu presigned GET doner; kategori dinamik `kategori_id` (task_category FK),
+okumada `kategori_ad` ile birlikte doner.
 """
 from __future__ import annotations
 
@@ -22,6 +29,12 @@ def _new(client, headers, **over):
     body = {"baslik": f"Talep {uuid.uuid4().hex[:6]}", "mesaj": "Detayli mesaj."}
     body.update(over)
     r = client.post("/complaints", headers=headers, json=body)
+    assert r.status_code == 201, r.text
+    return r.json()
+
+
+def _new_category(client, mgr, ad="Elektrik"):
+    r = client.post("/task-categories", headers=mgr, json={"ad": f"{ad}-{uuid.uuid4().hex[:6]}"})
     assert r.status_code == 201, r.text
     return r.json()
 
@@ -49,8 +62,10 @@ def test_resident_acar_durum_acik(client, world):
     c = _new(client, resident, baslik="Asansor arizali", mesaj="A blok asansoru durdu.")
     assert c["durum"] == "acik"
     assert c["acan_ad"] == "Resident A"
-    assert c["foto_key"] is None and c["foto_url"] is None
-    assert c["yonetici_yaniti"] is None and c["yanit_zamani"] is None
+    assert c["fotograflar"] == []
+    assert c["kategori_id"] is None and c["kategori_ad"] is None
+    assert c["is_emri_id"] is None and c["is_emri_durum"] is None
+    assert [h["durum"] for h in c["gecmis"]] == ["acik"]
 
 
 def test_saha_rolleri_de_acar(client, world):
@@ -62,7 +77,8 @@ def test_saha_rolleri_de_acar(client, world):
 
 
 def test_fotolu_acma_ve_okumada_foto_url(client, world):
-    """presign (resident erisir) -> foto_key ile ac -> okumada foto_url doner."""
+    """presign (resident erisir) -> foto_keys ile ac -> okumada fotograflar[].
+    foto_url doner (yonetim detayda da gorur)."""
     resident = _headers(client, world["slug_a"], world["resident_a"])
     pre = client.post(
         "/uploads/presign", headers=resident, json={"content_type": "image/jpeg"}
@@ -70,14 +86,15 @@ def test_fotolu_acma_ve_okumada_foto_url(client, world):
     assert pre.status_code == 200, pre.text
     foto_key = pre.json()["foto_key"]
 
-    c = _new(client, resident, baslik="Gorselli talep", foto_key=foto_key)
-    assert c["foto_key"] == foto_key
-    assert c["foto_url"] and "X-Amz-Signature" in c["foto_url"]
+    c = _new(client, resident, baslik="Gorselli talep", foto_keys=[foto_key])
+    assert [p["foto_key"] for p in c["fotograflar"]] == [foto_key]
+    assert c["fotograflar"][0]["foto_url"] and "X-Amz-Signature" in c["fotograflar"][0]["foto_url"]
 
     # yonetim de detayda gorseli gorur
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
     d = client.get(f"/complaints/{c['id']}", headers=yonetici)
-    assert d.status_code == 200 and "X-Amz-Signature" in d.json()["foto_url"]
+    assert d.status_code == 200
+    assert "X-Amz-Signature" in d.json()["fotograflar"][0]["foto_url"]
 
 
 def test_foto_key_tenant_namespace_disina_cikamaz(client, world):
@@ -89,14 +106,14 @@ def test_foto_key_tenant_namespace_disina_cikamaz(client, world):
         json={
             "baslik": "x",
             "mesaj": "y",
-            "foto_key": f"{world['b']}/tasks/victim.jpg",
+            "foto_keys": [f"{world['b']}/tasks/victim.jpg"],
         },
     )
     assert r.status_code == 422, r.text
     assert client.post(
         "/complaints",
         headers=resident,
-        json={"baslik": "x", "mesaj": "y", "foto_key": "serbest/anahtar.jpg"},
+        json={"baslik": "x", "mesaj": "y", "foto_keys": ["serbest/anahtar.jpg"]},
     ).status_code == 422
 
 
@@ -160,7 +177,10 @@ def test_liste_durum_filtresi_ve_sira(client, world):
     resident = _headers(client, world["slug_a"], world["resident_a"])
     a = _new(client, resident, baslik="Filtre-acik")
     b = _new(client, resident, baslik="Filtre-cozulecek")
-    client.patch(f"/complaints/{b['id']}", headers=yonetici, json={"durum": "cozuldu"})
+    # durum gecisi artik dogrudan resolve endpoint'i ile (PATCH kaldirildi)
+    assert client.post(
+        f"/complaints/{b['id']}/resolve", headers=yonetici, json={}
+    ).status_code == 200
 
     acik = client.get(
         "/complaints", headers=yonetici, params={"durum": "acik", "limit": 200}
@@ -176,70 +196,36 @@ def test_liste_durum_filtresi_ve_sira(client, world):
     assert hepsi["meta"]["total"] >= 2
 
 
-# ------------------------------ yanit (PATCH) ------------------------------- #
-def test_yonetici_durum_ve_yanit_yazar(client, world):
-    resident = _headers(client, world["slug_a"], world["resident_a"])
-    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
-    c = _new(client, resident, baslik="Yanit bekleyen")
-
-    p = client.patch(
-        f"/complaints/{c['id']}",
-        headers=yonetici,
-        json={"durum": "inceleniyor", "yonetici_yaniti": "Ekip yonlendirildi."},
-    )
-    assert p.status_code == 200, p.text
-    body = p.json()
-    assert body["durum"] == "inceleniyor"
-    assert body["yonetici_yaniti"] == "Ekip yonlendirildi."
-    assert body["yanitlayan_user_id"] and body["yanit_zamani"]
-
-    # resident kendi talebinde YANITI gorur
-    d = client.get(f"/complaints/{c['id']}", headers=resident).json()
-    assert d["yonetici_yaniti"] == "Ekip yonlendirildi."
-
-    # yalniz durum da degisebilir (yanit alanlari korunur)
-    p2 = client.patch(
-        f"/complaints/{c['id']}", headers=yonetici, json={"durum": "cozuldu"}
-    )
-    assert p2.status_code == 200 and p2.json()["durum"] == "cozuldu"
-    assert p2.json()["yonetici_yaniti"] == "Ekip yonlendirildi."
-
-    # bos govde 422; gecersiz durum 422
-    assert client.patch(
-        f"/complaints/{c['id']}", headers=yonetici, json={}
-    ).status_code == 422
-    assert client.patch(
-        f"/complaints/{c['id']}", headers=yonetici, json={"durum": "kapandi"}
-    ).status_code == 422
-
-
 # -------------------------------- RBAC -------------------------------------- #
-def test_rbac_acan_roller_patch_403_yonetim_acamaz(client, world):
-    """Kesin kural: CEVAPLAMA/DURUM yalniz yonetim — acan roller
-    (security/tesis_gorevlisi/resident) KENDI talebinde bile PATCH 403;
-    yonetim (yonetici/admin) talep ACAMAZ (403), ama PATCH yapar (200)."""
-    # her acan rol kendi talebini acar; PATCH'i 403
+def test_rbac_acan_roller_gecis_403_yonetim_acamaz(client, world):
+    """Kesin kural: durum gecisleri (convert/resolve/decline) yalniz yonetim —
+    acan roller (security/tesis_gorevlisi/resident) KENDI talebinde bile 403;
+    yonetim (yonetici/admin) talep ACAMAZ (403), ama gecis yapar (resolve 200)."""
+    # her acan rol kendi talebini acar; convert/resolve/decline 403
     for role in ("guard_a", "gorevli_a", "resident_a"):
         h = _headers(client, world["slug_a"], world[role])
         c = _new(client, h, baslik=f"RBAC {role}")
-        assert client.patch(
-            f"/complaints/{c['id']}", headers=h, json={"durum": "cozuldu"}
+        assert client.post(
+            f"/complaints/{c['id']}/resolve", headers=h, json={}
         ).status_code == 403, role
-        assert client.patch(
-            f"/complaints/{c['id']}", headers=h,
-            json={"yonetici_yaniti": "kendime yanit"},
+        assert client.post(
+            f"/complaints/{c['id']}/decline", headers=h, json={"sebep": "x"}
+        ).status_code == 403, role
+        assert client.post(
+            f"/complaints/{c['id']}/convert", headers=h,
+            json={"atanan_user_id": str(uuid.uuid4()), "oncelik": "orta"},
         ).status_code == 403, role
 
-    # yonetim talep ACAMAZ (kanalin cevaplayan tarafi) ama yanitlar
+    # yonetim talep ACAMAZ (kanalin cevaplayan tarafi) ama gecis yapar
     resident = _headers(client, world["slug_a"], world["resident_a"])
-    c = _new(client, resident, baslik="Yonetim yanitlar")
     for role in ("yonetici_a", "admin_a"):
         h = _headers(client, world["slug_a"], world[role])
         assert client.post(
             "/complaints", headers=h, json={"baslik": "x", "mesaj": "y"}
         ).status_code == 403, role
-        assert client.patch(
-            f"/complaints/{c['id']}", headers=h, json={"durum": "inceleniyor"}
+        c = _new(client, resident, baslik=f"Yonetim cozer {role}")
+        assert client.post(
+            f"/complaints/{c['id']}/resolve", headers=h, json={}
         ).status_code == 200, role
 
 
@@ -264,63 +250,38 @@ def test_tenant_izolasyonu(client, world):
     ).json()["items"]]
     assert c["id"] not in b_ids
     assert client.get(f"/complaints/{c['id']}", headers=yonetici_b).status_code == 404
-    assert client.patch(
-        f"/complaints/{c['id']}", headers=yonetici_b, json={"durum": "cozuldu"}
+    assert client.post(
+        f"/complaints/{c['id']}/resolve", headers=yonetici_b, json={}
     ).status_code == 404
 
 
-# ------------------------ kategori (Wave 1 #3) ------------------------------ #
-def test_kategori_ile_acma_okuma_ve_filtre(client, world):
-    """Opsiyonel kategori: gurultu/goruntu/diger ile acilir, okumada doner,
-    listede ?kategori= ile suzulur; kategorisiz eski davranis calisir."""
+# ------------------------ kategori (dinamik task_category) ------------------ #
+def test_kategori_ile_acma_ve_okuma(client, world):
+    """Opsiyonel kategori: kategori_id ile acilir, okumada kategori_id +
+    kategori_ad doner; kategorisiz eski davranis calisir (null)."""
     resident = _headers(client, world["slug_a"], world["resident_a"])
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    kat = _new_category(client, yonetici, ad="Gurultu")
 
-    gurultu = _new(client, resident, baslik="Gece muzik sesi", kategori="gurultu")
-    assert gurultu["kategori"] == "gurultu"
-    goruntu = _new(client, resident, baslik="Cirkin afisler", kategori="goruntu")
-    assert goruntu["kategori"] == "goruntu"
+    c = _new(client, resident, baslik="Gece muzik sesi", kategori_id=kat["id"])
+    assert c["kategori_id"] == kat["id"]
+    assert c["kategori_ad"] == kat["ad"]
+
     kategorisiz = _new(client, resident, baslik="Genel bir talep")
-    assert kategorisiz["kategori"] is None  # geriye uyumlu: kategori zorunlu degil
+    assert kategorisiz["kategori_id"] is None and kategorisiz["kategori_ad"] is None
 
     # tekil okuma kategoriyi doner
-    r = client.get(f"/complaints/{gurultu['id']}", headers=resident)
-    assert r.status_code == 200 and r.json()["kategori"] == "gurultu"
+    r = client.get(f"/complaints/{c['id']}", headers=resident)
+    assert r.status_code == 200
+    assert r.json()["kategori_id"] == kat["id"] and r.json()["kategori_ad"] == kat["ad"]
 
-    # yonetim listesi kategoriye gore suzer
-    items = client.get(
-        "/complaints", headers=yonetici, params={"kategori": "gurultu", "limit": 200}
-    ).json()["items"]
-    assert any(it["id"] == gurultu["id"] for it in items)
-    assert all(it["kategori"] == "gurultu" for it in items)
-    assert all(it["id"] != goruntu["id"] for it in items)
 
-    # gecersiz kategori degeri -> 422 (hem acmada hem filtrede)
-    bad = client.post(
+def test_kategori_gecersiz_uuid_422(client, world):
+    """kategori_id UUID olmali; sekilsiz deger -> 422 (sema dogrulamasi)."""
+    resident = _headers(client, world["slug_a"], world["resident_a"])
+    r = client.post(
         "/complaints",
         headers=resident,
-        json={"baslik": "x", "mesaj": "y", "kategori": "olmayan-tur"},
+        json={"baslik": "x", "mesaj": "y", "kategori_id": "olmayan-tur"},
     )
-    assert bad.status_code == 422
-    assert (
-        client.get("/complaints", headers=yonetici, params={"kategori": "olmayan"}).status_code
-        == 422
-    )
-
-
-def test_kategori_diger_ve_kendi_kaydi_kapsami(client, world):
-    """'diger' kategorisi kabul edilir; kategori filtresi kendi-kaydi
-    kapsamini DELMEZ (sakin yalniz kendi taleplerini gorur)."""
-    resident = _headers(client, world["slug_a"], world["resident_a"])
-    other = _second_resident(client, world)
-
-    mine = _new(client, resident, baslik="Benim gurultu talebim", kategori="gurultu")
-    _new(client, other, baslik="Baskasinin gurultu talebi", kategori="gurultu")
-
-    diger = _new(client, resident, baslik="Baska konu", kategori="diger")
-    assert diger["kategori"] == "diger"
-
-    items = client.get(
-        "/complaints", headers=resident, params={"kategori": "gurultu", "limit": 200}
-    ).json()["items"]
-    assert [it["id"] for it in items] == [mine["id"]]
+    assert r.status_code == 422, r.text
