@@ -247,7 +247,25 @@ export interface AnnouncementList {
 }
 
 // ----------------------------- complaints ---------------------------------- #
-export type ComplaintDurum = "acik" | "inceleniyor" | "cozuldu";
+// Talep/Ariza -> Is Emri (bkz. contracts/openapi.yaml Complaint semasi).
+export type ComplaintDurum = "acik" | "is_emri" | "cozuldu" | "reddedildi";
+export type ComplaintOncelik = "dusuk" | "orta" | "yuksek";
+
+export interface ComplaintPhoto {
+  id: string;
+  foto_key: string;
+  sira: number;
+  // Goruntuleme icin kisa omurlu presigned GET URL.
+  foto_url?: string | null;
+}
+
+// Durum gecis timeline'i satiri — user_id ASLA tutulmaz, YALNIZ actor_role.
+export interface ComplaintStatusHistory {
+  durum: string;
+  actor_role: string;
+  sebep?: string | null;
+  created_at: string;
+}
 
 export interface Complaint {
   id: string;
@@ -255,13 +273,15 @@ export interface Complaint {
   acan_ad?: string | null;
   baslik: string;
   mesaj: string;
-  foto_key?: string | null;
-  // Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa).
-  foto_url?: string | null;
+  // Talep kategorisi = yonetici-tanimli gorev kategorisi (task_category); null = belirtilmemis.
+  kategori_id?: string | null;
+  kategori_ad?: string | null;
   durum: ComplaintDurum;
-  yonetici_yaniti?: string | null;
-  yanitlayan_user_id?: string | null;
-  yanit_zamani?: string | null;
+  fotograflar: ComplaintPhoto[];
+  gecmis: ComplaintStatusHistory[];
+  // Bagli is emri (Task) — talep donusturulmusse dolu.
+  is_emri_id?: string | null;
+  is_emri_durum?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -269,6 +289,24 @@ export interface Complaint {
 export interface ComplaintList {
   meta: PageMeta;
   items: Complaint[];
+}
+
+// POST /complaints/{id}/convert govdesi (admin + yonetici).
+export interface ComplaintConvertRequest {
+  kategori_id?: string | null;
+  oncelik?: ComplaintOncelik;
+  atanan_user_id: string;
+  not?: string | null;
+}
+
+// POST /complaints/{id}/resolve govdesi (admin + yonetici).
+export interface ComplaintResolveRequest {
+  cozum_notu?: string | null;
+}
+
+// POST /complaints/{id}/decline govdesi (admin + yonetici) — sebep ZORUNLU.
+export interface ComplaintDeclineRequest {
+  sebep: string;
 }
 
 // -------------------------------- users ------------------------------------ #

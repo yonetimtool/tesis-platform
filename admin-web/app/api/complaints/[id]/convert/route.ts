@@ -5,9 +5,10 @@ import { proxyJson } from "@/lib/backend";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  _req: NextRequest,
+export async function POST(
+  req: NextRequest,
   { params }: { params: { id: string } },
 ): Promise<NextResponse> {
-  return proxyJson(`/complaints/${params.id}`, "GET");
+  const body = await req.json().catch(() => ({}));
+  return proxyJson(`/complaints/${params.id}/convert`, "POST", body);
 }
