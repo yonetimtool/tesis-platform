@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
+import '../../auth/domain/user_role.dart';
 import '../domain/complaint_models.dart';
 import 'complaints_controller.dart';
 
@@ -378,9 +379,9 @@ Future<void> _showComplaintDetail(
   );
 }
 
-/// MINIMAL detay yer tutucu (Task 12/13 bunu genisletecek). Su an salt
-/// okunur: baslik + durum + meta + mesaj + kategori + fotograflar basit
-/// liste. Galeri/timeline (Task 12) ve yonetici eylemleri (Task 13) BURADA
+/// Salt-okunur detay sheet'i: baslik + durum + meta + mesaj + kategori +
+/// foto galerisi (buyutulebilir) + dikey durum timeline'i (gecmis[]) + bagli
+/// is emri durumu. Yonetici donustur/coz/reddet eylemleri (Task 13) BURADA
 /// DEGIL — bilerek stub birakildi.
 class _ComplaintDetail extends StatelessWidget {
   const _ComplaintDetail({required this.complaint, required this.canRespond});
@@ -429,30 +430,20 @@ class _ComplaintDetail extends StatelessWidget {
             ],
             const SizedBox(height: 12),
             Text(c.mesaj),
-            // TODO(Task 12): foto galerisi (buyutulebilir onizleme, sira).
-            if (c.fotograflar.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              for (final foto in c.fotograflar)
-                if (foto.fotoUrl != null) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      foto.fotoUrl!,
-                      height: 160,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, _, _) => Container(
-                        height: 48,
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        color:
-                            Theme.of(context).colorScheme.surfaceContainerHighest,
-                        child: const Text('Görsel yüklenemedi'),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+            // Foto galerisi — sira alanina gore, buyutulebilir onizleme.
+            _PhotoGallery(fotograflar: c.fotograflar),
+            // Bagli is emri kaninca (durum == is_emri) canli ozet durum.
+            if (c.durum == TalepDurum.isEmri)
+              _LinkedWorkOrderCard(isEmriDurum: c.isEmriDurum),
+            // Durum gecis timeline'i (gecmis[], created_at ASC).
+            if (c.gecmis.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                trUpper('Durum geçmişi'),
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              const SizedBox(height: 8),
+              _StatusTimeline(gecmis: c.gecmis),
             ],
             // TODO(Task 13): admin/yonetici donustur/coz/reddet eylemleri.
             if (canRespond) ...[
@@ -464,6 +455,239 @@ class _ComplaintDetail extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Detay foto galerisi — [ComplaintPhoto.sira] sirasina gore dizilir; her
+/// gorsel dokununca tam ekran [InteractiveViewer]'da acilir (duyuru foto
+/// desenin aynasi). URL yoksa/gorsel yuklenemezse kirik-gorsel satiri.
+class _PhotoGallery extends StatelessWidget {
+  const _PhotoGallery({required this.fotograflar});
+
+  final List<ComplaintPhoto> fotograflar;
+
+  @override
+  Widget build(BuildContext context) {
+    final fotolar = fotograflar.where((f) => f.fotoUrl != null).toList()
+      ..sort((a, b) => a.sira.compareTo(b.sira));
+    if (fotolar.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final foto in fotolar) ...[
+          const SizedBox(height: 8),
+          _GalleryPhoto(url: foto.fotoUrl!),
+        ],
+      ],
+    );
+  }
+}
+
+/// Tek galeri gorseli: kartta onizleme; dokununca tam ekran (duyuru
+/// `_AnnouncementPhoto` deseniyle ayni).
+class _GalleryPhoto extends StatelessWidget {
+  const _GalleryPhoto({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _openFullScreen(context),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          url,
+          height: 160,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, progress) => progress == null
+              ? child
+              : const SizedBox(
+                  height: 160,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+          errorBuilder: (context, _, _) => Container(
+            height: 48,
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: const Row(
+              children: [
+                Icon(Icons.broken_image_outlined, size: 20),
+                SizedBox(width: 8),
+                Text('Görsel yüklenemedi'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openFullScreen(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(backgroundColor: Colors.black),
+          body: Center(
+            child: InteractiveViewer(
+              maxScale: 5,
+              child: Image.network(
+                url,
+                errorBuilder: (_, _, _) => const Text(
+                  'Görsel yüklenemedi',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bagli is emri (Task) canli ozet durum karti — durum == is_emri iken
+/// gosterilir. `is_emri_durum`: 'acik' → "Atandı", 'tamamlandi' →
+/// "Tamamlandı"; bilinmeyen/null → notr metin.
+class _LinkedWorkOrderCard extends StatelessWidget {
+  const _LinkedWorkOrderCard({required this.isEmriDurum});
+
+  final String? isEmriDurum;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (isEmriDurum) {
+      'acik' => ('Atandı', Colors.blue),
+      'tamamlandi' => ('Tamamlandı', Colors.green),
+      _ => ('Durum bilinmiyor', Colors.grey),
+    };
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.assignment_outlined, size: 20, color: color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'İş emri',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(color: color, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Dikey durum timeline'i — [ComplaintHistory] satirlarindan (created_at ASC,
+/// backend sirasi korunur). Her dugum: renkli nokta + baglanti cizgisi + TR
+/// durum etiketi, actor rolu, opsiyonel `sebep` ve yerel zaman damgasi. Yeni
+/// paket YOK; basit Column/Row.
+class _StatusTimeline extends StatelessWidget {
+  const _StatusTimeline({required this.gecmis});
+
+  final List<ComplaintHistory> gecmis;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < gecmis.length; i++)
+          _TimelineNode(
+            row: gecmis[i],
+            isLast: i == gecmis.length - 1,
+          ),
+      ],
+    );
+  }
+}
+
+class _TimelineNode extends StatelessWidget {
+  const _TimelineNode({required this.row, required this.isLast});
+
+  final ComplaintHistory row;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _durumColor(row.durum);
+    final rolLabel = UserRole.fromClaim(row.actorRole).label;
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Nokta + baglanti cizgisi (son dugumde cizgi yok).
+          Column(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                margin: const EdgeInsets.only(top: 4),
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        _durumLabel(row.durum),
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _fmtDateTime(row.createdAt.toLocal()),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  Text(
+                    rolLabel,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (row.sebep != null && row.sebep!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(row.sebep!, style: Theme.of(context).textTheme.bodyMedium),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
