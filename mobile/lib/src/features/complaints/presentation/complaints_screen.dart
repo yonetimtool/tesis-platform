@@ -6,20 +6,15 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
-// imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev/duyuru foto
-// akisiyla ayni saglayici (testlerde tek noktadan override edilir).
-import '../../tasks/presentation/task_complete_controller.dart'
-    show imagePickerProvider;
-import '../data/complaint_api.dart';
 import '../domain/complaint_models.dart';
 import 'complaints_controller.dart';
 
-/// "Sikayet / Oneri" — yasayan/calisandan yonetime kanal (auth.md §4
+/// "Talep / Arıza" (İş Emri) — yasayan/calisandan yonetime kanal (auth.md §4
 /// kesin kurali, UX aynasi):
 ///   * acan roller (security/tesis_gorevlisi/resident): KENDI talepleri +
-///     "Yeni talep" FAB'i; yaniti okur, CEVAPLAYAMAZ.
-///   * admin/yonetici: tenant'taki TUM talepler; detayda durum+yanit yazar,
-///     yeni talep ACAMAZ (FAB yok).
+///     "Yeni talep" FAB'i; durumu okur, eylem yapamaz.
+///   * admin/yonetici: tenant'taki TUM talepler; detayda donustur/coz/reddet
+///     (Task 13), yeni talep ACAMAZ (FAB yok).
 ///
 /// [initialComplaintId] push tiklamasindan gelir (?complaint_id=...): liste
 /// yuklendiginde ilgili talebin detayi BIR KEZ otomatik acilir; kayit
@@ -64,26 +59,28 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
     // Provider zaten yuklu geldiyse (listen tetiklenmez) mevcut durumu isle.
     _maybeOpenInitial(state);
 
-    // Sekme ayrimi durum bazli: "Acik" = acik (+ bilinmeyen — kaybolmasin),
-    // "Inceleniyor" = inceleniyor, "Cozulenler" = cozuldu. Yonetici durumu
-    // degistirince kayit sekme degistirir (refresh sonrasi otomatik).
+    // Sekme ayrimi durum bazli. "Açık" bilinmeyen durumu da toplar (ileriye
+    // uyum: yeni bir sunucu durumu kaybolmasin). Durum degisince kayit
+    // sekme degistirir (refresh sonrasi otomatik).
     final acik = state.items
         .where((c) =>
-            c.durum != ComplaintDurum.cozuldu &&
-            c.durum != ComplaintDurum.inceleniyor)
+            c.durum == TalepDurum.acik || c.durum == TalepDurum.unknown)
         .toList(growable: false);
-    final incelenen = state.items
-        .where((c) => c.durum == ComplaintDurum.inceleniyor)
+    final isEmri = state.items
+        .where((c) => c.durum == TalepDurum.isEmri)
         .toList(growable: false);
     final cozulen = state.items
-        .where((c) => c.durum == ComplaintDurum.cozuldu)
+        .where((c) => c.durum == TalepDurum.cozuldu)
+        .toList(growable: false);
+    final reddedilen = state.items
+        .where((c) => c.durum == TalepDurum.reddedildi)
         .toList(growable: false);
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(trUpper('Şikayet / Öneri')),
+          title: Text(trUpper('Talep / Arıza')),
           actions: [
             IconButton(
               tooltip: 'Yenile',
@@ -92,18 +89,19 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
             ),
           ],
           bottom: TabBar(
-            // Uc sekme dar ekranda sigmayabilir — kaydirilabilir.
+            // Dort sekme dar ekranda sigmaz — kaydirilabilir.
             isScrollable: true,
             tabs: [
               Tab(text: 'Açık (${acik.length})'),
-              Tab(text: 'İnceleniyor (${incelenen.length})'),
-              Tab(text: 'Çözülenler (${cozulen.length})'),
+              Tab(text: 'İş Emri (${isEmri.length})'),
+              Tab(text: 'Çözülen (${cozulen.length})'),
+              Tab(text: 'Reddedilen (${reddedilen.length})'),
             ],
           ),
         ),
         floatingActionButton: state.canCreate
             ? FloatingActionButton.extended(
-                icon: const Icon(Icons.rate_review_outlined),
+                icon: const Icon(Icons.add),
                 label: const Text('Yeni talep'),
                 onPressed: () => _openForm(context),
               )
@@ -117,7 +115,7 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
                 items: acik,
                 emptyText: state.canCreate
                     ? 'Açık talebiniz yok. "Yeni talep" ile '
-                        'şikayet/önerinizi iletebilirsiniz.'
+                        'talep/arızanızı iletebilirsiniz.'
                     : 'Açık talep yok.',
               ),
             ),
@@ -125,8 +123,8 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
               onRefresh: controller.refresh,
               child: _Body(
                 state: state,
-                items: incelenen,
-                emptyText: 'İncelemede talep yok.',
+                items: isEmri,
+                emptyText: 'İş emrine dönüşen talep yok.',
               ),
             ),
             RefreshIndicator(
@@ -135,6 +133,14 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
                 state: state,
                 items: cozulen,
                 emptyText: 'Henüz çözülen talep yok.',
+              ),
+            ),
+            RefreshIndicator(
+              onRefresh: controller.refresh,
+              child: _Body(
+                state: state,
+                items: reddedilen,
+                emptyText: 'Reddedilen talep yok.',
               ),
             ),
           ],
@@ -166,7 +172,7 @@ class _Body extends ConsumerWidget {
 
   final ComplaintsState state;
 
-  /// Bu sekmenin durum-suzgecli kayitlari (Acik / Cozulenler).
+  /// Bu sekmenin durum-suzgecli kayitlari.
   final List<Complaint> items;
   final String emptyText;
 
@@ -206,31 +212,44 @@ class _Body extends ConsumerWidget {
   }
 }
 
-/// Durum rozeti — renk kodu: acik=mavi, inceleniyor=turuncu, cozuldu=yesil.
+/// Ticketing durum paleti (Task 11 brief): acik=amber, isEmri=blue,
+/// cozuldu=green, reddedildi=red, unknown=grey.
+Color _durumColor(TalepDurum d) => switch (d) {
+      TalepDurum.acik => Colors.amber,
+      TalepDurum.isEmri => Colors.blue,
+      TalepDurum.cozuldu => Colors.green,
+      TalepDurum.reddedildi => Colors.red,
+      TalepDurum.unknown => Colors.grey,
+    };
+
+/// Durum rozetinin Turkce etiketi (model tel degerinin gorunum aynasi).
+String _durumLabel(TalepDurum d) => switch (d) {
+      TalepDurum.acik => 'Açık',
+      TalepDurum.isEmri => 'İş Emri',
+      TalepDurum.cozuldu => 'Çözüldü',
+      TalepDurum.reddedildi => 'Reddedildi',
+      TalepDurum.unknown => 'Bilinmiyor',
+    };
+
+/// Durum rozeti — [_durumColor] paletiyle renklenir.
 class _DurumChip extends StatelessWidget {
   const _DurumChip({required this.durum});
 
-  final ComplaintDurum durum;
-
-  Color get _color => switch (durum) {
-        ComplaintDurum.acik => Colors.blue,
-        ComplaintDurum.inceleniyor => Colors.orange,
-        ComplaintDurum.cozuldu => Colors.green,
-        ComplaintDurum.unknown => Colors.grey,
-      };
+  final TalepDurum durum;
 
   @override
   Widget build(BuildContext context) {
+    final color = _durumColor(durum);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        durum.label,
+        _durumLabel(durum),
         style: TextStyle(
-          color: _color,
+          color: color,
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
@@ -239,17 +258,11 @@ class _DurumChip extends StatelessWidget {
   }
 }
 
-/// Opsiyonel talep turu rozeti (kategori null ise HIC cizilmez).
+/// Opsiyonel talep kategorisi rozeti (kategori adi null ise HIC cizilmez).
 class _KategoriChip extends StatelessWidget {
-  const _KategoriChip({required this.kategori});
+  const _KategoriChip({required this.ad});
 
-  final ComplaintKategori kategori;
-
-  IconData get _icon => switch (kategori) {
-        ComplaintKategori.gurultu => Icons.volume_up_outlined,
-        ComplaintKategori.goruntu => Icons.visibility_outlined,
-        ComplaintKategori.diger => Icons.category_outlined,
-      };
+  final String ad;
 
   @override
   Widget build(BuildContext context) {
@@ -263,10 +276,10 @@ class _KategoriChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(_icon, size: 14, color: color),
+          Icon(Icons.category_outlined, size: 14, color: color),
           const SizedBox(width: 4),
           Text(
-            kategori.label,
+            ad,
             style: TextStyle(
               color: color,
               fontSize: 12,
@@ -292,7 +305,7 @@ class _ComplaintCard extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _openDetail(context),
+        onTap: () => _showComplaintDetail(context, c, canRespond: canRespond),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -311,37 +324,25 @@ class _ComplaintCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(c.mesaj, maxLines: 2, overflow: TextOverflow.ellipsis),
-              if (c.kategori != null) ...[
+              if (c.kategoriAd != null) ...[
                 const SizedBox(height: 6),
-                _KategoriChip(kategori: c.kategori!),
-              ],
-              if (c.yanitli) ...[
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.reply, size: 16, color: Colors.green),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        'Yönetim yanıtı: ${c.yoneticiYaniti}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ),
-                  ],
-                ),
+                _KategoriChip(ad: c.kategoriAd!),
               ],
               const SizedBox(height: 8),
               Row(
                 children: [
-                  if (c.fotoUrl != null) ...[
+                  if (c.fotograflar.isNotEmpty) ...[
                     const Icon(Icons.image_outlined, size: 16),
                     const SizedBox(width: 4),
+                    Text(
+                      '${c.fotograflar.length}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(width: 8),
                   ],
                   Expanded(
                     child: Text(
-                      // Yonetim gorunumunde kim actigi onemli; sakin zaten
+                      // Yonetim gorunumunde kim actigi onemli; acan zaten
                       // yalniz kendi taleplerini gorur.
                       '${canRespond ? '${c.acanAd ?? 'Sakin'} · ' : ''}'
                       '${_fmtDateTime(c.createdAt.toLocal())}',
@@ -357,105 +358,42 @@ class _ComplaintCard extends ConsumerWidget {
       ),
     );
   }
-
-  Future<void> _openDetail(BuildContext context) =>
-      _showComplaintDetail(context, complaint, canRespond: canRespond);
 }
 
 /// Talep detay sheet'i — kart dokunusundan ve push tiklamasindan (otomatik
 /// acilis) ayni yoldan cagrilir.
+///
+/// TODO(Task 12): foto galerisi + durum gecis timeline'i (gecmis[]).
+/// TODO(Task 13): yonetici donustur/coz/reddet eylem sheet'leri.
 Future<void> _showComplaintDetail(
   BuildContext context,
   Complaint complaint, {
   required bool canRespond,
 }) async {
-  final saved = await showModalBottomSheet<bool>(
+  await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _ComplaintDetail(complaint: complaint, canRespond: canRespond),
+    builder: (_) =>
+        _ComplaintDetail(complaint: complaint, canRespond: canRespond),
   );
-  if (saved == true && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Yanıt kaydedildi ✓')),
-    );
-  }
 }
 
-/// Detay + (yonetimde) yanit formu. Sakin icin salt okunur: mesajin tamami,
-/// gorsel ve yonetim yaniti.
-class _ComplaintDetail extends ConsumerStatefulWidget {
+/// MINIMAL detay yer tutucu (Task 12/13 bunu genisletecek). Su an salt
+/// okunur: baslik + durum + meta + mesaj + kategori + fotograflar basit
+/// liste. Galeri/timeline (Task 12) ve yonetici eylemleri (Task 13) BURADA
+/// DEGIL — bilerek stub birakildi.
+class _ComplaintDetail extends StatelessWidget {
   const _ComplaintDetail({required this.complaint, required this.canRespond});
 
   final Complaint complaint;
+
+  /// admin/yonetici mi — su an yalniz "eylemler yakinda" ipucu; gercek
+  /// donustur/coz/reddet Task 13'te eklenecek.
   final bool canRespond;
 
   @override
-  ConsumerState<_ComplaintDetail> createState() => _ComplaintDetailState();
-}
-
-class _ComplaintDetailState extends ConsumerState<_ComplaintDetail> {
-  late ComplaintDurum _durum;
-  late final TextEditingController _yanitCtrl;
-  bool _saving = false;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _durum = widget.complaint.durum == ComplaintDurum.unknown
-        ? ComplaintDurum.acik
-        : widget.complaint.durum;
-    _yanitCtrl = TextEditingController(text: widget.complaint.yoneticiYaniti);
-  }
-
-  @override
-  void dispose() {
-    _yanitCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    final c = widget.complaint;
-    final yanit = _yanitCtrl.text.trim();
-    final draft = ComplaintReplyDraft(
-      durum: _durum == c.durum ? null : _durum,
-      // Yanit degismediyse tekrar gonderilmez (damga korunur).
-      yoneticiYaniti:
-          yanit.isEmpty || yanit == c.yoneticiYaniti ? null : yanit,
-    );
-    if (draft.bos) {
-      setState(() => _error = 'Değişiklik yok: durum seçin veya yanıt yazın.');
-      return;
-    }
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    try {
-      await ref
-          .read(complaintsControllerProvider.notifier)
-          .reply(c.id, draft);
-      if (mounted) Navigator.pop(context, true);
-    } on ApiException catch (e) {
-      if (mounted) {
-        setState(() {
-          _saving = false;
-          _error = e.message;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _saving = false;
-          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
-        });
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final c = widget.complaint;
+    final c = complaint;
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -481,102 +419,47 @@ class _ComplaintDetailState extends ConsumerState<_ComplaintDetail> {
             ),
             const SizedBox(height: 4),
             Text(
-              '${widget.canRespond ? '${c.acanAd ?? 'Sakin'} · ' : ''}'
+              '${canRespond ? '${c.acanAd ?? 'Sakin'} · ' : ''}'
               '${_fmtDateTime(c.createdAt.toLocal())}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            if (c.kategori != null) ...[
+            if (c.kategoriAd != null) ...[
               const SizedBox(height: 8),
-              _KategoriChip(kategori: c.kategori!),
+              _KategoriChip(ad: c.kategoriAd!),
             ],
             const SizedBox(height: 12),
             Text(c.mesaj),
-            if (c.fotoUrl != null) ...[
+            // TODO(Task 12): foto galerisi (buyutulebilir onizleme, sira).
+            if (c.fotograflar.isNotEmpty) ...[
               const SizedBox(height: 12),
-              _ComplaintPhoto(url: c.fotoUrl!),
-            ],
-            const SizedBox(height: 12),
-            if (c.yanitli && !widget.canRespond) ...[
-              // Sakin gorunumu: yanit salt okunur blok.
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Yönetim yanıtı'
-                      '${c.yanitZamani != null ? ' · ${_fmtDateTime(c.yanitZamani!.toLocal())}' : ''}',
-                      style: Theme.of(context).textTheme.bodySmall,
+              for (final foto in c.fotograflar)
+                if (foto.fotoUrl != null) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      foto.fotoUrl!,
+                      height: 160,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, _, _) => Container(
+                        height: 48,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
+                        child: const Text('Görsel yüklenemedi'),
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(c.yoneticiYaniti!),
-                  ],
-                ),
-              ),
-            ],
-            if (!c.yanitli && !widget.canRespond)
-              Text(
-                'Yönetim yanıtı bekleniyor.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            if (widget.canRespond) ...[
-              const Divider(height: 24),
-              Text('Durum', style: Theme.of(context).textTheme.bodySmall),
-              const SizedBox(height: 8),
-              SegmentedButton<ComplaintDurum>(
-                segments: const [
-                  ButtonSegment(
-                    value: ComplaintDurum.acik,
-                    label: Text('Açık'),
                   ),
-                  ButtonSegment(
-                    value: ComplaintDurum.inceleniyor,
-                    label: Text('İnceleniyor'),
-                  ),
-                  ButtonSegment(
-                    value: ComplaintDurum.cozuldu,
-                    label: Text('Çözüldü'),
-                  ),
+                  const SizedBox(height: 8),
                 ],
-                selected: {_durum},
-                onSelectionChanged: _saving
-                    ? null
-                    : (s) => setState(() => _durum = s.first),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _yanitCtrl,
-                maxLength: 5000,
-                minLines: 2,
-                maxLines: 6,
-                decoration: const InputDecoration(
-                  labelText: 'Yönetim yanıtı',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 4),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
-              ],
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.reply),
-                  label: Text(_saving ? 'Kaydediliyor...' : 'Yanıtı kaydet'),
-                ),
+            ],
+            // TODO(Task 13): admin/yonetici donustur/coz/reddet eylemleri.
+            if (canRespond) ...[
+              const Divider(height: 24),
+              Text(
+                'Yönetici işlemleri (dönüştür / çöz / reddet) yakında.',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ],
@@ -586,76 +469,10 @@ class _ComplaintDetailState extends ConsumerState<_ComplaintDetail> {
   }
 }
 
-/// Talep gorseli: onizleme; dokununca tam ekran (InteractiveViewer).
-/// URL kisa omurlu presigned GET — yuklenemezse kirik-gorsel satiri.
-class _ComplaintPhoto extends StatelessWidget {
-  const _ComplaintPhoto({required this.url});
-
-  final String url;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _openFullScreen(context),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          url,
-          height: 160,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, progress) => progress == null
-              ? child
-              : const SizedBox(
-                  height: 160,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-          errorBuilder: (context, _, _) => Container(
-            height: 48,
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: const Row(
-              children: [
-                Icon(Icons.broken_image_outlined, size: 20),
-                SizedBox(width: 8),
-                Text('Görsel yüklenemedi'),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openFullScreen(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(backgroundColor: Colors.black),
-          body: Center(
-            child: InteractiveViewer(
-              maxScale: 5,
-              child: Image.network(
-                url,
-                errorBuilder: (_, _, _) => const Text(
-                  'Görsel yüklenemedi',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Yeni talep formu (bottom sheet, acan roller: saha + sakin). Sunucu sinirlari
-/// istemcide de uygulanir: baslik <= 200, mesaj <= 5000, bos deger
-/// gonderilmez. Opsiyonel gorsel: cek/sec → presign → PUT → foto_key
-/// (gorev/duyuru foto akisiyla ayni desen).
+/// Yeni talep formu (bottom sheet, acan roller: saha + sakin). Sunucu
+/// sinirlari istemcide de uygulanir: baslik <= 200, mesaj <= 5000, bos deger
+/// gonderilmez. En fazla 3 gorsel: cek/sec → presign → PUT → foto_key
+/// (gorev/duyuru foto akisiyla ayni desen, [ComplaintFormController]).
 class _ComplaintForm extends ConsumerStatefulWidget {
   const _ComplaintForm();
 
@@ -670,17 +487,6 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
   bool _saving = false;
   String? _error;
 
-  /// Secilen fotonun cihaz yolu (onizleme). [_fotoKey] dolu ise yukleme
-  /// tamamlanmistir; secili olup yuklenmemisse gonderim beklemeli.
-  String? _photoPath;
-  bool _photoBusy = false;
-  String? _photoError;
-  String? _fotoKey;
-  // Opsiyonel talep turu; secilmezse gonderilmez (geriye uyumlu).
-  ComplaintKategori? _kategori;
-
-  bool get _fotoBekliyor => _photoPath != null && _fotoKey == null;
-
   @override
   void dispose() {
     _baslikCtrl.dispose();
@@ -688,94 +494,40 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
     super.dispose();
   }
 
-  Future<void> _pickAndUploadPhoto(ImageSource source) async {
-    if (_photoBusy) return;
-    setState(() {
-      _photoBusy = true;
-      _photoError = null;
-    });
-    try {
-      final file = await ref.read(imagePickerProvider).pickImage(
-            source: source,
-            // Talep gorseli icin cozunurluk/kalite dusurulur (yukleme boyutu).
-            maxWidth: 1600,
-            imageQuality: 80,
-          );
-      if (!mounted) return;
-      if (file == null) {
-        // Kullanici vazgecti — mevcut secim korunur.
-        setState(() => _photoBusy = false);
-        return;
-      }
-      setState(() {
-        _photoPath = file.path;
-        // Eski yukleme gecersiz: yeni foto secildi.
-        _fotoKey = null;
-      });
-      await _uploadPhoto(file);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _photoBusy = false;
-        _photoError = 'Fotoğraf alınamadı: $e';
-      });
+  ComplaintFormController get _form =>
+      ref.read(complaintFormControllerProvider.notifier);
+
+  Future<void> _pickPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Kamera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Galeriden seç'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+    final err = await _form.addPhoto(source);
+    if (err != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
     }
-  }
-
-  Future<void> _retryUpload() async {
-    final path = _photoPath;
-    if (path == null || _photoBusy) return;
-    setState(() {
-      _photoBusy = true;
-      _photoError = null;
-    });
-    await _uploadPhoto(XFile(path));
-  }
-
-  Future<void> _uploadPhoto(XFile file) async {
-    final api = ref.read(complaintApiProvider);
-    try {
-      final contentType = _contentTypeFor(file);
-      final ticket = await api.presignUpload(
-        contentType: contentType,
-        dosyaAdi: file.name,
-      );
-      final bytes = await file.readAsBytes();
-      await api.uploadPhoto(
-        ticket: ticket,
-        bytes: bytes,
-        contentType: contentType,
-      );
-      if (!mounted) return;
-      setState(() {
-        _photoBusy = false;
-        _fotoKey = ticket.fotoKey;
-        _photoError = null;
-      });
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _photoBusy = false;
-        _photoError = e.kind == ApiErrorKind.network
-            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli '
-                '(yükleme adresi kısa ömürlü). Bağlantı gelince '
-                '"Tekrar yükle" ile deneyin.'
-            : e.message;
-      });
-    }
-  }
-
-  void _removePhoto() {
-    setState(() {
-      _photoPath = null;
-      _photoError = null;
-      _fotoKey = null;
-    });
   }
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_fotoBekliyor) {
+    final formState = ref.read(complaintFormControllerProvider);
+    if (formState.uploadPending) {
       setState(() {
         _error = 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin, '
             '"Tekrar yükle"yi deneyin veya fotoyu kaldırın.';
@@ -789,8 +541,8 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
     final draft = ComplaintDraft(
       baslik: _baslikCtrl.text.trim(),
       mesaj: _mesajCtrl.text.trim(),
-      kategori: _kategori,
-      fotoKey: _fotoKey,
+      kategoriId: formState.kategoriId,
+      fotoKeys: formState.fotoKeys,
     );
     try {
       await ref.read(complaintsControllerProvider.notifier).create(draft);
@@ -814,6 +566,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
 
   @override
   Widget build(BuildContext context) {
+    final formState = ref.watch(complaintFormControllerProvider);
     return Padding(
       // Klavye acildiginda formun gorunur kalmasi icin.
       padding: EdgeInsets.only(
@@ -831,7 +584,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Yeni şikayet / öneri',
+                'Yeni talep / arıza',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
@@ -852,98 +605,26 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                 minLines: 3,
                 maxLines: 8,
                 decoration: const InputDecoration(
-                  labelText: 'Mesajınız',
+                  labelText: 'Açıklama',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Mesaj zorunludur'
+                    ? 'Açıklama zorunludur'
                     : null,
               ),
               const SizedBox(height: 8),
-              const Text('Kategori (opsiyonel)'),
-              const SizedBox(height: 4),
-              // Tur secimi: gurultu/goruntu kirliligi + diger. Tekrar
-              // dokunmak secimi kaldirir (kategori zorunlu degil).
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final k in ComplaintKategori.values)
-                    ChoiceChip(
-                      label: Text(k.label),
-                      selected: _kategori == k,
-                      onSelected: _saving
-                          ? null
-                          : (selected) => setState(
-                                () => _kategori = selected ? k : null,
-                              ),
-                    ),
-                ],
+              _CategoryPicker(
+                state: formState,
+                saving: _saving,
+                onSelect: _saving ? null : _form.setKategori,
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    _fotoKey != null
-                        ? Icons.check_circle
-                        : Icons.image_outlined,
-                    color: _fotoKey != null ? Colors.green : null,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  const Text('Görsel (opsiyonel)'),
-                ],
-              ),
-              if (_photoPath != null) ...[
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    File(_photoPath!),
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                if (_photoBusy)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: LinearProgressIndicator(),
-                  ),
-              ],
-              if (_photoError != null) ...[
-                const SizedBox(height: 4),
-                Text(_photoError!, style: const TextStyle(color: Colors.red)),
-              ],
-              Wrap(
-                spacing: 8,
-                children: [
-                  TextButton.icon(
-                    onPressed: _photoBusy || _saving
-                        ? null
-                        : () => _pickAndUploadPhoto(ImageSource.camera),
-                    icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden çek'),
-                  ),
-                  TextButton.icon(
-                    onPressed: _photoBusy || _saving
-                        ? null
-                        : () => _pickAndUploadPhoto(ImageSource.gallery),
-                    icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Galeriden seç'),
-                  ),
-                  if (_photoPath != null && _fotoKey == null)
-                    TextButton.icon(
-                      onPressed: _photoBusy || _saving ? null : _retryUpload,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Tekrar yükle'),
-                    ),
-                  if (_photoPath != null)
-                    TextButton.icon(
-                      onPressed: _photoBusy || _saving ? null : _removePhoto,
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text('Kaldır'),
-                    ),
-                ],
+              const SizedBox(height: 12),
+              _PhotoRow(
+                state: formState,
+                saving: _saving,
+                onAdd: _saving ? null : _pickPhoto,
+                onRetry: _saving ? null : (id) => _form.retry(id),
+                onRemove: _saving ? null : (id) => _form.remove(id),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 8),
@@ -972,16 +653,233 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
   }
 }
 
-/// image_picker mimeType vermezse uzantidan tahmin (gorev akisiyla ayni).
-String _contentTypeFor(XFile file) {
-  if (file.mimeType != null) return file.mimeType!;
-  final lower = file.path.toLowerCase();
-  if (lower.endsWith('.png')) return 'image/png';
-  if (lower.endsWith('.webp')) return 'image/webp';
-  if (lower.endsWith('.heic') || lower.endsWith('.heif')) {
-    return 'image/heic';
+/// Kategori secici (opsiyonel → null = "Diğer"). Yuklenirken kucuk gosterge,
+/// hata olursa mesaj, bos ise gizli. Tekrar dokunmak secimi kaldirir.
+class _CategoryPicker extends StatelessWidget {
+  const _CategoryPicker({
+    required this.state,
+    required this.saving,
+    required this.onSelect,
+  });
+
+  final ComplaintFormState state;
+  final bool saving;
+
+  /// null-argümanla cagrilinca secim kalkar (kategori zorunlu degil).
+  final void Function(String?)? onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Kategori (opsiyonel)'),
+        const SizedBox(height: 4),
+        if (state.categoriesLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 4),
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          )
+        else if (state.categoriesError != null)
+          Text(
+            state.categoriesError!,
+            style: const TextStyle(color: Colors.red, fontSize: 12),
+          )
+        else if (state.categories.isEmpty)
+          Text(
+            'Tanımlı kategori yok; talep "Diğer" olarak açılır.',
+            style: Theme.of(context).textTheme.bodySmall,
+          )
+        else
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final k in state.categories)
+                ChoiceChip(
+                  label: Text(k.ad),
+                  selected: state.kategoriId == k.id,
+                  onSelected: (saving || onSelect == null)
+                      ? null
+                      : (selected) => onSelect!(selected ? k.id : null),
+                ),
+            ],
+          ),
+      ],
+    );
   }
-  return 'image/jpeg';
+}
+
+/// En fazla 3 foto thumbnail'i + "Ekle" karosu (3'te pasif). Her thumbnail:
+/// yukleme sirasi (progress), hata (Tekrar yükle) veya tamamlandi (tik).
+class _PhotoRow extends StatelessWidget {
+  const _PhotoRow({
+    required this.state,
+    required this.saving,
+    required this.onAdd,
+    required this.onRetry,
+    required this.onRemove,
+  });
+
+  final ComplaintFormState state;
+  final bool saving;
+  final VoidCallback? onAdd;
+  final void Function(int id)? onRetry;
+  final void Function(int id)? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Görseller (opsiyonel, en fazla 3)'),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 96,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              for (final slot in state.photos) ...[
+                _PhotoThumb(
+                  slot: slot,
+                  onRetry: onRetry == null ? null : () => onRetry!(slot.id),
+                  onRemove: onRemove == null ? null : () => onRemove!(slot.id),
+                ),
+                const SizedBox(width: 8),
+              ],
+              if (state.canAddPhoto)
+                _AddPhotoTile(
+                  onTap: (saving || state.uploading) ? null : onAdd,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PhotoThumb extends StatelessWidget {
+  const _PhotoThumb({
+    required this.slot,
+    required this.onRetry,
+    required this.onRemove,
+  });
+
+  final PhotoSlot slot;
+  final VoidCallback? onRetry;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 96,
+      height: 96,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.file(
+              File(slot.path),
+              width: 96,
+              height: 96,
+              fit: BoxFit.cover,
+            ),
+          ),
+          if (slot.busy)
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+            ),
+          if (slot.error != null && !slot.busy)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: onRetry,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.refresh, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          if (slot.fotoKey != null)
+            const Positioned(
+              left: 4,
+              bottom: 4,
+              child: Icon(Icons.check_circle, color: Colors.green, size: 18),
+            ),
+          Positioned(
+            right: 0,
+            top: 0,
+            child: GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(2),
+                child: const Icon(Icons.close, color: Colors.white, size: 16),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddPhotoTile extends StatelessWidget {
+  const _AddPhotoTile({required this.onTap});
+
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onTap == null;
+    final color = Theme.of(context).colorScheme.outline;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 96,
+        height: 96,
+        decoration: BoxDecoration(
+          border: Border.all(color: color),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Opacity(
+          opacity: disabled ? 0.4 : 1,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.add_a_photo_outlined),
+              const SizedBox(height: 4),
+              Text('Ekle', style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 String _fmtDateTime(DateTime dt) {
