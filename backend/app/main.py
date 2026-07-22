@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 import redis.asyncio as aioredis
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
@@ -72,6 +73,18 @@ app = FastAPI(
 )
 
 install_error_handlers(app)
+
+# CORS — YALNIZ prod'da (CORS_ORIGINS set edilince) eklenir. Dev'de liste bos =>
+# middleware yok => mevcut davranis (ve testler) degismez.
+if settings.cors_origin_list:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origin_list,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
 app.include_router(auth_router.router)
 app.include_router(residents_router.router)
 app.include_router(me_router.router)

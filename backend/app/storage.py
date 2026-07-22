@@ -56,7 +56,13 @@ def _client():
         aws_access_key_id=settings.minio_access_key,
         aws_secret_access_key=settings.minio_secret_key,
         region_name=settings.minio_region,
-        config=Config(signature_version="s3v4"),
+        # path-style adresleme (bucket URL yolunda, alt-alan adi DEGIL): presigned
+        # URL `{endpoint}/{bucket}/{key}` olur. Prod'da MinIO bir alt-alan
+        # (storage.yonetio.site) arkasinda ters-proxy'lenir; path-style, tek bir
+        # sertifika ve host-korumali reverse_proxy ile s3v4 imzasini bozmadan
+        # calisir (virtual-host style joker sertifika + `bucket.host` gerektirirdi).
+        # Dev'de (localhost) botocore zaten path-style kullanir => davranis ayni.
+        config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
     )
 
 

@@ -7,6 +7,10 @@ __pycache__/
 .env
 *.env
 !*.env.example
+# Uretim env (gercek sirlar) — YALNIZ .env.prod.example commit'lenir.
+.env.prod
+.env.prod.*
+!.env.prod.example
 
 # Docker/terminal cop dosyalari (kazara olusan)
 infra/=

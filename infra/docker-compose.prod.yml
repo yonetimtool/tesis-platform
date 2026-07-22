@@ -1,0 +1,287 @@
+# Yonetio — URETIM (PRODUCTION) compose.
+#
+# Tek Debian 13 sunucu; pfSense NAT arkasinda YALNIZ TCP 80/443 iletilir.
+# Sadece `caddy` host portu yayinlar (80/443). Diger tum servisler ic agda
+# (tesisnet) izole — postgres/redis/minio/api/admin-web host'a ACILMAZ.
+#
+# Kullanim (bkz. infra/RUNBOOK-PROD.md):
+#   cd infra && cp .env.prod.example .env.prod && $EDITOR .env.prod
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm api \
+#       python -m scripts.create_admin --email you@firma.com
+#
+# NOT: seed servisi YOKTUR (prod'da demo veri uretilmez). Ilk admin
+# scripts/create_admin.py ile kurulur.
+
+name: yonetio-prod
+
+x-tz: &tz
+  TZ: ${TZ:-Europe/Istanbul}
+
+services:
+  # --------------------------------------------------------------------- #
+  # Caddy — TEK genel giris. Otomatik Let's Encrypt TLS, HTTP->HTTPS,
+  # api./panel./storage. alt-alanlarini ic servislere ters-proxy'ler.
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - api
+      - admin-web
+      - minio
+    environment:
+      <<: *tz
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL gerekli (Let's Encrypt bildirimleri)}
+      API_DOMAIN: ${API_DOMAIN:-api.yonetio.site}
+      PANEL_DOMAIN: ${PANEL_DOMAIN:-panel.yonetio.site}
+      STORAGE_DOMAIN: ${STORAGE_DOMAIN:-storage.yonetio.site}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3 (QUIC)
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data       # ACME sertifikalari/anahtarlari (KALICI olmali)
+      - caddy_config:/config
+    networks: [tesisnet]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------- #
+  # Postgres — RLS'li ana veritabani. Host'a ACILMAZ.
+  db:
+    image: postgres:16
+    environment:
+      <<: *tz
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [tesisnet]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    # AOF => broker/sonuc dayanikliligi (celery). Host'a ACILMAZ.
+    command: ["redis-server", "--appendonly", "yes"]
+    environment:
+      <<: *tz
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [tesisnet]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------- #
+  # MinIO — foto kanit deposu. Host'a ACILMAZ; genel erisim YALNIZ Caddy
+  # uzerinden storage. alt-alanindan (presigned URL host'u). Konsol kapali.
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      <<: *tz
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER: "off"   # web konsolu prod'da kapali
+    volumes:
+      - miniodata:/data
+    # NOT: minio/minio imaji shell/curl icermez => klasik healthcheck yok;
+    # minio-init asagida `until mc ...` ile hazir olana dek bekler.
+    networks: [tesisnet]
+    restart: unless-stopped
+
+  # One-shot: bucket'i olusturur (private kalir; erisim presigned URL ile).
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    environment:
+      <<: *tz
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"; do
+          echo "minio bekleniyor..."; sleep 1;
+        done
+        mc mb -p "local/$$MINIO_BUCKET" || true
+        echo "bucket hazir: $$MINIO_BUCKET"
+    networks: [tesisnet]
+    restart: "no"
+
+  # --------------------------------------------------------------------- #
+  # One-shot: CANONICAL migration'lari OWNER ile uygular + app_rw rolunu kurar.
+  # (contracts + infra/scripts salt-okunur mount; kod imaja zaten bake edilmis.)
+  migrate:
+    build:
+      context: ../backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *tz
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      APP_DB_USER: ${APP_DB_USER}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+    volumes:
+      - ../contracts:/contracts:ro
+      - ./scripts:/scripts:ro
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo ">> Migration'lar uygulaniyor (owner)..."
+        alembic -c /contracts/db/alembic.ini upgrade head
+        echo ">> app_rw rolu hazirlaniyor..."
+        python /scripts/setup_app_role.py
+    networks: [tesisnet]
+    restart: "no"
+
+  # --------------------------------------------------------------------- #
+  # API (FastAPI). Host'a ACILMAZ; Caddy api. alt-alanindan proxy'ler.
+  api:
+    build:
+      context: ../backend
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *tz
+      # Uygulama app_rw (async asyncpg) ile baglanir — RLS'e TABI.
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      SDM_KEK: ${SDM_KEK}
+      # CORS: panel origin'i (tarayici -> API dogrudan cagri; prod'da acilir).
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      # MinIO: presigned URL host'u PUBLIC storage adresi olmali (istemci erisir).
+      # api sunucu-tarafi MinIO cagrisi YAPMAZ (presign yerel imzalanir).
+      MINIO_ENDPOINT: ${MINIO_PUBLIC_URL}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
+      # Odeme (opsiyonel; varsayilan manual — gercek anahtar yoksa dokunma).
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-manual}
+      IYZICO_API_KEY: ${IYZICO_API_KEY:-}
+      IYZICO_SECRET: ${IYZICO_SECRET:-}
+      PAYTR_MERCHANT_ID: ${PAYTR_MERCHANT_ID:-}
+      PAYTR_MERCHANT_KEY: ${PAYTR_MERCHANT_KEY:-}
+      PAYTR_MERCHANT_SALT: ${PAYTR_MERCHANT_SALT:-}
+      # Push (FCM). Kimlik dosyasi ./secrets/ altinda; yoksa no-op (cokme yok).
+      PUSH_PROVIDER: ${PUSH_PROVIDER:-noop}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      FCM_SERVICE_ACCOUNT_PATH: ${FCM_SERVICE_ACCOUNT_PATH:-/secrets/fcm-service-account.json}
+    volumes:
+      # Klasor mount (dosya yoksa da baslar); FCM json yoksa push unconfigured.
+      - ./secrets:/secrets:ro
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [tesisnet]
+    restart: unless-stopped
+
+  # Celery worker — dis bildirim (push) dispatch dahil.
+  worker:
+    build:
+      context: ../backend
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *tz
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      MINIO_ENDPOINT: ${MINIO_PUBLIC_URL}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
+      PUSH_PROVIDER: ${PUSH_PROVIDER:-noop}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      FCM_SERVICE_ACCOUNT_PATH: ${FCM_SERVICE_ACCOUNT_PATH:-/secrets/fcm-service-account.json}
+    volumes:
+      - ./secrets:/secrets:ro
+    command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
+    networks: [tesisnet]
+    restart: unless-stopped
+
+  # Celery beat — periyodik scheduler (pencere uretimi/tespiti).
+  beat:
+    build:
+      context: ../backend
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *tz
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+    command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
+    networks: [tesisnet]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------- #
+  # admin-web (Next.js standalone). Host'a ACILMAZ; Caddy panel. proxy'ler.
+  # BFF (sunucu tarafi) API'ye IC AGDAN (http://api:8000) baglanir.
+  admin-web:
+    build:
+      context: ../admin-web
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      <<: *tz
+      NODE_ENV: production
+      API_BASE_URL: http://api:8000
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/login"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [tesisnet]
+    restart: unless-stopped
+
+networks:
+  tesisnet:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  caddy_data:
+  caddy_config:

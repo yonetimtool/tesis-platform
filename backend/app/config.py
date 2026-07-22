@@ -32,6 +32,17 @@ class Settings(BaseSettings):
     # SQLAlchemy engine echo (debug).
     sql_echo: bool = False
 
+    # --- CORS (uretim) ---
+    # Virgulle ayrilmis izinli tarayici kaynaklari (orn.
+    # "https://panel.yonetio.site"). Bos (dev varsayilani) => CORS middleware
+    # EKLENMEZ: panel BFF (Next sunucu tarafi) API'yi cagirir, tarayici API'ye
+    # dogrudan gitmez; mobil ise native (CORS'suz). Prod'da panel origin'i verilir.
+    cors_origins: str = ""
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
     # --- NTAG424 SDM/SUN dogrulamasi ---
     # Checkpoint-basina AES-128 etiket anahtarlarini sifrelemekte kullanilan
     # KEK (key encryption key). 32+ karakter; bos = SDM anahtar kaydi kapali

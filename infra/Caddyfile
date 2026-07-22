@@ -1,0 +1,61 @@
+# Yonetio — URETIM reverse proxy (Caddy v2).
+#
+# Otomatik Let's Encrypt TLS (HTTP-01; pfSense YALNIZ 80/443 iletir => ACME
+# calisir). HTTP->HTTPS yonlendirmesi Caddy'de OTOMATIKTIR. Alt-alanlar
+# docker-compose.prod.yml ortam degiskenlerinden gelir ({$VAR}).
+#
+# Alt-alanlar:
+#   api.     -> api:8000        (FastAPI)
+#   panel.   -> admin-web:3000  (Next.js BFF)
+#   storage. -> minio:9000      (foto presigned PUT/GET; Host KORUNUR => s3v4 imza gecerli)
+{
+	# ACME kayit e-postasi (sertifika sona-erme uyarilari buraya gider).
+	email {$ACME_EMAIL}
+	# Otomatik HTTPS acik (varsayilan). Yerel/staging test icin asagiyi acabilirsiniz:
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# --- ortak guvenlik basliklari (snippet) ---------------------------------- #
+(security_headers) {
+	header {
+		# HSTS — 1 yil, alt-alanlar dahil.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# Sunucu parmak izini gizle.
+		-Server
+	}
+}
+
+# --- API ------------------------------------------------------------------ #
+{$API_DOMAIN} {
+	import security_headers
+	encode gzip zstd
+	reverse_proxy api:8000
+}
+
+# --- Yonetim paneli (admin-web) ------------------------------------------- #
+{$PANEL_DOMAIN} {
+	import security_headers
+	# Panel clickjacking'e karsi cerceveye alinamaz.
+	header X-Frame-Options "DENY"
+	encode gzip zstd
+	reverse_proxy admin-web:3000
+}
+
+# --- Foto deposu (MinIO, presigned URL host'u) ---------------------------- #
+# ONEMLI: Caddy v2 reverse_proxy GELEN Host basligini KORUR (nginx'in aksine
+# upstream'e gore YENIDEN YAZMAZ). Presigned URL storage. host'u ile imzalandigi
+# icin MinIO ayni Host'u gorur => s3v4 imza dogrulanir. Yol da AYNEN korunur
+# (path-style: /{bucket}/{key}); prefix soyulmaz. CORS (tarayici PUT preflight)
+# MinIO tarafindan yonetilir (varsayilan tum origin'lere izinli).
+{$STORAGE_DOMAIN} {
+	import security_headers
+	reverse_proxy minio:9000 {
+		# Buyuk foto yuklemelerinde erken zaman asimini onle.
+		transport http {
+			read_timeout 300s
+			write_timeout 300s
+		}
+	}
+}
