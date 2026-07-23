@@ -10,13 +10,15 @@ import type { ApiError } from "@/lib/types";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 // "Beni hatırla" için localStorage anahtarları (namespace: yonetio.rememberMe.*).
-// GÜVENLİK: localStorage tarayıcı bağlamında GİZLİ DEĞİLDİR (XSS/aynı-makine
-// erişimi okuyabilir); parolayı burada tutmak, mobil ile UX paritesi için bilinçli
-// bir ürün kararıdır. Saklanan bilgiler NORMAL giriş isteği DIŞINDA hiçbir yere
-// gönderilmez; çıkış (logout) bunları TEMİZLEMEZ (yalnızca oturum çerezini siler).
+// GÜVENLİK (bilinçli karar): YALNIZ gizli-olmayan tanımlayıcılar saklanır —
+// tesis slug + e-posta. PAROLA localStorage'a YAZILMAZ; tarayıcının kendi kimlik
+// yöneticisi (OS keychain), parola input'undaki autocomplete="current-password"
+// ile parolayı doldurur — JS-okunur depoya sır düşmez. Saklananlar normal giriş
+// isteği DIŞINDA hiçbir yere gönderilmez; çıkış (logout) bunları TEMİZLEMEZ
+// (yalnızca oturum çerezini siler). İleride sertleştirme: sunucu tarafı httpOnly +
+// Secure + SameSite opak "remember-me" token'ı (istemci sırrı hiç görmez).
 const RM_TENANT = "yonetio.rememberMe.tenant";
 const RM_EMAIL = "yonetio.rememberMe.email";
-const RM_PASSWORD = "yonetio.rememberMe.password";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,17 +29,16 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Mount: saklanmış giriş bilgileri varsa alanları ÖN-DOLDUR + kutuyu işaretle.
-  // (Yalnız istemcide çalışır — SSR/hydration uyumsuzluğu yok.)
+  // Mount: saklanmış tesis+e-posta varsa ÖN-DOLDUR + kutuyu işaretle. Parola
+  // saklanmaz; tarayıcı autofill (autocomplete) parolayı kendi keychain'inden
+  // önerir. (Yalnız istemcide çalışır — SSR/hydration uyumsuzluğu yok.)
   useEffect(() => {
     try {
       const t = localStorage.getItem(RM_TENANT);
       const e = localStorage.getItem(RM_EMAIL);
-      const p = localStorage.getItem(RM_PASSWORD);
-      if (t !== null && e !== null && p !== null) {
+      if (t !== null && e !== null) {
         setTenantSlug(t);
         setEmail(e);
-        setPassword(p);
         setRememberMe(true);
       }
     } catch {
@@ -48,13 +49,12 @@ export default function LoginPage() {
   function persistRememberMe() {
     try {
       if (rememberMe) {
+        // YALNIZ gizli-olmayan tanımlayıcılar (parola değil).
         localStorage.setItem(RM_TENANT, tenantSlug);
         localStorage.setItem(RM_EMAIL, email);
-        localStorage.setItem(RM_PASSWORD, password);
       } else {
         localStorage.removeItem(RM_TENANT);
         localStorage.removeItem(RM_EMAIL);
-        localStorage.removeItem(RM_PASSWORD);
       }
     } catch {
       // Depolama yoksa sessizce geç (giriş yine de başarılı).
