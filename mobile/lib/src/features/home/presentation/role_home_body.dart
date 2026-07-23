@@ -23,6 +23,7 @@ class RoleHomeBody extends StatelessWidget {
     required this.onOpen,
     this.weather,
     this.sections = const [],
+    this.counters = const {},
   });
 
   final UserRole role;
@@ -34,6 +35,10 @@ class RoleHomeBody extends StatelessWidget {
   /// One cikan izgara ile "Tüm Modüller" ARASINA giren rol-ozel bolumler
   /// (or. yonetici Hizli Ozet / Son Hareketler — R2.1).
   final List<Widget> sections;
+
+  /// Kart alt-satiri sayaclari (or. outbox → "3 bekleyen"). Girisi olmayan
+  /// kartlar sayacsiz cizilir.
+  final Map<HomeMenuEntry, String> counters;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +82,7 @@ class RoleHomeBody extends StatelessWidget {
               icon: spec.icon,
               title: spec.title,
               accent: spec.accent,
+              counter: counters[entry],
               onTap: () => onOpen(entry),
             );
           }),

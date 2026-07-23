@@ -60,13 +60,17 @@ class ModuleCard extends StatelessWidget {
                 child: Icon(icon, size: 24, color: accentColor),
               ),
               const SizedBox(height: 12),
-              Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: comingSoon ? theme.disabledColor : null,
+              // Flexible: dar izgara hucresinde baslik sikisirsa tasma yerine
+              // ellipsis'e duser (2 satir -> gerekirse 1).
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: comingSoon ? theme.disabledColor : null,
+                  ),
                 ),
               ),
               const SizedBox(height: 2),

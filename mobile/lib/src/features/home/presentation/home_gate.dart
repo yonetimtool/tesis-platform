@@ -8,6 +8,7 @@ import '../../tenant/data/tenant_api.dart';
 import '../../tenant/presentation/setup_tenant_screen.dart';
 import 'home_screen.dart';
 import 'resident_home_screen.dart';
+import 'saha_home_screen.dart';
 import 'yonetici_home_screen.dart';
 
 /// `/home` rotasinin kapisi (Onboarding Model A). BIRINCIL yonetici ILK
@@ -23,9 +24,12 @@ class HomeGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
-    // R1/R2: sakin + yonetici yeni tasarim ana ekranlarini gorur; saha
-    // rolleri (R3'e kadar) eski izgara HomeScreen'de kalir.
+    // R1/R2/R3: tum bilinen roller yeni tasarim ana ekranlarinda; eski izgara
+    // HomeScreen yalniz 'unknown' (rol cozulmeden, saniye alti) icin kalir.
     if (role == UserRole.resident) return const ResidentHomeScreen();
+    if (role == UserRole.security || role == UserRole.tesisGorevlisi) {
+      return SahaHomeScreen(role: role);
+    }
     if (role != UserRole.yonetici) return const HomeScreen();
 
     // Kapi YALNIZ BIRINCIL yoneticiye acilir; digerleri dogrudan ana ekran

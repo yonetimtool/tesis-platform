@@ -4,8 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/data/current_user_provider.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/home/presentation/home_gate.dart';
-import 'package:mobile/src/features/home/presentation/home_screen.dart';
-import 'package:mobile/src/features/home/presentation/resident_home_screen.dart';
 import 'package:mobile/src/features/home/presentation/saha_home_screen.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
 import 'package:mobile/src/features/profile/domain/profile.dart';
@@ -27,20 +25,14 @@ Widget _gate(UserRole role) => ProviderScope(
     );
 
 void main() {
-  testWidgets('sakin rolu -> ResidentHomeScreen (yeni R1 ekrani)',
-      (tester) async {
-    await tester.pumpWidget(_gate(UserRole.resident));
-    await tester.pumpAndSettle();
-    expect(find.byType(ResidentHomeScreen), findsOneWidget);
-    expect(find.byType(HomeScreen), findsNothing);
-  });
-
-  testWidgets('security artik SahaHomeScreen gorur (R3); eski HomeScreen '
-      'yalniz unknown geri-dususu', (tester) async {
-    await tester.pumpWidget(_gate(UserRole.security));
-    await tester.pumpAndSettle();
-    expect(find.byType(SahaHomeScreen), findsOneWidget);
-    expect(find.byType(ResidentHomeScreen), findsNothing);
-    expect(find.byType(HomeScreen), findsNothing);
-  });
+  for (final role in [UserRole.security, UserRole.tesisGorevlisi]) {
+    testWidgets('${role.wire} -> SahaHomeScreen (R3, rol parametresiyle)',
+        (tester) async {
+      await tester.pumpWidget(_gate(role));
+      await tester.pumpAndSettle();
+      final screen =
+          tester.widget<SahaHomeScreen>(find.byType(SahaHomeScreen));
+      expect(screen.role, role);
+    });
+  }
 }
