@@ -108,3 +108,10 @@ class VisitorApi {
 final visitorApiProvider = Provider<VisitorApi>((ref) {
   return VisitorApi(ref.watch(dioProvider));
 });
+
+/// Ziyaretci listesi — sakin ana ekran Son Hareketler akisi. Sunucu rol
+/// suzer (sakin yalniz kendine hedeflenenleri gorur). Hata → bolum gizli.
+final visitorsListProvider =
+    FutureProvider.autoDispose<List<Visitor>>((ref) {
+  return ref.watch(visitorApiProvider).fetchAll();
+});

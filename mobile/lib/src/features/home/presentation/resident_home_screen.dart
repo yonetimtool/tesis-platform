@@ -3,15 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../routing/app_router.dart';
+import '../../announcements/data/announcement_api.dart';
 import '../../auth/domain/user_role.dart';
 import '../../budget/domain/budget_models.dart' show formatKurusAsTl;
 import '../../dues/data/dues_api.dart';
 import '../../kargo/data/kargo_api.dart';
+import '../../kargo/domain/kargo_models.dart';
 import '../../profile/data/profile_api.dart';
+import '../../visitors/data/visitor_api.dart';
 import '../domain/home_menu.dart';
+import '../domain/son_hareketler.dart';
 import 'aidat_ozet_karti.dart';
+import 'duyurular_karti.dart';
 import 'module_card_spec.dart';
 import 'role_home_body.dart';
+import 'son_hareketler_section.dart';
 import 'widgets/home_shell.dart';
 
 /// Sakin ana ekrani (R1 + R1.1) — [HomeShell] + [RoleHomeBody] birlestirir,
@@ -27,10 +33,22 @@ class ResidentHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ad = ref.watch(profileProvider).value?.ad ?? '';
     final units = ref.watch(myDuesProvider).value ?? const [];
-    final kargoBekleyen = ref.watch(kargoBekleyenSayisiProvider).value ?? 0;
+    final kargolar = ref.watch(kargoListProvider).value ?? const <Kargo>[];
+    final ziyaretciler = ref.watch(visitorsListProvider).value ?? const [];
+    final duyurular = ref.watch(sonDuyurularProvider).value ?? const [];
 
     final toplamBorc = units.fold<int>(
         0, (t, u) => t + (u.bakiyeKurus > 0 ? u.bakiyeKurus : 0));
+    final kargoBekleyen =
+        kargolar.where((k) => k.durum == KargoDurum.bekliyor).length;
+    // Son Hareketler: ayni fetch'lerden istemcide birlesik akis (MISSING-
+    // BACKEND birlesik uc yerine); now yalniz etiket icin.
+    final hareketler = residentHareketleri(
+      kargolar: kargolar,
+      ziyaretciler: ziyaretciler,
+      duesUnits: units,
+    );
+    final now = DateTime.now();
 
     return HomeShell(
       role: UserRole.resident,
@@ -57,6 +75,18 @@ class ResidentHomeScreen extends ConsumerWidget {
             AidatOzetKarti(
               units: units,
               onDetay: () => context.push(AppRoutes.myDues),
+            ),
+          ],
+          if (hareketler.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SonHareketlerSection(hareketler: hareketler, now: now),
+          ],
+          if (duyurular.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            DuyurularKarti(
+              duyurular: duyurular,
+              now: now,
+              onTumu: () => context.push(AppRoutes.announcements),
             ),
           ],
         ],

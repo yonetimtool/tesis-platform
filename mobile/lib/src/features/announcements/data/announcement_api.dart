@@ -134,3 +134,11 @@ class AnnouncementApi {
 final announcementApiProvider = Provider<AnnouncementApi>((ref) {
   return AnnouncementApi(ref.watch(dioProvider));
 });
+
+/// Son duyurular (EN-YENI-USTTE garantili) — ana ekran "Duyurular" karti.
+/// Sunucu sirasina guvenmek yerine istemcide siralanir. Hata → kart gizli.
+final sonDuyurularProvider =
+    FutureProvider.autoDispose<List<Announcement>>((ref) async {
+  final list = await ref.watch(announcementApiProvider).fetchAll();
+  return [...list]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+});
