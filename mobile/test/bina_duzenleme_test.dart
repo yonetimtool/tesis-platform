@@ -47,8 +47,12 @@ class _FakeApi extends BinaDuzenlemeApi {
   }
 
   @override
-  Future<void> deleteBlock(String blockId) async {
+  Future<void> deleteBlock(String blockId, {bool cascade = false}) async {
     if (deleteBlockError != null) throw deleteBlockError!;
+    final idx = _blocks.indexWhere((b) => b.id == blockId);
+    final ad = idx >= 0 ? _blocks[idx].ad : null;
+    // Backend DB cascade aynasi: cascade=true ise blogun daireleri de gider.
+    if (cascade && ad != null) _units.removeWhere((u) => u.blok == ad);
     _blocks.removeWhere((b) => b.id == blockId);
   }
 
@@ -115,49 +119,46 @@ void main() {
   });
 
   testWidgets(
-      'bloksuz kova: kat ekle → kattaki "+" ile daire ekle (blok=null); '
-      'mod anahtari YOK, ayri "daire ekle" butonu YOK',
+      '"Blok atanmamış" kova SALT-GORUNTULEME: mevcut bloksuz daire gorunur, '
+      'ekleme kontrolleri (Kat ekle / Toplu / +) YOK',
       (tester) async {
-    final api = _FakeApi();
+    // Canli-site kurali: yeni daire bir bloga baglanir. Mevcut bloksuz
+    // daireler yalniz goruntulenir/silinir; buradan YENI daire eklenemez.
+    final api = _FakeApi(
+      units: const [EditorUnit(id: 'u-0', no: '7', blok: null, kat: 1, sira: 1)],
+    );
     await tester.pumpWidget(_app(api));
     await tester.pumpAndSettle();
 
-    // Mod anahtari kaldirildi (Bloklu/Bloksuz segmenti yok).
+    // Mod anahtari yok (Bloklu/Bloksuz segmenti hic yok).
     expect(find.widgetWithText(SegmentedButton<bool>, 'Bloklu'), findsNothing);
 
-    // Bos site: "Bloksuz" kovasi kutucugu gorunur → icine gir.
-    await tester.tap(find.text('Bloksuz'));
+    // Mevcut bloksuz daire oldugundan "Blok atanmamış" kovasi gorunur → gir.
+    await tester.tap(find.text('Blok atanmamış'));
     await tester.pumpAndSettle();
 
-    // Blok icinde ayri ust "Daire ekle" butonu YOK; yalniz "Kat ekle".
-    expect(find.text('Daire ekle'), findsNothing);
-    await tester.tap(find.text('Kat ekle'));
-    await tester.pumpAndSettle();
+    // Mevcut daire goruntulenir...
+    expect(find.text('7'), findsOneWidget);
+    // ...ama HICBIR ekleme kontrolu yok (Kat ekle / Toplu daire ekle / "+").
+    expect(find.text('Kat ekle'), findsNothing);
+    expect(find.text('Toplu daire ekle'), findsNothing);
+    expect(find.byIcon(Icons.add), findsNothing);
+  });
 
-    // Kattaki "+" hucresi daire formunu acar (son eklenen add ikonu).
-    await tester.tap(find.byIcon(Icons.add).last);
+  testWidgets('bos site: "Blok atanmamış" kovasi gorunmez (yalniz + Blok ekle)',
+      (tester) async {
+    await tester.pumpWidget(_app(_FakeApi()));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).first, '12'); // daire no
-    await tester.tap(find.text('Kaydet'));
-    await tester.pumpAndSettle();
-
-    // Daire hucresi belirir; blok=null olarak olusturuldu.
-    expect(find.text('12'), findsOneWidget);
-    expect(api._units.single.blok, isNull);
-    expect(api._units.single.no, '12');
+    expect(find.text('Blok atanmamış'), findsNothing);
+    expect(find.text('Blok'), findsOneWidget); // yalniz "+ Blok ekle" kutucugu
   });
 
   testWidgets(
-      'daire olan blogu sil → 409 hata mesaji gosterilir (silinmez)',
+      'daire olan blogu sil → yazili onay dialogu; ad yazilinca cascade siler',
       (tester) async {
     final api = _FakeApi(
       blocks: const [BuildingBlock(id: 'b-A', ad: 'A', unitSayisi: 1)],
       units: const [EditorUnit(id: 'u-1', no: 'A-1', blok: 'A', kat: 1, sira: 1)],
-      deleteBlockError: const ApiException(
-        code: 'conflict',
-        message: 'Bu blogu kullanan 1 daire var; once daireleri tasiyin/silin.',
-        statusCode: 409,
-      ),
     );
     await tester.pumpWidget(_app(api));
     await tester.pumpAndSettle();
@@ -168,9 +169,20 @@ void main() {
     await tester.tap(find.text('Bloğu sil'));
     await tester.pumpAndSettle();
 
-    // 409 mesaji SnackBar'da net gosterilir; blok hala listede.
-    expect(find.textContaining('daire var'), findsOneWidget);
-    expect(find.text('Blok A'), findsOneWidget);
+    // Yazili onay dialogu; "Sil (1 daire)" once PASIF (ad yazilmadan).
+    final silBtn = find.widgetWithText(FilledButton, 'Sil (1 daire)');
+    expect(silBtn, findsOneWidget);
+    expect(tester.widget<FilledButton>(silBtn).onPressed, isNull);
+
+    // Blok adini AYNEN yaz → buton aktiflesir → sil (cascade).
+    await tester.enterText(find.byType(TextField).last, 'A');
+    await tester.pump();
+    expect(tester.widget<FilledButton>(silBtn).onPressed, isNotNull);
+    await tester.tap(silBtn);
+    await tester.pumpAndSettle();
+
+    // Blok (ve daireleri) silindi → listede yok.
+    expect(find.text('Blok A'), findsNothing);
   });
 
   // ------------------------- SALT-OKUMA (saha rolleri) ---------------------- #

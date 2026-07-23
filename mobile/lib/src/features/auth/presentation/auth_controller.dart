@@ -93,6 +93,7 @@ class AuthController extends Notifier<AuthState> {
           );
       if (result.passwordSetupRequired) {
         _pendingRememberMe = rememberMe;
+        _pendingPhone = phone;
         state = state.copyWith(
           submitting: false,
           setupToken: result.setupToken,
@@ -124,6 +125,7 @@ class AuthController extends Notifier<AuthState> {
             setupToken: setupToken,
             newPassword: newPassword,
             rememberMe: _pendingRememberMe,
+            phone: _pendingPhone,
           );
       state = state.copyWith(
         status: AuthStatus.authenticated,
@@ -155,6 +157,10 @@ class AuthController extends Notifier<AuthState> {
   /// Ilk giristeki "beni hatirla" tercihi; parola kurulumu tamamlaninca
   /// [submitNewPassword] icinde uygulanir.
   bool _pendingRememberMe = false;
+
+  /// Ilk giriste girilen telefon; parola kurulumu sonrasi ON-DOLDURMA kaydinda
+  /// (telefon + yeni parola) kullanilir.
+  String? _pendingPhone;
 
   Future<void> logout() async {
     // Push cihaz kaydini auth token'lar HENUZ gecerliyken pasiflestir

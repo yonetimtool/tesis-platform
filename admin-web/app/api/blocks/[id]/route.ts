@@ -13,11 +13,13 @@ export async function PATCH(
   return proxyJson(`/blocks/${params.id}`, "PATCH", body);
 }
 
-// Blok silme: o blogu kullanan daire varsa backend 409 doner (once daireler
-// tasinmali/silinmeli); zarf mesaji istemciye aynen iletilir.
+// Blok silme. ?cascade=true ise blogun daireleri (ve bagli kayitlari) da silinir;
+// aksi halde daire varsa backend 409 doner (UI once yazili onay ister). Zarf
+// mesaji istemciye aynen iletilir.
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ): Promise<NextResponse> {
-  return proxyJson(`/blocks/${params.id}`, "DELETE");
+  const cascade = req.nextUrl.searchParams.get("cascade") === "true";
+  return proxyJson(`/blocks/${params.id}${cascade ? "?cascade=true" : ""}`, "DELETE");
 }

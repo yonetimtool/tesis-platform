@@ -118,8 +118,8 @@ class BinaDuzenlemeController extends Notifier<BinaDuzenlemeState> {
     await refresh();
   }
 
-  Future<void> deleteBlock(String blockId) async {
-    await ref.read(binaDuzenlemeApiProvider).deleteBlock(blockId);
+  Future<void> deleteBlock(String blockId, {bool cascade = false}) async {
+    await ref.read(binaDuzenlemeApiProvider).deleteBlock(blockId, cascade: cascade);
     await refresh();
   }
 

@@ -82,7 +82,7 @@ export default function UnitsPage() {
     setFormErr(null);
     const body = {
       no: form.no.trim(),
-      blok: form.blok.trim() || null,
+      blok: form.blok.trim(),  // blok ZORUNLU (canli-site kurali)
       kat: intOrNull(form.kat),
       sira: intOrNull(form.sira),
       metrekare: numOrNull(form.metrekare),
@@ -159,7 +159,7 @@ export default function UnitsPage() {
                 required
               />
             </Field>
-            <Field label="Blok (opsiyonel)" hint="Kısa alfanumerik (örn. A, B1) — bina şeması">
+            <Field label="Blok" hint="Zorunlu — kısa alfanumerik (örn. A, B1)">
               <input
                 className={inputCls}
                 value={form.blok}
@@ -168,6 +168,7 @@ export default function UnitsPage() {
                 maxLength={8}
                 title="Yalnızca harf ve sayı (örn. A, B1)"
                 placeholder="A"
+                required
               />
             </Field>
             <Field label="Metrekare (opsiyonel)">
@@ -234,7 +235,7 @@ export default function UnitsPage() {
               {(data?.items ?? []).map((u) => (
                 <tr key={u.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
                   <td className="px-4 py-2.5">{u.no}</td>
-                  <td className="px-4 py-2.5 text-slate-600">{u.blok ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{u.blok ?? "Blok atanmamış"}</td>
                   <td className="px-4 py-2.5 text-slate-600 tabular-nums">
                     {u.kat != null || u.sira != null ? `${u.kat ?? "—"} / ${u.sira ?? "—"}` : "—"}
                   </td>

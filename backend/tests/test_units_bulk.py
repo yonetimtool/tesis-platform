@@ -64,14 +64,12 @@ def test_bulk_var_olanlari_atlar(client, world):
     }
 
 
-def test_bulk_bloksuz_duz_numara(client, world):
+def test_bulk_bloksuz_422(client, world):
+    """Canli site kurali: blok ZORUNLU. Toplu olusturmada blok verilmezse 422."""
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     base = 900000 + int(uuid.uuid4().int % 1000)  # cakismasin diye yuksek/rasgele
     r = _bulk(client, yon, kat_sayisi=1, kat_basi_daire=3, baslangic_no=base)
-    assert r.status_code == 201, r.text
-    nos = {u["no"] for u in r.json()["olusturulan"]}
-    assert nos == {str(base), str(base + 1), str(base + 2)}  # blok yok -> duz no
-    assert all(u["blok"] is None for u in r.json()["olusturulan"])
+    assert r.status_code == 422, r.text
 
 
 def test_bulk_ust_sinir_422(client, world):

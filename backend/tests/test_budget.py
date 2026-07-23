@@ -38,7 +38,7 @@ def _new_entry(client, headers, kategori_id, tutar, **over):
 
 
 def _mk_unit(client, admin):
-    r = client.post("/units", headers=admin, json={"no": f"B-{uuid.uuid4().hex[:6]}"})
+    r = client.post("/units", headers=admin, json={"no": f"B-{uuid.uuid4().hex[:6]}", "blok": "A"})
     assert r.status_code == 201, r.text
     return r.json()
 

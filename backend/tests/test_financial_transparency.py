@@ -23,7 +23,7 @@ def _headers(client, slug, cred):
 
 
 def _mk_unit(client, admin, no=None):
-    r = client.post("/units", headers=admin, json={"no": no or f"T-{uuid.uuid4().hex[:6]}"})
+    r = client.post("/units", headers=admin, json={"no": no or f"T-{uuid.uuid4().hex[:6]}", "blok": "A"})
     assert r.status_code == 201, r.text
     return r.json()
 

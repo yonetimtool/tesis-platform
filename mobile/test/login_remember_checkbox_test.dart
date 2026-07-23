@@ -10,6 +10,9 @@ import 'package:mobile/src/features/auth/presentation/login_screen.dart';
 class _RecordingAuthRepository implements AuthRepository {
   final logins = <({String phone, bool rememberMe})>[];
 
+  /// ON-DOLDURMA testi icin ayarlanabilir saklanan giris bilgisi (yoksa null).
+  ({String phone, String password})? saved;
+
   @override
   Future<PhoneLoginResult> loginPhone({
     required String phone,
@@ -25,7 +28,12 @@ class _RecordingAuthRepository implements AuthRepository {
     required String setupToken,
     required String newPassword,
     bool rememberMe = false,
+    String? phone,
   }) async {}
+
+  @override
+  Future<({String phone, String password})?> readSavedCredentials() async =>
+      saved;
 
   @override
   Future<bool> restoreSession() async => false;
@@ -89,5 +97,38 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.logins.single.rememberMe, isTrue);
+  });
+
+  testWidgets(
+      'saklanan bilgi varsa alanlar ON-DOLU gelir ve kutu ISARETLI olur',
+      (tester) async {
+    repo.saved = (phone: '05321112203', password: 'sifre-123');
+    await pumpLogin(tester);
+    await tester.pumpAndSettle(); // async prefill tamamlansin
+
+    // Telefon + parola alanlari saklanan degerlerle dolu.
+    expect(find.widgetWithText(TextFormField, '05321112203'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'sifre-123'), findsOneWidget);
+    // "Beni hatirla" kutusu otomatik isaretli.
+    expect(
+      tester
+          .widget<CheckboxListTile>(find.byKey(const Key('remember_me_checkbox')))
+          .value,
+      isTrue,
+    );
+  });
+
+  testWidgets('saklanan bilgi yoksa alanlar BOS ve kutu ISARETSIZ kalir',
+      (tester) async {
+    // repo.saved = null (varsayilan)
+    await pumpLogin(tester);
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<CheckboxListTile>(find.byKey(const Key('remember_me_checkbox')))
+          .value,
+      isFalse,
+    );
   });
 }

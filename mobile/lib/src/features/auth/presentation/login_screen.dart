@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/branding/yonetio_logo.dart';
+import '../data/auth_repository_impl.dart';
 import 'auth_controller.dart';
 
 /// Telefonla giris ekrani (contracts/auth.md §1): cep telefonu (global
@@ -21,6 +22,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
   bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefillSavedCredentials();
+  }
+
+  /// "Beni hatirla" ile saklanmis giris bilgileri varsa alanlari ON-DOLDURUR
+  /// (uygulama yeniden acilisinda VE cikis sonrasi). Yoksa alanlar bos kalir.
+  Future<void> _prefillSavedCredentials() async {
+    final saved = await ref.read(authRepositoryProvider).readSavedCredentials();
+    if (saved == null || !mounted) return;
+    setState(() {
+      _phoneCtrl.text = saved.phone;
+      _passwordCtrl.text = saved.password;
+      _rememberMe = true;
+    });
+  }
 
   @override
   void dispose() {

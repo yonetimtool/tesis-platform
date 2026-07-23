@@ -121,7 +121,7 @@ def _seed_pending(owner_conn, client, world, cred, ref, tutar=50000):
     """Bir unit + 'bekliyor' paytr odeme (provider_ref=ref) olusturur; (unit_id) doner."""
     admin = _headers(client, world["slug_a"] if cred is world["admin_a"] else world["slug_b"], cred)
     admin_id = client.get("/me", headers=admin).json()["id"]
-    u = client.post("/units", headers=admin, json={"no": f"P-{uuid.uuid4().hex[:6]}"}).json()
+    u = client.post("/units", headers=admin, json={"no": f"P-{uuid.uuid4().hex[:6]}", "blok": "A"}).json()
     tenant_id = world["a"] if cred is world["admin_a"] else world["b"]
     owner_conn.execute(
         "INSERT INTO dues_payment (tenant_id, unit_id, tutar_kurus, yontem, durum, provider, provider_ref, kaydeden_user_id, idempotency_key) "

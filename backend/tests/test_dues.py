@@ -29,7 +29,7 @@ def test_unit_crud_and_no_conflict(client, world):
     assert client.get("/units", headers=admin).json()["meta"]["total"] >= 1
     assert client.patch(f"/units/{u['id']}", headers=admin, json={"blok": "B"}).json()["blok"] == "B"
     # ayni no -> 409
-    assert client.post("/units", headers=admin, json={"no": no}).status_code == 409
+    assert client.post("/units", headers=admin, json={"no": no, "blok": "A"}).status_code == 409
     assert client.delete(f"/units/{u['id']}", headers=admin).status_code == 204
     assert client.get(f"/units/{u['id']}", headers=admin).status_code == 404
 
@@ -42,14 +42,14 @@ def test_unit_no_alfanumerik_kabul_gecersiz_red(client, world):
 
     # gecerli formatlar: harf+tire+sayi / harf+sayi / yalniz sayi
     for no in (f"A-{ek}12", f"B{ek}3", f"9{ek}"):
-        r = client.post("/units", headers=admin, json={"no": no})
+        r = client.post("/units", headers=admin, json={"no": no, "blok": "A"})
         assert r.status_code == 201, f"{no}: {r.text}"
         assert r.json()["no"] == no
         client.delete(f"/units/{r.json()['id']}", headers=admin)
 
-    # gecersiz formatlar -> 422 (bosluk, ozel karakter, bos)
+    # gecersiz formatlar -> 422 (bosluk, ozel karakter, bos); blok gecerli => 422 no'dan
     for no in ("A 12", "A#12", "12!", " ", ""):
-        r = client.post("/units", headers=admin, json={"no": no})
+        r = client.post("/units", headers=admin, json={"no": no, "blok": "A"})
         assert r.status_code == 422, f"{no!r}: {r.status_code} {r.text}"
 
     # guncellemede de ayni kural
@@ -65,7 +65,7 @@ def test_unit_rbac_and_isolation(client, world):
     admin_b = _headers(client, world["slug_b"], world["admin_b"])
     gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     u = _new_unit(client, admin_a)
-    assert client.post("/units", headers=gorevli, json={"no": "X-1"}).status_code == 403
+    assert client.post("/units", headers=gorevli, json={"no": "X-1", "blok": "A"}).status_code == 403
     assert client.get(f"/units/{u['id']}", headers=admin_b).status_code == 404
 
 

@@ -109,14 +109,32 @@ export default function BuildingEditorPage() {
   }
 
   async function removeBlock(b: Block) {
-    if (!window.confirm(`Blok ${b.ad} silinsin mi?`)) return;
+    const count = unitItems.filter((u) => u.blok === b.ad).length;
+    let cascade = false;
+    if (count === 0) {
+      if (!window.confirm(`Blok ${b.ad} silinsin mi?`)) return;
+    } else {
+      // Yikici: daireleri + bagli kayitlari siler. Sert onay: blok adini yaz.
+      const typed = window.prompt(
+        `DİKKAT: Blok ${b.ad} ve içindeki ${count} daire (aidat, ziyaretçi, ` +
+          `kargo, rezervasyon, şikayet vb. tüm bağlı kayıtlarıyla) KALICI olarak ` +
+          `silinecek. Onaylamak için blok adını yazın: ${b.ad}`,
+      );
+      if (typed == null) return; // iptal
+      if (typed.trim() !== b.ad) {
+        toast.error("Blok adı eşleşmedi; silme iptal edildi.");
+        return;
+      }
+      cascade = true;
+    }
     try {
-      await apiSend(`/api/blocks/${b.id}`, "DELETE");
+      await apiSend(`/api/blocks/${b.id}${cascade ? "?cascade=true" : ""}`, "DELETE");
       if (openBlock === b.ad) closeDetail();
       refresh();
-      toast.success("Blok silindi.");
+      toast.success(
+        cascade ? `Blok ${b.ad} ve ${count} daire silindi.` : "Blok silindi.",
+      );
     } catch (err) {
-      // 409: blogu kullanan daire var → net mesaj (backend zarfindan gelir).
       toast.error(err instanceof Error ? err.message : "Blok silinemedi.");
     }
   }
@@ -374,14 +392,15 @@ function BlockTiles({
         </div>
       ))}
 
-      {/* Bloksuz kova: bloksuz daire varken VEYA hic blok yokken erisilebilir
-          (mod anahtari olmadan bloksuz siteler de buradan daire ekleyebilsin). */}
-      {(blocklessCount > 0 || labels.length === 0) && (
+      {/* "Blok atanmamış" kova: YALNIZ mevcut bloksuz daireler varken gorunur
+          (goruntuleme + tasima/silme icin). Yeni daire buradan EKLENEMEZ —
+          her yeni daire bir bloga baglanir (canli-site kurali). */}
+      {blocklessCount > 0 && (
         <button
           onClick={onOpenBlockless}
           className="flex h-32 w-40 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50"
         >
-          <span className="text-lg font-semibold text-slate-700">Bloksuz</span>
+          <span className="text-lg font-semibold text-slate-700">Blok atanmamış</span>
           <span className="text-xs text-slate-500">{blocklessCount} daire</span>
         </button>
       )}
@@ -420,12 +439,21 @@ function BlockDetail({
   return (
     <div className={`space-y-3 ${cardCls} p-5`}>
       <div className="flex items-center justify-between">
-        <h2 className="font-medium">{blockless ? "Bloksuz daireler" : `Blok ${label}`}</h2>
-        {/* Ust "+ Daire" kaldirildi: her katin kendi "+" dugmesi daire ekler. */}
-        <button className={btnGhost} onClick={onAddFloor}>+ Kat</button>
+        <h2 className="font-medium">{blockless ? "Blok atanmamış daireler" : `Blok ${label}`}</h2>
+        {/* Bloksuz kovaya yeni daire EKLENMEZ (her daire bir bloga baglanir). */}
+        {!blockless && (
+          <button className={btnGhost} onClick={onAddFloor}>+ Kat</button>
+        )}
       </div>
 
-      {floors.length === 0 && katsiz.length === 0 && (
+      {blockless && (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+          Bu daireler bir bloğa atanmamış (eski kayıtlar). Yeni daire eklemek için
+          bir blok seçin veya oluşturun; buradaki daireler görüntülenir ve silinebilir.
+        </p>
+      )}
+
+      {!blockless && floors.length === 0 && katsiz.length === 0 && (
         <p className="py-6 text-center text-sm text-muted">
           Henüz kat yok. “+ Kat” ile başlayın, sonra kattaki “+” ile daire ekleyin.
         </p>
@@ -436,6 +464,7 @@ function BlockDetail({
           key={kat}
           katLabel={`Kat ${kat}`}
           units={units.filter((u) => u.kat === kat).sort(bySira)}
+          canAdd={!blockless}
           onAddUnit={() => onAddUnit(kat)}
           onEditUnit={onEditUnit}
           onRemoveUnit={onRemoveUnit}
@@ -446,6 +475,7 @@ function BlockDetail({
         <FloorRow
           katLabel="Kat yok"
           units={[...katsiz].sort(bySira)}
+          canAdd={!blockless}
           onAddUnit={() => onAddUnit()}
           onEditUnit={onEditUnit}
           onRemoveUnit={onRemoveUnit}
@@ -456,10 +486,11 @@ function BlockDetail({
 }
 
 function FloorRow({
-  katLabel, units, onAddUnit, onEditUnit, onRemoveUnit,
+  katLabel, units, canAdd, onAddUnit, onEditUnit, onRemoveUnit,
 }: {
   katLabel: string;
   units: Unit[];
+  canAdd: boolean;
   onAddUnit: () => void;
   onEditUnit: (u: Unit) => void;
   onRemoveUnit: (u: Unit) => void;
@@ -483,12 +514,14 @@ function FloorRow({
             </div>
           </div>
         ))}
-        <button
-          onClick={onAddUnit}
-          className="flex h-16 w-20 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-2xl text-slate-400 hover:bg-slate-100"
-        >
-          +
-        </button>
+        {canAdd && (
+          <button
+            onClick={onAddUnit}
+            className="flex h-16 w-20 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-2xl text-slate-400 hover:bg-slate-100"
+          >
+            +
+          </button>
+        )}
       </div>
     </div>
   );

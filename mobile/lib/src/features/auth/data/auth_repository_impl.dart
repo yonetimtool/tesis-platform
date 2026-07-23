@@ -23,6 +23,12 @@ class AuthRepositoryImpl implements AuthRepository {
     if (result.tokens != null) {
       await storage.save(result.tokens!);
       await storage.saveRememberMe(rememberMe);
+      // ON-DOLDURMA: isaretliyse telefon+parolayi sakla, degilse temizle.
+      if (rememberMe) {
+        await storage.saveCredentials(phone: phone, password: password);
+      } else {
+        await storage.clearCredentials();
+      }
     }
     return result;
   }
@@ -32,6 +38,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String setupToken,
     required String newPassword,
     bool rememberMe = false,
+    String? phone,
   }) async {
     final tokens = await api.setPassword(
       setupToken: setupToken,
@@ -39,7 +46,17 @@ class AuthRepositoryImpl implements AuthRepository {
     );
     await storage.save(tokens);
     await storage.saveRememberMe(rememberMe);
+    // ON-DOLDURMA: ilk giris akisi — telefon biliniyorsa ve isaretliyse sakla.
+    if (rememberMe && phone != null && phone.isNotEmpty) {
+      await storage.saveCredentials(phone: phone, password: newPassword);
+    } else {
+      await storage.clearCredentials();
+    }
   }
+
+  @override
+  Future<({String phone, String password})?> readSavedCredentials() =>
+      storage.readCredentials();
 
   @override
   Future<bool> restoreSession() async {

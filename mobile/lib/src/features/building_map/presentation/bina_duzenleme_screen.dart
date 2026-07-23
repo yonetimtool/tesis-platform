@@ -90,7 +90,7 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
   String _titleFor(bool readOnly) {
     if (_openBlock != null) {
       return _openBlock == _blocklessKey
-          ? 'Bloksuz daireler'
+          ? 'Blok atanmamış'
           : 'Blok $_openBlock';
     }
     // Salt-okuma rollerinde baslik "Bina Yapisi" (duzenleme cagrismasi olmasin).
@@ -181,9 +181,10 @@ class _BlockList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final labels = state.blockLabels;
-    // Bloksuz kova: bloksuz daire varken VEYA hic blok yokken erisilebilir
-    // (mod anahtari olmadan bloksuz siteler de bu kovadan daire ekleyebilsin).
-    final showBlockless = state.blocklessUnits.isNotEmpty || labels.isEmpty;
+    // "Blok atanmamış" kova: YALNIZ mevcut bloksuz daireler varken gorunur
+    // (goruntuleme + duzenle/sil). Yeni daire buradan EKLENEMEZ — her yeni daire
+    // bir bloga baglanir (canli-site kurali).
+    final showBlockless = state.blocklessUnits.isNotEmpty;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -194,8 +195,7 @@ class _BlockList extends ConsumerWidget {
               ? 'Bina yapısı (salt görüntüleme). Blok kutucuğuna dokunup '
                   'kat ve daire yerleşimini görebilirsiniz.'
               : 'Blok ekleyin, kutucuğa dokunup içine kat ve daire yerleştirin. '
-                  'Blok kullanmıyorsanız "Bloksuz" kutusundan düz numarayla daire ekleyin. '
-                  'Şikayet Haritası bu yapıyı yansıtır.',
+                  'Her daire bir bloğa bağlanır. Şikayet Haritası bu yapıyı yansıtır.',
           style: TextStyle(
               fontSize: 13,
               color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -218,7 +218,7 @@ class _BlockList extends ConsumerWidget {
               ),
             if (showBlockless)
               _BlockTile(
-                label: 'Bloksuz',
+                label: 'Blok atanmamış',
                 unitCount: state.blocklessUnits.length,
                 registered: true,
                 icon: Icons.tag,
@@ -380,18 +380,19 @@ class _BlockDetail extends ConsumerWidget {
         Text(
           readOnly
               ? (_blockless
-                  ? 'Bloksuz daireler (salt görüntüleme).'
+                  ? 'Bloğa atanmamış daireler (salt görüntüleme).'
                   : 'Blok $label — kat ve daire yerleşimi (salt görüntüleme).')
               : (_blockless
-                  ? 'Bloksuz daireler — düz numaralandırma. Kat ekleyip her katın "+" düğmesiyle daire ekleyin.'
+                  ? 'Bu daireler bir bloğa atanmamış (eski kayıtlar). Görüntülenir, düzenlenip silinebilir; yeni daire için bir blok seçin/oluşturun.'
                   : 'Blok $label — kat ekleyip her katın "+" düğmesiyle daire ekleyin. Aynı kattakiler yan yana dizilir.'),
           style: TextStyle(
               fontSize: 13,
               color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 12),
-        // Salt-okuma: "Kat ekle" + "Toplu daire ekle" gizli.
-        if (!readOnly) ...[
+        // "Kat ekle" + "Toplu daire ekle": salt-okumada ve bloksuz kovada gizli
+        // (bloksuz kovaya yeni daire eklenmez).
+        if (!readOnly && !_blockless) ...[
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -405,7 +406,7 @@ class _BlockDetail extends ConsumerWidget {
                 onPressed: () => _showBulkUnitForm(
                   context,
                   ref,
-                  blok: _blockless ? null : label,
+                  blok: label,
                 ),
                 icon: const Icon(Icons.grid_view),
                 label: const Text('Toplu daire ekle'),
@@ -433,6 +434,7 @@ class _BlockDetail extends ConsumerWidget {
             units: (units.where((u) => u.kat == kat).toList()
               ..sort(_bySira)),
             readOnly: readOnly,
+            canAdd: !readOnly && !_blockless,
             onAddUnit: () => _openUnitForm(context, ref, kat: kat),
             onUnit: (u) => _openUnitForm(context, ref, existing: u),
           ),
@@ -441,6 +443,7 @@ class _BlockDetail extends ConsumerWidget {
             kat: null,
             units: katsizUnits..sort(_bySira),
             readOnly: readOnly,
+            canAdd: !readOnly && !_blockless,
             onAddUnit: () => _openUnitForm(context, ref),
             onUnit: (u) => _openUnitForm(context, ref, existing: u),
           ),
@@ -496,6 +499,7 @@ class _FloorRow extends StatelessWidget {
     required this.onAddUnit,
     required this.onUnit,
     required this.readOnly,
+    required this.canAdd,
   });
 
   final int? kat;
@@ -503,6 +507,8 @@ class _FloorRow extends StatelessWidget {
   final VoidCallback onAddUnit;
   final void Function(EditorUnit) onUnit;
   final bool readOnly;
+  // Yeni daire hucresi ("+") gorunur mu? (bloksuz kovada false — ekleme kapali.)
+  final bool canAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -528,8 +534,8 @@ class _FloorRow extends StatelessWidget {
                   // Salt-okuma: daireye dokunmak duzenleme formu ACMAZ.
                   for (final u in units)
                     _UnitCell(unit: u, onTap: readOnly ? null : () => onUnit(u)),
-                  // Salt-okuma: "daire ekle" hucresi gizli.
-                  if (!readOnly) _AddUnitCell(onTap: onAddUnit),
+                  // "daire ekle" hucresi: salt-okumada ve bloksuz kovada gizli.
+                  if (canAdd) _AddUnitCell(onTap: onAddUnit),
                 ],
               ),
             ),
@@ -661,7 +667,7 @@ Future<void> _manageBlock(
             leading: const Icon(Icons.delete_outline, color: Colors.red),
             title: const Text('Bloğu sil', style: TextStyle(color: Colors.red)),
             subtitle: block.unitSayisi > 0
-                ? Text('${block.unitSayisi} daire var — önce taşıyın/silin')
+                ? Text('${block.unitSayisi} daire ile birlikte silinir (onay gerekir)')
                 : null,
             onTap: () async {
               Navigator.of(ctx).pop();
@@ -677,13 +683,45 @@ Future<void> _manageBlock(
 Future<void> _deleteBlock(
     BuildContext context, WidgetRef ref, BuildingBlock block) async {
   final messenger = ScaffoldMessenger.of(context);
+  final count = block.unitSayisi;
+  bool cascade = false;
+
+  if (count > 0) {
+    // Yikici: daireleri + bagli kayitlari siler. Sert onay: blok adini yazdir.
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => _CascadeDeleteDialog(block: block),
+    );
+    if (confirmed != true) return;
+    cascade = true;
+  } else {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Blok ${block.ad} silinsin mi?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Vazgeç')),
+          FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Sil')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+  }
+
   try {
     await ref
         .read(binaDuzenlemeControllerProvider.notifier)
-        .deleteBlock(block.id);
-    messenger.showSnackBar(SnackBar(content: Text('Blok ${block.ad} silindi.')));
+        .deleteBlock(block.id, cascade: cascade);
+    messenger.showSnackBar(SnackBar(
+      content: Text(cascade
+          ? 'Blok ${block.ad} ve $count daire silindi.'
+          : 'Blok ${block.ad} silindi.'),
+    ));
   } on ApiException catch (e) {
-    // 409: blogu kullanan daire var → net mesaj.
     messenger.showSnackBar(SnackBar(
       content: Text(e.statusCode == 409
           ? e.message
@@ -692,6 +730,68 @@ Future<void> _deleteBlock(
   } catch (_) {
     messenger.showSnackBar(
       const SnackBar(content: Text('Blok silinemedi. Lütfen tekrar deneyin.')),
+    );
+  }
+}
+
+/// Yikici blok silme onayi — kullanici blok adini AYNEN yazana dek "Sil" pasif.
+class _CascadeDeleteDialog extends StatefulWidget {
+  const _CascadeDeleteDialog({required this.block});
+
+  final BuildingBlock block;
+
+  @override
+  State<_CascadeDeleteDialog> createState() => _CascadeDeleteDialogState();
+}
+
+class _CascadeDeleteDialogState extends State<_CascadeDeleteDialog> {
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final match = _ctrl.text.trim() == widget.block.ad;
+    return AlertDialog(
+      title: Text('Blok ${widget.block.ad} silinsin mi?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Bu blok ve içindeki ${widget.block.unitSayisi} daire; aidat, '
+            'ziyaretçi, kargo, rezervasyon ve şikayet kayıtlarıyla birlikte '
+            'KALICI olarak silinecek. Bu işlem geri alınamaz.',
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _ctrl,
+            autofocus: true,
+            textCapitalization: TextCapitalization.characters,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: 'Onaylamak için blok adını yazın',
+              hintText: widget.block.ad,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Vazgeç'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: Colors.red),
+          onPressed: match ? () => Navigator.of(context).pop(true) : null,
+          child: Text('Sil (${widget.block.unitSayisi} daire)'),
+        ),
+      ],
     );
   }
 }

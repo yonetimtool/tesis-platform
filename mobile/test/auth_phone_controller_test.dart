@@ -41,10 +41,15 @@ class _FakeAuthRepository implements AuthRepository {
     required String setupToken,
     required String newPassword,
     bool rememberMe = false,
+    String? phone,
   }) async {
     if (setPasswordError != null) throw setPasswordError!;
     setPasswords.add((setupToken: setupToken, rememberMe: rememberMe));
   }
+
+  @override
+  Future<({String phone, String password})?> readSavedCredentials() async =>
+      null;
 
   @override
   Future<void> logout() async {}

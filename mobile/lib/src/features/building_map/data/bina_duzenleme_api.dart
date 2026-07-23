@@ -73,11 +73,15 @@ class BinaDuzenlemeApi {
     }
   }
 
-  /// Blok siler. O blogu kullanan daire varsa backend 409 doner (ApiException
-  /// statusCode=409) — cagiran ekran "once daireleri tasiyin/silin" gosterir.
-  Future<void> deleteBlock(String blockId) async {
+  /// Blok siler. [cascade]=false ise o blogu kullanan daire varsa backend 409
+  /// doner (ApiException statusCode=409). [cascade]=true ise blogun daireleri
+  /// (ve bagli kayitlari) da silinir — cagiran ekran once yazili onay alir.
+  Future<void> deleteBlock(String blockId, {bool cascade = false}) async {
     try {
-      await _dio.delete<void>('/blocks/$blockId');
+      await _dio.delete<void>(
+        '/blocks/$blockId',
+        queryParameters: cascade ? const {'cascade': 'true'} : null,
+      );
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

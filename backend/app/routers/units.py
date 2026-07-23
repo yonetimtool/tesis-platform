@@ -136,7 +136,7 @@ async def bulk_create_units(
     n = body.baslangic_no
     for kat in range(1, body.kat_sayisi + 1):
         for sira in range(1, body.kat_basi_daire + 1):
-            no = f"{body.blok}-{n}" if body.blok else str(n)
+            no = f"{body.blok}-{n}"  # blok ZORUNLU (schema) => her zaman prefix'li
             plan.append((no, kat, sira))
             n += 1
 

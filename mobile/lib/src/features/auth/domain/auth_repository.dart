@@ -16,12 +16,18 @@ abstract interface class AuthRepository {
 
   /// Ilk giristeki zorunlu kalici parola belirleme: `POST /auth/set-password`.
   /// Basarida donen token cifti saklanir (oturum acilir) ve [rememberMe]
-  /// tercihi uygulanir. Hata durumunda [ApiException] firlatir.
+  /// tercihi uygulanir. [phone] verilir + [rememberMe] true ise ON-DOLDURMA
+  /// icin telefon + yeni parola saklanir. Hata durumunda [ApiException] firlatir.
   Future<void> setPassword({
     required String setupToken,
     required String newPassword,
     bool rememberMe = false,
+    String? phone,
   });
+
+  /// "Beni hatirla" isaretliyken saklanan giris bilgileri (telefon + parola);
+  /// login ekrani acilista alanlari bununla ON-DOLDURUR. Yoksa null.
+  Future<({String phone, String password})?> readSavedCredentials();
 
   /// Acilista saklanan oturumu geri yuklemeye calisir: "beni hatirla" bayragi
   /// + refresh token varsa `POST /auth/refresh` denenir. Basarili → true

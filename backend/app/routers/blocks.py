@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Response
-from sqlalchemy import func, select
+from fastapi import APIRouter, Depends, Query, Response
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -88,14 +88,48 @@ async def update_block(
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_MANAGER),
 ) -> BlockOut:
+    """Blogu YERINDE gunceller (ayni id). Etiket (ad) degisirse GERCEK
+    yeniden-adlandirma: `unit.blok` zayif metin baglantidir (hard FK yok), bu
+    yuzden ayni islemde bu blogun daireleri (blok == eski ad) YENI ada tasinir.
+    Boylece daireler kopmaz ve eski etiketli "hayalet" blok kalmaz."""
     obj = await get_or_404(db, BuildingBlock, block_id)
-    for key, value in body.model_dump(exclude_unset=True).items():
+    data = body.model_dump(exclude_unset=True)
+
+    old_ad = obj.ad
+    new_ad = data.get("ad")
+    if new_ad is not None:
+        new_ad = new_ad.strip()  # trimmed (pattern zaten bosluk yasaklar)
+        data["ad"] = new_ad
+        if new_ad != old_ad:
+            # Tenant-ici benzersizlik on-kontrolu (RLS => yalniz bu tenant).
+            dup = (
+                await db.execute(
+                    select(func.count())
+                    .select_from(BuildingBlock)
+                    .where(BuildingBlock.ad == new_ad, BuildingBlock.id != obj.id)
+                )
+            ).scalar_one()
+            if dup:
+                raise APIError(
+                    422, "conflict", "Bu blok etiketi bu tesiste zaten kayitli."
+                )
+
+    for key, value in data.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()
+
+    # Etiket degistiyse dairelerin zayif baglantisini ayni islemde tasi.
+    if new_ad is not None and new_ad != old_ad:
+        await db.execute(
+            update(Unit)
+            .where(Unit.blok == old_ad)
+            .values(blok=new_ad, updated_at=func.now())
+        )
+
     try:
         await db.flush()
     except IntegrityError as exc:
-        if is_unique_violation(exc):
+        if is_unique_violation(exc):  # es zamanli yeniden-adlandirma yarisi
             raise APIError(409, "conflict", "Bu blok etiketi bu tesiste zaten kayitli.")
         raise translate_integrity(exc)
     await db.refresh(obj)
@@ -106,21 +140,35 @@ async def update_block(
 @router.delete("/{block_id}", status_code=204)
 async def delete_block(
     block_id: uuid.UUID,
+    cascade: bool = Query(
+        False,
+        description="true ise blogun daireleri (ve bagli kayitlari) da silinir.",
+    ),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_MANAGER),
 ) -> Response:
+    """Blogu siler. Blogun daireleri varsa:
+      * cascade=false (varsayilan) -> 409 (kaza korumasi; UI once onay ister).
+      * cascade=true -> blogun daireleri (blok == ad) SILINIR; DB seviyesi
+        ON DELETE CASCADE ile daireye bagli tum kayitlar da temizlenir
+        (unit_resident, dues_assessment, dues_payment [budget_entry.ilgili_
+        payment_id SET NULL], visitor, kargo, unit_access_permission,
+        rezervasyon, unit_complaint). Tek islem/transaction; RLS => tenant-ici.
+    RBAC: admin + yonetici (_MANAGER)."""
     obj = await get_or_404(db, BuildingBlock, block_id)
-    # Bu blogu kullanan daire varsa silme -> 409 (once daireler tasinmali).
     kullanan = (
         await db.execute(
             select(func.count()).select_from(Unit).where(Unit.blok == obj.ad)
         )
     ).scalar_one()
-    if kullanan:
+    if kullanan and not cascade:
         raise APIError(
             409, "conflict",
-            f"Bu blogu kullanan {kullanan} daire var; once daireleri tasiyin/silin.",
+            f"Bu blogu kullanan {kullanan} daire var; silmek icin onay gerekli.",
         )
+    if kullanan:
+        # Daireleri sil -> DB ON DELETE CASCADE bagli kayitlari temizler.
+        await db.execute(delete(Unit).where(Unit.blok == obj.ad))
     await db.delete(obj)
     await db.flush()
     return Response(status_code=204)

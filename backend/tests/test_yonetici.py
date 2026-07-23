@@ -116,7 +116,7 @@ def test_yonetici_aidat_raporu_okur_yazamaz(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
 
-    u = client.post("/units", headers=admin, json={"no": f"Y-{uuid.uuid4().hex[:6]}"}).json()
+    u = client.post("/units", headers=admin, json={"no": f"Y-{uuid.uuid4().hex[:6]}", "blok": "A"}).json()
     client.post(
         "/dues/assessments", headers=admin,
         json={"unit_id": u["id"], "donem": "2026-07", "tutar_kurus": 50000},

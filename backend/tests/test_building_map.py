@@ -45,7 +45,9 @@ def _link(owner_conn, tenant_id, unit_id, user_id):
 
 
 def _create_unit(client, slug, admin, no, **layout):
-    body = {"no": no, **layout}
+    # blok artik ZORUNLU (canli site kurali); layout blok verirse onu kullanir,
+    # vermezse "A". kat/sira verilmeyen daire yine "yerlesimsiz" (unplaced) kalir.
+    body = {"no": no, "blok": "A", **layout}
     r = client.post("/units", headers=_headers(client, slug, admin), json=body)
     assert r.status_code == 201, r.text
     return r.json()
