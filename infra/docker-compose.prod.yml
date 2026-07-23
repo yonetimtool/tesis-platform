@@ -267,7 +267,11 @@ services:
       NODE_ENV: production
       API_BASE_URL: http://api:8000
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/login"]
+      # 127.0.0.1 (localhost DEGIL): busybox wget localhost'u ::1'e cozer ve
+      # IPv4'e DUSMEZ; app ise HOSTNAME=0.0.0.0 ile yalniz IPv4 dinler →
+      # "Connection refused" false-negative. (api'nin python urllib probe'u
+      # etkilenmez: getaddrinfo sonuclarini sirayla dener, IPv4'e duser.)
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/login"]
       interval: 15s
       timeout: 5s
       retries: 5
