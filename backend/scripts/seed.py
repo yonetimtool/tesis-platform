@@ -974,38 +974,41 @@ def main() -> int:
             )
         print("[seed] site kurallari: Otopark Kullanımı (1), Havuz Saatleri (2), Gürültü Kuralları (3)")
 
-    # --- Demo denetim kayitlari (audit_log, WP1) — dogal aksiyon ornekleri ---
-    # Idempotent: tenant'ta zaten audit yoksa birkac ornek satir ekle. meta'da
-    # kisisel veri DEGERI yok (yalniz id/alan-adi). audit_log yoksa (0002 henuz
-    # uygulanmamis — prod-upgrade simulasyonu) sessizce atla.
-    _has_audit = conn.execute(
-        "SELECT to_regclass('public.audit_log')"
-    ).fetchone()[0] is not None
-    if _has_audit and conn.execute(
-        "SELECT count(*) FROM audit_log WHERE tenant_id=%s", (tenant_id,)
-    ).fetchone()[0] == 0:
+        # --- Demo denetim kayitlari (audit_log, WP1) — dogal aksiyon ornekleri
+        # Idempotent: tenant'ta zaten audit yoksa birkac ornek satir ekle.
+        # meta'da kisisel veri DEGERI yok (yalniz id/alan-adi). audit_log yoksa
+        # (0002 henuz uygulanmamis — prod-upgrade simulasyonu) sessizce atla.
+        # NOT: bu blok `with psycopg.connect(...)` govdesinin ICINDE olmalidir;
+        # yanlis girintiyle disari tasmisti ve kapali baglantida execute
+        # "the connection is closed" ile patliyordu.
+        _has_audit = conn.execute(
+            "SELECT to_regclass('public.audit_log')"
+        ).fetchone()[0] is not None
+        if _has_audit and conn.execute(
+            "SELECT count(*) FROM audit_log WHERE tenant_id=%s", (tenant_id,)
+        ).fetchone()[0] == 0:
 
-        def _uid(email: str):
-            return conn.execute(
-                "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
-                (tenant_id, email),
-            ).fetchone()[0]
+            def _uid(email: str):
+                return conn.execute(
+                    "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
+                    (tenant_id, email),
+                ).fetchone()[0]
 
-        a_id, g_id, r_id = _uid("admin@acme.com"), _uid("guard@acme.com"), _uid("resident@acme.com")
-        demo_audit = [
-            ("login_ok", a_id, "admin", "app_user", str(a_id), "{}"),
-            ("resident_create", a_id, "admin", "app_user", str(r_id), "{}"),
-            ("phone_reveal", g_id, "security", "app_user", str(r_id), '{"channel": "phone"}'),
-            ("call_initiate", g_id, "security", "app_user", str(r_id), '{"channel": "phone"}'),
-        ]
-        for action, actor, rol, rtype, rid, meta in demo_audit:
-            conn.execute(
-                "INSERT INTO audit_log (tenant_id, actor_user_id, actor_rol, "
-                "action, resource_type, resource_id, meta) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb)",
-                (tenant_id, actor, rol, action, rtype, rid, meta),
-            )
-        print("[seed] demo audit_log kayitlari eklendi (4).")
+            a_id, g_id, r_id = _uid("admin@acme.com"), _uid("guard@acme.com"), _uid("resident@acme.com")
+            demo_audit = [
+                ("login_ok", a_id, "admin", "app_user", str(a_id), "{}"),
+                ("resident_create", a_id, "admin", "app_user", str(r_id), "{}"),
+                ("phone_reveal", g_id, "security", "app_user", str(r_id), '{"channel": "phone"}'),
+                ("call_initiate", g_id, "security", "app_user", str(r_id), '{"channel": "phone"}'),
+            ]
+            for action, actor, rol, rtype, rid, meta in demo_audit:
+                conn.execute(
+                    "INSERT INTO audit_log (tenant_id, actor_user_id, actor_rol, "
+                    "action, resource_type, resource_id, meta) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb)",
+                    (tenant_id, actor, rol, action, rtype, rid, meta),
+                )
+            print("[seed] demo audit_log kayitlari eklendi (4).")
 
     print("[seed] tamamlandi (idempotent).")
     return 0
