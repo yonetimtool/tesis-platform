@@ -1,6 +1,6 @@
 /// Vardiya modelleri — GET /shifts (/contracts/openapi.yaml).
-/// RBAC: GET admin + security + tesis_gorevlisi (YONETICI OKUYAMAZ — auth.md
-/// §4; yonetici panelinde vardiya bolumu icin sozlesme genisletmesi gerekir).
+/// RBAC: GET admin + yonetici + security + tesis_gorevlisi (yonetici okuma
+/// auth.md §4 genislemesiyle eklendi — panel "Vardiya Durumu" bolumu).
 /// Yazma (POST/PATCH/DELETE) yalniz admin — mobil salt okur.
 library;
 

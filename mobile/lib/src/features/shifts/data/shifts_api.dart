@@ -5,7 +5,7 @@ import '../../../core/network/dio_provider.dart';
 import '../domain/shift_models.dart';
 
 /// GET /shifts istemcisi — salt okuma (yazma admin panelden). RBAC: admin +
-/// security + tesis_gorevlisi (yonetici DEGIL — auth.md §4).
+/// yonetici + security + tesis_gorevlisi (auth.md §4).
 class ShiftsApi {
   ShiftsApi(this._dio);
   final Dio _dio;
@@ -26,8 +26,8 @@ final shiftsApiProvider = Provider<ShiftsApi>((ref) {
   return ShiftsApi(ref.watch(dioProvider));
 });
 
-/// Vardiya tanimlari — saha ana ekran "Vardiya Durumu" bolumu. Hata →
-/// izleyen ekran bolumu sessizce gizler (ana ekran rehin degil).
+/// Vardiya tanimlari — saha + yonetici ana ekran "Vardiya Durumu" bolumu.
+/// Hata → izleyen ekran bolumu sessizce gizler (ana ekran rehin degil).
 final shiftsProvider = FutureProvider.autoDispose<List<Shift>>((ref) {
   return ref.watch(shiftsApiProvider).fetch();
 });

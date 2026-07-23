@@ -229,7 +229,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /me/profile` (kendi)            |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /me/password` (kendi)          |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /me/contact` (kendi tel/riza)  |  ✅   | ✅  | ✅  | ✅  | ✅  |
-| `GET  /shifts` (liste/detay)          |  ✅   | ❌  | ✅  | ✅  | ❌  |
+| `GET  /shifts` (liste/detay)          |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /shifts`                        |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `PATCH /shifts/{id}`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `DELETE /shifts/{id}`                 |  ✅   | ❌  | ❌  | ❌  | ❌  |

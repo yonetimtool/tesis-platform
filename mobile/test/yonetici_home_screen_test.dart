@@ -8,12 +8,20 @@ import 'package:mobile/src/features/home/presentation/yonetici_home_screen.dart'
 import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
 import 'package:mobile/src/features/profile/domain/profile.dart';
+import 'package:mobile/src/features/shifts/data/shifts_api.dart';
+import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 
-Widget _app({Object? finansHata, int unread = 0, int acikSikayet = 0}) =>
+Widget _app({
+  Object? finansHata,
+  int unread = 0,
+  int acikSikayet = 0,
+  List<Shift> vardiyalar = const [],
+}) =>
     ProviderScope(
       overrides: [
         unreadNotificationCountProvider.overrideWith((ref) async => unread),
         acikSikayetSayisiProvider.overrideWith((ref) async => acikSikayet),
+        shiftsProvider.overrideWith((ref) async => vardiyalar),
         profileProvider.overrideWith((ref) async => const Profile(
               ad: 'Kerem',
               role: 'yonetici',
@@ -66,6 +74,33 @@ void main() {
     expect(find.text('Hızlı Özet'), findsOneWidget);
     expect(find.text('%86'), findsOneWidget);
     expect(find.text('₺248.750,00'), findsNWidgets(2));
+  });
+
+  testWidgets('R2.2: Vardiya Durumu bolumu — RBAC genislemesiyle yonetici de '
+      'gercek /shifts verisini gorur', (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app(vardiyalar: const [
+      Shift(
+          id: 'v1',
+          ad: 'Sabah Vardiyası',
+          baslangicSaat: '06:00',
+          bitisSaat: '14:00',
+          gunTipi: 'hafta_ici'),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Vardiya Durumu'), findsOneWidget);
+    expect(find.text('Sabah Vardiyası'), findsOneWidget);
+    expect(find.text('06:00 - 14:00'), findsOneWidget);
+  });
+
+  testWidgets('R2.2: vardiya YOKKEN/hatada bolum gizli, ekran calisir',
+      (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+    expect(find.text('Vardiya Durumu'), findsNothing);
+    expect(find.text('Görev Yönetimi'), findsOneWidget);
   });
 
   testWidgets('R2.1: acik sikayet sayisi "Şikayet / Öneri" kartinda '

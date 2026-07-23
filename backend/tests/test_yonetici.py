@@ -161,8 +161,10 @@ def test_yonetici_yapilandirma_ve_saha_kaniti_403(client, world):
     ).status_code == 403
     assert client.get("/devices", headers=yonetici).status_code == 403
 
-    # tanim okumalari yonetici'ye kapali olanlar (saha rollerine ozel)
-    assert client.get("/shifts", headers=yonetici).status_code == 403
+    # GET /shifts artik yonetici'ye ACIK: mobil yonetici panelinin "Vardiya
+    # Durumu" bolumu vardiya tanimlarini okur (yazma hala yalniz admin —
+    # yukaridaki POST 403 assert'i bunu koruyor).
+    assert client.get("/shifts", headers=yonetici).status_code == 200
     # NOT: patrol-plans OKUMA artik yonetici'ye ACIK (devriye plani yonetimi).
     assert client.get("/patrol-plans", headers=yonetici).status_code == 200
     assert client.get("/me/patrol-window", headers=yonetici).status_code == 403

@@ -8,6 +8,8 @@ import '../../budget/data/budget_api.dart';
 import '../../complaints/data/complaint_api.dart';
 import '../../notifications/data/notifications_controller.dart';
 import '../../profile/data/profile_api.dart';
+import '../../shifts/data/shifts_api.dart';
+import '../../shifts/presentation/vardiya_section.dart';
 import '../domain/home_menu.dart';
 import 'module_card_spec.dart';
 import 'role_home_body.dart';
@@ -32,6 +34,9 @@ class YoneticiHomeScreen extends ConsumerWidget {
     final unread = ref.watch(unreadNotificationCountProvider).value ?? 0;
     // R2.1: acik sikayet sayaci; hata → sayacsiz kart (ekran calisir).
     final acikSikayet = ref.watch(acikSikayetSayisiProvider).value ?? 0;
+    // R2.2: Vardiya Durumu — GET /shifts RBAC'i yoneticiyi kapsayacak sekilde
+    // genisletildi (auth.md §4 + test_yonetici); hata/bos → bolum gizli.
+    final vardiyalar = ref.watch(shiftsProvider).value ?? const [];
 
     return HomeShell(
       role: UserRole.yonetici,
@@ -50,6 +55,10 @@ class YoneticiHomeScreen extends ConsumerWidget {
             HomeMenuEntry.complaints: '$acikSikayet Açık',
         },
         sections: [
+          if (vardiyalar.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            VardiyaSection(vardiyalar: vardiyalar, now: DateTime.now()),
+          ],
           if (finans != null) ...[
             const SizedBox(height: 12),
             YoneticiQuickStats(summary: finans),
