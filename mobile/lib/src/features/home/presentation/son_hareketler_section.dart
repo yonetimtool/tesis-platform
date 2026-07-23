@@ -8,6 +8,8 @@ const _green = Color(0xFF16A34A);
 const _teal = Color(0xFF1DB2B6);
 const _purple = Color(0xFF7C3AED);
 const _navy = Color(0xFF0E3C91);
+const _red = Color(0xFFDC2626);
+const _amber = Color(0xFFD97706);
 
 /// Ana ekranin "Son Hareketler" bolumu (referans) — istemcide birlesik akis
 /// ([residentHareketleri]). [now] disaridan → zaman etiketleri deterministik.
@@ -50,6 +52,9 @@ class SonHareketlerSection extends StatelessWidget {
           Icons.local_shipping_outlined,
         HareketTip.ziyaretci => Icons.emoji_people_outlined,
         HareketTip.aidatOdeme => Icons.receipt_long_outlined,
+        HareketTip.alarm => Icons.error_outline,
+        HareketTip.uyari => Icons.schedule_outlined,
+        HareketTip.bilgi => Icons.notifications_outlined,
       };
 
   Color _accent(HareketTip tip) => switch (tip) {
@@ -57,5 +62,8 @@ class SonHareketlerSection extends StatelessWidget {
         HareketTip.kargoTeslim => _green,
         HareketTip.ziyaretci => _purple,
         HareketTip.aidatOdeme => _teal,
+        HareketTip.alarm => _red,
+        HareketTip.uyari => _amber,
+        HareketTip.bilgi => _navy,
       };
 }

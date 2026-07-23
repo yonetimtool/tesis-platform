@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/dues/domain/dues_models.dart';
 import 'package:mobile/src/features/home/domain/son_hareketler.dart';
 import 'package:mobile/src/features/kargo/domain/kargo_models.dart';
+import 'package:mobile/src/features/notifications/domain/notification_models.dart';
 import 'package:mobile/src/features/visitors/domain/visitor_models.dart';
 
 void main() {
@@ -105,6 +106,50 @@ void main() {
             kargolar: const [], ziyaretciler: const [], duesUnits: const []),
         isEmpty,
       );
+    });
+  });
+
+  group('yoneticiHareketleri — bildirimlerden yonetim akisi', () {
+    AppNotification bildirim(String tip, DateTime? t, {String mesaj = 'm'}) =>
+        AppNotification(
+            id: tip, tip: tip, mesaj: mesaj, okundu: false, createdAt: t);
+
+    test('tip -> baslik/tur eslesir; DESC siralanir; en fazla 5', () {
+      final h = yoneticiHareketleri([
+        bildirim('kacirilan_tur', DateTime(2026, 7, 23, 9),
+            mesaj: 'Gece turu kaçırıldı'),
+        bildirim('gecikmis_okutma', DateTime(2026, 7, 23, 11)),
+        bildirim('eksik_checkpoint', DateTime(2026, 7, 23, 10)),
+        bildirim('baska_tip', DateTime(2026, 7, 23, 8)),
+      ]);
+
+      expect(h.map((e) => e.baslik).toList(), [
+        'Gecikmiş Okutma', // 11
+        'Eksik Nokta', // 10
+        'Kaçırılan Tur', // 09
+        'Bildirim', // bilinmeyen tip -> genel etiket
+      ]);
+      expect(h.first.tip, HareketTip.uyari); // gecikme amber
+      expect(h[2].tip, HareketTip.alarm); // kacirilan_tur kirmizi
+      expect(h[2].altBaslik, 'Gece turu kaçırıldı');
+    });
+
+    test('createdAt NULL bildirim akisa GIRMEZ (siralanamaz)', () {
+      final h = yoneticiHareketleri([
+        bildirim('kacirilan_tur', null),
+        bildirim('eksik_checkpoint', DateTime(2026, 7, 23)),
+      ]);
+      expect(h, hasLength(1));
+      expect(h.single.baslik, 'Eksik Nokta');
+    });
+
+    test('5\'ten fazla: yalniz en yeni 5', () {
+      final h = yoneticiHareketleri([
+        for (var i = 1; i <= 7; i++)
+          bildirim('t$i', DateTime(2026, 7, i)),
+      ]);
+      expect(h, hasLength(5));
+      expect(h.first.zaman, DateTime(2026, 7, 7));
     });
   });
 }

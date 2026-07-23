@@ -8,10 +8,21 @@ library;
 import '../../budget/domain/budget_models.dart' show formatKurusAsTl;
 import '../../dues/domain/dues_models.dart';
 import '../../kargo/domain/kargo_models.dart';
+import '../../notifications/domain/notification_models.dart';
 import '../../visitors/domain/visitor_models.dart';
 
-/// Akistaki tek satirin turu — ikon/renk eslemesi sunumda.
-enum HareketTip { kargoKayit, kargoTeslim, ziyaretci, aidatOdeme }
+/// Akistaki tek satirin turu — ikon/renk eslemesi sunumda. Sakin tipleri +
+/// yonetim (bildirim-tabanli) tipleri: alarm (kirmizi), uyari (amber),
+/// bilgi (notr).
+enum HareketTip {
+  kargoKayit,
+  kargoTeslim,
+  ziyaretci,
+  aidatOdeme,
+  alarm,
+  uyari,
+  bilgi,
+}
 
 /// Birlesik akisin tek satiri.
 class Hareket {
@@ -85,6 +96,37 @@ List<Hareket> residentHareketleri({
                 '₺${formatKurusAsTl(p.tutarKurus)}${p.donem != null ? ' - ${p.donem}' : ''}',
             zaman: p.odemeZamani,
           ),
+  ]..sort((a, b) => b.zaman.compareTo(a.zaman));
+
+  return hareketler.take(limit).toList();
+}
+
+/// Yonetim akisi: /notifications kayitlarini Hareket'e esler (yonetici
+/// "Son Hareketler" — referans yonetici.jpeg). Baslik bildirim tipinin TR
+/// etiketi, alt-baslik mesajdir. createdAt NULL kayit akisa GIRMEZ
+/// (siralanamaz). DESC, en yeni [limit].
+List<Hareket> yoneticiHareketleri(
+  List<AppNotification> bildirimler, {
+  int limit = 5,
+}) {
+  final hareketler = <Hareket>[
+    for (final b in bildirimler)
+      if (b.createdAt != null)
+        Hareket(
+          tip: switch (b.tip) {
+            'kacirilan_tur' || 'eksik_checkpoint' => HareketTip.alarm,
+            'gecikmis_okutma' => HareketTip.uyari,
+            _ => HareketTip.bilgi,
+          },
+          baslik: switch (b.tip) {
+            'kacirilan_tur' => 'Kaçırılan Tur',
+            'eksik_checkpoint' => 'Eksik Nokta',
+            'gecikmis_okutma' => 'Gecikmiş Okutma',
+            _ => 'Bildirim',
+          },
+          altBaslik: b.mesaj,
+          zaman: b.createdAt!,
+        ),
   ]..sort((a, b) => b.zaman.compareTo(a.zaman));
 
   return hareketler.take(limit).toList();

@@ -6,22 +6,35 @@ import 'package:mobile/src/features/budget/domain/budget_models.dart';
 import 'package:mobile/src/features/complaints/data/complaint_api.dart';
 import 'package:mobile/src/features/home/presentation/yonetici_home_screen.dart';
 import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
+import 'package:mobile/src/features/notifications/domain/notification_models.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
 import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
+
+/// API'ye dokunmayan sahte bildirim listesi (Son Hareketler beslemesi).
+class _FakeNotifications extends NotificationsController {
+  _FakeNotifications(this._items);
+  final List<AppNotification> _items;
+
+  @override
+  Future<List<AppNotification>> build() async => _items;
+}
 
 Widget _app({
   Object? finansHata,
   int unread = 0,
   int acikSikayet = 0,
   List<Shift> vardiyalar = const [],
+  List<AppNotification> bildirimler = const [],
 }) =>
     ProviderScope(
       overrides: [
         unreadNotificationCountProvider.overrideWith((ref) async => unread),
         acikSikayetSayisiProvider.overrideWith((ref) async => acikSikayet),
         shiftsProvider.overrideWith((ref) async => vardiyalar),
+        notificationsProvider
+            .overrideWith(() => _FakeNotifications(bildirimler)),
         profileProvider.overrideWith((ref) async => const Profile(
               ad: 'Kerem',
               role: 'yonetici',
@@ -94,13 +107,39 @@ void main() {
     expect(find.text('06:00 - 14:00'), findsOneWidget);
   });
 
-  testWidgets('R2.2: vardiya YOKKEN/hatada bolum gizli, ekran calisir',
-      (tester) async {
+  testWidgets('R2.2/R2.3: vardiya + bildirim YOKKEN bolumler gizli, ekran '
+      'calisir', (tester) async {
     _tall(tester);
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
     expect(find.text('Vardiya Durumu'), findsNothing);
+    expect(find.text('Son Hareketler'), findsNothing);
     expect(find.text('Görev Yönetimi'), findsOneWidget);
+  });
+
+  testWidgets('R2.3: Son Hareketler — bildirimlerden yonetim akisi '
+      '(referans yonetici.jpeg)', (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app(bildirimler: [
+      AppNotification(
+          id: 'n1',
+          tip: 'kacirilan_tur',
+          mesaj: 'Gece turu kaçırıldı',
+          okundu: false,
+          createdAt: DateTime(2026, 7, 23, 9, 32)),
+      AppNotification(
+          id: 'n2',
+          tip: 'gecikmis_okutma',
+          mesaj: 'B Blok noktası geç okundu',
+          okundu: true,
+          createdAt: DateTime(2026, 7, 23, 8, 5)),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Son Hareketler'), findsOneWidget);
+    expect(find.text('Kaçırılan Tur'), findsOneWidget);
+    expect(find.text('Gece turu kaçırıldı'), findsOneWidget);
+    expect(find.text('Gecikmiş Okutma'), findsOneWidget);
   });
 
   testWidgets('R2.1: acik sikayet sayisi "Şikayet / Öneri" kartinda '

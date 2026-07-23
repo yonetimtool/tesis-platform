@@ -11,6 +11,8 @@ import '../../profile/data/profile_api.dart';
 import '../../shifts/data/shifts_api.dart';
 import '../../shifts/presentation/vardiya_section.dart';
 import '../domain/home_menu.dart';
+import '../domain/son_hareketler.dart';
+import 'son_hareketler_section.dart';
 import 'module_card_spec.dart';
 import 'role_home_body.dart';
 import 'widgets/home_shell.dart';
@@ -37,6 +39,11 @@ class YoneticiHomeScreen extends ConsumerWidget {
     // R2.2: Vardiya Durumu — GET /shifts RBAC'i yoneticiyi kapsayacak sekilde
     // genisletildi (auth.md §4 + test_yonetici); hata/bos → bolum gizli.
     final vardiyalar = ref.watch(shiftsProvider).value ?? const [];
+    // R2.3: Son Hareketler — /notifications kayitlarindan yonetim akisi
+    // (backend'de birlesik aktivite ucu yok; bildirimler zaten yonetici
+    // RBAC'inde). Hata/bos → bolum gizli.
+    final hareketler =
+        yoneticiHareketleri(ref.watch(notificationsProvider).value ?? const []);
 
     return HomeShell(
       role: UserRole.yonetici,
@@ -62,6 +69,14 @@ class YoneticiHomeScreen extends ConsumerWidget {
           if (finans != null) ...[
             const SizedBox(height: 12),
             YoneticiQuickStats(summary: finans),
+          ],
+          if (hareketler.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SonHareketlerSection(
+              hareketler: hareketler,
+              now: DateTime.now(),
+              onSeeAll: () => context.push(AppRoutes.notifications),
+            ),
           ],
         ],
       ),
