@@ -2517,3 +2517,54 @@ class AuditLogOut(BaseModel):
 class AuditLogListResponse(BaseModel):
     meta: PageMetaOut
     items: list[AuditLogOut]
+
+
+# ----------------------- seffaflik panosu (transparency) ------------------- #
+class TransparencyKategoriKalemi(BaseModel):
+    """Gider dagilimi kalemi — kategori ADI (kisisel veri DEGIL) + tutar + %."""
+
+    ad: str
+    toplam_kurus: int
+    yuzde: int  # toplam gider icindeki pay (0-100)
+
+
+class TransparencyAidat(BaseModel):
+    """Aidat toplama — TUTAR-bazli + ADET(daire)-bazli. Bireysel veri YOK; yalniz
+    toplamlar/sayilar/yuzdeler. `geciken_daire_sayisi` yalniz SAYI (hangi daire ASLA)."""
+
+    tahakkuk_kurus: int
+    tahsilat_kurus: int
+    tutar_orani_yuzde: int | None = None   # amount-based (tahakkuk 0 -> null)
+    toplam_daire: int
+    odeyen_daire: int                      # tam odeyen daire sayisi
+    daire_orani_yuzde: int | None = None   # count-based (toplam_daire 0 -> null)
+    geciken_daire_sayisi: int              # SAYI ONLY — kimlik/daire etiketi YOK
+
+
+class TransparencyBoardOut(BaseModel):
+    """Aylik anonim seffaflik ozeti. Ad/daire-etiketi/bireysel-tutar ICERMEZ."""
+
+    ay: str
+    yayinlandi: bool
+    toplam_gelir_kurus: int
+    toplam_gider_kurus: int
+    net_kurus: int
+    gider_dagilimi: list[TransparencyKategoriKalemi]
+    aidat: TransparencyAidat
+    onceki_ay_net_kurus: int | None = None
+
+
+class TransparencyAyOzet(BaseModel):
+    """Ay listesi ogesi. Sakin: yayinlanmis aylar. Yonetim: aday aylar + durum."""
+
+    ay: str
+    yayinlandi: bool
+    net_kurus: int | None = None  # yonetim/onizleme dolu; sakin listesinde de dolu
+
+
+class TransparencyListResponse(BaseModel):
+    items: list[TransparencyAyOzet]
+
+
+class TransparencyPublishRequest(BaseModel):
+    yayin: bool

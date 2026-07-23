@@ -73,6 +73,10 @@ class Action:
     PHONE_REVEAL = "phone_reveal"
     CALL_INITIATE = "call_initiate"
 
+    # --- seffaflik panosu (yayin kontrolu) ---
+    TRANSPARENCY_PUBLISH = "transparency_publish"
+    TRANSPARENCY_UNPUBLISH = "transparency_unpublish"
+
     # --- sistem ---
     EXPORT = "export"
     ERASURE_RUN = "erasure_run"            # retention/imha calismasi (sayilar)

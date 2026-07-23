@@ -606,3 +606,41 @@ export interface AuditLogList {
   meta: { limit: number; offset: number; total: number };
   items: AuditLog[];
 }
+
+// --------------------------- şeffaflık panosu ------------------------------ #
+export interface TransparencyKategori {
+  ad: string;
+  toplam_kurus: number;
+  yuzde: number;
+}
+
+export interface TransparencyAidat {
+  tahakkuk_kurus: number;
+  tahsilat_kurus: number;
+  tutar_orani_yuzde: number | null;
+  toplam_daire: number;
+  odeyen_daire: number;
+  daire_orani_yuzde: number | null;
+  geciken_daire_sayisi: number;
+}
+
+export interface TransparencyBoard {
+  ay: string;
+  yayinlandi: boolean;
+  toplam_gelir_kurus: number;
+  toplam_gider_kurus: number;
+  net_kurus: number;
+  gider_dagilimi: TransparencyKategori[];
+  aidat: TransparencyAidat;
+  onceki_ay_net_kurus: number | null;
+}
+
+export interface TransparencyAyOzet {
+  ay: string;
+  yayinlandi: boolean;
+  net_kurus: number | null;
+}
+
+export interface TransparencyList {
+  items: TransparencyAyOzet[];
+}

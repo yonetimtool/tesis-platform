@@ -343,6 +343,21 @@ def main() -> int:
         assert auto_count == 1, f"aidat->gelir kaydi bekleniyordu, bulunan: {auto_count}"
         print("[seed] aidat odemesi A-12 750.00 TL (2026-06) -> otomatik 'Aidat' gelir kaydi OK (tek, idempotent)")
 
+        # 3b) Seffaflik Panosu: 2026-06'yi YAYINLA (demo — sakin ekraninda gorunur).
+        #     Tablo yoksa (0003 uygulanmamis — prod-upgrade sim) sessizce atla.
+        if conn.execute(
+            "SELECT to_regclass('public.transparency_publication')"
+        ).fetchone()[0] is not None:
+            conn.execute(
+                """
+                INSERT INTO transparency_publication (tenant_id, ay, yayin)
+                VALUES (%s, '2026-06', true)
+                ON CONFLICT (tenant_id, ay) DO UPDATE SET yayin = true
+                """,
+                (tenant_id,),
+            )
+            print("[seed] seffaflik: 2026-06 yayinlandi (demo)")
+
         # 4) ornek duyuru (yonetici imzali). Dogal benzersiz anahtar yok ->
         #    ayni baslik varsa eklemeyerek idempotent kalinir.
         conn.execute(

@@ -241,6 +241,15 @@ class HomeScreen extends ConsumerWidget {
           onTap: () => context.push(AppRoutes.financialSummary),
           badge: null,
         );
+      case HomeMenuEntry.transparency:
+        // Seffaflik Panosu — aylik anonim ozet. Sakin: yayinlanmis; yonetici:
+        // yayinla/geri-al + onizleme. Ekran rolu icten ayirt eder.
+        return (
+          icon: Icons.insights_outlined,
+          title: 'Şeffaflık',
+          onTap: () => context.push(AppRoutes.transparency),
+          badge: null,
+        );
       case HomeMenuEntry.siteBudget:
         // Resident: site butcesinin agregat ozeti (seffaflik; salt okuma).
         return (

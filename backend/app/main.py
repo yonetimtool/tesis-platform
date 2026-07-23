@@ -42,6 +42,7 @@ from .routers import task_completions as task_completions_router
 from .routers import task_categories as task_categories_router
 from .routers import tasks as tasks_router
 from .routers import tenant as tenant_router
+from .routers import transparency as transparency_router
 from .routers import yonetici_iletisim as yonetici_iletisim_router
 from .routers import tenants as tenants_router
 from .routers import units as units_router
@@ -127,6 +128,7 @@ app.include_router(call_targets_router.router)
 app.include_router(integrations_router.router)
 app.include_router(webhooks_router.router)
 app.include_router(audit_router.router)
+app.include_router(transparency_router.router)
 
 
 @app.get("/health", tags=["health"])

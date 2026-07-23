@@ -45,6 +45,10 @@ enum HomeMenuEntry {
   /// (tahsilat orani, geciken daire, gelir/gider/kasa, en yuksek giderler).
   financialSummary,
 
+  /// Seffaflik Panosu (Dalga-1) — aylik ANONIM finansal ozet. Sakin:
+  /// yayinlanmis aylar (salt okuma); yonetici/admin: her ay + yayinla/geri-al.
+  transparency,
+
   /// Site Butcesi (Wave 2B) — resident: SALT OKUMA agregat seffaflik
   /// (toplam gelir/gider/kasa; defter satiri ve kisi/daire verisi yok).
   siteBudget,
@@ -201,6 +205,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.taskTracking,
         HomeMenuEntry.budget,
         HomeMenuEntry.financialSummary,
+        HomeMenuEntry.transparency,
         HomeMenuEntry.reports,
         HomeMenuEntry.personel,
         HomeMenuEntry.sakinler,
@@ -227,6 +232,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
+        HomeMenuEntry.transparency,
         HomeMenuEntry.yoneticiIletisim,
       ];
     case UserRole.unknown:

@@ -105,6 +105,7 @@ void main() {
           HomeMenuEntry.taskTracking,
           HomeMenuEntry.budget,
           HomeMenuEntry.financialSummary,
+          HomeMenuEntry.transparency,
           HomeMenuEntry.reports,
           HomeMenuEntry.personel,
           HomeMenuEntry.sakinler,
@@ -229,6 +230,7 @@ void main() {
         HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
+        HomeMenuEntry.transparency,
         HomeMenuEntry.yoneticiIletisim,
       ]);
     });

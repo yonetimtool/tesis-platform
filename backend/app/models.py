@@ -1571,10 +1571,32 @@ class AuditLog(Base):
     )
 
 
+# --------------------------------------------------------------------------- #
+class TransparencyPublication(Base):
+    """Seffaflik Panosu aylik yayin durumu (migration 0003). YALNIZ yayin bayragi;
+    finansal ozet server-side hesaplanir (kisisel veri TUTMAZ)."""
+
+    __tablename__ = "transparency_publication"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "ay", name="uq_transparency_tenant_ay"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ay: Mapped[str] = mapped_column(Text, nullable=False)  # 'YYYY-MM'
+    yayin: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    updated_at = _created_at()
+
+
 __all__ = [
     "Base",
     "Tenant",
     "AuditLog",
+    "TransparencyPublication",
     "AppUser",
     "Shift",
     "Checkpoint",

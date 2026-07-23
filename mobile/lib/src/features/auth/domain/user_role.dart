@@ -58,6 +58,13 @@ enum UserRole {
   /// admin + yonetici (yonetici yalniz saha rollerine atayabilir; 422).
   bool get canManageTasks => this == admin || this == yonetici;
 
+  /// Seffaflik Panosu yayinlama (ay yayinla/geri-al) — admin + yonetici.
+  bool get canPublishTransparency => this == admin || this == yonetici;
+
+  /// Seffaflik Panosu goruntuleme — tum bilinen roller (sakin dahil; ANONIM
+  /// agregat ozet). unknown haric.
+  bool get canViewTransparency => this != unknown;
+
   /// Sikayet/oneri ekranini gorme — yasayan/calisandan yonetime kanal
   /// (kesin kural, auth.md §4): acan roller kendi taleplerini, yonetim
   /// (admin/yonetici) tumunu gorur. Bilinen 5 rolun 5'i de erisir.

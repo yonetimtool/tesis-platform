@@ -14,6 +14,7 @@ import '../features/building_map/presentation/building_schematic_screen.dart';
 import '../features/unit_complaints/presentation/my_complaints_screen.dart';
 import '../features/budget/presentation/financial_summary_screen.dart';
 import '../features/budget/presentation/site_budget_screen.dart';
+import '../features/transparency/presentation/transparency_screen.dart';
 import '../features/home/presentation/home_gate.dart';
 import '../features/kargo/presentation/kargo_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
@@ -61,6 +62,7 @@ class AppRoutes {
   static const budget = '/budget';
   static const financialSummary = '/financial-summary';
   static const siteBudget = '/site-budget';
+  static const transparency = '/transparency';
   static const myDues = '/my-dues';
   static const complaints = '/complaints';
   static const visitors = '/visitors';
@@ -221,6 +223,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.siteBudget,
         builder: (context, state) => const SiteBudgetScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.transparency,
+        builder: (context, state) => const TransparencyScreen(),
       ),
       GoRoute(
         path: AppRoutes.myDues,

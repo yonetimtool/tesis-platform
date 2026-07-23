@@ -26,6 +26,7 @@ const LINKS: { href: string; label: string; icon: IconName }[] = [
   { href: "/schematic", label: "Şikayet Haritası", icon: "pin" },
   { href: "/dues", label: "Aidat", icon: "money" },
   { href: "/reports/dues", label: "Raporlar", icon: "chart" },
+  { href: "/transparency", label: "Şeffaflık", icon: "money" },
   { href: "/users", label: "Kullanıcılar", icon: "users" },
   { href: "/announcements", label: "Duyurular", icon: "megaphone" },
   { href: "/complaints", label: "Talepler", icon: "chat" },
