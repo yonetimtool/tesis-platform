@@ -258,6 +258,28 @@ def main() -> int:
             )
         print("[seed] bina bloklari: A (3 kat), B (2 kat)")
 
+        # Vardiya tanimlari — mobil saha ana ekrani "Vardiya Durumu" bolumu
+        # (GET /shifts; RBAC admin+security+tesis_gorevlisi). Gece vardiyasi
+        # bilerek gece-sarkmali (22:00-06:00): istemcinin aktifMi hesabinin
+        # sarkma dalini dev veride de gorunur kilar. shift'te benzersiz kisit
+        # yok -> (tenant_id, ad) uzerinden NOT EXISTS ile idempotent.
+        for _ad, _bas, _bit, _gun in [
+            ("Sabah Vardiyası", "06:00", "14:00", "hafta_ici"),
+            ("Öğle Vardiyası", "14:00", "22:00", "her_gun"),
+            ("Gece Vardiyası", "22:00", "06:00", "her_gun"),
+        ]:
+            conn.execute(
+                """
+                INSERT INTO shift (tenant_id, ad, baslangic_saat, bitis_saat, gun_tipi)
+                SELECT %s, %s, %s::time, %s::time, %s::gun_tipi
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM shift WHERE tenant_id = %s AND ad = %s
+                )
+                """,
+                (tenant_id, _ad, _bas, _bit, _gun, tenant_id, _ad),
+            )
+        print("[seed] vardiyalar: Sabah 06-14 (hafta_ici), Öğle 14-22, Gece 22-06")
+
         # 3b) BUTCE (Wave 2A): kategoriler + ornek defter + otomatik aidat→gelir.
         #     Para INTEGER KURUS. 'Aidat' otomatik gelir kategorisidir (basarili
         #     odeme kaydi burada toplanir).
