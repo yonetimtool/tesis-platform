@@ -8,6 +8,8 @@ import 'package:mobile/src/features/profile/data/profile_api.dart';
 import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/scan/data/scan_outbox.dart';
 import 'package:mobile/src/features/scan/domain/outbox_entry.dart';
+import 'package:mobile/src/features/shifts/data/shifts_api.dart';
+import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 
 /// Depoya dokunmayan sahte kuyruk (path_provider yok) — bekleyen sayisi
 /// kadar 'bekliyor' kaydi tasir.
@@ -36,6 +38,14 @@ Widget _app(UserRole role, {int pending = 0, int unread = 0}) => ProviderScope(
             ad: 'Mehmet', role: role.wire, aranabilir: false)),
         scanOutboxProvider.overrideWith(() => _FakeOutbox(pending)),
         unreadNotificationCountProvider.overrideWith((ref) async => unread),
+        shiftsProvider.overrideWith((ref) async => const [
+              Shift(
+                  id: 'v1',
+                  ad: 'Sabah Vardiyası',
+                  baslangicSaat: '06:00',
+                  bitisSaat: '14:00',
+                  gunTipi: 'hafta_ici'),
+            ]),
       ],
       child: MaterialApp(home: SahaHomeScreen(role: role)),
     );
@@ -49,7 +59,7 @@ void _tall(WidgetTester tester) {
 void main() {
   group('SahaHomeScreen — guvenlik + tesis gorevlisi (R3, gorevli.jpeg)', () {
     testWidgets('security: karsilama + "Güvenlik" + one cikanlar (Ziyaretçiler/'
-        'Turlarım) + "Yakında" kartlari (Vardiya/Canlı Kamera) + FAB',
+        'Turlarım) + GERCEK Vardiya Durumu bolumu + kalan "Yakında" kartlari',
         (tester) async {
       _tall(tester);
       await tester.pumpWidget(_app(UserRole.security));
@@ -60,14 +70,19 @@ void main() {
       expect(find.text('Ziyaretçiler'), findsOneWidget);
       expect(find.text('Turlarım'), findsOneWidget);
       expect(find.text('Olay Bildir'), findsOneWidget);
-      // MISSING-BACKEND referans kartlari — pasif "Yakında".
+      // Vardiya Durumu ARTIK GERCEK bolum (/shifts) — comingSoon kart degil.
+      // Cip durumu (AKTİF/PLANLANDI) gercek saate bagli oldugundan burada
+      // ASSERT EDILMEZ (saat-flake); deterministik testi vardiya_section'da.
       expect(find.text('Vardiya Durumu'), findsOneWidget);
+      expect(find.text('Sabah Vardiyası'), findsOneWidget);
+      expect(find.text('06:00 - 14:00'), findsOneWidget);
+      // Kalan MISSING-BACKEND kartlari — pasif "Yakında" (vardiya cikti).
       expect(find.text('Canlı Kamera'), findsOneWidget);
-      expect(find.text('Yakında'), findsNWidgets(4)); // vardiya+plaka+ihlal+kamera
+      expect(find.text('Yakında'), findsNWidgets(3)); // plaka+ihlal+kamera
     });
 
     testWidgets('tesisGorevlisi: KVKK — Ziyaretçi/Kargo/Kamera YOK; Görevlerim '
-        'VAR; yakinda YALNIZ Vardiya Durumu', (tester) async {
+        'VAR; vardiya GERCEK bolum; "Yakında" izgarasi HIC yok', (tester) async {
       _tall(tester);
       await tester.pumpWidget(_app(UserRole.tesisGorevlisi));
       await tester.pumpAndSettle();
@@ -78,7 +93,11 @@ void main() {
       expect(find.text('Kargo'), findsNothing);
       expect(find.text('Canlı Kamera'), findsNothing);
       expect(find.text('Araç Plaka'), findsNothing);
-      expect(find.text('Yakında'), findsOneWidget); // yalniz Vardiya Durumu
+      // Vardiya artik gercek; baska comingSoon kalmadi → izgara tamamen gizli.
+      expect(find.text('Vardiya Durumu'), findsOneWidget);
+      expect(find.text('Sabah Vardiyası'), findsOneWidget);
+      expect(find.text('Yakında'), findsNothing);
+      expect(find.text('Yakında Eklenecekler'), findsNothing);
     });
 
     testWidgets('security: okunmamis bildirim rozeti zil + sekmede gorunur '

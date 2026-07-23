@@ -7,6 +7,8 @@ import '../../auth/domain/user_role.dart';
 import '../../notifications/data/notifications_controller.dart';
 import '../../profile/data/profile_api.dart';
 import '../../scan/data/scan_outbox.dart';
+import '../../shifts/data/shifts_api.dart';
+import '../../shifts/presentation/vardiya_section.dart';
 import '../domain/home_menu.dart';
 import 'module_card_spec.dart';
 import 'role_home_body.dart';
@@ -39,6 +41,10 @@ class SahaHomeScreen extends ConsumerWidget {
     final unread = bildirimliRol
         ? ref.watch(unreadNotificationCountProvider).value ?? 0
         : 0;
+    // Vardiya Durumu — GERCEK /shifts verisi (iki saha rolu de RBAC-izinli).
+    // Hata/yukleme → bolum sessizce gizli (VardiyaSection bos listede hic
+    // cizilmez).
+    final vardiyalar = ref.watch(shiftsProvider).value ?? const [];
 
     return HomeShell(
       role: role,
@@ -56,6 +62,10 @@ class SahaHomeScreen extends ConsumerWidget {
           if (pending > 0) HomeMenuEntry.outbox: '$pending bekleyen',
         },
         sections: [
+          if (vardiyalar.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            VardiyaSection(vardiyalar: vardiyalar, now: DateTime.now()),
+          ],
           const SizedBox(height: 12),
           _YakindaSection(role: role),
         ],
@@ -89,9 +99,10 @@ class SahaHomeScreen extends ConsumerWidget {
   }
 }
 
-/// MISSING-BACKEND referans kartlari — pasif "Yakında" izgarasi. security
-/// gorevli.jpeg'in 4'unu gorur; tesis_gorevlisi KVKK disi tek karti (kendi
-/// vardiyasi) gorur.
+/// MISSING-BACKEND referans kartlari — pasif "Yakında" izgarasi. Vardiya
+/// Durumu ARTIK GERCEK bolum ([VardiyaSection]); kalanlar yalniz security'de
+/// (Plaka/İhlaller/Kamera). Kart kalmazsa (tesis_gorevlisi) izgara HIC
+/// cizilmez.
 class _YakindaSection extends StatelessWidget {
   const _YakindaSection({required this.role});
 
@@ -100,12 +111,6 @@ class _YakindaSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cards = <ModuleCard>[
-      const ModuleCard(
-        icon: Icons.local_police_outlined,
-        title: 'Vardiya Durumu',
-        accent: _navy,
-        comingSoon: true,
-      ),
       if (role == UserRole.security) ...const [
         ModuleCard(
           icon: Icons.directions_car_outlined,
@@ -127,6 +132,7 @@ class _YakindaSection extends StatelessWidget {
         ),
       ],
     ];
+    if (cards.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
