@@ -11,7 +11,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [tenantSlug, setTenantSlug] = useState("acme-plaza");
+  const [tenantSlug, setTenantSlug] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -129,6 +129,7 @@ export default function LoginPage() {
                 className={field}
                 value={tenantSlug}
                 onChange={(e) => setTenantSlug(e.target.value)}
+                placeholder="yonetio"
                 autoComplete="organization"
                 required
               />
