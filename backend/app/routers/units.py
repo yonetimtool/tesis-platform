@@ -14,6 +14,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -118,6 +119,7 @@ async def create_unit(
             raise APIError(409, "conflict", "Daire no bu tesiste zaten kayitli.")
         raise translate_integrity(exc)
     await db.refresh(obj)
+    await audit_user(db, user, Action.UNIT_CREATE, resource_type="unit", resource_id=obj.id)
     return obj
 
 
@@ -216,7 +218,7 @@ async def update_unit_layout(
 async def delete_unit(
     unit_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_LAYOUT_EDITOR),
+    user: AppUser = Depends(_LAYOUT_EDITOR),
 ) -> Response:
     obj = await get_or_404(db, Unit, unit_id)
     await db.delete(obj)
@@ -224,6 +226,7 @@ async def delete_unit(
         await db.flush()
     except IntegrityError as exc:
         raise translate_integrity(exc)
+    await audit_user(db, user, Action.UNIT_DELETE, resource_type="unit", resource_id=unit_id)
     return Response(status_code=204)
 
 
@@ -276,6 +279,10 @@ async def assign_resident(
             raise APIError(409, "conflict", "Bu kullanici daireye zaten aktif olarak bagli.")
         raise translate_integrity(exc)
     await db.refresh(obj)
+    await audit_user(
+        db, user, Action.RESIDENT_ASSIGN, resource_type="app_user",
+        resource_id=body.user_id, meta={"unit_id": str(unit_id)},
+    )
     return obj
 
 
@@ -284,7 +291,7 @@ async def remove_resident(
     unit_id: uuid.UUID,
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_ADMIN),
 ) -> Response:
     await get_or_404(db, Unit, unit_id)
     binding = (
@@ -300,4 +307,8 @@ async def remove_resident(
         raise APIError(404, "not_found", "Aktif sakin baglantisi bulunamadi.")
     binding.bitis = datetime.now(tz=timezone.utc)
     await db.flush()
+    await audit_user(
+        db, user, Action.RESIDENT_UNASSIGN, resource_type="app_user",
+        resource_id=user_id, meta={"unit_id": str(unit_id)},
+    )
     return Response(status_code=204)

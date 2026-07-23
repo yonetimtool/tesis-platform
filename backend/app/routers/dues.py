@@ -16,6 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -96,6 +97,10 @@ async def create_assessments(
                 raise APIError(409, "conflict", "Bu daire icin bu donem tahakkuk zaten var.")
             raise translate_integrity(exc)
         await db.refresh(obj)
+        await audit_user(
+            db, user, Action.DUES_ASSESSMENT_CREATE, resource_type="dues_assessment",
+            resource_id=obj.id, meta={"unit_id": str(body.unit_id)},
+        )
         return DuesAssessmentResult(created=[DuesAssessmentOut.model_validate(obj)], atlanan=0)
 
     # TOPLU mod: unit_ids verildiyse dogrula, yoksa tum aktif daireler
@@ -131,6 +136,11 @@ async def create_assessments(
             raise translate_integrity(exc)
         await db.refresh(obj)
         created.append(DuesAssessmentOut.model_validate(obj))
+    if created:
+        await audit_user(
+            db, user, Action.DUES_ASSESSMENT_CREATE, resource_type="dues_assessment",
+            meta={"count": len(created), "skipped": atlanan},
+        )
     return DuesAssessmentResult(created=created, atlanan=atlanan)
 
 
@@ -249,6 +259,10 @@ async def create_payment(
     # (ayni transaction; idempotent; butce aksakligi odemeyi DUSURMEZ).
     # Kartli odeme 'bekliyor' baslar — geliri webhook 'basarili' yapinca yazilir.
     await ensure_dues_income_entry(db, obj)
+    await audit_user(
+        db, user, Action.DUES_PAYMENT_RECORD, resource_type="dues_payment",
+        resource_id=obj.id, meta={"unit_id": str(obj.unit_id), "yontem": obj.yontem},
+    )
     content = DuesPaymentOut.model_validate(obj).model_dump(mode="json")
     if init.redirect_url:  # kart: saglayici odeme sayfasi URL'i
         content["odeme_url"] = init.redirect_url

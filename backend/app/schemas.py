@@ -2481,3 +2481,23 @@ class BuildingMapResponse(BaseModel):
     shows_density: bool  # True: complaint_count/color dolu (yonetim); False: yapi
     bloklar: list[BuildingMapBlok]
     unplaced: list[BuildingMapUnit]
+
+
+# ------------------------------ denetim (audit) ---------------------------- #
+class AuditLogOut(BaseModel):
+    """KVKK denetim satiri (admin goruntuleyici). meta yalniz id/alan-adi tutar."""
+
+    id: uuid.UUID
+    ts: datetime
+    tenant_id: uuid.UUID | None = None
+    actor_user_id: uuid.UUID | None = None
+    actor_rol: str | None = None
+    action: str
+    resource_type: str | None = None
+    resource_id: str | None = None
+    meta: dict = {}
+
+
+class AuditLogListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AuditLogOut]

@@ -28,3 +28,12 @@ def detect_missed_tours() -> dict:
     from .scheduler.service import detect_missed
 
     return detect_missed()
+
+
+@celery_app.task(name="scheduler.run_retention")
+def run_retention() -> dict:
+    """Beat (gecelik): KVKK saklama sinirini gecen kisisel veriyi siler/
+    anonimlestirir + audit_log purge; sonuc audit_log'a erasure_run olarak yazilir."""
+    from .retention import run_retention as _run
+
+    return _run()

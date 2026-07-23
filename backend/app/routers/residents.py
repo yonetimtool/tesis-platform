@@ -19,10 +19,14 @@ from sqlalchemy import and_, delete as sa_delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..crud_helpers import is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Unit, UnitResident
+from ..models import AppUser, Unit, UnitResident, UserDevice
+
+# KVKK anonimlestirme yer tutucusu (ad NOT NULL — NULL yerine sabit metin).
+ANONYMIZED_NAME = "Silinmiş Kullanıcı"
 from ..schemas import (
     ResidentCreate,
     ResidentCreatedOut,
@@ -104,6 +108,10 @@ async def create_resident(
     except IntegrityError as exc:
         raise translate_integrity(exc)
 
+    await audit_user(
+        db, user, Action.RESIDENT_CREATE, resource_type="app_user",
+        resource_id=resident.id, meta={"unit_id": str(unit.id)},
+    )
     return ResidentCreatedOut(
         user_id=resident.id,
         unit_id=unit.id,
@@ -173,11 +181,12 @@ async def update_resident(
     user_id: uuid.UUID,
     body: ResidentUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_YONETIM),
+    user: AppUser = Depends(_YONETIM),
 ) -> Response:
     """Sakini duzenle (yonetici/admin): ad ve/veya cep telefonu. telefon global
     benzersiz (cakisma 409). Numarayi bos birakmak = degismez."""
     resident = await _resident_or_404(db, user_id)
+    fields = list(body.model_dump(exclude_unset=True).keys())
     for key, value in body.model_dump(exclude_unset=True).items():
         setattr(resident, key, value)
     resident.updated_at = func.now()
@@ -187,6 +196,11 @@ async def update_resident(
         if is_unique_violation(exc):
             raise APIError(409, "conflict", "Bu telefon zaten kayitli.")
         raise translate_integrity(exc)
+    # meta: yalniz DEGISEN ALAN ADLARI (deger YOK — KVKK).
+    await audit_user(
+        db, user, Action.RESIDENT_UPDATE, resource_type="app_user",
+        resource_id=user_id, meta={"fields": fields},
+    )
     return Response(status_code=204)
 
 
@@ -194,7 +208,7 @@ async def update_resident(
 async def reset_resident_password(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_YONETIM),
+    user: AppUser = Depends(_YONETIM),
 ) -> ResidentResetPasswordOut:
     """Sakin parolasini sifirla (yonetici/admin): yeni TEK SEFERLIK gecici kod
     uretir. Sakin telefon + bu kodla girip yeni parolasini belirler (§1.3).
@@ -206,6 +220,10 @@ async def reset_resident_password(
     resident.temp_code_hash = hash_password(temp_code)
     resident.updated_at = func.now()
     await db.flush()
+    await audit_user(
+        db, user, Action.RESIDENT_RESET_PASSWORD, resource_type="app_user",
+        resource_id=user_id,
+    )
     return ResidentResetPasswordOut(temp_code=temp_code)
 
 
@@ -213,24 +231,34 @@ async def reset_resident_password(
 async def remove_resident_from_site(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_YONETIM),
+    user: AppUser = Depends(_YONETIM),
 ) -> ResidentDeleteOut:
-    """Sakini SIL (akilli, yonetici/admin) — telefon HER DURUMDA serbest kalir.
+    """Sakini SIL / ANONIMLESTIR (KVKK silme hakki; yonetici/admin).
 
     Gecmissiz sakin (yeni/hatali kayit) TAMAMEN silinir (unit_resident/rsvp/
-    device CASCADE ile gider) -> deleted=true. Gecmisi olan sakin (FK RESTRICT:
-    sikayet/rezervasyon vb.) silinemez; SAVEPOINT geri alinir ve pasiflestirilir
-    + telefon NULL yapilir (kayit denetim icin kalir) -> deleted=false. Tenant'ta
-    role=resident degilse 404."""
+    device CASCADE ile gider) -> deleted=true (audit: resident_delete). Gecmisi
+    olan sakin (FK RESTRICT: aidat/sikayet/rezervasyon vb.) silinemez; SAVEPOINT
+    geri alinir ve ANONIMLESTIRILIR -> deleted=false (audit: resident_erasure):
+      * ad -> 'Silinmiş Kullanıcı', email/telefon -> NULL, parola/gecici-kod
+        hash'leri temizlenir (kimlik dogrulama gecersizlesir),
+      * FCM/cihaz token'lari (user_device) SILINIR (push kesilir),
+      * aktif daire-sakin baglantilari kapatilir, is_active=false.
+    FINANSAL/denetim satirlari (dues_payment kaydeden, complaint acan vb.) DEFTER
+    butunlugu icin KALIR — yazari anonim kullaniciya isaret eder. Yuklenen
+    sikayet fotograflari KALIR (kisiyi degil, tesis sorununu belgeler). role=
+    resident degilse 404."""
     resident = await _resident_or_404(db, user_id)
 
     try:
         async with db.begin_nested():
             await db.execute(sa_delete(AppUser).where(AppUser.id == user_id))
+        await audit_user(
+            db, user, Action.RESIDENT_DELETE, resource_type="app_user",
+            resource_id=user_id, meta={"mode": "hard_delete"},
+        )
         return ResidentDeleteOut(deleted=True)
     except IntegrityError:
-        # Gecmis kayitlari var (RESTRICT) -> savepoint geri alindi; pasiflestir
-        # + telefonu bosalt (numara yeniden kullanilabilsin).
+        # Gecmis kayitlari var (RESTRICT) -> savepoint geri alindi; ANONIMLESTIR.
         now = datetime.now(tz=timezone.utc)
         bindings = (
             await db.execute(
@@ -242,8 +270,21 @@ async def remove_resident_from_site(
         ).scalars().all()
         for binding in bindings:
             binding.bitis = now
-        resident.is_active = False
+        # Cihaz/push token'larini sil (kisisel + artik gecersiz).
+        await db.execute(sa_delete(UserDevice).where(UserDevice.user_id == user_id))
+        # Kimlik alanlarini anonimlestir.
+        resident.ad = ANONYMIZED_NAME
+        resident.email = None
         resident.telefon = None
+        resident.password_hash = None
+        resident.temp_code_hash = None
+        resident.password_set = False
+        resident.aranabilir = False
+        resident.is_active = False
         resident.updated_at = func.now()
         await db.flush()
+        await audit_user(
+            db, user, Action.RESIDENT_ERASURE, resource_type="app_user",
+            resource_id=user_id, meta={"mode": "anonymize"},
+        )
         return ResidentDeleteOut(deleted=False)

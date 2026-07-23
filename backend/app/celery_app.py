@@ -6,6 +6,7 @@ import olmamasi icin burada tasks import EDILMEZ).
 from __future__ import annotations
 
 from celery import Celery
+from celery.schedules import crontab
 
 from .config import settings
 
@@ -32,5 +33,11 @@ celery_app.conf.beat_schedule = {
     "detect-missed-tours": {
         "task": "scheduler.detect_missed_tours",
         "schedule": float(settings.scheduler_detect_interval_seconds),
+    },
+    # KVKK saklama & imha — her gece 04:00 Europe/Istanbul. App TZ = UTC; TR
+    # yil boyu UTC+3 (DST yok) => 01:00 UTC = 04:00 Istanbul.
+    "run-retention": {
+        "task": "scheduler.run_retention",
+        "schedule": crontab(hour=1, minute=0),
     },
 }

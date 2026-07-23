@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..deps import get_current_user, get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Checkpoint
@@ -44,7 +45,7 @@ async def my_profile(user: AppUser = Depends(get_current_user)) -> AppUser:
 async def change_my_password(
     body: PasswordChangeRequest,
     user: AppUser = Depends(get_current_user),
-    _db: AsyncSession = Depends(get_tenant_db),
+    db: AsyncSession = Depends(get_tenant_db),
 ) -> Response:
     """Self-servis parola degisimi — mevcut parola dogrulanir (auth.md).
 
@@ -57,6 +58,10 @@ async def change_my_password(
     user.password_hash = hash_password(body.new_password)
     user.password_set = True
     user.updated_at = func.now()
+    await audit_user(
+        db, user, Action.PASSWORD_CHANGE, resource_type="app_user",
+        resource_id=user.id,
+    )
     # get_tenant_db transaction'i cikista commit eder (user ayni oturuma bagli).
     return Response(status_code=204)
 
@@ -65,7 +70,7 @@ async def change_my_password(
 async def update_my_contact(
     body: UserContactUpdate,
     user: AppUser = Depends(get_current_user),
-    _db: AsyncSession = Depends(get_tenant_db),
+    db: AsyncSession = Depends(get_tenant_db),
 ) -> AppUser:
     """Self-servis iletisim: kullanici KENDI telefon + aranabilir rizasini yonetir.
 
@@ -76,6 +81,10 @@ async def update_my_contact(
     for key, value in data.items():
         setattr(user, key, value)
     user.updated_at = func.now()
+    await audit_user(
+        db, user, Action.USER_CONTACT_UPDATE, resource_type="app_user",
+        resource_id=user.id, meta={"self": True, "fields": list(data.keys())},
+    )
     return user
 
 

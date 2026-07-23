@@ -29,6 +29,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from ..audit import Action, audit_user
 from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -170,6 +171,10 @@ async def create_visitor(
         title="Ziyaretci",
         data={"tip": "ziyaretci", "visitor_id": str(obj.id)},
     )
+    await audit_user(
+        db, user, Action.VISITOR_CREATE, resource_type="visitor",
+        resource_id=obj.id, meta={"unit_id": str(obj.unit_id)},
+    )
     return _out((obj, unit.no, user.ad, target_ad))
 
 
@@ -249,6 +254,10 @@ async def update_visitor(
     except IntegrityError as exc:
         raise translate_integrity(exc)
 
+    await audit_user(
+        db, user, Action.VISITOR_UPDATE, resource_type="visitor",
+        resource_id=visitor_id, meta={"fields": sorted(fields)},  # set -> JSON list
+    )
     row = (
         await db.execute(_base_stmt().where(Visitor.id == visitor_id))
     ).first()

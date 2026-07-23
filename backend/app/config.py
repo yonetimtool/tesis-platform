@@ -90,5 +90,17 @@ class Settings(BaseSettings):
     fcm_service_account_json: str = ""
     fcm_base_url: str = "https://fcm.googleapis.com"
 
+    # --- KVKK saklama & imha (retention) — AY cinsinden ---
+    # Saklama sinirlama ilkesi (KVKK m.4/2-d + m.7): kisisel veri, isleme amaci
+    # gectikten sonra tutulmaz. Varsayilanlar operatorce ENV ile DARALTILABILIR
+    # (uzatilmasi onerilmez). Gerekce contracts/auth.md §7'de belgelenmistir.
+    retention_visitors_months: int = 24        # ziyaretci LOG kaydi
+    retention_kargo_months: int = 24           # kargo/paket kaydi (+foto)
+    retention_reservations_months: int = 24    # TAMAMLANMIS/IPTAL rezervasyon
+    retention_tickets_months: int = 36         # COZULMUS/REDDEDILMIS talep/sikayet
+    retention_audit_months: int = 24           # audit_log purge
+    # Tek DELETE/UPDATE partisi (bellek/kilit basincini sinirlar).
+    retention_batch_size: int = 500
+
 
 settings = Settings()

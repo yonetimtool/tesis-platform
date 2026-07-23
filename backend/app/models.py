@@ -1542,9 +1542,39 @@ class UnitComplaint(Base):
     updated_at = _created_at()
 
 
+# --------------------------------------------------------------------------- #
+class AuditLog(Base):
+    """KVKK degistirilemez (append-only) denetim kaydi (migration 0002).
+
+    Uygulama YALNIZ INSERT eder (app_rw UPDATE/DELETE alamaz — setup_app_role
+    REVOKE eder). `tenant_id` platform olaylari icin NULL olabilir. `actor_user_id`
+    FK'SIZDIR (bilincli): kullanici anonimlestirilse/silinse de iz kalir. `meta`
+    yalniz id/alan-adi tutar — ASLA kisisel veri DEGERI (KVKK)."""
+
+    __tablename__ = "audit_log"
+
+    id: Mapped[uuid.UUID] = _pk()
+    ts = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
+    # FK yok modelde de: tenant silinince DB CASCADE temizler (DDL'de tanimli).
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    actor_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    actor_rol: Mapped[str | None] = mapped_column(Text, nullable=True)
+    action: Mapped[str] = mapped_column(Text, nullable=False)
+    resource_type: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resource_id: Mapped[str | None] = mapped_column(Text, nullable=True)
+    meta: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+
+
 __all__ = [
     "Base",
     "Tenant",
+    "AuditLog",
     "AppUser",
     "Shift",
     "Checkpoint",

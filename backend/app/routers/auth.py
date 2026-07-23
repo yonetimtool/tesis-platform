@@ -14,6 +14,7 @@ import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select, text
 
+from ..audit import Action, record_audit
 from ..config import settings
 from ..db import SessionLocal, set_tenant
 from ..deps import get_redis
@@ -64,6 +65,24 @@ async def _revoke_family(redis: aioredis.Redis, fam: str, jti: str | None = None
         await redis.delete(f"refresh:valid:{jti}")
 
 
+async def _audit_login_fail(tenant_id, *, method: str, user: AppUser | None = None) -> None:
+    """login_fail'i AYRI (commit'lenen) transaction'da yazar — ana akis 401 ile
+    raise ettiginden (ve read-only outer txn geri alindigindan) denetim satiri
+    burada bagimsiz yazilir. Tenant COZULMEDIYSE (bilinmeyen slug/numara)
+    cagrilmaz: kapsam yok. meta'da kisisel veri (e-posta/telefon) DEGERI YOK."""
+    async with SessionLocal() as session:
+        async with session.begin():
+            await set_tenant(session, tenant_id)
+            await record_audit(
+                session,
+                action=Action.LOGIN_FAIL,
+                tenant_id=tenant_id,
+                actor_user_id=(user.id if user else None),
+                actor_rol=(user.role if user else None),
+                meta={"method": method},
+            )
+
+
 @router.post("/login", response_model=TokenPair)
 async def login(
     body: LoginRequest,
@@ -94,10 +113,17 @@ async def login(
 
             # 3) dogrulama — basarisiz adimlari ayirt ettirmeden 401.
             if user is None or not verify_password(body.password, user.password_hash):
+                await _audit_login_fail(tenant_id, method="email", user=user)
                 raise _INVALID_CREDS
             if not user.is_active:
+                await _audit_login_fail(tenant_id, method="email", user=user)
                 raise _INVALID_CREDS
 
+            await record_audit(
+                session, action=Action.LOGIN_OK, tenant_id=tenant_id,
+                actor_user_id=user.id, actor_rol=user.role,
+                resource_type="app_user", resource_id=user.id,
+            )
             access = create_access_token(
                 user_id=user.id, tenant_id=user.tenant_id, role=user.role
             )
@@ -172,17 +198,32 @@ async def login_phone(
                 )
             ).scalar_one_or_none()
             if user is None or not user.is_active:
+                await _audit_login_fail(tenant_id, method="phone", user=user)
                 raise _INVALID_PHONE_CREDS
 
             if user.password_set:
                 if not verify_password(body.password, user.password_hash):
+                    await _audit_login_fail(tenant_id, method="phone", user=user)
                     raise _INVALID_PHONE_CREDS
+                await record_audit(
+                    session, action=Action.LOGIN_OK, tenant_id=tenant_id,
+                    actor_user_id=user.id, actor_rol=user.role,
+                    resource_type="app_user", resource_id=user.id,
+                    meta={"method": "phone"},
+                )
                 # Token'lar transaction disinda uretilir (asagida).
             else:
                 if not verify_password(body.password, user.temp_code_hash):
+                    await _audit_login_fail(tenant_id, method="phone", user=user)
                     raise _INVALID_PHONE_CREDS
                 # Gecici kod dogru -> parola kurulumu zorunlu; oturum token'i
-                # VERILMEZ (kod API erisimi saglamaz).
+                # VERILMEZ (kod API erisimi saglamaz). Denetim: kod dogrulandi.
+                await record_audit(
+                    session, action=Action.LOGIN_OK, tenant_id=tenant_id,
+                    actor_user_id=user.id, actor_rol=user.role,
+                    resource_type="app_user", resource_id=user.id,
+                    meta={"method": "phone", "setup_required": True},
+                )
                 return PhoneLoginResponse(
                     password_setup_required=True,
                     setup_token=create_setup_token(
@@ -233,6 +274,12 @@ async def set_password(
             user.password_set = True
             user.temp_code_hash = None
             user.updated_at = func.now()
+
+            await record_audit(
+                session, action=Action.PASSWORD_SET, tenant_id=claims["tenant_id"],
+                actor_user_id=user.id, actor_rol=user.role,
+                resource_type="app_user", resource_id=user.id,
+            )
 
     return await _issue_token_pair(redis, user)
 

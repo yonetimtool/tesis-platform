@@ -14,6 +14,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -129,6 +130,10 @@ async def create_user(
             raise _CONTACT_CONFLICT
         raise translate_integrity(exc)
     await db.refresh(obj)
+    await audit_user(
+        db, user, Action.USER_CREATE, resource_type="app_user",
+        resource_id=obj.id, meta={"role": obj.role},
+    )
     return UserCreatedOut(
         id=obj.id,
         ad=obj.ad,
@@ -179,6 +184,10 @@ async def update_user(
             raise _CONTACT_CONFLICT
         raise translate_integrity(exc)
     await db.refresh(obj)
+    await audit_user(
+        db, user, Action.USER_UPDATE, resource_type="app_user",
+        resource_id=obj.id, meta={"fields": list(data.keys())},
+    )
     return obj
 
 
@@ -204,6 +213,10 @@ async def reset_user_password(
     obj.temp_code_hash = hash_password(temp_code)
     obj.updated_at = func.now()
     await db.flush()
+    await audit_user(
+        db, user, Action.USER_RESET_PASSWORD, resource_type="app_user",
+        resource_id=obj.id,
+    )
     return ResidentResetPasswordOut(temp_code=temp_code)
 
 
@@ -212,7 +225,7 @@ async def update_user_contact(
     user_id: uuid.UUID,
     body: UserContactUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_CONTACT_MANAGER),
+    user: AppUser = Depends(_CONTACT_MANAGER),
 ) -> AppUser:
     """Rol-bazli arama iletisim ayari (C1a): telefon + arama rizasi.
 
@@ -234,4 +247,9 @@ async def update_user_contact(
             raise _CONTACT_CONFLICT
         raise translate_integrity(exc)
     await db.refresh(obj)
+    # C1a iletisim/riza degisikligi (telefon + aranabilir) — KVKK acisindan onemli.
+    await audit_user(
+        db, user, Action.USER_CONTACT_UPDATE, resource_type="app_user",
+        resource_id=obj.id, meta={"fields": list(data.keys())},
+    )
     return obj

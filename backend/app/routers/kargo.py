@@ -28,6 +28,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from ..audit import Action, audit_user
 from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -170,6 +171,10 @@ async def create_kargo(
             title="Kargo",
             data={"tip": "kargo", "kargo_id": str(obj.id)},
         )
+    await audit_user(
+        db, user, Action.KARGO_CREATE, resource_type="kargo",
+        resource_id=obj.id, meta={"unit_id": str(obj.unit_id), "has_photo": bool(obj.foto_key)},
+    )
     return _out((obj, unit.no, user.ad, None))
 
 
@@ -255,6 +260,12 @@ async def get_kargo(
     if row is None:
         # Baska dairenin/tenant'in kaydi 404 — varligi da sizdirilmaz.
         raise APIError(404, "not_found", "Kayit bulunamadi")
+    # KVKK: foto presign-GET ifsasi — YALNIZ tekil detayda (liste degil), fotolu ise.
+    if row[0].foto_key:
+        await audit_user(
+            db, user, Action.KARGO_PHOTO_VIEW, resource_type="kargo",
+            resource_id=row[0].id, meta={"unit_id": str(row[0].unit_id)},
+        )
     return _out(row)
 
 
@@ -303,4 +314,8 @@ async def receive_kargo(
     kaydeden_ad = (
         await db.execute(select(AppUser.ad).where(AppUser.id == obj.kaydeden_user_id))
     ).scalar_one_or_none()
+    await audit_user(
+        db, user, Action.KARGO_RECEIVE, resource_type="kargo",
+        resource_id=obj.id, meta={"unit_id": str(obj.unit_id)},
+    )
     return _out((obj, unit_no, kaydeden_ad, user.ad))

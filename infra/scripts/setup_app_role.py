@@ -75,6 +75,21 @@ def main() -> int:
             ).format(role=role)
         )
 
+        # --- audit_log: APPEND-ONLY (KVKK, migration 0002) ---
+        # Blanket GRANT (yukarida) app_rw'ye audit_log'da da UPDATE/DELETE verir;
+        # burada GERI ALIYORUZ => app_rw yalniz INSERT + SELECT yapar, denetim
+        # satirini DEGISTIREMEZ/SILEMEZ. Purge YALNIZ owner (retention task) ile.
+        # audit_log henuz yoksa (0002 uygulanmamis) sessizce atla.
+        if conn.execute(
+            "SELECT to_regclass('public.audit_log')"
+        ).fetchone()[0] is not None:
+            conn.execute(
+                sql.SQL("REVOKE UPDATE, DELETE ON audit_log FROM {role}").format(
+                    role=role
+                )
+            )
+            print("[setup_app_role] audit_log append-only (UPDATE/DELETE revoked).")
+
     print(f"[setup_app_role] '{app_user}' rolu hazir (LOGIN + GRANT).")
     return 0
 

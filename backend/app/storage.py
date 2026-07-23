@@ -102,6 +102,44 @@ def presign_put(
     return key, url, settings.minio_url_expire_seconds
 
 
+def delete_objects(keys: list[str]) -> int:
+    """Verilen anahtarlari MinIO'dan siler (retention/imha). Kac obje silindigini
+    doner. Presign'in aksine SUNUCU-TARAFI cagridir (MinIO ayakta olmali).
+
+    Anahtarlar tenant ile namespace'lidir (make_foto_key), bu yuzden yanlislikla
+    baska tenant'in objesi silinmez. Bos liste => 0. S3 batch API'si tek istekte
+    en fazla 1000 anahtar kabul eder; buyuk listeler parcalanir."""
+    keys = [k for k in keys if k]
+    if not keys:
+        return 0
+    client = _client()
+    deleted = 0
+    for i in range(0, len(keys), 1000):
+        chunk = keys[i : i + 1000]
+        resp = client.delete_objects(
+            Bucket=settings.minio_bucket,
+            Delete={"Objects": [{"Key": k} for k in chunk], "Quiet": True},
+        )
+        # Quiet modda yalniz HATALAR doner; silinen = istek - hata.
+        errors = resp.get("Errors", []) or []
+        deleted += len(chunk) - len(errors)
+    return deleted
+
+
+def delete_prefix(prefix: str) -> int:
+    """Bir anahtar ONEKI altindaki TUM objeleri siler (orn. tenant offboarding:
+    '{tenant_id}/'). Listeler + batch siler. Onek BOS ise guvenlik icin hicbir
+    sey yapmaz (tum bucket'i silmeyi onler)."""
+    if not prefix:
+        return 0
+    client = _client()
+    keys: list[str] = []
+    paginator = client.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=settings.minio_bucket, Prefix=prefix):
+        keys.extend(obj["Key"] for obj in page.get("Contents", []) or [])
+    return delete_objects(keys)
+
+
 def presign_get(key: str) -> str:
     """Goruntuleme icin presigned GET URL (opsiyonel kullanim)."""
     return _client().generate_presigned_url(

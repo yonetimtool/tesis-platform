@@ -588,3 +588,21 @@ export interface UnitComplaintList {
   meta: PageMeta;
   items: UnitComplaint[];
 }
+
+// ------------------------------ denetim (audit) ---------------------------- #
+export interface AuditLog {
+  id: string;
+  ts: string;
+  tenant_id: string | null;
+  actor_user_id: string | null;
+  actor_rol: string | null;
+  action: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  meta: Record<string, unknown>;
+}
+
+export interface AuditLogList {
+  meta: { limit: number; offset: number; total: number };
+  items: AuditLog[];
+}

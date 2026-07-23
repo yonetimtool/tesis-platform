@@ -31,6 +31,7 @@ const LINKS: { href: string; label: string; icon: IconName }[] = [
   { href: "/complaints", label: "Talepler", icon: "chat" },
   { href: "/notifications", label: "Bildirimler", icon: "bell" },
   { href: "/integrations", label: "Entegrasyonlar", icon: "hub" },
+  { href: "/audit", label: "Denetim Kaydı", icon: "scan" },
   { href: "/settings", label: "Ayarlar", icon: "gear" },
 ];
 

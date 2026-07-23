@@ -25,6 +25,7 @@ from sqlalchemy import and_, func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -142,6 +143,11 @@ async def file_unit_complaint(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    # NOT: meta'da complainant kimligi YOK (anonimlik) — yalniz hedef daire.
+    await audit_user(
+        db, user, Action.UNIT_COMPLAINT_FILE, resource_type="unit_complaint",
+        resource_id=obj.id, meta={"target_unit_id": str(obj.target_unit_id)},
+    )
     # Sikayet acan kendi kaydini gorur (kendi notu) — complainant kimligini
     # tekrar donmeye gerek yok (kendisi zaten biliyor; residentta hep None).
     return UnitComplaintOut.from_model(obj, unit_no=unit.no, include_note=True)
@@ -379,7 +385,7 @@ async def close_unit_complaint(
     complaint_id: uuid.UUID,
     body: UnitComplaintDecision,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_MANAGER),
+    user: AppUser = Depends(_MANAGER),
 ) -> UnitComplaintOut:
     """Yonetim durumu degistirir (kapali). Kapatma ACIK sayimi dusurur (renk
     feedback). Not doner; complainant kimligi ARTIK DONMEZ (gizlilik)."""
@@ -388,6 +394,10 @@ async def close_unit_complaint(
     obj.updated_at = func.now()
     await db.flush()
     await db.refresh(obj)
+    await audit_user(
+        db, user, Action.UNIT_COMPLAINT_CLOSE, resource_type="unit_complaint",
+        resource_id=obj.id, meta={"durum": obj.durum},
+    )
     unit_no = (
         await db.execute(
             select(Unit.no).where(Unit.id == obj.target_unit_id)

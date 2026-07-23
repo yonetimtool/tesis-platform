@@ -16,6 +16,7 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..call_targets import caller_can_reach, resolve_phone_target
 from ..crud_helpers import get_or_404
 from ..deps import get_tenant_db, require_role
@@ -51,6 +52,15 @@ async def resolve_call_target(
         raise APIError(
             404, "not_found", "Bu kullanici su an aranamiyor."
         )
+
+    # KVKK-kritik iz: telefon IFSASI + arama baslatma (kanal handoff). meta'da
+    # NUMARA YOK — yalniz hedef id/rol/kanal. Ayni islemde yazilir (commit ile).
+    _call_meta = {"target_user_id": str(callee.id), "target_rol": callee.role,
+                  "channel": target.channel}
+    await audit_user(db, user, Action.PHONE_REVEAL, resource_type="app_user",
+                     resource_id=callee.id, meta=_call_meta)
+    await audit_user(db, user, Action.CALL_INITIATE, resource_type="app_user",
+                     resource_id=callee.id, meta=_call_meta)
 
     return CallTargetOut(
         user_id=callee.id,

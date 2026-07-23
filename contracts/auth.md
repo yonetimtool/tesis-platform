@@ -895,3 +895,66 @@ Notlar:
 - `is_active = false` kullanici: login reddedilir; mevcut access token suresi
   dolana dek gecerli kabul edilir (kisa omurlu oldugu icin kabul edilebilir
   risk). Aninda iptal gerekiyorsa access token icin de `jti` denylist eklenir.
+
+---
+
+## 7. KVKK — Denetim Kaydı, Saklama & İmha (WP1 + WP2)
+
+Gerçek sakin verisi birikmeden önce KVKK duruşumuzun gerektirdiği iki paket:
+değiştirilemez denetim izi + saklama/imha motoru.
+
+### 7.1 Denetim kaydı (`audit_log`) — değiştirilemez (append-only)
+
+Migration **0002** `audit_log` tablosunu ekler (`id, ts, tenant_id [nullable],
+actor_user_id [FK'siz], actor_rol, action, resource_type, resource_id, meta jsonb`).
+
+- **Append-only:** `app_rw` YALNIZ `INSERT + SELECT` alır; `UPDATE/DELETE`
+  `setup_app_role.py`'de REVOKE edilir (blanket GRANT her migrate sonrası
+  koştuğundan REVOKE orada). Ham `app_rw` bağlantısı UPDATE/DELETE denerse
+  `permission denied` alır (test ile kanıtlı). 24 aylık purge YALNIZ owner ile.
+- **`actor_user_id` FK'siz (bilinçli):** kullanıcı anonimleştirilse/silinse de iz kalır.
+- **`meta` KVKK kuralı:** yalnız id'ler ve alan ADLARI; ASLA kişisel veri DEĞERİ
+  (telefon/e-posta/ad/parola değerleri denetime GİRMEZ).
+- **Yazım:** aynı-transaction ucuz INSERT (işlem COMMIT olursa yazılır; ROLLBACK
+  olursa yazılmaz → yanıltıcı iz yok). Tenant bağlamı set olduğundan RLS `WITH
+  CHECK` geçer. Sistem/tenant-siz olaylar (retention) owner ile yazılır.
+- **Görüntüleme:** `GET /audit` — YALNIZ platform admini (yönetici DEĞİL). RLS
+  FORCE olduğundan owner-sahipli `audit_log_list` SECURITY DEFINER fonksiyonu tüm
+  tenant'ları (opsiyonel filtreyle) döner. Panel: `/audit` (salt-okuma).
+- **Kapsam:** kimlik olayları (login ok/fail, parola set/değiştir); kişisel-veri
+  kaynaklarındaki YAZMA (sakin/kullanıcı, ziyaretçi, kargo, erişim izni, talep/
+  şikayet, aidat, blok/daire); **telefon ifşası (`phone_reveal`) + arama başlatma
+  (`call_initiate`)** (C1a — en kritik iz); kargo fotoğrafı presign-GET
+  (`kargo_photo_view`, yalnız tekil detay). Hassas-olmayan LİSTELEME loglanmaz.
+
+### 7.2 Saklama süreleri (retention) — KVKK saklama sınırlama ilkesi (m.4/2-d)
+
+Kişisel veri, işleme amacı geçtikten sonra tutulmaz. Varsayılanlar
+`app/config.py`'de, **ENV ile daraltılabilir** (uzatılması önerilmez):
+
+| Sınıf | Süre | İşlem | Gerekçe |
+|---|---|---|---|
+| Ziyaretçi (`visitor`) | 24 ay | SİL | Güvenlik log'u; amaç kısa vadeli kayıt/denetim |
+| Kargo (`kargo`) + fotoğraf | 24 ay | SİL (+MinIO foto) | Teslimat kaydı; foto kişisel |
+| Rezervasyon (geçmiş) | 24 ay | SİL | Tamamlanmış/iptal; operasyon amacı geçti |
+| Talep/şikayet (çözülmüş/reddedilmiş) | 36 ay | ANONİMLEŞTİR | İş-emri/defter bütünlüğü için satır kalır; serbest metin arşivlenir |
+| Denetim (`audit_log`) | 24 ay | PURGE (owner) | Hesap verebilirlik ↔ saklama dengesi |
+
+Gecelik Celery beat: **04:00 Europe/Istanbul** (`crontab(hour=1)` UTC; TR yıl boyu
+UTC+3). İdempotent, partili; sonuç `audit_log`'a `erasure_run` (yalnız sayılar)
+olarak yazılır. Kargo fotoğrafı önce MinIO'dan silinir, sonra DB satırı (MinIO
+erişilemezse o gece satır silinmez → foto asla DB'siz ortada kalmaz).
+
+### 7.3 Sakin imha (KVKK silme hakkı) — `DELETE /residents/{id}`
+
+Akıllı silme (yönetici/admin):
+- **Geçmişsiz sakin** (yalnız CASCADE referans): TAMAMEN silinir → `deleted=true`
+  (audit: `resident_delete`).
+- **Geçmişli sakin** (FK RESTRICT: aidat/talep/rezervasyon vb.): silinemez →
+  **ANONİMLEŞTİRİLİR** → `deleted=false` (audit: `resident_erasure`):
+  `ad → 'Silinmiş Kullanıcı'`, `email/telefon → NULL`, parola/geçici-kod hash'leri
+  temizlenir (kimlik doğrulama geçersizleşir), **FCM/cihaz token'ları silinir**,
+  `aranabilir=false`, aktif daire bağlantıları kapatılır, `is_active=false`.
+- **Korunan:** FİNANSAL (`dues_*`) ve talep/şikayet satırları defter bütünlüğü
+  için KALIR — yazarları anonim kullanıcıya işaret eder. **Yüklenen şikayet
+  fotoğrafları KALIR** (kişiyi değil, tesis sorununu belgeler — bilinçli karar).

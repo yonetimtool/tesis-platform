@@ -30,6 +30,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from ..audit import Action, audit_user
 from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -143,6 +144,10 @@ async def create_request(
             title="Goruntuleme izni talebi",
             data={"tip": "erisim_talebi", "request_id": str(obj.id)},
         )
+    await audit_user(
+        db, user, Action.UNIT_ACCESS_REQUEST, resource_type="unit_access_permission",
+        resource_id=obj.id, meta={"unit_id": str(obj.unit_id)},
+    )
     return _out((obj, unit.no, user.ad, None))
 
 
@@ -234,6 +239,12 @@ async def create_bulk_request(
             data={"tip": "erisim_talebi", "request_id": str(obj.id)},
         )
 
+    if created:
+        await audit_user(
+            db, user, Action.UNIT_ACCESS_REQUEST,
+            resource_type="unit_access_permission",
+            meta={"count": len(created), "skipped": skipped, "bulk": True},
+        )
     return BulkAccessRequestResult(created=len(created), skipped=skipped, items=created)
 
 
@@ -371,4 +382,8 @@ async def decide_request(
             )
         )
     ).scalar_one_or_none()
+    await audit_user(
+        db, user, Action.UNIT_ACCESS_DECIDE, resource_type="unit_access_permission",
+        resource_id=obj.id, meta={"unit_id": str(obj.unit_id), "durum": obj.durum},
+    )
     return _out((obj, unit_no, yonetici_ad, user.ad))

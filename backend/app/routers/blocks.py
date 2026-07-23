@@ -17,6 +17,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -77,6 +78,7 @@ async def create_block(
             raise APIError(409, "conflict", "Bu blok etiketi bu tesiste zaten kayitli.")
         raise translate_integrity(exc)
     await db.refresh(obj)
+    await audit_user(db, user, Action.BLOCK_CREATE, resource_type="building_block", resource_id=obj.id)
     counts = await _unit_counts(db)
     return _out(obj, counts.get(obj.ad, 0))
 
@@ -86,7 +88,7 @@ async def update_block(
     block_id: uuid.UUID,
     body: BlockUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_MANAGER),
+    user: AppUser = Depends(_MANAGER),
 ) -> BlockOut:
     """Blogu YERINDE gunceller (ayni id). Etiket (ad) degisirse GERCEK
     yeniden-adlandirma: `unit.blok` zayif metin baglantidir (hard FK yok), bu
@@ -133,6 +135,10 @@ async def update_block(
             raise APIError(409, "conflict", "Bu blok etiketi bu tesiste zaten kayitli.")
         raise translate_integrity(exc)
     await db.refresh(obj)
+    await audit_user(
+        db, user, Action.BLOCK_UPDATE, resource_type="building_block",
+        resource_id=obj.id, meta={"renamed": new_ad is not None and new_ad != old_ad},
+    )
     counts = await _unit_counts(db)
     return _out(obj, counts.get(obj.ad, 0))
 
@@ -145,7 +151,7 @@ async def delete_block(
         description="true ise blogun daireleri (ve bagli kayitlari) da silinir.",
     ),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_MANAGER),
+    user: AppUser = Depends(_MANAGER),
 ) -> Response:
     """Blogu siler. Blogun daireleri varsa:
       * cascade=false (varsayilan) -> 409 (kaza korumasi; UI once onay ister).
@@ -171,4 +177,8 @@ async def delete_block(
         await db.execute(delete(Unit).where(Unit.blok == obj.ad))
     await db.delete(obj)
     await db.flush()
+    await audit_user(
+        db, user, Action.BLOCK_DELETE, resource_type="building_block",
+        resource_id=block_id, meta={"cascade": bool(cascade), "unit_count": kullanan},
+    )
     return Response(status_code=204)

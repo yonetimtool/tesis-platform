@@ -14,6 +14,7 @@ from .db import engine
 from .errors import install_error_handlers
 from .routers import announcements as announcements_router
 from .routers import assets as assets_router
+from .routers import audit as audit_router
 from .routers import auth as auth_router
 from .routers import budget as budget_router
 from .routers import checkpoints as checkpoints_router
@@ -125,6 +126,7 @@ app.include_router(users_router.router)
 app.include_router(call_targets_router.router)
 app.include_router(integrations_router.router)
 app.include_router(webhooks_router.router)
+app.include_router(audit_router.router)
 
 
 @app.get("/health", tags=["health"])

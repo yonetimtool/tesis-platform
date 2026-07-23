@@ -20,6 +20,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -281,6 +282,7 @@ async def create_complaint(
         title=_PUSH_TITLE,
         data={"tip": "talep", "complaint_id": str(obj.id)},
     )
+    await audit_user(db, user, Action.COMPLAINT_CREATE, resource_type="complaint", resource_id=obj.id)
     return await _load_out(db, obj, user.ad)
 
 
@@ -338,6 +340,10 @@ async def convert_complaint(
             "complaint_id": str(obj.id),
         },
     )
+    await audit_user(
+        db, user, Action.COMPLAINT_CONVERT, resource_type="complaint",
+        resource_id=obj.id, meta={"task_id": str(task.id)},
+    )
     return await _load_out(db, obj, acan_ad)
 
 
@@ -376,6 +382,7 @@ async def resolve_complaint(
         tip="talep_cozuldu",
         mesaj=f"Talebiniz cozuldu: {obj.baslik}",
     )
+    await audit_user(db, user, Action.COMPLAINT_RESOLVE, resource_type="complaint", resource_id=obj.id)
     return await _load_out(db, obj, acan_ad)
 
 
@@ -394,4 +401,5 @@ async def decline_complaint(
         tip="talep_reddedildi",
         mesaj=f"Talebiniz reddedildi: {obj.baslik}",
     )
+    await audit_user(db, user, Action.COMPLAINT_DECLINE, resource_type="complaint", resource_id=obj.id)
     return await _load_out(db, obj, acan_ad)
