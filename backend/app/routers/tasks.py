@@ -22,7 +22,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..crud_helpers import coord_eq, get_or_404, is_unique_violation, nfc_eq, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Checkpoint, Complaint, Task, TaskCategory, TaskCompletion
+from ..models import (
+    AppUser,
+    Checkpoint,
+    Complaint,
+    Task,
+    TaskCategory,
+    TaskCompletion,
+    Unit,
+    UnitResident,
+)
 from ..schemas import (
     TaskCompletionCreate,
     TaskCompletionListResponse,
@@ -31,6 +40,7 @@ from ..schemas import (
     TaskListResponse,
     TaskOut,
     TaskUpdate,
+    TicketSummaryOut,
 )
 from ..ticketing import add_history, notify_opener
 
@@ -65,6 +75,60 @@ async def _visible_task_or_404(db: AsyncSession, task_id: uuid.UUID, user: AppUs
     if user.role in _SAHA_ROLLERI and task.atanan_user_id != user.id:
         raise APIError(404, "not_found", "Kayit bulunamadi")
     return task
+
+
+async def _serialize_tasks(db: AsyncSession, tasks: list[Task]) -> list[TaskOut]:
+    """Task -> TaskOut; talepten gelen gorevlere kompakt talep ozeti (ticket)
+    ekler. Toplu (batch) sorgu ile N+1 yok. RLS: tum sorgular tenant-kapsamli."""
+    outs = [TaskOut.model_validate(t) for t in tasks]
+    ticket_ids = {t.ticket_id for t in tasks if t.ticket_id is not None}
+    if not ticket_ids:
+        return outs
+
+    complaints = (
+        await db.execute(select(Complaint).where(Complaint.id.in_(ticket_ids)))
+    ).scalars().all()
+    cmap = {c.id: c for c in complaints}
+
+    # kategori adlari (NULL kategori -> None => istemci "Diğer" gosterir).
+    kat_ids = {c.kategori_id for c in complaints if c.kategori_id is not None}
+    katmap: dict[uuid.UUID, str] = {}
+    if kat_ids:
+        katmap = {
+            i: ad
+            for i, ad in (
+                await db.execute(
+                    select(TaskCategory.id, TaskCategory.ad).where(
+                        TaskCategory.id.in_(kat_ids)
+                    )
+                )
+            ).all()
+        }
+
+    # unit label = talebi ACANIN aktif dairesi (varsa). Ticketing anonim degil.
+    acan_ids = {c.acan_user_id for c in complaints}
+    unitmap: dict[uuid.UUID, str] = {}
+    if acan_ids:
+        for uid, no in (
+            await db.execute(
+                select(UnitResident.user_id, Unit.no)
+                .join(Unit, Unit.id == UnitResident.unit_id)
+                .where(UnitResident.user_id.in_(acan_ids), UnitResident.bitis.is_(None))
+            )
+        ).all():
+            unitmap.setdefault(uid, no)
+
+    for out, task in zip(outs, tasks):
+        c = cmap.get(task.ticket_id) if task.ticket_id else None
+        if c is not None:
+            out.ticket = TicketSummaryOut(
+                id=c.id,
+                kategori_ad=katmap.get(c.kategori_id) if c.kategori_id else None,
+                baslik=c.baslik,
+                durum=c.durum,
+                unit_label=unitmap.get(c.acan_user_id),
+            )
+    return outs
 
 
 async def _ensure_user_in_tenant(
@@ -159,7 +223,8 @@ async def list_tasks(
             select(Task).where(*where).order_by(Task.created_at).limit(limit).offset(offset)
         )
     ).scalars().all()
-    return TaskListResponse(meta={"limit": limit, "offset": offset, "total": total}, items=list(rows))
+    items = await _serialize_tasks(db, list(rows))
+    return TaskListResponse(meta={"limit": limit, "offset": offset, "total": total}, items=items)
 
 
 @router.get("/{task_id}", response_model=TaskOut)
@@ -167,8 +232,9 @@ async def get_task(
     task_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
-) -> Task:
-    return await _visible_task_or_404(db, task_id, user)
+) -> TaskOut:
+    task = await _visible_task_or_404(db, task_id, user)
+    return (await _serialize_tasks(db, [task]))[0]
 
 
 @router.post("", response_model=TaskOut, status_code=201)
@@ -176,7 +242,7 @@ async def create_task(
     body: TaskCreate,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_WRITER),
-) -> Task:
+) -> TaskOut:
     await _ensure_user_in_tenant(db, body.atanan_user_id, user)
     await _ensure_checkpoint_in_tenant(db, body.checkpoint_id)
     await _ensure_kategori_in_tenant(db, body.kategori_id)
@@ -187,7 +253,7 @@ async def create_task(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
-    return obj
+    return (await _serialize_tasks(db, [obj]))[0]
 
 
 @router.patch("/{task_id}", response_model=TaskOut)
@@ -196,7 +262,7 @@ async def update_task(
     body: TaskUpdate,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_WRITER),
-) -> Task:
+) -> TaskOut:
     obj = await get_or_404(db, Task, task_id)
     data = body.model_dump(exclude_unset=True)
     if "atanan_user_id" in data:
@@ -213,7 +279,7 @@ async def update_task(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
-    return obj
+    return (await _serialize_tasks(db, [obj]))[0]
 
 
 @router.delete("/{task_id}", status_code=204)

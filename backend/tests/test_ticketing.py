@@ -89,6 +89,64 @@ def test_convert_creates_task_and_sets_is_emri(client, world):
     assert is_emri_row["actor_role"] == "yonetici"
 
 
+def test_task_carries_ticket_context(client, world, owner_conn):
+    """Talepten gelen is emri gorevinde atanan saha kullanicisi ticket_id +
+    oncelik + kompakt talep ozeti (kategori/baslik/durum + acanin dairesi) gorur.
+    Ticketsiz normal gorevde bu alanlar None."""
+    res_h = _headers(client, world["slug_a"], world["resident_a"])
+    yon_h = _headers(client, world["slug_a"], world["yonetici_a"])
+    guard_h = _headers(client, world["slug_a"], world["guard_a"])
+    kat = _mk_category(client, yon_h, ad="Tesisat")
+    t = _open_ticket(client, res_h, kategori_id=kat)
+    sec_id = _me_id(client, guard_h)
+    res_id = _me_id(client, res_h)
+
+    # Acanin (resident) dairesini bagla -> ticket ozetinde unit_label dolsun.
+    unit_id = owner_conn.execute(
+        "INSERT INTO unit (tenant_id, no, blok) VALUES (%s,%s,'A') RETURNING id",
+        (str(world["a"]), f"TK-{uuid.uuid4().hex[:5]}"),
+    ).fetchone()[0]
+    owner_conn.execute(
+        "INSERT INTO unit_resident (tenant_id, unit_id, user_id) VALUES (%s,%s,%s)",
+        (str(world["a"]), unit_id, res_id),
+    )
+    unit_no = owner_conn.execute(
+        "SELECT no FROM unit WHERE id=%s", (unit_id,)
+    ).fetchone()[0]
+
+    conv = client.post(
+        f"/complaints/{t['id']}/convert",
+        json={"atanan_user_id": sec_id, "oncelik": "yuksek", "not": "acil"},
+        headers=yon_h,
+    ).json()
+    task_id = conv["is_emri_id"]
+
+    # Atanan saha kullanicisi (guard) 'Gorevlerim' listesinde ticket baglamini gorur.
+    items = client.get(
+        "/tasks", headers=guard_h, params={"atanan_user_id": "me"}
+    ).json()["items"]
+    task = next(x for x in items if x["id"] == task_id)
+    assert task["ticket_id"] == t["id"]
+    assert task["oncelik"] == "yuksek"
+    tk = task["ticket"]
+    assert set(tk.keys()) == {"id", "kategori_ad", "baslik", "durum", "unit_label"}
+    assert tk["id"] == t["id"] and tk["baslik"] == "Asansor arizasi"
+    assert tk["durum"] == "is_emri" and tk["kategori_ad"] is not None
+    assert tk["unit_label"] == unit_no
+
+    # Detay (GET /tasks/{id}) ayni baglami tasir.
+    d = client.get(f"/tasks/{task_id}", headers=guard_h).json()
+    assert d["ticket_id"] == t["id"] and d["ticket"]["baslik"] == "Asansor arizasi"
+
+    # Ticketsiz normal gorevde ticket alanlari None.
+    plain = client.post(
+        "/tasks", headers=yon_h,
+        json={"ad": "Normal gorev", "atanan_user_id": sec_id},
+    ).json()
+    assert plain["ticket_id"] is None
+    assert plain["oncelik"] is None and plain["ticket"] is None
+
+
 def test_convert_invalid_assignee_422(client, world):
     """Atanan ayni tenant security/tesis_gorevlisi degilse 422 invalid_assignee.
     Resident'e (acan rol) atama denemesi reddedilir."""

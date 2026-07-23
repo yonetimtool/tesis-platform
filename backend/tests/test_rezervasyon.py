@@ -527,8 +527,18 @@ def test_slots_dolu_bos_ve_gorunurluk_kademesi(client, rworld):
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
     diger = _headers(client, rworld["slug_a"], rworld["diger"])
     yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
-    # Pencere simdiye gore: [+1s, +5s] — 4 gelecek slot, hepsi <24s icinde.
-    start = (_now() + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+    # Pencere: 4 saatlik alan (h..h+4). TZ- + DAKIKA-GUVENLI baz:
+    #  * Saat basina hizalayip +2s => ilk slot HER ZAMAN 60-120 dk ileride =>
+    #    "son dakika (<10dk)" istisnasi TETIKLENMEZ (kota testi guvenilir; :50-:59
+    #    dakikalarinda bos slotun kotayi baypas etmesi engellenir).
+    #  * h+4 23'u asacaksa (aksam) YARIN 00:00'a kaydir => gecersiz "24:00" /
+    #    gece-yarisi sarmasi olmaz. Slotlar gelecekte + <24s icinde.
+    # Herhangi bir saatte gecerli (saat-bagimsiz).
+    start = _now().replace(minute=0, second=0, microsecond=0) + timedelta(hours=2)
+    if start.hour > 19:  # h+4 > 23 -> gecersiz kapanis; yarin erken saate kaydir
+        start = (_now() + timedelta(days=1)).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
     h = start.hour
     tarih = start.date().isoformat()
     alan = _mk_area(client, yonetici, ad=f"Slot-{uuid.uuid4().hex[:6]}",

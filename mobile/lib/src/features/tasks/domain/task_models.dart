@@ -13,6 +13,32 @@
 ///     eslesmezse 422 `invalid_reference`.
 library;
 
+/// Talepten (complaint→is emri) gelen gorevin kompakt talep ozeti (TicketSummary
+/// semasi). Atanan saha personeline baglam gosterir.
+class TicketSummary {
+  const TicketSummary({
+    required this.id,
+    required this.baslik,
+    required this.durum,
+    this.kategoriAd,
+    this.unitLabel,
+  });
+
+  final String id;
+  final String baslik; // kisa aciklama
+  final String durum; // acik | is_emri | cozuldu | reddedildi
+  final String? kategoriAd; // null -> "Diğer"
+  final String? unitLabel; // talebi acanin dairesi (varsa)
+
+  factory TicketSummary.fromJson(Map<String, dynamic> json) => TicketSummary(
+        id: json['id'] as String,
+        baslik: json['baslik'] as String? ?? '',
+        durum: json['durum'] as String? ?? '',
+        kategoriAd: json['kategori_ad'] as String?,
+        unitLabel: json['unit_label'] as String?,
+      );
+}
+
 /// `GET /tasks` ogesi (Task semasi).
 class Task {
   const Task({
@@ -26,6 +52,9 @@ class Task {
     this.kategoriId,
     this.periyotDakika,
     this.sonrakiPlanlanan,
+    this.ticketId,
+    this.oncelik,
+    this.ticket,
   });
 
   final String id;
@@ -55,6 +84,15 @@ class Task {
   /// Detay ekrani rozet gosterir ve gonderim oncesi erken uyari verir.
   final bool fotoZorunlu;
 
+  /// Ticketing: gorev bir TALEPTEN geldiyse dolu. [ticketId] bagli talebin id'si;
+  /// [oncelik] 'dusuk'|'orta'|'yuksek'; [ticket] kompakt talep ozeti (baglam).
+  final String? ticketId;
+  final String? oncelik;
+  final TicketSummary? ticket;
+
+  /// Gorev bir talepten mi geldi? (chip/rozet gorunurlugu).
+  bool get fromTicket => ticketId != null;
+
   bool isAssignedTo(String? userId) =>
       userId != null && atananUserId == userId;
 
@@ -71,6 +109,11 @@ class Task {
             : DateTime.parse(json['sonraki_planlanan'] as String).toUtc(),
         aktif: json['aktif'] as bool? ?? true,
         fotoZorunlu: json['foto_zorunlu'] as bool? ?? false,
+        ticketId: json['ticket_id'] as String?,
+        oncelik: json['oncelik'] as String?,
+        ticket: json['ticket'] == null
+            ? null
+            : TicketSummary.fromJson(json['ticket'] as Map<String, dynamic>),
       );
 }
 

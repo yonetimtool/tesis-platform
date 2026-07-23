@@ -11,6 +11,7 @@ import '../data/task_category_api.dart';
 import '../domain/task_models.dart';
 import 'task_complete_controller.dart';
 import 'task_form_sheet.dart';
+import 'task_ticket_widgets.dart';
 import 'task_tip_style.dart';
 import 'tasks_controller.dart';
 
@@ -63,6 +64,8 @@ class TaskDetailScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           _InfoCard(task: task, style: style),
+          // Bagli talep baglam karti (kategori + kisa aciklama + daire + durum).
+          if (task.ticket != null) TicketBaglamKarti(ticket: task.ticket!),
           const SizedBox(height: 16),
           if (!canComplete)
             const Card(
@@ -198,6 +201,18 @@ class _InfoCard extends ConsumerWidget {
                   ),
               ],
             ),
+            // Talepten gelen is emri: "Talepten geldi" chip + oncelik rozeti.
+            if (task.fromTicket) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  const TalepGeldiChip(),
+                  OncelikBadge(oncelik: task.oncelik),
+                ],
+              ),
+            ],
             if (task.aciklama != null) ...[
               const SizedBox(height: 8),
               Text(task.aciklama!),

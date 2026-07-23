@@ -7,6 +7,7 @@ import '../../../routing/app_router.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_models.dart';
 import 'task_form_sheet.dart';
+import 'task_ticket_widgets.dart';
 import 'task_tip_style.dart';
 import 'tasks_controller.dart';
 
@@ -223,6 +224,19 @@ class _TaskTile extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(style.label, style: TextStyle(color: style.color)),
+            // Talepten gelen is emri: "Talepten geldi" chip + oncelik rozeti.
+            if (task.fromTicket)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    const TalepGeldiChip(),
+                    OncelikBadge(oncelik: task.oncelik),
+                  ],
+                ),
+              ),
             if (task.sonrakiPlanlanan != null)
               Text(
                 'Planlanan: '

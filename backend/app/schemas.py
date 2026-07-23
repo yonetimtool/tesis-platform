@@ -1300,6 +1300,18 @@ class TaskCategoryListResponse(BaseModel):
     items: list[TaskCategoryOut]
 
 
+class TicketSummaryOut(BaseModel):
+    """Gorev bir TALEPTEN (complaint→is emri) geldiyse baglantili talebin kompakt
+    ozeti — atanan saha personeli baglam gorur. kisisel-veri gorunurluk kurallari:
+    ticketing anonim DEGIL; unit_label talebi acanin dairesidir (varsa)."""
+
+    id: uuid.UUID
+    kategori_ad: str | None = None    # talebin kategorisi (NULL = "Diğer")
+    baslik: str                       # kisa aciklama
+    durum: str                        # acik | is_emri | cozuldu | reddedildi
+    unit_label: str | None = None     # talebi acanin daire no'su (varsa)
+
+
 class TaskOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -1315,6 +1327,10 @@ class TaskOut(BaseModel):
     sonraki_planlanan: datetime | None = None
     foto_zorunlu: bool
     aktif: bool
+    # Ticketing: gorev bir talepten geldiyse ticket_id + oncelik dolu, ticket ozet.
+    ticket_id: uuid.UUID | None = None
+    oncelik: TaskOncelik | None = None
+    ticket: TicketSummaryOut | None = None
     created_at: datetime
     updated_at: datetime | None = None
 

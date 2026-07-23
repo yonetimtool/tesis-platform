@@ -202,13 +202,18 @@ def test_multiple_active_windows_all_returned(client, world, owner_conn):
     plan1 = _plan_with_checkpoints(client, admin, [cp1["id"]], ad="Plan-1")
     plan2 = _plan_with_checkpoints(client, admin, [cp2["id"]], ad="Plan-2")
     now = datetime.now(tz=UTC)
+    # ODAK (window) = ilk AKTIF pencere; endpoint pencereleri (pencere_baslangic,
+    # id) ile siralar (me_patrol.py). Iki pencere AYNI baslangica sahipse siralama
+    # id (UUID) ile belirlenir -> NONDETERMINISTIK. Bu yuzden w_soon'u DAHA ERKEN
+    # baslat: hem en erken baslangic hem en yakin bitis => "en acil" + deterministik
+    # (saatten bagimsiz; UUID yarisina bagli DEGIL).
     w_late = _ins_window(owner_conn, world["a"], plan1["id"], now - timedelta(minutes=5), now + timedelta(hours=2))
-    w_soon = _ins_window(owner_conn, world["a"], plan2["id"], now - timedelta(minutes=5), now + timedelta(hours=1))
+    w_soon = _ins_window(owner_conn, world["a"], plan2["id"], now - timedelta(minutes=10), now + timedelta(hours=1))
 
     body = client.get("/me/patrol-window", headers=guard).json()
     ids = [w["id"] for w in body["windows"]]
     assert str(w_soon) in ids and str(w_late) in ids
-    # window = pencere_bitis'i en yakin olan (en acil)
+    # window = en erken baslayan aktif pencere (= en acil; en yakin bitis).
     assert body["window"]["id"] == str(w_soon)
     assert body["checkpoints"] == next(
         w["checkpoints"] for w in body["windows"] if w["id"] == str(w_soon)

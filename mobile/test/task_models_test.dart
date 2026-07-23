@@ -59,6 +59,37 @@ void main() {
       expect(t.checkpointId, isNull);
       expect(t.sonrakiPlanlanan, isNull);
       expect(t.isAssignedTo('user-1'), isFalse);
+      // Ticketsiz gorev: ticket alanlari null; fromTicket false.
+      expect(t.ticketId, isNull);
+      expect(t.oncelik, isNull);
+      expect(t.ticket, isNull);
+      expect(t.fromTicket, isFalse);
+    });
+
+    test('talepten gelen gorev: ticket_id + oncelik + ticket ozeti eslenir', () {
+      final t = Task.fromJson({
+        'id': 't-3',
+        'ad': 'Asansor onarimi',
+        'aktif': true,
+        'created_at': '2026-07-01T08:00:00Z',
+        'ticket_id': 'c-9',
+        'oncelik': 'yuksek',
+        'ticket': {
+          'id': 'c-9',
+          'kategori_ad': 'Tesisat',
+          'baslik': 'Asansor arizasi',
+          'durum': 'is_emri',
+          'unit_label': 'A-12',
+        },
+      });
+      expect(t.ticketId, 'c-9');
+      expect(t.oncelik, 'yuksek');
+      expect(t.fromTicket, isTrue);
+      expect(t.ticket, isNotNull);
+      expect(t.ticket!.baslik, 'Asansor arizasi');
+      expect(t.ticket!.durum, 'is_emri');
+      expect(t.ticket!.kategoriAd, 'Tesisat');
+      expect(t.ticket!.unitLabel, 'A-12');
     });
   });
 

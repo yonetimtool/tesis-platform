@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:mobile/src/features/auth/data/current_user_provider.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/building_map/data/bina_duzenleme_api.dart';
@@ -15,14 +14,12 @@ class _FakeApi extends BinaDuzenlemeApi {
   _FakeApi({
     List<BuildingBlock>? blocks,
     List<EditorUnit>? units,
-    this.deleteBlockError,
   })  : _blocks = [...?blocks],
         _units = [...?units],
         super(Dio());
 
   final List<BuildingBlock> _blocks;
   final List<EditorUnit> _units;
-  final ApiException? deleteBlockError;
   int _seq = 0;
 
   @override
@@ -48,7 +45,6 @@ class _FakeApi extends BinaDuzenlemeApi {
 
   @override
   Future<void> deleteBlock(String blockId, {bool cascade = false}) async {
-    if (deleteBlockError != null) throw deleteBlockError!;
     final idx = _blocks.indexWhere((b) => b.id == blockId);
     final ad = idx >= 0 ? _blocks[idx].ad : null;
     // Backend DB cascade aynasi: cascade=true ise blogun daireleri de gider.
