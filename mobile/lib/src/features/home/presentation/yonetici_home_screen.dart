@@ -4,33 +4,45 @@ import 'package:go_router/go_router.dart';
 
 import '../../../routing/app_router.dart';
 import '../../auth/domain/user_role.dart';
+import '../../budget/data/budget_api.dart';
 import '../../profile/data/profile_api.dart';
 import 'module_card_spec.dart';
 import 'role_home_body.dart';
 import 'widgets/home_shell.dart';
+import 'yonetici_quick_stats.dart';
 
-/// Sakin ana ekrani (R1) — [HomeShell] + [ResidentHomeBody] birlestirir,
-/// provider'lari ve gezinmeyi baglar. Yalniz sakin rolune gosterilir (HomeGate
-/// yonlendirir). Alt-bar push tabanli (uygulama geneli deseni): sekmeler hedef
-/// rotayi acar, "Ana Sayfa" (index 0) bu ekranin kendisidir.
-class ResidentHomeScreen extends ConsumerWidget {
-  const ResidentHomeScreen({super.key});
+/// Yonetici ana ekrani (R2) — [HomeShell] + [RoleHomeBody]. Sakin ekraniyla
+/// ayni push-tabanli desen; fark: alt-basligi "Yönetici Paneli", Raporlar
+/// sekmesi aylik raporlara (/reports) gider. Rol-ozel zengin bolumler (Hizli
+/// Ozet, Vardiya Durumu, Son Hareketler) R2.1'de [RoleHomeBody.sections]
+/// uzerinden eklenecek.
+class YoneticiHomeScreen extends ConsumerWidget {
+  const YoneticiHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ad = ref.watch(profileProvider).value?.ad ?? '';
+    // Hizli Ozet: veri gelince gorunur; yuklenirken/hatada SESSIZCE gizli
+    // (ana ekran finans ucuna rehin degil — kartlar her durumda calisir).
+    final finans = ref.watch(financialSummaryProvider).value;
 
     return HomeShell(
-      role: UserRole.resident,
+      role: UserRole.yonetici,
       currentIndex: 0,
       onDestinationSelected: (i) => _onTab(context, i),
       onBildir: () => context.push(AppRoutes.complaints),
       onProfile: () => context.push(AppRoutes.profile),
       body: RoleHomeBody(
-        role: UserRole.resident,
+        role: UserRole.yonetici,
         greetingName: ad,
-        subtitle: UserRole.resident.label,
+        subtitle: 'Yönetici Paneli',
         onOpen: (entry) => context.push(moduleCardSpec(entry).route),
+        sections: [
+          if (finans != null) ...[
+            const SizedBox(height: 12),
+            YoneticiQuickStats(summary: finans),
+          ],
+        ],
       ),
     );
   }
@@ -43,8 +55,8 @@ class ResidentHomeScreen extends ConsumerWidget {
           ..showSnackBar(
             const SnackBar(content: Text('Bildirimler yakında')),
           );
-      case 3: // Raporlar — sakin icin seffaflik (aylik anonim ozet).
-        context.push(AppRoutes.transparency);
+      case 3: // Raporlar — yonetici aylik raporlari.
+        context.push(AppRoutes.reports);
       case 4: // Ayarlar.
         context.push(AppRoutes.settings);
     }

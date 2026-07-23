@@ -8,29 +8,37 @@ import 'widgets/home_header.dart';
 import 'widgets/module_card.dart';
 import 'widgets/section_header.dart';
 
-/// Sakin ana ekraninin GOVDESI — saf sunum: veriyi disaridan alir, kart
+/// Rol-parametrik ana ekran GOVDESI — saf sunum: veriyi disaridan alir, kart
 /// dokunuslarini [onOpen] ile geri bildirir (provider/router BAGIMSIZ, tam
-/// test edilebilir). Duzen referans site-sakini.jpeg: karsilama + 2 sutunlu
-/// "one cikan" kart izgarasi ([featuredMenuForRole]) + "Tüm Modüller"
-/// ([moreMenuForRole]).
-class ResidentHomeBody extends StatelessWidget {
-  const ResidentHomeBody({
+/// test edilebilir). Duzen referans tasarimlarin ortak iskeleti: karsilama +
+/// 2 sutunlu "one cikan" izgara ([featuredMenuForRole]) + "Tüm Modüller"
+/// ([moreMenuForRole]). Rol-ozel ek bolumler (Hizli Ozet, Son Hareketler...)
+/// [sections] ile one cikan izgaranin ALTINA eklenir.
+class RoleHomeBody extends StatelessWidget {
+  const RoleHomeBody({
     super.key,
+    required this.role,
     required this.greetingName,
     required this.subtitle,
     required this.onOpen,
     this.weather,
+    this.sections = const [],
   });
 
+  final UserRole role;
   final String greetingName;
   final String subtitle;
   final ValueChanged<HomeMenuEntry> onOpen;
   final HomeWeather? weather;
 
+  /// One cikan izgara ile "Tüm Modüller" ARASINA giren rol-ozel bolumler
+  /// (or. yonetici Hizli Ozet / Son Hareketler — R2.1).
+  final List<Widget> sections;
+
   @override
   Widget build(BuildContext context) {
-    final featured = featuredMenuForRole(UserRole.resident);
-    final more = moreMenuForRole(UserRole.resident);
+    final featured = featuredMenuForRole(role);
+    final more = moreMenuForRole(role);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -42,6 +50,7 @@ class ResidentHomeBody extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _grid(featured),
+        ...sections,
         if (more.isNotEmpty) ...[
           const SizedBox(height: 12),
           const SectionHeader(title: 'Tüm Modüller'),

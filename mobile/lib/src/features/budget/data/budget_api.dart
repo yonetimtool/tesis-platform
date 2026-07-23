@@ -141,3 +141,11 @@ class BudgetApi {
 final budgetApiProvider = Provider<BudgetApi>((ref) {
   return BudgetApi(ref.watch(dioProvider));
 });
+
+/// Guncel donem finansal ozeti (donem=null → sunucu varsayilani). Yonetici
+/// ana ekran "Hızlı Özet" bolumu kullanir; ekran acilisinda bir kez cekilir
+/// (autoDispose — ekrandan cikinca birakilir).
+final financialSummaryProvider =
+    FutureProvider.autoDispose<FinancialSummary>((ref) {
+  return ref.watch(budgetApiProvider).fetchFinancialSummary();
+});

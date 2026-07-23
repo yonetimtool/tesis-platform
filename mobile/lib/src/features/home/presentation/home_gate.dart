@@ -8,6 +8,7 @@ import '../../tenant/data/tenant_api.dart';
 import '../../tenant/presentation/setup_tenant_screen.dart';
 import 'home_screen.dart';
 import 'resident_home_screen.dart';
+import 'yonetici_home_screen.dart';
 
 /// `/home` rotasinin kapisi (Onboarding Model A). BIRINCIL yonetici ILK
 /// GIRISTE — tesis henuz adlandirilmamissa (`kurulum_tamamlandi=false`) —
@@ -22,26 +23,26 @@ class HomeGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
-    // R1: sakin yeni tasarim ana ekranini gorur; diger roller (R2/R3'e kadar)
-    // eski izgara HomeScreen'de kalir.
+    // R1/R2: sakin + yonetici yeni tasarim ana ekranlarini gorur; saha
+    // rolleri (R3'e kadar) eski izgara HomeScreen'de kalir.
     if (role == UserRole.resident) return const ResidentHomeScreen();
     if (role != UserRole.yonetici) return const HomeScreen();
 
     // Kapi YALNIZ BIRINCIL yoneticiye acilir; digerleri dogrudan ana ekran
     // (tesis adsizsa app-bar'da yer tutucu gorunur — bilincli karar).
-    // Profil yuklenirken value null → birincil=false → kisa sure HomeScreen;
+    // Profil yuklenirken value null → birincil=false → kisa sure ana ekran;
     // profil gelince kapi acilir.
     final birincil = ref.watch(profileProvider).value?.birincil ?? false;
-    if (!birincil) return const HomeScreen();
+    if (!birincil) return const YoneticiHomeScreen();
 
     // Birincil yonetici: kurulum durumunu getir. Yukleniyorken kisa bekleme; hata
     // olursa kullaniciyi kilitlemeden ana ekrana gec (kurulum ayarlardan da
     // yapilabilir — burada sadece ILK GIRIS yonlendirmesi var).
     return ref.watch(tenantSettingsProvider).when(
           data: (settings) => settings.kurulumTamamlandi
-              ? const HomeScreen()
+              ? const YoneticiHomeScreen()
               : const SetupTenantScreen(),
-          error: (_, _) => const HomeScreen(),
+          error: (_, _) => const YoneticiHomeScreen(),
           loading: () => const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           ),
