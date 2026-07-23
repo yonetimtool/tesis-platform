@@ -13,8 +13,7 @@ import '../domain/home_menu.dart';
 import 'module_card_spec.dart';
 import 'role_home_body.dart';
 import 'widgets/home_shell.dart';
-import 'widgets/module_card.dart';
-import 'widgets/section_header.dart';
+import 'widgets/yakinda_section.dart';
 
 const _purple = Color(0xFF7C3AED);
 const _red = Color(0xFFDC2626);
@@ -67,7 +66,22 @@ class SahaHomeScreen extends ConsumerWidget {
             VardiyaSection(vardiyalar: vardiyalar, now: DateTime.now()),
           ],
           const SizedBox(height: 12),
-          _YakindaSection(role: role),
+          // MISSING-BACKEND kartlari yalniz security'de (tesis_gorevlisi KVKK
+          // geregi Plaka/Kamera gormez; bos liste → izgara hic cizilmez).
+          YakindaSection(kartlar: [
+            if (role == UserRole.security) ...const [
+              YakindaKart(
+                  icon: Icons.directions_car_outlined,
+                  title: 'Araç Plaka',
+                  accent: _purple),
+              YakindaKart(
+                  icon: Icons.error_outline, title: 'İhlaller', accent: _red),
+              YakindaKart(
+                  icon: Icons.videocam_outlined,
+                  title: 'Canlı Kamera',
+                  accent: _navy),
+            ],
+          ]),
         ],
       ),
     );
@@ -96,59 +110,5 @@ class SahaHomeScreen extends ConsumerWidget {
       case 4: // Ayarlar.
         context.push(AppRoutes.settings);
     }
-  }
-}
-
-/// MISSING-BACKEND referans kartlari — pasif "Yakında" izgarasi. Vardiya
-/// Durumu ARTIK GERCEK bolum ([VardiyaSection]); kalanlar yalniz security'de
-/// (Plaka/İhlaller/Kamera). Kart kalmazsa (tesis_gorevlisi) izgara HIC
-/// cizilmez.
-class _YakindaSection extends StatelessWidget {
-  const _YakindaSection({required this.role});
-
-  final UserRole role;
-
-  @override
-  Widget build(BuildContext context) {
-    final cards = <ModuleCard>[
-      if (role == UserRole.security) ...const [
-        ModuleCard(
-          icon: Icons.directions_car_outlined,
-          title: 'Araç Plaka',
-          accent: _purple,
-          comingSoon: true,
-        ),
-        ModuleCard(
-          icon: Icons.error_outline,
-          title: 'İhlaller',
-          accent: _red,
-          comingSoon: true,
-        ),
-        ModuleCard(
-          icon: Icons.videocam_outlined,
-          title: 'Canlı Kamera',
-          accent: _navy,
-          comingSoon: true,
-        ),
-      ],
-    ];
-    if (cards.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SectionHeader(title: 'Yakında Eklenecekler'),
-        const SizedBox(height: 8),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.15,
-          children: cards,
-        ),
-      ],
-    );
   }
 }

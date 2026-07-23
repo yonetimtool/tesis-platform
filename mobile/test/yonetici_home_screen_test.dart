@@ -117,6 +117,18 @@ void main() {
     expect(find.text('Görev Yönetimi'), findsOneWidget);
   });
 
+  testWidgets('MISSING-BACKEND kartlari yonetici gridinde gorunur-ama-pasif: '
+      'Otopark Kullanımı + İhlaller "Yakında"', (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Yakında Eklenecekler'), findsOneWidget);
+    expect(find.text('Otopark Kullanımı'), findsOneWidget);
+    expect(find.text('İhlaller'), findsOneWidget);
+    expect(find.text('Yakında'), findsNWidgets(2)); // iki pasif kart rozeti
+  });
+
   testWidgets('R2.3: Son Hareketler — bildirimlerden yonetim akisi '
       '(referans yonetici.jpeg)', (tester) async {
     _tall(tester);

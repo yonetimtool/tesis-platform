@@ -13,6 +13,7 @@ import '../../shifts/presentation/vardiya_section.dart';
 import '../domain/home_menu.dart';
 import '../domain/son_hareketler.dart';
 import 'son_hareketler_section.dart';
+import 'widgets/yakinda_section.dart';
 import 'module_card_spec.dart';
 import 'role_home_body.dart';
 import 'widgets/home_shell.dart';
@@ -78,6 +79,19 @@ class YoneticiHomeScreen extends ConsumerWidget {
               onSeeAll: () => context.push(AppRoutes.notifications),
             ),
           ],
+          // Referans yonetici.jpeg'in MISSING-BACKEND kartlari —
+          // gorunur-ama-pasif (servis gelince gercek karta doner).
+          const SizedBox(height: 12),
+          const YakindaSection(kartlar: [
+            YakindaKart(
+                icon: Icons.directions_car_outlined,
+                title: 'Otopark Kullanımı',
+                accent: Color(0xFF7C3AED)),
+            YakindaKart(
+                icon: Icons.error_outline,
+                title: 'İhlaller',
+                accent: Color(0xFFDC2626)),
+          ]),
         ],
       ),
     );
