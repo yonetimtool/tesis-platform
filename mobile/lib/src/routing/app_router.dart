@@ -28,6 +28,7 @@ import '../features/patrol/presentation/patrol_tracking_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
 import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
+import '../features/notifications/presentation/notifications_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/staff/presentation/staff_screen.dart';
 import '../features/dis_hizmet/presentation/dis_hizmet_screen.dart';
@@ -78,6 +79,7 @@ class AppRoutes {
   static const sikayetHaritasi = '/sikayet-haritasi';
   static const sikayetlerim = '/sikayetlerim';
   static const settings = '/settings';
+  static const notifications = '/notifications';
   static const profile = '/profile';
   static const personel = '/personel';
   static const sakinler = '/sakinler';
@@ -333,6 +335,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.settings,
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        // Bildirimler inbox — RBAC: admin+yonetici+security (sakin/tesis
+        // gorevlisi ekranlarindan baglanmaz).
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationsScreen(),
       ),
       GoRoute(
         path: AppRoutes.profile,

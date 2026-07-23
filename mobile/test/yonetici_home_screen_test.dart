@@ -4,11 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/budget/data/budget_api.dart';
 import 'package:mobile/src/features/budget/domain/budget_models.dart';
 import 'package:mobile/src/features/home/presentation/yonetici_home_screen.dart';
+import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
 import 'package:mobile/src/features/profile/domain/profile.dart';
 
-Widget _app({Object? finansHata}) => ProviderScope(
+Widget _app({Object? finansHata, int unread = 0}) => ProviderScope(
       overrides: [
+        unreadNotificationCountProvider.overrideWith((ref) async => unread),
         profileProvider.overrideWith((ref) async => const Profile(
               ad: 'Kerem',
               role: 'yonetici',
@@ -61,6 +63,14 @@ void main() {
     expect(find.text('Hızlı Özet'), findsOneWidget);
     expect(find.text('%86'), findsOneWidget);
     expect(find.text('₺248.750,00'), findsNWidgets(2));
+  });
+
+  testWidgets('okunmamis bildirim sayisi zil + sekme rozetinde (gercek '
+      'provider baglanir)', (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app(unread: 7));
+    await tester.pumpAndSettle();
+    expect(find.text('7'), findsNWidgets(2));
   });
 
   testWidgets('finans HATASI ekrani dusurmez: Hızlı Özet sessizce gizli, '

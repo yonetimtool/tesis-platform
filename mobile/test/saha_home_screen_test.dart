@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/home/presentation/saha_home_screen.dart';
+import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
 import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/scan/data/scan_outbox.dart';
@@ -29,11 +30,12 @@ class _FakeOutbox extends ScanOutbox {
       );
 }
 
-Widget _app(UserRole role, {int pending = 0}) => ProviderScope(
+Widget _app(UserRole role, {int pending = 0, int unread = 0}) => ProviderScope(
       overrides: [
         profileProvider.overrideWith((ref) async => Profile(
             ad: 'Mehmet', role: role.wire, aranabilir: false)),
         scanOutboxProvider.overrideWith(() => _FakeOutbox(pending)),
+        unreadNotificationCountProvider.overrideWith((ref) async => unread),
       ],
       child: MaterialApp(home: SahaHomeScreen(role: role)),
     );
@@ -77,6 +79,22 @@ void main() {
       expect(find.text('Canlı Kamera'), findsNothing);
       expect(find.text('Araç Plaka'), findsNothing);
       expect(find.text('Yakında'), findsOneWidget); // yalniz Vardiya Durumu
+    });
+
+    testWidgets('security: okunmamis bildirim rozeti zil + sekmede gorunur '
+        '(RBAC izinli rol)', (tester) async {
+      _tall(tester);
+      await tester.pumpWidget(_app(UserRole.security, unread: 7));
+      await tester.pumpAndSettle();
+      expect(find.text('7'), findsNWidgets(2));
+    });
+
+    testWidgets('tesisGorevlisi: /notifications RBAC DISI — rozet HIC '
+        'gorunmez (401 uretecek istek de atilmaz)', (tester) async {
+      _tall(tester);
+      await tester.pumpWidget(_app(UserRole.tesisGorevlisi, unread: 7));
+      await tester.pumpAndSettle();
+      expect(find.text('7'), findsNothing);
     });
 
     testWidgets('outbox bekleyen > 0: Gönderim Kuyruğu kartinda sayac '

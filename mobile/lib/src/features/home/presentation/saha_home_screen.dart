@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../routing/app_router.dart';
 import '../../auth/domain/user_role.dart';
+import '../../notifications/data/notifications_controller.dart';
 import '../../profile/data/profile_api.dart';
 import '../../scan/data/scan_outbox.dart';
 import '../domain/home_menu.dart';
@@ -32,10 +33,17 @@ class SahaHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ad = ref.watch(profileProvider).value?.ad ?? '';
     final pending = ref.watch(scanOutboxProvider).pendingCount;
+    // /notifications RBAC: security izinli, tesis_gorevlisi DEGIL — izinsiz
+    // rolde provider hic izlenmez (401 uretecek istek atilmaz), rozet yok.
+    final bildirimliRol = role == UserRole.security;
+    final unread = bildirimliRol
+        ? ref.watch(unreadNotificationCountProvider).value ?? 0
+        : 0;
 
     return HomeShell(
       role: role,
       currentIndex: 0,
+      unreadCount: unread,
       onDestinationSelected: (i) => _onTab(context, i),
       onBildir: () => context.push(AppRoutes.complaints),
       onProfile: () => context.push(AppRoutes.profile),
@@ -57,12 +65,18 @@ class SahaHomeScreen extends ConsumerWidget {
 
   void _onTab(BuildContext context, int index) {
     switch (index) {
-      case 1: // Bildirimler — inbox ekrani henuz yok (MISSING-MOBILE).
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(content: Text('Bildirimler yakında')),
-          );
+      case 1: // Bildirimler: security inbox'a gider; tesis gorevlisi RBAC
+        // disi — durust mesaj (sahte bos ekran degil).
+        if (role == UserRole.security) {
+          context.push(AppRoutes.notifications);
+        } else {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                  content: Text('Bildirimler bu rolde kullanılamıyor')),
+            );
+        }
       case 3: // Raporlar — saha rollerine acik rapor ucu yok (RBAC yonetici).
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()

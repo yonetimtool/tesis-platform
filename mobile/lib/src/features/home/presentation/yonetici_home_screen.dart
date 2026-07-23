@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../routing/app_router.dart';
 import '../../auth/domain/user_role.dart';
 import '../../budget/data/budget_api.dart';
+import '../../notifications/data/notifications_controller.dart';
 import '../../profile/data/profile_api.dart';
 import 'module_card_spec.dart';
 import 'role_home_body.dart';
@@ -25,10 +26,13 @@ class YoneticiHomeScreen extends ConsumerWidget {
     // Hizli Ozet: veri gelince gorunur; yuklenirken/hatada SESSIZCE gizli
     // (ana ekran finans ucuna rehin degil — kartlar her durumda calisir).
     final finans = ref.watch(financialSummaryProvider).value;
+    // Okunmamis bildirim rozeti; hata/yukleme → 0 (rozet yok, ekran calisir).
+    final unread = ref.watch(unreadNotificationCountProvider).value ?? 0;
 
     return HomeShell(
       role: UserRole.yonetici,
       currentIndex: 0,
+      unreadCount: unread,
       onDestinationSelected: (i) => _onTab(context, i),
       onBildir: () => context.push(AppRoutes.complaints),
       onProfile: () => context.push(AppRoutes.profile),
@@ -49,12 +53,8 @@ class YoneticiHomeScreen extends ConsumerWidget {
 
   void _onTab(BuildContext context, int index) {
     switch (index) {
-      case 1: // Bildirimler — inbox ekrani henuz yok (MISSING-MOBILE).
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(content: Text('Bildirimler yakında')),
-          );
+      case 1: // Bildirimler inbox (RBAC: yonetici izinli).
+        context.push(AppRoutes.notifications);
       case 3: // Raporlar — yonetici aylik raporlari.
         context.push(AppRoutes.reports);
       case 4: // Ayarlar.
