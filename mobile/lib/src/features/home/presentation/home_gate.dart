@@ -6,15 +6,15 @@ import '../../auth/domain/user_role.dart';
 import '../../profile/data/profile_api.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../tenant/presentation/setup_tenant_screen.dart';
-import 'home_screen.dart';
+import 'admin_home_screen.dart';
 import 'resident_home_screen.dart';
 import 'saha_home_screen.dart';
 import 'yonetici_home_screen.dart';
 
 /// `/home` rotasinin kapisi (Onboarding Model A). BIRINCIL yonetici ILK
 /// GIRISTE — tesis henuz adlandirilmamissa (`kurulum_tamamlandi=false`) —
-/// once [SetupTenantScreen]'i gorur; diger tum durumlarda dogrudan
-/// [HomeScreen].
+/// once [SetupTenantScreen]'i gorur; diger tum durumlarda rolun yeni
+/// tasarim ana ekrani.
 ///
 /// Yonetici disi roller (sakin/saha) tesis kurulumuyla ilgilenmez → tesis
 /// ayarlari hic cekilmez, dogrudan ana ekran.
@@ -24,13 +24,17 @@ class HomeGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
-    // R1/R2/R3: tum bilinen roller yeni tasarim ana ekranlarinda; eski izgara
-    // HomeScreen yalniz 'unknown' (rol cozulmeden, saniye alti) icin kalir.
+    // Tum bilinen roller yeni tasarim ana ekranlarinda (eski izgara
+    // HomeScreen EMEKLI). 'unknown' rol cozulmeden gecen saniye-alti
+    // durumdur: yalin bekleme — yanlis kart gostermekten iyidir.
     if (role == UserRole.resident) return const ResidentHomeScreen();
     if (role == UserRole.security || role == UserRole.tesisGorevlisi) {
       return SahaHomeScreen(role: role);
     }
-    if (role != UserRole.yonetici) return const HomeScreen();
+    if (role == UserRole.admin) return const AdminHomeScreen();
+    if (role != UserRole.yonetici) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     // Kapi YALNIZ BIRINCIL yoneticiye acilir; digerleri dogrudan ana ekran
     // (tesis adsizsa app-bar'da yer tutucu gorunur — bilincli karar).
