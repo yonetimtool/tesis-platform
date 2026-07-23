@@ -3,14 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/budget/data/budget_api.dart';
 import 'package:mobile/src/features/budget/domain/budget_models.dart';
+import 'package:mobile/src/features/complaints/data/complaint_api.dart';
 import 'package:mobile/src/features/home/presentation/yonetici_home_screen.dart';
 import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
 import 'package:mobile/src/features/profile/domain/profile.dart';
 
-Widget _app({Object? finansHata, int unread = 0}) => ProviderScope(
+Widget _app({Object? finansHata, int unread = 0, int acikSikayet = 0}) =>
+    ProviderScope(
       overrides: [
         unreadNotificationCountProvider.overrideWith((ref) async => unread),
+        acikSikayetSayisiProvider.overrideWith((ref) async => acikSikayet),
         profileProvider.overrideWith((ref) async => const Profile(
               ad: 'Kerem',
               role: 'yonetici',
@@ -63,6 +66,14 @@ void main() {
     expect(find.text('Hızlı Özet'), findsOneWidget);
     expect(find.text('%86'), findsOneWidget);
     expect(find.text('₺248.750,00'), findsNWidgets(2));
+  });
+
+  testWidgets('R2.1: acik sikayet sayisi "Şikayet / Öneri" kartinda '
+      '"N Açık" sayaci', (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app(acikSikayet: 3));
+    await tester.pumpAndSettle();
+    expect(find.text('3 Açık'), findsOneWidget);
   });
 
   testWidgets('okunmamis bildirim sayisi zil + sekme rozetinde (gercek '

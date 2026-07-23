@@ -33,3 +33,11 @@ class DuesApi {
 final duesApiProvider = Provider<DuesApi>((ref) {
   return DuesApi(ref.watch(dioProvider));
 });
+
+/// Sakinin kendi dairelerinin borc durumu — ana ekran "Ödeme ve Aidat
+/// Durumu" karti + Aidatım kart sayaci. Hata → izleyen ekran kart/sayaci
+/// sessizce gizler (ana ekran rehin degil).
+final myDuesProvider =
+    FutureProvider.autoDispose<List<MyDuesUnit>>((ref) {
+  return ref.watch(duesApiProvider).fetchMyDues();
+});

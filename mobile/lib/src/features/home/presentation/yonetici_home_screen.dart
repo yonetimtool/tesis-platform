@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../routing/app_router.dart';
 import '../../auth/domain/user_role.dart';
 import '../../budget/data/budget_api.dart';
+import '../../complaints/data/complaint_api.dart';
 import '../../notifications/data/notifications_controller.dart';
 import '../../profile/data/profile_api.dart';
+import '../domain/home_menu.dart';
 import 'module_card_spec.dart';
 import 'role_home_body.dart';
 import 'widgets/home_shell.dart';
@@ -28,6 +30,8 @@ class YoneticiHomeScreen extends ConsumerWidget {
     final finans = ref.watch(financialSummaryProvider).value;
     // Okunmamis bildirim rozeti; hata/yukleme → 0 (rozet yok, ekran calisir).
     final unread = ref.watch(unreadNotificationCountProvider).value ?? 0;
+    // R2.1: acik sikayet sayaci; hata → sayacsiz kart (ekran calisir).
+    final acikSikayet = ref.watch(acikSikayetSayisiProvider).value ?? 0;
 
     return HomeShell(
       role: UserRole.yonetici,
@@ -41,6 +45,10 @@ class YoneticiHomeScreen extends ConsumerWidget {
         greetingName: ad,
         subtitle: 'Yönetici Paneli',
         onOpen: (entry) => context.push(moduleCardSpec(entry).route),
+        counters: {
+          if (acikSikayet > 0)
+            HomeMenuEntry.complaints: '$acikSikayet Açık',
+        },
         sections: [
           if (finans != null) ...[
             const SizedBox(height: 12),

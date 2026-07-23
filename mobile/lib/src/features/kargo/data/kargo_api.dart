@@ -134,3 +134,11 @@ class KargoApi {
 final kargoApiProvider = Provider<KargoApi>((ref) {
   return KargoApi(ref.watch(dioProvider));
 });
+
+/// Bekleyen kargo sayisi — sakin ana ekran "Kargo" kart sayaci ("N Bekliyor").
+/// Sunucu zaten rol suzer (sakin kendi dairesini gorur). Hata → sayac gizli.
+final kargoBekleyenSayisiProvider =
+    FutureProvider.autoDispose<int>((ref) async {
+  final list = await ref.watch(kargoApiProvider).fetchAll();
+  return list.where((k) => k.durum == KargoDurum.bekliyor).length;
+});

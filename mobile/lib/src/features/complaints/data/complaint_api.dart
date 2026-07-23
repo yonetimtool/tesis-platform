@@ -250,3 +250,14 @@ final complaintApiProvider = Provider<ComplaintApi>((ref) {
     ref.watch(taskCategoryApiProvider),
   );
 });
+
+/// Acik sikayet sayisi — yonetici ana ekran "Şikayet / Öneri" kart sayaci
+/// ("N Açık"). durum=acik + limit=1 sorgusunun meta.total'i; hata → sayac
+/// gizli (ana ekran rehin degil).
+final acikSikayetSayisiProvider =
+    FutureProvider.autoDispose<int>((ref) async {
+  final page = await ref
+      .watch(complaintApiProvider)
+      .list(durum: TalepDurum.acik, limit: 1);
+  return page.total;
+});
