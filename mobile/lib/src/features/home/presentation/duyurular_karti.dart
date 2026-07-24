@@ -42,50 +42,72 @@ class DuyurularKarti extends StatelessWidget {
             onTap: onTumu,
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          d.baslik,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
+                  if (d.fotoUrl != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        d.fotoUrl!,
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.cover,
+                        // Yuklenmemis gorsel karti BOZMAZ — bos kutuya duser.
+                        errorBuilder: (_, _, _) =>
+                            const SizedBox(width: 72, height: 72),
                       ),
-                      if (yeni)
-                        Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _amber.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'Yeni',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                                color: _amber, fontWeight: FontWeight.w700),
-                          ),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                d.baslik,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            if (yeni)
+                              Container(
+                                margin: const EdgeInsets.only(left: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: _amber.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Yeni',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                      color: _amber, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                          ],
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    d.govde,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.hintColor),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    tarih,
-                    style: theme.textTheme.labelSmall
-                        ?.copyWith(color: theme.hintColor),
+                        const SizedBox(height: 6),
+                        Text(
+                          d.govde,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: theme.hintColor),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          tarih,
+                          style: theme.textTheme.labelSmall
+                              ?.copyWith(color: theme.hintColor),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
