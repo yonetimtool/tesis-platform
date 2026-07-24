@@ -54,6 +54,7 @@ from .routers import users as users_router
 from .routers import uploads as uploads_router
 from .routers import unit_access as unit_access_router
 from .routers import visitors as visitors_router
+from .routers import weather as weather_router
 from .routers import webhooks as webhooks_router
 
 
@@ -131,6 +132,7 @@ app.include_router(webhooks_router.router)
 app.include_router(audit_router.router)
 app.include_router(support_router.router)
 app.include_router(transparency_router.router)
+app.include_router(weather_router.router)
 
 
 @app.get("/health", tags=["health"])

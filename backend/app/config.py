@@ -90,6 +90,11 @@ class Settings(BaseSettings):
     fcm_service_account_json: str = ""
     fcm_base_url: str = "https://fcm.googleapis.com"
 
+    # Hava durumu proxy'si (WP-C) — anahtarsiz Open-Meteo; testte/ozel kurulumda
+    # baska taban URL verilebilir.
+    weather_base_url: str = "https://api.open-meteo.com"
+    weather_cache_ttl: int = 1800  # saniye — tenant basina >=30dk'da 1 dis istek
+
     # --- KVKK saklama & imha (retention) — AY cinsinden ---
     # Saklama sinirlama ilkesi (KVKK m.4/2-d + m.7): kisisel veri, isleme amaci
     # gectikten sonra tutulmaz. Varsayilanlar operatorce ENV ile DARALTILABILIR

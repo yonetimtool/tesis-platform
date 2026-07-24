@@ -304,6 +304,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /yonetici-iletisim` (yonetici dizini)| ✅ | ✅ | ✅  | ✅  | ✅  |
 | `GET  /tenant/settings` (site adi dahil)|  ✅  | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /tenant/settings` (admin: hepsi / yonetici: `ad` + `konum_ad/konum_lat/konum_lon`)| ✅ | ✅ | ❌ | ❌ | ❌ |
+| `GET  /weather` (tenant konumu hava durumu)| ✅  | ✅  | ✅  | ✅  | ✅  |
 | `POST /tenants` (admin tesis+yonetici)|  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `GET  /tenants` (admin tum tesisler)  |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `POST /tenant/setup` (ilk-giris adlandir — YALNIZ **BIRINCIL** yonetici)| ❌ | ✅ | ❌ | ❌ | ❌ |

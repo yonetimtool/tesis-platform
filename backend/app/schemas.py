@@ -2621,3 +2621,10 @@ class SupportTicketUpdate(BaseModel):
 
     durum: SupportDurum | None = None
     admin_cevap: str | None = Field(None, max_length=4000)
+
+
+# -------------------------------- weather ---------------------------------- #
+class WeatherOut(BaseModel):
+    sicaklik_c: float
+    durum: str  # acik|parcali|kapali|sis|yagmur|kar|firtina
+    konum_ad: str
