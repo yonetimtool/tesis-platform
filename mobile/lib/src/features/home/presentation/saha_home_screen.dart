@@ -89,7 +89,11 @@ class SahaHomeScreen extends ConsumerWidget {
         sections: [
           if (vardiyalar.isNotEmpty) ...[
             const SizedBox(height: 12),
-            VardiyaSection(vardiyalar: vardiyalar, now: DateTime.now()),
+            VardiyaSection(
+              vardiyalar: vardiyalar,
+              now: DateTime.now(),
+              onSeeAll: () => context.push(AppRoutes.vardiyalar),
+            ),
           ],
           const SizedBox(height: 12),
           // MISSING-BACKEND kartlari yalniz security'de (tesis_gorevlisi KVKK

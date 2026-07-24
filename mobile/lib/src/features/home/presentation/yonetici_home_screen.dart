@@ -91,7 +91,11 @@ class YoneticiHomeScreen extends ConsumerWidget {
         sections: [
           if (vardiyalar.isNotEmpty) ...[
             const SizedBox(height: 12),
-            VardiyaSection(vardiyalar: vardiyalar, now: DateTime.now()),
+            VardiyaSection(
+              vardiyalar: vardiyalar,
+              now: DateTime.now(),
+              onSeeAll: () => context.push(AppRoutes.vardiyalar),
+            ),
           ],
           if (finans != null) ...[
             const SizedBox(height: 12),

@@ -59,4 +59,26 @@ void main() {
       expect(gunTipiLabel(null), 'Her gün'); // null = kisitsiz -> her gun
     });
   });
+
+  group('Shift.personel (WP-E)', () {
+    test('personel listesi savunmaci parse edilir', () {
+      final s = Shift.fromJson({
+        'id': 's1', 'ad': 'Sabah', 'baslangic_saat': '06:00',
+        'bitis_saat': '14:00',
+        'personel': [
+          {'user_id': 'u1', 'ad': 'Guard A', 'avatar_url': 'https://x/a.jpg'},
+          {'user_id': 'u2', 'ad': 'Gorevli A'},
+        ],
+      });
+      expect(s.personel.length, 2);
+      expect(s.personel.first.avatarUrl, 'https://x/a.jpg');
+      expect(s.personel.last.avatarUrl, isNull);
+    });
+
+    test('personel alani yoksa bos liste (eski sunucu uyumu)', () {
+      final s = Shift.fromJson({'id': 's1', 'ad': 'Sabah',
+          'baslangic_saat': '06:00', 'bitis_saat': '14:00'});
+      expect(s.personel, isEmpty);
+    });
+  });
 }

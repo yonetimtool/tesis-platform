@@ -42,7 +42,13 @@ class VardiyaSection extends StatelessWidget {
                 title: v.ad,
                 subtitle: '${v.baslangicSaat} - ${v.bitisSaat}',
                 status: aktif ? ShiftStatus.aktif : ShiftStatus.planlandi,
-                footer: gunTipiLabel(v.gunTipi),
+                // Atanan personel varsa ilkinin avatari + "N Görevli"; yoksa
+                // gun tipi etiketi (eski gorunum korunur).
+                avatarUrl:
+                    v.personel.isNotEmpty ? v.personel.first.avatarUrl : null,
+                footer: v.personel.isNotEmpty
+                    ? '${v.personel.length} Görevli'
+                    : gunTipiLabel(v.gunTipi),
               );
             },
           ),

@@ -20,10 +20,39 @@ class ShiftsApi {
         if (item is Map) Shift.fromJson(Map<String, dynamic>.from(item)),
     ];
   }
+
+  /// Vardiya personelini TAM LISTE olarak degistirir (admin+yonetici).
+  Future<void> updateAssignments(String shiftId, List<String> userIds) async {
+    await _dio.put<Map<String, dynamic>>(
+      '/shifts/$shiftId/assignments',
+      data: {'user_ids': userIds},
+    );
+  }
 }
 
 final shiftsApiProvider = Provider<ShiftsApi>((ref) {
   return ShiftsApi(ref.watch(dioProvider));
+});
+
+/// Atanabilir saha personeli (admin+yonetici cagirir; GET /users RBAC'i).
+/// security + tesis_gorevlisi kullanicilarini ShiftPersonel olarak doner.
+final atanabilirPersonelProvider =
+    FutureProvider.autoDispose<List<ShiftPersonel>>((ref) async {
+  final dio = ref.watch(dioProvider);
+  final out = <ShiftPersonel>[];
+  for (final role in ['security', 'tesis_gorevlisi']) {
+    final res = await dio.get<Map<String, dynamic>>(
+      '/users', queryParameters: {'role': role, 'limit': 200},
+    );
+    for (final item in (res.data?['items'] as List?) ?? const []) {
+      if (item is Map) {
+        final m = Map<String, dynamic>.from(item);
+        out.add(ShiftPersonel(
+            userId: m['id'] as String? ?? '', ad: m['ad'] as String? ?? ''));
+      }
+    }
+  }
+  return out;
 });
 
 /// Vardiya tanimlari — saha + yonetici ana ekran "Vardiya Durumu" bolumu.

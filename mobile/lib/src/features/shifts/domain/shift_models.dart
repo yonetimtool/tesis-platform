@@ -4,6 +4,21 @@
 /// Yazma (POST/PATCH/DELETE) yalniz admin — mobil salt okur.
 library;
 
+/// Vardiyaya atanan personel (WP-E) — GET /shifts personel[] elemani.
+class ShiftPersonel {
+  const ShiftPersonel({required this.userId, required this.ad, this.avatarUrl});
+
+  final String userId;
+  final String ad;
+  final String? avatarUrl;
+
+  factory ShiftPersonel.fromJson(Map<String, dynamic> json) => ShiftPersonel(
+        userId: json['user_id'] as String? ?? '',
+        ad: json['ad'] as String? ?? '',
+        avatarUrl: json['avatar_url'] as String?,
+      );
+}
+
 /// Tek vardiya tanimi (ShiftOut). Saatler "HH:MM" metni (sunucu boyle doner).
 class Shift {
   const Shift({
@@ -12,6 +27,7 @@ class Shift {
     required this.baslangicSaat,
     required this.bitisSaat,
     this.gunTipi,
+    this.personel = const [],
   });
 
   final String id;
@@ -22,12 +38,19 @@ class Shift {
   /// her_gun | hafta_ici | hafta_sonu | resmi_tatil | null (kisitsiz).
   final String? gunTipi;
 
+  /// Atanan saha personeli (WP-E) — eski sunucu alani vermezse bos liste.
+  final List<ShiftPersonel> personel;
+
   factory Shift.fromJson(Map<String, dynamic> json) => Shift(
         id: json['id'] as String? ?? '',
         ad: json['ad'] as String? ?? '',
         baslangicSaat: json['baslangic_saat'] as String? ?? '',
         bitisSaat: json['bitis_saat'] as String? ?? '',
         gunTipi: json['gun_tipi'] as String?,
+        personel: [
+          for (final p in (json['personel'] as List?) ?? const [])
+            if (p is Map) ShiftPersonel.fromJson(Map<String, dynamic>.from(p)),
+        ],
       );
 
   /// [now] su an bu vardiyanin saat araliginda mi? SAF hesap — `now` DISARIDAN

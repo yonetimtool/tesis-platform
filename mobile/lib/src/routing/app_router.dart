@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/announcements/presentation/announcements_screen.dart';
+import '../features/shifts/presentation/vardiyalar_screen.dart';
 import '../features/assets/presentation/assets_screen.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/complaints/presentation/complaints_screen.dart';
@@ -79,6 +80,7 @@ class AppRoutes {
   static const binaDuzenleme = '/bina-duzenleme';
   static const sikayetHaritasi = '/sikayet-haritasi';
   static const sikayetlerim = '/sikayetlerim';
+  static const vardiyalar = '/vardiyalar';
   static const settings = '/settings';
   static const notifications = '/notifications';
   static const destek = '/destek';
@@ -215,6 +217,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.reports,
         builder: (context, state) => const ReportsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.vardiyalar,
+        builder: (context, state) => const VardiyalarScreen(),
       ),
       GoRoute(
         path: AppRoutes.budget,

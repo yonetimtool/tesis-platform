@@ -26,6 +26,7 @@ class ShiftStatusCard extends StatelessWidget {
     required this.status,
     required this.footer,
     this.online = false,
+    this.avatarUrl,
   });
 
   final String title;
@@ -33,6 +34,7 @@ class ShiftStatusCard extends StatelessWidget {
   final ShiftStatus status;
   final String footer;
   final bool online;
+  final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +64,7 @@ class ShiftStatusCard extends StatelessWidget {
                     theme.textTheme.labelSmall?.copyWith(color: theme.hintColor),
               ),
               const SizedBox(height: 10),
-              _Avatar(color: status.color, online: online),
+              _Avatar(color: status.color, online: online, avatarUrl: avatarUrl),
               const SizedBox(height: 10),
               _StatusChip(status: status),
               const SizedBox(height: 8),
@@ -97,10 +99,11 @@ class ShiftStatusCard extends StatelessWidget {
 }
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.color, required this.online});
+  const _Avatar({required this.color, required this.online, this.avatarUrl});
 
   final Color color;
   final bool online;
+  final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +112,8 @@ class _Avatar extends StatelessWidget {
         CircleAvatar(
           radius: 22,
           backgroundColor: color.withValues(alpha: 0.12),
-          child: Icon(Icons.person, color: color),
+          backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+          child: avatarUrl == null ? Icon(Icons.person, color: color) : null,
         ),
         if (online)
           Positioned(
