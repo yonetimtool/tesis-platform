@@ -18,6 +18,8 @@ type SupportTicket = {
   aciklama: string;
   durum: "acik" | "cozuldu";
   admin_cevap: string | null;
+  foto_url: string | null;
+  admin_cevap_foto_url: string | null;
   created_at: string;
 };
 
@@ -34,6 +36,7 @@ export default function SupportPage() {
   const [tenantId, setTenantId] = useState("");
   const [secili, setSecili] = useState<SupportTicket | null>(null);
   const [cevap, setCevap] = useState("");
+  const [dosya, setDosya] = useState<File | null>(null);
   const [cozulduIsaretle, setCozulduIsaretle] = useState(true);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
@@ -49,17 +52,30 @@ export default function SupportPage() {
     setGonderiliyor(true);
     setHata(null);
     try {
+      // Yanit gorseli varsa once BFF upload proxy'sinden foto_key al.
+      let adminCevapFotoKey: string | undefined;
+      if (dosya) {
+        const fd = new FormData();
+        fd.append("file", dosya);
+        const up = await fetch("/api/uploads", { method: "POST", body: fd });
+        if (!up.ok) throw new Error(`Görsel yüklenemedi (${up.status})`);
+        adminCevapFotoKey = ((await up.json()) as { foto_key: string }).foto_key;
+      }
       const res = await fetch(`/api/support/${secili.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...(cevap.trim() ? { admin_cevap: cevap.trim() } : {}),
           ...(cozulduIsaretle ? { durum: "cozuldu" } : {}),
+          ...(adminCevapFotoKey
+            ? { admin_cevap_foto_key: adminCevapFotoKey }
+            : {}),
         }),
       });
       if (!res.ok) throw new Error(`Yanıt kaydedilemedi (${res.status})`);
       setSecili(null);
       setCevap("");
+      setDosya(null);
       await mutate(url);
     } catch (e) {
       setHata(e instanceof Error ? e.message : String(e));
@@ -137,7 +153,14 @@ export default function SupportPage() {
                   </td>
                   <td className="px-3 py-2">{t.tenant_ad ?? t.tenant_id.slice(0, 8)}</td>
                   <td className="max-w-[28rem] px-3 py-2">
-                    <div className="font-medium">{t.konu}</div>
+                    <div className="flex items-center gap-1 font-medium">
+                      {t.konu}
+                      {t.foto_url ? (
+                        <span title="Görsel ekli" aria-label="Görsel ekli">
+                          📷
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="truncate text-xs text-slate-500">{t.aciklama}</div>
                   </td>
                   <td className="px-3 py-2">
@@ -193,12 +216,39 @@ export default function SupportPage() {
             <p className="mt-3 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-800">
               {secili.aciklama}
             </p>
+            {secili.foto_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={secili.foto_url}
+                alt="Talep görseli"
+                className="mt-3 max-h-48 rounded-lg border border-slate-200 object-contain dark:border-slate-700"
+              />
+            ) : null}
             <Field label="Yanıt">
               <textarea
                 className={`${inputCls} min-h-[6rem]`}
                 value={cevap}
                 onChange={(e) => setCevap(e.target.value)}
                 maxLength={4000}
+              />
+            </Field>
+            {secili.admin_cevap_foto_url ? (
+              <div className="mb-2">
+                <p className="text-xs text-slate-500">Mevcut yanıt görseli</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={secili.admin_cevap_foto_url}
+                  alt="Yanıt görseli"
+                  className="mt-1 max-h-40 rounded-lg border border-slate-200 object-contain dark:border-slate-700"
+                />
+              </div>
+            ) : null}
+            <Field label="Yanıt görseli (opsiyonel)">
+              <input
+                type="file"
+                accept="image/*"
+                className={inputCls}
+                onChange={(e) => setDosya(e.target.files?.[0] ?? null)}
               />
             </Field>
             <label className="mt-2 flex items-center gap-2 text-sm">
@@ -212,7 +262,10 @@ export default function SupportPage() {
             <div className="mt-4 flex justify-end gap-2">
               <button
                 className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600"
-                onClick={() => setSecili(null)}
+                onClick={() => {
+                  setSecili(null);
+                  setDosya(null);
+                }}
                 disabled={gonderiliyor}
               >
                 Vazgeç
@@ -220,7 +273,9 @@ export default function SupportPage() {
               <button
                 className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
                 onClick={yanitla}
-                disabled={gonderiliyor || (!cevap.trim() && !cozulduIsaretle)}
+                disabled={
+                  gonderiliyor || (!cevap.trim() && !cozulduIsaretle && !dosya)
+                }
               >
                 {gonderiliyor ? "Gönderiliyor…" : "Gönder"}
               </button>

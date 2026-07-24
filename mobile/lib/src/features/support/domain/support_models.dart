@@ -8,6 +8,8 @@ class SupportTicket {
     this.aciklama = '',
     this.durum = 'acik',
     this.adminCevap,
+    this.fotoUrl,
+    this.adminCevapFotoUrl,
     this.createdAt,
   });
 
@@ -18,6 +20,12 @@ class SupportTicket {
   /// acik | cozuldu.
   final String durum;
   final String? adminCevap;
+
+  /// Talep gorseli (WP-G) — presigned GET URL (varsa).
+  final String? fotoUrl;
+
+  /// Admin cevap gorseli (WP-G) — presigned GET URL (varsa).
+  final String? adminCevapFotoUrl;
   final DateTime? createdAt;
 
   factory SupportTicket.fromJson(Map<String, dynamic> json) => SupportTicket(
@@ -26,6 +34,8 @@ class SupportTicket {
         aciklama: json['aciklama'] as String? ?? '',
         durum: json['durum'] as String? ?? 'acik',
         adminCevap: json['admin_cevap'] as String?,
+        fotoUrl: json['foto_url'] as String?,
+        adminCevapFotoUrl: json['admin_cevap_foto_url'] as String?,
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       );
 }

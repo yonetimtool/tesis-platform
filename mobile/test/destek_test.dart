@@ -21,6 +21,20 @@ void main() {
       expect(t.adminCevap, 'Güncelleme yayınlandı.');
       expect(SupportTicket.fromJson(const {'id': 'x'}).durum, 'acik');
     });
+
+    test('WP-G: foto_url + admin_cevap_foto_url savunmaci parse', () {
+      final t = SupportTicket.fromJson(const {
+        'id': 's1',
+        'foto_url': 'https://x/talep.jpg',
+        'admin_cevap_foto_url': 'https://x/cevap.jpg',
+      });
+      expect(t.fotoUrl, 'https://x/talep.jpg');
+      expect(t.adminCevapFotoUrl, 'https://x/cevap.jpg');
+      // Alanlar yoksa null (eski sunucu / gorselsiz talep).
+      expect(SupportTicket.fromJson(const {'id': 'x'}).fotoUrl, isNull);
+      expect(
+          SupportTicket.fromJson(const {'id': 'x'}).adminCevapFotoUrl, isNull);
+    });
   });
 
   group('DestekScreen — yonetici bilet listesi + form', () {
