@@ -59,5 +59,17 @@ void main() {
       await tester.tap(find.byType(ModuleCard));
       expect(tapped, 0, reason: 'yakinda kart tiklanamaz');
     });
+
+    testWidgets('dense varyant: dar hucrede tasma olmadan cizilir',
+        (tester) async {
+      await tester.pumpWidget(_wrap(const SizedBox(
+        width: 92, // 4 sutunlu izgaradaki gercek hucre genisligine yakin
+        height: 128,
+        child: ModuleCard(
+            icon: Icons.campaign_outlined, title: 'Duyurular', dense: true),
+      )));
+      expect(find.text('Duyurular'), findsOneWidget);
+      expect(tester.takeException(), isNull); // RenderFlex overflow yok
+    });
   });
 }

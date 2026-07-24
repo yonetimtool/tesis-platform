@@ -16,6 +16,7 @@ class ModuleCard extends StatelessWidget {
     this.accent,
     this.onTap,
     this.comingSoon = false,
+    this.dense = false,
   });
 
   final IconData icon;
@@ -32,11 +33,24 @@ class ModuleCard extends StatelessWidget {
   /// MISSING-BACKEND: pasif "Yakında" varyanti (dokunma yutulur).
   final bool comingSoon;
 
+  /// Kompakt varyant — 4'lu izgara hucresine sigmasi icin kucultulmus
+  /// chip/ikon/padding/tipografi (WP-A).
+  final bool dense;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final Color accentColor =
         comingSoon ? theme.disabledColor : (accent ?? YonetioColors.navy);
+    final double chip = dense ? 36 : 46;
+    final double iconSize = dense ? 20 : 24;
+    final EdgeInsets pad = EdgeInsets.all(dense ? 10 : 14);
+    final TextStyle? titleStyle =
+        (dense ? theme.textTheme.labelMedium : theme.textTheme.titleSmall)
+            ?.copyWith(
+      fontWeight: FontWeight.w700,
+      color: comingSoon ? theme.disabledColor : null,
+    );
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -44,7 +58,7 @@ class ModuleCard extends StatelessWidget {
         // comingSoon: onTap null'lanir → InkWell pasif, dokunma cagri uretmez.
         onTap: comingSoon ? null : onTap,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: pad,
           child: Column(
             // Referans 1:1 (WP2): kart icerigi ORTALI (ikon ustte-orta,
             // baslik + sayac ortada) — eski sola-hizali gorunumden sapmaydi.
@@ -54,15 +68,15 @@ class ModuleCard extends StatelessWidget {
             children: [
               // Pastel yuvarlak-kare ikon chip.
               Container(
-                width: 46,
-                height: 46,
+                width: chip,
+                height: chip,
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: comingSoon ? 0.10 : 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, size: 24, color: accentColor),
+                child: Icon(icon, size: iconSize, color: accentColor),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: dense ? 8 : 12),
               // Flexible: dar izgara hucresinde baslik sikisirsa tasma yerine
               // ellipsis'e duser (2 satir -> gerekirse 1).
               Flexible(
@@ -71,10 +85,7 @@ class ModuleCard extends StatelessWidget {
                   maxLines: 2,
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: comingSoon ? theme.disabledColor : null,
-                  ),
+                  style: titleStyle,
                 ),
               ),
               const SizedBox(height: 2),
@@ -86,7 +97,10 @@ class ModuleCard extends StatelessWidget {
                   counter!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelMedium?.copyWith(
+                  style: (dense
+                          ? theme.textTheme.labelSmall
+                          : theme.textTheme.labelMedium)
+                      ?.copyWith(
                     color: accent ?? YonetioColors.navy,
                     fontWeight: FontWeight.w600,
                   ),

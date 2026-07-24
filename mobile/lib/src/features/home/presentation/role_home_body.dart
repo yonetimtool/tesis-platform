@@ -4,6 +4,7 @@ import '../../auth/domain/user_role.dart';
 import '../domain/home_featured.dart';
 import '../domain/home_menu.dart';
 import 'module_card_spec.dart';
+import 'widgets/home_grid.dart';
 import 'widgets/home_header.dart';
 import 'widgets/module_card.dart';
 import 'widgets/section_header.dart';
@@ -11,9 +12,9 @@ import 'widgets/section_header.dart';
 /// Rol-parametrik ana ekran GOVDESI — saf sunum: veriyi disaridan alir, kart
 /// dokunuslarini [onOpen] ile geri bildirir (provider/router BAGIMSIZ, tam
 /// test edilebilir). Duzen referans tasarimlarin ortak iskeleti: karsilama +
-/// 2 sutunlu "one cikan" izgara ([featuredMenuForRole]) + "Tüm Modüller"
-/// ([moreMenuForRole]). Rol-ozel ek bolumler (Hizli Ozet, Son Hareketler...)
-/// [sections] ile one cikan izgaranin ALTINA eklenir.
+/// 4'lu (dar ekranda 2'li) "one cikan" izgara ([featuredMenuForRole]) +
+/// "Tüm Modüller" ([moreMenuForRole]). Rol-ozel ek bolumler (Hizli Ozet, Son
+/// Hareketler...) [sections] ile one cikan izgaranin ALTINA eklenir.
 class RoleHomeBody extends StatelessWidget {
   const RoleHomeBody({
     super.key,
@@ -67,26 +68,30 @@ class RoleHomeBody extends StatelessWidget {
   }
 
   Widget _grid(List<HomeMenuEntry> entries) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.15,
-      children: [
-        for (final entry in entries)
-          Builder(builder: (context) {
-            final spec = moduleCardSpec(entry);
-            return ModuleCard(
-              icon: spec.icon,
-              title: spec.title,
-              accent: spec.accent,
-              counter: counters[entry],
-              onTap: () => onOpen(entry),
-            );
-          }),
-      ],
-    );
+    return LayoutBuilder(builder: (context, c) {
+      final cols = homeGridCols(c.maxWidth);
+      return GridView.count(
+        crossAxisCount: cols,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: homeGridAspect(cols),
+        children: [
+          for (final entry in entries)
+            Builder(builder: (context) {
+              final spec = moduleCardSpec(entry);
+              return ModuleCard(
+                icon: spec.icon,
+                title: spec.title,
+                accent: spec.accent,
+                counter: counters[entry],
+                dense: cols == 4,
+                onTap: () => onOpen(entry),
+              );
+            }),
+        ],
+      );
+    });
   }
 }

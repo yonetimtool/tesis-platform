@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/branding/yonetio_logo.dart';
 import '../../budget/domain/budget_models.dart';
+import 'widgets/home_grid.dart';
 import 'widgets/section_header.dart';
 import 'widgets/stat_tile.dart';
 
@@ -28,44 +29,49 @@ class YoneticiQuickStats extends StatelessWidget {
       children: [
         const SectionHeader(title: 'Hızlı Özet'),
         const SizedBox(height: 8),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.05,
-          children: [
-            StatTile(
-              icon: Icons.payments_outlined,
-              value: tahsilat == null
-                  ? '—'
-                  : '₺${formatKurusAsTl(tahsilat.tahsilatKurus)}',
-              label: 'Toplam Tahsilat',
-              sublabel: 'Bu Ay',
-              accent: _green,
-            ),
-            StatTile(
-              icon: Icons.percent,
-              value: oran == null ? '—' : '%$oran',
-              label: 'Tahsilat Oranı',
-              sublabel: 'Bu Ay',
-              accent: _amber,
-            ),
-            StatTile(
-              icon: Icons.trending_up,
-              value: '₺${formatKurusAsTl(summary.toplamGelirKurus)}',
-              label: 'Toplam Gelir',
-              accent: YonetioColors.teal,
-            ),
-            StatTile(
-              icon: Icons.account_balance_outlined,
-              value: '₺${formatKurusAsTl(summary.bakiyeKurus)}',
-              label: 'Kasa',
-              accent: YonetioColors.navy,
-            ),
-          ],
-        ),
+        LayoutBuilder(builder: (context, c) {
+          final cols = homeGridCols(c.maxWidth);
+          return GridView.count(
+            crossAxisCount: cols,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            // Brief: 0.68 dar 4-sutun hucrede StatTile'i tasirdi (icon+deger+
+            // etiket+alt-etiket 4 satir) — 0.62'ye dusuruldu.
+            childAspectRatio: cols == 4 ? 0.62 : 1.05,
+            children: [
+              StatTile(
+                icon: Icons.payments_outlined,
+                value: tahsilat == null
+                    ? '—'
+                    : '₺${formatKurusAsTl(tahsilat.tahsilatKurus)}',
+                label: 'Toplam Tahsilat',
+                sublabel: 'Bu Ay',
+                accent: _green,
+              ),
+              StatTile(
+                icon: Icons.percent,
+                value: oran == null ? '—' : '%$oran',
+                label: 'Tahsilat Oranı',
+                sublabel: 'Bu Ay',
+                accent: _amber,
+              ),
+              StatTile(
+                icon: Icons.trending_up,
+                value: '₺${formatKurusAsTl(summary.toplamGelirKurus)}',
+                label: 'Toplam Gelir',
+                accent: YonetioColors.teal,
+              ),
+              StatTile(
+                icon: Icons.account_balance_outlined,
+                value: '₺${formatKurusAsTl(summary.bakiyeKurus)}',
+                label: 'Kasa',
+                accent: YonetioColors.navy,
+              ),
+            ],
+          );
+        }),
       ],
     );
   }

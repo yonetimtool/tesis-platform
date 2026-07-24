@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'home_grid.dart';
 import 'module_card.dart';
 import 'section_header.dart';
 
@@ -34,23 +35,27 @@ class YakindaSection extends StatelessWidget {
       children: [
         const SectionHeader(title: 'Yakında Eklenecekler'),
         const SizedBox(height: 8),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.15,
-          children: [
-            for (final k in kartlar)
-              ModuleCard(
-                icon: k.icon,
-                title: k.title,
-                accent: k.accent,
-                comingSoon: true,
-              ),
-          ],
-        ),
+        LayoutBuilder(builder: (context, c) {
+          final cols = homeGridCols(c.maxWidth);
+          return GridView.count(
+            crossAxisCount: cols,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: homeGridAspect(cols),
+            children: [
+              for (final k in kartlar)
+                ModuleCard(
+                  icon: k.icon,
+                  title: k.title,
+                  accent: k.accent,
+                  dense: cols == 4,
+                  comingSoon: true,
+                ),
+            ],
+          );
+        }),
       ],
     );
   }
