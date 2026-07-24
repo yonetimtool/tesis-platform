@@ -125,9 +125,11 @@ bugünkü görünüm aynen korunur. Veri zaten `sonDuyurularProvider`'da
     fotoğrafını görür.
   - `GET /users` / `GET /users/{id}` — admin/yönetici listelerinde.
   - `GET /shifts` — atanan personelin fotoğrafı (WP-E).
-- KVKK: erasure/anonimleştirme akışına avatar objesinin MinIO'dan silinmesi
-  + `avatar_key=NULL` eklenir (mevcut resident-anonimleştirme genişletmesi).
-  Fotoğraf self-servis yüklenir (rıza), amaç sınırlı: site içi tanıma.
+- KVKK: değiştirme/kaldırma anında eski MinIO objesi silinir (PATCH içinde
+  `delete_objects`). Resident anonimleştirme etkilenmez (sakinler avatar
+  yükleyemez); personel için silme ucu bugün yok — eklenirse avatar objesi
+  de silinmeli (auth.md notu). Fotoğraf self-servis yüklenir (rıza), amaç
+  sınırlı: site içi tanıma.
 
 **Mobil:**
 - Profil ekranına "Profil Fotoğrafı" bölümü (yalnız personel rollerinde):
