@@ -27,9 +27,10 @@ from ..storage import delete_objects, presign_get
 
 router = APIRouter(tags=["me"])
 
-# Profil fotografi YALNIZ personel rolleri (resident'a 403 — sakinler
-# personeli tanisin diye tek yonlu).
-_AVATAR_ROLLER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+# Self-servis profil fotografi YALNIZ yonetici + resident (kendi fotografi).
+# Saha personeli (security/tesis_gorevlisi) fotosunu yonetici PATCH
+# /users/{id}/avatar ile yonetir; admin'e self-servis gerekmez.
+_AVATAR_ROLLER = require_role("yonetici", "resident")
 
 
 def _user_out(user: AppUser) -> UserOut:

@@ -229,7 +229,8 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /me/profile` (kendi)            |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /me/password` (kendi)          |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /me/contact` (kendi tel/riza)  |  ✅   | ✅  | ✅  | ✅  | ✅  |
-| `PATCH /me/avatar` (profil fotografi) |  ✅   | ✅  | ✅  | ✅  | ❌  |
+| `PATCH /me/avatar` (kendi profil fotografi) |  ❌   | ✅  | ❌  | ❌  | ✅  |
+| `PATCH /users/{id}/avatar` (saha personeli) | ❌ | ✅  | ❌  | ❌  | ❌  |
 | `GET  /shifts` (liste/detay)          |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /shifts`                        |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `PATCH /shifts/{id}`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
@@ -643,13 +644,16 @@ Notlar:
     yonetir (en az bir alan). Numara **OTP'siz dogrudan** kaydedilir (SMS
     altyapisi ileride). Yonetim ucu (`PATCH /users/{id}/contact`, baskasi icin)
     ayri kalir; bu onun kendi-kaydi karsiligidir.
-  - **`PATCH /me/avatar` (profil fotografi, WP-D):** YALNIZ personel rolleri
-    (admin/yonetici/security/tesis_gorevlisi); **resident 403** (sakinler
-    personeli tanisin diye tek yonlu). `avatar_key` kendi tenant namespace'inde
-    olmali (yabanci onek 422 — IDOR). `null` gonderimi fotografi kaldirir; eski
-    obje MinIO'dan silinir. **Not:** ileride personel SILME ucu eklenirse
-    kullanicinin `avatar_key` objesi de silinmelidir (su an personel silme ucu
-    yok — yalniz create/update/reset).
+  - **`PATCH /me/avatar` (kendi profil fotografi):** YALNIZ **yonetici + resident**
+    (kendi fotografi). admin/security/tesis_gorevlisi 403. `avatar_key` kendi
+    tenant namespace'inde olmali (yabanci onek 422 — IDOR). `null` fotografi
+    kaldirir; eski obje MinIO'dan silinir.
+  - **`PATCH /users/{id}/avatar` (saha personeli fotografi):** YALNIZ **yonetici**.
+    Hedef ayni tenant'ta (RLS 404) ve rolu ∈ {security, tesis_gorevlisi} olmali
+    (degilse 422 invalid_target). Saha personeli KENDI fotografini yukleyemez —
+    yonetici yonetir. `avatar_key` yoneticinin kendi tenant namespace'inde
+    (yabanci onek 422). `null` kaldirir; eski obje silinir. **Not:** ileride
+    personel SILME ucu eklenirse `avatar_key` objesi de silinmeli.
   - **Kanal soyutlamasi (C1b'ye hazir):** yanit `channel` alani tasir; C1a yalniz
     `phone` (tel:). C1b (megafon/akilli-ev HTTP adaptorleri) yeni kanal + resolver
     ekler — sema/kapi yeniden yazilmaz. (Teknik data-minimization; hukuki tavsiye

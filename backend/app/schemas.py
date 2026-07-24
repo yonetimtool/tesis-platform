@@ -149,6 +149,8 @@ class UserAdminOut(BaseModel):
     # Tenant'in birincil yoneticisi mi? Mobil ilk-giris adlandirma kapisi
     # yalniz buna acilir (yonetici disi rollerde daima false).
     birincil: bool = False
+    # Saha personeli profil fotografi (presign GET URL; router doldurur).
+    avatar_url: str | None = None
     created_at: datetime
 
 
@@ -166,6 +168,8 @@ class UserAdminListItem(BaseModel):
     # Tenant'in birincil yoneticisi mi? Mobil ilk-giris adlandirma kapisi
     # yalniz buna acilir (yonetici disi rollerde daima false).
     birincil: bool = False
+    # Saha personeli profil fotografi (presign GET URL; router doldurur).
+    avatar_url: str | None = None
     created_at: datetime
 
 

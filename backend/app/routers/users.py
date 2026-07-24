@@ -20,7 +20,9 @@ from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser
 from ..schemas import (
+    AvatarUpdate,
     ResidentResetPasswordOut,
+    UserAdminListItem,
     UserAdminListResponse,
     UserAdminOut,
     UserContactUpdate,
@@ -30,6 +32,7 @@ from ..schemas import (
     UserUpdate,
 )
 from ..security import generate_temp_code, hash_password
+from ..storage import delete_objects, presign_get
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -48,6 +51,22 @@ _CONTACT_MANAGER = require_role("admin", "yonetici")
 # telefon global benzersiz; email tenant-ici benzersiz — hangisi cakisti
 # ayirt edilmeden tek mesaj.
 _CONTACT_CONFLICT = APIError(409, "conflict", "Bu telefon veya e-posta zaten kayitli.")
+# Saha personeli fotosu YALNIZ yonetici yonetir (spec P3); hedef saha personeli.
+_AVATAR_MANAGER = require_role("yonetici")
+_AVATAR_HEDEF_ROLLER = {"security", "tesis_gorevlisi"}
+
+
+def _admin_out(obj: AppUser) -> UserAdminOut:
+    """AppUser -> UserAdminOut; avatar_key varsa presigned GET URL doldurur."""
+    out = UserAdminOut.model_validate(obj)
+    out.avatar_url = presign_get(obj.avatar_key) if obj.avatar_key else None
+    return out
+
+
+def _list_item(obj: AppUser) -> UserAdminListItem:
+    out = UserAdminListItem.model_validate(obj)
+    out.avatar_url = presign_get(obj.avatar_key) if obj.avatar_key else None
+    return out
 
 
 @router.get("", response_model=UserAdminListResponse)
@@ -72,7 +91,10 @@ async def list_users(
     rows = (
         await db.execute(select(AppUser).where(*where).order_by(AppUser.ad).limit(limit).offset(offset))
     ).scalars().all()
-    return UserAdminListResponse(meta={"limit": limit, "offset": offset, "total": total}, items=list(rows))
+    return UserAdminListResponse(
+        meta={"limit": limit, "offset": offset, "total": total},
+        items=[_list_item(r) for r in rows],
+    )
 
 
 @router.get("/{user_id}", response_model=UserAdminOut)
@@ -80,8 +102,8 @@ async def get_user(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_READER),
-) -> AppUser:
-    return await get_or_404(db, AppUser, user_id)
+) -> UserAdminOut:
+    return _admin_out(await get_or_404(db, AppUser, user_id))
 
 
 @router.post("", response_model=UserCreatedOut, status_code=201)
@@ -153,7 +175,7 @@ async def update_user(
     body: UserUpdate,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_USER_CREATOR),
-) -> AppUser:
+) -> UserAdminOut:
     obj = await get_or_404(db, AppUser, user_id)
     # yonetici YALNIZ saha personelini (guvenlik/tesis gorevlisi) duzenler ve
     # rolu saha disina cekemez (yetki yukseltme yok); admin herkesi duzenler.
@@ -188,7 +210,7 @@ async def update_user(
         db, user, Action.USER_UPDATE, resource_type="app_user",
         resource_id=obj.id, meta={"fields": list(data.keys())},
     )
-    return obj
+    return _admin_out(obj)
 
 
 @router.post("/{user_id}/reset-password", response_model=ResidentResetPasswordOut)
@@ -226,7 +248,7 @@ async def update_user_contact(
     body: UserContactUpdate,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_CONTACT_MANAGER),
-) -> AppUser:
+) -> UserAdminOut:
     """Rol-bazli arama iletisim ayari (C1a): telefon + arama rizasi.
 
     admin + yonetici yonetir — rol/parola/is_active gibi hassas alanlara
@@ -252,4 +274,36 @@ async def update_user_contact(
         db, user, Action.USER_CONTACT_UPDATE, resource_type="app_user",
         resource_id=obj.id, meta={"fields": list(data.keys())},
     )
-    return obj
+    return _admin_out(obj)
+
+
+@router.patch("/{user_id}/avatar", response_model=UserAdminOut)
+async def update_user_avatar(
+    user_id: uuid.UUID,
+    body: AvatarUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_AVATAR_MANAGER),
+) -> UserAdminOut:
+    """Saha personeli profil fotografi — YALNIZ yonetici. Hedef ayni tenant'ta
+    (RLS) ve rolu saha personeli (security/tesis_gorevlisi) olmali; degilse 422.
+    avatar_key yoneticinin kendi tenant namespace'inde (IDOR). null kaldirir;
+    eski MinIO objesi silinir."""
+    obj = await get_or_404(db, AppUser, user_id)
+    if obj.role not in _AVATAR_HEDEF_ROLLER:
+        raise APIError(422, "invalid_target",
+                       "Yalniz saha personeline fotograf atanabilir.")
+    if body.avatar_key is not None and not body.avatar_key.startswith(
+        f"{user.tenant_id}/"
+    ):
+        raise APIError(422, "invalid_foto_key", "avatar_key tenant alani disinda")
+    eski = obj.avatar_key
+    obj.avatar_key = body.avatar_key
+    obj.updated_at = func.now()
+    if eski and eski != body.avatar_key:
+        delete_objects([eski])
+    await audit_user(
+        db, user, Action.AVATAR_UPDATE, resource_type="app_user",
+        resource_id=obj.id, meta={"hedef": str(obj.id),
+                                  "kaldirildi": body.avatar_key is None},
+    )
+    return _admin_out(obj)
