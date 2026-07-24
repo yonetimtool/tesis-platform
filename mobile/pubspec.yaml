@@ -48,6 +48,8 @@ dependencies:
   url_launcher: ^6.3.2
   firebase_core: ^4.11.0
   firebase_messaging: ^16.4.1
+  # WP-F canli kamera oynatici (HLS/MJPEG — istemci oynatir).
+  video_player: ^2.9.2
 
 dev_dependencies:
   flutter_test:

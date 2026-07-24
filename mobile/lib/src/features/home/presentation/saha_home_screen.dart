@@ -9,6 +9,8 @@ import 'widgets/bildir_menu_sheet.dart';
 import '../../notifications/data/notifications_controller.dart';
 import '../../profile/data/profile_api.dart';
 import '../../scan/data/scan_outbox.dart';
+import '../../cameras/data/cameras_api.dart';
+import '../../cameras/presentation/canli_kamera_section.dart';
 import '../../shifts/data/shifts_api.dart';
 import '../../shifts/presentation/vardiya_section.dart';
 import '../../weather/data/weather_api.dart';
@@ -22,7 +24,6 @@ import 'widgets/yakinda_section.dart';
 
 const _purple = Color(0xFF7C3AED);
 const _red = Color(0xFFDC2626);
-const _navy = Color(0xFF0E3C91);
 
 /// Saha ana ekrani (R3, gorevli.jpeg) — guvenlik + tesis gorevlisi TEK
 /// rol-parametrik ekranda: alt-baslik rol etiketi, "Yakında" kart seti role
@@ -95,9 +96,23 @@ class SahaHomeScreen extends ConsumerWidget {
               onSeeAll: () => context.push(AppRoutes.vardiyalar),
             ),
           ],
+          // WP-F: Canlı Kamera seridi YALNIZ security'de (tesis_gorevlisi KVKK
+          // geregi kamera gormez). Hata/bos → bolum sessizce gizli.
+          if (role == UserRole.security) ...[
+            const SizedBox(height: 12),
+            ref.watch(camerasProvider).maybeWhen(
+                  data: (list) => CanliKameraSection(
+                    kameralar: list,
+                    onIzle: (c) =>
+                        context.push(AppRoutes.kameraIzle, extra: c),
+                  ),
+                  orElse: () => const SizedBox.shrink(),
+                ),
+          ],
           const SizedBox(height: 12),
           // MISSING-BACKEND kartlari yalniz security'de (tesis_gorevlisi KVKK
-          // geregi Plaka/Kamera gormez; bos liste → izgara hic cizilmez).
+          // geregi Plaka gormez; bos liste → izgara hic cizilmez). Canlı Kamera
+          // artik gercek serit (yukarida) — Yakında'dan kaldirildi.
           YakindaSection(kartlar: [
             if (role == UserRole.security) ...const [
               YakindaKart(
@@ -106,10 +121,6 @@ class SahaHomeScreen extends ConsumerWidget {
                   accent: _purple),
               YakindaKart(
                   icon: Icons.error_outline, title: 'İhlaller', accent: _red),
-              YakindaKart(
-                  icon: Icons.videocam_outlined,
-                  title: 'Canlı Kamera',
-                  accent: _navy),
             ],
           ]),
         ],

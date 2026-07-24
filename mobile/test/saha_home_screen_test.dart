@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
+import 'package:mobile/src/features/cameras/data/cameras_api.dart';
+import 'package:mobile/src/features/cameras/domain/camera_models.dart';
 import 'package:mobile/src/features/home/presentation/saha_home_screen.dart';
 import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
@@ -46,6 +48,10 @@ Widget _app(UserRole role, {int pending = 0, int unread = 0}) => ProviderScope(
                   bitisSaat: '14:00',
                   gunTipi: 'hafta_ici'),
             ]),
+        camerasProvider.overrideWith((ref) async => const [
+              Camera(
+                  id: 'c1', ad: 'Ana Kapı', streamUrl: 'https://x/s.m3u8'),
+            ]),
       ],
       child: MaterialApp(home: SahaHomeScreen(role: role)),
     );
@@ -76,9 +82,12 @@ void main() {
       expect(find.text('Vardiya Durumu'), findsOneWidget);
       expect(find.text('Sabah Vardiyası'), findsOneWidget);
       expect(find.text('06:00 - 14:00'), findsOneWidget);
-      // Kalan MISSING-BACKEND kartlari — pasif "Yakında" (vardiya cikti).
-      expect(find.text('Canlı Kamera'), findsOneWidget);
-      expect(find.text('Yakında'), findsNWidgets(3)); // plaka+ihlal+kamera
+      // WP-F: Canlı Kamera artik GERCEK serit (bolum basligi + kamera adi);
+      // Yakında'dan kaldirildi.
+      expect(find.text('Canlı Kamera'), findsOneWidget); // serit basligi
+      expect(find.text('Ana Kapı'), findsOneWidget); // serit karti
+      // Kalan MISSING-BACKEND kartlari — pasif "Yakında" (Plaka + İhlaller).
+      expect(find.text('Yakında'), findsNWidgets(2)); // plaka+ihlal
     });
 
     testWidgets('tesisGorevlisi: KVKK — Ziyaretçi/Kargo/Kamera YOK; Görevlerim '

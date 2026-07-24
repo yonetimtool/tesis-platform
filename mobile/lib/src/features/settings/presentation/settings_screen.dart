@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/text/tr_upper.dart';
 import '../../../core/theme/theme_controller.dart';
+import '../../../routing/app_router.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../../tenant/data/tenant_api.dart';
@@ -28,6 +30,22 @@ class SettingsScreen extends ConsumerWidget {
             Text('Tesis', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             const _TesisAdiKarti(),
+            const SizedBox(height: 24),
+          ],
+          // Kamera yonetimi — admin/yonetici (WP-F). security ana ekran
+          // seridinden erisir; buradaki giris YONETIM icindir.
+          if (role == UserRole.admin || role == UserRole.yonetici) ...[
+            Text('Yönetim', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.videocam_outlined),
+                title: const Text('Kameralar'),
+                subtitle: const Text('Kamera ekle, düzenle, sil'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(AppRoutes.kameralar),
+              ),
+            ),
             const SizedBox(height: 24),
           ],
           Text('Görünüm',
