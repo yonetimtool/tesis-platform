@@ -1,106 +1,122 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/branding/yonetio_logo.dart';
+import '../../../../core/theme/home_tokens.dart';
+import '../../domain/home_view_models.dart';
+import 'home_card.dart';
 
-/// Referans "Hızlı Özet" bloklarindan biri: pastel ikon + BUYUK deger + etiket
-/// (+ opsiyonel alt-etiket, or. "Bu Ay"). Salt gosterim — dokunma yok.
+/// Referans "Hızlı Özet" kutusu (yonetici.jpeg): ortada tint ikon konteyneri,
+/// altinda 20 bold deger, 13 semibold etiket ve 12 gri alt-etiket. Salt
+/// gosterim — dokunma yok.
+///
+/// [degerGrubu] ayni bolumdeki kutularin degerini TEK TIP boyutta cizer
+/// ("512" ile "₺248.750" ayni buyuklukte; kesme yok).
 class StatTile extends StatelessWidget {
   const StatTile({
     super.key,
-    required this.icon,
-    required this.value,
-    required this.label,
-    this.sublabel,
-    this.accent,
-    this.dense = false,
-    this.valueGroup,
+    required this.kutu,
+    this.hucreGenisligi,
+    this.degerGrubu,
+    this.etiketGrubu,
   });
 
-  final IconData icon;
-  final String value;
-  final String label;
-  final String? sublabel;
-  final Color? accent;
-
-  /// dense (4'lu izgara) degerleri TEK TIP yapan grup — ayni grubu paylasan
-  /// tum kutular degeri AYNI (sigan en buyuk) boyutta cizer (512 ve ₺248.750
-  /// ayni boyutta; kesme yok).
-  final AutoSizeGroup? valueGroup;
-
-  /// Kompakt varyant — 4'lu izgara hucresine sigmasi icin kucultulmus
-  /// padding/ikon/etiket (WP-A). dense=false: eski (2 sutunlu) boyutlar.
-  final bool dense;
+  final OzetKutusu kutu;
+  final double? hucreGenisligi;
+  final AutoSizeGroup? degerGrubu;
+  final AutoSizeGroup? etiketGrubu;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final accentColor = accent ?? YonetioColors.navy;
-    final double chip = dense ? 32 : 40;
-    final EdgeInsets pad = EdgeInsets.all(dense ? 10 : 14);
-    return Card(
-      child: Padding(
-        // WP-A: 4'lu izgarada dar/kisa hucreye sigmasi icin dense=true iken
-        // 14 -> 10 (home_grid'in dense ModuleCard'iyla tutarli kompaklik).
-        padding: pad,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: chip,
-              height: chip,
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: dense ? 18 : 22, color: accentColor),
-            ),
-            SizedBox(height: dense ? 4 : 10),
-            // Deger: dense'te AutoSizeText + paylasilan grup → tum kutular AYNI
-            // okunakli boyutta (kisa/uzun fark etmez; kesme yok). Non-dense
-            // (2 sutun genis hucre): mevcut buyuk boyut korunur.
-            if (dense)
-              AutoSizeText(
-                value,
-                group: valueGroup,
-                maxLines: 1,
-                minFontSize: 11,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w800),
-              )
-            else
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w800),
-              ),
-            SizedBox(height: dense ? 1 : 2),
-            // WP-A: 4'lu dar hucrede 2 satir etiket yukseklik tasmasina yol
-            // aciyordu; dense=true iken 1 satira dusuruldu. dense=false
-            // (2 sutunlu genis hucre) eski 2 satirlik gorunumu korur.
-            Text(
-              label,
-              maxLines: dense ? 1 : 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.hintColor, fontWeight: FontWeight.w500),
-            ),
-            if (sublabel != null) ...[
-              const SizedBox(height: 1),
-              Text(
-                sublabel!,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall?.copyWith(color: theme.hintColor),
-              ),
-            ],
-          ],
-        ),
+    final s = HomeSurface.of(context);
+    final kutuBoyut = hucreGenisligi == null
+        ? HomeTokens.iconBox
+        : (hucreGenisligi! * 0.40).clamp(32.0, HomeTokens.iconBox);
+    // Dar hucrede (4 sutunlu izgara) etiket TEK satirdir — referans gorselde
+    // de tek satir; iki satir yuksekligi tasirirdi.
+    final dar = hucreGenisligi != null && hucreGenisligi! < 120;
+
+    return HomeCard(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          HomeIconBox(
+            icon: kutu.ikon,
+            accent: kutu.accent,
+            size: kutuBoyut,
+            iconSize: (kutuBoyut * 0.55).clamp(17.0, HomeTokens.iconSize),
+          ),
+          const SizedBox(height: 6),
+          AutoSizeText(
+            kutu.deger,
+            group: degerGrubu,
+            maxLines: 1,
+            minFontSize: 11,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            style: HomeText.statValue.copyWith(color: s.heading),
+          ),
+          const SizedBox(height: 2),
+          AutoSizeText(
+            kutu.etiket,
+            group: etiketGrubu,
+            maxLines: dar ? 1 : 2,
+            minFontSize: 8,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            style: HomeText.statLabel.copyWith(color: s.body),
+          ),
+          const SizedBox(height: 1),
+          AutoSizeText(
+            kutu.altEtiket,
+            group: etiketGrubu,
+            maxLines: 1,
+            minFontSize: 8,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            style: HomeText.rowSub.copyWith(color: s.muted),
+          ),
+        ],
       ),
     );
+  }
+}
+
+/// "Hızlı Özet" bolumu — 4'lu istatistik izgarasi (dar ekranda 2'li).
+class HizliOzetIzgarasi extends StatelessWidget {
+  const HizliOzetIzgarasi({super.key, required this.kutular});
+
+  final List<OzetKutusu> kutular;
+
+  @override
+  Widget build(BuildContext context) {
+    if (kutular.isEmpty) return const SizedBox.shrink();
+    final degerGrubu = AutoSizeGroup();
+    final etiketGrubu = AutoSizeGroup();
+
+    return LayoutBuilder(builder: (context, c) {
+      // Esik hizli erisim izgarasiyla AYNI (bkz. hizliErisimSutun).
+      final sutun = c.maxWidth < 300 ? 2 : 4;
+      final hucre = (c.maxWidth - HomeTokens.gridGap * (sutun - 1)) / sutun;
+      return GridView.count(
+        crossAxisCount: sutun,
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: HomeTokens.gridGap,
+        crossAxisSpacing: HomeTokens.gridGap,
+        childAspectRatio: sutun == 4 ? 0.66 : 1.1,
+        children: [
+          for (final k in kutular)
+            StatTile(
+              kutu: k,
+              hucreGenisligi: hucre,
+              degerGrubu: degerGrubu,
+              etiketGrubu: etiketGrubu,
+            ),
+        ],
+      );
+    });
   }
 }

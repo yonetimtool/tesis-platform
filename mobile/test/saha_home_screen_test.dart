@@ -12,6 +12,9 @@ import 'package:mobile/src/features/scan/data/scan_outbox.dart';
 import 'package:mobile/src/features/scan/domain/outbox_entry.dart';
 import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
+import 'package:mobile/src/features/tenant/data/tenant_api.dart';
+import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
+import 'package:mobile/src/features/weather/data/weather_api.dart';
 
 /// Depoya dokunmayan sahte kuyruk (path_provider yok) — bekleyen sayisi
 /// kadar 'bekliyor' kaydi tasir.
@@ -34,23 +37,34 @@ class _FakeOutbox extends ScanOutbox {
       );
 }
 
-Widget _app(UserRole role, {int pending = 0, int unread = 0}) => ProviderScope(
+Widget _app(
+  UserRole role, {
+  int pending = 0,
+  int unread = 0,
+  List<Shift> vardiyalar = const [
+    Shift(
+        id: 'v1',
+        ad: 'Sabah Vardiyası',
+        baslangicSaat: '06:00',
+        bitisSaat: '14:00',
+        gunTipi: 'hafta_ici'),
+  ],
+  String? tesisAd,
+}) =>
+    ProviderScope(
       overrides: [
-        profileProvider.overrideWith((ref) async => Profile(
-            ad: 'Mehmet', role: role.wire, aranabilir: false)),
+        profileProvider.overrideWith((ref) async =>
+            Profile(ad: 'Mehmet', role: role.wire, aranabilir: false)),
         scanOutboxProvider.overrideWith(() => _FakeOutbox(pending)),
         unreadNotificationCountProvider.overrideWith((ref) async => unread),
-        shiftsProvider.overrideWith((ref) async => const [
-              Shift(
-                  id: 'v1',
-                  ad: 'Sabah Vardiyası',
-                  baslangicSaat: '06:00',
-                  bitisSaat: '14:00',
-                  gunTipi: 'hafta_ici'),
-            ]),
+        // Hava/tesis uclari testte aga cikmasin.
+        weatherProvider.overrideWith((ref) async => throw Exception('offline')),
+        tenantSettingsProvider.overrideWith((ref) async => tesisAd == null
+            ? throw Exception('offline')
+            : TenantSettings(tenantId: 't1', ad: tesisAd)),
+        shiftsProvider.overrideWith((ref) async => vardiyalar),
         camerasProvider.overrideWith((ref) async => const [
-              Camera(
-                  id: 'c1', ad: 'Ana Kapı', streamUrl: 'https://x/s.m3u8'),
+              Camera(id: 'c1', ad: 'Ana Kapı', streamUrl: 'https://x/s.m3u8'),
             ]),
       ],
       child: MaterialApp(home: SahaHomeScreen(role: role)),
@@ -63,50 +77,76 @@ void _tall(WidgetTester tester) {
 }
 
 void main() {
-  group('SahaHomeScreen — guvenlik + tesis gorevlisi (R3, gorevli.jpeg)', () {
-    testWidgets('security: karsilama + "Güvenlik" + one cikanlar (Ziyaretçiler/'
-        'Turlarım) + GERCEK Vardiya Durumu bolumu + kalan "Yakında" kartlari',
+  group('SahaHomeScreen — gorevli.jpeg (guvenlik + tesis gorevlisi)', () {
+    testWidgets('security: karsilama + tesis secici + serit + GERCEK vardiya '
+        '+ Son Hareketler + Canlı Kamera', (tester) async {
+      _tall(tester);
+      await tester.pumpWidget(_app(UserRole.security, tesisAd: 'Mavi Sitesi'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Merhaba, Mehmet'), findsOneWidget);
+      // Tesis secici: gercek tenant adi + asagi ok.
+      expect(find.text('Mavi Sitesi'), findsOneWidget);
+      expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
+      // Hava: gercek uc hatali → mock taban.
+      expect(find.text('24°C'), findsOneWidget);
+
+      // Referans serit kartlari.
+      expect(find.text('Vardiya Durum'), findsOneWidget);
+      expect(find.text('Kargo'), findsOneWidget);
+      expect(find.text('Ziyaretçi'), findsOneWidget);
+
+      // Vardiya bolumu GERCEK /shifts verisinden.
+      expect(find.text('Vardiya Durumu'), findsOneWidget);
+      expect(find.text('Sabah Vardiyası'), findsOneWidget);
+      expect(find.text('06:00 - 14:00'), findsOneWidget);
+
+      // Son Hareketler (referans satirlar) + Canlı Kamera (gercek kamera).
+      expect(find.text('Son Hareketler'), findsOneWidget);
+      expect(find.text('Kamera İhlal Tespiti'), findsOneWidget);
+      expect(find.text('Canlı Kamera'), findsOneWidget);
+      expect(find.text('Ana Kapı'), findsOneWidget);
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('tesis adi YOKKEN referans tesis adi ("Mavi Residence")',
         (tester) async {
       _tall(tester);
       await tester.pumpWidget(_app(UserRole.security));
       await tester.pumpAndSettle();
-
-      expect(find.text('Merhaba, Mehmet'), findsOneWidget);
-      expect(find.text('Güvenlik'), findsOneWidget);
-      expect(find.text('Ziyaretçiler'), findsOneWidget);
-      expect(find.text('Turlarım'), findsOneWidget);
-      expect(find.text('Olay Bildir'), findsOneWidget);
-      // Vardiya Durumu ARTIK GERCEK bolum (/shifts) — comingSoon kart degil.
-      // Cip durumu (AKTİF/PLANLANDI) gercek saate bagli oldugundan burada
-      // ASSERT EDILMEZ (saat-flake); deterministik testi vardiya_section'da.
-      expect(find.text('Vardiya Durumu'), findsOneWidget);
-      expect(find.text('Sabah Vardiyası'), findsOneWidget);
-      expect(find.text('06:00 - 14:00'), findsOneWidget);
-      // WP-F: Canlı Kamera artik GERCEK serit (bolum basligi + kamera adi);
-      // Yakında'dan kaldirildi.
-      expect(find.text('Canlı Kamera'), findsOneWidget); // serit basligi
-      expect(find.text('Ana Kapı'), findsOneWidget); // serit karti
-      // Kalan MISSING-BACKEND kartlari — pasif "Yakında" (Plaka + İhlaller).
-      expect(find.text('Yakında'), findsNWidgets(2)); // plaka+ihlal
+      expect(find.text('Mavi Residence'), findsOneWidget);
     });
 
-    testWidgets('tesisGorevlisi: KVKK — Ziyaretçi/Kargo/Kamera YOK; Görevlerim '
-        'VAR; vardiya GERCEK bolum; "Yakında" izgarasi HIC yok', (tester) async {
+    testWidgets('tesisGorevlisi: KVKK — Kargo/Ziyaretçi/Araç Plaka kartlari '
+        've Canlı Kamera YOK; vardiya + son hareketler VAR', (tester) async {
       _tall(tester);
       await tester.pumpWidget(_app(UserRole.tesisGorevlisi));
       await tester.pumpAndSettle();
 
-      expect(find.text('Tesis Görevlisi'), findsOneWidget);
-      expect(find.text('Görevlerim'), findsOneWidget);
-      expect(find.text('Ziyaretçiler'), findsNothing);
       expect(find.text('Kargo'), findsNothing);
-      expect(find.text('Canlı Kamera'), findsNothing);
+      expect(find.text('Ziyaretçi'), findsNothing);
       expect(find.text('Araç Plaka'), findsNothing);
-      // Vardiya artik gercek; baska comingSoon kalmadi → izgara tamamen gizli.
+      expect(find.text('Canlı Kamera'), findsNothing);
+
+      expect(find.text('Vardiya Durum'), findsOneWidget); // serit karti
+      expect(find.text('Vardiya Durumu'), findsOneWidget); // bolum basligi
+      expect(find.text('Son Hareketler'), findsOneWidget);
+    });
+
+    testWidgets('vardiya YOKKEN bolum mock tabanla cizilir (bos ekran yok)',
+        (tester) async {
+      _tall(tester);
+      await tester.pumpWidget(_app(UserRole.security, vardiyalar: const []));
+      await tester.pumpAndSettle();
+
       expect(find.text('Vardiya Durumu'), findsOneWidget);
-      expect(find.text('Sabah Vardiyası'), findsOneWidget);
-      expect(find.text('Yakında'), findsNothing);
-      expect(find.text('Yakında Eklenecekler'), findsNothing);
+      expect(find.text('Öğle Vardiyası'), findsOneWidget); // mock kart
+      // Serit yatay kaydirilir; 4. kart (Yönetici) goruntu disinda kalabilir.
+      await tester.drag(
+          find.text('Sabah Vardiyası'), const Offset(-400, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('Kerem Aşçı'), findsOneWidget); // mock yonetici karti
     });
 
     testWidgets('security: okunmamis bildirim rozeti zil + sekmede gorunur '
@@ -125,14 +165,21 @@ void main() {
       expect(find.text('7'), findsNothing);
     });
 
-    testWidgets('outbox bekleyen > 0: Gönderim Kuyruğu kartinda sayac '
-        '(eski ekran rozetinin karsiligi — regresyon yok)', (tester) async {
+    testWidgets('outbox bekleyen > 0: seride "Gönderim Kuyruğu" karti girer '
+        '(cevrimdisi saha kaniti gorunur kalir)', (tester) async {
       _tall(tester);
       await tester.pumpWidget(_app(UserRole.tesisGorevlisi, pending: 3));
       await tester.pumpAndSettle();
-
       expect(find.text('Gönderim Kuyruğu'), findsOneWidget);
       expect(find.text('3 bekleyen'), findsOneWidget);
+    });
+
+    testWidgets('outbox bos: serit referans duzeninde kalir (ek kart YOK)',
+        (tester) async {
+      _tall(tester);
+      await tester.pumpWidget(_app(UserRole.tesisGorevlisi));
+      await tester.pumpAndSettle();
+      expect(find.text('Gönderim Kuyruğu'), findsNothing);
     });
   });
 }

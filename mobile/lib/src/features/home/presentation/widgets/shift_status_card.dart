@@ -1,176 +1,130 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/text/tr_upper.dart';
+import '../../../../core/theme/home_tokens.dart';
+import '../../domain/home_view_models.dart';
+import 'home_card.dart';
 
-/// Vardiya kartinin durumu → cip etiketi + rengi.
-enum ShiftStatus {
-  aktif('Aktif', Color(0xFF16A34A)), // yesil
-  planlandi('Planlandı', Color(0xFF2563EB)), // mavi
-  yonetici('Yönetici', Color(0xFF7C3AED)); // mor
+/// [VardiyaDurum] → cip etiketi + rengi (referans: AKTİF yesil, PLANLANDI
+/// mavi, YÖNETİCİ mor).
+extension VardiyaDurumStil on VardiyaDurum {
+  String get etiket => switch (this) {
+        VardiyaDurum.aktif => 'Aktif',
+        VardiyaDurum.planlandi => 'Planlandı',
+        VardiyaDurum.yonetici => 'Yönetici',
+      };
 
-  const ShiftStatus(this.label, this.color);
-
-  final String label;
-  final Color color;
+  Color get renk => switch (this) {
+        VardiyaDurum.aktif => HomeTokens.green,
+        VardiyaDurum.planlandi => HomeTokens.primary,
+        VardiyaDurum.yonetici => HomeTokens.purple,
+      };
 }
 
-/// Referans "Vardiya Durumu" bolumundeki tek kisi karti: avatar (opsiyonel
-/// online noktasi) + vardiya adi + saat araligi / kisi + durum cipi + alt
-/// satirda gorevli sayisi ("👥 2 Görevli") ya da "● Online". Yatay listede
-/// kullanilir (sabit genislik).
+/// Referans "Vardiya Durumu" seridindeki tek kart: vardiya adi + saat araligi
+/// (ya da yonetici adi), 56px yuvarlak avatar + yesil online noktasi, durum
+/// cipi, altta kisi ikonu + "2 Görevli" (ya da yesil nokta + "Online").
 class ShiftStatusCard extends StatelessWidget {
-  const ShiftStatusCard({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    required this.status,
-    required this.footer,
-    this.online = false,
-    this.avatarUrl,
-  });
+  const ShiftStatusCard({super.key, required this.kart});
 
-  final String title;
-  final String subtitle;
-  final ShiftStatus status;
-  final String footer;
-  final bool online;
-  final String? avatarUrl;
+  final VardiyaKart kart;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SizedBox(
-      width: 150,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    final s = HomeSurface.of(context);
+    return HomeCard(
+      width: HomeTokens.shiftCardWidth,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            kart.baslik,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: HomeText.cardTitle.copyWith(color: s.heading),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            kart.altBaslik,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: HomeText.rowSub.copyWith(color: s.muted),
+          ),
+          const SizedBox(height: 10),
+          _Avatar(kart: kart),
+          const SizedBox(height: 10),
+          HomeChip(label: trUpper(kart.durum.etiket), accent: kart.durum.renk),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style:
-                    theme.textTheme.labelSmall?.copyWith(color: theme.hintColor),
-              ),
-              const SizedBox(height: 10),
-              _Avatar(color: status.color, online: online, avatarUrl: avatarUrl),
-              const SizedBox(height: 10),
-              _StatusChip(status: status),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (online)
-                    const Padding(
-                      padding: EdgeInsets.only(right: 5),
-                      child: _Dot(color: Color(0xFF16A34A)),
-                    )
-                  else
-                    Icon(Icons.groups_outlined, size: 14, color: theme.hintColor),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      footer,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelSmall
-                          ?.copyWith(color: theme.hintColor),
-                    ),
-                  ),
-                ],
+              if (kart.online)
+                const Padding(
+                  padding: EdgeInsets.only(right: 6),
+                  child: HomeDot(color: HomeTokens.online),
+                )
+              else ...[
+                Icon(Icons.groups_outlined, size: 15, color: s.muted),
+                const SizedBox(width: 5),
+              ],
+              Flexible(
+                child: Text(
+                  kart.altBilgi,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: HomeText.rowSub.copyWith(color: s.muted),
+                ),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
+/// 56px avatar + sag altta yesil online noktasi (kart zeminiyle cerceveli).
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.color, required this.online, this.avatarUrl});
+  const _Avatar({required this.kart});
 
-  final Color color;
-  final bool online;
-  final String? avatarUrl;
+  final VardiyaKart kart;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: color.withValues(alpha: 0.12),
-          backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-          child: avatarUrl == null ? Icon(Icons.person, color: color) : null,
-        ),
-        if (online)
+    final s = HomeSurface.of(context);
+    final accent = kart.durum.renk;
+    return SizedBox(
+      width: 60,
+      height: 56,
+      child: Stack(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: HomeTokens.tint(accent),
+            backgroundImage:
+                kart.avatarUrl != null ? NetworkImage(kart.avatarUrl!) : null,
+            child: kart.avatarUrl == null
+                ? Icon(Icons.person, color: accent, size: 28)
+                : null,
+          ),
           Positioned(
             right: 0,
-            bottom: 0,
+            bottom: 2,
             child: Container(
-              width: 12,
-              height: 12,
+              width: 13,
+              height: 13,
               decoration: BoxDecoration(
-                color: const Color(0xFF16A34A),
+                color: HomeTokens.online,
                 shape: BoxShape.circle,
-                border: Border.all(
-                    color: Theme.of(context).cardColor, width: 2),
+                border: Border.all(color: s.card, width: 2),
               ),
             ),
           ),
-      ],
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
-
-  final ShiftStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-        color: status.color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
+        ],
       ),
-      child: Text(
-        trUpper(status.label),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: status.color,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.3,
-            ),
-      ),
-    );
-  }
-}
-
-class _Dot extends StatelessWidget {
-  const _Dot({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }

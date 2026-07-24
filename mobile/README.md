@@ -1108,3 +1108,161 @@ denemez, ön plan mesajı state'e yansır, çift abonelik yok.
 > **Gerçek uçtan uca push cihaz testinde:** fiziksel cihaz + backend
 > `PUSH_PROVIDER=fcm` ile doğrulanacak (backend duman testi geçti; mobil
 > birim testleri Firebase'i sahteler).
+
+---
+
+## 14. Ana sayfa yeniden tasarımı — 3 rol, referans görseller (DEV-B)
+
+Ana ekran(lar) `docs/design-refs/` altındaki üç referans görsele göre yeniden
+kuruldu: `gorevli.jpeg` (güvenlik görevlisi), `site-sakini.jpeg` (site sakini),
+`yonetici.jpeg` (yönetici). Bu bölüm **mimari kararı**, **mock/gerçek veri
+sınırını** ve **gerçek uca bağlanacak noktaları** kayda geçirir.
+
+### Mimari karar: 3 ekran + tek paylaşımlı komponent seti
+
+Seçenekler "tek `HomeScreen` + rol konfigürasyonu" ve "3 ekran + paylaşımlı
+komponentler" idi. **İkincisi** seçildi:
+
+- Üç varyantın **UI'ı** neredeyse tamamen ortak (kabuk, kartlar, bölümler) —
+  bu yüzden **tüm görsel kod tek yerde**: `home/presentation/widgets/`. Kopya
+  üçüz UI kodu **yok**.
+- Farklılaşan şey UI değil, **veri kablolaması ve RBAC**: sakin `/me/dues`,
+  `/kargo`, `/visitors` izler; saha `/shifts` + `/cameras` izler (ve
+  `tesis_gorevlisi` KVKK gereği kargo/ziyaretçi/kamera **görmez**); yönetim
+  `/reports/financial-summary` + `/notifications` izler. Bunları tek bir
+  ekranda `if (role == ...)` ile toplamak, izinsiz rollerde **401/403
+  üretecek provider'ları da izlemek** anlamına gelirdi.
+- Bu yüzden her rol ekranı yalnızca ~150 satırlık **kablolama** dosyasıdır;
+  düzeni `HomeGovde` + paylaşılan bölüm widget'ları kurar.
+
+Rol → varyant eşlemesi **tek fonksiyondadır**: `homeVaryantForRole`
+(`home/domain/home_varyant.dart`). Eşleşmeyen/eksik rol (`unknown`) için
+güvenli varsayılan **görevli** düzenidir. `admin` → yönetici varyantı
+(`YoneticiHomeScreen(role: admin)`).
+
+### Tasarım token'ları
+
+Tüm renk/ölçü/tipografi `lib/src/core/theme/home_tokens.dart` içinde; ekranlarda
+ve bölüm widget'larında **ham değer yazılmaz**.
+
+| Token | Değer |
+|---|---|
+| primary / green / orange / purple / red | `#2563EB` / `#16A34A` / `#F59E0B` / `#8B5CF6` / `#EF4444` |
+| arka plan / kart / ayraç | `#F4F6FA` / `#FFFFFF` / `#F1F2F6` |
+| metin: başlık / gövde / ikincil | `#111827` / `#374151` / `#6B7280` |
+| kart | radius 16, gölge yok + %4 siyah 1px kenarlık |
+| ikon konteyneri | 56×56, radius 14, tint (%12) zemin, 26px ikon |
+| chip | radius 8, tint zemin + accent metin, 11px semibold |
+| FAB | 56px, alt bar'ın 18px üstüne taşar |
+
+Vurgu renkleri iki temada da aynıdır; yüzey/metin renkleri `HomeSurface.of(context)`
+ile **koyu moda** çözülür (ana ekran koyu temada da okunur).
+
+### Mock ↔ gerçek veri sınırı (tek kural)
+
+> **Mock tabandır, gerçek API verisi geldiğinde onun üzerine yazar.**
+
+Referans görsellerdeki her değer `MockHomeRepository`
+(`home/data/home_repository.dart`) içinde **tek yerde** durur; rol ekranları önce
+bu tabanı alır, sonra ellerindeki gerçek provider değerleriyle ilgili alanları
+değiştirir. Böylece gerçek uç varsa **gerçek veri** görünür, yoksa ekran referans
+düzeninde kalır (boş beyaz ekran yok). `test/home_repository_test.dart` bu
+değerleri kilitler — bir metin/sayaç değişirse test yakalar.
+
+**Şu an GERÇEK uca bağlı:** hava (`/weather`), tesis adı (`/tenant/settings`),
+vardiya (`/shifts`), kamera (`/cameras`), kargo (`/kargo`), ziyaretçi
+(`/visitors`), aidat (`/me/dues`), duyuru (`/announcements`), bildirim sayacı ve
+yönetim akışı (`/notifications`), açık şikayet (`/complaints`), tahsilat ve oran
+(`/reports/financial-summary`), yönetici adı (`/yonetici-iletisim`).
+
+### TODO: gerçek uç (backend'de karşılığı YOK — bilinçli olarak uydurulmadı)
+
+| Bölüm / alan | Nerede | Not |
+|---|---|---|
+| **Araç Plaka** ("8 Giriş") | görevli hızlı erişim | plaka tanıma ucu yok; kartın rotası da yok (dokunma "yakında" der) |
+| **İhlaller** ("4 Yeni" / "5 Yeni") | görevli + yönetici hızlı erişim | ihlal/olay ucu yok |
+| **Ziyaretçi "içeride" sayacı** ("2 İçeride") | görevli hızlı erişim | `/visitors` durum alanı taşımaz (log-only akış); şimdilik kayıt sayısı gösterilir |
+| **Otopark Doluluk** ("78 / 120", "%65") | yönetici hızlı erişim + Hızlı Özet | otopark ucu yok |
+| **Toplam Daire** ("512") | yönetici Hızlı Özet | toplam daire sayısı veren uç yok |
+| **Aidat Durumu daire sayısı** ("104 Daire") | yönetici hızlı erişim | finansal özet daire kırılımı vermiyor |
+| **Görev bekleyen sayısı** ("6 Bekliyor") | yönetici hızlı erişim | sayaç için ayrı uç yok (liste çekmeden) |
+| **Görevli "Son Hareketler"** (kapı/araç/kamera satırları) | görevli | birleşik saha aktivite ucu yok; sakin/yönetici akışları gerçek verilerden istemcide birleştirilir |
+| **Duyuru görseli** | sakin duyuru kartı | `foto_url` boşsa gri yer tutucu çizilir |
+| **Canlı kamera karesi** | görevli kamera şeridi | kart içinde video **oynatılmaz**; 16:10 yer tutucu + oynat butonu, dokunma mevcut oynatıcı ekranına gider |
+| **Gürültü şikayeti** | sakin hızlı erişim | ayrı uç yok; mevcut `/complaints` akışına gider |
+
+### Referans düzenden bilinçli sapmalar
+
+1. **Marka adı.** Referans görsellerdeki kelime işareti "YÖNETİYOR"dur (hazır
+   mockup markası). Ürünün gerçek adı **Yönetio**'dur ve launcher ikonu, splash,
+   admin-web ve android kaynakları buna bağlıdır; mockup metnini kopyalamak ürünü
+   kendi markasından koparırdı. **Dizilim** (kalkan işareti + kelime işareti +
+   harf aralı "GÜVENLİK & DANIŞMANLIK" alt başlığı) görselle birebir, **kelime
+   işareti** gerçek markadır.
+2. **"Tüm Modüller" → hamburger çekmecesi.** Referans ana ekranlarda hızlı erişim
+   8 (görevlide 5) sabit karta indi. Kalan modüller (Turlarım, Görevlerim,
+   Demirbaş, Rezervasyon, Entegrasyonlar…) erişilebilir kalsın diye **app-bar'daki
+   hamburger menüye** taşındı (`HomeDrawer`). Görünürlüğün tek kaynağı yine
+   `homeMenuForRole`.
+3. **Gönderim Kuyruğu kartı.** Referans şeritte yok; ancak bekleyen çevrimdışı
+   okutma varken (`pending > 0`) saha şeridine **ek bir kart** girer — çevrimdışı
+   saha kanıtı ana ekrandan kaybolmasın diye. `pending = 0` iken (normal durum)
+   şerit referansla birebir 5 karttır.
+4. **İkon konteyneri ölçeği.** Spesifikasyondaki 56×56 kutu, 4 sütunlu izgarada
+   hücre ~83dp'ye düştüğü için kartı boğuyordu; izgarada kutu **hücre
+   genişliğinin ~%42'sine** ölçeklenir (referans görseldeki ikon/kart oranıyla
+   aynı), şeritte spesifikasyon değeri korunur.
+5. **Şerit kart genişliği.** Spesifikasyon ~110dp der; referans görselde 5 kartın
+   tamamı ekrana sığar — telefon genişliğinde ikisi aynı anda sağlanamaz
+   (5×110 + boşluklar ≈ 610dp). Şerit **~4.5 kart görünecek şekilde** ölçeklenir
+   (min 84dp, geniş ekranda 110dp) ve kaydırılabilir kalır.
+6. **İzgara hücreleri referanstan bir miktar uzun.** "Otopark Kullanımı" gibi
+   Türkçe başlıklar telefon genişliğinde iki satıra sarıyor; taşma üretmemek için
+   hücre oranı 0.70'tir.
+7. **Sakin bildirim rozeti yok.** Referansta zilde "3" rozeti var; `/notifications`
+   backend RBAC'inde sakine kapalı olduğu için sakin ekranında rozet gösterilmez
+   (uydurma sayı yerine yokluk).
+
+### Öz-denetim ekran görüntüsü üretimi
+
+Üç ekranın PNG çıktısı — referans görsellerle yan yana karşılaştırmak için:
+
+```bash
+flutter test --dart-define=HOME_GOLDEN=true --update-goldens \
+  test/tools/home_referans_golden_test.dart
+# → test/tools/goldens/{gorevli,site_sakini,yonetici}.png
+```
+
+Bu bir regresyon testi **değildir** (font/Skia sürümüne duyarlı): normal
+`flutter test` koşusunda atlanır, çıktılar git'e girmez.
+
+### Dosya haritası
+
+```
+core/theme/home_tokens.dart              tasarım token'ları (tek kaynak)
+features/home/
+  domain/home_varyant.dart               rol → referans düzen eşlemesi
+  domain/home_view_models.dart           bölümlerin saf görünüm modelleri
+  domain/home_tabs.dart                  alt-bar yuvaları (aktif/pasif ikon)
+  domain/home_menu.dart                  rol → modül görünürlüğü (değişmedi)
+  domain/son_hareketler.dart             istemcide birleşik akış (değişmedi)
+  data/home_repository.dart              HomeRepository + MockHomeRepository
+  presentation/home_gate.dart            rol yönlendirme
+  presentation/home_mappers.dart         gerçek API → görünüm modeli
+  presentation/{saha,resident,yonetici}_home_screen.dart   veri kablolaması
+  presentation/widgets/
+    home_shell.dart      app-bar (hamburger+marka+zil+avatar) + taşan FAB'lı alt bar
+    home_drawer.dart     hamburger çekmecesi: rolün tüm modülleri
+    home_marka.dart      marka kilidi
+    home_govde.dart      karşılama + sıralı bölümler
+    home_header.dart     "Merhaba, X" + rol alt satırı + hava
+    home_card.dart       beyaz kart, tint ikon kutusu, chip, nokta
+    section_header.dart  bölüm başlığı + "Tümünü Gör ›"
+    hizli_erisim.dart    yatay şerit (görevli) + 4×2 izgara (sakin/yönetici)
+    vardiya_seridi.dart + shift_status_card.dart   "Vardiya Durumu"
+    stat_tile.dart       "Hızlı Özet" kutuları + izgarası
+    son_hareketler_karti.dart + activity_row.dart  tek kart, 1px ayraçlı satırlar
+    odeme_karti.dart     "Ödeme ve Aidat Durumu" iki sütun
+    duyuru_karti.dart    duyuru kartı (96×72 görsel + "Yeni" çipi)
+    kamera_seridi.dart   "Canlı Kamera" 16:10 yer tutucu şeridi
+```

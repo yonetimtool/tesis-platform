@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/data/current_user_provider.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
-import 'package:mobile/src/features/home/presentation/admin_home_screen.dart';
 import 'package:mobile/src/features/home/presentation/home_gate.dart';
+import 'package:mobile/src/features/home/presentation/yonetici_home_screen.dart';
 import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
 import 'package:mobile/src/features/profile/domain/profile.dart';
@@ -27,11 +27,19 @@ Widget _gate(UserRole role) => ProviderScope(
     );
 
 void main() {
-  testWidgets('admin -> AdminHomeScreen (eski izgara HomeScreen emekli)',
+  testWidgets('admin -> yonetim duzeni (brief: admin→yönetici varyanti)',
       (tester) async {
+    tester.view.physicalSize = const Size(400, 3600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
     await tester.pumpWidget(_gate(UserRole.admin));
     await tester.pumpAndSettle();
-    expect(find.byType(AdminHomeScreen), findsOneWidget);
+
+    final ekran = tester.widget<YoneticiHomeScreen>(
+        find.byType(YoneticiHomeScreen));
+    expect(ekran.role, UserRole.admin);
+    expect(find.text('Yönetici Paneli'), findsOneWidget);
   });
 
   testWidgets('unknown (rol cozulmeden, saniye alti) -> yalin bekleme '
@@ -40,7 +48,7 @@ void main() {
     await tester.pump(); // ilk kare — rol "cozulmus" ama unknown
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.byType(AdminHomeScreen), findsNothing);
+    expect(find.byType(YoneticiHomeScreen), findsNothing);
     expect(find.text('Duyurular'), findsNothing);
   });
 }

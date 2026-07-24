@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Ana ekran tasarim denetimi ciktilari (yerel; bkz. test/tools/home_referans_golden_test.dart)
+test/tools/goldens/

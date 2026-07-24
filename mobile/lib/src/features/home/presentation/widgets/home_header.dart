@@ -1,38 +1,37 @@
 import 'package:flutter/material.dart';
 
-/// Hava durumu verisi — SAF deger tipi. Veri GET /weather'dan gelir
-/// (weatherProvider); yukleme/hata durumunda [HomeHeader.weather] null gecilir
-/// ve blok gizli kalir.
-class HomeWeather {
-  const HomeWeather({
-    required this.tempLabel,
-    required this.city,
-    this.icon = Icons.wb_sunny_outlined,
-  });
+import '../../../../core/theme/home_tokens.dart';
+import '../../domain/home_view_models.dart';
 
-  final String tempLabel; // or. "24°C"
-  final String city; // or. "İstanbul"
-  final IconData icon; // durum ikonu (weatherIcon); varsayilan gunes
-}
+/// Selamlamanin alt satir bicimi — referans gorsellerde uc varyant:
+/// tesis secici (gorevli: "Mavi Residence ⌄"), duz gri (sakin: daire/blok)
+/// ve MAVI (yonetici: "Yönetici Paneli").
+enum HomeAltBaslikStili { tesisSecici, gri, mavi }
 
-/// Referans ana ekranin karsilama blogu: solda "Merhaba, {ad}" + rol/daire
-/// alt-basligi, sagda opsiyonel hava (gunes ikonu + sicaklik + sehir). Bildirim
-/// zili + avatar app-bar satirindadir (HomeShell) — burada DEGIL.
+/// Referans ana ekranin karsilama blogu: solda "Merhaba, {ad}" (26 bold) +
+/// role gore alt satir; sagda hava blogu (gunes ikonu + "24°C" bold + sehir).
+/// Bildirim zili ve avatar app-bar satirindadir (HomeShell) — burada DEGIL.
 class HomeHeader extends StatelessWidget {
   const HomeHeader({
     super.key,
     required this.greetingName,
     required this.subtitle,
-    this.weather,
+    this.altBaslikStili = HomeAltBaslikStili.gri,
+    this.hava,
+    this.onAltBaslik,
   });
 
   final String greetingName;
   final String subtitle;
-  final HomeWeather? weather;
+  final HomeAltBaslikStili altBaslikStili;
+  final HomeHava? hava;
+
+  /// Tesis secici dokunmasi (gorevli). null → dokunmasiz gorunum.
+  final VoidCallback? onAltBaslik;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final s = HomeSurface.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -41,66 +40,109 @@ class HomeHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Merhaba, $greetingName',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w700),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Merhaba, $greetingName',
+                  maxLines: 1,
+                  style: HomeText.greeting.copyWith(color: s.heading),
+                ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: theme.hintColor, fontWeight: FontWeight.w500),
+              const SizedBox(height: 4),
+              _AltBaslik(
+                metin: subtitle,
+                stil: altBaslikStili,
+                onTap: onAltBaslik,
               ),
             ],
           ),
         ),
-        if (weather != null) ...[
+        if (hava != null) ...[
           const SizedBox(width: 12),
-          _WeatherBlock(weather: weather!),
+          _HavaBlogu(hava: hava!),
         ],
       ],
     );
   }
 }
 
-class _WeatherBlock extends StatelessWidget {
-  const _WeatherBlock({required this.weather});
+class _AltBaslik extends StatelessWidget {
+  const _AltBaslik({required this.metin, required this.stil, this.onTap});
 
-  final HomeWeather weather;
+  final String metin;
+  final HomeAltBaslikStili stil;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final s = HomeSurface.of(context);
+    final renk = switch (stil) {
+      HomeAltBaslikStili.mavi => HomeTokens.primary,
+      HomeAltBaslikStili.gri || HomeAltBaslikStili.tesisSecici => s.muted,
+    };
+    final metinWidget = Text(
+      metin,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: HomeText.greetingSub.copyWith(
+        color: renk,
+        fontWeight: stil == HomeAltBaslikStili.mavi
+            ? FontWeight.w600
+            : FontWeight.w400,
+      ),
+    );
+
+    if (stil != HomeAltBaslikStili.tesisSecici) return metinWidget;
+
+    // Tesis secici gorunumu: metin + asagi ok. Secim akisi HENUZ YOK
+    // (tek tenant oturumu) — dokunma opsiyoneldir, ok yalniz gorunumdur.
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: metinWidget),
+          const SizedBox(width: 4),
+          Icon(Icons.keyboard_arrow_down, size: 20, color: s.muted),
+        ],
+      ),
+    );
+  }
+}
+
+class _HavaBlogu extends StatelessWidget {
+  const _HavaBlogu({required this.hava});
+
+  final HomeHava hava;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = HomeSurface.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
-          weather.icon,
-          size: 22,
-          // Amber yalniz gunes ikonunda; diger durumlar notr renkte.
-          color: weather.icon == Icons.wb_sunny_outlined
-              ? Colors.amber
-              : theme.hintColor,
+          hava.ikon,
+          size: 26,
+          // Amber yalniz gunes ikonunda; diger hava durumlari notr.
+          color: hava.ikon == Icons.wb_sunny_outlined
+              ? HomeTokens.orange
+              : s.muted,
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              weather.tempLabel,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              hava.sicaklik,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)
+                  .copyWith(color: s.heading),
             ),
             Text(
-              weather.city,
-              style:
-                  theme.textTheme.labelSmall?.copyWith(color: theme.hintColor),
+              hava.sehir,
+              style: HomeText.rowSub.copyWith(color: s.muted),
             ),
           ],
         ),

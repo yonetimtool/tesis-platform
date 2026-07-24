@@ -6,7 +6,6 @@ import '../../auth/domain/user_role.dart';
 import '../../profile/data/profile_api.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../tenant/presentation/setup_tenant_screen.dart';
-import 'admin_home_screen.dart';
 import 'resident_home_screen.dart';
 import 'saha_home_screen.dart';
 import 'yonetici_home_screen.dart';
@@ -31,7 +30,10 @@ class HomeGate extends ConsumerWidget {
     if (role == UserRole.security || role == UserRole.tesisGorevlisi) {
       return SahaHomeScreen(role: role);
     }
-    if (role == UserRole.admin) return const AdminHomeScreen();
+    // Platform admini yonetim duzenini gorur (brief: admin→yönetici varyanti).
+    if (role == UserRole.admin) {
+      return const YoneticiHomeScreen(role: UserRole.admin);
+    }
     if (role != UserRole.yonetici) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

@@ -96,8 +96,10 @@ void main() {
     await _tapFab(tester);
 
     expect(find.text('Olay Bildir'), findsNWidgets(2)); // FAB etiketi + menu
-    expect(find.text('Görevlerim'), findsNWidgets(2)); // kart + menu
-    expect(find.text('Turlarım'), findsNWidgets(2));
+    // Referans hizli erisim seridinde "Görevlerim"/"Turlarım" karti yok
+    // (o moduller cekmecede) — bu yuzden yalniz FAB menusunde gorunurler.
+    expect(find.text('Görevlerim'), findsOneWidget);
+    expect(find.text('Turlarım'), findsOneWidget);
   });
 
   testWidgets('tesisGorevlisi FAB: Turlarım YOK (patrol RBAC disi)',

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/src/features/home/domain/home_view_models.dart';
 import 'package:mobile/src/features/home/presentation/widgets/shift_status_card.dart';
 
 Widget _wrap(Widget child) =>
@@ -62,10 +63,12 @@ void main() {
     testWidgets('vardiya adi + saat araligi + gorevli sayisi gosterir',
         (tester) async {
       await tester.pumpWidget(_wrap(const ShiftStatusCard(
-        title: 'Sabah Vardiyası',
-        subtitle: '06:00 - 14:00',
-        status: ShiftStatus.aktif,
-        footer: '2 Görevli',
+        kart: VardiyaKart(
+          baslik: 'Sabah Vardiyası',
+          altBaslik: '06:00 - 14:00',
+          durum: VardiyaDurum.aktif,
+          altBilgi: '2 Görevli',
+        ),
       )));
       expect(find.text('Sabah Vardiyası'), findsOneWidget);
       expect(find.text('06:00 - 14:00'), findsOneWidget);
@@ -75,38 +78,46 @@ void main() {
     testWidgets('durum cipi etiketi: AKTİF / PLANLANDI / YÖNETİCİ',
         (tester) async {
       await tester.pumpWidget(_wrap(const ShiftStatusCard(
-        title: 'Sabah',
-        subtitle: '06:00 - 14:00',
-        status: ShiftStatus.aktif,
-        footer: '2 Görevli',
+        kart: VardiyaKart(
+            baslik: 'Sabah',
+            altBaslik: '06:00 - 14:00',
+            durum: VardiyaDurum.aktif,
+            altBilgi: '2 Görevli'),
       )));
       expect(find.text('AKTİF'), findsOneWidget);
 
       await tester.pumpWidget(_wrap(const ShiftStatusCard(
-        title: 'Gece',
-        subtitle: '22:00 - 06:00',
-        status: ShiftStatus.planlandi,
-        footer: '2 Görevli',
+        kart: VardiyaKart(
+            baslik: 'Gece',
+            altBaslik: '22:00 - 06:00',
+            durum: VardiyaDurum.planlandi,
+            altBilgi: '2 Görevli'),
       )));
       expect(find.text('PLANLANDI'), findsOneWidget);
 
       await tester.pumpWidget(_wrap(const ShiftStatusCard(
-        title: 'Yönetici',
-        subtitle: 'Kerem Aşçı',
-        status: ShiftStatus.yonetici,
-        footer: 'Online',
-        online: true,
+        kart: VardiyaKart(
+            baslik: 'Yönetici',
+            altBaslik: 'Kerem Aşçı',
+            durum: VardiyaDurum.yonetici,
+            altBilgi: 'Online',
+            online: true),
       )));
       expect(find.text('YÖNETİCİ'), findsOneWidget);
       expect(find.text('Kerem Aşçı'), findsOneWidget);
+      expect(find.text('Online'), findsOneWidget);
     });
 
     testWidgets('avatarUrl verilirse resimli avatar cizilir', (tester) async {
       await HttpOverrides.runZoned(() async {
         await tester.pumpWidget(_wrap(const ShiftStatusCard(
-          title: 'Sabah', subtitle: '06:00 - 14:00',
-          status: ShiftStatus.aktif, footer: '2 Görevli',
-          avatarUrl: 'https://example.com/a.jpg',
+          kart: VardiyaKart(
+            baslik: 'Sabah',
+            altBaslik: '06:00 - 14:00',
+            durum: VardiyaDurum.aktif,
+            altBilgi: '2 Görevli',
+            avatarUrl: 'https://example.com/a.jpg',
+          ),
         )));
         await tester.pumpAndSettle();
         final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
