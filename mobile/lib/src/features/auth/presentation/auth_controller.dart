@@ -59,20 +59,17 @@ class AuthState {
 class AuthController extends Notifier<AuthState> {
   @override
   AuthState build() {
-    // Acilista saklanan oturumu (refresh token) async olarak kontrol et.
-    _restoreSession();
-    return const AuthState();
-  }
-
-  Future<void> _restoreSession() async {
-    final repo = ref.read(authRepositoryProvider);
-    // "Beni hatirla" isaretliyse refresh denenir; degilse/basarisizsa login.
-    final restored = await repo.restoreSession();
-    state = state.copyWith(
-      status: restored
-          ? AuthStatus.authenticated
-          : AuthStatus.unauthenticated,
+    // WP2.3 — SOGUK ACILIS her zaman LOGIN'e duser: sessiz auto-login
+    // (restoreSession + refresh) BILEREK kaldirildi. "Beni hatirla"
+    // isaretliyse login ekrani alanlari on-doldurur (telefon+parola+kutu)
+    // ve kullanici Giris'e basar. Oturum-ICI davranis degismez (bu build
+    // yalniz uygulama acilisinda kosar; interceptor'in refresh akisi ve
+    // arka plan donusleri ayni kalir). Mikro-gorevle isaretle: senkron
+    // build icinde state yazilamaz.
+    Future.microtask(
+      () => state = state.copyWith(status: AuthStatus.unauthenticated),
     );
+    return const AuthState();
   }
 
   /// Mobil giris (cep telefonu + kod|parola). Kalici parolayla giriste

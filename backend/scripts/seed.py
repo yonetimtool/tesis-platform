@@ -280,6 +280,7 @@ def main() -> int:
             )
         print("[seed] vardiyalar: Sabah 06-14 (hafta_ici), Öğle 14-22, Gece 22-06")
 
+
         # 3b) BUTCE (Wave 2A): kategoriler + ornek defter + otomatik aidat→gelir.
         #     Para INTEGER KURUS. 'Aidat' otomatik gelir kategorisidir (basarili
         #     odeme kaydi burada toplanir).
@@ -973,6 +974,24 @@ def main() -> int:
                  "y": yonetici_id},
             )
         print("[seed] site kurallari: Otopark Kullanımı (1), Havuz Saatleri (2), Gürültü Kuralları (3)")
+
+        # Platform destek kanali (WP1): 1 demo bilet — panel/mobil listeler
+        # bos gorunmesin. (tenant_id, konu) NOT EXISTS ile idempotent.
+        conn.execute(
+            """
+            INSERT INTO platform_support_ticket
+                (tenant_id, acan_user_id, konu, aciklama)
+            SELECT %(t)s, %(u)s,
+                   'Panel bildirim gecikmesi',
+                   'Duyuru yayınladıktan sonra mobil bildirimler geç geliyor.'
+            WHERE NOT EXISTS (
+                SELECT 1 FROM platform_support_ticket
+                WHERE tenant_id = %(t)s AND konu = 'Panel bildirim gecikmesi'
+            )
+            """,
+            {"t": tenant_id, "u": yonetici_id},
+        )
+        print("[seed] destek bileti: 'Panel bildirim gecikmesi' (acik)")
 
         # --- Demo denetim kayitlari (audit_log, WP1) — dogal aksiyon ornekleri
         # Idempotent: tenant'ta zaten audit yoksa birkac ornek satir ekle.

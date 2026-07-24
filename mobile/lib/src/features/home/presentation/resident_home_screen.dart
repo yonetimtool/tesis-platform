@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../routing/app_router.dart';
 import '../../announcements/data/announcement_api.dart';
 import '../../auth/domain/user_role.dart';
+import '../../auth/presentation/auth_controller.dart';
+import 'widgets/bildir_menu_sheet.dart';
 import '../../budget/domain/budget_models.dart' show formatKurusAsTl;
 import '../../dues/data/dues_api.dart';
 import '../../kargo/data/kargo_api.dart';
@@ -54,8 +56,16 @@ class ResidentHomeScreen extends ConsumerWidget {
       role: UserRole.resident,
       currentIndex: 0,
       onDestinationSelected: (i) => _onTab(context, i),
-      onBildir: () => context.push(AppRoutes.complaints),
+      // WP2.4: merkez FAB rol-bazli olusturma menusu acar.
+      onBildir: () => showBildirMenu(context, girisler: const [
+        BildirGiris(icon: Icons.rate_review_outlined,
+            label: 'Talep / Arıza Bildir', route: AppRoutes.complaints),
+        BildirGiris(icon: Icons.event_available_outlined,
+            label: 'Rezervasyon Yap', route: AppRoutes.rezervasyon),
+      ], onSec: (r) => context.push(r)),
       onProfile: () => context.push(AppRoutes.profile),
+      onLogout: () =>
+          ref.read(authControllerProvider.notifier).logout(),
       body: RoleHomeBody(
         role: UserRole.resident,
         greetingName: ad,

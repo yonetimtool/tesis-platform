@@ -2568,3 +2568,49 @@ class TransparencyListResponse(BaseModel):
 
 class TransparencyPublishRequest(BaseModel):
     yayin: bool
+
+
+# ------------------------- platform destek kanali -------------------------- #
+SupportDurum = Literal["acik", "cozuldu"]
+
+
+class SupportTicketCreate(BaseModel):
+    konu: str = Field(..., min_length=1, max_length=200)
+    aciklama: str = Field(..., min_length=1, max_length=4000)
+
+
+class SupportTicketOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tenant_id: uuid.UUID
+    acan_user_id: uuid.UUID
+    konu: str
+    aciklama: str
+    durum: str
+    admin_cevap: str | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class SupportTicketAdminOut(SupportTicketOut):
+    """Admin capraz-tenant listesi: tenant adi da doner."""
+
+    tenant_ad: str | None = None
+
+
+class SupportTicketListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[SupportTicketOut]
+
+
+class SupportTicketAdminListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[SupportTicketAdminOut]
+
+
+class SupportTicketUpdate(BaseModel):
+    """Admin yaniti: en az bir alan verilmeli (router zorlar)."""
+
+    durum: SupportDurum | None = None
+    admin_cevap: str | None = Field(None, max_length=4000)

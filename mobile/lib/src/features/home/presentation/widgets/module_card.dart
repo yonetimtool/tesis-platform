@@ -46,7 +46,10 @@ class ModuleCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            // Referans 1:1 (WP2): kart icerigi ORTALI (ikon ustte-orta,
+            // baslik + sayac ortada) — eski sola-hizali gorunumden sapmaydi.
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               // Pastel yuvarlak-kare ikon chip.
@@ -66,6 +69,7 @@ class ModuleCard extends StatelessWidget {
                 child: Text(
                   title,
                   maxLines: 2,
+                  textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,

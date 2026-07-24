@@ -202,16 +202,15 @@ void main() {
     expect(state.kayitliToken, 'tok-1');
   });
 
-  test('acilista oturum zaten aciksa da kayit yapilir (restore akisi)',
-      () async {
-    authRepo.sessionExists = true;
+  test('WP2.3: soguk acilis auto-login YAPMAZ -> push kaydi da olmaz '
+      '(kayit login SONRASI akista — ustteki test)', () async {
+    authRepo.sessionExists = true; // eskiden restore tetiklerdi
     final container = makeContainer();
     container.read(pushSetupProvider);
-    container.read(authControllerProvider); // restore'u tetikle
+    container.read(authControllerProvider);
 
-    await waitFor(
-        () => container.read(pushRegistrarProvider).kayitliToken == 'tok-1');
-    expect(api.registered.single.token, 'tok-1');
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(api.registered, isEmpty); // sessiz oturum yok -> kayit yok
   });
 
   test('Firebase baslatilamazsa: push devre disi, kayit yok, cokme yok',

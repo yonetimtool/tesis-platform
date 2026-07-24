@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../routing/app_router.dart';
 import '../../auth/domain/user_role.dart';
+import '../../auth/presentation/auth_controller.dart';
+import 'widgets/bildir_menu_sheet.dart';
 import '../../notifications/data/notifications_controller.dart';
 import '../../profile/data/profile_api.dart';
 import '../../scan/data/scan_outbox.dart';
@@ -31,8 +33,16 @@ class AdminHomeScreen extends ConsumerWidget {
       currentIndex: 0,
       unreadCount: unread,
       onDestinationSelected: (i) => _onTab(context, i),
-      onBildir: () => context.push(AppRoutes.complaints),
+      // WP2.4: merkez FAB rol-bazli olusturma menusu acar.
+      onBildir: () => showBildirMenu(context, girisler: const [
+        BildirGiris(icon: Icons.rate_review_outlined,
+            label: 'Olay Bildir', route: AppRoutes.complaints),
+        BildirGiris(icon: Icons.task_alt,
+            label: 'Görevlerim', route: AppRoutes.tasks),
+      ], onSec: (r) => context.push(r)),
       onProfile: () => context.push(AppRoutes.profile),
+      onLogout: () =>
+          ref.read(authControllerProvider.notifier).logout(),
       body: RoleHomeBody(
         role: UserRole.admin,
         greetingName: ad,

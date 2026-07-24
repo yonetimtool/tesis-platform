@@ -10,6 +10,7 @@ Widget _shell({
   void Function(int)? onDestinationSelected,
   VoidCallback? onBildir,
   VoidCallback? onProfile,
+  VoidCallback? onLogout,
 }) =>
     MaterialApp(
       home: HomeShell(
@@ -19,6 +20,7 @@ Widget _shell({
         onDestinationSelected: onDestinationSelected ?? (_) {},
         onBildir: onBildir ?? () {},
         onProfile: onProfile,
+        onLogout: onLogout,
         body: const Text('GOVDE'),
       ),
     );
@@ -70,11 +72,30 @@ void main() {
       expect(find.text('0'), findsNothing);
     });
 
-    testWidgets('avatar dokununca onProfile cagrilir', (tester) async {
+    testWidgets('avatar dokununca hesap menusu acilir: Profil -> onProfile, '
+        'Çıkış Yap -> onLogout (WP2.2 — logout her rolde erisilir)',
+        (tester) async {
       var profile = 0;
-      await tester.pumpWidget(_shell(onProfile: () => profile++));
+      var logout = 0;
+      await tester.pumpWidget(_shell(
+        onProfile: () => profile++,
+        onLogout: () => logout++,
+      ));
+
       await tester.tap(find.byKey(const Key('home-avatar')));
+      await tester.pumpAndSettle();
+      expect(find.text('Profil'), findsOneWidget);
+      expect(find.text('Çıkış Yap'), findsOneWidget);
+
+      await tester.tap(find.text('Profil'));
+      await tester.pumpAndSettle();
       expect(profile, 1);
+
+      await tester.tap(find.byKey(const Key('home-avatar')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Çıkış Yap'));
+      await tester.pumpAndSettle();
+      expect(logout, 1);
     });
   });
 }

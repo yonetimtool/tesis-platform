@@ -1642,4 +1642,27 @@ __all__ = [
     "UnitComplaint",
     "UNIT_COMPLAINT_KATEGORI",
     "UNIT_COMPLAINT_DURUM",
+    "PlatformSupportTicket",
 ]
+
+
+# --------------------------------------------------------------------------- #
+class PlatformSupportTicket(Base):
+    """Yonetici -> Yonetio platform ekibi destek bileti (migration 0004).
+    Yanit/durum guncellemesi YALNIZ admin'in SECURITY DEFINER fonksiyonundan
+    gecer (app_rw'de UPDATE grant yok)."""
+
+    __tablename__ = "platform_support_ticket"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    # FK yok (audit ile ayni gerekce): acan silinse de bilet kaydi kalir.
+    acan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    konu: Mapped[str] = mapped_column(Text, nullable=False)
+    aciklama: Mapped[str] = mapped_column(Text, nullable=False)
+    durum: Mapped[str] = mapped_column(Text, nullable=False, default="acik")
+    admin_cevap: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()

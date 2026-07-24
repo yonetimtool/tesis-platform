@@ -29,6 +29,7 @@ import '../features/reports/presentation/reports_screen.dart';
 import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
 import '../features/notifications/presentation/notifications_screen.dart';
+import '../features/support/presentation/destek_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/staff/presentation/staff_screen.dart';
 import '../features/dis_hizmet/presentation/dis_hizmet_screen.dart';
@@ -80,6 +81,7 @@ class AppRoutes {
   static const sikayetlerim = '/sikayetlerim';
   static const settings = '/settings';
   static const notifications = '/notifications';
+  static const destek = '/destek';
   static const profile = '/profile';
   static const personel = '/personel';
   static const sakinler = '/sakinler';
@@ -341,6 +343,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         // gorevlisi ekranlarindan baglanmaz).
         path: AppRoutes.notifications,
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        // Destek (WP1) — yonetici -> Yonetio ekibi (RBAC backend'de).
+        path: AppRoutes.destek,
+        builder: (context, state) => const DestekScreen(),
       ),
       GoRoute(
         path: AppRoutes.profile,

@@ -18,6 +18,7 @@ class HomeShell extends StatelessWidget {
     required this.onDestinationSelected,
     required this.onBildir,
     this.onProfile,
+    this.onLogout,
     this.unreadCount = 0,
   });
 
@@ -33,8 +34,12 @@ class HomeShell extends StatelessWidget {
   /// Merkez "Bildir" FAB.
   final VoidCallback onBildir;
 
-  /// Avatar dokunuldu (profil).
+  /// Hesap menusu "Profil" secildi.
   final VoidCallback? onProfile;
+
+  /// Hesap menusu "Çıkış Yap" secildi (WP2.2 — her rolde erisilir; oturumu
+  /// temizleyip login'e doner).
+  final VoidCallback? onLogout;
 
   /// Bildirim zili rozet sayisi (0 → rozet yok).
   final int unreadCount;
@@ -61,9 +66,10 @@ class HomeShell extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(right: 8, left: 4),
-            child: InkResponse(
+            child: Builder(builder: (context) => InkResponse(
               key: const Key('home-avatar'),
-              onTap: onProfile,
+              // Referans: avatar hesap menusunu acar (Profil + Çıkış Yap).
+              onTap: () => _hesapMenusu(context),
               radius: 22,
               child: CircleAvatar(
                 radius: 16,
@@ -72,7 +78,7 @@ class HomeShell extends StatelessWidget {
                 child: const Icon(Icons.person_outline,
                     size: 20, color: YonetioColors.navy),
               ),
-            ),
+            )),
           ),
         ],
       ),
@@ -83,6 +89,38 @@ class HomeShell extends StatelessWidget {
         unreadCount: unreadCount,
         onDestinationSelected: onDestinationSelected,
         onBildir: onBildir,
+      ),
+    );
+  }
+
+  /// Hesap menusu (referans: header avatari) — Profil + Çıkış Yap.
+  void _hesapMenusu(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.person_outline),
+              title: const Text('Profil'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                onProfile?.call();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Color(0xFFDC2626)),
+              title: const Text('Çıkış Yap',
+                  style: TextStyle(color: Color(0xFFDC2626))),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                onLogout?.call();
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
