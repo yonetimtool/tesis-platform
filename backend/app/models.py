@@ -166,6 +166,16 @@ class Tenant(Base):
     yonetim_email: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Dis Hizmetler bolumu notu (yonetici serbest metni; tum roller okur).
     dis_hizmet_notu: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Hava durumu konumu (0005) — baslikta gorunen ad + Open-Meteo koordinati.
+    konum_ad: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'İstanbul'")
+    )
+    konum_lat = mapped_column(
+        Numeric(9, 6), nullable=False, server_default=text("41.0082")
+    )
+    konum_lon = mapped_column(
+        Numeric(9, 6), nullable=False, server_default=text("28.9784")
+    )
     created_at = _created_at()
 
 
@@ -210,6 +220,9 @@ class AppUser(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    # Personel profil fotografi (0005) — MinIO obje anahtari; yalniz personel
+    # rolleri yazar (PATCH /me/avatar), resident'a 403.
+    avatar_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 
@@ -234,6 +247,56 @@ class Shift(Base):
     gun_tipi: Mapped[str] = mapped_column(
         GUN_TIPI, nullable=False, server_default=text("'her_gun'")
     )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class ShiftAssignment(Base):
+    """Vardiya personel atamasi (0005) — yonetici atar; kartta avatar."""
+
+    __tablename__ = "shift_assignment"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "shift_id", "user_id", name="uq_shift_assignment"
+        ),
+        ForeignKeyConstraint(
+            ["shift_id", "tenant_id"],
+            ["shift.id", "shift.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_shift_assignment_shift",
+        ),
+        ForeignKeyConstraint(
+            ["user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_shift_assignment_user",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    shift_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    created_at = _created_at()
+
+
+class Camera(Base):
+    """Site kamera yayini (0005) — ad + istemcinin oynattigi URL (MVP)."""
+
+    __tablename__ = "camera"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "ad", name="uq_camera_tenant_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    stream_url: Mapped[str] = mapped_column(Text, nullable=False)
     created_at = _created_at()
     updated_at = _created_at()
 
