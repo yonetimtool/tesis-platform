@@ -14,15 +14,19 @@ zenginleştirmeleri eklemek:
 3. **WP-C** — Başlıkta hava durumu (sıcaklık + ikon + şehir)
 4. **WP-D** — Personel profil fotoğrafı (yönetici + görevli)
 5. **WP-E** — Vardiya↔personel ataması + vardiya kartında personel fotoğrafı
+6. **WP-F** — Kamera MVP: yönetici sitedeki mevcut kamera sisteminin yayın
+   URL'lerini tanımlar; security ana ekranında "Canlı Kamera" şeridi oynatır
 
-**Kapsam dışı (kullanıcı kararı):** Canlı kamera — security ekranında
-"Yakında" kartı zaten mevcut (`saha_home_screen.dart`), bu turda gerçek
-yayın entegrasyonu YAPILMAYACAK. Sakinlere avatar yükleme YOK (yalnız
-personel rolleri).
+**Kapsam dışı (kullanıcı kararı):** Sakinlere avatar yükleme YOK (yalnız
+personel rolleri). Kamerada ONVIF keşfi / kayıt / geri izleme YOK — yalnız
+elle URL tanımı + canlı oynatma (yalnız RTSP veren eski NVR'lerde site
+tarafında HLS/MJPEG dönüştürücü gerekir; platform işi değil).
 
 ## Kullanıcı kararları (sohbet, 2026-07-24)
 
-- Kamera: yalnız mevcut "Yakında" kartı; MVP yayın entegrasyonu ertelendi.
+- Kamera: önce ertelendi, sonra **WP-F olarak kapsama alındı** — mevcut
+  Entegrasyonlar bölümü (giden webhook) kameraya uygun değil; ayrı
+  "Kameralar" tanımı yapılır.
 - Hava: backend proxy + Open-Meteo (anahtarsız); tenant konum ayarı,
   varsayılan İstanbul.
 - 4'lü dizilim: referanstaki gibi TÜM bölümler (öne çıkan ızgara, Hızlı
@@ -52,6 +56,11 @@ Tüm WP'lerin şema ihtiyacı tek migration'da toplanır (0004 support deseni):
    - `created_at` — ev stili `_created_at()`
    - RLS: mevcut tenant-izolasyon deseni (diğer tenant tablolarıyla aynı
      policy şablonu); `models.py` mirror'ı güncellenir.
+5. `camera` tablosu (WP-F):
+   - `id UUID PK`, `tenant_id UUID FK→tenant CASCADE`
+   - `ad TEXT NOT NULL`, `stream_url TEXT NOT NULL`
+   - `UNIQUE (tenant_id, ad)`
+   - `created_at`, `updated_at`; RLS aynı tenant-izolasyon deseni.
 
 ## WP-B — Duyurular kartında resim (salt mobil)
 
@@ -151,10 +160,35 @@ bugünkü görünüm aynen korunur. Veri zaten `sonDuyurularProvider`'da
   `?role=tesis_gorevlisi` birleşimi çoklu-seçim sheet'i → PUT. Security /
   tesis_gorevlisi ekranında salt-okunur liste.
 
+## WP-F — Kamera MVP (backend + mobil)
+
+**Backend (yeni `routers/cameras.py`):**
+- `GET /cameras` — admin + yonetici + **security** (KVKK: tesis_gorevlisi ve
+  resident 403; mevcut rol-görünürlük kararıyla tutarlı).
+- `POST /cameras`, `PATCH /cameras/{id}`, `DELETE /cameras/{id}` — admin +
+  yonetici. `stream_url` doğrulaması: yalnız `http(s)://` şeması (aksi 422).
+  Backend yayını HİÇ çekmez (SSRF yüzeyi yok — istemci oynatır); sır alanı
+  yok, URL kimlik bilgisi içerecekse sitenin kendi sorumluluğu (dokümante).
+- Audit: create/update/delete `audit_user` ile.
+
+**Mobil:**
+- `features/cameras/{domain,data,presentation}`: Camera modeli, camerasProvider.
+- Security ana ekranı: liste boş değilse referanstaki gibi yatay **"Canlı
+  Kamera" şeridi** (koyu kart + oynat ikonu + ad + "Canlı" noktası); karta
+  dokunma → tam ekran `CameraPlayerScreen` (`video_player` paketi, HLS).
+  Liste boşsa şerit çizilmez; "Yakında" ızgarasındaki Canlı Kamera kartı
+  KALDIRILIR (özellik artık gerçek).
+- Yönetici/admin: `/cameras` rotasında yönetim ekranı (liste + ekle/düzenle/
+  sil formu — ad + URL). Yönetici ana ekranındaki "Tüm Modüller"e girmez;
+  Entegrasyonlar gibi ayarlar-altı erişim yeterli (Ayarlar/Tesis bölümünden
+  bağlantı).
+- Yeni bağımlılık: `video_player` (pubspec).
+
 ## Uygulama sırası ve test
 
-Sıra: **B → A → C → D → E** (bağımsızlar önce; E, D'nin avatar_url
-altyapısını kullanır). Her WP kendi commit'i; TDD (önce kırmızı test).
+Sıra: **B → A → C → D → E → F** (bağımsızlar önce; E, D'nin avatar_url
+altyapısını kullanır; F en sonda — yeni bağımlılık + yeni tablo, diğerlerini
+bloklamaz). Her WP kendi commit'i; TDD (önce kırmızı test).
 Backend testleri canlı api container'a gider → migration + imaj rebuild
 her backend WP'sinde zorunlu (`backend-docker-images-bake-code-no-mount`).
 Mobil suite bugün 558+; her WP yeşil suite ile kapanır. Görsel doğrulama:
