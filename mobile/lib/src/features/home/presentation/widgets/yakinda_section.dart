@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 import 'home_grid.dart';
@@ -30,6 +31,9 @@ class YakindaSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (kartlar.isEmpty) return const SizedBox.shrink();
 
+    // Bolum ici kartlar TEK TIP boyutta cizsin diye ayni grubu paylasir.
+    final titleGroup = AutoSizeGroup();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -52,6 +56,7 @@ class YakindaSection extends StatelessWidget {
                   accent: k.accent,
                   dense: cols == 4,
                   comingSoon: true,
+                  titleGroup: titleGroup,
                 ),
             ],
           );

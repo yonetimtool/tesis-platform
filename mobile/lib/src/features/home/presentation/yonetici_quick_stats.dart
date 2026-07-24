@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/branding/yonetio_logo.dart';
@@ -23,6 +24,8 @@ class YoneticiQuickStats extends StatelessWidget {
   Widget build(BuildContext context) {
     final tahsilat = summary.tahsilat;
     final oran = tahsilat?.tahsilatOraniYuzde;
+    // 4 kutu degeri TEK TIP boyutta (512 ve ₺248.750 ayni) cizsin diye paylasir.
+    final valueGroup = AutoSizeGroup();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -50,6 +53,7 @@ class YoneticiQuickStats extends StatelessWidget {
                 sublabel: 'Bu Ay',
                 accent: _green,
                 dense: cols == 4,
+                valueGroup: valueGroup,
               ),
               StatTile(
                 icon: Icons.percent,
@@ -58,6 +62,7 @@ class YoneticiQuickStats extends StatelessWidget {
                 sublabel: 'Bu Ay',
                 accent: _amber,
                 dense: cols == 4,
+                valueGroup: valueGroup,
               ),
               StatTile(
                 icon: Icons.trending_up,
@@ -65,6 +70,7 @@ class YoneticiQuickStats extends StatelessWidget {
                 label: 'Toplam Gelir',
                 accent: YonetioColors.teal,
                 dense: cols == 4,
+                valueGroup: valueGroup,
               ),
               StatTile(
                 icon: Icons.account_balance_outlined,
@@ -72,6 +78,7 @@ class YoneticiQuickStats extends StatelessWidget {
                 label: 'Kasa',
                 accent: YonetioColors.navy,
                 dense: cols == 4,
+                valueGroup: valueGroup,
               ),
             ],
           );

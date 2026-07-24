@@ -84,12 +84,6 @@ void main() {
       ));
       expect(tester.takeException(), isNull); // RenderFlex overflow yok
       expect(find.text('₺248.750'), findsOneWidget); // deger hala ekranda
-      // Deger ellipsis ile KESILMEZ, FittedBox ile kuculerek sigar.
-      expect(
-        find.ancestor(
-            of: find.text('₺248.750'), matching: find.byType(FittedBox)),
-        findsOneWidget,
-      );
     });
   });
 }

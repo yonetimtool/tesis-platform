@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../auth/domain/user_role.dart';
@@ -45,6 +46,10 @@ class RoleHomeBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final featured = featuredMenuForRole(role);
     final more = moreMenuForRole(role);
+    // Tum modul kartlari (one cikan + Tüm Modüller) TEK TIP boyutta cizsin
+    // diye ayni gruplari paylasir.
+    final titleGroup = AutoSizeGroup();
+    final counterGroup = AutoSizeGroup();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -55,19 +60,23 @@ class RoleHomeBody extends StatelessWidget {
           weather: weather,
         ),
         const SizedBox(height: 16),
-        _grid(featured),
+        _grid(featured, titleGroup, counterGroup),
         ...sections,
         if (more.isNotEmpty) ...[
           const SizedBox(height: 12),
           const SectionHeader(title: 'Tüm Modüller'),
           const SizedBox(height: 8),
-          _grid(more),
+          _grid(more, titleGroup, counterGroup),
         ],
       ],
     );
   }
 
-  Widget _grid(List<HomeMenuEntry> entries) {
+  Widget _grid(
+    List<HomeMenuEntry> entries,
+    AutoSizeGroup titleGroup,
+    AutoSizeGroup counterGroup,
+  ) {
     return LayoutBuilder(builder: (context, c) {
       final cols = homeGridCols(c.maxWidth);
       return GridView.count(
@@ -87,6 +96,8 @@ class RoleHomeBody extends StatelessWidget {
                 accent: spec.accent,
                 counter: counters[entry],
                 dense: cols == 4,
+                titleGroup: titleGroup,
+                counterGroup: counterGroup,
                 onTap: () => onOpen(entry),
               );
             }),

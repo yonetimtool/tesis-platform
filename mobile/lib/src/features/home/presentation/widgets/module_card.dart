@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/branding/yonetio_logo.dart';
@@ -17,10 +18,17 @@ class ModuleCard extends StatelessWidget {
     this.onTap,
     this.comingSoon = false,
     this.dense = false,
+    this.titleGroup,
+    this.counterGroup,
   });
 
   final IconData icon;
   final String title;
+
+  /// dense (4'lu izgara) tipografiyi TEK TIP yapan gruplar — ayni grubu
+  /// paylasan tum kartlar basligi/sayaci AYNI (sigan en buyuk) boyutta cizer.
+  final AutoSizeGroup? titleGroup;
+  final AutoSizeGroup? counterGroup;
 
   /// Ikincil satir: "6 Bekliyor", "Borç Yok", "5 Yeni" gibi. null → gizli.
   final String? counter;
@@ -77,15 +85,20 @@ class ModuleCard extends StatelessWidget {
                 child: Icon(icon, size: iconSize, color: accentColor),
               ),
               SizedBox(height: dense ? 8 : 12),
-              // Dense (4'lu izgara): baslik tek satir + FittedBox ile kuculerek
-              // sigar (referans temiz gorunum; kesme/tasma yok). Non-dense
-              // (2 sutun): mevcut 2 satir + ellipsis korunur.
+              // Dense (4'lu izgara): AutoSizeText + paylasilan grup → tum
+              // kartlar AYNI okunakli boyutta (uzunluga gore degismez); uzun
+              // baslik 2 satira sarar, gerekirse grup boyunca birlikte kuculur
+              // (minFontSize okunaklilik tabani). Non-dense (2 sutun): mevcut.
               if (dense)
-                SizedBox(
-                  width: double.infinity,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(title, maxLines: 1, style: titleStyle),
+                Flexible(
+                  child: AutoSizeText(
+                    title,
+                    group: titleGroup,
+                    maxLines: 2,
+                    minFontSize: 10,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: titleStyle,
                   ),
                 )
               else
@@ -103,20 +116,27 @@ class ModuleCard extends StatelessWidget {
               if (comingSoon)
                 _YakindaPill(color: accentColor)
               else if (counter != null)
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    counter!,
-                    maxLines: 1,
-                    style: (dense
-                            ? theme.textTheme.labelSmall
-                            : theme.textTheme.labelMedium)
-                        ?.copyWith(
-                      color: accent ?? YonetioColors.navy,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+                dense
+                    ? AutoSizeText(
+                        counter!,
+                        group: counterGroup,
+                        maxLines: 1,
+                        minFontSize: 9,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: accent ?? YonetioColors.navy,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    : Text(
+                        counter!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: accent ?? YonetioColors.navy,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
             ],
           ),
         ),

@@ -50,6 +50,8 @@ dependencies:
   firebase_messaging: ^16.4.1
   # WP-F canli kamera oynatici (HLS/MJPEG — istemci oynatir).
   video_player: ^2.9.2
+  # 4'lu izgara/Hizli Ozet: grup paylasan metinler AYNI (sigan en buyuk) boyutta.
+  auto_size_text: ^3.0.0
 
 dev_dependencies:
   flutter_test:

@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/home/presentation/widgets/module_card.dart';
@@ -93,13 +94,43 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Otopark Kullanımı'), findsOneWidget);
       expect(find.text('78 / 120'), findsOneWidget);
-      // Baslik dense'te FittedBox ile kuculerek sigar (kesme yok).
-      expect(
-        find.ancestor(
-            of: find.text('Otopark Kullanımı'),
-            matching: find.byType(FittedBox)),
-        findsOneWidget,
-      );
+    });
+
+    testWidgets('dense: farkli uzunlukta basliklar AYNI grupla AYNI boyutta',
+        (tester) async {
+      final group = AutoSizeGroup();
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Row(
+            children: [
+              SizedBox(
+                width: 88, height: 132,
+                child: ModuleCard(
+                  icon: Icons.campaign_outlined, title: 'Duyurular',
+                  dense: true, titleGroup: group,
+                ),
+              ),
+              SizedBox(
+                width: 88, height: 132,
+                child: ModuleCard(
+                  icon: Icons.directions_car_outlined,
+                  title: 'Otopark Kullanımı', dense: true, titleGroup: group,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // Ayni grup → ayni fontSize (uzunluga gore degismez).
+      final t1 = tester.widget<AutoSizeText>(
+          find.ancestor(of: find.text('Duyurular'),
+              matching: find.byType(AutoSizeText)));
+      final t2 = tester.widget<AutoSizeText>(
+          find.ancestor(of: find.text('Otopark Kullanımı'),
+              matching: find.byType(AutoSizeText)));
+      expect(t1.group, same(t2.group));
+      expect(tester.takeException(), isNull);
     });
   });
 }

@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/branding/yonetio_logo.dart';
@@ -13,6 +14,7 @@ class StatTile extends StatelessWidget {
     this.sublabel,
     this.accent,
     this.dense = false,
+    this.valueGroup,
   });
 
   final IconData icon;
@@ -20,6 +22,11 @@ class StatTile extends StatelessWidget {
   final String label;
   final String? sublabel;
   final Color? accent;
+
+  /// dense (4'lu izgara) degerleri TEK TIP yapan grup — ayni grubu paylasan
+  /// tum kutular degeri AYNI (sigan en buyuk) boyutta cizer (512 ve ₺248.750
+  /// ayni boyutta; kesme yok).
+  final AutoSizeGroup? valueGroup;
 
   /// Kompakt varyant — 4'lu izgara hucresine sigmasi icin kucultulmus
   /// padding/ikon/etiket (WP-A). dense=false: eski (2 sutunlu) boyutlar.
@@ -50,22 +57,27 @@ class StatTile extends StatelessWidget {
               child: Icon(icon, size: dense ? 18 : 22, color: accentColor),
             ),
             SizedBox(height: dense ? 4 : 10),
-            // Deger dar 4-sutun hucrede KESILMEK yerine kuculerek sigar
-            // (referanstaki gibi tam gorunur). FittedBox sinirli genislige
-            // olceklendirir; SizedBox genisligi hucreye baglar.
-            SizedBox(
-              width: double.infinity,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  style: theme.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
+            // Deger: dense'te AutoSizeText + paylasilan grup → tum kutular AYNI
+            // okunakli boyutta (kisa/uzun fark etmez; kesme yok). Non-dense
+            // (2 sutun genis hucre): mevcut buyuk boyut korunur.
+            if (dense)
+              AutoSizeText(
+                value,
+                group: valueGroup,
+                maxLines: 1,
+                minFontSize: 11,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              )
+            else
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.w800),
               ),
-            ),
             SizedBox(height: dense ? 1 : 2),
             // WP-A: 4'lu dar hucrede 2 satir etiket yukseklik tasmasina yol
             // aciyordu; dense=true iken 1 satira dusuruldu. dense=false
