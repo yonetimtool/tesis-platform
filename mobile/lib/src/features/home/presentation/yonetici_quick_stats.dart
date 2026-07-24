@@ -49,6 +49,7 @@ class YoneticiQuickStats extends StatelessWidget {
                 label: 'Toplam Tahsilat',
                 sublabel: 'Bu Ay',
                 accent: _green,
+                dense: cols == 4,
               ),
               StatTile(
                 icon: Icons.percent,
@@ -56,18 +57,21 @@ class YoneticiQuickStats extends StatelessWidget {
                 label: 'Tahsilat Oranı',
                 sublabel: 'Bu Ay',
                 accent: _amber,
+                dense: cols == 4,
               ),
               StatTile(
                 icon: Icons.trending_up,
                 value: '₺${formatKurusAsTl(summary.toplamGelirKurus)}',
                 label: 'Toplam Gelir',
                 accent: YonetioColors.teal,
+                dense: cols == 4,
               ),
               StatTile(
                 icon: Icons.account_balance_outlined,
                 value: '₺${formatKurusAsTl(summary.bakiyeKurus)}',
                 label: 'Kasa',
                 accent: YonetioColors.navy,
+                dense: cols == 4,
               ),
             ],
           );

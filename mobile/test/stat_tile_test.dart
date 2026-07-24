@@ -34,5 +34,33 @@ void main() {
       )));
       expect(find.text('Bu Ay'), findsNothing);
     });
+
+    testWidgets('dense varyant: dar hucrede tasma olmadan cizilir',
+        (tester) async {
+      await tester.pumpWidget(_wrap(const SizedBox(
+        width: 92, // 4 sutunlu izgaradaki gercek hucre genisligine yakin
+        height: 148,
+        child: StatTile(
+          icon: Icons.payments_outlined,
+          value: '₺248.750,00',
+          label: 'Toplam Tahsilat',
+          sublabel: 'Bu Ay',
+          dense: true,
+        ),
+      )));
+      expect(find.text('₺248.750,00'), findsOneWidget);
+      expect(tester.takeException(), isNull); // RenderFlex overflow yok
+    });
+
+    testWidgets('dense=false varsayilani: eski gorunum (2 satir etiket) korunur',
+        (tester) async {
+      await tester.pumpWidget(_wrap(const StatTile(
+        icon: Icons.groups_outlined,
+        value: '512',
+        label: 'Toplam Daire',
+      )));
+      final label = tester.widget<Text>(find.text('Toplam Daire'));
+      expect(label.maxLines, 2);
+    });
   });
 }
