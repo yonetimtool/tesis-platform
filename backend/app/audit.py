@@ -45,6 +45,7 @@ class Action:
     USER_UPDATE = "user_update"
     USER_RESET_PASSWORD = "user_reset_password"
     USER_CONTACT_UPDATE = "user_contact_update"   # telefon/aranabilir (riza)
+    AVATAR_UPDATE = "avatar_update"               # profil fotografi (yukle/kaldir)
     RESIDENT_ASSIGN = "resident_assign"
     RESIDENT_UNASSIGN = "resident_unassign"
     VISITOR_CREATE = "visitor_create"

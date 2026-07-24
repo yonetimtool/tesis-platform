@@ -229,6 +229,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /me/profile` (kendi)            |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /me/password` (kendi)          |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /me/contact` (kendi tel/riza)  |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `PATCH /me/avatar` (profil fotografi) |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `GET  /shifts` (liste/detay)          |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /shifts`                        |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `PATCH /shifts/{id}`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
@@ -639,6 +640,13 @@ Notlar:
     yonetir (en az bir alan). Numara **OTP'siz dogrudan** kaydedilir (SMS
     altyapisi ileride). Yonetim ucu (`PATCH /users/{id}/contact`, baskasi icin)
     ayri kalir; bu onun kendi-kaydi karsiligidir.
+  - **`PATCH /me/avatar` (profil fotografi, WP-D):** YALNIZ personel rolleri
+    (admin/yonetici/security/tesis_gorevlisi); **resident 403** (sakinler
+    personeli tanisin diye tek yonlu). `avatar_key` kendi tenant namespace'inde
+    olmali (yabanci onek 422 — IDOR). `null` gonderimi fotografi kaldirir; eski
+    obje MinIO'dan silinir. **Not:** ileride personel SILME ucu eklenirse
+    kullanicinin `avatar_key` objesi de silinmelidir (su an personel silme ucu
+    yok — yalniz create/update/reset).
   - **Kanal soyutlamasi (C1b'ye hazir):** yanit `channel` alani tasir; C1a yalniz
     `phone` (tel:). C1b (megafon/akilli-ev HTTP adaptorleri) yeni kanal + resolver
     ekler — sema/kapi yeniden yazilmaz. (Teknik data-minimization; hukuki tavsiye

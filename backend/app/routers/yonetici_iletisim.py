@@ -25,6 +25,7 @@ from ..deps import get_current_user, get_tenant_db
 from ..errors import APIError
 from ..models import AppUser, Tenant
 from ..schemas import YoneticiIletisimOut, YoneticiKart
+from ..storage import presign_get
 
 router = APIRouter(tags=["yonetici-iletisim"])
 
@@ -58,7 +59,11 @@ async def yonetici_iletisim(
 
     return YoneticiIletisimOut(
         yoneticiler=[
-            YoneticiKart(user_id=u.id, ad_soyad=u.ad, telefon=u.telefon) for u in rows
+            YoneticiKart(
+                user_id=u.id, ad_soyad=u.ad, telefon=u.telefon,
+                avatar_url=presign_get(u.avatar_key) if u.avatar_key else None,
+            )
+            for u in rows
         ],
         yonetim_email=t.yonetim_email,
     )

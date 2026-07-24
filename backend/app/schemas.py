@@ -120,6 +120,14 @@ class UserOut(BaseModel):
     email: str | None = None  # resident'ta opsiyonel
     role: str
     is_active: bool
+    # Profil fotografi (0005/WP-D) — kisa omurlu presigned GET URL (varsa).
+    avatar_url: str | None = None
+
+
+class AvatarUpdate(BaseModel):
+    """PATCH /me/avatar — null gonderimi fotografi KALDIRIR (alan zorunlu)."""
+
+    avatar_key: str | None
 
 
 UserRoleLiteral = Literal["admin", "yonetici", "security", "tesis_gorevlisi", "resident"]
@@ -1640,6 +1648,8 @@ class YoneticiKart(BaseModel):
     user_id: uuid.UUID
     ad_soyad: str
     telefon: str | None = None
+    # Profil fotografi (WP-D) — presigned GET URL (yonetici yuklediyse).
+    avatar_url: str | None = None
 
 
 class YoneticiIletisimOut(BaseModel):

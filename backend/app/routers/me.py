@@ -15,6 +15,7 @@ from ..deps import get_current_user, get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Checkpoint
 from ..schemas import (
+    AvatarUpdate,
     CheckpointBrief,
     MeProfileOut,
     PasswordChangeRequest,
@@ -22,14 +23,55 @@ from ..schemas import (
     UserOut,
 )
 from ..security import hash_password, verify_password
+from ..storage import delete_objects, presign_get
 
 router = APIRouter(tags=["me"])
 
+# Profil fotografi YALNIZ personel rolleri (resident'a 403 — sakinler
+# personeli tanisin diye tek yonlu).
+_AVATAR_ROLLER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+
+
+def _user_out(user: AppUser) -> UserOut:
+    """AppUser -> UserOut; avatar_key varsa presigned GET URL doldurur."""
+    return UserOut(
+        id=user.id, tenant_id=user.tenant_id, ad=user.ad, email=user.email,
+        role=user.role, is_active=user.is_active,
+        avatar_url=presign_get(user.avatar_key) if user.avatar_key else None,
+    )
+
 
 @router.get("/me", response_model=UserOut)
-async def me(user: AppUser = Depends(get_current_user)) -> AppUser:
+async def me(user: AppUser = Depends(get_current_user)) -> UserOut:
     """Access token'daki kullaniciyi doner (tenant context token'dan)."""
-    return user
+    return _user_out(user)
+
+
+@router.patch("/me/avatar", response_model=UserOut)
+async def update_my_avatar(
+    body: AvatarUpdate,
+    user: AppUser = Depends(_AVATAR_ROLLER),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> UserOut:
+    """Self-servis profil fotografi — YALNIZ personel rolleri (resident 403).
+
+    Anahtar kendi tenant namespace'inde olmali (announcement _validate_foto_key
+    deseni — IDOR engeli). Degisen/kaldirilan eski obje MinIO'dan silinir
+    (artik erisilemez cop)."""
+    if body.avatar_key is not None and not body.avatar_key.startswith(
+        f"{user.tenant_id}/"
+    ):
+        raise APIError(422, "invalid_foto_key", "avatar_key tenant alani disinda")
+    eski = user.avatar_key
+    user.avatar_key = body.avatar_key
+    user.updated_at = func.now()
+    if eski and eski != body.avatar_key:
+        delete_objects([eski])
+    await audit_user(
+        db, user, Action.AVATAR_UPDATE, resource_type="app_user",
+        resource_id=user.id, meta={"kaldirildi": body.avatar_key is None},
+    )
+    return _user_out(user)
 
 
 @router.get("/me/profile", response_model=MeProfileOut)
