@@ -34,9 +34,11 @@ class ProfileScreen extends ConsumerWidget {
           children: [
             _Header(profile: profile),
             const SizedBox(height: 16),
-            // Profil fotografi YALNIZ personel rollerinde (resident'a sunucu
-            // 403 verir — kart hic gosterilmez).
-            if (UserRole.fromClaim(profile.role) != UserRole.resident) ...[
+            // Self-servis profil fotografi YALNIZ yonetici + site sakini
+            // (spec P3). admin/guvenlik/tesis gorevlisi'nde gizli — saha
+            // personeli fotosunu yonetici StaffScreen'den yonetir.
+            if (UserRole.fromClaim(profile.role) == UserRole.yonetici ||
+                UserRole.fromClaim(profile.role) == UserRole.resident) ...[
               const _AvatarCard(),
               const SizedBox(height: 16),
             ],

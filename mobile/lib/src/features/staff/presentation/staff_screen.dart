@@ -1,11 +1,16 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/ui/temp_code_dialog.dart';
 import '../../../core/validators/password_rule.dart';
 import '../../auth/domain/user_role.dart';
+import '../../tasks/presentation/task_complete_controller.dart'
+    show imagePickerProvider;
 import '../data/staff_api.dart';
 
 /// Saha Personeli (Ozellik 3) — yonetici/admin: guvenlik + tesis gorevlisi
@@ -68,11 +73,16 @@ class _StaffTile extends ConsumerWidget {
     return Card(
       child: ListTile(
         leading: CircleAvatar(
-          child: Icon(
-            member.role == 'security'
-                ? Icons.shield_outlined
-                : Icons.cleaning_services_outlined,
-          ),
+          backgroundImage: member.avatarUrl != null
+              ? NetworkImage(member.avatarUrl!)
+              : null,
+          child: member.avatarUrl == null
+              ? Icon(
+                  member.role == 'security'
+                      ? Icons.shield_outlined
+                      : Icons.cleaning_services_outlined,
+                )
+              : null,
         ),
         title: Text(member.ad),
         subtitle: Text(roleLabel),
@@ -186,6 +196,12 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
   String _role = 'security';
   bool _submitting = false;
 
+  // Profil fotografi (P3) — yonetici saha personeli fotosunu yukler.
+  Uint8List? _onizleme; // yeni secilen foto (memory onizleme)
+  String? _fotoKey; // presign sonrasi yuklendi
+  String? _mevcutUrl; // duzenlemede mevcut avatar (network onizleme)
+  bool _fotoYukleniyor = false;
+
   bool get _isEdit => widget.existing != null;
 
   @override
@@ -195,7 +211,74 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
     if (e != null) {
       _adCtrl.text = e.ad;
       _role = e.role;
+      _mevcutUrl = e.avatarUrl;
     }
+  }
+
+  Future<void> _fotoSec(ImageSource source) async {
+    if (_fotoYukleniyor) return;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _fotoYukleniyor = true);
+    try {
+      final file = await ref.read(imagePickerProvider).pickImage(
+            source: source,
+            maxWidth: 800,
+            imageQuality: 80,
+          );
+      if (file == null) {
+        if (mounted) setState(() => _fotoYukleniyor = false);
+        return;
+      }
+      final bytes = await file.readAsBytes();
+      final api = ref.read(staffApiProvider);
+      final contentType = _contentTypeFor(file);
+      final ticket = await api.presignUpload(contentType: contentType);
+      await api.uploadPhoto(
+          ticket: ticket, bytes: bytes, contentType: contentType);
+      if (!mounted) return;
+      setState(() {
+        _onizleme = bytes;
+        _fotoKey = ticket.fotoKey;
+        _fotoYukleniyor = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _fotoYukleniyor = false);
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _fotoYukleniyor = false);
+      messenger.showSnackBar(SnackBar(content: Text('Fotoğraf alınamadı: $e')));
+    }
+  }
+
+  void _fotoSecMenu() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Kamera'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _fotoSec(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Galeri'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _fotoSec(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -213,13 +296,18 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
     final navigator = Navigator.of(context);
     setState(() => _submitting = true);
     try {
+      final api = ref.read(staffApiProvider);
       if (_isEdit) {
-        await ref.read(staffApiProvider).updateStaff(
+        await api.updateStaff(
               widget.existing!.id,
               ad: _adCtrl.text.trim(),
               role: _role,
               telefon: _phoneCtrl.text.trim(),
             );
+        // Yeni foto secildiyse ata (yalniz yonetici; sunucu zorlar).
+        if (_fotoKey != null) {
+          await api.setStaffAvatar(widget.existing!.id, _fotoKey);
+        }
         if (!mounted) return;
         navigator.pop('ok');
         messenger.showSnackBar(
@@ -227,12 +315,17 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
         );
         return;
       }
-      final tempCode = await ref.read(staffApiProvider).addStaff(
+      final created = await api.addStaff(
             ad: _adCtrl.text.trim(),
             telefon: _phoneCtrl.text.trim(),
             role: _role,
             password: _passwordCtrl.text,
           );
+      // Personel olustuktan sonra foto secildiyse avatarini ata.
+      if (_fotoKey != null) {
+        await api.setStaffAvatar(created.id, _fotoKey);
+      }
+      final tempCode = created.tempCode;
       if (!mounted) return;
       navigator.pop('ok');
       if (tempCode != null && tempCode.isNotEmpty) {
@@ -267,6 +360,34 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
           children: [
             Text(_isEdit ? 'Personel düzenle' : 'Personel ekle',
                 style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            // Profil fotografi (P3) — yonetici saha personeli fotosunu yukler.
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundImage: _onizleme != null
+                      ? MemoryImage(_onizleme!)
+                      : (_mevcutUrl != null
+                          ? NetworkImage(_mevcutUrl!) as ImageProvider
+                          : null),
+                  child: (_onizleme == null && _mevcutUrl == null)
+                      ? const Icon(Icons.person_outline)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton.icon(
+                  onPressed: _fotoYukleniyor || _submitting ? null : _fotoSecMenu,
+                  icon: _fotoYukleniyor
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2.5))
+                      : const Icon(Icons.add_a_photo_outlined, size: 18),
+                  label: const Text('Fotoğraf'),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
             SegmentedButton<String>(
               segments: const [
@@ -349,6 +470,16 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
       ),
     );
   }
+}
+
+/// image_picker mimeType vermezse uzantidan tahmin (announcements ile ayni).
+String _contentTypeFor(XFile file) {
+  if (file.mimeType != null) return file.mimeType!;
+  final lower = file.path.toLowerCase();
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.heic') || lower.endsWith('.heif')) return 'image/heic';
+  return 'image/jpeg';
 }
 
 class _EmptyState extends StatelessWidget {
