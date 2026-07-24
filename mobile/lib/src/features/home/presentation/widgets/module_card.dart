@@ -77,32 +77,44 @@ class ModuleCard extends StatelessWidget {
                 child: Icon(icon, size: iconSize, color: accentColor),
               ),
               SizedBox(height: dense ? 8 : 12),
-              // Flexible: dar izgara hucresinde baslik sikisirsa tasma yerine
-              // ellipsis'e duser (2 satir -> gerekirse 1).
-              Flexible(
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: titleStyle,
+              // Dense (4'lu izgara): baslik tek satir + FittedBox ile kuculerek
+              // sigar (referans temiz gorunum; kesme/tasma yok). Non-dense
+              // (2 sutun): mevcut 2 satir + ellipsis korunur.
+              if (dense)
+                SizedBox(
+                  width: double.infinity,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(title, maxLines: 1, style: titleStyle),
+                  ),
+                )
+              else
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: titleStyle,
+                  ),
                 ),
-              ),
               const SizedBox(height: 2),
               // Alt satir: "Yakında" rozeti (comingSoon) ya da sayac / bos.
               if (comingSoon)
                 _YakindaPill(color: accentColor)
               else if (counter != null)
-                Text(
-                  counter!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: (dense
-                          ? theme.textTheme.labelSmall
-                          : theme.textTheme.labelMedium)
-                      ?.copyWith(
-                    color: accent ?? YonetioColors.navy,
-                    fontWeight: FontWeight.w600,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    counter!,
+                    maxLines: 1,
+                    style: (dense
+                            ? theme.textTheme.labelSmall
+                            : theme.textTheme.labelMedium)
+                        ?.copyWith(
+                      color: accent ?? YonetioColors.navy,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
             ],

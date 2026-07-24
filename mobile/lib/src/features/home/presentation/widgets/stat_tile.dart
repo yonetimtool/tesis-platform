@@ -50,12 +50,21 @@ class StatTile extends StatelessWidget {
               child: Icon(icon, size: dense ? 18 : 22, color: accentColor),
             ),
             SizedBox(height: dense ? 4 : 10),
-            Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w800),
+            // Deger dar 4-sutun hucrede KESILMEK yerine kuculerek sigar
+            // (referanstaki gibi tam gorunur). FittedBox sinirli genislige
+            // olceklendirir; SizedBox genisligi hucreye baglar.
+            SizedBox(
+              width: double.infinity,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  style: theme.textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
             ),
             SizedBox(height: dense ? 1 : 2),
             // WP-A: 4'lu dar hucrede 2 satir etiket yukseklik tasmasina yol

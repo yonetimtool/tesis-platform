@@ -71,5 +71,35 @@ void main() {
       expect(find.text('Duyurular'), findsOneWidget);
       expect(tester.takeException(), isNull); // RenderFlex overflow yok
     });
+
+    testWidgets('dense: uzun baslik dar hucrede kesilmeden sigar',
+        (tester) async {
+      await tester.pumpWidget(const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 88,
+              height: 132,
+              child: ModuleCard(
+                icon: Icons.directions_car_outlined,
+                title: 'Otopark Kullanımı',
+                counter: '78 / 120',
+                dense: true,
+              ),
+            ),
+          ),
+        ),
+      ));
+      expect(tester.takeException(), isNull);
+      expect(find.text('Otopark Kullanımı'), findsOneWidget);
+      expect(find.text('78 / 120'), findsOneWidget);
+      // Baslik dense'te FittedBox ile kuculerek sigar (kesme yok).
+      expect(
+        find.ancestor(
+            of: find.text('Otopark Kullanımı'),
+            matching: find.byType(FittedBox)),
+        findsOneWidget,
+      );
+    });
   });
 }
