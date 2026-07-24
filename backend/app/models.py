@@ -1727,5 +1727,8 @@ class PlatformSupportTicket(Base):
     aciklama: Mapped[str] = mapped_column(Text, nullable=False)
     durum: Mapped[str] = mapped_column(Text, nullable=False, default="acik")
     admin_cevap: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Destek gorselleri (0006/WP-G) — MinIO obje anahtarlari (tenant-onekli).
+    foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    admin_cevap_foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()

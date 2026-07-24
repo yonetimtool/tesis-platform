@@ -2659,6 +2659,8 @@ SupportDurum = Literal["acik", "cozuldu"]
 class SupportTicketCreate(BaseModel):
     konu: str = Field(..., min_length=1, max_length=200)
     aciklama: str = Field(..., min_length=1, max_length=4000)
+    # Talep gorseli (WP-G) — opsiyonel; tenant-onekli MinIO anahtari.
+    foto_key: str | None = None
 
 
 class SupportTicketOut(BaseModel):
@@ -2671,6 +2673,11 @@ class SupportTicketOut(BaseModel):
     aciklama: str
     durum: str
     admin_cevap: str | None = None
+    # Gorseller (WP-G) — key ORM/SQL'den; url router'da presign ile doldurulur.
+    foto_key: str | None = None
+    admin_cevap_foto_key: str | None = None
+    foto_url: str | None = None
+    admin_cevap_foto_url: str | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -2696,6 +2703,8 @@ class SupportTicketUpdate(BaseModel):
 
     durum: SupportDurum | None = None
     admin_cevap: str | None = Field(None, max_length=4000)
+    # Admin cevap gorseli (WP-G) — opsiyonel; admin kendi tenant onegi.
+    admin_cevap_foto_key: str | None = None
 
 
 # -------------------------------- weather ---------------------------------- #
