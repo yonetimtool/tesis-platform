@@ -9,9 +9,12 @@ import 'widgets/bildir_menu_sheet.dart';
 import '../../notifications/data/notifications_controller.dart';
 import '../../profile/data/profile_api.dart';
 import '../../scan/data/scan_outbox.dart';
+import '../../weather/data/weather_api.dart';
+import '../../weather/domain/weather_models.dart';
 import '../domain/home_menu.dart';
 import 'module_card_spec.dart';
 import 'role_home_body.dart';
+import 'widgets/home_header.dart';
 import 'widgets/home_shell.dart';
 
 /// Platform admin ana ekrani — eski izgara HomeScreen'in emekliligiyle admin
@@ -27,6 +30,15 @@ class AdminHomeScreen extends ConsumerWidget {
     final pending = ref.watch(scanOutboxProvider).pendingCount;
     // Admin /notifications RBAC-izinli; hata/yukleme → 0 (rozet yok).
     final unread = ref.watch(unreadNotificationCountProvider).value ?? 0;
+    // Baslik hava blogu — veri gelince gorunur; yukleme/hatada SESSIZCE gizli.
+    final hava = ref.watch(weatherProvider).maybeWhen(
+          data: (w) => HomeWeather(
+            tempLabel: w.tempLabel,
+            city: w.konumAd,
+            icon: weatherIcon(w.durum),
+          ),
+          orElse: () => null,
+        );
 
     return HomeShell(
       role: UserRole.admin,
@@ -47,6 +59,7 @@ class AdminHomeScreen extends ConsumerWidget {
         role: UserRole.admin,
         greetingName: ad,
         subtitle: UserRole.admin.label,
+        weather: hava,
         onOpen: (entry) => context.push(moduleCardSpec(entry).route),
         counters: {
           if (pending > 0) HomeMenuEntry.outbox: '$pending bekleyen',

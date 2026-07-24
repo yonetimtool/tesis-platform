@@ -13,6 +13,8 @@ import '../../kargo/data/kargo_api.dart';
 import '../../kargo/domain/kargo_models.dart';
 import '../../profile/data/profile_api.dart';
 import '../../visitors/data/visitor_api.dart';
+import '../../weather/data/weather_api.dart';
+import '../../weather/domain/weather_models.dart';
 import '../domain/home_menu.dart';
 import '../domain/son_hareketler.dart';
 import 'aidat_ozet_karti.dart';
@@ -20,6 +22,7 @@ import 'duyurular_karti.dart';
 import 'module_card_spec.dart';
 import 'role_home_body.dart';
 import 'son_hareketler_section.dart';
+import 'widgets/home_header.dart';
 import 'widgets/home_shell.dart';
 
 /// Sakin ana ekrani (R1 + R1.1) — [HomeShell] + [RoleHomeBody] birlestirir,
@@ -38,6 +41,15 @@ class ResidentHomeScreen extends ConsumerWidget {
     final kargolar = ref.watch(kargoListProvider).value ?? const <Kargo>[];
     final ziyaretciler = ref.watch(visitorsListProvider).value ?? const [];
     final duyurular = ref.watch(sonDuyurularProvider).value ?? const [];
+    // Baslik hava blogu — veri gelince gorunur; yukleme/hatada SESSIZCE gizli.
+    final hava = ref.watch(weatherProvider).maybeWhen(
+          data: (w) => HomeWeather(
+            tempLabel: w.tempLabel,
+            city: w.konumAd,
+            icon: weatherIcon(w.durum),
+          ),
+          orElse: () => null,
+        );
 
     final toplamBorc = units.fold<int>(
         0, (t, u) => t + (u.bakiyeKurus > 0 ? u.bakiyeKurus : 0));
@@ -70,6 +82,7 @@ class ResidentHomeScreen extends ConsumerWidget {
         role: UserRole.resident,
         greetingName: ad,
         subtitle: UserRole.resident.label,
+        weather: hava,
         onOpen: (entry) => context.push(moduleCardSpec(entry).route),
         counters: {
           if (units.isNotEmpty)

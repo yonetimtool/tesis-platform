@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 
-/// Hava durumu verisi — SAF deger tipi. Backend'de hava servisi YOK
-/// (MISSING-BACKEND); saglanana kadar [HomeHeader.weather] null gecilir ve
-/// blok gizli kalir.
+/// Hava durumu verisi — SAF deger tipi. Veri GET /weather'dan gelir
+/// (weatherProvider); yukleme/hata durumunda [HomeHeader.weather] null gecilir
+/// ve blok gizli kalir.
 class HomeWeather {
-  const HomeWeather({required this.tempLabel, required this.city});
+  const HomeWeather({
+    required this.tempLabel,
+    required this.city,
+    this.icon = Icons.wb_sunny_outlined,
+  });
 
   final String tempLabel; // or. "24°C"
   final String city; // or. "İstanbul"
+  final IconData icon; // durum ikonu (weatherIcon); varsayilan gunes
 }
 
 /// Referans ana ekranin karsilama blogu: solda "Merhaba, {ad}" + rol/daire
@@ -74,7 +79,14 @@ class _WeatherBlock extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.wb_sunny_outlined, size: 22, color: Colors.amber),
+        Icon(
+          weather.icon,
+          size: 22,
+          // Amber yalniz gunes ikonunda; diger durumlar notr renkte.
+          color: weather.icon == Icons.wb_sunny_outlined
+              ? Colors.amber
+              : theme.hintColor,
+        ),
         const SizedBox(width: 6),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
