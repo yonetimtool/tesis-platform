@@ -1,7 +1,7 @@
 # Ana Ekran Görsel Zenginleştirme — Tasarım
 
 **Tarih:** 2026-07-24
-**Durum:** Kullanıcı onaylı (sohbet içinde); yazılı spec incelemesi bekleniyor
+**Durum:** Uygulandı (2026-07-24) — WP-A…WP-G tüm iş paketleri commit'lendi; mobil suite (586) + ilgili backend testleri yeşil
 **Referanslar:** `docs/design-refs/{yonetici,site-sakini,gorevli}.jpeg`
 
 ## Amaç
