@@ -47,6 +47,9 @@ class Action:
     USER_CONTACT_UPDATE = "user_contact_update"   # telefon/aranabilir (riza)
     AVATAR_UPDATE = "avatar_update"               # profil fotografi (yukle/kaldir)
     SHIFT_ASSIGN = "shift_assign"                 # vardiya personel atamasi (tam-liste)
+    CAMERA_CREATE = "camera_create"
+    CAMERA_UPDATE = "camera_update"
+    CAMERA_DELETE = "camera_delete"
     RESIDENT_ASSIGN = "resident_assign"
     RESIDENT_UNASSIGN = "resident_unassign"
     VISITOR_CREATE = "visitor_create"

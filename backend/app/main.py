@@ -17,6 +17,7 @@ from .routers import assets as assets_router
 from .routers import audit as audit_router
 from .routers import auth as auth_router
 from .routers import budget as budget_router
+from .routers import cameras as cameras_router
 from .routers import checkpoints as checkpoints_router
 from .routers import common_areas as common_areas_router
 from .routers import complaints as complaints_router
@@ -133,6 +134,7 @@ app.include_router(audit_router.router)
 app.include_router(support_router.router)
 app.include_router(transparency_router.router)
 app.include_router(weather_router.router)
+app.include_router(cameras_router.router)
 
 
 @app.get("/health", tags=["health"])

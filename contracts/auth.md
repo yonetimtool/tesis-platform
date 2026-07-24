@@ -235,6 +235,8 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `PATCH /shifts/{id}`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `DELETE /shifts/{id}`                 |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `PUT  /shifts/{id}/assignments` (personel)| ✅ | ✅  | ❌  | ❌  | ❌  |
+| `GET  /cameras` (liste — KVKK dar)    |  ✅   | ✅  | ✅  | ❌  | ❌  |
+| `POST/PATCH/DELETE /cameras`          |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /checkpoints` (liste/detay)     |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /checkpoints` (tanim)           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `PATCH /checkpoints/{id}`             |  ✅   | ✅  | ❌  | ❌  | ❌  |

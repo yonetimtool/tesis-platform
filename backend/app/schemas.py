@@ -358,6 +358,55 @@ class ShiftListResponse(BaseModel):
     items: list[ShiftOut]
 
 
+# -------------------------------- cameras ---------------------------------- #
+def _http_url(v: str) -> str:
+    if not (v.startswith("http://") or v.startswith("https://")):
+        raise ValueError("stream_url http(s):// ile baslamali")
+    return v
+
+
+class CameraCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=100)
+    # Istemcinin oynattigi HLS/MJPEG yayini; backend HIC cekmez.
+    stream_url: str
+
+    @field_validator("stream_url")
+    @classmethod
+    def _v_url(cls, v: str) -> str:
+        return _http_url(v)
+
+
+class CameraUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=100)
+    stream_url: str | None = None
+
+    @field_validator("stream_url")
+    @classmethod
+    def _v_url(cls, v: str | None) -> str | None:
+        return None if v is None else _http_url(v)
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "CameraUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class CameraOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    stream_url: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class CameraListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[CameraOut]
+
+
 # ------------------------------ checkpoint --------------------------------- #
 class CheckpointOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
