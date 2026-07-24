@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/branding/yonetio_logo.dart';
 import '../../../auth/domain/user_role.dart';
+import '../../../profile/data/avatar_api.dart';
 import '../../domain/home_tabs.dart';
 
 /// Referans ana ekranin iskeleti: ust app-bar (marka logosu + bildirim zili
@@ -66,19 +68,26 @@ class HomeShell extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(right: 8, left: 4),
-            child: Builder(builder: (context) => InkResponse(
-              key: const Key('home-avatar'),
-              // Referans: avatar hesap menusunu acar (Profil + Çıkış Yap).
-              onTap: () => _hesapMenusu(context),
-              radius: 22,
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor:
-                    YonetioColors.navy.withValues(alpha: 0.12),
-                child: const Icon(Icons.person_outline,
-                    size: 20, color: YonetioColors.navy),
-              ),
-            )),
+            child: Consumer(builder: (context, ref, _) {
+              // Personel avatari varsa resimli goster; yoksa/hata varsa ikon
+              // fallback (ekran dusmez). Resident'ta uc 403 -> null -> ikon.
+              final url = ref.watch(myAvatarUrlProvider).value;
+              return InkResponse(
+                key: const Key('home-avatar'),
+                // Referans: avatar hesap menusunu acar (Profil + Çıkış Yap).
+                onTap: () => _hesapMenusu(context),
+                radius: 22,
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundColor: YonetioColors.navy.withValues(alpha: 0.12),
+                  backgroundImage: url != null ? NetworkImage(url) : null,
+                  child: url == null
+                      ? const Icon(Icons.person_outline,
+                          size: 20, color: YonetioColors.navy)
+                      : null,
+                ),
+              );
+            }),
           ),
         ],
       ),

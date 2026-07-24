@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/validators/password_rule.dart';
 import '../../auth/domain/user_role.dart';
+import '../../tasks/presentation/task_complete_controller.dart'
+    show imagePickerProvider;
+import '../data/avatar_api.dart';
 import '../data/profile_api.dart';
 import '../domain/profile.dart';
 
@@ -30,6 +34,12 @@ class ProfileScreen extends ConsumerWidget {
           children: [
             _Header(profile: profile),
             const SizedBox(height: 16),
+            // Profil fotografi YALNIZ personel rollerinde (resident'a sunucu
+            // 403 verir — kart hic gosterilmez).
+            if (UserRole.fromClaim(profile.role) != UserRole.resident) ...[
+              const _AvatarCard(),
+              const SizedBox(height: 16),
+            ],
             const _PasswordCard(),
             const SizedBox(height: 16),
             _ContactCard(
@@ -83,6 +93,175 @@ class _Header extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Profil fotografi karti (WP-D) — personel rolleri kendi avatarini yukler/
+/// kaldirir. Onizleme [myAvatarUrlProvider]'dan; yukleme announcements'daki
+/// presign PUT deseniyle. Hata SnackBar; ekran asla dusmez.
+class _AvatarCard extends ConsumerStatefulWidget {
+  const _AvatarCard();
+
+  @override
+  ConsumerState<_AvatarCard> createState() => _AvatarCardState();
+}
+
+class _AvatarCardState extends ConsumerState<_AvatarCard> {
+  bool _busy = false;
+
+  Future<void> _sec(ImageSource source) async {
+    if (_busy) return;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      final file = await ref.read(imagePickerProvider).pickImage(
+            source: source,
+            maxWidth: 800, // profil fotosu — kucuk yeter
+            imageQuality: 80,
+          );
+      if (file == null) {
+        if (mounted) setState(() => _busy = false);
+        return; // kullanici vazgecti
+      }
+      final api = ref.read(avatarApiProvider);
+      final contentType = _contentTypeFor(file);
+      final ticket = await api.presignUpload(contentType: contentType);
+      await api.uploadPhoto(
+        ticket: ticket,
+        bytes: await file.readAsBytes(),
+        contentType: contentType,
+      );
+      await api.setAvatar(ticket.fotoKey);
+      if (!mounted) return;
+      ref.invalidate(myAvatarUrlProvider);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Profil fotoğrafı güncellendi ✓')),
+      );
+    } on ApiException catch (e) {
+      if (mounted) messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text('Fotoğraf alınamadı: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _kaldir() async {
+    if (_busy) return;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      await ref.read(avatarApiProvider).setAvatar(null);
+      if (!mounted) return;
+      ref.invalidate(myAvatarUrlProvider);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Profil fotoğrafı kaldırıldı')),
+      );
+    } on ApiException catch (e) {
+      if (mounted) messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _kaynakSec() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Kamera'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _sec(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Galeri'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _sec(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final url = ref.watch(myAvatarUrlProvider).value;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 32,
+              backgroundColor: scheme.primaryContainer,
+              backgroundImage: url != null ? NetworkImage(url) : null,
+              child: url == null
+                  ? Icon(Icons.person_outline,
+                      size: 34, color: scheme.onPrimaryContainer)
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Profil fotoğrafı',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: _busy ? null : _kaynakSec,
+                        icon: _busy
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2.5),
+                              )
+                            : const Icon(Icons.add_a_photo_outlined, size: 18),
+                        label: const Text('Fotoğraf seç'),
+                      ),
+                      if (url != null)
+                        TextButton(
+                          onPressed: _busy ? null : _kaldir,
+                          child: const Text('Kaldır'),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// image_picker mimeType vermezse uzantidan tahmin (announcements ile ayni).
+String _contentTypeFor(XFile file) {
+  if (file.mimeType != null) return file.mimeType!;
+  final lower = file.path.toLowerCase();
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.heic') || lower.endsWith('.heif')) return 'image/heic';
+  return 'image/jpeg';
 }
 
 /// Parola degistirme karti: mevcut / yeni / yeni (tekrar). Client-side eslesme

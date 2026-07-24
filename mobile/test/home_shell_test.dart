@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/home/presentation/widgets/home_shell.dart';
+import 'package:mobile/src/features/profile/data/avatar_api.dart';
 
 Widget _shell({
   UserRole role = UserRole.yonetici,
@@ -12,16 +14,20 @@ Widget _shell({
   VoidCallback? onProfile,
   VoidCallback? onLogout,
 }) =>
-    MaterialApp(
-      home: HomeShell(
-        role: role,
-        unreadCount: unread,
-        currentIndex: currentIndex,
-        onDestinationSelected: onDestinationSelected ?? (_) {},
-        onBildir: onBildir ?? () {},
-        onProfile: onProfile,
-        onLogout: onLogout,
-        body: const Text('GOVDE'),
+    ProviderScope(
+      // App-bar avatari [myAvatarUrlProvider] izler — testte aga cikmasin.
+      overrides: [myAvatarUrlProvider.overrideWith((ref) async => null)],
+      child: MaterialApp(
+        home: HomeShell(
+          role: role,
+          unreadCount: unread,
+          currentIndex: currentIndex,
+          onDestinationSelected: onDestinationSelected ?? (_) {},
+          onBildir: onBildir ?? () {},
+          onProfile: onProfile,
+          onLogout: onLogout,
+          body: const Text('GOVDE'),
+        ),
       ),
     );
 
