@@ -4,7 +4,8 @@ RLS sayesinde yalnizca token'daki tenant'in satiri gorunur (id = current_tenant)
 
 RBAC:
   - okuma: TUM roller (herkes kendi tesisinin adini gorur — ana ekran basligi)
-  - guncelleme: admin (ad + timezone + yonetim_email) / yonetici (YALNIZ ad)
+  - guncelleme: admin (ad + timezone + yonetim_email + konum) /
+    yonetici (ad + konum_ad/konum_lat/konum_lon)
   - ilk-giris adlandirma (setup): YALNIZ BIRINCIL yonetici
 
 `slug` ve tenant `id` bu uclarin HICBIRINDE degismez (yalniz `ad` yazilir);
@@ -29,9 +30,9 @@ _READER = require_role(
 _YONETICI = require_role("yonetici")
 _ADMIN_VEYA_YONETICI = require_role("admin", "yonetici")
 
-# Yonetici YALNIZ tesis adini degistirebilir; yapilandirma admin'de kalir
-# (yetki yukseltme yok).
-_YONETICI_YAZABILIR = {"ad"}
+# Yonetici tesis adini VE hava durumu konumunu degistirebilir; geri kalan
+# yapilandirma (timezone, yonetim_email) admin'de kalir (yetki yukseltme yok).
+_YONETICI_YAZABILIR = {"ad", "konum_ad", "konum_lat", "konum_lon"}
 
 
 def _to_settings(t: Tenant) -> TenantSettings:
@@ -39,6 +40,9 @@ def _to_settings(t: Tenant) -> TenantSettings:
         tenant_id=t.id, ad=t.ad, slug=t.slug, timezone=t.timezone,
         kurulum_tamamlandi=t.kurulum_tamamlandi,
         yonetim_email=t.yonetim_email,
+        konum_ad=t.konum_ad,
+        konum_lat=float(t.konum_lat),
+        konum_lon=float(t.konum_lon),
     )
 
 
@@ -64,12 +68,14 @@ async def update_settings(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADMIN_VEYA_YONETICI),
 ) -> TenantSettings:
-    """admin: ad + timezone + yonetim_email. yonetici: YALNIZ ad (tesisini
-    yeniden adlandirir); baska alan gonderirse 403. slug'a ASLA yazilmaz."""
+    """admin: ad + timezone + yonetim_email + konum. yonetici: ad + konum
+    (hava durumu icin tesis konumunu belirler); baska alan gonderirse 403.
+    slug'a ASLA yazilmaz."""
     data = body.model_dump(exclude_unset=True)
     if user.role == "yonetici" and not set(data) <= _YONETICI_YAZABILIR:
         raise APIError(
-            403, "forbidden", "Yonetici yalniz tesis adini degistirebilir."
+            403, "forbidden",
+            "Yonetici yalniz tesis adini ve hava konumunu degistirebilir."
         )
     t = await _current_tenant(db)
     for key, value in data.items():

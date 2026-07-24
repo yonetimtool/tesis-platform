@@ -303,7 +303,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /assets/{id}/history`           |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `GET  /yonetici-iletisim` (yonetici dizini)| ✅ | ✅ | ✅  | ✅  | ✅  |
 | `GET  /tenant/settings` (site adi dahil)|  ✅  | ✅  | ✅  | ✅  | ✅  |
-| `PATCH /tenant/settings` (admin: hepsi / yonetici: YALNIZ `ad`)| ✅ | ✅ | ❌ | ❌ | ❌ |
+| `PATCH /tenant/settings` (admin: hepsi / yonetici: `ad` + `konum_ad/konum_lat/konum_lon`)| ✅ | ✅ | ❌ | ❌ | ❌ |
 | `POST /tenants` (admin tesis+yonetici)|  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `GET  /tenants` (admin tum tesisler)  |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `POST /tenant/setup` (ilk-giris adlandir — YALNIZ **BIRINCIL** yonetici)| ❌ | ✅ | ❌ | ❌ | ❌ |
@@ -346,8 +346,10 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 > varsa yeni daire acilmaz, mevcuda baglanir.
 >
 > **Tesis adi + kurulum:** `PATCH /tenant/settings` govdesinde **admin** TUM
-> alanlari (`ad` + `timezone` + `yonetim_email`) gonderebilir; **yonetici**
-> YALNIZ `ad` gonderebilir — baska alan gonderirse **403**. `POST /tenant/setup`
+> alanlari (`ad` + `timezone` + `yonetim_email` + `konum_ad`/`konum_lat`/
+> `konum_lon`) gonderebilir; **yonetici** `ad` + konum alanlarini gonderebilir
+> (hava durumu icin tesis konumunu belirler) — baska alan gonderirse **403**.
+> `POST /tenant/setup`
 > (ilk-giris adlandirma) YALNIZ **BIRINCIL** yoneticiye acilir; birincil olmayan
 > yonetici **403**, zaten kurulmus tesis **409**. `slug` ve tenant `id` bu
 > uclarin HICBIRINDE degismez.
@@ -450,8 +452,10 @@ Notlar:
     gosterilir. Birincil olmayan yonetici, tesis adsizken ana ekrani gorur
     (engelleyici ekran YOK — bilincli).
   - **Tesis adini degistirme:** TUM yoneticiler `PATCH /tenant/settings {ad}`
-    ile yeniden adlandirabilir (admin de). `timezone`/`yonetim_email` admin'de
-    kalir — yonetici gonderirse 403. **`slug` ve tenant `id` ASLA degismez.**
+    ile yeniden adlandirabilir (admin de). Yonetici ayrica `konum_ad`/
+    `konum_lat`/`konum_lon` (hava durumu konumu) gonderebilir. `timezone`/
+    `yonetim_email` admin'de kalir — yonetici gonderirse 403. **`slug` ve
+    tenant `id` ASLA degismez.**
   - **Bireysel kullanici silme ucu YOKTUR** (yalniz `DELETE /tenants/{id}` tum
     tenant'i siler; kullanici pasiflestirilir). Bu yuzden "birincil silinince
     terfi" senaryosu olusmaz; pasiflestirme birincil bayragini DEGISTIRMEZ.

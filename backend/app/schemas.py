@@ -1602,14 +1602,21 @@ class TenantSettings(BaseModel):
     kurulum_tamamlandi: bool = True
     # Tesisin yonetim maili — yonetici iletisim kartinda gosterilir.
     yonetim_email: str | None = None
+    # Hava durumu konumu (0005) — baslik + /weather sorgusu.
+    konum_ad: str = "İstanbul"
+    konum_lat: float = 41.0082
+    konum_lon: float = 28.9784
 
 
 class TenantSettingsUpdate(BaseModel):
-    """admin: hepsi. yonetici: YALNIZ `ad` (digerleri 403 — bkz. router)."""
+    """admin: hepsi. yonetici: `ad` + konum alanlari (digerleri 403 — bkz. router)."""
 
     timezone: str | None = None
     ad: str | None = None
     yonetim_email: str | None = None
+    konum_ad: str | None = Field(None, min_length=1)
+    konum_lat: float | None = Field(None, ge=-90, le=90)
+    konum_lon: float | None = Field(None, ge=-180, le=180)
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "TenantSettingsUpdate":
