@@ -299,6 +299,14 @@ class PageMetaOut(BaseModel):
 
 
 # -------------------------------- shift ------------------------------------ #
+class ShiftPersonelOut(BaseModel):
+    """Vardiyaya atanan personel (WP-E) — kart avatari + adi."""
+
+    user_id: uuid.UUID
+    ad: str
+    avatar_url: str | None = None
+
+
 class ShiftOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -309,6 +317,8 @@ class ShiftOut(BaseModel):
     gun_tipi: str
     created_at: datetime
     updated_at: datetime | None = None
+    # Atanan personel (WP-E) — router zenginlestirir; ORM'de kolon degil.
+    personel: list[ShiftPersonelOut] = []
 
     @field_validator("baslangic_saat", "bitis_saat", mode="before")
     @classmethod
@@ -335,6 +345,12 @@ class ShiftUpdate(BaseModel):
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
         return self
+
+
+class ShiftAssignmentsUpdate(BaseModel):
+    """Tam-liste degistirme (declarative replace) — tekil ekle/cikar ucu YOK."""
+
+    user_ids: list[uuid.UUID]
 
 
 class ShiftListResponse(BaseModel):
