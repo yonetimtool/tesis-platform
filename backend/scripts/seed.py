@@ -280,6 +280,27 @@ def main() -> int:
             )
         print("[seed] vardiyalar: Sabah 06-14 (hafta_ici), Öğle 14-22, Gece 22-06")
 
+        # Vardiya personel atamasi (0005/WP-E) — saha personelini (security +
+        # tesis_gorevlisi) TUM vardiyalara ata; yonetici dashboard'undaki
+        # "Vardiya Durumu" kartlari referanstaki gibi personelli (foto +
+        # "N Görevli") gorunsun. Foto'yu yonetici StaffScreen'den yukler; atama
+        # olmadan yuklenen foto vardiya kartinda gorunmezdi (eksik halka).
+        # UNIQUE(tenant_id, shift_id, user_id) -> ON CONFLICT ile idempotent.
+        conn.execute(
+            """
+            INSERT INTO shift_assignment (tenant_id, shift_id, user_id)
+            SELECT s.tenant_id, s.id, u.id
+            FROM shift s
+            JOIN app_user u
+              ON u.tenant_id = s.tenant_id
+             AND u.role IN ('security', 'tesis_gorevlisi')
+            WHERE s.tenant_id = %s
+            ON CONFLICT (tenant_id, shift_id, user_id) DO NOTHING
+            """,
+            (tenant_id,),
+        )
+        print("[seed] vardiya atamalari: saha personeli -> tum vardiyalar")
+
 
         # 3b) BUTCE (Wave 2A): kategoriler + ornek defter + otomatik aidat→gelir.
         #     Para INTEGER KURUS. 'Aidat' otomatik gelir kategorisidir (basarili
