@@ -2142,3 +2142,177 @@ Spec başındaki Durum satırını "Uygulandı (2026-07-XX)" yap.
 git add docs/superpowers/specs/2026-07-24-home-gorsel-zenginlestirme-design.md
 git commit -m "docs(spec): home gorsel zenginlestirme — uygulandi isareti"
 ```
+
+> **SIRA NOTU (2026-07-24 eklentisi):** Kullanıcı isteğiyle WP-G eklendi.
+> Yürütme sırası: … → Task 12 → **Task 14 → Task 15** → Task 13 (uçtan uca
+> doğrulama HER ZAMAN en son).
+
+---
+
+### Task 14: WP-G backend — destek taleplerine resim
+
+**Files:**
+- Create: `contracts/db/migrations/versions/0006_support_foto.py`
+- Modify: `backend/app/models.py` (PlatformSupportTicket: foto_key, admin_cevap_foto_key)
+- Modify: `backend/app/schemas.py` (SupportTicket* şemaları)
+- Modify: `backend/app/routers/support.py`
+- Create: `backend/tests/test_support_foto.py`
+- Modify: `contracts/auth.md` (§4 support satırı: foto alanları notu)
+
+**Interfaces:**
+- Consumes: `platform_support_ticket` (0004), `/uploads/presign`, `storage.presign_get`.
+- Produces: `SupportTicketCreate.foto_key`, `SupportTicketUpdate.admin_cevap_foto_key`; tüm SupportTicket çıktılarında `foto_key/foto_url/admin_cevap_foto_key/admin_cevap_foto_url`. Task 15 tüketir.
+
+- [ ] **Step 1: Kırmızı test** — `backend/tests/test_support_foto.py`:
+
+```python
+"""Destek talebi gorselleri (WP-G) — yonetici talep fotosu + admin cevap fotosu."""
+from __future__ import annotations
+
+import uuid
+
+
+def _headers(client, slug, cred):
+    r = client.post(
+        "/auth/login",
+        json={"tenant_slug": slug, "email": cred["email"], "password": cred["password"]},
+    )
+    assert r.status_code == 200, r.text
+    return {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+
+def _upload_foto(client, headers) -> str:
+    import httpx
+
+    r = client.post(
+        "/uploads/presign", headers=headers,
+        json={"content_type": "image/jpeg", "dosya_adi": "destek.jpg"},
+    )
+    assert r.status_code == 200, r.text
+    t = r.json()
+    put = httpx.put(t["upload_url"], content=b"fake-jpeg",
+                    headers={"Content-Type": "image/jpeg"}, timeout=10)
+    assert put.status_code in (200, 204), put.text
+    return t["foto_key"]
+
+
+def test_yonetici_fotolu_talep_acar_ve_gorur(client, world):
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    key = _upload_foto(client, yonetici)
+    r = client.post("/support", headers=yonetici,
+                    json={"konu": "Ekran hatasi", "aciklama": "Görsel ekte",
+                          "foto_key": key})
+    assert r.status_code == 201, r.text
+    assert r.json()["foto_url"]
+
+    r = client.get("/support", headers=yonetici)
+    item = next(i for i in r.json()["items"] if i["foto_key"] == key)
+    assert item["foto_url"]
+
+
+def test_yabanci_onek_422(client, world):
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = client.post("/support", headers=yonetici,
+                    json={"konu": "X", "aciklama": "Y",
+                          "foto_key": f"{uuid.uuid4()}/kacak.jpg"})
+    assert r.status_code == 422
+
+
+def test_admin_fotolu_cevap_yonetici_gorur(client, world):
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post("/support", headers=yonetici,
+                    json={"konu": "Soru", "aciklama": "Detay"})
+    tid = r.json()["id"]
+
+    cevap_key = _upload_foto(client, admin)
+    r = client.patch(f"/support/{tid}", headers=admin,
+                     json={"durum": "cozuldu", "admin_cevap": "Ekte",
+                           "admin_cevap_foto_key": cevap_key})
+    assert r.status_code == 200, r.text
+    assert r.json()["admin_cevap_foto_url"]
+
+    r = client.get("/support", headers=yonetici)
+    item = next(i for i in r.json()["items"] if i["id"] == tid)
+    assert item["admin_cevap_foto_url"]
+
+    # admin /all listesi de fotolari tasir
+    r = client.get("/support/all", headers=admin)
+    item = next(i for i in r.json()["items"] if i["id"] == tid)
+    assert item["admin_cevap_foto_url"]
+```
+
+- [ ] **Step 2: Migration 0006** — `0006_support_foto.py`: `down_revision = "0005_home_gorsel"`. Gövde:
+
+```python
+def upgrade() -> None:
+    op.execute(
+        "ALTER TABLE platform_support_ticket "
+        "ADD COLUMN foto_key text, ADD COLUMN admin_cevap_foto_key text;"
+    )
+    # Eski imzalar DUSURULUR (yeni parametre/sutunlar overload olusturmasin).
+    op.execute("DROP FUNCTION IF EXISTS public.support_ticket_list(uuid, text, integer, integer);")
+    op.execute("DROP FUNCTION IF EXISTS public.support_ticket_answer(uuid, text, text);")
+    # ... 0004'teki govdelerin AYNISI, iki farkla:
+    #   * RETURNS TABLE + SELECT listelerine foto_key, admin_cevap_foto_key eklenir
+    #   * answer'a p_cevap_foto_key text parametresi:
+    #       admin_cevap_foto_key = COALESCE(p_cevap_foto_key, s.admin_cevap_foto_key)
+    # REVOKE ALL ... FROM PUBLIC; GRANT EXECUTE ... TO app_rw (yeni imzalarla).
+```
+
+(0004'ü aç, iki fonksiyon gövdesini kopyala, yukarıdaki iki farkı uygula — davranış bire bir korunur. `downgrade`: yeni fonksiyonları DROP + 0004 imzalarını geri CREATE + kolonları DROP.)
+
+`models.py` PlatformSupportTicket'a iki `Mapped[str | None]` kolon (announcement.foto_key yorum deseni).
+
+- [ ] **Step 3: Şema + router**
+
+`schemas.py`: `SupportTicketCreate`'e `foto_key: str | None = None`; `SupportTicketUpdate`'e `admin_cevap_foto_key: str | None = None` (mevcut "en az bir alan" doğrulaması bu alanı da saysın); `SupportTicketOut`'a `foto_key/admin_cevap_foto_key: str | None = None` + `foto_url/admin_cevap_foto_url: str | None = None`.
+
+`support.py`: `_validate_prefix(key, tenant_id)` yardımcıcı (announcements deseni, 422 `invalid_foto_key`); `create_ticket` foto_key doğrular+yazar; `_with_urls(out)` yardımcısı `presign_get` ile iki URL'yi doldurur — `list_my_tickets`, `list_all_tickets` (raw satır eşlemesine iki key kolonu ekle), `answer_ticket` (SQL parametresine `p_cevap_foto_key`; admin kendi tenant öneki doğrulanır) hepsinde uygulanır.
+
+- [ ] **Step 4: Migration uygula + KIRMIZI→YEŞİL**
+
+```bash
+cd infra && docker compose down -v && docker compose up -d --build
+docker compose build seed && docker compose run --rm seed
+docker compose build api && docker compose up -d api
+docker compose exec -T api sh -c "pytest -q tests/test_support_foto.py tests/test_ticketing.py 2>&1 | tail -5"
+```
+
+Expected: PASS (önce migration'sız koşumda test_support_foto KIRMIZI görülmüş olmalı).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add contracts/db/migrations/versions/0006_support_foto.py backend/app backend/tests/test_support_foto.py contracts/auth.md
+git commit -m "feat(support): talep + admin cevap gorselleri — 0006 migration + presign URL'ler (WP-G)"
+```
+
+---
+
+### Task 15: WP-G istemciler — mobil destek formu + admin-web yanıt resmi
+
+**Files:**
+- Modify: `mobile/lib/src/features/support/domain/support_models.dart`
+- Modify: `mobile/lib/src/features/support/data/support_api.dart`
+- Modify: `mobile/lib/src/features/support/presentation/destek_screen.dart`
+- Modify: `mobile/test/destek_test.dart`
+- Create: `admin-web/app/api/uploads/route.ts` (BFF upload proxy'si)
+- Modify: `admin-web/app/(protected)/support/page.tsx` + `admin-web/app/api/support/[id]/route.ts`
+
+**Interfaces:**
+- Consumes: Task 14 API alanları; mobil announcements picker/presign deseni; admin-web mevcut BFF auth deseni (`app/api/support/route.ts` nasıl token taşıyorsa aynı).
+- Produces: mobil destek formunda opsiyonel görsel; listede talep + cevap görselleri; admin-web'de `POST /api/uploads` (FormData `file`) → `{foto_key}`; yanıt formunda dosya alanı.
+
+- [ ] **Step 1 (mobil, KIRMIZI→YEŞİL):** `support_models.dart`'a `fotoUrl`, `adminCevapFotoUrl` (savunmacı parse) + `destek_test.dart`'a parse testi; `SupportDraft`/create çağrısına `fotoKey`. `destek_screen.dart` formuna announcements'daki galeri/kamera seçici + önizleme + kaldır; listede talep görseli ve admin yanıt görseli (72dp thumbnail, `Image.network` errorBuilder'lı — kart düşmez). `flutter test test/destek_test.dart` + tam suite + analyze.
+
+- [ ] **Step 2 (admin-web):** `app/api/uploads/route.ts`: `POST` FormData'dan `file` al; mevcut BFF auth deseniyle backend `POST /uploads/presign` çağır (`content_type: file.type`); dönen `upload_url`'e sunucu tarafından `fetch(upload_url, {method:'PUT', body: buffer, headers:{'Content-Type': file.type}})`; `{foto_key}` döndür (hata → 502 JSON). `support/page.tsx`: yanıt formuna `<input type="file" accept="image/*">`; submit akışı: dosya varsa önce `/api/uploads` → `foto_key`, sonra PATCH gövdesine `admin_cevap_foto_key`; listede `foto_url` ve `admin_cevap_foto_url` varsa `<img>` (max-h sınırlı, `alt` metinli). `[id]/route.ts` PATCH gövdesini yeni alanla geçirir. Dark mode: globals.css merkezî kuralları — sayfa-içi `dark:` varyantı EKLEME.
+
+- [ ] **Step 3: Doğrulama + commit**
+
+```bash
+cd admin-web && npm run build
+cd ../mobile && flutter analyze && flutter test
+git add mobile admin-web
+git commit -m "feat(support): mobil talep gorseli + admin-web cevap gorseli (WP-G)"
+```

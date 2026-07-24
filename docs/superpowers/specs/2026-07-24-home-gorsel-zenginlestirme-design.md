@@ -186,6 +186,34 @@ bugünkü görünüm aynen korunur. Veri zaten `sonDuyurularProvider`'da
   bağlantı).
 - Yeni bağımlılık: `video_player` (pubspec).
 
+## WP-G — Destek taleplerine resim (backend + mobil + admin-web)
+
+Kullanıcı isteği (2026-07-24, yürütme sırasında): yönetici destek talebi
+açarken resim ekleyebilsin; admin web panelinden yanıtlarken yine resim
+ekleyebilsin. Taraf başına TEK opsiyonel görsel (announcement deseni; çoklu
+galeri YAGNI).
+
+**Backend:**
+- Migration `0006_support_foto`: `platform_support_ticket`'a `foto_key` +
+  `admin_cevap_foto_key` (text NULL). `support_ticket_list` ve
+  `support_ticket_answer` SECURITY DEFINER fonksiyonları DROP + yeni imzayla
+  yeniden CREATE (answer'a `p_cevap_foto_key` parametresi; app_rw'da UPDATE
+  grant'i YOK kararı korunur). REVOKE/GRANT hijyeni tekrarlanır.
+- `SupportTicketCreate.foto_key` (yönetici, tenant-önek doğrulaması — IDOR),
+  `SupportTicketUpdate.admin_cevap_foto_key` (admin, kendi tenant-önek
+  doğrulaması). Çıktılarda presigned `foto_url` + `admin_cevap_foto_url`.
+- Upload mevcut `/uploads/presign` ile (yonetici + admin zaten _UPLOADER'da).
+
+**Mobil:** DestekScreen talep formuna opsiyonel görsel (announcements picker
+deseni); talep listesinde talep görseli + admin yanıt görseli
+(`Image.network` + errorBuilder, kart düşmez).
+
+**Admin-web:** Dosya girişi tarayıcıdan MinIO'ya DEĞİL — BFF üzerinden:
+`app/api/uploads/route.ts` FormData dosyayı alır, admin token'ıyla backend
+presign'ı çağırır, sunucu tarafında presigned URL'e PUT eder, `foto_key`
+döner (dev MinIO CORS sorunu yok). Yanıt formuna dosya seçici; listede her
+iki görsel `foto_url`'lerden gösterilir.
+
 ## Uygulama sırası ve test
 
 Sıra: **B → A → C → D → E → F** (bağımsızlar önce; E, D'nin avatar_url
