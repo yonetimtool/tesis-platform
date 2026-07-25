@@ -54,6 +54,11 @@ class Action:
     RESIDENT_UNASSIGN = "resident_unassign"
     VISITOR_CREATE = "visitor_create"
     VISITOR_UPDATE = "visitor_update"
+    VISITOR_CHECKOUT = "visitor_checkout"         # ziyaretci cikis damgasi (G3)
+    VEHICLE_PASS_CREATE = "vehicle_pass_create"   # arac girisi (G1)
+    VEHICLE_PASS_CHECKOUT = "vehicle_pass_checkout"
+    VIOLATION_CREATE = "violation_create"         # ihlal kaydi (G2)
+    VIOLATION_UPDATE = "violation_update"         # ihlal durum gecisi
     KARGO_CREATE = "kargo_create"
     KARGO_RECEIVE = "kargo_receive"
     KARGO_PHOTO_VIEW = "kargo_photo_view"         # foto presign-GET (ifsa)

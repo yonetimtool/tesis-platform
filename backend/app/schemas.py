@@ -862,6 +862,8 @@ class VisitorOut(BaseModel):
     # Hedef sakin (bilgilendirme/gorunurluk sahibi) + adi (join ile).
     target_resident_user_id: uuid.UUID
     target_resident_ad: str | None = None
+    # Cikis damgasi (G3) — null ise ziyaretci HALA ICERIDE.
+    cikis_zamani: datetime | None = None
     created_at: datetime
 
 
@@ -1683,10 +1685,14 @@ class TenantSettings(BaseModel):
     konum_ad: str = "İstanbul"
     konum_lat: float = 41.0082
     konum_lon: float = 28.9784
+    # Otopark kapasitesi (G4). null = tanimsiz -> /parking/occupancy kapasite
+    # ve oran alanlarini null doner (ana ekran "—" gosterir).
+    otopark_kapasite: int | None = None
 
 
 class TenantSettingsUpdate(BaseModel):
-    """admin: hepsi. yonetici: `ad` + konum alanlari (digerleri 403 — bkz. router)."""
+    """admin: hepsi. yonetici: `ad` + konum + otopark kapasitesi (digerleri 403
+    — bkz. router)."""
 
     timezone: str | None = None
     ad: str | None = None
@@ -1694,6 +1700,8 @@ class TenantSettingsUpdate(BaseModel):
     konum_ad: str | None = Field(None, min_length=1)
     konum_lat: float | None = Field(None, ge=-90, le=90)
     konum_lon: float | None = Field(None, ge=-180, le=180)
+    # Acikca null gonderilirse kapasite TANIMSIZ'a doner (oran yeniden null).
+    otopark_kapasite: int | None = Field(None, ge=0, le=100000)
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "TenantSettingsUpdate":
@@ -2716,3 +2724,138 @@ class WeatherOut(BaseModel):
     sicaklik_c: float
     durum: str  # acik|parcali|kapali|sis|yagmur|kar|firtina
     konum_ad: str
+
+
+# ----------------------------- vehicle pass (G1) ---------------------------- #
+class VehiclePassCreate(BaseModel):
+    """Arac GIRISI. plaka sunucuda normalize edilir (bosluksuz + BUYUK).
+
+    Daire referansi opsiyoneldir: unit_id VEYA unit_no (ikisi birlikte olmaz).
+    Hicbiri verilmezse arac daireye bagli degildir (ziyaretci/kurye/bilinmeyen).
+    """
+
+    plaka: str = Field(..., min_length=1, max_length=32, examples=["34 ABC 123"])
+    arac_tanim: str | None = Field(None, min_length=1, max_length=120,
+                                   examples=["BMW Siyah"])
+    unit_id: uuid.UUID | None = None
+    unit_no: str | None = Field(None, min_length=1, max_length=50)
+    ziyaretci_mi: bool = False
+    # Girilmezse sunucu saati (now()) damgalanir; geriye donuk kayit icin acik
+    # deger verilebilir (gelecege damga 422 — router dogrular).
+    giris_zamani: datetime | None = None
+
+    @model_validator(mode="after")
+    def _tek_daire_referansi(self) -> "VehiclePassCreate":
+        if self.unit_id is not None and self.unit_no is not None:
+            raise ValueError("unit_id ve unit_no birlikte verilemez")
+        return self
+
+
+class VehiclePassOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    # NORMALIZE plaka (bosluksuz + BUYUK) — saklanan halin aynisi.
+    plaka: str
+    arac_tanim: str | None = None
+    giris_zamani: datetime
+    # null => arac HALA ICERIDE (acik gecis).
+    cikis_zamani: datetime | None = None
+    unit_id: uuid.UUID | None = None
+    # Daire numarasi (join ile; daire bagi yoksa null).
+    unit_no: str | None = None
+    ziyaretci_mi: bool
+    kaydeden_user_id: uuid.UUID
+    # Kaydi acan personelin adi (join ile).
+    kaydeden_ad: str | None = None
+    created_at: datetime
+
+
+class VehiclePassListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[VehiclePassOut]
+
+
+# ---------------------------- parking occupancy (G4) ------------------------ #
+class ParkingOccupancyOut(BaseModel):
+    """Otopark dolulugu. `dolu` = ACIK arac gecisi (cikis_zamani IS NULL) sayisi.
+
+    Kapasite tenant ayarindan gelir; TANIMSIZ (null) veya 0 iken `oran` da null
+    doner — istemci "—" gosterir (uydurma yuzde uretilmez).
+    """
+
+    kapasite: int | None = None
+    dolu: int
+    # Yuzde (0-100, tam sayiya yuvarli); kapasite null/0 iken null.
+    oran: int | None = None
+
+
+# ------------------------------ violation (G2) ------------------------------ #
+ViolationKaynak = Literal["kamera", "manuel", "devriye"]
+ViolationDurum = Literal["yeni", "inceleniyor", "kapatildi"]
+
+
+class ViolationCreate(BaseModel):
+    baslik: str = Field(..., min_length=1, max_length=200)
+    aciklama: str | None = Field(None, min_length=1, max_length=2000)
+    kaynak: ViolationKaynak = "manuel"
+    konum: str | None = Field(None, min_length=1, max_length=200,
+                              examples=["Otopark Girişi - Kamera 3"])
+
+
+class ViolationUpdate(BaseModel):
+    """Durum gecisi. 'kapatildi' TERMINAL ve YALNIZ admin (router zorlar)."""
+
+    durum: ViolationDurum
+
+
+class ViolationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    baslik: str
+    aciklama: str | None = None
+    kaynak: str
+    konum: str | None = None
+    durum: str
+    olusturan_user_id: uuid.UUID
+    # Kaydi acan kullanicinin adi (join ile).
+    olusturan_ad: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ViolationListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[ViolationOut]
+
+
+# --------------------------- unified activity (G5) -------------------------- #
+# Renk ipucu — UI noktasi/rozet rengi (mobil sozlugu).
+ActivityRenk = Literal["olumlu", "uyari", "alarm", "notr"]
+
+
+class ActivityItemOut(BaseModel):
+    """Birlesik akis olayi. `id` kaynaklar arasi benzersizdir ("<tur>:<uuid>");
+    `kaynak_id` ise kaynak kaydin kendi uuid'sidir (derin baglanti icin)."""
+
+    id: str
+    tur: str
+    baslik: str
+    alt_metin: str | None = None
+    zaman: datetime
+    renk_ipucu: ActivityRenk | None = None
+    kaynak_id: uuid.UUID
+
+
+class ActivityMetaOut(BaseModel):
+    """Cursor sayfalama meta'si — `total` YOKTUR (birlesik akista sayim pahali
+    ve anlamsizdir). `next_cursor` null ise akisin sonundasiniz."""
+
+    limit: int
+    next_cursor: str | None = None
+
+
+class ActivityResponse(BaseModel):
+    meta: ActivityMetaOut
+    items: list[ActivityItemOut]

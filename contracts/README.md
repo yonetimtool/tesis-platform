@@ -300,6 +300,45 @@ yok sayilir (eski mobil kirilmaz). Mobil, etiketin NDEF ciktisindan
   cihaz testinde yapilacak (kripto dogrulugu AN12196 yayinli vektorleriyle
   test edildi: `backend/tests/test_nfc_sdm.py`).
 
+## Mobil ana ekran sozlesme bosluklari kapatildi (G1–G7)
+
+Mobil ekibin 3-rol ana ekran raporundaki 7 bosluk. Bu turda **2 yeni tablo**
+(`vehicle_pass`, `violation`) + **2 yeni kolon** (`tenant.otopark_kapasite`,
+`visitor.cikis_zamani`) eklendi — canonical migration `0001_initial_schema.py`
+YERINDE guncellendi (yeni migration dosyasi uretilmedi; `down -v` ile yeniden
+uygulanir). Yeni tablolar tenant-kapsamli + RLS `ENABLE`+`FORCE`.
+
+| # | Bosluk | Nasil kapandi |
+|---|--------|---------------|
+| G1 | Arac plaka/gecis kaydi yok | `vehicle_pass` + `POST /vehicle-passes` (giris), `POST /vehicle-passes/{id}/checkout`, `GET /vehicle-passes?acik=&plaka=`. Plaka NORMALIZE (bosluksuz+BUYUK, `norm_plaka`); ayni plakadan tek ACIK gecis (kismi unique indeks → 409). RBAC admin+security |
+| G2 | Ihlal kaydi yok (site_kurali yalniz metin) | `violation` + `POST /violations` (admin+security), `GET /violations?durum=`, `PATCH /violations/{id}`. `yeni → inceleniyor → kapatildi`; **kapatma yalniz admin**, `kapatildi` TERMINAL (409) |
+| G3 | Ziyaretci "icerde" turetilemiyor | `visitor.cikis_zamani` (nullable) + `POST /visitors/{id}/checkout` (409 cift damga) + `GET /visitors?icerde=true` |
+| G4 | Otopark kapasite/doluluk yok | `tenant.otopark_kapasite` (`PATCH /tenant/settings`; admin **veya** yonetici) + `GET /parking/occupancy` → `{kapasite, dolu, oran}`. `dolu` = ACIK gecis sayimi (ayri sayac YOK); kapasite tanimsiz/0 → `kapasite`+`oran` **null** |
+| G5 | Akis istemcide 3–4 istekten birlestiriliyor | `GET /activity?limit=&cursor=` — 13 kaynagi SUNUCUDA birlestirir/siralar/rol'e gore suzer. Bilesik imlec (`zaman`,`id`) — `offset` ve `meta.total` YOK |
+| G6 | `/unit-complaints/mine`'da kategori suzgeci yok | `?kategori=` eklendi (`/unit-complaints` genel listesine de) |
+| G7 | `/weather` + `/cameras` canlida var, sozlesmede yok | `openapi.yaml`'a **davranis degistirilmeden** geri-dolduruldu (uygulama denetlenip gercek istek/yanit sekilleri yazildi) |
+
+Geriye uyumluluk: iki kolon da nullable; yeni alanlar/filtreler/uclar **additive**
+— mevcut istemciler etkilenmez. Mobil ekibin taslagindan bilincli sapmalar:
+
+- **G1 tek-satir gecis modeli** (`giris_zamani` + nullable `cikis_zamani`),
+  taslaktaki `yon: giris|cikis` iki-satir modeli DEGIL. Iki-satirda doluluk
+  "eslesmemis girisleri bul" sorgusuna doner (plaka basina son-olay penceresi;
+  yaris-acik, indekslemesi pahali); tek-satirda doluluk kismi indeksli tek
+  `COUNT` ve "ayni plakadan tek acik gecis" DB kisitiyla garanti.
+- **G1 RBAC'te `resident` yok.** Taslak "sakin kendi dairesinin araci" diyordu;
+  plaka PII'ye baglandigi ve gecisi kaydeden/okuyanin kapi operasyonu oldugu
+  icin liste admin+security'de birakildi. Sakinin ekraninda zaten arac karti yok.
+- **G4 alan adi `oran`** (taslakta `doluluk_yuzde`) ve `guncellenme` alani yok —
+  deger her istekte canli sayimdir, ayri damga yaniltici olurdu.
+- **G5'te `admin`/`yonetici` ziyaretci+kargo olaylarini GORMEZ.** Bu uclar
+  yonetime VARSAYILAN KAPALI'dir ve tek-seferlik izinle acilir; birlesik akis
+  o kapiyi bypass eden bir yan kanal olmamalidir (KVKK). `duyuru` turu de
+  akisa alinmadi (duyuru bir olay degil, kalici icerik — `/announcements`).
+- **G5 sayfalama offset degil imlec.** Taslak `offset`+`total` istiyordu; araya
+  yeni kayit girince offset sayfayi kaydirip olay TEKRARLATIR, ve 13 kaynagin
+  birlesik `total`'i her istekte tam tarama demektir.
+
 ## API base path
 
 - **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:

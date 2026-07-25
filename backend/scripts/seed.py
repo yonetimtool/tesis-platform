@@ -39,6 +39,9 @@ TENANT = {
     "ad": "Acme Plaza",
     "timezone": "Europe/Istanbul",
     "yonetim_email": "yonetim@acme.com",
+    # G4: otopark kapasitesi -> GET /parking/occupancy gercek oran doner
+    # (kapasite tanimsiz olsaydi kapasite+oran null gelirdi).
+    "otopark_kapasite": 120,
 }
 
 USERS = [
@@ -116,14 +119,18 @@ def main() -> int:
         # 1) tenant upsert (slug benzersiz).
         tenant_id = conn.execute(
             """
-            INSERT INTO tenant (ad, slug, timezone, yonetim_email)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO tenant (ad, slug, timezone, yonetim_email, otopark_kapasite)
+            VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (slug) DO UPDATE
                 SET ad = EXCLUDED.ad, timezone = EXCLUDED.timezone,
-                    yonetim_email = EXCLUDED.yonetim_email
+                    yonetim_email = EXCLUDED.yonetim_email,
+                    otopark_kapasite = EXCLUDED.otopark_kapasite
             RETURNING id
             """,
-            (TENANT["ad"], TENANT["slug"], TENANT["timezone"], TENANT["yonetim_email"]),
+            (
+                TENANT["ad"], TENANT["slug"], TENANT["timezone"],
+                TENANT["yonetim_email"], TENANT["otopark_kapasite"],
+            ),
         ).fetchone()[0]
         print(f"[seed] tenant '{TENANT['slug']}' -> {tenant_id}")
 
@@ -760,9 +767,86 @@ def main() -> int:
                     "g": guard_id, "r": target_id,
                 },
             )
+        # 6b) G3: kuryenin CIKISI damgalanir -> "icerde" sayaci gercek deger
+        #     uretir (Kurye cikti, Misafir hala iceride). WHERE cikis_zamani
+        #     IS NULL sayesinde ikinci kosumda damga DEGISMEZ (idempotent).
+        conn.execute(
+            """
+            UPDATE visitor SET cikis_zamani = now() - interval '30 minutes'
+            WHERE tenant_id = %s AND ziyaretci_ad = 'Kurye - Ahmet Yılmaz'
+              AND cikis_zamani IS NULL
+            """,
+            (tenant_id,),
+        )
         print(
-            "[seed] ziyaretci (LOG) 'Kurye - Ahmet Yılmaz' + 'Misafir - Ayşe Kaya' "
-            "A-12 -> hedef resident@acme.com (onay/red yok)"
+            "[seed] ziyaretci (LOG) 'Kurye - Ahmet Yılmaz' (CIKTI) + "
+            "'Misafir - Ayşe Kaya' (ICERIDE) A-12 -> hedef resident@acme.com"
+        )
+
+        # 6c) G1+G4: arac gecisleri — 3 ACIK (otopark dolu=3) + 1 kapanmis.
+        #     plaka NORMALIZE (bosluksuz + BUYUK) saklanir; ayni plakadan tek
+        #     acik gecis olabildigi icin plaka ile idempotent.
+        for plaka, tanim, ziyaretci_mi, daireli, kapali in (
+            ("34ABC123", "BMW Siyah", False, True, False),
+            ("06XYZ789", "Renault Clio Beyaz", True, False, False),
+            ("35DEF456", "Ford Transit (Kargo)", True, False, False),
+            ("34GHI321", "Toyota Corolla Gri", False, True, True),
+        ):
+            conn.execute(
+                """
+                INSERT INTO vehicle_pass (tenant_id, plaka, arac_tanim, unit_id,
+                                          ziyaretci_mi, kaydeden_user_id,
+                                          giris_zamani, cikis_zamani)
+                SELECT %(t)s, %(p)s, %(a)s, %(u)s, %(z)s, %(g)s,
+                       now() - interval '3 hours',
+                       CASE WHEN %(k)s THEN now() - interval '1 hour' END
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM vehicle_pass
+                    WHERE tenant_id = %(t)s AND plaka = %(p)s
+                )
+                """,
+                {
+                    "t": tenant_id, "p": plaka, "a": tanim,
+                    "u": unit_id if daireli else None,
+                    "z": ziyaretci_mi, "g": guard_id, "k": kapali,
+                },
+            )
+        print(
+            "[seed] arac gecisi: 3 ACIK (34ABC123, 06XYZ789, 35DEF456) + "
+            "1 kapanmis (34GHI321) -> /parking/occupancy dolu=3/120 (%3)"
+        )
+
+        # 6d) G2: ihlal kayitlari — 2 'yeni' (ana ekran sayaci), 1 inceleniyor,
+        #     1 kapatildi. Baslik ile idempotent.
+        for baslik, aciklama, kaynak, konum, durum in (
+            ("Otopark girişinde hatalı park", "Yangın yolu üzerine park edilmiş araç.",
+             "kamera", "Otopark Girişi - Kamera 3", "yeni"),
+            ("Gece 23:00 sonrası gürültü", "B blok bahçesinde yüksek sesli müzik.",
+             "manuel", "B Blok Bahçe", "yeni"),
+            ("Çöp konteyneri dışına atık", "Ayrıştırılmamış atık poşetleri.",
+             "devriye", "Çöp Toplama Alanı", "inceleniyor"),
+            ("Ziyaretçi aracı yaya yolunda", "Uyarı yapıldı, araç kaldırıldı.",
+             "kamera", "Ana Kapı - Kamera 1", "kapatildi"),
+        ):
+            conn.execute(
+                """
+                INSERT INTO violation (tenant_id, baslik, aciklama, kaynak,
+                                       konum, durum, olusturan_user_id)
+                SELECT %(t)s, %(b)s, %(a)s, %(k)s::violation_kaynak, %(ko)s,
+                       %(d)s::violation_durum, %(g)s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM violation
+                    WHERE tenant_id = %(t)s AND baslik = %(b)s
+                )
+                """,
+                {
+                    "t": tenant_id, "b": baslik, "a": aciklama, "k": kaynak,
+                    "ko": konum, "d": durum, "g": guard_id,
+                },
+            )
+        print(
+            "[seed] ihlal: 2 'yeni' + 1 'inceleniyor' + 1 'kapatildi' "
+            "(?durum=yeni sayaci = 2)"
         )
 
         # 7) ornek kargo: A-12 icin BEKLEYEN paket (guvenlik kaydi, fotosuz —

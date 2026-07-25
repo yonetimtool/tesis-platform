@@ -138,6 +138,14 @@ def upgrade() -> None:
     op.execute(
         "CREATE TYPE unit_complaint_durum AS ENUM ('acik', 'kapali');"
     )
+    # Ihlal kaydi (G2): tespit kaynagi + is akisi durumu. 'kapatildi' TERMINAL
+    # (geri donus yok) ve YALNIZ admin kapatir — API katmani zorlar.
+    op.execute(
+        "CREATE TYPE violation_kaynak AS ENUM ('kamera', 'manuel', 'devriye');"
+    )
+    op.execute(
+        "CREATE TYPE violation_durum AS ENUM ('yeni', 'inceleniyor', 'kapatildi');"
+    )
 
     # ------------------------------------------------------------------ #
     # 2. tenant
@@ -162,7 +170,12 @@ def upgrade() -> None:
             -- Dis Hizmetler bolumu notu (yonetici serbest metin: "yillardir
             -- guvendigimiz esnaflar; yabanci sokmayin" gibi). Tum roller okur.
             dis_hizmet_notu text,
+            -- Otopark kapasitesi (G4). NULL = tanimsiz -> GET /parking/occupancy
+            -- kapasite/oran NULL doner (uydurma sayi yok). 0 = kapasite yok.
+            otopark_kapasite integer,
             created_at  timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT ck_tenant_otopark_kapasite CHECK (otopark_kapasite IS NULL
+                                                         OR otopark_kapasite >= 0),
             CONSTRAINT uq_tenant_slug UNIQUE (slug),
             CONSTRAINT ck_tenant_slug CHECK (slug ~ '^[a-z0-9][a-z0-9-]*$')
         );
@@ -1436,6 +1449,9 @@ def upgrade() -> None:
             notlar               text,       -- opsiyonel not ("not" SQL anahtar sozcugu; asset deseni)
             kaydeden_user_id     uuid NOT NULL,   -- kaydi acan guvenlik
             target_resident_user_id uuid NOT NULL, -- guvenligin sectigi TEK sakin: bilgilendirme push'u + gorunurluk YALNIZ onda
+            -- Cikis damgasi (G3). NULL = ziyaretci HALA ICERIDE; "icerde"
+            -- sayisi bu kolondan turer (GET /visitors?icerde=true).
+            cikis_zamani         timestamptz,
             created_at           timestamptz NOT NULL DEFAULT now(),
             -- composite FK hedefi (ileride arama/meta tablolari icin de hazir).
             CONSTRAINT uq_visitor_id_tenant UNIQUE (id, tenant_id),
@@ -1461,6 +1477,11 @@ def upgrade() -> None:
     )
     op.execute(
         "CREATE INDEX ix_visitor_tenant_created ON visitor (tenant_id, created_at DESC);"
+    )
+    # "Icerde" sayaci (G3): cikis damgasi olmayan kayitlar — kismi indeks.
+    op.execute(
+        "CREATE INDEX ix_visitor_tenant_icerde ON visitor (tenant_id, created_at DESC) "
+        "WHERE cikis_zamani IS NULL;"
     )
 
     # ------------------------------------------------------------------ #
@@ -1879,6 +1900,118 @@ def upgrade() -> None:
     )
 
     # ------------------------------------------------------------------ #
+    # 9z11. vehicle_pass  (G1+G4 — arac giris/cikis gecisi. TEK SATIR bir
+    #     gecisin TAMAMINI tutar: giris_zamani her zaman dolu, cikis_zamani
+    #     NULL iken arac ICERIDEDIR. Otopark DOLULUGU (G4) bu "acik" satirlarin
+    #     sayimidir — ayri sayac tablosu/tetikleyici YOK, tek dogruluk kaynagi.
+    #
+    #     plaka NORMALIZE saklanir (bosluksuz + BUYUK harf; bkz.
+    #     crud_helpers.norm_plaka) — "34 abc 123" ve "34ABC123" ayni aracti.
+    #     Ayni plakadan AYNI ANDA en fazla bir acik gecis: kismi unique indeks
+    #     (yaris-guvenli; ikinci giris 409).
+    #
+    #     unit_id NULL = ziyaretci/misafir araci (ziyaretci_mi ile birlikte
+    #     tasinir; ikisi bagimsizdir — sakin araci gecici olarak ziyaretci
+    #     kaydedilebilir degil, ama dairesi bilinmeyen sakin araci olabilir).
+    #     tenant izole (RLS).)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE vehicle_pass (
+            id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id        uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            -- NORMALIZE: bosluksuz + BUYUK harf (uygulama katmani yazar).
+            plaka            text NOT NULL,
+            -- Serbest arac tanimi ("BMW Siyah") — opsiyonel.
+            arac_tanim       text,
+            giris_zamani     timestamptz NOT NULL DEFAULT now(),
+            -- NULL = arac HALA ICERIDE (acik gecis; doluluk bundan sayilir).
+            cikis_zamani     timestamptz,
+            -- NULL = daireye bagli olmayan arac (ziyaretci/kurye/bilinmeyen).
+            unit_id          uuid,
+            ziyaretci_mi     boolean NOT NULL DEFAULT false,
+            kaydeden_user_id uuid NOT NULL,
+            created_at       timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_vehicle_pass_id_tenant UNIQUE (id, tenant_id),
+            CONSTRAINT ck_vehicle_pass_plaka CHECK (plaka ~ '^[A-Z0-9]{2,20}$'),
+            -- Cikis girisden once olamaz.
+            CONSTRAINT ck_vehicle_pass_cikis CHECK (cikis_zamani IS NULL
+                                                    OR cikis_zamani >= giris_zamani),
+            -- composite FK: daire ayni tenant'ta olmali (RLS ile tutarli);
+            -- daire silinirse gecis kaydi kalir, bagi duser.
+            CONSTRAINT fk_vehicle_pass_unit
+                FOREIGN KEY (unit_id, tenant_id)
+                REFERENCES unit (id, tenant_id) ON DELETE SET NULL (unit_id),
+            CONSTRAINT fk_vehicle_pass_kaydeden
+                FOREIGN KEY (kaydeden_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_vehicle_pass_tenant ON vehicle_pass (tenant_id);")
+    # Doluluk sayaci + "acik gecisler" listesi (G4) — kismi indeks.
+    op.execute(
+        "CREATE INDEX ix_vehicle_pass_acik "
+        "ON vehicle_pass (tenant_id, giris_zamani DESC) WHERE cikis_zamani IS NULL;"
+    )
+    op.execute(
+        "CREATE INDEX ix_vehicle_pass_tenant_giris "
+        "ON vehicle_pass (tenant_id, giris_zamani DESC);"
+    )
+    # Plaka ile arama (tam/onek eslesme; normalize saklandigi icin duz indeks).
+    op.execute(
+        "CREATE INDEX ix_vehicle_pass_plaka ON vehicle_pass (tenant_id, plaka);"
+    )
+    # YAPISAL GARANTI: ayni plakadan ayni anda EN FAZLA BIR acik gecis.
+    # Es zamanli iki giris yarissa yalniz biri yazar, digeri 23505 -> 409.
+    op.execute(
+        "CREATE UNIQUE INDEX uq_vehicle_pass_acik_plaka "
+        "ON vehicle_pass (tenant_id, plaka) WHERE cikis_zamani IS NULL;"
+    )
+
+    # ------------------------------------------------------------------ #
+    # 9z12. violation  (G2 — ihlal/kural ihlali kaydi. site_kurali YALNIZ
+    #     METIN tutar; ihlalin kendisi burada izlenir: kim/nerede/nasil tespit
+    #     etti + is akisi durumu. Ana ekran sayaci ?durum=yeni.
+    #
+    #     durum akisi: yeni -> inceleniyor -> kapatildi. 'kapatildi' TERMINAL
+    #     ve YALNIZ admin kapatir (API katmani zorlar — DB'de kisit yok cunku
+    #     rol bilgisi DB'de degil token'da). tenant izole (RLS).)
+    # ------------------------------------------------------------------ #
+    op.execute(
+        """
+        CREATE TABLE violation (
+            id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id          uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            baslik             text NOT NULL,
+            aciklama           text,
+            kaynak             violation_kaynak NOT NULL DEFAULT 'manuel',
+            -- Serbest konum metni ("Otopark Girişi - Kamera 3"); checkpoint FK
+            -- DEGIL (ihlal cogu zaman checkpoint disinda tespit edilir).
+            konum              text,
+            durum              violation_durum NOT NULL DEFAULT 'yeni',
+            olusturan_user_id  uuid NOT NULL,
+            created_at         timestamptz NOT NULL DEFAULT now(),
+            updated_at         timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT uq_violation_id_tenant UNIQUE (id, tenant_id),
+            CONSTRAINT fk_violation_olusturan
+                FOREIGN KEY (olusturan_user_id, tenant_id)
+                REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT
+        );
+        """
+    )
+    op.execute("CREATE INDEX ix_violation_tenant ON violation (tenant_id);")
+    # Ana ekran sayaci (?durum=yeni) + durum filtreli liste.
+    op.execute(
+        "CREATE INDEX ix_violation_tenant_durum "
+        "ON violation (tenant_id, durum, created_at DESC);"
+    )
+    op.execute(
+        "CREATE INDEX ix_violation_tenant_created "
+        "ON violation (tenant_id, created_at DESC);"
+    )
+
+    # ------------------------------------------------------------------ #
     # 10. Row-Level Security
     # ------------------------------------------------------------------ #
     # Politika: satir, oturumdaki app.current_tenant_id ile eslesirse gorunur.
@@ -1923,6 +2056,8 @@ def upgrade() -> None:
         "dis_hizmet",
         "integration",
         "unit_complaint",
+        "vehicle_pass",
+        "violation",
     ):
         _enable_rls(table)
 
@@ -1978,6 +2113,8 @@ def downgrade() -> None:
     )
     op.execute("DROP FUNCTION IF EXISTS public.payment_tenant_by_ref(text, text);")
     for table in (
+        "violation",
+        "vehicle_pass",
         "unit_complaint",
         "integration",
         "dis_hizmet",
@@ -2019,6 +2156,8 @@ def downgrade() -> None:
     ):
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
+    op.execute("DROP TYPE IF EXISTS violation_durum;")
+    op.execute("DROP TYPE IF EXISTS violation_kaynak;")
     op.execute("DROP TYPE IF EXISTS unit_complaint_durum;")
     op.execute("DROP TYPE IF EXISTS unit_complaint_kategori;")
     op.execute("DROP TYPE IF EXISTS integration_channel;")

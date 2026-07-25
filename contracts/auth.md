@@ -269,9 +269,18 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `POST /visitors` (ziyaretci kaydi)    |  ❌   | ❌  | ✅  | ❌  | ❌  |
 | `GET  /visitors` (liste/detay)        |  🔒   | 🔒  | ✅  | ❌  | 🎯  |
 | `PATCH /visitors/{id}` (guvenlik duzenler: ad/daire/hedef/not)| ❌ | ❌ | ✅ | ❌ | ❌ |
+| `POST /visitors/{id}/checkout` (cikis damgasi, G3)| ❌ | ❌ | ✅ | ❌ | ❌ |
 | `POST /kargo` (paket kaydi)           |  ❌   | ❌  | ✅  | ❌  | ❌  |
 | `GET  /kargo` (liste/detay)           |  🔒   | 🔒  | ✅  | ❌  | 🔵  |
 | `PATCH /kargo/{id}` (teslim aldim)    |  ❌   | ❌  | ❌  | ❌  | ✅* |
+| `POST /vehicle-passes` (arac girisi, G1)| ✅  | ❌  | ✅  | ❌  | ❌  |
+| `POST /vehicle-passes/{id}/checkout`  |  ✅   | ❌  | ✅  | ❌  | ❌  |
+| `GET  /vehicle-passes` (liste/detay)  |  ✅   | ❌  | ✅  | ❌  | ❌  |
+| `GET  /parking/occupancy` (agregat, G4)|  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `POST /violations` (ihlal ac, G2)     |  ✅   | ❌  | ✅  | ❌  | ❌  |
+| `GET  /violations` (liste/detay)      |  ✅   | ✅  | ✅  | ❌  | ❌  |
+| `PATCH /violations/{id}` (durum)      |  ✅   | ❌  | ✅⚖ | ❌  | ❌  |
+| `GET  /activity` (birlesik akis, G5)  |  ✅◐  | ✅◐ | ✅◐ | ✅◐ | ✅◐ |
 | `POST /unit-access-request`           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /unit-access-request`           |  ✅   | 👤  | ❌  | ❌  | 🏠  |
 | `PATCH /unit-access-request/{id}`     |  ❌   | ❌  | ❌  | ❌  | ✅🏠|
@@ -591,7 +600,34 @@ Notlar:
 
 > Matris isaretleri: 🔒 varsayilan kapali (tek-seferlik izinle acilir) · 🎯
 > yalniz hedef sakin · 🔵 kendi dairesi (es dahil) · 👤 kendi talepleri · 🏠
-> kendi dairesine gelen talepler · 📞 yon+riza kapisiyla (bkz. rol-bazli arama).
+> kendi dairesine gelen talepler · 📞 yon+riza kapisiyla (bkz. rol-bazli arama)
+> · ⚖ durum degistirir ama KAPATAMAZ (kapatma yalniz admin — dort-goz) · ◐ uc
+> her role acik ama ICERIK role gore suzulur (bkz. birlesik akis).
+
+- **Arac gecisi + otopark (`/vehicle-passes`, `/parking/occupancy` — G1+G4):**
+  bir gecis TEK satirdir; `cikis_zamani IS NULL` iken arac ICERIDEDIR. Plaka
+  **PII'ye baglanabilir** (daire/kisi), bu yuzden gecis LISTESI yalniz
+  `admin`+`security`'dedir — `yonetici` ve `resident` 403. Yonetimin ihtiyaci
+  olan **agregat** doluluk (`{kapasite, dolu, oran}`) plaka/daire ICERMEZ ve
+  tum kimlikli rollere aciktir. Kapasite `tenant.otopark_kapasite`
+  (`PATCH /tenant/settings`; admin **veya** yonetici yazar); tanimsiz/0 iken
+  `oran` **null** doner (uydurma yuzde yok).
+
+- **Ihlal kaydi (`/violations` — G2):** kural METNI (`/site-rules`) ile somut
+  ihlal AYRIDIR. YAZMA `admin`+`security`; OKUMA `admin`+`yonetici`+`security`
+  (ihlal komsu davranisi hakkinda veri tasir — `resident`/`tesis_gorevlisi`
+  403). Durum akisi `yeni → inceleniyor → kapatildi`; **KAPATMA yalniz
+  `admin`** (dort-goz: inceleyen kendi kaydini kapatamaz) ve `kapatildi`
+  TERMINAL'dir (yeniden acma 409).
+
+- **Birlesik aktivite akisi (`GET /activity` — G5):** uc her role aciktir,
+  ICERIK sunucuda suzulur (istemci bypass EDEMEZ): `admin` operasyonel+finans;
+  `yonetici` ayni, arac gecisleri HARIC; `security` operasyonel + KENDI
+  talepleri, **finans YOK**; `resident` YALNIZ kendisi/kendi dairesi;
+  `tesis_gorevlisi` YALNIZ gorev tamamlamalari (mevcut KVKK kisiti).
+  **Ziyaretci/kargo olaylari yonetim rollerine burada da KAPALIDIR** (🔒) —
+  aksi halde akis, tek-seferlik izin kapisini (`/unit-access-request`) bypass
+  eden bir yan kanal olurdu.
 
 - **Rol-bazli arama (`/call-target`, C1a — telefon numarasi GIZLILIGI):**
   sahadaki roller birbirine cihaz ceviricisiyle (tel:, ucretsiz — Twilio yok)

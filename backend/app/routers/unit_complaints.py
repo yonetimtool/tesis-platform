@@ -38,6 +38,7 @@ from ..schemas import (
     UnitComplaintCreate,
     UnitComplaintDecision,
     UnitComplaintDurum,
+    UnitComplaintKategori,
     UnitComplaintListResponse,
     UnitComplaintOut,
     UnitDensityItem,
@@ -198,6 +199,9 @@ async def unit_density(
 @router.get("/mine", response_model=UnitComplaintListResponse)
 async def my_unit_complaints(
     durum: UnitComplaintDurum | None = Query(None),
+    kategori: UnitComplaintKategori | None = Query(
+        None, description="Kategori suzgeci (orn. gurultu) — ana ekran sayaci"
+    ),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
@@ -206,7 +210,10 @@ async def my_unit_complaints(
     """Sakinin KENDI actigi sikayetler (sikayet gitti mi geri bildirimi) —
     YALNIZ resident. Alanlar: hedef unit_no + kategori + tarih + durum. Baska
     sakinlerin kayitlari YOK; yogunluk/renk YOK; complainant (kendisi) OMITTED.
-    Kendi notunu gorur."""
+    Kendi notunu gorur.
+
+    Ana ekran "Gurultu Sikayeti" sayaci (G6):
+    `?kategori=gurultu&durum=acik&limit=1` -> `meta.total`."""
     base = (
         select(UnitComplaint, Unit.no)
         .join(Unit, Unit.id == UnitComplaint.target_unit_id)
@@ -214,6 +221,8 @@ async def my_unit_complaints(
     )
     if durum is not None:
         base = base.where(UnitComplaint.durum == durum)
+    if kategori is not None:
+        base = base.where(UnitComplaint.kategori == kategori)
 
     total = (
         await db.execute(select(func.count()).select_from(base.subquery()))
@@ -343,6 +352,9 @@ async def building_map(
 async def list_unit_complaints(
     target_unit_id: uuid.UUID | None = Query(None),
     durum: UnitComplaintDurum | None = Query(None),
+    kategori: UnitComplaintKategori | None = Query(
+        None, description="Kategori suzgeci (orn. gurultu)"
+    ),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
@@ -360,6 +372,8 @@ async def list_unit_complaints(
         base = base.where(UnitComplaint.target_unit_id == target_unit_id)
     if durum is not None:
         base = base.where(UnitComplaint.durum == durum)
+    if kategori is not None:
+        base = base.where(UnitComplaint.kategori == kategori)
 
     total = (
         await db.execute(select(func.count()).select_from(base.subquery()))

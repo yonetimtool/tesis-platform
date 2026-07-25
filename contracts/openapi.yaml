@@ -1238,6 +1238,14 @@ paths:
           in: query
           required: false
           schema: { type: string, format: uuid }
+        - name: icerde
+          in: query
+          required: false
+          description: >
+            (G3, ADDITIVE) true: halen ICERIDE olanlar (`cikis_zamani` IS NULL);
+            false: cikisi damgalanmis olanlar. Verilmezse tum gecmis.
+            Ana ekran sayaci: `?icerde=true&limit=1` -> `meta.total`.
+          schema: { type: boolean }
         - name: baslangic
           in: query
           required: false
@@ -1333,6 +1341,34 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
+
+  /visitors/{id}/checkout:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [visitors]
+      summary: Ziyaretci cikisini damgala (YALNIZ security) — G3
+      description: |
+        (ADDITIVE — G3) `cikis_zamani` sunucu saatiyle damgalanir; kayit bundan
+        sonra `?icerde=true` suzgecine GIRMEZ.
+
+        Kayit gibi CIKIS da KAPI OPERASYONUDUR: yalniz security damgalar
+        (yonetici/admin ziyaretci kaydi acmadigi gibi cikis da damgalamaz).
+        Atomik kosullu guncelleme — zaten cikmissa **409** ve ILK cikis zamani
+        DEGISMEZ (kargo teslim deseniyle ayni). Govde YOKTUR.
+      responses:
+        "200":
+          description: Cikis damgalandi (guncel kayit)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Visitor" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Ziyaretci cikisi zaten kaydedilmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
   # ================================================================= #
   # KARGO (paket takibi: guvenlik kaydeder (daire+firma+opsiyonel foto)
@@ -4099,6 +4135,11 @@ paths:
           in: query
           required: false
           schema: { type: string, enum: [acik, kapali] }
+        - name: kategori
+          in: query
+          required: false
+          description: "(G6, ADDITIVE) Kategori suzgeci"
+          schema: { type: string, enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, diger] }
       responses:
         "200":
           description: Liste
@@ -4152,6 +4193,9 @@ paths:
         Sakin YALNIZ kendi actigi sikayetleri gorur: hedef unit_no + kategori +
         tarih + durum (+ kendi notu). Baska sakinlerin kayitlari, yogunluk/renk,
         ve complainant (kendisi) YOKTUR. Diger roller 403.
+
+        Ana ekran "Gurultu Sikayeti" sayaci (G6):
+        `?kategori=gurultu&durum=acik&limit=1` -> `meta.total`.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -4159,6 +4203,11 @@ paths:
           in: query
           required: false
           schema: { type: string, enum: [acik, kapali] }
+        - name: kategori
+          in: query
+          required: false
+          description: "(G6, ADDITIVE) Kategori suzgeci — orn. gurultu"
+          schema: { type: string, enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, diger] }
       responses:
         "200":
           description: Kendi sikayet listem
@@ -4233,6 +4282,444 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
+  # ARAC GECISI + OTOPARK DOLULUGU (G1 + G4)
+  # Bir GECIS = bir satir: `giris_zamani` her zaman dolu, `cikis_zamani`
+  # NULL iken arac ICERIDEDIR. Doluluk = ACIK satirlarin sayimi (ayri
+  # sayac YOK). Plaka NORMALIZE saklanir (bosluksuz + BUYUK).
+  # ================================================================= #
+  /vehicle-passes:
+    get:
+      tags: [vehicle-passes]
+      summary: Arac gecisleri (giris_zamani DESC) — admin + security
+      description: |
+        RBAC: YALNIZ admin + security. Plaka kisisel veriye baglanabilir
+        (KVKK) — yonetici/resident/tesis_gorevlisi gecis LISTESINI GORMEZ
+        (403); yonetimin ihtiyaci olan AGREGAT doluluk `/parking/occupancy`
+        ile tum rollere aciktir.
+
+        Ana ekran sayaci ("N Iceride"): `?acik=true&limit=1` -> `meta.total`.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: acik
+          in: query
+          required: false
+          description: >
+            true: yalniz ACIK gecisler (`cikis_zamani` IS NULL — arac iceride);
+            false: yalniz kapanmis gecisler. Verilmezse tumu.
+          schema: { type: boolean }
+        - name: plaka
+          in: query
+          required: false
+          description: >
+            Plaka ONEK eslesmesi. Arama degeri de NORMALIZE edilir
+            ("34 abc" == "34ABC"), boylece istemci format bilmek zorunda degil.
+          schema: { type: string, minLength: 1, maxLength: 32 }
+        - name: baslangic
+          in: query
+          required: false
+          description: >
+            giris_zamani >= (tarih filtresi). "Bugun N giris" sayaci:
+            `?baslangic=<gun basi>&limit=1` -> `meta.total`.
+          schema: { type: string, format: date-time }
+        - name: bitis
+          in: query
+          required: false
+          description: giris_zamani < (tarih filtresi)
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/VehiclePass" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [vehicle-passes]
+      summary: Arac GIRISI kaydet (admin + security)
+      description: |
+        `plaka` sunucuda normalize edilir (alfanumerik disi karakterler atilir,
+        harfler buyur) ve NORMALIZE hali saklanir/donuur. Daire referansi
+        OPSIYONEL: `unit_id` VEYA `unit_no` (ikisi birlikte 422); hicbiri
+        verilmezse arac daireye bagli degildir. Verilen daire bulunamazsa 422.
+
+        Ayni plakanin ACIK bir gecisi varsa **409** (arac zaten iceride —
+        yapisal garanti: kismi unique indeks, es zamanli iki giris yarissa
+        yalniz biri yazar). Cikis damgalandiktan sonra ayni plaka yeniden
+        girebilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VehiclePassCreate" }
+      responses:
+        "201":
+          description: Giris kaydedildi (cikis_zamani null => arac iceride)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehiclePass" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Bu plakanin acik bir gecisi zaten var (arac iceride)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /vehicle-passes/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [vehicle-passes]
+      summary: Arac gecisi detayi (admin + security)
+      responses:
+        "200":
+          description: Gecis
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehiclePass" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /vehicle-passes/{id}/checkout:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [vehicle-passes]
+      summary: Arac CIKISI damgala (admin + security)
+      description: |
+        `cikis_zamani` sunucu saatiyle damgalanir; otopark dolulugu ANINDA
+        duser (ayri sayac yok). Atomik kosullu guncelleme — gecis zaten
+        kapanmissa **409** ve ilk cikis zamani DEGISMEZ. Govde YOKTUR.
+      responses:
+        "200":
+          description: Cikis damgalandi (guncel kayit)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehiclePass" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Arac gecisi zaten kapatilmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /parking/occupancy:
+    get:
+      tags: [vehicle-passes]
+      summary: Otopark dolulugu (agregat) — TUM kimlikli roller
+      description: |
+        `dolu` = ACIK arac gecisi (`cikis_zamani` IS NULL) sayisi — plaka veya
+        daire ICERMEZ, bu yuzden tum rollere aciktir (ana ekran karti +
+        "Hizli Ozet" kutusu ayni yaniti kullanir: "78 / 120" ve "%65").
+
+        `kapasite` tenant ayarindan gelir (`PATCH /tenant/settings` ->
+        `otopark_kapasite`; admin veya yonetici yazar). Kapasite TANIMSIZ
+        (null) veya 0 ise `oran` da **null** doner — istemci "—" gosterir,
+        uydurma yuzde uretilmez. `dolu` her zaman gercek sayidir.
+      responses:
+        "200":
+          description: Doluluk
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ParkingOccupancy" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  # ================================================================= #
+  # IHLAL KAYDI (G2) — site_kurali YALNIZ metin tutar; somut ihlal
+  # burada izlenir. Durum: yeni -> inceleniyor -> kapatildi (TERMINAL).
+  # ================================================================= #
+  /violations:
+    get:
+      tags: [violations]
+      summary: Ihlal kayitlari (created_at DESC) — admin + yonetici + security
+      description: |
+        RBAC: OKUMA admin + yonetici + security. resident ve tesis_gorevlisi
+        ERISMEZ (403) — ihlal kaydi komsu davranisi hakkinda veri tasir (KVKK).
+
+        Ana ekran sayaci ("N Yeni"): `?durum=yeni&limit=1` -> `meta.total`.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: durum
+          in: query
+          required: false
+          schema: { type: string, enum: [yeni, inceleniyor, kapatildi] }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Violation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [violations]
+      summary: Ihlal kaydi ac (admin + security)
+      description: |
+        Kayit acilinca `durum='yeni'` olur (ana ekran sayaci bunu sayar).
+        `kaynak` verilmezse 'manuel'. `konum` serbest metindir (checkpoint FK
+        DEGIL — ihlal cogu zaman checkpoint disinda tespit edilir).
+        yonetici OKUR ama ACMAZ (403).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ViolationCreate" }
+      responses:
+        "201":
+          description: Olusturuldu (durum=yeni)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Violation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /violations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [violations]
+      summary: Ihlal detayi (admin + yonetici + security)
+      responses:
+        "200":
+          description: Ihlal
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Violation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [violations]
+      summary: Ihlal durumunu degistir (admin + security; KAPATMA yalniz admin)
+      description: |
+        Gecis akisi: `yeni` -> `inceleniyor` -> `kapatildi`.
+
+        * KAPATMA (`durum=kapatildi`) YALNIZ **admin** — dort-goz kurali;
+          inceleyen personel kendi kaydini kapatamaz (security -> 403).
+        * `kapatildi` TERMINAL: kapali kayit yeniden ACILMAZ (409).
+        * Ayni duruma gecis IDEMPOTENT'tir (200, kayit degismez).
+        * yonetici okur ama durum degistiremez (403).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ViolationUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Violation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Kapatilmis ihlal yeniden acilamaz (terminal durum)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
+  # BIRLESIK AKTIVITE AKISI (G5) — "Son Hareketler"
+  # ================================================================= #
+  /activity:
+    get:
+      tags: [activity]
+      summary: Birlesik olay akisi (yeniden eskiye, rol-farkindali)
+      description: |
+        Mobil "Son Hareketler" akisi. Onceden istemci rol basina 3-4 ayri uca
+        istek atip sonuclari elde birlestiriyordu; bu uc AYNI olaylari
+        SUNUCUDA birlestirir, SUNUCUDA siralar ve SUNUCUDA rol/KVKK'ya gore
+        suzer. Yeni tablo YOKTUR — hepsi mevcut kayitlardan turer.
+
+        **Olay turleri (`tur`)**: `devriye_okutma` | `gorev_tamamlama` |
+        `aidat_odeme` | `talep` | `daire_sikayeti` | `alarm` |
+        `ziyaretci_giris` | `ziyaretci_cikis` | `kargo` | `kargo_teslim` |
+        `arac_giris` | `arac_cikis` | `ihlal`
+
+        **Rol suzgeci (sunucu tarafinda; istemci bypass EDEMEZ):**
+
+        | rol | gordugu turler |
+        |---|---|
+        | admin | devriye_okutma, gorev_tamamlama, aidat_odeme, talep, daire_sikayeti, alarm, arac_*, ihlal |
+        | yonetici | admin ile ayni, `arac_*` HARIC (plaka RBAC'i admin+security) |
+        | security | devriye_okutma, gorev_tamamlama, alarm, ziyaretci_*, kargo*, arac_*, ihlal + KENDI talepleri. FINANS (aidat) YOK |
+        | resident | YALNIZ kendisi/kendi dairesi: kendine hedeflenen ziyaretci, dairesinin kargosu, dairesinin aidat odemesi, kendi talepleri, KENDI ACTIGI daire sikayetleri |
+        | tesis_gorevlisi | YALNIZ `gorev_tamamlama` (mevcut KVKK kisiti) |
+
+        **ZIYARETCI/KARGO — bilincli kisit:** bu iki kaynak yonetim rollerine
+        (admin + yonetici) burada da KAPALIDIR. Sebep: `/visitors` ve `/kargo`
+        uclarinda yonetim VARSAYILAN KAPALI'dir ve daire bazli TEK-SEFERLIK
+        izinle (`/unit-access-request`) acilir. Birlesik akis bu kapiyi
+        bypass eden bir yan kanal OLMAMALIDIR.
+
+        **Sayfalama — bilesik imlec:** `ORDER BY zaman DESC, id DESC` +
+        `WHERE (zaman, id) < (imlec)`. `offset` YOKTUR: araya yeni kayit girse
+        bile sayfalar kaymaz/tekrarlamaz. `meta.total` de YOKTUR (13 kaynagin
+        birlesik sayimi her istekte tam tarama demektir ve akis ekraninda
+        kullanilmaz); "daha var mi" bilgisi `meta.next_cursor`'in null
+        OLMAMASIYLA verilir.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Sayfa boyutu (varsayilan 20, max 100)
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: cursor
+          in: query
+          required: false
+          description: >
+            Onceki yanitin `meta.next_cursor` degeri. OPAK'tir — istemci
+            icerigini AYRISTIRMAMALIDIR (siralama anahtari ileride degisirse
+            sozlesme kirilmasin). Gecersiz deger 422.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Akis sayfasi (yeniden eskiye)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActivityPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
+  # HAVA DURUMU (G7 — sozlesme geri-doldurmasi; UC ZATEN CANLIDA)
+  # ================================================================= #
+  /weather:
+    get:
+      tags: [weather]
+      summary: Tesis konumu icin guncel hava durumu — TUM kimlikli roller
+      description: |
+        Ana ekran basligindaki hava bloğu. Tenant'in `konum_lat`/`konum_lon`
+        koordinati icin Open-Meteo proxy'si; dis istek YALNIZ cache kacirilinca
+        atilir (varsayilan 30 dk TTL) ve kisa timeout'ludur (3 sn) — baslik ana
+        ekrani BEKLETMEZ. Dis servis dusukse BAYAT cache donulur; hic veri
+        yoksa 503 `weather_unavailable`.
+
+        Sorgu parametresi YOKTUR (konum tenant ayarindan gelir:
+        `PATCH /tenant/settings` -> `konum_ad`/`konum_lat`/`konum_lon`).
+      responses:
+        "200":
+          description: Guncel hava
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Weather" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Tenant bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: "Hava durumu su an alinamiyor (code: weather_unavailable)"
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  # ================================================================= #
+  # KAMERALAR (G7 — sozlesme geri-doldurmasi; UC ZATEN CANLIDA)
+  # ================================================================= #
+  /cameras:
+    get:
+      tags: [cameras]
+      summary: Kamera yayin listesi (ad ASC) — admin + yonetici + security
+      description: |
+        Site kamera yayin URL'leri. KVKK: tesis_gorevlisi ve resident kamera
+        GORMEZ (403). Backend yayini HIC cekmez — istemci oynatir (SSRF yuzeyi
+        yok); URL semasi http(s) ile sinirlidir.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Camera" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [cameras]
+      summary: Kamera ekle (admin + yonetici)
+      description: "`ad` tenant icinde benzersizdir (cakisirsa 409)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CameraCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Camera" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /cameras/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [cameras]
+      summary: Kamera guncelle (admin + yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CameraUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Camera" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [cameras]
+      summary: Kamera sil (admin + yonetici)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
 # =================================================================== #
 components:
@@ -5598,6 +6085,14 @@ components:
             (tek hedef modeli). Ayni dairedeki diger sakinler (es) bu kaydi
             gormez.
         target_resident_ad: { type: string, nullable: true }
+        cikis_zamani:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            (G3, ADDITIVE) Cikis damgasi. **null => ziyaretci HALA ICERIDE**
+            ("icerde" sayisi bu alandan turer). `POST /visitors/{id}/checkout`
+            ile doldurulur; ikinci damga 409 (ilk deger degismez).
         created_at: { type: string, format: date-time }
     VisitorCreate:
       type: object
@@ -6380,17 +6875,52 @@ components:
           type: string
           nullable: true
           description: "Tesisin yonetim maili (tenant seviyesi) — yonetici iletisim kartinda gosterilir"
+        konum_ad:
+          type: string
+          default: "İstanbul"
+          description: "Hava durumu basliginda gorunen konum adi (GET /weather)"
+        konum_lat:
+          type: number
+          format: double
+          default: 41.0082
+          description: "Hava durumu koordinati (enlem) — GET /weather bunu kullanir"
+        konum_lon:
+          type: number
+          format: double
+          default: 28.9784
+          description: "Hava durumu koordinati (boylam)"
+        otopark_kapasite:
+          type: integer
+          nullable: true
+          minimum: 0
+          example: 120
+          description: >
+            (G4, ADDITIVE) Otopark kapasitesi. **null = TANIMSIZ** —
+            `GET /parking/occupancy` `kapasite` ve `oran` alanlarini null
+            doner (istemci "—" gosterir).
     TenantSettingsUpdate:
       type: object
       description: >
-        En az bir alan gerekli. admin TUM alanlari gonderebilir; `yonetici` YALNIZ
-        `ad` gonderebilir (baska alan gonderirse 403). `slug` ve tenant `id` bu
+        En az bir alan gerekli. admin TUM alanlari gonderebilir; `yonetici`
+        YALNIZ `ad`, `konum_ad`, `konum_lat`, `konum_lon` ve `otopark_kapasite`
+        gonderebilir (baska alan gonderirse 403). `slug` ve tenant `id` bu
         uctan ASLA degismez.
       minProperties: 1
       properties:
         timezone: { type: string }
         ad: { type: string }
         yonetim_email: { type: string, nullable: true }
+        konum_ad: { type: string, minLength: 1 }
+        konum_lat: { type: number, format: double, minimum: -90, maximum: 90 }
+        konum_lon: { type: number, format: double, minimum: -180, maximum: 180 }
+        otopark_kapasite:
+          type: integer
+          nullable: true
+          minimum: 0
+          maximum: 100000
+          description: >
+            (G4, ADDITIVE) Acikca `null` gonderilirse kapasite TANIMSIZ'a
+            doner ve `oran` yeniden null olur.
 
     # ---------------------- yonetici iletisim ---------------------- #
     YoneticiKart:
@@ -6772,3 +7302,239 @@ components:
         tahsilat:
           allOf: [{ $ref: "#/components/schemas/TahsilatOzet" }]
           nullable: true
+
+    # -------------------- arac gecisi + otopark (G1 + G4) -------------------- #
+    VehiclePass:
+      type: object
+      description: >
+        Bir arac gecisi. TEK satir gecisin TAMAMINI tutar: `giris_zamani` her
+        zaman doludur, `cikis_zamani` NULL iken arac ICERIDEDIR. Otopark
+        dolulugu (GET /parking/occupancy) ACIK satirlarin sayimidir — ayri
+        sayac/tetikleyici yoktur, sayim ile kayit ASLA ayrisamaz.
+      required: [id, plaka, giris_zamani, ziyaretci_mi, kaydeden_user_id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        plaka:
+          type: string
+          example: "34ABC123"
+          description: >
+            NORMALIZE plaka — alfanumerik disi karakterler atilmis, harfler
+            buyutulmus hali saklanir VE donuur ("34 abc 123" -> "34ABC123").
+        arac_tanim:
+          type: string
+          nullable: true
+          example: "BMW Siyah"
+          description: Serbest arac tanimi (opsiyonel)
+        giris_zamani: { type: string, format: date-time }
+        cikis_zamani:
+          type: string
+          format: date-time
+          nullable: true
+          description: "**null => arac HALA ICERIDE** (acik gecis)"
+        unit_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: null = daireye bagli olmayan arac (ziyaretci/kurye/bilinmeyen)
+        unit_no: { type: string, nullable: true, description: Daire numarasi (join ile) }
+        ziyaretci_mi: { type: boolean, default: false }
+        kaydeden_user_id: { type: string, format: uuid }
+        kaydeden_ad: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+    VehiclePassCreate:
+      type: object
+      description: >
+        Arac GIRISI. `plaka` sunucuda normalize edilir. Daire referansi
+        OPSIYONEL: `unit_id` VEYA `unit_no` (ikisi birlikte 422); hicbiri
+        verilmezse arac daireye bagli degildir.
+      required: [plaka]
+      properties:
+        plaka:
+          type: string
+          minLength: 1
+          maxLength: 32
+          example: "34 ABC 123"
+          description: >
+            Serbest formatta girilebilir; sunucu normalize eder. Normalize
+            sonucu 2-20 alfanumerik karakter degilse 422.
+        arac_tanim: { type: string, nullable: true, minLength: 1, maxLength: 120 }
+        unit_id: { type: string, format: uuid, nullable: true }
+        unit_no: { type: string, nullable: true, minLength: 1, maxLength: 50 }
+        ziyaretci_mi: { type: boolean, default: false }
+        giris_zamani:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            Verilmezse sunucu saati damgalanir. Geriye donuk kayit icin acik
+            deger verilebilir; GELECEGE damga 422 (5 dk tolerans).
+    ParkingOccupancy:
+      type: object
+      required: [dolu]
+      properties:
+        kapasite:
+          type: integer
+          nullable: true
+          example: 120
+          description: "Tenant ayari (`otopark_kapasite`); TANIMSIZ ise null"
+        dolu:
+          type: integer
+          example: 78
+          description: ACIK arac gecisi sayisi — kapasite bilinmese de HER ZAMAN gercek sayi
+        oran:
+          type: integer
+          nullable: true
+          example: 65
+          description: >
+            Yuzde (0-100, tam sayiya yuvarli) = round(100*dolu/kapasite).
+            **kapasite null veya 0 ise null** — istemci "—" gosterir.
+
+    # ----------------------------- ihlal (G2) ------------------------------- #
+    Violation:
+      type: object
+      description: >
+        Ihlal kaydi. `site_kurali` YALNIZ kural METNINI tutar; somut ihlal
+        olayi (kim/nerede/nasil tespit etti + is akisi) burada izlenir.
+      required: [id, baslik, kaynak, durum, olusturan_user_id, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        baslik: { type: string, maxLength: 200, example: "Otopark girişinde hatalı park" }
+        aciklama: { type: string, nullable: true, maxLength: 2000 }
+        kaynak:
+          type: string
+          enum: [kamera, manuel, devriye]
+          default: manuel
+          description: Tespit kaynagi
+        konum:
+          type: string
+          nullable: true
+          maxLength: 200
+          example: "Otopark Girişi - Kamera 3"
+          description: Serbest konum metni (checkpoint FK DEGIL)
+        durum:
+          type: string
+          enum: [yeni, inceleniyor, kapatildi]
+          default: yeni
+          description: "`kapatildi` TERMINAL — yeniden acilmaz (409)"
+        olusturan_user_id: { type: string, format: uuid }
+        olusturan_ad: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ViolationCreate:
+      type: object
+      required: [baslik]
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        aciklama: { type: string, nullable: true, minLength: 1, maxLength: 2000 }
+        kaynak: { type: string, enum: [kamera, manuel, devriye], default: manuel }
+        konum: { type: string, nullable: true, minLength: 1, maxLength: 200 }
+    ViolationUpdate:
+      type: object
+      description: >
+        Durum gecisi. KAPATMA (`kapatildi`) YALNIZ admin (403); `kapatildi`
+        TERMINAL (409); ayni duruma gecis idempotent (200).
+      required: [durum]
+      properties:
+        durum: { type: string, enum: [yeni, inceleniyor, kapatildi] }
+
+    # ------------------------ birlesik akis (G5) ---------------------------- #
+    ActivityItem:
+      type: object
+      required: [id, tur, baslik, zaman, kaynak_id]
+      properties:
+        id:
+          type: string
+          example: "kargo_teslim:9f1c8a2e-2b7e-4b1a-9c31-3f5f0b6d1a44"
+          description: >
+            Kaynaklar arasi BENZERSIZ olay kimligi — `"<tur>:<kaynak_id>"`.
+            Siralamanin ikincil anahtaridir (esit zamanli olaylarda kararlilik).
+        tur:
+          type: string
+          enum:
+            [devriye_okutma, gorev_tamamlama, aidat_odeme, talep, daire_sikayeti,
+             alarm, ziyaretci_giris, ziyaretci_cikis, kargo, kargo_teslim,
+             arac_giris, arac_cikis, ihlal]
+        baslik:
+          type: string
+          example: "Kargo Teslim Edildi"
+          description: Olay etiketi (kart basligi)
+        alt_metin:
+          type: string
+          nullable: true
+          example: "Aras Kargo — Daire A-12"
+          description: Detay satiri (kart alt yazisi)
+        zaman:
+          type: string
+          format: date-time
+          description: Olayin GERCEKLESME zamani (kaydin created_at'i olmayabilir — orn. cikis damgasi)
+        renk_ipucu:
+          type: string
+          nullable: true
+          enum: [olumlu, uyari, alarm, notr]
+          description: UI nokta/rozet rengi ipucu
+        kaynak_id:
+          type: string
+          format: uuid
+          description: Kaynak kaydin kendi id'si (derin baglanti icin)
+    ActivityPage:
+      type: object
+      required: [meta, items]
+      properties:
+        meta:
+          type: object
+          required: [limit]
+          properties:
+            limit: { type: integer }
+            next_cursor:
+              type: string
+              nullable: true
+              description: >
+                Bir sonraki sayfanin imleci; **null ise akisin sonundasiniz**.
+                OPAK — istemci ayristirmamalidir. `total` alani YOKTUR.
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ActivityItem" }
+
+    # ---------------- hava durumu + kameralar (G7 backfill) ----------------- #
+    Weather:
+      type: object
+      required: [sicaklik_c, durum, konum_ad]
+      properties:
+        sicaklik_c: { type: number, format: double, example: 24.3 }
+        durum:
+          type: string
+          enum: [acik, parcali, kapali, sis, yagmur, kar, firtina]
+          description: Open-Meteo weather_code'undan turetilmis normalize durum
+        konum_ad:
+          type: string
+          example: "İstanbul"
+          description: "Tenant ayarindaki konum adi (tenant.konum_ad)"
+    Camera:
+      type: object
+      required: [id, ad, stream_url, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, maxLength: 100, example: "Ana Kapı" }
+        stream_url:
+          type: string
+          example: "https://cam.example.com/hls/1/index.m3u8"
+          description: >
+            Istemcinin oynattigi HLS/MJPEG yayini. Backend bu URL'i HIC cekmez
+            (SSRF yuzeyi yok); sema http(s) ile sinirlidir.
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    CameraCreate:
+      type: object
+      required: [ad, stream_url]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        stream_url:
+          type: string
+          description: "http:// veya https:// ile baslamali (aksi 422)"
+    CameraUpdate:
+      type: object
+      description: En az bir alan gerekli
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        stream_url: { type: string }

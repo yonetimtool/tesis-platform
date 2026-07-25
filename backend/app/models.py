@@ -126,6 +126,14 @@ UNIT_COMPLAINT_DURUM = ENUM(
     "acik", "kapali",
     name="unit_complaint_durum", create_type=False,
 )
+VIOLATION_KAYNAK = ENUM(
+    "kamera", "manuel", "devriye",
+    name="violation_kaynak", create_type=False,
+)
+VIOLATION_DURUM = ENUM(
+    "yeni", "inceleniyor", "kapatildi",
+    name="violation_durum", create_type=False,
+)
 
 
 def _pk() -> Mapped[uuid.UUID]:
@@ -166,6 +174,9 @@ class Tenant(Base):
     yonetim_email: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Dis Hizmetler bolumu notu (yonetici serbest metni; tum roller okur).
     dis_hizmet_notu: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Otopark kapasitesi (G4). NULL = tanimsiz -> /parking/occupancy kapasite +
+    # oran NULL doner (ana ekran "—" gosterir, uydurma sayi yok).
+    otopark_kapasite: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Hava durumu konumu (0005) — baslikta gorunen ad + Open-Meteo koordinati.
     konum_ad: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("'İstanbul'")
@@ -1150,6 +1161,8 @@ class Visitor(Base):
     target_resident_user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), nullable=False
     )
+    # Cikis damgasi (G3). NULL = ziyaretci HALA ICERIDE.
+    cikis_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
 
 
@@ -1601,6 +1614,94 @@ class UnitComplaint(Base):
     durum: Mapped[str] = mapped_column(
         UNIT_COMPLAINT_DURUM, nullable=False, server_default=text("'acik'")
     )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class VehiclePass(Base):
+    """Arac giris/cikis gecisi (G1) — TEK satir gecisin tamamini tutar.
+
+    `cikis_zamani IS NULL` => arac ICERIDE (acik gecis). Otopark DOLULUGU (G4)
+    bu acik satirlarin sayimidir; ayri sayac yoktur. `plaka` NORMALIZE saklanir
+    (bosluksuz + BUYUK harf; crud_helpers.norm_plaka) ve ayni plakadan ayni
+    anda en fazla bir acik gecis olabilir (kismi unique indeks -> 409).
+    """
+
+    __tablename__ = "vehicle_pass"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_vehicle_pass_id_tenant"),
+        CheckConstraint("plaka ~ '^[A-Z0-9]{2,20}$'", name="ck_vehicle_pass_plaka"),
+        CheckConstraint(
+            "cikis_zamani IS NULL OR cikis_zamani >= giris_zamani",
+            name="ck_vehicle_pass_cikis",
+        ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (unit_id); tenant_id korunur.
+        ForeignKeyConstraint(
+            ["unit_id", "tenant_id"],
+            ["unit.id", "unit.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_vehicle_pass_unit",
+        ),
+        ForeignKeyConstraint(
+            ["kaydeden_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_vehicle_pass_kaydeden",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    plaka: Mapped[str] = mapped_column(Text, nullable=False)
+    arac_tanim: Mapped[str | None] = mapped_column(Text, nullable=True)
+    giris_zamani = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
+    cikis_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    unit_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    ziyaretci_mi: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    kaydeden_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class Violation(Base):
+    """Ihlal kaydi (G2) — site_kurali METNINDEN bagimsiz, somut ihlal izi.
+
+    durum akisi: yeni -> inceleniyor -> kapatildi. 'kapatildi' TERMINAL ve
+    YALNIZ admin kapatir (rol DB'de degil token'da => API katmani zorlar).
+    """
+
+    __tablename__ = "violation"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_violation_id_tenant"),
+        ForeignKeyConstraint(
+            ["olusturan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_violation_olusturan",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    baslik: Mapped[str] = mapped_column(Text, nullable=False)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kaynak: Mapped[str] = mapped_column(
+        VIOLATION_KAYNAK, nullable=False, server_default=text("'manuel'")
+    )
+    konum: Mapped[str | None] = mapped_column(Text, nullable=True)
+    durum: Mapped[str] = mapped_column(
+        VIOLATION_DURUM, nullable=False, server_default=text("'yeni'")
+    )
+    olusturan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     created_at = _created_at()
     updated_at = _created_at()
 

@@ -1,6 +1,7 @@
 """CRUD router'lari icin ortak yardimcilar (404, integrity->4xx, referans dogrulama)."""
 from __future__ import annotations
 
+import re
 import uuid
 from collections.abc import Iterable
 
@@ -97,3 +98,24 @@ def norm_nfc(uid: str | None) -> str | None:
 
 def nfc_eq(a: str | None, b: str | None) -> bool:
     return norm_nfc(a) == norm_nfc(b)
+
+
+# Plaka normalizasyonu: alfanumerik DISI her sey atilir (bosluk, tire, nokta),
+# kalanlar buyuk harf. Turkce plakada harf yoktur ama kullanici "34 abc 123",
+# "34-ABC-123", "34ABC123" yazabilir — hepsi AYNI araci gosterir.
+_PLAKA_ATILACAK = re.compile(r"[^0-9A-Za-z]")
+
+
+def norm_plaka(plaka: str) -> str:
+    """Plakayi kanonik forma cevir (bosluksuz + BUYUK). Bos/gecersiz -> 422.
+
+    DB'de YALNIZ normalize hali saklanir (ck_vehicle_pass_plaka bunu zorlar),
+    boylece acik-gecis benzersizligi ve plaka aramasi format-bagimsiz calisir.
+    """
+    norm = _PLAKA_ATILACAK.sub("", plaka).upper()
+    if not (2 <= len(norm) <= 20):
+        raise APIError(
+            422, "validation_error",
+            "Plaka 2-20 alfanumerik karakter olmali (orn. 34ABC123).",
+        )
+    return norm

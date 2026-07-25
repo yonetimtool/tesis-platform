@@ -30,9 +30,12 @@ _READER = require_role(
 _YONETICI = require_role("yonetici")
 _ADMIN_VEYA_YONETICI = require_role("admin", "yonetici")
 
-# Yonetici tesis adini VE hava durumu konumunu degistirebilir; geri kalan
-# yapilandirma (timezone, yonetim_email) admin'de kalir (yetki yukseltme yok).
-_YONETICI_YAZABILIR = {"ad", "konum_ad", "konum_lat", "konum_lon"}
+# Yonetici tesis adini, hava durumu konumunu VE otopark kapasitesini
+# degistirebilir (hepsi tesis isletme verisi); geri kalan yapilandirma
+# (timezone, yonetim_email) admin'de kalir (yetki yukseltme yok).
+_YONETICI_YAZABILIR = {
+    "ad", "konum_ad", "konum_lat", "konum_lon", "otopark_kapasite",
+}
 
 
 def _to_settings(t: Tenant) -> TenantSettings:
@@ -43,6 +46,7 @@ def _to_settings(t: Tenant) -> TenantSettings:
         konum_ad=t.konum_ad,
         konum_lat=float(t.konum_lat),
         konum_lon=float(t.konum_lon),
+        otopark_kapasite=t.otopark_kapasite,
     )
 
 
@@ -68,9 +72,10 @@ async def update_settings(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADMIN_VEYA_YONETICI),
 ) -> TenantSettings:
-    """admin: ad + timezone + yonetim_email + konum. yonetici: ad + konum
-    (hava durumu icin tesis konumunu belirler); baska alan gonderirse 403.
-    slug'a ASLA yazilmaz."""
+    """admin: ad + timezone + yonetim_email + konum + otopark_kapasite.
+    yonetici: ad + konum (hava durumu icin tesis konumunu belirler) +
+    otopark_kapasite (G4 — doluluk orani bundan hesaplanir); baska alan
+    gonderirse 403. slug'a ASLA yazilmaz."""
     data = body.model_dump(exclude_unset=True)
     if user.role == "yonetici" and not set(data) <= _YONETICI_YAZABILIR:
         raise APIError(

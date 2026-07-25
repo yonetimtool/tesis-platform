@@ -12,6 +12,7 @@ from sqlalchemy import text
 from .config import settings
 from .db import engine
 from .errors import install_error_handlers
+from .routers import activity as activity_router
 from .routers import announcements as announcements_router
 from .routers import assets as assets_router
 from .routers import audit as audit_router
@@ -54,6 +55,8 @@ from .routers import integrations as integrations_router
 from .routers import users as users_router
 from .routers import uploads as uploads_router
 from .routers import unit_access as unit_access_router
+from .routers import vehicle_passes as vehicle_passes_router
+from .routers import violations as violations_router
 from .routers import visitors as visitors_router
 from .routers import weather as weather_router
 from .routers import webhooks as webhooks_router
@@ -135,6 +138,12 @@ app.include_router(support_router.router)
 app.include_router(transparency_router.router)
 app.include_router(weather_router.router)
 app.include_router(cameras_router.router)
+# G1+G4: arac gecisi + otopark dolulugu (ayni modul, iki prefix).
+app.include_router(vehicle_passes_router.router)
+app.include_router(vehicle_passes_router.parking_router)
+app.include_router(violations_router.router)
+# G5: birlesik "Son Hareketler" akisi (istemci tarafi birlestirmeyi kaldirir).
+app.include_router(activity_router.router)
 
 
 @app.get("/health", tags=["health"])

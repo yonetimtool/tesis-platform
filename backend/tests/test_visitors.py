@@ -469,3 +469,68 @@ def test_ziyaretci_duzenle_rbac_yalniz_guvenlik(client, vworld):
 def test_ziyaretci_duzenle_404(client, vworld):
     guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
     assert _patch(client, guard, str(uuid.uuid4()), ziyaretci_ad="X").status_code == 404
+
+
+# --------------------------- cikis / "icerde" (G3) -------------------------- #
+def test_cikis_damgalanir_ve_icerde_disina_cikar(client, vworld):
+    """POST /visitors/{id}/checkout -> cikis_zamani dolar; kayit artik
+    ?icerde=true suzgecine girmez (ana ekran "N Icerde" sayaci)."""
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    v = _register_visitor(
+        client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"],
+    )
+    assert v["cikis_zamani"] is None  # kayit acilinca ziyaretci ICERIDE
+
+    icerde_ids = lambda: {  # noqa: E731
+        i["id"]
+        for i in client.get("/visitors?icerde=true&limit=200", headers=guard).json()["items"]
+    }
+    assert v["id"] in icerde_ids()
+
+    r = client.post(f"/visitors/{v['id']}/checkout", headers=guard)
+    assert r.status_code == 200, r.text
+    assert r.json()["cikis_zamani"] is not None
+    assert v["id"] not in icerde_ids()
+
+    # icerde=false karsit kumeyi verir.
+    cikanlar = client.get("/visitors?icerde=false&limit=200", headers=guard).json()
+    assert v["id"] in {i["id"] for i in cikanlar["items"]}
+
+
+def test_cift_cikis_409(client, vworld):
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    v = _register_visitor(
+        client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"],
+    )
+    assert client.post(f"/visitors/{v['id']}/checkout", headers=guard).status_code == 200
+    r = client.post(f"/visitors/{v['id']}/checkout", headers=guard)
+    assert r.status_code == 409, r.text
+    assert r.json()["error"]["code"] == "conflict"
+
+
+def test_cikis_404(client, vworld):
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    r = client.post(f"/visitors/{uuid.uuid4()}/checkout", headers=guard)
+    assert r.status_code == 404
+
+
+def test_cikis_rbac_yalniz_guvenlik(client, vworld):
+    """Kayit gibi CIKIS da kapi operasyonudur — yalniz security damgalar."""
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    v = _register_visitor(
+        client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"],
+    )
+    for role in ("admin_a", "yonetici_a", "resident_a", "gorevli_a"):
+        h = _headers(client, vworld["slug_a"], vworld[role])
+        r = client.post(f"/visitors/{v['id']}/checkout", headers=h)
+        assert r.status_code == 403, role
+
+
+def test_cikis_tenant_izolasyonu(client, vworld):
+    """B tenant'in guvenligi A'nin kaydini damgalayamaz (RLS -> 404)."""
+    guard_a = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    v = _register_visitor(
+        client, guard_a, vworld["resident_a_id"], unit_no=vworld["unit1_no"],
+    )
+    guard_b = _headers(client, vworld["slug_b"], vworld["guard_b"])
+    assert client.post(f"/visitors/{v['id']}/checkout", headers=guard_b).status_code == 404

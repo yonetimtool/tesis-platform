@@ -24,7 +24,7 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -264,10 +264,51 @@ async def update_visitor(
     return _out(row)
 
 
+# ------------------------------- cikis (G3) --------------------------------- #
+@router.post("/{visitor_id}/checkout", response_model=VisitorOut)
+async def checkout_visitor(
+    visitor_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_REGISTRAR),
+) -> VisitorOut:
+    """Ziyaretci CIKISI — `cikis_zamani` damgalanir; bundan sonra kayit
+    "icerde" sayilmaz (GET /visitors?icerde=true).
+
+    Kayit gibi cikis da KAPI OPERASYONUDUR: yalniz security damgalar
+    (yonetici/admin ziyaretci kaydi acmadigi gibi cikis da damgalamaz).
+    Atomik kosullu UPDATE — zaten cikmissa 409 ve ILK cikis zamani degismez
+    (kargo teslim deseniyle ayni)."""
+    exists = (
+        await db.execute(select(Visitor.id).where(Visitor.id == visitor_id))
+    ).scalar_one_or_none()
+    if exists is None:
+        raise APIError(404, "not_found", "Kayit bulunamadi")
+
+    res = await db.execute(
+        update(Visitor)
+        .where(Visitor.id == visitor_id, Visitor.cikis_zamani.is_(None))
+        .values(cikis_zamani=func.now())
+    )
+    if res.rowcount == 0:
+        raise APIError(409, "conflict", "Ziyaretci cikisi zaten kaydedilmis.")
+
+    await audit_user(
+        db, user, Action.VISITOR_CHECKOUT, resource_type="visitor",
+        resource_id=visitor_id,
+    )
+    row = (await db.execute(_base_stmt().where(Visitor.id == visitor_id))).first()
+    return _out(row)
+
+
 # ------------------------------- okuma -------------------------------------- #
 @router.get("", response_model=VisitorListResponse)
 async def list_visitors(
     unit_id: uuid.UUID | None = Query(None),
+    icerde: bool | None = Query(
+        None,
+        description="true: halen ICERIDE olanlar (cikis_zamani IS NULL); "
+                    "false: cikisi damgalanmis olanlar",
+    ),
     baslangic: datetime | None = Query(None, description="created_at >= (tarih filtresi)"),
     bitis: datetime | None = Query(None, description="created_at < (tarih filtresi)"),
     limit: int = Query(50, ge=1, le=200),
@@ -295,6 +336,10 @@ async def list_visitors(
     stmt = _base_stmt()
     if unit_id is not None:
         stmt = stmt.where(Visitor.unit_id == unit_id)
+    if icerde is True:
+        stmt = stmt.where(Visitor.cikis_zamani.is_(None))
+    elif icerde is False:
+        stmt = stmt.where(Visitor.cikis_zamani.is_not(None))
     if baslangic is not None:
         stmt = stmt.where(Visitor.created_at >= baslangic)
     if bitis is not None:
