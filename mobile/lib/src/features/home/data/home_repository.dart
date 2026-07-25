@@ -1,19 +1,19 @@
-/// Ana ekran bolumlerinin TABAN DUZENI (referans gorseller) + SOZLESMEDE
-/// KARSILIGI OLMAYAN kartlarin metinleri.
+/// Ana ekran bolumlerinin TABAN DUZENI (referans gorseller).
 ///
-/// Kural (tek cumle): **bu dosya UYDURMA SAYI URETMEZ.** Icerdigi tek sey
-///   1. kart iskeleti — ikon / baslik / accent renk / rota (tasarim sabiti,
-///      veri degil), ve
-///   2. `contracts/openapi.yaml`'da KARSILIGI OLMAYAN kartlarin 'Yakında'
-///      etiketi (her biri `// TODO(contract):` ile isaretli).
+/// Kural (tek cumle): **bu dosya UYDURMA SAYI URETMEZ.** Icerdigi tek sey kart
+/// iskeleti — ikon / baslik / accent renk / rota (tasarim sabiti, veri degil).
+///
+/// G1-G7 kapandiktan sonra (backend `bf1dc84`) izgaralarda SOZLESME BOSLUGU
+/// KALMADI: her sayacin bir ucu var, bu yuzden 'Yakında' etiketi ve
+/// `TODO(contract)` isaretleri kaldirildi. Sayac degil ETIKET tasiyan iki kart
+/// ("Aylık Özet") sabit metnini korur — onlar sayac degildir.
 ///
 /// Gercek uca bagli her kartin sayaci `null` baslar: veri gelene kadar kart
 /// iskelet cizer ([HomeSayacIskeleti]), veri gelince rol ekrani `sayacla` ile
 /// GERCEK degeri yazar. Boylece ekranda hicbir an sahte sayi durmaz.
 ///
 /// Alan → uc eslemesinin TAM tablosu README "Ana ekran veri eslemesi"
-/// bolumundedir; oradaki MISSING satirlari ile buradaki `TODO(contract)`
-/// isaretleri birebir ayni kumedir.
+/// bolumundedir.
 library;
 
 import 'package:flutter/material.dart';
@@ -66,27 +66,24 @@ class MockHomeRepository implements HomeRepository {
       ikon: Icons.person,
       baslik: 'Ziyaretçi',
       accent: HomeTokens.orange,
-      altMetin: null, // GET /visitors
+      altMetin: null, // GET /visitors?icerde=true → meta.total
       rota: AppRoutes.visitors,
     ),
-    // TODO(contract): plaka okuma/arac gecis ucu YOK — gecis kaydi, plaka,
-    // gunluk giris sayaci hicbir semada gecmiyor. Oneri: GET /vehicle-passes.
     HizliErisimKart(
       ikon: Icons.directions_car,
       baslik: 'Araç Plaka',
       accent: HomeTokens.purple,
-      altMetin: _yakinda,
-      altMetinRengi: _gri,
+      // GET /vehicle-passes?baslangic=<gun basi> → meta.total ("N Giriş").
+      // Liste/detay ekrani henuz yok → rota null (dokununca "yakında").
+      altMetin: null,
     ),
-    // TODO(contract): "ihlal" ucu YOK (kamera/kural ihlali kaydi). Site
-    // kurallari (/site-rules) yalniz METIN tutar, ihlal kaydi tutmaz.
-    // Oneri: GET /violations.
     HizliErisimKart(
       ikon: Icons.error_outline,
       baslik: 'İhlaller',
       accent: HomeTokens.red,
-      altMetin: _yakinda,
-      altMetinRengi: _gri,
+      // GET /violations?durum=yeni → meta.total ("N Yeni").
+      // Liste ekrani yok → rotasiz.
+      altMetin: null,
     ),
   ];
 
@@ -122,9 +119,9 @@ class MockHomeRepository implements HomeRepository {
       ikon: Icons.graphic_eq,
       baslik: 'Gürültü Şikayeti',
       accent: HomeTokens.red,
-      // Sayac degil EYLEM etiketi (POST /unit-complaints) — sabit metin.
-      altMetin: 'Bildirim Yap',
-      altMetinRengi: _gri,
+      // G6: GET /unit-complaints/mine?kategori=gurultu&durum=acik → meta.total
+      // ("N Açık"). Kart dokunulunca hala BILDIRIM akisina gider.
+      altMetin: null,
       rota: AppRoutes.complaints,
     ),
     HizliErisimKart(
@@ -186,22 +183,18 @@ class MockHomeRepository implements HomeRepository {
       altMetinRengi: _gri,
       rota: AppRoutes.financialSummary,
     ),
-    // TODO(contract): otopark ucu YOK (kapasite/doluluk/park yeri). Oneri:
-    // GET /parking/occupancy.
     HizliErisimKart(
       ikon: Icons.directions_car,
       baslik: 'Otopark Kullanımı',
       accent: HomeTokens.purple,
-      altMetin: _yakinda,
-      altMetinRengi: _gri,
+      // GET /parking/occupancy → "dolu / kapasite" (kapasite yoksa "N araç").
+      altMetin: null,
     ),
-    // TODO(contract): ihlal ucu YOK (bkz. gorevli seridi).
     HizliErisimKart(
       ikon: Icons.error_outline,
       baslik: 'İhlaller',
       accent: HomeTokens.red,
-      altMetin: _yakinda,
-      altMetinRengi: _gri,
+      altMetin: null, // GET /violations?durum=yeni → meta.total
     ),
     HizliErisimKart(
       ikon: Icons.mode_comment_outlined,
@@ -250,13 +243,13 @@ class MockHomeRepository implements HomeRepository {
           altEtiket: 'Bu Ay',
           accent: HomeTokens.orange,
         ),
-        // TODO(contract): otopark doluluk ucu YOK — kapasite de doluluk da
-        // hicbir semada gecmiyor. Oneri: GET /parking/occupancy.
+        // GET /parking/occupancy → `oran` ("%2"); kapasite tanimsizsa sunucu
+        // oran'i null doner → kutu '—' gosterir (uydurma yuzde YOK).
         OzetKutusu(
           ikon: Icons.directions_car,
-          deger: _bos,
+          deger: null,
           etiket: 'Otopark Doluluk',
-          altEtiket: _yakinda,
+          altEtiket: 'Şu An',
           accent: HomeTokens.purple,
         ),
       ];
@@ -264,12 +257,6 @@ class MockHomeRepository implements HomeRepository {
 
 /// Referans gorsellerde ACIKLAMA alt metinleri gridir (sayac degil).
 const _gri = Color(0xFF6B7280);
-
-/// Sozlesmede karsiligi olmayan kartin sayac satiri — sayi YERINE bu durur.
-const _yakinda = 'Yakında';
-
-/// Sozlesmede karsiligi olmayan istatistik kutusunun degeri.
-const _bos = '—';
 
 /// Ana ekran taban duzeni. Testte `overrideWithValue` ile degistirilebilir.
 final homeRepositoryProvider =

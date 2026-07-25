@@ -16,6 +16,7 @@ import '../../kargo/domain/kargo_models.dart';
 import '../../profile/data/profile_api.dart';
 import '../../visitors/data/visitor_api.dart';
 import '../../weather/data/weather_api.dart';
+import '../data/activity_api.dart';
 import '../data/home_api.dart';
 import '../data/home_repository.dart';
 import '../domain/home_varyant.dart';
@@ -38,9 +39,10 @@ import 'widgets/son_hareketler_karti.dart';
 /// Ödeme ve Aidat Durumu → Son Hareketler → Duyurular.
 ///
 /// VERI: her sayac sakinin KENDI verisinden gelir (`/me/dues`, `/kargo`,
-/// `/visitors`, `/complaints`, `/unit-complaints/mine`, `/announcements` —
-/// hepsi sunucuda sakin-suzgecli). Uydurma sayi YOKTUR: veri gelene kadar
-/// iskelet, hata halinde "Yüklenemedi" + yeniden dene.
+/// `/visitors`, `/complaints`, `/unit-complaints/mine` [+ `?kategori=gurultu`],
+/// `/announcements` — hepsi sunucuda sakin-suzgecli); akis `/activity`'den.
+/// Uydurma sayi YOKTUR: veri gelene kadar iskelet, hata halinde
+/// "Yüklenemedi" + yeniden dene.
 class ResidentHomeScreen extends ConsumerWidget {
   const ResidentHomeScreen({super.key});
 
@@ -57,7 +59,11 @@ class ResidentHomeScreen extends ConsumerWidget {
     final duyuruAsync = ref.watch(sonDuyurularProvider);
     final talep = ref.watch(acikSikayetSayisiProvider);
     final daireSikayet = ref.watch(kendiDaireSikayetSayisiProvider);
-    final hareketler = ref.watch(residentHareketleriProvider);
+    // G6: gurultu sayaci — kategori suzgeci SUNUCUDA (istemci suzmez).
+    final gurultu = ref.watch(kendiGurultuSikayetSayisiProvider);
+    // Son Hareketler TEK uctan (/activity); sunucu sakini KENDI olaylariyla
+    // sinirlar — istemci artik kargo/ziyaretci/odeme/talep birlestirmez.
+    final hareketler = ref.watch(sonHareketlerProvider);
 
     final units = duesAsync.value ?? const <MyDuesUnit>[];
 
@@ -76,6 +82,7 @@ class ResidentHomeScreen extends ConsumerWidget {
               duesAsync.metin(_aidatTutari),
               yeniIkinciAltMetin: duesAsync.metin(_borcEtiketi),
             ),
+          'Gürültü Şikayeti' => k.sayacla(gurultu.sayac((n) => n, 'Açık')),
           'Geri Bildirim' => k.sayacla(talep.sayac((n) => n, 'Açık')),
           'Şikayetlerim' => k.sayacla(daireSikayet.sayac((n) => n, 'Açık')),
           'Duyurular' =>
@@ -155,7 +162,7 @@ class ResidentHomeScreen extends ConsumerWidget {
                   const HomeBolumIskeleti(baslik: 'Son Hareketler'),
               hata: () => HomeBolumHatasi(
                 baslik: 'Son Hareketler',
-                onYenile: () => ref.invalidate(residentHareketleriProvider),
+                onYenile: () => ref.invalidate(sonHareketlerProvider),
               ),
             ),
           ),

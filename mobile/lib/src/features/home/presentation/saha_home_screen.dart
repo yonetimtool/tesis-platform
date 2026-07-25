@@ -15,9 +15,9 @@ import '../../profile/data/profile_api.dart';
 import '../../scan/data/scan_outbox.dart';
 import '../../shifts/data/shifts_api.dart';
 import '../../tenant/data/tenant_api.dart';
-import '../../visitors/data/visitor_api.dart';
 import '../../weather/data/weather_api.dart';
 import '../../yonetici_iletisim/data/yonetici_iletisim_api.dart';
+import '../data/activity_api.dart';
 import '../data/home_api.dart';
 import '../data/home_repository.dart';
 import '../domain/home_varyant.dart';
@@ -41,11 +41,12 @@ import 'widgets/vardiya_seridi.dart';
 /// Bolum sirasi gorselle birebir: karsilama → yatay hizli erisim seridi →
 /// Vardiya Durumu → Son Hareketler → Canlı Kamera.
 ///
-/// KVKK: tesis_gorevlisi ziyaretci/kargo/plaka/kamera GORMEZ — o kartlar ve
-/// kamera seridi bu rolde cizilmez (backend RBAC de 403 doner).
+/// KVKK: tesis_gorevlisi ziyaretci/kargo/plaka/ihlal/kamera GORMEZ — o kartlar
+/// ve kamera seridi bu rolde cizilmez (backend RBAC de 403 doner).
 ///
-/// VERI: sayaclar GERCEK uctan (/shifts, /kargo, /visitors); "Araç Plaka" ve
-/// "İhlaller" sozlesmede YOK → 'Yakında' (README "CONTRACT GAPS").
+/// VERI: seritteki BES sayacin tamami GERCEK uctan gelir — /shifts, /kargo,
+/// /visitors?icerde=true, `/vehicle-passes?baslangic=<gun basi>`,
+/// /violations?durum=yeni. Akis TEK uctan: /activity (sunucu birlestirir).
 class SahaHomeScreen extends ConsumerWidget {
   const SahaHomeScreen({super.key, required this.role});
 
@@ -72,13 +73,21 @@ class SahaHomeScreen extends ConsumerWidget {
     final kargoAsync = guvenlik
         ? ref.watch(kargoListProvider)
         : const AsyncValue<List<Kargo>>.data([]);
-    final ziyaretciAsync =
-        guvenlik ? ref.watch(visitorsListProvider) : null;
+    // /visitors + /vehicle-passes + /violations: RBAC'i security'dir; hepsi
+    // ?limit=1 sayacidir (liste tasinmaz). tesis_gorevlisi rolunde kart
+    // cizilmedigi icin saglayici hic izlenmez.
+    final icerdeAsync =
+        guvenlik ? ref.watch(icerdekiZiyaretciSayisiProvider) : null;
+    final aracAsync =
+        guvenlik ? ref.watch(bugunkuAracGirisSayisiProvider) : null;
+    final ihlalAsync = guvenlik ? ref.watch(yeniIhlalSayisiProvider) : null;
     // Vardiya seridinin son karti tenant yoneticisidir (referans gorsel).
     // /yonetici-iletisim saha rollerine aciktir.
     final yoneticiler =
         ref.watch(yoneticiIletisimProvider).value?.yoneticiler ?? const [];
-    final hareketler = ref.watch(sahaHareketleriProvider(guvenlik));
+    // Son Hareketler TEK uctan: rol suzgeci SUNUCUDA (tesis_gorevlisi yalniz
+    // gorev tamamlamalarini gorur) — istemci artik kaynak birlestirmez.
+    final hareketler = ref.watch(sonHareketlerProvider);
 
     final aktifVardiya = vardiyalar.where((v) => v.aktifMi(now)).length;
     final pending = ref.watch(scanOutboxProvider).pendingCount;
@@ -92,14 +101,18 @@ class SahaHomeScreen extends ConsumerWidget {
                 (l) => l.where((x) => x.durum == KargoDurum.bekliyor).length,
                 'Bekliyor',
               )),
-            // Ziyaretci LOG'unda cikis alani YOK (sozlesme) — "içeride"
-            // hesaplanamaz; BUGUNKU kayit sayisi gosterilir.
-            'Ziyaretçi' when ziyaretciAsync != null => k.sayacla(
-                ziyaretciAsync.sayac(
-                  (l) => l.where((z) => _bugun(z.createdAt, now)).length,
-                  'Bugün',
-                ),
-              ),
+            // G3: cikis damgasi geldi → halen ICERIDE olanlar sunucuda
+            // sayilir (?icerde=true), istemci bugun/dun hesabi yapmaz.
+            'Ziyaretçi' when icerdeAsync != null =>
+              k.sayacla(icerdeAsync.sayac((n) => n, 'İçeride')),
+            // G1: bugunku arac girisi. Tek-satir gecis modelinde "acik gecis"
+            // sayisi otopark DOLULUGUDUR (yonetici karti) — serit karti gun
+            // icindeki GIRIS akisini gosterir.
+            'Araç Plaka' when aracAsync != null =>
+              k.sayacla(aracAsync.sayac((n) => n, 'Giriş')),
+            // G2: henuz ele alinmamis ihlal.
+            'İhlaller' when ihlalAsync != null =>
+              k.sayacla(ihlalAsync.sayac((n) => n, 'Yeni')),
             _ => k,
           },
       // Cevrimdisi saha kaniti kaybolmasin: bekleyen okutma VARSA seride
@@ -172,7 +185,7 @@ class SahaHomeScreen extends ConsumerWidget {
               hata: () => HomeBolumHatasi(
                 baslik: 'Son Hareketler',
                 onYenile: () =>
-                    ref.invalidate(sahaHareketleriProvider(guvenlik)),
+                    ref.invalidate(sonHareketlerProvider),
               ),
             ),
           ),
@@ -189,17 +202,14 @@ class SahaHomeScreen extends ConsumerWidget {
     );
   }
 
-  bool _bugun(DateTime t, DateTime now) {
-    final yerel = t.toLocal();
-    return yerel.year == now.year &&
-        yerel.month == now.month &&
-        yerel.day == now.day;
-  }
-
-  /// KVKK: tesis_gorevlisi kargo/ziyaretci/plaka kartlarini gormez.
+  /// KVKK: tesis_gorevlisi kargo/ziyaretci/plaka/ihlal kartlarini gormez.
+  /// Ihlal kaydi komsu davranisi hakkinda veri tasir; sozlesme bu role
+  /// `/violations` okumasini KAPATIR (403) — kart sayi yerine '—' gosterecegi
+  /// icin hic cizilmez (bkz. Kargo/Ziyaretçi/Araç Plaka ile ayni kural).
   bool _gorunur(HizliErisimKart k, bool guvenlik) =>
       guvenlik ||
-      !const {'Kargo', 'Ziyaretçi', 'Araç Plaka'}.contains(k.baslik);
+      !const {'Kargo', 'Ziyaretçi', 'Araç Plaka', 'İhlaller'}
+          .contains(k.baslik);
 
   void _ac(BuildContext context, HizliErisimKart k) {
     final rota = k.rota;

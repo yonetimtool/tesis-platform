@@ -14,7 +14,7 @@ import '../../dues/domain/dues_models.dart';
 import '../../shifts/domain/shift_models.dart';
 import '../../weather/domain/weather_models.dart';
 import '../../../core/theme/home_tokens.dart';
-import '../domain/son_hareketler.dart';
+import '../domain/activity_models.dart';
 import '../domain/home_view_models.dart';
 
 /// GET /weather → baslik hava blogu.
@@ -63,20 +63,40 @@ List<VardiyaKart> vardiyaKartlari({
   ];
 }
 
-/// Istemcide birlestirilen [Hareket] akisi → "Son Hareketler" satirlari.
-/// Ikon MODULUN rengini, nokta OLAYIN durum rengini tasir (referans).
-List<HareketSatiri> hareketSatirlari(List<Hareket> hareketler, DateTime now) =>
+/// `GET /activity` sayfasi → "Son Hareketler" satirlari.
+///
+/// Metinler SUNUCUDAN gelir (baslik / alt_metin); istemci yalnizca ikon,
+/// modul rengi ve zaman etiketini ekler. Ikon MODULUN rengini, nokta OLAYIN
+/// durum rengini (`renk_ipucu`) tasir (referans gorseller).
+List<HareketSatiri> hareketSatirlari(
+  List<ActivityItem> olaylar,
+  DateTime now,
+) =>
     [
-      for (final h in hareketler)
+      for (final o in olaylar)
         HareketSatiri(
-          ikon: _ikon(h.tip),
-          baslik: h.baslik,
-          altBaslik: h.altBaslik,
-          zaman: hareketZamanEtiketi(h.zaman, now),
-          ikonAccent: _ikonAccent(h.tip),
-          noktaRengi: _nokta(h.tip),
+          ikon: _ikon(o.tur),
+          baslik: o.baslik,
+          altBaslik: o.altMetin ?? '',
+          zaman: hareketZamanEtiketi(o.zaman, now),
+          ikonAccent: _ikonAccent(o.tur),
+          noktaRengi: _nokta(o.renk),
         ),
     ];
+
+/// Satir zaman etiketi — [now] DISARIDAN (deterministik test; saat-flake yok).
+/// Ayni gun "HH:mm", dun "Dün", daha eski "dd.MM".
+String hareketZamanEtiketi(DateTime t, DateTime now) {
+  bool ayniGun(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+  if (ayniGun(t, now)) {
+    return '${t.hour.toString().padLeft(2, '0')}:'
+        '${t.minute.toString().padLeft(2, '0')}';
+  }
+  if (ayniGun(t, now.subtract(const Duration(days: 1)))) return 'Dün';
+  return '${t.day.toString().padLeft(2, '0')}.'
+      '${t.month.toString().padLeft(2, '0')}';
+}
 
 /// GET /cameras → canli kamera seridi.
 List<KameraOzeti> kameraOzetleri(List<Camera> kameralar) => [
@@ -133,42 +153,50 @@ OdemeOzeti? odemeOzeti(List<MyDuesUnit> units) {
 String _tarih(DateTime t) => '${t.day.toString().padLeft(2, '0')}.'
     '${t.month.toString().padLeft(2, '0')}.${t.year}';
 
-IconData _ikon(HareketTip tip) => switch (tip) {
-      HareketTip.kargoKayit ||
-      HareketTip.kargoTeslim =>
+/// Olay turu → modul ikonu. Taninmayan tur (sunucu yeni tur eklerse) NOTR
+/// zil ikonu alir — satir akistan DUSMEZ.
+IconData _ikon(ActivityTur tur) => switch (tur) {
+      ActivityTur.kargo ||
+      ActivityTur.kargoTeslim =>
         Icons.inventory_2_outlined,
-      HareketTip.ziyaretci => Icons.person_outline,
-      HareketTip.aidatOdeme => Icons.account_balance_wallet,
-      HareketTip.talep => Icons.mode_comment_outlined,
-      HareketTip.gorevTamamlama => Icons.assignment_turned_in_outlined,
-      HareketTip.alarm => Icons.error_outline,
-      HareketTip.uyari => Icons.schedule_outlined,
-      HareketTip.bilgi => Icons.notifications_outlined,
+      ActivityTur.ziyaretciGiris ||
+      ActivityTur.ziyaretciCikis =>
+        Icons.person_outline,
+      ActivityTur.aidatOdeme => Icons.account_balance_wallet,
+      ActivityTur.talep => Icons.mode_comment_outlined,
+      ActivityTur.daireSikayeti => Icons.description_outlined,
+      ActivityTur.gorevTamamlama => Icons.assignment_turned_in_outlined,
+      ActivityTur.devriyeOkutma => Icons.directions_walk,
+      ActivityTur.aracGiris || ActivityTur.aracCikis => Icons.directions_car,
+      ActivityTur.ihlal => Icons.error_outline,
+      ActivityTur.alarm => Icons.error_outline,
+      ActivityTur.bilinmeyen => Icons.notifications_outlined,
     };
 
-/// Ikon rengi = modulun rengi (kargo yesil, ziyaretci mor, aidat mavi...).
-Color _ikonAccent(HareketTip tip) => switch (tip) {
-      HareketTip.kargoKayit => HomeTokens.orange,
-      HareketTip.kargoTeslim => HomeTokens.green,
-      HareketTip.ziyaretci => HomeTokens.purple,
-      HareketTip.aidatOdeme => HomeTokens.primary,
-      HareketTip.talep => HomeTokens.purple,
-      HareketTip.gorevTamamlama => HomeTokens.green,
-      HareketTip.alarm => HomeTokens.red,
-      HareketTip.uyari => HomeTokens.orange,
-      HareketTip.bilgi => HomeTokens.primary,
+/// Ikon rengi = modulun rengi (kargo yesil, ziyaretci mor, aidat mavi...) —
+/// hizli erisim kartlarindaki accent'lerle ayni kume.
+Color _ikonAccent(ActivityTur tur) => switch (tur) {
+      ActivityTur.kargo => HomeTokens.orange,
+      ActivityTur.kargoTeslim => HomeTokens.green,
+      ActivityTur.ziyaretciGiris ||
+      ActivityTur.ziyaretciCikis =>
+        HomeTokens.purple,
+      ActivityTur.aidatOdeme => HomeTokens.primary,
+      ActivityTur.talep => HomeTokens.purple,
+      ActivityTur.daireSikayeti => HomeTokens.purple,
+      ActivityTur.gorevTamamlama => HomeTokens.green,
+      ActivityTur.devriyeOkutma => HomeTokens.primary,
+      ActivityTur.aracGiris || ActivityTur.aracCikis => HomeTokens.purple,
+      ActivityTur.ihlal => HomeTokens.red,
+      ActivityTur.alarm => HomeTokens.red,
+      ActivityTur.bilinmeyen => HomeTokens.primary,
     };
 
-/// Nokta rengi = olayin durumu (tamamlanan yesil, uyari turuncu, ihlal
-/// kirmizi).
-Color _nokta(HareketTip tip) => switch (tip) {
-      HareketTip.kargoKayit => HomeTokens.orange,
-      HareketTip.kargoTeslim => HomeTokens.green,
-      HareketTip.ziyaretci => HomeTokens.purple,
-      HareketTip.aidatOdeme => HomeTokens.green,
-      HareketTip.talep => HomeTokens.orange,
-      HareketTip.gorevTamamlama => HomeTokens.green,
-      HareketTip.alarm => HomeTokens.red,
-      HareketTip.uyari => HomeTokens.orange,
-      HareketTip.bilgi => HomeTokens.primary,
+/// Nokta rengi = olayin DURUMU — sunucunun `renk_ipucu` alani (olumlu yesil,
+/// uyari turuncu, alarm kirmizi, notr mavi). Istemci durum TAHMIN ETMEZ.
+Color _nokta(ActivityRenk renk) => switch (renk) {
+      ActivityRenk.olumlu => HomeTokens.green,
+      ActivityRenk.uyari => HomeTokens.orange,
+      ActivityRenk.alarm => HomeTokens.red,
+      ActivityRenk.notr => HomeTokens.primary,
     };

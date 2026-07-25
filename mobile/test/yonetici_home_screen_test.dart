@@ -5,7 +5,9 @@ import 'package:mobile/src/features/budget/data/budget_api.dart';
 import 'package:mobile/src/features/budget/domain/budget_models.dart';
 import 'package:mobile/src/features/complaints/data/complaint_api.dart';
 import 'package:mobile/src/features/home/data/home_api.dart';
-import 'package:mobile/src/features/home/domain/son_hareketler.dart';
+import 'package:mobile/src/features/home/data/activity_api.dart';
+import 'package:mobile/src/features/home/domain/activity_models.dart';
+import 'package:mobile/src/features/home/domain/parking_occupancy.dart';
 import 'package:mobile/src/features/home/presentation/widgets/home_states.dart';
 import 'package:mobile/src/features/home/presentation/yonetici_home_screen.dart';
 import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
@@ -23,8 +25,11 @@ Widget _app({
   int? aktifGorev,
   int? daireSikayet,
   List<Shift> vardiyalar = const [],
-  List<Hareket> hareketler = const [],
+  List<ActivityItem> hareketler = const [],
   Object? hareketHata,
+  int? yeniIhlal,
+  ParkingOccupancy? otopark = const ParkingOccupancy(
+      kapasite: 120, dolu: 3, oran: 2),
 }) =>
     ProviderScope(
       overrides: [
@@ -37,9 +42,14 @@ Widget _app({
             (ref) async => aktifGorev ?? (throw Exception('403'))),
         acikDaireSikayetSayisiProvider.overrideWith(
             (ref) async => daireSikayet ?? (throw Exception('403'))),
-        yonetimHareketleriProvider.overrideWith((ref) => hareketHata != null
-            ? AsyncError(hareketHata, StackTrace.empty)
-            : AsyncData(hareketler)),
+        sonHareketlerProvider.overrideWith((ref) async {
+          if (hareketHata != null) throw hareketHata;
+          return hareketler;
+        }),
+        yeniIhlalSayisiProvider.overrideWith(
+            (ref) async => yeniIhlal ?? (throw Exception('403'))),
+        otoparkDolulukProvider.overrideWith(
+            (ref) async => otopark ?? (throw Exception('500'))),
         shiftsProvider.overrideWith((ref) async => vardiyalar),
         // Hava ucu testte aga cikmasin — hata → hava blogu HIC cizilmez.
         weatherProvider.overrideWith((ref) async => throw Exception('offline')),
@@ -87,11 +97,13 @@ void main() {
             gunTipi: 'hafta_ici'),
       ],
       hareketler: [
-        Hareket(
-          tip: HareketTip.talep,
+        ActivityItem(
+          id: 'talep:t1',
+          tur: ActivityTur.talep,
           baslik: 'Yeni Talep',
-          altBaslik: 'Asansör',
+          altMetin: 'Asansör',
           zaman: DateTime(2026, 7, 23, 9),
+          kaynakId: 't1',
         ),
       ],
     ));
@@ -126,7 +138,7 @@ void main() {
   });
 
   testWidgets('Hızlı Özet TAMAMEN gercek uctan: /units toplami + finans '
-      'tahsilat/oran; otopark MISSING-BACKEND → "—" + Yakında',
+      'tahsilat/oran + GERCEK otopark orani ("Yakında" KALMADI)',
       (tester) async {
     _tall(tester);
     await tester.pumpWidget(_app(toplamDaire: 52));
@@ -135,13 +147,46 @@ void main() {
     expect(find.text('Hızlı Özet'), findsOneWidget);
     expect(find.text('52'), findsOneWidget); // GERCEK daire sayisi
     expect(find.text('₺248.750,00'), findsOneWidget); // gercek tahsilat
-    expect(find.text('%86'), findsOneWidget); // gercek oran
+    expect(find.text('%86'), findsOneWidget); // gercek tahsilat orani
+    expect(find.text('%2'), findsOneWidget); // GERCEK otopark orani
+    expect(find.text('Şu An'), findsOneWidget); // kutu alt etiketi
+    expect(find.text('3 / 120'), findsOneWidget); // izgara karti "dolu/kapasite"
     // Referans gorseldeki uydurma degerler ARTIK YOK.
     expect(find.text('512'), findsNothing);
     expect(find.text('₺248.750'), findsNothing);
     expect(find.text('78 / 120'), findsNothing);
-    // Otopark kutusu + izgara karti: sayi yerine "—" / "Yakında".
-    expect(find.text('Yakında'), findsNWidgets(3)); // otopark x2 + ihlaller
+    // Sozlesme boslugu kalmadi: hicbir kart/kutu 'Yakında' gostermez.
+    expect(find.text('Yakında'), findsNothing);
+  });
+
+  testWidgets('G4: kapasite TANIMSIZ iken kart "N araç" gosterir, oran kutusu '
+      '"—" (uydurma kapasite/yuzde YOK)', (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app(
+      otopark: const ParkingOccupancy(dolu: 7),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('7 araç'), findsOneWidget);
+    expect(find.textContaining('/'), findsNothing);
+    expect(find.text('—'), findsWidgets); // oran kutusu
+  });
+
+  testWidgets('G2: ihlal sayaci gercek uctan ("N Yeni")', (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app(yeniIhlal: 2));
+    await tester.pumpAndSettle();
+    expect(find.text('2 Yeni'), findsOneWidget);
+  });
+
+  testWidgets('G2: ihlal ucu 403/500 verirse kart sayi UYDURMAZ ("—")',
+      (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app()); // yeniIhlal null -> 403
+    await tester.pumpAndSettle();
+    expect(find.text('2 Yeni'), findsNothing);
+    expect(find.text('—'), findsWidgets);
   });
 
   testWidgets('izgara sayaclari gercek uctan: gorev / geciken daire / talep / '
@@ -204,20 +249,27 @@ void main() {
     expect(find.text('Vardiya Durumu'), findsOneWidget); // yalniz izgara karti
   });
 
-  testWidgets('Son Hareketler birlesik akistan cizilir', (tester) async {
+  testWidgets('Son Hareketler TEK uctan (/activity) cizilir — istemci '
+      'birlestirmesi YOK', (tester) async {
     _tall(tester);
     await tester.pumpWidget(_app(hareketler: [
-      Hareket(
-        tip: HareketTip.alarm,
+      ActivityItem(
+        id: 'alarm:n1',
+        tur: ActivityTur.alarm,
         baslik: 'Kaçırılan Tur',
-        altBaslik: 'A Blok turu kaçırıldı',
+        altMetin: 'A Blok turu kaçırıldı',
         zaman: DateTime(2026, 7, 23, 9, 32),
+        renk: ActivityRenk.alarm,
+        kaynakId: 'n1',
       ),
-      Hareket(
-        tip: HareketTip.gorevTamamlama,
+      ActivityItem(
+        id: 'gorev_tamamlama:c1',
+        tur: ActivityTur.gorevTamamlama,
         baslik: 'Görev Tamamlandı',
-        altBaslik: 'Çöp toplama - Temizlik',
+        altMetin: 'Çöp toplama — Temizlik',
         zaman: DateTime(2026, 7, 23, 9, 10),
+        renk: ActivityRenk.olumlu,
+        kaynakId: 'c1',
       ),
     ]));
     await tester.pumpAndSettle();

@@ -5,7 +5,8 @@ import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/cameras/data/cameras_api.dart';
 import 'package:mobile/src/features/cameras/domain/camera_models.dart';
 import 'package:mobile/src/features/home/data/home_api.dart';
-import 'package:mobile/src/features/home/domain/son_hareketler.dart';
+import 'package:mobile/src/features/home/data/activity_api.dart';
+import 'package:mobile/src/features/home/domain/activity_models.dart';
 import 'package:mobile/src/features/home/presentation/saha_home_screen.dart';
 import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
@@ -33,14 +34,19 @@ Widget _app({List<Shift> vardiyalar = const []}) => ProviderScope(
         camerasProvider.overrideWith((ref) async => const [
               Camera(id: 'c1', ad: 'Ana Kapı', streamUrl: 'https://x/s.m3u8'),
             ]),
-        sahaHareketleriProvider.overrideWith((ref, guvenlik) => AsyncData([
-              Hareket(
-                tip: HareketTip.ziyaretci,
+        icerdekiZiyaretciSayisiProvider.overrideWith((ref) async => 1),
+        bugunkuAracGirisSayisiProvider.overrideWith((ref) async => 4),
+        yeniIhlalSayisiProvider.overrideWith((ref) async => 2),
+        sonHareketlerProvider.overrideWith((ref) async => [
+              ActivityItem(
+                id: 'ziyaretci_giris:z1',
+                tur: ActivityTur.ziyaretciGiris,
                 baslik: 'Ziyaretçi Girişi',
-                altBaslik: 'Ahmet Yılmaz - Daire 12',
+                altMetin: 'Ahmet Yılmaz — Daire 12',
                 zaman: DateTime(2026, 7, 23, 10),
+                kaynakId: 'z1',
               ),
-            ])),
+            ]),
       ],
       child: const MaterialApp(home: SahaHomeScreen(role: UserRole.security)),
     );

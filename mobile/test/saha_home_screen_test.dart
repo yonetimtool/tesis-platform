@@ -5,7 +5,8 @@ import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/cameras/data/cameras_api.dart';
 import 'package:mobile/src/features/cameras/domain/camera_models.dart';
 import 'package:mobile/src/features/home/data/home_api.dart';
-import 'package:mobile/src/features/home/domain/son_hareketler.dart';
+import 'package:mobile/src/features/home/data/activity_api.dart';
+import 'package:mobile/src/features/home/domain/activity_models.dart';
 import 'package:mobile/src/features/home/presentation/saha_home_screen.dart';
 import 'package:mobile/src/features/home/presentation/widgets/home_states.dart';
 import 'package:mobile/src/features/kargo/data/kargo_api.dart';
@@ -19,8 +20,6 @@ import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
-import 'package:mobile/src/features/visitors/data/visitor_api.dart';
-import 'package:mobile/src/features/visitors/domain/visitor_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
 
 /// Depoya dokunmayan sahte kuyruk (path_provider yok) — bekleyen sayisi
@@ -58,8 +57,10 @@ Widget _app(
   ],
   String? tesisAd,
   List<Kargo> kargolar = const [],
-  List<Visitor> ziyaretciler = const [],
-  List<Hareket> hareketler = const [],
+  int icerdeZiyaretci = 0,
+  int aracGiris = 0,
+  int yeniIhlal = 0,
+  List<ActivityItem> hareketler = const [],
   Object? hareketHata,
 }) =>
     ProviderScope(
@@ -75,11 +76,15 @@ Widget _app(
             : TenantSettings(tenantId: 't1', ad: tesisAd)),
         shiftsProvider.overrideWith((ref) async => vardiyalar),
         kargoListProvider.overrideWith((ref) async => kargolar),
-        visitorsListProvider.overrideWith((ref) async => ziyaretciler),
-        sahaHareketleriProvider.overrideWith((ref, guvenlik) =>
-            hareketHata != null
-                ? AsyncError(hareketHata, StackTrace.empty)
-                : AsyncData(hareketler)),
+        // G1/G2/G3 sayaclari: hepsi ?limit=1 -> meta.total (liste tasinmaz).
+        icerdekiZiyaretciSayisiProvider
+            .overrideWith((ref) async => icerdeZiyaretci),
+        bugunkuAracGirisSayisiProvider.overrideWith((ref) async => aracGiris),
+        yeniIhlalSayisiProvider.overrideWith((ref) async => yeniIhlal),
+        sonHareketlerProvider.overrideWith((ref) async {
+          if (hareketHata != null) throw hareketHata;
+          return hareketler;
+        }),
         camerasProvider.overrideWith((ref) async => const [
               Camera(id: 'c1', ad: 'Ana Kapı', streamUrl: 'https://x/s.m3u8'),
             ]),
@@ -102,11 +107,13 @@ void main() {
         UserRole.security,
         tesisAd: 'Mavi Sitesi',
         hareketler: [
-          Hareket(
-            tip: HareketTip.ziyaretci,
+          ActivityItem(
+            id: 'ziyaretci_giris:z1',
+            tur: ActivityTur.ziyaretciGiris,
             baslik: 'Ziyaretçi Girişi',
-            altBaslik: 'Ahmet Yılmaz - Daire 12',
+            altMetin: 'Ahmet Yılmaz — Daire 12',
             zaman: DateTime(2026, 7, 23, 10),
+            kaynakId: 'z1',
           ),
         ],
       ));
@@ -149,8 +156,9 @@ void main() {
       expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
     });
 
-    testWidgets('serit sayaclari GERCEK uctan: kargo bekleyen + bugunku '
-        'ziyaretci; plaka/ihlal "Yakında"', (tester) async {
+    testWidgets('serit sayaclarinin TAMAMI gercek uctan: kargo bekleyen + '
+        'ziyaretci ICERIDE + arac girisi + yeni ihlal ("Yakında" KALMADI)',
+        (tester) async {
       _tall(tester);
       final now = DateTime.now();
       await tester.pumpWidget(_app(
@@ -167,39 +175,39 @@ void main() {
             createdAt: now,
           ),
         ],
-        ziyaretciler: [
-          Visitor(
-            id: 'z1',
-            unitId: 'u1',
-            unitNo: '12',
-            ziyaretciAd: 'Ahmet',
-            kaydedenUserId: 'g1',
-            targetResidentUserId: 'r1',
-            createdAt: now,
-          ),
-        ],
+        icerdeZiyaretci: 1,
+        aracGiris: 4,
+        yeniIhlal: 2,
       ));
       await tester.pumpAndSettle();
 
       expect(find.text('1 Bekliyor'), findsOneWidget); // Kargo
-      expect(find.text('1 Bugün'), findsOneWidget); // Ziyaretçi
-      // Serit yatay kaydirilir; MISSING-BACKEND kartlar sonda.
+      // G3: "bugunku kayit" degil, halen ICERIDE olanlar (sunucu suzgeci).
+      expect(find.text('1 İçeride'), findsOneWidget);
+      expect(find.text('1 Bugün'), findsNothing);
+      // Serit yatay kaydirilir; plaka + ihlal kartlari sonda.
       await tester.drag(find.text('Kargo'), const Offset(-400, 0));
       await tester.pumpAndSettle();
-      expect(find.text('Yakında'), findsWidgets);
+      expect(find.text('4 Giriş'), findsOneWidget); // G1 Araç Plaka
+      expect(find.text('2 Yeni'), findsOneWidget); // G2 İhlaller
+      expect(find.text('Yakında'), findsNothing);
     });
 
-    testWidgets('tesisGorevlisi: KVKK — Kargo/Ziyaretçi/Araç Plaka kartlari '
-        've Canlı Kamera YOK; vardiya + son hareketler VAR', (tester) async {
+    testWidgets('tesisGorevlisi: KVKK — Kargo/Ziyaretçi/Araç Plaka/İhlaller '
+        'kartlari ve Canlı Kamera YOK; vardiya + son hareketler VAR',
+        (tester) async {
       _tall(tester);
       await tester.pumpWidget(_app(
         UserRole.tesisGorevlisi,
         hareketler: [
-          Hareket(
-            tip: HareketTip.gorevTamamlama,
+          ActivityItem(
+            id: 'gorev_tamamlama:c1',
+            tur: ActivityTur.gorevTamamlama,
             baslik: 'Görev Tamamlandı',
-            altBaslik: 'Merdiven - Temizlik',
+            altMetin: 'Merdiven — Temizlik',
             zaman: DateTime(2026, 7, 23, 10),
+            renk: ActivityRenk.olumlu,
+            kaynakId: 'c1',
           ),
         ],
       ));
@@ -208,6 +216,8 @@ void main() {
       expect(find.text('Kargo'), findsNothing);
       expect(find.text('Ziyaretçi'), findsNothing);
       expect(find.text('Araç Plaka'), findsNothing);
+      // /violations tesis_gorevlisine 403 — kart cizilmez ('—' de gostermez).
+      expect(find.text('İhlaller'), findsNothing);
       expect(find.text('Canlı Kamera'), findsNothing);
 
       expect(find.text('Vardiya Durum'), findsOneWidget); // serit karti

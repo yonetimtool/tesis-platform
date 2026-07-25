@@ -6,7 +6,9 @@ import 'package:mobile/src/features/announcements/domain/announcement_models.dar
 import 'package:mobile/src/features/complaints/data/complaint_api.dart';
 import 'package:mobile/src/features/dues/data/dues_api.dart';
 import 'package:mobile/src/features/dues/domain/dues_models.dart';
+import 'package:mobile/src/features/home/data/activity_api.dart';
 import 'package:mobile/src/features/home/data/home_api.dart';
+import 'package:mobile/src/features/home/domain/activity_models.dart';
 import 'package:mobile/src/features/home/presentation/resident_home_screen.dart';
 import 'package:mobile/src/features/home/presentation/widgets/home_states.dart';
 import 'package:mobile/src/features/kargo/data/kargo_api.dart';
@@ -27,6 +29,8 @@ Widget _app({
   List<Announcement> duyurular = const [],
   int acikTalep = 0,
   int daireSikayet = 0,
+  int gurultuSikayet = 0,
+  List<ActivityItem> hareketler = const [],
   bool hata = false,
   bool gecikme = false,
 }) {
@@ -53,7 +57,11 @@ Widget _app({
       sonDuyurularProvider.overrideWith((ref) => uc(duyurular)),
       acikSikayetSayisiProvider.overrideWith((ref) => uc(acikTalep)),
       kendiDaireSikayetSayisiProvider.overrideWith((ref) => uc(daireSikayet)),
-      sonTaleplerProvider.overrideWith((ref) => uc(const [])),
+      // G6: gurultu sayaci — kategori suzgeci sunucuda.
+      kendiGurultuSikayetSayisiProvider
+          .overrideWith((ref) => uc(gurultuSikayet)),
+      // G5: akis TEK uctan (/activity) — istemci birlestirmesi YOK.
+      sonHareketlerProvider.overrideWith((ref) => uc(hareketler)),
     ],
     child: const MaterialApp(home: ResidentHomeScreen()),
   );
@@ -106,7 +114,20 @@ void main() {
       'izgara → Ödeme ve Aidat Durumu → Son Hareketler → Duyurular',
       (tester) async {
     _tall(tester);
-    await tester.pumpWidget(_app(units: _borcsuz, kargolar: [_kargo('k1')]));
+    await tester.pumpWidget(_app(
+      units: _borcsuz,
+      kargolar: [_kargo('k1')],
+      hareketler: [
+        ActivityItem(
+          id: 'kargo:k1',
+          tur: ActivityTur.kargo,
+          baslik: 'Kargo Kaydedildi',
+          altMetin: 'Mng — Daire 12',
+          zaman: DateTime(2026, 7, 23, 9),
+          kaynakId: 'k1',
+        ),
+      ],
+    ));
     await tester.pumpAndSettle();
 
     expect(find.text('Merhaba, Çiğdem'), findsOneWidget);
@@ -185,6 +206,7 @@ void main() {
       ],
       acikTalep: 2,
       daireSikayet: 1,
+      gurultuSikayet: 3,
       duyurular: [
         Announcement(
           id: 'd1',
@@ -201,32 +223,39 @@ void main() {
     expect(find.text('1 Kayıt'), findsOneWidget); // Ziyaretçiler
     expect(find.text('2 Açık'), findsOneWidget); // Geri Bildirim
     expect(find.text('1 Açık'), findsOneWidget); // Şikayetlerim
+    // G6: gurultu sayaci ?kategori=gurultu suzgecinden (istemci suzmez).
+    expect(find.text('3 Açık'), findsOneWidget); // Gürültü Şikayeti
+    expect(find.text('Bildirim Yap'), findsNothing);
     expect(find.text('1 Yeni'), findsOneWidget); // Duyurular (son 3 gun)
     expect(find.text('Asansör Bakımı'), findsOneWidget); // duyuru karti
   });
 
-  testWidgets('Son Hareketler GERCEK akistan (kargo+ziyaretci) beslenir',
-      (tester) async {
+  testWidgets('Son Hareketler TEK uctan (/activity): sunucu metinleri aynen '
+      'cizilir, istemci birlestirmez', (tester) async {
     _tall(tester);
-    await tester.pumpWidget(_app(
-      kargolar: [_kargo('k1')],
-      ziyaretciler: [
-        Visitor(
-          id: 'z1',
-          unitId: 'u1',
-          unitNo: '12',
-          ziyaretciAd: 'Ahmet Yılmaz',
-          kaydedenUserId: 'g1',
-          targetResidentUserId: 'r1',
-          createdAt: DateTime(2026, 7, 23, 10),
-        ),
-      ],
-    ));
+    await tester.pumpWidget(_app(hareketler: [
+      ActivityItem(
+        id: 'kargo:k1',
+        tur: ActivityTur.kargo,
+        baslik: 'Kargo Kaydedildi',
+        altMetin: 'Aras Kargo — Daire A-12',
+        zaman: DateTime(2026, 7, 23, 11),
+        kaynakId: 'k1',
+      ),
+      ActivityItem(
+        id: 'ziyaretci_giris:z1',
+        tur: ActivityTur.ziyaretciGiris,
+        baslik: 'Ziyaretçi Girişi',
+        altMetin: 'Ahmet Yılmaz — Daire A-12',
+        zaman: DateTime(2026, 7, 23, 10),
+        kaynakId: 'z1',
+      ),
+    ]));
     await tester.pumpAndSettle();
 
     expect(find.text('Son Hareketler'), findsOneWidget);
     expect(find.text('Kargo Kaydedildi'), findsOneWidget);
-    expect(find.text('Ahmet Yılmaz - Daire 12'), findsOneWidget);
+    expect(find.text('Ahmet Yılmaz — Daire A-12'), findsOneWidget);
   });
 
   testWidgets('veri HATALARI ekrani dusurmez: bolumler "Yüklenemedi" + '

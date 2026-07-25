@@ -31,7 +31,9 @@ import 'package:mobile/src/features/budget/domain/budget_models.dart';
 import 'package:mobile/src/features/cameras/domain/camera_models.dart';
 import 'package:mobile/src/features/dues/domain/dues_models.dart';
 import 'package:mobile/src/features/home/data/home_api.dart';
-import 'package:mobile/src/features/home/domain/son_hareketler.dart';
+import 'package:mobile/src/features/home/data/activity_api.dart';
+import 'package:mobile/src/features/home/domain/activity_models.dart';
+import 'package:mobile/src/features/home/domain/parking_occupancy.dart';
 import 'package:mobile/src/features/kargo/data/kargo_api.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
@@ -150,37 +152,45 @@ List<Object> _temsili(String ad, String role) => [
       aktifGorevSayisiProvider.overrideWith((ref) async => 6),
       acikDaireSikayetSayisiProvider.overrideWith((ref) async => 3),
       kendiDaireSikayetSayisiProvider.overrideWith((ref) async => 1),
-      sonTaleplerProvider.overrideWith((ref) async => const []),
-      sonOdemelerProvider.overrideWith((ref) async => const []),
-      sonGorevTamamlamalariProvider.overrideWith((ref) async => const []),
-      yonetimHareketleriProvider.overrideWith((ref) => AsyncData(_hareketler)),
-      sahaHareketleriProvider
-          .overrideWith((ref, guvenlik) => AsyncData(_hareketler)),
-      residentHareketleriProvider
-          .overrideWith((ref) => AsyncData(_hareketler)),
+      kendiGurultuSikayetSayisiProvider.overrideWith((ref) async => 2),
+      icerdekiZiyaretciSayisiProvider.overrideWith((ref) async => 3),
+      bugunkuAracGirisSayisiProvider.overrideWith((ref) async => 12),
+      yeniIhlalSayisiProvider.overrideWith((ref) async => 2),
+      otoparkDolulukProvider.overrideWith((ref) async =>
+          const ParkingOccupancy(kapasite: 120, dolu: 78, oran: 65)),
+      sonHareketlerProvider.overrideWith((ref) async => _hareketler),
       yoneticiIletisimProvider
           .overrideWith((ref) async => throw Exception('offline')),
     ];
 
 /// Gorsel denetim icin temsili "Son Hareketler" satirlari.
 final _hareketler = [
-  Hareket(
-    tip: HareketTip.talep,
+  ActivityItem(
+    id: 'talep:t1',
+    tur: ActivityTur.talep,
     baslik: 'Yeni Talep',
-    altBaslik: 'Asansör arızası - Tesisat',
+    altMetin: 'Asansör arızası — Tesisat',
     zaman: DateTime.now().subtract(const Duration(minutes: 20)),
+    renk: ActivityRenk.uyari,
+    kaynakId: 't1',
   ),
-  Hareket(
-    tip: HareketTip.gorevTamamlama,
+  ActivityItem(
+    id: 'gorev_tamamlama:c1',
+    tur: ActivityTur.gorevTamamlama,
     baslik: 'Görev Tamamlandı',
-    altBaslik: 'Çöp toplama - Temizlik',
+    altMetin: 'Çöp toplama — Temizlik',
     zaman: DateTime.now().subtract(const Duration(hours: 2)),
+    renk: ActivityRenk.olumlu,
+    kaynakId: 'c1',
   ),
-  Hareket(
-    tip: HareketTip.aidatOdeme,
+  ActivityItem(
+    id: 'aidat_odeme:o1',
+    tur: ActivityTur.aidatOdeme,
     baslik: 'Aidat Ödemesi',
-    altBaslik: '₺1.250,00 - 2026-07',
+    altMetin: '₺1.250,00 — 2026-07',
     zaman: DateTime.now().subtract(const Duration(days: 1)),
+    renk: ActivityRenk.olumlu,
+    kaynakId: 'o1',
   ),
 ];
 

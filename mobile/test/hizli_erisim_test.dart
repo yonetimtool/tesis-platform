@@ -30,10 +30,10 @@ void main() {
 
       expect(find.text('Vardiya Durum'), findsOneWidget);
       expect(find.text('Kargo'), findsOneWidget);
-      // Taban SAYI TASIMAZ: gercek uca bagli kartlarda sayac yerine iskelet,
-      // sozlesmede karsiligi olmayan kartlarda 'Yakında' vardir.
+      // Taban SAYI TASIMAZ: bes kartin tamami gercek uca baglidir, sayac
+      // gelene kadar iskelet cizilir ('Yakında' etiketi KALMADI).
       expect(find.byType(HomeSayacIskeleti), findsWidgets);
-      expect(find.text('Yakında'), findsWidgets);
+      expect(find.text('Yakında'), findsNothing);
       // Serit yatay kaydirilir — sondaki kartlar goruntude olmayabilir;
       // widget agacinda (ListView) hepsi yaratilir.
       expect(tester.takeException(), isNull);

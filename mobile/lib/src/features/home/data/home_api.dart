@@ -1,4 +1,4 @@
-/// Ana ekranin TOPLAM/SAYAC sorgulari + birlesik "Son Hareketler" akislari.
+/// Ana ekranin TOPLAM/SAYAC sorgulari.
 ///
 /// Buradaki her cagri `contracts/openapi.yaml`'da VAR OLAN bir uca gider; uc
 /// UYDURULMAZ. Sayaclar `?limit=1` ile cekilir ve YALNIZ `meta.total` okunur
@@ -8,13 +8,19 @@
 ///   * `GET /tasks?aktif=true&limit=1`            → aktif gorev sayisi
 ///   * `GET /unit-complaints?durum=acik&limit=1`  → acik daire sikayeti (yonetim)
 ///   * `GET /unit-complaints/mine?durum=acik&limit=1` → sakinin acik sikayeti
-///   * `GET /dues/payments?limit=5`               → son odemeler (yonetim)
-///   * `GET /task-completions?limit=5`            → son gorev tamamlamalari
+///   * `GET /unit-complaints/mine?kategori=gurultu&durum=acik&limit=1` → gurultu
+///   * `GET /visitors?icerde=true&limit=1`        → halen ICERIDE ziyaretci
+///   * `GET /vehicle-passes?baslangic=<gun basi>&limit=1` → bugunku arac girisi
+///   * `GET /violations?durum=yeni&limit=1`       → yeni ihlal
+///   * `GET /parking/occupancy`                   → otopark dolulugu (agregat)
+///
+/// Birlesik "Son Hareketler" akisi BURADA DEGIL: tek uc olarak
+/// `data/activity_api.dart` (`GET /activity`) icindedir.
 ///
 /// Rol siniri SUNUCUDA: sakin `/units`'e 403 alir, saha `/dues/payments`'e
-/// 403 alir. Bu yuzden her sayac YALNIZ yetkili rolun ekraninda izlenir ve
-/// akis birlestirici tek tek kaynak hatalarini yutar (bir uc kapaliysa akis
-/// kalan kaynaklarla cizilir).
+/// 403 alir, `/vehicle-passes` yalniz admin+security'ye aciktir. Bu yuzden her
+/// sayac YALNIZ yetkili rolun ekraninda izlenir — izinsiz rolde istek HIC
+/// atilmaz (403 uretilmez), kart cizilmez.
 library;
 
 import 'package:dio/dio.dart';
@@ -22,18 +28,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
-import '../../complaints/data/complaint_api.dart';
-import '../../complaints/domain/complaint_models.dart';
-import '../../dues/data/dues_api.dart';
-import '../../dues/domain/dues_models.dart';
-import '../../kargo/data/kargo_api.dart';
-import '../../kargo/domain/kargo_models.dart';
-import '../../notifications/data/notifications_controller.dart';
-import '../../notifications/domain/notification_models.dart';
-import '../../reports/domain/report_models.dart' show SonTamamlama;
-import '../../visitors/data/visitor_api.dart';
-import '../../visitors/domain/visitor_models.dart';
-import '../domain/son_hareketler.dart';
+import '../domain/parking_occupancy.dart';
 
 /// Ana ekran toplamlarinin ince HTTP istemcisi.
 class HomeApi {
@@ -69,39 +64,35 @@ class HomeApi {
   Future<int> kendiAcikDaireSikayetSayisi() =>
       _total('/unit-complaints/mine', {'durum': 'acik'});
 
-  /// `GET /dues/payments` → son odemeler (yonetim; akis satiri).
-  Future<List<DuesPayment>> sonOdemeler({int limit = 5}) async {
-    try {
-      final res = await _dio.get<Map<String, dynamic>>(
-        '/dues/payments',
-        queryParameters: {'limit': limit, 'offset': 0},
-      );
-      final items = res.data?['items'];
-      if (items is! List) return const [];
-      return [
-        for (final item in items)
-          if (item is Map)
-            DuesPayment.fromJson(Map<String, dynamic>.from(item)),
-      ];
-    } on DioException catch (e) {
-      throw ApiException.fromDio(e);
-    }
-  }
+  /// `GET /unit-complaints/mine?kategori=<k>&durum=acik` (G6) → sakinin
+  /// KENDI acik sikayetleri, KATEGORI suzgeci SUNUCUDA (istemci suzmez).
+  Future<int> kendiKategoriSikayetSayisi(String kategori) =>
+      _total('/unit-complaints/mine', {'kategori': kategori, 'durum': 'acik'});
 
-  /// `GET /task-completions` → son gorev tamamlamalari (akis satiri).
-  Future<List<SonTamamlama>> sonGorevTamamlamalari({int limit = 5}) async {
-    try {
-      final res = await _dio.get<Map<String, dynamic>>(
-        '/task-completions',
-        queryParameters: {'limit': limit, 'offset': 0},
+  /// `GET /visitors?icerde=true` (G3) → cikisi damgalanMAMIS ziyaretci sayisi
+  /// ("N İçeride"). RBAC: security (+ resident kendine hedeflenenler).
+  Future<int> icerdekiZiyaretciSayisi() =>
+      _total('/visitors', {'icerde': true});
+
+  /// `GET /vehicle-passes?baslangic=<gun basi>` (G1) → BUGUN kaydedilen arac
+  /// girisi sayisi ("N Giriş"). [gunBasi] cihazin YEREL gun basidir; sunucu
+  /// `giris_zamani >= baslangic` uygular. RBAC: admin + security.
+  Future<int> bugunkuAracGirisSayisi(DateTime gunBasi) => _total(
+        '/vehicle-passes',
+        {'baslangic': gunBasi.toUtc().toIso8601String()},
       );
-      final items = res.data?['items'];
-      if (items is! List) return const [];
-      return [
-        for (final item in items)
-          if (item is Map)
-            SonTamamlama.fromJson(Map<String, dynamic>.from(item)),
-      ];
+
+  /// `GET /violations?durum=yeni` (G2) → henuz ele alinmamis ihlal sayisi
+  /// ("N Yeni"). RBAC: admin + yonetici + security.
+  Future<int> yeniIhlalSayisi() => _total('/violations', {'durum': 'yeni'});
+
+  /// `GET /parking/occupancy` (G4) → `{kapasite, dolu, oran}`. Kapasite
+  /// tanimsizsa `kapasite`/`oran` null gelir; kart/kutu bunu KENDI gosterir
+  /// (uydurma kapasite/yuzde yok).
+  Future<ParkingOccupancy> otoparkDoluluk() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/parking/occupancy');
+      return ParkingOccupancy.fromJson(res.data ?? const {});
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -137,114 +128,38 @@ final kendiDaireSikayetSayisiProvider =
   return ref.watch(homeApiProvider).kendiAcikDaireSikayetSayisi();
 });
 
-/// Son talepler (akis satiri). Sunucu rol suzer: sakin/saha KENDI actiklarini,
-/// yonetim tenant'in tumunu gorur.
-final sonTaleplerProvider =
-    FutureProvider.autoDispose<List<Complaint>>((ref) async {
-  final page = await ref.watch(complaintApiProvider).list(limit: 5);
-  return page.items;
+/// "Gürültü Şikayeti" kart sayaci (sakin) — kendi actigi ACIK gurultu
+/// sikayetleri; kategori suzgeci SUNUCUDA (G6).
+final kendiGurultuSikayetSayisiProvider =
+    FutureProvider.autoDispose<int>((ref) {
+  return ref.watch(homeApiProvider).kendiKategoriSikayetSayisi('gurultu');
 });
 
-/// Son aidat odemeleri (YALNIZ yonetim; saha/sakin 403).
-final sonOdemelerProvider =
-    FutureProvider.autoDispose<List<DuesPayment>>((ref) {
-  return ref.watch(homeApiProvider).sonOdemeler();
+/// "Ziyaretçi → N İçeride" (gorevli). RBAC: security; tesis_gorevlisi
+/// ekraninda kart CIZILMEZ, saglayici izlenmez.
+final icerdekiZiyaretciSayisiProvider =
+    FutureProvider.autoDispose<int>((ref) {
+  return ref.watch(homeApiProvider).icerdekiZiyaretciSayisi();
 });
 
-/// Son gorev tamamlamalari (yonetim + saha; sakin 403).
-final sonGorevTamamlamalariProvider =
-    FutureProvider.autoDispose<List<SonTamamlama>>((ref) {
-  return ref.watch(homeApiProvider).sonGorevTamamlamalari();
+/// "Araç Plaka → N Giriş" (gorevli) — BUGUNKU giris sayisi. Gun basi
+/// saglayici kurulurken cihaz saatinden alinir (ekran gun icinde yenilenir).
+final bugunkuAracGirisSayisiProvider =
+    FutureProvider.autoDispose<int>((ref) {
+  final now = DateTime.now();
+  return ref
+      .watch(homeApiProvider)
+      .bugunkuAracGirisSayisi(DateTime(now.year, now.month, now.day));
 });
 
-// ------------------------------------------------------- birlesik akislar
-
-/// Birlesik akisin TOPLU durumu — "en iyi caba":
-///   * en az bir kaynak veri verdiyse → akis o kaynaklarla cizilir (kapali
-///     uc bolumu karartmaz),
-///   * hicbiri veri vermediyse ve en az biri hata verdiyse → HATA
-///     ("Yüklenemedi" + yeniden dene),
-///   * aksi halde → YUKLENIYOR.
-///
-/// Saglayicilar SENKRON okunur (`.future` beklenmez): Riverpod hatali bir
-/// saglayiciyi otomatik yeniden dener ve bu sirada `.future` askida kalir —
-/// o durumda bolum sonsuza kadar iskelet gosterirdi.
-AsyncValue<List<Hareket>>? _birlesikDurum(List<AsyncValue<Object>> kaynaklar) {
-  if (kaynaklar.any((k) => k.hasValue)) return null; // veriyle devam
-  final hatali = kaynaklar.where((k) => k.hasError).firstOrNull;
-  if (hatali != null) {
-    return AsyncError(hatali.error!, hatali.stackTrace ?? StackTrace.empty);
-  }
-  return const AsyncLoading();
-}
-
-List<T> _liste<T>(AsyncValue<Object> kaynak) =>
-    (kaynak.value as List?)?.cast<T>() ?? const [];
-
-/// Sakin "Son Hareketler": kendi kargosu + kendine hedeflenen ziyaretciler +
-/// kendi aidat odemeleri + kendi talepleri. Hepsi sunucuda sakin-suzgeclidir.
-final residentHareketleriProvider =
-    Provider.autoDispose<AsyncValue<List<Hareket>>>((ref) {
-  final kargo = ref.watch(kargoListProvider);
-  final ziyaretci = ref.watch(visitorsListProvider);
-  final dues = ref.watch(myDuesProvider);
-  final talep = ref.watch(sonTaleplerProvider);
-
-  final durum = _birlesikDurum([kargo, ziyaretci, dues, talep]);
-  if (durum != null) return durum;
-
-  return AsyncData(residentHareketleri(
-    kargolar: _liste<Kargo>(kargo),
-    ziyaretciler: _liste<Visitor>(ziyaretci),
-    duesUnits: _liste<MyDuesUnit>(dues),
-    talepler: _liste<Complaint>(talep),
-  ));
+/// "İhlaller → N Yeni" (gorevli/security + yonetim).
+final yeniIhlalSayisiProvider = FutureProvider.autoDispose<int>((ref) {
+  return ref.watch(homeApiProvider).yeniIhlalSayisi();
 });
 
-/// Yonetim "Son Hareketler": bildirim + talep + aidat odemesi + gorev
-/// tamamlama tek akista.
-final yonetimHareketleriProvider =
-    Provider.autoDispose<AsyncValue<List<Hareket>>>((ref) {
-  final bildirim = ref.watch(notificationsProvider);
-  final talep = ref.watch(sonTaleplerProvider);
-  final odeme = ref.watch(sonOdemelerProvider);
-  final tamamlama = ref.watch(sonGorevTamamlamalariProvider);
-
-  final durum = _birlesikDurum([bildirim, talep, odeme, tamamlama]);
-  if (durum != null) return durum;
-
-  return AsyncData(yonetimHareketleri(
-    bildirimler: _liste<AppNotification>(bildirim),
-    talepler: _liste<Complaint>(talep),
-    odemeler: _liste<DuesPayment>(odeme),
-    tamamlamalar: _liste<SonTamamlama>(tamamlama),
-  ));
-});
-
-/// Saha "Son Hareketler". [guvenlik] false (tesis_gorevlisi) iken ziyaretci/
-/// kargo/bildirim uclari RBAC disidir — hic izlenmez (403 uretecek istek
-/// atilmaz), akis yalniz gorev tamamlamalarindan olusur.
-final sahaHareketleriProvider = Provider.autoDispose
-    .family<AsyncValue<List<Hareket>>, bool>((ref, guvenlik) {
-  final tamamlama = ref.watch(sonGorevTamamlamalariProvider);
-  if (!guvenlik) {
-    final durum = _birlesikDurum([tamamlama]);
-    return durum ??
-        AsyncData(
-            sahaHareketleri(tamamlamalar: _liste<SonTamamlama>(tamamlama)));
-  }
-
-  final ziyaretci = ref.watch(visitorsListProvider);
-  final kargo = ref.watch(kargoListProvider);
-  final bildirim = ref.watch(notificationsProvider);
-
-  final durum = _birlesikDurum([tamamlama, ziyaretci, kargo, bildirim]);
-  if (durum != null) return durum;
-
-  return AsyncData(sahaHareketleri(
-    ziyaretciler: _liste<Visitor>(ziyaretci),
-    kargolar: _liste<Kargo>(kargo),
-    tamamlamalar: _liste<SonTamamlama>(tamamlama),
-    bildirimler: _liste<AppNotification>(bildirim),
-  ));
+/// "Otopark Kullanımı" karti + "Otopark Doluluk" kutusu AYNI yaniti kullanir
+/// (tek istek).
+final otoparkDolulukProvider =
+    FutureProvider.autoDispose<ParkingOccupancy>((ref) {
+  return ref.watch(homeApiProvider).otoparkDoluluk();
 });

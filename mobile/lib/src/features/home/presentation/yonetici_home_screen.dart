@@ -12,10 +12,12 @@ import '../../notifications/data/notifications_controller.dart';
 import '../../profile/data/profile_api.dart';
 import '../../shifts/data/shifts_api.dart';
 import '../../weather/data/weather_api.dart';
+import '../data/activity_api.dart';
 import '../data/home_api.dart';
 import '../data/home_repository.dart';
 import '../domain/home_varyant.dart';
 import '../domain/home_view_models.dart';
+import '../domain/parking_occupancy.dart';
 import 'home_async.dart';
 import 'home_mappers.dart';
 import 'widgets/bildir_menu_sheet.dart';
@@ -36,10 +38,10 @@ import 'widgets/vardiya_seridi.dart';
 /// Bolum sirasi gorselle birebir: karsilama → 4x2 hizli erisim izgarasi →
 /// Vardiya Durumu → Hızlı Özet → Son Hareketler.
 ///
-/// VERI: her sayac GERCEK uctan gelir (esleme tablosu README "Ana ekran veri
-/// eslemesi"). Sozlesmede karsiligi olmayan kartlar 'Yakında' gosterir —
-/// ekranda uydurma sayi YOKTUR. Veri gelene kadar iskelet, uc hata verirse
-/// "Yüklenemedi" + yeniden dene.
+/// VERI: izgaradaki SEKIZ kartin ve Hızlı Özet'in TAMAMI gercek uctan gelir
+/// (esleme tablosu README "Ana ekran veri eslemesi") — 'Yakında' etiketi
+/// kalmadi. Ekranda uydurma sayi YOKTUR: veri gelene kadar iskelet, uc hata
+/// verirse "Yüklenemedi" + yeniden dene ya da sayac yerine '—'.
 class YoneticiHomeScreen extends ConsumerWidget {
   const YoneticiHomeScreen({super.key, this.role = UserRole.yonetici});
 
@@ -61,9 +63,15 @@ class YoneticiHomeScreen extends ConsumerWidget {
     final gorev = ref.watch(aktifGorevSayisiProvider);
     final talep = ref.watch(acikSikayetSayisiProvider);
     final daireSikayet = ref.watch(acikDaireSikayetSayisiProvider);
+    final ihlal = ref.watch(yeniIhlalSayisiProvider);
+    // Otopark: kart ("dolu / kapasite") ve "Hızlı Özet" kutusu ("%oran")
+    // AYNI yaniti kullanir — tek istek.
+    final otopark = ref.watch(otoparkDolulukProvider);
     final vardiyaAsync = ref.watch(shiftsProvider);
     final vardiyalar = vardiyaAsync.value ?? const [];
-    final hareketler = ref.watch(yonetimHareketleriProvider);
+    // Son Hareketler TEK uctan (/activity); sunucu rol suzer. KVKK: yonetim
+    // bu akista ziyaretci/kargo olaylarini GORMEZ — istemci geri EKLEMEZ.
+    final hareketler = ref.watch(sonHareketlerProvider);
 
     final aktifVardiya = vardiyalar.where((v) => v.aktifMi(now)).length;
     final erisim = [
@@ -77,6 +85,9 @@ class YoneticiHomeScreen extends ConsumerWidget {
           'Aidat Durumu' => k.sayacla(finans.metin((f) => f.tahsilat == null
               ? '—'
               : '${f.tahsilat!.gecikenDaireSayisi} Daire')),
+          // G4: kapasite tanimsizsa payda UYDURULMAZ → "N araç".
+          'Otopark Kullanımı' => k.sayacla(otopark.metin((o) => o.doluMetni)),
+          'İhlaller' => k.sayacla(ihlal.sayac((n) => n, 'Yeni')),
           'Geri Bildirim' => k.sayacla(talep.sayac((n) => n, 'Açık')),
           'Şikayetler' => k.sayacla(daireSikayet.sayac((n) => n, 'Açık')),
           _ => k,
@@ -140,7 +151,7 @@ class YoneticiHomeScreen extends ConsumerWidget {
                 // "Hızlı Özet" — tam liste yok, "Tümünü Gör" gizli.
                 const SectionHeader(title: 'Hızlı Özet'),
                 HizliOzetIzgarasi(
-                  kutular: _ozet(taban.ozet(), daire, finans),
+                  kutular: _ozet(taban.ozet(), daire, finans, otopark),
                 ),
               ],
             ),
@@ -155,7 +166,7 @@ class YoneticiHomeScreen extends ConsumerWidget {
                   const HomeBolumIskeleti(baslik: 'Son Hareketler'),
               hata: () => HomeBolumHatasi(
                 baslik: 'Son Hareketler',
-                onYenile: () => ref.invalidate(yonetimHareketleriProvider),
+                onYenile: () => ref.invalidate(sonHareketlerProvider),
               ),
             ),
           ),
@@ -165,12 +176,14 @@ class YoneticiHomeScreen extends ConsumerWidget {
   }
 
   /// "Hızlı Özet": Toplam Daire → GET /units, Toplam Tahsilat + Aidat
-  /// Tahsilat Oranı → GET /reports/financial-summary. "Otopark Doluluk"
-  /// MISSING-BACKEND (taban '—' + "Yakında" gosterir, dokunulmaz).
+  /// Tahsilat Oranı → GET /reports/financial-summary, Otopark Doluluk →
+  /// GET /parking/occupancy (`oran`; kapasite tanimsizsa sunucu null doner →
+  /// kutu '—' gosterir, uydurma yuzde yok).
   List<OzetKutusu> _ozet(
     List<OzetKutusu> taban,
     AsyncValue<int> daire,
     AsyncValue<FinancialSummary> finans,
+    AsyncValue<ParkingOccupancy> otopark,
   ) {
     return [
       for (final k in taban)
@@ -183,6 +196,7 @@ class YoneticiHomeScreen extends ConsumerWidget {
             k.degerle(finans.metin((f) => f.tahsilat?.tahsilatOraniYuzde == null
                 ? '—'
                 : '%${f.tahsilat!.tahsilatOraniYuzde}')),
+          'Otopark Doluluk' => k.degerle(otopark.metin((o) => o.oranMetni)),
           _ => k,
         },
     ];

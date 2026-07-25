@@ -1,8 +1,8 @@
-/// [MockHomeRepository] artik SAYI TASIMAZ: referans gorsellerin DUZENINI
-/// (ikon/baslik/renk/sira/rota) ve YALNIZCA sozlesmede karsiligi olmayan
-/// kartlarin 'Yakında' etiketini tasir.
+/// [MockHomeRepository] SAYI TASIMAZ: yalnizca referans gorsellerin DUZENINI
+/// (ikon/baslik/renk/sira/rota) tasir.
 ///
-/// Bu test iki seyi KILITLER:
+/// G1-G7 kapandiktan sonra sozlesme boslugu KALMADI: hicbir kart/kutu
+/// 'Yakında' gostermez. Bu test iki seyi KILITLER:
 ///   1. duzen (baslik sirasi + rotalar) referanstan sapmasin,
 ///   2. gercek uca bagli hicbir kart SABIT bir sayi tasimasin (altMetin
 ///      null = yukleniyor) — yani ekranda uydurma deger BELIREMESIN.
@@ -15,11 +15,8 @@ import 'package:mobile/src/features/home/domain/home_varyant.dart';
 
 const _mock = MockHomeRepository();
 
-/// Sozlesmede karsiligi OLMAYAN kartlarin tek isaretcisi.
-const _yakinda = 'Yakında';
-
-/// Sayac DEGIL, sabit aciklama etiketi olan kartlar (uc gerektirmez).
-const _etiketKartlari = {'Bildirim Yap', 'Aylık Özet'};
+/// Sayac DEGIL, sabit bolum etiketi olan kartlar (uc gerektirmez).
+const _etiketKartlari = {'Aylık Özet'};
 
 void main() {
   group('homeVaryantForRole — rol → referans duzen', () {
@@ -38,12 +35,12 @@ void main() {
 
   group('UYDURMA SAYI YOK — taban yalniz bosluklari doldurur', () {
     for (final varyant in HomeVaryant.values) {
-      test('$varyant: sayac ya null (yukleniyor) ya "Yakında" ya sabit etiket',
-          () {
+      test('$varyant: sayac ya null (yukleniyor) ya sabit bolum etiketi; '
+          "'Yakında' KALMADI", () {
         for (final k in _mock.hizliErisim(varyant)) {
           final m = k.altMetin;
           expect(
-            m == null || m == _yakinda || _etiketKartlari.contains(m),
+            m == null || _etiketKartlari.contains(m),
             isTrue,
             reason: '${k.baslik} kartinda sabit deger var: "$m"',
           );
@@ -51,8 +48,8 @@ void main() {
       });
     }
 
-    test('yonetici Hızlı Özet: gercek uca bagli kutular DEGERSIZ baslar; '
-        'yalniz otopark (MISSING-BACKEND) "—" + "Yakında"', () {
+    test('yonetici Hızlı Özet: DORT kutunun tamami gercek uca bagli — hepsi '
+        'DEGERSIZ baslar (otopark artik /parking/occupancy)', () {
       final kutular = _mock.ozet();
       expect([for (final k in kutular) k.etiket], [
         'Toplam Daire',
@@ -60,9 +57,8 @@ void main() {
         'Aidat Tahsilat Oranı',
         'Otopark Doluluk',
       ]);
-      expect([for (final k in kutular.take(3)) k.deger], [null, null, null]);
-      expect(kutular.last.deger, '—');
-      expect(kutular.last.altEtiket, _yakinda);
+      expect([for (final k in kutular) k.deger], [null, null, null, null]);
+      expect(kutular.last.altEtiket, 'Şu An');
     });
   });
 
@@ -74,13 +70,15 @@ void main() {
       );
     });
 
-    test('karsiligi olmayan kartlarin rotasi YOK ve "Yakında" gosterir', () {
+    test('sayaci VAR ama liste ekrani olmayan kartlar rotasiz kalir '
+        '(dokununca "yakında"); sayac yine de GERCEK uctan gelir', () {
       final rotasiz = [
         for (final k in _mock.hizliErisim(HomeVaryant.gorevli))
           if (k.rota == null) k
       ];
       expect([for (final k in rotasiz) k.baslik], ['Araç Plaka', 'İhlaller']);
-      expect([for (final k in rotasiz) k.altMetin], [_yakinda, _yakinda]);
+      // Sabit metin YOK: sayac gercek uctan gelene kadar iskelet.
+      expect([for (final k in rotasiz) k.altMetin], [null, null]);
     });
   });
 
@@ -136,14 +134,15 @@ void main() {
       );
     });
 
-    test('karsiligi olmayan kartlar: Otopark Kullanımı + İhlaller', () {
+    test('liste ekrani olmayan kartlar rotasiz: Otopark Kullanımı + İhlaller '
+        '(sayaclari GERCEK uctan)', () {
       final rotasiz = [
         for (final k in _mock.hizliErisim(HomeVaryant.yonetici))
           if (k.rota == null) k
       ];
       expect([for (final k in rotasiz) k.baslik],
           ['Otopark Kullanımı', 'İhlaller']);
-      expect([for (final k in rotasiz) k.altMetin], [_yakinda, _yakinda]);
+      expect([for (final k in rotasiz) k.altMetin], [null, null]);
     });
   });
 }

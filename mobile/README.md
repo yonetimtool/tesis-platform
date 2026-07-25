@@ -1187,15 +1187,17 @@ uygulamayı düşürmez.
 
 ### Ana ekran veri eşlemesi (UI alanı → uç)
 
-Kaynak: `contracts/openapi.yaml` (salt okunur). "MISSING" satırları aşağıdaki
-**CONTRACT GAPS** bölümünde ayrıntılanır.
+Kaynak: `contracts/openapi.yaml` (salt okunur). **Sözleşme boşluğu (MISSING)
+kalmadı:** G1–G7 backend'de kapandı (`bf1dc84`) ve bu tur ile mobil tarafa
+bağlandı — ana ekranda artık "Yakında" gösteren hiçbir kart/kutu yok.
+Tarihçe ve backend'in bilinçli sapmaları için → **[G1–G7 kapanış notları](#g1g7-kapanış-notları-sözleşme-boşlukları-kapandı)**.
 
 **Ortak (üç ekran)**
 
 | UI alanı | Uç → alan |
 |---|---|
 | "Merhaba, {ad}" | `GET /me/profile` → `ad` |
-| Başlık hava bloğu | `GET /weather` → `sicaklik_c` / `durum` / `konum_ad` ⚠️ *uç canlıda var, `openapi.yaml`'da YOK — bkz. G7* |
+| Başlık hava bloğu | `GET /weather` → `sicaklik_c` / `durum` / `konum_ad` (G7 ile sözleşmeye yazıldı) |
 | Zil / sekme okunmamış rozeti | `GET /notifications?okundu=false&limit=1` → `meta.total` (RBAC: admin+yönetici+security; sakin/tesis görevlisinde rozet **yok**) |
 
 **Görevli (security + tesis_gorevlisi) — `gorevli.jpeg`**
@@ -1205,12 +1207,12 @@ Kaynak: `contracts/openapi.yaml` (salt okunur). "MISSING" satırları aşağıda
 | Alt başlık "Mavi Residence ⌄" | `GET /tenant/settings` → `ad` (yoksa satır çizilmez) |
 | Şerit "Vardiya Durum → N Aktif" | `GET /shifts` → o an aktif vardiya sayısı (istemcide `aktifMi(now)`) |
 | Şerit "Kargo → N Bekliyor" | `GET /kargo` → `durum='bekliyor'` sayısı (yalnız security) |
-| Şerit "Ziyaretçi → N Bugün" | `GET /visitors` → bugünkü kayıt sayısı (yalnız security) — *"içeride" türetilemez, bkz. G3* |
-| Şerit "Araç Plaka" | **MISSING** → "Yakında" (G1) |
-| Şerit "İhlaller" | **MISSING** → "Yakında" (G2) |
+| Şerit "Ziyaretçi → N İçeride" | `GET /visitors?icerde=true&limit=1` → `meta.total` (yalnız security) — G3 |
+| Şerit "Araç Plaka → N Giriş" | `GET /vehicle-passes?baslangic=<yerel gün başı>&limit=1` → `meta.total` (yalnız admin+security) — G1 |
+| Şerit "İhlaller → N Yeni" | `GET /violations?durum=yeni&limit=1` → `meta.total` (security; tesis_gorevlisi'nde kart **çizilmez**, 403) — G2 |
 | Vardiya Durumu şeridi | `GET /shifts` (+ `personel[]` avatar/sayı) + son kart `GET /yonetici-iletisim` → `yoneticiler[0].ad_soyad` |
-| Son Hareketler | **birleşik uç YOK (G5)** → istemcide: `/visitors` + `/kargo` + `/task-completions` + `/notifications`; tesis_gorevlisi'nde yalnız `/task-completions` (KVKK/RBAC) |
-| Canlı Kamera şeridi | `GET /cameras` → `ad` / `stream_url` ⚠️ *uç canlıda var, `openapi.yaml`'da YOK — bkz. G7* |
+| Son Hareketler | `GET /activity?limit=5` (G5) — **tek uç**; sunucu birleştirir/sıralar/rol süzer (tesis_gorevlisi yalnız `gorev_tamamlama` görür) |
+| Canlı Kamera şeridi | `GET /cameras` → `ad` / `stream_url` (G7 ile sözleşmeye yazıldı) |
 | Gönderim Kuyruğu (koşullu) | yerel outbox (uç değil) |
 
 **Site sakini — `site-sakini.jpeg`**
@@ -1221,13 +1223,13 @@ Kaynak: `contracts/openapi.yaml` (salt okunur). "MISSING" satırları aşağıda
 | "Ziyaretçiler → N Kayıt" | `GET /visitors` (sunucu yalnız kendisine hedeflenenleri döner) |
 | "Kargolarım → N Bekliyor" | `GET /kargo` → `durum='bekliyor'` |
 | "Aidat Bilgileri → ₺X / Borç Yok\|Var" | `GET /me/dues` → `bakiye_kurus` (borç varsa borç, yoksa `toplam_tahakkuk_kurus`) |
-| "Gürültü Şikayeti → Bildirim Yap" | eylem etiketi (`POST /unit-complaints` akışı) — sayaç değil |
+| "Gürültü Şikayeti → N Açık" | `GET /unit-complaints/mine?kategori=gurultu&durum=acik&limit=1` → `meta.total` (G6; kategori süzgeci **sunucuda**) |
 | "Geri Bildirim → N Açık" | `GET /complaints?durum=acik&limit=1` → `meta.total` (sunucu kendi taleplerine kısıtlar) |
 | "Şikayetlerim → N Açık" | `GET /unit-complaints/mine?durum=acik&limit=1` → `meta.total` |
 | "Duyurular → N Yeni" | `GET /announcements` → son 3 günde yayınlananların sayısı |
 | "Site Raporları → Aylık Özet" | bölüm etiketi (şeffaflık ekranı) — sayaç değil |
 | Ödeme kartı: Bu Ayki Aidat / Ödendi / Son Ödeme / Gelecek Ödeme | `GET /me/dues` → `assessments[]` (son dönem `tutar_kurus`, `son_odeme_tarihi`) + `payments[]` (`durum='basarili'`) + `bakiye_kurus` |
-| Son Hareketler | **birleşik uç YOK (G5)** → istemcide: `/kargo` + `/visitors` + `/me/dues`(payments) + `/complaints` |
+| Son Hareketler | `GET /activity?limit=5` (G5) — sunucu sakini yalnız kendi/dairesinin olaylarıyla sınırlar |
 | Duyuru kartı | `GET /announcements` → en yeni kayıt (`baslik`, `govde`, `created_at`, `foto_url`); 3 günden yeniyse "Yeni" çipi |
 
 **Yönetici / admin — `yonetici.jpeg`**
@@ -1237,8 +1239,8 @@ Kaynak: `contracts/openapi.yaml` (salt okunur). "MISSING" satırları aşağıda
 | "Vardiya Durumu → N Aktif" | `GET /shifts` |
 | "Görevler → N Bekliyor" | `GET /tasks?aktif=true&limit=1` → `meta.total` |
 | "Aidat Durumu → N Daire" | `GET /reports/financial-summary` → `tahsilat.geciken_daire_sayisi` |
-| "Otopark Kullanımı" | **MISSING** → "Yakında" (G4) |
-| "İhlaller" | **MISSING** → "Yakında" (G2) |
+| "Otopark Kullanımı → dolu / kapasite" | `GET /parking/occupancy` → `dolu` + `kapasite` (G4; kapasite yoksa "N araç" — aşağıdaki kurala bakın) |
+| "İhlaller → N Yeni" | `GET /violations?durum=yeni&limit=1` → `meta.total` (G2) |
 | "Geri Bildirim → N Açık" | `GET /complaints?durum=acik&limit=1` → `meta.total` |
 | "Şikayetler → N Açık" | `GET /unit-complaints?durum=acik&limit=1` → `meta.total` |
 | "Raporlar → Aylık Özet" | bölüm etiketi — sayaç değil |
@@ -1246,129 +1248,96 @@ Kaynak: `contracts/openapi.yaml` (salt okunur). "MISSING" satırları aşağıda
 | Hızlı Özet "Toplam Daire" | `GET /units?aktif=true&limit=1` → `meta.total` |
 | Hızlı Özet "Toplam Tahsilat" | `GET /reports/financial-summary` → `tahsilat.tahsilat_kurus` |
 | Hızlı Özet "Aidat Tahsilat Oranı" | ↑ aynı yanıt → `tahsilat.tahsilat_orani_yuzde` (null ise "—") |
-| Hızlı Özet "Otopark Doluluk" | **MISSING** → "—" + "Yakında" (G4) |
-| Son Hareketler | **birleşik uç YOK (G5)** → istemcide: `/notifications` + `/complaints` + `/dues/payments` + `/task-completions` |
+| Hızlı Özet "Otopark Doluluk" | ↑ **aynı yanıt** (tek istek) → `oran` ("%2"); `oran` null ise "—" |
+| Son Hareketler | `GET /activity?limit=5` (G5) — sunucu süzer; **yönetim bu akışta ziyaretçi/kargo olaylarını görmez** (KVKK, aşağıya bakın) |
 
 Sayaç sorguları `?limit=1` ile atılır ve yalnız `meta.total` okunur (sayfa
-verisi taşınmaz) — `home/data/home_api.dart`.
+verisi taşınmaz) — `home/data/home_api.dart`. Birleşik akış ayrı bir dosyadadır:
+`home/data/activity_api.dart`.
 
-### CONTRACT GAPS (DEV-A'ya) — önerilen uçlar
+**Otopark: `kapasite = null` render kuralı.** `GET /parking/occupancy` kapasite
+tenant ayarında tanımsız (ya da 0) iken `kapasite` **ve** `oran` alanlarını
+`null` döner; `dolu` her zaman gerçek sayıdır. Mobil bu durumda:
 
-Aşağıdaki kartlar tasarımda **kalır** ama sayı yerine "Yakında"/"—" gösterir.
-Kod içinde her biri `// TODO(contract):` ile işaretlidir
-(`home/data/home_repository.dart`).
+| Alan | kapasite VAR | kapasite `null` |
+|---|---|---|
+| İzgara kartı "Otopark Kullanımı" | `3 / 120` | `3 araç` (payda uydurulmaz) |
+| Hızlı Özet "Otopark Doluluk" | `%2` | `—` (yüzde uydurulmaz) |
 
-**G1 — Araç plaka / geçiş kaydı** (görevli şeridi: "Araç Plaka")
+Kart hiçbir durumda çökmez ve **uydurma kapasite/yüzde göstermez**
+(`home/domain/parking_occupancy.dart` → `doluMetni` / `oranMetni`).
 
-```yaml
-GET /vehicle-passes?limit&offset&baslangic&bitis&yon=giris|cikis
-200:
-  meta: { limit, offset, total }
-  items:
-    - id: uuid
-      plaka: "34 ABC 123"          # normalize (boşluksuz+büyük) saklanmalı
-      yon: giris | cikis
-      arac_aciklama: "BMW Siyah"   # nullable
-      unit_id: uuid                # nullable (ziyaretçi aracı)
-      unit_no: "A-12"              # nullable, join
-      kaydeden_user_id: uuid       # manuel giriş; OCR ise null
-      kaynak: manuel | kamera      # ileride plaka tanıma
-      created_at: date-time
-```
-Kart sayacı: `GET /vehicle-passes?yon=giris&baslangic=<bugün>&limit=1` →
-`meta.total` ("N Giriş"). RBAC: security + admin/yönetici; resident yalnız kendi
-dairesinin aracı (KVKK).
+**Sayacı olan ama ekranı olmayan kartlar.** "Araç Plaka", "İhlaller" ve
+"Otopark Kullanımı" gerçek sayacı gösterir ama mobilde henüz liste/detay
+ekranları yoktur → `rota == null`, dokunulunca "Bu bölüm yakında" bildirimi
+çıkar. Sayaç gerçektir, eksik olan **ekran**dır.
 
-**G2 — İhlal kaydı** (görevli + yönetici: "İhlaller")
+### G1–G7 kapanış notları (sözleşme boşlukları KAPANDI)
 
-Site kuralları (`/site-rules`) yalnızca **metin** tutar; ihlal kaydı yok.
+Bu bölüm eskiden **CONTRACT GAPS** listesiydi: yedi kart/bölüm için uç yoktu ve
+ekranda "Yakında"/"—" duruyordu. Backend hepsini kapattı (`bf1dc84`,
+`contracts/openapi.yaml`), mobil de bu tur ile gerçek uçlara bağlandı. Aşağıda
+**ne bağlandı** ve backend'in taslak öneriden **bilinçli sapmaları** durur —
+sapmalar mobil tarafta neyi değiştirdiği için önemlidir.
 
-```yaml
-GET /violations?limit&offset&durum=acik|kapali&kategori&unit_id
-200:
-  meta: { limit, offset, total }
-  items:
-    - id: uuid
-      site_rule_id: uuid           # nullable (hangi kural)
-      baslik: "Otopark girişinde park"
-      kaynak: kamera | personel    # tespit eden
-      checkpoint_id: uuid          # nullable
-      unit_id: uuid                # nullable
-      foto_key: string             # nullable (presign akışı)
-      durum: acik | kapali
-      created_at: date-time
-POST /violations                   # security + tesis_gorevlisi + yönetim
-```
-Kart sayacı: `?durum=acik&limit=1` → `meta.total` ("N Yeni").
+| # | Konu | Bağlanan uç | Kart / bölüm |
+|---|---|---|---|
+| G1 | Araç geçişi | `GET /vehicle-passes?baslangic=&acik=&plaka=` | görevli şeridi "Araç Plaka → N Giriş" |
+| G2 | İhlal kaydı | `GET /violations?durum=yeni` | görevli + yönetici "İhlaller → N Yeni" |
+| G3 | Ziyaretçi çıkışı | `GET /visitors?icerde=true` (+ `POST /visitors/{id}/checkout`) | görevli "Ziyaretçi → N İçeride" |
+| G4 | Otopark | `GET /parking/occupancy` | yönetici kartı + Hızlı Özet kutusu (**tek istek**) |
+| G5 | Birleşik akış | `GET /activity?limit&cursor` | üç ekranda "Son Hareketler" |
+| G6 | Gürültü sayacı | `GET /unit-complaints/mine?kategori=gurultu&durum=acik` | sakin "Gürültü Şikayeti → N Açık" |
+| G7 | Sözleşme geri-doldurması | `/weather` + `/cameras` artık `openapi.yaml`'da | başlık hava bloğu + Canlı Kamera |
 
-**G3 — Ziyaretçi "içeride" durumu** (görevli şeridi: "Ziyaretçi")
+**Backend'in bilinçli sapmaları (mobili etkileyenler)**
 
-`Visitor` şeması yalnız `created_at` taşır; **çıkış zamanı yok**, bu yüzden
-"içeride" sayısı türetilemez. Şimdilik *bugünkü kayıt sayısı* gösteriliyor.
-En küçük değişiklik:
+1. **G1 tek-satır geçiş modeli.** Taslak `yon=giris|cikis` ile iki satır
+   öneriyordu; sözleşme tek satır tutar (`giris_zamani` dolu, `cikis_zamani`
+   null → **araç içeride**). Sonuç: `yon` parametresi **yok**; "içeride"
+   sayısı `?acik=true`, "bugün N giriş" ise `?baslangic=<gün başı>` ile alınır.
+   Mobil şerit kartı **bugünkü giriş akışını** ("N Giriş") gösterir; anlık
+   iceride sayısı zaten otopark doluluğu olarak yöneticide durur — aynı sayıyı
+   iki kartta tekrarlamamak için bu ayrım seçildi.
+2. **G5: yönetim akışta ziyaretçi/kargo görmez.** `/visitors` ve `/kargo`
+   yönetim rollerine **varsayılan kapalı**dır (daire bazlı tek-seferlik izinle
+   açılır); birleşik akış o kapıyı bypass eden yan kanal olmamalı (KVKK). Mobil
+   bu olayları admin/yönetici için **istemcide geri eklemez** — sunucu ne
+   gönderirse doğrudur.
+3. **G5 imleç, offset değil.** `offset` araya giren kayıtta sayfayı kaydırıp
+   olay tekrarlatır; `meta.total` de yoktur (13 kaynağın birleşik sayımı her
+   istekte tam tarama). "Daha var mı" bilgisi `meta.next_cursor != null`
+   iledir. İmleç **opaktır** — istemci ayrıştırmaz, aynen geri gönderir
+   (`ActivityApi.sayfa(cursor:)`).
+4. **G4 `dolu` ayrı sayaç değil.** Doluluk açık geçişlerin `COUNT`'udur; sayım
+   ile kayıt asla ayrışamaz. Kapasite tanımsızsa `kapasite` **ve** `oran` null
+   gelir → yukarıdaki `kapasite = null` render kuralı.
 
-```yaml
-# Visitor şemasına ek:
-cikis_zamani: { type: string, format: date-time, nullable: true }
-POST /visitors/{id}/checkout   # 200 → güncellenmiş Visitor
-GET  /visitors?icerde=true     # cikis_zamani IS NULL süzgeci
-```
-Kart sayacı: `GET /visitors?icerde=true&limit=1` → `meta.total` ("N İçeride").
+**Son Hareketler: istemci birleştirmesi KALDIRILDI**
 
-**G4 — Otopark kapasite/doluluk** (yönetici kartı + Hızlı Özet kutusu)
+Eski hâl: rol başına 3–4 uç + istemcide `sort` + `take(5)`
+(`domain/son_hareketler.dart`, ~240 satır + testleri). Yeni hâl: tek uç, tek
+eşleme. Satır metinleri (`baslik`, `alt_metin`) **sunucudan** gelir; istemci
+yalnız ikon + modül rengi + zaman etiketi ekler, nokta rengini de sunucunun
+`renk_ipucu` alanından alır (durum **tahmin etmez**).
 
-```yaml
-GET /parking/occupancy
-200:
-  kapasite: 120                    # tenant ayarı
-  dolu: 78
-  doluluk_yuzde: 65                # round(100*dolu/kapasite); kapasite 0 → null
-  guncellenme: date-time
-```
-İki yerde de aynı yanıt kullanılır ("78 / 120" ve "%65"). RBAC: tüm kimlikli
-roller (agregat).
+Olay türü (`tur`) tanınmıyorsa (sunucu ileride tür eklerse) satır **düşmez**:
+nötr zil ikonuyla çizilir — "hiçbir şey olmadı" yalanı üretilmez.
 
-**G5 — Birleşik aktivite akışı** ("Son Hareketler", üç ekranda da)
+Ana ekran istek sayısı (seed verisiyle, rol başına):
 
-Şu an akış istemcide 4 ayrı uçtan birleştiriliyor (rol başına 3–4 ek istek,
-sayfalama yok, sıralama istemcide). Doğrusu tek uç:
+| Rol | Önce | Sonra | Not |
+|---|---|---|---|
+| görevli (security) | 11 | 12 | akış 2 uç → 1; **+2** yeni sayaç (plaka, ihlal); `/visitors` tam liste → `?icerde=true&limit=1` |
+| görevli (tesis_gorevlisi) | 6 | 6 | akış `/task-completions` → `/activity` |
+| yönetici / admin | 13 | 12 | akış 4 uç → 1; **+2** yeni sayaç (ihlal, otopark) |
+| sakin | 9 | 10 | akış 1 ek uç → 1; **+1** yeni sayaç (gürültü) |
 
-```yaml
-GET /activity?limit=20&offset=0&tip=...   # rol-farkındalıklı; sunucu süzer
-200:
-  meta: { limit, offset, total }
-  items:
-    - id: uuid
-      tip: kargo | ziyaretci | aidat_odeme | talep | gorev_tamamlama |
-           kacirilan_tur | ihlal | duyuru
-      baslik: "Kargo Teslim Edildi"
-      alt_baslik: "Aras Kargo - Daire A-12"
-      durum_rengi: olumlu | uyari | alarm | notr    # UI noktası
-      ilgili_id: uuid                                # kaynağın id'si
-      rota_ipucu: "/kargo"                           # nullable, derin bağlantı
-      created_at: date-time
-```
-Sunucu tarafı RLS/RBAC ile süzer (sakin yalnız kendi olayları, tesis_gorevlisi
-yalnız görev olayları…) — istemci "hangi ucu hangi rolde çağırabilirim"
-bilgisini taşımak zorunda kalmaz. **Kazanç:** 4 istek → 1, doğru kronoloji,
-sayfalanabilir "Tümünü Gör" ekranı.
+Kazanç istek **sayısında** değil doğrulukta ve taşınan veride: kronoloji
+sunucuda, sayfalama imleçle mümkün, ve dört yeni kart artık gerçek sayı
+gösteriyor (önce hiç veri yoktu). Akış artık üç ekranda **tek** sağlayıcıdır
+(`sonHareketlerProvider`), rol parametresi yoktur.
 
-**G6 — Gürültü şikayeti sayacı** (sakin: "Gürültü Şikayeti")
-
-Kart bir *eylem* (yeni şikayet aç). Sayaç istenirse
-`GET /unit-complaints/mine?kategori=gurultu&durum=acik&limit=1` yeterlidir —
-`kategori` süzgeci `/unit-complaints/mine`'da **yok**, eklenmesi gerekir.
-
-**G7 — Sözleşme gecikmesi: `/weather` ve `/cameras`**
-
-Her iki uç da **canlı backend'de var** (`GET /weather`, `GET /cameras`) ve
-uygulama bunları kullanıyor, ama `contracts/openapi.yaml` (21.07 tarihli) içinde
-**tanımlı değil**. Kod eksiği değil, sözleşme eksiği: `openapi.yaml`'a
-eklenmeli — aksi halde sözleşme tabanlı mock/doğrulama bu iki ucu göremez.
-
-**Not — sözleşmede olup ana ekranda kullanılmayanlar:** `/dashboard/live` ve
-`/me/patrol-window` (RBAC: admin+security) devriye ekranlarına bağlıdır; ana
-ekranda vardiya bilgisi `/shifts`'ten geldiği için tekrar çağrılmaz.
 
 ### Tasarımda kalan yer tutucular (uç gerektirmez)
 
@@ -1431,9 +1400,11 @@ features/home/
   domain/home_view_models.dart           bölümlerin saf görünüm modelleri
   domain/home_tabs.dart                  alt-bar yuvaları (aktif/pasif ikon)
   domain/home_menu.dart                  rol → modül görünürlüğü (değişmedi)
-  domain/son_hareketler.dart             istemcide birleşik akış (3 rol)
-  data/home_repository.dart              düzen tabanı + sözleşme boşlukları
-  data/home_api.dart                     sayaç sorguları + birleşik akış sağlayıcıları
+  domain/activity_models.dart            GET /activity öğe/sayfa modelleri (imleç)
+  domain/parking_occupancy.dart          GET /parking/occupancy + "kapasite null" metinleri
+  data/home_repository.dart              düzen tabanı (ikon/başlık/renk/sıra/rota)
+  data/home_api.dart                     sayaç sorguları (?limit=1 → meta.total)
+  data/activity_api.dart                 "Son Hareketler" tek uç + tek sağlayıcı
   presentation/home_gate.dart            rol yönlendirme
   presentation/home_async.dart           AsyncValue → veri/hata/iskelet (retry-dayanıklı)
   presentation/home_mappers.dart         gerçek API → görünüm modeli
