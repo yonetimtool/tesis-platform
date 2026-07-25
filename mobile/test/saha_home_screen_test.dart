@@ -4,7 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/cameras/data/cameras_api.dart';
 import 'package:mobile/src/features/cameras/domain/camera_models.dart';
+import 'package:mobile/src/features/home/data/home_api.dart';
+import 'package:mobile/src/features/home/domain/son_hareketler.dart';
 import 'package:mobile/src/features/home/presentation/saha_home_screen.dart';
+import 'package:mobile/src/features/home/presentation/widgets/home_states.dart';
+import 'package:mobile/src/features/kargo/data/kargo_api.dart';
+import 'package:mobile/src/features/kargo/domain/kargo_models.dart';
 import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
 import 'package:mobile/src/features/profile/domain/profile.dart';
@@ -14,6 +19,8 @@ import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
+import 'package:mobile/src/features/visitors/data/visitor_api.dart';
+import 'package:mobile/src/features/visitors/domain/visitor_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
 
 /// Depoya dokunmayan sahte kuyruk (path_provider yok) — bekleyen sayisi
@@ -50,6 +57,10 @@ Widget _app(
         gunTipi: 'hafta_ici'),
   ],
   String? tesisAd,
+  List<Kargo> kargolar = const [],
+  List<Visitor> ziyaretciler = const [],
+  List<Hareket> hareketler = const [],
+  Object? hareketHata,
 }) =>
     ProviderScope(
       overrides: [
@@ -63,6 +74,12 @@ Widget _app(
             ? throw Exception('offline')
             : TenantSettings(tenantId: 't1', ad: tesisAd)),
         shiftsProvider.overrideWith((ref) async => vardiyalar),
+        kargoListProvider.overrideWith((ref) async => kargolar),
+        visitorsListProvider.overrideWith((ref) async => ziyaretciler),
+        sahaHareketleriProvider.overrideWith((ref, guvenlik) =>
+            hareketHata != null
+                ? AsyncError(hareketHata, StackTrace.empty)
+                : AsyncData(hareketler)),
         camerasProvider.overrideWith((ref) async => const [
               Camera(id: 'c1', ad: 'Ana Kapı', streamUrl: 'https://x/s.m3u8'),
             ]),
@@ -81,15 +98,26 @@ void main() {
     testWidgets('security: karsilama + tesis secici + serit + GERCEK vardiya '
         '+ Son Hareketler + Canlı Kamera', (tester) async {
       _tall(tester);
-      await tester.pumpWidget(_app(UserRole.security, tesisAd: 'Mavi Sitesi'));
+      await tester.pumpWidget(_app(
+        UserRole.security,
+        tesisAd: 'Mavi Sitesi',
+        hareketler: [
+          Hareket(
+            tip: HareketTip.ziyaretci,
+            baslik: 'Ziyaretçi Girişi',
+            altBaslik: 'Ahmet Yılmaz - Daire 12',
+            zaman: DateTime(2026, 7, 23, 10),
+          ),
+        ],
+      ));
       await tester.pumpAndSettle();
 
       expect(find.text('Merhaba, Mehmet'), findsOneWidget);
       // Tesis secici: gercek tenant adi + asagi ok.
       expect(find.text('Mavi Sitesi'), findsOneWidget);
       expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
-      // Hava: gercek uc hatali → mock taban.
-      expect(find.text('24°C'), findsOneWidget);
+      // Hava ucu hatali → uydurma 24°C YOK.
+      expect(find.text('24°C'), findsNothing);
 
       // Referans serit kartlari.
       expect(find.text('Vardiya Durum'), findsOneWidget);
@@ -101,27 +129,80 @@ void main() {
       expect(find.text('Sabah Vardiyası'), findsOneWidget);
       expect(find.text('06:00 - 14:00'), findsOneWidget);
 
-      // Son Hareketler (referans satirlar) + Canlı Kamera (gercek kamera).
+      // Son Hareketler GERCEK akistan + Canlı Kamera (gercek kamera).
       expect(find.text('Son Hareketler'), findsOneWidget);
-      expect(find.text('Kamera İhlal Tespiti'), findsOneWidget);
+      expect(find.text('Ziyaretçi Girişi'), findsOneWidget);
       expect(find.text('Canlı Kamera'), findsOneWidget);
       expect(find.text('Ana Kapı'), findsOneWidget);
+      // Referans (uydurma) satirlar ARTIK YOK.
+      expect(find.text('Kamera İhlal Tespiti'), findsNothing);
 
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('tesis adi YOKKEN referans tesis adi ("Mavi Residence")',
-        (tester) async {
+    testWidgets('tesis adi YOKKEN alt satir HIC cizilmez (uydurma tesis adi '
+        'yok)', (tester) async {
       _tall(tester);
       await tester.pumpWidget(_app(UserRole.security));
       await tester.pumpAndSettle();
-      expect(find.text('Mavi Residence'), findsOneWidget);
+      expect(find.text('Mavi Residence'), findsNothing);
+      expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
+    });
+
+    testWidgets('serit sayaclari GERCEK uctan: kargo bekleyen + bugunku '
+        'ziyaretci; plaka/ihlal "Yakında"', (tester) async {
+      _tall(tester);
+      final now = DateTime.now();
+      await tester.pumpWidget(_app(
+        UserRole.security,
+        tesisAd: 'Mavi Sitesi',
+        kargolar: [
+          Kargo(
+            id: 'k1',
+            unitId: 'u1',
+            unitNo: '12',
+            firma: 'Aras',
+            durum: KargoDurum.bekliyor,
+            kaydedenUserId: 'g1',
+            createdAt: now,
+          ),
+        ],
+        ziyaretciler: [
+          Visitor(
+            id: 'z1',
+            unitId: 'u1',
+            unitNo: '12',
+            ziyaretciAd: 'Ahmet',
+            kaydedenUserId: 'g1',
+            targetResidentUserId: 'r1',
+            createdAt: now,
+          ),
+        ],
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('1 Bekliyor'), findsOneWidget); // Kargo
+      expect(find.text('1 Bugün'), findsOneWidget); // Ziyaretçi
+      // Serit yatay kaydirilir; MISSING-BACKEND kartlar sonda.
+      await tester.drag(find.text('Kargo'), const Offset(-400, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('Yakında'), findsWidgets);
     });
 
     testWidgets('tesisGorevlisi: KVKK — Kargo/Ziyaretçi/Araç Plaka kartlari '
         've Canlı Kamera YOK; vardiya + son hareketler VAR', (tester) async {
       _tall(tester);
-      await tester.pumpWidget(_app(UserRole.tesisGorevlisi));
+      await tester.pumpWidget(_app(
+        UserRole.tesisGorevlisi,
+        hareketler: [
+          Hareket(
+            tip: HareketTip.gorevTamamlama,
+            baslik: 'Görev Tamamlandı',
+            altBaslik: 'Merdiven - Temizlik',
+            zaman: DateTime(2026, 7, 23, 10),
+          ),
+        ],
+      ));
       await tester.pumpAndSettle();
 
       expect(find.text('Kargo'), findsNothing);
@@ -132,21 +213,31 @@ void main() {
       expect(find.text('Vardiya Durum'), findsOneWidget); // serit karti
       expect(find.text('Vardiya Durumu'), findsOneWidget); // bolum basligi
       expect(find.text('Son Hareketler'), findsOneWidget);
+      expect(find.text('Görev Tamamlandı'), findsOneWidget);
     });
 
-    testWidgets('vardiya YOKKEN bolum mock tabanla cizilir (bos ekran yok)',
+    testWidgets('vardiya YOKKEN bolum HIC cizilmez (uydurma vardiya yok)',
         (tester) async {
       _tall(tester);
       await tester.pumpWidget(_app(UserRole.security, vardiyalar: const []));
       await tester.pumpAndSettle();
 
-      expect(find.text('Vardiya Durumu'), findsOneWidget);
-      expect(find.text('Öğle Vardiyası'), findsOneWidget); // mock kart
-      // Serit yatay kaydirilir; 4. kart (Yönetici) goruntu disinda kalabilir.
-      await tester.drag(
-          find.text('Sabah Vardiyası'), const Offset(-400, 0));
+      expect(find.text('Vardiya Durumu'), findsNothing); // bolum basligi yok
+      expect(find.text('Öğle Vardiyası'), findsNothing);
+      expect(find.text('Kerem Aşçı'), findsNothing); // mock yonetici karti yok
+      expect(find.text('Vardiya Durum'), findsOneWidget); // serit karti durur
+    });
+
+    testWidgets('Son Hareketler HATASI: "Yüklenemedi" + yeniden dene',
+        (tester) async {
+      _tall(tester);
+      await tester.pumpWidget(
+          _app(UserRole.security, hareketHata: Exception('500')));
       await tester.pumpAndSettle();
-      expect(find.text('Kerem Aşçı'), findsOneWidget); // mock yonetici karti
+
+      expect(find.byType(HomeBolumHatasi), findsOneWidget);
+      expect(find.text('Yeniden dene'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('security: okunmamis bildirim rozeti zil + sekmede gorunur '

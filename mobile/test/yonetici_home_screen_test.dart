@@ -4,40 +4,44 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/budget/data/budget_api.dart';
 import 'package:mobile/src/features/budget/domain/budget_models.dart';
 import 'package:mobile/src/features/complaints/data/complaint_api.dart';
+import 'package:mobile/src/features/home/data/home_api.dart';
+import 'package:mobile/src/features/home/domain/son_hareketler.dart';
+import 'package:mobile/src/features/home/presentation/widgets/home_states.dart';
 import 'package:mobile/src/features/home/presentation/yonetici_home_screen.dart';
 import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
-import 'package:mobile/src/features/notifications/domain/notification_models.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
 import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
 
-/// API'ye dokunmayan sahte bildirim listesi (Son Hareketler beslemesi).
-class _FakeNotifications extends NotificationsController {
-  _FakeNotifications(this._items);
-  final List<AppNotification> _items;
-
-  @override
-  Future<List<AppNotification>> build() async => _items;
-}
-
 Widget _app({
   Object? finansHata,
   int unread = 0,
-  int? acikSikayet,
+  int? acikTalep,
+  int? toplamDaire,
+  int? aktifGorev,
+  int? daireSikayet,
   List<Shift> vardiyalar = const [],
-  List<AppNotification> bildirimler = const [],
+  List<Hareket> hareketler = const [],
+  Object? hareketHata,
 }) =>
     ProviderScope(
       overrides: [
         unreadNotificationCountProvider.overrideWith((ref) async => unread),
-        acikSikayetSayisiProvider.overrideWith((ref) async =>
-            acikSikayet ?? (throw Exception('403'))),
+        acikSikayetSayisiProvider.overrideWith(
+            (ref) async => acikTalep ?? (throw Exception('403'))),
+        toplamDaireSayisiProvider.overrideWith(
+            (ref) async => toplamDaire ?? (throw Exception('403'))),
+        aktifGorevSayisiProvider.overrideWith(
+            (ref) async => aktifGorev ?? (throw Exception('403'))),
+        acikDaireSikayetSayisiProvider.overrideWith(
+            (ref) async => daireSikayet ?? (throw Exception('403'))),
+        yonetimHareketleriProvider.overrideWith((ref) => hareketHata != null
+            ? AsyncError(hareketHata, StackTrace.empty)
+            : AsyncData(hareketler)),
         shiftsProvider.overrideWith((ref) async => vardiyalar),
-        notificationsProvider
-            .overrideWith(() => _FakeNotifications(bildirimler)),
-        // Hava ucu testte aga cikmasin — hata → mock taban (24°C).
+        // Hava ucu testte aga cikmasin — hata → hava blogu HIC cizilmez.
         weatherProvider.overrideWith((ref) async => throw Exception('offline')),
         profileProvider.overrideWith((ref) async => const Profile(
               ad: 'Kerem',
@@ -73,13 +77,30 @@ void main() {
   testWidgets('referans bolum SIRASI (yonetici.jpeg): karsilama → 4x2 izgara '
       '→ Vardiya Durumu → Hızlı Özet → Son Hareketler', (tester) async {
     _tall(tester);
-    await tester.pumpWidget(_app());
+    await tester.pumpWidget(_app(
+      vardiyalar: const [
+        Shift(
+            id: 'v1',
+            ad: 'Sabah Vardiyası',
+            baslangicSaat: '06:00',
+            bitisSaat: '14:00',
+            gunTipi: 'hafta_ici'),
+      ],
+      hareketler: [
+        Hareket(
+          tip: HareketTip.talep,
+          baslik: 'Yeni Talep',
+          altBaslik: 'Asansör',
+          zaman: DateTime(2026, 7, 23, 9),
+        ),
+      ],
+    ));
     await tester.pumpAndSettle();
 
     expect(find.text('Merhaba, Kerem'), findsOneWidget);
     expect(find.text('Yönetici Paneli'), findsOneWidget);
-    expect(find.text('24°C'), findsOneWidget); // hava mock tabani
-    expect(find.text('Olay Bildir'), findsOneWidget);
+    // Hava ucu hatali → uydurma 24°C YOK.
+    expect(find.text('24°C'), findsNothing);
 
     // Izgaranin referans kartlari.
     for (final baslik in [
@@ -104,22 +125,43 @@ void main() {
     expect(sira[1] < sira[2], isTrue);
   });
 
-  testWidgets('Hızlı Özet: finans verisi gelince GERCEK tahsilat + oran mock '
-      'tabani ezer; digerleri (Toplam Daire / Otopark) mock kalir',
+  testWidgets('Hızlı Özet TAMAMEN gercek uctan: /units toplami + finans '
+      'tahsilat/oran; otopark MISSING-BACKEND → "—" + Yakında',
       (tester) async {
     _tall(tester);
-    await tester.pumpWidget(_app());
+    await tester.pumpWidget(_app(toplamDaire: 52));
     await tester.pumpAndSettle();
 
     expect(find.text('Hızlı Özet'), findsOneWidget);
+    expect(find.text('52'), findsOneWidget); // GERCEK daire sayisi
     expect(find.text('₺248.750,00'), findsOneWidget); // gercek tahsilat
     expect(find.text('%86'), findsOneWidget); // gercek oran
-    expect(find.text('512'), findsOneWidget); // mock: Toplam Daire
-    // "78 / 120" iki yerde: izgara karti (Otopark Kullanımı) + ozet kutusu.
-    expect(find.text('78 / 120'), findsNWidgets(2));
+    // Referans gorseldeki uydurma degerler ARTIK YOK.
+    expect(find.text('512'), findsNothing);
+    expect(find.text('₺248.750'), findsNothing);
+    expect(find.text('78 / 120'), findsNothing);
+    // Otopark kutusu + izgara karti: sayi yerine "—" / "Yakında".
+    expect(find.text('Yakında'), findsNWidgets(3)); // otopark x2 + ihlaller
   });
 
-  testWidgets('finans HATASI ekrani dusurmez: Hızlı Özet mock tabanla cizilir',
+  testWidgets('izgara sayaclari gercek uctan: gorev / geciken daire / talep / '
+      'daire sikayeti', (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app(
+      aktifGorev: 6,
+      acikTalep: 9,
+      daireSikayet: 3,
+      vardiyalar: const [],
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('6 Bekliyor'), findsOneWidget); // Görevler
+    expect(find.text('4 Daire'), findsOneWidget); // geciken_daire_sayisi
+    expect(find.text('9 Açık'), findsOneWidget); // Geri Bildirim
+    expect(find.text('3 Açık'), findsOneWidget); // Şikayetler
+  });
+
+  testWidgets('finans HATASI ekrani dusurmez: kutular "—", kartlar durur',
       (tester) async {
     _tall(tester);
     await tester.pumpWidget(_app(finansHata: Exception('500')));
@@ -127,8 +169,10 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Hızlı Özet'), findsOneWidget);
-    expect(find.text('₺248.750'), findsOneWidget); // mock deger
     expect(find.text('Görevler'), findsOneWidget); // kartlar duruyor
+    // Uydurma deger YOK: hata → '—'.
+    expect(find.text('₺248.750'), findsNothing);
+    expect(find.text('—'), findsWidgets);
   });
 
   testWidgets('Vardiya Durumu: gercek /shifts verisi + sonda yonetici karti',
@@ -151,23 +195,29 @@ void main() {
     expect(find.text('YÖNETİCİ'), findsOneWidget);
   });
 
-  testWidgets('vardiya YOKKEN bolum mock tabanla cizilir (bos ekran yok)',
+  testWidgets('vardiya YOKKEN bolum HIC cizilmez (uydurma vardiya yok)',
       (tester) async {
     _tall(tester);
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
-    expect(find.text('Sabah Vardiyası'), findsOneWidget); // mock kart
+    expect(find.text('Sabah Vardiyası'), findsNothing);
+    expect(find.text('Vardiya Durumu'), findsOneWidget); // yalniz izgara karti
   });
 
-  testWidgets('Son Hareketler: bildirim varsa GERCEK akis mock tabani ezer',
-      (tester) async {
+  testWidgets('Son Hareketler birlesik akistan cizilir', (tester) async {
     _tall(tester);
-    await tester.pumpWidget(_app(bildirimler: [
-      AppNotification(
-        id: 'n1',
-        tip: 'kacirilan_tur',
-        mesaj: 'A Blok turu kaçırıldı',
-        createdAt: DateTime(2026, 7, 23, 9, 32),
+    await tester.pumpWidget(_app(hareketler: [
+      Hareket(
+        tip: HareketTip.alarm,
+        baslik: 'Kaçırılan Tur',
+        altBaslik: 'A Blok turu kaçırıldı',
+        zaman: DateTime(2026, 7, 23, 9, 32),
+      ),
+      Hareket(
+        tip: HareketTip.gorevTamamlama,
+        baslik: 'Görev Tamamlandı',
+        altBaslik: 'Çöp toplama - Temizlik',
+        zaman: DateTime(2026, 7, 23, 9, 10),
       ),
     ]));
     await tester.pumpAndSettle();
@@ -175,17 +225,20 @@ void main() {
     expect(find.text('Son Hareketler'), findsOneWidget);
     expect(find.text('Kaçırılan Tur'), findsOneWidget);
     expect(find.text('A Blok turu kaçırıldı'), findsOneWidget);
-    // Mock satiri artik yok — gercek veri ezdi.
+    expect(find.text('Görev Tamamlandı'), findsOneWidget);
+    // Referans (uydurma) satirlar ARTIK YOK.
     expect(find.text('Kamera İhlal Tespiti'), findsNothing);
   });
 
-  testWidgets('acik sikayet sayisi izgara kartinin sayacini EZER',
+  testWidgets('Son Hareketler HATASI: "Yüklenemedi" + yeniden dene',
       (tester) async {
     _tall(tester);
-    await tester.pumpWidget(_app(acikSikayet: 9));
+    await tester.pumpWidget(_app(hareketHata: Exception('500')));
     await tester.pumpAndSettle();
-    expect(find.text('9 Açık'), findsOneWidget);
-    expect(find.text('3 Yeni'), findsNothing); // mock sayac ezildi
+
+    expect(find.byType(HomeBolumHatasi), findsOneWidget);
+    expect(find.text('Yüklenemedi'), findsOneWidget);
+    expect(find.text('Yeniden dene'), findsOneWidget);
   });
 
   testWidgets('okunmamis bildirim sayisi zil + sekme rozetinde', (tester) async {

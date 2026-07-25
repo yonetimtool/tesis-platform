@@ -15,17 +15,21 @@ import '../../profile/data/profile_api.dart';
 import '../../scan/data/scan_outbox.dart';
 import '../../shifts/data/shifts_api.dart';
 import '../../tenant/data/tenant_api.dart';
+import '../../visitors/data/visitor_api.dart';
 import '../../weather/data/weather_api.dart';
 import '../../yonetici_iletisim/data/yonetici_iletisim_api.dart';
+import '../data/home_api.dart';
 import '../data/home_repository.dart';
 import '../domain/home_varyant.dart';
 import '../domain/home_view_models.dart';
+import 'home_async.dart';
 import 'home_mappers.dart';
 import 'widgets/bildir_menu_sheet.dart';
 import 'widgets/hizli_erisim.dart';
 import 'widgets/home_govde.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_shell.dart';
+import 'widgets/home_states.dart';
 import 'widgets/kamera_seridi.dart';
 import 'widgets/section_padding.dart';
 import 'widgets/son_hareketler_karti.dart';
@@ -39,6 +43,9 @@ import 'widgets/vardiya_seridi.dart';
 ///
 /// KVKK: tesis_gorevlisi ziyaretci/kargo/plaka/kamera GORMEZ — o kartlar ve
 /// kamera seridi bu rolde cizilmez (backend RBAC de 403 doner).
+///
+/// VERI: sayaclar GERCEK uctan (/shifts, /kargo, /visitors); "Araç Plaka" ve
+/// "İhlaller" sozlesmede YOK → 'Yakında' (README "CONTRACT GAPS").
 class SahaHomeScreen extends ConsumerWidget {
   const SahaHomeScreen({super.key, required this.role});
 
@@ -46,7 +53,7 @@ class SahaHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mock = ref.watch(homeRepositoryProvider);
+    final taban = ref.watch(homeRepositoryProvider);
     final ad = ref.watch(profileProvider).value?.ad ?? '';
     final guvenlik = role == UserRole.security;
     final now = DateTime.now();
@@ -56,42 +63,43 @@ class SahaHomeScreen extends ConsumerWidget {
     final unread =
         guvenlik ? ref.watch(unreadNotificationCountProvider).value ?? 0 : 0;
 
-    // ---- gercek veri; yoksa mock taban -----------------------------------
     final hava = ref.watch(weatherProvider).value;
-    final tesisAd = ref.watch(tenantSettingsProvider).value?.ad;
-    final vardiyalar = ref.watch(shiftsProvider).value ?? const [];
-    final kargolar = guvenlik
-        ? ref.watch(kargoListProvider).value ?? const <Kargo>[]
-        : const <Kargo>[];
+    final tesisAd = ref.watch(tenantSettingsProvider).value?.ad ?? '';
+    final vardiyaAsync = ref.watch(shiftsProvider);
+    final vardiyalar = vardiyaAsync.value ?? const [];
+    // KVKK: kargo/ziyaretci UCLARI tesis_gorevlisine kapali — o rolde hic
+    // izlenmez (403 uretecek istek atilmaz).
+    final kargoAsync = guvenlik
+        ? ref.watch(kargoListProvider)
+        : const AsyncValue<List<Kargo>>.data([]);
+    final ziyaretciAsync =
+        guvenlik ? ref.watch(visitorsListProvider) : null;
     // Vardiya seridinin son karti tenant yoneticisidir (referans gorsel).
-    // /yonetici-iletisim saha rollerine aciktir; hata/bos → mock ad.
+    // /yonetici-iletisim saha rollerine aciktir.
     final yoneticiler =
         ref.watch(yoneticiIletisimProvider).value?.yoneticiler ?? const [];
+    final hareketler = ref.watch(sahaHareketleriProvider(guvenlik));
 
-    final vardiyaKartlar = vardiyalar.isEmpty
-        ? mock.vardiyalar()
-        : vardiyaKartlari(
-            vardiyalar: vardiyalar,
-            now: now,
-            yoneticiAd: yoneticiler.isNotEmpty
-                ? yoneticiler.first.adSoyad
-                : mock.yoneticiAd(),
-          );
-
-    // Hizli erisim: mock taban + elde GERCEK verisi olan sayaclar. Karsiligi
-    // olmayan kartlar (Araç Plaka, İhlaller) mock degerde kalir.
-    final kargoBekleyen =
-        kargolar.where((k) => k.durum == KargoDurum.bekliyor).length;
     final aktifVardiya = vardiyalar.where((v) => v.aktifMi(now)).length;
     final pending = ref.watch(scanOutboxProvider).pendingCount;
     final erisim = [
-      for (final k in mock.hizliErisim(HomeVaryant.gorevli))
+      for (final k in taban.hizliErisim(HomeVaryant.gorevli))
         if (_gorunur(k, guvenlik))
           switch (k.baslik) {
-            'Vardiya Durum' when vardiyalar.isNotEmpty =>
-              k.sayacla('$aktifVardiya Aktif'),
-            'Kargo' when kargolar.isNotEmpty =>
-              k.sayacla('$kargoBekleyen Bekliyor'),
+            'Vardiya Durum' =>
+              k.sayacla(vardiyaAsync.sayac((_) => aktifVardiya, 'Aktif')),
+            'Kargo' => k.sayacla(kargoAsync.sayac(
+                (l) => l.where((x) => x.durum == KargoDurum.bekliyor).length,
+                'Bekliyor',
+              )),
+            // Ziyaretci LOG'unda cikis alani YOK (sozlesme) — "içeride"
+            // hesaplanamaz; BUGUNKU kayit sayisi gosterilir.
+            'Ziyaretçi' when ziyaretciAsync != null => k.sayacla(
+                ziyaretciAsync.sayac(
+                  (l) => l.where((z) => _bugun(z.createdAt, now)).length,
+                  'Bugün',
+                ),
+              ),
             _ => k,
           },
       // Cevrimdisi saha kaniti kaybolmasin: bekleyen okutma VARSA seride
@@ -110,9 +118,6 @@ class SahaHomeScreen extends ConsumerWidget {
     final kameralar = guvenlik
         ? (ref.watch(camerasProvider).value ?? const <Camera>[])
         : const <Camera>[];
-    final kameraKartlar = !guvenlik
-        ? const <KameraOzeti>[]
-        : (kameralar.isEmpty ? mock.kameralar() : kameraOzetleri(kameralar));
 
     return HomeShell(
       role: role,
@@ -138,29 +143,42 @@ class SahaHomeScreen extends ConsumerWidget {
       body: HomeGovde(
         header: HomeHeader(
           greetingName: ad,
-          // Referans: tesis secici gorunumu ("Mavi Residence ⌄").
-          subtitle: (tesisAd == null || tesisAd.isEmpty) ? mock.tesisAd() : tesisAd,
+          // Referans: tesis secici gorunumu ("Mavi Residence ⌄") — ad
+          // GET /tenant/settings'ten; gelmeden satir cizilmez.
+          subtitle: tesisAd,
           altBaslikStili: HomeAltBaslikStili.tesisSecici,
-          hava: hava == null ? mock.hava() : havaOzeti(hava),
+          hava: hava == null ? null : havaOzeti(hava),
         ),
         bolumler: [
           HizliErisimSeridi(kartlar: erisim, onSec: (k) => _ac(context, k)),
           VardiyaSeridi(
-            kartlar: vardiyaKartlar,
+            kartlar: vardiyaKartlari(
+              vardiyalar: vardiyalar,
+              now: now,
+              yoneticiAd:
+                  yoneticiler.isNotEmpty ? yoneticiler.first.adSoyad : null,
+            ),
             onSeeAll: () => context.push(AppRoutes.vardiyalar),
           ),
           HomeSectionPad(
-            child: SonHareketlerKarti(
-              // MISSING-BACKEND: birlesik saha aktivite ucu yok — referans
-              // satirlar (README "TODO: gerçek uç").
-              satirlar: mock.hareketler(HomeVaryant.gorevli),
-              onSeeAll:
-                  guvenlik ? () => context.push(AppRoutes.notifications) : null,
+            child: hareketler.durum(
+              veri: (satirlar) => SonHareketlerKarti(
+                satirlar: hareketSatirlari(satirlar, now),
+                onSeeAll:
+                    guvenlik ? () => context.push(AppRoutes.notifications) : null,
+              ),
+              yukleniyor: () =>
+                  const HomeBolumIskeleti(baslik: 'Son Hareketler'),
+              hata: () => HomeBolumHatasi(
+                baslik: 'Son Hareketler',
+                onYenile: () =>
+                    ref.invalidate(sahaHareketleriProvider(guvenlik)),
+              ),
             ),
           ),
-          if (kameraKartlar.isNotEmpty)
+          if (kameralar.isNotEmpty)
             KameraSeridi(
-              kameralar: kameraKartlar,
+              kameralar: kameraOzetleri(kameralar),
               onSeeAll: () => context.push(AppRoutes.kameralar),
               onIzle: (i) => i < kameralar.length
                   ? context.push(AppRoutes.kameraIzle, extra: kameralar[i])
@@ -169,6 +187,13 @@ class SahaHomeScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  bool _bugun(DateTime t, DateTime now) {
+    final yerel = t.toLocal();
+    return yerel.year == now.year &&
+        yerel.month == now.month &&
+        yerel.day == now.day;
   }
 
   /// KVKK: tesis_gorevlisi kargo/ziyaretci/plaka kartlarini gormez.

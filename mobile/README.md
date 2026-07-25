@@ -1158,38 +1158,224 @@ ve bölüm widget'larında **ham değer yazılmaz**.
 Vurgu renkleri iki temada da aynıdır; yüzey/metin renkleri `HomeSurface.of(context)`
 ile **koyu moda** çözülür (ana ekran koyu temada da okunur).
 
-### Mock ↔ gerçek veri sınırı (tek kural)
+### Veri kuralı (tek cümle) — UYDURMA SAYI YOK
 
-> **Mock tabandır, gerçek API verisi geldiğinde onun üzerine yazar.**
+> **Ekrandaki her sayı gerçek bir uçtan gelir; karşılığı olmayan kart sayı
+> yerine "Yakında" (ya da "—") gösterir.**
 
-Referans görsellerdeki her değer `MockHomeRepository`
-(`home/data/home_repository.dart`) içinde **tek yerde** durur; rol ekranları önce
-bu tabanı alır, sonra ellerindeki gerçek provider değerleriyle ilgili alanları
-değiştirir. Böylece gerçek uç varsa **gerçek veri** görünür, yoksa ekran referans
-düzeninde kalır (boş beyaz ekran yok). `test/home_repository_test.dart` bu
-değerleri kilitler — bir metin/sayaç değişirse test yakalar.
+`MockHomeRepository` (`home/data/home_repository.dart`) artık **veri taşımaz**;
+yalnızca referans görsellerin *düzenini* (ikon / başlık / accent renk / sıra /
+rota) ve sözleşmede karşılığı olmayan kartların "Yakında" etiketini tutar. Her
+kartın sayacı `null` başlar:
 
-**Şu an GERÇEK uca bağlı:** hava (`/weather`), tesis adı (`/tenant/settings`),
-vardiya (`/shifts`), kamera (`/cameras`), kargo (`/kargo`), ziyaretçi
-(`/visitors`), aidat (`/me/dues`), duyuru (`/announcements`), bildirim sayacı ve
-yönetim akışı (`/notifications`), açık şikayet (`/complaints`), tahsilat ve oran
-(`/reports/financial-summary`), yönetici adı (`/yonetici-iletisim`).
+| Durum | Kartta görünen |
+|---|---|
+| Veri yükleniyor | nötr iskelet çubuğu (`HomeSayacIskeleti`) — düzen kaymaz |
+| Veri geldi | gerçek değer |
+| Uç hata verdi (403/500/offline) | `—` |
+| Sözleşmede karşılığı yok | `Yakında` (gri) + kartın rotası yok |
 
-### TODO: gerçek uç (backend'de karşılığı YOK — bilinçli olarak uydurulmadı)
+Bölümler (Ödeme ve Aidat Durumu / Son Hareketler / Duyurular) için aynı kural
+bölüm ölçeğinde uygulanır: yüklenirken iskelet kart, hatada **"Yüklenemedi" +
+"Yeniden dene"** (`HomeBolumHatasi`). Hiçbir bölüm boş beyaz kalmaz, hata
+uygulamayı düşürmez.
 
-| Bölüm / alan | Nerede | Not |
-|---|---|---|
-| **Araç Plaka** ("8 Giriş") | görevli hızlı erişim | plaka tanıma ucu yok; kartın rotası da yok (dokunma "yakında" der) |
-| **İhlaller** ("4 Yeni" / "5 Yeni") | görevli + yönetici hızlı erişim | ihlal/olay ucu yok |
-| **Ziyaretçi "içeride" sayacı** ("2 İçeride") | görevli hızlı erişim | `/visitors` durum alanı taşımaz (log-only akış); şimdilik kayıt sayısı gösterilir |
-| **Otopark Doluluk** ("78 / 120", "%65") | yönetici hızlı erişim + Hızlı Özet | otopark ucu yok |
-| **Toplam Daire** ("512") | yönetici Hızlı Özet | toplam daire sayısı veren uç yok |
-| **Aidat Durumu daire sayısı** ("104 Daire") | yönetici hızlı erişim | finansal özet daire kırılımı vermiyor |
-| **Görev bekleyen sayısı** ("6 Bekliyor") | yönetici hızlı erişim | sayaç için ayrı uç yok (liste çekmeden) |
-| **Görevli "Son Hareketler"** (kapı/araç/kamera satırları) | görevli | birleşik saha aktivite ucu yok; sakin/yönetici akışları gerçek verilerden istemcide birleştirilir |
-| **Duyuru görseli** | sakin duyuru kartı | `foto_url` boşsa gri yer tutucu çizilir |
-| **Canlı kamera karesi** | görevli kamera şeridi | kart içinde video **oynatılmaz**; 16:10 yer tutucu + oynat butonu, dokunma mevcut oynatıcı ekranına gider |
-| **Gürültü şikayeti** | sakin hızlı erişim | ayrı uç yok; mevcut `/complaints` akışına gider |
+> Riverpod hatalı bir sağlayıcıyı otomatik yeniden dener ve bu sırada durumu
+> tekrar `AsyncLoading` olur; düz `when(...)` hata dalını hiç çalıştırmaz. Bu
+> yüzden ekranlar `home_async.dart` içindeki `durum(...)` uzantısını kullanır —
+> sıralama **veri → hata → yükleme**'dir.
+
+### Ana ekran veri eşlemesi (UI alanı → uç)
+
+Kaynak: `contracts/openapi.yaml` (salt okunur). "MISSING" satırları aşağıdaki
+**CONTRACT GAPS** bölümünde ayrıntılanır.
+
+**Ortak (üç ekran)**
+
+| UI alanı | Uç → alan |
+|---|---|
+| "Merhaba, {ad}" | `GET /me/profile` → `ad` |
+| Başlık hava bloğu | `GET /weather` → `sicaklik_c` / `durum` / `konum_ad` ⚠️ *uç canlıda var, `openapi.yaml`'da YOK — bkz. G7* |
+| Zil / sekme okunmamış rozeti | `GET /notifications?okundu=false&limit=1` → `meta.total` (RBAC: admin+yönetici+security; sakin/tesis görevlisinde rozet **yok**) |
+
+**Görevli (security + tesis_gorevlisi) — `gorevli.jpeg`**
+
+| UI alanı | Uç → alan |
+|---|---|
+| Alt başlık "Mavi Residence ⌄" | `GET /tenant/settings` → `ad` (yoksa satır çizilmez) |
+| Şerit "Vardiya Durum → N Aktif" | `GET /shifts` → o an aktif vardiya sayısı (istemcide `aktifMi(now)`) |
+| Şerit "Kargo → N Bekliyor" | `GET /kargo` → `durum='bekliyor'` sayısı (yalnız security) |
+| Şerit "Ziyaretçi → N Bugün" | `GET /visitors` → bugünkü kayıt sayısı (yalnız security) — *"içeride" türetilemez, bkz. G3* |
+| Şerit "Araç Plaka" | **MISSING** → "Yakında" (G1) |
+| Şerit "İhlaller" | **MISSING** → "Yakında" (G2) |
+| Vardiya Durumu şeridi | `GET /shifts` (+ `personel[]` avatar/sayı) + son kart `GET /yonetici-iletisim` → `yoneticiler[0].ad_soyad` |
+| Son Hareketler | **birleşik uç YOK (G5)** → istemcide: `/visitors` + `/kargo` + `/task-completions` + `/notifications`; tesis_gorevlisi'nde yalnız `/task-completions` (KVKK/RBAC) |
+| Canlı Kamera şeridi | `GET /cameras` → `ad` / `stream_url` ⚠️ *uç canlıda var, `openapi.yaml`'da YOK — bkz. G7* |
+| Gönderim Kuyruğu (koşullu) | yerel outbox (uç değil) |
+
+**Site sakini — `site-sakini.jpeg`**
+
+| UI alanı | Uç → alan |
+|---|---|
+| Alt başlık "Daire X • Kat Maliki" | `GET /me/dues` → `items[].no` |
+| "Ziyaretçiler → N Kayıt" | `GET /visitors` (sunucu yalnız kendisine hedeflenenleri döner) |
+| "Kargolarım → N Bekliyor" | `GET /kargo` → `durum='bekliyor'` |
+| "Aidat Bilgileri → ₺X / Borç Yok\|Var" | `GET /me/dues` → `bakiye_kurus` (borç varsa borç, yoksa `toplam_tahakkuk_kurus`) |
+| "Gürültü Şikayeti → Bildirim Yap" | eylem etiketi (`POST /unit-complaints` akışı) — sayaç değil |
+| "Geri Bildirim → N Açık" | `GET /complaints?durum=acik&limit=1` → `meta.total` (sunucu kendi taleplerine kısıtlar) |
+| "Şikayetlerim → N Açık" | `GET /unit-complaints/mine?durum=acik&limit=1` → `meta.total` |
+| "Duyurular → N Yeni" | `GET /announcements` → son 3 günde yayınlananların sayısı |
+| "Site Raporları → Aylık Özet" | bölüm etiketi (şeffaflık ekranı) — sayaç değil |
+| Ödeme kartı: Bu Ayki Aidat / Ödendi / Son Ödeme / Gelecek Ödeme | `GET /me/dues` → `assessments[]` (son dönem `tutar_kurus`, `son_odeme_tarihi`) + `payments[]` (`durum='basarili'`) + `bakiye_kurus` |
+| Son Hareketler | **birleşik uç YOK (G5)** → istemcide: `/kargo` + `/visitors` + `/me/dues`(payments) + `/complaints` |
+| Duyuru kartı | `GET /announcements` → en yeni kayıt (`baslik`, `govde`, `created_at`, `foto_url`); 3 günden yeniyse "Yeni" çipi |
+
+**Yönetici / admin — `yonetici.jpeg`**
+
+| UI alanı | Uç → alan |
+|---|---|
+| "Vardiya Durumu → N Aktif" | `GET /shifts` |
+| "Görevler → N Bekliyor" | `GET /tasks?aktif=true&limit=1` → `meta.total` |
+| "Aidat Durumu → N Daire" | `GET /reports/financial-summary` → `tahsilat.geciken_daire_sayisi` |
+| "Otopark Kullanımı" | **MISSING** → "Yakında" (G4) |
+| "İhlaller" | **MISSING** → "Yakında" (G2) |
+| "Geri Bildirim → N Açık" | `GET /complaints?durum=acik&limit=1` → `meta.total` |
+| "Şikayetler → N Açık" | `GET /unit-complaints?durum=acik&limit=1` → `meta.total` |
+| "Raporlar → Aylık Özet" | bölüm etiketi — sayaç değil |
+| Vardiya Durumu şeridi | `GET /shifts`; son kart oturumun kendi adı (`/me/profile`) |
+| Hızlı Özet "Toplam Daire" | `GET /units?aktif=true&limit=1` → `meta.total` |
+| Hızlı Özet "Toplam Tahsilat" | `GET /reports/financial-summary` → `tahsilat.tahsilat_kurus` |
+| Hızlı Özet "Aidat Tahsilat Oranı" | ↑ aynı yanıt → `tahsilat.tahsilat_orani_yuzde` (null ise "—") |
+| Hızlı Özet "Otopark Doluluk" | **MISSING** → "—" + "Yakında" (G4) |
+| Son Hareketler | **birleşik uç YOK (G5)** → istemcide: `/notifications` + `/complaints` + `/dues/payments` + `/task-completions` |
+
+Sayaç sorguları `?limit=1` ile atılır ve yalnız `meta.total` okunur (sayfa
+verisi taşınmaz) — `home/data/home_api.dart`.
+
+### CONTRACT GAPS (DEV-A'ya) — önerilen uçlar
+
+Aşağıdaki kartlar tasarımda **kalır** ama sayı yerine "Yakında"/"—" gösterir.
+Kod içinde her biri `// TODO(contract):` ile işaretlidir
+(`home/data/home_repository.dart`).
+
+**G1 — Araç plaka / geçiş kaydı** (görevli şeridi: "Araç Plaka")
+
+```yaml
+GET /vehicle-passes?limit&offset&baslangic&bitis&yon=giris|cikis
+200:
+  meta: { limit, offset, total }
+  items:
+    - id: uuid
+      plaka: "34 ABC 123"          # normalize (boşluksuz+büyük) saklanmalı
+      yon: giris | cikis
+      arac_aciklama: "BMW Siyah"   # nullable
+      unit_id: uuid                # nullable (ziyaretçi aracı)
+      unit_no: "A-12"              # nullable, join
+      kaydeden_user_id: uuid       # manuel giriş; OCR ise null
+      kaynak: manuel | kamera      # ileride plaka tanıma
+      created_at: date-time
+```
+Kart sayacı: `GET /vehicle-passes?yon=giris&baslangic=<bugün>&limit=1` →
+`meta.total` ("N Giriş"). RBAC: security + admin/yönetici; resident yalnız kendi
+dairesinin aracı (KVKK).
+
+**G2 — İhlal kaydı** (görevli + yönetici: "İhlaller")
+
+Site kuralları (`/site-rules`) yalnızca **metin** tutar; ihlal kaydı yok.
+
+```yaml
+GET /violations?limit&offset&durum=acik|kapali&kategori&unit_id
+200:
+  meta: { limit, offset, total }
+  items:
+    - id: uuid
+      site_rule_id: uuid           # nullable (hangi kural)
+      baslik: "Otopark girişinde park"
+      kaynak: kamera | personel    # tespit eden
+      checkpoint_id: uuid          # nullable
+      unit_id: uuid                # nullable
+      foto_key: string             # nullable (presign akışı)
+      durum: acik | kapali
+      created_at: date-time
+POST /violations                   # security + tesis_gorevlisi + yönetim
+```
+Kart sayacı: `?durum=acik&limit=1` → `meta.total` ("N Yeni").
+
+**G3 — Ziyaretçi "içeride" durumu** (görevli şeridi: "Ziyaretçi")
+
+`Visitor` şeması yalnız `created_at` taşır; **çıkış zamanı yok**, bu yüzden
+"içeride" sayısı türetilemez. Şimdilik *bugünkü kayıt sayısı* gösteriliyor.
+En küçük değişiklik:
+
+```yaml
+# Visitor şemasına ek:
+cikis_zamani: { type: string, format: date-time, nullable: true }
+POST /visitors/{id}/checkout   # 200 → güncellenmiş Visitor
+GET  /visitors?icerde=true     # cikis_zamani IS NULL süzgeci
+```
+Kart sayacı: `GET /visitors?icerde=true&limit=1` → `meta.total` ("N İçeride").
+
+**G4 — Otopark kapasite/doluluk** (yönetici kartı + Hızlı Özet kutusu)
+
+```yaml
+GET /parking/occupancy
+200:
+  kapasite: 120                    # tenant ayarı
+  dolu: 78
+  doluluk_yuzde: 65                # round(100*dolu/kapasite); kapasite 0 → null
+  guncellenme: date-time
+```
+İki yerde de aynı yanıt kullanılır ("78 / 120" ve "%65"). RBAC: tüm kimlikli
+roller (agregat).
+
+**G5 — Birleşik aktivite akışı** ("Son Hareketler", üç ekranda da)
+
+Şu an akış istemcide 4 ayrı uçtan birleştiriliyor (rol başına 3–4 ek istek,
+sayfalama yok, sıralama istemcide). Doğrusu tek uç:
+
+```yaml
+GET /activity?limit=20&offset=0&tip=...   # rol-farkındalıklı; sunucu süzer
+200:
+  meta: { limit, offset, total }
+  items:
+    - id: uuid
+      tip: kargo | ziyaretci | aidat_odeme | talep | gorev_tamamlama |
+           kacirilan_tur | ihlal | duyuru
+      baslik: "Kargo Teslim Edildi"
+      alt_baslik: "Aras Kargo - Daire A-12"
+      durum_rengi: olumlu | uyari | alarm | notr    # UI noktası
+      ilgili_id: uuid                                # kaynağın id'si
+      rota_ipucu: "/kargo"                           # nullable, derin bağlantı
+      created_at: date-time
+```
+Sunucu tarafı RLS/RBAC ile süzer (sakin yalnız kendi olayları, tesis_gorevlisi
+yalnız görev olayları…) — istemci "hangi ucu hangi rolde çağırabilirim"
+bilgisini taşımak zorunda kalmaz. **Kazanç:** 4 istek → 1, doğru kronoloji,
+sayfalanabilir "Tümünü Gör" ekranı.
+
+**G6 — Gürültü şikayeti sayacı** (sakin: "Gürültü Şikayeti")
+
+Kart bir *eylem* (yeni şikayet aç). Sayaç istenirse
+`GET /unit-complaints/mine?kategori=gurultu&durum=acik&limit=1` yeterlidir —
+`kategori` süzgeci `/unit-complaints/mine`'da **yok**, eklenmesi gerekir.
+
+**G7 — Sözleşme gecikmesi: `/weather` ve `/cameras`**
+
+Her iki uç da **canlı backend'de var** (`GET /weather`, `GET /cameras`) ve
+uygulama bunları kullanıyor, ama `contracts/openapi.yaml` (21.07 tarihli) içinde
+**tanımlı değil**. Kod eksiği değil, sözleşme eksiği: `openapi.yaml`'a
+eklenmeli — aksi halde sözleşme tabanlı mock/doğrulama bu iki ucu göremez.
+
+**Not — sözleşmede olup ana ekranda kullanılmayanlar:** `/dashboard/live` ve
+`/me/patrol-window` (RBAC: admin+security) devriye ekranlarına bağlıdır; ana
+ekranda vardiya bilgisi `/shifts`'ten geldiği için tekrar çağrılmaz.
+
+### Tasarımda kalan yer tutucular (uç gerektirmez)
+
+| Alan | Not |
+|---|---|
+| **Duyuru görseli** | `foto_url` boşsa gri yer tutucu çizilir |
+| **Canlı kamera karesi** | kart içinde video **oynatılmaz**; 16:10 yer tutucu + oynat butonu, dokunma mevcut oynatıcı ekranına gider |
 
 ### Referans düzenden bilinçli sapmalar
 
@@ -1245,9 +1431,11 @@ features/home/
   domain/home_view_models.dart           bölümlerin saf görünüm modelleri
   domain/home_tabs.dart                  alt-bar yuvaları (aktif/pasif ikon)
   domain/home_menu.dart                  rol → modül görünürlüğü (değişmedi)
-  domain/son_hareketler.dart             istemcide birleşik akış (değişmedi)
-  data/home_repository.dart              HomeRepository + MockHomeRepository
+  domain/son_hareketler.dart             istemcide birleşik akış (3 rol)
+  data/home_repository.dart              düzen tabanı + sözleşme boşlukları
+  data/home_api.dart                     sayaç sorguları + birleşik akış sağlayıcıları
   presentation/home_gate.dart            rol yönlendirme
+  presentation/home_async.dart           AsyncValue → veri/hata/iskelet (retry-dayanıklı)
   presentation/home_mappers.dart         gerçek API → görünüm modeli
   presentation/{saha,resident,yonetici}_home_screen.dart   veri kablolaması
   presentation/widgets/
@@ -1265,4 +1453,5 @@ features/home/
     odeme_karti.dart     "Ödeme ve Aidat Durumu" iki sütun
     duyuru_karti.dart    duyuru kartı (96×72 görsel + "Yeni" çipi)
     kamera_seridi.dart   "Canlı Kamera" 16:10 yer tutucu şeridi
+    home_states.dart     iskelet çubuğu + bölüm iskeleti + "Yüklenemedi"/yenile
 ```

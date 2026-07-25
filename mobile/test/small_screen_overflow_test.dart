@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
+import 'package:mobile/src/features/cameras/data/cameras_api.dart';
+import 'package:mobile/src/features/cameras/domain/camera_models.dart';
+import 'package:mobile/src/features/home/data/home_api.dart';
+import 'package:mobile/src/features/home/domain/son_hareketler.dart';
 import 'package:mobile/src/features/home/presentation/saha_home_screen.dart';
 import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
@@ -25,6 +29,18 @@ Widget _app({List<Shift> vardiyalar = const []}) => ProviderScope(
         scanOutboxProvider.overrideWith(_FakeOutbox.new),
         unreadNotificationCountProvider.overrideWith((ref) async => 5),
         shiftsProvider.overrideWith((ref) async => vardiyalar),
+        // Bolumler GERCEK uctan beslenir; testte aga cikmadan doldurulur.
+        camerasProvider.overrideWith((ref) async => const [
+              Camera(id: 'c1', ad: 'Ana Kapı', streamUrl: 'https://x/s.m3u8'),
+            ]),
+        sahaHareketleriProvider.overrideWith((ref, guvenlik) => AsyncData([
+              Hareket(
+                tip: HareketTip.ziyaretci,
+                baslik: 'Ziyaretçi Girişi',
+                altBaslik: 'Ahmet Yılmaz - Daire 12',
+                zaman: DateTime(2026, 7, 23, 10),
+              ),
+            ])),
       ],
       child: const MaterialApp(home: SahaHomeScreen(role: UserRole.security)),
     );
@@ -59,7 +75,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('320x480: gercek vardiya YOKKEN de (mock taban) tasma yok',
+  testWidgets('320x480: vardiya YOKKEN (bolum cizilmez) de tasma yok',
       (tester) async {
     tester.view.physicalSize = const Size(320, 480);
     tester.view.devicePixelRatio = 1.0;
@@ -68,6 +84,9 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(find.text('Vardiya Durumu'), findsOneWidget);
+    // Vardiya bolumu yok; serit karti (dar ekranda 2 sutuna dusen izgara
+    // degil, yatay serit) yerinde durur.
+    expect(find.text('Vardiya Durumu'), findsNothing);
+    expect(find.text('Vardiya Durum'), findsOneWidget);
   });
 }

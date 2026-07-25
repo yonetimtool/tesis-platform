@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
+import 'home_states.dart';
 
 /// Referans "Hızlı Özet" kutusu (yonetici.jpeg): ortada tint ikon konteyneri,
 /// altinda 20 bold deger, 13 semibold etiket ve 12 gri alt-etiket. Salt
@@ -48,15 +49,23 @@ class StatTile extends StatelessWidget {
             iconSize: (kutuBoyut * 0.55).clamp(17.0, HomeTokens.iconSize),
           ),
           const SizedBox(height: 6),
-          AutoSizeText(
-            kutu.deger,
-            group: degerGrubu,
-            maxLines: 1,
-            minFontSize: 11,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: HomeText.statValue.copyWith(color: s.heading),
-          ),
+          // Deger YOKKEN (gercek uc henuz yuklenmedi) iskelet — referans
+          // yerlesimi korunur, uydurma sayi gosterilmez.
+          if (kutu.deger == null)
+            const SizedBox(
+              height: 22,
+              child: Center(child: HomeIskeletCubugu(genislik: 52)),
+            )
+          else
+            AutoSizeText(
+              kutu.deger!,
+              group: degerGrubu,
+              maxLines: 1,
+              minFontSize: 11,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: HomeText.statValue.copyWith(color: s.heading),
+            ),
           const SizedBox(height: 2),
           AutoSizeText(
             kutu.etiket,

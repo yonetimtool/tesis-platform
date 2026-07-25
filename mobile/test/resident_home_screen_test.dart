@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/announcements/data/announcement_api.dart';
 import 'package:mobile/src/features/announcements/domain/announcement_models.dart';
+import 'package:mobile/src/features/complaints/data/complaint_api.dart';
 import 'package:mobile/src/features/dues/data/dues_api.dart';
 import 'package:mobile/src/features/dues/domain/dues_models.dart';
+import 'package:mobile/src/features/home/data/home_api.dart';
 import 'package:mobile/src/features/home/presentation/resident_home_screen.dart';
+import 'package:mobile/src/features/home/presentation/widgets/home_states.dart';
 import 'package:mobile/src/features/kargo/data/kargo_api.dart';
 import 'package:mobile/src/features/kargo/domain/kargo_models.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
@@ -14,33 +17,47 @@ import 'package:mobile/src/features/visitors/data/visitor_api.dart';
 import 'package:mobile/src/features/visitors/domain/visitor_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
 
+/// Ana ekran artik SADECE gercek uclardan beslenir; testte her uc override
+/// edilir. `hata: true` tum uclari dusurur — ekran cokmemeli, bolumler
+/// "Yüklenemedi" + yeniden dene gostermeli.
 Widget _app({
   List<MyDuesUnit> units = const [],
   List<Kargo> kargolar = const [],
   List<Visitor> ziyaretciler = const [],
   List<Announcement> duyurular = const [],
+  int acikTalep = 0,
+  int daireSikayet = 0,
   bool hata = false,
-}) =>
-    ProviderScope(
-      overrides: [
-        profileProvider.overrideWith((ref) async => const Profile(
-              ad: 'Çiğdem',
-              role: 'resident',
-              aranabilir: false,
-            )),
-        // Hava ucu testte aga cikmasin — hata → mock taban (24°C).
-        weatherProvider.overrideWith((ref) async => throw Exception('offline')),
-        myDuesProvider.overrideWith(
-            (ref) async => hata ? throw Exception('500') : units),
-        kargoListProvider.overrideWith(
-            (ref) async => hata ? throw Exception('500') : kargolar),
-        visitorsListProvider.overrideWith(
-            (ref) async => hata ? throw Exception('500') : ziyaretciler),
-        sonDuyurularProvider.overrideWith(
-            (ref) async => hata ? throw Exception('500') : duyurular),
-      ],
-      child: const MaterialApp(home: ResidentHomeScreen()),
-    );
+  bool gecikme = false,
+}) {
+  Future<T> uc<T>(T deger) async {
+    if (hata) throw Exception('500');
+    if (gecikme) {
+      return Future.delayed(const Duration(milliseconds: 400), () => deger);
+    }
+    return deger;
+  }
+
+  return ProviderScope(
+    overrides: [
+      profileProvider.overrideWith((ref) async => const Profile(
+            ad: 'Çiğdem',
+            role: 'resident',
+            aranabilir: false,
+          )),
+      // Hava ucu testte aga cikmasin — hata → baslik hava blogu cizilmez.
+      weatherProvider.overrideWith((ref) async => throw Exception('offline')),
+      myDuesProvider.overrideWith((ref) => uc(units)),
+      kargoListProvider.overrideWith((ref) => uc(kargolar)),
+      visitorsListProvider.overrideWith((ref) => uc(ziyaretciler)),
+      sonDuyurularProvider.overrideWith((ref) => uc(duyurular)),
+      acikSikayetSayisiProvider.overrideWith((ref) => uc(acikTalep)),
+      kendiDaireSikayetSayisiProvider.overrideWith((ref) => uc(daireSikayet)),
+      sonTaleplerProvider.overrideWith((ref) => uc(const [])),
+    ],
+    child: const MaterialApp(home: ResidentHomeScreen()),
+  );
+}
 
 void _tall(WidgetTester tester) {
   tester.view.physicalSize = const Size(400, 4200);
@@ -48,22 +65,30 @@ void _tall(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
-const _borcsuz = [
+final _borcsuz = [
   MyDuesUnit(
-      unitId: 'u1',
-      no: '12',
-      tahakkukKurus: 125000,
-      odenenKurus: 125000,
-      bakiyeKurus: 0),
+    unitId: 'u1',
+    no: '12',
+    tahakkukKurus: 125000,
+    odenenKurus: 125000,
+    bakiyeKurus: 0,
+    assessments: [
+      DuesAssessment(donem: '2026-06', tutarKurus: 125000),
+    ],
+  ),
 ];
 
-const _borclu = [
+final _borclu = [
   MyDuesUnit(
-      unitId: 'u1',
-      no: '12',
-      tahakkukKurus: 250000,
-      odenenKurus: 125000,
-      bakiyeKurus: 125000),
+    unitId: 'u1',
+    no: '12',
+    tahakkukKurus: 250000,
+    odenenKurus: 125000,
+    bakiyeKurus: 125000,
+    assessments: [
+      DuesAssessment(donem: '2026-07', tutarKurus: 125000),
+    ],
+  ),
 ];
 
 Kargo _kargo(String id, {KargoDurum durum = KargoDurum.bekliyor}) => Kargo(
@@ -81,13 +106,14 @@ void main() {
       'izgara → Ödeme ve Aidat Durumu → Son Hareketler → Duyurular',
       (tester) async {
     _tall(tester);
-    await tester.pumpWidget(_app());
+    await tester.pumpWidget(_app(units: _borcsuz, kargolar: [_kargo('k1')]));
     await tester.pumpAndSettle();
 
     expect(find.text('Merhaba, Çiğdem'), findsOneWidget);
-    // Hava: gercek uc hatali → mock taban.
-    expect(find.text('24°C'), findsOneWidget);
-    expect(find.text('İstanbul'), findsOneWidget);
+    // Daire/blok alt satiri GERCEK /me/dues'ten.
+    expect(find.textContaining('Daire 12  •  '), findsOneWidget);
+    // Hava ucu hatali → uydurma 24°C YOK, blok hic cizilmez.
+    expect(find.text('24°C'), findsNothing);
 
     // Izgaranin 8 karti (referans sirasi).
     for (final baslik in [
@@ -95,15 +121,15 @@ void main() {
       'Kargolarım',
       'Aidat Bilgileri',
       'Gürültü Şikayeti',
+      'Geri Bildirim',
       'Şikayetlerim',
       'Site Raporları',
     ]) {
       expect(find.text(baslik), findsOneWidget, reason: baslik);
     }
-    // "Duyurular" iki yerde mesru: izgara karti + bolum basligi; "Geri
-    // Bildirim" de oyle: izgara karti + referans hareket satiri.
-    expect(find.text('Duyurular'), findsNWidgets(2));
-    expect(find.text('Geri Bildirim'), findsNWidgets(2));
+    // "Duyurular" iki yerde mesru degil: duyuru YOKKEN bolum cizilmez →
+    // yalniz izgara karti kalir.
+    expect(find.text('Duyurular'), findsOneWidget);
 
     final sira = [
       for (final baslik in [
@@ -117,7 +143,7 @@ void main() {
     expect(sira[1] < sira[2], isTrue);
   });
 
-  testWidgets('borcsuz sakin: gercek /me/dues izgara sayacini EZER '
+  testWidgets('borcsuz sakin: gercek /me/dues izgara sayacini besler '
       '("Borç Yok")', (tester) async {
     _tall(tester);
     await tester.pumpWidget(_app(units: _borcsuz));
@@ -125,6 +151,7 @@ void main() {
 
     expect(find.text('Ödeme ve Aidat Durumu'), findsOneWidget);
     expect(find.text('Borç Yok'), findsOneWidget); // izgara kartinin 2. satiri
+    expect(find.text('₺1.250,00'), findsWidgets);
   });
 
   testWidgets('borclu sakin: izgara sayaci borc tutari + "Borç Var"; kargo '
@@ -140,8 +167,46 @@ void main() {
     expect(find.text('3 Bekliyor'), findsOneWidget); // Kargolarım sayaci
   });
 
-  testWidgets('Son Hareketler GERCEK akistan (kargo+ziyaretci) beslenir ve '
-      'mock tabani ezer', (tester) async {
+  testWidgets('sayaclar GERCEK uctan: ziyaretci/talep/daire sikayeti/duyuru',
+      (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app(
+      units: _borcsuz,
+      ziyaretciler: [
+        Visitor(
+          id: 'z1',
+          unitId: 'u1',
+          unitNo: '12',
+          ziyaretciAd: 'Ahmet Yılmaz',
+          kaydedenUserId: 'g1',
+          targetResidentUserId: 'r1',
+          createdAt: DateTime(2026, 7, 23, 10),
+        ),
+      ],
+      acikTalep: 2,
+      daireSikayet: 1,
+      duyurular: [
+        Announcement(
+          id: 'd1',
+          baslik: 'Asansör Bakımı',
+          govde: 'Perşembe günü asansör bakımı yapılacaktır.',
+          olusturanUserId: 'y1',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      ],
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 Kayıt'), findsOneWidget); // Ziyaretçiler
+    expect(find.text('2 Açık'), findsOneWidget); // Geri Bildirim
+    expect(find.text('1 Açık'), findsOneWidget); // Şikayetlerim
+    expect(find.text('1 Yeni'), findsOneWidget); // Duyurular (son 3 gun)
+    expect(find.text('Asansör Bakımı'), findsOneWidget); // duyuru karti
+  });
+
+  testWidgets('Son Hareketler GERCEK akistan (kargo+ziyaretci) beslenir',
+      (tester) async {
     _tall(tester);
     await tester.pumpWidget(_app(
       kargolar: [_kargo('k1')],
@@ -162,39 +227,40 @@ void main() {
     expect(find.text('Son Hareketler'), findsOneWidget);
     expect(find.text('Kargo Kaydedildi'), findsOneWidget);
     expect(find.text('Ahmet Yılmaz - Daire 12'), findsOneWidget);
-    // Mock satiri (referans) artik gorunmuyor — gercek veri ezdi.
-    expect(find.text('Gürültü Şikayeti Bildirimi'), findsNothing);
   });
 
-  testWidgets('gercek duyuru varsa kart onu gosterir', (tester) async {
-    _tall(tester);
-    await tester.pumpWidget(_app(duyurular: [
-      Announcement(
-        id: 'd1',
-        baslik: 'Asansör Bakımı',
-        govde: 'Perşembe günü asansör bakımı yapılacaktır.',
-        olusturanUserId: 'y1',
-        createdAt: DateTime(2026, 7, 22),
-        updatedAt: DateTime(2026, 7, 22),
-      ),
-    ]));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Asansör Bakımı'), findsOneWidget);
-    expect(find.text('Bahçe Düzenlemesi'), findsNothing); // mock ezildi
-  });
-
-  testWidgets('veri HATALARI ekrani dusurmez: bolumler mock tabanla cizilir',
-      (tester) async {
+  testWidgets('veri HATALARI ekrani dusurmez: bolumler "Yüklenemedi" + '
+      'yeniden dene gosterir, sayaclar "—"', (tester) async {
     _tall(tester);
     await tester.pumpWidget(_app(hata: true));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    // Referans duzen ayakta: bolumler bos beyaz ekrana donmuyor.
+    // Bolumler bos beyaz degil: hata karti + yenileme dugmesi.
     expect(find.text('Ödeme ve Aidat Durumu'), findsOneWidget);
     expect(find.text('Son Hareketler'), findsOneWidget);
-    expect(find.text('Bahçe Düzenlemesi'), findsOneWidget); // mock duyuru
+    expect(find.text('Duyurular'), findsWidgets);
+    expect(find.text('Yüklenemedi'), findsNWidgets(3));
+    expect(find.byType(HomeBolumHatasi), findsNWidgets(3));
+    // Kart sayaclari uydurmuyor: '—'.
     expect(find.text('Ziyaretçiler'), findsOneWidget);
+    expect(find.text('—'), findsWidgets);
+  });
+
+  testWidgets('UYDURMA SAYI YOK: veri gelmeden sayac yerine iskelet cizilir',
+      (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app(units: _borcsuz, gecikme: true));
+    await tester.pump(); // uclar henuz cevap vermedi
+
+    expect(find.byType(HomeSayacIskeleti), findsWidgets);
+    expect(find.byType(HomeBolumIskeleti), findsWidgets);
+    // Referans gorselin sabit degerleri HICBIR ZAMAN gorunmez.
+    expect(find.text('₺1.250,00'), findsNothing);
+    expect(find.text('2 Bekliyor'), findsNothing);
+
+    // Zamanlayicilari bosalt (aksi halde "Timer is still pending").
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
   });
 }

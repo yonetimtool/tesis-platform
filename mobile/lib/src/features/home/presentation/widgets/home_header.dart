@@ -49,12 +49,17 @@ class HomeHeader extends StatelessWidget {
                   style: HomeText.greeting.copyWith(color: s.heading),
                 ),
               ),
-              const SizedBox(height: 4),
-              _AltBaslik(
-                metin: subtitle,
-                stil: altBaslikStili,
-                onTap: onAltBaslik,
-              ),
+              // Alt satir gercek veriden gelir (tesis adi / daire-blok).
+              // Veri yokken satir HIC cizilmez — yer tutucu bir tesis adi
+              // uydurmaktansa bosluk birakilir.
+              if (subtitle.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                _AltBaslik(
+                  metin: subtitle,
+                  stil: altBaslikStili,
+                  onTap: onAltBaslik,
+                ),
+              ],
             ],
           ),
         ),

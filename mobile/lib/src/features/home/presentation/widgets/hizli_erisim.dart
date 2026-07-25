@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
+import 'home_states.dart';
 import 'section_padding.dart';
 
 /// Referans "hizli erisim" karti — beyaz kart, ortada tint ikon konteyneri,
@@ -75,16 +76,21 @@ class HizliErisimKarti extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 3),
-          AutoSizeText(
-            kart.altMetin,
-            group: sayacGrubu,
-            maxLines: 1,
-            minFontSize: 8,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: HomeText.cardCounter
-                .copyWith(color: kart.altMetinRengi ?? kart.accent),
-          ),
+          // Sayac YOKKEN (gercek uc henuz yuklenmedi) uydurma sayi degil,
+          // notr iskelet cizilir — kart yuksekligi degismez.
+          if (kart.altMetin == null)
+            const HomeSayacIskeleti()
+          else
+            AutoSizeText(
+              kart.altMetin!,
+              group: sayacGrubu,
+              maxLines: 1,
+              minFontSize: 8,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: HomeText.cardCounter
+                  .copyWith(color: kart.altMetinRengi ?? kart.accent),
+            ),
           if (kart.ikinciAltMetin != null)
             AutoSizeText(
               kart.ikinciAltMetin!,

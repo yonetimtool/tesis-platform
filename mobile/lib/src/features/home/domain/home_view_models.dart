@@ -40,7 +40,11 @@ class HizliErisimKart {
   final Color accent;
 
   /// Baslik altindaki sayac/etiket, or. "3 Aktif" / "Aylık Özet".
-  final String altMetin;
+  ///
+  /// **null = VERI HENUZ YOK** (gercek uc yukleniyor) → kart sayac satirinda
+  /// iskelet cizer. UYDURMA SAYI YOKTUR: sozlesmede karsiligi olmayan
+  /// kartlar 'Yakında' etiketi tasir (bkz. [MockHomeRepository]).
+  final String? altMetin;
 
   /// Alt metin rengi — null ise [accent]. Referans gorsellerde SAYAC'lar
   /// accent, ACIKLAMA etiketleri ("Aylık Özet", "Bildirim Yap") gridir;
@@ -110,11 +114,23 @@ class OzetKutusu {
 
   final IconData ikon;
 
-  /// Buyuk deger, or. "512" / "₺248.750" / "78 / 120".
-  final String deger;
+  /// Buyuk deger, or. "52" / "₺750,00". **null = VERI HENUZ YOK** (gercek uc
+  /// yukleniyor) → kutu iskelet cizer. Sozlesmede karsiligi olmayan kutu '—'
+  /// tasir ve alt etiketi 'Yakında'dir.
+  final String? deger;
   final String etiket;
   final String altEtiket;
   final Color accent;
+
+  /// Buyuk degeri gercek veriyle degistirir (ikon/etiket/renk korunur).
+  /// [yeniDeger] null ise kutu YUKLENIYOR halinde kalir.
+  OzetKutusu degerle(String? yeniDeger) => OzetKutusu(
+        ikon: ikon,
+        deger: yeniDeger ?? deger,
+        etiket: etiket,
+        altEtiket: altEtiket,
+        accent: accent,
+      );
 }
 
 /// Vardiya seridindeki tek kart (personel vardiyasi ya da yonetici karti).

@@ -1,15 +1,25 @@
-/// MockHomeRepository referans gorsellerin (docs/design-refs) DEGERLERINI
-/// tasir. Bu test o degerleri KILITLER: bir kart metni/sayaci degisirse ana
-/// ekran referanstan sapmis demektir ve burada yakalanir.
+/// [MockHomeRepository] artik SAYI TASIMAZ: referans gorsellerin DUZENINI
+/// (ikon/baslik/renk/sira/rota) ve YALNIZCA sozlesmede karsiligi olmayan
+/// kartlarin 'Yakında' etiketini tasir.
+///
+/// Bu test iki seyi KILITLER:
+///   1. duzen (baslik sirasi + rotalar) referanstan sapmasin,
+///   2. gercek uca bagli hicbir kart SABIT bir sayi tasimasin (altMetin
+///      null = yukleniyor) — yani ekranda uydurma deger BELIREMESIN.
 library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/home/data/home_repository.dart';
 import 'package:mobile/src/features/home/domain/home_varyant.dart';
-import 'package:mobile/src/features/home/domain/home_view_models.dart';
 
 const _mock = MockHomeRepository();
+
+/// Sozlesmede karsiligi OLMAYAN kartlarin tek isaretcisi.
+const _yakinda = 'Yakında';
+
+/// Sayac DEGIL, sabit aciklama etiketi olan kartlar (uc gerektirmez).
+const _etiketKartlari = {'Bildirim Yap', 'Aylık Özet'};
 
 void main() {
   group('homeVaryantForRole — rol → referans duzen', () {
@@ -26,153 +36,114 @@ void main() {
     });
   });
 
-  group('gorevli.jpeg — hizli erisim seridi (5 kart, sirali)', () {
-    test('baslik + sayac ciftleri gorselle birebir', () {
-      final kartlar = _mock.hizliErisim(HomeVaryant.gorevli);
-      expect(
-        [for (final k in kartlar) '${k.baslik}|${k.altMetin}'],
-        [
-          'Vardiya Durum|3 Aktif',
-          'Kargo|5 Bekliyor',
-          'Ziyaretçi|2 İçeride',
-          'Araç Plaka|8 Giriş',
-          'İhlaller|4 Yeni',
-        ],
-      );
-    });
+  group('UYDURMA SAYI YOK — taban yalniz bosluklari doldurur', () {
+    for (final varyant in HomeVaryant.values) {
+      test('$varyant: sayac ya null (yukleniyor) ya "Yakında" ya sabit etiket',
+          () {
+        for (final k in _mock.hizliErisim(varyant)) {
+          final m = k.altMetin;
+          expect(
+            m == null || m == _yakinda || _etiketKartlari.contains(m),
+            isTrue,
+            reason: '${k.baslik} kartinda sabit deger var: "$m"',
+          );
+        }
+      });
+    }
 
-    test('karsiligi olmayan kartlarin rotasi YOK (uc uydurulmadi)', () {
-      final rotasiz = [
-        for (final k in _mock.hizliErisim(HomeVaryant.gorevli))
-          if (k.rota == null) k.baslik
-      ];
-      expect(rotasiz, ['Araç Plaka', 'İhlaller']);
-    });
-
-    test('son hareketler 5 satir, metinler gorselle birebir', () {
-      final satirlar = _mock.hareketler(HomeVaryant.gorevli);
-      expect(satirlar.length, 5);
-      expect(
-        [for (final s in satirlar) '${s.baslik}|${s.altBaslik}|${s.zaman}'],
-        [
-          'Kamera İhlal Tespiti|Otopark Girişi - Kamera 3|09:32',
-          'Kapı Açıldı|A Blok - Ana Giriş|09:21',
-          'Araç Girişi|34 ABC 123 - BMW Siyah|09:15',
-          'Kargo Teslim Alındı|Mng Kargo - 245781236|09:05',
-          'Ziyaretçi Girişi|Ahmet Yılmaz - Daire 15|08:58',
-        ],
-      );
-    });
-
-    test('canli kamera seridi 4 kart', () {
-      expect([for (final k in _mock.kameralar()) k.ad],
-          ['Ana Giriş', 'Otopark', 'Arka Bahçe', 'B Blok Girişi']);
+    test('yonetici Hızlı Özet: gercek uca bagli kutular DEGERSIZ baslar; '
+        'yalniz otopark (MISSING-BACKEND) "—" + "Yakında"', () {
+      final kutular = _mock.ozet();
+      expect([for (final k in kutular) k.etiket], [
+        'Toplam Daire',
+        'Toplam Tahsilat',
+        'Aidat Tahsilat Oranı',
+        'Otopark Doluluk',
+      ]);
+      expect([for (final k in kutular.take(3)) k.deger], [null, null, null]);
+      expect(kutular.last.deger, '—');
+      expect(kutular.last.altEtiket, _yakinda);
     });
   });
 
-  group('site-sakini.jpeg — 4x2 izgara + odeme + duyuru', () {
-    test('8 kart, sira ve sayaclar gorselle birebir', () {
-      final kartlar = _mock.hizliErisim(HomeVaryant.sakin);
-      expect(kartlar.length, 8);
+  group('gorevli.jpeg — hizli erisim seridi (5 kart, sirali)', () {
+    test('baslik sirasi gorselle birebir', () {
       expect(
-        [for (final k in kartlar) '${k.baslik}|${k.altMetin}'],
+        [for (final k in _mock.hizliErisim(HomeVaryant.gorevli)) k.baslik],
+        ['Vardiya Durum', 'Kargo', 'Ziyaretçi', 'Araç Plaka', 'İhlaller'],
+      );
+    });
+
+    test('karsiligi olmayan kartlarin rotasi YOK ve "Yakında" gosterir', () {
+      final rotasiz = [
+        for (final k in _mock.hizliErisim(HomeVaryant.gorevli))
+          if (k.rota == null) k
+      ];
+      expect([for (final k in rotasiz) k.baslik], ['Araç Plaka', 'İhlaller']);
+      expect([for (final k in rotasiz) k.altMetin], [_yakinda, _yakinda]);
+    });
+  });
+
+  group('site-sakini.jpeg — 4x2 izgara', () {
+    test('8 kart, sira gorselle birebir', () {
+      final kartlar = _mock.hizliErisim(HomeVaryant.sakin);
+      expect(
+        [for (final k in kartlar) k.baslik],
         [
-          'Ziyaretçiler|2 Bekliyor',
-          'Kargolarım|1 Bekliyor',
-          'Aidat Bilgileri|₺1.250,00',
-          'Gürültü Şikayeti|Bildirim Yap',
-          'Geri Bildirim|2 Yeni',
-          'Şikayetlerim|1 Açık',
-          'Duyurular|3 Yeni',
-          'Site Raporları|Aylık Özet',
+          'Ziyaretçiler',
+          'Kargolarım',
+          'Aidat Bilgileri',
+          'Gürültü Şikayeti',
+          'Geri Bildirim',
+          'Şikayetlerim',
+          'Duyurular',
+          'Site Raporları',
         ],
       );
     });
 
-    test('aidat karti ikinci satiri yesil "Borç Yok"', () {
+    test('sakin izgarasinin TAMAMININ ucu var (rotasiz kart yok)', () {
+      final rotasiz = [
+        for (final k in _mock.hizliErisim(HomeVaryant.sakin))
+          if (k.rota == null) k.baslik
+      ];
+      expect(rotasiz, isEmpty);
+    });
+
+    test('aidat kartinin iki satiri da gercek veriyi bekler', () {
       final aidat = _mock
           .hizliErisim(HomeVaryant.sakin)
           .firstWhere((k) => k.baslik == 'Aidat Bilgileri');
-      expect(aidat.ikinciAltMetin, 'Borç Yok');
-    });
-
-    test('odeme ozeti gorseldeki degerler', () {
-      final o = _mock.odeme();
-      expect(o.buAyTutar, '₺1.250,00');
-      expect(o.odendi, isTrue);
-      expect(o.sonOdeme, '05.05.2026');
-      expect(o.gelecekTarih, '05.06.2026');
-      expect(o.gelecekTutar, '₺1.250,00');
-    });
-
-    test('duyuru karti gorseldeki metinler', () {
-      final d = _mock.duyuru();
-      expect(d.baslik, 'Bahçe Düzenlemesi');
-      expect(d.govde, 'Site bahçemizde peyzaj düzenlemesi yapılacaktır.');
-      expect(d.tarih, '20 Mayıs – 09:00');
-      expect(d.yeni, isTrue);
-    });
-
-    test('son hareketler 5 satir', () {
-      final satirlar = _mock.hareketler(HomeVaryant.sakin);
-      expect(satirlar.length, 5);
-      expect(satirlar.first.baslik, 'Ziyaretçi Girişi');
-      expect(satirlar.last.baslik, 'Aidat Ödemesi');
-      expect(satirlar.last.zaman, '05.05.2026');
+      expect(aidat.altMetin, isNull);
+      expect(aidat.ikinciAltMetin, isNull);
     });
   });
 
-  group('yonetici.jpeg — 4x2 izgara + hizli ozet', () {
-    test('8 kart, sira ve sayaclar gorselle birebir', () {
+  group('yonetici.jpeg — 4x2 izgara', () {
+    test('8 kart, sira gorselle birebir', () {
       expect(
+        [for (final k in _mock.hizliErisim(HomeVaryant.yonetici)) k.baslik],
         [
-          for (final k in _mock.hizliErisim(HomeVaryant.yonetici))
-            '${k.baslik}|${k.altMetin}'
-        ],
-        [
-          'Vardiya Durumu|4 Aktif',
-          'Görevler|6 Bekliyor',
-          'Aidat Durumu|104 Daire',
-          'Otopark Kullanımı|78 / 120',
-          'İhlaller|5 Yeni',
-          'Geri Bildirim|8 Yeni',
-          'Şikayetler|3 Yeni',
-          'Raporlar|Aylık Özet',
+          'Vardiya Durumu',
+          'Görevler',
+          'Aidat Durumu',
+          'Otopark Kullanımı',
+          'İhlaller',
+          'Geri Bildirim',
+          'Şikayetler',
+          'Raporlar',
         ],
       );
     });
 
-    test('hizli ozet 4 kutu (deger/etiket/alt-etiket)', () {
-      expect(
-        [
-          for (final k in _mock.ozet())
-            '${k.deger}|${k.etiket}|${k.altEtiket}'
-        ],
-        [
-          '512|Toplam Daire|Tüm Site',
-          '₺248.750|Toplam Tahsilat|Bu Ay',
-          '%86|Aidat Tahsilat Oranı|Bu Ay',
-          '78 / 120|Otopark Doluluk|%65',
-        ],
-      );
-    });
-
-    test('son hareketler 4 satir; aidat satiri turuncu ikon + mavi nokta', () {
-      final satirlar = _mock.hareketler(HomeVaryant.yonetici);
-      expect(satirlar.length, 4);
-      final aidat = satirlar.firstWhere((s) => s.baslik == 'Aidat Ödemesi');
-      expect(aidat.ikonAccent, isNot(aidat.noktaRengi));
-    });
-  });
-
-  group('vardiya serisi — 3 vardiya + yonetici karti', () {
-    test('gorseldeki dizilim', () {
-      final kartlar = _mock.vardiyalar();
-      expect([for (final k in kartlar) k.baslik],
-          ['Sabah Vardiyası', 'Öğle Vardiyası', 'Gece Vardiyası', 'Yönetici']);
-      expect(kartlar[2].durum, VardiyaDurum.planlandi);
-      expect(kartlar[3].durum, VardiyaDurum.yonetici);
-      expect(kartlar[3].altBaslik, 'Kerem Aşçı');
+    test('karsiligi olmayan kartlar: Otopark Kullanımı + İhlaller', () {
+      final rotasiz = [
+        for (final k in _mock.hizliErisim(HomeVaryant.yonetici))
+          if (k.rota == null) k
+      ];
+      expect([for (final k in rotasiz) k.baslik],
+          ['Otopark Kullanımı', 'İhlaller']);
+      expect([for (final k in rotasiz) k.altMetin], [_yakinda, _yakinda]);
     });
   });
 }

@@ -1,21 +1,19 @@
-/// Ana ekran bolumlerinin VERI KAPISI.
+/// Ana ekran bolumlerinin TABAN DUZENI (referans gorseller) + SOZLESMEDE
+/// KARSILIGI OLMAYAN kartlarin metinleri.
 ///
-/// Referans gorsellerdeki bolumlerin bir kisminin backend'de karsiligi YOK
-/// (arac plaka, ihlaller, otopark doluluk, "ziyaretçi içeride" sayaci,
-/// hava/duyuru gorseli...). Bunlar icin uc UYDURULMAZ: hepsi bu arayuzun
-/// arkasindadir ve [MockHomeRepository] referans gorsellerdeki DEGERLERIN
-/// AYNISINI dondurur.
+/// Kural (tek cumle): **bu dosya UYDURMA SAYI URETMEZ.** Icerdigi tek sey
+///   1. kart iskeleti — ikon / baslik / accent renk / rota (tasarim sabiti,
+///      veri degil), ve
+///   2. `contracts/openapi.yaml`'da KARSILIGI OLMAYAN kartlarin 'Yakında'
+///      etiketi (her biri `// TODO(contract):` ile isaretli).
 ///
-/// Kural (tek cumle): **mock TABANDIR, gercek API verisi geldiginde onun
-/// uzerine YAZAR.** Rol ekranlari once bu tabani alir, sonra elindeki gercek
-/// provider degerleriyle ilgili alanlari degistirir. Boylece:
-///   * gercek uc varsa kullanici GERCEK veriyi gorur,
-///   * gercek uc yoksa/bosken ekran referans duzeninde durur (bos beyaz
-///     ekran yok),
-///   * "hangi alan gercek, hangisi mock" TEK dosyadan okunur.
+/// Gercek uca bagli her kartin sayaci `null` baslar: veri gelene kadar kart
+/// iskelet cizer ([HomeSayacIskeleti]), veri gelince rol ekrani `sayacla` ile
+/// GERCEK degeri yazar. Boylece ekranda hicbir an sahte sayi durmaz.
 ///
-/// Gercek uca baglanacak alanlarin listesi README "TODO: gerçek uç"
-/// bolumundedir.
+/// Alan → uc eslemesinin TAM tablosu README "Ana ekran veri eslemesi"
+/// bolumundedir; oradaki MISSING satirlari ile buradaki `TODO(contract)`
+/// isaretleri birebir ayni kumedir.
 library;
 
 import 'package:flutter/material.dart';
@@ -26,67 +24,21 @@ import '../../../routing/app_router.dart';
 import '../domain/home_varyant.dart';
 import '../domain/home_view_models.dart';
 
-/// Ana ekranin ihtiyac duydugu tum bolum verisi. SAF — Dio/provider bilmez,
-/// testte kolayca sahtelenir.
+/// Ana ekranin taban duzeni. SAF — Dio/provider bilmez, testte sahtelenir.
 abstract class HomeRepository {
-  /// Baslik hava blogu (MISSING-BACKEND degil: /weather var — bu yalniz
-  /// yukleme/hata anindaki taban).
-  HomeHava hava();
-
   /// Varyantin hizli erisim kartlari (gorevli: 5'li serit; digerleri 4x2).
+  /// Gercek uca bagli kartlarin `altMetin`i null'dir (yukleniyor).
   List<HizliErisimKart> hizliErisim(HomeVaryant varyant);
 
-  /// Varyantin "Son Hareketler" satirlari.
-  List<HareketSatiri> hareketler(HomeVaryant varyant);
-
-  /// Vardiya seridi (gorevli + yonetici).
-  List<VardiyaKart> vardiyalar();
-
-  /// Yonetici "Hızlı Özet" kutulari.
+  /// Yonetici "Hızlı Özet" kutulari (degerler null = yukleniyor).
   List<OzetKutusu> ozet();
-
-  /// Sakin "Ödeme ve Aidat Durumu".
-  OdemeOzeti odeme();
-
-  /// Sakin duyuru karti.
-  DuyuruOzeti duyuru();
-
-  /// Gorevli canli kamera seridi.
-  List<KameraOzeti> kameralar();
-
-  /// Gorevli baslik alt satirindaki tesis adi ("Mavi Residence ⌄").
-  String tesisAd();
-
-  /// Sakin baslik alt satiri ("Daire 12, A Blok  •  Kat Maliki").
-  String sakinAltBaslik();
-
-  /// Vardiya seridindeki yonetici kartinin adi.
-  String yoneticiAd();
 }
 
-/// Referans gorsellerin (docs/design-refs) DEGERLERI. Metinler, sayilar,
-/// renkler ve sira gorsellerle birebir; degistirilirse ana ekran referanstan
-/// sapar.
+/// Referans gorsellerin (docs/design-refs) DUZENI: ikon, baslik, renk, sira
+/// ve rota gorsellerle birebir. Sayilar burada YOKTUR.
 class MockHomeRepository implements HomeRepository {
   const MockHomeRepository();
 
-  @override
-  HomeHava hava() => const HomeHava(
-        sicaklik: '24°C',
-        sehir: 'İstanbul',
-        ikon: Icons.wb_sunny_outlined,
-      );
-
-  @override
-  String tesisAd() => 'Mavi Residence';
-
-  @override
-  String sakinAltBaslik() => 'Daire 12, A Blok  •  Kat Maliki';
-
-  @override
-  String yoneticiAd() => 'Kerem Aşçı';
-
-  // ------------------------------------------------------------ hizli erisim
   @override
   List<HizliErisimKart> hizliErisim(HomeVaryant varyant) => switch (varyant) {
         HomeVaryant.gorevli => _gorevliErisim,
@@ -94,51 +46,57 @@ class MockHomeRepository implements HomeRepository {
         HomeVaryant.yonetici => _yoneticiErisim,
       };
 
-  /// gorevli.jpeg — TEK SIRA yatay serit, 5 kart; alt metinler accent renkte.
+  /// gorevli.jpeg — TEK SIRA yatay serit, 5 kart.
   static const _gorevliErisim = <HizliErisimKart>[
     HizliErisimKart(
       ikon: Icons.local_police,
       baslik: 'Vardiya Durum',
       accent: HomeTokens.primary,
-      altMetin: '3 Aktif',
+      altMetin: null, // GET /shifts
       rota: AppRoutes.vardiyalar,
     ),
     HizliErisimKart(
       ikon: Icons.inventory_2,
       baslik: 'Kargo',
       accent: HomeTokens.green,
-      altMetin: '5 Bekliyor',
+      altMetin: null, // GET /kargo
       rota: AppRoutes.kargo,
     ),
     HizliErisimKart(
       ikon: Icons.person,
       baslik: 'Ziyaretçi',
       accent: HomeTokens.orange,
-      altMetin: '2 İçeride',
+      altMetin: null, // GET /visitors
       rota: AppRoutes.visitors,
     ),
+    // TODO(contract): plaka okuma/arac gecis ucu YOK — gecis kaydi, plaka,
+    // gunluk giris sayaci hicbir semada gecmiyor. Oneri: GET /vehicle-passes.
     HizliErisimKart(
       ikon: Icons.directions_car,
       baslik: 'Araç Plaka',
       accent: HomeTokens.purple,
-      altMetin: '8 Giriş',
+      altMetin: _yakinda,
+      altMetinRengi: _gri,
     ),
+    // TODO(contract): "ihlal" ucu YOK (kamera/kural ihlali kaydi). Site
+    // kurallari (/site-rules) yalniz METIN tutar, ihlal kaydi tutmaz.
+    // Oneri: GET /violations.
     HizliErisimKart(
       ikon: Icons.error_outline,
       baslik: 'İhlaller',
       accent: HomeTokens.red,
-      altMetin: '4 Yeni',
+      altMetin: _yakinda,
+      altMetinRengi: _gri,
     ),
   ];
 
-  /// site-sakini.jpeg — 4 sutun x 2 satir SABIT izgara. Sayaclar gri,
-  /// vurgulu olanlar (2 Yeni / 3 Yeni / Borç Yok) renkli — gorseldeki gibi.
+  /// site-sakini.jpeg — 4 sutun x 2 satir SABIT izgara.
   static const _sakinErisim = <HizliErisimKart>[
     HizliErisimKart(
       ikon: Icons.person_outline,
       baslik: 'Ziyaretçiler',
       accent: HomeTokens.purple,
-      altMetin: '2 Bekliyor',
+      altMetin: null, // GET /visitors (yalniz kendine hedeflenenler)
       altMetinRengi: _gri,
       rota: AppRoutes.visitors,
     ),
@@ -146,7 +104,7 @@ class MockHomeRepository implements HomeRepository {
       ikon: Icons.inventory_2,
       baslik: 'Kargolarım',
       accent: HomeTokens.green,
-      altMetin: '1 Bekliyor',
+      altMetin: null, // GET /kargo (kendi dairesi)
       altMetinRengi: _gri,
       rota: AppRoutes.kargo,
     ),
@@ -154,9 +112,9 @@ class MockHomeRepository implements HomeRepository {
       ikon: Icons.account_balance_wallet,
       baslik: 'Aidat Bilgileri',
       accent: HomeTokens.primary,
-      altMetin: '₺1.250,00',
+      altMetin: null, // GET /me/dues
       altMetinRengi: _gri,
-      ikinciAltMetin: 'Borç Yok',
+      ikinciAltMetin: null, // GET /me/dues → bakiye
       ikinciAltMetinRengi: HomeTokens.green,
       rota: AppRoutes.myDues,
     ),
@@ -164,6 +122,7 @@ class MockHomeRepository implements HomeRepository {
       ikon: Icons.graphic_eq,
       baslik: 'Gürültü Şikayeti',
       accent: HomeTokens.red,
+      // Sayac degil EYLEM etiketi (POST /unit-complaints) — sabit metin.
       altMetin: 'Bildirim Yap',
       altMetinRengi: _gri,
       rota: AppRoutes.complaints,
@@ -172,14 +131,14 @@ class MockHomeRepository implements HomeRepository {
       ikon: Icons.campaign,
       baslik: 'Geri Bildirim',
       accent: HomeTokens.orange,
-      altMetin: '2 Yeni',
+      altMetin: null, // GET /complaints?durum=acik (kendi actiklari)
       rota: AppRoutes.complaints,
     ),
     HizliErisimKart(
       ikon: Icons.description_outlined,
       baslik: 'Şikayetlerim',
       accent: HomeTokens.primary,
-      altMetin: '1 Açık',
+      altMetin: null, // GET /unit-complaints/mine?durum=acik
       altMetinRengi: _gri,
       rota: AppRoutes.sikayetlerim,
     ),
@@ -187,13 +146,14 @@ class MockHomeRepository implements HomeRepository {
       ikon: Icons.info,
       baslik: 'Duyurular',
       accent: HomeTokens.purple,
-      altMetin: '3 Yeni',
+      altMetin: null, // GET /announcements
       rota: AppRoutes.announcements,
     ),
     HizliErisimKart(
       ikon: Icons.bar_chart,
       baslik: 'Site Raporları',
       accent: HomeTokens.primary,
+      // Sayac degil bolum etiketi (GET /reports/financial-summary ekrani).
       altMetin: 'Aylık Özet',
       altMetinRengi: _gri,
       rota: AppRoutes.transparency,
@@ -206,14 +166,14 @@ class MockHomeRepository implements HomeRepository {
       ikon: Icons.local_police,
       baslik: 'Vardiya Durumu',
       accent: HomeTokens.primary,
-      altMetin: '4 Aktif',
+      altMetin: null, // GET /shifts
       rota: AppRoutes.vardiyalar,
     ),
     HizliErisimKart(
       ikon: Icons.assignment_turned_in_outlined,
       baslik: 'Görevler',
       accent: HomeTokens.green,
-      altMetin: '6 Bekliyor',
+      altMetin: null, // GET /tasks?aktif=true → meta.total
       altMetinRengi: _gri,
       rota: '${AppRoutes.tasks}?gorunum=yonetim',
     ),
@@ -221,273 +181,96 @@ class MockHomeRepository implements HomeRepository {
       ikon: Icons.description_outlined,
       baslik: 'Aidat Durumu',
       accent: HomeTokens.orange,
-      altMetin: '104 Daire',
+      // GET /reports/financial-summary → tahsilat.geciken_daire_sayisi
+      altMetin: null,
       altMetinRengi: _gri,
       rota: AppRoutes.financialSummary,
     ),
+    // TODO(contract): otopark ucu YOK (kapasite/doluluk/park yeri). Oneri:
+    // GET /parking/occupancy.
     HizliErisimKart(
       ikon: Icons.directions_car,
       baslik: 'Otopark Kullanımı',
       accent: HomeTokens.purple,
-      altMetin: '78 / 120',
-      altMetinRengi: HomeTokens.primary,
+      altMetin: _yakinda,
+      altMetinRengi: _gri,
     ),
+    // TODO(contract): ihlal ucu YOK (bkz. gorevli seridi).
     HizliErisimKart(
       ikon: Icons.error_outline,
       baslik: 'İhlaller',
       accent: HomeTokens.red,
-      altMetin: '5 Yeni',
+      altMetin: _yakinda,
+      altMetinRengi: _gri,
     ),
     HizliErisimKart(
       ikon: Icons.mode_comment_outlined,
       baslik: 'Geri Bildirim',
       accent: HomeTokens.orange,
-      altMetin: '8 Yeni',
+      altMetin: null, // GET /complaints?durum=acik → meta.total
       rota: AppRoutes.complaints,
     ),
     HizliErisimKart(
       ikon: Icons.campaign_outlined,
       baslik: 'Şikayetler',
       accent: HomeTokens.purple,
-      altMetin: '3 Yeni',
+      altMetin: null, // GET /unit-complaints?durum=acik → meta.total
       rota: AppRoutes.sikayetHaritasi,
     ),
     HizliErisimKart(
       ikon: Icons.bar_chart,
       baslik: 'Raporlar',
       accent: HomeTokens.primary,
-      altMetin: 'Aylık Özet',
+      altMetin: 'Aylık Özet', // bolum etiketi, sayac degil
       altMetinRengi: _gri,
       rota: AppRoutes.reports,
     ),
   ];
 
-  // -------------------------------------------------------------- hareketler
-  @override
-  List<HareketSatiri> hareketler(HomeVaryant varyant) => switch (varyant) {
-        HomeVaryant.gorevli => _gorevliHareket,
-        HomeVaryant.sakin => _sakinHareket,
-        HomeVaryant.yonetici => _yoneticiHareket,
-      };
-
-  static const _gorevliHareket = <HareketSatiri>[
-    HareketSatiri(
-      ikon: Icons.error_outline,
-      baslik: 'Kamera İhlal Tespiti',
-      altBaslik: 'Otopark Girişi - Kamera 3',
-      zaman: '09:32',
-      ikonAccent: HomeTokens.red,
-      noktaRengi: HomeTokens.red,
-    ),
-    HareketSatiri(
-      ikon: Icons.sensor_door_outlined,
-      baslik: 'Kapı Açıldı',
-      altBaslik: 'A Blok - Ana Giriş',
-      zaman: '09:21',
-      ikonAccent: HomeTokens.green,
-      noktaRengi: HomeTokens.green,
-    ),
-    HareketSatiri(
-      ikon: Icons.directions_car,
-      baslik: 'Araç Girişi',
-      altBaslik: '34 ABC 123 - BMW Siyah',
-      zaman: '09:15',
-      ikonAccent: HomeTokens.primary,
-      noktaRengi: HomeTokens.primary,
-    ),
-    HareketSatiri(
-      ikon: Icons.inventory_2_outlined,
-      baslik: 'Kargo Teslim Alındı',
-      altBaslik: 'Mng Kargo - 245781236',
-      zaman: '09:05',
-      ikonAccent: HomeTokens.orange,
-      noktaRengi: HomeTokens.orange,
-    ),
-    HareketSatiri(
-      ikon: Icons.person_outline,
-      baslik: 'Ziyaretçi Girişi',
-      altBaslik: 'Ahmet Yılmaz - Daire 15',
-      zaman: '08:58',
-      ikonAccent: HomeTokens.purple,
-      noktaRengi: HomeTokens.purple,
-    ),
-  ];
-
-  static const _sakinHareket = <HareketSatiri>[
-    HareketSatiri(
-      ikon: Icons.person_outline,
-      baslik: 'Ziyaretçi Girişi',
-      altBaslik: 'Ahmet Yılmaz - Daire 15',
-      zaman: 'Bugün 10:15',
-      ikonAccent: HomeTokens.purple,
-      noktaRengi: HomeTokens.purple,
-    ),
-    HareketSatiri(
-      ikon: Icons.inventory_2_outlined,
-      baslik: 'Kargo Teslim Edildi',
-      altBaslik: 'Mng Kargo - 245781236',
-      zaman: 'Bugün 09:47',
-      ikonAccent: HomeTokens.green,
-      noktaRengi: HomeTokens.green,
-    ),
-    HareketSatiri(
-      // Gorselde ikon KIRMIZI ses dalgasi (modulun rengi), nokta TURUNCU
-      // (olayin durum rengi) — ikisi bilincli olarak ayri.
-      ikon: Icons.graphic_eq,
-      baslik: 'Gürültü Şikayeti Bildirimi',
-      altBaslik: 'Akşam 22:30 – Müzik Sesi',
-      zaman: 'Dün 22:35',
-      ikonAccent: HomeTokens.red,
-      noktaRengi: HomeTokens.orange,
-    ),
-    HareketSatiri(
-      ikon: Icons.campaign,
-      baslik: 'Geri Bildirim',
-      altBaslik: 'Asansör temizliği hakkında',
-      zaman: 'Dün 15:20',
-      ikonAccent: HomeTokens.orange,
-      noktaRengi: HomeTokens.purple,
-    ),
-    HareketSatiri(
-      ikon: Icons.account_balance_wallet,
-      baslik: 'Aidat Ödemesi',
-      altBaslik: 'Mayıs 2026 - Ödeme Yapıldı',
-      zaman: '05.05.2026',
-      ikonAccent: HomeTokens.primary,
-      noktaRengi: HomeTokens.green,
-    ),
-  ];
-
-  static const _yoneticiHareket = <HareketSatiri>[
-    HareketSatiri(
-      ikon: Icons.error_outline,
-      baslik: 'Kamera İhlal Tespiti',
-      altBaslik: 'Otopark Girişi - Kamera 3',
-      zaman: '09:32',
-      ikonAccent: HomeTokens.red,
-      noktaRengi: HomeTokens.red,
-    ),
-    HareketSatiri(
-      ikon: Icons.sensor_door_outlined,
-      baslik: 'Kapı Açıldı',
-      altBaslik: 'A Blok - Ana Giriş',
-      zaman: '09:21',
-      ikonAccent: HomeTokens.green,
-      noktaRengi: HomeTokens.green,
-    ),
-    HareketSatiri(
-      ikon: Icons.description_outlined,
-      baslik: 'Aidat Ödemesi',
-      altBaslik: 'Daire 15 - Aylık Ödeme',
-      zaman: '09:15',
-      ikonAccent: HomeTokens.orange,
-      noktaRengi: HomeTokens.primary,
-    ),
-    HareketSatiri(
-      ikon: Icons.mode_comment_outlined,
-      baslik: 'Yeni Şikayet',
-      altBaslik: 'Gürültü şikayeti - Daire 22',
-      zaman: '08:58',
-      ikonAccent: HomeTokens.purple,
-      noktaRengi: HomeTokens.purple,
-    ),
-  ];
-
-  // ----------------------------------------------------------------- vardiya
-  @override
-  List<VardiyaKart> vardiyalar() => const [
-        VardiyaKart(
-          baslik: 'Sabah Vardiyası',
-          altBaslik: '06:00 - 14:00',
-          durum: VardiyaDurum.aktif,
-          altBilgi: '2 Görevli',
-          online: false,
-        ),
-        VardiyaKart(
-          baslik: 'Öğle Vardiyası',
-          altBaslik: '14:00 - 22:00',
-          durum: VardiyaDurum.aktif,
-          altBilgi: '2 Görevli',
-        ),
-        VardiyaKart(
-          baslik: 'Gece Vardiyası',
-          altBaslik: '22:00 - 06:00',
-          durum: VardiyaDurum.planlandi,
-          altBilgi: '2 Görevli',
-        ),
-        VardiyaKart(
-          baslik: 'Yönetici',
-          altBaslik: 'Kerem Aşçı',
-          durum: VardiyaDurum.yonetici,
-          altBilgi: 'Online',
-          online: true,
-        ),
-      ];
-
-  // ------------------------------------------------------------- hizli ozet
   @override
   List<OzetKutusu> ozet() => const [
         OzetKutusu(
           ikon: Icons.groups,
-          deger: '512',
+          deger: null, // GET /units?limit=1 → meta.total
           etiket: 'Toplam Daire',
           altEtiket: 'Tüm Site',
           accent: HomeTokens.primary,
         ),
         OzetKutusu(
           ikon: Icons.paid_outlined,
-          deger: '₺248.750',
+          deger: null, // GET /reports/financial-summary → tahsilat_kurus
           etiket: 'Toplam Tahsilat',
           altEtiket: 'Bu Ay',
           accent: HomeTokens.green,
         ),
         OzetKutusu(
           ikon: Icons.percent,
-          deger: '%86',
+          deger: null, // .. → tahsilat_orani_yuzde
           etiket: 'Aidat Tahsilat Oranı',
           altEtiket: 'Bu Ay',
           accent: HomeTokens.orange,
         ),
+        // TODO(contract): otopark doluluk ucu YOK — kapasite de doluluk da
+        // hicbir semada gecmiyor. Oneri: GET /parking/occupancy.
         OzetKutusu(
           ikon: Icons.directions_car,
-          deger: '78 / 120',
+          deger: _bos,
           etiket: 'Otopark Doluluk',
-          altEtiket: '%65',
+          altEtiket: _yakinda,
           accent: HomeTokens.purple,
         ),
-      ];
-
-  // ------------------------------------------------------------------- sakin
-  @override
-  OdemeOzeti odeme() => const OdemeOzeti(
-        buAyTutar: '₺1.250,00',
-        odendi: true,
-        sonOdeme: '05.05.2026',
-        gelecekTarih: '05.06.2026',
-        gelecekTutar: '₺1.250,00',
-      );
-
-  @override
-  DuyuruOzeti duyuru() => const DuyuruOzeti(
-        baslik: 'Bahçe Düzenlemesi',
-        govde: 'Site bahçemizde peyzaj düzenlemesi yapılacaktır.',
-        tarih: '20 Mayıs – 09:00',
-        yeni: true,
-      );
-
-  // ---------------------------------------------------------------- kameralar
-  @override
-  List<KameraOzeti> kameralar() => const [
-        KameraOzeti(ad: 'Ana Giriş'),
-        KameraOzeti(ad: 'Otopark'),
-        KameraOzeti(ad: 'Arka Bahçe'),
-        KameraOzeti(ad: 'B Blok Girişi'),
       ];
 }
 
 /// Referans gorsellerde ACIKLAMA alt metinleri gridir (sayac degil).
 const _gri = Color(0xFF6B7280);
 
-/// Ana ekran taban verisi. Testte `overrideWithValue` ile degistirilebilir.
+/// Sozlesmede karsiligi olmayan kartin sayac satiri — sayi YERINE bu durur.
+const _yakinda = 'Yakında';
+
+/// Sozlesmede karsiligi olmayan istatistik kutusunun degeri.
+const _bos = '—';
+
+/// Ana ekran taban duzeni. Testte `overrideWithValue` ile degistirilebilir.
 final homeRepositoryProvider =
     Provider<HomeRepository>((ref) => const MockHomeRepository());

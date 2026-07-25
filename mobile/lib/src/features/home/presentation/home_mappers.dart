@@ -32,8 +32,11 @@ List<VardiyaKart> vardiyaKartlari({
   required DateTime now,
   String? yoneticiAd,
   String? yoneticiAvatarUrl,
-}) =>
-    [
+}) {
+  // Vardiya YOKSA bolum hic cizilmez — yalniz "Yönetici" karti tasiyan bir
+  // serit referansta yoktur ve "vardiya durumu" bilgisi vermez.
+  if (vardiyalar.isEmpty) return const [];
+  return [
       for (final v in vardiyalar)
         VardiyaKart(
           baslik: v.ad,
@@ -57,7 +60,8 @@ List<VardiyaKart> vardiyaKartlari({
           online: true,
           avatarUrl: yoneticiAvatarUrl,
         ),
-    ];
+  ];
+}
 
 /// Istemcide birlestirilen [Hareket] akisi → "Son Hareketler" satirlari.
 /// Ikon MODULUN rengini, nokta OLAYIN durum rengini tasir (referans).
@@ -135,6 +139,8 @@ IconData _ikon(HareketTip tip) => switch (tip) {
         Icons.inventory_2_outlined,
       HareketTip.ziyaretci => Icons.person_outline,
       HareketTip.aidatOdeme => Icons.account_balance_wallet,
+      HareketTip.talep => Icons.mode_comment_outlined,
+      HareketTip.gorevTamamlama => Icons.assignment_turned_in_outlined,
       HareketTip.alarm => Icons.error_outline,
       HareketTip.uyari => Icons.schedule_outlined,
       HareketTip.bilgi => Icons.notifications_outlined,
@@ -146,6 +152,8 @@ Color _ikonAccent(HareketTip tip) => switch (tip) {
       HareketTip.kargoTeslim => HomeTokens.green,
       HareketTip.ziyaretci => HomeTokens.purple,
       HareketTip.aidatOdeme => HomeTokens.primary,
+      HareketTip.talep => HomeTokens.purple,
+      HareketTip.gorevTamamlama => HomeTokens.green,
       HareketTip.alarm => HomeTokens.red,
       HareketTip.uyari => HomeTokens.orange,
       HareketTip.bilgi => HomeTokens.primary,
@@ -158,6 +166,8 @@ Color _nokta(HareketTip tip) => switch (tip) {
       HareketTip.kargoTeslim => HomeTokens.green,
       HareketTip.ziyaretci => HomeTokens.purple,
       HareketTip.aidatOdeme => HomeTokens.green,
+      HareketTip.talep => HomeTokens.orange,
+      HareketTip.gorevTamamlama => HomeTokens.green,
       HareketTip.alarm => HomeTokens.red,
       HareketTip.uyari => HomeTokens.orange,
       HareketTip.bilgi => HomeTokens.primary,

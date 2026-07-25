@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/src/features/cameras/domain/camera_models.dart';
 import 'package:mobile/src/features/dues/domain/dues_models.dart';
-import 'package:mobile/src/features/home/data/home_repository.dart';
 import 'package:mobile/src/features/home/presentation/home_mappers.dart';
 import 'package:mobile/src/features/home/presentation/widgets/kamera_seridi.dart';
 import 'package:mobile/src/features/home/presentation/widgets/odeme_karti.dart';
@@ -9,7 +9,30 @@ import 'package:mobile/src/features/home/presentation/widgets/odeme_karti.dart';
 Widget _wrap(Widget child) =>
     MaterialApp(home: Scaffold(body: SingleChildScrollView(child: child)));
 
-const _mock = MockHomeRepository();
+/// GERCEK `/me/dues` sekli: borcsuz daire — tahakkuk 1.250,00 ve son odeme
+/// 05.05.2026, sonraki son-odeme tarihi 05.06.2026.
+final _borcsuzUnit = MyDuesUnit(
+  unitId: 'u1',
+  no: '12',
+  tahakkukKurus: 125000,
+  odenenKurus: 125000,
+  bakiyeKurus: 0,
+  assessments: [
+    DuesAssessment(
+      donem: '2026-05',
+      tutarKurus: 125000,
+      sonOdemeTarihi: DateTime(2026, 6, 5),
+    ),
+  ],
+  payments: [
+    DuesPayment(
+      tutarKurus: 125000,
+      odemeZamani: DateTime(2026, 5, 5),
+      yontem: 'elden',
+      durum: 'basarili',
+    ),
+  ],
+);
 
 void main() {
   group('OdemeKarti — "Ödeme ve Aidat Durumu" iki sutun (referans)', () {
@@ -17,7 +40,7 @@ void main() {
         'gelecek odeme + "Geçmiş Ödemeler" butonu', (tester) async {
       var gecmis = 0;
       await tester.pumpWidget(_wrap(OdemeKarti(
-        ozet: _mock.odeme(),
+        ozet: odemeOzeti([_borcsuzUnit])!,
         onGecmis: () => gecmis++,
       )));
 
@@ -113,7 +136,11 @@ void main() {
 
       int? secilen;
       await tester.pumpWidget(_wrap(KameraSeridi(
-        kameralar: _mock.kameralar(),
+        // GERCEK /cameras yanitindan turer (mock kamera listesi kaldirildi).
+        kameralar: kameraOzetleri(const [
+          Camera(id: 'c1', ad: 'Ana Giriş', streamUrl: 'https://x/1.m3u8'),
+          Camera(id: 'c2', ad: 'Otopark', streamUrl: 'https://x/2.m3u8'),
+        ]),
         onIzle: (i) => secilen = i,
       )));
 
