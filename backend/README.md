@@ -396,6 +396,20 @@ Parolalar `SEED_ADMIN_PASSWORD` / `SEED_YONETICI_PASSWORD` / `SEED_GUARD_PASSWOR
 `SEED_CLEANER_PASSWORD` / `SEED_RESIDENT_PASSWORD`
 env'leri ile override edilebilir.
 
+**Seed gorselleri (MinIO).** Gorselli kayitlar (yaklasan etkinlikler + bir site
+kurali) icin seed kucuk birer PNG uretir ve MinIO'ya **EN-IYI-CABA** yukler;
+foto_key her zaman yazilir, yukleme basarisiz olursa seed durmaz (`[seed] UYARI
+gorsel yuklenemedi ...` basar, yalnizca gorsel gorunmez). api/seed
+konteynerindeki `MINIO_ENDPOINT` presign icin PUBLIC adrestir; seed IC agdan
+yazdigi icin ayri degisken kullanir: `MINIO_SEED_ENDPOINT`
+(varsayilan `http://minio:9000`).
+
+**Kamera seed'i gercek PUBLIC test yayinlaridir** (oynatma gercekten denenebilir):
+5 kayit — 3 `hls` + 1 `mp4` + 1 `rtsp`; `sakin_gorebilir=true` yalniz "Ana Kapı"
+ve "Otopark"ta, "Servis Girişi" ise `aktif=false` (bayrak acik olsa da sakin
+GORMEZ). Yani `GET /cameras` -> admin/yonetici/security 5, resident/
+tesis_gorevlisi 2 kayit dondurur; `rtsp` kaydinda `oynatilabilir=false`.
+
 Calistirma (api ayaktayken — tek komut):
 ```bash
 docker compose exec api python -m scripts.seed

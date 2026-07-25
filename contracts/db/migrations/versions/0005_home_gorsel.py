@@ -6,6 +6,9 @@
 * shift_assignment        : vardiya <-> personel atamasi (yonetici atar).
 * camera                  : site kamera yayin URL'leri (istemci oynatir;
                             backend yayini HIC cekmez — SSRF yuzeyi yok).
+                            ad/konum/stream_url/tur/aktif/sakin_gorebilir —
+                            sakin gorunurlugu YALNIZ sakin_gorebilir ile acilir
+                            (varsayilan false).
 
 URETIM: additive + geriye-uyumlu; 0001-0004 IMMUTABLE.
 """
@@ -47,18 +50,34 @@ def upgrade() -> None:
         );
         """
     )
+    # Yayin turu: hls/mp4 istemcide OYNAR; rtsp saklanir ama native
+    # oynatilamaz (API `oynatilabilir=false` isaretler — ileride medya gecidi).
+    op.execute("CREATE TYPE camera_tur AS ENUM ('hls', 'mp4', 'rtsp');")
     op.execute(
         """
         CREATE TABLE camera (
             id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id  uuid NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
             ad         text NOT NULL,
+            -- Serbest konum metni (orn. "Ana Kapı - Giriş").
+            konum      text,
             stream_url text NOT NULL,
+            tur        camera_tur NOT NULL DEFAULT 'hls',
+            -- Pasif kamera hicbir sakine/gorevliye gosterilmez (yonetim gorur).
+            aktif      boolean NOT NULL DEFAULT true,
+            -- KVKK ANAHTARI: sakin/tesis gorevlisi gorunurlugu YALNIZ bu
+            -- bayrakla acilir; varsayilan KAPALI (kamera mahremiyet tasir).
+            sakin_gorebilir boolean NOT NULL DEFAULT false,
             created_at timestamptz NOT NULL DEFAULT now(),
             updated_at timestamptz NOT NULL DEFAULT now(),
             UNIQUE (tenant_id, ad)
         );
         """
+    )
+    # Sakine acik + aktif kamera listesi en sik sorgu (ana ekran seridi).
+    op.execute(
+        "CREATE INDEX ix_camera_tenant_gorunur ON camera "
+        "(tenant_id, aktif, sakin_gorebilir);"
     )
     for table in ("shift_assignment", "camera"):
         op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;")
@@ -77,6 +96,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.execute("DROP TABLE IF EXISTS camera;")
+    op.execute("DROP TYPE IF EXISTS camera_tur;")
     op.execute("DROP TABLE IF EXISTS shift_assignment;")
     op.execute("ALTER TABLE app_user DROP COLUMN IF EXISTS avatar_key;")
     op.execute(

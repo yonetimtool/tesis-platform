@@ -114,6 +114,12 @@ KATILIM_DURUM = ENUM(
     "katiliyorum", "katilmiyorum",
     name="katilim_durum", create_type=False,
 )
+# Kamera yayin turu: hls/mp4 istemcide OYNAR, rtsp saklanir ama oynatilamaz
+# (API cikisinda oynatilabilir=false).
+CAMERA_TUR = ENUM(
+    "hls", "mp4", "rtsp",
+    name="camera_tur", create_type=False,
+)
 INTEGRATION_CHANNEL = ENUM(
     "webhook", "megaphone", "smarthome",
     name="integration_channel", create_type=False,
@@ -295,7 +301,16 @@ class ShiftAssignment(Base):
 
 
 class Camera(Base):
-    """Site kamera yayini (0005) — ad + istemcinin oynattigi URL (MVP)."""
+    """Site kamerasi (0005) — yonetim yonetir, gorunurluk role gore suzulur.
+
+    `sakin_gorebilir` TEK anahtardir: resident + tesis_gorevlisi YALNIZ
+    `aktif=true AND sakin_gorebilir=true` kameralari gorur (suzgec SUNUCUDA,
+    bkz. routers/cameras.py). Varsayilan KAPALI — kamera mahremiyet tasir.
+
+    Backend yayini HIC cekmez (istemci oynatir) => SSRF yuzeyi yok. `tur`
+    oynatilabilirligi belirler: hls/mp4 oynar, rtsp saklanir ama istemci
+    natively oynatamaz (cikista `oynatilabilir=false`).
+    """
 
     __tablename__ = "camera"
     __table_args__ = (
@@ -307,7 +322,17 @@ class Camera(Base):
         UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
     )
     ad: Mapped[str] = mapped_column(Text, nullable=False)
+    konum: Mapped[str | None] = mapped_column(Text, nullable=True)
     stream_url: Mapped[str] = mapped_column(Text, nullable=False)
+    tur: Mapped[str] = mapped_column(
+        CAMERA_TUR, nullable=False, server_default=text("'hls'")
+    )
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    sakin_gorebilir: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     created_at = _created_at()
     updated_at = _created_at()
 
@@ -1403,8 +1428,12 @@ class Etkinlik(Base):
     )
     baslik: Mapped[str] = mapped_column(Text, nullable=False)
     aciklama: Mapped[str] = mapped_column(Text, nullable=False)
+    # Baslangic; bitis_zamani NULL ise etkinlik anliktir (bitis = baslangic).
     tarih = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    bitis_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     konum: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Opsiyonel gorsel — duyuru/site kurali ile AYNI presign mekanizmasi.
+    foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     olusturan_user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), nullable=False
     )

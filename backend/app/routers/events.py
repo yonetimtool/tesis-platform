@@ -14,6 +14,16 @@ Akis (urun sahibi sabit):
      Kim-katiliyor listesi URUN GEREGI paylasilmaz — kimlik degil yalniz sayi
      (benim_durumum yalniz istekteki kullanicinin KENDI beyanidir).
 
+Opsiyonel gorsel: olusturma/duzenlemede /uploads/presign ile yuklenmis
+foto_key kabul edilir (duyuru + site kurali ile AYNI mekanizma: ayni depo,
+ayni boyut/tur limitleri, tenant-namespace IDOR kontrolu); okumada kisa
+omurlu presigned GET `foto_url` doner.
+
+Yaklasan/aktif suzgeci: `?aktif=true` -> `COALESCE(bitis_zamani, tarih) >=
+now()`. Etkinlik BITISI gecene kadar listede kalir; bitis verilmemisse
+etkinlik anliktir (bitis = baslangic). aktif=true siralamasi YAKLASAN
+(ASC — en yakin once); suzgecsiz liste EN YENI once (DESC, geriye uyumlu).
+
 RBAC (auth.md §4): OLUSTUR/DUZENLE/SIL admin+yonetici (duyuru deseni).
 OKUMA TUM roller (sayilar dahil — seffaflik). RSVP YALNIZ resident —
 etkinligin muhatabi sakinlerdir; personel katilim beyani vermez (karar).
@@ -34,6 +44,7 @@ from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Etkinlik, EtkinlikKatilim
 from ..scheduler.notify import dispatch_external
+from ..storage import presign_get
 from ..schemas import (
     EtkinlikCreate,
     EtkinlikListResponse,
@@ -55,13 +66,31 @@ _RSVP = require_role("resident")
 _AUDIENCE_ROLES: tuple[str, ...] = ("resident",)
 
 
+def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
+    """foto_key kendi tenant namespace'inde olmali (duyuru/site kurali ile ayni
+    IDOR korumasi: okumada bu anahtara presigned GET imzalanir)."""
+    if foto_key is not None and not foto_key.startswith(f"{tenant_id}/"):
+        raise APIError(422, "invalid_foto_key", "foto_key tenant alani disinda")
+
+
 def _out(obj: Etkinlik, olusturan_ad, katiliyor, katilmiyor, benim) -> EtkinlikOut:
     out = EtkinlikOut.model_validate(obj)
     out.olusturan_ad = olusturan_ad
     out.katiliyorum_sayisi = int(katiliyor or 0)
     out.katilmiyorum_sayisi = int(katilmiyor or 0)
     out.benim_durumum = benim
+    if obj.foto_key:
+        try:
+            out.foto_url = presign_get(obj.foto_key)
+        except APIError:
+            # Depo yapilandirilmamissa okuma akisi kirilmasin (duyuru deseni).
+            out.foto_url = None
     return out
+
+
+def _bitis_ifadesi():
+    """Etkinligin BITIS ani — bitis verilmemisse baslangic (anlik etkinlik)."""
+    return func.coalesce(Etkinlik.bitis_zamani, Etkinlik.tarih)
 
 
 def _base_stmt(user: AppUser):
@@ -118,12 +147,15 @@ async def create_event(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_MANAGER),
 ) -> EtkinlikOut:
+    _validate_foto_key(body.foto_key, user.tenant_id)
     obj = Etkinlik(
         tenant_id=user.tenant_id,
         baslik=body.baslik,
         aciklama=body.aciklama,
         tarih=body.tarih,
+        bitis_zamani=body.bitis_zamani,
         konum=body.konum,
+        foto_key=body.foto_key,
         olusturan_user_id=user.id,
     )
     db.add(obj)
@@ -155,7 +187,19 @@ async def update_event(
     ).scalar_one_or_none()
     if obj is None:
         raise APIError(404, "not_found", "Kayit bulunamadi")
-    for k, v in body.model_dump(exclude_unset=True).items():
+    alanlar = body.model_dump(exclude_unset=True)
+    if "foto_key" in alanlar:
+        _validate_foto_key(alanlar["foto_key"], user.tenant_id)
+    # Aralik dogrulamasi MEVCUT kayitla birlesik: yalniz `tarih` ya da yalniz
+    # `bitis_zamani` gonderildiginde de ters aralik olusamaz (DB'deki
+    # ck_etkinlik_bitis ayni kurali son savunma olarak zorlar).
+    yeni_tarih = alanlar.get("tarih", obj.tarih)
+    yeni_bitis = alanlar.get("bitis_zamani", obj.bitis_zamani)
+    if yeni_bitis is not None and yeni_bitis <= yeni_tarih:
+        raise APIError(
+            422, "invalid_bitis_zamani", "bitis_zamani baslangictan sonra olmali"
+        )
+    for k, v in alanlar.items():
         setattr(obj, k, v)
     obj.updated_at = func.now()
     try:
@@ -187,19 +231,35 @@ async def delete_event(
 async def list_events(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
+    aktif: bool | None = Query(
+        None,
+        description=(
+            "true: BITISI gecmemis (yaklasan/suren) etkinlikler — "
+            "COALESCE(bitis_zamani, tarih) >= now(), YAKLASAN siralamasi "
+            "(en yakin once). false: bitmis etkinlikler (en yeni once). "
+            "Verilmezse tumu (en yeni once)."
+        ),
+    ),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> EtkinlikListResponse:
-    total = (
-        await db.execute(select(func.count()).select_from(Etkinlik))
-    ).scalar_one()
-    rows = (
-        await db.execute(
-            # Etkinlik zamanina gore DESC: en yeni/yaklasan onde; istemci
-            # yaklasan/gecmis ayrimini tarih'e gore yapar.
-            _base_stmt(user).order_by(Etkinlik.tarih.desc()).limit(limit).offset(offset)
+    sayim = select(func.count()).select_from(Etkinlik)
+    stmt = _base_stmt(user)
+    if aktif is not None:
+        kosul = (
+            _bitis_ifadesi() >= func.now()
+            if aktif
+            else _bitis_ifadesi() < func.now()
         )
-    ).all()
+        sayim = sayim.where(kosul)
+        stmt = stmt.where(kosul)
+    # aktif=true ana ekranin "yaklasan" bolumu: en YAKIN once (ASC).
+    # Diger durumlarda geriye uyumlu: en YENI once (DESC).
+    stmt = stmt.order_by(
+        _bitis_ifadesi().asc() if aktif else Etkinlik.tarih.desc()
+    )
+    total = (await db.execute(sayim)).scalar_one()
+    rows = (await db.execute(stmt.limit(limit).offset(offset))).all()
     return EtkinlikListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
         items=[_out(*r) for r in rows],

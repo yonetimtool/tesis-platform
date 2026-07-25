@@ -1710,13 +1710,24 @@ def upgrade() -> None:
             tenant_id           uuid NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
             baslik              text NOT NULL,
             aciklama            text NOT NULL,
-            tarih               timestamptz NOT NULL,   -- etkinlik zamani
+            tarih               timestamptz NOT NULL,   -- etkinlik BASLANGICI
+            -- Opsiyonel BITIS: "yaklasan/aktif" suzgeci (?aktif=true) sonu
+            -- gecmemis etkinlikleri doner -> COALESCE(bitis_zamani, tarih).
+            -- NULL = anlik/tek-zamanli etkinlik (bitis = baslangic).
+            bitis_zamani        timestamptz,
             konum               text,                   -- opsiyonel yer bilgisi
+            -- Opsiyonel gorsel: /uploads/presign ile yuklenen MinIO anahtari
+            -- (duyuru/site_kurali ile AYNI mekanizma; okumada presigned GET).
+            foto_key            text,
             olusturan_user_id   uuid NOT NULL,
             created_at          timestamptz NOT NULL DEFAULT now(),
             updated_at          timestamptz NOT NULL DEFAULT now(),
             -- composite FK hedefi (etkinlik_katilim.etkinlik_id).
             CONSTRAINT uq_etkinlik_id_tenant UNIQUE (id, tenant_id),
+            -- Bitis varsa baslangictan SONRA olmali (ters aralik yazilamaz).
+            CONSTRAINT ck_etkinlik_bitis CHECK (
+                bitis_zamani IS NULL OR bitis_zamani > tarih
+            ),
             CONSTRAINT fk_etkinlik_olusturan
                 FOREIGN KEY (olusturan_user_id, tenant_id)
                 REFERENCES app_user (id, tenant_id) ON DELETE RESTRICT
@@ -1726,6 +1737,11 @@ def upgrade() -> None:
     op.execute("CREATE INDEX ix_etkinlik_tenant ON etkinlik (tenant_id);")
     op.execute(
         "CREATE INDEX ix_etkinlik_tenant_tarih ON etkinlik (tenant_id, tarih DESC);"
+    )
+    # ?aktif=true suzgeci + "yaklasan" siralamasi ayni ifadeyi kullanir.
+    op.execute(
+        "CREATE INDEX ix_etkinlik_tenant_bitis ON etkinlik "
+        "(tenant_id, (COALESCE(bitis_zamani, tarih)));"
     )
 
     op.execute(

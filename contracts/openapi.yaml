@@ -1862,16 +1862,38 @@ paths:
   /events:
     get:
       tags: [etkinlik]
-      summary: Etkinlik listesi (tarih DESC) + seffaf katilim sayilari
+      summary: Etkinlik listesi + seffaf katilim sayilari (?aktif ile yaklasanlar)
       description: |
         TUM roller okur. Her etkinlik SEFFAF sayilarla doner
         (katiliyorum_sayisi + katilmiyorum_sayisi — herkes gorur) ve
         istekteki kullanicinin KENDI beyani (benim_durumum; yoksa null) ile
         gelir. Kim-katiliyor listesi URUN GEREGI donmez — kimlik degil,
-        yalniz sayi. Yaklasan/gecmis ayrimini istemci tarih'e gore yapar.
+        yalniz sayi.
+
+        **Yaklasan/aktif suzgeci (`?aktif=true`)**: etkinlik BITISI gecene
+        kadar listede kalir —
+        `COALESCE(bitis_zamani, tarih) >= now()`. `bitis_zamani` verilmemis
+        etkinlik ANLIKTIR (bitis = baslangic), yani baslangic anini gecince
+        listeden duser. Siralama:
+
+        | sorgu | siralama |
+        |---|---|
+        | `?aktif=true` | YAKLASAN once (bitis ASC) — ana ekran "yaklasan etkinlikler" bolumu |
+        | `?aktif=false` | bitmisler, en YENI once (tarih DESC) |
+        | suzgecsiz | tumu, en YENI once (tarih DESC — geriye uyumlu) |
+
+        Gorsel: `foto_url` kisa omurlu presigned GET'tir (foto_key varsa) —
+        duyuru/site kurali ile AYNI mekanizma.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          required: false
+          description: >
+            true: bitisi gecmemis (yaklasan/suren) etkinlikler, en yakin once.
+            false: bitmis etkinlikler. Verilmezse tumu.
+          schema: { type: boolean }
       responses:
         "200":
           description: Liste
@@ -1895,6 +1917,14 @@ paths:
         sonrasi TUM SAKINLERIN cihazlarina push denenir (hedef kitle
         sakinler; personel okur ama push almaz — EK gonderim, hatasi kaydi
         etkilemez; data: tip=etkinlik, etkinlik_id).
+
+        Opsiyonel `bitis_zamani` baslangictan SONRA olmali (aksi 422); DB'de
+        `ck_etkinlik_bitis` ile de zorlanir.
+
+        Opsiyonel gorsel: `POST /uploads/presign` ile yuklenen `foto_key`
+        (duyuru + site kurali ile AYNI akis: ayni depo, ayni tur/boyut
+        limitleri). foto_key kendi tenant onekinde olmali — aksi halde 422
+        `invalid_foto_key` (IDOR korumasi). Okumada `foto_url` doner.
       requestBody:
         required: true
         content:
@@ -1928,6 +1958,11 @@ paths:
     patch:
       tags: [etkinlik]
       summary: Etkinlik duzenle (admin + yonetici; en az bir alan)
+      description: |
+        Aralik dogrulamasi MEVCUT kayitla birlesiktir: yalniz `tarih` ya da
+        yalniz `bitis_zamani` gonderildiginde de ters aralik olusamaz (422
+        `invalid_bitis_zamani`). `bitis_zamani: null` bitisi kaldirir
+        (etkinlik anliga doner); `foto_key: null` gorseli kaldirir.
       requestBody:
         required: true
         content:
@@ -4646,14 +4681,41 @@ paths:
   /cameras:
     get:
       tags: [cameras]
-      summary: Kamera yayin listesi (ad ASC) — admin + yonetici + security
+      summary: Kamera listesi (ad ASC) — TUM roller, gorunurluk SUNUCUDA suzulur
       description: |
-        Site kamera yayin URL'leri. KVKK: tesis_gorevlisi ve resident kamera
-        GORMEZ (403). Backend yayini HIC cekmez — istemci oynatir (SSRF yuzeyi
-        yok); URL semasi http(s) ile sinirlidir.
+        Site kameralari. Gorunurluk ROL BAZLI ve suzgec SUNUCUDADIR — gizli
+        kamera yaniti HIC terk etmez, istemci "hangisini gorebilirim"
+        hesabi yapmaz:
+
+        | rol | gordugu kameralar |
+        |---|---|
+        | admin, yonetici, security | TUMU (pasif + sakine kapali dahil) |
+        | resident, tesis_gorevlisi | YALNIZ `aktif=true` **VE** `sakin_gorebilir=true` |
+
+        `sakin_gorebilir` TEK anahtardir ve varsayilani **false**'tur: kamera
+        mahremiyet tasir (KVKK), sakine acmak yonetimin ACIK kararidir.
+        `aktif=false` kamera hicbir sakine gosterilmez — bayrak acik olsa bile
+        iki kosul BIRLIKTE aranir.
+
+        Backend yayini HIC cekmez — istemci oynatir (SSRF yuzeyi yok).
+        `oynatilabilir` alani turden turer: `hls`/`mp4` -> true, `rtsp` ->
+        **false** (istemciler RTSP'yi natively oynatamaz; kayit envanter icin
+        tutulur, ileride medya gecidi eklenecek).
+
+        DEGISIKLIK (onceki surum): resident + tesis_gorevlisi eskiden 403
+        aliyordu, artik 200 alir. Varsayilan `sakin_gorebilir=false` oldugu
+        icin MEVCUT kayitlarin gorunurlugu degismez.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          required: false
+          description: >
+            Yonetim/operasyon suzgeci (admin+yonetici+security). resident ve
+            tesis_gorevlisi icin YOK SAYILIR — o roller her durumda yalniz
+            aktif + sakine acik kameralari alir.
+          schema: { type: boolean }
       responses:
         "200":
           description: Liste
@@ -4673,7 +4735,14 @@ paths:
     post:
       tags: [cameras]
       summary: Kamera ekle (admin + yonetici)
-      description: "`ad` tenant icinde benzersizdir (cakisirsa 409)."
+      description: |
+        `ad` tenant icinde benzersizdir (cakisirsa 409).
+
+        URL semasi `tur` ile TUTARLI olmali (aksi 422 `invalid_stream_url`):
+        `hls`/`mp4` -> `http(s)://`, `rtsp` -> `rtsp://`. rtsp KABUL EDILIR ve
+        saklanir; yanitta `oynatilabilir=false` doner.
+
+        `sakin_gorebilir` verilmezse **false** (sakin/tesis gorevlisi gormez).
       requestBody:
         required: true
         content:
@@ -4695,7 +4764,12 @@ paths:
       - $ref: "#/components/parameters/PathId"
     patch:
       tags: [cameras]
-      summary: Kamera guncelle (admin + yonetici)
+      summary: Kamera guncelle (admin + yonetici; en az bir alan)
+      description: |
+        URL/tur tutarliligi MEVCUT kayitla birlestirilerek dogrulanir: yalniz
+        `tur` gonderilse bile kayitli URL'in semasi yeni ture uymak zorundadir
+        (orn. http(s) URL'li kamera `tur=rtsp` yapilamaz -> 422
+        `invalid_stream_url`). `sakin_gorebilir` bu uctan acilip kapatilir.
       requestBody:
         required: true
         content:
@@ -6422,8 +6496,28 @@ components:
         id: { type: string, format: uuid }
         baslik: { type: string, maxLength: 200, example: Mac izleme aksami }
         aciklama: { type: string, maxLength: 5000 }
-        tarih: { type: string, format: date-time, description: Etkinlik zamani }
+        tarih:
+          type: string
+          format: date-time
+          description: Etkinlik BASLANGICI
+        bitis_zamani:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            Etkinlik bitisi; null = ANLIK etkinlik (bitis = baslangic).
+            `?aktif=true` suzgeci COALESCE(bitis_zamani, tarih) kullanir.
         konum: { type: string, nullable: true, maxLength: 500 }
+        foto_key:
+          type: string
+          nullable: true
+          description: MinIO obje anahtari (/uploads/presign ile yuklenir)
+        foto_url:
+          type: string
+          nullable: true
+          description: >
+            Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa).
+            Depo yapilandirilmamissa null doner — okuma akisi kirilmaz.
         olusturan_user_id: { type: string, format: uuid }
         olusturan_ad: { type: string, nullable: true }
         katiliyorum_sayisi: { type: integer, minimum: 0 }
@@ -6441,16 +6535,29 @@ components:
       properties:
         baslik: { type: string, minLength: 1, maxLength: 200 }
         aciklama: { type: string, minLength: 1, maxLength: 5000 }
-        tarih: { type: string, format: date-time }
+        tarih: { type: string, format: date-time, description: Baslangic }
+        bitis_zamani:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Verilirse baslangictan SONRA olmali (aksi 422)"
         konum: { type: string, nullable: true, minLength: 1, maxLength: 500 }
+        foto_key:
+          type: string
+          nullable: true
+          description: "/uploads/presign ile yuklenen obje anahtari (tenant onekli)"
     EtkinlikUpdate:
       type: object
-      description: En az bir alan gerekli
+      description: >
+        En az bir alan gerekli. `bitis_zamani: null` bitisi, `foto_key: null`
+        gorseli kaldirir.
       properties:
         baslik: { type: string, minLength: 1, maxLength: 200 }
         aciklama: { type: string, minLength: 1, maxLength: 5000 }
         tarih: { type: string, format: date-time }
+        bitis_zamani: { type: string, format: date-time, nullable: true }
         konum: { type: string, nullable: true, maxLength: 500 }
+        foto_key: { type: string, nullable: true }
     EtkinlikRsvp:
       type: object
       description: Kullanici basina TEK kayit; tekrar PUT beyani degistirir
@@ -7511,16 +7618,50 @@ components:
           description: "Tenant ayarindaki konum adi (tenant.konum_ad)"
     Camera:
       type: object
-      required: [id, ad, stream_url, created_at, updated_at]
+      description: >
+        Site kamerasi. `sakin_gorebilir` sakin/tesis gorevlisi gorunurlugunun
+        TEK anahtaridir (varsayilan false); suzgec sunucuda uygulanir.
+      required: [id, ad, stream_url, tur, aktif, sakin_gorebilir,
+                 oynatilabilir, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         ad: { type: string, maxLength: 100, example: "Ana Kapı" }
+        konum:
+          type: string
+          nullable: true
+          maxLength: 200
+          example: "Ana Kapı - Giriş"
+          description: Serbest konum metni (checkpoint FK DEGIL)
         stream_url:
           type: string
           example: "https://cam.example.com/hls/1/index.m3u8"
           description: >
-            Istemcinin oynattigi HLS/MJPEG yayini. Backend bu URL'i HIC cekmez
-            (SSRF yuzeyi yok); sema http(s) ile sinirlidir.
+            Istemcinin oynattigi yayin. Backend bu URL'i HIC cekmez (SSRF
+            yuzeyi yok). Sema `tur` ile tutarlidir: hls/mp4 -> http(s)://,
+            rtsp -> rtsp://.
+        tur:
+          type: string
+          enum: [hls, mp4, rtsp]
+          default: hls
+          description: Yayin turu; oynatilabilirligi belirler
+        aktif:
+          type: boolean
+          default: true
+          description: >
+            false = devre disi (orn. bakimda). Pasif kamera SAKINE hic
+            gosterilmez; yonetim/operasyon gorur.
+        sakin_gorebilir:
+          type: boolean
+          default: false
+          description: >
+            **KVKK anahtari.** true = resident + tesis_gorevlisi bu kamerayi
+            gorur (aktif=true ise). Varsayilan false.
+        oynatilabilir:
+          type: boolean
+          description: >
+            TURETILMIS (saklanmaz): istemci bu yayini NATIVE oynatabilir mi.
+            hls/mp4 -> true; **rtsp -> false** (kayit tutulur ama oynatilamaz;
+            ileride medya gecidi). Istemci false ise oynat dugmesini pasifler.
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
     CameraCreate:
@@ -7528,13 +7669,28 @@ components:
       required: [ad, stream_url]
       properties:
         ad: { type: string, minLength: 1, maxLength: 100 }
+        konum: { type: string, nullable: true, minLength: 1, maxLength: 200 }
         stream_url:
           type: string
-          description: "http:// veya https:// ile baslamali (aksi 422)"
+          description: >
+            Sema `tur` ile tutarli olmali (aksi 422 invalid_stream_url):
+            hls/mp4 -> http:// | https://, rtsp -> rtsp://
+        tur: { type: string, enum: [hls, mp4, rtsp], default: hls }
+        aktif: { type: boolean, default: true }
+        sakin_gorebilir:
+          type: boolean
+          default: false
+          description: Verilmezse KAPALI — sakin/tesis gorevlisi gormez
     CameraUpdate:
       type: object
-      description: En az bir alan gerekli
+      description: >
+        En az bir alan gerekli. URL/tur tutarliligi mevcut kayitla
+        birlestirilerek dogrulanir (yalniz `tur` gonderilse bile).
       minProperties: 1
       properties:
         ad: { type: string, minLength: 1, maxLength: 100 }
+        konum: { type: string, nullable: true, maxLength: 200 }
         stream_url: { type: string }
+        tur: { type: string, enum: [hls, mp4, rtsp] }
+        aktif: { type: boolean }
+        sakin_gorebilir: { type: boolean }

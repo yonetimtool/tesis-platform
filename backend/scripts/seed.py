@@ -34,6 +34,68 @@ OWNER_DSN = os.getenv(
     "postgresql://tesis_owner:owner_secret_change_me@db:5432/tesis",
 )
 
+# Seed gorselleri MinIO'ya EN-IYI-CABA yuklenir. api/seed konteynerindeki
+# MINIO_ENDPOINT presign icin PUBLIC adrestir (tarayici/cihaz erisir); yukleme
+# ise IC agdan yapilir -> ayri degisken. Erisilemezse seed DURMAZ: foto_key
+# yine yazilir (API sekli/akisi denenebilir), yalniz gorsel gorunmez.
+MINIO_SEED_ENDPOINT = os.getenv("MINIO_SEED_ENDPOINT", "http://minio:9000")
+MINIO_BUCKET = os.getenv("MINIO_BUCKET", "tesis-foto")
+MINIO_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
+MINIO_SECRET = os.getenv("MINIO_SECRET_KEY", "minioadmin12345")
+
+
+def _solid_png(width: int, height: int, rgb: tuple[int, int, int]) -> bytes:
+    """Bagimliliksiz (PIL yok) tek-renk PNG — seed gorselleri icin yeterli."""
+    import struct
+    import zlib
+
+    def chunk(tag: bytes, data: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(data))
+            + tag
+            + data
+            + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+        )
+
+    satir = b"\x00" + bytes(rgb) * width  # filter byte + RGB pikseller
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(satir * height, 6))
+        + chunk(b"IEND", b"")
+    )
+
+
+def _gorsel_yukle(tenant_id: str, ad: str, rgb: tuple[int, int, int]) -> str:
+    """Seed gorselini MinIO'ya yazar ve foto_key doner (idempotent: ayni ad ->
+    ayni anahtar, PUT ustune yazar). Yukleme basarisiz olursa UYARI basar ve
+    anahtari yine doner — DB kaydi tutarli kalir, yalniz obje eksik olur.
+
+    Anahtar tenant ile namespace'lidir (`{tenant_id}/seed/...`): API'nin
+    IDOR kontrolu (foto_key tenant onekiyle baslamali) saglanir.
+    """
+    key = f"{tenant_id}/seed/{ad}.png"
+    try:
+        import boto3
+        from botocore.client import Config
+
+        boto3.client(
+            "s3",
+            endpoint_url=MINIO_SEED_ENDPOINT,
+            aws_access_key_id=MINIO_KEY,
+            aws_secret_access_key=MINIO_SECRET,
+            config=Config(signature_version="s3v4",
+                          s3={"addressing_style": "path"}),
+        ).put_object(
+            Bucket=MINIO_BUCKET,
+            Key=key,
+            Body=_solid_png(800, 480, rgb),
+            ContentType="image/png",
+        )
+    except Exception as exc:  # pragma: no cover - dev araci; depo yoksa atla
+        print(f"[seed] UYARI gorsel yuklenemedi ({key}): {exc}")
+    return key
+
 TENANT = {
     "slug": "acme-plaza",
     "ad": "Acme Plaza",
@@ -1032,7 +1094,43 @@ def main() -> int:
                 {"t": tenant_id, "b": baslik, "a": aciklama,
                  "tarih": tarih, "k": konum, "y": yonetici_id},
             ).fetchone()[0]
-        print("[seed] etkinlikler: 'Maç izleme akşamı' (yaklasan) + 'Site genel kurulu' (gecmis)")
+        print("[seed] etkinlikler: 'Maç izleme akşamı' + 'Site genel kurulu' (ikisi de gecmis tarihli)")
+
+        # 9b) YAKLASAN 2 etkinlik + GORSEL: sakin ana ekraninin "yaklasan
+        #     etkinlikler" bolumu (?aktif=true) her zaman veriyle gorunsun.
+        #     Tarihler GORELIDIR (now() + interval) — seed ne zaman kosarsa
+        #     kossun etkinlikler yaklasan kalir. bitis_zamani dolu: etkinlik
+        #     BITENE kadar listede durur (COALESCE(bitis, tarih) >= now()).
+        yaklasan = [
+            ("Bahar şenliği", "Bahçede müzik, ikram ve çocuklar için oyun alanı.",
+             "3 days", "5 hours", "Site bahçesi", "etkinlik-bahar-senligi",
+             (37, 99, 235)),
+            ("Aidat bilgilendirme toplantısı",
+             "2026 bütçesi ve aidat kalemleri sunumu; soru-cevap.",
+             "10 days", "2 hours", "Toplantı Odası", "etkinlik-aidat-toplantisi",
+             (13, 148, 136)),
+        ]
+        for baslik, aciklama, sonra, sure, konum, dosya, renk in yaklasan:
+            foto_key = _gorsel_yukle(tenant_id, dosya, renk)
+            conn.execute(
+                f"""
+                INSERT INTO etkinlik (tenant_id, baslik, aciklama, tarih,
+                                      bitis_zamani, konum, foto_key,
+                                      olusturan_user_id)
+                SELECT %(t)s, %(b)s, %(a)s,
+                       now() + interval '{sonra}',
+                       now() + interval '{sonra}' + interval '{sure}',
+                       %(k)s, %(f)s, %(y)s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM etkinlik
+                    WHERE tenant_id = %(t)s AND baslik = %(b)s
+                )
+                """,
+                {"t": tenant_id, "b": baslik, "a": aciklama, "k": konum,
+                 "f": foto_key, "y": yonetici_id},
+            )
+        print("[seed] YAKLASAN etkinlikler (gorselli): 'Bahar şenliği' (+3g, 5s) + "
+              "'Aidat bilgilendirme toplantısı' (+10g, 2s) -> ?aktif=true = 2")
 
         # RSVP'ler: iki sakin de mac izlemeye katiliyor (sayi=2 gorunsun).
         for email in ("resident@acme.com", "resident2@acme.com"):
@@ -1078,7 +1176,58 @@ def main() -> int:
                 {"t": tenant_id, "b": baslik, "i": icerik, "s": sira,
                  "y": yonetici_id},
             )
-        print("[seed] site kurallari: Otopark Kullanımı (1), Havuz Saatleri (2), Gürültü Kuralları (3)")
+        # Bir kurala GORSEL: sakin ana ekraninda gorselli kural bolumu
+        # denenebilsin (gorsel akisi duyuru/etkinlik ile AYNI mekanizma).
+        conn.execute(
+            """
+            UPDATE site_kurali SET foto_key = %(f)s
+            WHERE tenant_id = %(t)s AND baslik = 'Otopark Kullanımı'
+              AND foto_key IS DISTINCT FROM %(f)s
+            """,
+            {"t": tenant_id,
+             "f": _gorsel_yukle(tenant_id, "kural-otopark", (234, 88, 12))},
+        )
+        print("[seed] site kurallari: Otopark Kullanımı (1, GORSELLI), "
+              "Havuz Saatleri (2), Gürültü Kuralları (3)")
+
+        # 10b) KAMERALAR (WP-H): tur karisimi + gorunurluk bayragi.
+        #      URL'ler PUBLIC test yayinlaridir -> oynatma gercekten denenir.
+        #      sakin/tesis gorevlisi YALNIZ aktif+sakin_gorebilir olanlari
+        #      gorur: burada tam 2 kamera ('Ana Kapı', 'Otopark').
+        kameralar = [
+            ("Ana Kapı", "Ana Kapı - Giriş", "hls", True, True,
+             "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"),
+            ("Otopark", "Kapalı otopark -1", "hls", True, True,
+             "https://devstreaming-cdn.apple.com/videos/streaming/examples/"
+             "img_bipbop_adv_example_fmp4/master.m3u8"),
+            # Havuz KVKK: kisiler goruntulenir -> sakine KAPALI (yonetim gorur).
+            ("Havuz", "Havuz cevresi", "mp4", True, False,
+             "https://commondatastorage.googleapis.com/gtv-videos-bucket/"
+             "sample/BigBuckBunny.mp4"),
+            # RTSP: kayit TUTULUR ama istemci oynatamaz -> oynatilabilir=false.
+            ("Arka Bahçe NVR", "NVR kanal 4", "rtsp", True, False,
+             "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4"),
+            # PASIF + sakine acik: aktif=false oldugu icin sakin GORMEZ
+            # (iki kosul birlikte aranir).
+            ("Servis Girişi (bakımda)", "Servis kapısı", "hls", False, True,
+             "https://test-streams.mux.dev/pts_shift/master.m3u8"),
+        ]
+        for ad, konum, tur, aktif, sakin_gorebilir, url in kameralar:
+            conn.execute(
+                """
+                INSERT INTO camera (tenant_id, ad, konum, stream_url, tur,
+                                    aktif, sakin_gorebilir)
+                SELECT %(t)s, %(ad)s, %(k)s, %(u)s, %(tur)s::camera_tur,
+                       %(a)s, %(sg)s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM camera WHERE tenant_id = %(t)s AND ad = %(ad)s
+                )
+                """,
+                {"t": tenant_id, "ad": ad, "k": konum, "u": url, "tur": tur,
+                 "a": aktif, "sg": sakin_gorebilir},
+            )
+        print("[seed] kameralar: 5 kayit (3 hls + 1 mp4 + 1 rtsp) — sakin/gorevli "
+              "YALNIZ 'Ana Kapı' + 'Otopark' gorur (aktif+sakin_gorebilir)")
 
         # Platform destek kanali (WP1): 1 demo bilet — panel/mobil listeler
         # bos gorunmesin. (tenant_id, konu) NOT EXISTS ile idempotent.

@@ -339,6 +339,73 @@ Geriye uyumluluk: iki kolon da nullable; yeni alanlar/filtreler/uclar **additive
   yeni kayit girince offset sayfayi kaydirip olay TEKRARLATIR, ve 13 kaynagin
   birlesik `total`'i her istekte tam tarama demektir.
 
+## Kamera yonetimi + gorunurluk, etkinlik gorseli, sakin ana ekran icerigi (WP-H)
+
+Bu turda kamera "basit yayin listesi"nden **yonetilen varlik**a yukseltildi,
+etkinliklere **gorsel + bitis zamani** eklendi ve sakin ana ekraninin uc icerik
+listesi (duyuru / kural / yaklasan etkinlik) uctan uca dogrulandi.
+
+**Sema** (canonical migration YERINDE guncellendi; yeni dosya uretilmedi —
+`down -v` ile yeniden uygulanir):
+
+| Tablo | Degisiklik | Migration |
+|---|---|---|
+| `camera` | `+konum`, `+tur camera_tur('hls','mp4','rtsp')`, `+aktif`, `+sakin_gorebilir`, `+ix_camera_tenant_gorunur` | `0005_home_gorsel.py` (tablonun canonical tanimi orada) |
+| `etkinlik` | `+bitis_zamani` (nullable, `ck_etkinlik_bitis` CHECK), `+foto_key`, `+ix_etkinlik_tenant_bitis` | `0001_initial_schema.py` |
+
+**Kamera gorunurlugu (KVKK) — suzgec SUNUCUDA:**
+
+| rol | gordugu kameralar |
+|---|---|
+| admin, yonetici, security | TUMU (pasif + sakine kapali dahil); `?aktif=` ile suzebilir |
+| resident, tesis_gorevlisi | YALNIZ `aktif=true` **VE** `sakin_gorebilir=true` |
+
+`sakin_gorebilir` varsayilani **false**'tur; `?aktif=` parametresi sakin/gorevli
+icin YOK SAYILIR (istemci suzgeci genisletemez). Gizli kameranin `stream_url`'i
+ve hatta `meta.total` sayimi bu rollerin yanitina HIC girmez.
+
+**Oynatilabilirlik:** yanittaki `oynatilabilir` alani turden TURER (saklanmaz) —
+`hls`/`mp4` → true, `rtsp` → **false**. RTSP kaydi kabul edilir ve saklanir
+(envanter/ileride medya gecidi) ama istemci natively oynatamaz; UI oynat
+dugmesini bu alanla pasifler.
+
+**Etkinlik "yaklasan" suzgeci:** `GET /events?aktif=true` →
+`COALESCE(bitis_zamani, tarih) >= now()`, siralama en YAKIN once. `aktif=false`
+bitmisleri (en yeni once), suzgecsiz liste eskisi gibi tumu (en yeni once).
+`bitis_zamani` NULL ise etkinlik ANLIKTIR (bitis = baslangic).
+
+**Gorsel mekanizmasi TEK:** etkinlik gorseli `POST /uploads/presign` →
+`foto_key` → okumada kisa omurlu presigned GET `foto_url`; duyuru, site kurali,
+talep ve gorev tamamlama ile AYNI depo, ayni tur/boyut limitleri, ayni
+tenant-namespace IDOR kontrolu (yabanci onek → 422 `invalid_foto_key`).
+
+Bilincli sapmalar (istek metnine gore):
+
+- **`stream_url` alani `url` olarak YENIDEN ADLANDIRILMADI.** Istek "url"
+  diyordu; alan adini degistirmek yayindaki mobil istemciyi (Camera modeli
+  `stream_url` okur) kirar ve karsiliginda hicbir sey kazandirmaz. Yanit sekli
+  bu yuzden **geriye uyumlu**: yalniz alan EKLENDI (`konum`, `tur`, `aktif`,
+  `sakin_gorebilir`, `oynatilabilir`), hicbir alan kaldirilmadi/adlandirilmadi.
+- **URL semasi `tur` ile TUTARLI olmak zorunda** (`hls`/`mp4` → `http(s)://`,
+  `rtsp` → `rtsp://`; aksi 422 `invalid_stream_url`). Istek "url http(s) olmali
+  ama rtsp turu kabul edilir" diyordu; `tur=rtsp` kaydina http(s) URL yazmak
+  calismayan bir kayit uretirdi (RTSP yayinlari `rtsp://`dir). PATCH'te
+  tutarlilik MEVCUT kayitla birlestirilerek dogrulanir (yalniz `tur`
+  gonderilse bile). SSRF yuzeyi degismedi — backend yayini HIC cekmez.
+- **resident + tesis_gorevlisi artik `GET /cameras`'ta 403 DEGIL 200 alir.**
+  Onceki kural "kamera listesi bile kapali"ydi; gorunurluk artik kayit bazinda
+  ve varsayilan KAPALI oldugu icin mevcut kayitlarin gorunurlugu DEGISMEZ.
+- **Etkinlige `bitis_zamani` EKLENDI** (istek "bitis yoksa baslangica gore
+  suz" diyordu). Bitis olmadan 20:00–23:00 arasi SUREN etkinlik 20:01'de
+  listeden duserdi; nullable kolon + `COALESCE` hem dogru davranisi verir hem
+  eski kayitlari (bitis NULL) aynen korur.
+- **Site kurali gorseli YENIDEN YAZILMADI:** `site_kurali.foto_key` +
+  `foto_url` zaten vardi (uygulama + sozlesme + test). Bu turda yalniz
+  dogrulandi ve seed'e gorselli bir kural eklendi.
+
+Geriye uyumluluk: tum kolonlar nullable ya da `DEFAULT`'lu; yeni alanlar,
+filtreler ve `oynatilabilir` **additive** — mevcut istemciler etkilenmez.
+
 ## API base path
 
 - **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:

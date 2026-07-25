@@ -9,6 +9,12 @@ kayit imkansiz). Kim-katiliyor listesi DONMEZ — yalniz sayi + kendi beyanim.
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timedelta, timezone
+
+
+def _iso(**delta) -> str:
+    """GERCEK simdiye GORELI ISO zaman — testler saate/gune bagli kalmasin."""
+    return (datetime.now(timezone.utc) + timedelta(**delta)).isoformat()
 
 
 def _headers(client, slug, cred):
@@ -226,3 +232,188 @@ def test_tenant_izolasyonu(client, world):
     assert client.patch(f"/events/{e['id']}", headers=yonetici_b,
                         json={"baslik": "gasp"}).status_code == 404
     assert client.delete(f"/events/{e['id']}", headers=yonetici_b).status_code == 404
+
+
+# ------------------------------ gorsel (WP-H) ------------------------------- #
+def test_gorselli_etkinlik_ve_okumada_foto_url(client, world):
+    """MEVCUT presign akisi (duyuru/site kurali ile AYNI): yonetici presign ->
+    foto_key ile etkinlik -> okumada foto_url (presigned GET). Sakin de gorur;
+    acik null gorseli kaldirir."""
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    pre = client.post("/uploads/presign", headers=yonetici,
+                      json={"content_type": "image/jpeg"})
+    assert pre.status_code == 200, pre.text
+    foto_key = pre.json()["foto_key"]
+
+    e = _mk_event(client, yonetici, foto_key=foto_key)
+    assert e["foto_key"] == foto_key
+    assert e["foto_url"] and "X-Amz-Signature" in e["foto_url"]
+
+    # sakin da gorseli okur (ana ekran "yaklasan etkinlikler" bolumu)
+    resident = _headers(client, world["slug_a"], world["resident_a"])
+    d = client.get(f"/events/{e['id']}", headers=resident)
+    assert d.status_code == 200 and "X-Amz-Signature" in d.json()["foto_url"]
+
+    # PATCH ile gorsel degistirme + acik null ile kaldirma
+    pre2 = client.post("/uploads/presign", headers=yonetici,
+                       json={"content_type": "image/png"})
+    yeni_key = pre2.json()["foto_key"]
+    p = client.patch(f"/events/{e['id']}", headers=yonetici,
+                     json={"foto_key": yeni_key})
+    assert p.status_code == 200 and p.json()["foto_key"] == yeni_key
+
+    p = client.patch(f"/events/{e['id']}", headers=yonetici,
+                     json={"foto_key": None})
+    assert p.status_code == 200
+    assert p.json()["foto_key"] is None and p.json()["foto_url"] is None
+
+
+def test_gorsel_foto_key_tenant_namespace_disina_cikamaz(client, world):
+    """Duyuru/site kurali/kargo ile ayni IDOR korumasi: yabanci anahtar 422."""
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    for foto_key in (f"{world['b']}/tasks/victim.jpg", "serbest/anahtar.jpg"):
+        r = client.post("/events", headers=yonetici, json={
+            "baslik": f"E{uuid.uuid4().hex[:5]}", "aciklama": "x",
+            "tarih": _iso(days=2), "foto_key": foto_key,
+        })
+        assert r.status_code == 422, foto_key
+    # PATCH de korumali
+    e = _mk_event(client, yonetici)
+    assert client.patch(f"/events/{e['id']}", headers=yonetici, json={
+        "foto_key": f"{world['b']}/tasks/victim.jpg",
+    }).status_code == 422
+
+
+# ----------------------- yaklasan/aktif suzgeci (WP-H) ---------------------- #
+def test_aktif_suzgeci_bitis_zamani_gecene_kadar_listede(client, world):
+    """?aktif=true: COALESCE(bitis_zamani, tarih) >= now().
+
+    * suren  : basladi ama bitmedi -> AKTIF (bitis alani olmasa duserdi)
+    * yaklasan: henuz baslamadi    -> AKTIF
+    * bitmis : bitisi gecti        -> AKTIF DEGIL
+    * anlik  : bitis YOK, tarih gecti -> AKTIF DEGIL
+    """
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    tag = uuid.uuid4().hex[:6]
+    suren = _mk_event(client, yonetici, baslik=f"Suren {tag}",
+                      tarih=_iso(hours=-1), bitis_zamani=_iso(hours=2))
+    yaklasan = _mk_event(client, yonetici, baslik=f"Yaklasan {tag}",
+                         tarih=_iso(days=3), bitis_zamani=_iso(days=3, hours=4))
+    bitmis = _mk_event(client, yonetici, baslik=f"Bitmis {tag}",
+                       tarih=_iso(days=-2), bitis_zamani=_iso(days=-2, hours=3))
+    anlik_gecmis = _mk_event(client, yonetici, baslik=f"Anlik {tag}",
+                             tarih=_iso(hours=-3))
+
+    aktifler = client.get("/events", headers=yonetici,
+                          params={"aktif": "true", "limit": 200}).json()["items"]
+    ids = [i["id"] for i in aktifler]
+    assert suren["id"] in ids and yaklasan["id"] in ids
+    assert bitmis["id"] not in ids and anlik_gecmis["id"] not in ids
+
+    # aktif=true YAKLASAN siralamasi: en yakin bitis once
+    kendi = [i["id"] for i in aktifler if i["id"] in (suren["id"], yaklasan["id"])]
+    assert kendi == [suren["id"], yaklasan["id"]]
+
+    # aktif=false: bitmisler
+    bitmisler = [i["id"] for i in client.get(
+        "/events", headers=yonetici, params={"aktif": "false", "limit": 200}
+    ).json()["items"]]
+    assert bitmis["id"] in bitmisler and anlik_gecmis["id"] in bitmisler
+    assert suren["id"] not in bitmisler
+
+    # suzgecsiz: hepsi (geriye uyumlu)
+    tumu = [i["id"] for i in client.get(
+        "/events", headers=yonetici, params={"limit": 200}
+    ).json()["items"]]
+    for e in (suren, yaklasan, bitmis, anlik_gecmis):
+        assert e["id"] in tumu
+
+
+def test_aktif_suzgeci_meta_total_suzulmus_kumeyi_sayar(client, world):
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    _mk_event(client, yonetici, tarih=_iso(days=-5))  # bitmis
+    tumu = client.get("/events", headers=yonetici,
+                      params={"limit": 1}).json()["meta"]["total"]
+    aktif = client.get("/events", headers=yonetici,
+                       params={"limit": 1, "aktif": "true"}).json()["meta"]["total"]
+    assert aktif < tumu
+
+
+def test_sakin_yaklasan_etkinlikleri_gorselleriyle_okur(client, world):
+    """Ana ekran bolumu: sakin ?aktif=true + limit ile yaklasanlari okur."""
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    foto_key = client.post("/uploads/presign", headers=yonetici,
+                           json={"content_type": "image/jpeg"}).json()["foto_key"]
+    e = _mk_event(client, yonetici, baslik=f"Bahar {uuid.uuid4().hex[:5]}",
+                  tarih=_iso(days=1), bitis_zamani=_iso(days=1, hours=5),
+                  foto_key=foto_key)
+
+    resident = _headers(client, world["slug_a"], world["resident_a"])
+    r = client.get("/events", headers=resident,
+                   params={"aktif": "true", "limit": 5})
+    assert r.status_code == 200
+    kayit = next((i for i in r.json()["items"] if i["id"] == e["id"]), None)
+    assert kayit is not None
+    assert kayit["bitis_zamani"] is not None
+    assert "X-Amz-Signature" in kayit["foto_url"]
+
+
+def test_bitis_zamani_baslangictan_once_olamaz_422(client, world):
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    # olusturmada
+    r = client.post("/events", headers=yonetici, json={
+        "baslik": f"E{uuid.uuid4().hex[:5]}", "aciklama": "x",
+        "tarih": _iso(days=3), "bitis_zamani": _iso(days=2),
+    })
+    assert r.status_code == 422, r.text
+
+    # PATCH: yalniz bitis gonderilse bile MEVCUT baslangicla dogrulanir
+    e = _mk_event(client, yonetici, tarih=_iso(days=3))
+    assert client.patch(f"/events/{e['id']}", headers=yonetici, json={
+        "bitis_zamani": _iso(days=1),
+    }).status_code == 422
+    # ... ve yalniz tarih gonderilse bile MEVCUT bitisle dogrulanir
+    e2 = _mk_event(client, yonetici, tarih=_iso(days=3),
+                   bitis_zamani=_iso(days=3, hours=2))
+    assert client.patch(f"/events/{e2['id']}", headers=yonetici, json={
+        "tarih": _iso(days=9),
+    }).status_code == 422
+
+    # gecerli guncelleme + acik null ile bitisi kaldirma (anlik etkinlik)
+    ok = client.patch(f"/events/{e2['id']}", headers=yonetici, json={
+        "bitis_zamani": _iso(days=4),
+    })
+    assert ok.status_code == 200 and ok.json()["bitis_zamani"] is not None
+    ok = client.patch(f"/events/{e2['id']}", headers=yonetici,
+                      json={"bitis_zamani": None})
+    assert ok.status_code == 200 and ok.json()["bitis_zamani"] is None
+
+
+def test_naive_zaman_utc_kabul_edilir_karisik_govde_500_URETMEZ(client, world):
+    """Regresyon: naive ve aware datetime karsilastirilamaz (TypeError).
+
+    Sozlesme konvansiyonu "tum zamanlar UTC" oldugu icin naive deger UTC
+    kabul edilir; aksi halde karisik govde (naive tarih + aware bitis) ya da
+    "naive bitis + DB'den gelen aware tarih" PATCH'i 500 uretirdi.
+    """
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    naive = "2026-09-01T18:00:00"
+    aware = "2026-09-01T21:00:00Z"
+
+    # 1) karisik govde: naive baslangic + aware bitis -> 201 (500 DEGIL)
+    r = client.post("/events", headers=yonetici, json={
+        "baslik": f"Karisik {uuid.uuid4().hex[:5]}", "aciklama": "x",
+        "tarih": naive, "bitis_zamani": aware,
+    })
+    assert r.status_code == 201, r.text
+    e = r.json()
+
+    # 2) PATCH: naive bitis, DB'de aware baslangic -> 200 (500 DEGIL)
+    p = client.patch(f"/events/{e['id']}", headers=yonetici,
+                     json={"bitis_zamani": "2026-09-01T23:30:00"})
+    assert p.status_code == 200, p.text
+
+    # 3) naive degerlerde de ters aralik yakalanir (422, 500 degil)
+    bad = client.patch(f"/events/{e['id']}", headers=yonetici,
+                       json={"bitis_zamani": "2026-08-01T10:00:00"})
+    assert bad.status_code == 422, bad.text

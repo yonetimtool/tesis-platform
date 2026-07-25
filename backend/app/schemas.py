@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 import uuid
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timezone
 from typing import Literal
 
 from pydantic import (
@@ -363,31 +363,66 @@ class ShiftListResponse(BaseModel):
 
 
 # -------------------------------- cameras ---------------------------------- #
-def _http_url(v: str) -> str:
-    if not (v.startswith("http://") or v.startswith("https://")):
-        raise ValueError("stream_url http(s):// ile baslamali")
-    return v
+# Kamera yayin turu — istemci oynatilabilirligini belirler.
+CameraTur = Literal["hls", "mp4", "rtsp"]
+
+# tur -> izinli URL semasi. hls/mp4 istemcide oynar => http(s) ZORUNLU.
+# rtsp yayin istemcide oynatilamaz ama kayit TUTULUR (envanter/ileride medya
+# gecidi) ve rtsp:// semasi ancak tur=rtsp iken kabul edilir; boylece
+# "oynatilabilir" alanlarda calismayan sema saklanmaz.
+_TUR_SEMALARI: dict[str, tuple[str, ...]] = {
+    "hls": ("http://", "https://"),
+    "mp4": ("http://", "https://"),
+    "rtsp": ("rtsp://",),
+}
+
+
+def oynatilabilir_mi(tur: str) -> bool:
+    """Istemci bu turu NATIVE oynatabilir mi? rtsp icin HAYIR."""
+    return tur in ("hls", "mp4")
+
+
+def dogrula_url_tur(stream_url: str, tur: str) -> None:
+    """URL semasi ile `tur` tutarli mi (aksi halde ValueError -> 422).
+
+    hls/mp4 -> http(s):// ; rtsp -> rtsp://. Backend yayini HIC cekmez, bu
+    yuzden sema kontrolu SSRF icin degil, "kayit ile gerceklik tutarli
+    kalsin" diyedir (yanlis semali kayit istemcide sessizce bozulur).
+    """
+    izinli = _TUR_SEMALARI[tur]
+    if not stream_url.startswith(izinli):
+        raise ValueError(
+            f"tur={tur} icin stream_url {' veya '.join(izinli)} ile baslamali"
+        )
 
 
 class CameraCreate(BaseModel):
     ad: str = Field(..., min_length=1, max_length=100)
-    # Istemcinin oynattigi HLS/MJPEG yayini; backend HIC cekmez.
+    # Serbest konum metni (orn. "Ana Kapı - Giriş").
+    konum: str | None = Field(None, min_length=1, max_length=200)
+    # Istemcinin oynattigi yayin; backend HIC cekmez.
     stream_url: str
+    tur: CameraTur = "hls"
+    aktif: bool = True
+    # KVKK: sakin/tesis gorevlisi gorunurlugu YALNIZ bu bayrakla acilir.
+    sakin_gorebilir: bool = False
 
-    @field_validator("stream_url")
-    @classmethod
-    def _v_url(cls, v: str) -> str:
-        return _http_url(v)
+    @model_validator(mode="after")
+    def _v_url_tur(self) -> "CameraCreate":
+        dogrula_url_tur(self.stream_url, self.tur)
+        return self
 
 
 class CameraUpdate(BaseModel):
-    ad: str | None = Field(None, min_length=1, max_length=100)
-    stream_url: str | None = None
+    """Kismi guncelleme; en az bir alan. URL/tur tutarliligi router'da
+    MEVCUT kayitla birlestirilerek dogrulanir (yalniz biri gonderilebilir)."""
 
-    @field_validator("stream_url")
-    @classmethod
-    def _v_url(cls, v: str | None) -> str | None:
-        return None if v is None else _http_url(v)
+    ad: str | None = Field(None, min_length=1, max_length=100)
+    konum: str | None = Field(None, max_length=200)
+    stream_url: str | None = None
+    tur: CameraTur | None = None
+    aktif: bool | None = None
+    sakin_gorebilir: bool | None = None
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "CameraUpdate":
@@ -401,7 +436,13 @@ class CameraOut(BaseModel):
 
     id: uuid.UUID
     ad: str
+    konum: str | None = None
     stream_url: str
+    tur: CameraTur
+    aktif: bool
+    sakin_gorebilir: bool
+    # TURETILMIS (saklanmaz): istemci bu yayini native oynatabilir mi.
+    oynatilabilir: bool = True
     created_at: datetime
     updated_at: datetime
 
@@ -1187,24 +1228,72 @@ class RezervasyonListResponse(BaseModel):
 KatilimDurum = Literal["katiliyorum", "katilmiyorum"]
 
 
+def _utc(v: datetime | None) -> datetime | None:
+    """Naive zamani UTC kabul et (sozlesme konvansiyonu: tum zamanlar UTC).
+
+    Neden gerekli: naive ve aware datetime KARSILASTIRILAMAZ (TypeError). Bu
+    normalizasyon olmadan "naive tarih + aware bitis" ya da "naive bitis +
+    DB'den gelen aware tarih" karsilastirmasi 500 uretirdi
+    (bkz. routers/scans.py, routers/vehicle_passes.py — ayni konvansiyon).
+    """
+    if v is not None and v.tzinfo is None:
+        return v.replace(tzinfo=timezone.utc)
+    return v
+
+
 class EtkinlikCreate(BaseModel):
     baslik: str = Field(..., min_length=1, max_length=200)
     aciklama: str = Field(..., min_length=1, max_length=5000)
-    # Etkinlik zamani (timestamptz — ISO8601 UTC).
+    # Etkinlik BASLANGICI (timestamptz — ISO8601 UTC).
     tarih: datetime
+    # Opsiyonel BITIS: verilirse baslangictan sonra olmali. ?aktif=true
+    # suzgeci COALESCE(bitis_zamani, tarih) >= now() uygular.
+    bitis_zamani: datetime | None = None
     konum: str | None = Field(None, min_length=1, max_length=500)
+    # Opsiyonel gorsel: /uploads/presign ile yuklenen obje anahtari
+    # (duyuru/site kurali ile AYNI akis).
+    foto_key: str | None = None
+
+    @field_validator("tarih", "bitis_zamani")
+    @classmethod
+    def _v_utc(cls, v: datetime | None) -> datetime | None:
+        return _utc(v)
+
+    @model_validator(mode="after")
+    def _v_aralik(self) -> "EtkinlikCreate":
+        if self.bitis_zamani is not None and self.bitis_zamani <= self.tarih:
+            raise ValueError("bitis_zamani baslangictan sonra olmali")
+        return self
 
 
 class EtkinlikUpdate(BaseModel):
     baslik: str | None = Field(None, min_length=1, max_length=200)
     aciklama: str | None = Field(None, min_length=1, max_length=5000)
     tarih: datetime | None = None
+    # Acikca null gonderilirse bitis kaldirilir (anlik etkinlige doner).
+    bitis_zamani: datetime | None = None
     konum: str | None = Field(None, max_length=500)
+    # Acikca null gonderilirse gorsel kaldirilir; alan yoksa dokunulmaz.
+    foto_key: str | None = None
+
+    @field_validator("tarih", "bitis_zamani")
+    @classmethod
+    def _v_utc(cls, v: datetime | None) -> datetime | None:
+        return _utc(v)
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "EtkinlikUpdate":
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
+        # Ikisi birlikte geldiyse burada; yalniz biri geldiyse router MEVCUT
+        # kayitla birlestirip dogrular (ck_etkinlik_bitis ayni kurali DB'de
+        # de zorlar).
+        if (
+            self.tarih is not None
+            and self.bitis_zamani is not None
+            and self.bitis_zamani <= self.tarih
+        ):
+            raise ValueError("bitis_zamani baslangictan sonra olmali")
         return self
 
 
@@ -1221,7 +1310,11 @@ class EtkinlikOut(BaseModel):
     baslik: str
     aciklama: str
     tarih: datetime
+    bitis_zamani: datetime | None = None
     konum: str | None = None
+    foto_key: str | None = None
+    # Goruntuleme icin kisa omurlu presigned GET URL (foto_key varsa).
+    foto_url: str | None = None
     olusturan_user_id: uuid.UUID
     # Olusturan yoneticinin adi (join ile).
     olusturan_ad: str | None = None
