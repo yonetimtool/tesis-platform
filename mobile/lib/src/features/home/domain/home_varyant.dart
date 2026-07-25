@@ -5,10 +5,16 @@ library;
 
 import '../../auth/domain/user_role.dart';
 
-/// Uc referans duzen: gorevli.jpeg / site-sakini.jpeg / yonetici.jpeg.
+/// Referans duzenler. gorevli.jpeg iki role hizmet eder ve KART SETI
+/// farklidir (KVKK: tesis gorevlisi ziyaretci/kargo/plaka/ihlal GORMEZ), bu
+/// yuzden ayri varyant: duzen ayni (4'lu izgara), icerik farkli.
 enum HomeVaryant {
-  /// Yatay hizli erisim seridi + vardiya + son hareketler + canli kamera.
+  /// Guvenlik: 4'lu izgara (8 kart) + vardiya + son hareketler + kamera.
   gorevli,
+
+  /// Tesis gorevlisi: 4'lu izgara (kendi is kartlari) + vardiya + hareketler
+  /// + kamera (sunucu yalniz sakine acik kameralari doner).
+  tesisGorevlisi,
 
   /// 4x2 izgara + odeme karti + son hareketler + duyurular.
   sakin,
@@ -23,6 +29,7 @@ HomeVaryant homeVaryantForRole(UserRole role) => switch (role) {
       UserRole.resident => HomeVaryant.sakin,
       // Platform admini yonetim duzenini gorur (brief: admin→yönetici).
       UserRole.admin || UserRole.yonetici => HomeVaryant.yonetici,
-      UserRole.security || UserRole.tesisGorevlisi => HomeVaryant.gorevli,
+      UserRole.security => HomeVaryant.gorevli,
+      UserRole.tesisGorevlisi => HomeVaryant.tesisGorevlisi,
       UserRole.unknown => HomeVaryant.gorevli,
     };

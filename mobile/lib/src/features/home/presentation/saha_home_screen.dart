@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../routing/app_router.dart';
+import '../../announcements/data/announcement_api.dart';
+import '../../announcements/domain/announcement_models.dart';
 import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../cameras/data/cameras_api.dart';
 import '../../cameras/domain/camera_models.dart';
+import '../../cameras/presentation/kameralar_screen.dart' show kameraAc;
 import '../../kargo/data/kargo_api.dart';
 import '../../kargo/domain/kargo_models.dart';
 import '../../notifications/data/notifications_controller.dart';
@@ -17,12 +20,14 @@ import '../../shifts/data/shifts_api.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../weather/data/weather_api.dart';
 import '../../yonetici_iletisim/data/yonetici_iletisim_api.dart';
+import '../../complaints/data/complaint_api.dart';
 import '../data/activity_api.dart';
 import '../data/home_api.dart';
 import '../data/home_repository.dart';
 import '../domain/home_varyant.dart';
 import '../domain/home_view_models.dart';
 import 'home_async.dart';
+import 'home_refresh.dart';
 import 'home_mappers.dart';
 import 'widgets/bildir_menu_sheet.dart';
 import 'widgets/hizli_erisim.dart';
@@ -38,15 +43,22 @@ import 'widgets/vardiya_seridi.dart';
 /// Gorevli ana ekrani (referans: gorevli.jpeg) — guvenlik + tesis gorevlisi
 /// TEK rol-parametrik ekranda.
 ///
-/// Bolum sirasi gorselle birebir: karsilama → yatay hizli erisim seridi →
-/// Vardiya Durumu → Son Hareketler → Canlı Kamera.
+/// Bolum sirasi: karsilama → 4'LU IZGARA (yonetici izgarasiyla ayni kart
+/// tipi) → Vardiya Durumu → Son Hareketler → Canlı Kamera.
 ///
-/// KVKK: tesis_gorevlisi ziyaretci/kargo/plaka/ihlal/kamera GORMEZ — o kartlar
-/// ve kamera seridi bu rolde cizilmez (backend RBAC de 403 doner).
+/// IZGARA (bu tur): yatay 5'li serit KALKTI. Guvenlik 8 kart gorur (vardiya,
+/// kargo, ziyaretci, plaka, ihlal + gorevlerim, demirbas, turlarim); tesis
+/// gorevlisi KENDI 8 karti (vardiya, gorevlerim, demirbas, talep, duyuru,
+/// etkinlik, kurallar, yonetici) — KVKK geregi ziyaretci/kargo/plaka/ihlal
+/// YOK; o kartlarin ucu bu role 403 doner, dolayisiyla kart hic cizilmez.
 ///
-/// VERI: seritteki BES sayacin tamami GERCEK uctan gelir — /shifts, /kargo,
-/// /visitors?icerde=true, `/vehicle-passes?baslangic=<gun basi>`,
-/// /violations?durum=yeni. Akis TEK uctan: /activity (sunucu birlestirir).
+/// KAMERA: iki rolde de gosterilir. Liste SUNUCUDA suzulur — tesis gorevlisi
+/// yalniz `aktif && sakin_gorebilir` kameralari alir; istemci ek suzgec
+/// UYGULAMAZ (gelen ne ise o cizilir).
+///
+/// VERI: her sayac GERCEK uctan gelir; akis TEK uctan (/activity). Ana ekran
+/// CANLI: donus/on plan/asagi-cekme/periyodik yenileme
+/// ([HomeCanliVeri], bkz. home_refresh.dart).
 class SahaHomeScreen extends ConsumerWidget {
   const SahaHomeScreen({super.key, required this.role});
 
@@ -81,6 +93,15 @@ class SahaHomeScreen extends ConsumerWidget {
     final aracAsync =
         guvenlik ? ref.watch(bugunkuAracGirisSayisiProvider) : null;
     final ihlalAsync = guvenlik ? ref.watch(yeniIhlalSayisiProvider) : null;
+    // Saha personelinin gunluk isleri — iki rolde de izlenir (/tasks ve
+    // /assets saha rollerine aciktir; sunucu kendi kapsamiyla suzer).
+    final gorevAsync = ref.watch(aktifGorevSayisiProvider);
+    final zimmetAsync = ref.watch(uzerimdekiZimmetSayisiProvider);
+    // Tesis gorevlisi izgarasinin kendi sayaclari (RBAC'i bu role acik).
+    final talepAsync = guvenlik ? null : ref.watch(acikSikayetSayisiProvider);
+    final duyuruAsync = guvenlik ? null : ref.watch(sonDuyurularProvider);
+    final etkinlikAsync =
+        guvenlik ? null : ref.watch(yaklasanEtkinlikSayisiProvider);
     // Vardiya seridinin son karti tenant yoneticisidir (referans gorsel).
     // /yonetici-iletisim saha rollerine aciktir.
     final yoneticiler =
@@ -91,9 +112,10 @@ class SahaHomeScreen extends ConsumerWidget {
 
     final aktifVardiya = vardiyalar.where((v) => v.aktifMi(now)).length;
     final pending = ref.watch(scanOutboxProvider).pendingCount;
+    final varyant =
+        guvenlik ? HomeVaryant.gorevli : HomeVaryant.tesisGorevlisi;
     final erisim = [
-      for (final k in taban.hizliErisim(HomeVaryant.gorevli))
-        if (_gorunur(k, guvenlik))
+      for (final k in taban.hizliErisim(varyant))
           switch (k.baslik) {
             'Vardiya Durum' =>
               k.sayacla(vardiyaAsync.sayac((_) => aktifVardiya, 'Aktif')),
@@ -113,11 +135,23 @@ class SahaHomeScreen extends ConsumerWidget {
             // G2: henuz ele alinmamis ihlal.
             'İhlaller' when ihlalAsync != null =>
               k.sayacla(ihlalAsync.sayac((n) => n, 'Yeni')),
+            // Kendi rol grubuna atanan + atanmamis AKTIF gorevler (sunucu
+            // saha gorunurlugunu kendisi uygular).
+            'Görevlerim' => k.sayacla(gorevAsync.sayac((n) => n, 'Bekliyor')),
+            // Uzerimdeki ACIK zimmet (/assets?checked_out_by=me).
+            'Demirbaş' => k.sayacla(zimmetAsync.sayac((n) => n, 'Zimmetli')),
+            'Talep / Arıza' when talepAsync != null =>
+              k.sayacla(talepAsync.sayac((n) => n, 'Açık')),
+            'Duyurular' when duyuruAsync != null => k.sayacla(
+                duyuruAsync.sayac((l) => _yeniDuyuru(l, now), 'Yeni'),
+              ),
+            'Etkinlikler' when etkinlikAsync != null =>
+              k.sayacla(etkinlikAsync.sayac((n) => n, 'Yaklaşan')),
             _ => k,
           },
-      // Cevrimdisi saha kaniti kaybolmasin: bekleyen okutma VARSA seride
-      // ek bir kart girer. pending=0 iken (normal durum) serit referans
-      // gorselle birebir 5 karttir — bu kart yalniz sorun varken belirir.
+      // Cevrimdisi saha kaniti kaybolmasin: bekleyen okutma VARSA izgaraya
+      // ek bir kart girer (9. hucre). pending=0 iken (normal durum) izgara
+      // 4x2'dir — bu kart yalniz sorun varken belirir.
       if (pending > 0)
         HizliErisimKart(
           ikon: Icons.outbox_outlined,
@@ -128,11 +162,13 @@ class SahaHomeScreen extends ConsumerWidget {
         ),
     ];
 
-    final kameralar = guvenlik
-        ? (ref.watch(camerasProvider).value ?? const <Camera>[])
-        : const <Camera>[];
+    // Kamera listesi SUNUCUDA rol'e gore suzuludur: tesis gorevlisi yalniz
+    // sakine acilmis kameralari alir. Istemci burada suzgec UYGULAMAZ.
+    final kameralar = ref.watch(camerasProvider).value ?? const <Camera>[];
 
-    return HomeShell(
+    return HomeCanliVeri(
+      varyant: varyant,
+      child: HomeShell(
       role: role,
       currentIndex: 0,
       unreadCount: unread,
@@ -162,8 +198,14 @@ class SahaHomeScreen extends ConsumerWidget {
           altBaslikStili: HomeAltBaslikStili.tesisSecici,
           hava: hava == null ? null : havaOzeti(hava),
         ),
+        onYenile: () => homeVerisiniYenile(ref, varyant),
         bolumler: [
-          HizliErisimSeridi(kartlar: erisim, onSec: (k) => _ac(context, k)),
+          HomeSectionPad(
+            child: HizliErisimIzgarasi(
+              kartlar: erisim,
+              onSec: (k) => _ac(context, k),
+            ),
+          ),
           VardiyaSeridi(
             kartlar: vardiyaKartlari(
               vardiyalar: vardiyalar,
@@ -191,25 +233,22 @@ class SahaHomeScreen extends ConsumerWidget {
           ),
           if (kameralar.isNotEmpty)
             KameraSeridi(
-              kameralar: kameraOzetleri(kameralar),
+              kameralar: kameralar,
               onSeeAll: () => context.push(AppRoutes.kameralar),
-              onIzle: (i) => i < kameralar.length
-                  ? context.push(AppRoutes.kameraIzle, extra: kameralar[i])
-                  : _yakinda(context),
+              // Oynatilabilirse oynatici, RTSP ise bilgi karti (tek kural).
+              onAc: (kamera) => kameraAc(context, kamera),
             ),
         ],
+      ),
       ),
     );
   }
 
-  /// KVKK: tesis_gorevlisi kargo/ziyaretci/plaka/ihlal kartlarini gormez.
-  /// Ihlal kaydi komsu davranisi hakkinda veri tasir; sozlesme bu role
-  /// `/violations` okumasini KAPATIR (403) — kart sayi yerine '—' gosterecegi
-  /// icin hic cizilmez (bkz. Kargo/Ziyaretçi/Araç Plaka ile ayni kural).
-  bool _gorunur(HizliErisimKart k, bool guvenlik) =>
-      guvenlik ||
-      !const {'Kargo', 'Ziyaretçi', 'Araç Plaka', 'İhlaller'}
-          .contains(k.baslik);
+  /// "N Yeni" — son 3 gunde yayinlanan duyuru sayisi (sakin ekraniyla ayni
+  /// esik).
+  int _yeniDuyuru(List<Announcement> liste, DateTime now) => liste
+      .where((d) => now.difference(d.createdAt) <= const Duration(days: 3))
+      .length;
 
   void _ac(BuildContext context, HizliErisimKart k) {
     final rota = k.rota;

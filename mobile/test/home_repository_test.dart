@@ -16,16 +16,20 @@ import 'package:mobile/src/features/home/domain/home_varyant.dart';
 const _mock = MockHomeRepository();
 
 /// Sayac DEGIL, sabit bolum etiketi olan kartlar (uc gerektirmez).
-const _etiketKartlari = {'Aylık Özet'};
+const _etiketKartlari = {'Aylık Özet', 'Devriye', 'Kurallar', 'İletişim'};
 
 void main() {
   group('homeVaryantForRole — rol → referans duzen', () {
-    test('sakin → sakin; yonetici + admin → yonetici; saha → gorevli', () {
+    test('sakin → sakin; yonetici + admin → yonetici; security → gorevli; '
+        'tesis gorevlisi → KENDI varyanti (kart seti farkli)', () {
       expect(homeVaryantForRole(UserRole.resident), HomeVaryant.sakin);
       expect(homeVaryantForRole(UserRole.yonetici), HomeVaryant.yonetici);
       expect(homeVaryantForRole(UserRole.admin), HomeVaryant.yonetici);
       expect(homeVaryantForRole(UserRole.security), HomeVaryant.gorevli);
-      expect(homeVaryantForRole(UserRole.tesisGorevlisi), HomeVaryant.gorevli);
+      expect(
+        homeVaryantForRole(UserRole.tesisGorevlisi),
+        HomeVaryant.tesisGorevlisi,
+      );
     });
 
     test('eslesmeyen/eksik rol icin GUVENLI varsayilan gorevli', () {
@@ -62,12 +66,25 @@ void main() {
     });
   });
 
-  group('gorevli.jpeg — hizli erisim seridi (5 kart, sirali)', () {
-    test('baslik sirasi gorselle birebir', () {
+  group('gorevli (security) — 4\'LU IZGARA: 8 kart, sirali', () {
+    test('baslik sirasi: referans 5 kart + gunluk is kartlari', () {
       expect(
         [for (final k in _mock.hizliErisim(HomeVaryant.gorevli)) k.baslik],
-        ['Vardiya Durum', 'Kargo', 'Ziyaretçi', 'Araç Plaka', 'İhlaller'],
+        [
+          'Vardiya Durum',
+          'Kargo',
+          'Ziyaretçi',
+          'Araç Plaka',
+          'İhlaller',
+          'Görevlerim',
+          'Demirbaş',
+          'Turlarım',
+        ],
       );
+    });
+
+    test('8 kart = 4 sutunda TAM iki satir (dengeli izgara)', () {
+      expect(_mock.hizliErisim(HomeVaryant.gorevli).length % 4, 0);
     });
 
     test('sayaci VAR ama liste ekrani olmayan kartlar rotasiz kalir '
@@ -79,6 +96,39 @@ void main() {
       expect([for (final k in rotasiz) k.baslik], ['Araç Plaka', 'İhlaller']);
       // Sabit metin YOK: sayac gercek uctan gelene kadar iskelet.
       expect([for (final k in rotasiz) k.altMetin], [null, null]);
+    });
+  });
+
+  group('tesis gorevlisi — 4\'LU IZGARA: kendi is kartlari (KVKK)', () {
+    final kartlar = _mock.hizliErisim(HomeVaryant.tesisGorevlisi);
+
+    test('baslik sirasi', () {
+      expect([for (final k in kartlar) k.baslik], [
+        'Vardiya Durum',
+        'Görevlerim',
+        'Demirbaş',
+        'Talep / Arıza',
+        'Duyurular',
+        'Etkinlikler',
+        'Site Kuralları',
+        'Yönetici',
+      ]);
+    });
+
+    test('KVKK: ziyaretci/kargo/plaka/ihlal kartlari HIC YOK — bu rolun '
+        'ucleri 403 doner, kart kalici "—" gosterirdi', () {
+      final basliklar = {for (final k in kartlar) k.baslik};
+      for (final yasak in ['Kargo', 'Ziyaretçi', 'Araç Plaka', 'İhlaller']) {
+        expect(basliklar.contains(yasak), isFalse, reason: yasak);
+      }
+    });
+
+    test('her kartin bir rotasi VAR (rotasiz/olu kart yok)', () {
+      expect([for (final k in kartlar) if (k.rota == null) k.baslik], isEmpty);
+    });
+
+    test('8 kart = 4 sutunda TAM iki satir', () {
+      expect(kartlar.length % 4, 0);
     });
   });
 

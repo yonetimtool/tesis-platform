@@ -7,8 +7,11 @@ import 'home_card.dart';
 import 'home_states.dart';
 
 /// Referans "Hızlı Özet" kutusu (yonetici.jpeg): ortada tint ikon konteyneri,
-/// altinda 20 bold deger, 13 semibold etiket ve 12 gri alt-etiket. Salt
-/// gosterim — dokunma yok.
+/// altinda 20 bold deger, 13 semibold etiket ve 12 gri alt-etiket.
+///
+/// Kutu DOKUNULABILIR: ozet degerinden ilgili ekrana kisa yol ([onTap]).
+/// Rotasi olmayan kutuda da dokunma cagrilir — hedefi cagiran katman belirler
+/// (ekranda "yakında" bilgilendirmesi).
 ///
 /// [degerGrubu] ayni bolumdeki kutularin degerini TEK TIP boyutta cizer
 /// ("512" ile "₺248.750" ayni buyuklukte; kesme yok).
@@ -16,12 +19,14 @@ class StatTile extends StatelessWidget {
   const StatTile({
     super.key,
     required this.kutu,
+    this.onTap,
     this.hucreGenisligi,
     this.degerGrubu,
     this.etiketGrubu,
   });
 
   final OzetKutusu kutu;
+  final VoidCallback? onTap;
   final double? hucreGenisligi;
   final AutoSizeGroup? degerGrubu;
   final AutoSizeGroup? etiketGrubu;
@@ -37,6 +42,7 @@ class StatTile extends StatelessWidget {
     final dar = hucreGenisligi != null && hucreGenisligi! < 120;
 
     return HomeCard(
+      onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -94,9 +100,12 @@ class StatTile extends StatelessWidget {
 
 /// "Hızlı Özet" bolumu — 4'lu istatistik izgarasi (dar ekranda 2'li).
 class HizliOzetIzgarasi extends StatelessWidget {
-  const HizliOzetIzgarasi({super.key, required this.kutular});
+  const HizliOzetIzgarasi({super.key, required this.kutular, this.onSec});
 
   final List<OzetKutusu> kutular;
+
+  /// Kutuya dokunuldu (rotasi olmayan kutuda da cagrilir).
+  final ValueChanged<OzetKutusu>? onSec;
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +129,7 @@ class HizliOzetIzgarasi extends StatelessWidget {
           for (final k in kutular)
             StatTile(
               kutu: k,
+              onTap: onSec == null ? null : () => onSec!(k),
               hucreGenisligi: hucre,
               degerGrubu: degerGrubu,
               etiketGrubu: etiketGrubu,

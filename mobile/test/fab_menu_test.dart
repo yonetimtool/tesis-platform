@@ -96,10 +96,18 @@ void main() {
     await _tapFab(tester);
 
     expect(find.text('Olay Bildir'), findsNWidgets(2)); // FAB etiketi + menu
-    // Referans hizli erisim seridinde "Görevlerim"/"Turlarım" karti yok
-    // (o moduller cekmecede) — bu yuzden yalniz FAB menusunde gorunurler.
-    expect(find.text('Görevlerim'), findsOneWidget);
-    expect(find.text('Turlarım'), findsOneWidget);
+    // "Görevlerim"/"Turlarım" ARTIK izgarada da birer karttir; FAB menusundeki
+    // girisler ListTile oldugu icin onlarla hedeflenir (kart + menu = 2).
+    for (final etiket in ['Görevlerim', 'Turlarım']) {
+      expect(
+        find.descendant(
+          of: find.byType(ListTile),
+          matching: find.text(etiket),
+        ),
+        findsOneWidget,
+        reason: etiket,
+      );
+    }
   });
 
   testWidgets('tesisGorevlisi FAB: Turlarım YOK (patrol RBAC disi)',

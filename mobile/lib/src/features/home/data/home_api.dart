@@ -13,6 +13,8 @@
 ///   * `GET /vehicle-passes?baslangic=<gun basi>&limit=1` → bugunku arac girisi
 ///   * `GET /violations?durum=yeni&limit=1`       → yeni ihlal
 ///   * `GET /parking/occupancy`                   → otopark dolulugu (agregat)
+///   * `GET /assets?checked_out_by=me&limit=1`     → uzerimdeki zimmet sayisi
+///   * `GET /events?aktif=true&limit=1`            → yaklasan etkinlik sayisi
 ///
 /// Birlesik "Son Hareketler" akisi BURADA DEGIL: tek uc olarak
 /// `data/activity_api.dart` (`GET /activity`) icindedir.
@@ -86,6 +88,16 @@ class HomeApi {
   /// ("N Yeni"). RBAC: admin + yonetici + security.
   Future<int> yeniIhlalSayisi() => _total('/violations', {'durum': 'yeni'});
 
+  /// `GET /assets?checked_out_by=me` → SAHA personelinin uzerinde ACIK olan
+  /// zimmet sayisi ("N Zimmetli"). `me` her role acik (baska kullanicinin
+  /// zimmeti YALNIZ admin — istemci onu hic sormaz).
+  Future<int> uzerimdekiZimmetSayisi() =>
+      _total('/assets', {'checked_out_by': 'me'});
+
+  /// `GET /events?aktif=true` → bitisi gecmemis (yaklasan/suren) etkinlik
+  /// sayisi. Suzgec SUNUCUDA (COALESCE(bitis_zamani, tarih) >= now()).
+  Future<int> yaklasanEtkinlikSayisi() => _total('/events', {'aktif': true});
+
   /// `GET /parking/occupancy` (G4) → `{kapasite, dolu, oran}`. Kapasite
   /// tanimsizsa `kapasite`/`oran` null gelir; kart/kutu bunu KENDI gosterir
   /// (uydurma kapasite/yuzde yok).
@@ -155,6 +167,18 @@ final bugunkuAracGirisSayisiProvider =
 /// "İhlaller → N Yeni" (gorevli/security + yonetim).
 final yeniIhlalSayisiProvider = FutureProvider.autoDispose<int>((ref) {
   return ref.watch(homeApiProvider).yeniIhlalSayisi();
+});
+
+/// "Demirbaş" kart sayaci (saha) — uzerimdeki acik zimmet adedi.
+final uzerimdekiZimmetSayisiProvider =
+    FutureProvider.autoDispose<int>((ref) {
+  return ref.watch(homeApiProvider).uzerimdekiZimmetSayisi();
+});
+
+/// "Etkinlikler" kart sayaci — yaklasan/suren etkinlik adedi (tum roller).
+final yaklasanEtkinlikSayisiProvider =
+    FutureProvider.autoDispose<int>((ref) {
+  return ref.watch(homeApiProvider).yaklasanEtkinlikSayisi();
 });
 
 /// "Otopark Kullanımı" karti + "Otopark Doluluk" kutusu AYNI yaniti kullanir

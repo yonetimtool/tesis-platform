@@ -29,6 +29,8 @@ class _FakeEtkinlikApi extends EtkinlikApi {
 Etkinlik _e({
   String id = 'e-1',
   DateTime? tarih,
+  DateTime? bitis,
+  String? fotoUrl,
   int katiliyor = 5,
   int katilmiyor = 2,
   KatilimDurum? benimDurumum,
@@ -38,6 +40,8 @@ Etkinlik _e({
       baslik: 'Mac izleme aksami',
       aciklama: 'Buyuk ekranda milli mac.',
       tarih: tarih ?? DateTime.now().add(const Duration(days: 5)),
+      bitisZamani: bitis,
+      fotoUrl: fotoUrl,
       konum: 'Sosyal tesis salonu',
       olusturanUserId: 'yon-1',
       olusturanAd: 'Acme Yonetici',
@@ -257,6 +261,71 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Mac izleme aksami'), findsOneWidget); // liste ekrani
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('etkinlik gorseli + form (WP-I)', () {
+    testWidgets('foto_url YOKSA kartta gorsel alani cizilmez (geriye uyumlu)',
+        (tester) async {
+      final (_, app) = _app(UserRole.resident, items: [_e()]);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      expect(find.byType(Image), findsNothing);
+      expect(find.text('Mac izleme aksami'), findsOneWidget);
+    });
+
+    testWidgets('foto_url VARSA kartta gorsel alani cizilir (cokme yok)',
+        (tester) async {
+      final (_, app) = _app(
+        UserRole.resident,
+        items: [_e(fotoUrl: 'http://minio.local/x.png?X-Amz-Signature=s')],
+      );
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      // Testte ag yok → Image.network errorBuilder'a duser; onemli olan
+      // alanin CIZILMESI ve ekranin cokmemesi.
+      expect(
+        find.byType(Image).evaluate().isNotEmpty ||
+            find.byIcon(Icons.image_outlined).evaluate().isNotEmpty,
+        isTrue,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('yonetim formu: "Görsel (opsiyonel)" + Kamera/Galeri + '
+        'opsiyonel BITIS alani', (tester) async {
+      tester.view.physicalSize = const Size(400, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final (_, app) = _app(UserRole.yonetici, items: [_e()]);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Yeni etkinlik'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Görsel (opsiyonel)'), findsOneWidget);
+      expect(find.text('Kamera'), findsOneWidget);
+      expect(find.text('Galeriden seç'), findsOneWidget);
+      expect(find.text('Bitiş ekle (opsiyonel)'), findsOneWidget);
+      // Gorselsiz de duyurulabilir.
+      expect(find.text('Duyur ve sakinlere bildir'), findsOneWidget);
+    });
+
+    testWidgets('detayda zaman ARALIGI gosterilir (bitis varsa)',
+        (tester) async {
+      final bas = DateTime.now().add(const Duration(days: 2));
+      final (_, app) = _app(
+        UserRole.resident,
+        items: [_e(tarih: bas, bitis: bas.add(const Duration(hours: 3)))],
+        initialEtkinlikId: 'e-1',
+      );
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+
+      // "Zaman: gg.aa.yyyy ss:dd – ss:dd" (ayni gun araligi)
+      expect(find.textContaining('Zaman:'), findsOneWidget);
+      expect(find.textContaining('–'), findsWidgets);
     });
   });
 }

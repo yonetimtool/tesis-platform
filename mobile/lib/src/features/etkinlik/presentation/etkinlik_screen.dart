@@ -1,8 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
+// Foto akisi GOREV KANITI ile ayni: ayni picker saglayicisi, ayni presign uc.
+import '../../tasks/presentation/task_complete_controller.dart'
+    show imagePickerProvider;
+import '../data/etkinlik_api.dart';
 import '../domain/etkinlik_models.dart';
 import 'etkinlik_controller.dart';
 
@@ -191,17 +198,27 @@ class _SayacRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dar ekranda (kart/alt sayfa ici) iki sayac satiri tasmasin: metinler
+    // esnek + kirpilabilir.
     return Row(
       children: [
         const Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
         const SizedBox(width: 4),
-        Text('${etkinlik.katiliyorumSayisi} katılıyor',
-            style: Theme.of(context).textTheme.bodySmall),
+        Flexible(
+          child: Text('${etkinlik.katiliyorumSayisi} katılıyor',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall),
+        ),
         const SizedBox(width: 12),
         const Icon(Icons.cancel_outlined, size: 16, color: Colors.red),
         const SizedBox(width: 4),
-        Text('${etkinlik.katilmiyorumSayisi} katılmıyor',
-            style: Theme.of(context).textTheme.bodySmall),
+        Flexible(
+          child: Text('${etkinlik.katilmiyorumSayisi} katılmıyor',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall),
+        ),
       ],
     );
   }
@@ -254,6 +271,10 @@ class _EtkinlikCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(e.aciklama, maxLines: 2, overflow: TextOverflow.ellipsis),
+              if (e.fotoUrl != null) ...[
+                const SizedBox(height: 8),
+                _EtkinlikGorseli(url: e.fotoUrl!, yukseklik: 120),
+              ],
               const SizedBox(height: 8),
               _SayacRow(etkinlik: e),
               if (canRsvp && !e.gecmis) ...[
@@ -435,10 +456,14 @@ void _showDetail(
                 ],
               ),
               const SizedBox(height: 12),
-              Text('Zaman: ${_fmtDateTime(e.tarih.toLocal())}'),
+              Text('Zaman: ${_fmtAralik(e)}'),
               if (e.konum != null) ...[
                 const SizedBox(height: 4),
                 Text('Yer: ${e.konum}'),
+              ],
+              if (e.fotoUrl != null) ...[
+                const SizedBox(height: 12),
+                _EtkinlikGorseli(url: e.fotoUrl!, yukseklik: 180),
               ],
               const SizedBox(height: 8),
               Text(e.aciklama),
@@ -570,8 +595,25 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
   late final _konum = TextEditingController(text: widget.mevcut?.konum);
   late DateTime _tarih = widget.mevcut?.tarih.toLocal() ??
       DateTime.now().add(const Duration(days: 1));
+  late DateTime? _bitis = widget.mevcut?.bitisZamani?.toLocal();
   bool _busy = false;
   String? _hata;
+
+  /// Gorsel akisi GOREV FOTO KANITININ AYNISI: cek/sec → presign → PUT →
+  /// foto_key (ayni uc, ayni sikistirma/boyut kurallari).
+  String? _photoPath;
+  bool _photoBusy = false;
+  String? _photoError;
+  String? _fotoKey;
+
+  /// Mevcut kaydin gorseli KALDIRILDI mi (PATCH'te acik null gonderilir).
+  bool _fotoKaldirildi = false;
+
+  bool get _fotoBekliyor => _photoPath != null && _fotoKey == null;
+
+  /// Duzenlemede: kaldirilmadiysa ve yeni secim yoksa MEVCUT gorsel durur.
+  String? get _mevcutFotoUrl =>
+      (_fotoKaldirildi || _photoPath != null) ? null : widget.mevcut?.fotoUrl;
 
   @override
   void dispose() {
@@ -579,6 +621,112 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
     _aciklama.dispose();
     _konum.dispose();
     super.dispose();
+  }
+
+  Future<void> _fotoSecVeYukle(ImageSource source) async {
+    if (_photoBusy) return;
+    setState(() {
+      _photoBusy = true;
+      _photoError = null;
+    });
+    try {
+      final file = await ref.read(imagePickerProvider).pickImage(
+            source: source,
+            // Gorev/duyuru akisiyla AYNI sikistirma: yukleme boyutu makul.
+            maxWidth: 1600,
+            imageQuality: 80,
+          );
+      if (!mounted) return;
+      if (file == null) {
+        setState(() => _photoBusy = false); // vazgecildi
+        return;
+      }
+      setState(() {
+        _photoPath = file.path;
+        _fotoKey = null; // yeni secim: eski yukleme gecersiz
+        _fotoKaldirildi = false;
+      });
+      await _fotoYukle(file);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _photoBusy = false;
+        _photoError = 'Fotoğraf alınamadı: $e';
+      });
+    }
+  }
+
+  Future<void> _fotoYukle(XFile file) async {
+    final api = ref.read(etkinlikApiProvider);
+    try {
+      final contentType = _contentTypeFor(file);
+      final ticket = await api.presignUpload(
+        contentType: contentType,
+        dosyaAdi: file.name,
+      );
+      final bytes = await file.readAsBytes();
+      await api.uploadPhoto(
+        ticket: ticket,
+        bytes: bytes,
+        contentType: contentType,
+      );
+      if (!mounted) return;
+      setState(() {
+        _photoBusy = false;
+        _fotoKey = ticket.fotoKey;
+        _photoError = null;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _photoBusy = false;
+        _photoError = e.kind == ApiErrorKind.network
+            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli '
+                '(yükleme adresi kısa ömürlü). Bağlantı gelince '
+                '"Tekrar yükle" ile deneyin.'
+            : e.message;
+      });
+    }
+  }
+
+  Future<void> _fotoTekrarYukle() async {
+    final path = _photoPath;
+    if (path == null || _photoBusy) return;
+    setState(() {
+      _photoBusy = true;
+      _photoError = null;
+    });
+    await _fotoYukle(XFile(path));
+  }
+
+  void _fotoKaldir() {
+    setState(() {
+      _photoPath = null;
+      _photoError = null;
+      _fotoKey = null;
+      // Duzenlemede mevcut gorselin SILINMESI istendi.
+      _fotoKaldirildi = widget.mevcut?.fotoUrl != null;
+    });
+  }
+
+  Future<void> _pickBitis() async {
+    final gun = await showDatePicker(
+      context: context,
+      initialDate: _bitis ?? _tarih.add(const Duration(hours: 2)),
+      firstDate: _tarih,
+      lastDate: _tarih.add(const Duration(days: 30)),
+    );
+    if (gun == null || !mounted) return;
+    final saat = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(
+        _bitis ?? _tarih.add(const Duration(hours: 2)),
+      ),
+    );
+    if (saat == null) return;
+    setState(() {
+      _bitis = DateTime(gun.year, gun.month, gun.day, saat.hour, saat.minute);
+    });
   }
 
   Future<void> _pickDateTime() async {
@@ -601,6 +749,17 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
 
   Future<void> _submit() async {
     if (_busy || !(_formKey.currentState?.validate() ?? false)) return;
+    if (_fotoBekliyor) {
+      setState(() {
+        _hata = 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin, '
+            '"Tekrar yükle"yi deneyin veya fotoyu kaldırın.';
+      });
+      return;
+    }
+    if (_bitis != null && !_bitis!.isAfter(_tarih)) {
+      setState(() => _hata = 'Bitiş, başlangıçtan sonra olmalı');
+      return;
+    }
     setState(() {
       _busy = true;
       _hata = null;
@@ -609,7 +768,10 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
       baslik: _baslik.text.trim(),
       aciklama: _aciklama.text.trim(),
       tarih: _tarih,
+      bitisZamani: _bitis,
       konum: _konum.text.trim().isEmpty ? null : _konum.text.trim(),
+      fotoKey: _fotoKey,
+      fotoKeyKaldir: _fotoKaldirildi,
     );
     try {
       final controller = ref.read(etkinlikControllerProvider.notifier);
@@ -686,6 +848,33 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                 onPressed: _busy ? null : _pickDateTime,
               ),
               const SizedBox(height: 8),
+              // Opsiyonel BITIS: etkinlik bitene kadar "yaklasan" listesinde
+              // kalir (sunucu ?aktif=true suzgeci COALESCE(bitis, tarih)).
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.schedule_outlined, size: 18),
+                      // Uzun etiket (tarih+saat) dar telefonda tasmasin.
+                      label: Text(
+                        _bitis == null
+                            ? 'Bitiş ekle (opsiyonel)'
+                            : 'Bitiş: ${_fmtDateTime(_bitis!)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onPressed: _busy ? null : _pickBitis,
+                    ),
+                  ),
+                  if (_bitis != null)
+                    IconButton(
+                      tooltip: 'Bitişi kaldır',
+                      icon: const Icon(Icons.close),
+                      onPressed: _busy ? null : () => setState(() => _bitis = null),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _konum,
                 decoration: const InputDecoration(
@@ -693,6 +882,78 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                   border: OutlineInputBorder(),
                 ),
                 maxLength: 500,
+              ),
+              // ---- Gorsel (opsiyonel) — gorev foto kaniti akisinin aynisi ----
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    (_fotoKey != null || _mevcutFotoUrl != null)
+                        ? Icons.check_circle
+                        : Icons.image_outlined,
+                    color: (_fotoKey != null || _mevcutFotoUrl != null)
+                        ? Colors.green
+                        : null,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('Görsel (opsiyonel)'),
+                ],
+              ),
+              if (_photoPath != null) ...[
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(_photoPath!),
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                if (_photoBusy)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: LinearProgressIndicator(),
+                  ),
+              ] else if (_mevcutFotoUrl != null) ...[
+                const SizedBox(height: 8),
+                _EtkinlikGorseli(url: _mevcutFotoUrl!, yukseklik: 120),
+              ],
+              if (_photoError != null) ...[
+                const SizedBox(height: 4),
+                Text(_photoError!, style: const TextStyle(color: Colors.red)),
+              ],
+              Wrap(
+                spacing: 8,
+                children: [
+                  TextButton.icon(
+                    onPressed: _photoBusy || _busy
+                        ? null
+                        : () => _fotoSecVeYukle(ImageSource.camera),
+                    icon: const Icon(Icons.photo_camera_outlined),
+                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden çek'),
+                  ),
+                  TextButton.icon(
+                    onPressed: _photoBusy || _busy
+                        ? null
+                        : () => _fotoSecVeYukle(ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Galeriden seç'),
+                  ),
+                  if (_fotoBekliyor)
+                    TextButton.icon(
+                      onPressed: _photoBusy || _busy ? null : _fotoTekrarYukle,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Tekrar yükle'),
+                    ),
+                  if (_photoPath != null || _mevcutFotoUrl != null)
+                    TextButton.icon(
+                      onPressed: _photoBusy || _busy ? null : _fotoKaldir,
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Kaldır'),
+                    ),
+                ],
               ),
               if (_hata != null) ...[
                 const SizedBox(height: 8),
@@ -723,7 +984,71 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
   }
 }
 
+/// Etkinlik gorseli — kisa omurlu presigned GET URL; yuklenemezse SESSIZCE
+/// yer tutucu (kart/detay bozulmaz). Dokunma tam ekran gorunum acar.
+class _EtkinlikGorseli extends StatelessWidget {
+  const _EtkinlikGorseli({required this.url, required this.yukseklik});
+
+  final String url;
+  final double yukseklik;
+
+  @override
+  Widget build(BuildContext context) {
+    final yerTutucu = Container(
+      height: yukseklik,
+      width: double.infinity,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: const Center(child: Icon(Icons.image_outlined)),
+    );
+    return GestureDetector(
+      onTap: () => showDialog<void>(
+        context: context,
+        builder: (_) => Dialog(
+          insetPadding: const EdgeInsets.all(12),
+          child: InteractiveViewer(
+            child: Image.network(url, errorBuilder: (_, _, _) => yerTutucu),
+          ),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          url,
+          height: yukseklik,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => yerTutucu,
+        ),
+      ),
+    );
+  }
+}
+
+/// image_picker mimeType vermezse uzantidan tahmin (gorev akisiyla ayni).
+String _contentTypeFor(XFile file) {
+  if (file.mimeType != null) return file.mimeType!;
+  final lower = file.path.toLowerCase();
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.heic') || lower.endsWith('.heif')) return 'image/heic';
+  return 'image/jpeg';
+}
+
 String _fmtDateTime(DateTime dt) {
   String p(int n) => n.toString().padLeft(2, '0');
   return '${p(dt.day)}.${p(dt.month)}.${dt.year} ${p(dt.hour)}:${p(dt.minute)}';
+}
+
+/// "25.07.2026 18:00 – 21:00" (ayni gun) / "... – 26.07.2026 01:00" (gun asan)
+/// / bitis yoksa yalniz baslangic.
+String _fmtAralik(Etkinlik e) {
+  final bas = e.tarih.toLocal();
+  final bit = e.bitisZamani?.toLocal();
+  if (bit == null) return _fmtDateTime(bas);
+  String p(int n) => n.toString().padLeft(2, '0');
+  final ayniGun =
+      bas.year == bit.year && bas.month == bit.month && bas.day == bit.day;
+  return ayniGun
+      ? '${_fmtDateTime(bas)} – ${p(bit.hour)}:${p(bit.minute)}'
+      : '${_fmtDateTime(bas)} – ${_fmtDateTime(bit)}';
 }

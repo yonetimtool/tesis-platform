@@ -41,7 +41,10 @@ class Etkinlik {
     required this.katiliyorumSayisi,
     required this.katilmiyorumSayisi,
     required this.createdAt,
+    this.bitisZamani,
     this.konum,
+    this.fotoKey,
+    this.fotoUrl,
     this.olusturanAd,
     this.benimDurumum,
   });
@@ -50,10 +53,20 @@ class Etkinlik {
   final String baslik;
   final String aciklama;
 
-  /// Etkinlik zamani (UTC gelir; gosterimde yerellestirilir).
+  /// Etkinlik BASLANGICI (UTC gelir; gosterimde yerellestirilir).
   final DateTime tarih;
 
+  /// Opsiyonel BITIS; null → anlik etkinlik (bitis = baslangic). Sunucunun
+  /// `?aktif=true` suzgeci COALESCE(bitis_zamani, tarih) kullanir.
+  final DateTime? bitisZamani;
+
   final String? konum;
+
+  /// Opsiyonel gorsel — MinIO obje anahtari (varligi "foto var" demektir).
+  final String? fotoKey;
+
+  /// Goruntuleme icin kisa omurlu presigned GET URL (sunucu okumada uretir).
+  final String? fotoUrl;
   final String olusturanUserId;
   final String? olusturanAd;
 
@@ -66,7 +79,16 @@ class Etkinlik {
 
   final DateTime createdAt;
 
-  bool get gecmis => tarih.isBefore(DateTime.now());
+  /// Etkinligin BITTIGI an — bitis verilmemisse baslangic (sunucudaki
+  /// COALESCE(bitis_zamani, tarih) ile ayni kural).
+  DateTime get bitis => bitisZamani ?? tarih;
+
+  /// Bitisi gecmis mi (liste basliklari icin; suzgec SUNUCUDA yapilir).
+  bool get gecmis => bitis.isBefore(DateTime.now());
+
+  /// Baslangici gecti ama bitisi gelmedi → su an SURUYOR.
+  bool get suruyor =>
+      tarih.isBefore(DateTime.now()) && bitis.isAfter(DateTime.now());
 
   factory Etkinlik.fromJson(Map<String, dynamic> json) => Etkinlik(
         id: json['id'] as String? ?? '',
@@ -74,7 +96,10 @@ class Etkinlik {
         aciklama: json['aciklama'] as String? ?? '',
         tarih: DateTime.tryParse(json['tarih'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+        bitisZamani: DateTime.tryParse(json['bitis_zamani'] as String? ?? ''),
         konum: json['konum'] as String?,
+        fotoKey: json['foto_key'] as String?,
+        fotoUrl: json['foto_url'] as String?,
         olusturanUserId: json['olusturan_user_id'] as String? ?? '',
         olusturanAd: json['olusturan_ad'] as String?,
         katiliyorumSayisi: (json['katiliyorum_sayisi'] as num?)?.toInt() ?? 0,
@@ -91,22 +116,41 @@ class EtkinlikDraft {
     required this.baslik,
     required this.aciklama,
     required this.tarih,
+    this.bitisZamani,
     this.konum,
+    this.fotoKey,
+    this.fotoKeyKaldir = false,
   });
 
   final String baslik;
   final String aciklama;
 
-  /// ISO8601 UTC gonderilir.
+  /// ISO8601 UTC gonderilir (baslangic).
   final DateTime tarih;
+
+  /// Opsiyonel bitis — sunucu baslangictan SONRA olmasini zorlar (422).
+  final DateTime? bitisZamani;
 
   /// Opsiyonel yer; bos/null ise JSON'a HIC yazilmaz (sunucu minLength 1).
   final String? konum;
+
+  /// Yeni gorsel anahtari (presign akisindan); null → alan yazilmaz.
+  final String? fotoKey;
+
+  /// PATCH'te gorseli KALDIRMAK icin acik null gonderimi (site kurali/duyuru
+  /// ile ayni sozlesme: alan yoksa dokunulmaz, acik null kaldirir).
+  final bool fotoKeyKaldir;
 
   Map<String, dynamic> toJson() => {
         'baslik': baslik,
         'aciklama': aciklama,
         'tarih': tarih.toUtc().toIso8601String(),
+        if (bitisZamani != null)
+          'bitis_zamani': bitisZamani!.toUtc().toIso8601String(),
         if (konum != null && konum!.isNotEmpty) 'konum': konum,
+        if (fotoKey != null)
+          'foto_key': fotoKey
+        else if (fotoKeyKaldir)
+          'foto_key': null,
       };
 }

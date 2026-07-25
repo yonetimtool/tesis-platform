@@ -31,6 +31,24 @@ class SiteKuraliApi {
   /// gelir). Gorev/duyuru/talep/kargo foto akisiyla ayni desen.
   final Dio _uploadDio;
 
+  /// Ana ekran bolumu icin TEK SAYFA (hafif) cekim — `sira` ASC sunucudan.
+  Future<List<SiteKurali>> fetchIlk({int limit = 3}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/site-rules',
+        queryParameters: {'limit': limit, 'offset': 0},
+      );
+      final items = res.data?['items'];
+      if (items is! List) return const [];
+      return [
+        for (final item in items)
+          if (item is Map) SiteKurali.fromJson(Map<String, dynamic>.from(item)),
+      ];
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<List<SiteKurali>> fetchAll({String? q}) async {
     final out = <SiteKurali>[];
     var offset = 0;
@@ -136,6 +154,14 @@ class SiteKuraliApi {
     }
   }
 }
+
+/// Sakin ana ekraninin "Site Kuralları" bolumu — ilk kurallar (sunucu `sira`
+/// ASC dondurur; bolum 3 kayit gosterir, "Tümünü Gör" tam listeye gider).
+/// Hata → bolum sessizce gizlenir (ana ekran rehin degil).
+final anaEkranKurallariProvider =
+    FutureProvider.autoDispose<List<SiteKurali>>((ref) {
+  return ref.watch(siteKuraliApiProvider).fetchIlk(limit: 3);
+});
 
 final siteKuraliApiProvider = Provider<SiteKuraliApi>((ref) {
   return SiteKuraliApi(ref.watch(dioProvider));

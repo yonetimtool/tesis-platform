@@ -10,10 +10,12 @@ import '../../auth/presentation/auth_controller.dart';
 import '../../budget/domain/budget_models.dart' show formatKurusAsTl;
 import '../../complaints/data/complaint_api.dart';
 import '../../dues/data/dues_api.dart';
+import '../../etkinlik/data/etkinlik_api.dart';
 import '../../dues/domain/dues_models.dart';
 import '../../kargo/data/kargo_api.dart';
 import '../../kargo/domain/kargo_models.dart';
 import '../../profile/data/profile_api.dart';
+import '../../site_kurali/data/site_kurali_api.dart';
 import '../../visitors/data/visitor_api.dart';
 import '../../weather/data/weather_api.dart';
 import '../data/activity_api.dart';
@@ -21,9 +23,11 @@ import '../data/home_api.dart';
 import '../data/home_repository.dart';
 import '../domain/home_varyant.dart';
 import 'home_async.dart';
+import 'home_refresh.dart';
 import 'home_mappers.dart';
 import 'widgets/bildir_menu_sheet.dart';
 import 'widgets/duyuru_karti.dart';
+import 'widgets/icerik_bolumu.dart';
 import 'widgets/hizli_erisim.dart';
 import 'widgets/home_govde.dart';
 import 'widgets/home_header.dart';
@@ -35,8 +39,13 @@ import 'widgets/son_hareketler_karti.dart';
 
 /// Sakin ana ekrani (referans: site-sakini.jpeg).
 ///
-/// Bolum sirasi gorselle birebir: karsilama → 4x2 hizli erisim izgarasi →
-/// Ödeme ve Aidat Durumu → Son Hareketler → Duyurular.
+/// Bolum sirasi: karsilama → 4x2 hizli erisim izgarasi → Ödeme ve Aidat
+/// Durumu → Son Hareketler → Duyurular → SITE KURALLARI → ETKINLIKLER.
+///
+/// Son iki bolum duyuru kartiyla AYNI desendedir (gorsel + baslik + ozet +
+/// tarih/cip) ve 3 kayitla sinirlidir; "Tümünü Gör" tam listeye gider.
+/// Etkinlikler `?aktif=true` ile gelir — bitisi gecmemis kayitlar, suzgec ve
+/// siralama SUNUCUDA.
 ///
 /// VERI: her sayac sakinin KENDI verisinden gelir (`/me/dues`, `/kargo`,
 /// `/visitors`, `/complaints`, `/unit-complaints/mine` [+ `?kategori=gurultu`],
@@ -64,6 +73,11 @@ class ResidentHomeScreen extends ConsumerWidget {
     // Son Hareketler TEK uctan (/activity); sunucu sakini KENDI olaylariyla
     // sinirlar — istemci artik kargo/ziyaretci/odeme/talep birlestirmez.
     final hareketler = ref.watch(sonHareketlerProvider);
+    // Ana ekran icerik bolumleri (3 kayit): kurallar sira ASC, etkinlikler
+    // ?aktif=true + en yakin once — ikisi de sunucudan sirali gelir.
+    final kurallar = ref.watch(anaEkranKurallariProvider).value ?? const [];
+    final etkinlikler =
+        ref.watch(yaklasanEtkinliklerProvider).value ?? const [];
 
     final units = duesAsync.value ?? const <MyDuesUnit>[];
 
@@ -97,7 +111,9 @@ class ResidentHomeScreen extends ConsumerWidget {
         : 'Daire ${units.map((u) => u.no).join(', ')}  •  '
             '${UserRole.resident.label}';
 
-    return HomeShell(
+    return HomeCanliVeri(
+      varyant: HomeVaryant.sakin,
+      child: HomeShell(
       role: UserRole.resident,
       currentIndex: 0,
       onDestinationSelected: (i) => _onTab(context, i),
@@ -115,6 +131,7 @@ class ResidentHomeScreen extends ConsumerWidget {
       onProfile: () => context.push(AppRoutes.profile),
       onLogout: () => ref.read(authControllerProvider.notifier).logout(),
       body: HomeGovde(
+        onYenile: () => homeVerisiniYenile(ref, HomeVaryant.sakin),
         header: HomeHeader(
           greetingName: ad,
           subtitle: altBaslik,
@@ -183,7 +200,30 @@ class ResidentHomeScreen extends ConsumerWidget {
               ),
             ),
           ),
+          // Site Kurallari — gorselli kural kartlari; dokunma kural listesine
+          // (blog-tarzi tam icerik + gorsel) gider.
+          HomeSectionPad(
+            child: IcerikBolumu(
+              baslik: 'Site Kuralları',
+              satirlar: kuralOzetleri(kurallar),
+              onTumu: () => context.push(AppRoutes.siteKurallari),
+              onSec: (_) => context.push(AppRoutes.siteKurallari),
+            ),
+          ),
+          // Etkinlikler — YAKLASAN/SUREN (sunucu suzer); dokunma etkinligin
+          // detayini (gorsel + zaman + aciklama + katilim) acar.
+          HomeSectionPad(
+            child: IcerikBolumu(
+              baslik: 'Etkinlikler',
+              satirlar: etkinlikOzetleri(etkinlikler),
+              onTumu: () => context.push(AppRoutes.etkinlik),
+              onSec: (o) => context.push(
+                '${AppRoutes.etkinlik}?etkinlik_id=${o.id}',
+              ),
+            ),
+          ),
         ],
+      ),
       ),
     );
   }

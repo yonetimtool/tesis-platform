@@ -42,11 +42,14 @@ class MockHomeRepository implements HomeRepository {
   @override
   List<HizliErisimKart> hizliErisim(HomeVaryant varyant) => switch (varyant) {
         HomeVaryant.gorevli => _gorevliErisim,
+        HomeVaryant.tesisGorevlisi => _tesisGorevlisiErisim,
         HomeVaryant.sakin => _sakinErisim,
         HomeVaryant.yonetici => _yoneticiErisim,
       };
 
-  /// gorevli.jpeg — TEK SIRA yatay serit, 5 kart.
+  /// gorevli.jpeg duzeni 4'LU IZGARAYA tasindi (yonetici izgarasiyla ayni
+  /// kart tipi/olcusu): 8 kart = 4x2 dengeli iki satir. Serit 5 kartta
+  /// kaliyordu ve "Görevlerim"/"Demirbaş" gibi gunluk isler menude gizliydi.
   static const _gorevliErisim = <HizliErisimKart>[
     HizliErisimKart(
       ikon: Icons.local_police,
@@ -84,6 +87,98 @@ class MockHomeRepository implements HomeRepository {
       // GET /violations?durum=yeni → meta.total ("N Yeni").
       // Liste ekrani yok → rotasiz.
       altMetin: null,
+    ),
+    // Saha personelinin GUNLUK isleri: gorev + zimmet + devriye. Bunlar
+    // eskiden yalniz cekmecede duruyordu; izgaraya cikti.
+    HizliErisimKart(
+      ikon: Icons.task_alt,
+      baslik: 'Görevlerim',
+      accent: HomeTokens.green,
+      altMetin: null, // GET /tasks?aktif=true → meta.total
+      rota: AppRoutes.tasks,
+    ),
+    HizliErisimKart(
+      ikon: Icons.inventory_outlined,
+      baslik: 'Demirbaş',
+      accent: HomeTokens.orange,
+      altMetin: null, // GET /assets?checked_out_by=me → meta.total
+      rota: AppRoutes.assets,
+    ),
+    HizliErisimKart(
+      ikon: Icons.directions_walk,
+      baslik: 'Turlarım',
+      accent: HomeTokens.primary,
+      // Devriye penceresi sayaci ana ekranda yok (ekran kendi durumunu
+      // gosterir) — sayac degil BOLUM etiketi.
+      altMetin: 'Devriye',
+      altMetinRengi: _gri,
+      rota: AppRoutes.patrol,
+    ),
+  ];
+
+  /// Tesis gorevlisi izgarasi — KVKK: ziyaretci/kargo/plaka/ihlal/kamera
+  /// yonetimi YOK. Yalniz bu rolun cagirabildigi uclar (auth.md §4):
+  /// /shifts, /tasks, /assets, /complaints, /announcements, /events,
+  /// /site-rules, /yonetici-iletisim.
+  static const _tesisGorevlisiErisim = <HizliErisimKart>[
+    HizliErisimKart(
+      ikon: Icons.local_police,
+      baslik: 'Vardiya Durum',
+      accent: HomeTokens.primary,
+      altMetin: null, // GET /shifts
+      rota: AppRoutes.vardiyalar,
+    ),
+    HizliErisimKart(
+      ikon: Icons.task_alt,
+      baslik: 'Görevlerim',
+      accent: HomeTokens.green,
+      altMetin: null, // GET /tasks?aktif=true → meta.total
+      rota: AppRoutes.tasks,
+    ),
+    HizliErisimKart(
+      ikon: Icons.inventory_outlined,
+      baslik: 'Demirbaş',
+      accent: HomeTokens.orange,
+      altMetin: null, // GET /assets?checked_out_by=me → meta.total
+      rota: AppRoutes.assets,
+    ),
+    HizliErisimKart(
+      ikon: Icons.rate_review_outlined,
+      baslik: 'Talep / Arıza',
+      accent: HomeTokens.red,
+      altMetin: null, // GET /complaints?durum=acik → meta.total (kendi actiklari)
+      rota: AppRoutes.complaints,
+    ),
+    HizliErisimKart(
+      ikon: Icons.info,
+      baslik: 'Duyurular',
+      accent: HomeTokens.purple,
+      altMetin: null, // GET /announcements → son 3 gun
+      rota: AppRoutes.announcements,
+    ),
+    HizliErisimKart(
+      ikon: Icons.event_available_outlined,
+      baslik: 'Etkinlikler',
+      accent: HomeTokens.green,
+      altMetin: null, // GET /events?aktif=true → meta.total
+      rota: AppRoutes.etkinlik,
+    ),
+    HizliErisimKart(
+      ikon: Icons.menu_book_outlined,
+      baslik: 'Site Kuralları',
+      accent: HomeTokens.primary,
+      // Sayac degil bolum etiketi (kural listesi).
+      altMetin: 'Kurallar',
+      altMetinRengi: _gri,
+      rota: AppRoutes.siteKurallari,
+    ),
+    HizliErisimKart(
+      ikon: Icons.support_agent_outlined,
+      baslik: 'Yönetici',
+      accent: HomeTokens.orange,
+      altMetin: 'İletişim',
+      altMetinRengi: _gri,
+      rota: AppRoutes.yoneticiIletisim,
     ),
   ];
 
@@ -228,6 +323,8 @@ class MockHomeRepository implements HomeRepository {
           etiket: 'Toplam Daire',
           altEtiket: 'Tüm Site',
           accent: HomeTokens.primary,
+          // Daire listesi/duzenlemesi: blok → kat → daire editoru.
+          rota: AppRoutes.binaDuzenleme,
         ),
         OzetKutusu(
           ikon: Icons.paid_outlined,
@@ -235,6 +332,7 @@ class MockHomeRepository implements HomeRepository {
           etiket: 'Toplam Tahsilat',
           altEtiket: 'Bu Ay',
           accent: HomeTokens.green,
+          rota: AppRoutes.financialSummary,
         ),
         OzetKutusu(
           ikon: Icons.percent,
@@ -242,9 +340,15 @@ class MockHomeRepository implements HomeRepository {
           etiket: 'Aidat Tahsilat Oranı',
           altEtiket: 'Bu Ay',
           accent: HomeTokens.orange,
+          // Ayni yanittan beslenen tahsilat raporu ekrani.
+          rota: AppRoutes.financialSummary,
         ),
         // GET /parking/occupancy → `oran` ("%2"); kapasite tanimsizsa sunucu
         // oran'i null doner → kutu '—' gosterir (uydurma yuzde YOK).
+        //
+        // ROTA YOK: mobilde arac gecisi/otopark EKRANI henuz yok (sayac var,
+        // liste yok). Dokunma "yakında" bilgilendirmesi verir; uydurma bir
+        // hedefe (orn. kameralar) yonlendirmek yanlis olurdu.
         OzetKutusu(
           ikon: Icons.directions_car,
           deger: null,

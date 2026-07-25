@@ -19,6 +19,7 @@ import '../domain/home_varyant.dart';
 import '../domain/home_view_models.dart';
 import '../domain/parking_occupancy.dart';
 import 'home_async.dart';
+import 'home_refresh.dart';
 import 'home_mappers.dart';
 import 'widgets/bildir_menu_sheet.dart';
 import 'widgets/hizli_erisim.dart';
@@ -94,7 +95,9 @@ class YoneticiHomeScreen extends ConsumerWidget {
         },
     ];
 
-    return HomeShell(
+    return HomeCanliVeri(
+      varyant: HomeVaryant.yonetici,
+      child: HomeShell(
       role: role,
       currentIndex: 0,
       unreadCount: unread,
@@ -119,6 +122,7 @@ class YoneticiHomeScreen extends ConsumerWidget {
       onProfile: () => context.push(AppRoutes.profile),
       onLogout: () => ref.read(authControllerProvider.notifier).logout(),
       body: HomeGovde(
+        onYenile: () => homeVerisiniYenile(ref, HomeVaryant.yonetici),
         header: HomeHeader(
           greetingName: ad,
           subtitle: 'Yönetici Paneli',
@@ -152,6 +156,11 @@ class YoneticiHomeScreen extends ConsumerWidget {
                 const SectionHeader(title: 'Hızlı Özet'),
                 HizliOzetIzgarasi(
                   kutular: _ozet(taban.ozet(), daire, finans, otopark),
+                  // Ozetten DETAYA kisa yol; ekrani olmayan kutu (otopark)
+                  // "yakında" bilgilendirmesi verir.
+                  onSec: (k) => k.rota == null
+                      ? _yakinda(context)
+                      : context.push(k.rota!),
                 ),
               ],
             ),
@@ -171,6 +180,7 @@ class YoneticiHomeScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

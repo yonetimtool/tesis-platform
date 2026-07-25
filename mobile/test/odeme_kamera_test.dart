@@ -127,34 +127,67 @@ void main() {
     });
   });
 
-  group('KameraSeridi — 16:10 yer tutucu + oynat + "Canlı" (referans)', () {
-    testWidgets('kamera adlari + canli etiketi; dokunma indeks doner',
-        (tester) async {
+  group('KameraSeridi — kamera karti: ad + konum + durum (referans)', () {
+    testWidgets('ad/konum + "Canlı"; dokunma KAMERAYI doner', (tester) async {
       tester.view.physicalSize = const Size(400, 1200);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
 
-      int? secilen;
+      Camera? secilen;
       await tester.pumpWidget(_wrap(KameraSeridi(
         // GERCEK /cameras yanitindan turer (mock kamera listesi kaldirildi).
-        kameralar: kameraOzetleri(const [
-          Camera(id: 'c1', ad: 'Ana Giriş', streamUrl: 'https://x/1.m3u8'),
+        kameralar: const [
+          Camera(
+            id: 'c1',
+            ad: 'Ana Giriş',
+            konum: 'Ana Kapı - Giriş',
+            streamUrl: 'https://x/1.m3u8',
+          ),
           Camera(id: 'c2', ad: 'Otopark', streamUrl: 'https://x/2.m3u8'),
-        ]),
-        onIzle: (i) => secilen = i,
+        ],
+        onAc: (k) => secilen = k,
       )));
 
       expect(find.text('Canlı Kamera'), findsOneWidget);
       expect(find.text('Ana Giriş'), findsOneWidget);
+      expect(find.text('Ana Kapı - Giriş'), findsOneWidget); // konum satiri
+      expect(find.text('Canlı'), findsNWidgets(2));
       expect(find.byIcon(Icons.play_arrow), findsWidgets);
 
       await tester.tap(find.text('Ana Giriş'));
-      expect(secilen, 0);
+      expect(secilen?.id, 'c1');
+    });
+
+    testWidgets('RTSP (oynatilabilir=false): listede KALIR + "Oynatılamıyor" '
+        'rozeti, oynat butonu YOK', (tester) async {
+      tester.view.physicalSize = const Size(400, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_wrap(KameraSeridi(
+        kameralar: const [
+          Camera(
+            id: 'c9',
+            ad: 'Arka Bahçe NVR',
+            konum: 'NVR kanal 4',
+            streamUrl: 'rtsp://nvr/kanal4',
+            tur: CameraTur.rtsp,
+            oynatilabilir: false,
+          ),
+        ],
+        onAc: (_) {},
+      )));
+
+      expect(find.text('Arka Bahçe NVR'), findsOneWidget);
+      expect(find.text('Oynatılamıyor'), findsOneWidget);
+      expect(find.text('Canlı'), findsNothing);
+      expect(find.byIcon(Icons.play_arrow), findsNothing);
+      expect(find.byIcon(Icons.videocam_off_outlined), findsOneWidget);
     });
 
     testWidgets('bos liste: bolum HIC cizilmez', (tester) async {
       await tester.pumpWidget(
-          _wrap(KameraSeridi(kameralar: const [], onIzle: (_) {})));
+          _wrap(KameraSeridi(kameralar: const [], onAc: (_) {})));
       expect(find.text('Canlı Kamera'), findsNothing);
     });
   });

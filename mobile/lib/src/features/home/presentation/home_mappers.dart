@@ -9,7 +9,8 @@ import 'package:flutter/material.dart';
 
 import '../../announcements/domain/announcement_models.dart';
 import '../../budget/domain/budget_models.dart';
-import '../../cameras/domain/camera_models.dart';
+import '../../etkinlik/domain/etkinlik_models.dart';
+import '../../site_kurali/domain/site_kurali_models.dart';
 import '../../dues/domain/dues_models.dart';
 import '../../shifts/domain/shift_models.dart';
 import '../../weather/domain/weather_models.dart';
@@ -98,10 +99,35 @@ String hareketZamanEtiketi(DateTime t, DateTime now) {
       '${t.month.toString().padLeft(2, '0')}';
 }
 
-/// GET /cameras → canli kamera seridi.
-List<KameraOzeti> kameraOzetleri(List<Camera> kameralar) => [
-      for (final k in kameralar)
-        KameraOzeti(ad: k.ad, streamUrl: k.streamUrl),
+/// GET /site-rules → sakin ana ekraninin "Site Kuralları" bolumu.
+/// Gorsel varsa presigned `foto_url` kullanilir; yoksa yer tutucu.
+List<IcerikOzeti> kuralOzetleri(List<SiteKurali> kurallar) => [
+      for (final k in kurallar)
+        IcerikOzeti(
+          id: k.id,
+          baslik: k.baslik,
+          altMetin: k.icerik,
+          ikon: Icons.menu_book_outlined,
+          fotoUrl: k.fotoUrl,
+        ),
+    ];
+
+/// GET /events?aktif=true → "Etkinlikler" bolumu (yaklasan/suren).
+/// Cip: suren etkinlikte "Sürüyor" (yesil), yaklasanda "Yaklaşan" (mavi).
+List<IcerikOzeti> etkinlikOzetleri(List<Etkinlik> etkinlikler) => [
+      for (final e in etkinlikler)
+        IcerikOzeti(
+          id: e.id,
+          baslik: e.baslik,
+          altMetin: e.konum == null || e.konum!.isEmpty
+              ? e.aciklama
+              : '${e.konum} · ${e.aciklama}',
+          ikon: Icons.event_available_outlined,
+          fotoUrl: e.fotoUrl,
+          tarih: _tarihSaat(e.tarih.toLocal()),
+          cip: e.suruyor ? 'Sürüyor' : 'Yaklaşan',
+          cipAccent: e.suruyor ? HomeTokens.green : HomeTokens.primary,
+        ),
     ];
 
 /// En yeni duyuru → duyuru karti. 3 gunden yeni ise "Yeni" cipi.
@@ -152,6 +178,11 @@ OdemeOzeti? odemeOzeti(List<MyDuesUnit> units) {
 
 String _tarih(DateTime t) => '${t.day.toString().padLeft(2, '0')}.'
     '${t.month.toString().padLeft(2, '0')}.${t.year}';
+
+/// "28.07.2026 · 12:51" — etkinlik satirinin tarih/saat etiketi.
+String _tarihSaat(DateTime t) => '${_tarih(t)} · '
+    '${t.hour.toString().padLeft(2, '0')}:'
+    '${t.minute.toString().padLeft(2, '0')}';
 
 /// Olay turu → modul ikonu. Taninmayan tur (sunucu yeni tur eklerse) NOTR
 /// zil ikonu alir — satir akistan DUSMEZ.

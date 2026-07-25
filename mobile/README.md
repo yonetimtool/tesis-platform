@@ -1200,20 +1200,40 @@ Tarihçe ve backend'in bilinçli sapmaları için → **[G1–G7 kapanış notla
 | Başlık hava bloğu | `GET /weather` → `sicaklik_c` / `durum` / `konum_ad` (G7 ile sözleşmeye yazıldı) |
 | Zil / sekme okunmamış rozeti | `GET /notifications?okundu=false&limit=1` → `meta.total` (RBAC: admin+yönetici+security; sakin/tesis görevlisinde rozet **yok**) |
 
-**Görevli (security + tesis_gorevlisi) — `gorevli.jpeg`**
+**Görevli (security) — `gorevli.jpeg` düzeni, artık 4'LÜ IZGARA**
 
 | UI alanı | Uç → alan |
 |---|---|
 | Alt başlık "Mavi Residence ⌄" | `GET /tenant/settings` → `ad` (yoksa satır çizilmez) |
-| Şerit "Vardiya Durum → N Aktif" | `GET /shifts` → o an aktif vardiya sayısı (istemcide `aktifMi(now)`) |
-| Şerit "Kargo → N Bekliyor" | `GET /kargo` → `durum='bekliyor'` sayısı (yalnız security) |
-| Şerit "Ziyaretçi → N İçeride" | `GET /visitors?icerde=true&limit=1` → `meta.total` (yalnız security) — G3 |
-| Şerit "Araç Plaka → N Giriş" | `GET /vehicle-passes?baslangic=<yerel gün başı>&limit=1` → `meta.total` (yalnız admin+security) — G1 |
-| Şerit "İhlaller → N Yeni" | `GET /violations?durum=yeni&limit=1` → `meta.total` (security; tesis_gorevlisi'nde kart **çizilmez**, 403) — G2 |
+| "Vardiya Durum → N Aktif" | `GET /shifts` → o an aktif vardiya sayısı (istemcide `aktifMi(now)`) |
+| "Kargo → N Bekliyor" | `GET /kargo` → `durum='bekliyor'` sayısı |
+| "Ziyaretçi → N İçeride" | `GET /visitors?icerde=true&limit=1` → `meta.total` — G3 |
+| "Araç Plaka → N Giriş" | `GET /vehicle-passes?baslangic=<yerel gün başı>&limit=1` → `meta.total` — G1 |
+| "İhlaller → N Yeni" | `GET /violations?durum=yeni&limit=1` → `meta.total` — G2 |
+| "Görevlerim → N Bekliyor" | `GET /tasks?aktif=true&limit=1` → `meta.total` (sunucu saha görünürlüğünü kendi uygular: rol grubuna atanan + atanmamış) |
+| "Demirbaş → N Zimmetli" | `GET /assets?checked_out_by=me&limit=1` → `meta.total` (üzerimdeki açık zimmet) |
+| "Turlarım → Devriye" | bölüm etiketi (devriye ekranı kendi durumunu gösterir) — sayaç değil |
 | Vardiya Durumu şeridi | `GET /shifts` (+ `personel[]` avatar/sayı) + son kart `GET /yonetici-iletisim` → `yoneticiler[0].ad_soyad` |
 | Son Hareketler | `GET /activity?limit=5` (G5) — **tek uç**; sunucu birleştirir/sıralar/rol süzer (tesis_gorevlisi yalnız `gorev_tamamlama` görür) |
-| Canlı Kamera şeridi | `GET /cameras` → `ad` / `stream_url` (G7 ile sözleşmeye yazıldı) |
-| Gönderim Kuyruğu (koşullu) | yerel outbox (uç değil) |
+| Canlı Kamera şeridi | `GET /cameras` → `ad` / `konum` / `stream_url` / `tur` / `oynatilabilir` (liste **sunucuda rol-süzgeçli**) |
+| Gönderim Kuyruğu (koşullu) | yerel outbox (uç değil) — `pending>0` iken 9. hücre |
+
+**Tesis görevlisi — KENDİ 4'lü ızgarası (KVKK)**
+
+Ziyaretçi/kargo/plaka/ihlal kartları **yok** (bu rolün uçları 403 döner; kart
+kalıcı `—` gösterirdi). Kart seti yalnız rolün çağırabildiği uçlardan:
+
+| UI alanı | Uç → alan |
+|---|---|
+| "Vardiya Durum → N Aktif" | `GET /shifts` |
+| "Görevlerim → N Bekliyor" | `GET /tasks?aktif=true&limit=1` → `meta.total` |
+| "Demirbaş → N Zimmetli" | `GET /assets?checked_out_by=me&limit=1` → `meta.total` |
+| "Talep / Arıza → N Açık" | `GET /complaints?durum=acik&limit=1` → `meta.total` (sunucu kendi taleplerine kısıtlar) |
+| "Duyurular → N Yeni" | `GET /announcements` → son 3 günde yayınlananlar |
+| "Etkinlikler → N Yaklaşan" | `GET /events?aktif=true&limit=1` → `meta.total` |
+| "Site Kuralları → Kurallar" | bölüm etiketi — sayaç değil |
+| "Yönetici → İletişim" | bölüm etiketi (`GET /yonetici-iletisim` ekranı) |
+| Canlı Kamera şeridi | `GET /cameras` — sunucu bu role **yalnız `aktif && sakin_gorebilir`** kameraları döner |
 
 **Site sakini — `site-sakini.jpeg`**
 
@@ -1231,6 +1251,8 @@ Tarihçe ve backend'in bilinçli sapmaları için → **[G1–G7 kapanış notla
 | Ödeme kartı: Bu Ayki Aidat / Ödendi / Son Ödeme / Gelecek Ödeme | `GET /me/dues` → `assessments[]` (son dönem `tutar_kurus`, `son_odeme_tarihi`) + `payments[]` (`durum='basarili'`) + `bakiye_kurus` |
 | Son Hareketler | `GET /activity?limit=5` (G5) — sunucu sakini yalnız kendi/dairesinin olaylarıyla sınırlar |
 | Duyuru kartı | `GET /announcements` → en yeni kayıt (`baslik`, `govde`, `created_at`, `foto_url`); 3 günden yeniyse "Yeni" çipi |
+| **"Site Kuralları" bölümü** (3 kayıt) | `GET /site-rules?limit=3` → `baslik` / `icerik` / `foto_url` (görsel yoksa yer tutucu); "Tümünü Gör" → kural listesi |
+| **"Etkinlikler" bölümü** (3 kayıt) | `GET /events?aktif=true&limit=3` → `baslik` / `konum` / `aciklama` / `tarih` / `foto_url`; çip **Sürüyor** (yeşil, `tarih<now<bitiş`) veya **Yaklaşan** (mavi). Satıra dokunma → `/etkinlik?etkinlik_id=` (detay + görsel) |
 
 **Yönetici / admin — `yonetici.jpeg`**
 
@@ -1245,10 +1267,10 @@ Tarihçe ve backend'in bilinçli sapmaları için → **[G1–G7 kapanış notla
 | "Şikayetler → N Açık" | `GET /unit-complaints?durum=acik&limit=1` → `meta.total` |
 | "Raporlar → Aylık Özet" | bölüm etiketi — sayaç değil |
 | Vardiya Durumu şeridi | `GET /shifts`; son kart oturumun kendi adı (`/me/profile`) |
-| Hızlı Özet "Toplam Daire" | `GET /units?aktif=true&limit=1` → `meta.total` |
-| Hızlı Özet "Toplam Tahsilat" | `GET /reports/financial-summary` → `tahsilat.tahsilat_kurus` |
-| Hızlı Özet "Aidat Tahsilat Oranı" | ↑ aynı yanıt → `tahsilat.tahsilat_orani_yuzde` (null ise "—") |
-| Hızlı Özet "Otopark Doluluk" | ↑ **aynı yanıt** (tek istek) → `oran` ("%2"); `oran` null ise "—" |
+| Hızlı Özet "Toplam Daire" | `GET /units?aktif=true&limit=1` → `meta.total` · **dokunma → Bina Düzenleme** (blok/kat/daire listesi) |
+| Hızlı Özet "Toplam Tahsilat" | `GET /reports/financial-summary` → `tahsilat.tahsilat_kurus` · **dokunma → Finansal Özet** |
+| Hızlı Özet "Aidat Tahsilat Oranı" | ↑ aynı yanıt → `tahsilat.tahsilat_orani_yuzde` (null ise "—") · **dokunma → Finansal Özet** |
+| Hızlı Özet "Otopark Doluluk" | ↑ **aynı yanıt** (tek istek) → `oran` ("%2"); `oran` null ise "—". **Dokunma hedefi YOK** — mobilde araç geçişi/otopark ekranı henüz yok; dokunma "yakında" bildirimi verir (uydurma bir hedefe yönlendirilmedi) |
 | Son Hareketler | `GET /activity?limit=5` (G5) — sunucu süzer; **yönetim bu akışta ziyaretçi/kargo olaylarını görmez** (KVKK, aşağıya bakın) |
 
 Sayaç sorguları `?limit=1` ile atılır ve yalnız `meta.total` okunur (sayfa
@@ -1339,6 +1361,90 @@ gösteriyor (önce hiç veri yoktu). Akış artık üç ekranda **tek** sağlay�
 (`sonHareketlerProvider`), rol parametresi yoktur.
 
 
+### Kamera oynatıcı + kamera yönetimi (WP-I)
+
+**Paket kararı: `video_player` tek başına — `chewie` EKLENMEDİ.**
+`video_player` Flutter takımının paketidir ve HLS'i **platform oynatıcısıyla**
+çalar (Android ExoPlayer, iOS AVPlayer) — ek yapılandırma gerekmez. `chewie`
+hazır bir kontrol çubuğu getirirdi ama (a) ihtiyacımız olan kontrol seti küçük
+(oynat/durdur + hata + yeniden dene + yatay), (b) kendi materyal tasarım dilini
+dayatıp onaylanmış ana ekran diline yabancı bir görünüm katıyor, (c) ek bağımlılık
+yüzeyi. Bu yüzden ince bir oynatıcı ekranı yazıldı:
+
+| Durum | Ekran |
+|---|---|
+| Yükleniyor | ortada spinner (`Key('kamera-yukleniyor')`) |
+| Hazır | video + **gövdenin tamamı dokunmatik** (oynat/durdur); duraklatınca büyük oynat ikonu |
+| Hata | "Yayın açılamadı" + "Kamera kapalı olabilir ya da ağ yayına ulaşamıyor." + **Yeniden dene** (yeni controller kurar, eskisini atar) |
+| Yatay | ekran açıkken landscape serbest, çıkışta eski yön kısıtı geri yüklenir |
+
+Controller **her yolda** atılır (hata, erken çıkış, yeniden deneme) ve durum
+değişimi `controller.addListener` ile dinlenir — platformdan gelen duraklama/
+tamponlama da ekrana yansır. (`setState`'e `Future` dönen bir geri çağrım
+vermek Flutter'da assertion hatasıdır; ilk sürümde bu vardı, test yakaladı.)
+
+**RTSP:** sunucu `oynatilabilir=false` döner. Kart listede **kalır**, "Canlı"
+yerine **"Oynatılamıyor"** yazar ve dokunma oynatıcı değil bilgi kartı açar
+(ad/konum/tür + "RTSP yayınlar şu an uygulama içinde oynatılamıyor").
+
+**Kamera yönetimi (admin + yönetici).** Kameralar ekranı 2'li ızgaradır (ana
+ekran kart diliyle aynı `KameraKarti`); yönetim rollerinde FAB "Kamera Ekle" +
+kart altında düzenle/sil. Form alanları sözleşmeyle birebir: Ad, Konum
+(opsiyonel), **Tür (HLS/MP4/RTSP)**, Yayın URL'si, **Aktif**, **"Site sakinleri
+görebilsin"**. İstemci doğrulaması sunucudaki 422 kuralının aynısıdır
+(`hls`/`mp4` → `http(s)://`, `rtsp` → `rtsp://`) ve **tür değişince URL alanı
+yeniden doğrulanır**; sunucu 422/409 dönerse mesaj **aynen** gösterilir. RTSP
+seçilince satır-içi uyarı çıkar. Kaydetme sonrası `camerasProvider` invalidate
+edilir → ana ekran şeridi ve ızgara **anında** tazelenir.
+
+**Görünürlük istemcide TEKRARLANMAZ.** `GET /cameras` sunucuda rol-süzgeçlidir
+(admin/yönetici/security tümü; resident/tesis_gorevlisi yalnız
+`aktif && sakin_gorebilir`). Mobil hiçbir yerde `sakin_gorebilir=false`
+kayıtlarını eleyen bir "sahte güvenlik" katmanı **çalıştırmaz** — gelen liste
+çizilir (`test/kamera_yonetim_test.dart` bunu kilitler).
+
+### Canlı veri yenileme — 4 tetikleyici (bayat sayaç hatası)
+
+Ana ekran bir kez yüklenip bir daha sorulmuyordu ("53 daire" bir daire silindikten
+sonra bile duruyordu). `home_refresh.dart` dört tetikleyiciyi tek bir yenileme
+fonksiyonuna bağlar:
+
+| # | Tetikleyici | Nasıl | Kapsam |
+|---|---|---|---|
+| 1 | Başka ekrandan **dönüş** | `RouteAware.didPopNext` (`homeRouteObserver` GoRouter'a `observers` ile takılı) | tam |
+| 2 | Uygulama **ön plana** | `WidgetsBindingObserver.didChangeAppLifecycleState(resumed)` | tam |
+| 3 | **Aşağı çekip** yenileme | `HomeGovde.onYenile` → `RefreshIndicator` (üç varyantta da bağlı) | tam |
+| 4 | **Periyodik** yumuşak yenileme | `Timer.periodic(45 sn)` — ana ekran görünürken | yalnız sayaç + akış |
+
+* **Yumuşak** kapsam sayaçlar + `/activity`'dir: video yok, ağır liste yok.
+* Zamanlayıcı arka planda **durur** (`paused/inactive`) ve üstüne ekran açılınca
+  da durur (`didPushNext`), dönüşte yeniden başlar → pil/veri.
+* **Titreme yok:** yenileme `ref.invalidate` iledir; Riverpod yeniden hesaplarken
+  önceki değeri korur (`hasValue` true kalır) ve `durum()`/`sayac()` yardımcıları
+  veriyi önce okur — **iskelet yalnız ilk yüklemede** görünür.
+* Rol başına yenilenen sağlayıcı kümesi `_sayacProviderlari()` /
+  `_tamProviderlar()` içinde tek yerdedir; dinleyicisi olmayan `autoDispose`
+  sağlayıcıyı invalidate etmek istek üretmez (fazladan trafik yok).
+
+### 4'lü ızgara düzenleri (rol başına)
+
+| Rol | Izgara | Kartlar |
+|---|---|---|
+| security | 4×2 (8 kart) | Vardiya Durum · Kargo · Ziyaretçi · Araç Plaka · İhlaller · **Görevlerim** · **Demirbaş** · **Turlarım** |
+| tesis_gorevlisi | 4×2 (8 kart) | Vardiya Durum · Görevlerim · Demirbaş · Talep / Arıza · Duyurular · Etkinlikler · Site Kuralları · Yönetici |
+| resident | 4×2 (8 kart) | (değişmedi) |
+| yönetici/admin | 4×2 (8 kart) | (değişmedi) + **Hızlı Özet kutuları artık tıklanabilir** |
+
+Görevli ekranındaki **yatay 5'li şerit kaldırıldı**: aynı kart tipi/ölçüsüyle
+yönetici ızgarasına hizalandı. Gerekçe: şerit 5 kartta sabitti, "Görevlerim"/
+"Demirbaş"/"Turlarım" gibi günlük işler yalnız çekmecede duruyordu; ızgara 8
+kartı tek ekranda ve dengeli iki satırda verir. `pending>0` iken "Gönderim
+Kuyruğu" 9. hücre olarak eklenir (çevrimdışı kanıt görünür kalsın).
+
+**Kart eklenirken kural:** bir kart YALNIZ rolün çağırabildiği bir uca
+bağlanıyorsa eklenir. Tesis görevlisi ızgarasında ziyaretçi/kargo/plaka/ihlal
+kartı yoktur — o uçlar bu role 403 döner ve kart kalıcı olarak `—` gösterirdi.
+
 ### Tasarımda kalan yer tutucular (uç gerektirmez)
 
 | Alan | Not |
@@ -1405,6 +1511,7 @@ features/home/
   data/home_repository.dart              düzen tabanı (ikon/başlık/renk/sıra/rota)
   data/home_api.dart                     sayaç sorguları (?limit=1 → meta.total)
   data/activity_api.dart                 "Son Hareketler" tek uç + tek sağlayıcı
+  presentation/home_refresh.dart         canlı veri: 4 tetikleyici + invalidate kümeleri
   presentation/home_gate.dart            rol yönlendirme
   presentation/home_async.dart           AsyncValue → veri/hata/iskelet (retry-dayanıklı)
   presentation/home_mappers.dart         gerçek API → görünüm modeli
@@ -1421,6 +1528,8 @@ features/home/
     vardiya_seridi.dart + shift_status_card.dart   "Vardiya Durumu"
     stat_tile.dart       "Hızlı Özet" kutuları + izgarası
     son_hareketler_karti.dart + activity_row.dart  tek kart, 1px ayraçlı satırlar
+    icerik_bolumu.dart   sakin "Site Kuralları"/"Etkinlikler" bölümleri (görsel + çip)
+    kamera_seridi.dart   "Canlı Kamera" şeridi (kart: features/cameras/.../kamera_karti.dart)
     odeme_karti.dart     "Ödeme ve Aidat Durumu" iki sütun
     duyuru_karti.dart    duyuru kartı (96×72 görsel + "Yeni" çipi)
     kamera_seridi.dart   "Canlı Kamera" 16:10 yer tutucu şeridi

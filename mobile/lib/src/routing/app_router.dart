@@ -20,6 +20,7 @@ import '../features/budget/presentation/financial_summary_screen.dart';
 import '../features/budget/presentation/site_budget_screen.dart';
 import '../features/transparency/presentation/transparency_screen.dart';
 import '../features/home/presentation/home_gate.dart';
+import '../features/home/presentation/home_refresh.dart' show homeRouteObserver;
 import '../features/kargo/presentation/kargo_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
 import '../features/dues/presentation/my_dues_screen.dart';
@@ -164,6 +165,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
     refreshListenable: refresh,
+    // Ana ekran "geri donuldu" sinyalini bu gozlemciden alir (RouteAware) —
+    // baska ekrandan donunce sayaclar/akis yenilenir (bkz. home_refresh.dart).
+    observers: [homeRouteObserver],
     routes: [
       GoRoute(
         path: AppRoutes.splash,

@@ -1,29 +1,30 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/home_tokens.dart';
-import '../../domain/home_view_models.dart';
-import 'home_card.dart';
+import '../../../cameras/domain/camera_models.dart';
+import '../../../cameras/presentation/kamera_karti.dart';
 import 'section_header.dart';
 import 'section_padding.dart';
 
-/// Gorevli ana ekraninin "Canlı Kamera" seridi (gorevli.jpeg): yatay
-/// kaydirilabilir kucuk kartlar — 16:10 gri kare + ortada yari saydam
-/// oynat butonu, altinda kamera adi ve yesil "• Canlı".
+/// Ana ekranin "Canlı Kamera" seridi (gorevli.jpeg): yatay kaydirilabilir
+/// kamera kartlari. Kart tipi Kameralar ekranindaki izgarayla AYNIDIR
+/// ([KameraKarti]) — ad + konum + "• Canlı" / "Oynatılamıyor".
 ///
-/// Kart icinde VIDEO OYNATILMAZ; kare yalnizca yer tutucudur. Dokunma
-/// [onIzle] ile disariya (gercek oynatici ekranina) birakilir.
+/// Liste SUNUCUDAN gelir ve sunucuda rol'e gore suzulmustur; bu widget
+/// EK SUZGEC UYGULAMAZ (sakin/gorevli yalniz kendisine gonderilen kameralari
+/// gorur — istemci "gizli" bir kamerayi eleyip guvenlik gibi davranmaz).
 class KameraSeridi extends StatelessWidget {
   const KameraSeridi({
     super.key,
     required this.kameralar,
-    required this.onIzle,
+    required this.onAc,
     this.onSeeAll,
   });
 
-  final List<KameraOzeti> kameralar;
+  final List<Camera> kameralar;
 
-  /// Secilen kameranin listedeki indeksi.
-  final ValueChanged<int> onIzle;
+  /// Secilen kamera — oynatilabilir mi kararini cagiran katman verir.
+  final ValueChanged<Camera> onAc;
 
   final VoidCallback? onSeeAll;
 
@@ -38,8 +39,10 @@ class KameraSeridi extends StatelessWidget {
           child: SectionHeader(title: 'Canlı Kamera', onSeeAll: onSeeAll),
         ),
         SizedBox(
-          // 168 genislik − 16 padding = 152 gorsel; 16:10 → 95 + baslik/etiket.
-          height: 164,
+          // 168 genislik − 16 kart boslugu = 152 gorsel; 16:10 → 95px. Ustune
+          // ad (17) + konum (15) + durum (15) satirlari ve boslukiar: 196
+          // hepsini KONUMLU kartta da tasmadan alir (testle kilitli).
+          height: 196,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding:
@@ -47,83 +50,14 @@ class KameraSeridi extends StatelessWidget {
             itemCount: kameralar.length,
             separatorBuilder: (_, _) =>
                 const SizedBox(width: HomeTokens.gridGap),
-            itemBuilder: (context, i) => _KameraKarti(
+            itemBuilder: (context, i) => KameraKarti(
               kamera: kameralar[i],
-              onTap: () => onIzle(i),
+              width: 168,
+              onTap: () => onAc(kameralar[i]),
             ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _KameraKarti extends StatelessWidget {
-  const _KameraKarti({required this.kamera, required this.onTap});
-
-  final KameraOzeti kamera;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = HomeSurface.of(context);
-    return HomeCard(
-      width: 168,
-      padding: const EdgeInsets.all(8),
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: AspectRatio(
-              aspectRatio: 16 / 10,
-              child: Container(
-                color: s.placeholder,
-                child: const Center(
-                  child: _OynatButonu(),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            kamera.ad,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: HomeText.cardTitle.copyWith(color: s.heading),
-          ),
-          const SizedBox(height: 3),
-          Row(
-            children: [
-              const HomeDot(color: HomeTokens.online, size: 7),
-              const SizedBox(width: 5),
-              Text('Canlı',
-                  style: HomeText.rowSub.copyWith(color: HomeTokens.green)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Yari saydam siyah daire + beyaz ucgen — referans yer tutucunun oynat
-/// butonu (islev: karti actirir, video baslatmaz).
-class _OynatButonu extends StatelessWidget {
-  const _OynatButonu();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 38,
-      height: 38,
-      decoration: const BoxDecoration(
-        color: Color(0x8C000000),
-        shape: BoxShape.circle,
-      ),
-      child: const Icon(Icons.play_arrow, color: Colors.white, size: 24),
     );
   }
 }

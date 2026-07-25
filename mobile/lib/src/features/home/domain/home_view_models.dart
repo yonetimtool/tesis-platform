@@ -110,6 +110,7 @@ class OzetKutusu {
     required this.etiket,
     required this.altEtiket,
     required this.accent,
+    this.rota,
   });
 
   final IconData ikon;
@@ -122,7 +123,11 @@ class OzetKutusu {
   final String altEtiket;
   final Color accent;
 
-  /// Buyuk degeri gercek veriyle degistirir (ikon/etiket/renk korunur).
+  /// Dokununca gidilecek ekran; null → dokunma yok (mobilde ekrani olmayan
+  /// kutu). Kutular ozetten DETAYA gecisin kisa yoludur.
+  final String? rota;
+
+  /// Buyuk degeri gercek veriyle degistirir (ikon/etiket/renk/rota korunur).
   /// [yeniDeger] null ise kutu YUKLENIYOR halinde kalir.
   OzetKutusu degerle(String? yeniDeger) => OzetKutusu(
         ikon: ikon,
@@ -130,6 +135,7 @@ class OzetKutusu {
         etiket: etiket,
         altEtiket: altEtiket,
         accent: accent,
+        rota: rota,
       );
 }
 
@@ -209,12 +215,38 @@ class DuyuruOzeti {
   final String? fotoUrl;
 }
 
-/// Canli kamera seridi karti.
-class KameraOzeti {
-  const KameraOzeti({required this.ad, this.streamUrl});
+/// Sakin ana ekraninin ICERIK bolumu satiri (Site Kuralları / Etkinlikler) —
+/// duyuru kartiyla ayni desen: gorsel + baslik + ozet + tarih/cip.
+class IcerikOzeti {
+  const IcerikOzeti({
+    required this.id,
+    required this.baslik,
+    required this.altMetin,
+    required this.ikon,
+    this.fotoUrl,
+    this.tarih,
+    this.cip,
+    this.cipAccent,
+  });
 
-  final String ad;
+  /// Kaynak kaydin id'si (derin baglanti icin).
+  final String id;
 
-  /// null → yalniz yer tutucu (oynatma yok).
-  final String? streamUrl;
+  final String baslik;
+
+  /// Ikinci satir — kural icerigi ya da etkinlik aciklamasi (2 satir kirpma).
+  final String altMetin;
+
+  /// Gorsel yoksa yer tutucuda gorunecek ikon (kural/etkinlik ayrimi).
+  final IconData ikon;
+
+  /// Kisa omurlu presigned GET URL (sunucudan); yoksa yer tutucu.
+  final String? fotoUrl;
+
+  /// Bicimlenmis tarih satiri; null → satir cizilmez.
+  final String? tarih;
+
+  /// Sag alt cip ("Yaklaşan", "Sürüyor"...); null → cip yok.
+  final String? cip;
+  final Color? cipAccent;
 }

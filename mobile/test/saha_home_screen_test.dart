@@ -194,7 +194,7 @@ void main() {
     });
 
     testWidgets('tesisGorevlisi: KVKK — Kargo/Ziyaretçi/Araç Plaka/İhlaller '
-        'kartlari ve Canlı Kamera YOK; vardiya + son hareketler VAR',
+        'kartlari YOK; vardiya + son hareketler + KENDI is kartlari VAR',
         (tester) async {
       _tall(tester);
       await tester.pumpWidget(_app(
@@ -218,7 +218,13 @@ void main() {
       expect(find.text('Araç Plaka'), findsNothing);
       // /violations tesis_gorevlisine 403 — kart cizilmez ('—' de gostermez).
       expect(find.text('İhlaller'), findsNothing);
-      expect(find.text('Canlı Kamera'), findsNothing);
+      // Kamera bolumu ARTIK bu rolde de var: sunucu yalniz sakine acilmis
+      // kameralari doner (suzgec SUNUCUDA — istemci ek suzgec uygulamaz).
+      expect(find.text('Canlı Kamera'), findsOneWidget);
+      // Rolun KENDI is kartlari izgarada.
+      for (final baslik in ['Görevlerim', 'Demirbaş', 'Site Kuralları']) {
+        expect(find.text(baslik), findsOneWidget, reason: baslik);
+      }
 
       expect(find.text('Vardiya Durum'), findsOneWidget); // serit karti
       expect(find.text('Vardiya Durumu'), findsOneWidget); // bolum basligi
