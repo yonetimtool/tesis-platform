@@ -1202,8 +1202,11 @@ def main() -> int:
              "img_bipbop_adv_example_fmp4/master.m3u8"),
             # Havuz KVKK: kisiler goruntulenir -> sakine KAPALI (yonetim gorur).
             ("Havuz", "Havuz cevresi", "mp4", True, False,
-             "https://commondatastorage.googleapis.com/gtv-videos-bucket/"
-             "sample/BigBuckBunny.mp4"),
+             # NOT: eski ornek (commondatastorage.googleapis.com/gtv-videos-
+             # bucket/...) artik 403 doner — public degil. Bu adres 206 +
+             # video/mp4 ile dogrulandi.
+             "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/"
+             "Big_Buck_Bunny_360_10s_1MB.mp4"),
             # RTSP: kayit TUTULUR ama istemci oynatamaz -> oynatilabilir=false.
             ("Arka Bahçe NVR", "NVR kanal 4", "rtsp", True, False,
              "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4"),
