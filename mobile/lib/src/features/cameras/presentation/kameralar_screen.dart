@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/error/api_exception.dart';
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../../../routing/app_router.dart';
 import '../../auth/data/current_user_provider.dart';
@@ -28,14 +28,17 @@ class KameralarScreen extends ConsumerWidget {
     final camerasAsync = ref.watch(camerasProvider);
     final role = ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
     final yonetebilir = role == UserRole.admin || role == UserRole.yonetici;
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Kameralar'))),
+      appBar: AppBar(
+        title: Text(baslikBuyuk(l10n.kameraBaslik, context.dilKodu)),
+      ),
       floatingActionButton: yonetebilir
           ? FloatingActionButton.extended(
               onPressed: () => KameraFormSheet.ac(context),
               icon: const Icon(Icons.add),
-              label: const Text('Kamera Ekle'),
+              label: Text(l10n.kameraEkle),
             )
           : null,
       body: RefreshIndicator(
@@ -46,7 +49,9 @@ class KameralarScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             children: [
               Text(
-                e is ApiException ? e.message : 'Kameralar yüklenemedi.',
+                // SERVER-LOCALIZED(next round): ApiException.message SUNUCUDAN
+                // gelir (su an yalniz TR). Sunucu yerelestirmesi ayri turda.
+                e is ApiException ? e.message : l10n.kameraListeHata,
                 textAlign: TextAlign.center,
               ),
             ],
@@ -57,9 +62,7 @@ class KameralarScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(24),
                 children: [
                   Text(
-                    yonetebilir
-                        ? 'Kamera tanımı yok. Sağ alttan ekleyebilirsiniz.'
-                        : 'Görüntülemenize açık kamera yok.',
+                    yonetebilir ? l10n.kameraBosYonetim : l10n.kameraBosSakin,
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -103,14 +106,14 @@ class KameralarScreen extends ConsumerWidget {
                           IconButton(
                             visualDensity: VisualDensity.compact,
                             icon: const Icon(Icons.edit_outlined, size: 18),
-                            tooltip: 'Düzenle',
+                            tooltip: l10n.ortakDuzenle,
                             onPressed: () =>
                                 KameraFormSheet.ac(context, mevcut: k),
                           ),
                           IconButton(
                             visualDensity: VisualDensity.compact,
                             icon: const Icon(Icons.delete_outline, size: 18),
-                            tooltip: 'Sil',
+                            tooltip: l10n.ortakSil,
                             onPressed: () => _sil(context, ref, k),
                           ),
                         ],
@@ -126,19 +129,20 @@ class KameralarScreen extends ConsumerWidget {
   }
 
   Future<void> _sil(BuildContext context, WidgetRef ref, Camera k) async {
+    final l10n = context.l10n;
     final onay = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Kamerayı sil'),
-        content: Text('"${k.ad}" silinsin mi?'),
+        title: Text(l10n.kameraSilBaslik),
+        content: Text(l10n.kameraSilOnay(k.ad)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Vazgeç'),
+            child: Text(l10n.ortakVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Sil'),
+            child: Text(l10n.ortakSil),
           ),
         ],
       ),

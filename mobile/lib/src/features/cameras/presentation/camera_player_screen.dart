@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../core/i18n/l10n.dart';
 import '../domain/camera_models.dart';
 
 /// Tam ekran canli yayin oynatici — HLS (`.m3u8`) ve MP4 icin.
@@ -37,9 +38,9 @@ class CameraPlayerScreen extends StatefulWidget {
 class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
   VideoPlayerController? _controller;
 
-  /// Hata metni (null → hata yok). Ayri alan: controller ATILDIGINDA da
-  /// mesaj ekranda kalsin.
-  String? _hata;
+  /// Hata VAR MI (metin degil!): mesaj cizim aninda aktif dilden okunur —
+  /// boylece dil degisince ekrandaki hata metni de degisir.
+  bool _hataVar = false;
   bool _hazirlaniyor = true;
 
   @override
@@ -58,7 +59,7 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
   Future<void> _baslat() async {
     setState(() {
       _hazirlaniyor = true;
-      _hata = null;
+      _hataVar = false;
     });
     // Yeniden denemede ONCEKI controller atilir (sizinti yok).
     final eski = _controller;
@@ -87,7 +88,7 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
       setState(() {
         _controller = null;
         _hazirlaniyor = false;
-        _hata = 'Yayın açılamadı';
+        _hataVar = true;
       });
     }
   }
@@ -148,7 +149,8 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
   }
 
   Widget _govde(VideoPlayerController? c) {
-    if (_hata != null) {
+    final l10n = context.l10n;
+    if (_hataVar) {
       return Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -158,22 +160,22 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
                 color: Colors.white54, size: 44),
             const SizedBox(height: 12),
             Text(
-              _hata!,
+              l10n.kameraYayinAcilamadi,
               key: const Key('kamera-hata'),
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white70, fontSize: 16),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Kamera kapalı olabilir ya da ağ yayına ulaşamıyor.',
+            Text(
+              l10n.kameraYayinAcilamadiAlt,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white38, fontSize: 12),
+              style: const TextStyle(color: Colors.white38, fontSize: 12),
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: _baslat,
               icon: const Icon(Icons.refresh),
-              label: const Text('Yeniden dene'),
+              label: Text(l10n.ortakYenidenDene),
             ),
           ],
         ),
@@ -249,15 +251,12 @@ class CameraBilgiSheet extends StatelessWidget {
               children: [
                 const Icon(Icons.videocam_off_outlined, size: 20),
                 const SizedBox(width: 8),
-                Text('Tür: ${kamera.tur.label}', style: metin.bodyMedium),
+                Text(context.l10n.kameraTurEtiket(kamera.tur.label),
+                    style: metin.bodyMedium),
               ],
             ),
             const SizedBox(height: 12),
-            Text(
-              'RTSP yayınlar şu an uygulama içinde oynatılamıyor. Kayıt '
-              'sistemde tutuluyor; oynatma desteği ileride eklenecek.',
-              style: metin.bodySmall,
-            ),
+            Text(context.l10n.kameraRtspBilgi, style: metin.bodySmall),
           ],
         ),
       ),

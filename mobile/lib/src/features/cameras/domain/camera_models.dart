@@ -11,6 +11,18 @@
 /// dokunma oynatici yerine bilgi kartini acar.
 library;
 
+/// Yayin URL'si dogrulama hatasinin TURU (metin degil — i18n icin).
+enum CameraUrlHatasi {
+  /// Alan bos.
+  bos,
+
+  /// hls/mp4 icin http(s):// gerekli.
+  httpSemasiGerekli,
+
+  /// rtsp icin rtsp:// gerekli.
+  rtspSemasiGerekli,
+}
+
 /// `camera_tur` enum'unun istemci aynasi.
 enum CameraTur {
   hls('hls', 'HLS', 'https://... .m3u8'),
@@ -133,15 +145,17 @@ class CameraDraft {
       };
 
   /// Istemci tarafi URL/tur tutarlilik kontrolu — sunucudaki 422 kuralinin
-  /// AYNISI (hls/mp4 -> http(s), rtsp -> rtsp://). Gecerliyse null, degilse
-  /// kullaniciya gosterilecek TR mesaj.
-  static String? urlHatasi(String url, CameraTur tur) {
+  /// AYNISI (hls/mp4 -> http(s), rtsp -> rtsp://).
+  ///
+  /// METIN DONDURMEZ: domain katmani dil bilmez (i18n). Hata TURU doner;
+  /// kullaniciya gosterilecek metni form katmani aktif dilden secer
+  /// (bkz. kamera_form_sheet.dart).
+  static CameraUrlHatasi? urlHatasi(String url, CameraTur tur) {
     final u = url.trim();
-    if (u.isEmpty) return 'Yayın adresi zorunludur';
+    if (u.isEmpty) return CameraUrlHatasi.bos;
     if (tur.semalar.any(u.startsWith)) return null;
-    return switch (tur) {
-      CameraTur.rtsp => 'RTSP yayın adresi rtsp:// ile başlamalı',
-      _ => '${tur.label} yayın adresi http:// veya https:// ile başlamalı',
-    };
+    return tur == CameraTur.rtsp
+        ? CameraUrlHatasi.rtspSemasiGerekli
+        : CameraUrlHatasi.httpSemasiGerekli;
   }
 }

@@ -5,9 +5,10 @@ import 'package:mobile/src/features/dues/domain/dues_models.dart';
 import 'package:mobile/src/features/home/presentation/home_mappers.dart';
 import 'package:mobile/src/features/home/presentation/widgets/kamera_seridi.dart';
 import 'package:mobile/src/features/home/presentation/widgets/odeme_karti.dart';
+import 'helpers/l10n_test_app.dart';
 
 Widget _wrap(Widget child) =>
-    MaterialApp(home: Scaffold(body: SingleChildScrollView(child: child)));
+    l10nApp(Scaffold(body: SingleChildScrollView(child: child)));
 
 /// GERCEK `/me/dues` sekli: borcsuz daire — tahakkuk 1.250,00 ve son odeme
 /// 05.05.2026, sonraki son-odeme tarihi 05.06.2026.

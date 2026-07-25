@@ -30,6 +30,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # i18n: 7 dil (tr varsayilan + en/ar/ru/de/fr/es) — ARB + gen-l10n akisi.
+  flutter_localizations:
+    sdk: flutter
+  # Tarih/saat/sayi bicimlendirmesi (DateFormat/NumberFormat) — aktif dile gore.
+  intl: any
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -93,6 +98,8 @@ flutter_launcher_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
+  # ARB dosyalarindan AppLocalizations uretimi (bkz. l10n.yaml).
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

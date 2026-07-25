@@ -64,6 +64,10 @@ List<VardiyaKart> vardiyaKartlari({
   ];
 }
 
+// SERVER-LOCALIZED(next round): asagidaki satirlarin `baslik` ve `alt_metin`
+// alanlari SUNUCUDAN gelir (13 kaynak, TR uretilir) — istemci CEVIRMEZ.
+// Sunucu yerelestirmesi turunda `/activity` Accept-Language'e uyunca bu
+// esleme degismeden dogru dilde gorunecek.
 /// `GET /activity` sayfasi → "Son Hareketler" satirlari.
 ///
 /// Metinler SUNUCUDAN gelir (baslik / alt_metin); istemci yalnizca ikon,

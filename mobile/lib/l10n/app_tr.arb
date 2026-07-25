@@ -1,0 +1,101 @@
+{
+  "@@locale": "tr",
+  "@@x-glossary": "SOZLUK (tum dillerde TUTARLI kullanilir): aidat=dues, vardiya=shift, devriye=patrol, kontrol noktasi=checkpoint, demirbas/zimmet=asset/checkout, talep=request/ticket, sikayet=complaint, daire=unit, blok=block, tesis=facility/site, gorevli=officer, sakin=resident. Para birimi HER DILDE Turk Lirasi (₺) ve Turkce sayi gruplamasiyla gosterilir.",
+  "ortakKaydet": "Kaydet",
+  "sayacBekliyor": "{n} Bekliyor",
+  "@sayacBekliyor": {
+    "description": "Kart sayaci — ICU plural TOHUM anahtari: ru/ar cogul kategorileri testle kilitlidir; ana ekran sayaclari bir sonraki turda ayni deseni kullanir.",
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "ortakKaydediliyor": "Kaydediliyor...",
+  "ortakVazgec": "Vazgeç",
+  "ortakSil": "Sil",
+  "ortakDuzenle": "Düzenle",
+  "ortakEkle": "Ekle",
+  "ortakTamam": "Tamam",
+  "ortakKapat": "Kapat",
+  "ortakTumunuGor": "Tümünü Gör",
+  "ortakYuklenemedi": "Yüklenemedi",
+  "ortakYenidenDene": "Yeniden dene",
+  "ortakYakinda": "Yakında",
+  "ortakBolumYakinda": "Bu bölüm yakında",
+  "ortakBeklenmeyenHata": "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.",
+  "ortakZorunluAlan": "{alan} zorunludur",
+  "@ortakZorunluAlan": {
+    "description": "Form dogrulama: eksik zorunlu alan",
+    "placeholders": {
+      "alan": {
+        "type": "String"
+      }
+    }
+  },
+  "ayarlarBaslik": "Ayarlar",
+  "ayarlarTesis": "Tesis",
+  "ayarlarYonetim": "Yönetim",
+  "ayarlarGorunum": "Görünüm",
+  "ayarlarTema": "Tema",
+  "ayarlarTemaSistem": "Sistem",
+  "ayarlarTemaAcik": "Açık",
+  "ayarlarTemaKoyu": "Koyu",
+  "ayarlarTemaAciklama": "Koyu tema tüm ekranlarda uygulanır; sistem seçilirse cihaz ayarını izler.",
+  "ayarlarTesisAdi": "Tesis adı",
+  "ayarlarTesisAdiAciklama": "Ana ekranda ve raporlarda görünen ad.",
+  "ayarlarTesisAdiGuncellendi": "Tesis adı güncellendi",
+  "ayarlarKameralar": "Kameralar",
+  "ayarlarKameralarAlt": "Kamera ekle, düzenle, sil",
+  "ayarlarDil": "Dil / Language",
+  "@ayarlarDil": {
+    "description": "Ayarlardaki dil satiri — TR disi dillerde de \"Language\" ile bulunabilir"
+  },
+  "dilSecBaslik": "Uygulama dili",
+  "kameraBaslik": "Kameralar",
+  "kameraEkle": "Kamera Ekle",
+  "kameraYeni": "Yeni kamera",
+  "kameraDuzenleBaslik": "Kamerayı düzenle",
+  "kameraAd": "Ad",
+  "kameraKonum": "Konum (opsiyonel)",
+  "kameraTur": "Tür",
+  "kameraUrl": "Yayın URL'si",
+  "kameraAktif": "Aktif",
+  "kameraAktifAlt": "Kapalıyken hiçbir listede görünmez",
+  "kameraSakinGorebilir": "Site sakinleri görebilsin",
+  "kameraSakinGorebilirAlt": "Kapalıyken kamerayı yalnızca yönetim ve güvenlik görür",
+  "kameraRtspFormUyari": "RTSP yayınlar şu an uygulama içinde oynatılamaz. Kayıt saklanır; oynatma desteği ileride eklenecek.",
+  "kameraUrlZorunlu": "Yayın adresi zorunludur",
+  "kameraUrlHataHttp": "{tur} yayın adresi http:// veya https:// ile başlamalı",
+  "@kameraUrlHataHttp": {
+    "description": "tur: HLS | MP4",
+    "placeholders": {
+      "tur": {
+        "type": "String"
+      }
+    }
+  },
+  "kameraUrlHataRtsp": "RTSP yayın adresi rtsp:// ile başlamalı",
+  "kameraSilBaslik": "Kamerayı sil",
+  "kameraSilOnay": "\"{ad}\" silinsin mi?",
+  "@kameraSilOnay": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "kameraBosYonetim": "Kamera tanımı yok. Sağ alttan ekleyebilirsiniz.",
+  "kameraBosSakin": "Görüntülemenize açık kamera yok.",
+  "kameraListeHata": "Kameralar yüklenemedi.",
+  "kameraCanli": "Canlı",
+  "kameraOynatilamiyor": "Oynatılamıyor",
+  "kameraYayinAcilamadi": "Yayın açılamadı",
+  "kameraYayinAcilamadiAlt": "Kamera kapalı olabilir ya da ağ yayına ulaşamıyor.",
+  "kameraTurEtiket": "Tür: {tur}",
+  "@kameraTurEtiket": {
+    "placeholders": {
+      "tur": {
+        "type": "String"
+      }
+    }
+  },
+  "kameraRtspBilgi": "RTSP yayınlar şu an uygulama içinde oynatılamıyor. Kayıt sistemde tutuluyor; oynatma desteği ileride eklenecek.",
+  "kameraSeritBaslik": "Canlı Kamera"
+}

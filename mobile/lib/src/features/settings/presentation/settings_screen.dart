@@ -3,16 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/error/api_exception.dart';
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
+import '../../../core/i18n/locale_controller.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../routing/app_router.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../../tenant/data/tenant_api.dart';
 
-/// Ayarlar — kullanici tercihleri (tema modu) + yonetici'ye ozel tesis
-/// adlandirmasi. Tema secimi kalicidir ([ThemeModeController] guvenli depoya
-/// yazar).
+/// Ayarlar — kullanici tercihleri (DIL + tema modu) + yonetici'ye ozel tesis
+/// adlandirmasi. Iki tercih de kalicidir (guvenli depo) ve ANINDA uygulanir;
+/// uygulama yeniden baslatilmaz.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -20,14 +21,18 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
     final role = ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Ayarlar'))),
+      appBar: AppBar(
+        title: Text(baslikBuyuk(l10n.ayarlarBaslik, context.dilKodu)),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // Tesis adini YALNIZ yonetici degistirir (backend RBAC zorlar).
           if (role == UserRole.yonetici) ...[
-            Text('Tesis', style: Theme.of(context).textTheme.titleMedium),
+            Text(l10n.ayarlarTesis,
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             const _TesisAdiKarti(),
             const SizedBox(height: 24),
@@ -35,33 +40,38 @@ class SettingsScreen extends ConsumerWidget {
           // Kamera yonetimi — admin/yonetici (WP-F). security ana ekran
           // seridinden erisir; buradaki giris YONETIM icindir.
           if (role == UserRole.admin || role == UserRole.yonetici) ...[
-            Text('Yönetim', style: Theme.of(context).textTheme.titleMedium),
+            Text(l10n.ayarlarYonetim,
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Card(
               child: ListTile(
                 leading: const Icon(Icons.videocam_outlined),
-                title: const Text('Kameralar'),
-                subtitle: const Text('Kamera ekle, düzenle, sil'),
+                title: Text(l10n.ayarlarKameralar),
+                subtitle: Text(l10n.ayarlarKameralarAlt),
+                // RTL: chevron Directionality ile kendiliginden aynalanir.
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push(AppRoutes.kameralar),
               ),
             ),
             const SizedBox(height: 24),
           ],
-          Text('Görünüm',
+          // ------------------------------- DIL ------------------------- #
+          Text(l10n.ayarlarGorunum,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
+          const _DilKarti(),
+          const SizedBox(height: 12),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Tema',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text(l10n.ayarlarTema,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   Text(
-                    'Sistem: cihaz ayarını izler. Açık/Koyu: elle seçim.',
+                    l10n.ayarlarTemaAciklama,
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -71,21 +81,21 @@ class SettingsScreen extends ConsumerWidget {
                   SizedBox(
                     width: double.infinity,
                     child: SegmentedButton<ThemeMode>(
-                      segments: const [
+                      segments: [
                         ButtonSegment(
                           value: ThemeMode.system,
-                          icon: Icon(Icons.brightness_auto_outlined),
-                          label: Text('Sistem'),
+                          icon: const Icon(Icons.brightness_auto_outlined),
+                          label: Text(l10n.ayarlarTemaSistem),
                         ),
                         ButtonSegment(
                           value: ThemeMode.light,
-                          icon: Icon(Icons.light_mode_outlined),
-                          label: Text('Açık'),
+                          icon: const Icon(Icons.light_mode_outlined),
+                          label: Text(l10n.ayarlarTemaAcik),
                         ),
                         ButtonSegment(
                           value: ThemeMode.dark,
-                          icon: Icon(Icons.dark_mode_outlined),
-                          label: Text('Koyu'),
+                          icon: const Icon(Icons.dark_mode_outlined),
+                          label: Text(l10n.ayarlarTemaKoyu),
                         ),
                       ],
                       selected: {mode},
@@ -98,6 +108,78 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// DIL karti — "Dil / Language" satiri (TR disi dillerde de "Language"
+/// gectigi icin kullanici anlamadigi bir dilde kalsa bile bulabilir).
+/// Secim ANINDA uygulanir ve kalicidir.
+class _DilKarti extends ConsumerWidget {
+  const _DilKarti();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final secili = ref.watch(localeControllerProvider);
+    // Secim yoksa cihaz dili gecerlidir: satirda O AN gecerli dil gosterilir.
+    final aktifKod = Localizations.localeOf(context).languageCode;
+    final aktif = secili ?? AppDil.fromKod(aktifKod) ?? AppDil.tr;
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.translate_outlined),
+        title: Text(context.l10n.ayarlarDil),
+        subtitle: Text(aktif.adKendiDilinde),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _dilSec(context, ref),
+      ),
+    );
+  }
+
+  Future<void> _dilSec(BuildContext context, WidgetRef ref) async {
+    final secili = ref.read(localeControllerProvider);
+    final aktifKod = Localizations.localeOf(context).languageCode;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 20, 8),
+              child: Text(
+                sheetContext.l10n.dilSecBaslik,
+                style: Theme.of(sheetContext).textTheme.titleMedium,
+              ),
+            ),
+            // Secim yoksa cihaz dilinin karsiligi isaretli gorunur.
+            RadioGroup<AppDil>(
+              groupValue: secili ?? AppDil.fromKod(aktifKod) ?? AppDil.tr,
+              onChanged: (yeni) {
+                if (yeni != null) {
+                  ref.read(localeControllerProvider.notifier).sec(yeni);
+                }
+                Navigator.pop(sheetContext);
+              },
+              child: Column(
+                children: [
+                  for (final dil in AppDil.values)
+                    RadioListTile<AppDil>(
+                      // Her dil KENDI DILINDE yazilir (kullanici kendi dilini
+                      // bulabilsin) ve kendi yonunde cizilir.
+                      title: Text(
+                        dil.adKendiDilinde,
+                        textDirection:
+                            dil.rtl ? TextDirection.rtl : TextDirection.ltr,
+                      ),
+                      value: dil,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

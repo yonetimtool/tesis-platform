@@ -1535,3 +1535,192 @@ features/home/
     kamera_seridi.dart   "Canlı Kamera" 16:10 yer tutucu şeridi
     home_states.dart     iskelet çubuğu + bölüm iskeleti + "Yüklenemedi"/yenile
 ```
+
+## 15. Çoklu dil (i18n) — 7 dil + RTL
+
+**Durum (bu tur):** altyapı **tam**, iki modül (**Ayarlar** + **Kameralar**) ve
+ortak durum metinleri **çevrildi** (7 dil). Kalan modüllerin dışa alımı
+mekanik bir iştir ve aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
+
+### Mimari
+
+| Parça | Yer |
+|---|---|
+| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` |
+| gen-l10n yapılandırması | `l10n.yaml` (şablon: `app_tr.arb`) |
+| Üretilen sınıf | `lib/l10n/gen/app_localizations.dart` (**repoda tutulur** → taze klonda `analyze`/`test` ek adım istemez; yenilemek için `flutter gen-l10n`) |
+| Dil seçimi + kalıcılık | `lib/src/core/i18n/locale_controller.dart` (`AppDil`, `LocaleController`, `ui.locale` anahtarı — tema ile aynı güvenli depo) |
+| Ergonomi + biçimlendirme | `lib/src/core/i18n/l10n.dart` (`context.l10n`, `tlIsaretli`, `tarihBicimi`, `baslikBuyuk`, `ltrIzole`) |
+| Uygulama bağlaması | `lib/main.dart` (`localizationsDelegates`, `supportedLocales`, `localeResolutionCallback`) |
+| Dil seçici | Ayarlar → "Dil / Language" (alt sayfa, 7 dil kendi adıyla) |
+
+**Dil çözümleme sırası:** kullanıcı seçimi (kalıcı) → cihaz dili (destekleniyorsa;
+ülke kodu yok sayılır, `en_US → en`) → **Türkçe**. Seçim **anında** uygulanır
+(uygulama yeniden başlamaz) ve kalıcıdır.
+
+**Eksik çeviri derlemeyi kırmaz:** gen-l10n şablon (TR) değerine düşer.
+
+### Bir metin nasıl eklenir (ARB akışı)
+
+1. `lib/l10n/app_tr.arb`'ye anahtarı yaz (gerekiyorsa `@anahtar` altında
+   `description` + `placeholders`).
+2. Diğer 6 ARB'ye çevirisini ekle (`app_en/ar/ru/de/fr/es.arb`).
+3. `flutter gen-l10n` → `AppLocalizations` yenilenir.
+4. Kodda `context.l10n.anahtar` (veya parametreliyse `context.l10n.anahtar(x)`).
+   **String birleştirme yok**: sayı/isim geçen metinler ICU placeholder/plural
+   ile yazılır.
+
+Her ARB'nin başında `@@x-glossary` bloğu vardır: aidat=dues, vardiya=shift,
+devriye=patrol, checkpoint, demirbaş/zimmet=asset/checkout, daire=unit,
+blok=block, sakin=resident... Çeviriler bu terminolojiye uyar (native gözden
+geçirme öncesi tutarlılık şartı).
+
+### ICU çoğul (ru/ar)
+
+Sayaç metinleri çoğul kategorileriyle yazılır; `ru` (one/few/many) ve `ar`
+(zero/one/two/few/many) davranışı `test/i18n_test.dart` ile kilitlidir:
+`1 ожидает` · `3 ожидают` · `11 ожидают` · `21 ожидает` /
+`لا شيء بالانتظار` · `عنصر واحد` · `عنصران` · `عناصر` · `عنصراً`.
+Türkçe/Almanca/Fransızca/İspanyolca tek biçim kullanır (sayıdan sonra çoğul eki
+yok) — bu **bilinçli**, dilbilgisi gereği.
+
+### RTL (Arapça)
+
+* Yön `Directionality` ile gelir (`MaterialApp.locale=ar` → RTL); chevron ve
+  geri okları **kendiliğinden** aynalanır.
+* Kenar boşlukları yön-duyarlı: `EdgeInsetsDirectional.fromSTEB` (dil seçici
+  başlığı), hizalama `CrossAxisAlignment.start/end` — `left/right` kullanılmaz.
+* **LTR izolasyon:** plaka, telefon, tutar gibi diziler RTL gövde içinde ters
+  görünmesin diye `ltrIzole()` ile Unicode FSI/PDI (U+2068/U+2069) arasına
+  alınır. `tlIsaretli()` bunu para için zaten uygular.
+* Uygulanan düzeltmeler bu turda: dil seçici başlığı `EdgeInsetsDirectional`,
+  dil adları kendi yönünde (`textDirection` per satır), kamera kartı/oynatıcı
+  metinleri yön-nötr, para/tutar biçimleyici izolasyonlu. RTL denetimi
+  `test/i18n_test.dart` içinde **Ayarlar** ve **Kamera formu** ekranlarında
+  doğrulanır.
+
+### Para ve sayı politikası (bilinçli)
+
+> **Tutarlar UI dili ne olursa olsun ₺ ve Türkçe gruplamayla gösterilir**
+> (`₺1.250,00`).
+
+Gerekçe: para **site-yereldir** — aidat TL toplanır, dekont/İBAN TL'dir. Dile
+göre `$`/`€` göstermek ya da `1,250.00` biçimi kullanmak muhasebeyle çelişir.
+Tarih/saat ve ay/gün adları ise **aktif dile** göre biçimlenir
+(`DateFormat.yMd(dil)`, `DateFormat.EEEE(dil)`).
+
+Başlık BÜYÜK HARF kuralı da dile duyarlıdır (`baslikBuyuk`): `tr` için i→İ /
+ı→I, **Arapçada büyük harf yoktur** (metin aynen), diğerlerinde standart.
+
+### Sunucu metni sınırı — `SERVER-LOCALIZED(next round)`
+
+Sunucudan gelen metinler bu turda **çevrilmez, olduğu gibi gösterilir**
+(backend yerelleştirmesi ayrı tur). İşaretli sınırlar:
+
+| Sınır | Dosya |
+|---|---|
+| Tüm API hata metinleri (422/409/503...) | `lib/src/core/error/api_exception.dart` (sınıf başı) |
+| Akış satırları (`baslik`/`alt_metin`, 13 kaynak) | `lib/src/features/home/presentation/home_mappers.dart` → `hareketSatirlari` |
+| Kamera listesi hata metni | `lib/src/features/cameras/presentation/kameralar_screen.dart` |
+| Kamera formu 422 mesajı | `lib/src/features/cameras/presentation/kamera_form_sheet.dart` |
+
+`ApiException.message` **66 dosyada** tüketilir (snackbar/hata kartı); tek sınır
+işaretlenmiştir çünkü çeviri sunucuda çözülünce hepsi kendiliğinden düzelir —
+`grep -rn "SERVER-LOCALIZED(next round)" lib/` ile bulunur, tüketici listesi
+`grep -rln "e.message" lib/` ile üretilir.
+
+### Test kapsamı
+
+`test/i18n_test.dart` (20 test): dil listesi/çözümleme, dil değiştirme
+(tr→en→ar→ru ile örnek widget kümesi), "Language" bulunabilirliği, eksik
+çeviri düşüşü, RTL yön + iki ekran denetimi, ICU çoğul (ru/ar/en/tr/de/fr/es),
+para/tarih/büyük-harf kuralları, **kalıcılık** (seç → yeni `ProviderContainer`
+= yeniden başlatma → aynı dil).
+
+Widget testleri yerelleştirme delegelerine ihtiyaç duyar: `test/helpers/l10n_test_app.dart`
+(`l10nApp(...)` / `l10nScaffold(...)`, varsayılan **tr**). Yalın `MaterialApp`
+ile çizilen yerelleştirilmiş ekran "Null check operator used on a null value"
+ile düşer.
+
+**Altın görseller (golden) TÜRKÇE'ye sabitlendi** (`test/tools/home_referans_golden_test.dart`):
+referans görseller TR'dir ve dil başına golden üretmek 7 kat çıktı demektir;
+çeviri doğruluğu metin bazlı testlerle güvence altındadır.
+
+### Kalan iş (dışa alınacak metinler)
+
+Ölçüm yöntemi (grep-doğrulanabilir): Türkçe'ye özgü karakter (`çğıöşüİ...`)
+**veya** yaygın TR UI kelimesi içeren string literalleri say (yorumlar hariç):
+
+```bash
+# mobile/ içinde
+python3 - <<'EOF'
+import re, pathlib
+tr=set('çğıöşüÇĞİÖŞÜ')
+kw=re.compile(r'\b(Yeni|Aktif|Bekliyor|Kayıt|Açık|Giriş|Sil|Kaydet|Ekle|Düzenle|Tamam|İptal|Vazgeç)\b')
+n=0
+for f in pathlib.Path('lib').rglob('*.dart'):
+    if 'l10n/gen' in str(f): continue
+    body='\n'.join(l for l in f.read_text().split('\n') if not l.strip().startswith('//'))
+    for m in re.finditer(r"'([^'\\\n]{2,})'|\"([^\"\\\n]{2,})\"", body):
+        v=m.group(1) or m.group(2) or ''
+        if any(c in tr for c in v) or kw.search(v): n+=1
+print(n)
+EOF
+```
+
+Bu turdan sonra kalan: **~1.125 string / 106 dosya** (modül başına):
+
+| Modül | Kalan string |
+|---|---|
+| `home` | 127 |
+| `tasks` | 110 |
+| `patrol` | 86 |
+| `building_map` | 84 |
+| `complaints` | 65 |
+| `rezervasyon` | 51 |
+| `etkinlik` | 44 |
+| `unit_access` | 41 |
+| `budget` | 39 |
+| `assets` | 36 |
+| `site_kurali` | 32 |
+| `announcements` | 31 |
+| `kargo` | 30 |
+| `residents` | 30 |
+| `dis_hizmet` | 26 |
+| `nfc` | 25 |
+| `staff` | 25 |
+| `integrations` | 23 |
+| `transparency` | 22 |
+| `visitors` | 22 |
+| `reports` | 21 |
+| `auth` | 20 |
+| `dues` | 18 |
+| `profile` | 18 |
+| `checkpoints` | 16 |
+| `scan` | 14 |
+| `support` | 13 |
+| `tenant` | 9 |
+| `unit_complaints` | 8 |
+| `shifts` | 7 |
+| `settings` | 6 |
+| `yonetici_iletisim` | 6 |
+| `validators` | 5 |
+| `error` | 3 |
+| `ui` | 3 |
+| `branding` | 2 |
+| `i18n` | 2 |
+| `call` | 2 |
+| `main.dart` | 1 |
+| `notifications` | 1 |
+| `push` | 1 |
+
+**Bilinçli istisnalar (çevrilmez):**
+
+* **Marka kilidi** — `Yönetio` kelime işareti ve `GÜVENLİK & DANIŞMANLIK` alt
+  başlığı logo lockup'ının parçasıdır (`home_marka.dart`, `yonetio_logo.dart`);
+  marka adı dile göre değişmez.
+* **Teknik sabitler** — enum tel değerleri (`hls`, `mp4`, `rtsp`, `acik`,
+  `kapali`), rota yolları, `HLS`/`MP4`/`RTSP` etiketleri, URL örnekleri.
+* **Seed/demo metinleri** — backend seed verisi (kamera adları, kural
+  başlıkları) sunucudan gelir; istemci çevirmez.
+* **Kod içi yorum ve `debugPrint`** — kullanıcıya görünmez.

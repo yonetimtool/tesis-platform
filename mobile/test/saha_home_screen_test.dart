@@ -21,6 +21,7 @@ import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
+import 'helpers/l10n_test_app.dart';
 
 /// Depoya dokunmayan sahte kuyruk (path_provider yok) — bekleyen sayisi
 /// kadar 'bekliyor' kaydi tasir.
@@ -89,7 +90,7 @@ Widget _app(
               Camera(id: 'c1', ad: 'Ana Kapı', streamUrl: 'https://x/s.m3u8'),
             ]),
       ],
-      child: MaterialApp(home: SahaHomeScreen(role: role)),
+      child: l10nApp(SahaHomeScreen(role: role)),
     );
 
 void _tall(WidgetTester tester) {

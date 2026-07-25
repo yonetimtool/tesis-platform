@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/i18n/l10n.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../../cameras/domain/camera_models.dart';
 import '../../../cameras/presentation/kamera_karti.dart';
@@ -36,7 +37,8 @@ class KameraSeridi extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         HomeSectionPad(
-          child: SectionHeader(title: 'Canlı Kamera', onSeeAll: onSeeAll),
+          child: SectionHeader(
+              title: context.l10n.kameraSeritBaslik, onSeeAll: onSeeAll),
         ),
         SizedBox(
           // 168 genislik − 16 kart boslugu = 152 gorsel; 16:10 → 95px. Ustune

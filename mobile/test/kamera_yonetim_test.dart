@@ -18,6 +18,8 @@ import 'package:mobile/src/features/cameras/data/cameras_api.dart';
 import 'package:mobile/src/features/cameras/domain/camera_models.dart';
 import 'package:mobile/src/features/cameras/presentation/kamera_form_sheet.dart';
 import 'package:mobile/src/features/cameras/presentation/kameralar_screen.dart';
+import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 const _hls = Camera(
   id: 'c1',
@@ -48,7 +50,7 @@ Widget _app(UserRole role, List<Camera> sunucuYaniti) => ProviderScope(
         currentUserRoleProvider.overrideWith((ref) async => role),
         camerasProvider.overrideWith((ref) async => sunucuYaniti),
       ],
-      child: const MaterialApp(home: KameralarScreen()),
+      child: l10nApp(KameralarScreen()),
     );
 
 void _tall(WidgetTester tester) {
@@ -133,27 +135,30 @@ void main() {
     });
   });
 
+  // NOT: dogrulama METIN DEGIL HATA TURU doner (i18n: domain katmani dil
+  // bilmez); kullaniciya gosterilen metni form katmani secer.
   group('CameraDraft.urlHatasi — sunucu 422 kuralinin ISTEMCI aynasi', () {
     test('hls/mp4: http(s) zorunlu', () {
       expect(CameraDraft.urlHatasi('https://a/b.m3u8', CameraTur.hls), isNull);
       expect(CameraDraft.urlHatasi('http://a/b.mp4', CameraTur.mp4), isNull);
       expect(
         CameraDraft.urlHatasi('rtsp://a/b', CameraTur.hls),
-        'HLS yayın adresi http:// veya https:// ile başlamalı',
+        CameraUrlHatasi.httpSemasiGerekli,
       );
-      expect(CameraDraft.urlHatasi('ftp://a/b', CameraTur.mp4), isNotNull);
+      expect(CameraDraft.urlHatasi('ftp://a/b', CameraTur.mp4),
+          CameraUrlHatasi.httpSemasiGerekli);
     });
 
     test('rtsp: rtsp:// zorunlu', () {
       expect(CameraDraft.urlHatasi('rtsp://a/b', CameraTur.rtsp), isNull);
       expect(
         CameraDraft.urlHatasi('https://a/b.m3u8', CameraTur.rtsp),
-        'RTSP yayın adresi rtsp:// ile başlamalı',
+        CameraUrlHatasi.rtspSemasiGerekli,
       );
     });
 
-    test('bos URL: zorunlu alan mesaji', () {
-      expect(CameraDraft.urlHatasi('  ', CameraTur.hls), 'Yayın adresi zorunludur');
+    test('bos URL: bos hata turu', () {
+      expect(CameraDraft.urlHatasi('  ', CameraTur.hls), CameraUrlHatasi.bos);
     });
 
     test('govde: create bos konumu YAZMAZ, update ACIK null gonderir', () {
@@ -178,6 +183,9 @@ void main() {
       _tall(tester);
       await tester.pumpWidget(ProviderScope(
         child: MaterialApp(
+        locale: const Locale('tr'),
+        supportedLocales: supportedLocales,
+        localizationsDelegates: testLocalizationsDelegates,
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
@@ -210,6 +218,9 @@ void main() {
       _tall(tester);
       await tester.pumpWidget(ProviderScope(
         child: MaterialApp(
+        locale: const Locale('tr'),
+        supportedLocales: supportedLocales,
+        localizationsDelegates: testLocalizationsDelegates,
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
@@ -239,6 +250,9 @@ void main() {
       _tall(tester);
       await tester.pumpWidget(ProviderScope(
         child: MaterialApp(
+        locale: const Locale('tr'),
+        supportedLocales: supportedLocales,
+        localizationsDelegates: testLocalizationsDelegates,
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(

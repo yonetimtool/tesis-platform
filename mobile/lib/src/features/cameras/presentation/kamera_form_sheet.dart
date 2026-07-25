@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 import '../data/cameras_api.dart';
 import '../domain/camera_models.dart';
 
@@ -84,7 +85,8 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (!mounted) return;
-      // Sunucu mesaji AYNEN gosterilir (orn. 409 ad cakismasi, 422 URL/tur).
+      // SERVER-LOCALIZED(next round): sunucu mesaji AYNEN gosterilir (orn. 409
+      // ad cakismasi, 422 URL/tur) — su an TR. Istemci cevirmez.
       setState(() {
         _kaydediyor = false;
         _hata = e.message;
@@ -92,9 +94,21 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
     }
   }
 
+  /// Domain'den gelen hata TURUNU aktif dildeki metne cevirir (metin domain
+  /// katmaninda tutulmaz — bkz. [CameraDraft.urlHatasi]).
+  String? _urlHataMetni(AppLocalizations l10n, String url) {
+    return switch (CameraDraft.urlHatasi(url, _tur)) {
+      null => null,
+      CameraUrlHatasi.bos => l10n.kameraUrlZorunlu,
+      CameraUrlHatasi.rtspSemasiGerekli => l10n.kameraUrlHataRtsp,
+      CameraUrlHatasi.httpSemasiGerekli => l10n.kameraUrlHataHttp(_tur.label),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final duzenleme = widget.mevcut != null;
+    final l10n = context.l10n;
     return Padding(
       padding: EdgeInsets.only(
         left: 20,
@@ -109,7 +123,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                duzenleme ? 'Kamerayı düzenle' : 'Yeni kamera',
+                duzenleme ? l10n.kameraDuzenleBaslik : l10n.kameraYeni,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 16),
@@ -117,31 +131,30 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                 controller: _adCtrl,
                 enabled: !_kaydediyor,
                 maxLength: 100,
-                decoration: const InputDecoration(
-                  labelText: 'Ad *',
-                  hintText: 'Ana Kapı',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: '${l10n.kameraAd} *',
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (v) =>
-                    (v ?? '').trim().isEmpty ? 'Ad zorunludur' : null,
+                validator: (v) => (v ?? '').trim().isEmpty
+                    ? l10n.ortakZorunluAlan(l10n.kameraAd)
+                    : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _konumCtrl,
                 enabled: !_kaydediyor,
                 maxLength: 200,
-                decoration: const InputDecoration(
-                  labelText: 'Konum (opsiyonel)',
-                  hintText: 'Ana Kapı - Giriş',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.kameraKonum,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 8),
               // Tur secici: URL kuralini belirledigi icin URL alanindan ONCE.
               InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Tür',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.kameraTur,
+                  border: const OutlineInputBorder(),
                 ),
                 child: SegmentedButton<CameraTur>(
                   segments: [
@@ -169,8 +182,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        'RTSP yayınlar şu an uygulama içinde oynatılamaz. '
-                        'Kayıt saklanır; oynatma desteği ileride eklenecek.',
+                        l10n.kameraRtspFormUyari,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
@@ -184,27 +196,26 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                 keyboardType: TextInputType.url,
                 autocorrect: false,
                 decoration: InputDecoration(
-                  labelText: 'Yayın URL\'si *',
+                  labelText: '${l10n.kameraUrl} *',
+                  // Ipucu bir URL ORNEGIDIR (dile bagli degil).
                   hintText: _tur.ornek,
                   border: const OutlineInputBorder(),
                 ),
-                validator: (v) => CameraDraft.urlHatasi(v ?? '', _tur),
+                validator: (v) => _urlHataMetni(l10n, v ?? ''),
               ),
               const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Aktif'),
-                subtitle: const Text('Kapalıyken hiçbir listede görünmez'),
+                title: Text(l10n.kameraAktif),
+                subtitle: Text(l10n.kameraAktifAlt),
                 value: _aktif,
                 onChanged:
                     _kaydediyor ? null : (v) => setState(() => _aktif = v),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Site sakinleri görebilsin'),
-                subtitle: const Text(
-                  'Kapalıyken kamerayı yalnızca yönetim ve güvenlik görür',
-                ),
+                title: Text(l10n.kameraSakinGorebilir),
+                subtitle: Text(l10n.kameraSakinGorebilirAlt),
                 value: _sakinGorebilir,
                 onChanged: _kaydediyor
                     ? null
@@ -224,7 +235,8 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.save_outlined),
-                label: Text(_kaydediyor ? 'Kaydediliyor...' : 'Kaydet'),
+                label: Text(
+                    _kaydediyor ? l10n.ortakKaydediliyor : l10n.ortakKaydet),
               ),
             ],
           ),

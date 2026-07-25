@@ -46,3 +46,4 @@ app.*.map.json
 
 # Ana ekran tasarim denetimi ciktilari (yerel; bkz. test/tools/home_referans_golden_test.dart)
 test/tools/goldens/
+l10n_eksikler.txt

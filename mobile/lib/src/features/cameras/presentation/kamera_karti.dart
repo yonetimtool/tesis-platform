@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../../home/presentation/widgets/home_card.dart';
 import '../domain/camera_models.dart';
@@ -77,14 +78,14 @@ class KameraKarti extends StatelessWidget {
               children: [
                 const HomeDot(color: HomeTokens.online, size: 7),
                 const SizedBox(width: 5),
-                Text('Canlı',
+                Text(context.l10n.kameraCanli,
                     style: HomeText.rowSub.copyWith(color: HomeTokens.green)),
               ],
             )
           else
             // Sunucu RTSP'yi oynatilamaz isaretledi — kart LISTEDE KALIR,
             // yalniz beklenti dogru kurulur (sessizce kaybolmaz).
-            Text('Oynatılamıyor',
+            Text(context.l10n.kameraOynatilamiyor,
                 style: HomeText.rowSub.copyWith(color: s.muted)),
         ],
       ),

@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/cameras/domain/camera_models.dart';
 import 'package:mobile/src/features/cameras/presentation/camera_player_screen.dart';
 import 'package:video_player/video_player.dart';
+import 'helpers/l10n_test_app.dart';
 
 /// Platform'a HIC dokunmayan sahte controller. `initialize` [basarili] ise
 /// value'yu "hazir" yapar, degilse firlatir; `dispose` sayilir (sizinti
@@ -63,8 +64,8 @@ void main() {
   testWidgets('yayin acilamazsa: "Yayın açılamadı" + oneri + Yeniden dene',
       (tester) async {
     final kurulanlar = <_SahteController>[];
-    await tester.pumpWidget(MaterialApp(
-      home: CameraPlayerScreen(
+    await tester.pumpWidget(l10nApp(
+      CameraPlayerScreen(
         kamera: _kamera,
         controllerYapici: (_) {
           final c = _SahteController(basarili: false);
@@ -95,8 +96,8 @@ void main() {
   testWidgets('Yeniden dene: YENI controller kurulur, eskisi atilir',
       (tester) async {
     final kurulanlar = <_SahteController>[];
-    await tester.pumpWidget(MaterialApp(
-      home: CameraPlayerScreen(
+    await tester.pumpWidget(l10nApp(
+      CameraPlayerScreen(
         kamera: _kamera,
         controllerYapici: (_) {
           final c = _SahteController(basarili: false);
@@ -120,8 +121,8 @@ void main() {
   testWidgets('yayin acilinca: spinner YERINE video; dokunma oynat/durdur',
       (tester) async {
     late _SahteController kurulan;
-    await tester.pumpWidget(MaterialApp(
-      home: CameraPlayerScreen(
+    await tester.pumpWidget(l10nApp(
+      CameraPlayerScreen(
         kamera: _kamera,
         controllerYapici: (_) => kurulan = _SahteController(basarili: true),
       ),
@@ -144,8 +145,8 @@ void main() {
   testWidgets('ekrandan cikis: controller ATILIR (sizinti yok)',
       (tester) async {
     late _SahteController kurulan;
-    await tester.pumpWidget(MaterialApp(
-      home: CameraPlayerScreen(
+    await tester.pumpWidget(l10nApp(
+      CameraPlayerScreen(
         kamera: _kamera,
         controllerYapici: (_) => kurulan = _SahteController(basarili: true),
       ),
@@ -153,7 +154,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(kurulan.atildi, isFalse);
 
-    await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+    await tester.pumpWidget(l10nApp(SizedBox.shrink()));
     await tester.pumpAndSettle();
 
     expect(kurulan.atildi, isTrue);
@@ -163,8 +164,8 @@ void main() {
   testWidgets('RTSP bilgi karti: ad + konum + tur + aciklama (oynatici YOK)',
       (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
+      l10nApp(
+        const Scaffold(
           body: CameraBilgiSheet(
             kamera: Camera(
               id: 'c9',

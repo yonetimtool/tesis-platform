@@ -1,0 +1,18 @@
+# gen-l10n yapilandirmasi — `flutter gen-l10n` (ve `flutter run/build`) ARB
+# dosyalarindan `AppLocalizations` uretir.
+#
+# KAYNAK DIL: Turkce (app_tr.arb). Yeni bir metin EKLENIRKEN once app_tr.arb'ye
+# yazilir (aciklama/placeholder ile), sonra diger 6 dile cevrilir. Eksik ceviri
+# derlemeyi kirmaz: `AppLocalizations` o anahtar icin TR degerine duser
+# (template-arb-file fallback).
+arb-dir: lib/l10n
+template-arb-file: app_tr.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# Uretilen kod lib/l10n/gen'e yazilir ve REPOYA GIRER: boylece taze klonda
+# `flutter analyze`/`flutter test` ek bir uretim adimi olmadan calisir.
+# Yeniden uretmek icin: `flutter gen-l10n`.
+output-dir: lib/l10n/gen
+# Eksik cevirileri raporla ama derlemeyi KIRMA (ceviri turu ayri ilerler).
+untranslated-messages-file: l10n_eksikler.txt
+nullable-getter: false

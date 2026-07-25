@@ -49,6 +49,8 @@ import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/visitors/data/visitor_api.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
 import 'package:mobile/src/features/yonetici_iletisim/data/yonetici_iletisim_api.dart';
+import '../helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 class _FakeOutbox extends ScanOutbox {
   @override
@@ -209,7 +211,14 @@ Future<void> _cek(
 
   await tester.pumpWidget(ProviderScope(
     overrides: _temsili(ad, role).cast(),
-    child: MaterialApp(debugShowCheckedModeBanner: false, home: ekran),
+    // Altin gorseller TURKCE'ye SABIT (bkz. dosya basligi).
+    child: MaterialApp(
+      debugShowCheckedModeBanner: false,
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
+      home: ekran,
+    ),
   ));
   await tester.pumpAndSettle();
 

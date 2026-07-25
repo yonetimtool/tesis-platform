@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'l10n/gen/app_localizations.dart';
+import 'src/core/i18n/locale_controller.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/core/theme/theme_controller.dart';
 import 'src/features/push/presentation/push_registrar.dart';
@@ -29,6 +32,10 @@ class TesisGuvenlikApp extends ConsumerWidget {
     ref.watch(pushSetupProvider);
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
+    // Dil: kullanici secimi (kalici) — null ise cihaz dili, o da
+    // desteklenmiyorsa Turkce (bkz. localeCozumle). Secim degisince
+    // MaterialApp yeniden cizilir; UYGULAMA YENIDEN BASLAMAZ.
+    final locale = ref.watch(aktifLocaleProvider);
 
     // On planda gelen push → SnackBar; hedefi olan bildirimde "Ac" aksiyonu
     // ilgili ekrana goturur (on plan mesaji tepsiye dusmez — tiklama bu).
@@ -63,6 +70,17 @@ class TesisGuvenlikApp extends ConsumerWidget {
       theme: buildLightTheme(),
       darkTheme: buildDarkTheme(),
       themeMode: themeMode,
+      locale: locale,
+      supportedLocales: supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      // Cihaz dili desteklenmiyorsa Turkce'ye duser (ulke kodu yok sayilir).
+      localeResolutionCallback: (cihaz, desteklenen) =>
+          localeCozumle(cihaz, desteklenen),
       routerConfig: router,
     );
   }

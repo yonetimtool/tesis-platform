@@ -10,6 +10,12 @@ enum ApiErrorKind { network, auth, api }
 
 /// Sozlesmedeki hata zarfini (`{ "error": { "code", "message" } }`) temsil eden
 /// uygulama-ici istisna. UI bu istisnanin [message] alanini kullaniciya gosterir.
+// SERVER-LOCALIZED(next round): [ApiException.message] SUNUCUDAN gelen metindir
+// (422 dogrulama, 409 catisma, 503 ...) ve su an YALNIZ TURKCE'dir. Istemci bu
+// metni CEVIRMEZ — aynen gosterir. Sunucu yerelestirmesi (Accept-Language ->
+// yerelestirilmis hata metni) ayri bir turda yapilacak; o zaman bu sinifin TUM
+// tuketicileri gozden gecirilmelidir. Tuketici envanteri: mobile/README.md
+// "Sunucu metni siniri" bolumu.
 class ApiException implements Exception {
   const ApiException({
     required this.code,

@@ -14,6 +14,7 @@ import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/scan/data/scan_outbox.dart';
 import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
+import 'helpers/l10n_test_app.dart';
 
 /// Eski home_screen_overflow_test'in mirasi: KUCUK ekranda (320x480) en cok
 /// bolumlu ekran (saha/security: serit + vardiya + son hareketler + kamera)
@@ -48,7 +49,7 @@ Widget _app({List<Shift> vardiyalar = const []}) => ProviderScope(
               ),
             ]),
       ],
-      child: const MaterialApp(home: SahaHomeScreen(role: UserRole.security)),
+      child: l10nApp(SahaHomeScreen(role: UserRole.security)),
     );
 
 void main() {
