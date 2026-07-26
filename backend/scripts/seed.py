@@ -112,6 +112,13 @@ USERS = [
         "email": "admin@acme.com",
         "role": "admin",
         "password": os.getenv("SEED_ADMIN_PASSWORD", "Admin123!"),
+        # MOBIL GIRIS telefonla yapilir (POST /auth/login-phone); e-posta+tesis
+        # kodu YALNIZ panelde (POST /auth/login) kullanilir. Telefonu olmayan
+        # admin mobilde HIC giris yapamiyordu — dev'de admin duzenini mobilde
+        # denemek icin numara verildi (blogun basi: 200).
+        "telefon": "+905321112200",
+        # Platform operatoru: rol-bazli aramaya (C1a) ACIK DEGIL.
+        "aranabilir": False,
     },
     {
         "ad": "Acme Yonetici",
@@ -126,9 +133,9 @@ USERS = [
     },
     {
         # Ikinci yonetici: "Yonetici Iletisim" sekmesindeki COKLU listeyi
-        # gosterir. NOT: telefon GLOBAL benzersiz — 201-206 zaten dolu
-        # (201 yonetici, 202 guard, 203 sakin, 204 cleaner, 205 sakin-3,
-        # 206 sakin-es asagida ayri INSERT'te) -> 207.
+        # gosterir. NOT: telefon GLOBAL benzersiz — 200-206 zaten dolu
+        # (200 admin, 201 yonetici, 202 guard, 203 sakin, 204 cleaner,
+        # 205 sakin-3, 206 sakin-es asagida ayri INSERT'te) -> 207.
         "ad": "Acme Yonetici 2",
         "email": "yonetici2@acme.com",
         "role": "yonetici",

@@ -388,6 +388,20 @@ Gelistirme/test icin **idempotent** seed (`scripts/seed.py`). Olusturur:
 | tesis_gorevlisi | `cleaner@acme.com` / `Clean123!` (rol: tesis_gorevlisi) |
 | resident | `resident@acme.com` / `Resident123!` (rol: resident) |
 
+**Mobil giris telefonladir** (`POST /auth/login-phone`; e-posta + `tenant_slug`
+YALNIZ panelde). Telefonlar global benzersizdir:
+
+| Rol | Telefon | Parola |
+|---|---|---|
+| admin | `+905321112200` | `Admin123!` |
+| yonetici (birincil) | `+905321112201` | `Yonetici123!` |
+| security | `+905321112202` | `Guard123!` |
+| resident | `+905321112203` | `Resident123!` |
+| tesis_gorevlisi | `+905321112204` | `Clean123!` |
+| resident-3 | `+905321112205` | `Resident123!` |
+| resident-es | `+905321112206` | *(gecici kod — parola belirlemeden)* |
+| yonetici-2 | `+905321112207` | `Yonetici123!` |
+
 **RLS:** Yeni tenant olusturmak app_rw ile mumkun olmadigindan (RLS WITH CHECK),
 seed **OWNER** baglantisi (`OWNER_DSN`) ile calisir — migrate servisiyle ayni
 yetki. UPSERT (`ON CONFLICT DO UPDATE`) ile tekrar tekrar guvenle calisir;

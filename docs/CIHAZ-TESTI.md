@@ -122,13 +122,16 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
 
   Seed idempotenttir (tekrar çalıştırmak güvenli). Oluşturduğu hesaplar:
 
-  | Rol | E-posta | Parola | Tesis kodu (tenant_slug) |
-  |---|---|---|---|
-  | admin (platform admini — panel) | `admin@acme.com` | `Admin123!` | `acme-plaza` |
-  | yonetici (site yöneticisi — mobil) | `yonetici@acme.com` | `Yonetici123!` | `acme-plaza` |
-  | security (güvenlik) | `guard@acme.com` | `Guard123!` | `acme-plaza` |
-  | tesis_gorevlisi (temizlik+bahçıvan+teknik) | `cleaner@acme.com` | `Clean123!` | `acme-plaza` |
-  | resident (site sakini) | `resident@acme.com` | `Resident123!` | `acme-plaza` |
+  | Rol | E-posta (panel) | Telefon (mobil) | Parola | Tesis kodu (tenant_slug) |
+  |---|---|---|---|---|
+  | admin (platform admini — panel) | `admin@acme.com` | `+905321112200` | `Admin123!` | `acme-plaza` |
+  | yonetici (site yöneticisi — mobil) | `yonetici@acme.com` | `+905321112201` | `Yonetici123!` | `acme-plaza` |
+  | security (güvenlik) | `guard@acme.com` | `+905321112202` | `Guard123!` | `acme-plaza` |
+  | tesis_gorevlisi (temizlik+bahçıvan+teknik) | `cleaner@acme.com` | `+905321112204` | `Clean123!` | `acme-plaza` |
+  | resident (site sakini) | `resident@acme.com` | `+905321112203` | `Resident123!` | `acme-plaza` |
+
+  > **Mobil giriş telefonladır** (`POST /auth/login-phone`) — tesis kodu/e-posta
+  > istenmez. E-posta + tesis kodu girişi yalnız admin-web panelindedir.
 
   > Rol modeli notu: **panel (admin-web) yalnız `admin` içindir**; `yonetici`
   > mobil kullanır ve kendi tesisiyle sınırlıdır (görev atama/takip, rapor okuma,

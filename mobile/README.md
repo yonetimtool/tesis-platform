@@ -14,16 +14,24 @@ Bu prompt kapsamı (Faz 0): iskelet + **login** (`tenant_slug` + `email` + `pass
 → access/refresh token) + token'ların güvenli saklanması + **açılışta oturum geri
 yükleme** + **401'de otomatik token yenileme (refresh rotation)** + logout.
 
-### 🔐 Örnek test girişi (gerçek backend, seed verisi)
+### 🔐 Örnek test girişleri (gerçek backend, seed verisi)
 
-| Alan | Değer |
-|------|-------|
-| Tesis kodu (`tenant_slug`) | `acme-plaza` |
-| E-posta | `admin@acme.com` |
-| Parola | `Admin123!` |
+**Mobil giriş TELEFONLADIR** (`POST /auth/login-phone`) — tesis kodu/e-posta
+istenmez, tenant numaradan çözülür. E-posta + `tenant_slug` girişi
+(`POST /auth/login`) **yalnız admin-web panelindedir**.
 
-> Bu, docker compose ile kalkan yerel backend'in seed kullanıcısıdır; gerçek
-> `POST /auth/login` token çifti döndürür.
+| Rol | Telefon | Parola |
+|---|---|---|
+| admin (platform admini) | `+905321112200` | `Admin123!` |
+| yonetici (birincil) | `+905321112201` | `Yonetici123!` |
+| security | `+905321112202` | `Guard123!` |
+| tesis_gorevlisi | `+905321112204` | `Clean123!` |
+| resident | `+905321112203` | `Resident123!` |
+
+> Bunlar docker compose ile kalkan yerel backend'in seed kullanıcılarıdır.
+> Admin'in telefonu sonradan eklendi: numarası olmadığı için mobilde **hiç**
+> giriş yapamıyordu (panelde e-postayla giriyor). Mobilde admin, yönetim
+> düzenini görür (`HomeGate`: admin → yönetici varyantı).
 
 ---
 
@@ -179,12 +187,14 @@ flutter run
 flutter run --dart-define=API_BASE_URL=http://192.168.1.20:8000
 ```
 
-Akış: login ekranı (örnek giriş: `acme-plaza` / `admin@acme.com` / `Admin123!`) →
-`POST /auth/login` → dönen access+refresh çifti secure storage'a yazılır → ana
-ekrana geçilir. Sonraki korunan isteklerde access token otomatik eklenir; 401'de
-arka planda refresh denenir (§3). Uygulamayı yeniden başlattığınızda saklı oturum
-varsa **login atlanır**, doğrudan ana ekran açılır (çıkış için ana ekrandaki
-logout ikonu token'ları siler ve login'e döner).
+Akış: login ekranı (örnek giriş: `+905321112201` / `Yonetici123!` — tam liste
+yukarıda) → `POST /auth/login-phone` → dönen access+refresh çifti secure
+storage'a yazılır → rolün ana ekranına geçilir. Sonraki korunan isteklerde
+access token otomatik eklenir; 401'de arka planda refresh denenir (§3).
+
+Soğuk açılış **her zaman login ekranına düşer** (sessiz auto-login bilerek yok);
+"Beni hatırla" işaretliyse alanlar ön-dolu gelir ve kullanıcı Giriş'e basar.
+Çıkış app-bar avatarındaki hesap menüsündedir.
 
 ---
 
