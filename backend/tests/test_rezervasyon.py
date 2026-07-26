@@ -9,32 +9,92 @@ durum='onaylandi' olur. Zamanlama (slot baslangicina gore, tenant tz):
 Iptal (durum='iptal') slotu bosaltir. CAKISMA: DB partial EXCLUDE
 (WHERE durum='onaylandi') — cakisan ikinci talep 409 (INSERT aninda, yaris-safe).
 
-Testler CANLI sunucuya (httpx) gider; sunucu GERCEK saati kullanir. Bu yuzden
-slot saatleri "simdi"ye gore (Europe/Istanbul) uretilir — sabit tarih yerine
-now+ofset. Ayni gun ikinci rezervasyon gunluk kotaya takilir; bu yuzden ayni
-gun coklu-slot testleri FARKLI sakinler kullanir (kota kisi-bazli).
+Testler CANLI sunucuya (httpx) gider; sunucu GERCEK saati kullanir — slot
+saatleri sabit tarih yerine "simdi + ofset" olarak uretilir. Ayni gun ikinci
+rezervasyon gunluk kotaya takilir; bu yuzden ayni gun coklu-slot testleri
+FARKLI sakinler kullanir (kota kisi-bazli). Saat bagimsizligi icin bkz.
+asagidaki "SAAT-BAGIMSIZLIK" blogu.
 """
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import pytest
 
-_IST = ZoneInfo("Europe/Istanbul")
+# ------------------------------ SAAT-BAGIMSIZLIK ---------------------------- #
+# SORUN (kalici olarak cozuldu): slotlar gercek "simdi + N saat" oldugu icin
+# AKSAM saatlerinde gece yarisini sariyordu ve dosya her gun birkac saat
+# KIRMIZI yaniyordu (kodla ilgisiz, saf test-zamani kusuru):
+#   (a) 23:xx baslayan 1 saatlik slot -> bitis 00:00 ama TARIH ayni kalir =>
+#       422 "bitis baslangictan sonra olmali";
+#   (b) alan penceresi h+2/h+4 -> "24:00" gibi GECERSIZ kapanis saati => 422;
+#   (c) +2s ve +4s farkli GUNLERE dusunce "ayni gun ikinci rezervasyon 409"
+#       ve +23s ayni gune dusunce "farkli gun serbest" varsayimlari cokuyordu.
+#
+# COZUM: kurallar TENANT SAAT DILIMINDE degerlendirilir (bkz.
+# app/reservations_timing.py -> slot_start_utc). Test tenant'inin saat dilimi,
+# YEREL saat guvenli bir bantta (~09:xx) olacak sekilde secilir; boylece
+#   * +2s..+6s slotlari hep AYNI takvim gununde ve <= 23:00,
+#   * +23s hep ERTESI gun (farkli-gun testleri anlamli),
+#   * alan pencereleri (h+2 / h+4) 23'u asmaz.
+# Etc/GMT bolgeleri sabit ofsetlidir (DST yok) -> yaz saati kaymasi da elenir.
+#
+# YAN FAYDA: bu ayni zamanda DAHA IYI bir test — kurallarin sunucu-yerel saate
+# degil TENANT saatine bagli oldugunu kanitlar. Istanbul'a sabitken "tesadufen
+# dogru" olabiliyordu.
+_HEDEF_YEREL_SAAT = 9
+
+
+def _guvenli_bolge(utc_saat: int) -> ZoneInfo:
+    """Verilen UTC saatinde yerel saati `_HEDEF_YEREL_SAAT`:xx yapan bolge.
+
+    SAF fonksiyon — 24 saatin HEPSINDE dogrulugu
+    `test_saat_dilimi_secimi_24_saatin_hepsinde_guvenli` ile kilitlidir.
+    """
+    ofset = (_HEDEF_YEREL_SAAT - utc_saat) % 24
+    if ofset > 14:  # Etc/GMT bolgeleri yalniz -12..+14 arasini kapsar
+        ofset -= 24
+    # DIKKAT: Etc/GMT'de ISARET TERSTIR — Etc/GMT-3 == UTC+3.
+    return ZoneInfo(f"Etc/GMT{-ofset:+d}")
+
+
+def _sabit_saat_dilimi() -> ZoneInfo:
+    """MODUL YUKLENIRKEN BIR KEZ secilen bolge.
+
+    Bir kez hesaplanir cunku fixture'in tenant'a yazdigi deger ile
+    yardimcilarin kullandigi deger AYNI kalmalidir (UTC saati kosum ortasinda
+    ilerlese bile bolge degismez). Uzun bir kosumda yerel saat ileri kayar;
+    guvenli bant genis oldugu icin (~09:00 -> 18:00 arasi sorunsuz) bu bilincli
+    bir toleranstir.
+    """
+    return _guvenli_bolge(datetime.now(timezone.utc).hour)
+
+
+#: Test tenant'inin (ve tum slot hesaplarinin) saat dilimi — bkz. `rworld`.
+TEST_TZ = _sabit_saat_dilimi()
 
 
 def _now():
-    return datetime.now(_IST)
+    """Tenant-yerel "simdi" ([TEST_TZ]; fixture tenant'i bu bolgeye alir)."""
+    return datetime.now(TEST_TZ)
 
 
 def _hslot(hours_ahead, dur_h=1):
-    """Saat-hizali slot: simdi+hours_ahead (tarih, "HH:MM", "HH:MM")."""
+    """Saat-hizali slot: simdi+hours_ahead (tarih, "HH:MM", "HH:MM").
+
+    [TEST_TZ] sayesinde gece yarisi sarmasi olusamaz; yine de sessizce yanlis
+    slot uretip anlasilmaz bir 422'ye donusmemesi icin ACIKCA dogrulanir.
+    """
     start = (_now() + timedelta(hours=hours_ahead)).replace(
         minute=0, second=0, microsecond=0
     )
     end = start + timedelta(hours=dur_h)
+    assert start.date() == end.date(), (
+        f"slot gece yarisini sardi ({start} -> {end}); TEST_TZ={TEST_TZ} "
+        "beklenen guvenli bantta degil"
+    )
     return start.date().isoformat(), start.strftime("%H:%M"), end.strftime("%H:%M")
 
 
@@ -46,21 +106,19 @@ def _mslot(minutes_ahead, dur_min=20):
 
 
 def _iki_bitisik_slot_ayni_gun():
-    """AYNI takvim gunune denk, 24s penceresi icinde, cakismayan iki BITISIK
-    saat slotu -> ((tarih,s,e), (tarih,s,e)). Kural her gun bagimsiz 1 oldugundan
-    MUMKUNSE gelecek bir gun (yarin) secilir; gece yarisina yakin saatlerde (0-1)
-    bugune duser — iki durumda da 2. slot ayni gune denk gelir (kota testi)."""
-    now = _now()
-    if now.hour >= 2:  # yarin: (simdi-2s) ve (simdi-1s) saatleri hala <24s icinde
-        day = (now + timedelta(days=1)).date()
-        h1 = now.hour - 2
-    else:  # gece yarisi kenar durumu: bugun ileri iki saat
-        day = now.date()
-        h1 = now.hour + 1
-    d = day.isoformat()
+    """YARININ ayni takvim gunune denk, <24s icinde, cakismayan iki BITISIK
+    saat slotu -> ((tarih,s,e), (tarih,s,e)).
+
+    Kota her takvim gunu icin BAGIMSIZ 1 oldugundan bilerek GELECEK bir gun
+    secilir. Yerel saat ~09:xx oldugu icin yarinin 01:00-03:00 araligi hem
+    gelecekte hem <24s icindedir (yaklasik +16s)."""
+    yarin = (_now() + timedelta(days=1)).replace(
+        hour=1, minute=0, second=0, microsecond=0
+    )
+    d = yarin.date().isoformat()
     return (
-        (d, f"{h1:02d}:00", f"{h1 + 1:02d}:00"),
-        (d, f"{h1 + 1:02d}:00", f"{h1 + 2:02d}:00"),
+        (d, "01:00", "02:00"),
+        (d, "02:00", "03:00"),
     )
 
 
@@ -117,9 +175,20 @@ def rworld(client, world, owner_conn):
     * unit1 (R-101): resident_a + es (ayni dairede iki sakin).
     * unit2 (R-202): resident_diger.
     * alan1, alan2 — tenant A. Uc ayri sakin (resident_a, es, diger).
+
+    SAAT DILIMI: her iki tenant da [TEST_TZ]'ye alinir — zamanlama kurallari
+    tenant-yerel saate gore isledigi icin slot yardimcilarinin varsayimlari
+    ancak boyle GARANTI edilir (bkz. "SAAT-BAGIMSIZLIK"). Tenant'lar
+    `two_tenants` teardown'unda silinir, sizinti yok.
     """
     a = world["a"]
     suffix = uuid.uuid4().hex[:6]
+
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE tenant SET timezone=%s WHERE id IN (%s,%s)",
+            (str(TEST_TZ), a, world["b"]),
+        )
     pw = "RezPass1!"
     es_email = f"res-{suffix}@acme.com"
     diger_email = f"rdiger-{suffix}@acme.com"
@@ -166,6 +235,46 @@ def rworld(client, world, owner_conn):
         "alan1": alan1["id"],
         "alan2": alan2["id"],
     }
+
+
+# --------------------------- saat-bagimsizlik ------------------------------- #
+def test_saat_dilimi_secimi_24_saatin_hepsinde_guvenli():
+    """Duzeltmenin ASIL iddiasi: gunun HANGI saatinde kosulursa kosulsun
+    tenant-yerel saat sabit ve guvenli bir degere oturur (eskiden aksam
+    saatlerinde gece yarisi sarmasi kacinilmazdi)."""
+    ornek = datetime.now(timezone.utc)
+    for utc_saat in range(24):
+        bolge = _guvenli_bolge(utc_saat)
+        ofset_saat = bolge.utcoffset(ornek).total_seconds() / 3600
+        assert ofset_saat == int(ofset_saat), bolge  # tam saat ofseti
+        yerel = (utc_saat + ofset_saat) % 24
+        assert yerel == _HEDEF_YEREL_SAAT, (utc_saat, str(bolge), yerel)
+
+
+def test_saat_bagimsizlik_capasi_gecerli():
+    """Slot yardimcilarinin dayandigi VARSAYIM tek bir yerde sinanir.
+
+    Bozulursa dosyanin yarisi anlasilmaz 422/409'larla kirilmak yerine BURASI
+    tek ve acik bir hata verir."""
+    now = _now()
+    # Yerel saat guvenli bantta: +6s gunu asmaz, -2s gunun basina dusmez.
+    assert 2 <= now.hour <= 17, (
+        f"yerel saat {now:%H:%M} guvenli bantta degil (TEST_TZ={TEST_TZ}); "
+        "modul yuklendiginden beri cok uzun sure gecmis olabilir"
+    )
+    # +2s/+4s AYNI gun, +23s ERTESI gun ve hepsi 24s penceresi icinde.
+    assert _hslot(2)[0] == _hslot(4)[0] == now.date().isoformat()
+    assert _hslot(23)[0] == (now + timedelta(days=1)).date().isoformat()
+    # Sabit ofset (DST yok) -> yaz saati kaymasi slot saatlerini oynatmaz.
+    assert now.dst() == timedelta(0)
+
+
+def test_tenant_saat_dilimi_teste_ayarlandi(client, rworld, owner_conn):
+    """Fixture tenant'i [TEST_TZ]'ye almali — kurallar tenant-yerel saate gore
+    isler; ayarlanmazsa slot varsayimlari sunucuda TUTMAZ."""
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT timezone FROM tenant WHERE id=%s", (rworld["a"],))
+        assert cur.fetchone()[0] == str(TEST_TZ)
 
 
 # ------------------------------ ortak alan ---------------------------------- #
@@ -527,19 +636,15 @@ def test_slots_dolu_bos_ve_gorunurluk_kademesi(client, rworld):
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
     diger = _headers(client, rworld["slug_a"], rworld["diger"])
     yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
-    # Pencere: 4 saatlik alan (h..h+4). TZ- + DAKIKA-GUVENLI baz:
-    #  * Saat basina hizalayip +2s => ilk slot HER ZAMAN 60-120 dk ileride =>
-    #    "son dakika (<10dk)" istisnasi TETIKLENMEZ (kota testi guvenilir; :50-:59
-    #    dakikalarinda bos slotun kotayi baypas etmesi engellenir).
-    #  * h+4 23'u asacaksa (aksam) YARIN 00:00'a kaydir => gecersiz "24:00" /
-    #    gece-yarisi sarmasi olmaz. Slotlar gelecekte + <24s icinde.
-    # Herhangi bir saatte gecerli (saat-bagimsiz).
+    # Pencere: 4 saatlik alan (h..h+4). Baz saat basina hizalanip +2s alinir =>
+    # ilk slot HER ZAMAN 60-120 dk ileride => "son dakika (<10dk)" istisnasi
+    # TETIKLENMEZ (kota testi guvenilir; :50-:59 dakikalarinda bos slotun kotayi
+    # baypas etmesi engellenir). h+4 <= 23 ve gece-yarisi sarmasi olmamasi
+    # [TEST_TZ] ile GARANTIDIR (bkz. "SAAT-BAGIMSIZLIK") — eskiden burada
+    # aksam saatleri icin elle kaydirma vardi, artik gereksiz.
     start = _now().replace(minute=0, second=0, microsecond=0) + timedelta(hours=2)
-    if start.hour > 19:  # h+4 > 23 -> gecersiz kapanis; yarin erken saate kaydir
-        start = (_now() + timedelta(days=1)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
     h = start.hour
+    assert h + 4 <= 23, f"pencere gunu asti (h={h}); TEST_TZ={TEST_TZ}"
     tarih = start.date().isoformat()
     alan = _mk_area(client, yonetici, ad=f"Slot-{uuid.uuid4().hex[:6]}",
                     acilis=f"{h:02d}:00", kapanis=f"{h + 4:02d}:00", slot_dakika=60)
@@ -617,9 +722,11 @@ def test_slots_pasif_alan_sakine_404(client, rworld):
 def test_rezerve_musaitlik_penceresi_disi_422(client, rworld):
     yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
-    # Pencere [+2s, +4s]: ici slotlar gelecekte + <24s icinde.
+    # Pencere [+2s, +4s]: ici slotlar gelecekte + <24s icinde. [TEST_TZ] ile
+    # h-1 >= 0 ve h+3 <= 23 garantidir (gun sinirini asan saat uretilmez).
     start = (_now() + timedelta(hours=2)).replace(minute=0, second=0, microsecond=0)
     h = start.hour
+    assert 1 <= h <= 20, f"pencere saati bantta degil (h={h}); TEST_TZ={TEST_TZ}"
     tarih = start.date().isoformat()
     alan = _mk_area(client, yonetici, ad=f"Pencere-{uuid.uuid4().hex[:6]}",
                     acilis=f"{h:02d}:00", kapanis=f"{h + 2:02d}:00", slot_dakika=60)

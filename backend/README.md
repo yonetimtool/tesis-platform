@@ -55,6 +55,31 @@ docker compose exec api pytest -v
 Beklenen: `test_rls_isolation.py` → 4 test PASS
 (A sadece A'yi gorur, B sadece B'yi, capraz sizinti yok, tenant set degilse 0 satir).
 
+> **KOD DEGISIKLIGINDEN SONRA IMAGE'I YENILE.** Kod image'a GOMULUDUR (mount
+> yok): `docker compose build api && docker compose up -d api`. Aksi halde
+> pytest ESKI kodu/testleri kosar ve anlasilmaz hatalar gorursun.
+
+### Zaman bagimli testler (saat flake'i)
+
+Testler CANLI sunucuya gider ve sunucu GERCEK saati kullanir; zamanlama kurallari
+tenant-yerel saatte olculur. `test_rezervasyon.py` bu yuzden eskiden aksam
+saatlerinde kiriliyordu (slotlar gece yarisini sariyor, alan kapanisi "24:00"
+oluyordu). **Cozuldu:** dosya tenant'in saat dilimini yerel saat ~09:xx olacak
+sabit-ofset bir bolgeye (`Etc/GMT±N`, DST yok) alir; secim `test_saat_dilimi_
+secimi_24_saatin_hepsinde_guvenli` ile 24 UTC saati icin dogrulanir. Bu dosyada
+saat kaynakli bir kirik gorursen artik gercek bir kusur ara.
+
+Kesilen bir kosum `world`/`rworld` tenant'larini geride birakabilir (teardown
+kacar). Sonraki kosumda benzersizlik hatalari gorursen temizle:
+
+```bash
+docker compose exec db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -c "DELETE FROM tenant WHERE slug !~ 'acme';"
+```
+
+Ayrica **iki pytest kosumunu ayni anda calistirmayin** — ayni DB'yi paylastiklari
+icin yuzlerce sahte `psycopg` hatasi uretirler.
+
 ### Host'tan calistirma (opsiyonel)
 
 `docker compose up` ile portlar acik (5432/8000). Host'ta sanal ortamda:
