@@ -25,6 +25,13 @@ class ScanOutboxStore {
   /// Yazimlari serilestiren kilit zinciri: eszamanli [save] cagrilari
   /// (enqueue + pump ayni anda persist edebilir) sirayla diske iner; aksi
   /// halde `.tmp` + rename adimlar birbirinin dosyasini kapabilir.
+  ///
+  /// KILIT ORNEK BASINADIR: bu sinif TEK YAZAR varsayar (uygulamada
+  /// [scanOutboxStoreProvider] tek ornek verir). AYNI dosyaya yazan IKI ornek
+  /// olusturmayin — kilitleri ayri oldugu icin paylasilan `.tmp` uzerinde
+  /// yarisirlar (testte bu yasandi: bkz. test/scan_outbox_test.dart
+  /// "kalicilik" testindeki ON KOSUL notu). Okuma ([load]) icin ek ornek
+  /// olusturmak guvenlidir.
   Future<void> _writeLock = Future.value();
 
   static Future<File> _defaultFile() async {

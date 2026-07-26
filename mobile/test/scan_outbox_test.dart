@@ -79,6 +79,25 @@ void main() {
     return container;
   }
 
+  /// Diskteki kuyrugu URETIM cozucusuyle okur (alan adlarini tekrarlamayiz).
+  /// Salt okuma oldugu icin oturumlarin yazim kilidini etkilemez.
+  Future<List<OutboxEntry>> diskteki() => ScanOutboxStore(
+        resolveFile: () async => File('${tmpDir.path}/outbox.json'),
+      ).load();
+
+  Future<void> waitForAsync(
+    Future<bool> Function() condition, {
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
+    final deadline = DateTime.now().add(timeout);
+    while (!await condition()) {
+      if (DateTime.now().isAfter(deadline)) {
+        fail('waitForAsync zaman asimi');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+  }
+
   Future<void> waitFor(
     bool Function() condition, {
     Duration timeout = const Duration(seconds: 5),
@@ -200,6 +219,18 @@ void main() {
     await waitFor(() =>
         container1.read(scanOutboxProvider).entries.firstOrNull?.attemptCount ==
         1);
+    // ON KOSUL: kayit DISKE inmis olmali (bu bir KALICILIK testi).
+    //
+    // FLAKE (~%15, duzeltildi): bellekteki attemptCount, `_persist()` DAHA
+    // TAMAMLANMADAN 1 olur. Hemen dispose edip 2. oturumu acmak iki oturumun
+    // yazimlarini CAKISTIRIYORDU: her ProviderContainer kendi
+    // [ScanOutboxStore]'unu alir, yani yazim kilitleri AYRIDIR; ayni ".tmp"
+    // dosyasina paralel yazim + rename yarisi 2. oturumun kaydini
+    // gonderemeyip zaman asimina dusuruyordu. Gercek bir "uygulama yeniden
+    // acilisi" da ancak dosya atomik yazildiktan SONRA olur — test artik
+    // gercek sirayi taklit ediyor.
+    await waitForAsync(() async =>
+        (await diskteki()).firstOrNull?.attemptCount == 1);
     container1.dispose();
 
     // 2. "oturum" (uygulama yeniden acildi): ayni dosya, API artik saglam.
