@@ -181,5 +181,6 @@
   "kameraYayinAcilamadiAlt": "The camera may be off, or the network cannot reach the stream.",
   "kameraTurEtiket": "Type: {tur}",
   "kameraRtspBilgi": "RTSP streams can't be played in the app right now. The record is kept in the system; playback support will be added later.",
-  "kameraSeritBaslik": "Live camera"
+  "kameraSeritBaslik": "Live camera",
+  "anaKarsilama": "Hello, {ad}"
 }

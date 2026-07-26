@@ -6,6 +6,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'l10n/gen/app_localizations.dart';
 import 'src/core/i18n/locale_controller.dart';
+import 'src/core/startup/acilis_tercihleri.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/core/theme/theme_controller.dart';
 import 'src/features/push/presentation/push_registrar.dart';
@@ -13,11 +14,21 @@ import 'src/features/push/presentation/push_setup.dart';
 import 'src/features/scan/data/scan_outbox.dart';
 import 'src/routing/app_router.dart';
 
-void main() {
+Future<void> main() async {
+  // Depo okumasi platform kanali kullanir → baglama once kurulmalidir.
+  WidgetsFlutterBinding.ensureInitialized();
   // 7 dilin tarih/ay/gun adlari icin intl locale verisi — bicimleyiciler
   // widget agacindan BAGIMSIZ da cagrilabildigi icin acikca baslatilir.
   initializeDateFormatting();
-  runApp(const ProviderScope(child: TesisGuvenlikApp()));
+  // ILK KARE DOGRU DILDE: dil/tema tercihi runApp'ten ONCE okunur (tek depo
+  // okumasi; platformun kendi acilis ekraninda gecer, yeni splash YOK).
+  // Eskiden bunlar asenkron okunuyordu → ilk kare varsayilan dille cizilip
+  // hemen yenileniyordu; kullanicinin gordugu METIN TITREMESI buydu.
+  final tercihler = await acilisTercihleriniOku();
+  runApp(ProviderScope(
+    overrides: [acilisTercihleriProvider.overrideWithValue(tercihler)],
+    child: const TesisGuvenlikApp(),
+  ));
 }
 
 /// On plan push bildirimini SnackBar ile gostermek icin kok messenger.

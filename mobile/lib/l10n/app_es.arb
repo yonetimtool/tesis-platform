@@ -181,5 +181,6 @@
   "kameraYayinAcilamadiAlt": "La cámara puede estar apagada o la red no alcanza la emisión.",
   "kameraTurEtiket": "Tipo: {tur}",
   "kameraRtspBilgi": "Las emisiones RTSP no se pueden reproducir ahora en la aplicación. El registro se conserva en el sistema; la reproducción se añadirá más adelante.",
-  "kameraSeritBaslik": "Cámara en directo"
+  "kameraSeritBaslik": "Cámara en directo",
+  "anaKarsilama": "Hola, {ad}"
 }

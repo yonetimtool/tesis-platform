@@ -181,5 +181,6 @@
   "kameraYayinAcilamadiAlt": "La caméra est peut-être éteinte ou le réseau n'atteint pas le flux.",
   "kameraTurEtiket": "Type : {tur}",
   "kameraRtspBilgi": "Les flux RTSP ne sont pas lisibles dans l'application pour le moment. L'enregistrement reste dans le système ; la lecture sera ajoutée plus tard.",
-  "kameraSeritBaslik": "Caméra en direct"
+  "kameraSeritBaslik": "Caméra en direct",
+  "anaKarsilama": "Bonjour, {ad}"
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +12,7 @@ import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
 import 'package:mobile/src/features/tenant/presentation/setup_tenant_screen.dart';
+import 'package:mobile/src/routing/splash_screen.dart';
 import 'helpers/l10n_test_app.dart';
 import 'package:mobile/src/core/i18n/locale_controller.dart';
 
@@ -34,7 +37,44 @@ Widget _gate({required bool birincil, required bool kurulum}) => ProviderScope(
       home: HomeGate()),
     );
 
+/// Kurulum ucu YANIT VERMEYEN kapi (yavas ag / takili uc).
+Widget _kapiTakili() => ProviderScope(
+      overrides: [
+        currentUserRoleProvider.overrideWith((ref) async => UserRole.yonetici),
+        profileProvider.overrideWith((ref) async => Profile(
+            ad: 'Kerem', role: 'yonetici', aranabilir: false, birincil: true)),
+        tenantSettingsProvider.overrideWith((ref) => Completer<TenantSettings>()
+            .future), // ASLA tamamlanmaz
+      ],
+      child: MaterialApp(
+          locale: const Locale('tr'),
+          supportedLocales: supportedLocales,
+          localizationsDelegates: testLocalizationsDelegates,
+          home: const HomeGate()),
+    );
+
 void main() {
+  testWidgets('REGRESYON: kurulum ucu YANIT VERMEZSE kapi uygulamayi '
+      'KILITLEMEZ — kisa markali bekleme, sonra ana ekran', (tester) async {
+    tester.view.physicalSize = const Size(400, 3600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_kapiTakili());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // Beklerken BOS ekran degil, markali acilis ekrani gorunur.
+    expect(find.byType(SplashScreen), findsOneWidget);
+    expect(find.byType(YoneticiHomeScreen), findsNothing);
+
+    // Zaman siniri dolunca kullanici ana ekrana ALINIR (sonsuz spinner YOK).
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.byType(YoneticiHomeScreen), findsOneWidget);
+    expect(find.byType(SplashScreen), findsNothing);
+  });
+
   testWidgets('yonetici (birincil, kurulum tamam) -> YoneticiHomeScreen (R2)',
       (tester) async {
     await tester.pumpWidget(_gate(birincil: true, kurulum: true));

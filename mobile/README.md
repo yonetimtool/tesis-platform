@@ -1548,17 +1548,31 @@ aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
 
 | Parça | Yer |
 |---|---|
-| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**181 anahtar × 7**, boşluk yok) |
+| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**182 anahtar × 7**, boşluk yok) |
 | gen-l10n yapılandırması | `l10n.yaml` (şablon: `app_tr.arb`) |
 | Üretilen sınıf | `lib/l10n/gen/app_localizations.dart` (**repoda tutulur** → taze klonda `analyze`/`test` ek adım istemez; yenilemek için `flutter gen-l10n`) |
 | Dil seçimi + kalıcılık | `lib/src/core/i18n/locale_controller.dart` (`AppDil`, `LocaleController`, `ui.locale` anahtarı — tema ile aynı güvenli depo) |
 | Ergonomi + biçimlendirme | `lib/src/core/i18n/l10n.dart` (`context.l10n`, `tlIsaretli`, `tarihBicimi`, `baslikBuyuk`, `ltrIzole`) |
 | Uygulama bağlaması | `lib/main.dart` (`localizationsDelegates`, `supportedLocales`, `localeResolutionCallback`) |
+| Açılış ön-okuması | `lib/src/core/startup/acilis_tercihleri.dart` — dil + tema `runApp`'ten **önce** okunur, `acilisTercihleriProvider` ile tohumlanır |
 | Dil seçici | Ayarlar → "Dil / Language" (alt sayfa, 7 dil kendi adıyla) |
 
 **Dil çözümleme sırası:** kullanıcı seçimi (kalıcı) → cihaz dili (destekleniyorsa;
 ülke kodu yok sayılır, `en_US → en`) → **Türkçe**. Seçim **anında** uygulanır
 (uygulama yeniden başlamaz) ve kalıcıdır.
+
+> **Dikkat (davranış değişikliği):** seçim yapılmamışsa uygulama artık **cihaz
+> dilini** izler. Türkçe olmayan bir telefonda arayüz İngilizce/Almanca… açılır.
+> Bilinçli tasarım kararıdır; Türkçe'ye sabitlemek isteyen kullanıcı Ayarlar →
+> "Dil / Language" ile seçer.
+
+**İlk kare doğru dilde boyanır.** Dil ve tema tercihi `runApp`'ten **önce**
+okunur (`acilisTercihleriniOku`) ve denetleyicilere tohumlanır. Eskiden bu
+okuma asenkron yapıldığı için ilk kare varsayılan dille (cihaz dili) çizilip
+hemen yenileniyordu — görünen **metin titremesi** buydu. Regresyon testi:
+`test/acilis_dil_titremesi_test.dart` (eski davranış da ölçülür; ikisinin farkı
+kusurun kaydıdır). Yeni bir açılış ekranı **eklenmedi**; tek depo okuması
+platformun kendi açılış ekranında geçer.
 
 **Eksik çeviri derlemeyi kırmaz:** gen-l10n şablon (TR) değerine düşer.
 
@@ -1664,6 +1678,12 @@ Doğrulama: `grep -rnE "(switch|case|==)\s*\(?\s*['\"][^'\"]*[çğıöşü…]" 
 para/tarih/büyük-harf kuralları, **kalıcılık** (seç → yeni `ProviderContainer`
 = yeniden başlatma → aynı dil).
 
+`test/uygulama_acilis_giris_test.dart` (7 test): **gerçek uygulama kökü**
+(`TesisGuvenlikApp`/main.dart) ile soğuk açılış → giriş → rol ana ekranı
+(yönetici/admin/security/resident) + kayıtlı dil (ar) altında aynı akış. Bu
+dosyadan önce main.dart'ı çizen **hiçbir** test yoktu; i18n bağlaması tam orada
+yaşadığı için açılış yolu kapsamsızdı.
+
 `test/home_i18n_test.dart` (6 test): kart **kimliği** dilden bağımsız / başlık
 dile bağlı (taban kartlar metin taşımaz), ana ekranda **tr→en→ru** dil
 değiştirme (başlıklar + ICU sayaç metinleri değişir, düzen aynı kalır), bölüm
@@ -1714,7 +1734,15 @@ EOF
 | Tur 2 sonrası | **994** | 91 | **2** (1 dosya) |
 
 Kalan 2 `home` stringi `home_marka.dart` içindeki **marka kilidi**dir (`Yönetio`,
-`GÜVENLİK & DANIŞMANLIK`) — aşağıdaki bilinçli istisna. Yani ana ekran modülü
+`GÜVENLİK & DANIŞMANLIK`) — aşağıdaki bilinçli istisna.
+
+> **Ölçümün kör noktası (kayda geçti):** bu grep yalnızca Türkçe'ye özgü karakter
+> **veya** listedeki anahtar kelimeyi arar. `'Merhaba, '` gibi ikisini de
+> içermeyen Türkçe metinler sayıma **girmez**. Nitekim ana ekran karşılaması
+> (`home_header.dart`) sayım 0 gösterirken çevrilmemiş kalmıştı; canlı 7-dil
+> sürüşünde yakalandı ve `anaKarsilama` anahtarıyla çevrildi. Bir modülü
+> "bitti" ilan etmeden önce grep'e **ek olarak** o modülü yabancı bir dilde
+> gözle sürmek gerekir. Yani ana ekran modülü
 sayıma **sıfır** katkı verir. (Tur 1 sonunda bu bölümde yazan ~1.125/106
 rakamı ölçümün o anki halidir; tur 2 başında aynı komut 1.115/100 verdi —
 arada başka modüle dokunulmadı, fark ara commit'lerdeki küçük düzenlemelerden

@@ -3,8 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/theme/home_tokens.dart';
 import 'package:mobile/src/features/home/domain/home_view_models.dart';
 import 'package:mobile/src/features/home/presentation/widgets/home_header.dart';
+import 'helpers/l10n_test_app.dart';
 
-Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
+// Karsilama metni artik YERELLESTIRILMIS ("Merhaba, {ad}" ARB'den) → yalin
+// MaterialApp yetmez, delegeler gerekir (bkz. l10n_test_app.dart).
+Widget _wrap(Widget child) => l10nScaffold(child);
 
 const _hava = HomeHava(
     sicaklik: '24°C', sehir: 'İstanbul', ikon: Icons.wb_sunny_outlined);

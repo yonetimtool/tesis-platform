@@ -731,4 +731,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get kameraSeritBaslik => 'كاميرا مباشرة';
+
+  @override
+  String anaKarsilama(String ad) {
+    return 'مرحبًا، $ad';
+  }
 }

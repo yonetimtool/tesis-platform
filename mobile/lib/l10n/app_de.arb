@@ -181,5 +181,6 @@
   "kameraYayinAcilamadiAlt": "Die Kamera ist möglicherweise aus oder das Netzwerk erreicht den Stream nicht.",
   "kameraTurEtiket": "Typ: {tur}",
   "kameraRtspBilgi": "RTSP-Streams können derzeit nicht in der App abgespielt werden. Der Eintrag bleibt im System; Wiedergabe folgt später.",
-  "kameraSeritBaslik": "Live-Kamera"
+  "kameraSeritBaslik": "Live-Kamera",
+  "anaKarsilama": "Hallo, {ad}"
 }

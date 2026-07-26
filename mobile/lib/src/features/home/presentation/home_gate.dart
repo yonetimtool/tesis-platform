@@ -6,6 +6,7 @@ import '../../auth/domain/user_role.dart';
 import '../../profile/data/profile_api.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../tenant/presentation/setup_tenant_screen.dart';
+import '../../../routing/splash_screen.dart';
 import 'resident_home_screen.dart';
 import 'saha_home_screen.dart';
 import 'yonetici_home_screen.dart';
@@ -35,7 +36,7 @@ class HomeGate extends ConsumerWidget {
       return const YoneticiHomeScreen(role: UserRole.admin);
     }
     if (role != UserRole.yonetici) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const SplashScreen();
     }
 
     // Kapi YALNIZ BIRINCIL yoneticiye acilir; digerleri dogrudan ana ekran
@@ -45,17 +46,15 @@ class HomeGate extends ConsumerWidget {
     final birincil = ref.watch(profileProvider).value?.birincil ?? false;
     if (!birincil) return const YoneticiHomeScreen();
 
-    // Birincil yonetici: kurulum durumunu getir. Yukleniyorken kisa bekleme; hata
-    // olursa kullaniciyi kilitlemeden ana ekrana gec (kurulum ayarlardan da
-    // yapilabilir — burada sadece ILK GIRIS yonlendirmesi var).
-    return ref.watch(tenantSettingsProvider).when(
-          data: (settings) => settings.kurulumTamamlandi
-              ? const YoneticiHomeScreen()
-              : const SetupTenantScreen(),
+    // Birincil yonetici: kurulum durumunu getir. Kapi ZAMAN SINIRLIDIR
+    // (bkz. kurulumKapisiProvider) — yavas/hatali uc kullaniciyi giris
+    // sonrasinda bos bir ekranda TUTAMAZ; bilinmiyorsa ana ekran gosterilir.
+    // Kisa bekleme markali acilis ekraniyla yapilir (bos beyaz ekran degil).
+    return ref.watch(kurulumKapisiProvider).when(
+          data: (kurulumGerekli) =>
+              kurulumGerekli ? const SetupTenantScreen() : const YoneticiHomeScreen(),
           error: (_, _) => const YoneticiHomeScreen(),
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () => const SplashScreen(),
         );
   }
 }

@@ -601,4 +601,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get kameraSeritBaslik => 'Canlı Kamera';
+
+  @override
+  String anaKarsilama(String ad) {
+    return 'Merhaba, $ad';
+  }
 }

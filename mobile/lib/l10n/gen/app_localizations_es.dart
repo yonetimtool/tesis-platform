@@ -605,4 +605,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get kameraSeritBaslik => 'Cámara en directo';
+
+  @override
+  String anaKarsilama(String ad) {
+    return 'Hola, $ad';
+  }
 }

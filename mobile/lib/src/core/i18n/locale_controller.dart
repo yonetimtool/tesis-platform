@@ -7,15 +7,19 @@
 ///   3. TURKCE (varsayilan + ceviri bosluklarinin geri dusus dili).
 ///
 /// Kalicilik tema ile AYNI depoyu kullanir ([FlutterSecureStorage]) — ayrica
-/// bir tercih deposu getirilmedi. Depo okumasi async oldugu icin ilk kareler
-/// "secim yok" (=cihaz/tr) ile cizilir, deger gelince UI kendini yeniler
-/// (uygulama YENIDEN BASLAMAZ).
+/// bir tercih deposu getirilmedi.
+///
+/// ILK KARE: secim `runApp`'ten ONCE okunur ve [acilisTercihleriProvider] ile
+/// tohumlanir; boylece uygulama ilk kareyi ZATEN dogru dille boyar (eskiden
+/// once varsayilan dille cizip sonra kendini yeniliyordu → METIN TITREMESI).
+/// Tohum yoksa (widget testleri) eski asenkron yol calisir.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/data/token_storage.dart';
+import '../startup/acilis_tercihleri.dart';
 
 /// Desteklenen diller + KENDI DILINDEKI adi (dil secicide boyle gorunur).
 enum AppDil {
@@ -58,6 +62,10 @@ class LocaleController extends Notifier<AppDil?> {
 
   @override
   AppDil? build() {
+    // Acilis on-okumasi yapildiysa ILK deger dogrudan ondan gelir → ilk kare
+    // dogru dilde boyanir, sonradan yenilenme (titreme) OLMAZ.
+    final onOkuma = ref.read(acilisTercihleriProvider);
+    if (onOkuma != null) return onOkuma.dil;
     _yukle();
     return null;
   }

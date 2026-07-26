@@ -64,3 +64,21 @@ final tenantSettingsProvider = FutureProvider<TenantSettings>((ref) async {
   ref.watch(authControllerProvider.select((s) => s.status));
   return ref.watch(tenantApiProvider).getSettings();
 });
+
+/// KURULUM KAPISI: "birincil yonetici kurulum ekranina mi gitmeli?"
+///
+/// Kapi bir ONBOARDING kolayligidir; uygulamayi kilitlemesi kabul edilemez.
+/// Bu yuzden yanit KISA SUREDE gelmezse (yavas ag, uc hatasi) `false` doner →
+/// yonetici dogrudan ana ekrana gecer (kurulum Ayarlar'dan da yapilabilir).
+/// Aksi halde giris sonrasi BOS bir bekleme ekraninda 15 sn'ye kadar
+/// takilinabiliyordu — kullanici acisindan "giris tamamlanmiyor".
+final kurulumKapisiProvider = FutureProvider<bool>((ref) async {
+  try {
+    final ayarlar = await ref
+        .watch(tenantSettingsProvider.future)
+        .timeout(const Duration(seconds: 4));
+    return !ayarlar.kurulumTamamlandi;
+  } catch (_) {
+    return false;
+  }
+});

@@ -708,4 +708,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get kameraSeritBaslik => 'Камера в реальном времени';
+
+  @override
+  String anaKarsilama(String ad) {
+    return 'Здравствуйте, $ad';
+  }
 }

@@ -187,5 +187,14 @@
   "kameraYayinAcilamadiAlt": "Kamera kapalı olabilir ya da ağ yayına ulaşamıyor.",
   "kameraTurEtiket": "Tür: {tur}",
   "kameraRtspBilgi": "RTSP yayınlar şu an uygulama içinde oynatılamıyor. Kayıt sistemde tutuluyor; oynatma desteği ileride eklenecek.",
-  "kameraSeritBaslik": "Canlı Kamera"
+  "kameraSeritBaslik": "Canlı Kamera",
+  "anaKarsilama": "Merhaba, {ad}",
+  "@anaKarsilama": {
+    "description": "Ana ekran karsilama basligi (ad = kullanicinin adi)",
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  }
 }

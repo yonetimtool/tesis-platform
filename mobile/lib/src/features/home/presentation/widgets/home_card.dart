@@ -94,7 +94,14 @@ class HomeChip extends StatelessWidget {
         color: HomeTokens.tint(accent),
         borderRadius: BorderRadius.circular(HomeTokens.chipRadius),
       ),
-      child: Text(label, style: HomeText.chip.copyWith(color: accent)),
+      // Cip TEK SATIRDIR: uzun cevirilerde (ru "ЗАПЛАНИРОВАНА", es
+      // "PROGRAMADO") sarma sabit yukseklikli kartlari TASIRIYORDU.
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: HomeText.chip.copyWith(color: accent),
+      ),
     );
   }
 }

@@ -1193,6 +1193,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Canlı Kamera'**
   String get kameraSeritBaslik;
+
+  /// Ana ekran karsilama basligi (ad = kullanicinin adi)
+  ///
+  /// In tr, this message translates to:
+  /// **'Merhaba, {ad}'**
+  String anaKarsilama(String ad);
 }
 
 class _AppLocalizationsDelegate

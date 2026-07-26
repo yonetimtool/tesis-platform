@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/i18n/l10n.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 
@@ -44,7 +45,7 @@ class HomeHeader extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Merhaba, $greetingName',
+                  context.l10n.anaKarsilama(greetingName),
                   maxLines: 1,
                   style: HomeText.greeting.copyWith(color: s.heading),
                 ),

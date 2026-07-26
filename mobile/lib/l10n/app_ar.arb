@@ -181,5 +181,6 @@
   "kameraYayinAcilamadiAlt": "قد تكون الكاميرا مطفأة أو أن الشبكة لا تصل إلى البث.",
   "kameraTurEtiket": "النوع: {tur}",
   "kameraRtspBilgi": "لا يمكن تشغيل بثوث RTSP داخل التطبيق حالياً. السجل محفوظ في النظام، وستُضاف إمكانية التشغيل لاحقاً.",
-  "kameraSeritBaslik": "كاميرا مباشرة"
+  "kameraSeritBaslik": "كاميرا مباشرة",
+  "anaKarsilama": "مرحبًا، {ad}"
 }

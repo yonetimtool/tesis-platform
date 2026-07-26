@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/data/token_storage.dart';
+import '../startup/acilis_tercihleri.dart';
 
 /// Kullanicinin sectigi tema modu (acik/koyu/sistem) — [FlutterSecureStorage]
 /// ile kalici (uygulamanin mevcut yerel-saklama deseni; token'larla ayni
-/// depo). Varsayilan: sistem. Depo okumasi async oldugundan, deger okunana
-/// kadar gecici olarak sistem modu gecerlidir.
+/// depo). Varsayilan: sistem.
+///
+/// ILK KARE: tercih `runApp`'ten ONCE okunur ([acilisTercihleriProvider]) →
+/// acilista acik/koyu tema CAKMASI olmaz. Tohum yoksa (widget testleri) eski
+/// asenkron yol calisir.
 class ThemeModeController extends Notifier<ThemeMode> {
   static const _key = 'ui.theme_mode';
 
   @override
   ThemeMode build() {
+    final onOkuma = ref.read(acilisTercihleriProvider);
+    if (onOkuma != null) return onOkuma.temaModu ?? ThemeMode.system;
     _load();
     return ThemeMode.system;
   }
@@ -28,12 +34,8 @@ class ThemeModeController extends Notifier<ThemeMode> {
     await ref.read(secureStorageProvider).write(key: _key, value: mode.name);
   }
 
-  static ThemeMode? _decode(String? raw) => switch (raw) {
-        'light' => ThemeMode.light,
-        'dark' => ThemeMode.dark,
-        'system' => ThemeMode.system,
-        _ => null,
-      };
+  // Cozumleme acilis on-okumasiyla PAYLASILIR (tek kaynak).
+  static ThemeMode? _decode(String? raw) => temaModuCoz(raw);
 }
 
 final themeModeProvider =

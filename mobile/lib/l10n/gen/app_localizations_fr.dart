@@ -605,4 +605,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get kameraSeritBaslik => 'Caméra en direct';
+
+  @override
+  String anaKarsilama(String ad) {
+    return 'Bonjour, $ad';
+  }
 }
