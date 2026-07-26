@@ -106,8 +106,8 @@ npm run lint      # ESLint (next/core-web-vitals)
 npm run build     # prod derleme (tip + lint dahil)
 ```
 
-**Kapsam (58 test, `tests/`):** saf mantik (`lib/`) + oturum kapisi
-(`middleware.ts`). Ortam `node`; jsdom/Testing Library **yok** — React/sayfa
+**Kapsam (80 test, `tests/`):** saf mantik (`lib/`) + BFF cekirdegi
+(`lib/backend.ts`) + oturum kapisi (`middleware.ts`). Ortam `node`; jsdom/Testing Library **yok** — React/sayfa
 testleri bilincli olarak kapsam disi (ayri bir is). `window`a dokunan
 modullerde (`fetcher`, `client`) global test icinde `vi.stubGlobal` ile
 taklit edilir, aga cikilmaz.
@@ -119,7 +119,15 @@ taklit edilir, aga cikilmaz.
 | `cookies.test.ts` | isimler, sozlesme omurleri (15 dk / 30 gun), httpOnly + sameSite=lax, `secure` yalniz production |
 | `fetcher.test.ts` | 401 → `/login` + firlat, sunucu hata mesajinin tasinmasi, zarf yoksa genel mesaj |
 | `client.test.ts` | `Content-Type` yalniz govde varken, 204 → `undefined`, sayfali `fetchAllItems` (ayirici, ilerleme, **bos sayfada durma** = sonsuz dongu yok), idempotency anahtari |
+| `backend.test.ts` | BFF: `Bearer` ekleme, `cache: no-store`, 204/`content-length: 0` govdesiz gecis, upstream durum kodu; **401 → refresh → tekrar dene + rotasyonu cookie'ye yaz**; refresh olurse 401 zarfi + cookie temizligi; 403 refresh TETIKLEMEZ; **tek-ucus** (es zamanli iki 401 → BIR refresh) |
 | `middleware.test.ts` | oturum yok → `/login` (307, sorgu korunur), bos/yabanci cookie oturum sayilmaz, token GECERLILIGI burada denetlenmez; **matcher kapsami** |
+
+`next/headers` sunucuya ozgudur; `backend.test.ts` onu `vi.mock` ile taklit
+edip cookie kavanozunu test basina doldurur. **Neden onemli:** backend refresh'te
+ROTATION yapar (eski token gecersizlesir) — es zamanli iki 401 iki ayri refresh
+cagirirsa ikincisi "reuse" sayilip oturumu komple iptal ettirir; ayrica donen
+yeni cift cookie'ye yazilmazsa kullanici bir sonraki istekte yine 401 alir
+("rastgele atiliyorum"). Bu iki davranis artik testle kilitli.
 
 **Yapisal matcher testi (onemli):** `middleware.test.ts` `app/(protected)`
 agacini dosya sisteminden gezer ve her sayfanin `config.matcher`'da bir girisi
