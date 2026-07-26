@@ -35,5 +35,16 @@ export const config = {
     "/announcements/:path*",
     "/settings/:path*",
     "/reports/:path*",
+    // Sonradan eklenen sayfalar — bunlar bir sure KAPI DISINDA kalmisti
+    // (oturumsuz kullanici panel kabugunu goruyordu; veri sizmiyordu cunku
+    // /api/* 401 doner). tests/middleware.test.ts artik app/(protected)
+    // agacini gezip her sayfanin burada bir girisi oldugunu dogruluyor.
+    "/audit/:path*",
+    "/complaints/:path*",
+    "/integrations/:path*",
+    "/schematic/:path*",
+    "/support/:path*",
+    "/tenants/:path*",
+    "/transparency/:path*",
   ],
 };

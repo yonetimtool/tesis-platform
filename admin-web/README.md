@@ -96,6 +96,39 @@ components/Nav.tsx            ust menu + cikis
 - **Bildirimler** (`/notifications`): liste, okundu/okunmamis filtresi, sayfalama (limit/offset),
   `PATCH /notifications/{id}` ile okundu isaretleme.
 
+## Testler
+
+```bash
+npm test          # vitest run  (birim testleri)
+npm run test:watch
+npx tsc --noEmit  # tip denetimi
+npm run lint      # ESLint (next/core-web-vitals)
+npm run build     # prod derleme (tip + lint dahil)
+```
+
+**Kapsam (58 test, `tests/`):** saf mantik (`lib/`) + oturum kapisi
+(`middleware.ts`). Ortam `node`; jsdom/Testing Library **yok** — React/sayfa
+testleri bilincli olarak kapsam disi (ayri bir is). `window`a dokunan
+modullerde (`fetcher`, `client`) global test icinde `vi.stubGlobal` ile
+taklit edilir, aga cikilmaz.
+
+| Dosya | Ne kilitleniyor |
+|---|---|
+| `money.test.ts` | TL↔kurus TAM SAYI aritmetigi, gecersiz girdi `null` (sessiz 0 degil), tr-TR bicim, gidis-donus |
+| `roles.test.ts` | `auth.md` §4 aynasi: 5 bilinen rol, bilinmeyen rolde ham deger, `SAHA_ROLLERI` = yalniz security + tesis_gorevlisi |
+| `cookies.test.ts` | isimler, sozlesme omurleri (15 dk / 30 gun), httpOnly + sameSite=lax, `secure` yalniz production |
+| `fetcher.test.ts` | 401 → `/login` + firlat, sunucu hata mesajinin tasinmasi, zarf yoksa genel mesaj |
+| `client.test.ts` | `Content-Type` yalniz govde varken, 204 → `undefined`, sayfali `fetchAllItems` (ayirici, ilerleme, **bos sayfada durma** = sonsuz dongu yok), idempotency anahtari |
+| `middleware.test.ts` | oturum yok → `/login` (307, sorgu korunur), bos/yabanci cookie oturum sayilmaz, token GECERLILIGI burada denetlenmez; **matcher kapsami** |
+
+**Yapisal matcher testi (onemli):** `middleware.test.ts` `app/(protected)`
+agacini dosya sisteminden gezer ve her sayfanin `config.matcher`'da bir girisi
+oldugunu dogrular; karsiligi olmayan gereksiz giris de olmamalidir. Bu test
+yazilirken **7 sayfanin kapi disinda kaldigi** ortaya cikti (`audit`,
+`complaints`, `integrations`, `schematic`, `support`, `tenants`,
+`transparency`) — matcher'a eklendi. Yeni sayfa ekleyip matcher'a yazmayi
+unutursan bu test kirmizi yanar.
+
 ## Notlar
 - Backend ve sozlesme **degistirilmedi** (yalniz `/admin-web`).
 - `npm run build` TypeScript + ESLint (`next/core-web-vitals`) kontrolunu calistirir.
