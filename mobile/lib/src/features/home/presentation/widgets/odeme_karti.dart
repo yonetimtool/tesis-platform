@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/i18n/l10n.dart';
+
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
@@ -31,7 +33,7 @@ class OdemeKarti extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(title: 'Ödeme ve Aidat Durumu', onSeeAll: onSeeAll),
+        SectionHeader(title: context.l10n.bolumOdemeAidat, onSeeAll: onSeeAll),
         HomeCard(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
           child: IntrinsicHeight(
@@ -68,7 +70,7 @@ class _SolSutun extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Bu Ayki Aidat',
+        Text(context.l10n.anaBuAykiAidat,
             style: HomeText.rowSub.copyWith(color: s.muted)),
         const SizedBox(height: 8),
         Row(
@@ -87,14 +89,14 @@ class _SolSutun extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             if (ozet.odendi)
-              const HomeChip(label: 'Ödendi', accent: HomeTokens.green)
+              HomeChip(label: context.l10n.anaOdendi, accent: HomeTokens.green)
             else
-              const HomeChip(label: 'Ödenmedi', accent: HomeTokens.red),
+              HomeChip(label: context.l10n.anaOdenmedi, accent: HomeTokens.red),
           ],
         ),
         const SizedBox(height: 10),
         Text(
-          'Son Ödeme: ${ozet.sonOdeme}',
+          context.l10n.anaSonOdemeTarih(ozet.sonOdeme),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: HomeText.rowSub.copyWith(color: s.muted),
@@ -117,7 +119,7 @@ class _SagSutun extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Gelecek Ödeme',
+        Text(context.l10n.anaGelecekOdeme,
             style: HomeText.rowSub.copyWith(color: s.muted)),
         const SizedBox(height: 6),
         FittedBox(
@@ -157,7 +159,7 @@ class _SagSutun extends StatelessWidget {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      'Geçmiş Ödemeler',
+                      context.l10n.anaGecmisOdemeler,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: HomeText.cardCounter

@@ -22,6 +22,8 @@ import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
 import 'package:mobile/src/features/yonetici_iletisim/data/yonetici_iletisim_api.dart';
+import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 class _FakeOutbox extends ScanOutbox {
   @override
@@ -52,7 +54,11 @@ Widget _app(UserRole role) => ProviderScope(
         acikSikayetSayisiProvider.overrideWith((ref) async => 5),
         yaklasanEtkinlikSayisiProvider.overrideWith((ref) async => 2),
       ],
-      child: MaterialApp(home: SahaHomeScreen(role: role)),
+      child: MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
+      home: SahaHomeScreen(role: role)),
     );
 
 void _tall(WidgetTester tester) {

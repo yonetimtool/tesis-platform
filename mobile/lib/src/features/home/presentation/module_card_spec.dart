@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/branding/yonetio_logo.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../routing/app_router.dart';
 import '../domain/home_menu.dart';
 
@@ -10,13 +11,11 @@ import '../domain/home_menu.dart';
 class ModuleCardSpec {
   const ModuleCardSpec({
     required this.icon,
-    required this.title,
     required this.accent,
     required this.route,
   });
 
   final IconData icon;
-  final String title;
   final Color accent;
 
   /// go_router konumu (query dahil olabilir, or. "/tasks?gorunum=yonetim").
@@ -39,176 +38,183 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
     case HomeMenuEntry.announcements:
       return const ModuleCardSpec(
           icon: Icons.campaign_outlined,
-          title: 'Duyurular',
           accent: _amber,
           route: AppRoutes.announcements);
     case HomeMenuEntry.patrol:
       return const ModuleCardSpec(
           icon: Icons.directions_walk,
-          title: 'Turlarım',
           accent: _navy,
           route: AppRoutes.patrol);
     case HomeMenuEntry.patrolTracking:
       return const ModuleCardSpec(
           icon: Icons.route_outlined,
-          title: 'Devriye Takibi',
           accent: _navy,
           route: AppRoutes.patrolTracking);
     case HomeMenuEntry.tasks:
       return const ModuleCardSpec(
           icon: Icons.task_alt,
-          title: 'Görevlerim',
           accent: _green,
           route: AppRoutes.tasks);
     case HomeMenuEntry.taskTracking:
       return const ModuleCardSpec(
           icon: Icons.fact_check_outlined,
-          title: 'Görev Yönetimi',
           accent: _green,
           route: '${AppRoutes.tasks}?gorunum=yonetim');
     case HomeMenuEntry.assets:
       return const ModuleCardSpec(
           icon: Icons.inventory_2_outlined,
-          title: 'Demirbaş',
           accent: _green,
           route: AppRoutes.assets);
     case HomeMenuEntry.nfc:
       return const ModuleCardSpec(
           icon: Icons.nfc,
-          title: 'NFC Okutma',
           accent: _navy,
           route: AppRoutes.nfc);
     case HomeMenuEntry.outbox:
       return const ModuleCardSpec(
           icon: Icons.outbox_outlined,
-          title: 'Gönderim Kuyruğu',
           accent: _navy,
           route: AppRoutes.outbox);
     case HomeMenuEntry.reports:
       return const ModuleCardSpec(
           icon: Icons.insights_outlined,
-          title: 'Aylık Raporlar',
           accent: _teal,
           route: AppRoutes.reports);
     case HomeMenuEntry.budget:
       return const ModuleCardSpec(
           icon: Icons.savings_outlined,
-          title: 'Bütçe',
           accent: _teal,
           route: AppRoutes.budget);
     case HomeMenuEntry.financialSummary:
       return const ModuleCardSpec(
           icon: Icons.query_stats_outlined,
-          title: 'Finansal Özet',
           accent: _teal,
           route: AppRoutes.financialSummary);
     case HomeMenuEntry.transparency:
       return const ModuleCardSpec(
           icon: Icons.insights_outlined,
-          title: 'Şeffaflık',
           accent: _teal,
           route: AppRoutes.transparency);
     case HomeMenuEntry.siteBudget:
       return const ModuleCardSpec(
           icon: Icons.pie_chart_outline,
-          title: 'Site Bütçesi',
           accent: _teal,
           route: AppRoutes.siteBudget);
     case HomeMenuEntry.myDues:
       return const ModuleCardSpec(
           icon: Icons.account_balance_wallet_outlined,
-          title: 'Aidatım',
           accent: _teal,
           route: AppRoutes.myDues);
     case HomeMenuEntry.complaints:
       return const ModuleCardSpec(
           icon: Icons.rate_review_outlined,
-          title: 'Şikayet / Öneri',
           accent: _purple,
           route: AppRoutes.complaints);
     case HomeMenuEntry.visitors:
       return const ModuleCardSpec(
           icon: Icons.emoji_people_outlined,
-          title: 'Ziyaretçiler',
           accent: _navy,
           route: AppRoutes.visitors);
     case HomeMenuEntry.kargo:
       return const ModuleCardSpec(
           icon: Icons.local_shipping_outlined,
-          title: 'Kargo',
           accent: _green,
           route: AppRoutes.kargo);
     case HomeMenuEntry.unitAccess:
       return const ModuleCardSpec(
           icon: Icons.key_outlined,
-          title: 'Görüntüleme İzni',
           accent: _navy,
           route: AppRoutes.unitAccess);
     case HomeMenuEntry.rezervasyon:
       return const ModuleCardSpec(
           icon: Icons.event_available_outlined,
-          title: 'Rezervasyon',
           accent: _navy,
           route: AppRoutes.rezervasyon);
     case HomeMenuEntry.etkinlik:
       return const ModuleCardSpec(
           icon: Icons.celebration_outlined,
-          title: 'Etkinlikler',
           accent: _amber,
           route: AppRoutes.etkinlik);
     case HomeMenuEntry.siteKurallari:
       return const ModuleCardSpec(
           icon: Icons.gavel_outlined,
-          title: 'Site Kuralları',
           accent: _amber,
           route: AppRoutes.siteKurallari);
     case HomeMenuEntry.disHizmet:
       return const ModuleCardSpec(
           icon: Icons.handyman_outlined,
-          title: 'Dış Hizmetler',
           accent: _amber,
           route: AppRoutes.disHizmet);
     case HomeMenuEntry.integrations:
       return const ModuleCardSpec(
           icon: Icons.hub_outlined,
-          title: 'Entegrasyonlar',
           accent: _navy,
           route: AppRoutes.integrations);
     case HomeMenuEntry.personel:
       return const ModuleCardSpec(
           icon: Icons.badge_outlined,
-          title: 'Saha Personeli',
           accent: _navy,
           route: AppRoutes.personel);
     case HomeMenuEntry.sakinler:
       return const ModuleCardSpec(
           icon: Icons.people_alt_outlined,
-          title: 'Site Sakinleri',
           accent: _navy,
           route: AppRoutes.sakinler);
     case HomeMenuEntry.binaDuzenleme:
       return const ModuleCardSpec(
           icon: Icons.apartment_outlined,
-          title: 'Bina Yapısı',
           accent: _navy,
           route: AppRoutes.binaDuzenleme);
     case HomeMenuEntry.sikayetHaritasi:
       return const ModuleCardSpec(
           icon: Icons.grid_view_outlined,
-          title: 'Şikayet Haritası',
           accent: _purple,
           route: AppRoutes.sikayetHaritasi);
     case HomeMenuEntry.sikayetlerim:
       return const ModuleCardSpec(
           icon: Icons.feedback_outlined,
-          title: 'Şikayetlerim',
           accent: _purple,
           route: AppRoutes.sikayetlerim);
     case HomeMenuEntry.yoneticiIletisim:
       return const ModuleCardSpec(
           icon: Icons.contact_phone,
-          title: 'Yönetici İletişim',
           accent: _navy,
           route: AppRoutes.yoneticiIletisim);
   }
 }
+
+
+/// Menu girisinin BASLIGI — aktif dilden. Kimlik [HomeMenuEntry] enum'udur;
+/// switch EKSIKSIZDIR (default yok) → yeni giris eklenince derleyici zorlar.
+String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
+    switch (entry) {
+      HomeMenuEntry.announcements => l10n.modulDuyurular,
+      HomeMenuEntry.patrol => l10n.modulTurlarim,
+      HomeMenuEntry.patrolTracking => l10n.modulDevriyeTakibi,
+      HomeMenuEntry.tasks => l10n.modulGorevlerim,
+      HomeMenuEntry.taskTracking => l10n.modulGorevYonetimi,
+      HomeMenuEntry.assets => l10n.modulDemirbas,
+      HomeMenuEntry.nfc => l10n.modulNfcOkutma,
+      HomeMenuEntry.outbox => l10n.modulGonderimKuyrugu,
+      HomeMenuEntry.reports => l10n.modulAylikRaporlar,
+      HomeMenuEntry.budget => l10n.modulButce,
+      HomeMenuEntry.financialSummary => l10n.modulFinansalOzet,
+      HomeMenuEntry.transparency => l10n.modulSeffaflik,
+      HomeMenuEntry.siteBudget => l10n.modulSiteButcesi,
+      HomeMenuEntry.myDues => l10n.modulAidatim,
+      HomeMenuEntry.complaints => l10n.modulSikayetOneri,
+      HomeMenuEntry.visitors => l10n.modulZiyaretciler,
+      HomeMenuEntry.kargo => l10n.modulKargo,
+      HomeMenuEntry.unitAccess => l10n.modulGoruntulemeIzni,
+      HomeMenuEntry.rezervasyon => l10n.modulRezervasyon,
+      HomeMenuEntry.etkinlik => l10n.modulEtkinlikler,
+      HomeMenuEntry.siteKurallari => l10n.modulSiteKurallari,
+      HomeMenuEntry.disHizmet => l10n.modulDisHizmetler,
+      HomeMenuEntry.integrations => l10n.modulEntegrasyonlar,
+      HomeMenuEntry.personel => l10n.modulPersonel,
+      HomeMenuEntry.sakinler => l10n.modulSakinler,
+      HomeMenuEntry.binaDuzenleme => l10n.modulBinaYapisi,
+      HomeMenuEntry.sikayetHaritasi => l10n.modulSikayetHaritasi,
+      HomeMenuEntry.sikayetlerim => l10n.modulSikayetlerim,
+      HomeMenuEntry.yoneticiIletisim => l10n.modulYoneticiIletisim,
+    };

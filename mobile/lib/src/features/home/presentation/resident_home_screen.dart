@@ -7,7 +7,6 @@ import '../../announcements/data/announcement_api.dart';
 import '../../announcements/domain/announcement_models.dart';
 import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/auth_controller.dart';
-import '../../budget/domain/budget_models.dart' show formatKurusAsTl;
 import '../../complaints/data/complaint_api.dart';
 import '../../dues/data/dues_api.dart';
 import '../../etkinlik/data/etkinlik_api.dart';
@@ -21,6 +20,8 @@ import '../../weather/data/weather_api.dart';
 import '../data/activity_api.dart';
 import '../data/home_api.dart';
 import '../data/home_repository.dart';
+import '../../../core/i18n/l10n.dart';
+import '../domain/home_kart_id.dart';
 import '../domain/home_varyant.dart';
 import 'home_async.dart';
 import 'home_refresh.dart';
@@ -57,6 +58,8 @@ class ResidentHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final taban = ref.watch(homeRepositoryProvider);
     final ad = ref.watch(profileProvider).value?.ad ?? '';
     final now = DateTime.now();
@@ -85,22 +88,23 @@ class ResidentHomeScreen extends ConsumerWidget {
     // (sakin izgarasindaki 8 kartin hepsinin ucu var).
     final erisim = [
       for (final k in taban.hizliErisim(HomeVaryant.sakin))
-        switch (k.baslik) {
-          'Ziyaretçiler' =>
-            k.sayacla(ziyaretciAsync.sayac((l) => l.length, 'Kayıt')),
-          'Kargolarım' => k.sayacla(kargoAsync.sayac(
-              (l) => l.where((x) => x.durum == KargoDurum.bekliyor).length,
-              'Bekliyor',
-            )),
-          'Aidat Bilgileri' => k.sayacla(
-              duesAsync.metin(_aidatTutari),
-              yeniIkinciAltMetin: duesAsync.metin(_borcEtiketi),
+        switch (k.id) {
+          HomeKartId.ziyaretciler => k.sayacla(
+              ziyaretciAsync.metin((l) => l10n.sayacKayit(l.length))),
+          HomeKartId.kargolarim => k.sayacla(kargoAsync.metin((l) =>
+              l10n.sayacBekliyor(
+                  l.where((x) => x.durum == KargoDurum.bekliyor).length))),
+          HomeKartId.aidatBilgileri => k.sayacla(
+              duesAsync.metin((u) => _aidatTutari(u, dil)),
+              yeniIkinciAltMetin: duesAsync.metin((u) => _borcEtiketi(u, l10n)),
             ),
-          'Gürültü Şikayeti' => k.sayacla(gurultu.sayac((n) => n, 'Açık')),
-          'Geri Bildirim' => k.sayacla(talep.sayac((n) => n, 'Açık')),
-          'Şikayetlerim' => k.sayacla(daireSikayet.sayac((n) => n, 'Açık')),
-          'Duyurular' =>
-            k.sayacla(duyuruAsync.sayac((l) => _yeniDuyuru(l, now), 'Yeni')),
+          HomeKartId.gurultuSikayeti =>
+            k.sayacla(gurultu.metin(l10n.sayacAcik)),
+          HomeKartId.geriBildirim => k.sayacla(talep.metin(l10n.sayacAcik)),
+          HomeKartId.sikayetlerim =>
+            k.sayacla(daireSikayet.metin(l10n.sayacAcik)),
+          HomeKartId.duyurular => k.sayacla(
+              duyuruAsync.metin((l) => l10n.sayacYeni(_yeniDuyuru(l, now)))),
           _ => k,
         },
     ];
@@ -108,8 +112,10 @@ class ResidentHomeScreen extends ConsumerWidget {
     // Daire/blok bilgisi GERCEK /me/dues'ten; gelmeden alt satir cizilmez.
     final altBaslik = units.isEmpty
         ? ''
-        : 'Daire ${units.map((u) => u.no).join(', ')}  •  '
-            '${UserRole.resident.label}';
+        : l10n.anaDaireAltBaslik(
+            units.map((u) => u.no).join(', '),
+            UserRole.resident.label,
+          );
 
     return HomeCanliVeri(
       varyant: HomeVaryant.sakin,
@@ -118,14 +124,14 @@ class ResidentHomeScreen extends ConsumerWidget {
       currentIndex: 0,
       onDestinationSelected: (i) => _onTab(context, i),
       onModul: (rota) => context.push(rota),
-      onBildir: () => showBildirMenu(context, girisler: const [
+      onBildir: () => showBildirMenu(context, girisler: [
         BildirGiris(
             icon: Icons.rate_review_outlined,
-            label: 'Talep / Arıza Bildir',
+            label: l10n.fabTalepArizaBildir,
             route: AppRoutes.complaints),
         BildirGiris(
             icon: Icons.event_available_outlined,
-            label: 'Rezervasyon Yap',
+            label: l10n.fabRezervasyonYap,
             route: AppRoutes.rezervasyon),
       ], onSec: (r) => context.push(r)),
       onProfile: () => context.push(AppRoutes.profile),
@@ -149,11 +155,11 @@ class ResidentHomeScreen extends ConsumerWidget {
           HomeSectionPad(
             child: duesAsync.durum(
               veri: (u) {
-                final ozet = odemeOzeti(u);
+                final ozet = odemeOzeti(u, dil);
                 if (ozet == null) {
                   return HomeBolumHatasi(
-                    baslik: 'Ödeme ve Aidat Durumu',
-                    mesaj: 'Aidat kaydı bulunamadı',
+                    baslik: l10n.bolumOdemeAidat,
+                    mesaj: l10n.anaAidatKaydiYok,
                     onYenile: () => ref.invalidate(myDuesProvider),
                   );
                 }
@@ -163,10 +169,10 @@ class ResidentHomeScreen extends ConsumerWidget {
                   onSeeAll: () => context.push(AppRoutes.myDues),
                 );
               },
-              yukleniyor: () => const HomeBolumIskeleti(
-                  baslik: 'Ödeme ve Aidat Durumu', satir: 2),
+              yukleniyor: () =>
+                  HomeBolumIskeleti(baslik: l10n.bolumOdemeAidat, satir: 2),
               hata: () => HomeBolumHatasi(
-                baslik: 'Ödeme ve Aidat Durumu',
+                baslik: l10n.bolumOdemeAidat,
                 onYenile: () => ref.invalidate(myDuesProvider),
               ),
             ),
@@ -174,11 +180,11 @@ class ResidentHomeScreen extends ConsumerWidget {
           HomeSectionPad(
             child: hareketler.durum(
               veri: (satirlar) =>
-                  SonHareketlerKarti(satirlar: hareketSatirlari(satirlar, now)),
+                  SonHareketlerKarti(satirlar: hareketSatirlari(l10n, dil, satirlar, now)),
               yukleniyor: () =>
-                  const HomeBolumIskeleti(baslik: 'Son Hareketler'),
+                  HomeBolumIskeleti(baslik: l10n.bolumSonHareketler),
               hata: () => HomeBolumHatasi(
-                baslik: 'Son Hareketler',
+                baslik: l10n.bolumSonHareketler,
                 onYenile: () => ref.invalidate(sonHareketlerProvider),
               ),
             ),
@@ -189,13 +195,13 @@ class ResidentHomeScreen extends ConsumerWidget {
               veri: (liste) => liste.isEmpty
                   ? const SizedBox.shrink()
                   : DuyuruKarti(
-                      duyuru: duyuruOzeti(liste.first, now),
+                      duyuru: duyuruOzeti(liste.first, now, dil),
                       onTumu: () => context.push(AppRoutes.announcements),
                     ),
               yukleniyor: () =>
-                  const HomeBolumIskeleti(baslik: 'Duyurular', satir: 1),
+                  HomeBolumIskeleti(baslik: l10n.bolumDuyurular, satir: 1),
               hata: () => HomeBolumHatasi(
-                baslik: 'Duyurular',
+                baslik: l10n.bolumDuyurular,
                 onYenile: () => ref.invalidate(sonDuyurularProvider),
               ),
             ),
@@ -204,7 +210,7 @@ class ResidentHomeScreen extends ConsumerWidget {
           // (blog-tarzi tam icerik + gorsel) gider.
           HomeSectionPad(
             child: IcerikBolumu(
-              baslik: 'Site Kuralları',
+              baslik: l10n.bolumSiteKurallari,
               satirlar: kuralOzetleri(kurallar),
               onTumu: () => context.push(AppRoutes.siteKurallari),
               onSec: (_) => context.push(AppRoutes.siteKurallari),
@@ -214,8 +220,8 @@ class ResidentHomeScreen extends ConsumerWidget {
           // detayini (gorsel + zaman + aciklama + katilim) acar.
           HomeSectionPad(
             child: IcerikBolumu(
-              baslik: 'Etkinlikler',
-              satirlar: etkinlikOzetleri(etkinlikler),
+              baslik: l10n.bolumEtkinlikler,
+              satirlar: etkinlikOzetleri(l10n, dil, etkinlikler),
               onTumu: () => context.push(AppRoutes.etkinlik),
               onSec: (o) => context.push(
                 '${AppRoutes.etkinlik}?etkinlik_id=${o.id}',
@@ -229,15 +235,19 @@ class ResidentHomeScreen extends ConsumerWidget {
   }
 
   /// Kart sayaci: borc varsa BORC, yoksa son tahakkuk tutari.
-  String _aidatTutari(List<MyDuesUnit> units) {
+  String _aidatTutari(List<MyDuesUnit> units, String dil) {
     if (units.isEmpty) return '—';
     final borc = _borc(units);
-    if (borc > 0) return '₺${formatKurusAsTl(borc)}';
-    return '₺${formatKurusAsTl(units.first.tahakkukKurus)}';
+    // PARA: dil ne olursa olsun ₺ + Turkce gruplama (bkz. core/i18n/l10n.dart)
+    // ve RTL'de ters donmesin diye LTR izolasyonlu.
+    if (borc > 0) return tlIsaretli(borc, dil);
+    return tlIsaretli(units.first.tahakkukKurus, dil);
   }
 
-  String _borcEtiketi(List<MyDuesUnit> units) =>
-      units.isEmpty ? '—' : (_borc(units) > 0 ? 'Borç Var' : 'Borç Yok');
+  String _borcEtiketi(List<MyDuesUnit> units, AppLocalizations l10n) =>
+      units.isEmpty
+          ? '—'
+          : (_borc(units) > 0 ? l10n.anaBorcVar : l10n.anaBorcYok);
 
   int _borc(List<MyDuesUnit> units) => units.fold<int>(
       0, (t, u) => t + (u.bakiyeKurus > 0 ? u.bakiyeKurus : 0));
@@ -251,7 +261,8 @@ class ResidentHomeScreen extends ConsumerWidget {
   void _yakinda(BuildContext context) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Bu bölüm yakında')));
+      ..showSnackBar(
+          SnackBar(content: Text(context.l10n.ortakBolumYakinda)));
   }
 
   void _onTab(BuildContext context, int index) {
@@ -259,7 +270,8 @@ class ResidentHomeScreen extends ConsumerWidget {
       case 1: // Bildirimler — /notifications RBAC sakine kapali (backend).
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text('Bildirimler yakında')));
+          ..showSnackBar(
+          SnackBar(content: Text(context.l10n.anaBildirimlerYakinda)));
       case 3: // Raporlar — sakin icin seffaflik (aylik anonim ozet).
         context.push(AppRoutes.transparency);
       case 4: // Ayarlar.

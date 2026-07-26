@@ -10,6 +10,8 @@ import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
 import 'package:mobile/src/features/tenant/presentation/setup_tenant_screen.dart';
+import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 Widget _gate({required bool birincil, required bool kurulum}) => ProviderScope(
       overrides: [
@@ -25,7 +27,11 @@ Widget _gate({required bool birincil, required bool kurulum}) => ProviderScope(
             ad: 'Mavi Residence',
             kurulumTamamlandi: kurulum)),
       ],
-      child: const MaterialApp(home: HomeGate()),
+      child: MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
+      home: HomeGate()),
     );
 
 void main() {

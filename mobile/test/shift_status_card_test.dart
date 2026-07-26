@@ -6,9 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/home/domain/home_view_models.dart';
 import 'package:mobile/src/features/home/presentation/widgets/shift_status_card.dart';
+import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 Widget _wrap(Widget child) =>
-    MaterialApp(home: Scaffold(body: Center(child: child)));
+    MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
+      home: Scaffold(body: Center(child: child)));
 
 // NetworkImage testte gercek ag'a cikar (400 -> test hatasi). Yalniz avatar
 // testinde gecerli 1x1 seffaf PNG donduren sahte istemci kurulur.

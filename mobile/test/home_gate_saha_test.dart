@@ -8,6 +8,8 @@ import 'package:mobile/src/features/home/presentation/saha_home_screen.dart';
 import 'package:mobile/src/features/profile/data/profile_api.dart';
 import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/scan/data/scan_outbox.dart';
+import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 class _FakeOutbox extends ScanOutbox {
   @override
@@ -21,7 +23,11 @@ Widget _gate(UserRole role) => ProviderScope(
             Profile(ad: 'X', role: role.wire, aranabilir: false)),
         scanOutboxProvider.overrideWith(_FakeOutbox.new),
       ],
-      child: const MaterialApp(home: HomeGate()),
+      child: MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
+      home: HomeGate()),
     );
 
 void main() {

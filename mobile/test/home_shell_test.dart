@@ -5,6 +5,8 @@ import 'package:mobile/src/core/theme/home_tokens.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/home/presentation/widgets/home_shell.dart';
 import 'package:mobile/src/features/profile/data/avatar_api.dart';
+import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 Widget _shell({
   UserRole role = UserRole.yonetici,
@@ -20,6 +22,9 @@ Widget _shell({
       // App-bar avatari [myAvatarUrlProvider] izler — testte aga cikmasin.
       overrides: [myAvatarUrlProvider.overrideWith((ref) async => null)],
       child: MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
         home: HomeShell(
           role: role,
           unreadCount: unread,
@@ -145,7 +150,9 @@ void main() {
         onModul: (r) => rota = r,
       ));
 
-      await tester.tap(find.byTooltip('Open navigation menu'));
+      // NOT: hamburger tooltip'i artik YERELLESTIRILMIS (tr: "Gezinme
+      // menüsünü aç") — dile bagli metin yerine Scaffold uzerinden acilir.
+      tester.state<ScaffoldState>(find.byType(Scaffold).first).openDrawer();
       await tester.pumpAndSettle();
 
       // Referans hizli erisim seridinde OLMAYAN moduller cekmecede duruyor.

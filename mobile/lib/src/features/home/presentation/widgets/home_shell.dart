@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/i18n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/home_tokens.dart';
@@ -108,7 +110,7 @@ class HomeShell extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.person_outline),
-              title: const Text('Profil'),
+              title: Text(context.l10n.kabukProfil),
               onTap: () {
                 Navigator.of(ctx).pop();
                 onProfile?.call();
@@ -116,8 +118,8 @@ class HomeShell extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.logout, color: HomeTokens.red),
-              title: const Text('Çıkış Yap',
-                  style: TextStyle(color: HomeTokens.red)),
+              title: Text(context.l10n.kabukCikisYap,
+                  style: const TextStyle(color: HomeTokens.red)),
               onTap: () {
                 Navigator.of(ctx).pop();
                 onLogout?.call();
@@ -227,7 +229,7 @@ class _HomeBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = HomeSurface.of(context);
-    final slots = homeShellSlots(role);
+    final slots = homeShellSlots(context.l10n, role);
 
     return SizedBox(
       // FAB'in tasma payi + bar + cihaz alt guvenli alani.

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/i18n/l10n.dart';
+
 import '../../../../core/branding/yonetio_logo.dart';
 
 /// FAB olusturma menusunun tek girisi (WP2.4). [route] null + [comingSoon]
@@ -48,7 +50,7 @@ Future<void> showBildirMenu(
               ),
               title: Text(g.label),
               trailing: g.comingSoon
-                  ? Text('Yakında',
+                  ? Text(context.l10n.ortakYakinda,
                       style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
                           color: Theme.of(ctx).disabledColor))
                   : const Icon(Icons.chevron_right, size: 18),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/i18n/l10n.dart';
+
 import '../../../../core/theme/home_tokens.dart';
 import '../../../auth/domain/user_role.dart';
 import '../../domain/home_menu.dart';
@@ -69,7 +71,7 @@ class HomeDrawer extends StatelessWidget {
                           iconSize: 20,
                         ),
                         title: Text(
-                          spec.title,
+                          moduleBaslik(context.l10n, entry),
                           style:
                               HomeText.cardTitle.copyWith(color: s.heading),
                         ),
@@ -85,7 +87,7 @@ class HomeDrawer extends StatelessWidget {
             Divider(height: 1, color: s.divider),
             ListTile(
               leading: Icon(Icons.person_outline, color: s.body),
-              title: Text('Profil',
+              title: Text(context.l10n.kabukProfil,
                   style: HomeText.cardTitle.copyWith(color: s.heading)),
               onTap: () {
                 Navigator.of(context).pop();
@@ -94,7 +96,7 @@ class HomeDrawer extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.logout, color: HomeTokens.red),
-              title: Text('Çıkış Yap',
+              title: Text(context.l10n.kabukCikisYap,
                   style: HomeText.cardTitle.copyWith(color: HomeTokens.red)),
               onTap: () {
                 Navigator.of(context).pop();

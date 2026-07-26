@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/l10n/gen/app_localizations.dart';
 import 'package:mobile/src/core/theme/home_tokens.dart';
 import 'package:mobile/src/features/announcements/domain/announcement_models.dart';
 import 'package:mobile/src/features/home/domain/activity_models.dart';
@@ -7,12 +8,18 @@ import 'package:mobile/src/features/home/domain/home_view_models.dart';
 import 'package:mobile/src/features/home/presentation/home_mappers.dart';
 import 'package:mobile/src/features/home/presentation/widgets/duyuru_karti.dart';
 import 'package:mobile/src/features/home/presentation/widgets/son_hareketler_karti.dart';
+import 'helpers/l10n_test_app.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      home: Scaffold(body: SingleChildScrollView(child: child)),
-    );
+
+
+late AppLocalizations trL10n;
 
 void main() {
+  setUpAll(() async {
+    // Testler TR'ye sabit: mevcut metin beklentileri korunur.
+    trL10n = await AppLocalizations.delegate.load(const Locale('tr'));
+  });
+
   group('SonHareketlerKarti — TEK kart + 1px ayracli satirlar (referans)', () {
     final hareketler = [
       ActivityItem(
@@ -35,8 +42,8 @@ void main() {
 
     testWidgets('baslik + satirlar + zaman etiketleri (bugun HH:mm, dun Dün)',
         (tester) async {
-      await tester.pumpWidget(_wrap(SonHareketlerKarti(
-        satirlar: hareketSatirlari(hareketler, DateTime(2026, 7, 23, 14, 0)),
+      await tester.pumpWidget(l10nScaffold(SonHareketlerKarti(
+        satirlar: hareketSatirlari(trL10n, 'tr', hareketler, DateTime(2026, 7, 23, 14, 0)),
       )));
       expect(find.text('Son Hareketler'), findsOneWidget);
       expect(find.text('Kargo Teslim Edildi'), findsOneWidget);
@@ -47,14 +54,14 @@ void main() {
     });
 
     testWidgets('bos akis: bolum HIC cizilmez', (tester) async {
-      await tester.pumpWidget(_wrap(const SonHareketlerKarti(satirlar: [])));
+      await tester.pumpWidget(l10nScaffold(const SonHareketlerKarti(satirlar: [])));
       expect(find.text('Son Hareketler'), findsNothing);
     });
 
     testWidgets('satir dokunmasi geri bildirilir', (tester) async {
       var secim = 0;
-      await tester.pumpWidget(_wrap(SonHareketlerKarti(
-        satirlar: hareketSatirlari(hareketler, DateTime(2026, 7, 23, 14, 0)),
+      await tester.pumpWidget(l10nScaffold(SonHareketlerKarti(
+        satirlar: hareketSatirlari(trL10n, 'tr', hareketler, DateTime(2026, 7, 23, 14, 0)),
         onSatir: (_) => secim++,
       )));
       await tester.tap(find.text('Kargo Teslim Edildi'));
@@ -64,7 +71,7 @@ void main() {
 
   group('hareketSatirlari — ikon rengi MODUL, nokta SUNUCU renk_ipucu', () {
     HareketSatiri satir(ActivityTur tur, ActivityRenk renk) =>
-        hareketSatirlari([
+        hareketSatirlari(trL10n, 'tr', [
           ActivityItem(
               id: '1',
               tur: tur,
@@ -102,7 +109,7 @@ void main() {
     });
 
     test('alt_metin null: satir bos alt yaziyla cizilir', () {
-      final s = hareketSatirlari([
+      final s = hareketSatirlari(trL10n, 'tr', [
         ActivityItem(
             id: '1',
             tur: ActivityTur.aracGiris,
@@ -119,13 +126,13 @@ void main() {
     final now = DateTime(2026, 7, 23, 14, 0);
 
     test('ayni gun: HH:mm', () {
-      expect(hareketZamanEtiketi(DateTime(2026, 7, 23, 9, 5), now), '09:05');
+      expect(hareketZamanEtiketi(DateTime(2026, 7, 23, 9, 5), now, trL10n, 'tr'), '09:05');
     });
     test('dun: "Dün"', () {
-      expect(hareketZamanEtiketi(DateTime(2026, 7, 22, 23, 0), now), 'Dün');
+      expect(hareketZamanEtiketi(DateTime(2026, 7, 22, 23, 0), now, trL10n, 'tr'), 'Dün');
     });
     test('daha eski: dd.MM', () {
-      expect(hareketZamanEtiketi(DateTime(2026, 7, 1, 8, 0), now), '01.07');
+      expect(hareketZamanEtiketi(DateTime(2026, 7, 1, 8, 0), now, trL10n, 'tr'), '01.07');
     });
   });
 
@@ -142,9 +149,9 @@ void main() {
     testWidgets('son duyuru: baslik + govde ozeti; yeni (<=3 gun) "Yeni" cipi',
         (tester) async {
       var tumu = 0;
-      await tester.pumpWidget(_wrap(DuyuruKarti(
+      await tester.pumpWidget(l10nScaffold(DuyuruKarti(
         duyuru: duyuruOzeti(duyuru(DateTime(2026, 7, 22, 9, 0)),
-            DateTime(2026, 7, 23)),
+            DateTime(2026, 7, 23), 'tr'),
         onTumu: () => tumu++,
       )));
       expect(find.text('Duyurular'), findsOneWidget);
@@ -157,9 +164,9 @@ void main() {
     });
 
     testWidgets('eski duyuru (>3 gun): "Yeni" cipi YOK', (tester) async {
-      await tester.pumpWidget(_wrap(DuyuruKarti(
+      await tester.pumpWidget(l10nScaffold(DuyuruKarti(
         duyuru: duyuruOzeti(
-            duyuru(DateTime(2026, 7, 10)), DateTime(2026, 7, 23)),
+            duyuru(DateTime(2026, 7, 10)), DateTime(2026, 7, 23), 'tr'),
         onTumu: () {},
       )));
       expect(find.text('Yeni'), findsNothing);
@@ -167,9 +174,9 @@ void main() {
 
     testWidgets('foto YOKken gri yer tutucu cizilir (kart bozulmaz)',
         (tester) async {
-      await tester.pumpWidget(_wrap(DuyuruKarti(
+      await tester.pumpWidget(l10nScaffold(DuyuruKarti(
         duyuru: duyuruOzeti(
-            duyuru(DateTime(2026, 7, 22)), DateTime(2026, 7, 23)),
+            duyuru(DateTime(2026, 7, 22)), DateTime(2026, 7, 23), 'tr'),
         onTumu: () {},
       )));
       expect(find.byIcon(Icons.image_outlined), findsOneWidget);

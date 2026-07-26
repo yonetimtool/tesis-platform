@@ -41,7 +41,7 @@ void main() {
         'gelecek odeme + "Geçmiş Ödemeler" butonu', (tester) async {
       var gecmis = 0;
       await tester.pumpWidget(_wrap(OdemeKarti(
-        ozet: odemeOzeti([_borcsuzUnit])!,
+        ozet: odemeOzeti([_borcsuzUnit], 'tr')!,
         onGecmis: () => gecmis++,
       )));
 
@@ -73,7 +73,7 @@ void main() {
                   sonOdemeTarihi: DateTime(2026, 6, 5)),
             ],
           ),
-        ])!,
+        ], 'tr')!,
         onGecmis: () {},
       )));
       expect(find.text('Ödenmedi'), findsOneWidget);
@@ -83,7 +83,7 @@ void main() {
 
   group('odemeOzeti — /me/dues → odeme karti (SAF)', () {
     test('daire yoksa null (mock taban kullanilir)', () {
-      expect(odemeOzeti(const []), isNull);
+      expect(odemeOzeti(const [], 'tr'), isNull);
     });
 
     test('tahakkuk yoksa null', () {
@@ -95,7 +95,7 @@ void main() {
                 tahakkukKurus: 0,
                 odenenKurus: 0,
                 bakiyeKurus: 0),
-          ]),
+          ], 'tr'),
           isNull);
     });
 
@@ -121,7 +121,7 @@ void main() {
                 durum: 'basarili'),
           ],
         ),
-      ])!;
+      ], 'tr')!;
       expect(o.odendi, isTrue);
       expect(o.sonOdeme, '05.05.2026');
       expect(o.gelecekTarih, '05.06.2026');

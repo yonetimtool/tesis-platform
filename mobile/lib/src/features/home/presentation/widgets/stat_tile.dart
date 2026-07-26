@@ -1,6 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/i18n/l10n.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
@@ -34,6 +35,7 @@ class StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = HomeSurface.of(context);
+    final l10n = context.l10n;
     final kutuBoyut = hucreGenisligi == null
         ? HomeTokens.iconBox
         : (hucreGenisligi! * 0.40).clamp(32.0, HomeTokens.iconBox);
@@ -74,7 +76,7 @@ class StatTile extends StatelessWidget {
             ),
           const SizedBox(height: 2),
           AutoSizeText(
-            kutu.etiket,
+            kutu.etiket(l10n),
             group: etiketGrubu,
             maxLines: dar ? 1 : 2,
             minFontSize: 8,
@@ -84,7 +86,7 @@ class StatTile extends StatelessWidget {
           ),
           const SizedBox(height: 1),
           AutoSizeText(
-            kutu.altEtiket,
+            kutu.altEtiket(l10n),
             group: etiketGrubu,
             maxLines: 1,
             minFontSize: 8,

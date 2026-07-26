@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/l10n/gen/app_localizations.dart';
 import 'package:mobile/src/features/home/domain/home_view_models.dart';
 import 'package:mobile/src/features/home/presentation/home_mappers.dart';
 import 'package:mobile/src/features/home/presentation/widgets/vardiya_seridi.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
+import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
       home: Scaffold(body: SingleChildScrollView(child: child)),
     );
 
@@ -24,11 +30,19 @@ const _vardiyalar = [
       gunTipi: null),
 ];
 
+late AppLocalizations trL10n;
+
 void main() {
+  setUpAll(() async {
+    // Testler TR'ye sabit (mevcut metin beklentileri korunur).
+    trL10n = await AppLocalizations.delegate.load(const Locale('tr'));
+  });
+
   group('vardiyaKartlari — /shifts → vardiya kartlari (SAF)', () {
     test('now araliktakine aktif, digerine planlandi', () {
       final kartlar = vardiyaKartlari(
-        vardiyalar: _vardiyalar,
+      l10n: trL10n,
+      vardiyalar: _vardiyalar,
         now: DateTime(2026, 7, 23, 9, 30), // sabah araliginda
       );
       expect(kartlar.map((k) => k.durum).toList(),
@@ -39,7 +53,8 @@ void main() {
 
     test('gece sarkmasi: gece yarisi sonrasi gece vardiyasi aktif', () {
       final kartlar = vardiyaKartlari(
-        vardiyalar: _vardiyalar,
+      l10n: trL10n,
+      vardiyalar: _vardiyalar,
         now: DateTime(2026, 7, 23, 2, 0),
       );
       expect(kartlar.map((k) => k.durum).toList(),
@@ -48,7 +63,8 @@ void main() {
 
     test('yoneticiAd verilince serinin SONUNA "Yönetici" karti eklenir', () {
       final kartlar = vardiyaKartlari(
-        vardiyalar: _vardiyalar,
+      l10n: trL10n,
+      vardiyalar: _vardiyalar,
         now: DateTime(2026, 7, 23, 9, 30),
         yoneticiAd: 'Kerem Aşçı',
       );
@@ -61,7 +77,8 @@ void main() {
 
     test('bos yoneticiAd: ek kart YOK', () {
       final kartlar = vardiyaKartlari(
-        vardiyalar: _vardiyalar,
+      l10n: trL10n,
+      vardiyalar: _vardiyalar,
         now: DateTime(2026, 7, 23, 9, 30),
         yoneticiAd: '',
       );
@@ -70,7 +87,8 @@ void main() {
 
     test('atanan personel varsa alt bilgi "N Görevli"', () {
       final kartlar = vardiyaKartlari(
-        vardiyalar: const [
+      l10n: trL10n,
+      vardiyalar: const [
           Shift(
             id: 'v1',
             ad: 'Sabah Vardiyası',
@@ -94,7 +112,8 @@ void main() {
       var tumu = 0;
       await tester.pumpWidget(_wrap(VardiyaSeridi(
         kartlar: vardiyaKartlari(
-          vardiyalar: _vardiyalar,
+      l10n: trL10n,
+      vardiyalar: _vardiyalar,
           now: DateTime(2026, 7, 23, 9, 30),
         ),
         onSeeAll: () => tumu++,

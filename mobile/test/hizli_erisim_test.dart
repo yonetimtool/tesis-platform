@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/l10n/gen/app_localizations.dart';
 import 'package:mobile/src/core/theme/home_tokens.dart';
 import 'package:mobile/src/features/home/data/home_repository.dart';
 import 'package:mobile/src/features/home/domain/home_varyant.dart';
+import 'package:mobile/src/features/home/domain/home_kart_id.dart';
 import 'package:mobile/src/features/home/domain/home_view_models.dart';
 import 'package:mobile/src/features/home/presentation/widgets/hizli_erisim.dart';
 import 'package:mobile/src/features/home/presentation/widgets/home_states.dart';
-
-Widget _wrap(Widget child) =>
-    MaterialApp(home: Scaffold(body: SingleChildScrollView(child: child)));
+import 'helpers/l10n_test_app.dart';
 
 const _mock = MockHomeRepository();
 
@@ -18,12 +18,18 @@ void _ekran(WidgetTester tester, {double h = 2000}) {
   addTearDown(tester.view.reset);
 }
 
+late AppLocalizations trL10n;
+
 void main() {
+  setUpAll(() async {
+    trL10n = await AppLocalizations.delegate.load(const Locale('tr'));
+  });
+
   group('HizliErisimSeridi — gorevli: TEK SIRA yatay 5 kart', () {
     testWidgets('referans kart basliklari ve sayaclari sirayla cizilir',
         (tester) async {
       _ekran(tester);
-      await tester.pumpWidget(_wrap(HizliErisimSeridi(
+      await tester.pumpWidget(l10nScaffold(HizliErisimSeridi(
         kartlar: _mock.hizliErisim(HomeVaryant.gorevli),
         onSec: (_) {},
       )));
@@ -44,10 +50,10 @@ void main() {
       _ekran(tester);
       final kartlar = [
         for (final k in _mock.hizliErisim(HomeVaryant.gorevli))
-          k.baslik == 'Kargo' ? k.sayacla('2 Bekliyor') : k,
+          k.id == HomeKartId.kargo ? k.sayacla('2 Bekliyor') : k,
       ];
       await tester.pumpWidget(
-          _wrap(HizliErisimSeridi(kartlar: kartlar, onSec: (_) {})));
+          l10nScaffold(HizliErisimSeridi(kartlar: kartlar, onSec: (_) {})));
 
       expect(find.text('2 Bekliyor'), findsOneWidget);
     });
@@ -55,12 +61,12 @@ void main() {
     testWidgets('kart dokunmasi geri bildirilir', (tester) async {
       _ekran(tester);
       HizliErisimKart? secilen;
-      await tester.pumpWidget(_wrap(HizliErisimSeridi(
+      await tester.pumpWidget(l10nScaffold(HizliErisimSeridi(
         kartlar: _mock.hizliErisim(HomeVaryant.gorevli),
         onSec: (k) => secilen = k,
       )));
       await tester.tap(find.text('Kargo'));
-      expect(secilen?.baslik, 'Kargo');
+      expect(secilen?.id, HomeKartId.kargo);
       expect(secilen?.rota, '/kargo');
     });
   });
@@ -69,7 +75,7 @@ void main() {
     testWidgets('8 kart da cizilir, tasma yok (400dp genislik)',
         (tester) async {
       _ekran(tester);
-      await tester.pumpWidget(_wrap(SizedBox(
+      await tester.pumpWidget(l10nScaffold(SizedBox(
         width: 368,
         child: HizliErisimIzgarasi(
           kartlar: _mock.hizliErisim(HomeVaryant.yonetici),
@@ -97,11 +103,11 @@ void main() {
       _ekran(tester);
       final kartlar = [
         for (final k in _mock.hizliErisim(HomeVaryant.sakin))
-          k.baslik == 'Aidat Bilgileri'
+          k.id == HomeKartId.aidatBilgileri
               ? k.sayacla('₺1.250,00', yeniIkinciAltMetin: 'Borç Yok')
               : k,
       ];
-      await tester.pumpWidget(_wrap(SizedBox(
+      await tester.pumpWidget(l10nScaffold(SizedBox(
         width: 368,
         child: HizliErisimIzgarasi(kartlar: kartlar, onSec: (_) {}),
       )));
@@ -126,7 +132,7 @@ void main() {
     });
 
     testWidgets('bos liste: izgara HIC cizilmez', (tester) async {
-      await tester.pumpWidget(_wrap(
+      await tester.pumpWidget(l10nScaffold(
           HizliErisimIzgarasi(kartlar: const [], onSec: (_) {})));
       expect(find.byType(HizliErisimKarti), findsNothing);
     });
@@ -136,7 +142,7 @@ void main() {
     test('sayac degisir; ikon/renk/rota korunur', () {
       const kart = HizliErisimKart(
         ikon: Icons.inventory_2,
-        baslik: 'Kargo',
+        id: HomeKartId.kargo,
         accent: HomeTokens.green,
         altMetin: '5 Bekliyor',
         rota: '/kargo',
@@ -151,7 +157,7 @@ void main() {
     test('null sayac: kart AYNEN kalir (veri henuz gelmedi → iskelet)', () {
       const kart = HizliErisimKart(
         ikon: Icons.error_outline,
-        baslik: 'İhlaller',
+        id: HomeKartId.ihlaller,
         accent: HomeTokens.red,
         altMetin: null,
       );

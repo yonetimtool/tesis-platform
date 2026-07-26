@@ -1,7 +1,9 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/i18n/l10n.dart';
 import '../../../../core/theme/home_tokens.dart';
+import '../../domain/home_kart_id.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
 import 'home_states.dart';
@@ -43,6 +45,10 @@ class HizliErisimKarti extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = HomeSurface.of(context);
+    final l10n = context.l10n;
+    // Sayac YOKSA sabit etiket (varsa) gosterilir; ikisi de yoksa iskelet.
+    final altSatir = kart.altMetin ??
+        (kart.etiketId == null ? null : kartEtiketi(l10n, kart.etiketId!));
     final kutu = hucreGenisligi == null
         ? HomeTokens.iconBox
         : (hucreGenisligi! * 0.42).clamp(32.0, HomeTokens.iconBox);
@@ -66,7 +72,7 @@ class HizliErisimKarti extends StatelessWidget {
           const SizedBox(height: 8),
           Flexible(
             child: AutoSizeText(
-              kart.baslik,
+              kart.baslik(l10n),
               group: baslikGrubu,
               maxLines: 2,
               minFontSize: 8,
@@ -78,11 +84,11 @@ class HizliErisimKarti extends StatelessWidget {
           const SizedBox(height: 3),
           // Sayac YOKKEN (gercek uc henuz yuklenmedi) uydurma sayi degil,
           // notr iskelet cizilir — kart yuksekligi degismez.
-          if (kart.altMetin == null)
+          if (altSatir == null)
             const HomeSayacIskeleti()
           else
             AutoSizeText(
-              kart.altMetin!,
+              altSatir,
               group: sayacGrubu,
               maxLines: 1,
               minFontSize: 8,

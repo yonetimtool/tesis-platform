@@ -1,12 +1,135 @@
 {
   "@@locale": "tr",
   "@@x-glossary": "SOZLUK (tum dillerde TUTARLI kullanilir): aidat=dues, vardiya=shift, devriye=patrol, kontrol noktasi=checkpoint, demirbas/zimmet=asset/checkout, talep=request/ticket, sikayet=complaint, daire=unit, blok=block, tesis=facility/site, gorevli=officer, sakin=resident. Para birimi HER DILDE Turk Lirasi (₺) ve Turkce sayi gruplamasiyla gosterilir.",
+  "cipYeni": "Yeni",
+  "@cipYeni": {
+    "description": "Duyuru kartinin sag alt cipi — SAYI TASIMAZ"
+  },
+  "cipAktif": "Aktif",
+  "@cipAktif": {
+    "description": "Vardiya karti durum cipi"
+  },
+  "bolumVardiyaDurumu": "Vardiya Durumu",
+  "bolumSonHareketler": "Son Hareketler",
+  "bolumHizliOzet": "Hızlı Özet",
+  "bolumDuyurular": "Duyurular",
+  "bolumSiteKurallari": "Site Kuralları",
+  "bolumEtkinlikler": "Etkinlikler",
+  "bolumOdemeAidat": "Ödeme ve Aidat Durumu",
+  "bolumTumModuller": "Tüm Modüller",
+  "kartVardiyaDurum": "Vardiya Durum",
+  "kartKargo": "Kargo",
+  "kartZiyaretci": "Ziyaretçi",
+  "kartAracPlaka": "Araç Plaka",
+  "kartIhlaller": "İhlaller",
+  "kartGorevlerim": "Görevlerim",
+  "kartDemirbas": "Demirbaş",
+  "kartTurlarim": "Turlarım",
+  "kartTalepAriza": "Talep / Arıza",
+  "kartZiyaretciler": "Ziyaretçiler",
+  "kartKargolarim": "Kargolarım",
+  "kartAidatBilgileri": "Aidat Bilgileri",
+  "kartGurultuSikayeti": "Gürültü Şikayeti",
+  "kartGeriBildirim": "Geri Bildirim",
+  "kartSikayetlerim": "Şikayetlerim",
+  "kartSiteRaporlari": "Site Raporları",
+  "kartGorevler": "Görevler",
+  "kartAidatDurumu": "Aidat Durumu",
+  "kartOtoparkKullanimi": "Otopark Kullanımı",
+  "kartSikayetler": "Şikayetler",
+  "kartRaporlar": "Raporlar",
+  "kartYonetici": "Yönetici",
+  "kartGonderimKuyrugu": "Gönderim Kuyruğu",
+  "etiketAylikOzet": "Aylık Özet",
+  "etiketDevriye": "Devriye",
+  "etiketKurallar": "Kurallar",
+  "etiketIletisim": "İletişim",
+  "sayacAktif": "{n} Aktif",
+  "sayacIceride": "{n} İçeride",
+  "sayacGiris": "{n} Giriş",
+  "sayacYeni": "{n} Yeni",
+  "sayacAcik": "{n} Açık",
+  "sayacZimmetli": "{n} Zimmetli",
+  "sayacKayit": "{n} Kayıt",
+  "sayacYaklasan": "{n} Yaklaşan",
+  "sayacDaire": "{n} Daire",
+  "sayacArac": "{n} araç",
+  "sayacGorevli": "{n} Görevli",
+  "sayacBekleyen": "{n} bekleyen",
+  "ozetToplamDaire": "Toplam Daire",
+  "ozetToplamTahsilat": "Toplam Tahsilat",
+  "ozetTahsilatOrani": "Aidat Tahsilat Oranı",
+  "ozetOtoparkDoluluk": "Otopark Doluluk",
+  "ozetTumSite": "Tüm Site",
+  "ozetBuAy": "Bu Ay",
+  "ozetSuAn": "Şu An",
+  "otoparkDoluKapasite": "{dolu} / {kapasite}",
+  "yuzdeDeger": "%{oran}",
+  "anaSelam": "Merhaba, {ad}",
+  "anaYoneticiPaneli": "Yönetici Paneli",
+  "anaDaireAltBaslik": "Daire {daireler}  •  {rol}",
+  "anaDun": "Dün",
+  "anaOnline": "Online",
+  "anaVardiyaAktif": "Aktif",
+  "anaVardiyaPlanlandi": "Planlandı",
+  "anaEtkinlikSuruyor": "Sürüyor",
+  "anaEtkinlikYaklasan": "Yaklaşan",
+  "anaOdendi": "Ödendi",
+  "anaOdenmedi": "Ödenmedi",
+  "anaBorcVar": "Borç Var",
+  "anaBorcYok": "Borç Yok",
+  "anaBuAykiAidat": "Bu Ayki Aidat",
+  "anaSonOdemeTarih": "Son Ödeme: {tarih}",
+  "anaGelecekOdeme": "Gelecek Ödeme",
+  "anaGecmisOdemeler": "Geçmiş Ödemeler",
+  "anaAidatKaydiYok": "Aidat kaydı bulunamadı",
+  "anaBildirimlerYakinda": "Bildirimler yakında",
+  "anaBildirimlerRolYok": "Bildirimler bu rolde kullanılamıyor",
+  "anaRaporlarYakinda": "Raporlar yakında",
+  "sekmeAnaSayfa": "Ana Sayfa",
+  "sekmeBildirimler": "Bildirimler",
+  "sekmeRaporlar": "Raporlar",
+  "sekmeAyarlar": "Ayarlar",
+  "kabukProfil": "Profil",
+  "kabukCikisYap": "Çıkış Yap",
+  "fabOlayBildir": "Olay Bildir",
+  "fabTalepBildir": "Talep / Bildir",
+  "fabTalepArizaBildir": "Talep / Arıza Bildir",
+  "fabRezervasyonYap": "Rezervasyon Yap",
+  "fabDuyuruYayinla": "Duyuru Yayınla",
+  "fabGorevOlustur": "Görev Oluştur",
+  "fabDestekTalebi": "Destek Talebi",
+  "modulDuyurular": "Duyurular",
+  "modulTurlarim": "Turlarım",
+  "modulDevriyeTakibi": "Devriye Takibi",
+  "modulGorevlerim": "Görevlerim",
+  "modulGorevYonetimi": "Görev Yönetimi",
+  "modulDemirbas": "Demirbaş",
+  "modulNfcOkutma": "NFC Okutma",
+  "modulGonderimKuyrugu": "Gönderim Kuyruğu",
+  "modulAylikRaporlar": "Aylık Raporlar",
+  "modulButce": "Bütçe",
+  "modulFinansalOzet": "Finansal Özet",
+  "modulSeffaflik": "Şeffaflık",
+  "modulSiteButcesi": "Site Bütçesi",
+  "modulAidatim": "Aidatım",
+  "modulSikayetOneri": "Şikayet / Öneri",
+  "modulZiyaretciler": "Ziyaretçiler",
+  "modulKargo": "Kargo",
+  "modulGoruntulemeIzni": "Görüntüleme İzni",
+  "modulRezervasyon": "Rezervasyon",
+  "modulEtkinlikler": "Etkinlikler",
+  "modulSiteKurallari": "Site Kuralları",
+  "modulDisHizmetler": "Dış Hizmetler",
+  "modulEntegrasyonlar": "Entegrasyonlar",
+  "modulPersonel": "Saha Personeli",
+  "modulSakinler": "Site Sakinleri",
+  "modulBinaYapisi": "Bina Yapısı",
+  "modulSikayetHaritasi": "Şikayet Haritası",
+  "modulSikayetlerim": "Şikayetlerim",
+  "modulYoneticiIletisim": "Yönetici İletişim",
   "ortakKaydet": "Kaydet",
   "sayacBekliyor": "{n} Bekliyor",
-  "@sayacBekliyor": {
-    "description": "Kart sayaci — ICU plural TOHUM anahtari: ru/ar cogul kategorileri testle kilitlidir; ana ekran sayaclari bir sonraki turda ayni deseni kullanir.",
-    "placeholders": { "n": { "type": "int" } }
-  },
   "ortakKaydediliyor": "Kaydediliyor...",
   "ortakVazgec": "Vazgeç",
   "ortakSil": "Sil",
@@ -21,14 +144,6 @@
   "ortakBolumYakinda": "Bu bölüm yakında",
   "ortakBeklenmeyenHata": "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.",
   "ortakZorunluAlan": "{alan} zorunludur",
-  "@ortakZorunluAlan": {
-    "description": "Form dogrulama: eksik zorunlu alan",
-    "placeholders": {
-      "alan": {
-        "type": "String"
-      }
-    }
-  },
   "ayarlarBaslik": "Ayarlar",
   "ayarlarTesis": "Tesis",
   "ayarlarYonetim": "Yönetim",
@@ -44,9 +159,6 @@
   "ayarlarKameralar": "Kameralar",
   "ayarlarKameralarAlt": "Kamera ekle, düzenle, sil",
   "ayarlarDil": "Dil / Language",
-  "@ayarlarDil": {
-    "description": "Ayarlardaki dil satiri — TR disi dillerde de \"Language\" ile bulunabilir"
-  },
   "dilSecBaslik": "Uygulama dili",
   "kameraBaslik": "Kameralar",
   "kameraEkle": "Kamera Ekle",
@@ -63,24 +175,9 @@
   "kameraRtspFormUyari": "RTSP yayınlar şu an uygulama içinde oynatılamaz. Kayıt saklanır; oynatma desteği ileride eklenecek.",
   "kameraUrlZorunlu": "Yayın adresi zorunludur",
   "kameraUrlHataHttp": "{tur} yayın adresi http:// veya https:// ile başlamalı",
-  "@kameraUrlHataHttp": {
-    "description": "tur: HLS | MP4",
-    "placeholders": {
-      "tur": {
-        "type": "String"
-      }
-    }
-  },
   "kameraUrlHataRtsp": "RTSP yayın adresi rtsp:// ile başlamalı",
   "kameraSilBaslik": "Kamerayı sil",
   "kameraSilOnay": "\"{ad}\" silinsin mi?",
-  "@kameraSilOnay": {
-    "placeholders": {
-      "ad": {
-        "type": "String"
-      }
-    }
-  },
   "kameraBosYonetim": "Kamera tanımı yok. Sağ alttan ekleyebilirsiniz.",
   "kameraBosSakin": "Görüntülemenize açık kamera yok.",
   "kameraListeHata": "Kameralar yüklenemedi.",
@@ -89,13 +186,6 @@
   "kameraYayinAcilamadi": "Yayın açılamadı",
   "kameraYayinAcilamadiAlt": "Kamera kapalı olabilir ya da ağ yayına ulaşamıyor.",
   "kameraTurEtiket": "Tür: {tur}",
-  "@kameraTurEtiket": {
-    "placeholders": {
-      "tur": {
-        "type": "String"
-      }
-    }
-  },
   "kameraRtspBilgi": "RTSP yayınlar şu an uygulama içinde oynatılamıyor. Kayıt sistemde tutuluyor; oynatma desteği ileride eklenecek.",
   "kameraSeritBaslik": "Canlı Kamera"
 }

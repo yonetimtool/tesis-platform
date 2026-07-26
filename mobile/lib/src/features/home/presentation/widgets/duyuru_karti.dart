@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/i18n/l10n.dart';
+
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
@@ -25,7 +27,7 @@ class DuyuruKarti extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(title: 'Duyurular', onSeeAll: onTumu),
+        SectionHeader(title: context.l10n.bolumDuyurular, onSeeAll: onTumu),
         HomeCard(
           onTap: onTumu,
           padding: const EdgeInsets.all(12),
@@ -64,8 +66,9 @@ class DuyuruKarti extends StatelessWidget {
                           ),
                         ),
                         if (duyuru.yeni)
-                          const HomeChip(
-                              label: 'Yeni', accent: HomeTokens.primary),
+                          HomeChip(
+                              label: context.l10n.cipYeni,
+                              accent: HomeTokens.primary),
                       ],
                     ),
                   ],

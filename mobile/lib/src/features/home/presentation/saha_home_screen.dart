@@ -24,6 +24,8 @@ import '../../complaints/data/complaint_api.dart';
 import '../data/activity_api.dart';
 import '../data/home_api.dart';
 import '../data/home_repository.dart';
+import '../../../core/i18n/l10n.dart';
+import '../domain/home_kart_id.dart';
 import '../domain/home_varyant.dart';
 import '../domain/home_view_models.dart';
 import 'home_async.dart';
@@ -66,6 +68,8 @@ class SahaHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final taban = ref.watch(homeRepositoryProvider);
     final ad = ref.watch(profileProvider).value?.ad ?? '';
     final guvenlik = role == UserRole.security;
@@ -116,37 +120,35 @@ class SahaHomeScreen extends ConsumerWidget {
         guvenlik ? HomeVaryant.gorevli : HomeVaryant.tesisGorevlisi;
     final erisim = [
       for (final k in taban.hizliErisim(varyant))
-          switch (k.baslik) {
-            'Vardiya Durum' =>
-              k.sayacla(vardiyaAsync.sayac((_) => aktifVardiya, 'Aktif')),
-            'Kargo' => k.sayacla(kargoAsync.sayac(
-                (l) => l.where((x) => x.durum == KargoDurum.bekliyor).length,
-                'Bekliyor',
-              )),
+          switch (k.id) {
+            HomeKartId.vardiyaDurum =>
+              k.sayacla(vardiyaAsync.metin((_) => l10n.sayacAktif(aktifVardiya))),
+            HomeKartId.kargo => k.sayacla(kargoAsync.metin((l) => l10n.sayacBekliyor(
+                  l.where((x) => x.durum == KargoDurum.bekliyor).length))),
             // G3: cikis damgasi geldi → halen ICERIDE olanlar sunucuda
             // sayilir (?icerde=true), istemci bugun/dun hesabi yapmaz.
-            'Ziyaretçi' when icerdeAsync != null =>
-              k.sayacla(icerdeAsync.sayac((n) => n, 'İçeride')),
+            HomeKartId.ziyaretci when icerdeAsync != null =>
+              k.sayacla(icerdeAsync.metin(l10n.sayacIceride)),
             // G1: bugunku arac girisi. Tek-satir gecis modelinde "acik gecis"
             // sayisi otopark DOLULUGUDUR (yonetici karti) — serit karti gun
             // icindeki GIRIS akisini gosterir.
-            'Araç Plaka' when aracAsync != null =>
-              k.sayacla(aracAsync.sayac((n) => n, 'Giriş')),
+            HomeKartId.aracPlaka when aracAsync != null =>
+              k.sayacla(aracAsync.metin(l10n.sayacGiris)),
             // G2: henuz ele alinmamis ihlal.
-            'İhlaller' when ihlalAsync != null =>
-              k.sayacla(ihlalAsync.sayac((n) => n, 'Yeni')),
+            HomeKartId.ihlaller when ihlalAsync != null =>
+              k.sayacla(ihlalAsync.metin(l10n.sayacYeni)),
             // Kendi rol grubuna atanan + atanmamis AKTIF gorevler (sunucu
             // saha gorunurlugunu kendisi uygular).
-            'Görevlerim' => k.sayacla(gorevAsync.sayac((n) => n, 'Bekliyor')),
+            HomeKartId.gorevlerim => k.sayacla(gorevAsync.metin(l10n.sayacBekliyor)),
             // Uzerimdeki ACIK zimmet (/assets?checked_out_by=me).
-            'Demirbaş' => k.sayacla(zimmetAsync.sayac((n) => n, 'Zimmetli')),
-            'Talep / Arıza' when talepAsync != null =>
-              k.sayacla(talepAsync.sayac((n) => n, 'Açık')),
-            'Duyurular' when duyuruAsync != null => k.sayacla(
-                duyuruAsync.sayac((l) => _yeniDuyuru(l, now), 'Yeni'),
+            HomeKartId.demirbas => k.sayacla(zimmetAsync.metin(l10n.sayacZimmetli)),
+            HomeKartId.talepAriza when talepAsync != null =>
+              k.sayacla(talepAsync.metin(l10n.sayacAcik)),
+            HomeKartId.duyurular when duyuruAsync != null => k.sayacla(
+                duyuruAsync.metin((l) => l10n.sayacYeni(_yeniDuyuru(l, now))),
               ),
-            'Etkinlikler' when etkinlikAsync != null =>
-              k.sayacla(etkinlikAsync.sayac((n) => n, 'Yaklaşan')),
+            HomeKartId.etkinlikler when etkinlikAsync != null =>
+              k.sayacla(etkinlikAsync.metin(l10n.sayacYaklasan)),
             _ => k,
           },
       // Cevrimdisi saha kaniti kaybolmasin: bekleyen okutma VARSA izgaraya
@@ -155,9 +157,9 @@ class SahaHomeScreen extends ConsumerWidget {
       if (pending > 0)
         HizliErisimKart(
           ikon: Icons.outbox_outlined,
-          baslik: 'Gönderim Kuyruğu',
+          id: HomeKartId.gonderimKuyrugu,
           accent: HomeTokens.orange,
-          altMetin: '$pending bekleyen',
+          altMetin: l10n.sayacBekleyen(pending),
           rota: AppRoutes.outbox,
         ),
     ];
@@ -175,16 +177,18 @@ class SahaHomeScreen extends ConsumerWidget {
       onDestinationSelected: (i) => _onTab(context, i),
       onModul: (rota) => context.push(rota),
       onBildir: () => showBildirMenu(context, girisler: [
-        const BildirGiris(
+        BildirGiris(
             icon: Icons.rate_review_outlined,
-            label: 'Olay Bildir',
+            label: l10n.fabOlayBildir,
             route: AppRoutes.complaints),
-        const BildirGiris(
-            icon: Icons.task_alt, label: 'Görevlerim', route: AppRoutes.tasks),
+        BildirGiris(
+            icon: Icons.task_alt,
+            label: l10n.kartGorevlerim,
+            route: AppRoutes.tasks),
         if (guvenlik)
-          const BildirGiris(
+          BildirGiris(
               icon: Icons.directions_walk,
-              label: 'Turlarım',
+              label: l10n.kartTurlarim,
               route: AppRoutes.patrol),
       ], onSec: (r) => context.push(r)),
       onProfile: () => context.push(AppRoutes.profile),
@@ -208,6 +212,7 @@ class SahaHomeScreen extends ConsumerWidget {
           ),
           VardiyaSeridi(
             kartlar: vardiyaKartlari(
+              l10n: l10n,
               vardiyalar: vardiyalar,
               now: now,
               yoneticiAd:
@@ -218,14 +223,14 @@ class SahaHomeScreen extends ConsumerWidget {
           HomeSectionPad(
             child: hareketler.durum(
               veri: (satirlar) => SonHareketlerKarti(
-                satirlar: hareketSatirlari(satirlar, now),
+                satirlar: hareketSatirlari(l10n, dil, satirlar, now),
                 onSeeAll:
                     guvenlik ? () => context.push(AppRoutes.notifications) : null,
               ),
               yukleniyor: () =>
-                  const HomeBolumIskeleti(baslik: 'Son Hareketler'),
+                  HomeBolumIskeleti(baslik: l10n.bolumSonHareketler),
               hata: () => HomeBolumHatasi(
-                baslik: 'Son Hareketler',
+                baslik: l10n.bolumSonHareketler,
                 onYenile: () =>
                     ref.invalidate(sonHareketlerProvider),
               ),
@@ -262,7 +267,8 @@ class SahaHomeScreen extends ConsumerWidget {
   void _yakinda(BuildContext context) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Bu bölüm yakında')));
+      ..showSnackBar(
+          SnackBar(content: Text(context.l10n.ortakBolumYakinda)));
   }
 
   void _onTab(BuildContext context, int index) {
@@ -274,15 +280,15 @@ class SahaHomeScreen extends ConsumerWidget {
         } else {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
-            ..showSnackBar(
-              const SnackBar(
-                  content: Text('Bildirimler bu rolde kullanılamıyor')),
-            );
+            ..showSnackBar(SnackBar(
+              content: Text(context.l10n.anaBildirimlerRolYok),
+            ));
         }
       case 3: // Raporlar — saha rollerine acik rapor ucu yok (RBAC yonetici).
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text('Raporlar yakında')));
+          ..showSnackBar(
+              SnackBar(content: Text(context.l10n.anaRaporlarYakinda)));
       case 4: // Ayarlar.
         context.push(AppRoutes.settings);
     }

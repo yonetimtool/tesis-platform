@@ -18,6 +18,8 @@ import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/scan/data/scan_outbox.dart';
 import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/visitors/data/visitor_api.dart';
+import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 /// WP2.4: merkez FAB artik dogrudan rota ACMAZ — rol-bazli olusturma menusu
 /// (bottom sheet) acar.
@@ -63,7 +65,11 @@ void main() {
   testWidgets('resident FAB: Talep / Arıza + Rezervasyon menusu', (tester) async {
     await tester.pumpWidget(ProviderScope(
       overrides: _common('resident'),
-      child: const MaterialApp(home: ResidentHomeScreen()),
+      child: MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
+      home: ResidentHomeScreen()),
     ));
     await tester.pumpAndSettle();
     await _tapFab(tester);
@@ -75,7 +81,11 @@ void main() {
   testWidgets('yonetici FAB: Duyuru + Görev + Destek (WP1)', (tester) async {
     await tester.pumpWidget(ProviderScope(
       overrides: _common('yonetici'),
-      child: const MaterialApp(home: YoneticiHomeScreen()),
+      child: MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
+      home: YoneticiHomeScreen()),
     ));
     await tester.pumpAndSettle();
     await _tapFab(tester);
@@ -89,7 +99,10 @@ void main() {
       (tester) async {
     await tester.pumpWidget(ProviderScope(
       overrides: _common('security'),
-      child: const MaterialApp(
+      child: MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
           home: SahaHomeScreen(role: UserRole.security)),
     ));
     await tester.pumpAndSettle();
@@ -114,7 +127,10 @@ void main() {
       (tester) async {
     await tester.pumpWidget(ProviderScope(
       overrides: _common('tesis_gorevlisi'),
-      child: const MaterialApp(
+      child: MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
           home: SahaHomeScreen(role: UserRole.tesisGorevlisi)),
     ));
     await tester.pumpAndSettle();

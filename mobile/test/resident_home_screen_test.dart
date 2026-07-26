@@ -18,6 +18,8 @@ import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/visitors/data/visitor_api.dart';
 import 'package:mobile/src/features/visitors/domain/visitor_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
+import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 /// Ana ekran artik SADECE gercek uclardan beslenir; testte her uc override
 /// edilir. `hata: true` tum uclari dusurur — ekran cokmemeli, bolumler
@@ -63,7 +65,11 @@ Widget _app({
       // G5: akis TEK uctan (/activity) — istemci birlestirmesi YOK.
       sonHareketlerProvider.overrideWith((ref) => uc(hareketler)),
     ],
-    child: const MaterialApp(home: ResidentHomeScreen()),
+    child: MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
+      home: ResidentHomeScreen()),
   );
 }
 

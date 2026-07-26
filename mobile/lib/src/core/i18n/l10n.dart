@@ -38,21 +38,38 @@ String ltrIzole(String metin) => '\u2068$metin\u2069';
 String tlTutar(int kurus) =>
     NumberFormat('#,##0.00', 'tr_TR').format(kurus / 100);
 
-/// "₺1.250,00" — RTL dilde de soldan-saga okunacak sekilde izole edilir.
-String tlIsaretli(int kurus) => ltrIzole('₺${tlTutar(kurus)}');
+/// "₺1.250,00" — para birimi simgesiyle.
+///
+/// [dil] RTL (Arapca) ise LTR IZOLASYONU uygulanir (tutar ters gorunmesin);
+/// LTR dillerde metin OLDUGU GIBI doner — gorunmez isaretler eklenmez, boylece
+/// metin karsilastirmalari (test/analitik) beklenmedik karakter gormez.
+String tlIsaretli(int kurus, [String dil = 'tr']) {
+  final metin = '₺${tlTutar(kurus)}';
+  return rtlMi(dil) ? ltrIzole(metin) : metin;
+}
 
 /// Yalniz TARIH: aktif dile gore ("25.07.2026" / "07/25/2026" / "٢٥‏/٧‏/٢٠٢٦").
 String tarihBicimi(DateTime t, String dil) =>
     DateFormat.yMd(dil).format(t.toLocal());
 
-/// Tarih + saat ("25.07.2026 09:47").
-String tarihSaatBicimi(DateTime t, String dil) =>
-    '${DateFormat.yMd(dil).format(t.toLocal())} '
+/// Tarih + saat, referans gorsellerdeki AYIRICI ile ("25.07.2026 · 09:47").
+/// [ayirici] cagrilan yerin gorsel dilini korur (duyuru karti "–" kullanir).
+String tarihSaatBicimi(DateTime t, String dil, {String ayirici = '·'}) =>
+    '${DateFormat.yMd(dil).format(t.toLocal())} $ayirici '
     '${DateFormat.Hm(dil).format(t.toLocal())}';
 
 /// Yalniz saat ("09:47").
 String saatBicimi(DateTime t, String dil) =>
     DateFormat.Hm(dil).format(t.toLocal());
+
+/// GUN.AY — akis satirlarinin kisa tarihi.
+///
+/// TR'de "01.07" (sifir dolgulu, nokta ayirici) GORSEL OLARAK KORUNUR —
+/// intl'in tr `Md` deseni "1/7" verir ve Turkce yazim aliskanligina uymaz.
+/// Diger dillerde locale deseni kullanilir ("7/25", "25.7", "٢٥‏/٧").
+String gunAyBicimi(DateTime t, String dil) => dil == 'tr'
+    ? DateFormat('dd.MM').format(t.toLocal())
+    : DateFormat.Md(dil).format(t.toLocal());
 
 /// Uzun tarih (ay adi dile gore): "25 Temmuz 2026" / "July 25, 2026".
 String uzunTarihBicimi(DateTime t, String dil) =>

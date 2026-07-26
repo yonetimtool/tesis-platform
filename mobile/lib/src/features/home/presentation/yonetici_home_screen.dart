@@ -15,6 +15,8 @@ import '../../weather/data/weather_api.dart';
 import '../data/activity_api.dart';
 import '../data/home_api.dart';
 import '../data/home_repository.dart';
+import '../../../core/i18n/l10n.dart';
+import '../domain/home_kart_id.dart';
 import '../domain/home_varyant.dart';
 import '../domain/home_view_models.dart';
 import '../domain/parking_occupancy.dart';
@@ -52,6 +54,8 @@ class YoneticiHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final taban = ref.watch(homeRepositoryProvider);
     final ad = ref.watch(profileProvider).value?.ad ?? '';
     final now = DateTime.now();
@@ -77,20 +81,25 @@ class YoneticiHomeScreen extends ConsumerWidget {
     final aktifVardiya = vardiyalar.where((v) => v.aktifMi(now)).length;
     final erisim = [
       for (final k in taban.hizliErisim(HomeVaryant.yonetici))
-        switch (k.baslik) {
-          'Vardiya Durumu' =>
-            k.sayacla(vardiyaAsync.sayac((_) => aktifVardiya, 'Aktif')),
-          'Görevler' => k.sayacla(gorev.sayac((n) => n, 'Bekliyor')),
+        switch (k.id) {
+          HomeKartId.vardiyaDurumu => k.sayacla(
+              vardiyaAsync.metin((_) => l10n.sayacAktif(aktifVardiya))),
+          HomeKartId.gorevler => k.sayacla(gorev.metin(l10n.sayacBekliyor)),
           // Geciken (borclu) daire sayisi — tahsilat blogu YALNIZ yonetimde
           // dolar; sakin/saha yanitinda null gelir.
-          'Aidat Durumu' => k.sayacla(finans.metin((f) => f.tahsilat == null
-              ? '—'
-              : '${f.tahsilat!.gecikenDaireSayisi} Daire')),
+          HomeKartId.aidatDurumu => k.sayacla(finans.metin((f) =>
+              f.tahsilat == null
+                  ? '—'
+                  : l10n.sayacDaire(f.tahsilat!.gecikenDaireSayisi))),
           // G4: kapasite tanimsizsa payda UYDURULMAZ → "N araç".
-          'Otopark Kullanımı' => k.sayacla(otopark.metin((o) => o.doluMetni)),
-          'İhlaller' => k.sayacla(ihlal.sayac((n) => n, 'Yeni')),
-          'Geri Bildirim' => k.sayacla(talep.sayac((n) => n, 'Açık')),
-          'Şikayetler' => k.sayacla(daireSikayet.sayac((n) => n, 'Açık')),
+          HomeKartId.otoparkKullanimi => k.sayacla(otopark.metin(
+              (o) => o.kapasite == null
+                  ? l10n.sayacArac(o.dolu)
+                  : l10n.otoparkDoluKapasite(o.dolu, o.kapasite!))),
+          HomeKartId.ihlaller => k.sayacla(ihlal.metin(l10n.sayacYeni)),
+          HomeKartId.geriBildirim => k.sayacla(talep.metin(l10n.sayacAcik)),
+          HomeKartId.sikayetler =>
+            k.sayacla(daireSikayet.metin(l10n.sayacAcik)),
           _ => k,
         },
     ];
@@ -106,17 +115,17 @@ class YoneticiHomeScreen extends ConsumerWidget {
       onBildir: () => showBildirMenu(context, girisler: [
         // Duyuru YAYINLAMA mobilde yalniz yonetici (admin panelden moderasyon).
         if (role.canManageAnnouncements)
-          const BildirGiris(
+          BildirGiris(
               icon: Icons.campaign_outlined,
-              label: 'Duyuru Yayınla',
+              label: l10n.fabDuyuruYayinla,
               route: AppRoutes.announcements),
-        const BildirGiris(
+        BildirGiris(
             icon: Icons.fact_check_outlined,
-            label: 'Görev Oluştur',
+            label: l10n.fabGorevOlustur,
             route: '${AppRoutes.tasks}?gorunum=yonetim'),
-        const BildirGiris(
+        BildirGiris(
             icon: Icons.support_agent_outlined,
-            label: 'Destek Talebi',
+            label: l10n.fabDestekTalebi,
             route: AppRoutes.destek),
       ], onSec: (r) => context.push(r)),
       onProfile: () => context.push(AppRoutes.profile),
@@ -125,7 +134,7 @@ class YoneticiHomeScreen extends ConsumerWidget {
         onYenile: () => homeVerisiniYenile(ref, HomeVaryant.yonetici),
         header: HomeHeader(
           greetingName: ad,
-          subtitle: 'Yönetici Paneli',
+          subtitle: l10n.anaYoneticiPaneli,
           // Referans: yonetici alt basligi MAVI.
           altBaslikStili: HomeAltBaslikStili.mavi,
           hava: hava == null ? null : havaOzeti(hava),
@@ -142,6 +151,7 @@ class YoneticiHomeScreen extends ConsumerWidget {
           // sonunda durur (referans gorsel). Bos/hatali → bolum cizilmez.
           VardiyaSeridi(
             kartlar: vardiyaKartlari(
+              l10n: l10n,
               vardiyalar: vardiyalar,
               now: now,
               yoneticiAd: ad,
@@ -153,9 +163,9 @@ class YoneticiHomeScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // "Hızlı Özet" — tam liste yok, "Tümünü Gör" gizli.
-                const SectionHeader(title: 'Hızlı Özet'),
+                SectionHeader(title: l10n.bolumHizliOzet),
                 HizliOzetIzgarasi(
-                  kutular: _ozet(taban.ozet(), daire, finans, otopark),
+                  kutular: _ozet(l10n, dil, taban.ozet(), daire, finans, otopark),
                   // Ozetten DETAYA kisa yol; ekrani olmayan kutu (otopark)
                   // "yakında" bilgilendirmesi verir.
                   onSec: (k) => k.rota == null
@@ -168,13 +178,13 @@ class YoneticiHomeScreen extends ConsumerWidget {
           HomeSectionPad(
             child: hareketler.durum(
               veri: (satirlar) => SonHareketlerKarti(
-                satirlar: hareketSatirlari(satirlar, now),
+                satirlar: hareketSatirlari(l10n, dil, satirlar, now),
                 onSeeAll: () => context.push(AppRoutes.notifications),
               ),
               yukleniyor: () =>
-                  const HomeBolumIskeleti(baslik: 'Son Hareketler'),
+                  HomeBolumIskeleti(baslik: l10n.bolumSonHareketler),
               hata: () => HomeBolumHatasi(
-                baslik: 'Son Hareketler',
+                baslik: l10n.bolumSonHareketler,
                 onYenile: () => ref.invalidate(sonHareketlerProvider),
               ),
             ),
@@ -190,6 +200,8 @@ class YoneticiHomeScreen extends ConsumerWidget {
   /// GET /parking/occupancy (`oran`; kapasite tanimsizsa sunucu null doner →
   /// kutu '—' gosterir, uydurma yuzde yok).
   List<OzetKutusu> _ozet(
+    AppLocalizations l10n,
+    String dil,
     List<OzetKutusu> taban,
     AsyncValue<int> daire,
     AsyncValue<FinancialSummary> finans,
@@ -197,17 +209,18 @@ class YoneticiHomeScreen extends ConsumerWidget {
   ) {
     return [
       for (final k in taban)
-        switch (k.etiket) {
-          'Toplam Daire' => k.degerle(daire.metin((n) => '$n')),
-          'Toplam Tahsilat' => k.degerle(finans.metin((f) => f.tahsilat == null
-              ? '—'
-              : '₺${formatKurusAsTl(f.tahsilat!.tahsilatKurus)}')),
-          'Aidat Tahsilat Oranı' =>
-            k.degerle(finans.metin((f) => f.tahsilat?.tahsilatOraniYuzde == null
-                ? '—'
-                : '%${f.tahsilat!.tahsilatOraniYuzde}')),
-          'Otopark Doluluk' => k.degerle(otopark.metin((o) => o.oranMetni)),
-          _ => k,
+        switch (k.id) {
+          OzetKutuId.toplamDaire => k.degerle(daire.metin((n) => '$n')),
+          // PARA: dil ne olursa olsun ₺ + Turkce gruplama (site-yerel kural).
+          OzetKutuId.toplamTahsilat => k.degerle(finans.metin((f) =>
+              f.tahsilat == null ? '—' : tlIsaretli(f.tahsilat!.tahsilatKurus, dil))),
+          OzetKutuId.tahsilatOrani => k.degerle(finans.metin((f) =>
+              f.tahsilat?.tahsilatOraniYuzde == null
+                  ? '—'
+                  : l10n.yuzdeDeger(f.tahsilat!.tahsilatOraniYuzde!))),
+          // Kapasite tanimsizsa sunucu oran'i null doner → uydurma yuzde yok.
+          OzetKutuId.otoparkDoluluk => k.degerle(otopark.metin(
+              (o) => o.oran == null ? '—' : l10n.yuzdeDeger(o.oran!))),
         },
     ];
   }
@@ -215,7 +228,8 @@ class YoneticiHomeScreen extends ConsumerWidget {
   void _yakinda(BuildContext context) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Bu bölüm yakında')));
+      ..showSnackBar(
+          SnackBar(content: Text(context.l10n.ortakBolumYakinda)));
   }
 
   void _onTab(BuildContext context, int index) {

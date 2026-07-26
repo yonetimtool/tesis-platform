@@ -16,6 +16,8 @@ import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
+import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 Widget _app({
   Object? finansHata,
@@ -74,7 +76,11 @@ Widget _app({
           );
         }),
       ],
-      child: const MaterialApp(home: YoneticiHomeScreen()),
+      child: MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
+      home: YoneticiHomeScreen()),
     );
 
 void _tall(WidgetTester tester) {

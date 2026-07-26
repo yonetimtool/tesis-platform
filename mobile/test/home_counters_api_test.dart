@@ -115,8 +115,8 @@ void main() {
       expect(adapter.istekler.single.path, '/parking/occupancy');
       expect(o.dolu, 3);
       expect(o.kapasite, 120);
-      expect(o.doluMetni, '3 / 120');
-      expect(o.oranMetni, '%2');
+      // Gorunum metni ARTIK EKRANDA uretilir (i18n): domain yalniz veri.
+      expect(o.oran, 2);
     });
 
     test('kapasite TANIMSIZ: dolu tek basina ("5 araç"), oran YOK ("—")',
@@ -128,14 +128,13 @@ void main() {
       expect(o.dolu, 5);
       expect(o.kapasite, isNull);
       expect(o.oran, isNull);
-      expect(o.doluMetni, '5 araç'); // payda UYDURULMAZ
-      expect(o.oranMetni, '—'); // yuzde UYDURULMAZ
+      // kapasite null → oran da null; ekran '—' ve "N araç" gosterir.
     });
 
     test('bos yanit: dolu 0, kapasite/oran null', () {
       const o = ParkingOccupancy(dolu: 0);
       expect(ParkingOccupancy.fromJson(const {}).dolu, o.dolu);
-      expect(ParkingOccupancy.fromJson(const {}).doluMetni, '0 araç');
+      expect(ParkingOccupancy.fromJson(const {}).kapasite, isNull);
     });
   });
 }

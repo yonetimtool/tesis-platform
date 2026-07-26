@@ -9,10 +9,408 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get cipYeni => 'Nuevo';
+
+  @override
+  String get cipAktif => 'Activo';
+
+  @override
+  String get bolumVardiyaDurumu => 'Estado de turnos';
+
+  @override
+  String get bolumSonHareketler => 'Actividad reciente';
+
+  @override
+  String get bolumHizliOzet => 'Resumen rápido';
+
+  @override
+  String get bolumDuyurular => 'Anuncios';
+
+  @override
+  String get bolumSiteKurallari => 'Normas del complejo';
+
+  @override
+  String get bolumEtkinlikler => 'Eventos';
+
+  @override
+  String get bolumOdemeAidat => 'Pagos y cuotas';
+
+  @override
+  String get bolumTumModuller => 'Todos los módulos';
+
+  @override
+  String get kartVardiyaDurum => 'Turno';
+
+  @override
+  String get kartKargo => 'Paquetes';
+
+  @override
+  String get kartZiyaretci => 'Visitantes';
+
+  @override
+  String get kartAracPlaka => 'Vehículos';
+
+  @override
+  String get kartIhlaller => 'Infracciones';
+
+  @override
+  String get kartGorevlerim => 'Mis tareas';
+
+  @override
+  String get kartDemirbas => 'Inventario';
+
+  @override
+  String get kartTurlarim => 'Mis rondas';
+
+  @override
+  String get kartTalepAriza => 'Solicitudes';
+
+  @override
+  String get kartZiyaretciler => 'Visitantes';
+
+  @override
+  String get kartKargolarim => 'Mis paquetes';
+
+  @override
+  String get kartAidatBilgileri => 'Cuotas';
+
+  @override
+  String get kartGurultuSikayeti => 'Queja por ruido';
+
+  @override
+  String get kartGeriBildirim => 'Comentarios';
+
+  @override
+  String get kartSikayetlerim => 'Mis quejas';
+
+  @override
+  String get kartSiteRaporlari => 'Informes del complejo';
+
+  @override
+  String get kartGorevler => 'Tareas';
+
+  @override
+  String get kartAidatDurumu => 'Estado de cuotas';
+
+  @override
+  String get kartOtoparkKullanimi => 'Uso del aparcamiento';
+
+  @override
+  String get kartSikayetler => 'Quejas';
+
+  @override
+  String get kartRaporlar => 'Informes';
+
+  @override
+  String get kartYonetici => 'Administrador';
+
+  @override
+  String get kartGonderimKuyrugu => 'Cola de envío';
+
+  @override
+  String get etiketAylikOzet => 'Resumen mensual';
+
+  @override
+  String get etiketDevriye => 'Ronda';
+
+  @override
+  String get etiketKurallar => 'Normas';
+
+  @override
+  String get etiketIletisim => 'Contacto';
+
+  @override
+  String sayacAktif(num n) {
+    return '$n activos';
+  }
+
+  @override
+  String sayacIceride(num n) {
+    return '$n dentro';
+  }
+
+  @override
+  String sayacGiris(num n) {
+    return '$n entradas';
+  }
+
+  @override
+  String sayacYeni(num n) {
+    return '$n nuevos';
+  }
+
+  @override
+  String sayacAcik(num n) {
+    return '$n abiertos';
+  }
+
+  @override
+  String sayacZimmetli(num n) {
+    return '$n en préstamo';
+  }
+
+  @override
+  String sayacKayit(num n) {
+    return '$n registros';
+  }
+
+  @override
+  String sayacYaklasan(num n) {
+    return '$n próximos';
+  }
+
+  @override
+  String sayacDaire(num n) {
+    return '$n viviendas';
+  }
+
+  @override
+  String sayacArac(num n) {
+    return '$n vehículos';
+  }
+
+  @override
+  String sayacGorevli(num n) {
+    return '$n agentes';
+  }
+
+  @override
+  String sayacBekleyen(num n) {
+    return '$n en espera';
+  }
+
+  @override
+  String get ozetToplamDaire => 'Viviendas totales';
+
+  @override
+  String get ozetToplamTahsilat => 'Total recaudado';
+
+  @override
+  String get ozetTahsilatOrani => 'Tasa de cobro';
+
+  @override
+  String get ozetOtoparkDoluluk => 'Ocupación del aparcamiento';
+
+  @override
+  String get ozetTumSite => 'Todo el complejo';
+
+  @override
+  String get ozetBuAy => 'Este mes';
+
+  @override
+  String get ozetSuAn => 'Ahora';
+
+  @override
+  String otoparkDoluKapasite(Object dolu, Object kapasite) {
+    return '$dolu / $kapasite';
+  }
+
+  @override
+  String yuzdeDeger(Object oran) {
+    return '$oran %';
+  }
+
+  @override
+  String anaSelam(Object ad) {
+    return 'Hola, $ad';
+  }
+
+  @override
+  String get anaYoneticiPaneli => 'Panel del administrador';
+
+  @override
+  String anaDaireAltBaslik(Object daireler, Object rol) {
+    return 'Vivienda $daireler  •  $rol';
+  }
+
+  @override
+  String get anaDun => 'Ayer';
+
+  @override
+  String get anaOnline => 'En línea';
+
+  @override
+  String get anaVardiyaAktif => 'Activo';
+
+  @override
+  String get anaVardiyaPlanlandi => 'Programado';
+
+  @override
+  String get anaEtkinlikSuruyor => 'En curso';
+
+  @override
+  String get anaEtkinlikYaklasan => 'Próximo';
+
+  @override
+  String get anaOdendi => 'Pagado';
+
+  @override
+  String get anaOdenmedi => 'Sin pagar';
+
+  @override
+  String get anaBorcVar => 'Saldo pendiente';
+
+  @override
+  String get anaBorcYok => 'Sin saldo';
+
+  @override
+  String get anaBuAykiAidat => 'Cuotas de este mes';
+
+  @override
+  String anaSonOdemeTarih(Object tarih) {
+    return 'Último pago: $tarih';
+  }
+
+  @override
+  String get anaGelecekOdeme => 'Próximo pago';
+
+  @override
+  String get anaGecmisOdemeler => 'Historial de pagos';
+
+  @override
+  String get anaAidatKaydiYok => 'No se encontraron cuotas';
+
+  @override
+  String get anaBildirimlerYakinda => 'Notificaciones próximamente';
+
+  @override
+  String get anaBildirimlerRolYok =>
+      'Las notificaciones no están disponibles para este rol';
+
+  @override
+  String get anaRaporlarYakinda => 'Informes próximamente';
+
+  @override
+  String get sekmeAnaSayfa => 'Inicio';
+
+  @override
+  String get sekmeBildirimler => 'Notificaciones';
+
+  @override
+  String get sekmeRaporlar => 'Informes';
+
+  @override
+  String get sekmeAyarlar => 'Ajustes';
+
+  @override
+  String get kabukProfil => 'Perfil';
+
+  @override
+  String get kabukCikisYap => 'Cerrar sesión';
+
+  @override
+  String get fabOlayBildir => 'Reportar incidencia';
+
+  @override
+  String get fabTalepBildir => 'Solicitud / aviso';
+
+  @override
+  String get fabTalepArizaBildir => 'Reportar solicitud o avería';
+
+  @override
+  String get fabRezervasyonYap => 'Reservar';
+
+  @override
+  String get fabDuyuruYayinla => 'Publicar anuncio';
+
+  @override
+  String get fabGorevOlustur => 'Crear tarea';
+
+  @override
+  String get fabDestekTalebi => 'Solicitud de soporte';
+
+  @override
+  String get modulDuyurular => 'Anuncios';
+
+  @override
+  String get modulTurlarim => 'Mis rondas';
+
+  @override
+  String get modulDevriyeTakibi => 'Seguimiento de rondas';
+
+  @override
+  String get modulGorevlerim => 'Mis tareas';
+
+  @override
+  String get modulGorevYonetimi => 'Gestión de tareas';
+
+  @override
+  String get modulDemirbas => 'Inventario';
+
+  @override
+  String get modulNfcOkutma => 'Lectura NFC';
+
+  @override
+  String get modulGonderimKuyrugu => 'Cola de envío';
+
+  @override
+  String get modulAylikRaporlar => 'Informes mensuales';
+
+  @override
+  String get modulButce => 'Presupuesto';
+
+  @override
+  String get modulFinansalOzet => 'Resumen financiero';
+
+  @override
+  String get modulSeffaflik => 'Transparencia';
+
+  @override
+  String get modulSiteButcesi => 'Presupuesto del complejo';
+
+  @override
+  String get modulAidatim => 'Mis cuotas';
+
+  @override
+  String get modulSikayetOneri => 'Queja / sugerencia';
+
+  @override
+  String get modulZiyaretciler => 'Visitantes';
+
+  @override
+  String get modulKargo => 'Paquetes';
+
+  @override
+  String get modulGoruntulemeIzni => 'Permiso de visualización';
+
+  @override
+  String get modulRezervasyon => 'Reservas';
+
+  @override
+  String get modulEtkinlikler => 'Eventos';
+
+  @override
+  String get modulSiteKurallari => 'Normas del complejo';
+
+  @override
+  String get modulDisHizmetler => 'Servicios externos';
+
+  @override
+  String get modulEntegrasyonlar => 'Integraciones';
+
+  @override
+  String get modulPersonel => 'Personal de campo';
+
+  @override
+  String get modulSakinler => 'Residentes';
+
+  @override
+  String get modulBinaYapisi => 'Estructura del edificio';
+
+  @override
+  String get modulSikayetHaritasi => 'Mapa de quejas';
+
+  @override
+  String get modulSikayetlerim => 'Mis quejas';
+
+  @override
+  String get modulYoneticiIletisim => 'Contacto del administrador';
+
+  @override
   String get ortakKaydet => 'Guardar';
 
   @override
-  String sayacBekliyor(int n) {
+  String sayacBekliyor(num n) {
     return '$n pendientes';
   }
 
@@ -57,7 +455,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Se produjo un error inesperado. Inténtalo de nuevo.';
 
   @override
-  String ortakZorunluAlan(String alan) {
+  String ortakZorunluAlan(Object alan) {
     return '$alan es obligatorio';
   }
 
@@ -158,7 +556,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get kameraUrlZorunlu => 'La dirección de emisión es obligatoria';
 
   @override
-  String kameraUrlHataHttp(String tur) {
+  String kameraUrlHataHttp(Object tur) {
     return 'La dirección de emisión $tur debe empezar por http:// o https://';
   }
 
@@ -169,7 +567,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get kameraSilBaslik => 'Eliminar cámara';
 
   @override
-  String kameraSilOnay(String ad) {
+  String kameraSilOnay(Object ad) {
     return '¿Eliminar «$ad»?';
   }
 
@@ -197,7 +595,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'La cámara puede estar apagada o la red no alcanza la emisión.';
 
   @override
-  String kameraTurEtiket(String tur) {
+  String kameraTurEtiket(Object tur) {
     return 'Tipo: $tur';
   }
 

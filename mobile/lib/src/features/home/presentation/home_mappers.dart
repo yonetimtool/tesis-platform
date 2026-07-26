@@ -8,12 +8,12 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../announcements/domain/announcement_models.dart';
-import '../../budget/domain/budget_models.dart';
 import '../../etkinlik/domain/etkinlik_models.dart';
 import '../../site_kurali/domain/site_kurali_models.dart';
 import '../../dues/domain/dues_models.dart';
 import '../../shifts/domain/shift_models.dart';
 import '../../weather/domain/weather_models.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../domain/activity_models.dart';
 import '../domain/home_view_models.dart';
@@ -29,6 +29,7 @@ HomeHava havaOzeti(Weather w) => HomeHava(
 /// hesabi deterministik. [yoneticiAd] verilirse referans gorseldeki gibi
 /// serinin SONUNA "Yönetici" karti eklenir.
 List<VardiyaKart> vardiyaKartlari({
+  required AppLocalizations l10n,
   required List<Shift> vardiyalar,
   required DateTime now,
   String? yoneticiAd,
@@ -49,15 +50,15 @@ List<VardiyaKart> vardiyaKartlari({
           avatarUrl:
               v.personel.isNotEmpty ? v.personel.first.avatarUrl : null,
           altBilgi: v.personel.isNotEmpty
-              ? '${v.personel.length} Görevli'
+              ? l10n.sayacGorevli(v.personel.length)
               : gunTipiLabel(v.gunTipi),
         ),
       if (yoneticiAd != null && yoneticiAd.isNotEmpty)
         VardiyaKart(
-          baslik: 'Yönetici',
+          baslik: l10n.kartYonetici,
           altBaslik: yoneticiAd,
           durum: VardiyaDurum.yonetici,
-          altBilgi: 'Online',
+          altBilgi: l10n.anaOnline,
           online: true,
           avatarUrl: yoneticiAvatarUrl,
         ),
@@ -74,6 +75,8 @@ List<VardiyaKart> vardiyaKartlari({
 /// modul rengi ve zaman etiketini ekler. Ikon MODULUN rengini, nokta OLAYIN
 /// durum rengini (`renk_ipucu`) tasir (referans gorseller).
 List<HareketSatiri> hareketSatirlari(
+  AppLocalizations l10n,
+  String dil,
   List<ActivityItem> olaylar,
   DateTime now,
 ) =>
@@ -83,24 +86,25 @@ List<HareketSatiri> hareketSatirlari(
           ikon: _ikon(o.tur),
           baslik: o.baslik,
           altBaslik: o.altMetin ?? '',
-          zaman: hareketZamanEtiketi(o.zaman, now),
+          zaman: hareketZamanEtiketi(o.zaman, now, l10n, dil),
           ikonAccent: _ikonAccent(o.tur),
           noktaRengi: _nokta(o.renk),
         ),
     ];
 
 /// Satir zaman etiketi — [now] DISARIDAN (deterministik test; saat-flake yok).
-/// Ayni gun "HH:mm", dun "Dün", daha eski "dd.MM".
-String hareketZamanEtiketi(DateTime t, DateTime now) {
+/// Ayni gun SAAT (dile gore bicim), dun "Dün", daha eski GUN.AY (dile gore).
+String hareketZamanEtiketi(
+  DateTime t,
+  DateTime now,
+  AppLocalizations l10n,
+  String dil,
+) {
   bool ayniGun(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
-  if (ayniGun(t, now)) {
-    return '${t.hour.toString().padLeft(2, '0')}:'
-        '${t.minute.toString().padLeft(2, '0')}';
-  }
-  if (ayniGun(t, now.subtract(const Duration(days: 1)))) return 'Dün';
-  return '${t.day.toString().padLeft(2, '0')}.'
-      '${t.month.toString().padLeft(2, '0')}';
+  if (ayniGun(t, now)) return saatBicimi(t, dil);
+  if (ayniGun(t, now.subtract(const Duration(days: 1)))) return l10n.anaDun;
+  return gunAyBicimi(t, dil);
 }
 
 /// GET /site-rules → sakin ana ekraninin "Site Kuralları" bolumu.
@@ -118,7 +122,11 @@ List<IcerikOzeti> kuralOzetleri(List<SiteKurali> kurallar) => [
 
 /// GET /events?aktif=true → "Etkinlikler" bolumu (yaklasan/suren).
 /// Cip: suren etkinlikte "Sürüyor" (yesil), yaklasanda "Yaklaşan" (mavi).
-List<IcerikOzeti> etkinlikOzetleri(List<Etkinlik> etkinlikler) => [
+List<IcerikOzeti> etkinlikOzetleri(
+  AppLocalizations l10n,
+  String dil,
+  List<Etkinlik> etkinlikler,
+) => [
       for (final e in etkinlikler)
         IcerikOzeti(
           id: e.id,
@@ -128,21 +136,18 @@ List<IcerikOzeti> etkinlikOzetleri(List<Etkinlik> etkinlikler) => [
               : '${e.konum} · ${e.aciklama}',
           ikon: Icons.event_available_outlined,
           fotoUrl: e.fotoUrl,
-          tarih: _tarihSaat(e.tarih.toLocal()),
-          cip: e.suruyor ? 'Sürüyor' : 'Yaklaşan',
+          tarih: tarihSaatBicimi(e.tarih, dil),
+          cip: e.suruyor ? l10n.anaEtkinlikSuruyor : l10n.anaEtkinlikYaklasan,
           cipAccent: e.suruyor ? HomeTokens.green : HomeTokens.primary,
         ),
     ];
 
 /// En yeni duyuru → duyuru karti. 3 gunden yeni ise "Yeni" cipi.
-DuyuruOzeti duyuruOzeti(Announcement d, DateTime now) => DuyuruOzeti(
+DuyuruOzeti duyuruOzeti(Announcement d, DateTime now, String dil) => DuyuruOzeti(
       baslik: d.baslik,
       govde: d.govde,
-      tarih: '${d.createdAt.day.toString().padLeft(2, '0')}.'
-          '${d.createdAt.month.toString().padLeft(2, '0')}.'
-          '${d.createdAt.year} – '
-          '${d.createdAt.hour.toString().padLeft(2, '0')}:'
-          '${d.createdAt.minute.toString().padLeft(2, '0')}',
+      // Tarih/saat AKTIF DILE gore bicimlenir (ay/gun adlari dahil).
+      tarih: tarihSaatBicimi(d.createdAt, dil, ayirici: '–'),
       yeni: now.difference(d.createdAt) <= const Duration(days: 3),
       fotoUrl: d.fotoUrl,
     );
@@ -152,8 +157,8 @@ DuyuruOzeti duyuruOzeti(Announcement d, DateTime now) => DuyuruOzeti(
 ///
 /// "Bu ayki aidat" en son tahakkuk, "gelecek ödeme" ondan sonraki son-odeme
 /// tarihidir; borc yoksa "Ödendi" cipi yanar. Tutar bicimlendirmesi
-/// [formatKurusAsTl] ile sunucu kurusundan turer.
-OdemeOzeti? odemeOzeti(List<MyDuesUnit> units) {
+/// [tlIsaretli] ile sunucu kurusundan turer (₺ + Turkce gruplama).
+OdemeOzeti? odemeOzeti(List<MyDuesUnit> units, String dil) {
   if (units.isEmpty) return null;
 
   final tahakkuklar = [for (final u in units) ...u.assessments]
@@ -170,23 +175,18 @@ OdemeOzeti? odemeOzeti(List<MyDuesUnit> units) {
       0, (t, u) => t + (u.bakiyeKurus > 0 ? u.bakiyeKurus : 0));
 
   return OdemeOzeti(
-    buAyTutar: '₺${formatKurusAsTl(sonTahakkuk.tutarKurus)}',
+    // PARA: ₺ + Turkce gruplama (dil ne olursa olsun) + LTR izolasyonu.
+    buAyTutar: tlIsaretli(sonTahakkuk.tutarKurus, dil),
     odendi: borc == 0,
-    sonOdeme: odemeler.isEmpty ? '—' : _tarih(odemeler.first.odemeZamani),
+    sonOdeme: odemeler.isEmpty
+        ? '—'
+        : tarihBicimi(odemeler.first.odemeZamani, dil),
     gelecekTarih: sonTahakkuk.sonOdemeTarihi == null
         ? '—'
-        : _tarih(sonTahakkuk.sonOdemeTarihi!),
-    gelecekTutar: '₺${formatKurusAsTl(sonTahakkuk.tutarKurus)}',
+        : tarihBicimi(sonTahakkuk.sonOdemeTarihi!, dil),
+    gelecekTutar: tlIsaretli(sonTahakkuk.tutarKurus, dil),
   );
 }
-
-String _tarih(DateTime t) => '${t.day.toString().padLeft(2, '0')}.'
-    '${t.month.toString().padLeft(2, '0')}.${t.year}';
-
-/// "28.07.2026 · 12:51" — etkinlik satirinin tarih/saat etiketi.
-String _tarihSaat(DateTime t) => '${_tarih(t)} · '
-    '${t.hour.toString().padLeft(2, '0')}:'
-    '${t.minute.toString().padLeft(2, '0')}';
 
 /// Olay turu → modul ikonu. Taninmayan tur (sunucu yeni tur eklerse) NOTR
 /// zil ikonu alir — satir akistan DUSMEZ.

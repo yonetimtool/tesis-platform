@@ -2,7 +2,7 @@
 ///
 /// `dolu` ACIK arac gecisi sayimidir (ayri sayac yok) ve HER ZAMAN gercektir.
 /// `kapasite` tenant ayari (`otopark_kapasite`); TANIMSIZ/0 ise sunucu `oran`i
-/// da null doner — istemci UYDURMA YUZDE URETMEZ (bkz. [oranMetni]).
+/// da null doner — istemci UYDURMA YUZDE URETMEZ (kart '—' gosterir).
 library;
 
 class ParkingOccupancy {
@@ -24,10 +24,7 @@ class ParkingOccupancy {
         oran: (json['oran'] as num?)?.toInt(),
       );
 
-  /// Kart sayaci: kapasite biliniyorsa "3 / 120", bilinmiyorsa "3 araç".
-  /// Kapasite yoksa payda UYDURULMAZ.
-  String get doluMetni => kapasite == null ? '$dolu araç' : '$dolu / $kapasite';
-
-  /// "Hızlı Özet" kutusu: "%2"; kapasite tanimsizsa oran da yok → '—'.
-  String get oranMetni => oran == null ? '—' : '%$oran';
+  // GORUNUM METNI YOK (i18n): "3 / 120" ve "%2" gibi metinler ekran
+  // katmaninda aktif dilden uretilir (l10n.otoparkDoluKapasite / yuzdeDeger);
+  // domain katmani dil bilmez — CameraUrlHatasi ile ayni ilke.
 }

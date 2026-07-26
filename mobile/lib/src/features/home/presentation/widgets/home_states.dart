@@ -8,6 +8,8 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/i18n/l10n.dart';
+
 import '../../../../core/theme/home_tokens.dart';
 import 'home_card.dart';
 import 'section_header.dart';
@@ -118,16 +120,21 @@ class HomeBolumHatasi extends StatelessWidget {
     super.key,
     required this.baslik,
     required this.onYenile,
-    this.mesaj = 'Yüklenemedi',
+    this.mesaj,
   });
 
   final String baslik;
-  final String mesaj;
+
+  /// Ozel mesaj; null → aktif dilde "Yüklenemedi" (const yapici oldugu icin
+  /// varsayilan metin CIZIM ANINDA cozulur).
+  final String? mesaj;
+
   final VoidCallback onYenile;
 
   @override
   Widget build(BuildContext context) {
     final s = HomeSurface.of(context);
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -140,7 +147,7 @@ class HomeBolumHatasi extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  mesaj,
+                  mesaj ?? l10n.ortakYuklenemedi,
                   style: HomeText.cardCounter.copyWith(color: s.muted),
                 ),
               ),
@@ -153,7 +160,7 @@ class HomeBolumHatasi extends StatelessWidget {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('Yeniden dene', style: HomeText.link),
+                child: Text(l10n.ortakYenidenDene, style: HomeText.link),
               ),
             ],
           ),

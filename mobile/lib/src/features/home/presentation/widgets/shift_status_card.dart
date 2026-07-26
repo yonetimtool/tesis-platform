@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/text/tr_upper.dart';
+import '../../../../core/i18n/l10n.dart';
+
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
@@ -8,10 +9,11 @@ import 'home_card.dart';
 /// [VardiyaDurum] → cip etiketi + rengi (referans: AKTİF yesil, PLANLANDI
 /// mavi, YÖNETİCİ mor).
 extension VardiyaDurumStil on VardiyaDurum {
-  String get etiket => switch (this) {
-        VardiyaDurum.aktif => 'Aktif',
-        VardiyaDurum.planlandi => 'Planlandı',
-        VardiyaDurum.yonetici => 'Yönetici',
+  /// Cip etiketi — AKTIF DILDEN (extension'da context yok, l10n gecilir).
+  String etiket(AppLocalizations l10n) => switch (this) {
+        VardiyaDurum.aktif => l10n.anaVardiyaAktif,
+        VardiyaDurum.planlandi => l10n.anaVardiyaPlanlandi,
+        VardiyaDurum.yonetici => l10n.kartYonetici,
       };
 
   Color get renk => switch (this) {
@@ -56,7 +58,12 @@ class ShiftStatusCard extends StatelessWidget {
           const SizedBox(height: 10),
           _Avatar(kart: kart),
           const SizedBox(height: 10),
-          HomeChip(label: trUpper(kart.durum.etiket), accent: kart.durum.renk),
+          HomeChip(
+            // BUYUK HARF dile duyarli (tr i→İ; Arapcada buyuk harf yok).
+            label: baslikBuyuk(
+                kart.durum.etiket(context.l10n), context.dilKodu),
+            accent: kart.durum.renk,
+          ),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,

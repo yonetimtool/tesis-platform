@@ -1,25 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/theme/home_tokens.dart';
+import 'package:mobile/src/features/home/domain/home_kart_id.dart';
 import 'package:mobile/src/features/home/domain/home_view_models.dart';
 import 'package:mobile/src/features/home/presentation/widgets/stat_tile.dart';
+import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 Widget _wrap(Widget child) =>
-    MaterialApp(home: Scaffold(body: Center(child: child)));
+    MaterialApp(
+      locale: const Locale('tr'),
+      supportedLocales: supportedLocales,
+      localizationsDelegates: testLocalizationsDelegates,
+      home: Scaffold(body: Center(child: child)));
 
 const _daire = OzetKutusu(
   ikon: Icons.groups,
   deger: '512',
-  etiket: 'Toplam Daire',
-  altEtiket: 'Tüm Site',
+  id: OzetKutuId.toplamDaire,
   accent: HomeTokens.primary,
 );
 
 const _tahsilat = OzetKutusu(
   ikon: Icons.paid_outlined,
   deger: '₺248.750',
-  etiket: 'Toplam Tahsilat',
-  altEtiket: 'Bu Ay',
+  id: OzetKutuId.toplamDaire,
   accent: HomeTokens.green,
 );
 
@@ -58,14 +63,12 @@ void main() {
           OzetKutusu(
               ikon: Icons.percent,
               deger: '%86',
-              etiket: 'Aidat Tahsilat Oranı',
-              altEtiket: 'Bu Ay',
+              id: OzetKutuId.toplamDaire,
               accent: HomeTokens.orange),
           OzetKutusu(
               ikon: Icons.directions_car,
               deger: '78 / 120',
-              etiket: 'Otopark Doluluk',
-              altEtiket: '%65',
+              id: OzetKutuId.toplamDaire,
               accent: HomeTokens.purple),
         ]),
       )));

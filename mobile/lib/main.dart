@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// Dile bagli tarih/saat bicimleyicileri icin locale verisi (intl).
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'l10n/gen/app_localizations.dart';
 import 'src/core/i18n/locale_controller.dart';
@@ -12,6 +14,9 @@ import 'src/features/scan/data/scan_outbox.dart';
 import 'src/routing/app_router.dart';
 
 void main() {
+  // 7 dilin tarih/ay/gun adlari icin intl locale verisi — bicimleyiciler
+  // widget agacindan BAGIMSIZ da cagrilabildigi icin acikca baslatilir.
+  initializeDateFormatting();
   runApp(const ProviderScope(child: TesisGuvenlikApp()));
 }
 

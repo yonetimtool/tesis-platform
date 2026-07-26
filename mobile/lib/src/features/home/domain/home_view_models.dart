@@ -6,6 +6,9 @@ library;
 
 import 'package:flutter/widgets.dart';
 
+import '../../../core/i18n/l10n.dart';
+import 'home_kart_id.dart';
+
 /// Baslik hava blogu ("☀ 24°C / İstanbul").
 class HomeHava {
   const HomeHava({
@@ -24,9 +27,10 @@ class HomeHava {
 class HizliErisimKart {
   const HizliErisimKart({
     required this.ikon,
-    required this.baslik,
+    required this.id,
     required this.accent,
     required this.altMetin,
+    this.etiketId,
     this.altMetinRengi,
     this.ikinciAltMetin,
     this.ikinciAltMetinRengi,
@@ -34,17 +38,27 @@ class HizliErisimKart {
   });
 
   final IconData ikon;
-  final String baslik;
+
+  /// KARARLI KIMLIK — tum switch/rota eslemeleri bunu kullanir; BASLIK dile
+  /// gore [baslik] ile cozulur (i18n: metin kontrol akisinda kullanilmaz).
+  final HomeKartId id;
 
   /// Ikon konteynerinin tint zemini + varsayilan alt metin rengi.
   final Color accent;
 
-  /// Baslik altindaki sayac/etiket, or. "3 Aktif" / "Aylık Özet".
+  /// Baslik — AKTIF DILDEN cozulur (kimlikten).
+  String baslik(AppLocalizations l10n) => kartBasligi(l10n, id);
+
+  /// Baslik altindaki SAYAC metni (or. "3 Aktif") — rol ekrani gercek veriyle
+  /// doldurur.
   ///
-  /// **null = VERI HENUZ YOK** (gercek uc yukleniyor) → kart sayac satirinda
-  /// iskelet cizer. UYDURMA SAYI YOKTUR: sozlesmede karsiligi olmayan
-  /// kartlar 'Yakında' etiketi tasir (bkz. [MockHomeRepository]).
+  /// **null = VERI HENUZ YOK** → kart sayac satirinda iskelet cizer
+  /// ([etiketId] doluysa onun yerine sabit etiket gosterilir).
   final String? altMetin;
+
+  /// Sayac DEGIL sabit etiket tasiyan kartlarda etiket kimligi
+  /// (or. "Aylık Özet"); metni cizim aninda cozulur.
+  final HomeKartEtiketId? etiketId;
 
   /// Alt metin rengi — null ise [accent]. Referans gorsellerde SAYAC'lar
   /// accent, ACIKLAMA etiketleri ("Aylık Özet", "Bildirim Yap") gridir;
@@ -58,14 +72,15 @@ class HizliErisimKart {
   /// Dokununca gidilecek rota; null → karsiligi olmayan (mock) kart.
   final String? rota;
 
-  /// Sayac metnini gercek veriyle degistirir (rota/ikon/renk korunur).
+  /// Sayac metnini gercek veriyle degistirir (kimlik/rota/ikon/renk korunur).
   HizliErisimKart sayacla(String? yeniAltMetin, {String? yeniIkinciAltMetin}) {
     if (yeniAltMetin == null && yeniIkinciAltMetin == null) return this;
     return HizliErisimKart(
       ikon: ikon,
-      baslik: baslik,
+      id: id,
       accent: accent,
       altMetin: yeniAltMetin ?? altMetin,
+      etiketId: etiketId,
       altMetinRengi: altMetinRengi,
       ikinciAltMetin: yeniIkinciAltMetin ?? ikinciAltMetin,
       ikinciAltMetinRengi: ikinciAltMetinRengi,
@@ -107,8 +122,7 @@ class OzetKutusu {
   const OzetKutusu({
     required this.ikon,
     required this.deger,
-    required this.etiket,
-    required this.altEtiket,
+    required this.id,
     required this.accent,
     this.rota,
   });
@@ -119,9 +133,18 @@ class OzetKutusu {
   /// yukleniyor) → kutu iskelet cizer. Sozlesmede karsiligi olmayan kutu '—'
   /// tasir ve alt etiketi 'Yakında'dir.
   final String? deger;
-  final String etiket;
-  final String altEtiket;
+
+  /// KARARLI KIMLIK — switch/rota eslemesi bunu kullanir; etiketler dile gore
+  /// [etiket]/[altEtiket] ile cozulur.
+  final OzetKutuId id;
+
   final Color accent;
+
+  /// Kutu etiketi — aktif dilden.
+  String etiket(AppLocalizations l10n) => ozetEtiketi(l10n, id);
+
+  /// Kutu alt etiketi ("Tüm Site" / "Bu Ay" / "Şu An") — aktif dilden.
+  String altEtiket(AppLocalizations l10n) => ozetAltEtiketi(l10n, id);
 
   /// Dokununca gidilecek ekran; null → dokunma yok (mobilde ekrani olmayan
   /// kutu). Kutular ozetten DETAYA gecisin kisa yoludur.
@@ -132,8 +155,7 @@ class OzetKutusu {
   OzetKutusu degerle(String? yeniDeger) => OzetKutusu(
         ikon: ikon,
         deger: yeniDeger ?? deger,
-        etiket: etiket,
-        altEtiket: altEtiket,
+        id: id,
         accent: accent,
         rota: rota,
       );

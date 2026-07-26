@@ -1538,15 +1538,17 @@ features/home/
 
 ## 15. Çoklu dil (i18n) — 7 dil + RTL
 
-**Durum (bu tur):** altyapı **tam**, iki modül (**Ayarlar** + **Kameralar**) ve
-ortak durum metinleri **çevrildi** (7 dil). Kalan modüllerin dışa alımı
-mekanik bir iştir ve aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
+**Durum:** altyapı **tam**; çevrilen modüller: **Ayarlar**, **Kameralar**, ortak
+durum metinleri (tur 1) ve **Ana ekran (home)** (tur 2 — üç rol varyantı, hızlı
+erişim ızgarası, Hızlı Özet, son hareketler/duyuru/etkinlik kartları, kabuk +
+çekmece + modül adları). Kalan modüllerin dışa alımı mekanik bir iştir ve
+aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
 
 ### Mimari
 
 | Parça | Yer |
 |---|---|
-| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` |
+| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**181 anahtar × 7**, boşluk yok) |
 | gen-l10n yapılandırması | `l10n.yaml` (şablon: `app_tr.arb`) |
 | Üretilen sınıf | `lib/l10n/gen/app_localizations.dart` (**repoda tutulur** → taze klonda `analyze`/`test` ek adım istemez; yenilemek için `flutter gen-l10n`) |
 | Dil seçimi + kalıcılık | `lib/src/core/i18n/locale_controller.dart` (`AppDil`, `LocaleController`, `ui.locale` anahtarı — tema ile aynı güvenli depo) |
@@ -1629,6 +1631,31 @@ işaretlenmiştir çünkü çeviri sunucuda çözülünce hepsi kendiliğinden d
 `grep -rn "SERVER-LOCALIZED(next round)" lib/` ile bulunur, tüketici listesi
 `grep -rln "e.message" lib/` ile üretilir.
 
+### Kimlik / metin ayrımı — kart id refactor (ana ekran)
+
+> **Kural:** alan katmanları (domain/data) **kimlik** döndürür, yerelleştirilmiş
+> metin **çizim anında** çözülür. Kontrol akışında (`switch`, `if`, harita
+> anahtarı) **metin kullanılmaz**.
+
+Ana ekran kartları eskiden Türkçe başlığı hem ekranda gösteriyor hem de
+`switch (k.baslik)` ile sayaç/rota eşleme **anahtarı** olarak kullanıyordu — dil
+değişince yönlendirme bozulurdu. Artık:
+
+| Kimlik | Yer | Metin çözümü |
+|---|---|---|
+| `HomeKartId` (27 kart) | `features/home/domain/home_kart_id.dart` | `kartBasligi(l10n, id)` |
+| `HomeKartEtiketId` (sayaç değil, sabit alt etiket) | aynı dosya | `kartEtiketi(l10n, id)` |
+| `OzetKutuId` ("Hızlı Özet" 4 kutu) | aynı dosya | `ozetEtiketi` / `ozetAltEtiketi` |
+| `HomeMenuEntry` (çekmece/modül adları) | `presentation/module_card_spec.dart` | `moduleBaslik(l10n, entry)` |
+
+`switch`'lerin `default` dalı **yoktur**: yeni kart eklenince derleyici çeviriyi
+zorlar. `ParkingOccupancy` gibi alan tiplerinden görüntü metni üreten üyeler
+(`doluMetni`/`oranMetni`) kaldırıldı — ekran `l10n.otoparkDoluKapasite` ile
+biçimler (`CameraUrlHatasi` emsali).
+
+Doğrulama: `grep -rnE "(switch|case|==)\s*\(?\s*['\"][^'\"]*[çğıöşü…]" lib/src/features/home`
+→ **boş**.
+
 ### Test kapsamı
 
 `test/i18n_test.dart` (20 test): dil listesi/çözümleme, dil değiştirme
@@ -1636,6 +1663,17 @@ işaretlenmiştir çünkü çeviri sunucuda çözülünce hepsi kendiliğinden d
 çeviri düşüşü, RTL yön + iki ekran denetimi, ICU çoğul (ru/ar/en/tr/de/fr/es),
 para/tarih/büyük-harf kuralları, **kalıcılık** (seç → yeni `ProviderContainer`
 = yeniden başlatma → aynı dil).
+
+`test/home_i18n_test.dart` (6 test): kart **kimliği** dilden bağımsız / başlık
+dile bağlı (taban kartlar metin taşımaz), ana ekranda **tr→en→ru** dil
+değiştirme (başlıklar + ICU sayaç metinleri değişir, düzen aynı kalır), bölüm
+başlıkları + kamera şeridi, ve **RTL** denetimi: Arapça görevli ana ekranında
+yön `rtl`, ızgara + son hareketler satırları çizilir, plaka `34 ABC 123` LTR
+izolasyonlu kalır, uzun Arapça metinlerde ızgara **taşmaz**.
+
+`test/flutter_test_config.dart` süite başına bir kez `initializeDateFormatting()`
+çağırır: eşleyicileri doğrudan çağıran saf birim testleri aksi halde
+`LocaleDataException` ile düşer (uygulamada bu `main.dart`'ta yapılır).
 
 Widget testleri yerelleştirme delegelerine ihtiyaç duyar: `test/helpers/l10n_test_app.dart`
 (`l10nApp(...)` / `l10nScaffold(...)`, varsayılan **tr**). Yalın `MaterialApp`
@@ -1668,14 +1706,27 @@ print(n)
 EOF
 ```
 
-Bu turdan sonra kalan: **~1.125 string / 106 dosya** (modül başına):
+**Tur 2 (home) ölçümü — aynı komut, önce/sonra:**
+
+| | Toplam string | Dosya | `home` modülü |
+|---|---|---|---|
+| Tur 2 öncesi | 1.115 | 100 | **123** (16 dosya) |
+| Tur 2 sonrası | **994** | 91 | **2** (1 dosya) |
+
+Kalan 2 `home` stringi `home_marka.dart` içindeki **marka kilidi**dir (`Yönetio`,
+`GÜVENLİK & DANIŞMANLIK`) — aşağıdaki bilinçli istisna. Yani ana ekran modülü
+sayıma **sıfır** katkı verir. (Tur 1 sonunda bu bölümde yazan ~1.125/106
+rakamı ölçümün o anki halidir; tur 2 başında aynı komut 1.115/100 verdi —
+arada başka modüle dokunulmadı, fark ara commit'lerdeki küçük düzenlemelerden
+gelir.)
+
+Kalan envanter (modül başına, tur 2 sonrası):
 
 | Modül | Kalan string |
 |---|---|
-| `home` | 127 |
 | `tasks` | 110 |
-| `patrol` | 86 |
 | `building_map` | 84 |
+| `patrol` | 81 |
 | `complaints` | 65 |
 | `rezervasyon` | 51 |
 | `etkinlik` | 44 |
@@ -1692,8 +1743,8 @@ Bu turdan sonra kalan: **~1.125 string / 106 dosya** (modül başına):
 | `integrations` | 23 |
 | `transparency` | 22 |
 | `visitors` | 22 |
-| `reports` | 21 |
 | `auth` | 20 |
+| `reports` | 20 |
 | `dues` | 18 |
 | `profile` | 18 |
 | `checkpoints` | 16 |
@@ -1708,8 +1759,9 @@ Bu turdan sonra kalan: **~1.125 string / 106 dosya** (modül başına):
 | `error` | 3 |
 | `ui` | 3 |
 | `branding` | 2 |
-| `i18n` | 2 |
 | `call` | 2 |
+| `home` | 2 (marka kilidi — istisna) |
+| `i18n` | 2 |
 | `main.dart` | 1 |
 | `notifications` | 1 |
 | `push` | 1 |

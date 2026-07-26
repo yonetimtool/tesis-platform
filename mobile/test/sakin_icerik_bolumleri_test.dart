@@ -8,16 +8,15 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/l10n/gen/app_localizations.dart';
 import 'package:mobile/src/core/theme/home_tokens.dart';
 import 'package:mobile/src/features/etkinlik/domain/etkinlik_models.dart';
 import 'package:mobile/src/features/home/domain/home_view_models.dart';
 import 'package:mobile/src/features/home/presentation/home_mappers.dart';
 import 'package:mobile/src/features/home/presentation/widgets/icerik_bolumu.dart';
 import 'package:mobile/src/features/site_kurali/domain/site_kurali_models.dart';
+import 'helpers/l10n_test_app.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      home: Scaffold(body: SingleChildScrollView(child: child)),
-    );
 
 SiteKurali _kural(String baslik, {String? fotoUrl}) => SiteKurali(
       id: 'k-$baslik',
@@ -51,11 +50,18 @@ Etkinlik _etkinlik({
       createdAt: DateTime(2026, 7, 1),
     );
 
+late AppLocalizations trL10n;
+
 void main() {
+  setUpAll(() async {
+    // Testler TR'ye sabit (mevcut metin beklentileri korunur).
+    trL10n = await AppLocalizations.delegate.load(const Locale('tr'));
+  });
+
   group('IcerikBolumu — duyuru kartiyla ayni desen', () {
     testWidgets('kurallar: baslik + icerik + yer tutucu (gorsel YOK)',
         (tester) async {
-      await tester.pumpWidget(_wrap(IcerikBolumu(
+      await tester.pumpWidget(l10nScaffold(IcerikBolumu(
         baslik: 'Site Kuralları',
         satirlar: kuralOzetleri([_kural('Otopark Kullanımı')]),
         onTumu: () {},
@@ -70,7 +76,7 @@ void main() {
     });
 
     testWidgets('kurallar: gorsel VARSA Image cizilir', (tester) async {
-      await tester.pumpWidget(_wrap(IcerikBolumu(
+      await tester.pumpWidget(l10nScaffold(IcerikBolumu(
         baslik: 'Site Kuralları',
         satirlar: kuralOzetleri([
           _kural('Otopark Kullanımı', fotoUrl: 'https://x/y.png'),
@@ -82,7 +88,7 @@ void main() {
     });
 
     testWidgets('bos liste: bolum HIC cizilmez', (tester) async {
-      await tester.pumpWidget(_wrap(IcerikBolumu(
+      await tester.pumpWidget(l10nScaffold(IcerikBolumu(
         baslik: 'Etkinlikler',
         satirlar: const <IcerikOzeti>[],
         onTumu: () {},
@@ -94,7 +100,7 @@ void main() {
         (tester) async {
       var tumu = 0;
       IcerikOzeti? secilen;
-      await tester.pumpWidget(_wrap(IcerikBolumu(
+      await tester.pumpWidget(l10nScaffold(IcerikBolumu(
         baslik: 'Site Kuralları',
         satirlar: kuralOzetleri([_kural('Havuz Saatleri')]),
         onTumu: () => tumu++,
@@ -109,7 +115,7 @@ void main() {
 
     testWidgets('3 kayit: bolum 3 kart cizer (ana ekran sinirli)',
         (tester) async {
-      await tester.pumpWidget(_wrap(IcerikBolumu(
+      await tester.pumpWidget(l10nScaffold(IcerikBolumu(
         baslik: 'Site Kuralları',
         satirlar: kuralOzetleri([
           _kural('Bir'),
@@ -127,7 +133,7 @@ void main() {
   group('etkinlikOzetleri — cip + tarih SUNUCU verisinden', () {
     test('yaklasan etkinlik: "Yaklaşan" cipi (mavi) + tarih/saat', () {
       final ileri = DateTime.now().add(const Duration(days: 2));
-      final o = etkinlikOzetleri([
+      final o = etkinlikOzetleri(trL10n, 'tr', [
         _etkinlik(baslik: 'Bahar şenliği', tarih: ileri, konum: 'Bahçe'),
       ]).single;
 
@@ -139,7 +145,7 @@ void main() {
     });
 
     test('SUREN etkinlik (basladi, bitmedi): "Sürüyor" cipi (yesil)', () {
-      final o = etkinlikOzetleri([
+      final o = etkinlikOzetleri(trL10n, 'tr', [
         _etkinlik(
           baslik: 'Maç',
           tarih: DateTime.now().subtract(const Duration(hours: 1)),
@@ -168,7 +174,7 @@ void main() {
     });
 
     test('gorsel: foto_url dogrudan tasinir (presigned GET)', () {
-      final o = etkinlikOzetleri([
+      final o = etkinlikOzetleri(trL10n, 'tr', [
         _etkinlik(
           baslik: 'G',
           tarih: DateTime.now().add(const Duration(days: 1)),

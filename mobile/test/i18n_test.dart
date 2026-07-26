@@ -201,7 +201,12 @@ void main() {
     test('LTR izolasyon: plaka/telefon/tutar RTL govdede ters DONMEZ', () {
       // U+2068 (FSI) ... U+2069 (PDI) — yon-notr olmayan dizileri korur.
       expect(ltrIzole('34 ABC 123'), '\u2068' '34 ABC 123' '\u2069');
-      expect(tlIsaretli(125000), '\u2068' '₺1.250,00' '\u2069');
+      // PARA: izolasyon YALNIZ RTL dilde uygulanir — LTR dillerde metin
+      // oldugu gibi kalir (gorunmez isaret eklenmez, metin karsilastirmalari
+      // beklenmedik karakter gormez).
+      expect(tlIsaretli(125000, 'ar'), '\u2068' '₺1.250,00' '\u2069');
+      expect(tlIsaretli(125000, 'tr'), '₺1.250,00');
+      expect(tlIsaretli(125000, 'en'), '₺1.250,00');
     });
   });
 
@@ -245,7 +250,8 @@ void main() {
       // Kural: para SITE-YERELDIR (aidat TL toplanir) → dile gore degismez.
       expect(tlTutar(125000), '1.250,00');
       expect(tlTutar(99), '0,99');
-      expect(tlIsaretli(125000), contains('₺1.250,00'));
+      expect(tlIsaretli(125000, 'tr'), '₺1.250,00');
+      expect(tlIsaretli(125000, 'ar'), contains('₺1.250,00'));
     });
 
     test('TARIH: aktif dile gore bicimlenir', () {
