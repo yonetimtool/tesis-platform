@@ -2926,4 +2926,172 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ortakKopyalandi => 'Copied';
+
+  @override
+  String get girisParolaVeyaKod => 'Password or temporary code';
+
+  @override
+  String get girisIlkKodIpucu =>
+      'On first sign-in, enter the temporary code you got from management.';
+
+  @override
+  String get girisBeniHatirla => 'Remember me';
+
+  @override
+  String get girisYap => 'Sign in';
+
+  @override
+  String get girisOturumSonaErdi =>
+      'Your session has expired. Please sign in again.';
+
+  @override
+  String get parolaBelirleBaslik => 'Set your password';
+
+  @override
+  String get parolaBelirleAciklama =>
+      'You signed in for the first time with a temporary code. To continue, create your own permanent password; from now on you will sign in with your unit number + this password.';
+
+  @override
+  String get parolaBelirleButon => 'Set password';
+
+  @override
+  String get parolaGiriseDon => 'Back to sign-in';
+
+  @override
+  String get ortakParolaZorunlu => 'Password is required';
+
+  @override
+  String get ortakYeniParola => 'New password';
+
+  @override
+  String get ortakYeniParolaTekrar => 'New password (again)';
+
+  @override
+  String get ortakYeniParolaZorunlu => 'New password is required';
+
+  @override
+  String get ortakParolalarEslesmiyor => 'Passwords do not match';
+
+  @override
+  String get parolaKuraliKisa => 'Must be at least 8 characters';
+
+  @override
+  String get parolaKuraliBuyukHarf =>
+      'Must contain at least one uppercase letter';
+
+  @override
+  String get parolaKuraliRakam => 'Must contain at least one digit';
+
+  @override
+  String get parolaKuraliSembol =>
+      'Must contain at least one symbol (! ? @ # . -)';
+
+  @override
+  String get profilYuklenemedi => 'Profile could not be loaded.';
+
+  @override
+  String get profilNumaraYok => 'No number entered';
+
+  @override
+  String get profilFotoBaslik => 'Profile photo';
+
+  @override
+  String get profilFotoSec => 'Choose photo';
+
+  @override
+  String get profilFotoGuncellendi => 'Profile photo updated ✓';
+
+  @override
+  String get profilFotoKaldirildi => 'Profile photo removed';
+
+  @override
+  String get ortakGaleri => 'Gallery';
+
+  @override
+  String get profilParolaDegistir => 'Change password';
+
+  @override
+  String get profilMevcutParola => 'Current password';
+
+  @override
+  String get profilMevcutParolaZorunlu => 'Current password is required';
+
+  @override
+  String get profilParolaGuncelle => 'Update password';
+
+  @override
+  String get profilParolaGuncellendi => 'Password updated ✓';
+
+  @override
+  String get profilTelefon => 'Phone';
+
+  @override
+  String get profilTelefonIpucu => 'e.g. +905551112233';
+
+  @override
+  String get profilAranabilir => 'Reachable by phone';
+
+  @override
+  String get profilAranabilirAlt =>
+      'Authorized roles (consent-based calling) can reach your number';
+
+  @override
+  String get profilIletisimKaydet => 'Save contact details';
+
+  @override
+  String get profilIletisimGuncellendi => 'Contact details updated ✓';
+
+  @override
+  String get personelEkle => 'Add staff';
+
+  @override
+  String get personelDuzenle => 'Edit staff';
+
+  @override
+  String get personelListelenemedi => 'Staff could not be listed.';
+
+  @override
+  String get personelPasiflestir => 'Deactivate';
+
+  @override
+  String get personelAktiflestir => 'Activate';
+
+  @override
+  String get personelPasiflestirildi => 'Deactivated ✓';
+
+  @override
+  String get personelAktiflestirildi => 'Activated ✓';
+
+  @override
+  String personelSifirlaGovde(Object ad) {
+    return 'A new temporary code will be generated for $ad; the old password stops working.';
+  }
+
+  @override
+  String get personelYeniKodMesaji =>
+      'New temporary code. Share it with the staff member; they sign in with phone + this code and then set a password.';
+
+  @override
+  String get personelGuncellendi => 'Staff member updated ✓';
+
+  @override
+  String get personelEklendi => 'Staff member added ✓';
+
+  @override
+  String get personelEklendiKod =>
+      'Staff member added. Share this code with them; they sign in with phone + this code and then set a password.';
+
+  @override
+  String get personelFoto => 'Photo';
+
+  @override
+  String get personelTelefonOpsiyonel => 'Mobile number (optional)';
+
+  @override
+  String get personelBosBirakDegismezNokta =>
+      'Leave empty to keep it unchanged.';
+
+  @override
+  String get personelYok =>
+      'No field staff yet.\nAdd one from the bottom right.';
 }

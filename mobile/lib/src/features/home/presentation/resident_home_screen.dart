@@ -6,6 +6,7 @@ import '../../../routing/app_router.dart';
 import '../../announcements/data/announcement_api.dart';
 import '../../announcements/domain/announcement_models.dart';
 import '../../auth/domain/user_role.dart';
+import '../../auth/presentation/rol_adi.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../complaints/data/complaint_api.dart';
 import '../../dues/data/dues_api.dart';
@@ -114,7 +115,7 @@ class ResidentHomeScreen extends ConsumerWidget {
         ? ''
         : l10n.anaDaireAltBaslik(
             units.map((u) => u.no).join(', '),
-            UserRole.resident.label,
+            rolAdi(l10n, UserRole.resident),
           );
 
     return HomeCanliVeri(

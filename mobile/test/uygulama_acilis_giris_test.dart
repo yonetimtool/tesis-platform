@@ -138,12 +138,16 @@ Widget _uygulama(BellekDepo depo, UserRole role) {
   );
 }
 
-/// Giris yapar: telefon + parola doldurup "Giriş yap"a basar.
+/// Giris yapar: telefon + parola doldurup giris butonuna basar.
+///
+/// Buton metni tur 8'de YERELLESTIRILDI (`girisYap`): bu dosya ar dilinde de
+/// kostugu icin buton TIPTEN bulunur, metinden DEGIL — aksi halde Arapca
+/// senaryo "Giriş yap" bulamayip duserdi.
 Future<void> _girisYap(WidgetTester tester) async {
   await tester.enterText(
       find.byType(TextFormField).first, '+905321112201');
   await tester.enterText(find.byType(TextFormField).last, 'Yonetici123!');
-  await tester.tap(find.text('Giriş yap'));
+  await tester.tap(find.byType(FilledButton));
   await tester.pumpAndSettle();
 }
 

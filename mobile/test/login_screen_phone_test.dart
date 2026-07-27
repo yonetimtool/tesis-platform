@@ -7,6 +7,8 @@ import 'package:mobile/src/features/auth/domain/phone_login_result.dart';
 import 'package:mobile/src/features/auth/domain/token_pair.dart';
 import 'package:mobile/src/features/auth/presentation/login_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 const _tokens = TokenPair(
   accessToken: 'acc',
   refreshToken: 'ref',
@@ -57,7 +59,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [authRepositoryProvider.overrideWithValue(repo)],
-        child: const MaterialApp(home: LoginScreen()),
+        child: l10nApp(const LoginScreen()),
       ),
     );
     await tester.pump();

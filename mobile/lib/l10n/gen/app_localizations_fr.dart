@@ -2877,4 +2877,174 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ortakKopyalandi => 'Copié';
+
+  @override
+  String get girisParolaVeyaKod => 'Mot de passe ou code temporaire';
+
+  @override
+  String get girisIlkKodIpucu =>
+      'À la première connexion, saisissez le code temporaire reçu de la gestion.';
+
+  @override
+  String get girisBeniHatirla => 'Se souvenir de moi';
+
+  @override
+  String get girisYap => 'Se connecter';
+
+  @override
+  String get girisOturumSonaErdi =>
+      'Votre session a expiré. Veuillez vous reconnecter.';
+
+  @override
+  String get parolaBelirleBaslik => 'Définissez votre mot de passe';
+
+  @override
+  String get parolaBelirleAciklama =>
+      'Vous vous êtes connecté pour la première fois avec un code temporaire. Pour continuer, créez votre propre mot de passe permanent ; vous vous connecterez ensuite avec votre numéro de logement + ce mot de passe.';
+
+  @override
+  String get parolaBelirleButon => 'Définir le mot de passe';
+
+  @override
+  String get parolaGiriseDon => 'Retour à la connexion';
+
+  @override
+  String get ortakParolaZorunlu => 'Le mot de passe est obligatoire';
+
+  @override
+  String get ortakYeniParola => 'Nouveau mot de passe';
+
+  @override
+  String get ortakYeniParolaTekrar => 'Nouveau mot de passe (à nouveau)';
+
+  @override
+  String get ortakYeniParolaZorunlu =>
+      'Le nouveau mot de passe est obligatoire';
+
+  @override
+  String get ortakParolalarEslesmiyor =>
+      'Les mots de passe ne correspondent pas';
+
+  @override
+  String get parolaKuraliKisa => 'Doit contenir au moins 8 caractères';
+
+  @override
+  String get parolaKuraliBuyukHarf => 'Doit contenir au moins une majuscule';
+
+  @override
+  String get parolaKuraliRakam => 'Doit contenir au moins un chiffre';
+
+  @override
+  String get parolaKuraliSembol =>
+      'Doit contenir au moins un symbole (! ? @ # . -)';
+
+  @override
+  String get profilYuklenemedi => 'Impossible de charger le profil.';
+
+  @override
+  String get profilNumaraYok => 'Aucun numéro saisi';
+
+  @override
+  String get profilFotoBaslik => 'Photo de profil';
+
+  @override
+  String get profilFotoSec => 'Choisir une photo';
+
+  @override
+  String get profilFotoGuncellendi => 'Photo de profil mise à jour ✓';
+
+  @override
+  String get profilFotoKaldirildi => 'Photo de profil supprimée';
+
+  @override
+  String get ortakGaleri => 'Galerie';
+
+  @override
+  String get profilParolaDegistir => 'Changer le mot de passe';
+
+  @override
+  String get profilMevcutParola => 'Mot de passe actuel';
+
+  @override
+  String get profilMevcutParolaZorunlu =>
+      'Le mot de passe actuel est obligatoire';
+
+  @override
+  String get profilParolaGuncelle => 'Mettre à jour le mot de passe';
+
+  @override
+  String get profilParolaGuncellendi => 'Mot de passe mis à jour ✓';
+
+  @override
+  String get profilTelefon => 'Téléphone';
+
+  @override
+  String get profilTelefonIpucu => 'ex. +905551112233';
+
+  @override
+  String get profilAranabilir => 'Joignable par téléphone';
+
+  @override
+  String get profilAranabilirAlt =>
+      'Les rôles autorisés (appel avec consentement) peuvent joindre votre numéro';
+
+  @override
+  String get profilIletisimKaydet => 'Enregistrer le contact';
+
+  @override
+  String get profilIletisimGuncellendi => 'Coordonnées mises à jour ✓';
+
+  @override
+  String get personelEkle => 'Ajouter un employé';
+
+  @override
+  String get personelDuzenle => 'Modifier l\'employé';
+
+  @override
+  String get personelListelenemedi => 'Impossible de lister le personnel.';
+
+  @override
+  String get personelPasiflestir => 'Désactiver';
+
+  @override
+  String get personelAktiflestir => 'Activer';
+
+  @override
+  String get personelPasiflestirildi => 'Désactivé ✓';
+
+  @override
+  String get personelAktiflestirildi => 'Activé ✓';
+
+  @override
+  String personelSifirlaGovde(Object ad) {
+    return 'Un nouveau code temporaire sera généré pour $ad ; l\'ancien mot de passe devient invalide.';
+  }
+
+  @override
+  String get personelYeniKodMesaji =>
+      'Nouveau code temporaire. Transmettez-le à l\'employé : il se connecte avec le téléphone + ce code puis définit un mot de passe.';
+
+  @override
+  String get personelGuncellendi => 'Employé mis à jour ✓';
+
+  @override
+  String get personelEklendi => 'Employé ajouté ✓';
+
+  @override
+  String get personelEklendiKod =>
+      'Employé ajouté. Transmettez-lui ce code : il se connecte avec le téléphone + ce code puis définit un mot de passe.';
+
+  @override
+  String get personelFoto => 'Photo';
+
+  @override
+  String get personelTelefonOpsiyonel => 'Numéro de mobile (facultatif)';
+
+  @override
+  String get personelBosBirakDegismezNokta =>
+      'Laissez vide pour ne rien changer.';
+
+  @override
+  String get personelYok =>
+      'Aucun personnel de terrain.\nAjoutez-en depuis le bas à droite.';
 }

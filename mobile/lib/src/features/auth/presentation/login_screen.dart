@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/branding/yonetio_logo.dart';
+import '../../../core/i18n/l10n.dart';
 import '../data/auth_repository_impl.dart';
 import 'auth_controller.dart';
+import 'giris_hata_metni.dart';
 
 /// Telefonla giris ekrani (contracts/auth.md §1): cep telefonu (global
 /// benzersiz) + parola/gecici kod. Tenant numaradan otomatik cozulur — tesis
@@ -62,6 +64,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
     final submitting = auth.submitting;
+    final l10n = context.l10n;
+    final hata = girisHatasiCoz(l10n, auth.hataKimligi, auth.errorMessage);
 
     return Scaffold(
       body: SafeArea(
@@ -84,14 +88,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.phone,
                       autocorrect: false,
-                      decoration: const InputDecoration(
-                        labelText: 'Cep telefonu',
-                        hintText: 'örn. 0532 111 22 03',
-                        prefixIcon: Icon(Icons.phone_outlined),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.ortakCepTelefonu,
+                        hintText: l10n.ortakTelefonIpucu,
+                        prefixIcon: const Icon(Icons.phone_outlined),
+                        border: const OutlineInputBorder(),
                       ),
-                      validator: (v) =>
-                          (v?.trim() ?? '').isEmpty ? 'Telefon zorunludur' : null,
+                      validator: (v) => (v?.trim() ?? '').isEmpty
+                          ? l10n.ortakTelefonZorunlu
+                          : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -101,9 +106,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
                       decoration: InputDecoration(
-                        labelText: 'Parola veya geçici kod',
-                        helperText:
-                            'İlk girişte yönetimden aldığınız geçici kodu yazın.',
+                        labelText: l10n.girisParolaVeyaKod,
+                        helperText: l10n.girisIlkKodIpucu,
                         helperMaxLines: 2,
                         prefixIcon: const Icon(Icons.lock_outline),
                         border: const OutlineInputBorder(),
@@ -117,7 +121,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       validator: (v) =>
-                          (v ?? '').isEmpty ? 'Parola zorunludur' : null,
+                          (v ?? '').isEmpty ? l10n.ortakParolaZorunlu : null,
                     ),
                     const SizedBox(height: 8),
                     // Isaretliyse oturum kalici saklanir → sonraki acilista
@@ -128,14 +132,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onChanged: submitting
                           ? null
                           : (v) => setState(() => _rememberMe = v ?? false),
-                      title: const Text('Beni hatırla'),
+                      title: Text(l10n.girisBeniHatirla),
                       controlAffinity: ListTileControlAffinity.leading,
                       contentPadding: EdgeInsets.zero,
                       dense: true,
                     ),
-                    if (auth.errorMessage != null) ...[
+                    if (hata != null) ...[
                       const SizedBox(height: 16),
-                      _ErrorBanner(message: auth.errorMessage!),
+                      _ErrorBanner(message: hata),
                     ],
                     const SizedBox(height: 24),
                     FilledButton(
@@ -149,7 +153,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               width: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.5),
                             )
-                          : const Text('Giriş yap'),
+                          : Text(l10n.girisYap),
                     ),
                   ],
                 ),

@@ -4,40 +4,36 @@
 /// (UX hizalamasi). Gercek yetki her istekte backend RBAC'ta zorlanir;
 /// istemci suzgeci atlatilsa bile backend 403 doner.
 ///
-/// KIMLIK / METIN AYRIMI (README §15): enum'daki [UserRole.label] TR sabittir
-/// ve YERELLESTIRILMIS ekranlarda KULLANILMAZ — cizim katmani rolu kendi
-/// `rolAdi` cozucusuyle aktif dilden yazar (`CameraUrlHatasi` emsali: enum
-/// domain'de, `switch` cizim katmaninda). `label` henuz cevrilmemis
-/// modullerde kullanildigi icin kaldirilmadi (sonraki turlarda dusecek).
+/// KIMLIK / METIN AYRIMI (README §15): enum METIN TASIMAZ. Eski `label` (TR
+/// sabiti) tur 8'de KALDIRILDI; gorunen ad `presentation/rol_adi.dart`
+/// icindeki `rolAdi(l10n, rol)` ile cizim aninda cozulur
+/// (`CameraUrlHatasi` emsali: enum domain'de, `switch` cizim katmaninda).
 library;
 
 enum UserRole {
   /// Platform admini (biz) — panel + tum operasyon uclari.
-  admin('admin', 'Platform Admin'),
+  admin('admin'),
 
   /// Site yoneticisi (musteri) — mobil; gorev atama/takip, rapor okuma.
   /// Saha kaniti uretmez (scan/tamamlama/zimmet yok).
-  yonetici('yonetici', 'Yönetici'),
+  yonetici('yonetici'),
 
   /// Guvenlik gorevlisi — devriye + saha operasyonu.
-  security('security', 'Güvenlik'),
+  security('security'),
 
   /// Tesis gorevlisi (temizlik + bahcivan + teknik; eski `cleaning`).
-  tesisGorevlisi('tesis_gorevlisi', 'Tesis Görevlisi'),
+  tesisGorevlisi('tesis_gorevlisi'),
 
   /// Site sakini — v0'da operasyon erisimi yok.
-  resident('resident', 'Site Sakini'),
+  resident('resident'),
 
   /// Claim yok/bilinmeyen deger (eski token, bozuk payload).
-  unknown('unknown', 'Bilinmeyen rol');
+  unknown('unknown');
 
-  const UserRole(this.wire, this.label);
+  const UserRole(this.wire);
 
   /// Backend enum degeri (user_role).
   final String wire;
-
-  /// TR gorunen ad.
-  final String label;
 
   static UserRole fromClaim(String? value) => UserRole.values.firstWhere(
         (r) => r.wire == value,

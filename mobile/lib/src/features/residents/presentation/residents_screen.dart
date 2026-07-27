@@ -420,7 +420,8 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
                 prefixIcon: const Icon(Icons.lock_outline),
                 border: const OutlineInputBorder(),
               ),
-              validator: (v) => (v ?? '').isEmpty ? null : passwordError(v),
+              validator: (v) =>
+                  (v ?? '').isEmpty ? null : parolaHataMetni(l10n, v),
             ),
             const SizedBox(height: 16),
             FilledButton(

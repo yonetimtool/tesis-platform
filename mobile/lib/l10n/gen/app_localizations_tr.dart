@@ -2783,4 +2783,169 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ortakKopyalandi => 'Kopyalandı';
+
+  @override
+  String get girisParolaVeyaKod => 'Parola veya geçici kod';
+
+  @override
+  String get girisIlkKodIpucu =>
+      'İlk girişte yönetimden aldığınız geçici kodu yazın.';
+
+  @override
+  String get girisBeniHatirla => 'Beni hatırla';
+
+  @override
+  String get girisYap => 'Giriş yap';
+
+  @override
+  String get girisOturumSonaErdi =>
+      'Oturumunuz sona erdi. Lütfen tekrar giriş yapın.';
+
+  @override
+  String get parolaBelirleBaslik => 'Parolanızı belirleyin';
+
+  @override
+  String get parolaBelirleAciklama =>
+      'Geçici kodla ilk girişinizi yaptınız. Devam etmek için kendi kalıcı parolanızı oluşturun; sonraki girişlerde daire no + bu parolayı kullanacaksınız.';
+
+  @override
+  String get parolaBelirleButon => 'Parolayı belirle';
+
+  @override
+  String get parolaGiriseDon => 'Girişe dön';
+
+  @override
+  String get ortakParolaZorunlu => 'Parola zorunludur';
+
+  @override
+  String get ortakYeniParola => 'Yeni parola';
+
+  @override
+  String get ortakYeniParolaTekrar => 'Yeni parola (tekrar)';
+
+  @override
+  String get ortakYeniParolaZorunlu => 'Yeni parola zorunludur';
+
+  @override
+  String get ortakParolalarEslesmiyor => 'Parolalar eşleşmiyor';
+
+  @override
+  String get parolaKuraliKisa => 'En az 8 karakter olmalı';
+
+  @override
+  String get parolaKuraliBuyukHarf => 'En az bir büyük harf içermeli';
+
+  @override
+  String get parolaKuraliRakam => 'En az bir rakam içermeli';
+
+  @override
+  String get parolaKuraliSembol => 'En az bir sembol içermeli (! ? @ # . -)';
+
+  @override
+  String get profilYuklenemedi => 'Profil yüklenemedi.';
+
+  @override
+  String get profilNumaraYok => 'Numara girilmemiş';
+
+  @override
+  String get profilFotoBaslik => 'Profil fotoğrafı';
+
+  @override
+  String get profilFotoSec => 'Fotoğraf seç';
+
+  @override
+  String get profilFotoGuncellendi => 'Profil fotoğrafı güncellendi ✓';
+
+  @override
+  String get profilFotoKaldirildi => 'Profil fotoğrafı kaldırıldı';
+
+  @override
+  String get ortakGaleri => 'Galeri';
+
+  @override
+  String get profilParolaDegistir => 'Parola değiştir';
+
+  @override
+  String get profilMevcutParola => 'Mevcut parola';
+
+  @override
+  String get profilMevcutParolaZorunlu => 'Mevcut parola zorunludur';
+
+  @override
+  String get profilParolaGuncelle => 'Parolayı güncelle';
+
+  @override
+  String get profilParolaGuncellendi => 'Parola güncellendi ✓';
+
+  @override
+  String get profilTelefon => 'Telefon';
+
+  @override
+  String get profilTelefonIpucu => 'örn. +905551112233';
+
+  @override
+  String get profilAranabilir => 'Aranabilir';
+
+  @override
+  String get profilAranabilirAlt =>
+      'Yetkili roller (rıza gerektiren arama) numaranıza ulaşabilir';
+
+  @override
+  String get profilIletisimKaydet => 'İletişimi kaydet';
+
+  @override
+  String get profilIletisimGuncellendi => 'İletişim bilgileri güncellendi ✓';
+
+  @override
+  String get personelEkle => 'Personel ekle';
+
+  @override
+  String get personelDuzenle => 'Personel düzenle';
+
+  @override
+  String get personelListelenemedi => 'Personel listelenemedi.';
+
+  @override
+  String get personelPasiflestir => 'Pasifleştir';
+
+  @override
+  String get personelAktiflestir => 'Aktifleştir';
+
+  @override
+  String get personelPasiflestirildi => 'Pasifleştirildi ✓';
+
+  @override
+  String get personelAktiflestirildi => 'Aktifleştirildi ✓';
+
+  @override
+  String personelSifirlaGovde(Object ad) {
+    return '$ad için yeni geçici kod üretilecek; eski parola geçersiz olur.';
+  }
+
+  @override
+  String get personelYeniKodMesaji =>
+      'Yeni geçici kod. Personele iletin; telefon + bu kod ile girip parolasını belirler.';
+
+  @override
+  String get personelGuncellendi => 'Personel güncellendi ✓';
+
+  @override
+  String get personelEklendi => 'Personel eklendi ✓';
+
+  @override
+  String get personelEklendiKod =>
+      'Personel eklendi. Bu kodu personele iletin; telefon + bu kod ile girip parolasını belirler.';
+
+  @override
+  String get personelFoto => 'Fotoğraf';
+
+  @override
+  String get personelTelefonOpsiyonel => 'Cep telefonu (opsiyonel)';
+
+  @override
+  String get personelBosBirakDegismezNokta => 'Boş bırakırsanız değişmez.';
+
+  @override
+  String get personelYok =>
+      'Henüz saha personeli yok.\nSağ alttan ekleyebilirsiniz.';
 }

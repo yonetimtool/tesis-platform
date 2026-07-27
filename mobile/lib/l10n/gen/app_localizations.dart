@@ -4900,6 +4900,318 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Kopyalandı'**
   String get ortakKopyalandi;
+
+  /// No description provided for @girisParolaVeyaKod.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parola veya geçici kod'**
+  String get girisParolaVeyaKod;
+
+  /// No description provided for @girisIlkKodIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlk girişte yönetimden aldığınız geçici kodu yazın.'**
+  String get girisIlkKodIpucu;
+
+  /// No description provided for @girisBeniHatirla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Beni hatırla'**
+  String get girisBeniHatirla;
+
+  /// No description provided for @girisYap.
+  ///
+  /// In tr, this message translates to:
+  /// **'Giriş yap'**
+  String get girisYap;
+
+  /// No description provided for @girisOturumSonaErdi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Oturumunuz sona erdi. Lütfen tekrar giriş yapın.'**
+  String get girisOturumSonaErdi;
+
+  /// No description provided for @parolaBelirleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolanızı belirleyin'**
+  String get parolaBelirleBaslik;
+
+  /// No description provided for @parolaBelirleAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçici kodla ilk girişinizi yaptınız. Devam etmek için kendi kalıcı parolanızı oluşturun; sonraki girişlerde daire no + bu parolayı kullanacaksınız.'**
+  String get parolaBelirleAciklama;
+
+  /// No description provided for @parolaBelirleButon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolayı belirle'**
+  String get parolaBelirleButon;
+
+  /// No description provided for @parolaGiriseDon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Girişe dön'**
+  String get parolaGiriseDon;
+
+  /// No description provided for @ortakParolaZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parola zorunludur'**
+  String get ortakParolaZorunlu;
+
+  /// No description provided for @ortakYeniParola.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni parola'**
+  String get ortakYeniParola;
+
+  /// No description provided for @ortakYeniParolaTekrar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni parola (tekrar)'**
+  String get ortakYeniParolaTekrar;
+
+  /// No description provided for @ortakYeniParolaZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni parola zorunludur'**
+  String get ortakYeniParolaZorunlu;
+
+  /// No description provided for @ortakParolalarEslesmiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolalar eşleşmiyor'**
+  String get ortakParolalarEslesmiyor;
+
+  /// No description provided for @parolaKuraliKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'En az 8 karakter olmalı'**
+  String get parolaKuraliKisa;
+
+  /// No description provided for @parolaKuraliBuyukHarf.
+  ///
+  /// In tr, this message translates to:
+  /// **'En az bir büyük harf içermeli'**
+  String get parolaKuraliBuyukHarf;
+
+  /// No description provided for @parolaKuraliRakam.
+  ///
+  /// In tr, this message translates to:
+  /// **'En az bir rakam içermeli'**
+  String get parolaKuraliRakam;
+
+  /// Parantez ICI teknik sabit — semboller cevrilmez
+  ///
+  /// In tr, this message translates to:
+  /// **'En az bir sembol içermeli (! ? @ # . -)'**
+  String get parolaKuraliSembol;
+
+  /// No description provided for @profilYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Profil yüklenemedi.'**
+  String get profilYuklenemedi;
+
+  /// No description provided for @profilNumaraYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Numara girilmemiş'**
+  String get profilNumaraYok;
+
+  /// No description provided for @profilFotoBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Profil fotoğrafı'**
+  String get profilFotoBaslik;
+
+  /// No description provided for @profilFotoSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf seç'**
+  String get profilFotoSec;
+
+  /// No description provided for @profilFotoGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Profil fotoğrafı güncellendi ✓'**
+  String get profilFotoGuncellendi;
+
+  /// No description provided for @profilFotoKaldirildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Profil fotoğrafı kaldırıldı'**
+  String get profilFotoKaldirildi;
+
+  /// No description provided for @ortakGaleri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Galeri'**
+  String get ortakGaleri;
+
+  /// No description provided for @profilParolaDegistir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parola değiştir'**
+  String get profilParolaDegistir;
+
+  /// No description provided for @profilMevcutParola.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mevcut parola'**
+  String get profilMevcutParola;
+
+  /// No description provided for @profilMevcutParolaZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mevcut parola zorunludur'**
+  String get profilMevcutParolaZorunlu;
+
+  /// No description provided for @profilParolaGuncelle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolayı güncelle'**
+  String get profilParolaGuncelle;
+
+  /// No description provided for @profilParolaGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parola güncellendi ✓'**
+  String get profilParolaGuncellendi;
+
+  /// No description provided for @profilTelefon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon'**
+  String get profilTelefon;
+
+  /// No description provided for @profilTelefonIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. +905551112233'**
+  String get profilTelefonIpucu;
+
+  /// No description provided for @profilAranabilir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aranabilir'**
+  String get profilAranabilir;
+
+  /// No description provided for @profilAranabilirAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yetkili roller (rıza gerektiren arama) numaranıza ulaşabilir'**
+  String get profilAranabilirAlt;
+
+  /// No description provided for @profilIletisimKaydet.
+  ///
+  /// In tr, this message translates to:
+  /// **'İletişimi kaydet'**
+  String get profilIletisimKaydet;
+
+  /// No description provided for @profilIletisimGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İletişim bilgileri güncellendi ✓'**
+  String get profilIletisimGuncellendi;
+
+  /// No description provided for @personelEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel ekle'**
+  String get personelEkle;
+
+  /// No description provided for @personelDuzenle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel düzenle'**
+  String get personelDuzenle;
+
+  /// No description provided for @personelListelenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel listelenemedi.'**
+  String get personelListelenemedi;
+
+  /// No description provided for @personelPasiflestir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Pasifleştir'**
+  String get personelPasiflestir;
+
+  /// No description provided for @personelAktiflestir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aktifleştir'**
+  String get personelAktiflestir;
+
+  /// No description provided for @personelPasiflestirildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Pasifleştirildi ✓'**
+  String get personelPasiflestirildi;
+
+  /// No description provided for @personelAktiflestirildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aktifleştirildi ✓'**
+  String get personelAktiflestirildi;
+
+  /// Onay dialogu govdesi — {ad} personelin adi
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} için yeni geçici kod üretilecek; eski parola geçersiz olur.'**
+  String personelSifirlaGovde(Object ad);
+
+  /// No description provided for @personelYeniKodMesaji.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni geçici kod. Personele iletin; telefon + bu kod ile girip parolasını belirler.'**
+  String get personelYeniKodMesaji;
+
+  /// No description provided for @personelGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel güncellendi ✓'**
+  String get personelGuncellendi;
+
+  /// No description provided for @personelEklendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel eklendi ✓'**
+  String get personelEklendi;
+
+  /// No description provided for @personelEklendiKod.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel eklendi. Bu kodu personele iletin; telefon + bu kod ile girip parolasını belirler.'**
+  String get personelEklendiKod;
+
+  /// No description provided for @personelFoto.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf'**
+  String get personelFoto;
+
+  /// No description provided for @personelTelefonOpsiyonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Cep telefonu (opsiyonel)'**
+  String get personelTelefonOpsiyonel;
+
+  /// No description provided for @personelBosBirakDegismezNokta.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş bırakırsanız değişmez.'**
+  String get personelBosBirakDegismezNokta;
+
+  /// Iki satir (\n) — bos liste durumu
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz saha personeli yok.\nSağ alttan ekleyebilirsiniz.'**
+  String get personelYok;
 }
 
 class _AppLocalizationsDelegate

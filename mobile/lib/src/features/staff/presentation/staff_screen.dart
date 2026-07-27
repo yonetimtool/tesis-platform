@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/temp_code_dialog.dart';
 import '../../../core/validators/password_rule.dart';
 import '../../auth/domain/user_role.dart';
+import '../../auth/presentation/rol_adi.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../data/staff_api.dart';
@@ -22,17 +23,21 @@ class StaffScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final staffAsync = ref.watch(fieldStaffProvider);
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Saha Personeli'))),
+      appBar: AppBar(
+        title: Text(baslikBuyuk(l10n.modulPersonel, context.dilKodu)),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddSheet(context, ref),
         icon: const Icon(Icons.person_add_alt_1),
-        label: const Text('Personel ekle'),
+        label: Text(l10n.personelEkle),
       ),
       body: staffAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
-          message: e is ApiException ? e.message : 'Personel listelenemedi.',
+          // Sunucu metni varsa o gosterilir (SERVER-LOCALIZED siniri).
+          message: e is ApiException ? e.message : l10n.personelListelenemedi,
           onRetry: () => ref.invalidate(fieldStaffProvider),
         ),
         data: (list) => list.isEmpty
@@ -69,7 +74,8 @@ class _StaffTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final roleLabel = UserRole.fromClaim(member.role).label;
+    final l10n = context.l10n;
+    final roleLabel = rolAdi(l10n, UserRole.fromClaim(member.role));
     return Card(
       child: ListTile(
         leading: CircleAvatar(
@@ -91,7 +97,7 @@ class _StaffTile extends ConsumerWidget {
           children: [
             if (!member.isActive)
               Chip(
-                label: const Text('Pasif'),
+                label: Text(l10n.devriyePasif),
                 visualDensity: VisualDensity.compact,
                 backgroundColor:
                     Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -103,12 +109,16 @@ class _StaffTile extends ConsumerWidget {
                 if (v == 'toggle') _toggle(context, ref);
               },
               itemBuilder: (_) => [
-                const PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-                const PopupMenuItem(
-                    value: 'reset', child: Text('Parola sıfırla')),
+                PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
+                PopupMenuItem(
+                  value: 'reset',
+                  child: Text(l10n.sakinParolaSifirla),
+                ),
                 PopupMenuItem(
                   value: 'toggle',
-                  child: Text(member.isActive ? 'Pasifleştir' : 'Aktifleştir'),
+                  child: Text(member.isActive
+                      ? l10n.personelPasiflestir
+                      : l10n.personelAktiflestir),
                 ),
               ],
             ),
@@ -128,20 +138,20 @@ class _StaffTile extends ConsumerWidget {
   }
 
   Future<void> _reset(BuildContext context, WidgetRef ref) async {
+    // Async bosluklardan ONCE yakala.
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
-        title: const Text('Parola sıfırlansın mı?'),
-        content: Text(
-          '${member.ad} için yeni geçici kod üretilecek; eski parola geçersiz olur.',
-        ),
+        title: Text(l10n.sakinParolaSifirlaOnay),
+        content: Text(l10n.personelSifirlaGovde(member.ad)),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(dctx).pop(false),
-              child: const Text('Vazgeç')),
+              child: Text(l10n.ortakVazgec)),
           FilledButton(
               onPressed: () => Navigator.of(dctx).pop(true),
-              child: const Text('Sıfırla')),
+              child: Text(l10n.sakinSifirla)),
         ],
       ),
     );
@@ -154,8 +164,7 @@ class _StaffTile extends ConsumerWidget {
       await showTempCodeDialog(
         ctx,
         code: code,
-        message: 'Yeni geçici kod. Personele iletin; telefon + bu kod ile '
-            'girip parolasını belirler.',
+        message: l10n.personelYeniKodMesaji,
       );
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
@@ -165,11 +174,14 @@ class _StaffTile extends ConsumerWidget {
   Future<void> _toggle(BuildContext context, WidgetRef ref) async {
     final next = !member.isActive;
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
     try {
       await ref.read(staffApiProvider).setActive(member.id, next);
       ref.invalidate(fieldStaffProvider);
       messenger.showSnackBar(SnackBar(
-          content: Text(next ? 'Aktifleştirildi ✓' : 'Pasifleştirildi ✓')));
+          content: Text(next
+              ? l10n.personelAktiflestirildi
+              : l10n.personelPasiflestirildi)));
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
@@ -215,9 +227,12 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
     }
   }
 
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   Future<void> _fotoSec(ImageSource source) async {
     if (_fotoYukleniyor) return;
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = _l10n;
     setState(() => _fotoYukleniyor = true);
     try {
       final file = await ref.read(imagePickerProvider).pickImage(
@@ -248,7 +263,9 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _fotoYukleniyor = false);
-      messenger.showSnackBar(SnackBar(content: Text('Fotoğraf alınamadı: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.gorevFotoAlinamadi('$e'))),
+      );
     }
   }
 
@@ -261,7 +278,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Kamera'),
+              title: Text(sheetContext.l10n.gorevKamera),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _fotoSec(ImageSource.camera);
@@ -269,7 +286,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Galeri'),
+              title: Text(sheetContext.l10n.ortakGaleri),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _fotoSec(ImageSource.gallery);
@@ -294,6 +311,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
     if (!_formKey.currentState!.validate()) return;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final l10n = context.l10n;
     setState(() => _submitting = true);
     try {
       final api = ref.read(staffApiProvider);
@@ -311,7 +329,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
         if (!mounted) return;
         navigator.pop('ok');
         messenger.showSnackBar(
-          const SnackBar(content: Text('Personel güncellendi ✓')),
+          SnackBar(content: Text(l10n.personelGuncellendi)),
         );
         return;
       }
@@ -332,12 +350,11 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
         await showTempCodeDialog(
           navigator.context,
           code: tempCode,
-          message: 'Personel eklendi. Bu kodu personele iletin; telefon + bu '
-              'kod ile girip parolasını belirler.',
+          message: l10n.personelEklendiKod,
         );
       } else {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Personel eklendi ✓')),
+          SnackBar(content: Text(l10n.personelEklendi)),
         );
       }
     } on ApiException catch (e) {
@@ -349,6 +366,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
@@ -358,7 +376,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(_isEdit ? 'Personel düzenle' : 'Personel ekle',
+            Text(_isEdit ? l10n.personelDuzenle : l10n.personelEkle,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             // Profil fotografi (P3) — yonetici saha personeli fotosunu yukler.
@@ -384,21 +402,22 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
                           width: 16,
                           child: CircularProgressIndicator(strokeWidth: 2.5))
                       : const Icon(Icons.add_a_photo_outlined, size: 18),
-                  label: const Text('Fotoğraf'),
+                  label: Text(l10n.personelFoto),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             SegmentedButton<String>(
-              segments: const [
+              // Rol adlari TEK KAYNAKTAN (rolAdi) — segment etiketi de.
+              segments: [
                 ButtonSegment(
                     value: 'security',
-                    label: Text('Güvenlik'),
-                    icon: Icon(Icons.shield_outlined)),
+                    label: Text(rolAdi(l10n, UserRole.security)),
+                    icon: const Icon(Icons.shield_outlined)),
                 ButtonSegment(
                     value: 'tesis_gorevlisi',
-                    label: Text('Tesis Görevlisi'),
-                    icon: Icon(Icons.cleaning_services_outlined)),
+                    label: Text(rolAdi(l10n, UserRole.tesisGorevlisi)),
+                    icon: const Icon(Icons.cleaning_services_outlined)),
               ],
               selected: {_role},
               onSelectionChanged: _submitting
@@ -409,13 +428,13 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
             TextFormField(
               controller: _adCtrl,
               enabled: !_submitting,
-              decoration: const InputDecoration(
-                labelText: 'Ad Soyad',
-                prefixIcon: Icon(Icons.person_outline),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.ortakAdSoyad,
+                prefixIcon: const Icon(Icons.person_outline),
+                border: const OutlineInputBorder(),
               ),
               validator: (v) =>
-                  (v?.trim() ?? '').length < 2 ? 'Ad zorunludur' : null,
+                  (v?.trim() ?? '').length < 2 ? l10n.butAdZorunlu : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -423,19 +442,20 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
               enabled: !_submitting,
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
-                labelText:
-                    _isEdit ? 'Cep telefonu (opsiyonel)' : 'Cep telefonu',
-                hintText: 'örn. 0532 111 22 03',
+                labelText: _isEdit
+                    ? l10n.personelTelefonOpsiyonel
+                    : l10n.ortakCepTelefonu,
+                hintText: l10n.ortakTelefonIpucu,
                 prefixIcon: const Icon(Icons.phone_outlined),
                 border: const OutlineInputBorder(),
                 helperText: _isEdit
-                    ? 'Boş bırakırsanız değişmez.'
-                    : 'Giriş anahtarı (global benzersiz).',
+                    ? l10n.personelBosBirakDegismezNokta
+                    : l10n.sakinGirisAnahtari,
               ),
               // Duzenlemede telefon opsiyonel (bos = degismez); eklemede zorunlu.
               validator: (v) => _isEdit || (v?.trim() ?? '').isNotEmpty
                   ? null
-                  : 'Telefon zorunludur',
+                  : l10n.ortakTelefonZorunlu,
             ),
             const SizedBox(height: 12),
             // Parola alani YALNIZ eklemede; duzenlemede ayri "Parola sıfırla".
@@ -444,13 +464,14 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
                 controller: _passwordCtrl,
                 enabled: !_submitting,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Parola (opsiyonel)',
-                  helperText: 'Boş bırakırsanız geçici kod üretilir',
-                  prefixIcon: Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.sakinParolaOpsiyonel,
+                  helperText: l10n.sakinBosBirakKod,
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (v) => (v ?? '').isEmpty ? null : passwordError(v),
+                validator: (v) =>
+                    (v ?? '').isEmpty ? null : parolaHataMetni(l10n, v),
               ),
               const SizedBox(height: 16),
             ],
@@ -463,7 +484,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2.5),
                     )
-                  : Text(_isEdit ? 'Güncelle' : 'Ekle'),
+                  : Text(_isEdit ? l10n.ortakGuncelle : l10n.ortakEkle),
             ),
           ],
         ),
@@ -496,7 +517,7 @@ class _EmptyState extends StatelessWidget {
             const Icon(Icons.groups_outlined, size: 48),
             const SizedBox(height: 12),
             Text(
-              'Henüz saha personeli yok.\nSağ alttan ekleyebilirsiniz.',
+              context.l10n.personelYok,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -527,7 +548,10 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            FilledButton.tonal(onPressed: onRetry, child: const Text('Tekrar dene')),
+            FilledButton.tonal(
+              onPressed: onRetry,
+              child: Text(context.l10n.ortakTekrarDene),
+            ),
           ],
         ),
       ),

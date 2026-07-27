@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../../push/presentation/push_registrar.dart';
 import '../data/auth_repository_impl.dart';
+import '../domain/giris_hatasi.dart';
 
 enum AuthStatus {
   /// Acilista saklanan oturum henuz kontrol edilmedi.
@@ -21,6 +22,7 @@ class AuthState {
     this.status = AuthStatus.unknown,
     this.submitting = false,
     this.errorMessage,
+    this.hataKimligi,
     this.setupToken,
   });
 
@@ -29,8 +31,11 @@ class AuthState {
   /// Login istegi devam ediyor mu (buton spinner'i icin).
   final bool submitting;
 
-  /// Sozlesme hata zarfindan turetilmis, kullaniciya gosterilecek mesaj.
+  /// Hata KANALI ikilidir (README §15): [errorMessage] sozlesme hata
+  /// zarfindan gelen SUNUCU metnini, [hataKimligi] yerellestirilebilir
+  /// kimligi tasir (denetleyicide `BuildContext` yok).
   final String? errorMessage;
+  final GirisAkisHatasi? hataKimligi;
 
   /// Sakinin gecici kodla ILK girisinde donen kisa omurlu parola-kurulum
   /// token'i. Dolu ise router parola belirleme ekranina yonlendirir.
@@ -40,6 +45,7 @@ class AuthState {
     AuthStatus? status,
     bool? submitting,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     Object? setupToken = _sentinel,
   }) {
     return AuthState(
@@ -48,6 +54,9 @@ class AuthState {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as GirisAkisHatasi?,
       setupToken:
           setupToken == _sentinel ? this.setupToken : setupToken as String?,
     );
@@ -81,7 +90,11 @@ class AuthController extends Notifier<AuthState> {
     required String password,
     bool rememberMe = false,
   }) async {
-    state = state.copyWith(submitting: true, errorMessage: null);
+    state = state.copyWith(
+      submitting: true,
+      errorMessage: null,
+      hataKimligi: null,
+    );
     try {
       final result = await ref.read(authRepositoryProvider).loginPhone(
             phone: phone,
@@ -102,11 +115,16 @@ class AuthController extends Notifier<AuthState> {
         );
       }
     } on ApiException catch (e) {
-      state = state.copyWith(submitting: false, errorMessage: e.message);
+      state = state.copyWith(
+        submitting: false,
+        errorMessage: e.message,
+        hataKimligi: null,
+      );
     } catch (_) {
       state = state.copyWith(
         submitting: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: GirisAkisHatasi.beklenmeyen,
       );
     }
   }
@@ -116,7 +134,11 @@ class AuthController extends Notifier<AuthState> {
   Future<void> submitNewPassword(String newPassword) async {
     final setupToken = state.setupToken;
     if (setupToken == null) return;
-    state = state.copyWith(submitting: true, errorMessage: null);
+    state = state.copyWith(
+      submitting: true,
+      errorMessage: null,
+      hataKimligi: null,
+    );
     try {
       await ref.read(authRepositoryProvider).setPassword(
             setupToken: setupToken,
@@ -136,19 +158,25 @@ class AuthController extends Notifier<AuthState> {
       state = state.copyWith(
         submitting: false,
         errorMessage: e.message,
+        hataKimligi: null,
         setupToken: dead ? null : setupToken,
       );
     } catch (_) {
       state = state.copyWith(
         submitting: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: GirisAkisHatasi.beklenmeyen,
       );
     }
   }
 
   /// Parola kurulumundan vazgec (login'e don).
   void cancelPasswordSetup() {
-    state = state.copyWith(setupToken: null, errorMessage: null);
+    state = state.copyWith(
+      setupToken: null,
+      errorMessage: null,
+      hataKimligi: null,
+    );
   }
 
   /// Ilk giristeki "beni hatirla" tercihi; parola kurulumu tamamlaninca
@@ -175,7 +203,8 @@ class AuthController extends Notifier<AuthState> {
     state = state.copyWith(
       status: AuthStatus.unauthenticated,
       submitting: false,
-      errorMessage: 'Oturumunuz sona erdi. Lütfen tekrar giriş yapın.',
+      errorMessage: null,
+      hataKimligi: GirisAkisHatasi.oturumSonaErdi,
     );
   }
 }

@@ -2982,4 +2982,171 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ortakKopyalandi => 'Скопировано';
+
+  @override
+  String get girisParolaVeyaKod => 'Пароль или временный код';
+
+  @override
+  String get girisIlkKodIpucu =>
+      'При первом входе введите временный код, полученный от управления.';
+
+  @override
+  String get girisBeniHatirla => 'Запомнить меня';
+
+  @override
+  String get girisYap => 'Войти';
+
+  @override
+  String get girisOturumSonaErdi => 'Сеанс истёк. Пожалуйста, войдите снова.';
+
+  @override
+  String get parolaBelirleBaslik => 'Задайте пароль';
+
+  @override
+  String get parolaBelirleAciklama =>
+      'Вы вошли впервые по временному коду. Чтобы продолжить, создайте постоянный пароль; в дальнейшем вы будете входить по номеру квартиры и этому паролю.';
+
+  @override
+  String get parolaBelirleButon => 'Задать пароль';
+
+  @override
+  String get parolaGiriseDon => 'Вернуться к входу';
+
+  @override
+  String get ortakParolaZorunlu => 'Пароль обязателен';
+
+  @override
+  String get ortakYeniParola => 'Новый пароль';
+
+  @override
+  String get ortakYeniParolaTekrar => 'Новый пароль (повторно)';
+
+  @override
+  String get ortakYeniParolaZorunlu => 'Новый пароль обязателен';
+
+  @override
+  String get ortakParolalarEslesmiyor => 'Пароли не совпадают';
+
+  @override
+  String get parolaKuraliKisa => 'Не менее 8 символов';
+
+  @override
+  String get parolaKuraliBuyukHarf =>
+      'Должен содержать хотя бы одну заглавную букву';
+
+  @override
+  String get parolaKuraliRakam => 'Должен содержать хотя бы одну цифру';
+
+  @override
+  String get parolaKuraliSembol =>
+      'Должен содержать хотя бы один символ (! ? @ # . -)';
+
+  @override
+  String get profilYuklenemedi => 'Не удалось загрузить профиль.';
+
+  @override
+  String get profilNumaraYok => 'Номер не указан';
+
+  @override
+  String get profilFotoBaslik => 'Фото профиля';
+
+  @override
+  String get profilFotoSec => 'Выбрать фото';
+
+  @override
+  String get profilFotoGuncellendi => 'Фото профиля обновлено ✓';
+
+  @override
+  String get profilFotoKaldirildi => 'Фото профиля удалено';
+
+  @override
+  String get ortakGaleri => 'Галерея';
+
+  @override
+  String get profilParolaDegistir => 'Смена пароля';
+
+  @override
+  String get profilMevcutParola => 'Текущий пароль';
+
+  @override
+  String get profilMevcutParolaZorunlu => 'Текущий пароль обязателен';
+
+  @override
+  String get profilParolaGuncelle => 'Обновить пароль';
+
+  @override
+  String get profilParolaGuncellendi => 'Пароль обновлён ✓';
+
+  @override
+  String get profilTelefon => 'Телефон';
+
+  @override
+  String get profilTelefonIpucu => 'напр. +905551112233';
+
+  @override
+  String get profilAranabilir => 'Доступен для звонка';
+
+  @override
+  String get profilAranabilirAlt =>
+      'Уполномоченные роли (звонок по согласию) смогут увидеть ваш номер';
+
+  @override
+  String get profilIletisimKaydet => 'Сохранить контакт';
+
+  @override
+  String get profilIletisimGuncellendi => 'Контактные данные обновлены ✓';
+
+  @override
+  String get personelEkle => 'Добавить сотрудника';
+
+  @override
+  String get personelDuzenle => 'Изменить сотрудника';
+
+  @override
+  String get personelListelenemedi =>
+      'Не удалось загрузить список сотрудников.';
+
+  @override
+  String get personelPasiflestir => 'Деактивировать';
+
+  @override
+  String get personelAktiflestir => 'Активировать';
+
+  @override
+  String get personelPasiflestirildi => 'Деактивирован ✓';
+
+  @override
+  String get personelAktiflestirildi => 'Активирован ✓';
+
+  @override
+  String personelSifirlaGovde(Object ad) {
+    return 'Для $ad будет создан новый временный код; старый пароль перестанет работать.';
+  }
+
+  @override
+  String get personelYeniKodMesaji =>
+      'Новый временный код. Передайте его сотруднику: он входит по телефону + этому коду и задаёт пароль.';
+
+  @override
+  String get personelGuncellendi => 'Сотрудник обновлён ✓';
+
+  @override
+  String get personelEklendi => 'Сотрудник добавлен ✓';
+
+  @override
+  String get personelEklendiKod =>
+      'Сотрудник добавлен. Передайте ему этот код: он входит по телефону + этому коду и задаёт пароль.';
+
+  @override
+  String get personelFoto => 'Фото';
+
+  @override
+  String get personelTelefonOpsiyonel => 'Мобильный номер (необязательно)';
+
+  @override
+  String get personelBosBirakDegismezNokta => 'Оставьте пустым — не изменится.';
+
+  @override
+  String get personelYok =>
+      'Сотрудников пока нет.\nДобавьте кнопкой справа снизу.';
 }

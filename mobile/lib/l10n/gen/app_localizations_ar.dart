@@ -3003,4 +3003,171 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ortakKopyalandi => 'تم النسخ';
+
+  @override
+  String get girisParolaVeyaKod => 'كلمة المرور أو الرمز المؤقت';
+
+  @override
+  String get girisIlkKodIpucu =>
+      'في أول تسجيل دخول، أدخل الرمز المؤقت الذي حصلت عليه من الإدارة.';
+
+  @override
+  String get girisBeniHatirla => 'تذكّرني';
+
+  @override
+  String get girisYap => 'تسجيل الدخول';
+
+  @override
+  String get girisOturumSonaErdi =>
+      'انتهت صلاحية جلستك. الرجاء تسجيل الدخول مرة أخرى.';
+
+  @override
+  String get parolaBelirleBaslik => 'حدّد كلمة المرور';
+
+  @override
+  String get parolaBelirleAciklama =>
+      'لقد سجّلت الدخول لأول مرة برمز مؤقت. للمتابعة، أنشئ كلمة مرور دائمة خاصة بك؛ وستستخدم رقم الوحدة + كلمة المرور هذه في المرات القادمة.';
+
+  @override
+  String get parolaBelirleButon => 'تعيين كلمة المرور';
+
+  @override
+  String get parolaGiriseDon => 'العودة لتسجيل الدخول';
+
+  @override
+  String get ortakParolaZorunlu => 'كلمة المرور إلزامية';
+
+  @override
+  String get ortakYeniParola => 'كلمة مرور جديدة';
+
+  @override
+  String get ortakYeniParolaTekrar => 'كلمة المرور الجديدة (مرة أخرى)';
+
+  @override
+  String get ortakYeniParolaZorunlu => 'كلمة المرور الجديدة إلزامية';
+
+  @override
+  String get ortakParolalarEslesmiyor => 'كلمتا المرور غير متطابقتين';
+
+  @override
+  String get parolaKuraliKisa => 'يجب أن تكون 8 أحرف على الأقل';
+
+  @override
+  String get parolaKuraliBuyukHarf =>
+      'يجب أن تحتوي على حرف كبير واحد على الأقل';
+
+  @override
+  String get parolaKuraliRakam => 'يجب أن تحتوي على رقم واحد على الأقل';
+
+  @override
+  String get parolaKuraliSembol =>
+      'يجب أن تحتوي على رمز واحد على الأقل (! ? @ # . -)';
+
+  @override
+  String get profilYuklenemedi => 'تعذّر تحميل الملف الشخصي.';
+
+  @override
+  String get profilNumaraYok => 'لم يُدخل رقم';
+
+  @override
+  String get profilFotoBaslik => 'صورة الملف الشخصي';
+
+  @override
+  String get profilFotoSec => 'اختر صورة';
+
+  @override
+  String get profilFotoGuncellendi => 'تم تحديث صورة الملف الشخصي ✓';
+
+  @override
+  String get profilFotoKaldirildi => 'تمت إزالة صورة الملف الشخصي';
+
+  @override
+  String get ortakGaleri => 'المعرض';
+
+  @override
+  String get profilParolaDegistir => 'تغيير كلمة المرور';
+
+  @override
+  String get profilMevcutParola => 'كلمة المرور الحالية';
+
+  @override
+  String get profilMevcutParolaZorunlu => 'كلمة المرور الحالية إلزامية';
+
+  @override
+  String get profilParolaGuncelle => 'تحديث كلمة المرور';
+
+  @override
+  String get profilParolaGuncellendi => 'تم تحديث كلمة المرور ✓';
+
+  @override
+  String get profilTelefon => 'الهاتف';
+
+  @override
+  String get profilTelefonIpucu => 'مثال: +905551112233';
+
+  @override
+  String get profilAranabilir => 'قابل للاتصال';
+
+  @override
+  String get profilAranabilirAlt =>
+      'يمكن للأدوار المصرّح لها (اتصال يستلزم الموافقة) الوصول إلى رقمك';
+
+  @override
+  String get profilIletisimKaydet => 'حفظ معلومات الاتصال';
+
+  @override
+  String get profilIletisimGuncellendi => 'تم تحديث معلومات الاتصال ✓';
+
+  @override
+  String get personelEkle => 'إضافة موظف';
+
+  @override
+  String get personelDuzenle => 'تعديل الموظف';
+
+  @override
+  String get personelListelenemedi => 'تعذّر إدراج الموظفين.';
+
+  @override
+  String get personelPasiflestir => 'تعطيل';
+
+  @override
+  String get personelAktiflestir => 'تنشيط';
+
+  @override
+  String get personelPasiflestirildi => 'تم التعطيل ✓';
+
+  @override
+  String get personelAktiflestirildi => 'تم التنشيط ✓';
+
+  @override
+  String personelSifirlaGovde(Object ad) {
+    return 'سيتم إنشاء رمز مؤقت جديد لـ $ad؛ وتصبح كلمة المرور القديمة غير صالحة.';
+  }
+
+  @override
+  String get personelYeniKodMesaji =>
+      'رمز مؤقت جديد. سلّمه للموظف؛ يسجّل الدخول بالهاتف + هذا الرمز ثم يحدّد كلمة المرور.';
+
+  @override
+  String get personelGuncellendi => 'تم تحديث الموظف ✓';
+
+  @override
+  String get personelEklendi => 'تمت إضافة الموظف ✓';
+
+  @override
+  String get personelEklendiKod =>
+      'تمت إضافة الموظف. سلّمه هذا الرمز؛ يسجّل الدخول بالهاتف + هذا الرمز ثم يحدّد كلمة المرور.';
+
+  @override
+  String get personelFoto => 'صورة';
+
+  @override
+  String get personelTelefonOpsiyonel => 'رقم الجوال (اختياري)';
+
+  @override
+  String get personelBosBirakDegismezNokta => 'اتركه فارغاً ليبقى كما هو.';
+
+  @override
+  String get personelYok =>
+      'لا يوجد موظفو ميدان بعد.\nيمكنك الإضافة من أسفل اليمين.';
 }

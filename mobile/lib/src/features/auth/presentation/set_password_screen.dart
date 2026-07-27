@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/l10n.dart';
 import '../../../core/validators/password_rule.dart';
 import 'auth_controller.dart';
+import 'giris_hata_metni.dart';
 
 /// Sakinin gecici kodla ILK girisinden sonraki ZORUNLU kalici parola
 /// belirleme ekrani. Basarida oturum acilir (router ana ekrana goturur);
@@ -39,6 +41,8 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
     final submitting = auth.submitting;
+    final l10n = context.l10n;
+    final hata = girisHatasiCoz(l10n, auth.hataKimligi, auth.errorMessage);
 
     return Scaffold(
       body: SafeArea(
@@ -56,15 +60,13 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                     const Icon(Icons.password_outlined, size: 64),
                     const SizedBox(height: 16),
                     Text(
-                      'Parolanızı belirleyin',
+                      l10n.parolaBelirleBaslik,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Geçici kodla ilk girişinizi yaptınız. Devam etmek için '
-                      'kendi kalıcı parolanızı oluşturun; sonraki girişlerde '
-                      'daire no + bu parolayı kullanacaksınız.',
+                      l10n.parolaBelirleAciklama,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -75,7 +77,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                       obscureText: _obscure,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
-                        labelText: 'Yeni parola',
+                        labelText: l10n.ortakYeniParola,
                         prefixIcon: const Icon(Icons.lock_outline),
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
@@ -87,8 +89,9 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
-                      validator: (v) =>
-                          (v ?? '').isEmpty ? 'Parola zorunludur' : passwordError(v),
+                      validator: (v) => (v ?? '').isEmpty
+                          ? l10n.ortakParolaZorunlu
+                          : parolaHataMetni(l10n, v),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -97,17 +100,18 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                       obscureText: _obscure,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
-                      decoration: const InputDecoration(
-                        labelText: 'Yeni parola (tekrar)',
-                        prefixIcon: Icon(Icons.lock_outline),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.ortakYeniParolaTekrar,
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        border: const OutlineInputBorder(),
                       ),
-                      validator: (v) =>
-                          v == _passwordCtrl.text ? null : 'Parolalar eşleşmiyor',
+                      validator: (v) => v == _passwordCtrl.text
+                          ? null
+                          : l10n.ortakParolalarEslesmiyor,
                     ),
-                    if (auth.errorMessage != null) ...[
+                    if (hata != null) ...[
                       const SizedBox(height: 16),
-                      _ErrorBanner(message: auth.errorMessage!),
+                      _ErrorBanner(message: hata),
                     ],
                     const SizedBox(height: 24),
                     FilledButton(
@@ -121,7 +125,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                               width: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.5),
                             )
-                          : const Text('Parolayı belirle'),
+                          : Text(l10n.parolaBelirleButon),
                     ),
                     const SizedBox(height: 8),
                     TextButton(
@@ -130,7 +134,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                           : () => ref
                               .read(authControllerProvider.notifier)
                               .cancelPasswordSetup(),
-                      child: const Text('Girişe dön'),
+                      child: Text(l10n.parolaGiriseDon),
                     ),
                   ],
                 ),

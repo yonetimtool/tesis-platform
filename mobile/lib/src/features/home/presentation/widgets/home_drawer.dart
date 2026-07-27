@@ -4,6 +4,7 @@ import '../../../../core/i18n/l10n.dart';
 
 import '../../../../core/theme/home_tokens.dart';
 import '../../../auth/domain/user_role.dart';
+import '../../../auth/presentation/rol_adi.dart';
 import '../../domain/home_menu.dart';
 import '../module_card_spec.dart';
 import 'home_card.dart';
@@ -50,7 +51,7 @@ class HomeDrawer extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Text(
-                role.label,
+                rolAdi(context.l10n, role),
                 style: HomeText.cardCounter.copyWith(color: s.muted),
               ),
             ),

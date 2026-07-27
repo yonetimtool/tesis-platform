@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/validators/password_rule.dart';
 import '../../auth/domain/user_role.dart';
+import '../../auth/presentation/rol_adi.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../data/avatar_api.dart';
@@ -21,12 +22,16 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(profileProvider);
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Profil'))),
+      appBar: AppBar(
+        title: Text(baslikBuyuk(l10n.kabukProfil, context.dilKodu)),
+      ),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
-          message: e is ApiException ? e.message : 'Profil yüklenemedi.',
+          // Sunucu metni varsa o gosterilir (SERVER-LOCALIZED siniri).
+          message: e is ApiException ? e.message : l10n.profilYuklenemedi,
           onRetry: () => ref.invalidate(profileProvider),
         ),
         data: (profile) => ListView(
@@ -63,7 +68,8 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final roleLabel = UserRole.fromClaim(profile.role).label;
+    final l10n = context.l10n;
+    final roleLabel = rolAdi(l10n, UserRole.fromClaim(profile.role));
     return Row(
       children: [
         CircleAvatar(
@@ -86,7 +92,7 @@ class _Header extends StatelessWidget {
               Text(
                 profile.telefon?.isNotEmpty == true
                     ? profile.telefon!
-                    : 'Numara girilmemiş',
+                    : l10n.profilNumaraYok,
                 style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
               ),
             ],
@@ -110,9 +116,12 @@ class _AvatarCard extends ConsumerStatefulWidget {
 class _AvatarCardState extends ConsumerState<_AvatarCard> {
   bool _busy = false;
 
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   Future<void> _sec(ImageSource source) async {
     if (_busy) return;
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = _l10n;
     setState(() => _busy = true);
     try {
       final file = await ref.read(imagePickerProvider).pickImage(
@@ -136,13 +145,15 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
       if (!mounted) return;
       ref.invalidate(myAvatarUrlProvider);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Profil fotoğrafı güncellendi ✓')),
+        SnackBar(content: Text(l10n.profilFotoGuncellendi)),
       );
     } on ApiException catch (e) {
       if (mounted) messenger.showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       if (mounted) {
-        messenger.showSnackBar(SnackBar(content: Text('Fotoğraf alınamadı: $e')));
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.gorevFotoAlinamadi('$e'))),
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -152,13 +163,14 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
   Future<void> _kaldir() async {
     if (_busy) return;
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = _l10n;
     setState(() => _busy = true);
     try {
       await ref.read(avatarApiProvider).setAvatar(null);
       if (!mounted) return;
       ref.invalidate(myAvatarUrlProvider);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Profil fotoğrafı kaldırıldı')),
+        SnackBar(content: Text(l10n.profilFotoKaldirildi)),
       );
     } on ApiException catch (e) {
       if (mounted) messenger.showSnackBar(SnackBar(content: Text(e.message)));
@@ -176,7 +188,7 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Kamera'),
+              title: Text(sheetContext.l10n.gorevKamera),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _sec(ImageSource.camera);
@@ -184,7 +196,7 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Galeri'),
+              title: Text(sheetContext.l10n.ortakGaleri),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _sec(ImageSource.gallery);
@@ -199,6 +211,7 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final url = ref.watch(myAvatarUrlProvider).value;
     return Card(
       child: Padding(
@@ -219,7 +232,7 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Profil fotoğrafı',
+                  Text(l10n.profilFotoBaslik,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Wrap(
@@ -237,12 +250,12 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
                                     CircularProgressIndicator(strokeWidth: 2.5),
                               )
                             : const Icon(Icons.add_a_photo_outlined, size: 18),
-                        label: const Text('Fotoğraf seç'),
+                        label: Text(l10n.profilFotoSec),
                       ),
                       if (url != null)
                         TextButton(
                           onPressed: _busy ? null : _kaldir,
-                          child: const Text('Kaldır'),
+                          child: Text(l10n.gorevKaldir),
                         ),
                     ],
                   ),
@@ -295,6 +308,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
     setState(() => _submitting = true);
     try {
       await ref.read(profileApiProvider).changePassword(
@@ -306,7 +320,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
       _newCtrl.clear();
       _confirmCtrl.clear();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Parola güncellendi ✓')),
+        SnackBar(content: Text(l10n.profilParolaGuncellendi)),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -318,6 +332,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -326,7 +341,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Parola değiştir',
+              Text(l10n.profilParolaDegistir,
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 12),
               TextFormField(
@@ -334,7 +349,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                 enabled: !_submitting,
                 obscureText: _obscure,
                 decoration: InputDecoration(
-                  labelText: 'Mevcut parola',
+                  labelText: l10n.profilMevcutParola,
                   prefixIcon: const Icon(Icons.lock_outline),
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
@@ -344,21 +359,23 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
-                validator: (v) =>
-                    (v ?? '').isEmpty ? 'Mevcut parola zorunludur' : null,
+                validator: (v) => (v ?? '').isEmpty
+                    ? l10n.profilMevcutParolaZorunlu
+                    : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _newCtrl,
                 enabled: !_submitting,
                 obscureText: _obscure,
-                decoration: const InputDecoration(
-                  labelText: 'Yeni parola',
-                  prefixIcon: Icon(Icons.lock_reset_outlined),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.ortakYeniParola,
+                  prefixIcon: const Icon(Icons.lock_reset_outlined),
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (v) =>
-                    (v ?? '').isEmpty ? 'Yeni parola zorunludur' : passwordError(v),
+                validator: (v) => (v ?? '').isEmpty
+                    ? l10n.ortakYeniParolaZorunlu
+                    : parolaHataMetni(l10n, v),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -367,13 +384,14 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                 obscureText: _obscure,
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _submit(),
-                decoration: const InputDecoration(
-                  labelText: 'Yeni parola (tekrar)',
-                  prefixIcon: Icon(Icons.lock_reset_outlined),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.ortakYeniParolaTekrar,
+                  prefixIcon: const Icon(Icons.lock_reset_outlined),
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (v) =>
-                    (v ?? '') != _newCtrl.text ? 'Parolalar eşleşmiyor' : null,
+                validator: (v) => (v ?? '') != _newCtrl.text
+                    ? l10n.ortakParolalarEslesmiyor
+                    : null,
               ),
               const SizedBox(height: 16),
               FilledButton(
@@ -386,7 +404,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2.5),
                       )
-                    : const Text('Parolayı güncelle'),
+                    : Text(l10n.profilParolaGuncelle),
               ),
             ],
           ),
@@ -426,6 +444,7 @@ class _ContactCardState extends ConsumerState<_ContactCard> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
     setState(() => _submitting = true);
     try {
       await ref.read(profileApiProvider).updateContact(
@@ -435,7 +454,7 @@ class _ContactCardState extends ConsumerState<_ContactCard> {
       if (!mounted) return;
       ref.invalidate(profileProvider);
       messenger.showSnackBar(
-        const SnackBar(content: Text('İletişim bilgileri güncellendi ✓')),
+        SnackBar(content: Text(l10n.profilIletisimGuncellendi)),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -447,34 +466,33 @@ class _ContactCardState extends ConsumerState<_ContactCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('İletişim',
+            Text(l10n.etiketIletisim,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             TextField(
               controller: _telefonCtrl,
               enabled: !_submitting,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Telefon',
-                hintText: 'örn. +905551112233',
-                prefixIcon: Icon(Icons.phone_outlined),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.profilTelefon,
+                hintText: l10n.profilTelefonIpucu,
+                prefixIcon: const Icon(Icons.phone_outlined),
+                border: const OutlineInputBorder(),
               ),
             ),
             SwitchListTile(
               value: _aranabilir,
               onChanged:
                   _submitting ? null : (v) => setState(() => _aranabilir = v),
-              title: const Text('Aranabilir'),
-              subtitle: const Text(
-                'Yetkili roller (rıza gerektiren arama) numaranıza ulaşabilir',
-              ),
+              title: Text(l10n.profilAranabilir),
+              subtitle: Text(l10n.profilAranabilirAlt),
               contentPadding: EdgeInsets.zero,
             ),
             const SizedBox(height: 8),
@@ -488,7 +506,7 @@ class _ContactCardState extends ConsumerState<_ContactCard> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2.5),
                     )
-                  : const Text('İletişimi kaydet'),
+                  : Text(l10n.profilIletisimKaydet),
             ),
           ],
         ),
@@ -517,7 +535,7 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton.tonal(
               onPressed: onRetry,
-              child: const Text('Tekrar dene'),
+              child: Text(context.l10n.ortakTekrarDene),
             ),
           ],
         ),

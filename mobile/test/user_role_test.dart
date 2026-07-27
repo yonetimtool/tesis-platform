@@ -299,12 +299,8 @@ void main() {
       }
     });
 
-    test('TR gorunen adlar (dogru diyakritikli, tutarli set)', () {
-      expect(UserRole.admin.label, 'Platform Admin');
-      expect(UserRole.yonetici.label, 'Yönetici');
-      expect(UserRole.security.label, 'Güvenlik');
-      expect(UserRole.tesisGorevlisi.label, 'Tesis Görevlisi');
-      expect(UserRole.resident.label, 'Site Sakini');
-    });
+    // TR gorunen adlar tur 8'de enum'dan KALKTI (`label` kaldirildi); artik
+    // `rolAdi(l10n, rol)` cozer ve kapsami
+    // test/giris_profil_personel_i18n_test.dart icindedir.
   });
 }

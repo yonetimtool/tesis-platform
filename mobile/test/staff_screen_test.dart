@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/staff/data/staff_api.dart';
 import 'package:mobile/src/features/staff/presentation/staff_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 // NetworkImage testte gercek ag'a cikar (400 -> test hatasi). Avatarli satirda
 // gecerli 1x1 seffaf PNG donduren sahte istemci kurulur.
 final _transparentPng = base64Decode(
@@ -68,7 +70,7 @@ void main() {
                     isActive: true, avatarUrl: 'https://x/a.jpg'),
               ]),
         ],
-        child: const MaterialApp(home: StaffScreen()),
+        child: l10nApp(const StaffScreen()),
       ));
       await tester.pumpAndSettle();
       expect(find.text('Guard A'), findsOneWidget);

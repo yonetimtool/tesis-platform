@@ -1560,17 +1560,20 @@ blok/kat/daire yerleşimi, toplu daire ekleme, yoğunluk göstergesi, daire
 alan formu, RSVP akışı, etkinlik formu, izin isteği/onayı + tek-seferlik kayıt
 görüntüleme) **Bütçe + Demirbaş + Kargo** (tur 6 — bütçe özeti/hareketler/
 kategoriler, finansal özet, sakin "Site Bütçesi" şeffaflık ekranı, NFC zimmet
-akışı + üzerimdekiler, kargo listesi/detay/kayıt formu) ve **Site Kuralları +
+akışı + üzerimdekiler, kargo listesi/detay/kayıt formu) **Site Kuralları +
 Duyurular + Site Sakinleri** (tur 7 — kural listesi/arama/detay/form, duyuru
 kartı/menüsü/formu + tam ekran görsel, sakin listesi/ekle/düzenle/parola
-sıfırlama ve ortak **geçici kod dialogu**). Kalan modüllerin dışa alımı mekanik
-bir iştir ve aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
+sıfırlama ve ortak **geçici kod dialogu**) ve **Giriş/Auth + Profil + Saha
+Personeli** (tur 8 — telefonla giriş, zorunlu parola belirleme, oturum-düştü
+mesajı, self-servis profil (avatar/parola/iletişim), personel listesi/form/
+parola sıfırlama ve ortak **parola kuralı**). Kalan modüllerin dışa alımı
+mekanik bir iştir ve aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
 
 ### Mimari
 
 | Parça | Yer |
 |---|---|
-| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**797 anahtar × 7**, boşluk yok) |
+| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**849 anahtar × 7**, boşluk yok) |
 | gen-l10n yapılandırması | `l10n.yaml` (şablon: `app_tr.arb`) |
 | Üretilen sınıf | `lib/l10n/gen/app_localizations.dart` (**repoda tutulur** → taze klonda `analyze`/`test` ek adım istemez; yenilemek için `flutter gen-l10n`) |
 | Dil seçimi + kalıcılık | `lib/src/core/i18n/locale_controller.dart` (`AppDil`, `LocaleController`, `ui.locale` anahtarı — tema ile aynı güvenli depo) |
@@ -1693,7 +1696,9 @@ değişince yönlendirme bozulurdu. Artık:
 | `taskKategoriStyle().ad` **(null = kategorisiz)** | `tasks/presentation/task_tip_style.dart` | `style.ad ?? l10n.gorevKategoriDiger` |
 | `TaskOncelik` (düşük/orta/yüksek) | aynı dosya | `oncelikEtiketi(l10n, kimlik)` |
 | `GorevAkisHatasi` / `DevriyeAkisHatasi` | `*/domain/*_hata.dart` | `gorevHataMetni` / `devriyeHataMetni` |
-| `UserRole` (rol adları) | `auth/domain/user_role.dart` | `rolAdi(l10n, rol)` (`auth/presentation/rol_adi.dart` — tur 4'te tasks'tan taşındı: ikinci tüketici çıktı) |
+| `UserRole` (rol adları) | `auth/domain/user_role.dart` | `rolAdi(l10n, rol)` (`auth/presentation/rol_adi.dart` — tur 4'te tasks'tan taşındı; **`label` alanı tur 8'de KALDIRILDI**, tek kaynak çözücü) |
+| `ParolaKuraliHatasi` (parola politikası) | `core/validators/password_rule.dart` | `parolaKuraliMetni` / `parolaHataMetni` — 4 ekran ortak kullanır |
+| `GirisAkisHatasi` (oturum/giriş) | `auth/domain/giris_hatasi.dart` | `girisHataMetni` (`auth/presentation/`) |
 | `DensityRenk` | `building_map/domain/building_map_models.dart` | **`label` alanı KALDIRILDI** (ölü TR metin; gösterge eşik sayısı yazar) |
 | `UnitComplaintKategori` | `unit_complaints/domain/unit_complaint_models.dart` | `unitComplaintKategoriAdi(l10n, k)` |
 | `TalepDurum` | `complaints/domain/complaint_models.dart` | `_durumLabel(l10n, durum)` |
@@ -1836,6 +1841,38 @@ varlığı; **RTL** (kural formu, duyuru kartı+formu, sakin listesi+formu) ve
 > gerekir (`_sifirla`). Tur 3–6 döngüleri aynı override kümesini kullandığı
 > için bu tuzak o turlarda görünmemişti.
 
+`test/giris_profil_personel_i18n_test.dart` (17 test — tur 8): girişte
+**tr→en→ru**, profilde **tr→en→fr**, personelde **tr→en→es** dil değişimi; boş
+form doğrulamasının aktif dilde yazması; `parolaKuraliHatasi`nın **kimlik**
+döndürmesi + 4 kuralın 7 dilde karşılığı; `rolAdi`nın 6 rol × 7 dil kapsamı;
+`GirisAkisHatasi` çözümü (kimlik önce, sonra sunucu metni); rol segmentlerinin
+`rolAdi` ile çizilmesi; **RTL** (giriş formu, profil kartları, personel
+listesi+formu) ve **320 dp** senaryoları.
+
+> **Tur 8'in bulduğu ÜÇÜNCÜ kör nokta — `enum.label` grep'e görünmez.**
+> Ölçüm **string literalleri** sayar; `role.label` bir literal DEĞİLDİR. Tur
+> 2'de "bitti" ilan edilen `home` modülünde iki çağrı yeri
+> (`home_drawer.dart`, `resident_home_screen.dart`) rol adını `UserRole.label`
+> TR sabitinden yazıyordu: Arapça arayüzde çekmecede "Güvenlik" görünüyordu ve
+> §15 sayacı **0** diyordu. `label` bu turda kaldırılınca derleyici iki yeri de
+> gösterdi. Ders: bir modülü kapatırken **enum alanlarının tüketicilerini de**
+> tara (`grep -rn "\.label"`), yalnız literalleri değil.
+
+> **TR sözcük birliği (bilinçli değişiklik):** `label` döneminde admin/yönetici
+> için iki ayrı Türkçe metin dolaşıyordu — enum'da "Platform Admin"/"Yönetici",
+> çözücüde (tur 4'ten beri görev/talep ekranlarında görünen) "Platform
+> Admini"/"Site Yöneticisi". `label` kalkınca **çözücünün metni tek kaynak**
+> oldu; profil başlığı, personel satırı ve çekmece bu iki rolde artık "Platform
+> Admini"/"Site Yöneticisi" yazıyor. Alternatif (ARB'yi enum'a uydurmak) 7 dilde
+> zaten yayınlanmış metni geri almak olurdu.
+
+> **Tur 8 RTL/dar-ekran taraması: bulgu YOK.** Üç ekranın hepsi tek kolon
+> (`ConstrainedBox(maxWidth: 420)` + `CrossAxisAlignment.stretch`) ve yön-sabit
+> hizalama/`EdgeInsets.only(left/right)` hiç kullanılmıyor; 320/360 dp × tr/ar/de
+> × (giriş, parola belirleme, profil, personel listesi/menü/form) = 18 senaryo
+> temiz geçti. Sonda yine de kayda geçti: **bulgu olmaması taramanın
+> yapılmadığı anlamına gelmez.**
+
 `test/flutter_test_config.dart` süite başına bir kez `initializeDateFormatting()`
 çağırır: eşleyicileri doğrudan çağıran saf birim testleri aksi halde
 `LocaleDataException` ile düşer (uygulamada bu `main.dart`'ta yapılır).
@@ -1850,7 +1887,9 @@ ile düşer.
 > `building_schematic_test` ve `complaints_screen_test` (33 test), tur 6'da
 > `budget_screen_test`, `financial_summary_screen_test`,
 > `site_budget_screen_test` ve `kargo_screen_test`, tur 7'de
-`site_kurali_screen_test` ve `announcements_screen_test` böyle geçirildi; TR metin
+`site_kurali_screen_test` ve `announcements_screen_test`, tur 8'de
+`staff_screen_test`, `login_screen_phone_test` ve `login_remember_checkbox_test`
+böyle geçirildi; TR metin
 > beklentileri **değişmediği** için başka düzeltme gerekmedi (çeviri
 > anahtarlarının TR değerleri birebir korundu). Tur 6'da ek olarak
 > `budget_models_test` içindeki iki `BudgetTip.label` iddiası düştü — alan
@@ -1962,13 +2001,33 @@ iki denetleyiciye `hataKimligi` (`AkisHatasi`) eklendi ve ortak
 **açıklama satırı** çağıranda kalır, çünkü bağlama göre değişir (sakin ekleme /
 parola sıfırlama / personel ekleme).
 
-> **Bilinçli olarak ERTELENEN (tur 7 kapsam notu):** sakin ekleme formundaki
-> opsiyonel parola alanı hâlâ `core/validators/password_rule.dart` içindeki
-> **Türkçe** metinlerle doğrular ("En az 8 karakter olmalı" vb.). `passwordError`
-> 4 çağrı yerine sahiptir ve **üçü bu turun kapsamı dışındadır** (`auth`,
-> `profile`, `staff`); doğru çözüm bir kimlik enum'u + çözücü ve dört çağrı
-> yerinin AYNI turda taşınmasıdır — `auth` turuna bırakıldı. §15 sayımında
-> `validators: 5` olarak görünür.
+> **Tur 7'de ERTELENEN, tur 8'de KAPANDI:** parola kuralı (`passwordError`)
+> Türkçe metin döndürüyordu ve 4 çağrı yeri vardı (`auth`, `profile`, `staff`,
+> `residents`) — üçü tur 7'nin kapsamı dışında olduğu için ertelenmişti. Tur 8
+> bu üç modülü kapsadığı için kural **kimliğe** çevrildi
+> (`ParolaKuraliHatasi` + `parolaKuraliMetni`) ve dört çağrı yeri AYNI commit'te
+> taşındı.
+
+**Tur 8 (auth + profile + staff) ölçümü — aynı komut:**
+
+| | Toplam string | Dosya | `auth` | `profile` | `staff` | `validators` |
+|---|---|---|---|---|---|---|
+| Tur 8 öncesi | 317 | 44 | **20** | **18** | **25** | **5** |
+| Tur 8 sonrası | **250** | 38 | **0** | **0** | **0** | **1** (teknik) |
+
+67 string dışa alındı; **52 yeni ARB anahtarı × 7 dil** (797 → 849) + mevcut
+anahtarların yeniden kullanımı (`ortakCepTelefonu`, `ortakTelefonIpucu`,
+`ortakTelefonZorunlu`, `ortakAdSoyad`, `ortakEkle`, `ortakGuncelle`,
+`ortakDuzenle`, `ortakVazgec`, `ortakTekrarDene`, `ortakBeklenmeyenHata`,
+`kabukProfil`, `modulPersonel`, `etiketIletisim`, `devriyePasif`,
+`butAdZorunlu`, `sakinParolaSifirla`, `sakinParolaSifirlaOnay`, `sakinSifirla`,
+`sakinGirisAnahtari`, `sakinParolaOpsiyonel`, `sakinBosBirakKod`,
+`gorevKamera`, `gorevKaldir`, `gorevFotoAlinamadi`) — tur 7'de eklenen
+`ortak*` anahtarların **altısı** bu turda ilk kez ikinci tüketicisini buldu.
+
+Kalan `validators: 1`, parola kuralındaki `'[A-ZÇĞİÖŞÜ]'` **regex karakter
+sınıfıdır** — Türkçe büyük harfleri tanıyan teknik sabit, kullanıcı metni
+değil (bkz. bilinçli istisnalar).
 
 > **Tur 5'te bulunan SESSİZ HATA SINIFI — ICU placeholder sırası.** ARB'de
 > `placeholders` metadata'sı **yoksa** gen-l10n parametreleri **alfabetik**
@@ -2004,7 +2063,11 @@ grep -rnE "(switch|case|==)\s*\(?\s*['\"][^'\"]*[çğıöşü…]" \
   lib/src/features/tasks lib/src/features/patrol \
   lib/src/features/budget lib/src/features/assets lib/src/features/kargo \
   lib/src/features/site_kurali lib/src/features/announcements \
-  lib/src/features/residents
+  lib/src/features/residents lib/src/features/auth \
+  lib/src/features/profile lib/src/features/staff
+
+# Tur 8 dersi: enum ALANLARI da taranir (grep literal gormez)
+grep -rn "\.label" lib/src --include=*.dart | grep -v label(Text|Large|Medium|Small)
 ```
 
 Kalan 2 `home` stringi `home_marka.dart` içindeki **marka kilidi**dir (`Yönetio`,
@@ -2032,23 +2095,20 @@ rakamı ölçümün o anki halidir; tur 2 başında aynı komut 1.115/100 verdi 
 arada başka modüle dokunulmadı, fark ara commit'lerdeki küçük düzenlemelerden
 gelir.)
 
-Kalan envanter (modül başına, **tur 7 sonrası**; `tasks`, `patrol`,
+Kalan envanter (modül başına, **tur 8 sonrası**; `tasks`, `patrol`,
 `building_map`, `complaints`, `rezervasyon`, `etkinlik`, `unit_access`, `budget`,
-`assets`, `kargo`, `site_kurali`, `announcements` ve `residents` listeden
-düştü):
+`assets`, `kargo`, `site_kurali`, `announcements`, `residents`, `auth`,
+`profile` ve `staff` listeden düştü):
 
 | Modül | Kalan string |
 |---|---|
 | `dis_hizmet` | 26 |
-| `staff` | 25 |
 | `nfc` | 25 |
 | `integrations` | 23 |
 | `transparency` | 22 |
 | `visitors` | 22 |
-| `auth` | 20 |
 | `reports` | 20 |
 | `dues` | 18 |
-| `profile` | 18 |
 | `checkpoints` | 16 |
 | `scan` | 14 |
 | `support` | 13 |
@@ -2057,7 +2117,6 @@ düştü):
 | `shifts` | 7 |
 | `yonetici_iletisim` | 6 |
 | `settings` | 6 |
-| `validators` | 5 (parola kuralı — `auth` turuna bırakıldı) |
 | `error` | 3 |
 | `home` | 2 (marka kilidi — istisna) |
 | `i18n` | 2 |
@@ -2066,6 +2125,7 @@ düştü):
 | `main.dart` | 1 |
 | `notifications` | 1 |
 | `push` | 1 |
+| `validators` | 1 (regex sabiti — istisna) |
 
 **Bilinçli istisnalar (çevrilmez):**
 
@@ -2073,7 +2133,9 @@ düştü):
   başlığı logo lockup'ının parçasıdır (`home_marka.dart`, `yonetio_logo.dart`);
   marka adı dile göre değişmez.
 * **Teknik sabitler** — enum tel değerleri (`hls`, `mp4`, `rtsp`, `acik`,
-  `kapali`), rota yolları, `HLS`/`MP4`/`RTSP` etiketleri, URL örnekleri.
+  `kapali`), rota yolları, `HLS`/`MP4`/`RTSP` etiketleri, URL örnekleri ve
+  **regex karakter sınıfları** (`'[A-ZÇĞİÖŞÜ]'` — parola kuralı Türkçe büyük
+  harfleri tanır; dile göre değişmez).
 * **Seed/demo metinleri** — backend seed verisi (kamera adları, kural
   başlıkları) sunucudan gelir; istemci çevirmez.
 * **Kod içi yorum ve `debugPrint`** — kullanıcıya görünmez.
