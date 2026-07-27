@@ -285,7 +285,7 @@ export default function UsersPage() {
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </motion.form>
@@ -331,7 +331,7 @@ export default function UsersPage() {
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex justify-end gap-2">
                       <button className={btnGhost} onClick={() => openEdit(u)}>
-                        Düzenle
+                        {t("ortakDuzenle")}
                       </button>
                       {u.is_active ? (
                         <button className={btnGhost} onClick={() => setActive(u, false)}>{t("ortakPasiflestir")}</button>

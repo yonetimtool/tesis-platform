@@ -199,7 +199,18 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
     expect(sizanlar).toEqual([]);
   });
 
-  it("PANELIN TAMAMINDA Turkce sabit kalmadi (tur 20)", () => {
+  // TUR 21 — GOZLE SURUS DERSI. Panel 7 dilde gercekten calistirilinca
+  // (login + her sayfa + her dil, SUNUCUNUN URETTIGI HTML incelendi) uc
+  // Turkce paragraf ciktı. Sebep: onceki taramalar yalniz STRING
+  // LITERALLERINE bakiyordu; JSX icindeki COK SATIRLI DUZ METIN ne tirnak
+  // icindedir ne de tek satirda `>...<` kalibina uyar — yani gorunmezdi.
+  //
+  // Asagidaki tarama artik onu da olcuyor ve kalan is bir CIRCIR (ratchet)
+  // ile kilitlendi: sayi ARTAMAZ. Kalan satirlar README'de dosya dosya
+  // listeli; her turda bu esik dusurulerek sifira inilecek.
+  const KALAN_ESIK = 67;
+
+  it("cok satirli JSX metni: kalan Turkce sayisi ARTMASIN (tur 21 circiri)", () => {
     // Tur 20'de son sayfa da cevrildi; artik dosya listesi degil TUM kaynak
     // taranir. Yeni bir sayfa Turkce sabitle eklenirse bu test kirilir.
     const TR = /[çğıöşüÇĞİÖŞÜ]/;
@@ -227,10 +238,25 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
                 sizanlar.push(`${göreli}:${i + 1} ${v}`);
               }
             }
+            // COK SATIRLI JSX METNI (tur 21'de gozle surus bunu buldu):
+            // string literali DEGIL, dogrudan JSX icindeki duz metin. Satir
+            // ne `"` ne `'` icerir; `>` ve `<` de baska satirlardadir —
+            // dolayisiyla yukaridaki literal taramasi ONU HIC GORMEZ.
+            const cipl = kod
+              .replace(/<[^>]*>/g, " ")
+              .replace(/\{[^}]*\}/g, " ")
+              .trim();
+            if (TR.test(cipl) && !MARKA.test(cipl)) {
+              sizanlar.push(`${göreli}:${i + 1} (JSX metni) ${cipl.slice(0, 60)}`);
+            }
           });
       }
     };
     ["app", "components", "lib"].forEach(tara);
-    expect(sizanlar).toEqual([]);
+    // Circir: yeni Turkce metin EKLENEMEZ; mevcutlar tur tur eritilir.
+    expect(
+      sizanlar.length,
+      `kalan ${sizanlar.length} satir:\n${sizanlar.slice(0, 10).join("\n")}`,
+    ).toBeLessThanOrEqual(KALAN_ESIK);
   });
 });

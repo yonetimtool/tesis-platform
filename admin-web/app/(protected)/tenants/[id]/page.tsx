@@ -221,7 +221,7 @@ export default function TenantDetailPage() {
                     onClick={() => setNameEditing(false)}
                     disabled={nameSaving}
                   >
-                    Vazgeç
+                    {t("ortakVazgec")}
                   </button>
                 </div>
               </form>
@@ -295,7 +295,7 @@ export default function TenantDetailPage() {
                     {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
                   </button>
                   <button type="button" className={btnGhost} onClick={() => setEditing(false)}>
-                    İptal
+                    {t("ortakIptal")}
                   </button>
                 </div>
               </form>

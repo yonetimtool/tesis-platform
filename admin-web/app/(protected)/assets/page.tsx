@@ -239,7 +239,7 @@ export default function AssetsPage() {
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </motion.form>
@@ -281,7 +281,7 @@ export default function AssetsPage() {
                       {detail?.id === a.id ? "Kapat" : "Zimmet"}
                     </button>
                     <button className={btnGhost} onClick={() => openEdit(a)}>
-                      Düzenle
+                      {t("ortakDuzenle")}
                     </button>
                     <button className={btnGhost} onClick={() => setActive(a, !a.aktif)}>
                       {a.aktif ? t("ortakPasiflestir") : t("ortakAktiflestir")}

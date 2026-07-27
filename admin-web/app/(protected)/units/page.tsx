@@ -212,7 +212,7 @@ export default function UnitsPage() {
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </motion.form>
@@ -258,10 +258,10 @@ export default function UnitsPage() {
                         {detail?.id === u.id ? "Kapat" : "Detay / Aidat"}
                       </button>
                       <button className={btnGhost} onClick={() => openEdit(u)}>
-                        Düzenle
+                        {t("ortakDuzenle")}
                       </button>
                       <button className={btnDanger} onClick={() => remove(u)}>
-                        Sil
+                        {t("ortakSil")}
                       </button>
                     </div>
                   </td>

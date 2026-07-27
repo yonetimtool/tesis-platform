@@ -283,7 +283,7 @@ export default function PatrolPlansPage() {
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </motion.form>
@@ -308,20 +308,20 @@ export default function PatrolPlansPage() {
                 </span>
                 <span className="flex gap-1">
                   <button className={btnGhost} onClick={() => move(i, -1)} disabled={i === 0}>
-                    Yukarı
+                    {t("ortakYukari")}
                   </button>
                   <button
                     className={btnGhost}
                     onClick={() => move(i, 1)}
                     disabled={i === selected.length - 1}
                   >
-                    Aşağı
+                    {t("ortakAsagi")}
                   </button>
                   <button
                     className={btnDanger}
                     onClick={() => setSelected(selected.filter((x) => x !== cid))}
                   >
-                    Çıkar
+                    {t("kullaniciCikar")}
                   </button>
                 </span>
               </li>
@@ -358,7 +358,7 @@ export default function PatrolPlansPage() {
                 setAddPick("");
               }}
             >
-              Ekle
+              {t("ortakEkle")}
             </button>
           </div>
 
@@ -368,7 +368,7 @@ export default function PatrolPlansPage() {
               {assignSaving ? t("ortakKaydediliyor") : t("planAtamayiKaydet")}
             </button>
             <button className={btnGhost} onClick={() => setAssignPlan(null)}>
-              Kapat
+              {t("ortakKapat")}
             </button>
           </div>
         </motion.div>
@@ -409,10 +409,10 @@ export default function PatrolPlansPage() {
                         Noktalar
                       </button>
                       <button className={btnGhost} onClick={() => openEdit(p)}>
-                        Düzenle
+                        {t("ortakDuzenle")}
                       </button>
                       <button className={btnDanger} onClick={() => remove(p)}>
-                        Sil
+                        {t("ortakSil")}
                       </button>
                     </div>
                   </td>

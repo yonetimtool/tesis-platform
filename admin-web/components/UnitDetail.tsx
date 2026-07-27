@@ -294,7 +294,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               {pBusy ? "Kaydediliyor..." : "Tahsil et"}
             </button>
             <button type="button" className={btnGhost} onClick={() => setPOpen(false)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </form>
@@ -388,7 +388,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                 {r.user_id.slice(0, 8)} · {r.rol_tipi ?? "—"}
               </span>
               <button className={btnDanger} onClick={() => removeResident(r.user_id)}>
-                Çıkar
+                {t("kullaniciCikar")}
               </button>
             </li>
           ))}

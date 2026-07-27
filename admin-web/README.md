@@ -157,6 +157,41 @@ Turkce sabit kalmadigi her kosumda dogrulanir. Yarim cevrilmis sayfa listeye
 GIRMEZ: "bitti" gorunup karisik dilde kalmasi, hic cevrilmemis olmasindan
 daha kotudur.
 
+### Tur 21 — paneli 7 dilde GOZLE SUR
+
+Statik tarama kaynagi okur; **gozle surus** calisan panelin URETTIGI HTML'e
+bakar. Otomatiklestirildi (`/tmp` degil, tekrarlanabilir olsun diye adimlar):
+
+```bash
+npx next build && npx next start -p 3113          # panel
+curl -s -c c.txt -X POST localhost:3113/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"tenant_slug":"acme-plaza","email":"admin@acme.com","password":"Admin123!"}'
+# 7 dil x 23 sayfa: her biri icin Cookie: ui.locale=<dil> ile cek ve
+# cizilen METINDE (script/etiket ayiklanmis) su uce bak:
+#   1) <html lang> ve dir dogru mu,
+#   2) ham sozluk ANAHTARI sizmis mi (orn. "ortakKaydet" ekranda),
+#   3) TR'ye OZGU harf (ğışĞİŞ) kalmis mi — marka kelimesi haric.
+```
+
+**Sonuc: 161 sayfa-dil kontrolu, 0 bulgu** (duzeltmelerden sonra).
+
+> **NE BULDU — ve neden statik tarama goremedi.** Ilk kosum UC Turkce
+> paragraf cikardi (`building-editor`, `announcements`, `complaints`).
+> Sebep: o metinler **JSX icinde cok satirli DUZ METIN**tir — ne tirnak
+> icindedir (literal taramasi gormez) ne de tek satirda `>...<` kalibina
+> uyar. Yani tur 20'nin "sayac 3'e indi" olcumu YANILTICIYDI: tarama
+> baktigi yerde dogruydu, sorun nereye bakmadigiydi. (Ayni sinif: tur 20'de
+> `app/api` route handler'lari, tur 16'da `notify_opener`, tur 15'te
+> `_REASON_ERRORS`.)
+
+Tarama artik cok satirli JSX metnini de olcuyor ve kalan is bir **circir**
+ile kilitli (`tests/i18n.test.ts` -> `KALAN_ESIK`): sayi **artamaz**, her
+turda dusurulur. Bugunku esik **67 satir / 19 dosya**.
+
+Gozle surusun ayrica dogruladigi: 7 dilin hepsinde `<html lang>` dogru,
+Arapcada `dir="rtl"`, hicbir sayfada ham sozluk anahtari sizmiyor.
+
 ### Tur 18'de ogrenilen iki sey
 
 **Modul duzeyinde `t()` cagrilamaz** — ve cagrilabilse bile YANLIS olurdu:

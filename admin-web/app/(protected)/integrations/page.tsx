@@ -310,7 +310,7 @@ export default function IntegrationsPage() {
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </motion.form>
@@ -355,10 +355,10 @@ export default function IntegrationsPage() {
                           {testing === it.id ? "Test ediliyor..." : "Test"}
                         </button>
                         <button className={btnGhost} onClick={() => openEdit(it)}>
-                          Düzenle
+                          {t("ortakDuzenle")}
                         </button>
                         <button className={btnDanger} onClick={() => remove(it)}>
-                          Sil
+                          {t("ortakSil")}
                         </button>
                       </div>
                       {tr && (

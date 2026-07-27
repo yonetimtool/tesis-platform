@@ -102,9 +102,7 @@ export default function ComplaintsPage() {
       />
 
       <p className="text-sm text-muted">
-        Sakinlerin ve saha ekibinin ilettiği talep/arızalar. Açık talebi
-        <strong>{t("talepCoz")}</strong> ya da <strong>Reddet</strong> ile
-        sonuçlandırın; iş emrine dönüştürme (atama) mobil uygulamadan yapılır.
+        {t("talepPanelNotu", { coz: t("talepCoz"), reddet: t("talepReddet") })}
       </p>
 
       {error && <ErrorBox message={error.message} />}
@@ -338,10 +336,10 @@ function ActionForm({
           className={`${isReddet ? btnDanger : btnPrimary} disabled:opacity-60`}
           disabled={submitDisabled}
         >
-          {saving ? t("destekGonderiliyor") : isReddet ? "Reddet" : t("talepCoz")}
+          {saving ? t("destekGonderiliyor") : isReddet ? t("talepReddet") : t("talepCoz")}
         </button>
         <button type="button" className={btnGhost} onClick={onClose}>
-          İptal
+          {t("ortakIptal")}
         </button>
       </div>
     </form>

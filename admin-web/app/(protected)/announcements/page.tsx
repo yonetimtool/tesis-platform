@@ -162,9 +162,7 @@ export default function AnnouncementsPage() {
       <PageHeader title={t("kabukDuyurular")} />
 
       <p className="text-sm text-muted">
-        Duyuruyu SİTE YÖNETİCİSİ mobil uygulamadan oluşturur; panel yalnız
-        düzenleme/silme (moderasyon) içindir. Duyurular tüm rollere görünür;
-        yayınlandığında tesisin kayıtlı tüm cihazlarına bildirim denenir.
+        {t("duyuruPanelNotu")}
       </p>
 
       {error && <ErrorBox message={error.message} />}
@@ -235,7 +233,7 @@ export default function AnnouncementsPage() {
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </motion.form>
@@ -266,10 +264,10 @@ export default function AnnouncementsPage() {
               </div>
               <div className="flex shrink-0 gap-2">
                 <button className={btnGhost} onClick={() => openEdit(a)}>
-                  Düzenle
+                  {t("ortakDuzenle")}
                 </button>
                 <button className={btnDanger} onClick={() => remove(a)}>
-                  Sil
+                  {t("ortakSil")}
                 </button>
               </div>
             </div>

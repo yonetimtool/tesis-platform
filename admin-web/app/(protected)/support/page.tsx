@@ -188,7 +188,7 @@ export default function SupportPage() {
                         setCozulduIsaretle(bilet.durum !== "cozuldu");
                       }}
                     >
-                      Yanıtla
+                      {t("destekYanitla")}
                     </button>
                   </td>
                 </tr>
@@ -270,7 +270,7 @@ export default function SupportPage() {
                 }}
                 disabled={gonderiliyor}
               >
-                Vazgeç
+                {t("ortakVazgec")}
               </button>
               <button
                 className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"

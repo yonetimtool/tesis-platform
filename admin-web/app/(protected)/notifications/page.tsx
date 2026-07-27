@@ -113,14 +113,14 @@ export default function NotificationsPage() {
             onClick={() => setOffset(Math.max(0, offset - LIMIT))}
             className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-50"
           >
-            Önceki
+            {t("ortakOnceki")}
           </button>
           <button
             disabled={!canNext}
             onClick={() => setOffset(offset + LIMIT)}
             className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-50"
           >
-            Sonraki
+            {t("ortakSonraki")}
           </button>
         </div>
       </div>

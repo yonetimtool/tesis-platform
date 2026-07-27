@@ -189,7 +189,7 @@ export default function CheckpointsPage() {
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </motion.form>
@@ -229,10 +229,10 @@ export default function CheckpointsPage() {
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex justify-end gap-2">
                       <button className={btnGhost} onClick={() => openEdit(c)}>
-                        Düzenle
+                        {t("ortakDuzenle")}
                       </button>
                       <button className={btnDanger} onClick={() => remove(c)}>
-                        Sil
+                        {t("ortakSil")}
                       </button>
                     </div>
                   </td>

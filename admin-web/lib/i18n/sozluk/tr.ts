@@ -500,4 +500,18 @@ export const tr = {
   tesisYonet: "Yönet",
   // tur 20 — yukleme BFF hatalari
   yuklemeDosyaYok: "Dosya bulunamadı.",
+  // tur 21 — gozle surus: cok satirli JSX metinleri
+  binaYetkiNotu: "Bu düzenleyici panelde yalnızca platform adminine açıktır; site yöneticileri (yönetici) aynı düzenlemeyi mobil {ekran} ekranından yapar. Yetki backend'de admin+yönetici olarak tanımlıdır.",
+  duyuruPanelNotu: "Duyuruyu SİTE YÖNETİCİSİ mobil uygulamadan oluşturur; panel yalnız düzenleme/silme (moderasyon) içindir. Duyurular tüm rollere görünür; yayınlandığında tesisin kayıtlı tüm cihazlarına bildirim denenir.",
+  talepPanelNotu: "Sakinlerin ve saha ekibinin ilettiği talep/arızalar. Açık talebi {coz} ya da {reddet} ile sonuçlandırın; iş emrine dönüştürme (atama) mobil uygulamadan yapılır.",
+  talepReddet: "Reddet",
+  // tur 21 — ciplak JSX metinleri
+  kullaniciCikar: "Çıkar",
+  ortakOnceki: "Önceki",
+  ortakSonraki: "Sonraki",
+  ortakYukari: "Yukarı",
+  ortakAsagi: "Aşağı",
+  destekYanitla: "Yanıtla",
+  // tur 21 — sayfalayici
+  ortakSayfalayici: "Toplam {toplam} · {bas}-{son}",
 } as const;

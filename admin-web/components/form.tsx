@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useT } from "@/lib/i18n/kullan";
 
 // Ortak form/dugme token'lari (Faz 1). Teal odak halkasi + yumusak golge/hover
 // kaldirmasi. Ic sayfalar bu siniflari import ederek "bedava" cilalanir.
@@ -97,19 +98,24 @@ export function Pager({
   onPrev: () => void;
   onNext: () => void;
 }) {
+  const t = useT();
   const canPrev = offset > 0;
   const canNext = offset + limit < total;
   return (
     <div className="flex items-center justify-between text-sm">
       <span className="text-muted">
-        Toplam {total} · {total === 0 ? 0 : offset + 1}-{Math.min(offset + limit, total)}
+        {t("ortakSayfalayici", {
+          toplam: total,
+          bas: total === 0 ? 0 : offset + 1,
+          son: Math.min(offset + limit, total),
+        })}
       </span>
       <div className="flex gap-2">
         <button disabled={!canPrev} onClick={onPrev} className={`${btnGhost} disabled:opacity-50`}>
-          Önceki
+          {t("ortakOnceki")}
         </button>
         <button disabled={!canNext} onClick={onNext} className={`${btnGhost} disabled:opacity-50`}>
-          Sonraki
+          {t("ortakSonraki")}
         </button>
       </div>
     </div>

@@ -233,9 +233,7 @@ export default function BuildingEditorPage() {
       />
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600">
-        Bu düzenleyici panelde yalnızca platform adminine açıktır; site yöneticileri (yönetici)
-        aynı düzenlemeyi mobil <span className="font-medium">{t("kabukBinaDuzenleme")}</span> ekranından yapar.
-        Yetki backend’de admin+yönetici olarak tanımlıdır.
+        {t("binaYetkiNotu", { ekran: t("kabukBinaDuzenleme") })}
       </div>
 
       {loadError && <ErrorBox message={t("binaVerilerYuklenemedi")} />}
@@ -264,7 +262,7 @@ export default function BuildingEditorPage() {
               {blockForm.saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setBlockForm(EMPTY_BLOCK)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </form>
@@ -317,7 +315,7 @@ export default function BuildingEditorPage() {
               {unitForm.saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setUnitForm(EMPTY_UNIT)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </form>
@@ -385,7 +383,7 @@ function BlockTiles({
           {registeredFor(label) && (
             <div className="flex justify-center gap-2">
               <button className="text-xs text-slate-500 hover:underline" onClick={() => onEditBlock(label)}>
-                Düzenle
+                {t("ortakDuzenle")}
               </button>
               <button className="text-xs text-red-600 hover:underline" onClick={() => onRemoveBlock(label)}>{t("ortakSil")}</button>
             </div>

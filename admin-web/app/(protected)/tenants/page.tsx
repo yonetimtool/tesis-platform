@@ -264,7 +264,7 @@ export default function TenantsPage() {
               {saving ? t("tesisOlusturuluyor") : t("tesisOlustur")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </motion.form>

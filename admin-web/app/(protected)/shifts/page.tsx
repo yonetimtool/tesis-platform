@@ -184,7 +184,7 @@ export default function ShiftsPage() {
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              İptal
+              {t("ortakIptal")}
             </button>
           </div>
         </motion.form>
@@ -212,10 +212,10 @@ export default function ShiftsPage() {
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex justify-end gap-2">
                       <button className={btnGhost} onClick={() => openEdit(s)}>
-                        Düzenle
+                        {t("ortakDuzenle")}
                       </button>
                       <button className={btnDanger} onClick={() => remove(s)}>
-                        Sil
+                        {t("ortakSil")}
                       </button>
                     </div>
                   </td>
