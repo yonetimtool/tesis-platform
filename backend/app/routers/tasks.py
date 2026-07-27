@@ -419,9 +419,9 @@ async def create_completion(
                 )
                 await db.flush()
                 notify_opener(
-                    complaint=complaint, tenant_id=user.tenant_id,
+                    complaint=complaint,
+                    tenant_id=user.tenant_id,
                     tip="talep_cozuldu",
-                    mesaj=f"Talebiniz cozuldu: {complaint.baslik}",
                 )
         await db.refresh(obj)
         return JSONResponse(

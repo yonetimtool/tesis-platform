@@ -219,6 +219,38 @@ def test_kaynakta_ham_bildirim_cumlesi_kalmadi():
     assert not sizanlar, "katalogsuz bildirim metni:\n" + "\n".join(sizanlar)
 
 
+def test_notify_opener_cagrilari_kimlik_tasir():
+    """`notify_opener` de METIN almaz — `tip` KIMLIKTIR.
+
+    Tur 16'da bu fonksiyonun `mesaj=` parametresi kaldirildi ama
+    `routers/tasks.py`deki DORDUNCU cagri yeri gozden kacti: uc yerine
+    bakip "bitti" dedim, o yol 500 verdi (tam suite yakaladi). Tarama artik
+    `dispatch_external` ile AYNI sekilde bu fonksiyonu da denetler.
+    """
+    import ast
+    import pathlib
+
+    kok = pathlib.Path(__file__).resolve().parents[1] / "app"
+    sizanlar = []
+    for yol in sorted(kok.rglob("*.py")):
+        agac = ast.parse(yol.read_text(encoding="utf-8"))
+        for d in ast.walk(agac):
+            if not (
+                isinstance(d, ast.Call)
+                and getattr(d.func, "id", None) == "notify_opener"
+            ):
+                continue
+            adlar = {kw.arg for kw in d.keywords}
+            # `mesaj`/`title` gibi METIN parametreleri KALDIRILDI.
+            fazla = adlar - {"complaint", "tenant_id", "tip"}
+            if fazla:
+                sizanlar.append(f"{yol.name}:{d.lineno} fazla arguman: {sorted(fazla)}")
+            tip = next((kw.value for kw in d.keywords if kw.arg == "tip"), None)
+            if isinstance(tip, ast.Constant) and tip.value not in METINLER:
+                sizanlar.append(f"{yol.name}:{d.lineno} katalogsuz tip: {tip.value}")
+    assert not sizanlar, "\n".join(sizanlar)
+
+
 def test_notification_tipleri_katalogda():
     """`data.tip` degerleri kimlik olarak da cozulebilmeli (istemci yonlendirme
     ile metin ayni anahtari kullanir)."""
