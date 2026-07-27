@@ -5,17 +5,17 @@
 library;
 
 /// `budget_tip` enum'unun istemci aynasi.
+///
+/// KIMLIK / METIN AYRIMI (README §15): tur 6'da `label` (TR sabiti) KALDIRILDI;
+/// gorunen ad `presentation/butce_tip_adi.dart` icinde cizim aninda cozulur.
 enum BudgetTip {
-  gelir('gelir', 'Gelir'),
-  gider('gider', 'Gider');
+  gelir('gelir'),
+  gider('gider');
 
-  const BudgetTip(this.wire, this.label);
+  const BudgetTip(this.wire);
 
   /// Backend enum degeri.
   final String wire;
-
-  /// TR gorunen ad.
-  final String label;
 
   static BudgetTip fromWire(String? value) => BudgetTip.values.firstWhere(
         (t) => t.wire == value,

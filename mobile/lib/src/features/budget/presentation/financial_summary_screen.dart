@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 import '../data/budget_api.dart';
 import '../domain/budget_models.dart';
 
@@ -21,7 +22,11 @@ class FinancialSummaryScreen extends ConsumerStatefulWidget {
 class _FinancialSummaryScreenState
     extends ConsumerState<FinancialSummaryScreen> {
   FinancialSummary? _summary;
+
+  /// Hata KANALI ikilidir (README §15): sunucu metni + yerellestirilebilir
+  /// kimlik.
   String? _error;
+  AkisHatasi? _hataKimligi;
   late String? _donem; // acilista icinde bulunulan ay
 
   @override
@@ -33,7 +38,10 @@ class _FinancialSummaryScreenState
   }
 
   Future<void> _load() async {
-    setState(() => _error = null);
+    setState(() {
+      _error = null;
+      _hataKimligi = null;
+    });
     try {
       final summary = await ref
           .read(budgetApiProvider)
@@ -42,16 +50,14 @@ class _FinancialSummaryScreenState
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) {
-        setState(() => _error = 'Beklenmeyen bir hata oluştu. Tekrar deneyin.');
-      }
+      if (mounted) setState(() => _hataKimligi = AkisHatasi.beklenmeyen);
     }
   }
 
-  List<DropdownMenuItem<String?>> _donemItems() {
+  List<DropdownMenuItem<String?>> _donemItems(AppLocalizations l10n) {
     final now = DateTime.now();
     return [
-      const DropdownMenuItem<String?>(value: null, child: Text('Tüm zamanlar')),
+      DropdownMenuItem<String?>(value: null, child: Text(l10n.butTumZamanlar)),
       for (var i = 0; i < 12; i++)
         () {
           final d = DateTime(now.year, now.month - i);
@@ -64,19 +70,23 @@ class _FinancialSummaryScreenState
   @override
   Widget build(BuildContext context) {
     final s = _summary;
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
+    final hata = akisHatasiCoz(l10n, _hataKimligi, _error);
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Finansal özet'))),
-      body: _error != null
+      appBar: AppBar(title: Text(baslikBuyuk(l10n.butFinansalOzet, dil))),
+      body: hata != null
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_error!, textAlign: TextAlign.center),
+                    Text(hata, textAlign: TextAlign.center),
                     const SizedBox(height: 12),
                     FilledButton(
-                        onPressed: _load, child: const Text('Tekrar dene')),
+                        onPressed: _load,
+                        child: Text(l10n.ortakTekrarDene)),
                   ],
                 ),
               ),
@@ -92,41 +102,42 @@ class _FinancialSummaryScreenState
                       DropdownButtonFormField<String?>(
                         key: const Key('fs_donem_dropdown'),
                         initialValue: _donem,
-                        items: _donemItems(),
+                        items: _donemItems(l10n),
                         onChanged: (v) {
                           setState(() => _donem = v);
                           _load();
                         },
-                        decoration: const InputDecoration(
-                          labelText: 'Dönem',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.calendar_month_outlined),
+                        decoration: InputDecoration(
+                          labelText: l10n.butDonem,
+                          border: const OutlineInputBorder(),
+                          prefixIcon:
+                              const Icon(Icons.calendar_month_outlined),
                         ),
                       ),
                       if (s.tahsilat != null) ...[
                         const SizedBox(height: 16),
                         _sectionTitle(context, Icons.payments_outlined,
-                            'Aidat tahsilatı'),
+                            l10n.butAidatTahsilati),
                         _TahsilatCard(tahsilat: s.tahsilat!),
                       ],
                       const SizedBox(height: 16),
                       _sectionTitle(
-                          context, Icons.savings_outlined, 'Bütçe'),
+                          context, Icons.savings_outlined, l10n.butBaslik),
                       Card(
                         margin: EdgeInsets.zero,
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
                             children: [
-                              _statRow('Gelir',
-                                  '${formatKurusAsTl(s.toplamGelirKurus)} TL',
+                              _statRow(l10n.butGelir,
+                                  tlSonEkli(s.toplamGelirKurus, dil),
                                   valueColor: Colors.green),
-                              _statRow('Gider',
-                                  '${formatKurusAsTl(s.toplamGiderKurus)} TL',
+                              _statRow(l10n.butGider,
+                                  tlSonEkli(s.toplamGiderKurus, dil),
                                   valueColor: Colors.red),
                               _statRow(
-                                'Kasa',
-                                '${formatKurusAsTl(s.bakiyeKurus)} TL',
+                                l10n.butKasa,
+                                tlSonEkli(s.bakiyeKurus, dil),
                                 valueColor: s.bakiyeKurus < 0
                                     ? Colors.red
                                     : Colors.blue,
@@ -139,7 +150,7 @@ class _FinancialSummaryScreenState
                       if (s.enYuksekGiderler.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         _sectionTitle(context, Icons.leaderboard_outlined,
-                            'En yüksek giderler'),
+                            l10n.butEnYuksekGiderler),
                         Card(
                           margin: EdgeInsets.zero,
                           child: Column(
@@ -159,7 +170,8 @@ class _FinancialSummaryScreenState
                                   ),
                                   title: Text(s.enYuksekGiderler[i].ad),
                                   trailing: Text(
-                                    '${formatKurusAsTl(s.enYuksekGiderler[i].toplamKurus)} TL',
+                                    tlSonEkli(
+                                        s.enYuksekGiderler[i].toplamKurus, dil),
                                     style: const TextStyle(
                                         fontWeight: FontWeight.w600),
                                   ),
@@ -196,7 +208,10 @@ Widget _statRow(String label, String value,
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label),
+        // Etiket kucultulebilir: dar ekranda (320 dp) uzun ceviriler
+        // ("المصروفات", "Sollstellung") satiri tasiriyordu. TUTAR asla
+        // kirpilmaz — para okunabilir kalmali.
+        Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
         Text(
           value,
           style: TextStyle(
@@ -216,6 +231,8 @@ class _TahsilatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final yuzde = tahsilat.tahsilatOraniYuzde;
     return Card(
       margin: EdgeInsets.zero,
@@ -224,16 +241,15 @@ class _TahsilatCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _statRow(l10n.butTahakkuk, tlSonEkli(tahsilat.tahakkukKurus, dil)),
             _statRow(
-                'Tahakkuk', '${formatKurusAsTl(tahsilat.tahakkukKurus)} TL'),
-            _statRow(
-              'Tahsilat',
-              '${formatKurusAsTl(tahsilat.tahsilatKurus)} TL',
+              l10n.butTahsilat,
+              tlSonEkli(tahsilat.tahsilatKurus, dil),
               valueColor: Colors.green,
             ),
             _statRow(
-              'Geciken',
-              '${tahsilat.gecikenDaireSayisi} daire',
+              l10n.butGeciken,
+              l10n.binaDaireSayisi(tahsilat.gecikenDaireSayisi),
               valueColor:
                   tahsilat.gecikenDaireSayisi > 0 ? Colors.red : Colors.green,
             ),
@@ -250,16 +266,18 @@ class _TahsilatCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Align(
-                alignment: Alignment.centerRight,
+                // YON-DUYARLI: Arapca'da sola hizalanir (centerRight sabit
+                // sagda kalirdi).
+                alignment: AlignmentDirectional.centerEnd,
                 child: Text(
-                  'Tahsilat %$yuzde',
+                  l10n.butTahsilatYuzde(yuzde),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
             ] else
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text('Bu dönem için tahakkuk kaydı yok.'),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(l10n.butTahakkukYok),
               ),
           ],
         ),

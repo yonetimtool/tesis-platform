@@ -10,18 +10,19 @@
 library;
 
 /// `kargo_durum` enum'unun istemci aynasi.
+///
+/// KIMLIK / METIN AYRIMI (README §15): tur 6'da `label` (TR sabiti) KALDIRILDI
+/// — son tuketici olan `kargo_screen` yerellestirildi; gorunen ad
+/// `presentation/kargo_durum_adi.dart` icinde cizim aninda cozulur.
 enum KargoDurum {
-  bekliyor('bekliyor', 'Bekliyor'),
-  teslimAlindi('teslim_alindi', 'Teslim alındı'),
-  unknown('unknown', 'Bilinmeyen');
+  bekliyor('bekliyor'),
+  teslimAlindi('teslim_alindi'),
+  unknown('unknown');
 
-  const KargoDurum(this.wire, this.label);
+  const KargoDurum(this.wire);
 
   /// Backend enum degeri.
   final String wire;
-
-  /// TR gorunen ad.
-  final String label;
 
   static KargoDurum fromWire(String? value) => KargoDurum.values.firstWhere(
         (d) => d.wire == value,

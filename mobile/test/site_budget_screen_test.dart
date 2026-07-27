@@ -6,6 +6,8 @@ import 'package:mobile/src/features/budget/data/budget_api.dart';
 import 'package:mobile/src/features/budget/domain/budget_models.dart';
 import 'package:mobile/src/features/budget/presentation/site_budget_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Sakin şeffaflık ekrani icin sahte istemci — yalniz OZET cagrilir.
 class _FakeBudgetApi extends BudgetApi {
   _FakeBudgetApi() : super(Dio());
@@ -46,7 +48,7 @@ void main() {
 
   Widget app() => ProviderScope(
         overrides: [budgetApiProvider.overrideWithValue(api)],
-        child: const MaterialApp(home: SiteBudgetScreen()),
+        child: l10nApp(const SiteBudgetScreen()),
       );
 
   testWidgets('agregat toplamlar TL olarak gorunur (negatif kasa dahil)',

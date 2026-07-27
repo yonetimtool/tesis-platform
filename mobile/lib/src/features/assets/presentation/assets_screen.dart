@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../domain/asset_models.dart';
 import 'assets_controller.dart';
+import 'demirbas_mesaj_metni.dart';
 
 /// "Demirbas" — NFC-oncelikli zimmet ekrani.
 ///
@@ -20,15 +21,20 @@ class AssetsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final myCount =
         ref.watch(assetsControllerProvider.select((s) => s.myItems.length));
+    final l10n = context.l10n;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(trUpper('Demirbaş')),
+          title: Text(baslikBuyuk(l10n.demBaslik, context.dilKodu)),
           bottom: TabBar(
             tabs: [
-              const Tab(text: 'Etiket okut'),
-              Tab(text: 'Üzerimdekiler${myCount > 0 ? ' ($myCount)' : ''}'),
+              Tab(text: l10n.demEtiketOkut),
+              Tab(
+                text: l10n.demUzerimdekiler(
+                  myCount > 0 ? ' ($myCount)' : '',
+                ),
+              ),
             ],
           ),
         ),
@@ -54,31 +60,30 @@ class _ScanTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(assetsControllerProvider);
     final controller = ref.read(assetsControllerProvider.notifier);
+    final l10n = context.l10n;
     final busy = state.scanPhase == AssetScanPhase.reading ||
         state.scanPhase == AssetScanPhase.resolving;
+    final scanHatasi = demirbasMesajCoz(l10n, state.scanError);
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         if (state.scanned == null) ...[
-          const Card(
+          Card(
             child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'Demirbaşı alırken veya bırakırken üzerindeki NFC etiketini '
-                'okutun. Uygulama demirbaşı tanır ve kimde olduğunu gösterir.',
-              ),
+              padding: const EdgeInsets.all(16),
+              child: Text(l10n.demNfcAciklama),
             ),
           ),
           const SizedBox(height: 16),
         ],
-        if (state.scanError != null)
+        if (scanHatasi != null)
           Card(
             color: Colors.red.withValues(alpha: 0.08),
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Text(
-                state.scanError!,
+                scanHatasi,
                 style: const TextStyle(color: Colors.red),
               ),
             ),
@@ -106,10 +111,11 @@ class _ScanTab extends ConsumerWidget {
                 : const Icon(Icons.nfc),
             label: Text(
               switch (state.scanPhase) {
-                AssetScanPhase.reading => 'Etiket bekleniyor...',
-                AssetScanPhase.resolving => 'Demirbaş tanınıyor...',
-                _ =>
-                  state.scanned == null ? 'Etiket okut' : 'Başka etiket okut',
+                AssetScanPhase.reading => l10n.gorevEtiketBekleniyor,
+                AssetScanPhase.resolving => l10n.demTaniniyor,
+                _ => state.scanned == null
+                    ? l10n.demEtiketOkut
+                    : l10n.demBaskaEtiketOkut,
               },
             ),
           ),
@@ -129,32 +135,36 @@ class _ScannedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final info = state.scanned!;
+    final l10n = context.l10n;
     final (icon, color, durumText) = switch (info.verdict) {
       ZimmetVerdict.kimsedeDegil => (
           Icons.lock_open,
           Colors.green,
-          'Kimsede değil — alınabilir.',
+          l10n.demKimsedeDegil,
         ),
       ZimmetVerdict.sende => (
           Icons.person,
           Colors.blue,
-          'SENDE — '
-              '${_sinceText(info.acikZimmet?.alinmaZamani)} üzerinde.',
+          l10n.demSende(_sinceText(l10n, info.acikZimmet?.alinmaZamani)),
         ),
       ZimmetVerdict.baskasinda => (
           Icons.person_outline,
           Colors.orange,
           info.acikZimmet == null
-              ? 'Başkasının üzerinde görünüyor.'
-              : 'Başkasında: ${_holderName(info.acikZimmet!)} — '
-                  '${_sinceText(info.acikZimmet!.alinmaZamani)} üzerinde.',
+              ? l10n.demBaskasininUzerinde
+              : l10n.demBaskasinda(
+                  _holderName(info.acikZimmet!),
+                  _sinceText(l10n, info.acikZimmet!.alinmaZamani),
+                ),
         ),
       ZimmetVerdict.bakimda => (
           Icons.build_circle_outlined,
           Colors.grey,
-          'Bakımda — şu an zimmetlenemez.',
+          l10n.demBakimda,
         ),
     };
+    final islemMesaji = demirbasMesajCoz(l10n, state.actionMessage);
+    final islemHatasi = demirbasMesajCoz(l10n, state.actionError);
 
     return Card(
       child: Padding(
@@ -192,25 +202,24 @@ class _ScannedCard extends StatelessWidget {
             if (info.verdict == ZimmetVerdict.baskasinda) ...[
               const SizedBox(height: 4),
               Text(
-                'Zorla devralma yok — demirbaşı şu anki kullanıcısı '
-                'bırakmalı.',
+                l10n.demZorlaDevralmaYok,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
-            if (state.actionMessage != null) ...[
+            if (islemMesaji != null) ...[
               const SizedBox(height: 8),
               Text(
-                state.actionMessage!,
+                islemMesaji,
                 style: const TextStyle(
                   color: Colors.green,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
-            if (state.actionError != null) ...[
+            if (islemHatasi != null) ...[
               const SizedBox(height: 8),
               Text(
-                state.actionError!,
+                islemHatasi,
                 style: const TextStyle(color: Colors.red),
               ),
             ],
@@ -220,14 +229,14 @@ class _ScannedCard extends StatelessWidget {
                 onPressed:
                     state.actionBusy ? null : controller.checkoutScanned,
                 icon: _actionIcon(state.actionBusy, Icons.download),
-                label: const Text('Zimmetine al'),
+                label: Text(l10n.demZimmetineAl),
               )
             else if (info.verdict == ZimmetVerdict.sende)
               FilledButton.icon(
                 onPressed:
                     state.actionBusy ? null : controller.checkinScanned,
                 icon: _actionIcon(state.actionBusy, Icons.upload),
-                label: const Text('Bırak / iade et'),
+                label: Text(l10n.demBirak),
               ),
           ],
         ),
@@ -252,6 +261,8 @@ class _HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -259,7 +270,7 @@ class _HistoryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Son hareketler',
+              l10n.demSonHareketler,
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
@@ -277,12 +288,15 @@ class _HistoryCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         co.isOpen
-                            ? '${_userLabel(co)} aldı — '
-                                '${_fmtDateTime(co.almaZamani.toLocal())} '
-                                '(hala üzerinde)'
-                            : '${_userLabel(co)} · '
-                                '${_fmtDateTime(co.almaZamani.toLocal())} → '
-                                '${_fmtDateTime(co.birakmaZamani!.toLocal())}',
+                            ? l10n.demAldi(
+                                _userLabel(co),
+                                _kisaZaman(co.almaZamani, dil),
+                              )
+                            : l10n.demAldiBirakti(
+                                _userLabel(co),
+                                _kisaZaman(co.almaZamani, dil),
+                                _kisaZaman(co.birakmaZamani!, dil),
+                              ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
@@ -307,6 +321,8 @@ class _MyItemsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(assetsControllerProvider);
     final controller = ref.read(assetsControllerProvider.notifier);
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
 
     if (state.myLoading && state.myItems.isEmpty && state.myError == null) {
       return const Center(child: CircularProgressIndicator());
@@ -325,18 +341,18 @@ class _MyItemsTab extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 child: Text(
                   state.forbidden
-                      ? 'Demirbaş listesi için yetkiniz yok.'
-                      : state.myError!,
+                      ? l10n.demListeYetkiYok
+                      : demirbasMesajMetni(l10n, state.myError!),
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
             ),
           if (state.myItems.isEmpty && state.myError == null)
-            const Card(
+            Card(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Şu an üzerinde demirbaş görünmüyor.',
+                  l10n.demUzerindeYok,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -348,8 +364,10 @@ class _MyItemsTab extends ConsumerWidget {
                 leading: const Icon(Icons.inventory_2_outlined),
                 title: Text(item.asset.ad),
                 subtitle: Text(
-                  'Aldın: ${_fmtDateTime(item.zimmet.alinmaZamani.toLocal())} '
-                  '(${_sinceText(item.zimmet.alinmaZamani)})',
+                  l10n.demAldin(
+                    _kisaZaman(item.zimmet.alinmaZamani, dil),
+                    _sinceText(l10n, item.zimmet.alinmaZamani),
+                  ),
                 ),
                 trailing: state.quickCheckinBusyId == item.asset.id
                     ? const SizedBox(
@@ -361,7 +379,7 @@ class _MyItemsTab extends ConsumerWidget {
                         onPressed: state.quickCheckinBusyId != null
                             ? null
                             : () => controller.quickCheckin(item),
-                        child: const Text('Bırak'),
+                        child: Text(l10n.demBirakKisa),
                       ),
               ),
             ),
@@ -388,17 +406,18 @@ String _userLabel(AssetCheckout co) =>
 String _shortId(String userId) =>
     userId.length > 8 ? '${userId.substring(0, 8)}…' : userId;
 
-String _sinceText(DateTime? since) {
-  if (since == null) return 'bir süredir';
+/// "Ne zamandan beri" PARCASI — cumleye `{sure}` olarak girer. EDAT parcanin
+/// kendisindedir (bkz. `@demSende` notu): sablon yalniz yerlestirir, boylece
+/// hicbir dilde edat iki kez yazilmaz.
+String _sinceText(AppLocalizations l10n, DateTime? since) {
+  if (since == null) return l10n.demSureBelirsiz;
   final d = DateTime.now().toUtc().difference(since.toUtc());
-  if (d.inMinutes < 1) return 'az önce alındı, o zamandan beri';
-  if (d.inMinutes < 60) return '${d.inMinutes} dakikadır';
-  if (d.inHours < 24) return '${d.inHours} saattir';
-  return '${d.inDays} gündür';
+  if (d.inMinutes < 1) return l10n.demSureAzOnce;
+  if (d.inMinutes < 60) return l10n.demSureDakika(d.inMinutes);
+  if (d.inHours < 24) return l10n.demSureSaat(d.inHours);
+  return l10n.demSureGun(d.inDays);
 }
 
-String _two(int v) => v.toString().padLeft(2, '0');
-
-String _fmtDateTime(DateTime local) =>
-    '${_two(local.day)}.${_two(local.month)} '
-    '${_two(local.hour)}:${_two(local.minute)}';
+/// GUN.AY SAAT — hareket satirlarinin kisa zamani (yil yok; kayitlar guncel).
+String _kisaZaman(DateTime t, String dil) =>
+    '${gunAyBicimi(t, dil)} ${saatBicimi(t, dil)}';

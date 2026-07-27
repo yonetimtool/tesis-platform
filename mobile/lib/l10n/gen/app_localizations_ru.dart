@@ -2388,4 +2388,369 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get rezSizin => 'Ваша бронь';
+
+  @override
+  String get butBaslik => 'Бюджет';
+
+  @override
+  String get butSekmeOzet => 'Сводка';
+
+  @override
+  String get butSekmeHareketler => 'Операции';
+
+  @override
+  String get butSekmeKategoriler => 'Категории';
+
+  @override
+  String get butTumZamanlar => 'За всё время';
+
+  @override
+  String get butDonem => 'Период';
+
+  @override
+  String get butGelir => 'Доходы';
+
+  @override
+  String get butGider => 'Расходы';
+
+  @override
+  String get butKasa => 'Касса';
+
+  @override
+  String get butKategoriKirilimi => 'Разбивка по категориям';
+
+  @override
+  String get butYeniHareket => 'Новая операция';
+
+  @override
+  String get butHareketYok => 'Операций пока нет.';
+
+  @override
+  String get butKategori => 'Категория';
+
+  @override
+  String get butOtomatik => 'Автоматически';
+
+  @override
+  String get butKategoriSecin => 'Выберите категорию';
+
+  @override
+  String get butTutar => 'Сумма (TL)';
+
+  @override
+  String get butTutarIpucu => 'напр. 1.250,50';
+
+  @override
+  String get butTutarGecersiz => 'Введите корректную сумму (напр. 1.250,50)';
+
+  @override
+  String butTarih(Object tarih) {
+    return 'Дата: $tarih';
+  }
+
+  @override
+  String get butYeniKategori => 'Новая категория';
+
+  @override
+  String get butKategoriYok => 'Категорий пока нет.';
+
+  @override
+  String get butKategoriAdi => 'Название категории';
+
+  @override
+  String get butKategoriAdiIpucu => 'напр. Уход за садом';
+
+  @override
+  String get butAdZorunlu => 'Название обязательно';
+
+  @override
+  String butKategoriTip(Object ad, Object tip) {
+    return '$ad ($tip)';
+  }
+
+  @override
+  String get butPasifEki => ' · неактивна (новые записи закрыты)';
+
+  @override
+  String get butBeklenmeyenKisa =>
+      'Произошла непредвиденная ошибка. Попробуйте снова.';
+
+  @override
+  String get butFinansalOzet => 'Финансовая сводка';
+
+  @override
+  String get butAidatTahsilati => 'Сбор взносов';
+
+  @override
+  String get butEnYuksekGiderler => 'Крупнейшие расходы';
+
+  @override
+  String butTahsilatYuzde(Object yuzde) {
+    return 'Сбор $yuzde%';
+  }
+
+  @override
+  String get butTahakkukYok => 'За этот период начислений нет.';
+
+  @override
+  String get butSiteBaslik => 'Бюджет объекта';
+
+  @override
+  String get butKategoriToplamlari => 'Итоги по категориям';
+
+  @override
+  String get butSeffaflikNotu =>
+      'Этот экран показывает доходы и расходы управления объектом в виде сводки — для прозрачности. Данные по людям и квартирам не показываются; с вопросами обращайтесь к управлению.';
+
+  @override
+  String get demBaslik => 'Инвентарь';
+
+  @override
+  String get demEtiketOkut => 'Считать метку';
+
+  @override
+  String get demBaskaEtiketOkut => 'Считать другую метку';
+
+  @override
+  String demUzerimdekiler(Object ek) {
+    return 'На мне$ek';
+  }
+
+  @override
+  String get demNfcAciklama =>
+      'Сканируйте NFC-метку на предмете при получении или возврате. Приложение опознает предмет и покажет, у кого он.';
+
+  @override
+  String get demTaniniyor => 'Опознание предмета...';
+
+  @override
+  String get demKimsedeDegil => 'Ни у кого — можно взять.';
+
+  @override
+  String demSende(Object sure) {
+    return 'У ВАС — $sure.';
+  }
+
+  @override
+  String demBaskasinda(Object ad, Object sure) {
+    return 'У другого: $ad — $sure.';
+  }
+
+  @override
+  String get demBaskasininUzerinde => 'Похоже, он у другого сотрудника.';
+
+  @override
+  String get demBakimda => 'На обслуживании — сейчас выдать нельзя.';
+
+  @override
+  String get demZorlaDevralmaYok =>
+      'Принудительная передача невозможна — предмет должен вернуть текущий владелец.';
+
+  @override
+  String get demZimmetineAl => 'Взять на себя';
+
+  @override
+  String get demBirak => 'Вернуть';
+
+  @override
+  String get demBirakKisa => 'Вернуть';
+
+  @override
+  String get demSonHareketler => 'Последние операции';
+
+  @override
+  String demAldi(Object ad, Object zaman) {
+    return '$ad взял — $zaman (всё ещё у него)';
+  }
+
+  @override
+  String get demListeYetkiYok => 'У вас нет прав на список инвентаря.';
+
+  @override
+  String get demUzerindeYok => 'Сейчас за вами нет предметов.';
+
+  @override
+  String demAldin(Object zaman, Object sure) {
+    return 'Взято: $zaman ($sure)';
+  }
+
+  @override
+  String get demSureBelirsiz => 'уже некоторое время';
+
+  @override
+  String get demSureAzOnce => 'только что';
+
+  @override
+  String demSureDakika(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n минут',
+      many: '$n минут',
+      few: '$n минуты',
+      one: '$n минуту',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String demSureSaat(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n часов',
+      many: '$n часов',
+      few: '$n часа',
+      one: '$n час',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String demSureGun(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n дней',
+      many: '$n дней',
+      few: '$n дня',
+      one: '$n день',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get demOfflineUyari =>
+      'Требуется интернет-соединение. Владение предметом — запись в реальном времени; офлайн не обрабатывается (очередь была бы обманчивой).';
+
+  @override
+  String demEtiketEslesmiyor(Object uid) {
+    return 'Эта метка ($uid) не соответствует зарегистрированному предмету. Метку нужно привязать к предмету в панели.';
+  }
+
+  @override
+  String get demZatenZimmetinde =>
+      'Уже был за вами ✓ (повторная отправка — без дубликата)';
+
+  @override
+  String get demZimmetineAlindi => 'Взято ✓';
+
+  @override
+  String get demBirakildi => 'Возвращено ✓ — запись закрыта.';
+
+  @override
+  String demIslemYapilamadi(Object hata) {
+    return 'Не удалось выполнить: $hata Статус обновлён — посмотрите карточку снова.';
+  }
+
+  @override
+  String demHataSatiri(Object ad, Object hata) {
+    return '$ad: $hata';
+  }
+
+  @override
+  String get karBaslik => 'Посылки';
+
+  @override
+  String karSekmeBekleyen(Object n) {
+    return 'Ожидают ($n)';
+  }
+
+  @override
+  String karSekmeTeslim(Object n) {
+    return 'Полученные ($n)';
+  }
+
+  @override
+  String get karYeni => 'Новая посылка';
+
+  @override
+  String get karBekleyenYokSakin => 'У вас нет посылок к получению.';
+
+  @override
+  String get karBekleyenYok => 'Посылок к получению нет.';
+
+  @override
+  String get karTeslimYok => 'Записей о полученных посылках пока нет.';
+
+  @override
+  String get karKaydedildi => 'Посылка записана — жители квартиры уведомлены ✓';
+
+  @override
+  String karDaireTarih(Object daire, Object zaman) {
+    return 'Кв.: $daire · $zaman';
+  }
+
+  @override
+  String karDaire(Object daire) {
+    return 'Кв.: $daire';
+  }
+
+  @override
+  String karKayit(Object zaman) {
+    return 'Запись: $zaman';
+  }
+
+  @override
+  String karNot(Object not) {
+    return 'Примечание: $not';
+  }
+
+  @override
+  String get karTeslimAlindiBildirim => 'Посылка получена ✓';
+
+  @override
+  String get karIsaretlenemedi => 'Не удалось отметить. Попробуйте снова.';
+
+  @override
+  String get karTeslimAldim => 'Я получил';
+
+  @override
+  String get karGonderilemedi =>
+      'Не удалось отправить запись. Попробуйте снова.';
+
+  @override
+  String get karDaireNo => 'Номер квартиры * (напр. A-12)';
+
+  @override
+  String get karDaireNoGerekli => 'Номер квартиры обязателен';
+
+  @override
+  String get karFirma => 'Служба доставки *';
+
+  @override
+  String get karFirmaGerekli => 'Служба доставки обязательна';
+
+  @override
+  String get karPaketFotografi => 'Фото посылки (необязательно)';
+
+  @override
+  String get karKaydetVeBildir => 'Сохранить и уведомить жителей';
+
+  @override
+  String get ortakTekrarDene => 'Повторить';
+
+  @override
+  String get butTahakkuk => 'Начислено';
+
+  @override
+  String get butTahsilat => 'Собрано';
+
+  @override
+  String get butGeciken => 'Просрочено';
+
+  @override
+  String demAldiBirakti(Object ad, Object alma, Object birakma) {
+    return '$ad · $alma → $birakma';
+  }
+
+  @override
+  String karAdEki(Object ad) {
+    return ' — $ad';
+  }
+
+  @override
+  String karZamanEki(Object zaman) {
+    return ' · $zaman';
+  }
 }

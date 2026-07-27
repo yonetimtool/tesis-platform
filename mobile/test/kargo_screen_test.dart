@@ -8,6 +8,8 @@ import 'package:mobile/src/features/kargo/data/kargo_api.dart';
 import 'package:mobile/src/features/kargo/domain/kargo_models.dart';
 import 'package:mobile/src/features/kargo/presentation/kargo_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Aga cikmayan sahte istemci — liste sabit doner; teslim cagrilari
 /// kaydedilir (widget testi).
 class _FakeKargoApi extends KargoApi {
@@ -61,9 +63,7 @@ Kargo _k({
         kargoApiProvider.overrideWithValue(api),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
-      child: MaterialApp(
-        home: KargoScreen(initialKargoId: initialKargoId),
-      ),
+      child: l10nApp(KargoScreen(initialKargoId: initialKargoId)),
     ),
   );
 }

@@ -1,9 +1,10 @@
 /// [KargoDurum] -> aktif dildeki gorunen ad.
 ///
-/// KIMLIK / METIN AYRIMI (README §15): `label` alani TR sabittir ve
-/// YERELLESTIRILMIS ekranlarda kullanilmaz. Bu cozucu tur 5'te eklendi cunku
-/// `unit_access` kayit ekrani (kapsam ICI) kargo durumunu cizer; `kargo`
-/// modulunun kendi ekranlari henuz cevrilmedigi icin `label` korundu.
+/// KIMLIK / METIN AYRIMI (README §15). Bu cozucu tur 5'te eklendi cunku
+/// `unit_access` kayit ekrani (o turun kapsami) kargo durumunu ciziyordu;
+/// `kargo` modulunun kendi ekranlari henuz cevrilmedigi icin enum'daki TR
+/// `label` alani o turda korunmustu. Tur 6'da `kargo` cevrildi ve `label`
+/// KALDIRILDI — gorunen ad artik YALNIZ buradan gelir.
 library;
 
 import '../../../core/i18n/l10n.dart';

@@ -2281,4 +2281,364 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get rezSizin => 'Su reserva';
+
+  @override
+  String get butBaslik => 'Presupuesto';
+
+  @override
+  String get butSekmeOzet => 'Resumen';
+
+  @override
+  String get butSekmeHareketler => 'Movimientos';
+
+  @override
+  String get butSekmeKategoriler => 'Categorías';
+
+  @override
+  String get butTumZamanlar => 'Todo el tiempo';
+
+  @override
+  String get butDonem => 'Periodo';
+
+  @override
+  String get butGelir => 'Ingresos';
+
+  @override
+  String get butGider => 'Gastos';
+
+  @override
+  String get butKasa => 'Caja';
+
+  @override
+  String get butKategoriKirilimi => 'Desglose por categoría';
+
+  @override
+  String get butYeniHareket => 'Nuevo movimiento';
+
+  @override
+  String get butHareketYok => 'Aún no hay movimientos.';
+
+  @override
+  String get butKategori => 'Categoría';
+
+  @override
+  String get butOtomatik => 'Automático';
+
+  @override
+  String get butKategoriSecin => 'Seleccione una categoría';
+
+  @override
+  String get butTutar => 'Importe (TL)';
+
+  @override
+  String get butTutarIpucu => 'ej. 1.250,50';
+
+  @override
+  String get butTutarGecersiz => 'Introduzca un importe válido (ej. 1.250,50)';
+
+  @override
+  String butTarih(Object tarih) {
+    return 'Fecha: $tarih';
+  }
+
+  @override
+  String get butYeniKategori => 'Nueva categoría';
+
+  @override
+  String get butKategoriYok => 'Aún no hay categorías.';
+
+  @override
+  String get butKategoriAdi => 'Nombre de la categoría';
+
+  @override
+  String get butKategoriAdiIpucu => 'ej. Mantenimiento del jardín';
+
+  @override
+  String get butAdZorunlu => 'El nombre es obligatorio';
+
+  @override
+  String butKategoriTip(Object ad, Object tip) {
+    return '$ad ($tip)';
+  }
+
+  @override
+  String get butPasifEki => ' · inactiva (sin nuevos movimientos)';
+
+  @override
+  String get butBeklenmeyenKisa =>
+      'Se ha producido un error inesperado. Inténtelo de nuevo.';
+
+  @override
+  String get butFinansalOzet => 'Resumen financiero';
+
+  @override
+  String get butAidatTahsilati => 'Cobro de cuotas';
+
+  @override
+  String get butEnYuksekGiderler => 'Mayores gastos';
+
+  @override
+  String butTahsilatYuzde(Object yuzde) {
+    return 'Cobro $yuzde %';
+  }
+
+  @override
+  String get butTahakkukYok => 'No hay devengos registrados para este periodo.';
+
+  @override
+  String get butSiteBaslik => 'Presupuesto del sitio';
+
+  @override
+  String get butKategoriToplamlari => 'Totales por categoría';
+
+  @override
+  String get butSeffaflikNotu =>
+      'Esta pantalla muestra los ingresos y gastos de la administración del sitio como resumen, por transparencia. No se muestran detalles por persona ni por unidad; consulte a su administración.';
+
+  @override
+  String get demBaslik => 'Activos';
+
+  @override
+  String get demEtiketOkut => 'Escanear etiqueta';
+
+  @override
+  String get demBaskaEtiketOkut => 'Escanear otra etiqueta';
+
+  @override
+  String demUzerimdekiler(Object ek) {
+    return 'En mi poder$ek';
+  }
+
+  @override
+  String get demNfcAciklama =>
+      'Escanee la etiqueta NFC del activo al retirarlo o devolverlo. La app lo identifica y muestra quién lo tiene.';
+
+  @override
+  String get demTaniniyor => 'Identificando el activo...';
+
+  @override
+  String get demKimsedeDegil => 'Nadie lo tiene — disponible.';
+
+  @override
+  String demSende(Object sure) {
+    return 'LO TIENES — $sure.';
+  }
+
+  @override
+  String demBaskasinda(Object ad, Object sure) {
+    return 'Lo tiene $ad — $sure.';
+  }
+
+  @override
+  String get demBaskasininUzerinde => 'Parece estar en poder de otra persona.';
+
+  @override
+  String get demBakimda => 'En mantenimiento — no se puede asignar ahora.';
+
+  @override
+  String get demZorlaDevralmaYok =>
+      'No hay toma forzada — el poseedor actual debe devolver el activo.';
+
+  @override
+  String get demZimmetineAl => 'Asignarme';
+
+  @override
+  String get demBirak => 'Devolver';
+
+  @override
+  String get demBirakKisa => 'Devolver';
+
+  @override
+  String get demSonHareketler => 'Movimientos recientes';
+
+  @override
+  String demAldi(Object ad, Object zaman) {
+    return '$ad lo tomó — $zaman (aún lo tiene)';
+  }
+
+  @override
+  String get demListeYetkiYok => 'No tiene permiso para la lista de activos.';
+
+  @override
+  String get demUzerindeYok => 'Actualmente no tiene activos.';
+
+  @override
+  String demAldin(Object zaman, Object sure) {
+    return 'Tomado: $zaman ($sure)';
+  }
+
+  @override
+  String get demSureBelirsiz => 'desde hace un rato';
+
+  @override
+  String get demSureAzOnce => 'hace un instante';
+
+  @override
+  String demSureDakika(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'desde hace $n minutos',
+      one: 'desde hace $n minuto',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String demSureSaat(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'desde hace $n horas',
+      one: 'desde hace $n hora',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String demSureGun(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'desde hace $n días',
+      one: 'desde hace $n día',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get demOfflineUyari =>
+      'Se necesita conexión a Internet. La custodia es un registro en tiempo real; no se procesa sin conexión (encolarlo sería engañoso).';
+
+  @override
+  String demEtiketEslesmiyor(Object uid) {
+    return 'Esta etiqueta ($uid) no coincide con ningún activo registrado. Debe asignarse a un activo desde el panel.';
+  }
+
+  @override
+  String get demZatenZimmetinde =>
+      'Ya estaba asignado a usted ✓ (reenvío — sin duplicado)';
+
+  @override
+  String get demZimmetineAlindi => 'Asignado ✓';
+
+  @override
+  String get demBirakildi => 'Devuelto ✓ — la asignación se ha cerrado.';
+
+  @override
+  String demIslemYapilamadi(Object hata) {
+    return 'No se pudo realizar: $hata Estado actualizado — vuelva a mirar la tarjeta.';
+  }
+
+  @override
+  String demHataSatiri(Object ad, Object hata) {
+    return '$ad: $hata';
+  }
+
+  @override
+  String get karBaslik => 'Paquetes';
+
+  @override
+  String karSekmeBekleyen(Object n) {
+    return 'Pendientes ($n)';
+  }
+
+  @override
+  String karSekmeTeslim(Object n) {
+    return 'Recogidos ($n)';
+  }
+
+  @override
+  String get karYeni => 'Nuevo paquete';
+
+  @override
+  String get karBekleyenYokSakin => 'No tiene paquetes pendientes de recogida.';
+
+  @override
+  String get karBekleyenYok => 'No hay paquetes pendientes de recogida.';
+
+  @override
+  String get karTeslimYok => 'Aún no hay paquetes recogidos registrados.';
+
+  @override
+  String get karKaydedildi =>
+      'Paquete registrado — se ha notificado a los residentes ✓';
+
+  @override
+  String karDaireTarih(Object daire, Object zaman) {
+    return 'Unidad: $daire · $zaman';
+  }
+
+  @override
+  String karDaire(Object daire) {
+    return 'Unidad: $daire';
+  }
+
+  @override
+  String karKayit(Object zaman) {
+    return 'Registro: $zaman';
+  }
+
+  @override
+  String karNot(Object not) {
+    return 'Nota: $not';
+  }
+
+  @override
+  String get karTeslimAlindiBildirim => 'Paquete marcado como recogido ✓';
+
+  @override
+  String get karIsaretlenemedi => 'No se pudo marcar. Inténtelo de nuevo.';
+
+  @override
+  String get karTeslimAldim => 'Lo he recogido';
+
+  @override
+  String get karGonderilemedi =>
+      'No se pudo enviar el registro. Inténtelo de nuevo.';
+
+  @override
+  String get karDaireNo => 'Número de unidad * (ej. A-12)';
+
+  @override
+  String get karDaireNoGerekli => 'El número de unidad es obligatorio';
+
+  @override
+  String get karFirma => 'Empresa de transporte *';
+
+  @override
+  String get karFirmaGerekli => 'La empresa de transporte es obligatoria';
+
+  @override
+  String get karPaketFotografi => 'Foto del paquete (opcional)';
+
+  @override
+  String get karKaydetVeBildir => 'Guardar y notificar a los residentes';
+
+  @override
+  String get ortakTekrarDene => 'Reintentar';
+
+  @override
+  String get butTahakkuk => 'Devengado';
+
+  @override
+  String get butTahsilat => 'Cobrado';
+
+  @override
+  String get butGeciken => 'Vencido';
+
+  @override
+  String demAldiBirakti(Object ad, Object alma, Object birakma) {
+    return '$ad · $alma → $birakma';
+  }
+
+  @override
+  String karAdEki(Object ad) {
+    return ' — $ad';
+  }
+
+  @override
+  String karZamanEki(Object zaman) {
+    return ' · $zaman';
+  }
 }

@@ -6,6 +6,8 @@ import 'package:mobile/src/features/budget/data/budget_api.dart';
 import 'package:mobile/src/features/budget/domain/budget_models.dart';
 import 'package:mobile/src/features/budget/presentation/budget_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Aga cikmayan sahte istemci; cagrilari kaydeder.
 class _FakeBudgetApi extends BudgetApi {
   _FakeBudgetApi() : super(Dio());
@@ -123,7 +125,7 @@ void main() {
 
   Widget app() => ProviderScope(
         overrides: [budgetApiProvider.overrideWithValue(api)],
-        child: const MaterialApp(home: BudgetScreen()),
+        child: l10nApp(const BudgetScreen()),
       );
 
   testWidgets('Ozet sekmesi: gelir/gider/kasa TL olarak gorunur (negatif kasa)',

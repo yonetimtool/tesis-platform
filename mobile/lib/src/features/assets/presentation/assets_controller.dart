@@ -5,6 +5,7 @@ import '../../auth/data/current_user_provider.dart';
 import '../../nfc/presentation/nfc_controller.dart';
 import '../data/asset_api.dart';
 import '../domain/asset_models.dart';
+import '../domain/demirbas_mesaj.dart';
 
 /// Okutma akisinin asamasi.
 enum AssetScanPhase { idle, reading, resolving, done }
@@ -52,19 +53,22 @@ class AssetsState {
 
   final AssetScanPhase scanPhase;
   final ScannedAssetInfo? scanned;
-  final String? scanError;
+
+  /// Mesaj KANALLARI kimlik tasir, metin tasimaz (README §15): denetleyicide
+  /// `BuildContext` yok. Sunucu metinleri [DemirbasSunucuMetni] icinde gelir.
+  final DemirbasMesaj? scanError;
 
   /// Okutma kartindaki al/birak islemi suruyor.
   final bool actionBusy;
-  final String? actionError;
+  final DemirbasMesaj? actionError;
 
-  /// Basarili islem mesaji ("Zimmetine alindi ✓" vb.).
-  final String? actionMessage;
+  /// Basarili islem mesaji (zimmet acildi/kapandi vb.).
+  final DemirbasMesaj? actionMessage;
 
   /// Su an bende olan demirbaslar (istemcide suzulur — sunucu filtresi yok).
   final List<MyAssetItem> myItems;
   final bool myLoading;
-  final String? myError;
+  final DemirbasMesaj? myError;
 
   /// 403 — rol asset uclarina erisemiyor.
   final bool forbidden;
@@ -92,17 +96,19 @@ class AssetsState {
       scanPhase: scanPhase ?? this.scanPhase,
       scanned:
           scanned == _sentinel ? this.scanned : scanned as ScannedAssetInfo?,
-      scanError:
-          scanError == _sentinel ? this.scanError : scanError as String?,
+      scanError: scanError == _sentinel
+          ? this.scanError
+          : scanError as DemirbasMesaj?,
       actionBusy: actionBusy ?? this.actionBusy,
-      actionError:
-          actionError == _sentinel ? this.actionError : actionError as String?,
+      actionError: actionError == _sentinel
+          ? this.actionError
+          : actionError as DemirbasMesaj?,
       actionMessage: actionMessage == _sentinel
           ? this.actionMessage
-          : actionMessage as String?,
+          : actionMessage as DemirbasMesaj?,
       myItems: myItems ?? this.myItems,
       myLoading: myLoading ?? this.myLoading,
-      myError: myError == _sentinel ? this.myError : myError as String?,
+      myError: myError == _sentinel ? this.myError : myError as DemirbasMesaj?,
       forbidden: forbidden ?? this.forbidden,
       quickCheckinBusyId: quickCheckinBusyId == _sentinel
           ? this.quickCheckinBusyId
@@ -138,9 +144,9 @@ class AssetsController extends Notifier<AssetsState> {
 
   AssetApi get _api => ref.read(assetApiProvider);
 
-  static const _offlineMessage =
-      'İnternet bağlantısı gerekli. Zimmet kimde-olduğu ANLIK bir kayıttır; '
-      'offline işlem yapılmaz (kuyruklamak yanıltıcı olurdu).';
+  /// OFFLINE KARARI metni degil KIMLIGI (metin: `demOfflineUyari`).
+  static const _offline =
+      DemirbasKimlikMesaji(DemirbasMesajKimlik.offline);
 
   /// Buyuk "Etiket okut" akisi: NFC oku → asset'i coz → durumu getir.
   Future<void> scanTag() async {
@@ -161,7 +167,11 @@ class AssetsController extends Notifier<AssetsState> {
     if (!result.isSuccess) {
       state = state.copyWith(
         scanPhase: AssetScanPhase.idle,
-        scanError: result.error ?? 'Etiket okunamadı.',
+        scanError: result.error != null
+            ? DemirbasSunucuMetni(result.error!)
+            : const DemirbasKimlikMesaji(
+                DemirbasMesajKimlik.etiketOkunamadi,
+              ),
       );
       return;
     }
@@ -174,8 +184,7 @@ class AssetsController extends Notifier<AssetsState> {
       if (match == null) {
         state = state.copyWith(
           scanPhase: AssetScanPhase.idle,
-          scanError: 'Bu etiket (${result.uid}) kayıtlı bir demirbaşla '
-              'eşleşmiyor. Etiket panelden bir demirbaşa tanımlanmalı.',
+          scanError: DemirbasEtiketEslesmiyor(result.uid!),
         );
         return;
       }
@@ -184,8 +193,9 @@ class AssetsController extends Notifier<AssetsState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         scanPhase: AssetScanPhase.idle,
-        scanError:
-            e.kind == ApiErrorKind.network ? _offlineMessage : e.message,
+        scanError: e.kind == ApiErrorKind.network
+            ? _offline
+            : DemirbasSunucuMetni(e.message),
         forbidden: e.statusCode == 403,
       );
     }
@@ -254,11 +264,13 @@ class AssetsController extends Notifier<AssetsState> {
           : await _api.checkin(draft);
       if (!ref.mounted) return;
       state = state.copyWith(
-        actionMessage: tip == AssetActionTip.alma
-            ? (result.wasDuplicate
-                ? 'Zaten zimmetindeydi ✓ (tekrar gönderim — çift kayıt yok)'
-                : 'Zimmetine alındı ✓')
-            : 'Bırakıldı ✓ — zimmet kapatıldı.',
+        actionMessage: DemirbasKimlikMesaji(
+          tip == AssetActionTip.alma
+              ? (result.wasDuplicate
+                  ? DemirbasMesajKimlik.zatenZimmetinde
+                  : DemirbasMesajKimlik.zimmetineAlindi)
+              : DemirbasMesajKimlik.birakildi,
+        ),
       );
       await _resolveAndShow(scanned.asset.id, scanned.scannedUid);
       await refreshMyItems(silent: true);
@@ -269,11 +281,10 @@ class AssetsController extends Notifier<AssetsState> {
       // karti taze durumla yeniden ciz.
       state = state.copyWith(
         actionError: offline
-            ? _offlineMessage
+            ? _offline
             : e.statusCode == 409
-                ? 'İşlem yapılamadı: ${e.message} Durum güncellendi — '
-                    'karta tekrar bakın.'
-                : e.message,
+                ? DemirbasCakismaMesaji(e.message)
+                : DemirbasSunucuMetni(e.message),
       );
       if (!offline && e.statusCode == 409) {
         try {
@@ -318,15 +329,16 @@ class AssetsController extends Notifier<AssetsState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         myLoading: false,
-        myError:
-            e.kind == ApiErrorKind.network ? _offlineMessage : e.message,
+        myError: e.kind == ApiErrorKind.network
+            ? _offline
+            : DemirbasSunucuMetni(e.message),
         forbidden: e.statusCode == 403,
       );
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         myLoading: false,
-        myError: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        myError: const DemirbasKimlikMesaji(DemirbasMesajKimlik.beklenmeyen),
       );
     } finally {
       _refreshingMy = false;
@@ -351,10 +363,10 @@ class AssetsController extends Notifier<AssetsState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         myError: e.kind == ApiErrorKind.network
-            ? _offlineMessage
+            ? _offline
             : e.statusCode == 409
-                ? '${item.asset.ad}: ${e.message}'
-                : e.message,
+                ? DemirbasAdliHata(ad: item.asset.ad, sunucuMetni: e.message)
+                : DemirbasSunucuMetni(e.message),
       );
       await refreshMyItems(silent: true);
     } finally {

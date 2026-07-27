@@ -871,5 +871,184 @@
       "bitis": {}
     },
     "description": "Parametre sirasi MESAJ sirasidir (bkz. §15 notu)."
+  },
+  "butBaslik": "Bütçe",
+  "butSekmeOzet": "Özet",
+  "butSekmeHareketler": "Hareketler",
+  "butSekmeKategoriler": "Kategoriler",
+  "butTumZamanlar": "Tüm zamanlar",
+  "butDonem": "Dönem",
+  "butGelir": "Gelir",
+  "butGider": "Gider",
+  "butKasa": "Kasa",
+  "butKategoriKirilimi": "Kategori kırılımı",
+  "butYeniHareket": "Yeni hareket",
+  "butHareketYok": "Henüz hareket yok.",
+  "butKategori": "Kategori",
+  "butOtomatik": "Otomatik",
+  "butKategoriSecin": "Kategori seçin",
+  "butTutar": "Tutar (TL)",
+  "butTutarIpucu": "örn. 1.250,50",
+  "butTutarGecersiz": "Geçerli bir tutar girin (örn. 1.250,50)",
+  "butTarih": "Tarih: {tarih}",
+  "butYeniKategori": "Yeni kategori",
+  "butKategoriYok": "Henüz kategori yok.",
+  "butKategoriAdi": "Kategori adı",
+  "butKategoriAdiIpucu": "örn. Bahçe bakımı",
+  "butAdZorunlu": "Ad zorunludur",
+  "butKategoriTip": "{ad} ({tip})",
+  "@butKategoriTip": {
+    "description": "Kategori adi + tip etiketi (Gelir/Gider)",
+    "placeholders": {
+      "ad": {},
+      "tip": {}
+    }
+  },
+  "butPasifEki": " · pasif (yeni kayıt kapalı)",
+  "butBeklenmeyenKisa": "Beklenmeyen bir hata oluştu. Tekrar deneyin.",
+  "butFinansalOzet": "Finansal özet",
+  "butAidatTahsilati": "Aidat tahsilatı",
+  "butEnYuksekGiderler": "En yüksek giderler",
+  "butTahsilatYuzde": "Tahsilat %{yuzde}",
+  "butTahakkukYok": "Bu dönem için tahakkuk kaydı yok.",
+  "butSiteBaslik": "Site Bütçesi",
+  "butKategoriToplamlari": "Kategori toplamları",
+  "butSeffaflikNotu": "Bu ekran site yönetiminin gelir ve giderlerini şeffaflık amacıyla özet olarak gösterir. Kişi ve daire bazlı detaylar görüntülenmez; sorularınız için yönetiminize başvurun.",
+  "demBaslik": "Demirbaş",
+  "demEtiketOkut": "Etiket okut",
+  "demBaskaEtiketOkut": "Başka etiket okut",
+  "demUzerimdekiler": "Üzerimdekiler{ek}",
+  "@demUzerimdekiler": {
+    "description": "ek = ' (N)' sayaci ya da bos"
+  },
+  "demNfcAciklama": "Demirbaşı alırken veya bırakırken üzerindeki NFC etiketini okutun. Uygulama demirbaşı tanır ve kimde olduğunu gösterir.",
+  "demTaniniyor": "Demirbaş tanınıyor...",
+  "demKimsedeDegil": "Kimsede değil — alınabilir.",
+  "demSende": "SENDE — {sure} üzerinde.",
+  "@demSende": {
+    "description": "Sure PARCASI ({sure}) edati kendi tasir — bkz. demSure*"
+  },
+  "demBaskasinda": "Başkasında: {ad} — {sure} üzerinde.",
+  "@demBaskasinda": {
+    "description": "Sure PARCASI ({sure}) edati kendi tasir",
+    "placeholders": {
+      "ad": {},
+      "sure": {}
+    }
+  },
+  "demBaskasininUzerinde": "Başkasının üzerinde görünüyor.",
+  "demBakimda": "Bakımda — şu an zimmetlenemez.",
+  "demZorlaDevralmaYok": "Zorla devralma yok — demirbaşı şu anki kullanıcısı bırakmalı.",
+  "demZimmetineAl": "Zimmetine al",
+  "demBirak": "Bırak / iade et",
+  "demBirakKisa": "Bırak",
+  "demSonHareketler": "Son hareketler",
+  "demAldi": "{ad} aldı — {zaman} (hala üzerinde)",
+  "@demAldi": {
+    "placeholders": {
+      "ad": {},
+      "zaman": {}
+    }
+  },
+  "demListeYetkiYok": "Demirbaş listesi için yetkiniz yok.",
+  "demUzerindeYok": "Şu an üzerinde demirbaş görünmüyor.",
+  "demAldin": "Aldın: {zaman} ({sure})",
+  "demSureBelirsiz": "bir süredir",
+  "demSureAzOnce": "az önce alındı, o zamandan beri",
+  "demSureDakika": "{n} dakikadır",
+  "demSureSaat": "{n} saattir",
+  "demSureGun": "{n} gündür",
+  "demOfflineUyari": "İnternet bağlantısı gerekli. Zimmet kimde-olduğu ANLIK bir kayıttır; offline işlem yapılmaz (kuyruklamak yanıltıcı olurdu).",
+  "demEtiketEslesmiyor": "Bu etiket ({uid}) kayıtlı bir demirbaşla eşleşmiyor. Etiket panelden bir demirbaşa tanımlanmalı.",
+  "demZatenZimmetinde": "Zaten zimmetindeydi ✓ (tekrar gönderim — çift kayıt yok)",
+  "demZimmetineAlindi": "Zimmetine alındı ✓",
+  "demBirakildi": "Bırakıldı ✓ — zimmet kapatıldı.",
+  "demIslemYapilamadi": "İşlem yapılamadı: {hata} Durum güncellendi — karta tekrar bakın.",
+  "demHataSatiri": "{ad}: {hata}",
+  "@demHataSatiri": {
+    "placeholders": {
+      "ad": {},
+      "hata": {}
+    }
+  },
+  "karBaslik": "Kargo",
+  "karSekmeBekleyen": "Bekleyen ({n})",
+  "karSekmeTeslim": "Teslim alınan ({n})",
+  "karYeni": "Yeni kargo",
+  "karBekleyenYokSakin": "Teslim bekleyen kargonuz yok.",
+  "karBekleyenYok": "Teslim bekleyen kargo yok.",
+  "karTeslimYok": "Henüz teslim alınan kargo kaydı yok.",
+  "karKaydedildi": "Kargo kaydedildi — daire sakinlerine bildirildi ✓",
+  "karDaireTarih": "Daire: {daire} · {zaman}",
+  "@karDaireTarih": {
+    "description": "Daire no + kayit zamani (dile duyarli bicim)",
+    "placeholders": {
+      "daire": {},
+      "zaman": {}
+    }
+  },
+  "karDaire": "Daire: {daire}",
+  "karKayit": "Kayıt: {zaman}",
+  "karNot": "Not: {not}",
+  "karTeslimAlindiBildirim": "Kargo teslim alındı ✓",
+  "karIsaretlenemedi": "İşaretlenemedi. Tekrar deneyin.",
+  "karTeslimAldim": "Teslim aldım",
+  "karGonderilemedi": "Kayıt gönderilemedi. Tekrar deneyin.",
+  "karDaireNo": "Daire no * (örn. A-12)",
+  "karDaireNoGerekli": "Daire no gerekli",
+  "karFirma": "Kargo firması *",
+  "karFirmaGerekli": "Kargo firması gerekli",
+  "karPaketFotografi": "Paket fotoğrafı (opsiyonel)",
+  "karKaydetVeBildir": "Kaydet ve sakinlere bildir",
+  "@demSureDakika": {
+    "description": "Sure parcasi (ICU cogul) — sablona {sure} olarak girer",
+    "placeholders": {
+      "n": {
+        "type": "num"
+      }
+    }
+  },
+  "@demSureSaat": {
+    "description": "Sure parcasi (ICU cogul) — sablona {sure} olarak girer",
+    "placeholders": {
+      "n": {
+        "type": "num"
+      }
+    }
+  },
+  "@demSureGun": {
+    "description": "Sure parcasi (ICU cogul) — sablona {sure} olarak girer",
+    "placeholders": {
+      "n": {
+        "type": "num"
+      }
+    }
+  },
+  "@demAldin": {
+    "placeholders": {
+      "zaman": {},
+      "sure": {}
+    }
+  },
+  "ortakTekrarDene": "Tekrar dene",
+  "butTahakkuk": "Tahakkuk",
+  "butTahsilat": "Tahsilat",
+  "butGeciken": "Geciken",
+  "demAldiBirakti": "{ad} · {alma} → {birakma}",
+  "@demAldiBirakti": {
+    "description": "Kapali zimmet satiri: kim · alma -> birakma",
+    "placeholders": {
+      "ad": {},
+      "alma": {},
+      "birakma": {}
+    }
+  },
+  "karAdEki": " — {ad}",
+  "@karAdEki": {
+    "description": "Kargo satirinda istege bagli ad eki"
+  },
+  "karZamanEki": " · {zaman}",
+  "@karZamanEki": {
+    "description": "Kargo satirinda istege bagli zaman eki"
   }
 }

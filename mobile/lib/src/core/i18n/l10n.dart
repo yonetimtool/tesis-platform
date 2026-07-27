@@ -48,6 +48,21 @@ String tlIsaretli(int kurus, [String dil = 'tr']) {
   return rtlMi(dil) ? ltrIzole(metin) : metin;
 }
 
+/// "1.250,00 TL" — TL SON EKLI varyant (butce/finans ekranlari bu bicimi
+/// kullanir; [tlIsaretli] ise ₺ ON EKLI olani).
+///
+/// Gruplama TEK KAYNAKTAN gelir ([tlTutar]); `budget_models.formatKurusAsTl`
+/// bunun i18n-oncesi ikizidir ve henuz yerellestirilmemis ekranlarda
+/// (orn. seffaflik panosu) durur — cikti ayni olmak zorundadir, tur 6 testi
+/// bunu dogrular.
+///
+/// [onEk] hareket satirlarindaki isaret icindir ('+' / '-'); izolasyon
+/// isaretle BIRLIKTE uygulanir ki Arapca'da isaret tutardan kopmasin.
+String tlSonEkli(int kurus, String dil, {String onEk = ''}) {
+  final metin = '$onEk${tlTutar(kurus)} TL';
+  return rtlMi(dil) ? ltrIzole(metin) : metin;
+}
+
 /// Yalniz TARIH: aktif dile gore ("25.07.2026" / "07/25/2026" / "٢٥‏/٧‏/٢٠٢٦").
 String tarihBicimi(DateTime t, String dil) =>
     DateFormat.yMd(dil).format(t.toLocal());

@@ -3904,6 +3904,582 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Rezervasyonunuz'**
   String get rezSizin;
+
+  /// No description provided for @butBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bütçe'**
+  String get butBaslik;
+
+  /// No description provided for @butSekmeOzet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Özet'**
+  String get butSekmeOzet;
+
+  /// No description provided for @butSekmeHareketler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hareketler'**
+  String get butSekmeHareketler;
+
+  /// No description provided for @butSekmeKategoriler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategoriler'**
+  String get butSekmeKategoriler;
+
+  /// No description provided for @butTumZamanlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm zamanlar'**
+  String get butTumZamanlar;
+
+  /// No description provided for @butDonem.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dönem'**
+  String get butDonem;
+
+  /// No description provided for @butGelir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gelir'**
+  String get butGelir;
+
+  /// No description provided for @butGider.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gider'**
+  String get butGider;
+
+  /// No description provided for @butKasa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kasa'**
+  String get butKasa;
+
+  /// No description provided for @butKategoriKirilimi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori kırılımı'**
+  String get butKategoriKirilimi;
+
+  /// No description provided for @butYeniHareket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni hareket'**
+  String get butYeniHareket;
+
+  /// No description provided for @butHareketYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz hareket yok.'**
+  String get butHareketYok;
+
+  /// No description provided for @butKategori.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori'**
+  String get butKategori;
+
+  /// No description provided for @butOtomatik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Otomatik'**
+  String get butOtomatik;
+
+  /// No description provided for @butKategoriSecin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori seçin'**
+  String get butKategoriSecin;
+
+  /// No description provided for @butTutar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tutar (TL)'**
+  String get butTutar;
+
+  /// No description provided for @butTutarIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. 1.250,50'**
+  String get butTutarIpucu;
+
+  /// No description provided for @butTutarGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçerli bir tutar girin (örn. 1.250,50)'**
+  String get butTutarGecersiz;
+
+  /// No description provided for @butTarih.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarih: {tarih}'**
+  String butTarih(Object tarih);
+
+  /// No description provided for @butYeniKategori.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni kategori'**
+  String get butYeniKategori;
+
+  /// No description provided for @butKategoriYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz kategori yok.'**
+  String get butKategoriYok;
+
+  /// No description provided for @butKategoriAdi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori adı'**
+  String get butKategoriAdi;
+
+  /// No description provided for @butKategoriAdiIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. Bahçe bakımı'**
+  String get butKategoriAdiIpucu;
+
+  /// No description provided for @butAdZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad zorunludur'**
+  String get butAdZorunlu;
+
+  /// Kategori adi + tip etiketi (Gelir/Gider)
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} ({tip})'**
+  String butKategoriTip(Object ad, Object tip);
+
+  /// No description provided for @butPasifEki.
+  ///
+  /// In tr, this message translates to:
+  /// **' · pasif (yeni kayıt kapalı)'**
+  String get butPasifEki;
+
+  /// No description provided for @butBeklenmeyenKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Beklenmeyen bir hata oluştu. Tekrar deneyin.'**
+  String get butBeklenmeyenKisa;
+
+  /// No description provided for @butFinansalOzet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Finansal özet'**
+  String get butFinansalOzet;
+
+  /// No description provided for @butAidatTahsilati.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat tahsilatı'**
+  String get butAidatTahsilati;
+
+  /// No description provided for @butEnYuksekGiderler.
+  ///
+  /// In tr, this message translates to:
+  /// **'En yüksek giderler'**
+  String get butEnYuksekGiderler;
+
+  /// No description provided for @butTahsilatYuzde.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahsilat %{yuzde}'**
+  String butTahsilatYuzde(Object yuzde);
+
+  /// No description provided for @butTahakkukYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu dönem için tahakkuk kaydı yok.'**
+  String get butTahakkukYok;
+
+  /// No description provided for @butSiteBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Site Bütçesi'**
+  String get butSiteBaslik;
+
+  /// No description provided for @butKategoriToplamlari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori toplamları'**
+  String get butKategoriToplamlari;
+
+  /// No description provided for @butSeffaflikNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ekran site yönetiminin gelir ve giderlerini şeffaflık amacıyla özet olarak gösterir. Kişi ve daire bazlı detaylar görüntülenmez; sorularınız için yönetiminize başvurun.'**
+  String get butSeffaflikNotu;
+
+  /// No description provided for @demBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Demirbaş'**
+  String get demBaslik;
+
+  /// No description provided for @demEtiketOkut.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etiket okut'**
+  String get demEtiketOkut;
+
+  /// No description provided for @demBaskaEtiketOkut.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başka etiket okut'**
+  String get demBaskaEtiketOkut;
+
+  /// ek = ' (N)' sayaci ya da bos
+  ///
+  /// In tr, this message translates to:
+  /// **'Üzerimdekiler{ek}'**
+  String demUzerimdekiler(Object ek);
+
+  /// No description provided for @demNfcAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Demirbaşı alırken veya bırakırken üzerindeki NFC etiketini okutun. Uygulama demirbaşı tanır ve kimde olduğunu gösterir.'**
+  String get demNfcAciklama;
+
+  /// No description provided for @demTaniniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Demirbaş tanınıyor...'**
+  String get demTaniniyor;
+
+  /// No description provided for @demKimsedeDegil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kimsede değil — alınabilir.'**
+  String get demKimsedeDegil;
+
+  /// Sure PARCASI ({sure}) edati kendi tasir — bkz. demSure*
+  ///
+  /// In tr, this message translates to:
+  /// **'SENDE — {sure} üzerinde.'**
+  String demSende(Object sure);
+
+  /// Sure PARCASI ({sure}) edati kendi tasir
+  ///
+  /// In tr, this message translates to:
+  /// **'Başkasında: {ad} — {sure} üzerinde.'**
+  String demBaskasinda(Object ad, Object sure);
+
+  /// No description provided for @demBaskasininUzerinde.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başkasının üzerinde görünüyor.'**
+  String get demBaskasininUzerinde;
+
+  /// No description provided for @demBakimda.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakımda — şu an zimmetlenemez.'**
+  String get demBakimda;
+
+  /// No description provided for @demZorlaDevralmaYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zorla devralma yok — demirbaşı şu anki kullanıcısı bırakmalı.'**
+  String get demZorlaDevralmaYok;
+
+  /// No description provided for @demZimmetineAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zimmetine al'**
+  String get demZimmetineAl;
+
+  /// No description provided for @demBirak.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bırak / iade et'**
+  String get demBirak;
+
+  /// No description provided for @demBirakKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bırak'**
+  String get demBirakKisa;
+
+  /// No description provided for @demSonHareketler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son hareketler'**
+  String get demSonHareketler;
+
+  /// No description provided for @demAldi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} aldı — {zaman} (hala üzerinde)'**
+  String demAldi(Object ad, Object zaman);
+
+  /// No description provided for @demListeYetkiYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Demirbaş listesi için yetkiniz yok.'**
+  String get demListeYetkiYok;
+
+  /// No description provided for @demUzerindeYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şu an üzerinde demirbaş görünmüyor.'**
+  String get demUzerindeYok;
+
+  /// No description provided for @demAldin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aldın: {zaman} ({sure})'**
+  String demAldin(Object zaman, Object sure);
+
+  /// No description provided for @demSureBelirsiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'bir süredir'**
+  String get demSureBelirsiz;
+
+  /// No description provided for @demSureAzOnce.
+  ///
+  /// In tr, this message translates to:
+  /// **'az önce alındı, o zamandan beri'**
+  String get demSureAzOnce;
+
+  /// Sure parcasi (ICU cogul) — sablona {sure} olarak girer
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} dakikadır'**
+  String demSureDakika(num n);
+
+  /// Sure parcasi (ICU cogul) — sablona {sure} olarak girer
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} saattir'**
+  String demSureSaat(num n);
+
+  /// Sure parcasi (ICU cogul) — sablona {sure} olarak girer
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} gündür'**
+  String demSureGun(num n);
+
+  /// No description provided for @demOfflineUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'İnternet bağlantısı gerekli. Zimmet kimde-olduğu ANLIK bir kayıttır; offline işlem yapılmaz (kuyruklamak yanıltıcı olurdu).'**
+  String get demOfflineUyari;
+
+  /// No description provided for @demEtiketEslesmiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu etiket ({uid}) kayıtlı bir demirbaşla eşleşmiyor. Etiket panelden bir demirbaşa tanımlanmalı.'**
+  String demEtiketEslesmiyor(Object uid);
+
+  /// No description provided for @demZatenZimmetinde.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zaten zimmetindeydi ✓ (tekrar gönderim — çift kayıt yok)'**
+  String get demZatenZimmetinde;
+
+  /// No description provided for @demZimmetineAlindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zimmetine alındı ✓'**
+  String get demZimmetineAlindi;
+
+  /// No description provided for @demBirakildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bırakıldı ✓ — zimmet kapatıldı.'**
+  String get demBirakildi;
+
+  /// No description provided for @demIslemYapilamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşlem yapılamadı: {hata} Durum güncellendi — karta tekrar bakın.'**
+  String demIslemYapilamadi(Object hata);
+
+  /// No description provided for @demHataSatiri.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad}: {hata}'**
+  String demHataSatiri(Object ad, Object hata);
+
+  /// No description provided for @karBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kargo'**
+  String get karBaslik;
+
+  /// No description provided for @karSekmeBekleyen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bekleyen ({n})'**
+  String karSekmeBekleyen(Object n);
+
+  /// No description provided for @karSekmeTeslim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teslim alınan ({n})'**
+  String karSekmeTeslim(Object n);
+
+  /// No description provided for @karYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni kargo'**
+  String get karYeni;
+
+  /// No description provided for @karBekleyenYokSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teslim bekleyen kargonuz yok.'**
+  String get karBekleyenYokSakin;
+
+  /// No description provided for @karBekleyenYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teslim bekleyen kargo yok.'**
+  String get karBekleyenYok;
+
+  /// No description provided for @karTeslimYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz teslim alınan kargo kaydı yok.'**
+  String get karTeslimYok;
+
+  /// No description provided for @karKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kargo kaydedildi — daire sakinlerine bildirildi ✓'**
+  String get karKaydedildi;
+
+  /// Daire no + kayit zamani (dile duyarli bicim)
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire: {daire} · {zaman}'**
+  String karDaireTarih(Object daire, Object zaman);
+
+  /// No description provided for @karDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire: {daire}'**
+  String karDaire(Object daire);
+
+  /// No description provided for @karKayit.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt: {zaman}'**
+  String karKayit(Object zaman);
+
+  /// No description provided for @karNot.
+  ///
+  /// In tr, this message translates to:
+  /// **'Not: {not}'**
+  String karNot(Object not);
+
+  /// No description provided for @karTeslimAlindiBildirim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kargo teslim alındı ✓'**
+  String get karTeslimAlindiBildirim;
+
+  /// No description provided for @karIsaretlenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşaretlenemedi. Tekrar deneyin.'**
+  String get karIsaretlenemedi;
+
+  /// No description provided for @karTeslimAldim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teslim aldım'**
+  String get karTeslimAldim;
+
+  /// No description provided for @karGonderilemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt gönderilemedi. Tekrar deneyin.'**
+  String get karGonderilemedi;
+
+  /// No description provided for @karDaireNo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire no * (örn. A-12)'**
+  String get karDaireNo;
+
+  /// No description provided for @karDaireNoGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire no gerekli'**
+  String get karDaireNoGerekli;
+
+  /// No description provided for @karFirma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kargo firması *'**
+  String get karFirma;
+
+  /// No description provided for @karFirmaGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kargo firması gerekli'**
+  String get karFirmaGerekli;
+
+  /// No description provided for @karPaketFotografi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Paket fotoğrafı (opsiyonel)'**
+  String get karPaketFotografi;
+
+  /// No description provided for @karKaydetVeBildir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydet ve sakinlere bildir'**
+  String get karKaydetVeBildir;
+
+  /// No description provided for @ortakTekrarDene.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tekrar dene'**
+  String get ortakTekrarDene;
+
+  /// No description provided for @butTahakkuk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahakkuk'**
+  String get butTahakkuk;
+
+  /// No description provided for @butTahsilat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahsilat'**
+  String get butTahsilat;
+
+  /// No description provided for @butGeciken.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geciken'**
+  String get butGeciken;
+
+  /// Kapali zimmet satiri: kim · alma -> birakma
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} · {alma} → {birakma}'**
+  String demAldiBirakti(Object ad, Object alma, Object birakma);
+
+  /// Kargo satirinda istege bagli ad eki
+  ///
+  /// In tr, this message translates to:
+  /// **' — {ad}'**
+  String karAdEki(Object ad);
+
+  /// Kargo satirinda istege bagli zaman eki
+  ///
+  /// In tr, this message translates to:
+  /// **' · {zaman}'**
+  String karZamanEki(Object zaman);
 }
 
 class _AppLocalizationsDelegate

@@ -3,11 +3,9 @@ import 'package:mobile/src/features/budget/domain/budget_models.dart';
 
 void main() {
   group('BudgetTip.fromWire', () {
-    test('bilinen degerler + etiketler', () {
+    test('bilinen degerler', () {
       expect(BudgetTip.fromWire('gelir'), BudgetTip.gelir);
       expect(BudgetTip.fromWire('gider'), BudgetTip.gider);
-      expect(BudgetTip.gelir.label, 'Gelir');
-      expect(BudgetTip.gider.label, 'Gider');
     });
   });
 

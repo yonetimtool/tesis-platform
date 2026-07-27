@@ -2405,4 +2405,373 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get rezSizin => 'حجزك';
+
+  @override
+  String get butBaslik => 'الميزانية';
+
+  @override
+  String get butSekmeOzet => 'الملخص';
+
+  @override
+  String get butSekmeHareketler => 'الحركات';
+
+  @override
+  String get butSekmeKategoriler => 'الفئات';
+
+  @override
+  String get butTumZamanlar => 'كل الأوقات';
+
+  @override
+  String get butDonem => 'الفترة';
+
+  @override
+  String get butGelir => 'الإيرادات';
+
+  @override
+  String get butGider => 'المصروفات';
+
+  @override
+  String get butKasa => 'الرصيد';
+
+  @override
+  String get butKategoriKirilimi => 'التوزيع حسب الفئة';
+
+  @override
+  String get butYeniHareket => 'حركة جديدة';
+
+  @override
+  String get butHareketYok => 'لا توجد حركات بعد.';
+
+  @override
+  String get butKategori => 'الفئة';
+
+  @override
+  String get butOtomatik => 'تلقائي';
+
+  @override
+  String get butKategoriSecin => 'اختر فئة';
+
+  @override
+  String get butTutar => 'المبلغ (ليرة)';
+
+  @override
+  String get butTutarIpucu => 'مثال: 1.250,50';
+
+  @override
+  String get butTutarGecersiz => 'أدخل مبلغاً صحيحاً (مثال: 1.250,50)';
+
+  @override
+  String butTarih(Object tarih) {
+    return 'التاريخ: $tarih';
+  }
+
+  @override
+  String get butYeniKategori => 'فئة جديدة';
+
+  @override
+  String get butKategoriYok => 'لا توجد فئات بعد.';
+
+  @override
+  String get butKategoriAdi => 'اسم الفئة';
+
+  @override
+  String get butKategoriAdiIpucu => 'مثال: صيانة الحديقة';
+
+  @override
+  String get butAdZorunlu => 'الاسم مطلوب';
+
+  @override
+  String butKategoriTip(Object ad, Object tip) {
+    return '$ad ($tip)';
+  }
+
+  @override
+  String get butPasifEki => ' · غير نشط (لا قيود جديدة)';
+
+  @override
+  String get butBeklenmeyenKisa => 'حدث خطأ غير متوقع. حاول مرة أخرى.';
+
+  @override
+  String get butFinansalOzet => 'الملخص المالي';
+
+  @override
+  String get butAidatTahsilati => 'تحصيل الرسوم';
+
+  @override
+  String get butEnYuksekGiderler => 'أكبر المصروفات';
+
+  @override
+  String butTahsilatYuzde(Object yuzde) {
+    return 'التحصيل $yuzde٪';
+  }
+
+  @override
+  String get butTahakkukYok => 'لا توجد استحقاقات مسجّلة لهذه الفترة.';
+
+  @override
+  String get butSiteBaslik => 'ميزانية الموقع';
+
+  @override
+  String get butKategoriToplamlari => 'مجاميع الفئات';
+
+  @override
+  String get butSeffaflikNotu =>
+      'تعرض هذه الشاشة إيرادات ومصروفات إدارة الموقع كملخص بهدف الشفافية. لا تُعرض التفاصيل على مستوى الأشخاص والوحدات؛ راجع الإدارة لأي أسئلة.';
+
+  @override
+  String get demBaslik => 'الأصول';
+
+  @override
+  String get demEtiketOkut => 'امسح الوسم';
+
+  @override
+  String get demBaskaEtiketOkut => 'امسح وسماً آخر';
+
+  @override
+  String demUzerimdekiler(Object ek) {
+    return 'ما بحوزتي$ek';
+  }
+
+  @override
+  String get demNfcAciklama =>
+      'امسح وسم NFC الموجود على الأصل عند أخذه أو إعادته. يتعرّف التطبيق على الأصل ويُظهر من يحوزه.';
+
+  @override
+  String get demTaniniyor => 'جارٍ التعرّف على الأصل...';
+
+  @override
+  String get demKimsedeDegil => 'ليس بحوزة أحد — متاح.';
+
+  @override
+  String demSende(Object sure) {
+    return 'بحوزتك — $sure.';
+  }
+
+  @override
+  String demBaskasinda(Object ad, Object sure) {
+    return 'بحوزة $ad — $sure.';
+  }
+
+  @override
+  String get demBaskasininUzerinde => 'يبدو أنه بحوزة شخص آخر.';
+
+  @override
+  String get demBakimda => 'تحت الصيانة — لا يمكن تسليمه الآن.';
+
+  @override
+  String get demZorlaDevralmaYok =>
+      'لا استيلاء قسري — يجب أن يعيده حائزه الحالي.';
+
+  @override
+  String get demZimmetineAl => 'استلام';
+
+  @override
+  String get demBirak => 'إعادة';
+
+  @override
+  String get demBirakKisa => 'إعادة';
+
+  @override
+  String get demSonHareketler => 'الحركات الأخيرة';
+
+  @override
+  String demAldi(Object ad, Object zaman) {
+    return 'أخذه $ad — $zaman (لا يزال بحوزته)';
+  }
+
+  @override
+  String get demListeYetkiYok => 'ليست لديك صلاحية لقائمة الأصول.';
+
+  @override
+  String get demUzerindeYok => 'لا توجد أصول بحوزتك حالياً.';
+
+  @override
+  String demAldin(Object zaman, Object sure) {
+    return 'أُخذ: $zaman ($sure)';
+  }
+
+  @override
+  String get demSureBelirsiz => 'منذ فترة';
+
+  @override
+  String get demSureAzOnce => 'قبل لحظات';
+
+  @override
+  String demSureDakika(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'منذ $n دقيقة',
+      many: 'منذ $n دقيقة',
+      few: 'منذ $n دقائق',
+      two: 'منذ دقيقتين',
+      one: 'منذ دقيقة',
+      zero: 'منذ $n دقيقة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String demSureSaat(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'منذ $n ساعة',
+      many: 'منذ $n ساعة',
+      few: 'منذ $n ساعات',
+      two: 'منذ ساعتين',
+      one: 'منذ ساعة',
+      zero: 'منذ $n ساعة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String demSureGun(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'منذ $n يوم',
+      many: 'منذ $n يوماً',
+      few: 'منذ $n أيام',
+      two: 'منذ يومين',
+      one: 'منذ يوم',
+      zero: 'منذ $n يوم',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get demOfflineUyari =>
+      'يلزم اتصال بالإنترنت. حيازة الأصل سجل فوري؛ ولا تُعالج دون اتصال (الانتظار في قائمة سيكون مضلّلاً).';
+
+  @override
+  String demEtiketEslesmiyor(Object uid) {
+    return 'هذا الوسم ($uid) لا يطابق أي أصل مسجّل. يجب ربط الوسم بأصل من اللوحة.';
+  }
+
+  @override
+  String get demZatenZimmetinde =>
+      'كان بحوزتك بالفعل ✓ (إعادة إرسال — بلا تكرار)';
+
+  @override
+  String get demZimmetineAlindi => 'تم الاستلام ✓';
+
+  @override
+  String get demBirakildi => 'تمت الإعادة ✓ — أُغلق التسليم.';
+
+  @override
+  String demIslemYapilamadi(Object hata) {
+    return 'تعذّر تنفيذ العملية: $hata تم تحديث الحالة — راجع البطاقة.';
+  }
+
+  @override
+  String demHataSatiri(Object ad, Object hata) {
+    return '$ad: $hata';
+  }
+
+  @override
+  String get karBaslik => 'الشحنات';
+
+  @override
+  String karSekmeBekleyen(Object n) {
+    return 'قيد الانتظار ($n)';
+  }
+
+  @override
+  String karSekmeTeslim(Object n) {
+    return 'المستلمة ($n)';
+  }
+
+  @override
+  String get karYeni => 'شحنة جديدة';
+
+  @override
+  String get karBekleyenYokSakin => 'لا توجد شحنات في انتظار استلامك.';
+
+  @override
+  String get karBekleyenYok => 'لا توجد شحنات في انتظار الاستلام.';
+
+  @override
+  String get karTeslimYok => 'لا توجد شحنات مستلمة مسجّلة بعد.';
+
+  @override
+  String get karKaydedildi => 'تم تسجيل الشحنة — أُبلغ سكان الوحدة ✓';
+
+  @override
+  String karDaireTarih(Object daire, Object zaman) {
+    return 'الوحدة: $daire · $zaman';
+  }
+
+  @override
+  String karDaire(Object daire) {
+    return 'الوحدة: $daire';
+  }
+
+  @override
+  String karKayit(Object zaman) {
+    return 'التسجيل: $zaman';
+  }
+
+  @override
+  String karNot(Object not) {
+    return 'ملاحظة: $not';
+  }
+
+  @override
+  String get karTeslimAlindiBildirim => 'تم استلام الشحنة ✓';
+
+  @override
+  String get karIsaretlenemedi => 'تعذّر التأشير. حاول مرة أخرى.';
+
+  @override
+  String get karTeslimAldim => 'لقد استلمتها';
+
+  @override
+  String get karGonderilemedi => 'تعذّر إرسال السجل. حاول مرة أخرى.';
+
+  @override
+  String get karDaireNo => 'رقم الوحدة * (مثال: A-12)';
+
+  @override
+  String get karDaireNoGerekli => 'رقم الوحدة مطلوب';
+
+  @override
+  String get karFirma => 'شركة الشحن *';
+
+  @override
+  String get karFirmaGerekli => 'شركة الشحن مطلوبة';
+
+  @override
+  String get karPaketFotografi => 'صورة الشحنة (اختياري)';
+
+  @override
+  String get karKaydetVeBildir => 'احفظ وأبلغ السكان';
+
+  @override
+  String get ortakTekrarDene => 'حاول مرة أخرى';
+
+  @override
+  String get butTahakkuk => 'المستحق';
+
+  @override
+  String get butTahsilat => 'المُحصّل';
+
+  @override
+  String get butGeciken => 'متأخر';
+
+  @override
+  String demAldiBirakti(Object ad, Object alma, Object birakma) {
+    return '$ad · $alma → $birakma';
+  }
+
+  @override
+  String karAdEki(Object ad) {
+    return ' — $ad';
+  }
+
+  @override
+  String karZamanEki(Object zaman) {
+    return ' · $zaman';
+  }
 }

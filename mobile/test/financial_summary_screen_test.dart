@@ -6,6 +6,8 @@ import 'package:mobile/src/features/budget/data/budget_api.dart';
 import 'package:mobile/src/features/budget/domain/budget_models.dart';
 import 'package:mobile/src/features/budget/presentation/financial_summary_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 class _FakeBudgetApi extends BudgetApi {
   _FakeBudgetApi() : super(Dio());
 
@@ -40,7 +42,7 @@ void main() {
 
   Widget app() => ProviderScope(
         overrides: [budgetApiProvider.overrideWithValue(api)],
-        child: const MaterialApp(home: FinancialSummaryScreen()),
+        child: l10nApp(const FinancialSummaryScreen()),
       );
 
   testWidgets('yonetici ozeti: tahsilat orani + geciken daire + top giderler',

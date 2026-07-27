@@ -1558,18 +1558,20 @@ blok/kat/daire yerleşimi, toplu daire ekleme, yoğunluk göstergesi, daire
 şikayet formu, talep sekmeleri/detay/durum geçmişi, iş emrine dönüştürme) ve
 **Rezervasyon + Etkinlik + Görüntüleme izni** (tur 5 — ortak alan/slot ızgarası,
 alan formu, RSVP akışı, etkinlik formu, izin isteği/onayı + tek-seferlik kayıt
-görüntüleme). Kalan modüllerin dışa alımı mekanik bir iştir ve aşağıdaki
-envanterle sürdürülür — bkz. "Kalan iş".
+görüntüleme) ve **Bütçe + Demirbaş + Kargo** (tur 6 — bütçe özeti/hareketler/
+kategoriler, finansal özet, sakin "Site Bütçesi" şeffaflık ekranı, NFC zimmet
+akışı + üzerimdekiler, kargo listesi/detay/kayıt formu). Kalan modüllerin dışa
+alımı mekanik bir iştir ve aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
 
 ### Mimari
 
 | Parça | Yer |
 |---|---|
-| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**631 anahtar × 7**, boşluk yok) |
+| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**727 anahtar × 7**, boşluk yok) |
 | gen-l10n yapılandırması | `l10n.yaml` (şablon: `app_tr.arb`) |
 | Üretilen sınıf | `lib/l10n/gen/app_localizations.dart` (**repoda tutulur** → taze klonda `analyze`/`test` ek adım istemez; yenilemek için `flutter gen-l10n`) |
 | Dil seçimi + kalıcılık | `lib/src/core/i18n/locale_controller.dart` (`AppDil`, `LocaleController`, `ui.locale` anahtarı — tema ile aynı güvenli depo) |
-| Ergonomi + biçimlendirme | `lib/src/core/i18n/l10n.dart` (`context.l10n`, `tlIsaretli`, `tarihBicimi`, `baslikBuyuk`, `ltrIzole`) |
+| Ergonomi + biçimlendirme | `lib/src/core/i18n/l10n.dart` (`context.l10n`, `tlIsaretli`, `tlSonEkli`, `tarihBicimi`, `baslikBuyuk`, `ltrIzole`) |
 | Uygulama bağlaması | `lib/main.dart` (`localizationsDelegates`, `supportedLocales`, `localeResolutionCallback`) |
 | Açılış ön-okuması | `lib/src/core/startup/acilis_tercihleri.dart` — dil + tema `runApp`'ten **önce** okunur, `acilisTercihleriProvider` ile tohumlanır |
 | Dil seçici | Ayarlar → "Dil / Language" (alt sayfa, 7 dil kendi adıyla) |
@@ -1637,6 +1639,13 @@ yok) — bu **bilinçli**, dilbilgisi gereği.
 > **Tutarlar UI dili ne olursa olsun ₺ ve Türkçe gruplamayla gösterilir**
 > (`₺1.250,00`).
 
+İki biçimleyici vardır: `tlIsaretli` (**₺ ön ekli**, kartlar) ve `tlSonEkli`
+(**"TL" son ekli**, bütçe/finans ekranları — hareket satırlarında `onEk: '+'/'-'`
+işaretiyle). Gruplama tek kaynaktan gelir (`tlTutar`); `budget_models.dart`
+içindeki `formatKurusAsTl` bunun i18n-öncesi ikizidir ve henüz çevrilmemiş
+şeffaflık panosunda durur — **çıktı eşitliği tur 6 testinde kilitlidir**.
+Arapça'da tutar (işaretiyle birlikte) LTR izole edilir.
+
 Gerekçe: para **site-yereldir** — aidat TL toplanır, dekont/İBAN TL'dir. Dile
 göre `$`/`€` göstermek ya da `1,250.00` biçimi kullanmak muhasebeyle çelişir.
 Tarih/saat ve ay/gün adları ise **aktif dile** göre biçimlenir
@@ -1690,7 +1699,16 @@ değişince yönlendirme bozulurdu. Artık:
 | `OrtakAlan.musaitlikOzeti` · `Slot.sebepEtiketi` | — | **ÜYELER KALDIRILDI** (domain metin üretmez); yerine `musaitlikOzeti(l10n, alan)` + `SlotSebep` kimliği |
 | `KatilimDurum` | `etkinlik/domain/etkinlik_models.dart` | `katilimDurumAdi` (`etk_etiket.dart`) |
 | `AccessRequestDurum` | `unit_access/domain/unit_access_models.dart` | `erisimDurumAdi` (`izin_etiket.dart`) |
-| `KargoDurum` | `kargo/domain/kargo_models.dart` | `kargoDurumAdi` (`kargo/presentation/`) — `unit_access` çizdiği için tur 5'te eklendi |
+| `KargoDurum` | `kargo/domain/kargo_models.dart` | `kargoDurumAdi` (`kargo/presentation/`) — çözücü tur 5'te (`unit_access` çizdiği için) eklendi, **`label` alanı tur 6'da KALDIRILDI** |
+| `BudgetTip` | `budget/domain/budget_models.dart` | `butceTipAdi` (`budget/presentation/`) — **`label` alanı KALDIRILDI** |
+| `DemirbasMesaj` (**sealed**) + `DemirbasMesajKimlik` | `assets/domain/demirbas_mesaj.dart` | `demirbasMesajMetni` (`assets/presentation/`) |
+
+**Parametre taşıyan mesaj kimlikleri (tur 6).** Diğer modüllerde denetleyici
+hatası tek bir `enum` + ayrı `errorMessage` alanıyla taşınıyordu. Demirbaş
+mesajlarının bir kısmı **parametre** taşır (okutulan UID, çatışan demirbaşın
+adı), bu yüzden `DemirbasMesaj` bir **sealed sınıftır**: kimlik ve parametreleri
+birlikte tutar, `DemirbasSunucuMetni` de sunucu kanalını temsil eder. Denetleyici
+hâlâ **metin üretmez**; `assets_screen` çizim anında çözer.
 
 `switch`'lerin `default` dalı **yoktur**: yeni kart eklenince derleyici çeviriyi
 zorlar. `ParkingOccupancy` gibi alan tiplerinden görüntü metni üreten üyeler
@@ -1757,6 +1775,35 @@ ICU çoğul (ru/ar) katılım sayaçları; **çok-placeholder sıra kilidi** (yu
 sessiz hata sınıfı) ve **RTL**: Arapça rezervasyon alan formu, etkinlik formu ve
 izin kartı — yön `rtl`, taşma yok.
 
+`test/butce_demirbas_kargo_i18n_test.dart` (17 test — tur 6): bütçede
+**tr→en→de**, demirbaşta **tr→en→ru**, kargoda **tr→en→es** dil değişimi;
+`BudgetTip`/`KargoDurum` çözücülerinin 7 dilde karşılığı; `DemirbasMesaj`
+kimlik + **parametre** çözümü ve sunucu kanalının olduğu gibi geçişi;
+`tlSonEkli` ↔ `formatKurusAsTl` **çıktı eşitliği** + Arapça LTR izolasyonu;
+çok-placeholder **sıra kilidi**; süre parçasının **edatı taşıması** (aşağıdaki
+not) ve **RTL**: Arapça bütçe hareket formu, demirbaş durum kartı, kargo formu
+ve kargo detayı — yön `rtl`, taşma yok. Ayrıca **320 dp dar ekran** senaryosu
+(milyonluk bütçe + en uzun TR etiketler) aşağıdaki taşma düzeltmelerini kilitler.
+
+> **Tur 6'nın çeviri tasarım kararı — cümleye giren PARÇA edatı taşır.**
+> Demirbaş kartı "SENDE — {süre} üzerinde." kurar; `{süre}` = "3 saattir".
+> İngilizce şablon "WITH YOU — {süre}." olur ve parça "for 3 hours" gelir.
+> Edat **parçanın** içinde olmasa şablon her dilde ya iki kez ("for for
+> 3 hours") ya hiç yazardı. `@demSende` bu kuralı ARB'de not eder.
+
+> **Tur 6 RTL/dar-ekran taramasının bulguları — üçü yön, üçü taşma.**
+> Yön: `Alignment.centerRight` (tahsilat yüzdesi) ve `Alignment.centerLeft`
+> (kargo görsel hatası) Arapça'da yanlış kenara yapışıyordu →
+> `AlignmentDirectional.centerEnd/Start`. Taşma (320–360 dp): tutar kartında
+> `trailing:` 7 haneli tutarla **tüm tile genişliğini tüketip ListTile'ı
+> düşürüyordu**; hareket satırındaki "Otomatik" rozeti sabit genişlikteydi;
+> kargo formunda "Paket fotoğrafı (opsiyonel)" satıra sığmıyordu. Düzeltmeler:
+> etiket `Expanded` + ellipsis, tutar `Flexible` + `FittedBox(scaleDown)`,
+> rozet `Flexible`, form etiketi `Expanded`. **Bu üç taşma Türkçe'de de
+> oluşuyordu** (i18n kaynaklı değil, mevcut kusur); Arapça sadece iki satırda
+> daha erken tetikliyordu. Tur 3/4 bulgularıyla aynı ders: **grep taşmayı
+> görmez.**
+
 `test/flutter_test_config.dart` süite başına bir kez `initializeDateFormatting()`
 çağırır: eşleyicileri doğrudan çağıran saf birim testleri aksi halde
 `LocaleDataException` ile düşer (uygulamada bu `main.dart`'ta yapılır).
@@ -1768,9 +1815,13 @@ ile düşer.
 
 > **Her turun sabit adımı:** o modülün MEVCUT widget testleri `MaterialApp` →
 > `l10nApp` geçişi yapar. Tur 4'te `bina_duzenleme_test`,
-> `building_schematic_test` ve `complaints_screen_test` (33 test) böyle
-> geçirildi; TR metin beklentileri **değişmediği** için başka düzeltme
-> gerekmedi (çeviri anahtarlarının TR değerleri birebir korundu).
+> `building_schematic_test` ve `complaints_screen_test` (33 test), tur 6'da
+> `budget_screen_test`, `financial_summary_screen_test`,
+> `site_budget_screen_test` ve `kargo_screen_test` böyle geçirildi; TR metin
+> beklentileri **değişmediği** için başka düzeltme gerekmedi (çeviri
+> anahtarlarının TR değerleri birebir korundu). Tur 6'da ek olarak
+> `budget_models_test` içindeki iki `BudgetTip.label` iddiası düştü — alan
+> kaldırıldı, karşılığı `butceTipAdi` testidir.
 
 **Altın görseller (golden) TÜRKÇE'ye sabitlendi** (`test/tools/home_referans_golden_test.dart`):
 referans görseller TR'dir ve dil başına golden üretmek 7 kat çıktı demektir;
@@ -1828,6 +1879,28 @@ EOF
 
 136 string dışa alındı; **133 yeni ARB anahtarı × 7 dil** (498 → 631).
 
+**Tur 6 (budget + assets + kargo) ölçümü — aynı komut:**
+
+| | Toplam string | Dosya | `budget` | `assets` | `kargo` |
+|---|---|---|---|---|---|
+| Tur 6 öncesi | 518 | 58 | **39** | **36** | **30** |
+| Tur 6 sonrası | **413** | 50 | **0** | **0** | **0** |
+
+105 string dışa alındı; **96 yeni ARB anahtarı × 7 dil** (631 → 727) + mevcut
+anahtarların yeniden kullanımı (`ortakKaydet`, `ortakKaydediliyor`, `ortakYenile`,
+`ortakNotOpsiyonel`, `ortakBeklenmeyenHata`, `binaDaireSayisi` (ICU çoğul —
+geciken daire sayacı), `kargoDurumTeslimAlindi`, `devriyeDurumBekliyor/Bilinmiyor`,
+`gorevEtiketBekleniyor`, `gorevEtiketOkunamadi`, `gorevAciklamaOpsiyonel`,
+`gorevKamera`, `gorevYenidenCek`, `gorevGaleridenSec`, `gorevTekrarYukle`,
+`gorevKaldir`, `gorevFoto*`, `talepGorselYuklenemedi`) ve **yeni ortak anahtar**
+`ortakTekrarDene` (henüz çevrilmemiş 5 modülde de aynı metin geçiyor).
+
+Tur 6'da **kontrol akışı denetimi boş döndü** — bu üç modülde hiçbir TR string
+`switch`/`==` anahtarı değildi, id-split gerekmedi; yapılan üç ayrım
+**görünen ad alanlarının kaldırılmasıydı** (`BudgetTip.label`,
+`KargoDurum.label`) ve denetleyici mesaj kanallarının kimliğe çevrilmesiydi
+(`DemirbasMesaj`, `KargoState.hataKimligi`, bütçe ekranlarında `AkisHatasi`).
+
 > **Tur 5'te bulunan SESSİZ HATA SINIFI — ICU placeholder sırası.** ARB'de
 > `placeholders` metadata'sı **yoksa** gen-l10n parametreleri **alfabetik**
 > sıralar. Çağrı yeri mesajın okuma sırasını varsayarsa metin sessizce yanlış
@@ -1854,11 +1927,13 @@ kullanımı (`ortakSil`, `ortakVazgec`, `ortakKaydet`, `ortakEkle`, `ortakYenile
 `ortakKaydediliyor`, `ortakBeklenmeyenHata`, `cipAktif`, `modulGorevlerim`,
 `modulGorevYonetimi`, `modulTurlarim`).
 
-Doğrulama (tur 2'deki `home` denetiminin tur 3 karşılığı) — **boş dönmeli**:
+Doğrulama (tur 2'deki `home` denetiminin sonraki turlardaki karşılığı) —
+**boş dönmeli**:
 
 ```bash
 grep -rnE "(switch|case|==)\s*\(?\s*['\"][^'\"]*[çğıöşü…]" \
-  lib/src/features/tasks lib/src/features/patrol
+  lib/src/features/tasks lib/src/features/patrol \
+  lib/src/features/budget lib/src/features/assets lib/src/features/kargo
 ```
 
 Kalan 2 `home` stringi `home_marka.dart` içindeki **marka kilidi**dir (`Yönetio`,
@@ -1886,19 +1961,18 @@ rakamı ölçümün o anki halidir; tur 2 başında aynı komut 1.115/100 verdi 
 arada başka modüle dokunulmadı, fark ara commit'lerdeki küçük düzenlemelerden
 gelir.)
 
-Kalan envanter (modül başına, **tur 5 sonrası**; `tasks`, `patrol`, `building_map`, `complaints`, `rezervasyon`, `etkinlik` ve `unit_access` listeden düştü):
+Kalan envanter (modül başına, **tur 6 sonrası**; `tasks`, `patrol`,
+`building_map`, `complaints`, `rezervasyon`, `etkinlik`, `unit_access`, `budget`,
+`assets` ve `kargo` listeden düştü):
 
 | Modül | Kalan string |
 |---|---|
-| `budget` | 39 |
-| `assets` | 36 |
 | `site_kurali` | 32 |
 | `announcements` | 31 |
-| `kargo` | 30 |
 | `residents` | 30 |
 | `dis_hizmet` | 26 |
-| `nfc` | 25 |
 | `staff` | 25 |
+| `nfc` | 25 |
 | `integrations` | 23 |
 | `transparency` | 22 |
 | `visitors` | 22 |
@@ -1912,15 +1986,15 @@ Kalan envanter (modül başına, **tur 5 sonrası**; `tasks`, `patrol`, `buildin
 | `tenant` | 9 |
 | `unit_complaints` | 8 |
 | `shifts` | 7 |
-| `settings` | 6 |
 | `yonetici_iletisim` | 6 |
+| `settings` | 6 |
 | `validators` | 5 |
-| `error` | 3 |
 | `ui` | 3 |
-| `branding` | 2 |
-| `call` | 2 |
+| `error` | 3 |
 | `home` | 2 (marka kilidi — istisna) |
 | `i18n` | 2 |
+| `branding` | 2 (marka kilidi — istisna) |
+| `call` | 2 |
 | `main.dart` | 1 |
 | `notifications` | 1 |
 | `push` | 1 |

@@ -2215,4 +2215,345 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rezSizin => 'Rezervasyonunuz';
+
+  @override
+  String get butBaslik => 'Bütçe';
+
+  @override
+  String get butSekmeOzet => 'Özet';
+
+  @override
+  String get butSekmeHareketler => 'Hareketler';
+
+  @override
+  String get butSekmeKategoriler => 'Kategoriler';
+
+  @override
+  String get butTumZamanlar => 'Tüm zamanlar';
+
+  @override
+  String get butDonem => 'Dönem';
+
+  @override
+  String get butGelir => 'Gelir';
+
+  @override
+  String get butGider => 'Gider';
+
+  @override
+  String get butKasa => 'Kasa';
+
+  @override
+  String get butKategoriKirilimi => 'Kategori kırılımı';
+
+  @override
+  String get butYeniHareket => 'Yeni hareket';
+
+  @override
+  String get butHareketYok => 'Henüz hareket yok.';
+
+  @override
+  String get butKategori => 'Kategori';
+
+  @override
+  String get butOtomatik => 'Otomatik';
+
+  @override
+  String get butKategoriSecin => 'Kategori seçin';
+
+  @override
+  String get butTutar => 'Tutar (TL)';
+
+  @override
+  String get butTutarIpucu => 'örn. 1.250,50';
+
+  @override
+  String get butTutarGecersiz => 'Geçerli bir tutar girin (örn. 1.250,50)';
+
+  @override
+  String butTarih(Object tarih) {
+    return 'Tarih: $tarih';
+  }
+
+  @override
+  String get butYeniKategori => 'Yeni kategori';
+
+  @override
+  String get butKategoriYok => 'Henüz kategori yok.';
+
+  @override
+  String get butKategoriAdi => 'Kategori adı';
+
+  @override
+  String get butKategoriAdiIpucu => 'örn. Bahçe bakımı';
+
+  @override
+  String get butAdZorunlu => 'Ad zorunludur';
+
+  @override
+  String butKategoriTip(Object ad, Object tip) {
+    return '$ad ($tip)';
+  }
+
+  @override
+  String get butPasifEki => ' · pasif (yeni kayıt kapalı)';
+
+  @override
+  String get butBeklenmeyenKisa =>
+      'Beklenmeyen bir hata oluştu. Tekrar deneyin.';
+
+  @override
+  String get butFinansalOzet => 'Finansal özet';
+
+  @override
+  String get butAidatTahsilati => 'Aidat tahsilatı';
+
+  @override
+  String get butEnYuksekGiderler => 'En yüksek giderler';
+
+  @override
+  String butTahsilatYuzde(Object yuzde) {
+    return 'Tahsilat %$yuzde';
+  }
+
+  @override
+  String get butTahakkukYok => 'Bu dönem için tahakkuk kaydı yok.';
+
+  @override
+  String get butSiteBaslik => 'Site Bütçesi';
+
+  @override
+  String get butKategoriToplamlari => 'Kategori toplamları';
+
+  @override
+  String get butSeffaflikNotu =>
+      'Bu ekran site yönetiminin gelir ve giderlerini şeffaflık amacıyla özet olarak gösterir. Kişi ve daire bazlı detaylar görüntülenmez; sorularınız için yönetiminize başvurun.';
+
+  @override
+  String get demBaslik => 'Demirbaş';
+
+  @override
+  String get demEtiketOkut => 'Etiket okut';
+
+  @override
+  String get demBaskaEtiketOkut => 'Başka etiket okut';
+
+  @override
+  String demUzerimdekiler(Object ek) {
+    return 'Üzerimdekiler$ek';
+  }
+
+  @override
+  String get demNfcAciklama =>
+      'Demirbaşı alırken veya bırakırken üzerindeki NFC etiketini okutun. Uygulama demirbaşı tanır ve kimde olduğunu gösterir.';
+
+  @override
+  String get demTaniniyor => 'Demirbaş tanınıyor...';
+
+  @override
+  String get demKimsedeDegil => 'Kimsede değil — alınabilir.';
+
+  @override
+  String demSende(Object sure) {
+    return 'SENDE — $sure üzerinde.';
+  }
+
+  @override
+  String demBaskasinda(Object ad, Object sure) {
+    return 'Başkasında: $ad — $sure üzerinde.';
+  }
+
+  @override
+  String get demBaskasininUzerinde => 'Başkasının üzerinde görünüyor.';
+
+  @override
+  String get demBakimda => 'Bakımda — şu an zimmetlenemez.';
+
+  @override
+  String get demZorlaDevralmaYok =>
+      'Zorla devralma yok — demirbaşı şu anki kullanıcısı bırakmalı.';
+
+  @override
+  String get demZimmetineAl => 'Zimmetine al';
+
+  @override
+  String get demBirak => 'Bırak / iade et';
+
+  @override
+  String get demBirakKisa => 'Bırak';
+
+  @override
+  String get demSonHareketler => 'Son hareketler';
+
+  @override
+  String demAldi(Object ad, Object zaman) {
+    return '$ad aldı — $zaman (hala üzerinde)';
+  }
+
+  @override
+  String get demListeYetkiYok => 'Demirbaş listesi için yetkiniz yok.';
+
+  @override
+  String get demUzerindeYok => 'Şu an üzerinde demirbaş görünmüyor.';
+
+  @override
+  String demAldin(Object zaman, Object sure) {
+    return 'Aldın: $zaman ($sure)';
+  }
+
+  @override
+  String get demSureBelirsiz => 'bir süredir';
+
+  @override
+  String get demSureAzOnce => 'az önce alındı, o zamandan beri';
+
+  @override
+  String demSureDakika(num n) {
+    return '$n dakikadır';
+  }
+
+  @override
+  String demSureSaat(num n) {
+    return '$n saattir';
+  }
+
+  @override
+  String demSureGun(num n) {
+    return '$n gündür';
+  }
+
+  @override
+  String get demOfflineUyari =>
+      'İnternet bağlantısı gerekli. Zimmet kimde-olduğu ANLIK bir kayıttır; offline işlem yapılmaz (kuyruklamak yanıltıcı olurdu).';
+
+  @override
+  String demEtiketEslesmiyor(Object uid) {
+    return 'Bu etiket ($uid) kayıtlı bir demirbaşla eşleşmiyor. Etiket panelden bir demirbaşa tanımlanmalı.';
+  }
+
+  @override
+  String get demZatenZimmetinde =>
+      'Zaten zimmetindeydi ✓ (tekrar gönderim — çift kayıt yok)';
+
+  @override
+  String get demZimmetineAlindi => 'Zimmetine alındı ✓';
+
+  @override
+  String get demBirakildi => 'Bırakıldı ✓ — zimmet kapatıldı.';
+
+  @override
+  String demIslemYapilamadi(Object hata) {
+    return 'İşlem yapılamadı: $hata Durum güncellendi — karta tekrar bakın.';
+  }
+
+  @override
+  String demHataSatiri(Object ad, Object hata) {
+    return '$ad: $hata';
+  }
+
+  @override
+  String get karBaslik => 'Kargo';
+
+  @override
+  String karSekmeBekleyen(Object n) {
+    return 'Bekleyen ($n)';
+  }
+
+  @override
+  String karSekmeTeslim(Object n) {
+    return 'Teslim alınan ($n)';
+  }
+
+  @override
+  String get karYeni => 'Yeni kargo';
+
+  @override
+  String get karBekleyenYokSakin => 'Teslim bekleyen kargonuz yok.';
+
+  @override
+  String get karBekleyenYok => 'Teslim bekleyen kargo yok.';
+
+  @override
+  String get karTeslimYok => 'Henüz teslim alınan kargo kaydı yok.';
+
+  @override
+  String get karKaydedildi =>
+      'Kargo kaydedildi — daire sakinlerine bildirildi ✓';
+
+  @override
+  String karDaireTarih(Object daire, Object zaman) {
+    return 'Daire: $daire · $zaman';
+  }
+
+  @override
+  String karDaire(Object daire) {
+    return 'Daire: $daire';
+  }
+
+  @override
+  String karKayit(Object zaman) {
+    return 'Kayıt: $zaman';
+  }
+
+  @override
+  String karNot(Object not) {
+    return 'Not: $not';
+  }
+
+  @override
+  String get karTeslimAlindiBildirim => 'Kargo teslim alındı ✓';
+
+  @override
+  String get karIsaretlenemedi => 'İşaretlenemedi. Tekrar deneyin.';
+
+  @override
+  String get karTeslimAldim => 'Teslim aldım';
+
+  @override
+  String get karGonderilemedi => 'Kayıt gönderilemedi. Tekrar deneyin.';
+
+  @override
+  String get karDaireNo => 'Daire no * (örn. A-12)';
+
+  @override
+  String get karDaireNoGerekli => 'Daire no gerekli';
+
+  @override
+  String get karFirma => 'Kargo firması *';
+
+  @override
+  String get karFirmaGerekli => 'Kargo firması gerekli';
+
+  @override
+  String get karPaketFotografi => 'Paket fotoğrafı (opsiyonel)';
+
+  @override
+  String get karKaydetVeBildir => 'Kaydet ve sakinlere bildir';
+
+  @override
+  String get ortakTekrarDene => 'Tekrar dene';
+
+  @override
+  String get butTahakkuk => 'Tahakkuk';
+
+  @override
+  String get butTahsilat => 'Tahsilat';
+
+  @override
+  String get butGeciken => 'Geciken';
+
+  @override
+  String demAldiBirakti(Object ad, Object alma, Object birakma) {
+    return '$ad · $alma → $birakma';
+  }
+
+  @override
+  String karAdEki(Object ad) {
+    return ' — $ad';
+  }
+
+  @override
+  String karZamanEki(Object zaman) {
+    return ' · $zaman';
+  }
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 import '../data/budget_api.dart';
 import '../domain/budget_models.dart';
 
@@ -19,7 +20,11 @@ class SiteBudgetScreen extends ConsumerStatefulWidget {
 
 class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
   BudgetSummary? _summary;
+
+  /// Hata KANALI ikilidir (README §15): sunucu metni + yerellestirilebilir
+  /// kimlik.
   String? _error;
+  AkisHatasi? _hataKimligi;
   String? _donem; // null = tum zamanlar
 
   @override
@@ -29,7 +34,10 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _error = null);
+    setState(() {
+      _error = null;
+      _hataKimligi = null;
+    });
     try {
       final summary =
           await ref.read(budgetApiProvider).fetchSummary(donem: _donem);
@@ -37,16 +45,14 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) {
-        setState(() => _error = 'Beklenmeyen bir hata oluştu. Tekrar deneyin.');
-      }
+      if (mounted) setState(() => _hataKimligi = AkisHatasi.beklenmeyen);
     }
   }
 
-  List<DropdownMenuItem<String?>> _donemItems() {
+  List<DropdownMenuItem<String?>> _donemItems(AppLocalizations l10n) {
     final now = DateTime.now();
     return [
-      const DropdownMenuItem<String?>(value: null, child: Text('Tüm zamanlar')),
+      DropdownMenuItem<String?>(value: null, child: Text(l10n.butTumZamanlar)),
       for (var i = 0; i < 12; i++)
         () {
           final d = DateTime(now.year, now.month - i);
@@ -59,19 +65,23 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
   @override
   Widget build(BuildContext context) {
     final s = _summary;
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
+    final hata = akisHatasiCoz(l10n, _hataKimligi, _error);
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Site Bütçesi'))),
-      body: _error != null
+      appBar: AppBar(title: Text(baslikBuyuk(l10n.butSiteBaslik, dil))),
+      body: hata != null
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_error!, textAlign: TextAlign.center),
+                    Text(hata, textAlign: TextAlign.center),
                     const SizedBox(height: 12),
                     FilledButton(
-                        onPressed: _load, child: const Text('Tekrar dene')),
+                        onPressed: _load,
+                        child: Text(l10n.ortakTekrarDene)),
                   ],
                 ),
               ),
@@ -87,34 +97,35 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
                       DropdownButtonFormField<String?>(
                         key: const Key('site_budget_donem_dropdown'),
                         initialValue: _donem,
-                        items: _donemItems(),
+                        items: _donemItems(l10n),
                         onChanged: (v) {
                           setState(() => _donem = v);
                           _load();
                         },
-                        decoration: const InputDecoration(
-                          labelText: 'Dönem',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.calendar_month_outlined),
+                        decoration: InputDecoration(
+                          labelText: l10n.butDonem,
+                          border: const OutlineInputBorder(),
+                          prefixIcon:
+                              const Icon(Icons.calendar_month_outlined),
                         ),
                       ),
                       const SizedBox(height: 16),
                       _TotalTile(
-                        label: 'Gelir',
+                        label: l10n.butGelir,
                         kurus: s.toplamGelirKurus,
                         color: Colors.green,
                         icon: Icons.trending_up,
                       ),
                       const SizedBox(height: 8),
                       _TotalTile(
-                        label: 'Gider',
+                        label: l10n.butGider,
                         kurus: s.toplamGiderKurus,
                         color: Colors.red,
                         icon: Icons.trending_down,
                       ),
                       const SizedBox(height: 8),
                       _TotalTile(
-                        label: 'Kasa',
+                        label: l10n.butKasa,
                         kurus: s.bakiyeKurus,
                         color: s.bakiyeKurus < 0 ? Colors.red : Colors.blue,
                         icon: Icons.account_balance_wallet_outlined,
@@ -122,7 +133,7 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
                       if (s.kategoriler.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         Text(
-                          'Kategori toplamları',
+                          l10n.butKategoriToplamlari,
                           style: Theme.of(context).textTheme.titleSmall,
                         ),
                         const SizedBox(height: 4),
@@ -140,7 +151,7 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
                             ),
                             title: Text(k.ad),
                             trailing: Text(
-                              '${formatKurusAsTl(k.toplamKurus)} TL',
+                              tlSonEkli(k.toplamKurus, dil),
                               style:
                                   const TextStyle(fontWeight: FontWeight.w600),
                             ),
@@ -148,10 +159,7 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
                       ],
                       const SizedBox(height: 12),
                       Text(
-                        'Bu ekran site yönetiminin gelir ve giderlerini '
-                        'şeffaflık amacıyla özet olarak gösterir. Kişi ve '
-                        'daire bazlı detaylar görüntülenmez; sorularınız '
-                        'için yönetiminize başvurun.',
+                        l10n.butSeffaflikNotu,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -180,14 +188,31 @@ class _TotalTile extends StatelessWidget {
       margin: EdgeInsets.zero,
       child: ListTile(
         leading: Icon(icon, color: color, size: 32),
-        title: Text(label),
-        trailing: Text(
-          '${formatKurusAsTl(kurus)} TL',
-          style: TextStyle(
-            color: color,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+        // Etiket + tutar TEK satirda: `trailing:` kullanildiginda 7+ haneli
+        // tutar dar ekranda (320 dp) tum tile genisligini tuketip
+        // ListTile'i dusuruyordu (TR'de de olusan mevcut hata). Gorunum
+        // ayni; fark yalniz tutarin esnetilebilir olmasi.
+        title: Row(
+          children: [
+            Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
+            const SizedBox(width: 8),
+            // Tutar KIRPILMAZ, gerekirse KUCULUR: milyonluk site butcesi
+            // 18 dp kalin puntoyla dar ekrana (<= 360 dp) sigmiyor.
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerEnd,
+                child: Text(
+                  tlSonEkli(kurus, context.dilKodu),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

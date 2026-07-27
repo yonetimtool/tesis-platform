@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 // imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev/duyuru/talep
 // foto akisiyla ayni saglayici (testlerde tek noktadan override edilir).
 import '../../tasks/presentation/task_complete_controller.dart'
@@ -13,6 +14,7 @@ import '../../tasks/presentation/task_complete_controller.dart'
 import '../data/kargo_api.dart';
 import '../domain/kargo_models.dart';
 import 'kargo_controller.dart';
+import 'kargo_durum_adi.dart';
 
 /// "Kargo" — paket takibi (auth.md §4 kesin kurali, UX aynasi):
 ///   * security: "Yeni kargo" FAB'i (daire no + firma + opsiyonel foto/not,
@@ -66,30 +68,31 @@ class _KargoScreenState extends ConsumerState<KargoScreen> {
         state.items.where((k) => k.bekliyor).toList(growable: false);
     final teslim =
         state.items.where((k) => !k.bekliyor).toList(growable: false);
+    final l10n = context.l10n;
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(trUpper('Kargo')),
+          title: Text(baslikBuyuk(l10n.karBaslik, context.dilKodu)),
           actions: [
             IconButton(
-              tooltip: 'Yenile',
+              tooltip: l10n.ortakYenile,
               icon: const Icon(Icons.refresh),
               onPressed: state.loading ? null : controller.refresh,
             ),
           ],
           bottom: TabBar(
             tabs: [
-              Tab(text: 'Bekleyen (${bekleyen.length})'),
-              Tab(text: 'Teslim alınan (${teslim.length})'),
+              Tab(text: l10n.karSekmeBekleyen(bekleyen.length)),
+              Tab(text: l10n.karSekmeTeslim(teslim.length)),
             ],
           ),
         ),
         floatingActionButton: state.canRegister
             ? FloatingActionButton.extended(
                 icon: const Icon(Icons.local_shipping_outlined),
-                label: const Text('Yeni kargo'),
+                label: Text(l10n.karYeni),
                 onPressed: () => _openForm(context),
               )
             : null,
@@ -101,8 +104,8 @@ class _KargoScreenState extends ConsumerState<KargoScreen> {
                 state: state,
                 items: bekleyen,
                 emptyText: state.canReceive
-                    ? 'Teslim bekleyen kargonuz yok.'
-                    : 'Teslim bekleyen kargo yok.',
+                    ? l10n.karBekleyenYokSakin
+                    : l10n.karBekleyenYok,
               ),
             ),
             RefreshIndicator(
@@ -110,7 +113,7 @@ class _KargoScreenState extends ConsumerState<KargoScreen> {
               child: _Body(
                 state: state,
                 items: teslim,
-                emptyText: 'Henüz teslim alınan kargo kaydı yok.',
+                emptyText: l10n.karTeslimYok,
               ),
             ),
           ],
@@ -127,9 +130,7 @@ class _KargoScreenState extends ConsumerState<KargoScreen> {
     );
     if (saved == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Kargo kaydedildi — daire sakinlerine bildirildi ✓'),
-        ),
+        SnackBar(content: Text(context.l10n.karKaydedildi)),
       );
     }
   }
@@ -153,12 +154,17 @@ class _Body extends ConsumerWidget {
     if (state.loading && state.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null && state.items.isEmpty) {
+    final hata = akisHatasiCoz(
+      context.l10n,
+      state.hataKimligi,
+      state.errorMessage,
+    );
+    if (hata != null && state.items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            state.errorMessage!,
+            hata,
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.red),
           ),
@@ -205,7 +211,7 @@ class _DurumChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        durum.label,
+        kargoDurumAdi(context.l10n, durum),
         style: TextStyle(
           color: _color,
           fontSize: 12,
@@ -225,6 +231,8 @@ class _KargoCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final k = kargo;
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     // Sakin icin BEKLEYEN paket belirgin: kapida kargo teslim bekliyor.
     final vurgulu = k.bekliyor && canReceive;
     return Card(
@@ -274,7 +282,10 @@ class _KargoCard extends ConsumerWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Daire: ${k.unitNo ?? '-'} · ${_fmtDateTime(k.createdAt.toLocal())}',
+                l10n.karDaireTarih(
+                  k.unitNo ?? '-',
+                  tarihSaatBicimi(k.createdAt, dil),
+                ),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               if (k.notlar != null && k.notlar!.isNotEmpty) ...[
@@ -293,9 +304,7 @@ class _KargoCard extends ConsumerWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        'Teslim alındı'
-                        '${k.teslimAlanAd != null ? ' — ${k.teslimAlanAd}' : ''}'
-                        '${k.teslimZamani != null ? ' · ${_fmtDateTime(k.teslimZamani!.toLocal())}' : ''}',
+                        _teslimSatiri(l10n, dil, k),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
@@ -336,12 +345,14 @@ class _ReceiveButtonState extends ConsumerState<_ReceiveButton> {
     if (_busy) return;
     setState(() => _busy = true);
     final messenger = ScaffoldMessenger.of(context);
+    // Async bosluktan ONCE yakala: sonrasinda context kullanilmaz.
+    final l10n = context.l10n;
     try {
       await ref
           .read(kargoControllerProvider.notifier)
           .markReceived(widget.kargoId);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Kargo teslim alındı ✓')),
+        SnackBar(content: Text(l10n.karTeslimAlindiBildirim)),
       );
       widget.onReceived?.call();
     } on ApiException catch (e) {
@@ -349,7 +360,7 @@ class _ReceiveButtonState extends ConsumerState<_ReceiveButton> {
       widget.onReceived?.call();
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('İşaretlenemedi. Tekrar deneyin.')),
+        SnackBar(content: Text(l10n.karIsaretlenemedi)),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -363,7 +374,7 @@ class _ReceiveButtonState extends ConsumerState<_ReceiveButton> {
       child: FilledButton.icon(
         style: FilledButton.styleFrom(backgroundColor: Colors.green),
         icon: const Icon(Icons.check),
-        label: const Text('Teslim aldım'),
+        label: Text(context.l10n.karTeslimAldim),
         onPressed: _busy ? null : _receive,
       ),
     );
@@ -376,14 +387,17 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (sheetContext) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    builder: (sheetContext) {
+      final l10n = sheetContext.l10n;
+      final dil = sheetContext.dilKodu;
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Row(
                 children: [
                   const Icon(Icons.inventory_2_outlined),
@@ -401,21 +415,17 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
                 ],
               ),
               const SizedBox(height: 12),
-              Text('Daire: ${k.unitNo ?? '-'}'),
+              Text(l10n.karDaire(k.unitNo ?? '-')),
               const SizedBox(height: 4),
-              Text('Kayıt: ${_fmtDateTime(k.createdAt.toLocal())}'
-                  '${k.kaydedenAd != null ? ' — ${k.kaydedenAd}' : ''}'),
+              Text('${l10n.karKayit(tarihSaatBicimi(k.createdAt, dil))}'
+                  '${k.kaydedenAd != null ? l10n.karAdEki(k.kaydedenAd!) : ''}'),
               if (k.notlar != null && k.notlar!.isNotEmpty) ...[
                 const SizedBox(height: 4),
-                Text('Not: ${k.notlar}'),
+                Text(l10n.karNot(k.notlar!)),
               ],
               if (!k.bekliyor) ...[
                 const SizedBox(height: 4),
-                Text(
-                  'Teslim alındı'
-                  '${k.teslimAlanAd != null ? ' — ${k.teslimAlanAd}' : ''}'
-                  '${k.teslimZamani != null ? ' · ${_fmtDateTime(k.teslimZamani!.toLocal())}' : ''}',
-                ),
+                Text(_teslimSatiri(l10n, dil, k)),
               ],
               if (k.fotoUrl != null) ...[
                 const SizedBox(height: 12),
@@ -437,16 +447,17 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
                               ),
                     errorBuilder: (_, _, _) => Container(
                       height: 48,
-                      alignment: Alignment.centerLeft,
+                      // YON-DUYARLI: Arapca'da saga hizalanir.
+                      alignment: AlignmentDirectional.centerStart,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       color: Theme.of(context)
                           .colorScheme
                           .surfaceContainerHighest,
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.broken_image_outlined, size: 20),
-                          SizedBox(width: 8),
-                          Text('Görsel yüklenemedi'),
+                          const Icon(Icons.broken_image_outlined, size: 20),
+                          const SizedBox(width: 8),
+                          Text(l10n.talepGorselYuklenemedi),
                         ],
                       ),
                     ),
@@ -460,13 +471,20 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
                   onReceived: () => Navigator.of(sheetContext).pop(),
                 ),
               ],
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
+
+/// Teslim satiri: "Teslim alindi — {ad} · {zaman}" (ad/zaman opsiyonel).
+String _teslimSatiri(AppLocalizations l10n, String dil, Kargo k) =>
+    '${l10n.kargoDurumTeslimAlindi}'
+    '${k.teslimAlanAd != null ? l10n.karAdEki(k.teslimAlanAd!) : ''}'
+    '${k.teslimZamani != null ? l10n.karZamanEki(tarihSaatBicimi(k.teslimZamani!, dil)) : ''}';
 
 /// Yeni kargo formu (yalniz guvenlik): daire no + firma + opsiyonel foto/not.
 /// Foto akisi complaints/gorev formuyla AYNI: cek/sec → presign → PUT →
@@ -503,6 +521,8 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
     super.dispose();
   }
 
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   Future<void> _pickAndUploadPhoto(ImageSource source) async {
     if (_photoBusy) return;
     setState(() {
@@ -532,7 +552,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
       if (!mounted) return;
       setState(() {
         _photoBusy = false;
-        _photoError = 'Fotoğraf alınamadı: $e';
+        _photoError = _l10n.gorevFotoAlinamadi('$e');
       });
     }
   }
@@ -572,9 +592,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
       setState(() {
         _photoBusy = false;
         _photoError = e.kind == ApiErrorKind.network
-            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli '
-                '(yükleme adresi kısa ömürlü). Bağlantı gelince '
-                '"Tekrar yükle" ile deneyin.'
+            ? _l10n.gorevFotoOnlineGerekli
             : e.message;
       });
     }
@@ -592,8 +610,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
     if (_busy || !(_formKey.currentState?.validate() ?? false)) return;
     if (_fotoBekliyor) {
       setState(() {
-        _hata = 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin, '
-            '"Tekrar yükle"yi deneyin veya fotoyu kaldırın.';
+        _hata = _l10n.gorevFotoHenuzYuklenmedi;
       });
       return;
     }
@@ -623,7 +640,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = 'Kayıt gönderilemedi. Tekrar deneyin.';
+          _hata = _l10n.karGonderilemedi;
         });
       }
     }
@@ -631,6 +648,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final viewInsets = MediaQuery.of(context).viewInsets;
     return Padding(
       // Klavye acilinca form yukari itilsin.
@@ -643,40 +661,42 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Yeni kargo',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              Text(
+                l10n.karYeni,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _unitNo,
-                decoration: const InputDecoration(
-                  labelText: 'Daire no * (örn. A-12)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.karDaireNo,
+                  border: const OutlineInputBorder(),
                 ),
                 maxLength: 50,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Daire no gerekli' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? l10n.karDaireNoGerekli
+                    : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _firma,
                 textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Kargo firması *',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.karFirma,
+                  border: const OutlineInputBorder(),
                 ),
                 maxLength: 200,
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Kargo firması gerekli'
+                    ? l10n.karFirmaGerekli
                     : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _notlar,
-                decoration: const InputDecoration(
-                  labelText: 'Not (opsiyonel)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.ortakNotOpsiyonel,
+                  border: const OutlineInputBorder(),
                 ),
                 maxLength: 1000,
                 maxLines: 2,
@@ -692,7 +712,8 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  const Text('Paket fotoğrafı (opsiyonel)'),
+                  // Dar ekranda (<= 360 dp) etiket satira sigmiyordu; sar.
+                  Expanded(child: Text(l10n.karPaketFotografi)),
                 ],
               ),
               if (_photoPath != null) ...[
@@ -724,26 +745,28 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden çek'),
+                    label: Text(_photoPath == null
+                        ? l10n.gorevKamera
+                        : l10n.gorevYenidenCek),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _busy
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Galeriden seç'),
+                    label: Text(l10n.gorevGaleridenSec),
                   ),
                   if (_photoPath != null && _fotoKey == null)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _retryUpload,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Tekrar yükle'),
+                      label: Text(l10n.gorevTekrarYukle),
                     ),
                   if (_photoPath != null)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _removePhoto,
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Kaldır'),
+                      label: Text(l10n.gorevKaldir),
                     ),
                 ],
               ),
@@ -762,7 +785,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.local_shipping_outlined),
-                  label: const Text('Kaydet ve sakinlere bildir'),
+                  label: Text(l10n.karKaydetVeBildir),
                   onPressed: _busy ? null : _submit,
                 ),
               ),
@@ -784,9 +807,4 @@ String _contentTypeFor(XFile file) {
     return 'image/heic';
   }
   return 'image/jpeg';
-}
-
-String _fmtDateTime(DateTime dt) {
-  String p(int n) => n.toString().padLeft(2, '0');
-  return '${p(dt.day)}.${p(dt.month)}.${dt.year} ${p(dt.hour)}:${p(dt.minute)}';
 }
