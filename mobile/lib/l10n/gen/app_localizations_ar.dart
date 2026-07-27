@@ -736,4 +736,637 @@ class AppLocalizationsAr extends AppLocalizations {
   String anaKarsilama(String ad) {
     return 'مرحبًا، $ad';
   }
+
+  @override
+  String get gorevKategorilerTooltip => 'الفئات';
+
+  @override
+  String get gorevYeni => 'مهمة جديدة';
+
+  @override
+  String get gorevOlusturuldu => 'تم إنشاء المهمة ✓';
+
+  @override
+  String get gorevListesiYetkiYok =>
+      'ليست لديك صلاحية لعرض قائمة المهام. هذه الشاشة متاحة لدوري النظافة والأمن.';
+
+  @override
+  String get gorevBuFiltredeYok => 'لا توجد مهام نشطة بهذا التصفية.';
+
+  @override
+  String get gorevCipBanaAtanan => 'المُسندة إليّ';
+
+  @override
+  String get gorevCipTumGorevler => 'كل المهام';
+
+  @override
+  String get gorevCipTumu => 'الكل';
+
+  @override
+  String get gorevKategoriDiger => 'أخرى';
+
+  @override
+  String gorevPlanlanan(Object zaman) {
+    return 'المُقرَّر: $zaman';
+  }
+
+  @override
+  String get gorevSanaAtanmis => 'مُسندة إليك';
+
+  @override
+  String get gorevFotoZorunlu => 'الصورة إلزامية';
+
+  @override
+  String get gorevTamamlandiZatenKayitli => 'تم الإنجاز ✓ (كان مسجّلاً بالفعل)';
+
+  @override
+  String get gorevTamamlandiBuOturumda => 'تم الإنجاز ✓ (في هذه الجلسة)';
+
+  @override
+  String get gorevIslemleriTooltip => 'إجراءات المهمة';
+
+  @override
+  String get gorevTakipGorunumu => 'عرض المتابعة';
+
+  @override
+  String get gorevTakipGorunumuAlt =>
+      'يتم الإنجاز بواسطة العاملين الميدانيين (الأمن / مسؤول المنشأة). هذه الشاشة للمتابعة فقط.';
+
+  @override
+  String get gorevGonderiliyor => 'جارٍ الإرسال...';
+
+  @override
+  String get gorevTamamla => 'إنجاز';
+
+  @override
+  String get gorevGuncellendi => 'تم تحديث المهمة ✓';
+
+  @override
+  String get gorevSilinsinMi => 'هل تُحذف المهمة؟';
+
+  @override
+  String get gorevSilindi => 'تم حذف المهمة ✓';
+
+  @override
+  String get gorevNfcAciklama =>
+      'هذه المهمة موثّقة بـ NFC: امسح الوسم عند نقطة المهمة قبل الإنجاز.';
+
+  @override
+  String get gorevAdim1Etiket => '١. امسح الوسم';
+
+  @override
+  String gorevOkundu(Object uid) {
+    return 'تم المسح: $uid';
+  }
+
+  @override
+  String get gorevEtiketBekleniyor => 'في انتظار الوسم...';
+
+  @override
+  String get gorevYenidenOkut => 'امسح مرة أخرى';
+
+  @override
+  String get gorevEtiketiOkut => 'امسح الوسم';
+
+  @override
+  String get gorevAdim2Foto => '٢. إثبات بالصورة';
+
+  @override
+  String get gorevAdim2FotoOpsiyonel => '٢. إثبات بالصورة (اختياري)';
+
+  @override
+  String get gorevYukleniyorNokta => 'جارٍ التحميل...';
+
+  @override
+  String get gorevYuklendi => 'تم التحميل ✓';
+
+  @override
+  String get gorevKamera => 'الكاميرا';
+
+  @override
+  String get gorevYenidenCek => 'أعد التصوير';
+
+  @override
+  String get gorevGaleridenSec => 'اختر من المعرض';
+
+  @override
+  String get gorevTekrarYukle => 'أعد التحميل';
+
+  @override
+  String get gorevKaldir => 'إزالة';
+
+  @override
+  String get gorevAdim3Not => '٣. ملاحظة (اختياري)';
+
+  @override
+  String get gorevNotIpucu => 'مثال: تم تفريغ حاويات النفايات';
+
+  @override
+  String get gorevZatenKayitliydi =>
+      'هذا الإنجاز كان مسجّلاً بالفعل (إعادة إرسال — لم يُنشأ سجل مكرّر).';
+
+  @override
+  String get gorevTamamlandiKayit => 'تم إنجاز المهمة — أُنشئ السجل.';
+
+  @override
+  String gorevZaman(Object zaman) {
+    return 'الوقت: $zaman';
+  }
+
+  @override
+  String get gorevFotoKanitiVar => 'يوجد إثبات بالصورة';
+
+  @override
+  String get gorevNfcDogrulandi => 'تم التحقق بـ NFC';
+
+  @override
+  String get gorevYeniTamamlamaBaslat => 'بدء إنجاز جديد';
+
+  @override
+  String get gorevDuzenleBaslik => 'تعديل المهمة';
+
+  @override
+  String get gorevKategoriSilinmis => 'الفئة (محذوفة)';
+
+  @override
+  String get gorevAtananListedeDegil => 'المستخدم المُسند إليه (غير مدرج)';
+
+  @override
+  String get gorevTipleriYukleniyor => 'جارٍ تحميل أنواع المهام...';
+
+  @override
+  String get gorevTipi => 'نوع المهمة';
+
+  @override
+  String get gorevTipiYokUyari =>
+      'لم تُعرّف أي نوع مهمة بعد. يمكنك إضافة أنواعك من شاشة \"الفئات\" أعلاه؛ يُستخدم \"أخرى\" في الوقت الحالي.';
+
+  @override
+  String get gorevAdi => 'اسم المهمة';
+
+  @override
+  String get gorevAdiZorunlu => 'اسم المهمة مطلوب';
+
+  @override
+  String get gorevAciklamaOpsiyonel => 'الوصف (اختياري)';
+
+  @override
+  String get gorevPersonelYukleniyor => 'جارٍ تحميل قائمة العاملين...';
+
+  @override
+  String get gorevAtananPersonel => 'العامل المُسند';
+
+  @override
+  String get gorevAtanmamisHavuz => '— غير مُسندة (مهمة مشتركة) —';
+
+  @override
+  String gorevPersonelAlinamadi(Object hata) {
+    return 'تعذّر جلب قائمة العاملين: $hata';
+  }
+
+  @override
+  String get gorevKontrolNoktasiOpsiyonel => 'نقطة تفتيش (NFC) — اختياري';
+
+  @override
+  String get gorevKontrolNoktasiYardim =>
+      'إذا تم الربط، تُنجَز المهمة بمسح NFC';
+
+  @override
+  String get gorevNfcYok => '— بدون NFC —';
+
+  @override
+  String get gorevPeriyotDakika => 'الدورية بالدقائق (اختياري)';
+
+  @override
+  String get gorevPeriyotYardim => 'للمهام الدورية؛ فارغ = مرة واحدة';
+
+  @override
+  String get gorevPozitifSayi => 'أدخل عدداً صحيحاً موجباً';
+
+  @override
+  String get gorevFotoKanitiZorunlu => 'إثبات بالصورة إلزامي';
+
+  @override
+  String get gorevFotoKanitiZorunluAlt => 'لا يُقبل الإنجاز بدون صورة';
+
+  @override
+  String get gorevPasifAciklama => 'المهمة غير النشطة لا تظهر في القائمة';
+
+  @override
+  String get gorevKategorileriBaslik => 'فئات المهام';
+
+  @override
+  String get gorevKategoriYeni => 'فئة جديدة';
+
+  @override
+  String get gorevKategoriAdi => 'اسم الفئة';
+
+  @override
+  String get gorevKategoriAdiIpucu => 'مثال: صيانة المسبح';
+
+  @override
+  String gorevKategoriEklendi(Object ad) {
+    return 'تمت إضافة \"$ad\"';
+  }
+
+  @override
+  String gorevKategoriEklenemedi(Object hata) {
+    return 'تعذّرت الإضافة: $hata';
+  }
+
+  @override
+  String get gorevKategoriSilinsinMi => 'هل تُحذف الفئة؟';
+
+  @override
+  String gorevKategoriSilOnay(Object ad) {
+    return 'سيتم تعطيل \"$ad\"؛ يُحفظ سجل المهام الحالية، ولا يمكن اختيارها للمهام الجديدة.';
+  }
+
+  @override
+  String gorevKategoriSilindi(Object ad) {
+    return 'تم حذف \"$ad\"';
+  }
+
+  @override
+  String gorevKategoriSilinemedi(Object hata) {
+    return 'تعذّر الحذف: $hata';
+  }
+
+  @override
+  String gorevKategoriListeAlinamadi(Object hata) {
+    return 'تعذّر جلب القائمة: $hata';
+  }
+
+  @override
+  String get gorevKategoriYokBos =>
+      'لا توجد فئات بعد. أضف واحدة عبر \"فئة جديدة\" حتى يمكن اختيارها عند إنشاء مهمة.';
+
+  @override
+  String get gorevOncelikDusuk => 'منخفضة';
+
+  @override
+  String get gorevOncelikOrta => 'متوسطة';
+
+  @override
+  String get gorevOncelikYuksek => 'عالية';
+
+  @override
+  String get gorevOncelik => 'الأولوية';
+
+  @override
+  String get gorevTaleptenGeldi => 'من طلب';
+
+  @override
+  String get gorevBagliTalep => 'الطلب المرتبط';
+
+  @override
+  String gorevDaireEtiket(Object daire) {
+    return 'الوحدة $daire';
+  }
+
+  @override
+  String get talepDurumAcik => 'مفتوح';
+
+  @override
+  String get talepDurumIsEmri => 'أمر عمل';
+
+  @override
+  String get talepDurumCozuldu => 'تم الحل';
+
+  @override
+  String get talepDurumReddedildi => 'مرفوض';
+
+  @override
+  String get gorevEtiketOkunamadi => 'تعذّر قراءة الوسم.';
+
+  @override
+  String get gorevFotoOnlineGerekli =>
+      'يلزم اتصال بالإنترنت لتحميل الصورة (عنوان التحميل قصير الأجل). عند عودة الاتصال، استخدم \"أعد التحميل\".';
+
+  @override
+  String gorevFotoAlinamadi(Object hata) {
+    return 'تعذّر الحصول على الصورة: $hata';
+  }
+
+  @override
+  String get gorevFotoOnlineGerekliKisa =>
+      'يلزم اتصال بالإنترنت لتحميل الصورة.';
+
+  @override
+  String get gorevFotoZorunluUyari =>
+      'الإثبات بالصورة إلزامي لهذه المهمة. صوّر وحمّل الصورة قبل الإنجاز.';
+
+  @override
+  String get gorevFotoHenuzYuklenmedi =>
+      'لم تُحمَّل الصورة بعد. انتظر انتهاء التحميل، أو جرّب \"أعد التحميل\"، أو أزل الصورة.';
+
+  @override
+  String get gorevTamamlamaOfflineUyari =>
+      'تعذّر إرسال الإنجاز — يلزم اتصال بالإنترنت. عند عودة الاتصال اضغط \"إنجاز\" مرة أخرى؛ لن يتكرر السجل نفسه (مفتاح Idempotency ثابت). الإنجاز مع صورة غير مدعوم دون اتصال (قيد معروف).';
+
+  @override
+  String get rolAdmin => 'مدير المنصة';
+
+  @override
+  String get rolYonetici => 'مدير الموقع';
+
+  @override
+  String get rolGuvenlik => 'الأمن';
+
+  @override
+  String get rolTesisGorevlisi => 'مسؤول المنشأة';
+
+  @override
+  String get rolSakin => 'ساكن';
+
+  @override
+  String get rolBilinmeyen => 'دور غير معروف';
+
+  @override
+  String get ortakOlustur => 'إنشاء';
+
+  @override
+  String get ortakGuncelle => 'تحديث';
+
+  @override
+  String get ortakYenile => 'تحديث';
+
+  @override
+  String get devriyeGonderimKuyruguTooltip => 'قائمة الإرسال';
+
+  @override
+  String get sekmeGecmis => 'السجل';
+
+  @override
+  String get devriyeYetkiYok =>
+      'ليست لديك صلاحية للبيانات في هذه الشاشة. متابعة الدورية متاحة لدور الأمن (والمدير).';
+
+  @override
+  String devriyeSonGuncelleme(Object saat) {
+    return 'آخر تحديث: $saat (تحديث تلقائي: ٦٠ ثانية)';
+  }
+
+  @override
+  String get devriyeTuru => 'دورية';
+
+  @override
+  String devriyeBitisEtiket(Object saat) {
+    return 'الانتهاء $saat';
+  }
+
+  @override
+  String devriyePencere(Object baslangic, Object bitis) {
+    return 'النافذة: $baslangic – $bitis';
+  }
+
+  @override
+  String devriyeNoktaSayaci(Object beklenen, Object okutulan) {
+    return '$okutulan/$beklenen نقطة';
+  }
+
+  @override
+  String get devriyeTumNoktalarOkutuldu =>
+      'تم مسح جميع النقاط — الدورية تُستكمل. ✓';
+
+  @override
+  String devriyeSunucudaOkutma(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n عملية مسح مسجّلة على الخادم (قد تتضمن مسح أجهزة أخرى).',
+      many: '$n عملية مسح مسجّلة على الخادم (قد تتضمن مسح أجهزة أخرى).',
+      few: '$n عمليات مسح مسجّلة على الخادم (قد تتضمن مسح أجهزة أخرى).',
+      two: 'عمليتا مسح مسجّلتان على الخادم (قد تتضمن مسح أجهزة أخرى).',
+      one: 'عملية مسح واحدة مسجّلة على الخادم (قد تتضمن مسح أجهزة أخرى).',
+      zero: 'لا توجد عمليات مسح مسجّلة على الخادم.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devriyeNoktaOkutNfc => 'امسح نقطة (NFC)';
+
+  @override
+  String get devriyeBugununDigerTurlari => 'دوريات اليوم الأخرى';
+
+  @override
+  String get devriyeBugununTurlari => 'دوريات اليوم';
+
+  @override
+  String get devriyeDurumTamamlandi => 'مُنجزة';
+
+  @override
+  String get devriyeDurumKacirildi => 'فائتة';
+
+  @override
+  String get devriyeDurumSimdiAktif => 'نشطة الآن';
+
+  @override
+  String get devriyeDurumYaklasan => 'قادمة';
+
+  @override
+  String get devriyeDurumBitti => 'انتهت';
+
+  @override
+  String get devriyeDurumBekliyor => 'بالانتظار';
+
+  @override
+  String get devriyeDurumBilinmiyor => 'غير معروف';
+
+  @override
+  String get devriyeDurumSuresiGecti => 'انقضى الوقت';
+
+  @override
+  String get devriyeBugunTurYok => 'لا توجد دورية لهذا اليوم.';
+
+  @override
+  String get devriyeNoktaListesiYok =>
+      'تعذّر جلب قائمة نقاط هذه الخطة أو لم تُسند نقاط للخطة.';
+
+  @override
+  String get devriyeKontrolNoktalari => 'نقاط التفتيش';
+
+  @override
+  String get devriyeNoktaDurumAciklama =>
+      'حالات النقاط تأتي من الخادم؛ تظهر عمليات مسح جميع العاملين بعلامة ✓. الصفوف \"قيد الإرسال\" هي عمليات مسح من هذا الجهاز لم تُرسل بعد.';
+
+  @override
+  String devriyeNoktaAdiYedek(Object kisaId) {
+    return 'النقطة $kisaId';
+  }
+
+  @override
+  String get devriyeOkutuldu => 'تم المسح ✓';
+
+  @override
+  String devriyeOkutulduZamanli(Object saat) {
+    return 'تم المسح ✓ · $saat';
+  }
+
+  @override
+  String get devriyeOkutulduGonderiliyor =>
+      'تم المسح ✓ — قيد الإرسال (في القائمة)';
+
+  @override
+  String get devriyePencereSuresiDoldu => 'انقضت مدة النافذة.';
+
+  @override
+  String devriyeKalanSure(Object sure) {
+    return 'الوقت المتبقي: $sure';
+  }
+
+  @override
+  String sureSaatDakika(Object dakika, Object saat) {
+    return '$saat س $dakika د';
+  }
+
+  @override
+  String sureDakikaSaniye(Object dakika, Object saniye) {
+    return '$dakika د $saniye ث';
+  }
+
+  @override
+  String sureSaniye(Object saniye) {
+    return '$saniye ث';
+  }
+
+  @override
+  String get devriyeGecmisYetkiYok =>
+      'ليست لديك صلاحية لسجل الدوريات. هذه القائمة متاحة لدوري الأمن والمدير.';
+
+  @override
+  String get devriyeGecmisBos => 'لا توجد سجلات نوافذ دوريات بعد.';
+
+  @override
+  String get devriyeOzetToplam => 'الإجمالي';
+
+  @override
+  String get devriyePlanlariBaslik => 'خطط الدوريات';
+
+  @override
+  String get devriyePlanEkle => 'إضافة خطة';
+
+  @override
+  String get devriyePlanlarListelenemedi => 'تعذّر عرض الخطط.';
+
+  @override
+  String devriyePlanAralik(Object baslangic, Object bitis, Object dakika) {
+    return '$baslangic–$bitis · كل $dakika د';
+  }
+
+  @override
+  String get devriyePasif => 'غير نشط';
+
+  @override
+  String get devriyePlanSilinsinMi => 'هل تُحذف الخطة؟';
+
+  @override
+  String devriyePlanSilOnay(Object ad) {
+    return 'سيتم حذف خطة الدورية \"$ad\".';
+  }
+
+  @override
+  String get devriyePlanSilindi => 'تم حذف الخطة ✓';
+
+  @override
+  String get devriyePlanDuzenleBaslik => 'تعديل خطة الدورية';
+
+  @override
+  String get devriyePlanYeniBaslik => 'خطة دورية جديدة';
+
+  @override
+  String get devriyePlanAdi => 'اسم الخطة';
+
+  @override
+  String get devriyePlanAdiIpucu => 'مثال: دورية ليلية';
+
+  @override
+  String get devriyeAdZorunlu => 'الاسم مطلوب';
+
+  @override
+  String devriyeBaslangicSaat(Object saat) {
+    return 'البداية $saat';
+  }
+
+  @override
+  String devriyeBitisSaat(Object saat) {
+    return 'النهاية $saat';
+  }
+
+  @override
+  String get devriyeTurSikligi => 'تكرار الدورية (دقائق)';
+
+  @override
+  String get devriyeTurSikligiYardim => 'مثال: ٦٠ = دورية كل ساعة';
+
+  @override
+  String get devriyeTurSikligiPozitif =>
+      'يجب أن يكون تكرار الدورية (د) موجباً.';
+
+  @override
+  String get devriyeTumunuKaldir => 'إزالة الكل';
+
+  @override
+  String get devriyeTumunuSec => 'تحديد الكل';
+
+  @override
+  String get devriyeAktifNoktaYok =>
+      'لا توجد نقاط تفتيش نشطة. أضف واحدة من \"نقاط التفتيش\" أولاً.';
+
+  @override
+  String devriyeUidEtiket(Object uid) {
+    return 'المعرّف: $uid';
+  }
+
+  @override
+  String get devriyeKaydedilemedi => 'تعذّر الحفظ. حاول مرة أخرى.';
+
+  @override
+  String get devriyePlanYokBos =>
+      'لا توجد خطط دوريات بعد.\nأضف واحدة من أسفل اليمين (الساعات + النقاط).';
+
+  @override
+  String get devriyeTakibiBaslik => 'متابعة الدوريات';
+
+  @override
+  String get sekmeBugun => 'اليوم';
+
+  @override
+  String get sekmeTaramaGunlugu => 'سجل المسح';
+
+  @override
+  String get devriyeTakibiYetkiYok =>
+      'ليست لديك صلاحية لمتابعة الدوريات. هذه الشاشة متاحة لدوري المدير والأمن.';
+
+  @override
+  String get devriyeBugunPencereYok => 'لا توجد نافذة دورية مجدولة لهذا اليوم.';
+
+  @override
+  String devriyeNoktaOkutuldu(Object beklenen, Object okutulan) {
+    return 'تم مسح $okutulan/$beklenen نقطة';
+  }
+
+  @override
+  String get devriyeTaramaGunluguAlinamadi => 'تعذّر جلب سجل المسح.';
+
+  @override
+  String get devriyeGunOkutmaYok => 'لا توجد عمليات مسح لهذا اليوم.';
+
+  @override
+  String get devriyeImzali => 'موقَّع ✓';
+
+  @override
+  String devriyeOkutmaBekliyor(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n عملية مسح بانتظار الإرسال',
+      many: '$n عملية مسح بانتظار الإرسال',
+      few: '$n عمليات مسح بانتظار الإرسال',
+      two: 'عمليتا مسح بانتظار الإرسال',
+      one: 'عملية مسح واحدة بانتظار الإرسال',
+      zero: 'لا توجد عمليات مسح بانتظار الإرسال',
+    );
+    return '$_temp0';
+  }
 }

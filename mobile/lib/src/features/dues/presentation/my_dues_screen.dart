@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/l10n.dart';
 import '../../../core/text/tr_upper.dart';
 import '../../patrol/presentation/patrol_history_view.dart'
-    show PatrolErrorBanner, fmtClock, fmtDate;
+    show PatrolErrorBanner;
 import '../../reports/domain/report_models.dart' show kurusToTl;
 import '../domain/dues_models.dart';
 import 'my_dues_controller.dart';
@@ -179,7 +180,8 @@ class _UnitCard extends StatelessWidget {
                       subtitle: a.sonOdemeTarihi == null
                           ? null
                           : Text(
-                              'Son ödeme: ${fmtDate(a.sonOdemeTarihi!)}',
+                              'Son ödeme: '
+                              '${tarihBicimi(a.sonOdemeTarihi!, context.dilKodu)}',
                             ),
                       trailing: Text(
                         kurusToTl(a.tutarKurus),
@@ -247,13 +249,13 @@ class _PaymentTile extends StatelessWidget {
       'iptal' => (Colors.red, Icons.cancel_outlined),
       _ => (Colors.grey, Icons.help_outline),
     };
-    final local = p.odemeZamani.toLocal();
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, color: color),
       title: Text(
-        '${fmtDate(local)} ${fmtClock(local)} · ${yontemLabel(p.yontem)}'
+        '${tarihBicimi(p.odemeZamani, context.dilKodu)} '
+        '${saatBicimi(p.odemeZamani, context.dilKodu)} · ${yontemLabel(p.yontem)}'
         '${p.donem == null ? '' : ' · ${p.donem}'}',
       ),
       subtitle: p.makbuzNo == null ? null : Text('Makbuz: ${p.makbuzNo}'),

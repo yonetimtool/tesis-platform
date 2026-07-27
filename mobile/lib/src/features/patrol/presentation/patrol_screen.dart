@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../routing/app_router.dart';
 import '../../scan/data/scan_outbox.dart';
 import '../domain/patrol_models.dart';
+import 'devriye_hata_metni.dart';
 import 'patrol_controller.dart';
 import 'patrol_history_view.dart';
 
@@ -25,18 +26,19 @@ class PatrolScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final pendingCount =
         ref.watch(scanOutboxProvider.select((s) => s.pendingCount));
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(trUpper('Turlarım')),
+          title: Text(baslikBuyuk(l10n.modulTurlarim, context.dilKodu)),
           actions: [
             IconButton(
               tooltip: pendingCount > 0
-                  ? '$pendingCount okutma gönderim bekliyor'
-                  : 'Gönderim kuyruğu',
+                  ? l10n.devriyeOkutmaBekliyor(pendingCount)
+                  : l10n.devriyeGonderimKuyruguTooltip,
               onPressed: () => context.push(AppRoutes.outbox),
               icon: Badge(
                 isLabelVisible: pendingCount > 0,
@@ -45,10 +47,10 @@ class PatrolScreen extends ConsumerWidget {
               ),
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Aktif'),
-              Tab(text: 'Geçmiş'),
+              Tab(text: l10n.cipAktif),
+              Tab(text: l10n.sekmeGecmis),
             ],
           ),
         ),
@@ -72,6 +74,8 @@ class _ActiveTourTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final state = ref.watch(patrolTourControllerProvider);
     final controller = ref.read(patrolTourControllerProvider.notifier);
 
@@ -85,12 +89,13 @@ class _ActiveTourTab extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
-          if (state.errorMessage != null)
+          if (state.errorMessage != null || state.hataKimligi != null)
             PatrolErrorBanner(
               message: state.forbidden
-                  ? 'Bu ekrandaki veriler için yetkiniz yok. '
-                      'Tur takibi güvenlik (ve yönetici) rolüne açıktır.'
-                  : state.errorMessage!,
+                  ? l10n.devriyeYetkiYok
+                  : devriyeHatasiCoz(
+                          l10n, state.hataKimligi, state.errorMessage) ??
+                      '',
               onRetry: state.forbidden ? null : controller.refresh,
             ),
           // Su an AKTIF pencere (varsa): genisletilmis kart + nokta listesi
@@ -111,8 +116,8 @@ class _ActiveTourTab extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text(
-                'Son güncelleme: ${fmtClock(state.refreshedAt!.toLocal())} '
-                '(otomatik yenileme: 60 sn)',
+                l10n.devriyeSonGuncelleme(
+                    saatBicimi(state.refreshedAt!, dil)),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -133,6 +138,8 @@ class _WindowSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     return Wrap(
       spacing: 8,
       runSpacing: 4,
@@ -140,8 +147,8 @@ class _WindowSelector extends ConsumerWidget {
         for (final w in state.windows)
           ChoiceChip(
             label: Text(
-              '${w.patrolPlanAd ?? 'Devriye turu'} · '
-              'bitiş ${fmtClock(w.pencereBitis.toLocal())}',
+              '${w.patrolPlanAd ?? l10n.devriyeTuru} · '
+              '${l10n.devriyeBitisEtiket(saatBicimi(w.pencereBitis, dil))}',
             ),
             selected: w.patrolWindowId == state.selectedWindowId,
             onSelected: (_) => ref
@@ -161,6 +168,8 @@ class _ActiveWindowCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final active = state.active!;
     final beklenen = state.beklenen;
     final okutulan = state.okutulanBirlesik;
@@ -182,17 +191,17 @@ class _ActiveWindowCard extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    active.patrolPlanAd ?? 'Devriye turu',
+                    active.patrolPlanAd ?? l10n.devriyeTuru,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              'Pencere: ${fmtClock(active.pencereBaslangic.toLocal())}'
-              ' – ${fmtClock(active.pencereBitis.toLocal())}',
-            ),
+            Text(l10n.devriyePencere(
+              saatBicimi(active.pencereBaslangic, dil),
+              saatBicimi(active.pencereBitis, dil),
+            )),
             const SizedBox(height: 4),
             _CountdownText(until: active.pencereBitis),
             const SizedBox(height: 12),
@@ -210,16 +219,16 @@ class _ActiveWindowCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '$okutulan/$beklenen nokta',
+                  l10n.devriyeNoktaSayaci(beklenen, okutulan),
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
             if (tamamlandi) ...[
               const SizedBox(height: 8),
-              const Text(
-                'Tüm noktalar okutuldu — tur tamamlanıyor. ✓',
-                style: TextStyle(color: Colors.green),
+              Text(
+                l10n.devriyeTumNoktalarOkutuldu,
+                style: const TextStyle(color: Colors.green),
               ),
             ],
             // Sunucu bu cihazin bilmedigi okutmalar da sayabilir (baska
@@ -227,8 +236,7 @@ class _ActiveWindowCard extends ConsumerWidget {
             if (active.okutulanCheckpointSayisi > state.localOkutulan) ...[
               const SizedBox(height: 8),
               Text(
-                'Sunucuda ${active.okutulanCheckpointSayisi} okutma kayıtlı '
-                '(diğer cihazların okutmaları dahil olabilir).',
+                l10n.devriyeSunucudaOkutma(active.okutulanCheckpointSayisi),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -238,7 +246,7 @@ class _ActiveWindowCard extends ConsumerWidget {
               child: FilledButton.icon(
                 onPressed: () => _goScan(context, ref),
                 icon: const Icon(Icons.nfc),
-                label: const Text('Nokta okut (NFC)'),
+                label: Text(l10n.devriyeNoktaOkutNfc),
               ),
             ),
           ],
@@ -268,6 +276,7 @@ class _TodayWindows extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     if (state.windows.isEmpty) return const _NoWindowsToday();
     final now = DateTime.now().toUtc();
     final activeId = state.active?.patrolWindowId;
@@ -280,7 +289,9 @@ class _TodayWindows extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            state.active != null ? 'Bugünün diğer turları' : 'Bugünün turları',
+            state.active != null
+                ? l10n.devriyeBugununDigerTurlari
+                : l10n.devriyeBugununTurlari,
             style: Theme.of(context).textTheme.titleSmall,
           ),
         ),
@@ -298,26 +309,30 @@ class _TodayWindowTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final w = window;
     final beklenen = w.beklenenCheckpointSayisi;
     final okutulan = w.okutulanCheckpointSayisi;
     final (color, label) = switch (w.durum) {
-      PatrolWindowDurum.tamamlandi => (Colors.green, 'Tamamlandı'),
-      PatrolWindowDurum.kacirildi => (Colors.red, 'Kaçırıldı'),
+      PatrolWindowDurum.tamamlandi =>
+        (Colors.green, l10n.devriyeDurumTamamlandi),
+      PatrolWindowDurum.kacirildi => (Colors.red, l10n.devriyeDurumKacirildi),
       _ => w.isActiveAt(now)
-          ? (Colors.blue, 'Şimdi aktif')
+          ? (Colors.blue, l10n.devriyeDurumSimdiAktif)
           : w.isUpcomingAt(now)
-              ? (Colors.blueGrey, 'Yaklaşan')
-              : (Colors.grey, 'Bitti'),
+              ? (Colors.blueGrey, l10n.devriyeDurumYaklasan)
+              : (Colors.grey, l10n.devriyeDurumBitti),
     };
     return Card(
       child: ListTile(
         dense: true,
-        title: Text(w.patrolPlanAd ?? 'Devriye turu'),
-        subtitle: Text(
-          '${fmtClock(w.pencereBaslangic.toLocal())} – ${fmtClock(w.pencereBitis.toLocal())}'
-          '${beklenen > 0 ? ' · $okutulan/$beklenen nokta' : ''}',
-        ),
+        title: Text(w.patrolPlanAd ?? l10n.devriyeTuru),
+        subtitle: Text([
+          '${saatBicimi(w.pencereBaslangic, dil)} – '
+              '${saatBicimi(w.pencereBitis, dil)}',
+          if (beklenen > 0) l10n.devriyeNoktaSayaci(beklenen, okutulan),
+        ].join(' · ')),
         trailing: Chip(
           label: Text(label),
           labelStyle: TextStyle(color: color),
@@ -334,16 +349,17 @@ class _NoWindowsToday extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Card(
+    return Card(
       child: Padding(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Icon(Icons.event_busy_outlined, size: 48),
-            SizedBox(height: 12),
+            const Icon(Icons.event_busy_outlined, size: 48),
+            const SizedBox(height: 12),
             Text(
-              'Bugün için devriye turu yok.',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              context.l10n.devriyeBugunTurYok,
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
           ],
@@ -361,14 +377,13 @@ class _CheckpointList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final checkpoints = state.checkpoints;
     if (checkpoints.isEmpty) {
-      return const Card(
+      return Card(
         child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Text(
-            'Bu planın nokta listesi alınamadı veya plana nokta atanmamış.',
-          ),
+          padding: const EdgeInsets.all(16),
+          child: Text(l10n.devriyeNoktaListesiYok),
         ),
       );
     }
@@ -378,7 +393,7 @@ class _CheckpointList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'Kontrol noktaları',
+            l10n.devriyeKontrolNoktalari,
             style: Theme.of(context).textTheme.titleSmall,
           ),
         ),
@@ -396,9 +411,7 @@ class _CheckpointList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 8, left: 4, right: 4),
           child: Text(
-            'Nokta durumları sunucudandır; tüm görevlilerin okutmaları ✓ '
-            'görünür. "Gönderiliyor" satırlar bu cihazın henüz gönderilmemiş '
-            'okutmalarıdır.',
+            l10n.devriyeNoktaDurumAciklama,
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
@@ -414,25 +427,31 @@ class _CheckpointTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final cp = status.checkpoint;
     final ad = cp.ad ??
-        'Nokta ${cp.checkpointId.length > 8 ? cp.checkpointId.substring(0, 8) : cp.checkpointId}';
+        l10n.devriyeNoktaAdiYedek(cp.checkpointId.length > 8
+            ? cp.checkpointId.substring(0, 8)
+            : cp.checkpointId);
     final (icon, color, sub) = switch (status.durum) {
       CheckpointScanDurum.okutuldu => (
           Icons.check_circle,
           Colors.green,
-          'Okutuldu ✓'
-              '${status.okutmaZamani != null ? ' · ${fmtClock(status.okutmaZamani!.toLocal())}' : ''}',
+          status.okutmaZamani != null
+              ? l10n.devriyeOkutulduZamanli(
+                  saatBicimi(status.okutmaZamani!, dil))
+              : l10n.devriyeOkutuldu,
         ),
       CheckpointScanDurum.gonderiliyor => (
           Icons.cloud_upload_outlined,
           Colors.teal,
-          'Okutuldu ✓ — gönderiliyor (kuyrukta)',
+          l10n.devriyeOkutulduGonderiliyor,
         ),
       CheckpointScanDurum.bekliyor => (
           Icons.radio_button_unchecked,
           Colors.grey,
-          'Bekliyor',
+          l10n.devriyeDurumBekliyor,
         ),
     };
     return ListTile(
@@ -477,11 +496,13 @@ class _CountdownTextState extends State<_CountdownText> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final remaining = widget.until.difference(DateTime.now().toUtc());
     if (remaining.isNegative) {
-      return const Text(
-        'Pencere süresi doldu.',
-        style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+      return Text(
+        l10n.devriyePencereSuresiDoldu,
+        style: const TextStyle(
+            color: Colors.red, fontWeight: FontWeight.w600),
       );
     }
     final urgent = remaining < const Duration(minutes: 10);
@@ -494,7 +515,7 @@ class _CountdownTextState extends State<_CountdownText> {
         ),
         const SizedBox(width: 6),
         Text(
-          'Kalan süre: ${fmtDuration(remaining)}',
+          l10n.devriyeKalanSure(sureMetni(l10n, remaining)),
           style: TextStyle(
             color: urgent ? Colors.red : null,
             fontWeight: FontWeight.w600,

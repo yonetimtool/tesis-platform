@@ -6,12 +6,14 @@ import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../data/task_api.dart';
 import '../domain/task_models.dart';
+import '../domain/task_hata.dart';
 
 /// "Gorevlerim" listesinin durumu.
 class TasksState {
   const TasksState({
     this.loading = false,
     this.errorMessage,
+    this.hataKimligi,
     this.forbidden = false,
     this.tasks = const [],
     this.kategoriFilter,
@@ -23,7 +25,11 @@ class TasksState {
   });
 
   final bool loading;
+  /// Hata KANALI ikilidir: `errorMessage` SUNUCU metnini, `hataKimligi`
+  /// yerellestirilebilir KIMLIGI tasir (bkz. domain/*_hata.dart). Ekran once
+  /// kimligi cozer (`*HatasiCoz`), yoksa sunucu metnini gosterir.
   final String? errorMessage;
+  final GorevAkisHatasi? hataKimligi;
 
   /// 403 — rol gorev listesine erisemiyor (orn. resident).
   final bool forbidden;
@@ -57,6 +63,7 @@ class TasksState {
   TasksState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     bool? forbidden,
     List<Task>? tasks,
     Object? kategoriFilter = _sentinel,
@@ -71,6 +78,9 @@ class TasksState {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as GorevAkisHatasi?,
       forbidden: forbidden ?? this.forbidden,
       tasks: tasks ?? this.tasks,
       kategoriFilter: kategoriFilter == _sentinel
@@ -120,7 +130,7 @@ class TasksController extends Notifier<TasksState> {
     final done = Completer<void>();
     _inflight = done.future;
     if (!silent) {
-      state = state.copyWith(loading: true, errorMessage: null);
+      state = state.copyWith(loading: true, errorMessage: null, hataKimligi: null);
     }
     try {
       // JWT sub yalnizca "Sana atanmis" rozeti icin ("Tumu" gorunumunde);
@@ -135,6 +145,7 @@ class TasksController extends Notifier<TasksState> {
       state = state.copyWith(
         loading: false,
         errorMessage: null,
+        hataKimligi: null,
         forbidden: false,
         tasks: sortTasksByPlan(tasks),
         currentUserId: userId,
@@ -146,13 +157,15 @@ class TasksController extends Notifier<TasksState> {
       state = state.copyWith(
         loading: false,
         errorMessage: e.message,
+        hataKimligi: null,
         forbidden: e.statusCode == 403,
       );
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: GorevAkisHatasi.beklenmeyen,
       );
     } finally {
       _refreshing = false;

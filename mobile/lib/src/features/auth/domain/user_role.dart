@@ -3,6 +3,12 @@
 /// Buradaki yetenek bayraklari YALNIZCA menu/ekran gorunurlugu icindir
 /// (UX hizalamasi). Gercek yetki her istekte backend RBAC'ta zorlanir;
 /// istemci suzgeci atlatilsa bile backend 403 doner.
+///
+/// KIMLIK / METIN AYRIMI (README §15): enum'daki [UserRole.label] TR sabittir
+/// ve YERELLESTIRILMIS ekranlarda KULLANILMAZ — cizim katmani rolu kendi
+/// `rolAdi` cozucusuyle aktif dilden yazar (`CameraUrlHatasi` emsali: enum
+/// domain'de, `switch` cizim katmaninda). `label` henuz cevrilmemis
+/// modullerde kullanildigi icin kaldirilmadi (sonraki turlarda dusecek).
 library;
 
 enum UserRole {

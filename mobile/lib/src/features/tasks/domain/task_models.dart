@@ -27,7 +27,7 @@ class TicketSummary {
   final String id;
   final String baslik; // kisa aciklama
   final String durum; // acik | is_emri | cozuldu | reddedildi
-  final String? kategoriAd; // null -> "Diğer"
+  final String? kategoriAd; // null -> l10n.gorevKategoriDiger
   final String? unitLabel; // talebi acanin dairesi (varsa)
 
   factory TicketSummary.fromJson(Map<String, dynamic> json) => TicketSummary(
@@ -64,7 +64,8 @@ class Task {
   /// Gorevin atandigi kullanici (yoksa havuz gorevi).
   final String? atananUserId;
 
-  /// Gorev TIPI = yonetici-tanimli kategori (task_category); null = "Diğer".
+  /// Gorev TIPI = yonetici-tanimli kategori (task_category);
+  /// null = kategorisiz (ekran l10n.gorevKategoriDiger yazar).
   /// Sabit tip enum'u kaldirildi; ad, kategori listesinden cozulur.
   final String? kategoriId;
 
@@ -289,7 +290,7 @@ class TaskDraft {
   final String? aciklama;
   final String? atananUserId;
 
-  /// Gorev tipi = kategori; null = "Diğer".
+  /// Gorev tipi = kategori; null = kategorisiz (l10n.gorevKategoriDiger).
   final String? kategoriId;
 
   /// Bagli NFC kontrol noktasi; doluysa gorev NFC-dogrulamalidir (tamamlarken

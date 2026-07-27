@@ -713,4 +713,642 @@ class AppLocalizationsRu extends AppLocalizations {
   String anaKarsilama(String ad) {
     return 'Здравствуйте, $ad';
   }
+
+  @override
+  String get gorevKategorilerTooltip => 'Категории';
+
+  @override
+  String get gorevYeni => 'Новая задача';
+
+  @override
+  String get gorevOlusturuldu => 'Задача создана ✓';
+
+  @override
+  String get gorevListesiYetkiYok =>
+      'У вас нет прав на просмотр списка задач. Этот экран доступен ролям уборки и охраны.';
+
+  @override
+  String get gorevBuFiltredeYok => 'С этим фильтром активных задач нет.';
+
+  @override
+  String get gorevCipBanaAtanan => 'Назначено мне';
+
+  @override
+  String get gorevCipTumGorevler => 'Все задачи';
+
+  @override
+  String get gorevCipTumu => 'Все';
+
+  @override
+  String get gorevKategoriDiger => 'Другое';
+
+  @override
+  String gorevPlanlanan(Object zaman) {
+    return 'Запланировано: $zaman';
+  }
+
+  @override
+  String get gorevSanaAtanmis => 'Назначено вам';
+
+  @override
+  String get gorevFotoZorunlu => 'Требуется фото';
+
+  @override
+  String get gorevTamamlandiZatenKayitli => 'Выполнено ✓ (уже было записано)';
+
+  @override
+  String get gorevTamamlandiBuOturumda => 'Выполнено ✓ (в этом сеансе)';
+
+  @override
+  String get gorevIslemleriTooltip => 'Действия с задачей';
+
+  @override
+  String get gorevTakipGorunumu => 'Режим наблюдения';
+
+  @override
+  String get gorevTakipGorunumuAlt =>
+      'Выполнение производится сотрудниками на месте (охрана / техник). Этот экран — для наблюдения.';
+
+  @override
+  String get gorevGonderiliyor => 'Отправка...';
+
+  @override
+  String get gorevTamamla => 'Завершить';
+
+  @override
+  String get gorevGuncellendi => 'Задача обновлена ✓';
+
+  @override
+  String get gorevSilinsinMi => 'Удалить задачу?';
+
+  @override
+  String get gorevSilindi => 'Задача удалена ✓';
+
+  @override
+  String get gorevNfcAciklama =>
+      'Эта задача с NFC-подтверждением: перед завершением отсканируйте метку в точке задачи.';
+
+  @override
+  String get gorevAdim1Etiket => '1. Отсканируйте метку';
+
+  @override
+  String gorevOkundu(Object uid) {
+    return 'Считано: $uid';
+  }
+
+  @override
+  String get gorevEtiketBekleniyor => 'Ожидание метки...';
+
+  @override
+  String get gorevYenidenOkut => 'Считать снова';
+
+  @override
+  String get gorevEtiketiOkut => 'Считать метку';
+
+  @override
+  String get gorevAdim2Foto => '2. Фотоподтверждение';
+
+  @override
+  String get gorevAdim2FotoOpsiyonel => '2. Фотоподтверждение (необязательно)';
+
+  @override
+  String get gorevYukleniyorNokta => 'Загрузка...';
+
+  @override
+  String get gorevYuklendi => 'Загружено ✓';
+
+  @override
+  String get gorevKamera => 'Камера';
+
+  @override
+  String get gorevYenidenCek => 'Снять заново';
+
+  @override
+  String get gorevGaleridenSec => 'Выбрать из галереи';
+
+  @override
+  String get gorevTekrarYukle => 'Загрузить снова';
+
+  @override
+  String get gorevKaldir => 'Удалить';
+
+  @override
+  String get gorevAdim3Not => '3. Примечание (необязательно)';
+
+  @override
+  String get gorevNotIpucu => 'Напр. мусорные контейнеры опорожнены';
+
+  @override
+  String get gorevZatenKayitliydi =>
+      'Это выполнение уже было записано (повторная отправка — дубликат не создан).';
+
+  @override
+  String get gorevTamamlandiKayit => 'Задача выполнена — запись создана.';
+
+  @override
+  String gorevZaman(Object zaman) {
+    return 'Время: $zaman';
+  }
+
+  @override
+  String get gorevFotoKanitiVar => 'есть фотоподтверждение';
+
+  @override
+  String get gorevNfcDogrulandi => 'NFC подтверждён';
+
+  @override
+  String get gorevYeniTamamlamaBaslat => 'Начать новое выполнение';
+
+  @override
+  String get gorevDuzenleBaslik => 'Изменить задачу';
+
+  @override
+  String get gorevKategoriSilinmis => 'Категория (удалена)';
+
+  @override
+  String get gorevAtananListedeDegil => 'Исполнитель (нет в списке)';
+
+  @override
+  String get gorevTipleriYukleniyor => 'Загрузка типов задач...';
+
+  @override
+  String get gorevTipi => 'Тип задачи';
+
+  @override
+  String get gorevTipiYokUyari =>
+      'Вы ещё не задали типы задач. Свои типы можно добавить на экране «Категории» выше; пока используется «Другое».';
+
+  @override
+  String get gorevAdi => 'Название задачи';
+
+  @override
+  String get gorevAdiZorunlu => 'Название задачи обязательно';
+
+  @override
+  String get gorevAciklamaOpsiyonel => 'Описание (необязательно)';
+
+  @override
+  String get gorevPersonelYukleniyor => 'Загрузка списка сотрудников...';
+
+  @override
+  String get gorevAtananPersonel => 'Назначенный сотрудник';
+
+  @override
+  String get gorevAtanmamisHavuz => '— не назначено (общая задача) —';
+
+  @override
+  String gorevPersonelAlinamadi(Object hata) {
+    return 'Не удалось получить список сотрудников: $hata';
+  }
+
+  @override
+  String get gorevKontrolNoktasiOpsiyonel =>
+      'Контрольная точка (NFC) — необязательно';
+
+  @override
+  String get gorevKontrolNoktasiYardim =>
+      'Если привязано, задача завершается сканированием NFC';
+
+  @override
+  String get gorevNfcYok => '— без NFC —';
+
+  @override
+  String get gorevPeriyotDakika => 'Период в минутах (необязательно)';
+
+  @override
+  String get gorevPeriyotYardim =>
+      'Для повторяющихся задач; пусто = однократно';
+
+  @override
+  String get gorevPozitifSayi => 'Введите положительное целое число';
+
+  @override
+  String get gorevFotoKanitiZorunlu => 'Требуется фотоподтверждение';
+
+  @override
+  String get gorevFotoKanitiZorunluAlt => 'Выполнение без фото не принимается';
+
+  @override
+  String get gorevPasifAciklama => 'Неактивная задача не отображается в списке';
+
+  @override
+  String get gorevKategorileriBaslik => 'Категории задач';
+
+  @override
+  String get gorevKategoriYeni => 'Новая категория';
+
+  @override
+  String get gorevKategoriAdi => 'Название категории';
+
+  @override
+  String get gorevKategoriAdiIpucu => 'напр. Обслуживание бассейна';
+
+  @override
+  String gorevKategoriEklendi(Object ad) {
+    return '«$ad» добавлена';
+  }
+
+  @override
+  String gorevKategoriEklenemedi(Object hata) {
+    return 'Не удалось добавить: $hata';
+  }
+
+  @override
+  String get gorevKategoriSilinsinMi => 'Удалить категорию?';
+
+  @override
+  String gorevKategoriSilOnay(Object ad) {
+    return '«$ad» будет деактивирована; история существующих задач сохраняется, но выбрать её для новых задач нельзя.';
+  }
+
+  @override
+  String gorevKategoriSilindi(Object ad) {
+    return '«$ad» удалена';
+  }
+
+  @override
+  String gorevKategoriSilinemedi(Object hata) {
+    return 'Не удалось удалить: $hata';
+  }
+
+  @override
+  String gorevKategoriListeAlinamadi(Object hata) {
+    return 'Не удалось получить список: $hata';
+  }
+
+  @override
+  String get gorevKategoriYokBos =>
+      'Категорий пока нет. Добавьте её через «Новая категория», чтобы её можно было выбрать при создании задачи.';
+
+  @override
+  String get gorevOncelikDusuk => 'Низкий';
+
+  @override
+  String get gorevOncelikOrta => 'Средний';
+
+  @override
+  String get gorevOncelikYuksek => 'Высокий';
+
+  @override
+  String get gorevOncelik => 'Приоритет';
+
+  @override
+  String get gorevTaleptenGeldi => 'Из заявки';
+
+  @override
+  String get gorevBagliTalep => 'Связанная заявка';
+
+  @override
+  String gorevDaireEtiket(Object daire) {
+    return 'Квартира $daire';
+  }
+
+  @override
+  String get talepDurumAcik => 'Открыт';
+
+  @override
+  String get talepDurumIsEmri => 'Наряд';
+
+  @override
+  String get talepDurumCozuldu => 'Решён';
+
+  @override
+  String get talepDurumReddedildi => 'Отклонён';
+
+  @override
+  String get gorevEtiketOkunamadi => 'Не удалось считать метку.';
+
+  @override
+  String get gorevFotoOnlineGerekli =>
+      'Для загрузки фото нужно интернет-соединение (адрес загрузки кратковременный). При появлении связи нажмите «Загрузить снова».';
+
+  @override
+  String gorevFotoAlinamadi(Object hata) {
+    return 'Не удалось получить фото: $hata';
+  }
+
+  @override
+  String get gorevFotoOnlineGerekliKisa =>
+      'Для загрузки фото нужно интернет-соединение.';
+
+  @override
+  String get gorevFotoZorunluUyari =>
+      'Для этой задачи ОБЯЗАТЕЛЬНО фотоподтверждение. Сделайте и загрузите фото перед завершением.';
+
+  @override
+  String get gorevFotoHenuzYuklenmedi =>
+      'Фото ещё не загружено. Дождитесь окончания загрузки, попробуйте «Загрузить снова» или удалите фото.';
+
+  @override
+  String get gorevTamamlamaOfflineUyari =>
+      'Не удалось отправить выполнение — нужно интернет-соединение. При появлении связи снова нажмите «Завершить»; та же запись не продублируется (Idempotency-Key фиксирован). Выполнение с фото офлайн не поддерживается (известное ограничение).';
+
+  @override
+  String get rolAdmin => 'Администратор платформы';
+
+  @override
+  String get rolYonetici => 'Управляющий объектом';
+
+  @override
+  String get rolGuvenlik => 'Охрана';
+
+  @override
+  String get rolTesisGorevlisi => 'Техник объекта';
+
+  @override
+  String get rolSakin => 'Житель';
+
+  @override
+  String get rolBilinmeyen => 'Неизвестная роль';
+
+  @override
+  String get ortakOlustur => 'Создать';
+
+  @override
+  String get ortakGuncelle => 'Обновить';
+
+  @override
+  String get ortakYenile => 'Обновить';
+
+  @override
+  String get devriyeGonderimKuyruguTooltip => 'Очередь отправки';
+
+  @override
+  String get sekmeGecmis => 'История';
+
+  @override
+  String get devriyeYetkiYok =>
+      'У вас нет прав на данные этого экрана. Отслеживание обходов доступно роли охраны (и управляющего).';
+
+  @override
+  String devriyeSonGuncelleme(Object saat) {
+    return 'Последнее обновление: $saat (автообновление: 60 с)';
+  }
+
+  @override
+  String get devriyeTuru => 'Обход';
+
+  @override
+  String devriyeBitisEtiket(Object saat) {
+    return 'конец $saat';
+  }
+
+  @override
+  String devriyePencere(Object baslangic, Object bitis) {
+    return 'Окно: $baslangic – $bitis';
+  }
+
+  @override
+  String devriyeNoktaSayaci(Object beklenen, Object okutulan) {
+    return '$okutulan/$beklenen точек';
+  }
+
+  @override
+  String get devriyeTumNoktalarOkutuldu =>
+      'Все точки отсканированы — обход завершается. ✓';
+
+  @override
+  String devriyeSunucudaOkutma(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other:
+          'На сервере записано $n сканирований (могут быть включены сканирования других устройств).',
+      many:
+          'На сервере записано $n сканирований (могут быть включены сканирования других устройств).',
+      few:
+          'На сервере записано $n сканирования (могут быть включены сканирования других устройств).',
+      one:
+          'На сервере записано $n сканирование (могут быть включены сканирования других устройств).',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devriyeNoktaOkutNfc => 'Сканировать точку (NFC)';
+
+  @override
+  String get devriyeBugununDigerTurlari => 'Другие обходы сегодня';
+
+  @override
+  String get devriyeBugununTurlari => 'Обходы сегодня';
+
+  @override
+  String get devriyeDurumTamamlandi => 'Выполнен';
+
+  @override
+  String get devriyeDurumKacirildi => 'Пропущен';
+
+  @override
+  String get devriyeDurumSimdiAktif => 'Активен сейчас';
+
+  @override
+  String get devriyeDurumYaklasan => 'Предстоящий';
+
+  @override
+  String get devriyeDurumBitti => 'Завершён';
+
+  @override
+  String get devriyeDurumBekliyor => 'Ожидает';
+
+  @override
+  String get devriyeDurumBilinmiyor => 'Неизвестно';
+
+  @override
+  String get devriyeDurumSuresiGecti => 'Время истекло';
+
+  @override
+  String get devriyeBugunTurYok => 'На сегодня обходов нет.';
+
+  @override
+  String get devriyeNoktaListesiYok =>
+      'Не удалось получить список точек этого плана либо точки не назначены.';
+
+  @override
+  String get devriyeKontrolNoktalari => 'Контрольные точки';
+
+  @override
+  String get devriyeNoktaDurumAciklama =>
+      'Статусы точек приходят с сервера; сканирования всех сотрудников отображаются как ✓. Строки «Отправляется» — сканирования этого устройства, ещё не отправленные.';
+
+  @override
+  String devriyeNoktaAdiYedek(Object kisaId) {
+    return 'Точка $kisaId';
+  }
+
+  @override
+  String get devriyeOkutuldu => 'Отсканировано ✓';
+
+  @override
+  String devriyeOkutulduZamanli(Object saat) {
+    return 'Отсканировано ✓ · $saat';
+  }
+
+  @override
+  String get devriyeOkutulduGonderiliyor =>
+      'Отсканировано ✓ — отправляется (в очереди)';
+
+  @override
+  String get devriyePencereSuresiDoldu => 'Время окна истекло.';
+
+  @override
+  String devriyeKalanSure(Object sure) {
+    return 'Осталось: $sure';
+  }
+
+  @override
+  String sureSaatDakika(Object dakika, Object saat) {
+    return '$saat ч $dakika мин';
+  }
+
+  @override
+  String sureDakikaSaniye(Object dakika, Object saniye) {
+    return '$dakika мин $saniye с';
+  }
+
+  @override
+  String sureSaniye(Object saniye) {
+    return '$saniye с';
+  }
+
+  @override
+  String get devriyeGecmisYetkiYok =>
+      'У вас нет прав на историю обходов. Этот список доступен ролям охраны и управляющего.';
+
+  @override
+  String get devriyeGecmisBos => 'Записей окон обходов пока нет.';
+
+  @override
+  String get devriyeOzetToplam => 'Всего';
+
+  @override
+  String get devriyePlanlariBaslik => 'Планы обходов';
+
+  @override
+  String get devriyePlanEkle => 'Добавить план';
+
+  @override
+  String get devriyePlanlarListelenemedi =>
+      'Не удалось получить список планов.';
+
+  @override
+  String devriyePlanAralik(Object baslangic, Object bitis, Object dakika) {
+    return '$baslangic–$bitis · каждые $dakika мин';
+  }
+
+  @override
+  String get devriyePasif => 'Неактивен';
+
+  @override
+  String get devriyePlanSilinsinMi => 'Удалить план?';
+
+  @override
+  String devriyePlanSilOnay(Object ad) {
+    return 'План обхода «$ad» будет удалён.';
+  }
+
+  @override
+  String get devriyePlanSilindi => 'План удалён ✓';
+
+  @override
+  String get devriyePlanDuzenleBaslik => 'Изменить план обхода';
+
+  @override
+  String get devriyePlanYeniBaslik => 'Новый план обхода';
+
+  @override
+  String get devriyePlanAdi => 'Название плана';
+
+  @override
+  String get devriyePlanAdiIpucu => 'напр. Ночной обход';
+
+  @override
+  String get devriyeAdZorunlu => 'Название обязательно';
+
+  @override
+  String devriyeBaslangicSaat(Object saat) {
+    return 'Начало $saat';
+  }
+
+  @override
+  String devriyeBitisSaat(Object saat) {
+    return 'Конец $saat';
+  }
+
+  @override
+  String get devriyeTurSikligi => 'Частота обхода (минуты)';
+
+  @override
+  String get devriyeTurSikligiYardim => 'напр. 60 = один обход в час';
+
+  @override
+  String get devriyeTurSikligiPozitif =>
+      'Частота обхода (мин) должна быть положительной.';
+
+  @override
+  String get devriyeTumunuKaldir => 'Снять все';
+
+  @override
+  String get devriyeTumunuSec => 'Выбрать все';
+
+  @override
+  String get devriyeAktifNoktaYok =>
+      'Активных контрольных точек нет. Сначала добавьте их в «Контрольные точки».';
+
+  @override
+  String devriyeUidEtiket(Object uid) {
+    return 'UID: $uid';
+  }
+
+  @override
+  String get devriyeKaydedilemedi => 'Не удалось сохранить. Попробуйте снова.';
+
+  @override
+  String get devriyePlanYokBos =>
+      'Планов обходов пока нет.\nДобавьте план справа снизу (часы + точки).';
+
+  @override
+  String get devriyeTakibiBaslik => 'Отслеживание обходов';
+
+  @override
+  String get sekmeBugun => 'Сегодня';
+
+  @override
+  String get sekmeTaramaGunlugu => 'Журнал сканирований';
+
+  @override
+  String get devriyeTakibiYetkiYok =>
+      'У вас нет прав на отслеживание обходов. Этот экран доступен ролям управляющего и охраны.';
+
+  @override
+  String get devriyeBugunPencereYok =>
+      'На сегодня окно обхода не запланировано.';
+
+  @override
+  String devriyeNoktaOkutuldu(Object beklenen, Object okutulan) {
+    return 'Отсканировано точек: $okutulan/$beklenen';
+  }
+
+  @override
+  String get devriyeTaramaGunluguAlinamadi =>
+      'Не удалось получить журнал сканирований.';
+
+  @override
+  String get devriyeGunOkutmaYok => 'За этот день сканирований нет.';
+
+  @override
+  String get devriyeImzali => 'подписано ✓';
+
+  @override
+  String devriyeOkutmaBekliyor(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n сканирований ожидают отправки',
+      many: '$n сканирований ожидают отправки',
+      few: '$n сканирования ожидают отправки',
+      one: '$n сканирование ожидает отправки',
+    );
+    return '$_temp0';
+  }
 }

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../routing/app_router.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_models.dart';
+import 'gorev_hata_metni.dart';
 import 'task_form_sheet.dart';
 import 'task_ticket_widgets.dart';
 import 'task_tip_style.dart';
@@ -49,16 +50,20 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(tasksControllerProvider);
     final controller = ref.read(tasksControllerProvider.notifier);
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(trUpper(widget.yonetimGorunumu ? 'Görev yönetimi' : 'Görevlerim')),
+        title: Text(baslikBuyuk(
+            widget.yonetimGorunumu ? l10n.modulGorevYonetimi : l10n.modulGorevlerim,
+            dil)),
         actions: [
           // Kategori yönetimi (A6) — yalnız yönetim görünümünde ve
           // yetkili rolde (canManage); backend RBAC yazmayı ayrıca zorlar.
           if (widget.yonetimGorunumu && state.canManage)
             IconButton(
-              tooltip: 'Kategoriler',
+              tooltip: l10n.gorevKategorilerTooltip,
               icon: const Icon(Icons.label_outline),
               onPressed: () => context.push(AppRoutes.taskCategories),
             ),
@@ -69,12 +74,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       floatingActionButton: state.canManage
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.add_task),
-              label: const Text('Yeni görev'),
+              label: Text(l10n.gorevYeni),
               onPressed: () async {
                 final saved = await showTaskFormSheet(context);
                 if (saved == true && context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Görev oluşturuldu ✓')),
+                    SnackBar(content: Text(l10n.gorevOlusturuldu)),
                   );
                 }
               },
@@ -93,23 +98,25 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(16),
                       children: [
-                        if (state.errorMessage != null)
+                        if (state.errorMessage != null ||
+                            state.hataKimligi != null)
                           _ErrorBanner(
                             message: state.forbidden
-                                ? 'Görev listesi için yetkiniz yok. Bu ekran '
-                                    'temizlik ve güvenlik rollerine açıktır.'
-                                : state.errorMessage!,
+                                ? l10n.gorevListesiYetkiYok
+                                : gorevHatasiCoz(l10n, state.hataKimligi,
+                                        state.errorMessage) ??
+                                    '',
                             onRetry:
                                 state.forbidden ? null : controller.refresh,
                           ),
                         if (state.tasks.isEmpty &&
                             state.errorMessage == null &&
                             !state.loading)
-                          const Card(
+                          Card(
                             child: Padding(
-                              padding: EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(24),
                               child: Text(
-                                'Bu filtreyle aktif görev yok.',
+                                l10n.gorevBuFiltredeYok,
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -142,6 +149,7 @@ class _TipFilterBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(tasksControllerProvider.notifier);
     final kategoriler = ref.watch(taskCategoriesProvider).value ?? const [];
+    final l10n = context.l10n;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -153,21 +161,21 @@ class _TipFilterBar extends ConsumerWidget {
           if (yonetim) ...[
             ChoiceChip(
               avatar: const Icon(Icons.person, size: 16),
-              label: const Text('Bana atanan'),
+              label: Text(l10n.gorevCipBanaAtanan),
               selected: state.sadeceBenim,
               onSelected: (_) => controller.setSadeceBenim(true),
             ),
             const SizedBox(width: 8),
             ChoiceChip(
               avatar: const Icon(Icons.groups, size: 16),
-              label: const Text('Tüm görevler'),
+              label: Text(l10n.gorevCipTumGorevler),
               selected: !state.sadeceBenim,
               onSelected: (_) => controller.setSadeceBenim(false),
             ),
             const SizedBox(width: 16),
           ],
           ChoiceChip(
-            label: const Text('Tümü'),
+            label: Text(l10n.gorevCipTumu),
             selected: state.kategoriFilter == null,
             onSelected: (_) => controller.setKategoriFilter(null),
           ),
@@ -185,7 +193,7 @@ class _TipFilterBar extends ConsumerWidget {
           ],
           const SizedBox(width: 8),
           ChoiceChip(
-            label: const Text('Diğer'),
+            label: Text(l10n.gorevKategoriDiger),
             selected: state.kategoriFilter == 'diger',
             onSelected: (_) => controller.setKategoriFilter('diger'),
           ),
@@ -203,6 +211,8 @@ class _TaskTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final kategoriler = ref.watch(taskCategoriesProvider).value;
     final adlar = (kategoriler ?? const [])
         .where((k) => k.id == task.kategoriId)
@@ -223,7 +233,8 @@ class _TaskTile extends ConsumerWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(style.label, style: TextStyle(color: style.color)),
+            Text(style.ad ?? l10n.gorevKategoriDiger,
+                style: TextStyle(color: style.color)),
             // Talepten gelen is emri: "Talepten geldi" chip + oncelik rozeti.
             if (task.fromTicket)
               Padding(
@@ -238,24 +249,22 @@ class _TaskTile extends ConsumerWidget {
                 ),
               ),
             if (task.sonrakiPlanlanan != null)
-              Text(
-                'Planlanan: '
-                '${_fmtDateTime(task.sonrakiPlanlanan!.toLocal())}',
-              ),
+              Text(l10n.gorevPlanlanan(
+                  tarihSaatBicimi(task.sonrakiPlanlanan!, dil))),
             // "Bana atanan" gorunumunde her satir zaten benim — rozet
             // yalnizca "Herkes" gorunumunde ayirt edicidir.
             if (mine && !state.sadeceBenim)
-              const Text(
-                'Sana atanmış',
-                style: TextStyle(
+              Text(
+                l10n.gorevSanaAtanmis,
+                style: const TextStyle(
                   color: Colors.blue,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             if (task.fotoZorunlu)
-              const Text(
-                'Foto zorunlu',
-                style: TextStyle(
+              Text(
+                l10n.gorevFotoZorunlu,
+                style: const TextStyle(
                   color: Colors.deepOrange,
                   fontWeight: FontWeight.w600,
                 ),
@@ -263,8 +272,8 @@ class _TaskTile extends ConsumerWidget {
             if (completed != null)
               Text(
                 completed.wasDuplicate
-                    ? 'Tamamlandı ✓ (zaten kayıtlıydı)'
-                    : 'Tamamlandı ✓ (bu oturumda)',
+                    ? l10n.gorevTamamlandiZatenKayitli
+                    : l10n.gorevTamamlandiBuOturumda,
                 style: const TextStyle(
                   color: Colors.green,
                   fontWeight: FontWeight.w600,
@@ -304,7 +313,7 @@ class _ErrorBanner extends StatelessWidget {
             if (onRetry != null)
               TextButton(
                 onPressed: () => onRetry!(),
-                child: const Text('Tekrar dene'),
+                child: Text(context.l10n.ortakYenidenDene),
               ),
           ],
         ),
@@ -312,9 +321,3 @@ class _ErrorBanner extends StatelessWidget {
     );
   }
 }
-
-String _two(int v) => v.toString().padLeft(2, '0');
-
-String _fmtDateTime(DateTime local) =>
-    '${_two(local.day)}.${_two(local.month)}.${local.year} '
-    '${_two(local.hour)}:${_two(local.minute)}';

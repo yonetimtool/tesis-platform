@@ -1549,16 +1549,18 @@ features/home/
 ## 15. Çoklu dil (i18n) — 7 dil + RTL
 
 **Durum:** altyapı **tam**; çevrilen modüller: **Ayarlar**, **Kameralar**, ortak
-durum metinleri (tur 1) ve **Ana ekran (home)** (tur 2 — üç rol varyantı, hızlı
+durum metinleri (tur 1), **Ana ekran (home)** (tur 2 — üç rol varyantı, hızlı
 erişim ızgarası, Hızlı Özet, son hareketler/duyuru/etkinlik kartları, kabuk +
-çekmece + modül adları). Kalan modüllerin dışa alımı mekanik bir iştir ve
+çekmece + modül adları) ve **Görevler + Devriye** (tur 3 — liste/detay/form,
+kategori yönetimi, foto-kanıtı ve NFC akış metinleri, tur pencereleri, plan
+formu, tarama günlüğü). Kalan modüllerin dışa alımı mekanik bir iştir ve
 aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
 
 ### Mimari
 
 | Parça | Yer |
 |---|---|
-| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**182 anahtar × 7**, boşluk yok) |
+| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**359 anahtar × 7**, boşluk yok) |
 | gen-l10n yapılandırması | `l10n.yaml` (şablon: `app_tr.arb`) |
 | Üretilen sınıf | `lib/l10n/gen/app_localizations.dart` (**repoda tutulur** → taze klonda `analyze`/`test` ek adım istemez; yenilemek için `flutter gen-l10n`) |
 | Dil seçimi + kalıcılık | `lib/src/core/i18n/locale_controller.dart` (`AppDil`, `LocaleController`, `ui.locale` anahtarı — tema ile aynı güvenli depo) |
@@ -1671,6 +1673,10 @@ değişince yönlendirme bozulurdu. Artık:
 | `HomeKartEtiketId` (sayaç değil, sabit alt etiket) | aynı dosya | `kartEtiketi(l10n, id)` |
 | `OzetKutuId` ("Hızlı Özet" 4 kutu) | aynı dosya | `ozetEtiketi` / `ozetAltEtiketi` |
 | `HomeMenuEntry` (çekmece/modül adları) | `presentation/module_card_spec.dart` | `moduleBaslik(l10n, entry)` |
+| `taskKategoriStyle().ad` **(null = kategorisiz)** | `tasks/presentation/task_tip_style.dart` | `style.ad ?? l10n.gorevKategoriDiger` |
+| `TaskOncelik` (düşük/orta/yüksek) | aynı dosya | `oncelikEtiketi(l10n, kimlik)` |
+| `GorevAkisHatasi` / `DevriyeAkisHatasi` | `*/domain/*_hata.dart` | `gorevHataMetni` / `devriyeHataMetni` |
+| `UserRole` (rol adları) | `auth/domain/user_role.dart` | `rolAdi(l10n, rol)` (`tasks/presentation/rol_adi.dart`) |
 
 `switch`'lerin `default` dalı **yoktur**: yeni kart eklenince derleyici çeviriyi
 zorlar. `ParkingOccupancy` gibi alan tiplerinden görüntü metni üreten üyeler
@@ -1700,6 +1706,20 @@ değiştirme (başlıklar + ICU sayaç metinleri değişir, düzen aynı kalır)
 başlıkları + kamera şeridi, ve **RTL** denetimi: Arapça görevli ana ekranında
 yön `rtl`, ızgara + son hareketler satırları çizilir, plaka `34 ABC 123` LTR
 izolasyonlu kalır, uzun Arapça metinlerde ızgara **taşmaz**.
+
+`test/tasks_patrol_i18n_test.dart` (8 test — tur 3): görev listesinde **tr→en→ru**
+ve devriye planlarında **tr→de→ar** dil değişimi (metin çevrilir, düzen + sunucu
+verisi aynı kalır), kategori **kimliğinin** dilden bağımsızlığı (renk/ikon sabit,
+`ad` null = metin yok), denetleyici hata **kimliğinin** ekranda çevrilmesi, tüm
+hata kimliklerinin 7 dilde karşılığı olduğu, ICU çoğul (ru one/few/many + ar
+zero/one/two) ve **RTL**: Arapça **görev formu** ile **devriye plan formu**
+(iki form-yoğun ekran) yön `rtl` çizilir, taşma yok, UID LTR izolasyonlu.
+
+> **RTL denetiminin yakaladığı gerçek kusur:** Arapça çeviriler TR'den uzun
+> olduğu için görev formunda iki yerde taşma vardı (yükleme satırı 4 px,
+> "Atanan personel" açılır listesi 90 px). Düzeltme, kontrol noktası listesinde
+> zaten kullanılan desendir: satırda `Expanded`, açılır listede `isExpanded`.
+> Grep bunu **bulamazdı** — ölçüm metin sayar, yerleşim denemez.
 
 `test/flutter_test_config.dart` süite başına bir kez `initializeDateFormatting()`
 çağırır: eşleyicileri doğrudan çağıran saf birim testleri aksi halde
@@ -1743,6 +1763,26 @@ EOF
 | Tur 2 öncesi | 1.115 | 100 | **123** (16 dosya) |
 | Tur 2 sonrası | **994** | 91 | **2** (1 dosya) |
 
+**Tur 3 (tasks + patrol) ölçümü — aynı komut, önce/sonra:**
+
+| | Toplam string | Dosya | `tasks` | `patrol` |
+|---|---|---|---|---|
+| Tur 3 öncesi | 994 | 91 | **110** (9 dosya) | **81** (6 dosya) |
+| Tur 3 sonrası | **803** | 75 | **0** | **0** |
+
+191 string dışa alındı (tasks 110 + patrol 81); **177 yeni ARB anahtarı × 7 dil**
+(182 → 359) + 12 mevcut ortak anahtarın yeniden kullanımı (`ortakSil`,
+`ortakVazgec`, `ortakKaydet`, `ortakDuzenle`, `ortakEkle`, `ortakYenidenDene`,
+`ortakKaydediliyor`, `ortakBeklenmeyenHata`, `cipAktif`, `modulGorevlerim`,
+`modulGorevYonetimi`, `modulTurlarim`).
+
+Doğrulama (tur 2'deki `home` denetiminin tur 3 karşılığı) — **boş dönmeli**:
+
+```bash
+grep -rnE "(switch|case|==)\s*\(?\s*['\"][^'\"]*[çğıöşü…]" \
+  lib/src/features/tasks lib/src/features/patrol
+```
+
 Kalan 2 `home` stringi `home_marka.dart` içindeki **marka kilidi**dir (`Yönetio`,
 `GÜVENLİK & DANIŞMANLIK`) — aşağıdaki bilinçli istisna.
 
@@ -1752,19 +1792,27 @@ Kalan 2 `home` stringi `home_marka.dart` içindeki **marka kilidi**dir (`Yöneti
 > (`home_header.dart`) sayım 0 gösterirken çevrilmemiş kalmıştı; canlı 7-dil
 > sürüşünde yakalandı ve `anaKarsilama` anahtarıyla çevrildi. Bir modülü
 > "bitti" ilan etmeden önce grep'e **ek olarak** o modülü yabancı bir dilde
-> gözle sürmek gerekir. Yani ana ekran modülü
+> gözle sürmek gerekir.
+>
+> **Tur 3'te bulunan ikinci kör nokta:** betik yalnızca `//` ile **başlayan**
+> satırları ayıklar; satır **sonundaki** yorum (`final x; // null -> "Diğer"`)
+> string sayılır. `task_models.dart` tam çevrildiği hâlde sayaç 1 gösteriyordu.
+> Yorumlar Türkçe görünen metni alıntılamak yerine **l10n anahtarına** işaret
+> edecek şekilde yazıldı (`// null -> l10n.gorevKategoriDiger`) — hem sayaç
+> doğru hem yorum daha bilgilendirici. Ayrıca grep, `'Planlanan: '` gibi
+> Türkçe'ye özgü karakter taşımayan metinleri de kaçırır; tur 3'te bunlar
+> dosya dosya okunarak bulundu (elle `_fmtDateTime` biçimleyicileri de
+> `tarihSaatBicimi`/`saatBicimi` ile değiştirildi — tarih artık dile duyarlı). Yani ana ekran modülü
 sayıma **sıfır** katkı verir. (Tur 1 sonunda bu bölümde yazan ~1.125/106
 rakamı ölçümün o anki halidir; tur 2 başında aynı komut 1.115/100 verdi —
 arada başka modüle dokunulmadı, fark ara commit'lerdeki küçük düzenlemelerden
 gelir.)
 
-Kalan envanter (modül başına, tur 2 sonrası):
+Kalan envanter (modül başına, **tur 3 sonrası**; `tasks` ve `patrol` listeden düştü):
 
 | Modül | Kalan string |
 |---|---|
-| `tasks` | 110 |
 | `building_map` | 84 |
-| `patrol` | 81 |
 | `complaints` | 65 |
 | `rezervasyon` | 51 |
 | `etkinlik` | 44 |

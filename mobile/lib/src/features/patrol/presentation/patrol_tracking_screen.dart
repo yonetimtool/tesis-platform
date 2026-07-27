@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../checkpoints/presentation/checkpoints_screen.dart';
 import '../data/scan_report_api.dart';
 import 'patrol_plans_screen.dart';
 import '../domain/patrol_models.dart';
 import '../domain/tracking_ozet.dart';
+import 'devriye_hata_metni.dart';
 import 'patrol_history_view.dart';
 import 'patrol_tracking_controller.dart';
 
@@ -56,6 +57,7 @@ class _PatrolTrackingScreenState extends ConsumerState<PatrolTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final loading =
         ref.watch(patrolTrackingControllerProvider.select((s) => s.loading));
     final controller = ref.read(patrolTrackingControllerProvider.notifier);
@@ -63,34 +65,34 @@ class _PatrolTrackingScreenState extends ConsumerState<PatrolTrackingScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(trUpper('Devriye takibi')),
+          title: Text(baslikBuyuk(l10n.devriyeTakibiBaslik, context.dilKodu)),
           actions: [
             IconButton(
-              tooltip: 'Devriye planları',
+              tooltip: l10n.devriyePlanlariBaslik,
               icon: const Icon(Icons.route_outlined),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const PatrolPlansScreen()),
               ),
             ),
             IconButton(
-              tooltip: 'Kontrol noktaları',
+              tooltip: l10n.devriyeKontrolNoktalari,
               icon: const Icon(Icons.add_location_alt_outlined),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const CheckpointsScreen()),
               ),
             ),
             IconButton(
-              tooltip: 'Yenile',
+              tooltip: l10n.ortakYenile,
               icon: const Icon(Icons.refresh),
               onPressed: loading ? null : controller.refresh,
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             isScrollable: true,
             tabs: [
-              Tab(text: 'Bugün'),
-              Tab(text: 'Geçmiş'),
-              Tab(text: 'Tarama günlüğü'),
+              Tab(text: l10n.sekmeBugun),
+              Tab(text: l10n.sekmeGecmis),
+              Tab(text: l10n.sekmeTaramaGunlugu),
             ],
           ),
         ),
@@ -111,6 +113,7 @@ class _TodayTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final state = ref.watch(patrolTrackingControllerProvider);
     final controller = ref.read(patrolTrackingControllerProvider.notifier);
 
@@ -127,12 +130,13 @@ class _TodayTab extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
-          if (state.errorMessage != null)
+          if (state.errorMessage != null || state.hataKimligi != null)
             PatrolErrorBanner(
               message: state.forbidden
-                  ? 'Devriye takibi için yetkiniz yok. Bu ekran yönetici '
-                      've güvenlik rollerine açıktır.'
-                  : state.errorMessage!,
+                  ? l10n.devriyeTakibiYetkiYok
+                  : devriyeHatasiCoz(
+                          l10n, state.hataKimligi, state.errorMessage) ??
+                      '',
               onRetry: state.forbidden ? null : controller.refresh,
             ),
           if (state.windows.isNotEmpty) ...[
@@ -140,11 +144,11 @@ class _TodayTab extends ConsumerWidget {
             const SizedBox(height: 12),
             for (final w in state.windows) _WindowCard(window: w, now: now),
           ] else if (state.errorMessage == null)
-            const Card(
+            Card(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Bugün için planlanmış devriye penceresi yok.',
+                  l10n.devriyeBugunPencereYok,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -162,6 +166,7 @@ class _TodaySummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     Widget chip(String label, int value, Color color) => Chip(
           avatar: CircleAvatar(backgroundColor: color, radius: 6),
           label: Text('$label $value'),
@@ -171,10 +176,10 @@ class _TodaySummary extends StatelessWidget {
       spacing: 8,
       runSpacing: 4,
       children: [
-        chip('Şimdi aktif', ozet.aktif, Colors.blue),
-        chip('Yaklaşan', ozet.yaklasan, Colors.blueGrey),
-        chip('Tamamlandı', ozet.tamamlandi, Colors.green),
-        chip('Kaçırıldı', ozet.kacirildi, Colors.red),
+        chip(l10n.devriyeDurumSimdiAktif, ozet.aktif, Colors.blue),
+        chip(l10n.devriyeDurumYaklasan, ozet.yaklasan, Colors.blueGrey),
+        chip(l10n.devriyeDurumTamamlandi, ozet.tamamlandi, Colors.green),
+        chip(l10n.devriyeDurumKacirildi, ozet.kacirildi, Colors.red),
       ],
     );
   }
@@ -188,18 +193,19 @@ class _WindowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final w = window;
     final (color, label) = switch (w.durum) {
-      PatrolWindowDurum.tamamlandi => (Colors.green, 'Tamamlandı'),
-      PatrolWindowDurum.kacirildi => (Colors.red, 'Kaçırıldı'),
+      PatrolWindowDurum.tamamlandi =>
+        (Colors.green, l10n.devriyeDurumTamamlandi),
+      PatrolWindowDurum.kacirildi => (Colors.red, l10n.devriyeDurumKacirildi),
       _ => w.isActiveAt(now)
-          ? (Colors.blue, 'Şimdi aktif')
+          ? (Colors.blue, l10n.devriyeDurumSimdiAktif)
           : w.isUpcomingAt(now)
-              ? (Colors.blueGrey, 'Yaklaşan')
-              : (Colors.red, 'Süresi geçti'),
+              ? (Colors.blueGrey, l10n.devriyeDurumYaklasan)
+              : (Colors.red, l10n.devriyeDurumSuresiGecti),
     };
-    final start = w.pencereBaslangic.toLocal();
-    final end = w.pencereBitis.toLocal();
     final beklenen = w.beklenenCheckpointSayisi;
     final okutulan = w.okutulanCheckpointSayisi;
 
@@ -214,7 +220,7 @@ class _WindowCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    w.patrolPlanAd ?? 'Devriye turu',
+                    w.patrolPlanAd ?? l10n.devriyeTuru,
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -228,7 +234,8 @@ class _WindowCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${fmtClock(start)} – ${fmtClock(end)}',
+              '${saatBicimi(w.pencereBaslangic, dil)} – '
+              '${saatBicimi(w.pencereBitis, dil)}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             if (beklenen > 0) ...[
@@ -244,7 +251,7 @@ class _WindowCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '$okutulan/$beklenen nokta okutuldu',
+                l10n.devriyeNoktaOkutuldu(beklenen, okutulan),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -287,16 +294,10 @@ class _ScanLogTabState extends ConsumerState<_ScanLogTab> {
     }
   }
 
-  String _fmtDay(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
-
-  String _fmtTime(DateTime utc) {
-    final l = utc.toLocal();
-    return '${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
-  }
-
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final async = ref.watch(scanReportProvider(_day));
     return Column(
       children: [
@@ -312,7 +313,7 @@ class _ScanLogTabState extends ConsumerState<_ScanLogTab> {
               Expanded(
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.calendar_today, size: 16),
-                  label: Text(_fmtDay(_day)),
+                  label: Text(tarihBicimi(_day, dil)),
                   onPressed: _pick,
                 ),
               ),
@@ -329,11 +330,13 @@ class _ScanLogTabState extends ConsumerState<_ScanLogTab> {
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => _Message(
-              e is ApiException ? e.message : 'Tarama günlüğü alınamadı.',
+              e is ApiException
+                  ? e.message
+                  : l10n.devriyeTaramaGunluguAlinamadi,
               onRetry: () => ref.invalidate(scanReportProvider(_day)),
             ),
             data: (items) => items.isEmpty
-                ? const _Message('Bu gün için okutma yok.')
+                ? _Message(l10n.devriyeGunOkutmaYok)
                 : RefreshIndicator(
                     onRefresh: () async =>
                         ref.invalidate(scanReportProvider(_day)),
@@ -346,12 +349,15 @@ class _ScanLogTabState extends ConsumerState<_ScanLogTab> {
                         return Card(
                           child: ListTile(
                             leading: CircleAvatar(
-                              child: Text(_fmtTime(it.okutmaZamani),
+                              child: Text(
+                                  saatBicimi(it.okutmaZamani, dil),
                                   style: const TextStyle(fontSize: 12)),
                             ),
                             title: Text(it.checkpointAd),
-                            subtitle: Text('${it.guardAd}'
-                                '${it.imzaDogrulandi ? ' · imzalı ✓' : ''}'),
+                            subtitle: Text([
+                              it.guardAd,
+                              if (it.imzaDogrulandi) l10n.devriyeImzali,
+                            ].join(' · ')),
                           ),
                         );
                       },
@@ -381,7 +387,8 @@ class _Message extends StatelessWidget {
           const SizedBox(height: 16),
           Center(
             child: FilledButton.tonal(
-                onPressed: onRetry, child: const Text('Tekrar dene')),
+                onPressed: onRetry,
+                child: Text(context.l10n.ortakYenidenDene)),
           ),
         ],
       ],

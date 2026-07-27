@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/error/api_exception.dart';
 import '../../nfc/presentation/nfc_controller.dart';
 import '../data/task_api.dart';
+import '../domain/task_hata.dart';
 import '../domain/task_models.dart';
 import 'tasks_controller.dart';
 
@@ -13,11 +14,14 @@ class TaskCompleteState {
     required this.draft,
     this.nfcReading = false,
     this.nfcError,
+    this.nfcHata,
     this.photoPath,
     this.photoBusy = false,
     this.photoError,
+    this.photoHata,
     this.submitting = false,
     this.submitError,
+    this.submitHata,
     this.result,
   });
 
@@ -28,7 +32,12 @@ class TaskCompleteState {
   final TaskCompletionDraft draft;
 
   final bool nfcReading;
+
+  /// Hata KANALI ikilidir: `*Error` SUNUCU metnini (ApiException.message),
+  /// `*Hata` ise yerellestirilebilir KIMLIGI tasir (bkz. task_hata.dart).
+  /// Ekran once kimligi cozer, yoksa sunucu metnini gosterir.
   final String? nfcError;
+  final GorevAkisHatasi? nfcHata;
 
   /// Cekilen fotonun cihaz yolu (onizleme icin). `draft.fotoKey` dolu ise
   /// yukleme tamamlanmistir.
@@ -37,9 +46,11 @@ class TaskCompleteState {
   /// Presign + PUT devam ediyor.
   final bool photoBusy;
   final String? photoError;
+  final GorevAkisHatasi? photoHata;
 
   final bool submitting;
   final String? submitError;
+  final GorevAkisHatasi? submitHata;
 
   /// Basarili gonderim sonucu (201 yeni / 200 idempotent tekrar).
   final TaskCompletionResult? result;
@@ -54,26 +65,38 @@ class TaskCompleteState {
     TaskCompletionDraft? draft,
     bool? nfcReading,
     Object? nfcError = _sentinel,
+    Object? nfcHata = _sentinel,
     Object? photoPath = _sentinel,
     bool? photoBusy,
     Object? photoError = _sentinel,
+    Object? photoHata = _sentinel,
     bool? submitting,
     Object? submitError = _sentinel,
+    Object? submitHata = _sentinel,
     Object? result = _sentinel,
   }) {
     return TaskCompleteState(
       draft: draft ?? this.draft,
       nfcReading: nfcReading ?? this.nfcReading,
       nfcError: nfcError == _sentinel ? this.nfcError : nfcError as String?,
+      nfcHata: nfcHata == _sentinel
+          ? this.nfcHata
+          : nfcHata as GorevAkisHatasi?,
       photoPath:
           photoPath == _sentinel ? this.photoPath : photoPath as String?,
       photoBusy: photoBusy ?? this.photoBusy,
       photoError:
           photoError == _sentinel ? this.photoError : photoError as String?,
+      photoHata: photoHata == _sentinel
+          ? this.photoHata
+          : photoHata as GorevAkisHatasi?,
       submitting: submitting ?? this.submitting,
       submitError: submitError == _sentinel
           ? this.submitError
           : submitError as String?,
+      submitHata: submitHata == _sentinel
+          ? this.submitHata
+          : submitHata as GorevAkisHatasi?,
       result: result == _sentinel ? this.result : result as TaskCompletionResult?,
     );
   }
@@ -122,7 +145,9 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
     } else {
       state = state.copyWith(
         nfcReading: false,
-        nfcError: result.error ?? 'Etiket okunamadı.',
+        // Surucu metni varsa oldugu gibi; yoksa yerellestirilebilir kimlik.
+        nfcError: result.error,
+        nfcHata: result.error == null ? GorevAkisHatasi.etiketOkunamadi : null,
       );
     }
   }
@@ -172,17 +197,17 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         photoBusy: false,
-        photoError: e.kind == ApiErrorKind.network
-            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli '
-                '(yükleme adresi kısa ömürlü). Bağlantı gelince '
-                '"Tekrar yükle" ile deneyin.'
-            : e.message,
+        photoError: e.kind == ApiErrorKind.network ? null : e.message,
+        photoHata: e.kind == ApiErrorKind.network
+            ? GorevAkisHatasi.fotoOnlineGerekli
+            : null,
       );
     } catch (e) {
       if (!ref.mounted) return;
       state = state.copyWith(
         photoBusy: false,
-        photoError: 'Fotoğraf alınamadı: $e',
+        photoError: '$e',
+        photoHata: null,
       );
     }
   }
@@ -215,9 +240,10 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         photoBusy: false,
-        photoError: e.kind == ApiErrorKind.network
-            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli.'
-            : e.message,
+        photoError: e.kind == ApiErrorKind.network ? null : e.message,
+        photoHata: e.kind == ApiErrorKind.network
+            ? GorevAkisHatasi.fotoOnlineGerekliKisa
+            : null,
       );
     }
   }
@@ -244,20 +270,16 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
   Future<void> submit({bool fotoZorunlu = false}) async {
     if (state.submitting || state.result != null) return;
     if (fotoZorunlu && state.draft.fotoKey == null && !state.fotoBekliyor) {
-      state = state.copyWith(
-        submitError: 'Bu görev için FOTO KANITI ZORUNLU. Tamamlamadan önce '
-            'fotoğraf çekip yükleyin.',
-      );
+      state = state.copyWith(submitHata: GorevAkisHatasi.fotoZorunlu);
       return;
     }
     if (state.fotoBekliyor) {
       state = state.copyWith(
-        submitError: 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini '
-            'bekleyin, "Tekrar yükle"yi deneyin veya fotoyu kaldırın.',
-      );
+          submitHata: GorevAkisHatasi.fotoHenuzYuklenmedi);
       return;
     }
-    state = state.copyWith(submitting: true, submitError: null);
+    state = state.copyWith(
+        submitting: true, submitError: null, submitHata: null);
     try {
       final result = await _api.submitCompletion(state.draft);
       if (!ref.mounted) return;
@@ -269,18 +291,16 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         submitting: false,
-        submitError: e.kind == ApiErrorKind.network
-            ? 'Tamamlama gönderilemedi — internet bağlantısı gerekli. '
-                'Bağlantı gelince tekrar "Tamamla"ya basın; aynı kayıt '
-                'çift oluşmaz (Idempotency-Key sabit). Fotoğraflı '
-                'tamamlama offline desteklenmez (bilinen kısıt).'
-            : e.message,
+        submitError: e.kind == ApiErrorKind.network ? null : e.message,
+        submitHata: e.kind == ApiErrorKind.network
+            ? GorevAkisHatasi.tamamlamaOffline
+            : null,
       );
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         submitting: false,
-        submitError: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        submitHata: GorevAkisHatasi.beklenmeyen,
       );
     }
   }

@@ -1199,6 +1199,1068 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Merhaba, {ad}'**
   String anaKarsilama(String ad);
+
+  /// No description provided for @gorevKategorilerTooltip.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategoriler'**
+  String get gorevKategorilerTooltip;
+
+  /// No description provided for @gorevYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni görev'**
+  String get gorevYeni;
+
+  /// No description provided for @gorevOlusturuldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev oluşturuldu ✓'**
+  String get gorevOlusturuldu;
+
+  /// No description provided for @gorevListesiYetkiYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev listesi için yetkiniz yok. Bu ekran temizlik ve güvenlik rollerine açıktır.'**
+  String get gorevListesiYetkiYok;
+
+  /// No description provided for @gorevBuFiltredeYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu filtreyle aktif görev yok.'**
+  String get gorevBuFiltredeYok;
+
+  /// No description provided for @gorevCipBanaAtanan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bana atanan'**
+  String get gorevCipBanaAtanan;
+
+  /// No description provided for @gorevCipTumGorevler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm görevler'**
+  String get gorevCipTumGorevler;
+
+  /// No description provided for @gorevCipTumu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümü'**
+  String get gorevCipTumu;
+
+  /// No description provided for @gorevKategoriDiger.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diğer'**
+  String get gorevKategoriDiger;
+
+  /// Gorevin sonraki planlanan zamani (tarih + saat)
+  ///
+  /// In tr, this message translates to:
+  /// **'Planlanan: {zaman}'**
+  String gorevPlanlanan(Object zaman);
+
+  /// No description provided for @gorevSanaAtanmis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sana atanmış'**
+  String get gorevSanaAtanmis;
+
+  /// No description provided for @gorevFotoZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Foto zorunlu'**
+  String get gorevFotoZorunlu;
+
+  /// No description provided for @gorevTamamlandiZatenKayitli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlandı ✓ (zaten kayıtlıydı)'**
+  String get gorevTamamlandiZatenKayitli;
+
+  /// No description provided for @gorevTamamlandiBuOturumda.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlandı ✓ (bu oturumda)'**
+  String get gorevTamamlandiBuOturumda;
+
+  /// No description provided for @gorevIslemleriTooltip.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev işlemleri'**
+  String get gorevIslemleriTooltip;
+
+  /// No description provided for @gorevTakipGorunumu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Takip görünümü'**
+  String get gorevTakipGorunumu;
+
+  /// No description provided for @gorevTakipGorunumuAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlama saha personeli tarafından yapılır (güvenlik / tesis görevlisi). Bu ekran izleme içindir.'**
+  String get gorevTakipGorunumuAlt;
+
+  /// No description provided for @gorevGonderiliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderiliyor...'**
+  String get gorevGonderiliyor;
+
+  /// No description provided for @gorevTamamla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamla'**
+  String get gorevTamamla;
+
+  /// No description provided for @gorevGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev güncellendi ✓'**
+  String get gorevGuncellendi;
+
+  /// No description provided for @gorevSilinsinMi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev silinsin mi?'**
+  String get gorevSilinsinMi;
+
+  /// No description provided for @gorevSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev silindi ✓'**
+  String get gorevSilindi;
+
+  /// No description provided for @gorevNfcAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu görev NFC doğrulamalı: tamamlamadan önce görev noktasındaki etiketi okutun.'**
+  String get gorevNfcAciklama;
+
+  /// No description provided for @gorevAdim1Etiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'1. Etiketi okutun'**
+  String get gorevAdim1Etiket;
+
+  /// Okunan NFC etiketinin UID'si
+  ///
+  /// In tr, this message translates to:
+  /// **'Okundu: {uid}'**
+  String gorevOkundu(Object uid);
+
+  /// No description provided for @gorevEtiketBekleniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etiket bekleniyor...'**
+  String get gorevEtiketBekleniyor;
+
+  /// No description provided for @gorevYenidenOkut.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeniden okut'**
+  String get gorevYenidenOkut;
+
+  /// No description provided for @gorevEtiketiOkut.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etiketi okut'**
+  String get gorevEtiketiOkut;
+
+  /// No description provided for @gorevAdim2Foto.
+  ///
+  /// In tr, this message translates to:
+  /// **'2. Foto kanıtı'**
+  String get gorevAdim2Foto;
+
+  /// No description provided for @gorevAdim2FotoOpsiyonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'2. Foto kanıtı (isteğe bağlı)'**
+  String get gorevAdim2FotoOpsiyonel;
+
+  /// No description provided for @gorevYukleniyorNokta.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yükleniyor...'**
+  String get gorevYukleniyorNokta;
+
+  /// No description provided for @gorevYuklendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yüklendi ✓'**
+  String get gorevYuklendi;
+
+  /// No description provided for @gorevKamera.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kamera'**
+  String get gorevKamera;
+
+  /// No description provided for @gorevYenidenCek.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeniden çek'**
+  String get gorevYenidenCek;
+
+  /// No description provided for @gorevGaleridenSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Galeriden seç'**
+  String get gorevGaleridenSec;
+
+  /// No description provided for @gorevTekrarYukle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tekrar yükle'**
+  String get gorevTekrarYukle;
+
+  /// No description provided for @gorevKaldir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaldır'**
+  String get gorevKaldir;
+
+  /// No description provided for @gorevAdim3Not.
+  ///
+  /// In tr, this message translates to:
+  /// **'3. Not (isteğe bağlı)'**
+  String get gorevAdim3Not;
+
+  /// No description provided for @gorevNotIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Örn. çöp konteynerleri boşaltıldı'**
+  String get gorevNotIpucu;
+
+  /// No description provided for @gorevZatenKayitliydi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu tamamlama zaten kayıtlıydı (tekrar gönderim — çift kayıt oluşmadı).'**
+  String get gorevZatenKayitliydi;
+
+  /// No description provided for @gorevTamamlandiKayit.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev tamamlandı — kayıt oluşturuldu.'**
+  String get gorevTamamlandiKayit;
+
+  /// Tamamlama zamani (tarih + saat)
+  ///
+  /// In tr, this message translates to:
+  /// **'Zaman: {zaman}'**
+  String gorevZaman(Object zaman);
+
+  /// No description provided for @gorevFotoKanitiVar.
+  ///
+  /// In tr, this message translates to:
+  /// **'foto kanıtı var'**
+  String get gorevFotoKanitiVar;
+
+  /// No description provided for @gorevNfcDogrulandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'NFC doğrulandı'**
+  String get gorevNfcDogrulandi;
+
+  /// No description provided for @gorevYeniTamamlamaBaslat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni tamamlama başlat'**
+  String get gorevYeniTamamlamaBaslat;
+
+  /// No description provided for @gorevDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev düzenle'**
+  String get gorevDuzenleBaslik;
+
+  /// No description provided for @gorevKategoriSilinmis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori (silinmiş)'**
+  String get gorevKategoriSilinmis;
+
+  /// No description provided for @gorevAtananListedeDegil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Atanan kullanıcı (listede değil)'**
+  String get gorevAtananListedeDegil;
+
+  /// No description provided for @gorevTipleriYukleniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev tipleri yükleniyor...'**
+  String get gorevTipleriYukleniyor;
+
+  /// No description provided for @gorevTipi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev tipi'**
+  String get gorevTipi;
+
+  /// No description provided for @gorevTipiYokUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz görev tipi tanımlamadınız. Üstteki \"Kategoriler\" ekranından kendi tiplerinizi ekleyebilirsiniz; şimdilik \"Diğer\" kullanılır.'**
+  String get gorevTipiYokUyari;
+
+  /// No description provided for @gorevAdi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev adı'**
+  String get gorevAdi;
+
+  /// No description provided for @gorevAdiZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev adı zorunludur'**
+  String get gorevAdiZorunlu;
+
+  /// No description provided for @gorevAciklamaOpsiyonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama (opsiyonel)'**
+  String get gorevAciklamaOpsiyonel;
+
+  /// No description provided for @gorevPersonelYukleniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel listesi yükleniyor...'**
+  String get gorevPersonelYukleniyor;
+
+  /// No description provided for @gorevAtananPersonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Atanan personel'**
+  String get gorevAtananPersonel;
+
+  /// No description provided for @gorevAtanmamisHavuz.
+  ///
+  /// In tr, this message translates to:
+  /// **'— atanmamış (havuz görevi) —'**
+  String get gorevAtanmamisHavuz;
+
+  /// No description provided for @gorevPersonelAlinamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel listesi alınamadı: {hata}'**
+  String gorevPersonelAlinamadi(Object hata);
+
+  /// No description provided for @gorevKontrolNoktasiOpsiyonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kontrol noktası (NFC) — opsiyonel'**
+  String get gorevKontrolNoktasiOpsiyonel;
+
+  /// No description provided for @gorevKontrolNoktasiYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağlanırsa görev NFC okutularak tamamlanır'**
+  String get gorevKontrolNoktasiYardim;
+
+  /// No description provided for @gorevNfcYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'— NFC yok —'**
+  String get gorevNfcYok;
+
+  /// No description provided for @gorevPeriyotDakika.
+  ///
+  /// In tr, this message translates to:
+  /// **'Periyot dakika (opsiyonel)'**
+  String get gorevPeriyotDakika;
+
+  /// No description provided for @gorevPeriyotYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Periyodik görevler için; boş = tek seferlik'**
+  String get gorevPeriyotYardim;
+
+  /// No description provided for @gorevPozitifSayi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Pozitif tam sayı girin'**
+  String get gorevPozitifSayi;
+
+  /// No description provided for @gorevFotoKanitiZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Foto kanıtı zorunlu'**
+  String get gorevFotoKanitiZorunlu;
+
+  /// No description provided for @gorevFotoKanitiZorunluAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlama foto olmadan kabul edilmez'**
+  String get gorevFotoKanitiZorunluAlt;
+
+  /// No description provided for @gorevPasifAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Pasif görev listede görünmez'**
+  String get gorevPasifAciklama;
+
+  /// No description provided for @gorevKategorileriBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev kategorileri'**
+  String get gorevKategorileriBaslik;
+
+  /// No description provided for @gorevKategoriYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni kategori'**
+  String get gorevKategoriYeni;
+
+  /// No description provided for @gorevKategoriAdi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori adı'**
+  String get gorevKategoriAdi;
+
+  /// No description provided for @gorevKategoriAdiIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. Havuz bakımı'**
+  String get gorevKategoriAdiIpucu;
+
+  /// ad = yoneticinin girdigi kategori adi
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" eklendi'**
+  String gorevKategoriEklendi(Object ad);
+
+  /// No description provided for @gorevKategoriEklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eklenemedi: {hata}'**
+  String gorevKategoriEklenemedi(Object hata);
+
+  /// No description provided for @gorevKategoriSilinsinMi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori silinsin mi?'**
+  String get gorevKategoriSilinsinMi;
+
+  /// No description provided for @gorevKategoriSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" pasifleştirilir; mevcut görevlerin geçmişi korunur, yeni görevlerde seçilemez.'**
+  String gorevKategoriSilOnay(Object ad);
+
+  /// No description provided for @gorevKategoriSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" silindi'**
+  String gorevKategoriSilindi(Object ad);
+
+  /// No description provided for @gorevKategoriSilinemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Silinemedi: {hata}'**
+  String gorevKategoriSilinemedi(Object hata);
+
+  /// No description provided for @gorevKategoriListeAlinamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Liste alınamadı: {hata}'**
+  String gorevKategoriListeAlinamadi(Object hata);
+
+  /// No description provided for @gorevKategoriYokBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz kategori yok. Görev oluştururken seçilebilmesi için \"Yeni kategori\" ile ekleyin.'**
+  String get gorevKategoriYokBos;
+
+  /// No description provided for @gorevOncelikDusuk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Düşük'**
+  String get gorevOncelikDusuk;
+
+  /// No description provided for @gorevOncelikOrta.
+  ///
+  /// In tr, this message translates to:
+  /// **'Orta'**
+  String get gorevOncelikOrta;
+
+  /// No description provided for @gorevOncelikYuksek.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yüksek'**
+  String get gorevOncelikYuksek;
+
+  /// No description provided for @gorevOncelik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Öncelik'**
+  String get gorevOncelik;
+
+  /// No description provided for @gorevTaleptenGeldi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talepten geldi'**
+  String get gorevTaleptenGeldi;
+
+  /// No description provided for @gorevBagliTalep.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağlı talep'**
+  String get gorevBagliTalep;
+
+  /// Talebi acanin dairesi (orn. A-12)
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire {daire}'**
+  String gorevDaireEtiket(Object daire);
+
+  /// No description provided for @talepDurumAcik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık'**
+  String get talepDurumAcik;
+
+  /// No description provided for @talepDurumIsEmri.
+  ///
+  /// In tr, this message translates to:
+  /// **'İş Emri'**
+  String get talepDurumIsEmri;
+
+  /// No description provided for @talepDurumCozuldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çözüldü'**
+  String get talepDurumCozuldu;
+
+  /// No description provided for @talepDurumReddedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Reddedildi'**
+  String get talepDurumReddedildi;
+
+  /// No description provided for @gorevEtiketOkunamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etiket okunamadı.'**
+  String get gorevEtiketOkunamadi;
+
+  /// No description provided for @gorevFotoOnlineGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf yüklemek için internet bağlantısı gerekli (yükleme adresi kısa ömürlü). Bağlantı gelince \"Tekrar yükle\" ile deneyin.'**
+  String get gorevFotoOnlineGerekli;
+
+  /// No description provided for @gorevFotoAlinamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf alınamadı: {hata}'**
+  String gorevFotoAlinamadi(Object hata);
+
+  /// No description provided for @gorevFotoOnlineGerekliKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf yüklemek için internet bağlantısı gerekli.'**
+  String get gorevFotoOnlineGerekliKisa;
+
+  /// No description provided for @gorevFotoZorunluUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu görev için FOTO KANITI ZORUNLU. Tamamlamadan önce fotoğraf çekip yükleyin.'**
+  String get gorevFotoZorunluUyari;
+
+  /// No description provided for @gorevFotoHenuzYuklenmedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin, \"Tekrar yükle\"yi deneyin veya fotoyu kaldırın.'**
+  String get gorevFotoHenuzYuklenmedi;
+
+  /// No description provided for @gorevTamamlamaOfflineUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlama gönderilemedi — internet bağlantısı gerekli. Bağlantı gelince tekrar \"Tamamla\"ya basın; aynı kayıt çift oluşmaz (Idempotency-Key sabit). Fotoğraflı tamamlama offline desteklenmez (bilinen kısıt).'**
+  String get gorevTamamlamaOfflineUyari;
+
+  /// UserRole gorunen adlari — domain enum'u METIN TASIMAZ
+  ///
+  /// In tr, this message translates to:
+  /// **'Platform Admini'**
+  String get rolAdmin;
+
+  /// No description provided for @rolYonetici.
+  ///
+  /// In tr, this message translates to:
+  /// **'Site Yöneticisi'**
+  String get rolYonetici;
+
+  /// No description provided for @rolGuvenlik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvenlik'**
+  String get rolGuvenlik;
+
+  /// No description provided for @rolTesisGorevlisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis Görevlisi'**
+  String get rolTesisGorevlisi;
+
+  /// No description provided for @rolSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Site Sakini'**
+  String get rolSakin;
+
+  /// No description provided for @rolBilinmeyen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bilinmeyen rol'**
+  String get rolBilinmeyen;
+
+  /// No description provided for @ortakOlustur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Oluştur'**
+  String get ortakOlustur;
+
+  /// No description provided for @ortakGuncelle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güncelle'**
+  String get ortakGuncelle;
+
+  /// No description provided for @ortakYenile.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yenile'**
+  String get ortakYenile;
+
+  /// No description provided for @devriyeGonderimKuyruguTooltip.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderim kuyruğu'**
+  String get devriyeGonderimKuyruguTooltip;
+
+  /// No description provided for @sekmeGecmis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçmiş'**
+  String get sekmeGecmis;
+
+  /// No description provided for @devriyeYetkiYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ekrandaki veriler için yetkiniz yok. Tur takibi güvenlik (ve yönetici) rolüne açıktır.'**
+  String get devriyeYetkiYok;
+
+  /// saat = son yenileme saati (aktif dile gore bicimli)
+  ///
+  /// In tr, this message translates to:
+  /// **'Son güncelleme: {saat} (otomatik yenileme: 60 sn)'**
+  String devriyeSonGuncelleme(Object saat);
+
+  /// No description provided for @devriyeTuru.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devriye turu'**
+  String get devriyeTuru;
+
+  /// No description provided for @devriyeBitisEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'bitiş {saat}'**
+  String devriyeBitisEtiket(Object saat);
+
+  /// Pencerenin baslangic/bitis saati
+  ///
+  /// In tr, this message translates to:
+  /// **'Pencere: {baslangic} – {bitis}'**
+  String devriyePencere(Object baslangic, Object bitis);
+
+  /// okutulan/beklenen nokta sayisi
+  ///
+  /// In tr, this message translates to:
+  /// **'{okutulan}/{beklenen} nokta'**
+  String devriyeNoktaSayaci(Object beklenen, Object okutulan);
+
+  /// No description provided for @devriyeTumNoktalarOkutuldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm noktalar okutuldu — tur tamamlanıyor. ✓'**
+  String get devriyeTumNoktalarOkutuldu;
+
+  /// Sunucudaki okutma sayisi (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'Sunucuda {n} okutma kayıtlı (diğer cihazların okutmaları dahil olabilir).'**
+  String devriyeSunucudaOkutma(num n);
+
+  /// No description provided for @devriyeNoktaOkutNfc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Nokta okut (NFC)'**
+  String get devriyeNoktaOkutNfc;
+
+  /// No description provided for @devriyeBugununDigerTurlari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bugünün diğer turları'**
+  String get devriyeBugununDigerTurlari;
+
+  /// No description provided for @devriyeBugununTurlari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bugünün turları'**
+  String get devriyeBugununTurlari;
+
+  /// No description provided for @devriyeDurumTamamlandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlandı'**
+  String get devriyeDurumTamamlandi;
+
+  /// No description provided for @devriyeDurumKacirildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaçırıldı'**
+  String get devriyeDurumKacirildi;
+
+  /// No description provided for @devriyeDurumSimdiAktif.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şimdi aktif'**
+  String get devriyeDurumSimdiAktif;
+
+  /// No description provided for @devriyeDurumYaklasan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yaklaşan'**
+  String get devriyeDurumYaklasan;
+
+  /// No description provided for @devriyeDurumBitti.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitti'**
+  String get devriyeDurumBitti;
+
+  /// No description provided for @devriyeDurumBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bekliyor'**
+  String get devriyeDurumBekliyor;
+
+  /// No description provided for @devriyeDurumBilinmiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bilinmiyor'**
+  String get devriyeDurumBilinmiyor;
+
+  /// No description provided for @devriyeDurumSuresiGecti.
+  ///
+  /// In tr, this message translates to:
+  /// **'Süresi geçti'**
+  String get devriyeDurumSuresiGecti;
+
+  /// No description provided for @devriyeBugunTurYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bugün için devriye turu yok.'**
+  String get devriyeBugunTurYok;
+
+  /// No description provided for @devriyeNoktaListesiYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu planın nokta listesi alınamadı veya plana nokta atanmamış.'**
+  String get devriyeNoktaListesiYok;
+
+  /// No description provided for @devriyeKontrolNoktalari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kontrol noktaları'**
+  String get devriyeKontrolNoktalari;
+
+  /// No description provided for @devriyeNoktaDurumAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Nokta durumları sunucudandır; tüm görevlilerin okutmaları ✓ görünür. \"Gönderiliyor\" satırlar bu cihazın henüz gönderilmemiş okutmalarıdır.'**
+  String get devriyeNoktaDurumAciklama;
+
+  /// Nokta adi sunucudan gelmediyse kisa id ile yedek ad
+  ///
+  /// In tr, this message translates to:
+  /// **'Nokta {kisaId}'**
+  String devriyeNoktaAdiYedek(Object kisaId);
+
+  /// No description provided for @devriyeOkutuldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okutuldu ✓'**
+  String get devriyeOkutuldu;
+
+  /// No description provided for @devriyeOkutulduZamanli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okutuldu ✓ · {saat}'**
+  String devriyeOkutulduZamanli(Object saat);
+
+  /// No description provided for @devriyeOkutulduGonderiliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okutuldu ✓ — gönderiliyor (kuyrukta)'**
+  String get devriyeOkutulduGonderiliyor;
+
+  /// No description provided for @devriyePencereSuresiDoldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Pencere süresi doldu.'**
+  String get devriyePencereSuresiDoldu;
+
+  /// No description provided for @devriyeKalanSure.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kalan süre: {sure}'**
+  String devriyeKalanSure(Object sure);
+
+  /// Kalan sure birimi — kisaltmalar dile gore
+  ///
+  /// In tr, this message translates to:
+  /// **'{saat} sa {dakika} dk'**
+  String sureSaatDakika(Object dakika, Object saat);
+
+  /// No description provided for @sureDakikaSaniye.
+  ///
+  /// In tr, this message translates to:
+  /// **'{dakika} dk {saniye} sn'**
+  String sureDakikaSaniye(Object dakika, Object saniye);
+
+  /// No description provided for @sureSaniye.
+  ///
+  /// In tr, this message translates to:
+  /// **'{saniye} sn'**
+  String sureSaniye(Object saniye);
+
+  /// No description provided for @devriyeGecmisYetkiYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tur geçmişi için yetkiniz yok. Bu liste güvenlik ve yönetici rollerine açıktır.'**
+  String get devriyeGecmisYetkiYok;
+
+  /// No description provided for @devriyeGecmisBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz tur penceresi kaydı yok.'**
+  String get devriyeGecmisBos;
+
+  /// No description provided for @devriyeOzetToplam.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam'**
+  String get devriyeOzetToplam;
+
+  /// No description provided for @devriyePlanlariBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devriye Planları'**
+  String get devriyePlanlariBaslik;
+
+  /// No description provided for @devriyePlanEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plan ekle'**
+  String get devriyePlanEkle;
+
+  /// No description provided for @devriyePlanlarListelenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Planlar listelenemedi.'**
+  String get devriyePlanlarListelenemedi;
+
+  /// No description provided for @devriyePlanAralik.
+  ///
+  /// In tr, this message translates to:
+  /// **'{baslangic}–{bitis} · her {dakika} dk'**
+  String devriyePlanAralik(Object baslangic, Object bitis, Object dakika);
+
+  /// No description provided for @devriyePasif.
+  ///
+  /// In tr, this message translates to:
+  /// **'Pasif'**
+  String get devriyePasif;
+
+  /// No description provided for @devriyePlanSilinsinMi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plan silinsin mi?'**
+  String get devriyePlanSilinsinMi;
+
+  /// No description provided for @devriyePlanSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" devriye planı silinecek.'**
+  String devriyePlanSilOnay(Object ad);
+
+  /// No description provided for @devriyePlanSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plan silindi ✓'**
+  String get devriyePlanSilindi;
+
+  /// No description provided for @devriyePlanDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devriye planı düzenle'**
+  String get devriyePlanDuzenleBaslik;
+
+  /// No description provided for @devriyePlanYeniBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni devriye planı'**
+  String get devriyePlanYeniBaslik;
+
+  /// No description provided for @devriyePlanAdi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plan adı'**
+  String get devriyePlanAdi;
+
+  /// No description provided for @devriyePlanAdiIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. Gece devriyesi'**
+  String get devriyePlanAdiIpucu;
+
+  /// No description provided for @devriyeAdZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad zorunludur'**
+  String get devriyeAdZorunlu;
+
+  /// No description provided for @devriyeBaslangicSaat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç {saat}'**
+  String devriyeBaslangicSaat(Object saat);
+
+  /// No description provided for @devriyeBitisSaat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş {saat}'**
+  String devriyeBitisSaat(Object saat);
+
+  /// No description provided for @devriyeTurSikligi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tur sıklığı (dakika)'**
+  String get devriyeTurSikligi;
+
+  /// No description provided for @devriyeTurSikligiYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. 60 = saatte bir tur'**
+  String get devriyeTurSikligiYardim;
+
+  /// No description provided for @devriyeTurSikligiPozitif.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tur sıklığı (dk) pozitif olmalı.'**
+  String get devriyeTurSikligiPozitif;
+
+  /// No description provided for @devriyeTumunuKaldir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümünü kaldır'**
+  String get devriyeTumunuKaldir;
+
+  /// No description provided for @devriyeTumunuSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümünü seç'**
+  String get devriyeTumunuSec;
+
+  /// No description provided for @devriyeAktifNoktaYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aktif kontrol noktası yok. Önce \"Kontrol noktaları\"ndan ekleyin.'**
+  String get devriyeAktifNoktaYok;
+
+  /// NFC etiket UID'si (LTR izolasyonlu gosterilir)
+  ///
+  /// In tr, this message translates to:
+  /// **'UID: {uid}'**
+  String devriyeUidEtiket(Object uid);
+
+  /// No description provided for @devriyeKaydedilemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydedilemedi. Tekrar deneyin.'**
+  String get devriyeKaydedilemedi;
+
+  /// No description provided for @devriyePlanYokBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz devriye planı yok.\nSağ alttan ekleyin (saatler + noktalar).'**
+  String get devriyePlanYokBos;
+
+  /// No description provided for @devriyeTakibiBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devriye takibi'**
+  String get devriyeTakibiBaslik;
+
+  /// No description provided for @sekmeBugun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bugün'**
+  String get sekmeBugun;
+
+  /// No description provided for @sekmeTaramaGunlugu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarama günlüğü'**
+  String get sekmeTaramaGunlugu;
+
+  /// No description provided for @devriyeTakibiYetkiYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devriye takibi için yetkiniz yok. Bu ekran yönetici ve güvenlik rollerine açıktır.'**
+  String get devriyeTakibiYetkiYok;
+
+  /// No description provided for @devriyeBugunPencereYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bugün için planlanmış devriye penceresi yok.'**
+  String get devriyeBugunPencereYok;
+
+  /// No description provided for @devriyeNoktaOkutuldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'{okutulan}/{beklenen} nokta okutuldu'**
+  String devriyeNoktaOkutuldu(Object beklenen, Object okutulan);
+
+  /// No description provided for @devriyeTaramaGunluguAlinamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarama günlüğü alınamadı.'**
+  String get devriyeTaramaGunluguAlinamadi;
+
+  /// No description provided for @devriyeGunOkutmaYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu gün için okutma yok.'**
+  String get devriyeGunOkutmaYok;
+
+  /// No description provided for @devriyeImzali.
+  ///
+  /// In tr, this message translates to:
+  /// **'imzalı ✓'**
+  String get devriyeImzali;
+
+  /// Outbox'ta bekleyen okutma sayisi (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} okutma gönderim bekliyor'**
+  String devriyeOkutmaBekliyor(num n);
 }
 
 class _AppLocalizationsDelegate

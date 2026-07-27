@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/l10n.dart';
 import '../../../core/text/tr_upper.dart';
 import '../../patrol/presentation/patrol_history_view.dart'
-    show PatrolErrorBanner, fmtClock, fmtDate;
+    show PatrolErrorBanner;
 import '../../tasks/presentation/task_tip_style.dart';
 import '../domain/report_models.dart';
 import 'reports_controller.dart';
@@ -336,13 +337,18 @@ class _SonTamamlamaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // NOT: reports modulu bu turun KAPSAMINDA DEGIL; asagidaki iki satir
+    // tasks/patrol refactor'unun ZORUNLU uyarlamasidir (kategori kimlik
+    // ayrimi + patrol'den tasinan tarih bicimleyicileri).
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final style = taskKategoriStyle(item.kategoriAd);
-    final local = item.tamamlanmaZamani.toLocal();
     return ListTile(
       dense: true,
       leading: Icon(style.icon, color: style.color),
-      title: Text(item.taskAdi ?? style.label),
-      subtitle: Text('${fmtDate(local)} · ${fmtClock(local)}'),
+      title: Text(item.taskAdi ?? style.ad ?? l10n.gorevKategoriDiger),
+      subtitle: Text('${tarihBicimi(item.tamamlanmaZamani, dil)} · '
+          '${saatBicimi(item.tamamlanmaZamani, dil)}'),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

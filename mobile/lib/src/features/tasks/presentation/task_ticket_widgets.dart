@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/i18n/l10n.dart';
 import '../domain/task_models.dart';
+import 'task_tip_style.dart';
 
-/// Gorev oncelik (dusuk|orta|yuksek) renk + TR etiket. Bilinmeyen/null -> notr.
-/// Renkler complaints paletiyle uyumlu (yesil/amber/kirmizi).
-({Color color, String label}) taskOncelikStyle(String? oncelik) => switch (oncelik) {
-      'dusuk' => (color: Colors.green, label: 'Düşük'),
-      'orta' => (color: Colors.amber.shade800, label: 'Orta'),
-      'yuksek' => (color: Colors.red, label: 'Yüksek'),
-      _ => (color: Colors.blueGrey, label: 'Öncelik'),
+/// Oncelik etiketi — KIMLIKTEN cizim aninda cozulur (bkz. task_tip_style.dart).
+String oncelikEtiketi(AppLocalizations l10n, TaskOncelik o) => switch (o) {
+      TaskOncelik.dusuk => l10n.gorevOncelikDusuk,
+      TaskOncelik.orta => l10n.gorevOncelikOrta,
+      TaskOncelik.yuksek => l10n.gorevOncelikYuksek,
+      TaskOncelik.yok => l10n.gorevOncelik,
+    };
+
+/// Talep durumu (wire) -> gorunen metin. Wire degerleri TEKNIK SABITTIR.
+String talepDurumEtiketi(AppLocalizations l10n, String durum) => switch (durum) {
+      'acik' => l10n.talepDurumAcik,
+      'is_emri' => l10n.talepDurumIsEmri,
+      'cozuldu' => l10n.talepDurumCozuldu,
+      'reddedildi' => l10n.talepDurumReddedildi,
+      // Sunucu yeni bir durum eklerse ham deger gosterilir (ekran dusmez).
+      _ => durum,
     };
 
 /// "Talepten geldi" rozeti — gorev bir talepten (complaint) donusturulmusse.
@@ -25,13 +36,13 @@ class TalepGeldiChip extends StatelessWidget {
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.report_problem_outlined, size: 14, color: color),
-          SizedBox(width: 4),
-          Text('Talepten geldi',
-              style: TextStyle(
+          const Icon(Icons.report_problem_outlined, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(context.l10n.gorevTaleptenGeldi,
+              style: const TextStyle(
                   color: color, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
@@ -47,16 +58,17 @@ class OncelikBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = taskOncelikStyle(oncelik);
+    final kimlik = taskOncelikKimligi(oncelik);
+    final renk = taskOncelikRengi(kimlik);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: s.color.withValues(alpha: 0.15),
+        color: renk.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(s.label,
+      child: Text(oncelikEtiketi(context.l10n, kimlik),
           style: TextStyle(
-              color: s.color, fontSize: 12, fontWeight: FontWeight.w600)),
+              color: renk, fontSize: 12, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -69,20 +81,14 @@ class TicketBaglamKarti extends StatelessWidget {
 
   final TicketSummary ticket;
 
-  static const _durumLabel = {
-    'acik': 'Açık',
-    'is_emri': 'İş Emri',
-    'cozuldu': 'Çözüldü',
-    'reddedildi': 'Reddedildi',
-  };
-
   @override
   Widget build(BuildContext context) {
     const color = Color(0xFF3949AB);
+    final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final alt = <String>[
       if (ticket.kategoriAd != null) ticket.kategoriAd!,
-      if (ticket.unitLabel != null) 'Daire ${ticket.unitLabel}',
+      if (ticket.unitLabel != null) l10n.gorevDaireEtiket(ticket.unitLabel!),
     ].join(' · ');
     return Padding(
       padding: const EdgeInsets.only(top: 12),
@@ -101,11 +107,11 @@ class TicketBaglamKarti extends StatelessWidget {
                 const Icon(Icons.report_problem_outlined, size: 20, color: color),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Bağlı talep',
+                  child: Text(l10n.gorevBagliTalep,
                       style: Theme.of(context).textTheme.bodyMedium),
                 ),
                 Text(
-                  _durumLabel[ticket.durum] ?? ticket.durum,
+                  talepDurumEtiketi(l10n, ticket.durum),
                   style:
                       const TextStyle(color: color, fontWeight: FontWeight.w600),
                 ),

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../checkpoints/data/checkpoint_api.dart';
 import '../data/patrol_plan_api.dart';
+import '../domain/patrol_hata.dart';
+import 'devriye_hata_metni.dart';
 
 /// Devriye planlari yonetimi — yonetici/admin: her gun tekrar eden devriye
 /// planlari (ad + baslangic/bitis saati + tur sikligi + kontrol noktalari).
@@ -14,13 +16,16 @@ class PatrolPlansScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final async = ref.watch(patrolPlansProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Devriye Planları'))),
+      appBar: AppBar(
+          title: Text(
+              baslikBuyuk(l10n.devriyePlanlariBaslik, context.dilKodu))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('Plan ekle'),
+        label: Text(l10n.devriyePlanEkle),
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -28,7 +33,7 @@ class PatrolPlansScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              e is ApiException ? e.message : 'Planlar listelenemedi.',
+              e is ApiException ? e.message : l10n.devriyePlanlarListelenemedi,
               textAlign: TextAlign.center,
             ),
           ),
@@ -65,6 +70,7 @@ class _PlanTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     return Card(
       child: ListTile(
         leading: CircleAvatar(
@@ -74,15 +80,17 @@ class _PlanTile extends ConsumerWidget {
           child: Icon(plan.aktif ? Icons.route_outlined : Icons.block),
         ),
         title: Text(plan.ad),
-        subtitle: Text(
-          '${plan.baslangicHHMM}–${plan.bitisHHMM} · her ${plan.periyotDakika} dk',
-        ),
+        subtitle: Text(l10n.devriyePlanAralik(
+          plan.baslangicHHMM,
+          plan.bitisHHMM,
+          '${plan.periyotDakika}',
+        )),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (!plan.aktif)
-              const Chip(
-                label: Text('Pasif'),
+              Chip(
+                label: Text(l10n.devriyePasif),
                 visualDensity: VisualDensity.compact,
               ),
             PopupMenuButton<String>(
@@ -90,9 +98,9 @@ class _PlanTile extends ConsumerWidget {
                 if (v == 'edit') _edit(context, ref);
                 if (v == 'delete') _delete(context, ref);
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-                PopupMenuItem(value: 'delete', child: Text('Sil')),
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
+                PopupMenuItem(value: 'delete', child: Text(l10n.ortakSil)),
               ],
             ),
           ],
@@ -111,19 +119,20 @@ class _PlanTile extends ConsumerWidget {
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
-        title: const Text('Plan silinsin mi?'),
-        content: Text('"${plan.ad}" devriye planı silinecek.'),
+        title: Text(l10n.devriyePlanSilinsinMi),
+        content: Text(l10n.devriyePlanSilOnay(plan.ad)),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(dctx).pop(false),
-              child: const Text('Vazgeç')),
+              child: Text(l10n.ortakVazgec)),
           FilledButton(
               style: FilledButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () => Navigator.of(dctx).pop(true),
-              child: const Text('Sil')),
+              child: Text(l10n.ortakSil)),
         ],
       ),
     );
@@ -132,7 +141,8 @@ class _PlanTile extends ConsumerWidget {
     try {
       await ref.read(patrolPlanApiProvider).delete(plan.id);
       ref.invalidate(patrolPlansProvider);
-      messenger.showSnackBar(const SnackBar(content: Text('Plan silindi ✓')));
+      messenger.showSnackBar(
+          SnackBar(content: Text(l10n.devriyePlanSilindi)));
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
@@ -157,10 +167,17 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
   bool _aktif = true;
   final Set<String> _selected = {};
   bool _busy = false;
+
+  /// Hata KANALI ikilidir: `_error` SUNUCU metni, `_hataKimligi` yerellesti-
+  /// rilebilir kimlik (bkz. domain/patrol_hata.dart).
   String? _error;
+  DevriyeAkisHatasi? _hataKimligi;
   bool _loadingSelection = false;
 
   bool get _isEdit => widget.existing != null;
+
+  /// `setState` yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
 
   @override
   void initState() {
@@ -218,12 +235,13 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
     if (!_formKey.currentState!.validate()) return;
     final periyot = int.tryParse(_periyot.text.trim());
     if (periyot == null || periyot < 1) {
-      setState(() => _error = 'Tur sıklığı (dk) pozitif olmalı.');
+      setState(() => _error = _l10n.devriyeTurSikligiPozitif);
       return;
     }
     setState(() {
       _busy = true;
       _error = null;
+      _hataKimligi = null;
     });
     final navigator = Navigator.of(context);
     try {
@@ -255,7 +273,9 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Kaydedilemedi. Tekrar deneyin.');
+      if (mounted) {
+        setState(() => _hataKimligi = DevriyeAkisHatasi.kaydedilemedi);
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -263,6 +283,7 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     final checkpoints =
         (ref.watch(checkpointsProvider).value ?? const <Checkpoint>[])
@@ -279,19 +300,22 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(_isEdit ? 'Devriye planı düzenle' : 'Yeni devriye planı',
+              Text(
+                  _isEdit
+                      ? l10n.devriyePlanDuzenleBaslik
+                      : l10n.devriyePlanYeniBaslik,
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _ad,
                 enabled: !_busy,
-                decoration: const InputDecoration(
-                  labelText: 'Plan adı',
-                  hintText: 'örn. Gece devriyesi',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.devriyePlanAdi,
+                  hintText: l10n.devriyePlanAdiIpucu,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                    (v?.trim() ?? '').isEmpty ? 'Ad zorunludur' : null,
+                    (v?.trim() ?? '').isEmpty ? l10n.devriyeAdZorunlu : null,
               ),
               const SizedBox(height: 12),
               Row(
@@ -299,7 +323,8 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.schedule),
-                      label: Text('Başlangıç ${_fmt(_baslangic).substring(0, 5)}'),
+                      label: Text(l10n.devriyeBaslangicSaat(
+                          _fmt(_baslangic).substring(0, 5))),
                       onPressed: _busy ? null : () => _pickTime(true),
                     ),
                   ),
@@ -307,7 +332,8 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.schedule),
-                      label: Text('Bitiş ${_fmt(_bitis).substring(0, 5)}'),
+                      label: Text(l10n.devriyeBitisSaat(
+                          _fmt(_bitis).substring(0, 5))),
                       onPressed: _busy ? null : () => _pickTime(false),
                     ),
                   ),
@@ -318,24 +344,24 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                 controller: _periyot,
                 enabled: !_busy,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Tur sıklığı (dakika)',
-                  helperText: 'örn. 60 = saatte bir tur',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.devriyeTurSikligi,
+                  helperText: l10n.devriyeTurSikligiYardim,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Aktif'),
+                title: Text(l10n.cipAktif),
                 value: _aktif,
                 onChanged: _busy ? null : (v) => setState(() => _aktif = v),
               ),
               const Divider(),
               Row(
                 children: [
-                  const Expanded(
-                    child: Text('Kontrol noktaları',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                  Expanded(
+                    child: Text(l10n.devriyeKontrolNoktalari,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                   if (checkpoints.isNotEmpty)
                     TextButton(
@@ -350,7 +376,9 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                                     ..addAll(checkpoints.map((c) => c.id));
                                 }
                               }),
-                      child: Text(allSelected ? 'Tümünü kaldır' : 'Tümünü seç'),
+                      child: Text(allSelected
+                          ? l10n.devriyeTumunuKaldir
+                          : l10n.devriyeTumunuSec),
                     ),
                 ],
               ),
@@ -360,11 +388,11 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                   child: LinearProgressIndicator(),
                 ),
               if (checkpoints.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
-                    'Aktif kontrol noktası yok. Önce "Kontrol noktaları"ndan ekleyin.',
-                    style: TextStyle(color: Colors.orange),
+                    l10n.devriyeAktifNoktaYok,
+                    style: const TextStyle(color: Colors.orange),
                   ),
                 )
               else
@@ -373,7 +401,8 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     title: Text(c.ad),
-                    subtitle: Text('UID: ${c.nfcTagUid}'),
+                    subtitle: Text(l10n.devriyeUidEtiket(
+                        ltrIzole(c.nfcTagUid))),
                     value: _selected.contains(c.id),
                     onChanged: _busy
                         ? null
@@ -385,9 +414,10 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                               }
                             }),
                   ),
-              if (_error != null) ...[
+              if (devriyeHatasiCoz(l10n, _hataKimligi, _error)
+                  case final hata?) ...[
                 const SizedBox(height: 8),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+                Text(hata, style: const TextStyle(color: Colors.red)),
               ],
               const SizedBox(height: 12),
               FilledButton(
@@ -400,7 +430,7 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2.5),
                       )
-                    : Text(_isEdit ? 'Güncelle' : 'Oluştur'),
+                    : Text(_isEdit ? l10n.ortakGuncelle : l10n.ortakOlustur),
               ),
             ],
           ),
@@ -424,7 +454,7 @@ class _Empty extends StatelessWidget {
             const Icon(Icons.route_outlined, size: 48),
             const SizedBox(height: 12),
             Text(
-              'Henüz devriye planı yok.\nSağ alttan ekleyin (saatler + noktalar).',
+              context.l10n.devriyePlanYokBos,
               textAlign: TextAlign.center,
               style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant),

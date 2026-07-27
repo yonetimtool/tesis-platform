@@ -5,19 +5,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/patrol_api.dart';
 import '../domain/patrol_models.dart';
+import '../domain/patrol_hata.dart';
 
 /// "Gecmis" sekmesinin durumu: son pencereler + ozet sayilar.
 class PatrolHistoryState {
   const PatrolHistoryState({
     this.loading = false,
     this.errorMessage,
+    this.hataKimligi,
     this.forbidden = false,
     this.items = const [],
     this.ozet = const PatrolWindowOzet(),
   });
 
   final bool loading;
+  /// Hata KANALI ikilidir: `errorMessage` SUNUCU metnini, `hataKimligi`
+  /// yerellestirilebilir KIMLIGI tasir (bkz. domain/*_hata.dart). Ekran once
+  /// kimligi cozer (`*HatasiCoz`), yoksa sunucu metnini gosterir.
   final String? errorMessage;
+  final DevriyeAkisHatasi? hataKimligi;
   final bool forbidden;
   final List<PatrolWindowHistoryItem> items;
   final PatrolWindowOzet ozet;
@@ -25,6 +31,7 @@ class PatrolHistoryState {
   PatrolHistoryState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     bool? forbidden,
     List<PatrolWindowHistoryItem>? items,
     PatrolWindowOzet? ozet,
@@ -34,6 +41,9 @@ class PatrolHistoryState {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as DevriyeAkisHatasi?,
       forbidden: forbidden ?? this.forbidden,
       items: items ?? this.items,
       ozet: ozet ?? this.ozet,
@@ -55,7 +65,7 @@ class PatrolHistoryController extends Notifier<PatrolHistoryState> {
   }
 
   Future<void> refresh() async {
-    state = state.copyWith(loading: true, errorMessage: null);
+    state = state.copyWith(loading: true, errorMessage: null, hataKimligi: null);
     try {
       // Gecmis = YALNIZ gecmis: bugunun turlari "Aktif"/"Bugun"da; burada
       // yalniz bugunden ONCE baslayan pencereler.
@@ -69,6 +79,7 @@ class PatrolHistoryController extends Notifier<PatrolHistoryState> {
       state = state.copyWith(
         loading: false,
         errorMessage: null,
+        hataKimligi: null,
         forbidden: false,
         items: page.items,
         ozet: page.ozet,
@@ -78,13 +89,15 @@ class PatrolHistoryController extends Notifier<PatrolHistoryState> {
       state = state.copyWith(
         loading: false,
         errorMessage: e.message,
+        hataKimligi: null,
         forbidden: e.statusCode == 403,
       );
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: DevriyeAkisHatasi.beklenmeyen,
       );
     }
   }

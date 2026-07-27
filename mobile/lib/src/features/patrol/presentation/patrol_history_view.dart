@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/l10n.dart';
 import '../domain/patrol_models.dart';
+import 'devriye_hata_metni.dart';
 import 'patrol_history_controller.dart';
 
 /// Pencere gecmisi gorunumu (`GET /patrol-windows` — ozet + son pencereler).
@@ -12,6 +14,7 @@ class PatrolHistoryView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final state = ref.watch(patrolHistoryControllerProvider);
     final controller = ref.read(patrolHistoryControllerProvider.notifier);
 
@@ -25,12 +28,13 @@ class PatrolHistoryView extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
-          if (state.errorMessage != null)
+          if (state.errorMessage != null || state.hataKimligi != null)
             PatrolErrorBanner(
               message: state.forbidden
-                  ? 'Tur geçmişi için yetkiniz yok. Bu liste güvenlik '
-                      've yönetici rollerine açıktır.'
-                  : state.errorMessage!,
+                  ? l10n.devriyeGecmisYetkiYok
+                  : devriyeHatasiCoz(
+                          l10n, state.hataKimligi, state.errorMessage) ??
+                      '',
               onRetry: state.forbidden ? null : controller.refresh,
             ),
           if (state.items.isNotEmpty) ...[
@@ -48,11 +52,11 @@ class PatrolHistoryView extends ConsumerWidget {
               ),
             ),
           ] else if (state.errorMessage == null)
-            const Card(
+            Card(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Henüz tur penceresi kaydı yok.',
+                  l10n.devriyeGecmisBos,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -70,6 +74,7 @@ class PatrolHistorySummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     Widget chip(String label, int value, Color color) => Chip(
           avatar: CircleAvatar(backgroundColor: color, radius: 6),
           label: Text('$label $value'),
@@ -79,10 +84,10 @@ class PatrolHistorySummary extends StatelessWidget {
       spacing: 8,
       runSpacing: 4,
       children: [
-        chip('Toplam', ozet.toplam, Colors.blueGrey),
-        chip('Tamamlandı', ozet.tamamlandi, Colors.green),
-        chip('Kaçırıldı', ozet.kacirildi, Colors.red),
-        chip('Bekliyor', ozet.bekliyor, Colors.orange),
+        chip(l10n.devriyeOzetToplam, ozet.toplam, Colors.blueGrey),
+        chip(l10n.devriyeDurumTamamlandi, ozet.tamamlandi, Colors.green),
+        chip(l10n.devriyeDurumKacirildi, ozet.kacirildi, Colors.red),
+        chip(l10n.devriyeDurumBekliyor, ozet.bekliyor, Colors.orange),
       ],
     );
   }
@@ -95,31 +100,34 @@ class PatrolHistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final (icon, color, label) = switch (item.durum) {
       PatrolWindowDurum.tamamlandi => (
           Icons.check_circle,
           Colors.green,
-          'Tamamlandı',
+          l10n.devriyeDurumTamamlandi,
         ),
-      PatrolWindowDurum.kacirildi => (Icons.cancel, Colors.red, 'Kaçırıldı'),
+      PatrolWindowDurum.kacirildi =>
+        (Icons.cancel, Colors.red, l10n.devriyeDurumKacirildi),
       PatrolWindowDurum.bekliyor => (
           Icons.hourglass_top,
           Colors.orange,
-          'Bekliyor',
+          l10n.devriyeDurumBekliyor,
         ),
       PatrolWindowDurum.bilinmiyor => (
           Icons.help_outline,
           Colors.grey,
-          'Bilinmiyor',
+          l10n.devriyeDurumBilinmiyor,
         ),
     };
-    final start = item.pencereBaslangic.toLocal();
-    final end = item.pencereBitis.toLocal();
     return ListTile(
       leading: Icon(icon, color: color),
-      title: Text(item.planAdi ?? 'Devriye turu'),
+      title: Text(item.planAdi ?? l10n.devriyeTuru),
       subtitle: Text(
-        '${fmtDate(start)} · ${fmtClock(start)} – ${fmtClock(end)}',
+        '${tarihBicimi(item.pencereBaslangic, dil)} · '
+        '${saatBicimi(item.pencereBaslangic, dil)} – '
+        '${saatBicimi(item.pencereBitis, dil)}',
       ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -160,7 +168,7 @@ class PatrolErrorBanner extends StatelessWidget {
             if (onRetry != null)
               TextButton(
                 onPressed: () => onRetry!(),
-                child: const Text('Tekrar dene'),
+                child: Text(context.l10n.ortakYenidenDene),
               ),
           ],
         ),
@@ -171,17 +179,14 @@ class PatrolErrorBanner extends StatelessWidget {
 
 String _two(int v) => v.toString().padLeft(2, '0');
 
-String fmtClock(DateTime local) => '${_two(local.hour)}:${_two(local.minute)}';
-
-String fmtDate(DateTime local) =>
-    '${_two(local.day)}.${_two(local.month)}.${local.year}';
-
-String fmtDuration(Duration d) {
+/// Kalan sure metni — birim KISALTMALARI dile gore (ARB: sure*).
+/// Sayilar LTR izole edilmez: cevre metin zaten sayi+birim ciftidir.
+String sureMetni(AppLocalizations l10n, Duration d) {
   if (d.inHours >= 1) {
-    return '${d.inHours} sa ${_two(d.inMinutes % 60)} dk';
+    return l10n.sureSaatDakika('${d.inHours}', _two(d.inMinutes % 60));
   }
   if (d.inMinutes >= 1) {
-    return '${d.inMinutes} dk ${_two(d.inSeconds % 60)} sn';
+    return l10n.sureDakikaSaniye('${d.inMinutes}', _two(d.inSeconds % 60));
   }
-  return '${d.inSeconds} sn';
+  return l10n.sureSaniye('${d.inSeconds}');
 }

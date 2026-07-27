@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_models.dart';
+import 'gorev_hata_metni.dart';
 import 'task_complete_controller.dart';
 import 'task_form_sheet.dart';
 import 'task_ticket_widgets.dart';
@@ -25,6 +26,8 @@ class TaskDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final state = ref.watch(taskCompleteControllerProvider(task.id));
     final controller =
         ref.read(taskCompleteControllerProvider(task.id).notifier);
@@ -44,18 +47,18 @@ class TaskDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(trUpper(task.ad)),
+        title: Text(baslikBuyuk(task.ad, dil)),
         actions: [
           if (canManage)
             PopupMenuButton<String>(
-              tooltip: 'Görev işlemleri',
+              tooltip: l10n.gorevIslemleriTooltip,
               onSelected: (v) {
                 if (v == 'edit') _edit(context, ref);
                 if (v == 'delete') _delete(context, ref);
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-                PopupMenuItem(value: 'delete', child: Text('Sil')),
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
+                PopupMenuItem(value: 'delete', child: Text(l10n.ortakSil)),
               ],
             ),
         ],
@@ -68,14 +71,11 @@ class TaskDetailScreen extends ConsumerWidget {
           if (task.ticket != null) TicketBaglamKarti(ticket: task.ticket!),
           const SizedBox(height: 16),
           if (!canComplete)
-            const Card(
+            Card(
               child: ListTile(
-                leading: Icon(Icons.visibility_outlined),
-                title: Text('Takip görünümü'),
-                subtitle: Text(
-                  'Tamamlama saha personeli tarafından yapılır '
-                  '(güvenlik / tesis görevlisi). Bu ekran izleme içindir.',
-                ),
+                leading: const Icon(Icons.visibility_outlined),
+                title: Text(l10n.gorevTakipGorunumu),
+                subtitle: Text(l10n.gorevTakipGorunumuAlt),
               ),
             )
           else if (state.result != null)
@@ -93,11 +93,12 @@ class TaskDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             _NoteStep(controller: controller),
             const SizedBox(height: 16),
-            if (state.submitError != null)
+            if (gorevHatasiCoz(l10n, state.submitHata, state.submitError)
+                case final hata?)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
-                  state.submitError!,
+                  hata,
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
@@ -112,7 +113,8 @@ class TaskDetailScreen extends ConsumerWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.check),
-              label: Text(state.submitting ? 'Gönderiliyor...' : 'Tamamla'),
+              label: Text(
+                  state.submitting ? l10n.gorevGonderiliyor : l10n.gorevTamamla),
             ),
           ],
         ],
@@ -123,31 +125,33 @@ class TaskDetailScreen extends ConsumerWidget {
   /// Duzenleme formu; kaydedilirse detay KAPANIR (elimizdeki [task] kopyasi
   /// bayatladi — guncel hali tazelenmis listededir).
   Future<void> _edit(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final saved = await showTaskFormSheet(context, edit: task);
     if (saved == true && context.mounted) {
       Navigator.pop(context);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Görev güncellendi ✓')),
+        SnackBar(content: Text(l10n.gorevGuncellendi)),
       );
     }
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Görev silinsin mi?'),
+        title: Text(l10n.gorevSilinsinMi),
         content: Text(task.ad),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(l10n.ortakVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(l10n.ortakSil),
           ),
         ],
       ),
@@ -158,7 +162,7 @@ class TaskDetailScreen extends ConsumerWidget {
       if (context.mounted) {
         Navigator.pop(context);
         messenger.showSnackBar(
-          const SnackBar(content: Text('Görev silindi ✓')),
+          SnackBar(content: Text(l10n.gorevSilindi)),
         );
       }
     } on ApiException catch (e) {
@@ -171,10 +175,12 @@ class _InfoCard extends ConsumerWidget {
   const _InfoCard({required this.task, required this.style});
 
   final Task task;
-  final ({Color color, IconData icon, String label}) style;
+  final ({Color color, IconData icon, String? ad}) style;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final currentUserId =
         ref.watch(tasksControllerProvider.select((s) => s.currentUserId));
     return Card(
@@ -188,15 +194,15 @@ class _InfoCard extends ConsumerWidget {
                 Icon(style.icon, color: style.color),
                 const SizedBox(width: 8),
                 Chip(
-                  label: Text(style.label),
+                  label: Text(style.ad ?? l10n.gorevKategoriDiger),
                   backgroundColor: style.color.withValues(alpha: 0.15),
                   labelStyle: TextStyle(color: style.color),
                   visualDensity: VisualDensity.compact,
                 ),
                 const Spacer(),
                 if (task.isAssignedTo(currentUserId))
-                  const Chip(
-                    label: Text('Sana atanmış'),
+                  Chip(
+                    label: Text(l10n.gorevSanaAtanmis),
                     visualDensity: VisualDensity.compact,
                   ),
               ],
@@ -220,16 +226,15 @@ class _InfoCard extends ConsumerWidget {
             if (task.sonrakiPlanlanan != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Planlanan: '
-                '${_fmtDateTime(task.sonrakiPlanlanan!.toLocal())}',
+                l10n.gorevPlanlanan(
+                    tarihSaatBicimi(task.sonrakiPlanlanan!, dil)),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
             if (task.checkpointId != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Bu görev NFC doğrulamalı: tamamlamadan önce görev '
-                'noktasındaki etiketi okutun.',
+                l10n.gorevNfcAciklama,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -251,6 +256,7 @@ class _NfcStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -264,21 +270,22 @@ class _NfcStep extends StatelessWidget {
                   color: state.nfcOkundu ? Colors.green : null,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  '1. Etiketi okutun',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  l10n.gorevAdim1Etiket,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             if (state.nfcOkundu)
               Text(
-                'Okundu: ${state.draft.nfcTagUid}',
+                l10n.gorevOkundu(ltrIzole('${state.draft.nfcTagUid}')),
                 style: const TextStyle(color: Colors.green),
               ),
-            if (state.nfcError != null)
+            if (gorevHatasiCoz(l10n, state.nfcHata, state.nfcError)
+                case final hata?)
               Text(
-                state.nfcError!,
+                hata,
                 style: const TextStyle(color: Colors.red),
               ),
             const SizedBox(height: 8),
@@ -293,10 +300,10 @@ class _NfcStep extends StatelessWidget {
                   : const Icon(Icons.nfc),
               label: Text(
                 state.nfcReading
-                    ? 'Etiket bekleniyor...'
+                    ? l10n.gorevEtiketBekleniyor
                     : state.nfcOkundu
-                        ? 'Yeniden okut'
-                        : 'Etiketi okut',
+                        ? l10n.gorevYenidenOkut
+                        : l10n.gorevEtiketiOkut,
               ),
             ),
           ],
@@ -323,6 +330,7 @@ class _PhotoStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -340,16 +348,16 @@ class _PhotoStep extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   fotoZorunlu
-                      ? '2. Foto kanıtı'
-                      : '2. Foto kanıtı (isteğe bağlı)',
+                      ? l10n.gorevAdim2Foto
+                      : l10n.gorevAdim2FotoOpsiyonel,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 if (fotoZorunlu) ...[
                   const SizedBox(width: 8),
-                  const Chip(
-                    label: Text('Foto zorunlu'),
-                    labelStyle:
-                        TextStyle(color: Colors.deepOrange, fontSize: 12),
+                  Chip(
+                    label: Text(l10n.gorevFotoZorunlu),
+                    labelStyle: const TextStyle(
+                        color: Colors.deepOrange, fontSize: 12),
                     visualDensity: VisualDensity.compact,
                   ),
                 ],
@@ -368,28 +376,29 @@ class _PhotoStep extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               if (state.photoBusy)
-                const Row(
+                Row(
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                    SizedBox(width: 8),
-                    Text('Yükleniyor...'),
+                    const SizedBox(width: 8),
+                    Text(l10n.gorevYukleniyorNokta),
                   ],
                 )
               else if (state.fotoYuklendi)
-                const Text(
-                  'Yüklendi ✓',
-                  style: TextStyle(color: Colors.green),
+                Text(
+                  l10n.gorevYuklendi,
+                  style: const TextStyle(color: Colors.green),
                 ),
             ],
-            if (state.photoError != null)
+            if (gorevHatasiCoz(l10n, state.photoHata, state.photoError)
+                case final hata?)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  state.photoError!,
+                  hata,
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
@@ -405,7 +414,9 @@ class _PhotoStep extends StatelessWidget {
                           controller.pickAndUploadPhoto(ImageSource.camera),
                   icon: const Icon(Icons.photo_camera),
                   label: Text(
-                    state.photoPath == null ? 'Kamera' : 'Yeniden çek',
+                    state.photoPath == null
+                        ? l10n.gorevKamera
+                        : l10n.gorevYenidenCek,
                   ),
                 ),
                 OutlinedButton.icon(
@@ -414,21 +425,21 @@ class _PhotoStep extends StatelessWidget {
                       : () =>
                           controller.pickAndUploadPhoto(ImageSource.gallery),
                   icon: const Icon(Icons.photo_library_outlined),
-                  label: const Text('Galeriden seç'),
+                  label: Text(l10n.gorevGaleridenSec),
                 ),
                 if (state.photoPath != null && !state.fotoYuklendi)
                   OutlinedButton.icon(
                     onPressed:
                         state.photoBusy ? null : controller.retryUpload,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Tekrar yükle'),
+                    label: Text(l10n.gorevTekrarYukle),
                   ),
                 if (state.photoPath != null)
                   TextButton.icon(
                     onPressed:
                         state.photoBusy ? null : controller.removePhoto,
                     icon: const Icon(Icons.delete_outline),
-                    label: const Text('Kaldır'),
+                    label: Text(l10n.gorevKaldir),
                   ),
               ],
             ),
@@ -447,23 +458,24 @@ class _NoteStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '3. Not (isteğe bağlı)',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            Text(
+              l10n.gorevAdim3Not,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             TextField(
               onChanged: controller.setNotlar,
               maxLines: 3,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Örn. çöp konteynerleri boşaltıldı',
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: l10n.gorevNotIpucu,
               ),
             ),
           ],
@@ -483,6 +495,8 @@ class _ResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final result = state.result!;
     return Card(
       color: Colors.green.withValues(alpha: 0.08),
@@ -494,25 +508,27 @@ class _ResultCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               result.wasDuplicate
-                  ? 'Bu tamamlama zaten kayıtlıydı (tekrar gönderim — '
-                      'çift kayıt oluşmadı).'
-                  : 'Görev tamamlandı — kayıt oluşturuldu.',
+                  ? l10n.gorevZatenKayitliydi
+                  : l10n.gorevTamamlandiKayit,
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             Text(
-              'Zaman: '
-              '${_fmtDateTime(result.completion.tamamlanmaZamani.toLocal())}'
-              '${result.completion.fotoKey != null ? ' · foto kanıtı var' : ''}'
-              '${result.completion.nfcTagUid != null ? ' · NFC doğrulandı' : ''}',
+              [
+                l10n.gorevZaman(tarihSaatBicimi(
+                    result.completion.tamamlanmaZamani, dil)),
+                if (result.completion.fotoKey != null) l10n.gorevFotoKanitiVar,
+                if (result.completion.nfcTagUid != null)
+                  l10n.gorevNfcDogrulandi,
+              ].join(' · '),
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: onNew,
-              child: const Text('Yeni tamamlama başlat'),
+              child: Text(l10n.gorevYeniTamamlamaBaslat),
             ),
           ],
         ),
@@ -520,9 +536,3 @@ class _ResultCard extends StatelessWidget {
     );
   }
 }
-
-String _two(int v) => v.toString().padLeft(2, '0');
-
-String _fmtDateTime(DateTime local) =>
-    '${_two(local.day)}.${_two(local.month)}.${local.year} '
-    '${_two(local.hour)}:${_two(local.minute)}';

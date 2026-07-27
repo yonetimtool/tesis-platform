@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../auth/domain/user_role.dart';
 import '../../checkpoints/data/checkpoint_api.dart';
 import '../data/task_api.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_category_models.dart';
 import '../domain/task_models.dart';
+import 'rol_adi.dart';
 import 'tasks_controller.dart';
 
 /// Gorev olustur/duzenle formu (bottom sheet) — admin + yonetici.
@@ -46,6 +48,9 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
   bool _saving = false;
   String? _error;
 
+  /// Denetleyici/`setState` yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   /// Atanabilir personel (bir kez yuklenir); null → yukleniyor.
   List<AssignableUser>? _personel;
   String? _personelError;
@@ -82,11 +87,9 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
         if (_kategoriId != null && !list.any((k) => k.id == _kategoriId)) {
           _kategoriler = [
             ...list,
-            TaskCategory(
-              id: _kategoriId!,
-              ad: 'Kategori (silinmiş)',
-              aktif: false,
-            ),
+            // Ad BOS: silinmis kategori etiketi cizim aninda cozulur
+            // (l10n.gorevKategoriSilinmis) — domain metin tasimaz.
+            TaskCategory(id: _kategoriId!, ad: '', aktif: false),
           ];
         }
       });
@@ -108,11 +111,8 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
             !users.any((u) => u.id == _atananUserId)) {
           _personel = [
             ...users,
-            AssignableUser(
-              id: _atananUserId!,
-              ad: 'Atanan kullanıcı (listede değil)',
-              role: '',
-            ),
+            // Ad BOS: "listede degil" etiketi cizim aninda cozulur.
+            AssignableUser(id: _atananUserId!, ad: '', role: ''),
           ];
         }
       });
@@ -171,7 +171,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+          _error = _l10n.ortakBeklenmeyenHata;
         });
       }
     }
@@ -179,6 +179,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final editing = widget.task != null;
     return Padding(
       // Klavye acildiginda formun gorunur kalmasi icin.
@@ -196,67 +197,71 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                editing ? 'Görev düzenle' : 'Yeni görev',
+                editing ? l10n.gorevDuzenleBaslik : l10n.gorevYeni,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
               // Gorev TIPI = yonetici-tanimli kategori; "Diğer" = tipsiz.
               // Sabit tip listesi kaldirildi (yonetici kendi tiplerini tanimlar).
               if (_kategoriler == null)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
                     children: [
-                      SizedBox(
+                      const SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
-                      SizedBox(width: 8),
-                      Text('Görev tipleri yükleniyor...'),
+                      const SizedBox(width: 8),
+                      // Uzun cevirilerde (ar/de) satir tasmasin.
+                      Expanded(child: Text(l10n.gorevTipleriYukleniyor)),
                     ],
                   ),
                 )
               else ...[
                 DropdownButtonFormField<String?>(
                   initialValue: _kategoriId,
-                  decoration: const InputDecoration(
-                    labelText: 'Görev tipi',
-                    border: OutlineInputBorder(),
+                  isExpanded: true, // uzun kategori adi/ceviri tasmasin
+                  decoration: InputDecoration(
+                    labelText: l10n.gorevTipi,
+                    border: const OutlineInputBorder(),
                   ),
                   items: [
-                    const DropdownMenuItem<String?>(
+                    DropdownMenuItem<String?>(
                       value: null,
-                      child: Text('Diğer'),
+                      child: Text(l10n.gorevKategoriDiger),
                     ),
                     for (final k in _kategoriler!)
                       DropdownMenuItem<String?>(
                         value: k.id,
-                        child: Text(k.ad, overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          k.ad.isEmpty ? l10n.gorevKategoriSilinmis : k.ad,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                   ],
                   onChanged: (v) => setState(() => _kategoriId = v),
                 ),
                 if (_kategoriler!.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 6),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
                     child: Text(
-                      'Henüz görev tipi tanımlamadınız. Üstteki "Kategoriler" '
-                      'ekranından kendi tiplerinizi ekleyebilirsiniz; şimdilik '
-                      '"Diğer" kullanılır.',
-                      style: TextStyle(fontSize: 12, color: Colors.orange),
+                      l10n.gorevTipiYokUyari,
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.orange),
                     ),
                   ),
               ],
               const SizedBox(height: 8),
               TextFormField(
                 controller: _adCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Görev adı',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.gorevAdi,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Görev adı zorunludur'
+                    ? l10n.gorevAdiZorunlu
                     : null,
               ),
               const SizedBox(height: 8),
@@ -264,46 +269,50 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                 controller: _aciklamaCtrl,
                 minLines: 2,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Açıklama (opsiyonel)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.gorevAciklamaOpsiyonel,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 8),
               if (_personel == null)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
                     children: [
-                      SizedBox(
+                      const SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
-                      SizedBox(width: 8),
-                      Text('Personel listesi yükleniyor...'),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(l10n.gorevPersonelYukleniyor)),
                     ],
                   ),
                 )
               else ...[
                 DropdownButtonFormField<String?>(
                   initialValue: _atananUserId,
-                  decoration: const InputDecoration(
-                    labelText: 'Atanan personel',
-                    border: OutlineInputBorder(),
+                  isExpanded: true, // "ad (rol)" + uzun ceviri tasmasin
+                  decoration: InputDecoration(
+                    labelText: l10n.gorevAtananPersonel,
+                    border: const OutlineInputBorder(),
                   ),
                   items: [
-                    const DropdownMenuItem<String?>(
+                    DropdownMenuItem<String?>(
                       value: null,
-                      child: Text('— atanmamış (havuz görevi) —'),
+                      child: Text(l10n.gorevAtanmamisHavuz),
                     ),
                     for (final u in _personel!)
                       DropdownMenuItem<String?>(
                         value: u.id,
                         child: Text(
                           u.role.isEmpty
-                              ? u.ad
-                              : '${u.ad} (${UserRole.fromClaim(u.role).label})',
+                              ? (u.ad.isEmpty
+                                  ? l10n.gorevAtananListedeDegil
+                                  : u.ad)
+                              : '${u.ad} '
+                                  '(${rolAdi(l10n, UserRole.fromClaim(u.role))})',
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -314,7 +323,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      'Personel listesi alınamadı: $_personelError',
+                      l10n.gorevPersonelAlinamadi(_personelError!),
                       style: const TextStyle(color: Colors.orange),
                     ),
                   ),
@@ -336,15 +345,15 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                   initialValue:
                       items.any((c) => c.id == _checkpointId) ? _checkpointId : null,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Kontrol noktası (NFC) — opsiyonel',
-                    helperText: 'Bağlanırsa görev NFC okutularak tamamlanır',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.gorevKontrolNoktasiOpsiyonel,
+                    helperText: l10n.gorevKontrolNoktasiYardim,
+                    border: const OutlineInputBorder(),
                   ),
                   items: [
-                    const DropdownMenuItem<String?>(
+                    DropdownMenuItem<String?>(
                       value: null,
-                      child: Text('— NFC yok —'),
+                      child: Text(l10n.gorevNfcYok),
                     ),
                     for (final c in items)
                       DropdownMenuItem<String?>(
@@ -359,34 +368,30 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
               TextFormField(
                 controller: _periyotCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Periyot dakika (opsiyonel)',
-                  helperText: 'Periyodik görevler için; boş = tek seferlik',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.gorevPeriyotDakika,
+                  helperText: l10n.gorevPeriyotYardim,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (v) {
                   final t = (v ?? '').trim();
                   if (t.isEmpty) return null;
                   final n = int.tryParse(t);
-                  return (n == null || n <= 0)
-                      ? 'Pozitif tam sayı girin'
-                      : null;
+                  return (n == null || n <= 0) ? l10n.gorevPozitifSayi : null;
                 },
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Foto kanıtı zorunlu'),
-                subtitle: const Text(
-                  'Tamamlama foto olmadan kabul edilmez',
-                ),
+                title: Text(l10n.gorevFotoKanitiZorunlu),
+                subtitle: Text(l10n.gorevFotoKanitiZorunluAlt),
                 value: _fotoZorunlu,
                 onChanged: (v) => setState(() => _fotoZorunlu = v),
               ),
               if (editing)
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Aktif'),
-                  subtitle: const Text('Pasif görev listede görünmez'),
+                  title: Text(l10n.cipAktif),
+                  subtitle: Text(l10n.gorevPasifAciklama),
                   value: _aktif,
                   onChanged: (v) => setState(() => _aktif = v),
                 ),
@@ -408,10 +413,10 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                       : const Icon(Icons.check),
                   label: Text(
                     _saving
-                        ? 'Kaydediliyor...'
+                        ? l10n.ortakKaydediliyor
                         : editing
-                            ? 'Kaydet'
-                            : 'Oluştur',
+                            ? l10n.ortakKaydet
+                            : l10n.ortakOlustur,
                   ),
                 ),
               ),

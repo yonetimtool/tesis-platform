@@ -8,12 +8,14 @@ import '../../scan/data/scan_outbox.dart';
 import '../../scan/domain/outbox_entry.dart';
 import '../data/patrol_api.dart';
 import '../domain/patrol_models.dart';
+import '../domain/patrol_hata.dart';
 
 /// "Turlarim" aktif sekmesinin durumu: aktif/siradaki pencere + nokta listesi.
 class PatrolTourState {
   const PatrolTourState({
     this.loading = false,
     this.errorMessage,
+    this.hataKimligi,
     this.forbidden = false,
     this.active,
     this.next,
@@ -29,7 +31,11 @@ class PatrolTourState {
 
   /// Son yenilemenin kullaniciya gosterilecek hatasi (varsa). Eldeki veri
   /// silinmez; bayat veri + hata bandi birlikte gosterilebilir.
+  /// Hata KANALI ikilidir: `errorMessage` SUNUCU metnini, `hataKimligi`
+  /// yerellestirilebilir KIMLIGI tasir (bkz. domain/*_hata.dart). Ekran once
+  /// kimligi cozer (`*HatasiCoz`), yoksa sunucu metnini gosterir.
   final String? errorMessage;
+  final DevriyeAkisHatasi? hataKimligi;
 
   /// 403 — rol bu uca erisemiyor (guvenlik disi roller icin kibar mesaj).
   final bool forbidden;
@@ -74,6 +80,7 @@ class PatrolTourState {
   PatrolTourState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     bool? forbidden,
     Object? active = _sentinel,
     Object? next = _sentinel,
@@ -87,6 +94,9 @@ class PatrolTourState {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as DevriyeAkisHatasi?,
       forbidden: forbidden ?? this.forbidden,
       active: active == _sentinel ? this.active : active as ActivePatrolWindow?,
       next: next == _sentinel ? this.next : next as ActivePatrolWindow?,
@@ -163,7 +173,7 @@ class PatrolTourController extends Notifier<PatrolTourState> {
     if (_refreshing) return;
     _refreshing = true;
     if (!silent) {
-      state = state.copyWith(loading: true, errorMessage: null);
+      state = state.copyWith(loading: true, errorMessage: null, hataKimligi: null);
     }
     try {
       final me = await _api.fetchMyPatrolWindow();
@@ -189,6 +199,7 @@ class PatrolTourController extends Notifier<PatrolTourState> {
       state = state.copyWith(
         loading: false,
         errorMessage: null,
+        hataKimligi: null,
         forbidden: false,
         active: selected?.toActiveWindow(),
         next: next,
@@ -202,13 +213,15 @@ class PatrolTourController extends Notifier<PatrolTourState> {
       state = state.copyWith(
         loading: false,
         errorMessage: e.message,
+        hataKimligi: null,
         forbidden: e.statusCode == 403,
       );
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: DevriyeAkisHatasi.beklenmeyen,
       );
     } finally {
       _refreshing = false;

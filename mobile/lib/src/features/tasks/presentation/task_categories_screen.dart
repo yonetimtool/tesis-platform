@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_category_models.dart';
@@ -46,29 +46,30 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
   }
 
   Future<void> _ekle() async {
+    final l10n = context.l10n;
     final ctrl = TextEditingController();
     final ad = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Yeni kategori'),
+        title: Text(l10n.gorevKategoriYeni),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           maxLength: 100,
-          decoration: const InputDecoration(
-            labelText: 'Kategori adı',
-            hintText: 'örn. Havuz bakımı',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.gorevKategoriAdi,
+            hintText: l10n.gorevKategoriAdiIpucu,
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Vazgeç'),
+            child: Text(l10n.ortakVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Ekle'),
+            child: Text(l10n.ortakEkle),
           ),
         ],
       ),
@@ -78,34 +79,32 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
       await ref.read(taskCategoryApiProvider).create(ad);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('"$ad" eklendi')),
+        SnackBar(content: Text(l10n.gorevKategoriEklendi(ad))),
       );
       await _yenile();
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Eklenemedi: ${e.message}')),
+        SnackBar(content: Text(l10n.gorevKategoriEklenemedi(e.message))),
       );
     }
   }
 
   Future<void> _sil(TaskCategory kategori) async {
+    final l10n = context.l10n;
     final onay = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Kategori silinsin mi?'),
-        content: Text(
-          '"${kategori.ad}" pasifleştirilir; mevcut görevlerin geçmişi '
-          'korunur, yeni görevlerde seçilemez.',
-        ),
+        title: Text(l10n.gorevKategoriSilinsinMi),
+        content: Text(l10n.gorevKategoriSilOnay(kategori.ad)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Vazgeç'),
+            child: Text(l10n.ortakVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(l10n.ortakSil),
           ),
         ],
       ),
@@ -115,26 +114,28 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
       await ref.read(taskCategoryApiProvider).delete(kategori.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('"${kategori.ad}" silindi')),
+        SnackBar(content: Text(l10n.gorevKategoriSilindi(kategori.ad))),
       );
       await _yenile();
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Silinemedi: ${e.message}')),
+        SnackBar(content: Text(l10n.gorevKategoriSilinemedi(e.message))),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final liste = _kategoriler;
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Görev kategorileri'))),
+      appBar: AppBar(
+          title: Text(baslikBuyuk(l10n.gorevKategorileriBaslik, context.dilKodu))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _ekle,
         icon: const Icon(Icons.add),
-        label: const Text('Yeni kategori'),
+        label: Text(l10n.gorevKategoriYeni),
       ),
       body: RefreshIndicator(
         onRefresh: _yenile,
@@ -148,20 +149,17 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Text('Liste alınamadı: $_hata'),
+                    child: Text(l10n.gorevKategoriListeAlinamadi(_hata!)),
                   ),
                 ],
               );
             }
             if (liste == null || liste.isEmpty) {
               return ListView(
-                children: const [
+                children: [
                   Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text(
-                      'Henüz kategori yok. Görev oluştururken seçilebilmesi '
-                      'için "Yeni kategori" ile ekleyin.',
-                    ),
+                    padding: const EdgeInsets.all(24),
+                    child: Text(l10n.gorevKategoriYokBos),
                   ),
                 ],
               );
@@ -175,7 +173,7 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
                   leading: const Icon(Icons.label_outline),
                   title: Text(k.ad),
                   trailing: IconButton(
-                    tooltip: 'Sil',
+                    tooltip: l10n.ortakSil,
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () => _sil(k),
                   ),
