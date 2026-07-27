@@ -10,12 +10,15 @@ import '../../tasks/presentation/task_complete_controller.dart'
 import '../../tasks/domain/task_category_models.dart' show TaskCategory;
 import '../data/complaint_api.dart';
 import '../domain/complaint_models.dart';
+import '../../../core/error/akis_hatasi.dart';
+import '../domain/talep_hata.dart';
 
 /// Talep listesinin durumu.
 class ComplaintsState {
   const ComplaintsState({
     this.loading = false,
     this.errorMessage,
+    this.hataKimligi,
     this.items = const [],
     this.canCreate = false,
     this.canRespond = false,
@@ -23,7 +26,10 @@ class ComplaintsState {
   });
 
   final bool loading;
+  /// Hata KANALI ikilidir: `errorMessage` SUNUCU metnini, `hataKimligi`
+  /// yerellestirilebilir KIMLIGI tasir (bkz. core/error/akis_hatasi.dart).
   final String? errorMessage;
+  final AkisHatasi? hataKimligi;
 
   /// Sunucu sirasi: created_at DESC (en yeni onde). Acan roller icin sunucu
   /// zaten YALNIZ kendi actiklarini doner.
@@ -41,6 +47,7 @@ class ComplaintsState {
   ComplaintsState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     List<Complaint>? items,
     bool? canCreate,
     bool? canRespond,
@@ -51,6 +58,9 @@ class ComplaintsState {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as AkisHatasi?,
       items: items ?? this.items,
       canCreate: canCreate ?? this.canCreate,
       canRespond: canRespond ?? this.canRespond,
@@ -76,7 +86,7 @@ class ComplaintsController extends Notifier<ComplaintsState> {
   Future<void> refresh() async {
     if (_refreshing) return;
     _refreshing = true;
-    state = state.copyWith(loading: true, errorMessage: null);
+    state = state.copyWith(loading: true, errorMessage: null, hataKimligi: null);
     try {
       final role = await ref.read(currentUserRoleProvider.future);
       final items = await ref.read(complaintApiProvider).fetchAll();
@@ -91,12 +101,13 @@ class ComplaintsController extends Notifier<ComplaintsState> {
       );
     } on ApiException catch (e) {
       if (!ref.mounted) return;
-      state = state.copyWith(loading: false, errorMessage: e.message);
+      state = state.copyWith(loading: false, errorMessage: e.message, hataKimligi: null);
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: AkisHatasi.beklenmeyen,
       );
     } finally {
       _refreshing = false;
@@ -144,6 +155,7 @@ class PhotoSlot {
     this.busy = false,
     this.fotoKey,
     this.error,
+    this.hata,
   });
 
   /// Yuva kimligi — liste indeksinden BAGIMSIZ (yukleme sirasinda silme/
@@ -156,12 +168,17 @@ class PhotoSlot {
 
   /// Presign akisindan alinan obje anahtari (yukleme bitince dolar).
   final String? fotoKey;
+
+  /// Hata KANALI ikilidir: `error` SUNUCU metni ya da ayrinti, `hata`
+  /// yerellestirilebilir kimlik.
   final String? error;
+  final TalepAkisHatasi? hata;
 
   PhotoSlot copyWith({
     bool? busy,
     Object? fotoKey = _sentinel,
     Object? error = _sentinel,
+    Object? hata = _sentinel,
   }) {
     return PhotoSlot(
       id: id,
@@ -169,6 +186,7 @@ class PhotoSlot {
       busy: busy ?? this.busy,
       fotoKey: fotoKey == _sentinel ? this.fotoKey : fotoKey as String?,
       error: error == _sentinel ? this.error : error as String?,
+      hata: hata == _sentinel ? this.hata : hata as TalepAkisHatasi?,
     );
   }
 
@@ -184,13 +202,17 @@ class ComplaintFormState {
     this.categories = const [],
     this.categoriesLoading = true,
     this.categoriesError,
+    this.categoriesHata,
     this.kategoriId,
   });
 
   final List<PhotoSlot> photos;
   final List<TaskCategory> categories;
   final bool categoriesLoading;
+  /// Hata KANALI ikilidir: `categoriesError` SUNUCU metni, `categoriesHata`
+  /// yerellestirilebilir kimlik (bkz. domain/talep_hata.dart).
   final String? categoriesError;
+  final TalepAkisHatasi? categoriesHata;
 
   /// Secilen talep kategorisi (task_category); null = "Diğer".
   final String? kategoriId;
@@ -216,6 +238,7 @@ class ComplaintFormState {
     List<TaskCategory>? categories,
     bool? categoriesLoading,
     Object? categoriesError = _sentinel,
+    Object? categoriesHata = _sentinel,
     Object? kategoriId = _sentinel,
   }) {
     return ComplaintFormState(
@@ -225,6 +248,9 @@ class ComplaintFormState {
       categoriesError: categoriesError == _sentinel
           ? this.categoriesError
           : categoriesError as String?,
+      categoriesHata: categoriesHata == _sentinel
+          ? this.categoriesHata
+          : categoriesHata as TalepAkisHatasi?,
       kategoriId:
           kategoriId == _sentinel ? this.kategoriId : kategoriId as String?,
     );
@@ -258,12 +284,16 @@ class ComplaintFormController extends Notifier<ComplaintFormState> {
       );
     } on ApiException catch (e) {
       if (!ref.mounted) return;
-      state = state.copyWith(categoriesLoading: false, categoriesError: e.message);
+      state = state.copyWith(
+          categoriesLoading: false,
+          categoriesError: e.message,
+          categoriesHata: null);
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         categoriesLoading: false,
-        categoriesError: 'Kategoriler yüklenemedi.',
+        categoriesError: null,
+        categoriesHata: TalepAkisHatasi.kategorilerYuklenemedi,
       );
     }
   }
@@ -272,7 +302,9 @@ class ComplaintFormController extends Notifier<ComplaintFormState> {
 
   /// Kamera/galeriden foto secip yeni bir yuva olusturur ve yukler. 3 yuva
   /// doluysa hicbir sey yapmaz. Secim/okuma hatasinda kullaniciya
-  /// gosterilecek mesaji doner (null = hata yok).
+  /// Secim/okuma hatasinda AYRINTIYI doner (null = hata yok). Metin cagiranda
+  /// `talepHataMetni(..., TalepAkisHatasi.fotoAlinamadi, ayrinti)` ile kurulur —
+  /// denetleyici gorunen metin URETMEZ.
   Future<String?> addPhoto(ImageSource source) async {
     if (!state.canAddPhoto) return null;
     final XFile? file;
@@ -284,7 +316,7 @@ class ComplaintFormController extends Notifier<ComplaintFormState> {
             imageQuality: 80,
           );
     } catch (e) {
-      return 'Fotoğraf alınamadı: $e';
+      return '$e';
     }
     if (file == null || !ref.mounted) return null;
     final id = _nextId++;
@@ -304,7 +336,7 @@ class ComplaintFormController extends Notifier<ComplaintFormState> {
       }
     }
     if (slot == null || slot.busy) return;
-    _patch(id, (s) => s.copyWith(busy: true, error: null));
+    _patch(id, (s) => s.copyWith(busy: true, error: null, hata: null));
     await _upload(id, XFile(slot.path));
   }
 
@@ -337,16 +369,22 @@ class ComplaintFormController extends Notifier<ComplaintFormState> {
         id,
         (s) => s.copyWith(
           busy: false,
-          error: e.kind == ApiErrorKind.network
-              ? 'Fotoğraf yüklemek için internet bağlantısı gerekli '
-                  '(yükleme adresi kısa ömürlü). Bağlantı gelince '
-                  '"Tekrar yükle" ile deneyin.'
-              : e.message,
+          error: e.kind == ApiErrorKind.network ? null : e.message,
+          hata: e.kind == ApiErrorKind.network
+              ? TalepAkisHatasi.fotoOnlineGerekli
+              : null,
         ),
       );
     } catch (_) {
       if (!ref.mounted) return;
-      _patch(id, (s) => s.copyWith(busy: false, error: 'Fotoğraf yüklenemedi.'));
+      _patch(
+        id,
+        (s) => s.copyWith(
+          busy: false,
+          error: null,
+          hata: TalepAkisHatasi.fotoYuklenemedi,
+        ),
+      );
     }
   }
 

@@ -1551,16 +1551,19 @@ features/home/
 **Durum:** altyapı **tam**; çevrilen modüller: **Ayarlar**, **Kameralar**, ortak
 durum metinleri (tur 1), **Ana ekran (home)** (tur 2 — üç rol varyantı, hızlı
 erişim ızgarası, Hızlı Özet, son hareketler/duyuru/etkinlik kartları, kabuk +
-çekmece + modül adları) ve **Görevler + Devriye** (tur 3 — liste/detay/form,
+çekmece + modül adları), **Görevler + Devriye** (tur 3 — liste/detay/form,
 kategori yönetimi, foto-kanıtı ve NFC akış metinleri, tur pencereleri, plan
-formu, tarama günlüğü). Kalan modüllerin dışa alımı mekanik bir iştir ve
-aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
+formu, tarama günlüğü) ve **Bina (şema + düzenleme) + Talep/Arıza** (tur 4 —
+blok/kat/daire yerleşimi, toplu daire ekleme, yoğunluk göstergesi, daire
+şikayet formu, talep sekmeleri/detay/durum geçmişi, iş emrine dönüştürme).
+Kalan modüllerin dışa alımı mekanik bir iştir ve aşağıdaki envanterle
+sürdürülür — bkz. "Kalan iş".
 
 ### Mimari
 
 | Parça | Yer |
 |---|---|
-| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**359 anahtar × 7**, boşluk yok) |
+| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**498 anahtar × 7**, boşluk yok) |
 | gen-l10n yapılandırması | `l10n.yaml` (şablon: `app_tr.arb`) |
 | Üretilen sınıf | `lib/l10n/gen/app_localizations.dart` (**repoda tutulur** → taze klonda `analyze`/`test` ek adım istemez; yenilemek için `flutter gen-l10n`) |
 | Dil seçimi + kalıcılık | `lib/src/core/i18n/locale_controller.dart` (`AppDil`, `LocaleController`, `ui.locale` anahtarı — tema ile aynı güvenli depo) |
@@ -1676,7 +1679,11 @@ değişince yönlendirme bozulurdu. Artık:
 | `taskKategoriStyle().ad` **(null = kategorisiz)** | `tasks/presentation/task_tip_style.dart` | `style.ad ?? l10n.gorevKategoriDiger` |
 | `TaskOncelik` (düşük/orta/yüksek) | aynı dosya | `oncelikEtiketi(l10n, kimlik)` |
 | `GorevAkisHatasi` / `DevriyeAkisHatasi` | `*/domain/*_hata.dart` | `gorevHataMetni` / `devriyeHataMetni` |
-| `UserRole` (rol adları) | `auth/domain/user_role.dart` | `rolAdi(l10n, rol)` (`tasks/presentation/rol_adi.dart`) |
+| `UserRole` (rol adları) | `auth/domain/user_role.dart` | `rolAdi(l10n, rol)` (`auth/presentation/rol_adi.dart` — tur 4'te tasks'tan taşındı: ikinci tüketici çıktı) |
+| `DensityRenk` | `building_map/domain/building_map_models.dart` | **`label` alanı KALDIRILDI** (ölü TR metin; gösterge eşik sayısı yazar) |
+| `UnitComplaintKategori` | `unit_complaints/domain/unit_complaint_models.dart` | `unitComplaintKategoriAdi(l10n, k)` |
+| `TalepDurum` | `complaints/domain/complaint_models.dart` | `_durumLabel(l10n, durum)` |
+| `AkisHatasi` (ortak) / `TalepAkisHatasi` | `core/error/akis_hatasi.dart` · `complaints/domain/talep_hata.dart` | `akisHataMetni` / `talepHataMetni` |
 
 `switch`'lerin `default` dalı **yoktur**: yeni kart eklenince derleyici çeviriyi
 zorlar. `ParkingOccupancy` gibi alan tiplerinden görüntü metni üreten üyeler
@@ -1721,6 +1728,21 @@ zero/one/two) ve **RTL**: Arapça **görev formu** ile **devriye plan formu**
 > zaten kullanılan desendir: satırda `Expanded`, açılır listede `isExpanded`.
 > Grep bunu **bulamazdı** — ölçüm metin sayar, yerleşim denemez.
 
+`test/bina_complaints_i18n_test.dart` (9 test — tur 4): şemada **tr→en→ru**,
+bina düzenlemede **tr→de**, taleplerde **tr→en→fr** dil değişimi (metin çevrilir,
+düzen + sunucu verisi aynı kalır), `DensityRenk`/`UnitComplaintKategori`
+kimliklerinin metin taşımadığı, denetleyici hata kimliğinin ekranda çevrildiği,
+tüm hata kimliklerinin 7 dilde karşılığı olduğu ve **RTL**: Arapça şema,
+bina düzenleme (toplu daire formu) ve yeni talep formu — yön `rtl`, taşma yok.
+
+> **RTL/çeviri denetiminin yakaladığı gerçek kusur (tur 4):** daire detay
+> başlığı `Daire {no}` + `Spacer()` + `{n} açık şikayet` düzeniydi; İngilizce
+> ("6 open complaints") ve Rusça ("6 открытых жалоб") çeviriler TR'den uzun
+> olduğu için **81 px taşıyordu** (TR'de sığıyordu, bu yüzden görünmemişti).
+> Düzeltme: başlık `Expanded`, sayaç `Flexible` + `textAlign.end`, `Spacer`
+> yerine sabit boşluk. Tur 3'teki bulgu (görev formu 4 px + 90 px) ile aynı
+> desen: **grep taşmayı görmez, ölçüm metin sayar.**
+
 `test/flutter_test_config.dart` süite başına bir kez `initializeDateFormatting()`
 çağırır: eşleyicileri doğrudan çağıran saf birim testleri aksi halde
 `LocaleDataException` ile düşer (uygulamada bu `main.dart`'ta yapılır).
@@ -1729,6 +1751,12 @@ Widget testleri yerelleştirme delegelerine ihtiyaç duyar: `test/helpers/l10n_t
 (`l10nApp(...)` / `l10nScaffold(...)`, varsayılan **tr**). Yalın `MaterialApp`
 ile çizilen yerelleştirilmiş ekran "Null check operator used on a null value"
 ile düşer.
+
+> **Her turun sabit adımı:** o modülün MEVCUT widget testleri `MaterialApp` →
+> `l10nApp` geçişi yapar. Tur 4'te `bina_duzenleme_test`,
+> `building_schematic_test` ve `complaints_screen_test` (33 test) böyle
+> geçirildi; TR metin beklentileri **değişmediği** için başka düzeltme
+> gerekmedi (çeviri anahtarlarının TR değerleri birebir korundu).
 
 **Altın görseller (golden) TÜRKÇE'ye sabitlendi** (`test/tools/home_referans_golden_test.dart`):
 referans görseller TR'dir ve dil başına golden üretmek 7 kat çıktı demektir;
@@ -1770,6 +1798,21 @@ EOF
 | Tur 3 öncesi | 994 | 91 | **110** (9 dosya) | **81** (6 dosya) |
 | Tur 3 sonrası | **803** | 75 | **0** | **0** |
 
+**Tur 4 (building_map + complaints) ölçümü — aynı komut, önce/sonra:**
+
+| | Toplam string | Dosya | `building_map` | `complaints` |
+|---|---|---|---|---|
+| Tur 4 öncesi | 803 | 75 | **84** (4 dosya) | **65** (2 dosya) |
+| Tur 4 sonrası | **654** | 68 | **0** | **0** |
+
+149 string dışa alındı (building_map 84 + complaints 65); **139 yeni ARB
+anahtarı × 7 dil** (359 → 498) + mevcut ortak/görev anahtarlarının yeniden
+kullanımı (`ortakSil`, `ortakVazgec`, `ortakKaydet`, `ortakEkle`, `ortakYenile`,
+`ortakKaydediliyor`, `ortakBeklenmeyenHata`, `modulBinaYapisi`,
+`modulSikayetHaritasi`, `kartTalepAriza`, `talepDurum*` (tur 3),
+`gorevOncelik*`, `gorevGaleridenSec`, `gorevFoto*`, `gorevAtananPersonel`,
+`gorevKategoriDiger/Silinmis`, `devriyeDurumBilinmiyor`).
+
 191 string dışa alındı (tasks 110 + patrol 81); **177 yeni ARB anahtarı × 7 dil**
 (182 → 359) + 12 mevcut ortak anahtarın yeniden kullanımı (`ortakSil`,
 `ortakVazgec`, `ortakKaydet`, `ortakDuzenle`, `ortakEkle`, `ortakYenidenDene`,
@@ -1808,12 +1851,10 @@ rakamı ölçümün o anki halidir; tur 2 başında aynı komut 1.115/100 verdi 
 arada başka modüle dokunulmadı, fark ara commit'lerdeki küçük düzenlemelerden
 gelir.)
 
-Kalan envanter (modül başına, **tur 3 sonrası**; `tasks` ve `patrol` listeden düştü):
+Kalan envanter (modül başına, **tur 4 sonrası**; `tasks`, `patrol`, `building_map` ve `complaints` listeden düştü):
 
 | Modül | Kalan string |
 |---|---|
-| `building_map` | 84 |
-| `complaints` | 65 |
 | `rezervasyon` | 51 |
 | `etkinlik` | 44 |
 | `unit_access` | 41 |

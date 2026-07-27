@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/bina_duzenleme_api.dart';
 import '../domain/bina_duzenleme_models.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// "Bina Düzenleme" editor durumu — bloklar (BOS dahil) + tum daireler yuklenir;
 /// yonetim gorsel olarak blok/kat/daire olusturur/duzenler/siler.
@@ -10,12 +11,16 @@ class BinaDuzenlemeState {
   const BinaDuzenlemeState({
     this.loading = false,
     this.errorMessage,
+    this.hataKimligi,
     this.blocks = const [],
     this.units = const [],
   });
 
   final bool loading;
+  /// Hata KANALI ikilidir: `errorMessage` SUNUCU metnini, `hataKimligi`
+  /// yerellestirilebilir KIMLIGI tasir (bkz. core/error/akis_hatasi.dart).
   final String? errorMessage;
+  final AkisHatasi? hataKimligi;
   final List<BuildingBlock> blocks;
   final List<EditorUnit> units;
 
@@ -54,6 +59,7 @@ class BinaDuzenlemeState {
   BinaDuzenlemeState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     List<BuildingBlock>? blocks,
     List<EditorUnit>? units,
   }) {
@@ -61,6 +67,9 @@ class BinaDuzenlemeState {
       loading: loading ?? this.loading,
       errorMessage:
           errorMessage == _sentinel ? this.errorMessage : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as AkisHatasi?,
       blocks: blocks ?? this.blocks,
       units: units ?? this.units,
     );
@@ -81,7 +90,7 @@ class BinaDuzenlemeController extends Notifier<BinaDuzenlemeState> {
   Future<void> refresh() async {
     if (_refreshing) return;
     _refreshing = true;
-    state = state.copyWith(loading: true, errorMessage: null);
+    state = state.copyWith(loading: true, errorMessage: null, hataKimligi: null);
     try {
       final api = ref.read(binaDuzenlemeApiProvider);
       final results = await Future.wait([api.listBlocks(), api.listUnits()]);
@@ -94,12 +103,13 @@ class BinaDuzenlemeController extends Notifier<BinaDuzenlemeState> {
       );
     } on ApiException catch (e) {
       if (!ref.mounted) return;
-      state = state.copyWith(loading: false, errorMessage: e.message);
+      state = state.copyWith(loading: false, errorMessage: e.message, hataKimligi: null);
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: AkisHatasi.beklenmeyen,
       );
     } finally {
       _refreshing = false;

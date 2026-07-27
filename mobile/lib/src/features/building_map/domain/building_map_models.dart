@@ -10,16 +10,20 @@
 library;
 
 /// Yogunluk rengi (acik sikayet sayisina gore): 0-2 yesil, 3-4 sari, 5+ kirmizi.
+///
+/// KIMLIK / METIN AYRIMI (README §15): enum GORUNEN METIN TASIMAZ. Eskiden bir
+/// `label` alani vardi (TR sabitleri) ama HICBIR YERDE cizilmiyordu — gosterge
+/// esik SAYILARINI yazar ("0–2", "3–4", "5+"). Olu TR metni domain'de tutmak
+/// yerine kaldirildi; renk esleme `densityColor` ile cizim katmanindadir.
 enum DensityRenk {
-  yesil('yesil', 'Yeşil'),
-  sari('sari', 'Sarı'),
-  kirmizi('kirmizi', 'Kırmızı'),
-  unknown('unknown', 'Bilinmeyen');
+  yesil('yesil'),
+  sari('sari'),
+  kirmizi('kirmizi'),
+  unknown('unknown');
 
-  const DensityRenk(this.wire, this.label);
+  const DensityRenk(this.wire);
 
   final String wire;
-  final String label;
 
   static DensityRenk fromWire(String? value) => DensityRenk.values.firstWhere(
         (r) => r.wire == value,

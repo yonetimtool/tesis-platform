@@ -9,7 +9,7 @@ import '../data/task_api.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_category_models.dart';
 import '../domain/task_models.dart';
-import 'rol_adi.dart';
+import '../../auth/presentation/rol_adi.dart';
 import 'tasks_controller.dart';
 
 /// Gorev olustur/duzenle formu (bottom sheet) — admin + yonetici.

@@ -1243,4 +1243,527 @@ class AppLocalizationsEs extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get ortakIptal => 'Cancelar';
+
+  @override
+  String get ortakNotOpsiyonel => 'Nota (opcional)';
+
+  @override
+  String get binaDuzenlemeBaslik => 'Estructura del edificio';
+
+  @override
+  String get binaBlokTile => 'Bloque';
+
+  @override
+  String get binaBlokAtanmamis => 'Sin bloque asignado';
+
+  @override
+  String binaBlokEtiket(Object ad) {
+    return 'Bloque $ad';
+  }
+
+  @override
+  String get binaSaltGoruntulemeAciklama =>
+      'Estructura del edificio (solo lectura). Toque el mosaico de un bloque para ver la distribución de plantas y unidades.';
+
+  @override
+  String get binaDuzenlemeAciklama =>
+      'Añada un bloque, toque el mosaico y coloque plantas y unidades dentro. Cada unidad pertenece a un bloque. El mapa de quejas refleja esta estructura.';
+
+  @override
+  String binaDaireSayisi(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n unidades',
+      one: '$n unidad',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get binaKayitsiz => 'sin registrar';
+
+  @override
+  String get binaBloksuzDairelerSalt =>
+      'Unidades sin bloque asignado (solo lectura).';
+
+  @override
+  String binaBlokYerlesimSalt(Object ad) {
+    return 'Bloque $ad — distribución de plantas y unidades (solo lectura).';
+  }
+
+  @override
+  String get binaBloksuzUyari =>
+      'Estas unidades no están asignadas a ningún bloque (registros antiguos). Se muestran y pueden editarse o eliminarse; para una unidad nueva elija o cree un bloque.';
+
+  @override
+  String binaBlokYerlesimYardim(Object ad) {
+    return 'Bloque $ad — añada plantas y luego unidades con el botón \"+\" de cada planta. Las unidades de la misma planta se alinean.';
+  }
+
+  @override
+  String get binaKatEkle => 'Añadir planta';
+
+  @override
+  String get binaTopluDaireEkle => 'Añadir unidades en lote';
+
+  @override
+  String get binaBloktaDaireYok => 'Aún no hay unidades en este bloque.';
+
+  @override
+  String get binaKatYokBos =>
+      'Aún no hay plantas. Empiece con «Añadir planta» y luego añada unidades con el «+» de la planta.';
+
+  @override
+  String get binaKatYok => 'Sin planta';
+
+  @override
+  String binaKatEtiket(Object kat) {
+    return 'Planta $kat';
+  }
+
+  @override
+  String binaBlokDuzenleBaslik(Object ad) {
+    return 'Bloque $ad — editar';
+  }
+
+  @override
+  String get binaBloguSil => 'Eliminar bloque';
+
+  @override
+  String binaBloguSilAlt(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Se elimina junto con $n unidades (requiere confirmación)',
+      one: 'Se elimina junto con $n unidad (requiere confirmación)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String binaBlokSilinsinMi(Object ad) {
+    return '¿Eliminar el bloque $ad?';
+  }
+
+  @override
+  String binaBlokVeDaireSilindi(Object ad, Object n) {
+    return 'Bloque $ad y $n unidades eliminados.';
+  }
+
+  @override
+  String binaBlokSilindi(Object ad) {
+    return 'Bloque $ad eliminado.';
+  }
+
+  @override
+  String binaBlokSilinemedi(Object hata) {
+    return 'No se pudo eliminar el bloque: $hata';
+  }
+
+  @override
+  String get binaBlokSilinemediGenel =>
+      'No se pudo eliminar el bloque. Inténtelo de nuevo.';
+
+  @override
+  String binaKaliciSilmeUyari(Object n) {
+    return 'Este bloque y sus $n unidades se eliminarán DE FORMA PERMANENTE junto con sus registros de cuotas, visitantes, paquetes, reservas y quejas. Esta acción no se puede deshacer.';
+  }
+
+  @override
+  String get binaOnayIcinBlokAdi =>
+      'Escriba el nombre del bloque para confirmar';
+
+  @override
+  String binaSilNDaire(Object n) {
+    return 'Eliminar ($n unidades)';
+  }
+
+  @override
+  String get binaBlokEtiketiGerekli =>
+      'Se requiere una etiqueta de bloque (ej. A, B1).';
+
+  @override
+  String get binaBlokEtiketiZatenVar =>
+      'Esta etiqueta de bloque ya está registrada.';
+
+  @override
+  String get binaBlokDuzenle => 'Editar bloque';
+
+  @override
+  String get binaYeniBlok => 'Nuevo bloque';
+
+  @override
+  String get binaBlokEtiketi => 'Etiqueta del bloque';
+
+  @override
+  String get binaBlokEtiketiYardim =>
+      'Alfanumérico corto (ej. A, B1) — sin guiones';
+
+  @override
+  String get binaDaireNoGerekli =>
+      'Se requiere el número de unidad (ej. A-12, 12).';
+
+  @override
+  String get binaKatSiraTamSayi =>
+      'La planta y la posición deben ser números enteros.';
+
+  @override
+  String get binaDaireNoZatenVar => 'Este número de unidad ya está registrado.';
+
+  @override
+  String binaDaireDuzenleBaslik(Object no) {
+    return 'Unidad $no — editar';
+  }
+
+  @override
+  String binaYeniDaire(Object blok) {
+    return 'Nueva unidad · $blok';
+  }
+
+  @override
+  String get binaDaireNo => 'Número de unidad';
+
+  @override
+  String get binaDaireNoYardim => 'Alfanumérico + guion (ej. A-12, B3, 12)';
+
+  @override
+  String get binaSira => 'Posición';
+
+  @override
+  String get binaSiraYardim => 'Posición en la planta';
+
+  @override
+  String binaEnFazla500(Object n) {
+    return 'Máximo 500 unidades (ahora $n).';
+  }
+
+  @override
+  String binaTopluOnizleme(
+    Object adet,
+    Object bas,
+    Object bitis,
+    Object kat,
+    Object toplam,
+  ) {
+    return '$bas … $bitis  ($toplam unidades, $kat plantas × $adet)';
+  }
+
+  @override
+  String get binaTopluAlanlarGerekli =>
+      'Se requieren número de plantas, unidades por planta y número inicial.';
+
+  @override
+  String get binaTekSeferde500 => 'Máximo 500 unidades por vez.';
+
+  @override
+  String binaAtlananEk(Object n) {
+    return ' ($n ya existían, omitidas)';
+  }
+
+  @override
+  String binaDaireEklendi(Object ek, Object n) {
+    return '$n unidades añadidas ✓$ek';
+  }
+
+  @override
+  String get binaEklenemedi => 'No se pudo añadir. Inténtelo de nuevo.';
+
+  @override
+  String binaTopluBaslik(Object blok) {
+    return 'Añadir en lote — Bloque $blok';
+  }
+
+  @override
+  String get binaTopluBaslikBloksuz => 'Añadir en lote — sin bloque';
+
+  @override
+  String get binaTopluAciklama =>
+      'Los números son consecutivos desde el inicio, planta por planta. Los existentes se omiten.';
+
+  @override
+  String get binaKatSayisi => 'Número de plantas';
+
+  @override
+  String get binaKatBasinaDaire => 'Unidades por planta';
+
+  @override
+  String get binaBaslangicNo => 'Número inicial';
+
+  @override
+  String get binaBaslangicNoIpucu => 'ej. 101';
+
+  @override
+  String get binaDaireleriOlustur => 'Crear unidades';
+
+  @override
+  String get binaSilinemedi => 'No se pudo eliminar. Inténtelo de nuevo.';
+
+  @override
+  String get binaKaydedilemedi => 'No se pudo guardar. Inténtelo de nuevo.';
+
+  @override
+  String get semaDaireYok => 'Aún no hay unidades.';
+
+  @override
+  String get semaYogunluk => 'Densidad:';
+
+  @override
+  String get semaYerlesimAciklama =>
+      'Distribución del edificio. La densidad de quejas solo se muestra a la administración.';
+
+  @override
+  String get semaYerlesimGirilmemis => 'Distribución no indicada en el mapa';
+
+  @override
+  String semaDaireEtiket(Object no) {
+    return 'Unidad $no';
+  }
+
+  @override
+  String semaAcikSikayet(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n quejas abiertas',
+      one: '$n queja abierta',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get semaBuDaireSikayetlerim => 'Sus quejas sobre esta unidad';
+
+  @override
+  String get semaYogunlukYonetim =>
+      'La densidad de quejas solo se muestra a la administración.';
+
+  @override
+  String get semaBuDaireyiSikayetEt => 'Denunciar esta unidad';
+
+  @override
+  String get semaSikayetIletildi => 'Su queja ha sido enviada.';
+
+  @override
+  String get semaSikayetlerYuklenemedi => 'No se pudieron cargar las quejas.';
+
+  @override
+  String get semaAcikSikayetYok => 'No hay quejas abiertas para esta unidad.';
+
+  @override
+  String get semaSikayetlerimYuklenemedi => 'No se pudieron cargar sus quejas.';
+
+  @override
+  String get semaSikayetimYok => 'No tiene quejas sobre esta unidad.';
+
+  @override
+  String get semaYonetimeIletildi => 'Enviado a la administración';
+
+  @override
+  String get semaKapatildi => 'Cerrado';
+
+  @override
+  String get semaHaftalikSinir =>
+      'Puede abrir como máximo 1 queja por semana sobre este tema para esta unidad.';
+
+  @override
+  String get semaKendiBlok =>
+      'Solo puede denunciar unidades de su propio bloque.';
+
+  @override
+  String get semaGonderilemedi => 'No se pudo enviar. Inténtelo de nuevo.';
+
+  @override
+  String semaSikayetEtBaslik(Object no) {
+    return 'Unidad $no — denunciar';
+  }
+
+  @override
+  String get semaSikayetAnonimNot =>
+      'Su queja se envía a la administración; no se muestra a sus vecinos.';
+
+  @override
+  String get semaSikayetiGonder => 'Enviar queja';
+
+  @override
+  String get kategoriGurultu => 'Ruido';
+
+  @override
+  String get kategoriKapiOnuAyakkabi => 'Entrada / zapatos';
+
+  @override
+  String get kategoriZararVerme => 'Daños';
+
+  @override
+  String talepSekmeAcik(Object n) {
+    return 'Abiertos ($n)';
+  }
+
+  @override
+  String talepSekmeIsEmri(Object n) {
+    return 'Orden de trabajo ($n)';
+  }
+
+  @override
+  String talepSekmeCozulen(Object n) {
+    return 'Resueltos ($n)';
+  }
+
+  @override
+  String talepSekmeReddedilen(Object n) {
+    return 'Rechazados ($n)';
+  }
+
+  @override
+  String get talepYeni => 'Nueva solicitud';
+
+  @override
+  String get talepAcikYokSakin =>
+      'No tiene solicitudes abiertas. Use «Nueva solicitud» para comunicar una solicitud o avería.';
+
+  @override
+  String get talepAcikYok => 'No hay solicitudes abiertas.';
+
+  @override
+  String get talepIsEmriYok =>
+      'No hay solicitudes convertidas en orden de trabajo.';
+
+  @override
+  String get talepCozulenYok => 'Aún no hay solicitudes resueltas.';
+
+  @override
+  String get talepReddedilenYok => 'No hay solicitudes rechazadas.';
+
+  @override
+  String get talepIletildi => 'Su solicitud ha sido enviada ✓';
+
+  @override
+  String get talepDurumGecmisi => 'Historial de estados';
+
+  @override
+  String get talepGorselYuklenemedi => 'No se pudo cargar la imagen';
+
+  @override
+  String get talepIsEmriAtandi => 'Asignado';
+
+  @override
+  String get talepIsEmriTamamlandi => 'Completado';
+
+  @override
+  String get talepIsEmriDurumBilinmiyor => 'Estado desconocido';
+
+  @override
+  String get talepIsEmri => 'Orden de trabajo';
+
+  @override
+  String get talepYeniBaslik => 'Nueva solicitud / avería';
+
+  @override
+  String get talepBaslikAlan => 'Título';
+
+  @override
+  String get talepBaslikZorunlu => 'El título es obligatorio';
+
+  @override
+  String get talepAciklamaAlan => 'Descripción';
+
+  @override
+  String get talepAciklamaZorunlu => 'La descripción es obligatoria';
+
+  @override
+  String get talepGonder => 'Enviar';
+
+  @override
+  String get talepKategoriOpsiyonel => 'Categoría (opcional)';
+
+  @override
+  String get talepKategoriYok =>
+      'No hay categorías definidas; la solicitud se abrirá como «Otros».';
+
+  @override
+  String get talepGorseller => 'Imágenes (opcional, máx. 3)';
+
+  @override
+  String get talepYoneticiIslemleri => 'Acciones del administrador';
+
+  @override
+  String get talepIsEmrineDonusturuldu =>
+      'Solicitud convertida en orden de trabajo ✓';
+
+  @override
+  String get talepIsEmrineDonusturBuyuk => 'Convertir en orden de trabajo';
+
+  @override
+  String get talepCozuldu => 'Solicitud resuelta ✓';
+
+  @override
+  String get talepCoz => 'Resolver';
+
+  @override
+  String get talepReddedildiBildirim => 'Solicitud rechazada ✓';
+
+  @override
+  String get talepReddet => 'Rechazar';
+
+  @override
+  String get talepReddediliyor => 'Rechazando...';
+
+  @override
+  String get talepPersonelAlinamadiKisa =>
+      'No se pudo obtener la lista de personal.';
+
+  @override
+  String get talepIsEmrineDonustur => 'Convertir en orden de trabajo';
+
+  @override
+  String get talepAtanabilirPersonelYok =>
+      'No hay personal de campo activo para asignar. Para convertir, añada primero seguridad u operario de instalaciones.';
+
+  @override
+  String get talepDonusturuluyor => 'Convirtiendo...';
+
+  @override
+  String get talepDonustur => 'Convertir';
+
+  @override
+  String get talepReddetBaslik => 'Rechazar la solicitud';
+
+  @override
+  String get talepRetSebebiNot =>
+      'El motivo del rechazo es visible para el solicitante en el historial de estados.';
+
+  @override
+  String get talepRetSebebi => 'Motivo del rechazo';
+
+  @override
+  String get talepCozBaslik => 'Resolver la solicitud';
+
+  @override
+  String get talepCozNot =>
+      'La solicitud se marca como resuelta directamente, sin orden de trabajo.';
+
+  @override
+  String get talepCozumNotu => 'Nota de resolución (opcional)';
+
+  @override
+  String get talepKategorilerYuklenemedi =>
+      'No se pudieron cargar las categorías.';
+
+  @override
+  String get talepFotoYuklenemedi => 'No se pudo subir la foto.';
+
+  @override
+  String get binaKat => 'Planta';
+
+  @override
+  String get binaKatYardim => '0 = planta baja';
+
+  @override
+  String get binaBloksuz => 'Sin bloque';
+
+  @override
+  String get talepAcanSakin => 'Residente';
 }

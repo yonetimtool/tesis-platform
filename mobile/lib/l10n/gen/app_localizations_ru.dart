@@ -1351,4 +1351,523 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get ortakIptal => 'Отмена';
+
+  @override
+  String get ortakNotOpsiyonel => 'Примечание (необязательно)';
+
+  @override
+  String get binaDuzenlemeBaslik => 'Планировка здания';
+
+  @override
+  String get binaBlokTile => 'Блок';
+
+  @override
+  String get binaBlokAtanmamis => 'Блок не назначен';
+
+  @override
+  String binaBlokEtiket(Object ad) {
+    return 'Блок $ad';
+  }
+
+  @override
+  String get binaSaltGoruntulemeAciklama =>
+      'Структура здания (только просмотр). Нажмите на плитку блока, чтобы увидеть размещение этажей и квартир.';
+
+  @override
+  String get binaDuzenlemeAciklama =>
+      'Добавьте блок, нажмите на плитку и разместите внутри этажи и квартиры. Каждая квартира принадлежит блоку. Карта жалоб отражает эту структуру.';
+
+  @override
+  String binaDaireSayisi(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n квартир',
+      many: '$n квартир',
+      few: '$n квартиры',
+      one: '$n квартира',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get binaKayitsiz => 'не зарегистрировано';
+
+  @override
+  String get binaBloksuzDairelerSalt => 'Квартиры без блока (только просмотр).';
+
+  @override
+  String binaBlokYerlesimSalt(Object ad) {
+    return 'Блок $ad — размещение этажей и квартир (только просмотр).';
+  }
+
+  @override
+  String get binaBloksuzUyari =>
+      'Эти квартиры не привязаны к блоку (старые записи). Они отображаются, их можно изменить или удалить; для новой квартиры выберите или создайте блок.';
+
+  @override
+  String binaBlokYerlesimYardim(Object ad) {
+    return 'Блок $ad — добавьте этажи, затем добавляйте квартиры кнопкой \"+\" каждого этажа. Квартиры одного этажа выстраиваются в ряд.';
+  }
+
+  @override
+  String get binaKatEkle => 'Добавить этаж';
+
+  @override
+  String get binaTopluDaireEkle => 'Массовое добавление квартир';
+
+  @override
+  String get binaBloktaDaireYok => 'В этом блоке пока нет квартир.';
+
+  @override
+  String get binaKatYokBos =>
+      'Этажей пока нет. Начните с «Добавить этаж», затем добавляйте квартиры кнопкой «+» на этаже.';
+
+  @override
+  String get binaKatYok => 'Без этажа';
+
+  @override
+  String binaKatEtiket(Object kat) {
+    return 'Этаж $kat';
+  }
+
+  @override
+  String binaBlokDuzenleBaslik(Object ad) {
+    return 'Блок $ad — изменить';
+  }
+
+  @override
+  String get binaBloguSil => 'Удалить блок';
+
+  @override
+  String binaBloguSilAlt(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Удаляется вместе с $n квартирами (нужно подтверждение)',
+      many: 'Удаляется вместе с $n квартирами (нужно подтверждение)',
+      few: 'Удаляется вместе с $n квартирами (нужно подтверждение)',
+      one: 'Удаляется вместе с $n квартирой (нужно подтверждение)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String binaBlokSilinsinMi(Object ad) {
+    return 'Удалить блок $ad?';
+  }
+
+  @override
+  String binaBlokVeDaireSilindi(Object ad, Object n) {
+    return 'Блок $ad и квартиры ($n) удалены.';
+  }
+
+  @override
+  String binaBlokSilindi(Object ad) {
+    return 'Блок $ad удалён.';
+  }
+
+  @override
+  String binaBlokSilinemedi(Object hata) {
+    return 'Не удалось удалить блок: $hata';
+  }
+
+  @override
+  String get binaBlokSilinemediGenel =>
+      'Не удалось удалить блок. Попробуйте снова.';
+
+  @override
+  String binaKaliciSilmeUyari(Object n) {
+    return 'Этот блок и $n квартир в нём будут УДАЛЕНЫ БЕЗВОЗВРАТНО вместе с записями взносов, посетителей, посылок, бронирований и жалоб. Отменить это нельзя.';
+  }
+
+  @override
+  String get binaOnayIcinBlokAdi => 'Введите название блока для подтверждения';
+
+  @override
+  String binaSilNDaire(Object n) {
+    return 'Удалить ($n кв.)';
+  }
+
+  @override
+  String get binaBlokEtiketiGerekli => 'Требуется метка блока (напр. A, B1).';
+
+  @override
+  String get binaBlokEtiketiZatenVar => 'Такая метка блока уже существует.';
+
+  @override
+  String get binaBlokDuzenle => 'Изменить блок';
+
+  @override
+  String get binaYeniBlok => 'Новый блок';
+
+  @override
+  String get binaBlokEtiketi => 'Метка блока';
+
+  @override
+  String get binaBlokEtiketiYardim =>
+      'Короткий буквенно-цифровой код (напр. A, B1) — без дефиса';
+
+  @override
+  String get binaDaireNoGerekli => 'Требуется номер квартиры (напр. A-12, 12).';
+
+  @override
+  String get binaKatSiraTamSayi => 'Этаж и позиция должны быть целыми числами.';
+
+  @override
+  String get binaDaireNoZatenVar => 'Такой номер квартиры уже существует.';
+
+  @override
+  String binaDaireDuzenleBaslik(Object no) {
+    return 'Квартира $no — изменить';
+  }
+
+  @override
+  String binaYeniDaire(Object blok) {
+    return 'Новая квартира · $blok';
+  }
+
+  @override
+  String get binaDaireNo => 'Номер квартиры';
+
+  @override
+  String get binaDaireNoYardim => 'Буквы/цифры + дефис (напр. A-12, B3, 12)';
+
+  @override
+  String get binaSira => 'Позиция';
+
+  @override
+  String get binaSiraYardim => 'Место на этаже';
+
+  @override
+  String binaEnFazla500(Object n) {
+    return 'Не более 500 квартир (сейчас $n).';
+  }
+
+  @override
+  String binaTopluOnizleme(
+    Object adet,
+    Object bas,
+    Object bitis,
+    Object kat,
+    Object toplam,
+  ) {
+    return '$bas … $bitis  ($toplam кв., $kat этаж × $adet)';
+  }
+
+  @override
+  String get binaTopluAlanlarGerekli =>
+      'Требуются число этажей, квартир на этаж и начальный номер.';
+
+  @override
+  String get binaTekSeferde500 => 'Не более 500 квартир за один раз.';
+
+  @override
+  String binaAtlananEk(Object n) {
+    return ' ($n уже были, пропущены)';
+  }
+
+  @override
+  String binaDaireEklendi(Object ek, Object n) {
+    return 'Добавлено квартир: $n ✓$ek';
+  }
+
+  @override
+  String get binaEklenemedi => 'Не удалось добавить. Попробуйте снова.';
+
+  @override
+  String binaTopluBaslik(Object blok) {
+    return 'Массовое добавление — Блок $blok';
+  }
+
+  @override
+  String get binaTopluBaslikBloksuz => 'Массовое добавление — без блока';
+
+  @override
+  String get binaTopluAciklama =>
+      'Номера идут последовательно от начального, заполняя этаж за этажом. Существующие пропускаются.';
+
+  @override
+  String get binaKatSayisi => 'Число этажей';
+
+  @override
+  String get binaKatBasinaDaire => 'Квартир на этаж';
+
+  @override
+  String get binaBaslangicNo => 'Начальный номер';
+
+  @override
+  String get binaBaslangicNoIpucu => 'напр. 101';
+
+  @override
+  String get binaDaireleriOlustur => 'Создать квартиры';
+
+  @override
+  String get binaSilinemedi => 'Не удалось удалить. Попробуйте снова.';
+
+  @override
+  String get binaKaydedilemedi => 'Не удалось сохранить. Попробуйте снова.';
+
+  @override
+  String get semaDaireYok => 'Квартир пока нет.';
+
+  @override
+  String get semaYogunluk => 'Плотность:';
+
+  @override
+  String get semaYerlesimAciklama =>
+      'Планировка здания. Плотность жалоб видна только руководству.';
+
+  @override
+  String get semaYerlesimGirilmemis => 'Размещение на карте не задано';
+
+  @override
+  String semaDaireEtiket(Object no) {
+    return 'Квартира $no';
+  }
+
+  @override
+  String semaAcikSikayet(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n открытых жалоб',
+      many: '$n открытых жалоб',
+      few: '$n открытые жалобы',
+      one: '$n открытая жалоба',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get semaBuDaireSikayetlerim => 'Ваши жалобы по этой квартире';
+
+  @override
+  String get semaYogunlukYonetim => 'Плотность жалоб видна только руководству.';
+
+  @override
+  String get semaBuDaireyiSikayetEt => 'Пожаловаться на эту квартиру';
+
+  @override
+  String get semaSikayetIletildi => 'Ваша жалоба отправлена.';
+
+  @override
+  String get semaSikayetlerYuklenemedi => 'Не удалось загрузить жалобы.';
+
+  @override
+  String get semaAcikSikayetYok => 'По этой квартире нет открытых жалоб.';
+
+  @override
+  String get semaSikayetlerimYuklenemedi => 'Не удалось загрузить ваши жалобы.';
+
+  @override
+  String get semaSikayetimYok => 'У вас нет жалоб на эту квартиру.';
+
+  @override
+  String get semaYonetimeIletildi => 'Отправлено руководству';
+
+  @override
+  String get semaKapatildi => 'Закрыто';
+
+  @override
+  String get semaHaftalikSinir =>
+      'По этой теме для этой квартиры можно подать не более 1 жалобы в неделю.';
+
+  @override
+  String get semaKendiBlok =>
+      'Жаловаться можно только на квартиры в своём блоке.';
+
+  @override
+  String get semaGonderilemedi => 'Не удалось отправить. Попробуйте снова.';
+
+  @override
+  String semaSikayetEtBaslik(Object no) {
+    return 'Квартира $no — жалоба';
+  }
+
+  @override
+  String get semaSikayetAnonimNot =>
+      'Ваша жалоба поступает руководству; соседям она не показывается.';
+
+  @override
+  String get semaSikayetiGonder => 'Отправить жалобу';
+
+  @override
+  String get kategoriGurultu => 'Шум';
+
+  @override
+  String get kategoriKapiOnuAyakkabi => 'Перед дверью / обувь';
+
+  @override
+  String get kategoriZararVerme => 'Порча имущества';
+
+  @override
+  String talepSekmeAcik(Object n) {
+    return 'Открытые ($n)';
+  }
+
+  @override
+  String talepSekmeIsEmri(Object n) {
+    return 'Наряды ($n)';
+  }
+
+  @override
+  String talepSekmeCozulen(Object n) {
+    return 'Решённые ($n)';
+  }
+
+  @override
+  String talepSekmeReddedilen(Object n) {
+    return 'Отклонённые ($n)';
+  }
+
+  @override
+  String get talepYeni => 'Новая заявка';
+
+  @override
+  String get talepAcikYokSakin =>
+      'У вас нет открытых заявок. Через «Новая заявка» можно сообщить о заявке или неисправности.';
+
+  @override
+  String get talepAcikYok => 'Открытых заявок нет.';
+
+  @override
+  String get talepIsEmriYok => 'Нет заявок, преобразованных в наряд.';
+
+  @override
+  String get talepCozulenYok => 'Решённых заявок пока нет.';
+
+  @override
+  String get talepReddedilenYok => 'Отклонённых заявок нет.';
+
+  @override
+  String get talepIletildi => 'Ваша заявка отправлена ✓';
+
+  @override
+  String get talepDurumGecmisi => 'История статусов';
+
+  @override
+  String get talepGorselYuklenemedi => 'Не удалось загрузить изображение';
+
+  @override
+  String get talepIsEmriAtandi => 'Назначен';
+
+  @override
+  String get talepIsEmriTamamlandi => 'Завершён';
+
+  @override
+  String get talepIsEmriDurumBilinmiyor => 'Статус неизвестен';
+
+  @override
+  String get talepIsEmri => 'Наряд';
+
+  @override
+  String get talepYeniBaslik => 'Новая заявка / неисправность';
+
+  @override
+  String get talepBaslikAlan => 'Заголовок';
+
+  @override
+  String get talepBaslikZorunlu => 'Заголовок обязателен';
+
+  @override
+  String get talepAciklamaAlan => 'Описание';
+
+  @override
+  String get talepAciklamaZorunlu => 'Описание обязательно';
+
+  @override
+  String get talepGonder => 'Отправить';
+
+  @override
+  String get talepKategoriOpsiyonel => 'Категория (необязательно)';
+
+  @override
+  String get talepKategoriYok =>
+      'Категории не заданы; заявка будет открыта как «Другое».';
+
+  @override
+  String get talepGorseller => 'Изображения (необязательно, до 3)';
+
+  @override
+  String get talepYoneticiIslemleri => 'Действия управляющего';
+
+  @override
+  String get talepIsEmrineDonusturuldu => 'Заявка преобразована в наряд ✓';
+
+  @override
+  String get talepIsEmrineDonusturBuyuk => 'Преобразовать в наряд';
+
+  @override
+  String get talepCozuldu => 'Заявка решена ✓';
+
+  @override
+  String get talepCoz => 'Решить';
+
+  @override
+  String get talepReddedildiBildirim => 'Заявка отклонена ✓';
+
+  @override
+  String get talepReddet => 'Отклонить';
+
+  @override
+  String get talepReddediliyor => 'Отклонение...';
+
+  @override
+  String get talepPersonelAlinamadiKisa =>
+      'Не удалось получить список сотрудников.';
+
+  @override
+  String get talepIsEmrineDonustur => 'Преобразовать в наряд';
+
+  @override
+  String get talepAtanabilirPersonelYok =>
+      'Нет активных сотрудников для назначения. Чтобы преобразовать, сначала добавьте охрану или техника.';
+
+  @override
+  String get talepDonusturuluyor => 'Преобразование...';
+
+  @override
+  String get talepDonustur => 'Преобразовать';
+
+  @override
+  String get talepReddetBaslik => 'Отклонить заявку';
+
+  @override
+  String get talepRetSebebiNot =>
+      'Причина отклонения видна заявителю в истории статусов.';
+
+  @override
+  String get talepRetSebebi => 'Причина отклонения';
+
+  @override
+  String get talepCozBaslik => 'Решить заявку';
+
+  @override
+  String get talepCozNot =>
+      'Заявка помечается решённой сразу, без создания наряда.';
+
+  @override
+  String get talepCozumNotu => 'Примечание к решению (необязательно)';
+
+  @override
+  String get talepKategorilerYuklenemedi => 'Не удалось загрузить категории.';
+
+  @override
+  String get talepFotoYuklenemedi => 'Не удалось загрузить фото.';
+
+  @override
+  String get binaKat => 'Этаж';
+
+  @override
+  String get binaKatYardim => '0 = первый этаж';
+
+  @override
+  String get binaBloksuz => 'Без блока';
+
+  @override
+  String get talepAcanSakin => 'Житель';
 }

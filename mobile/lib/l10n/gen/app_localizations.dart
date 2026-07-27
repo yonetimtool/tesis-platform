@@ -2261,6 +2261,846 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{n} okutma gönderim bekliyor'**
   String devriyeOkutmaBekliyor(num n);
+
+  /// No description provided for @ortakIptal.
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal'**
+  String get ortakIptal;
+
+  /// No description provided for @ortakNotOpsiyonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Not (opsiyonel)'**
+  String get ortakNotOpsiyonel;
+
+  /// No description provided for @binaDuzenlemeBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bina Düzenleme'**
+  String get binaDuzenlemeBaslik;
+
+  /// No description provided for @binaBlokTile.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok'**
+  String get binaBlokTile;
+
+  /// No description provided for @binaBlokAtanmamis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok atanmamış'**
+  String get binaBlokAtanmamis;
+
+  /// ad = blok etiketi (A, B1 ...) — SUNUCU verisi, cevrilmez
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok {ad}'**
+  String binaBlokEtiket(Object ad);
+
+  /// No description provided for @binaSaltGoruntulemeAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bina yapısı (salt görüntüleme). Blok kutucuğuna dokunup kat ve daire yerleşimini görebilirsiniz.'**
+  String get binaSaltGoruntulemeAciklama;
+
+  /// No description provided for @binaDuzenlemeAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok ekleyin, kutucuğa dokunup içine kat ve daire yerleştirin. Her daire bir bloğa bağlanır. Şikayet Haritası bu yapıyı yansıtır.'**
+  String get binaDuzenlemeAciklama;
+
+  /// Blok kutucugundaki daire sayaci (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daire'**
+  String binaDaireSayisi(num n);
+
+  /// No description provided for @binaKayitsiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'kayıtsız'**
+  String get binaKayitsiz;
+
+  /// No description provided for @binaBloksuzDairelerSalt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bloğa atanmamış daireler (salt görüntüleme).'**
+  String get binaBloksuzDairelerSalt;
+
+  /// No description provided for @binaBlokYerlesimSalt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok {ad} — kat ve daire yerleşimi (salt görüntüleme).'**
+  String binaBlokYerlesimSalt(Object ad);
+
+  /// No description provided for @binaBloksuzUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu daireler bir bloğa atanmamış (eski kayıtlar). Görüntülenir, düzenlenip silinebilir; yeni daire için bir blok seçin/oluşturun.'**
+  String get binaBloksuzUyari;
+
+  /// No description provided for @binaBlokYerlesimYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok {ad} — kat ekleyip her katın \"+\" düğmesiyle daire ekleyin. Aynı kattakiler yan yana dizilir.'**
+  String binaBlokYerlesimYardim(Object ad);
+
+  /// No description provided for @binaKatEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kat ekle'**
+  String get binaKatEkle;
+
+  /// No description provided for @binaTopluDaireEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplu daire ekle'**
+  String get binaTopluDaireEkle;
+
+  /// No description provided for @binaBloktaDaireYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu blokta henüz daire yok.'**
+  String get binaBloktaDaireYok;
+
+  /// No description provided for @binaKatYokBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz kat yok. \"Kat ekle\" ile başlayın, sonra kattaki \"+\" ile daire ekleyin.'**
+  String get binaKatYokBos;
+
+  /// No description provided for @binaKatYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kat yok'**
+  String get binaKatYok;
+
+  /// No description provided for @binaKatEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kat {kat}'**
+  String binaKatEtiket(Object kat);
+
+  /// No description provided for @binaBlokDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok {ad} — düzenle'**
+  String binaBlokDuzenleBaslik(Object ad);
+
+  /// No description provided for @binaBloguSil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bloğu sil'**
+  String get binaBloguSil;
+
+  /// Blok silme secenegi alt metni (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daire ile birlikte silinir (onay gerekir)'**
+  String binaBloguSilAlt(num n);
+
+  /// No description provided for @binaBlokSilinsinMi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok {ad} silinsin mi?'**
+  String binaBlokSilinsinMi(Object ad);
+
+  /// No description provided for @binaBlokVeDaireSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok {ad} ve {n} daire silindi.'**
+  String binaBlokVeDaireSilindi(Object ad, Object n);
+
+  /// No description provided for @binaBlokSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok {ad} silindi.'**
+  String binaBlokSilindi(Object ad);
+
+  /// No description provided for @binaBlokSilinemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok silinemedi: {hata}'**
+  String binaBlokSilinemedi(Object hata);
+
+  /// No description provided for @binaBlokSilinemediGenel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok silinemedi. Lütfen tekrar deneyin.'**
+  String get binaBlokSilinemediGenel;
+
+  /// No description provided for @binaKaliciSilmeUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu blok ve içindeki {n} daire; aidat, ziyaretçi, kargo, rezervasyon ve şikayet kayıtlarıyla birlikte KALICI olarak silinecek. Bu işlem geri alınamaz.'**
+  String binaKaliciSilmeUyari(Object n);
+
+  /// No description provided for @binaOnayIcinBlokAdi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onaylamak için blok adını yazın'**
+  String get binaOnayIcinBlokAdi;
+
+  /// No description provided for @binaSilNDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sil ({n} daire)'**
+  String binaSilNDaire(Object n);
+
+  /// No description provided for @binaBlokEtiketiGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok etiketi gerekli (örn. A, B1).'**
+  String get binaBlokEtiketiGerekli;
+
+  /// No description provided for @binaBlokEtiketiZatenVar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu blok etiketi zaten kayıtlı.'**
+  String get binaBlokEtiketiZatenVar;
+
+  /// No description provided for @binaBlokDuzenle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok düzenle'**
+  String get binaBlokDuzenle;
+
+  /// No description provided for @binaYeniBlok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni blok'**
+  String get binaYeniBlok;
+
+  /// No description provided for @binaBlokEtiketi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok etiketi'**
+  String get binaBlokEtiketi;
+
+  /// No description provided for @binaBlokEtiketiYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kısa alfanumerik (örn. A, B1) — tire yok'**
+  String get binaBlokEtiketiYardim;
+
+  /// No description provided for @binaDaireNoGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire no gerekli (örn. A-12, 12).'**
+  String get binaDaireNoGerekli;
+
+  /// No description provided for @binaKatSiraTamSayi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kat ve sıra tam sayı olmalı.'**
+  String get binaKatSiraTamSayi;
+
+  /// No description provided for @binaDaireNoZatenVar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu daire no zaten kayıtlı.'**
+  String get binaDaireNoZatenVar;
+
+  /// No description provided for @binaDaireDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire {no} — düzenle'**
+  String binaDaireDuzenleBaslik(Object no);
+
+  /// No description provided for @binaYeniDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni daire · {blok}'**
+  String binaYeniDaire(Object blok);
+
+  /// No description provided for @binaDaireNo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire no'**
+  String get binaDaireNo;
+
+  /// No description provided for @binaDaireNoYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alfanumerik + tire (örn. A-12, B3, 12)'**
+  String get binaDaireNoYardim;
+
+  /// No description provided for @binaSira.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sıra'**
+  String get binaSira;
+
+  /// No description provided for @binaSiraYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kattaki konum'**
+  String get binaSiraYardim;
+
+  /// No description provided for @binaEnFazla500.
+  ///
+  /// In tr, this message translates to:
+  /// **'En fazla 500 daire (şu an {n}).'**
+  String binaEnFazla500(Object n);
+
+  /// Toplu ekleme onizlemesi: ilk … son (toplam, kat x adet)
+  ///
+  /// In tr, this message translates to:
+  /// **'{bas} … {bitis}  ({toplam} daire, {kat} kat × {adet})'**
+  String binaTopluOnizleme(
+    Object adet,
+    Object bas,
+    Object bitis,
+    Object kat,
+    Object toplam,
+  );
+
+  /// No description provided for @binaTopluAlanlarGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kat sayısı, kat başına daire ve başlangıç no gerekli.'**
+  String get binaTopluAlanlarGerekli;
+
+  /// No description provided for @binaTekSeferde500.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tek seferde en fazla 500 daire.'**
+  String get binaTekSeferde500;
+
+  /// No description provided for @binaAtlananEk.
+  ///
+  /// In tr, this message translates to:
+  /// **' ({n} zaten vardı, atlandı)'**
+  String binaAtlananEk(Object n);
+
+  /// ek = ' (n zaten vardi, atlandi)' eki ya da bos
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daire eklendi ✓{ek}'**
+  String binaDaireEklendi(Object ek, Object n);
+
+  /// No description provided for @binaEklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eklenemedi. Tekrar deneyin.'**
+  String get binaEklenemedi;
+
+  /// No description provided for @binaTopluBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplu daire ekle — Blok {blok}'**
+  String binaTopluBaslik(Object blok);
+
+  /// No description provided for @binaTopluBaslikBloksuz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplu daire ekle — Bloksuz'**
+  String get binaTopluBaslikBloksuz;
+
+  /// No description provided for @binaTopluAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Numaralar başlangıçtan itibaren ardışık, kat kat dolar. Var olanlar atlanır.'**
+  String get binaTopluAciklama;
+
+  /// No description provided for @binaKatSayisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kat sayısı'**
+  String get binaKatSayisi;
+
+  /// No description provided for @binaKatBasinaDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kat başına daire'**
+  String get binaKatBasinaDaire;
+
+  /// No description provided for @binaBaslangicNo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç no'**
+  String get binaBaslangicNo;
+
+  /// No description provided for @binaBaslangicNoIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. 101'**
+  String get binaBaslangicNoIpucu;
+
+  /// No description provided for @binaDaireleriOlustur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daireleri oluştur'**
+  String get binaDaireleriOlustur;
+
+  /// No description provided for @binaSilinemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Silinemedi. Lütfen tekrar deneyin.'**
+  String get binaSilinemedi;
+
+  /// No description provided for @binaKaydedilemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydedilemedi. Lütfen tekrar deneyin.'**
+  String get binaKaydedilemedi;
+
+  /// No description provided for @semaDaireYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz daire yok.'**
+  String get semaDaireYok;
+
+  /// No description provided for @semaYogunluk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yoğunluk:'**
+  String get semaYogunluk;
+
+  /// No description provided for @semaYerlesimAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bina yerleşimi. Şikayet yoğunluğu yalnızca yönetime gösterilir.'**
+  String get semaYerlesimAciklama;
+
+  /// No description provided for @semaYerlesimGirilmemis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Haritada yerleşimi girilmemiş'**
+  String get semaYerlesimGirilmemis;
+
+  /// No description provided for @semaDaireEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire {no}'**
+  String semaDaireEtiket(Object no);
+
+  /// Dairenin acik sikayet sayisi (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} açık şikayet'**
+  String semaAcikSikayet(num n);
+
+  /// No description provided for @semaBuDaireSikayetlerim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu daire için şikayetleriniz'**
+  String get semaBuDaireSikayetlerim;
+
+  /// No description provided for @semaYogunlukYonetim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikayet yoğunluğu yalnızca yönetime gösterilir.'**
+  String get semaYogunlukYonetim;
+
+  /// No description provided for @semaBuDaireyiSikayetEt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu daireyi şikayet et'**
+  String get semaBuDaireyiSikayetEt;
+
+  /// No description provided for @semaSikayetIletildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikayetiniz iletildi.'**
+  String get semaSikayetIletildi;
+
+  /// No description provided for @semaSikayetlerYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikayetler yüklenemedi.'**
+  String get semaSikayetlerYuklenemedi;
+
+  /// No description provided for @semaAcikSikayetYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu daire için açık şikayet yok.'**
+  String get semaAcikSikayetYok;
+
+  /// No description provided for @semaSikayetlerimYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikayetleriniz yüklenemedi.'**
+  String get semaSikayetlerimYuklenemedi;
+
+  /// No description provided for @semaSikayetimYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu daireye şikayetiniz yok.'**
+  String get semaSikayetimYok;
+
+  /// No description provided for @semaYonetimeIletildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetime iletildi'**
+  String get semaYonetimeIletildi;
+
+  /// No description provided for @semaKapatildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapatıldı'**
+  String get semaKapatildi;
+
+  /// No description provided for @semaHaftalikSinir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu daire için bu konuda haftada en fazla 1 şikayet açabilirsiniz.'**
+  String get semaHaftalikSinir;
+
+  /// No description provided for @semaKendiBlok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnızca kendi bloğunuzdaki daireleri şikayet edebilirsiniz.'**
+  String get semaKendiBlok;
+
+  /// No description provided for @semaGonderilemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderilemedi. Lütfen tekrar deneyin.'**
+  String get semaGonderilemedi;
+
+  /// No description provided for @semaSikayetEtBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire {no} — şikayet et'**
+  String semaSikayetEtBaslik(Object no);
+
+  /// No description provided for @semaSikayetAnonimNot.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikayetiniz yönetime iletilir; komşularınıza gösterilmez.'**
+  String get semaSikayetAnonimNot;
+
+  /// No description provided for @semaSikayetiGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikayeti gönder'**
+  String get semaSikayetiGonder;
+
+  /// UnitComplaintKategori gorunen adlari — enum METIN TASIMAZ
+  ///
+  /// In tr, this message translates to:
+  /// **'Gürültü'**
+  String get kategoriGurultu;
+
+  /// No description provided for @kategoriKapiOnuAyakkabi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapı önü / ayakkabı'**
+  String get kategoriKapiOnuAyakkabi;
+
+  /// No description provided for @kategoriZararVerme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zarar verme'**
+  String get kategoriZararVerme;
+
+  /// No description provided for @talepSekmeAcik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık ({n})'**
+  String talepSekmeAcik(Object n);
+
+  /// No description provided for @talepSekmeIsEmri.
+  ///
+  /// In tr, this message translates to:
+  /// **'İş Emri ({n})'**
+  String talepSekmeIsEmri(Object n);
+
+  /// No description provided for @talepSekmeCozulen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çözülen ({n})'**
+  String talepSekmeCozulen(Object n);
+
+  /// No description provided for @talepSekmeReddedilen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Reddedilen ({n})'**
+  String talepSekmeReddedilen(Object n);
+
+  /// No description provided for @talepYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni talep'**
+  String get talepYeni;
+
+  /// No description provided for @talepAcikYokSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık talebiniz yok. \"Yeni talep\" ile talep/arızanızı iletebilirsiniz.'**
+  String get talepAcikYokSakin;
+
+  /// No description provided for @talepAcikYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık talep yok.'**
+  String get talepAcikYok;
+
+  /// No description provided for @talepIsEmriYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'İş emrine dönüşen talep yok.'**
+  String get talepIsEmriYok;
+
+  /// No description provided for @talepCozulenYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz çözülen talep yok.'**
+  String get talepCozulenYok;
+
+  /// No description provided for @talepReddedilenYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Reddedilen talep yok.'**
+  String get talepReddedilenYok;
+
+  /// No description provided for @talepIletildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talebiniz iletildi ✓'**
+  String get talepIletildi;
+
+  /// No description provided for @talepDurumGecmisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Durum geçmişi'**
+  String get talepDurumGecmisi;
+
+  /// No description provided for @talepGorselYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görsel yüklenemedi'**
+  String get talepGorselYuklenemedi;
+
+  /// No description provided for @talepIsEmriAtandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Atandı'**
+  String get talepIsEmriAtandi;
+
+  /// No description provided for @talepIsEmriTamamlandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlandı'**
+  String get talepIsEmriTamamlandi;
+
+  /// No description provided for @talepIsEmriDurumBilinmiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Durum bilinmiyor'**
+  String get talepIsEmriDurumBilinmiyor;
+
+  /// No description provided for @talepIsEmri.
+  ///
+  /// In tr, this message translates to:
+  /// **'İş emri'**
+  String get talepIsEmri;
+
+  /// No description provided for @talepYeniBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni talep / arıza'**
+  String get talepYeniBaslik;
+
+  /// No description provided for @talepBaslikAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlık'**
+  String get talepBaslikAlan;
+
+  /// No description provided for @talepBaslikZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlık zorunludur'**
+  String get talepBaslikZorunlu;
+
+  /// No description provided for @talepAciklamaAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama'**
+  String get talepAciklamaAlan;
+
+  /// No description provided for @talepAciklamaZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama zorunludur'**
+  String get talepAciklamaZorunlu;
+
+  /// No description provided for @talepGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönder'**
+  String get talepGonder;
+
+  /// No description provided for @talepKategoriOpsiyonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori (opsiyonel)'**
+  String get talepKategoriOpsiyonel;
+
+  /// No description provided for @talepKategoriYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tanımlı kategori yok; talep \"Diğer\" olarak açılır.'**
+  String get talepKategoriYok;
+
+  /// No description provided for @talepGorseller.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görseller (opsiyonel, en fazla 3)'**
+  String get talepGorseller;
+
+  /// No description provided for @talepYoneticiIslemleri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici işlemleri'**
+  String get talepYoneticiIslemleri;
+
+  /// No description provided for @talepIsEmrineDonusturuldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep iş emrine dönüştürüldü ✓'**
+  String get talepIsEmrineDonusturuldu;
+
+  /// No description provided for @talepIsEmrineDonusturBuyuk.
+  ///
+  /// In tr, this message translates to:
+  /// **'İş Emrine Dönüştür'**
+  String get talepIsEmrineDonusturBuyuk;
+
+  /// No description provided for @talepCozuldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep çözüldü ✓'**
+  String get talepCozuldu;
+
+  /// No description provided for @talepCoz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çöz'**
+  String get talepCoz;
+
+  /// No description provided for @talepReddedildiBildirim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep reddedildi ✓'**
+  String get talepReddedildiBildirim;
+
+  /// No description provided for @talepReddet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Reddet'**
+  String get talepReddet;
+
+  /// No description provided for @talepReddediliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Reddediliyor...'**
+  String get talepReddediliyor;
+
+  /// No description provided for @talepPersonelAlinamadiKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel listesi alınamadı.'**
+  String get talepPersonelAlinamadiKisa;
+
+  /// No description provided for @talepIsEmrineDonustur.
+  ///
+  /// In tr, this message translates to:
+  /// **'İş emrine dönüştür'**
+  String get talepIsEmrineDonustur;
+
+  /// No description provided for @talepAtanabilirPersonelYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Atanabilir aktif saha personeli yok. Dönüştürmek için önce security/tesis görevlisi ekleyin.'**
+  String get talepAtanabilirPersonelYok;
+
+  /// No description provided for @talepDonusturuluyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dönüştürülüyor...'**
+  String get talepDonusturuluyor;
+
+  /// No description provided for @talepDonustur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dönüştür'**
+  String get talepDonustur;
+
+  /// No description provided for @talepReddetBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talebi reddet'**
+  String get talepReddetBaslik;
+
+  /// No description provided for @talepRetSebebiNot.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ret sebebi talebi açan kişiye durum geçmişinde görünür.'**
+  String get talepRetSebebiNot;
+
+  /// No description provided for @talepRetSebebi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ret sebebi'**
+  String get talepRetSebebi;
+
+  /// No description provided for @talepCozBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talebi çöz'**
+  String get talepCozBaslik;
+
+  /// No description provided for @talepCozNot.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep iş emri açmadan doğrudan çözüldü olarak işaretlenir.'**
+  String get talepCozNot;
+
+  /// No description provided for @talepCozumNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çözüm notu (opsiyonel)'**
+  String get talepCozumNotu;
+
+  /// No description provided for @talepKategorilerYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategoriler yüklenemedi.'**
+  String get talepKategorilerYuklenemedi;
+
+  /// No description provided for @talepFotoYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf yüklenemedi.'**
+  String get talepFotoYuklenemedi;
+
+  /// No description provided for @binaKat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kat'**
+  String get binaKat;
+
+  /// No description provided for @binaKatYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'0 = zemin'**
+  String get binaKatYardim;
+
+  /// No description provided for @binaBloksuz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bloksuz'**
+  String get binaBloksuz;
+
+  /// No description provided for @talepAcanSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin'**
+  String get talepAcanSakin;
 }
 
 class _AppLocalizationsDelegate

@@ -1,5 +1,8 @@
 /// [UserRole] -> aktif dildeki gorunen ad.
 ///
+/// Tur 4'te tasks/presentation'dan BURAYA tasindi: ikinci tuketici (complaints)
+/// cikti ve rolun sahibi auth modulu.
+///
 /// KIMLIK / METIN AYRIMI (README §15): enum domain'de METIN TASIMAZ
 /// (`UserRole.label` henuz cevrilmemis modullerin TR sabitidir); `switch`
 /// cizim katmanindadir — `CameraUrlHatasi` emsali. `default` dali YOKTUR:
@@ -7,7 +10,7 @@
 library;
 
 import '../../../core/i18n/l10n.dart';
-import '../../auth/domain/user_role.dart';
+import '../domain/user_role.dart';
 
 String rolAdi(AppLocalizations l10n, UserRole rol) => switch (rol) {
       UserRole.admin => l10n.rolAdmin,

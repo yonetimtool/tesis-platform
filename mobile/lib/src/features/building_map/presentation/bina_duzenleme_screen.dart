@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/error/akis_hatasi.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
@@ -71,10 +72,10 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: drilledIn ? BackButton(onPressed: _closeBlock) : null,
-        title: Text(trUpper(_titleFor(readOnly))),
+        title: Text(baslikBuyuk(_titleFor(readOnly), context.dilKodu)),
         actions: [
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: context.l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
             onPressed: state.loading ? null : controller.refresh,
           ),
@@ -88,24 +89,27 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
   }
 
   String _titleFor(bool readOnly) {
+    final l10n = context.l10n;
     if (_openBlock != null) {
       return _openBlock == _blocklessKey
-          ? 'Blok atanmamış'
-          : 'Blok $_openBlock';
+          ? l10n.binaBlokAtanmamis
+          : l10n.binaBlokEtiket(_openBlock!);
     }
     // Salt-okuma rollerinde baslik "Bina Yapisi" (duzenleme cagrismasi olmasin).
-    return readOnly ? 'Bina Yapısı' : 'Bina Düzenleme';
+    return readOnly ? l10n.modulBinaYapisi : l10n.binaDuzenlemeBaslik;
   }
 
   Widget _body(BinaDuzenlemeState state, bool readOnly) {
     if (state.loading && state.bos) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null && state.bos) {
+    final hataMetni =
+        akisHatasiCoz(context.l10n, state.hataKimligi, state.errorMessage);
+    if (hataMetni != null && state.bos) {
       return ListView(
         children: [
           const SizedBox(height: 120),
-          Center(child: Text(state.errorMessage!)),
+          Center(child: Text(hataMetni)),
         ],
       );
     }
@@ -133,11 +137,13 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
   }
 
   Widget? _errorBanner(BinaDuzenlemeState state) {
-    if (state.errorMessage == null || state.bos) return null;
+    final hataMetni =
+        akisHatasiCoz(context.l10n, state.hataKimligi, state.errorMessage);
+    if (hataMetni == null || state.bos) return null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
-        state.errorMessage!,
+        hataMetni,
         style: TextStyle(color: Theme.of(context).colorScheme.error),
       ),
     );
@@ -192,10 +198,8 @@ class _BlockList extends ConsumerWidget {
         ?errorBanner,
         Text(
           readOnly
-              ? 'Bina yapısı (salt görüntüleme). Blok kutucuğuna dokunup '
-                  'kat ve daire yerleşimini görebilirsiniz.'
-              : 'Blok ekleyin, kutucuğa dokunup içine kat ve daire yerleştirin. '
-                  'Her daire bir bloğa bağlanır. Şikayet Haritası bu yapıyı yansıtır.',
+              ? context.l10n.binaSaltGoruntulemeAciklama
+              : context.l10n.binaDuzenlemeAciklama,
           style: TextStyle(
               fontSize: 13,
               color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -218,7 +222,7 @@ class _BlockList extends ConsumerWidget {
               ),
             if (showBlockless)
               _BlockTile(
-                label: 'Blok atanmamış',
+                label: context.l10n.binaBlokAtanmamis,
                 unitCount: state.blocklessUnits.length,
                 registered: true,
                 icon: Icons.tag,
@@ -279,19 +283,19 @@ class _BlockTile extends StatelessWidget {
             Icon(icon ?? Icons.domain, color: iconColor),
             const SizedBox(height: 4),
             Text(
-              icon == null ? 'Blok $label' : label,
+              icon == null ? context.l10n.binaBlokEtiket(label) : label,
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: titleColor,
               ),
               overflow: TextOverflow.ellipsis,
             ),
-            Text('$unitCount daire',
+            Text(context.l10n.binaDaireSayisi(unitCount),
                 style: TextStyle(
                     fontSize: 11, color: scheme.onSurfaceVariant)),
             if (!registered)
-              const Text('kayıtsız',
-                  style: TextStyle(fontSize: 10, color: Colors.orange)),
+              Text(context.l10n.binaKayitsiz,
+                  style: const TextStyle(fontSize: 10, color: Colors.orange)),
           ],
         ),
       ),
@@ -327,7 +331,7 @@ class _AddTile extends StatelessWidget {
           children: [
             Icon(Icons.add, color: fg),
             const SizedBox(height: 4),
-            Text('Blok', style: TextStyle(color: fg)),
+            Text(context.l10n.binaBlokTile, style: TextStyle(color: fg)),
           ],
         ),
       ),
@@ -380,11 +384,11 @@ class _BlockDetail extends ConsumerWidget {
         Text(
           readOnly
               ? (_blockless
-                  ? 'Bloğa atanmamış daireler (salt görüntüleme).'
-                  : 'Blok $label — kat ve daire yerleşimi (salt görüntüleme).')
+                  ? context.l10n.binaBloksuzDairelerSalt
+                  : context.l10n.binaBlokYerlesimSalt(label))
               : (_blockless
-                  ? 'Bu daireler bir bloğa atanmamış (eski kayıtlar). Görüntülenir, düzenlenip silinebilir; yeni daire için bir blok seçin/oluşturun.'
-                  : 'Blok $label — kat ekleyip her katın "+" düğmesiyle daire ekleyin. Aynı kattakiler yan yana dizilir.'),
+                  ? context.l10n.binaBloksuzUyari
+                  : context.l10n.binaBlokYerlesimYardim(label)),
           style: TextStyle(
               fontSize: 13,
               color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -400,7 +404,7 @@ class _BlockDetail extends ConsumerWidget {
               OutlinedButton.icon(
                 onPressed: onAddFloor,
                 icon: const Icon(Icons.add),
-                label: const Text('Kat ekle'),
+                label: Text(context.l10n.binaKatEkle),
               ),
               OutlinedButton.icon(
                 onPressed: () => _showBulkUnitForm(
@@ -409,7 +413,7 @@ class _BlockDetail extends ConsumerWidget {
                   blok: label,
                 ),
                 icon: const Icon(Icons.grid_view),
-                label: const Text('Toplu daire ekle'),
+                label: Text(context.l10n.binaTopluDaireEkle),
               ),
             ],
           ),
@@ -421,8 +425,8 @@ class _BlockDetail extends ConsumerWidget {
             child: Center(
               child: Text(
                   readOnly
-                      ? 'Bu blokta henüz daire yok.'
-                      : 'Henüz kat yok. "Kat ekle" ile başlayın, sonra kattaki "+" ile daire ekleyin.',
+                      ? context.l10n.binaBloktaDaireYok
+                      : context.l10n.binaKatYokBos,
                   style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant),
                   textAlign: TextAlign.center),
@@ -522,7 +526,9 @@ class _FloorRow extends StatelessWidget {
             SizedBox(
               width: 60,
               child: Text(
-                kat == null ? 'Kat yok' : 'Kat $kat',
+                kat == null
+                    ? context.l10n.binaKatYok
+                    : context.l10n.binaKatEtiket('$kat'),
                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
@@ -650,7 +656,7 @@ Future<void> _manageBlock(
         children: [
           ListTile(
             leading: const Icon(Icons.edit_outlined),
-            title: Text('Blok ${block.ad} — düzenle'),
+            title: Text(context.l10n.binaBlokDuzenleBaslik(block.ad)),
             onTap: () {
               Navigator.of(ctx).pop();
               showModalBottomSheet<void>(
@@ -665,9 +671,10 @@ Future<void> _manageBlock(
           ),
           ListTile(
             leading: const Icon(Icons.delete_outline, color: Colors.red),
-            title: const Text('Bloğu sil', style: TextStyle(color: Colors.red)),
+            title: Text(context.l10n.binaBloguSil,
+                style: const TextStyle(color: Colors.red)),
             subtitle: block.unitSayisi > 0
-                ? Text('${block.unitSayisi} daire ile birlikte silinir (onay gerekir)')
+                ? Text(context.l10n.binaBloguSilAlt(block.unitSayisi))
                 : null,
             onTap: () async {
               Navigator.of(ctx).pop();
@@ -682,6 +689,7 @@ Future<void> _manageBlock(
 
 Future<void> _deleteBlock(
     BuildContext context, WidgetRef ref, BuildingBlock block) async {
+  final l10n = context.l10n;
   final messenger = ScaffoldMessenger.of(context);
   final count = block.unitSayisi;
   bool cascade = false;
@@ -698,14 +706,14 @@ Future<void> _deleteBlock(
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Blok ${block.ad} silinsin mi?'),
+        title: Text(l10n.binaBlokSilinsinMi(block.ad)),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Vazgeç')),
+              child: Text(l10n.ortakVazgec)),
           FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Sil')),
+              child: Text(l10n.ortakSil)),
         ],
       ),
     );
@@ -718,18 +726,18 @@ Future<void> _deleteBlock(
         .deleteBlock(block.id, cascade: cascade);
     messenger.showSnackBar(SnackBar(
       content: Text(cascade
-          ? 'Blok ${block.ad} ve $count daire silindi.'
-          : 'Blok ${block.ad} silindi.'),
+          ? l10n.binaBlokVeDaireSilindi(block.ad, '$count')
+          : l10n.binaBlokSilindi(block.ad)),
     ));
   } on ApiException catch (e) {
     messenger.showSnackBar(SnackBar(
       content: Text(e.statusCode == 409
           ? e.message
-          : 'Blok silinemedi: ${e.message}'),
+          : l10n.binaBlokSilinemedi(e.message)),
     ));
   } catch (_) {
     messenger.showSnackBar(
-      const SnackBar(content: Text('Blok silinemedi. Lütfen tekrar deneyin.')),
+      SnackBar(content: Text(l10n.binaBlokSilinemediGenel)),
     );
   }
 }
@@ -755,18 +763,15 @@ class _CascadeDeleteDialogState extends State<_CascadeDeleteDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final match = _ctrl.text.trim() == widget.block.ad;
     return AlertDialog(
-      title: Text('Blok ${widget.block.ad} silinsin mi?'),
+      title: Text(l10n.binaBlokSilinsinMi(widget.block.ad)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Bu blok ve içindeki ${widget.block.unitSayisi} daire; aidat, '
-            'ziyaretçi, kargo, rezervasyon ve şikayet kayıtlarıyla birlikte '
-            'KALICI olarak silinecek. Bu işlem geri alınamaz.',
-          ),
+          Text(l10n.binaKaliciSilmeUyari('${widget.block.unitSayisi}')),
           const SizedBox(height: 12),
           TextField(
             controller: _ctrl,
@@ -774,7 +779,7 @@ class _CascadeDeleteDialogState extends State<_CascadeDeleteDialog> {
             textCapitalization: TextCapitalization.characters,
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
-              labelText: 'Onaylamak için blok adını yazın',
+              labelText: l10n.binaOnayIcinBlokAdi,
               hintText: widget.block.ad,
               border: const OutlineInputBorder(),
             ),
@@ -784,12 +789,12 @@ class _CascadeDeleteDialogState extends State<_CascadeDeleteDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Vazgeç'),
+          child: Text(l10n.ortakVazgec),
         ),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: Colors.red),
           onPressed: match ? () => Navigator.of(context).pop(true) : null,
-          child: Text('Sil (${widget.block.unitSayisi} daire)'),
+          child: Text(l10n.binaSilNDaire('${widget.block.unitSayisi}')),
         ),
       ],
     );
@@ -811,6 +816,9 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
   bool _busy = false;
   String? _error;
 
+  /// `setState` yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   @override
   void dispose() {
     _ad.dispose();
@@ -821,7 +829,7 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
     if (_busy) return;
     final ad = _ad.text.trim();
     if (ad.isEmpty) {
-      setState(() => _error = 'Blok etiketi gerekli (örn. A, B1).');
+      setState(() => _error = _l10n.binaBlokEtiketiGerekli);
       return;
     }
     setState(() {
@@ -842,14 +850,14 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
       setState(() {
         _busy = false;
         _error = e.statusCode == 409
-            ? 'Bu blok etiketi zaten kayıtlı.'
+            ? _l10n.binaBlokEtiketiZatenVar
             : e.message;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = 'Kaydedilemedi. Lütfen tekrar deneyin.';
+        _error = _l10n.binaKaydedilemedi;
       });
     }
   }
@@ -862,7 +870,10 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.existing != null ? 'Blok düzenle' : 'Yeni blok',
+          Text(
+              widget.existing != null
+                  ? context.l10n.binaBlokDuzenle
+                  : context.l10n.binaYeniBlok,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
           TextField(
@@ -872,10 +883,10 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
             ],
-            decoration: const InputDecoration(
-              labelText: 'Blok etiketi',
+            decoration: InputDecoration(
+              labelText: context.l10n.binaBlokEtiketi,
               hintText: 'A',
-              helperText: 'Kısa alfanumerik (örn. A, B1) — tire yok',
+              helperText: context.l10n.binaBlokEtiketiYardim,
             ),
           ),
           if (_error != null) ...[
@@ -888,13 +899,15 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
               Expanded(
                 child: FilledButton(
                   onPressed: _busy ? null : _save,
-                  child: Text(_busy ? 'Kaydediliyor...' : 'Kaydet'),
+                  child: Text(_busy
+                      ? context.l10n.ortakKaydediliyor
+                      : context.l10n.ortakKaydet),
                 ),
               ),
               const SizedBox(width: 12),
               TextButton(
                 onPressed: _busy ? null : () => Navigator.of(context).pop(),
-                child: const Text('İptal'),
+                child: Text(context.l10n.ortakIptal),
               ),
             ],
           ),
@@ -936,6 +949,9 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
   bool _busy = false;
   String? _error;
 
+  /// `setState` yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   @override
   void dispose() {
     _no.dispose();
@@ -948,7 +964,7 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
     if (_busy) return;
     final no = _no.text.trim();
     if (no.isEmpty) {
-      setState(() => _error = 'Daire no gerekli (örn. A-12, 12).');
+      setState(() => _error = _l10n.binaDaireNoGerekli);
       return;
     }
     final katText = _kat.text.trim();
@@ -957,7 +973,7 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
     final sira = siraText.isEmpty ? null : int.tryParse(siraText);
     if ((katText.isNotEmpty && kat == null) ||
         (siraText.isNotEmpty && sira == null)) {
-      setState(() => _error = 'Kat ve sıra tam sayı olmalı.');
+      setState(() => _error = _l10n.binaKatSiraTamSayi);
       return;
     }
     setState(() {
@@ -978,14 +994,14 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
       setState(() {
         _busy = false;
         _error = e.statusCode == 409
-            ? 'Bu daire no zaten kayıtlı.'
+            ? _l10n.binaDaireNoZatenVar
             : e.message;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = 'Kaydedilemedi. Lütfen tekrar deneyin.';
+        _error = _l10n.binaKaydedilemedi;
       });
     }
   }
@@ -1011,14 +1027,17 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = 'Silinemedi. Lütfen tekrar deneyin.';
+        _error = _l10n.binaSilinemedi;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final blokLabel = widget.blok == null ? 'Bloksuz' : 'Blok ${widget.blok}';
+    final l10n = context.l10n;
+    final blokLabel = widget.blok == null
+        ? l10n.binaBloksuz
+        : l10n.binaBlokEtiket(widget.blok!);
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -1027,8 +1046,8 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
         children: [
           Text(
             widget.existing != null
-                ? 'Daire ${widget.existing!.no} — düzenle'
-                : 'Yeni daire · $blokLabel',
+                ? l10n.binaDaireDuzenleBaslik(widget.existing!.no)
+                : l10n.binaYeniDaire(blokLabel),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
@@ -1038,10 +1057,10 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9-]')),
             ],
-            decoration: const InputDecoration(
-              labelText: 'Daire no',
+            decoration: InputDecoration(
+              labelText: l10n.binaDaireNo,
               hintText: 'A-12',
-              helperText: 'Alfanumerik + tire (örn. A-12, B3, 12)',
+              helperText: l10n.binaDaireNoYardim,
             ),
           ),
           Row(
@@ -1053,10 +1072,10 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
                   ],
-                  decoration: const InputDecoration(
-                    labelText: 'Kat',
+                  decoration: InputDecoration(
+                    labelText: l10n.binaKat,
                     hintText: '1',
-                    helperText: '0 = zemin',
+                    helperText: l10n.binaKatYardim,
                   ),
                 ),
               ),
@@ -1066,10 +1085,10 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
                   controller: _sira,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
-                    labelText: 'Sıra',
+                  decoration: InputDecoration(
+                    labelText: l10n.binaSira,
                     hintText: '1',
-                    helperText: 'Kattaki konum',
+                    helperText: l10n.binaSiraYardim,
                   ),
                 ),
               ),
@@ -1085,7 +1104,9 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
               Expanded(
                 child: FilledButton(
                   onPressed: _busy ? null : _save,
-                  child: Text(_busy ? 'Kaydediliyor...' : 'Kaydet'),
+                  child: Text(_busy
+                      ? context.l10n.ortakKaydediliyor
+                      : context.l10n.ortakKaydet),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1093,12 +1114,12 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
                 TextButton(
                   onPressed: _busy ? null : _delete,
                   style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  child: const Text('Sil'),
+                  child: Text(context.l10n.ortakSil),
                 )
               else
                 TextButton(
                   onPressed: _busy ? null : () => Navigator.of(context).pop(),
-                  child: const Text('İptal'),
+                  child: Text(context.l10n.ortakIptal),
                 ),
             ],
           ),
@@ -1143,6 +1164,9 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
   bool _busy = false;
   String? _error;
 
+  /// `setState` yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   @override
   void dispose() {
     _katSayisi.dispose();
@@ -1164,19 +1188,20 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
       return '';
     }
     final toplam = k * m;
-    if (toplam > 500) return 'En fazla 500 daire (şu an $toplam).';
+    if (toplam > 500) return _l10n.binaEnFazla500('$toplam');
     final bitis = b + toplam - 1;
-    return '$_no0$b … $_no0$bitis  ($toplam daire, $k kat × $m)';
+    return _l10n.binaTopluOnizleme(
+        '$_no0$b', '$_no0$bitis', '$toplam', '$k', '$m');
   }
 
   Future<void> _submit() async {
     final k = _kat, m = _mDaire, b = _bas;
     if (k == null || m == null || b == null || k < 1 || m < 1 || b < 0) {
-      setState(() => _error = 'Kat sayısı, kat başına daire ve başlangıç no gerekli.');
+      setState(() => _error = _l10n.binaTopluAlanlarGerekli);
       return;
     }
     if (k * m > 500) {
-      setState(() => _error = 'Tek seferde en fazla 500 daire.');
+      setState(() => _error = _l10n.binaTekSeferde500);
       return;
     }
     setState(() {
@@ -1195,14 +1220,17 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
       Navigator.of(context).pop();
       final atl = res.atlanan.isEmpty
           ? ''
-          : ' (${res.atlanan.length} zaten vardı, atlandı)';
+          : _l10n.binaAtlananEk('${res.atlanan.length}');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${res.olusturulanSayi} daire eklendi ✓$atl')),
+        SnackBar(
+          content: Text(
+              _l10n.binaDaireEklendi('${res.olusturulanSayi}', atl)),
+        ),
       );
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Eklenemedi. Tekrar deneyin.');
+      if (mounted) setState(() => _error = _l10n.binaEklenemedi);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -1210,6 +1238,7 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final onizleme = _onizleme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
@@ -1219,14 +1248,13 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
         children: [
           Text(
             widget.blok != null
-                ? 'Toplu daire ekle — Blok ${widget.blok}'
-                : 'Toplu daire ekle — Bloksuz',
+                ? l10n.binaTopluBaslik(widget.blok!)
+                : l10n.binaTopluBaslikBloksuz,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
-            'Numaralar başlangıçtan itibaren ardışık, kat kat dolar. Var olan '
-            'daire no\'ları atlanır.',
+            l10n.binaTopluAciklama,
             style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -1239,8 +1267,8 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
                   controller: _katSayisi,
                   keyboardType: TextInputType.number,
                   onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(
-                    labelText: 'Kat sayısı',
+                  decoration: InputDecoration(
+                    labelText: l10n.binaKatSayisi,
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -1251,8 +1279,8 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
                   controller: _katBasi,
                   keyboardType: TextInputType.number,
                   onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(
-                    labelText: 'Kat başına daire',
+                  decoration: InputDecoration(
+                    labelText: l10n.binaKatBasinaDaire,
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -1264,9 +1292,9 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
             controller: _baslangic,
             keyboardType: TextInputType.number,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(
-              labelText: 'Başlangıç no',
-              hintText: 'örn. 101',
+            decoration: InputDecoration(
+              labelText: l10n.binaBaslangicNo,
+              hintText: l10n.binaBaslangicNoIpucu,
               border: OutlineInputBorder(),
             ),
           ),
@@ -1298,7 +1326,7 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.grid_view),
-              label: const Text('Daireleri oluştur'),
+              label: Text(l10n.binaDaireleriOlustur),
               onPressed: _busy ? null : _submit,
             ),
           ),

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/error/akis_hatasi.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../../unit_complaints/data/unit_complaint_api.dart';
 import '../../unit_complaints/domain/unit_complaint_models.dart';
+import '../../unit_complaints/presentation/kategori_adi.dart';
 import '../domain/building_map_models.dart';
 import 'building_map_controller.dart';
 
@@ -33,10 +35,11 @@ class BuildingSchematicScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(trUpper('Şikayet Haritası')),
+        title: Text(baslikBuyuk(
+            context.l10n.modulSikayetHaritasi, context.dilKodu)),
         actions: [
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: context.l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
             onPressed: state.loading ? null : controller.refresh,
           ),
@@ -76,17 +79,19 @@ class _Body extends StatelessWidget {
     if (state.loading && state.map == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null && state.map == null) {
+    final hataMetni =
+        akisHatasiCoz(context.l10n, state.hataKimligi, state.errorMessage);
+    if (hataMetni != null && state.map == null) {
       return ListView(
-        children: [const SizedBox(height: 120), Center(child: Text(state.errorMessage!))],
+        children: [const SizedBox(height: 120), Center(child: Text(hataMetni))],
       );
     }
     final map = state.map;
     if (map == null || map.bos) {
       return ListView(
-        children: const [
-          SizedBox(height: 120),
-          Center(child: Text('Henüz daire yok.')),
+        children: [
+          const SizedBox(height: 120),
+          Center(child: Text(context.l10n.semaDaireYok)),
         ],
       );
     }
@@ -137,7 +142,8 @@ class _Legend extends StatelessWidget {
           spacing: 16,
           runSpacing: 8,
           children: [
-            const Text('Yoğunluk:', style: TextStyle(fontWeight: FontWeight.w600)),
+            Text(context.l10n.semaYogunluk,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             item(DensityRenk.yesil, '0–2'),
             item(DensityRenk.sari, '3–4'),
             item(DensityRenk.kirmizi, '5+'),
@@ -158,7 +164,7 @@ class _StructureNote extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Text(
-          'Bina yerleşimi. Şikayet yoğunluğu yalnızca yönetime gösterilir.',
+          context.l10n.semaYerlesimAciklama,
           style: TextStyle(
             fontSize: 13,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -191,7 +197,7 @@ class _BlokSchematic extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Blok ${blok.blok}',
+            Text(context.l10n.binaBlokEtiket(blok.blok),
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             for (final kat in katlar)
@@ -219,7 +225,7 @@ class _KatRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 52,
-            child: Text('Kat ${kat.kat}',
+            child: Text(context.l10n.binaKatEtiket('${kat.kat}'),
                 style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant)),
@@ -347,8 +353,8 @@ class _UnplacedList extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Haritada yerleşimi girilmemiş',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            Text(context.l10n.semaYerlesimGirilmemis,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Wrap(
               spacing: 6,
@@ -464,12 +470,22 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
                   ),
                   const SizedBox(width: 8),
                 ],
-                Text('Daire ${u.unitNo}',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                const Spacer(),
-                if (widget.showsDensity)
-                  Text('${u.complaintCount ?? 0} açık şikayet',
-                      style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+                Expanded(
+                  child: Text(context.l10n.semaDaireEtiket(u.unitNo),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w700)),
+                ),
+                if (widget.showsDensity) ...[
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      context.l10n.semaAcikSikayet(u.complaintCount ?? 0),
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                          color: color, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 12),
@@ -478,13 +494,13 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
               SizedBox(height: 220, child: _ComplaintList(future: _future))
             // resident: bu daireye KENDI ilettigi sikayetler (kategori/tarih/durum).
             else if (_showsOwn) ...[
-              const Text('Bu daire için şikayetleriniz',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+              Text(context.l10n.semaBuDaireSikayetlerim,
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),
               SizedBox(height: 160, child: _OwnComplaintList(future: _future)),
             ] else
               Text(
-                'Şikayet yoğunluğu yalnızca yönetime gösterilir.',
+                context.l10n.semaYogunlukYonetim,
                 style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
@@ -494,7 +510,7 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   icon: const Icon(Icons.add_alert_outlined),
-                  label: const Text('Bu daireyi şikayet et'),
+                  label: Text(context.l10n.semaBuDaireyiSikayetEt),
                   onPressed: () => _openFileForm(context),
                 ),
               ),
@@ -506,6 +522,7 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
   }
 
   Future<void> _openFileForm(BuildContext context) async {
+    final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final filed = await showModalBottomSheet<bool>(
       context: context,
@@ -516,7 +533,7 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
       // Gitti mi geri bildirimi: harita uzerinde daire artik "iletildi" olarak
       // isaretlenir; ayri sayfaya gitmeye gerek yok.
       messenger.showSnackBar(
-        const SnackBar(content: Text('Şikayetiniz iletildi.')),
+        SnackBar(content: Text(l10n.semaSikayetIletildi)),
       );
       await ref.read(buildingMapControllerProvider.notifier).refresh();
       if (mounted) _reload();
@@ -540,11 +557,11 @@ class _ComplaintList extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (snap.hasError) {
-          return const Center(child: Text('Şikayetler yüklenemedi.'));
+          return Center(child: Text(context.l10n.semaSikayetlerYuklenemedi));
         }
         final items = snap.data ?? const [];
         if (items.isEmpty) {
-          return const Center(child: Text('Bu daire için açık şikayet yok.'));
+          return Center(child: Text(context.l10n.semaAcikSikayetYok));
         }
         return ListView.separated(
           itemCount: items.length,
@@ -556,9 +573,10 @@ class _ComplaintList extends StatelessWidget {
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.report_gmailerrorred_outlined),
-              title: Text(c.kategori.label),
+              title: Text(
+                  unitComplaintKategoriAdi(context.l10n, c.kategori)),
               subtitle: Text(
-                '${_fmtDate(c.createdAt.toLocal())}'
+                '${tarihBicimi(c.createdAt, context.dilKodu)}'
                 '${c.notlar != null ? '\n${c.notlar}' : ''}',
               ),
               isThreeLine: c.notlar != null,
@@ -587,18 +605,20 @@ class _OwnComplaintList extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (snap.hasError) {
-          return const Center(child: Text('Şikayetleriniz yüklenemedi.'));
+          return Center(child: Text(context.l10n.semaSikayetlerimYuklenemedi));
         }
         final items = snap.data ?? const [];
         if (items.isEmpty) {
-          return const Center(child: Text('Bu daireye şikayetiniz yok.'));
+          return Center(child: Text(context.l10n.semaSikayetimYok));
         }
         return ListView.separated(
           itemCount: items.length,
           separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (context, i) {
             final c = items[i];
-            final durumLabel = c.acik ? 'Yönetime iletildi' : 'Kapatıldı';
+            final durumLabel = c.acik
+                ? context.l10n.semaYonetimeIletildi
+                : context.l10n.semaKapatildi;
             return ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
@@ -606,9 +626,10 @@ class _OwnComplaintList extends StatelessWidget {
                 c.acik ? Icons.check_circle_outline : Icons.task_alt,
                 color: c.acik ? _ownComplaintColor : Colors.green,
               ),
-              title: Text(c.kategori.label),
+              title: Text(
+                  unitComplaintKategoriAdi(context.l10n, c.kategori)),
               subtitle: Text(
-                '${_fmtDate(c.createdAt.toLocal())} · $durumLabel'
+                '${tarihBicimi(c.createdAt, context.dilKodu)} · $durumLabel'
                 '${c.notlar != null ? '\n${c.notlar}' : ''}',
               ),
               isThreeLine: c.notlar != null,
@@ -635,6 +656,9 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
   final _notlar = TextEditingController();
   bool _busy = false;
   String? _error;
+
+  /// `setState` yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
 
   @override
   void dispose() {
@@ -666,8 +690,8 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
         _busy = false;
         // 409: haftalik kategori limiti; 403: kendi blogun disi.
         _error = switch (e.statusCode) {
-          409 => 'Bu daire için bu konuda haftada en fazla 1 şikayet açabilirsiniz.',
-          403 => 'Yalnızca kendi bloğunuzdaki daireleri şikayet edebilirsiniz.',
+          409 => _l10n.semaHaftalikSinir,
+          403 => _l10n.semaKendiBlok,
           _ => e.message,
         };
       });
@@ -675,7 +699,7 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = 'Gönderilemedi. Lütfen tekrar deneyin.';
+        _error = _l10n.semaGonderilemedi;
       });
     }
   }
@@ -693,11 +717,11 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Daire ${widget.unit.unitNo} — şikayet et',
+          Text(context.l10n.semaSikayetEtBaslik(widget.unit.unitNo),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
           Text(
-            'Şikayetiniz yönetime iletilir; komşularınıza gösterilmez.',
+            context.l10n.semaSikayetAnonimNot,
             style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -711,7 +735,9 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
             ),
             items: [
               for (final k in UnitComplaintKategori.values)
-                DropdownMenuItem(value: k, child: Text(k.label)),
+                DropdownMenuItem(
+                    value: k,
+                    child: Text(unitComplaintKategoriAdi(context.l10n, k))),
             ],
             onChanged: (v) => setState(() => _kategori = v ?? _kategori),
           ),
@@ -720,9 +746,9 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
             controller: _notlar,
             maxLength: 1000,
             maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Not (opsiyonel)',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: context.l10n.ortakNotOpsiyonel,
+              border: const OutlineInputBorder(),
             ),
           ),
           if (_error != null) ...[
@@ -734,16 +760,13 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
             width: double.infinity,
             child: FilledButton(
               onPressed: _busy ? null : _submit,
-              child: Text(_busy ? 'Gönderiliyor...' : 'Şikayeti gönder'),
+              child: Text(_busy
+                  ? context.l10n.gorevGonderiliyor
+                  : context.l10n.semaSikayetiGonder),
             ),
           ),
         ],
       ),
     );
   }
-}
-
-String _fmtDate(DateTime dt) {
-  String p(int n) => n.toString().padLeft(2, '0');
-  return '${p(dt.day)}.${p(dt.month)}.${dt.year}';
 }

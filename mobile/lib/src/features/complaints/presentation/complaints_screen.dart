@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../auth/domain/user_role.dart';
+import '../../auth/presentation/rol_adi.dart';
 // Atanabilir personel (aktif security/tesis_gorevlisi) listesi gorev
 // atama akisiyla AYNI kaynaktan gelir — kopya yok.
 import '../../tasks/data/task_api.dart';
@@ -14,6 +16,8 @@ import '../../tasks/domain/task_models.dart' show AssignableUser;
 import '../../tasks/domain/task_category_models.dart' show TaskCategory;
 import '../data/complaint_api.dart' show complaintApiProvider;
 import '../domain/complaint_models.dart';
+import '../domain/talep_hata.dart';
+import 'talep_hata_metni.dart';
 import 'complaints_controller.dart';
 
 /// "Talep / Arıza" (İş Emri) — yasayan/calisandan yonetime kanal (auth.md §4
@@ -87,10 +91,10 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(trUpper('Talep / Arıza')),
+          title: Text(baslikBuyuk(context.l10n.kartTalepAriza, context.dilKodu)),
           actions: [
             IconButton(
-              tooltip: 'Yenile',
+              tooltip: context.l10n.ortakYenile,
               icon: const Icon(Icons.refresh),
               onPressed: state.loading ? null : controller.refresh,
             ),
@@ -99,17 +103,17 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
             // Dort sekme dar ekranda sigmaz — kaydirilabilir.
             isScrollable: true,
             tabs: [
-              Tab(text: 'Açık (${acik.length})'),
-              Tab(text: 'İş Emri (${isEmri.length})'),
-              Tab(text: 'Çözülen (${cozulen.length})'),
-              Tab(text: 'Reddedilen (${reddedilen.length})'),
+              Tab(text: context.l10n.talepSekmeAcik('${acik.length}')),
+              Tab(text: context.l10n.talepSekmeIsEmri('${isEmri.length}')),
+              Tab(text: context.l10n.talepSekmeCozulen('${cozulen.length}')),
+              Tab(text: context.l10n.talepSekmeReddedilen('${reddedilen.length}')),
             ],
           ),
         ),
         floatingActionButton: state.canCreate
             ? FloatingActionButton.extended(
                 icon: const Icon(Icons.add),
-                label: const Text('Yeni talep'),
+                label: Text(context.l10n.talepYeni),
                 onPressed: () => _openForm(context),
               )
             : null,
@@ -121,9 +125,8 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
                 state: state,
                 items: acik,
                 emptyText: state.canCreate
-                    ? 'Açık talebiniz yok. "Yeni talep" ile '
-                        'talep/arızanızı iletebilirsiniz.'
-                    : 'Açık talep yok.',
+                    ? context.l10n.talepAcikYokSakin
+                    : context.l10n.talepAcikYok,
               ),
             ),
             RefreshIndicator(
@@ -131,7 +134,7 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
               child: _Body(
                 state: state,
                 items: isEmri,
-                emptyText: 'İş emrine dönüşen talep yok.',
+                emptyText: context.l10n.talepIsEmriYok,
               ),
             ),
             RefreshIndicator(
@@ -139,7 +142,7 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
               child: _Body(
                 state: state,
                 items: cozulen,
-                emptyText: 'Henüz çözülen talep yok.',
+                emptyText: context.l10n.talepCozulenYok,
               ),
             ),
             RefreshIndicator(
@@ -147,7 +150,7 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
               child: _Body(
                 state: state,
                 items: reddedilen,
-                emptyText: 'Reddedilen talep yok.',
+                emptyText: context.l10n.talepReddedilenYok,
               ),
             ),
           ],
@@ -164,7 +167,7 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
     );
     if (saved == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Talebiniz iletildi ✓')),
+        SnackBar(content: Text(context.l10n.talepIletildi)),
       );
     }
   }
@@ -188,12 +191,14 @@ class _Body extends ConsumerWidget {
     if (state.loading && state.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null && state.items.isEmpty) {
+    final hataMetni =
+        akisHatasiCoz(context.l10n, state.hataKimligi, state.errorMessage);
+    if (hataMetni != null && state.items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            state.errorMessage!,
+            hataMetni,
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.red),
           ),
@@ -229,13 +234,14 @@ Color _durumColor(TalepDurum d) => switch (d) {
       TalepDurum.unknown => Colors.grey,
     };
 
-/// Durum rozetinin Turkce etiketi (model tel degerinin gorunum aynasi).
-String _durumLabel(TalepDurum d) => switch (d) {
-      TalepDurum.acik => 'Açık',
-      TalepDurum.isEmri => 'İş Emri',
-      TalepDurum.cozuldu => 'Çözüldü',
-      TalepDurum.reddedildi => 'Reddedildi',
-      TalepDurum.unknown => 'Bilinmiyor',
+/// Durum rozetinin AKTIF DILDEKI etiketi (enum METIN TASIMAZ; `default` dali
+/// yok — yeni durum eklenince derleyici ceviriyi zorlar).
+String _durumLabel(AppLocalizations l10n, TalepDurum d) => switch (d) {
+      TalepDurum.acik => l10n.talepDurumAcik,
+      TalepDurum.isEmri => l10n.talepDurumIsEmri,
+      TalepDurum.cozuldu => l10n.talepDurumCozuldu,
+      TalepDurum.reddedildi => l10n.talepDurumReddedildi,
+      TalepDurum.unknown => l10n.devriyeDurumBilinmiyor,
     };
 
 /// Durum rozeti — [_durumColor] paletiyle renklenir.
@@ -254,7 +260,7 @@ class _DurumChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        _durumLabel(durum),
+        _durumLabel(context.l10n, durum),
         style: TextStyle(
           color: color,
           fontSize: 12,
@@ -351,8 +357,8 @@ class _ComplaintCard extends ConsumerWidget {
                     child: Text(
                       // Yonetim gorunumunde kim actigi onemli; acan zaten
                       // yalniz kendi taleplerini gorur.
-                      '${canRespond ? '${c.acanAd ?? 'Sakin'} · ' : ''}'
-                      '${_fmtDateTime(c.createdAt.toLocal())}',
+                      '${canRespond ? '${c.acanAd ?? context.l10n.talepAcanSakin} · ' : ''}'
+                      '${tarihSaatBicimi(c.createdAt, context.dilKodu, ayirici: '')}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
@@ -423,8 +429,8 @@ class _ComplaintDetail extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${canRespond ? '${c.acanAd ?? 'Sakin'} · ' : ''}'
-              '${_fmtDateTime(c.createdAt.toLocal())}',
+              '${canRespond ? '${c.acanAd ?? context.l10n.talepAcanSakin} · ' : ''}'
+              '${tarihSaatBicimi(c.createdAt, context.dilKodu, ayirici: '')}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             if (c.kategoriAd != null) ...[
@@ -442,7 +448,7 @@ class _ComplaintDetail extends StatelessWidget {
             if (c.gecmis.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                trUpper('Durum geçmişi'),
+                baslikBuyuk(context.l10n.talepDurumGecmisi, context.dilKodu),
                 style: Theme.of(context).textTheme.labelLarge,
               ),
               const SizedBox(height: 8),
@@ -517,11 +523,11 @@ class _GalleryPhoto extends StatelessWidget {
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.broken_image_outlined, size: 20),
-                SizedBox(width: 8),
-                Text('Görsel yüklenemedi'),
+                const Icon(Icons.broken_image_outlined, size: 20),
+                const SizedBox(width: 8),
+                Text(context.l10n.talepGorselYuklenemedi),
               ],
             ),
           ),
@@ -541,9 +547,9 @@ class _GalleryPhoto extends StatelessWidget {
               maxScale: 5,
               child: Image.network(
                 url,
-                errorBuilder: (_, _, _) => const Text(
-                  'Görsel yüklenemedi',
-                  style: TextStyle(color: Colors.white),
+                errorBuilder: (_, _, _) => Text(
+                  context.l10n.talepGorselYuklenemedi,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ),
@@ -565,9 +571,9 @@ class _LinkedWorkOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (isEmriDurum) {
-      'acik' => ('Atandı', Colors.blue),
-      'tamamlandi' => ('Tamamlandı', Colors.green),
-      _ => ('Durum bilinmiyor', Colors.grey),
+      'acik' => (context.l10n.talepIsEmriAtandi, Colors.blue),
+      'tamamlandi' => (context.l10n.talepIsEmriTamamlandi, Colors.green),
+      _ => (context.l10n.talepIsEmriDurumBilinmiyor, Colors.grey),
     };
     return Padding(
       padding: const EdgeInsets.only(top: 12),
@@ -584,7 +590,7 @@ class _LinkedWorkOrderCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'İş emri',
+                context.l10n.talepIsEmri,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
@@ -632,7 +638,7 @@ class _TimelineNode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _durumColor(row.durum);
-    final rolLabel = UserRole.fromClaim(row.actorRole).label;
+    final rolLabel = rolAdi(context.l10n, UserRole.fromClaim(row.actorRole));
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -665,7 +671,7 @@ class _TimelineNode extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        _durumLabel(row.durum),
+                        _durumLabel(context.l10n, row.durum),
                         style: TextStyle(
                           color: color,
                           fontWeight: FontWeight.w600,
@@ -673,7 +679,8 @@ class _TimelineNode extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        _fmtDateTime(row.createdAt.toLocal()),
+                        tarihSaatBicimi(row.createdAt, context.dilKodu,
+                            ayirici: ''),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -708,6 +715,9 @@ class _ComplaintForm extends ConsumerStatefulWidget {
 }
 
 class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
+  /// `setState`/async yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   final _formKey = GlobalKey<FormState>();
   final _baslikCtrl = TextEditingController();
   final _mesajCtrl = TextEditingController();
@@ -737,7 +747,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Galeriden seç'),
+              title: Text(context.l10n.gorevGaleridenSec),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],
@@ -745,9 +755,12 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
       ),
     );
     if (source == null) return;
-    final err = await _form.addPhoto(source);
-    if (err != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    final ayrinti = await _form.addPhoto(source);
+    if (ayrinti != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(talepHataMetni(
+            _l10n, TalepAkisHatasi.fotoAlinamadi, ayrinti)),
+      ));
     }
   }
 
@@ -756,8 +769,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
     final formState = ref.read(complaintFormControllerProvider);
     if (formState.uploadPending) {
       setState(() {
-        _error = 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin, '
-            '"Tekrar yükle"yi deneyin veya fotoyu kaldırın.';
+        _error = _l10n.gorevFotoHenuzYuklenmedi;
       });
       return;
     }
@@ -785,7 +797,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+          _error = _l10n.ortakBeklenmeyenHata;
         });
       }
     }
@@ -811,19 +823,21 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Yeni talep / arıza',
+                context.l10n.talepYeniBaslik,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _baslikCtrl,
                 maxLength: 200,
-                decoration: const InputDecoration(
-                  labelText: 'Başlık',
+                decoration: InputDecoration(
+                  labelText: context.l10n.talepBaslikAlan,
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Başlık zorunludur' : null,
+                    (v == null || v.trim().isEmpty)
+                        ? context.l10n.talepBaslikZorunlu
+                        : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -831,12 +845,12 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                 maxLength: 5000,
                 minLines: 3,
                 maxLines: 8,
-                decoration: const InputDecoration(
-                  labelText: 'Açıklama',
+                decoration: InputDecoration(
+                  labelText: context.l10n.talepAciklamaAlan,
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Açıklama zorunludur'
+                    ? context.l10n.talepAciklamaZorunlu
                     : null,
               ),
               const SizedBox(height: 8),
@@ -869,7 +883,9 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.send_outlined),
-                  label: Text(_saving ? 'Gönderiliyor...' : 'Gönder'),
+                  label: Text(_saving
+                      ? context.l10n.gorevGonderiliyor
+                      : context.l10n.talepGonder),
                 ),
               ),
             ],
@@ -911,14 +927,16 @@ class _CategoryPicker extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
           )
-        else if (state.categoriesError != null)
+        else if (talepHatasiCoz(context.l10n, state.categoriesHata,
+                state.categoriesError)
+            case final kategoriHata?)
           Text(
-            state.categoriesError!,
+            kategoriHata,
             style: const TextStyle(color: Colors.red, fontSize: 12),
           )
         else if (state.categories.isEmpty)
           Text(
-            'Tanımlı kategori yok; talep "Diğer" olarak açılır.',
+            context.l10n.talepKategoriYok,
             style: Theme.of(context).textTheme.bodySmall,
           )
         else
@@ -962,7 +980,7 @@ class _PhotoRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Görseller (opsiyonel, en fazla 3)'),
+        Text(context.l10n.talepGorseller),
         const SizedBox(height: 8),
         SizedBox(
           height: 96,
@@ -1032,7 +1050,9 @@ class _PhotoThumb extends StatelessWidget {
                 ),
               ),
             ),
-          if (slot.error != null && !slot.busy)
+          // Yuva hatasi METIN gostermez (yalniz yeniden-dene kaplamasi) —
+          // bu yuzden kimligi cozmeye gerek yok, VARLIGI yeterli.
+          if ((slot.hata != null || slot.error != null) && !slot.busy)
             Positioned.fill(
               child: GestureDetector(
                 onTap: onRetry,
@@ -1100,7 +1120,8 @@ class _AddPhotoTile extends StatelessWidget {
             children: [
               const Icon(Icons.add_a_photo_outlined),
               const SizedBox(height: 4),
-              Text('Ekle', style: Theme.of(context).textTheme.bodySmall),
+              Text(context.l10n.ortakEkle,
+                  style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
         ),
@@ -1125,18 +1146,18 @@ class _YoneticiActionBar extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          trUpper('Yönetici işlemleri'),
+          baslikBuyuk(context.l10n.talepYoneticiIslemleri, context.dilKodu),
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
         FilledButton.icon(
           onPressed: () => _open(
             context,
-            const Text('Talep iş emrine dönüştürüldü ✓'),
+            Text(context.l10n.talepIsEmrineDonusturuldu),
             (_) => _ConvertSheet(complaint: complaint),
           ),
           icon: const Icon(Icons.assignment_turned_in_outlined),
-          label: const Text('İş Emrine Dönüştür'),
+          label: Text(context.l10n.talepIsEmrineDonusturBuyuk),
         ),
         const SizedBox(height: 8),
         Row(
@@ -1145,11 +1166,11 @@ class _YoneticiActionBar extends ConsumerWidget {
               child: OutlinedButton.icon(
                 onPressed: () => _open(
                   context,
-                  const Text('Talep çözüldü ✓'),
+                  Text(context.l10n.talepCozuldu),
                   (_) => _ResolveSheet(complaint: complaint),
                 ),
                 icon: const Icon(Icons.check_circle_outline),
-                label: const Text('Çöz'),
+                label: Text(context.l10n.talepCoz),
               ),
             ),
             const SizedBox(width: 8),
@@ -1158,11 +1179,11 @@ class _YoneticiActionBar extends ConsumerWidget {
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                 onPressed: () => _open(
                   context,
-                  const Text('Talep reddedildi ✓'),
+                  Text(context.l10n.talepReddedildiBildirim),
                   (_) => _DeclineSheet(complaint: complaint),
                 ),
                 icon: const Icon(Icons.cancel_outlined),
-                label: const Text('Reddet'),
+                label: Text(context.l10n.talepReddet),
               ),
             ),
           ],
@@ -1206,6 +1227,9 @@ class _ConvertSheet extends ConsumerStatefulWidget {
 }
 
 class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
+  /// `setState`/async yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   final _notCtrl = TextEditingController();
   TalepOncelik _oncelik = TalepOncelik.orta;
   late String? _kategoriId = widget.complaint.kategoriId;
@@ -1249,7 +1273,7 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
       if (!mounted) return;
       setState(() {
         _personel = const [];
-        _personelError = 'Personel listesi alınamadı.';
+        _personelError = _l10n.talepPersonelAlinamadiKisa;
       });
     }
   }
@@ -1265,7 +1289,8 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
         if (_kategoriId != null && !aktifler.any((k) => k.id == _kategoriId)) {
           _kategoriler = [
             ...aktifler,
-            TaskCategory(id: _kategoriId!, ad: 'Kategori (silinmiş)', aktif: false),
+            // Ad BOS: "silinmis" etiketi cizim aninda cozulur.
+            TaskCategory(id: _kategoriId!, ad: '', aktif: false),
           ];
         } else {
           _kategoriler = aktifler;
@@ -1310,7 +1335,7 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+          _error = _l10n.ortakBeklenmeyenHata;
         });
       }
     }
@@ -1332,7 +1357,7 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'İş emrine dönüştür',
+              context.l10n.talepIsEmrineDonustur,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
@@ -1353,9 +1378,9 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
                   border: OutlineInputBorder(),
                 ),
                 items: [
-                  const DropdownMenuItem<String?>(
+                  DropdownMenuItem<String?>(
                     value: null,
-                    child: Text('Diğer'),
+                    child: Text(context.l10n.gorevKategoriDiger),
                   ),
                   for (final k in _kategoriler!)
                     DropdownMenuItem<String?>(
@@ -1368,21 +1393,21 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
                     : (v) => setState(() => _kategoriId = v),
               ),
               const SizedBox(height: 16),
-              const Text('Öncelik'),
+              Text(context.l10n.gorevOncelik),
               const SizedBox(height: 4),
               SegmentedButton<TalepOncelik>(
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: TalepOncelik.dusuk,
-                    label: Text('Düşük'),
+                    label: Text(context.l10n.gorevOncelikDusuk),
                   ),
                   ButtonSegment(
                     value: TalepOncelik.orta,
-                    label: Text('Orta'),
+                    label: Text(context.l10n.gorevOncelikOrta),
                   ),
                   ButtonSegment(
                     value: TalepOncelik.yuksek,
-                    label: Text('Yüksek'),
+                    label: Text(context.l10n.gorevOncelikYuksek),
                   ),
                 ],
                 selected: {_oncelik},
@@ -1396,8 +1421,8 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
               DropdownButtonFormField<String?>(
                 initialValue: _atananUserId,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Atanan personel',
+                decoration: InputDecoration(
+                  labelText: context.l10n.gorevAtananPersonel,
                   border: OutlineInputBorder(),
                 ),
                 items: [
@@ -1407,7 +1432,8 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
                       child: Text(
                         u.role.isEmpty
                             ? u.ad
-                            : '${u.ad} (${UserRole.fromClaim(u.role).label})',
+                            : '${u.ad} '
+                                '(${rolAdi(context.l10n, UserRole.fromClaim(u.role))})',
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1420,7 +1446,7 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
-                    'Personel listesi alınamadı: $_personelError',
+                    context.l10n.gorevPersonelAlinamadi(_personelError!),
                     style: const TextStyle(color: Colors.orange),
                   ),
                 )
@@ -1428,8 +1454,7 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
-                    'Atanabilir aktif saha personeli yok. Dönüştürmek için '
-                    'önce security/tesis görevlisi ekleyin.',
+                    context.l10n.talepAtanabilirPersonelYok,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -1439,8 +1464,8 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
                 minLines: 2,
                 maxLines: 4,
                 enabled: !_saving,
-                decoration: const InputDecoration(
-                  labelText: 'Not (opsiyonel)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.ortakNotOpsiyonel,
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -1461,7 +1486,9 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.assignment_turned_in_outlined),
-                  label: Text(_saving ? 'Dönüştürülüyor...' : 'Dönüştür'),
+                  label: Text(_saving
+                      ? context.l10n.talepDonusturuluyor
+                      : context.l10n.talepDonustur),
                 ),
               ),
             ],
@@ -1484,6 +1511,9 @@ class _DeclineSheet extends ConsumerStatefulWidget {
 }
 
 class _DeclineSheetState extends ConsumerState<_DeclineSheet> {
+  /// `setState`/async yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   final _sebepCtrl = TextEditingController();
   bool _saving = false;
   String? _error;
@@ -1517,7 +1547,7 @@ class _DeclineSheetState extends ConsumerState<_DeclineSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+          _error = _l10n.ortakBeklenmeyenHata;
         });
       }
     }
@@ -1543,7 +1573,7 @@ class _DeclineSheetState extends ConsumerState<_DeclineSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Ret sebebi talebi açan kişiye durum geçmişinde görünür.',
+              context.l10n.talepRetSebebiNot,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
@@ -1555,8 +1585,8 @@ class _DeclineSheetState extends ConsumerState<_DeclineSheet> {
               enabled: !_saving,
               // Sebep degisince buton aktifligi guncellenmeli.
               onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                labelText: 'Ret sebebi',
+              decoration: InputDecoration(
+                labelText: context.l10n.talepRetSebebi,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -1602,6 +1632,9 @@ class _ResolveSheet extends ConsumerStatefulWidget {
 }
 
 class _ResolveSheetState extends ConsumerState<_ResolveSheet> {
+  /// `setState`/async yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   final _notCtrl = TextEditingController();
   bool _saving = false;
   String? _error;
@@ -1635,7 +1668,7 @@ class _ResolveSheetState extends ConsumerState<_ResolveSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+          _error = _l10n.ortakBeklenmeyenHata;
         });
       }
     }
@@ -1656,12 +1689,12 @@ class _ResolveSheetState extends ConsumerState<_ResolveSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Talebi çöz',
+              context.l10n.talepCozBaslik,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
             Text(
-              'Talep iş emri açmadan doğrudan çözüldü olarak işaretlenir.',
+              context.l10n.talepCozNot,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
@@ -1670,8 +1703,8 @@ class _ResolveSheetState extends ConsumerState<_ResolveSheet> {
               minLines: 2,
               maxLines: 4,
               enabled: !_saving,
-              decoration: const InputDecoration(
-                labelText: 'Çözüm notu (opsiyonel)',
+              decoration: InputDecoration(
+                labelText: context.l10n.talepCozumNotu,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -1691,7 +1724,9 @@ class _ResolveSheetState extends ConsumerState<_ResolveSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check_circle_outline),
-                label: Text(_saving ? 'Kaydediliyor...' : 'Çöz'),
+                label: Text(_saving
+                    ? context.l10n.ortakKaydediliyor
+                    : context.l10n.talepCoz),
               ),
             ),
           ],
@@ -1699,9 +1734,4 @@ class _ResolveSheetState extends ConsumerState<_ResolveSheet> {
       ),
     );
   }
-}
-
-String _fmtDateTime(DateTime dt) {
-  String p(int n) => n.toString().padLeft(2, '0');
-  return '${p(dt.day)}.${p(dt.month)}.${dt.year} ${p(dt.hour)}:${p(dt.minute)}';
 }

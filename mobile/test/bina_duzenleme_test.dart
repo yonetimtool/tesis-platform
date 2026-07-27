@@ -8,6 +8,8 @@ import 'package:mobile/src/features/building_map/data/bina_duzenleme_api.dart';
 import 'package:mobile/src/features/building_map/domain/bina_duzenleme_models.dart';
 import 'package:mobile/src/features/building_map/presentation/bina_duzenleme_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Sahte editor istemcisi — bellek-ici blok/daire tutar; create/delete sonrasi
 /// refresh guncel listeyi dondurur (gercek CRUD davranisini taklit eder).
 class _FakeApi extends BinaDuzenlemeApi {
@@ -91,7 +93,7 @@ Widget _app(_FakeApi api, {UserRole role = UserRole.yonetici}) {
       binaDuzenlemeApiProvider.overrideWithValue(api),
       currentUserRoleProvider.overrideWith((ref) async => role),
     ],
-    child: const MaterialApp(home: BinaDuzenlemeScreen()),
+    child: l10nApp(const BinaDuzenlemeScreen()),
   );
 }
 

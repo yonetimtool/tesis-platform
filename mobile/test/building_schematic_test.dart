@@ -12,6 +12,8 @@ import 'package:mobile/src/features/building_map/presentation/building_schematic
 import 'package:mobile/src/features/unit_complaints/data/unit_complaint_api.dart';
 import 'package:mobile/src/features/unit_complaints/domain/unit_complaint_models.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Sahte building-map istemcisi — sabit sema doner (rol-farkinda: showsDensity).
 class _FakeMapApi extends BuildingMapApi {
   _FakeMapApi(this._map) : super(Dio());
@@ -106,7 +108,7 @@ Widget _app(
           .overrideWithValue(complaintApi ?? _FakeComplaintApi(complaints)),
       currentUserRoleProvider.overrideWith((ref) async => role),
     ],
-    child: const MaterialApp(home: BuildingSchematicScreen()),
+    child: l10nApp(const BuildingSchematicScreen()),
   );
 }
 

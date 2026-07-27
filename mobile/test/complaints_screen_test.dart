@@ -10,6 +10,8 @@ import 'package:mobile/src/features/complaints/presentation/complaints_screen.da
 import 'package:mobile/src/features/tasks/data/task_category_api.dart';
 import 'package:mobile/src/features/tasks/domain/task_category_models.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Aga cikmayan sahte istemci — liste sabit doner, kategori bos (widget
 /// testleri ag beklemez). ComplaintApi Task 10'da ikinci pozisyonel
 /// bagimlilik (TaskCategoryApi) kazandi; super cagrisi buna uyar.
@@ -57,8 +59,8 @@ Widget _app(
         complaintApiProvider.overrideWithValue(_FakeComplaintApi(items)),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
-      child: MaterialApp(
-        home: ComplaintsScreen(initialComplaintId: initialComplaintId),
+      child: l10nApp(
+        ComplaintsScreen(initialComplaintId: initialComplaintId),
       ),
     );
 

@@ -1369,4 +1369,524 @@ class AppLocalizationsAr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get ortakIptal => 'إلغاء';
+
+  @override
+  String get ortakNotOpsiyonel => 'ملاحظة (اختياري)';
+
+  @override
+  String get binaDuzenlemeBaslik => 'تخطيط المبنى';
+
+  @override
+  String get binaBlokTile => 'مبنى';
+
+  @override
+  String get binaBlokAtanmamis => 'لم يُعيَّن مبنى';
+
+  @override
+  String binaBlokEtiket(Object ad) {
+    return 'المبنى $ad';
+  }
+
+  @override
+  String get binaSaltGoruntulemeAciklama =>
+      'هيكل المبنى (للعرض فقط). اضغط على مربّع المبنى لرؤية توزيع الطوابق والوحدات.';
+
+  @override
+  String get binaDuzenlemeAciklama =>
+      'أضف مبنى، ثم اضغط على المربّع وضع الطوابق والوحدات داخله. كل وحدة مرتبطة بمبنى. تعكس خريطة الشكاوى هذا الهيكل.';
+
+  @override
+  String binaDaireSayisi(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n وحدة',
+      many: '$n وحدة',
+      few: '$n وحدات',
+      two: 'وحدتان',
+      one: 'وحدة واحدة',
+      zero: 'لا وحدات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get binaKayitsiz => 'غير مسجّل';
+
+  @override
+  String get binaBloksuzDairelerSalt => 'وحدات غير معيَّنة لمبنى (للعرض فقط).';
+
+  @override
+  String binaBlokYerlesimSalt(Object ad) {
+    return 'المبنى $ad — توزيع الطوابق والوحدات (للعرض فقط).';
+  }
+
+  @override
+  String get binaBloksuzUyari =>
+      'هذه الوحدات غير معيَّنة لمبنى (سجلات قديمة). تُعرض ويمكن تعديلها أو حذفها؛ لوحدة جديدة اختر مبنى أو أنشئه.';
+
+  @override
+  String binaBlokYerlesimYardim(Object ad) {
+    return 'المبنى $ad — أضف طوابق ثم أضف وحدات بزر \"+\" لكل طابق. تُصفّ وحدات الطابق نفسه جنباً إلى جنب.';
+  }
+
+  @override
+  String get binaKatEkle => 'إضافة طابق';
+
+  @override
+  String get binaTopluDaireEkle => 'إضافة وحدات بالجملة';
+
+  @override
+  String get binaBloktaDaireYok => 'لا توجد وحدات في هذا المبنى بعد.';
+
+  @override
+  String get binaKatYokBos =>
+      'لا توجد طوابق بعد. ابدأ بـ \"إضافة طابق\"، ثم أضف وحدات بـ \"+\" في الطابق.';
+
+  @override
+  String get binaKatYok => 'بدون طابق';
+
+  @override
+  String binaKatEtiket(Object kat) {
+    return 'الطابق $kat';
+  }
+
+  @override
+  String binaBlokDuzenleBaslik(Object ad) {
+    return 'المبنى $ad — تعديل';
+  }
+
+  @override
+  String get binaBloguSil => 'حذف المبنى';
+
+  @override
+  String binaBloguSilAlt(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'يُحذف مع $n وحدة (يلزم تأكيد)',
+      many: 'يُحذف مع $n وحدة (يلزم تأكيد)',
+      few: 'يُحذف مع $n وحدات (يلزم تأكيد)',
+      two: 'يُحذف مع وحدتين (يلزم تأكيد)',
+      one: 'يُحذف مع وحدة واحدة (يلزم تأكيد)',
+      zero: 'يُحذف (يلزم تأكيد)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String binaBlokSilinsinMi(Object ad) {
+    return 'هل يُحذف المبنى $ad؟';
+  }
+
+  @override
+  String binaBlokVeDaireSilindi(Object ad, Object n) {
+    return 'تم حذف المبنى $ad و$n وحدة.';
+  }
+
+  @override
+  String binaBlokSilindi(Object ad) {
+    return 'تم حذف المبنى $ad.';
+  }
+
+  @override
+  String binaBlokSilinemedi(Object hata) {
+    return 'تعذّر حذف المبنى: $hata';
+  }
+
+  @override
+  String get binaBlokSilinemediGenel => 'تعذّر حذف المبنى. حاول مرة أخرى.';
+
+  @override
+  String binaKaliciSilmeUyari(Object n) {
+    return 'سيُحذف هذا المبنى و$n وحدة داخله نهائياً مع سجلات الرسوم والزوار والشحنات والحجوزات والشكاوى. لا يمكن التراجع عن هذه العملية.';
+  }
+
+  @override
+  String get binaOnayIcinBlokAdi => 'اكتب اسم المبنى للتأكيد';
+
+  @override
+  String binaSilNDaire(Object n) {
+    return 'حذف ($n وحدة)';
+  }
+
+  @override
+  String get binaBlokEtiketiGerekli => 'مطلوب رمز المبنى (مثال: A، B1).';
+
+  @override
+  String get binaBlokEtiketiZatenVar => 'رمز المبنى هذا مسجّل بالفعل.';
+
+  @override
+  String get binaBlokDuzenle => 'تعديل المبنى';
+
+  @override
+  String get binaYeniBlok => 'مبنى جديد';
+
+  @override
+  String get binaBlokEtiketi => 'رمز المبنى';
+
+  @override
+  String get binaBlokEtiketiYardim =>
+      'أحرف وأرقام قصيرة (مثال: A، B1) — بدون شرطة';
+
+  @override
+  String get binaDaireNoGerekli => 'مطلوب رقم الوحدة (مثال: A-12، 12).';
+
+  @override
+  String get binaKatSiraTamSayi => 'يجب أن يكون الطابق والترتيب أعداداً صحيحة.';
+
+  @override
+  String get binaDaireNoZatenVar => 'رقم الوحدة هذا مسجّل بالفعل.';
+
+  @override
+  String binaDaireDuzenleBaslik(Object no) {
+    return 'الوحدة $no — تعديل';
+  }
+
+  @override
+  String binaYeniDaire(Object blok) {
+    return 'وحدة جديدة · $blok';
+  }
+
+  @override
+  String get binaDaireNo => 'رقم الوحدة';
+
+  @override
+  String get binaDaireNoYardim => 'أحرف وأرقام + شرطة (مثال: A-12، B3، 12)';
+
+  @override
+  String get binaSira => 'الترتيب';
+
+  @override
+  String get binaSiraYardim => 'الموضع في الطابق';
+
+  @override
+  String binaEnFazla500(Object n) {
+    return '٥٠٠ وحدة كحد أقصى (حالياً $n).';
+  }
+
+  @override
+  String binaTopluOnizleme(
+    Object adet,
+    Object bas,
+    Object bitis,
+    Object kat,
+    Object toplam,
+  ) {
+    return '$bas … $bitis  ($toplam وحدة، $kat طابق × $adet)';
+  }
+
+  @override
+  String get binaTopluAlanlarGerekli =>
+      'مطلوب عدد الطوابق وعدد الوحدات لكل طابق ورقم البداية.';
+
+  @override
+  String get binaTekSeferde500 => '٥٠٠ وحدة كحد أقصى في المرة.';
+
+  @override
+  String binaAtlananEk(Object n) {
+    return ' ($n موجودة مسبقاً، تم تخطيها)';
+  }
+
+  @override
+  String binaDaireEklendi(Object ek, Object n) {
+    return 'تمت إضافة $n وحدة ✓$ek';
+  }
+
+  @override
+  String get binaEklenemedi => 'تعذّرت الإضافة. حاول مرة أخرى.';
+
+  @override
+  String binaTopluBaslik(Object blok) {
+    return 'إضافة وحدات بالجملة — المبنى $blok';
+  }
+
+  @override
+  String get binaTopluBaslikBloksuz => 'إضافة وحدات بالجملة — بدون مبنى';
+
+  @override
+  String get binaTopluAciklama =>
+      'تتسلسل الأرقام من البداية وتُملأ طابقاً بطابق. تُتخطّى الأرقام الموجودة.';
+
+  @override
+  String get binaKatSayisi => 'عدد الطوابق';
+
+  @override
+  String get binaKatBasinaDaire => 'وحدات لكل طابق';
+
+  @override
+  String get binaBaslangicNo => 'رقم البداية';
+
+  @override
+  String get binaBaslangicNoIpucu => 'مثال: ١٠١';
+
+  @override
+  String get binaDaireleriOlustur => 'إنشاء الوحدات';
+
+  @override
+  String get binaSilinemedi => 'تعذّر الحذف. حاول مرة أخرى.';
+
+  @override
+  String get binaKaydedilemedi => 'تعذّر الحفظ. حاول مرة أخرى.';
+
+  @override
+  String get semaDaireYok => 'لا توجد وحدات بعد.';
+
+  @override
+  String get semaYogunluk => 'الكثافة:';
+
+  @override
+  String get semaYerlesimAciklama =>
+      'توزيع المبنى. تُعرض كثافة الشكاوى للإدارة فقط.';
+
+  @override
+  String get semaYerlesimGirilmemis => 'لم يُدخل التوزيع على الخريطة';
+
+  @override
+  String semaDaireEtiket(Object no) {
+    return 'الوحدة $no';
+  }
+
+  @override
+  String semaAcikSikayet(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n شكوى مفتوحة',
+      many: '$n شكوى مفتوحة',
+      few: '$n شكاوى مفتوحة',
+      two: 'شكويان مفتوحتان',
+      one: 'شكوى مفتوحة واحدة',
+      zero: 'لا شكاوى مفتوحة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get semaBuDaireSikayetlerim => 'شكاواك بشأن هذه الوحدة';
+
+  @override
+  String get semaYogunlukYonetim => 'تُعرض كثافة الشكاوى للإدارة فقط.';
+
+  @override
+  String get semaBuDaireyiSikayetEt => 'الإبلاغ عن هذه الوحدة';
+
+  @override
+  String get semaSikayetIletildi => 'تم إرسال شكواك.';
+
+  @override
+  String get semaSikayetlerYuklenemedi => 'تعذّر تحميل الشكاوى.';
+
+  @override
+  String get semaAcikSikayetYok => 'لا توجد شكاوى مفتوحة لهذه الوحدة.';
+
+  @override
+  String get semaSikayetlerimYuklenemedi => 'تعذّر تحميل شكاواك.';
+
+  @override
+  String get semaSikayetimYok => 'ليست لديك شكاوى بشأن هذه الوحدة.';
+
+  @override
+  String get semaYonetimeIletildi => 'أُرسلت إلى الإدارة';
+
+  @override
+  String get semaKapatildi => 'مُغلقة';
+
+  @override
+  String get semaHaftalikSinir =>
+      'يمكنك تقديم شكوى واحدة كحد أقصى أسبوعياً بهذا الشأن لهذه الوحدة.';
+
+  @override
+  String get semaKendiBlok => 'يمكنك الإبلاغ عن وحدات في مبناك فقط.';
+
+  @override
+  String get semaGonderilemedi => 'تعذّر الإرسال. حاول مرة أخرى.';
+
+  @override
+  String semaSikayetEtBaslik(Object no) {
+    return 'الوحدة $no — إبلاغ';
+  }
+
+  @override
+  String get semaSikayetAnonimNot =>
+      'تُرسل شكواك إلى الإدارة؛ ولا تُعرض على جيرانك.';
+
+  @override
+  String get semaSikayetiGonder => 'إرسال الشكوى';
+
+  @override
+  String get kategoriGurultu => 'ضجيج';
+
+  @override
+  String get kategoriKapiOnuAyakkabi => 'أمام الباب / أحذية';
+
+  @override
+  String get kategoriZararVerme => 'إحداث ضرر';
+
+  @override
+  String talepSekmeAcik(Object n) {
+    return 'مفتوح ($n)';
+  }
+
+  @override
+  String talepSekmeIsEmri(Object n) {
+    return 'أمر عمل ($n)';
+  }
+
+  @override
+  String talepSekmeCozulen(Object n) {
+    return 'محلولة ($n)';
+  }
+
+  @override
+  String talepSekmeReddedilen(Object n) {
+    return 'مرفوضة ($n)';
+  }
+
+  @override
+  String get talepYeni => 'طلب جديد';
+
+  @override
+  String get talepAcikYokSakin =>
+      'ليست لديك طلبات مفتوحة. استخدم \"طلب جديد\" لإرسال طلبك أو عطلك.';
+
+  @override
+  String get talepAcikYok => 'لا توجد طلبات مفتوحة.';
+
+  @override
+  String get talepIsEmriYok => 'لا توجد طلبات حُوّلت إلى أمر عمل.';
+
+  @override
+  String get talepCozulenYok => 'لا توجد طلبات محلولة بعد.';
+
+  @override
+  String get talepReddedilenYok => 'لا توجد طلبات مرفوضة.';
+
+  @override
+  String get talepIletildi => 'تم إرسال طلبك ✓';
+
+  @override
+  String get talepDurumGecmisi => 'سجل الحالة';
+
+  @override
+  String get talepGorselYuklenemedi => 'تعذّر تحميل الصورة';
+
+  @override
+  String get talepIsEmriAtandi => 'مُسند';
+
+  @override
+  String get talepIsEmriTamamlandi => 'مُنجز';
+
+  @override
+  String get talepIsEmriDurumBilinmiyor => 'الحالة غير معروفة';
+
+  @override
+  String get talepIsEmri => 'أمر عمل';
+
+  @override
+  String get talepYeniBaslik => 'طلب / عطل جديد';
+
+  @override
+  String get talepBaslikAlan => 'العنوان';
+
+  @override
+  String get talepBaslikZorunlu => 'العنوان مطلوب';
+
+  @override
+  String get talepAciklamaAlan => 'الوصف';
+
+  @override
+  String get talepAciklamaZorunlu => 'الوصف مطلوب';
+
+  @override
+  String get talepGonder => 'إرسال';
+
+  @override
+  String get talepKategoriOpsiyonel => 'الفئة (اختياري)';
+
+  @override
+  String get talepKategoriYok =>
+      'لا توجد فئات معرّفة؛ سيُفتح الطلب كـ \"أخرى\".';
+
+  @override
+  String get talepGorseller => 'الصور (اختياري، ٣ كحد أقصى)';
+
+  @override
+  String get talepYoneticiIslemleri => 'إجراءات المدير';
+
+  @override
+  String get talepIsEmrineDonusturuldu => 'تم تحويل الطلب إلى أمر عمل ✓';
+
+  @override
+  String get talepIsEmrineDonusturBuyuk => 'تحويل إلى أمر عمل';
+
+  @override
+  String get talepCozuldu => 'تم حل الطلب ✓';
+
+  @override
+  String get talepCoz => 'حل';
+
+  @override
+  String get talepReddedildiBildirim => 'تم رفض الطلب ✓';
+
+  @override
+  String get talepReddet => 'رفض';
+
+  @override
+  String get talepReddediliyor => 'جارٍ الرفض...';
+
+  @override
+  String get talepPersonelAlinamadiKisa => 'تعذّر جلب قائمة العاملين.';
+
+  @override
+  String get talepIsEmrineDonustur => 'تحويل إلى أمر عمل';
+
+  @override
+  String get talepAtanabilirPersonelYok =>
+      'لا يوجد عاملون ميدانيون نشطون للإسناد. أضف أولاً أمناً أو مسؤول منشأة لتتمكن من التحويل.';
+
+  @override
+  String get talepDonusturuluyor => 'جارٍ التحويل...';
+
+  @override
+  String get talepDonustur => 'تحويل';
+
+  @override
+  String get talepReddetBaslik => 'رفض الطلب';
+
+  @override
+  String get talepRetSebebiNot => 'يظهر سبب الرفض لمقدّم الطلب في سجل الحالة.';
+
+  @override
+  String get talepRetSebebi => 'سبب الرفض';
+
+  @override
+  String get talepCozBaslik => 'حل الطلب';
+
+  @override
+  String get talepCozNot => 'يُعلَّم الطلب كمحلول مباشرة دون إنشاء أمر عمل.';
+
+  @override
+  String get talepCozumNotu => 'ملاحظة الحل (اختياري)';
+
+  @override
+  String get talepKategorilerYuklenemedi => 'تعذّر تحميل الفئات.';
+
+  @override
+  String get talepFotoYuklenemedi => 'تعذّر تحميل الصورة.';
+
+  @override
+  String get binaKat => 'الطابق';
+
+  @override
+  String get binaKatYardim => '٠ = الطابق الأرضي';
+
+  @override
+  String get binaBloksuz => 'بدون مبنى';
+
+  @override
+  String get talepAcanSakin => 'ساكن';
 }

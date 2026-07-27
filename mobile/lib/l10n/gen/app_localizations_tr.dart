@@ -1222,4 +1222,500 @@ class AppLocalizationsTr extends AppLocalizations {
   String devriyeOkutmaBekliyor(num n) {
     return '$n okutma gönderim bekliyor';
   }
+
+  @override
+  String get ortakIptal => 'İptal';
+
+  @override
+  String get ortakNotOpsiyonel => 'Not (opsiyonel)';
+
+  @override
+  String get binaDuzenlemeBaslik => 'Bina Düzenleme';
+
+  @override
+  String get binaBlokTile => 'Blok';
+
+  @override
+  String get binaBlokAtanmamis => 'Blok atanmamış';
+
+  @override
+  String binaBlokEtiket(Object ad) {
+    return 'Blok $ad';
+  }
+
+  @override
+  String get binaSaltGoruntulemeAciklama =>
+      'Bina yapısı (salt görüntüleme). Blok kutucuğuna dokunup kat ve daire yerleşimini görebilirsiniz.';
+
+  @override
+  String get binaDuzenlemeAciklama =>
+      'Blok ekleyin, kutucuğa dokunup içine kat ve daire yerleştirin. Her daire bir bloğa bağlanır. Şikayet Haritası bu yapıyı yansıtır.';
+
+  @override
+  String binaDaireSayisi(num n) {
+    return '$n daire';
+  }
+
+  @override
+  String get binaKayitsiz => 'kayıtsız';
+
+  @override
+  String get binaBloksuzDairelerSalt =>
+      'Bloğa atanmamış daireler (salt görüntüleme).';
+
+  @override
+  String binaBlokYerlesimSalt(Object ad) {
+    return 'Blok $ad — kat ve daire yerleşimi (salt görüntüleme).';
+  }
+
+  @override
+  String get binaBloksuzUyari =>
+      'Bu daireler bir bloğa atanmamış (eski kayıtlar). Görüntülenir, düzenlenip silinebilir; yeni daire için bir blok seçin/oluşturun.';
+
+  @override
+  String binaBlokYerlesimYardim(Object ad) {
+    return 'Blok $ad — kat ekleyip her katın \"+\" düğmesiyle daire ekleyin. Aynı kattakiler yan yana dizilir.';
+  }
+
+  @override
+  String get binaKatEkle => 'Kat ekle';
+
+  @override
+  String get binaTopluDaireEkle => 'Toplu daire ekle';
+
+  @override
+  String get binaBloktaDaireYok => 'Bu blokta henüz daire yok.';
+
+  @override
+  String get binaKatYokBos =>
+      'Henüz kat yok. \"Kat ekle\" ile başlayın, sonra kattaki \"+\" ile daire ekleyin.';
+
+  @override
+  String get binaKatYok => 'Kat yok';
+
+  @override
+  String binaKatEtiket(Object kat) {
+    return 'Kat $kat';
+  }
+
+  @override
+  String binaBlokDuzenleBaslik(Object ad) {
+    return 'Blok $ad — düzenle';
+  }
+
+  @override
+  String get binaBloguSil => 'Bloğu sil';
+
+  @override
+  String binaBloguSilAlt(num n) {
+    return '$n daire ile birlikte silinir (onay gerekir)';
+  }
+
+  @override
+  String binaBlokSilinsinMi(Object ad) {
+    return 'Blok $ad silinsin mi?';
+  }
+
+  @override
+  String binaBlokVeDaireSilindi(Object ad, Object n) {
+    return 'Blok $ad ve $n daire silindi.';
+  }
+
+  @override
+  String binaBlokSilindi(Object ad) {
+    return 'Blok $ad silindi.';
+  }
+
+  @override
+  String binaBlokSilinemedi(Object hata) {
+    return 'Blok silinemedi: $hata';
+  }
+
+  @override
+  String get binaBlokSilinemediGenel =>
+      'Blok silinemedi. Lütfen tekrar deneyin.';
+
+  @override
+  String binaKaliciSilmeUyari(Object n) {
+    return 'Bu blok ve içindeki $n daire; aidat, ziyaretçi, kargo, rezervasyon ve şikayet kayıtlarıyla birlikte KALICI olarak silinecek. Bu işlem geri alınamaz.';
+  }
+
+  @override
+  String get binaOnayIcinBlokAdi => 'Onaylamak için blok adını yazın';
+
+  @override
+  String binaSilNDaire(Object n) {
+    return 'Sil ($n daire)';
+  }
+
+  @override
+  String get binaBlokEtiketiGerekli => 'Blok etiketi gerekli (örn. A, B1).';
+
+  @override
+  String get binaBlokEtiketiZatenVar => 'Bu blok etiketi zaten kayıtlı.';
+
+  @override
+  String get binaBlokDuzenle => 'Blok düzenle';
+
+  @override
+  String get binaYeniBlok => 'Yeni blok';
+
+  @override
+  String get binaBlokEtiketi => 'Blok etiketi';
+
+  @override
+  String get binaBlokEtiketiYardim =>
+      'Kısa alfanumerik (örn. A, B1) — tire yok';
+
+  @override
+  String get binaDaireNoGerekli => 'Daire no gerekli (örn. A-12, 12).';
+
+  @override
+  String get binaKatSiraTamSayi => 'Kat ve sıra tam sayı olmalı.';
+
+  @override
+  String get binaDaireNoZatenVar => 'Bu daire no zaten kayıtlı.';
+
+  @override
+  String binaDaireDuzenleBaslik(Object no) {
+    return 'Daire $no — düzenle';
+  }
+
+  @override
+  String binaYeniDaire(Object blok) {
+    return 'Yeni daire · $blok';
+  }
+
+  @override
+  String get binaDaireNo => 'Daire no';
+
+  @override
+  String get binaDaireNoYardim => 'Alfanumerik + tire (örn. A-12, B3, 12)';
+
+  @override
+  String get binaSira => 'Sıra';
+
+  @override
+  String get binaSiraYardim => 'Kattaki konum';
+
+  @override
+  String binaEnFazla500(Object n) {
+    return 'En fazla 500 daire (şu an $n).';
+  }
+
+  @override
+  String binaTopluOnizleme(
+    Object adet,
+    Object bas,
+    Object bitis,
+    Object kat,
+    Object toplam,
+  ) {
+    return '$bas … $bitis  ($toplam daire, $kat kat × $adet)';
+  }
+
+  @override
+  String get binaTopluAlanlarGerekli =>
+      'Kat sayısı, kat başına daire ve başlangıç no gerekli.';
+
+  @override
+  String get binaTekSeferde500 => 'Tek seferde en fazla 500 daire.';
+
+  @override
+  String binaAtlananEk(Object n) {
+    return ' ($n zaten vardı, atlandı)';
+  }
+
+  @override
+  String binaDaireEklendi(Object ek, Object n) {
+    return '$n daire eklendi ✓$ek';
+  }
+
+  @override
+  String get binaEklenemedi => 'Eklenemedi. Tekrar deneyin.';
+
+  @override
+  String binaTopluBaslik(Object blok) {
+    return 'Toplu daire ekle — Blok $blok';
+  }
+
+  @override
+  String get binaTopluBaslikBloksuz => 'Toplu daire ekle — Bloksuz';
+
+  @override
+  String get binaTopluAciklama =>
+      'Numaralar başlangıçtan itibaren ardışık, kat kat dolar. Var olanlar atlanır.';
+
+  @override
+  String get binaKatSayisi => 'Kat sayısı';
+
+  @override
+  String get binaKatBasinaDaire => 'Kat başına daire';
+
+  @override
+  String get binaBaslangicNo => 'Başlangıç no';
+
+  @override
+  String get binaBaslangicNoIpucu => 'örn. 101';
+
+  @override
+  String get binaDaireleriOlustur => 'Daireleri oluştur';
+
+  @override
+  String get binaSilinemedi => 'Silinemedi. Lütfen tekrar deneyin.';
+
+  @override
+  String get binaKaydedilemedi => 'Kaydedilemedi. Lütfen tekrar deneyin.';
+
+  @override
+  String get semaDaireYok => 'Henüz daire yok.';
+
+  @override
+  String get semaYogunluk => 'Yoğunluk:';
+
+  @override
+  String get semaYerlesimAciklama =>
+      'Bina yerleşimi. Şikayet yoğunluğu yalnızca yönetime gösterilir.';
+
+  @override
+  String get semaYerlesimGirilmemis => 'Haritada yerleşimi girilmemiş';
+
+  @override
+  String semaDaireEtiket(Object no) {
+    return 'Daire $no';
+  }
+
+  @override
+  String semaAcikSikayet(num n) {
+    return '$n açık şikayet';
+  }
+
+  @override
+  String get semaBuDaireSikayetlerim => 'Bu daire için şikayetleriniz';
+
+  @override
+  String get semaYogunlukYonetim =>
+      'Şikayet yoğunluğu yalnızca yönetime gösterilir.';
+
+  @override
+  String get semaBuDaireyiSikayetEt => 'Bu daireyi şikayet et';
+
+  @override
+  String get semaSikayetIletildi => 'Şikayetiniz iletildi.';
+
+  @override
+  String get semaSikayetlerYuklenemedi => 'Şikayetler yüklenemedi.';
+
+  @override
+  String get semaAcikSikayetYok => 'Bu daire için açık şikayet yok.';
+
+  @override
+  String get semaSikayetlerimYuklenemedi => 'Şikayetleriniz yüklenemedi.';
+
+  @override
+  String get semaSikayetimYok => 'Bu daireye şikayetiniz yok.';
+
+  @override
+  String get semaYonetimeIletildi => 'Yönetime iletildi';
+
+  @override
+  String get semaKapatildi => 'Kapatıldı';
+
+  @override
+  String get semaHaftalikSinir =>
+      'Bu daire için bu konuda haftada en fazla 1 şikayet açabilirsiniz.';
+
+  @override
+  String get semaKendiBlok =>
+      'Yalnızca kendi bloğunuzdaki daireleri şikayet edebilirsiniz.';
+
+  @override
+  String get semaGonderilemedi => 'Gönderilemedi. Lütfen tekrar deneyin.';
+
+  @override
+  String semaSikayetEtBaslik(Object no) {
+    return 'Daire $no — şikayet et';
+  }
+
+  @override
+  String get semaSikayetAnonimNot =>
+      'Şikayetiniz yönetime iletilir; komşularınıza gösterilmez.';
+
+  @override
+  String get semaSikayetiGonder => 'Şikayeti gönder';
+
+  @override
+  String get kategoriGurultu => 'Gürültü';
+
+  @override
+  String get kategoriKapiOnuAyakkabi => 'Kapı önü / ayakkabı';
+
+  @override
+  String get kategoriZararVerme => 'Zarar verme';
+
+  @override
+  String talepSekmeAcik(Object n) {
+    return 'Açık ($n)';
+  }
+
+  @override
+  String talepSekmeIsEmri(Object n) {
+    return 'İş Emri ($n)';
+  }
+
+  @override
+  String talepSekmeCozulen(Object n) {
+    return 'Çözülen ($n)';
+  }
+
+  @override
+  String talepSekmeReddedilen(Object n) {
+    return 'Reddedilen ($n)';
+  }
+
+  @override
+  String get talepYeni => 'Yeni talep';
+
+  @override
+  String get talepAcikYokSakin =>
+      'Açık talebiniz yok. \"Yeni talep\" ile talep/arızanızı iletebilirsiniz.';
+
+  @override
+  String get talepAcikYok => 'Açık talep yok.';
+
+  @override
+  String get talepIsEmriYok => 'İş emrine dönüşen talep yok.';
+
+  @override
+  String get talepCozulenYok => 'Henüz çözülen talep yok.';
+
+  @override
+  String get talepReddedilenYok => 'Reddedilen talep yok.';
+
+  @override
+  String get talepIletildi => 'Talebiniz iletildi ✓';
+
+  @override
+  String get talepDurumGecmisi => 'Durum geçmişi';
+
+  @override
+  String get talepGorselYuklenemedi => 'Görsel yüklenemedi';
+
+  @override
+  String get talepIsEmriAtandi => 'Atandı';
+
+  @override
+  String get talepIsEmriTamamlandi => 'Tamamlandı';
+
+  @override
+  String get talepIsEmriDurumBilinmiyor => 'Durum bilinmiyor';
+
+  @override
+  String get talepIsEmri => 'İş emri';
+
+  @override
+  String get talepYeniBaslik => 'Yeni talep / arıza';
+
+  @override
+  String get talepBaslikAlan => 'Başlık';
+
+  @override
+  String get talepBaslikZorunlu => 'Başlık zorunludur';
+
+  @override
+  String get talepAciklamaAlan => 'Açıklama';
+
+  @override
+  String get talepAciklamaZorunlu => 'Açıklama zorunludur';
+
+  @override
+  String get talepGonder => 'Gönder';
+
+  @override
+  String get talepKategoriOpsiyonel => 'Kategori (opsiyonel)';
+
+  @override
+  String get talepKategoriYok =>
+      'Tanımlı kategori yok; talep \"Diğer\" olarak açılır.';
+
+  @override
+  String get talepGorseller => 'Görseller (opsiyonel, en fazla 3)';
+
+  @override
+  String get talepYoneticiIslemleri => 'Yönetici işlemleri';
+
+  @override
+  String get talepIsEmrineDonusturuldu => 'Talep iş emrine dönüştürüldü ✓';
+
+  @override
+  String get talepIsEmrineDonusturBuyuk => 'İş Emrine Dönüştür';
+
+  @override
+  String get talepCozuldu => 'Talep çözüldü ✓';
+
+  @override
+  String get talepCoz => 'Çöz';
+
+  @override
+  String get talepReddedildiBildirim => 'Talep reddedildi ✓';
+
+  @override
+  String get talepReddet => 'Reddet';
+
+  @override
+  String get talepReddediliyor => 'Reddediliyor...';
+
+  @override
+  String get talepPersonelAlinamadiKisa => 'Personel listesi alınamadı.';
+
+  @override
+  String get talepIsEmrineDonustur => 'İş emrine dönüştür';
+
+  @override
+  String get talepAtanabilirPersonelYok =>
+      'Atanabilir aktif saha personeli yok. Dönüştürmek için önce security/tesis görevlisi ekleyin.';
+
+  @override
+  String get talepDonusturuluyor => 'Dönüştürülüyor...';
+
+  @override
+  String get talepDonustur => 'Dönüştür';
+
+  @override
+  String get talepReddetBaslik => 'Talebi reddet';
+
+  @override
+  String get talepRetSebebiNot =>
+      'Ret sebebi talebi açan kişiye durum geçmişinde görünür.';
+
+  @override
+  String get talepRetSebebi => 'Ret sebebi';
+
+  @override
+  String get talepCozBaslik => 'Talebi çöz';
+
+  @override
+  String get talepCozNot =>
+      'Talep iş emri açmadan doğrudan çözüldü olarak işaretlenir.';
+
+  @override
+  String get talepCozumNotu => 'Çözüm notu (opsiyonel)';
+
+  @override
+  String get talepKategorilerYuklenemedi => 'Kategoriler yüklenemedi.';
+
+  @override
+  String get talepFotoYuklenemedi => 'Fotoğraf yüklenemedi.';
+
+  @override
+  String get binaKat => 'Kat';
+
+  @override
+  String get binaKatYardim => '0 = zemin';
+
+  @override
+  String get binaBloksuz => 'Bloksuz';
+
+  @override
+  String get talepAcanSakin => 'Sakin';
 }

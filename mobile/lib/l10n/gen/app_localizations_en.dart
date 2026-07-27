@@ -1314,4 +1314,520 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get ortakIptal => 'Cancel';
+
+  @override
+  String get ortakNotOpsiyonel => 'Note (optional)';
+
+  @override
+  String get binaDuzenlemeBaslik => 'Building Layout';
+
+  @override
+  String get binaBlokTile => 'Block';
+
+  @override
+  String get binaBlokAtanmamis => 'No block assigned';
+
+  @override
+  String binaBlokEtiket(Object ad) {
+    return 'Block $ad';
+  }
+
+  @override
+  String get binaSaltGoruntulemeAciklama =>
+      'Building structure (read-only). Tap a block tile to see its floor and unit layout.';
+
+  @override
+  String get binaDuzenlemeAciklama =>
+      'Add a block, tap its tile and place floors and units inside. Every unit belongs to a block. The Complaint Map mirrors this structure.';
+
+  @override
+  String binaDaireSayisi(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n units',
+      one: '$n unit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get binaKayitsiz => 'unregistered';
+
+  @override
+  String get binaBloksuzDairelerSalt =>
+      'Units not assigned to a block (read-only).';
+
+  @override
+  String binaBlokYerlesimSalt(Object ad) {
+    return 'Block $ad — floor and unit layout (read-only).';
+  }
+
+  @override
+  String get binaBloksuzUyari =>
+      'These units are not assigned to a block (legacy records). They are shown and can be edited or deleted; for a new unit pick or create a block.';
+
+  @override
+  String binaBlokYerlesimYardim(Object ad) {
+    return 'Block $ad — add floors, then add units with each floor\'s \"+\" button. Units on the same floor are laid out side by side.';
+  }
+
+  @override
+  String get binaKatEkle => 'Add floor';
+
+  @override
+  String get binaTopluDaireEkle => 'Bulk add units';
+
+  @override
+  String get binaBloktaDaireYok => 'No units in this block yet.';
+
+  @override
+  String get binaKatYokBos =>
+      'No floors yet. Start with \"Add floor\", then add units with the \"+\" on the floor.';
+
+  @override
+  String get binaKatYok => 'No floor';
+
+  @override
+  String binaKatEtiket(Object kat) {
+    return 'Floor $kat';
+  }
+
+  @override
+  String binaBlokDuzenleBaslik(Object ad) {
+    return 'Block $ad — edit';
+  }
+
+  @override
+  String get binaBloguSil => 'Delete block';
+
+  @override
+  String binaBloguSilAlt(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Deleted together with $n units (confirmation required)',
+      one: 'Deleted together with $n unit (confirmation required)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String binaBlokSilinsinMi(Object ad) {
+    return 'Delete block $ad?';
+  }
+
+  @override
+  String binaBlokVeDaireSilindi(Object ad, Object n) {
+    return 'Block $ad and $n units deleted.';
+  }
+
+  @override
+  String binaBlokSilindi(Object ad) {
+    return 'Block $ad deleted.';
+  }
+
+  @override
+  String binaBlokSilinemedi(Object hata) {
+    return 'Could not delete block: $hata';
+  }
+
+  @override
+  String get binaBlokSilinemediGenel =>
+      'Could not delete the block. Please try again.';
+
+  @override
+  String binaKaliciSilmeUyari(Object n) {
+    return 'This block and its $n units will be PERMANENTLY deleted together with their dues, visitor, parcel, reservation and complaint records. This cannot be undone.';
+  }
+
+  @override
+  String get binaOnayIcinBlokAdi => 'Type the block name to confirm';
+
+  @override
+  String binaSilNDaire(Object n) {
+    return 'Delete ($n units)';
+  }
+
+  @override
+  String get binaBlokEtiketiGerekli =>
+      'A block label is required (e.g. A, B1).';
+
+  @override
+  String get binaBlokEtiketiZatenVar =>
+      'This block label is already registered.';
+
+  @override
+  String get binaBlokDuzenle => 'Edit block';
+
+  @override
+  String get binaYeniBlok => 'New block';
+
+  @override
+  String get binaBlokEtiketi => 'Block label';
+
+  @override
+  String get binaBlokEtiketiYardim =>
+      'Short alphanumeric (e.g. A, B1) — no dashes';
+
+  @override
+  String get binaDaireNoGerekli => 'A unit number is required (e.g. A-12, 12).';
+
+  @override
+  String get binaKatSiraTamSayi => 'Floor and position must be whole numbers.';
+
+  @override
+  String get binaDaireNoZatenVar => 'This unit number is already registered.';
+
+  @override
+  String binaDaireDuzenleBaslik(Object no) {
+    return 'Unit $no — edit';
+  }
+
+  @override
+  String binaYeniDaire(Object blok) {
+    return 'New unit · $blok';
+  }
+
+  @override
+  String get binaDaireNo => 'Unit number';
+
+  @override
+  String get binaDaireNoYardim => 'Alphanumeric + dash (e.g. A-12, B3, 12)';
+
+  @override
+  String get binaSira => 'Position';
+
+  @override
+  String get binaSiraYardim => 'Position on the floor';
+
+  @override
+  String binaEnFazla500(Object n) {
+    return 'At most 500 units (currently $n).';
+  }
+
+  @override
+  String binaTopluOnizleme(
+    Object adet,
+    Object bas,
+    Object bitis,
+    Object kat,
+    Object toplam,
+  ) {
+    return '$bas … $bitis  ($toplam units, $kat floors × $adet)';
+  }
+
+  @override
+  String get binaTopluAlanlarGerekli =>
+      'Floor count, units per floor and starting number are required.';
+
+  @override
+  String get binaTekSeferde500 => 'At most 500 units at a time.';
+
+  @override
+  String binaAtlananEk(Object n) {
+    return ' ($n already existed, skipped)';
+  }
+
+  @override
+  String binaDaireEklendi(Object ek, Object n) {
+    return '$n units added ✓$ek';
+  }
+
+  @override
+  String get binaEklenemedi => 'Could not add. Try again.';
+
+  @override
+  String binaTopluBaslik(Object blok) {
+    return 'Bulk add units — Block $blok';
+  }
+
+  @override
+  String get binaTopluBaslikBloksuz => 'Bulk add units — No block';
+
+  @override
+  String get binaTopluAciklama =>
+      'Numbers run consecutively from the start, filling floor by floor. Existing ones are skipped.';
+
+  @override
+  String get binaKatSayisi => 'Number of floors';
+
+  @override
+  String get binaKatBasinaDaire => 'Units per floor';
+
+  @override
+  String get binaBaslangicNo => 'Starting number';
+
+  @override
+  String get binaBaslangicNoIpucu => 'e.g. 101';
+
+  @override
+  String get binaDaireleriOlustur => 'Create units';
+
+  @override
+  String get binaSilinemedi => 'Could not delete. Please try again.';
+
+  @override
+  String get binaKaydedilemedi => 'Could not save. Please try again.';
+
+  @override
+  String get semaDaireYok => 'No units yet.';
+
+  @override
+  String get semaYogunluk => 'Density:';
+
+  @override
+  String get semaYerlesimAciklama =>
+      'Building layout. Complaint density is shown to management only.';
+
+  @override
+  String get semaYerlesimGirilmemis => 'Layout not entered on the map';
+
+  @override
+  String semaDaireEtiket(Object no) {
+    return 'Unit $no';
+  }
+
+  @override
+  String semaAcikSikayet(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n open complaints',
+      one: '$n open complaint',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get semaBuDaireSikayetlerim => 'Your complaints for this unit';
+
+  @override
+  String get semaYogunlukYonetim =>
+      'Complaint density is shown to management only.';
+
+  @override
+  String get semaBuDaireyiSikayetEt => 'Report this unit';
+
+  @override
+  String get semaSikayetIletildi => 'Your complaint has been submitted.';
+
+  @override
+  String get semaSikayetlerYuklenemedi => 'Complaints could not be loaded.';
+
+  @override
+  String get semaAcikSikayetYok => 'No open complaints for this unit.';
+
+  @override
+  String get semaSikayetlerimYuklenemedi =>
+      'Your complaints could not be loaded.';
+
+  @override
+  String get semaSikayetimYok => 'You have no complaints about this unit.';
+
+  @override
+  String get semaYonetimeIletildi => 'Sent to management';
+
+  @override
+  String get semaKapatildi => 'Closed';
+
+  @override
+  String get semaHaftalikSinir =>
+      'You can open at most 1 complaint per week on this topic for this unit.';
+
+  @override
+  String get semaKendiBlok => 'You can only report units in your own block.';
+
+  @override
+  String get semaGonderilemedi => 'Could not send. Please try again.';
+
+  @override
+  String semaSikayetEtBaslik(Object no) {
+    return 'Unit $no — report';
+  }
+
+  @override
+  String get semaSikayetAnonimNot =>
+      'Your complaint goes to management; it is not shown to your neighbours.';
+
+  @override
+  String get semaSikayetiGonder => 'Send complaint';
+
+  @override
+  String get kategoriGurultu => 'Noise';
+
+  @override
+  String get kategoriKapiOnuAyakkabi => 'Doorway / shoes';
+
+  @override
+  String get kategoriZararVerme => 'Damage';
+
+  @override
+  String talepSekmeAcik(Object n) {
+    return 'Open ($n)';
+  }
+
+  @override
+  String talepSekmeIsEmri(Object n) {
+    return 'Work Order ($n)';
+  }
+
+  @override
+  String talepSekmeCozulen(Object n) {
+    return 'Resolved ($n)';
+  }
+
+  @override
+  String talepSekmeReddedilen(Object n) {
+    return 'Rejected ($n)';
+  }
+
+  @override
+  String get talepYeni => 'New request';
+
+  @override
+  String get talepAcikYokSakin =>
+      'You have no open requests. Use \"New request\" to report a request or fault.';
+
+  @override
+  String get talepAcikYok => 'No open requests.';
+
+  @override
+  String get talepIsEmriYok => 'No requests converted to a work order.';
+
+  @override
+  String get talepCozulenYok => 'No resolved requests yet.';
+
+  @override
+  String get talepReddedilenYok => 'No rejected requests.';
+
+  @override
+  String get talepIletildi => 'Your request has been submitted ✓';
+
+  @override
+  String get talepDurumGecmisi => 'Status history';
+
+  @override
+  String get talepGorselYuklenemedi => 'Image could not be loaded';
+
+  @override
+  String get talepIsEmriAtandi => 'Assigned';
+
+  @override
+  String get talepIsEmriTamamlandi => 'Completed';
+
+  @override
+  String get talepIsEmriDurumBilinmiyor => 'Status unknown';
+
+  @override
+  String get talepIsEmri => 'Work order';
+
+  @override
+  String get talepYeniBaslik => 'New request / fault';
+
+  @override
+  String get talepBaslikAlan => 'Title';
+
+  @override
+  String get talepBaslikZorunlu => 'Title is required';
+
+  @override
+  String get talepAciklamaAlan => 'Description';
+
+  @override
+  String get talepAciklamaZorunlu => 'Description is required';
+
+  @override
+  String get talepGonder => 'Send';
+
+  @override
+  String get talepKategoriOpsiyonel => 'Category (optional)';
+
+  @override
+  String get talepKategoriYok =>
+      'No categories defined; the request will be opened as \"Other\".';
+
+  @override
+  String get talepGorseller => 'Images (optional, up to 3)';
+
+  @override
+  String get talepYoneticiIslemleri => 'Manager actions';
+
+  @override
+  String get talepIsEmrineDonusturuldu => 'Request converted to a work order ✓';
+
+  @override
+  String get talepIsEmrineDonusturBuyuk => 'Convert to Work Order';
+
+  @override
+  String get talepCozuldu => 'Request resolved ✓';
+
+  @override
+  String get talepCoz => 'Resolve';
+
+  @override
+  String get talepReddedildiBildirim => 'Request rejected ✓';
+
+  @override
+  String get talepReddet => 'Reject';
+
+  @override
+  String get talepReddediliyor => 'Rejecting...';
+
+  @override
+  String get talepPersonelAlinamadiKisa => 'Could not load the staff list.';
+
+  @override
+  String get talepIsEmrineDonustur => 'Convert to work order';
+
+  @override
+  String get talepAtanabilirPersonelYok =>
+      'No active field staff available to assign. Add a security or facility officer first in order to convert.';
+
+  @override
+  String get talepDonusturuluyor => 'Converting...';
+
+  @override
+  String get talepDonustur => 'Convert';
+
+  @override
+  String get talepReddetBaslik => 'Reject request';
+
+  @override
+  String get talepRetSebebiNot =>
+      'The rejection reason is visible to the requester in the status history.';
+
+  @override
+  String get talepRetSebebi => 'Rejection reason';
+
+  @override
+  String get talepCozBaslik => 'Resolve request';
+
+  @override
+  String get talepCozNot =>
+      'The request is marked resolved directly, without opening a work order.';
+
+  @override
+  String get talepCozumNotu => 'Resolution note (optional)';
+
+  @override
+  String get talepKategorilerYuklenemedi => 'Categories could not be loaded.';
+
+  @override
+  String get talepFotoYuklenemedi => 'The photo could not be uploaded.';
+
+  @override
+  String get binaKat => 'Floor';
+
+  @override
+  String get binaKatYardim => '0 = ground floor';
+
+  @override
+  String get binaBloksuz => 'No block';
+
+  @override
+  String get talepAcanSakin => 'Resident';
 }
