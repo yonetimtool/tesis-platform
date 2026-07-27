@@ -135,12 +135,12 @@ export default function UsersPage() {
       }
       setOpen(false);
       mutate();
-      toast.success(editingId ? "Kullanıcı güncellendi." : "Kullanıcı oluşturuldu.");
+      toast.success(editingId ? t("kullaniciGuncellendi") : t("kullaniciOlusturuldu"));
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
       setFormErr(
         /email|e-posta|telefon|zaten kayitli|conflict/i.test(m)
-          ? "Bu e-posta veya telefon zaten kayıtlı."
+          ? t("kullaniciZatenKayitli")
           : m,
       );
     } finally {
@@ -152,28 +152,26 @@ export default function UsersPage() {
     try {
       await apiSend(`/api/users/${u.id}`, "PATCH", { is_active: active });
       mutate();
-      toast.success(active ? "Kullanıcı aktifleştirildi." : "Kullanıcı pasifleştirildi.");
+      toast.success(active ? t("kullaniciAktiflestirildi") : t("kullaniciPasiflestirildi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Güncellenemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakGuncellenemedi"));
     }
   }
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Kullanıcılar"
+        title={t("kabukKullanicilar")}
         action={
-          <button className={btnPrimary} onClick={openNew}>
-            Yeni kullanıcı
-          </button>
+          <button className={btnPrimary} onClick={openNew}>{t("kullaniciYeni")}</button>
         }
       />
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-44">
-          <Field label="Rol">
+          <Field label={t("ortakRol")}>
             <select className={inputCls} value={role} onChange={(e) => resetFilters({ role: e.target.value })}>
-              <option value="">Tümü</option>
+              <option value="">{t("ortakTumu")}</option>
               {ROLES.map((r) => (
                 <option key={r.value} value={r.value}>
                   {t(r.anahtar)}
@@ -183,10 +181,10 @@ export default function UsersPage() {
           </Field>
         </div>
         <div className="w-44">
-          <Field label="Durum">
+          <Field label={t("ortakDurum")}>
             <select className={inputCls} value={aktif} onChange={(e) => resetFilters({ aktif: e.target.value })}>
-              <option value="">Tümü</option>
-              <option value="true">Aktif</option>
+              <option value="">{t("ortakTumu")}</option>
+              <option value="true">{t("ortakAktif")}</option>
               <option value="false">Pasif</option>
             </select>
           </Field>
@@ -204,13 +202,13 @@ export default function UsersPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{editingId ? "Kullanıcı düzenle" : "Yeni kullanıcı"}</h2>
+          <h2 className="font-medium">{editingId ? t("kullaniciDuzenle") : t("kullaniciYeni")}</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Ad">
+            <Field label={t("ortakAd")}>
               <input
                 className={inputCls}
                 value={form.ad}
@@ -218,7 +216,7 @@ export default function UsersPage() {
                 required
               />
             </Field>
-            <Field label="E-posta (opsiyonel)" hint="Girişte kullanılmaz; bildirim/yedek">
+            <Field label="E-posta (opsiyonel)" hint={t("kullaniciEpostaIpucu")}>
               <input
                 type="email"
                 className={inputCls}
@@ -227,18 +225,18 @@ export default function UsersPage() {
               />
             </Field>
             <Field
-              label="Cep telefonu (giriş anahtarı)"
-              hint="Global benzersiz; kullanıcı telefonla giriş yapar"
+              label={t("kullaniciTelefon")}
+              hint={t("kullaniciTelefonIpucu")}
             >
               <input
                 className={inputCls}
                 value={form.telefon}
                 onChange={(e) => setForm({ ...form, telefon: e.target.value })}
-                placeholder="örn. 0532 111 22 03"
+                placeholder={t("kullaniciTelefonOrnek")}
                 required
               />
             </Field>
-            <Field label="Aranabilir (rıza)" hint="Numara aramaya izin verildi mi?">
+            <Field label={t("kullaniciAranabilir")} hint="Numara aramaya izin verildi mi?">
               <label className="flex h-10 items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -248,7 +246,7 @@ export default function UsersPage() {
                 Telefonla aranmaya izin ver
               </label>
             </Field>
-            <Field label="Rol">
+            <Field label={t("ortakRol")}>
               <select
                 className={inputCls}
                 value={form.role}
@@ -262,11 +260,11 @@ export default function UsersPage() {
               </select>
             </Field>
             <Field
-              label={editingId ? "Yeni parola (opsiyonel)" : "Parola (opsiyonel)"}
+              label={editingId ? t("kullaniciYeniParola") : "Parola (opsiyonel)"}
               hint={
                 editingId
                   ? "En az 8 karakter"
-                  : "Boş bırakırsanız tek seferlik geçici kod üretilir"
+                  : t("kullaniciParolaBosYeni")
               }
             >
               <input
@@ -276,7 +274,7 @@ export default function UsersPage() {
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 minLength={8}
                 placeholder={
-                  editingId ? "Boş bırakırsanız değişmez" : "Boş: geçici kod"
+                  editingId ? t("kullaniciParolaBosDuzenle") : t("kullaniciParolaBosKisa")
                 }
               />
             </Field>
@@ -284,7 +282,7 @@ export default function UsersPage() {
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? "Kaydediliyor..." : "Kaydet"}
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
               İptal
@@ -298,11 +296,11 @@ export default function UsersPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <th className="px-4 py-2.5 font-medium">Ad</th>
-                <th className="px-4 py-2.5 font-medium">E-posta</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("girisEposta")}</th>
                 <th className="px-4 py-2.5 font-medium">Aranabilir</th>
-                <th className="px-4 py-2.5 font-medium">Rol</th>
-                <th className="px-4 py-2.5 font-medium">Durum</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakRol")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
                 <th className="px-4 py-2.5 font-medium" />
               </tr>
             </thead>
@@ -336,13 +334,9 @@ export default function UsersPage() {
                         Düzenle
                       </button>
                       {u.is_active ? (
-                        <button className={btnGhost} onClick={() => setActive(u, false)}>
-                          Pasifleştir
-                        </button>
+                        <button className={btnGhost} onClick={() => setActive(u, false)}>{t("ortakPasiflestir")}</button>
                       ) : (
-                        <button className={btnGhost} onClick={() => setActive(u, true)}>
-                          Aktifleştir
-                        </button>
+                        <button className={btnGhost} onClick={() => setActive(u, true)}>{t("ortakAktiflestir")}</button>
                       )}
                     </div>
                   </td>
@@ -351,7 +345,7 @@ export default function UsersPage() {
               {data && data.items.length === 0 && (
                 <tr>
                   <td colSpan={6}>
-                    <EmptyState title="Kullanıcı yok" description="Filtreyi değiştirin ya da yeni bir kullanıcı ekleyin." />
+                    <EmptyState title={t("kullaniciYok")} description={t("kullaniciYokAlt")} />
                   </td>
                 </tr>
               )}

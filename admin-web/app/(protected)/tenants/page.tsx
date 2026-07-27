@@ -11,6 +11,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
 
 interface TenantRow {
   id: string;
@@ -48,6 +49,7 @@ function fmtDate(iso: string): string {
 }
 
 export default function TenantsPage() {
+  const t = useT();
   const toast = useToast();
   const { data, error, isLoading, mutate } = useSWR<TenantListResponse>(
     "/api/tenants",
@@ -129,7 +131,7 @@ export default function TenantsPage() {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
       setFormErr(
         /telefon|zaten kayitli|conflict|zaten kayıtlı/i.test(m)
-          ? "Bu telefon zaten kayıtlı."
+          ? t("tesisTelefonKayitli")
           : m,
       );
     } finally {
@@ -141,43 +143,41 @@ export default function TenantsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Tesisler"
-        subtitle="Yeni tesis + yöneticisini burada açarsınız. Yönetici ilk girişte tesisi adlandırır."
+        subtitle={t("tesisListeAciklama")}
         action={
-          <button className={btnPrimary} onClick={openNew}>
-            Yeni tesis + yönetici
-          </button>
+          <button className={btnPrimary} onClick={openNew}>{t("tesisYeni")}</button>
         }
       />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">Yeni tesis + yönetici</h2>
+          <h2 className="font-medium">{t("tesisYeni")}</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field
-              label="Tesis adı (opsiyonel)"
-              hint="Boş bırakırsanız yönetici ilk girişte kendisi belirler."
+              label={t("tesisAdiOpsiyonel")}
+              hint={t("tesisAdiBosIpucu")}
             >
               <input
                 className={inputCls}
                 value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}
                 minLength={2}
-                placeholder="örn. Acme Plaza"
+                placeholder={t("tesisAdiOrnek")}
               />
             </Field>
             <Field
-              label="Yönetim maili (opsiyonel)"
-              hint="Yönetici iletişim kartında herkese görünür."
+              label={t("tesisYonetimMaili")}
+              hint={t("tesisYonetimMailiIpucu")}
             >
               <input
                 type="email"
                 className={inputCls}
                 value={form.yonetim_email}
                 onChange={(e) => setForm({ ...form, yonetim_email: e.target.value })}
-                placeholder="örn. yonetim@acme.com"
+                placeholder={t("tesisYonetimMailiOrnek")}
               />
             </Field>
           </div>
@@ -188,10 +188,10 @@ export default function TenantsPage() {
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-medium">
-                      {i === 0 ? "Birincil yönetici" : `Yönetici ${i + 1}`}
+                      {i === 0 ? t("tesisBirincilYonetici") : `Yönetici ${i + 1}`}
                     </h3>
                     {i === 0 && (
-                      <p className="text-xs text-muted">Tesisi ilk girişte adlandırır.</p>
+                      <p className="text-xs text-muted">{t("tesisIlkGirisAdlandirir")}</p>
                     )}
                   </div>
                   {i > 0 && (
@@ -220,20 +220,20 @@ export default function TenantsPage() {
                     />
                   </Field>
                   <Field
-                    label="Cep telefonu (giriş anahtarı)"
-                    hint="Global benzersiz; yönetici telefonla giriş yapar"
+                    label={t("kullaniciTelefon")}
+                    hint={t("tesisTelefonIpucu")}
                   >
                     <input
                       className={inputCls}
                       value={y.phone}
                       onChange={(e) => setYonetici(i, { phone: e.target.value })}
-                      placeholder="örn. 0532 111 22 03"
+                      placeholder={t("kullaniciTelefonOrnek")}
                       required
                     />
                   </Field>
                   <Field
                     label="Parola (opsiyonel)"
-                    hint="Boş bırakırsanız tek seferlik geçici kod üretilir"
+                    hint={t("kullaniciParolaBosYeni")}
                   >
                     <input
                       type="password"
@@ -241,7 +241,7 @@ export default function TenantsPage() {
                       value={y.password}
                       onChange={(e) => setYonetici(i, { password: e.target.value })}
                       minLength={8}
-                      placeholder="Boş: geçici kod"
+                      placeholder={t("kullaniciParolaBosKisa")}
                     />
                   </Field>
                 </div>
@@ -261,7 +261,7 @@ export default function TenantsPage() {
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? "Oluşturuluyor..." : "Oluştur"}
+              {saving ? t("tesisOlusturuluyor") : t("tesisOlustur")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
               İptal
@@ -275,41 +275,44 @@ export default function TenantsPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <th className="px-4 py-2.5 font-medium">Tesis adı</th>
+                <th className="px-4 py-2.5 font-medium">{t("ayarTesisAdi")}</th>
                 <th className="px-4 py-2.5 font-medium">Kimlik (ID)</th>
                 <th className="px-4 py-2.5 font-medium">Kurulum</th>
-                <th className="px-4 py-2.5 font-medium">Oluşturulma</th>
+                <th className="px-4 py-2.5 font-medium">{t("tesisOlusturulma")}</th>
                 <th className="px-4 py-2.5 font-medium" />
               </tr>
             </thead>
             <tbody>
-              {(data?.items ?? []).map((t) => (
-                <tr key={t.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+              {(data?.items ?? []).map((tesis) => (
+                <tr key={tesis.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
                   <td className="px-4 py-2.5">
-                    <Link href={`/tenants/${t.id}`} className="font-medium text-ink hover:underline">
-                      {t.ad}
+                    <Link href={`/tenants/${tesis.id}`} className="font-medium text-ink hover:underline">
+                      {tesis.ad}
                     </Link>
                   </td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{t.id}</td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{tesis.id}</td>
                   <td className="px-4 py-2.5">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        t.kurulum_tamamlandi
+                        tesis.kurulum_tamamlandi
                           ? "bg-emerald-100 text-emerald-800"
                           : "bg-amber-100 text-amber-800"
                       }`}
                     >
-                      {t.kurulum_tamamlandi ? "tamamlandı" : "bekliyor"}
+                      {tesis.kurulum_tamamlandi ? t("tesisTamamlandi") : t("tesisBekliyor")}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-600">{fmtDate(t.created_at)}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{fmtDate(tesis.created_at)}</td>
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex justify-end gap-2">
-                      <Link href={`/tenants/${t.id}`} className={btnGhost}>
-                        Yönet
+                      <Link href={`/tenants/${tesis.id}`} className={btnGhost}>
+                        {t("tesisYonet")}
                       </Link>
-                      <button className={btnDanger} onClick={() => removeTenant(t)}>
-                        Sil
+                      <button
+                        className={btnDanger}
+                        onClick={() => removeTenant(tesis)}
+                      >
+                        {t("ortakSil")}
                       </button>
                     </div>
                   </td>
@@ -318,7 +321,7 @@ export default function TenantsPage() {
               {data && data.items.length === 0 && (
                 <tr>
                   <td colSpan={5}>
-                    <EmptyState title="Henüz tesis yok" description="İlk tesisi ve yöneticisini oluşturarak başlayın." />
+                    <EmptyState title={t("tesisYok")} description={t("tesisYokAlt")} />
                   </td>
                 </tr>
               )}

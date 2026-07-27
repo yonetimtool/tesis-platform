@@ -9,6 +9,7 @@ import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger,
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { useT } from "@/lib/i18n/kullan";
 import type {
   AuthType,
   HttpMethod,
@@ -47,6 +48,7 @@ const METHODS: HttpMethod[] = ["POST", "PUT", "PATCH", "GET"];
 const AUTH_TYPES: AuthType[] = ["none", "bearer", "api_key"];
 
 export default function IntegrationsPage() {
+  const t = useT();
   const toast = useToast();
   const { data, error, isLoading, mutate } = useSWR<IntegrationList>(
     "/api/integrations?limit=200",
@@ -113,7 +115,7 @@ export default function IntegrationsPage() {
       headers_json = form.headers_text.trim() ? JSON.parse(form.headers_text) : {};
     } catch {
       setSaving(false);
-      setFormErr("Header'lar geçerli JSON olmalı.");
+      setFormErr(t("entegHeaderJson"));
       return;
     }
     try {
@@ -133,7 +135,7 @@ export default function IntegrationsPage() {
       else await apiSend("/api/integrations", "POST", base);
       setOpen(false);
       mutate();
-      toast.success(editingId ? "Entegrasyon güncellendi." : "Entegrasyon oluşturuldu.");
+      toast.success(editingId ? t("entegGuncellendi") : t("entegOlusturuldu"));
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -158,7 +160,7 @@ export default function IntegrationsPage() {
       const res = await apiSend<IntegrationTriggerResult>(
         `/api/integrations/${it.id}/trigger`,
         "POST",
-        { message: "Test mesajı", title: "Test" },
+        { message: t("entegTestMesaji"), title: "Test" },
       );
       setTestResult((m) => ({ ...m, [it.id]: res }));
     } catch (err) {
@@ -175,28 +177,26 @@ export default function IntegrationsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Entegrasyonlar"
-        subtitle="Dış sistemler (megafon / akıllı ev / genel webhook) — API bilgisi girin, tetikleyin. Giden istekler SSRF korumasından geçer."
+        subtitle={t("entegAciklama")}
         action={
-          <button className={btnPrimary} onClick={openNew}>
-            Yeni entegrasyon
-          </button>
+          <button className={btnPrimary} onClick={openNew}>{t("entegYeni")}</button>
         }
       />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{editingId ? "Entegrasyon düzenle" : "Yeni entegrasyon"}</h2>
+          <h2 className="font-medium">{editingId ? t("entegDuzenle") : t("entegYeni")}</h2>
           {!editingId && presets && presets.length > 0 && (
-            <Field label="Hazır şablon (preset)" hint="Doldurur; düzenlenebilir">
+            <Field label={t("entegSablon")} hint={t("entegSablonIpucu")}>
               <select
                 className={inputCls}
                 defaultValue=""
                 onChange={(e) => e.target.value && applyPreset(e.target.value)}
               >
-                <option value="">— şablon seç —</option>
+                <option value="">{t("entegSablonSec")}</option>
                 {presets.map((p) => (
                   <option key={p.key} value={p.key}>
                     {p.key}
@@ -206,7 +206,7 @@ export default function IntegrationsPage() {
             </Field>
           )}
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Ad">
+            <Field label={t("ortakAd")}>
               <input
                 className={inputCls}
                 value={form.ad}
@@ -229,7 +229,7 @@ export default function IntegrationsPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Endpoint URL" hint="http(s) — iç/özel adresler engellenir">
+            <Field label="Endpoint URL" hint={t("entegUrlIpucu")}>
               <input
                 className={inputCls}
                 value={form.endpoint_url}
@@ -251,7 +251,7 @@ export default function IntegrationsPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Kimlik doğrulama">
+            <Field label={t("entegKimlikDogrulama")}>
               <select
                 className={inputCls}
                 value={form.auth_type}
@@ -265,11 +265,11 @@ export default function IntegrationsPage() {
               </select>
             </Field>
             <Field
-              label="Sır (bearer token / API key)"
+              label={t("entegSir")}
               hint={
                 editingSecretSet
-                  ? "Kayıtlı — değiştirmek için yeni değer girin (yazma-özel)"
-                  : "Yazma-özel; GET'te asla dönmez"
+                  ? t("entegSirKayitli")
+                  : t("entegSirYazmaOzel")
               }
             >
               <input
@@ -277,7 +277,7 @@ export default function IntegrationsPage() {
                 className={inputCls}
                 value={form.auth_secret}
                 onChange={(e) => setForm({ ...form, auth_secret: e.target.value })}
-                placeholder={editingSecretSet ? "•••••• (değiştirmezseniz boş bırakın)" : ""}
+                placeholder={editingSecretSet ? t("entegSirBos") : ""}
                 disabled={form.auth_type === "none"}
               />
             </Field>
@@ -290,7 +290,7 @@ export default function IntegrationsPage() {
               onChange={(e) => setForm({ ...form, headers_text: e.target.value })}
             />
           </Field>
-          <Field label="Payload şablonu" hint="{{message}} / {{title}} yer tutucuları">
+          <Field label={t("entegPayloadSablonu")} hint={t("entegYerTutucular")}>
             <textarea
               className={`${inputCls} font-mono`}
               rows={3}
@@ -303,13 +303,11 @@ export default function IntegrationsPage() {
               type="checkbox"
               checked={form.aktif}
               onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
-            />
-            Aktif
-          </label>
+            />{t("ortakAktif")}</label>
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? "Kaydediliyor..." : "Kaydet"}
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
               İptal
@@ -323,11 +321,11 @@ export default function IntegrationsPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <th className="px-4 py-2.5 font-medium">Ad</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
                 <th className="px-4 py-2.5 font-medium">Kanal</th>
                 <th className="px-4 py-2.5 font-medium">Endpoint</th>
                 <th className="px-4 py-2.5 font-medium">Kimlik</th>
-                <th className="px-4 py-2.5 font-medium">Aktif</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakAktif")}</th>
                 <th className="px-4 py-2.5 font-medium" />
               </tr>
             </thead>
@@ -369,7 +367,7 @@ export default function IntegrationsPage() {
                         >
                           {tr.ok
                             ? `✓ Başarılı (${tr.status ?? "—"})`
-                            : `✗ ${tr.error ?? "Başarısız"}${tr.status ? ` (${tr.status})` : ""}`}
+                            : `✗ ${tr.error ?? t("entegBasarisiz")}${tr.status ? ` (${tr.status})` : ""}`}
                         </span>
                       )}
                     </div>
@@ -380,7 +378,7 @@ export default function IntegrationsPage() {
             {data && data.items.length === 0 && (
               <tr>
                 <td colSpan={6}>
-                  <EmptyState title="Entegrasyon yok." description="İlk entegrasyonu ekleyerek başlayın." />
+                  <EmptyState title="Entegrasyon yok." description={t("entegYokAlt")} />
                 </td>
               </tr>
             )}

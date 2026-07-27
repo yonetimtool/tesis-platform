@@ -8,6 +8,8 @@ import { useToast } from "@/components/Toast";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { kurusToTL, tlToKurus } from "@/lib/money";
+import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
   DuesYontem,
   ResidentRol,
@@ -18,17 +20,19 @@ import type {
 } from "@/lib/types";
 
 // Manuel tahsilat: elden/havale/diger. (kart = provider/webhook akisi, panelde manuel odak.)
-const YONTEM: { value: DuesYontem; label: string }[] = [
-  { value: "elden", label: "Elden" },
-  { value: "havale", label: "Havale" },
-  { value: "diger", label: "Diğer" },
+// METIN DEGIL KIMLIK (modul duzeyi — README tur 18 dersi).
+const YONTEM: { value: DuesYontem; anahtar: SozlukAnahtari }[] = [
+  { value: "elden", anahtar: "odemeElden" },
+  { value: "havale", anahtar: "odemeHavale" },
+  { value: "diger", anahtar: "ortakDiger" },
 ];
-const ROL: { value: ResidentRol; label: string }[] = [
-  { value: "malik", label: "Malik" },
-  { value: "kiraci", label: "Kiracı" },
+const ROL: { value: ResidentRol; anahtar: SozlukAnahtari }[] = [
+  { value: "malik", anahtar: "daireMalik" },
+  { value: "kiraci", anahtar: "daireKiraci" },
 ];
 
 export function UnitDetail({ unit }: { unit: Unit }) {
+  const t = useT();
   const toast = useToast();
   const { data: dues, mutate: mutateDues } = useSWR<UnitDuesStatus>(
     `/api/units/${unit.id}/dues`,
@@ -59,7 +63,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
     setAOk(null);
     const k = tlToKurus(aTl);
     if (k === null || k <= 0) {
-      setAErr("Geçerli bir tutar girin (sıfırdan büyük).");
+      setAErr(t("aidatTutarGecersiz"));
       return;
     }
     setABusy(true);
@@ -81,7 +85,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       const m = err instanceof Error ? err.message : "Hata";
       setAErr(
         /zaten var|conflict|donem/i.test(m)
-          ? "Bu daireye bu dönem için zaten tahakkuk var."
+          ? t("daireTahakkukVar")
           : m,
       );
     } finally {
@@ -120,7 +124,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
     setPErr(null);
     const k = tlToKurus(pTl);
     if (k === null || k <= 0) {
-      setPErr("Geçerli bir tutar girin (sıfırdan büyük).");
+      setPErr(t("aidatTutarGecersiz"));
       return;
     }
     setPBusy(true);
@@ -142,7 +146,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       setPOpen(false);
       mutateDues();
     } catch (err) {
-      setPErr(err instanceof Error ? err.message : "Ödeme kaydedilemedi.");
+      setPErr(err instanceof Error ? err.message : t("daireOdemeKaydedilemedi"));
     } finally {
       setPBusy(false);
     }
@@ -174,13 +178,13 @@ export function UnitDetail({ unit }: { unit: Unit }) {
   }
 
   async function removeResident(userId: string) {
-    if (!window.confirm("Sakin daireden çıkarılsın mı?")) return;
+    if (!window.confirm(t("daireSakinCikarilsinMi"))) return;
     try {
       await apiSend(`/api/units/${unit.id}/residents/${userId}`, "DELETE");
       mutateRes();
-      toast.success("Sakin daireden çıkarıldı.");
+      toast.success(t("daireSakinCikarildi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Çıkarılamadı.");
+      toast.error(err instanceof Error ? err.message : t("daireCikarilamadi"));
     }
   }
 
@@ -196,17 +200,17 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       {/* Bakiye ozeti */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-lg bg-slate-50 p-3">
-          <div className="text-xs text-muted">Toplam tahakkuk</div>
+          <div className="text-xs text-muted">{t("raporToplamTahakkuk")}</div>
           <div className="text-lg font-semibold">
             {kurusToTL(dues?.toplam_tahakkuk_kurus ?? 0)}
           </div>
         </div>
         <div className="rounded-lg bg-slate-50 p-3">
-          <div className="text-xs text-muted">Ödenen</div>
+          <div className="text-xs text-muted">{t("raporOdenen")}</div>
           <div className="text-lg font-semibold">{kurusToTL(dues?.toplam_odenen_kurus ?? 0)}</div>
         </div>
         <div className={`rounded-lg p-3 ${bakiye > 0 ? "bg-red-50" : "bg-emerald-50"}`}>
-          <div className="text-xs text-muted">Bakiye (borç)</div>
+          <div className="text-xs text-muted">{t("raporBakiyeBorc")}</div>
           <div className={`text-lg font-semibold ${bakiye > 0 ? "text-red-700" : "text-emerald-700"}`}>
             {kurusToTL(bakiye)}
           </div>
@@ -223,7 +227,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         <form onSubmit={pay} className="space-y-3 rounded-lg border border-slate-200 p-4">
           <h3 className="font-medium">Manuel tahsilat</h3>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Tutar (TL)" hint="Örnek: 250 veya 250,50 — kısmi ödeme olabilir">
+            <Field label="Tutar (TL)" hint={t("daireTutarOrnek")}>
               <input
                 className={inputCls}
                 inputMode="decimal"
@@ -233,7 +237,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                 required
               />
             </Field>
-            <Field label="Yöntem">
+            <Field label={t("aidatYontem")}>
               <select
                 className={inputCls}
                 value={pYontem}
@@ -241,7 +245,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               >
                 {YONTEM.map((o) => (
                   <option key={o.value} value={o.value}>
-                    {o.label}
+                    {t(o.anahtar)}
                   </option>
                 ))}
               </select>
@@ -268,11 +272,11 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               </select>
             </Field>
             <Field
-              label="Dönem (opsiyonel)"
+              label={t("daireDonemOpsiyonel")}
               hint={
                 pAssessment
-                  ? "Seçili tahakkuktan otomatik türetilir"
-                  : "Örnek: 2026-07 — serbest ödemeyi rapora atfeder"
+                  ? t("daireDonemOtomatik")
+                  : t("daireDonemSerbest")
               }
             >
               <input
@@ -316,7 +320,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
           </ul>
         </div>
         <div>
-          <h3 className="mb-2 font-medium">Ödemeler</h3>
+          <h3 className="mb-2 font-medium">{t("aidatOdemeler")}</h3>
           <ul className="space-y-1 text-sm">
             {(dues?.payments ?? []).map((p) => (
               <li key={p.id} className="flex justify-between rounded border border-slate-100 px-2 py-1">
@@ -327,7 +331,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                 <span className="font-medium">{kurusToTL(p.tutar_kurus)}</span>
               </li>
             ))}
-            {dues && dues.payments?.length === 0 && <li className="text-muted">Ödeme yok.</li>}
+            {dues && dues.payments?.length === 0 && <li className="text-muted">{t("daireOdemeYok")}</li>}
           </ul>
         </div>
       </div>
@@ -336,7 +340,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       <form onSubmit={addAssessment} className="space-y-3 rounded-lg border border-slate-200 p-4">
         <h3 className="font-medium">Tahakkuk ekle (bu daire)</h3>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Dönem" hint="Örnek: 2026-07">
+          <Field label={t("ortakDonem")} hint={t("daireDonemOrnek")}>
             <input
               className={inputCls}
               value={aDonem}
@@ -355,7 +359,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               required
             />
           </Field>
-          <Field label="Son ödeme tarihi (opsiyonel)">
+          <Field label={t("daireSonOdemeTarihi")}>
             <input
               type="date"
               className={inputCls}
@@ -363,7 +367,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               onChange={(e) => setASon(e.target.value)}
             />
           </Field>
-          <Field label="Açıklama (opsiyonel)">
+          <Field label={t("ortakAciklamaOpsiyonel")}>
             <input className={inputCls} value={aDesc} onChange={(e) => setADesc(e.target.value)} />
           </Field>
         </div>
@@ -389,19 +393,19 @@ export function UnitDetail({ unit }: { unit: Unit }) {
             </li>
           ))}
           {residents && aktifSakinler.length === 0 && (
-            <li className="text-muted">Aktif sakin yok.</li>
+            <li className="text-muted">{t("daireAktifSakinYok")}</li>
           )}
         </ul>
         <form onSubmit={addResident} className="flex items-end gap-2">
           <div className="grow">
-            <Field label="Sakin ekle" hint="Kullanıcılar ekranından eklenen resident hesapları">
+            <Field label="Sakin ekle" hint={t("daireSakinIpucu")}>
               <select
                 className={inputCls}
                 value={rUser}
                 onChange={(e) => setRUser(e.target.value)}
                 required
               >
-                <option value="">— sakin seç —</option>
+                <option value="">{t("daireSakinSec")}</option>
                 {residentChoices.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.ad} ({u.email})
@@ -411,24 +415,22 @@ export function UnitDetail({ unit }: { unit: Unit }) {
             </Field>
           </div>
           <div className="w-40">
-            <Field label="Rol">
+            <Field label={t("ortakRol")}>
               <select
                 className={inputCls}
                 value={rRol}
                 onChange={(e) => setRRol(e.target.value as ResidentRol | "")}
               >
-                <option value="">— seç —</option>
+                <option value="">{t("planSec")}</option>
                 {ROL.map((o) => (
                   <option key={o.value} value={o.value}>
-                    {o.label}
+                    {t(o.anahtar)}
                   </option>
                 ))}
               </select>
             </Field>
           </div>
-          <button type="submit" className={btnGhost} disabled={rBusy}>
-            Ekle
-          </button>
+          <button type="submit" className={btnGhost} disabled={rBusy}>{t("ortakEkle")}</button>
         </form>
         <ErrorBox message={rErr} />
       </div>

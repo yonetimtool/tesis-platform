@@ -9,54 +9,58 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type { Complaint, ComplaintDurum, ComplaintList, ComplaintStatusHistory } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 const LIMIT = 20;
 
 // Durum rozetleri — mobil ile ayni wire kodu: acik=amber, is_emri=mavi,
 // cozuldu=yesil, reddedildi=kirmizi. Renk siniflari globals.css'te koyu-mod
 // eslemesi olan accent'ler (bg-*-100 / text-*-700).
-const DURUM_META: Record<ComplaintDurum, { label: string; cls: string }> = {
-  acik: { label: "Açık", cls: "bg-amber-100 text-amber-700" },
-  is_emri: { label: "İş Emri", cls: "bg-blue-100 text-blue-700" },
-  cozuldu: { label: "Çözüldü", cls: "bg-green-100 text-green-700" },
-  reddedildi: { label: "Reddedildi", cls: "bg-red-100 text-red-700" },
+// METIN DEGIL KIMLIK (modul duzeyi — README tur 18 dersi).
+const DURUM_META: Record<ComplaintDurum, { anahtar: SozlukAnahtari; cls: string }> = {
+  acik: { anahtar: "ortakAcik", cls: "bg-amber-100 text-amber-700" },
+  is_emri: { anahtar: "talepIsEmri", cls: "bg-blue-100 text-blue-700" },
+  cozuldu: { anahtar: "destekCozuldu", cls: "bg-green-100 text-green-700" },
+  reddedildi: { anahtar: "talepReddedildi", cls: "bg-red-100 text-red-700" },
 };
 
-const FILTERS: Array<{ value: ComplaintDurum | ""; label: string }> = [
-  { value: "", label: "Tümü" },
-  { value: "acik", label: "Açık" },
-  { value: "is_emri", label: "İş Emri" },
-  { value: "cozuldu", label: "Çözüldü" },
-  { value: "reddedildi", label: "Reddedilen" },
+const FILTERS: Array<{ value: ComplaintDurum | ""; anahtar: SozlukAnahtari }> = [
+  { value: "", anahtar: "ortakTumu" },
+  { value: "acik", anahtar: "ortakAcik" },
+  { value: "is_emri", anahtar: "talepIsEmri" },
+  { value: "cozuldu", anahtar: "destekCozuldu" },
+  { value: "reddedildi", anahtar: "talepReddedilen" },
 ];
 
 // Timeline actor rolu -> TR etiket (mobil UserRole.label ile ayni).
-const ROLE_LABEL: Record<string, string> = {
-  admin: "Platform Admin",
-  yonetici: "Yönetici",
-  security: "Güvenlik",
-  tesis_gorevlisi: "Tesis Görevlisi",
-  resident: "Site Sakini",
+const ROLE_ANAHTAR: Record<string, SozlukAnahtari> = {
+  admin: "rolPlatformAdmin",
+  yonetici: "rolYonetici",
+  security: "rolGuvenlik",
+  tesis_gorevlisi: "rolTesisGorevlisi",
+  resident: "rolSiteSakini",
 };
 
 // Bagli is emri (Task) durumu -> TR etiket (mobil _LinkedWorkOrderCard ile ayni):
-// 'acik' -> "Atandı", 'tamamlandi' -> "Tamamlandı".
-function isEmriLabel(durum?: string | null): string {
+// 'acik' -> t("talepAtandi"), 'tamamlandi' -> t("talepTamamlandi").
+function isEmriAnahtari(durum?: string | null): SozlukAnahtari {
   switch (durum) {
     case "acik":
-      return "Atandı";
+      return "talepAtandi";
     case "tamamlandi":
-      return "Tamamlandı";
+      return "talepTamamlandi";
     default:
-      return "Durum bilinmiyor";
+      return "talepDurumBilinmiyor";
   }
 }
 
 function DurumBadge({ durum }: { durum: ComplaintDurum }) {
+  const t = useT();
   const meta = DURUM_META[durum] ?? DURUM_META.acik;
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
-      {meta.label}
+      {t(meta.anahtar)}
     </span>
   );
 }
@@ -65,6 +69,7 @@ function DurumBadge({ durum }: { durum: ComplaintDurum }) {
 // Panel admin'i tenant'taki TUMUNU gorur. Is emrine DONUSTURME (atama secimi)
 // mobilde kalir; panel bagli is emrini SALT OKUR gosterir + acik talebi coz/reddet.
 export default function ComplaintsPage() {
+  const t = useT();
   const [offset, setOffset] = useState(0);
   const [durum, setDurum] = useState<ComplaintDurum | "">("");
   const query = `/api/complaints?limit=${LIMIT}&offset=${offset}${durum ? `&durum=${durum}` : ""}`;
@@ -73,7 +78,7 @@ export default function ComplaintsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Talep / Arıza"
+        title={t("talepBaslik")}
         action={
           <div className="flex flex-wrap gap-1">
             {FILTERS.map((f) => (
@@ -89,7 +94,7 @@ export default function ComplaintsPage() {
                   setOffset(0);
                 }}
               >
-                {f.label}
+                {t(f.anahtar)}
               </button>
             ))}
           </div>
@@ -98,12 +103,12 @@ export default function ComplaintsPage() {
 
       <p className="text-sm text-muted">
         Sakinlerin ve saha ekibinin ilettiği talep/arızalar. Açık talebi
-        <strong> Çöz</strong> ya da <strong>Reddet</strong> ile
+        <strong>{t("talepCoz")}</strong> ya da <strong>Reddet</strong> ile
         sonuçlandırın; iş emrine dönüştürme (atama) mobil uygulamadan yapılır.
       </p>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       <ul className="space-y-3">
         {(data?.items ?? []).map((c) => (
@@ -111,11 +116,11 @@ export default function ComplaintsPage() {
         ))}
         {data && data.items.length === 0 && (
           <EmptyState
-            title={durum ? "Bu durumda talep yok." : "Henüz talep yok."}
+            title={durum ? "Bu durumda talep yok." : t("talepYok")}
             description={
               durum
-                ? "Filtreyi değiştirerek diğer talepleri görebilirsiniz."
-                : "Sakinler/saha ekibi mobil uygulamadan talep açtığında burada listelenir."
+                ? t("talepFiltreDegistir")
+                : t("talepYokAlt")
             }
           />
         )}
@@ -141,6 +146,7 @@ function ComplaintCard({
   complaint: Complaint;
   onChanged: () => void;
 }) {
+  const t = useT();
   // Acik talepte iki eylem: "coz" (opsiyonel not) / "reddet" (zorunlu sebep).
   const [action, setAction] = useState<"coz" | "reddet" | null>(null);
   const canAct = c.durum === "acik";
@@ -153,7 +159,7 @@ function ComplaintCard({
             <h3 className="font-medium">{c.baslik}</h3>
             <DurumBadge durum={c.durum} />
             <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-              {c.kategori_ad ?? "Diğer"}
+              {c.kategori_ad ?? t("ortakDiger")}
             </span>
           </div>
           <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{c.mesaj}</p>
@@ -189,9 +195,9 @@ function ComplaintCard({
 
           {c.is_emri_id && (
             <div className="mt-3 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm">
-              <span className="text-blue-700">Bağlı İş Emri</span>
+              <span className="text-blue-700">{t("talepBagliIsEmri")}</span>
               <span className="ml-auto font-medium text-blue-700">
-                {isEmriLabel(c.is_emri_durum)}
+                {t(isEmriAnahtari(c.is_emri_durum))}
               </span>
             </div>
           )}
@@ -203,9 +209,7 @@ function ComplaintCard({
 
         {canAct && !action && (
           <div className="flex shrink-0 flex-col gap-2">
-            <button className={btnPrimary} onClick={() => setAction("coz")}>
-              Çöz
-            </button>
+            <button className={btnPrimary} onClick={() => setAction("coz")}>{t("talepCoz")}</button>
             <button className={btnDanger} onClick={() => setAction("reddet")}>
               Reddet
             </button>
@@ -229,9 +233,10 @@ function ComplaintCard({
 }
 
 function Timeline({ gecmis }: { gecmis: ComplaintStatusHistory[] }) {
+  const t = useT();
   return (
     <div className="mt-3 border-t border-slate-100 pt-3">
-      <p className="mb-2 text-xs font-medium text-muted">Durum geçmişi</p>
+      <p className="mb-2 text-xs font-medium text-muted">{t("talepDurumGecmisi")}</p>
       <ol className="space-y-3">
         {gecmis.map((g, i) => {
           const meta = DURUM_META[g.durum as ComplaintDurum];
@@ -244,9 +249,9 @@ function Timeline({ gecmis }: { gecmis: ComplaintStatusHistory[] }) {
               />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="font-medium">{meta?.label ?? g.durum}</span>
+                  <span className="font-medium">{meta ? t(meta.anahtar) : g.durum}</span>
                   <span className="text-xs text-muted">
-                    {ROLE_LABEL[g.actor_role] ?? g.actor_role} ·{" "}
+                    {ROLE_ANAHTAR[g.actor_role] ? t(ROLE_ANAHTAR[g.actor_role]) : g.actor_role} ·{" "}
                     {formatDateTime(g.created_at)}
                   </span>
                 </div>
@@ -273,6 +278,7 @@ function ActionForm({
   onClose: () => void;
   onDone: () => void;
 }) {
+  const t = useT();
   const toast = useToast();
   const [text, setText] = useState("");
   const [saving, setSaving] = useState(false);
@@ -297,11 +303,11 @@ function ActionForm({
         await apiSend(`/api/complaints/${c.id}/resolve`, "POST", {
           cozum_notu: notu || null,
         });
-        toast.success("Talep çözüldü.");
+        toast.success(t("talepCozuldu"));
       }
       onDone();
     } catch (e2) {
-      setErr(e2 instanceof Error ? e2.message : "İşlem başarısız.");
+      setErr(e2 instanceof Error ? e2.message : t("ortakIslemBasarisiz"));
     } finally {
       setSaving(false);
     }
@@ -310,11 +316,11 @@ function ActionForm({
   return (
     <form onSubmit={submit} className="mt-4 space-y-4 border-t border-slate-100 pt-4">
       <Field
-        label={isReddet ? "Red sebebi" : "Çözüm notu"}
+        label={isReddet ? "Red sebebi" : t("talepCozumNotu")}
         hint={
           isReddet
-            ? "Zorunlu — sakin mobilde bu sebebi görür."
-            : "İsteğe bağlı — sakin mobilde görür."
+            ? t("talepNotZorunlu")
+            : t("talepNotIstege")
         }
       >
         <textarea
@@ -332,7 +338,7 @@ function ActionForm({
           className={`${isReddet ? btnDanger : btnPrimary} disabled:opacity-60`}
           disabled={submitDisabled}
         >
-          {saving ? "Gönderiliyor..." : isReddet ? "Reddet" : "Çöz"}
+          {saving ? t("destekGonderiliyor") : isReddet ? "Reddet" : t("talepCoz")}
         </button>
         <button type="button" className={btnGhost} onClick={onClose}>
           İptal

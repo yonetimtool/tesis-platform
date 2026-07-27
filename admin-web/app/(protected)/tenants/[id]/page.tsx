@@ -9,6 +9,7 @@ import { Field, ErrorBox, btnPrimary, btnGhost, inputCls, cardCls } from "@/comp
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { useT } from "@/lib/i18n/kullan";
 
 interface Yonetici {
   id: string;
@@ -34,6 +35,7 @@ function fmtDate(iso: string): string {
 }
 
 export default function TenantDetailPage() {
+  const t = useT();
   const toast = useToast();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -71,7 +73,7 @@ export default function TenantDetailPage() {
       await apiSend(`/api/tenants/${id}`, "PATCH", { ad: nameInput.trim() });
       setNameEditing(false);
       mutate();
-      toast.success("Tesis adı güncellendi.");
+      toast.success(t("tesisAdiGuncellendi"));
     } catch (err) {
       setNameErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -97,10 +99,10 @@ export default function TenantDetailPage() {
       await apiSend(`/api/tenants/${id}/yonetici`, "PATCH", body);
       setEditing(false);
       mutate();
-      toast.success("Yönetici güncellendi.");
+      toast.success(t("tesisYoneticiGuncellendi"));
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
-      setFormErr(/telefon|zaten kay/i.test(m) ? "Bu telefon zaten kayıtlı." : m);
+      setFormErr(/telefon|zaten kay/i.test(m) ? t("tesisTelefonKayitli") : m);
     } finally {
       setSaving(false);
     }
@@ -109,21 +111,21 @@ export default function TenantDetailPage() {
   async function toggleActive() {
     if (!y) return;
     const next = !y.is_active;
-    if (!window.confirm(next ? "Yönetici hesabı aktifleştirilsin mi?" : "Yönetici hesabı pasifleştirilsin mi? (giriş engellenir)")) return;
+    if (!window.confirm(next ? t("tesisYoneticiAktifOnay") : t("tesisYoneticiPasifOnay"))) return;
     setBusy(true);
     try {
       await apiSend(`/api/tenants/${id}/yonetici`, "PATCH", { is_active: next });
       mutate();
-      toast.success(next ? "Yönetici aktifleştirildi." : "Yönetici pasifleştirildi.");
+      toast.success(next ? t("tesisYoneticiAktiflestirildi") : t("tesisYoneticiPasiflestirildi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Güncellenemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakGuncellenemedi"));
     } finally {
       setBusy(false);
     }
   }
 
   async function resetCredential() {
-    if (!window.confirm("Yöneticinin parolası sıfırlanıp yeni geçici kod üretilsin mi?")) return;
+    if (!window.confirm(t("tesisParolaSifirlaOnay"))) return;
     setBusy(true);
     try {
       const r = await apiSend<{ temp_code: string }>(
@@ -136,7 +138,7 @@ export default function TenantDetailPage() {
       );
       mutate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Sıfırlanamadı.");
+      toast.error(err instanceof Error ? err.message : t("tesisSifirlanamadi"));
     } finally {
       setBusy(false);
     }
@@ -162,7 +164,7 @@ export default function TenantDetailPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {data && (
         <>
@@ -181,7 +183,7 @@ export default function TenantDetailPage() {
                         : "bg-amber-100 text-amber-800"
                     }`}
                   >
-                    {data.kurulum_tamamlandi ? "kurulum tamamlandı" : "kurulum bekliyor"}
+                    {data.kurulum_tamamlandi ? t("tesisKurulumTamamlandi") : "kurulum bekliyor"}
                   </span>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
@@ -197,7 +199,7 @@ export default function TenantDetailPage() {
 
             {nameEditing && (
               <form onSubmit={saveName} className="space-y-3">
-                <Field label="Tesis adı">
+                <Field label={t("ayarTesisAdi")}>
                   <input
                     className={inputCls}
                     value={nameInput}
@@ -211,7 +213,7 @@ export default function TenantDetailPage() {
                 {nameErr && <ErrorBox message={nameErr} />}
                 <div className="flex gap-2">
                   <button type="submit" className={btnPrimary} disabled={nameSaving}>
-                    {nameSaving ? "Kaydediliyor..." : "Kaydet"}
+                    {nameSaving ? t("ortakKaydediliyor") : t("ortakKaydet")}
                   </button>
                   <button
                     type="button"
@@ -227,17 +229,17 @@ export default function TenantDetailPage() {
           </div>
 
           <div className={`${cardCls} p-5`}>
-            <h2 className="mb-3 font-medium">Yönetici</h2>
-            {!y && <p className="text-sm text-muted">Bu tesiste yönetici yok.</p>}
+            <h2 className="mb-3 font-medium">{t("rolYonetici")}</h2>
+            {!y && <p className="text-sm text-muted">{t("tesisYoneticiYok")}</p>}
 
             {y && !editing && (
               <div className="space-y-3">
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <dt className="text-slate-500">Ad</dt>
+                  <dt className="text-slate-500">{t("ortakAd")}</dt>
                   <dd>{y.ad}</dd>
-                  <dt className="text-slate-500">Telefon (giriş)</dt>
+                  <dt className="text-slate-500">{t("tesisTelefonGiris")}</dt>
                   <dd>{y.telefon ?? "—"}</dd>
-                  <dt className="text-slate-500">Durum</dt>
+                  <dt className="text-slate-500">{t("ortakDurum")}</dt>
                   <dd>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -249,7 +251,7 @@ export default function TenantDetailPage() {
                   </dd>
                   <dt className="text-slate-500">Kimlik</dt>
                   <dd className="text-slate-600">
-                    {y.password_set ? "parola belirlendi" : "geçici kod aşamasında"}
+                    {y.password_set ? "parola belirlendi" : t("tesisGeciciKodAsamasi")}
                   </dd>
                 </dl>
                 <div className="flex flex-wrap gap-2 pt-1">
@@ -260,7 +262,7 @@ export default function TenantDetailPage() {
                     Parola sıfırla / geçici kod üret
                   </button>
                   <button className={btnGhost} onClick={toggleActive} disabled={busy}>
-                    {y.is_active ? "Pasifleştir" : "Aktifleştir"}
+                    {y.is_active ? t("ortakPasiflestir") : t("ortakAktiflestir")}
                   </button>
                 </div>
               </div>
@@ -269,7 +271,7 @@ export default function TenantDetailPage() {
             {y && editing && (
               <form onSubmit={saveEdit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Ad">
+                  <Field label={t("ortakAd")}>
                     <input
                       className={inputCls}
                       value={ad}
@@ -278,19 +280,19 @@ export default function TenantDetailPage() {
                       minLength={2}
                     />
                   </Field>
-                  <Field label="Cep telefonu (giriş anahtarı)" hint="Global benzersiz">
+                  <Field label={t("kullaniciTelefon")} hint="Global benzersiz">
                     <input
                       className={inputCls}
                       value={telefon}
                       onChange={(e) => setTelefon(e.target.value)}
-                      placeholder="örn. 0532 111 22 03"
+                      placeholder={t("kullaniciTelefonOrnek")}
                     />
                   </Field>
                 </div>
                 <ErrorBox message={formErr} />
                 <div className="flex gap-2">
                   <button type="submit" className={btnPrimary} disabled={saving}>
-                    {saving ? "Kaydediliyor..." : "Kaydet"}
+                    {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
                   </button>
                   <button type="button" className={btnGhost} onClick={() => setEditing(false)}>
                     İptal
@@ -301,23 +303,23 @@ export default function TenantDetailPage() {
           </div>
 
           <div className="rounded-xl border border-rose-200 bg-rose-50 p-5">
-            <h2 className="font-medium text-rose-800">Tehlikeli bölge</h2>
+            <h2 className="font-medium text-rose-800">{t("tesisTehlikeliBolge")}</h2>
             <p className="mt-1 text-sm text-rose-700">
               Tesisi silmek yöneticiyi, duyuruları, daireleri, sakinleri ve tüm site
               verisini kalıcı olarak siler. Bu işlem geri alınamaz. Onaylamak için
-              aşağıya <span className="font-semibold">SİL</span> yazın.
+              aşağıya <span className="font-semibold">{t("tesisSilOnayKelimesi")}</span> yazın.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <input
                 className={`${inputCls} max-w-xs`}
                 value={confirmAd}
                 onChange={(e) => setConfirmAd(e.target.value)}
-                placeholder="SİL"
+                placeholder={t("tesisSilOnayKelimesi")}
               />
               <button
                 className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-50"
                 onClick={deleteTenant}
-                disabled={busy || confirmAd.trim().toLocaleUpperCase("tr") !== "SİL"}
+                disabled={busy || confirmAd.trim().toLocaleUpperCase("tr") !== t("tesisSilOnayKelimesi")}
               >
                 Tesisi kalıcı olarak sil
               </button>

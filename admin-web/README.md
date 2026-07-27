@@ -149,6 +149,7 @@ farkindaligi TASIMAZ). `tests/i18n.test.ts` kabukta sabit `left-0`/`pl-64`/
 | 17 | kabuk (21 menu + cikis + mobil cekmece), giris ekrani, tema dugmesi, dil secici, sayfa ust verisi, rol adlari, BFF oturum-doldu mesaji |
 | 18 | **denetim kaydi, canli panel, bildirimler, ayarlar, sikayet haritasi, vardiyalar, duyurular, NFC noktalari, seffaflik panosu** + `lib/client.ts`, `lib/fetcher.ts`, `ReportsTabs` |
 | 19 | **devriye planlari, gorev gecmisi raporu, aidat tahsilat raporu, tur gecmisi raporu, daireler, aidat, destek** |
+| 20 | **demirbas, kullanicilar, entegrasyonlar, gorevler, talepler, bina duzenleme, tesisler, tesis detayi, daire detayi** + `app/api/uploads` (BFF) — **PANEL TAMAMLANDI** |
 
 Bir sayfa ancak **tamami** cevrildiginde listeye girer ve
 `tests/i18n.test.ts`teki `CEVRILEN` dizisine eklenir — o dizideki dosyalarda
@@ -203,7 +204,8 @@ EOF
 | Tur 17 oncesi | 473 | 35 |
 | Tur 17 sonrasi (kabuk + giris) | 450 | 32 |
 | Tur 18 sonrasi | 386 | 22 |
-| **Tur 19 sonrasi** | **251** | **12** (9'u gercek sayfa; 3'u marka kelimesi) |
+| Tur 19 sonrasi | 251 | 12 |
+| **Tur 20 sonrasi** | **3** | **3** — ucu de MARKA kelimesi (`Yönetio`) |
 
 > **IKINCI OLCUM ZORUNLUDUR.** Mobil §15'in en pahali dersi: birinci olcum
 > yalnizca Turkce'ye ozgu karakter **veya** listedeki kelimeyi arar.
@@ -213,12 +215,21 @@ EOF
 > etmeden once UI konumundaki (`label=`, `title=`, `placeholder=`,
 > `aria-label=`, `>metin<`) **tum** literalleri de taramak gerekir.
 
-Kalan sayfalar (tur 19 sonrasi **9 sayfa**): `assets` (31), `users` (30),
-`tasks` (28), `complaints` (28), `building-editor` (28), `tenants/[id]` (28),
-`UnitDetail` (28), `tenants` (24), `integrations` (23).
+**KALAN SAYFA YOK.** Olcumdeki son 3 hit `Yönetio` marka kelimesidir
+(`login`, `AppShell`, `YonetioLogo`) — bilincli istisna, cevrilmez.
 
-> Olcumdeki 12 dosyanin 3'u (`login`, `AppShell`, `YonetioLogo`) yalnizca
-> **marka kelimesini** ("Yönetio") tasir — bilincli istisnadir, cevrilmez.
+Tur 20'den itibaren kaynak taramasi **dosya listesiyle degil TUM agacla**
+calisir (`tests/i18n.test.ts` -> "PANELIN TAMAMINDA Turkce sabit kalmadi"):
+Turkce sabitle eklenen YENI bir sayfa testi kirar. Iki muafiyet var ve ikisi
+de gerekcelidir: sozlugun kendisi ve `lib/i18n/diller.ts` (dil adlari her
+zaman kendi dilinde yazar).
+
+> **TUR 20'DE BULUNAN KOR NOKTA:** onceki turlarin olcumu `app/**/*.tsx`,
+> `components` ve `lib`e bakiyordu; **`app/api/**/*.ts` route handler'lari
+> kapsam disindaydi. Tam agac taramasi `app/api/uploads/route.ts` icinde uc
+> Turkce hata mesaji buldu — BFF'in KENDI urettigi, istemciye giden metinler.
+> Ders: "tum kaynagi tara" derken dizin listesini elle yazmak, listeye
+> girmeyen her yeri sessizce muaf tutar.
 
 **Ayri bir alt is — TARIH BICIMI.** `lib/fetcher.ts` ve 5 sayfa tarihi
 `toLocaleString("tr-TR")` ile bicimliyor: dil degisse de tarih Turkce

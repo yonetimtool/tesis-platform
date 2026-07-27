@@ -8,6 +8,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { Block, BlockList, Unit, UnitList } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
 
 // Bloksuz kova (implicit tek blok) icin sentinel — gercek blok etiketi
 // alfanumerik ve >=1 karakter, bu deger asla cakismaz.
@@ -46,6 +47,7 @@ const EMPTY_UNIT: UnitFormState = {
 };
 
 export default function BuildingEditorPage() {
+  const t = useT();
   const toast = useToast();
   const blocks = useSWR<BlockList>("/api/blocks", jsonFetcher);
   const units = useSWR<UnitList>("/api/units?limit=200&offset=0", jsonFetcher);
@@ -97,13 +99,13 @@ export default function BuildingEditorPage() {
       else await apiSend("/api/blocks", "POST", body);
       setBlockForm(EMPTY_BLOCK);
       refresh();
-      toast.success(blockForm.editingId ? "Blok güncellendi." : "Blok oluşturuldu.");
+      toast.success(blockForm.editingId ? t("binaBlokGuncellendi") : t("binaBlokOlusturuldu"));
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
       setBlockForm((f) => ({
         ...f,
         saving: false,
-        err: /zaten kayitli|conflict/i.test(m) ? "Bu blok etiketi zaten kayıtlı." : m,
+        err: /zaten kayitli|conflict/i.test(m) ? t("binaBlokZatenKayitli") : m,
       }));
     }
   }
@@ -122,7 +124,7 @@ export default function BuildingEditorPage() {
       );
       if (typed == null) return; // iptal
       if (typed.trim() !== b.ad) {
-        toast.error("Blok adı eşleşmedi; silme iptal edildi.");
+        toast.error(t("binaBlokAdEslesmedi"));
         return;
       }
       cascade = true;
@@ -155,13 +157,13 @@ export default function BuildingEditorPage() {
       else await apiSend("/api/units", "POST", body);
       setUnitForm(EMPTY_UNIT);
       refresh();
-      toast.success(unitForm.editingId ? "Daire güncellendi." : "Daire oluşturuldu.");
+      toast.success(unitForm.editingId ? t("daireGuncellendi") : t("daireOlusturuldu"));
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
       setUnitForm((f) => ({
         ...f,
         saving: false,
-        err: /zaten kayitli|conflict|no /i.test(m) ? "Bu daire no zaten kayıtlı." : m,
+        err: /zaten kayitli|conflict|no /i.test(m) ? t("daireNoZatenKayitli") : m,
       }));
     }
   }
@@ -221,36 +223,36 @@ export default function BuildingEditorPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Bina Düzenleme"
-        subtitle="Blok, kat ve daireleri görsel olarak oluşturun. Şikayet Haritası bu yapıyı yansıtır."
+        title={t("kabukBinaDuzenleme")}
+        subtitle={t("binaAciklama")}
         action={
           drilledIn ? (
-            <button className={btnGhost} onClick={closeDetail}>← Bloklara dön</button>
+            <button className={btnGhost} onClick={closeDetail}>{t("binaBloklaraDon")}</button>
           ) : undefined
         }
       />
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600">
         Bu düzenleyici panelde yalnızca platform adminine açıktır; site yöneticileri (yönetici)
-        aynı düzenlemeyi mobil <span className="font-medium">Bina Düzenleme</span> ekranından yapar.
+        aynı düzenlemeyi mobil <span className="font-medium">{t("kabukBinaDuzenleme")}</span> ekranından yapar.
         Yetki backend’de admin+yönetici olarak tanımlıdır.
       </div>
 
-      {loadError && <ErrorBox message="Veriler yüklenemedi." />}
+      {loadError && <ErrorBox message={t("binaVerilerYuklenemedi")} />}
 
       {/* Blok ekle/duzenle formu */}
       {blockForm.open && (
         <form onSubmit={saveBlock} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{blockForm.editingId ? "Blok düzenle" : "Yeni blok"}</h2>
+          <h2 className="font-medium">{blockForm.editingId ? t("binaBlokDuzenle") : t("binaBlokYeni")}</h2>
           <div className="grid grid-cols-1 gap-4 sm:max-w-xs">
-            <Field label="Blok etiketi" hint="Kısa alfanumerik (örn. A, B1) — tire yok">
+            <Field label="Blok etiketi" hint={t("binaBlokIpucu")}>
               <input
                 className={inputCls}
                 value={blockForm.ad}
                 onChange={(e) => setBlockForm({ ...blockForm, ad: e.target.value })}
                 pattern="[A-Za-z0-9]+"
                 maxLength={8}
-                title="Yalnızca harf ve sayı (örn. A, B1)"
+                title={t("blokGecersiz")}
                 placeholder="A"
                 required
               />
@@ -259,7 +261,7 @@ export default function BuildingEditorPage() {
           <ErrorBox message={blockForm.err} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={blockForm.saving}>
-              {blockForm.saving ? "Kaydediliyor..." : "Kaydet"}
+              {blockForm.saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setBlockForm(EMPTY_BLOCK)}>
               İptal
@@ -272,20 +274,20 @@ export default function BuildingEditorPage() {
       {unitForm.open && (
         <form onSubmit={saveUnit} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">
-            {unitForm.editingId ? "Daire düzenle" : "Yeni daire"}
+            {unitForm.editingId ? t("daireDuzenle") : t("daireYeni")}
             <span className="ml-2 text-sm text-muted">
               {unitForm.blok ? `· Blok ${unitForm.blok}` : "· Bloksuz"}
             </span>
           </h2>
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Daire no" hint="Alfanumerik + tire (örn. A-12, B3, 12)">
+            <Field label="Daire no" hint={t("binaDaireNoIpucu")}>
               <input
                 className={inputCls}
                 value={unitForm.no}
                 onChange={(e) => setUnitForm({ ...unitForm, no: e.target.value })}
                 pattern="[A-Za-z0-9-]+"
                 maxLength={50}
-                title="Yalnızca harf, sayı ve tire"
+                title={t("binaDaireNoGecersiz")}
                 placeholder="A-12"
                 required
               />
@@ -299,7 +301,7 @@ export default function BuildingEditorPage() {
                 placeholder="1"
               />
             </Field>
-            <Field label="Sıra" hint="Kattaki konum">
+            <Field label={t("binaSira")} hint="Kattaki konum">
               <input
                 className={inputCls}
                 inputMode="numeric"
@@ -312,7 +314,7 @@ export default function BuildingEditorPage() {
           <ErrorBox message={unitForm.err} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={unitForm.saving}>
-              {unitForm.saving ? "Kaydediliyor..." : "Kaydet"}
+              {unitForm.saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setUnitForm(EMPTY_UNIT)}>
               İptal
@@ -365,6 +367,7 @@ function BlockTiles({
   onRemoveBlock: (label: string) => void;
   onAddBlock: () => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-wrap gap-3">
       {labels.map((label) => (
@@ -376,7 +379,7 @@ function BlockTiles({
             <span className="text-lg font-semibold text-indigo-900">Blok {label}</span>
             <span className="text-xs text-slate-500">{unitCountFor(label)} daire</span>
             {!registeredFor(label) && (
-              <span className="mt-1 text-[10px] text-amber-600">kayıtsız (yalnızca dairede)</span>
+              <span className="mt-1 text-[10px] text-amber-600">{t("binaKayitsiz")}</span>
             )}
           </button>
           {registeredFor(label) && (
@@ -384,15 +387,13 @@ function BlockTiles({
               <button className="text-xs text-slate-500 hover:underline" onClick={() => onEditBlock(label)}>
                 Düzenle
               </button>
-              <button className="text-xs text-red-600 hover:underline" onClick={() => onRemoveBlock(label)}>
-                Sil
-              </button>
+              <button className="text-xs text-red-600 hover:underline" onClick={() => onRemoveBlock(label)}>{t("ortakSil")}</button>
             </div>
           )}
         </div>
       ))}
 
-      {/* "Blok atanmamış" kova: YALNIZ mevcut bloksuz daireler varken gorunur
+      {/* t("daireBlokAtanmamis") kova: YALNIZ mevcut bloksuz daireler varken gorunur
           (goruntuleme + tasima/silme icin). Yeni daire buradan EKLENEMEZ —
           her yeni daire bir bloga baglanir (canli-site kurali). */}
       {blocklessCount > 0 && (
@@ -400,7 +401,7 @@ function BlockTiles({
           onClick={onOpenBlockless}
           className="flex h-32 w-40 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50"
         >
-          <span className="text-lg font-semibold text-slate-700">Blok atanmamış</span>
+          <span className="text-lg font-semibold text-slate-700">{t("daireBlokAtanmamis")}</span>
           <span className="text-xs text-slate-500">{blocklessCount} daire</span>
         </button>
       )}
@@ -427,6 +428,7 @@ function BlockDetail({
   onEditUnit: (u: Unit) => void;
   onRemoveUnit: (u: Unit) => void;
 }) {
+  const t = useT();
   const blockless = label === BLOCKLESS;
 
   const floorSet = new Set<number>(pendingFloors);
@@ -439,7 +441,7 @@ function BlockDetail({
   return (
     <div className={`space-y-3 ${cardCls} p-5`}>
       <div className="flex items-center justify-between">
-        <h2 className="font-medium">{blockless ? "Blok atanmamış daireler" : `Blok ${label}`}</h2>
+        <h2 className="font-medium">{blockless ? t("binaBloksuzDaireler") : `Blok ${label}`}</h2>
         {/* Bloksuz kovaya yeni daire EKLENMEZ (her daire bir bloga baglanir). */}
         {!blockless && (
           <button className={btnGhost} onClick={onAddFloor}>+ Kat</button>
@@ -495,6 +497,7 @@ function FloorRow({
   onEditUnit: (u: Unit) => void;
   onRemoveUnit: (u: Unit) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex items-start gap-3 border-t border-slate-100 pt-3">
       <span className="w-16 shrink-0 pt-3 text-xs font-medium text-slate-500">{katLabel}</span>
@@ -509,7 +512,7 @@ function FloorRow({
             <span className="text-sm font-semibold">{u.no}</span>
             {u.sira != null && <span className="text-[10px] opacity-90">#{u.sira}</span>}
             <div className="absolute inset-x-0 bottom-0 hidden justify-center gap-2 rounded-b-lg bg-black/40 py-0.5 text-[10px] group-hover:flex">
-              <button className="hover:underline" onClick={() => onEditUnit(u)}>düzenle</button>
+              <button className="hover:underline" onClick={() => onEditUnit(u)}>{t("binaDuzenleKucuk")}</button>
               <button className="hover:underline" onClick={() => onRemoveUnit(u)}>sil</button>
             </div>
           </div>

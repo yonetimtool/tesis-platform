@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { proxyJson } from "@/lib/backend";
+import { DIL_COOKIE, istekDili } from "@/lib/i18n/diller";
+import { SOZLUKLER } from "@/lib/i18n/sozluk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,11 +11,21 @@ export const dynamic = "force-dynamic";
 // -> presigned PUT (sunucu tarafinda) -> {foto_key}. Token httpOnly cookie'de;
 // istemci presigned URL'i ASLA gormez (SSRF/imza sizma yuzeyi kapali).
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  // Bu metinleri BFF'in KENDISI uretir (backend'e hic gitmez), dolayisiyla
+  // tur 14'un sunucu katalogu devrede degil — panel sozlugunden, isteğin
+  // dilinde uretilir (bkz. lib/backend.ts'teki ayni desen).
+  const sozluk =
+    SOZLUKLER[
+      istekDili(
+        req.cookies.get(DIL_COOKIE)?.value,
+        req.headers.get("accept-language"),
+      )
+    ];
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
   if (!(file instanceof File)) {
     return NextResponse.json(
-      { error: { code: "no_file", message: "Dosya bulunamadı." } },
+      { error: { code: "no_file", message: sozluk.yuklemeDosyaYok } },
       { status: 400 },
     );
   }
@@ -40,13 +52,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
     if (!put.ok) {
       return NextResponse.json(
-        { error: { code: "upload_failed", message: "Görsel yüklenemedi." } },
+        { error: { code: "upload_failed", message: sozluk.duyuruGorselYuklenemedi } },
         { status: 502 },
       );
     }
   } catch {
     return NextResponse.json(
-      { error: { code: "upload_failed", message: "Görsel yüklenemedi." } },
+      { error: { code: "upload_failed", message: sozluk.duyuruGorselYuklenemedi } },
       { status: 502 },
     );
   }

@@ -11,6 +11,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { SAHA_ROLLERI, rolAdi } from "@/lib/roles";
 import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
   Task,
   TaskCategoryList,
@@ -21,16 +22,18 @@ import type {
 } from "@/lib/types";
 
 const LIMIT = 20;
-const TIPLER: { value: TaskTip; label: string }[] = [
-  { value: "temizlik", label: "Temizlik" },
-  { value: "kontrol", label: "Kontrol" },
-  { value: "ilaclama", label: "İlaçlama" },
-  { value: "bakim", label: "Bakım" },
-  { value: "peyzaj", label: "Peyzaj" },
-  { value: "diger", label: "Diğer" },
+// METIN DEGIL KIMLIK (modul duzeyi — README tur 18 dersi).
+const TIPLER: { value: TaskTip; anahtar: SozlukAnahtari }[] = [
+  { value: "temizlik", anahtar: "gorevTipiTemizlik" },
+  { value: "kontrol", anahtar: "gorevTipiKontrol" },
+  { value: "ilaclama", anahtar: "gorevTipiIlaclama" },
+  { value: "bakim", anahtar: "gorevTipiBakim" },
+  { value: "peyzaj", anahtar: "gorevTipiPeyzaj" },
+  { value: "diger", anahtar: "ortakDiger" },
 ];
-function tipLabel(v: string): string {
-  return TIPLER.find((t) => t.value === v)?.label ?? v;
+function tipAdi(ceviri: (a: SozlukAnahtari) => string, v: string): string {
+  const o = TIPLER.find((x) => x.value === v);
+  return o ? ceviri(o.anahtar) : v;
 }
 
 function toIso(local: string): string | null {
@@ -157,7 +160,7 @@ export default function TasksPage() {
       else await apiSend("/api/tasks", "POST", body);
       setOpen(false);
       mutate();
-      toast.success(editingId ? "Görev güncellendi." : "Görev oluşturuldu.");
+      toast.success(editingId ? t("gorevGuncellendi") : t("gorevOlusturuldu"));
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -165,26 +168,24 @@ export default function TasksPage() {
     }
   }
 
-  async function remove(t: Task) {
-    if (!window.confirm(`${t.ad} silinsin mi?`)) return;
+  async function remove(gorev: Task) {
+    if (!window.confirm(t("gorevSilOnay", { ad: gorev.ad }))) return;
     try {
-      await apiSend(`/api/tasks/${t.id}`, "DELETE");
-      if (detail?.id === t.id) setDetail(null);
+      await apiSend(`/api/tasks/${gorev.id}`, "DELETE");
+      if (detail?.id === gorev.id) setDetail(null);
       mutate();
-      toast.success("Görev silindi.");
+      toast.success(t("gorevSilindi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
     }
   }
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Görevler"
+        title={t("kabukGorevler")}
         action={
-          <button className={btnPrimary} onClick={openNew}>
-            Yeni görev
-          </button>
+          <button className={btnPrimary} onClick={openNew}>{t("gorevYeni")}</button>
         }
       />
 
@@ -199,17 +200,17 @@ export default function TasksPage() {
                 setOffset(0);
               }}
             >
-              <option value="">Tümü</option>
-              {TIPLER.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              <option value="">{t("ortakTumu")}</option>
+              {TIPLER.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {t(o.anahtar)}
                 </option>
               ))}
             </select>
           </Field>
         </div>
         <div className="w-44">
-          <Field label="Durum">
+          <Field label={t("ortakDurum")}>
             <select
               className={inputCls}
               value={aktif}
@@ -218,8 +219,8 @@ export default function TasksPage() {
                 setOffset(0);
               }}
             >
-              <option value="">Tümü</option>
-              <option value="true">Aktif</option>
+              <option value="">{t("ortakTumu")}</option>
+              <option value="true">{t("ortakAktif")}</option>
               <option value="false">Pasif</option>
             </select>
           </Field>
@@ -234,7 +235,7 @@ export default function TasksPage() {
                 setOffset(0);
               }}
             >
-              <option value="">Tümü</option>
+              <option value="">{t("ortakTumu")}</option>
               {personel.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.ad} ({rolAdi(t, u.role)})
@@ -246,11 +247,11 @@ export default function TasksPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{editingId ? "Görev düzenle" : "Yeni görev"}</h2>
+          <h2 className="font-medium">{editingId ? t("gorevDuzenle") : t("gorevYeni")}</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Tip">
               <select
@@ -258,14 +259,14 @@ export default function TasksPage() {
                 value={form.tip}
                 onChange={(e) => setForm({ ...form, tip: e.target.value as TaskTip })}
               >
-                {TIPLER.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
+                {TIPLER.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {t(o.anahtar)}
                   </option>
                 ))}
               </select>
             </Field>
-            <Field label="Başlık">
+            <Field label={t("ortakBaslik")}>
               <input
                 className={inputCls}
                 value={form.ad}
@@ -273,7 +274,7 @@ export default function TasksPage() {
                 required
               />
             </Field>
-            <Field label="Açıklama (opsiyonel)">
+            <Field label={t("ortakAciklamaOpsiyonel")}>
               <input
                 className={inputCls}
                 value={form.aciklama}
@@ -294,7 +295,7 @@ export default function TasksPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Kategori (opsiyonel)" hint="Yönetici tanımlı kategoriler">
+            <Field label="Kategori (opsiyonel)" hint={t("gorevKategoriIpucu")}>
               <select
                 className={inputCls}
                 value={form.kategori_id}
@@ -308,7 +309,7 @@ export default function TasksPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Periyot dakika (opsiyonel)" hint="Periyodik/peyzaj görevi için">
+            <Field label="Periyot dakika (opsiyonel)" hint={t("gorevPeriyodikIpucu")}>
               <input
                 type="number"
                 min={1}
@@ -340,14 +341,12 @@ export default function TasksPage() {
                 type="checkbox"
                 checked={form.aktif}
                 onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
-              />
-              Aktif
-            </label>
+              />{t("ortakAktif")}</label>
           </div>
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? "Kaydediliyor..." : "Kaydet"}
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
               İptal
@@ -361,47 +360,45 @@ export default function TasksPage() {
           <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Başlık</th>
+              <th className="px-4 py-2.5 font-medium">{t("ortakBaslik")}</th>
               <th className="px-4 py-2.5 font-medium">Tip</th>
               <th className="px-4 py-2.5 font-medium">Kategori</th>
               <th className="px-4 py-2.5 font-medium">Atanan</th>
               <th className="px-4 py-2.5 font-medium">Sonraki</th>
-              <th className="px-4 py-2.5 font-medium">Aktif</th>
+              <th className="px-4 py-2.5 font-medium">{t("ortakAktif")}</th>
               <th className="px-4 py-2.5 font-medium" />
             </tr>
           </thead>
           <tbody>
-            {(data?.items ?? []).map((t) => (
-              <tr key={t.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${t.aktif ? "" : "opacity-60"}`}>
+            {(data?.items ?? []).map((gorev) => (
+              <tr key={gorev.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${gorev.aktif ? "" : "opacity-60"}`}>
                 <td className="px-4 py-2.5">
-                  {t.ad}
-                  {t.foto_zorunlu && (
+                  {gorev.ad}
+                  {gorev.foto_zorunlu && (
                     <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
                       foto zorunlu
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-2.5 text-slate-600">{tipLabel(t.tip)}</td>
-                <td className="px-4 py-2.5 text-slate-600">{kategoriAd(t.kategori_id)}</td>
-                <td className="px-4 py-2.5 text-slate-600">{userName(t.atanan_user_id)}</td>
+                <td className="px-4 py-2.5 text-slate-600">{tipAdi(t, gorev.tip)}</td>
+                <td className="px-4 py-2.5 text-slate-600">{kategoriAd(gorev.kategori_id)}</td>
+                <td className="px-4 py-2.5 text-slate-600">{userName(gorev.atanan_user_id)}</td>
                 <td className="px-4 py-2.5 text-slate-600">
-                  {t.sonraki_planlanan ? formatDateTime(t.sonraki_planlanan) : "—"}
+                  {gorev.sonraki_planlanan ? formatDateTime(gorev.sonraki_planlanan) : "—"}
                 </td>
-                <td className="px-4 py-2.5 text-slate-600">{t.aktif ? "evet" : "hayır"}</td>
+                <td className="px-4 py-2.5 text-slate-600">{gorev.aktif ? "evet" : t("ortakHayir2")}</td>
                 <td className="px-4 py-2.5 text-right">
                   <div className="flex justify-end gap-2">
                     <button
                       className={btnGhost}
-                      onClick={() => setDetail(detail?.id === t.id ? null : t)}
+                      onClick={() => setDetail(detail?.id === gorev.id ? null : gorev)}
                     >
-                      {detail?.id === t.id ? "Kapat" : "Kayıtlar"}
+                      {detail?.id === gorev.id ? t("ortakKapat") : t("gorevKayitlar")}
                     </button>
-                    <button className={btnGhost} onClick={() => openEdit(t)}>
-                      Düzenle
+                    <button className={btnGhost} onClick={() => openEdit(gorev)}>
+                      {t("ortakDuzenle")}
                     </button>
-                    <button className={btnDanger} onClick={() => remove(t)}>
-                      Sil
-                    </button>
+                    <button className={btnDanger} onClick={() => remove(gorev)}>{t("ortakSil")}</button>
                   </div>
                 </td>
               </tr>
@@ -409,7 +406,7 @@ export default function TasksPage() {
             {data && data.items.length === 0 && (
               <tr>
                 <td colSpan={7}>
-                  <EmptyState title="Görev yok" description="Filtreyi değiştirin ya da yeni bir görev ekleyin." />
+                  <EmptyState title={t("gorevYok")} description={t("gorevYokAlt")} />
                 </td>
               </tr>
             )}
@@ -429,7 +426,7 @@ export default function TasksPage() {
                   <th className="px-4 py-2.5 font-medium">Zaman</th>
                   <th className="px-4 py-2.5 font-medium">Tamamlayan</th>
                   <th className="px-4 py-2.5 font-medium">Foto</th>
-                  <th className="px-4 py-2.5 font-medium">Not</th>
+                  <th className="px-4 py-2.5 font-medium">{t("raporNot")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -452,7 +449,7 @@ export default function TasksPage() {
                 {completions && completions.items.length === 0 && (
                   <tr>
                     <td colSpan={4}>
-                      <EmptyState title="Kayıt yok" />
+                      <EmptyState title={t("denetimKayitYok")} />
                     </td>
                   </tr>
                 )}

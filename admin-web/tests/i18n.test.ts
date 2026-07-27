@@ -166,6 +166,16 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
     "app/(protected)/units/page.tsx",
     "app/(protected)/dues/page.tsx",
     "app/(protected)/support/page.tsx",
+    // tur 20 — panel TAMAMLANDI
+    "app/(protected)/assets/page.tsx",
+    "app/(protected)/users/page.tsx",
+    "app/(protected)/integrations/page.tsx",
+    "app/(protected)/tasks/page.tsx",
+    "app/(protected)/complaints/page.tsx",
+    "app/(protected)/building-editor/page.tsx",
+    "app/(protected)/tenants/page.tsx",
+    "app/(protected)/tenants/[id]/page.tsx",
+    "components/UnitDetail.tsx",
   ];
 
   // MARKA KILIDI: "Yönetio" kelime isareti cevrilmez (mobil README §15 ile
@@ -186,6 +196,41 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
         }
       });
     }
+    expect(sizanlar).toEqual([]);
+  });
+
+  it("PANELIN TAMAMINDA Turkce sabit kalmadi (tur 20)", () => {
+    // Tur 20'de son sayfa da cevrildi; artik dosya listesi degil TUM kaynak
+    // taranir. Yeni bir sayfa Turkce sabitle eklenirse bu test kirilir.
+    const TR = /[çğıöşüÇĞİÖŞÜ]/;
+    const sizanlar: string[] = [];
+    const tara = (dizin: string) => {
+      for (const ad of fs.readdirSync(path.join(KOK, dizin))) {
+        const göreli = `${dizin}/${ad}`;
+        const tam = path.join(KOK, göreli);
+        if (fs.statSync(tam).isDirectory()) {
+          tara(göreli);
+          continue;
+        }
+        if (!/\.(tsx?|ts)$/.test(ad)) continue;
+        if (göreli.includes("i18n/sozluk")) continue; // sozlugun KENDISI
+        // Dil adlari HER ZAMAN kendi dilinde ("Türkçe", "Français") —
+        // bilincli istisna, bkz. DIL_ADLARI.
+        if (göreli.endsWith("i18n/diller.ts")) continue;
+        fs.readFileSync(tam, "utf8")
+          .split("\n")
+          .forEach((satir, i) => {
+            const kod = satir.split("//")[0];
+            for (const m of kod.matchAll(/"([^"\\\n]{2,})"|'([^'\\\n]{2,})'/g)) {
+              const v = m[1] ?? m[2] ?? "";
+              if (TR.test(v) && !MARKA.test(v)) {
+                sizanlar.push(`${göreli}:${i + 1} ${v}`);
+              }
+            }
+          });
+      }
+    };
+    ["app", "components", "lib"].forEach(tara);
     expect(sizanlar).toEqual([]);
   });
 });

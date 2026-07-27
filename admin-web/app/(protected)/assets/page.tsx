@@ -9,6 +9,8 @@ import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, pan
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
+import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
   Asset,
   AssetCheckoutList,
@@ -19,11 +21,12 @@ import type {
 
 const LIMIT = 20;
 const NFC_PLACEHOLDER = "04A1B2C3D4";
-const KATEGORI: { value: AssetKategori; label: string }[] = [
-  { value: "ekipman", label: "Ekipman" },
-  { value: "arac", label: "Araç" },
-  { value: "alet", label: "Alet" },
-  { value: "diger", label: "Diğer" },
+// METIN DEGIL KIMLIK (modul duzeyinde `t()` yok — README tur 18 dersi).
+const KATEGORI: { value: AssetKategori; anahtar: SozlukAnahtari }[] = [
+  { value: "ekipman", anahtar: "demirbasEkipman" },
+  { value: "arac", anahtar: "demirbasArac" },
+  { value: "alet", anahtar: "demirbasAlet" },
+  { value: "diger", anahtar: "ortakDiger" },
 ];
 const DURUM_STYLE: Record<string, string> = {
   musait: "bg-emerald-100 text-emerald-800",
@@ -41,6 +44,7 @@ interface FormState {
 const EMPTY: FormState = { ad: "", kategori: "", nfc_tag_uid: "", aciklama: "", aktif: true };
 
 export default function AssetsPage() {
+  const t = useT();
   const toast = useToast();
   const [offset, setOffset] = useState(0);
   const [kategori, setKategori] = useState("");
@@ -106,10 +110,10 @@ export default function AssetsPage() {
       else await apiSend("/api/assets", "POST", body);
       setOpen(false);
       mutate();
-      toast.success(editingId ? "Demirbaş güncellendi." : "Demirbaş oluşturuldu.");
+      toast.success(editingId ? t("demirbasGuncellendi") : t("demirbasOlusturuldu"));
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
-      setFormErr(/nfc/i.test(m) ? "Bu NFC etiketi başka bir demirbaşta kullanılıyor." : m);
+      setFormErr(/nfc/i.test(m) ? t("demirbasEtiketKullanimda") : m);
     } finally {
       setSaving(false);
     }
@@ -119,9 +123,9 @@ export default function AssetsPage() {
     try {
       await apiSend(`/api/assets/${a.id}`, "PATCH", { aktif: active });
       mutate();
-      toast.success(active ? "Demirbaş aktifleştirildi." : "Demirbaş pasifleştirildi.");
+      toast.success(active ? t("demirbasAktiflestirildi") : t("demirbasPasiflestirildi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Güncellenemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakGuncellenemedi"));
     }
   }
 
@@ -130,11 +134,9 @@ export default function AssetsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Demirbaş"
+        title={t("kabukDemirbas")}
         action={
-          <button className={btnPrimary} onClick={openNew}>
-            Yeni demirbaş
-          </button>
+          <button className={btnPrimary} onClick={openNew}>{t("demirbasYeni")}</button>
         }
       />
 
@@ -149,17 +151,17 @@ export default function AssetsPage() {
                 setOffset(0);
               }}
             >
-              <option value="">Tümü</option>
+              <option value="">{t("ortakTumu")}</option>
               {KATEGORI.map((k) => (
                 <option key={k.value} value={k.value}>
-                  {k.label}
+                  {t(k.anahtar)}
                 </option>
               ))}
             </select>
           </Field>
         </div>
         <div className="w-44">
-          <Field label="Durum">
+          <Field label={t("ortakDurum")}>
             <select
               className={inputCls}
               value={durum}
@@ -168,23 +170,23 @@ export default function AssetsPage() {
                 setOffset(0);
               }}
             >
-              <option value="">Tümü</option>
-              <option value="musait">Müsait</option>
+              <option value="">{t("ortakTumu")}</option>
+              <option value="musait">{t("demirbasMusait")}</option>
               <option value="zimmetli">Zimmetli</option>
-              <option value="bakimda">Bakımda</option>
+              <option value="bakimda">{t("demirbasBakimda")}</option>
             </select>
           </Field>
         </div>
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{editingId ? "Demirbaş düzenle" : "Yeni demirbaş"}</h2>
+          <h2 className="font-medium">{editingId ? t("demirbasDuzenle") : t("demirbasYeni")}</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Ad">
+            <Field label={t("ortakAd")}>
               <input
                 className={inputCls}
                 value={form.ad}
@@ -198,17 +200,17 @@ export default function AssetsPage() {
                 value={form.kategori}
                 onChange={(e) => setForm({ ...form, kategori: e.target.value })}
               >
-                <option value="">— yok —</option>
+                <option value="">{t("ortakYokSecim")}</option>
                 {KATEGORI.map((k) => (
                   <option key={k.value} value={k.value}>
-                    {k.label}
+                    {t(k.anahtar)}
                   </option>
                 ))}
               </select>
             </Field>
             <Field
               label="NFC etiket UID (opsiyonel)"
-              hint="Büyük harf hex, ayraçsız. Örnek: 04A1B2C3D4 (mobil ile tutarlı)."
+              hint={t("demirbasEtiketIpucu")}
             >
               <input
                 className={`${inputCls} font-mono uppercase`}
@@ -217,7 +219,7 @@ export default function AssetsPage() {
                 onChange={(e) => setForm({ ...form, nfc_tag_uid: e.target.value.toUpperCase() })}
               />
             </Field>
-            <Field label="Açıklama (opsiyonel)">
+            <Field label={t("ortakAciklamaOpsiyonel")}>
               <input
                 className={inputCls}
                 value={form.aciklama}
@@ -230,13 +232,11 @@ export default function AssetsPage() {
               type="checkbox"
               checked={form.aktif}
               onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
-            />
-            Aktif
-          </label>
+            />{t("ortakAktif")}</label>
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? "Kaydediliyor..." : "Kaydet"}
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
               İptal
@@ -250,11 +250,11 @@ export default function AssetsPage() {
           <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Ad</th>
+              <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
               <th className="px-4 py-2.5 font-medium">Kategori</th>
               <th className="px-4 py-2.5 font-medium">NFC</th>
-              <th className="px-4 py-2.5 font-medium">Durum</th>
-              <th className="px-4 py-2.5 font-medium">Aktif</th>
+              <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
+              <th className="px-4 py-2.5 font-medium">{t("ortakAktif")}</th>
               <th className="px-4 py-2.5 font-medium" />
             </tr>
           </thead>
@@ -271,7 +271,7 @@ export default function AssetsPage() {
                     {a.durum}
                   </span>
                 </td>
-                <td className="px-4 py-2.5 text-slate-600">{a.aktif ? "evet" : "hayır"}</td>
+                <td className="px-4 py-2.5 text-slate-600">{a.aktif ? "evet" : t("ortakHayir2")}</td>
                 <td className="px-4 py-2.5 text-right">
                   <div className="flex justify-end gap-2">
                     <button
@@ -284,7 +284,7 @@ export default function AssetsPage() {
                       Düzenle
                     </button>
                     <button className={btnGhost} onClick={() => setActive(a, !a.aktif)}>
-                      {a.aktif ? "Pasifleştir" : "Aktifleştir"}
+                      {a.aktif ? t("ortakPasiflestir") : t("ortakAktiflestir")}
                     </button>
                   </div>
                 </td>
@@ -293,7 +293,7 @@ export default function AssetsPage() {
             {data && data.items.length === 0 && (
               <tr>
                 <td colSpan={6}>
-                  <EmptyState title="Demirbaş yok" description="Filtreyi değiştirin ya da yeni bir demirbaş ekleyin." />
+                  <EmptyState title={t("demirbasYok")} description={t("demirbasYokAlt")} />
                 </td>
               </tr>
             )}
@@ -312,7 +312,7 @@ export default function AssetsPage() {
                 {formatDateTime(openCheckout.alma_zamani)})
               </span>
             ) : (
-              <span className="text-emerald-700">Şu an kimsede değil (müsait).</span>
+              <span className="text-emerald-700">{t("demirbasKimsedeDegil")}</span>
             )}
           </p>
           <p className="text-xs text-muted">
@@ -325,7 +325,7 @@ export default function AssetsPage() {
                 <tr>
                   <th className="px-4 py-2.5 font-medium">Alan</th>
                   <th className="px-4 py-2.5 font-medium">Alma</th>
-                  <th className="px-4 py-2.5 font-medium">Bırakma</th>
+                  <th className="px-4 py-2.5 font-medium">{t("demirbasBirakma")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -334,14 +334,14 @@ export default function AssetsPage() {
                     <td className="px-4 py-2.5">{userName(h.alan_user_id)}</td>
                     <td className="px-4 py-2.5 text-slate-600">{formatDateTime(h.alma_zamani)}</td>
                     <td className="px-4 py-2.5 text-slate-600">
-                      {h.birakma_zamani ? formatDateTime(h.birakma_zamani) : "— açık —"}
+                      {h.birakma_zamani ? formatDateTime(h.birakma_zamani) : t("demirbasAcik")}
                     </td>
                   </tr>
                 ))}
                 {history && history.items.length === 0 && (
                   <tr>
                     <td colSpan={3}>
-                      <EmptyState title="Zimmet kaydı yok" />
+                      <EmptyState title={t("demirbasZimmetYok")} />
                     </td>
                   </tr>
                 )}
