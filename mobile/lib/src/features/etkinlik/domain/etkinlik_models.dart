@@ -10,17 +10,17 @@
 library;
 
 /// `katilim_durum` enum'unun istemci aynasi (RSVP beyani).
+///
+/// KIMLIK / METIN AYRIMI (README §15): enum GORUNEN METIN TASIMAZ — etiket
+/// cizim aninda `katilimDurumAdi` ile cozulur.
 enum KatilimDurum {
-  katiliyorum('katiliyorum', 'Katılıyorum'),
-  katilmiyorum('katilmiyorum', 'Katılmıyorum');
+  katiliyorum('katiliyorum'),
+  katilmiyorum('katilmiyorum');
 
-  const KatilimDurum(this.wire, this.label);
+  const KatilimDurum(this.wire);
 
   /// Backend enum degeri.
   final String wire;
-
-  /// TR gorunen ad.
-  final String label;
 
   /// null/bilinmeyen deger → null (beyan verilmemis sayilir; cokme yok).
   static KatilimDurum? fromWire(String? value) {

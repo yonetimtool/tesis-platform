@@ -4,12 +4,14 @@ import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../data/unit_access_api.dart';
 import '../domain/unit_access_models.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Tek-seferlik daire erisim izni listesinin durumu (rol-uyarlamali).
 class UnitAccessState {
   const UnitAccessState({
     this.loading = false,
     this.errorMessage,
+    this.hataKimligi,
     this.items = const [],
     this.grantedUnits = const [],
     this.canRequest = false,
@@ -18,7 +20,10 @@ class UnitAccessState {
   });
 
   final bool loading;
+  /// Hata KANALI ikilidir: `errorMessage` SUNUCU metnini, `hataKimligi`
+  /// yerellestirilebilir KIMLIGI tasir (bkz. core/error/akis_hatasi.dart).
   final String? errorMessage;
+  final AkisHatasi? hataKimligi;
   final List<UnitAccessRequest> items;
 
   /// Talep edenin (admin/yonetici) SU AN goruntuleyebilecegi daireler
@@ -42,6 +47,7 @@ class UnitAccessState {
   UnitAccessState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     List<UnitAccessRequest>? items,
     List<GrantedUnit>? grantedUnits,
     bool? canRequest,
@@ -53,6 +59,9 @@ class UnitAccessState {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as AkisHatasi?,
       items: items ?? this.items,
       grantedUnits: grantedUnits ?? this.grantedUnits,
       canRequest: canRequest ?? this.canRequest,
@@ -76,7 +85,7 @@ class UnitAccessController extends Notifier<UnitAccessState> {
   Future<void> refresh() async {
     if (_refreshing) return;
     _refreshing = true;
-    state = state.copyWith(loading: true, errorMessage: null);
+    state = state.copyWith(loading: true, errorMessage: null, hataKimligi: null);
     try {
       final role = await ref.read(currentUserRoleProvider.future);
       final api = ref.read(unitAccessApiProvider);
@@ -108,7 +117,8 @@ class UnitAccessController extends Notifier<UnitAccessState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: AkisHatasi.beklenmeyen,
       );
     } finally {
       _refreshing = false;

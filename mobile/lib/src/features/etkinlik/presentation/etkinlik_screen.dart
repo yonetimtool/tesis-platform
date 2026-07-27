@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 // Foto akisi GOREV KANITI ile ayni: ayni picker saglayicisi, ayni presign uc.
 import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../data/etkinlik_api.dart';
 import '../domain/etkinlik_models.dart';
+import 'etk_etiket.dart';
 import 'etkinlik_controller.dart';
 
 /// "Etkinlikler" — etkinlik + RSVP (auth.md §4 kesin kurali, UX aynasi):
@@ -76,25 +77,25 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(trUpper('Etkinlikler')),
+          title: Text(baslikBuyuk(context.l10n.modulEtkinlikler, context.dilKodu)),
           actions: [
             IconButton(
-              tooltip: 'Yenile',
+              tooltip: context.l10n.ortakYenile,
               icon: const Icon(Icons.refresh),
               onPressed: state.loading ? null : controller.refresh,
             ),
           ],
           bottom: TabBar(
             tabs: [
-              Tab(text: 'Yaklaşan (${yaklasan.length})'),
-              Tab(text: 'Geçmiş (${gecmis.length})'),
+              Tab(text: context.l10n.etkSekmeYaklasan('${yaklasan.length}')),
+              Tab(text: context.l10n.etkSekmeGecmis('${gecmis.length}')),
             ],
           ),
         ),
         floatingActionButton: state.canManage
             ? FloatingActionButton.extended(
                 icon: const Icon(Icons.celebration_outlined),
-                label: const Text('Yeni etkinlik'),
+                label: Text(context.l10n.etkYeni),
                 onPressed: () => _openForm(context),
               )
             : null,
@@ -106,8 +107,8 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
                 state: state,
                 items: yaklasan,
                 emptyText: state.canManage
-                    ? 'Yaklaşan etkinlik yok. "Yeni etkinlik" ile duyurun.'
-                    : 'Yaklaşan etkinlik yok.',
+                    ? context.l10n.etkYaklasanYokYonetim
+                    : context.l10n.etkYaklasanYok,
               ),
             ),
             RefreshIndicator(
@@ -115,7 +116,7 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
               child: _Body(
                 state: state,
                 items: gecmis,
-                emptyText: 'Geçmiş etkinlik yok.',
+                emptyText: context.l10n.etkGecmisYok,
               ),
             ),
           ],
@@ -134,8 +135,8 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(mevcut == null
-              ? 'Etkinlik duyuruldu — sakinlere bildirildi ✓'
-              : 'Etkinlik güncellendi ✓'),
+              ? context.l10n.etkDuyuruldu
+              : context.l10n.etkGuncellendi),
         ),
       );
     }
@@ -205,7 +206,7 @@ class _SayacRow extends StatelessWidget {
         const Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
         const SizedBox(width: 4),
         Flexible(
-          child: Text('${etkinlik.katiliyorumSayisi} katılıyor',
+          child: Text(context.l10n.etkKatiliyorSayisi(etkinlik.katiliyorumSayisi),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall),
@@ -214,7 +215,7 @@ class _SayacRow extends StatelessWidget {
         const Icon(Icons.cancel_outlined, size: 16, color: Colors.red),
         const SizedBox(width: 4),
         Flexible(
-          child: Text('${etkinlik.katilmiyorumSayisi} katılmıyor',
+          child: Text(context.l10n.etkKatilmiyorSayisi(etkinlik.katilmiyorumSayisi),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall),
@@ -265,7 +266,7 @@ class _EtkinlikCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${_fmtDateTime(e.tarih.toLocal())}'
+                '${tarihSaatBicimi(e.tarih, context.dilKodu, ayirici: '')}'
                 '${e.konum != null ? ' · ${e.konum}' : ''}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -311,7 +312,7 @@ class _BeyanChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        durum.label,
+        katilimDurumAdi(context.l10n, durum),
         style: TextStyle(color: renk, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
@@ -343,7 +344,7 @@ class _RecordedAnswer extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Katılımınız: ${durum.label}',
+              context.l10n.etkKatiliminiz(katilimDurumAdi(context.l10n, durum)),
               style: TextStyle(color: renk, fontWeight: FontWeight.w600),
             ),
           ),
@@ -373,20 +374,23 @@ class _RsvpButtonsState extends ConsumerState<_RsvpButtons> {
   Future<void> _beyan(KatilimDurum durum) async {
     if (_busy) return;
     setState(() => _busy = true);
+    // Async bosluktan ONCE yakalanir (messenger ile ayni gerekce).
+    final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     try {
       await ref
           .read(etkinlikControllerProvider.notifier)
           .rsvp(widget.etkinlik.id, durum);
       messenger.showSnackBar(
-        SnackBar(content: Text('Beyanınız kaydedildi: ${durum.label} ✓')),
+        SnackBar(
+            content: Text(l10n.etkBeyanKaydedildi(katilimDurumAdi(l10n, durum)))),
       );
       widget.onAnswered?.call();
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Beyan gönderilemedi. Tekrar deneyin.')),
+        SnackBar(content: Text(l10n.etkBeyanGonderilemedi)),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -402,7 +406,7 @@ class _RsvpButtonsState extends ConsumerState<_RsvpButtons> {
         Expanded(
           child: OutlinedButton.icon(
             icon: const Icon(Icons.check, color: Colors.green),
-            label: const Text('Katılıyorum'),
+            label: Text(context.l10n.etkKatiliyorum),
             onPressed: _busy ? null : () => _beyan(KatilimDurum.katiliyorum),
           ),
         ),
@@ -410,7 +414,7 @@ class _RsvpButtonsState extends ConsumerState<_RsvpButtons> {
         Expanded(
           child: OutlinedButton.icon(
             icon: const Icon(Icons.close, color: Colors.red),
-            label: const Text('Katılmıyorum'),
+            label: Text(context.l10n.etkKatilmiyorum),
             onPressed: _busy ? null : () => _beyan(KatilimDurum.katilmiyorum),
           ),
         ),
@@ -456,10 +460,10 @@ void _showDetail(
                 ],
               ),
               const SizedBox(height: 12),
-              Text('Zaman: ${_fmtAralik(e)}'),
+              Text(context.l10n.etkZaman(_fmtAralik(e, context.dilKodu))),
               if (e.konum != null) ...[
                 const SizedBox(height: 4),
-                Text('Yer: ${e.konum}'),
+                Text(context.l10n.etkYer(e.konum!)),
               ],
               if (e.fotoUrl != null) ...[
                 const SizedBox(height: 12),
@@ -472,7 +476,7 @@ void _showDetail(
               if (e.olusturanAd != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Duyuran: ${e.olusturanAd}',
+                  context.l10n.etkDuyuran(e.olusturanAd!),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -495,7 +499,7 @@ void _showDetail(
                     Expanded(
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.edit_outlined),
-                        label: const Text('Düzenle'),
+                        label: Text(context.l10n.ortakDuzenle),
                         onPressed: () async {
                           Navigator.of(sheetContext).pop();
                           await showModalBottomSheet<bool>(
@@ -536,25 +540,27 @@ class _DeleteButton extends ConsumerWidget {
     return OutlinedButton.icon(
       style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
       icon: const Icon(Icons.delete_outline),
-      label: const Text('Sil'),
+      label: Text(context.l10n.ortakSil),
       onPressed: () async {
         final messenger = ScaffoldMessenger.of(context);
+        // Async bosluktan ONCE yakalanir (messenger ile ayni gerekce).
+        final l10n = context.l10n;
         final onay = await showDialog<bool>(
           context: context,
           builder: (dctx) => AlertDialog(
-            title: const Text('Etkinlik silinsin mi?'),
+            title: Text(context.l10n.etkSilinsinMi),
             content: Text(
-              '"${etkinlik.baslik}" ve tüm katılım beyanları silinecek.',
+              context.l10n.etkSilOnay(etkinlik.baslik),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dctx).pop(false),
-                child: const Text('Vazgeç'),
+                child: Text(context.l10n.ortakVazgec),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: () => Navigator.of(dctx).pop(true),
-                child: const Text('Sil'),
+                child: Text(context.l10n.ortakSil),
               ),
             ],
           ),
@@ -565,7 +571,7 @@ class _DeleteButton extends ConsumerWidget {
               .read(etkinlikControllerProvider.notifier)
               .delete(etkinlik.id);
           messenger.showSnackBar(
-            const SnackBar(content: Text('Etkinlik silindi ✓')),
+            SnackBar(content: Text(l10n.etkSilindi)),
           );
           onDeleted();
         } on ApiException catch (e) {
@@ -589,6 +595,9 @@ class _EtkinlikForm extends ConsumerStatefulWidget {
 }
 
 class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
+  /// `setState` yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   final _formKey = GlobalKey<FormState>();
   late final _baslik = TextEditingController(text: widget.mevcut?.baslik);
   late final _aciklama = TextEditingController(text: widget.mevcut?.aciklama);
@@ -651,7 +660,7 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
       if (!mounted) return;
       setState(() {
         _photoBusy = false;
-        _photoError = 'Fotoğraf alınamadı: $e';
+        _photoError = _l10n.gorevFotoAlinamadi('$e');
       });
     }
   }
@@ -681,9 +690,7 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
       setState(() {
         _photoBusy = false;
         _photoError = e.kind == ApiErrorKind.network
-            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli '
-                '(yükleme adresi kısa ömürlü). Bağlantı gelince '
-                '"Tekrar yükle" ile deneyin.'
+            ? _l10n.gorevFotoOnlineGerekli
             : e.message;
       });
     }
@@ -751,13 +758,12 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
     if (_busy || !(_formKey.currentState?.validate() ?? false)) return;
     if (_fotoBekliyor) {
       setState(() {
-        _hata = 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin, '
-            '"Tekrar yükle"yi deneyin veya fotoyu kaldırın.';
+        _hata = _l10n.gorevFotoHenuzYuklenmedi;
       });
       return;
     }
     if (_bitis != null && !_bitis!.isAfter(_tarih)) {
-      setState(() => _hata = 'Bitiş, başlangıçtan sonra olmalı');
+      setState(() => _hata = _l10n.etkBitisSonra);
       return;
     }
     setState(() {
@@ -792,7 +798,7 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = 'Kaydedilemedi. Tekrar deneyin.';
+          _hata = _l10n.etkKaydedilemedi;
         });
       }
     }
@@ -811,7 +817,7 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.mevcut == null ? 'Yeni etkinlik' : 'Etkinliği düzenle',
+                widget.mevcut == null ? context.l10n.etkYeni : context.l10n.etkDuzenleBaslik,
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
@@ -819,32 +825,33 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
               TextFormField(
                 controller: _baslik,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Başlık * (örn. Maç izleme akşamı)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.etkBaslikAlan,
                   border: OutlineInputBorder(),
                 ),
                 maxLength: 200,
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Başlık gerekli' : null,
+                    (v == null || v.trim().isEmpty) ? context.l10n.etkBaslikGerekli : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _aciklama,
-                decoration: const InputDecoration(
-                  labelText: 'Açıklama *',
+                decoration: InputDecoration(
+                  labelText: context.l10n.etkAciklamaAlan,
                   border: OutlineInputBorder(),
                 ),
                 maxLength: 5000,
                 minLines: 2,
                 maxLines: 5,
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Açıklama gerekli'
+                    ? context.l10n.etkAciklamaGerekli
                     : null,
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 icon: const Icon(Icons.schedule, size: 18),
-                label: Text('Zaman: ${_fmtDateTime(_tarih)}'),
+                label: Text(context.l10n.etkZamanSecim(
+                  tarihSaatBicimi(_tarih, context.dilKodu, ayirici: ''))),
                 onPressed: _busy ? null : _pickDateTime,
               ),
               const SizedBox(height: 8),
@@ -858,8 +865,9 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                       // Uzun etiket (tarih+saat) dar telefonda tasmasin.
                       label: Text(
                         _bitis == null
-                            ? 'Bitiş ekle (opsiyonel)'
-                            : 'Bitiş: ${_fmtDateTime(_bitis!)}',
+                            ? context.l10n.etkBitisEkle
+                            : context.l10n.etkBitis(tarihSaatBicimi(
+                                _bitis!, context.dilKodu, ayirici: '')),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -868,7 +876,7 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                   ),
                   if (_bitis != null)
                     IconButton(
-                      tooltip: 'Bitişi kaldır',
+                      tooltip: context.l10n.etkBitisiKaldir,
                       icon: const Icon(Icons.close),
                       onPressed: _busy ? null : () => setState(() => _bitis = null),
                     ),
@@ -877,8 +885,8 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _konum,
-                decoration: const InputDecoration(
-                  labelText: 'Yer (opsiyonel)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.etkYerAlan,
                   border: OutlineInputBorder(),
                 ),
                 maxLength: 500,
@@ -897,7 +905,7 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  const Text('Görsel (opsiyonel)'),
+                  Text(context.l10n.etkGorselAlan),
                 ],
               ),
               if (_photoPath != null) ...[
@@ -932,26 +940,26 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                         ? null
                         : () => _fotoSecVeYukle(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden çek'),
+                    label: Text(_photoPath == null ? context.l10n.gorevKamera : context.l10n.gorevYenidenCek),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _busy
                         ? null
                         : () => _fotoSecVeYukle(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Galeriden seç'),
+                    label: Text(context.l10n.gorevGaleridenSec),
                   ),
                   if (_fotoBekliyor)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _fotoTekrarYukle,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Tekrar yükle'),
+                      label: Text(context.l10n.gorevTekrarYukle),
                     ),
                   if (_photoPath != null || _mevcutFotoUrl != null)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _fotoKaldir,
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Kaldır'),
+                      label: Text(context.l10n.gorevKaldir),
                     ),
                 ],
               ),
@@ -971,8 +979,8 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                         )
                       : const Icon(Icons.celebration_outlined),
                   label: Text(widget.mevcut == null
-                      ? 'Duyur ve sakinlere bildir'
-                      : 'Kaydet'),
+                      ? context.l10n.etkDuyurVeBildir
+                      : context.l10n.ortakKaydet),
                   onPressed: _busy ? null : _submit,
                 ),
               ),
@@ -1034,21 +1042,20 @@ String _contentTypeFor(XFile file) {
   return 'image/jpeg';
 }
 
-String _fmtDateTime(DateTime dt) {
-  String p(int n) => n.toString().padLeft(2, '0');
-  return '${p(dt.day)}.${p(dt.month)}.${dt.year} ${p(dt.hour)}:${p(dt.minute)}';
-}
+/// Etkinlik zaman araligi — TARIH/SAAT aktif dile gore bicimlenir.
+String _fmtAralikIc(DateTime dt, String dil) =>
+    tarihSaatBicimi(dt, dil, ayirici: '');
 
 /// "25.07.2026 18:00 – 21:00" (ayni gun) / "... – 26.07.2026 01:00" (gun asan)
 /// / bitis yoksa yalniz baslangic.
-String _fmtAralik(Etkinlik e) {
+String _fmtAralik(Etkinlik e, String dil) {
   final bas = e.tarih.toLocal();
   final bit = e.bitisZamani?.toLocal();
-  if (bit == null) return _fmtDateTime(bas);
-  String p(int n) => n.toString().padLeft(2, '0');
+  if (bit == null) return _fmtAralikIc(e.tarih, dil);
   final ayniGun =
       bas.year == bit.year && bas.month == bit.month && bas.day == bit.day;
   return ayniGun
-      ? '${_fmtDateTime(bas)} – ${p(bit.hour)}:${p(bit.minute)}'
-      : '${_fmtDateTime(bas)} – ${_fmtDateTime(bit)}';
+      ? '${_fmtAralikIc(e.tarih, dil)} – ${saatBicimi(e.bitisZamani!, dil)}'
+      : '${_fmtAralikIc(e.tarih, dil)} – '
+          '${_fmtAralikIc(e.bitisZamani!, dil)}';
 }

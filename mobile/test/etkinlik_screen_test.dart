@@ -8,6 +8,8 @@ import 'package:mobile/src/features/etkinlik/data/etkinlik_api.dart';
 import 'package:mobile/src/features/etkinlik/domain/etkinlik_models.dart';
 import 'package:mobile/src/features/etkinlik/presentation/etkinlik_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Aga cikmayan sahte istemci — liste sabit doner; RSVP cagrilari kaydedilir
 /// (widget testi).
 class _FakeEtkinlikApi extends EtkinlikApi {
@@ -64,8 +66,8 @@ Etkinlik _e({
         etkinlikApiProvider.overrideWithValue(api),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
-      child: MaterialApp(
-        home: EtkinlikScreen(initialEtkinlikId: initialEtkinlikId),
+      child: l10nApp(
+        EtkinlikScreen(initialEtkinlikId: initialEtkinlikId),
       ),
     ),
   );

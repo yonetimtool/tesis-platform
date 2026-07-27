@@ -113,14 +113,16 @@ void main() {
       expect(s.dolu, isFalse);
       expect(s.rezerveEdilebilir, isFalse);
       expect(s.sebep, 'cok_erken');
-      expect(s.sebepEtiketi, '24s içinde açılır');
+      // Domain METIN TASIMAZ (tur 5 kimlik/metin ayrimi): kimlik dondurur,
+      // gorunen metni ekran `slotSebepAdi` ile cozer.
+      expect(s.sebepKimligi, SlotSebep.cokErken);
     });
 
     test('eksik alanlarda varsayilan (rezerve_edilebilir=false, sebep=null)', () {
       final s = Slot.fromJson(const {'baslangic': '10:00', 'bitis': '11:00'});
       expect(s.rezerveEdilebilir, isFalse);
       expect(s.sebep, isNull);
-      expect(s.sebepEtiketi, isNull);
+      expect(s.sebepKimligi, isNull);
     });
   });
 

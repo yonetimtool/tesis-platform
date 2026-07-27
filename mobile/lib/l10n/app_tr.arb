@@ -332,11 +332,19 @@
   "devriyeBitisEtiket": "bitiş {saat}",
   "devriyePencere": "Pencere: {baslangic} – {bitis}",
   "@devriyePencere": {
-    "description": "Pencerenin baslangic/bitis saati"
+    "description": "Pencerenin baslangic/bitis saati",
+    "placeholders": {
+      "baslangic": {},
+      "bitis": {}
+    }
   },
   "devriyeNoktaSayaci": "{okutulan}/{beklenen} nokta",
   "@devriyeNoktaSayaci": {
-    "description": "okutulan/beklenen nokta sayisi"
+    "description": "okutulan/beklenen nokta sayisi",
+    "placeholders": {
+      "okutulan": {},
+      "beklenen": {}
+    }
   },
   "devriyeTumNoktalarOkutuldu": "Tüm noktalar okutuldu — tur tamamlanıyor. ✓",
   "devriyeSunucudaOkutma": "Sunucuda {n} okutma kayıtlı (diğer cihazların okutmaları dahil olabilir).",
@@ -374,7 +382,11 @@
   "devriyeKalanSure": "Kalan süre: {sure}",
   "sureSaatDakika": "{saat} sa {dakika} dk",
   "@sureSaatDakika": {
-    "description": "Kalan sure birimi — kisaltmalar dile gore"
+    "description": "Kalan sure birimi — kisaltmalar dile gore",
+    "placeholders": {
+      "saat": {},
+      "dakika": {}
+    }
   },
   "sureDakikaSaniye": "{dakika} dk {saniye} sn",
   "sureSaniye": "{saniye} sn",
@@ -494,14 +506,25 @@
   "binaEnFazla500": "En fazla 500 daire (şu an {n}).",
   "binaTopluOnizleme": "{bas} … {bitis}  ({toplam} daire, {kat} kat × {adet})",
   "@binaTopluOnizleme": {
-    "description": "Toplu ekleme onizlemesi: ilk … son (toplam, kat x adet)"
+    "description": "Toplu ekleme onizlemesi: ilk … son (toplam, kat x adet)",
+    "placeholders": {
+      "bas": {},
+      "bitis": {},
+      "toplam": {},
+      "kat": {},
+      "adet": {}
+    }
   },
   "binaTopluAlanlarGerekli": "Kat sayısı, kat başına daire ve başlangıç no gerekli.",
   "binaTekSeferde500": "Tek seferde en fazla 500 daire.",
   "binaAtlananEk": " ({n} zaten vardı, atlandı)",
   "binaDaireEklendi": "{n} daire eklendi ✓{ek}",
   "@binaDaireEklendi": {
-    "description": "ek = ' (n zaten vardi, atlandi)' eki ya da bos"
+    "description": "ek = ' (n zaten vardi, atlandi)' eki ya da bos",
+    "placeholders": {
+      "n": {},
+      "ek": {}
+    }
   },
   "binaEklenemedi": "Eklenemedi. Tekrar deneyin.",
   "binaTopluBaslik": "Toplu daire ekle — Blok {blok}",
@@ -600,5 +623,253 @@
   "binaKat": "Kat",
   "binaKatYardim": "0 = zemin",
   "binaBloksuz": "Bloksuz",
-  "talepAcanSakin": "Sakin"
+  "talepAcanSakin": "Sakin",
+  "rezSekmeRezervasyonlar": "Rezervasyonlar ({n})",
+  "rezSekmeAlanlar": "Alanlar ({n})",
+  "rezYokSakin": "Rezervasyonunuz yok. \"Alanlar\" sekmesinden bir alan seçip boş bir slotu ayırtın.",
+  "rezYok": "Rezervasyon yok.",
+  "rezYeniAlan": "Yeni alan",
+  "rezAlanEklendi": "Ortak alan eklendi ✓",
+  "rezAlanGuncellendi": "Alan güncellendi ✓",
+  "rezOrtakAlan": "Ortak alan",
+  "rezSatirOzet": "{tarih} · {baslangic}-{bitis} · {kisi} kişi",
+  "rezIptalEdildi": "İptal edildi",
+  "rezIptalEdilsinMi": "Rezervasyon iptal edilsin mi?",
+  "rezIptalUyari": "Slot yeniden boşa çıkar; bu işlem geri alınamaz.",
+  "rezEvetIptalEt": "Evet, iptal et",
+  "rezIptalEdildiBildirim": "Rezervasyon iptal edildi",
+  "rezIptalGonderilemedi": "İptal gönderilemedi. Tekrar deneyin.",
+  "rezIptalEt": "İptal et",
+  "rezDetayTarih": "Tarih: {tarih} · {baslangic}-{bitis}",
+  "rezDetayKisi": "Kişi sayısı: {n}",
+  "rezDetayRezerve": "Rezerve: {zaman}",
+  "rezDetayNot": "Not: {not}",
+  "rezAlanYokYonetim": "Henüz ortak alan yok. \"Yeni alan\" ile ekleyin.",
+  "rezAlanYokGoruntuleme": "Görüntülenecek ortak alan yok.",
+  "rezAlanYokSakin": "Rezerve edilebilir alan yok.",
+  "rezMusait": "Müsait: {ozet}",
+  "rezMusaitOzeti": "{acilis}–{kapanis} · {dakika} dk slot",
+  "@rezMusaitOzeti": {
+    "description": "Alan musaitlik ozeti — domain'den TASINDI (metin cizimde)",
+    "placeholders": {
+      "acilis": {},
+      "kapanis": {},
+      "dakika": {}
+    }
+  },
+  "rezAcikDuzenle": "Açık · düzenlemek için dokun",
+  "rezKapaliDuzenle": "Kapalı · düzenlemek için dokun",
+  "rezMusaitSlotlariGor": "Müsait: {ozet} · dokunup slotları gör",
+  "rezPasifAlan": "Pasif (rezerve edilemez)",
+  "rezKapanisSonra": "Kapanış saati açılıştan sonra olmalı.",
+  "rezAlanEklenemedi": "Alan eklenemedi. Tekrar deneyin.",
+  "rezAlanDuzenle": "Alanı düzenle",
+  "rezYeniOrtakAlan": "Yeni ortak alan",
+  "rezAlanAdi": "Alan adı * (örn. Havuz)",
+  "rezAlanAdiGerekli": "Alan adı gerekli",
+  "rezMusaitlikHerGun": "Müsaitlik (her gün)",
+  "rezAcilis": "Açılış: {saat}",
+  "rezKapanis": "Kapanış: {saat}",
+  "rezSlotUzunlugu": "Slot uzunluğu",
+  "rezSlotDakika": "{n} dakika",
+  "rezAlaniEkle": "Alanı ekle",
+  "rezSlotlarYuklenemedi": "Slotlar yüklenemedi. Tekrar deneyin.",
+  "rezOnaylandi": "Rezervasyonunuz onaylandı ✓",
+  "rezTarihEtiket": "Tarih: {tarih}",
+  "rezSlotKurali": "Slot yalnızca başlangıcına 24 saatten az kala açılır; günde en fazla bir rezervasyon yapabilirsiniz.",
+  "rezSlotYok": "Bu alan için tanımlı slot yok.",
+  "rezBenimAktif": "Rezervasyonum (aktif)",
+  "rezBenimGecti": "Rezervasyonum (geçti)",
+  "rezDoluBaskasi": "Dolu (başkası)",
+  "rezSizinGecti": "Rezervasyonunuz (geçti)",
+  "rezKisiEki": " · {n} kişi",
+  "rezDoluDaire": "Dolu · Daire {daire}{kisi}",
+  "rezBos": "Boş",
+  "rezDolu": "Dolu",
+  "rezSlotAralik": "{baslangic} – {bitis}",
+  "rezSec": "Seç",
+  "rezGonderilemedi": "Gönderilemedi. Tekrar deneyin.",
+  "rezEtBaslik": "{ad} — rezerve et",
+  "rezKisiSayisiEtiket": "Kişi sayısı:",
+  "rezEt": "Rezerve et",
+  "rezDurumOnayli": "Onaylı",
+  "rezSebepDolu": "dolu",
+  "@rezSebepDolu": {
+    "description": "Slot kapali sebebi — domain enum'u METIN TASIMAZ"
+  },
+  "rezSebepGecti": "geçti",
+  "rezSebepCokErken": "24s içinde açılır",
+  "rezSebepGunluk": "günlük hakkınız dolu",
+  "etkSekmeYaklasan": "Yaklaşan ({n})",
+  "etkSekmeGecmis": "Geçmiş ({n})",
+  "etkYeni": "Yeni etkinlik",
+  "etkYaklasanYokYonetim": "Yaklaşan etkinlik yok. \"Yeni etkinlik\" ile duyurun.",
+  "etkYaklasanYok": "Yaklaşan etkinlik yok.",
+  "etkGecmisYok": "Geçmiş etkinlik yok.",
+  "etkDuyuruldu": "Etkinlik duyuruldu — sakinlere bildirildi ✓",
+  "etkGuncellendi": "Etkinlik güncellendi ✓",
+  "etkKatiliyorSayisi": "{n} katılıyor",
+  "@etkKatiliyorSayisi": {
+    "description": "RSVP katilan sayisi (ICU cogul)",
+    "placeholders": {
+      "n": {
+        "type": "num"
+      }
+    }
+  },
+  "etkKatilmiyorSayisi": "{n} katılmıyor",
+  "@etkKatilmiyorSayisi": {
+    "description": "RSVP katilmayan sayisi (ICU cogul)",
+    "placeholders": {
+      "n": {
+        "type": "num"
+      }
+    }
+  },
+  "etkKatiliminiz": "Katılımınız: {durum}",
+  "etkBeyanKaydedildi": "Beyanınız kaydedildi: {durum} ✓",
+  "etkBeyanGonderilemedi": "Beyan gönderilemedi. Tekrar deneyin.",
+  "etkKatiliyorum": "Katılıyorum",
+  "etkKatilmiyorum": "Katılmıyorum",
+  "etkZaman": "Zaman: {aralik}",
+  "etkYer": "Yer: {konum}",
+  "etkDuyuran": "Duyuran: {ad}",
+  "etkSilinsinMi": "Etkinlik silinsin mi?",
+  "etkSilOnay": "\"{baslik}\" ve tüm katılım beyanları silinecek.",
+  "etkSilindi": "Etkinlik silindi ✓",
+  "etkBitisSonra": "Bitiş, başlangıçtan sonra olmalı",
+  "etkKaydedilemedi": "Kaydedilemedi. Tekrar deneyin.",
+  "etkDuzenleBaslik": "Etkinliği düzenle",
+  "etkBaslikAlan": "Başlık * (örn. Maç izleme akşamı)",
+  "etkBaslikGerekli": "Başlık gerekli",
+  "etkAciklamaAlan": "Açıklama *",
+  "etkAciklamaGerekli": "Açıklama gerekli",
+  "etkZamanSecim": "Zaman: {zaman}",
+  "etkBitisEkle": "Bitiş ekle (opsiyonel)",
+  "etkBitis": "Bitiş: {zaman}",
+  "etkBitisiKaldir": "Bitişi kaldır",
+  "etkYerAlan": "Yer (opsiyonel)",
+  "etkGorselAlan": "Görsel (opsiyonel)",
+  "etkDuyurVeBildir": "Duyur ve sakinlere bildir",
+  "izinBaslik": "Görüntüleme izni",
+  "izinTumDairelere": "Tüm dairelere izin iste",
+  "izinYeniIstek": "Yeni istek",
+  "izinIstekYokYonetim": "Henüz izin isteğiniz yok. \"Yeni istek\" ile bir daire, üstteki \"Tüm daireler\" ile tümü için izin isteyin.",
+  "izinIstekYokSakin": "Dairenize gelen görüntüleme isteği yok.",
+  "izinTumDaireUyari": "Sakini olan tüm daireler için görüntüleme izni isteği gönderilecek. Her daire kendi sakininin onayına bağlıdır — yalnızca onaylayan dairelerin kayıtlarını görebilirsiniz.",
+  "izinAtlandiEki": " ({n} zaten açık)",
+  "izinTopluGonderildi": "{n} daire için istek gönderildi{atlandi} — sakin onayları bekleniyor",
+  "@izinTopluGonderildi": {
+    "description": "atlandi = ' (n zaten acik)' eki ya da bos",
+    "placeholders": {
+      "n": {},
+      "atlandi": {}
+    }
+  },
+  "izinGonderilemedi": "Gönderilemedi: {hata}",
+  "izinIsteBaslik": "Görüntüleme izni iste",
+  "izinDaireNo": "Daire no (örn. A-12)",
+  "izinIstekGonder": "İstek gönder",
+  "izinIstekGonderildi": "İstek gönderildi — sakinin onayı bekleniyor",
+  "izinDaireIstegi": "Daire görüntüleme isteği{daire}",
+  "izinIsteyen": "İsteyen: {ad}",
+  "izinKullanildiUyari": "İzin kullanıldı (tek seferlik). Tekrar görmek için yeni istek açın.",
+  "izinGoruntulenebilirDaireler": "Görüntülenebilir daireler ({n})",
+  "izinKullanildi": "Kullanıldı",
+  "izinOnayli": "Onaylı",
+  "izinVerildi": "İzin verildi",
+  "izinOnayla": "Onayla",
+  "izinKargolar": "Kargolar",
+  "izinKayitBaslik": "{baslik}{daire}",
+  "@izinKayitBaslik": {
+    "description": "Ziyaretci/kargo ekran basligi + opsiyonel daire eki",
+    "placeholders": {
+      "baslik": {},
+      "daire": {}
+    }
+  },
+  "izinDaireEki": " — {daire}",
+  "izinSuresiDoldu": "İzin kullanıldı veya süresi doldu (tek seferlik). Tekrar görüntülemek için yeni bir izin isteği açın.",
+  "izinTekSeferlikUyari": "Tek seferlik izinle görüntüleniyor — yenilemede erişim kapanır.",
+  "izinKayitYok": "Bu dairede kayıt yok.",
+  "izinHedef": "Hedef: {ad}",
+  "izinKaydeden": "Kaydeden: {ad}",
+  "izinDurumEtiket": "Durum: {durum}",
+  "izinDurumOnaylandi": "Onaylandı",
+  "kargoDurumTeslimAlindi": "Teslim alındı",
+  "rezSizin": "Rezervasyonunuz",
+  "@otoparkDoluKapasite": {
+    "placeholders": {
+      "dolu": {},
+      "kapasite": {}
+    },
+    "description": "Parametre sirasi MESAJ sirasidir (bkz. §15 notu)."
+  },
+  "@anaDaireAltBaslik": {
+    "placeholders": {
+      "daireler": {},
+      "rol": {}
+    },
+    "description": "Parametre sirasi MESAJ sirasidir (bkz. §15 notu)."
+  },
+  "@sureDakikaSaniye": {
+    "placeholders": {
+      "dakika": {},
+      "saniye": {}
+    },
+    "description": "Parametre sirasi MESAJ sirasidir (bkz. §15 notu)."
+  },
+  "@devriyePlanAralik": {
+    "placeholders": {
+      "baslangic": {},
+      "bitis": {},
+      "dakika": {}
+    },
+    "description": "Parametre sirasi MESAJ sirasidir (bkz. §15 notu)."
+  },
+  "@devriyeNoktaOkutuldu": {
+    "placeholders": {
+      "okutulan": {},
+      "beklenen": {}
+    },
+    "description": "Parametre sirasi MESAJ sirasidir (bkz. §15 notu)."
+  },
+  "@binaBlokVeDaireSilindi": {
+    "placeholders": {
+      "ad": {},
+      "n": {}
+    },
+    "description": "Parametre sirasi MESAJ sirasidir (bkz. §15 notu)."
+  },
+  "@rezSatirOzet": {
+    "placeholders": {
+      "tarih": {},
+      "baslangic": {},
+      "bitis": {},
+      "kisi": {}
+    },
+    "description": "Parametre sirasi MESAJ sirasidir (bkz. §15 notu)."
+  },
+  "@rezDetayTarih": {
+    "placeholders": {
+      "tarih": {},
+      "baslangic": {},
+      "bitis": {}
+    },
+    "description": "Parametre sirasi MESAJ sirasidir (bkz. §15 notu)."
+  },
+  "@rezDoluDaire": {
+    "placeholders": {
+      "daire": {},
+      "kisi": {}
+    },
+    "description": "Parametre sirasi MESAJ sirasidir (bkz. §15 notu)."
+  },
+  "@rezSlotAralik": {
+    "placeholders": {
+      "baslangic": {},
+      "bitis": {}
+    },
+    "description": "Parametre sirasi MESAJ sirasidir (bkz. §15 notu)."
+  }
 }

@@ -9,6 +9,8 @@ import 'package:mobile/src/features/rezervasyon/domain/rezervasyon_models.dart';
 import 'package:mobile/src/features/rezervasyon/presentation/rezervasyon_controller.dart';
 import 'package:mobile/src/features/rezervasyon/presentation/rezervasyon_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 String _two(int n) => n.toString().padLeft(2, '0');
 
 /// Aga cikmayan sahte istemci — listeler + slotlar sabit doner; iptal/rezerve
@@ -109,8 +111,8 @@ Rezervasyon _r({
         currentUserRoleProvider.overrideWith((ref) async => role),
         currentUserIdProvider.overrideWith((ref) async => userId),
       ],
-      child: MaterialApp(
-        home: RezervasyonScreen(initialRezervasyonId: initialRezervasyonId),
+      child: l10nApp(
+        RezervasyonScreen(initialRezervasyonId: initialRezervasyonId),
       ),
     ),
   );

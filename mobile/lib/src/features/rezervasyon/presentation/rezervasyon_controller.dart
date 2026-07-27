@@ -5,12 +5,14 @@ import '../../auth/data/current_user_provider.dart'
     show currentUserRoleProvider, currentUserIdProvider;
 import '../data/rezervasyon_api.dart';
 import '../domain/rezervasyon_models.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Rezervasyon ekraninin durumu (alanlar + rezervasyonlar birlikte).
 class RezervasyonState {
   const RezervasyonState({
     this.loading = false,
     this.errorMessage,
+    this.hataKimligi,
     this.alanlar = const [],
     this.items = const [],
     this.canManageAreas = false,
@@ -20,7 +22,10 @@ class RezervasyonState {
   });
 
   final bool loading;
+  /// Hata KANALI ikilidir: `errorMessage` SUNUCU metnini, `hataKimligi`
+  /// yerellestirilebilir KIMLIGI tasir (bkz. core/error/akis_hatasi.dart).
   final String? errorMessage;
+  final AkisHatasi? hataKimligi;
 
   /// Alanlar (ada gore): yonetim pasifleri de gorur, sakin yalniz aktifleri
   /// (sunucu daraltir).
@@ -62,6 +67,7 @@ class RezervasyonState {
   RezervasyonState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     List<OrtakAlan>? alanlar,
     List<Rezervasyon>? items,
     bool? canManageAreas,
@@ -74,6 +80,9 @@ class RezervasyonState {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as AkisHatasi?,
       alanlar: alanlar ?? this.alanlar,
       items: items ?? this.items,
       canManageAreas: canManageAreas ?? this.canManageAreas,
@@ -103,7 +112,7 @@ class RezervasyonController extends Notifier<RezervasyonState> {
   Future<void> refresh() async {
     if (_refreshing) return;
     _refreshing = true;
-    state = state.copyWith(loading: true, errorMessage: null);
+    state = state.copyWith(loading: true, errorMessage: null, hataKimligi: null);
     try {
       final role = await ref.read(currentUserRoleProvider.future);
       final userId = await ref.read(currentUserIdProvider.future);
@@ -132,7 +141,8 @@ class RezervasyonController extends Notifier<RezervasyonState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: AkisHatasi.beklenmeyen,
       );
     } finally {
       _refreshing = false;

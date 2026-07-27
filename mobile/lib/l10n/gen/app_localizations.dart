@@ -444,7 +444,7 @@ abstract class AppLocalizations {
   /// **'Şu An'**
   String get ozetSuAn;
 
-  /// No description provided for @otoparkDoluKapasite.
+  /// Parametre sirasi MESAJ sirasidir (bkz. §15 notu).
   ///
   /// In tr, this message translates to:
   /// **'{dolu} / {kapasite}'**
@@ -468,7 +468,7 @@ abstract class AppLocalizations {
   /// **'Yönetici Paneli'**
   String get anaYoneticiPaneli;
 
-  /// No description provided for @anaDaireAltBaslik.
+  /// Parametre sirasi MESAJ sirasidir (bkz. §15 notu).
   ///
   /// In tr, this message translates to:
   /// **'Daire {daireler}  •  {rol}'**
@@ -1882,7 +1882,7 @@ abstract class AppLocalizations {
   ///
   /// In tr, this message translates to:
   /// **'{okutulan}/{beklenen} nokta'**
-  String devriyeNoktaSayaci(Object beklenen, Object okutulan);
+  String devriyeNoktaSayaci(Object okutulan, Object beklenen);
 
   /// No description provided for @devriyeTumNoktalarOkutuldu.
   ///
@@ -2026,9 +2026,9 @@ abstract class AppLocalizations {
   ///
   /// In tr, this message translates to:
   /// **'{saat} sa {dakika} dk'**
-  String sureSaatDakika(Object dakika, Object saat);
+  String sureSaatDakika(Object saat, Object dakika);
 
-  /// No description provided for @sureDakikaSaniye.
+  /// Parametre sirasi MESAJ sirasidir (bkz. §15 notu).
   ///
   /// In tr, this message translates to:
   /// **'{dakika} dk {saniye} sn'**
@@ -2076,7 +2076,7 @@ abstract class AppLocalizations {
   /// **'Planlar listelenemedi.'**
   String get devriyePlanlarListelenemedi;
 
-  /// No description provided for @devriyePlanAralik.
+  /// Parametre sirasi MESAJ sirasidir (bkz. §15 notu).
   ///
   /// In tr, this message translates to:
   /// **'{baslangic}–{bitis} · her {dakika} dk'**
@@ -2232,11 +2232,11 @@ abstract class AppLocalizations {
   /// **'Bugün için planlanmış devriye penceresi yok.'**
   String get devriyeBugunPencereYok;
 
-  /// No description provided for @devriyeNoktaOkutuldu.
+  /// Parametre sirasi MESAJ sirasidir (bkz. §15 notu).
   ///
   /// In tr, this message translates to:
   /// **'{okutulan}/{beklenen} nokta okutuldu'**
-  String devriyeNoktaOkutuldu(Object beklenen, Object okutulan);
+  String devriyeNoktaOkutuldu(Object okutulan, Object beklenen);
 
   /// No description provided for @devriyeTaramaGunluguAlinamadi.
   ///
@@ -2406,7 +2406,7 @@ abstract class AppLocalizations {
   /// **'Blok {ad} silinsin mi?'**
   String binaBlokSilinsinMi(Object ad);
 
-  /// No description provided for @binaBlokVeDaireSilindi.
+  /// Parametre sirasi MESAJ sirasidir (bkz. §15 notu).
   ///
   /// In tr, this message translates to:
   /// **'Blok {ad} ve {n} daire silindi.'**
@@ -2549,11 +2549,11 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{bas} … {bitis}  ({toplam} daire, {kat} kat × {adet})'**
   String binaTopluOnizleme(
-    Object adet,
     Object bas,
     Object bitis,
-    Object kat,
     Object toplam,
+    Object kat,
+    Object adet,
   );
 
   /// No description provided for @binaTopluAlanlarGerekli.
@@ -2578,7 +2578,7 @@ abstract class AppLocalizations {
   ///
   /// In tr, this message translates to:
   /// **'{n} daire eklendi ✓{ek}'**
-  String binaDaireEklendi(Object ek, Object n);
+  String binaDaireEklendi(Object n, Object ek);
 
   /// No description provided for @binaEklenemedi.
   ///
@@ -3101,6 +3101,809 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Sakin'**
   String get talepAcanSakin;
+
+  /// No description provided for @rezSekmeRezervasyonlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyonlar ({n})'**
+  String rezSekmeRezervasyonlar(Object n);
+
+  /// No description provided for @rezSekmeAlanlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alanlar ({n})'**
+  String rezSekmeAlanlar(Object n);
+
+  /// No description provided for @rezYokSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyonunuz yok. \"Alanlar\" sekmesinden bir alan seçip boş bir slotu ayırtın.'**
+  String get rezYokSakin;
+
+  /// No description provided for @rezYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyon yok.'**
+  String get rezYok;
+
+  /// No description provided for @rezYeniAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni alan'**
+  String get rezYeniAlan;
+
+  /// No description provided for @rezAlanEklendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ortak alan eklendi ✓'**
+  String get rezAlanEklendi;
+
+  /// No description provided for @rezAlanGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alan güncellendi ✓'**
+  String get rezAlanGuncellendi;
+
+  /// No description provided for @rezOrtakAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ortak alan'**
+  String get rezOrtakAlan;
+
+  /// Parametre sirasi MESAJ sirasidir (bkz. §15 notu).
+  ///
+  /// In tr, this message translates to:
+  /// **'{tarih} · {baslangic}-{bitis} · {kisi} kişi'**
+  String rezSatirOzet(
+    Object tarih,
+    Object baslangic,
+    Object bitis,
+    Object kisi,
+  );
+
+  /// No description provided for @rezIptalEdildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal edildi'**
+  String get rezIptalEdildi;
+
+  /// No description provided for @rezIptalEdilsinMi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyon iptal edilsin mi?'**
+  String get rezIptalEdilsinMi;
+
+  /// No description provided for @rezIptalUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Slot yeniden boşa çıkar; bu işlem geri alınamaz.'**
+  String get rezIptalUyari;
+
+  /// No description provided for @rezEvetIptalEt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Evet, iptal et'**
+  String get rezEvetIptalEt;
+
+  /// No description provided for @rezIptalEdildiBildirim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyon iptal edildi'**
+  String get rezIptalEdildiBildirim;
+
+  /// No description provided for @rezIptalGonderilemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal gönderilemedi. Tekrar deneyin.'**
+  String get rezIptalGonderilemedi;
+
+  /// No description provided for @rezIptalEt.
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal et'**
+  String get rezIptalEt;
+
+  /// Parametre sirasi MESAJ sirasidir (bkz. §15 notu).
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarih: {tarih} · {baslangic}-{bitis}'**
+  String rezDetayTarih(Object tarih, Object baslangic, Object bitis);
+
+  /// No description provided for @rezDetayKisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişi sayısı: {n}'**
+  String rezDetayKisi(Object n);
+
+  /// No description provided for @rezDetayRezerve.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezerve: {zaman}'**
+  String rezDetayRezerve(Object zaman);
+
+  /// No description provided for @rezDetayNot.
+  ///
+  /// In tr, this message translates to:
+  /// **'Not: {not}'**
+  String rezDetayNot(Object not);
+
+  /// No description provided for @rezAlanYokYonetim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz ortak alan yok. \"Yeni alan\" ile ekleyin.'**
+  String get rezAlanYokYonetim;
+
+  /// No description provided for @rezAlanYokGoruntuleme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görüntülenecek ortak alan yok.'**
+  String get rezAlanYokGoruntuleme;
+
+  /// No description provided for @rezAlanYokSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezerve edilebilir alan yok.'**
+  String get rezAlanYokSakin;
+
+  /// No description provided for @rezMusait.
+  ///
+  /// In tr, this message translates to:
+  /// **'Müsait: {ozet}'**
+  String rezMusait(Object ozet);
+
+  /// Alan musaitlik ozeti — domain'den TASINDI (metin cizimde)
+  ///
+  /// In tr, this message translates to:
+  /// **'{acilis}–{kapanis} · {dakika} dk slot'**
+  String rezMusaitOzeti(Object acilis, Object kapanis, Object dakika);
+
+  /// No description provided for @rezAcikDuzenle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık · düzenlemek için dokun'**
+  String get rezAcikDuzenle;
+
+  /// No description provided for @rezKapaliDuzenle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapalı · düzenlemek için dokun'**
+  String get rezKapaliDuzenle;
+
+  /// No description provided for @rezMusaitSlotlariGor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Müsait: {ozet} · dokunup slotları gör'**
+  String rezMusaitSlotlariGor(Object ozet);
+
+  /// No description provided for @rezPasifAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Pasif (rezerve edilemez)'**
+  String get rezPasifAlan;
+
+  /// No description provided for @rezKapanisSonra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapanış saati açılıştan sonra olmalı.'**
+  String get rezKapanisSonra;
+
+  /// No description provided for @rezAlanEklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alan eklenemedi. Tekrar deneyin.'**
+  String get rezAlanEklenemedi;
+
+  /// No description provided for @rezAlanDuzenle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alanı düzenle'**
+  String get rezAlanDuzenle;
+
+  /// No description provided for @rezYeniOrtakAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni ortak alan'**
+  String get rezYeniOrtakAlan;
+
+  /// No description provided for @rezAlanAdi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alan adı * (örn. Havuz)'**
+  String get rezAlanAdi;
+
+  /// No description provided for @rezAlanAdiGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alan adı gerekli'**
+  String get rezAlanAdiGerekli;
+
+  /// No description provided for @rezMusaitlikHerGun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Müsaitlik (her gün)'**
+  String get rezMusaitlikHerGun;
+
+  /// No description provided for @rezAcilis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açılış: {saat}'**
+  String rezAcilis(Object saat);
+
+  /// No description provided for @rezKapanis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapanış: {saat}'**
+  String rezKapanis(Object saat);
+
+  /// No description provided for @rezSlotUzunlugu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Slot uzunluğu'**
+  String get rezSlotUzunlugu;
+
+  /// No description provided for @rezSlotDakika.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} dakika'**
+  String rezSlotDakika(Object n);
+
+  /// No description provided for @rezAlaniEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alanı ekle'**
+  String get rezAlaniEkle;
+
+  /// No description provided for @rezSlotlarYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Slotlar yüklenemedi. Tekrar deneyin.'**
+  String get rezSlotlarYuklenemedi;
+
+  /// No description provided for @rezOnaylandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyonunuz onaylandı ✓'**
+  String get rezOnaylandi;
+
+  /// No description provided for @rezTarihEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarih: {tarih}'**
+  String rezTarihEtiket(Object tarih);
+
+  /// No description provided for @rezSlotKurali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Slot yalnızca başlangıcına 24 saatten az kala açılır; günde en fazla bir rezervasyon yapabilirsiniz.'**
+  String get rezSlotKurali;
+
+  /// No description provided for @rezSlotYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu alan için tanımlı slot yok.'**
+  String get rezSlotYok;
+
+  /// No description provided for @rezBenimAktif.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyonum (aktif)'**
+  String get rezBenimAktif;
+
+  /// No description provided for @rezBenimGecti.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyonum (geçti)'**
+  String get rezBenimGecti;
+
+  /// No description provided for @rezDoluBaskasi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dolu (başkası)'**
+  String get rezDoluBaskasi;
+
+  /// No description provided for @rezSizinGecti.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyonunuz (geçti)'**
+  String get rezSizinGecti;
+
+  /// No description provided for @rezKisiEki.
+  ///
+  /// In tr, this message translates to:
+  /// **' · {n} kişi'**
+  String rezKisiEki(Object n);
+
+  /// Parametre sirasi MESAJ sirasidir (bkz. §15 notu).
+  ///
+  /// In tr, this message translates to:
+  /// **'Dolu · Daire {daire}{kisi}'**
+  String rezDoluDaire(Object daire, Object kisi);
+
+  /// No description provided for @rezBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş'**
+  String get rezBos;
+
+  /// No description provided for @rezDolu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dolu'**
+  String get rezDolu;
+
+  /// Parametre sirasi MESAJ sirasidir (bkz. §15 notu).
+  ///
+  /// In tr, this message translates to:
+  /// **'{baslangic} – {bitis}'**
+  String rezSlotAralik(Object baslangic, Object bitis);
+
+  /// No description provided for @rezSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seç'**
+  String get rezSec;
+
+  /// No description provided for @rezGonderilemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderilemedi. Tekrar deneyin.'**
+  String get rezGonderilemedi;
+
+  /// No description provided for @rezEtBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} — rezerve et'**
+  String rezEtBaslik(Object ad);
+
+  /// No description provided for @rezKisiSayisiEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişi sayısı:'**
+  String get rezKisiSayisiEtiket;
+
+  /// No description provided for @rezEt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezerve et'**
+  String get rezEt;
+
+  /// No description provided for @rezDurumOnayli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onaylı'**
+  String get rezDurumOnayli;
+
+  /// Slot kapali sebebi — domain enum'u METIN TASIMAZ
+  ///
+  /// In tr, this message translates to:
+  /// **'dolu'**
+  String get rezSebepDolu;
+
+  /// No description provided for @rezSebepGecti.
+  ///
+  /// In tr, this message translates to:
+  /// **'geçti'**
+  String get rezSebepGecti;
+
+  /// No description provided for @rezSebepCokErken.
+  ///
+  /// In tr, this message translates to:
+  /// **'24s içinde açılır'**
+  String get rezSebepCokErken;
+
+  /// No description provided for @rezSebepGunluk.
+  ///
+  /// In tr, this message translates to:
+  /// **'günlük hakkınız dolu'**
+  String get rezSebepGunluk;
+
+  /// No description provided for @etkSekmeYaklasan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yaklaşan ({n})'**
+  String etkSekmeYaklasan(Object n);
+
+  /// No description provided for @etkSekmeGecmis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçmiş ({n})'**
+  String etkSekmeGecmis(Object n);
+
+  /// No description provided for @etkYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni etkinlik'**
+  String get etkYeni;
+
+  /// No description provided for @etkYaklasanYokYonetim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yaklaşan etkinlik yok. \"Yeni etkinlik\" ile duyurun.'**
+  String get etkYaklasanYokYonetim;
+
+  /// No description provided for @etkYaklasanYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yaklaşan etkinlik yok.'**
+  String get etkYaklasanYok;
+
+  /// No description provided for @etkGecmisYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçmiş etkinlik yok.'**
+  String get etkGecmisYok;
+
+  /// No description provided for @etkDuyuruldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etkinlik duyuruldu — sakinlere bildirildi ✓'**
+  String get etkDuyuruldu;
+
+  /// No description provided for @etkGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etkinlik güncellendi ✓'**
+  String get etkGuncellendi;
+
+  /// RSVP katilan sayisi (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} katılıyor'**
+  String etkKatiliyorSayisi(num n);
+
+  /// RSVP katilmayan sayisi (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} katılmıyor'**
+  String etkKatilmiyorSayisi(num n);
+
+  /// No description provided for @etkKatiliminiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Katılımınız: {durum}'**
+  String etkKatiliminiz(Object durum);
+
+  /// No description provided for @etkBeyanKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Beyanınız kaydedildi: {durum} ✓'**
+  String etkBeyanKaydedildi(Object durum);
+
+  /// No description provided for @etkBeyanGonderilemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Beyan gönderilemedi. Tekrar deneyin.'**
+  String get etkBeyanGonderilemedi;
+
+  /// No description provided for @etkKatiliyorum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Katılıyorum'**
+  String get etkKatiliyorum;
+
+  /// No description provided for @etkKatilmiyorum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Katılmıyorum'**
+  String get etkKatilmiyorum;
+
+  /// No description provided for @etkZaman.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zaman: {aralik}'**
+  String etkZaman(Object aralik);
+
+  /// No description provided for @etkYer.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yer: {konum}'**
+  String etkYer(Object konum);
+
+  /// No description provided for @etkDuyuran.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyuran: {ad}'**
+  String etkDuyuran(Object ad);
+
+  /// No description provided for @etkSilinsinMi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etkinlik silinsin mi?'**
+  String get etkSilinsinMi;
+
+  /// No description provided for @etkSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{baslik}\" ve tüm katılım beyanları silinecek.'**
+  String etkSilOnay(Object baslik);
+
+  /// No description provided for @etkSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etkinlik silindi ✓'**
+  String get etkSilindi;
+
+  /// No description provided for @etkBitisSonra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş, başlangıçtan sonra olmalı'**
+  String get etkBitisSonra;
+
+  /// No description provided for @etkKaydedilemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydedilemedi. Tekrar deneyin.'**
+  String get etkKaydedilemedi;
+
+  /// No description provided for @etkDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etkinliği düzenle'**
+  String get etkDuzenleBaslik;
+
+  /// No description provided for @etkBaslikAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlık * (örn. Maç izleme akşamı)'**
+  String get etkBaslikAlan;
+
+  /// No description provided for @etkBaslikGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlık gerekli'**
+  String get etkBaslikGerekli;
+
+  /// No description provided for @etkAciklamaAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama *'**
+  String get etkAciklamaAlan;
+
+  /// No description provided for @etkAciklamaGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama gerekli'**
+  String get etkAciklamaGerekli;
+
+  /// No description provided for @etkZamanSecim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zaman: {zaman}'**
+  String etkZamanSecim(Object zaman);
+
+  /// No description provided for @etkBitisEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş ekle (opsiyonel)'**
+  String get etkBitisEkle;
+
+  /// No description provided for @etkBitis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş: {zaman}'**
+  String etkBitis(Object zaman);
+
+  /// No description provided for @etkBitisiKaldir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitişi kaldır'**
+  String get etkBitisiKaldir;
+
+  /// No description provided for @etkYerAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yer (opsiyonel)'**
+  String get etkYerAlan;
+
+  /// No description provided for @etkGorselAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görsel (opsiyonel)'**
+  String get etkGorselAlan;
+
+  /// No description provided for @etkDuyurVeBildir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyur ve sakinlere bildir'**
+  String get etkDuyurVeBildir;
+
+  /// No description provided for @izinBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görüntüleme izni'**
+  String get izinBaslik;
+
+  /// No description provided for @izinTumDairelere.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm dairelere izin iste'**
+  String get izinTumDairelere;
+
+  /// No description provided for @izinYeniIstek.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni istek'**
+  String get izinYeniIstek;
+
+  /// No description provided for @izinIstekYokYonetim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz izin isteğiniz yok. \"Yeni istek\" ile bir daire, üstteki \"Tüm daireler\" ile tümü için izin isteyin.'**
+  String get izinIstekYokYonetim;
+
+  /// No description provided for @izinIstekYokSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dairenize gelen görüntüleme isteği yok.'**
+  String get izinIstekYokSakin;
+
+  /// No description provided for @izinTumDaireUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakini olan tüm daireler için görüntüleme izni isteği gönderilecek. Her daire kendi sakininin onayına bağlıdır — yalnızca onaylayan dairelerin kayıtlarını görebilirsiniz.'**
+  String get izinTumDaireUyari;
+
+  /// No description provided for @izinAtlandiEki.
+  ///
+  /// In tr, this message translates to:
+  /// **' ({n} zaten açık)'**
+  String izinAtlandiEki(Object n);
+
+  /// atlandi = ' (n zaten acik)' eki ya da bos
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daire için istek gönderildi{atlandi} — sakin onayları bekleniyor'**
+  String izinTopluGonderildi(Object n, Object atlandi);
+
+  /// No description provided for @izinGonderilemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderilemedi: {hata}'**
+  String izinGonderilemedi(Object hata);
+
+  /// No description provided for @izinIsteBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görüntüleme izni iste'**
+  String get izinIsteBaslik;
+
+  /// No description provided for @izinDaireNo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire no (örn. A-12)'**
+  String get izinDaireNo;
+
+  /// No description provided for @izinIstekGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'İstek gönder'**
+  String get izinIstekGonder;
+
+  /// No description provided for @izinIstekGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İstek gönderildi — sakinin onayı bekleniyor'**
+  String get izinIstekGonderildi;
+
+  /// No description provided for @izinDaireIstegi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire görüntüleme isteği{daire}'**
+  String izinDaireIstegi(Object daire);
+
+  /// No description provided for @izinIsteyen.
+  ///
+  /// In tr, this message translates to:
+  /// **'İsteyen: {ad}'**
+  String izinIsteyen(Object ad);
+
+  /// No description provided for @izinKullanildiUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'İzin kullanıldı (tek seferlik). Tekrar görmek için yeni istek açın.'**
+  String get izinKullanildiUyari;
+
+  /// No description provided for @izinGoruntulenebilirDaireler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görüntülenebilir daireler ({n})'**
+  String izinGoruntulenebilirDaireler(Object n);
+
+  /// No description provided for @izinKullanildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kullanıldı'**
+  String get izinKullanildi;
+
+  /// No description provided for @izinOnayli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onaylı'**
+  String get izinOnayli;
+
+  /// No description provided for @izinVerildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İzin verildi'**
+  String get izinVerildi;
+
+  /// No description provided for @izinOnayla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onayla'**
+  String get izinOnayla;
+
+  /// No description provided for @izinKargolar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kargolar'**
+  String get izinKargolar;
+
+  /// Ziyaretci/kargo ekran basligi + opsiyonel daire eki
+  ///
+  /// In tr, this message translates to:
+  /// **'{baslik}{daire}'**
+  String izinKayitBaslik(Object baslik, Object daire);
+
+  /// No description provided for @izinDaireEki.
+  ///
+  /// In tr, this message translates to:
+  /// **' — {daire}'**
+  String izinDaireEki(Object daire);
+
+  /// No description provided for @izinSuresiDoldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'İzin kullanıldı veya süresi doldu (tek seferlik). Tekrar görüntülemek için yeni bir izin isteği açın.'**
+  String get izinSuresiDoldu;
+
+  /// No description provided for @izinTekSeferlikUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tek seferlik izinle görüntüleniyor — yenilemede erişim kapanır.'**
+  String get izinTekSeferlikUyari;
+
+  /// No description provided for @izinKayitYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu dairede kayıt yok.'**
+  String get izinKayitYok;
+
+  /// No description provided for @izinHedef.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef: {ad}'**
+  String izinHedef(Object ad);
+
+  /// No description provided for @izinKaydeden.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydeden: {ad}'**
+  String izinKaydeden(Object ad);
+
+  /// No description provided for @izinDurumEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Durum: {durum}'**
+  String izinDurumEtiket(Object durum);
+
+  /// No description provided for @izinDurumOnaylandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onaylandı'**
+  String get izinDurumOnaylandi;
+
+  /// No description provided for @kargoDurumTeslimAlindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teslim alındı'**
+  String get kargoDurumTeslimAlindi;
+
+  /// No description provided for @rezSizin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyonunuz'**
+  String get rezSizin;
 }
 
 class _AppLocalizationsDelegate

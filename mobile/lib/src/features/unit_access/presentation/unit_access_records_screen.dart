@@ -7,6 +7,8 @@ import '../../kargo/data/kargo_api.dart';
 import '../../kargo/domain/kargo_models.dart';
 import '../../visitors/data/visitor_api.dart';
 import '../../visitors/domain/visitor_models.dart';
+import '../../../core/i18n/l10n.dart';
+import '../../kargo/presentation/kargo_durum_adi.dart';
 
 /// Onaylanan tek-seferlik izinle bir dairenin ziyaretci/kargo kayitlarinin
 /// SALT-OKUNUR gorunumu (admin/yonetici). Izin ILK okumada tuketilir; tekrar
@@ -78,10 +80,10 @@ class _UnitAccessRecordsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final baslik = _isKargo ? 'Kargolar' : 'Ziyaretçiler';
+    final baslik = _isKargo ? context.l10n.izinKargolar : context.l10n.modulZiyaretciler;
     final daire = widget.unitNo == null || widget.unitNo!.isEmpty
         ? ''
-        : ' — ${widget.unitNo}';
+        : context.l10n.izinDaireEki(widget.unitNo!);
     return Scaffold(
       appBar: AppBar(title: Text(trUpper('$baslik$daire'))),
       body: RefreshIndicator(
@@ -95,12 +97,11 @@ class _UnitAccessRecordsScreenState
                   if (_forbidden)
                     Card(
                       color: Colors.orange.withValues(alpha: 0.10),
-                      child: const Padding(
-                        padding: EdgeInsets.all(16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
                         child: Text(
-                          'İzin kullanıldı veya süresi doldu (tek seferlik). '
-                          'Tekrar görüntülemek için yeni bir izin isteği açın.',
-                          style: TextStyle(color: Colors.orange),
+                          context.l10n.izinSuresiDoldu,
+                          style: const TextStyle(color: Colors.orange),
                         ),
                       ),
                     )
@@ -116,12 +117,11 @@ class _UnitAccessRecordsScreenState
                       ),
                     )
                   else ...[
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: Text(
-                        'Tek seferlik izinle görüntüleniyor — yenilemede erişim '
-                        'kapanır.',
-                        style: TextStyle(color: Colors.grey),
+                        context.l10n.izinTekSeferlikUyari,
+                        style: const TextStyle(color: Colors.grey),
                       ),
                     ),
                     if (_isKargo)
@@ -130,11 +130,11 @@ class _UnitAccessRecordsScreenState
                       ..._visitors.map((v) => _VisitorTile(visitor: v)),
                     if (_isKargo && _kargolar.isEmpty ||
                         !_isKargo && _visitors.isEmpty)
-                      const Card(
+                      Card(
                         child: Padding(
-                          padding: EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(24),
                           child: Text(
-                            'Bu dairede kayıt yok.',
+                            context.l10n.izinKayitYok,
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -158,13 +158,13 @@ class _VisitorTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: const Icon(Icons.emoji_people_outlined),
+        leading: Icon(Icons.emoji_people_outlined),
         title: Text(v.ziyaretciAd),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (v.targetResidentAd != null) Text('Hedef: ${v.targetResidentAd}'),
-            if (v.kaydedenAd != null) Text('Kaydeden: ${v.kaydedenAd}'),
+            if (v.targetResidentAd != null) Text(context.l10n.izinHedef(v.targetResidentAd!)),
+            if (v.kaydedenAd != null) Text(context.l10n.izinKaydeden(v.kaydedenAd!)),
             if (v.notlar != null && v.notlar!.isNotEmpty) Text(v.notlar!),
           ],
         ),
@@ -184,12 +184,12 @@ class _KargoTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: const Icon(Icons.local_shipping_outlined),
+        leading: Icon(Icons.local_shipping_outlined),
         title: Text(k.firma),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Durum: ${k.durum.label}'),
+            Text(context.l10n.izinDurumEtiket(kargoDurumAdi(context.l10n, k.durum))),
             if (k.notlar != null && k.notlar!.isNotEmpty) Text(k.notlar!),
           ],
         ),

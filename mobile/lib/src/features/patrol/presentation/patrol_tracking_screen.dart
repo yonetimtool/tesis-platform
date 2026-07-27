@@ -251,7 +251,7 @@ class _WindowCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                l10n.devriyeNoktaOkutuldu(beklenen, okutulan),
+                l10n.devriyeNoktaOkutuldu(okutulan, beklenen),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],

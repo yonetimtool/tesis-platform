@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 import '../domain/rezervasyon_models.dart';
+import 'rez_etiket.dart';
 import 'rezervasyon_controller.dart';
 
 /// "Rezervasyon" — ortak alan rezervasyonu (auth.md §4 kesin kurali, UX aynasi).
@@ -71,18 +72,18 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(trUpper('Rezervasyon')),
+          title: Text(baslikBuyuk(context.l10n.modulRezervasyon, context.dilKodu)),
           actions: [
             IconButton(
-              tooltip: 'Yenile',
+              tooltip: context.l10n.ortakYenile,
               icon: const Icon(Icons.refresh),
               onPressed: state.loading ? null : controller.refresh,
             ),
           ],
           bottom: TabBar(
             tabs: [
-              Tab(text: 'Rezervasyonlar ($ilkSekmeSayi)'),
-              Tab(text: 'Alanlar (${state.alanlar.length})'),
+              Tab(text: context.l10n.rezSekmeRezervasyonlar('$ilkSekmeSayi')),
+              Tab(text: context.l10n.rezSekmeAlanlar('${state.alanlar.length}')),
             ],
           ),
         ),
@@ -99,9 +100,8 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
                       state: state,
                       items: state.items,
                       emptyText: state.canRequest
-                          ? 'Rezervasyonunuz yok. "Alanlar" sekmesinden bir alan '
-                              'seçip boş bir slotu ayırtın.'
-                          : 'Rezervasyon yok.',
+                          ? context.l10n.rezYokSakin
+                          : context.l10n.rezYok,
                     ),
             ),
             RefreshIndicator(
@@ -127,7 +127,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
     if (state.canManageAreas) {
       return FloatingActionButton.extended(
         icon: const Icon(Icons.add_home_outlined),
-        label: const Text('Yeni alan'),
+        label: Text(context.l10n.rezYeniAlan),
         onPressed: () => _openAreaForm(context),
       );
     }
@@ -149,7 +149,9 @@ Future<void> _showAreaForm(BuildContext context, {OrtakAlan? alan}) async {
   if (saved == true && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(alan == null ? 'Ortak alan eklendi ✓' : 'Alan güncellendi ✓'),
+        content: Text(alan == null
+            ? context.l10n.rezAlanEklendi
+            : context.l10n.rezAlanGuncellendi),
       ),
     );
   }
@@ -224,7 +226,7 @@ class _DurumChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        durum.label,
+        rezDurumAdi(context.l10n, durum),
         style: TextStyle(
           color: _color,
           fontSize: 12,
@@ -260,7 +262,7 @@ class _ReservationCard extends ConsumerWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      r.alanAd ?? 'Ortak alan',
+                      r.alanAd ?? context.l10n.rezOrtakAlan,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
@@ -269,8 +271,12 @@ class _ReservationCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${r.tarih} · ${r.baslangic}-${r.bitis} · ${r.kisiSayisi} kişi'
-                '${r.unitNo != null ? ' · Daire: ${r.unitNo}' : ''}',
+                [
+                  context.l10n.rezSatirOzet(
+                      r.tarih, r.baslangic, r.bitis, '${r.kisiSayisi}'),
+                  if (r.unitNo != null)
+                    context.l10n.gorevDaireEtiket(r.unitNo!),
+                ].join(' · '),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               if (r.notlar != null && r.notlar!.isNotEmpty) ...[
@@ -286,9 +292,9 @@ class _ReservationCard extends ConsumerWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        'İptal edildi'
+                        '${context.l10n.rezIptalEdildi}'
                         '${r.iptalEdenAd != null ? ' — ${r.iptalEdenAd}' : ''}'
-                        '${r.iptalZamani != null ? ' · ${_fmtDateTime(r.iptalZamani!.toLocal())}' : ''}',
+                        '${r.iptalZamani != null ? ' · ${tarihSaatBicimi(r.iptalZamani!, context.dilKodu, ayirici: '')}' : ''}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
@@ -326,21 +332,23 @@ class _CancelButtonState extends ConsumerState<_CancelButton> {
 
   Future<void> _cancel() async {
     if (_busy) return;
+    // Async bosluktan ONCE yakalanir (messenger ile ayni gerekce).
+    final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final onay = await showDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
-        title: const Text('Rezervasyon iptal edilsin mi?'),
-        content: const Text('Slot yeniden boşa çıkar; bu işlem geri alınamaz.'),
+        title: Text(context.l10n.rezIptalEdilsinMi),
+        content: Text(context.l10n.rezIptalUyari),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dctx).pop(false),
-            child: const Text('Vazgeç'),
+            child: Text(context.l10n.ortakVazgec),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(dctx).pop(true),
-            child: const Text('Evet, iptal et'),
+            child: Text(context.l10n.rezEvetIptalEt),
           ),
         ],
       ),
@@ -352,7 +360,7 @@ class _CancelButtonState extends ConsumerState<_CancelButton> {
           .read(rezervasyonControllerProvider.notifier)
           .cancel(widget.rezervasyonId);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Rezervasyon iptal edildi')),
+        SnackBar(content: Text(l10n.rezIptalEdildiBildirim)),
       );
       widget.onCancelled?.call();
     } on ApiException catch (e) {
@@ -361,7 +369,7 @@ class _CancelButtonState extends ConsumerState<_CancelButton> {
       widget.onCancelled?.call();
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('İptal gönderilemedi. Tekrar deneyin.')),
+        SnackBar(content: Text(l10n.rezIptalGonderilemedi)),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -375,7 +383,7 @@ class _CancelButtonState extends ConsumerState<_CancelButton> {
       child: OutlinedButton.icon(
         style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
         icon: const Icon(Icons.cancel_outlined),
-        label: const Text('İptal et'),
+        label: Text(context.l10n.rezIptalEt),
         onPressed: _busy ? null : _cancel,
       ),
     );
@@ -401,7 +409,7 @@ void _showDetail(BuildContext context, Rezervasyon r,
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    r.alanAd ?? 'Ortak alan',
+                    r.alanAd ?? context.l10n.rezOrtakAlan,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -412,23 +420,25 @@ void _showDetail(BuildContext context, Rezervasyon r,
               ],
             ),
             const SizedBox(height: 12),
-            Text('Tarih: ${r.tarih} · ${r.baslangic}-${r.bitis}'),
+            Text(context.l10n.rezDetayTarih(r.tarih, r.baslangic, r.bitis)),
             const SizedBox(height: 4),
-            Text('Kişi sayısı: ${r.kisiSayisi}'
-                '${r.unitNo != null ? ' · Daire: ${r.unitNo}' : ''}'),
+            Text([
+              context.l10n.rezDetayKisi('${r.kisiSayisi}'),
+              if (r.unitNo != null) context.l10n.gorevDaireEtiket(r.unitNo!),
+            ].join(' · ')),
             const SizedBox(height: 4),
-            Text('Rezerve: ${_fmtDateTime(r.createdAt.toLocal())}'
+            Text('${context.l10n.rezDetayRezerve(tarihSaatBicimi(r.createdAt, context.dilKodu, ayirici: ''))}'
                 '${r.talepEdenAd != null ? ' — ${r.talepEdenAd}' : ''}'),
             if (r.notlar != null && r.notlar!.isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text('Not: ${r.notlar}'),
+              Text(context.l10n.rezDetayNot(r.notlar!)),
             ],
             if (r.iptalEdildi) ...[
               const SizedBox(height: 4),
               Text(
-                'İptal'
+                '${context.l10n.ortakIptal}'
                 '${r.iptalEdenAd != null ? ' — ${r.iptalEdenAd}' : ''}'
-                '${r.iptalZamani != null ? ' · ${_fmtDateTime(r.iptalZamani!.toLocal())}' : ''}',
+                '${r.iptalZamani != null ? ' · ${tarihSaatBicimi(r.iptalZamani!, context.dilKodu, ayirici: '')}' : ''}',
               ),
             ],
             if (canCancel) ...[
@@ -466,10 +476,10 @@ class _AreaList extends ConsumerWidget {
     }
     if (state.alanlar.isEmpty) {
       final bos = switch (mode) {
-        _AreaListMode.manage => 'Henüz ortak alan yok. "Yeni alan" ile ekleyin.',
+        _AreaListMode.manage => context.l10n.rezAlanYokYonetim,
         _AreaListMode.slots => state.canManageAreas
-            ? 'Görüntülenecek ortak alan yok.'
-            : 'Rezerve edilebilir alan yok.',
+            ? context.l10n.rezAlanYokGoruntuleme
+            : context.l10n.rezAlanYokSakin,
       };
       return ListView(
         padding: const EdgeInsets.all(24),
@@ -490,7 +500,7 @@ class _AreaList extends ConsumerWidget {
               color: alan.aktif ? null : Colors.grey,
             ),
             title: Text(alan.ad),
-            subtitle: Text(_altBaslik(alan, manage)),
+            subtitle: Text(_altBaslik(context.l10n, alan, manage)),
             // manage: dokun → duzenle formu (yonetim). slots: dokun → slot
             // izgarasi (resident rezerve / yonetim izler).
             onTap: manage
@@ -522,19 +532,19 @@ class _AreaList extends ConsumerWidget {
 
   /// Tile alt basligi: yonetim yonetim-kipinde acik/kapali + "düzenle"; slot
   /// kipinde musaitlik ozeti + "dokunup slotları gör" (aktif) / pasif uyarisi.
-  static String _altBaslik(OrtakAlan alan, bool manage) {
+  static String _altBaslik(
+      AppLocalizations l10n, OrtakAlan alan, bool manage) {
     final satirlar = <String>[
       if (alan.aciklama != null && alan.aciklama!.isNotEmpty) alan.aciklama!,
     ];
     if (manage) {
-      satirlar.add('Müsait: ${alan.musaitlikOzeti}');
-      satirlar.add(alan.aktif
-          ? 'Açık · düzenlemek için dokun'
-          : 'Kapalı · düzenlemek için dokun');
+      satirlar.add(l10n.rezMusait(musaitlikOzeti(l10n, alan)));
+      satirlar.add(
+          alan.aktif ? l10n.rezAcikDuzenle : l10n.rezKapaliDuzenle);
     } else {
       satirlar.add(alan.aktif
-          ? 'Müsait: ${alan.musaitlikOzeti} · dokunup slotları gör'
-          : 'Pasif (rezerve edilemez)');
+          ? l10n.rezMusaitSlotlariGor(musaitlikOzeti(l10n, alan))
+          : l10n.rezPasifAlan);
     }
     return satirlar.join('\n');
   }
@@ -553,6 +563,9 @@ class _AreaForm extends ConsumerStatefulWidget {
 }
 
 class _AreaFormState extends ConsumerState<_AreaForm> {
+  /// `setState` yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   final _formKey = GlobalKey<FormState>();
   final _ad = TextEditingController();
   final _aciklama = TextEditingController();
@@ -624,7 +637,7 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
   Future<void> _submit() async {
     if (_busy || !(_formKey.currentState?.validate() ?? false)) return;
     if (!_saatGecerli) {
-      setState(() => _hata = 'Kapanış saati açılıştan sonra olmalı.');
+      setState(() => _hata = _l10n.rezKapanisSonra);
       return;
     }
     setState(() {
@@ -658,7 +671,7 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = 'Alan eklenemedi. Tekrar deneyin.';
+          _hata = _l10n.rezAlanEklenemedi;
         });
       }
     }
@@ -677,7 +690,7 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _duzenle ? 'Alanı düzenle' : 'Yeni ortak alan',
+                _duzenle ? context.l10n.rezAlanDuzenle : context.l10n.rezYeniOrtakAlan,
                 style: const TextStyle(
                     fontSize: 18, fontWeight: FontWeight.w700),
               ),
@@ -685,19 +698,21 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
               TextFormField(
                 controller: _ad,
                 textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Alan adı * (örn. Havuz)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.rezAlanAdi,
                   border: OutlineInputBorder(),
                 ),
                 maxLength: 200,
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Alan adı gerekli' : null,
+                    (v == null || v.trim().isEmpty)
+                        ? context.l10n.rezAlanAdiGerekli
+                        : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _aciklama,
-                decoration: const InputDecoration(
-                  labelText: 'Açıklama (opsiyonel)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.gorevAciklamaOpsiyonel,
                   border: OutlineInputBorder(),
                 ),
                 maxLength: 1000,
@@ -705,10 +720,10 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
               ),
               const SizedBox(height: 12),
               // Musaitlik: acilis/kapanis + slot uzunlugu (slotlar bundan uretilir).
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Müsaitlik (her gün)',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                child: Text(context.l10n.rezMusaitlikHerGun,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
               const SizedBox(height: 6),
               Row(
@@ -716,7 +731,7 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.wb_sunny_outlined, size: 18),
-                      label: Text('Açılış: ${_hhmm(_acilis)}'),
+                      label: Text(context.l10n.rezAcilis(_hhmm(_acilis))),
                       onPressed: _busy ? null : () => _pickSaat(true),
                     ),
                   ),
@@ -724,32 +739,34 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.nightlight_outlined, size: 18),
-                      label: Text('Kapanış: ${_hhmm(_kapanis)}'),
+                      label: Text(context.l10n.rezKapanis(_hhmm(_kapanis))),
                       onPressed: _busy ? null : () => _pickSaat(false),
                     ),
                   ),
                 ],
               ),
               if (!_saatGecerli)
-                const Padding(
-                  padding: EdgeInsets.only(top: 4),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
                   child: Text(
-                    'Kapanış saati açılıştan sonra olmalı.',
-                    style: TextStyle(color: Colors.red, fontSize: 12),
+                    context.l10n.rezKapanisSonra,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
                   ),
                 ),
               const SizedBox(height: 8),
               DropdownButtonFormField<int>(
                 initialValue: _slot,
-                decoration: const InputDecoration(
-                  labelText: 'Slot uzunluğu',
+                decoration: InputDecoration(
+                  labelText: context.l10n.rezSlotUzunlugu,
                   border: OutlineInputBorder(),
                 ),
                 // Duzenlemede alanin mevcut slot degeri listede olmayabilir —
                 // secenege ekle (aksi halde Dropdown deger uyusmazligi atar).
                 items: [
                   for (final s in {..._slotSecenekleri, _slot}.toList()..sort())
-                    DropdownMenuItem(value: s, child: Text('$s dakika')),
+                    DropdownMenuItem(
+                        value: s,
+                        child: Text(context.l10n.rezSlotDakika('$s'))),
                 ],
                 onChanged:
                     _busy ? null : (v) => setState(() => _slot = v ?? _slot),
@@ -771,7 +788,8 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
                       : Icon(_duzenle
                           ? Icons.save_outlined
                           : Icons.add_home_outlined),
-                  label: Text(_duzenle ? 'Kaydet' : 'Alanı ekle'),
+                  label: Text(
+                      _duzenle ? context.l10n.ortakKaydet : context.l10n.rezAlaniEkle),
                   onPressed: _busy ? null : _submit,
                 ),
               ),
@@ -807,6 +825,9 @@ class _AmenitySlotsSheet extends ConsumerStatefulWidget {
 }
 
 class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
+  /// `setState` yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   DateTime _tarih = DateTime.now();
   List<Slot> _slots = const [];
   bool _yukleniyor = false;
@@ -845,7 +866,7 @@ class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
       if (!mounted) return;
       setState(() {
         _yukleniyor = false;
-        _hata = 'Slotlar yüklenemedi. Tekrar deneyin.';
+        _hata = _l10n.rezSlotlarYuklenemedi;
       });
     }
   }
@@ -871,7 +892,7 @@ class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
     );
     if (booked == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rezervasyonunuz onaylandı ✓')),
+        SnackBar(content: Text(context.l10n.rezOnaylandi)),
       );
       await _load(); // slot artik dolu — izgarayi tazele
     }
@@ -925,20 +946,19 @@ class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
               ],
             ),
             const SizedBox(height: 4),
-            Text('Müsait: ${widget.alan.musaitlikOzeti}',
+            Text(context.l10n.rezMusait(musaitlikOzeti(context.l10n, widget.alan)),
                 style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               icon: const Icon(Icons.calendar_today_outlined, size: 18),
-              label: Text('Tarih: $_tarihStr'),
+              label: Text(context.l10n.rezTarihEtiket(_tarihStr)),
               onPressed: _yukleniyor ? null : _pickDate,
             ),
             if (canRequest) ...[
               const SizedBox(height: 4),
-              const Text(
-                'Slot yalnızca başlangıcına 24 saatten az kala açılır; '
-                'günde en fazla bir rezervasyon yapabilirsiniz.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+              Text(
+                context.l10n.rezSlotKurali,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ],
             const SizedBox(height: 8),
@@ -963,9 +983,9 @@ class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
       );
     }
     if (_slots.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
-        child: Text('Bu alan için tanımlı slot yok.'),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Text(context.l10n.rezSlotYok),
       );
     }
     // Slot IZGARASI: renkli hucreler. Renk kademesi rol-farkinda (_SlotCell).
@@ -1022,8 +1042,8 @@ class _SlotLegend extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Wrap(spacing: 12, runSpacing: 4, children: [
         item(_slotYesil, 'Rezervasyonum (aktif)'),
-        item(_slotKirmizi, 'Rezervasyonum (geçti)'),
-        item(Colors.blueGrey, 'Dolu (başkası)'),
+        item(_slotKirmizi, context.l10n.rezBenimGecti),
+        item(Colors.blueGrey, context.l10n.rezDoluBaskasi),
       ]),
     );
   }
@@ -1059,24 +1079,29 @@ class _SlotCell extends StatelessWidget {
     if (s.dolu) {
       if (canRequest && s.benim) {
         renk = gecti ? _slotKirmizi : _slotYesil;
-        durum = gecti ? 'Rezervasyonunuz (geçti)' : 'Rezervasyonunuz';
+        durum = gecti ? context.l10n.rezSizinGecti : context.l10n.rezSizin;
       } else if (s.unitNo != null) {
         // Yonetim: rezerve eden daire + kisi (denetim).
         renk = _slotAmber;
-        final kisi = s.kisiSayisi != null ? ' · ${s.kisiSayisi} kişi' : '';
-        durum = 'Dolu · Daire ${s.unitNo}$kisi';
+        final kisi = s.kisiSayisi != null
+            ? context.l10n.rezKisiEki('${s.kisiSayisi}')
+            : '';
+        durum = context.l10n.rezDoluDaire(s.unitNo!, kisi);
       } else {
         // Resident: baskasinin rezervasyonu — ANONIM (kimlik/kisi yok).
         renk = Colors.blueGrey;
-        durum = 'Dolu';
+        durum = context.l10n.rezDolu;
       }
     } else if (canRequest && s.rezerveEdilebilir) {
       renk = _slotYesil;
-      durum = 'Boş';
+      durum = context.l10n.rezBos;
       secilebilir = true;
     } else {
       renk = Colors.blueGrey;
-      durum = s.sebepEtiketi ?? 'Boş';
+      final sebep = s.sebepKimligi;
+      durum = sebep != null
+          ? slotSebepAdi(context.l10n, sebep)
+          : context.l10n.rezBos;
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1105,7 +1130,7 @@ class _SlotCell extends StatelessWidget {
                         fontWeight: FontWeight.w600)),
               ),
               if (secilebilir)
-                const Text('Seç',
+                Text(context.l10n.rezSec,
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -1142,6 +1167,9 @@ class _BookSlotSheet extends ConsumerStatefulWidget {
 }
 
 class _BookSlotSheetState extends ConsumerState<_BookSlotSheet> {
+  /// `setState` yollarinda kullanilan yerellestirme (build disi).
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   final _notlar = TextEditingController();
   int _kisi = 2;
   bool _busy = false;
@@ -1183,7 +1211,7 @@ class _BookSlotSheetState extends ConsumerState<_BookSlotSheet> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = 'Gönderilemedi. Tekrar deneyin.';
+          _hata = _l10n.rezGonderilemedi;
         });
       }
     }
@@ -1198,16 +1226,18 @@ class _BookSlotSheetState extends ConsumerState<_BookSlotSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('${widget.alan.ad} — rezerve et',
+          Text(context.l10n.rezEtBaslik(widget.alan.ad),
               style:
                   const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
-          Text('${widget.tarih} · ${widget.slot.baslangic}–${widget.slot.bitis}',
+          Text(
+              '${widget.tarih} · '
+              '${context.l10n.rezSlotAralik(widget.slot.baslangic, widget.slot.bitis)}',
               style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('Kişi sayısı:'),
+              Text(context.l10n.rezKisiSayisiEtiket),
               IconButton(
                 icon: const Icon(Icons.remove_circle_outline),
                 onPressed: _busy || _kisi <= 1
@@ -1226,8 +1256,8 @@ class _BookSlotSheetState extends ConsumerState<_BookSlotSheet> {
             controller: _notlar,
             maxLength: 1000,
             maxLines: 2,
-            decoration: const InputDecoration(
-              labelText: 'Not (opsiyonel)',
+            decoration: InputDecoration(
+              labelText: context.l10n.ortakNotOpsiyonel,
               border: OutlineInputBorder(),
             ),
           ),
@@ -1246,7 +1276,7 @@ class _BookSlotSheetState extends ConsumerState<_BookSlotSheet> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.event_available_outlined),
-              label: const Text('Rezerve et'),
+              label: Text(context.l10n.rezEt),
               onPressed: _busy ? null : _submit,
             ),
           ),
@@ -1254,9 +1284,4 @@ class _BookSlotSheetState extends ConsumerState<_BookSlotSheet> {
       ),
     );
   }
-}
-
-String _fmtDateTime(DateTime dt) {
-  String p(int n) => n.toString().padLeft(2, '0');
-  return '${p(dt.day)}.${p(dt.month)}.${dt.year} ${p(dt.hour)}:${p(dt.minute)}';
 }

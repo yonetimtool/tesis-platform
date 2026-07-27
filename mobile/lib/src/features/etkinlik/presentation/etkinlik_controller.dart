@@ -4,12 +4,14 @@ import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../data/etkinlik_api.dart';
 import '../domain/etkinlik_models.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Etkinlik listesinin durumu.
 class EtkinlikState {
   const EtkinlikState({
     this.loading = false,
     this.errorMessage,
+    this.hataKimligi,
     this.items = const [],
     this.canManage = false,
     this.canRsvp = false,
@@ -17,7 +19,10 @@ class EtkinlikState {
   });
 
   final bool loading;
+  /// Hata KANALI ikilidir: `errorMessage` SUNUCU metnini, `hataKimligi`
+  /// yerellestirilebilir KIMLIGI tasir (bkz. core/error/akis_hatasi.dart).
   final String? errorMessage;
+  final AkisHatasi? hataKimligi;
 
   /// Sunucu sirasi: etkinlik tarihi DESC. Sayilar SEFFAF (herkes gorur);
   /// benimDurumum kullanicinin kendi beyani.
@@ -35,6 +40,7 @@ class EtkinlikState {
   EtkinlikState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     List<Etkinlik>? items,
     bool? canManage,
     bool? canRsvp,
@@ -45,6 +51,9 @@ class EtkinlikState {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as AkisHatasi?,
       items: items ?? this.items,
       canManage: canManage ?? this.canManage,
       canRsvp: canRsvp ?? this.canRsvp,
@@ -70,7 +79,7 @@ class EtkinlikController extends Notifier<EtkinlikState> {
   Future<void> refresh() async {
     if (_refreshing) return;
     _refreshing = true;
-    state = state.copyWith(loading: true, errorMessage: null);
+    state = state.copyWith(loading: true, errorMessage: null, hataKimligi: null);
     try {
       final role = await ref.read(currentUserRoleProvider.future);
       final items = await ref.read(etkinlikApiProvider).fetchAll();
@@ -90,7 +99,8 @@ class EtkinlikController extends Notifier<EtkinlikState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: AkisHatasi.beklenmeyen,
       );
     } finally {
       _refreshing = false;

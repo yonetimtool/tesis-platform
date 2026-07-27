@@ -219,7 +219,7 @@ class _ActiveWindowCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  l10n.devriyeNoktaSayaci(beklenen, okutulan),
+                  l10n.devriyeNoktaSayaci(okutulan, beklenen),
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
@@ -331,7 +331,7 @@ class _TodayWindowTile extends StatelessWidget {
         subtitle: Text([
           '${saatBicimi(w.pencereBaslangic, dil)} – '
               '${saatBicimi(w.pencereBitis, dil)}',
-          if (beklenen > 0) l10n.devriyeNoktaSayaci(beklenen, okutulan),
+          if (beklenen > 0) l10n.devriyeNoktaSayaci(okutulan, beklenen),
         ].join(' · ')),
         trailing: Chip(
           label: Text(label),

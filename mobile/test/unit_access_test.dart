@@ -8,6 +8,8 @@ import 'package:mobile/src/features/unit_access/data/unit_access_api.dart';
 import 'package:mobile/src/features/unit_access/domain/unit_access_models.dart';
 import 'package:mobile/src/features/unit_access/presentation/unit_access_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Aga cikmayan sahte istemci — liste sabit doner; karar/talep kaydedilir.
 class _FakeUnitAccessApi extends UnitAccessApi {
   _FakeUnitAccessApi(this._items) : super(Dio());
@@ -73,7 +75,7 @@ UnitAccessRequest _r({
         unitAccessApiProvider.overrideWithValue(api),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
-      child: const MaterialApp(home: UnitAccessScreen()),
+      child: l10nApp(const UnitAccessScreen()),
     ),
   );
 }
@@ -190,7 +192,7 @@ void main() {
           unitAccessApiProvider.overrideWithValue(api),
           currentUserRoleProvider.overrideWith((ref) async => UserRole.yonetici),
         ],
-        child: const MaterialApp(home: UnitAccessScreen()),
+        child: l10nApp(const UnitAccessScreen()),
       );
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();

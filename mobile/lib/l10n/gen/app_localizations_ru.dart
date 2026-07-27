@@ -1099,7 +1099,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String devriyeNoktaSayaci(Object beklenen, Object okutulan) {
+  String devriyeNoktaSayaci(Object okutulan, Object beklenen) {
     return '$okutulan/$beklenen точек';
   }
 
@@ -1197,7 +1197,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String sureSaatDakika(Object dakika, Object saat) {
+  String sureSaatDakika(Object saat, Object dakika) {
     return '$saat ч $dakika мин';
   }
 
@@ -1325,7 +1325,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'На сегодня окно обхода не запланировано.';
 
   @override
-  String devriyeNoktaOkutuldu(Object beklenen, Object okutulan) {
+  String devriyeNoktaOkutuldu(Object okutulan, Object beklenen) {
     return 'Отсканировано точек: $okutulan/$beklenen';
   }
 
@@ -1549,11 +1549,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String binaTopluOnizleme(
-    Object adet,
     Object bas,
     Object bitis,
-    Object kat,
     Object toplam,
+    Object kat,
+    Object adet,
   ) {
     return '$bas … $bitis  ($toplam кв., $kat этаж × $adet)';
   }
@@ -1571,7 +1571,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String binaDaireEklendi(Object ek, Object n) {
+  String binaDaireEklendi(Object n, Object ek) {
     return 'Добавлено квартир: $n ✓$ek';
   }
 
@@ -1870,4 +1870,522 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get talepAcanSakin => 'Житель';
+
+  @override
+  String rezSekmeRezervasyonlar(Object n) {
+    return 'Брони ($n)';
+  }
+
+  @override
+  String rezSekmeAlanlar(Object n) {
+    return 'Зоны ($n)';
+  }
+
+  @override
+  String get rezYokSakin =>
+      'У вас нет брони. Выберите зону на вкладке «Зоны» и займите свободный слот.';
+
+  @override
+  String get rezYok => 'Брони нет.';
+
+  @override
+  String get rezYeniAlan => 'Новая зона';
+
+  @override
+  String get rezAlanEklendi => 'Общая зона добавлена ✓';
+
+  @override
+  String get rezAlanGuncellendi => 'Зона обновлена ✓';
+
+  @override
+  String get rezOrtakAlan => 'Общая зона';
+
+  @override
+  String rezSatirOzet(
+    Object tarih,
+    Object baslangic,
+    Object bitis,
+    Object kisi,
+  ) {
+    return '$tarih · $baslangic-$bitis · $kisi чел.';
+  }
+
+  @override
+  String get rezIptalEdildi => 'Отменено';
+
+  @override
+  String get rezIptalEdilsinMi => 'Отменить бронь?';
+
+  @override
+  String get rezIptalUyari =>
+      'Слот снова станет свободным; отменить это нельзя.';
+
+  @override
+  String get rezEvetIptalEt => 'Да, отменить';
+
+  @override
+  String get rezIptalEdildiBildirim => 'Бронь отменена';
+
+  @override
+  String get rezIptalGonderilemedi =>
+      'Не удалось отправить отмену. Попробуйте снова.';
+
+  @override
+  String get rezIptalEt => 'Отменить';
+
+  @override
+  String rezDetayTarih(Object tarih, Object baslangic, Object bitis) {
+    return 'Дата: $tarih · $baslangic-$bitis';
+  }
+
+  @override
+  String rezDetayKisi(Object n) {
+    return 'Количество человек: $n';
+  }
+
+  @override
+  String rezDetayRezerve(Object zaman) {
+    return 'Забронировано: $zaman';
+  }
+
+  @override
+  String rezDetayNot(Object not) {
+    return 'Примечание: $not';
+  }
+
+  @override
+  String get rezAlanYokYonetim =>
+      'Общих зон пока нет. Добавьте через «Новая зона».';
+
+  @override
+  String get rezAlanYokGoruntuleme => 'Нет общих зон для показа.';
+
+  @override
+  String get rezAlanYokSakin => 'Нет зон для бронирования.';
+
+  @override
+  String rezMusait(Object ozet) {
+    return 'Доступно: $ozet';
+  }
+
+  @override
+  String rezMusaitOzeti(Object acilis, Object kapanis, Object dakika) {
+    return '$acilis–$kapanis · слот $dakika мин';
+  }
+
+  @override
+  String get rezAcikDuzenle => 'Открыто · нажмите для изменения';
+
+  @override
+  String get rezKapaliDuzenle => 'Закрыто · нажмите для изменения';
+
+  @override
+  String rezMusaitSlotlariGor(Object ozet) {
+    return 'Доступно: $ozet · нажмите, чтобы увидеть слоты';
+  }
+
+  @override
+  String get rezPasifAlan => 'Неактивно (нельзя бронировать)';
+
+  @override
+  String get rezKapanisSonra =>
+      'Время закрытия должно быть позже времени открытия.';
+
+  @override
+  String get rezAlanEklenemedi => 'Не удалось добавить зону. Попробуйте снова.';
+
+  @override
+  String get rezAlanDuzenle => 'Изменить зону';
+
+  @override
+  String get rezYeniOrtakAlan => 'Новая общая зона';
+
+  @override
+  String get rezAlanAdi => 'Название зоны * (напр. Бассейн)';
+
+  @override
+  String get rezAlanAdiGerekli => 'Название зоны обязательно';
+
+  @override
+  String get rezMusaitlikHerGun => 'Доступность (каждый день)';
+
+  @override
+  String rezAcilis(Object saat) {
+    return 'Открытие: $saat';
+  }
+
+  @override
+  String rezKapanis(Object saat) {
+    return 'Закрытие: $saat';
+  }
+
+  @override
+  String get rezSlotUzunlugu => 'Длительность слота';
+
+  @override
+  String rezSlotDakika(Object n) {
+    return '$n минут';
+  }
+
+  @override
+  String get rezAlaniEkle => 'Добавить зону';
+
+  @override
+  String get rezSlotlarYuklenemedi =>
+      'Не удалось загрузить слоты. Попробуйте снова.';
+
+  @override
+  String get rezOnaylandi => 'Ваша бронь подтверждена ✓';
+
+  @override
+  String rezTarihEtiket(Object tarih) {
+    return 'Дата: $tarih';
+  }
+
+  @override
+  String get rezSlotKurali =>
+      'Слот открывается только менее чем за 24 часа до начала; не более одной брони в день.';
+
+  @override
+  String get rezSlotYok => 'Для этой зоны слоты не заданы.';
+
+  @override
+  String get rezBenimAktif => 'Моя бронь (активна)';
+
+  @override
+  String get rezBenimGecti => 'Моя бронь (прошла)';
+
+  @override
+  String get rezDoluBaskasi => 'Занято (другим)';
+
+  @override
+  String get rezSizinGecti => 'Ваша бронь (прошла)';
+
+  @override
+  String rezKisiEki(Object n) {
+    return ' · $n чел.';
+  }
+
+  @override
+  String rezDoluDaire(Object daire, Object kisi) {
+    return 'Занято · Кв. $daire$kisi';
+  }
+
+  @override
+  String get rezBos => 'Свободно';
+
+  @override
+  String get rezDolu => 'Занято';
+
+  @override
+  String rezSlotAralik(Object baslangic, Object bitis) {
+    return '$baslangic – $bitis';
+  }
+
+  @override
+  String get rezSec => 'Выбрать';
+
+  @override
+  String get rezGonderilemedi => 'Не удалось отправить. Попробуйте снова.';
+
+  @override
+  String rezEtBaslik(Object ad) {
+    return '$ad — забронировать';
+  }
+
+  @override
+  String get rezKisiSayisiEtiket => 'Количество человек:';
+
+  @override
+  String get rezEt => 'Забронировать';
+
+  @override
+  String get rezDurumOnayli => 'Подтверждено';
+
+  @override
+  String get rezSebepDolu => 'занято';
+
+  @override
+  String get rezSebepGecti => 'прошло';
+
+  @override
+  String get rezSebepCokErken => 'откроется в течение 24 ч';
+
+  @override
+  String get rezSebepGunluk => 'дневной лимит исчерпан';
+
+  @override
+  String etkSekmeYaklasan(Object n) {
+    return 'Предстоящие ($n)';
+  }
+
+  @override
+  String etkSekmeGecmis(Object n) {
+    return 'Прошедшие ($n)';
+  }
+
+  @override
+  String get etkYeni => 'Новое событие';
+
+  @override
+  String get etkYaklasanYokYonetim =>
+      'Предстоящих событий нет. Объявите через «Новое событие».';
+
+  @override
+  String get etkYaklasanYok => 'Предстоящих событий нет.';
+
+  @override
+  String get etkGecmisYok => 'Прошедших событий нет.';
+
+  @override
+  String get etkDuyuruldu =>
+      'Событие объявлено — жителям отправлено уведомление ✓';
+
+  @override
+  String get etkGuncellendi => 'Событие обновлено ✓';
+
+  @override
+  String etkKatiliyorSayisi(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n придут',
+      many: '$n придут',
+      few: '$n придут',
+      one: '$n придёт',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String etkKatilmiyorSayisi(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n не придут',
+      many: '$n не придут',
+      few: '$n не придут',
+      one: '$n не придёт',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String etkKatiliminiz(Object durum) {
+    return 'Ваш ответ: $durum';
+  }
+
+  @override
+  String etkBeyanKaydedildi(Object durum) {
+    return 'Ваш ответ сохранён: $durum ✓';
+  }
+
+  @override
+  String get etkBeyanGonderilemedi =>
+      'Не удалось отправить ответ. Попробуйте снова.';
+
+  @override
+  String get etkKatiliyorum => 'Приду';
+
+  @override
+  String get etkKatilmiyorum => 'Не приду';
+
+  @override
+  String etkZaman(Object aralik) {
+    return 'Время: $aralik';
+  }
+
+  @override
+  String etkYer(Object konum) {
+    return 'Место: $konum';
+  }
+
+  @override
+  String etkDuyuran(Object ad) {
+    return 'Объявил: $ad';
+  }
+
+  @override
+  String get etkSilinsinMi => 'Удалить событие?';
+
+  @override
+  String etkSilOnay(Object baslik) {
+    return '«$baslik» и все ответы будут удалены.';
+  }
+
+  @override
+  String get etkSilindi => 'Событие удалено ✓';
+
+  @override
+  String get etkBitisSonra => 'Окончание должно быть позже начала';
+
+  @override
+  String get etkKaydedilemedi => 'Не удалось сохранить. Попробуйте снова.';
+
+  @override
+  String get etkDuzenleBaslik => 'Изменить событие';
+
+  @override
+  String get etkBaslikAlan => 'Заголовок * (напр. Вечер просмотра матча)';
+
+  @override
+  String get etkBaslikGerekli => 'Заголовок обязателен';
+
+  @override
+  String get etkAciklamaAlan => 'Описание *';
+
+  @override
+  String get etkAciklamaGerekli => 'Описание обязательно';
+
+  @override
+  String etkZamanSecim(Object zaman) {
+    return 'Время: $zaman';
+  }
+
+  @override
+  String get etkBitisEkle => 'Добавить окончание (необязательно)';
+
+  @override
+  String etkBitis(Object zaman) {
+    return 'Окончание: $zaman';
+  }
+
+  @override
+  String get etkBitisiKaldir => 'Убрать окончание';
+
+  @override
+  String get etkYerAlan => 'Место (необязательно)';
+
+  @override
+  String get etkGorselAlan => 'Изображение (необязательно)';
+
+  @override
+  String get etkDuyurVeBildir => 'Объявить и уведомить жителей';
+
+  @override
+  String get izinBaslik => 'Разрешение на просмотр';
+
+  @override
+  String get izinTumDairelere => 'Запросить доступ ко всем квартирам';
+
+  @override
+  String get izinYeniIstek => 'Новый запрос';
+
+  @override
+  String get izinIstekYokYonetim =>
+      'У вас пока нет запросов. Через «Новый запрос» — для одной квартиры, через «Все квартиры» выше — для всех.';
+
+  @override
+  String get izinIstekYokSakin => 'Для вашей квартиры запросов нет.';
+
+  @override
+  String get izinTumDaireUyari =>
+      'Запрос на просмотр будет отправлен по каждой квартире с жителем. Каждая зависит от согласия своего жителя — вы увидите записи только одобривших квартир.';
+
+  @override
+  String izinAtlandiEki(Object n) {
+    return ' ($n уже открыто)';
+  }
+
+  @override
+  String izinTopluGonderildi(Object n, Object atlandi) {
+    return 'Запросы отправлены по $n квартирам$atlandi — ожидаются согласия жителей';
+  }
+
+  @override
+  String izinGonderilemedi(Object hata) {
+    return 'Не удалось отправить: $hata';
+  }
+
+  @override
+  String get izinIsteBaslik => 'Запросить разрешение на просмотр';
+
+  @override
+  String get izinDaireNo => 'Номер квартиры (напр. A-12)';
+
+  @override
+  String get izinIstekGonder => 'Отправить запрос';
+
+  @override
+  String get izinIstekGonderildi =>
+      'Запрос отправлен — ожидается согласие жителя';
+
+  @override
+  String izinDaireIstegi(Object daire) {
+    return 'Запрос на просмотр квартиры$daire';
+  }
+
+  @override
+  String izinIsteyen(Object ad) {
+    return 'Запросил: $ad';
+  }
+
+  @override
+  String get izinKullanildiUyari =>
+      'Разрешение использовано (однократное). Чтобы посмотреть снова, создайте новый запрос.';
+
+  @override
+  String izinGoruntulenebilirDaireler(Object n) {
+    return 'Доступные квартиры ($n)';
+  }
+
+  @override
+  String get izinKullanildi => 'Использовано';
+
+  @override
+  String get izinOnayli => 'Одобрено';
+
+  @override
+  String get izinVerildi => 'Разрешение выдано';
+
+  @override
+  String get izinOnayla => 'Одобрить';
+
+  @override
+  String get izinKargolar => 'Посылки';
+
+  @override
+  String izinKayitBaslik(Object baslik, Object daire) {
+    return '$baslik$daire';
+  }
+
+  @override
+  String izinDaireEki(Object daire) {
+    return ' — $daire';
+  }
+
+  @override
+  String get izinSuresiDoldu =>
+      'Разрешение использовано или истекло (однократное). Создайте новый запрос, чтобы посмотреть снова.';
+
+  @override
+  String get izinTekSeferlikUyari =>
+      'Просмотр по однократному разрешению — при обновлении доступ закроется.';
+
+  @override
+  String get izinKayitYok => 'По этой квартире записей нет.';
+
+  @override
+  String izinHedef(Object ad) {
+    return 'Получатель: $ad';
+  }
+
+  @override
+  String izinKaydeden(Object ad) {
+    return 'Записал: $ad';
+  }
+
+  @override
+  String izinDurumEtiket(Object durum) {
+    return 'Статус: $durum';
+  }
+
+  @override
+  String get izinDurumOnaylandi => 'Одобрено';
+
+  @override
+  String get kargoDurumTeslimAlindi => 'Получено';
+
+  @override
+  String get rezSizin => 'Ваша бронь';
 }

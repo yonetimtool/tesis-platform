@@ -7,16 +7,17 @@
 /// (used=true). Sureye bagli DEGIL (one-shot).
 library;
 
+/// KIMLIK / METIN AYRIMI (README §15): enum GORUNEN METIN TASIMAZ — etiket
+/// cizim aninda `erisimDurumAdi` ile cozulur.
 enum AccessRequestDurum {
-  bekliyor('bekliyor', 'Bekliyor'),
-  onaylandi('onaylandi', 'Onaylandı'),
-  reddedildi('reddedildi', 'Reddedildi'),
-  unknown('unknown', 'Bilinmeyen');
+  bekliyor('bekliyor'),
+  onaylandi('onaylandi'),
+  reddedildi('reddedildi'),
+  unknown('unknown');
 
-  const AccessRequestDurum(this.wire, this.label);
+  const AccessRequestDurum(this.wire);
 
   final String wire;
-  final String label;
 
   static AccessRequestDurum fromWire(String? value) =>
       AccessRequestDurum.values.firstWhere(

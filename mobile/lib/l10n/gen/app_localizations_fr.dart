@@ -1000,7 +1000,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String devriyeNoktaSayaci(Object beklenen, Object okutulan) {
+  String devriyeNoktaSayaci(Object okutulan, Object beklenen) {
     return '$okutulan/$beklenen points';
   }
 
@@ -1094,7 +1094,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String sureSaatDakika(Object dakika, Object saat) {
+  String sureSaatDakika(Object saat, Object dakika) {
     return '$saat h $dakika min';
   }
 
@@ -1222,7 +1222,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucun créneau de patrouille prévu aujourd\'hui.';
 
   @override
-  String devriyeNoktaOkutuldu(Object beklenen, Object okutulan) {
+  String devriyeNoktaOkutuldu(Object okutulan, Object beklenen) {
     return '$okutulan/$beklenen points scannés';
   }
 
@@ -1445,11 +1445,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String binaTopluOnizleme(
-    Object adet,
     Object bas,
     Object bitis,
-    Object kat,
     Object toplam,
+    Object kat,
+    Object adet,
   ) {
     return '$bas … $bitis  ($toplam logements, $kat étages × $adet)';
   }
@@ -1467,7 +1467,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String binaDaireEklendi(Object ek, Object n) {
+  String binaDaireEklendi(Object n, Object ek) {
     return '$n logements ajoutés ✓$ek';
   }
 
@@ -1770,4 +1770,519 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get talepAcanSakin => 'Résident';
+
+  @override
+  String rezSekmeRezervasyonlar(Object n) {
+    return 'Réservations ($n)';
+  }
+
+  @override
+  String rezSekmeAlanlar(Object n) {
+    return 'Espaces ($n)';
+  }
+
+  @override
+  String get rezYokSakin =>
+      'Vous n\'avez aucune réservation. Choisissez un espace dans l\'onglet « Espaces » et réservez un créneau libre.';
+
+  @override
+  String get rezYok => 'Aucune réservation.';
+
+  @override
+  String get rezYeniAlan => 'Nouvel espace';
+
+  @override
+  String get rezAlanEklendi => 'Espace commun ajouté ✓';
+
+  @override
+  String get rezAlanGuncellendi => 'Espace mis à jour ✓';
+
+  @override
+  String get rezOrtakAlan => 'Espace commun';
+
+  @override
+  String rezSatirOzet(
+    Object tarih,
+    Object baslangic,
+    Object bitis,
+    Object kisi,
+  ) {
+    return '$tarih · $baslangic-$bitis · $kisi pers.';
+  }
+
+  @override
+  String get rezIptalEdildi => 'Annulée';
+
+  @override
+  String get rezIptalEdilsinMi => 'Annuler la réservation ?';
+
+  @override
+  String get rezIptalUyari =>
+      'Le créneau redevient libre ; cette action est irréversible.';
+
+  @override
+  String get rezEvetIptalEt => 'Oui, annuler';
+
+  @override
+  String get rezIptalEdildiBildirim => 'Réservation annulée';
+
+  @override
+  String get rezIptalGonderilemedi =>
+      'Impossible d\'envoyer l\'annulation. Réessayez.';
+
+  @override
+  String get rezIptalEt => 'Annuler';
+
+  @override
+  String rezDetayTarih(Object tarih, Object baslangic, Object bitis) {
+    return 'Date : $tarih · $baslangic-$bitis';
+  }
+
+  @override
+  String rezDetayKisi(Object n) {
+    return 'Nombre de personnes : $n';
+  }
+
+  @override
+  String rezDetayRezerve(Object zaman) {
+    return 'Réservé : $zaman';
+  }
+
+  @override
+  String rezDetayNot(Object not) {
+    return 'Note : $not';
+  }
+
+  @override
+  String get rezAlanYokYonetim =>
+      'Aucun espace commun pour l\'instant. Ajoutez-en un avec « Nouvel espace ».';
+
+  @override
+  String get rezAlanYokGoruntuleme => 'Aucun espace commun à afficher.';
+
+  @override
+  String get rezAlanYokSakin => 'Aucun espace réservable.';
+
+  @override
+  String rezMusait(Object ozet) {
+    return 'Disponible : $ozet';
+  }
+
+  @override
+  String rezMusaitOzeti(Object acilis, Object kapanis, Object dakika) {
+    return '$acilis–$kapanis · créneaux de $dakika min';
+  }
+
+  @override
+  String get rezAcikDuzenle => 'Ouvert · touchez pour modifier';
+
+  @override
+  String get rezKapaliDuzenle => 'Fermé · touchez pour modifier';
+
+  @override
+  String rezMusaitSlotlariGor(Object ozet) {
+    return 'Disponible : $ozet · touchez pour voir les créneaux';
+  }
+
+  @override
+  String get rezPasifAlan => 'Inactif (non réservable)';
+
+  @override
+  String get rezKapanisSonra =>
+      'L\'heure de fermeture doit être après l\'heure d\'ouverture.';
+
+  @override
+  String get rezAlanEklenemedi => 'Impossible d\'ajouter l\'espace. Réessayez.';
+
+  @override
+  String get rezAlanDuzenle => 'Modifier l\'espace';
+
+  @override
+  String get rezYeniOrtakAlan => 'Nouvel espace commun';
+
+  @override
+  String get rezAlanAdi => 'Nom de l\'espace * (ex. Piscine)';
+
+  @override
+  String get rezAlanAdiGerekli => 'Le nom de l\'espace est obligatoire';
+
+  @override
+  String get rezMusaitlikHerGun => 'Disponibilité (chaque jour)';
+
+  @override
+  String rezAcilis(Object saat) {
+    return 'Ouverture : $saat';
+  }
+
+  @override
+  String rezKapanis(Object saat) {
+    return 'Fermeture : $saat';
+  }
+
+  @override
+  String get rezSlotUzunlugu => 'Durée du créneau';
+
+  @override
+  String rezSlotDakika(Object n) {
+    return '$n minutes';
+  }
+
+  @override
+  String get rezAlaniEkle => 'Ajouter l\'espace';
+
+  @override
+  String get rezSlotlarYuklenemedi =>
+      'Impossible de charger les créneaux. Réessayez.';
+
+  @override
+  String get rezOnaylandi => 'Votre réservation est confirmée ✓';
+
+  @override
+  String rezTarihEtiket(Object tarih) {
+    return 'Date : $tarih';
+  }
+
+  @override
+  String get rezSlotKurali =>
+      'Un créneau n\'ouvre que moins de 24 heures avant son début ; une seule réservation par jour au maximum.';
+
+  @override
+  String get rezSlotYok => 'Aucun créneau défini pour cet espace.';
+
+  @override
+  String get rezBenimAktif => 'Ma réservation (active)';
+
+  @override
+  String get rezBenimGecti => 'Ma réservation (passée)';
+
+  @override
+  String get rezDoluBaskasi => 'Occupé (autre)';
+
+  @override
+  String get rezSizinGecti => 'Votre réservation (passée)';
+
+  @override
+  String rezKisiEki(Object n) {
+    return ' · $n pers.';
+  }
+
+  @override
+  String rezDoluDaire(Object daire, Object kisi) {
+    return 'Occupé · Logement $daire$kisi';
+  }
+
+  @override
+  String get rezBos => 'Libre';
+
+  @override
+  String get rezDolu => 'Occupé';
+
+  @override
+  String rezSlotAralik(Object baslangic, Object bitis) {
+    return '$baslangic – $bitis';
+  }
+
+  @override
+  String get rezSec => 'Choisir';
+
+  @override
+  String get rezGonderilemedi => 'Envoi impossible. Réessayez.';
+
+  @override
+  String rezEtBaslik(Object ad) {
+    return '$ad — réserver';
+  }
+
+  @override
+  String get rezKisiSayisiEtiket => 'Nombre de personnes :';
+
+  @override
+  String get rezEt => 'Réserver';
+
+  @override
+  String get rezDurumOnayli => 'Confirmée';
+
+  @override
+  String get rezSebepDolu => 'occupé';
+
+  @override
+  String get rezSebepGecti => 'passé';
+
+  @override
+  String get rezSebepCokErken => 'ouvre sous 24 h';
+
+  @override
+  String get rezSebepGunluk => 'quota journalier atteint';
+
+  @override
+  String etkSekmeYaklasan(Object n) {
+    return 'À venir ($n)';
+  }
+
+  @override
+  String etkSekmeGecmis(Object n) {
+    return 'Passés ($n)';
+  }
+
+  @override
+  String get etkYeni => 'Nouvel événement';
+
+  @override
+  String get etkYaklasanYokYonetim =>
+      'Aucun événement à venir. Annoncez-en un avec « Nouvel événement ».';
+
+  @override
+  String get etkYaklasanYok => 'Aucun événement à venir.';
+
+  @override
+  String get etkGecmisYok => 'Aucun événement passé.';
+
+  @override
+  String get etkDuyuruldu => 'Événement annoncé — résidents notifiés ✓';
+
+  @override
+  String get etkGuncellendi => 'Événement mis à jour ✓';
+
+  @override
+  String etkKatiliyorSayisi(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n participent',
+      one: '$n participe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String etkKatilmiyorSayisi(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n ne participent pas',
+      one: '$n ne participe pas',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String etkKatiliminiz(Object durum) {
+    return 'Votre réponse : $durum';
+  }
+
+  @override
+  String etkBeyanKaydedildi(Object durum) {
+    return 'Votre réponse est enregistrée : $durum ✓';
+  }
+
+  @override
+  String get etkBeyanGonderilemedi =>
+      'Impossible d\'envoyer la réponse. Réessayez.';
+
+  @override
+  String get etkKatiliyorum => 'Je participe';
+
+  @override
+  String get etkKatilmiyorum => 'Je ne participe pas';
+
+  @override
+  String etkZaman(Object aralik) {
+    return 'Heure : $aralik';
+  }
+
+  @override
+  String etkYer(Object konum) {
+    return 'Lieu : $konum';
+  }
+
+  @override
+  String etkDuyuran(Object ad) {
+    return 'Annoncé par : $ad';
+  }
+
+  @override
+  String get etkSilinsinMi => 'Supprimer l\'événement ?';
+
+  @override
+  String etkSilOnay(Object baslik) {
+    return '\"$baslik\" et toutes les réponses seront supprimés.';
+  }
+
+  @override
+  String get etkSilindi => 'Événement supprimé ✓';
+
+  @override
+  String get etkBitisSonra => 'La fin doit être après le début';
+
+  @override
+  String get etkKaydedilemedi => 'Enregistrement impossible. Réessayez.';
+
+  @override
+  String get etkDuzenleBaslik => 'Modifier l\'événement';
+
+  @override
+  String get etkBaslikAlan => 'Titre * (ex. Soirée match)';
+
+  @override
+  String get etkBaslikGerekli => 'Le titre est obligatoire';
+
+  @override
+  String get etkAciklamaAlan => 'Description *';
+
+  @override
+  String get etkAciklamaGerekli => 'La description est obligatoire';
+
+  @override
+  String etkZamanSecim(Object zaman) {
+    return 'Heure : $zaman';
+  }
+
+  @override
+  String get etkBitisEkle => 'Ajouter une fin (facultatif)';
+
+  @override
+  String etkBitis(Object zaman) {
+    return 'Fin : $zaman';
+  }
+
+  @override
+  String get etkBitisiKaldir => 'Retirer la fin';
+
+  @override
+  String get etkYerAlan => 'Lieu (facultatif)';
+
+  @override
+  String get etkGorselAlan => 'Image (facultatif)';
+
+  @override
+  String get etkDuyurVeBildir => 'Annoncer et notifier les résidents';
+
+  @override
+  String get izinBaslik => 'Autorisation de consultation';
+
+  @override
+  String get izinTumDairelere =>
+      'Demander l\'autorisation pour tous les logements';
+
+  @override
+  String get izinYeniIstek => 'Nouvelle demande';
+
+  @override
+  String get izinIstekYokYonetim =>
+      'Vous n\'avez aucune demande d\'autorisation. Utilisez « Nouvelle demande » pour un logement, ou « Tous les logements » ci-dessus pour tous.';
+
+  @override
+  String get izinIstekYokSakin =>
+      'Aucune demande de consultation pour votre logement.';
+
+  @override
+  String get izinTumDaireUyari =>
+      'Une demande de consultation sera envoyée pour chaque logement occupé. Chaque logement dépend de l\'accord de son résident — vous ne verrez que les données des logements ayant accepté.';
+
+  @override
+  String izinAtlandiEki(Object n) {
+    return ' ($n déjà ouverts)';
+  }
+
+  @override
+  String izinTopluGonderildi(Object n, Object atlandi) {
+    return 'Demandes envoyées pour $n logements$atlandi — en attente des accords des résidents';
+  }
+
+  @override
+  String izinGonderilemedi(Object hata) {
+    return 'Envoi impossible : $hata';
+  }
+
+  @override
+  String get izinIsteBaslik => 'Demander l\'autorisation de consultation';
+
+  @override
+  String get izinDaireNo => 'Numéro de logement (ex. A-12)';
+
+  @override
+  String get izinIstekGonder => 'Envoyer la demande';
+
+  @override
+  String get izinIstekGonderildi =>
+      'Demande envoyée — en attente de l\'accord du résident';
+
+  @override
+  String izinDaireIstegi(Object daire) {
+    return 'Demande de consultation de logement$daire';
+  }
+
+  @override
+  String izinIsteyen(Object ad) {
+    return 'Demandé par : $ad';
+  }
+
+  @override
+  String get izinKullanildiUyari =>
+      'L\'autorisation a été utilisée (usage unique). Ouvrez une nouvelle demande pour consulter à nouveau.';
+
+  @override
+  String izinGoruntulenebilirDaireler(Object n) {
+    return 'Logements consultables ($n)';
+  }
+
+  @override
+  String get izinKullanildi => 'Utilisée';
+
+  @override
+  String get izinOnayli => 'Approuvée';
+
+  @override
+  String get izinVerildi => 'Autorisation accordée';
+
+  @override
+  String get izinOnayla => 'Approuver';
+
+  @override
+  String get izinKargolar => 'Colis';
+
+  @override
+  String izinKayitBaslik(Object baslik, Object daire) {
+    return '$baslik$daire';
+  }
+
+  @override
+  String izinDaireEki(Object daire) {
+    return ' — $daire';
+  }
+
+  @override
+  String get izinSuresiDoldu =>
+      'L\'autorisation a été utilisée ou a expiré (usage unique). Ouvrez une nouvelle demande pour consulter à nouveau.';
+
+  @override
+  String get izinTekSeferlikUyari =>
+      'Consultation avec une autorisation à usage unique — l\'accès se ferme au rafraîchissement.';
+
+  @override
+  String get izinKayitYok => 'Aucun enregistrement pour ce logement.';
+
+  @override
+  String izinHedef(Object ad) {
+    return 'Destinataire : $ad';
+  }
+
+  @override
+  String izinKaydeden(Object ad) {
+    return 'Enregistré par : $ad';
+  }
+
+  @override
+  String izinDurumEtiket(Object durum) {
+    return 'Statut : $durum';
+  }
+
+  @override
+  String get izinDurumOnaylandi => 'Approuvée';
+
+  @override
+  String get kargoDurumTeslimAlindi => 'Remis';
+
+  @override
+  String get rezSizin => 'Votre réservation';
 }

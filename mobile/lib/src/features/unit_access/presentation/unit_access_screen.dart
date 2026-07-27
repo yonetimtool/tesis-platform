@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../routing/app_router.dart';
 import '../domain/unit_access_models.dart';
@@ -23,20 +23,20 @@ class UnitAccessScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(trUpper('Görüntüleme izni')),
+        title: Text(baslikBuyuk(context.l10n.izinBaslik, context.dilKodu)),
         actions: [
           if (state.canRequest)
             IconButton(
-              tooltip: 'Tüm dairelere izin iste',
-              icon: const Icon(Icons.apartment_outlined),
+              tooltip: context.l10n.izinTumDairelere,
+              icon: Icon(Icons.apartment_outlined),
               onPressed: () => _bulkRequest(context, ref),
             ),
         ],
       ),
       floatingActionButton: state.canRequest
           ? FloatingActionButton.extended(
-              icon: const Icon(Icons.add),
-              label: const Text('Yeni istek'),
+              icon: Icon(Icons.add),
+              label: Text(context.l10n.izinYeniIstek),
               onPressed: () => _newRequest(context, ref),
             )
           : null,
@@ -69,10 +69,8 @@ class UnitAccessScreen extends ConsumerWidget {
                         padding: const EdgeInsets.all(24),
                         child: Text(
                           state.canRequest
-                              ? 'Henüz izin isteğiniz yok. "Yeni istek" ile bir '
-                                  'daire, üstteki "Tüm daireler" ile tümü için '
-                                  'izin isteyin.'
-                              : 'Dairenize gelen görüntüleme isteği yok.',
+                              ? context.l10n.izinIstekYokYonetim
+                              : context.l10n.izinIstekYokSakin,
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -89,20 +87,16 @@ class UnitAccessScreen extends ConsumerWidget {
     final onay = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Tüm dairelere izin iste'),
-        content: const Text(
-          'Sakini olan tüm daireler için görüntüleme izni isteği gönderilecek. '
-          'Her daire kendi sakininin onayına bağlıdır — yalnızca onaylayan '
-          'dairelerin kayıtlarını görebilirsiniz.',
-        ),
+        title: Text(context.l10n.izinTumDairelere),
+        content: Text(context.l10n.izinTumDaireUyari),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Vazgeç'),
+            child: Text(context.l10n.ortakVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Gönder'),
+            child: Text(context.l10n.talepGonder),
           ),
         ],
       ),
@@ -112,20 +106,18 @@ class UnitAccessScreen extends ConsumerWidget {
       final res =
           await ref.read(unitAccessControllerProvider.notifier).createBulkRequest();
       if (context.mounted) {
-        final atlandi = res.skipped > 0 ? ' (${res.skipped} zaten açık)' : '';
+        final atlandi = res.skipped > 0 ? context.l10n.izinAtlandiEki('${res.skipped}') : '';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              '${res.created} daire için istek gönderildi$atlandi — '
-              'sakin onayları bekleniyor',
-            ),
+            content: Text(context.l10n.izinTopluGonderildi(
+                '${res.created}', atlandi)),
           ),
         );
       }
     } on ApiException catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gönderilemedi: ${e.message}')),
+          SnackBar(content: Text(context.l10n.izinGonderilemedi(e.message))),
         );
       }
     }
@@ -136,23 +128,23 @@ class UnitAccessScreen extends ConsumerWidget {
     final unitNo = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Görüntüleme izni iste'),
+        title: Text(context.l10n.izinIsteBaslik),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Daire no (örn. A-12)',
+          decoration: InputDecoration(
+            labelText: context.l10n.izinDaireNo,
             border: OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Vazgeç'),
+            child: Text(context.l10n.ortakVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('İstek gönder'),
+            child: Text(context.l10n.izinIstekGonder),
           ),
         ],
       ),
@@ -162,13 +154,13 @@ class UnitAccessScreen extends ConsumerWidget {
       await ref.read(unitAccessControllerProvider.notifier).createRequest(unitNo);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('İstek gönderildi — sakinin onayı bekleniyor')),
+          SnackBar(content: Text(context.l10n.izinIstekGonderildi)),
         );
       }
     } on ApiException catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gönderilemedi: ${e.message}')),
+          SnackBar(content: Text(context.l10n.izinGonderilemedi(e.message))),
         );
       }
     }
@@ -196,7 +188,7 @@ class _RequestCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Daire görüntüleme isteği$daire',
+                    context.l10n.izinDaireIstegi(daire),
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -206,7 +198,7 @@ class _RequestCard extends ConsumerWidget {
             if (r.yoneticiAd != null)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text('İsteyen: ${r.yoneticiAd}'),
+                child: Text(context.l10n.izinIsteyen(r.yoneticiAd!)),
               ),
             // resident: bekleyen talebi onayla/reddet.
             if (canDecide && r.bekliyor)
@@ -222,13 +214,13 @@ class _RequestCard extends ConsumerWidget {
                   spacing: 8,
                   children: [
                     OutlinedButton.icon(
-                      icon: const Icon(Icons.emoji_people_outlined, size: 18),
-                      label: const Text('Ziyaretçiler'),
+                      icon: Icon(Icons.emoji_people_outlined, size: 18),
+                      label: Text(context.l10n.modulZiyaretciler),
                       onPressed: () => _openRecords(context, r, 'visitor'),
                     ),
                     OutlinedButton.icon(
-                      icon: const Icon(Icons.local_shipping_outlined, size: 18),
-                      label: const Text('Kargolar'),
+                      icon: Icon(Icons.local_shipping_outlined, size: 18),
+                      label: Text(context.l10n.izinKargolar),
                       onPressed: () => _openRecords(context, r, 'kargo'),
                     ),
                   ],
@@ -237,12 +229,11 @@ class _RequestCard extends ConsumerWidget {
             if (!canDecide &&
                 r.durum == AccessRequestDurum.onaylandi &&
                 r.used)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'İzin kullanıldı (tek seferlik). Tekrar görmek için yeni '
-                  'istek açın.',
-                  style: TextStyle(color: Colors.orange),
+                  context.l10n.izinKullanildiUyari,
+                  style: const TextStyle(color: Colors.orange),
                 ),
               ),
           ],
@@ -279,10 +270,10 @@ class _GrantedUnitsCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.lock_open_outlined, size: 18, color: Colors.green),
+                Icon(Icons.lock_open_outlined, size: 18, color: Colors.green),
                 const SizedBox(width: 6),
                 Text(
-                  'Görüntülenebilir daireler (${units.length})',
+                  context.l10n.izinGoruntulenebilirDaireler('${units.length}'),
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
@@ -315,12 +306,14 @@ class _DurumBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, text) = switch (durum) {
-      AccessRequestDurum.bekliyor => (Colors.orange, 'Bekliyor'),
+      AccessRequestDurum.bekliyor =>
+        (Colors.orange, context.l10n.devriyeDurumBekliyor),
       AccessRequestDurum.onaylandi => used
-          ? (Colors.grey, 'Kullanıldı')
-          : (Colors.green, 'Onaylı'),
-      AccessRequestDurum.reddedildi => (Colors.red, 'Reddedildi'),
-      AccessRequestDurum.unknown => (Colors.grey, 'Bilinmeyen'),
+          ? (Colors.grey, context.l10n.izinKullanildi)
+          : (Colors.green, context.l10n.izinOnayli),
+      AccessRequestDurum.reddedildi => (Colors.red, context.l10n.talepDurumReddedildi),
+      AccessRequestDurum.unknown =>
+        (Colors.grey, context.l10n.devriyeDurumBilinmiyor),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -353,7 +346,7 @@ class _DecideButtonsState extends ConsumerState<_DecideButtons> {
           .decide(widget.id, onayla: onayla);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(onayla ? 'İzin verildi' : 'Reddedildi')),
+          SnackBar(content: Text(onayla ? context.l10n.izinVerildi : context.l10n.talepDurumReddedildi)),
         );
       }
     } on ApiException catch (e) {
@@ -383,12 +376,12 @@ class _DecideButtonsState extends ConsumerState<_DecideButtons> {
       children: [
         FilledButton(
           onPressed: () => _decide(true),
-          child: const Text('Onayla'),
+          child: Text(context.l10n.izinOnayla),
         ),
         const SizedBox(width: 8),
         OutlinedButton(
           onPressed: () => _decide(false),
-          child: const Text('Reddet'),
+          child: Text(context.l10n.talepReddet),
         ),
       ],
     );

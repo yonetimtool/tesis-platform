@@ -1072,7 +1072,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String devriyeNoktaSayaci(Object beklenen, Object okutulan) {
+  String devriyeNoktaSayaci(Object okutulan, Object beklenen) {
     return '$okutulan/$beklenen points';
   }
 
@@ -1165,7 +1165,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String sureSaatDakika(Object dakika, Object saat) {
+  String sureSaatDakika(Object saat, Object dakika) {
     return '$saat h $dakika min';
   }
 
@@ -1291,7 +1291,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get devriyeBugunPencereYok => 'No patrol window scheduled for today.';
 
   @override
-  String devriyeNoktaOkutuldu(Object beklenen, Object okutulan) {
+  String devriyeNoktaOkutuldu(Object okutulan, Object beklenen) {
     return '$okutulan/$beklenen points scanned';
   }
 
@@ -1511,11 +1511,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String binaTopluOnizleme(
-    Object adet,
     Object bas,
     Object bitis,
-    Object kat,
     Object toplam,
+    Object kat,
+    Object adet,
   ) {
     return '$bas … $bitis  ($toplam units, $kat floors × $adet)';
   }
@@ -1533,7 +1533,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String binaDaireEklendi(Object ek, Object n) {
+  String binaDaireEklendi(Object n, Object ek) {
     return '$n units added ✓$ek';
   }
 
@@ -1830,4 +1830,515 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get talepAcanSakin => 'Resident';
+
+  @override
+  String rezSekmeRezervasyonlar(Object n) {
+    return 'Reservations ($n)';
+  }
+
+  @override
+  String rezSekmeAlanlar(Object n) {
+    return 'Areas ($n)';
+  }
+
+  @override
+  String get rezYokSakin =>
+      'You have no reservations. Pick an area on the \"Areas\" tab and book a free slot.';
+
+  @override
+  String get rezYok => 'No reservations.';
+
+  @override
+  String get rezYeniAlan => 'New area';
+
+  @override
+  String get rezAlanEklendi => 'Common area added ✓';
+
+  @override
+  String get rezAlanGuncellendi => 'Area updated ✓';
+
+  @override
+  String get rezOrtakAlan => 'Common area';
+
+  @override
+  String rezSatirOzet(
+    Object tarih,
+    Object baslangic,
+    Object bitis,
+    Object kisi,
+  ) {
+    return '$tarih · $baslangic-$bitis · $kisi people';
+  }
+
+  @override
+  String get rezIptalEdildi => 'Cancelled';
+
+  @override
+  String get rezIptalEdilsinMi => 'Cancel the reservation?';
+
+  @override
+  String get rezIptalUyari =>
+      'The slot becomes free again; this cannot be undone.';
+
+  @override
+  String get rezEvetIptalEt => 'Yes, cancel';
+
+  @override
+  String get rezIptalEdildiBildirim => 'Reservation cancelled';
+
+  @override
+  String get rezIptalGonderilemedi =>
+      'Could not send the cancellation. Try again.';
+
+  @override
+  String get rezIptalEt => 'Cancel';
+
+  @override
+  String rezDetayTarih(Object tarih, Object baslangic, Object bitis) {
+    return 'Date: $tarih · $baslangic-$bitis';
+  }
+
+  @override
+  String rezDetayKisi(Object n) {
+    return 'Number of people: $n';
+  }
+
+  @override
+  String rezDetayRezerve(Object zaman) {
+    return 'Booked: $zaman';
+  }
+
+  @override
+  String rezDetayNot(Object not) {
+    return 'Note: $not';
+  }
+
+  @override
+  String get rezAlanYokYonetim =>
+      'No common areas yet. Add one with \"New area\".';
+
+  @override
+  String get rezAlanYokGoruntuleme => 'No common areas to show.';
+
+  @override
+  String get rezAlanYokSakin => 'No bookable areas.';
+
+  @override
+  String rezMusait(Object ozet) {
+    return 'Available: $ozet';
+  }
+
+  @override
+  String rezMusaitOzeti(Object acilis, Object kapanis, Object dakika) {
+    return '$acilis–$kapanis · $dakika min slots';
+  }
+
+  @override
+  String get rezAcikDuzenle => 'Open · tap to edit';
+
+  @override
+  String get rezKapaliDuzenle => 'Closed · tap to edit';
+
+  @override
+  String rezMusaitSlotlariGor(Object ozet) {
+    return 'Available: $ozet · tap to see slots';
+  }
+
+  @override
+  String get rezPasifAlan => 'Inactive (not bookable)';
+
+  @override
+  String get rezKapanisSonra =>
+      'The closing time must be after the opening time.';
+
+  @override
+  String get rezAlanEklenemedi => 'Could not add the area. Try again.';
+
+  @override
+  String get rezAlanDuzenle => 'Edit area';
+
+  @override
+  String get rezYeniOrtakAlan => 'New common area';
+
+  @override
+  String get rezAlanAdi => 'Area name * (e.g. Pool)';
+
+  @override
+  String get rezAlanAdiGerekli => 'Area name is required';
+
+  @override
+  String get rezMusaitlikHerGun => 'Availability (every day)';
+
+  @override
+  String rezAcilis(Object saat) {
+    return 'Opening: $saat';
+  }
+
+  @override
+  String rezKapanis(Object saat) {
+    return 'Closing: $saat';
+  }
+
+  @override
+  String get rezSlotUzunlugu => 'Slot length';
+
+  @override
+  String rezSlotDakika(Object n) {
+    return '$n minutes';
+  }
+
+  @override
+  String get rezAlaniEkle => 'Add area';
+
+  @override
+  String get rezSlotlarYuklenemedi => 'Could not load the slots. Try again.';
+
+  @override
+  String get rezOnaylandi => 'Your reservation is confirmed ✓';
+
+  @override
+  String rezTarihEtiket(Object tarih) {
+    return 'Date: $tarih';
+  }
+
+  @override
+  String get rezSlotKurali =>
+      'A slot opens only within 24 hours of its start; you can make at most one reservation per day.';
+
+  @override
+  String get rezSlotYok => 'No slots defined for this area.';
+
+  @override
+  String get rezBenimAktif => 'My reservation (active)';
+
+  @override
+  String get rezBenimGecti => 'My reservation (past)';
+
+  @override
+  String get rezDoluBaskasi => 'Booked (someone else)';
+
+  @override
+  String get rezSizinGecti => 'Your reservation (past)';
+
+  @override
+  String rezKisiEki(Object n) {
+    return ' · $n people';
+  }
+
+  @override
+  String rezDoluDaire(Object daire, Object kisi) {
+    return 'Booked · Unit $daire$kisi';
+  }
+
+  @override
+  String get rezBos => 'Free';
+
+  @override
+  String get rezDolu => 'Booked';
+
+  @override
+  String rezSlotAralik(Object baslangic, Object bitis) {
+    return '$baslangic – $bitis';
+  }
+
+  @override
+  String get rezSec => 'Select';
+
+  @override
+  String get rezGonderilemedi => 'Could not send. Try again.';
+
+  @override
+  String rezEtBaslik(Object ad) {
+    return '$ad — book';
+  }
+
+  @override
+  String get rezKisiSayisiEtiket => 'Number of people:';
+
+  @override
+  String get rezEt => 'Book';
+
+  @override
+  String get rezDurumOnayli => 'Confirmed';
+
+  @override
+  String get rezSebepDolu => 'booked';
+
+  @override
+  String get rezSebepGecti => 'past';
+
+  @override
+  String get rezSebepCokErken => 'opens within 24h';
+
+  @override
+  String get rezSebepGunluk => 'daily limit reached';
+
+  @override
+  String etkSekmeYaklasan(Object n) {
+    return 'Upcoming ($n)';
+  }
+
+  @override
+  String etkSekmeGecmis(Object n) {
+    return 'Past ($n)';
+  }
+
+  @override
+  String get etkYeni => 'New event';
+
+  @override
+  String get etkYaklasanYokYonetim =>
+      'No upcoming events. Announce one with \"New event\".';
+
+  @override
+  String get etkYaklasanYok => 'No upcoming events.';
+
+  @override
+  String get etkGecmisYok => 'No past events.';
+
+  @override
+  String get etkDuyuruldu => 'Event announced — residents notified ✓';
+
+  @override
+  String get etkGuncellendi => 'Event updated ✓';
+
+  @override
+  String etkKatiliyorSayisi(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n attending',
+      one: '$n attending',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String etkKatilmiyorSayisi(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n not attending',
+      one: '$n not attending',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String etkKatiliminiz(Object durum) {
+    return 'Your RSVP: $durum';
+  }
+
+  @override
+  String etkBeyanKaydedildi(Object durum) {
+    return 'Your RSVP is saved: $durum ✓';
+  }
+
+  @override
+  String get etkBeyanGonderilemedi => 'Could not send the RSVP. Try again.';
+
+  @override
+  String get etkKatiliyorum => 'Attending';
+
+  @override
+  String get etkKatilmiyorum => 'Not attending';
+
+  @override
+  String etkZaman(Object aralik) {
+    return 'Time: $aralik';
+  }
+
+  @override
+  String etkYer(Object konum) {
+    return 'Location: $konum';
+  }
+
+  @override
+  String etkDuyuran(Object ad) {
+    return 'Announced by: $ad';
+  }
+
+  @override
+  String get etkSilinsinMi => 'Delete the event?';
+
+  @override
+  String etkSilOnay(Object baslik) {
+    return '\"$baslik\" and all RSVPs will be deleted.';
+  }
+
+  @override
+  String get etkSilindi => 'Event deleted ✓';
+
+  @override
+  String get etkBitisSonra => 'The end must be after the start';
+
+  @override
+  String get etkKaydedilemedi => 'Could not save. Try again.';
+
+  @override
+  String get etkDuzenleBaslik => 'Edit event';
+
+  @override
+  String get etkBaslikAlan => 'Title * (e.g. Match viewing night)';
+
+  @override
+  String get etkBaslikGerekli => 'Title is required';
+
+  @override
+  String get etkAciklamaAlan => 'Description *';
+
+  @override
+  String get etkAciklamaGerekli => 'Description is required';
+
+  @override
+  String etkZamanSecim(Object zaman) {
+    return 'Time: $zaman';
+  }
+
+  @override
+  String get etkBitisEkle => 'Add an end time (optional)';
+
+  @override
+  String etkBitis(Object zaman) {
+    return 'End: $zaman';
+  }
+
+  @override
+  String get etkBitisiKaldir => 'Remove the end time';
+
+  @override
+  String get etkYerAlan => 'Location (optional)';
+
+  @override
+  String get etkGorselAlan => 'Image (optional)';
+
+  @override
+  String get etkDuyurVeBildir => 'Announce and notify residents';
+
+  @override
+  String get izinBaslik => 'View permission';
+
+  @override
+  String get izinTumDairelere => 'Request permission for all units';
+
+  @override
+  String get izinYeniIstek => 'New request';
+
+  @override
+  String get izinIstekYokYonetim =>
+      'You have no permission requests yet. Use \"New request\" for a single unit, or \"All units\" above for every unit.';
+
+  @override
+  String get izinIstekYokSakin => 'No view requests for your unit.';
+
+  @override
+  String get izinTumDaireUyari =>
+      'A view-permission request will be sent for every unit that has a resident. Each unit depends on its own resident\'s approval — you can only see records of the units that approve.';
+
+  @override
+  String izinAtlandiEki(Object n) {
+    return ' ($n already open)';
+  }
+
+  @override
+  String izinTopluGonderildi(Object n, Object atlandi) {
+    return 'Requests sent for $n units$atlandi — awaiting resident approvals';
+  }
+
+  @override
+  String izinGonderilemedi(Object hata) {
+    return 'Could not send: $hata';
+  }
+
+  @override
+  String get izinIsteBaslik => 'Request view permission';
+
+  @override
+  String get izinDaireNo => 'Unit number (e.g. A-12)';
+
+  @override
+  String get izinIstekGonder => 'Send request';
+
+  @override
+  String get izinIstekGonderildi =>
+      'Request sent — awaiting the resident\'s approval';
+
+  @override
+  String izinDaireIstegi(Object daire) {
+    return 'Unit view request$daire';
+  }
+
+  @override
+  String izinIsteyen(Object ad) {
+    return 'Requested by: $ad';
+  }
+
+  @override
+  String get izinKullanildiUyari =>
+      'The permission has been used (single use). Open a new request to view again.';
+
+  @override
+  String izinGoruntulenebilirDaireler(Object n) {
+    return 'Viewable units ($n)';
+  }
+
+  @override
+  String get izinKullanildi => 'Used';
+
+  @override
+  String get izinOnayli => 'Approved';
+
+  @override
+  String get izinVerildi => 'Permission granted';
+
+  @override
+  String get izinOnayla => 'Approve';
+
+  @override
+  String get izinKargolar => 'Parcels';
+
+  @override
+  String izinKayitBaslik(Object baslik, Object daire) {
+    return '$baslik$daire';
+  }
+
+  @override
+  String izinDaireEki(Object daire) {
+    return ' — $daire';
+  }
+
+  @override
+  String get izinSuresiDoldu =>
+      'The permission was used or has expired (single use). Open a new permission request to view again.';
+
+  @override
+  String get izinTekSeferlikUyari =>
+      'Viewing with a single-use permission — access closes on refresh.';
+
+  @override
+  String get izinKayitYok => 'No records for this unit.';
+
+  @override
+  String izinHedef(Object ad) {
+    return 'Recipient: $ad';
+  }
+
+  @override
+  String izinKaydeden(Object ad) {
+    return 'Recorded by: $ad';
+  }
+
+  @override
+  String izinDurumEtiket(Object durum) {
+    return 'Status: $durum';
+  }
+
+  @override
+  String get izinDurumOnaylandi => 'Approved';
+
+  @override
+  String get kargoDurumTeslimAlindi => 'Delivered';
+
+  @override
+  String get rezSizin => 'Your reservation';
 }

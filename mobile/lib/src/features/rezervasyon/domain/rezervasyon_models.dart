@@ -11,19 +11,22 @@
 /// yonetim tumu / sakin kendi dairesi; saha rolleri erisemez.
 library;
 
-/// `rezervasyon_durum` enum'unun istemci aynasi (onay akisi YOK).
-enum RezervasyonDurum {
-  onaylandi('onaylandi', 'Onaylı'),
-  iptal('iptal', 'İptal'),
-  unknown('unknown', 'Bilinmeyen');
+/// Slotun neden rezerve EDILEMEDIGI (wire kodunun kimlik aynasi).
+enum SlotSebep { dolu, gecti, cokErken, gunluk }
 
-  const RezervasyonDurum(this.wire, this.label);
+/// `rezervasyon_durum` enum'unun istemci aynasi (onay akisi YOK).
+///
+/// KIMLIK / METIN AYRIMI (README §15): enum GORUNEN METIN TASIMAZ — etiket
+/// cizim aninda `rezDurumAdi` ile cozulur (`CameraUrlHatasi` emsali).
+enum RezervasyonDurum {
+  onaylandi('onaylandi'),
+  iptal('iptal'),
+  unknown('unknown');
+
+  const RezervasyonDurum(this.wire);
 
   /// Backend enum degeri.
   final String wire;
-
-  /// TR gorunen ad.
-  final String label;
 
   static RezervasyonDurum fromWire(String? value) =>
       RezervasyonDurum.values.firstWhere(
@@ -60,8 +63,6 @@ class OrtakAlan {
 
   final DateTime createdAt;
 
-  /// "HH:MM · HH:MM (N dk)" — alan kartinda musaitlik ozeti.
-  String get musaitlikOzeti => '$acilis–$kapanis · $slotDakika dk slot';
 
   factory OrtakAlan.fromJson(Map<String, dynamic> json) => OrtakAlan(
         id: json['id'] as String? ?? '',
@@ -115,12 +116,14 @@ class Slot {
   /// icin). Baskasinin dolu slotu benim=false + kimlik/kisi null (gizlilik).
   final bool benim;
 
-  /// Sakine gosterilecek kisa sebep etiketi (sebep koduna gore).
-  String? get sebepEtiketi => switch (sebep) {
-        'dolu' => 'dolu',
-        'gecti' => 'geçti',
-        'cok_erken' => '24s içinde açılır',
-        'gunluk' => 'günlük hakkınız dolu',
+  /// Sebep KIMLIGI (wire kodu). Gorunen metin cizim aninda `slotSebepAdi` ile
+  /// cozulur — domain METIN URETMEZ (`ParkingOccupancy.doluMetni` emsali:
+  /// o uyeler de bu gerekceyle kaldirilmisti).
+  SlotSebep? get sebepKimligi => switch (sebep) {
+        'dolu' => SlotSebep.dolu,
+        'gecti' => SlotSebep.gecti,
+        'cok_erken' => SlotSebep.cokErken,
+        'gunluk' => SlotSebep.gunluk,
         _ => null,
       };
 
