@@ -176,6 +176,41 @@ curl -s -c c.txt -X POST localhost:3113/api/auth/login \
 
 **Sonuc: 161 sayfa-dil kontrolu, 0 bulgu** (duzeltmelerden sonra).
 
+### Tur 25 — DAR EKRAN surusu (gercek tarayici)
+
+Tur 21 metni olcuyordu; bu YERLESIMI olcer. `tools/dar-ekran-surusu.mjs`
+gercek Chromium'da **7 dil x 24 sayfa x 2 olcu (360/414 dp) = 336** kontrol
+yapar ve her sayfada sorar:
+
+1. `<html lang>` ve `dir` dogru mu,
+2. **yatay tasma** var mi (`scrollWidth > clientWidth`),
+3. viewport disina TASAN gorunur oge var mi — **kirpan ya da kaydirilan bir
+   atasi olanlar haric** (tablolar ve dekoratif ogeler mesrudur).
+
+```bash
+npx next build && npx next start -p 3115
+node tools/dar-ekran-surusu.mjs
+```
+
+**Sonuc: 336 kontrol, 0 bulgu** (duzeltmelerden sonra).
+
+> **NE BULDU.** Iki gercek yerlesim hatasi — ikisi de **uzun ceviri + dar
+> ekran**, mobil tur 24'teki 104x104 kutucugun web karsiligi:
+>
+> | Sayfa | Dil | Olcum | Sebep |
+> |---|---|---|---|
+> | `/reports/*` sekmeleri | `de` | **+84 px** (360 dp) | "Beitragseinzug / Rundgangsverlauf / Aufgabenverlauf" tek satira sigmiyor |
+> | `/dues` filtre izgarasi | `ru` | **+23 px** (360 dp) | 4 sutunlu izgara + uzun Rusca etiketler |
+>
+> Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
+> Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
+>
+> **DEDEKTOR HATASI da kayda gecti:** ilk surum yalniz `overflow-x: auto|
+> scroll` atalarini mesru sayiyordu; `hidden`/`clip` DE KIRPAR. Bu yuzden
+> giris ekranindaki bilincli dekoratif orb'ler 7 dilde birden "tasma" diye
+> raporlandi. Yanlis alarm ureten bir dedektor zamanla susturulur — olcut
+> duzeltildi.
+
 > **NE BULDU — ve neden statik tarama goremedi.** Ilk kosum UC Turkce
 > paragraf cikardi (`building-editor`, `announcements`, `complaints`).
 > Sebep: o metinler **JSX icinde cok satirli DUZ METIN**tir — ne tirnak

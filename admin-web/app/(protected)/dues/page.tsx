@@ -81,7 +81,10 @@ export default function DuesPage() {
       {/* Toplu tahakkuk */}
       <motion.form {...panelMotion} onSubmit={bulk} className={`space-y-3 ${panelCls}`}>
         <h2 className="font-medium">{t("aidatTopluBaslik")}</h2>
-        <div className="grid grid-cols-4 gap-3">
+        {/* DAR EKRAN: 4 sutun 360 dp'ye sigmiyor — Rusca etiketlerle sayfa
+            yana kayiyordu (tur 25 surusu +23 px olctu). Dar ekranda 2,
+            sm'den itibaren 4 sutun. */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Field label={t("ortakDonem")} hint={t("aidatDonemOrnek")}>
             <input
               className={inputCls}

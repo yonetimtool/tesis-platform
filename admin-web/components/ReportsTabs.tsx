@@ -15,7 +15,12 @@ export function ReportsTabs() {
   const pathname = usePathname();
   const ceviri = useT();
   return (
-    <div className="flex gap-1 border-b border-slate-200">
+    // DAR EKRAN + UZUN CEVIRI: Almanca sekme adlari 360 dp'ye sigmiyor ve
+    // SAYFAYI yana kaydiriyordu (tur 25 surusu +84 px olctu). Sekmeler
+    // sarmamali (alt cizgi bozulur) — bu yuzden serit KENDI ICINDE
+    // kaydirilir; sayfa govdesi sabit kalir.
+    <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      <div className="flex min-w-max gap-1 border-b border-slate-200">
       {TABS.map((t) => {
         const active = pathname === t.href;
         return (
@@ -32,6 +37,7 @@ export function ReportsTabs() {
           </Link>
         );
       })}
+      </div>
     </div>
   );
 }
