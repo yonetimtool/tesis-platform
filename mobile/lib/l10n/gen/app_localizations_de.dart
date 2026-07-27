@@ -3577,4 +3577,202 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get raporKalanBakiye => 'Restsaldo';
+
+  @override
+  String get aidatBaslik => 'Meine Beiträge';
+
+  @override
+  String get aidatYetkiYok =>
+      'Beitragsinformationen sind nur für Bewohnerkonten verfügbar.';
+
+  @override
+  String get aidatDaireYok =>
+      'Auf Sie ist keine Wohnung registriert. Wenden Sie sich an die Verwaltung.';
+
+  @override
+  String get aidatToplamBakiye => 'Gesamtsaldo (alle Wohnungen)';
+
+  @override
+  String get aidatBorcVar => 'Offener Betrag';
+
+  @override
+  String get aidatBorcYok => 'Kein offener Betrag';
+
+  @override
+  String get aidatToplamTahakkuk => 'Sollstellung gesamt';
+
+  @override
+  String get aidatToplamOdenen => 'Bezahlt gesamt';
+
+  @override
+  String get aidatBakiye => 'Saldo';
+
+  @override
+  String aidatHesapSatiri(Object tahakkuk, Object odenen, Object bakiye) {
+    return 'Sollstellung $tahakkuk - bezahlt $odenen = $bakiye';
+  }
+
+  @override
+  String aidatTahakkuklar(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Sollstellungen ($n)',
+      one: 'Sollstellung ($n)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aidatOdemeler(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Zahlungen ($n)',
+      one: 'Zahlung ($n)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aidatSonOdeme(Object tarih) {
+    return 'Fällig am: $tarih';
+  }
+
+  @override
+  String aidatMakbuz(Object no) {
+    return 'Belegnr.: $no';
+  }
+
+  @override
+  String get aidatOdemeDurumuNotu =>
+      'Der Zahlungsstatus wird nur durch die Bestätigung des Zahlungsdienstleisters aktualisiert; bei Fragen wenden Sie sich an die Verwaltung.';
+
+  @override
+  String get aidatYontemElden => 'Barzahlung';
+
+  @override
+  String get aidatYontemHavale => 'Banküberweisung';
+
+  @override
+  String get aidatYontemKart => 'Karte';
+
+  @override
+  String get aidatYontemDiger => 'Sonstiges';
+
+  @override
+  String get aidatDurumBasarili => 'Erfolgreich';
+
+  @override
+  String get aidatDurumIptal => 'Storniert';
+
+  @override
+  String get noktaBaslik => 'Kontrollpunkte';
+
+  @override
+  String get noktaEkle => 'Punkt hinzufügen';
+
+  @override
+  String get noktaListelenemedi =>
+      'Kontrollpunkte konnten nicht geladen werden.';
+
+  @override
+  String get noktaSilOnay => 'Kontrollpunkt löschen?';
+
+  @override
+  String noktaSilGovde(Object ad) {
+    return 'Der Kontrollpunkt \"$ad\" wird gelöscht.';
+  }
+
+  @override
+  String get noktaSilindi => 'Kontrollpunkt gelöscht ✓';
+
+  @override
+  String get noktaUidZatenVar => 'Dieses NFC-Tag ist bereits erfasst.';
+
+  @override
+  String get noktaDuzenleBaslik => 'Kontrollpunkt bearbeiten';
+
+  @override
+  String get noktaYeniBaslik => 'Neuer Kontrollpunkt';
+
+  @override
+  String get noktaAdIpucu => 'z. B. Haupteingang';
+
+  @override
+  String get noktaUidAlan => 'NFC-Tag-UID';
+
+  @override
+  String get noktaUidIpucu => 'z. B. 04A2B3C4D5';
+
+  @override
+  String get noktaUidHelper => 'Die eindeutige Kennung des Tags (hex).';
+
+  @override
+  String get noktaEnlem => 'Breitengrad (opt.)';
+
+  @override
+  String get noktaBoylam => 'Längengrad (opt.)';
+
+  @override
+  String get noktaPasifAlt =>
+      'Ein inaktiver Punkt wird beim Scannen nicht erkannt';
+
+  @override
+  String get noktaYok =>
+      'Noch keine Kontrollpunkte.\nUnten rechts einen NFC-Punkt hinzufügen.';
+
+  @override
+  String get kuyrukHatalariTemizle => 'Dauerhafte Fehler löschen';
+
+  @override
+  String get kuyrukBos => 'Die Warteschlange ist leer.';
+
+  @override
+  String kuyrukOzet(Object bekleyen, Object hatali) {
+    return '$bekleyen ausstehend · $hatali dauerhafte Fehler';
+  }
+
+  @override
+  String get kuyrukSenkronla => 'Jetzt synchronisieren';
+
+  @override
+  String get kuyrukBekliyor => 'Ausstehend';
+
+  @override
+  String kuyrukBekliyorDeneme(Object n) {
+    return 'Ausstehend (Versuch: $n)';
+  }
+
+  @override
+  String get kuyrukGonderiliyor => 'Wird gesendet...';
+
+  @override
+  String get kuyrukGonderildiZatenVar => 'Gesendet (war bereits erfasst)';
+
+  @override
+  String get kuyrukGonderildiYeni => 'Gesendet (neuer Eintrag)';
+
+  @override
+  String kuyrukKaliciHata(Object hata) {
+    return 'Dauerhafter Fehler: $hata';
+  }
+
+  @override
+  String get kuyrukEtiketEslesmedi => 'Tag passte nicht';
+
+  @override
+  String get okutmaImzaGecersiz =>
+      'Die Tag-Signatur konnte nicht verifiziert werden — evtl. ein gefälschtes oder falsches Tag.';
+
+  @override
+  String get okutmaTekrarEdilmis => 'Dieser Scan wurde bereits verarbeitet.';
+
+  @override
+  String okutmaBeklenmeyenHata(Object detay) {
+    return 'Unerwarteter Fehler: $detay';
+  }
+
+  @override
+  String get noktaUidZorunlu => 'NFC-UID ist Pflicht';
 }

@@ -161,6 +161,7 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
             status: OutboxStatus.gonderildi,
             attemptCount: next.attemptCount + 1,
             lastError: null,
+            hataKodu: null,
             outcome: result.wasDuplicate
                 ? OutboxOutcome.duplicate
                 : OutboxOutcome.created,
@@ -173,7 +174,9 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
             _replace(next.copyWith(
               status: OutboxStatus.kaliciHata,
               attemptCount: next.attemptCount + 1,
-              lastError: permanentErrorMessage(e),
+              // METIN DEGIL KOD: kayit diske yazilir (bkz. OutboxEntry.hataKodu).
+              lastError: e.message,
+              hataKodu: e.code,
             ));
             await _persist();
             continue; // siradaki kayit denenebilir
@@ -185,7 +188,7 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
           break;
         } catch (e) {
           if (!ref.mounted) return;
-          await _markRetry(next, 'Beklenmeyen hata: $e');
+          await _markRetry(next, '$e', kod: _beklenmeyenKod);
           break;
         }
       }
@@ -219,11 +222,16 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
       // sabit, tekrar gonderim sonucu degistirmez.
       e.statusCode == 404 || e.statusCode == 400 || e.statusCode == 422;
 
-  Future<void> _markRetry(OutboxEntry entry, String message) async {
+  Future<void> _markRetry(
+    OutboxEntry entry,
+    String message, {
+    String? kod,
+  }) async {
     _replace(entry.copyWith(
       status: OutboxStatus.bekliyor,
       attemptCount: entry.attemptCount + 1,
       lastError: message,
+      hataKodu: kod,
     ));
     await _persist();
     _consecutiveFailures++;
@@ -274,15 +282,9 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
   }
 }
 
-/// Kalici hatanin kullaniciya gosterilecek Turkce karsiligi. NTAG424 SDM
-/// dogrulama kodlari icin ozel mesajlar; digerlerinde backend mesaji aynen
-/// kalir (404 zaten Turkce donuyor).
-String permanentErrorMessage(ApiException e) => switch (e.code) {
-      'invalid_signature' =>
-        'Etiket imzası doğrulanamadı — sahte veya yanlış etiket olabilir.',
-      'replay_detected' => 'Bu okutma daha önce işlendi.',
-      _ => e.message,
-    };
+/// Istemcinin urettigi tek hata kodu (sozlesmede yok): siniflandirilamayan
+/// istisna. Metni `okutmaHataMetni` cozer.
+const _beklenmeyenKod = 'client_unexpected';
 
 final scanOutboxProvider =
     NotifierProvider<ScanOutbox, ScanOutboxState>(ScanOutbox.new);

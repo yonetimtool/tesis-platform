@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/scan_api.dart';
 import '../domain/scan.dart';
@@ -31,6 +32,7 @@ class ScanSubmitState {
     this.status = ScanSubmitStatus.idle,
     this.event,
     this.message,
+    this.hataKimligi,
   });
 
   final ScanSubmitStatus status;
@@ -38,8 +40,14 @@ class ScanSubmitState {
   /// Basarili gonderimde (created/duplicate) donen kayit.
   final ScanEvent? event;
 
-  /// Hata/bilgi mesaji (notMatched/error durumunda dolu).
+  /// SUNUCU hata metni (error durumunda dolu; zaten yerellestirilmis gelir).
+  ///
+  /// KIMLIK / METIN AYRIMI (README §15): denetleyici TR metin URETMEZ.
+  /// `notMatched` durumunda mesaj YOKTUR — [status]'un kendisi kimliktir
+  /// (ekran `l10n.nfcEslesmeYok` yazar). Siniflandirilamayan hata icin
+  /// [hataKimligi] tasinir.
   final String? message;
+  final AkisHatasi? hataKimligi;
 
   bool get inProgress => status == ScanSubmitStatus.submitting;
 }
@@ -63,10 +71,8 @@ class ScanController extends Notifier<ScanSubmitState> {
       );
     } on ApiException catch (e) {
       if (e.statusCode == 404) {
-        state = ScanSubmitState(
-          status: ScanSubmitStatus.notMatched,
-          message: 'Bu etiket hiçbir checkpoint ile eşleşmiyor.',
-        );
+        // Mesaj YOK: durum kendisi kimliktir (bkz. [ScanSubmitState.message]).
+        state = const ScanSubmitState(status: ScanSubmitStatus.notMatched);
       } else {
         state = ScanSubmitState(
           status: ScanSubmitStatus.error,
@@ -76,7 +82,7 @@ class ScanController extends Notifier<ScanSubmitState> {
     } catch (_) {
       state = const ScanSubmitState(
         status: ScanSubmitStatus.error,
-        message: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        hataKimligi: AkisHatasi.beklenmeyen,
       );
     }
   }

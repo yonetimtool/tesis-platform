@@ -6070,6 +6070,324 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Kalan bakiye'**
   String get raporKalanBakiye;
+
+  /// No description provided for @aidatBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidatım'**
+  String get aidatBaslik;
+
+  /// No description provided for @aidatYetkiYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat bilgisi yalnızca site sakini hesabına açıktır.'**
+  String get aidatYetkiYok;
+
+  /// No description provided for @aidatDaireYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Üzerinize kayıtlı daire bulunamadı. Yönetiminizle iletişime geçin.'**
+  String get aidatDaireYok;
+
+  /// No description provided for @aidatToplamBakiye.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam bakiye (tüm daireler)'**
+  String get aidatToplamBakiye;
+
+  /// No description provided for @aidatBorcVar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borç var'**
+  String get aidatBorcVar;
+
+  /// No description provided for @aidatBorcYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borç yok'**
+  String get aidatBorcYok;
+
+  /// No description provided for @aidatToplamTahakkuk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam tahakkuk'**
+  String get aidatToplamTahakkuk;
+
+  /// No description provided for @aidatToplamOdenen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam ödenen'**
+  String get aidatToplamOdenen;
+
+  /// No description provided for @aidatBakiye.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakiye'**
+  String get aidatBakiye;
+
+  /// Seffaf hesap: tahakkuk - odenen = bakiye
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahakkuk {tahakkuk} - ödenen {odenen} = {bakiye}'**
+  String aidatHesapSatiri(Object tahakkuk, Object odenen, Object bakiye);
+
+  /// Tahakkuk sayaci (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahakkuklar ({n})'**
+  String aidatTahakkuklar(num n);
+
+  /// Odeme sayaci (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödemeler ({n})'**
+  String aidatOdemeler(num n);
+
+  /// No description provided for @aidatSonOdeme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son ödeme: {tarih}'**
+  String aidatSonOdeme(Object tarih);
+
+  /// No description provided for @aidatMakbuz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Makbuz: {no}'**
+  String aidatMakbuz(Object no);
+
+  /// No description provided for @aidatOdemeDurumuNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeme durumu yalnızca ödeme sağlayıcısından gelen onayla güncellenir; sorularınız için yönetiminize başvurun.'**
+  String get aidatOdemeDurumuNotu;
+
+  /// No description provided for @aidatYontemElden.
+  ///
+  /// In tr, this message translates to:
+  /// **'Elden'**
+  String get aidatYontemElden;
+
+  /// No description provided for @aidatYontemHavale.
+  ///
+  /// In tr, this message translates to:
+  /// **'Havale/EFT'**
+  String get aidatYontemHavale;
+
+  /// No description provided for @aidatYontemKart.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kart'**
+  String get aidatYontemKart;
+
+  /// No description provided for @aidatYontemDiger.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diğer'**
+  String get aidatYontemDiger;
+
+  /// No description provided for @aidatDurumBasarili.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başarılı'**
+  String get aidatDurumBasarili;
+
+  /// No description provided for @aidatDurumIptal.
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal'**
+  String get aidatDurumIptal;
+
+  /// No description provided for @noktaBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kontrol Noktaları'**
+  String get noktaBaslik;
+
+  /// No description provided for @noktaEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Nokta ekle'**
+  String get noktaEkle;
+
+  /// No description provided for @noktaListelenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Noktalar listelenemedi.'**
+  String get noktaListelenemedi;
+
+  /// No description provided for @noktaSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Nokta silinsin mi?'**
+  String get noktaSilOnay;
+
+  /// No description provided for @noktaSilGovde.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" kontrol noktası silinecek.'**
+  String noktaSilGovde(Object ad);
+
+  /// No description provided for @noktaSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Nokta silindi ✓'**
+  String get noktaSilindi;
+
+  /// No description provided for @noktaUidZatenVar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu NFC etiketi zaten kayıtlı.'**
+  String get noktaUidZatenVar;
+
+  /// No description provided for @noktaDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Nokta düzenle'**
+  String get noktaDuzenleBaslik;
+
+  /// No description provided for @noktaYeniBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni kontrol noktası'**
+  String get noktaYeniBaslik;
+
+  /// No description provided for @noktaAdIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. Giriş Kapısı'**
+  String get noktaAdIpucu;
+
+  /// No description provided for @noktaUidAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'NFC etiket UID'**
+  String get noktaUidAlan;
+
+  /// No description provided for @noktaUidIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. 04A2B3C4D5'**
+  String get noktaUidIpucu;
+
+  /// No description provided for @noktaUidHelper.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etiketin benzersiz kimliği (hex).'**
+  String get noktaUidHelper;
+
+  /// No description provided for @noktaEnlem.
+  ///
+  /// In tr, this message translates to:
+  /// **'Enlem (ops.)'**
+  String get noktaEnlem;
+
+  /// No description provided for @noktaBoylam.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boylam (ops.)'**
+  String get noktaBoylam;
+
+  /// No description provided for @noktaPasifAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Pasif nokta okutmada eşleşmez'**
+  String get noktaPasifAlt;
+
+  /// No description provided for @noktaYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz kontrol noktası yok.\nSağ alttan NFC noktası ekleyin.'**
+  String get noktaYok;
+
+  /// No description provided for @kuyrukHatalariTemizle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kalıcı hataları temizle'**
+  String get kuyrukHatalariTemizle;
+
+  /// No description provided for @kuyrukBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kuyruk boş.'**
+  String get kuyrukBos;
+
+  /// Bekleyen + kalici hatali kayit sayilari
+  ///
+  /// In tr, this message translates to:
+  /// **'{bekleyen} bekliyor · {hatali} kalıcı hata'**
+  String kuyrukOzet(Object bekleyen, Object hatali);
+
+  /// No description provided for @kuyrukSenkronla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şimdi senkronla'**
+  String get kuyrukSenkronla;
+
+  /// No description provided for @kuyrukBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bekliyor'**
+  String get kuyrukBekliyor;
+
+  /// No description provided for @kuyrukBekliyorDeneme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bekliyor (deneme: {n})'**
+  String kuyrukBekliyorDeneme(Object n);
+
+  /// No description provided for @kuyrukGonderiliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderiliyor...'**
+  String get kuyrukGonderiliyor;
+
+  /// No description provided for @kuyrukGonderildiZatenVar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderildi (zaten kayıtlıydı)'**
+  String get kuyrukGonderildiZatenVar;
+
+  /// No description provided for @kuyrukGonderildiYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderildi (yeni kayıt)'**
+  String get kuyrukGonderildiYeni;
+
+  /// {hata} sunucu metni ya da kimlikten cozulen metin
+  ///
+  /// In tr, this message translates to:
+  /// **'Kalıcı hata: {hata}'**
+  String kuyrukKaliciHata(Object hata);
+
+  /// No description provided for @kuyrukEtiketEslesmedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'etiket eşleşmedi'**
+  String get kuyrukEtiketEslesmedi;
+
+  /// No description provided for @okutmaImzaGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etiket imzası doğrulanamadı — sahte veya yanlış etiket olabilir.'**
+  String get okutmaImzaGecersiz;
+
+  /// No description provided for @okutmaTekrarEdilmis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu okutma daha önce işlendi.'**
+  String get okutmaTekrarEdilmis;
+
+  /// {detay} teknik istisna metni — cevrilmez
+  ///
+  /// In tr, this message translates to:
+  /// **'Beklenmeyen hata: {detay}'**
+  String okutmaBeklenmeyenHata(Object detay);
+
+  /// No description provided for @noktaUidZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'NFC UID zorunludur'**
+  String get noktaUidZorunlu;
 }
 
 class _AppLocalizationsDelegate

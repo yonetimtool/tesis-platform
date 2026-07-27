@@ -3609,4 +3609,200 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get raporKalanBakiye => 'Outstanding balance';
+
+  @override
+  String get aidatBaslik => 'My dues';
+
+  @override
+  String get aidatYetkiYok =>
+      'Dues information is available only to resident accounts.';
+
+  @override
+  String get aidatDaireYok =>
+      'No unit is registered to you. Please contact your management.';
+
+  @override
+  String get aidatToplamBakiye => 'Total balance (all units)';
+
+  @override
+  String get aidatBorcVar => 'Balance due';
+
+  @override
+  String get aidatBorcYok => 'No balance due';
+
+  @override
+  String get aidatToplamTahakkuk => 'Total assessed';
+
+  @override
+  String get aidatToplamOdenen => 'Total paid';
+
+  @override
+  String get aidatBakiye => 'Balance';
+
+  @override
+  String aidatHesapSatiri(Object tahakkuk, Object odenen, Object bakiye) {
+    return 'Assessed $tahakkuk - paid $odenen = $bakiye';
+  }
+
+  @override
+  String aidatTahakkuklar(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Assessments ($n)',
+      one: 'Assessment ($n)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aidatOdemeler(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Payments ($n)',
+      one: 'Payment ($n)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aidatSonOdeme(Object tarih) {
+    return 'Due date: $tarih';
+  }
+
+  @override
+  String aidatMakbuz(Object no) {
+    return 'Receipt: $no';
+  }
+
+  @override
+  String get aidatOdemeDurumuNotu =>
+      'Payment status is updated only by confirmation from the payment provider; contact your management with questions.';
+
+  @override
+  String get aidatYontemElden => 'Cash';
+
+  @override
+  String get aidatYontemHavale => 'Bank transfer';
+
+  @override
+  String get aidatYontemKart => 'Card';
+
+  @override
+  String get aidatYontemDiger => 'Other';
+
+  @override
+  String get aidatDurumBasarili => 'Successful';
+
+  @override
+  String get aidatDurumIptal => 'Cancelled';
+
+  @override
+  String get noktaBaslik => 'Checkpoints';
+
+  @override
+  String get noktaEkle => 'Add checkpoint';
+
+  @override
+  String get noktaListelenemedi => 'Checkpoints could not be listed.';
+
+  @override
+  String get noktaSilOnay => 'Delete this checkpoint?';
+
+  @override
+  String noktaSilGovde(Object ad) {
+    return 'The \"$ad\" checkpoint will be deleted.';
+  }
+
+  @override
+  String get noktaSilindi => 'Checkpoint deleted ✓';
+
+  @override
+  String get noktaUidZatenVar => 'This NFC tag is already registered.';
+
+  @override
+  String get noktaDuzenleBaslik => 'Edit checkpoint';
+
+  @override
+  String get noktaYeniBaslik => 'New checkpoint';
+
+  @override
+  String get noktaAdIpucu => 'e.g. Main Entrance';
+
+  @override
+  String get noktaUidAlan => 'NFC tag UID';
+
+  @override
+  String get noktaUidIpucu => 'e.g. 04A2B3C4D5';
+
+  @override
+  String get noktaUidHelper => 'The tag\'s unique identifier (hex).';
+
+  @override
+  String get noktaEnlem => 'Latitude (opt.)';
+
+  @override
+  String get noktaBoylam => 'Longitude (opt.)';
+
+  @override
+  String get noktaPasifAlt => 'An inactive checkpoint will not match a scan';
+
+  @override
+  String get noktaYok =>
+      'No checkpoints yet.\nAdd an NFC checkpoint from the bottom right.';
+
+  @override
+  String get kuyrukHatalariTemizle => 'Clear permanent failures';
+
+  @override
+  String get kuyrukBos => 'The queue is empty.';
+
+  @override
+  String kuyrukOzet(Object bekleyen, Object hatali) {
+    return '$bekleyen pending · $hatali permanent failures';
+  }
+
+  @override
+  String get kuyrukSenkronla => 'Sync now';
+
+  @override
+  String get kuyrukBekliyor => 'Pending';
+
+  @override
+  String kuyrukBekliyorDeneme(Object n) {
+    return 'Pending (attempt: $n)';
+  }
+
+  @override
+  String get kuyrukGonderiliyor => 'Sending...';
+
+  @override
+  String get kuyrukGonderildiZatenVar => 'Sent (already recorded)';
+
+  @override
+  String get kuyrukGonderildiYeni => 'Sent (new record)';
+
+  @override
+  String kuyrukKaliciHata(Object hata) {
+    return 'Permanent failure: $hata';
+  }
+
+  @override
+  String get kuyrukEtiketEslesmedi => 'tag did not match';
+
+  @override
+  String get okutmaImzaGecersiz =>
+      'The tag signature could not be verified — it may be a fake or wrong tag.';
+
+  @override
+  String get okutmaTekrarEdilmis => 'This scan was already processed.';
+
+  @override
+  String okutmaBeklenmeyenHata(Object detay) {
+    return 'Unexpected error: $detay';
+  }
+
+  @override
+  String get noktaUidZorunlu => 'NFC UID is required';
 }

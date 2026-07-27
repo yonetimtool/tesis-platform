@@ -1569,16 +1569,18 @@ mesajı, self-servis profil (avatar/parola/iletişim), personel listesi/form/
 parola sıfırlama ve ortak **parola kuralı**) **Dış Hizmetler + NFC +
 Şeffaflık Panosu** (tur 9 — esnaf listesi/bölüm notu/form, NFC okuma ekranı +
 **servis katmanı** ve **iOS sistem sayfası** metinleri, aylık anonim finans
-özeti + yayınla/geri-al) ve **Entegrasyonlar + Ziyaretçiler + Aylık raporlar**
+özeti + yayınla/geri-al) **Entegrasyonlar + Ziyaretçiler + Aylık raporlar**
 (tur 10 — entegrasyon listesi/form/test tetiği, ziyaretçi kaydı/detay/form,
-ay bazlı devriye-görev-aidat raporu). Kalan modüllerin dışa alımı mekanik bir
+ay bazlı devriye-görev-aidat raporu) ve **Aidatım + Kontrol noktaları +
+Gönderim kuyruğu** (tur 11 — daire bakiyesi/tahakkuk/ödeme listeleri, NFC
+nokta CRUD, offline okutma kuyruğu). Kalan modüllerin dışa alımı mekanik bir
 iştir ve aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
 
 ### Mimari
 
 | Parça | Yer |
 |---|---|
-| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**992 anahtar × 7**, boşluk yok) |
+| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**1.045 anahtar × 7**, boşluk yok) |
 | gen-l10n yapılandırması | `l10n.yaml` (şablon: `app_tr.arb`) |
 | Üretilen sınıf | `lib/l10n/gen/app_localizations.dart` (**repoda tutulur** → taze klonda `analyze`/`test` ek adım istemez; yenilemek için `flutter gen-l10n`) |
 | Dil seçimi + kalıcılık | `lib/src/core/i18n/locale_controller.dart` (`AppDil`, `LocaleController`, `ui.locale` anahtarı — tema ile aynı güvenli depo) |
@@ -1712,6 +1714,8 @@ değişince yönlendirme bozulurdu. Artık:
 | `NfcHatasi` (7 kimlik, 3'ü `{detay}` parametreli) | `nfc/domain/nfc_hatasi.dart` | `nfcHataMetni` (`nfc/presentation/`) — **veri katmanı** artık metin üretmez |
 | `SeffaflikHatasi` | `transparency/domain/seffaflik_hatasi.dart` | `seffaflikHataMetni` |
 | `KategoriSayi.kategoriAd` · `SonTamamlama.kategoriAd` **(null = kategorisiz)** | `reports/domain/report_models.dart` | `k.kategoriAd ?? l10n.gorevKategoriDiger` — domain TR sabit "Diğer" taşımaz |
+| Ödeme **yöntemi/durumu** tel değeri (`elden`, `basarili`…) | `dues/domain/dues_models.dart` | `odemeYontemiAdi` / `odemeDurumuAdi` (`dues/presentation/aidat_etiket.dart`) — **`yontemLabel`/`durumLabel` KALDIRILDI** |
+| `OutboxEntry.hataKodu` **(diske yazılır)** | `scan/domain/outbox_entry.dart` | `okutmaHataMetni` (`scan/presentation/`) |
 | `DensityRenk` | `building_map/domain/building_map_models.dart` | **`label` alanı KALDIRILDI** (ölü TR metin; gösterge eşik sayısı yazar) |
 | `UnitComplaintKategori` | `unit_complaints/domain/unit_complaint_models.dart` | `unitComplaintKategoriAdi(l10n, k)` |
 | `TalepDurum` | `complaints/domain/complaint_models.dart` | `_durumLabel(l10n, durum)` |
@@ -1941,6 +1945,30 @@ senaryoları.
 > butonun *yerelleştirilmiş etiketi* yalnız ARANABİLİR hedefte çizilir —
 > 404 dönen sahte ile "Aranamıyor" durumu görünür ve etiket testi boş döner.
 
+`test/aidat_nokta_kuyruk_i18n_test.dart` (12 test — tur 11): aidatta
+**tr→en→ru**, noktalarda **tr→en→fr** dil değişimi; ICU çoğul tahakkuk/ödeme
+sayaçları; ödeme yöntemi/durumu çözücüsünün 7 dilde karşılığı **ve bilinmeyen
+tel değerini olduğu gibi döndürmesi**; kuyruk hata **kodunun** çözülmesi +
+**eski kayıtların** sunucu metnine düşmesi; **RTL** ve **320 dp** senaryoları.
+
+> **Tur 11'in en önemli bulgusu — DİSKE YAZILAN METİN.** `OutboxEntry` offline
+> kuyruğun kaydıdır ve JSON olarak diske yazılır. Tur 11'e kadar `last_error`
+> alanında **Türkçe bir cümle** duruyordu (`permanentErrorMessage` veri
+> katmanında üretiyordu): kullanıcı dili değiştirse bile kuyrukta eski dildeki
+> metin kalıyordu — çeviri, veriye sızmış durumdaydı. Artık kayıt sözleşme
+> **kodunu** taşır (`hata_kodu`) ve metin çizimde çözülür; sunucu mesajı teşhis
+> için ayrı alanda saklanır. Eski kayıtlarda kod `null`'dır → ekran sunucu
+> metnine düşer (geri uyumluluk, testle kilitli). **Ders:** kalıcılaştırılan
+> hiçbir alan yerelleştirilmiş metin tutmamalı.
+
+> **Tur 11'de bulunan KONTROL AKIŞI kusuru — sunucu METNİNDE arama.** Kontrol
+> noktası formu, UID çakışmasını `e.message.contains('zaten')` ile tespit
+> ediyordu. Sunucu bugün "Kayit zaten mevcut…" döndüğü için çalışıyordu; sunucu
+> metni yerelleştirilse ya da yeniden yazılsa **sessizce** bozulurdu. Artık
+> `e.code == 'conflict' || e.statusCode == 409` bakılıyor. §15'in kontrol-akışı
+> grep'i bunu **görmüyordu** (yalnız `switch`/`case`/`==` yanındaki TR metni
+> arıyor); ölçüm komutuna `.contains('…')` taraması eklendi.
+
 `test/flutter_test_config.dart` süite başına bir kez `initializeDateFormatting()`
 çağırır: eşleyicileri doğrudan çağıran saf birim testleri aksi halde
 `LocaleDataException` ile düşer (uygulamada bu `main.dart`'ta yapılır).
@@ -2144,6 +2172,28 @@ kaldırıldı; `dues`'un 8 çağrı yeri (kapsam dışı modül) `tlSonEkli`'ye 
 tur 8'deki parola kuralı ve tur 9'daki NFC imza değişikliğiyle aynı tür
 **zorunlu uyarlama**, dosyada notlandı.
 
+**Tur 11 (dues + checkpoints + scan) ölçümü — aynı komut:**
+
+| | Toplam string | Dosya | `dues` | `checkpoints` | `scan` |
+|---|---|---|---|---|---|
+| Tur 11 öncesi | 112 | 25 | **18** | **16** | **14** |
+| Tur 11 sonrası | **64** | 18 | **0** | **0** | **0** |
+
+48 string dışa alındı; **53 yeni ARB anahtarı × 7 dil** (992 → 1.045) + mevcut
+anahtarların yeniden kullanımı (`ortakVazgec`, `ortakSil`, `ortakDuzenle`,
+`ortakEkle`, `ortakGuncelle`, `ortakYenile`, `kameraAd`, `cipAktif`,
+`devriyePasif`, `devriyeKaydedilemedi`, `butAdZorunlu`, `gorevDaireEtiket`,
+`nfcKuyruk`, `nfcUidSatir`). Anahtar sayısı string sayısından fazla: kuyruk
+hata **kodlarının** metinleri ve ödeme yöntemi/durumu etiketleri de bu turda
+ARB'ye taşındı (domain'den kalktı).
+
+> **Ölçümün BİRİNCİ kör noktası bu turda iki kez daha ısırdı:** grep yalnızca
+> Türkçe'ye özgü karakter **veya** listedeki anahtar kelimeyi arar. `'Ad
+> zorunludur'`, `'NFC UID zorunludur'` (kontrol noktası formu) ve `'Daire
+> ${unit.no}'` (aidat kartı) hiçbirini taşımadığı için sayıma **girmiyordu**;
+> üçü de dosyalar elle okunurken bulundu. Bir modülü kapatmadan önce dosyayı
+> baştan sona okumak grep'in yerini tutmaz — grep'i **tamamlar**.
+
 > **Tur 5'te bulunan SESSİZ HATA SINIFI — ICU placeholder sırası.** ARB'de
 > `placeholders` metadata'sı **yoksa** gen-l10n parametreleri **alfabetik**
 > sıralar. Çağrı yeri mesajın okuma sırasını varsayarsa metin sessizce yanlış
@@ -2182,7 +2232,11 @@ grep -rnE "(switch|case|==)\s*\(?\s*['\"][^'\"]*[çğıöşü…]" \
   lib/src/features/profile lib/src/features/staff \
   lib/src/features/dis_hizmet lib/src/features/nfc \
   lib/src/features/transparency lib/src/features/integrations \
-  lib/src/features/visitors lib/src/features/reports
+  lib/src/features/visitors lib/src/features/reports \
+  lib/src/features/dues lib/src/features/checkpoints lib/src/features/scan
+
+# Tur 11 dersi: SUNUCU METNINDE arama da kontrol akisidir
+grep -rn "contains('" lib/src --include=*.dart | grep -vE "RegExp|contains\('/'\)"
 
 # Tur 8 dersi: enum ALANLARI da taranir (grep literal gormez)
 grep -rn "\.label" lib/src --include=*.dart | grep -v label(Text|Large|Medium|Small)
@@ -2213,17 +2267,11 @@ rakamı ölçümün o anki halidir; tur 2 başında aynı komut 1.115/100 verdi 
 arada başka modüle dokunulmadı, fark ara commit'lerdeki küçük düzenlemelerden
 gelir.)
 
-Kalan envanter (modül başına, **tur 10 sonrası**; 22 modül listeden düştü —
-`tasks`, `patrol`, `building_map`, `complaints`, `rezervasyon`, `etkinlik`,
-`unit_access`, `budget`, `assets`, `kargo`, `site_kurali`, `announcements`,
-`residents`, `auth`, `profile`, `staff`, `dis_hizmet`, `nfc`, `transparency`,
-`integrations`, `visitors`, `reports`):
+Kalan envanter (modül başına, **tur 11 sonrası**; 25 modül listeden düştü —
+tur 1–11'in tamamı). Kalan **64 string / 18 dosya**, biri hariç hepsi ≤13:
 
 | Modül | Kalan string |
 |---|---|
-| `dues` | 18 |
-| `checkpoints` | 16 |
-| `scan` | 14 |
 | `support` | 13 |
 | `tenant` | 9 |
 | `unit_complaints` | 8 |
@@ -2232,13 +2280,15 @@ Kalan envanter (modül başına, **tur 10 sonrası**; 22 modül listeden düşt�
 | `settings` | 6 |
 | `error` | 3 |
 | `home` | 2 (marka kilidi — istisna) |
+| `call` | 2 |
 | `i18n` | 2 |
 | `branding` | 2 (marka kilidi — istisna) |
-| `call` | 2 |
 | `main.dart` | 1 |
 | `notifications` | 1 |
 | `push` | 1 |
 | `validators` | 1 (regex sabiti — istisna) |
+
+Kalan iş **tek bir süpürme turuna** sığar (istisnalar hariç 59 string).
 
 **Bilinçli istisnalar (çevrilmez):**
 

@@ -108,18 +108,8 @@ class MyDuesUnit {
       );
 }
 
-/// Odeme yontemi / durumu TR etiketleri (sozlesme enum'lari).
-String yontemLabel(String yontem) => switch (yontem) {
-      'elden' => 'Elden',
-      'havale' => 'Havale/EFT',
-      'kart' => 'Kart',
-      'diger' => 'Diğer',
-      _ => yontem,
-    };
-
-String durumLabel(String durum) => switch (durum) {
-      'basarili' => 'Başarılı',
-      'bekliyor' => 'Bekliyor',
-      'iptal' => 'İptal',
-      _ => durum,
-    };
+// Odeme yontemi/durumu ETIKETLERI burada DEGIL: tur 11'de kimlik/metin
+// ayrimina gecildi (README §15). Domain sozlesme TEL DEGERINI (`elden`,
+// `basarili` ...) tasir; gorunen ad `presentation/aidat_etiket.dart` icindeki
+// `odemeYontemiAdi` / `odemeDurumuAdi` ile cizim aninda cozulur. Bilinmeyen
+// tel degeri OLDUGU GIBI gosterilir (ileri uyumluluk).

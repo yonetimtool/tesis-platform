@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../data/checkpoint_api.dart';
 
 /// Kontrol noktalari (NFC) yonetimi — yonetici/admin ekler/duzenler/siler
@@ -14,12 +14,15 @@ class CheckpointsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(checkpointsProvider);
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Kontrol Noktaları'))),
+      appBar: AppBar(
+        title: Text(baslikBuyuk(l10n.noktaBaslik, context.dilKodu)),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add_location_alt_outlined),
-        label: const Text('Nokta ekle'),
+        label: Text(l10n.noktaEkle),
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -27,7 +30,8 @@ class CheckpointsScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              e is ApiException ? e.message : 'Noktalar listelenemedi.',
+              // Sunucu metni varsa o (SERVER-LOCALIZED siniri).
+              e is ApiException ? e.message : l10n.noktaListelenemedi,
               textAlign: TextAlign.center,
             ),
           ),
@@ -64,6 +68,7 @@ class _CheckpointTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     return Card(
       child: ListTile(
         leading: CircleAvatar(
@@ -74,15 +79,15 @@ class _CheckpointTile extends ConsumerWidget {
         ),
         title: Text(cp.ad),
         subtitle: Text(
-          'UID: ${cp.nfcTagUid}'
+          '${l10n.nfcUidSatir(ltrIzole(cp.nfcTagUid))}'
           '${cp.gpsLat != null ? ' · ${cp.gpsLat!.toStringAsFixed(4)}, ${cp.gpsLng?.toStringAsFixed(4)}' : ''}',
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (!cp.aktif)
-              const Chip(
-                label: Text('Pasif'),
+              Chip(
+                label: Text(l10n.devriyePasif),
                 visualDensity: VisualDensity.compact,
               ),
             PopupMenuButton<String>(
@@ -90,9 +95,9 @@ class _CheckpointTile extends ConsumerWidget {
                 if (v == 'edit') _edit(context, ref);
                 if (v == 'delete') _delete(context, ref);
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-                PopupMenuItem(value: 'delete', child: Text('Sil')),
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
+                PopupMenuItem(value: 'delete', child: Text(l10n.ortakSil)),
               ],
             ),
           ],
@@ -111,19 +116,20 @@ class _CheckpointTile extends ConsumerWidget {
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
-        title: const Text('Nokta silinsin mi?'),
-        content: Text('"${cp.ad}" kontrol noktası silinecek.'),
+        title: Text(l10n.noktaSilOnay),
+        content: Text(l10n.noktaSilGovde(cp.ad)),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(dctx).pop(false),
-              child: const Text('Vazgeç')),
+              child: Text(l10n.ortakVazgec)),
           FilledButton(
               style: FilledButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () => Navigator.of(dctx).pop(true),
-              child: const Text('Sil')),
+              child: Text(l10n.ortakSil)),
         ],
       ),
     );
@@ -132,7 +138,7 @@ class _CheckpointTile extends ConsumerWidget {
     try {
       await ref.read(checkpointApiProvider).delete(cp.id);
       ref.invalidate(checkpointsProvider);
-      messenger.showSnackBar(const SnackBar(content: Text('Nokta silindi ✓')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.noktaSilindi)));
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
@@ -216,20 +222,27 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
     } on ApiException catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.message.contains('zaten')
-              ? 'Bu NFC etiketi zaten kayıtlı.'
+          // KOD ile karar (tur 11): eskiden sunucu METNINDE 'zaten' aranıyordu
+          // — sunucu yerellestirilirse ya da metni degisirse sessizce bozulur.
+          _error = (e.code == 'conflict' || e.statusCode == 409)
+              ? _l10n.noktaUidZatenVar
               : e.message;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _error = 'Kaydedilemedi. Tekrar deneyin.');
+      if (mounted) {
+        setState(() => _error = _l10n.devriyeKaydedilemedi);
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
@@ -239,36 +252,36 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(_isEdit ? 'Nokta düzenle' : 'Yeni kontrol noktası',
+            Text(_isEdit ? l10n.noktaDuzenleBaslik : l10n.noktaYeniBaslik,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             TextFormField(
               controller: _ad,
               enabled: !_busy,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Ad',
-                hintText: 'örn. Giriş Kapısı',
-                prefixIcon: Icon(Icons.place_outlined),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.kameraAd,
+                hintText: l10n.noktaAdIpucu,
+                prefixIcon: const Icon(Icons.place_outlined),
+                border: const OutlineInputBorder(),
               ),
               validator: (v) =>
-                  (v?.trim() ?? '').isEmpty ? 'Ad zorunludur' : null,
+                  (v?.trim() ?? '').isEmpty ? l10n.butAdZorunlu : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _uid,
               enabled: !_busy,
               textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(
-                labelText: 'NFC etiket UID',
-                hintText: 'örn. 04A2B3C4D5',
-                prefixIcon: Icon(Icons.nfc),
-                border: OutlineInputBorder(),
-                helperText: 'Etiketin benzersiz kimliği (hex).',
+              decoration: InputDecoration(
+                labelText: l10n.noktaUidAlan,
+                hintText: l10n.noktaUidIpucu,
+                prefixIcon: const Icon(Icons.nfc),
+                border: const OutlineInputBorder(),
+                helperText: l10n.noktaUidHelper,
               ),
               validator: (v) =>
-                  (v?.trim() ?? '').isEmpty ? 'NFC UID zorunludur' : null,
+                  (v?.trim() ?? '').isEmpty ? l10n.noktaUidZorunlu : null,
             ),
             const SizedBox(height: 12),
             Row(
@@ -279,9 +292,9 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
                     enabled: !_busy,
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true, signed: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Enlem (ops.)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.noktaEnlem,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -292,9 +305,9 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
                     enabled: !_busy,
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true, signed: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Boylam (ops.)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.noktaBoylam,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -303,8 +316,8 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
             const SizedBox(height: 4),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Aktif'),
-              subtitle: const Text('Pasif nokta okutmada eşleşmez'),
+              title: Text(l10n.cipAktif),
+              subtitle: Text(l10n.noktaPasifAlt),
               value: _aktif,
               onChanged: _busy ? null : (v) => setState(() => _aktif = v),
             ),
@@ -323,7 +336,7 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2.5),
                     )
-                  : Text(_isEdit ? 'Güncelle' : 'Ekle'),
+                  : Text(_isEdit ? l10n.ortakGuncelle : l10n.ortakEkle),
             ),
           ],
         ),
@@ -346,7 +359,7 @@ class _Empty extends StatelessWidget {
             const Icon(Icons.location_off_outlined, size: 48),
             const SizedBox(height: 12),
             Text(
-              'Henüz kontrol noktası yok.\nSağ alttan NFC noktası ekleyin.',
+              context.l10n.noktaYok,
               textAlign: TextAlign.center,
               style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant),

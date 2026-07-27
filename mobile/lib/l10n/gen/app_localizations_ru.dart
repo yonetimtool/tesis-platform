@@ -3675,4 +3675,204 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get raporKalanBakiye => 'Остаток';
+
+  @override
+  String get aidatBaslik => 'Мои взносы';
+
+  @override
+  String get aidatYetkiYok => 'Информация о взносах доступна только жителям.';
+
+  @override
+  String get aidatDaireYok =>
+      'На вас не зарегистрирована квартира. Обратитесь к управлению.';
+
+  @override
+  String get aidatToplamBakiye => 'Общий остаток (все квартиры)';
+
+  @override
+  String get aidatBorcVar => 'Есть долг';
+
+  @override
+  String get aidatBorcYok => 'Долга нет';
+
+  @override
+  String get aidatToplamTahakkuk => 'Всего начислено';
+
+  @override
+  String get aidatToplamOdenen => 'Всего оплачено';
+
+  @override
+  String get aidatBakiye => 'Остаток';
+
+  @override
+  String aidatHesapSatiri(Object tahakkuk, Object odenen, Object bakiye) {
+    return 'Начислено $tahakkuk - оплачено $odenen = $bakiye';
+  }
+
+  @override
+  String aidatTahakkuklar(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Начислений ($n)',
+      many: 'Начислений ($n)',
+      few: 'Начисления ($n)',
+      one: 'Начисление ($n)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aidatOdemeler(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Платежей ($n)',
+      many: 'Платежей ($n)',
+      few: 'Платежа ($n)',
+      one: 'Платёж ($n)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aidatSonOdeme(Object tarih) {
+    return 'Срок оплаты: $tarih';
+  }
+
+  @override
+  String aidatMakbuz(Object no) {
+    return 'Квитанция: $no';
+  }
+
+  @override
+  String get aidatOdemeDurumuNotu =>
+      'Статус платежа обновляется только по подтверждению от платёжного провайдера; с вопросами обращайтесь к управлению.';
+
+  @override
+  String get aidatYontemElden => 'Наличными';
+
+  @override
+  String get aidatYontemHavale => 'Банковский перевод';
+
+  @override
+  String get aidatYontemKart => 'Карта';
+
+  @override
+  String get aidatYontemDiger => 'Другое';
+
+  @override
+  String get aidatDurumBasarili => 'Успешно';
+
+  @override
+  String get aidatDurumIptal => 'Отменён';
+
+  @override
+  String get noktaBaslik => 'Контрольные точки';
+
+  @override
+  String get noktaEkle => 'Добавить точку';
+
+  @override
+  String get noktaListelenemedi => 'Не удалось загрузить точки.';
+
+  @override
+  String get noktaSilOnay => 'Удалить точку?';
+
+  @override
+  String noktaSilGovde(Object ad) {
+    return 'Контрольная точка \"$ad\" будет удалена.';
+  }
+
+  @override
+  String get noktaSilindi => 'Точка удалена ✓';
+
+  @override
+  String get noktaUidZatenVar => 'Эта NFC-метка уже зарегистрирована.';
+
+  @override
+  String get noktaDuzenleBaslik => 'Изменить точку';
+
+  @override
+  String get noktaYeniBaslik => 'Новая контрольная точка';
+
+  @override
+  String get noktaAdIpucu => 'напр. Главный вход';
+
+  @override
+  String get noktaUidAlan => 'UID NFC-метки';
+
+  @override
+  String get noktaUidIpucu => 'напр. 04A2B3C4D5';
+
+  @override
+  String get noktaUidHelper => 'Уникальный идентификатор метки (hex).';
+
+  @override
+  String get noktaEnlem => 'Широта (опц.)';
+
+  @override
+  String get noktaBoylam => 'Долгота (опц.)';
+
+  @override
+  String get noktaPasifAlt =>
+      'Неактивная точка не сопоставляется при сканировании';
+
+  @override
+  String get noktaYok =>
+      'Контрольных точек пока нет.\nДобавьте NFC-точку кнопкой справа снизу.';
+
+  @override
+  String get kuyrukHatalariTemizle => 'Очистить постоянные ошибки';
+
+  @override
+  String get kuyrukBos => 'Очередь пуста.';
+
+  @override
+  String kuyrukOzet(Object bekleyen, Object hatali) {
+    return '$bekleyen в очереди · $hatali постоянных ошибок';
+  }
+
+  @override
+  String get kuyrukSenkronla => 'Синхронизировать';
+
+  @override
+  String get kuyrukBekliyor => 'Ожидает';
+
+  @override
+  String kuyrukBekliyorDeneme(Object n) {
+    return 'Ожидает (попытка: $n)';
+  }
+
+  @override
+  String get kuyrukGonderiliyor => 'Отправка...';
+
+  @override
+  String get kuyrukGonderildiZatenVar => 'Отправлено (уже было записано)';
+
+  @override
+  String get kuyrukGonderildiYeni => 'Отправлено (новая запись)';
+
+  @override
+  String kuyrukKaliciHata(Object hata) {
+    return 'Постоянная ошибка: $hata';
+  }
+
+  @override
+  String get kuyrukEtiketEslesmedi => 'метка не совпала';
+
+  @override
+  String get okutmaImzaGecersiz =>
+      'Не удалось проверить подпись метки — возможно, она поддельная или неверная.';
+
+  @override
+  String get okutmaTekrarEdilmis => 'Это сканирование уже обработано.';
+
+  @override
+  String okutmaBeklenmeyenHata(Object detay) {
+    return 'Непредвиденная ошибка: $detay';
+  }
+
+  @override
+  String get noktaUidZorunlu => 'UID NFC обязателен';
 }

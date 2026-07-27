@@ -61,6 +61,7 @@ class OutboxEntry {
     this.status = OutboxStatus.bekliyor,
     this.attemptCount = 0,
     this.lastError,
+    this.hataKodu,
     this.outcome,
   });
 
@@ -92,8 +93,17 @@ class OutboxEntry {
   /// Kac kez gonderim denendigi (teshis + backoff bilgisi).
   final int attemptCount;
 
-  /// Son denemenin hata mesaji (varsa; kullaniciya gosterilebilir).
+  /// Son denemenin SUNUCU mesaji (varsa). Sunucu metinleri zaten
+  /// yerellestirilmis gelir; oldugu gibi gosterilir.
   final String? lastError;
+
+  /// Kalici hatanin SOZLESME KODU (`invalid_signature`, `replay_detected`...).
+  ///
+  /// NEDEN KOD: bu kayit DISKE yazilir. Tur 11'e kadar burada TR bir CUMLE
+  /// duruyordu; kullanici dili degistirse bile kuyrukta eski dildeki metin
+  /// kaliyordu. Kod tasiyip cizimde cozunce kayit dil-notr olur. Eski
+  /// kayitlarda bu alan null'dir; ekran [lastError]'a duser (geri uyumluluk).
+  final String? hataKodu;
 
   /// `gonderildi` durumunda: 201 → created, 200 → duplicate.
   final OutboxOutcome? outcome;
@@ -131,6 +141,7 @@ class OutboxEntry {
     OutboxStatus? status,
     int? attemptCount,
     Object? lastError = _sentinel,
+    Object? hataKodu = _sentinel,
     Object? outcome = _sentinel,
   }) {
     return OutboxEntry(
@@ -146,6 +157,7 @@ class OutboxEntry {
       status: status ?? this.status,
       attemptCount: attemptCount ?? this.attemptCount,
       lastError: lastError == _sentinel ? this.lastError : lastError as String?,
+      hataKodu: hataKodu == _sentinel ? this.hataKodu : hataKodu as String?,
       outcome:
           outcome == _sentinel ? this.outcome : outcome as OutboxOutcome?,
     );
@@ -166,6 +178,7 @@ class OutboxEntry {
         'status': _statusJson[status],
         'attempt_count': attemptCount,
         if (lastError != null) 'last_error': lastError,
+        if (hataKodu != null) 'hata_kodu': hataKodu,
         if (outcome != null) 'outcome': outcome!.name,
       };
 
@@ -182,6 +195,7 @@ class OutboxEntry {
         status: _statusFromJson(json['status'] as String?),
         attemptCount: (json['attempt_count'] as num?)?.toInt() ?? 0,
         lastError: json['last_error'] as String?,
+        hataKodu: json['hata_kodu'] as String?,
         outcome: switch (json['outcome'] as String?) {
           'created' => OutboxOutcome.created,
           'duplicate' => OutboxOutcome.duplicate,

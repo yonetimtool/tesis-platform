@@ -1424,5 +1424,95 @@
       }
     }
   },
-  "raporKalanBakiye": "Kalan bakiye"
+  "raporKalanBakiye": "Kalan bakiye",
+  "aidatBaslik": "Aidatım",
+  "aidatYetkiYok": "Aidat bilgisi yalnızca site sakini hesabına açıktır.",
+  "aidatDaireYok": "Üzerinize kayıtlı daire bulunamadı. Yönetiminizle iletişime geçin.",
+  "aidatToplamBakiye": "Toplam bakiye (tüm daireler)",
+  "aidatBorcVar": "Borç var",
+  "aidatBorcYok": "Borç yok",
+  "aidatToplamTahakkuk": "Toplam tahakkuk",
+  "aidatToplamOdenen": "Toplam ödenen",
+  "aidatBakiye": "Bakiye",
+  "aidatHesapSatiri": "Tahakkuk {tahakkuk} - ödenen {odenen} = {bakiye}",
+  "@aidatHesapSatiri": {
+    "description": "Seffaf hesap: tahakkuk - odenen = bakiye",
+    "placeholders": {
+      "tahakkuk": {},
+      "odenen": {},
+      "bakiye": {}
+    }
+  },
+  "aidatTahakkuklar": "Tahakkuklar ({n})",
+  "@aidatTahakkuklar": {
+    "description": "Tahakkuk sayaci (ICU cogul)",
+    "placeholders": {
+      "n": {
+        "type": "num"
+      }
+    }
+  },
+  "aidatOdemeler": "Ödemeler ({n})",
+  "@aidatOdemeler": {
+    "description": "Odeme sayaci (ICU cogul)",
+    "placeholders": {
+      "n": {
+        "type": "num"
+      }
+    }
+  },
+  "aidatSonOdeme": "Son ödeme: {tarih}",
+  "aidatMakbuz": "Makbuz: {no}",
+  "aidatOdemeDurumuNotu": "Ödeme durumu yalnızca ödeme sağlayıcısından gelen onayla güncellenir; sorularınız için yönetiminize başvurun.",
+  "aidatYontemElden": "Elden",
+  "aidatYontemHavale": "Havale/EFT",
+  "aidatYontemKart": "Kart",
+  "aidatYontemDiger": "Diğer",
+  "aidatDurumBasarili": "Başarılı",
+  "aidatDurumIptal": "İptal",
+  "noktaBaslik": "Kontrol Noktaları",
+  "noktaEkle": "Nokta ekle",
+  "noktaListelenemedi": "Noktalar listelenemedi.",
+  "noktaSilOnay": "Nokta silinsin mi?",
+  "noktaSilGovde": "\"{ad}\" kontrol noktası silinecek.",
+  "noktaSilindi": "Nokta silindi ✓",
+  "noktaUidZatenVar": "Bu NFC etiketi zaten kayıtlı.",
+  "noktaDuzenleBaslik": "Nokta düzenle",
+  "noktaYeniBaslik": "Yeni kontrol noktası",
+  "noktaAdIpucu": "örn. Giriş Kapısı",
+  "noktaUidAlan": "NFC etiket UID",
+  "noktaUidIpucu": "örn. 04A2B3C4D5",
+  "noktaUidHelper": "Etiketin benzersiz kimliği (hex).",
+  "noktaEnlem": "Enlem (ops.)",
+  "noktaBoylam": "Boylam (ops.)",
+  "noktaPasifAlt": "Pasif nokta okutmada eşleşmez",
+  "noktaYok": "Henüz kontrol noktası yok.\nSağ alttan NFC noktası ekleyin.",
+  "kuyrukHatalariTemizle": "Kalıcı hataları temizle",
+  "kuyrukBos": "Kuyruk boş.",
+  "kuyrukOzet": "{bekleyen} bekliyor · {hatali} kalıcı hata",
+  "@kuyrukOzet": {
+    "description": "Bekleyen + kalici hatali kayit sayilari",
+    "placeholders": {
+      "bekleyen": {},
+      "hatali": {}
+    }
+  },
+  "kuyrukSenkronla": "Şimdi senkronla",
+  "kuyrukBekliyor": "Bekliyor",
+  "kuyrukBekliyorDeneme": "Bekliyor (deneme: {n})",
+  "kuyrukGonderiliyor": "Gönderiliyor...",
+  "kuyrukGonderildiZatenVar": "Gönderildi (zaten kayıtlıydı)",
+  "kuyrukGonderildiYeni": "Gönderildi (yeni kayıt)",
+  "kuyrukKaliciHata": "Kalıcı hata: {hata}",
+  "@kuyrukKaliciHata": {
+    "description": "{hata} sunucu metni ya da kimlikten cozulen metin"
+  },
+  "kuyrukEtiketEslesmedi": "etiket eşleşmedi",
+  "okutmaImzaGecersiz": "Etiket imzası doğrulanamadı — sahte veya yanlış etiket olabilir.",
+  "okutmaTekrarEdilmis": "Bu okutma daha önce işlendi.",
+  "okutmaBeklenmeyenHata": "Beklenmeyen hata: {detay}",
+  "@okutmaBeklenmeyenHata": {
+    "description": "{detay} teknik istisna metni — cevrilmez"
+  },
+  "noktaUidZorunlu": "NFC UID zorunludur"
 }

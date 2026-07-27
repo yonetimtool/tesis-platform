@@ -274,7 +274,9 @@ void main() {
     expect(container.read(scanOutboxProvider).entries, isEmpty);
   });
 
-  test('422 invalid_signature → kalici_hata + net Turkce mesaj, retry yok',
+  // Tur 11: kayit DISKE yazildigi icin artik TR cumle degil KOD tasiyor
+  // (metin cizimde `okutmaHataMetni` ile cozulur).
+  test('422 invalid_signature → kalici_hata + hata KODU, retry yok',
       () async {
     api.handler = (d) async => throw const ApiException(
           code: 'invalid_signature',
@@ -295,8 +297,9 @@ void main() {
     final entry = container.read(scanOutboxProvider).entries.single;
     expect(entry.status, OutboxStatus.kaliciHata);
     expect(entry.attemptCount, 1); // tekrar denenmedi
-    expect(entry.lastError, contains('doğrulanamadı'));
-    expect(entry.lastError, contains('sahte'));
+    expect(entry.hataKodu, 'invalid_signature');
+    // Sunucu metni AYNEN saklanir (geri uyumluluk + teshis).
+    expect(entry.lastError, 'signature verification failed');
   });
 
   test('422 replay_detected → kalici_hata + net Turkce mesaj, retry yok',
@@ -318,7 +321,8 @@ void main() {
     final entry = container.read(scanOutboxProvider).entries.single;
     expect(entry.status, OutboxStatus.kaliciHata);
     expect(entry.attemptCount, 1);
-    expect(entry.lastError, contains('daha önce işlendi'));
+    expect(entry.hataKodu, 'replay_detected');
+    expect(entry.lastError, 'scan counter did not advance');
   });
 
   test('OutboxEntry JSON gidis-donus kayipsizdir', () {
@@ -334,6 +338,7 @@ void main() {
       status: OutboxStatus.kaliciHata,
       attemptCount: 3,
       lastError: 'hata 404',
+      hataKodu: 'not_found',
     );
 
     final restored = OutboxEntry.fromJson(entry.toJson());
@@ -346,6 +351,7 @@ void main() {
     expect(restored.status, OutboxStatus.kaliciHata);
     expect(restored.attemptCount, 3);
     expect(restored.lastError, 'hata 404');
+    expect(restored.hataKodu, 'not_found');
     // Anahtar, taslaktan deterministik turetilenle ayni kalir.
     expect(restored.toDraft().idempotencyKey, entry.idempotencyKey);
   });

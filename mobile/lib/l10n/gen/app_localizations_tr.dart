@@ -3437,4 +3437,188 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get raporKalanBakiye => 'Kalan bakiye';
+
+  @override
+  String get aidatBaslik => 'Aidatım';
+
+  @override
+  String get aidatYetkiYok =>
+      'Aidat bilgisi yalnızca site sakini hesabına açıktır.';
+
+  @override
+  String get aidatDaireYok =>
+      'Üzerinize kayıtlı daire bulunamadı. Yönetiminizle iletişime geçin.';
+
+  @override
+  String get aidatToplamBakiye => 'Toplam bakiye (tüm daireler)';
+
+  @override
+  String get aidatBorcVar => 'Borç var';
+
+  @override
+  String get aidatBorcYok => 'Borç yok';
+
+  @override
+  String get aidatToplamTahakkuk => 'Toplam tahakkuk';
+
+  @override
+  String get aidatToplamOdenen => 'Toplam ödenen';
+
+  @override
+  String get aidatBakiye => 'Bakiye';
+
+  @override
+  String aidatHesapSatiri(Object tahakkuk, Object odenen, Object bakiye) {
+    return 'Tahakkuk $tahakkuk - ödenen $odenen = $bakiye';
+  }
+
+  @override
+  String aidatTahakkuklar(num n) {
+    return 'Tahakkuklar ($n)';
+  }
+
+  @override
+  String aidatOdemeler(num n) {
+    return 'Ödemeler ($n)';
+  }
+
+  @override
+  String aidatSonOdeme(Object tarih) {
+    return 'Son ödeme: $tarih';
+  }
+
+  @override
+  String aidatMakbuz(Object no) {
+    return 'Makbuz: $no';
+  }
+
+  @override
+  String get aidatOdemeDurumuNotu =>
+      'Ödeme durumu yalnızca ödeme sağlayıcısından gelen onayla güncellenir; sorularınız için yönetiminize başvurun.';
+
+  @override
+  String get aidatYontemElden => 'Elden';
+
+  @override
+  String get aidatYontemHavale => 'Havale/EFT';
+
+  @override
+  String get aidatYontemKart => 'Kart';
+
+  @override
+  String get aidatYontemDiger => 'Diğer';
+
+  @override
+  String get aidatDurumBasarili => 'Başarılı';
+
+  @override
+  String get aidatDurumIptal => 'İptal';
+
+  @override
+  String get noktaBaslik => 'Kontrol Noktaları';
+
+  @override
+  String get noktaEkle => 'Nokta ekle';
+
+  @override
+  String get noktaListelenemedi => 'Noktalar listelenemedi.';
+
+  @override
+  String get noktaSilOnay => 'Nokta silinsin mi?';
+
+  @override
+  String noktaSilGovde(Object ad) {
+    return '\"$ad\" kontrol noktası silinecek.';
+  }
+
+  @override
+  String get noktaSilindi => 'Nokta silindi ✓';
+
+  @override
+  String get noktaUidZatenVar => 'Bu NFC etiketi zaten kayıtlı.';
+
+  @override
+  String get noktaDuzenleBaslik => 'Nokta düzenle';
+
+  @override
+  String get noktaYeniBaslik => 'Yeni kontrol noktası';
+
+  @override
+  String get noktaAdIpucu => 'örn. Giriş Kapısı';
+
+  @override
+  String get noktaUidAlan => 'NFC etiket UID';
+
+  @override
+  String get noktaUidIpucu => 'örn. 04A2B3C4D5';
+
+  @override
+  String get noktaUidHelper => 'Etiketin benzersiz kimliği (hex).';
+
+  @override
+  String get noktaEnlem => 'Enlem (ops.)';
+
+  @override
+  String get noktaBoylam => 'Boylam (ops.)';
+
+  @override
+  String get noktaPasifAlt => 'Pasif nokta okutmada eşleşmez';
+
+  @override
+  String get noktaYok =>
+      'Henüz kontrol noktası yok.\nSağ alttan NFC noktası ekleyin.';
+
+  @override
+  String get kuyrukHatalariTemizle => 'Kalıcı hataları temizle';
+
+  @override
+  String get kuyrukBos => 'Kuyruk boş.';
+
+  @override
+  String kuyrukOzet(Object bekleyen, Object hatali) {
+    return '$bekleyen bekliyor · $hatali kalıcı hata';
+  }
+
+  @override
+  String get kuyrukSenkronla => 'Şimdi senkronla';
+
+  @override
+  String get kuyrukBekliyor => 'Bekliyor';
+
+  @override
+  String kuyrukBekliyorDeneme(Object n) {
+    return 'Bekliyor (deneme: $n)';
+  }
+
+  @override
+  String get kuyrukGonderiliyor => 'Gönderiliyor...';
+
+  @override
+  String get kuyrukGonderildiZatenVar => 'Gönderildi (zaten kayıtlıydı)';
+
+  @override
+  String get kuyrukGonderildiYeni => 'Gönderildi (yeni kayıt)';
+
+  @override
+  String kuyrukKaliciHata(Object hata) {
+    return 'Kalıcı hata: $hata';
+  }
+
+  @override
+  String get kuyrukEtiketEslesmedi => 'etiket eşleşmedi';
+
+  @override
+  String get okutmaImzaGecersiz =>
+      'Etiket imzası doğrulanamadı — sahte veya yanlış etiket olabilir.';
+
+  @override
+  String get okutmaTekrarEdilmis => 'Bu okutma daha önce işlendi.';
+
+  @override
+  String okutmaBeklenmeyenHata(Object detay) {
+    return 'Beklenmeyen hata: $detay';
+  }
+
+  @override
+  String get noktaUidZorunlu => 'NFC UID zorunludur';
 }

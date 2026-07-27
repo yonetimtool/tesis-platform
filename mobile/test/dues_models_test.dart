@@ -46,11 +46,7 @@ void main() {
     });
   });
 
-  test('yontem/durum TR etiketleri (bilinmeyen deger oldugu gibi doner)', () {
-    expect(yontemLabel('elden'), 'Elden');
-    expect(yontemLabel('havale'), 'Havale/EFT');
-    expect(durumLabel('basarili'), 'Başarılı');
-    expect(durumLabel('iptal'), 'İptal');
-    expect(durumLabel('acayip'), 'acayip');
-  });
+  // Yontem/durum ETIKETLERI tur 11'de domain'den kalkti (kimlik/metin
+  // ayrimi); cozucu iddialari aidat_nokta_kuyruk_i18n_test icinde
+  // (`odemeYontemiAdi` / `odemeDurumuAdi`, bilinmeyen tel degeri dahil).
 }

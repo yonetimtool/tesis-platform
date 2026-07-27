@@ -3695,4 +3695,206 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get raporKalanBakiye => 'الرصيد المتبقي';
+
+  @override
+  String get aidatBaslik => 'رسومي';
+
+  @override
+  String get aidatYetkiYok => 'معلومات الرسوم متاحة لحسابات السكان فقط.';
+
+  @override
+  String get aidatDaireYok => 'لا توجد وحدة مسجّلة باسمك. تواصل مع الإدارة.';
+
+  @override
+  String get aidatToplamBakiye => 'الرصيد الإجمالي (كل الوحدات)';
+
+  @override
+  String get aidatBorcVar => 'يوجد دين';
+
+  @override
+  String get aidatBorcYok => 'لا يوجد دين';
+
+  @override
+  String get aidatToplamTahakkuk => 'إجمالي المستحق';
+
+  @override
+  String get aidatToplamOdenen => 'إجمالي المدفوع';
+
+  @override
+  String get aidatBakiye => 'الرصيد';
+
+  @override
+  String aidatHesapSatiri(Object tahakkuk, Object odenen, Object bakiye) {
+    return 'المستحق $tahakkuk - المدفوع $odenen = $bakiye';
+  }
+
+  @override
+  String aidatTahakkuklar(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'استحقاقات ($n)',
+      many: 'استحقاقات ($n)',
+      few: 'استحقاقات ($n)',
+      two: 'استحقاقان ($n)',
+      one: 'استحقاق ($n)',
+      zero: 'الاستحقاقات ($n)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aidatOdemeler(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'مدفوعات ($n)',
+      many: 'مدفوعات ($n)',
+      few: 'مدفوعات ($n)',
+      two: 'دفعتان ($n)',
+      one: 'دفعة ($n)',
+      zero: 'المدفوعات ($n)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aidatSonOdeme(Object tarih) {
+    return 'آخر موعد للدفع: $tarih';
+  }
+
+  @override
+  String aidatMakbuz(Object no) {
+    return 'الإيصال: $no';
+  }
+
+  @override
+  String get aidatOdemeDurumuNotu =>
+      'تُحدَّث حالة الدفع فقط بتأكيد من مزوّد الدفع؛ راجع الإدارة لأي أسئلة.';
+
+  @override
+  String get aidatYontemElden => 'نقداً';
+
+  @override
+  String get aidatYontemHavale => 'حوالة بنكية';
+
+  @override
+  String get aidatYontemKart => 'بطاقة';
+
+  @override
+  String get aidatYontemDiger => 'أخرى';
+
+  @override
+  String get aidatDurumBasarili => 'ناجح';
+
+  @override
+  String get aidatDurumIptal => 'ملغى';
+
+  @override
+  String get noktaBaslik => 'نقاط التفتيش';
+
+  @override
+  String get noktaEkle => 'إضافة نقطة';
+
+  @override
+  String get noktaListelenemedi => 'تعذّر إدراج النقاط.';
+
+  @override
+  String get noktaSilOnay => 'حذف هذه النقطة؟';
+
+  @override
+  String noktaSilGovde(Object ad) {
+    return 'سيتم حذف نقطة التفتيش \"$ad\".';
+  }
+
+  @override
+  String get noktaSilindi => 'تم حذف النقطة ✓';
+
+  @override
+  String get noktaUidZatenVar => 'وسم NFC هذا مسجّل بالفعل.';
+
+  @override
+  String get noktaDuzenleBaslik => 'تعديل النقطة';
+
+  @override
+  String get noktaYeniBaslik => 'نقطة تفتيش جديدة';
+
+  @override
+  String get noktaAdIpucu => 'مثال: البوابة الرئيسية';
+
+  @override
+  String get noktaUidAlan => 'معرّف وسم NFC';
+
+  @override
+  String get noktaUidIpucu => 'مثال: 04A2B3C4D5';
+
+  @override
+  String get noktaUidHelper => 'المعرّف الفريد للوسم (hex).';
+
+  @override
+  String get noktaEnlem => 'خط العرض (اختياري)';
+
+  @override
+  String get noktaBoylam => 'خط الطول (اختياري)';
+
+  @override
+  String get noktaPasifAlt => 'النقطة غير النشطة لا تُطابق أي مسح';
+
+  @override
+  String get noktaYok =>
+      'لا توجد نقاط تفتيش بعد.\nأضف نقطة NFC من أسفل اليمين.';
+
+  @override
+  String get kuyrukHatalariTemizle => 'امسح الأخطاء الدائمة';
+
+  @override
+  String get kuyrukBos => 'القائمة فارغة.';
+
+  @override
+  String kuyrukOzet(Object bekleyen, Object hatali) {
+    return '$bekleyen في الانتظار · $hatali أخطاء دائمة';
+  }
+
+  @override
+  String get kuyrukSenkronla => 'زامن الآن';
+
+  @override
+  String get kuyrukBekliyor => 'في الانتظار';
+
+  @override
+  String kuyrukBekliyorDeneme(Object n) {
+    return 'في الانتظار (محاولة: $n)';
+  }
+
+  @override
+  String get kuyrukGonderiliyor => 'جارٍ الإرسال...';
+
+  @override
+  String get kuyrukGonderildiZatenVar => 'تم الإرسال (كان مسجّلاً)';
+
+  @override
+  String get kuyrukGonderildiYeni => 'تم الإرسال (سجل جديد)';
+
+  @override
+  String kuyrukKaliciHata(Object hata) {
+    return 'خطأ دائم: $hata';
+  }
+
+  @override
+  String get kuyrukEtiketEslesmedi => 'الوسم غير مطابق';
+
+  @override
+  String get okutmaImzaGecersiz =>
+      'تعذّر التحقق من توقيع الوسم — قد يكون وسماً مزيفاً أو خاطئاً.';
+
+  @override
+  String get okutmaTekrarEdilmis => 'تمت معالجة هذا المسح سابقاً.';
+
+  @override
+  String okutmaBeklenmeyenHata(Object detay) {
+    return 'خطأ غير متوقع: $detay';
+  }
+
+  @override
+  String get noktaUidZorunlu => 'معرّف NFC إلزامي';
 }

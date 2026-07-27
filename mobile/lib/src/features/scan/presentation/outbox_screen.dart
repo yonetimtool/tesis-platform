@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../data/scan_outbox.dart';
 import '../domain/outbox_entry.dart';
+import 'okutma_hata_metni.dart';
 
 /// Outbox durumu: bekleyen/gonderilen/kalici hatali kayitlarin listesi,
 /// manuel "simdi senkronla" ve kalici hatalari temizleme. Islevsel/basit.
@@ -20,11 +21,11 @@ class OutboxScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(trUpper('Gönderim kuyruğu')),
+        title: Text(baslikBuyuk(context.l10n.nfcKuyruk, context.dilKodu)),
         actions: [
           if (state.failedCount > 0)
             IconButton(
-              tooltip: 'Kalıcı hataları temizle',
+              tooltip: context.l10n.kuyrukHatalariTemizle,
               icon: const Icon(Icons.delete_sweep_outlined),
               onPressed: () => outbox.clearFailed(),
             ),
@@ -36,7 +37,7 @@ class OutboxScreen extends ConsumerWidget {
           const Divider(height: 1),
           Expanded(
             child: entries.isEmpty
-                ? const Center(child: Text('Kuyruk boş.'))
+                ? Center(child: Text(context.l10n.kuyrukBos))
                 : ListView.separated(
                     itemCount: entries.length,
                     separatorBuilder: (_, _) => const Divider(height: 1),
@@ -64,7 +65,10 @@ class _SyncBar extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              '${state.pendingCount} bekliyor · ${state.failedCount} kalıcı hata',
+              context.l10n.kuyrukOzet(
+                '${state.pendingCount}',
+                '${state.failedCount}',
+              ),
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
@@ -81,7 +85,7 @@ class _SyncBar extends StatelessWidget {
             FilledButton.tonalIcon(
               onPressed: state.pendingCount > 0 ? onSync : null,
               icon: const Icon(Icons.sync),
-              label: const Text('Şimdi senkronla'),
+              label: Text(context.l10n.kuyrukSenkronla),
             ),
         ],
       ),
@@ -96,28 +100,36 @@ class _EntryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final (icon, color, label) = switch (entry.status) {
       OutboxStatus.bekliyor => (
           Icons.schedule,
           Colors.orange,
-          'Bekliyor${entry.attemptCount > 0 ? ' (deneme: ${entry.attemptCount})' : ''}',
+          entry.attemptCount > 0
+              ? l10n.kuyrukBekliyorDeneme('${entry.attemptCount}')
+              : l10n.kuyrukBekliyor,
         ),
       OutboxStatus.gonderiliyor => (
           Icons.sync,
           Colors.blue,
-          'Gönderiliyor...',
+          l10n.kuyrukGonderiliyor,
         ),
       OutboxStatus.gonderildi => (
           Icons.check_circle_outline,
           Colors.green,
           entry.outcome == OutboxOutcome.duplicate
-              ? 'Gönderildi (zaten kayıtlıydı)'
-              : 'Gönderildi (yeni kayıt)',
+              ? l10n.kuyrukGonderildiZatenVar
+              : l10n.kuyrukGonderildiYeni,
         ),
+      // Hata KODU diskten gelir; metin BURADA cozulur (tur 11).
       OutboxStatus.kaliciHata => (
           Icons.link_off,
           Colors.red,
-          'Kalıcı hata: ${entry.lastError ?? 'etiket eşleşmedi'}',
+          l10n.kuyrukKaliciHata(okutmaHataMetni(
+            l10n,
+            kod: entry.hataKodu,
+            sunucuMetni: entry.lastError,
+          )),
         ),
     };
 
