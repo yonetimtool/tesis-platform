@@ -370,6 +370,20 @@ void main() {
       trSizintisiYok(tester, dil, veri: surusVerisi);
     });
   }
+
+  // ---- TUR 26: DAR EKRAN SURUSU (320 dp x 6 dil) ----
+  testWidgets('DAR 320dp: talep ekrani 6 dilde TASMAZ', (tester) async {
+    await darEkranSurusu(tester, (dil) => _talepEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('DAR 320dp: bina semasi ekrani 6 dilde TASMAZ', (tester) async {
+    await darEkranSurusu(tester, (dil) => _semaEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('DAR 320dp: bina duzenleme ekrani 6 dilde TASMAZ', (tester) async {
+    await darEkranSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
 }
 
 class _PatlayanMapApi extends BuildingMapApi {

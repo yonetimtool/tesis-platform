@@ -391,4 +391,10 @@ void main() {
       trSizintisiYok(tester, dil, veri: surusVerisi);
     }
   });
+
+  // ---- TUR 26: DAR EKRAN SURUSU (320 dp x 6 dil) ----
+  testWidgets('DAR 320dp: giris ekrani 6 dilde TASMAZ', (tester) async {
+    await darEkranSurusu(tester, (dil) => _girisEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
 }

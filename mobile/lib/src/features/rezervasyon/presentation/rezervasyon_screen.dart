@@ -757,6 +757,9 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
                 ),
               const SizedBox(height: 8),
               DropdownButtonFormField<int>(
+                // Uzun ceviri + dar ekran: `isExpanded` olmazsa ic Row tasar
+                // (tur 26 dersi — README §15 dropdown kalibi).
+                isExpanded: true,
                 initialValue: _slot,
                 decoration: InputDecoration(
                   labelText: context.l10n.rezSlotUzunlugu,

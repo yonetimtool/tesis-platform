@@ -38,3 +38,44 @@ void trSizintisiYok(WidgetTester tester, String dil, {Set<String> veri = const {
     expect(_trHarf.hasMatch(m), isFalse, reason: '$dil ekraninda TR: "$m"');
   }
 }
+
+/// DAR EKRAN surusu (tur 26) — panelin `tools/dar-ekran-surusu.mjs`inin
+/// mobil karsiligi.
+///
+/// Flutter'da tasma bir ISTISNA olarak raporlanir ("A RenderFlex overflowed
+/// by N pixels"); `pumpAndSettle` sonrasi `takeException()` onu verir. 320 dp
+/// bilincli olarak SERT bir esiktir: piyasadaki en dar telefonlar + en buyuk
+/// yazi tipi olcegi. Turkce sigan bir kutu Rusca/Almanca'da tasabilir —
+/// tur 24'te `bina_duzenleme` (ru/es) ve tur 25'te panelin rapor sekmeleri
+/// (de) boyle bulundu.
+Future<void> darEkranSurusu(
+  WidgetTester tester,
+  Widget Function(String dil) kur, {
+  double genislik = 320,
+  double yukseklik = 900,
+  Set<String> veri = const {},
+}) async {
+  tester.view.physicalSize = Size(genislik, yukseklik);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+  for (final dil in surusDilleri) {
+    // `takeException()` yalniz istisnayi verir, HANGI WIDGET oldugunu degil.
+    // Tanilama `FlutterErrorDetails` icindedir — surus boyunca yakalanir.
+    final ayrinti = <String>[];
+    final eskiOnError = FlutterError.onError;
+    FlutterError.onError = (d) {
+      ayrinti.add('${d.exception}\n${d.context}');
+      eskiOnError?.call(d);
+    };
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(kur(dil));
+    await tester.pumpAndSettle();
+    FlutterError.onError = eskiOnError;
+    // Tasma ISTISNASI: hangi dilde oldugu mesajda gorunsun.
+    final hata = tester.takeException();
+    expect(hata, isNull,
+        reason: '$dil ($genislik dp) tasti:\n'
+            '${ayrinti.join("\n---\n")}');
+    trSizintisiYok(tester, dil, veri: veri);
+  }
+}

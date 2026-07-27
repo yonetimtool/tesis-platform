@@ -95,6 +95,9 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       DropdownButtonFormField<String?>(
+                        // Uzun ceviri + dar ekran: `isExpanded` olmazsa ic Row tasar
+                        // (tur 26 dersi — README §15 dropdown kalibi).
+                        isExpanded: true,
                         key: const Key('site_budget_donem_dropdown'),
                         initialValue: _donem,
                         items: _donemItems(l10n),

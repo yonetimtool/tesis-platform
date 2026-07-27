@@ -431,4 +431,22 @@ void main() {
       trSizintisiYok(tester, dil, veri: surusVerisi);
     }
   });
+
+  // ---- TUR 26: DAR EKRAN SURUSU (320 dp x 6 dil) ----
+  testWidgets('DAR 320dp: destek ekrani 6 dilde TASMAZ', (tester) async {
+    await darEkranSurusu(tester, (dil) => _destekEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('DAR 320dp: tesis kurulumu ekrani 6 dilde TASMAZ', (tester) async {
+    await darEkranSurusu(tester, (dil) => _tesisEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('DAR 320dp: vardiyalar ekrani 6 dilde TASMAZ', (tester) async {
+    await darEkranSurusu(tester, (dil) => _vardiyaEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('DAR 320dp: yonetici iletisim ekrani 6 dilde TASMAZ', (tester) async {
+    await darEkranSurusu(tester, (dil) => _yoneticiEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
 }

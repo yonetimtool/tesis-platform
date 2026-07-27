@@ -339,4 +339,14 @@ void main() {
   });
 
 
+
+  // ---- TUR 26: DAR EKRAN SURUSU (320 dp x 6 dil) ----
+  testWidgets('DAR 320dp: gorevler ekrani 6 dilde TASMAZ', (tester) async {
+    await darEkranSurusu(tester, (dil) => _tasksEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('DAR 320dp: devriye planlari ekrani 6 dilde TASMAZ', (tester) async {
+    await darEkranSurusu(tester, (dil) => _planlarEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
 }

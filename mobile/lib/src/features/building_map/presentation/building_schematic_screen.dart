@@ -728,6 +728,9 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<UnitComplaintKategori>(
+            // Uzun ceviri + dar ekran: `isExpanded` olmazsa ic Row tasar
+            // (tur 26 dersi — README §15 dropdown kalibi).
+            isExpanded: true,
             initialValue: _kategori,
             decoration: InputDecoration(
               labelText: context.l10n.butKategori,

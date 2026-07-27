@@ -2066,6 +2066,33 @@ tesis kurulumu, vardiyalar, yönetici iletişim.
 > Her dil **ayrı test** olarak sürülür: bir dilin taşması diğerlerini
 > maskelemesin ve rapor "hangi dil" sorusunu doğrudan yanıtlasın.
 
+**TUR 26 — DAR EKRAN SÜRÜŞÜ (320 dp × 6 dil).** `darEkranSurusu` yardımcısı
+her modül ekranını **320 dp** genişlikte 6 dilde çizer ve taşma **istisnasını**
+(`takeException`) yakalar. 320 dp bilinçli olarak sert bir eşiktir: piyasadaki
+en dar telefon + en büyük yazı tipi ölçeği.
+
+> **BULDUĞU HATA — `isExpanded` eksikliği.** `budget_screen`in dönem
+> `DropdownButtonFormField`ında `isExpanded: true` yoktu: dropdown iç `Row`u
+> içeriği kadar genişler, uzun Almanca etiket + `prefixIcon` 320 dp'de
+> **+30 px** taşırıyordu. Bu, §15'in "dropdown + uzun değer" kalıbının tam
+> örneğidir — kalıp yazılıydı, uygulanmamıştı.
+>
+> Aynı bulgu bir **tarama** doğurdu: `grep DropdownButtonFormField` vs
+> `grep isExpanded` → **5 dropdown daha** eksikti (visitors, rezervasyon,
+> site_budget, financial_summary, building_schematic). Sürüş bunları
+> göremezdi (kapalı formların içinde), ama sürüşün *bulduğu* hata onları
+> aramayı akla getirdi. Beşi de kapatıldı.
+>
+> İkinci düzeltme: bütçe kategori kırılımındaki `ListTile` hâlâ `trailing:`
+> ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
+> uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
+
+> **TANILAMA NOTU:** `tester.takeException()` istisnayı verir ama **hangi
+> widget** olduğunu söylemez; `FlutterErrorDetails` içindedir. Sürüş
+> yardımcısı `FlutterError.onError`u geçici olarak sarıp tanılamayı
+> biriktirir ve hata mesajına ekler — yoksa "bir yerde +30 px taştı"
+> deyip kalırdı.
+
 > Sürüşün **VERİ** ile **UI SABİTİ** ayrımını yapması şart: ilk koşumda
 > `"Ana Kapı"` (kontrol noktası adı) ve `"GÜVENLİK & DANIŞMANLIK"` (logo alt
 > başlığı) çıktı. Birincisi tenant verisi, ikincisi marka kilidi — ikisi de

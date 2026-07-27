@@ -180,6 +180,10 @@ class _SummaryTab extends StatelessWidget {
       children: [
         DropdownButtonFormField<String?>(
           key: const Key('summary_donem_dropdown'),
+          // `isExpanded` OLMAZSA dropdown ic Row'u icerigi kadar genisler:
+          // uzun etiket (de) + prefixIcon 320 dp'de +30 px tasiriyordu
+          // (tur 26 surusu). README §15'in "dropdown + uzun deger" kalibi.
+          isExpanded: true,
           initialValue: donem,
           items: donemItems,
           onChanged: onDonemChanged,
@@ -225,10 +229,25 @@ class _SummaryTab extends StatelessWidget {
                     : Icons.remove_circle_outline,
                 color: k.tip == BudgetTip.gelir ? Colors.green : Colors.red,
               ),
-              title: Text(k.ad),
-              trailing: Text(
-                tlSonEkli(k.toplamKurus, dil),
-                style: const TextStyle(fontWeight: FontWeight.w600),
+              // `trailing:` ile tutar SIKISTIRILAMAZ; dar ekranda (320 dp)
+              // uzun kategori adi + 7 haneli tutar tile'i tasiriyordu
+              // (tur 26 surusu `de`de +30 px olctu). Ayni cozum `_AmountCard`
+              // icinde de var: etiket ELLIPSIS, tutar KUCULUR.
+              title: Row(
+                children: [
+                  Expanded(child: Text(k.ad, overflow: TextOverflow.ellipsis)),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: Text(
+                        tlSonEkli(k.toplamKurus, dil),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
         ],
@@ -459,6 +478,7 @@ class _EntryFormState extends ConsumerState<_EntryForm> {
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 12),
               DropdownButtonFormField<BudgetCategory>(
+                isExpanded: true,
                 key: const Key('entry_category_dropdown'),
                 initialValue: _kategori,
                 items: [

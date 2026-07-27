@@ -100,6 +100,9 @@ class _FinancialSummaryScreenState
                     padding: const EdgeInsets.all(16),
                     children: [
                       DropdownButtonFormField<String?>(
+                        // Uzun ceviri + dar ekran: `isExpanded` olmazsa ic Row tasar
+                        // (tur 26 dersi — README §15 dropdown kalibi).
+                        isExpanded: true,
                         key: const Key('fs_donem_dropdown'),
                         initialValue: _donem,
                         items: _donemItems(l10n),

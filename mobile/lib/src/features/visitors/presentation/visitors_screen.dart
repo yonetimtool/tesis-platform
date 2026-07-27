@@ -524,6 +524,9 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
               ),
             if (_residents != null && _residents!.isNotEmpty)
               DropdownButtonFormField<String>(
+                // Uzun ceviri + dar ekran: `isExpanded` olmazsa ic Row tasar
+                // (tur 26 dersi — README §15 dropdown kalibi).
+                isExpanded: true,
                 initialValue: _targetId,
                 decoration: InputDecoration(
                   labelText: l10n.ziyaretBildirilecekSakin,
