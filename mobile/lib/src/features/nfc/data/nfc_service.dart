@@ -8,6 +8,7 @@ import 'package:nfc_manager/nfc_manager_android.dart';
 import 'package:nfc_manager/nfc_manager_ios.dart';
 
 import '../domain/nfc_read_result.dart';
+import '../domain/nfc_hatasi.dart';
 
 /// Uint8List UID'i sozlesme (contracts/openapi.yaml) formatina cevirir:
 /// BUYUK HARF, IKI NOKTA (`:`) AYRACLI. Ornek: [0x04, 0xA3, 0xB2] -> "04:A3:B2".
@@ -24,6 +25,10 @@ String bytesToHex(Uint8List bytes) {
 /// NFC donanimiyla konusan tek nokta. UI'a ham platform nesnesi sizdirmaz;
 /// her zaman [NfcReadResult] / [NfcAvailability] gibi tiplenmis sonuc doner ve
 /// hicbir kosulda exception firlatip uygulamayi cokertmez.
+///
+/// METIN URETMEZ (README §15): hatalar [NfcHatasi] KIMLIGI olarak doner;
+/// iOS'un sistem sayfasinda gorunecek metinler [NfcIosMetinleri] ile CIZIM
+/// katmanindan gecirilir.
 class NfcService {
   bool _sessionActive = false;
 
@@ -39,17 +44,15 @@ class NfcService {
 
   /// Tek bir etiket okur. Oturumu acar, ilk etiketi cozumler, oturumu kapatir.
   /// NFC kapali/yoksa veya hata olursa [NfcReadResult.failure] doner (cokme yok).
-  Future<NfcReadResult> readSingleTag() async {
+  Future<NfcReadResult> readSingleTag(NfcIosMetinleri ios) async {
     final avail = await availability();
     switch (avail) {
       case NfcAvailability.enabled:
         break;
       case NfcAvailability.disabled:
-        return NfcReadResult.failure(
-          'NFC kapalı. Lütfen cihaz ayarlarından NFC\'yi açın.',
-        );
+        return NfcReadResult.failure(NfcHatasi.kapali);
       case NfcAvailability.unsupported:
-        return NfcReadResult.failure('Bu cihaz NFC desteklemiyor.');
+        return NfcReadResult.failure(NfcHatasi.desteklenmiyor);
     }
 
     final completer = Completer<NfcReadResult>();
@@ -63,19 +66,24 @@ class NfcService {
           NfcPollingOption.iso15693,
           NfcPollingOption.iso18092,
         },
-        alertMessageIos: 'Etiketi telefonun arkasına yaklaştırın.',
+        alertMessageIos: ios.yaklastir,
         onDiscovered: (tag) async {
           final result = _parseTag(tag);
           await _safeStop(
-            successIos: result.isSuccess ? 'Okundu' : null,
-            errorIos: result.isSuccess ? null : (result.error ?? 'Okunamadi'),
+            successIos: result.isSuccess ? ios.okundu : null,
+            // Sistem sayfasinda TEK satir yer var; kimlige gore metin uretmek
+            // yerine genel "okunamadi" gecilir (ayrinti uygulama icinde).
+            errorIos: result.isSuccess ? null : ios.okunamadi,
           );
           if (!completer.isCompleted) completer.complete(result);
         },
         onSessionErrorIos: (error) {
           if (!completer.isCompleted) {
             completer.complete(
-              NfcReadResult.failure('Okuma iptal edildi: ${error.message}'),
+              NfcReadResult.failure(
+                NfcHatasi.okumaIptal,
+                detay: error.message,
+              ),
             );
           }
         },
@@ -84,7 +92,10 @@ class NfcService {
       await _safeStop();
       if (!completer.isCompleted) {
         completer.complete(
-          NfcReadResult.failure('NFC oturumu baslatilamadi: $e'),
+          NfcReadResult.failure(
+            NfcHatasi.oturumBaslatilamadi,
+            detay: '$e',
+          ),
         );
       }
     }
@@ -92,7 +103,12 @@ class NfcService {
   }
 
   /// Devam eden okuma oturumunu iptal eder (kullanici "vazgec" dediginde).
-  Future<void> cancel() => _safeStop(errorIos: 'İptal edildi');
+  ///
+  /// [iptalMetni] iOS sistem sayfasinda gorunur; cizim katmanindan gelir.
+  /// `ref.onDispose` gibi context'siz yollardan cagrildiginda null gecilir —
+  /// sayfa mesajsiz kapanir (kabul edilebilir: kullanici zaten ekrandan cikti).
+  Future<void> cancel({String? iptalMetni}) =>
+      _safeStop(errorIos: iptalMetni);
 
   Future<void> _safeStop({String? successIos, String? errorIos}) async {
     if (!_sessionActive) return;
@@ -117,16 +133,16 @@ class NfcService {
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         return _parseIos(tag);
       }
-      return NfcReadResult.failure('Desteklenmeyen platform.');
+      return NfcReadResult.failure(NfcHatasi.desteklenmiyor);
     } catch (e) {
-      return NfcReadResult.failure('Etiket çözümlenemedi: $e');
+      return NfcReadResult.failure(NfcHatasi.cozumlenemedi, detay: '$e');
     }
   }
 
   NfcReadResult _parseAndroid(NfcTag tag) {
     final androidTag = NfcTagAndroid.from(tag);
     if (androidTag == null || androidTag.id.isEmpty) {
-      return NfcReadResult.failure('Etiket UID okunamadı.');
+      return NfcReadResult.failure(NfcHatasi.uidOkunamadi);
     }
     final uid = bytesToHex(androidTag.id);
     final tagType = _tagTypeFromTechList(androidTag.techList);
@@ -147,7 +163,7 @@ class NfcService {
   NfcReadResult _parseIos(NfcTag tag) {
     final mifare = MiFareIos.from(tag);
     if (mifare == null || mifare.identifier.isEmpty) {
-      return NfcReadResult.failure('Etiket UID okunamadı.');
+      return NfcReadResult.failure(NfcHatasi.uidOkunamadi);
     }
     final uid = bytesToHex(mifare.identifier);
     final tagType = switch (mifare.mifareFamily) {

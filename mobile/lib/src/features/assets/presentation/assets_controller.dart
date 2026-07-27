@@ -6,6 +6,7 @@ import '../../nfc/presentation/nfc_controller.dart';
 import '../data/asset_api.dart';
 import '../domain/asset_models.dart';
 import '../domain/demirbas_mesaj.dart';
+import '../../nfc/domain/nfc_hatasi.dart';
 
 /// Okutma akisinin asamasi.
 enum AssetScanPhase { idle, reading, resolving, done }
@@ -149,7 +150,9 @@ class AssetsController extends Notifier<AssetsState> {
       DemirbasKimlikMesaji(DemirbasMesajKimlik.offline);
 
   /// Buyuk "Etiket okut" akisi: NFC oku → asset'i coz → durumu getir.
-  Future<void> scanTag() async {
+  ///
+  /// [ios] iOS sistem sayfasinin metinleri — cizim katmanindan gelir (tur 9).
+  Future<void> scanTag(NfcIosMetinleri ios) async {
     if (state.scanPhase == AssetScanPhase.reading ||
         state.scanPhase == AssetScanPhase.resolving) {
       return;
@@ -162,13 +165,13 @@ class AssetsController extends Notifier<AssetsState> {
       actionMessage: null,
     );
 
-    final result = await ref.read(nfcServiceProvider).readSingleTag();
+    final result = await ref.read(nfcServiceProvider).readSingleTag(ios);
     if (!ref.mounted) return;
     if (!result.isSuccess) {
       state = state.copyWith(
         scanPhase: AssetScanPhase.idle,
-        scanError: result.error != null
-            ? DemirbasSunucuMetni(result.error!)
+        scanError: result.hata != null
+            ? DemirbasNfcHatasi(result.hata!, detay: result.hataDetay)
             : const DemirbasKimlikMesaji(
                 DemirbasMesajKimlik.etiketOkunamadi,
               ),

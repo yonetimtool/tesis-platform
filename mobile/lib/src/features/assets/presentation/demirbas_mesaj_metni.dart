@@ -5,6 +5,7 @@
 library;
 
 import '../../../core/i18n/l10n.dart';
+import '../../nfc/presentation/nfc_hata_metni.dart';
 import '../domain/demirbas_mesaj.dart';
 
 String demirbasMesajMetni(AppLocalizations l10n, DemirbasMesaj mesaj) =>
@@ -22,6 +23,8 @@ String demirbasMesajMetni(AppLocalizations l10n, DemirbasMesaj mesaj) =>
       DemirbasCakismaMesaji(sunucuMetni: final m) => l10n.demIslemYapilamadi(m),
       DemirbasAdliHata(ad: final ad, sunucuMetni: final m) =>
         l10n.demHataSatiri(ad, m),
+      DemirbasNfcHatasi(kimlik: final k, detay: final d) =>
+        nfcHataMetni(l10n, k, detay: d),
       DemirbasSunucuMetni(metin: final m) => m,
     };
 

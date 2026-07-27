@@ -1198,5 +1198,127 @@
   "personelYok": "Henüz saha personeli yok.\nSağ alttan ekleyebilirsiniz.",
   "@personelYok": {
     "description": "Iki satir (\\n) — bos liste durumu"
+  },
+  "disKisiEkle": "Kişi ekle",
+  "disListeAlinamadi": "Liste alınamadı.",
+  "disKayitYokYonetim": "Henüz kayıt yok. Sağ alttan güvendiğiniz esnafı ekleyin.",
+  "disKayitYok": "Henüz dış hizmet kaydı yok.",
+  "disNotEkleyin": "Not ekleyin (yalnızca yönetici düzenler).",
+  "disNotuDuzenle": "Notu düzenle",
+  "disBolumNotu": "Bölüm notu",
+  "disNotIpucu": "örn. Yıllardır güvendiğimiz esnaflar; site güvenliği için yabancı kişileri içeri almayın.",
+  "disNotGuncellendi": "Not güncellendi ✓",
+  "disAra": "Ara",
+  "disSilOnay": "Kayıt silinsin mi?",
+  "disSilGovde": "\"{ad}\" silinecek.",
+  "disSilindi": "Silindi ✓",
+  "disYeniKisi": "Yeni dış hizmet kişisi",
+  "disKisiDuzenle": "Kişi düzenle",
+  "disTur": "Hizmet türü",
+  "disTurIpucu": "örn. Çilingir, Elektrik, Tesisat",
+  "disTurZorunlu": "Tür zorunludur",
+  "disAd": "Ad",
+  "disSoyad": "Soyad",
+  "disAdGerekli": "Ad gerekli",
+  "disSoyadGerekli": "Soyad gerekli",
+  "nfcBaslik": "NFC etiket okuma",
+  "nfcHazir": "Okumaya hazır. Başlat'a dokunun.",
+  "nfcYaklastirBekliyor": "Etiketi telefonun arkasına yaklaştırın...",
+  "nfcOkundu": "Etiket okundu.",
+  "nfcOkumayaBasla": "Okumayı başlat",
+  "nfcTekrarOku": "Tekrar oku",
+  "nfcKuyrukBekleyen": "{n} okutma gönderim bekliyor",
+  "@nfcKuyrukBekleyen": {
+    "description": "Rozet ipucu (ICU cogul)",
+    "placeholders": {
+      "n": {
+        "type": "num"
+      }
+    }
+  },
+  "nfcKuyruk": "Gönderim kuyruğu",
+  "nfcKaydedildiBekliyor": "Kaydedildi ✓ — bağlantı gelince otomatik gönderilecek.",
+  "nfcKaydedildiGonderiliyor": "Kaydedildi ✓ — gönderiliyor...",
+  "nfcGonderildiZatenVar": "Gönderildi ✓ — bu okutma zaten kayıtlıydı.",
+  "nfcGonderildi": "Gönderildi ✓ — okutma kaydedildi.",
+  "nfcEslesmeYok": "Bu etiket hiçbir checkpoint ile eşleşmiyor.",
+  "nfcSdmBaslik": "SDM (ham, doğrulanmamış)",
+  "nfcTipEtiket": "Tip",
+  "nfcNoktalarAlinamadi": "Noktalar alınamadı: {hata}",
+  "nfcTestBaslik": "TEST: hangi noktayı okutalım?",
+  "nfcTestAlt": "Fiziksel etiket olmadan okutmayı simüle eder.",
+  "nfcAktifNoktaYok": "Aktif kontrol noktası yok.",
+  "nfcAktifNoktaYokAlt": "Önce \"Kontrol noktaları\"ndan ekleyin.",
+  "nfcManuelOkut": "Manuel okut (test)",
+  "nfcTestGorunur": "Yalnızca test derlemesinde görünür.",
+  "nfcUidSatir": "UID: {uid}",
+  "@nfcUidSatir": {
+    "description": "Teknik alan — UID etiketi cevrilmez"
+  },
+  "nfcHataKapali": "NFC kapalı. Lütfen cihaz ayarlarından NFC'yi açın.",
+  "nfcHataDesteklenmiyor": "Bu cihaz NFC desteklemiyor.",
+  "nfcHataUidOkunamadi": "Etiket UID okunamadı.",
+  "nfcHataCozumlenemedi": "Etiket çözümlenemedi: {detay}",
+  "nfcHataOturum": "NFC oturumu başlatılamadı: {detay}",
+  "nfcHataOkumaIptal": "Okuma iptal edildi: {detay}",
+  "nfcHataBilinmeyen": "Bilinmeyen bir hata oluştu.",
+  "nfcIosYaklastir": "Etiketi telefonun arkasına yaklaştırın.",
+  "@nfcIosYaklastir": {
+    "description": "iOS SISTEM sayfasinda gorunur (NFCTagReaderSession)"
+  },
+  "nfcIosOkundu": "Okundu",
+  "@nfcIosOkundu": {
+    "description": "iOS SISTEM sayfasinda gorunur (NFCTagReaderSession)"
+  },
+  "nfcIosIptal": "İptal edildi",
+  "nfcIosOkunamadi": "Okunamadı",
+  "seffafYuklenemedi": "Yüklenemedi. Lütfen tekrar deneyin.",
+  "seffafAyYayinlandi": "Ay yayınlandı.",
+  "seffafYayinGeriAlindi": "Yayın geri alındı.",
+  "seffafVeriYokYonetim": "Henüz finansal veri yok. Gelir/gider veya aidat girildiğinde aylar burada listelenir.",
+  "seffafVeriYok": "Yönetim henüz özet yayınlamadı.",
+  "seffafTaslakEki": " • taslak",
+  "seffafYayinla": "Bu ayı yayınla",
+  "seffafYayindaAlt": "Sakinler bu özeti görüyor.",
+  "seffafOnizlemeAlt": "Yalnızca yönetim görüyor (önizleme).",
+  "seffafOnizlemeUyari": "Önizleme — henüz yayınlanmadı.",
+  "seffafOzetBaslik": "{ay} — Özet",
+  "seffafToplamGelir": "Toplam gelir",
+  "seffafToplamGider": "Toplam gider",
+  "seffafNet": "Net",
+  "seffafOncekiAyNet": "Önceki ay net: {tutar}",
+  "seffafGiderDagilimi": "Gider dağılımı",
+  "seffafGiderYok": "Bu ay gider kaydı yok.",
+  "seffafAidatToplama": "Aidat toplama",
+  "seffafTahakkukYok": "Bu ay için tahakkuk yok.",
+  "seffafOdeyenDaire": "Ödeyen daire: {odeyen}/{toplam}",
+  "@seffafOdeyenDaire": {
+    "description": "Odeyen / toplam daire sayisi",
+    "placeholders": {
+      "odeyen": {},
+      "toplam": {}
+    }
+  },
+  "seffafTahsilatSatir": "Tahsilat: {tahsilat} / {tahakkuk}  (tutar: %{yuzde})",
+  "@seffafTahsilatSatir": {
+    "description": "Tahsilat/tahakkuk tutarlari + tutar orani (%)",
+    "placeholders": {
+      "tahsilat": {},
+      "tahakkuk": {},
+      "yuzde": {}
+    }
+  },
+  "seffafGecikmede": "Gecikmede {n} daire",
+  "@seffafGecikmede": {
+    "description": "Geciken daire sayaci (ICU cogul)",
+    "placeholders": {
+      "n": {
+        "type": "num"
+      }
+    }
+  },
+  "ortakYuzde": "%{yuzde}",
+  "@ortakYuzde": {
+    "description": "Yalin yuzde gosterimi; isaretin YERI dile gore degisir"
   }
 }

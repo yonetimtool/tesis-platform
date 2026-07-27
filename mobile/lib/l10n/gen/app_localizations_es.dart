@@ -3036,4 +3036,292 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get personelYok =>
       'Aún no hay personal de campo.\nAñada uno desde abajo a la derecha.';
+
+  @override
+  String get disKisiEkle => 'Añadir contacto';
+
+  @override
+  String get disListeAlinamadi => 'No se pudo cargar la lista.';
+
+  @override
+  String get disKayitYokYonetim =>
+      'Aún no hay registros. Añada un profesional de confianza desde abajo a la derecha.';
+
+  @override
+  String get disKayitYok => 'Aún no hay servicios externos registrados.';
+
+  @override
+  String get disNotEkleyin =>
+      'Añada una nota (solo la administración puede editar).';
+
+  @override
+  String get disNotuDuzenle => 'Editar nota';
+
+  @override
+  String get disBolumNotu => 'Nota de la sección';
+
+  @override
+  String get disNotIpucu =>
+      'ej. Profesionales de confianza desde años; por seguridad del sitio, no deje entrar a desconocidos.';
+
+  @override
+  String get disNotGuncellendi => 'Nota actualizada ✓';
+
+  @override
+  String get disAra => 'Llamar';
+
+  @override
+  String get disSilOnay => '¿Eliminar este registro?';
+
+  @override
+  String disSilGovde(Object ad) {
+    return '\"$ad\" se eliminará.';
+  }
+
+  @override
+  String get disSilindi => 'Eliminado ✓';
+
+  @override
+  String get disYeniKisi => 'Nuevo contacto externo';
+
+  @override
+  String get disKisiDuzenle => 'Editar contacto';
+
+  @override
+  String get disTur => 'Tipo de servicio';
+
+  @override
+  String get disTurIpucu => 'ej. Cerrajero, Electricidad, Fontanería';
+
+  @override
+  String get disTurZorunlu => 'El tipo es obligatorio';
+
+  @override
+  String get disAd => 'Nombre';
+
+  @override
+  String get disSoyad => 'Apellidos';
+
+  @override
+  String get disAdGerekli => 'El nombre es obligatorio';
+
+  @override
+  String get disSoyadGerekli => 'Los apellidos son obligatorios';
+
+  @override
+  String get nfcBaslik => 'Lectura de etiqueta NFC';
+
+  @override
+  String get nfcHazir => 'Listo para leer. Pulse Iniciar.';
+
+  @override
+  String get nfcYaklastirBekliyor =>
+      'Acerque la etiqueta a la parte trasera del teléfono...';
+
+  @override
+  String get nfcOkundu => 'Etiqueta leída.';
+
+  @override
+  String get nfcOkumayaBasla => 'Iniciar lectura';
+
+  @override
+  String get nfcTekrarOku => 'Leer de nuevo';
+
+  @override
+  String nfcKuyrukBekleyen(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n lecturas pendientes de envío',
+      one: '$n lectura pendiente de envío',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get nfcKuyruk => 'Cola de envío';
+
+  @override
+  String get nfcKaydedildiBekliyor =>
+      'Guardado ✓ — se enviará automáticamente cuando haya conexión.';
+
+  @override
+  String get nfcKaydedildiGonderiliyor => 'Guardado ✓ — enviando...';
+
+  @override
+  String get nfcGonderildiZatenVar =>
+      'Enviado ✓ — esta lectura ya estaba registrada.';
+
+  @override
+  String get nfcGonderildi => 'Enviado ✓ — lectura registrada.';
+
+  @override
+  String get nfcEslesmeYok =>
+      'Esta etiqueta no coincide con ningún punto de control.';
+
+  @override
+  String get nfcSdmBaslik => 'SDM (bruto, sin verificar)';
+
+  @override
+  String get nfcTipEtiket => 'Tipo';
+
+  @override
+  String nfcNoktalarAlinamadi(Object hata) {
+    return 'No se pudieron cargar los puntos: $hata';
+  }
+
+  @override
+  String get nfcTestBaslik => 'PRUEBA: ¿qué punto escaneamos?';
+
+  @override
+  String get nfcTestAlt => 'Simula una lectura sin etiqueta física.';
+
+  @override
+  String get nfcAktifNoktaYok => 'No hay puntos de control activos.';
+
+  @override
+  String get nfcAktifNoktaYokAlt =>
+      'Añada uno primero desde «Puntos de control».';
+
+  @override
+  String get nfcManuelOkut => 'Lectura manual (prueba)';
+
+  @override
+  String get nfcTestGorunur => 'Visible solo en compilaciones de prueba.';
+
+  @override
+  String nfcUidSatir(Object uid) {
+    return 'UID: $uid';
+  }
+
+  @override
+  String get nfcHataKapali =>
+      'El NFC está desactivado. Actívelo en los ajustes del dispositivo.';
+
+  @override
+  String get nfcHataDesteklenmiyor => 'Este dispositivo no admite NFC.';
+
+  @override
+  String get nfcHataUidOkunamadi => 'No se pudo leer el UID de la etiqueta.';
+
+  @override
+  String nfcHataCozumlenemedi(Object detay) {
+    return 'No se pudo interpretar la etiqueta: $detay';
+  }
+
+  @override
+  String nfcHataOturum(Object detay) {
+    return 'No se pudo iniciar la sesión NFC: $detay';
+  }
+
+  @override
+  String nfcHataOkumaIptal(Object detay) {
+    return 'Lectura cancelada: $detay';
+  }
+
+  @override
+  String get nfcHataBilinmeyen => 'Se ha producido un error desconocido.';
+
+  @override
+  String get nfcIosYaklastir =>
+      'Acerque la etiqueta a la parte trasera del teléfono.';
+
+  @override
+  String get nfcIosOkundu => 'Leída';
+
+  @override
+  String get nfcIosIptal => 'Cancelado';
+
+  @override
+  String get nfcIosOkunamadi => 'No se pudo leer';
+
+  @override
+  String get seffafYuklenemedi => 'No se pudo cargar. Inténtelo de nuevo.';
+
+  @override
+  String get seffafAyYayinlandi => 'El mes se ha publicado.';
+
+  @override
+  String get seffafYayinGeriAlindi => 'Publicación retirada.';
+
+  @override
+  String get seffafVeriYokYonetim =>
+      'Aún no hay datos financieros. Los meses aparecerán al registrar ingresos/gastos o cuotas.';
+
+  @override
+  String get seffafVeriYok =>
+      'La administración aún no ha publicado un resumen.';
+
+  @override
+  String get seffafTaslakEki => ' • borrador';
+
+  @override
+  String get seffafYayinla => 'Publicar este mes';
+
+  @override
+  String get seffafYayindaAlt => 'Los residentes ven este resumen.';
+
+  @override
+  String get seffafOnizlemeAlt =>
+      'Solo lo ve la administración (vista previa).';
+
+  @override
+  String get seffafOnizlemeUyari => 'Vista previa — aún sin publicar.';
+
+  @override
+  String seffafOzetBaslik(Object ay) {
+    return '$ay — Resumen';
+  }
+
+  @override
+  String get seffafToplamGelir => 'Ingresos totales';
+
+  @override
+  String get seffafToplamGider => 'Gastos totales';
+
+  @override
+  String get seffafNet => 'Neto';
+
+  @override
+  String seffafOncekiAyNet(Object tutar) {
+    return 'Neto del mes anterior: $tutar';
+  }
+
+  @override
+  String get seffafGiderDagilimi => 'Distribución de gastos';
+
+  @override
+  String get seffafGiderYok => 'No hay gastos registrados este mes.';
+
+  @override
+  String get seffafAidatToplama => 'Cobro de cuotas';
+
+  @override
+  String get seffafTahakkukYok => 'No hay devengo para este mes.';
+
+  @override
+  String seffafOdeyenDaire(Object odeyen, Object toplam) {
+    return 'Unidades pagadas: $odeyen/$toplam';
+  }
+
+  @override
+  String seffafTahsilatSatir(Object tahsilat, Object tahakkuk, Object yuzde) {
+    return 'Cobrado: $tahsilat / $tahakkuk  (importe: $yuzde %)';
+  }
+
+  @override
+  String seffafGecikmede(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n unidades vencidas',
+      one: '$n unidad vencida',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ortakYuzde(Object yuzde) {
+    return '$yuzde %';
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/budget/domain/budget_models.dart';
+import 'package:mobile/src/core/i18n/l10n.dart';
 
 void main() {
   group('BudgetTip.fromWire', () {
@@ -104,17 +105,12 @@ void main() {
       expect(parseTlToKurus('12,345'), isNull); // 3 ondalik hane olmaz
     });
 
-    test('formatKurusAsTl: TR gosterimi', () {
-      expect(formatKurusAsTl(245000), '2.450,00');
-      expect(formatKurusAsTl(123456), '1.234,56');
-      expect(formatKurusAsTl(75000), '750,00');
-      expect(formatKurusAsTl(-50000), '-500,00'); // negatif kasa
-      expect(formatKurusAsTl(5), '0,05');
-    });
-
+    // GOSTERIM tarafi tur 9'da core/i18n'e tasindi (`tlTutar`); domain'deki
+    // ikiz (`formatKurusAsTl`) kaldirildi. Bicim iddialari
+    // butce_demirbas_kargo_i18n_test icinde `tlSonEkli` uzerinden yasiyor.
     test('gidis-donus kayipsiz (integer kurus)', () {
       for (final kurus in [1, 99, 100, 123456, 99999999]) {
-        expect(parseTlToKurus(formatKurusAsTl(kurus)), kurus);
+        expect(parseTlToKurus(tlTutar(kurus)), kurus);
       }
     });
   });

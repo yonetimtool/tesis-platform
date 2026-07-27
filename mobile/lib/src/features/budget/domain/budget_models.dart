@@ -1,7 +1,9 @@
 /// Butce modulunun domain modelleri — `contracts/openapi.yaml` Budget*
 /// semalarina uyar. PARA HER YERDE INTEGER KURUS tasinir (float asla);
-/// TL yalnizca GOSTERIM/GIRIS katmaninda ([formatKurusAsTl] /
-/// [parseTlToKurus]) donusturulur.
+/// TL yalnizca GOSTERIM/GIRIS katmaninda donusturulur: GIRIS burada
+/// ([parseTlToKurus]), GOSTERIM `core/i18n/l10n.dart` icinde
+/// (`tlSonEkli`/`tlIsaretli`). Tur 9'da `formatKurusAsTl` KALDIRILDI —
+/// gruplamanin iki uygulamasi vardi, tek kaynak `tlTutar` oldu.
 library;
 
 /// `budget_tip` enum'unun istemci aynasi.
@@ -64,7 +66,7 @@ class BudgetEntry {
   final String? kategoriAd;
   final BudgetTip tip;
 
-  /// KURUS (integer) — gosterimde [formatKurusAsTl] ile TL'ye cevrilir.
+  /// KURUS (integer) — gosterimde `tlSonEkli` ile TL'ye cevrilir.
   final int tutarKurus;
 
   final DateTime tarih;
@@ -251,18 +253,3 @@ int? parseTlToKurus(String input) {
   return kurus > 0 ? kurus : null;
 }
 
-/// INTEGER KURUS'u TR bicimli TL metnine cevirir (orn. 245000 -> "2.450,00").
-String formatKurusAsTl(int kurus) {
-  final negatif = kurus < 0;
-  final abs = kurus.abs();
-  final tam = abs ~/ 100;
-  final ondalik = (abs % 100).toString().padLeft(2, '0');
-
-  final digits = tam.toString();
-  final buf = StringBuffer();
-  for (var i = 0; i < digits.length; i++) {
-    if (i > 0 && (digits.length - i) % 3 == 0) buf.write('.');
-    buf.write(digits[i]);
-  }
-  return '${negatif ? '-' : ''}$buf,$ondalik';
-}

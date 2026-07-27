@@ -2,6 +2,8 @@
 /// konusur; ham platform nesneleri (NfcTag, TagPigeon) buraya sizmaz.
 library;
 
+import 'nfc_hatasi.dart';
+
 /// Algilanan etiketin kaba siniflandirmasi.
 ///
 /// Tam tip tespiti icin uretici komutlari (GET_VERSION) gerekir; burada
@@ -67,7 +69,8 @@ class NfcReadResult {
     this.tagType = NfcTagType.unknown,
     this.sdmData,
     this.readAt,
-    this.error,
+    this.hata,
+    this.hataDetay,
   });
 
   /// Etiket UID'i: BUYUK HARF, IKI NOKTA AYRACLI hex (orn. "04:A3:B2:C1:90:00").
@@ -83,15 +86,21 @@ class NfcReadResult {
   /// kullanilir; okuma aninda sabitlenir (offline gecikmeli gonderim icin).
   final DateTime? readAt;
 
-  /// Kullaniciya gosterilecek hata mesaji. null ise okuma basarili.
-  final String? error;
+  /// Hata KIMLIGI (metin DEGIL — bkz. nfc_hatasi.dart). null ise okuma
+  /// basarili.
+  final NfcHatasi? hata;
 
-  bool get isSuccess => error == null && uid != null;
+  /// Platform/istisna detayi (teknik): yalniz [hata] parametreli kimlikse
+  /// anlamlidir ve cevrilmez — cumleye `{detay}` olarak girer.
+  final String? hataDetay;
 
-  factory NfcReadResult.failure(String message) =>
-      NfcReadResult(error: message);
+  bool get isSuccess => hata == null && uid != null;
+
+  factory NfcReadResult.failure(NfcHatasi hata, {String? detay}) =>
+      NfcReadResult(hata: hata, hataDetay: detay);
 
   @override
   String toString() =>
-      'NfcReadResult(uid: $uid, tagType: ${tagType.name}, sdm: $sdmData, error: $error)';
+      'NfcReadResult(uid: $uid, tagType: ${tagType.name}, sdm: $sdmData, '
+      'hata: ${hata?.name}, detay: $hataDetay)';
 }

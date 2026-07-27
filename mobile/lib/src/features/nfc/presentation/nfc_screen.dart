@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../routing/app_router.dart';
 import '../../checkpoints/data/checkpoint_api.dart';
 import '../../scan/data/scan_outbox.dart';
 import '../../scan/domain/outbox_entry.dart';
 import '../../scan/domain/scan.dart';
+import '../domain/nfc_hatasi.dart';
 import '../domain/nfc_read_result.dart';
+import 'nfc_hata_metni.dart';
 import 'nfc_controller.dart';
 
 /// "Etiketi okutun" ekrani. Etiket okununca okutma ANINDA kalici outbox'a
@@ -28,7 +30,9 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
 
   Future<void> _startNewRead() async {
     setState(() => _currentKey = null);
-    await ref.read(nfcControllerProvider.notifier).startReading();
+    await ref
+        .read(nfcControllerProvider.notifier)
+        .startReading(nfcIosMetinleri(context.l10n));
     if (!mounted) return;
 
     final result = ref.read(nfcControllerProvider).result;
@@ -58,7 +62,7 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
       checkpoints = await ref.read(checkpointsProvider.future);
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Noktalar alınamadı: $e')),
+        SnackBar(content: Text(_l10n.nfcNoktalarAlinamadi('$e'))),
       );
       return;
     }
@@ -70,22 +74,22 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            const ListTile(
-              title: Text('TEST: hangi noktayı okutalım?',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: Text('Fiziksel etiket olmadan okutmayı simüle eder.'),
+            ListTile(
+              title: Text(_l10n.nfcTestBaslik,
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Text(_l10n.nfcTestAlt),
             ),
             if (aktif.isEmpty)
-              const ListTile(
-                title: Text('Aktif kontrol noktası yok.'),
-                subtitle: Text('Önce "Kontrol noktaları"ndan ekleyin.'),
+              ListTile(
+                title: Text(_l10n.nfcAktifNoktaYok),
+                subtitle: Text(_l10n.nfcAktifNoktaYokAlt),
               )
             else
               for (final c in aktif)
                 ListTile(
                   leading: const Icon(Icons.nfc),
                   title: Text(c.ad),
-                  subtitle: Text('UID: ${c.nfcTagUid}'),
+                  subtitle: Text(_l10n.nfcUidSatir(ltrIzole(c.nfcTagUid))),
                   onTap: () => Navigator.of(context).pop(c),
                 ),
           ],
@@ -105,13 +109,14 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(nfcControllerProvider);
     final nfc = ref.read(nfcControllerProvider.notifier);
+    final l10n = context.l10n;
     final outboxState = ref.watch(scanOutboxProvider);
     final currentEntry =
         _currentKey == null ? null : outboxState.byKey(_currentKey!);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(trUpper('NFC etiket okuma')),
+        title: Text(baslikBuyuk(l10n.nfcBaslik, context.dilKodu)),
         actions: [
           _OutboxBadge(
             pendingCount: outboxState.pendingCount,
@@ -128,7 +133,7 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
               _StatusIcon(status: state.status),
               const SizedBox(height: 16),
               Text(
-                _statusLabel(state.status),
+                _statusLabel(l10n, state.status),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -142,12 +147,18 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
                 _OutboxOutcome(entry: currentEntry),
               ],
               if (state.status == NfcStatus.error)
-                _ErrorBox(message: state.errorMessage ?? 'Hata'),
+                _ErrorBox(
+                  message: nfcHataMetni(
+                    l10n,
+                    state.hata ?? NfcHatasi.bilinmeyen,
+                    detay: state.hataDetay,
+                  ),
+                ),
               const SizedBox(height: 32),
               _ActionButton(
                 status: state.status,
                 onRead: _startNewRead,
-                onCancel: nfc.cancel,
+                onCancel: () => nfc.cancel(iptalMetni: l10n.nfcIosIptal),
               ),
               // TEST (yalniz debug): fiziksel etiket olmadan okutma simulasyonu.
               if (kDebugMode) ...[
@@ -157,10 +168,10 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
                       ? null
                       : _manualTestScan,
                   icon: const Icon(Icons.science_outlined),
-                  label: const Text('Manuel okut (test)'),
+                  label: Text(l10n.nfcManuelOkut),
                 ),
                 Text(
-                  'Yalnızca test derlemesinde görünür.',
+                  l10n.nfcTestGorunur,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -171,12 +182,14 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
     );
   }
 
-  String _statusLabel(NfcStatus status) {
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
+  String _statusLabel(AppLocalizations l10n, NfcStatus status) {
     return switch (status) {
-      NfcStatus.ready => 'Okumaya hazır. Başlat\'a dokunun.',
-      NfcStatus.reading => 'Etiketi telefonun arkasına yaklaştırın...',
-      NfcStatus.success => 'Etiket okundu.',
-      NfcStatus.error => 'Etiket okunamadı.',
+      NfcStatus.ready => l10n.nfcHazir,
+      NfcStatus.reading => l10n.nfcYaklastirBekliyor,
+      NfcStatus.success => l10n.nfcOkundu,
+      NfcStatus.error => l10n.gorevEtiketOkunamadi,
     };
   }
 }
@@ -190,10 +203,11 @@ class _OutboxBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return IconButton(
       tooltip: pendingCount > 0
-          ? '$pendingCount okutma gönderim bekliyor'
-          : 'Gönderim kuyruğu',
+          ? l10n.nfcKuyrukBekleyen(pendingCount)
+          : l10n.nfcKuyruk,
       onPressed: onTap,
       icon: Badge(
         isLabelVisible: pendingCount > 0,
@@ -215,44 +229,46 @@ class _OutboxOutcome extends StatelessWidget {
   Widget build(BuildContext context) {
     final e = entry;
     if (e == null) return const SizedBox.shrink();
+    final l10n = context.l10n;
 
     return switch (e.status) {
-      OutboxStatus.bekliyor => const _ScanOutcome(
+      OutboxStatus.bekliyor => _ScanOutcome(
           icon: Icons.check_circle,
           color: Colors.teal,
-          text:
-              'Kaydedildi ✓ — bağlantı gelince otomatik gönderilecek.',
+          text: l10n.nfcKaydedildiBekliyor,
         ),
-      OutboxStatus.gonderiliyor => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
+      OutboxStatus.gonderiliyor => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-              SizedBox(width: 12),
-              Text('Kaydedildi ✓ — gönderiliyor...'),
+              const SizedBox(width: 12),
+              // Dar ekranda satira sigmayabilir — sar.
+              Expanded(child: Text(l10n.nfcKaydedildiGonderiliyor)),
             ],
           ),
         ),
       OutboxStatus.gonderildi => e.outcome == OutboxOutcome.duplicate
-          ? const _ScanOutcome(
+          ? _ScanOutcome(
               icon: Icons.info_outline,
               color: Colors.blueGrey,
-              text: 'Gönderildi ✓ — bu okutma zaten kayıtlıydı.',
+              text: l10n.nfcGonderildiZatenVar,
             )
-          : const _ScanOutcome(
+          : _ScanOutcome(
               icon: Icons.check_circle,
               color: Colors.green,
-              text: 'Gönderildi ✓ — okutma kaydedildi.',
+              text: l10n.nfcGonderildi,
             ),
+      // SERVER-LOCALIZED(next round): `lastError` sunucu metnidir.
       OutboxStatus.kaliciHata => _ScanOutcome(
           icon: Icons.link_off,
           color: Colors.orange,
-          text: e.lastError ?? 'Bu etiket hiçbir checkpoint ile eşleşmiyor.',
+          text: e.lastError ?? l10n.nfcEslesmeYok,
         ),
     };
   }
@@ -296,14 +312,15 @@ class _ResultCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 'UID' teknik alan adidir (cevrilmez); 'Tip' cevrilir.
             _KvRow(label: 'UID', value: result.uid ?? '-'),
             const SizedBox(height: 8),
-            _KvRow(label: 'Tip', value: result.tagType.name),
+            _KvRow(label: context.l10n.nfcTipEtiket, value: result.tagType.name),
             if (sdm != null) ...[
               const Divider(height: 24),
-              const Text(
-                'SDM (ham, doğrulanmamış)',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              Text(
+                context.l10n.nfcSdmBaslik,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               _KvRow(label: 'PICCData', value: sdm.piccData ?? '-'),
@@ -404,25 +421,26 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     switch (status) {
       case NfcStatus.reading:
         return OutlinedButton.icon(
           onPressed: onCancel,
           icon: const Icon(Icons.close),
-          label: const Text('Vazgeç'),
+          label: Text(l10n.ortakVazgec),
         );
       case NfcStatus.ready:
         return FilledButton.icon(
           onPressed: onRead,
           icon: const Icon(Icons.nfc),
-          label: const Text('Okumayı başlat'),
+          label: Text(l10n.nfcOkumayaBasla),
         );
       case NfcStatus.success:
       case NfcStatus.error:
         return OutlinedButton.icon(
           onPressed: onRead,
           icon: const Icon(Icons.refresh),
-          label: const Text('Tekrar oku'),
+          label: Text(l10n.nfcTekrarOku),
         );
     }
   }

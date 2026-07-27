@@ -2948,4 +2948,274 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get personelYok =>
       'Henüz saha personeli yok.\nSağ alttan ekleyebilirsiniz.';
+
+  @override
+  String get disKisiEkle => 'Kişi ekle';
+
+  @override
+  String get disListeAlinamadi => 'Liste alınamadı.';
+
+  @override
+  String get disKayitYokYonetim =>
+      'Henüz kayıt yok. Sağ alttan güvendiğiniz esnafı ekleyin.';
+
+  @override
+  String get disKayitYok => 'Henüz dış hizmet kaydı yok.';
+
+  @override
+  String get disNotEkleyin => 'Not ekleyin (yalnızca yönetici düzenler).';
+
+  @override
+  String get disNotuDuzenle => 'Notu düzenle';
+
+  @override
+  String get disBolumNotu => 'Bölüm notu';
+
+  @override
+  String get disNotIpucu =>
+      'örn. Yıllardır güvendiğimiz esnaflar; site güvenliği için yabancı kişileri içeri almayın.';
+
+  @override
+  String get disNotGuncellendi => 'Not güncellendi ✓';
+
+  @override
+  String get disAra => 'Ara';
+
+  @override
+  String get disSilOnay => 'Kayıt silinsin mi?';
+
+  @override
+  String disSilGovde(Object ad) {
+    return '\"$ad\" silinecek.';
+  }
+
+  @override
+  String get disSilindi => 'Silindi ✓';
+
+  @override
+  String get disYeniKisi => 'Yeni dış hizmet kişisi';
+
+  @override
+  String get disKisiDuzenle => 'Kişi düzenle';
+
+  @override
+  String get disTur => 'Hizmet türü';
+
+  @override
+  String get disTurIpucu => 'örn. Çilingir, Elektrik, Tesisat';
+
+  @override
+  String get disTurZorunlu => 'Tür zorunludur';
+
+  @override
+  String get disAd => 'Ad';
+
+  @override
+  String get disSoyad => 'Soyad';
+
+  @override
+  String get disAdGerekli => 'Ad gerekli';
+
+  @override
+  String get disSoyadGerekli => 'Soyad gerekli';
+
+  @override
+  String get nfcBaslik => 'NFC etiket okuma';
+
+  @override
+  String get nfcHazir => 'Okumaya hazır. Başlat\'a dokunun.';
+
+  @override
+  String get nfcYaklastirBekliyor =>
+      'Etiketi telefonun arkasına yaklaştırın...';
+
+  @override
+  String get nfcOkundu => 'Etiket okundu.';
+
+  @override
+  String get nfcOkumayaBasla => 'Okumayı başlat';
+
+  @override
+  String get nfcTekrarOku => 'Tekrar oku';
+
+  @override
+  String nfcKuyrukBekleyen(num n) {
+    return '$n okutma gönderim bekliyor';
+  }
+
+  @override
+  String get nfcKuyruk => 'Gönderim kuyruğu';
+
+  @override
+  String get nfcKaydedildiBekliyor =>
+      'Kaydedildi ✓ — bağlantı gelince otomatik gönderilecek.';
+
+  @override
+  String get nfcKaydedildiGonderiliyor => 'Kaydedildi ✓ — gönderiliyor...';
+
+  @override
+  String get nfcGonderildiZatenVar =>
+      'Gönderildi ✓ — bu okutma zaten kayıtlıydı.';
+
+  @override
+  String get nfcGonderildi => 'Gönderildi ✓ — okutma kaydedildi.';
+
+  @override
+  String get nfcEslesmeYok => 'Bu etiket hiçbir checkpoint ile eşleşmiyor.';
+
+  @override
+  String get nfcSdmBaslik => 'SDM (ham, doğrulanmamış)';
+
+  @override
+  String get nfcTipEtiket => 'Tip';
+
+  @override
+  String nfcNoktalarAlinamadi(Object hata) {
+    return 'Noktalar alınamadı: $hata';
+  }
+
+  @override
+  String get nfcTestBaslik => 'TEST: hangi noktayı okutalım?';
+
+  @override
+  String get nfcTestAlt => 'Fiziksel etiket olmadan okutmayı simüle eder.';
+
+  @override
+  String get nfcAktifNoktaYok => 'Aktif kontrol noktası yok.';
+
+  @override
+  String get nfcAktifNoktaYokAlt => 'Önce \"Kontrol noktaları\"ndan ekleyin.';
+
+  @override
+  String get nfcManuelOkut => 'Manuel okut (test)';
+
+  @override
+  String get nfcTestGorunur => 'Yalnızca test derlemesinde görünür.';
+
+  @override
+  String nfcUidSatir(Object uid) {
+    return 'UID: $uid';
+  }
+
+  @override
+  String get nfcHataKapali =>
+      'NFC kapalı. Lütfen cihaz ayarlarından NFC\'yi açın.';
+
+  @override
+  String get nfcHataDesteklenmiyor => 'Bu cihaz NFC desteklemiyor.';
+
+  @override
+  String get nfcHataUidOkunamadi => 'Etiket UID okunamadı.';
+
+  @override
+  String nfcHataCozumlenemedi(Object detay) {
+    return 'Etiket çözümlenemedi: $detay';
+  }
+
+  @override
+  String nfcHataOturum(Object detay) {
+    return 'NFC oturumu başlatılamadı: $detay';
+  }
+
+  @override
+  String nfcHataOkumaIptal(Object detay) {
+    return 'Okuma iptal edildi: $detay';
+  }
+
+  @override
+  String get nfcHataBilinmeyen => 'Bilinmeyen bir hata oluştu.';
+
+  @override
+  String get nfcIosYaklastir => 'Etiketi telefonun arkasına yaklaştırın.';
+
+  @override
+  String get nfcIosOkundu => 'Okundu';
+
+  @override
+  String get nfcIosIptal => 'İptal edildi';
+
+  @override
+  String get nfcIosOkunamadi => 'Okunamadı';
+
+  @override
+  String get seffafYuklenemedi => 'Yüklenemedi. Lütfen tekrar deneyin.';
+
+  @override
+  String get seffafAyYayinlandi => 'Ay yayınlandı.';
+
+  @override
+  String get seffafYayinGeriAlindi => 'Yayın geri alındı.';
+
+  @override
+  String get seffafVeriYokYonetim =>
+      'Henüz finansal veri yok. Gelir/gider veya aidat girildiğinde aylar burada listelenir.';
+
+  @override
+  String get seffafVeriYok => 'Yönetim henüz özet yayınlamadı.';
+
+  @override
+  String get seffafTaslakEki => ' • taslak';
+
+  @override
+  String get seffafYayinla => 'Bu ayı yayınla';
+
+  @override
+  String get seffafYayindaAlt => 'Sakinler bu özeti görüyor.';
+
+  @override
+  String get seffafOnizlemeAlt => 'Yalnızca yönetim görüyor (önizleme).';
+
+  @override
+  String get seffafOnizlemeUyari => 'Önizleme — henüz yayınlanmadı.';
+
+  @override
+  String seffafOzetBaslik(Object ay) {
+    return '$ay — Özet';
+  }
+
+  @override
+  String get seffafToplamGelir => 'Toplam gelir';
+
+  @override
+  String get seffafToplamGider => 'Toplam gider';
+
+  @override
+  String get seffafNet => 'Net';
+
+  @override
+  String seffafOncekiAyNet(Object tutar) {
+    return 'Önceki ay net: $tutar';
+  }
+
+  @override
+  String get seffafGiderDagilimi => 'Gider dağılımı';
+
+  @override
+  String get seffafGiderYok => 'Bu ay gider kaydı yok.';
+
+  @override
+  String get seffafAidatToplama => 'Aidat toplama';
+
+  @override
+  String get seffafTahakkukYok => 'Bu ay için tahakkuk yok.';
+
+  @override
+  String seffafOdeyenDaire(Object odeyen, Object toplam) {
+    return 'Ödeyen daire: $odeyen/$toplam';
+  }
+
+  @override
+  String seffafTahsilatSatir(Object tahsilat, Object tahakkuk, Object yuzde) {
+    return 'Tahsilat: $tahsilat / $tahakkuk  (tutar: %$yuzde)';
+  }
+
+  @override
+  String seffafGecikmede(num n) {
+    return 'Gecikmede $n daire';
+  }
+
+  @override
+  String ortakYuzde(Object yuzde) {
+    return '%$yuzde';
+  }
 }

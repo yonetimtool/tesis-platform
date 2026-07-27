@@ -8,6 +8,8 @@ import 'package:mobile/src/features/transparency/data/transparency_api.dart';
 import 'package:mobile/src/features/transparency/domain/transparency_models.dart';
 import 'package:mobile/src/features/transparency/presentation/transparency_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 TransparencyBoard _board({bool yayinlandi = true}) => TransparencyBoard(
       ay: '2026-06',
       yayinlandi: yayinlandi,
@@ -56,7 +58,7 @@ Widget _app(_FakeApi api, UserRole role) => ProviderScope(
         transparencyApiProvider.overrideWithValue(api),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
-      child: const MaterialApp(home: TransparencyScreen()),
+      child: l10nApp(const TransparencyScreen()),
     );
 
 void main() {

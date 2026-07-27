@@ -5212,6 +5212,480 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Henüz saha personeli yok.\nSağ alttan ekleyebilirsiniz.'**
   String get personelYok;
+
+  /// No description provided for @disKisiEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişi ekle'**
+  String get disKisiEkle;
+
+  /// No description provided for @disListeAlinamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Liste alınamadı.'**
+  String get disListeAlinamadi;
+
+  /// No description provided for @disKayitYokYonetim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz kayıt yok. Sağ alttan güvendiğiniz esnafı ekleyin.'**
+  String get disKayitYokYonetim;
+
+  /// No description provided for @disKayitYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz dış hizmet kaydı yok.'**
+  String get disKayitYok;
+
+  /// No description provided for @disNotEkleyin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Not ekleyin (yalnızca yönetici düzenler).'**
+  String get disNotEkleyin;
+
+  /// No description provided for @disNotuDuzenle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Notu düzenle'**
+  String get disNotuDuzenle;
+
+  /// No description provided for @disBolumNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bölüm notu'**
+  String get disBolumNotu;
+
+  /// No description provided for @disNotIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. Yıllardır güvendiğimiz esnaflar; site güvenliği için yabancı kişileri içeri almayın.'**
+  String get disNotIpucu;
+
+  /// No description provided for @disNotGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Not güncellendi ✓'**
+  String get disNotGuncellendi;
+
+  /// No description provided for @disAra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ara'**
+  String get disAra;
+
+  /// No description provided for @disSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt silinsin mi?'**
+  String get disSilOnay;
+
+  /// No description provided for @disSilGovde.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" silinecek.'**
+  String disSilGovde(Object ad);
+
+  /// No description provided for @disSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Silindi ✓'**
+  String get disSilindi;
+
+  /// No description provided for @disYeniKisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni dış hizmet kişisi'**
+  String get disYeniKisi;
+
+  /// No description provided for @disKisiDuzenle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişi düzenle'**
+  String get disKisiDuzenle;
+
+  /// No description provided for @disTur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hizmet türü'**
+  String get disTur;
+
+  /// No description provided for @disTurIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. Çilingir, Elektrik, Tesisat'**
+  String get disTurIpucu;
+
+  /// No description provided for @disTurZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tür zorunludur'**
+  String get disTurZorunlu;
+
+  /// No description provided for @disAd.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad'**
+  String get disAd;
+
+  /// No description provided for @disSoyad.
+  ///
+  /// In tr, this message translates to:
+  /// **'Soyad'**
+  String get disSoyad;
+
+  /// No description provided for @disAdGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad gerekli'**
+  String get disAdGerekli;
+
+  /// No description provided for @disSoyadGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Soyad gerekli'**
+  String get disSoyadGerekli;
+
+  /// No description provided for @nfcBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'NFC etiket okuma'**
+  String get nfcBaslik;
+
+  /// No description provided for @nfcHazir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okumaya hazır. Başlat\'a dokunun.'**
+  String get nfcHazir;
+
+  /// No description provided for @nfcYaklastirBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etiketi telefonun arkasına yaklaştırın...'**
+  String get nfcYaklastirBekliyor;
+
+  /// No description provided for @nfcOkundu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etiket okundu.'**
+  String get nfcOkundu;
+
+  /// No description provided for @nfcOkumayaBasla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okumayı başlat'**
+  String get nfcOkumayaBasla;
+
+  /// No description provided for @nfcTekrarOku.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tekrar oku'**
+  String get nfcTekrarOku;
+
+  /// Rozet ipucu (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} okutma gönderim bekliyor'**
+  String nfcKuyrukBekleyen(num n);
+
+  /// No description provided for @nfcKuyruk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderim kuyruğu'**
+  String get nfcKuyruk;
+
+  /// No description provided for @nfcKaydedildiBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydedildi ✓ — bağlantı gelince otomatik gönderilecek.'**
+  String get nfcKaydedildiBekliyor;
+
+  /// No description provided for @nfcKaydedildiGonderiliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydedildi ✓ — gönderiliyor...'**
+  String get nfcKaydedildiGonderiliyor;
+
+  /// No description provided for @nfcGonderildiZatenVar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderildi ✓ — bu okutma zaten kayıtlıydı.'**
+  String get nfcGonderildiZatenVar;
+
+  /// No description provided for @nfcGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderildi ✓ — okutma kaydedildi.'**
+  String get nfcGonderildi;
+
+  /// No description provided for @nfcEslesmeYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu etiket hiçbir checkpoint ile eşleşmiyor.'**
+  String get nfcEslesmeYok;
+
+  /// No description provided for @nfcSdmBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'SDM (ham, doğrulanmamış)'**
+  String get nfcSdmBaslik;
+
+  /// No description provided for @nfcTipEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tip'**
+  String get nfcTipEtiket;
+
+  /// No description provided for @nfcNoktalarAlinamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Noktalar alınamadı: {hata}'**
+  String nfcNoktalarAlinamadi(Object hata);
+
+  /// No description provided for @nfcTestBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'TEST: hangi noktayı okutalım?'**
+  String get nfcTestBaslik;
+
+  /// No description provided for @nfcTestAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fiziksel etiket olmadan okutmayı simüle eder.'**
+  String get nfcTestAlt;
+
+  /// No description provided for @nfcAktifNoktaYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aktif kontrol noktası yok.'**
+  String get nfcAktifNoktaYok;
+
+  /// No description provided for @nfcAktifNoktaYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önce \"Kontrol noktaları\"ndan ekleyin.'**
+  String get nfcAktifNoktaYokAlt;
+
+  /// No description provided for @nfcManuelOkut.
+  ///
+  /// In tr, this message translates to:
+  /// **'Manuel okut (test)'**
+  String get nfcManuelOkut;
+
+  /// No description provided for @nfcTestGorunur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnızca test derlemesinde görünür.'**
+  String get nfcTestGorunur;
+
+  /// Teknik alan — UID etiketi cevrilmez
+  ///
+  /// In tr, this message translates to:
+  /// **'UID: {uid}'**
+  String nfcUidSatir(Object uid);
+
+  /// No description provided for @nfcHataKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'NFC kapalı. Lütfen cihaz ayarlarından NFC\'yi açın.'**
+  String get nfcHataKapali;
+
+  /// No description provided for @nfcHataDesteklenmiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu cihaz NFC desteklemiyor.'**
+  String get nfcHataDesteklenmiyor;
+
+  /// No description provided for @nfcHataUidOkunamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etiket UID okunamadı.'**
+  String get nfcHataUidOkunamadi;
+
+  /// No description provided for @nfcHataCozumlenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etiket çözümlenemedi: {detay}'**
+  String nfcHataCozumlenemedi(Object detay);
+
+  /// No description provided for @nfcHataOturum.
+  ///
+  /// In tr, this message translates to:
+  /// **'NFC oturumu başlatılamadı: {detay}'**
+  String nfcHataOturum(Object detay);
+
+  /// No description provided for @nfcHataOkumaIptal.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okuma iptal edildi: {detay}'**
+  String nfcHataOkumaIptal(Object detay);
+
+  /// No description provided for @nfcHataBilinmeyen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bilinmeyen bir hata oluştu.'**
+  String get nfcHataBilinmeyen;
+
+  /// iOS SISTEM sayfasinda gorunur (NFCTagReaderSession)
+  ///
+  /// In tr, this message translates to:
+  /// **'Etiketi telefonun arkasına yaklaştırın.'**
+  String get nfcIosYaklastir;
+
+  /// iOS SISTEM sayfasinda gorunur (NFCTagReaderSession)
+  ///
+  /// In tr, this message translates to:
+  /// **'Okundu'**
+  String get nfcIosOkundu;
+
+  /// No description provided for @nfcIosIptal.
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal edildi'**
+  String get nfcIosIptal;
+
+  /// No description provided for @nfcIosOkunamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okunamadı'**
+  String get nfcIosOkunamadi;
+
+  /// No description provided for @seffafYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yüklenemedi. Lütfen tekrar deneyin.'**
+  String get seffafYuklenemedi;
+
+  /// No description provided for @seffafAyYayinlandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ay yayınlandı.'**
+  String get seffafAyYayinlandi;
+
+  /// No description provided for @seffafYayinGeriAlindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yayın geri alındı.'**
+  String get seffafYayinGeriAlindi;
+
+  /// No description provided for @seffafVeriYokYonetim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz finansal veri yok. Gelir/gider veya aidat girildiğinde aylar burada listelenir.'**
+  String get seffafVeriYokYonetim;
+
+  /// No description provided for @seffafVeriYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetim henüz özet yayınlamadı.'**
+  String get seffafVeriYok;
+
+  /// No description provided for @seffafTaslakEki.
+  ///
+  /// In tr, this message translates to:
+  /// **' • taslak'**
+  String get seffafTaslakEki;
+
+  /// No description provided for @seffafYayinla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ayı yayınla'**
+  String get seffafYayinla;
+
+  /// No description provided for @seffafYayindaAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakinler bu özeti görüyor.'**
+  String get seffafYayindaAlt;
+
+  /// No description provided for @seffafOnizlemeAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnızca yönetim görüyor (önizleme).'**
+  String get seffafOnizlemeAlt;
+
+  /// No description provided for @seffafOnizlemeUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önizleme — henüz yayınlanmadı.'**
+  String get seffafOnizlemeUyari;
+
+  /// No description provided for @seffafOzetBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ay} — Özet'**
+  String seffafOzetBaslik(Object ay);
+
+  /// No description provided for @seffafToplamGelir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam gelir'**
+  String get seffafToplamGelir;
+
+  /// No description provided for @seffafToplamGider.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam gider'**
+  String get seffafToplamGider;
+
+  /// No description provided for @seffafNet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Net'**
+  String get seffafNet;
+
+  /// No description provided for @seffafOncekiAyNet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önceki ay net: {tutar}'**
+  String seffafOncekiAyNet(Object tutar);
+
+  /// No description provided for @seffafGiderDagilimi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gider dağılımı'**
+  String get seffafGiderDagilimi;
+
+  /// No description provided for @seffafGiderYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ay gider kaydı yok.'**
+  String get seffafGiderYok;
+
+  /// No description provided for @seffafAidatToplama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat toplama'**
+  String get seffafAidatToplama;
+
+  /// No description provided for @seffafTahakkukYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ay için tahakkuk yok.'**
+  String get seffafTahakkukYok;
+
+  /// Odeyen / toplam daire sayisi
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeyen daire: {odeyen}/{toplam}'**
+  String seffafOdeyenDaire(Object odeyen, Object toplam);
+
+  /// Tahsilat/tahakkuk tutarlari + tutar orani (%)
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahsilat: {tahsilat} / {tahakkuk}  (tutar: %{yuzde})'**
+  String seffafTahsilatSatir(Object tahsilat, Object tahakkuk, Object yuzde);
+
+  /// Geciken daire sayaci (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'Gecikmede {n} daire'**
+  String seffafGecikmede(num n);
+
+  /// Yalin yuzde gosterimi; isaretin YERI dile gore degisir
+  ///
+  /// In tr, this message translates to:
+  /// **'%{yuzde}'**
+  String ortakYuzde(Object yuzde);
 }
 
 class _AppLocalizationsDelegate

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/l10n.dart';
+import '../../nfc/presentation/nfc_hata_metni.dart';
 import '../domain/asset_models.dart';
 import 'assets_controller.dart';
 import 'demirbas_mesaj_metni.dart';
@@ -98,7 +99,8 @@ class _ScanTab extends ConsumerWidget {
         SizedBox(
           height: 56,
           child: FilledButton.icon(
-            onPressed: busy ? null : controller.scanTag,
+            onPressed:
+                busy ? null : () => controller.scanTag(nfcIosMetinleri(l10n)),
             icon: busy
                 ? const SizedBox(
                     width: 20,

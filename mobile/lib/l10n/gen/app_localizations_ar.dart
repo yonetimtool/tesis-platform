@@ -3170,4 +3170,292 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get personelYok =>
       'لا يوجد موظفو ميدان بعد.\nيمكنك الإضافة من أسفل اليمين.';
+
+  @override
+  String get disKisiEkle => 'إضافة جهة اتصال';
+
+  @override
+  String get disListeAlinamadi => 'تعذّر تحميل القائمة.';
+
+  @override
+  String get disKayitYokYonetim =>
+      'لا توجد سجلات بعد. أضف من أسفل اليمين حرفياً تثق به.';
+
+  @override
+  String get disKayitYok => 'لا توجد سجلات خدمات خارجية بعد.';
+
+  @override
+  String get disNotEkleyin => 'أضف ملاحظة (الإدارة فقط يمكنها التعديل).';
+
+  @override
+  String get disNotuDuzenle => 'تعديل الملاحظة';
+
+  @override
+  String get disBolumNotu => 'ملاحظة القسم';
+
+  @override
+  String get disNotIpucu =>
+      'مثال: حرفيون نثق بهم منذ سنوات؛ لأمن المجمّع لا تُدخل الغرباء.';
+
+  @override
+  String get disNotGuncellendi => 'تم تحديث الملاحظة ✓';
+
+  @override
+  String get disAra => 'اتصال';
+
+  @override
+  String get disSilOnay => 'حذف هذا السجل؟';
+
+  @override
+  String disSilGovde(Object ad) {
+    return 'سيتم حذف \"$ad\".';
+  }
+
+  @override
+  String get disSilindi => 'تم الحذف ✓';
+
+  @override
+  String get disYeniKisi => 'جهة اتصال خارجية جديدة';
+
+  @override
+  String get disKisiDuzenle => 'تعديل جهة الاتصال';
+
+  @override
+  String get disTur => 'نوع الخدمة';
+
+  @override
+  String get disTurIpucu => 'مثال: أقفال، كهرباء، سباكة';
+
+  @override
+  String get disTurZorunlu => 'النوع إلزامي';
+
+  @override
+  String get disAd => 'الاسم';
+
+  @override
+  String get disSoyad => 'اسم العائلة';
+
+  @override
+  String get disAdGerekli => 'الاسم مطلوب';
+
+  @override
+  String get disSoyadGerekli => 'اسم العائلة مطلوب';
+
+  @override
+  String get nfcBaslik => 'قراءة وسم NFC';
+
+  @override
+  String get nfcHazir => 'جاهز للقراءة. اضغط ابدأ.';
+
+  @override
+  String get nfcYaklastirBekliyor => 'قرّب الوسم من ظهر الهاتف...';
+
+  @override
+  String get nfcOkundu => 'تم قراءة الوسم.';
+
+  @override
+  String get nfcOkumayaBasla => 'ابدأ القراءة';
+
+  @override
+  String get nfcTekrarOku => 'اقرأ مرة أخرى';
+
+  @override
+  String nfcKuyrukBekleyen(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n مسح في انتظار الإرسال',
+      many: '$n مسحاً في انتظار الإرسال',
+      few: '$n مسحات في انتظار الإرسال',
+      two: 'مسحان في انتظار الإرسال',
+      one: 'مسح واحد في انتظار الإرسال',
+      zero: 'لا مسحات في الانتظار',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get nfcKuyruk => 'قائمة الإرسال';
+
+  @override
+  String get nfcKaydedildiBekliyor =>
+      'تم الحفظ ✓ — سيُرسل تلقائياً عند توفر الاتصال.';
+
+  @override
+  String get nfcKaydedildiGonderiliyor => 'تم الحفظ ✓ — جارٍ الإرسال...';
+
+  @override
+  String get nfcGonderildiZatenVar =>
+      'تم الإرسال ✓ — هذا المسح كان مسجّلاً بالفعل.';
+
+  @override
+  String get nfcGonderildi => 'تم الإرسال ✓ — تم تسجيل المسح.';
+
+  @override
+  String get nfcEslesmeYok => 'هذا الوسم لا يطابق أي نقطة تفتيش.';
+
+  @override
+  String get nfcSdmBaslik => 'SDM (خام، غير مُتحقَّق)';
+
+  @override
+  String get nfcTipEtiket => 'النوع';
+
+  @override
+  String nfcNoktalarAlinamadi(Object hata) {
+    return 'تعذّر تحميل النقاط: $hata';
+  }
+
+  @override
+  String get nfcTestBaslik => 'اختبار: أي نقطة نمسح؟';
+
+  @override
+  String get nfcTestAlt => 'يحاكي المسح بدون وسم مادي.';
+
+  @override
+  String get nfcAktifNoktaYok => 'لا توجد نقاط تفتيش نشطة.';
+
+  @override
+  String get nfcAktifNoktaYokAlt => 'أضف واحدة أولاً من \"نقاط التفتيش\".';
+
+  @override
+  String get nfcManuelOkut => 'مسح يدوي (اختبار)';
+
+  @override
+  String get nfcTestGorunur => 'يظهر في نسخ الاختبار فقط.';
+
+  @override
+  String nfcUidSatir(Object uid) {
+    return 'UID: $uid';
+  }
+
+  @override
+  String get nfcHataKapali => 'NFC مغلق. الرجاء تشغيل NFC من إعدادات الجهاز.';
+
+  @override
+  String get nfcHataDesteklenmiyor => 'هذا الجهاز لا يدعم NFC.';
+
+  @override
+  String get nfcHataUidOkunamadi => 'تعذّر قراءة معرّف الوسم (UID).';
+
+  @override
+  String nfcHataCozumlenemedi(Object detay) {
+    return 'تعذّر تحليل الوسم: $detay';
+  }
+
+  @override
+  String nfcHataOturum(Object detay) {
+    return 'تعذّر بدء جلسة NFC: $detay';
+  }
+
+  @override
+  String nfcHataOkumaIptal(Object detay) {
+    return 'أُلغيت القراءة: $detay';
+  }
+
+  @override
+  String get nfcHataBilinmeyen => 'حدث خطأ غير معروف.';
+
+  @override
+  String get nfcIosYaklastir => 'قرّب الوسم من ظهر الهاتف.';
+
+  @override
+  String get nfcIosOkundu => 'تم القراءة';
+
+  @override
+  String get nfcIosIptal => 'أُلغي';
+
+  @override
+  String get nfcIosOkunamadi => 'تعذّرت القراءة';
+
+  @override
+  String get seffafYuklenemedi => 'تعذّر التحميل. الرجاء المحاولة مرة أخرى.';
+
+  @override
+  String get seffafAyYayinlandi => 'تم نشر الشهر.';
+
+  @override
+  String get seffafYayinGeriAlindi => 'تم سحب النشر.';
+
+  @override
+  String get seffafVeriYokYonetim =>
+      'لا توجد بيانات مالية بعد. تظهر الأشهر هنا بعد إدخال الإيرادات/المصروفات أو الرسوم.';
+
+  @override
+  String get seffafVeriYok => 'لم تنشر الإدارة ملخصاً بعد.';
+
+  @override
+  String get seffafTaslakEki => ' • مسودة';
+
+  @override
+  String get seffafYayinla => 'انشر هذا الشهر';
+
+  @override
+  String get seffafYayindaAlt => 'السكان يرون هذا الملخص.';
+
+  @override
+  String get seffafOnizlemeAlt => 'الإدارة فقط تراه (معاينة).';
+
+  @override
+  String get seffafOnizlemeUyari => 'معاينة — لم يُنشر بعد.';
+
+  @override
+  String seffafOzetBaslik(Object ay) {
+    return '$ay — الملخص';
+  }
+
+  @override
+  String get seffafToplamGelir => 'إجمالي الإيرادات';
+
+  @override
+  String get seffafToplamGider => 'إجمالي المصروفات';
+
+  @override
+  String get seffafNet => 'الصافي';
+
+  @override
+  String seffafOncekiAyNet(Object tutar) {
+    return 'صافي الشهر السابق: $tutar';
+  }
+
+  @override
+  String get seffafGiderDagilimi => 'توزيع المصروفات';
+
+  @override
+  String get seffafGiderYok => 'لا مصروفات مسجّلة هذا الشهر.';
+
+  @override
+  String get seffafAidatToplama => 'تحصيل الرسوم';
+
+  @override
+  String get seffafTahakkukYok => 'لا استحقاق لهذا الشهر.';
+
+  @override
+  String seffafOdeyenDaire(Object odeyen, Object toplam) {
+    return 'الوحدات الدافعة: $odeyen/$toplam';
+  }
+
+  @override
+  String seffafTahsilatSatir(Object tahsilat, Object tahakkuk, Object yuzde) {
+    return 'المُحصّل: $tahsilat / $tahakkuk  (المبلغ: $yuzde٪)';
+  }
+
+  @override
+  String seffafGecikmede(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n وحدة متأخرة',
+      many: '$n وحدة متأخرة',
+      few: '$n وحدات متأخرة',
+      two: 'وحدتان متأخرتان',
+      one: 'وحدة واحدة متأخرة',
+      zero: 'لا وحدات متأخرة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ortakYuzde(Object yuzde) {
+    return '$yuzde٪';
+  }
 }

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/error/api_exception.dart';
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../data/dis_hizmet_api.dart';
@@ -22,12 +22,15 @@ class DisHizmetScreen extends ConsumerWidget {
     final async = ref.watch(disHizmetlerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Dış Hizmetler'))),
+      appBar: AppBar(
+        title: Text(baslikBuyuk(context.l10n.modulDisHizmetler,
+            context.dilKodu)),
+      ),
       floatingActionButton: canWrite
           ? FloatingActionButton.extended(
               onPressed: () => _openForm(context, ref),
               icon: const Icon(Icons.person_add_alt_1),
-              label: const Text('Kişi ekle'),
+              label: Text(context.l10n.disKisiEkle),
             )
           : null,
       body: async.when(
@@ -36,7 +39,8 @@ class DisHizmetScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              e is ApiException ? e.message : 'Liste alınamadı.',
+              // Sunucu metni varsa o (SERVER-LOCALIZED siniri).
+              e is ApiException ? e.message : context.l10n.disListeAlinamadi,
               textAlign: TextAlign.center,
             ),
           ),
@@ -54,8 +58,8 @@ class DisHizmetScreen extends ConsumerWidget {
                   child: Center(
                     child: Text(
                       canWrite
-                          ? 'Henüz kayıt yok. Sağ alttan güvendiğiniz esnafı ekleyin.'
-                          : 'Henüz dış hizmet kaydı yok.',
+                          ? context.l10n.disKayitYokYonetim
+                          : context.l10n.disKayitYok,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -93,6 +97,7 @@ class _NoteCard extends ConsumerWidget {
     final has = note != null && note!.trim().isNotEmpty;
     if (!has && !canWrite) return const SizedBox.shrink();
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Card(
       color: scheme.secondaryContainer,
       child: Padding(
@@ -104,7 +109,7 @@ class _NoteCard extends ConsumerWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                has ? note! : 'Not ekleyin (yalnızca yönetici düzenler).',
+                has ? note! : l10n.disNotEkleyin,
                 style: TextStyle(
                   color: scheme.onSecondaryContainer,
                   fontStyle: has ? FontStyle.normal : FontStyle.italic,
@@ -113,7 +118,7 @@ class _NoteCard extends ConsumerWidget {
             ),
             if (canWrite)
               IconButton(
-                tooltip: 'Notu düzenle',
+                tooltip: l10n.disNotuDuzenle,
                 icon: const Icon(Icons.edit_outlined),
                 onPressed: () => _editNote(context, ref),
               ),
@@ -124,28 +129,28 @@ class _NoteCard extends ConsumerWidget {
   }
 
   Future<void> _editNote(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
     final ctrl = TextEditingController(text: note ?? '');
     final result = await showDialog<String?>(
       context: context,
       builder: (dctx) => AlertDialog(
-        title: const Text('Bölüm notu'),
+        title: Text(l10n.disBolumNotu),
         content: TextField(
           controller: ctrl,
           maxLines: 5,
           minLines: 3,
-          decoration: const InputDecoration(
-            hintText: 'örn. Yıllardır güvendiğimiz esnaflar; site güvenliği '
-                'için yabancı kişileri içeri almayın.',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: l10n.disNotIpucu,
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(dctx).pop(null),
-              child: const Text('Vazgeç')),
+              child: Text(l10n.ortakVazgec)),
           FilledButton(
               onPressed: () => Navigator.of(dctx).pop(ctrl.text.trim()),
-              child: const Text('Kaydet')),
+              child: Text(l10n.ortakKaydet)),
         ],
       ),
     );
@@ -154,7 +159,7 @@ class _NoteCard extends ConsumerWidget {
     try {
       await ref.read(disHizmetApiProvider).setNote(result.isEmpty ? null : result);
       ref.invalidate(disHizmetlerProvider);
-      messenger.showSnackBar(const SnackBar(content: Text('Not güncellendi ✓')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.disNotGuncellendi)));
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
@@ -170,6 +175,7 @@ class _HizmetTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final h = hizmet;
+    final l10n = context.l10n;
     return Card(
       child: ListTile(
         leading: CircleAvatar(child: Text(h.tur.isNotEmpty ? h.tur[0] : '?')),
@@ -185,7 +191,7 @@ class _HizmetTile extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              tooltip: 'Ara',
+              tooltip: l10n.disAra,
               icon: const Icon(Icons.call, color: Colors.green),
               onPressed: () => _call(h.telefon),
             ),
@@ -195,9 +201,9 @@ class _HizmetTile extends ConsumerWidget {
                   if (v == 'edit') _edit(context, ref);
                   if (v == 'delete') _delete(context, ref);
                 },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-                  PopupMenuItem(value: 'delete', child: Text('Sil')),
+                itemBuilder: (_) => [
+                  PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
+                  PopupMenuItem(value: 'delete', child: Text(l10n.ortakSil)),
                 ],
               ),
           ],
@@ -222,19 +228,20 @@ class _HizmetTile extends ConsumerWidget {
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
-        title: const Text('Kayıt silinsin mi?'),
-        content: Text('"${hizmet.adSoyad}" silinecek.'),
+        title: Text(l10n.disSilOnay),
+        content: Text(l10n.disSilGovde(hizmet.adSoyad)),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(dctx).pop(false),
-              child: const Text('Vazgeç')),
+              child: Text(l10n.ortakVazgec)),
           FilledButton(
               style: FilledButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () => Navigator.of(dctx).pop(true),
-              child: const Text('Sil')),
+              child: Text(l10n.ortakSil)),
         ],
       ),
     );
@@ -243,7 +250,7 @@ class _HizmetTile extends ConsumerWidget {
     try {
       await ref.read(disHizmetApiProvider).delete(hizmet.id);
       ref.invalidate(disHizmetlerProvider);
-      messenger.showSnackBar(const SnackBar(content: Text('Silindi ✓')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.disSilindi)));
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
@@ -328,7 +335,9 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Kaydedilemedi. Tekrar deneyin.');
+      if (mounted) {
+        setState(() => _error = AppLocalizations.of(context).devriyeKaydedilemedi);
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -336,6 +345,7 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
@@ -345,21 +355,21 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(_isEdit ? 'Kişi düzenle' : 'Yeni dış hizmet kişisi',
+            Text(_isEdit ? l10n.disKisiDuzenle : l10n.disYeniKisi,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             TextFormField(
               controller: _tur,
               enabled: !_busy,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Hizmet türü',
-                hintText: 'örn. Çilingir, Elektrik, Tesisat',
-                prefixIcon: Icon(Icons.handyman_outlined),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.disTur,
+                hintText: l10n.disTurIpucu,
+                prefixIcon: const Icon(Icons.handyman_outlined),
+                border: const OutlineInputBorder(),
               ),
               validator: (v) =>
-                  (v?.trim() ?? '').isEmpty ? 'Tür zorunludur' : null,
+                  (v?.trim() ?? '').isEmpty ? l10n.disTurZorunlu : null,
             ),
             const SizedBox(height: 12),
             Row(
@@ -369,12 +379,12 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
                     controller: _ad,
                     enabled: !_busy,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Ad',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.disAd,
+                      border: const OutlineInputBorder(),
                     ),
                     validator: (v) =>
-                        (v?.trim() ?? '').isEmpty ? 'Ad gerekli' : null,
+                        (v?.trim() ?? '').isEmpty ? l10n.disAdGerekli : null,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -383,12 +393,12 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
                     controller: _soyad,
                     enabled: !_busy,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Soyad',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.disSoyad,
+                      border: const OutlineInputBorder(),
                     ),
                     validator: (v) =>
-                        (v?.trim() ?? '').isEmpty ? 'Soyad gerekli' : null,
+                        (v?.trim() ?? '').isEmpty ? l10n.disSoyadGerekli : null,
                   ),
                 ),
               ],
@@ -398,23 +408,23 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
               controller: _telefon,
               enabled: !_busy,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Telefon',
-                hintText: 'örn. 0532 111 22 33',
-                prefixIcon: Icon(Icons.phone_outlined),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.profilTelefon,
+                hintText: l10n.ortakTelefonIpucu,
+                prefixIcon: const Icon(Icons.phone_outlined),
+                border: const OutlineInputBorder(),
               ),
               validator: (v) =>
-                  (v?.trim() ?? '').isEmpty ? 'Telefon zorunludur' : null,
+                  (v?.trim() ?? '').isEmpty ? l10n.ortakTelefonZorunlu : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _aciklama,
               enabled: !_busy,
               maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Açıklama (opsiyonel)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.gorevAciklamaOpsiyonel,
+                border: const OutlineInputBorder(),
               ),
             ),
             if (_error != null) ...[
@@ -432,7 +442,7 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2.5),
                     )
-                  : Text(_isEdit ? 'Güncelle' : 'Ekle'),
+                  : Text(_isEdit ? l10n.ortakGuncelle : l10n.ortakEkle),
             ),
           ],
         ),

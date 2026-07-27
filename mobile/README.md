@@ -1563,21 +1563,24 @@ kategoriler, finansal özet, sakin "Site Bütçesi" şeffaflık ekranı, NFC zim
 akışı + üzerimdekiler, kargo listesi/detay/kayıt formu) **Site Kuralları +
 Duyurular + Site Sakinleri** (tur 7 — kural listesi/arama/detay/form, duyuru
 kartı/menüsü/formu + tam ekran görsel, sakin listesi/ekle/düzenle/parola
-sıfırlama ve ortak **geçici kod dialogu**) ve **Giriş/Auth + Profil + Saha
+sıfırlama ve ortak **geçici kod dialogu**) **Giriş/Auth + Profil + Saha
 Personeli** (tur 8 — telefonla giriş, zorunlu parola belirleme, oturum-düştü
 mesajı, self-servis profil (avatar/parola/iletişim), personel listesi/form/
-parola sıfırlama ve ortak **parola kuralı**). Kalan modüllerin dışa alımı
-mekanik bir iştir ve aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
+parola sıfırlama ve ortak **parola kuralı**) ve **Dış Hizmetler + NFC +
+Şeffaflık Panosu** (tur 9 — esnaf listesi/bölüm notu/form, NFC okuma ekranı +
+**servis katmanı** ve **iOS sistem sayfası** metinleri, aylık anonim finans
+özeti + yayınla/geri-al). Kalan modüllerin dışa alımı mekanik bir iştir ve
+aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
 
 ### Mimari
 
 | Parça | Yer |
 |---|---|
-| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**849 anahtar × 7**, boşluk yok) |
+| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**928 anahtar × 7**, boşluk yok) |
 | gen-l10n yapılandırması | `l10n.yaml` (şablon: `app_tr.arb`) |
 | Üretilen sınıf | `lib/l10n/gen/app_localizations.dart` (**repoda tutulur** → taze klonda `analyze`/`test` ek adım istemez; yenilemek için `flutter gen-l10n`) |
 | Dil seçimi + kalıcılık | `lib/src/core/i18n/locale_controller.dart` (`AppDil`, `LocaleController`, `ui.locale` anahtarı — tema ile aynı güvenli depo) |
-| Ergonomi + biçimlendirme | `lib/src/core/i18n/l10n.dart` (`context.l10n`, `tlIsaretli`, `tlSonEkli`, `tarihBicimi`, `baslikBuyuk`, `ltrIzole`) |
+| Ergonomi + biçimlendirme | `lib/src/core/i18n/l10n.dart` (`context.l10n`, `tlIsaretli`, `tlSonEkli`, `tarihBicimi`, `ayAdi`, `baslikBuyuk`, `ltrIzole`) |
 | Uygulama bağlaması | `lib/main.dart` (`localizationsDelegates`, `supportedLocales`, `localeResolutionCallback`) |
 | Açılış ön-okuması | `lib/src/core/startup/acilis_tercihleri.dart` — dil + tema `runApp`'ten **önce** okunur, `acilisTercihleriProvider` ile tohumlanır |
 | Dil seçici | Ayarlar → "Dil / Language" (alt sayfa, 7 dil kendi adıyla) |
@@ -1646,11 +1649,12 @@ yok) — bu **bilinçli**, dilbilgisi gereği.
 > (`₺1.250,00`).
 
 İki biçimleyici vardır: `tlIsaretli` (**₺ ön ekli**, kartlar) ve `tlSonEkli`
-(**"TL" son ekli**, bütçe/finans ekranları — hareket satırlarında `onEk: '+'/'-'`
-işaretiyle). Gruplama tek kaynaktan gelir (`tlTutar`); `budget_models.dart`
-içindeki `formatKurusAsTl` bunun i18n-öncesi ikizidir ve henüz çevrilmemiş
-şeffaflık panosunda durur — **çıktı eşitliği tur 6 testinde kilitlidir**.
-Arapça'da tutar (işaretiyle birlikte) LTR izole edilir.
+(**"TL" son ekli**, bütçe/finans/şeffaflık ekranları — hareket satırlarında
+`onEk: '+'/'-'` işaretiyle). Gruplama **tek kaynaktan** gelir (`tlTutar`):
+tur 6'da `budget_models.dart` içinde bunun i18n-öncesi bir ikizi
+(`formatKurusAsTl`) duruyor ve çıktı eşitliği testle kilitleniyordu; tur 9'da
+son tüketicisi (şeffaflık panosu) çevrilince **ikiz kaldırıldı**. Arapça'da
+tutar (işaretiyle birlikte) LTR izole edilir.
 
 Gerekçe: para **site-yereldir** — aidat TL toplanır, dekont/İBAN TL'dir. Dile
 göre `$`/`€` göstermek ya da `1,250.00` biçimi kullanmak muhasebeyle çelişir.
@@ -1699,6 +1703,8 @@ değişince yönlendirme bozulurdu. Artık:
 | `UserRole` (rol adları) | `auth/domain/user_role.dart` | `rolAdi(l10n, rol)` (`auth/presentation/rol_adi.dart` — tur 4'te tasks'tan taşındı; **`label` alanı tur 8'de KALDIRILDI**, tek kaynak çözücü) |
 | `ParolaKuraliHatasi` (parola politikası) | `core/validators/password_rule.dart` | `parolaKuraliMetni` / `parolaHataMetni` — 4 ekran ortak kullanır |
 | `GirisAkisHatasi` (oturum/giriş) | `auth/domain/giris_hatasi.dart` | `girisHataMetni` (`auth/presentation/`) |
+| `NfcHatasi` (7 kimlik, 3'ü `{detay}` parametreli) | `nfc/domain/nfc_hatasi.dart` | `nfcHataMetni` (`nfc/presentation/`) — **veri katmanı** artık metin üretmez |
+| `SeffaflikHatasi` | `transparency/domain/seffaflik_hatasi.dart` | `seffaflikHataMetni` |
 | `DensityRenk` | `building_map/domain/building_map_models.dart` | **`label` alanı KALDIRILDI** (ölü TR metin; gösterge eşik sayısı yazar) |
 | `UnitComplaintKategori` | `unit_complaints/domain/unit_complaint_models.dart` | `unitComplaintKategoriAdi(l10n, k)` |
 | `TalepDurum` | `complaints/domain/complaint_models.dart` | `_durumLabel(l10n, durum)` |
@@ -1873,6 +1879,35 @@ listesi+formu) ve **320 dp** senaryoları.
 > temiz geçti. Sonda yine de kayda geçti: **bulgu olmaması taramanın
 > yapılmadığı anlamına gelmez.**
 
+`test/dis_nfc_seffaflik_i18n_test.dart` (18 test — tur 9): dış hizmette
+**tr→en→ru**, şeffaflıkta **tr→en→fr** dil değişimi; `NfcReadResult`in metin
+değil **kimlik** taşıması; 7 NFC kimliğinin 7 dilde karşılığı + `{detay}`
+yerleştirmesi; **iOS sistem sayfasının** 4 metninin çizimden gelmesi; **ay
+adının** dile göre yazılması (`ayAdi`); paranın dil ne olursa olsun site-yerel
+kalması + Arapça LTR izolasyonu; taslak eki/yayın anahtarı; **RTL** ve
+**320/360 dp** senaryoları.
+
+> **Tur 9'un mimari ayrımı — metin İKİ YÖNDE akar.** `NfcService` VERİ
+> katmanındadır ve `BuildContext` görmez: hataları artık [NfcHatasi] **kimliği**
+> olarak döndürür (önce TR sabit metin döndürüyordu ve tüketici denetleyiciler
+> bunu "sürücü metni" sanıp olduğu gibi gösteriyordu — görev ve demirbaş
+> modüllerinde Arapça arayüzde Türkçe NFC hatası çıkıyordu). Ters yönde,
+> **iOS'un NFC okuma sayfasını SİSTEM çizer** ve metni bizden parametre alır;
+> bu yüzden o dört metin çizim katmanında `nfcIosMetinleri(l10n)` ile üretilip
+> servise geçirilir. Kural şu şekilde genelleşti: *veri katmanı metin
+> üretmez; platformun çizdiği metni ise çizim katmanı üretip aşağı verir.*
+> `ref.onDispose` gibi context'siz iptal yollarında metin geçilmez (sayfa
+> mesajsız kapanır) — bilinçli ve dokümante.
+
+> **Tur 9 RTL/dar-ekran taramasının bulguları — iki taşma, ikisi de TR'de de.**
+> (a) Ay seçici (`DropdownButtonFormField`) uzun çevirilerde taşıyordu
+> ("September 2026 • Entwurf", 360 dp'de 152 px) → `isExpanded: true` + öğe
+> metninde ellipsis; tur 3'teki "Atanan personel" bulgusuyla **aynı desen**.
+> (b) Gider dağılımı satırında 9 haneli tutar taşıyordu (11 px) → tutar
+> `Flexible` + `FittedBox(scaleDown)`; tur 6'daki tutar kartı bulgusuyla **aynı
+> desen**. Yön-duyarlılık taraması temiz çıktı (bu üç modülde yön-sabit
+> hizalama hiç yok).
+
 `test/flutter_test_config.dart` süite başına bir kez `initializeDateFormatting()`
 çağırır: eşleyicileri doğrudan çağıran saf birim testleri aksi halde
 `LocaleDataException` ile düşer (uygulamada bu `main.dart`'ta yapılır).
@@ -1888,8 +1923,8 @@ ile düşer.
 > `budget_screen_test`, `financial_summary_screen_test`,
 > `site_budget_screen_test` ve `kargo_screen_test`, tur 7'de
 `site_kurali_screen_test` ve `announcements_screen_test`, tur 8'de
-`staff_screen_test`, `login_screen_phone_test` ve `login_remember_checkbox_test`
-böyle geçirildi; TR metin
+`staff_screen_test`, `login_screen_phone_test` ve `login_remember_checkbox_test`,
+tur 9'da `transparency_screen_test` böyle geçirildi; TR metin
 > beklentileri **değişmediği** için başka düzeltme gerekmedi (çeviri
 > anahtarlarının TR değerleri birebir korundu). Tur 6'da ek olarak
 > `budget_models_test` içindeki iki `BudgetTip.label` iddiası düştü — alan
@@ -2029,6 +2064,31 @@ Kalan `validators: 1`, parola kuralındaki `'[A-ZÇĞİÖŞÜ]'` **regex karakte
 sınıfıdır** — Türkçe büyük harfleri tanıyan teknik sabit, kullanıcı metni
 değil (bkz. bilinçli istisnalar).
 
+**Tur 9 (dis_hizmet + nfc + transparency) ölçümü — aynı komut:**
+
+| | Toplam string | Dosya | `dis_hizmet` | `nfc` | `transparency` |
+|---|---|---|---|---|---|
+| Tur 9 öncesi | 250 | 38 | **26** | **25** | **22** |
+| Tur 9 sonrası | **177** | 32 | **0** | **0** | **0** |
+
+73 string dışa alındı; **79 yeni ARB anahtarı × 7 dil** (849 → 928) + mevcut
+anahtarların yeniden kullanımı (`ortakVazgec`, `ortakSil`, `ortakDuzenle`,
+`ortakKaydet`, `ortakEkle`, `ortakGuncelle`, `ortakYenile`,
+`modulDisHizmetler`, `modulSeffaflik`, `butDonem`, `profilTelefon`,
+`ortakTelefonIpucu`, `ortakTelefonZorunlu`, `gorevAciklamaOpsiyonel`,
+`gorevEtiketOkunamadi`, `devriyeKaydedilemedi`). Anahtar sayısı dışa alınan
+string sayısından FAZLA: NFC'nin **servis katmanı** ve **iOS sistem sayfası**
+metinleri de (11 anahtar) bu turda ARB'ye taşındı — grep bunları sayıyordu ama
+tek bir ekranda değil üç katmanda duruyorlardı.
+
+Bu turda ayrıca **ay adları** TR sabit diziden `ayAdi(ay, dil)`e taşındı
+(`core/i18n`, tek kaynak) ve **`formatKurusAsTl` kaldırıldı** — para
+gruplamasının iki uygulaması vardı, artık yalnız `tlTutar`.
+
+`transparency_models.dart` içindeki son sayım kalemi bir **satır-sonu
+yorumdaki** `"Diğer"` alıntısıydı (tur 3'te kayda geçen ikinci kör nokta);
+yorum, çeviri anahtarı yerine sunucu davranışını anlatacak şekilde yazıldı.
+
 > **Tur 5'te bulunan SESSİZ HATA SINIFI — ICU placeholder sırası.** ARB'de
 > `placeholders` metadata'sı **yoksa** gen-l10n parametreleri **alfabetik**
 > sıralar. Çağrı yeri mesajın okuma sırasını varsayarsa metin sessizce yanlış
@@ -2064,7 +2124,9 @@ grep -rnE "(switch|case|==)\s*\(?\s*['\"][^'\"]*[çğıöşü…]" \
   lib/src/features/budget lib/src/features/assets lib/src/features/kargo \
   lib/src/features/site_kurali lib/src/features/announcements \
   lib/src/features/residents lib/src/features/auth \
-  lib/src/features/profile lib/src/features/staff
+  lib/src/features/profile lib/src/features/staff \
+  lib/src/features/dis_hizmet lib/src/features/nfc \
+  lib/src/features/transparency
 
 # Tur 8 dersi: enum ALANLARI da taranir (grep literal gormez)
 grep -rn "\.label" lib/src --include=*.dart | grep -v label(Text|Large|Medium|Small)
@@ -2095,17 +2157,14 @@ rakamı ölçümün o anki halidir; tur 2 başında aynı komut 1.115/100 verdi 
 arada başka modüle dokunulmadı, fark ara commit'lerdeki küçük düzenlemelerden
 gelir.)
 
-Kalan envanter (modül başına, **tur 8 sonrası**; `tasks`, `patrol`,
-`building_map`, `complaints`, `rezervasyon`, `etkinlik`, `unit_access`, `budget`,
-`assets`, `kargo`, `site_kurali`, `announcements`, `residents`, `auth`,
-`profile` ve `staff` listeden düştü):
+Kalan envanter (modül başına, **tur 9 sonrası**; 19 modül listeden düştü —
+`tasks`, `patrol`, `building_map`, `complaints`, `rezervasyon`, `etkinlik`,
+`unit_access`, `budget`, `assets`, `kargo`, `site_kurali`, `announcements`,
+`residents`, `auth`, `profile`, `staff`, `dis_hizmet`, `nfc`, `transparency`):
 
 | Modül | Kalan string |
 |---|---|
-| `dis_hizmet` | 26 |
-| `nfc` | 25 |
 | `integrations` | 23 |
-| `transparency` | 22 |
 | `visitors` | 22 |
 | `reports` | 20 |
 | `dues` | 18 |

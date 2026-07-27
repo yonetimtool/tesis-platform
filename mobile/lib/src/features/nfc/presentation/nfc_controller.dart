@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/nfc_service.dart';
+import '../domain/nfc_hatasi.dart';
 import '../domain/nfc_read_result.dart';
 
 /// NFC okuma ekraninin asamasi.
@@ -23,7 +24,8 @@ class NfcState {
   const NfcState({
     this.status = NfcStatus.ready,
     this.result,
-    this.errorMessage,
+    this.hata,
+    this.hataDetay,
   });
 
   final NfcStatus status;
@@ -31,20 +33,22 @@ class NfcState {
   /// Basarili okumanin sonucu (UID, tag tipi, SDM).
   final NfcReadResult? result;
 
-  /// Kullaniciya gosterilecek hata mesaji.
-  final String? errorMessage;
+  /// Hata KIMLIGI (metin degil) + teknik detay — bkz. nfc_hatasi.dart.
+  final NfcHatasi? hata;
+  final String? hataDetay;
 
   NfcState copyWith({
     NfcStatus? status,
     Object? result = _sentinel,
-    Object? errorMessage = _sentinel,
+    Object? hata = _sentinel,
+    Object? hataDetay = _sentinel,
   }) {
     return NfcState(
       status: status ?? this.status,
       result: result == _sentinel ? this.result : result as NfcReadResult?,
-      errorMessage: errorMessage == _sentinel
-          ? this.errorMessage
-          : errorMessage as String?,
+      hata: hata == _sentinel ? this.hata : hata as NfcHatasi?,
+      hataDetay:
+          hataDetay == _sentinel ? this.hataDetay : hataDetay as String?,
     );
   }
 
@@ -56,40 +60,46 @@ class NfcController extends Notifier<NfcState> {
   NfcState build() {
     ref.onDispose(() {
       // Ekran kapanirsa acik oturumu birak.
+      // context YOK: iOS sayfasi mesajsiz kapanir (bkz. cancel dokumani).
       ref.read(nfcServiceProvider).cancel();
     });
     return const NfcState();
   }
 
   /// Okumayi baslatir; etiket okunana / hata olana kadar `reading` kalir.
-  Future<void> startReading() async {
+  ///
+  /// [ios] iOS sistem sayfasinin metinleri — CIZIM katmanindan gelir.
+  Future<void> startReading(NfcIosMetinleri ios) async {
     if (state.status == NfcStatus.reading) return;
     state = state.copyWith(
       status: NfcStatus.reading,
       result: null,
-      errorMessage: null,
+      hata: null,
+      hataDetay: null,
     );
 
-    final result = await ref.read(nfcServiceProvider).readSingleTag();
+    final result = await ref.read(nfcServiceProvider).readSingleTag(ios);
 
     if (result.isSuccess) {
       state = state.copyWith(
         status: NfcStatus.success,
         result: result,
-        errorMessage: null,
+        hata: null,
+        hataDetay: null,
       );
     } else {
       state = state.copyWith(
         status: NfcStatus.error,
         result: null,
-        errorMessage: result.error ?? 'Bilinmeyen bir hata oluştu.',
+        hata: result.hata ?? NfcHatasi.bilinmeyen,
+        hataDetay: result.hataDetay,
       );
     }
   }
 
   /// Devam eden okumayi iptal eder ve hazir duruma doner.
-  Future<void> cancel() async {
-    await ref.read(nfcServiceProvider).cancel();
+  Future<void> cancel({String? iptalMetni}) async {
+    await ref.read(nfcServiceProvider).cancel(iptalMetni: iptalMetni);
     state = state.copyWith(status: NfcStatus.ready);
   }
 

@@ -7,6 +7,7 @@ import '../data/task_api.dart';
 import '../domain/task_hata.dart';
 import '../domain/task_models.dart';
 import 'tasks_controller.dart';
+import '../../nfc/domain/nfc_hatasi.dart';
 
 /// Tek gorevin tamamlama akisinin durumu (NFC → foto → not → gonder).
 class TaskCompleteState {
@@ -15,6 +16,8 @@ class TaskCompleteState {
     this.nfcReading = false,
     this.nfcError,
     this.nfcHata,
+    this.nfcKimlik,
+    this.nfcKimlikDetay,
     this.photoPath,
     this.photoBusy = false,
     this.photoError,
@@ -38,6 +41,11 @@ class TaskCompleteState {
   /// Ekran once kimligi cozer, yoksa sunucu metnini gosterir.
   final String? nfcError;
   final GorevAkisHatasi? nfcHata;
+
+  /// NFC servisinin dondurdugu kimlik (varsa ekran BUNU cizer; `nfcHata`
+  /// yalniz geri-dusum). Teknik detay cumleye `{detay}` olarak girer.
+  final NfcHatasi? nfcKimlik;
+  final String? nfcKimlikDetay;
 
   /// Cekilen fotonun cihaz yolu (onizleme icin). `draft.fotoKey` dolu ise
   /// yukleme tamamlanmistir.
@@ -66,6 +74,8 @@ class TaskCompleteState {
     bool? nfcReading,
     Object? nfcError = _sentinel,
     Object? nfcHata = _sentinel,
+    Object? nfcKimlik = _sentinel,
+    Object? nfcKimlikDetay = _sentinel,
     Object? photoPath = _sentinel,
     bool? photoBusy,
     Object? photoError = _sentinel,
@@ -79,6 +89,11 @@ class TaskCompleteState {
       draft: draft ?? this.draft,
       nfcReading: nfcReading ?? this.nfcReading,
       nfcError: nfcError == _sentinel ? this.nfcError : nfcError as String?,
+      nfcKimlik:
+          nfcKimlik == _sentinel ? this.nfcKimlik : nfcKimlik as NfcHatasi?,
+      nfcKimlikDetay: nfcKimlikDetay == _sentinel
+          ? this.nfcKimlikDetay
+          : nfcKimlikDetay as String?,
       nfcHata: nfcHata == _sentinel
           ? this.nfcHata
           : nfcHata as GorevAkisHatasi?,
@@ -131,10 +146,12 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
   TaskApi get _api => ref.read(taskApiProvider);
 
   /// Mevcut NFC servisiyle tek etiket okur; UID taslaga islenir.
-  Future<void> readNfc() async {
+  ///
+  /// [ios] iOS sistem sayfasinin metinleri — cizim katmanindan gelir (tur 9).
+  Future<void> readNfc(NfcIosMetinleri ios) async {
     if (state.nfcReading) return;
-    state = state.copyWith(nfcReading: true, nfcError: null);
-    final result = await ref.read(nfcServiceProvider).readSingleTag();
+    state = state.copyWith(nfcReading: true, nfcError: null, nfcHata: null);
+    final result = await ref.read(nfcServiceProvider).readSingleTag(ios);
     if (!ref.mounted) return;
     if (result.isSuccess) {
       state = state.copyWith(
@@ -145,9 +162,11 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
     } else {
       state = state.copyWith(
         nfcReading: false,
-        // Surucu metni varsa oldugu gibi; yoksa yerellestirilebilir kimlik.
-        nfcError: result.error,
-        nfcHata: result.error == null ? GorevAkisHatasi.etiketOkunamadi : null,
+        // Tur 9: NFC servisi artik KIMLIK dondurur (eskiden TR sabit metin).
+        nfcError: null,
+        nfcHata: GorevAkisHatasi.etiketOkunamadi,
+        nfcKimlik: result.hata,
+        nfcKimlikDetay: result.hataDetay,
       );
     }
   }

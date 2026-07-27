@@ -2,26 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
-import '../../budget/domain/budget_models.dart' show formatKurusAsTl;
 import '../data/transparency_api.dart';
+import '../domain/seffaflik_hatasi.dart';
 import '../domain/transparency_models.dart';
 
-const _ayAdlari = [
-  '', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
-];
-
-String _ayBaslik(String ay) {
+/// Sunucudan "YYYY-MM" gelen donemi "Temmuz 2026" gibi yazar — AY ADI aktif
+/// dilden gelir (`ayAdi`); bicim tanimazsa ham deger doner.
+String _ayBaslik(String ay, String dil) {
   final p = ay.split('-');
   if (p.length != 2) return ay;
-  final m = int.tryParse(p[1]) ?? 0;
-  return (m >= 1 && m <= 12) ? '${_ayAdlari[m]} ${p[0]}' : ay;
+  final ad = ayAdi(int.tryParse(p[1]) ?? 0, dil);
+  return ad.isEmpty ? ay : '$ad ${p[0]}';
 }
-
-String _tl(int kurus) => '${formatKurusAsTl(kurus)} TL';
 
 /// Şeffaflık Panosu — aylık ANONİM finansal özet. Sakin: yalnız yayınlanmış
 /// aylar. Yönetici/admin: her ay + yayınla/geri-al anahtarı (yayınlanmamış =
@@ -39,7 +34,11 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
   TransparencyBoard? _board;
   bool _loading = true;
   bool _busy = false; // yayın anahtarı işlemde
+
+  /// Hata KANALI ikilidir (README §15): sunucu metni + yerellestirilebilir
+  /// kimlik.
   String? _error;
+  SeffaflikHatasi? _hataKimligi;
 
   @override
   void initState() {
@@ -51,6 +50,7 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _hataKimligi = null;
     });
     try {
       final m = await ref.read(transparencyApiProvider).fetchMonths();
@@ -64,7 +64,7 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
     } on ApiException catch (e) {
       _error = e.message;
     } catch (_) {
-      _error = 'Yüklenemedi. Lütfen tekrar deneyin.';
+      _hataKimligi = SeffaflikHatasi.yuklenemedi;
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -100,7 +100,11 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
       ];
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(yayin ? 'Ay yayınlandı.' : 'Yayın geri alındı.')),
+          SnackBar(
+            content: Text(yayin
+                ? context.l10n.seffafAyYayinlandi
+                : context.l10n.seffafYayinGeriAlindi),
+          ),
         );
       }
     } on ApiException catch (e) {
@@ -117,13 +121,14 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
   Widget build(BuildContext context) {
     final role = ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
     final canPublish = role.canPublishTransparency;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(trUpper('Şeffaflık')),
+        title: Text(baslikBuyuk(l10n.modulSeffaflik, context.dilKodu)),
         actions: [
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
             onPressed: _loading ? null : _loadMonths,
           ),
@@ -137,9 +142,14 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
   }
 
   Widget _body(BuildContext context, bool canPublish) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_error != null && _board == null && _months.isEmpty) {
-      return ListView(children: [const SizedBox(height: 120), Center(child: Text(_error!))]);
+    final hata = seffaflikHatasiCoz(l10n, _hataKimligi, _error);
+    if (hata != null && _board == null && _months.isEmpty) {
+      return ListView(
+        children: [const SizedBox(height: 120), Center(child: Text(hata))],
+      );
     }
     if (_months.isEmpty) {
       return ListView(
@@ -152,9 +162,7 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Text(
-                canPublish
-                    ? 'Henüz finansal veri yok. Gelir/gider veya aidat girildiğinde aylar burada listelenir.'
-                    : 'Yönetim henüz özet yayınlamadı.',
+                canPublish ? l10n.seffafVeriYokYonetim : l10n.seffafVeriYok,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
@@ -172,17 +180,23 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
         DropdownButtonFormField<String>(
           key: const Key('transparency_ay_dropdown'),
           initialValue: _ay,
-          decoration: const InputDecoration(
-            labelText: 'Dönem',
-            prefixIcon: Icon(Icons.calendar_month_outlined),
-            border: OutlineInputBorder(),
+          // Uzun ceviriler ("September 2026 • Entwurf") + prefix ikon dar
+          // ekranda satiri tasiriyordu (tur 3'teki "Atanan personel" ile ayni
+          // desen): secili oge genisletilir, metin gerekirse kirpilir.
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: l10n.butDonem,
+            prefixIcon: const Icon(Icons.calendar_month_outlined),
+            border: const OutlineInputBorder(),
           ),
           items: [
             for (final m in _months)
               DropdownMenuItem(
                 value: m.ay,
                 child: Text(
-                  '${_ayBaslik(m.ay)}${m.yayinlandi ? '' : ' • taslak'}',
+                  '${_ayBaslik(m.ay, dil)}'
+                  '${m.yayinlandi ? '' : l10n.seffafTaslakEki}',
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
           ],
@@ -195,10 +209,10 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
           Card(
             child: SwitchListTile(
               key: const Key('transparency_publish_switch'),
-              title: const Text('Bu ayı yayınla'),
+              title: Text(l10n.seffafYayinla),
               subtitle: Text(board.yayinlandi
-                  ? 'Sakinler bu özeti görüyor.'
-                  : 'Yalnızca yönetim görüyor (önizleme).'),
+                  ? l10n.seffafYayindaAlt
+                  : l10n.seffafOnizlemeAlt),
               value: board.yayinlandi,
               onChanged: _busy ? null : _togglePublish,
             ),
@@ -206,7 +220,7 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
           if (!board.yayinlandi)
             Padding(
               padding: const EdgeInsets.only(top: 4, bottom: 4),
-              child: Text('Önizleme — henüz yayınlanmadı.',
+              child: Text(l10n.seffafOnizlemeUyari,
                   style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontStyle: FontStyle.italic)),
@@ -233,6 +247,8 @@ class _OzetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final netColor = board.netKurus >= 0 ? Colors.green : Colors.red;
     return Card(
       child: Padding(
@@ -240,16 +256,21 @@ class _OzetCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${_ayBaslik(board.ay)} — Özet',
+            Text(l10n.seffafOzetBaslik(_ayBaslik(board.ay, dil)),
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
-            _row('Toplam gelir', _tl(board.toplamGelirKurus), Colors.green),
-            _row('Toplam gider', _tl(board.toplamGiderKurus), Colors.red),
+            _row(l10n.seffafToplamGelir,
+                tlSonEkli(board.toplamGelirKurus, dil), Colors.green),
+            _row(l10n.seffafToplamGider,
+                tlSonEkli(board.toplamGiderKurus, dil), Colors.red),
             const Divider(height: 20),
-            _row('Net', _tl(board.netKurus), netColor, bold: true),
+            _row(l10n.seffafNet, tlSonEkli(board.netKurus, dil), netColor,
+                bold: true),
             if (board.oncekiAyNetKurus != null) ...[
               const SizedBox(height: 6),
-              Text('Önceki ay net: ${_tl(board.oncekiAyNetKurus!)}',
+              Text(
+                  l10n.seffafOncekiAyNet(
+                      tlSonEkli(board.oncekiAyNetKurus!, dil)),
                   style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.onSurfaceVariant)),
@@ -280,6 +301,8 @@ class _GiderDagilimCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final items = board.giderDagilimi;
     return Card(
       child: Padding(
@@ -287,25 +310,36 @@ class _GiderDagilimCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Gider dağılımı',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            Text(l10n.seffafGiderDagilimi,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             if (items.isEmpty)
-              Text('Bu ay gider kaydı yok.',
+              Text(l10n.seffafGiderYok,
                   style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant))
             else
               for (final k in items) ...[
                 Row(
                   children: [
-                    Expanded(child: Text(k.ad)),
-                    Text('%${k.yuzde}',
+                    Expanded(
+                      child: Text(k.ad, overflow: TextOverflow.ellipsis),
+                    ),
+                    Text(l10n.ortakYuzde('${k.yuzde}'),
                         style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 12)),
                     const SizedBox(width: 8),
-                    Text(_tl(k.toplamKurus),
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    // Tutar KIRPILMAZ, gerekirse KUCULUR (tur 6 emsali):
+                    // milyonluk site butcesi dar ekrana sigmiyor.
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: Text(tlSonEkli(k.toplamKurus, dil),
+                            style: const TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -333,6 +367,8 @@ class _AidatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final daireYuzde = aidat.daireOraniYuzde;
     return Card(
       child: Padding(
@@ -340,18 +376,20 @@ class _AidatCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Aidat toplama',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            Text(l10n.seffafAidatToplama,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: Text(daireYuzde == null
-                      ? 'Bu ay için tahakkuk yok.'
-                      : 'Ödeyen daire: ${aidat.odeyenDaire}/${aidat.toplamDaire}'),
+                      ? l10n.seffafTahakkukYok
+                      : l10n.seffafOdeyenDaire(
+                          '${aidat.odeyenDaire}', '${aidat.toplamDaire}')),
                 ),
                 if (daireYuzde != null)
-                  Text('%$daireYuzde',
+                  Text(l10n.ortakYuzde('$daireYuzde'),
                       style: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: daireYuzde >= 80 ? Colors.green : Colors.orange)),
@@ -370,8 +408,11 @@ class _AidatCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Tahsilat: ${_tl(aidat.tahsilatKurus)} / ${_tl(aidat.tahakkukKurus)}'
-                '  (tutar: %${aidat.tutarOraniYuzde ?? 0})',
+                l10n.seffafTahsilatSatir(
+                  tlSonEkli(aidat.tahsilatKurus, dil),
+                  tlSonEkli(aidat.tahakkukKurus, dil),
+                  '${aidat.tutarOraniYuzde ?? 0}',
+                ),
                 style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -386,7 +427,10 @@ class _AidatCard extends StatelessWidget {
                         ? Colors.orange
                         : Theme.of(context).colorScheme.onSurfaceVariant),
                 const SizedBox(width: 6),
-                Text('Gecikmede ${aidat.gecikenDaireSayisi} daire'),
+                // Dar ekranda satira sigmayabilir — sar.
+                Expanded(
+                  child: Text(l10n.seffafGecikmede(aidat.gecikenDaireSayisi)),
+                ),
               ],
             ),
           ],

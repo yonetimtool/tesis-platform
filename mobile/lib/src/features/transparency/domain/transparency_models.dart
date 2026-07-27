@@ -9,7 +9,10 @@ class TransparencyKategori {
     required this.yuzde,
   });
 
-  final String ad; // kategori adı (kişisel veri DEĞİL) — "Diğer" toplu kalan
+  /// Kategori adi — SUNUCUDAN gelir (kisisel veri DEGIL); artan kalemler
+  /// backend'de tek bir "diger" kategorisinde toplanir. Istemci cevirmez
+  /// (SERVER-LOCALIZED siniri).
+  final String ad;
   final int toplamKurus;
   final int yuzde; // toplam gider içindeki pay (0-100)
 

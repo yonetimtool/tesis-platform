@@ -9,8 +9,8 @@
 ///     ([DemirbasMesaj]), cozum `demirbasMesajMetni` ile cizimde yapilir.
 ///   * PARA KURALI: tutar UI dili ne olursa olsun Turkce gruplama + "TL"
 ///     ile gosterilir; Arapca'da yalnizca LTR IZOLASYONU eklenir.
-///   * `tlSonEkli` (l10n) ile `formatKurusAsTl` (domain ikizi) AYNI ciktiyi
-///     verir — ikisi ayrisirsa seffaflik panosu ile butce ekrani coker.
+///   * `tlSonEkli` PARA BICIMINI kilitler (tur 9'da domain ikizi
+///     `formatKurusAsTl` kaldirildi; tek kaynak `tlTutar`).
 ///   * Cok-parametreli ARB anahtarlari MESAJ sirasinda uretilir (tur 5
 ///     bulgusu: `placeholders` metadata'si yoksa gen-l10n alfabetik siralar).
 library;
@@ -355,14 +355,15 @@ void main() {
   });
 
   // ============================ PARA + SIRALAMA ==========================
-  test('tlSonEkli ile formatKurusAsTl AYNI gruplamayi verir', () {
-    for (final kurus in [0, 5, 75000, 123456, 245000, -50000, 999999999]) {
-      expect(
-        tlSonEkli(kurus, 'tr'),
-        '${formatKurusAsTl(kurus)} TL',
-        reason: '$kurus',
-      );
-    }
+  test('tlSonEkli: TR gruplama bicimi (tek kaynak)', () {
+    // Tur 9: domain ikizi `formatKurusAsTl` kaldirildi; bicim BURADA kilitli.
+    expect(tlSonEkli(0, 'tr'), '0,00 TL');
+    expect(tlSonEkli(5, 'tr'), '0,05 TL');
+    expect(tlSonEkli(75000, 'tr'), '750,00 TL');
+    expect(tlSonEkli(123456, 'tr'), '1.234,56 TL');
+    expect(tlSonEkli(245000, 'tr'), '2.450,00 TL');
+    expect(tlSonEkli(-50000, 'tr'), '-500,00 TL');
+    expect(tlSonEkli(999999999, 'tr'), '9.999.999,99 TL');
   });
 
   test('tlSonEkli: Arapca LTR izolasyonu ekler, isaret tutardan kopmaz', () {

@@ -51,10 +51,10 @@ String tlIsaretli(int kurus, [String dil = 'tr']) {
 /// "1.250,00 TL" — TL SON EKLI varyant (butce/finans ekranlari bu bicimi
 /// kullanir; [tlIsaretli] ise ₺ ON EKLI olani).
 ///
-/// Gruplama TEK KAYNAKTAN gelir ([tlTutar]); `budget_models.formatKurusAsTl`
-/// bunun i18n-oncesi ikizidir ve henuz yerellestirilmemis ekranlarda
-/// (orn. seffaflik panosu) durur — cikti ayni olmak zorundadir, tur 6 testi
-/// bunu dogrular.
+/// Gruplama TEK KAYNAKTAN gelir ([tlTutar]). Tur 6'da `budget_models` icinde
+/// bunun i18n-oncesi bir IKIZI (`formatKurusAsTl`) duruyordu ve ciktilarinin
+/// esitligi testle kilitliydi; tur 9'da son tuketicisi (seffaflik panosu)
+/// cevrilince ikiz KALDIRILDI.
 ///
 /// [onEk] hareket satirlarindaki isaret icindir ('+' / '-'); izolasyon
 /// isaretle BIRLIKTE uygulanir ki Arapca'da isaret tutardan kopmasin.
@@ -89,6 +89,13 @@ String gunAyBicimi(DateTime t, String dil) => dil == 'tr'
 /// Uzun tarih (ay adi dile gore): "25 Temmuz 2026" / "July 25, 2026".
 String uzunTarihBicimi(DateTime t, String dil) =>
     DateFormat.yMMMMd(dil).format(t.toLocal());
+
+/// AY ADI (1-12) — dile gore ("Temmuz" / "July" / "يوليو"). Sunucudan
+/// "YYYY-MM" gelen donemleri yazmak icin (seffaflik panosu); gecersiz ay
+/// numarasinda bos doner ki cagiran ham degeri gosterebilsin.
+String ayAdi(int ay, String dil) => (ay < 1 || ay > 12)
+    ? ''
+    : DateFormat.MMMM(dil).format(DateTime(2000, ay));
 
 /// Gun adi ("Cumartesi" / "Saturday" / "السبت").
 String gunAdi(DateTime t, String dil) => DateFormat.EEEE(dil).format(t.toLocal());

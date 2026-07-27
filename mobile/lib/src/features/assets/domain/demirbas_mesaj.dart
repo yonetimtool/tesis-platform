@@ -11,6 +11,8 @@
 /// sunucuda yerellestirilmis gelir, oldugu gibi tasinir (ceviri denenmez).
 library;
 
+import '../../nfc/domain/nfc_hatasi.dart';
+
 sealed class DemirbasMesaj {
   const DemirbasMesaj();
 }
@@ -65,6 +67,15 @@ final class DemirbasAdliHata extends DemirbasMesaj {
 
   final String ad;
   final String sunucuMetni;
+}
+
+/// NFC servisinin dondurdugu kimlik (tur 9: eskiden TR sabit metin gelirdi ve
+/// yanlislikla SUNUCU kanalindan tasiniyordu).
+final class DemirbasNfcHatasi extends DemirbasMesaj {
+  const DemirbasNfcHatasi(this.kimlik, {this.detay});
+
+  final NfcHatasi kimlik;
+  final String? detay;
 }
 
 /// Sunucu metni (zaten yerellestirilmis) — oldugu gibi gosterilir.

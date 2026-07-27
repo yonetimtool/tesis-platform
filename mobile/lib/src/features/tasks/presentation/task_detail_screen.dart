@@ -15,6 +15,7 @@ import 'task_form_sheet.dart';
 import 'task_ticket_widgets.dart';
 import 'task_tip_style.dart';
 import 'tasks_controller.dart';
+import '../../nfc/presentation/nfc_hata_metni.dart';
 
 /// Gorev detayi + tamamlama akisi: NFC (gorevde etiket tanimliysa) → foto
 /// kaniti (opsiyonel; cek → presign → PUT) → not → "Tamamla".
@@ -282,7 +283,15 @@ class _NfcStep extends StatelessWidget {
                 l10n.gorevOkundu(ltrIzole('${state.draft.nfcTagUid}')),
                 style: const TextStyle(color: Colors.green),
               ),
-            if (gorevHatasiCoz(l10n, state.nfcHata, state.nfcError)
+            // NFC servisinin KIMLIGI varsa onu ciz (tur 9); yoksa gorev
+            // akisinin kimligi / sunucu metni.
+            if (state.nfcKimlik != null)
+              Text(
+                nfcHataMetni(l10n, state.nfcKimlik!,
+                    detay: state.nfcKimlikDetay),
+                style: const TextStyle(color: Colors.red),
+              )
+            else if (gorevHatasiCoz(l10n, state.nfcHata, state.nfcError)
                 case final hata?)
               Text(
                 hata,
@@ -290,7 +299,9 @@ class _NfcStep extends StatelessWidget {
               ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: state.nfcReading ? null : controller.readNfc,
+              onPressed: state.nfcReading
+                  ? null
+                  : () => controller.readNfc(nfcIosMetinleri(l10n)),
               icon: state.nfcReading
                   ? const SizedBox(
                       width: 18,
