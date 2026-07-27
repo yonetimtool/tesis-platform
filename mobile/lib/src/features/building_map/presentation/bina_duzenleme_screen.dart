@@ -269,8 +269,9 @@ class _BlockTile extends StatelessWidget {
       onLongPress: onManage,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: 104,
-        height: 104,
+        // Yazi olcegiyle birlikte buyur (tur 27 — bkz. sema hucresi).
+        width: MediaQuery.textScalerOf(context).scale(104),
+        height: MediaQuery.textScalerOf(context).scale(104),
         decoration: BoxDecoration(
           color: tileFill,
           borderRadius: BorderRadius.circular(12),
@@ -332,8 +333,9 @@ class _AddTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: 104,
-        height: 104,
+        // Yazi olcegiyle birlikte buyur (tur 27 — bkz. sema hucresi).
+        width: MediaQuery.textScalerOf(context).scale(104),
+        height: MediaQuery.textScalerOf(context).scale(104),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.blueGrey.shade300, width: 1.2, style: BorderStyle.solid),

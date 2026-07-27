@@ -384,6 +384,17 @@ void main() {
     await darEkranSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)),
         veri: surusVerisi);
   });
+
+  // ---- TUR 27: YAZI OLCEGI SURUSU (2.0x x 6 dil) ----
+  testWidgets('OLCEK 2x: talep ekrani 6 dilde TASMAZ', (tester) async {
+    await yaziOlcegiSurusu(tester, (dil) => _talepEkrani(Locale(dil)), veri: surusVerisi);
+  });
+  testWidgets('OLCEK 2x: sema ekrani 6 dilde TASMAZ', (tester) async {
+    await yaziOlcegiSurusu(tester, (dil) => _semaEkrani(Locale(dil)), veri: surusVerisi);
+  });
+  testWidgets('OLCEK 2x: duzenleme ekrani 6 dilde TASMAZ', (tester) async {
+    await yaziOlcegiSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)), veri: surusVerisi);
+  });
 }
 
 class _PatlayanMapApi extends BuildingMapApi {

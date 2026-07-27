@@ -2087,6 +2087,25 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 27 — YAZI TİPİ ÖLÇEĞİ SÜRÜŞÜ (2.0× × 6 dil).** `yaziOlcegiSurusu`
+ekranı `TextScaler.linear(2.0)` ile sarıp çizer: kullanıcı yazıyı iki katına
+çıkardığında **metin büyür, kutu büyümez**. Erişilebilirlik × i18n kesişimi
+dar ekrandan daha serttir; 24 ekran × 6 dil sürüldü.
+
+> **BULDUĞU HATA — sabit ölçülü diyagram hücreleri.** `bina_semasi`nın daire
+> hücresi (58×46) ve `bina_duzenleme`nin blok kutucuğu (104×104) 2.0×'te
+> taştı (+21 / +13 / +6.4 px) — ve bu kez **`en`de** taştı, yani sebep çeviri
+> uzunluğu değil **punto**ydu.
+>
+> Çözümde bilinçli bir tercih var: metni küçültmek (`FittedBox`) taşmayı
+> giderirdi ama kullanıcının erişilebilirlik ayarını **sessizce iptal**
+> ederdi. Bunun yerine **kutu yazıyla birlikte büyür**
+> (`MediaQuery.textScalerOf(context).scale(58)`): şema bir diyagram olduğu
+> için oran korunur, `Wrap` içinde ızgara doğal olarak yeniden akar.
+>
+> Diğer 22 ekran 2.0×'te temiz geçti — önceki turların `Expanded` + ellipsis
+> + `FittedBox` kalıpları burada işe yaradı.
+
 > **TANILAMA NOTU:** `tester.takeException()` istisnayı verir ama **hangi
 > widget** olduğunu söylemez; `FlutterErrorDetails` içindedir. Sürüş
 > yardımcısı `FlutterError.onError`u geçici olarak sarıp tanılamayı

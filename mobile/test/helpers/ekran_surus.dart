@@ -79,3 +79,42 @@ Future<void> darEkranSurusu(
     trSizintisiYok(tester, dil, veri: veri);
   }
 }
+
+/// YAZI TIPI OLCEGI surusu (tur 27) — erisilebilirlik x i18n kesisimi.
+///
+/// Android/iOS'ta kullanici yaziyi 2x'e kadar buyutebilir. Uzun ceviri
+/// (Almanca/Rusca) + buyuk punto, dar ekrandan DAHA sert bir testtir:
+/// metin buyur ama kutu buyumez. `TextScaler` MediaQuery'den gelir, bu
+/// yuzden ekran kurucusunu SARARIZ (ekranlarin kendisi degismez).
+Future<void> yaziOlcegiSurusu(
+  WidgetTester tester,
+  Widget Function(String dil) kur, {
+  double olcek = 2.0,
+  double genislik = 430,
+  double yukseklik = 1600,
+  Set<String> veri = const {},
+}) async {
+  tester.view.physicalSize = Size(genislik, yukseklik);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+  for (final dil in surusDilleri) {
+    final ayrinti = <String>[];
+    final eskiOnError = FlutterError.onError;
+    FlutterError.onError = (d) {
+      ayrinti.add('${d.exception}');
+      eskiOnError?.call(d);
+    };
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(
+      MediaQuery(
+        data: MediaQueryData(textScaler: TextScaler.linear(olcek)),
+        child: kur(dil),
+      ),
+    );
+    await tester.pumpAndSettle();
+    FlutterError.onError = eskiOnError;
+    final hata = tester.takeException();
+    expect(hata, isNull,
+        reason: '$dil (olcek ${olcek}x) tasti:\n${ayrinti.join("\n---\n")}');
+  }
+}

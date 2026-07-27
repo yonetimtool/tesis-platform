@@ -287,8 +287,12 @@ class _UnitCell extends StatelessWidget {
       onTap: () => showUnitDetailSheet(context, unit, map: map, isResident: isResident),
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        width: 58,
-        height: 46,
+        // KUTU YAZIYLA BIRLIKTE BUYUR (tur 27): sabit 58x46, kullanici
+        // yaziyi 2x yaptiginda tasiyordu. Olcegi YOK SAYMAK (metni
+        // kucultmek) erisilebilirlik ayarini sessizce iptal etmek olurdu;
+        // sema bir DIYAGRAM oldugu icin hucre buyur, oran korunur.
+        width: MediaQuery.textScalerOf(context).scale(58),
+        height: MediaQuery.textScalerOf(context).scale(46),
         decoration: BoxDecoration(
           color: fill,
           borderRadius: BorderRadius.circular(8),

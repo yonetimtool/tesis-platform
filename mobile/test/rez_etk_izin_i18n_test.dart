@@ -400,4 +400,15 @@ void main() {
     await darEkranSurusu(tester, (dil) => _izinEkrani(Locale(dil)),
         veri: surusVerisi);
   });
+
+  // ---- TUR 27: YAZI OLCEGI SURUSU (2.0x x 6 dil) ----
+  testWidgets('OLCEK 2x: rez ekrani 6 dilde TASMAZ', (tester) async {
+    await yaziOlcegiSurusu(tester, (dil) => _rezEkrani(Locale(dil)), veri: surusVerisi);
+  });
+  testWidgets('OLCEK 2x: etk ekrani 6 dilde TASMAZ', (tester) async {
+    await yaziOlcegiSurusu(tester, (dil) => _etkEkrani(Locale(dil)), veri: surusVerisi);
+  });
+  testWidgets('OLCEK 2x: izin ekrani 6 dilde TASMAZ', (tester) async {
+    await yaziOlcegiSurusu(tester, (dil) => _izinEkrani(Locale(dil)), veri: surusVerisi);
+  });
 }
