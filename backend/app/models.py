@@ -578,7 +578,13 @@ class Notification(Base):
     checkpoint_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     task_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     dedup_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # DEPRECATED (tur 16): donmus Turkce cumle. Yeni satirlarda yapisal
+    # veriden uretilir; eski satirlarda tek kaynak odur.
     mesaj: Mapped[str] = mapped_column(Text, nullable=False)
+    # Metnin KIMLIGI + parametreleri (0008). Okuma yolu metni istegin
+    # dilinde bunlardan uretir — cumle kayda DONDURULMAZ.
+    mesaj_kimlik: Mapped[str | None] = mapped_column(Text, nullable=True)
+    mesaj_veri: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     okundu: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
@@ -1572,6 +1578,9 @@ class UserDevice(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     fcm_token: Mapped[str] = mapped_column(Text, nullable=False)
     platform: Mapped[str] = mapped_column(DEVICE_PLATFORM, nullable=False)
+    # CIHAZIN dili — push metni GONDERIM aninda buradan cozulur (tur 16).
+    # Kullanici degil cihaz bazli: ayni kisinin iki cihazi farkli dilde olabilir.
+    dil: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'tr'"))
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at = _created_at()
     updated_at = _created_at()

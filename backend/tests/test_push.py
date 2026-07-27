@@ -9,6 +9,7 @@ from __future__ import annotations
 import uuid
 
 import app.push as push
+from app.push_metinleri import METINLER
 from app.scheduler import notify
 
 
@@ -66,7 +67,10 @@ def test_noop_provider(monkeypatch):
 
 # ------------------------ dispatch_external wiring -------------------------- #
 def test_dispatch_calls_provider_with_tokens(monkeypatch):
-    monkeypatch.setattr(notify, "_fetch_device_tokens", lambda t, r: ["TOKX", "TOKY"])
+    # TUR 16: fetch (token, DIL) doner; cagiran cumle degil KIMLIK + params verir.
+    monkeypatch.setattr(
+        notify, "_fetch_device_tokens", lambda t, r: [("TOKX", "tr"), ("TOKY", "tr")]
+    )
     rec = []
 
     class Recorder:
@@ -75,9 +79,21 @@ def test_dispatch_calls_provider_with_tokens(monkeypatch):
 
     monkeypatch.setattr(notify.push, "get_push_provider", lambda: Recorder())
     notify.dispatch_external(
-        "mesaj", tenant_id=uuid.uuid4(), target_roles=("admin",), title="TT", data={"a": "b"}
+        "duyuru",
+        tenant_id=uuid.uuid4(),
+        target_roles=("admin",),
+        params={"baslik": "Su kesintisi"},
+        data={"a": "b"},
     )
-    assert rec == [(["TOKX", "TOKY"], "TT", "mesaj", {"a": "b"})]
+    # Ayni dildeki cihazlar TEK batch; metin katalogtan uretilir.
+    assert rec == [
+        (
+            ["TOKX", "TOKY"],
+            METINLER["duyuru"].baslik["tr"],
+            "Su kesintisi",
+            {"a": "b"},
+        )
+    ]
 
 
 def test_dispatch_user_targeted_uses_user_fetch(monkeypatch):
@@ -88,7 +104,7 @@ def test_dispatch_user_targeted_uses_user_fetch(monkeypatch):
 
     def fake_users_fetch(t, user_ids):
         fetched.append(list(user_ids))
-        return ["TOK-RESIDENT"]
+        return [("TOK-RESIDENT", "en")]  # (token, DIL)
 
     monkeypatch.setattr(notify, "_fetch_device_tokens_for_users", fake_users_fetch)
     # rol bazli fetch CAGRILMAMALI
@@ -104,14 +120,22 @@ def test_dispatch_user_targeted_uses_user_fetch(monkeypatch):
 
     monkeypatch.setattr(notify.push, "get_push_provider", lambda: Recorder())
     notify.dispatch_external(
-        "Talebiniz yanitlandi: X",
+        "talep_cozuldu",
         tenant_id=uuid.uuid4(),
         target_user_ids=(uid,),
-        title="Sikayet/Oneri",
-        data={"tip": "talep_yanit"},
+        params={"baslik": "X"},
+        data={"tip": "talep_cozuldu"},
     )
     assert fetched == [[uid]]
-    assert rec == [(["TOK-RESIDENT"], "Sikayet/Oneri", "Talebiniz yanitlandi: X", {"tip": "talep_yanit"})]
+    # Cihazin dili `en` -> metin de Ingilizce (kullanicinin degil CIHAZIN dili).
+    assert rec == [
+        (
+            ["TOK-RESIDENT"],
+            METINLER["talep_cozuldu"].baslik["en"],
+            METINLER["talep_cozuldu"].govde["en"].format(baslik="X"),
+            {"tip": "talep_cozuldu"},
+        )
+    ]
 
 
 def test_dispatch_without_target_is_noop(monkeypatch):
@@ -128,7 +152,7 @@ def test_dispatch_without_target_is_noop(monkeypatch):
 
 
 def test_dispatch_push_error_does_not_raise(monkeypatch):
-    monkeypatch.setattr(notify, "_fetch_device_tokens", lambda t, r: ["T"])
+    monkeypatch.setattr(notify, "_fetch_device_tokens", lambda t, r: [("T", "tr")])
 
     class Boom:
         def send(self, *a, **k):
@@ -183,7 +207,9 @@ def test_unregister_deactivates(client, world):
 
     from app.scheduler.notify import _fetch_device_tokens
 
-    assert tok not in _fetch_device_tokens(world["a"], ("admin", "security"))
+    assert tok not in {
+        t for t, _ in _fetch_device_tokens(world["a"], ("admin", "security"))
+    }
     # tekrar -> 404 (pasif/yok)
     assert client.delete(f"/devices/{tok}", headers=guard).status_code == 404
 
@@ -210,13 +236,14 @@ def test_fetch_tokens_role_and_tenant_isolation(client, world):
 
     from app.scheduler.notify import _fetch_device_tokens
 
-    toks = set(_fetch_device_tokens(world["a"], ("admin", "security")))
+    # (token, dil) uclusu doner -> yalniz token'lari karsilastir.
+    toks = {t for t, _ in _fetch_device_tokens(world["a"], ("admin", "security"))}
     # admin + security (guard) A -> VAR; gorevli A ve B tenant -> YOK
     assert f"ADM-A-{ta}" in toks and f"GRD-A-{ta}" in toks
     assert f"CLN-A-{ta}" not in toks
     assert f"ADM-B-{ta}" not in toks
     # B tarafi kendi token'ini gorur, A'ninkini gormez (tenant izolasyon)
-    toks_b = set(_fetch_device_tokens(world["b"], ("admin", "security")))
+    toks_b = {t for t, _ in _fetch_device_tokens(world["b"], ("admin", "security"))}
     assert f"ADM-B-{ta}" in toks_b and f"ADM-A-{ta}" not in toks_b
 
 

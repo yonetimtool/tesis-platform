@@ -162,10 +162,10 @@ async def create_visitor(
     # dairenin diger sakinlerine/tenant'a sizmaz). Onay/red istenmez; hatasi
     # kaydi kirmaz.
     dispatch_external(
-        f"Ziyaretciniz kaydedildi: {body.ziyaretci_ad} — {unit.no}",
+        "ziyaretci",
         tenant_id=user.tenant_id,
         target_user_ids=(body.target_resident_user_id,),
-        title="Ziyaretci",
+        params={"ad": body.ziyaretci_ad, "daire": unit.no},
         data={"tip": "ziyaretci", "visitor_id": str(obj.id)},
     )
     await audit_user(

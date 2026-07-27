@@ -1476,6 +1476,16 @@ class DisHizmetNoteUpdate(BaseModel):
 
 
 class NotificationOut(BaseModel):
+    """In-app bildirim satiri.
+
+    `mesaj` ISTEGIN DILINDE uretilir (tur 16): kayit cumle degil
+    `mesaj_kimlik` + `mesaj_veri` tasir, metin okuma aninda kurulur. Boylece
+    ayni kayit her kullaniciya kendi dilinde gorunur. Kimlik/veri alanlari da
+    doner: istemci kendi metnini kurmak ya da derin baglanti yapmak isterse
+    kullanir. Tur 16 ONCESI satirlarda kimlik NULL'dur ve `mesaj` kayitta ne
+    yaziyorsa odur (Turkce).
+    """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
@@ -1485,6 +1495,8 @@ class NotificationOut(BaseModel):
     checkpoint_id: uuid.UUID | None = None
     task_id: uuid.UUID | None = None
     mesaj: str
+    mesaj_kimlik: str | None = None
+    mesaj_veri: dict[str, Any] | None = None
     okundu: bool
     created_at: datetime
 
@@ -1655,10 +1667,18 @@ class TaskCompletionHistoryListResponse(BaseModel):
 # ------------------------------- devices ----------------------------------- #
 DevicePlatform = Literal["android", "ios", "web"]
 
+# Desteklenen UI dilleri — `ceviri.DESTEKLENEN_DILLER` ile AYNI kume; burada
+# Literal olarak yazilir ki sema/openapi degeri kisitlasin (gecersiz dil 422).
+Dil = Literal["tr", "en", "ar", "ru", "de", "fr", "es"]
+
 
 class DeviceRegister(BaseModel):
     fcm_token: str = Field(..., min_length=1)
     platform: DevicePlatform
+    # Cihazin UI dili — push metni bu dilde uretilir (tur 16). Gonderilmezse
+    # `tr` (eski istemciler bugunku davranisi korur). Dil uygulama icinden
+    # degistiginde istemci cihazi YENIDEN kaydeder (upsert).
+    dil: Dil | None = None
 
 
 class DeviceOut(BaseModel):
@@ -1668,6 +1688,7 @@ class DeviceOut(BaseModel):
     user_id: uuid.UUID
     fcm_token: str
     platform: str
+    dil: str
     aktif: bool
     created_at: datetime
     updated_at: datetime

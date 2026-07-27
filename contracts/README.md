@@ -76,11 +76,19 @@ metni istemci kendi dilinde kurar. Bugunku uygulamalari:
 |---|---|---|
 | Hata zarfi | `error.code` (+ sunucu `message`'i **cevrilmis** doner, tur 14) | — |
 | `/activity` satiri | `baslik_kimlik` (tur 15) | `veri` (daire, firma, plaka, `tutar_kurus`, kategori kimligi...) |
+| Bildirim satiri | `mesaj_kimlik` (tur 16) | `mesaj_veri` |
 | Durum/kategori alanlari | enum degeri (`durum`, `kategori`, `tip`) | — |
 
 Bicimleme de istemcidedir: **para** `*_kurus` TAM SAYI olarak gider (sunucu
 "₺1.250,00" yazmaz), **zaman** ISO-8601 UTC gider (yerel saat/12-24 saat
 karari istemcinin). Sunucu bicimlerse dil ve saat dilimi sessizce yanlis olur.
+
+**PUSH bir istisnadir** (tur 16): asenkron gonderildigi icin `Accept-Language`
+YOKTUR. Metni sunucu uretmek ZORUNDADIR ve dili **cihaz kaydindan** okur:
+`POST /devices` govdesindeki `dil`. Istemci uygulama dilini degistirdiginde
+cihazi yeniden kaydeder; gonderim dile gore gruplanir (ayni olay, farkli
+dildeki cihazlara farkli metin). Ayni olayin KALICI kaydi (`notification`)
+yine kimlik tasir ve in-app liste metni okuma aninda uretilir.
 
 ### Sayfalama
 - Liste endpoint'leri: `limit` (varsayilan **50**, max **200**) + `offset`.

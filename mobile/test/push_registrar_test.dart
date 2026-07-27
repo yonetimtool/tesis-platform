@@ -15,6 +15,8 @@ import 'package:mobile/src/features/push/data/push_token_store.dart';
 import 'package:mobile/src/features/push/domain/push_models.dart';
 import 'package:mobile/src/features/push/presentation/push_registrar.dart';
 import 'package:mobile/src/features/push/presentation/push_setup.dart';
+import 'package:mobile/src/features/auth/data/token_storage.dart';
+import 'package:mobile/src/core/i18n/locale_controller.dart';
 
 /// Davranisi test basina ayarlanabilen sahte Firebase katmani.
 class _FakeMessaging implements PushMessaging {
@@ -63,7 +65,7 @@ class _FakeMessaging implements PushMessaging {
 class _FakeDeviceApi extends DeviceApi {
   _FakeDeviceApi() : super(Dio());
 
-  final registered = <({String token, String platform})>[];
+  final registered = <({String token, String platform, String dil})>[];
   final unregistered = <String>[];
   ApiException? registerError;
   ApiException? unregisterError;
@@ -72,9 +74,10 @@ class _FakeDeviceApi extends DeviceApi {
   Future<void> register({
     required String fcmToken,
     required String platform,
+    required String dil,
   }) async {
     if (registerError != null) throw registerError!;
-    registered.add((token: fcmToken, platform: platform));
+    registered.add((token: fcmToken, platform: platform, dil: dil));
   }
 
   @override
@@ -137,6 +140,27 @@ class _FakeAuthRepository implements AuthRepository {
   }
 }
 
+/// Diske yazmayan guvenli depo — dil saglayicisi (tur 16) bunu okur;
+/// gercek FlutterSecureStorage platform kanali ister ve testte cokerdi.
+class _BellekDepo extends FlutterSecureStorage {
+  const _BellekDepo();
+
+  @override
+  Future<String?> read({required String key, dynamic iOptions, dynamic aOptions,
+      dynamic lOptions, dynamic webOptions, dynamic mOptions,
+      dynamic wOptions}) async => null;
+
+  @override
+  Future<void> write({required String key, required String? value,
+      dynamic iOptions, dynamic aOptions, dynamic lOptions, dynamic webOptions,
+      dynamic mOptions, dynamic wOptions}) async {}
+
+  @override
+  Future<void> delete({required String key, dynamic iOptions, dynamic aOptions,
+      dynamic lOptions, dynamic webOptions, dynamic mOptions,
+      dynamic wOptions}) async {}
+}
+
 void main() {
   late _FakeMessaging messaging;
   late _FakeDeviceApi api;
@@ -157,6 +181,7 @@ void main() {
         deviceApiProvider.overrideWithValue(api),
         pushTokenStoreProvider.overrideWithValue(store),
         authRepositoryProvider.overrideWithValue(authRepo),
+        secureStorageProvider.overrideWithValue(const _BellekDepo()),
       ],
     );
     addTearDown(container.dispose);
@@ -405,6 +430,38 @@ void main() {
         () => container.read(pushRegistrarProvider).sonTiklanan != null);
     expect(container.read(pushRegistrarProvider).sonTiklanan!.data['complaint_id'],
         'c-9');
+  });
+
+  // ---- TUR 16: cihaz DILI kaydi ----
+  test('kayit CIHAZIN dilini gonderir', () async {
+    final container = await loginAndRegister();
+    // Secim yokken aktif dil cihazdan cozulur (desteklenmiyorsa tr).
+    final beklenen = container.read(aktifDilKoduProvider);
+    expect(supportedLocales.map((l) => l.languageCode), contains(beklenen));
+    expect(api.registered.single.dil, beklenen);
+    expect(container.read(pushRegistrarProvider).kayitliDil, beklenen);
+  });
+
+  test('DIL DEGISINCE cihaz yeniden kaydedilir (push eski dilde kalmasin)',
+      () async {
+    final container = await loginAndRegister();
+    expect(api.registered, hasLength(1));
+
+    await container.read(localeControllerProvider.notifier).sec(AppDil.ar);
+    await waitFor(() => api.registered.length > 1);
+
+    // Ayni token, YENI dil: sunucu tarafi idempotent upsert (ayni satir).
+    expect(api.registered.last.token, api.registered.first.token);
+    expect(api.registered.last.dil, 'ar');
+    expect(container.read(pushRegistrarProvider).kayitliDil, 'ar');
+  });
+
+  test('oturum YOKKEN dil degisimi kayit denemez (401 uretmez)', () async {
+    final container = makeContainer();
+    container.read(pushSetupProvider);
+    await container.read(localeControllerProvider.notifier).sec(AppDil.de);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(api.registered, isEmpty);
   });
 
   test('PushMessageEvent.displayText: VARSAYILAN METIN URETMEZ (tur 12)', () {

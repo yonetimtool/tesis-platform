@@ -165,10 +165,10 @@ async def create_kargo(
     ).scalars().all()
     if sakinler:
         dispatch_external(
-            f"Kargonuz geldi — {body.firma} ({unit.no})",
+            "kargo",
             tenant_id=user.tenant_id,
             target_user_ids=tuple(dict.fromkeys(sakinler)),
-            title="Kargo",
+            params={"firma": body.firma, "daire": unit.no},
             data={"tip": "kargo", "kargo_id": str(obj.id)},
         )
     await audit_user(

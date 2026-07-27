@@ -459,9 +459,52 @@ metinler hala Turkce:
 | Ne | Yer | Not |
 |---|---|---|
 | ~~`/activity` satirlari~~ | ~~`app/routers/activity.py`~~ | **TUR 15'TE KAPANDI** — asagi bak. |
-| Push bildirim metinleri | `app/push.py` cagrilari | Cihaz dilini sunucu bilmez; kullanicinin dil tercihi kalici saklanmali (`app_user` alani) — ayri is. |
-| `notification.mesaj` | `app/scheduler/notify.py` | Kalici kayittaki Turkce ozet cumle. Akista ARTIK GOSTERILMIYOR (tur 15 yapisal veriye gecti); bildirim listesi ekraninda hala gorunur. |
+| ~~Push bildirim metinleri~~ | ~~`app/push.py` cagrilari~~ | **TUR 16'DA KAPANDI** — asagi bak. |
+| ~~`notification.mesaj`~~ | ~~`app/scheduler/notify.py`~~ | **TUR 16'DA KAPANDI** — kayit kimlik tasir, metin okuma aninda uretilir. |
 | Seed/demo icerigi | `scripts/seed.py` | Ornek veridir, cevrilmez. |
+
+**Sunucunun urettigi kullanici-gorunur metinlerin hepsi artik 7 dilde.**
+
+## Push + in-app bildirim metinleri (tur 16)
+
+Bildirimlerin sorunu hata metinlerinden FARKLIYDI: **push asenkrondur** —
+gonderim aninda istek yoktur, dolayisiyla `Accept-Language` de yoktur. Tur
+14'un cozumu (istek aninda cevirme) burada calismaz. Iki parca gerekti:
+
+| Parca | Yer |
+|---|---|
+| Katalog (kimlik -> baslik + govde, 7 dil) | `app/push_metinleri.py` — **14 kimlik** |
+| Cihazin dili | `user_device.dil` (migration **0008**); `POST /devices` govdesindeki `dil` |
+| Gonderim | `scheduler/notify.dispatch_external(kimlik, params=...)` — dile gore GRUPLAR |
+| Kalici kayit | `notification.mesaj_kimlik` + `mesaj_veri` (0008) |
+| Okuma | `routers/notifications` — metin `Accept-Language`e gore uretilir |
+| Kilit | `tests/test_push_i18n.py` (17 test) |
+
+```python
+# cumle DEGIL kimlik + parametre
+dispatch_external(
+    "kargo",
+    tenant_id=user.tenant_id,
+    target_user_ids=sakinler,
+    params={"firma": body.firma, "daire": unit.no},
+    data={"tip": "kargo", "kargo_id": str(obj.id)},
+)
+```
+
+**Kurallar**
+
+* Kimlik = `data.tip` = `notification.tip` (mumkun oldugunca): istemci
+  yonlendirmesi ile metin AYNI anahtari kullanir.
+* **Durum bir SOZCUK ise kimlige girer**, parametreye degil:
+  `talep_cozuldu` / `talep_reddedildi` ayri kimliklerdir. `{durum}` diye
+  parametre gecmek, cevrilecek metni gizlemenin baska bir yolu olurdu.
+* Dil **cihaz** bazlidir, kullanici bazli degil: ayni kisinin iki cihazi
+  farkli dilde olabilir; gonderim dile gore gruplanir.
+* Kullanici uygulama dilini degistirince istemci cihazi YENIDEN kaydeder
+  (idempotent upsert). Yapilmazsa bildirimler eski dilde gelmeye devam eder.
+* Kalici kayda **cumle yazilmaz**: yazan kisinin dili sonsuza kadar
+  sabitlenirdi. `mesaj` kolonu (NOT NULL) deprecated olarak ayni yapisal
+  veriden uretilir; eski satirlarda kimlik NULL'dur ve metin aynen doner.
 
 ## `/activity` satirlari: METIN degil KIMLIK (tur 15)
 

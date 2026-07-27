@@ -204,10 +204,13 @@ async def create_event(
     )
     # EK push: tum sakinlerin cihazlarina duyurulur (hatasi kaydi kirmaz).
     dispatch_external(
-        f"Yeni etkinlik: {body.baslik} — {body.tarih.strftime('%d.%m.%Y %H:%M')}",
+        "etkinlik",
         tenant_id=user.tenant_id,
         target_roles=_AUDIENCE_ROLES,
-        title="Etkinlik",
+        # Tarih BICIMI dile baglidir; push metni sunucuda kuruldugu icin
+        # ISO-8601 gonderilir (tek anlamli) — istemci derin baglantidan
+        # ekrani acinca kendi biciminde gosterir.
+        params={"baslik": body.baslik, "zaman": body.tarih.isoformat(timespec="minutes")},
         data={"tip": "etkinlik", "etkinlik_id": str(obj.id)},
     )
     return _out(obj, user.ad, 0, 0, None)

@@ -222,11 +222,15 @@ async def create_reservation(
     ).scalar_one()
     # EK push: rezerve edene onay bildirimi (hatasi kaydi kirmaz).
     dispatch_external(
-        f"Rezervasyonunuz onaylandi: {alan.ad} — {body.tarih.isoformat()} "
-        f"{body.baslangic.strftime('%H:%M')}-{body.bitis.strftime('%H:%M')} ({unit_no})",
+        "rezervasyon",
         tenant_id=user.tenant_id,
         target_user_ids=(user.id,),
-        title="Rezervasyon",
+        params={
+            "alan": alan.ad,
+            "tarih": body.tarih.isoformat(),
+            "baslangic": body.baslangic.strftime("%H:%M"),
+            "bitis": body.bitis.strftime("%H:%M"),
+        },
         data={"tip": "rezervasyon", "rezervasyon_id": str(obj.id)},
     )
     return _out((obj, alan.ad, unit_no, user.ad, None))

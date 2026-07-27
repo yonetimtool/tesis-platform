@@ -280,7 +280,12 @@ def test_kayit_bilgilendirme_push_yalniz_hedef_sakine(client, vworld):
 
     from app.scheduler.notify import _fetch_device_tokens_for_users
 
-    hedef_toks = set(_fetch_device_tokens_for_users(vworld["a"], [vworld["resident_a_id"]]))
+    hedef_toks = {
+        t
+        for t, _ in _fetch_device_tokens_for_users(
+            vworld["a"], [vworld["resident_a_id"]]
+        )
+    }
     assert f"RES1-{tag}" in hedef_toks
     assert f"ES-{tag}" not in hedef_toks
 

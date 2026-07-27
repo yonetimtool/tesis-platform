@@ -39,6 +39,7 @@ class PushState {
   const PushState({
     this.durum = PushDurum.baslatilmadi,
     this.kayitliToken,
+    this.kayitliDil,
     this.sonBildirim,
     this.sonTiklanan,
   });
@@ -47,6 +48,11 @@ class PushState {
 
   /// Backend'e en son basariyla kaydedilen FCM token (yoksa null).
   final String? kayitliToken;
+
+  /// Cihaz kaydiyla birlikte sunucuya yazilan UI dili (tur 16). Kullanici
+  /// dili degistirince bu deger eskir ve cihaz YENIDEN kaydedilir — yoksa
+  /// push eski dilde gelmeye devam ederdi (sunucu istek basligini goremez).
+  final String? kayitliDil;
 
   /// On planda yakalanan son mesaj — UI (main) dinleyip SnackBar gosterir.
   final PushMessageEvent? sonBildirim;
@@ -59,6 +65,7 @@ class PushState {
   PushState copyWith({
     PushDurum? durum,
     Object? kayitliToken = _sentinel,
+    Object? kayitliDil = _sentinel,
     Object? sonBildirim = _sentinel,
     Object? sonTiklanan = _sentinel,
   }) {
@@ -67,6 +74,8 @@ class PushState {
       kayitliToken: kayitliToken == _sentinel
           ? this.kayitliToken
           : kayitliToken as String?,
+      kayitliDil:
+          kayitliDil == _sentinel ? this.kayitliDil : kayitliDil as String?,
       sonBildirim: sonBildirim == _sentinel
           ? this.sonBildirim
           : sonBildirim as PushMessageEvent?,

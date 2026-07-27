@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/locale_controller.dart';
 import '../data/device_api.dart';
 import '../data/push_messaging.dart';
 import '../data/push_token_store.dart';
@@ -116,14 +117,18 @@ class PushRegistrar extends Notifier<PushState> {
 
   Future<void> _register(String token) async {
     try {
+      final dil = ref.read(aktifDilKoduProvider);
       await _api.register(
         fcmToken: token,
         platform: defaultTargetPlatform == TargetPlatform.iOS
             ? 'ios'
             : 'android',
+        dil: dil,
       );
       await _store.save(token);
-      if (ref.mounted) state = state.copyWith(kayitliToken: token);
+      if (ref.mounted) {
+        state = state.copyWith(kayitliToken: token, kayitliDil: dil);
+      }
     } catch (e) {
       // Ag yok / sunucu hatasi: sonraki login/acilista yeniden denenir
       // (backend idempotent). Login akisini ASLA bozma.

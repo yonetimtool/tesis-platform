@@ -35,6 +35,9 @@ async def register_device(
         user_id=user.id,
         fcm_token=body.fcm_token,
         platform=body.platform,
+        # Dil GONDERILMEZSE `tr` (kolon varsayilani ile ayni): eski istemciler
+        # bugunku davranisi korur. Istemci dili degistirince YENIDEN kaydeder.
+        dil=body.dil or "tr",
         aktif=True,
     )
     stmt = stmt.on_conflict_do_update(
@@ -42,6 +45,7 @@ async def register_device(
         set_={
             "user_id": stmt.excluded.user_id,
             "platform": stmt.excluded.platform,
+            "dil": stmt.excluded.dil,
             "aktif": True,
             "updated_at": func.now(),
         },

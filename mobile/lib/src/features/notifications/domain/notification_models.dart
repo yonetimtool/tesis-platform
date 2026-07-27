@@ -5,6 +5,11 @@ library;
 
 /// Tek bildirim kaydi (NotificationOut). Savunmaci parse: eksik alan
 /// patlatmaz; `okundu` varsayilani TRUE — parse hatasi rozet yakmasin.
+///
+/// DIL (tur 16): `mesaj` SUNUCUDAN gelir ve artik istegin dilinde uretilir —
+/// kayit cumle degil kimlik + parametre tasir, metin okuma aninda kurulur.
+/// Istemci bu alani AYNEN gosterir; `Accept-Language` her istekte gider
+/// (`core/network/dil_interceptor.dart`).
 class AppNotification {
   const AppNotification({
     required this.id,

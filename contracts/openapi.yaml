@@ -5049,14 +5049,25 @@ components:
       properties:
         fcm_token: { type: string }
         platform: { $ref: "#/components/schemas/DevicePlatform" }
+        dil:
+          type: string
+          enum: [tr, en, ar, ru, de, fr, es]
+          default: tr
+          description: >
+            CIHAZIN arayuz dili. Push metni SUNUCUDA, gonderim aninda bu dilde
+            uretilir — push asenkron oldugu icin o anda `Accept-Language`
+            YOKTUR. Istemci uygulama dilini degistirdiginde cihazi YENIDEN
+            kaydeder (ayni token -> idempotent upsert, dil guncellenir).
+            Gonderilmezse `tr`.
     Device:
       type: object
-      required: [id, user_id, fcm_token, platform, aktif, created_at, updated_at]
+      required: [id, user_id, fcm_token, platform, dil, aktif, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         user_id: { type: string, format: uuid }
         fcm_token: { type: string }
         platform: { $ref: "#/components/schemas/DevicePlatform" }
+        dil: { type: string, enum: [tr, en, ar, ru, de, fr, es] }
         aktif: { type: boolean }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
@@ -6847,6 +6858,12 @@ components:
     Notification:
       type: object
       required: [id, tip, mesaj, okundu, created_at]
+      description: >
+        `mesaj` ISTEGIN DILINDE uretilir (tur 16): kayit cumle degil
+        `mesaj_kimlik` + `mesaj_veri` tasir. Boylece ayni kayit her
+        kullaniciya kendi dilinde gorunur — cumle kayda DONDURULMAZ.
+        Tur 16 oncesi satirlarda kimlik `null`dur ve `mesaj` kayittaki
+        (Turkce) metindir.
       properties:
         id: { type: string, format: uuid }
         tip:
@@ -6857,7 +6874,23 @@ components:
         patrol_plan_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
         task_id: { type: string, format: uuid, nullable: true }
-        mesaj: { type: string }
+        mesaj:
+          type: string
+          description: Istegin dilinde uretilmis gosterilecek metin
+        mesaj_kimlik:
+          type: string
+          nullable: true
+          example: kacirilan_tur
+          description: >
+            Metnin yerellestirilebilir kimligi (= `tip` / push `data.tip`).
+            Istemci kendi metnini kurmak ya da yonlendirme yapmak icin
+            kullanabilir.
+        mesaj_veri:
+          type: object
+          nullable: true
+          additionalProperties: true
+          example: { plan: "Gece devriyesi", eksik: 2 }
+          description: Metnin DEGISKEN alanlari (cevrilmez — veridir)
         okundu: { type: boolean }
         created_at: { type: string, format: date-time }
     NotificationUpdate:

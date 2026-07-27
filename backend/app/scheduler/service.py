@@ -109,14 +109,18 @@ def detect_missed(
                 conn.execute(
                     "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
                 )
+                # Plan ADI da cekilir: bildirim metni artik pencere ISO
+                # damgasi degil PLAN ADI + eksik sayisi tasir (tur 16).
                 windows = conn.execute(
-                    "SELECT id, patrol_plan_id, pencere_baslangic, pencere_bitis "
-                    "FROM patrol_window "
-                    "WHERE durum = 'bekliyor' AND pencere_bitis <= %s",
+                    "SELECT w.id, w.patrol_plan_id, w.pencere_baslangic, "
+                    "       w.pencere_bitis, p.ad "
+                    "FROM patrol_window w "
+                    "JOIN patrol_plan p ON p.id = w.patrol_plan_id "
+                    "WHERE w.durum = 'bekliyor' AND w.pencere_bitis <= %s",
                     (now,),
                 ).fetchall()
 
-                for window_id, plan_id, w_start, w_end in windows:
+                for window_id, plan_id, w_start, w_end, plan_adi in windows:
                     expected = [
                         r[0]
                         for r in conn.execute(
@@ -152,6 +156,7 @@ def detect_missed(
                             pencere_baslangic=w_start,
                             pencere_bitis=w_end,
                             missing_checkpoints=missing,
+                            plan_adi=plan_adi,
                         )
                         summary["kacirildi"] += 1
                     else:

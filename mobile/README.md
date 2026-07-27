@@ -1582,7 +1582,8 @@ kimliğe çevrildi (`core` artık hiçbir dilde metin üretmez); tur 14'te
 **sunucu hata metinleri** de 7 dile alındı (`backend/app/hata_metinleri.py`) —
 mobil her isteğe `Accept-Language` ekler; tur 15'te **`/activity` satırları**
 kimliğe çevrildi (sunucu `baslik_kimlik` + `veri` gönderir, cümleyi istemci
-kurar) — böylece sunucudan gelen son Türkçe metin de kalktı.
+kurar); tur 16'da **push + in-app bildirim metinleri** 7 dile alındı —
+böylece sunucudan gelen kullanıcı-görünür metinlerin hepsi dile duyarlı.
 
 > **DIŞA ALIM BİTTİ (tur 12) — İ18N BORCU DA KAPANDI (tur 13).** Ölçüm
 > **8 string / 5 dosya**'da duruyor ve tamamı **bilinçli istisna**dır (marka
@@ -2017,6 +2018,23 @@ yönetici iletişimde **tr→en** dil değişimi; `gunTipiAdi`nın null (kısıt
 `displayText`in artık varsayılan metin üretmediği; **dil adlarının kendi
 dilinde kaldığı** (istisna kilidi); **RTL** ve **320 dp** senaryoları.
 
+**Push dili (tur 16).** Push **asenkrondur**: sunucu gönderim anında isteğe
+sahip değildir, dolayısıyla `Accept-Language` başlığı yoktur. Bu yüzden dil
+**cihaz kaydında** saklanır: `POST /devices` gövdesinde `dil` gider
+(`push/data/device_api.dart`) ve **kullanıcı uygulama dilini değiştirdiğinde
+cihaz yeniden kaydedilir** (`push/presentation/push_setup.dart`) — yoksa
+bildirimler eski dilde gelmeye devam ederdi. In-app bildirim listesi ise
+normal istek yolundadır: sunucu metni `Accept-Language`e göre üretir, istemci
+aynen gösterir.
+
+> **Riverpod tuzağı (tur 16'da yakalandı):** dil değişimini
+> `aktifDilKoduProvider` (türetilmiş `Provider`) üzerinden dinlemek **sessizce
+> hiç tetiklenmiyordu** — türetilmiş bir `Provider` yalnızca *okunduğunda*
+> yeniden hesaplanır, ona kurulan `ref.listen` tek başına onu canlı tutmaz.
+> Dinlenen şey artık seçimin kendisi (`localeControllerProvider`). Testi
+> yazmasaydım bu, "dili değiştirdim ama bildirimler hâlâ Türkçe" olarak
+> sahada görünürdü.
+
 `test/akis_kimlik_i18n_test.dart` (10 test — tur 15): `/activity` satırının
 başlığının **kimlikten** çözüldüğü ve `tur`ün tek başına yetmediği (talep →
 4 ayrı başlık), 18 başlık kimliğinin 7 dilde karşılık bulduğu ve TR sızıntısı
@@ -2027,6 +2045,11 @@ istemcide kurulduğu; **opsiyonel alanın yokluğunun** biçimi değiştirdiği 
 `COALESCE`'unun yerine); veri yokken uydurma metin üretilmediği; bilinmeyen
 kimliğin satırı düşürmeyip deprecated sunucu metnine düştüğü. Sunucu tarafı:
 `backend/tests/test_activity.py`.
+
+`test/push_registrar_test.dart` (19 test; 3'ü tur 16): kaydın **cihazın**
+dilini gönderdiği, **dil değişince cihazın yeniden kaydedildiği** (aynı token,
+yeni dil) ve oturum yokken kayıt denenmediği (401 üretmez). Sunucu tarafı:
+`backend/tests/test_push_i18n.py` (17 test).
 
 `test/dil_interceptor_test.dart` (6 test — tur 14): her isteğin
 `Accept-Language` taşıdığı, değerin **cihaz dili değil** uygulamanın o an

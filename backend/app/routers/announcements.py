@@ -176,10 +176,10 @@ async def create_announcement(
     )
     # EK push (in-app kaydi duyurunun kendisi; push hatasi akisi kirmaz).
     dispatch_external(
-        body.baslik,
+        "duyuru",
         tenant_id=user.tenant_id,
         target_roles=_ALL_ROLES,
-        title="Duyuru",
+        params={"baslik": body.baslik},
         data={"tip": "duyuru", "announcement_id": str(obj.id)},
     )
     return _out(obj, user.ad)

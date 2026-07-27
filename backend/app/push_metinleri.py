@@ -1,0 +1,379 @@
+"""Push + in-app bildirim metinleri — 7 dil (tur 16).
+
+NEDEN AYRI BIR MODUL: hata metinleri (tur 14) istegin `Accept-Language`
+basligina gore uretilir. Push ASENKRONDUR — istek yoktur. Bu yuzden dil
+GONDERIM aninda **cihaz kaydindan** okunur (`user_device.dil`, migration
+0008) ve gonderim dile gore GRUPLANIR: ayni olay, farkli dildeki cihazlara
+farkli metinle gider.
+
+Kalici `notification` satiri da metin degil KIMLIK tasir
+(`mesaj_kimlik` + `mesaj_veri`): in-app liste metni OKUMA aninda, istegin
+dilinde uretir. Cumleyi kayda dondurmak, kaydi ilk yazan kullanicinin dilini
+sonsuza kadar sabitlerdi.
+
+Her kimlik iki metin verir: `baslik` (push basligi / bildirim etiketi) ve
+`govde` (govde metni; `{param}` alanlari `mesaj_veri`den gelir).
+
+YENI BILDIRIM EKLERKEN: 7 dilin HEPSI yazilir; eksik dil calisma aninda
+Turkce'ye duser ve `test_push_i18n.py` ile yakalanir.
+"""
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+
+from app.ceviri import DESTEKLENEN_DILLER, VARSAYILAN_DIL
+
+
+@dataclass(frozen=True)
+class PushMetni:
+    """Bir bildirim kimliginin 7 dildeki basligi + govdesi."""
+
+    baslik: Mapping[str, str]
+    govde: Mapping[str, str]
+    #: Govdedeki `{...}` alanlari — testte tum dillerde ayni olmasi dogrulanir.
+    params: tuple[str, ...] = field(default=())
+
+
+def _coz(metinler: Mapping[str, str], dil: str) -> str:
+    return metinler.get(dil) or metinler.get(VARSAYILAN_DIL) or ""
+
+
+def dil_normalize(dil: str | None) -> str:
+    """Cihaz kaydindaki dili desteklenen kumeye indirger (yoksa `tr`)."""
+    return dil if dil in DESTEKLENEN_DILLER else VARSAYILAN_DIL
+
+
+def push_basligi(kimlik: str, dil: str = VARSAYILAN_DIL) -> str:
+    kayit = METINLER.get(kimlik)
+    return _coz(kayit.baslik, dil_normalize(dil)) if kayit else kimlik
+
+
+def push_govdesi(
+    kimlik: str,
+    dil: str = VARSAYILAN_DIL,
+    params: Mapping[str, object] | None = None,
+) -> str:
+    """Kimlik + dil + parametre -> gosterilecek metin.
+
+    Bilinmeyen kimlik kimligin KENDISINI dondurur; parametre eksikse ham
+    sablon doner. Ikisi de "bos bildirim" gostermekten iyidir ve testlerle
+    yakalanir.
+    """
+    kayit = METINLER.get(kimlik)
+    if kayit is None:
+        return kimlik
+    sablon = _coz(kayit.govde, dil_normalize(dil))
+    if not params:
+        return sablon
+    try:
+        return sablon.format(**params)
+    except (KeyError, IndexError, ValueError):
+        return sablon
+
+
+# --------------------------------------------------------------------------- #
+# Katalog — kimlik, `data.tip` ile AYNI degerdir (istemci yonlendirmesi orada).
+# --------------------------------------------------------------------------- #
+METINLER: dict[str, PushMetni] = {
+    "kacirilan_tur": PushMetni(
+        baslik={
+            "tr": "Kaçırılan tur",
+            "en": "Missed patrol",
+            "ar": "جولة فائتة",
+            "ru": "Пропущенный обход",
+            "de": "Verpasster Rundgang",
+            "fr": "Ronde manquée",
+            "es": "Ronda perdida",
+        },
+        govde={
+            "tr": "{plan} turu kaçırıldı ({eksik} eksik kontrol noktası).",
+            "en": "The {plan} patrol was missed ({eksik} checkpoints missing).",
+            "ar": "تم تفويت جولة {plan} ({eksik} نقاط تفتيش ناقصة).",
+            "ru": "Обход «{plan}» пропущен (не отмечено контрольных точек: {eksik}).",
+            "de": "Der Rundgang {plan} wurde verpasst ({eksik} fehlende Kontrollpunkte).",
+            "fr": "La ronde {plan} a été manquée ({eksik} points de contrôle manquants).",
+            "es": "Se perdió la ronda {plan} ({eksik} puntos de control faltantes).",
+        },
+        params=('plan', 'eksik'),
+    ),
+    "yeni_talep": PushMetni(
+        baslik={
+            "tr": "Talep / Arıza",
+            "en": "Request / Fault",
+            "ar": "طلب / عطل",
+            "ru": "Заявка / неисправность",
+            "de": "Anfrage / Störung",
+            "fr": "Demande / panne",
+            "es": "Solicitud / avería",
+        },
+        govde={
+            "tr": "Yeni talep: {baslik}",
+            "en": "New request: {baslik}",
+            "ar": "طلب جديد: {baslik}",
+            "ru": "Новая заявка: {baslik}",
+            "de": "Neue Anfrage: {baslik}",
+            "fr": "Nouvelle demande : {baslik}",
+            "es": "Nueva solicitud: {baslik}",
+        },
+        params=('baslik',),
+    ),
+    # Talep yanitlari: kimlik = `notification`/`data.tip` degeri ile AYNI.
+    # Tek bir "talep_yaniti" + {durum} parametresi YERINE uc ayri kimlik:
+    # durum bir SOZCUK olurdu ve onun da cevrilmesi gerekirdi (metni parametre
+    # olarak tasimak, cevrilecek metni gizlemenin baska bir yoludur).
+    "talep_is_emri": PushMetni(
+        baslik={
+            "tr": "Talebiniz güncellendi",
+            "en": "Your request was updated",
+            "ar": "تم تحديث طلبك",
+            "ru": "Ваша заявка обновлена",
+            "de": "Ihre Anfrage wurde aktualisiert",
+            "fr": "Votre demande a été mise à jour",
+            "es": "Su solicitud se actualizó",
+        },
+        govde={
+            "tr": "Talebiniz iş emrine dönüştürüldü: {baslik}",
+            "en": "Your request was turned into a work order: {baslik}",
+            "ar": "تم تحويل طلبك إلى أمر عمل: {baslik}",
+            "ru": "Ваша заявка преобразована в наряд: {baslik}",
+            "de": "Ihre Anfrage wurde in einen Arbeitsauftrag umgewandelt: {baslik}",
+            "fr": "Votre demande a été convertie en ordre de travail : {baslik}",
+            "es": "Su solicitud se convirtió en una orden de trabajo: {baslik}",
+        },
+        params=("baslik",),
+    ),
+    "talep_cozuldu": PushMetni(
+        baslik={
+            "tr": "Talebiniz çözüldü",
+            "en": "Your request was resolved",
+            "ar": "تم حل طلبك",
+            "ru": "Ваша заявка решена",
+            "de": "Ihre Anfrage wurde gelöst",
+            "fr": "Votre demande a été résolue",
+            "es": "Su solicitud fue resuelta",
+        },
+        govde={
+            "tr": "Talebiniz çözüldü: {baslik}",
+            "en": "Your request was resolved: {baslik}",
+            "ar": "تم حل طلبك: {baslik}",
+            "ru": "Ваша заявка решена: {baslik}",
+            "de": "Ihre Anfrage wurde gelöst: {baslik}",
+            "fr": "Votre demande a été résolue : {baslik}",
+            "es": "Su solicitud fue resuelta: {baslik}",
+        },
+        params=("baslik",),
+    ),
+    "talep_reddedildi": PushMetni(
+        baslik={
+            "tr": "Talebiniz reddedildi",
+            "en": "Your request was rejected",
+            "ar": "تم رفض طلبك",
+            "ru": "Ваша заявка отклонена",
+            "de": "Ihre Anfrage wurde abgelehnt",
+            "fr": "Votre demande a été rejetée",
+            "es": "Su solicitud fue rechazada",
+        },
+        govde={
+            "tr": "Talebiniz reddedildi: {baslik}",
+            "en": "Your request was rejected: {baslik}",
+            "ar": "تم رفض طلبك: {baslik}",
+            "ru": "Ваша заявка отклонена: {baslik}",
+            "de": "Ihre Anfrage wurde abgelehnt: {baslik}",
+            "fr": "Votre demande a été rejetée : {baslik}",
+            "es": "Su solicitud fue rechazada: {baslik}",
+        },
+        params=("baslik",),
+    ),
+    "is_emri_atandi": PushMetni(
+        baslik={
+            "tr": "İş emri",
+            "en": "Work order",
+            "ar": "أمر عمل",
+            "ru": "Наряд",
+            "de": "Arbeitsauftrag",
+            "fr": "Ordre de travail",
+            "es": "Orden de trabajo",
+        },
+        govde={
+            "tr": "Size iş emri atandı: {baslik}",
+            "en": "A work order was assigned to you: {baslik}",
+            "ar": "تم إسناد أمر عمل إليك: {baslik}",
+            "ru": "Вам назначен наряд: {baslik}",
+            "de": "Ihnen wurde ein Arbeitsauftrag zugewiesen: {baslik}",
+            "fr": "Un ordre de travail vous a été attribué : {baslik}",
+            "es": "Se le asignó una orden de trabajo: {baslik}",
+        },
+        params=('baslik',),
+    ),
+    "duyuru": PushMetni(
+        baslik={
+            "tr": "Duyuru",
+            "en": "Announcement",
+            "ar": "إعلان",
+            "ru": "Объявление",
+            "de": "Ankündigung",
+            "fr": "Annonce",
+            "es": "Anuncio",
+        },
+        govde={
+            "tr": "{baslik}",
+            "en": "{baslik}",
+            "ar": "{baslik}",
+            "ru": "{baslik}",
+            "de": "{baslik}",
+            "fr": "{baslik}",
+            "es": "{baslik}",
+        },
+        params=('baslik',),
+    ),
+    "etkinlik": PushMetni(
+        baslik={
+            "tr": "Etkinlik",
+            "en": "Event",
+            "ar": "فعالية",
+            "ru": "Мероприятие",
+            "de": "Veranstaltung",
+            "fr": "Événement",
+            "es": "Evento",
+        },
+        govde={
+            "tr": "Yeni etkinlik: {baslik} — {zaman}",
+            "en": "New event: {baslik} — {zaman}",
+            "ar": "فعالية جديدة: {baslik} — {zaman}",
+            "ru": "Новое мероприятие: {baslik} — {zaman}",
+            "de": "Neue Veranstaltung: {baslik} — {zaman}",
+            "fr": "Nouvel événement : {baslik} — {zaman}",
+            "es": "Nuevo evento: {baslik} — {zaman}",
+        },
+        params=('baslik', 'zaman'),
+    ),
+    "kargo": PushMetni(
+        baslik={
+            "tr": "Kargo",
+            "en": "Parcel",
+            "ar": "طرد",
+            "ru": "Посылка",
+            "de": "Paket",
+            "fr": "Colis",
+            "es": "Paquete",
+        },
+        govde={
+            "tr": "Kargonuz geldi — {firma} ({daire})",
+            "en": "Your parcel has arrived — {firma} ({daire})",
+            "ar": "وصل طردك — {firma} ({daire})",
+            "ru": "Ваша посылка прибыла — {firma} ({daire})",
+            "de": "Ihr Paket ist angekommen — {firma} ({daire})",
+            "fr": "Votre colis est arrivé — {firma} ({daire})",
+            "es": "Su paquete ha llegado — {firma} ({daire})",
+        },
+        params=('firma', 'daire'),
+    ),
+    "ziyaretci": PushMetni(
+        baslik={
+            "tr": "Ziyaretçi",
+            "en": "Visitor",
+            "ar": "زائر",
+            "ru": "Посетитель",
+            "de": "Besucher",
+            "fr": "Visiteur",
+            "es": "Visitante",
+        },
+        govde={
+            "tr": "Ziyaretçiniz kaydedildi: {ad} — {daire}",
+            "en": "Your visitor was registered: {ad} — {daire}",
+            "ar": "تم تسجيل زائرك: {ad} — {daire}",
+            "ru": "Ваш посетитель зарегистрирован: {ad} — {daire}",
+            "de": "Ihr Besucher wurde erfasst: {ad} — {daire}",
+            "fr": "Votre visiteur a été enregistré : {ad} — {daire}",
+            "es": "Su visitante fue registrado: {ad} — {daire}",
+        },
+        params=('ad', 'daire'),
+    ),
+    "erisim_talebi": PushMetni(
+        baslik={
+            "tr": "Görüntüleme izni talebi",
+            "en": "View permission request",
+            "ar": "طلب إذن اطّلاع",
+            "ru": "Запрос на доступ к просмотру",
+            "de": "Anfrage für Anzeigeberechtigung",
+            "fr": "Demande d'autorisation de consultation",
+            "es": "Solicitud de permiso de consulta",
+        },
+        govde={
+            "tr": "{ad}, {daire} ziyaretçi/kargo kayıtlarını görmek istiyor.",
+            "en": "{ad} wants to view the visitor/parcel records of {daire}.",
+            "ar": "يريد {ad} الاطّلاع على سجلات الزوار/الطرود للوحدة {daire}.",
+            "ru": "{ad} хочет просмотреть записи о посетителях/посылках кв. {daire}.",
+            "de": "{ad} möchte die Besucher-/Paketdatensätze von {daire} einsehen.",
+            "fr": "{ad} souhaite consulter les enregistrements visiteurs/colis de {daire}.",
+            "es": "{ad} quiere ver los registros de visitantes/paquetes de {daire}.",
+        },
+        params=('ad', 'daire'),
+    ),
+    # Sonuc bildirimi: karar (onay/red) KIMLIGE girer — "onaylandi" sozcugunu
+    # parametre olarak tasimak, cevrilecek metni gizlemek olurdu.
+    "erisim_onaylandi": PushMetni(
+        baslik={
+            "tr": "Görüntüleme izni sonucu",
+            "en": "View permission result",
+            "ar": "نتيجة إذن الاطّلاع",
+            "ru": "Результат запроса на просмотр",
+            "de": "Ergebnis der Anzeigeberechtigung",
+            "fr": "Résultat de l'autorisation de consultation",
+            "es": "Resultado del permiso de consulta",
+        },
+        govde={
+            "tr": "{daire} görüntüleme izni onaylandı ({ad}).",
+            "en": "View permission for {daire} was approved ({ad}).",
+            "ar": "تمت الموافقة على إذن الاطّلاع للوحدة {daire} ({ad}).",
+            "ru": "Доступ к просмотру кв. {daire} одобрен ({ad}).",
+            "de": "Die Anzeigeberechtigung für {daire} wurde genehmigt ({ad}).",
+            "fr": "L'autorisation de consultation pour {daire} a été approuvée ({ad}).",
+            "es": "Se aprobó el permiso de consulta para {daire} ({ad}).",
+        },
+        params=("daire", "ad"),
+    ),
+    "erisim_reddedildi": PushMetni(
+        baslik={
+            "tr": "Görüntüleme izni sonucu",
+            "en": "View permission result",
+            "ar": "نتيجة إذن الاطّلاع",
+            "ru": "Результат запроса на просмотр",
+            "de": "Ergebnis der Anzeigeberechtigung",
+            "fr": "Résultat de l'autorisation de consultation",
+            "es": "Resultado del permiso de consulta",
+        },
+        govde={
+            "tr": "{daire} görüntüleme izni reddedildi ({ad}).",
+            "en": "View permission for {daire} was rejected ({ad}).",
+            "ar": "تم رفض إذن الاطّلاع للوحدة {daire} ({ad}).",
+            "ru": "Доступ к просмотру кв. {daire} отклонён ({ad}).",
+            "de": "Die Anzeigeberechtigung für {daire} wurde abgelehnt ({ad}).",
+            "fr": "L'autorisation de consultation pour {daire} a été refusée ({ad}).",
+            "es": "Se rechazó el permiso de consulta para {daire} ({ad}).",
+        },
+        params=("daire", "ad"),
+    ),
+    "rezervasyon": PushMetni(
+        baslik={
+            "tr": "Rezervasyon",
+            "en": "Reservation",
+            "ar": "حجز",
+            "ru": "Бронирование",
+            "de": "Reservierung",
+            "fr": "Réservation",
+            "es": "Reserva",
+        },
+        govde={
+            "tr": "Rezervasyonunuz onaylandı: {alan} — {tarih} {baslangic}-{bitis}",
+            "en": "Your reservation is confirmed: {alan} — {tarih} {baslangic}-{bitis}",
+            "ar": "تم تأكيد حجزك: {alan} — {tarih} {baslangic}-{bitis}",
+            "ru": "Ваше бронирование подтверждено: {alan} — {tarih} {baslangic}-{bitis}",
+            "de": "Ihre Reservierung ist bestätigt: {alan} — {tarih} {baslangic}-{bitis}",
+            "fr": "Votre réservation est confirmée : {alan} — {tarih} {baslangic}-{bitis}",
+            "es": "Su reserva está confirmada: {alan} — {tarih} {baslangic}-{bitis}",
+        },
+        params=('alan', 'tarih', 'baslangic', 'bitis'),
+    ),
+}

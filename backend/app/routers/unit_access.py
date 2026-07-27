@@ -137,11 +137,10 @@ async def create_request(
     ).scalars().all()
     if sakinler:
         dispatch_external(
-            f"{user.ad} {unit.no} ziyaretci/kargo kayitlarini gormek istiyor. "
-            "Onayla/Reddet",
+            "erisim_talebi",
             tenant_id=user.tenant_id,
             target_user_ids=tuple(dict.fromkeys(sakinler)),
-            title="Goruntuleme izni talebi",
+            params={"ad": user.ad, "daire": unit.no},
             data={"tip": "erisim_talebi", "request_id": str(obj.id)},
         )
     await audit_user(
@@ -231,11 +230,10 @@ async def create_bulk_request(
         # EK push: dairenin aktif sakinlerine (karar onlarda); hatasi kirmaz.
         hedefler = tuple(dict.fromkeys(sakinler[unit_id]))
         dispatch_external(
-            f"{user.ad} {unit_nos.get(unit_id)} ziyaretci/kargo kayitlarini gormek "
-            "istiyor. Onayla/Reddet",
+            "erisim_talebi",
             tenant_id=user.tenant_id,
             target_user_ids=hedefler,
-            title="Goruntuleme izni talebi",
+            params={"ad": user.ad, "daire": unit_nos.get(unit_id)},
             data={"tip": "erisim_talebi", "request_id": str(obj.id)},
         )
 
@@ -365,12 +363,12 @@ async def decide_request(
     await db.refresh(obj)
 
     # EK push: sonuc talebi acan yonetici'ye; hatasi karari kirmaz.
-    sonuc = "onaylandi" if body.durum == "onaylandi" else "reddedildi"
+    onay = body.durum == "onaylandi"
     dispatch_external(
-        f"{unit_no} goruntuleme izni {sonuc} ({user.ad})",
+        "erisim_onaylandi" if onay else "erisim_reddedildi",
         tenant_id=user.tenant_id,
         target_user_ids=(obj.granted_to_yonetici_user_id,),
-        title="Goruntuleme izni sonucu",
+        params={"daire": unit_no, "ad": user.ad},
         data={"tip": "erisim_sonuc", "request_id": str(obj.id)},
     )
     yonetici_ad = (

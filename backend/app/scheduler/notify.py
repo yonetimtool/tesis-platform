@@ -10,6 +10,7 @@ notification'i ETKILEMEZ — push EK gonderimdir; hatasi bildirim akisini kirmaz
 """
 from __future__ import annotations
 
+import json
 import logging
 import uuid
 from collections.abc import Mapping, Sequence
@@ -19,37 +20,49 @@ import psycopg
 
 from .. import push
 from ..config import settings
+from ..push_metinleri import dil_normalize, push_basligi, push_govdesi
+from ..ceviri import VARSAYILAN_DIL
 
 logger = logging.getLogger("scheduler.notify")
 
 # Alarm bildirimlerini push olarak alacak roller (dashboard alarm mantigiyla tutarli).
 _ALARM_ROLES: tuple[str, ...] = ("admin", "security")
 
+# Bildirim kimligi = `notification.tip` = `data.tip` (tek deger, uc yerde ayni).
+_KACIRILAN_TUR = "kacirilan_tur"
+
 
 def dispatch_external(
-    message: str,
+    kimlik: str,
     *,
     tenant_id: uuid.UUID | None = None,
     target_roles: Sequence[str] | None = None,
     target_user_ids: Sequence[uuid.UUID] | None = None,
-    title: str = "Tesis bildirimi",
+    params: Mapping[str, object] | None = None,
     data: Mapping[str, str] | None = None,
 ) -> None:
     """Gercek-gonderim kancasi (FCM push) — EK gonderim, in-app'i etkilemez.
+
+    METIN DEGIL KIMLIK (tur 16): cagiran cumle degil `kimlik` + `params`
+    verir; baslik/govde CIHAZIN dilinde burada uretilir
+    (`push_metinleri.METINLER`). Push asenkron oldugu icin istegin
+    `Accept-Language` basligi YOKTUR — dil `user_device.dil`den okunur ve
+    gonderim DILE GORE gruplanir (ayni olay, farkli dilde iki batch).
 
     Hedef: `target_user_ids` verilirse YALNIZ o kullanicilarin cihazlari
     (orn. talep yaniti -> talebi acan sakin); yoksa `target_roles`. Ikisi de
     yoksa (veya tenant_id yoksa) eski no-op davranisi (yalniz log). Push
     hatasi bildirim akisini KIRMAZ (try/except + log).
     """
-    logger.info("EXTERNAL_NOTIFY: %s", message)
+    # Log OPERATORE hitap eder: kimlik + parametreler, cumle degil.
+    logger.info("EXTERNAL_NOTIFY: %s %s", kimlik, dict(params or {}))
     try:
         _push_to_devices(
             tenant_id=tenant_id,
             target_roles=target_roles,
             target_user_ids=target_user_ids,
-            title=title,
-            body=message,
+            kimlik=kimlik,
+            params=params,
             data=data,
         )
     except Exception:  # savunma: push cokerse in-app bildirim akisi devam eder
@@ -61,24 +74,37 @@ def _push_to_devices(
     tenant_id: uuid.UUID | None,
     target_roles: Sequence[str] | None,
     target_user_ids: Sequence[uuid.UUID] | None = None,
-    title: str,
-    body: str,
+    kimlik: str,
+    params: Mapping[str, object] | None,
     data: Mapping[str, str] | None,
 ) -> None:
     provider = push.get_push_provider()
     if tenant_id is None or not (target_roles or target_user_ids):
         return  # hedef bilgisi yok -> gonderim yapma (eski no-op)
     if target_user_ids:
-        tokens = _fetch_device_tokens_for_users(tenant_id, target_user_ids)
+        cihazlar = _fetch_device_tokens_for_users(tenant_id, target_user_ids)
     else:
-        tokens = _fetch_device_tokens(tenant_id, target_roles or ())
-    if not tokens:
+        cihazlar = _fetch_device_tokens(tenant_id, target_roles or ())
+    if not cihazlar:
         return
-    provider.send(tokens, title=title, body=body, data=dict(data or {}))
+    # DILE GORE GRUPLA: tek bir metinle gondermek, cihazin dilini yok saymak
+    # olurdu. Gruplama gonderim SAYISINI degil, metin SAYISINI artirir.
+    gruplar: dict[str, list[str]] = {}
+    for token, dil in cihazlar:
+        gruplar.setdefault(dil_normalize(dil), []).append(token)
+    for dil, tokenlar in gruplar.items():
+        provider.send(
+            tokenlar,
+            title=push_basligi(kimlik, dil),
+            body=push_govdesi(kimlik, dil, params),
+            data=dict(data or {}),
+        )
 
 
-def _fetch_device_tokens(tenant_id: uuid.UUID, roles: Sequence[str]) -> list[str]:
-    """Tenant'ta hedef rollerdeki AKTIF kullanicilarin aktif device token'lari.
+def _fetch_device_tokens(
+    tenant_id: uuid.UUID, roles: Sequence[str]
+) -> list[tuple[str, str]]:
+    """Hedef rollerdeki AKTIF kullanicilarin aktif cihazlari: (token, DIL).
 
     Kendi kisa-omurlu app_rw baglantisini acar + tenant context set eder (RLS-safe);
     boylece hem sync (scheduler) hem async cagiran icin ayni kod calisir.
@@ -89,18 +115,18 @@ def _fetch_device_tokens(tenant_id: uuid.UUID, roles: Sequence[str]) -> list[str
                 "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
             )
             cur.execute(
-                "SELECT d.fcm_token FROM user_device d "
+                "SELECT d.fcm_token, d.dil FROM user_device d "
                 "JOIN app_user u ON u.id = d.user_id "
                 "WHERE d.aktif = true AND u.is_active = true AND u.role::text = ANY(%s)",
                 (list(roles),),
             )
-            return [r[0] for r in cur.fetchall()]
+            return [(r[0], r[1]) for r in cur.fetchall()]
 
 
 def _fetch_device_tokens_for_users(
     tenant_id: uuid.UUID, user_ids: Sequence[uuid.UUID]
-) -> list[str]:
-    """Belirli AKTIF kullanicilarin aktif device token'lari (RLS-safe).
+) -> list[tuple[str, str]]:
+    """Belirli AKTIF kullanicilarin aktif cihazlari: (token, DIL) (RLS-safe).
 
     Rol yerine kisi hedefleme: orn. talep yaniti yalniz talebi acan sakine
     gider — tenant'taki diger sakinlere sizmaz.
@@ -111,13 +137,13 @@ def _fetch_device_tokens_for_users(
                 "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
             )
             cur.execute(
-                "SELECT d.fcm_token FROM user_device d "
+                "SELECT d.fcm_token, d.dil FROM user_device d "
                 "JOIN app_user u ON u.id = d.user_id "
                 "WHERE d.aktif = true AND u.is_active = true "
                 "AND u.id = ANY(%s::uuid[])",
                 ([str(u) for u in user_ids],),
             )
-            return [r[0] for r in cur.fetchall()]
+            return [(r[0], r[1]) for r in cur.fetchall()]
 
 
 def notify_missed_tour(
@@ -129,26 +155,33 @@ def notify_missed_tour(
     pencere_baslangic: datetime,
     pencere_bitis: datetime,
     missing_checkpoints: list[uuid.UUID],
+    plan_adi: str | None = None,
 ) -> None:
-    """Kacirilan tur icin kalici notification yaz (idempotent) + log + soyut gonderim."""
-    mesaj = (
-        f"Kacirilan tur: pencere {pencere_baslangic.isoformat()} - "
-        f"{pencere_bitis.isoformat()} ({len(missing_checkpoints)} eksik checkpoint)"
-    )
+    """Kacirilan tur icin kalici notification yaz (idempotent) + log + push.
+
+    KAYIT METIN DEGIL KIMLIK TASIR (tur 16): `mesaj_kimlik` + `mesaj_veri`.
+    Cumleyi kayda dondurmak, ilk yazan kullanicinin dilini kalici hale
+    getirirdi; in-app liste metni OKUMA aninda istegin dilinde uretir.
+    `mesaj` DEPRECATED olarak (NOT NULL kolon) ayni yapisal veriden uretilir.
+    """
+    veri = {"plan": plan_adi or "-", "eksik": len(missing_checkpoints)}
+    # Eski kolon: guncellenmemis istemciler icin Turkce ozet (bkz. 0008).
+    mesaj = push_govdesi(_KACIRILAN_TUR, VARSAYILAN_DIL, veri)
     conn.execute(
-        "INSERT INTO notification (tenant_id, tip, patrol_window_id, patrol_plan_id, mesaj) "
-        "VALUES (%s, 'kacirilan_tur', %s, %s, %s) "
+        "INSERT INTO notification (tenant_id, tip, patrol_window_id, patrol_plan_id, "
+        "mesaj, mesaj_kimlik, mesaj_veri) "
+        "VALUES (%s, 'kacirilan_tur', %s, %s, %s, %s, %s::jsonb) "
         "ON CONFLICT (tenant_id, tip, patrol_window_id) DO NOTHING",
-        (tenant_id, window_id, plan_id, mesaj),
+        (tenant_id, window_id, plan_id, mesaj, _KACIRILAN_TUR, json.dumps(veri)),
     )
     logger.warning(
         "MISSED_TOUR tenant=%s plan=%s window=%s missing=%s",
         tenant_id, plan_id, window_id, [str(c) for c in missing_checkpoints],
     )
     dispatch_external(
-        mesaj,
+        _KACIRILAN_TUR,
         tenant_id=tenant_id,
         target_roles=_ALARM_ROLES,
-        title="Kacirilan tur",
-        data={"tip": "kacirilan_tur", "patrol_window_id": str(window_id)},
+        params=veri,
+        data={"tip": _KACIRILAN_TUR, "patrol_window_id": str(window_id)},
     )

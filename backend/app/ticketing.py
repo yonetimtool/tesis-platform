@@ -51,14 +51,16 @@ def notify_opener(
     complaint,
     tenant_id: uuid.UUID,
     tip: str,
-    mesaj: str,
-    title: str = "Talep/Ariza",
 ) -> None:
-    """EK push — talebi acana. Hatasi kaydi kirmaz (dispatch_external try/except)."""
+    """EK push — talebi acana. Hatasi kaydi kirmaz (dispatch_external try/except).
+
+    `tip` hem `data.tip` (istemci yonlendirmesi) hem de METIN KIMLIGIDIR
+    (tur 16): baslik/govde alicinin CIHAZ dilinde uretilir.
+    """
     dispatch_external(
-        mesaj,
+        tip,
         tenant_id=tenant_id,
         target_user_ids=(complaint.acan_user_id,),
-        title=title,
+        params={"baslik": complaint.baslik},
         data={"tip": tip, "complaint_id": str(complaint.id)},
     )

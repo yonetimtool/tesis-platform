@@ -63,7 +63,6 @@ _MANAGEMENT_ROLES: tuple[str, ...] = ("admin", "yonetici")
 # Is emri yalniz sahaya atanir.
 _ATANABILIR_ROLLER = {"security", "tesis_gorevlisi"}
 
-_PUSH_TITLE = "Talep/Ariza"
 
 
 def _validate_foto_key(foto_key: str, tenant_id: uuid.UUID) -> None:
@@ -276,10 +275,10 @@ async def create_complaint(
     await db.refresh(obj)
     # EK push: yeni talep yonetime bildirilir (hatasi talep kaydini kirmaz).
     dispatch_external(
-        f"Yeni talep: {body.baslik}",
+        "yeni_talep",
         tenant_id=user.tenant_id,
         target_roles=_MANAGEMENT_ROLES,
-        title=_PUSH_TITLE,
+        params={"baslik": body.baslik},
         data={"tip": "talep", "complaint_id": str(obj.id)},
     )
     await audit_user(db, user, Action.COMPLAINT_CREATE, resource_type="complaint", resource_id=obj.id)
@@ -322,18 +321,13 @@ async def convert_complaint(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
-    notify_opener(
-        complaint=obj,
-        tenant_id=user.tenant_id,
-        tip="talep_is_emri",
-        mesaj=f"Talebiniz is emrine donusturuldu: {obj.baslik}",
-    )
+    notify_opener(complaint=obj, tenant_id=user.tenant_id, tip="talep_is_emri")
     # EK push: is emri atanan saha personeline.
     dispatch_external(
-        f"Yeni is emri: {obj.baslik}",
+        "is_emri_atandi",
         tenant_id=user.tenant_id,
         target_user_ids=(body.atanan_user_id,),
-        title="Is Emri",
+        params={"baslik": obj.baslik},
         data={
             "tip": "is_emri_atandi",
             "task_id": str(task.id),
@@ -376,12 +370,7 @@ async def resolve_complaint(
 ) -> ComplaintOut:
     obj, acan_ad = await _get_or_404(db, complaint_id, user)
     await _close(db, user, obj, durum="cozuldu", sebep=body.cozum_notu)
-    notify_opener(
-        complaint=obj,
-        tenant_id=user.tenant_id,
-        tip="talep_cozuldu",
-        mesaj=f"Talebiniz cozuldu: {obj.baslik}",
-    )
+    notify_opener(complaint=obj, tenant_id=user.tenant_id, tip="talep_cozuldu")
     await audit_user(db, user, Action.COMPLAINT_RESOLVE, resource_type="complaint", resource_id=obj.id)
     return await _load_out(db, obj, acan_ad)
 
@@ -395,11 +384,6 @@ async def decline_complaint(
 ) -> ComplaintOut:
     obj, acan_ad = await _get_or_404(db, complaint_id, user)
     await _close(db, user, obj, durum="reddedildi", sebep=body.sebep)
-    notify_opener(
-        complaint=obj,
-        tenant_id=user.tenant_id,
-        tip="talep_reddedildi",
-        mesaj=f"Talebiniz reddedildi: {obj.baslik}",
-    )
+    notify_opener(complaint=obj, tenant_id=user.tenant_id, tip="talep_reddedildi")
     await audit_user(db, user, Action.COMPLAINT_DECLINE, resource_type="complaint", resource_id=obj.id)
     return await _load_out(db, obj, acan_ad)
