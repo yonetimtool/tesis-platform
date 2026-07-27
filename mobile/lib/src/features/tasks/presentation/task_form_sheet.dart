@@ -11,6 +11,7 @@ import '../domain/task_category_models.dart';
 import '../domain/task_models.dart';
 import '../../auth/presentation/rol_adi.dart';
 import 'tasks_controller.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Gorev olustur/duzenle formu (bottom sheet) — admin + yonetici.
 /// Atama secicisi YALNIZ aktif saha personelini listeler (security +
@@ -120,7 +121,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
       if (!mounted) return;
       setState(() {
         _personel = const [];
-        _personelError = e.message;
+        _personelError = apiHataMetni(_l10n, e);
       });
     }
   }
@@ -164,7 +165,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = e.message;
+          _error = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {

@@ -6,6 +6,7 @@ import '../../../core/error/api_exception.dart';
 import '../domain/rezervasyon_models.dart';
 import 'rez_etiket.dart';
 import 'rezervasyon_controller.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// "Rezervasyon" — ortak alan rezervasyonu (auth.md §4 kesin kurali, UX aynasi).
 /// Iki sekme; ICERIK role gore degisir (slot izgarasi paylasilan bilesen):
@@ -365,7 +366,7 @@ class _CancelButtonState extends ConsumerState<_CancelButton> {
       widget.onCancelled?.call();
     } on ApiException catch (e) {
       // 409: zaten iptal edilmis.
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
       widget.onCancelled?.call();
     } catch (_) {
       messenger.showSnackBar(
@@ -512,13 +513,14 @@ class _AreaList extends ConsumerWidget {
                     value: alan.aktif,
                     onChanged: (v) async {
                       final messenger = ScaffoldMessenger.of(context);
+                      final l10n = context.l10n;
                       try {
                         await ref
                             .read(rezervasyonControllerProvider.notifier)
                             .setAreaActive(alan.id, v);
                       } on ApiException catch (e) {
                         messenger.showSnackBar(
-                          SnackBar(content: Text(e.message)),
+                          SnackBar(content: Text(apiHataMetni(l10n, e))),
                         );
                       }
                     },
@@ -664,7 +666,7 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = e.message;
+          _hata = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {
@@ -860,7 +862,7 @@ class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
       if (!mounted) return;
       setState(() {
         _yukleniyor = false;
-        _hata = e.message;
+        _hata = apiHataMetni(_l10n, e);
       });
     } catch (_) {
       if (!mounted) return;
@@ -1204,7 +1206,7 @@ class _BookSlotSheetState extends ConsumerState<_BookSlotSheet> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = e.message;
+          _hata = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {

@@ -13,6 +13,7 @@ import '../domain/tracking_ozet.dart';
 import 'devriye_hata_metni.dart';
 import 'patrol_history_view.dart';
 import 'patrol_tracking_controller.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// "Devriye takibi" — yonetici (site yoneticisi) icin SALT IZLEME ekrani.
 /// Saha ekrani (Turlarim) /me/patrol-window kullanir ve okutma yapar; burasi
@@ -331,7 +332,7 @@ class _ScanLogTabState extends ConsumerState<_ScanLogTab> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => _Message(
               e is ApiException
-                  ? e.message
+                  ? apiHataMetni(l10n, e)
                   : l10n.devriyeTaramaGunluguAlinamadi,
               onRetry: () => ref.invalidate(scanReportProvider(_day)),
             ),

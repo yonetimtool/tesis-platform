@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/tenant_api.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Yoneticinin ILK GIRISTE tesisini adlandirdigi kurulum ekrani (Onboarding
 /// Model A). Admin tesisi isimsiz acar; burada girilen ad `POST /tenant/setup`
@@ -54,7 +55,7 @@ class _SetupTenantScreenState extends ConsumerState<SetupTenantScreen> {
       // ekrani acar; ayni oturum, yonlendirmeye gerek yok.
       ref.invalidate(tenantSettingsProvider);
     } on ApiException catch (e) {
-      if (mounted) setState(() => _errorMessage = e.message);
+      if (mounted) setState(() => _errorMessage = apiHataMetni(_l10n, e));
     } catch (_) {
       if (mounted) {
         setState(() => _errorMessage = _l10n.ortakBeklenmeyenHata);

@@ -319,6 +319,7 @@ class _DeleteButton extends ConsumerWidget {
       label: Text(l10n.ortakSil),
       onPressed: () async {
         final messenger = ScaffoldMessenger.of(context);
+        final l10n = context.l10n;
         final onay = await showDialog<bool>(
           context: context,
           builder: (dctx) => AlertDialog(
@@ -347,7 +348,7 @@ class _DeleteButton extends ConsumerWidget {
           );
           onDeleted();
         } on ApiException catch (e) {
-          messenger.showSnackBar(SnackBar(content: Text(e.message)));
+          messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
         }
       },
     );
@@ -459,7 +460,7 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
         _photoBusy = false;
         _photoError = e.kind == ApiErrorKind.network
             ? _l10n.ortakFotoOnlineTekrarDene
-            : e.message;
+            : apiHataMetni(_l10n, e);
       });
     }
   }
@@ -505,7 +506,7 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = e.message;
+          _hata = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {

@@ -8,6 +8,7 @@ import '../../profile/data/profile_api.dart';
 import '../data/shifts_api.dart';
 import '../domain/shift_models.dart';
 import 'gun_tipi_adi.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Vardiyalar ekrani (WP-E) — tum vardiya tanimlari + atanan personel.
 /// admin/yonetici her vardiyaya "Personel Ata" ile saha personeli atar
@@ -33,7 +34,7 @@ class VardiyalarScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              e is ApiException ? e.message : l10n.vardiyaYuklenemedi,
+              e is ApiException ? apiHataMetni(l10n, e) : l10n.vardiyaYuklenemedi,
               textAlign: TextAlign.center,
             ),
           ),
@@ -130,7 +131,7 @@ class _AtamaSheetState extends ConsumerState<_AtamaSheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _kaydediyor = false);
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 
@@ -166,7 +167,7 @@ class _AtamaSheetState extends ConsumerState<_AtamaSheet> {
                   padding: const EdgeInsets.all(24),
                   child: Text(
                       e is ApiException
-                          ? e.message
+                          ? apiHataMetni(l10n, e)
                           : l10n.vardiyaPersonelYuklenemedi),
                 ),
                 data: (personel) {

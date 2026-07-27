@@ -7,6 +7,7 @@ import '../../../core/error/api_exception.dart';
 import '../../../routing/app_router.dart';
 import '../domain/unit_access_models.dart';
 import 'unit_access_controller.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Tek-seferlik daire goruntuleme izni ekrani (rol-uyarlamali, KVKK):
 ///   * admin/yonetici: "Yeni istek" ile TEK daire; "Tüm daireler" ile TOPLU
@@ -117,7 +118,8 @@ class UnitAccessScreen extends ConsumerWidget {
     } on ApiException catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.izinGonderilemedi(e.message))),
+          SnackBar(content: Text(context.l10n
+              .izinGonderilemedi(apiHataMetni(context.l10n, e)))),
         );
       }
     }
@@ -160,7 +162,8 @@ class UnitAccessScreen extends ConsumerWidget {
     } on ApiException catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.izinGonderilemedi(e.message))),
+          SnackBar(content: Text(context.l10n
+              .izinGonderilemedi(apiHataMetni(context.l10n, e)))),
         );
       }
     }
@@ -352,7 +355,7 @@ class _DecideButtonsState extends ConsumerState<_DecideButtons> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
+          SnackBar(content: Text(apiHataMetni(context.l10n, e))),
         );
       }
     } finally {

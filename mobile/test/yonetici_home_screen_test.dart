@@ -22,6 +22,7 @@ import 'package:mobile/src/core/i18n/locale_controller.dart';
 Widget _app({
   Object? finansHata,
   int unread = 0,
+  Locale dil = const Locale('tr'),
   int? acikTalep,
   int? toplamDaire,
   int? aktifGorev,
@@ -77,7 +78,7 @@ Widget _app({
         }),
       ],
       child: MaterialApp(
-      locale: const Locale('tr'),
+      locale: dil,
       supportedLocales: supportedLocales,
       localizationsDelegates: testLocalizationsDelegates,
       home: YoneticiHomeScreen()),
@@ -304,5 +305,18 @@ void main() {
     await tester.pumpWidget(_app(unread: 4));
     await tester.pumpAndSettle();
     expect(find.text('4'), findsNWidgets(2));
+  });
+
+  // TUR 13: rozet, sekmenin CEVRILMIS etiketine ('Bildirimler') bakiyordu —
+  // Turkce disi her dilde sessizce kayboluyordu. Karar artik HomeSlotId ile.
+  testWidgets('rozet dilden BAGIMSIZ (etikete degil kimlige bakar)',
+      (tester) async {
+    _tall(tester);
+    for (final dil in [Locale('en'), Locale('ar')]) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_app(unread: 4, dil: dil));
+      await tester.pumpAndSettle();
+      expect(find.text('4'), findsNWidgets(2), reason: '$dil');
+    }
   });
 }

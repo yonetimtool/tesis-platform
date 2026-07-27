@@ -790,7 +790,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = e.message;
+          _error = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {
@@ -1267,7 +1267,7 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
       if (!mounted) return;
       setState(() {
         _personel = const [];
-        _personelError = e.message;
+        _personelError = apiHataMetni(_l10n, e);
       });
     } catch (_) {
       if (!mounted) return;
@@ -1328,7 +1328,7 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = e.message;
+          _error = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {
@@ -1540,7 +1540,7 @@ class _DeclineSheetState extends ConsumerState<_DeclineSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = e.message;
+          _error = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {
@@ -1661,7 +1661,7 @@ class _ResolveSheetState extends ConsumerState<_ResolveSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = e.message;
+          _error = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {

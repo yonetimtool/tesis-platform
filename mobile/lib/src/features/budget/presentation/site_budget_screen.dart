@@ -43,7 +43,7 @@ class _SiteBudgetScreenState extends ConsumerState<SiteBudgetScreen> {
           await ref.read(budgetApiProvider).fetchSummary(donem: _donem);
       if (mounted) setState(() => _summary = summary);
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) setState(() => _error = apiHataMetni(context.l10n, e));
     } catch (_) {
       if (mounted) setState(() => _hataKimligi = AkisHatasi.beklenmeyen);
     }

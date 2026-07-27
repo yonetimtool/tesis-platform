@@ -9,4 +9,10 @@ enum DevriyeAkisHatasi {
 
   /// Plan kaydedilemedi (sunucu mesaji yok).
   kaydedilemedi,
+
+  /// AG: baglanti zaman asimi (istemci uretir — bkz. `AkisHatasi.zamanAsimi`).
+  agZamanAsimi,
+
+  /// AG: sunucuya ulasilamadi (istemci uretir).
+  agUlasilamadi,
 }

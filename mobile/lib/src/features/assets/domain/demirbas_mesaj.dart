@@ -39,6 +39,12 @@ enum DemirbasMesajKimlik {
 
   /// Zimmet kapandi.
   birakildi,
+
+  /// AG: baglanti zaman asimi (istemci uretir).
+  agZamanAsimi,
+
+  /// AG: sunucuya ulasilamadi (istemci uretir).
+  agUlasilamadi,
 }
 
 final class DemirbasKimlikMesaji extends DemirbasMesaj {

@@ -106,7 +106,7 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
       if (mounted) setState(() => _result = r);
     } on ApiException catch (e) {
       if (mounted) {
-        setState(() => _result = TriggerResult(ok: false, error: e.message));
+        setState(() => _result = TriggerResult(ok: false, error: apiHataMetni(_l10n, e)));
       }
     } finally {
       if (mounted) setState(() => _testing = false);
@@ -140,7 +140,7 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.entegSilinemedi(e.message))),
+          SnackBar(content: Text(l10n.entegSilinemedi(apiHataMetni(l10n, e)))),
         );
       }
     }
@@ -320,7 +320,9 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
       }
       if (mounted) Navigator.pop(context);
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(() => _error = apiHataMetni(context.l10n, e));
+      }
     } catch (_) {
       if (mounted) {
         setState(() =>

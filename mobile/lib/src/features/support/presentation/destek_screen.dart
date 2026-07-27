@@ -10,6 +10,7 @@ import '../../tasks/presentation/task_complete_controller.dart'
 import '../data/support_api.dart';
 import '../domain/support_models.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 const _green = Color(0xFF16A34A);
 const _amber = Color(0xFFD97706);
@@ -94,6 +95,7 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
   Future<void> _fotoSec(ImageSource source) async {
     if (_fotoYukleniyor) return;
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
     setState(() => _fotoYukleniyor = true);
     try {
       final file = await ref.read(imagePickerProvider).pickImage(
@@ -120,7 +122,7 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _fotoYukleniyor = false);
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     } catch (e) {
       if (!mounted) return;
       setState(() => _fotoYukleniyor = false);

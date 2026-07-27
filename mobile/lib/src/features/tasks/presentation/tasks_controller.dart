@@ -7,6 +7,7 @@ import '../../auth/data/current_user_provider.dart';
 import '../data/task_api.dart';
 import '../domain/task_models.dart';
 import '../domain/task_hata.dart';
+import '../../tasks/presentation/gorev_hata_metni.dart';
 
 /// "Gorevlerim" listesinin durumu.
 class TasksState {
@@ -157,7 +158,7 @@ class TasksController extends Notifier<TasksState> {
       state = state.copyWith(
         loading: false,
         errorMessage: e.message,
-        hataKimligi: null,
+        hataKimligi: gorevAgHatasi(e),
         forbidden: e.statusCode == 403,
       );
     } catch (_) {

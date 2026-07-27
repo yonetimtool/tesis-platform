@@ -6,6 +6,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/temp_code_dialog.dart';
 import '../../../core/validators/password_rule.dart';
 import '../data/residents_api.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Site Sakinleri — yonetici/admin: sakinleri listeler, yeni tasinani ekler
 /// (gecici kod), ayrilani cikarir (pasiflestir). Sakin KENDI kayit olamaz.
@@ -28,7 +29,7 @@ class ResidentsScreen extends ConsumerWidget {
         error: (e, _) => _ErrorState(
           // Sunucu metni varsa o gosterilir (SERVER-LOCALIZED siniri);
           // yoksa yerellestirilmis genel metin.
-          message: e is ApiException ? e.message : l10n.sakinListelenemedi,
+          message: e is ApiException ? apiHataMetni(l10n, e) : l10n.sakinListelenemedi,
           onRetry: () => ref.invalidate(residentsProvider),
         ),
         data: (list) => list.isEmpty
@@ -148,7 +149,7 @@ class _ResidentTile extends StatelessWidget {
         message: l10n.sakinYeniKodMesaji(member.ad),
       );
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 
@@ -187,7 +188,7 @@ class _ResidentTile extends StatelessWidget {
             : l10n.sakinPasiflestirildi(member.ad)),
       ));
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 }
@@ -234,7 +235,7 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
       messenger.showSnackBar(SnackBar(content: Text(l10n.sakinGuncellendi)));
     } on ApiException catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
       setState(() => _submitting = false);
     }
   }
@@ -349,7 +350,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
       }
     } on ApiException catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
       setState(() => _submitting = false);
     }
   }

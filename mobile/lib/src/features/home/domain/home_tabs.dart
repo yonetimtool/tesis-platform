@@ -18,10 +18,19 @@ String fabLabelForRole(AppLocalizations l10n, UserRole role) =>
 /// Alt-bar yuvasinin turu: normal destinasyon (sekme) ya da merkez FAB.
 enum HomeSlotKind { destination, fab }
 
+/// Yuvanin DILDEN BAGIMSIZ kimligi. Alt-bar davranisi (orn. okunmamis
+/// bildirim rozetinin hangi sekmeye basilacagi) buna bakar — ETIKETE DEGIL:
+/// etiket aktif dile gore degisir (bkz. README §15, kimlik/metin ayrimi).
+enum HomeSlotId { anaSayfa, bildirimler, bildir, raporlar, ayarlar }
+
 /// Alt-bar tek yuvasi — ikon + etiket + tur. Rota cozumu sunum katmaninda.
 class HomeSlot {
-  const HomeSlot(this.kind, this.icon, this.label, {IconData? activeIcon})
+  const HomeSlot(this.id, this.kind, this.icon, this.label,
+      {IconData? activeIcon})
       : activeIcon = activeIcon ?? icon;
+
+  /// Dilden bagimsiz kimlik — karsilastirmalar BUNUNLA yapilir.
+  final HomeSlotId id;
 
   final HomeSlotKind kind;
 
@@ -41,17 +50,18 @@ class HomeSlot {
 /// ETIKETLER AKTIF DILDEN gelir ([l10n]) — yuva listesi artik `const`
 /// degildir (metin cizim aninda cozulur).
 List<HomeSlot> homeShellSlots(AppLocalizations l10n, UserRole role) => [
-      HomeSlot(HomeSlotKind.destination, Icons.home_outlined,
-          l10n.sekmeAnaSayfa,
+      HomeSlot(HomeSlotId.anaSayfa, HomeSlotKind.destination,
+          Icons.home_outlined, l10n.sekmeAnaSayfa,
           activeIcon: Icons.home),
-      HomeSlot(HomeSlotKind.destination, Icons.notifications_outlined,
-          l10n.sekmeBildirimler,
+      HomeSlot(HomeSlotId.bildirimler, HomeSlotKind.destination,
+          Icons.notifications_outlined, l10n.sekmeBildirimler,
           activeIcon: Icons.notifications),
-      HomeSlot(HomeSlotKind.fab, Icons.add, fabLabelForRole(l10n, role)),
-      HomeSlot(HomeSlotKind.destination, Icons.insert_chart_outlined,
-          l10n.sekmeRaporlar,
+      HomeSlot(HomeSlotId.bildir, HomeSlotKind.fab, Icons.add,
+          fabLabelForRole(l10n, role)),
+      HomeSlot(HomeSlotId.raporlar, HomeSlotKind.destination,
+          Icons.insert_chart_outlined, l10n.sekmeRaporlar,
           activeIcon: Icons.insert_chart),
-      HomeSlot(HomeSlotKind.destination, Icons.settings_outlined,
-          l10n.sekmeAyarlar,
+      HomeSlot(HomeSlotId.ayarlar, HomeSlotKind.destination,
+          Icons.settings_outlined, l10n.sekmeAyarlar,
           activeIcon: Icons.settings),
     ];

@@ -224,7 +224,7 @@ class _AnnouncementCard extends ConsumerWidget {
     } on ApiException catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
+          SnackBar(content: Text(apiHataMetni(l10n, e))),
         );
       }
     }
@@ -420,7 +420,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
         _photoBusy = false;
         _photoError = e.kind == ApiErrorKind.network
             ? _l10n.gorevFotoOnlineGerekli
-            : e.message;
+            : apiHataMetni(_l10n, e);
       });
     }
   }
@@ -463,7 +463,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = e.message;
+          _error = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {

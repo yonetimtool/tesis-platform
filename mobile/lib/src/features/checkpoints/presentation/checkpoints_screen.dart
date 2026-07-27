@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../data/checkpoint_api.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Kontrol noktalari (NFC) yonetimi — yonetici/admin ekler/duzenler/siler
 /// (Parca D). Guvenlik/tesis gorevlisi bu noktalari NFC ile okutur; okutmalar
@@ -31,7 +32,7 @@ class CheckpointsScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             child: Text(
               // Sunucu metni varsa o (SERVER-LOCALIZED siniri).
-              e is ApiException ? e.message : l10n.noktaListelenemedi,
+              e is ApiException ? apiHataMetni(l10n, e) : l10n.noktaListelenemedi,
               textAlign: TextAlign.center,
             ),
           ),
@@ -140,7 +141,7 @@ class _CheckpointTile extends ConsumerWidget {
       ref.invalidate(checkpointsProvider);
       messenger.showSnackBar(SnackBar(content: Text(l10n.noktaSilindi)));
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 }
@@ -226,7 +227,7 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
           // — sunucu yerellestirilirse ya da metni degisirse sessizce bozulur.
           _error = (e.code == 'conflict' || e.statusCode == 409)
               ? _l10n.noktaUidZatenVar
-              : e.message;
+              : apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {

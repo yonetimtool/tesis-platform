@@ -5,6 +5,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_category_models.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Gorev kategorisi yonetim ekrani (A6) — YALNIZ yonetici (+admin) girer;
 /// giris noktasi "Görev yönetimi" ekranindaki AppBar aksiyonudur (canManage
@@ -39,7 +40,7 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
       setState(() => _kategoriler = liste);
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _hata = e.message);
+      setState(() => _hata = apiHataMetni(context.l10n, e));
     } finally {
       if (mounted) setState(() => _yukleniyor = false);
     }
@@ -85,7 +86,7 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.gorevKategoriEklenemedi(e.message))),
+        SnackBar(content: Text(l10n.gorevKategoriEklenemedi(apiHataMetni(l10n, e)))),
       );
     }
   }
@@ -120,7 +121,7 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.gorevKategoriSilinemedi(e.message))),
+        SnackBar(content: Text(l10n.gorevKategoriSilinemedi(apiHataMetni(l10n, e)))),
       );
     }
   }

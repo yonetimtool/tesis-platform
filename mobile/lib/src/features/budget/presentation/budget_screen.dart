@@ -59,7 +59,9 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
         _categories = results[2] as List<BudgetCategory>;
       });
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(() => _error = apiHataMetni(context.l10n, e));
+      }
     } catch (_) {
       if (mounted) setState(() => _hataKimligi = AkisHatasi.beklenmeyen);
     }
@@ -423,7 +425,7 @@ class _EntryFormState extends ConsumerState<_EntryForm> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = e.message;
+          _error = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {
@@ -595,7 +597,7 @@ class _CategoriesTab extends ConsumerWidget {
                       } on ApiException catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(e.message)),
+                            SnackBar(content: Text(apiHataMetni(context.l10n, e))),
                           );
                         }
                       }
@@ -645,7 +647,7 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = e.message;
+          _error = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {

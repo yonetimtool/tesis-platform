@@ -12,4 +12,10 @@ enum GirisAkisHatasi {
 
   /// Refresh basarisiz — oturum dustu, yeniden giris gerekiyor.
   oturumSonaErdi,
+
+  /// AG: baglanti zaman asimi (istemci uretir — bkz. `AkisHatasi.zamanAsimi`).
+  agZamanAsimi,
+
+  /// AG: sunucuya ulasilamadi (istemci uretir).
+  agUlasilamadi,
 }

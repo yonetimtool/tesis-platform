@@ -733,7 +733,7 @@ Future<void> _deleteBlock(
     messenger.showSnackBar(SnackBar(
       content: Text(e.statusCode == 409
           ? e.message
-          : l10n.binaBlokSilinemedi(e.message)),
+          : l10n.binaBlokSilinemedi(apiHataMetni(l10n, e))),
     ));
   } catch (_) {
     messenger.showSnackBar(
@@ -851,7 +851,7 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
         _busy = false;
         _error = e.statusCode == 409
             ? _l10n.binaBlokEtiketiZatenVar
-            : e.message;
+            : apiHataMetni(_l10n, e);
       });
     } catch (_) {
       if (!mounted) return;
@@ -995,7 +995,7 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
         _busy = false;
         _error = e.statusCode == 409
             ? _l10n.binaDaireNoZatenVar
-            : e.message;
+            : apiHataMetni(_l10n, e);
       });
     } catch (_) {
       if (!mounted) return;
@@ -1021,7 +1021,7 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = e.message;
+        _error = apiHataMetni(_l10n, e);
       });
     } catch (_) {
       if (!mounted) return;
@@ -1228,7 +1228,7 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
         ),
       );
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) setState(() => _error = apiHataMetni(_l10n, e));
     } catch (_) {
       if (mounted) setState(() => _error = _l10n.binaEklenemedi);
     } finally {

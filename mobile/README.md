@@ -223,7 +223,8 @@ mobile/
 │  └─ src/
 │     ├─ core/
 │     │  ├─ config/app_config.dart        # API_BASE_URL (--dart-define)
-│     │  ├─ error/api_exception.dart      # { error: { code, message } } parse + ApiErrorKind
+│     │  ├─ error/api_exception.dart      # { error: { code, message } } parse + ApiErrorKind + agHatasi
+│     │  ├─ error/akis_hatasi.dart        # AkisHatasi kimlikleri + apiHataMetni (metin çizimde)
 │     │  └─ network/
 │     │     ├─ dio_provider.dart          # paylaşılan Dio + ham Dio + interceptor
 │     │     └─ auth_interceptor.dart      # access header + 401→refresh rotation
@@ -269,7 +270,8 @@ mobile/
 │        └─ splash_screen.dart             # oturum geri yüklenirken
 └─ test/
    ├─ token_pair_test.dart
-   ├─ api_exception_test.dart
+   ├─ api_exception_test.dart               # iki kanal: sunucu metni vs ağ kimliği
+   ├─ ag_hatasi_i18n_test.dart              # ağ hatası 7 dilde (tur 13)
    ├─ auth_interceptor_test.dart
    ├─ scan_outbox_test.dart                # outbox durum makinesi + kalıcılık testleri
    └─ patrol_merge_test.dart               # nokta durumu yerel birleşim mantığı (§9)
@@ -1575,12 +1577,14 @@ ay bazlı devriye-görev-aidat raporu) **Aidatım + Kontrol noktaları +
 Gönderim kuyruğu** (tur 11 — daire bakiyesi/tahakkuk/ödeme listeleri, NFC
 nokta CRUD, offline okutma kuyruğu) ve **süpürme turu** (tur 12 — destek,
 tesis kurulumu/ayarı, şikayetlerim, vardiyalar, yönetici iletişim,
-bildirimler, arama butonu, push).
+bildirimler, arama butonu, push). Tur 13'te **`ApiException` ağ metinleri**
+kimliğe çevrildi (`core` artık hiçbir dilde metin üretmez).
 
-> **DIŞA ALIM BİTTİ (tur 12).** Ölçüm **11 string / 6 dosya**'da duruyor ve
-> tamamı ya **bilinçli istisna** ya da **yazılı i18n borcu**dur (aşağıda
-> tek tek listeli). Yeni ekran/metin eklerken §15 akışı ("Bir metin nasıl
-> eklenir") geçerlidir; ölçüm komutu regresyon bekçisi olarak kalır.
+> **DIŞA ALIM BİTTİ (tur 12) — İ18N BORCU DA KAPANDI (tur 13).** Ölçüm
+> **8 string / 5 dosya**'da duruyor ve tamamı **bilinçli istisna**dır (marka
+> kilidi, dil adları, regex karakter sınıfı — aşağıda tek tek listeli).
+> Açık i18n borcu **yoktur**. Yeni ekran/metin eklerken §15 akışı ("Bir metin
+> nasıl eklenir") geçerlidir; ölçüm komutu regresyon bekçisi olarak kalır.
 
 ### Mimari
 
@@ -1694,6 +1698,13 @@ Sunucudan gelen metinler bu turda **çevrilmez, olduğu gibi gösterilir**
 işaretlenmiştir çünkü çeviri sunucuda çözülünce hepsi kendiliğinden düzelir —
 `grep -rn "SERVER-LOCALIZED(next round)" lib/` ile bulunur, tüketici listesi
 `grep -rln "e.message" lib/` ile üretilir.
+
+> **Tur 13'ten sonra bu sınır YALNIZ sunucu metnini kapsar.** Ağ hataları
+> (timeout / bağlantı yok / zarfsız gövde) artık `message` **üretmez**:
+> `ApiException.agHatasi` kimliğini taşır ve metin çizimde
+> `apiHataMetni(l10n, e)` ile aktif dilde üretilir. Yani sunucu
+> yerelleştirmesini beklemeden ağ hataları **bugün 7 dilde** doğrudur; sınır
+> yalnız 422/409/503 gibi **sunucunun yazdığı** cümleler için geçerlidir.
 
 ### Kimlik / metin ayrımı — kart id refactor (ana ekran)
 
@@ -1984,6 +1995,17 @@ yönetici iletişimde **tr→en** dil değişimi; `gunTipiAdi`nın null (kısıt
 **bilinmeyen tel değeri** davranışı; `UnitComplaintKategori` çözücüsünün 7 dili;
 `displayText`in artık varsayılan metin üretmediği; **dil adlarının kendi
 dilinde kaldığı** (istisna kilidi); **RTL** ve **320 dp** senaryoları.
+
+`test/ag_hatasi_i18n_test.dart` (9 test — tur 13): `core/error`un artık **metin
+üretmediği** (ağ hatasında `message` boş + `agHatasi` dolu), `apiHataMetni`nin
+**7 dilde** boş olmayan ve Türkçe sızıntısı taşımayan metin verdiği, **sunucu
+metni geldiğinde onun korunduğu** (istemci çevirmez), zarf gelip mesaj
+gelmediğinde bile **boş ekran çıkmadığı**; modül eşleyicilerinin
+(`gorevAgHatasi`, `devriyeAgHatasi`, `girisAgHatasi`, `talepAgHatasi`,
+`seffaflikAgHatasi`, `demirbasAgMesaji`) ağ hatasını yutmadığı ve sunucu
+metnini gölgelemediği; kuyruk kaydının **diske kod yazdığı** (`okutmaAgKodu`).
+Ekran ucu `tasks_patrol_i18n_test.dart` içinde: ağ hatası `en`/`de` ekranında
+aktif dilde çıkar, TR sızmaz.
 
 > **Süpürme turunun asıl işi ölçümün kör noktasını KAPATMAKTI.** Tur 12'de
 > §15 grep'i **59 string** gösteriyordu; UI konumundaki (`Text(`, `labelText:`,
@@ -2333,24 +2355,75 @@ EOF
 
 **Beklenen çıktı: yalnızca `lib/main.dart:83 'Yönetio'` (marka kilidi).**
 
-### Kalan 11 string — hepsi kayıtlı
+**Tur 13 (`api_exception` i18n borcu) ölçümü — aynı komut:**
+
+| | Toplam string | Dosya |
+|---|---|---|
+| Tur 13 öncesi | 11 | 6 |
+| Tur 13 sonrası | **8** | **5** |
+
+**Yeni ARB anahtarı yok** (1.090 sabit): tur 12'de eklenen `hataZamanAsimi` ve
+`hataSunucuyaUlasilamadi` bu turda **tüketildi**. Bu tur metin dışa almak değil,
+**tek bir metin kaynağını kimliğe çevirmek** üzerineydi.
+
+### Tur 13 — `ApiException` iki kanala ayrıldı
+
+`core/error/api_exception.dart` üç TR cümle üretiyordu ve bunlar `e.message`
+üzerinden **143 çağrı / 66 dosyaya** dağılıyordu: bağlantı koptuğunda Arapça
+arayüzde Türkçe cümle çıkıyordu. Çözüm dördüncü bir kanal değil, mevcut
+kanalın **ikiye ayrılması** oldu:
+
+| Kanal | Kim doldurur | Kural |
+|---|---|---|
+| `ApiException.message` | **sunucu** (hata zarfı) | istemci **çevirmez**, aynen gösterir |
+| `ApiException.agHatasi` | **istemci** (zarf hiç gelmedi) | `AkisHatasi` **kimliği**; metin çizimde üretilir |
+
+Zarf gelmediyse `message` **boş**tur ve kimlik doludur; ikisini
+`apiHataMetni(l10n, e)` birleştirir (sunucu metni varsa o, yoksa kimlikten
+metin). Böylece çağrı yerleri **tek** bir değişiklikle kapandı:
+
+* **~70 çizim yeri** (`Text(e.message)`, `_error = e.message`,
+  `l10n.xxx(e.message)`) → `apiHataMetni(l10n, e)`;
+* **20 denetleyici** `hataKimligi: e.agHatasi` taşır — modüle özgü kimlik
+  enum'u olanlar (`tasks`, `patrol`, `auth`, `complaints`, `transparency`,
+  `assets`) kendi eşleyicilerinden geçer (`gorevAgHatasi`, `devriyeAgHatasi`,
+  `girisAgHatasi`, `talepAgHatasi`, `seffaflikAgHatasi`, `demirbasAgMesaji`);
+* **kuyruk (diske yazılan) kayıt** metin değil kod tutar:
+  `scan/domain/okutma_hata_kodu.dart` (`okutmaAgKodu`) — `data` katmanı
+  çizim katmanına bağlanmasın diye kodlar `domain`'de.
+
+Kilit: `test/ag_hatasi_i18n_test.dart` (7 dil × kimlik/metin ayrımı + sunucu
+metninin korunması) ve `test/api_exception_test.dart`.
+
+> **Sessiz hata sınıfı — `copyWith` sentinel'i tip hatasını YUTAR.** Riverpod
+> durumlarındaki `copyWith(Object? hataKimligi = _sentinel)` deseni parametreyi
+> `Object?` alır; içeride `hataKimligi as DevriyeAkisHatasi?` yapar. Bu turda
+> 16 denetleyiciye toplu `hataKimligi: e.agHatasi` yazıldığında **derleyici
+> hiçbir şey söylemedi** — oysa `AkisHatasi`, `DevriyeAkisHatasi` değildir ve
+> kod **çalışma anında** cast hatası verecekti. Alan tipleri tek tek okunarak
+> yakalandı. Ders: sentinel'li `copyWith`'e toplu düzenleme yapıldığında
+> derleyiciye güvenilmez; alan tipi doğrulanmalıdır.
+
+> **Ölçümün ÜÇÜNCÜ kör noktası — karşılaştırılan metin Türkçe'ye özgü karakter
+> taşımıyorsa kontrol-akışı grep'i de görmez.** Bu turda bulunan canlı hata:
+> alt-bar okunmamış bildirim rozeti `slots[i].label == 'Bildirimler'` ile
+> karar veriyordu; etiket `l10n.sekmeBildirimler`'den geldiği için rozet
+> **Türkçe dışı her dilde kayboluyordu**. `== 'Bildirimler'` içinde ç/ğ/ı/ö/ş/ü
+> **yok**, dolayısıyla §15'in `(switch|case|==)…[çğıöşü]` doğrulaması bu satırı
+> hiç göstermiyordu. Düzeltme: `HomeSlotId` kimliği (tur 8'deki `UserRole.label`
+> hatasının aynısı, farklı kılıkta). Kilit: `yonetici_home_screen_test.dart`
+> içinde rozet artık `en` + `ar` ile de doğrulanıyor. Kontrol-akışı grep'ine
+> **ek** olarak `== '` ve `.label` taramaları da her turda çalıştırılmalıdır.
+
+### Kalan 8 string — hepsi kayıtlı
 
 | Dosya | Adet | Neden |
 |---|---|---|
 | `main.dart`, `core/branding/yonetio_logo.dart`, `home/.../home_marka.dart` | 5 | **Marka kilidi** — `Yönetio` kelime işareti + `GÜVENLİK & DANIŞMANLIK` alt başlığı |
 | `core/i18n/locale_controller.dart` | 2 | **Dil adları kendi dilinde** (`Türkçe`, `Français`) — dil seçicinin gereği; çevrilirse seçici işlevini yitirir |
 | `core/validators/password_rule.dart` | 1 | **Regex karakter sınıfı** (`[A-ZÇĞİÖŞÜ]`) — teknik sabit |
-| `core/error/api_exception.dart` | 3 | **Yazılı i18n borcu** (aşağıda) |
 
-> **Kalan i18n borcu — `ApiException` ağ mesajları (3 string).** Bu üç metin
-> sunucudan gelmez, **istemci üretir**: timeout, "sunucuya ulaşılamadı" ve
-> genel geri-düşüm. Doğru çözüm bir `AgHatasi` kimliği taşıyıp metni çizimde
-> üretmektir; ancak o zaman `message` ağ hatalarında **boş** kalır ve hatayı
-> gösteren **143 çağrı / 66 dosya** (çoğu context'siz denetleyicide
-> `errorMessage: e.message` olarak **saklar**) dördüncü bir kanal taşımak
-> zorundadır. Bu, süpürme turuna sığmayan ayrı bir iştir: kimlik + çözücü +
-> ~20 denetleyici durumu **aynı commit'te** değişmelidir. Gerekçe
-> `api_exception.dart` başında da yazılıdır.
+**Kalan i18n borcu yoktur:** listedeki 8 string'in tamamı bilinçli istisnadır.
 
 **Bilinçli istisnalar (çevrilmez):**
 

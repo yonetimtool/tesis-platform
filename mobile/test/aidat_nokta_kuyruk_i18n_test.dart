@@ -23,6 +23,7 @@ import 'package:mobile/src/features/dues/data/dues_api.dart';
 import 'package:mobile/src/features/dues/domain/dues_models.dart';
 import 'package:mobile/src/features/dues/presentation/aidat_etiket.dart';
 import 'package:mobile/src/features/dues/presentation/my_dues_screen.dart';
+import 'package:mobile/src/features/scan/domain/okutma_hata_kodu.dart';
 import 'package:mobile/src/features/scan/presentation/okutma_hata_metni.dart';
 
 import 'helpers/l10n_test_app.dart';

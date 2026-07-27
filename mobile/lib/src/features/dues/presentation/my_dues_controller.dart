@@ -87,7 +87,7 @@ class MyDuesController extends Notifier<MyDuesState> {
       state = state.copyWith(
         loading: false,
         errorMessage: e.message,
-        hataKimligi: null,
+        hataKimligi: e.agHatasi,
         forbidden: e.statusCode == 403,
       );
     } catch (_) {

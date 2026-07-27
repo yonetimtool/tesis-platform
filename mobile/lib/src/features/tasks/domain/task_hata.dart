@@ -29,4 +29,10 @@ enum GorevAkisHatasi {
 
   /// Siniflandirilamayan hata.
   beklenmeyen,
+
+  /// AG: baglanti zaman asimi (istemci uretir — bkz. `AkisHatasi.zamanAsimi`).
+  agZamanAsimi,
+
+  /// AG: sunucuya ulasilamadi (istemci uretir).
+  agUlasilamadi,
 }

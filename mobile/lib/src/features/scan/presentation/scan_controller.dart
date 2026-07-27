@@ -77,6 +77,7 @@ class ScanController extends Notifier<ScanSubmitState> {
         state = ScanSubmitState(
           status: ScanSubmitStatus.error,
           message: e.message,
+          hataKimligi: e.agHatasi,
         );
       }
     } catch (_) {

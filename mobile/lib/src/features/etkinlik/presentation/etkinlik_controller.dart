@@ -94,7 +94,11 @@ class EtkinlikController extends Notifier<EtkinlikState> {
       );
     } on ApiException catch (e) {
       if (!ref.mounted) return;
-      state = state.copyWith(loading: false, errorMessage: e.message);
+      state = state.copyWith(
+        loading: false,
+        errorMessage: e.message,
+        hataKimligi: e.agHatasi,
+      );
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(

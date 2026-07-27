@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../domain/outbox_entry.dart';
+import '../domain/okutma_hata_kodu.dart';
 import '../domain/scan.dart';
 import 'scan_api.dart';
 import 'scan_outbox_store.dart';
@@ -176,7 +177,7 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
               attemptCount: next.attemptCount + 1,
               // METIN DEGIL KOD: kayit diske yazilir (bkz. OutboxEntry.hataKodu).
               lastError: e.message,
-              hataKodu: e.code,
+              hataKodu: okutmaAgKodu(e) ?? e.code,
             ));
             await _persist();
             continue; // siradaki kayit denenebilir
@@ -184,11 +185,11 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
           // Ag / timeout / 5xx / auth (refresh olu) → bekliyor kalir,
           // sonra tekrar denenir. Tur kesilir: baglanti yoksa siradakiler
           // de basarisiz olur, pil/veri bosa harcanmasin.
-          await _markRetry(next, e.message);
+          await _markRetry(next, e.message, kod: okutmaAgKodu(e));
           break;
         } catch (e) {
           if (!ref.mounted) return;
-          await _markRetry(next, '$e', kod: _beklenmeyenKod);
+          await _markRetry(next, '$e', kod: okutmaBeklenmeyenKod);
           break;
         }
       }
@@ -281,10 +282,6 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
     }
   }
 }
-
-/// Istemcinin urettigi tek hata kodu (sozlesmede yok): siniflandirilamayan
-/// istisna. Metni `okutmaHataMetni` cozer.
-const _beklenmeyenKod = 'client_unexpected';
 
 final scanOutboxProvider =
     NotifierProvider<ScanOutbox, ScanOutboxState>(ScanOutbox.new);

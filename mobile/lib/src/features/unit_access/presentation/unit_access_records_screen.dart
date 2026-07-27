@@ -9,6 +9,7 @@ import '../../visitors/data/visitor_api.dart';
 import '../../visitors/domain/visitor_models.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../kargo/presentation/kargo_durum_adi.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Onaylanan tek-seferlik izinle bir dairenin ziyaretci/kargo kayitlarinin
 /// SALT-OKUNUR gorunumu (admin/yonetici). Izin ILK okumada tuketilir; tekrar
@@ -70,7 +71,7 @@ class _UnitAccessRecordsScreenState
         if (e.statusCode == 403) {
           _forbidden = true;
         } else {
-          _error = e.message;
+          _error = apiHataMetni(context.l10n, e);
         }
       });
     } finally {

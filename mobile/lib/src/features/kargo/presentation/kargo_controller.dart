@@ -101,7 +101,7 @@ class KargoController extends Notifier<KargoState> {
       state = state.copyWith(
         loading: false,
         errorMessage: e.message,
-        hataKimligi: null,
+        hataKimligi: e.agHatasi,
       );
     } catch (_) {
       if (!ref.mounted) return;

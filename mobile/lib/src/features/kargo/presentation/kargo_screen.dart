@@ -356,7 +356,7 @@ class _ReceiveButtonState extends ConsumerState<_ReceiveButton> {
       );
       widget.onReceived?.call();
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
       widget.onReceived?.call();
     } catch (_) {
       messenger.showSnackBar(
@@ -594,7 +594,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
         _photoBusy = false;
         _photoError = e.kind == ApiErrorKind.network
             ? _l10n.gorevFotoOnlineGerekli
-            : e.message;
+            : apiHataMetni(_l10n, e);
       });
     }
   }
@@ -634,7 +634,7 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = e.message;
+          _hata = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {

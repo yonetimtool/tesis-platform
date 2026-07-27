@@ -10,6 +10,7 @@ import '../../../routing/app_router.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../../tenant/data/tenant_api.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Ayarlar — kullanici tercihleri (DIL + tema modu) + yonetici'ye ozel tesis
 /// adlandirmasi. Iki tercih de kalicidir (guvenli depo) ve ANINDA uygulanir;
@@ -231,7 +232,7 @@ class _TesisAdiKartiState extends ConsumerState<_TesisAdiKarti> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+            .showSnackBar(SnackBar(content: Text(apiHataMetni(_l10n, e))));
       }
     } catch (_) {
       if (mounted) {

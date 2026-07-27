@@ -12,6 +12,7 @@ import '../../tasks/presentation/task_complete_controller.dart'
 import '../data/avatar_api.dart';
 import '../data/profile_api.dart';
 import '../domain/profile.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Self-servis profil ekrani — kullanici KENDI parolasini ve telefon/arama
 /// rizasini gunceller (contracts/auth.md self-servis profil). Sag-ust profil
@@ -31,7 +32,7 @@ class ProfileScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
           // Sunucu metni varsa o gosterilir (SERVER-LOCALIZED siniri).
-          message: e is ApiException ? e.message : l10n.profilYuklenemedi,
+          message: e is ApiException ? apiHataMetni(l10n, e) : l10n.profilYuklenemedi,
           onRetry: () => ref.invalidate(profileProvider),
         ),
         data: (profile) => ListView(
@@ -148,7 +149,7 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
         SnackBar(content: Text(l10n.profilFotoGuncellendi)),
       );
     } on ApiException catch (e) {
-      if (mounted) messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      if (mounted) messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     } catch (e) {
       if (mounted) {
         messenger.showSnackBar(
@@ -173,7 +174,7 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
         SnackBar(content: Text(l10n.profilFotoKaldirildi)),
       );
     } on ApiException catch (e) {
-      if (mounted) messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      if (mounted) messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -324,7 +325,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -458,7 +459,7 @@ class _ContactCardState extends ConsumerState<_ContactCard> {
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

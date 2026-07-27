@@ -13,6 +13,7 @@ import '../../auth/presentation/rol_adi.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../data/staff_api.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Saha Personeli (Ozellik 3) — yonetici/admin: guvenlik + tesis gorevlisi
 /// hesaplarini listeler ve ekler. yonetici backend'de YALNIZ saha personeli
@@ -37,7 +38,7 @@ class StaffScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
           // Sunucu metni varsa o gosterilir (SERVER-LOCALIZED siniri).
-          message: e is ApiException ? e.message : l10n.personelListelenemedi,
+          message: e is ApiException ? apiHataMetni(l10n, e) : l10n.personelListelenemedi,
           onRetry: () => ref.invalidate(fieldStaffProvider),
         ),
         data: (list) => list.isEmpty
@@ -167,7 +168,7 @@ class _StaffTile extends ConsumerWidget {
         message: l10n.personelYeniKodMesaji,
       );
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 
@@ -183,7 +184,7 @@ class _StaffTile extends ConsumerWidget {
               ? l10n.personelAktiflestirildi
               : l10n.personelPasiflestirildi)));
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 }
@@ -259,7 +260,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _fotoYukleniyor = false);
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     } catch (e) {
       if (!mounted) return;
       setState(() => _fotoYukleniyor = false);
@@ -359,7 +360,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
       }
     } on ApiException catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
       setState(() => _submitting = false);
     }
   }

@@ -7,6 +7,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../data/dis_hizmet_api.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Dis Hizmetler — guvenilir esnaf/hizmet kisileri (cilingir/elektrik/tesisat)
 /// + yonetici notu. Yonetici/admin ekler/duzenler/siler + notu yazar; guvenlik
@@ -40,7 +41,9 @@ class DisHizmetScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             child: Text(
               // Sunucu metni varsa o (SERVER-LOCALIZED siniri).
-              e is ApiException ? e.message : context.l10n.disListeAlinamadi,
+              e is ApiException
+                  ? apiHataMetni(context.l10n, e)
+                  : context.l10n.disListeAlinamadi,
               textAlign: TextAlign.center,
             ),
           ),
@@ -161,7 +164,7 @@ class _NoteCard extends ConsumerWidget {
       ref.invalidate(disHizmetlerProvider);
       messenger.showSnackBar(SnackBar(content: Text(l10n.disNotGuncellendi)));
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 }
@@ -252,7 +255,7 @@ class _HizmetTile extends ConsumerWidget {
       ref.invalidate(disHizmetlerProvider);
       messenger.showSnackBar(SnackBar(content: Text(l10n.disSilindi)));
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 }
@@ -333,7 +336,7 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
       }
       if (mounted) navigator.pop(true);
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) setState(() => _error = apiHataMetni(context.l10n, e));
     } catch (_) {
       if (mounted) {
         setState(() => _error = AppLocalizations.of(context).devriyeKaydedilemedi);

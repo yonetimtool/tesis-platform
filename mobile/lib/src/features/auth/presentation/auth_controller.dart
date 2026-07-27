@@ -4,6 +4,7 @@ import '../../../core/error/api_exception.dart';
 import '../../push/presentation/push_registrar.dart';
 import '../data/auth_repository_impl.dart';
 import '../domain/giris_hatasi.dart';
+import 'giris_hata_metni.dart';
 
 enum AuthStatus {
   /// Acilista saklanan oturum henuz kontrol edilmedi.
@@ -118,7 +119,7 @@ class AuthController extends Notifier<AuthState> {
       state = state.copyWith(
         submitting: false,
         errorMessage: e.message,
-        hataKimligi: null,
+        hataKimligi: girisAgHatasi(e),
       );
     } catch (_) {
       state = state.copyWith(
@@ -158,7 +159,7 @@ class AuthController extends Notifier<AuthState> {
       state = state.copyWith(
         submitting: false,
         errorMessage: e.message,
-        hataKimligi: null,
+        hataKimligi: girisAgHatasi(e),
         setupToken: dead ? null : setupToken,
       );
     } catch (_) {

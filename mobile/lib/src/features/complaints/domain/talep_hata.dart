@@ -17,4 +17,9 @@ enum TalepAkisHatasi {
 
   /// Foto yuklemesi siniflandirilamayan nedenle basarisiz.
   fotoYuklenemedi,
+  /// AG: baglanti zaman asimi (istemci uretir — bkz. `AkisHatasi.zamanAsimi`).
+  agZamanAsimi,
+
+  /// AG: sunucuya ulasilamadi (istemci uretir).
+  agUlasilamadi,
 }

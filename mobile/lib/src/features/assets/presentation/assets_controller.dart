@@ -6,6 +6,7 @@ import '../../nfc/presentation/nfc_controller.dart';
 import '../data/asset_api.dart';
 import '../domain/asset_models.dart';
 import '../domain/demirbas_mesaj.dart';
+import 'demirbas_mesaj_metni.dart';
 import '../../nfc/domain/nfc_hatasi.dart';
 
 /// Okutma akisinin asamasi.
@@ -198,7 +199,7 @@ class AssetsController extends Notifier<AssetsState> {
         scanPhase: AssetScanPhase.idle,
         scanError: e.kind == ApiErrorKind.network
             ? _offline
-            : DemirbasSunucuMetni(e.message),
+            : (demirbasAgMesaji(e) ?? DemirbasSunucuMetni(e.message)),
         forbidden: e.statusCode == 403,
       );
     }
@@ -286,8 +287,8 @@ class AssetsController extends Notifier<AssetsState> {
         actionError: offline
             ? _offline
             : e.statusCode == 409
-                ? DemirbasCakismaMesaji(e.message)
-                : DemirbasSunucuMetni(e.message),
+                ? (demirbasAgMesaji(e) ?? DemirbasCakismaMesaji(e.message))
+                : (demirbasAgMesaji(e) ?? DemirbasSunucuMetni(e.message)),
       );
       if (!offline && e.statusCode == 409) {
         try {
@@ -334,7 +335,7 @@ class AssetsController extends Notifier<AssetsState> {
         myLoading: false,
         myError: e.kind == ApiErrorKind.network
             ? _offline
-            : DemirbasSunucuMetni(e.message),
+            : (demirbasAgMesaji(e) ?? DemirbasSunucuMetni(e.message)),
         forbidden: e.statusCode == 403,
       );
     } catch (_) {
@@ -368,8 +369,9 @@ class AssetsController extends Notifier<AssetsState> {
         myError: e.kind == ApiErrorKind.network
             ? _offline
             : e.statusCode == 409
-                ? DemirbasAdliHata(ad: item.asset.ad, sunucuMetni: e.message)
-                : DemirbasSunucuMetni(e.message),
+                ? (demirbasAgMesaji(e) ??
+                    DemirbasAdliHata(ad: item.asset.ad, sunucuMetni: e.message))
+                : (demirbasAgMesaji(e) ?? DemirbasSunucuMetni(e.message)),
       );
       await refreshMyItems(silent: true);
     } finally {

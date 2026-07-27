@@ -5,6 +5,7 @@ import '../../../core/error/api_exception.dart';
 import '../../nfc/presentation/nfc_controller.dart';
 import '../data/task_api.dart';
 import '../domain/task_hata.dart';
+import 'gorev_hata_metni.dart';
 import '../domain/task_models.dart';
 import 'tasks_controller.dart';
 import '../../nfc/domain/nfc_hatasi.dart';
@@ -219,7 +220,7 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
         photoError: e.kind == ApiErrorKind.network ? null : e.message,
         photoHata: e.kind == ApiErrorKind.network
             ? GorevAkisHatasi.fotoOnlineGerekli
-            : null,
+            : gorevAgHatasi(e),
       );
     } catch (e) {
       if (!ref.mounted) return;
@@ -313,7 +314,7 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
         submitError: e.kind == ApiErrorKind.network ? null : e.message,
         submitHata: e.kind == ApiErrorKind.network
             ? GorevAkisHatasi.tamamlamaOffline
-            : null,
+            : gorevAgHatasi(e),
       );
     } catch (_) {
       if (!ref.mounted) return;

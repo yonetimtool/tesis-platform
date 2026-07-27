@@ -8,6 +8,7 @@ import '../../auth/domain/user_role.dart';
 import '../data/transparency_api.dart';
 import '../domain/seffaflik_hatasi.dart';
 import '../domain/transparency_models.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Sunucudan "YYYY-MM" gelen donemi "Temmuz 2026" gibi yazar — AY ADI aktif
 /// dilden gelir (`ayAdi`); bicim tanimazsa ham deger doner.
@@ -62,7 +63,10 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
         _board = null;
       }
     } on ApiException catch (e) {
+      // Sunucu metni + AG kimligi AYRI kanallarda; metin cizimde cozulur
+      // (`seffaflikHatasiCoz`) — burada context'e dokunmayiz.
       _error = e.message;
+      _hataKimligi = seffaflikAgHatasi(e);
     } catch (_) {
       _hataKimligi = SeffaflikHatasi.yuklenemedi;
     } finally {
@@ -75,6 +79,7 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
       _board = await ref.read(transparencyApiProvider).fetchBoard(ay);
     } on ApiException catch (e) {
       _error = e.message;
+      _hataKimligi = seffaflikAgHatasi(e);
       _board = null;
     }
     if (mounted) setState(() {});
@@ -110,7 +115,7 @@ class _TransparencyScreenState extends ConsumerState<TransparencyScreen> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+            .showSnackBar(SnackBar(content: Text(apiHataMetni(context.l10n, e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

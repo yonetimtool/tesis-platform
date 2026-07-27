@@ -13,6 +13,7 @@ import '../domain/camera_models.dart';
 import 'camera_player_screen.dart';
 import 'kamera_form_sheet.dart';
 import 'kamera_karti.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Kameralar ekrani — 2'li IZGARA (ana ekran kart diliyle ayni).
 ///
@@ -51,7 +52,7 @@ class KameralarScreen extends ConsumerWidget {
               Text(
                 // SERVER-LOCALIZED(next round): ApiException.message SUNUCUDAN
                 // gelir (su an yalniz TR). Sunucu yerelestirmesi ayri turda.
-                e is ApiException ? e.message : l10n.kameraListeHata,
+                e is ApiException ? apiHataMetni(l10n, e) : l10n.kameraListeHata,
                 textAlign: TextAlign.center,
               ),
             ],
@@ -153,7 +154,7 @@ class KameralarScreen extends ConsumerWidget {
       await ref.read(camerasApiProvider).delete(k.id);
       ref.invalidate(camerasProvider);
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 }

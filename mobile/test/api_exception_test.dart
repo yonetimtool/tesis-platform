@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/src/core/error/akis_hatasi.dart';
 import 'package:mobile/src/core/error/api_exception.dart';
 
 void main() {
@@ -27,7 +28,10 @@ void main() {
       expect(ex.statusCode, 401);
     });
 
-    test('baglanti hatasinda anlamli mesaj uretir', () {
+    // TUR 13: ag hatasinda `core` artik METIN uretmez — KIMLIK tasir.
+    // Metin cizim katmaninda `apiHataMetni(l10n, e)` ile uretilir; boylece
+    // Arapca UI'da Turkce cumle gorunmez.
+    test('baglanti hatasinda METIN degil KIMLIK uretir', () {
       final e = DioException(
         requestOptions: req,
         type: DioExceptionType.connectionError,
@@ -35,7 +39,39 @@ void main() {
 
       final ex = ApiException.fromDio(e);
       expect(ex.code, 'network_error');
-      expect(ex.message, contains('ulaşılamadı'));
+      expect(ex.message, isEmpty);
+      expect(ex.agHatasi, AkisHatasi.sunucuyaUlasilamadi);
+    });
+
+    test('timeout → zamanAsimi kimligi, mesaj BOS', () {
+      for (final t in [
+        DioExceptionType.connectionTimeout,
+        DioExceptionType.sendTimeout,
+        DioExceptionType.receiveTimeout,
+      ]) {
+        final ex = ApiException.fromDio(
+          DioException(requestOptions: req, type: t),
+        );
+        expect(ex.message, isEmpty, reason: '$t');
+        expect(ex.agHatasi, AkisHatasi.zamanAsimi, reason: '$t');
+      }
+    });
+
+    // Zarf VAR ama `message` yok: eskiden bos metin gosterilirdi.
+    test('zarf var / mesaj yok → beklenmeyen kimligi', () {
+      final ex = ApiException.fromDio(DioException(
+        requestOptions: req,
+        response: Response(
+          requestOptions: req,
+          statusCode: 500,
+          data: {
+            'error': {'code': 'server_error'}
+          },
+        ),
+      ));
+      expect(ex.code, 'server_error');
+      expect(ex.message, isEmpty);
+      expect(ex.agHatasi, AkisHatasi.beklenmeyen);
     });
   });
 

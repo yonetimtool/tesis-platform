@@ -692,7 +692,7 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
         _error = switch (e.statusCode) {
           409 => _l10n.semaHaftalikSinir,
           403 => _l10n.semaKendiBlok,
-          _ => e.message,
+          _ => apiHataMetni(_l10n, e),
         };
       });
     } catch (_) {

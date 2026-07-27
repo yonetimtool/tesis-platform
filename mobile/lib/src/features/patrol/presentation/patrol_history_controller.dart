@@ -6,6 +6,7 @@ import '../../../core/error/api_exception.dart';
 import '../data/patrol_api.dart';
 import '../domain/patrol_models.dart';
 import '../domain/patrol_hata.dart';
+import 'devriye_hata_metni.dart';
 
 /// "Gecmis" sekmesinin durumu: son pencereler + ozet sayilar.
 class PatrolHistoryState {
@@ -89,7 +90,7 @@ class PatrolHistoryController extends Notifier<PatrolHistoryState> {
       state = state.copyWith(
         loading: false,
         errorMessage: e.message,
-        hataKimligi: null,
+        hataKimligi: devriyeAgHatasi(e),
         forbidden: e.statusCode == 403,
       );
     } catch (_) {

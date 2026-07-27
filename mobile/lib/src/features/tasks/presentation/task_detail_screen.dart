@@ -16,6 +16,7 @@ import 'task_ticket_widgets.dart';
 import 'task_tip_style.dart';
 import 'tasks_controller.dart';
 import '../../nfc/presentation/nfc_hata_metni.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Gorev detayi + tamamlama akisi: NFC (gorevde etiket tanimliysa) → foto
 /// kaniti (opsiyonel; cek → presign → PUT) → not → "Tamamla".
@@ -167,7 +168,7 @@ class TaskDetailScreen extends ConsumerWidget {
         );
       }
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 }

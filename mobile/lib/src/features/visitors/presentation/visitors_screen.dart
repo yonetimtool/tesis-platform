@@ -391,7 +391,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
       });
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _residentsError = e.message);
+      setState(() => _residentsError = apiHataMetni(_l10n, e));
     } finally {
       if (mounted) setState(() => _loadingResidents = false);
     }
@@ -432,7 +432,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       // 422 invalid_reference: daire yok / hedef o dairenin sakini degil.
-      if (mounted) setState(() => _hata = e.message);
+      if (mounted) setState(() => _hata = apiHataMetni(_l10n, e));
     } catch (_) {
       if (mounted) {
         setState(() => _hata = _l10n.karGonderilemedi);

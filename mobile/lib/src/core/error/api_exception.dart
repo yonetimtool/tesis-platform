@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'akis_hatasi.dart';
 
 /// API hatalarinin kaba siniflandirmasi (tiplenmis hata ele alimi icin).
 ///
@@ -9,73 +10,74 @@ import 'package:dio/dio.dart';
 enum ApiErrorKind { network, auth, api }
 
 /// Sozlesmedeki hata zarfini (`{ "error": { "code", "message" } }`) temsil eden
-/// uygulama-ici istisna. UI bu istisnanin [message] alanini kullaniciya gosterir.
-// SERVER-LOCALIZED(next round): [ApiException.message] SUNUCUDAN gelen metindir
-// (422 dogrulama, 409 catisma, 503 ...) ve su an YALNIZ TURKCE'dir. Istemci bu
-// metni CEVIRMEZ — aynen gosterir. Sunucu yerelestirmesi (Accept-Language ->
-// yerelestirilmis hata metni) ayri bir turda yapilacak; o zaman bu sinifin TUM
-// tuketicileri gozden gecirilmelidir. Tuketici envanteri: mobile/README.md
-// "Sunucu metni siniri" bolumu.
+/// uygulama-ici istisna.
+///
+/// IKI KANAL (tur 13):
+///   * [message] — SUNUCUDAN gelen metin (422/409/503...). Istemci CEVIRMEZ,
+///     aynen gosterir. SERVER-LOCALIZED(next round): su an yalniz Turkce;
+///     sunucu yerellestirmesi ayri bir turda yapilacak.
+///   * [agHatasi] — sozlesme zarfi HIC gelmediginde (timeout / baglanti yok /
+///     zarfsiz govde) ISTEMCININ urettigi KIMLIK. Bu durumda [message] BOS'tur
+///     ve metni cizim katmani `apiHataMetni(l10n, e)` ile uretir.
+///
+/// Bu ayrim tur 13'te yapildi: oncesinde `core` katmani UC TR sabit cumle
+/// tasiyordu ve uygulamanin tamamina Turkce sizdiriyordu.
 class ApiException implements Exception {
   const ApiException({
     required this.code,
     required this.message,
     this.statusCode,
+    this.agHatasi,
   });
 
   /// Makine-okunabilir hata kodu (orn. `invalid_credentials`, `validation_error`).
   final String code;
 
-  /// Kullaniciya gosterilebilir aciklama.
+  /// SUNUCUNUN dondurdugu, kullaniciya gosterilebilir aciklama. Ag
+  /// hatalarinda BOS'tur — o durumda [agHatasi] doludur.
   final String message;
 
   /// HTTP durum kodu (varsa).
   final int? statusCode;
 
+  /// Sozlesme zarfi gelmediginde ISTEMCI hata kimligi (bkz. [AkisHatasi]).
+  /// Doluysa [message] bostur; metin cizimde `apiHataMetni` ile uretilir.
+  final AkisHatasi? agHatasi;
+
   /// [DioException]'i sozlesme hata zarfina gore [ApiException]'a cevirir.
   /// Zarf yoksa (ag hatasi, timeout, beklenmeyen govde) makul bir mesaj uretir.
-  ///
-  /// SERVER-LOCALIZED(next round) + I18N BORCU (tur 12'de olculdu): asagidaki
-  /// UC metin SUNUCUDAN gelmez, ISTEMCI uretir — yani `core` katmani hala
-  /// Turkce tasiyor. Duzgun cozum bir `AgHatasi` KIMLIGI tasimak ve metni
-  /// cizimde uretmek; ancak `message` o zaman ag hatalarinda BOS kalir ve
-  /// hatayi GOSTEREN her yer (143 cagri / 66 dosya, cogu context'siz
-  /// denetleyicide "errorMessage: e.message" olarak SAKLAR) dorduncu bir kanal
-  /// tasimak zorunda kalir. Bu, supurme turuna sigmayan ayri bir istir:
-  /// kimlik + cozucu + ~20 denetleyici durumu ayni commit'te degismelidir.
-  /// Bu yuzden BILINCLI olarak ertelendi (bkz. README §15 "Kalan i18n borcu").
   factory ApiException.fromDio(DioException e) {
     final status = e.response?.statusCode;
     final data = e.response?.data;
 
     if (data is Map && data['error'] is Map) {
       final err = data['error'] as Map;
+      final sunucuMetni = err['message'] as String?;
       return ApiException(
         code: (err['code'] as String?) ?? 'unknown_error',
-        message: (err['message'] as String?) ?? _genericMessage,
+        // Zarf var ama mesaj yoksa metni ISTEMCI uretir → kimlik tasi.
+        message: sunucuMetni ?? '',
         statusCode: status,
+        agHatasi: sunucuMetni == null ? AkisHatasi.beklenmeyen : null,
       );
     }
 
-    // Hata zarfi yok → baglanti/timeout gibi durumlar icin anlamli mesaj.
-    final message = switch (e.type) {
+    // Hata zarfi yok → metin ISTEMCIDE uretilir, bu yuzden KIMLIK tasinir.
+    final ag = switch (e.type) {
       DioExceptionType.connectionTimeout ||
       DioExceptionType.sendTimeout ||
       DioExceptionType.receiveTimeout =>
-        'Sunucuya bağlanırken zaman aşımı oluştu.',
-      DioExceptionType.connectionError =>
-        'Sunucuya ulaşılamadı. Ağ bağlantınızı ve sunucu adresini kontrol edin.',
-      _ => _genericMessage,
+        AkisHatasi.zamanAsimi,
+      DioExceptionType.connectionError => AkisHatasi.sunucuyaUlasilamadi,
+      _ => AkisHatasi.beklenmeyen,
     };
     return ApiException(
       code: 'network_error',
-      message: message,
+      message: '',
       statusCode: status,
+      agHatasi: ag,
     );
   }
-
-  static const String _genericMessage =
-      'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
 
   /// Hatanin kaba turu — UI'da ayrim icin (orn. ag hatasinda "tekrar dene",
   /// auth hatasinda login'e donus).

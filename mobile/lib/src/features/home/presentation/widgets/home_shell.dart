@@ -265,7 +265,9 @@ class _HomeBottomBar extends StatelessWidget {
                           : _DestinationSlot(
                               slot: slots[i],
                               active: i == currentIndex,
-                              badge: slots[i].label == 'Bildirimler'
+                              // KIMLIK ile karar: etikete bakmak rozeti
+                              // Turkce disi her dilde yok ederdi (tur 13).
+                              badge: slots[i].id == HomeSlotId.bildirimler
                                   ? unreadCount
                                   : 0,
                               onTap: () => onDestinationSelected(i),

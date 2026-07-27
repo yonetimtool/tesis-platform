@@ -5,6 +5,7 @@ import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../data/cameras_api.dart';
 import '../domain/camera_models.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Kamera ekle/duzenle formu (admin + yonetici) — alt sayfa.
 ///
@@ -89,7 +90,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
       // ad cakismasi, 422 URL/tur) — su an TR. Istemci cevirmez.
       setState(() {
         _kaydediyor = false;
-        _hata = e.message;
+        _hata = apiHataMetni(context.l10n, e);
       });
     }
   }

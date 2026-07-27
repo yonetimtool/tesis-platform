@@ -7,6 +7,7 @@ import '../../checkpoints/data/checkpoint_api.dart';
 import '../data/patrol_plan_api.dart';
 import '../domain/patrol_hata.dart';
 import 'devriye_hata_metni.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// Devriye planlari yonetimi — yonetici/admin: her gun tekrar eden devriye
 /// planlari (ad + baslangic/bitis saati + tur sikligi + kontrol noktalari).
@@ -33,7 +34,7 @@ class PatrolPlansScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              e is ApiException ? e.message : l10n.devriyePlanlarListelenemedi,
+              e is ApiException ? apiHataMetni(l10n, e) : l10n.devriyePlanlarListelenemedi,
               textAlign: TextAlign.center,
             ),
           ),
@@ -144,7 +145,7 @@ class _PlanTile extends ConsumerWidget {
       messenger.showSnackBar(
           SnackBar(content: Text(l10n.devriyePlanSilindi)));
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 }
@@ -271,7 +272,7 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
       await api.setCheckpoints(planId, _selected.toList());
       if (mounted) navigator.pop(true);
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) setState(() => _error = apiHataMetni(_l10n, e));
     } catch (_) {
       if (mounted) {
         setState(() => _hataKimligi = DevriyeAkisHatasi.kaydedilemedi);

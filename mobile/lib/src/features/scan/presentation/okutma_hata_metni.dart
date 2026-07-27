@@ -10,9 +10,7 @@
 library;
 
 import '../../../core/i18n/l10n.dart';
-
-/// Istemci tarafinda uretilen kod (sozlesmede yok).
-const okutmaBeklenmeyenKod = 'client_unexpected';
+import '../domain/okutma_hata_kodu.dart';
 
 String okutmaHataMetni(
   AppLocalizations l10n, {
@@ -22,7 +20,12 @@ String okutmaHataMetni(
     switch (kod) {
       'invalid_signature' => l10n.okutmaImzaGecersiz,
       'replay_detected' => l10n.okutmaTekrarEdilmis,
-      okutmaBeklenmeyenKod =>
-        l10n.okutmaBeklenmeyenHata(sunucuMetni ?? '-'),
-      _ => sunucuMetni ?? l10n.kuyrukEtiketEslesmedi,
+      okutmaAgZamanAsimiKod => l10n.hataZamanAsimi,
+      okutmaAgUlasilamadiKod => l10n.hataSunucuyaUlasilamadi,
+      okutmaBeklenmeyenKod => l10n.okutmaBeklenmeyenHata(
+          (sunucuMetni?.isNotEmpty ?? false) ? sunucuMetni! : '-'),
+      // Sunucu metni BOS olabilir (zarf var, mesaj yok) — o da kimlige duser.
+      _ => (sunucuMetni?.isNotEmpty ?? false)
+          ? sunucuMetni!
+          : l10n.kuyrukEtiketEslesmedi,
     };

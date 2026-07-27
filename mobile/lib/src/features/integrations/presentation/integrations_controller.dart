@@ -88,7 +88,7 @@ class IntegrationsController extends Notifier<IntegrationsState> {
       state = state.copyWith(
         loading: false,
         errorMessage: e.message,
-        hataKimligi: null,
+        hataKimligi: e.agHatasi,
       );
     } catch (_) {
       if (!ref.mounted) return;

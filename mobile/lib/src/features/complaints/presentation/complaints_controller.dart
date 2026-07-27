@@ -12,6 +12,7 @@ import '../data/complaint_api.dart';
 import '../domain/complaint_models.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../domain/talep_hata.dart';
+import 'talep_hata_metni.dart';
 
 /// Talep listesinin durumu.
 class ComplaintsState {
@@ -101,7 +102,7 @@ class ComplaintsController extends Notifier<ComplaintsState> {
       );
     } on ApiException catch (e) {
       if (!ref.mounted) return;
-      state = state.copyWith(loading: false, errorMessage: e.message, hataKimligi: null);
+      state = state.copyWith(loading: false, errorMessage: e.message, hataKimligi: e.agHatasi);
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
@@ -287,7 +288,7 @@ class ComplaintFormController extends Notifier<ComplaintFormState> {
       state = state.copyWith(
           categoriesLoading: false,
           categoriesError: e.message,
-          categoriesHata: null);
+          categoriesHata: talepAgHatasi(e));
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
@@ -372,7 +373,7 @@ class ComplaintFormController extends Notifier<ComplaintFormState> {
           error: e.kind == ApiErrorKind.network ? null : e.message,
           hata: e.kind == ApiErrorKind.network
               ? TalepAkisHatasi.fotoOnlineGerekli
-              : null,
+              : talepAgHatasi(e),
         ),
       );
     } catch (_) {

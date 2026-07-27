@@ -13,6 +13,7 @@ import '../data/etkinlik_api.dart';
 import '../domain/etkinlik_models.dart';
 import 'etk_etiket.dart';
 import 'etkinlik_controller.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// "Etkinlikler" — etkinlik + RSVP (auth.md §4 kesin kurali, UX aynasi):
 ///   * yonetim (admin/yonetici): "Yeni etkinlik" FAB'i + detayda duzenle/sil;
@@ -387,7 +388,7 @@ class _RsvpButtonsState extends ConsumerState<_RsvpButtons> {
       );
       widget.onAnswered?.call();
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     } catch (_) {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.etkBeyanGonderilemedi)),
@@ -575,7 +576,7 @@ class _DeleteButton extends ConsumerWidget {
           );
           onDeleted();
         } on ApiException catch (e) {
-          messenger.showSnackBar(SnackBar(content: Text(e.message)));
+          messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
         }
       },
     );
@@ -691,7 +692,7 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
         _photoBusy = false;
         _photoError = e.kind == ApiErrorKind.network
             ? _l10n.gorevFotoOnlineGerekli
-            : e.message;
+            : apiHataMetni(_l10n, e);
       });
     }
   }
@@ -791,7 +792,7 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = e.message;
+          _hata = apiHataMetni(_l10n, e);
         });
       }
     } catch (_) {

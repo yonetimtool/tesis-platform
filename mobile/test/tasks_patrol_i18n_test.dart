@@ -193,6 +193,29 @@ void main() {
     expect(find.textContaining('unexpected error'), findsOneWidget);
   });
 
+  // TUR 13: ag hatasi ARTIK `core`dan TR cumle olarak gelmiyor. Denetleyici
+  // `e.agHatasi`yi modul kimligine cevirir, ekran onu aktif dilde cizer.
+  testWidgets('GOREV: AG hatasi ekranda aktif dilde cikar (TR sizmaz)',
+      (tester) async {
+    for (final (locale, beklenen) in [
+      (const Locale('en'), 'The server could not be reached'),
+      (const Locale('de'), 'Der Server ist nicht erreichbar'),
+    ]) {
+      await tester.pumpWidget(_tasksEkrani(
+        locale,
+        // Sunucu METNI BOS — zarf hic gelmedi; metin yalniz kimlikten uretilir.
+        durum: const TasksState(
+          errorMessage: '',
+          hataKimligi: GorevAkisHatasi.agUlasilamadi,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.textContaining(beklenen), findsOneWidget, reason: '$locale');
+      expect(find.textContaining('ulaşılamadı'), findsNothing,
+          reason: '$locale TR sizintisi');
+    }
+  });
+
   test('GOREV hata kimliklerinin HEPSI 7 dilde karsilik bulur', () async {
     for (final dil in ['tr', 'en', 'ar', 'ru', 'de', 'fr', 'es']) {
       final l10n = await AppLocalizations.delegate.load(Locale(dil));
