@@ -6,6 +6,7 @@ import useSWR, { mutate } from "swr";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorBox, Field, PageHeader, Pager, inputCls } from "@/components/form";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
+import { useT } from "@/lib/i18n/kullan";
 
 const LIMIT = 50;
 
@@ -31,6 +32,7 @@ type SupportList = {
 // Destek kanali (WP1): tum tesislerin yonetici biletleri — filtre (durum +
 // tenant), detayda yanit + cozuldu isareti. Backend RBAC admin'i zorlar.
 export default function SupportPage() {
+  const t = useT();
   const [offset, setOffset] = useState(0);
   const [durum, setDurum] = useState("");
   const [tenantId, setTenantId] = useState("");
@@ -88,11 +90,11 @@ export default function SupportPage() {
     <div className="space-y-4">
       <PageHeader
         title="Destek"
-        subtitle="Tesis yöneticilerinden gelen platform destek talepleri — yanıtla ve çözüldü işaretle."
+        subtitle={t("destekAciklama")}
       />
 
       <div className="flex flex-wrap gap-3">
-        <Field label="Durum">
+        <Field label={t("ortakDurum")}>
           <select
             className={inputCls}
             value={durum}
@@ -101,16 +103,16 @@ export default function SupportPage() {
               setOffset(0);
             }}
           >
-            <option value="">Tümü</option>
-            <option value="acik">Açık</option>
-            <option value="cozuldu">Çözüldü</option>
+            <option value="">{t("ortakTumu")}</option>
+            <option value="acik">{t("ortakAcik")}</option>
+            <option value="cozuldu">{t("destekCozuldu")}</option>
           </select>
         </Field>
         <Field label="Tesis (tenant id)">
           <input
             className={inputCls}
             value={tenantId}
-            placeholder="uuid — boş: tümü"
+            placeholder={t("destekUuidBos")}
             onChange={(e) => {
               setTenantId(e.target.value.trim());
               setOffset(0);
@@ -123,67 +125,67 @@ export default function SupportPage() {
       <ErrorBox message={hata} />
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Yükleniyor…</p>
+        <p className="text-sm text-slate-500">{t("ortakYukleniyor")}</p>
       ) : !data || data.items.length === 0 ? (
         <EmptyState
           title="Destek talebi yok"
-          description="Seçili filtrelerde bilet bulunamadı."
+          description={t("destekBiletYok")}
         />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700">
-                <th className="px-3 py-2">Tarih</th>
+                <th className="px-3 py-2">{t("ortakTarih")}</th>
                 <th className="px-3 py-2">Tesis</th>
                 <th className="px-3 py-2">Konu</th>
-                <th className="px-3 py-2">Durum</th>
-                <th className="px-3 py-2">Yanıt</th>
+                <th className="px-3 py-2">{t("ortakDurum")}</th>
+                <th className="px-3 py-2">{t("destekYanit")}</th>
                 <th className="px-3 py-2" />
               </tr>
             </thead>
             <tbody>
-              {data.items.map((t) => (
+              {data.items.map((bilet) => (
                 <tr
-                  key={t.id}
+                  key={bilet.id}
                   className="border-b border-slate-100 last:border-0 dark:border-slate-800"
                 >
                   <td className="whitespace-nowrap px-3 py-2 text-slate-500">
-                    {formatDateTime(t.created_at)}
+                    {formatDateTime(bilet.created_at)}
                   </td>
-                  <td className="px-3 py-2">{t.tenant_ad ?? t.tenant_id.slice(0, 8)}</td>
+                  <td className="px-3 py-2">{bilet.tenant_ad ?? bilet.tenant_id.slice(0, 8)}</td>
                   <td className="max-w-[28rem] px-3 py-2">
                     <div className="flex items-center gap-1 font-medium">
-                      {t.konu}
-                      {t.foto_url ? (
-                        <span title="Görsel ekli" aria-label="Görsel ekli">
+                      {bilet.konu}
+                      {bilet.foto_url ? (
+                        <span title={t("destekGorselEkli")} aria-label={t("destekGorselEkli")}>
                           📷
                         </span>
                       ) : null}
                     </div>
-                    <div className="truncate text-xs text-slate-500">{t.aciklama}</div>
+                    <div className="truncate text-xs text-slate-500">{bilet.aciklama}</div>
                   </td>
                   <td className="px-3 py-2">
                     <span
                       className={
-                        t.durum === "cozuldu"
+                        bilet.durum === "cozuldu"
                           ? "rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
                           : "rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
                       }
                     >
-                      {t.durum === "cozuldu" ? "Çözüldü" : "Açık"}
+                      {bilet.durum === "cozuldu" ? t("destekCozuldu") : t("ortakAcik")}
                     </span>
                   </td>
                   <td className="max-w-[16rem] truncate px-3 py-2 text-xs text-slate-500">
-                    {t.admin_cevap ?? "—"}
+                    {bilet.admin_cevap ?? "—"}
                   </td>
                   <td className="px-3 py-2 text-right">
                     <button
                       className="rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
                       onClick={() => {
-                        setSecili(t);
-                        setCevap(t.admin_cevap ?? "");
-                        setCozulduIsaretle(t.durum !== "cozuldu");
+                        setSecili(bilet);
+                        setCevap(bilet.admin_cevap ?? "");
+                        setCozulduIsaretle(bilet.durum !== "cozuldu");
                       }}
                     >
                       Yanıtla
@@ -220,11 +222,11 @@ export default function SupportPage() {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={secili.foto_url}
-                alt="Talep görseli"
+                alt={t("destekTalepGorseli")}
                 className="mt-3 max-h-48 rounded-lg border border-slate-200 object-contain dark:border-slate-700"
               />
             ) : null}
-            <Field label="Yanıt">
+            <Field label={t("destekYanit")}>
               <textarea
                 className={`${inputCls} min-h-[6rem]`}
                 value={cevap}
@@ -234,16 +236,16 @@ export default function SupportPage() {
             </Field>
             {secili.admin_cevap_foto_url ? (
               <div className="mb-2">
-                <p className="text-xs text-slate-500">Mevcut yanıt görseli</p>
+                <p className="text-xs text-slate-500">{t("destekMevcutYanitGorseli")}</p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={secili.admin_cevap_foto_url}
-                  alt="Yanıt görseli"
+                  alt={t("destekYanitGorseli")}
                   className="mt-1 max-h-40 rounded-lg border border-slate-200 object-contain dark:border-slate-700"
                 />
               </div>
             ) : null}
-            <Field label="Yanıt görseli (opsiyonel)">
+            <Field label={t("destekYanitGorseliOpsiyonel")}>
               <input
                 type="file"
                 accept="image/*"
@@ -277,7 +279,7 @@ export default function SupportPage() {
                   gonderiliyor || (!cevap.trim() && !cozulduIsaretle && !dosya)
                 }
               >
-                {gonderiliyor ? "Gönderiliyor…" : "Gönder"}
+                {gonderiliyor ? t("destekGonderiliyor") : t("destekGonder")}
               </button>
             </div>
           </div>

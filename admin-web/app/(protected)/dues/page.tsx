@@ -10,6 +10,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { kurusToTL, tlToKurus } from "@/lib/money";
+import { useT } from "@/lib/i18n/kullan";
 import type {
   DuesAssessmentList,
   DuesAssessmentResult,
@@ -19,6 +20,7 @@ import type {
 const LIMIT = 20;
 
 export default function DuesPage() {
+  const t = useT();
   const toast = useToast();
   // --- toplu tahakkuk ---
   const [donem, setDonem] = useState("");
@@ -50,7 +52,7 @@ export default function DuesPage() {
     setBRes(null);
     const k = tlToKurus(tl);
     if (k === null || k <= 0) {
-      setBErr("Geçerli bir tutar girin (sıfırdan büyük).");
+      setBErr(t("aidatTutarGecersiz"));
       return;
     }
     setBBusy(true);
@@ -64,9 +66,9 @@ export default function DuesPage() {
       });
       setBRes({ created: res.created.length, atlanan: res.atlanan });
       mutateA();
-      toast.success("Toplu tahakkuk oluşturuldu.");
+      toast.success(t("aidatTopluOlusturuldu"));
     } catch (err) {
-      setBErr(err instanceof Error ? err.message : "Tahakkuk oluşturulamadı.");
+      setBErr(err instanceof Error ? err.message : t("aidatTopluOlusturulamadi"));
     } finally {
       setBBusy(false);
     }
@@ -78,9 +80,9 @@ export default function DuesPage() {
 
       {/* Toplu tahakkuk */}
       <motion.form {...panelMotion} onSubmit={bulk} className={`space-y-3 ${panelCls}`}>
-        <h2 className="font-medium">Toplu tahakkuk (tüm aktif daireler)</h2>
+        <h2 className="font-medium">{t("aidatTopluBaslik")}</h2>
         <div className="grid grid-cols-4 gap-3">
-          <Field label="Dönem" hint="Örnek: 2026-07">
+          <Field label={t("ortakDonem")} hint={t("aidatDonemOrnek")}>
             <input
               className={inputCls}
               value={donem}
@@ -99,10 +101,10 @@ export default function DuesPage() {
               required
             />
           </Field>
-          <Field label="Son ödeme (opsiyonel)">
+          <Field label={t("aidatSonOdeme")}>
             <input type="date" className={inputCls} value={son} onChange={(e) => setSon(e.target.value)} />
           </Field>
-          <Field label="Açıklama (opsiyonel)">
+          <Field label={t("ortakAciklamaOpsiyonel")}>
             <input className={inputCls} value={desc} onChange={(e) => setDesc(e.target.value)} />
           </Field>
         </div>
@@ -113,7 +115,7 @@ export default function DuesPage() {
           </p>
         )}
         <button type="submit" className={btnPrimary} disabled={bBusy}>
-          {bBusy ? "Oluşturuluyor..." : "Toplu tahakkuk oluştur"}
+          {bBusy ? t("aidatOlusturuluyor") : t("aidatTopluOlustur")}
         </button>
       </motion.form>
 
@@ -122,7 +124,7 @@ export default function DuesPage() {
         <div className="flex items-end justify-between">
           <h2 className="text-lg font-medium">Tahakkuklar</h2>
           <div className="w-48">
-            <Field label="Dönem filtresi">
+            <Field label={t("aidatDonemFiltresi")}>
               <input
                 className={inputCls}
                 value={aDonem}
@@ -141,9 +143,9 @@ export default function DuesPage() {
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
                   <th className="px-4 py-2.5 font-medium">Daire</th>
-                  <th className="px-4 py-2.5 font-medium">Dönem</th>
+                  <th className="px-4 py-2.5 font-medium">{t("ortakDonem")}</th>
                   <th className="px-4 py-2.5 font-medium">Tutar</th>
-                  <th className="px-4 py-2.5 font-medium">Son ödeme</th>
+                  <th className="px-4 py-2.5 font-medium">{t("aidatSonOdemeKisa")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -158,7 +160,7 @@ export default function DuesPage() {
                 {assessments && assessments.items.length === 0 && (
                   <tr>
                     <td colSpan={4}>
-                      <EmptyState title="Tahakkuk yok" description="Dönem filtresini değiştirin ya da yukarıdan toplu tahakkuk oluşturun." />
+                      <EmptyState title="Tahakkuk yok" description={t("aidatTahakkukYokAlt")} />
                     </td>
                   </tr>
                 )}
@@ -179,15 +181,15 @@ export default function DuesPage() {
 
       {/* Odeme listesi */}
       <section className="space-y-3">
-        <h2 className="text-lg font-medium">Ödemeler</h2>
+        <h2 className="text-lg font-medium">{t("aidatOdemeler")}</h2>
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
                   <th className="px-4 py-2.5 font-medium">Daire</th>
-                  <th className="px-4 py-2.5 font-medium">Yöntem</th>
-                  <th className="px-4 py-2.5 font-medium">Durum</th>
+                  <th className="px-4 py-2.5 font-medium">{t("aidatYontem")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
                   <th className="px-4 py-2.5 font-medium">Tutar</th>
                   <th className="px-4 py-2.5 font-medium">Zaman</th>
                 </tr>
@@ -217,7 +219,7 @@ export default function DuesPage() {
                 {payments && payments.items.length === 0 && (
                   <tr>
                     <td colSpan={5}>
-                      <EmptyState title="Ödeme yok" description="Henüz kayıtlı ödeme bulunmuyor." />
+                      <EmptyState title={t("aidatOdemeYok")} description={t("aidatOdemeYokAlt")} />
                     </td>
                   </tr>
                 )}

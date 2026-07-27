@@ -10,6 +10,7 @@ import { ReportsTabs } from "@/components/ReportsTabs";
 import { fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type { PatrolPlanList, PatrolWindowListResponse, PatrolWindowRow } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
 
 const LIMIT = 20;
 const DURUM_STYLE: Record<string, string> = {
@@ -37,6 +38,7 @@ function csvDownload(filename: string, rows: string[][]): void {
 }
 
 export default function PatrolReportPage() {
+  const t = useT();
   const [bas, setBas] = useState("");
   const [bit, setBit] = useState("");
   const [durum, setDurum] = useState("");
@@ -80,7 +82,7 @@ export default function PatrolReportPage() {
     if (committed === null) return;
     const items = await fetchAllItems<PatrolWindowRow>(`/api/patrol-windows?${committed}`);
     const rows: string[][] = [
-      ["Plan", "Baslangic", "Bitis", "Durum", "Okutulan", "Beklenen"],
+      ["Plan", "Baslangic", "Bitis", t("ortakDurum"), "Okutulan", "Beklenen"],
     ];
     for (const w of items) {
       rows.push([
@@ -98,33 +100,33 @@ export default function PatrolReportPage() {
   return (
     <div className="space-y-6">
       <ReportsTabs />
-      <PageHeader title="Tur Geçmişi Raporu" />
+      <PageHeader title={t("raporTurGecmisiBaslik")} />
 
       <motion.form {...panelMotion} onSubmit={submit} className={`flex flex-wrap items-end gap-3 ${panelCls}`}>
         <div className="w-52">
-          <Field label="Başlangıç" hint="Yerel saat (opsiyonel)">
+          <Field label={t("ortakBaslangic")} hint="Yerel saat (opsiyonel)">
             <input type="datetime-local" className={inputCls} value={bas} onChange={(e) => setBas(e.target.value)} />
           </Field>
         </div>
         <div className="w-52">
-          <Field label="Bitiş" hint="Yerel saat (opsiyonel)">
+          <Field label={t("ortakBitis")} hint="Yerel saat (opsiyonel)">
             <input type="datetime-local" className={inputCls} value={bit} onChange={(e) => setBit(e.target.value)} />
           </Field>
         </div>
         <div className="w-44">
-          <Field label="Durum">
+          <Field label={t("ortakDurum")}>
             <select className={inputCls} value={durum} onChange={(e) => setDurum(e.target.value)}>
-              <option value="">Tümü</option>
-              <option value="tamamlandi">Tamamlandı</option>
-              <option value="kacirildi">Kaçırıldı</option>
-              <option value="bekliyor">Bekliyor</option>
+              <option value="">{t("ortakTumu")}</option>
+              <option value="tamamlandi">{t("raporTamamlandi")}</option>
+              <option value="kacirildi">{t("raporKacirildi")}</option>
+              <option value="bekliyor">{t("panelBekleyen")}</option>
             </select>
           </Field>
         </div>
         <div className="w-52">
           <Field label="Plan (opsiyonel)">
             <select className={inputCls} value={planId} onChange={(e) => setPlanId(e.target.value)}>
-              <option value="">Tümü</option>
+              <option value="">{t("ortakTumu")}</option>
               {(plans?.items ?? []).map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.ad}
@@ -140,18 +142,18 @@ export default function PatrolReportPage() {
 
       {error && <ErrorBox message={error.message} />}
       {committed === null && (
-        <p className="text-sm text-muted">Filtre seçip Raporu getir butonuna basın.</p>
+        <p className="text-sm text-muted">{t("raporFiltreSecin")}</p>
       )}
-      {isLoading && committed !== null && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && committed !== null && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {data && (
         <>
           <div className="grid gap-3 md:grid-cols-5">
-            <Card baslik="Toplam pencere" deger={String(data.ozet.toplam)} />
-            <Card baslik="Tamamlanan" deger={String(data.ozet.tamamlandi)} tone="emerald" />
-            <Card baslik="Kaçırılan" deger={String(data.ozet.kacirildi)} tone="red" />
-            <Card baslik="Bekleyen" deger={String(data.ozet.bekliyor)} tone="amber" />
-            <Card baslik="Tamamlanma oranı" deger={oran} />
+            <Card baslik={t("raporToplamPencere")} deger={String(data.ozet.toplam)} />
+            <Card baslik={t("panelTamamlanan")} deger={String(data.ozet.tamamlandi)} tone="emerald" />
+            <Card baslik={t("raporKacirilan")} deger={String(data.ozet.kacirildi)} tone="red" />
+            <Card baslik={t("panelBekleyen")} deger={String(data.ozet.bekliyor)} tone="amber" />
+            <Card baslik={t("raporTamamlanmaOrani")} deger={oran} />
           </div>
 
           <section className="space-y-2">
@@ -167,9 +169,9 @@ export default function PatrolReportPage() {
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
                       <th className="px-4 py-2.5 font-medium">Plan</th>
-                      <th className="px-4 py-2.5 font-medium">Başlangıç</th>
-                      <th className="px-4 py-2.5 font-medium">Bitiş</th>
-                      <th className="px-4 py-2.5 font-medium">Durum</th>
+                      <th className="px-4 py-2.5 font-medium">{t("ortakBaslangic")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("ortakBitis")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
                       <th className="px-4 py-2.5 font-medium">Checkpoint</th>
                     </tr>
                   </thead>
@@ -194,7 +196,7 @@ export default function PatrolReportPage() {
                     {data.items.length === 0 && (
                       <tr>
                         <td colSpan={5}>
-                          <EmptyState title="Pencere yok" description="Seçili filtrelerde tur penceresi bulunmuyor." />
+                          <EmptyState title="Pencere yok" description={t("raporPencereYok")} />
                         </td>
                       </tr>
                     )}

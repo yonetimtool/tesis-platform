@@ -10,13 +10,16 @@ import { ReportsTabs } from "@/components/ReportsTabs";
 import { fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type { TaskCompletionHistoryResponse, TaskCompletionRow, UserListResponse } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 const LIMIT = 20;
-const TIPLER = [
-  { value: "temizlik", label: "Temizlik" },
-  { value: "kontrol", label: "Kontrol" },
-  { value: "ilaclama", label: "İlaçlama" },
-  { value: "peyzaj", label: "Peyzaj" },
+// METIN DEGIL KIMLIK (modul duzeyinde `t()` yok — bkz. README tur 18 dersi).
+const TIPLER: { value: string; anahtar: SozlukAnahtari }[] = [
+  { value: "temizlik", anahtar: "gorevTipiTemizlik" },
+  { value: "kontrol", anahtar: "gorevTipiKontrol" },
+  { value: "ilaclama", anahtar: "gorevTipiIlaclama" },
+  { value: "peyzaj", anahtar: "gorevTipiPeyzaj" },
 ];
 const TIP_STYLE: Record<string, string> = {
   temizlik: "bg-teal-100 text-teal-800",
@@ -24,8 +27,11 @@ const TIP_STYLE: Record<string, string> = {
   ilaclama: "bg-violet-100 text-violet-800",
   peyzaj: "bg-emerald-100 text-emerald-800",
 };
-function tipLabel(v: string): string {
-  return TIPLER.find((t) => t.value === v)?.label ?? v;
+/// Gorev tipi ADI — `ceviri` cizim katmanindan gelir; taninmayan deger HAM
+/// gosterilir (sunucu yeni tip eklerse rozet bos kalmasin).
+function tipAdi(ceviri: (a: SozlukAnahtari) => string, v: string): string {
+  const o = TIPLER.find((x) => x.value === v);
+  return o ? ceviri(o.anahtar) : v;
 }
 
 function toIso(local: string): string {
@@ -47,6 +53,7 @@ function csvDownload(filename: string, rows: string[][]): void {
 }
 
 export default function TaskReportPage() {
+  const t = useT();
   const [bas, setBas] = useState("");
   const [bit, setBit] = useState("");
   const [tip, setTip] = useState("");
@@ -88,7 +95,7 @@ export default function TaskReportPage() {
     if (committed === null) return;
     const items = await fetchAllItems<TaskCompletionRow>(`/api/task-completions?${committed}`);
     const rows: string[][] = [
-      ["Gorev", "Tip", "Tamamlayan", "Zaman", "Foto", "NFC", "Not"],
+      ["Gorev", "Tip", "Tamamlayan", "Zaman", "Foto", "NFC", t("raporNot")],
     ];
     for (const c of items) {
       rows.push([
@@ -107,26 +114,26 @@ export default function TaskReportPage() {
   return (
     <div className="space-y-6">
       <ReportsTabs />
-      <PageHeader title="Görev Geçmişi Raporu" />
+      <PageHeader title={t("raporGorevGecmisiBaslik")} />
 
       <motion.form {...panelMotion} onSubmit={submit} className={`flex flex-wrap items-end gap-3 ${panelCls}`}>
         <div className="w-52">
-          <Field label="Başlangıç" hint="Yerel saat (opsiyonel)">
+          <Field label={t("ortakBaslangic")} hint="Yerel saat (opsiyonel)">
             <input type="datetime-local" className={inputCls} value={bas} onChange={(e) => setBas(e.target.value)} />
           </Field>
         </div>
         <div className="w-52">
-          <Field label="Bitiş" hint="Yerel saat (opsiyonel)">
+          <Field label={t("ortakBitis")} hint="Yerel saat (opsiyonel)">
             <input type="datetime-local" className={inputCls} value={bit} onChange={(e) => setBit(e.target.value)} />
           </Field>
         </div>
         <div className="w-44">
           <Field label="Tip">
             <select className={inputCls} value={tip} onChange={(e) => setTip(e.target.value)}>
-              <option value="">Tümü</option>
-              {TIPLER.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              <option value="">{t("ortakTumu")}</option>
+              {TIPLER.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {t(o.anahtar)}
                 </option>
               ))}
             </select>
@@ -135,7 +142,7 @@ export default function TaskReportPage() {
         <div className="w-52">
           <Field label="Tamamlayan (opsiyonel)">
             <select className={inputCls} value={tamamlayan} onChange={(e) => setTamamlayan(e.target.value)}>
-              <option value="">Tümü</option>
+              <option value="">{t("ortakTumu")}</option>
               {(users?.items ?? []).map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.ad}
@@ -151,17 +158,17 @@ export default function TaskReportPage() {
 
       {error && <ErrorBox message={error.message} />}
       {committed === null && (
-        <p className="text-sm text-muted">Filtre seçip Raporu getir butonuna basın.</p>
+        <p className="text-sm text-muted">{t("raporFiltreSecin")}</p>
       )}
-      {isLoading && committed !== null && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && committed !== null && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {data && (
         <>
           <div className="grid gap-3 md:grid-cols-5">
-            <Card baslik="Toplam tamamlama" deger={String(data.ozet.toplam)} />
+            <Card baslik={t("raporToplamTamamlama")} deger={String(data.ozet.toplam)} />
             <Card baslik="Temizlik" deger={String(data.ozet.temizlik)} tone="teal" />
             <Card baslik="Kontrol" deger={String(data.ozet.kontrol)} tone="blue" />
-            <Card baslik="İlaçlama" deger={String(data.ozet.ilaclama)} tone="violet" />
+            <Card baslik={t("gorevTipiIlaclama")} deger={String(data.ozet.ilaclama)} tone="violet" />
             <Card baslik="Peyzaj" deger={String(data.ozet.peyzaj)} tone="emerald" />
           </div>
 
@@ -177,13 +184,13 @@ export default function TaskReportPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
-                      <th className="px-4 py-2.5 font-medium">Görev</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporGorev")}</th>
                       <th className="px-4 py-2.5 font-medium">Tip</th>
                       <th className="px-4 py-2.5 font-medium">Tamamlayan</th>
                       <th className="px-4 py-2.5 font-medium">Zaman</th>
                       <th className="px-4 py-2.5 font-medium">Foto</th>
                       <th className="px-4 py-2.5 font-medium">NFC</th>
-                      <th className="px-4 py-2.5 font-medium">Not</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporNot")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -194,7 +201,7 @@ export default function TaskReportPage() {
                           <span
                             className={`rounded-full px-2 py-0.5 text-xs font-medium ${TIP_STYLE[c.tip] ?? "bg-slate-100 text-slate-700"}`}
                           >
-                            {tipLabel(c.tip)}
+                            {tipAdi(t, c.tip)}
                           </span>
                         </td>
                         <td className="px-4 py-2.5">{userName(c.tamamlayan_user_id)}</td>
@@ -219,7 +226,7 @@ export default function TaskReportPage() {
                     {data.items.length === 0 && (
                       <tr>
                         <td colSpan={7}>
-                          <EmptyState title="Tamamlama yok" description="Seçili filtrelerde görev tamamlaması bulunmuyor." />
+                          <EmptyState title="Tamamlama yok" description={t("raporSonucYok")} />
                         </td>
                       </tr>
                     )}

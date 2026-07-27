@@ -20,6 +20,7 @@ import {
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { useT } from "@/lib/i18n/kullan";
 import type {
   CheckpointList,
   PatrolPlan,
@@ -57,6 +58,7 @@ function windowCount(bas: string, bit: string, per: number): number {
 }
 
 export default function PatrolPlansPage() {
+  const t = useT();
   const toast = useToast();
   const [offset, setOffset] = useState(0);
   const { data, error, isLoading, mutate } = useSWR<PatrolPlanList>(
@@ -119,7 +121,7 @@ export default function PatrolPlansPage() {
       else await apiSend("/api/patrol-plans", "POST", body);
       setOpen(false);
       mutate();
-      toast.success(editingId ? "Plan güncellendi." : "Plan oluşturuldu.");
+      toast.success(editingId ? t("planGuncellendi") : t("planOlusturuldu"));
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -196,16 +198,14 @@ export default function PatrolPlansPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Devriye Planları"
+        title={t("kabukDevriyePlanlari")}
         action={
-          <button className={btnPrimary} onClick={openNew}>
-            Yeni plan
-          </button>
+          <button className={btnPrimary} onClick={openNew}>{t("planYeni")}</button>
         }
       />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form
@@ -213,7 +213,7 @@ export default function PatrolPlansPage() {
           onSubmit={save}
           className={`space-y-4 ${panelCls}`}
         >
-          <h2 className="font-medium">{editingId ? "Plan düzenle" : "Yeni plan"}</h2>
+          <h2 className="font-medium">{editingId ? t("planDuzenle") : t("planYeni")}</h2>
           <Field label="Ad">
             <input
               className={inputCls}
@@ -237,7 +237,7 @@ export default function PatrolPlansPage() {
             </select>
           </Field>
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Başlangıç" hint="HH:MM">
+            <Field label={t("ortakBaslangic")} hint="HH:MM">
               <input
                 type="time"
                 className={inputCls}
@@ -246,7 +246,7 @@ export default function PatrolPlansPage() {
                 required
               />
             </Field>
-            <Field label="Bitiş" hint="HH:MM">
+            <Field label={t("ortakBitis")} hint="HH:MM">
               <input
                 type="time"
                 className={inputCls}
@@ -280,7 +280,7 @@ export default function PatrolPlansPage() {
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? "Kaydediliyor..." : "Kaydet"}
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
               İptal
@@ -341,7 +341,7 @@ export default function PatrolPlansPage() {
                   value={addPick}
                   onChange={(e) => setAddPick(e.target.value)}
                 >
-                  <option value="">— seç —</option>
+                  <option value="">{t("planSec")}</option>
                   {available.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.ad} ({c.nfc_tag_uid})
@@ -365,7 +365,7 @@ export default function PatrolPlansPage() {
           <ErrorBox message={assignErr} />
           <div className="flex gap-2">
             <button className={btnPrimary} onClick={saveAssign} disabled={assignSaving}>
-              {assignSaving ? "Kaydediliyor..." : "Atamayı kaydet"}
+              {assignSaving ? t("ortakKaydediliyor") : t("planAtamayiKaydet")}
             </button>
             <button className={btnGhost} onClick={() => setAssignPlan(null)}>
               Kapat
@@ -382,7 +382,7 @@ export default function PatrolPlansPage() {
                 <th className="px-4 py-2.5 font-medium">Ad</th>
                 <th className="px-4 py-2.5 font-medium">Vardiya</th>
                 <th className="px-4 py-2.5 font-medium">Saat / Periyot</th>
-                <th className="px-4 py-2.5 font-medium">Durum</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
                 <th className="px-4 py-2.5 font-medium" />
               </tr>
             </thead>
@@ -421,7 +421,7 @@ export default function PatrolPlansPage() {
               {data && data.items.length === 0 && (
                 <tr>
                   <td colSpan={5}>
-                    <EmptyState title="Plan yok" description="İlk devriye planını oluşturarak başlayın." />
+                    <EmptyState title="Plan yok" description={t("planYokAlt")} />
                   </td>
                 </tr>
               )}

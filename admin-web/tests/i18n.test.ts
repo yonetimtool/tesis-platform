@@ -158,6 +158,14 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
     "app/(protected)/announcements/page.tsx",
     "app/(protected)/checkpoints/page.tsx",
     "app/(protected)/transparency/page.tsx",
+    // tur 19
+    "app/(protected)/patrol-plans/page.tsx",
+    "app/(protected)/reports/tasks/page.tsx",
+    "app/(protected)/reports/dues/page.tsx",
+    "app/(protected)/reports/patrols/page.tsx",
+    "app/(protected)/units/page.tsx",
+    "app/(protected)/dues/page.tsx",
+    "app/(protected)/support/page.tsx",
   ];
 
   // MARKA KILIDI: "Yönetio" kelime isareti cevrilmez (mobil README §15 ile

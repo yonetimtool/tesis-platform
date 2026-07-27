@@ -148,6 +148,7 @@ farkindaligi TASIMAZ). `tests/i18n.test.ts` kabukta sabit `left-0`/`pl-64`/
 |---|---|
 | 17 | kabuk (21 menu + cikis + mobil cekmece), giris ekrani, tema dugmesi, dil secici, sayfa ust verisi, rol adlari, BFF oturum-doldu mesaji |
 | 18 | **denetim kaydi, canli panel, bildirimler, ayarlar, sikayet haritasi, vardiyalar, duyurular, NFC noktalari, seffaflik panosu** + `lib/client.ts`, `lib/fetcher.ts`, `ReportsTabs` |
+| 19 | **devriye planlari, gorev gecmisi raporu, aidat tahsilat raporu, tur gecmisi raporu, daireler, aidat, destek** |
 
 Bir sayfa ancak **tamami** cevrildiginde listeye girer ve
 `tests/i18n.test.ts`teki `CEVRILEN` dizisine eklenir — o dizideki dosyalarda
@@ -201,7 +202,8 @@ EOF
 |---|---|---|
 | Tur 17 oncesi | 473 | 35 |
 | Tur 17 sonrasi (kabuk + giris) | 450 | 32 |
-| **Tur 18 sonrasi** | **386** | **22** |
+| Tur 18 sonrasi | 386 | 22 |
+| **Tur 19 sonrasi** | **251** | **12** (9'u gercek sayfa; 3'u marka kelimesi) |
 
 > **IKINCI OLCUM ZORUNLUDUR.** Mobil §15'in en pahali dersi: birinci olcum
 > yalnizca Turkce'ye ozgu karakter **veya** listedeki kelimeyi arar.
@@ -211,11 +213,12 @@ EOF
 > etmeden once UI konumundaki (`label=`, `title=`, `placeholder=`,
 > `aria-label=`, `>metin<`) **tum** literalleri de taramak gerekir.
 
-Kalan sayfalar (buyukten kucuge, tur 18 sonrasi **16 sayfa**): `assets` (31),
-`users` (30), `tasks` (28), `complaints` (28), `building-editor` (28),
-`tenants/[id]` (28), `UnitDetail` (28), `tenants` (24), `integrations` (23),
-`support` (22), `reports/dues` (21), `reports/patrols` (21), `dues` (19),
-`units` (18), `reports/tasks` (14), `patrol-plans` (13).
+Kalan sayfalar (tur 19 sonrasi **9 sayfa**): `assets` (31), `users` (30),
+`tasks` (28), `complaints` (28), `building-editor` (28), `tenants/[id]` (28),
+`UnitDetail` (28), `tenants` (24), `integrations` (23).
+
+> Olcumdeki 12 dosyanin 3'u (`login`, `AppShell`, `YonetioLogo`) yalnizca
+> **marka kelimesini** ("Yönetio") tasir — bilincli istisnadir, cevrilmez.
 
 **Ayri bir alt is — TARIH BICIMI.** `lib/fetcher.ts` ve 5 sayfa tarihi
 `toLocaleString("tr-TR")` ile bicimliyor: dil degisse de tarih Turkce

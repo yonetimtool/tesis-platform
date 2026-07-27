@@ -11,6 +11,7 @@ import { UnitDetail } from "@/components/UnitDetail";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { Unit, UnitList } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
 
 const LIMIT = 20;
 
@@ -40,6 +41,7 @@ function intOrNull(s: string): number | null {
 }
 
 export default function UnitsPage() {
+  const t = useT();
   const toast = useToast();
   const [offset, setOffset] = useState(0);
   const [blok, setBlok] = useState("");
@@ -93,10 +95,10 @@ export default function UnitsPage() {
       else await apiSend("/api/units", "POST", body);
       setOpen(false);
       mutate();
-      toast.success(editingId ? "Daire güncellendi." : "Daire oluşturuldu.");
+      toast.success(editingId ? t("daireGuncellendi") : t("daireOlusturuldu"));
     } catch (err) {
       const m = err instanceof Error ? err.message : "Kaydedilemedi.";
-      setFormErr(/zaten kayitli|conflict|no /i.test(m) ? "Bu daire no zaten kayıtlı." : m);
+      setFormErr(/zaten kayitli|conflict|no /i.test(m) ? t("daireNoZatenKayitli") : m);
     } finally {
       setSaving(false);
     }
@@ -119,9 +121,7 @@ export default function UnitsPage() {
       <PageHeader
         title="Daireler"
         action={
-          <button className={btnPrimary} onClick={openNew}>
-            Yeni daire
-          </button>
+          <button className={btnPrimary} onClick={openNew}>{t("daireYeni")}</button>
         }
       />
 
@@ -142,31 +142,31 @@ export default function UnitsPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{editingId ? "Daire düzenle" : "Yeni daire"}</h2>
+          <h2 className="font-medium">{editingId ? t("daireDuzenle") : t("daireYeni")}</h2>
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Daire no" hint="Tesiste benzersiz; harf + sayı + tire (örn. A-12, B3, 12)">
+            <Field label="Daire no" hint={t("daireNoIpucu")}>
               <input
                 className={inputCls}
                 value={form.no}
                 onChange={(e) => setForm({ ...form, no: e.target.value })}
                 placeholder="A-12"
                 pattern="[A-Za-z0-9-]+"
-                title="Yalnızca harf, sayı ve tire kullanın (örn. A-12, B3, 12)"
+                title={t("daireNoGecersiz")}
                 required
               />
             </Field>
-            <Field label="Blok" hint="Zorunlu — kısa alfanumerik (örn. A, B1)">
+            <Field label="Blok" hint={t("blokIpucu")}>
               <input
                 className={inputCls}
                 value={form.blok}
                 onChange={(e) => setForm({ ...form, blok: e.target.value })}
                 pattern="[A-Za-z0-9]+"
                 maxLength={8}
-                title="Yalnızca harf ve sayı (örn. A, B1)"
+                title={t("blokGecersiz")}
                 placeholder="A"
                 required
               />
@@ -179,7 +179,7 @@ export default function UnitsPage() {
                 onChange={(e) => setForm({ ...form, metrekare: e.target.value })}
               />
             </Field>
-            <Field label="Kat (opsiyonel)" hint="0 = zemin — bina şeması için">
+            <Field label="Kat (opsiyonel)" hint={t("katIpucu")}>
               <input
                 className={inputCls}
                 inputMode="numeric"
@@ -188,7 +188,7 @@ export default function UnitsPage() {
                 placeholder="1"
               />
             </Field>
-            <Field label="Sıra (opsiyonel)" hint="Kattaki konum/sıra (örn. 1, 2)">
+            <Field label={t("siraOpsiyonel")} hint={t("siraIpucu")}>
               <input
                 className={inputCls}
                 inputMode="numeric"
@@ -209,7 +209,7 @@ export default function UnitsPage() {
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? "Kaydediliyor..." : "Kaydet"}
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
               İptal
@@ -225,9 +225,9 @@ export default function UnitsPage() {
               <tr>
                 <th className="px-4 py-2.5 font-medium">No</th>
                 <th className="px-4 py-2.5 font-medium">Blok</th>
-                <th className="px-4 py-2.5 font-medium">Kat/Sıra</th>
+                <th className="px-4 py-2.5 font-medium">{t("daireKatSira")}</th>
                 <th className="px-4 py-2.5 font-medium">m²</th>
-                <th className="px-4 py-2.5 font-medium">Durum</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
                 <th className="px-4 py-2.5 font-medium" />
               </tr>
             </thead>
@@ -235,7 +235,7 @@ export default function UnitsPage() {
               {(data?.items ?? []).map((u) => (
                 <tr key={u.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
                   <td className="px-4 py-2.5">{u.no}</td>
-                  <td className="px-4 py-2.5 text-slate-600">{u.blok ?? "Blok atanmamış"}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{u.blok ?? t("daireBlokAtanmamis")}</td>
                   <td className="px-4 py-2.5 text-slate-600 tabular-nums">
                     {u.kat != null || u.sira != null ? `${u.kat ?? "—"} / ${u.sira ?? "—"}` : "—"}
                   </td>
@@ -270,7 +270,7 @@ export default function UnitsPage() {
               {data && data.items.length === 0 && (
                 <tr>
                   <td colSpan={6}>
-                    <EmptyState title="Daire yok" description="Blok filtresini değiştirin ya da yeni bir daire ekleyin." />
+                    <EmptyState title="Daire yok" description={t("daireYokAlt")} />
                   </td>
                 </tr>
               )}

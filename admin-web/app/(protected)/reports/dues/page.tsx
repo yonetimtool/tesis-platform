@@ -11,6 +11,7 @@ import { fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { kurusToTL } from "@/lib/money";
 import type { DuesAssessment, DuesPayment, UnitList } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
 
 interface BorcRow {
   unit_id: string;
@@ -54,6 +55,7 @@ function csvDownload(filename: string, rows: string[][]): void {
 }
 
 export default function DuesReportPage() {
+  const t = useT();
   const [donem, setDonem] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export default function DuesReportPage() {
     setErr(null);
     setReport(null);
     if (!donem.trim()) {
-      setErr("Lütfen bir dönem girin (örn. 2026-06).");
+      setErr(t("raporDonemGerekli"));
       return;
     }
     setBusy(true);
@@ -159,7 +161,7 @@ export default function DuesReportPage() {
         serbestBasariliSayi,
       });
     } catch (e2) {
-      setErr(e2 instanceof Error ? e2.message : "Rapor oluşturulamadı.");
+      setErr(e2 instanceof Error ? e2.message : t("raporOlusturulamadi"));
     } finally {
       setBusy(false);
     }
@@ -187,7 +189,7 @@ export default function DuesReportPage() {
 
       <motion.form {...panelMotion} onSubmit={run} className={`flex items-end gap-3 ${panelCls}`}>
         <div className="w-56">
-          <Field label="Dönem" hint="Örnek: 2026-06">
+          <Field label={t("ortakDonem")} hint={t("raporDonemOrnek")}>
             <input
               className={inputCls}
               value={donem}
@@ -197,7 +199,7 @@ export default function DuesReportPage() {
           </Field>
         </div>
         <button type="submit" className={btnPrimary} disabled={busy}>
-          {busy ? "Hesaplanıyor..." : "Raporu getir"}
+          {busy ? t("raporHesaplaniyor") : "Raporu getir"}
         </button>
       </motion.form>
 
@@ -212,15 +214,15 @@ export default function DuesReportPage() {
         <>
           {/* Ozet kartlari */}
           <div className="grid gap-3 md:grid-cols-4">
-            <Card baslik="Toplam tahakkuk" deger={kurusToTL(report.toplamTahakkuk)} />
-            <Card baslik="Toplam tahsilat" deger={kurusToTL(report.toplamTahsilat)} tone="emerald" />
-            <Card baslik="Bakiye (borç)" deger={kurusToTL(report.bakiye)} tone={report.bakiye > 0 ? "red" : "emerald"} />
-            <Card baslik="Tahsilat oranı" deger={`% ${report.oranYuzde}`} />
+            <Card baslik={t("raporToplamTahakkuk")} deger={kurusToTL(report.toplamTahakkuk)} />
+            <Card baslik={t("raporToplamTahsilat")} deger={kurusToTL(report.toplamTahsilat)} tone="emerald" />
+            <Card baslik={t("raporBakiyeBorc")} deger={kurusToTL(report.bakiye)} tone={report.bakiye > 0 ? "red" : "emerald"} />
+            <Card baslik={t("raporTahsilatOrani")} deger={`% ${report.oranYuzde}`} />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <Card baslik="Tahakkuk edilen daire" deger={String(report.daireTahakkuk)} />
-            <Card baslik="Tam ödeyen daire" deger={String(report.daireTamOdeyen)} tone="emerald" />
-            <Card baslik="Borçlu daire" deger={String(report.daireBorclu)} tone={report.daireBorclu > 0 ? "red" : "emerald"} />
+            <Card baslik={t("raporTamOdeyen")} deger={String(report.daireTamOdeyen)} tone="emerald" />
+            <Card baslik={t("raporBorcluDaire")} deger={String(report.daireBorclu)} tone={report.daireBorclu > 0 ? "red" : "emerald"} />
           </div>
 
           {report.serbestBasariliSayi > 0 && (
@@ -234,7 +236,7 @@ export default function DuesReportPage() {
           {/* Borclu daireler */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Borçlu daireler</h2>
+              <h2 className="text-lg font-medium">{t("raporBorcluDaireler")}</h2>
               <button className={btnGhost} onClick={exportBorclular} disabled={report.borclular.length === 0}>
                 CSV indir
               </button>
@@ -246,9 +248,9 @@ export default function DuesReportPage() {
                     <tr>
                       <th className="px-4 py-2.5 font-medium">Daire</th>
                       <th className="px-4 py-2.5 font-medium">Tahakkuk</th>
-                      <th className="px-4 py-2.5 font-medium">Ödenen</th>
-                      <th className="px-4 py-2.5 font-medium">Kalan borç</th>
-                      <th className="px-4 py-2.5 font-medium">Son ödeme</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporOdenen")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporKalanBorc")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("aidatSonOdemeKisa")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -264,7 +266,7 @@ export default function DuesReportPage() {
                     {report.borclular.length === 0 && (
                       <tr>
                         <td colSpan={5}>
-                          <EmptyState title="Borçlu daire yok" description="Bu dönemde tüm daireler tam ödeme yapmış." />
+                          <EmptyState title={t("raporBorcluYok")} description={t("raporBorcluYokAlt")} />
                         </td>
                       </tr>
                     )}
@@ -276,7 +278,7 @@ export default function DuesReportPage() {
 
           {/* Odemeler */}
           <section className="space-y-2">
-            <h2 className="text-lg font-medium">Dönem tahsilatları (başarılı)</h2>
+            <h2 className="text-lg font-medium">{t("raporDonemTahsilatlari")}</h2>
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -284,7 +286,7 @@ export default function DuesReportPage() {
                     <tr>
                       <th className="px-4 py-2.5 font-medium">Daire</th>
                       <th className="px-4 py-2.5 font-medium">Tutar</th>
-                      <th className="px-4 py-2.5 font-medium">Yöntem</th>
+                      <th className="px-4 py-2.5 font-medium">{t("aidatYontem")}</th>
                       <th className="px-4 py-2.5 font-medium">Zaman</th>
                     </tr>
                   </thead>
@@ -300,7 +302,7 @@ export default function DuesReportPage() {
                     {report.odemeler.length === 0 && (
                       <tr>
                         <td colSpan={4}>
-                          <EmptyState title="Ödeme yok" description="Bu döneme atfedilen başarılı ödeme bulunmuyor." />
+                          <EmptyState title={t("aidatOdemeYok")} description={t("raporOdemeYok")} />
                         </td>
                       </tr>
                     )}
