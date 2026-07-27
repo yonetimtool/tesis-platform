@@ -33,6 +33,7 @@ import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
 import 'package:mobile/src/features/yonetici_iletisim/data/yonetici_iletisim_api.dart';
 
+import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
 class _FakeOutbox extends ScanOutbox {
@@ -192,7 +193,29 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('RTL: kart izgarasi TASMAZ (Arapca metinler daha uzun)',
+    // ---- TUR 23: EKRAN SURUSU ----
+  // Panelde (tur 21) paneli calistirip URETILEN ciktiya bakmak, statik
+  // taramanin goremedigi metinleri bulmustu. Mobilde karsiligi bu: ekrani
+  // 6 dilde cizip GORUNEN her Text'i tara. Sozlukte olmayan (kaynakta
+  // unutulmus) bir sabit ancak boyle yakalanir.
+  for (final rol in [UserRole.security, UserRole.tesisGorevlisi]) {
+    testWidgets('SURUS: ${rol.wire} ana ekrani 6 dilde TR sabit tasimaz',
+        (tester) async {
+      _tall(tester);
+      for (final dil in surusDilleri) {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpWidget(_saha(rol, Locale(dil)));
+        await tester.pumpAndSettle();
+        // VERI (cevrilmez): profil adi, plaka, kontrol noktasi adi —
+        // ucu de sunucudan/tenant'tan gelir. Surusun isi UI SABITLERINI
+        // yakalamak; veriyi cevirmek zaten YANLIS olurdu.
+        trSizintisiYok(tester, dil,
+            veri: const {'Mehmet', '34 ABC 123', 'Ana Kapı'});
+      }
+    });
+  }
+
+  testWidgets('RTL: kart izgarasi TASMAZ (Arapca metinler daha uzun)',
         (tester) async {
       _tall(tester);
       await tester.pumpWidget(_saha(UserRole.tesisGorevlisi, const Locale('ar')));

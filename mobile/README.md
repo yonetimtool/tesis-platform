@@ -2035,6 +2035,26 @@ aynen gösterir.
 > yazmasaydım bu, "dili değiştirdim ama bildirimler hâlâ Türkçe" olarak
 > sahada görünürdü.
 
+`test/sozluk_denetimi_test.dart` (5 test — tur 23, **sözlük sürüşü**): 7 dilin
+anahtar kümesi aynı mı, Türkçe'ye özgü harf başka dile sızmış mı, "TR kopyası"
+şüphelileri **bilinen 15 anahtarla sınırlı mı** (çırçır — yeni bir anahtar
+çevrilmeden kalırsa test kırılır), gen-l10n'un **ürettiği sınıf** 7 dilde
+çalışıyor ve boş metin döndürmüyor mu, ICU çoğul dalları `ru`/`ar`'da gerçekten
+farklı metin veriyor mu. ARB'ye değil **üretilen sınıfa** bakar: bir anahtar
+ARB'de doğru görünüp gen-l10n çıktısında bozuk olabilir.
+
+> **EKRAN SÜRÜŞÜ (tur 23).** `test/helpers/ekran_surus.dart` çizili ağaçtaki
+> **tüm `Text`/`RichText`** metinlerini toplar; `home_i18n_test.dart` iki rolün
+> ana ekranını **6 dilde** çizip Türkçe sabit arar. Sözlük denetimi *sözlüğü*
+> ölçer; bu *ekranı* ölçer — sözlükte hiç olmayan, kaynakta unutulmuş bir sabit
+> ancak böyle yakalanır (panelde tur 21'de tam olarak bu olmuştu).
+>
+> Sürüşün **VERİ** ile **UI SABİTİ** ayrımını yapması şart: ilk koşumda
+> `"Ana Kapı"` (kontrol noktası adı) ve `"GÜVENLİK & DANIŞMANLIK"` (logo alt
+> başlığı) çıktı. Birincisi tenant verisi, ikincisi marka kilidi — ikisi de
+> **çevrilmemeli**. Bu yüzden yardımcı, veri listesini ve markayı muaf tutar;
+> muafiyet listesi testte açıkça yazılıdır.
+
 `test/akis_kimlik_i18n_test.dart` (10 test — tur 15): `/activity` satırının
 başlığının **kimlikten** çözüldüğü ve `tur`ün tek başına yetmediği (talep →
 4 ayrı başlık), 18 başlık kimliğinin 7 dilde karşılık bulduğu ve TR sızıntısı
