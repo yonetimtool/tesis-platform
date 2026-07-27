@@ -195,7 +195,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
 
   return (
     <div className={`space-y-5 p-5 ${cardCls}`}>
-      <h2 className="text-lg font-medium">Daire {unit.no} — borç durumu</h2>
+      <h2 className="text-lg font-medium">{t("daireBorcDurumu", { no: unit.no })}</h2>
 
       {/* Bakiye ozeti */}
       <div className="grid grid-cols-3 gap-3">

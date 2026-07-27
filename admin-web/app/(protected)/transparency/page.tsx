@@ -119,7 +119,7 @@ export default function TransparencyPage() {
                   />
                   {b.onceki_ay_net_kurus != null && (
                     <p className="pt-1 text-xs text-muted">
-                      Önceki ay net: {tl(b.onceki_ay_net_kurus)}
+                      {t("seffafOncekiAyNet", { tutar: tl(b.onceki_ay_net_kurus) })}
                     </p>
                   )}
                 </dl>
@@ -134,7 +134,7 @@ export default function TransparencyPage() {
                   <>
                     <div className="mb-1 flex justify-between text-sm">
                       <span>
-                        Ödeyen daire: {b.aidat.odeyen_daire}/{b.aidat.toplam_daire}
+                        {t("seffafOdeyenDaire", { odeyen: b.aidat.odeyen_daire, toplam: b.aidat.toplam_daire })}
                       </span>
                       <span className="font-semibold">%{b.aidat.daire_orani_yuzde}</span>
                     </div>

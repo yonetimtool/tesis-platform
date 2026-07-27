@@ -12,6 +12,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
+import { ApiHatasi } from "@/lib/client";
 
 interface TenantRow {
   id: string;
@@ -67,17 +68,16 @@ export default function TenantsPage() {
     setOpen(true);
   }
 
-  async function removeTenant(t: TenantRow) {
+  async function removeTenant(tesis: TenantRow) {
     // Tesisi + TUM verisini kalici siler (geri alinamaz). Tek adimli net onay
     // (yeni tesisin adi "(Kurulum bekliyor)" yer tutucu oldugundan ad-yazdirma
     // pratik degil).
     const ok = window.confirm(
-      `"${t.ad}" tesisini ve TÜM verisini (yönetici, duyuru, daire, sakin...) ` +
-        `kalıcı olarak silmek üzeresiniz.\n\nBu işlem GERİ ALINAMAZ. Silinsin mi?`,
+      t("tesisSilOnayMetni", { ad: tesis.ad }),
     );
     if (!ok) return;
     try {
-      await apiSend(`/api/tenants/${t.id}`, "DELETE");
+      await apiSend(`/api/tenants/${tesis.id}`, "DELETE");
       mutate();
       toast.success("Tesis silindi.");
     } catch (err) {
@@ -114,25 +114,31 @@ export default function TenantsPage() {
       const kodlar = (created?.yoneticiler ?? []).filter((y) => y.temp_code);
       if (kodlar.length) {
         window.alert(
-          "Tesis + yöneticiler oluşturuldu.\n\nGeçici giriş kodları:\n" +
+          t("tesisKodlarBaslik") +
             kodlar
               .map((y) => `• ${y.ad}${y.birincil ? " (birincil)" : ""}: ${y.temp_code}`)
               .join("\n") +
-            "\n\nHer yönetici telefonu + kendi kodu ile girip kalıcı parolasını belirler.",
+            t("tesisKodlarNot"),
         );
       } else {
         window.alert(
-          "Tesis + yöneticiler oluşturuldu.\nYöneticiler belirlediğiniz parola ile giriş yapar.",
+          t("tesisParolaIleGiris"),
         );
       }
       setOpen(false);
       mutate();
     } catch (err) {
-      const m = err instanceof Error ? err.message : "Kaydedilemedi.";
+      // KOD ile karar (tur 22): sunucu metni artik 7 dilde geldigi icin
+      // metinde arama yapmak Turkce disi her dilde sessizce bozulurdu.
+      const cakisma =
+        err instanceof ApiHatasi &&
+        (err.code === "conflict" || err.status === 409);
       setFormErr(
-        /telefon|zaten kayitli|conflict|zaten kayıtlı/i.test(m)
+        cakisma
           ? t("tesisTelefonKayitli")
-          : m,
+          : err instanceof Error
+            ? err.message
+            : t("ortakHataOlustu"),
       );
     } finally {
       setSaving(false);
@@ -205,7 +211,7 @@ export default function TenantsPage() {
                         })
                       }
                     >
-                      Kaldır
+                      {t("tesisKaldir")}
                     </button>
                   )}
                 </div>
@@ -254,7 +260,7 @@ export default function TenantsPage() {
                 setForm({ ...form, yoneticiler: [...form.yoneticiler, { ...BOS_YONETICI }] })
               }
             >
-              + Yönetici ekle
+              {t("tesisYoneticiEkle")}
             </button>
           </div>
 

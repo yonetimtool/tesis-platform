@@ -133,8 +133,7 @@ export default function TenantDetailPage() {
         "POST",
       );
       window.alert(
-        `Geçici giriş kodu: ${r.temp_code}\n\nBu kod yalnızca bir kez gösterilir; ` +
-          `yöneticiye iletin. Yönetici cep telefonu + bu kod ile girip yeni parolasını belirler.`,
+        t("tesisGeciciKod", { kod: r.temp_code }),
       );
       mutate();
     } catch (err) {
@@ -188,10 +187,10 @@ export default function TenantDetailPage() {
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <p className="text-sm text-slate-600">
-                    Oluşturulma: {fmtDate(data.created_at)}
+                    {t("tesisOlusturulmaTarihi", { zaman: fmtDate(data.created_at) })}
                   </p>
                   <button className={btnGhost} onClick={openNameEdit}>
-                    Adı düzenle
+                    {t("tesisAdiDuzenle")}
                   </button>
                 </div>
               </>
@@ -256,10 +255,10 @@ export default function TenantDetailPage() {
                 </dl>
                 <div className="flex flex-wrap gap-2 pt-1">
                   <button className={btnGhost} onClick={openEdit} disabled={busy}>
-                    Ad / telefon düzenle
+                    {t("tesisAdTelefonDuzenle")}
                   </button>
                   <button className={btnGhost} onClick={resetCredential} disabled={busy}>
-                    Parola sıfırla / geçici kod üret
+                    {t("tesisParolaSifirla")}
                   </button>
                   <button className={btnGhost} onClick={toggleActive} disabled={busy}>
                     {y.is_active ? t("ortakPasiflestir") : t("ortakAktiflestir")}
@@ -305,9 +304,7 @@ export default function TenantDetailPage() {
           <div className="rounded-xl border border-rose-200 bg-rose-50 p-5">
             <h2 className="font-medium text-rose-800">{t("tesisTehlikeliBolge")}</h2>
             <p className="mt-1 text-sm text-rose-700">
-              Tesisi silmek yöneticiyi, duyuruları, daireleri, sakinleri ve tüm site
-              verisini kalıcı olarak siler. Bu işlem geri alınamaz. Onaylamak için
-              aşağıya <span className="font-semibold">{t("tesisSilOnayKelimesi")}</span> yazın.
+              {t("tesisSilUyari", { kelime: t("tesisSilOnayKelimesi") })}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <input
@@ -321,7 +318,7 @@ export default function TenantDetailPage() {
                 onClick={deleteTenant}
                 disabled={busy || confirmAd.trim().toLocaleUpperCase("tr") !== t("tesisSilOnayKelimesi")}
               >
-                Tesisi kalıcı olarak sil
+                {t("tesisKaliciSil")}
               </button>
             </div>
           </div>

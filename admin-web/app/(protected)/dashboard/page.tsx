@@ -100,7 +100,7 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{t("kabukCanliPanel")}</h1>
         {data && (
           <span className="text-xs text-muted">
-            Güncellendi: {formatDateTime(data.generated_at)} · otomatik yenilenir (15 sn)
+            {t("panelGuncellendiTam", { zaman: formatDateTime(data.generated_at) })}
           </span>
         )}
       </div>
@@ -133,7 +133,7 @@ export default function DashboardPage() {
         <StatCard
           label={t("panelBekleyen")}
           value={bekleyen}
-          detail={kacirilan ? `${kacirilan} kaçırılan` : t("panelKacirilanYok")}
+          detail={kacirilan ? t("panelKacirilanN", { n: kacirilan }) : t("panelKacirilanYok")}
           tone="amber"
         />
         <StatCard
@@ -175,7 +175,7 @@ export default function DashboardPage() {
                 {data && turlar.length === 0 && (
                   <tr>
                     <td className="px-4 py-8 text-center text-muted" colSpan={4}>
-                      Bugün için tur yok.
+                      {t("panelTurYokBugun")}
                     </td>
                   </tr>
                 )}

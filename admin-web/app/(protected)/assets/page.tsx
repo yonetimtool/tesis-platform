@@ -304,19 +304,23 @@ export default function AssetsPage() {
 
       {detail && (
         <motion.div {...panelMotion} className={`space-y-3 ${panelCls}`}>
-          <h2 className="text-lg font-medium">Zimmet — {detail.ad}</h2>
+          <h2 className="text-lg font-medium">
+            {t("demirbasZimmetBaslik", { ad: detail.ad })}
+          </h2>
           <p className="text-sm">
             {openCheckout ? (
               <span className="text-amber-700">
-                Şu an <strong>{userName(openCheckout.alan_user_id)}</strong> üzerinde (alındı:{" "}
-                {formatDateTime(openCheckout.alma_zamani)})
+                {t("demirbasSuAnUzerinde", {
+                  kisi: userName(openCheckout.alan_user_id),
+                  zaman: formatDateTime(openCheckout.alma_zamani),
+                })}
               </span>
             ) : (
               <span className="text-emerald-700">{t("demirbasKimsedeDegil")}</span>
             )}
           </p>
           <p className="text-xs text-muted">
-            Zimmet al/bırak sahada NFC ile mobilde yapılır; panel yalnızca görüntüler.
+            {t("demirbasPanelNotu")}
           </p>
           <div className="overflow-hidden rounded-lg border border-slate-200">
             <div className="overflow-x-auto">

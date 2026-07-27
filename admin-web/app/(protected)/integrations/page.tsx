@@ -366,7 +366,7 @@ export default function IntegrationsPage() {
                           className={`text-xs ${tr.ok ? "text-emerald-700" : "text-red-700"}`}
                         >
                           {tr.ok
-                            ? `✓ Başarılı (${tr.status ?? "—"})`
+                            ? t("entegBasarili", { kod: tr.status ?? "—" })
                             : `✗ ${tr.error ?? t("entegBasarisiz")}${tr.status ? ` (${tr.status})` : ""}`}
                         </span>
                       )}

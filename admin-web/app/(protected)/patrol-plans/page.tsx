@@ -267,7 +267,7 @@ export default function PatrolPlansPage() {
             </Field>
           </div>
           <p className="text-xs text-muted">
-            Önizleme: bu plan günde yaklaşık {previewWindows} pencere üretir.
+            {t("planOnizleme", { sayi: previewWindows })}
           </p>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -293,7 +293,7 @@ export default function PatrolPlansPage() {
         <motion.div {...panelMotion} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">Noktalar: {assignPlan.ad}</h2>
           <p className="text-xs text-muted">
-            Sıralı liste; kaydedince planın noktaları tamamen bununla değişir.
+            {t("planSiraliListe")}
           </p>
 
           <ol className="space-y-2">
@@ -328,7 +328,7 @@ export default function PatrolPlansPage() {
             ))}
             {selected.length === 0 && (
               <li className="rounded-lg border border-dashed border-slate-300 px-3 py-4 text-center text-muted">
-                Henüz nokta eklenmedi.
+                {t("planNoktaYok")}
               </li>
             )}
           </ol>

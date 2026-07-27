@@ -162,7 +162,7 @@ export default function ShiftsPage() {
           </div>
           {overnight && (
             <p className="text-xs text-amber-700">
-              Bilgi: başlangıç bitişten sonra; gece vardiyası (ertesi güne sarkar).
+              {t("vardiyaGeceNotu")}
             </p>
           )}
           <Field label={t("vardiyaGunTipi")}>

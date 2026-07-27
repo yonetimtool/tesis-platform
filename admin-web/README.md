@@ -185,9 +185,19 @@ curl -s -c c.txt -X POST localhost:3113/api/auth/login \
 > `app/api` route handler'lari, tur 16'da `notify_opener`, tur 15'te
 > `_REASON_ERRORS`.)
 
-Tarama artik cok satirli JSX metnini de olcuyor ve kalan is bir **circir**
-ile kilitli (`tests/i18n.test.ts` -> `KALAN_ESIK`): sayi **artamaz**, her
-turda dusurulur. Bugunku esik **67 satir / 19 dosya**.
+Tarama artik cok satirli JSX metnini de olcuyor. **Tur 22'de esik SIFIRA
+indi** (`KALAN_ESIK = 0`): panelde — string literali, cok satirli JSX metni,
+sablon dizesi, `confirm()`/`throw new Error()` metinleri dahil — Turkce
+sabit KALMADI. Tek istisna `Yönetio` marka kelimesidir.
+
+> **TUR 22'DE BULUNAN SON HATA — metne bakan kontrol akisi.** `tenants`
+> sayfasi telefon cakismasini
+> `/telefon|zaten kayitli|conflict/i.test(mesaj)` ile tespit ediyordu.
+> Sunucu metni tur 14'te 7 dile cevrilince bu regex **Turkce disi her dilde
+> sessizce calismaz** oldu: kullanici "Bu telefon zaten kayitli" yerine ham
+> sunucu hatasini gorurdu. `lib/client.ts` artik `ApiHatasi` firlatiyor
+> (`code` + `status` tasiyor) ve karar `err.code === "conflict"` ile
+> veriliyor — mobil tur 11'de kapatilan hatanin panel karsiligi.
 
 Gozle surusun ayrica dogruladigi: 7 dilin hepsinde `<html lang>` dogru,
 Arapcada `dir="rtl"`, hicbir sayfada ham sozluk anahtari sizmiyor.

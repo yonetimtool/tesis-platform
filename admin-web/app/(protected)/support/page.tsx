@@ -60,7 +60,7 @@ export default function SupportPage() {
         const fd = new FormData();
         fd.append("file", dosya);
         const up = await fetch("/api/uploads", { method: "POST", body: fd });
-        if (!up.ok) throw new Error(`Görsel yüklenemedi (${up.status})`);
+        if (!up.ok) throw new Error(t("destekGorselYuklenemediKod", { kod: up.status }));
         adminCevapFotoKey = ((await up.json()) as { foto_key: string }).foto_key;
       }
       const res = await fetch(`/api/support/${secili.id}`, {
@@ -74,7 +74,7 @@ export default function SupportPage() {
             : {}),
         }),
       });
-      if (!res.ok) throw new Error(`Yanıt kaydedilemedi (${res.status})`);
+      if (!res.ok) throw new Error(t("destekYanitKaydedilemedi", { kod: res.status }));
       setSecili(null);
       setCevap("");
       setDosya(null);
@@ -259,7 +259,7 @@ export default function SupportPage() {
                 checked={cozulduIsaretle}
                 onChange={(e) => setCozulduIsaretle(e.target.checked)}
               />
-              Çözüldü olarak işaretle
+              {t("destekCozulduIsaretle")}
             </label>
             <div className="mt-4 flex justify-end gap-2">
               <button

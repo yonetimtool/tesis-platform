@@ -111,7 +111,7 @@ export default function DuesPage() {
         <ErrorBox message={bErr} />
         {bRes && (
           <p className="text-sm text-emerald-700">
-            {bRes.created} tahakkuk oluşturuldu · {bRes.atlanan} atlandı (zaten vardı).
+            {t("aidatTopluSonuc", { olusan: bRes.created, atlanan: bRes.atlanan })}
           </p>
         )}
         <button type="submit" className={btnPrimary} disabled={bBusy}>

@@ -53,11 +53,12 @@ function UnitCell({
   onSelect: (u: BuildingMapUnit) => void;
   selected: boolean;
 }) {
+  const t = useT();
   const c = cls(unit.color);
   return (
     <button
       onClick={() => onSelect(unit)}
-      title={`${unit.unit_no} — ${unit.complaint_count ?? 0} açık şikayet`}
+      title={t("haritaKartBaslik", { daire: unit.unit_no, sayi: unit.complaint_count ?? 0 })}
       className={`flex h-16 w-20 flex-col items-center justify-center rounded-lg border text-white transition ${c.cell} ${
         selected ? "ring-2 ring-ink ring-offset-2" : "hover:opacity-90"
       }`}
@@ -133,15 +134,16 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
             </div>
             {/* Rev-1: sikayet eden kimligi YALNIZ yonetime (denetim). */}
             {it.complainant_ad && (
-              <p className="mt-0.5 text-xs text-slate-500">Şikayet eden: {it.complainant_ad}</p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                  {t("haritaSikayetEden", { kisi: it.complainant_ad })}
+                </p>
             )}
             {it.notlar && <p className="mt-1 text-slate-600">{it.notlar}</p>}
           </li>
         ))}
       </ul>
       <p className="text-xs text-muted">
-        Şikayet eden kimliği yalnızca yönetime (denetim) gösterilir; sakinlere ve
-        sahaya kapalıdır.
+        {t("haritaKimlikNotu")}
       </p>
     </div>
   );
@@ -196,7 +198,7 @@ export default function SchematicPage() {
             <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-5">
               <h2 className="font-medium">{t("haritaYerlesimYok")}</h2>
               <p className="text-xs text-muted">
-                Bu dairelere blok/kat girilmemiş; “Daireler” ekranından yerleşim
+                {t("haritaYerlesimNotu")}
                 eklenebilir.
               </p>
               <div className="flex flex-wrap gap-2">
@@ -214,7 +216,7 @@ export default function SchematicPage() {
 
           {data && data.bloklar.length === 0 && (data.unplaced?.length ?? 0) === 0 && (
             <div className={`${cardCls} p-8 text-center text-muted`}>
-              Henüz daire yok.
+              {t("haritaDaireYok")}
             </div>
           )}
         </div>
@@ -225,7 +227,7 @@ export default function SchematicPage() {
             <DetailPanel unit={selected} />
           ) : (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-muted">
-              Detay için bir daire seçin.
+              {t("haritaDaireSecin")}
             </div>
           )}
         </div>

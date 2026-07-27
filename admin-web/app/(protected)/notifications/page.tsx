@@ -49,7 +49,7 @@ export default function NotificationsPage() {
 
       <div className="flex items-center gap-2">
         {([
-          ["", "Tümü"],
+          ["", t("ortakTumu")],
           ["false", t("bildirimOkunmamis")],
           ["true", t("bildirimOkunmus")],
         ] as [OkunduFiltre, string][]).map(([v, label]) => (

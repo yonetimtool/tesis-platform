@@ -103,7 +103,7 @@ export default function AnnouncementsPage() {
         headers: { "Content-Type": file.type || "image/jpeg" },
         body: file,
       });
-      if (!put.ok) throw new Error(`Yükleme başarısız (HTTP ${put.status}).`);
+      if (!put.ok) throw new Error(t("yuklemeBasarisiz", { kod: put.status }));
       setPhoto((p) => ({ ...p, uploading: false, fotoKey: ticket.foto_key }));
     } catch (err) {
       setPhoto((p) => ({
@@ -221,7 +221,7 @@ export default function AnnouncementsPage() {
                       setPhoto((p) => ({ ...p, removed: true }));
                     }}
                   >
-                    Görseli kaldır
+                    {t("duyuruGorseliKaldir")}
                   </button>
                 )}
               </div>
@@ -252,7 +252,7 @@ export default function AnnouncementsPage() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={a.foto_url}
-                      alt={`${a.baslik} görseli`}
+                      alt={t("gorselAlt", { baslik: a.baslik })}
                       className="max-h-40 rounded-lg border border-slate-200 object-cover"
                     />
                   </a>

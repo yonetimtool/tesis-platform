@@ -206,7 +206,7 @@ export default function DuesReportPage() {
       {err && <ErrorBox message={err} />}
       {unitTruncated && (
         <p className="text-xs text-amber-700">
-          Not: 200 daireden fazla var; daire adları bir kısmı için kısaltılmış ID gösterebilir.
+          {t("raporDaireNotu")}
         </p>
       )}
 
@@ -227,9 +227,7 @@ export default function DuesReportPage() {
 
           {report.serbestBasariliSayi > 0 && (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              Not: {report.serbestBasariliSayi} başarılı ödeme DÖNEMSİZ (eski kayıt: dönem
-              alanı boş ve tahakkuğa bağlı değil); hiçbir dönem tahsilatına dahil edilemedi.
-              Yeni ödemelerde dönem alanı doldurulduğu için bu sayı zamanla erimeli.
+              {t("raporDonemsizNot", { sayi: report.serbestBasariliSayi })}
             </p>
           )}
 

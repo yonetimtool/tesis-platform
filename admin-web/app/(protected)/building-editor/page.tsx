@@ -118,9 +118,7 @@ export default function BuildingEditorPage() {
     } else {
       // Yikici: daireleri + bagli kayitlari siler. Sert onay: blok adini yaz.
       const typed = window.prompt(
-        `DİKKAT: Blok ${b.ad} ve içindeki ${count} daire (aidat, ziyaretçi, ` +
-          `kargo, rezervasyon, şikayet vb. tüm bağlı kayıtlarıyla) KALICI olarak ` +
-          `silinecek. Onaylamak için blok adını yazın: ${b.ad}`,
+        t("binaBlokSilOnay", { blok: b.ad, sayi: count }),
       );
       if (typed == null) return; // iptal
       if (typed.trim() !== b.ad) {
@@ -448,14 +446,13 @@ function BlockDetail({
 
       {blockless && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-          Bu daireler bir bloğa atanmamış (eski kayıtlar). Yeni daire eklemek için
-          bir blok seçin veya oluşturun; buradaki daireler görüntülenir ve silinebilir.
+          {t("binaBloksuzNot")}
         </p>
       )}
 
       {!blockless && floors.length === 0 && katsiz.length === 0 && (
         <p className="py-6 text-center text-sm text-muted">
-          Henüz kat yok. “+ Kat” ile başlayın, sonra kattaki “+” ile daire ekleyin.
+          {t("binaKatYok")}
         </p>
       )}
 

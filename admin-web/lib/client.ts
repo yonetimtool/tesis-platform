@@ -2,6 +2,24 @@ import { metin } from "./i18n/metin";
 // Istemci mutasyon yardimcisi (POST/PATCH/DELETE -> BFF /api/*).
 // 401 => oturum bitti -> /login. Hata zarfindan ({error:{message}}) mesaj cikarir.
 
+/// Sunucu hata zarfini TASIYAN istisna (tur 22).
+///
+/// KONTROL AKISI METNE BAKMAZ: eskiden `tenants` sayfasi
+/// `/telefon|zaten kayitli|conflict/i.test(mesaj)` ile karar veriyordu —
+/// sunucu metni tur 14'te 7 dile cevrilince o regex Turkce disi her dilde
+/// SESSIZCE calismaz oldu. Artik `code`/`status` bakilir (mobil tur 11'de
+/// ayni hata `e.code === "conflict"` ile duzeltilmisti).
+export class ApiHatasi extends Error {
+  constructor(
+    message: string,
+    readonly code?: string,
+    readonly status?: number,
+  ) {
+    super(message);
+    this.name = "ApiHatasi";
+  }
+}
+
 export async function apiSend<T = unknown>(
   url: string,
   method: string,
@@ -22,10 +40,14 @@ export async function apiSend<T = unknown>(
   if (res.status === 204) return undefined as T;
   const data: unknown = await res.json().catch(() => null);
   if (!res.ok) {
-    const message =
-      (data as { error?: { message?: string } } | null)?.error?.message ??
-      metin("ortakHataOlustu");
-    throw new Error(message);
+    const zarf = (data as {
+      error?: { code?: string; message?: string };
+    } | null)?.error;
+    throw new ApiHatasi(
+      zarf?.message ?? metin("ortakHataOlustu"),
+      zarf?.code,
+      res.status,
+    );
   }
   return data as T;
 }

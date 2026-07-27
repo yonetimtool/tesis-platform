@@ -180,7 +180,13 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
 
   // MARKA KILIDI: "Yönetio" kelime isareti cevrilmez (mobil README §15 ile
   // ayni karar) — Turkce karakter tasir ama dile gore degismez.
-  const MARKA = /^Yönetio$/;
+  // MARKA KILIDI: "Yönetio" kelime isareti cevrilmez (mobil README §15 ile
+  // ayni karar). Satir icinde de gecebilir (`alt="Yönetio"`, logo yazisi) —
+  // bu yuzden kalip TAM ESLESME degil, "Turkce karakteri YALNIZ marka
+  // kelimesinden geliyor mu" testidir.
+  const markaDisi = (v: string) =>
+    v.replace(/Yönetio/gi, "").replace(/yönetio/g, "");
+  const MARKA = { test: (v: string) => !/[çğıöşüÇĞİÖŞÜ]/.test(markaDisi(v)) };
 
   it("cevrilen dosyalarda TURKCE sabit kalmadi", () => {
     const TR = /[çğıöşüÇĞİÖŞÜ]/;
@@ -208,9 +214,9 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
   // Asagidaki tarama artik onu da olcuyor ve kalan is bir CIRCIR (ratchet)
   // ile kilitlendi: sayi ARTAMAZ. Kalan satirlar README'de dosya dosya
   // listeli; her turda bu esik dusurulerek sifira inilecek.
-  const KALAN_ESIK = 67;
+  const KALAN_ESIK = 0;   // tur 22: SIFIRA indi
 
-  it("cok satirli JSX metni: kalan Turkce sayisi ARTMASIN (tur 21 circiri)", () => {
+  it("cok satirli JSX metni dahil HICBIR Turkce sabit kalmadi (tur 22)", () => {
     // Tur 20'de son sayfa da cevrildi; artik dosya listesi degil TUM kaynak
     // taranir. Yeni bir sayfa Turkce sabitle eklenirse bu test kirilir.
     const TR = /[çğıöşüÇĞİÖŞÜ]/;

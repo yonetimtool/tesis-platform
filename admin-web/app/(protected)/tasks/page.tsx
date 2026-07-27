@@ -334,7 +334,7 @@ export default function TasksPage() {
                 checked={form.foto_zorunlu}
                 onChange={(e) => setForm({ ...form, foto_zorunlu: e.target.checked })}
               />
-              Foto kanıtı zorunlu
+              {t("gorevFotoZorunlu")}
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -417,7 +417,9 @@ export default function TasksPage() {
 
       {detail && (
         <motion.div {...panelMotion} className={`space-y-3 ${panelCls}`}>
-          <h2 className="text-lg font-medium">Tamamlanma kayıtları — {detail.ad}</h2>
+          <h2 className="text-lg font-medium">
+            {t("gorevTamamlamaKayitlari", { ad: detail.ad })}
+          </h2>
           <div className="overflow-hidden rounded-lg border border-slate-200">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

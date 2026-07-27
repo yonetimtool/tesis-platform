@@ -127,9 +127,7 @@ export default function UsersPage() {
         );
         if (created?.temp_code) {
           window.alert(
-            `Kullanıcı oluşturuldu.\nGeçici giriş kodu: ${created.temp_code}\n\n` +
-              `Bu kod yalnızca bir kez gösterilir; kullanıcıya iletin. ` +
-              `Kullanıcı cep telefonu + bu kod ile girip kalıcı parolasını belirler.`,
+            t("kullaniciGeciciKod", { kod: created.temp_code }),
           );
         }
       }
