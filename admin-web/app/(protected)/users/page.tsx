@@ -9,8 +9,9 @@ import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, pan
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
-import { ROLE_OPTIONS as ROLES, ROLE_STYLE, roleLabel } from "@/lib/roles";
+import { ROLE_OPTIONS as ROLES, ROLE_STYLE, rolAdi } from "@/lib/roles";
 import type { UserDetail, UserListResponse, UserRole, UserRow } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
 
 const LIMIT = 20;
 
@@ -32,6 +33,7 @@ const EMPTY: FormState = {
 };
 
 export default function UsersPage() {
+  const t = useT();
   const toast = useToast();
   const [offset, setOffset] = useState(0);
   const [role, setRole] = useState<string>("");
@@ -174,7 +176,7 @@ export default function UsersPage() {
               <option value="">Tümü</option>
               {ROLES.map((r) => (
                 <option key={r.value} value={r.value}>
-                  {r.label}
+                  {t(r.anahtar)}
                 </option>
               ))}
             </select>
@@ -254,7 +256,7 @@ export default function UsersPage() {
               >
                 {ROLES.map((r) => (
                   <option key={r.value} value={r.value}>
-                    {r.label}
+                    {t(r.anahtar)}
                   </option>
                 ))}
               </select>
@@ -316,7 +318,7 @@ export default function UsersPage() {
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_STYLE[u.role] ?? "bg-slate-100 text-slate-700"}`}
                     >
-                      {roleLabel(u.role)}
+                      {rolAdi(t, u.role)}
                     </span>
                   </td>
                   <td className="px-4 py-2.5">

@@ -7,6 +7,8 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { API_BASE } from "./config";
+import { DIL_COOKIE, istekDili, type Dil } from "./i18n/diller";
+import { SOZLUKLER } from "./i18n/sozluk";
 import {
   ACCESS_COOKIE,
   ACCESS_MAX_AGE,
@@ -30,6 +32,19 @@ function clearAuthCookies(res: NextResponse): void {
   res.cookies.delete(REFRESH_COOKIE);
 }
 
+/// BFF'in ileteceği dil: kullanicinin cookie secimi, yoksa tarayici dili.
+/// `cookies()` yalniz istek baglaminda calisir — bu dosya zaten route
+/// handler'lardan cagrilir.
+async function panelDili(): Promise<Dil> {
+  try {
+    const c = await cookies();
+    return istekDili(c.get(DIL_COOKIE)?.value);
+  } catch {
+    // Istek baglami yoksa (beklenmez) varsayilan dil.
+    return "tr";
+  }
+}
+
 async function callBackend(
   path: string,
   method: string,
@@ -37,11 +52,13 @@ async function callBackend(
   body?: unknown,
   extraHeaders?: Record<string, string>,
 ): Promise<Response> {
-  // Panel TEK dilli (`<html lang="tr">`). Sunucu hata metinleri tur 14'ten
-  // beri `Accept-Language`e gore uretiliyor; basligi ACIKCA gonderiyoruz ki
-  // sunucu varsayilani degisirse panel sessizce baska dile kaymasin.
+  // Sunucu hata metinleri (tur 14) ve icerik cevirisi `Accept-Language`e
+  // gore servis edilir. Panel artik 7 dilli (tur 17): baslik KULLANICININ
+  // sectigi dilden gelir, sabit `tr` degil. Zincir `dil, tr;q=0.8`:
+  // sunucuda cevirisi eksik bir metin Turkce'ye duser, bos kalmaz.
+  const dil = await panelDili();
   const headers: Record<string, string> = {
-    "Accept-Language": "tr",
+    "Accept-Language": dil === "tr" ? "tr" : `${dil}, tr;q=0.8`,
     ...(extraHeaders ?? {}),
   };
   if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
@@ -133,8 +150,16 @@ export async function proxyJson(
   if (res.status === 401 && refresh) {
     const pair = await refreshSingleFlight(refresh);
     if (!pair) {
+      // Bu metin BFF'in KENDI urettigi hatadir (backend'e hic gitmedi),
+      // dolayisiyla tur 14'un sunucu katalogu devrede degil — panel
+      // sozlugunden, kullanicinin dilinde uretilir.
       const out = NextResponse.json(
-        { error: { code: "unauthorized", message: "Oturum süresi doldu." } },
+        {
+          error: {
+            code: "unauthorized",
+            message: SOZLUKLER[await panelDili()].ortakOturumSuresiDoldu,
+          },
+        },
         { status: 401 },
       );
       clearAuthCookies(out);

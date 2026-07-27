@@ -3,7 +3,8 @@
 // olsa da kullaniciya yapamayacagi bir sey teklif edilmis olur.
 import { describe, expect, it } from "vitest";
 
-import { ROLE_OPTIONS, ROLE_STYLE, SAHA_ROLLERI, roleLabel } from "@/lib/roles";
+import { ROLE_OPTIONS, ROLE_STYLE, SAHA_ROLLERI, rolAdi, roleAnahtari } from "@/lib/roles";
+import { SOZLUKLER } from "@/lib/i18n/sozluk";
 import type { UserRole } from "@/lib/types";
 
 /** Sozlesmedeki BILINEN 5 rol (auth.md §4). */
@@ -22,10 +23,15 @@ describe("ROLE_OPTIONS", () => {
     );
   });
 
-  it("her rolun bos olmayan, TEKIL bir etiketi var", () => {
-    const etiketler = ROLE_OPTIONS.map((r) => r.label);
-    expect(etiketler.every((l) => l.trim().length > 0)).toBe(true);
-    expect(new Set(etiketler).size).toBe(etiketler.length);
+  it("her rolun TEKIL bir sozluk ANAHTARI var (metin degil kimlik)", () => {
+    const anahtarlar = ROLE_OPTIONS.map((r) => r.anahtar);
+    expect(new Set(anahtarlar).size).toBe(anahtarlar.length);
+    // Anahtarlar 7 dilde de bos olmayan, TEKIL metin verir.
+    for (const dil of ["tr", "en", "ar"] as const) {
+      const etiketler = anahtarlar.map((a) => SOZLUKLER[dil][a]);
+      expect(etiketler.every((l) => l.trim().length > 0), dil).toBe(true);
+      expect(new Set(etiketler).size, dil).toBe(etiketler.length);
+    }
   });
 
   it("ROLE_STYLE her rol icin bir sinif tasir (rozet renksiz kalmaz)", () => {
@@ -35,16 +41,22 @@ describe("ROLE_OPTIONS", () => {
   });
 });
 
-describe("roleLabel", () => {
-  it("bilinen rolu Turkce etiketine cevirir", () => {
-    expect(roleLabel("admin")).toBe("Platform Admin");
-    expect(roleLabel("tesis_gorevlisi")).toBe("Tesis Görevlisi");
+describe("rolAdi (tur 17: kimlik -> aktif dil)", () => {
+  const t = (a: keyof (typeof SOZLUKLER)["tr"]) => SOZLUKLER.en[a];
+
+  it("bilinen rolu AKTIF DILDEKI adina cevirir", () => {
+    expect(roleAnahtari("admin")).toBe("rolPlatformAdmin");
+    expect(rolAdi(t, "admin")).toBe(SOZLUKLER.en.rolPlatformAdmin);
+    expect(rolAdi((a) => SOZLUKLER.tr[a], "tesis_gorevlisi")).toBe(
+      "Tesis Görevlisi",
+    );
   });
 
   it("BILINMEYEN rol: ham deger gosterilir (bos/undefined DEGIL)", () => {
     // Backend yeni bir rol eklerse panel patlamaz, tel degerini gosterir.
-    expect(roleLabel("gelecek_rol")).toBe("gelecek_rol");
-    expect(roleLabel("")).toBe("");
+    expect(roleAnahtari("gelecek_rol")).toBeNull();
+    expect(rolAdi(t, "gelecek_rol")).toBe("gelecek_rol");
+    expect(rolAdi(t, "")).toBe("");
   });
 });
 

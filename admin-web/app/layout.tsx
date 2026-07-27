@@ -1,4 +1,9 @@
 import type { Metadata } from "next";
+import { cookies, headers } from "next/headers";
+
+import { I18nProvider } from "@/lib/i18n/kullan";
+import { DIL_COOKIE, istekDili, yon } from "@/lib/i18n/diller";
+import { SOZLUKLER } from "@/lib/i18n/sozluk";
 
 import "./globals.css";
 
@@ -10,18 +15,36 @@ import "./globals.css";
 // hash'siz birakiyordu; Next ise bu rotayi `immutable, max-age=31536000` ile
 // sunuyor. Sonuc: logo degisse bile tarayicilar eski faviconu BIR YIL boyunca
 // yeniden istemiyordu (hard refresh cogu tarayicida bunu asmaz).
-export const metadata: Metadata = {
-  title: "Yönetio Panel",
-  description: "Yönetio — çok kiracılı tesis operasyon SaaS yönetim paneli",
-};
+// Ust veri de DILE DUYARLI (tur 17): sekme basligi ve paylasim aciklamasi
+// kullanicinin dilinde uretilir. Sabit `metadata` nesnesi bunu yapamazdi.
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieDeposu = await cookies();
+  const baslikDeposu = await headers();
+  const dil = istekDili(
+    cookieDeposu.get(DIL_COOKIE)?.value,
+    baslikDeposu.get("accept-language"),
+  );
+  const sozluk = SOZLUKLER[dil];
+  return { title: sozluk.metaBaslik, description: sozluk.metaAciklama };
+}
 
-export default function RootLayout({
+// Dil SUNUCUDA cozulur: ilk kare dogru dilde ve dogru YONDE boyanir.
+// Istemcide cozseydik sayfa once `tr`/`ltr` cizilip sonra kendini
+// duzeltirdi (mobil tarafta "metin titremesi" diye kayda gecen hata).
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieDeposu = await cookies();
+  const baslikDeposu = await headers();
+  const dil = istekDili(
+    cookieDeposu.get(DIL_COOKIE)?.value,
+    baslikDeposu.get("accept-language"),
+  );
+
   return (
-    <html lang="tr" suppressHydrationWarning>
+    <html lang={dil} dir={yon(dil)} suppressHydrationWarning>
       <head>
         {/* Ilk boyamadan once tema sinifini ata (FOUC yok). Kayitli tercih
             yoksa/sistem ise OS temasini izle. */}
@@ -31,7 +54,9 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <I18nProvider baslangicDili={dil}>{children}</I18nProvider>
+      </body>
     </html>
   );
 }

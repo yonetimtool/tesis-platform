@@ -9,7 +9,8 @@ import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btn
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
-import { SAHA_ROLLERI, roleLabel } from "@/lib/roles";
+import { SAHA_ROLLERI, rolAdi } from "@/lib/roles";
+import { useT } from "@/lib/i18n/kullan";
 import type {
   Task,
   TaskCategoryList,
@@ -69,6 +70,7 @@ const EMPTY: FormState = {
 };
 
 export default function TasksPage() {
+  const t = useT();
   const toast = useToast();
   const [offset, setOffset] = useState(0);
   const [tip, setTip] = useState("");
@@ -235,7 +237,7 @@ export default function TasksPage() {
               <option value="">Tümü</option>
               {personel.map((u) => (
                 <option key={u.id} value={u.id}>
-                  {u.ad} ({roleLabel(u.role)})
+                  {u.ad} ({rolAdi(t, u.role)})
                 </option>
               ))}
             </select>
@@ -287,7 +289,7 @@ export default function TasksPage() {
                 <option value="">— yok —</option>
                 {personel.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.ad} ({roleLabel(u.role)})
+                    {u.ad} ({rolAdi(t, u.role)})
                   </option>
                 ))}
               </select>

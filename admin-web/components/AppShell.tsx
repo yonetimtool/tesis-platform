@@ -5,7 +5,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
+import { DilSecici } from "@/components/DilSecici";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { YonetioLogo } from "@/components/YonetioLogo";
 
 type IconName =
@@ -13,28 +16,31 @@ type IconName =
   | "box" | "home" | "edit" | "pin" | "money" | "chart"
   | "users" | "megaphone" | "chat" | "bell" | "hub" | "gear";
 
-const LINKS: { href: string; label: string; icon: IconName }[] = [
-  { href: "/dashboard", label: "Canlı Panel", icon: "grid" },
-  { href: "/tenants", label: "Tesisler", icon: "building" },
-  { href: "/shifts", label: "Vardiyalar", icon: "clock" },
-  { href: "/checkpoints", label: "NFC Noktaları", icon: "scan" },
-  { href: "/patrol-plans", label: "Devriye Planları", icon: "route" },
-  { href: "/tasks", label: "Görevler", icon: "check" },
-  { href: "/assets", label: "Demirbaş", icon: "box" },
-  { href: "/units", label: "Daireler", icon: "home" },
-  { href: "/building-editor", label: "Bina Düzenleme", icon: "edit" },
-  { href: "/schematic", label: "Şikayet Haritası", icon: "pin" },
-  { href: "/dues", label: "Aidat", icon: "money" },
-  { href: "/reports/dues", label: "Raporlar", icon: "chart" },
-  { href: "/transparency", label: "Şeffaflık", icon: "money" },
-  { href: "/users", label: "Kullanıcılar", icon: "users" },
-  { href: "/announcements", label: "Duyurular", icon: "megaphone" },
-  { href: "/complaints", label: "Talepler", icon: "chat" },
-  { href: "/notifications", label: "Bildirimler", icon: "bell" },
-  { href: "/integrations", label: "Entegrasyonlar", icon: "hub" },
-  { href: "/support", label: "Destek", icon: "chat" },
-  { href: "/audit", label: "Denetim Kaydı", icon: "scan" },
-  { href: "/settings", label: "Ayarlar", icon: "gear" },
+// Menu ogeleri METIN degil ANAHTAR tasir (tur 17): etiket cizim aninda
+// aktif dilde cozulur. Eskiden Turkce sabitlerdi ve dil degisimi menuyu
+// oldugu gibi birakirdi.
+const LINKS: { href: string; anahtar: SozlukAnahtari; icon: IconName }[] = [
+  { href: "/dashboard", anahtar: "kabukCanliPanel", icon: "grid" },
+  { href: "/tenants", anahtar: "kabukTesisler", icon: "building" },
+  { href: "/shifts", anahtar: "kabukVardiyalar", icon: "clock" },
+  { href: "/checkpoints", anahtar: "kabukNfcNoktalari", icon: "scan" },
+  { href: "/patrol-plans", anahtar: "kabukDevriyePlanlari", icon: "route" },
+  { href: "/tasks", anahtar: "kabukGorevler", icon: "check" },
+  { href: "/assets", anahtar: "kabukDemirbas", icon: "box" },
+  { href: "/units", anahtar: "kabukDaireler", icon: "home" },
+  { href: "/building-editor", anahtar: "kabukBinaDuzenleme", icon: "edit" },
+  { href: "/schematic", anahtar: "kabukSikayetHaritasi", icon: "pin" },
+  { href: "/dues", anahtar: "kabukAidat", icon: "money" },
+  { href: "/reports/dues", anahtar: "kabukRaporlar", icon: "chart" },
+  { href: "/transparency", anahtar: "kabukSeffaflik", icon: "money" },
+  { href: "/users", anahtar: "kabukKullanicilar", icon: "users" },
+  { href: "/announcements", anahtar: "kabukDuyurular", icon: "megaphone" },
+  { href: "/complaints", anahtar: "kabukTalepler", icon: "chat" },
+  { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell" },
+  { href: "/integrations", anahtar: "kabukEntegrasyonlar", icon: "hub" },
+  { href: "/support", anahtar: "kabukDestek", icon: "chat" },
+  { href: "/audit", anahtar: "kabukDenetimKaydi", icon: "scan" },
+  { href: "/settings", anahtar: "kabukAyarlar", icon: "gear" },
 ];
 
 function Icon({ name }: { name: IconName }) {
@@ -106,6 +112,7 @@ function Icon({ name }: { name: IconName }) {
 function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useT();
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -139,26 +146,29 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
               {active && (
                 <motion.span
                   layoutId="nav-active-bar"
-                  className="absolute inset-y-1.5 left-0 w-1 rounded-r-full bg-brand-teal"
+                  className="absolute inset-y-1.5 start-0 w-1 rounded-e-full bg-brand-teal"
                   transition={{ type: "spring", stiffness: 500, damping: 40 }}
                 />
               )}
               <span className={active ? "text-brand-teal" : "text-slate-400 group-hover:text-slate-500"}>
                 <Icon name={l.icon} />
               </span>
-              <span className="truncate">{l.label}</span>
+              <span className="truncate">{t(l.anahtar)}</span>
             </Link>
           );
         })}
       </nav>
 
       <div className="shrink-0 space-y-2 border-t border-slate-200 px-3 py-4">
-        <ThemeToggle />
+        <div className="flex flex-wrap gap-2">
+          <ThemeToggle />
+          <DilSecici />
+        </div>
         <button
           onClick={logout}
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-left text-sm text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-start text-sm text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
         >
-          Çıkış
+          {t("kabukCikisYap")}
         </button>
       </div>
     </div>
@@ -168,6 +178,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const t = useT();
 
   // Rota degisince mobil cekmeceyi kapat.
   useEffect(() => setOpen(false), [pathname]);
@@ -176,7 +187,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen">
         {/* Masaustu sabit kenar cubugu */}
-        <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-slate-200 bg-white lg:block">
+        {/* RTL: `left/border-r` yerine MANTIKSAL kenar — Arapcada kenar
+            cubugu saga gecer (tur 17). */}
+        <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 border-e border-slate-200 bg-white lg:block">
           <SidebarBody />
         </aside>
 
@@ -184,7 +197,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden">
           <button
             onClick={() => setOpen(true)}
-            aria-label="Menüyü aç"
+            aria-label={t("kabukMenuyuAc")}
             className="rounded-lg border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
@@ -198,21 +211,25 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Mobil cekmece + arka plan */}
         {open && (
           <button
-            aria-label="Menüyü kapat"
+            aria-label={t("kabukMenuyuKapat")}
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
           />
         )}
         <aside
-          className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-slate-200 bg-white transition-transform duration-300 lg:hidden ${
-            open ? "translate-x-0" : "-translate-x-full"
+          // Cekmece RTL'de SAGDAN girer: `start-0` + `rtl:translate-x-full`
+          // (Tailwind'in `-translate-x-full`u yon farkindaligi TASIMAZ).
+          className={`fixed inset-y-0 start-0 z-50 w-64 border-e border-slate-200 bg-white transition-transform duration-300 lg:hidden ${
+            open
+              ? "translate-x-0"
+              : "-translate-x-full rtl:translate-x-full"
           }`}
         >
           <SidebarBody onNavigate={() => setOpen(false)} />
         </aside>
 
         {/* Icerik */}
-        <div className="lg:pl-64">
+        <div className="lg:ps-64">
           <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             {children}
           </main>

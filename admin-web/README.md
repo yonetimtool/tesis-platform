@@ -96,6 +96,107 @@ components/Nav.tsx            ust menu + cikis
 - **Bildirimler** (`/notifications`): liste, okundu/okunmamis filtresi, sayfalama (limit/offset),
   `PATCH /notifications/{id}` ile okundu isaretleme.
 
+## Coklu dil (i18n) — 7 dil + RTL
+
+Panel tur 17'ye kadar **tek dilliydi**: `<html lang="tr">`, Turkce sabitler ve
+BFF'te sabit `Accept-Language: tr`. Mobil uygulama (tur 1-13) ve backend
+(tur 14-16) 7 dile gecmisti; panel geride kalan son parcaydi.
+
+### Mimari
+
+| Parca | Yer |
+|---|---|
+| Dil kumesi + cozumleme | `lib/i18n/diller.ts` (`DILLER`, `istekDili`, `acceptLanguageCoz`, `yon`) |
+| Sozlukler | `lib/i18n/sozluk/{tr,en,ar,ru,de,fr,es}.ts` |
+| Sozluk TIPI | `lib/i18n/sozluk/tipler.ts` — **`typeof tr`den turer** |
+| Baglam + `t()` | `lib/i18n/kullan.tsx` (`I18nProvider`, `useT`) |
+| Dil secici | `components/DilSecici.tsx` (kabukta + giris ekraninda) |
+| Kilit | `tests/i18n.test.ts` (18 test) |
+
+**KUTUPHANE YOK — bilincli.** Sozluk duz bir TS nesnesidir ve tipi kaynak
+dilden (`tr`) turer: eksik ya da fazla anahtar **derleme hatasidir**
+(`npx tsc --noEmit` eksik anahtarlari tek tek sayar). Bir i18n kutuphanesi bunu
+calisma anina ("missing key" uyarisi) ertelerdi. Bu, mobil taraftaki
+"`switch`in `default` dalini yazma, derleyici ceviriyi zorlasin" kuralinin
+TypeScript karsiligidir.
+
+### Dil nasil secilir
+
+```
+KULLANICI SECIMI (cookie `ui.locale`)  ->  tarayici `Accept-Language`  ->  tr
+```
+
+Secim **cookie**dedir, localStorage'da degil: sunucu bileseni ilk boyamada
+`<html lang/dir>` icin, **BFF** ise backend'e gonderdigi `Accept-Language`
+basligi icin ayni degeri okur. Yani **tek secim** hem paneli hem SUNUCU
+metinlerini (hata mesajlari — tur 14, icerik cevirisi, bildirimler) ayni dile
+getirir. localStorage olsaydi sunucu bileseni onu goremez, ilk kare yanlis
+dilde boyanir ve backend Turkce hata donerdi.
+
+### RTL
+
+`<html dir>` sunucuda uretilir. Kabukta sabit yon siniflari yerine
+**mantiksal** karsiliklari kullanilir: `start-`/`end-`, `ps-`/`pe-`,
+`border-e`, `text-start`. Arapcada kenar cubugu saga gecer, mobil cekmece
+sagdan girer (`rtl:translate-x-full` — Tailwind'in `-translate-x-full`u yon
+farkindaligi TASIMAZ). `tests/i18n.test.ts` kabukta sabit `left-0`/`pl-64`/
+`border-r` kalmadigini dogrular.
+
+### Bu turda cevrilen yuzey (tur 17)
+
+Kabuk (21 menu ogesi + cikis + mobil cekmece), **giris ekrani** (dil secici
+dahil — Turkce bilmeyen kullanici oturum acmadan once dilini secebilmeli),
+tema dugmesi, sayfa ust verisi (`<title>`/description `generateMetadata` ile),
+rol adlari (`lib/roles.ts` artik METIN degil **KIMLIK** tasir: `roleAnahtari`
++ `rolAdi(t, deger)`), BFF'in kendi urettigi oturum-doldu mesaji.
+
+### Kalan is — modul modul (sonraki turlar)
+
+Olcum (repo kokunden `admin-web/` icinde):
+
+```bash
+# 1) TR'ye ozgu karakter VEYA yaygin TR UI kelimesi
+python3 - <<'EOF'
+import re, pathlib
+tr=set('çğıöşüÇĞİÖŞÜ')
+kw=re.compile(r'\b(Yeni|Aktif|Bekliyor|Kayıt|Açık|Giriş|Sil|Kaydet|Ekle|Düzenle|Tamam|İptal|Vazgeç|Ara|Filtre)\b')
+n=0
+for f in list(pathlib.Path('app').rglob('*.tsx'))+list(pathlib.Path('components').rglob('*.tsx'))+list(pathlib.Path('lib').rglob('*.ts')):
+    if 'i18n/sozluk' in str(f): continue
+    body='\n'.join(l for l in f.read_text().split('\n') if not l.strip().startswith('//'))
+    for m in re.finditer(r'"([^"\\\n]{2,})"|\'([^\'\\\n]{2,})\'|>([^<>{}\n]{2,})<', body):
+        v=(m.group(1) or m.group(2) or m.group(3) or '').strip()
+        if any(c in tr for c in v) or kw.search(v): n+=1
+print(n)
+EOF
+```
+
+| | Olcum 1 (diyakritik/kelime) | Olcum 2 (UI konumu) |
+|---|---|---|
+| Tur 17 oncesi | 473 string / 35 dosya | — |
+| Tur 17 sonrasi | **450 / 32** | **355 / 28** |
+
+> **IKINCI OLCUM ZORUNLUDUR.** Mobil §15'in en pahali dersi: birinci olcum
+> yalnizca Turkce'ye ozgu karakter **veya** listedeki kelimeyi arar.
+> `"Tamamlanan"`, `"Bekleyen"`, `"Toplam"` gibi metinler ikisini de tasimaz ve
+> sayima **girmez** — nitekim `dashboard/page.tsx` birinci olcumde 7 string
+> gosterirken ekranda bundan fazlasi Turkcedir. Bir sayfayi "bitti" ilan
+> etmeden once UI konumundaki (`label=`, `title=`, `placeholder=`,
+> `aria-label=`, `>metin<`) **tum** literalleri de taramak gerekir.
+
+Kalan sayfalar (buyukten kucuge): `assets`, `building-editor`, `complaints`,
+`tenants/[id]`, `tasks`, `UnitDetail`, `users`, `tenants`, `integrations`,
+`support`, `reports/dues`, `dues`, `units`, `transparency`, `announcements`,
+`reports/patrols`, `schematic`, `shifts`, `patrol-plans`, `audit`,
+`reports/tasks`, `checkpoints`, `dashboard`, `notifications`, `settings`.
+
+**Ayri bir alt is — TARIH BICIMI.** `lib/fetcher.ts` ve 5 sayfa tarihi
+`toLocaleString("tr-TR")` ile bicimliyor: dil degisse de tarih Turkce
+bicimde kalir (mobil tur 15'te ayni sinif hata `tarihBicimi(dil)` ile
+kapanmisti). Toplam 42 cagri yeri; kendi turunu hak ediyor.
+`lib/money.ts`in `tr-TR` kullanimi ise **DOGRUDUR** ve kalir: para politikasi
+"TL + Turkce gruplama, arayuz dili ne olursa olsun" der (mobil README §15).
+
 ## Testler
 
 ```bash

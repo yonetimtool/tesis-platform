@@ -2,13 +2,21 @@
 
 import { useEffect, useState } from "react";
 
+import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+
 // Tema modu: sistem (OS'i izle), acik veya koyu. Secim localStorage'da kalici.
 // Ilk boyama oncesi `.dark` sinifi layout'taki satir-ici script ile atanir
 // (FOUC yok); bu bilesen calisma-zamani degisimini ve senkronu yonetir.
 type Mode = "system" | "light" | "dark";
 
 const ORDER: Mode[] = ["system", "light", "dark"];
-const LABEL: Record<Mode, string> = { system: "Sistem", light: "Açık", dark: "Koyu" };
+// Etiket METIN degil ANAHTAR (tur 17) — cizim aninda aktif dilde cozulur.
+const LABEL: Record<Mode, SozlukAnahtari> = {
+  system: "temaSistem",
+  light: "temaAcik",
+  dark: "temaKoyu",
+};
 const ICON: Record<Mode, string> = { system: "🖥️", light: "☀️", dark: "🌙" };
 
 function systemPrefersDark(): boolean {
@@ -21,6 +29,7 @@ function applyMode(mode: Mode) {
 }
 
 export function ThemeToggle() {
+  const t = useT();
   const [mode, setMode] = useState<Mode>("system");
   const [mounted, setMounted] = useState(false);
 
@@ -48,15 +57,15 @@ export function ThemeToggle() {
     applyMode(next);
   }
 
-  // Hydration uyumu: sunucu modu bilmez; ilk render'da notrr etiket goster.
-  const label = mounted ? LABEL[mode] : "Tema";
+  // Hydration uyumu: sunucu modu bilmez; ilk render'da notr etiket goster.
+  const label = mounted ? t(LABEL[mode]) : t("temaSecici");
   const icon = mounted ? ICON[mode] : "🎨";
 
   return (
     <button
       onClick={cycle}
-      title={`Tema: ${label} — değiştirmek için tıklayın`}
-      aria-label={`Tema: ${label}`}
+      title={`${t("temaSecici")}: ${label}`}
+      aria-label={`${t("temaSecici")}: ${label}`}
       className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100"
     >
       <span aria-hidden>{icon}</span> {label}

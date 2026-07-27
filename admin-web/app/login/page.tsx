@@ -7,6 +7,9 @@ import { useEffect, useState } from "react";
 
 import type { ApiError } from "@/lib/types";
 
+import { DilSecici } from "@/components/DilSecici";
+import { useT } from "@/lib/i18n/kullan";
+
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 // "Beni hatırla" için localStorage anahtarları (namespace: yonetio.rememberMe.*).
@@ -21,6 +24,7 @@ const RM_TENANT = "yonetio.rememberMe.tenant";
 const RM_EMAIL = "yonetio.rememberMe.email";
 
 export default function LoginPage() {
+  const t = useT();
   const router = useRouter();
   const [tenantSlug, setTenantSlug] = useState("");
   const [email, setEmail] = useState("");
@@ -73,7 +77,9 @@ export default function LoginPage() {
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as ApiError | null;
-        setError(data?.error?.message ?? "Giriş başarısız.");
+        // Sunucu metni ONCE (tur 14'ten beri istegin dilinde gelir); yoksa
+        // panel sozlugunden genel metin.
+        setError(data?.error?.message ?? t("girisBasarisiz"));
         return;
       }
       // Başarılı giriş: işaretliyse bilgileri sakla, değilse temizle.
@@ -81,7 +87,7 @@ export default function LoginPage() {
       router.replace("/dashboard");
       router.refresh();
     } catch {
-      setError("Sunucuya ulaşılamadı.");
+      setError(t("ortakSunucuyaUlasilamadi"));
     } finally {
       setLoading(false);
     }
@@ -138,23 +144,23 @@ export default function LoginPage() {
             className="relative z-10 max-w-md"
           >
             <h1 className="text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
-              Tesis operasyonunuz,
-              <br />
-              tek panelden.
+              {t("girisSloganBaslik")}
             </h1>
             <p className="mt-4 text-base leading-relaxed text-white/75">
-              Devriye, görev, aidat ve sakin akışlarını tek yerden yönetin —
-              canlı durum, net raporlar, sade bir arayüz.
+              {t("girisSloganAlt")}
             </p>
           </motion.div>
 
           <div className="relative z-10 text-xs text-white/60">
-            © Yönetio · çok kiracılı tesis operasyon platformu
+            © {t("girisAltBilgi")}
           </div>
         </section>
 
         {/* ---- Sag: temiz form karti ---- */}
-        <section className="flex items-center justify-center bg-[#fafbfc] px-4 py-10 sm:px-8 dark:bg-transparent">
+        <section className="relative flex items-center justify-center bg-[#fafbfc] px-4 py-10 sm:px-8 dark:bg-transparent">
+          <div className="absolute end-4 top-4 z-20">
+            <DilSecici />
+          </div>
           <motion.form
             onSubmit={onSubmit}
             variants={container}
@@ -163,14 +169,14 @@ export default function LoginPage() {
             className="w-full max-w-sm space-y-5 rounded-2xl border border-slate-200 bg-white p-8 shadow-card"
           >
             <motion.div variants={item}>
-              <h2 className="text-xl font-semibold tracking-tight">Yönetim Paneli</h2>
+              <h2 className="text-xl font-semibold tracking-tight">{t("girisYonetimPaneli")}</h2>
               <p className="mt-1 text-sm text-muted">
-                Yalnızca platform admini giriş yapabilir.
+                {t("girisYalnizAdmin")}
               </p>
             </motion.div>
 
             <motion.label variants={item} className="block">
-              <span className={labelText}>Tesis (slug)</span>
+              <span className={labelText}>{t("girisTesisSlug")}</span>
               <input
                 className={field}
                 value={tenantSlug}
@@ -182,7 +188,7 @@ export default function LoginPage() {
             </motion.label>
 
             <motion.label variants={item} className="block">
-              <span className={labelText}>E-posta</span>
+              <span className={labelText}>{t("girisEposta")}</span>
               <input
                 type="email"
                 className={field}
@@ -194,7 +200,7 @@ export default function LoginPage() {
             </motion.label>
 
             <motion.label variants={item} className="block">
-              <span className={labelText}>Parola</span>
+              <span className={labelText}>{t("girisParola")}</span>
               <input
                 type="password"
                 className={field}
@@ -216,7 +222,7 @@ export default function LoginPage() {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 rounded border-slate-300 accent-brand-teal focus:ring-2 focus:ring-brand-teal/25"
               />
-              <span className="text-sm text-slate-700">Beni hatırla</span>
+              <span className="text-sm text-slate-700">{t("girisBeniHatirla")}</span>
             </motion.label>
 
             {error && (
@@ -240,7 +246,7 @@ export default function LoginPage() {
               {loading && (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
               )}
-              {loading ? "Giriş yapılıyor..." : "Giriş yap"}
+              {loading ? t("girisYapiliyor") : t("girisYap")}
             </motion.button>
           </motion.form>
         </section>
