@@ -33,6 +33,7 @@ import 'package:mobile/src/features/yonetici_iletisim/data/yonetici_iletisim_api
 import 'package:mobile/src/features/yonetici_iletisim/domain/yonetici_iletisim_models.dart';
 import 'package:mobile/src/features/yonetici_iletisim/presentation/yonetici_iletisim_screen.dart';
 
+import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
 // --------------------------------------------------------------------------
@@ -382,6 +383,52 @@ void main() {
       await tester.pumpWidget(ekran);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: '$etiket 320');
+    }
+  });
+
+  // ---- TUR 24: EKRAN SURUSU ----
+  testWidgets('SURUS: destek ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_destekEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+  testWidgets('SURUS: tesis kurulumu ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_tesisEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+  testWidgets('SURUS: vardiyalar ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_vardiyaEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+  testWidgets('SURUS: yonetici iletisim ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_yoneticiEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
     }
   });
 }

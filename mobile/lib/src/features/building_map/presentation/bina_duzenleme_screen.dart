@@ -282,20 +282,33 @@ class _BlockTile extends StatelessWidget {
           children: [
             Icon(icon ?? Icons.domain, color: iconColor),
             const SizedBox(height: 4),
+            // SABIT 104x104 kutucuk: her satir TEK SATIR olmak ZORUNDA.
+            // `maxLines` verilmezse uzun ceviriler (ru/es) ikinci satira
+            // sarar ve kutucuk 10 px tasar — tur 24'te 7 dilde surerken
+            // yakalandi. `overflow` tek basina yetmez: sarmayi engelleyen
+            // `maxLines`tir.
             Text(
               icon == null ? context.l10n.binaBlokEtiket(label) : label,
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: titleColor,
               ),
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            Text(context.l10n.binaDaireSayisi(unitCount),
-                style: TextStyle(
-                    fontSize: 11, color: scheme.onSurfaceVariant)),
+            Text(
+              context.l10n.binaDaireSayisi(unitCount),
+              style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             if (!registered)
-              Text(context.l10n.binaKayitsiz,
-                  style: const TextStyle(fontSize: 10, color: Colors.orange)),
+              Text(
+                context.l10n.binaKayitsiz,
+                style: const TextStyle(fontSize: 10, color: Colors.orange),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
           ],
         ),
       ),

@@ -36,6 +36,7 @@ import 'package:mobile/src/features/kargo/domain/kargo_models.dart';
 import 'package:mobile/src/features/kargo/presentation/kargo_durum_adi.dart';
 import 'package:mobile/src/features/kargo/presentation/kargo_screen.dart';
 
+import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
 // --------------------------------------------------------------------------
@@ -515,4 +516,43 @@ void main() {
       reason: 'kargo detayi Arapca metinlerle tasmamali',
     );
   });
+
+  // ---- TUR 24: EKRAN SURUSU (bkz. README — sozluk degil EKRAN olcumu) ----
+  testWidgets('SURUS: butce ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_butceEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+
+  testWidgets('SURUS: demirbas ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_demirbasEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+
+  testWidgets('SURUS: kargo ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_kargoEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+
+
 }

@@ -26,6 +26,7 @@ import 'package:mobile/src/features/dues/presentation/my_dues_screen.dart';
 import 'package:mobile/src/features/scan/domain/okutma_hata_kodu.dart';
 import 'package:mobile/src/features/scan/presentation/okutma_hata_metni.dart';
 
+import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
 // --------------------------------------------------------------------------
@@ -358,5 +359,29 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull, reason: 'nokta formu 320');
+  });
+
+  // ---- TUR 24: EKRAN SURUSU ----
+  testWidgets('SURUS: aidat ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_aidatEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+  testWidgets('SURUS: kontrol noktalari ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_noktaEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
   });
 }

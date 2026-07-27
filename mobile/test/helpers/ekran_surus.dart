@@ -20,6 +20,15 @@ List<String> gorunenMetinler(WidgetTester tester) {
   return out;
 }
 
+/// Test kosumlarindaki SUNUCU/TENANT verisi — cevrilmemesi DOGRU olan
+/// metinler. Surusun isi UI SABITLERINI yakalamak; veriyi "sizinti" saymak
+/// yanlis alarm uretir ve taramayi zamanla susturur.
+const surusVerisi = <String>{
+  'Mehmet', '34 ABC 123', 'Ana Kapı', 'Havuz temizliği', 'Kazan dairesi',
+  'Gece devriyesi', 'Temizlik', 'Asansör arızası', 'Bahçe Düzenlemesi',
+  'Mng Kargo', 'Aras Kargo', 'Yurtiçi', 'Kerem', 'Ayşe', 'Acme Plaza',
+};
+
 /// Marka + kullanici VERISI disinda Turkce sabit var mi?
 void trSizintisiYok(WidgetTester tester, String dil, {Set<String> veri = const {}}) {
   for (final m in gorunenMetinler(tester)) {

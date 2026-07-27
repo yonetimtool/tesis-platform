@@ -32,6 +32,7 @@ import 'package:mobile/src/features/tasks/presentation/task_tip_style.dart';
 import 'package:mobile/src/features/tasks/presentation/tasks_controller.dart';
 import 'package:mobile/src/features/tasks/presentation/tasks_screen.dart';
 
+import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
 // --------------------------------------------------------------------------
@@ -311,4 +312,31 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  // ---- TUR 24: EKRAN SURUSU (bkz. README — sozluk degil EKRAN olcumu) ----
+  testWidgets('SURUS: gorevler ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_tasksEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+
+  testWidgets('SURUS: devriye planlari ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_planlarEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+
+
 }

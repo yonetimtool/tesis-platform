@@ -27,6 +27,7 @@ import 'package:mobile/src/features/profile/presentation/profile_screen.dart';
 import 'package:mobile/src/features/staff/data/staff_api.dart';
 import 'package:mobile/src/features/staff/presentation/staff_screen.dart';
 
+import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
 // --------------------------------------------------------------------------
@@ -376,5 +377,18 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull, reason: 'personel formu 320');
+  });
+
+  // ---- TUR 24: EKRAN SURUSU ----
+  testWidgets('SURUS: giris ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_girisEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
   });
 }

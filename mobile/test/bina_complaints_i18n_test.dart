@@ -35,6 +35,7 @@ import 'package:mobile/src/features/unit_complaints/data/unit_complaint_api.dart
 import 'package:mobile/src/features/unit_complaints/domain/unit_complaint_models.dart';
 import 'package:mobile/src/features/unit_complaints/presentation/kategori_adi.dart';
 
+import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
 // --------------------------------------------------------------------------
@@ -332,6 +333,43 @@ void main() {
     expect(tester.takeException(), isNull,
         reason: 'toplu daire formu Arapca metinlerle tasmamali');
   });
+
+  // ---- TUR 24: EKRAN SURUSU ----
+  testWidgets('SURUS: talep ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_talepEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+  testWidgets('SURUS: bina semasi ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_semaEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+  // Her dil AYRI test: bir dilin tasmasi digerlerini maskelemesin ve
+  // rapor "hangi dil" sorusunu dogrudan yanitlasin.
+  for (final dil in surusDilleri) {
+    testWidgets('SURUS: bina duzenleme ekrani ($dil) TR sabit tasimaz',
+        (tester) async {
+      tester.view.physicalSize = const Size(430, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(_duzenlemeEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    });
+  }
 }
 
 class _PatlayanMapApi extends BuildingMapApi {

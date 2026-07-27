@@ -30,6 +30,7 @@ import 'package:mobile/src/features/visitors/data/visitor_api.dart';
 import 'package:mobile/src/features/visitors/domain/visitor_models.dart';
 import 'package:mobile/src/features/visitors/presentation/visitors_screen.dart';
 
+import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
 // --------------------------------------------------------------------------
@@ -500,6 +501,30 @@ void main() {
       await tester.pumpWidget(ekran);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: '$etiket 320');
+    }
+  });
+
+  // ---- TUR 24: EKRAN SURUSU ----
+  testWidgets('SURUS: ziyaretci ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_ziyaretEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
+    }
+  });
+  testWidgets('SURUS: rapor ekrani 6 dilde TR sabit tasimaz', (tester) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (final dil in surusDilleri) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_raporEkrani(Locale(dil)));
+      await tester.pumpAndSettle();
+      trSizintisiYok(tester, dil, veri: surusVerisi);
     }
   });
 }

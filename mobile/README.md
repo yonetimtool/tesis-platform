@@ -2049,6 +2049,23 @@ ARB'de doğru görünüp gen-l10n çıktısında bozuk olabilir.
 > ölçer; bu *ekranı* ölçer — sözlükte hiç olmayan, kaynakta unutulmuş bir sabit
 > ancak böyle yakalanır (panelde tur 21'de tam olarak bu olmuştu).
 >
+**TUR 24 — SÜRÜŞ TÜM MODÜLLERE YAYILDI.** 15 ekran × 6 dil: görevler,
+devriye planları, rezervasyon, etkinlik, görüntüleme izni, bütçe, demirbaş,
+kargo, site kuralı, sakinler, giriş, aidat, kontrol noktaları, dış hizmet,
+şeffaflık, ziyaretçi, rapor, talep, bina şeması, bina düzenleme, destek,
+tesis kurulumu, vardiyalar, yönetici iletişim.
+
+> **SÜRÜŞ BİR LAYOUT HATASI BULDU (tur 24).** `bina_duzenleme` ekranındaki
+> sabit **104×104** blok kutucuğu `ru` ve `es`'de **10 px taştı**: uzun
+> çeviriler ikinci satıra sarıyordu. `tr/en/de/fr/ar` sığdığı için önceki
+> turların testleri (yalnız tr/de/ar sürüyordu) bunu **hiç görmemişti**.
+> Düzeltme `maxLines: 1` — `overflow: ellipsis` tek başına yetmez, sarmayı
+> engelleyen `maxLines`tır. Bu, README'nin "dar ekran" bölümündeki kalıbın
+> yeni bir örneği: **sabit ölçülü kutu + çevrilebilir metin = taşma riski**.
+>
+> Her dil **ayrı test** olarak sürülür: bir dilin taşması diğerlerini
+> maskelemesin ve rapor "hangi dil" sorusunu doğrudan yanıtlasın.
+
 > Sürüşün **VERİ** ile **UI SABİTİ** ayrımını yapması şart: ilk koşumda
 > `"Ana Kapı"` (kontrol noktası adı) ve `"GÜVENLİK & DANIŞMANLIK"` (logo alt
 > başlığı) çıktı. Birincisi tenant verisi, ikincisi marka kilidi — ikisi de
