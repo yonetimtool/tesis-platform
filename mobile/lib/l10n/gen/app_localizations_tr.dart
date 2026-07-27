@@ -3773,4 +3773,98 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get bildirimYeniPush => 'Yeni bildirim';
+
+  @override
+  String get akisDevriyeOkutma => 'Devriye Okutması';
+
+  @override
+  String get akisGorevTamamlandi => 'Görev Tamamlandı';
+
+  @override
+  String get akisAidatOdemesi => 'Aidat Ödemesi';
+
+  @override
+  String get akisTalepAcildi => 'Talep Açıldı';
+
+  @override
+  String get akisTalepIsEmri => 'Talep İş Emrine Dönüştü';
+
+  @override
+  String get akisTalepCozuldu => 'Talep Çözüldü';
+
+  @override
+  String get akisTalepReddedildi => 'Talep Reddedildi';
+
+  @override
+  String get akisDaireSikayeti => 'Daire Şikayeti';
+
+  @override
+  String get akisAlarmKacirilanTur => 'Kaçırılan Tur';
+
+  @override
+  String get akisAlarmEksikCheckpoint => 'Eksik Kontrol Noktası';
+
+  @override
+  String get akisAlarmGecikmisOkutma => 'Gecikmiş Okutma';
+
+  @override
+  String get akisZiyaretciGirisi => 'Ziyaretçi Girişi';
+
+  @override
+  String get akisZiyaretciCikisi => 'Ziyaretçi Çıkışı';
+
+  @override
+  String get akisKargoKaydedildi => 'Kargo Kaydedildi';
+
+  @override
+  String get akisKargoTeslimEdildi => 'Kargo Teslim Edildi';
+
+  @override
+  String get akisAracGirisi => 'Araç Girişi';
+
+  @override
+  String get akisAracCikisi => 'Araç Çıkışı';
+
+  @override
+  String get akisIhlalKaydi => 'İhlal Kaydı';
+
+  @override
+  String akisAltDaireTutar(Object daire, Object tutar) {
+    return 'Daire $daire — $tutar';
+  }
+
+  @override
+  String akisAltDaireKategori(Object daire, Object kategori) {
+    return 'Daire $daire — $kategori';
+  }
+
+  @override
+  String akisAltAdDaire(Object ad, Object daire) {
+    return '$ad — Daire $daire';
+  }
+
+  @override
+  String akisAltPlakaDaire(Object plaka, Object daire) {
+    return '$plaka — Daire $daire';
+  }
+
+  @override
+  String akisAltPlakaTanim(Object plaka, Object tanim) {
+    return '$plaka ($tanim)';
+  }
+
+  @override
+  String akisAltPlakaDaireTanim(Object plaka, Object daire, Object tanim) {
+    return '$plaka — Daire $daire ($tanim)';
+  }
+
+  @override
+  String akisAltMetinKonum(Object metin, Object konum) {
+    return '$metin — $konum';
+  }
+
+  @override
+  String akisAltPlanAralik(Object plan, Object aralik) {
+    return '$plan · $aralik';
+  }
 }

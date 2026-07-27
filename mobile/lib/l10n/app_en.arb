@@ -1090,5 +1090,80 @@
   "aramaYapilamiyor": "Not callable",
   "bildirimYok": "No notifications",
   "bildirimYuklenemedi": "Notifications could not be loaded.\n{hata}",
-  "bildirimYeniPush": "New notification"
+  "bildirimYeniPush": "New notification",
+  "akisDevriyeOkutma": "Patrol Scan",
+  "akisGorevTamamlandi": "Task Completed",
+  "akisAidatOdemesi": "Dues Payment",
+  "akisTalepAcildi": "Request Opened",
+  "akisTalepIsEmri": "Request Turned Into a Work Order",
+  "akisTalepCozuldu": "Request Resolved",
+  "akisTalepReddedildi": "Request Rejected",
+  "akisDaireSikayeti": "Unit Complaint",
+  "akisAlarmKacirilanTur": "Missed Patrol",
+  "akisAlarmEksikCheckpoint": "Missing Checkpoint",
+  "akisAlarmGecikmisOkutma": "Late Scan",
+  "akisZiyaretciGirisi": "Visitor Check-In",
+  "akisZiyaretciCikisi": "Visitor Check-Out",
+  "akisKargoKaydedildi": "Parcel Registered",
+  "akisKargoTeslimEdildi": "Parcel Handed Over",
+  "akisAracGirisi": "Vehicle Entry",
+  "akisAracCikisi": "Vehicle Exit",
+  "akisIhlalKaydi": "Violation Record",
+  "akisAltDaireTutar": "Unit {daire} — {tutar}",
+  "@akisAltDaireTutar": {
+    "placeholders": {
+      "daire": {},
+      "tutar": {}
+    }
+  },
+  "akisAltDaireKategori": "Unit {daire} — {kategori}",
+  "@akisAltDaireKategori": {
+    "placeholders": {
+      "daire": {},
+      "kategori": {}
+    }
+  },
+  "akisAltAdDaire": "{ad} — Unit {daire}",
+  "@akisAltAdDaire": {
+    "placeholders": {
+      "ad": {},
+      "daire": {}
+    }
+  },
+  "akisAltPlakaDaire": "{plaka} — Unit {daire}",
+  "@akisAltPlakaDaire": {
+    "placeholders": {
+      "plaka": {},
+      "daire": {}
+    }
+  },
+  "akisAltPlakaTanim": "{plaka} ({tanim})",
+  "@akisAltPlakaTanim": {
+    "placeholders": {
+      "plaka": {},
+      "tanim": {}
+    }
+  },
+  "akisAltPlakaDaireTanim": "{plaka} — Unit {daire} ({tanim})",
+  "@akisAltPlakaDaireTanim": {
+    "placeholders": {
+      "plaka": {},
+      "daire": {},
+      "tanim": {}
+    }
+  },
+  "akisAltMetinKonum": "{metin} — {konum}",
+  "@akisAltMetinKonum": {
+    "placeholders": {
+      "metin": {},
+      "konum": {}
+    }
+  },
+  "akisAltPlanAralik": "{plan} · {aralik}",
+  "@akisAltPlanAralik": {
+    "placeholders": {
+      "plan": {},
+      "aralik": {}
+    }
+  }
 }

@@ -42,8 +42,9 @@ Widget _app({List<Shift> vardiyalar = const []}) => ProviderScope(
               ActivityItem(
                 id: 'ziyaretci_giris:z1',
                 tur: ActivityTur.ziyaretciGiris,
-                baslik: 'Ziyaretçi Girişi',
-                altMetin: 'Ahmet Yılmaz — Daire 12',
+                baslikKimlik: AkisBaslik.ziyaretciGiris,
+                sunucuBaslik: 'Ziyaretçi Girişi',
+                sunucuAltMetin: 'Ahmet Yılmaz — Daire 12',
                 zaman: DateTime(2026, 7, 23, 10),
                 kaynakId: 'z1',
               ),

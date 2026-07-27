@@ -1580,7 +1580,9 @@ tesis kurulumu/ayarı, şikayetlerim, vardiyalar, yönetici iletişim,
 bildirimler, arama butonu, push). Tur 13'te **`ApiException` ağ metinleri**
 kimliğe çevrildi (`core` artık hiçbir dilde metin üretmez); tur 14'te
 **sunucu hata metinleri** de 7 dile alındı (`backend/app/hata_metinleri.py`) —
-mobil her isteğe `Accept-Language` ekler.
+mobil her isteğe `Accept-Language` ekler; tur 15'te **`/activity` satırları**
+kimliğe çevrildi (sunucu `baslik_kimlik` + `veri` gönderir, cümleyi istemci
+kurar) — böylece sunucudan gelen son Türkçe metin de kalktı.
 
 > **DIŞA ALIM BİTTİ (tur 12) — İ18N BORCU DA KAPANDI (tur 13).** Ölçüm
 > **8 string / 5 dosya**'da duruyor ve tamamı **bilinçli istisna**dır (marka
@@ -1694,14 +1696,21 @@ ve bugünkü durumları:
 | Tüm API hata metinleri (422/409/503...) | `lib/src/core/error/api_exception.dart` (sınıf başı) | **KAPANDI (tur 14)** — sunucu 7 dilde üretiyor |
 | Kamera listesi hata metni | `lib/src/features/cameras/presentation/kameralar_screen.dart` | **KAPANDI (tur 14)** — aynı kanal |
 | Kamera formu 422 mesajı | `lib/src/features/cameras/presentation/kamera_form_sheet.dart` | **KAPANDI (tur 14)** — aynı kanal |
-| Akış satırları (`baslik`/`alt_metin`, 13 kaynak) | `lib/src/features/home/presentation/home_mappers.dart` → `hareketSatirlari` | **AÇIK** — üretilen *içerik*, hata değil; hâlâ TR |
+| Akış satırları (`baslik`/`alt_metin`, 13 kaynak) | `lib/src/features/home/presentation/home_mappers.dart` → `hareketSatirlari` | **KAPANDI (tur 15)** — sunucu `baslik_kimlik` + `veri` gönderiyor, metni istemci kuruyor |
 
 `ApiException.message` **66 dosyada** tüketilir (snackbar/hata kartı); tek sınır
 işaretlenmişti çünkü çeviri sunucuda çözülünce hepsi kendiliğinden düzelir — tur
 14'te tam olarak bu oldu: istemcide **tek bir tüketici bile değişmedi**, yalnız
-`Accept-Language` başlığı eklendi. Kalan tek işaret (`grep -rn
-"SERVER-LOCALIZED(next round)" lib/`) `/activity` satırlarıdır ve ayrı bir iştir:
-o metinler hata değil, sunucunun ürettiği içeriktir.
+`Accept-Language` başlığı eklendi.
+
+**Tur 15'te son işaret de kalktı.** `/activity` satırları için çözüm çeviri
+*değil* **kimlik** oldu: sunucu `baslik_kimlik` + `veri` gönderiyor, cümleyi
+istemci kuruyor (`home/presentation/akis_metinleri.dart`). Böylece para ve saat
+biçimi de istemciye geçti — sunucu artık `₺750.00` ya da `to_char(...)` üretmiyor.
+Bekleyen iş işareti (`grep -rn "SERVER-LOCALIZED(next round)" lib/`) artık
+**boş döner**; kalan `SERVER-LOCALIZED sınırı` notları yalnızca "bu metin
+sunucudan gelir, istemci çevirmez" kuralını hatırlatır (sunucu onları tur 14'ten
+beri isteğin dilinde üretiyor).
 
 > **Tur 13'te bu sınır YALNIZ sunucu metnine daraldı.** Ağ hataları
 > (timeout / bağlantı yok / zarfsız gövde) artık `message` **üretmez**:
@@ -2007,6 +2016,17 @@ yönetici iletişimde **tr→en** dil değişimi; `gunTipiAdi`nın null (kısıt
 **bilinmeyen tel değeri** davranışı; `UnitComplaintKategori` çözücüsünün 7 dili;
 `displayText`in artık varsayılan metin üretmediği; **dil adlarının kendi
 dilinde kaldığı** (istisna kilidi); **RTL** ve **320 dp** senaryoları.
+
+`test/akis_kimlik_i18n_test.dart` (10 test — tur 15): `/activity` satırının
+başlığının **kimlikten** çözüldüğü ve `tur`ün tek başına yetmediği (talep →
+4 ayrı başlık), 18 başlık kimliğinin 7 dilde karşılık bulduğu ve TR sızıntısı
+taşımadığı; alt metinde **VERİ**nin (firma, daire no, plaka) çevrilmeden
+geçtiği ama **KİMLİĞİN** (şikayet kategorisi) çevrildiği; paranın istemcide
+biçimlendiği (kuruş → TL, Arapçada LTR izolasyonu) ve alarm saat aralığının
+istemcide kurulduğu; **opsiyonel alanın yokluğunun** biçimi değiştirdiği (SQL
+`COALESCE`'unun yerine); veri yokken uydurma metin üretilmediği; bilinmeyen
+kimliğin satırı düşürmeyip deprecated sunucu metnine düştüğü. Sunucu tarafı:
+`backend/tests/test_activity.py`.
 
 `test/dil_interceptor_test.dart` (6 test — tur 14): her isteğin
 `Accept-Language` taşıdığı, değerin **cihaz dili değil** uygulamanın o an

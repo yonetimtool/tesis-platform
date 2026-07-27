@@ -1580,5 +1580,80 @@
   "@bildirimYuklenemedi": {
     "description": "{hata} teknik istisna metni — cevrilmez"
   },
-  "bildirimYeniPush": "Yeni bildirim"
+  "bildirimYeniPush": "Yeni bildirim",
+  "akisDevriyeOkutma": "Devriye Okutması",
+  "akisGorevTamamlandi": "Görev Tamamlandı",
+  "akisAidatOdemesi": "Aidat Ödemesi",
+  "akisTalepAcildi": "Talep Açıldı",
+  "akisTalepIsEmri": "Talep İş Emrine Dönüştü",
+  "akisTalepCozuldu": "Talep Çözüldü",
+  "akisTalepReddedildi": "Talep Reddedildi",
+  "akisDaireSikayeti": "Daire Şikayeti",
+  "akisAlarmKacirilanTur": "Kaçırılan Tur",
+  "akisAlarmEksikCheckpoint": "Eksik Kontrol Noktası",
+  "akisAlarmGecikmisOkutma": "Gecikmiş Okutma",
+  "akisZiyaretciGirisi": "Ziyaretçi Girişi",
+  "akisZiyaretciCikisi": "Ziyaretçi Çıkışı",
+  "akisKargoKaydedildi": "Kargo Kaydedildi",
+  "akisKargoTeslimEdildi": "Kargo Teslim Edildi",
+  "akisAracGirisi": "Araç Girişi",
+  "akisAracCikisi": "Araç Çıkışı",
+  "akisIhlalKaydi": "İhlal Kaydı",
+  "akisAltDaireTutar": "Daire {daire} — {tutar}",
+  "@akisAltDaireTutar": {
+    "placeholders": {
+      "daire": {},
+      "tutar": {}
+    }
+  },
+  "akisAltDaireKategori": "Daire {daire} — {kategori}",
+  "@akisAltDaireKategori": {
+    "placeholders": {
+      "daire": {},
+      "kategori": {}
+    }
+  },
+  "akisAltAdDaire": "{ad} — Daire {daire}",
+  "@akisAltAdDaire": {
+    "placeholders": {
+      "ad": {},
+      "daire": {}
+    }
+  },
+  "akisAltPlakaDaire": "{plaka} — Daire {daire}",
+  "@akisAltPlakaDaire": {
+    "placeholders": {
+      "plaka": {},
+      "daire": {}
+    }
+  },
+  "akisAltPlakaTanim": "{plaka} ({tanim})",
+  "@akisAltPlakaTanim": {
+    "placeholders": {
+      "plaka": {},
+      "tanim": {}
+    }
+  },
+  "akisAltPlakaDaireTanim": "{plaka} — Daire {daire} ({tanim})",
+  "@akisAltPlakaDaireTanim": {
+    "placeholders": {
+      "plaka": {},
+      "daire": {},
+      "tanim": {}
+    }
+  },
+  "akisAltMetinKonum": "{metin} — {konum}",
+  "@akisAltMetinKonum": {
+    "placeholders": {
+      "metin": {},
+      "konum": {}
+    }
+  },
+  "akisAltPlanAralik": "{plan} · {aralik}",
+  "@akisAltPlanAralik": {
+    "placeholders": {
+      "plan": {},
+      "aralik": {}
+    }
+  }
 }

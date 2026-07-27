@@ -7739,7 +7739,12 @@ components:
     # ------------------------ birlesik akis (G5) ---------------------------- #
     ActivityItem:
       type: object
-      required: [id, tur, baslik, zaman, kaynak_id]
+      required: [id, tur, baslik_kimlik, veri, baslik, zaman, kaynak_id]
+      description: >
+        METIN DEGIL KIMLIK (tur 15): satirin gorunen cumlesini ISTEMCI kurar.
+        Sunucu `baslik_kimlik` (yerellestirilebilir kimlik) ve `veri` (satirin
+        degisken alanlari) gonderir. `baslik`/`alt_metin` DEPRECATED'dir ve
+        yalniz guncellenmemis istemciler icin, TURKCE uretilir.
       properties:
         id:
           type: string
@@ -7753,15 +7758,50 @@ components:
             [devriye_okutma, gorev_tamamlama, aidat_odeme, talep, daire_sikayeti,
              alarm, ziyaretci_giris, ziyaretci_cikis, kargo, kargo_teslim,
              arac_giris, arac_cikis, ihlal]
+        baslik_kimlik:
+          type: string
+          example: talep_cozuldu
+          enum:
+            [devriye_okutma, gorev_tamamlama, aidat_odeme,
+             talep_acik, talep_is_emri, talep_cozuldu, talep_reddedildi,
+             daire_sikayeti,
+             alarm_kacirilan_tur, alarm_eksik_checkpoint, alarm_gecikmis_okutma,
+             ziyaretci_giris, ziyaretci_cikis, kargo, kargo_teslim,
+             arac_giris, arac_cikis, ihlal]
+          description: >
+            Basligin YERELLESTIRILEBILIR kimligi. `tur`den AYRIDIR: bir tur
+            birden cok baslik verebilir (`talep` -> acildi / is emrine donustu /
+            cozuldu / reddedildi; `alarm` -> tipine gore uc kimlik). Istemci
+            metni kendi dilinde uretir. Taninmayan kimlik satiri DUSURMEZ.
+        veri:
+          type: object
+          additionalProperties: true
+          example: { firma: "Aras Kargo", daire: "A-12" }
+          description: >
+            Satirin DEGISKEN kismi. Alanlar `tur`e gore degisir:
+            `ad` (devriye/gorev), `daire`+`tutar_kurus` (aidat),
+            `baslik` (talep/ihlal, ihlalde ayrica `konum`),
+            `daire`+`kategori` (daire sikayeti; `kategori` SOZLESME KIMLIGI),
+            `plan`+`baslangic`+`bitis` (alarm), `ad`+`daire` (ziyaretci),
+            `firma`+`daire` (kargo), `plaka`(+`daire`,`tanim`) (arac).
+            OPSIYONEL alanlar null olarak degil HIC gonderilmez — bicimi
+            alanin varligi belirler. Para `tutar_kurus` TAM SAYIDIR: bicimleme
+            dile duyarlidir ve istemcinin isidir.
         baslik:
           type: string
+          deprecated: true
           example: "Kargo Teslim Edildi"
-          description: Olay etiketi (kart basligi)
+          description: >
+            DEPRECATED (tur 15) — `baslik_kimlik` kullanin. Yalniz Turkce
+            uretilir; tum istemciler gecince kalkacak.
         alt_metin:
           type: string
           nullable: true
+          deprecated: true
           example: "Aras Kargo — Daire A-12"
-          description: Detay satiri (kart alt yazisi)
+          description: >
+            DEPRECATED (tur 15) — `veri` kullanin. `veri`den TURETILIR
+            (sunucuda artik SQL'de cumle kurulmaz).
         zaman:
           type: string
           format: date-time

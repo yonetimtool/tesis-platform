@@ -1090,5 +1090,80 @@
   "aramaYapilamiyor": "Звонок недоступен",
   "bildirimYok": "Уведомлений нет",
   "bildirimYuklenemedi": "Не удалось загрузить уведомления.\n{hata}",
-  "bildirimYeniPush": "Новое уведомление"
+  "bildirimYeniPush": "Новое уведомление",
+  "akisDevriyeOkutma": "Сканирование обхода",
+  "akisGorevTamamlandi": "Задача выполнена",
+  "akisAidatOdemesi": "Оплата взносов",
+  "akisTalepAcildi": "Заявка открыта",
+  "akisTalepIsEmri": "Заявка стала нарядом",
+  "akisTalepCozuldu": "Заявка решена",
+  "akisTalepReddedildi": "Заявка отклонена",
+  "akisDaireSikayeti": "Жалоба на квартиру",
+  "akisAlarmKacirilanTur": "Пропущенный обход",
+  "akisAlarmEksikCheckpoint": "Пропущенная контрольная точка",
+  "akisAlarmGecikmisOkutma": "Позднее сканирование",
+  "akisZiyaretciGirisi": "Вход посетителя",
+  "akisZiyaretciCikisi": "Выход посетителя",
+  "akisKargoKaydedildi": "Посылка зарегистрирована",
+  "akisKargoTeslimEdildi": "Посылка выдана",
+  "akisAracGirisi": "Въезд автомобиля",
+  "akisAracCikisi": "Выезд автомобиля",
+  "akisIhlalKaydi": "Запись о нарушении",
+  "akisAltDaireTutar": "Кв. {daire} — {tutar}",
+  "@akisAltDaireTutar": {
+    "placeholders": {
+      "daire": {},
+      "tutar": {}
+    }
+  },
+  "akisAltDaireKategori": "Кв. {daire} — {kategori}",
+  "@akisAltDaireKategori": {
+    "placeholders": {
+      "daire": {},
+      "kategori": {}
+    }
+  },
+  "akisAltAdDaire": "{ad} — кв. {daire}",
+  "@akisAltAdDaire": {
+    "placeholders": {
+      "ad": {},
+      "daire": {}
+    }
+  },
+  "akisAltPlakaDaire": "{plaka} — кв. {daire}",
+  "@akisAltPlakaDaire": {
+    "placeholders": {
+      "plaka": {},
+      "daire": {}
+    }
+  },
+  "akisAltPlakaTanim": "{plaka} ({tanim})",
+  "@akisAltPlakaTanim": {
+    "placeholders": {
+      "plaka": {},
+      "tanim": {}
+    }
+  },
+  "akisAltPlakaDaireTanim": "{plaka} — кв. {daire} ({tanim})",
+  "@akisAltPlakaDaireTanim": {
+    "placeholders": {
+      "plaka": {},
+      "daire": {},
+      "tanim": {}
+    }
+  },
+  "akisAltMetinKonum": "{metin} — {konum}",
+  "@akisAltMetinKonum": {
+    "placeholders": {
+      "metin": {},
+      "konum": {}
+    }
+  },
+  "akisAltPlanAralik": "{plan} · {aralik}",
+  "@akisAltPlanAralik": {
+    "placeholders": {
+      "plan": {},
+      "aralik": {}
+    }
+  }
 }

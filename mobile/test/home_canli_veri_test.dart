@@ -59,7 +59,8 @@ _overrides(_Sayac daire, _Sayac akis) => [
           (i) => ActivityItem(
             id: 'talep:$i',
             tur: ActivityTur.talep,
-            baslik: 'Olay $i',
+            baslikKimlik: AkisBaslik.talepAcik,
+            veri: {'baslik': 'Olay $i'},
             zaman: DateTime(2026, 7, 25),
             kaynakId: '$i',
           ),

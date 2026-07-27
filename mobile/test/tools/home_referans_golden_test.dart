@@ -170,8 +170,8 @@ final _hareketler = [
   ActivityItem(
     id: 'talep:t1',
     tur: ActivityTur.talep,
-    baslik: 'Yeni Talep',
-    altMetin: 'Asansör arızası — Tesisat',
+    baslikKimlik: AkisBaslik.talepAcik,
+    veri: const {'baslik': 'Asansör arızası'},
     zaman: DateTime.now().subtract(const Duration(minutes: 20)),
     renk: ActivityRenk.uyari,
     kaynakId: 't1',
@@ -179,8 +179,8 @@ final _hareketler = [
   ActivityItem(
     id: 'gorev_tamamlama:c1',
     tur: ActivityTur.gorevTamamlama,
-    baslik: 'Görev Tamamlandı',
-    altMetin: 'Çöp toplama — Temizlik',
+    baslikKimlik: AkisBaslik.gorevTamamlama,
+    veri: const {'ad': 'Çöp toplama'},
     zaman: DateTime.now().subtract(const Duration(hours: 2)),
     renk: ActivityRenk.olumlu,
     kaynakId: 'c1',
@@ -188,8 +188,8 @@ final _hareketler = [
   ActivityItem(
     id: 'aidat_odeme:o1',
     tur: ActivityTur.aidatOdeme,
-    baslik: 'Aidat Ödemesi',
-    altMetin: '₺1.250,00 — 2026-07',
+    baslikKimlik: AkisBaslik.aidatOdeme,
+    veri: const {'daire': 'A-12', 'tutar_kurus': 125000},
     zaman: DateTime.now().subtract(const Duration(days: 1)),
     renk: ActivityRenk.olumlu,
     kaynakId: 'o1',

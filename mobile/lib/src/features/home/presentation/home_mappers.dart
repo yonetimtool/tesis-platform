@@ -18,6 +18,7 @@ import '../../../core/theme/home_tokens.dart';
 import '../domain/activity_models.dart';
 import '../domain/home_view_models.dart';
 import '../../shifts/presentation/gun_tipi_adi.dart';
+import 'akis_metinleri.dart';
 
 /// GET /weather → baslik hava blogu.
 HomeHava havaOzeti(Weather w) => HomeHava(
@@ -66,17 +67,12 @@ List<VardiyaKart> vardiyaKartlari({
   ];
 }
 
-// SERVER-LOCALIZED(next round): asagidaki satirlarin `baslik` ve `alt_metin`
-// alanlari SUNUCUDAN gelir (13 kaynak, TR uretilir) — istemci CEVIRMEZ.
-// TUR 14 KAPSAMI DISI: o tur yalniz HATA metinlerini (`APIError`) yerellestirdi;
-// `/activity` satirlari uretilen ICERIKTIR ve hala TR gelir. `Accept-Language`
-// artik her istekte gidiyor — sunucu bu satirlari da uretince bu esleme
-// degismeden dogru dilde gorunecek.
 /// `GET /activity` sayfasi → "Son Hareketler" satirlari.
 ///
-/// Metinler SUNUCUDAN gelir (baslik / alt_metin); istemci yalnizca ikon,
-/// modul rengi ve zaman etiketini ekler. Ikon MODULUN rengini, nokta OLAYIN
-/// durum rengini (`renk_ipucu`) tasir (referans gorseller).
+/// TUR 15: metinler ARTIK SUNUCUDAN GELMIYOR. Sunucu `baslik_kimlik` + `veri`
+/// gonderir; baslik ve alt metin burada, aktif dilde uretilir
+/// (`akis_metinleri.dart`). Ikon MODULUN rengini, nokta OLAYIN durum rengini
+/// (`renk_ipucu`) tasir (referans gorseller).
 List<HareketSatiri> hareketSatirlari(
   AppLocalizations l10n,
   String dil,
@@ -87,8 +83,8 @@ List<HareketSatiri> hareketSatirlari(
       for (final o in olaylar)
         HareketSatiri(
           ikon: _ikon(o.tur),
-          baslik: o.baslik,
-          altBaslik: o.altMetin ?? '',
+          baslik: akisBaslikMetni(l10n, o),
+          altBaslik: akisAltMetni(l10n, dil, o) ?? '',
           zaman: hareketZamanEtiketi(o.zaman, now, l10n, dil),
           ikonAccent: _ikonAccent(o.tur),
           noktaRengi: _nokta(o.renk),

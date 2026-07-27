@@ -63,16 +63,75 @@ enum ActivityRenk {
       };
 }
 
-/// Akisin tek satiri (`ActivityItem`). Basliklar/alt metinler SUNUCUDAN
-/// gelir — istemci metin uretmez, yalniz ikon/renk/zaman etiketi ekler.
+/// Akis satirinin BASLIK KIMLIGI (tur 15). `tur`den AYRIDIR: bir tur birden
+/// cok basliga karsilik gelebilir (`talep` -> acildi / is emri / cozuldu /
+/// reddedildi). Metin cizim aninda cozulur (`akis_metinleri.dart`).
+enum AkisBaslik {
+  devriyeOkutma,
+  gorevTamamlama,
+  aidatOdeme,
+  talepAcik,
+  talepIsEmri,
+  talepCozuldu,
+  talepReddedildi,
+  daireSikayeti,
+  alarmKacirilanTur,
+  alarmEksikCheckpoint,
+  alarmGecikmisOkutma,
+  ziyaretciGiris,
+  ziyaretciCikis,
+  kargo,
+  kargoTeslim,
+  aracGiris,
+  aracCikis,
+  ihlal,
+
+  /// Sunucu YENI bir kimlik gonderdi. Satir AKISTA KALIR: basligi sunucunun
+  /// (deprecated) `baslik` alanindan gosteririz — olay dusurmek "bir sey
+  /// olmadi" yalanidir.
+  bilinmeyen;
+
+  static AkisBaslik fromWire(String? wire) => switch (wire) {
+        'devriye_okutma' => devriyeOkutma,
+        'gorev_tamamlama' => gorevTamamlama,
+        'aidat_odeme' => aidatOdeme,
+        'talep_acik' => talepAcik,
+        'talep_is_emri' => talepIsEmri,
+        'talep_cozuldu' => talepCozuldu,
+        'talep_reddedildi' => talepReddedildi,
+        'daire_sikayeti' => daireSikayeti,
+        'alarm_kacirilan_tur' => alarmKacirilanTur,
+        'alarm_eksik_checkpoint' => alarmEksikCheckpoint,
+        'alarm_gecikmis_okutma' => alarmGecikmisOkutma,
+        'ziyaretci_giris' => ziyaretciGiris,
+        'ziyaretci_cikis' => ziyaretciCikis,
+        'kargo' => kargo,
+        'kargo_teslim' => kargoTeslim,
+        'arac_giris' => aracGiris,
+        'arac_cikis' => aracCikis,
+        'ihlal' => ihlal,
+        _ => bilinmeyen,
+      };
+}
+
+/// Akisin tek satiri (`ActivityItem`).
+///
+/// TUR 15 — METIN DEGIL KIMLIK: sunucu `baslik_kimlik` + `veri` gonderir,
+/// cumleyi ISTEMCI kendi dilinde kurar (`presentation/akis_metinleri.dart`).
+/// Eskiden `baslik`/`alt_metin` SQL'de Turkce uretiliyordu ve Arapca arayuzde
+/// bile Turkce gorunuyordu. O iki alan sozlesmede DEPRECATED olarak duruyor;
+/// burada yalniz **geri dusus** olarak saklanir (bilinmeyen kimlik / eski
+/// sunucu).
 class ActivityItem {
   const ActivityItem({
     required this.id,
     required this.tur,
-    required this.baslik,
+    required this.baslikKimlik,
     required this.zaman,
     required this.kaynakId,
-    this.altMetin,
+    this.veri = const {},
+    this.sunucuBaslik = '',
+    this.sunucuAltMetin,
     this.renk = ActivityRenk.notr,
   });
 
@@ -80,8 +139,18 @@ class ActivityItem {
   final String id;
 
   final ActivityTur tur;
-  final String baslik;
-  final String? altMetin;
+
+  /// Yerellestirilebilir baslik kimligi (tur 15).
+  final AkisBaslik baslikKimlik;
+
+  /// Satirin DEGISKEN kismi: `{daire, firma, plaka, tutar_kurus, kategori,
+  /// plan, baslangic, bitis, ad, baslik, konum, tanim}`. Opsiyonel alanlar
+  /// GONDERILMEZ — bicim alanin VARLIGINA gore secilir.
+  final Map<String, dynamic> veri;
+
+  /// DEPRECATED sunucu metinleri — yalniz geri dusus (bkz. sinif dokumani).
+  final String sunucuBaslik;
+  final String? sunucuAltMetin;
 
   /// Olayin GERCEKLESME zamani — YEREL saate cevrilmis (sunucu UTC gonderir;
   /// "09:47" etiketi cihaz saatiyle tutarli olsun diye).
@@ -95,8 +164,13 @@ class ActivityItem {
   factory ActivityItem.fromJson(Map<String, dynamic> json) => ActivityItem(
         id: json['id'] as String? ?? '',
         tur: ActivityTur.fromWire(json['tur'] as String?),
-        baslik: json['baslik'] as String? ?? '',
-        altMetin: json['alt_metin'] as String?,
+        baslikKimlik: AkisBaslik.fromWire(json['baslik_kimlik'] as String?),
+        veri: switch (json['veri']) {
+          final Map<dynamic, dynamic> m => Map<String, dynamic>.from(m),
+          _ => const {},
+        },
+        sunucuBaslik: json['baslik'] as String? ?? '',
+        sunucuAltMetin: json['alt_metin'] as String?,
         zaman: (DateTime.tryParse(json['zaman'] as String? ?? '') ??
                 DateTime.fromMillisecondsSinceEpoch(0, isUtc: true))
             .toLocal(),

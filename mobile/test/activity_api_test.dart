@@ -55,6 +55,8 @@ Map<String, dynamic> _olay(
   String tur,
   String id, {
   String baslik = 'Olay',
+  String? baslikKimlik,
+  Map<String, dynamic>? veri,
   String? altMetin = 'detay',
   String zaman = '2026-07-25T06:52:03.210069Z',
   String? renk = 'notr',
@@ -62,6 +64,9 @@ Map<String, dynamic> _olay(
     {
       'id': '$tur:$id',
       'tur': tur,
+      // TUR 15: kimlik + veri asil kanaldir; baslik/alt_metin DEPRECATED.
+      'baslik_kimlik': baslikKimlik ?? tur,
+      'veri': veri ?? const <String, dynamic>{},
       'baslik': baslik,
       'alt_metin': altMetin,
       'zaman': zaman,
@@ -138,7 +143,7 @@ void main() {
       ActivityRenk.notr, // renk_ipucu 'notr'
       ActivityRenk.alarm,
     ]);
-    expect(items[2].altMetin, isNull);
+    expect(items[2].sunucuAltMetin, isNull);
     expect(items[2].kaynakId, 'a1');
   });
 
@@ -152,7 +157,50 @@ void main() {
 
     final olay = (await api.sayfa()).items.single;
     expect(olay.tur, ActivityTur.bilinmeyen);
-    expect(olay.baslik, 'Yeni Olay'); // metin SUNUCUDAN, satir cizilir
+    expect(olay.baslikKimlik, AkisBaslik.bilinmeyen);
+    // Kimlik cozulemedi -> DEPRECATED sunucu metnine duseriz; satir CIZILIR
+    // (olay dusurmek "bir sey olmadi" yalanidir).
+    expect(olay.sunucuBaslik, 'Yeni Olay');
+  });
+
+  test('TUR 15: baslik_kimlik + veri ayristirilir', () async {
+    final (api: api, adapter: _) = _kur([
+      {
+        'meta': {'limit': 20},
+        'items': [
+          _olay('talep', 't1',
+              baslikKimlik: 'talep_cozuldu',
+              veri: {'baslik': 'Asansör arızası'}),
+          _olay('aidat_odeme', 'd1',
+              veri: {'daire': 'A-12', 'tutar_kurus': 125000}),
+        ],
+      },
+    ]);
+
+    final items = (await api.sayfa()).items;
+    expect(items[0].baslikKimlik, AkisBaslik.talepCozuldu);
+    expect(items[0].veri['baslik'], 'Asansör arızası');
+    // Para KURUS tam sayi gelir — sunucu bicimlemez.
+    expect(items[1].veri['tutar_kurus'], 125000);
+  });
+
+  test('veri alani YOKSA bos harita (cokme yok)', () async {
+    final (api: api, adapter: _) = _kur([
+      {
+        'meta': {'limit': 20},
+        'items': [
+          {
+            'id': 'kargo:k9',
+            'tur': 'kargo',
+            'baslik_kimlik': 'kargo',
+            'baslik': 'Kargo',
+            'zaman': '2026-07-25T06:52:03Z',
+            'kaynak_id': 'k9',
+          }
+        ],
+      },
+    ]);
+    expect((await api.sayfa()).items.single.veri, isEmpty);
   });
 
   test('zaman YEREL saate cevrilir (etiket cihaz saatiyle tutarli)', () async {

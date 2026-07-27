@@ -45,9 +45,9 @@ final _plakaliAkis = [
   ActivityItem(
     id: 'arac_giris:1',
     tur: ActivityTur.aracGiris,
-    baslik: 'Araç Girişi',
-    // SERVER-LOCALIZED(next round): metin sunucudan gelir; plaka LTR dizidir.
-    altMetin: '34 ABC 123',
+    // TUR 15: baslik KIMLIKTEN cozulur; plaka VERI'dir ve LTR dizidir.
+    baslikKimlik: AkisBaslik.aracGiris,
+    veri: const {'plaka': '34 ABC 123'},
     zaman: DateTime(2026, 7, 25, 9, 47),
     kaynakId: '1',
   ),
@@ -178,8 +178,11 @@ void main() {
       expect(find.text('مهامي'), findsWidgets); // Görevlerim
       expect(find.text('المركبات'), findsWidgets); // Araç Plaka
 
-      // 3) Akis satiri: sunucu metni + PLAKA (LTR dizi) ekranda
-      expect(find.text('Araç Girişi'), findsOneWidget);
+      // 3) Akis satiri: baslik ARAPCA (tur 15 — eskiden sunucudan TR gelir
+      //    ve Arapca ekranda "Araç Girişi" yazardi), plaka LTR dizi olarak
+      //    OLDUGU GIBI kalir (VERI cevrilmez).
+      expect(find.text('دخول مركبة'), findsOneWidget);
+      expect(find.text('Araç Girişi'), findsNothing);
       expect(find.text('34 ABC 123'), findsOneWidget);
 
       // 4) Plaka gibi diziler icin izolasyon yardimcisi RTL'de sarar

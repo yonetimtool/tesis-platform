@@ -25,16 +25,16 @@ void main() {
       ActivityItem(
           id: 'kargo_teslim:k1',
           tur: ActivityTur.kargoTeslim,
-          baslik: 'Kargo Teslim Edildi',
-          altMetin: 'Mng — Daire 12',
+          baslikKimlik: AkisBaslik.kargoTeslim,
+          veri: const {'firma': 'Mng', 'daire': '12'},
           zaman: DateTime(2026, 7, 23, 9, 47),
           renk: ActivityRenk.olumlu,
           kaynakId: 'k1'),
       ActivityItem(
           id: 'aidat_odeme:o1',
           tur: ActivityTur.aidatOdeme,
-          baslik: 'Aidat Ödemesi',
-          altMetin: '₺1.250,00',
+          baslikKimlik: AkisBaslik.aidatOdeme,
+          veri: const {'daire': '12', 'tutar_kurus': 125000},
           zaman: DateTime(2026, 7, 22, 10, 0),
           renk: ActivityRenk.olumlu,
           kaynakId: 'o1'),
@@ -75,8 +75,10 @@ void main() {
           ActivityItem(
               id: '1',
               tur: tur,
-              baslik: 'Olay',
-              altMetin: 'detay',
+              // Bilinmeyen kimlik: baslik DEPRECATED sunucu alanindan gelir.
+              baslikKimlik: AkisBaslik.bilinmeyen,
+              sunucuBaslik: 'Olay',
+              sunucuAltMetin: 'detay',
               zaman: DateTime(2026, 5, 5),
               renk: renk,
               kaynakId: '1'),
@@ -108,15 +110,16 @@ void main() {
       expect(s.baslik, 'Olay');
     });
 
-    test('alt_metin null: satir bos alt yaziyla cizilir', () {
+    test('veri YOK: satir bos alt yaziyla cizilir (uydurma metin yok)', () {
       final s = hareketSatirlari(trL10n, 'tr', [
         ActivityItem(
             id: '1',
             tur: ActivityTur.aracGiris,
-            baslik: 'Araç Girişi',
+            baslikKimlik: AkisBaslik.aracGiris,
             zaman: DateTime(2026, 5, 5),
             kaynakId: '1'),
       ], DateTime(2026, 7, 23)).single;
+      expect(s.baslik, 'Araç Girişi'); // baslik KIMLIKTEN cozuldu
       expect(s.altBaslik, '');
       expect(s.ikon, Icons.directions_car);
     });

@@ -6658,6 +6658,162 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Yeni bildirim'**
   String get bildirimYeniPush;
+
+  /// No description provided for @akisDevriyeOkutma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devriye Okutması'**
+  String get akisDevriyeOkutma;
+
+  /// No description provided for @akisGorevTamamlandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev Tamamlandı'**
+  String get akisGorevTamamlandi;
+
+  /// No description provided for @akisAidatOdemesi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat Ödemesi'**
+  String get akisAidatOdemesi;
+
+  /// No description provided for @akisTalepAcildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep Açıldı'**
+  String get akisTalepAcildi;
+
+  /// No description provided for @akisTalepIsEmri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep İş Emrine Dönüştü'**
+  String get akisTalepIsEmri;
+
+  /// No description provided for @akisTalepCozuldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep Çözüldü'**
+  String get akisTalepCozuldu;
+
+  /// No description provided for @akisTalepReddedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep Reddedildi'**
+  String get akisTalepReddedildi;
+
+  /// No description provided for @akisDaireSikayeti.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire Şikayeti'**
+  String get akisDaireSikayeti;
+
+  /// No description provided for @akisAlarmKacirilanTur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaçırılan Tur'**
+  String get akisAlarmKacirilanTur;
+
+  /// No description provided for @akisAlarmEksikCheckpoint.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eksik Kontrol Noktası'**
+  String get akisAlarmEksikCheckpoint;
+
+  /// No description provided for @akisAlarmGecikmisOkutma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gecikmiş Okutma'**
+  String get akisAlarmGecikmisOkutma;
+
+  /// No description provided for @akisZiyaretciGirisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçi Girişi'**
+  String get akisZiyaretciGirisi;
+
+  /// No description provided for @akisZiyaretciCikisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçi Çıkışı'**
+  String get akisZiyaretciCikisi;
+
+  /// No description provided for @akisKargoKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kargo Kaydedildi'**
+  String get akisKargoKaydedildi;
+
+  /// No description provided for @akisKargoTeslimEdildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kargo Teslim Edildi'**
+  String get akisKargoTeslimEdildi;
+
+  /// No description provided for @akisAracGirisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Araç Girişi'**
+  String get akisAracGirisi;
+
+  /// No description provided for @akisAracCikisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Araç Çıkışı'**
+  String get akisAracCikisi;
+
+  /// No description provided for @akisIhlalKaydi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İhlal Kaydı'**
+  String get akisIhlalKaydi;
+
+  /// No description provided for @akisAltDaireTutar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire {daire} — {tutar}'**
+  String akisAltDaireTutar(Object daire, Object tutar);
+
+  /// No description provided for @akisAltDaireKategori.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire {daire} — {kategori}'**
+  String akisAltDaireKategori(Object daire, Object kategori);
+
+  /// No description provided for @akisAltAdDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} — Daire {daire}'**
+  String akisAltAdDaire(Object ad, Object daire);
+
+  /// No description provided for @akisAltPlakaDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'{plaka} — Daire {daire}'**
+  String akisAltPlakaDaire(Object plaka, Object daire);
+
+  /// No description provided for @akisAltPlakaTanim.
+  ///
+  /// In tr, this message translates to:
+  /// **'{plaka} ({tanim})'**
+  String akisAltPlakaTanim(Object plaka, Object tanim);
+
+  /// No description provided for @akisAltPlakaDaireTanim.
+  ///
+  /// In tr, this message translates to:
+  /// **'{plaka} — Daire {daire} ({tanim})'**
+  String akisAltPlakaDaireTanim(Object plaka, Object daire, Object tanim);
+
+  /// No description provided for @akisAltMetinKonum.
+  ///
+  /// In tr, this message translates to:
+  /// **'{metin} — {konum}'**
+  String akisAltMetinKonum(Object metin, Object konum);
+
+  /// No description provided for @akisAltPlanAralik.
+  ///
+  /// In tr, this message translates to:
+  /// **'{plan} · {aralik}'**
+  String akisAltPlanAralik(Object plan, Object aralik);
 }
 
 class _AppLocalizationsDelegate

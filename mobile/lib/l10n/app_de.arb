@@ -1090,5 +1090,80 @@
   "aramaYapilamiyor": "Nicht anrufbar",
   "bildirimYok": "Keine Benachrichtigungen",
   "bildirimYuklenemedi": "Benachrichtigungen konnten nicht geladen werden.\n{hata}",
-  "bildirimYeniPush": "Neue Benachrichtigung"
+  "bildirimYeniPush": "Neue Benachrichtigung",
+  "akisDevriyeOkutma": "Rundgang-Scan",
+  "akisGorevTamamlandi": "Aufgabe abgeschlossen",
+  "akisAidatOdemesi": "Beitragszahlung",
+  "akisTalepAcildi": "Anfrage eröffnet",
+  "akisTalepIsEmri": "Anfrage in Arbeitsauftrag umgewandelt",
+  "akisTalepCozuldu": "Anfrage gelöst",
+  "akisTalepReddedildi": "Anfrage abgelehnt",
+  "akisDaireSikayeti": "Beschwerde über Wohneinheit",
+  "akisAlarmKacirilanTur": "Verpasster Rundgang",
+  "akisAlarmEksikCheckpoint": "Fehlender Kontrollpunkt",
+  "akisAlarmGecikmisOkutma": "Verspäteter Scan",
+  "akisZiyaretciGirisi": "Besucher-Eintritt",
+  "akisZiyaretciCikisi": "Besucher-Austritt",
+  "akisKargoKaydedildi": "Paket erfasst",
+  "akisKargoTeslimEdildi": "Paket ausgehändigt",
+  "akisAracGirisi": "Fahrzeugeinfahrt",
+  "akisAracCikisi": "Fahrzeugausfahrt",
+  "akisIhlalKaydi": "Verstoßeintrag",
+  "akisAltDaireTutar": "Einheit {daire} — {tutar}",
+  "@akisAltDaireTutar": {
+    "placeholders": {
+      "daire": {},
+      "tutar": {}
+    }
+  },
+  "akisAltDaireKategori": "Einheit {daire} — {kategori}",
+  "@akisAltDaireKategori": {
+    "placeholders": {
+      "daire": {},
+      "kategori": {}
+    }
+  },
+  "akisAltAdDaire": "{ad} — Einheit {daire}",
+  "@akisAltAdDaire": {
+    "placeholders": {
+      "ad": {},
+      "daire": {}
+    }
+  },
+  "akisAltPlakaDaire": "{plaka} — Einheit {daire}",
+  "@akisAltPlakaDaire": {
+    "placeholders": {
+      "plaka": {},
+      "daire": {}
+    }
+  },
+  "akisAltPlakaTanim": "{plaka} ({tanim})",
+  "@akisAltPlakaTanim": {
+    "placeholders": {
+      "plaka": {},
+      "tanim": {}
+    }
+  },
+  "akisAltPlakaDaireTanim": "{plaka} — Einheit {daire} ({tanim})",
+  "@akisAltPlakaDaireTanim": {
+    "placeholders": {
+      "plaka": {},
+      "daire": {},
+      "tanim": {}
+    }
+  },
+  "akisAltMetinKonum": "{metin} — {konum}",
+  "@akisAltMetinKonum": {
+    "placeholders": {
+      "metin": {},
+      "konum": {}
+    }
+  },
+  "akisAltPlanAralik": "{plan} · {aralik}",
+  "@akisAltPlanAralik": {
+    "placeholders": {
+      "plan": {},
+      "aralik": {}
+    }
+  }
 }

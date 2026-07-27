@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 import uuid
 from datetime import date, datetime, time, timezone
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import (
     BaseModel,
@@ -2976,10 +2976,27 @@ ActivityRenk = Literal["olumlu", "uyari", "alarm", "notr"]
 
 class ActivityItemOut(BaseModel):
     """Birlesik akis olayi. `id` kaynaklar arasi benzersizdir ("<tur>:<uuid>");
-    `kaynak_id` ise kaynak kaydin kendi uuid'sidir (derin baglanti icin)."""
+    `kaynak_id` ise kaynak kaydin kendi uuid'sidir (derin baglanti icin).
+
+    METIN DEGIL KIMLIK (tur 15): satirin gorunen cumlesini ISTEMCI kurar.
+      * `baslik_kimlik` — yerellestirilebilir baslik kimligi. `tur`den AYRIDIR
+        cunku bir tur birden cok baslik verebilir (`talep` -> `talep_acik` |
+        `talep_is_emri` | `talep_cozuldu` | `talep_reddedildi`).
+      * `veri` — satirin DEGISKEN kismi (daire no, firma, plaka, kurus,
+        kategori kimligi, pencere sinirlari). Opsiyonel alanlar YOKTUR
+        (gonderilmez), boylece istemci bicimi alanin varligina gore secer.
+        Para `tutar_kurus` tam sayidir: bicimleme dile duyarlidir, sunucunun
+        isi degildir.
+
+    `baslik`/`alt_metin` **DEPRECATED**: yalniz guncellenmemis istemciler icin
+    ve YALNIZ Turkce uretilir (`app/akis_metinleri.py`). Yeni istemci bunlara
+    bakmaz; tum istemciler gecince alanlar sozlesmeden kalkacak.
+    """
 
     id: str
     tur: str
+    baslik_kimlik: str
+    veri: dict[str, Any] = Field(default_factory=dict)
     baslik: str
     alt_metin: str | None = None
     zaman: datetime

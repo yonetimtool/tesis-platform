@@ -67,6 +67,21 @@ Accept-Language: ar, tr;q=0.8
   **cevrilmez**: operatore hitap eder. Katalog ve gerekce:
   `backend/app/hata_metinleri.py`.
 
+### Uretilen metin — KIMLIK kurali
+
+Sunucu kullaniciya gosterilecek **cumle uretmez**; kimlik + veri gonderir ve
+metni istemci kendi dilinde kurar. Bugunku uygulamalari:
+
+| Alan | Kimlik kanali | Veri kanali |
+|---|---|---|
+| Hata zarfi | `error.code` (+ sunucu `message`'i **cevrilmis** doner, tur 14) | — |
+| `/activity` satiri | `baslik_kimlik` (tur 15) | `veri` (daire, firma, plaka, `tutar_kurus`, kategori kimligi...) |
+| Durum/kategori alanlari | enum degeri (`durum`, `kategori`, `tip`) | — |
+
+Bicimleme de istemcidedir: **para** `*_kurus` TAM SAYI olarak gider (sunucu
+"₺1.250,00" yazmaz), **zaman** ISO-8601 UTC gider (yerel saat/12-24 saat
+karari istemcinin). Sunucu bicimlerse dil ve saat dilimi sessizce yanlis olur.
+
 ### Sayfalama
 - Liste endpoint'leri: `limit` (varsayilan **50**, max **200**) + `offset`.
 - Yanit `meta: { limit, offset, total }` icerir.
@@ -333,7 +348,7 @@ uygulanir). Yeni tablolar tenant-kapsamli + RLS `ENABLE`+`FORCE`.
 | G2 | Ihlal kaydi yok (site_kurali yalniz metin) | `violation` + `POST /violations` (admin+security), `GET /violations?durum=`, `PATCH /violations/{id}`. `yeni → inceleniyor → kapatildi`; **kapatma yalniz admin**, `kapatildi` TERMINAL (409) |
 | G3 | Ziyaretci "icerde" turetilemiyor | `visitor.cikis_zamani` (nullable) + `POST /visitors/{id}/checkout` (409 cift damga) + `GET /visitors?icerde=true` |
 | G4 | Otopark kapasite/doluluk yok | `tenant.otopark_kapasite` (`PATCH /tenant/settings`; admin **veya** yonetici) + `GET /parking/occupancy` → `{kapasite, dolu, oran}`. `dolu` = ACIK gecis sayimi (ayri sayac YOK); kapasite tanimsiz/0 → `kapasite`+`oran` **null** |
-| G5 | Akis istemcide 3–4 istekten birlestiriliyor | `GET /activity?limit=&cursor=` — 13 kaynagi SUNUCUDA birlestirir/siralar/rol'e gore suzer. Bilesik imlec (`zaman`,`id`) — `offset` ve `meta.total` YOK |
+| G5 | Akis istemcide 3–4 istekten birlestiriliyor | `GET /activity?limit=&cursor=` — 13 kaynagi SUNUCUDA birlestirir/siralar/rol'e gore suzer. Bilesik imlec (`zaman`,`id`) — `offset` ve `meta.total` YOK. **Satirlar METIN degil KIMLIK tasir** (`baslik_kimlik` + `veri`); cumleyi istemci kendi dilinde kurar (tur 15) |
 | G6 | `/unit-complaints/mine`'da kategori suzgeci yok | `?kategori=` eklendi (`/unit-complaints` genel listesine de) |
 | G7 | `/weather` + `/cameras` canlida var, sozlesmede yok | `openapi.yaml`'a **davranis degistirilmeden** geri-dolduruldu (uygulama denetlenip gercek istek/yanit sekilleri yazildi) |
 

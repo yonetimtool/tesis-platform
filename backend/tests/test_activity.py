@@ -231,6 +231,72 @@ def test_resident_kendi_dairesine_gelen_sikayeti_gormez(client, aworld):
     assert f"Daire ACT-1-{sfx} — diger" not in metinler     # dairesine gelen
 
 
+# ------------------------- KIMLIK sozlesmesi (tur 15) ----------------------- #
+# Akis satirlari artik SUNUCUDA metin URETMEZ: `baslik_kimlik` + `veri` gider,
+# cumleyi istemci kendi dilinde kurar. `baslik`/`alt_metin` DEPRECATED olarak
+# ayni degerleri uretmeye devam eder (guncellenmemis istemciler icin).
+def test_kimlik_ve_veri_gonderilir(client, aworld):
+    h = _headers(client, aworld["slug_a"], aworld["admin_a"])
+    items = _feed(client, h)["items"]
+    assert items
+
+    for i in items:
+        # Kimlik HER satirda var ve makine-okunabilir (kucuk harf + alt cizgi).
+        assert i["baslik_kimlik"], i
+        assert i["baslik_kimlik"] == i["baslik_kimlik"].lower()
+        assert " " not in i["baslik_kimlik"]
+        assert isinstance(i["veri"], dict)
+
+    kimlikler = {i["baslik_kimlik"] for i in items}
+    # Bir TUR birden cok kimlik verebilir: talep durumu kimlige girer.
+    assert kimlikler & {
+        "talep_acik", "talep_is_emri", "talep_cozuldu", "talep_reddedildi"
+    }
+    assert "alarm" not in kimlikler  # alarm tipi de kimlige girer
+    assert kimlikler & {
+        "alarm_kacirilan_tur", "alarm_eksik_checkpoint", "alarm_gecikmis_okutma"
+    }
+
+
+def test_veri_yapisaldir_metin_degil(client, aworld):
+    """Degisken alanlar AYRI AYRI gider: istemci cumleyi kendisi kurar."""
+    h = _headers(client, aworld["slug_a"], aworld["admin_a"])
+    items = _feed(client, h)["items"]
+    sfx = aworld["sfx"]
+
+    aidat = next(i for i in items if i["tur"] == "aidat_odeme")
+    # PARA: kurus TAM SAYI — sunucu "₺750.00" bicimlemez (bicim dile baglidir).
+    assert aidat["veri"]["tutar_kurus"] == 75000
+    assert aidat["veri"]["daire"].startswith("ACT-")
+
+    sikayet = next(i for i in items if i["tur"] == "daire_sikayeti")
+    # KATEGORI: sozlesme kimligi (gorunen ad DEGIL) — istemci cevirir.
+    assert sikayet["veri"]["kategori"] in {
+        "gurultu", "kapi_onu_ayakkabi", "zarar_verme", "diger"
+    }
+
+    ihlal = next(i for i in items if i["tur"] == "ihlal")
+    assert ihlal["veri"]["baslik"] == f"Ihlal {sfx}"
+
+
+def test_opsiyonel_alan_YOKSA_gonderilmez(client, aworld):
+    """`jsonb_strip_nulls`: bos alan null olarak degil, HIC gonderilmez —
+    istemci bicimi alanin VARLIGINA gore secer (SQL COALESCE'unun yerine)."""
+    h = _headers(client, aworld["slug_a"], aworld["admin_a"])
+    items = _feed(client, h)["items"]
+    for i in items:
+        assert None not in i["veri"].values(), i
+
+
+def test_eski_alanlar_ayni_metni_uretmeye_devam_eder(client, aworld):
+    """DEPRECATED `baslik`/`alt_metin`: eski istemci REGRESYON gormez."""
+    h = _headers(client, aworld["slug_a"], aworld["admin_a"])
+    items = _feed(client, h)["items"]
+    aidat = next(i for i in items if i["tur"] == "aidat_odeme")
+    assert aidat["baslik"] == "Aidat Ödemesi"
+    assert aidat["alt_metin"] == f"Daire {aidat['veri']['daire']} — ₺750.00"
+
+
 # --------------------------- siralama / imlec ------------------------------- #
 def test_yeniden_eskiye_siralanir(client, aworld):
     h = _headers(client, aworld["slug_a"], aworld["admin_a"])

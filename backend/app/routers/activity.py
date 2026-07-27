@@ -47,6 +47,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser
+from ..akis_metinleri import eski_alt_metin, eski_baslik
 from ..schemas import ActivityItemOut, ActivityResponse
 
 router = APIRouter(prefix="/activity", tags=["activity"])
@@ -57,31 +58,38 @@ _READER = require_role(
 
 # --------------------------------------------------------------------------- #
 # Kaynak parcalari. Her parca AYNI kolonlari uretir:
-#   kaynak_id uuid | tur text | baslik text | alt_metin text |
+#   kaynak_id uuid | tur text | baslik_kimlik text | veri jsonb |
 #   zaman timestamptz | renk_ipucu text
+# TUR 15: parcalar artik METIN URETMEZ. `baslik_kimlik` yerellestirilebilir
+# bir KIMLIK ("kargo_teslim", "talep_cozuldu"...), `veri` ise satirin
+# DEGISKEN kismidir (daire no, firma, plaka, kurus...). Cumleyi istemci
+# kendi dilinde kurar — bkz. mobile `home_mappers.dart`.
 # RLS tenant'i zaten daraltir; buradaki WHERE'ler YALNIZ rol/sahiplik icindir.
 # `:uid` = oturum kullanicisi (resident/own-scope parcalarinda kullanilir).
 # --------------------------------------------------------------------------- #
 
 _DEVRIYE = """
-SELECT s.id, 'devriye_okutma', 'Devriye Okutması', c.ad,
+SELECT s.id, 'devriye_okutma', 'devriye_okutma',
+       jsonb_build_object('ad', c.ad),
        s.okutma_zamani, 'notr'
 FROM scan_event s
 JOIN checkpoint c ON c.id = s.checkpoint_id
 """
 
 _GOREV = """
-SELECT tc.id, 'gorev_tamamlama', 'Görev Tamamlandı', t.ad,
+SELECT tc.id, 'gorev_tamamlama', 'gorev_tamamlama',
+       jsonb_build_object('ad', t.ad),
        tc.tamamlanma_zamani, 'olumlu'
 FROM task_completion tc
 JOIN task t ON t.id = tc.task_id
 """
 
 # Yalniz BASARILI odemeler akisa girer (bekleyen/iptal finansal olay degildir).
+# Tutar BICIMLENMEZ: kurus tam sayi olarak gider, para bicimi istemcinin
+# (dile duyarli) isidir — sunucu "₺1.234,50" uretmez.
 _AIDAT = """
-SELECT p.id, 'aidat_odeme', 'Aidat Ödemesi',
-       'Daire ' || u.no || ' — ₺' ||
-           to_char(p.tutar_kurus / 100.0, 'FM999999990.00'),
+SELECT p.id, 'aidat_odeme', 'aidat_odeme',
+       jsonb_build_object('daire', u.no, 'tutar_kurus', p.tutar_kurus),
        p.odeme_zamani, 'olumlu'
 FROM dues_payment p
 JOIN unit u ON u.id = p.unit_id
@@ -94,15 +102,17 @@ _AIDAT_OWN = _AIDAT + """
                 AND ur.bitis IS NULL)
 """
 
+# Baslik KIMLIGI durumu da tasir (talep_acik / talep_cozuldu ...): tek bir
+# `tur` degeri dort ayri basliga karsilik geldigi icin durum kimlige girer.
 _TALEP = """
 SELECT c.id, 'talep',
        CASE c.durum
-           WHEN 'acik'       THEN 'Talep Açıldı'
-           WHEN 'is_emri'    THEN 'Talep İş Emrine Dönüştü'
-           WHEN 'cozuldu'    THEN 'Talep Çözüldü'
-           ELSE                   'Talep Reddedildi'
+           WHEN 'acik'       THEN 'talep_acik'
+           WHEN 'is_emri'    THEN 'talep_is_emri'
+           WHEN 'cozuldu'    THEN 'talep_cozuldu'
+           ELSE                   'talep_reddedildi'
        END,
-       c.baslik, c.updated_at,
+       jsonb_build_object('baslik', c.baslik), c.updated_at,
        CASE c.durum
            WHEN 'cozuldu' THEN 'olumlu'
            WHEN 'acik'    THEN 'uyari'
@@ -116,9 +126,11 @@ _TALEP_OWN = _TALEP + " WHERE c.acan_user_id = :uid"
 
 # Daire sikayeti TAM ANONIM: sikayet EDEN hicbir turde donmez (kaynak_id
 # sikayet kaydinin id'sidir, kisi degil).
+# `kategori` SOZLESME KIMLIGIDIR (enum degeri), gorunen ad degil: istemci
+# kendi kategori cozucusunden gecirir.
 _SIKAYET = """
-SELECT uc.id, 'daire_sikayeti', 'Daire Şikayeti',
-       'Daire ' || u.no || ' — ' || uc.kategori::text,
+SELECT uc.id, 'daire_sikayeti', 'daire_sikayeti',
+       jsonb_build_object('daire', u.no, 'kategori', uc.kategori::text),
        uc.created_at, 'uyari'
 FROM unit_complaint uc
 JOIN unit u ON u.id = uc.target_unit_id
@@ -129,27 +141,40 @@ _SIKAYET_OWN = _SIKAYET + " WHERE uc.complainant_user_id = :uid"
 
 # "Acil durum" olaylari = tur alarmlari (SOS kaldirildi; dashboard/live ile
 # ayni tip kumesi).
+# ALT METIN ARTIK `n.mesaj` DEGIL. O metin scheduler'in urettigi Turkce bir
+# cumleydi ("Kacirilan tur: pencere <iso> - <iso> (N eksik checkpoint)") ve
+# istemci onu ceviremiyordu. Yerine YAPISAL veri: plan adi (VERI) + pencere
+# sinirlari (zaman) — istemci kendi dilinde/saat biciminde yazar.
+# `n.mesaj` kaydin kendisinde DURUYOR (denetim/log); yalniz akista gosterilmiyor.
 _ALARM = """
 SELECT n.id, 'alarm',
        CASE n.tip
-           WHEN 'kacirilan_tur'    THEN 'Kaçırılan Tur'
-           WHEN 'eksik_checkpoint' THEN 'Eksik Checkpoint'
-           ELSE                         'Gecikmiş Okutma'
+           WHEN 'kacirilan_tur'    THEN 'alarm_kacirilan_tur'
+           WHEN 'eksik_checkpoint' THEN 'alarm_eksik_checkpoint'
+           ELSE                         'alarm_gecikmis_okutma'
        END,
-       n.mesaj, n.created_at, 'alarm'
+       jsonb_strip_nulls(jsonb_build_object(
+           'plan', pp.ad,
+           'baslangic', pw.pencere_baslangic,
+           'bitis', pw.pencere_bitis)),
+       n.created_at, 'alarm'
 FROM notification n
+LEFT JOIN patrol_window pw ON pw.id = n.patrol_window_id
+LEFT JOIN patrol_plan pp ON pp.id = n.patrol_plan_id
 WHERE n.tip IN ('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma')
 """
 
 _ZIYARETCI_GIRIS = """
-SELECT v.id, 'ziyaretci_giris', 'Ziyaretçi Girişi',
-       v.ziyaretci_ad || ' — Daire ' || u.no, v.created_at, 'notr'
+SELECT v.id, 'ziyaretci_giris', 'ziyaretci_giris',
+       jsonb_build_object('ad', v.ziyaretci_ad, 'daire', u.no),
+       v.created_at, 'notr'
 FROM visitor v
 JOIN unit u ON u.id = v.unit_id
 """
 _ZIYARETCI_CIKIS = """
-SELECT v.id, 'ziyaretci_cikis', 'Ziyaretçi Çıkışı',
-       v.ziyaretci_ad || ' — Daire ' || u.no, v.cikis_zamani, 'notr'
+SELECT v.id, 'ziyaretci_cikis', 'ziyaretci_cikis',
+       jsonb_build_object('ad', v.ziyaretci_ad, 'daire', u.no),
+       v.cikis_zamani, 'notr'
 FROM visitor v
 JOIN unit u ON u.id = v.unit_id
 WHERE v.cikis_zamani IS NOT NULL
@@ -160,14 +185,16 @@ _ZIYARETCI_GIRIS_OWN = _ZIYARETCI_GIRIS + " WHERE v.target_resident_user_id = :u
 _ZIYARETCI_CIKIS_OWN = _ZIYARETCI_CIKIS + " AND v.target_resident_user_id = :uid"
 
 _KARGO = """
-SELECT k.id, 'kargo', 'Kargo Kaydedildi',
-       k.firma || ' — Daire ' || u.no, k.created_at, 'notr'
+SELECT k.id, 'kargo', 'kargo',
+       jsonb_build_object('firma', k.firma, 'daire', u.no),
+       k.created_at, 'notr'
 FROM kargo k
 JOIN unit u ON u.id = k.unit_id
 """
 _KARGO_TESLIM = """
-SELECT k.id, 'kargo_teslim', 'Kargo Teslim Edildi',
-       k.firma || ' — Daire ' || u.no, k.teslim_zamani, 'olumlu'
+SELECT k.id, 'kargo_teslim', 'kargo_teslim',
+       jsonb_build_object('firma', k.firma, 'daire', u.no),
+       k.teslim_zamani, 'olumlu'
 FROM kargo k
 JOIN unit u ON u.id = k.unit_id
 WHERE k.teslim_zamani IS NOT NULL
@@ -183,17 +210,19 @@ _KARGO_TESLIM_OWN = _KARGO_TESLIM + " AND " + _OWN_UNIT_KARGO
 
 # Arac gecisi: plaka daireye/kisiye baglanabilir (KVKK) — YALNIZ admin+security
 # (uc RBAC'i ile ayni).
+# `jsonb_strip_nulls`: daire/tanim opsiyoneldir — istemci ALANIN YOKLUGUNA
+# gore bicim secer (eskiden bu karar SQL'de COALESCE ile veriliyordu).
 _ARAC_GIRIS = """
-SELECT vp.id, 'arac_giris', 'Araç Girişi',
-       vp.plaka || COALESCE(' — Daire ' || u.no, '')
-                || COALESCE(' (' || vp.arac_tanim || ')', ''),
+SELECT vp.id, 'arac_giris', 'arac_giris',
+       jsonb_strip_nulls(jsonb_build_object(
+           'plaka', vp.plaka, 'daire', u.no, 'tanim', vp.arac_tanim)),
        vp.giris_zamani, 'notr'
 FROM vehicle_pass vp
 LEFT JOIN unit u ON u.id = vp.unit_id
 """
 _ARAC_CIKIS = """
-SELECT vp.id, 'arac_cikis', 'Araç Çıkışı',
-       vp.plaka || COALESCE(' — Daire ' || u.no, ''),
+SELECT vp.id, 'arac_cikis', 'arac_cikis',
+       jsonb_strip_nulls(jsonb_build_object('plaka', vp.plaka, 'daire', u.no)),
        vp.cikis_zamani, 'notr'
 FROM vehicle_pass vp
 LEFT JOIN unit u ON u.id = vp.unit_id
@@ -201,8 +230,9 @@ WHERE vp.cikis_zamani IS NOT NULL
 """
 
 _IHLAL = """
-SELECT vi.id, 'ihlal', 'İhlal Kaydı',
-       vi.baslik || COALESCE(' — ' || vi.konum, ''), vi.created_at,
+SELECT vi.id, 'ihlal', 'ihlal',
+       jsonb_strip_nulls(jsonb_build_object(
+           'baslik', vi.baslik, 'konum', vi.konum)), vi.created_at,
        CASE vi.durum
            WHEN 'yeni'        THEN 'alarm'
            WHEN 'inceleniyor' THEN 'uyari'
@@ -284,15 +314,15 @@ async def list_activity(
 
     sql = text(
         f"""
-        SELECT f.id, f.tur, f.baslik, f.alt_metin, f.zaman, f.renk_ipucu,
+        SELECT f.id, f.tur, f.baslik_kimlik, f.veri, f.zaman, f.renk_ipucu,
                f.kaynak_id
         FROM (
             SELECT u.tur || ':' || u.kaynak_id::text AS id,
-                   u.tur, u.baslik, u.alt_metin, u.zaman, u.renk_ipucu,
+                   u.tur, u.baslik_kimlik, u.veri, u.zaman, u.renk_ipucu,
                    u.kaynak_id
             FROM (
                 {union_sql}
-            ) AS u (kaynak_id, tur, baslik, alt_metin, zaman, renk_ipucu)
+            ) AS u (kaynak_id, tur, baslik_kimlik, veri, zaman, renk_ipucu)
         ) AS f
         {kosul}
         ORDER BY f.zaman DESC, f.id DESC
@@ -308,8 +338,12 @@ async def list_activity(
         ActivityItemOut(
             id=r["id"],
             tur=r["tur"],
-            baslik=r["baslik"],
-            alt_metin=r["alt_metin"],
+            baslik_kimlik=r["baslik_kimlik"],
+            veri=r["veri"] or {},
+            # ESKI ALANLAR (deprecated): guncellenmemis istemciler icin ayni
+            # Turkce metin buradan URETILIR — SQL'de artik cumle yok.
+            baslik=eski_baslik(r["baslik_kimlik"]),
+            alt_metin=eski_alt_metin(r["tur"], r["veri"] or {}),
             zaman=r["zaman"],
             renk_ipucu=r["renk_ipucu"],
             kaynak_id=r["kaynak_id"],

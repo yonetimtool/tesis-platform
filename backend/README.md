@@ -458,9 +458,46 @@ metinler hala Turkce:
 
 | Ne | Yer | Not |
 |---|---|---|
-| `/activity` satirlari (`baslik`, `alt_metin`) | `app/routers/activity.py` — 13 SQL kaynagi | Metinler SQL'de sabit ("Kargo Teslim Edildi"). **Daha iyi cozum ceviri degil KIMLIK**: satir zaten `tur` alanini tasiyor ve mobil ikon/rengi ondan seciyor (`home_mappers.dart`) — baslik da istemcide `tur`den cozulebilir; `alt_metin`in degisken kismi (firma, daire no) zaten VERI. |
+| ~~`/activity` satirlari~~ | ~~`app/routers/activity.py`~~ | **TUR 15'TE KAPANDI** — asagi bak. |
 | Push bildirim metinleri | `app/push.py` cagrilari | Cihaz dilini sunucu bilmez; kullanicinin dil tercihi kalici saklanmali (`app_user` alani) — ayri is. |
+| `notification.mesaj` | `app/scheduler/notify.py` | Kalici kayittaki Turkce ozet cumle. Akista ARTIK GOSTERILMIYOR (tur 15 yapisal veriye gecti); bildirim listesi ekraninda hala gorunur. |
 | Seed/demo icerigi | `scripts/seed.py` | Ornek veridir, cevrilmez. |
+
+## `/activity` satirlari: METIN degil KIMLIK (tur 15)
+
+13 SQL kaynagi `baslik`/`alt_metin` alanlarini TURKCE uretiyordu
+("Kargo Teslim Edildi", `'Daire ' || u.no || ' — ₺' || to_char(...)`). Istemci
+onlari aynen gosterdigi icin Arapca arayuzde de Turkce goruntuleniyordu.
+
+Artik her satir sunlari tasir:
+
+| Alan | Anlam |
+|---|---|
+| `tur` | olay turu (ikon/renk secimi) |
+| `baslik_kimlik` | basligin YERELLESTIRILEBILIR kimligi — `tur`den ayridir: `talep` -> `talep_acik`/`talep_is_emri`/`talep_cozuldu`/`talep_reddedildi`, `alarm` -> tipine gore 3 kimlik |
+| `veri` (jsonb) | satirin DEGISKEN kismi: `daire`, `firma`, `plaka`, `tutar_kurus`, `kategori` (kimlik), `plan`+`baslangic`+`bitis`, `ad`, `baslik`, `konum`, `tanim` |
+
+**Kurallar**
+
+* SQL cumle KURMAZ; `jsonb_build_object` ile alanlari ayri ayri gonderir.
+* `jsonb_strip_nulls`: opsiyonel alan **null olarak degil, hic** gonderilmez —
+  bicimi alanin varligi belirler (eski `COALESCE(' — Daire ' || u.no, '')`
+  mantiginin istemci karsiligi).
+* **Para** `tutar_kurus` TAM SAYIDIR; sunucu `to_char` ile bicimlemez.
+  **Zaman** ISO-8601 UTC gider. Ikisi de dile/saat dilimine baglidir.
+* `kategori` gorunen ad degil **sozlesme kimligidir**; adi istemci cozer.
+* Alarm satirinin alt metni artik `notification.mesaj` (scheduler'in Turkce
+  cumlesi) DEGIL, plan adi + pencere sinirlaridir.
+
+`baslik`/`alt_metin` alanlari **DEPRECATED** olarak duruyor: guncellenmemis
+istemciler bozulmasin diye ayni metin `app/akis_metinleri.py` icinde YAPISAL
+VERIDEN uretilir (SQL'e cumle geri sizmaz). O modul **tek dillidir** ve
+bilincli olarak boyledir — 7 dile cevirmek mobil ARB'nin ikinci bir kopyasini
+ve kayma riskini yaratirdi. Tum istemciler gecince modul de alanlar da
+silinecek.
+
+Kilit: `tests/test_activity.py` (kimlik/veri sozlesmesi + eski alanlarin ayni
+metni uretmesi) ve mobil `test/akis_kimlik_i18n_test.dart`.
 
 **Istemciler:** mobil her istege `Accept-Language` ekler
 (`core/network/dil_interceptor.dart`; deger **cihaz** dili degil, uygulamanin
