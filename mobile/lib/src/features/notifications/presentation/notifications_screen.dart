@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/l10n.dart';
 import '../../home/presentation/widgets/activity_row.dart';
 import '../data/notifications_controller.dart';
 import '../domain/notification_models.dart';
@@ -20,10 +21,10 @@ class NotificationsScreen extends ConsumerWidget {
     final async = ref.watch(notificationsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Bildirimler')),
+      appBar: AppBar(title: Text(context.l10n.sekmeBildirimler)),
       body: async.when(
         data: (items) => items.isEmpty
-            ? const Center(child: Text('Bildirim yok'))
+            ? Center(child: Text(context.l10n.bildirimYok))
             : RefreshIndicator(
                 onRefresh: () => ref.refresh(notificationsProvider.future),
                 child: ListView.separated(
@@ -37,7 +38,7 @@ class NotificationsScreen extends ConsumerWidget {
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Bildirimler yüklenemedi.\n$e',
+            child: Text(context.l10n.bildirimYuklenemedi('$e'),
                 textAlign: TextAlign.center),
           ),
         ),
@@ -91,7 +92,7 @@ class _NotificationRow extends ConsumerWidget {
         ),
         if (!bildirim.okundu)
           Padding(
-            padding: const EdgeInsets.only(left: 4, right: 8),
+            padding: const EdgeInsetsDirectional.only(start: 4, end: 8),
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -100,7 +101,7 @@ class _NotificationRow extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'Yeni',
+                context.l10n.cipYeni,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: _accent, fontWeight: FontWeight.w700),
               ),

@@ -213,6 +213,8 @@ class _TesisAdiKartiState extends ConsumerState<_TesisAdiKarti> {
     super.dispose();
   }
 
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   Future<void> _kaydet() async {
     FocusScope.of(context).unfocus();
     final ad = _adCtrl.text.trim();
@@ -223,7 +225,7 @@ class _TesisAdiKartiState extends ConsumerState<_TesisAdiKarti> {
       ref.invalidate(tenantSettingsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tesis adı güncellendi')),
+          SnackBar(content: Text(_l10n.tesisAdiGuncellendi)),
         );
       }
     } on ApiException catch (e) {
@@ -234,9 +236,7 @@ class _TesisAdiKartiState extends ConsumerState<_TesisAdiKarti> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.'),
-          ),
+          SnackBar(content: Text(_l10n.ortakBeklenmeyenHata)),
         );
       }
     } finally {
@@ -246,17 +246,18 @@ class _TesisAdiKartiState extends ConsumerState<_TesisAdiKarti> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Tesis adı',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            Text(l10n.ayarlarTesisAdi,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 4),
             Text(
-              'Ana ekranın başlığında görünür; tüm kullanıcılar bu adı görür.',
+              l10n.tesisAdiAciklama,
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -270,15 +271,16 @@ class _TesisAdiKartiState extends ConsumerState<_TesisAdiKarti> {
               textCapitalization: TextCapitalization.words,
               onChanged: (_) => setState(() {}),
               onSubmitted: (_) => _kaydet(),
-              decoration: const InputDecoration(
-                hintText: 'Örn. Örnek Sitesi',
-                prefixIcon: Icon(Icons.business_outlined),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: l10n.tesisAdiIpucu,
+                prefixIcon: const Icon(Icons.business_outlined),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             Align(
-              alignment: Alignment.centerRight,
+              // YON-DUYARLI: Arapca'da sola hizalanir.
+              alignment: AlignmentDirectional.centerEnd,
               child: FilledButton(
                 onPressed: (_submitting || _adCtrl.text.trim().isEmpty)
                     ? null
@@ -289,7 +291,7 @@ class _TesisAdiKartiState extends ConsumerState<_TesisAdiKarti> {
                         width: 18,
                         child: CircularProgressIndicator(strokeWidth: 2.5),
                       )
-                    : const Text('Kaydet'),
+                    : Text(l10n.ortakKaydet),
               ),
             ),
           ],

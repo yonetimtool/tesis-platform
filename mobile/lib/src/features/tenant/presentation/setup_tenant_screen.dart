@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../data/tenant_api.dart';
+import '../../../core/i18n/l10n.dart';
 
 /// Yoneticinin ILK GIRISTE tesisini adlandirdigi kurulum ekrani (Onboarding
 /// Model A). Admin tesisi isimsiz acar; burada girilen ad `POST /tenant/setup`
@@ -38,6 +39,8 @@ class _SetupTenantScreenState extends ConsumerState<SetupTenantScreen> {
     super.dispose();
   }
 
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
@@ -54,8 +57,7 @@ class _SetupTenantScreenState extends ConsumerState<SetupTenantScreen> {
       if (mounted) setState(() => _errorMessage = e.message);
     } catch (_) {
       if (mounted) {
-        setState(() =>
-            _errorMessage = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');
+        setState(() => _errorMessage = _l10n.ortakBeklenmeyenHata);
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -64,6 +66,7 @@ class _SetupTenantScreenState extends ConsumerState<SetupTenantScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -80,15 +83,13 @@ class _SetupTenantScreenState extends ConsumerState<SetupTenantScreen> {
                     const Icon(Icons.apartment_outlined, size: 64),
                     const SizedBox(height: 16),
                     Text(
-                      'Tesisinizi tanımlayın',
+                      l10n.tesisKurulumBaslik,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Yönetici olarak ilk girişinizi yaptınız. Devam etmek için '
-                      'sitenizin/tesisinizin adını girin. Bu adı daha sonra '
-                      'ayarlardan değiştirebilirsiniz.',
+                      l10n.tesisKurulumAciklama,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -99,15 +100,15 @@ class _SetupTenantScreenState extends ConsumerState<SetupTenantScreen> {
                       textInputAction: TextInputAction.done,
                       textCapitalization: TextCapitalization.words,
                       onFieldSubmitted: (_) => _submit(),
-                      decoration: const InputDecoration(
-                        labelText: 'Tesis adı',
-                        hintText: 'Örn. Örnek Sitesi',
-                        prefixIcon: Icon(Icons.business_outlined),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.ayarlarTesisAdi,
+                        hintText: l10n.tesisAdiIpucu,
+                        prefixIcon: const Icon(Icons.business_outlined),
+                        border: const OutlineInputBorder(),
                       ),
                       validator: (v) {
                         final t = (v ?? '').trim();
-                        if (t.length < 2) return 'Tesis adı en az 2 karakter olmalı';
+                        if (t.length < 2) return l10n.tesisAdiKisa;
                         return null;
                       },
                     ),
@@ -127,7 +128,7 @@ class _SetupTenantScreenState extends ConsumerState<SetupTenantScreen> {
                               width: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.5),
                             )
-                          : const Text('Tesisi oluştur'),
+                          : Text(l10n.tesisOlustur),
                     ),
                   ],
                 ),

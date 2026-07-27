@@ -79,11 +79,6 @@ class Shift {
   }
 }
 
-/// gun_tipi TR etiketi; null kisitsizdir → "Her gün".
-String gunTipiLabel(String? gunTipi) => switch (gunTipi) {
-      'hafta_ici' => 'Hafta içi',
-      'hafta_sonu' => 'Hafta sonu',
-      'resmi_tatil' => 'Resmî tatil',
-      'her_gun' || null => 'Her gün',
-      final diger => diger,
-    };
+// gun_tipi ETIKETI burada DEGIL: tur 12'de kimlik/metin ayrimina gecildi
+// (README §15). Domain sozlesme tel degerini (`hafta_ici`, null = kisitsiz)
+// tasir; gorunen ad `presentation/gun_tipi_adi.dart` icinde cozulur.

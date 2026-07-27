@@ -3755,4 +3755,159 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get noktaUidZorunlu => 'El UID NFC es obligatorio';
+
+  @override
+  String get hataZamanAsimi =>
+      'Se agotó el tiempo al conectar con el servidor.';
+
+  @override
+  String get hataSunucuyaUlasilamadi =>
+      'No se pudo contactar con el servidor. Compruebe su conexión y la dirección del servidor.';
+
+  @override
+  String get destekBaslik => 'Soporte';
+
+  @override
+  String get destekYeniTalep => 'Nueva solicitud';
+
+  @override
+  String get destekTalepYok => 'Aún no tiene solicitudes de soporte';
+
+  @override
+  String destekYuklenemedi(Object hata) {
+    return 'No se pudieron cargar las solicitudes.\n$hata';
+  }
+
+  @override
+  String destekGonderilemedi(Object hata) {
+    return 'No se pudo enviar la solicitud: $hata';
+  }
+
+  @override
+  String get destekYeniTalepBaslik => 'Nueva solicitud de soporte';
+
+  @override
+  String get destekKonu => 'Asunto';
+
+  @override
+  String get destekGorselEkle => 'Añadir imagen';
+
+  @override
+  String get destekGorseliDegistir => 'Cambiar imagen';
+
+  @override
+  String get destekEkip => 'El equipo de Yönetio';
+
+  @override
+  String get tesisKurulumBaslik => 'Configure su sitio';
+
+  @override
+  String get tesisKurulumAciklama =>
+      'Ha iniciado sesión como administrador por primera vez. Para continuar, introduzca el nombre de su sitio; podrá cambiarlo después en los ajustes.';
+
+  @override
+  String get tesisAdiIpucu => 'ej. Residencial Ejemplo';
+
+  @override
+  String get tesisAdiKisa =>
+      'El nombre del sitio debe tener al menos 2 caracteres';
+
+  @override
+  String get tesisOlustur => 'Crear sitio';
+
+  @override
+  String get tesisAdiGuncellendi => 'Nombre del sitio actualizado';
+
+  @override
+  String get tesisAdiAciklama =>
+      'Aparece en el título de la pantalla de inicio; lo ven todos los usuarios.';
+
+  @override
+  String get sikayetYokSakin =>
+      'Aún no ha abierto ninguna queja.\nElija una unidad en el mapa de quejas para presentarla.';
+
+  @override
+  String sikayetSatirBaslik(Object daire, Object kategori) {
+    return 'Unidad $daire · $kategori';
+  }
+
+  @override
+  String get sikayetDurumKapandi => 'Cerrada';
+
+  @override
+  String get vardiyaBaslik => 'Turnos';
+
+  @override
+  String get vardiyaYuklenemedi => 'No se pudieron cargar los turnos.';
+
+  @override
+  String get vardiyaTanimYok => 'No hay turnos definidos';
+
+  @override
+  String vardiyaSaatAraligi(Object baslangic, Object bitis, Object gunTipi) {
+    return '$baslangic - $bitis • $gunTipi';
+  }
+
+  @override
+  String get vardiyaPersonelAta => 'Asignar personal';
+
+  @override
+  String vardiyaPersonelBaslik(Object ad) {
+    return '$ad — Personal';
+  }
+
+  @override
+  String get vardiyaPersonelGuncellendi => 'Personal del turno actualizado ✓';
+
+  @override
+  String get vardiyaPersonelYuklenemedi => 'No se pudo cargar el personal.';
+
+  @override
+  String get vardiyaAtanabilirYok => 'No hay personal asignable';
+
+  @override
+  String get gunTipiHaftaIci => 'Días laborables';
+
+  @override
+  String get gunTipiHaftaSonu => 'Fines de semana';
+
+  @override
+  String get gunTipiResmiTatil => 'Días festivos';
+
+  @override
+  String get gunTipiHerGun => 'Todos los días';
+
+  @override
+  String get yonIletisimBaslik => 'Contactos de administración';
+
+  @override
+  String get yonIletisimAlinamadi =>
+      'No se pudieron obtener los datos de administración.';
+
+  @override
+  String get yonIletisimTanimliDegil =>
+      'No hay datos de contacto de administración definidos.';
+
+  @override
+  String get yonIletisimMail => 'Correo de administración';
+
+  @override
+  String get yonIletisimAra => 'Llamar al administrador';
+
+  @override
+  String get aramaBaslatilamadi => 'No se pudo iniciar la llamada';
+
+  @override
+  String get aramaYapilamiyor => 'No se puede llamar';
+
+  @override
+  String get bildirimYok => 'Sin notificaciones';
+
+  @override
+  String bildirimYuklenemedi(Object hata) {
+    return 'No se pudieron cargar las notificaciones.\n$hata';
+  }
+
+  @override
+  String get bildirimYeniPush => 'Nueva notificación';
 }

@@ -17,6 +17,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../domain/activity_models.dart';
 import '../domain/home_view_models.dart';
+import '../../shifts/presentation/gun_tipi_adi.dart';
 
 /// GET /weather → baslik hava blogu.
 HomeHava havaOzeti(Weather w) => HomeHava(
@@ -51,7 +52,7 @@ List<VardiyaKart> vardiyaKartlari({
               v.personel.isNotEmpty ? v.personel.first.avatarUrl : null,
           altBilgi: v.personel.isNotEmpty
               ? l10n.sayacGorevli(v.personel.length)
-              : gunTipiLabel(v.gunTipi),
+              : gunTipiAdi(l10n, v.gunTipi),
         ),
       if (yoneticiAd != null && yoneticiAd.isNotEmpty)
         VardiyaKart(

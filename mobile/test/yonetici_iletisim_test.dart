@@ -5,6 +5,8 @@ import 'package:mobile/src/features/call/data/call_launcher.dart';
 import 'package:mobile/src/features/yonetici_iletisim/domain/yonetici_iletisim_models.dart';
 import 'package:mobile/src/features/yonetici_iletisim/presentation/yonetici_iletisim_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 class _FakeLauncher implements CallLauncher {
   String? dialed;
 
@@ -26,9 +28,7 @@ void main() {
 
     await tester.pumpWidget(ProviderScope(
       overrides: [callLauncherProvider.overrideWithValue(fake)],
-      child: const MaterialApp(
-        home: Scaffold(body: YoneticiKartTile(kart: kart)),
-      ),
+      child: l10nApp(Scaffold(body: YoneticiKartTile(kart: kart))),
     ));
 
     await tester.tap(find.text('Yöneticiyi Ara'));
@@ -38,9 +38,9 @@ void main() {
   });
 
   testWidgets('telefonu olmayan yoneticide arama butonu yok', (tester) async {
-    await tester.pumpWidget(const ProviderScope(
-      child: MaterialApp(
-        home: Scaffold(
+    await tester.pumpWidget(ProviderScope(
+      child: l10nApp(
+        const Scaffold(
           body: YoneticiKartTile(
             kart: YoneticiKart(userId: 'u2', adSoyad: 'Numarasiz'),
           ),

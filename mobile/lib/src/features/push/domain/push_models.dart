@@ -25,11 +25,13 @@ class PushMessageEvent {
   /// FCM data payload (string→string; orn. {"tip": "duyuru"}).
   final Map<String, String> data;
 
-  /// SnackBar/banner icin tek satirlik metin.
-  String get displayText {
-    final parts = [title, body].whereType<String>().where((s) => s.isNotEmpty);
-    return parts.isEmpty ? 'Yeni bildirim' : parts.join(' — ');
-  }
+  /// SnackBar/banner icin tek satirlik metin — SUNUCU yukundan kurulur.
+  ///
+  /// KIMLIK / METIN AYRIMI (README §15): push yuku bos gelirse gosterilecek
+  /// varsayilan metni domain URETMEZ (tur 12'ye kadar TR sabit 'Yeni bildirim'
+  /// duruyordu); bos doner ve cizim katmani `l10n.bildirimYeniPush` yazar.
+  String get displayText =>
+      [title, body].whereType<String>().where((s) => s.isNotEmpty).join(' — ');
 }
 
 /// Push kayit akisinin anlik durumu (UI + teshis).

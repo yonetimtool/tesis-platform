@@ -1059,7 +1059,7 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
             ],
             decoration: InputDecoration(
               labelText: l10n.binaDaireNo,
-              hintText: 'A-12',
+              hintText: l10n.ortakDaireNoIpucu,
               helperText: l10n.binaDaireNoYardim,
             ),
           ),

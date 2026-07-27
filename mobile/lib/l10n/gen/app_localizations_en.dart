@@ -3805,4 +3805,156 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noktaUidZorunlu => 'NFC UID is required';
+
+  @override
+  String get hataZamanAsimi => 'Timed out while connecting to the server.';
+
+  @override
+  String get hataSunucuyaUlasilamadi =>
+      'The server could not be reached. Check your network connection and the server address.';
+
+  @override
+  String get destekBaslik => 'Support';
+
+  @override
+  String get destekYeniTalep => 'New request';
+
+  @override
+  String get destekTalepYok => 'You have no support requests yet';
+
+  @override
+  String destekYuklenemedi(Object hata) {
+    return 'Requests could not be loaded.\n$hata';
+  }
+
+  @override
+  String destekGonderilemedi(Object hata) {
+    return 'The request could not be sent: $hata';
+  }
+
+  @override
+  String get destekYeniTalepBaslik => 'New support request';
+
+  @override
+  String get destekKonu => 'Subject';
+
+  @override
+  String get destekGorselEkle => 'Add image';
+
+  @override
+  String get destekGorseliDegistir => 'Change image';
+
+  @override
+  String get destekEkip => 'The Yönetio team';
+
+  @override
+  String get tesisKurulumBaslik => 'Set up your site';
+
+  @override
+  String get tesisKurulumAciklama =>
+      'You have signed in as a manager for the first time. To continue, enter the name of your site; you can change it later in settings.';
+
+  @override
+  String get tesisAdiIpucu => 'e.g. Example Residence';
+
+  @override
+  String get tesisAdiKisa => 'The site name must be at least 2 characters';
+
+  @override
+  String get tesisOlustur => 'Create site';
+
+  @override
+  String get tesisAdiGuncellendi => 'Site name updated';
+
+  @override
+  String get tesisAdiAciklama =>
+      'Shown in the home screen title; every user sees this name.';
+
+  @override
+  String get sikayetYokSakin =>
+      'You have not opened a complaint yet.\nPick a unit on the Complaint Map to file one.';
+
+  @override
+  String sikayetSatirBaslik(Object daire, Object kategori) {
+    return 'Unit $daire · $kategori';
+  }
+
+  @override
+  String get sikayetDurumKapandi => 'Closed';
+
+  @override
+  String get vardiyaBaslik => 'Shifts';
+
+  @override
+  String get vardiyaYuklenemedi => 'Shifts could not be loaded.';
+
+  @override
+  String get vardiyaTanimYok => 'No shifts defined';
+
+  @override
+  String vardiyaSaatAraligi(Object baslangic, Object bitis, Object gunTipi) {
+    return '$baslangic - $bitis • $gunTipi';
+  }
+
+  @override
+  String get vardiyaPersonelAta => 'Assign staff';
+
+  @override
+  String vardiyaPersonelBaslik(Object ad) {
+    return '$ad — Staff';
+  }
+
+  @override
+  String get vardiyaPersonelGuncellendi => 'Shift staff updated ✓';
+
+  @override
+  String get vardiyaPersonelYuklenemedi => 'Staff could not be loaded.';
+
+  @override
+  String get vardiyaAtanabilirYok => 'No assignable staff';
+
+  @override
+  String get gunTipiHaftaIci => 'Weekdays';
+
+  @override
+  String get gunTipiHaftaSonu => 'Weekends';
+
+  @override
+  String get gunTipiResmiTatil => 'Public holidays';
+
+  @override
+  String get gunTipiHerGun => 'Every day';
+
+  @override
+  String get yonIletisimBaslik => 'Management contacts';
+
+  @override
+  String get yonIletisimAlinamadi => 'Management details could not be loaded.';
+
+  @override
+  String get yonIletisimTanimliDegil =>
+      'No management contact details are defined.';
+
+  @override
+  String get yonIletisimMail => 'Management email';
+
+  @override
+  String get yonIletisimAra => 'Call the manager';
+
+  @override
+  String get aramaBaslatilamadi => 'The call could not be started';
+
+  @override
+  String get aramaYapilamiyor => 'Not callable';
+
+  @override
+  String get bildirimYok => 'No notifications';
+
+  @override
+  String bildirimYuklenemedi(Object hata) {
+    return 'Notifications could not be loaded.\n$hata';
+  }
+
+  @override
+  String get bildirimYeniPush => 'New notification';
 }

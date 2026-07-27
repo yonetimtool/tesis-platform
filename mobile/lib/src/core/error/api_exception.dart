@@ -34,6 +34,16 @@ class ApiException implements Exception {
 
   /// [DioException]'i sozlesme hata zarfina gore [ApiException]'a cevirir.
   /// Zarf yoksa (ag hatasi, timeout, beklenmeyen govde) makul bir mesaj uretir.
+  ///
+  /// SERVER-LOCALIZED(next round) + I18N BORCU (tur 12'de olculdu): asagidaki
+  /// UC metin SUNUCUDAN gelmez, ISTEMCI uretir — yani `core` katmani hala
+  /// Turkce tasiyor. Duzgun cozum bir `AgHatasi` KIMLIGI tasimak ve metni
+  /// cizimde uretmek; ancak `message` o zaman ag hatalarinda BOS kalir ve
+  /// hatayi GOSTEREN her yer (143 cagri / 66 dosya, cogu context'siz
+  /// denetleyicide "errorMessage: e.message" olarak SAKLAR) dorduncu bir kanal
+  /// tasimak zorunda kalir. Bu, supurme turuna sigmayan ayri bir istir:
+  /// kimlik + cozucu + ~20 denetleyici durumu ayni commit'te degismelidir.
+  /// Bu yuzden BILINCLI olarak ertelendi (bkz. README §15 "Kalan i18n borcu").
   factory ApiException.fromDio(DioException e) {
     final status = e.response?.statusCode;
     final data = e.response?.data;

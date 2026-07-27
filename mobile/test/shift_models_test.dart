@@ -50,15 +50,9 @@ void main() {
     });
   });
 
-  group('gunTipiLabel', () {
-    test('bilinen degerler TR etiket; null/bilinmeyen bos degil', () {
-      expect(gunTipiLabel('hafta_ici'), 'Hafta içi');
-      expect(gunTipiLabel('hafta_sonu'), 'Hafta sonu');
-      expect(gunTipiLabel('her_gun'), 'Her gün');
-      expect(gunTipiLabel('resmi_tatil'), 'Resmî tatil');
-      expect(gunTipiLabel(null), 'Her gün'); // null = kisitsiz -> her gun
-    });
-  });
+  // gun_tipi ETIKETI tur 12'de domain'den kalkti (kimlik/metin ayrimi);
+  // cozucu iddialari kalan_moduller_i18n_test icinde (`gunTipiAdi`,
+  // bilinmeyen tel degeri dahil).
 
   group('Shift.personel (WP-E)', () {
     test('personel listesi savunmaci parse edilir', () {

@@ -742,7 +742,7 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Kamera'),
+              title: Text(context.l10n.gorevKamera),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
@@ -916,7 +916,7 @@ class _CategoryPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Kategori (opsiyonel)'),
+        Text(context.l10n.talepKategoriOpsiyonel),
         const SizedBox(height: 4),
         if (state.categoriesLoading)
           const Padding(
@@ -1373,9 +1373,9 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
                     ? _kategoriId
                     : null,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Kategori',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.l10n.butKategori,
+                  border: const OutlineInputBorder(),
                 ),
                 items: [
                   DropdownMenuItem<String?>(

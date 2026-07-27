@@ -1514,5 +1514,71 @@
   "@okutmaBeklenmeyenHata": {
     "description": "{detay} teknik istisna metni — cevrilmez"
   },
-  "noktaUidZorunlu": "NFC UID zorunludur"
+  "noktaUidZorunlu": "NFC UID zorunludur",
+  "hataZamanAsimi": "Sunucuya bağlanırken zaman aşımı oluştu.",
+  "hataSunucuyaUlasilamadi": "Sunucuya ulaşılamadı. Ağ bağlantınızı ve sunucu adresini kontrol edin.",
+  "destekBaslik": "Destek",
+  "destekYeniTalep": "Yeni Talep",
+  "destekTalepYok": "Henüz destek talebiniz yok",
+  "destekYuklenemedi": "Talepler yüklenemedi.\n{hata}",
+  "@destekYuklenemedi": {
+    "description": "{hata} teknik istisna metni — cevrilmez"
+  },
+  "destekGonderilemedi": "Talep gönderilemedi: {hata}",
+  "destekYeniTalepBaslik": "Yeni Destek Talebi",
+  "destekKonu": "Konu",
+  "destekGorselEkle": "Görsel ekle",
+  "destekGorseliDegistir": "Görseli değiştir",
+  "destekEkip": "Yönetio Ekibi",
+  "tesisKurulumBaslik": "Tesisinizi tanımlayın",
+  "tesisKurulumAciklama": "Yönetici olarak ilk girişinizi yaptınız. Devam etmek için sitenizin/tesisinizin adını girin. Bu adı daha sonra ayarlardan değiştirebilirsiniz.",
+  "tesisAdiIpucu": "Örn. Örnek Sitesi",
+  "tesisAdiKisa": "Tesis adı en az 2 karakter olmalı",
+  "tesisOlustur": "Tesisi oluştur",
+  "tesisAdiGuncellendi": "Tesis adı güncellendi",
+  "tesisAdiAciklama": "Ana ekranın başlığında görünür; tüm kullanıcılar bu adı görür.",
+  "sikayetYokSakin": "Henüz şikayet açmadınız.\nŞikayet Haritası’ndan bir daire seçip şikayet edebilirsiniz.",
+  "sikayetSatirBaslik": "Daire {daire} · {kategori}",
+  "@sikayetSatirBaslik": {
+    "description": "Daire no + kategori adi",
+    "placeholders": {
+      "daire": {},
+      "kategori": {}
+    }
+  },
+  "sikayetDurumKapandi": "Kapandı",
+  "vardiyaBaslik": "Vardiyalar",
+  "vardiyaYuklenemedi": "Vardiyalar yüklenemedi.",
+  "vardiyaTanimYok": "Vardiya tanımı yok",
+  "vardiyaSaatAraligi": "{baslangic} - {bitis} • {gunTipi}",
+  "@vardiyaSaatAraligi": {
+    "description": "Baslangic-bitis saati + gun tipi etiketi",
+    "placeholders": {
+      "baslangic": {},
+      "bitis": {},
+      "gunTipi": {}
+    }
+  },
+  "vardiyaPersonelAta": "Personel Ata",
+  "vardiyaPersonelBaslik": "{ad} — Personel",
+  "vardiyaPersonelGuncellendi": "Vardiya personeli güncellendi ✓",
+  "vardiyaPersonelYuklenemedi": "Personel yüklenemedi.",
+  "vardiyaAtanabilirYok": "Atanabilir personel yok",
+  "gunTipiHaftaIci": "Hafta içi",
+  "gunTipiHaftaSonu": "Hafta sonu",
+  "gunTipiResmiTatil": "Resmî tatil",
+  "gunTipiHerGun": "Her gün",
+  "yonIletisimBaslik": "Yönetici İletişim",
+  "yonIletisimAlinamadi": "Yönetici bilgileri alınamadı.",
+  "yonIletisimTanimliDegil": "Yönetici iletişim bilgisi tanımlı değil.",
+  "yonIletisimMail": "Yönetim maili",
+  "yonIletisimAra": "Yöneticiyi Ara",
+  "aramaBaslatilamadi": "Arama başlatılamadı",
+  "aramaYapilamiyor": "Aranamıyor",
+  "bildirimYok": "Bildirim yok",
+  "bildirimYuklenemedi": "Bildirimler yüklenemedi.\n{hata}",
+  "@bildirimYuklenemedi": {
+    "description": "{hata} teknik istisna metni — cevrilmez"
+  },
+  "bildirimYeniPush": "Yeni bildirim"
 }

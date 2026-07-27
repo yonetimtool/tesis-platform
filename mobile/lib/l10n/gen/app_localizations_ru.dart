@@ -3875,4 +3875,157 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noktaUidZorunlu => 'UID NFC обязателен';
+
+  @override
+  String get hataZamanAsimi => 'Истекло время ожидания подключения к серверу.';
+
+  @override
+  String get hataSunucuyaUlasilamadi =>
+      'Не удалось связаться с сервером. Проверьте подключение к сети и адрес сервера.';
+
+  @override
+  String get destekBaslik => 'Поддержка';
+
+  @override
+  String get destekYeniTalep => 'Новая заявка';
+
+  @override
+  String get destekTalepYok => 'У вас пока нет заявок в поддержку';
+
+  @override
+  String destekYuklenemedi(Object hata) {
+    return 'Не удалось загрузить заявки.\n$hata';
+  }
+
+  @override
+  String destekGonderilemedi(Object hata) {
+    return 'Не удалось отправить заявку: $hata';
+  }
+
+  @override
+  String get destekYeniTalepBaslik => 'Новая заявка в поддержку';
+
+  @override
+  String get destekKonu => 'Тема';
+
+  @override
+  String get destekGorselEkle => 'Добавить изображение';
+
+  @override
+  String get destekGorseliDegistir => 'Заменить изображение';
+
+  @override
+  String get destekEkip => 'Команда Yönetio';
+
+  @override
+  String get tesisKurulumBaslik => 'Опишите ваш объект';
+
+  @override
+  String get tesisKurulumAciklama =>
+      'Вы впервые вошли как управляющий. Чтобы продолжить, введите название объекта; позже его можно изменить в настройках.';
+
+  @override
+  String get tesisAdiIpucu => 'напр. ЖК Пример';
+
+  @override
+  String get tesisAdiKisa =>
+      'Название объекта должно содержать минимум 2 символа';
+
+  @override
+  String get tesisOlustur => 'Создать объект';
+
+  @override
+  String get tesisAdiGuncellendi => 'Название объекта обновлено';
+
+  @override
+  String get tesisAdiAciklama =>
+      'Отображается в заголовке главного экрана; его видят все пользователи.';
+
+  @override
+  String get sikayetYokSakin =>
+      'Вы ещё не подавали жалоб.\nВыберите квартиру на карте жалоб, чтобы подать.';
+
+  @override
+  String sikayetSatirBaslik(Object daire, Object kategori) {
+    return 'Кв. $daire · $kategori';
+  }
+
+  @override
+  String get sikayetDurumKapandi => 'Закрыта';
+
+  @override
+  String get vardiyaBaslik => 'Смены';
+
+  @override
+  String get vardiyaYuklenemedi => 'Не удалось загрузить смены.';
+
+  @override
+  String get vardiyaTanimYok => 'Смены не заданы';
+
+  @override
+  String vardiyaSaatAraligi(Object baslangic, Object bitis, Object gunTipi) {
+    return '$baslangic - $bitis • $gunTipi';
+  }
+
+  @override
+  String get vardiyaPersonelAta => 'Назначить сотрудников';
+
+  @override
+  String vardiyaPersonelBaslik(Object ad) {
+    return '$ad — сотрудники';
+  }
+
+  @override
+  String get vardiyaPersonelGuncellendi => 'Состав смены обновлён ✓';
+
+  @override
+  String get vardiyaPersonelYuklenemedi => 'Не удалось загрузить сотрудников.';
+
+  @override
+  String get vardiyaAtanabilirYok => 'Нет сотрудников для назначения';
+
+  @override
+  String get gunTipiHaftaIci => 'По будням';
+
+  @override
+  String get gunTipiHaftaSonu => 'По выходным';
+
+  @override
+  String get gunTipiResmiTatil => 'Государственные праздники';
+
+  @override
+  String get gunTipiHerGun => 'Каждый день';
+
+  @override
+  String get yonIletisimBaslik => 'Контакты управления';
+
+  @override
+  String get yonIletisimAlinamadi => 'Не удалось получить данные управления.';
+
+  @override
+  String get yonIletisimTanimliDegil =>
+      'Контактные данные управления не заданы.';
+
+  @override
+  String get yonIletisimMail => 'Почта управления';
+
+  @override
+  String get yonIletisimAra => 'Позвонить управляющему';
+
+  @override
+  String get aramaBaslatilamadi => 'Не удалось начать звонок';
+
+  @override
+  String get aramaYapilamiyor => 'Звонок недоступен';
+
+  @override
+  String get bildirimYok => 'Уведомлений нет';
+
+  @override
+  String bildirimYuklenemedi(Object hata) {
+    return 'Не удалось загрузить уведомления.\n$hata';
+  }
+
+  @override
+  String get bildirimYeniPush => 'Новое уведомление';
 }

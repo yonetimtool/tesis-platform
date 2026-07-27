@@ -407,8 +407,9 @@ void main() {
         'c-9');
   });
 
-  test('PushMessageEvent.displayText: bos alanlarda makul metin', () {
-    expect(const PushMessageEvent().displayText, 'Yeni bildirim');
+  test('PushMessageEvent.displayText: VARSAYILAN METIN URETMEZ (tur 12)', () {
+    // Bos yukte metin uretmez; "Yeni bildirim" cizimde (l10n) yazilir.
+    expect(const PushMessageEvent().displayText, isEmpty);
     expect(const PushMessageEvent(title: 'Baslik').displayText, 'Baslik');
     expect(const PushMessageEvent(body: 'Govde').displayText, 'Govde');
   });

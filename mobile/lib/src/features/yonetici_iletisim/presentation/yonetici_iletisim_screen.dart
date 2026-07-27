@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../call/data/call_launcher.dart';
 import '../../call/domain/tel_uri.dart';
 import '../data/yonetici_iletisim_api.dart';
@@ -16,17 +16,17 @@ class YoneticiIletisimScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(yoneticiIletisimProvider);
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Yönetici İletişim'))),
+      appBar: AppBar(
+        title: Text(baslikBuyuk(l10n.yonIletisimBaslik, context.dilKodu)),
+      ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) =>
-            const Center(child: Text('Yönetici bilgileri alınamadı.')),
+        error: (_, _) => Center(child: Text(l10n.yonIletisimAlinamadi)),
         data: (d) {
           if (d.yoneticiler.isEmpty && (d.yonetimEmail ?? '').isEmpty) {
-            return const Center(
-              child: Text('Yönetici iletişim bilgisi tanımlı değil.'),
-            );
+            return Center(child: Text(l10n.yonIletisimTanimliDegil));
           }
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -37,7 +37,7 @@ class YoneticiIletisimScreen extends ConsumerWidget {
                 Card(
                   child: ListTile(
                     leading: const Icon(Icons.mail_outline),
-                    title: const Text('Yönetim maili'),
+                    title: Text(l10n.yonIletisimMail),
                     subtitle: Text(d.yonetimEmail!),
                   ),
                 ),
@@ -78,12 +78,13 @@ class YoneticiKartTile extends ConsumerWidget {
                       await ref.read(callLauncherProvider).dial(uri.toString());
                   if (!ok && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Arama başlatılamadı')),
+                      SnackBar(
+                          content: Text(context.l10n.aramaBaslatilamadi)),
                     );
                   }
                 },
                 icon: const Icon(Icons.phone),
-                label: const Text('Yöneticiyi Ara'),
+                label: Text(context.l10n.yonIletisimAra),
               ),
             ],
           ],

@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/support/data/support_api.dart';
 import 'package:mobile/src/features/support/domain/support_models.dart';
 import 'package:mobile/src/features/support/presentation/destek_screen.dart';
+
+import 'helpers/l10n_test_app.dart';
 
 void main() {
   group('SupportTicket.fromJson', () {
@@ -58,7 +59,7 @@ void main() {
                     createdAt: DateTime(2026, 7, 23)),
               ]),
         ],
-        child: const MaterialApp(home: DestekScreen()),
+        child: l10nApp(const DestekScreen()),
       ));
       await tester.pumpAndSettle();
 
@@ -74,7 +75,7 @@ void main() {
     testWidgets('bos liste: anlamli bos-durum + Yeni Talep', (tester) async {
       await tester.pumpWidget(ProviderScope(
         overrides: [myTicketsProvider.overrideWith((ref) async => const [])],
-        child: const MaterialApp(home: DestekScreen()),
+        child: l10nApp(const DestekScreen()),
       ));
       await tester.pumpAndSettle();
       expect(find.text('Henüz destek talebiniz yok'), findsOneWidget);

@@ -6388,6 +6388,276 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'NFC UID zorunludur'**
   String get noktaUidZorunlu;
+
+  /// No description provided for @hataZamanAsimi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sunucuya bağlanırken zaman aşımı oluştu.'**
+  String get hataZamanAsimi;
+
+  /// No description provided for @hataSunucuyaUlasilamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sunucuya ulaşılamadı. Ağ bağlantınızı ve sunucu adresini kontrol edin.'**
+  String get hataSunucuyaUlasilamadi;
+
+  /// No description provided for @destekBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Destek'**
+  String get destekBaslik;
+
+  /// No description provided for @destekYeniTalep.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni Talep'**
+  String get destekYeniTalep;
+
+  /// No description provided for @destekTalepYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz destek talebiniz yok'**
+  String get destekTalepYok;
+
+  /// {hata} teknik istisna metni — cevrilmez
+  ///
+  /// In tr, this message translates to:
+  /// **'Talepler yüklenemedi.\n{hata}'**
+  String destekYuklenemedi(Object hata);
+
+  /// No description provided for @destekGonderilemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep gönderilemedi: {hata}'**
+  String destekGonderilemedi(Object hata);
+
+  /// No description provided for @destekYeniTalepBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni Destek Talebi'**
+  String get destekYeniTalepBaslik;
+
+  /// No description provided for @destekKonu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konu'**
+  String get destekKonu;
+
+  /// No description provided for @destekGorselEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görsel ekle'**
+  String get destekGorselEkle;
+
+  /// No description provided for @destekGorseliDegistir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görseli değiştir'**
+  String get destekGorseliDegistir;
+
+  /// No description provided for @destekEkip.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetio Ekibi'**
+  String get destekEkip;
+
+  /// No description provided for @tesisKurulumBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesisinizi tanımlayın'**
+  String get tesisKurulumBaslik;
+
+  /// No description provided for @tesisKurulumAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici olarak ilk girişinizi yaptınız. Devam etmek için sitenizin/tesisinizin adını girin. Bu adı daha sonra ayarlardan değiştirebilirsiniz.'**
+  String get tesisKurulumAciklama;
+
+  /// No description provided for @tesisAdiIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Örn. Örnek Sitesi'**
+  String get tesisAdiIpucu;
+
+  /// No description provided for @tesisAdiKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis adı en az 2 karakter olmalı'**
+  String get tesisAdiKisa;
+
+  /// No description provided for @tesisOlustur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesisi oluştur'**
+  String get tesisOlustur;
+
+  /// No description provided for @tesisAdiGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis adı güncellendi'**
+  String get tesisAdiGuncellendi;
+
+  /// No description provided for @tesisAdiAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ana ekranın başlığında görünür; tüm kullanıcılar bu adı görür.'**
+  String get tesisAdiAciklama;
+
+  /// No description provided for @sikayetYokSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz şikayet açmadınız.\nŞikayet Haritası’ndan bir daire seçip şikayet edebilirsiniz.'**
+  String get sikayetYokSakin;
+
+  /// Daire no + kategori adi
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire {daire} · {kategori}'**
+  String sikayetSatirBaslik(Object daire, Object kategori);
+
+  /// No description provided for @sikayetDurumKapandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapandı'**
+  String get sikayetDurumKapandi;
+
+  /// No description provided for @vardiyaBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiyalar'**
+  String get vardiyaBaslik;
+
+  /// No description provided for @vardiyaYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiyalar yüklenemedi.'**
+  String get vardiyaYuklenemedi;
+
+  /// No description provided for @vardiyaTanimYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya tanımı yok'**
+  String get vardiyaTanimYok;
+
+  /// Baslangic-bitis saati + gun tipi etiketi
+  ///
+  /// In tr, this message translates to:
+  /// **'{baslangic} - {bitis} • {gunTipi}'**
+  String vardiyaSaatAraligi(Object baslangic, Object bitis, Object gunTipi);
+
+  /// No description provided for @vardiyaPersonelAta.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel Ata'**
+  String get vardiyaPersonelAta;
+
+  /// No description provided for @vardiyaPersonelBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} — Personel'**
+  String vardiyaPersonelBaslik(Object ad);
+
+  /// No description provided for @vardiyaPersonelGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya personeli güncellendi ✓'**
+  String get vardiyaPersonelGuncellendi;
+
+  /// No description provided for @vardiyaPersonelYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel yüklenemedi.'**
+  String get vardiyaPersonelYuklenemedi;
+
+  /// No description provided for @vardiyaAtanabilirYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Atanabilir personel yok'**
+  String get vardiyaAtanabilirYok;
+
+  /// No description provided for @gunTipiHaftaIci.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hafta içi'**
+  String get gunTipiHaftaIci;
+
+  /// No description provided for @gunTipiHaftaSonu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hafta sonu'**
+  String get gunTipiHaftaSonu;
+
+  /// No description provided for @gunTipiResmiTatil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Resmî tatil'**
+  String get gunTipiResmiTatil;
+
+  /// No description provided for @gunTipiHerGun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her gün'**
+  String get gunTipiHerGun;
+
+  /// No description provided for @yonIletisimBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici İletişim'**
+  String get yonIletisimBaslik;
+
+  /// No description provided for @yonIletisimAlinamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici bilgileri alınamadı.'**
+  String get yonIletisimAlinamadi;
+
+  /// No description provided for @yonIletisimTanimliDegil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici iletişim bilgisi tanımlı değil.'**
+  String get yonIletisimTanimliDegil;
+
+  /// No description provided for @yonIletisimMail.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetim maili'**
+  String get yonIletisimMail;
+
+  /// No description provided for @yonIletisimAra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yöneticiyi Ara'**
+  String get yonIletisimAra;
+
+  /// No description provided for @aramaBaslatilamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Arama başlatılamadı'**
+  String get aramaBaslatilamadi;
+
+  /// No description provided for @aramaYapilamiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aranamıyor'**
+  String get aramaYapilamiyor;
+
+  /// No description provided for @bildirimYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirim yok'**
+  String get bildirimYok;
+
+  /// {hata} teknik istisna metni — cevrilmez
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirimler yüklenemedi.\n{hata}'**
+  String bildirimYuklenemedi(Object hata);
+
+  /// No description provided for @bildirimYeniPush.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni bildirim'**
+  String get bildirimYeniPush;
 }
 
 class _AppLocalizationsDelegate

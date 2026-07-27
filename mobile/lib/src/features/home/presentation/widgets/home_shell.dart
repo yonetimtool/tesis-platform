@@ -143,7 +143,7 @@ class _ZilButonu extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = HomeSurface.of(context);
     return IconButton(
-      tooltip: 'Bildirimler',
+      tooltip: context.l10n.sekmeBildirimler,
       onPressed: onTap,
       icon: unreadCount > 0
           ? Badge(

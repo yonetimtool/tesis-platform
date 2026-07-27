@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 import 'package:mobile/src/features/shifts/presentation/vardiyalar_screen.dart';
+
+import 'helpers/l10n_test_app.dart';
 
 void main() {
   testWidgets('vardiyalar listelenir; personel adlari gorunur', (tester) async {
@@ -14,7 +15,7 @@ void main() {
     );
     await tester.pumpWidget(ProviderScope(
       overrides: [shiftsProvider.overrideWith((ref) async => [v])],
-      child: const MaterialApp(home: VardiyalarScreen()),
+      child: l10nApp(const VardiyalarScreen()),
     ));
     await tester.pumpAndSettle();
     expect(find.text('Sabah Vardiyası'), findsOneWidget);

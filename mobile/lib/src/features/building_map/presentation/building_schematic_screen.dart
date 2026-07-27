@@ -729,9 +729,9 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
           const SizedBox(height: 12),
           DropdownButtonFormField<UnitComplaintKategori>(
             initialValue: _kategori,
-            decoration: const InputDecoration(
-              labelText: 'Kategori',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: context.l10n.butKategori,
+              border: const OutlineInputBorder(),
             ),
             items: [
               for (final k in UnitComplaintKategori.values)

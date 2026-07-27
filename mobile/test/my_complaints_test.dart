@@ -6,6 +6,8 @@ import 'package:mobile/src/features/unit_complaints/data/unit_complaint_api.dart
 import 'package:mobile/src/features/unit_complaints/domain/unit_complaint_models.dart';
 import 'package:mobile/src/features/unit_complaints/presentation/my_complaints_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Sahte istemci — /mine sabit doner (kendi sikayetlerim).
 class _FakeApi extends UnitComplaintApi {
   _FakeApi(this._mine) : super(Dio());
@@ -32,7 +34,7 @@ UnitComplaint _c({
 
 Widget _app(List<UnitComplaint> mine) => ProviderScope(
       overrides: [unitComplaintApiProvider.overrideWithValue(_FakeApi(mine))],
-      child: const MaterialApp(home: MyComplaintsScreen()),
+      child: l10nApp(const MyComplaintsScreen()),
     );
 
 void main() {

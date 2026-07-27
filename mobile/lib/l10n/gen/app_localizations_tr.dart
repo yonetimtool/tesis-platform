@@ -3621,4 +3621,156 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get noktaUidZorunlu => 'NFC UID zorunludur';
+
+  @override
+  String get hataZamanAsimi => 'Sunucuya bağlanırken zaman aşımı oluştu.';
+
+  @override
+  String get hataSunucuyaUlasilamadi =>
+      'Sunucuya ulaşılamadı. Ağ bağlantınızı ve sunucu adresini kontrol edin.';
+
+  @override
+  String get destekBaslik => 'Destek';
+
+  @override
+  String get destekYeniTalep => 'Yeni Talep';
+
+  @override
+  String get destekTalepYok => 'Henüz destek talebiniz yok';
+
+  @override
+  String destekYuklenemedi(Object hata) {
+    return 'Talepler yüklenemedi.\n$hata';
+  }
+
+  @override
+  String destekGonderilemedi(Object hata) {
+    return 'Talep gönderilemedi: $hata';
+  }
+
+  @override
+  String get destekYeniTalepBaslik => 'Yeni Destek Talebi';
+
+  @override
+  String get destekKonu => 'Konu';
+
+  @override
+  String get destekGorselEkle => 'Görsel ekle';
+
+  @override
+  String get destekGorseliDegistir => 'Görseli değiştir';
+
+  @override
+  String get destekEkip => 'Yönetio Ekibi';
+
+  @override
+  String get tesisKurulumBaslik => 'Tesisinizi tanımlayın';
+
+  @override
+  String get tesisKurulumAciklama =>
+      'Yönetici olarak ilk girişinizi yaptınız. Devam etmek için sitenizin/tesisinizin adını girin. Bu adı daha sonra ayarlardan değiştirebilirsiniz.';
+
+  @override
+  String get tesisAdiIpucu => 'Örn. Örnek Sitesi';
+
+  @override
+  String get tesisAdiKisa => 'Tesis adı en az 2 karakter olmalı';
+
+  @override
+  String get tesisOlustur => 'Tesisi oluştur';
+
+  @override
+  String get tesisAdiGuncellendi => 'Tesis adı güncellendi';
+
+  @override
+  String get tesisAdiAciklama =>
+      'Ana ekranın başlığında görünür; tüm kullanıcılar bu adı görür.';
+
+  @override
+  String get sikayetYokSakin =>
+      'Henüz şikayet açmadınız.\nŞikayet Haritası’ndan bir daire seçip şikayet edebilirsiniz.';
+
+  @override
+  String sikayetSatirBaslik(Object daire, Object kategori) {
+    return 'Daire $daire · $kategori';
+  }
+
+  @override
+  String get sikayetDurumKapandi => 'Kapandı';
+
+  @override
+  String get vardiyaBaslik => 'Vardiyalar';
+
+  @override
+  String get vardiyaYuklenemedi => 'Vardiyalar yüklenemedi.';
+
+  @override
+  String get vardiyaTanimYok => 'Vardiya tanımı yok';
+
+  @override
+  String vardiyaSaatAraligi(Object baslangic, Object bitis, Object gunTipi) {
+    return '$baslangic - $bitis • $gunTipi';
+  }
+
+  @override
+  String get vardiyaPersonelAta => 'Personel Ata';
+
+  @override
+  String vardiyaPersonelBaslik(Object ad) {
+    return '$ad — Personel';
+  }
+
+  @override
+  String get vardiyaPersonelGuncellendi => 'Vardiya personeli güncellendi ✓';
+
+  @override
+  String get vardiyaPersonelYuklenemedi => 'Personel yüklenemedi.';
+
+  @override
+  String get vardiyaAtanabilirYok => 'Atanabilir personel yok';
+
+  @override
+  String get gunTipiHaftaIci => 'Hafta içi';
+
+  @override
+  String get gunTipiHaftaSonu => 'Hafta sonu';
+
+  @override
+  String get gunTipiResmiTatil => 'Resmî tatil';
+
+  @override
+  String get gunTipiHerGun => 'Her gün';
+
+  @override
+  String get yonIletisimBaslik => 'Yönetici İletişim';
+
+  @override
+  String get yonIletisimAlinamadi => 'Yönetici bilgileri alınamadı.';
+
+  @override
+  String get yonIletisimTanimliDegil =>
+      'Yönetici iletişim bilgisi tanımlı değil.';
+
+  @override
+  String get yonIletisimMail => 'Yönetim maili';
+
+  @override
+  String get yonIletisimAra => 'Yöneticiyi Ara';
+
+  @override
+  String get aramaBaslatilamadi => 'Arama başlatılamadı';
+
+  @override
+  String get aramaYapilamiyor => 'Aranamıyor';
+
+  @override
+  String get bildirimYok => 'Bildirim yok';
+
+  @override
+  String bildirimYuklenemedi(Object hata) {
+    return 'Bildirimler yüklenemedi.\n$hata';
+  }
+
+  @override
+  String get bildirimYeniPush => 'Yeni bildirim';
 }

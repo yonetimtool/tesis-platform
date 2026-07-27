@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
-import '../../../core/text/tr_upper.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../auth/domain/user_role.dart';
 import '../../profile/data/profile_api.dart';
 import '../data/shifts_api.dart';
 import '../domain/shift_models.dart';
+import 'gun_tipi_adi.dart';
 
 /// Vardiyalar ekrani (WP-E) — tum vardiya tanimlari + atanan personel.
 /// admin/yonetici her vardiyaya "Personel Ata" ile saha personeli atar
@@ -21,22 +22,25 @@ class VardiyalarScreen extends ConsumerWidget {
     final atayabilir =
         rol == UserRole.admin || rol == UserRole.yonetici;
 
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Vardiyalar'))),
+      appBar: AppBar(
+        title: Text(baslikBuyuk(l10n.vardiyaBaslik, context.dilKodu)),
+      ),
       body: shiftsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              e is ApiException ? e.message : 'Vardiyalar yüklenemedi.',
+              e is ApiException ? e.message : l10n.vardiyaYuklenemedi,
               textAlign: TextAlign.center,
             ),
           ),
         ),
         data: (vardiyalar) {
           if (vardiyalar.isEmpty) {
-            return const Center(child: Text('Vardiya tanımı yok'));
+            return Center(child: Text(l10n.vardiyaTanimYok));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(12),
@@ -51,8 +55,11 @@ class VardiyalarScreen extends ConsumerWidget {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${v.baslangicSaat} - ${v.bitisSaat}'
-                          ' • ${gunTipiLabel(v.gunTipi)}'),
+                      Text(l10n.vardiyaSaatAraligi(
+                        v.baslangicSaat,
+                        v.bitisSaat,
+                        gunTipiAdi(l10n, v.gunTipi),
+                      )),
                       if (v.personel.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
@@ -69,7 +76,7 @@ class VardiyalarScreen extends ConsumerWidget {
                   trailing: atayabilir
                       ? TextButton(
                           onPressed: () => _atamaSheet(context, ref, v),
-                          child: const Text('Personel Ata'),
+                          child: Text(l10n.vardiyaPersonelAta),
                         )
                       : null,
                 ),
@@ -109,6 +116,7 @@ class _AtamaSheetState extends ConsumerState<_AtamaSheet> {
     if (_kaydediyor) return;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final l10n = context.l10n;
     setState(() => _kaydediyor = true);
     try {
       await ref
@@ -117,7 +125,7 @@ class _AtamaSheetState extends ConsumerState<_AtamaSheet> {
       ref.invalidate(shiftsProvider);
       navigator.pop();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Vardiya personeli güncellendi ✓')),
+        SnackBar(content: Text(l10n.vardiyaPersonelGuncellendi)),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -128,6 +136,7 @@ class _AtamaSheetState extends ConsumerState<_AtamaSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final personelAsync = ref.watch(atanabilirPersonelProvider);
     return SafeArea(
       child: Padding(
@@ -141,7 +150,7 @@ class _AtamaSheetState extends ConsumerState<_AtamaSheet> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text('${widget.vardiya.ad} — Personel',
+                    child: Text(l10n.vardiyaPersonelBaslik(widget.vardiya.ad),
                         style: Theme.of(context).textTheme.titleMedium),
                   ),
                 ],
@@ -156,13 +165,15 @@ class _AtamaSheetState extends ConsumerState<_AtamaSheet> {
                 error: (e, _) => Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                      e is ApiException ? e.message : 'Personel yüklenemedi.'),
+                      e is ApiException
+                          ? e.message
+                          : l10n.vardiyaPersonelYuklenemedi),
                 ),
                 data: (personel) {
                   if (personel.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text('Atanabilir personel yok'),
+                    return Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(l10n.vardiyaAtanabilirYok),
                     );
                   }
                   return ListView(
@@ -199,7 +210,7 @@ class _AtamaSheetState extends ConsumerState<_AtamaSheet> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2.5),
                       )
-                    : const Text('Kaydet'),
+                    : Text(l10n.ortakKaydet),
               ),
             ),
           ],

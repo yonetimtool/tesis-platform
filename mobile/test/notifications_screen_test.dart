@@ -5,6 +5,8 @@ import 'package:mobile/src/features/notifications/data/notifications_controller.
 import 'package:mobile/src/features/notifications/domain/notification_models.dart';
 import 'package:mobile/src/features/notifications/presentation/notifications_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// API'ye dokunmayan sahte controller — markRead cagrilari kaydedilir.
 class _FakeNotifications extends NotificationsController {
   _FakeNotifications(this._items);
@@ -26,7 +28,7 @@ class _FakeNotifications extends NotificationsController {
 
 Widget _app(_FakeNotifications fake) => ProviderScope(
       overrides: [notificationsProvider.overrideWith(() => fake)],
-      child: const MaterialApp(home: NotificationsScreen()),
+      child: l10nApp(const NotificationsScreen()),
     );
 
 void main() {

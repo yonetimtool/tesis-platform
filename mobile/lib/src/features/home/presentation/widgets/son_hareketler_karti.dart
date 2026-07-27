@@ -5,6 +5,7 @@ import '../../domain/home_view_models.dart';
 import 'activity_row.dart';
 import 'home_card.dart';
 import 'section_header.dart';
+import '../../../../core/i18n/l10n.dart';
 
 /// Referans "Son Hareketler" bolumu — bolum basligi + TEK beyaz kart icinde
 /// satirlar, aralarinda 1px ayrac. Uc rol varyantinda AYNI widget; fark
@@ -29,7 +30,8 @@ class SonHareketlerKarti extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(title: 'Son Hareketler', onSeeAll: onSeeAll),
+        SectionHeader(
+            title: context.l10n.bolumSonHareketler, onSeeAll: onSeeAll),
         HomeCard(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Column(

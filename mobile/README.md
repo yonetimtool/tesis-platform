@@ -1571,16 +1571,22 @@ parola sıfırlama ve ortak **parola kuralı**) **Dış Hizmetler + NFC +
 **servis katmanı** ve **iOS sistem sayfası** metinleri, aylık anonim finans
 özeti + yayınla/geri-al) **Entegrasyonlar + Ziyaretçiler + Aylık raporlar**
 (tur 10 — entegrasyon listesi/form/test tetiği, ziyaretçi kaydı/detay/form,
-ay bazlı devriye-görev-aidat raporu) ve **Aidatım + Kontrol noktaları +
+ay bazlı devriye-görev-aidat raporu) **Aidatım + Kontrol noktaları +
 Gönderim kuyruğu** (tur 11 — daire bakiyesi/tahakkuk/ödeme listeleri, NFC
-nokta CRUD, offline okutma kuyruğu). Kalan modüllerin dışa alımı mekanik bir
-iştir ve aşağıdaki envanterle sürdürülür — bkz. "Kalan iş".
+nokta CRUD, offline okutma kuyruğu) ve **süpürme turu** (tur 12 — destek,
+tesis kurulumu/ayarı, şikayetlerim, vardiyalar, yönetici iletişim,
+bildirimler, arama butonu, push).
+
+> **DIŞA ALIM BİTTİ (tur 12).** Ölçüm **11 string / 6 dosya**'da duruyor ve
+> tamamı ya **bilinçli istisna** ya da **yazılı i18n borcu**dur (aşağıda
+> tek tek listeli). Yeni ekran/metin eklerken §15 akışı ("Bir metin nasıl
+> eklenir") geçerlidir; ölçüm komutu regresyon bekçisi olarak kalır.
 
 ### Mimari
 
 | Parça | Yer |
 |---|---|
-| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**1.045 anahtar × 7**, boşluk yok) |
+| ARB kaynakları (7 dil) | `lib/l10n/app_{tr,en,ar,ru,de,fr,es}.arb` (**1.090 anahtar × 7**, boşluk yok) |
 | gen-l10n yapılandırması | `l10n.yaml` (şablon: `app_tr.arb`) |
 | Üretilen sınıf | `lib/l10n/gen/app_localizations.dart` (**repoda tutulur** → taze klonda `analyze`/`test` ek adım istemez; yenilemek için `flutter gen-l10n`) |
 | Dil seçimi + kalıcılık | `lib/src/core/i18n/locale_controller.dart` (`AppDil`, `LocaleController`, `ui.locale` anahtarı — tema ile aynı güvenli depo) |
@@ -1716,6 +1722,9 @@ değişince yönlendirme bozulurdu. Artık:
 | `KategoriSayi.kategoriAd` · `SonTamamlama.kategoriAd` **(null = kategorisiz)** | `reports/domain/report_models.dart` | `k.kategoriAd ?? l10n.gorevKategoriDiger` — domain TR sabit "Diğer" taşımaz |
 | Ödeme **yöntemi/durumu** tel değeri (`elden`, `basarili`…) | `dues/domain/dues_models.dart` | `odemeYontemiAdi` / `odemeDurumuAdi` (`dues/presentation/aidat_etiket.dart`) — **`yontemLabel`/`durumLabel` KALDIRILDI** |
 | `OutboxEntry.hataKodu` **(diske yazılır)** | `scan/domain/outbox_entry.dart` | `okutmaHataMetni` (`scan/presentation/`) |
+| `gun_tipi` tel değeri (`hafta_ici`, null = kısıtsız) | `shifts/domain/shift_models.dart` | `gunTipiAdi` (`shifts/presentation/`) — **`gunTipiLabel` KALDIRILDI** |
+| `UnitComplaintKategori` | `unit_complaints/domain/unit_complaint_models.dart` | `unitComplaintKategoriAdi` — **`label` tur 12'de KALDIRILDI** (çözücü tur 4'ten beri vardı, ekran hâlâ enum alanını okuyordu) |
+| `PushMessageEvent.displayText` | `push/domain/push_models.dart` | Varsayılan metin **üretmez** (boş döner); çizim `l10n.bildirimYeniPush` yazar |
 | `DensityRenk` | `building_map/domain/building_map_models.dart` | **`label` alanı KALDIRILDI** (ölü TR metin; gösterge eşik sayısı yazar) |
 | `UnitComplaintKategori` | `unit_complaints/domain/unit_complaint_models.dart` | `unitComplaintKategoriAdi(l10n, k)` |
 | `TalepDurum` | `complaints/domain/complaint_models.dart` | `_durumLabel(l10n, durum)` |
@@ -1969,7 +1978,22 @@ tel değerini olduğu gibi döndürmesi**; kuyruk hata **kodunun** çözülmesi 
 > grep'i bunu **görmüyordu** (yalnız `switch`/`case`/`==` yanındaki TR metni
 > arıyor); ölçüm komutuna `.contains('…')` taraması eklendi.
 
-`test/flutter_test_config.dart` süite başına bir kez `initializeDateFormatting()`
+`test/kalan_moduller_i18n_test.dart` (15 test — tur 12, süpürme): destekte
+**tr→en→de**, tesis kurulumunda **tr→en→fr**, vardiyalarda **tr→en→ru**,
+yönetici iletişimde **tr→en** dil değişimi; `gunTipiAdi`nın null (kısıtsız) ve
+**bilinmeyen tel değeri** davranışı; `UnitComplaintKategori` çözücüsünün 7 dili;
+`displayText`in artık varsayılan metin üretmediği; **dil adlarının kendi
+dilinde kaldığı** (istisna kilidi); **RTL** ve **320 dp** senaryoları.
+
+> **Süpürme turunun asıl işi ölçümün kör noktasını KAPATMAKTI.** Tur 12'de
+> §15 grep'i **59 string** gösteriyordu; UI konumundaki (`Text(`, `labelText:`,
+> `tooltip:`, `title:`…) **tüm** literalleri diyakritikten bağımsız tarayan
+> ikinci bir geçiş, "bitti" ilan edilmiş modüllerde **9 kaçak** daha buldu:
+> `'Destek'`, `'Konu'`, `'Kamera'`, `'Galeri'`, `'Kategori'` (×2),
+> `'Kategori (opsiyonel)'`, `'Bildirimler'`, `'Bildirim yok'`,
+> `'Son Hareketler'`, `'Vardiya Durumu'`, `'Yenile'`. Hepsinin ARB karşılığı
+> **zaten vardı** — sorun çeviri değil, ölçümdü. Bu ikinci tarama artık ölçüm
+> bölümünde belgelidir ve modül kapatmanın parçasıdır.
 çağırır: eşleyicileri doğrudan çağıran saf birim testleri aksi halde
 `LocaleDataException` ile düşer (uygulamada bu `main.dart`'ta yapılır).
 
@@ -2233,7 +2257,10 @@ grep -rnE "(switch|case|==)\s*\(?\s*['\"][^'\"]*[çğıöşü…]" \
   lib/src/features/dis_hizmet lib/src/features/nfc \
   lib/src/features/transparency lib/src/features/integrations \
   lib/src/features/visitors lib/src/features/reports \
-  lib/src/features/dues lib/src/features/checkpoints lib/src/features/scan
+  lib/src/features/dues lib/src/features/checkpoints lib/src/features/scan \
+  lib/src/features/support lib/src/features/tenant lib/src/features/shifts \
+  lib/src/features/unit_complaints lib/src/features/yonetici_iletisim \
+  lib/src/features/settings lib/src/features/notifications
 
 # Tur 11 dersi: SUNUCU METNINDE arama da kontrol akisidir
 grep -rn "contains('" lib/src --include=*.dart | grep -vE "RegExp|contains\('/'\)"
@@ -2267,28 +2294,63 @@ rakamı ölçümün o anki halidir; tur 2 başında aynı komut 1.115/100 verdi 
 arada başka modüle dokunulmadı, fark ara commit'lerdeki küçük düzenlemelerden
 gelir.)
 
-Kalan envanter (modül başına, **tur 11 sonrası**; 25 modül listeden düştü —
-tur 1–11'in tamamı). Kalan **64 string / 18 dosya**, biri hariç hepsi ≤13:
+**Tur 12 (süpürme: kalan 12 modül) ölçümü — aynı komut:**
 
-| Modül | Kalan string |
-|---|---|
-| `support` | 13 |
-| `tenant` | 9 |
-| `unit_complaints` | 8 |
-| `shifts` | 7 |
-| `yonetici_iletisim` | 6 |
-| `settings` | 6 |
-| `error` | 3 |
-| `home` | 2 (marka kilidi — istisna) |
-| `call` | 2 |
-| `i18n` | 2 |
-| `branding` | 2 (marka kilidi — istisna) |
-| `main.dart` | 1 |
-| `notifications` | 1 |
-| `push` | 1 |
-| `validators` | 1 (regex sabiti — istisna) |
+| | Toplam string | Dosya |
+|---|---|---|
+| Tur 12 öncesi | 64 | 18 |
+| Tur 12 sonrası | **11** | **6** |
 
-Kalan iş **tek bir süpürme turuna** sığar (istisnalar hariç 59 string).
+53 string dışa alındı; **45 yeni ARB anahtarı × 7 dil** (1.045 → 1.090).
+Ayrıca ölçümün göremediği **9 kaçak** (yukarıdaki ikinci tarama) mevcut
+anahtarlara bağlandı.
+
+### İKİNCİ TARAMA — ölçümün kör noktasını kapatan komut
+
+§15 grep'i Türkçe'ye özgü karakter **veya** anahtar kelime arar; `'Destek'`,
+`'Konu'`, `'Kategori'` gibi metinler ikisini de taşımaz. Bir modülü kapatmadan
+önce **UI konumundaki tüm literalleri** de tara:
+
+```bash
+# mobile/ içinde
+python3 - <<'EOF'
+import re, pathlib
+UI = re.compile(r"(Text\(|labelText:|hintText:|helperText:|tooltip:|title:\s"
+                r"|subtitle:\s|label:\s|content:\s|message:\s)"
+                r"\s*(const\s+)?(Text\()?\s*'([^'\\\n]{3,})'")
+TEKNIK = re.compile(r"^(https?://|/|[a-z0-9_]+$|[A-Z0-9_]+$|\{\{|[0-9.:\-]+$"
+                    r"|tel:|image/|UID|SDM|HTTP|NFC$|PICCData$)")
+for f in sorted(pathlib.Path('lib').rglob('*.dart')):
+    if 'l10n/gen' in str(f): continue
+    for i, l in enumerate(f.read_text().split('\n'), 1):
+        if l.strip().startswith('//'): continue
+        for m in UI.finditer(l):
+            v = m.group(4)
+            if TEKNIK.match(v) or v.startswith('$') or '${' in v: continue
+            print(f'{f}:{i}  {v!r}')
+EOF
+```
+
+**Beklenen çıktı: yalnızca `lib/main.dart:83 'Yönetio'` (marka kilidi).**
+
+### Kalan 11 string — hepsi kayıtlı
+
+| Dosya | Adet | Neden |
+|---|---|---|
+| `main.dart`, `core/branding/yonetio_logo.dart`, `home/.../home_marka.dart` | 5 | **Marka kilidi** — `Yönetio` kelime işareti + `GÜVENLİK & DANIŞMANLIK` alt başlığı |
+| `core/i18n/locale_controller.dart` | 2 | **Dil adları kendi dilinde** (`Türkçe`, `Français`) — dil seçicinin gereği; çevrilirse seçici işlevini yitirir |
+| `core/validators/password_rule.dart` | 1 | **Regex karakter sınıfı** (`[A-ZÇĞİÖŞÜ]`) — teknik sabit |
+| `core/error/api_exception.dart` | 3 | **Yazılı i18n borcu** (aşağıda) |
+
+> **Kalan i18n borcu — `ApiException` ağ mesajları (3 string).** Bu üç metin
+> sunucudan gelmez, **istemci üretir**: timeout, "sunucuya ulaşılamadı" ve
+> genel geri-düşüm. Doğru çözüm bir `AgHatasi` kimliği taşıyıp metni çizimde
+> üretmektir; ancak o zaman `message` ağ hatalarında **boş** kalır ve hatayı
+> gösteren **143 çağrı / 66 dosya** (çoğu context'siz denetleyicide
+> `errorMessage: e.message` olarak **saklar**) dördüncü bir kanal taşımak
+> zorundadır. Bu, süpürme turuna sığmayan ayrı bir iştir: kimlik + çözücü +
+> ~20 denetleyici durumu **aynı commit'te** değişmelidir. Gerekçe
+> `api_exception.dart` başında da yazılıdır.
 
 **Bilinçli istisnalar (çevrilmez):**
 
@@ -2299,6 +2361,10 @@ Kalan iş **tek bir süpürme turuna** sığar (istisnalar hariç 59 string).
   `kapali`), rota yolları, `HLS`/`MP4`/`RTSP` etiketleri, URL örnekleri ve
   **regex karakter sınıfları** (`'[A-ZÇĞİÖŞÜ]'` — parola kuralı Türkçe büyük
   harfleri tanır; dile göre değişmez).
+* **Dil adları** — dil seçicide her dil **kendi dilinde** yazar (`Türkçe`,
+  `English`, `العربية`, `Русский`, `Deutsch`, `Français`, `Español`). ARB'ye
+  taşınırsa seçici işlevini yitirir: kullanıcı anlamadığı dilde kendi dilini
+  arayamaz. `AppDil.adKendiDilinde` tek kaynaktır ve tur 12 testiyle kilitli.
 * **Seed/demo metinleri** — backend seed verisi (kamera adları, kural
   başlıkları) sunucudan gelir; istemci çevirmez.
 * **Kod içi yorum ve `debugPrint`** — kullanıcıya görünmez.

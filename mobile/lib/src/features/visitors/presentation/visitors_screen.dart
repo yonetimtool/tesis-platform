@@ -64,7 +64,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
             context.dilKodu)),
         actions: [
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: context.l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
             onPressed: state.loading ? null : controller.refresh,
           ),

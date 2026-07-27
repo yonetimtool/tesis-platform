@@ -9,6 +9,7 @@ import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../data/support_api.dart';
 import '../domain/support_models.dart';
+import '../../../core/i18n/l10n.dart';
 
 const _green = Color(0xFF16A34A);
 const _amber = Color(0xFFD97706);
@@ -24,15 +25,15 @@ class DestekScreen extends ConsumerWidget {
     final async = ref.watch(myTicketsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Destek')),
+      appBar: AppBar(title: Text(context.l10n.destekBaslik)),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _yeniTalep(context),
         icon: const Icon(Icons.add),
-        label: const Text('Yeni Talep'),
+        label: Text(context.l10n.destekYeniTalep),
       ),
       body: async.when(
         data: (items) => items.isEmpty
-            ? const Center(child: Text('Henüz destek talebiniz yok'))
+            ? Center(child: Text(context.l10n.destekTalepYok))
             : RefreshIndicator(
                 onRefresh: () => ref.refresh(myTicketsProvider.future),
                 child: ListView.separated(
@@ -45,8 +46,8 @@ class DestekScreen extends ConsumerWidget {
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child:
-                Text('Talepler yüklenemedi.\n$e', textAlign: TextAlign.center),
+            child: Text(context.l10n.destekYuklenemedi('$e'),
+                textAlign: TextAlign.center),
           ),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -88,6 +89,8 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
     super.dispose();
   }
 
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   Future<void> _fotoSec(ImageSource source) async {
     if (_fotoYukleniyor) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -121,7 +124,9 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _fotoYukleniyor = false);
-      messenger.showSnackBar(SnackBar(content: Text('Fotoğraf alınamadı: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(_l10n.gorevFotoAlinamadi('$e'))),
+      );
     }
   }
 
@@ -134,7 +139,7 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Kamera'),
+              title: Text(sheetContext.l10n.gorevKamera),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _fotoSec(ImageSource.camera);
@@ -142,7 +147,7 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Galeri'),
+              title: Text(sheetContext.l10n.ortakGaleri),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _fotoSec(ImageSource.gallery);
@@ -173,13 +178,15 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _gonderiliyor = false);
-      messenger
-          .showSnackBar(SnackBar(content: Text('Talep gönderilemedi: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(_l10n.destekGonderilemedi('$e'))),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: EdgeInsets.only(
         left: 16, right: 16, top: 4,
@@ -189,7 +196,7 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Yeni Destek Talebi',
+          Text(l10n.destekYeniTalepBaslik,
               style: Theme.of(context)
                   .textTheme
                   .titleMedium
@@ -197,15 +204,17 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
           const SizedBox(height: 12),
           TextField(
             controller: _konuCtrl,
-            decoration: const InputDecoration(
-                labelText: 'Konu', border: OutlineInputBorder()),
+            decoration: InputDecoration(
+                labelText: l10n.destekKonu,
+                border: const OutlineInputBorder()),
             maxLength: 200,
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _aciklamaCtrl,
-            decoration: const InputDecoration(
-                labelText: 'Açıklama', border: OutlineInputBorder()),
+            decoration: InputDecoration(
+                labelText: l10n.talepAciklamaAlan,
+                border: const OutlineInputBorder()),
             maxLines: 4,
             maxLength: 4000,
           ),
@@ -229,7 +238,9 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2.5),
                       )
                     : const Icon(Icons.image_outlined, size: 18),
-                label: Text(_onizleme == null ? 'Görsel ekle' : 'Görseli değiştir'),
+                label: Text(_onizleme == null
+                    ? l10n.destekGorselEkle
+                    : l10n.destekGorseliDegistir),
               ),
               if (_onizleme != null)
                 TextButton(
@@ -239,7 +250,7 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
                             _onizleme = null;
                             _fotoKey = null;
                           }),
-                  child: const Text('Kaldır'),
+                  child: Text(l10n.gorevKaldir),
                 ),
             ],
           ),
@@ -252,7 +263,7 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2.5),
                   )
-                : const Text('Gönder'),
+                : Text(l10n.talepGonder),
           ),
         ],
       ),
@@ -320,7 +331,10 @@ class _TicketCard extends StatelessWidget {
                   color: renk.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(cozuldu ? 'Çözüldü' : 'Açık',
+                child: Text(
+                    cozuldu
+                        ? context.l10n.talepDurumCozuldu
+                        : context.l10n.talepDurumAcik,
                     style: theme.textTheme.labelSmall?.copyWith(
                         color: renk, fontWeight: FontWeight.w700)),
               ),
@@ -346,7 +360,7 @@ class _TicketCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Yönetio Ekibi',
+                    Text(context.l10n.destekEkip,
                         style: theme.textTheme.labelSmall?.copyWith(
                             color: _green, fontWeight: FontWeight.w700)),
                     if (bilet.adminCevap != null) ...[

@@ -3775,4 +3775,159 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get noktaUidZorunlu => 'NFC-UID ist Pflicht';
+
+  @override
+  String get hataZamanAsimi =>
+      'Zeitüberschreitung bei der Verbindung zum Server.';
+
+  @override
+  String get hataSunucuyaUlasilamadi =>
+      'Der Server ist nicht erreichbar. Prüfen Sie Netzwerkverbindung und Serveradresse.';
+
+  @override
+  String get destekBaslik => 'Support';
+
+  @override
+  String get destekYeniTalep => 'Neue Anfrage';
+
+  @override
+  String get destekTalepYok => 'Sie haben noch keine Support-Anfragen';
+
+  @override
+  String destekYuklenemedi(Object hata) {
+    return 'Anfragen konnten nicht geladen werden.\n$hata';
+  }
+
+  @override
+  String destekGonderilemedi(Object hata) {
+    return 'Anfrage konnte nicht gesendet werden: $hata';
+  }
+
+  @override
+  String get destekYeniTalepBaslik => 'Neue Support-Anfrage';
+
+  @override
+  String get destekKonu => 'Betreff';
+
+  @override
+  String get destekGorselEkle => 'Bild hinzufügen';
+
+  @override
+  String get destekGorseliDegistir => 'Bild ändern';
+
+  @override
+  String get destekEkip => 'Das Yönetio-Team';
+
+  @override
+  String get tesisKurulumBaslik => 'Richten Sie Ihr Objekt ein';
+
+  @override
+  String get tesisKurulumAciklama =>
+      'Sie haben sich erstmals als Verwalter angemeldet. Geben Sie zum Fortfahren den Namen Ihres Objekts ein; Sie können ihn später in den Einstellungen ändern.';
+
+  @override
+  String get tesisAdiIpucu => 'z. B. Beispiel-Anlage';
+
+  @override
+  String get tesisAdiKisa => 'Der Objektname muss mindestens 2 Zeichen haben';
+
+  @override
+  String get tesisOlustur => 'Objekt anlegen';
+
+  @override
+  String get tesisAdiGuncellendi => 'Objektname aktualisiert';
+
+  @override
+  String get tesisAdiAciklama =>
+      'Erscheint im Titel des Startbildschirms; alle Nutzer sehen diesen Namen.';
+
+  @override
+  String get sikayetYokSakin =>
+      'Sie haben noch keine Beschwerde eröffnet.\nWählen Sie auf der Beschwerdekarte eine Wohnung aus.';
+
+  @override
+  String sikayetSatirBaslik(Object daire, Object kategori) {
+    return 'Wohnung $daire · $kategori';
+  }
+
+  @override
+  String get sikayetDurumKapandi => 'Geschlossen';
+
+  @override
+  String get vardiyaBaslik => 'Schichten';
+
+  @override
+  String get vardiyaYuklenemedi => 'Schichten konnten nicht geladen werden.';
+
+  @override
+  String get vardiyaTanimYok => 'Keine Schichten definiert';
+
+  @override
+  String vardiyaSaatAraligi(Object baslangic, Object bitis, Object gunTipi) {
+    return '$baslangic - $bitis • $gunTipi';
+  }
+
+  @override
+  String get vardiyaPersonelAta => 'Personal zuweisen';
+
+  @override
+  String vardiyaPersonelBaslik(Object ad) {
+    return '$ad — Personal';
+  }
+
+  @override
+  String get vardiyaPersonelGuncellendi => 'Schichtpersonal aktualisiert ✓';
+
+  @override
+  String get vardiyaPersonelYuklenemedi =>
+      'Personal konnte nicht geladen werden.';
+
+  @override
+  String get vardiyaAtanabilirYok => 'Kein zuweisbares Personal';
+
+  @override
+  String get gunTipiHaftaIci => 'Wochentags';
+
+  @override
+  String get gunTipiHaftaSonu => 'Am Wochenende';
+
+  @override
+  String get gunTipiResmiTatil => 'Gesetzliche Feiertage';
+
+  @override
+  String get gunTipiHerGun => 'Täglich';
+
+  @override
+  String get yonIletisimBaslik => 'Verwaltungskontakte';
+
+  @override
+  String get yonIletisimAlinamadi =>
+      'Verwaltungsdaten konnten nicht geladen werden.';
+
+  @override
+  String get yonIletisimTanimliDegil =>
+      'Es sind keine Verwaltungskontakte definiert.';
+
+  @override
+  String get yonIletisimMail => 'Verwaltungs-E-Mail';
+
+  @override
+  String get yonIletisimAra => 'Verwalter anrufen';
+
+  @override
+  String get aramaBaslatilamadi => 'Anruf konnte nicht gestartet werden';
+
+  @override
+  String get aramaYapilamiyor => 'Nicht anrufbar';
+
+  @override
+  String get bildirimYok => 'Keine Benachrichtigungen';
+
+  @override
+  String bildirimYuklenemedi(Object hata) {
+    return 'Benachrichtigungen konnten nicht geladen werden.\n$hata';
+  }
+
+  @override
+  String get bildirimYeniPush => 'Neue Benachrichtigung';
 }

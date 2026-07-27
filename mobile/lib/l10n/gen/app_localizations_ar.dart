@@ -3897,4 +3897,155 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noktaUidZorunlu => 'معرّف NFC إلزامي';
+
+  @override
+  String get hataZamanAsimi => 'انتهت المهلة أثناء الاتصال بالخادم.';
+
+  @override
+  String get hataSunucuyaUlasilamadi =>
+      'تعذّر الوصول إلى الخادم. تحقّق من اتصال الشبكة وعنوان الخادم.';
+
+  @override
+  String get destekBaslik => 'الدعم';
+
+  @override
+  String get destekYeniTalep => 'طلب جديد';
+
+  @override
+  String get destekTalepYok => 'لا توجد لديك طلبات دعم بعد';
+
+  @override
+  String destekYuklenemedi(Object hata) {
+    return 'تعذّر تحميل الطلبات.\n$hata';
+  }
+
+  @override
+  String destekGonderilemedi(Object hata) {
+    return 'تعذّر إرسال الطلب: $hata';
+  }
+
+  @override
+  String get destekYeniTalepBaslik => 'طلب دعم جديد';
+
+  @override
+  String get destekKonu => 'الموضوع';
+
+  @override
+  String get destekGorselEkle => 'أضف صورة';
+
+  @override
+  String get destekGorseliDegistir => 'تغيير الصورة';
+
+  @override
+  String get destekEkip => 'فريق Yönetio';
+
+  @override
+  String get tesisKurulumBaslik => 'عرّف مجمّعك';
+
+  @override
+  String get tesisKurulumAciklama =>
+      'لقد سجّلت الدخول كمدير لأول مرة. للمتابعة، أدخل اسم مجمّعك؛ ويمكنك تغييره لاحقاً من الإعدادات.';
+
+  @override
+  String get tesisAdiIpucu => 'مثال: مجمّع نموذجي';
+
+  @override
+  String get tesisAdiKisa => 'يجب أن يكون اسم المجمّع حرفين على الأقل';
+
+  @override
+  String get tesisOlustur => 'إنشاء المجمّع';
+
+  @override
+  String get tesisAdiGuncellendi => 'تم تحديث اسم المجمّع';
+
+  @override
+  String get tesisAdiAciklama =>
+      'يظهر في عنوان الشاشة الرئيسية؛ يراه جميع المستخدمين.';
+
+  @override
+  String get sikayetYokSakin =>
+      'لم تفتح أي شكوى بعد.\nاختر وحدة من خريطة الشكاوى لتقديم شكوى.';
+
+  @override
+  String sikayetSatirBaslik(Object daire, Object kategori) {
+    return 'الوحدة $daire · $kategori';
+  }
+
+  @override
+  String get sikayetDurumKapandi => 'مغلقة';
+
+  @override
+  String get vardiyaBaslik => 'الورديات';
+
+  @override
+  String get vardiyaYuklenemedi => 'تعذّر تحميل الورديات.';
+
+  @override
+  String get vardiyaTanimYok => 'لا توجد ورديات معرّفة';
+
+  @override
+  String vardiyaSaatAraligi(Object baslangic, Object bitis, Object gunTipi) {
+    return '$baslangic - $bitis • $gunTipi';
+  }
+
+  @override
+  String get vardiyaPersonelAta => 'تعيين موظفين';
+
+  @override
+  String vardiyaPersonelBaslik(Object ad) {
+    return '$ad — الموظفون';
+  }
+
+  @override
+  String get vardiyaPersonelGuncellendi => 'تم تحديث موظفي الوردية ✓';
+
+  @override
+  String get vardiyaPersonelYuklenemedi => 'تعذّر تحميل الموظفين.';
+
+  @override
+  String get vardiyaAtanabilirYok => 'لا يوجد موظفون قابلون للتعيين';
+
+  @override
+  String get gunTipiHaftaIci => 'أيام الأسبوع';
+
+  @override
+  String get gunTipiHaftaSonu => 'عطلة نهاية الأسبوع';
+
+  @override
+  String get gunTipiResmiTatil => 'العطل الرسمية';
+
+  @override
+  String get gunTipiHerGun => 'كل يوم';
+
+  @override
+  String get yonIletisimBaslik => 'التواصل مع الإدارة';
+
+  @override
+  String get yonIletisimAlinamadi => 'تعذّر جلب بيانات الإدارة.';
+
+  @override
+  String get yonIletisimTanimliDegil => 'لم تُعرَّف بيانات تواصل الإدارة.';
+
+  @override
+  String get yonIletisimMail => 'بريد الإدارة';
+
+  @override
+  String get yonIletisimAra => 'اتصل بالمدير';
+
+  @override
+  String get aramaBaslatilamadi => 'تعذّر بدء الاتصال';
+
+  @override
+  String get aramaYapilamiyor => 'غير قابل للاتصال';
+
+  @override
+  String get bildirimYok => 'لا توجد إشعارات';
+
+  @override
+  String bildirimYuklenemedi(Object hata) {
+    return 'تعذّر تحميل الإشعارات.\n$hata';
+  }
+
+  @override
+  String get bildirimYeniPush => 'إشعار جديد';
 }

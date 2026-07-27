@@ -8,16 +8,20 @@
 library;
 
 /// `unit_complaint_kategori` enum'unun istemci aynasi (Rev-1 genisleme).
+///
+/// KIMLIK / METIN AYRIMI (README §15): tur 12'de `label` (TR sabiti)
+/// KALDIRILDI — cozucu tur 4'te eklenmisti
+/// (`presentation/kategori_adi.dart` → `unitComplaintKategoriAdi`), ama
+/// `my_complaints_screen` hala enum alanini okuyordu.
 enum UnitComplaintKategori {
-  gurultu('gurultu', 'Gürültü'),
-  kapiOnuAyakkabi('kapi_onu_ayakkabi', 'Kapı önü / ayakkabı'),
-  zararVerme('zarar_verme', 'Zarar verme'),
-  diger('diger', 'Diğer');
+  gurultu('gurultu'),
+  kapiOnuAyakkabi('kapi_onu_ayakkabi'),
+  zararVerme('zarar_verme'),
+  diger('diger');
 
-  const UnitComplaintKategori(this.wire, this.label);
+  const UnitComplaintKategori(this.wire);
 
   final String wire;
-  final String label;
 
   static UnitComplaintKategori fromWire(String? value) =>
       UnitComplaintKategori.values.firstWhere(

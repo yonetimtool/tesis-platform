@@ -5,6 +5,7 @@ import '../../domain/home_view_models.dart';
 import 'section_header.dart';
 import 'section_padding.dart';
 import 'shift_status_card.dart';
+import '../../../../core/i18n/l10n.dart';
 
 /// Referans "Vardiya Durumu" bolumu — yatay kaydirilabilir [ShiftStatusCard]
 /// seridi. gorevli.jpeg ve yonetici.jpeg'de AYNI bolum: tek widget, iki
@@ -27,7 +28,8 @@ class VardiyaSeridi extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         HomeSectionPad(
-          child: SectionHeader(title: 'Vardiya Durumu', onSeeAll: onSeeAll),
+          child: SectionHeader(
+              title: context.l10n.bolumVardiyaDurumu, onSeeAll: onSeeAll),
         ),
         SizedBox(
           height: 196,

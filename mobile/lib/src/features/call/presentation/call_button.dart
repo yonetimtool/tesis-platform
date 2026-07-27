@@ -5,6 +5,7 @@ import '../../../core/error/api_exception.dart';
 import '../data/call_api.dart';
 import '../data/call_launcher.dart';
 import '../domain/call_models.dart';
+import '../../../core/i18n/l10n.dart';
 
 /// Rol-bazli arama butonu (C1a). Verilen [userId] icin /call-target'i cozer:
 ///   * 200 (aranabilir) → etkin "Ara" butonu; dokununca cihaz ceviricisi (tel:).
@@ -61,7 +62,7 @@ class _CallButtonState extends ConsumerState<CallButton> {
       final ok = await ref.read(callLauncherProvider).dial(t.telUri);
       if (!ok && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Arama başlatılamadı')),
+          SnackBar(content: Text(context.l10n.aramaBaslatilamadi)),
         );
       }
     } finally {
@@ -83,13 +84,14 @@ class _CallButtonState extends ConsumerState<CallButton> {
     }
     if (_target == null) {
       // Sessiz "aranamıyor" durumu (numara yok/riza yok/yetki yok).
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            Icon(Icons.phone_disabled, size: 16, color: Colors.grey),
-            SizedBox(width: 6),
-            Text('Aranamıyor', style: TextStyle(color: Colors.grey)),
+            const Icon(Icons.phone_disabled, size: 16, color: Colors.grey),
+            const SizedBox(width: 6),
+            Text(context.l10n.aramaYapilamiyor,
+                style: const TextStyle(color: Colors.grey)),
           ],
         ),
       );

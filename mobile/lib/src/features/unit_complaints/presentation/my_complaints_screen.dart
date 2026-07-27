@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/error/akis_hatasi.dart';
+import '../../../core/i18n/l10n.dart';
 import '../domain/unit_complaint_models.dart';
 import 'my_complaints_controller.dart';
+import 'kategori_adi.dart';
 
 /// "Şikayetlerim" (D-viz Rev-1.1) — sakin KENDI actigi daire sikayetlerini
 /// (gitti mi geri bildirimi) gorur: hedef daire + kategori + tarih + durum.
@@ -16,12 +18,13 @@ class MyComplaintsScreen extends ConsumerWidget {
     final state = ref.watch(myComplaintsControllerProvider);
     final controller = ref.read(myComplaintsControllerProvider.notifier);
 
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: Text(trUpper('Şikayetlerim')),
+        title: Text(baslikBuyuk(l10n.modulSikayetlerim, context.dilKodu)),
         actions: [
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
             onPressed: state.loading ? null : controller.refresh,
           ),
@@ -42,25 +45,23 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     if (state.loading && state.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null && state.items.isEmpty) {
+    final hata = akisHatasiCoz(l10n, state.hataKimligi, state.errorMessage);
+    if (hata != null && state.items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
-        children: [Center(child: Text(state.errorMessage!))],
+        children: [Center(child: Text(hata))],
       );
     }
     if (state.items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
-        children: const [
+        children: [
           Center(
-            child: Text(
-              'Henüz şikayet açmadınız.\nŞikayet Haritası’ndan bir daire seçip '
-              'şikayet edebilirsiniz.',
-              textAlign: TextAlign.center,
-            ),
+            child: Text(l10n.sikayetYokSakin, textAlign: TextAlign.center),
           ),
         ],
       );
@@ -89,8 +90,11 @@ class _ComplaintCard extends StatelessWidget {
           acik ? Icons.hourglass_bottom_outlined : Icons.check_circle_outline,
           color: acik ? Colors.orange : Colors.green,
         ),
-        title: Text('Daire ${c.unitNo ?? '-'} · ${c.kategori.label}'),
-        subtitle: Text(_fmtDate(c.createdAt.toLocal())),
+        title: Text(context.l10n.sikayetSatirBaslik(
+          c.unitNo ?? '-',
+          unitComplaintKategoriAdi(context.l10n, c.kategori),
+        )),
+        subtitle: Text(tarihSaatBicimi(c.createdAt, context.dilKodu)),
         trailing: _DurumChip(acik: acik),
       ),
     );
@@ -112,14 +116,9 @@ class _DurumChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        acik ? 'Açık' : 'Kapandı',
+        acik ? context.l10n.talepDurumAcik : context.l10n.sikayetDurumKapandi,
         style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
   }
-}
-
-String _fmtDate(DateTime dt) {
-  String p(int n) => n.toString().padLeft(2, '0');
-  return '${p(dt.day)}.${p(dt.month)}.${dt.year} ${p(dt.hour)}:${p(dt.minute)}';
 }

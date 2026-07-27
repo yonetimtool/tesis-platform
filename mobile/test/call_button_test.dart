@@ -8,6 +8,8 @@ import 'package:mobile/src/features/call/data/call_launcher.dart';
 import 'package:mobile/src/features/call/domain/call_models.dart';
 import 'package:mobile/src/features/call/presentation/call_button.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Sahte call API — verilen sonucu doner ya da ApiException firlatir (403/404).
 class _FakeCallApi extends CallApi {
   _FakeCallApi({this.target, this.error}) : super(Dio());
@@ -51,8 +53,8 @@ Widget _app({required _FakeCallApi api, required _FakeLauncher launcher}) {
       callApiProvider.overrideWithValue(api),
       callLauncherProvider.overrideWithValue(launcher),
     ],
-    child: const MaterialApp(
-      home: Scaffold(body: CallButton(userId: 'r-1', label: 'Sakini ara')),
+    child: l10nApp(
+      const Scaffold(body: CallButton(userId: 'r-1', label: 'Sakini ara')),
     ),
   );
 }
