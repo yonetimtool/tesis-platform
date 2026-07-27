@@ -101,7 +101,12 @@ class StatTile extends StatelessWidget {
 }
 
 /// "Hızlı Özet" bolumu — 4'lu istatistik izgarasi (dar ekranda 2'li).
-class HizliOzetIzgarasi extends StatelessWidget {
+///
+/// StatefulWidget'tir cunku [AutoSizeGroup]'lar KALICI olmak zorundadir
+/// (gerekce: [HizliErisimIzgarasi] uzerindeki not). `build()` icinde uretilen
+/// grup, her yeniden cizimde deger yazilarini bir kare buyutup kucultur —
+/// "%86" gibi kutu degerleri gozle gorulur bicimde ziplardi.
+class HizliOzetIzgarasi extends StatefulWidget {
   const HizliOzetIzgarasi({super.key, required this.kutular, this.onSec});
 
   final List<OzetKutusu> kutular;
@@ -110,10 +115,18 @@ class HizliOzetIzgarasi extends StatelessWidget {
   final ValueChanged<OzetKutusu>? onSec;
 
   @override
+  State<HizliOzetIzgarasi> createState() => _HizliOzetIzgarasiState();
+}
+
+class _HizliOzetIzgarasiState extends State<HizliOzetIzgarasi> {
+  // TITREME KURALI: gruplar STATE'te durur, `build()` icinde URETILMEZ.
+  final degerGrubu = AutoSizeGroup();
+  final etiketGrubu = AutoSizeGroup();
+
+  @override
   Widget build(BuildContext context) {
+    final kutular = widget.kutular;
     if (kutular.isEmpty) return const SizedBox.shrink();
-    final degerGrubu = AutoSizeGroup();
-    final etiketGrubu = AutoSizeGroup();
 
     return LayoutBuilder(builder: (context, c) {
       // Esik hizli erisim izgarasiyla AYNI (bkz. hizliErisimSutun).
@@ -131,7 +144,7 @@ class HizliOzetIzgarasi extends StatelessWidget {
           for (final k in kutular)
             StatTile(
               kutu: k,
-              onTap: onSec == null ? null : () => onSec!(k),
+              onTap: widget.onSec == null ? null : () => widget.onSec!(k),
               hucreGenisligi: hucre,
               degerGrubu: degerGrubu,
               etiketGrubu: etiketGrubu,

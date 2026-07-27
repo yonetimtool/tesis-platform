@@ -117,7 +117,7 @@ class HizliErisimKarti extends StatelessWidget {
 }
 
 /// gorevli.jpeg — TEK SIRA yatay kaydirilabilir serit (5 kart, ~110dp).
-class HizliErisimSeridi extends StatelessWidget {
+class HizliErisimSeridi extends StatefulWidget {
   const HizliErisimSeridi({
     super.key,
     required this.kartlar,
@@ -128,10 +128,19 @@ class HizliErisimSeridi extends StatelessWidget {
   final ValueChanged<HizliErisimKart> onSec;
 
   @override
+  State<HizliErisimSeridi> createState() => _HizliErisimSeridiState();
+}
+
+class _HizliErisimSeridiState extends State<HizliErisimSeridi> {
+  // TITREME KURALI: gruplar STATE'te durur, `build()` icinde URETILMEZ.
+  // Gerekce icin [HizliErisimIzgarasi] uzerindeki nota bakin.
+  final baslikGrubu = AutoSizeGroup();
+  final sayacGrubu = AutoSizeGroup();
+
+  @override
   Widget build(BuildContext context) {
+    final kartlar = widget.kartlar;
     if (kartlar.isEmpty) return const SizedBox.shrink();
-    final baslikGrubu = AutoSizeGroup();
-    final sayacGrubu = AutoSizeGroup();
 
     return LayoutBuilder(builder: (context, c) {
       final genislik = seritKartGenisligi(c.maxWidth);
@@ -147,7 +156,7 @@ class HizliErisimSeridi extends StatelessWidget {
             width: genislik,
             child: HizliErisimKarti(
               kart: kartlar[i],
-              onTap: () => onSec(kartlar[i]),
+              onTap: () => widget.onSec(kartlar[i]),
               hucreGenisligi: genislik,
               baslikGrubu: baslikGrubu,
               sayacGrubu: sayacGrubu,
@@ -162,7 +171,17 @@ class HizliErisimSeridi extends StatelessWidget {
 /// site-sakini.jpeg / yonetici.jpeg — 4 sutun x 2 satir SABIT izgara
 /// (kaydirma yok). Cok dar ekranda (<=360dp) 4 sutun okunmaz hale geldigi
 /// icin 2 sutuna duser — icerik ve sira aynidir.
-class HizliErisimIzgarasi extends StatelessWidget {
+///
+/// NEDEN StatefulWidget (yalniz [AutoSizeGroup] icin): grup, uyelerinin ORTAK
+/// yazi boyutunu tutan KALICI bir denetleyicidir ve ilk karede boyutu henuz
+/// bilinmez — uyeler kendi boyutlarinda cizilir, grup en kucugunu bulunca bir
+/// mikrogorev ile hepsini yeniden cizdirir. Grup `build()` icinde uretilirse
+/// bu "bir kare sapma" HER yeniden cizimde tekrarlanir (sayac degeri
+/// degismese bile: 45 sn'lik periyodik yenileme, dil/tema degisimi...) ve
+/// kart yazilari gozle gorulur bicimde ziplar. Gruplari state'te tutmak
+/// kimliklerini sabitler; `AutoSizeText.didUpdateWidget` grubu "degismis"
+/// saymaz, ortak boyut korunur. Regresyon: home_kart_titremesi_test.dart.
+class HizliErisimIzgarasi extends StatefulWidget {
   const HizliErisimIzgarasi({
     super.key,
     required this.kartlar,
@@ -173,10 +192,18 @@ class HizliErisimIzgarasi extends StatelessWidget {
   final ValueChanged<HizliErisimKart> onSec;
 
   @override
+  State<HizliErisimIzgarasi> createState() => _HizliErisimIzgarasiState();
+}
+
+class _HizliErisimIzgarasiState extends State<HizliErisimIzgarasi> {
+  // TITREME KURALI: gruplar STATE'te durur, `build()` icinde URETILMEZ.
+  final baslikGrubu = AutoSizeGroup();
+  final sayacGrubu = AutoSizeGroup();
+
+  @override
   Widget build(BuildContext context) {
+    final kartlar = widget.kartlar;
     if (kartlar.isEmpty) return const SizedBox.shrink();
-    final baslikGrubu = AutoSizeGroup();
-    final sayacGrubu = AutoSizeGroup();
 
     return LayoutBuilder(builder: (context, c) {
       final sutun = hizliErisimSutun(c.maxWidth);
@@ -194,7 +221,7 @@ class HizliErisimIzgarasi extends StatelessWidget {
           for (final k in kartlar)
             HizliErisimKarti(
               kart: k,
-              onTap: () => onSec(k),
+              onTap: () => widget.onSec(k),
               hucreGenisligi: hucre,
               baslikGrubu: baslikGrubu,
               sayacGrubu: sayacGrubu,
