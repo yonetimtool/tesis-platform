@@ -91,7 +91,7 @@ async def create_resident(
         if is_unique_violation(exc):
             # telefon global benzersiz; email tenant-ici benzersiz — hangisi
             # oldugu ayirt edilmeden tek mesaj (numara/e-posta cakismasi).
-            raise APIError(409, "conflict", "Bu telefon veya e-posta zaten kayitli.")
+            raise APIError(409, "conflict", "telefon_veya_email_zaten_kayitli")
         raise translate_integrity(exc)
 
     # 3) aktif daire-sakin baglantisi.
@@ -172,7 +172,7 @@ async def _resident_or_404(db: AsyncSession, user_id: uuid.UUID) -> AppUser:
         )
     ).scalar_one_or_none()
     if resident is None:
-        raise APIError(404, "not_found", "Sakin bulunamadi.")
+        raise APIError(404, "not_found", "sakin_bulunamadi")
     return resident
 
 
@@ -194,7 +194,7 @@ async def update_resident(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "Bu telefon zaten kayitli.")
+            raise APIError(409, "conflict", "telefon_zaten_kayitli")
         raise translate_integrity(exc)
     # meta: yalniz DEGISEN ALAN ADLARI (deger YOK — KVKK).
     await audit_user(

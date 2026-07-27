@@ -62,7 +62,7 @@ async def update_my_avatar(
     if body.avatar_key is not None and not body.avatar_key.startswith(
         f"{user.tenant_id}/"
     ):
-        raise APIError(422, "invalid_foto_key", "avatar_key tenant alani disinda")
+        raise APIError(422, "invalid_foto_key", "avatar_key_alan_disi")
     eski = user.avatar_key
     user.avatar_key = body.avatar_key
     user.updated_at = func.now()
@@ -97,7 +97,7 @@ async def change_my_password(
     Basarida yeni bcrypt hash yazilir; oturum (refresh) devam eder.
     """
     if not verify_password(body.current_password, user.password_hash):
-        raise APIError(400, "invalid_credentials", "Mevcut parola hatali.")
+        raise APIError(400, "invalid_credentials", "mevcut_parola_hatali")
     user.password_hash = hash_password(body.new_password)
     user.password_set = True
     user.updated_at = func.now()

@@ -60,7 +60,7 @@ _SUMMARY_READER = require_role(
 # olusturulur; yoksa ilk odemede get-or-create ile acilir).
 AIDAT_KATEGORI_AD = "Aidat"
 
-_CAT_CONFLICT = APIError(409, "conflict", "Bu ad ve tipte kategori zaten var.")
+_CAT_CONFLICT = APIError(409, "conflict", "butce_kategori_ad_tip_var")
 
 
 def _donem_range(donem: str) -> tuple[date, date]:
@@ -70,7 +70,7 @@ def _donem_range(donem: str) -> tuple[date, date]:
         year, month = int(y), int(m)
         first = date(year, month, 1)
     except (ValueError, TypeError):
-        raise APIError(422, "validation_error", "donem 'YYYY-MM' biciminde olmali.")
+        raise APIError(422, "validation_error", "donem_bicimi")
     last = date(year, month, calendar.monthrange(year, month)[1])
     return first, last
 
@@ -174,12 +174,9 @@ async def create_entry(
         await db.execute(select(BudgetCategory).where(BudgetCategory.id == body.kategori_id))
     ).scalar_one_or_none()
     if cat is None:
-        raise APIError(422, "invalid_reference", "kategori_id bu tenant'ta bulunamadi.")
+        raise APIError(422, "invalid_reference", "butce_kategori_bulunamadi")
     if not cat.aktif:
-        raise APIError(
-            422, "invalid_reference",
-            "Pasif kategoriye yeni kayit yazilamaz (kategoriyi aktiflestirin).",
-        )
+        raise APIError(422, "invalid_reference", "butce_pasif_kategoriye_yazilamaz")
 
     obj = BudgetEntry(
         tenant_id=user.tenant_id,
@@ -245,10 +242,7 @@ async def _manual_entry_or_error(db: AsyncSession, entry_id: uuid.UUID) -> Budge
     if obj.kaynak != "manuel":
         # Otomatik aidat kaydi defterden elle oynanamaz — aidat mutabakati
         # bozulmasin (odeme iptali/duzeltmesi aidat modulunun isi).
-        raise APIError(
-            422, "invalid_reference",
-            "Otomatik aidat kaydi duzenlenemez/silinemez; aidat modulunden yonetilir.",
-        )
+        raise APIError(422, "invalid_reference", "butce_otomatik_aidat_kaydi")
     return obj
 
 
@@ -269,9 +263,9 @@ async def update_entry(
             )
         ).scalar_one_or_none()
         if cat is None:
-            raise APIError(422, "invalid_reference", "kategori_id bu tenant'ta bulunamadi.")
+            raise APIError(422, "invalid_reference", "butce_kategori_bulunamadi")
         if not cat.aktif:
-            raise APIError(422, "invalid_reference", "Pasif kategoriye tasinabilir degil.")
+            raise APIError(422, "invalid_reference", "butce_pasif_kategoriye_tasinamaz")
         obj.tip = cat.tip  # tip kategoriyle birlikte guncellenir
 
     for key, value in data.items():

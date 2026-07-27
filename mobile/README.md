@@ -1578,7 +1578,9 @@ Gönderim kuyruğu** (tur 11 — daire bakiyesi/tahakkuk/ödeme listeleri, NFC
 nokta CRUD, offline okutma kuyruğu) ve **süpürme turu** (tur 12 — destek,
 tesis kurulumu/ayarı, şikayetlerim, vardiyalar, yönetici iletişim,
 bildirimler, arama butonu, push). Tur 13'te **`ApiException` ağ metinleri**
-kimliğe çevrildi (`core` artık hiçbir dilde metin üretmez).
+kimliğe çevrildi (`core` artık hiçbir dilde metin üretmez); tur 14'te
+**sunucu hata metinleri** de 7 dile alındı (`backend/app/hata_metinleri.py`) —
+mobil her isteğe `Accept-Language` ekler.
 
 > **DIŞA ALIM BİTTİ (tur 12) — İ18N BORCU DA KAPANDI (tur 13).** Ölçüm
 > **8 string / 5 dosya**'da duruyor ve tamamı **bilinçli istisna**dır (marka
@@ -1682,29 +1684,39 @@ Tarih/saat ve ay/gün adları ise **aktif dile** göre biçimlenir
 Başlık BÜYÜK HARF kuralı da dile duyarlıdır (`baslikBuyuk`): `tr` için i→İ /
 ı→I, **Arapçada büyük harf yoktur** (metin aynen), diğerlerinde standart.
 
-### Sunucu metni sınırı — `SERVER-LOCALIZED(next round)`
+### Sunucu metni sınırı — durum
 
-Sunucudan gelen metinler bu turda **çevrilmez, olduğu gibi gösterilir**
-(backend yerelleştirmesi ayrı tur). İşaretli sınırlar:
+Sunucudan gelen metinleri istemci **çevirmez, olduğu gibi gösterir**. Sınırlar
+ve bugünkü durumları:
 
-| Sınır | Dosya |
-|---|---|
-| Tüm API hata metinleri (422/409/503...) | `lib/src/core/error/api_exception.dart` (sınıf başı) |
-| Akış satırları (`baslik`/`alt_metin`, 13 kaynak) | `lib/src/features/home/presentation/home_mappers.dart` → `hareketSatirlari` |
-| Kamera listesi hata metni | `lib/src/features/cameras/presentation/kameralar_screen.dart` |
-| Kamera formu 422 mesajı | `lib/src/features/cameras/presentation/kamera_form_sheet.dart` |
+| Sınır | Dosya | Durum |
+|---|---|---|
+| Tüm API hata metinleri (422/409/503...) | `lib/src/core/error/api_exception.dart` (sınıf başı) | **KAPANDI (tur 14)** — sunucu 7 dilde üretiyor |
+| Kamera listesi hata metni | `lib/src/features/cameras/presentation/kameralar_screen.dart` | **KAPANDI (tur 14)** — aynı kanal |
+| Kamera formu 422 mesajı | `lib/src/features/cameras/presentation/kamera_form_sheet.dart` | **KAPANDI (tur 14)** — aynı kanal |
+| Akış satırları (`baslik`/`alt_metin`, 13 kaynak) | `lib/src/features/home/presentation/home_mappers.dart` → `hareketSatirlari` | **AÇIK** — üretilen *içerik*, hata değil; hâlâ TR |
 
 `ApiException.message` **66 dosyada** tüketilir (snackbar/hata kartı); tek sınır
-işaretlenmiştir çünkü çeviri sunucuda çözülünce hepsi kendiliğinden düzelir —
-`grep -rn "SERVER-LOCALIZED(next round)" lib/` ile bulunur, tüketici listesi
-`grep -rln "e.message" lib/` ile üretilir.
+işaretlenmişti çünkü çeviri sunucuda çözülünce hepsi kendiliğinden düzelir — tur
+14'te tam olarak bu oldu: istemcide **tek bir tüketici bile değişmedi**, yalnız
+`Accept-Language` başlığı eklendi. Kalan tek işaret (`grep -rn
+"SERVER-LOCALIZED(next round)" lib/`) `/activity` satırlarıdır ve ayrı bir iştir:
+o metinler hata değil, sunucunun ürettiği içeriktir.
 
-> **Tur 13'ten sonra bu sınır YALNIZ sunucu metnini kapsar.** Ağ hataları
+> **Tur 13'te bu sınır YALNIZ sunucu metnine daraldı.** Ağ hataları
 > (timeout / bağlantı yok / zarfsız gövde) artık `message` **üretmez**:
 > `ApiException.agHatasi` kimliğini taşır ve metin çizimde
-> `apiHataMetni(l10n, e)` ile aktif dilde üretilir. Yani sunucu
-> yerelleştirmesini beklemeden ağ hataları **bugün 7 dilde** doğrudur; sınır
-> yalnız 422/409/503 gibi **sunucunun yazdığı** cümleler için geçerlidir.
+> `apiHataMetni(l10n, e)` ile aktif dilde üretilir.
+>
+> **TUR 14'TE SINIR KAPANDI.** Sunucu hata metinleri de 7 dilde:
+> `backend/app/hata_metinleri.py` (**127 kimlik × 7 dil**); metin
+> `Accept-Language`e göre üretilir ve mobil bu başlığı **her istekte**
+> gönderir (`core/network/dil_interceptor.dart` — değer cihaz dili **değil**,
+> uygulamanın o an çizdiği dil; `ar, tr;q=0.8` zinciriyle). Yani
+> `apiHataMetni`nin "sunucu metnini aynen göster" dalı artık **zaten aktif
+> dilde** bir metin gösterir; yukarıdaki tablo tarihsel kayıttır.
+> Sözleşme: `/contracts/README.md` → *Hata formatı*; kurallar ve kilit
+> testleri: `backend/README.md` → *Hata metinleri 7 dilde*.
 
 ### Kimlik / metin ayrımı — kart id refactor (ana ekran)
 
@@ -1995,6 +2007,14 @@ yönetici iletişimde **tr→en** dil değişimi; `gunTipiAdi`nın null (kısıt
 **bilinmeyen tel değeri** davranışı; `UnitComplaintKategori` çözücüsünün 7 dili;
 `displayText`in artık varsayılan metin üretmediği; **dil adlarının kendi
 dilinde kaldığı** (istisna kilidi); **RTL** ve **320 dp** senaryoları.
+
+`test/dil_interceptor_test.dart` (6 test — tur 14): her isteğin
+`Accept-Language` taşıdığı, değerin **cihaz dili değil** uygulamanın o an
+çizdiği dil olduğu, dil çalışma anında değişince **sonraki** isteğin yeni dili
+taşıdığı (sabit başlık bunu kaçırırdı), geri-düşme zincirinin (`ar, tr;q=0.8`)
+kurulduğu, mevcut başlıkların ezilmediği; **kablolama**: hem paylaşılan hem
+**ham** Dio (refresh yolu) `DilInterceptor` taşır. Sunucu tarafı:
+`backend/tests/test_hata_i18n.py` (22 test).
 
 `test/ag_hatasi_i18n_test.dart` (9 test — tur 13): `core/error`un artık **metin
 üretmediği** (ağ hatasında `message` boş + `agHatasi` dolu), `apiHataMetni`nin

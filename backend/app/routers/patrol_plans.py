@@ -64,9 +64,7 @@ async def _ensure_shift_in_tenant(db: AsyncSession, shift_id: uuid.UUID | None) 
         await db.execute(select(Shift.id).where(Shift.id == shift_id))
     ).scalar_one_or_none()
     if found is None:
-        raise APIError(
-            422, "invalid_reference", "shift_id bu tenant'ta bulunamadi."
-        )
+        raise APIError(422, "invalid_reference", "shift_bulunamadi")
 
 
 async def _checkpoints_for(db: AsyncSession, plan_id: uuid.UUID) -> list[PatrolPlanCheckpoint]:
@@ -211,10 +209,15 @@ async def assign_plan_checkpoints(
     for idx, item in enumerate(body.items):
         sira = item.sira if item.sira is not None else idx
         if sira in seen_sira:
-            raise APIError(422, "validation_error", f"Tekrar eden sira: {sira}")
+            raise APIError(
+                422, "validation_error", "plan_tekrar_eden_sira", sira=sira
+            )
         if item.checkpoint_id in seen_cp:
             raise APIError(
-                422, "validation_error", f"Tekrar eden checkpoint: {item.checkpoint_id}"
+                422,
+                "validation_error",
+                "plan_tekrar_eden_checkpoint",
+                checkpoint=item.checkpoint_id,
             )
         seen_sira.add(sira)
         seen_cp.add(item.checkpoint_id)

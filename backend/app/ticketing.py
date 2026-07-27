@@ -25,7 +25,9 @@ def assert_transition(current: str, target: str) -> None:
         raise APIError(
             422,
             "invalid_transition",
-            f"'{current}' -> '{target}' gecersiz gecis",
+            "gecersiz_durum_gecisi",
+            mevcut=current,
+            hedef=target,
         )
 
 

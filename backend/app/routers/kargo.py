@@ -68,7 +68,7 @@ def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
     korumasi) — dogrulanmazsa baska tenant'in objesine presigned GET
     imzalanabilirdi."""
     if foto_key is not None and not foto_key.startswith(f"{tenant_id}/"):
-        raise APIError(422, "invalid_foto_key", "foto_key tenant alani disinda")
+        raise APIError(422, "invalid_foto_key", "foto_key_alan_disi")
 
 
 def _out(row) -> KargoOut:
@@ -137,7 +137,7 @@ async def create_kargo(
             await db.execute(select(Unit).where(Unit.no == body.unit_no))
         ).scalar_one_or_none()
     if unit is None:
-        raise APIError(422, "invalid_reference", "Daire bu tenant'ta bulunamadi.")
+        raise APIError(422, "invalid_reference", "daire_bulunamadi")
 
     obj = Kargo(
         tenant_id=user.tenant_id,
@@ -194,16 +194,9 @@ async def list_kargo(
     # (one-shot tuketim), yoksa 403. Ziyaretci ile ayni gizlilik deseni.
     if user.role in _IZIN_GEREKEN:
         if unit_id is None:
-            raise APIError(
-                403, "forbidden",
-                "Kargo kayitlari yonetime kapali; bir daire icin "
-                "tek-seferlik izin alin (unit_id gerekli).",
-            )
+            raise APIError(403, "forbidden", "kargo_yonetime_kapali")
         if not await try_consume_unit_permission(db, unit_id, user.id):
-            raise APIError(
-                403, "forbidden",
-                "Bu daire icin gecerli (kullanilmamis) goruntuleme izniniz yok.",
-            )
+            raise APIError(403, "forbidden", "goruntuleme_izni_yok")
 
     stmt = _base_stmt()
     if durum is not None:
@@ -246,10 +239,7 @@ async def get_kargo(
         if k_unit is None or not await try_consume_unit_permission(
             db, k_unit, user.id
         ):
-            raise APIError(
-                403, "forbidden",
-                "Bu kayit yonetime kapali; daire icin tek-seferlik izin alin.",
-            )
+            raise APIError(403, "forbidden", "kayit_yonetime_kapali")
 
     unit_ids = await _aktif_daire_ids(db, user) if user.role == "resident" else None
     row = (
@@ -259,7 +249,7 @@ async def get_kargo(
     ).first()
     if row is None:
         # Baska dairenin/tenant'in kaydi 404 — varligi da sizdirilmaz.
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     # KVKK: foto presign-GET ifsasi — YALNIZ tekil detayda (liste degil), fotolu ise.
     if row[0].foto_key:
         await audit_user(
@@ -285,13 +275,13 @@ async def receive_kargo(
         )
     ).first()
     if row is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     obj, unit_no = row
 
     # Yalniz O dairenin AKTIF sakini teslim alir; digerine 404 (varlik
     # sizdirilmaz — sunucu tarafinda zorlanir, bypass yolu yok).
     if obj.unit_id not in await _aktif_daire_ids(db, user):
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
 
     # Atomik teslim: durum='bekliyor' kosullu UPDATE — es zamanli ikinci
     # isaret (esler ayni anda bassa bile) satiri bulamaz ve 409 alir;
@@ -306,7 +296,7 @@ async def receive_kargo(
         )
     )
     if res.rowcount == 0:
-        raise APIError(409, "conflict", "Kargo zaten teslim alinmis.")
+        raise APIError(409, "conflict", "kargo_zaten_teslim_alinmis")
     await db.refresh(obj)
 
     # Urun karari: teslimde geri-push YOK (kayit-push'u yeterli); guvenlik

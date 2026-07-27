@@ -99,7 +99,7 @@ async def create_vehicle_pass(
             await db.execute(select(Unit).where(col == val))
         ).scalar_one_or_none()
         if unit is None:
-            raise APIError(422, "invalid_reference", "Daire bu tenant'ta bulunamadi.")
+            raise APIError(422, "invalid_reference", "daire_bulunamadi")
         unit_id, unit_no = unit.id, unit.no
 
     giris = body.giris_zamani
@@ -107,9 +107,7 @@ async def create_vehicle_pass(
         if giris.tzinfo is None:
             giris = giris.replace(tzinfo=timezone.utc)
         if giris > datetime.now(tz=timezone.utc) + _GELECEK_TOLERANS:
-            raise APIError(
-                422, "validation_error", "giris_zamani gelecekte olamaz."
-            )
+            raise APIError(422, "validation_error", "giris_zamani_gelecekte")
 
     obj = VehiclePass(
         tenant_id=user.tenant_id,
@@ -129,7 +127,8 @@ async def create_vehicle_pass(
             # uq_vehicle_pass_acik_plaka: bu plakanin acik gecisi zaten var.
             raise APIError(
                 409, "conflict",
-                f"{plaka} plakali aracin acik bir gecisi var (arac iceride).",
+                "arac_acik_gecisi_var",
+                plaka=plaka,
             )
         raise translate_integrity(exc)
     await db.refresh(obj)
@@ -154,7 +153,7 @@ async def checkout_vehicle_pass(
         await db.execute(select(VehiclePass.id).where(VehiclePass.id == pass_id))
     ).scalar_one_or_none()
     if exists is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
 
     res = await db.execute(
         update(VehiclePass)
@@ -162,7 +161,7 @@ async def checkout_vehicle_pass(
         .values(cikis_zamani=func.now())
     )
     if res.rowcount == 0:
-        raise APIError(409, "conflict", "Arac gecisi zaten kapatilmis.")
+        raise APIError(409, "conflict", "arac_gecisi_zaten_kapali")
 
     await audit_user(
         db, user, Action.VEHICLE_PASS_CHECKOUT, resource_type="vehicle_pass",
@@ -236,7 +235,7 @@ async def get_vehicle_pass(
 ) -> VehiclePassOut:
     row = (await db.execute(_base_stmt().where(VehiclePass.id == pass_id))).first()
     if row is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     return _out(row)
 
 

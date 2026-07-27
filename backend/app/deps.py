@@ -37,15 +37,15 @@ def get_access_claims(
     creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> dict[str, Any]:
     if creds is None or not creds.credentials:
-        raise APIError(401, "unauthorized", "Kimlik dogrulama gerekli.")
+        raise APIError(401, "unauthorized", "kimlik_dogrulama_gerekli")
     from .security import decode_token  # gec import (dairesel bagimlilik yok)
 
     try:
         return decode_token(creds.credentials, expected_type="access")
     except jwt.ExpiredSignatureError:
-        raise APIError(401, "token_expired", "Access token suresi dolmus.")
+        raise APIError(401, "token_expired", "access_token_suresi_dolmus")
     except jwt.PyJWTError:
-        raise APIError(401, "invalid_token", "Gecersiz access token.")
+        raise APIError(401, "invalid_token", "access_token_gecersiz")
 
 
 async def get_tenant_db(
@@ -54,7 +54,7 @@ async def get_tenant_db(
     """Token'daki tenant_id ile baglam kurulmus, transaction'li session."""
     tenant_id = claims.get("tenant_id")
     if not tenant_id:
-        raise APIError(401, "invalid_token", "Token tenant_id icermiyor.")
+        raise APIError(401, "invalid_token", "token_tenant_icermiyor")
     async with SessionLocal() as session:
         async with session.begin():
             await set_tenant(session, tenant_id)
@@ -71,7 +71,7 @@ async def get_current_user(
         await db.execute(select(AppUser).where(AppUser.id == user_id))
     ).scalar_one_or_none()
     if user is None or not user.is_active:
-        raise APIError(401, "invalid_token", "Kullanici bulunamadi veya pasif.")
+        raise APIError(401, "invalid_token", "kullanici_bulunamadi_veya_pasif")
     return user
 
 
@@ -81,9 +81,7 @@ def require_role(*roles: str):
 
     async def _dep(user: AppUser = Depends(get_current_user)) -> AppUser:
         if user.role not in allowed:
-            raise APIError(
-                403, "forbidden", "Bu islem icin yetkiniz yok."
-            )
+            raise APIError(403, "forbidden", "yetkiniz_yok")
         return user
 
     return _dep

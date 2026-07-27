@@ -50,7 +50,7 @@ class KameralarScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             children: [
               Text(
-                // SERVER-LOCALIZED(next round): ApiException.message SUNUCUDAN
+                // SUNUCU metni (tur 14'ten beri istegin dilinde): ApiException.message
                 // gelir (su an yalniz TR). Sunucu yerelestirmesi ayri turda.
                 e is ApiException ? apiHataMetni(l10n, e) : l10n.kameraListeHata,
                 textAlign: TextAlign.center,

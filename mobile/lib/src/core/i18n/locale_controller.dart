@@ -15,6 +15,8 @@
 /// Tohum yoksa (widget testleri) eski asenkron yol calisir.
 library;
 
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -97,6 +99,20 @@ final localeControllerProvider =
 /// (Flutter cihaz dilini [localeCozumle] ile cozer).
 final aktifLocaleProvider = Provider<Locale?>((ref) {
   return ref.watch(localeControllerProvider)?.locale;
+});
+
+/// UYGULAMANIN O AN CIZDIGI dilin kodu (secim yoksa cihazdan cozulen).
+///
+/// `aktifLocaleProvider` secim yokken **null** doner (MaterialApp'in cihaz
+/// dilini cozmesi icin); ag katmani ise somut bir kod ister — `Accept-Language`
+/// basligi bu saglayiciyi kullanir (bkz. `core/network/dil_interceptor.dart`).
+final aktifDilKoduProvider = Provider<String>((ref) {
+  final secim = ref.watch(localeControllerProvider);
+  if (secim != null) return secim.kod;
+  return localeCozumle(
+    PlatformDispatcher.instance.locale,
+    supportedLocales,
+  ).languageCode;
 });
 
 /// `MaterialApp.localeResolutionCallback` — cihaz dili desteklenenler

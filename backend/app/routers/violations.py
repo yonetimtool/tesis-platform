@@ -122,7 +122,7 @@ async def get_violation(
 ) -> ViolationOut:
     row = (await db.execute(_base_stmt().where(Violation.id == violation_id))).first()
     if row is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     return _out(row)
 
 
@@ -140,7 +140,7 @@ async def update_violation(
         await db.execute(select(Violation).where(Violation.id == violation_id))
     ).scalar_one_or_none()
     if obj is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
 
     hedef = body.durum
     if hedef == obj.durum:
@@ -151,10 +151,10 @@ async def update_violation(
 
     # Terminal durum: kapali kayit yeniden acilmaz (denetim izi bozulmasin).
     if obj.durum == "kapatildi":
-        raise APIError(409, "conflict", "Kapatilmis ihlal yeniden acilamaz.")
+        raise APIError(409, "conflict", "ihlal_yeniden_acilamaz")
     # Kapatma yetkisi: dort-goz kurali — kaydi acan/inceleyen kapatamaz.
     if hedef == "kapatildi" and user.role not in _KAPATABILEN:
-        raise APIError(403, "forbidden", "Ihlali yalniz admin kapatabilir.")
+        raise APIError(403, "forbidden", "ihlal_yalniz_admin_kapatir")
 
     obj.durum = hedef
     obj.updated_at = func.now()

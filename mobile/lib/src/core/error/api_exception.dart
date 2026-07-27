@@ -14,8 +14,9 @@ enum ApiErrorKind { network, auth, api }
 ///
 /// IKI KANAL (tur 13):
 ///   * [message] — SUNUCUDAN gelen metin (422/409/503...). Istemci CEVIRMEZ,
-///     aynen gosterir. SERVER-LOCALIZED(next round): su an yalniz Turkce;
-///     sunucu yerellestirmesi ayri bir turda yapilacak.
+///     aynen gosterir. TUR 14'ten beri sunucu bu metni `Accept-Language`e
+///     gore 7 dilde uretir (`backend/app/hata_metinleri.py`); basligi
+///     `core/network/dil_interceptor.dart` her istege ekler.
 ///   * [agHatasi] — sozlesme zarfi HIC gelmediginde (timeout / baglanti yok /
 ///     zarfsiz govde) ISTEMCININ urettigi KIMLIK. Bu durumda [message] BOS'tur
 ///     ve metni cizim katmani `apiHataMetni(l10n, e)` ile uretir.

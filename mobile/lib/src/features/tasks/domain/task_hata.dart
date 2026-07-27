@@ -5,7 +5,8 @@
 /// ekran `gorevHataMetni` ile cizim aninda cozer.
 ///
 /// SUNUCU metinleri (`ApiException.message`) bu kanaldan GECMEZ; onlar
-/// `SERVER-LOCALIZED(next round)` sinirindadir ve oldugu gibi gosterilir.
+/// SUNUCU metnidir ve oldugu gibi gosterilir; sunucu onu tur 14'ten beri
+/// istegin dilinde uretir (bkz. `core/error/api_exception.dart`).
 library;
 
 enum GorevAkisHatasi {

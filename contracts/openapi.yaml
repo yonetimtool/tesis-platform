@@ -4908,6 +4908,10 @@ components:
         servis edilecegini belirler. Standart RFC 9110 bicimi desteklenir:
         `tr-TR,tr;q=0.9,en;q=0.8`.
 
+        **HATA METINLERI de bu basliga uyar** (`Error.message`) — endpoint
+        bu parametreyi tanimlamasa bile, hata zarfi TUM uclarda istegin
+        dilinde doner (ayni eslestirme zinciri).
+
         **Eslestirme**: bolge eki DUSURULUR (`tr-TR` -> `tr`), q'ya gore
         azalan sirada ilk DESTEKLENEN dil secilir. Desteklenen kume:
         `tr` (varsayilan/kaynak), `en`, `ar`, `ru`, `de`, `fr`, `es`.
@@ -4992,8 +4996,15 @@ components:
               example: validation_error
             message:
               type: string
-              description: Insan-okunabilir aciklama
-              example: "baslangic_saat bitis_saat'ten once olmali"
+              description: |
+                Insan-okunabilir aciklama. **YERELLESTIRILMISTIR**: metin
+                istegin `Accept-Language` basligina gore 7 dilden birinde
+                doner (baslik yoksa `tr`). Istemci mantigi buna DEGIL
+                `code`a bakmalidir. Sunucu yapilandirma hatalari
+                (`storage_unconfigured`, `config_error`,
+                `payment_unconfigured`, `payment_provider_error`,
+                `webhook_unsupported`) cevrilmez — operatore hitap eder.
+              example: "The record already exists (uniqueness violation)."
             details:
               type: array
               description: Alan bazli dogrulama hatalari (opsiyonel)

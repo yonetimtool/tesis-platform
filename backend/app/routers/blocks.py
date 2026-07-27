@@ -75,7 +75,7 @@ async def create_block(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "Bu blok etiketi bu tesiste zaten kayitli.")
+            raise APIError(409, "conflict", "blok_etiketi_zaten_kayitli")
         raise translate_integrity(exc)
     await db.refresh(obj)
     await audit_user(db, user, Action.BLOCK_CREATE, resource_type="building_block", resource_id=obj.id)
@@ -112,9 +112,7 @@ async def update_block(
                 )
             ).scalar_one()
             if dup:
-                raise APIError(
-                    422, "conflict", "Bu blok etiketi bu tesiste zaten kayitli."
-                )
+                raise APIError(422, "conflict", "blok_etiketi_zaten_kayitli")
 
     for key, value in data.items():
         setattr(obj, key, value)
@@ -132,7 +130,7 @@ async def update_block(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):  # es zamanli yeniden-adlandirma yarisi
-            raise APIError(409, "conflict", "Bu blok etiketi bu tesiste zaten kayitli.")
+            raise APIError(409, "conflict", "blok_etiketi_zaten_kayitli")
         raise translate_integrity(exc)
     await db.refresh(obj)
     await audit_user(
@@ -170,7 +168,8 @@ async def delete_block(
     if kullanan and not cascade:
         raise APIError(
             409, "conflict",
-            f"Bu blogu kullanan {kullanan} daire var; silmek icin onay gerekli.",
+            "blok_silme_onayi_gerekli",
+            kullanan=kullanan,
         )
     if kullanan:
         # Daireleri sil -> DB ON DELETE CASCADE bagli kayitlari temizler.

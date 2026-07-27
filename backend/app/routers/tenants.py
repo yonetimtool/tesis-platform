@@ -63,7 +63,7 @@ async def create_tenant(
         try:
             phone = normalize_phone(y.phone)
         except ValueError:
-            raise APIError(422, "validation_error", "Gecersiz telefon numarasi.")
+            raise APIError(422, "validation_error", "telefon_gecersiz")
         if y.password is not None:
             hazir.append({
                 "ad": y.ad, "telefon": phone,
@@ -82,10 +82,7 @@ async def create_tenant(
     # (orn. "0532..." ve "+90532..." ayni numaraya coker).
     phones = [h["telefon"] for h in hazir]
     if len(phones) != len(set(phones)):
-        raise APIError(
-            422, "validation_error",
-            "Ayni telefon birden fazla yoneticide kullanilamaz.",
-        )
+        raise APIError(422, "validation_error", "telefon_birden_fazla_yoneticide")
 
     ad = body.ad or _PLACEHOLDER_AD
     payload = [
@@ -115,7 +112,7 @@ async def create_tenant(
                     )
                 ).all()
             except IntegrityError:
-                raise APIError(409, "conflict", "Bu telefon zaten kayitli.")
+                raise APIError(409, "conflict", "telefon_zaten_kayitli")
 
     # INSERT ... RETURNING satir SIRASINI garanti etmez -> TELEFONLA esle.
     # (Yanlis esleme = yanlis kisiye gecici kod.)
@@ -194,7 +191,7 @@ async def _detail_or_404(session, tenant_id: uuid.UUID):
     """tenant_detail satirini doner; tenant yoksa 404."""
     row = (await session.execute(_DETAIL_SQL, {"tid": tenant_id})).one_or_none()
     if row is None:
-        raise APIError(404, "not_found", "Tesis bulunamadi.")
+        raise APIError(404, "not_found", "tenant_bulunamadi")
     return row
 
 
@@ -227,7 +224,7 @@ async def update_tenant(
                 )
             ).scalar()
             if updated is None:
-                raise APIError(404, "not_found", "Tesis bulunamadi.")
+                raise APIError(404, "not_found", "tenant_bulunamadi")
             row = await _detail_or_404(session, tenant_id)
     return _to_detail(row)
 
@@ -245,13 +242,13 @@ async def update_yonetici(
         try:
             phone = normalize_phone(body.phone)
         except ValueError:
-            raise APIError(422, "validation_error", "Gecersiz telefon numarasi.")
+            raise APIError(422, "validation_error", "telefon_gecersiz")
 
     async with SessionLocal() as session:
         async with session.begin():
             row = await _detail_or_404(session, tenant_id)
             if row.yonetici_id is None:
-                raise APIError(404, "not_found", "Tesiste yonetici yok.")
+                raise APIError(404, "not_found", "tesiste_yonetici_yok")
             try:
                 updated = (
                     await session.execute(
@@ -269,9 +266,9 @@ async def update_yonetici(
                     )
                 ).scalar()
             except IntegrityError:
-                raise APIError(409, "conflict", "Bu telefon zaten kayitli.")
+                raise APIError(409, "conflict", "telefon_zaten_kayitli")
             if updated is None:
-                raise APIError(404, "not_found", "Tesiste yonetici yok.")
+                raise APIError(404, "not_found", "tesiste_yonetici_yok")
             row = await _detail_or_404(session, tenant_id)
     return _to_detail(row)
 
@@ -292,7 +289,7 @@ async def reset_yonetici_credential(
         async with session.begin():
             row = await _detail_or_404(session, tenant_id)
             if row.yonetici_id is None:
-                raise APIError(404, "not_found", "Tesiste yonetici yok.")
+                raise APIError(404, "not_found", "tesiste_yonetici_yok")
             updated = (
                 await session.execute(
                     text(
@@ -307,7 +304,7 @@ async def reset_yonetici_credential(
                 )
             ).scalar()
             if updated is None:
-                raise APIError(404, "not_found", "Tesiste yonetici yok.")
+                raise APIError(404, "not_found", "tesiste_yonetici_yok")
     return TenantYoneticiResetOut(temp_code=temp_code)
 
 
@@ -327,5 +324,5 @@ async def delete_tenant_endpoint(
                 )
             ).scalar()
             if deleted is None:
-                raise APIError(404, "not_found", "Tesis bulunamadi.")
+                raise APIError(404, "not_found", "tenant_bulunamadi")
     return Response(status_code=204)

@@ -196,7 +196,7 @@ async def _verify_sdm_or_422(
     if body.sdm_picc_data is None and body.sdm_cmac is None:
         return False, None
     if body.sdm_picc_data is None or body.sdm_cmac is None:
-        raise APIError(422, "invalid_signature", "sdm_picc_data ve sdm_cmac birlikte gonderilmeli.")
+        raise APIError(422, "invalid_signature", "sdm_alanlari_birlikte_gonderilmeli")
     try:
         key = decrypt_key(checkpoint.sdm_key_sifreli, settings.sdm_kek)
     except Exception:
@@ -204,10 +204,10 @@ async def _verify_sdm_or_422(
         raise APIError(500, "config_error", "SDM anahtari cozulemedi (SDM_KEK yapilandirmasini kontrol edin).")
     res = verify_sdm(key, checkpoint.nfc_tag_uid, body.sdm_picc_data, body.sdm_cmac, checkpoint.sdm_son_sayac)
     if res.neden == "replay":
-        raise APIError(422, "replay_detected", "SDM okuma sayaci ilerlememis (tekrar oynatma).")
+        raise APIError(422, "replay_detected", "sdm_tekrar_oynatma")
     if not res.ok:
         # cmac/uid/format ayrintisi sizdirilmaz (tasarim: hata yonetimi).
-        raise APIError(422, "invalid_signature", "SDM imzasi dogrulanamadi.")
+        raise APIError(422, "invalid_signature", "sdm_imza_dogrulanamadi")
     return True, res.sayac
 
 
@@ -219,7 +219,7 @@ async def create_scan(
     user: AppUser = Depends(_SCANNER),
 ) -> JSONResponse:
     if not idempotency_key or not idempotency_key.strip():
-        raise APIError(400, "bad_request", "Idempotency-Key header zorunlu.")
+        raise APIError(400, "bad_request", "idempotency_key_zorunlu")
 
     # 1) nfc_tag_uid -> checkpoint (RLS ile tenant-scoped). Capraz-tenant/bilinmeyen -> 404.
     # Eslesme normalize (strip+upper) — task completion / asset ile ayni davranis (mobil §11 #3).
@@ -231,9 +231,9 @@ async def create_scan(
         )
     ).scalar_one_or_none()
     if checkpoint is None:
-        raise APIError(404, "not_found", "nfc_tag_uid hicbir checkpoint ile eslesmedi.")
+        raise APIError(404, "not_found", "nfc_checkpoint_eslesmedi")
     if body.checkpoint_id is not None and body.checkpoint_id != checkpoint.id:
-        raise APIError(422, "invalid_reference", "checkpoint_id nfc_tag_uid ile eslesmiyor.")
+        raise APIError(422, "invalid_reference", "checkpoint_nfc_eslesmiyor")
 
     # 2) patrol_window_id verildiyse dogrula (durum DEGISTIRILMEZ — scheduler isi).
     if body.patrol_window_id is not None:
@@ -243,7 +243,7 @@ async def create_scan(
             )
         ).scalar_one_or_none()
         if exists is None:
-            raise APIError(422, "invalid_reference", "patrol_window_id bu tenant'ta bulunamadi.")
+            raise APIError(422, "invalid_reference", "patrol_window_bulunamadi")
 
     okutma = body.okutma_zamani
     if okutma.tzinfo is None:  # zamanlar UTC (konvansiyon)
@@ -264,7 +264,7 @@ async def create_scan(
             return JSONResponse(
                 status_code=200, content=ScanEventOut.model_validate(existing).model_dump(mode="json")
             )
-        raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
+        raise APIError(409, "conflict", "idempotency_key_govde_farkli")
 
     # 3) ONCE idempotent tekrar kontrolu (SDM'den once — kritik): sayac ilk
     # gonderimde ilerledigi icin tekrar dogrulama yanlis replay uretirdi.
@@ -317,7 +317,7 @@ async def create_scan(
                 .values(sdm_son_sayac=sdm_sayac)
             )
             if upd.rowcount == 0:
-                raise APIError(422, "replay_detected", "SDM okuma sayaci ilerlememis (tekrar oynatma).")
+                raise APIError(422, "replay_detected", "sdm_tekrar_oynatma")
         # 7) ANINDA TAMAMLANMA: bu tarama bir aktif ('bekliyor') pencerenin SON
         # eksik noktasiysa pencere HEMEN 'tamamlandi' olur (scheduler'in bitiste
         # yaptigi tamamlandi tanimiyla ayni; ama pencere-bitisini beklemez).

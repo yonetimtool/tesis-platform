@@ -55,7 +55,7 @@ async def yonetici_iletisim(
     # RLS: yalnizca current tenant'in satiri gorunur.
     t = (await db.execute(select(Tenant))).scalar_one_or_none()
     if t is None:
-        raise APIError(404, "not_found", "Tenant bulunamadi.")
+        raise APIError(404, "not_found", "tenant_bulunamadi")
 
     return YoneticiIletisimOut(
         yoneticiler=[

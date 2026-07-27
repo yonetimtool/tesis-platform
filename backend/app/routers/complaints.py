@@ -73,7 +73,7 @@ def _validate_foto_key(foto_key: str, tenant_id: uuid.UUID) -> None:
     tenant'in objesi talep gorseli diye sizdirilabilir (IDOR).
     """
     if not foto_key.startswith(f"{tenant_id}/"):
-        raise APIError(422, "invalid_foto_key", "foto_key tenant alani disinda")
+        raise APIError(422, "invalid_foto_key", "foto_key_alan_disi")
 
 
 def _sign(key: str) -> str | None:
@@ -202,7 +202,7 @@ async def _get_or_404(
     ).first()
     if row is None:
         # Baskasinin talebi acan role 404 — varligi da sizdirilmaz.
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     return row[0], row[1]
 
 
@@ -300,7 +300,7 @@ async def convert_complaint(
         await db.execute(select(AppUser).where(AppUser.id == body.atanan_user_id))
     ).scalar_one_or_none()
     if atanan is None or atanan.role not in _ATANABILIR_ROLLER:
-        raise APIError(422, "invalid_assignee", "atanan security/tesis_gorevlisi olmali")
+        raise APIError(422, "invalid_assignee", "talep_atanan_rol_kisiti")
     task = Task(
         tenant_id=user.tenant_id,
         ad=obj.baslik,

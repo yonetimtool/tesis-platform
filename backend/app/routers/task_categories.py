@@ -38,7 +38,7 @@ async def create_category(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "Bu adla kategori zaten kayitli.")
+            raise APIError(409, "conflict", "kategori_adi_zaten_kayitli")
         raise translate_integrity(exc)
     await db.refresh(obj)
     return obj

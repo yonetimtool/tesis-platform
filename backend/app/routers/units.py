@@ -92,7 +92,7 @@ async def list_unit_residents_by_no(
         await db.execute(select(Unit).where(Unit.no == unit_no))
     ).scalar_one_or_none()
     if unit is None:
-        raise APIError(404, "not_found", "Daire bu tenant'ta bulunamadi.")
+        raise APIError(404, "not_found", "daire_bulunamadi")
     rows = (
         await db.execute(
             select(AppUser.id, AppUser.ad)
@@ -116,7 +116,7 @@ async def create_unit(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "Daire no bu tesiste zaten kayitli.")
+            raise APIError(409, "conflict", "daire_no_zaten_kayitli")
         raise translate_integrity(exc)
     await db.refresh(obj)
     await audit_user(db, user, Action.UNIT_CREATE, resource_type="unit", resource_id=obj.id)
@@ -163,7 +163,7 @@ async def bulk_create_units(
     except IntegrityError as exc:
         if is_unique_violation(exc):
             # es zamanli baska istek ayni no'lari eklemis olabilir.
-            raise APIError(409, "conflict", "Daire no cakismasi (es zamanli ekleme).")
+            raise APIError(409, "conflict", "daire_no_cakismasi")
         raise translate_integrity(exc)
     for obj in olusturulan:
         await db.refresh(obj)
@@ -190,7 +190,7 @@ async def update_unit(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "Daire no bu tesiste zaten kayitli.")
+            raise APIError(409, "conflict", "daire_no_zaten_kayitli")
         raise translate_integrity(exc)
     await db.refresh(obj)
     return obj
@@ -260,9 +260,9 @@ async def assign_resident(
         await db.execute(select(AppUser).where(AppUser.id == body.user_id))
     ).scalar_one_or_none()
     if target is None:
-        raise APIError(422, "invalid_reference", "user_id bu tenant'ta bulunamadi.")
+        raise APIError(422, "invalid_reference", "user_id_bulunamadi")
     if target.role != "resident":
-        raise APIError(422, "invalid_reference", "Atanacak kullanici role=resident olmali.")
+        raise APIError(422, "invalid_reference", "atanacak_kullanici_resident_olmali")
 
     obj = UnitResident(
         tenant_id=user.tenant_id,
@@ -276,7 +276,7 @@ async def assign_resident(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "Bu kullanici daireye zaten aktif olarak bagli.")
+            raise APIError(409, "conflict", "kullanici_daireye_zaten_bagli")
         raise translate_integrity(exc)
     await db.refresh(obj)
     await audit_user(
@@ -304,7 +304,7 @@ async def remove_resident(
         )
     ).scalar_one_or_none()
     if binding is None:
-        raise APIError(404, "not_found", "Aktif sakin baglantisi bulunamadi.")
+        raise APIError(404, "not_found", "aktif_sakin_baglantisi_yok")
     binding.bitis = datetime.now(tz=timezone.utc)
     await db.flush()
     await audit_user(

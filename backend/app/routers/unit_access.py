@@ -111,7 +111,7 @@ async def create_request(
             await db.execute(select(Unit).where(Unit.no == body.unit_no))
         ).scalar_one_or_none()
     if unit is None:
-        raise APIError(422, "invalid_reference", "Daire bu tenant'ta bulunamadi.")
+        raise APIError(422, "invalid_reference", "daire_bulunamadi")
 
     obj = UnitAccessPermission(
         tenant_id=user.tenant_id,
@@ -339,13 +339,13 @@ async def decide_request(
         )
     ).first()
     if row is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     obj, unit_no = row
 
     # Yalniz talebin AIT OLDUGU dairenin AKTIF sakini karar verir; digerine 404
     # (varlik sizdirilmaz — bypass yok, sunucu tarafinda zorlanir).
     if obj.unit_id not in await _aktif_daire_ids(db, user):
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
 
     # ILK karar kazanir: durum='bekliyor' kosullu atomik UPDATE.
     res = await db.execute(
@@ -361,9 +361,7 @@ async def decide_request(
         )
     )
     if res.rowcount == 0:
-        raise APIError(
-            409, "conflict", "Talep zaten yanitlanmis (ilk karar gecerli)."
-        )
+        raise APIError(409, "conflict", "talep_zaten_yanitlanmis")
     await db.refresh(obj)
 
     # EK push: sonuc talebi acan yonetici'ye; hatasi karari kirmaz.

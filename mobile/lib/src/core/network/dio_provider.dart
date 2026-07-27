@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/data/token_storage.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../config/app_config.dart';
+import '../i18n/locale_controller.dart';
 import 'auth_interceptor.dart';
+import 'dil_interceptor.dart';
 
 BaseOptions _baseOptions() => BaseOptions(
       baseUrl: AppConfig.apiBaseUrl,
@@ -20,7 +22,13 @@ BaseOptions _baseOptions() => BaseOptions(
 /// sonrasi orijinal istegin yeniden denenmesi bununla yapilir; boylece
 /// interceptor'a tekrar girilmez (sonsuz refresh dongusu engellenir).
 final rawDioProvider = Provider<Dio>((ref) {
-  return Dio(_baseOptions());
+  final dio = Dio(_baseOptions());
+  // Refresh de hata dondurebilir (401 "oturum yenileme anahtari gecersiz") —
+  // o metin de kullanicinin dilinde olmali.
+  dio.interceptors.add(
+    DilInterceptor(dilKodu: () => ref.read(aktifDilKoduProvider)),
+  );
+  return dio;
 });
 
 /// Uygulama genelinde paylasilan [Dio] ornegi.
@@ -30,6 +38,9 @@ final rawDioProvider = Provider<Dio>((ref) {
 /// (login'e donus). Login/refresh public oldugu icin onlara header eklenmez.
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(_baseOptions());
+  dio.interceptors.add(
+    DilInterceptor(dilKodu: () => ref.read(aktifDilKoduProvider)),
+  );
   dio.interceptors.add(
     AuthInterceptor(
       storage: ref.watch(tokenStorageProvider),

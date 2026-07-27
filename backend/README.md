@@ -80,6 +80,19 @@ docker compose exec db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
 Ayrica **iki pytest kosumunu ayni anda calistirmayin** — ayni DB'yi paylastiklari
 icin yuzlerce sahte `psycopg` hatasi uretirler.
 
+### Hata metni testleri (tur 14)
+
+```bash
+docker compose exec api pytest -q tests/test_hata_i18n.py   # 23 test
+```
+
+Ilk 18'i saf birim testidir (katalog butunlugu, dil cozumleme, kaynak
+taramasi); son 5'i CALISAN API'ye gider ve ayni istegin `Accept-Language`
+degistikce farkli metin, **ayni kodu** dondurdugunu dogrular.
+
+`test_kaynakta_ham_cumle_kalmadi` yeni bir hata cumlesi eklendiginde kirilir;
+cozum metni `app/hata_metinleri.py` katalogunda 7 dille tanimlamaktir.
+
 ### Host'tan calistirma (opsiyonel)
 
 `docker compose up` ile portlar acik (5432/8000). Host'ta sanal ortamda:
@@ -399,6 +412,60 @@ docker compose exec api python -m scripts.run_scheduler --detect --now 2026-06-2
 Servisler: `worker` (Celery worker) + `beat` (Celery beat) — `infra/docker-compose.yml`.
 Env: `OWNER_DSN`, `APP_DSN`, `SCHEDULER_HORIZON_DAYS`,
 `SCHEDULER_GENERATE_INTERVAL_SECONDS`, `SCHEDULER_DETECT_INTERVAL_SECONDS`.
+
+## Hata metinleri 7 dilde (tur 14)
+
+Hata zarfindaki `message` kullaniciya **aynen** gosterilir (mobil
+`ApiException.message`). Tur 13'e kadar bu metin sabit Turkce cumleydi: Arapca
+arayuzdeki bir sakin 409'u Turkce goruyordu. Artik `APIError` **cumle degil
+kimlik** tasir, metin istegin `Accept-Language` basligina gore hata
+isleyicisinde uretilir.
+
+| Parca | Yer |
+|---|---|
+| Katalog (kimlik → 7 dil) | `app/hata_metinleri.py` — `METINLER` (**127 kimlik × 7 dil**) |
+| Cozumleyici | `hata_metni(kimlik, dil, params)` + `istek_dili(header)` |
+| Uretim noktasi | `app/errors.py` — `install_error_handlers` (TEK yer) |
+| Dil zinciri | `ceviri.accept_language_coz` — **icerik cevirisiyle AYNI** |
+| Kilit | `tests/test_hata_i18n.py` (22 test; 5'i calisan API'ye) |
+
+```python
+# cumle DEGIL kimlik; parametreler kwargs ile
+raise APIError(409, "conflict", "blok_etiketi_zaten_kayitli")
+raise APIError(422, "invalid_reference", "daire_listesi_bulunamadi", eksik=", ".join(missing))
+```
+
+**Kurallar**
+
+* `code` **dilden bagimsizdir** ve istemci mantigi onunla kurulur; `message`
+  yalnizca gosterilir (bkz. `/contracts/README.md` → Hata formati).
+* Yeni hata eklerken katalogda **7 dilin hepsi** yazilir. Eksik dil calisma
+  aninda Turkce'ye duser (kullaniciya bos metin gitmez) ve
+  `test_katalog_tam` ile yakalanir.
+* `APIError`e **cumle gecirilmez**: `test_kaynakta_ham_cumle_kalmadi` tum
+  `app/` agacini tarar ve katalogsuz metni reddeder.
+* **Cevrilmeyenler** (bilincli): `storage_unconfigured`, `config_error`,
+  `payment_unconfigured`, `payment_provider_error`, `webhook_unsupported` —
+  operatore/loga hitap eder, kullaniciya degil.
+* Parametreli metinlerde alan adlari **tum dillerde ayni** olmali
+  (`test_parametreli_kimliklerde_alanlar_tum_dillerde_ayni`) — bir dilde
+  dusen `{plaka}` sessizce eksik bilgi gosterir.
+
+### Kalan sunucu i18n borcu (tur 14 KAPSAMI DISI)
+
+Bu tur **hata metinlerini** kapsadi. Sunucunun urettigi diger kullanici-gorunur
+metinler hala Turkce:
+
+| Ne | Yer | Not |
+|---|---|---|
+| `/activity` satirlari (`baslik`, `alt_metin`) | `app/routers/activity.py` — 13 SQL kaynagi | Metinler SQL'de sabit ("Kargo Teslim Edildi"). **Daha iyi cozum ceviri degil KIMLIK**: satir zaten `tur` alanini tasiyor ve mobil ikon/rengi ondan seciyor (`home_mappers.dart`) — baslik da istemcide `tur`den cozulebilir; `alt_metin`in degisken kismi (firma, daire no) zaten VERI. |
+| Push bildirim metinleri | `app/push.py` cagrilari | Cihaz dilini sunucu bilmez; kullanicinin dil tercihi kalici saklanmali (`app_user` alani) — ayri is. |
+| Seed/demo icerigi | `scripts/seed.py` | Ornek veridir, cevrilmez. |
+
+**Istemciler:** mobil her istege `Accept-Language` ekler
+(`core/network/dil_interceptor.dart`; deger **cihaz** dili degil, uygulamanin
+o an cizdigi dil). Admin panel tek dillidir ve `tr` gonderir. Baslik
+gonderilmezse Turkce doner — eski istemciler etkilenmez.
 
 ## Seed (ornek veri)
 

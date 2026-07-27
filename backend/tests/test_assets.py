@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import uuid
 
+from app.hata_metinleri import METINLER
+
 
 def _headers(client, slug, cred):
     r = client.post(
@@ -211,7 +213,8 @@ def test_checkin_ownership_other_user_403(client, world):
     r = _checkin(client, gorevli, a["id"])
     assert r.status_code == 403, r.text
     assert r.json()["error"]["code"] == "forbidden"
-    assert "baskasinin uzerinde" in r.json()["error"]["message"]
+    # Metin KIMLIKTEN uretilir (tur 14): sozcuge degil kataloga bakilir.
+    assert r.json()["error"]["message"] == METINLER["demirbas_baskasinin_zimmetinde"]["tr"]
 
     # zimmet hala acik, sahibi kapatabilir
     assert client.get(f"/assets/{a['id']}", headers=admin).json()["durum"] == "zimmetli"

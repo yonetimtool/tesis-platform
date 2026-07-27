@@ -48,7 +48,7 @@ async def payment_webhook(provider: str, request: Request) -> dict:
                 )
             ).scalar_one_or_none()
             if tenant_id is None:
-                raise APIError(404, "not_found", "Odeme referansi bulunamadi.")
+                raise APIError(404, "not_found", "odeme_referansi_bulunamadi")
 
             await set_tenant(session, tenant_id)
 
@@ -73,10 +73,10 @@ async def payment_webhook(provider: str, request: Request) -> dict:
                 )
             ).scalar_one_or_none()
             if payment is None:
-                raise APIError(404, "not_found", "Odeme bulunamadi.")
+                raise APIError(404, "not_found", "odeme_bulunamadi")
             if event.tutar_kurus != payment.tutar_kurus:
                 # manipulasyon engeli -> rollback (event isaretlenmez), durum degismez
-                raise APIError(400, "amount_mismatch", "Webhook tutari odeme ile uyusmuyor.")
+                raise APIError(400, "amount_mismatch", "webhook_tutar_uyusmuyor")
 
             payment.durum = event.durum
             # Kartli odeme webhook'la 'basarili' oldugunda otomatik butce

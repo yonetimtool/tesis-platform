@@ -50,7 +50,7 @@ def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
     """foto_key kendi tenant namespace'inde olmali (complaints/kargo ile ayni
     IDOR korumasi)."""
     if foto_key is not None and not foto_key.startswith(f"{tenant_id}/"):
-        raise APIError(422, "invalid_foto_key", "foto_key tenant alani disinda")
+        raise APIError(422, "invalid_foto_key", "foto_key_alan_disi")
 
 
 #: Ceviri kaydindaki tip adi (bkz. app/ceviri.py TIPLER).
@@ -139,7 +139,7 @@ async def get_rule(
         await db.execute(_base_stmt().where(SiteKurali.id == rule_id))
     ).first()
     if row is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     obj, olusturan_ad = row
     yereller = await yerel_harita(
         db,
@@ -196,7 +196,7 @@ async def update_rule(
         await db.execute(_base_stmt().where(SiteKurali.id == rule_id))
     ).first()
     if row is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     obj, olusturan_ad = row
     payload = body.model_dump(exclude_unset=True)
     if "foto_key" in payload:
@@ -233,7 +233,7 @@ async def delete_rule(
         await db.execute(select(SiteKurali).where(SiteKurali.id == rule_id))
     ).scalar_one_or_none()
     if obj is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     # HARD DELETE (karar): salt icerik, FK/gecmis tasimaz.
     await db.delete(obj)
     await db.flush()

@@ -87,14 +87,14 @@ async def create_assessments(
     # TEK daire modu: unit_id verildi -> dup donem 409
     if body.unit_id is not None:
         if (await db.execute(select(Unit.id).where(Unit.id == body.unit_id))).scalar_one_or_none() is None:
-            raise APIError(422, "invalid_reference", "unit_id bu tenant'ta bulunamadi.")
+            raise APIError(422, "invalid_reference", "daire_bulunamadi")
         obj = DuesAssessment(tenant_id=user.tenant_id, unit_id=body.unit_id, **common)
         db.add(obj)
         try:
             await db.flush()
         except IntegrityError as exc:
             if is_unique_violation(exc):
-                raise APIError(409, "conflict", "Bu daire icin bu donem tahakkuk zaten var.")
+                raise APIError(409, "conflict", "tahakkuk_zaten_var")
             raise translate_integrity(exc)
         await db.refresh(obj)
         await audit_user(
@@ -110,7 +110,12 @@ async def create_assessments(
         )
         missing = [str(u) for u in body.unit_ids if u not in found]
         if missing:
-            raise APIError(422, "invalid_reference", f"Daire bulunamadi: {', '.join(missing)}")
+            raise APIError(
+                422,
+                "invalid_reference",
+                "daire_listesi_bulunamadi",
+                eksik=", ".join(missing),
+            )
         targets = list(dict.fromkeys(body.unit_ids))
     else:
         targets = list(
@@ -188,16 +193,16 @@ async def create_payment(
     user: AppUser = Depends(_ADMIN),
 ) -> JSONResponse:
     if not idempotency_key or not idempotency_key.strip():
-        raise APIError(400, "bad_request", "Idempotency-Key header zorunlu.")
+        raise APIError(400, "bad_request", "idempotency_key_zorunlu")
     if (await db.execute(select(Unit.id).where(Unit.id == body.unit_id))).scalar_one_or_none() is None:
-        raise APIError(422, "invalid_reference", "unit_id bu tenant'ta bulunamadi.")
+        raise APIError(422, "invalid_reference", "daire_bulunamadi")
     assessment_donem: str | None = None
     if body.assessment_id is not None:
         assessment_donem = (
             await db.execute(select(DuesAssessment.donem).where(DuesAssessment.id == body.assessment_id))
         ).scalar_one_or_none()
         if assessment_donem is None:
-            raise APIError(422, "invalid_reference", "assessment_id bu tenant'ta bulunamadi.")
+            raise APIError(422, "invalid_reference", "tahakkuk_bulunamadi")
 
     # donem: acikca verilen > assessment'tan tureyen > NULL (serbest odeme; rapor atfi).
     donem = body.donem if body.donem is not None else assessment_donem
@@ -212,7 +217,7 @@ async def create_payment(
     if existing is not None:
         if _same_payment(existing, **cmp):
             return JSONResponse(status_code=200, content=DuesPaymentOut.model_validate(existing).model_dump(mode="json"))
-        raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
+        raise APIError(409, "conflict", "idempotency_key_govde_farkli")
 
     # Odeme baslat: aktif saglayici (env). Manuel -> anlik 'basarili'; kart -> 'bekliyor'
     # + provider_ref + odeme URL (kullanici saglayiciya yonlenir, otorite WEBHOOK'tan gelir).
@@ -252,7 +257,7 @@ async def create_payment(
             ).scalar_one()
             if _same_payment(again, **cmp):
                 return JSONResponse(status_code=200, content=DuesPaymentOut.model_validate(again).model_dump(mode="json"))
-            raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
+            raise APIError(409, "conflict", "idempotency_key_govde_farkli")
         raise translate_integrity(exc)
     await db.refresh(obj)
     # OTOMATIK butce entegrasyonu: basarili odeme 'Aidat' gelir kaydi uretir

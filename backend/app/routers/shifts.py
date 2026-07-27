@@ -123,10 +123,7 @@ async def replace_assignments(
             (await db.execute(select(AppUser).where(AppUser.id.in_(ids)))).scalars().all()
         )
         if len(users) != len(ids) or any(u.role not in _ATANABILIR for u in users):
-            raise APIError(
-                422, "invalid_assignment",
-                "Yalniz security/tesis_gorevlisi kullanicilari atanabilir.",
-            )
+            raise APIError(422, "invalid_assignment", "vardiya_atama_rol_kisiti")
     await db.execute(delete(ShiftAssignment).where(ShiftAssignment.shift_id == shift_id))
     for uid in ids:
         db.add(ShiftAssignment(tenant_id=user.tenant_id, shift_id=shift_id, user_id=uid))

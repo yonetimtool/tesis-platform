@@ -86,7 +86,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (!mounted) return;
-      // SERVER-LOCALIZED(next round): sunucu mesaji AYNEN gosterilir (orn. 409
+      // SUNUCU mesaji AYNEN gosterilir (tur 14: istegin dilinde gelir; orn. 409
       // ad cakismasi, 422 URL/tur) — su an TR. Istemci cevirmez.
       setState(() {
         _kaydediyor = false;

@@ -52,7 +52,7 @@ def _constraint(exc: IntegrityError) -> str | None:
 def _check_nfc(asset: Asset, nfc: str | None) -> None:
     # Normalize karsilastirma (strip+upper) — scan/task completion ile ayni davranis.
     if nfc is not None and asset.nfc_tag_uid is not None and not nfc_eq(nfc, asset.nfc_tag_uid):
-        raise APIError(422, "invalid_reference", "nfc_tag_uid demirbas ile eslesmiyor.")
+        raise APIError(422, "invalid_reference", "demirbas_nfc_eslesmiyor")
 
 
 async def _acik_zimmetler(
@@ -110,9 +110,9 @@ async def list_assets(
             try:
                 target = uuid.UUID(checked_out_by)
             except ValueError:
-                raise APIError(422, "validation_error", "checked_out_by 'me' veya UUID olmali.")
+                raise APIError(422, "validation_error", "checked_out_by_bicimi")
             if user.role != "admin":
-                raise APIError(403, "forbidden", "checked_out_by=<uuid> yalniz admin; 'me' kullanin.")
+                raise APIError(403, "forbidden", "checked_out_by_yalniz_admin")
         where.append(
             Asset.id.in_(
                 select(AssetCheckout.asset_id).where(
@@ -160,7 +160,7 @@ async def create_asset(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "nfc_tag_uid bu tenant'ta zaten kayitli.")
+            raise APIError(409, "conflict", "nfc_uid_zaten_kayitli")
         raise translate_integrity(exc)
     await db.refresh(obj)
     return obj
@@ -181,7 +181,7 @@ async def update_asset(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "nfc_tag_uid bu tenant'ta zaten kayitli.")
+            raise APIError(409, "conflict", "nfc_uid_zaten_kayitli")
         raise translate_integrity(exc)
     await db.refresh(obj)
     return obj
@@ -246,7 +246,7 @@ async def checkout(
     user: AppUser = Depends(_FIELD),
 ) -> JSONResponse:
     if not idempotency_key or not idempotency_key.strip():
-        raise APIError(400, "bad_request", "Idempotency-Key header zorunlu.")
+        raise APIError(400, "bad_request", "idempotency_key_zorunlu")
     asset = await get_or_404(db, Asset, asset_id)
     _check_nfc(asset, body.nfc_tag_uid)
 
@@ -262,11 +262,11 @@ async def checkout(
             gps_lat=body.gps_lat, gps_lng=body.gps_lng, notlar=body.notlar,
         ):
             return JSONResponse(status_code=200, content=await _co_payload(db, existing))
-        raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
+        raise APIError(409, "conflict", "idempotency_key_govde_farkli")
 
     # 2) zaten zimmetli mi?
     if await _open_checkout(db, asset_id) is not None:
-        raise APIError(409, "conflict", "Demirbas zaten zimmetli.")
+        raise APIError(409, "conflict", "demirbas_zaten_zimmetli")
 
     # 3) yeni zimmet (race-safe SAVEPOINT)
     obj = AssetCheckout(
@@ -289,7 +289,7 @@ async def checkout(
         except Exception:
             pass
         if _constraint(exc) == "uq_asset_open_checkout":
-            raise APIError(409, "conflict", "Demirbas zaten zimmetli.")
+            raise APIError(409, "conflict", "demirbas_zaten_zimmetli")
         if is_unique_violation(exc):  # idempotency yarisi
             again = (
                 await db.execute(
@@ -301,7 +301,7 @@ async def checkout(
                 gps_lat=body.gps_lat, gps_lng=body.gps_lng, notlar=body.notlar,
             ):
                 return JSONResponse(status_code=200, content=await _co_payload(db, again))
-            raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
+            raise APIError(409, "conflict", "idempotency_key_govde_farkli")
         raise translate_integrity(exc)
 
     asset.durum = "zimmetli"
@@ -319,7 +319,7 @@ async def checkin(
     user: AppUser = Depends(_FIELD),
 ) -> JSONResponse:
     if not idempotency_key or not idempotency_key.strip():
-        raise APIError(400, "bad_request", "Idempotency-Key header zorunlu.")
+        raise APIError(400, "bad_request", "idempotency_key_zorunlu")
     asset = await get_or_404(db, Asset, asset_id)
     _check_nfc(asset, body.nfc_tag_uid)
 
@@ -334,11 +334,11 @@ async def checkin(
 
     open_co = await _open_checkout(db, asset_id)
     if open_co is None:
-        raise APIError(409, "conflict", "Acik zimmet yok (demirbas zaten musait).")
+        raise APIError(409, "conflict", "demirbas_acik_zimmet_yok")
 
     # SAHIPLIK (mobil §13 #6): yalniz zimmetin sahibi veya admin kapatabilir.
     if open_co.alan_user_id != user.id and user.role != "admin":
-        raise APIError(403, "forbidden", "Zimmet baskasinin uzerinde; yalniz sahibi veya admin birakabilir.")
+        raise APIError(403, "forbidden", "demirbas_baskasinin_zimmetinde")
 
     open_co.birakan_user_id = user.id
     open_co.birakma_zamani = datetime.now(tz=timezone.utc)

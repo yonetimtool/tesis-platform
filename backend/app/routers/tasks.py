@@ -73,7 +73,7 @@ async def _visible_task_or_404(db: AsyncSession, task_id: uuid.UUID, user: AppUs
     kendine atanan gorevi gorur (aksi 404 — varligi da sizdirilmaz)."""
     task = await get_or_404(db, Task, task_id)
     if user.role in _SAHA_ROLLERI and task.atanan_user_id != user.id:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     return task
 
 
@@ -140,12 +140,9 @@ async def _ensure_user_in_tenant(
         await db.execute(select(AppUser.role).where(AppUser.id == user_id))
     ).scalar_one_or_none()
     if target_role is None:
-        raise APIError(422, "invalid_reference", "atanan_user_id bu tenant'ta bulunamadi.")
+        raise APIError(422, "invalid_reference", "atanan_user_bulunamadi")
     if actor.role == "yonetici" and target_role not in _YONETICI_ATANABILIR:
-        raise APIError(
-            422, "invalid_reference",
-            "yonetici gorevi yalniz security/tesis_gorevlisi kullanicilara atayabilir.",
-        )
+        raise APIError(422, "invalid_reference", "gorev_atama_rol_kisiti")
 
 
 async def _ensure_kategori_in_tenant(db: AsyncSession, kategori_id: uuid.UUID | None) -> None:
@@ -157,12 +154,9 @@ async def _ensure_kategori_in_tenant(db: AsyncSession, kategori_id: uuid.UUID | 
         await db.execute(select(TaskCategory.aktif).where(TaskCategory.id == kategori_id))
     ).scalar_one_or_none()
     if aktif is None:
-        raise APIError(422, "invalid_reference", "kategori_id bu tenant'ta bulunamadi.")
+        raise APIError(422, "invalid_reference", "butce_kategori_bulunamadi")
     if not aktif:
-        raise APIError(
-            422, "invalid_reference",
-            "Pasif kategoriye gorev yazilamaz (kategori silinmis).",
-        )
+        raise APIError(422, "invalid_reference", "gorev_pasif_kategoriye_yazilamaz")
 
 
 async def _ensure_checkpoint_in_tenant(db: AsyncSession, checkpoint_id: uuid.UUID | None) -> None:
@@ -172,7 +166,7 @@ async def _ensure_checkpoint_in_tenant(db: AsyncSession, checkpoint_id: uuid.UUI
         await db.execute(select(Checkpoint.id).where(Checkpoint.id == checkpoint_id))
     ).scalar_one_or_none()
     if found is None:
-        raise APIError(422, "invalid_reference", "checkpoint_id bu tenant'ta bulunamadi.")
+        raise APIError(422, "invalid_reference", "checkpoint_bulunamadi")
 
 
 # -------------------------------- CRUD ------------------------------------- #
@@ -203,9 +197,7 @@ async def list_tasks(
             try:
                 where.append(Task.kategori_id == uuid.UUID(kategori_id))
             except ValueError:
-                raise APIError(
-                    422, "validation_error", "kategori_id UUID veya 'diger' olmali."
-                )
+                raise APIError(422, "validation_error", "kategori_id_bicimi")
     if aktif is not None:
         where.append(Task.aktif == aktif)
     if atanan_user_id is not None:
@@ -215,7 +207,7 @@ async def list_tasks(
             try:
                 target = uuid.UUID(atanan_user_id)
             except ValueError:
-                raise APIError(422, "validation_error", "atanan_user_id 'me' veya UUID olmali.")
+                raise APIError(422, "validation_error", "atanan_user_id_bicimi")
         where.append(Task.atanan_user_id == target)
     total = (await db.execute(select(func.count()).select_from(Task).where(*where))).scalar_one()
     rows = (
@@ -348,7 +340,7 @@ async def create_completion(
     user: AppUser = Depends(_COMPLETER),
 ) -> JSONResponse:
     if not idempotency_key or not idempotency_key.strip():
-        raise APIError(400, "bad_request", "Idempotency-Key header zorunlu.")
+        raise APIError(400, "bad_request", "idempotency_key_zorunlu")
 
     # Gorunurluk: grup disi / baska tenant -> 404 (varlik sizdirilmaz).
     task = await _visible_task_or_404(db, task_id, user)
@@ -357,16 +349,11 @@ async def create_completion(
     # tamamlar. (_visible_task_or_404 zaten kendine-ait olmayani 404'ler; bu
     # ek kontrol savunmacidir.)
     if user.role in _SAHA_ROLLERI and task.atanan_user_id != user.id:
-        raise APIError(
-            403, "forbidden", "Bu gorevi yalniz atanan kullanici tamamlayabilir."
-        )
+        raise APIError(403, "forbidden", "gorev_yalniz_atanan_tamamlar")
 
     # Foto kaniti: gorev foto_zorunlu ise foto_key olmadan tamamlanamaz (mobil §11 #2).
     if task.foto_zorunlu and body.foto_key is None:
-        raise APIError(
-            422, "validation_error",
-            "Bu gorev icin foto kaniti zorunlu — once /uploads/presign ile yukleyip foto_key gonderin.",
-        )
+        raise APIError(422, "validation_error", "gorev_foto_kaniti_zorunlu")
 
     # NFC kaniti: task'in checkpoint'i varsa ve nfc gonderildiyse eslesmeli
     # (normalize karsilastirma — mobil §11 #3).
@@ -375,7 +362,7 @@ async def create_completion(
             await db.execute(select(Checkpoint).where(Checkpoint.id == task.checkpoint_id))
         ).scalar_one_or_none()
         if cp is None or not nfc_eq(cp.nfc_tag_uid, body.nfc_tag_uid):
-            raise APIError(422, "invalid_reference", "nfc_tag_uid gorevin checkpoint'i ile eslesmiyor.")
+            raise APIError(422, "invalid_reference", "gorev_nfc_eslesmiyor")
 
     zaman = body.tamamlanma_zamani
     if zaman.tzinfo is None:
@@ -450,4 +437,4 @@ async def create_completion(
         return JSONResponse(
             status_code=200, content=TaskCompletionOut.model_validate(existing).model_dump(mode="json")
         )
-    raise APIError(409, "conflict", "Ayni Idempotency-Key farkli govde ile gonderildi.")
+    raise APIError(409, "conflict", "idempotency_key_govde_farkli")

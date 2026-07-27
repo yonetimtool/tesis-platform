@@ -83,7 +83,7 @@ async def create_area(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "Bu adla bir ortak alan zaten var.")
+            raise APIError(409, "conflict", "ortak_alan_adi_zaten_var")
         raise translate_integrity(exc)
     await db.refresh(obj)
     return obj
@@ -100,21 +100,19 @@ async def update_area(
         await db.execute(select(OrtakAlan).where(OrtakAlan.id == area_id))
     ).scalar_one_or_none()
     if obj is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     payload = body.model_dump(exclude_unset=True)
     for k, v in payload.items():
         setattr(obj, k, v)
     # Kismi saat guncellemesi (yalniz biri verildi) mevcut deger ile tutarli
     # olmali — DB CHECK son guvence, ama once anlamli 422 verelim.
     if obj.kapanis <= obj.acilis:
-        raise APIError(
-            422, "validation_error", "kapanis acilistan sonra olmali."
-        )
+        raise APIError(422, "validation_error", "kapanis_acilistan_sonra")
     try:
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "Bu adla bir ortak alan zaten var.")
+            raise APIError(409, "conflict", "ortak_alan_adi_zaten_var")
         raise translate_integrity(exc)
     await db.refresh(obj)
     return obj
@@ -140,7 +138,7 @@ async def area_slots(
         await db.execute(select(OrtakAlan).where(OrtakAlan.id == area_id))
     ).scalar_one_or_none()
     if alan is None or (not alan.aktif and user.role not in _MANAGEMENT_ROLES):
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
 
     # O gunun ONAYLI rezervasyon araliklari. Daire no + kisi sayisi YALNIZ
     # yonetime aciklanir; talep_eden_user_id yalniz "benim mi" kararinda

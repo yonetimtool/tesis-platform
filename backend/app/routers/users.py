@@ -50,7 +50,7 @@ _YONETICI_CREATABLE_ROLES = frozenset({"security", "tesis_gorevlisi"})
 _CONTACT_MANAGER = require_role("admin", "yonetici")
 # telefon global benzersiz; email tenant-ici benzersiz — hangisi cakisti
 # ayirt edilmeden tek mesaj.
-_CONTACT_CONFLICT = APIError(409, "conflict", "Bu telefon veya e-posta zaten kayitli.")
+_CONTACT_CONFLICT = APIError(409, "conflict", "telefon_veya_email_zaten_kayitli")
 # Saha personeli fotosu YALNIZ yonetici yonetir (spec P3); hedef saha personeli.
 _AVATAR_MANAGER = require_role("yonetici")
 _AVATAR_HEDEF_ROLLER = {"security", "tesis_gorevlisi"}
@@ -114,10 +114,7 @@ async def create_user(
 ) -> UserCreatedOut:
     # yonetici YALNIZ saha personeli acabilir (yetki yukseltme yok).
     if user.role == "yonetici" and body.role not in _YONETICI_CREATABLE_ROLES:
-        raise APIError(
-            403, "forbidden",
-            "Bu rolu olusturamazsiniz (yalniz guvenlik/tesis gorevlisi).",
-        )
+        raise APIError(403, "forbidden", "rol_olusturulamaz_yalniz_saha")
     # password verilirse admin parolayi dogrudan belirler (password_set=true);
     # verilmezse TEK SEFERLIK gecici kod uretilir (temp password first) —
     # kod yanitta bir kez doner, kullanici telefonla girip parola belirler.
@@ -181,14 +178,9 @@ async def update_user(
     # rolu saha disina cekemez (yetki yukseltme yok); admin herkesi duzenler.
     if user.role == "yonetici":
         if obj.role not in _YONETICI_CREATABLE_ROLES:
-            raise APIError(
-                403, "forbidden", "Yalniz saha personelini duzenleyebilirsiniz."
-            )
+            raise APIError(403, "forbidden", "yalniz_saha_personeli_duzenlenir")
         if body.role is not None and body.role not in _YONETICI_CREATABLE_ROLES:
-            raise APIError(
-                403, "forbidden",
-                "Rolu yalniz guvenlik/tesis gorevlisi yapabilirsiniz.",
-            )
+            raise APIError(403, "forbidden", "rol_yalniz_saha_yapilabilir")
     data = body.model_dump(exclude_unset=True)
     new_password = data.pop("password", None)
     if "email" in data and data["email"] is not None:
@@ -225,10 +217,7 @@ async def reset_user_password(
     gorevlisi) icin sifirlar."""
     obj = await get_or_404(db, AppUser, user_id)
     if user.role == "yonetici" and obj.role not in _YONETICI_CREATABLE_ROLES:
-        raise APIError(
-            403, "forbidden",
-            "Yalniz saha personelinin parolasini sifirlayabilirsiniz.",
-        )
+        raise APIError(403, "forbidden", "yalniz_saha_personeli_parola")
     temp_code = generate_temp_code()
     obj.password_hash = None
     obj.password_set = False
@@ -291,11 +280,11 @@ async def update_user_avatar(
     obj = await get_or_404(db, AppUser, user_id)
     if obj.role not in _AVATAR_HEDEF_ROLLER:
         raise APIError(422, "invalid_target",
-                       "Yalniz saha personeline fotograf atanabilir.")
+                       "yalniz_saha_personeline_foto")
     if body.avatar_key is not None and not body.avatar_key.startswith(
         f"{user.tenant_id}/"
     ):
-        raise APIError(422, "invalid_foto_key", "avatar_key tenant alani disinda")
+        raise APIError(422, "invalid_foto_key", "avatar_key_alan_disi")
     eski = obj.avatar_key
     obj.avatar_key = body.avatar_key
     obj.updated_at = func.now()

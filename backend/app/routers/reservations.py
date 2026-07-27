@@ -124,14 +124,13 @@ def _cakisma_kosulu(alan_id: uuid.UUID, tarih, baslangic, bitis):
     )
 
 
-# Zamanlama sebep kodu -> (status, code, message).
+# Zamanlama sebep kodu -> (status, code, mesaj KIMLIGI).
+# Metin `hata_metinleri.METINLER`den istegin dilinde uretilir (tur 14).
 _REASON_ERRORS: dict[str, tuple[int, str, str]] = {
-    "dolu": (409, "conflict",
-             "Secilen aralik bu alanda onaylanmis bir rezervasyonla cakisiyor."),
-    "gecti": (422, "validation_error", "Slot baslangic saati gecti."),
-    "cok_erken": (422, "validation_error",
-                  "Rezervasyon en erken 24 saat kala yapilabilir."),
-    "gunluk": (409, "conflict", "Bu gun icin zaten bir rezervasyonunuz var."),
+    "dolu": (409, "conflict", "rezervasyon_cakismasi"),
+    "gecti": (422, "validation_error", "rezervasyon_slot_gecti"),
+    "cok_erken": (422, "validation_error", "rezervasyon_cok_erken"),
+    "gunluk": (409, "conflict", "rezervasyon_gunluk_kota"),
 }
 
 
@@ -146,24 +145,21 @@ async def create_reservation(
         await db.execute(select(OrtakAlan).where(OrtakAlan.id == body.alan_id))
     ).scalar_one_or_none()
     if alan is None or not alan.aktif:
-        raise APIError(422, "invalid_reference", "Alan bulunamadi veya aktif degil.")
+        raise APIError(422, "invalid_reference", "ortak_alan_bulunamadi_veya_pasif")
 
     # MUSAITLIK: talep edilen aralik alanin [acilis, kapanis] penceresinde
     # olmali (slot izgara hizasi UX isi; cakismasizligi EXCLUDE saglar).
     if body.baslangic < alan.acilis or body.bitis > alan.kapanis:
-        raise APIError(
-            422, "validation_error",
-            "Secilen aralik alanin musaitlik saatleri (acilis-kapanis) disinda.",
-        )
+        raise APIError(422, "validation_error", "aralik_musaitlik_disinda")
 
     # Daire: sakinin aktif dairelerinden; unit_id verildiyse KENDI dairesi
     # olmali (baska daire adina talep acilamaz), verilmediyse tek/ilk daire.
     unit_ids = await _aktif_daire_ids(db, user)
     if not unit_ids:
-        raise APIError(422, "invalid_reference", "Aktif daire baglantiniz yok.")
+        raise APIError(422, "invalid_reference", "aktif_daire_baglantiniz_yok")
     if body.unit_id is not None:
         if body.unit_id not in unit_ids:
-            raise APIError(422, "invalid_reference", "unit_id kendi daireniz olmali.")
+            raise APIError(422, "invalid_reference", "unit_id_kendi_daireniz_olmali")
         unit_id = body.unit_id
     else:
         unit_id = unit_ids[0]
@@ -195,8 +191,8 @@ async def create_reservation(
         tzname, body.tarih, body.baslangic, dolu=dolu, kota_dolu=kota_dolu
     )
     if sebep is not None:
-        status_code, code, message = _REASON_ERRORS[sebep]
-        raise APIError(status_code, code, message)
+        status_code, code, kimlik = _REASON_ERRORS[sebep]
+        raise APIError(status_code, code, kimlik)
 
     obj = Rezervasyon(
         tenant_id=user.tenant_id,
@@ -217,10 +213,7 @@ async def create_reservation(
         await db.flush()
     except IntegrityError as exc:
         if is_exclusion_violation(exc):
-            raise APIError(
-                409, "conflict",
-                "Secilen aralik bu alanda onaylanmis bir rezervasyonla cakisiyor.",
-            )
+            raise APIError(409, "conflict", "rezervasyon_cakismasi")
         raise translate_integrity(exc)
     await db.refresh(obj)
 
@@ -288,7 +281,7 @@ async def get_reservation(
     ).first()
     if row is None:
         # Baska dairenin/tenant'in kaydi 404 — varligi da sizdirilmaz.
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     return _out(row)
 
 
@@ -312,23 +305,20 @@ async def cancel_reservation(
         )
     ).first()
     if row is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     obj, alan_ad, unit_no = row
 
     # Sakin yalniz KENDI rezervasyonunu iptal eder (varligi sizdirmadan 404).
     if obj.talep_eden_user_id != user.id:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     if obj.durum != "onaylandi":
-        raise APIError(409, "conflict", "Rezervasyon zaten iptal edilmis.")
+        raise APIError(409, "conflict", "rezervasyon_zaten_iptal")
 
     # 10 DAKIKA KURALI: slot baslangicina <10 dk kala (veya baslamis) iptal yok.
     tzname = await _tenant_tz(db, user.tenant_id)
     kalan = rtiming.slot_start_utc(tzname, obj.tarih, obj.baslangic) - rtiming.now_utc()
     if kalan < rtiming.LAST_MINUTE:
-        raise APIError(
-            422, "too_late",
-            "Rezervasyon baslangicina 10 dakikadan az kaldi, iptal edilemez.",
-        )
+        raise APIError(422, "too_late", "rezervasyon_iptal_icin_gec")
 
     obj.durum = "iptal"
     obj.iptal_eden_user_id = user.id

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import uuid
 
+from app.hata_metinleri import METINLER
+
 
 def _headers(client, slug, cred):
     r = client.post(
@@ -264,7 +266,7 @@ def test_completion_foto_zorunlu(client, world):
         json={"tamamlanma_zamani": "2026-07-03T08:00:00Z"},
     )
     assert fotosuz.status_code == 422, fotosuz.text
-    assert "foto" in fotosuz.json()["error"]["message"].lower()
+    assert fotosuz.json()["error"]["message"] == METINLER["gorev_foto_kaniti_zorunlu"]["tr"]
 
     fotolu = client.post(
         f"/tasks/{t['id']}/completions",

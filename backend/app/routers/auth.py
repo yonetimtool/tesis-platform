@@ -41,12 +41,10 @@ from ..security import (
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-_INVALID_CREDS = APIError(401, "invalid_credentials", "Email, parola veya tenant hatali.")
+_INVALID_CREDS = APIError(401, "invalid_credentials", "giris_bilgileri_hatali_email")
 # Telefon girisinde de hangi adimin patladigi sizdirilmaz (numara var mi, kod mu
 # parola mi yanlis vb. ayirt ettirilmez) — personel akisiyla ayni ilke.
-_INVALID_PHONE_CREDS = APIError(
-    401, "invalid_credentials", "Telefon veya parola hatali."
-)
+_INVALID_PHONE_CREDS = APIError(401, "invalid_credentials", "giris_bilgileri_hatali_telefon")
 
 
 def _refresh_ttl() -> int:
@@ -250,7 +248,7 @@ async def set_password(
     try:
         claims = decode_token(body.setup_token, expected_type="pwd_setup")
     except jwt.PyJWTError:
-        raise APIError(401, "invalid_token", "Gecersiz veya suresi dolmus kurulum token'i.")
+        raise APIError(401, "invalid_token", "kurulum_tokeni_gecersiz")
 
     async with SessionLocal() as session:
         async with session.begin():
@@ -268,7 +266,7 @@ async def set_password(
                 or user.password_set
                 or user.temp_code_hash is None
             ):
-                raise APIError(401, "invalid_token", "Kurulum token'i artik gecerli degil.")
+                raise APIError(401, "invalid_token", "kurulum_tokeni_kullanilmis")
 
             user.password_hash = hash_password(body.new_password)
             user.password_set = True
@@ -293,7 +291,7 @@ async def refresh(
     try:
         claims = decode_token(body.refresh_token, expected_type="refresh")
     except jwt.PyJWTError:
-        raise APIError(401, "invalid_token", "Gecersiz veya suresi dolmus refresh token.")
+        raise APIError(401, "invalid_token", "refresh_token_gecersiz")
 
     jti = claims.get("jti", "")
     fam = claims.get("fam", "")
@@ -306,7 +304,7 @@ async def refresh(
     if valid_fam is None or current != jti:
         # gecersiz/zaten donmus/eski jti => reuse suphesi: tum aileyi iptal et.
         await _revoke_family(redis, fam, jti)
-        raise APIError(401, "invalid_token", "Refresh token gecersiz veya iptal edilmis.")
+        raise APIError(401, "invalid_token", "refresh_token_iptal")
 
     # 3) kullaniciyi RLS altinda yeniden yukle (rol degismis olabilir).
     async with SessionLocal() as session:
@@ -317,7 +315,7 @@ async def refresh(
             ).scalar_one_or_none()
             if user is None or not user.is_active:
                 await _revoke_family(redis, fam, jti)
-                raise APIError(401, "invalid_token", "Kullanici bulunamadi veya pasif.")
+                raise APIError(401, "invalid_token", "kullanici_bulunamadi_veya_pasif")
 
             access = create_access_token(
                 user_id=user.id, tenant_id=user.tenant_id, role=user.role

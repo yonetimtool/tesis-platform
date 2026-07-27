@@ -54,7 +54,7 @@ async def _current_tenant(db: AsyncSession) -> Tenant:
     # RLS: yalnizca current tenant'in satiri gorunur.
     t = (await db.execute(select(Tenant))).scalar_one_or_none()
     if t is None:
-        raise APIError(404, "not_found", "Tenant bulunamadi.")
+        raise APIError(404, "not_found", "tenant_bulunamadi")
     return t
 
 
@@ -78,10 +78,7 @@ async def update_settings(
     gonderirse 403. slug'a ASLA yazilmaz."""
     data = body.model_dump(exclude_unset=True)
     if user.role == "yonetici" and not set(data) <= _YONETICI_YAZABILIR:
-        raise APIError(
-            403, "forbidden",
-            "Yonetici yalniz tesis adini ve hava konumunu degistirebilir."
-        )
+        raise APIError(403, "forbidden", "yonetici_sinirli_alan_degistirir")
     t = await _current_tenant(db)
     for key, value in data.items():
         setattr(t, key, value)
@@ -104,12 +101,10 @@ async def setup_tenant(
     uc de eslesmelidir (aksi halde istemci tarafi bir kisit olarak kalirdi).
     Zaten kuruluysa 409."""
     if not user.birincil:
-        raise APIError(
-            403, "forbidden", "Tesisi yalniz birincil yonetici adlandirabilir."
-        )
+        raise APIError(403, "forbidden", "tesis_adi_yalniz_birincil_yonetici")
     t = await _current_tenant(db)
     if t.kurulum_tamamlandi:
-        raise APIError(409, "conflict", "Tesis zaten kuruldu.")
+        raise APIError(409, "conflict", "tesis_zaten_kuruldu")
     t.ad = body.ad
     t.kurulum_tamamlandi = True
     await db.flush()

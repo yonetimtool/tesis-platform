@@ -59,7 +59,7 @@ def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
     tenant'in objesi duyuru gorseli diye sizdirilabilir (IDOR).
     """
     if foto_key is not None and not foto_key.startswith(f"{tenant_id}/"):
-        raise APIError(422, "invalid_foto_key", "foto_key tenant alani disinda")
+        raise APIError(422, "invalid_foto_key", "foto_key_alan_disi")
 
 
 #: Ceviri kaydindaki tip adi (bkz. app/ceviri.py TIPLER).

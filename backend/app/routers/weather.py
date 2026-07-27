@@ -30,7 +30,7 @@ async def get_weather(
 ) -> WeatherOut:
     t = (await db.execute(select(Tenant))).scalar_one_or_none()
     if t is None:
-        raise APIError(404, "not_found", "Tenant bulunamadi.")
+        raise APIError(404, "not_found", "tenant_bulunamadi")
     lat, lon = float(t.konum_lat), float(t.konum_lon)
 
     payload = cache_get(lat, lon, settings.weather_cache_ttl)
@@ -55,5 +55,5 @@ async def get_weather(
         except Exception:
             payload = cache_get_stale(lat, lon)  # bayat-veri toleransi
     if payload is None:
-        raise APIError(503, "weather_unavailable", "Hava durumu su an alinamiyor.")
+        raise APIError(503, "weather_unavailable", "hava_durumu_alinamiyor")
     return WeatherOut(**payload, konum_ad=t.konum_ad)

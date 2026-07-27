@@ -76,7 +76,7 @@ def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
     """foto_key kendi tenant namespace'inde olmali (duyuru/site kurali ile ayni
     IDOR korumasi: okumada bu anahtara presigned GET imzalanir)."""
     if foto_key is not None and not foto_key.startswith(f"{tenant_id}/"):
-        raise APIError(422, "invalid_foto_key", "foto_key tenant alani disinda")
+        raise APIError(422, "invalid_foto_key", "foto_key_alan_disi")
 
 
 #: Ceviri kaydindaki tip adi (bkz. app/ceviri.py TIPLER).
@@ -158,7 +158,7 @@ async def _load_out(
         await db.execute(_base_stmt(user).where(Etkinlik.id == etkinlik_id))
     ).first()
     if row is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     yereller = await yerel_harita(
         db,
         tip_ad=_TIP,
@@ -224,7 +224,7 @@ async def update_event(
         await db.execute(select(Etkinlik).where(Etkinlik.id == event_id))
     ).scalar_one_or_none()
     if obj is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     alanlar = body.model_dump(exclude_unset=True)
     if "foto_key" in alanlar:
         _validate_foto_key(alanlar["foto_key"], user.tenant_id)
@@ -234,9 +234,7 @@ async def update_event(
     yeni_tarih = alanlar.get("tarih", obj.tarih)
     yeni_bitis = alanlar.get("bitis_zamani", obj.bitis_zamani)
     if yeni_bitis is not None and yeni_bitis <= yeni_tarih:
-        raise APIError(
-            422, "invalid_bitis_zamani", "bitis_zamani baslangictan sonra olmali"
-        )
+        raise APIError(422, "invalid_bitis_zamani", "bitis_baslangictan_sonra")
     for k, v in alanlar.items():
         setattr(obj, k, v)
     obj.updated_at = func.now()
@@ -268,7 +266,7 @@ async def delete_event(
         await db.execute(select(Etkinlik).where(Etkinlik.id == event_id))
     ).scalar_one_or_none()
     if obj is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     # RSVP'ler FK CASCADE ile silinir.
     await db.delete(obj)
     await db.flush()
@@ -358,7 +356,7 @@ async def rsvp_event(
         await db.execute(select(Etkinlik.id).where(Etkinlik.id == event_id))
     ).scalar_one_or_none()
     if exists is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
 
     # Beyan KILITLI: kullanici basina etkinlik icin TEK kayit, DEGISTIRILEMEZ.
     # Mevcut beyan varsa 409 — tekrar oy yok (secim kesin, urun karari).
@@ -371,11 +369,7 @@ async def rsvp_event(
         )
     ).scalar_one_or_none()
     if already is not None:
-        raise APIError(
-            409,
-            "already_answered",
-            "Katilim beyaniniz kaydedildi; degistirilemez.",
-        )
+        raise APIError(409, "already_answered", "rsvp_degistirilemez")
 
     # Ilk beyan: ON CONFLICT DO NOTHING — es zamanli iki ilk-PUT yarissa da
     # cift kayit olusmaz (ilki kazanir; kaybeden beyani sessizce yok sayilir,

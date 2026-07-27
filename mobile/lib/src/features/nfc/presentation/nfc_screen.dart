@@ -264,7 +264,8 @@ class _OutboxOutcome extends StatelessWidget {
               color: Colors.green,
               text: l10n.nfcGonderildi,
             ),
-      // SERVER-LOCALIZED(next round): `lastError` sunucu metnidir.
+      // `lastError` SUNUCU metnidir (tur 14'ten beri istegin dilinde;
+      // tur 14 oncesi kuyruga yazilmis eski kayitlar Turkce kalir).
       OutboxStatus.kaliciHata => _ScanOutcome(
           icon: Icons.link_off,
           color: Colors.orange,

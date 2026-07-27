@@ -95,15 +95,12 @@ async def file_unit_complaint(
         await db.execute(select(Unit).where(Unit.id == body.target_unit_id))
     ).scalar_one_or_none()
     if unit is None:
-        raise APIError(422, "invalid_reference", "Hedef daire bu tenant'ta bulunamadi.")
+        raise APIError(422, "invalid_reference", "hedef_daire_bulunamadi")
 
     # OWN-BLOCK (Rev-1): sakin yalniz KENDI blogundaki daireyi sikayet edebilir.
     my_blocks = await _resident_blocks(db, user)
     if unit.blok not in my_blocks:
-        raise APIError(
-            403, "forbidden",
-            "Yalnizca kendi blogunuzdaki daireleri sikayet edebilirsiniz.",
-        )
+        raise APIError(403, "forbidden", "sikayet_yalniz_kendi_blok")
 
     # SPAM KORUMASI (Rev-1.1 — HAFTALIK + KATEGORI-BAZLI, YARISSIZ):
     # ayni sikayetci ayni daireye ayni KATEGORIDE 7 gunde en fazla 1 (farkli
@@ -126,10 +123,7 @@ async def file_unit_complaint(
         )
     ).scalar_one_or_none()
     if son is not None:
-        raise APIError(
-            409, "conflict",
-            "Bu daire icin bu konuda haftada en fazla 1 sikayet acabilirsiniz.",
-        )
+        raise APIError(409, "conflict", "sikayet_haftalik_limit")
 
     obj = UnitComplaint(
         tenant_id=user.tenant_id,

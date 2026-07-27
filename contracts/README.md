@@ -48,6 +48,25 @@ degisecekse once burasi degisir, sonra kod.
 - HTTP durum kodlari: `400` (kotu istek), `401` (kimlik), `403` (yetki),
   `404` (bulunamadi), `409` (cakisma), `422` (dogrulama), `429` (limit).
 
+**`message` YERELLESTIRILMISTIR (7 dil), `code` DEGILDIR.** Istemci mantigi
+**daima `code`** (ve HTTP durumu) ile kurulur; `message` yalniz gosterilir.
+Metin `Accept-Language` basligina gore uretilir — icerik cevirisiyle **ayni**
+zincir (RFC 9110, bolge eki duser, ilk desteklenen dil kazanir, yoksa `tr`).
+
+```http
+GET /units/<id>
+Accept-Language: ar, tr;q=0.8
+→ 401 { "error": { "code": "unauthorized", "message": "المصادقة مطلوبة." } }
+```
+
+- Baslik gonderilmezse **Turkce** doner (mevcut istemciler etkilenmez).
+- `error.details[].message` alan duzeyinde **teknik** metindir (dogrulama
+  kutuphanesinin kendi ciktisi, Ingilizce) — kullaniciya ham gosterilmez.
+- Sunucu yapilandirma hatalari (`storage_unconfigured`, `config_error`,
+  `payment_unconfigured`, `payment_provider_error`, `webhook_unsupported`)
+  **cevrilmez**: operatore hitap eder. Katalog ve gerekce:
+  `backend/app/hata_metinleri.py`.
+
 ### Sayfalama
 - Liste endpoint'leri: `limit` (varsayilan **50**, max **200**) + `offset`.
 - Yanit `meta: { limit, offset, total }` icerir.

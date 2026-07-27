@@ -255,7 +255,7 @@ def _decode_cursor(cursor: str) -> tuple[datetime, str]:
         zaman_s, item_id = raw.split("|", 1)
         return datetime.fromisoformat(zaman_s), item_id
     except (ValueError, binascii.Error, UnicodeDecodeError):
-        raise APIError(422, "validation_error", "Gecersiz cursor degeri.")
+        raise APIError(422, "validation_error", "cursor_gecersiz")
 
 
 @router.get("", response_model=ActivityResponse)

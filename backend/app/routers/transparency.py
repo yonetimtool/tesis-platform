@@ -53,7 +53,7 @@ _LIST_LIMIT = 24
 
 def _valid_ay(ay: str) -> str:
     if not _AY_RE.match(ay):
-        raise APIError(422, "validation_error", "ay 'YYYY-MM' formatinda olmali.")
+        raise APIError(422, "validation_error", "ay_bicimi")
     return ay
 
 
@@ -248,7 +248,7 @@ async def get_board(
     _valid_ay(ay)
     published = await _is_published(db, ay)
     if user.role not in _YONETIM and not published:
-        raise APIError(404, "not_found", "Bu ay icin yayinlanmis ozet yok.")
+        raise APIError(404, "not_found", "seffaflik_yayin_yok")
     return await _board(db, ay, yayinlandi=published)
 
 

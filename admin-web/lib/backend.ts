@@ -37,7 +37,13 @@ async function callBackend(
   body?: unknown,
   extraHeaders?: Record<string, string>,
 ): Promise<Response> {
-  const headers: Record<string, string> = { ...(extraHeaders ?? {}) };
+  // Panel TEK dilli (`<html lang="tr">`). Sunucu hata metinleri tur 14'ten
+  // beri `Accept-Language`e gore uretiliyor; basligi ACIKCA gonderiyoruz ki
+  // sunucu varsayilani degisirse panel sessizce baska dile kaymasin.
+  const headers: Record<string, string> = {
+    "Accept-Language": "tr",
+    ...(extraHeaders ?? {}),
+  };
   if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
   if (body !== undefined) headers["Content-Type"] = "application/json";
   return fetch(`${API_BASE}${path}`, {

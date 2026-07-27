@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -50,7 +50,7 @@ def _validate_prefix(foto_key: str | None, tenant_id: uuid.UUID) -> None:
     """Gorsel anahtari yukleyen kullanicinin tenant namespace'inde olmali
     (announcement _validate_foto_key deseni — IDOR engeli)."""
     if foto_key is not None and not foto_key.startswith(f"{tenant_id}/"):
-        raise APIError(422, "invalid_foto_key", "foto_key tenant alani disinda")
+        raise APIError(422, "invalid_foto_key", "foto_key_alan_disi")
 
 
 def _foto_url(key: str | None) -> str | None:
@@ -166,7 +166,7 @@ async def answer_ticket(
         and body.admin_cevap is None
         and body.admin_cevap_foto_key is None
     ):
-        raise HTTPException(422, detail="durum, admin_cevap veya foto gerekli")
+        raise APIError(422, "validation_error", "destek_guncelleme_alani_gerekli")
     # Admin cevap gorseli admin'in KENDI tenant namespace'inde olmali (IDOR).
     _validate_prefix(body.admin_cevap_foto_key, user.tenant_id)
     row = (
@@ -179,7 +179,7 @@ async def answer_ticket(
         )
     ).mappings().first()
     if row is None:
-        raise HTTPException(404, detail="Bilet bulunamadi")
+        raise APIError(404, "not_found", "destek_bileti_bulunamadi")
     # Denetim: aktorun (admin) tenant baglaminda; hedef bilet baska tenant'in
     # olabilir -> meta'da hedef tenant id'si (KVKK: yalniz id'ler).
     await audit_user(

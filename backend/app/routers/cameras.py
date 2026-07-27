@@ -43,6 +43,7 @@ from ..schemas import (
     CameraListResponse,
     CameraOut,
     CameraUpdate,
+    UrlTurUyusmazligi,
     dogrula_url_tur,
     oynatilabilir_mi,
 )
@@ -68,8 +69,14 @@ def _url_tur_dogrula(stream_url: str, tur: str) -> None:
     """Sema/tur tutarliligi — ValueError'i 422 API hatasina cevirir."""
     try:
         dogrula_url_tur(stream_url, tur)
-    except ValueError as exc:
-        raise APIError(422, "invalid_stream_url", str(exc))
+    except UrlTurUyusmazligi as exc:
+        raise APIError(
+            422,
+            "invalid_stream_url",
+            "kamera_url_semasi",
+            tur=exc.tur,
+            semalar=" / ".join(exc.semalar),
+        ) from exc
 
 
 @router.get("", response_model=CameraListResponse)

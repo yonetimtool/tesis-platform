@@ -156,7 +156,9 @@ class IyzicoProvider(PaymentProvider):
         expected = _b64_hmac_sha256(secret, f"{event_id}{conversation_id}{status}{price}")
         got = headers.get("x-iyz-signature", "")
         if not got or not hmac.compare_digest(expected, got):
-            raise APIError(401, "invalid_signature", "iyzico webhook imzasi gecersiz.")
+            raise APIError(
+                401, "invalid_signature", "webhook_imza_gecersiz", saglayici="iyzico"
+            )
         return WebhookEvent(
             provider_ref=conversation_id,
             event_id=event_id,
@@ -223,7 +225,9 @@ class PaytrProvider(PaymentProvider):
         got = form.get("hash", "")
         expected = _b64_hmac_sha256(key, f"{merchant_oid}{salt}{status}{total_amount}")
         if not got or not hmac.compare_digest(expected, got):
-            raise APIError(401, "invalid_signature", "paytr webhook hash gecersiz.")
+            raise APIError(
+                401, "invalid_signature", "webhook_imza_gecersiz", saglayici="paytr"
+            )
         return WebhookEvent(
             provider_ref=merchant_oid,
             event_id=merchant_oid,  # PayTR order basina tek callback
@@ -248,5 +252,7 @@ def get_named_provider(name: str) -> PaymentProvider:
     """Webhook icin URL'deki provider adina gore (manual webhook desteklemez)."""
     cls = _PROVIDERS.get(name)
     if cls is None:
-        raise APIError(404, "not_found", f"Bilinmeyen saglayici: {name}")
+        raise APIError(
+            404, "not_found", "bilinmeyen_odeme_saglayicisi", saglayici=name
+        )
     return cls()

@@ -23,6 +23,8 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
+from app.hata_metinleri import METINLER
+
 # ------------------------------ SAAT-BAGIMSIZLIK ---------------------------- #
 # SORUN (kalici olarak cozuldu): slotlar gercek "simdi + N saat" oldugu icin
 # AKSAM saatlerinde gece yarisini sariyordu ve dosya her gun birkac saat
@@ -372,7 +374,7 @@ def test_24_saat_penceresi(client, rworld):
     _post(client, resident, rworld["alan1"], _hslot(2), expect=201)
     # simdi+25s (>= 24s) -> cok erken 422 (mesajda 24 saat vurgusu)
     r = _post(client, resident, rworld["alan1"], _hslot(25), expect=422)
-    assert "24 saat" in r["error"]["message"]
+    assert r["error"]["message"] == METINLER["rezervasyon_cok_erken"]["tr"]
     # gecmis slot (simdi-2s) -> 422
     _post(client, resident, rworld["alan1"], _hslot(-2), expect=422)
 
@@ -394,7 +396,7 @@ def test_gunde_bir_rezervasyon(client, rworld):
     _post(client, resident, rworld["alan1"], _hslot(2))
     # ayni sakin AYNI gun IKINCI (cakismayan) slot -> 409 gunluk kota
     r = _post(client, resident, rworld["alan1"], _hslot(4), expect=409)
-    assert "bu gun" in r["error"]["message"].lower()
+    assert r["error"]["message"] == METINLER["rezervasyon_gunluk_kota"]["tr"]
     # ayni sakin FARKLI gun (yarin, 24s icinde) rezerve EDEBILIR — kota slot-gunu
     # bazli; bugunku rezervasyon yarini bloke ETMEZ.
     _post(client, resident, rworld["alan1"], _hslot(23))
@@ -417,7 +419,7 @@ def test_gunde_bir_her_gun_bagimsiz(client, rworld):
     _post(client, resident, rworld["alan1"], s1)
     # AYNI gun IKINCI (bitisik -> cakisma DEGIL) slot -> 409 gunluk kota
     r = _post(client, resident, rworld["alan1"], s2, expect=409)
-    assert "bu gun" in r["error"]["message"].lower()
+    assert r["error"]["message"] == METINLER["rezervasyon_gunluk_kota"]["tr"]
     # BASKA sakin ayni gune rezerve edebilir (kota kisi-bazli, cakisma yok)
     _post(client, diger, rworld["alan1"], s2)
 
@@ -508,7 +510,7 @@ def test_iptal_10_dakika_kurali(client, rworld):
     r = _post(client, resident, rworld["alan1"], _mslot(5))
     resp = client.post(f"/reservations/{r['id']}/cancel", headers=resident)
     assert resp.status_code == 422, resp.text
-    assert "10 dakika" in resp.json()["error"]["message"]
+    assert resp.json()["error"]["message"] == METINLER["rezervasyon_iptal_icin_gec"]["tr"]
     # kayit hala onayli (iptal edilmedi)
     assert client.get(
         f"/reservations/{r['id']}", headers=resident

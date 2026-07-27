@@ -15,6 +15,8 @@ import uuid
 
 import pytest
 
+from app.hata_metinleri import METINLER
+
 
 def _headers(client, slug, cred):
     r = client.post(
@@ -144,7 +146,7 @@ def test_spam_haftalik_kategori_bazli(ucworld, client):
     assert _file(client, slug, r0, ucworld["unit1"], kategori="gurultu").status_code == 201
     dup = _file(client, slug, r0, ucworld["unit1"], kategori="gurultu")
     assert dup.status_code == 409 and dup.json()["error"]["code"] == "conflict"
-    assert "haftada" in dup.json()["error"]["message"].lower()
+    assert dup.json()["error"]["message"] == METINLER["sikayet_haftalik_limit"]["tr"]
     # ayni daire FARKLI kategori -> serbest (201)
     assert _file(client, slug, r0, ucworld["unit1"], kategori="zarar_verme").status_code == 201
     assert _file(client, slug, r0, ucworld["unit1"], kategori="kapi_onu_ayakkabi").status_code == 201

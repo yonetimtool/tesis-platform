@@ -18,7 +18,7 @@ async def get_or_404(db: AsyncSession, model: type, obj_id: uuid.UUID):
         await db.execute(select(model).where(model.id == obj_id))
     ).scalar_one_or_none()
     if obj is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi.")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     return obj
 
 
@@ -47,14 +47,14 @@ def translate_integrity(exc: IntegrityError) -> APIError:
     """DB kisit ihlalini sozlesme hata zarfina cevir."""
     code = _pgcode(exc)
     if code == "23505":  # unique_violation
-        return APIError(409, "conflict", "Kayit zaten mevcut (benzersizlik ihlali).")
+        return APIError(409, "conflict", "kayit_zaten_mevcut")
     if code == "23503":  # foreign_key_violation
-        return APIError(409, "conflict", "Iliskili kayit nedeniyle islem yapilamiyor.")
+        return APIError(409, "conflict", "iliskili_kayit_engeli")
     if code == "23514":  # check_violation
-        return APIError(422, "validation_error", "Deger kisit ihlali.")
+        return APIError(422, "validation_error", "deger_kisit_ihlali")
     if code == "23502":  # not_null_violation
-        return APIError(422, "validation_error", "Zorunlu alan eksik.")
-    return APIError(409, "conflict", "Veritabani kisit ihlali.")
+        return APIError(422, "validation_error", "zorunlu_alan_eksik")
+    return APIError(409, "conflict", "veritabani_kisit_ihlali")
 
 
 async def ensure_checkpoints_in_tenant(
@@ -83,7 +83,8 @@ async def ensure_checkpoints_in_tenant(
         raise APIError(
             422,
             "invalid_reference",
-            f"Checkpoint bu tenant'ta bulunamadi: {', '.join(missing)}",
+            "checkpoint_listesi_bulunamadi",
+            eksik=", ".join(missing),
         )
 
 
@@ -114,8 +115,5 @@ def norm_plaka(plaka: str) -> str:
     """
     norm = _PLAKA_ATILACAK.sub("", plaka).upper()
     if not (2 <= len(norm) <= 20):
-        raise APIError(
-            422, "validation_error",
-            "Plaka 2-20 alfanumerik karakter olmali (orn. 34ABC123).",
-        )
+        raise APIError(422, "validation_error", "plaka_bicimi")
     return norm

@@ -35,7 +35,7 @@ _ADMIN = require_role("admin")
 _WRITER = require_role("admin", "yonetici")
 _READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 
-_NFC_CONFLICT = APIError(409, "conflict", "nfc_tag_uid bu tenant'ta zaten kayitli.")
+_NFC_CONFLICT = APIError(409, "conflict", "nfc_uid_zaten_kayitli")
 
 
 @router.get("", response_model=CheckpointListResponse)

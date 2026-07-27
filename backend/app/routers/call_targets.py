@@ -42,16 +42,12 @@ async def resolve_call_target(
 
     # Yon kapisi: arayan rol bu callee rolunu arayabiliyor mu? (tam dizin degil)
     if not caller_can_reach(user.role, callee.role):
-        raise APIError(
-            403, "forbidden", "Bu rolu arama yetkiniz yok."
-        )
+        raise APIError(403, "forbidden", "arama_rol_yetkisi_yok")
 
     # Riza + numara kapisi: riza yoksa/numara yoksa numara ACIKLANMAZ (404).
     target = resolve_phone_target(callee)
     if target is None:
-        raise APIError(
-            404, "not_found", "Bu kullanici su an aranamiyor."
-        )
+        raise APIError(404, "not_found", "kullanici_su_an_aranamiyor")
 
     # KVKK-kritik iz: telefon IFSASI + arama baslatma (kanal handoff). meta'da
     # NUMARA YOK — yalniz hedef id/rol/kanal. Ayni islemde yazilir (commit ile).

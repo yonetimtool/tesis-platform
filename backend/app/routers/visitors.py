@@ -124,7 +124,7 @@ async def create_visitor(
             await db.execute(select(Unit).where(Unit.no == body.unit_no))
         ).scalar_one_or_none()
     if unit is None:
-        raise APIError(422, "invalid_reference", "Daire bu tenant'ta bulunamadi.")
+        raise APIError(422, "invalid_reference", "daire_bulunamadi")
 
     # Hedef sakin O dairenin AKTIF sakini olmali (guvenlik hangi sakine
     # bildirilecegini secer; degilse 422 — baska daireye/role sizmaz).
@@ -141,10 +141,7 @@ async def create_visitor(
         )
     ).scalar_one_or_none()
     if target_ad is None:
-        raise APIError(
-            422, "invalid_reference",
-            "target_resident_user_id bu dairenin aktif sakini degil.",
-        )
+        raise APIError(422, "invalid_reference", "hedef_sakin_daire_disi")
 
     obj = Visitor(
         tenant_id=user.tenant_id,
@@ -194,7 +191,7 @@ async def update_visitor(
         await db.execute(select(Visitor).where(Visitor.id == visitor_id))
     ).scalar_one_or_none()
     if obj is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
 
     fields = body.model_fields_set
 
@@ -212,7 +209,7 @@ async def update_visitor(
         else:
             unit = None
         if unit is None:
-            raise APIError(422, "invalid_reference", "Daire bu tenant'ta bulunamadi.")
+            raise APIError(422, "invalid_reference", "daire_bulunamadi")
         unit_id = unit.id
 
     # Nihai hedef sakin: yeni verildiyse o, yoksa mevcut.
@@ -238,10 +235,7 @@ async def update_visitor(
             )
         ).scalar_one_or_none()
         if ok is None:
-            raise APIError(
-                422, "invalid_reference",
-                "target_resident_user_id bu dairenin aktif sakini degil.",
-            )
+            raise APIError(422, "invalid_reference", "hedef_sakin_daire_disi")
 
     obj.unit_id = unit_id
     obj.target_resident_user_id = target_id
@@ -282,7 +276,7 @@ async def checkout_visitor(
         await db.execute(select(Visitor.id).where(Visitor.id == visitor_id))
     ).scalar_one_or_none()
     if exists is None:
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
 
     res = await db.execute(
         update(Visitor)
@@ -290,7 +284,7 @@ async def checkout_visitor(
         .values(cikis_zamani=func.now())
     )
     if res.rowcount == 0:
-        raise APIError(409, "conflict", "Ziyaretci cikisi zaten kaydedilmis.")
+        raise APIError(409, "conflict", "ziyaretci_cikisi_zaten_kayitli")
 
     await audit_user(
         db, user, Action.VISITOR_CHECKOUT, resource_type="visitor",
@@ -322,16 +316,9 @@ async def list_visitors(
     # kaydeden guvenlik.
     if user.role in _IZIN_GEREKEN:
         if unit_id is None:
-            raise APIError(
-                403, "forbidden",
-                "Ziyaretci kayitlari yonetime kapali; bir daire icin "
-                "tek-seferlik izin alin (unit_id gerekli).",
-            )
+            raise APIError(403, "forbidden", "ziyaretci_yonetime_kapali")
         if not await try_consume_unit_permission(db, unit_id, user.id):
-            raise APIError(
-                403, "forbidden",
-                "Bu daire icin gecerli (kullanilmamis) goruntuleme izniniz yok.",
-            )
+            raise APIError(403, "forbidden", "goruntuleme_izni_yok")
 
     stmt = _base_stmt()
     if unit_id is not None:
@@ -377,10 +364,7 @@ async def get_visitor(
         if v_unit is None or not await try_consume_unit_permission(
             db, v_unit, user.id
         ):
-            raise APIError(
-                403, "forbidden",
-                "Bu kayit yonetime kapali; daire icin tek-seferlik izin alin.",
-            )
+            raise APIError(403, "forbidden", "kayit_yonetime_kapali")
 
     unit_ids = await _aktif_daire_ids(db, user) if user.role == "resident" else None
     row = (
@@ -390,5 +374,5 @@ async def get_visitor(
     ).first()
     if row is None:
         # Baska dairenin/tenant'in kaydi 404 — varligi da sizdirilmaz.
-        raise APIError(404, "not_found", "Kayit bulunamadi")
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     return _out(row)

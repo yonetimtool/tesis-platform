@@ -71,7 +71,7 @@ async def unregister_device(
         )
     ).scalar_one_or_none()
     if obj is None:
-        raise APIError(404, "not_found", "Aktif cihaz bulunamadi.")
+        raise APIError(404, "not_found", "aktif_cihaz_bulunamadi")
     obj.aktif = False
     obj.updated_at = func.now()
     await db.flush()

@@ -382,8 +382,23 @@ def oynatilabilir_mi(tur: str) -> bool:
     return tur in ("hls", "mp4")
 
 
+class UrlTurUyusmazligi(ValueError):
+    """`stream_url` semasi `tur` ile uyusmuyor.
+
+    METIN DEGIL VERI tasir (tur 14): kullaniciya gosterilecek cumle router'da
+    `hata_metinleri` katalogundan istegin dilinde uretilir. `str(exc)` yalniz
+    pydantic ayrintisi/log icin teknik bir ozet verir.
+    """
+
+    def __init__(self, tur: str, semalar: tuple[str, ...]) -> None:
+        self.tur = tur
+        self.semalar = semalar
+        super().__init__(f"tur={tur} requires stream_url starting with "
+                         f"{' or '.join(semalar)}")
+
+
 def dogrula_url_tur(stream_url: str, tur: str) -> None:
-    """URL semasi ile `tur` tutarli mi (aksi halde ValueError -> 422).
+    """URL semasi ile `tur` tutarli mi (aksi halde [UrlTurUyusmazligi] -> 422).
 
     hls/mp4 -> http(s):// ; rtsp -> rtsp://. Backend yayini HIC cekmez, bu
     yuzden sema kontrolu SSRF icin degil, "kayit ile gerceklik tutarli
@@ -391,9 +406,7 @@ def dogrula_url_tur(stream_url: str, tur: str) -> None:
     """
     izinli = _TUR_SEMALARI[tur]
     if not stream_url.startswith(izinli):
-        raise ValueError(
-            f"tur={tur} icin stream_url {' veya '.join(izinli)} ile baslamali"
-        )
+        raise UrlTurUyusmazligi(tur, tuple(izinli))
 
 
 class CameraCreate(BaseModel):
