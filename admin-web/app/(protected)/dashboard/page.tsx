@@ -5,6 +5,7 @@ import useSWR from "swr";
 
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AktifTur, Alarm, DashboardLive } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
 
 const DURUM_STYLE: Record<string, string> = {
   bekliyor: "bg-amber-100 text-amber-800",
@@ -80,6 +81,7 @@ function StatCard({
 }
 
 export default function DashboardPage() {
+  const t = useT();
   const { data, error, isLoading } = useSWR<DashboardLive>(
     "/api/dashboard/live",
     jsonFetcher,
@@ -95,7 +97,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Canlı Panel</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("kabukCanliPanel")}</h1>
         {data && (
           <span className="text-xs text-muted">
             Güncellendi: {formatDateTime(data.generated_at)} · otomatik yenilenir (15 sn)
@@ -108,7 +110,7 @@ export default function DashboardPage() {
           {error.message}
         </p>
       )}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       <motion.div
         variants={grid}
@@ -117,42 +119,42 @@ export default function DashboardPage() {
         className="grid grid-cols-2 gap-4 lg:grid-cols-4"
       >
         <StatCard
-          label="Bugünkü Turlar"
+          label={t("panelBugunkuTurlar")}
           value={turlar.length}
           detail={`${turlar.length} plan penceresi`}
           tone="default"
         />
         <StatCard
-          label="Tamamlanan"
+          label={t("panelTamamlanan")}
           value={tamamlanan}
           detail={turlar.length ? `${turlar.length} turdan` : "tur yok"}
           tone="teal"
         />
         <StatCard
-          label="Bekleyen"
+          label={t("panelBekleyen")}
           value={bekleyen}
-          detail={kacirilan ? `${kacirilan} kaçırılan` : "kaçırılan yok"}
+          detail={kacirilan ? `${kacirilan} kaçırılan` : t("panelKacirilanYok")}
           tone="amber"
         />
         <StatCard
-          label="Aktif Alarm"
+          label={t("panelAktifAlarm")}
           value={alarmSayisi}
-          detail={alarmSayisi ? "ilgilenilmeli" : "her şey yolunda"}
+          detail={alarmSayisi ? "ilgilenilmeli" : t("panelHerSeyYolunda")}
           tone={alarmSayisi ? "red" : "default"}
         />
       </motion.div>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-medium">Bugünkü Turlar</h2>
+        <h2 className="text-lg font-medium">{t("panelBugunkuTurlar")}</h2>
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
-                  <th className="px-4 py-2.5 font-medium">Plan</th>
-                  <th className="px-4 py-2.5 font-medium">Pencere</th>
-                  <th className="px-4 py-2.5 font-medium">Durum</th>
-                  <th className="px-4 py-2.5 font-medium">Okutulan / Beklenen</th>
+                  <th className="px-4 py-2.5 font-medium">{t("panelPlan")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("panelPencere")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("panelOkutulanBeklenen")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -184,7 +186,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-medium">Son Alarmlar</h2>
+        <h2 className="text-lg font-medium">{t("panelSonAlarmlar")}</h2>
         <ul className="space-y-2">
           {(data?.son_alarmlar ?? []).map((a, i) => (
             <AlarmSatir key={`${a.tip}-${a.olusma_zamani}-${i}`} alarm={a} />

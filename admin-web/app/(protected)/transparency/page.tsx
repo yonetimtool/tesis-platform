@@ -7,16 +7,21 @@ import { EmptyState } from "@/components/EmptyState";
 import { ErrorBox, Field, PageHeader, inputCls } from "@/components/form";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { TransparencyBoard, TransparencyList } from "@/lib/types";
+import { useI18n } from "@/lib/i18n/kullan";
 
-const AY_ADLARI = [
-  "", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
-  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
-];
-
-function ayBaslik(ay: string): string {
+/// "2026-07" -> aktif dilde "Temmuz 2026" / "July 2026" / "يوليو 2026".
+///
+/// AY ADLARI SOZLUKTE DEGIL: `Intl` zaten 7 dilin hepsini biliyor; 12 ay x 7
+/// dil elle yazmak hem gereksiz hem de yerellestirme kurallarini (Rusca'da
+/// tamlayan hali gibi) yeniden uydurmak olurdu.
+function ayBaslik(ay: string, dil: string): string {
   const [y, m] = ay.split("-");
   const i = Number(m);
-  return i >= 1 && i <= 12 ? `${AY_ADLARI[i]} ${y}` : ay;
+  if (!(i >= 1 && i <= 12)) return ay;
+  const ad = new Intl.DateTimeFormat(dil, { month: "long" }).format(
+    new Date(Date.UTC(2000, i - 1, 1)),
+  );
+  return `${ad} ${y}`;
 }
 
 function tl(kurus: number): string {
@@ -30,6 +35,7 @@ function tl(kurus: number): string {
 }
 
 export default function TransparencyPage() {
+  const { t, dil } = useI18n();
   const list = useSWR<TransparencyList>("/api/transparency", jsonFetcher);
   const [ay, setAy] = useState<string>("");
 
@@ -48,26 +54,26 @@ export default function TransparencyPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Şeffaflık Panosu"
-        subtitle="Aylık anonim finansal özet (salt okuma). Yayın kontrolü mobil yönetici ekranındadır."
+        title={t("seffafPano")}
+        subtitle={t("seffafAciklama")}
       />
 
-      {list.error && <ErrorBox message="Aylar yüklenemedi." />}
+      {list.error && <ErrorBox message={t("seffafAylarYuklenemedi")} />}
       {list.isLoading && !list.data && (
-        <p className="text-sm text-muted">Yükleniyor...</p>
+        <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
       )}
 
       {list.data && months.length === 0 && (
         <EmptyState
-          title="Veri yok"
-          description="Bu tesiste henüz gelir/gider veya aidat kaydı yok."
+          title={t("seffafVeriYok")}
+          description={t("seffafVeriYokAlt")}
         />
       )}
 
       {months.length > 0 && (
         <>
           <div className="w-64">
-            <Field label="Dönem">
+            <Field label={t("ortakDonem")}>
               <select
                 className={inputCls}
                 value={ay}
@@ -75,7 +81,7 @@ export default function TransparencyPage() {
               >
                 {months.map((m) => (
                   <option key={m.ay} value={m.ay}>
-                    {ayBaslik(m.ay)}
+                    {ayBaslik(m.ay, dil)}
                     {m.yayinlandi ? "" : " • taslak"}
                   </option>
                 ))}
@@ -83,13 +89,15 @@ export default function TransparencyPage() {
             </Field>
           </div>
 
-          {board.error && <ErrorBox message="Özet yüklenemedi." />}
+          {board.error && <ErrorBox message={t("seffafOzetYuklenemedi")} />}
           {b && (
             <div className="grid gap-4 lg:grid-cols-2">
               {/* Özet */}
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="font-medium">{ayBaslik(b.ay)} — Özet</h2>
+                  <h2 className="font-medium">
+                    {t("seffafOzetBasligi", { ay: ayBaslik(b.ay, dil) })}
+                  </h2>
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       b.yayinlandi
@@ -97,12 +105,12 @@ export default function TransparencyPage() {
                         : "bg-slate-100 text-slate-600"
                     }`}
                   >
-                    {b.yayinlandi ? "yayında" : "taslak"}
+                    {b.yayinlandi ? t("seffafYayinda") : "taslak"}
                   </span>
                 </div>
                 <dl className="space-y-1.5 text-sm">
-                  <Row k="Toplam gelir" v={tl(b.toplam_gelir_kurus)} cls="text-emerald-700" />
-                  <Row k="Toplam gider" v={tl(b.toplam_gider_kurus)} cls="text-red-700" />
+                  <Row k={t("seffafToplamGelir")} v={tl(b.toplam_gelir_kurus)} cls="text-emerald-700" />
+                  <Row k={t("seffafToplamGider")} v={tl(b.toplam_gider_kurus)} cls="text-red-700" />
                   <div className="my-2 border-t border-slate-100" />
                   <Row
                     k="Net"
@@ -119,9 +127,9 @@ export default function TransparencyPage() {
 
               {/* Aidat */}
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-                <h2 className="mb-3 font-medium">Aidat toplama</h2>
+                <h2 className="mb-3 font-medium">{t("seffafAidatToplama")}</h2>
                 {b.aidat.daire_orani_yuzde == null ? (
-                  <p className="text-sm text-muted">Bu ay için tahakkuk yok.</p>
+                  <p className="text-sm text-muted">{t("seffafTahakkukYok")}</p>
                 ) : (
                   <>
                     <div className="mb-1 flex justify-between text-sm">
@@ -144,9 +152,9 @@ export default function TransparencyPage() {
 
               {/* Gider dağılımı */}
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card lg:col-span-2">
-                <h2 className="mb-3 font-medium">Gider dağılımı</h2>
+                <h2 className="mb-3 font-medium">{t("seffafGiderDagilimi")}</h2>
                 {b.gider_dagilimi.length === 0 ? (
-                  <p className="text-sm text-muted">Bu ay gider kaydı yok.</p>
+                  <p className="text-sm text-muted">{t("seffafGiderYok")}</p>
                 ) : (
                   <div className="space-y-3">
                     {b.gider_dagilimi.map((k) => (

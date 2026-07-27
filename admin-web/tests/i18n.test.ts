@@ -137,12 +137,27 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
   // (bkz. README "Kalan is" tablosu) — liste BILEREK dar tutuldu ki
   // "bitti" dedigimiz yuzey gercekten bitmis olsun.
   const CEVRILEN = [
+    // tur 17 — kabuk/giris yuzeyi
     "components/AppShell.tsx",
     "components/ThemeToggle.tsx",
     "components/DilSecici.tsx",
+    "components/ReportsTabs.tsx",
     "app/login/page.tsx",
     "app/layout.tsx",
     "lib/backend.ts",
+    "lib/client.ts",
+    "lib/fetcher.ts",
+    "lib/roles.ts",
+    // tur 18 — tamamlanan sayfalar
+    "app/(protected)/audit/page.tsx",
+    "app/(protected)/dashboard/page.tsx",
+    "app/(protected)/notifications/page.tsx",
+    "app/(protected)/settings/page.tsx",
+    "app/(protected)/schematic/page.tsx",
+    "app/(protected)/shifts/page.tsx",
+    "app/(protected)/announcements/page.tsx",
+    "app/(protected)/checkpoints/page.tsx",
+    "app/(protected)/transparency/page.tsx",
   ];
 
   // MARKA KILIDI: "Yönetio" kelime isareti cevrilmez (mobil README §15 ile

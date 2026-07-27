@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ErrorBox, Field, PageHeader, Pager, inputCls } from "@/components/form";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AuditLog, AuditLogList } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
 
 const LIMIT = 50;
 
@@ -25,6 +26,7 @@ const ACTIONS = [
 ];
 
 export default function AuditPage() {
+  const t = useT();
   const [offset, setOffset] = useState(0);
   const [action, setAction] = useState("");
   const [resourceType, setResourceType] = useState("");
@@ -56,12 +58,12 @@ export default function AuditPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Denetim Kaydı"
-        subtitle="Değiştirilemez KVKK denetim izi (append-only). Yalnızca platform admini görür."
+        title={t("kabukDenetimKaydi")}
+        subtitle={t("denetimAciklama")}
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Field label="İşlem">
+        <Field label={t("denetimIslem")}>
           <select
             className={inputCls}
             value={action}
@@ -74,7 +76,7 @@ export default function AuditPage() {
             ))}
           </select>
         </Field>
-        <Field label="Kaynak tipi">
+        <Field label={t("denetimKaynakTipi")}>
           <input
             className={inputCls}
             value={resourceType}
@@ -82,15 +84,15 @@ export default function AuditPage() {
             placeholder="app_user"
           />
         </Field>
-        <Field label="Tenant ID">
+        <Field label={t("ayarTenantId")}>
           <input
             className={inputCls}
             value={tenantId}
             onChange={(e) => reset(setTenantId)(e.target.value)}
-            placeholder="(tümü)"
+            placeholder={t("denetimTumu")}
           />
         </Field>
-        <Field label="Başlangıç">
+        <Field label={t("ortakBaslangic")}>
           <input
             type="date"
             className={inputCls}
@@ -98,7 +100,7 @@ export default function AuditPage() {
             onChange={(e) => reset(setFrom)(e.target.value)}
           />
         </Field>
-        <Field label="Bitiş">
+        <Field label={t("ortakBitis")}>
           <input
             type="date"
             className={inputCls}
@@ -108,20 +110,20 @@ export default function AuditPage() {
         </Field>
       </div>
 
-      {error && <ErrorBox message="Denetim kaydı yüklenemedi." />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {error && <ErrorBox message={t("denetimYuklenemedi")} />}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <th className="px-4 py-2.5 font-medium">Zaman</th>
-                <th className="px-4 py-2.5 font-medium">İşlem</th>
-                <th className="px-4 py-2.5 font-medium">Rol</th>
-                <th className="px-4 py-2.5 font-medium">Kaynak</th>
-                <th className="px-4 py-2.5 font-medium">Tenant</th>
-                <th className="px-4 py-2.5 font-medium">Meta</th>
+                <th className="px-4 py-2.5 font-medium">{t("denetimZaman")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("denetimIslem")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakRol")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("denetimKaynak")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakTesis")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("denetimMeta")}</th>
               </tr>
             </thead>
             <tbody>
@@ -160,8 +162,8 @@ export default function AuditPage() {
                 <tr>
                   <td colSpan={6}>
                     <EmptyState
-                      title="Kayıt yok"
-                      description="Filtreleri değiştirin ya da işlem gerçekleştikçe kayıtlar burada birikir."
+                      title={t("denetimKayitYok")}
+                      description={t("denetimKayitYokAlt")}
                     />
                   </td>
                 </tr>

@@ -8,11 +8,13 @@ import { ErrorBox, PageHeader, cardCls } from "@/components/form";
 import { useToast } from "@/components/Toast";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AppNotification, NotificationList } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
 
 type OkunduFiltre = "" | "true" | "false";
 const LIMIT = 20;
 
 export default function NotificationsPage() {
+  const t = useT();
   const toast = useToast();
   const [okundu, setOkundu] = useState<OkunduFiltre>("");
   const [offset, setOffset] = useState(0);
@@ -29,7 +31,7 @@ export default function NotificationsPage() {
       body: JSON.stringify({ okundu: true }),
     });
     mutate();
-    toast.success("Bildirim okundu olarak işaretlendi.");
+    toast.success(t("bildirimOkunduIsaretlendi"));
   }
 
   function setFilter(v: OkunduFiltre) {
@@ -43,13 +45,13 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Bildirimler" />
+      <PageHeader title={t("kabukBildirimler")} />
 
       <div className="flex items-center gap-2">
         {([
           ["", "Tümü"],
-          ["false", "Okunmamış"],
-          ["true", "Okunmuş"],
+          ["false", t("bildirimOkunmamis")],
+          ["true", t("bildirimOkunmus")],
         ] as [OkunduFiltre, string][]).map(([v, label]) => (
           <button
             key={label}
@@ -64,7 +66,7 @@ export default function NotificationsPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       <ul className="space-y-2">
         {(data?.items ?? []).map((n: AppNotification) => (
@@ -96,7 +98,7 @@ export default function NotificationsPage() {
         ))}
         {data && data.items.length === 0 && (
           <li className={cardCls}>
-            <EmptyState title="Bildirim yok." />
+            <EmptyState title={t("bildirimYok")} />
           </li>
         )}
       </ul>

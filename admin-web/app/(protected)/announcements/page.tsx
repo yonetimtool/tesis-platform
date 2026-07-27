@@ -10,6 +10,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type { Announcement, AnnouncementList, PresignTicket } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
 
 const LIMIT = 20;
 
@@ -45,6 +46,7 @@ const PHOTO_EMPTY: PhotoState = {
 // Duyuru olusturmada backend, tenant'in TUM aktif cihazlarina push dener
 // (auth.md §4) — panelden gonderilen duyuru mobil kullanicilara da duser.
 export default function AnnouncementsPage() {
+  const t = useT();
   const toast = useToast();
   const [offset, setOffset] = useState(0);
   const { data, error, isLoading, mutate } = useSWR<AnnouncementList>(
@@ -107,7 +109,7 @@ export default function AnnouncementsPage() {
       setPhoto((p) => ({
         ...p,
         uploading: false,
-        error: err instanceof Error ? err.message : "Görsel yüklenemedi.",
+        error: err instanceof Error ? err.message : t("duyuruGorselYuklenemedi"),
       }));
     }
   }
@@ -115,11 +117,11 @@ export default function AnnouncementsPage() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (photo.uploading) {
-      setFormErr("Görsel henüz yükleniyor — bitmesini bekleyin veya kaldırın.");
+      setFormErr(t("duyuruGorselBekleyin"));
       return;
     }
     if (photo.previewUrl && !photo.fotoKey) {
-      setFormErr("Görsel yüklenemedi. Tekrar seçin veya kaldırın.");
+      setFormErr(t("duyuruGorselTekrarSecin"));
       return;
     }
     setSaving(true);
@@ -136,7 +138,7 @@ export default function AnnouncementsPage() {
       setOpen(false);
       resetPhoto();
       mutate();
-      toast.success("Duyuru güncellendi.");
+      toast.success(t("duyuruGuncellendi"));
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
     } finally {
@@ -157,7 +159,7 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Duyurular" />
+      <PageHeader title={t("kabukDuyurular")} />
 
       <p className="text-sm text-muted">
         Duyuruyu SİTE YÖNETİCİSİ mobil uygulamadan oluşturur; panel yalnız
@@ -166,12 +168,12 @@ export default function AnnouncementsPage() {
       </p>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">Duyuru düzenle</h2>
-          <Field label="Başlık" hint="En fazla 200 karakter">
+          <h2 className="font-medium">{t("duyuruDuzenle")}</h2>
+          <Field label={t("ortakBaslik")} hint={t("duyuruEnFazla200")}>
             <input
               className={inputCls}
               value={form.baslik}
@@ -180,7 +182,7 @@ export default function AnnouncementsPage() {
               required
             />
           </Field>
-          <Field label="Duyuru metni" hint="En fazla 5000 karakter">
+          <Field label={t("duyuruMetni")} hint={t("duyuruEnFazla5000")}>
             <textarea
               className={`${inputCls} min-h-32`}
               value={form.govde}
@@ -189,18 +191,18 @@ export default function AnnouncementsPage() {
               required
             />
           </Field>
-          <Field label="Görsel (opsiyonel)" hint="Okuyan herkes duyuruda görür">
+          <Field label={t("duyuruGorselOpsiyonel")} hint={t("duyuruGorselHerkes")}>
             <div className="space-y-2">
               {/* Onizleme: yeni secim > mevcut gorsel (kaldirilmadiysa) */}
               {(photo.previewUrl || (editing?.foto_url && !photo.removed && !photo.fotoKey)) && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={photo.previewUrl ?? editing?.foto_url ?? ""}
-                  alt="Duyuru görseli"
+                  alt={t("duyuruGorseli")}
                   className="max-h-40 rounded-lg border border-slate-200 object-cover"
                 />
               )}
-              {photo.uploading && <p className="text-sm text-muted">Yükleniyor...</p>}
+              {photo.uploading && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
               {photo.error && <ErrorBox message={photo.error} />}
               <div className="flex items-center gap-2">
                 <input
@@ -230,7 +232,7 @@ export default function AnnouncementsPage() {
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? "Kaydediliyor..." : "Kaydet"}
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
               İptal
@@ -259,7 +261,7 @@ export default function AnnouncementsPage() {
                 )}
                 <p className="mt-2 text-xs text-muted">
                   {a.olusturan_ad ?? "—"} · {formatDateTime(a.created_at)}
-                  {a.updated_at !== a.created_at && " · düzenlendi"}
+                  {a.updated_at !== a.created_at && ` ${t("duyuruDuzenlendiEki")}`}
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
@@ -275,8 +277,8 @@ export default function AnnouncementsPage() {
         ))}
         {data && data.items.length === 0 && (
           <EmptyState
-            title="Henüz duyuru yok"
-            description="Duyurular site yöneticisi tarafından mobil uygulamadan oluşturulur."
+            title={t("duyuruYok")}
+            description={t("duyuruYokAlt")}
           />
         )}
       </ul>

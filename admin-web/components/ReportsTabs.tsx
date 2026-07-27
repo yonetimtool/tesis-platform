@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
-const TABS = [
-  { href: "/reports/dues", label: "Aidat Tahsilat" },
-  { href: "/reports/patrols", label: "Tur Geçmişi" },
-  { href: "/reports/tasks", label: "Görev Geçmişi" },
+const TABS: { href: string; anahtar: SozlukAnahtari }[] = [
+  { href: "/reports/dues", anahtar: "raporAidatTahsilat" },
+  { href: "/reports/patrols", anahtar: "raporTurGecmisi" },
+  { href: "/reports/tasks", anahtar: "raporGorevGecmisi" },
 ];
 
 export function ReportsTabs() {
   const pathname = usePathname();
+  const ceviri = useT();
   return (
     <div className="flex gap-1 border-b border-slate-200">
       {TABS.map((t) => {
@@ -25,7 +28,7 @@ export function ReportsTabs() {
                 : "border-transparent text-slate-600 hover:text-ink"
             }`}
           >
-            {t.label}
+            {ceviri(t.anahtar)}
           </Link>
         );
       })}

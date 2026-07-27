@@ -5,6 +5,8 @@ import useSWR from "swr";
 
 import { ErrorBox, PageHeader, cardCls } from "@/components/form";
 import { jsonFetcher } from "@/lib/fetcher";
+import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
   BuildingMap,
   BuildingMapUnit,
@@ -27,11 +29,14 @@ function cls(renk: DensityRenk | null | undefined) {
   return renk ? (RENK_CLS[renk] ?? RENK_CLS.yesil) : NEUTRAL;
 }
 
-const KATEGORI_LABEL: Record<string, string> = {
-  gurultu: "Gürültü",
-  kapi_onu_ayakkabi: "Kapı önü / ayakkabı",
-  zarar_verme: "Zarar verme",
-  diger: "Diğer",
+// METIN DEGIL KIMLIK: modul duzeyinde `t()` cagrilamaz (bilesen disi) ve
+// cagrilabilse bile metin dil degisiminde donmus kalirdi. Harita ANAHTAR
+// tutar, cozum cizim aninda yapilir.
+const KATEGORI_ANAHTAR: Record<string, SozlukAnahtari> = {
+  gurultu: "kategoriGurultu",
+  kapi_onu_ayakkabi: "kategoriKapiOnu",
+  zarar_verme: "kategoriZararVerme",
+  diger: "ortakDiger",
 };
 
 function fmtDate(s: string): string {
@@ -64,6 +69,7 @@ function UnitCell({
 }
 
 function Legend() {
+  const t = useT();
   const item = (renk: DensityRenk, label: string) => (
     <span className="flex items-center gap-1.5">
       <span className={`inline-block h-3.5 w-3.5 rounded ${cls(renk).dot}`} />
@@ -72,15 +78,16 @@ function Legend() {
   );
   return (
     <div className={`flex flex-wrap items-center gap-4 ${cardCls} p-3`}>
-      <span className="text-sm font-medium">Yoğunluk:</span>
-      {item("yesil", "0–2 (yeşil)")}
-      {item("sari", "3–4 (sarı)")}
-      {item("kirmizi", "5+ (kırmızı)")}
+      <span className="text-sm font-medium">{t("haritaYogunluk")}</span>
+      {item("yesil", t("haritaYesil"))}
+      {item("sari", t("haritaSari"))}
+      {item("kirmizi", t("haritaKirmizi"))}
     </div>
   );
 }
 
 function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
+  const t = useT();
   // Sikayet listesi (durum=acik — sayimla tutarli). Rev-1: yonetim gorunumunde
   // notlar + complainant (sikayet eden) DOLU gelir (denetim; backend zorlar).
   const { data, error, isLoading } = useSWR<UnitComplaintList>(
@@ -94,29 +101,33 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
     <div className={`space-y-3 ${cardCls} p-5`}>
       <div className="flex items-center gap-2">
         <span className={`inline-block h-4 w-4 rounded ${c.dot}`} />
-        <h2 className="text-lg font-medium">Daire {unit.unit_no}</h2>
-        <span className={`ml-auto font-semibold ${c.text}`}>
-          {unit.complaint_count ?? 0} açık şikayet
+        <h2 className="text-lg font-medium">
+          {t("haritaDaireNo", { no: unit.unit_no })}
+        </h2>
+        <span className={`ms-auto font-semibold ${c.text}`}>
+          {t("haritaAcikSikayetSayisi", { n: unit.complaint_count ?? 0 })}
         </span>
       </div>
       {unit.blok != null && (
         <p className="text-sm text-muted">
-          Blok {unit.blok}
-          {unit.kat != null ? ` · Kat ${unit.kat}` : ""}
-          {unit.sira != null ? ` · Sıra ${unit.sira}` : ""}
+          {t("haritaBlokKatSira", { blok: unit.blok })}
+          {unit.kat != null ? ` · ${t("haritaKat", { kat: unit.kat })}` : ""}
+          {unit.sira != null ? ` · ${t("haritaSira", { sira: unit.sira })}` : ""}
         </p>
       )}
-      {error && <ErrorBox message="Şikayetler yüklenemedi." />}
-      {isLoading && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {error && <ErrorBox message={t("haritaYuklenemedi")} />}
+      {isLoading && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
       {!isLoading && items.length === 0 && (
-        <p className="text-sm text-muted">Bu daire için açık şikayet yok.</p>
+        <p className="text-sm text-muted">{t("haritaAcikSikayetYok")}</p>
       )}
       <ul className="space-y-1 text-sm">
         {items.map((it) => (
           <li key={it.id} className="rounded border border-slate-100 px-3 py-2">
             <div className="flex justify-between">
               <span className="font-medium">
-                {KATEGORI_LABEL[it.kategori] ?? it.kategori}
+                {KATEGORI_ANAHTAR[it.kategori]
+                  ? t(KATEGORI_ANAHTAR[it.kategori])
+                  : it.kategori}
               </span>
               <span className="text-muted">{fmtDate(it.created_at)}</span>
             </div>
@@ -137,17 +148,18 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
 }
 
 export default function SchematicPage() {
+  const t = useT();
   const { data, error, isLoading } = useSWR<BuildingMap>("/api/building-map", jsonFetcher);
   const [selected, setSelected] = useState<BuildingMapUnit | null>(null);
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Şikayet Haritası" />
+      <PageHeader title={t("kabukSikayetHaritasi")} />
 
       <Legend />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         {/* Sema: blok -> kat (ust kat yukarida) -> renkli hucreler */}
@@ -182,7 +194,7 @@ export default function SchematicPage() {
           {/* Yerlesimi girilmemis daireler — ayni renk + tiklama */}
           {(data?.unplaced?.length ?? 0) > 0 && (
             <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-5">
-              <h2 className="font-medium">Haritada yerleşimi girilmemiş</h2>
+              <h2 className="font-medium">{t("haritaYerlesimYok")}</h2>
               <p className="text-xs text-muted">
                 Bu dairelere blok/kat girilmemiş; “Daireler” ekranından yerleşim
                 eklenebilir.

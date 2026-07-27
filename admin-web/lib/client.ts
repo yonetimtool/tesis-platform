@@ -1,3 +1,4 @@
+import { metin } from "./i18n/metin";
 // Istemci mutasyon yardimcisi (POST/PATCH/DELETE -> BFF /api/*).
 // 401 => oturum bitti -> /login. Hata zarfindan ({error:{message}}) mesaj cikarir.
 
@@ -16,14 +17,14 @@ export async function apiSend<T = unknown>(
   });
   if (res.status === 401) {
     if (typeof window !== "undefined") window.location.href = "/login";
-    throw new Error("Oturum süresi doldu.");
+    throw new Error(metin("ortakOturumSuresiDoldu"));
   }
   if (res.status === 204) return undefined as T;
   const data: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const message =
       (data as { error?: { message?: string } } | null)?.error?.message ??
-      "Bir hata oluştu.";
+      metin("ortakHataOlustu");
     throw new Error(message);
   }
   return data as T;
@@ -38,11 +39,11 @@ export async function fetchAllItems<T>(baseUrl: string, pageSize = 200): Promise
     const res = await fetch(`${baseUrl}${sep}limit=${pageSize}&offset=${offset}`);
     if (res.status === 401) {
       if (typeof window !== "undefined") window.location.href = "/login";
-      throw new Error("Oturum süresi doldu.");
+      throw new Error(metin("ortakOturumSuresiDoldu"));
     }
     const data: unknown = await res.json().catch(() => null);
     if (!res.ok) {
-      const m = (data as { error?: { message?: string } } | null)?.error?.message ?? "Hata";
+      const m = (data as { error?: { message?: string } } | null)?.error?.message ?? metin("ortakHataOlustu");
       throw new Error(m);
     }
     const d = data as { items?: T[]; meta?: { total?: number } } | null;

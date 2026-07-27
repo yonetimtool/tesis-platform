@@ -1,3 +1,4 @@
+import { metin } from "./i18n/metin";
 // Istemci tarafi fetcher (SWR icin). Yalniz same-origin /api/* (BFF) cagrilir;
 // 401 => oturum bitti, /login'e don.
 
@@ -5,13 +6,13 @@ export async function jsonFetcher<T>(url: string): Promise<T> {
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (res.status === 401) {
     if (typeof window !== "undefined") window.location.href = "/login";
-    throw new Error("Oturum süresi doldu.");
+    throw new Error(metin("ortakOturumSuresiDoldu"));
   }
   const data: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const message =
       (data as { error?: { message?: string } } | null)?.error?.message ??
-      "Bir hata oluştu.";
+      metin("ortakHataOlustu");
     throw new Error(message);
   }
   return data as T;

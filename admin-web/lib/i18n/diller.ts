@@ -72,3 +72,16 @@ export function istekDili(
   if (dilMi(cookieDegeri)) return cookieDegeri;
   return acceptLanguageCoz(acceptLanguage);
 }
+
+/// Tarayicida cookie'den aktif dil (React DISI kod icin: fetcher, api
+/// sarmalayici). Sunucuda `document` yoktur -> varsayilan dil.
+export function tarayiciDili(): Dil {
+  if (typeof document === "undefined") return VARSAYILAN_DIL;
+  const m = new RegExp(`(?:^|; )${DIL_COOKIE}=([^;]+)`).exec(document.cookie);
+  const secim = m?.[1];
+  return dilMi(secim)
+    ? secim
+    : acceptLanguageCoz(
+        typeof navigator === "undefined" ? null : navigator.language,
+      );
+}

@@ -142,7 +142,33 @@ sagdan girer (`rtl:translate-x-full` — Tailwind'in `-translate-x-full`u yon
 farkindaligi TASIMAZ). `tests/i18n.test.ts` kabukta sabit `left-0`/`pl-64`/
 `border-r` kalmadigini dogrular.
 
-### Bu turda cevrilen yuzey (tur 17)
+### Tamamlanan sayfalar
+
+| Tur | Yuzey |
+|---|---|
+| 17 | kabuk (21 menu + cikis + mobil cekmece), giris ekrani, tema dugmesi, dil secici, sayfa ust verisi, rol adlari, BFF oturum-doldu mesaji |
+| 18 | **denetim kaydi, canli panel, bildirimler, ayarlar, sikayet haritasi, vardiyalar, duyurular, NFC noktalari, seffaflik panosu** + `lib/client.ts`, `lib/fetcher.ts`, `ReportsTabs` |
+
+Bir sayfa ancak **tamami** cevrildiginde listeye girer ve
+`tests/i18n.test.ts`teki `CEVRILEN` dizisine eklenir — o dizideki dosyalarda
+Turkce sabit kalmadigi her kosumda dogrulanir. Yarim cevrilmis sayfa listeye
+GIRMEZ: "bitti" gorunup karisik dilde kalmasi, hic cevrilmemis olmasindan
+daha kotudur.
+
+### Tur 18'de ogrenilen iki sey
+
+**Modul duzeyinde `t()` cagrilamaz** — ve cagrilabilse bile YANLIS olurdu:
+sabit bir haritada (`KATEGORI_LABEL`, `GUN_TIPI_OPTS`, `ROLE_OPTIONS`) metin
+tutmak, dil degisiminde donmus metin birakir. Cozum her uc yerde ayni:
+harita **anahtar** tutar, cozum cizim aninda yapilir
+(`Record<string, SozlukAnahtari>` + `t(...)`).
+
+**Ay adlari sozluge YAZILMADI.** `Intl.DateTimeFormat(dil, { month: "long" })`
+7 dilin hepsini zaten biliyor; 12 ay x 7 dil elle yazmak hem gereksiz hem de
+dillerin kendi kurallarini (orn. Rusca'da tamlayan hali) yeniden uydurmak
+olurdu. Sozluge yalniz **uygulamaya ozgu** metinler girer.
+
+### Tur 17'de cevrilen yuzey
 
 Kabuk (21 menu ogesi + cikis + mobil cekmece), **giris ekrani** (dil secici
 dahil — Turkce bilmeyen kullanici oturum acmadan once dilini secebilmeli),
@@ -171,10 +197,11 @@ print(n)
 EOF
 ```
 
-| | Olcum 1 (diyakritik/kelime) | Olcum 2 (UI konumu) |
+| | Olcum 1 (diyakritik/kelime) | Dosya |
 |---|---|---|
-| Tur 17 oncesi | 473 string / 35 dosya | — |
-| Tur 17 sonrasi | **450 / 32** | **355 / 28** |
+| Tur 17 oncesi | 473 | 35 |
+| Tur 17 sonrasi (kabuk + giris) | 450 | 32 |
+| **Tur 18 sonrasi** | **386** | **22** |
 
 > **IKINCI OLCUM ZORUNLUDUR.** Mobil §15'in en pahali dersi: birinci olcum
 > yalnizca Turkce'ye ozgu karakter **veya** listedeki kelimeyi arar.
@@ -184,11 +211,11 @@ EOF
 > etmeden once UI konumundaki (`label=`, `title=`, `placeholder=`,
 > `aria-label=`, `>metin<`) **tum** literalleri de taramak gerekir.
 
-Kalan sayfalar (buyukten kucuge): `assets`, `building-editor`, `complaints`,
-`tenants/[id]`, `tasks`, `UnitDetail`, `users`, `tenants`, `integrations`,
-`support`, `reports/dues`, `dues`, `units`, `transparency`, `announcements`,
-`reports/patrols`, `schematic`, `shifts`, `patrol-plans`, `audit`,
-`reports/tasks`, `checkpoints`, `dashboard`, `notifications`, `settings`.
+Kalan sayfalar (buyukten kucuge, tur 18 sonrasi **16 sayfa**): `assets` (31),
+`users` (30), `tasks` (28), `complaints` (28), `building-editor` (28),
+`tenants/[id]` (28), `UnitDetail` (28), `tenants` (24), `integrations` (23),
+`support` (22), `reports/dues` (21), `reports/patrols` (21), `dues` (19),
+`units` (18), `reports/tasks` (14), `patrol-plans` (13).
 
 **Ayri bir alt is — TARIH BICIMI.** `lib/fetcher.ts` ve 5 sayfa tarihi
 `toLocaleString("tr-TR")` ile bicimliyor: dil degisse de tarih Turkce

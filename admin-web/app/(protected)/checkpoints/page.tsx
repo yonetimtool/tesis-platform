@@ -21,6 +21,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { Checkpoint, CheckpointList } from "@/lib/types";
+import { useT } from "@/lib/i18n/kullan";
 
 const LIMIT = 20;
 // Mobil POC ile tutarli: buyuk harf hex, ayracsiz.
@@ -43,6 +44,7 @@ function numOrNull(s: string): number | null {
 }
 
 export default function CheckpointsPage() {
+  const t = useT();
   const toast = useToast();
   const [offset, setOffset] = useState(0);
   const { data, error, isLoading, mutate } = useSWR<CheckpointList>(
@@ -91,13 +93,13 @@ export default function CheckpointsPage() {
       else await apiSend("/api/checkpoints", "POST", body);
       setOpen(false);
       mutate();
-      toast.success(editingId ? "Nokta güncellendi." : "Nokta oluşturuldu.");
+      toast.success(editingId ? t("noktaGuncellendi") : t("noktaOlusturuldu"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Kaydedilemedi.";
       // nfc cakismasi (409) -> anlamli mesaj
       setFormErr(
         /nfc/i.test(msg)
-          ? "Bu NFC etiketi başka bir noktada kullanılıyor."
+          ? t("noktaEtiketKullanimda")
           : msg,
       );
     } finally {
@@ -119,21 +121,19 @@ export default function CheckpointsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="NFC Noktaları"
+        title={t("kabukNfcNoktalari")}
         action={
-          <button className={btnPrimary} onClick={openNew}>
-            Yeni nokta
-          </button>
+          <button className={btnPrimary} onClick={openNew}>{t("noktaYeni")}</button>
         }
       />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">Yükleniyor...</p>}
+      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{editingId ? "Nokta düzenle" : "Yeni nokta"}</h2>
-          <Field label="Ad">
+          <h2 className="font-medium">{editingId ? t("noktaDuzenle") : t("noktaYeni")}</h2>
+          <Field label={t("ortakAd")}>
             <input
               className={inputCls}
               value={form.ad}
@@ -142,8 +142,8 @@ export default function CheckpointsPage() {
             />
           </Field>
           <Field
-            label="NFC etiket UID"
-            hint="Büyük harf hex, ayraçsız. Örnek: 04A1B2C3D4 (mobil okuyucu bu formatta gönderir)."
+            label={t("noktaEtiketUid")}
+            hint={t("noktaEtiketIpucu")}
           >
             <input
               className={`${inputCls} font-mono uppercase`}
@@ -156,7 +156,7 @@ export default function CheckpointsPage() {
             />
           </Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="GPS enlem (opsiyonel)">
+            <Field label={t("noktaGpsEnlem")}>
               <input
                 className={inputCls}
                 inputMode="decimal"
@@ -165,7 +165,7 @@ export default function CheckpointsPage() {
                 onChange={(e) => setForm({ ...form, gps_lat: e.target.value })}
               />
             </Field>
-            <Field label="GPS boylam (opsiyonel)">
+            <Field label={t("noktaGpsBoylam")}>
               <input
                 className={inputCls}
                 inputMode="decimal"
@@ -186,7 +186,7 @@ export default function CheckpointsPage() {
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? "Kaydediliyor..." : "Kaydet"}
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
               İptal
@@ -200,10 +200,10 @@ export default function CheckpointsPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <th className="px-4 py-2.5 font-medium">Ad</th>
-                <th className="px-4 py-2.5 font-medium">NFC UID</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("noktaUid")}</th>
                 <th className="px-4 py-2.5 font-medium">GPS</th>
-                <th className="px-4 py-2.5 font-medium">Durum</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
                 <th className="px-4 py-2.5 font-medium" />
               </tr>
             </thead>
@@ -241,7 +241,7 @@ export default function CheckpointsPage() {
               {data && data.items.length === 0 && (
                 <tr>
                   <td colSpan={5}>
-                    <EmptyState title="Nokta yok" description="İlk NFC noktasını ekleyerek başlayın." />
+                    <EmptyState title={t("noktaYok")} description={t("noktaYokAlt")} />
                   </td>
                 </tr>
               )}

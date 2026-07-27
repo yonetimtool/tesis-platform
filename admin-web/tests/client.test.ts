@@ -5,6 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { apiSend, fetchAllItems, genIdempotencyKey } from "@/lib/client";
+import { SOZLUKLER } from "@/lib/i18n/sozluk";
 
 interface SahteYanit {
   status?: number;
@@ -148,9 +149,12 @@ describe("fetchAllItems (sayfali toplama)", () => {
     expect(w.location.href).toBe("/login");
   });
 
-  it("hata: zarf mesaji yoksa 'Hata' ile firlatir", async () => {
+  it("hata: zarf mesaji yoksa GENEL metinle firlatir (tur 18: sozlukten)", async () => {
     stubFetchSeq([{ status: 500, body: null }]);
-    await expect(fetchAllItems("/api/x")).rejects.toThrow("Hata");
+    // Metin artik sabit degil, aktif dilden gelir; testte varsayilan `tr`.
+    await expect(fetchAllItems("/api/x")).rejects.toThrow(
+      SOZLUKLER.tr.ortakHataOlustu,
+    );
   });
 });
 
