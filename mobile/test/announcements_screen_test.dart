@@ -8,6 +8,8 @@ import 'package:mobile/src/features/announcements/presentation/announcements_scr
 import 'package:mobile/src/features/auth/data/current_user_provider.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Aga cikmayan sahte istemci — liste sabit doner (widget testi).
 class _FakeAnnouncementApi extends AnnouncementApi {
   _FakeAnnouncementApi(this._items) : super(Dio());
@@ -37,7 +39,7 @@ Widget _app(UserRole role, {List<Announcement> items = const []}) =>
             .overrideWithValue(_FakeAnnouncementApi(items)),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
-      child: const MaterialApp(home: AnnouncementsScreen()),
+      child: l10nApp(const AnnouncementsScreen()),
     );
 
 void main() {

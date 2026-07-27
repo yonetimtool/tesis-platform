@@ -457,7 +457,8 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
                         children: [
                           const Icon(Icons.broken_image_outlined, size: 20),
                           const SizedBox(width: 8),
-                          Text(l10n.talepGorselYuklenemedi),
+                          // Dar ekranda (320 dp) satira sigmiyor — sar.
+                          Expanded(child: Text(l10n.talepGorselYuklenemedi)),
                         ],
                       ),
                     ),

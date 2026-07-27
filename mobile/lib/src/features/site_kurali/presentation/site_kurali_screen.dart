@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 // imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev/duyuru/talep/
 // kargo foto akisiyla ayni saglayici (testlerde tek noktadan override).
 import '../../tasks/presentation/task_complete_controller.dart'
@@ -27,13 +28,14 @@ class SiteKuraliScreen extends ConsumerWidget {
     final state = ref.watch(siteKuraliControllerProvider);
     final controller = ref.read(siteKuraliControllerProvider.notifier);
     final kurallar = state.suzulmus;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(trUpper('Site Kuralları')),
+        title: Text(baslikBuyuk(l10n.kuralBaslik, context.dilKodu)),
         actions: [
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
             onPressed: state.loading ? null : controller.refresh,
           ),
@@ -42,7 +44,7 @@ class SiteKuraliScreen extends ConsumerWidget {
       floatingActionButton: state.canManage
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.post_add_outlined),
-              label: const Text('Yeni kural'),
+              label: Text(l10n.kuralYeni),
               onPressed: () => _openForm(context),
             )
           : null,
@@ -55,7 +57,7 @@ class SiteKuraliScreen extends ConsumerWidget {
             child: TextField(
               onChanged: controller.search,
               decoration: InputDecoration(
-                hintText: 'Başlıkta ara (örn. havuz)',
+                hintText: l10n.kuralAramaIpucu,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -83,10 +85,12 @@ class SiteKuraliScreen extends ConsumerWidget {
       builder: (_) => _KuralForm(mevcut: mevcut),
     );
     if (saved == true && context.mounted) {
+      final l10n = context.l10n;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text(mevcut == null ? 'Kural eklendi ✓' : 'Kural güncellendi ✓'),
+          content: Text(
+            mevcut == null ? l10n.kuralEklendi : l10n.kuralGuncellendi,
+          ),
         ),
       );
     }
@@ -103,15 +107,17 @@ class _Body extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     if (state.loading && state.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null && state.items.isEmpty) {
+    final hata = akisHatasiCoz(l10n, state.hataKimligi, state.errorMessage);
+    if (hata != null && state.items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            state.errorMessage!,
+            hata,
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.red),
           ),
@@ -125,10 +131,10 @@ class _Body extends ConsumerWidget {
           Center(
             child: Text(
               state.sorgu.trim().isNotEmpty
-                  ? 'Aramayla eşleşen kural yok.'
+                  ? l10n.kuralAramaBos
                   : state.canManage
-                      ? 'Henüz kural yok. "Yeni kural" ile ekleyin.'
-                      : 'Henüz kural yayınlanmamış.',
+                      ? l10n.kuralYokYonetim
+                      : l10n.kuralYokSakin,
               textAlign: TextAlign.center,
             ),
           ),
@@ -195,14 +201,16 @@ void _showDetail(BuildContext context, SiteKurali k,
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (sheetContext) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    builder: (sheetContext) {
+      final l10n = sheetContext.l10n;
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Row(
                 children: [
                   const Icon(Icons.gavel_outlined),
@@ -240,16 +248,18 @@ void _showDetail(BuildContext context, SiteKurali k,
                               ),
                     errorBuilder: (_, _, _) => Container(
                       height: 48,
-                      alignment: Alignment.centerLeft,
+                      // YON-DUYARLI: Arapca'da saga hizalanir.
+                      alignment: AlignmentDirectional.centerStart,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       color: Theme.of(context)
                           .colorScheme
                           .surfaceContainerHighest,
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.broken_image_outlined, size: 20),
-                          SizedBox(width: 8),
-                          Text('Görsel yüklenemedi'),
+                          const Icon(Icons.broken_image_outlined, size: 20),
+                          const SizedBox(width: 8),
+                          // Dar ekranda (320 dp) satira sigmiyor — sar.
+                          Expanded(child: Text(l10n.talepGorselYuklenemedi)),
                         ],
                       ),
                     ),
@@ -263,7 +273,7 @@ void _showDetail(BuildContext context, SiteKurali k,
                     Expanded(
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.edit_outlined),
-                        label: const Text('Düzenle'),
+                        label: Text(l10n.ortakDuzenle),
                         onPressed: () async {
                           Navigator.of(sheetContext).pop();
                           await showModalBottomSheet<bool>(
@@ -284,11 +294,12 @@ void _showDetail(BuildContext context, SiteKurali k,
                   ],
                 ),
               ],
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 
@@ -301,26 +312,27 @@ class _DeleteButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     return OutlinedButton.icon(
       style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
       icon: const Icon(Icons.delete_outline),
-      label: const Text('Sil'),
+      label: Text(l10n.ortakSil),
       onPressed: () async {
         final messenger = ScaffoldMessenger.of(context);
         final onay = await showDialog<bool>(
           context: context,
           builder: (dctx) => AlertDialog(
-            title: const Text('Kural silinsin mi?'),
-            content: Text('"${kural.baslik}" kalıcı olarak silinecek.'),
+            title: Text(l10n.kuralSilOnayBaslik),
+            content: Text(l10n.kuralSilOnayGovde(kural.baslik)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dctx).pop(false),
-                child: const Text('Vazgeç'),
+                child: Text(l10n.ortakVazgec),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: () => Navigator.of(dctx).pop(true),
-                child: const Text('Sil'),
+                child: Text(l10n.ortakSil),
               ),
             ],
           ),
@@ -331,7 +343,7 @@ class _DeleteButton extends ConsumerWidget {
               .read(siteKuraliControllerProvider.notifier)
               .delete(kural.id);
           messenger.showSnackBar(
-            const SnackBar(content: Text('Kural silindi ✓')),
+            SnackBar(content: Text(l10n.kuralSilindi)),
           );
           onDeleted();
         } on ApiException catch (e) {
@@ -384,6 +396,8 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
     super.dispose();
   }
 
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   Future<void> _pickAndUploadPhoto(ImageSource source) async {
     if (_photoBusy) return;
     setState(() {
@@ -414,7 +428,7 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
       if (!mounted) return;
       setState(() {
         _photoBusy = false;
-        _photoError = 'Fotoğraf alınamadı: $e';
+        _photoError = _l10n.gorevFotoAlinamadi('$e');
       });
     }
   }
@@ -444,8 +458,7 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
       setState(() {
         _photoBusy = false;
         _photoError = e.kind == ApiErrorKind.network
-            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli. '
-                'Bağlantı gelince tekrar deneyin.'
+            ? _l10n.ortakFotoOnlineTekrarDene
             : e.message;
       });
     }
@@ -465,8 +478,7 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
     if (_busy || !(_formKey.currentState?.validate() ?? false)) return;
     if (_fotoBekliyor) {
       setState(() {
-        _hata = 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin '
-            'veya fotoyu kaldırın.';
+        _hata = _l10n.ortakFotoBekleyinVeyaKaldir;
       });
       return;
     }
@@ -500,7 +512,7 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _hata = 'Kaydedilemedi. Tekrar deneyin.';
+          _hata = _l10n.devriyeKaydedilemedi;
         });
       }
     }
@@ -508,6 +520,7 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final viewInsets = MediaQuery.of(context).viewInsets;
     // Mevcut/yeni gorsel gostergesi: yeni secim onizlenir; duzenlemede
     // secim yoksa mevcut foto_key'in varligi metinle belirtilir.
@@ -523,7 +536,9 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.mevcut == null ? 'Yeni kural' : 'Kuralı düzenle',
+                widget.mevcut == null
+                    ? l10n.kuralYeni
+                    : l10n.kuralDuzenleBaslik,
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
@@ -531,41 +546,40 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
               TextFormField(
                 controller: _baslik,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Başlık * (örn. Havuz Saatleri)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.kuralBaslikAlan,
+                  border: const OutlineInputBorder(),
                 ),
                 maxLength: 200,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Başlık gerekli' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? l10n.kuralBaslikGerekli
+                    : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _icerik,
-                decoration: const InputDecoration(
-                  labelText: 'Kural metni *',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.kuralMetni,
+                  border: const OutlineInputBorder(),
                 ),
                 maxLength: 10000,
                 minLines: 3,
                 maxLines: 8,
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Kural metni gerekli'
+                    ? l10n.kuralMetniGerekli
                     : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _sira,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Sıra (küçük önce)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.kuralSira,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (v) {
                   final n = int.tryParse((v ?? '').trim());
-                  return (n == null || n < 0)
-                      ? 'Sıra 0 veya pozitif tam sayı olmalı'
-                      : null;
+                  return (n == null || n < 0) ? l10n.kuralSiraGecersiz : null;
                 },
               ),
               const SizedBox(height: 8),
@@ -581,9 +595,12 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  Text(mevcutFotoVar
-                      ? 'Mevcut görsel korunuyor'
-                      : 'Görsel (opsiyonel)'),
+                  // Dar ekranda satira sigmayabilir (uzun ceviriler) — sar.
+                  Expanded(
+                    child: Text(mevcutFotoVar
+                        ? l10n.kuralMevcutGorsel
+                        : l10n.etkGorselAlan),
+                  ),
                 ],
               ),
               if (_photoPath != null) ...[
@@ -615,20 +632,22 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden çek'),
+                    label: Text(_photoPath == null
+                        ? l10n.gorevKamera
+                        : l10n.gorevYenidenCek),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _busy
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Galeriden seç'),
+                    label: Text(l10n.gorevGaleridenSec),
                   ),
                   if (_photoPath != null || mevcutFotoVar)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _removePhoto,
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Kaldır'),
+                      label: Text(l10n.gorevKaldir),
                     ),
                 ],
               ),
@@ -647,7 +666,9 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.post_add_outlined),
-                  label: Text(widget.mevcut == null ? 'Kuralı ekle' : 'Kaydet'),
+                  label: Text(widget.mevcut == null
+                      ? l10n.kuralEkleButon
+                      : l10n.ortakKaydet),
                   onPressed: _busy ? null : _submit,
                 ),
               ),

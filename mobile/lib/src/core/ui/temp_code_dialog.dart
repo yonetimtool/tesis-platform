@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../i18n/l10n.dart';
+
 /// Geçici giriş kodu dialog'u — kod SelectableText + "Kopyala" (panoya) ile
 /// gösterilir (iletme kolaylığı). Sakin/personel ekleme + parola sıfırlamada
-/// ortak kullanılır. [message] koda dair açıklama satırıdır.
+/// ortak kullanılır. [message] koda dair açıklama satırıdır — ÇAĞIRAN taraf
+/// yerelleştirir (metin bağlama göre değişir); dialog kendi metinlerini
+/// `l10n`'dan alır.
 Future<void> showTempCodeDialog(
   BuildContext context, {
   required String code,
@@ -15,7 +19,7 @@ Future<void> showTempCodeDialog(
       var copied = false;
       return StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          title: const Text('Geçici giriş kodu'),
+          title: Text(ctx.l10n.ortakGeciciKodBaslik),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,11 +52,13 @@ Future<void> showTempCodeDialog(
                 setLocal(() => copied = true);
               },
               icon: Icon(copied ? Icons.check : Icons.copy, size: 18),
-              label: Text(copied ? 'Kopyalandı' : 'Kopyala'),
+              label: Text(
+                copied ? ctx.l10n.ortakKopyalandi : ctx.l10n.ortakKopyala,
+              ),
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Tamam'),
+              child: Text(ctx.l10n.ortakTamam),
             ),
           ],
         ),

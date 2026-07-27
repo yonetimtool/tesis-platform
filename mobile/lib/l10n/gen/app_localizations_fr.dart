@@ -2648,4 +2648,233 @@ class AppLocalizationsFr extends AppLocalizations {
   String karZamanEki(Object zaman) {
     return ' · $zaman';
   }
+
+  @override
+  String get kuralBaslik => 'Règlement du site';
+
+  @override
+  String get kuralYeni => 'Nouvelle règle';
+
+  @override
+  String get kuralAramaIpucu => 'Rechercher dans les titres (ex. piscine)';
+
+  @override
+  String get kuralEklendi => 'Règle ajoutée ✓';
+
+  @override
+  String get kuralGuncellendi => 'Règle mise à jour ✓';
+
+  @override
+  String get kuralAramaBos => 'Aucune règle ne correspond à la recherche.';
+
+  @override
+  String get kuralYokYonetim =>
+      'Aucune règle pour l’instant. Ajoutez-en une via \"Nouvelle règle\".';
+
+  @override
+  String get kuralYokSakin => 'Aucune règle publiée pour l’instant.';
+
+  @override
+  String get kuralSilOnayBaslik => 'Supprimer cette règle ?';
+
+  @override
+  String kuralSilOnayGovde(Object baslik) {
+    return '\"$baslik\" sera définitivement supprimé.';
+  }
+
+  @override
+  String get kuralSilindi => 'Règle supprimée ✓';
+
+  @override
+  String get kuralDuzenleBaslik => 'Modifier la règle';
+
+  @override
+  String get kuralBaslikAlan => 'Titre * (ex. Horaires piscine)';
+
+  @override
+  String get kuralBaslikGerekli => 'Le titre est obligatoire';
+
+  @override
+  String get kuralMetni => 'Texte de la règle *';
+
+  @override
+  String get kuralMetniGerekli => 'Le texte de la règle est obligatoire';
+
+  @override
+  String get kuralSira => 'Ordre (le plus petit d’abord)';
+
+  @override
+  String get kuralSiraGecersiz => 'L’ordre doit être 0 ou un entier positif';
+
+  @override
+  String get kuralMevcutGorsel => 'Image actuelle conservée';
+
+  @override
+  String get kuralEkleButon => 'Ajouter la règle';
+
+  @override
+  String get ortakFotoOnlineTekrarDene =>
+      'Une connexion Internet est nécessaire pour envoyer une photo. Réessayez dès que vous êtes en ligne.';
+
+  @override
+  String get ortakFotoBekleyinVeyaKaldir =>
+      'La photo n’est pas encore envoyée. Attendez la fin de l’envoi ou retirez la photo.';
+
+  @override
+  String get duyuruYeni => 'Nouvelle annonce';
+
+  @override
+  String get duyuruYayinlandi => 'Annonce publiée ✓';
+
+  @override
+  String get duyuruGuncellendi => 'Annonce mise à jour ✓';
+
+  @override
+  String get duyuruYok => 'Aucune annonce pour l’instant.';
+
+  @override
+  String get duyuruYonetim => 'Gestion';
+
+  @override
+  String duyuruMeta(Object ad, Object zaman, Object duzenlendi) {
+    return '$ad · $zaman$duzenlendi';
+  }
+
+  @override
+  String get duyuruDuzenlendiEki => ' · modifiée';
+
+  @override
+  String get duyuruSilOnay => 'Supprimer cette annonce ?';
+
+  @override
+  String get duyuruSilindi => 'Annonce supprimée ✓';
+
+  @override
+  String get duyuruDuzenleBaslik => 'Modifier l’annonce';
+
+  @override
+  String get duyuruBaslikZorunlu => 'Le titre est obligatoire';
+
+  @override
+  String get duyuruMetniAlan => 'Texte de l’annonce';
+
+  @override
+  String get duyuruMetniZorunlu => 'Le texte de l’annonce est obligatoire';
+
+  @override
+  String get duyuruYayinla => 'Publier';
+
+  @override
+  String get ortakIslemler => 'Actions';
+
+  @override
+  String get sakinBaslik => 'Résidents du site';
+
+  @override
+  String get sakinEkle => 'Ajouter un résident';
+
+  @override
+  String get sakinListelenemedi => 'Impossible de lister les résidents.';
+
+  @override
+  String get sakinDaireYok => 'Aucun logement attribué';
+
+  @override
+  String get sakinIslemleri => 'Actions du résident';
+
+  @override
+  String get sakinParolaSifirla => 'Réinitialiser le mot de passe';
+
+  @override
+  String get sakinParolaSifirlaOnay => 'Réinitialiser le mot de passe ?';
+
+  @override
+  String sakinParolaSifirlaGovde(Object ad) {
+    return 'Un nouveau code temporaire est généré pour \"$ad\" ; l’ancien mot de passe devient invalide. L’utilisateur se connecte avec le téléphone + le nouveau code puis définit un mot de passe.';
+  }
+
+  @override
+  String get sakinSifirla => 'Réinitialiser';
+
+  @override
+  String sakinYeniKodMesaji(Object ad) {
+    return 'Nouveau code temporaire pour \"$ad\". Transmettez-le au résident : il se connecte avec le téléphone + ce code puis définit un mot de passe.';
+  }
+
+  @override
+  String get sakinSilOnay => 'Supprimer le résident ?';
+
+  @override
+  String sakinSilGovde(Object ad) {
+    return '\"$ad\" sera supprimé. Sans historique, l’enregistrement est supprimé ; sinon il devient inactif. Dans tous les cas le numéro de téléphone est libéré (il peut être réenregistré).';
+  }
+
+  @override
+  String sakinSilindi(Object ad) {
+    return '\"$ad\" supprimé (numéro libéré)';
+  }
+
+  @override
+  String sakinPasiflestirildi(Object ad) {
+    return '\"$ad\" désactivé — possède un historique (numéro libéré)';
+  }
+
+  @override
+  String get sakinDuzenleBaslik => 'Modifier le résident';
+
+  @override
+  String get sakinYeniTelefon => 'Nouveau numéro de mobile';
+
+  @override
+  String get sakinBosBirakDegismez => 'Laissez vide pour ne rien changer';
+
+  @override
+  String get sakinGuncellendi => 'Mis à jour ✓';
+
+  @override
+  String get ortakAdSoyad => 'Nom complet';
+
+  @override
+  String get ortakCepTelefonu => 'Numéro de mobile';
+
+  @override
+  String get ortakTelefonIpucu => 'ex. 0532 111 22 03';
+
+  @override
+  String get ortakTelefonZorunlu => 'Le téléphone est obligatoire';
+
+  @override
+  String get sakinGirisAnahtari => 'Clé de connexion (unique globalement).';
+
+  @override
+  String get ortakDaireNoIpucu => 'ex. A-12';
+
+  @override
+  String get sakinDaireNoZorunlu => 'Le numéro de logement est obligatoire';
+
+  @override
+  String get sakinParolaOpsiyonel => 'Mot de passe (facultatif)';
+
+  @override
+  String get sakinBosBirakKod => 'Laissez vide pour générer un code temporaire';
+
+  @override
+  String get sakinEklendiKod =>
+      'Résident ajouté. Transmettez-lui ce code : il se connecte avec le téléphone + ce code puis définit un mot de passe.';
+
+  @override
+  String get sakinEklendi => 'Résident ajouté ✓';
+
+  @override
+  String get sakinYok =>
+      'Aucun résident pour l’instant.\nAjoutez-en depuis le bas à droite.';
+
+  @override
+  String get ortakGeciciKodBaslik => 'Code de connexion temporaire';
+
+  @override
+  String get ortakKopyala => 'Copier';
+
+  @override
+  String get ortakKopyalandi => 'Copié';
 }

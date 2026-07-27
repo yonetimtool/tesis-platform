@@ -2774,4 +2774,233 @@ class AppLocalizationsAr extends AppLocalizations {
   String karZamanEki(Object zaman) {
     return ' · $zaman';
   }
+
+  @override
+  String get kuralBaslik => 'قواعد المجمّع';
+
+  @override
+  String get kuralYeni => 'قاعدة جديدة';
+
+  @override
+  String get kuralAramaIpucu => 'ابحث في العناوين (مثال: المسبح)';
+
+  @override
+  String get kuralEklendi => 'تمت إضافة القاعدة ✓';
+
+  @override
+  String get kuralGuncellendi => 'تم تحديث القاعدة ✓';
+
+  @override
+  String get kuralAramaBos => 'لا توجد قواعد مطابقة للبحث.';
+
+  @override
+  String get kuralYokYonetim =>
+      'لا توجد قواعد بعد. أضف واحدة عبر \"قاعدة جديدة\".';
+
+  @override
+  String get kuralYokSakin => 'لم تُنشر أي قواعد بعد.';
+
+  @override
+  String get kuralSilOnayBaslik => 'حذف هذه القاعدة؟';
+
+  @override
+  String kuralSilOnayGovde(Object baslik) {
+    return 'سيتم حذف \"$baslik\" نهائياً.';
+  }
+
+  @override
+  String get kuralSilindi => 'تم حذف القاعدة ✓';
+
+  @override
+  String get kuralDuzenleBaslik => 'تعديل القاعدة';
+
+  @override
+  String get kuralBaslikAlan => 'العنوان * (مثال: أوقات المسبح)';
+
+  @override
+  String get kuralBaslikGerekli => 'العنوان مطلوب';
+
+  @override
+  String get kuralMetni => 'نص القاعدة *';
+
+  @override
+  String get kuralMetniGerekli => 'نص القاعدة مطلوب';
+
+  @override
+  String get kuralSira => 'الترتيب (الأصغر أولاً)';
+
+  @override
+  String get kuralSiraGecersiz =>
+      'يجب أن يكون الترتيب 0 أو عدداً صحيحاً موجباً';
+
+  @override
+  String get kuralMevcutGorsel => 'يتم الإبقاء على الصورة الحالية';
+
+  @override
+  String get kuralEkleButon => 'أضف القاعدة';
+
+  @override
+  String get ortakFotoOnlineTekrarDene =>
+      'يلزم اتصال بالإنترنت لتحميل الصورة. أعد المحاولة عند عودة الاتصال.';
+
+  @override
+  String get ortakFotoBekleyinVeyaKaldir =>
+      'لم يتم تحميل الصورة بعد. انتظر انتهاء التحميل أو أزل الصورة.';
+
+  @override
+  String get duyuruYeni => 'إعلان جديد';
+
+  @override
+  String get duyuruYayinlandi => 'تم نشر الإعلان ✓';
+
+  @override
+  String get duyuruGuncellendi => 'تم تحديث الإعلان ✓';
+
+  @override
+  String get duyuruYok => 'لا توجد إعلانات بعد.';
+
+  @override
+  String get duyuruYonetim => 'الإدارة';
+
+  @override
+  String duyuruMeta(Object ad, Object zaman, Object duzenlendi) {
+    return '$ad · $zaman$duzenlendi';
+  }
+
+  @override
+  String get duyuruDuzenlendiEki => ' · مُعدَّل';
+
+  @override
+  String get duyuruSilOnay => 'حذف هذا الإعلان؟';
+
+  @override
+  String get duyuruSilindi => 'تم حذف الإعلان ✓';
+
+  @override
+  String get duyuruDuzenleBaslik => 'تعديل الإعلان';
+
+  @override
+  String get duyuruBaslikZorunlu => 'العنوان إلزامي';
+
+  @override
+  String get duyuruMetniAlan => 'نص الإعلان';
+
+  @override
+  String get duyuruMetniZorunlu => 'نص الإعلان إلزامي';
+
+  @override
+  String get duyuruYayinla => 'نشر';
+
+  @override
+  String get ortakIslemler => 'الإجراءات';
+
+  @override
+  String get sakinBaslik => 'سكان المجمّع';
+
+  @override
+  String get sakinEkle => 'إضافة ساكن';
+
+  @override
+  String get sakinListelenemedi => 'تعذّر إدراج السكان.';
+
+  @override
+  String get sakinDaireYok => 'لم تُخصَّص وحدة';
+
+  @override
+  String get sakinIslemleri => 'إجراءات الساكن';
+
+  @override
+  String get sakinParolaSifirla => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get sakinParolaSifirlaOnay => 'إعادة تعيين كلمة المرور؟';
+
+  @override
+  String sakinParolaSifirlaGovde(Object ad) {
+    return 'سيتم إنشاء رمز مؤقت جديد لـ \"$ad\"؛ وتصبح كلمة المرور القديمة غير صالحة. يسجّل المستخدم الدخول بالهاتف + الرمز الجديد ثم يحدّد كلمة المرور.';
+  }
+
+  @override
+  String get sakinSifirla => 'إعادة تعيين';
+
+  @override
+  String sakinYeniKodMesaji(Object ad) {
+    return 'رمز مؤقت جديد لـ \"$ad\". سلّمه للساكن؛ يسجّل الدخول بالهاتف + هذا الرمز ثم يحدّد كلمة المرور.';
+  }
+
+  @override
+  String get sakinSilOnay => 'حذف الساكن؟';
+
+  @override
+  String sakinSilGovde(Object ad) {
+    return 'سيُحذف \"$ad\". إذا لم يكن له سجل يُحذف نهائياً؛ وإلا يصبح غير نشط. في كل الحالات يُحرَّر رقم الهاتف (يمكن التسجيل به مجدداً).';
+  }
+
+  @override
+  String sakinSilindi(Object ad) {
+    return 'تم حذف \"$ad\" (تم تحرير الرقم)';
+  }
+
+  @override
+  String sakinPasiflestirildi(Object ad) {
+    return 'تم تعطيل \"$ad\" — لديه سجل (تم تحرير الرقم)';
+  }
+
+  @override
+  String get sakinDuzenleBaslik => 'تعديل الساكن';
+
+  @override
+  String get sakinYeniTelefon => 'رقم جوال جديد';
+
+  @override
+  String get sakinBosBirakDegismez => 'اتركه فارغاً ليبقى كما هو';
+
+  @override
+  String get sakinGuncellendi => 'تم التحديث ✓';
+
+  @override
+  String get ortakAdSoyad => 'الاسم الكامل';
+
+  @override
+  String get ortakCepTelefonu => 'رقم الجوال';
+
+  @override
+  String get ortakTelefonIpucu => 'مثال: 0532 111 22 03';
+
+  @override
+  String get ortakTelefonZorunlu => 'الهاتف إلزامي';
+
+  @override
+  String get sakinGirisAnahtari => 'مفتاح تسجيل الدخول (فريد عالمياً).';
+
+  @override
+  String get ortakDaireNoIpucu => 'مثال: A-12';
+
+  @override
+  String get sakinDaireNoZorunlu => 'رقم الوحدة إلزامي';
+
+  @override
+  String get sakinParolaOpsiyonel => 'كلمة المرور (اختياري)';
+
+  @override
+  String get sakinBosBirakKod => 'اتركه فارغاً ليتم إنشاء رمز مؤقت';
+
+  @override
+  String get sakinEklendiKod =>
+      'تمت إضافة الساكن. سلّمه هذا الرمز؛ يسجّل الدخول بالهاتف + هذا الرمز ثم يحدّد كلمة المرور.';
+
+  @override
+  String get sakinEklendi => 'تمت إضافة الساكن ✓';
+
+  @override
+  String get sakinYok => 'لا يوجد سكان بعد.\nيمكنك الإضافة من أسفل اليمين.';
+
+  @override
+  String get ortakGeciciKodBaslik => 'رمز الدخول المؤقت';
+
+  @override
+  String get ortakKopyala => 'نسخ';
+
+  @override
+  String get ortakKopyalandi => 'تم النسخ';
 }

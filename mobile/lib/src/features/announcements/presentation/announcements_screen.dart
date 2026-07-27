@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 // imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev foto akisiyla
 // ayni saglayici (testlerde tek noktadan override edilir).
 import '../../tasks/presentation/task_complete_controller.dart'
@@ -23,13 +24,14 @@ class AnnouncementsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(announcementsControllerProvider);
     final controller = ref.read(announcementsControllerProvider.notifier);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(trUpper('Duyurular')),
+        title: Text(baslikBuyuk(l10n.modulDuyurular, context.dilKodu)),
         actions: [
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
             onPressed: state.loading ? null : controller.refresh,
           ),
@@ -38,7 +40,7 @@ class AnnouncementsScreen extends ConsumerWidget {
       floatingActionButton: state.canManage
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.campaign_outlined),
-              label: const Text('Yeni duyuru'),
+              label: Text(l10n.duyuruYeni),
               onPressed: () => _openForm(context, ref),
             )
           : null,
@@ -60,10 +62,11 @@ class AnnouncementsScreen extends ConsumerWidget {
       builder: (_) => _AnnouncementForm(announcement: edit),
     );
     if (saved == true && context.mounted) {
+      final l10n = context.l10n;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            edit == null ? 'Duyuru yayınlandı ✓' : 'Duyuru güncellendi ✓',
+            edit == null ? l10n.duyuruYayinlandi : l10n.duyuruGuncellendi,
           ),
         ),
       );
@@ -79,15 +82,17 @@ class _Body extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     if (state.loading && state.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null && state.items.isEmpty) {
+    final hata = akisHatasiCoz(l10n, state.hataKimligi, state.errorMessage);
+    if (hata != null && state.items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            state.errorMessage!,
+            hata,
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.red),
           ),
@@ -97,8 +102,8 @@ class _Body extends ConsumerWidget {
     if (state.items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
-        children: const [
-          Center(child: Text('Henüz duyuru yok.')),
+        children: [
+          Center(child: Text(l10n.duyuruYok)),
         ],
       );
     }
@@ -128,6 +133,7 @@ class _AnnouncementCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final a = announcement;
+    final l10n = context.l10n;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -145,14 +151,20 @@ class _AnnouncementCard extends ConsumerWidget {
                 ),
                 if (canManage)
                   PopupMenuButton<String>(
-                    tooltip: 'İşlemler',
+                    tooltip: l10n.ortakIslemler,
                     onSelected: (v) async {
                       if (v == 'edit') onEdit(a);
                       if (v == 'delete') await _confirmDelete(context, ref, a);
                     },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-                      PopupMenuItem(value: 'delete', child: Text('Sil')),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Text(l10n.ortakDuzenle),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(l10n.ortakSil),
+                      ),
                     ],
                   ),
               ],
@@ -165,8 +177,11 @@ class _AnnouncementCard extends ConsumerWidget {
             ],
             const SizedBox(height: 8),
             Text(
-              '${a.olusturanAd ?? 'Yönetim'} · ${_fmtDateTime(a.createdAt.toLocal())}'
-              '${a.duzenlendi ? ' · düzenlendi' : ''}',
+              l10n.duyuruMeta(
+                a.olusturanAd ?? l10n.duyuruYonetim,
+                tarihSaatBicimi(a.createdAt, context.dilKodu),
+                a.duzenlendi ? l10n.duyuruDuzenlendiEki : '',
+              ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -180,19 +195,20 @@ class _AnnouncementCard extends ConsumerWidget {
     WidgetRef ref,
     Announcement a,
   ) async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Duyuru silinsin mi?'),
+        title: Text(l10n.duyuruSilOnay),
         content: Text(a.baslik),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(l10n.ortakIptal),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(l10n.ortakSil),
           ),
         ],
       ),
@@ -202,7 +218,7 @@ class _AnnouncementCard extends ConsumerWidget {
       await ref.read(announcementsControllerProvider.notifier).delete(a.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Duyuru silindi ✓')),
+          SnackBar(content: Text(l10n.duyuruSilindi)),
         );
       }
     } on ApiException catch (e) {
@@ -241,14 +257,16 @@ class _AnnouncementPhoto extends StatelessWidget {
                 ),
           errorBuilder: (context, _, _) => Container(
             height: 48,
-            alignment: Alignment.centerLeft,
+            // YON-DUYARLI: Arapca'da saga hizalanir.
+            alignment: AlignmentDirectional.centerStart,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.broken_image_outlined, size: 20),
-                SizedBox(width: 8),
-                Text('Görsel yüklenemedi'),
+                const Icon(Icons.broken_image_outlined, size: 20),
+                const SizedBox(width: 8),
+                // Dar ekranda (320 dp) satira sigmiyor — sar.
+                Expanded(child: Text(context.l10n.talepGorselYuklenemedi)),
               ],
             ),
           ),
@@ -260,7 +278,7 @@ class _AnnouncementPhoto extends StatelessWidget {
   void _openFullScreen(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => Scaffold(
+        builder: (routeContext) => Scaffold(
           backgroundColor: Colors.black,
           appBar: AppBar(backgroundColor: Colors.black),
           body: Center(
@@ -268,9 +286,9 @@ class _AnnouncementPhoto extends StatelessWidget {
               maxScale: 5,
               child: Image.network(
                 url,
-                errorBuilder: (_, _, _) => const Text(
-                  'Görsel yüklenemedi',
-                  style: TextStyle(color: Colors.white),
+                errorBuilder: (_, _, _) => Text(
+                  routeContext.l10n.talepGorselYuklenemedi,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ),
@@ -328,6 +346,8 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
 
   /// Foto cek/sec → presign → PUT → foto_key (gorev akisinin aynisi).
   /// Foto OPSIYONEL — vazgecilirse/kaldirilirsa duyuru foto'suz gider.
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   Future<void> _pickAndUploadPhoto(ImageSource source) async {
     if (_photoBusy) return;
     setState(() {
@@ -357,7 +377,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
       if (!mounted) return;
       setState(() {
         _photoBusy = false;
-        _photoError = 'Fotoğraf alınamadı: $e';
+        _photoError = _l10n.gorevFotoAlinamadi('$e');
       });
     }
   }
@@ -399,9 +419,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
       setState(() {
         _photoBusy = false;
         _photoError = e.kind == ApiErrorKind.network
-            ? 'Fotoğraf yüklemek için internet bağlantısı gerekli '
-                '(yükleme adresi kısa ömürlü). Bağlantı gelince '
-                '"Tekrar yükle" ile deneyin.'
+            ? _l10n.gorevFotoOnlineGerekli
             : e.message;
       });
     }
@@ -419,8 +437,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_fotoBekliyor) {
       setState(() {
-        _error = 'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin, '
-            '"Tekrar yükle"yi deneyin veya fotoyu kaldırın.';
+        _error = _l10n.gorevFotoHenuzYuklenmedi;
       });
       return;
     }
@@ -453,7 +470,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+          _error = _l10n.ortakBeklenmeyenHata;
         });
       }
     }
@@ -461,6 +478,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final editing = widget.announcement != null;
     return Padding(
       // Klavye acildiginda formun gorunur kalmasi icin.
@@ -479,19 +497,20 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              editing ? 'Duyuru düzenle' : 'Yeni duyuru',
+              editing ? l10n.duyuruDuzenleBaslik : l10n.duyuruYeni,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _baslikCtrl,
               maxLength: 200,
-              decoration: const InputDecoration(
-                labelText: 'Başlık',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.talepBaslikAlan,
+                border: const OutlineInputBorder(),
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Başlık zorunludur' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l10n.duyuruBaslikZorunlu
+                  : null,
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -499,12 +518,12 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
               maxLength: 5000,
               minLines: 3,
               maxLines: 8,
-              decoration: const InputDecoration(
-                labelText: 'Duyuru metni',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.duyuruMetniAlan,
+                border: const OutlineInputBorder(),
               ),
               validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Duyuru metni zorunludur'
+                  ? l10n.duyuruMetniZorunlu
                   : null,
             ),
             // Gorsel yalniz YENI duyuruda eklenir (duzenlemede mevcut korunur).
@@ -520,7 +539,7 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  const Text('Görsel (opsiyonel)'),
+                  Text(l10n.etkGorselAlan),
                 ],
               ),
               if (_photoPath != null) ...[
@@ -552,26 +571,28 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null ? 'Kamera' : 'Yeniden çek'),
+                    label: Text(_photoPath == null
+                        ? l10n.gorevKamera
+                        : l10n.gorevYenidenCek),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _saving
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Galeriden seç'),
+                    label: Text(l10n.gorevGaleridenSec),
                   ),
                   if (_photoPath != null && _fotoKey == null)
                     TextButton.icon(
                       onPressed: _photoBusy || _saving ? null : _retryUpload,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Tekrar yükle'),
+                      label: Text(l10n.gorevTekrarYukle),
                     ),
                   if (_photoPath != null)
                     TextButton.icon(
                       onPressed: _photoBusy || _saving ? null : _removePhoto,
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Kaldır'),
+                      label: Text(l10n.gorevKaldir),
                     ),
                 ],
               ),
@@ -594,10 +615,10 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                     : const Icon(Icons.campaign_outlined),
                 label: Text(
                   _saving
-                      ? 'Gönderiliyor...'
+                      ? l10n.gorevGonderiliyor
                       : editing
-                          ? 'Kaydet'
-                          : 'Yayınla',
+                          ? l10n.ortakKaydet
+                          : l10n.duyuruYayinla,
                 ),
               ),
             ),
@@ -619,9 +640,4 @@ String _contentTypeFor(XFile file) {
     return 'image/heic';
   }
   return 'image/jpeg';
-}
-
-String _fmtDateTime(DateTime dt) {
-  String p(int n) => n.toString().padLeft(2, '0');
-  return '${p(dt.day)}.${p(dt.month)}.${dt.year} ${p(dt.hour)}:${p(dt.minute)}';
 }

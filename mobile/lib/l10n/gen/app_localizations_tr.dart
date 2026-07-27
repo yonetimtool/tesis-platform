@@ -2556,4 +2556,231 @@ class AppLocalizationsTr extends AppLocalizations {
   String karZamanEki(Object zaman) {
     return ' · $zaman';
   }
+
+  @override
+  String get kuralBaslik => 'Site Kuralları';
+
+  @override
+  String get kuralYeni => 'Yeni kural';
+
+  @override
+  String get kuralAramaIpucu => 'Başlıkta ara (örn. havuz)';
+
+  @override
+  String get kuralEklendi => 'Kural eklendi ✓';
+
+  @override
+  String get kuralGuncellendi => 'Kural güncellendi ✓';
+
+  @override
+  String get kuralAramaBos => 'Aramayla eşleşen kural yok.';
+
+  @override
+  String get kuralYokYonetim => 'Henüz kural yok. \"Yeni kural\" ile ekleyin.';
+
+  @override
+  String get kuralYokSakin => 'Henüz kural yayınlanmamış.';
+
+  @override
+  String get kuralSilOnayBaslik => 'Kural silinsin mi?';
+
+  @override
+  String kuralSilOnayGovde(Object baslik) {
+    return '\"$baslik\" kalıcı olarak silinecek.';
+  }
+
+  @override
+  String get kuralSilindi => 'Kural silindi ✓';
+
+  @override
+  String get kuralDuzenleBaslik => 'Kuralı düzenle';
+
+  @override
+  String get kuralBaslikAlan => 'Başlık * (örn. Havuz Saatleri)';
+
+  @override
+  String get kuralBaslikGerekli => 'Başlık gerekli';
+
+  @override
+  String get kuralMetni => 'Kural metni *';
+
+  @override
+  String get kuralMetniGerekli => 'Kural metni gerekli';
+
+  @override
+  String get kuralSira => 'Sıra (küçük önce)';
+
+  @override
+  String get kuralSiraGecersiz => 'Sıra 0 veya pozitif tam sayı olmalı';
+
+  @override
+  String get kuralMevcutGorsel => 'Mevcut görsel korunuyor';
+
+  @override
+  String get kuralEkleButon => 'Kuralı ekle';
+
+  @override
+  String get ortakFotoOnlineTekrarDene =>
+      'Fotoğraf yüklemek için internet bağlantısı gerekli. Bağlantı gelince tekrar deneyin.';
+
+  @override
+  String get ortakFotoBekleyinVeyaKaldir =>
+      'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin veya fotoyu kaldırın.';
+
+  @override
+  String get duyuruYeni => 'Yeni duyuru';
+
+  @override
+  String get duyuruYayinlandi => 'Duyuru yayınlandı ✓';
+
+  @override
+  String get duyuruGuncellendi => 'Duyuru güncellendi ✓';
+
+  @override
+  String get duyuruYok => 'Henüz duyuru yok.';
+
+  @override
+  String get duyuruYonetim => 'Yönetim';
+
+  @override
+  String duyuruMeta(Object ad, Object zaman, Object duzenlendi) {
+    return '$ad · $zaman$duzenlendi';
+  }
+
+  @override
+  String get duyuruDuzenlendiEki => ' · düzenlendi';
+
+  @override
+  String get duyuruSilOnay => 'Duyuru silinsin mi?';
+
+  @override
+  String get duyuruSilindi => 'Duyuru silindi ✓';
+
+  @override
+  String get duyuruDuzenleBaslik => 'Duyuru düzenle';
+
+  @override
+  String get duyuruBaslikZorunlu => 'Başlık zorunludur';
+
+  @override
+  String get duyuruMetniAlan => 'Duyuru metni';
+
+  @override
+  String get duyuruMetniZorunlu => 'Duyuru metni zorunludur';
+
+  @override
+  String get duyuruYayinla => 'Yayınla';
+
+  @override
+  String get ortakIslemler => 'İşlemler';
+
+  @override
+  String get sakinBaslik => 'Site Sakinleri';
+
+  @override
+  String get sakinEkle => 'Sakin ekle';
+
+  @override
+  String get sakinListelenemedi => 'Sakinler listelenemedi.';
+
+  @override
+  String get sakinDaireYok => 'Daire atanmamış';
+
+  @override
+  String get sakinIslemleri => 'Sakin işlemleri';
+
+  @override
+  String get sakinParolaSifirla => 'Parola sıfırla';
+
+  @override
+  String get sakinParolaSifirlaOnay => 'Parola sıfırlansın mı?';
+
+  @override
+  String sakinParolaSifirlaGovde(Object ad) {
+    return '\"$ad\" için yeni geçici kod üretilir; eski parolası geçersiz olur. Kullanıcı telefon + yeni kod ile girip parolasını belirler.';
+  }
+
+  @override
+  String get sakinSifirla => 'Sıfırla';
+
+  @override
+  String sakinYeniKodMesaji(Object ad) {
+    return '\"$ad\" için yeni geçici kod. Sakine iletin; telefon + bu kod ile girip parolasını belirler.';
+  }
+
+  @override
+  String get sakinSilOnay => 'Sakini sil?';
+
+  @override
+  String sakinSilGovde(Object ad) {
+    return '\"$ad\" silinir. Geçmiş kaydı yoksa tamamen silinir; varsa pasifleşir. Her durumda telefon numarası serbest kalır (aynı numarayla yeniden kayıt yapılabilir).';
+  }
+
+  @override
+  String sakinSilindi(Object ad) {
+    return '\"$ad\" silindi (numara serbest)';
+  }
+
+  @override
+  String sakinPasiflestirildi(Object ad) {
+    return '\"$ad\" pasifleştirildi — geçmişi var (numara serbest)';
+  }
+
+  @override
+  String get sakinDuzenleBaslik => 'Sakini düzenle';
+
+  @override
+  String get sakinYeniTelefon => 'Yeni cep telefonu';
+
+  @override
+  String get sakinBosBirakDegismez => 'Boş bırakırsanız değişmez';
+
+  @override
+  String get sakinGuncellendi => 'Güncellendi ✓';
+
+  @override
+  String get ortakAdSoyad => 'Ad Soyad';
+
+  @override
+  String get ortakCepTelefonu => 'Cep telefonu';
+
+  @override
+  String get ortakTelefonIpucu => 'örn. 0532 111 22 03';
+
+  @override
+  String get ortakTelefonZorunlu => 'Telefon zorunludur';
+
+  @override
+  String get sakinGirisAnahtari => 'Giriş anahtarı (global benzersiz).';
+
+  @override
+  String get ortakDaireNoIpucu => 'örn. A-12';
+
+  @override
+  String get sakinDaireNoZorunlu => 'Daire no zorunludur';
+
+  @override
+  String get sakinParolaOpsiyonel => 'Parola (opsiyonel)';
+
+  @override
+  String get sakinBosBirakKod => 'Boş bırakırsanız geçici kod üretilir';
+
+  @override
+  String get sakinEklendiKod =>
+      'Sakin eklendi. Bu kodu sakine iletin; telefon + bu kod ile girip parolasını belirler.';
+
+  @override
+  String get sakinEklendi => 'Sakin eklendi ✓';
+
+  @override
+  String get sakinYok => 'Henüz site sakini yok.\nSağ alttan ekleyebilirsiniz.';
+
+  @override
+  String get ortakGeciciKodBaslik => 'Geçici giriş kodu';
+
+  @override
+  String get ortakKopyala => 'Kopyala';
+
+  @override
+  String get ortakKopyalandi => 'Kopyalandı';
 }

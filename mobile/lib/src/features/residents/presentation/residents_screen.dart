@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/temp_code_dialog.dart';
 import '../../../core/validators/password_rule.dart';
 import '../data/residents_api.dart';
@@ -15,17 +15,20 @@ class ResidentsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(residentsProvider);
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Site Sakinleri'))),
+      appBar: AppBar(title: Text(baslikBuyuk(l10n.sakinBaslik, context.dilKodu))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddSheet(context, ref),
         icon: const Icon(Icons.person_add_alt_1),
-        label: const Text('Sakin ekle'),
+        label: Text(l10n.sakinEkle),
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
-          message: e is ApiException ? e.message : 'Sakinler listelenemedi.',
+          // Sunucu metni varsa o gosterilir (SERVER-LOCALIZED siniri);
+          // yoksa yerellestirilmis genel metin.
+          message: e is ApiException ? e.message : l10n.sakinListelenemedi,
           onRetry: () => ref.invalidate(residentsProvider),
         ),
         data: (list) => list.isEmpty
@@ -62,9 +65,10 @@ class _ResidentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final subtitle = member.unitNo?.isNotEmpty == true
-        ? 'Daire ${member.unitNo}'
-        : 'Daire atanmamış';
+        ? l10n.gorevDaireEtiket(member.unitNo!)
+        : l10n.sakinDaireYok;
     return Card(
       child: ListTile(
         leading: CircleAvatar(
@@ -77,22 +81,25 @@ class _ResidentTile extends StatelessWidget {
           children: [
             if (!member.isActive)
               Chip(
-                label: const Text('Pasif'),
+                label: Text(l10n.devriyePasif),
                 visualDensity: VisualDensity.compact,
                 backgroundColor:
                     Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
             PopupMenuButton<String>(
-              tooltip: 'Sakin işlemleri',
+              tooltip: l10n.sakinIslemleri,
               onSelected: (v) {
                 if (v == 'edit') _edit(context);
                 if (v == 'reset') _resetPassword(context);
                 if (v == 'delete') _confirmRemove(context);
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-                PopupMenuItem(value: 'reset', child: Text('Parola sıfırla')),
-                PopupMenuItem(value: 'delete', child: Text('Sil')),
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
+                PopupMenuItem(
+                  value: 'reset',
+                  child: Text(l10n.sakinParolaSifirla),
+                ),
+                PopupMenuItem(value: 'delete', child: Text(l10n.ortakSil)),
               ],
             ),
           ],
@@ -112,22 +119,21 @@ class _ResidentTile extends StatelessWidget {
 
   Future<void> _resetPassword(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
+    // Async bosluklardan ONCE yakala.
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Parola sıfırlansın mı?'),
-        content: Text(
-          '"${member.ad}" için yeni geçici kod üretilir; eski parolası geçersiz '
-          'olur. Kullanıcı telefon + yeni kod ile girip parolasını belirler.',
-        ),
+        title: Text(l10n.sakinParolaSifirlaOnay),
+        content: Text(l10n.sakinParolaSifirlaGovde(member.ad)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Vazgeç'),
+            child: Text(l10n.ortakVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Sıfırla'),
+            child: Text(l10n.sakinSifirla),
           ),
         ],
       ),
@@ -139,8 +145,7 @@ class _ResidentTile extends StatelessWidget {
       await showTempCodeDialog(
         context,
         code: code,
-        message: '"${member.ad}" için yeni geçici kod. Sakine iletin; telefon + '
-            'bu kod ile girip parolasını belirler.',
+        message: l10n.sakinYeniKodMesaji(member.ad),
       );
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
@@ -149,26 +154,24 @@ class _ResidentTile extends StatelessWidget {
 
   Future<void> _confirmRemove(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
+    // Async bosluklardan ONCE yakala.
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Sakini sil?'),
-        content: Text(
-          '"${member.ad}" silinir. Geçmiş kaydı yoksa tamamen silinir; varsa '
-          'pasifleşir. Her durumda telefon numarası serbest kalır '
-          '(aynı numarayla yeniden kayıt yapılabilir).',
-        ),
+        title: Text(l10n.sakinSilOnay),
+        content: Text(l10n.sakinSilGovde(member.ad)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Vazgeç'),
+            child: Text(l10n.ortakVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Sil'),
+            child: Text(l10n.ortakSil),
           ),
         ],
       ),
@@ -180,8 +183,8 @@ class _ResidentTile extends StatelessWidget {
       ref.invalidate(residentsProvider);
       messenger.showSnackBar(SnackBar(
         content: Text(deleted
-            ? '"${member.ad}" silindi (numara serbest)'
-            : '"${member.ad}" pasifleştirildi — geçmişi var (numara serbest)'),
+            ? l10n.sakinSilindi(member.ad)
+            : l10n.sakinPasiflestirildi(member.ad)),
       ));
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
@@ -218,6 +221,7 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
     if (!_formKey.currentState!.validate()) return;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final l10n = context.l10n;
     setState(() => _submitting = true);
     try {
       await ref.read(residentsApiProvider).updateResident(
@@ -227,7 +231,7 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
           );
       if (!mounted) return;
       navigator.pop(true);
-      messenger.showSnackBar(const SnackBar(content: Text('Güncellendi ✓')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.sakinGuncellendi)));
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
@@ -237,6 +241,7 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
@@ -246,31 +251,31 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Sakini düzenle',
+            Text(l10n.sakinDuzenleBaslik,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             TextFormField(
               controller: _adCtrl,
               enabled: !_submitting,
-              decoration: const InputDecoration(
-                labelText: 'Ad Soyad',
-                prefixIcon: Icon(Icons.person_outline),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.ortakAdSoyad,
+                prefixIcon: const Icon(Icons.person_outline),
+                border: const OutlineInputBorder(),
               ),
               validator: (v) =>
-                  (v?.trim() ?? '').length < 2 ? 'Ad zorunludur' : null,
+                  (v?.trim() ?? '').length < 2 ? l10n.butAdZorunlu : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _phoneCtrl,
               enabled: !_submitting,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Yeni cep telefonu',
-                hintText: 'örn. 0532 111 22 03',
-                helperText: 'Boş bırakırsanız değişmez',
-                prefixIcon: Icon(Icons.phone_outlined),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.sakinYeniTelefon,
+                hintText: l10n.ortakTelefonIpucu,
+                helperText: l10n.sakinBosBirakDegismez,
+                prefixIcon: const Icon(Icons.phone_outlined),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
@@ -284,7 +289,7 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2.5),
                     )
-                  : const Text('Kaydet'),
+                  : Text(l10n.ortakKaydet),
             ),
           ],
         ),
@@ -322,6 +327,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
     if (!_formKey.currentState!.validate()) return;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final l10n = context.l10n;
     setState(() => _submitting = true);
     try {
       final tempCode = await ref.read(residentsApiProvider).addResident(
@@ -336,11 +342,10 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
         await showTempCodeDialog(
           navigator.context,
           code: tempCode,
-          message: 'Sakin eklendi. Bu kodu sakine iletin; telefon + bu kod ile '
-              'girip parolasını belirler.',
+          message: l10n.sakinEklendiKod,
         );
       } else {
-        messenger.showSnackBar(const SnackBar(content: Text('Sakin eklendi ✓')));
+        messenger.showSnackBar(SnackBar(content: Text(l10n.sakinEklendi)));
       }
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -351,6 +356,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
@@ -360,57 +366,59 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Sakin ekle', style: Theme.of(context).textTheme.titleMedium),
+            Text(l10n.sakinEkle,
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             TextFormField(
               controller: _adCtrl,
               enabled: !_submitting,
-              decoration: const InputDecoration(
-                labelText: 'Ad Soyad',
-                prefixIcon: Icon(Icons.person_outline),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.ortakAdSoyad,
+                prefixIcon: const Icon(Icons.person_outline),
+                border: const OutlineInputBorder(),
               ),
               validator: (v) =>
-                  (v?.trim() ?? '').length < 2 ? 'Ad zorunludur' : null,
+                  (v?.trim() ?? '').length < 2 ? l10n.butAdZorunlu : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _phoneCtrl,
               enabled: !_submitting,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Cep telefonu',
-                hintText: 'örn. 0532 111 22 03',
-                prefixIcon: Icon(Icons.phone_outlined),
-                border: OutlineInputBorder(),
-                helperText: 'Giriş anahtarı (global benzersiz).',
+              decoration: InputDecoration(
+                labelText: l10n.ortakCepTelefonu,
+                hintText: l10n.ortakTelefonIpucu,
+                prefixIcon: const Icon(Icons.phone_outlined),
+                border: const OutlineInputBorder(),
+                helperText: l10n.sakinGirisAnahtari,
               ),
               validator: (v) =>
-                  (v?.trim() ?? '').isEmpty ? 'Telefon zorunludur' : null,
+                  (v?.trim() ?? '').isEmpty ? l10n.ortakTelefonZorunlu : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _unitCtrl,
               enabled: !_submitting,
-              decoration: const InputDecoration(
-                labelText: 'Daire no',
-                hintText: 'örn. A-12',
-                prefixIcon: Icon(Icons.door_front_door_outlined),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.binaDaireNo,
+                hintText: l10n.ortakDaireNoIpucu,
+                prefixIcon: const Icon(Icons.door_front_door_outlined),
+                border: const OutlineInputBorder(),
               ),
-              validator: (v) =>
-                  (v?.trim() ?? '').isEmpty ? 'Daire no zorunludur' : null,
+              validator: (v) => (v?.trim() ?? '').isEmpty
+                  ? l10n.sakinDaireNoZorunlu
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _passwordCtrl,
               enabled: !_submitting,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Parola (opsiyonel)',
-                helperText: 'Boş bırakırsanız geçici kod üretilir',
-                prefixIcon: Icon(Icons.lock_outline),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.sakinParolaOpsiyonel,
+                helperText: l10n.sakinBosBirakKod,
+                prefixIcon: const Icon(Icons.lock_outline),
+                border: const OutlineInputBorder(),
               ),
               validator: (v) => (v ?? '').isEmpty ? null : passwordError(v),
             ),
@@ -425,7 +433,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2.5),
                     )
-                  : const Text('Ekle'),
+                  : Text(l10n.ortakEkle),
             ),
           ],
         ),
@@ -448,7 +456,7 @@ class _EmptyState extends StatelessWidget {
             const Icon(Icons.home_outlined, size: 48),
             const SizedBox(height: 12),
             Text(
-              'Henüz site sakini yok.\nSağ alttan ekleyebilirsiniz.',
+              context.l10n.sakinYok,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -479,7 +487,10 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            FilledButton.tonal(onPressed: onRetry, child: const Text('Tekrar dene')),
+            FilledButton.tonal(
+              onPressed: onRetry,
+              child: Text(context.l10n.ortakTekrarDene),
+            ),
           ],
         ),
       ),

@@ -8,6 +8,8 @@ import 'package:mobile/src/features/site_kurali/data/site_kurali_api.dart';
 import 'package:mobile/src/features/site_kurali/domain/site_kurali_models.dart';
 import 'package:mobile/src/features/site_kurali/presentation/site_kurali_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Aga cikmayan sahte istemci — liste sabit doner; silme cagrilari
 /// kaydedilir (widget testi).
 class _FakeSiteKuraliApi extends SiteKuraliApi {
@@ -52,7 +54,7 @@ SiteKurali _k({
         siteKuraliApiProvider.overrideWithValue(api),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
-      child: const MaterialApp(home: SiteKuraliScreen()),
+      child: l10nApp(const SiteKuraliScreen()),
     ),
   );
 }

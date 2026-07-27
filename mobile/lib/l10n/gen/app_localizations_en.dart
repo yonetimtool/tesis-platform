@@ -2699,4 +2699,231 @@ class AppLocalizationsEn extends AppLocalizations {
   String karZamanEki(Object zaman) {
     return ' · $zaman';
   }
+
+  @override
+  String get kuralBaslik => 'Site Rules';
+
+  @override
+  String get kuralYeni => 'New rule';
+
+  @override
+  String get kuralAramaIpucu => 'Search titles (e.g. pool)';
+
+  @override
+  String get kuralEklendi => 'Rule added ✓';
+
+  @override
+  String get kuralGuncellendi => 'Rule updated ✓';
+
+  @override
+  String get kuralAramaBos => 'No rules match your search.';
+
+  @override
+  String get kuralYokYonetim => 'No rules yet. Add one with \"New rule\".';
+
+  @override
+  String get kuralYokSakin => 'No rules published yet.';
+
+  @override
+  String get kuralSilOnayBaslik => 'Delete this rule?';
+
+  @override
+  String kuralSilOnayGovde(Object baslik) {
+    return '\"$baslik\" will be permanently deleted.';
+  }
+
+  @override
+  String get kuralSilindi => 'Rule deleted ✓';
+
+  @override
+  String get kuralDuzenleBaslik => 'Edit rule';
+
+  @override
+  String get kuralBaslikAlan => 'Title * (e.g. Pool Hours)';
+
+  @override
+  String get kuralBaslikGerekli => 'Title is required';
+
+  @override
+  String get kuralMetni => 'Rule text *';
+
+  @override
+  String get kuralMetniGerekli => 'Rule text is required';
+
+  @override
+  String get kuralSira => 'Order (lowest first)';
+
+  @override
+  String get kuralSiraGecersiz => 'Order must be 0 or a positive integer';
+
+  @override
+  String get kuralMevcutGorsel => 'Existing image kept';
+
+  @override
+  String get kuralEkleButon => 'Add rule';
+
+  @override
+  String get ortakFotoOnlineTekrarDene =>
+      'An internet connection is required to upload a photo. Try again once you are back online.';
+
+  @override
+  String get ortakFotoBekleyinVeyaKaldir =>
+      'The photo has not been uploaded yet. Wait for the upload to finish or remove the photo.';
+
+  @override
+  String get duyuruYeni => 'New announcement';
+
+  @override
+  String get duyuruYayinlandi => 'Announcement published ✓';
+
+  @override
+  String get duyuruGuncellendi => 'Announcement updated ✓';
+
+  @override
+  String get duyuruYok => 'No announcements yet.';
+
+  @override
+  String get duyuruYonetim => 'Management';
+
+  @override
+  String duyuruMeta(Object ad, Object zaman, Object duzenlendi) {
+    return '$ad · $zaman$duzenlendi';
+  }
+
+  @override
+  String get duyuruDuzenlendiEki => ' · edited';
+
+  @override
+  String get duyuruSilOnay => 'Delete this announcement?';
+
+  @override
+  String get duyuruSilindi => 'Announcement deleted ✓';
+
+  @override
+  String get duyuruDuzenleBaslik => 'Edit announcement';
+
+  @override
+  String get duyuruBaslikZorunlu => 'Title is required';
+
+  @override
+  String get duyuruMetniAlan => 'Announcement text';
+
+  @override
+  String get duyuruMetniZorunlu => 'Announcement text is required';
+
+  @override
+  String get duyuruYayinla => 'Publish';
+
+  @override
+  String get ortakIslemler => 'Actions';
+
+  @override
+  String get sakinBaslik => 'Residents';
+
+  @override
+  String get sakinEkle => 'Add resident';
+
+  @override
+  String get sakinListelenemedi => 'Residents could not be listed.';
+
+  @override
+  String get sakinDaireYok => 'No unit assigned';
+
+  @override
+  String get sakinIslemleri => 'Resident actions';
+
+  @override
+  String get sakinParolaSifirla => 'Reset password';
+
+  @override
+  String get sakinParolaSifirlaOnay => 'Reset the password?';
+
+  @override
+  String sakinParolaSifirlaGovde(Object ad) {
+    return 'A new temporary code is generated for \"$ad\"; the old password stops working. The user signs in with phone + the new code and then sets a password.';
+  }
+
+  @override
+  String get sakinSifirla => 'Reset';
+
+  @override
+  String sakinYeniKodMesaji(Object ad) {
+    return 'New temporary code for \"$ad\". Share it with the resident; they sign in with phone + this code and then set a password.';
+  }
+
+  @override
+  String get sakinSilOnay => 'Delete resident?';
+
+  @override
+  String sakinSilGovde(Object ad) {
+    return '\"$ad\" will be removed. With no history the record is deleted outright; otherwise it becomes inactive. Either way the phone number is released (it can be registered again).';
+  }
+
+  @override
+  String sakinSilindi(Object ad) {
+    return '\"$ad\" deleted (number released)';
+  }
+
+  @override
+  String sakinPasiflestirildi(Object ad) {
+    return '\"$ad\" set to inactive — has history (number released)';
+  }
+
+  @override
+  String get sakinDuzenleBaslik => 'Edit resident';
+
+  @override
+  String get sakinYeniTelefon => 'New mobile number';
+
+  @override
+  String get sakinBosBirakDegismez => 'Leave empty to keep it unchanged';
+
+  @override
+  String get sakinGuncellendi => 'Updated ✓';
+
+  @override
+  String get ortakAdSoyad => 'Full name';
+
+  @override
+  String get ortakCepTelefonu => 'Mobile number';
+
+  @override
+  String get ortakTelefonIpucu => 'e.g. 0532 111 22 03';
+
+  @override
+  String get ortakTelefonZorunlu => 'Phone number is required';
+
+  @override
+  String get sakinGirisAnahtari => 'Sign-in key (globally unique).';
+
+  @override
+  String get ortakDaireNoIpucu => 'e.g. A-12';
+
+  @override
+  String get sakinDaireNoZorunlu => 'Unit number is required';
+
+  @override
+  String get sakinParolaOpsiyonel => 'Password (optional)';
+
+  @override
+  String get sakinBosBirakKod => 'Leave empty to generate a temporary code';
+
+  @override
+  String get sakinEklendiKod =>
+      'Resident added. Share this code with them; they sign in with phone + this code and then set a password.';
+
+  @override
+  String get sakinEklendi => 'Resident added ✓';
+
+  @override
+  String get sakinYok => 'No residents yet.\nAdd one from the bottom right.';
+
+  @override
+  String get ortakGeciciKodBaslik => 'Temporary sign-in code';
+
+  @override
+  String get ortakKopyala => 'Copy';
+
+  @override
+  String get ortakKopyalandi => 'Copied';
 }

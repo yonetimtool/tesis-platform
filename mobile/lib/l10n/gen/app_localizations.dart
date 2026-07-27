@@ -4480,6 +4480,426 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **' · {zaman}'**
   String karZamanEki(Object zaman);
+
+  /// No description provided for @kuralBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Site Kuralları'**
+  String get kuralBaslik;
+
+  /// No description provided for @kuralYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni kural'**
+  String get kuralYeni;
+
+  /// No description provided for @kuralAramaIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlıkta ara (örn. havuz)'**
+  String get kuralAramaIpucu;
+
+  /// No description provided for @kuralEklendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kural eklendi ✓'**
+  String get kuralEklendi;
+
+  /// No description provided for @kuralGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kural güncellendi ✓'**
+  String get kuralGuncellendi;
+
+  /// No description provided for @kuralAramaBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aramayla eşleşen kural yok.'**
+  String get kuralAramaBos;
+
+  /// No description provided for @kuralYokYonetim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz kural yok. \"Yeni kural\" ile ekleyin.'**
+  String get kuralYokYonetim;
+
+  /// No description provided for @kuralYokSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz kural yayınlanmamış.'**
+  String get kuralYokSakin;
+
+  /// No description provided for @kuralSilOnayBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kural silinsin mi?'**
+  String get kuralSilOnayBaslik;
+
+  /// Tirnak icindeki {baslik} kullanicinin girdigi metin
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{baslik}\" kalıcı olarak silinecek.'**
+  String kuralSilOnayGovde(Object baslik);
+
+  /// No description provided for @kuralSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kural silindi ✓'**
+  String get kuralSilindi;
+
+  /// No description provided for @kuralDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kuralı düzenle'**
+  String get kuralDuzenleBaslik;
+
+  /// No description provided for @kuralBaslikAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlık * (örn. Havuz Saatleri)'**
+  String get kuralBaslikAlan;
+
+  /// No description provided for @kuralBaslikGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlık gerekli'**
+  String get kuralBaslikGerekli;
+
+  /// No description provided for @kuralMetni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kural metni *'**
+  String get kuralMetni;
+
+  /// No description provided for @kuralMetniGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kural metni gerekli'**
+  String get kuralMetniGerekli;
+
+  /// No description provided for @kuralSira.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sıra (küçük önce)'**
+  String get kuralSira;
+
+  /// No description provided for @kuralSiraGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sıra 0 veya pozitif tam sayı olmalı'**
+  String get kuralSiraGecersiz;
+
+  /// No description provided for @kuralMevcutGorsel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mevcut görsel korunuyor'**
+  String get kuralMevcutGorsel;
+
+  /// No description provided for @kuralEkleButon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kuralı ekle'**
+  String get kuralEkleButon;
+
+  /// No description provided for @ortakFotoOnlineTekrarDene.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf yüklemek için internet bağlantısı gerekli. Bağlantı gelince tekrar deneyin.'**
+  String get ortakFotoOnlineTekrarDene;
+
+  /// No description provided for @ortakFotoBekleyinVeyaKaldir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf henüz yüklenmedi. Yüklemenin bitmesini bekleyin veya fotoyu kaldırın.'**
+  String get ortakFotoBekleyinVeyaKaldir;
+
+  /// No description provided for @duyuruYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni duyuru'**
+  String get duyuruYeni;
+
+  /// No description provided for @duyuruYayinlandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyuru yayınlandı ✓'**
+  String get duyuruYayinlandi;
+
+  /// No description provided for @duyuruGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyuru güncellendi ✓'**
+  String get duyuruGuncellendi;
+
+  /// No description provided for @duyuruYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz duyuru yok.'**
+  String get duyuruYok;
+
+  /// No description provided for @duyuruYonetim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetim'**
+  String get duyuruYonetim;
+
+  /// Duyuru alt satiri: yazar · zaman (+ duzenlendi eki)
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} · {zaman}{duzenlendi}'**
+  String duyuruMeta(Object ad, Object zaman, Object duzenlendi);
+
+  /// duyuruMeta icine giren istege bagli ek
+  ///
+  /// In tr, this message translates to:
+  /// **' · düzenlendi'**
+  String get duyuruDuzenlendiEki;
+
+  /// No description provided for @duyuruSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyuru silinsin mi?'**
+  String get duyuruSilOnay;
+
+  /// No description provided for @duyuruSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyuru silindi ✓'**
+  String get duyuruSilindi;
+
+  /// No description provided for @duyuruDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyuru düzenle'**
+  String get duyuruDuzenleBaslik;
+
+  /// No description provided for @duyuruBaslikZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlık zorunludur'**
+  String get duyuruBaslikZorunlu;
+
+  /// No description provided for @duyuruMetniAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyuru metni'**
+  String get duyuruMetniAlan;
+
+  /// No description provided for @duyuruMetniZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyuru metni zorunludur'**
+  String get duyuruMetniZorunlu;
+
+  /// No description provided for @duyuruYayinla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yayınla'**
+  String get duyuruYayinla;
+
+  /// No description provided for @ortakIslemler.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşlemler'**
+  String get ortakIslemler;
+
+  /// No description provided for @sakinBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Site Sakinleri'**
+  String get sakinBaslik;
+
+  /// No description provided for @sakinEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin ekle'**
+  String get sakinEkle;
+
+  /// No description provided for @sakinListelenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakinler listelenemedi.'**
+  String get sakinListelenemedi;
+
+  /// No description provided for @sakinDaireYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire atanmamış'**
+  String get sakinDaireYok;
+
+  /// No description provided for @sakinIslemleri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin işlemleri'**
+  String get sakinIslemleri;
+
+  /// No description provided for @sakinParolaSifirla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parola sıfırla'**
+  String get sakinParolaSifirla;
+
+  /// No description provided for @sakinParolaSifirlaOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parola sıfırlansın mı?'**
+  String get sakinParolaSifirlaOnay;
+
+  /// No description provided for @sakinParolaSifirlaGovde.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" için yeni geçici kod üretilir; eski parolası geçersiz olur. Kullanıcı telefon + yeni kod ile girip parolasını belirler.'**
+  String sakinParolaSifirlaGovde(Object ad);
+
+  /// No description provided for @sakinSifirla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sıfırla'**
+  String get sakinSifirla;
+
+  /// No description provided for @sakinYeniKodMesaji.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" için yeni geçici kod. Sakine iletin; telefon + bu kod ile girip parolasını belirler.'**
+  String sakinYeniKodMesaji(Object ad);
+
+  /// No description provided for @sakinSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakini sil?'**
+  String get sakinSilOnay;
+
+  /// No description provided for @sakinSilGovde.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" silinir. Geçmiş kaydı yoksa tamamen silinir; varsa pasifleşir. Her durumda telefon numarası serbest kalır (aynı numarayla yeniden kayıt yapılabilir).'**
+  String sakinSilGovde(Object ad);
+
+  /// No description provided for @sakinSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" silindi (numara serbest)'**
+  String sakinSilindi(Object ad);
+
+  /// No description provided for @sakinPasiflestirildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" pasifleştirildi — geçmişi var (numara serbest)'**
+  String sakinPasiflestirildi(Object ad);
+
+  /// No description provided for @sakinDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakini düzenle'**
+  String get sakinDuzenleBaslik;
+
+  /// No description provided for @sakinYeniTelefon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni cep telefonu'**
+  String get sakinYeniTelefon;
+
+  /// No description provided for @sakinBosBirakDegismez.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş bırakırsanız değişmez'**
+  String get sakinBosBirakDegismez;
+
+  /// No description provided for @sakinGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güncellendi ✓'**
+  String get sakinGuncellendi;
+
+  /// No description provided for @ortakAdSoyad.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad Soyad'**
+  String get ortakAdSoyad;
+
+  /// No description provided for @ortakCepTelefonu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Cep telefonu'**
+  String get ortakCepTelefonu;
+
+  /// No description provided for @ortakTelefonIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. 0532 111 22 03'**
+  String get ortakTelefonIpucu;
+
+  /// No description provided for @ortakTelefonZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon zorunludur'**
+  String get ortakTelefonZorunlu;
+
+  /// No description provided for @sakinGirisAnahtari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Giriş anahtarı (global benzersiz).'**
+  String get sakinGirisAnahtari;
+
+  /// No description provided for @ortakDaireNoIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'örn. A-12'**
+  String get ortakDaireNoIpucu;
+
+  /// No description provided for @sakinDaireNoZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire no zorunludur'**
+  String get sakinDaireNoZorunlu;
+
+  /// No description provided for @sakinParolaOpsiyonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parola (opsiyonel)'**
+  String get sakinParolaOpsiyonel;
+
+  /// No description provided for @sakinBosBirakKod.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş bırakırsanız geçici kod üretilir'**
+  String get sakinBosBirakKod;
+
+  /// No description provided for @sakinEklendiKod.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin eklendi. Bu kodu sakine iletin; telefon + bu kod ile girip parolasını belirler.'**
+  String get sakinEklendiKod;
+
+  /// No description provided for @sakinEklendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin eklendi ✓'**
+  String get sakinEklendi;
+
+  /// Iki satir (\n) — bos liste durumu
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz site sakini yok.\nSağ alttan ekleyebilirsiniz.'**
+  String get sakinYok;
+
+  /// No description provided for @ortakGeciciKodBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçici giriş kodu'**
+  String get ortakGeciciKodBaslik;
+
+  /// No description provided for @ortakKopyala.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kopyala'**
+  String get ortakKopyala;
+
+  /// No description provided for @ortakKopyalandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kopyalandı'**
+  String get ortakKopyalandi;
 }
 
 class _AppLocalizationsDelegate

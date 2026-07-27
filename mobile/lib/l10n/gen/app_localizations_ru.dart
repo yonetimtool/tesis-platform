@@ -2753,4 +2753,233 @@ class AppLocalizationsRu extends AppLocalizations {
   String karZamanEki(Object zaman) {
     return ' · $zaman';
   }
+
+  @override
+  String get kuralBaslik => 'Правила объекта';
+
+  @override
+  String get kuralYeni => 'Новое правило';
+
+  @override
+  String get kuralAramaIpucu => 'Поиск по заголовкам (напр. бассейн)';
+
+  @override
+  String get kuralEklendi => 'Правило добавлено ✓';
+
+  @override
+  String get kuralGuncellendi => 'Правило обновлено ✓';
+
+  @override
+  String get kuralAramaBos => 'Нет правил, подходящих под поиск.';
+
+  @override
+  String get kuralYokYonetim =>
+      'Правил пока нет. Добавьте через \"Новое правило\".';
+
+  @override
+  String get kuralYokSakin => 'Правила пока не опубликованы.';
+
+  @override
+  String get kuralSilOnayBaslik => 'Удалить правило?';
+
+  @override
+  String kuralSilOnayGovde(Object baslik) {
+    return '\"$baslik\" будет удалено безвозвратно.';
+  }
+
+  @override
+  String get kuralSilindi => 'Правило удалено ✓';
+
+  @override
+  String get kuralDuzenleBaslik => 'Изменить правило';
+
+  @override
+  String get kuralBaslikAlan => 'Заголовок * (напр. Часы бассейна)';
+
+  @override
+  String get kuralBaslikGerekli => 'Заголовок обязателен';
+
+  @override
+  String get kuralMetni => 'Текст правила *';
+
+  @override
+  String get kuralMetniGerekli => 'Текст правила обязателен';
+
+  @override
+  String get kuralSira => 'Порядок (меньше — раньше)';
+
+  @override
+  String get kuralSiraGecersiz =>
+      'Порядок должен быть 0 или положительным целым';
+
+  @override
+  String get kuralMevcutGorsel => 'Текущее изображение сохраняется';
+
+  @override
+  String get kuralEkleButon => 'Добавить правило';
+
+  @override
+  String get ortakFotoOnlineTekrarDene =>
+      'Для загрузки фото нужно интернет-соединение. Повторите попытку, когда связь вернётся.';
+
+  @override
+  String get ortakFotoBekleyinVeyaKaldir =>
+      'Фото ещё не загружено. Дождитесь окончания загрузки или удалите фото.';
+
+  @override
+  String get duyuruYeni => 'Новое объявление';
+
+  @override
+  String get duyuruYayinlandi => 'Объявление опубликовано ✓';
+
+  @override
+  String get duyuruGuncellendi => 'Объявление обновлено ✓';
+
+  @override
+  String get duyuruYok => 'Объявлений пока нет.';
+
+  @override
+  String get duyuruYonetim => 'Управление';
+
+  @override
+  String duyuruMeta(Object ad, Object zaman, Object duzenlendi) {
+    return '$ad · $zaman$duzenlendi';
+  }
+
+  @override
+  String get duyuruDuzenlendiEki => ' · изменено';
+
+  @override
+  String get duyuruSilOnay => 'Удалить объявление?';
+
+  @override
+  String get duyuruSilindi => 'Объявление удалено ✓';
+
+  @override
+  String get duyuruDuzenleBaslik => 'Изменить объявление';
+
+  @override
+  String get duyuruBaslikZorunlu => 'Заголовок обязателен';
+
+  @override
+  String get duyuruMetniAlan => 'Текст объявления';
+
+  @override
+  String get duyuruMetniZorunlu => 'Текст объявления обязателен';
+
+  @override
+  String get duyuruYayinla => 'Опубликовать';
+
+  @override
+  String get ortakIslemler => 'Действия';
+
+  @override
+  String get sakinBaslik => 'Жители объекта';
+
+  @override
+  String get sakinEkle => 'Добавить жителя';
+
+  @override
+  String get sakinListelenemedi => 'Не удалось загрузить список жителей.';
+
+  @override
+  String get sakinDaireYok => 'Квартира не назначена';
+
+  @override
+  String get sakinIslemleri => 'Действия с жителем';
+
+  @override
+  String get sakinParolaSifirla => 'Сбросить пароль';
+
+  @override
+  String get sakinParolaSifirlaOnay => 'Сбросить пароль?';
+
+  @override
+  String sakinParolaSifirlaGovde(Object ad) {
+    return 'Для \"$ad\" будет создан новый временный код; старый пароль перестанет работать. Пользователь входит по телефону + новому коду и задаёт пароль.';
+  }
+
+  @override
+  String get sakinSifirla => 'Сбросить';
+
+  @override
+  String sakinYeniKodMesaji(Object ad) {
+    return 'Новый временный код для \"$ad\". Передайте его жителю: он входит по телефону + этому коду и задаёт пароль.';
+  }
+
+  @override
+  String get sakinSilOnay => 'Удалить жителя?';
+
+  @override
+  String sakinSilGovde(Object ad) {
+    return '\"$ad\" будет удалён. Если истории нет — запись удаляется полностью, иначе становится неактивной. В любом случае номер телефона освобождается (его можно зарегистрировать снова).';
+  }
+
+  @override
+  String sakinSilindi(Object ad) {
+    return '\"$ad\" удалён (номер освобождён)';
+  }
+
+  @override
+  String sakinPasiflestirildi(Object ad) {
+    return '\"$ad\" деактивирован — есть история (номер освобождён)';
+  }
+
+  @override
+  String get sakinDuzenleBaslik => 'Изменить жителя';
+
+  @override
+  String get sakinYeniTelefon => 'Новый мобильный номер';
+
+  @override
+  String get sakinBosBirakDegismez => 'Оставьте пустым — не изменится';
+
+  @override
+  String get sakinGuncellendi => 'Обновлено ✓';
+
+  @override
+  String get ortakAdSoyad => 'Имя и фамилия';
+
+  @override
+  String get ortakCepTelefonu => 'Мобильный номер';
+
+  @override
+  String get ortakTelefonIpucu => 'напр. 0532 111 22 03';
+
+  @override
+  String get ortakTelefonZorunlu => 'Телефон обязателен';
+
+  @override
+  String get sakinGirisAnahtari => 'Ключ входа (глобально уникальный).';
+
+  @override
+  String get ortakDaireNoIpucu => 'напр. A-12';
+
+  @override
+  String get sakinDaireNoZorunlu => 'Номер квартиры обязателен';
+
+  @override
+  String get sakinParolaOpsiyonel => 'Пароль (необязательно)';
+
+  @override
+  String get sakinBosBirakKod => 'Оставьте пустым — будет создан временный код';
+
+  @override
+  String get sakinEklendiKod =>
+      'Житель добавлен. Передайте ему этот код: он входит по телефону + этому коду и задаёт пароль.';
+
+  @override
+  String get sakinEklendi => 'Житель добавлен ✓';
+
+  @override
+  String get sakinYok => 'Жителей пока нет.\nДобавьте кнопкой справа снизу.';
+
+  @override
+  String get ortakGeciciKodBaslik => 'Временный код входа';
+
+  @override
+  String get ortakKopyala => 'Копировать';
+
+  @override
+  String get ortakKopyalandi => 'Скопировано';
 }
