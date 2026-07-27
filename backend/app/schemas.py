@@ -731,7 +731,36 @@ class MePatrolWindowResponse(BaseModel):
     windows: list[MePatrolWindowItem]
 
 
-# ----------------------------- notifications ------------------------------- #
+# ------------------------------ icerik cevirisi ---------------------------- #
+CeviriDurum = Literal["hazir", "bekliyor", "hata"]
+
+
+class CevrilebilirOut(BaseModel):
+    """Cevrilebilir YAYIN icerigi (duyuru / site kurali / etkinlik) ortak alanlari.
+
+    Govdedeki metin alanlari (baslik + govde/icerik/aciklama) Accept-Language
+    ile SECILEN dilde doner; asagidaki alanlar o metnin NE oldugunu soyler:
+
+    * `orijinal_dil`   : icerigin yazildigi dil (kaynak).
+    * `gosterilen_dil` : govdedeki metnin GERCEK dili. Ceviri hazir degilse
+                         geri-dusme yuzunden `orijinal_dil`e esit olur.
+    * `ceviri_durumu`  : istenen dil icin hazir | bekliyor | hata. `bekliyor`
+                         iken istemci "çeviri hazırlanıyor" gosterebilir —
+                         metin alanlari BOS DEGIL, orijinali tasir.
+    * `cevirildi_mi`   : govdedeki metin MAKINE cevirisi mi? Orijinalde ve elle
+                         duzeltilmis ceviride false.
+    * `orijinal`       : orijinal metinler ({"baslik": ..., ...}) — HER ZAMAN
+                         doner (ayri istek/parametre gerekmez), boylece istemci
+                         "orijinali goster" secenegini tek yanitla sunabilir.
+    """
+
+    orijinal_dil: str = "tr"
+    gosterilen_dil: str = "tr"
+    ceviri_durumu: CeviriDurum = "hazir"
+    cevirildi_mi: bool = False
+    orijinal: dict[str, str] = Field(default_factory=dict)
+
+
 # ---------------------------- announcements -------------------------------- #
 class AnnouncementCreate(BaseModel):
     baslik: str = Field(..., min_length=1, max_length=200)
@@ -747,10 +776,11 @@ class AnnouncementUpdate(BaseModel):
     foto_key: str | None = None
 
 
-class AnnouncementOut(BaseModel):
+class AnnouncementOut(CevrilebilirOut):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+    # baslik/govde: Accept-Language ile secilen dilde (bkz. CevrilebilirOut).
     baslik: str
     govde: str
     foto_key: str | None = None
@@ -1303,10 +1333,12 @@ class EtkinlikRsvp(BaseModel):
     durum: KatilimDurum
 
 
-class EtkinlikOut(BaseModel):
+class EtkinlikOut(CevrilebilirOut):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+    # baslik/aciklama: Accept-Language ile secilen dilde. konum CEVRILMEZ
+    # (yer adi) — bkz. CevrilebilirOut.
     baslik: str
     aciklama: str
     tarih: datetime
@@ -1357,10 +1389,11 @@ class SiteKuraliUpdate(BaseModel):
         return self
 
 
-class SiteKuraliOut(BaseModel):
+class SiteKuraliOut(CevrilebilirOut):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+    # baslik/icerik: Accept-Language ile secilen dilde (bkz. CevrilebilirOut).
     baslik: str
     icerik: str
     foto_key: str | None = None

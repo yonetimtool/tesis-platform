@@ -13,11 +13,17 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Header, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import ceviri
+from ..ceviri_api import (
+    ceviri_isaretle_ve_kuyrukla,
+    ceviri_uygula,
+    yerel_harita,
+)
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -56,9 +62,19 @@ def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
         raise APIError(422, "invalid_foto_key", "foto_key tenant alani disinda")
 
 
-def _out(obj: Announcement, olusturan_ad: str | None) -> AnnouncementOut:
+#: Ceviri kaydindaki tip adi (bkz. app/ceviri.py TIPLER).
+_TIP = "duyuru"
+
+
+def _out(
+    obj: Announcement,
+    olusturan_ad: str | None,
+    yerel: ceviri.Yerel | None = None,
+) -> AnnouncementOut:
     out = AnnouncementOut.model_validate(obj)
     out.olusturan_ad = olusturan_ad
+    # Metin alanlarini istenen dile cevir + ceviri bayraklarini doldur.
+    ceviri_uygula(out, tip_ad=_TIP, yerel=yerel, kaynak_dil=obj.kaynak_dil)
     if obj.foto_key:
         try:
             out.foto_url = presign_get(obj.foto_key)
@@ -72,6 +88,12 @@ def _out(obj: Announcement, olusturan_ad: str | None) -> AnnouncementOut:
 async def list_announcements(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
+    dil: str | None = Query(
+        None,
+        description="Accept-Language'i EZER. Dil kodu (tr/en/ar/ru/de/fr/es) "
+        "ya da 'orijinal' (kaynak dil).",
+    ),
+    accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_READER),
 ) -> AnnouncementListResponse:
@@ -87,15 +109,24 @@ async def list_announcements(
             .offset(offset)
         )
     ).all()
+    yereller = await yerel_harita(
+        db,
+        tip_ad=_TIP,
+        objeler=[a for a, _ad in rows],
+        accept_language=accept_language,
+        istek_dil=dil,
+    )
     return AnnouncementListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
-        items=[_out(a, ad) for a, ad in rows],
+        items=[_out(a, ad, yereller.get(a.id)) for a, ad in rows],
     )
 
 
 @router.get("/{announcement_id}", response_model=AnnouncementOut)
 async def get_announcement(
     announcement_id: uuid.UUID,
+    dil: str | None = Query(None, description="Accept-Language'i ezer (bkz. liste)."),
+    accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_READER),
 ) -> AnnouncementOut:
@@ -103,7 +134,14 @@ async def get_announcement(
     ad = (
         await db.execute(select(AppUser.ad).where(AppUser.id == obj.olusturan_user_id))
     ).scalar_one_or_none()
-    return _out(obj, ad)
+    yereller = await yerel_harita(
+        db,
+        tip_ad=_TIP,
+        objeler=[obj],
+        accept_language=accept_language,
+        istek_dil=dil,
+    )
+    return _out(obj, ad, yereller.get(obj.id))
 
 
 @router.post("", response_model=AnnouncementOut, status_code=201)
@@ -126,6 +164,16 @@ async def create_announcement(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    # 7 dile ceviri: hedef diller 'bekliyor' acilir + is kuyruklanir. Ceviri
+    # hatasi/kuyruk erisilemezligi duyuru kaydini DUSURMEZ (bkz. ceviri_service).
+    await ceviri_isaretle_ve_kuyrukla(
+        db,
+        tip_ad=_TIP,
+        entity_id=obj.id,
+        tenant_id=user.tenant_id,
+        orijinal={"baslik": obj.baslik, "govde": obj.govde},
+        kaynak_dil=obj.kaynak_dil,
+    )
     # EK push (in-app kaydi duyurunun kendisi; push hatasi akisi kirmaz).
     dispatch_external(
         body.baslik,
@@ -154,6 +202,17 @@ async def update_announcement(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    # Yeniden ceviri: kaynak metin degistiyse eski ceviriler GECERSIZ. Elle
+    # duzeltilmis ceviriler yalniz kaynak metin AYNI kaldiysa korunur
+    # (kural: app/ceviri.py [korunur_mu]).
+    await ceviri_isaretle_ve_kuyrukla(
+        db,
+        tip_ad=_TIP,
+        entity_id=obj.id,
+        tenant_id=obj.tenant_id,
+        orijinal={"baslik": obj.baslik, "govde": obj.govde},
+        kaynak_dil=obj.kaynak_dil,
+    )
     ad = (
         await db.execute(select(AppUser.ad).where(AppUser.id == obj.olusturan_user_id))
     ).scalar_one_or_none()

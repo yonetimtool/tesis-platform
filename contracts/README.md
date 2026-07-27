@@ -406,6 +406,58 @@ Bilincli sapmalar (istek metnine gore):
 Geriye uyumluluk: tum kolonlar nullable ya da `DEFAULT`'lu; yeni alanlar,
 filtreler ve `oynatilabilir` **additive** — mevcut istemciler etkilenmez.
 
+## Icerik cevirisi — yayin icerigi 7 dilde (Accept-Language)
+
+Yonetimin yazdigi **yayin icerigi** (duyuru / site kurali / etkinlik) sakinin
+kendi dilinde okunur. Mimari kararlar (baglayici):
+
+| Karar | Deger |
+|---|---|
+| Ne zaman cevrilir | **YAZMA** aninda (kayit sonrasi kuyruk); okuma cevirmez |
+| Kac dil | 7: `tr` (kaynak/varsayilan) + `en`, `ar`, `ru`, `de`, `fr`, `es` |
+| Saklama | Entity basina yan tablo: `announcement_ceviri`, `site_kurali_ceviri`, `etkinlik_ceviri` (migration 0007; RLS ENABLE+FORCE, composite FK + CASCADE) |
+| Cevrilen alanlar | duyuru `baslik`+`govde`, kural `baslik`+`icerik`, etkinlik `baslik`+`aciklama` |
+| CEVRILMEYEN | `konum` (yer adi), `foto_key`/`foto_url`, tarih/sira/sayilar |
+| Motor | **Kendi barindirdigimiz LibreTranslate** (compose ic agi; icerik dis servise GITMEZ) |
+| Orijinal | **Her zaman korunur** ve her yanitta `orijinal` alaninda doner |
+
+### Okuma sozlesmesi
+
+`Accept-Language` (RFC 9110; `tr-TR,tr;q=0.9,en;q=0.8`) ile dil secilir. Bolge
+eki duser, q'ya gore ilk **desteklenen** dil kazanir. **Geri-dusme zinciri:**
+`?dil=` → Accept-Language → icerigin orijinal dili. Desteklenmeyen dil **400
+URETMEZ** — orijinale duser (icerik her zaman okunabilir). `?dil=orijinal`
+kaynak dili zorlar.
+
+Yanit alanlari (`CeviriAlanlari`, openapi.yaml): `orijinal_dil`,
+`gosterilen_dil`, `ceviri_durumu` (`hazir`|`bekliyor`|`hata`), `cevirildi_mi`,
+`orijinal`.
+
+**Ceviri hazir degilse ORIJINAL metin servis edilir** ve `ceviri_durumu`
+gercegi soyler; istemci "çeviri hazırlanıyor" gosterebilir ama metin alanlari
+**asla bos kalmaz**.
+
+### Elle duzeltme kurali (tek cumle)
+
+Yonetici bir dildeki ceviriyi duzeltirse (`elle_duzeltildi=true`), bu duzeltme
+**yalnizca kaynak metin degismedikce korunur**. Ilgisiz bir alan (gorsel,
+tarih, sira) duzenlenirse duzeltme kalir; kaynak **metin** degisirse duzeltme
+artik yanlis metnin duzeltmesi oldugu icin gecersizdir ve yeniden cevrilir.
+Anahtar: her ceviri satirinda kaynak metnin ozeti (`kaynak_hash`) tutulur.
+
+### Basarisizlik ilkesi
+
+Ceviri **EK** bir islemdir: saglayici ya da kuyruk erisilemez olsa bile icerik
+kaydi **BASARILI** olur (POST/PATCH 2xx). Basarisiz diller `durum='hata'`
+isaretlenir ve orijinal metin servis edilmeye devam eder.
+
+### Yapilandirma
+
+`TRANSLATE_PROVIDER` = `libretranslate` (kod varsayilani) | `echo`
+(deterministik sahte — **dev/test varsayilani**, model indirmesi/CPU gerekmez) |
+`noop`. `TRANSLATE_URL` ic ag adresidir (operator ayari; kullanici girdisi
+olmadigi icin SSRF kapisindan gecmez).
+
 ## API base path
 
 - **Base path YOK** (`/v0` kaldirildi). Tum endpoint'ler host:port kokunden sunulur:

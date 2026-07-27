@@ -955,6 +955,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/AcceptLanguage"
+        - $ref: "#/components/parameters/DilQuery"
       responses:
         "200":
           description: Liste
@@ -980,6 +982,16 @@ paths:
         data: tip=duyuru, announcement_id). Opsiyonel gorsel: once
         POST /uploads/presign ile foto_key + PUT URL alinir, dosya PUT edilir,
         foto_key burada gonderilir. Okumada foto_url (presigned GET) doner.
+
+        **OTOMATIK CEVIRI**: kayit sonrasi kaynak dil disindaki 6 dil icin
+        ceviri isi ACILIR (`ceviri_durumu` = `bekliyor`) ve arka planda
+        uretilir. Ceviri EK bir islemdir: saglayici ya da kuyruk
+        erisilemez olsa bile bu istek BASARILI olur ve orijinal metin
+        servis edilmeye devam eder (basarisiz diller `hata` isaretlenir).
+        Duzenlemede kaynak METIN degistiyse ceviriler yeniden uretilir;
+        yonetici tarafindan ELLE DUZELTILMIS bir ceviri YALNIZCA kaynak
+        metin AYNI kaldiysa (orn. yalniz gorsel/tarih/sira degistiyse)
+        KORUNUR.
       requestBody:
         required: true
         content:
@@ -1002,6 +1014,9 @@ paths:
     get:
       tags: [announcements]
       summary: Duyuru detayi (tum roller)
+      parameters:
+        - $ref: "#/components/parameters/AcceptLanguage"
+        - $ref: "#/components/parameters/DilQuery"
       responses:
         "200":
           description: Duyuru
@@ -1014,6 +1029,16 @@ paths:
     patch:
       tags: [announcements]
       summary: Duyuru guncelle (admin + yonetici)
+      description: |
+        **OTOMATIK CEVIRI**: kayit sonrasi kaynak dil disindaki 6 dil icin
+        ceviri isi ACILIR (`ceviri_durumu` = `bekliyor`) ve arka planda
+        uretilir. Ceviri EK bir islemdir: saglayici ya da kuyruk
+        erisilemez olsa bile bu istek BASARILI olur ve orijinal metin
+        servis edilmeye devam eder (basarisiz diller `hata` isaretlenir).
+        Duzenlemede kaynak METIN degistiyse ceviriler yeniden uretilir;
+        yonetici tarafindan ELLE DUZELTILMIS bir ceviri YALNIZCA kaynak
+        metin AYNI kaldiysa (orn. yalniz gorsel/tarih/sira degistiyse)
+        KORUNUR.
       requestBody:
         required: true
         content:
@@ -1887,6 +1912,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/AcceptLanguage"
+        - $ref: "#/components/parameters/DilQuery"
         - name: aktif
           in: query
           required: false
@@ -1925,6 +1952,16 @@ paths:
         (duyuru + site kurali ile AYNI akis: ayni depo, ayni tur/boyut
         limitleri). foto_key kendi tenant onekinde olmali — aksi halde 422
         `invalid_foto_key` (IDOR korumasi). Okumada `foto_url` doner.
+
+        **OTOMATIK CEVIRI**: kayit sonrasi kaynak dil disindaki 6 dil icin
+        ceviri isi ACILIR (`ceviri_durumu` = `bekliyor`) ve arka planda
+        uretilir. Ceviri EK bir islemdir: saglayici ya da kuyruk
+        erisilemez olsa bile bu istek BASARILI olur ve orijinal metin
+        servis edilmeye devam eder (basarisiz diller `hata` isaretlenir).
+        Duzenlemede kaynak METIN degistiyse ceviriler yeniden uretilir;
+        yonetici tarafindan ELLE DUZELTILMIS bir ceviri YALNIZCA kaynak
+        metin AYNI kaldiysa (orn. yalniz gorsel/tarih/sira degistiyse)
+        KORUNUR.
       requestBody:
         required: true
         content:
@@ -1947,6 +1984,9 @@ paths:
     get:
       tags: [etkinlik]
       summary: Etkinlik detayi + seffaf sayilar + kendi beyanim
+      parameters:
+        - $ref: "#/components/parameters/AcceptLanguage"
+        - $ref: "#/components/parameters/DilQuery"
       responses:
         "200":
           description: Etkinlik
@@ -1963,6 +2003,16 @@ paths:
         yalniz `bitis_zamani` gonderildiginde de ters aralik olusamaz (422
         `invalid_bitis_zamani`). `bitis_zamani: null` bitisi kaldirir
         (etkinlik anliga doner); `foto_key: null` gorseli kaldirir.
+
+        **OTOMATIK CEVIRI**: kayit sonrasi kaynak dil disindaki 6 dil icin
+        ceviri isi ACILIR (`ceviri_durumu` = `bekliyor`) ve arka planda
+        uretilir. Ceviri EK bir islemdir: saglayici ya da kuyruk
+        erisilemez olsa bile bu istek BASARILI olur ve orijinal metin
+        servis edilmeye devam eder (basarisiz diller `hata` isaretlenir).
+        Duzenlemede kaynak METIN degistiyse ceviriler yeniden uretilir;
+        yonetici tarafindan ELLE DUZELTILMIS bir ceviri YALNIZCA kaynak
+        metin AYNI kaldiysa (orn. yalniz gorsel/tarih/sira degistiyse)
+        KORUNUR.
       requestBody:
         required: true
         content:
@@ -2006,6 +2056,9 @@ paths:
         content:
           application/json:
             schema: { $ref: "#/components/schemas/EtkinlikRsvp" }
+      parameters:
+        - $ref: "#/components/parameters/AcceptLanguage"
+        - $ref: "#/components/parameters/DilQuery"
       responses:
         "200":
           description: Beyan kaydedildi/guncellendi
@@ -2034,6 +2087,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/AcceptLanguage"
+        - $ref: "#/components/parameters/DilQuery"
         - name: q
           in: query
           required: false
@@ -2063,6 +2118,16 @@ paths:
         gonderilir (tenant-namespace dogrulanir; gorev/talep/duyuru/kargo
         ile ayni desen — yeni upload yolu YOK). Push YOK — kurallar basvuru
         icerigidir (urun karari).
+
+        **OTOMATIK CEVIRI**: kayit sonrasi kaynak dil disindaki 6 dil icin
+        ceviri isi ACILIR (`ceviri_durumu` = `bekliyor`) ve arka planda
+        uretilir. Ceviri EK bir islemdir: saglayici ya da kuyruk
+        erisilemez olsa bile bu istek BASARILI olur ve orijinal metin
+        servis edilmeye devam eder (basarisiz diller `hata` isaretlenir).
+        Duzenlemede kaynak METIN degistiyse ceviriler yeniden uretilir;
+        yonetici tarafindan ELLE DUZELTILMIS bir ceviri YALNIZCA kaynak
+        metin AYNI kaldiysa (orn. yalniz gorsel/tarih/sira degistiyse)
+        KORUNUR.
       requestBody:
         required: true
         content:
@@ -2085,6 +2150,9 @@ paths:
     get:
       tags: [site-kurallari]
       summary: Kural detayi (tum roller)
+      parameters:
+        - $ref: "#/components/parameters/AcceptLanguage"
+        - $ref: "#/components/parameters/DilQuery"
       responses:
         "200":
           description: Kural
@@ -2096,7 +2164,18 @@ paths:
     patch:
       tags: [site-kurallari]
       summary: Kural duzenle (admin + yonetici; en az bir alan)
-      description: foto_key acikca null gonderilirse gorsel kaldirilir.
+      description: |
+        foto_key acikca null gonderilirse gorsel kaldirilir.
+
+        **OTOMATIK CEVIRI**: kayit sonrasi kaynak dil disindaki 6 dil icin
+        ceviri isi ACILIR (`ceviri_durumu` = `bekliyor`) ve arka planda
+        uretilir. Ceviri EK bir islemdir: saglayici ya da kuyruk
+        erisilemez olsa bile bu istek BASARILI olur ve orijinal metin
+        servis edilmeye devam eder (basarisiz diller `hata` isaretlenir).
+        Duzenlemede kaynak METIN degistiyse ceviriler yeniden uretilir;
+        yonetici tarafindan ELLE DUZELTILMIS bir ceviri YALNIZCA kaynak
+        metin AYNI kaldiysa (orn. yalniz gorsel/tarih/sira degistiyse)
+        KORUNUR.
       requestBody:
         required: true
         content:
@@ -4820,6 +4899,39 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      required: false
+      description: |
+        Yayin iceriginin (duyuru / site kurali / etkinlik) hangi dilde
+        servis edilecegini belirler. Standart RFC 9110 bicimi desteklenir:
+        `tr-TR,tr;q=0.9,en;q=0.8`.
+
+        **Eslestirme**: bolge eki DUSURULUR (`tr-TR` -> `tr`), q'ya gore
+        azalan sirada ilk DESTEKLENEN dil secilir. Desteklenen kume:
+        `tr` (varsayilan/kaynak), `en`, `ar`, `ru`, `de`, `fr`, `es`.
+
+        **GERI-DUSME ZINCIRI**: `?dil=` -> Accept-Language'daki ilk
+        desteklenen dil -> icerigin ORIJINAL dili. Desteklenmeyen bir dil
+        istemek HATA DEGILDIR (400 donmez) — orijinale duser, yani icerik
+        her zaman okunabilir.
+
+        Ceviri henuz hazir degilse (`ceviri_durumu` = `bekliyor`/`hata`)
+        ORIJINAL metin servis edilir; govde ASLA bos kalmaz.
+      schema: { type: string, example: "ru-RU,ru;q=0.9,en;q=0.8" }
+    DilQuery:
+      name: dil
+      in: query
+      required: false
+      description: |
+        Accept-Language basligini EZER (panel/dogrulama icin). Dil kodu
+        (`tr`|`en`|`ar`|`ru`|`de`|`fr`|`es`) ya da `orijinal` — `orijinal`
+        icerigin kaynak dilini zorlar. Desteklenmeyen deger 400 URETMEZ;
+        geri-dusme zinciri isler.
+      schema:
+        type: string
+        enum: [tr, en, ar, ru, de, fr, es, orijinal]
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -5968,8 +6080,67 @@ components:
         checkpoint_id: { type: string, format: uuid, nullable: true }
 
     # ------------------------- notifications ----------------------- #
+    CeviriAlanlari:
+      type: object
+      description: |
+        CEVRILEBILIR YAYIN ICERIGININ ceviri ustverisi (duyuru / site kurali /
+        etkinlik ortak). Govdedeki metin alanlari (`baslik` + `govde` /
+        `icerik` / `aciklama`) Accept-Language ile SECILEN dilde doner;
+        asagidaki alanlar o metnin NE oldugunu soyler.
+
+        Mimari: ceviri YAZMA aninda uretilir (7 dil saklanir), okuma
+        Accept-Language ile servis edilir, ORIJINAL metin her zaman korunur.
+        Ceviri motoru kendi barindirdigimiz LibreTranslate'tir — icerik dis
+        bir servise gonderilmez.
+
+        CEVRILMEYEN alanlar (bilincli): `konum` (yer adi), `foto_key`/
+        `foto_url` (gorsel), tarih/sira/sayi alanlari.
+      required: [orijinal_dil, gosterilen_dil, ceviri_durumu, cevirildi_mi, orijinal]
+      properties:
+        orijinal_dil:
+          type: string
+          description: Icerigin YAZILDIGI (kaynak) dil. Su an her zaman `tr`.
+          example: tr
+        gosterilen_dil:
+          type: string
+          description: |
+            Govdedeki metnin GERCEK dili. Ceviri hazir degilse geri-dusme
+            nedeniyle `orijinal_dil`e esittir.
+          example: ru
+        ceviri_durumu:
+          type: string
+          enum: [hazir, bekliyor, hata]
+          description: |
+            Istenen dil icin cevirinin durumu.
+
+            | durum | anlam | govdedeki metin |
+            |---|---|---|
+            | `hazir` | ceviri servis edilebilir (ya da kaynak dil istendi) | istenen dilde |
+            | `bekliyor` | ceviri kuyrukta/uretiliyor | ORIJINAL |
+            | `hata` | ceviri saglayicisi basarisiz | ORIJINAL |
+
+            Istemci `bekliyor` iken "çeviri hazırlanıyor" gosterebilir; metin
+            alanlari BOS DEGILDIR.
+        cevirildi_mi:
+          type: boolean
+          description: |
+            Govdedeki metin MAKINE cevirisi mi? Orijinal metinde ve yonetici
+            tarafindan ELLE DUZELTILMIS ceviride `false`.
+        orijinal:
+          type: object
+          additionalProperties: { type: string }
+          description: |
+            Orijinal (kaynak dildeki) metinler — HER ZAMAN doner (ayri istek
+            ya da `?dil=orijinal` gerekmez). Anahtarlar entity'nin cevrilen
+            alanlaridir; orn. duyuruda `{"baslik": ..., "govde": ...}`.
+          example: { baslik: "Su kesintisi", govde: "Yarin 10:00-12:00." }
     Announcement:
       type: object
+      description: >-
+        Cevrilen metin alanlari `baslik` + `govde`; Accept-Language ile secilen
+        dilde doner. Ceviri ustverisi: CeviriAlanlari.
+      allOf:
+        - $ref: "#/components/schemas/CeviriAlanlari"
       required: [id, baslik, govde, olusturan_user_id, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
@@ -6490,6 +6661,11 @@ components:
         Etkinlik + SEFFAF katilim sayilari. Sayilar herkese acik;
         kim-katiliyor listesi URUN GEREGI donmez (kimlik degil yalniz sayi).
         benim_durumum istekteki kullanicinin KENDI beyanidir.
+
+        Cevrilen metin alanlari `baslik` + `aciklama`; `konum` CEVRILMEZ
+        (yer adi). Ceviri ustverisi: CeviriAlanlari.
+      allOf:
+        - $ref: "#/components/schemas/CeviriAlanlari"
       required: [id, baslik, aciklama, tarih, olusturan_user_id,
                  katiliyorum_sayisi, katilmiyorum_sayisi, created_at, updated_at]
       properties:
@@ -6567,6 +6743,11 @@ components:
 
     SiteKurali:
       type: object
+      description: >-
+        Cevrilen metin alanlari `baslik` + `icerik`; Accept-Language ile secilen
+        dilde doner. Ceviri ustverisi: CeviriAlanlari.
+      allOf:
+        - $ref: "#/components/schemas/CeviriAlanlari"
       required: [id, baslik, icerik, sira, olusturan_user_id,
                  created_at, updated_at]
       properties:

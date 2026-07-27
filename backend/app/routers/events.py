@@ -33,12 +33,18 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Header, Query, Response
 from sqlalchemy import case, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import ceviri
+from ..ceviri_api import (
+    ceviri_isaretle_ve_kuyrukla,
+    ceviri_uygula,
+    yerel_harita,
+)
 from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -73,12 +79,21 @@ def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
         raise APIError(422, "invalid_foto_key", "foto_key tenant alani disinda")
 
 
-def _out(obj: Etkinlik, olusturan_ad, katiliyor, katilmiyor, benim) -> EtkinlikOut:
+#: Ceviri kaydindaki tip adi (bkz. app/ceviri.py TIPLER).
+_TIP = "etkinlik"
+
+
+def _out(
+    obj: Etkinlik, olusturan_ad, katiliyor, katilmiyor, benim,
+    yerel: ceviri.Yerel | None = None,
+) -> EtkinlikOut:
     out = EtkinlikOut.model_validate(obj)
     out.olusturan_ad = olusturan_ad
     out.katiliyorum_sayisi = int(katiliyor or 0)
     out.katilmiyorum_sayisi = int(katilmiyor or 0)
     out.benim_durumum = benim
+    # Metin alanlarini istenen dile cevir + ceviri bayraklarini doldur.
+    ceviri_uygula(out, tip_ad=_TIP, yerel=yerel, kaynak_dil=obj.kaynak_dil)
     if obj.foto_key:
         try:
             out.foto_url = presign_get(obj.foto_key)
@@ -131,13 +146,27 @@ def _base_stmt(user: AppUser):
     )
 
 
-async def _load_out(db: AsyncSession, user: AppUser, etkinlik_id: uuid.UUID) -> EtkinlikOut:
+async def _load_out(
+    db: AsyncSession,
+    user: AppUser,
+    etkinlik_id: uuid.UUID,
+    *,
+    accept_language: str | None = None,
+    istek_dil: str | None = None,
+) -> EtkinlikOut:
     row = (
         await db.execute(_base_stmt(user).where(Etkinlik.id == etkinlik_id))
     ).first()
     if row is None:
         raise APIError(404, "not_found", "Kayit bulunamadi")
-    return _out(*row)
+    yereller = await yerel_harita(
+        db,
+        tip_ad=_TIP,
+        objeler=[row[0]],
+        accept_language=accept_language,
+        istek_dil=istek_dil,
+    )
+    return _out(*row, yereller.get(row[0].id))
 
 
 # ------------------------------- yonetim ------------------------------------ #
@@ -164,6 +193,15 @@ async def create_event(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    # 7 dile ceviri (hata/kuyruk erisilemezligi kaydi DUSURMEZ).
+    await ceviri_isaretle_ve_kuyrukla(
+        db,
+        tip_ad=_TIP,
+        entity_id=obj.id,
+        tenant_id=user.tenant_id,
+        orijinal={"baslik": obj.baslik, "aciklama": obj.aciklama},
+        kaynak_dil=obj.kaynak_dil,
+    )
     # EK push: tum sakinlerin cihazlarina duyurulur (hatasi kaydi kirmaz).
     dispatch_external(
         f"Yeni etkinlik: {body.baslik} — {body.tarih.strftime('%d.%m.%Y %H:%M')}",
@@ -206,6 +244,17 @@ async def update_event(
         await db.flush()
     except IntegrityError as exc:
         raise translate_integrity(exc)
+    await db.refresh(obj)
+    # Kaynak metin degistiyse ceviriler gecersiz; elle duzeltmeler yalniz
+    # kaynak AYNI kaldiysa korunur (app/ceviri.py [korunur_mu]).
+    await ceviri_isaretle_ve_kuyrukla(
+        db,
+        tip_ad=_TIP,
+        entity_id=obj.id,
+        tenant_id=obj.tenant_id,
+        orijinal={"baslik": obj.baslik, "aciklama": obj.aciklama},
+        kaynak_dil=obj.kaynak_dil,
+    )
     return await _load_out(db, user, event_id)
 
 
@@ -240,6 +289,12 @@ async def list_events(
             "Verilmezse tumu (en yeni once)."
         ),
     ),
+    dil: str | None = Query(
+        None,
+        description="Accept-Language'i EZER. Dil kodu (tr/en/ar/ru/de/fr/es) "
+        "ya da 'orijinal' (kaynak dil).",
+    ),
+    accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> EtkinlikListResponse:
@@ -260,19 +315,30 @@ async def list_events(
     )
     total = (await db.execute(sayim)).scalar_one()
     rows = (await db.execute(stmt.limit(limit).offset(offset))).all()
+    yereller = await yerel_harita(
+        db,
+        tip_ad=_TIP,
+        objeler=[r[0] for r in rows],
+        accept_language=accept_language,
+        istek_dil=dil,
+    )
     return EtkinlikListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
-        items=[_out(*r) for r in rows],
+        items=[_out(*r, yereller.get(r[0].id)) for r in rows],
     )
 
 
 @router.get("/{event_id}", response_model=EtkinlikOut)
 async def get_event(
     event_id: uuid.UUID,
+    dil: str | None = Query(None, description="Accept-Language'i ezer (bkz. liste)."),
+    accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> EtkinlikOut:
-    return await _load_out(db, user, event_id)
+    return await _load_out(
+        db, user, event_id, accept_language=accept_language, istek_dil=dil
+    )
 
 
 # -------------------------------- RSVP -------------------------------------- #
@@ -280,6 +346,11 @@ async def get_event(
 async def rsvp_event(
     event_id: uuid.UUID,
     body: EtkinlikRsvp,
+    # RSVP yanitini SAKIN alir (mobil) — bu yuzden okuma uclari gibi
+    # Accept-Language'a uyar; PATCH/POST yanitlari ise icerigi YAZANA gider
+    # ve bilincli olarak ORIJINAL metni dondurur.
+    dil: str | None = Query(None, description="Accept-Language'i ezer (bkz. liste)."),
+    accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_RSVP),
 ) -> EtkinlikOut:
@@ -322,4 +393,6 @@ async def rsvp_event(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     # Guncel seffaf sayilar + kendi beyaniyla etkinligi don (UI aninda gorur).
-    return await _load_out(db, user, event_id)
+    return await _load_out(
+        db, user, event_id, accept_language=accept_language, istek_dil=dil
+    )

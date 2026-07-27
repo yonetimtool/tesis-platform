@@ -17,11 +17,17 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Header, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import ceviri
+from ..ceviri_api import (
+    ceviri_isaretle_ve_kuyrukla,
+    ceviri_uygula,
+    yerel_harita,
+)
 from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -47,9 +53,19 @@ def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
         raise APIError(422, "invalid_foto_key", "foto_key tenant alani disinda")
 
 
-def _out(obj: SiteKurali, olusturan_ad: str | None) -> SiteKuraliOut:
+#: Ceviri kaydindaki tip adi (bkz. app/ceviri.py TIPLER).
+_TIP = "site_kurali"
+
+
+def _out(
+    obj: SiteKurali,
+    olusturan_ad: str | None,
+    yerel: ceviri.Yerel | None = None,
+) -> SiteKuraliOut:
     out = SiteKuraliOut.model_validate(obj)
     out.olusturan_ad = olusturan_ad
+    # Metin alanlarini istenen dile cevir + ceviri bayraklarini doldur.
+    ceviri_uygula(out, tip_ad=_TIP, yerel=yerel, kaynak_dil=obj.kaynak_dil)
     if obj.foto_key:
         try:
             out.foto_url = presign_get(obj.foto_key)
@@ -72,6 +88,12 @@ async def list_rules(
                           description="Baslik aramasi (ILIKE, buyuk/kucuk harf duyarsiz)"),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
+    dil: str | None = Query(
+        None,
+        description="Accept-Language'i EZER. Dil kodu (tr/en/ar/ru/de/fr/es) "
+        "ya da 'orijinal' (kaynak dil).",
+    ),
+    accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_READER),
 ) -> SiteKuraliListResponse:
@@ -92,15 +114,24 @@ async def list_rules(
             .limit(limit).offset(offset)
         )
     ).all()
+    yereller = await yerel_harita(
+        db,
+        tip_ad=_TIP,
+        objeler=[o for o, _ad in rows],
+        accept_language=accept_language,
+        istek_dil=dil,
+    )
     return SiteKuraliListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
-        items=[_out(o, ad) for o, ad in rows],
+        items=[_out(o, ad, yereller.get(o.id)) for o, ad in rows],
     )
 
 
 @router.get("/{rule_id}", response_model=SiteKuraliOut)
 async def get_rule(
     rule_id: uuid.UUID,
+    dil: str | None = Query(None, description="Accept-Language'i ezer (bkz. liste)."),
+    accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_READER),
 ) -> SiteKuraliOut:
@@ -109,7 +140,15 @@ async def get_rule(
     ).first()
     if row is None:
         raise APIError(404, "not_found", "Kayit bulunamadi")
-    return _out(*row)
+    obj, olusturan_ad = row
+    yereller = await yerel_harita(
+        db,
+        tip_ad=_TIP,
+        objeler=[obj],
+        accept_language=accept_language,
+        istek_dil=dil,
+    )
+    return _out(obj, olusturan_ad, yereller.get(obj.id))
 
 
 # ------------------------------- yonetim ------------------------------------ #
@@ -134,6 +173,15 @@ async def create_rule(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    # 7 dile ceviri (hata/kuyruk erisilemezligi kaydi DUSURMEZ).
+    await ceviri_isaretle_ve_kuyrukla(
+        db,
+        tip_ad=_TIP,
+        entity_id=obj.id,
+        tenant_id=user.tenant_id,
+        orijinal={"baslik": obj.baslik, "icerik": obj.icerik},
+        kaynak_dil=obj.kaynak_dil,
+    )
     return _out(obj, user.ad)
 
 
@@ -162,6 +210,16 @@ async def update_rule(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    # Kaynak metin degistiyse ceviriler gecersiz; elle duzeltmeler yalniz
+    # kaynak AYNI kaldiysa korunur (app/ceviri.py [korunur_mu]).
+    await ceviri_isaretle_ve_kuyrukla(
+        db,
+        tip_ad=_TIP,
+        entity_id=obj.id,
+        tenant_id=obj.tenant_id,
+        orijinal={"baslik": obj.baslik, "icerik": obj.icerik},
+        kaynak_dil=obj.kaynak_dil,
+    )
     return _out(obj, olusturan_ad)
 
 

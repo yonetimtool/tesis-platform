@@ -103,7 +103,15 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 docker compose -f docker-compose.prod.yml --env-file .env.prod ps
 ```
 
-`api` ve `admin-web` **healthy**, `migrate`/`minio-init` **exited (0)** olmalı.
+`api` ve `admin-web` **healthy**, `migrate`/`minio-init`/`libretranslate-init`
+**exited (0)** olmalı.
+
+> **`libretranslate` ilk açılışta uzun sürer.** Çeviri modelleri (~1-2 GB)
+> indirilir ve `ltmodels` volume'una yazılır; bu sürede servis **starting**
+> görünür (healthcheck `start_period` 120 sn, 40 deneme). Bu **bloklayıcı
+> değildir**: duyuru/kural/etkinlik yazılmaya ve **orijinal dilde** okunmaya
+> devam eder; çeviriler hazır olunca kendiliğinden görünür. İlerleme:
+> `$C logs -f libretranslate`.
 
 ## 7. İlk platform admin'i oluştur (seed YOK)
 
@@ -208,6 +216,8 @@ $C ps                     # sağlık durumları
 | **Foto yüklenmiyor/görünmüyor** | `storage.yonetio.site` sertifikası var mı? `$C logs minio`. `MINIO_PUBLIC_URL=https://storage.yonetio.site` mi? Caddy Host'u koruyor (imza için şart). |
 | **Foto 403 SignatureDoesNotMatch** | `MINIO_PUBLIC_URL` ile gerçek erişilen host birebir aynı olmalı; `storage.` alanı Caddy'de tanımlı ve `minio:9000`'e proxy'li olmalı. |
 | **Push gelmiyor** | Beklenen (varsayılan noop). FCM için §5 + `PUSH_PROVIDER=fcm`; `$C logs worker` "unconfigured" diyorsa JSON yolu/`project_id` eksik. |
+| **Çeviri gelmiyor (içerik hep Türkçe)** | Beklenen olabilir: modeller inmemiş olabilir (`$C logs libretranslate`, `$C ps`). Kontrol: `$C exec api python -c "import urllib.request;print(urllib.request.urlopen('http://libretranslate:5000/languages').status)"` → 200 olmalı. `TRANSLATE_PROVIDER=libretranslate` mi? `worker` ayakta mı (çeviri işi orada koşar)? |
+| **`ceviri_durumu: hata` kalıyor** | Motor erişilemiyor ya da model yok. İçerik **etkilenmez** (orijinal servis edilir). `$C logs worker` çeviri hatasını yazar; motor healthy olunca içerik düzenlenince (ya da yeniden kuyruklanınca) tekrar denenir. |
 | **create_admin RLS hatası** | Komut `api` imajından `run --rm` ile çalışmalı (OWNER_DSN taşır); `--env-file .env.prod` verildiğinden emin olun. |
 
 ---

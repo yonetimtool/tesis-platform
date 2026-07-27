@@ -121,6 +121,58 @@ services:
     restart: "no"
 
   # --------------------------------------------------------------------- #
+  # Ceviri motoru — KENDI BARINDIRDIGIMIZ LibreTranslate (yayin icerigi 7 dil).
+  #
+  # Icerik DIS bir servise gonderilmez: tesise ait veridir. Servis yalniz ic
+  # agda (tesisnet) durur — `ports:` YOKTUR, Caddy'ye de baglanmaz.
+  #
+  # OPERASYON NOTU: ilk kalkista argos modelleri INDIRILIR (~1-2 GB, dakikalar
+  # surer) ve `ltmodels` volume'unde kalir. Disk/bellek butcesini buna gore
+  # ayirin; modeller inene kadar ceviri isleri `durum='hata'` yazar ve
+  # ORIJINAL metin servis edilmeye devam eder (icerik ETKILENMEZ).
+  libretranslate:
+    image: libretranslate/libretranslate:v1.6.1
+    depends_on:
+      libretranslate-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *tz
+      # Yalniz mobil UI'nin 7 dili (tum dil seti GB'lar demek olurdu).
+      LT_LOAD_ONLY: ${TRANSLATE_LANGS:-tr,en,ar,ru,de,fr,es}
+      LT_DISABLE_WEB_UI: "true"
+      LT_UPDATE_MODELS: "false"
+    volumes:
+      - ltmodels:/home/libretranslate/.local/share/argos-translate
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/languages').status==200 else 1)"
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 120s
+    networks: [tesisnet]
+    restart: unless-stopped
+
+  # One-shot: model dizininin sahipligini KONTEYNER kullanicisina verir (taze
+  # named volume root'a ait olur; LibreTranslate uid 1032 ile kosar ve aksi
+  # halde "Permission denied" ile duser). minio-init ile ayni desen.
+  libretranslate-init:
+    image: alpine:3.20
+    volumes:
+      - ltmodels:/models
+    command:
+      - sh
+      - -c
+      - |
+        chown -R 1032:65534 /models
+        echo "ceviri model dizini hazir"
+    networks: [tesisnet]
+    restart: "no"
+
+  # --------------------------------------------------------------------- #
   # One-shot: CANONICAL migration'lari OWNER ile uygular + app_rw rolunu kurar.
   # (contracts + infra/scripts salt-okunur mount; kod imaja zaten bake edilmis.)
   migrate:
@@ -186,6 +238,10 @@ services:
       PAYTR_MERCHANT_SALT: ${PAYTR_MERCHANT_SALT:-}
       # Push (FCM). Kimlik dosyasi ./secrets/ altinda; yoksa no-op (cokme yok).
       PUSH_PROVIDER: ${PUSH_PROVIDER:-noop}
+      # Icerik cevirisi: prod'da GERCEK motor (ic ag). Kapatmak icin
+      # TRANSLATE_PROVIDER=noop — icerik yine yazilir, ceviri uretilmez.
+      TRANSLATE_PROVIDER: ${TRANSLATE_PROVIDER:-libretranslate}
+      TRANSLATE_URL: ${TRANSLATE_URL:-http://libretranslate:5000}
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
       FCM_SERVICE_ACCOUNT_PATH: ${FCM_SERVICE_ACCOUNT_PATH:-/secrets/fcm-service-account.json}
     volumes:
@@ -225,6 +281,10 @@ services:
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-noop}
+      # Icerik cevirisi: prod'da GERCEK motor (ic ag). Kapatmak icin
+      # TRANSLATE_PROVIDER=noop — icerik yine yazilir, ceviri uretilmez.
+      TRANSLATE_PROVIDER: ${TRANSLATE_PROVIDER:-libretranslate}
+      TRANSLATE_URL: ${TRANSLATE_URL:-http://libretranslate:5000}
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
       FCM_SERVICE_ACCOUNT_PATH: ${FCM_SERVICE_ACCOUNT_PATH:-/secrets/fcm-service-account.json}
     volumes:
@@ -284,6 +344,8 @@ networks:
     driver: bridge
 
 volumes:
+  # Argos ceviri modelleri (ilk kalkista indirilir, sonra yeniden kullanilir).
+  ltmodels:
   pgdata:
   redisdata:
   miniodata:

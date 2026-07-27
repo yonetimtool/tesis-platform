@@ -95,6 +95,21 @@ class Settings(BaseSettings):
     weather_base_url: str = "https://api.open-meteo.com"
     weather_cache_ttl: int = 1800  # saniye — tenant basina >=30dk'da 1 dis istek
 
+    # --- Icerik cevirisi (duyuru / site kurali / etkinlik, 7 dil) ---
+    # libretranslate (varsayilan, kendi barindirdigimiz servis) | echo
+    # (deterministik sahte — dev/test) | noop (kapali).
+    translate_provider: str = "libretranslate"
+    # Compose ic ag adresi; kullanici girdisi DEGIL (bkz. translate.py SSRF notu).
+    translate_url: str = "http://libretranslate:5000"
+    translate_api_key: str = ""
+    translate_timeout_seconds: float = 30.0
+    # Kuyruga verme GECIKMESI (saniye). Ceviri isi istek yolundan, istegin
+    # transaction'i HENUZ COMMIT EDILMEDEN kuyruklanir; worker hemen kosarsa
+    # icerigi GOREMEZ ("icerik yok" -> ceviri hic uretilmez). Kucuk bir
+    # gecikme commit'in onde olmasini saglar; task ayrica sinirli sayida
+    # yeniden dener (bkz. app/tasks.py translate_entity).
+    translate_enqueue_delay_seconds: float = 2.0
+
     # --- KVKK saklama & imha (retention) — AY cinsinden ---
     # Saklama sinirlama ilkesi (KVKK m.4/2-d + m.7): kisisel veri, isleme amaci
     # gectikten sonra tutulmaz. Varsayilanlar operatorce ENV ile DARALTILABILIR

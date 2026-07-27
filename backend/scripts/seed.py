@@ -1293,8 +1293,54 @@ def main() -> int:
                 )
             print("[seed] demo audit_log kayitlari eklendi (4).")
 
+    _ceviri_uret(tenant_id)
+
     print("[seed] tamamlandi (idempotent).")
     return 0
+
+
+def _ceviri_uret(tenant_id) -> None:
+    """Ornek yayin icerigini GERCEK ceviri hattindan gecirir (7 dil).
+
+    Elle INSERT edilmis ceviri YOKTUR: worker'in cagirdigi ayni fonksiyon
+    (`app.ceviri_service.entity_cevir`) burada dogrudan cagrilir — yani
+    saglayici -> durum -> `alanlar` yolu ucu uca ayni koddur. Kuyruk (Celery)
+    gerekmez; seed sonucu beklemek ister.
+
+    Varsayilan saglayici seed servisi icin `libretranslate`tir (compose).
+    Saglayici erisilemezse [entity_cevir] ilgili dilleri `durum='hata'` yapar
+    ve BURASI PATLAMAZ — seed'in geri kalani gecerli kalir (orijinal metin
+    her zaman servis edilir).
+    """
+    from app import ceviri
+    from app.ceviri_service import entity_cevir
+    from app.config import settings
+    from app.translate import get_translation_provider
+
+    hedefler = [
+        ("duyuru", "announcement", "Hoş geldiniz"),
+        ("site_kurali", "site_kurali", "Otopark Kullanımı"),
+        ("etkinlik", "etkinlik", "Bahar şenliği"),
+    ]
+    saglayici = type(get_translation_provider()).__name__
+    print(
+        f"[seed] icerik cevirisi basliyor (saglayici={saglayici}, "
+        f"{len(ceviri.DESTEKLENEN_DILLER)} dil) — biraz surebilir..."
+    )
+    with psycopg.connect(settings.owner_dsn, autocommit=True) as conn:
+        for tip_ad, tablo, baslik in hedefler:
+            satir = conn.execute(
+                f"SELECT id FROM {tablo} WHERE tenant_id = %s AND baslik = %s",
+                (tenant_id, baslik),
+            ).fetchone()
+            if satir is None:
+                print(f"[seed]   ! {tip_ad}/{baslik!r} bulunamadi, atlandi")
+                continue
+            ozet = entity_cevir(tip_ad, satir[0], tenant_id)
+            print(
+                f"[seed]   {tip_ad} {baslik!r}: cevrilen={ozet['cevrilen']} "
+                f"hata={ozet['hata']} korunan={ozet['korunan']}"
+            )
 
 
 if __name__ == "__main__":

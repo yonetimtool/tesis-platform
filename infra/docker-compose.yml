@@ -77,6 +77,56 @@ services:
         echo "bucket hazir: $$MINIO_BUCKET"
     restart: "no"
 
+  # Ceviri motoru — KENDI BARINDIRDIGIMIZ LibreTranslate.
+  #
+  # NEDEN kendi barindirma: yayin icerigi (duyuru/kural/etkinlik) tesise ait
+  # veridir; dis bir ceviri servisine gonderilmez. Servis IC AGDA durur —
+  # `ports:` YOKTUR, yalniz api/worker erisir (host'a/internete kapali).
+  #
+  # Modeller ilk kalkista indirilir ve `ltmodels` volume'unde KALIR (sonraki
+  # kalkislar hizli). LT_LOAD_ONLY ile YALNIZ mobil UI'nin 7 dili yuklenir —
+  # tum dil setini indirmek GB'lar ve dakikalar demek olurdu.
+  libretranslate:
+    image: libretranslate/libretranslate:v1.6.1
+    depends_on:
+      libretranslate-init:
+        condition: service_completed_successfully
+    environment:
+      LT_LOAD_ONLY: ${TRANSLATE_LANGS:-tr,en,ar,ru,de,fr,es}
+      LT_DISABLE_WEB_UI: "true"
+      # Model guncellemesi kalkista ag beklemesi yapmasin (pinned imaj).
+      LT_UPDATE_MODELS: "false"
+    volumes:
+      - ltmodels:/home/libretranslate/.local/share/argos-translate
+    healthcheck:
+      # /languages yuklenmis modelleri listeler — modeller hazir olmadan 200 vermez.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/languages').status==200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+
+  # One-shot: model dizininin sahipligini KONTEYNER kullanicisina verir.
+  # Taze named volume root'a ait olur; LibreTranslate uid 1032 ile kosar ve
+  # aksi halde "Permission denied: .../argos-translate/packages" ile DUSER.
+  # (minio-init ile ayni desen.)
+  libretranslate-init:
+    image: alpine:3.20
+    volumes:
+      - ltmodels:/models
+    command:
+      - sh
+      - -c
+      - |
+        chown -R 1032:65534 /models
+        echo "ceviri model dizini hazir"
+    restart: "no"
+
   # One-shot: CANONICAL migration'lari OWNER ile uygular + app_rw rolunu kurar.
   migrate:
     build:
@@ -145,6 +195,12 @@ services:
       # kimlik mount'u docker-compose.push.yml override'iyla baglanir.
       PUSH_PROVIDER: ${PUSH_PROVIDER:-noop}
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      # Icerik cevirisi. DEV VARSAYILANI `echo` (deterministik sahte ceviri):
+      # test kosumu model indirmesine/CPU'ya bagli olmasin ve 600+ testin her
+      # duyuru olusturmasi gercek ceviri kuyrugu tetiklemesin. GERCEK ceviri
+      # icin: TRANSLATE_PROVIDER=libretranslate (servis zaten ayakta).
+      TRANSLATE_PROVIDER: ${TRANSLATE_PROVIDER:-echo}
+      TRANSLATE_URL: ${TRANSLATE_URL:-http://libretranslate:5000}
     ports:
       - "8000:8000"
     healthcheck:
@@ -169,8 +225,17 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+      # Seed ornek icerigi GERCEK ceviri hattindan gecirir -> motor hazir olmali.
+      libretranslate:
+        condition: service_healthy
     environment:
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # entity_cevir RLS altinda app_rw ile yazar (worker ile ayni yol).
+      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      # Seed BILINCLI olarak GERCEK saglayiciyi kullanir (api/worker dev
+      # varsayilani `echo`dur; ornek veri gercek ceviri tasisin).
+      TRANSLATE_PROVIDER: ${SEED_TRANSLATE_PROVIDER:-libretranslate}
+      TRANSLATE_URL: ${TRANSLATE_URL:-http://libretranslate:5000}
     command: ["python", "-m", "scripts.seed"]
     restart: "no"
 
@@ -197,6 +262,10 @@ services:
       # Push kancalari worker'da kosar (dispatch_external) — api ile ayni secim.
       PUSH_PROVIDER: ${PUSH_PROVIDER:-noop}
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      # ASIL CEVIRI ISI BURADA kosar (istek yolu yalniz kuyruklar). api ile
+      # AYNI secim; gercek ceviri icin TRANSLATE_PROVIDER=libretranslate.
+      TRANSLATE_PROVIDER: ${TRANSLATE_PROVIDER:-echo}
+      TRANSLATE_URL: ${TRANSLATE_URL:-http://libretranslate:5000}
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
     restart: unless-stopped
 
@@ -221,3 +290,5 @@ services:
 volumes:
   pgdata:
   miniodata:
+  # Argos ceviri modelleri (ilk kalkista indirilir, sonra yeniden kullanilir).
+  ltmodels:

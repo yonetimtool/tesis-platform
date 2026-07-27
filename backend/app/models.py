@@ -51,6 +51,10 @@ PATROL_WINDOW_DURUM = ENUM(
     "bekliyor", "tamamlandi", "kacirildi",
     name="patrol_window_durum", create_type=False,
 )
+CEVIRI_DURUM = ENUM(
+    "hazir", "bekliyor", "hata",
+    name="ceviri_durum", create_type=False,
+)
 NOTIFICATION_TIP = ENUM(
     "kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma",
     "peyzaj_yaklasan", "peyzaj_kacirilan",
@@ -1053,6 +1057,11 @@ class Announcement(Base):
     govde: Mapped[str] = mapped_column(Text, nullable=False)
     # Opsiyonel gorsel — /uploads/presign ile yuklenen MinIO obje anahtari.
     foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Icerigin YAZILDIGI dil (orijinal). Ceviriler bundan uretilir; bkz.
+    # app/ceviri.py. Simdilik tr sabit (admin secimi sonraki tur).
+    kaynak_dil: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'tr'")
+    )
     olusturan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     created_at = _created_at()
     updated_at = _created_at()
@@ -1434,6 +1443,10 @@ class Etkinlik(Base):
     konum: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Opsiyonel gorsel — duyuru/site kurali ile AYNI presign mekanizmasi.
     foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Orijinal dil — bkz. Announcement.kaynak_dil. (konum CEVRILMEZ: yer adi.)
+    kaynak_dil: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'tr'")
+    )
     olusturan_user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), nullable=False
     )
@@ -1503,6 +1516,10 @@ class SiteKurali(Base):
     baslik: Mapped[str] = mapped_column(Text, nullable=False)
     icerik: Mapped[str] = mapped_column(Text, nullable=False)
     foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Orijinal dil — bkz. Announcement.kaynak_dil.
+    kaynak_dil: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'tr'")
+    )
     sira: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default=text("0")
     )
@@ -1862,3 +1879,98 @@ class PlatformSupportTicket(Base):
     admin_cevap_foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+# Icerik cevirisi (migration 0007) — yayin iceriginin 7 dildeki karsiligi.
+#
+# Sema uc tabloda AYNIDIR; entity basina ayri tablo olmasinin gerekcesi
+# (composite FK + CASCADE) migration 0007'nin modul notundadir. Uygulama kodu
+# bu tablolara `app/ceviri.py` TIPLER kaydindan uretilen SQL ile erisir
+# (tek yol, uc entity); asagidaki modeller SEMAYI BELGELER ve ORM
+# sorgularina aciktir.
+# --------------------------------------------------------------------------- #
+class _CeviriTaban:
+    """Ortak ceviri kolonlari (bkz. 0007). Karma sinif — tablo DEGIL."""
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    # Hedef dil (ISO 639-1); kume CHECK ile kisitli (7 dil).
+    dil: Mapped[str] = mapped_column(Text, nullable=False)
+    # Cevrilmis alanlar: {"baslik": "...", "govde"/"icerik"/"aciklama": "..."}
+    alanlar: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    durum: Mapped[str] = mapped_column(
+        CEVIRI_DURUM, nullable=False, server_default=text("'bekliyor'")
+    )
+    # Metin MAKINE ciktisi mi (elle duzeltmede false olur).
+    cevirildi_mi: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    # Yonetici elle duzeltti: kaynak metin degismedikce KORUNUR.
+    elle_duzeltildi: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    # Cevirinin uretildigi kaynak metnin ozeti (elle duzeltme kuralinin anahtari).
+    kaynak_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    hata_mesaji: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class AnnouncementCeviri(_CeviriTaban, Base):
+    __tablename__ = "announcement_ceviri"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "announcement_id", "dil", name="uq_announcement_ceviri"
+        ),
+        ForeignKeyConstraint(
+            ["announcement_id", "tenant_id"],
+            ["announcement.id", "announcement.tenant_id"],
+            ondelete="CASCADE",
+            name="announcement_ceviri_announcement_id_tenant_id_fkey",
+        ),
+    )
+
+    announcement_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
+
+
+class SiteKuraliCeviri(_CeviriTaban, Base):
+    __tablename__ = "site_kurali_ceviri"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "site_kurali_id", "dil", name="uq_site_kurali_ceviri"
+        ),
+        ForeignKeyConstraint(
+            ["site_kurali_id", "tenant_id"],
+            ["site_kurali.id", "site_kurali.tenant_id"],
+            ondelete="CASCADE",
+            name="site_kurali_ceviri_site_kurali_id_tenant_id_fkey",
+        ),
+    )
+
+    site_kurali_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
+
+
+class EtkinlikCeviri(_CeviriTaban, Base):
+    __tablename__ = "etkinlik_ceviri"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "etkinlik_id", "dil", name="uq_etkinlik_ceviri"
+        ),
+        ForeignKeyConstraint(
+            ["etkinlik_id", "tenant_id"],
+            ["etkinlik.id", "etkinlik.tenant_id"],
+            ondelete="CASCADE",
+            name="etkinlik_ceviri_etkinlik_id_tenant_id_fkey",
+        ),
+    )
+
+    etkinlik_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
