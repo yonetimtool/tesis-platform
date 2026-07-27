@@ -5,7 +5,9 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/text/tr_upper.dart';
 import '../../patrol/presentation/patrol_history_view.dart'
     show PatrolErrorBanner;
-import '../../reports/domain/report_models.dart' show kurusToTl;
+// NOT: `dues` modulu tur 10'un KAPSAMINDA DEGIL; asagidaki tutar cagrilari
+// tur 10'un ZORUNLU uyarlamasidir — para gruplamasinin ucuncu uygulamasi
+// (`report_models.kurusToTl`) kaldirilip tek kaynaga (`tlSonEkli`) gecildi.
 import '../domain/dues_models.dart';
 import 'my_dues_controller.dart';
 
@@ -100,7 +102,7 @@ class _ToplamBakiyeCard extends StatelessWidget {
         ),
         title: const Text('Toplam bakiye (tüm daireler)'),
         trailing: Text(
-          kurusToTl(bakiyeKurus),
+          tlSonEkli(bakiyeKurus, context.dilKodu),
           style: TextStyle(
             fontWeight: FontWeight.w700,
             color: borc ? Colors.red : Colors.green,
@@ -147,17 +149,17 @@ class _UnitCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            _row('Toplam tahakkuk', kurusToTl(unit.tahakkukKurus)),
-            _row('Toplam ödenen', kurusToTl(unit.odenenKurus),
+            _row('Toplam tahakkuk', tlSonEkli(unit.tahakkukKurus, context.dilKodu)),
+            _row('Toplam ödenen', tlSonEkli(unit.odenenKurus, context.dilKodu),
                 valueColor: Colors.green),
-            _row('Bakiye', kurusToTl(unit.bakiyeKurus),
+            _row('Bakiye', tlSonEkli(unit.bakiyeKurus, context.dilKodu),
                 valueColor: borc ? Colors.red : Colors.green, bold: true),
             // Hesap seffaf: bakiye nasil bulundu tek satirda gorunur.
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
-                'Tahakkuk ${kurusToTl(unit.tahakkukKurus)} - ödenen '
-                '${kurusToTl(unit.odenenKurus)} = ${kurusToTl(unit.bakiyeKurus)}',
+                'Tahakkuk ${tlSonEkli(unit.tahakkukKurus, context.dilKodu)} - ödenen '
+                '${tlSonEkli(unit.odenenKurus, context.dilKodu)} = ${tlSonEkli(unit.bakiyeKurus, context.dilKodu)}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
@@ -184,7 +186,7 @@ class _UnitCard extends StatelessWidget {
                               '${tarihBicimi(a.sonOdemeTarihi!, context.dilKodu)}',
                             ),
                       trailing: Text(
-                        kurusToTl(a.tutarKurus),
+                        tlSonEkli(a.tutarKurus, context.dilKodu),
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -264,7 +266,7 @@ class _PaymentTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            kurusToTl(p.tutarKurus),
+            tlSonEkli(p.tutarKurus, context.dilKodu),
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           Text(durumLabel(p.durum),

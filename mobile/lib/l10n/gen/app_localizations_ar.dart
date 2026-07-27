@@ -3458,4 +3458,241 @@ class AppLocalizationsAr extends AppLocalizations {
   String ortakYuzde(Object yuzde) {
     return '$yuzde٪';
   }
+
+  @override
+  String get entegYeni => 'جديد';
+
+  @override
+  String get entegYokMesaj =>
+      'لا توجد تكاملات. أضف نظاماً خارجياً (مكبر صوت/منزل ذكي/webhook) عبر \"جديد\".';
+
+  @override
+  String get entegSilOnay => 'حذفه؟';
+
+  @override
+  String entegSilGovde(Object ad) {
+    return 'سيتم حذف التكامل \"$ad\".';
+  }
+
+  @override
+  String entegSilinemedi(Object hata) {
+    return 'تعذّر الحذف: $hata';
+  }
+
+  @override
+  String get entegAktifKisa => 'نشط';
+
+  @override
+  String get entegPasifKisa => 'غير نشط';
+
+  @override
+  String entegKimlikSatir(Object tip, Object kilit) {
+    return 'المصادقة: $tip$kilit';
+  }
+
+  @override
+  String get entegTest => 'اختبار';
+
+  @override
+  String entegTestBasarili(Object durum) {
+    return '✓ نجح ($durum)';
+  }
+
+  @override
+  String entegTestBasarisiz(Object hata, Object durum) {
+    return '✗ $hata$durum';
+  }
+
+  @override
+  String get entegBasarisiz => 'فشل';
+
+  @override
+  String get entegDuzenleBaslik => 'تعديل التكامل';
+
+  @override
+  String get entegYeniBaslik => 'تكامل جديد';
+
+  @override
+  String get entegPreset => 'قالب جاهز (preset)';
+
+  @override
+  String get entegKanalTipi => 'نوع القناة';
+
+  @override
+  String get entegUrl => 'عنوان Endpoint (http/https)';
+
+  @override
+  String get entegUrlHelper => 'تُحجب العناوين الداخلية/الخاصة عند التشغيل';
+
+  @override
+  String get entegUrlHata => 'يجب أن يبدأ بـ http(s)';
+
+  @override
+  String get entegHttpMetodu => 'طريقة HTTP';
+
+  @override
+  String get entegKimlikDogrulama => 'المصادقة';
+
+  @override
+  String get entegSir => 'السر (bearer token / API key)';
+
+  @override
+  String get entegSirKayitli => 'مُخزَّن — أدخل قيمة جديدة لتغييره';
+
+  @override
+  String get entegSirYazmaOzel => 'للكتابة فقط؛ لا يعيده الخادم أبداً';
+
+  @override
+  String get entegPayload => 'قالب الحمولة';
+
+  @override
+  String entegPayloadHelper(Object sablonlar) {
+    return 'عناصر بديلة $sablonlar';
+  }
+
+  @override
+  String get entegTestMesaji => 'رسالة اختبار';
+
+  @override
+  String get ortakAdGerekli => 'الاسم مطلوب';
+
+  @override
+  String get ziyaretYeni => 'زائر جديد';
+
+  @override
+  String get ziyaretKaydedildi => 'تم تسجيل الزائر — أُبلغ ساكن الوحدة ✓';
+
+  @override
+  String get ziyaretYokGuvenlik => 'لا توجد سجلات زوار بعد.';
+
+  @override
+  String get ziyaretYokSakin => 'لا توجد سجلات زوار مُبلَّغة إليك.';
+
+  @override
+  String ziyaretBildirilenSakin(Object ad) {
+    return 'الساكن المُبلَّغ: $ad';
+  }
+
+  @override
+  String get ziyaretSakiniAra => 'اتصل بالساكن';
+
+  @override
+  String get ziyaretGuvenligiAra => 'اتصل بالأمن';
+
+  @override
+  String get ziyaretBilgileriDuzenle => 'تعديل البيانات';
+
+  @override
+  String get ziyaretGuncellendi => 'تم تحديث بيانات الزائر ✓';
+
+  @override
+  String get ziyaretOnceDaireNo => 'أدخل رقم الوحدة أولاً';
+
+  @override
+  String get ziyaretSakiniSecin => 'اختر الساكن المراد إبلاغه';
+
+  @override
+  String get ziyaretDuzenleBaslik => 'تعديل الزائر';
+
+  @override
+  String get ziyaretDuzenleAlt =>
+      'يمكنك تحديث الاسم والوحدة والساكن المُبلَّغ والملاحظة.';
+
+  @override
+  String get ziyaretYeniAlt => 'يُرسل للساكن إشعار فقط (لا يُطلب أي موافقة).';
+
+  @override
+  String get ziyaretAdAlan => 'اسم الزائر *';
+
+  @override
+  String get ziyaretAdGerekli => 'اسم الزائر مطلوب';
+
+  @override
+  String get ziyaretSakinleriGetir => 'إحضار السكان';
+
+  @override
+  String get ziyaretBildirilecekSakin => 'الساكن المراد إبلاغه *';
+
+  @override
+  String get ziyaretKaydetVeBildir => 'احفظ وأبلغ الساكن';
+
+  @override
+  String get raporBaslik => 'التقارير الشهرية';
+
+  @override
+  String get raporOncekiAy => 'الشهر السابق';
+
+  @override
+  String get raporSonrakiAy => 'الشهر التالي';
+
+  @override
+  String raporAyBaslik(Object ay, Object yil) {
+    return '$ay $yil';
+  }
+
+  @override
+  String get raporYetkiYok =>
+      'ليست لديك صلاحية للتقارير الشهرية. هذه الشاشة متاحة لدور مدير الموقع.';
+
+  @override
+  String get raporGorevTamamlama => 'إنجاز المهام';
+
+  @override
+  String get raporAidat => 'الرسوم';
+
+  @override
+  String get raporSonTamamlamalar => 'آخر الإنجازات (أول 10)';
+
+  @override
+  String get raporPlanlananPencere => 'النوافذ المخططة';
+
+  @override
+  String raporTamamlanmaYuzde(Object yuzde) {
+    return 'الإنجاز $yuzde٪';
+  }
+
+  @override
+  String get raporPencereYok => 'لا نوافذ دوريات مخططة هذا الشهر.';
+
+  @override
+  String get raporGorevYok => 'لا إنجازات مهام هذا الشهر.';
+
+  @override
+  String get raporToplamTamamlama => 'إجمالي الإنجازات';
+
+  @override
+  String get raporAidatKayitYok => 'لا سجلات استحقاق/دفع لهذه الفترة.';
+
+  @override
+  String raporTahakkukDaire(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'المستحق ($n وحدة)',
+      many: 'المستحق ($n وحدة)',
+      few: 'المستحق ($n وحدات)',
+      two: 'المستحق (وحدتان)',
+      one: 'المستحق (وحدة واحدة)',
+      zero: 'المستحق (لا وحدات)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String raporTahsilatOdeme(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'المُحصّل ($n دفعة)',
+      many: 'المُحصّل ($n دفعة)',
+      few: 'المُحصّل ($n دفعات)',
+      two: 'المُحصّل (دفعتان)',
+      one: 'المُحصّل (دفعة واحدة)',
+      zero: 'المُحصّل (لا مدفوعات)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get raporKalanBakiye => 'الرصيد المتبقي';
 }

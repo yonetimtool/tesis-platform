@@ -1,8 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/reports/domain/report_models.dart';
+import 'package:mobile/src/core/i18n/l10n.dart';
 
 void main() {
-  group('ayAralik / donemStr / ayBaslik', () {
+  group('ayAralik / donemStr', () {
     test('ay siniri yari-acik; aralik ayi tam kapsar', () {
       final r = ayAralik(2026, 7);
       expect(r.baslangic, DateTime(2026, 7, 1).toUtc());
@@ -19,19 +20,13 @@ void main() {
       expect(donemStr(2026, 12), '2026-12');
     });
 
-    test('TR ay basligi', () {
-      expect(ayBaslik(2026, 7), 'Temmuz 2026');
-      expect(ayBaslik(2026, 1), 'Ocak 2026');
-    });
-  });
-
-  group('kurusToTl — tam sayi aritmetigi (panel money.ts kurali)', () {
-    test('binlik ayirici + iki haneli kurus', () {
-      expect(kurusToTl(75000), '750,00 TL');
-      expect(kurusToTl(123456789), '1.234.567,89 TL');
-      expect(kurusToTl(5), '0,05 TL');
-      expect(kurusToTl(0), '0,00 TL');
-      expect(kurusToTl(-75050), '-750,50 TL');
+    // AY BASLIGI ve PARA BICIMI tur 10'da core/i18n'e tasindi (`ayAdi` +
+    // `tlSonEkli`); iddialari dis_nfc_seffaflik / butce_demirbas_kargo
+    // testlerinde yasiyor. Burada YALNIZ tarih/donem aritmetigi kalir.
+    test('para bicimi core/i18n tek kaynagindan gelir', () {
+      expect(tlSonEkli(75000, 'tr'), '750,00 TL');
+      expect(tlSonEkli(123456789, 'tr'), '1.234.567,89 TL');
+      expect(tlSonEkli(-75050, 'tr'), '-750,50 TL');
     });
   });
 

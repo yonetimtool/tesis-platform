@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/report_api.dart';
 import '../domain/report_models.dart';
+import '../../../core/error/akis_hatasi.dart';
 
 /// "Aylik raporlar" ekraninin durumu — secili ay + o ayin derlenen raporu.
 class ReportsState {
@@ -11,6 +12,7 @@ class ReportsState {
     required this.ay,
     this.loading = false,
     this.errorMessage,
+    this.hataKimligi,
     this.forbidden = false,
     this.rapor,
   });
@@ -18,7 +20,10 @@ class ReportsState {
   final int yil;
   final int ay;
   final bool loading;
+  /// Hata KANALI ikilidir (README §15): sunucu metni + yerellestirilebilir
+  /// kimlik.
   final String? errorMessage;
+  final AkisHatasi? hataKimligi;
   final bool forbidden;
   final AylikRapor? rapor;
 
@@ -27,6 +32,7 @@ class ReportsState {
     int? ay,
     bool? loading,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     bool? forbidden,
     Object? rapor = _sentinel,
   }) {
@@ -37,6 +43,9 @@ class ReportsState {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as AkisHatasi?,
       forbidden: forbidden ?? this.forbidden,
       rapor: rapor == _sentinel ? this.rapor : rapor as AylikRapor?,
     );
@@ -58,7 +67,11 @@ class ReportsController extends Notifier<ReportsState> {
   Future<void> refresh() async {
     if (_loadingNow) return;
     _loadingNow = true;
-    state = state.copyWith(loading: true, errorMessage: null);
+    state = state.copyWith(
+      loading: true,
+      errorMessage: null,
+      hataKimligi: null,
+    );
     final (yil, ay) = (state.yil, state.ay);
     try {
       final rapor = await ref.read(reportApiProvider).fetchMonthly(yil, ay);
@@ -68,6 +81,7 @@ class ReportsController extends Notifier<ReportsState> {
       state = state.copyWith(
         loading: false,
         errorMessage: null,
+        hataKimligi: null,
         forbidden: false,
         rapor: rapor,
       );
@@ -76,13 +90,15 @@ class ReportsController extends Notifier<ReportsState> {
       state = state.copyWith(
         loading: false,
         errorMessage: e.message,
+        hataKimligi: null,
         forbidden: e.statusCode == 403,
       );
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: AkisHatasi.beklenmeyen,
       );
     } finally {
       _loadingNow = false;

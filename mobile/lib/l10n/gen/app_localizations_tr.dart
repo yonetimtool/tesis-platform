@@ -3218,4 +3218,223 @@ class AppLocalizationsTr extends AppLocalizations {
   String ortakYuzde(Object yuzde) {
     return '%$yuzde';
   }
+
+  @override
+  String get entegYeni => 'Yeni';
+
+  @override
+  String get entegYokMesaj =>
+      'Entegrasyon yok. \"Yeni\" ile bir dış sistem (megafon/akıllı ev/webhook) ekleyin.';
+
+  @override
+  String get entegSilOnay => 'Silinsin mi?';
+
+  @override
+  String entegSilGovde(Object ad) {
+    return '\"$ad\" entegrasyonu silinecek.';
+  }
+
+  @override
+  String entegSilinemedi(Object hata) {
+    return 'Silinemedi: $hata';
+  }
+
+  @override
+  String get entegAktifKisa => 'aktif';
+
+  @override
+  String get entegPasifKisa => 'pasif';
+
+  @override
+  String entegKimlikSatir(Object tip, Object kilit) {
+    return 'Kimlik: $tip$kilit';
+  }
+
+  @override
+  String get entegTest => 'Test';
+
+  @override
+  String entegTestBasarili(Object durum) {
+    return '✓ Başarılı ($durum)';
+  }
+
+  @override
+  String entegTestBasarisiz(Object hata, Object durum) {
+    return '✗ $hata$durum';
+  }
+
+  @override
+  String get entegBasarisiz => 'Başarısız';
+
+  @override
+  String get entegDuzenleBaslik => 'Entegrasyon düzenle';
+
+  @override
+  String get entegYeniBaslik => 'Yeni entegrasyon';
+
+  @override
+  String get entegPreset => 'Hazır şablon (preset)';
+
+  @override
+  String get entegKanalTipi => 'Kanal tipi';
+
+  @override
+  String get entegUrl => 'Endpoint URL (http/https)';
+
+  @override
+  String get entegUrlHelper => 'İç/özel adresler tetikte engellenir';
+
+  @override
+  String get entegUrlHata => 'http(s) ile başlamalı';
+
+  @override
+  String get entegHttpMetodu => 'HTTP metodu';
+
+  @override
+  String get entegKimlikDogrulama => 'Kimlik doğrulama';
+
+  @override
+  String get entegSir => 'Sır (bearer token / API key)';
+
+  @override
+  String get entegSirKayitli => 'Kayıtlı — değiştirmek için yeni değer girin';
+
+  @override
+  String get entegSirYazmaOzel => 'Yazma-özel; sunucudan asla dönmez';
+
+  @override
+  String get entegPayload => 'Payload şablonu';
+
+  @override
+  String entegPayloadHelper(Object sablonlar) {
+    return '$sablonlar yer tutucuları';
+  }
+
+  @override
+  String get entegTestMesaji => 'Test mesajı';
+
+  @override
+  String get ortakAdGerekli => 'Ad gerekli';
+
+  @override
+  String get ziyaretYeni => 'Yeni ziyaretçi';
+
+  @override
+  String get ziyaretKaydedildi =>
+      'Ziyaretçi kaydedildi — daire sakinine bildirildi ✓';
+
+  @override
+  String get ziyaretYokGuvenlik => 'Henüz ziyaretçi kaydı yok.';
+
+  @override
+  String get ziyaretYokSakin => 'Size iletilen ziyaretçi kaydı yok.';
+
+  @override
+  String ziyaretBildirilenSakin(Object ad) {
+    return 'Bildirilen sakin: $ad';
+  }
+
+  @override
+  String get ziyaretSakiniAra => 'Sakini ara';
+
+  @override
+  String get ziyaretGuvenligiAra => 'Güvenliği ara';
+
+  @override
+  String get ziyaretBilgileriDuzenle => 'Bilgileri düzenle';
+
+  @override
+  String get ziyaretGuncellendi => 'Ziyaretçi bilgileri güncellendi ✓';
+
+  @override
+  String get ziyaretOnceDaireNo => 'Önce daire no girin';
+
+  @override
+  String get ziyaretSakiniSecin => 'Bildirilecek sakini seçin';
+
+  @override
+  String get ziyaretDuzenleBaslik => 'Ziyaretçi düzenle';
+
+  @override
+  String get ziyaretDuzenleAlt =>
+      'Ad, daire, bildirilen sakin ve notu güncelleyebilirsiniz.';
+
+  @override
+  String get ziyaretYeniAlt =>
+      'Sakine yalnızca bilgilendirme gider (onay istenmez).';
+
+  @override
+  String get ziyaretAdAlan => 'Ziyaretçi adı *';
+
+  @override
+  String get ziyaretAdGerekli => 'Ziyaretçi adı gerekli';
+
+  @override
+  String get ziyaretSakinleriGetir => 'Sakinleri getir';
+
+  @override
+  String get ziyaretBildirilecekSakin => 'Bildirilecek sakin *';
+
+  @override
+  String get ziyaretKaydetVeBildir => 'Kaydet ve sakine bildir';
+
+  @override
+  String get raporBaslik => 'Aylık raporlar';
+
+  @override
+  String get raporOncekiAy => 'Önceki ay';
+
+  @override
+  String get raporSonrakiAy => 'Sonraki ay';
+
+  @override
+  String raporAyBaslik(Object ay, Object yil) {
+    return '$ay $yil';
+  }
+
+  @override
+  String get raporYetkiYok =>
+      'Aylık raporlar için yetkiniz yok. Bu ekran yönetici rolüne açıktır.';
+
+  @override
+  String get raporGorevTamamlama => 'Görev tamamlama';
+
+  @override
+  String get raporAidat => 'Aidat';
+
+  @override
+  String get raporSonTamamlamalar => 'Son tamamlamalar (ilk 10)';
+
+  @override
+  String get raporPlanlananPencere => 'Planlanan pencere';
+
+  @override
+  String raporTamamlanmaYuzde(Object yuzde) {
+    return 'Tamamlanma %$yuzde';
+  }
+
+  @override
+  String get raporPencereYok => 'Bu ay planlanmış devriye penceresi yok.';
+
+  @override
+  String get raporGorevYok => 'Bu ay görev tamamlaması yok.';
+
+  @override
+  String get raporToplamTamamlama => 'Toplam tamamlama';
+
+  @override
+  String get raporAidatKayitYok => 'Bu dönem için tahakkuk/ödeme kaydı yok.';
+
+  @override
+  String raporTahakkukDaire(num n) {
+    return 'Tahakkuk ($n daire)';
+  }
+
+  @override
+  String raporTahsilatOdeme(num n) {
+    return 'Tahsilat ($n ödeme)';
+  }
+
+  @override
+  String get raporKalanBakiye => 'Kalan bakiye';
 }

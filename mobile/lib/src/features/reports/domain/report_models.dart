@@ -18,46 +18,32 @@ library;
 /// Aidat donem anahtari: 'YYYY-MM' (backend `donem` filtresi bu bicimi bekler).
 String donemStr(int yil, int ay) => '$yil-${ay.toString().padLeft(2, '0')}';
 
-/// TR ay adi ('Temmuz 2026' gibi baslik icin).
-const _ayAdlari = [
-  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
-];
-
-String ayBaslik(int yil, int ay) => '${_ayAdlari[ay - 1]} $yil';
-
-/// 75000 kurus -> '750,00 TL' (tam sayi aritmetigi; float yok — panel
-/// lib/money.ts ile ayni kural).
-String kurusToTl(int kurus) {
-  final neg = kurus < 0;
-  final abs = kurus.abs();
-  final lira = abs ~/ 100;
-  final kr = (abs % 100).toString().padLeft(2, '0');
-  // binlik ayirici: 1234567 -> 1.234.567
-  final s = lira.toString();
-  final buf = StringBuffer();
-  for (var i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
-    buf.write(s[i]);
-  }
-  return '${neg ? '-' : ''}$buf,$kr TL';
-}
+// AY ADI ve PARA BICIMI burada DEGIL: tur 10'da ikisi de `core/i18n/l10n.dart`
+// icindeki tek kaynaga tasindi (`ayAdi` + `tlSonEkli`). Eskiden bu dosyada TR
+// sabit bir ay dizisi ve `kurusToTl` (para gruplamasinin UCUNCU uygulamasi)
+// duruyordu; baslik `l10n.raporAyBaslik(ayAdi(ay, dil), '$yil')` ile kurulur.
 
 /// Kategori bazli tamamlanma sayimi (GorevOzet kalemi).
+///
+/// KIMLIK / METIN AYRIMI (README §15): `kategoriAd` NULL olabilir (kategorisiz);
+/// TR sabit "Diğer" burada DEGIL, cizim katmanindadir.
 class KategoriSayi {
-  const KategoriSayi({required this.kategoriAd, required this.sayi});
+  const KategoriSayi({this.kategoriAd, required this.sayi});
 
-  final String kategoriAd;
+  /// null = kategorisiz; gorunen ad cizim aninda `l10n.gorevKategoriDiger`
+  /// ile yazilir (tur 3'teki `taskKategoriStyle` emsali — domain TR sabit
+  /// "Diğer" tasimaz).
+  final String? kategoriAd;
   final int sayi;
 
   factory KategoriSayi.fromJson(Map<String, dynamic> json) => KategoriSayi(
-        kategoriAd: json['kategori_ad'] as String? ?? 'Diğer',
+        kategoriAd: json['kategori_ad'] as String?,
         sayi: (json['sayi'] as num?)?.toInt() ?? 0,
       );
 }
 
 /// `GET /task-completions` → `ozet` (filtrelenmis TUM kume uzerinden).
-/// Sabit tip kirilimi kaldirildi; KATEGORI bazli sayim (NULL kategori "Diğer").
+/// Sabit tip kirilimi kaldirildi; KATEGORI bazli sayim (null = kategorisiz).
 class GorevOzet {
   const GorevOzet({this.toplam = 0, this.kalemler = const []});
 
@@ -77,7 +63,7 @@ class GorevOzet {
 class SonTamamlama {
   const SonTamamlama({
     required this.id,
-    required this.kategoriAd,
+    this.kategoriAd,
     required this.tamamlanmaZamani,
     this.taskAdi,
     this.fotoVar = false,
@@ -85,7 +71,9 @@ class SonTamamlama {
   });
 
   final String id;
-  final String kategoriAd;
+
+  /// null = kategorisiz (bkz. [KategoriSayi.kategoriAd]).
+  final String? kategoriAd;
   final String? taskAdi;
   final DateTime tamamlanmaZamani;
   final bool fotoVar;
@@ -93,7 +81,7 @@ class SonTamamlama {
 
   factory SonTamamlama.fromJson(Map<String, dynamic> json) => SonTamamlama(
         id: json['id'] as String? ?? '',
-        kategoriAd: json['kategori_ad'] as String? ?? 'Diğer',
+        kategoriAd: json['kategori_ad'] as String?,
         taskAdi: json['task_adi'] as String?,
         tamamlanmaZamani:
             DateTime.tryParse(json['tamamlanma_zamani'] as String? ?? '')

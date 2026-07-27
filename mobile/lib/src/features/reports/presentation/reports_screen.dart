@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/error/akis_hatasi.dart';
 import '../../../core/i18n/l10n.dart';
-import '../../../core/text/tr_upper.dart';
 import '../../patrol/presentation/patrol_history_view.dart'
     show PatrolErrorBanner;
 import '../../tasks/presentation/task_tip_style.dart';
@@ -19,9 +19,12 @@ class ReportsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(reportsControllerProvider);
     final controller = ref.read(reportsControllerProvider.notifier);
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Aylık raporlar'))),
+      appBar: AppBar(
+        title: Text(baslikBuyuk(l10n.raporBaslik, context.dilKodu)),
+      ),
       body: Column(
         children: [
           _MonthBar(state: state, controller: controller),
@@ -46,24 +49,26 @@ class _MonthBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Önceki ay',
+            tooltip: l10n.raporOncekiAy,
             icon: const Icon(Icons.chevron_left),
             onPressed: state.loading ? null : controller.prevMonth,
           ),
           Expanded(
             child: Text(
-              ayBaslik(state.yil, state.ay),
+              l10n.raporAyBaslik(ayAdi(state.ay, dil), '${state.yil}'),
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
           IconButton(
-            tooltip: 'Sonraki ay',
+            tooltip: l10n.raporSonrakiAy,
             icon: const Icon(Icons.chevron_right),
             onPressed:
                 state.loading || !controller.canGoNext ? null : controller.nextMonth,
@@ -82,7 +87,9 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (state.loading && state.rapor == null && state.errorMessage == null) {
+    final l10n = context.l10n;
+    final hata = akisHatasiCoz(l10n, state.hataKimligi, state.errorMessage);
+    if (state.loading && state.rapor == null && hata == null) {
       return const Center(child: CircularProgressIndicator());
     }
     final rapor = state.rapor;
@@ -90,28 +97,27 @@ class _Body extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
-        if (state.errorMessage != null)
+        if (hata != null)
           PatrolErrorBanner(
-            message: state.forbidden
-                ? 'Aylık raporlar için yetkiniz yok. Bu ekran yönetici '
-                    'rolüne açıktır.'
-                : state.errorMessage!,
+            message: state.forbidden ? l10n.raporYetkiYok : hata,
             onRetry: state.forbidden ? null : controller.refresh,
           ),
         if (rapor != null) ...[
-          _SectionTitle(icon: Icons.route_outlined, title: 'Devriye'),
+          _SectionTitle(
+              icon: Icons.route_outlined, title: l10n.etiketDevriye),
           _DevriyeCard(rapor: rapor),
           const SizedBox(height: 16),
-          _SectionTitle(icon: Icons.task_alt, title: 'Görev tamamlama'),
+          _SectionTitle(
+              icon: Icons.task_alt, title: l10n.raporGorevTamamlama),
           _GorevCard(rapor: rapor),
           const SizedBox(height: 16),
-          _SectionTitle(icon: Icons.payments_outlined, title: 'Aidat'),
+          _SectionTitle(icon: Icons.payments_outlined, title: l10n.raporAidat),
           _AidatCard(ozet: rapor.aidat),
           if (rapor.sonTamamlamalar.isNotEmpty) ...[
             const SizedBox(height: 16),
             _SectionTitle(
               icon: Icons.history,
-              title: 'Son tamamlamalar (ilk 10)',
+              title: l10n.raporSonTamamlamalar,
             ),
             _SonTamamlamalarCard(items: rapor.sonTamamlamalar),
           ],
@@ -135,7 +141,11 @@ class _SectionTitle extends StatelessWidget {
         children: [
           Icon(icon, size: 18),
           const SizedBox(width: 6),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+          // Uzun ceviriler ("Achèvement des tâches") satiri tasiriyordu.
+          Expanded(
+            child: Text(title,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );
@@ -157,10 +167,19 @@ class _StatRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label),
-          Text(
-            value,
-            style: TextStyle(fontWeight: FontWeight.w600, color: valueColor),
+          // Etiket kucultulebilir (uzun ceviriler + ICU cogul sayaclari);
+          // DEGER kirpilmaz, gerekirse kuculur (tur 6/9 emsali).
+          Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerEnd,
+              child: Text(
+                value,
+                style: TextStyle(fontWeight: FontWeight.w600, color: valueColor),
+              ),
+            ),
           ),
         ],
       ),
@@ -175,6 +194,7 @@ class _DevriyeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final yuzde = rapor.devriyeYuzde;
     return Card(
       margin: EdgeInsets.zero,
@@ -182,14 +202,16 @@ class _DevriyeCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _StatRow(label: 'Planlanan pencere', value: '${rapor.devriyeToplam}'),
             _StatRow(
-              label: 'Tamamlandı',
+                label: l10n.raporPlanlananPencere,
+                value: '${rapor.devriyeToplam}'),
+            _StatRow(
+              label: l10n.devriyeDurumTamamlandi,
               value: '${rapor.devriyeTamamlandi}',
               valueColor: Colors.green,
             ),
             _StatRow(
-              label: 'Kaçırıldı',
+              label: l10n.devriyeDurumKacirildi,
               value: '${rapor.devriyeKacirildi}',
               valueColor: rapor.devriyeKacirildi > 0 ? Colors.red : null,
             ),
@@ -206,16 +228,17 @@ class _DevriyeCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Align(
-                alignment: Alignment.centerRight,
+                // YON-DUYARLI: Arapca'da sola hizalanir.
+                alignment: AlignmentDirectional.centerEnd,
                 child: Text(
-                  'Tamamlanma %$yuzde',
+                  l10n.raporTamamlanmaYuzde('$yuzde'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
             ] else
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text('Bu ay planlanmış devriye penceresi yok.'),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(l10n.raporPencereYok),
               ),
           ],
         ),
@@ -231,19 +254,24 @@ class _GorevCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final g = rapor.gorev;
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: g.toplam == 0
-            ? const Text('Bu ay görev tamamlaması yok.')
+            ? Text(l10n.raporGorevYok)
             : Column(
                 children: [
-                  _StatRow(label: 'Toplam tamamlama', value: '${g.toplam}'),
-                  // Kategori (görev tipi) bazlı kırılım; NULL kategori "Diğer".
+                  _StatRow(
+                      label: l10n.raporToplamTamamlama, value: '${g.toplam}'),
+                  // Kategori bazli kirilim; null kategori cizimde cozulur.
                   for (final k in g.kalemler)
-                    _StatRow(label: k.kategoriAd, value: '${k.sayi}'),
+                    _StatRow(
+                      label: k.kategoriAd ?? l10n.gorevKategoriDiger,
+                      value: '${k.sayi}',
+                    ),
                 ],
               ),
       ),
@@ -258,27 +286,29 @@ class _AidatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     final yuzde = ozet.tahsilatYuzde;
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: ozet.tahakkukAdet == 0 && ozet.tahsilatAdet == 0
-            ? const Text('Bu dönem için tahakkuk/ödeme kaydı yok.')
+            ? Text(l10n.raporAidatKayitYok)
             : Column(
                 children: [
                   _StatRow(
-                    label: 'Tahakkuk (${ozet.tahakkukAdet} daire)',
-                    value: kurusToTl(ozet.tahakkukKurus),
+                    label: l10n.raporTahakkukDaire(ozet.tahakkukAdet),
+                    value: tlSonEkli(ozet.tahakkukKurus, dil),
                   ),
                   _StatRow(
-                    label: 'Tahsilat (${ozet.tahsilatAdet} ödeme)',
-                    value: kurusToTl(ozet.tahsilatKurus),
+                    label: l10n.raporTahsilatOdeme(ozet.tahsilatAdet),
+                    value: tlSonEkli(ozet.tahsilatKurus, dil),
                     valueColor: Colors.green,
                   ),
                   _StatRow(
-                    label: 'Kalan bakiye',
-                    value: kurusToTl(ozet.bakiyeKurus),
+                    label: l10n.raporKalanBakiye,
+                    value: tlSonEkli(ozet.bakiyeKurus, dil),
                     valueColor: ozet.bakiyeKurus > 0 ? Colors.red : Colors.green,
                   ),
                   if (yuzde != null) ...[
@@ -295,9 +325,10 @@ class _AidatCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Align(
-                      alignment: Alignment.centerRight,
+                      // YON-DUYARLI: Arapca'da sola hizalanir.
+                      alignment: AlignmentDirectional.centerEnd,
                       child: Text(
-                        'Tahsilat %$yuzde',
+                        l10n.butTahsilatYuzde(yuzde),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
@@ -337,9 +368,6 @@ class _SonTamamlamaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // NOT: reports modulu bu turun KAPSAMINDA DEGIL; asagidaki iki satir
-    // tasks/patrol refactor'unun ZORUNLU uyarlamasidir (kategori kimlik
-    // ayrimi + patrol'den tasinan tarih bicimleyicileri).
     final l10n = context.l10n;
     final dil = context.dilKodu;
     final style = taskKategoriStyle(item.kategoriAd);
@@ -354,12 +382,12 @@ class _SonTamamlamaTile extends StatelessWidget {
         children: [
           if (item.nfcDogrulandi)
             const Padding(
-              padding: EdgeInsets.only(left: 4),
+              padding: EdgeInsetsDirectional.only(start: 4),
               child: Icon(Icons.nfc, size: 16),
             ),
           if (item.fotoVar)
             const Padding(
-              padding: EdgeInsets.only(left: 4),
+              padding: EdgeInsetsDirectional.only(start: 4),
               child: Icon(Icons.photo_camera_outlined, size: 16),
             ),
         ],

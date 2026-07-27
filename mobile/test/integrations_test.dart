@@ -6,6 +6,8 @@ import 'package:mobile/src/features/integrations/data/integration_api.dart';
 import 'package:mobile/src/features/integrations/domain/integration_models.dart';
 import 'package:mobile/src/features/integrations/presentation/integrations_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Aga cikmayan sahte istemci.
 class _FakeIntegrationApi extends IntegrationApi {
   _FakeIntegrationApi(this._items) : super(Dio());
@@ -46,7 +48,7 @@ Integration _i({String id = 'i-1', bool secretSet = true}) => Integration(
     api,
     ProviderScope(
       overrides: [integrationApiProvider.overrideWithValue(api)],
-      child: const MaterialApp(home: IntegrationsScreen()),
+      child: l10nApp(const IntegrationsScreen()),
     ),
   );
 }

@@ -1320,5 +1320,109 @@
   "ortakYuzde": "%{yuzde}",
   "@ortakYuzde": {
     "description": "Yalin yuzde gosterimi; isaretin YERI dile gore degisir"
-  }
+  },
+  "entegYeni": "Yeni",
+  "entegYokMesaj": "Entegrasyon yok. \"Yeni\" ile bir dış sistem (megafon/akıllı ev/webhook) ekleyin.",
+  "entegSilOnay": "Silinsin mi?",
+  "entegSilGovde": "\"{ad}\" entegrasyonu silinecek.",
+  "entegSilinemedi": "Silinemedi: {hata}",
+  "entegAktifKisa": "aktif",
+  "entegPasifKisa": "pasif",
+  "entegKimlikSatir": "Kimlik: {tip}{kilit}",
+  "@entegKimlikSatir": {
+    "description": "{kilit} istege bagli kilit simgesi (bos ya da ' 🔒')",
+    "placeholders": {
+      "tip": {},
+      "kilit": {}
+    }
+  },
+  "entegTest": "Test",
+  "entegTestBasarili": "✓ Başarılı ({durum})",
+  "entegTestBasarisiz": "✗ {hata}{durum}",
+  "@entegTestBasarisiz": {
+    "description": "{durum} istege bagli HTTP durumu (' (500)' gibi)",
+    "placeholders": {
+      "hata": {},
+      "durum": {}
+    }
+  },
+  "entegBasarisiz": "Başarısız",
+  "entegDuzenleBaslik": "Entegrasyon düzenle",
+  "entegYeniBaslik": "Yeni entegrasyon",
+  "entegPreset": "Hazır şablon (preset)",
+  "entegKanalTipi": "Kanal tipi",
+  "entegUrl": "Endpoint URL (http/https)",
+  "entegUrlHelper": "İç/özel adresler tetikte engellenir",
+  "entegUrlHata": "http(s) ile başlamalı",
+  "entegHttpMetodu": "HTTP metodu",
+  "entegKimlikDogrulama": "Kimlik doğrulama",
+  "entegSir": "Sır (bearer token / API key)",
+  "entegSirKayitli": "Kayıtlı — değiştirmek için yeni değer girin",
+  "entegSirYazmaOzel": "Yazma-özel; sunucudan asla dönmez",
+  "entegPayload": "Payload şablonu",
+  "entegPayloadHelper": "{sablonlar} yer tutucuları",
+  "@entegPayloadHelper": {
+    "description": "{sablonlar} teknik yer tutucular — CEVRILMEZ"
+  },
+  "entegTestMesaji": "Test mesajı",
+  "ortakAdGerekli": "Ad gerekli",
+  "ziyaretYeni": "Yeni ziyaretçi",
+  "ziyaretKaydedildi": "Ziyaretçi kaydedildi — daire sakinine bildirildi ✓",
+  "ziyaretYokGuvenlik": "Henüz ziyaretçi kaydı yok.",
+  "ziyaretYokSakin": "Size iletilen ziyaretçi kaydı yok.",
+  "ziyaretBildirilenSakin": "Bildirilen sakin: {ad}",
+  "ziyaretSakiniAra": "Sakini ara",
+  "ziyaretGuvenligiAra": "Güvenliği ara",
+  "ziyaretBilgileriDuzenle": "Bilgileri düzenle",
+  "ziyaretGuncellendi": "Ziyaretçi bilgileri güncellendi ✓",
+  "ziyaretOnceDaireNo": "Önce daire no girin",
+  "ziyaretSakiniSecin": "Bildirilecek sakini seçin",
+  "ziyaretDuzenleBaslik": "Ziyaretçi düzenle",
+  "ziyaretDuzenleAlt": "Ad, daire, bildirilen sakin ve notu güncelleyebilirsiniz.",
+  "ziyaretYeniAlt": "Sakine yalnızca bilgilendirme gider (onay istenmez).",
+  "ziyaretAdAlan": "Ziyaretçi adı *",
+  "ziyaretAdGerekli": "Ziyaretçi adı gerekli",
+  "ziyaretSakinleriGetir": "Sakinleri getir",
+  "ziyaretBildirilecekSakin": "Bildirilecek sakin *",
+  "ziyaretKaydetVeBildir": "Kaydet ve sakine bildir",
+  "raporBaslik": "Aylık raporlar",
+  "raporOncekiAy": "Önceki ay",
+  "raporSonrakiAy": "Sonraki ay",
+  "raporAyBaslik": "{ay} {yil}",
+  "@raporAyBaslik": {
+    "description": "Ay adi + yil ('Temmuz 2026')",
+    "placeholders": {
+      "ay": {},
+      "yil": {}
+    }
+  },
+  "raporYetkiYok": "Aylık raporlar için yetkiniz yok. Bu ekran yönetici rolüne açıktır.",
+  "raporGorevTamamlama": "Görev tamamlama",
+  "raporAidat": "Aidat",
+  "raporSonTamamlamalar": "Son tamamlamalar (ilk 10)",
+  "raporPlanlananPencere": "Planlanan pencere",
+  "raporTamamlanmaYuzde": "Tamamlanma %{yuzde}",
+  "raporPencereYok": "Bu ay planlanmış devriye penceresi yok.",
+  "raporGorevYok": "Bu ay görev tamamlaması yok.",
+  "raporToplamTamamlama": "Toplam tamamlama",
+  "raporAidatKayitYok": "Bu dönem için tahakkuk/ödeme kaydı yok.",
+  "raporTahakkukDaire": "Tahakkuk ({n} daire)",
+  "@raporTahakkukDaire": {
+    "description": "Daire sayaci (ICU cogul)",
+    "placeholders": {
+      "n": {
+        "type": "num"
+      }
+    }
+  },
+  "raporTahsilatOdeme": "Tahsilat ({n} ödeme)",
+  "@raporTahsilatOdeme": {
+    "description": "Odeme sayaci (ICU cogul)",
+    "placeholders": {
+      "n": {
+        "type": "num"
+      }
+    }
+  },
+  "raporKalanBakiye": "Kalan bakiye"
 }

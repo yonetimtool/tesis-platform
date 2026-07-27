@@ -5686,6 +5686,390 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'%{yuzde}'**
   String ortakYuzde(Object yuzde);
+
+  /// No description provided for @entegYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni'**
+  String get entegYeni;
+
+  /// No description provided for @entegYokMesaj.
+  ///
+  /// In tr, this message translates to:
+  /// **'Entegrasyon yok. \"Yeni\" ile bir dış sistem (megafon/akıllı ev/webhook) ekleyin.'**
+  String get entegYokMesaj;
+
+  /// No description provided for @entegSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Silinsin mi?'**
+  String get entegSilOnay;
+
+  /// No description provided for @entegSilGovde.
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" entegrasyonu silinecek.'**
+  String entegSilGovde(Object ad);
+
+  /// No description provided for @entegSilinemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Silinemedi: {hata}'**
+  String entegSilinemedi(Object hata);
+
+  /// No description provided for @entegAktifKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'aktif'**
+  String get entegAktifKisa;
+
+  /// No description provided for @entegPasifKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'pasif'**
+  String get entegPasifKisa;
+
+  /// {kilit} istege bagli kilit simgesi (bos ya da ' 🔒')
+  ///
+  /// In tr, this message translates to:
+  /// **'Kimlik: {tip}{kilit}'**
+  String entegKimlikSatir(Object tip, Object kilit);
+
+  /// No description provided for @entegTest.
+  ///
+  /// In tr, this message translates to:
+  /// **'Test'**
+  String get entegTest;
+
+  /// No description provided for @entegTestBasarili.
+  ///
+  /// In tr, this message translates to:
+  /// **'✓ Başarılı ({durum})'**
+  String entegTestBasarili(Object durum);
+
+  /// {durum} istege bagli HTTP durumu (' (500)' gibi)
+  ///
+  /// In tr, this message translates to:
+  /// **'✗ {hata}{durum}'**
+  String entegTestBasarisiz(Object hata, Object durum);
+
+  /// No description provided for @entegBasarisiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başarısız'**
+  String get entegBasarisiz;
+
+  /// No description provided for @entegDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Entegrasyon düzenle'**
+  String get entegDuzenleBaslik;
+
+  /// No description provided for @entegYeniBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni entegrasyon'**
+  String get entegYeniBaslik;
+
+  /// No description provided for @entegPreset.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hazır şablon (preset)'**
+  String get entegPreset;
+
+  /// No description provided for @entegKanalTipi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kanal tipi'**
+  String get entegKanalTipi;
+
+  /// No description provided for @entegUrl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Endpoint URL (http/https)'**
+  String get entegUrl;
+
+  /// No description provided for @entegUrlHelper.
+  ///
+  /// In tr, this message translates to:
+  /// **'İç/özel adresler tetikte engellenir'**
+  String get entegUrlHelper;
+
+  /// No description provided for @entegUrlHata.
+  ///
+  /// In tr, this message translates to:
+  /// **'http(s) ile başlamalı'**
+  String get entegUrlHata;
+
+  /// No description provided for @entegHttpMetodu.
+  ///
+  /// In tr, this message translates to:
+  /// **'HTTP metodu'**
+  String get entegHttpMetodu;
+
+  /// No description provided for @entegKimlikDogrulama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kimlik doğrulama'**
+  String get entegKimlikDogrulama;
+
+  /// No description provided for @entegSir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sır (bearer token / API key)'**
+  String get entegSir;
+
+  /// No description provided for @entegSirKayitli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıtlı — değiştirmek için yeni değer girin'**
+  String get entegSirKayitli;
+
+  /// No description provided for @entegSirYazmaOzel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yazma-özel; sunucudan asla dönmez'**
+  String get entegSirYazmaOzel;
+
+  /// No description provided for @entegPayload.
+  ///
+  /// In tr, this message translates to:
+  /// **'Payload şablonu'**
+  String get entegPayload;
+
+  /// {sablonlar} teknik yer tutucular — CEVRILMEZ
+  ///
+  /// In tr, this message translates to:
+  /// **'{sablonlar} yer tutucuları'**
+  String entegPayloadHelper(Object sablonlar);
+
+  /// No description provided for @entegTestMesaji.
+  ///
+  /// In tr, this message translates to:
+  /// **'Test mesajı'**
+  String get entegTestMesaji;
+
+  /// No description provided for @ortakAdGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad gerekli'**
+  String get ortakAdGerekli;
+
+  /// No description provided for @ziyaretYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni ziyaretçi'**
+  String get ziyaretYeni;
+
+  /// No description provided for @ziyaretKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçi kaydedildi — daire sakinine bildirildi ✓'**
+  String get ziyaretKaydedildi;
+
+  /// No description provided for @ziyaretYokGuvenlik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz ziyaretçi kaydı yok.'**
+  String get ziyaretYokGuvenlik;
+
+  /// No description provided for @ziyaretYokSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Size iletilen ziyaretçi kaydı yok.'**
+  String get ziyaretYokSakin;
+
+  /// No description provided for @ziyaretBildirilenSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirilen sakin: {ad}'**
+  String ziyaretBildirilenSakin(Object ad);
+
+  /// No description provided for @ziyaretSakiniAra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakini ara'**
+  String get ziyaretSakiniAra;
+
+  /// No description provided for @ziyaretGuvenligiAra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvenliği ara'**
+  String get ziyaretGuvenligiAra;
+
+  /// No description provided for @ziyaretBilgileriDuzenle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bilgileri düzenle'**
+  String get ziyaretBilgileriDuzenle;
+
+  /// No description provided for @ziyaretGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçi bilgileri güncellendi ✓'**
+  String get ziyaretGuncellendi;
+
+  /// No description provided for @ziyaretOnceDaireNo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önce daire no girin'**
+  String get ziyaretOnceDaireNo;
+
+  /// No description provided for @ziyaretSakiniSecin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirilecek sakini seçin'**
+  String get ziyaretSakiniSecin;
+
+  /// No description provided for @ziyaretDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçi düzenle'**
+  String get ziyaretDuzenleBaslik;
+
+  /// No description provided for @ziyaretDuzenleAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad, daire, bildirilen sakin ve notu güncelleyebilirsiniz.'**
+  String get ziyaretDuzenleAlt;
+
+  /// No description provided for @ziyaretYeniAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakine yalnızca bilgilendirme gider (onay istenmez).'**
+  String get ziyaretYeniAlt;
+
+  /// No description provided for @ziyaretAdAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçi adı *'**
+  String get ziyaretAdAlan;
+
+  /// No description provided for @ziyaretAdGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçi adı gerekli'**
+  String get ziyaretAdGerekli;
+
+  /// No description provided for @ziyaretSakinleriGetir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakinleri getir'**
+  String get ziyaretSakinleriGetir;
+
+  /// No description provided for @ziyaretBildirilecekSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirilecek sakin *'**
+  String get ziyaretBildirilecekSakin;
+
+  /// No description provided for @ziyaretKaydetVeBildir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydet ve sakine bildir'**
+  String get ziyaretKaydetVeBildir;
+
+  /// No description provided for @raporBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aylık raporlar'**
+  String get raporBaslik;
+
+  /// No description provided for @raporOncekiAy.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önceki ay'**
+  String get raporOncekiAy;
+
+  /// No description provided for @raporSonrakiAy.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sonraki ay'**
+  String get raporSonrakiAy;
+
+  /// Ay adi + yil ('Temmuz 2026')
+  ///
+  /// In tr, this message translates to:
+  /// **'{ay} {yil}'**
+  String raporAyBaslik(Object ay, Object yil);
+
+  /// No description provided for @raporYetkiYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aylık raporlar için yetkiniz yok. Bu ekran yönetici rolüne açıktır.'**
+  String get raporYetkiYok;
+
+  /// No description provided for @raporGorevTamamlama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev tamamlama'**
+  String get raporGorevTamamlama;
+
+  /// No description provided for @raporAidat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat'**
+  String get raporAidat;
+
+  /// No description provided for @raporSonTamamlamalar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son tamamlamalar (ilk 10)'**
+  String get raporSonTamamlamalar;
+
+  /// No description provided for @raporPlanlananPencere.
+  ///
+  /// In tr, this message translates to:
+  /// **'Planlanan pencere'**
+  String get raporPlanlananPencere;
+
+  /// No description provided for @raporTamamlanmaYuzde.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlanma %{yuzde}'**
+  String raporTamamlanmaYuzde(Object yuzde);
+
+  /// No description provided for @raporPencereYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ay planlanmış devriye penceresi yok.'**
+  String get raporPencereYok;
+
+  /// No description provided for @raporGorevYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ay görev tamamlaması yok.'**
+  String get raporGorevYok;
+
+  /// No description provided for @raporToplamTamamlama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam tamamlama'**
+  String get raporToplamTamamlama;
+
+  /// No description provided for @raporAidatKayitYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu dönem için tahakkuk/ödeme kaydı yok.'**
+  String get raporAidatKayitYok;
+
+  /// Daire sayaci (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahakkuk ({n} daire)'**
+  String raporTahakkukDaire(num n);
+
+  /// Odeme sayaci (ICU cogul)
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahsilat ({n} ödeme)'**
+  String raporTahsilatOdeme(num n);
+
+  /// No description provided for @raporKalanBakiye.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kalan bakiye'**
+  String get raporKalanBakiye;
 }
 
 class _AppLocalizationsDelegate

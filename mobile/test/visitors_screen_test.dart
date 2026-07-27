@@ -12,6 +12,8 @@ import 'package:mobile/src/features/visitors/data/visitor_api.dart';
 import 'package:mobile/src/features/visitors/domain/visitor_models.dart';
 import 'package:mobile/src/features/visitors/presentation/visitors_screen.dart';
 
+import 'helpers/l10n_test_app.dart';
+
 /// Sahte call API — detay ekranindaki CallButton gercek aga cikmasin diye.
 class _FakeCallApi extends CallApi {
   _FakeCallApi({this.callable = false}) : super(Dio());
@@ -86,9 +88,7 @@ Visitor _v({String id = 'v-1'}) => Visitor(
         callApiProvider.overrideWithValue(_FakeCallApi(callable: callable)),
         callLauncherProvider.overrideWithValue(launcher ?? _FakeLauncher()),
       ],
-      child: MaterialApp(
-        home: VisitorsScreen(initialVisitorId: initialVisitorId),
-      ),
+      child: l10nApp(VisitorsScreen(initialVisitorId: initialVisitorId)),
     ),
   );
 }

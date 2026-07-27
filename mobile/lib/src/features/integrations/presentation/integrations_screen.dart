@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/l10n.dart';
 import '../domain/integration_models.dart';
 import 'integrations_controller.dart';
 
@@ -15,12 +16,16 @@ class IntegrationsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(integrationsControllerProvider);
     final controller = ref.read(integrationsControllerProvider.notifier);
+    final l10n = context.l10n;
+    final hata = akisHatasiCoz(l10n, state.hataKimligi, state.errorMessage);
 
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('Entegrasyonlar'))),
+      appBar: AppBar(
+        title: Text(baslikBuyuk(l10n.modulEntegrasyonlar, context.dilKodu)),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
-        label: const Text('Yeni'),
+        label: Text(l10n.entegYeni),
         onPressed: () => _openForm(context, ref),
       ),
       body: RefreshIndicator(
@@ -31,24 +36,23 @@ class IntegrationsScreen extends ConsumerWidget {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: [
-                  if (state.errorMessage != null)
+                  if (hata != null)
                     Card(
                       color: Colors.red.withValues(alpha: 0.08),
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Text(
-                          state.errorMessage!,
+                          hata,
                           style: const TextStyle(color: Colors.red),
                         ),
                       ),
                     ),
-                  if (state.items.isEmpty && state.errorMessage == null)
-                    const Card(
+                  if (state.items.isEmpty && hata == null)
+                    Card(
                       child: Padding(
-                        padding: EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(24),
                         child: Text(
-                          'Entegrasyon yok. "Yeni" ile bir dış sistem (megafon/'
-                          'akıllı ev/webhook) ekleyin.',
+                          l10n.entegYokMesaj,
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -87,12 +91,18 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
   TriggerResult? _result;
   bool _testing = false;
 
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   Future<void> _test() async {
     setState(() => _testing = true);
+    // Test yuku DIS sisteme gider; metni yoneticinin dilinde uretiriz
+    // (denetleyicide `BuildContext` yok — cizimden gecirilir).
+    final mesaj = _l10n.entegTestMesaji;
+    final baslik = _l10n.entegTest;
     try {
       final r = await ref
           .read(integrationsControllerProvider.notifier)
-          .trigger(widget.integration.id);
+          .trigger(widget.integration.id, mesaj: mesaj, baslik: baslik);
       if (mounted) setState(() => _result = r);
     } on ApiException catch (e) {
       if (mounted) {
@@ -104,19 +114,20 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
   }
 
   Future<void> _delete() async {
+    final l10n = _l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Silinsin mi?'),
-        content: Text('"${widget.integration.ad}" entegrasyonu silinecek.'),
+        title: Text(l10n.entegSilOnay),
+        content: Text(l10n.entegSilGovde(widget.integration.ad)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Vazgeç'),
+            child: Text(l10n.ortakVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(l10n.ortakSil),
           ),
         ],
       ),
@@ -129,7 +140,7 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Silinemedi: ${e.message}')),
+          SnackBar(content: Text(l10n.entegSilinemedi(e.message))),
         );
       }
     }
@@ -139,6 +150,7 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
   Widget build(BuildContext context) {
     final it = widget.integration;
     final r = _result;
+    final l10n = context.l10n;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
@@ -155,7 +167,7 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
                   ),
                 ),
                 Text(
-                  it.aktif ? 'aktif' : 'pasif',
+                  it.aktif ? l10n.entegAktifKisa : l10n.entegPasifKisa,
                   style: TextStyle(
                     color: it.aktif ? Colors.green : Colors.grey,
                     fontSize: 12,
@@ -171,7 +183,8 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
               overflow: TextOverflow.ellipsis,
             ),
             Text(
-              'Kimlik: ${it.authType}${it.authSecretSet ? ' 🔒' : ''}',
+              l10n.entegKimlikSatir(
+                  it.authType, it.authSecretSet ? ' 🔒' : ''),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             if (r != null)
@@ -179,8 +192,11 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   r.ok
-                      ? '✓ Başarılı (${r.status ?? '—'})'
-                      : '✗ ${r.error ?? 'Başarısız'}${r.status != null ? ' (${r.status})' : ''}',
+                      ? l10n.entegTestBasarili('${r.status ?? '—'}')
+                      : l10n.entegTestBasarisiz(
+                          r.error ?? l10n.entegBasarisiz,
+                          r.status != null ? ' (${r.status})' : '',
+                        ),
                   style: TextStyle(
                     color: r.ok ? Colors.green : Colors.red,
                     fontSize: 12,
@@ -199,18 +215,18 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.play_arrow, size: 18),
-                  label: const Text('Test'),
+                  label: Text(l10n.entegTest),
                   onPressed: _testing ? null : _test,
                 ),
                 OutlinedButton.icon(
                   icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text('Düzenle'),
+                  label: Text(l10n.ortakDuzenle),
                   onPressed: () =>
                       IntegrationsScreen._openForm(context, ref, edit: it),
                 ),
                 OutlinedButton.icon(
                   icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text('Sil'),
+                  label: Text(l10n.ortakSil),
                   onPressed: _delete,
                 ),
               ],
@@ -306,7 +322,10 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Kaydedilemedi. Tekrar deneyin.');
+      if (mounted) {
+        setState(() =>
+            _error = AppLocalizations.of(context).devriyeKaydedilemedi);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -316,6 +335,7 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
   Widget build(BuildContext context) {
     final editing = widget.edit != null;
     final presets = ref.watch(integrationsControllerProvider).presets;
+    final l10n = context.l10n;
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -331,19 +351,25 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                editing ? 'Entegrasyon düzenle' : 'Yeni entegrasyon',
+                editing ? l10n.entegDuzenleBaslik : l10n.entegYeniBaslik,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
               if (!editing && presets.isNotEmpty)
                 DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Hazır şablon (preset)',
-                    border: OutlineInputBorder(),
+                  // Uzun teknik degerler ("megaphone_generic") dar ekranda
+                  // satiri tasiriyordu (tur 9 ay secici emsali).
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.entegPreset,
+                    border: const OutlineInputBorder(),
                   ),
                   items: [
                     for (final p in presets)
-                      DropdownMenuItem(value: p.key, child: Text(p.key)),
+                      DropdownMenuItem(
+                        value: p.key,
+                        child: Text(p.key, overflow: TextOverflow.ellipsis),
+                      ),
                   ],
                   onChanged: (v) {
                     final p = presets.where((x) => x.key == v).firstOrNull;
@@ -353,19 +379,20 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _ad,
-                decoration: const InputDecoration(
-                  labelText: 'Ad',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.kameraAd,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Ad gerekli' : null,
+                    (v == null || v.trim().isEmpty) ? l10n.ortakAdGerekli : null,
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 initialValue: _channel,
-                decoration: const InputDecoration(
-                  labelText: 'Kanal tipi',
-                  border: OutlineInputBorder(),
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: l10n.entegKanalTipi,
+                  border: const OutlineInputBorder(),
                 ),
                 items: [
                   for (final c in _channels)
@@ -376,16 +403,16 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _url,
-                decoration: const InputDecoration(
-                  labelText: 'Endpoint URL (http/https)',
+                decoration: InputDecoration(
+                  labelText: l10n.entegUrl,
                   hintText: 'https://...',
-                  helperText: 'İç/özel adresler tetikte engellenir',
-                  border: OutlineInputBorder(),
+                  helperText: l10n.entegUrlHelper,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (v) {
                   final t = (v ?? '').trim();
                   if (!t.startsWith('http://') && !t.startsWith('https://')) {
-                    return 'http(s) ile başlamalı';
+                    return l10n.entegUrlHata;
                   }
                   return null;
                 },
@@ -393,9 +420,10 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 initialValue: _method,
-                decoration: const InputDecoration(
-                  labelText: 'HTTP metodu',
-                  border: OutlineInputBorder(),
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: l10n.entegHttpMetodu,
+                  border: const OutlineInputBorder(),
                 ),
                 items: [
                   for (final m in _methods)
@@ -406,9 +434,10 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 initialValue: _authType,
-                decoration: const InputDecoration(
-                  labelText: 'Kimlik doğrulama',
-                  border: OutlineInputBorder(),
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: l10n.entegKimlikDogrulama,
+                  border: const OutlineInputBorder(),
                 ),
                 items: [
                   for (final a in _authTypes)
@@ -422,10 +451,10 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
                 obscureText: true,
                 enabled: _authType != 'none',
                 decoration: InputDecoration(
-                  labelText: 'Sır (bearer token / API key)',
+                  labelText: l10n.entegSir,
                   helperText: editing && widget.edit!.authSecretSet
-                      ? 'Kayıtlı — değiştirmek için yeni değer girin'
-                      : 'Yazma-özel; sunucudan asla dönmez',
+                      ? l10n.entegSirKayitli
+                      : l10n.entegSirYazmaOzel,
                   border: const OutlineInputBorder(),
                 ),
               ),
@@ -434,15 +463,18 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
                 controller: _template,
                 minLines: 2,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Payload şablonu',
-                  helperText: '{{message}} / {{title}} yer tutucuları',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.entegPayload,
+                  // Teknik yer tutucular ARGUMAN olarak girer: ICU'da '{{'
+                  // kacisi kirilgan.
+                  helperText:
+                      l10n.entegPayloadHelper('{{message}} / {{title}}'),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Aktif'),
+                title: Text(l10n.cipAktif),
                 value: _aktif,
                 onChanged: (v) => setState(() => _aktif = v),
               ),
@@ -455,7 +487,8 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _saving ? null : _submit,
-                  child: Text(_saving ? 'Kaydediliyor...' : 'Kaydet'),
+                  child: Text(
+                      _saving ? l10n.ortakKaydediliyor : l10n.ortakKaydet),
                 ),
               ),
             ],

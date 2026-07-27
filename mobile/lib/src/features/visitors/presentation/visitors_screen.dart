@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
+import '../../../core/error/akis_hatasi.dart';
+import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 import '../../call/presentation/call_button.dart';
 import '../data/visitor_api.dart';
@@ -59,7 +60,8 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(trUpper('Ziyaretçiler')),
+        title: Text(baslikBuyuk(context.l10n.modulZiyaretciler,
+            context.dilKodu)),
         actions: [
           IconButton(
             tooltip: 'Yenile',
@@ -71,7 +73,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
       floatingActionButton: state.canRegister
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.person_add_alt_1),
-              label: const Text('Yeni ziyaretçi'),
+              label: Text(context.l10n.ziyaretYeni),
               onPressed: () => _openForm(context),
             )
           : null,
@@ -86,9 +88,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
     final saved = await _showVisitorForm(context);
     if (saved && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ziyaretçi kaydedildi — daire sakinine bildirildi ✓'),
-        ),
+        SnackBar(content: Text(context.l10n.ziyaretKaydedildi)),
       );
     }
   }
@@ -115,12 +115,17 @@ class _Body extends ConsumerWidget {
     if (state.loading && state.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null && state.items.isEmpty) {
+    final hata = akisHatasiCoz(
+      context.l10n,
+      state.hataKimligi,
+      state.errorMessage,
+    );
+    if (hata != null && state.items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            state.errorMessage!,
+            hata,
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.red),
           ),
@@ -134,8 +139,8 @@ class _Body extends ConsumerWidget {
           Center(
             child: Text(
               state.canRegister
-                  ? 'Henüz ziyaretçi kaydı yok.'
-                  : 'Size iletilen ziyaretçi kaydı yok.',
+                  ? context.l10n.ziyaretYokGuvenlik
+                  : context.l10n.ziyaretYokSakin,
               textAlign: TextAlign.center,
             ),
           ),
@@ -162,6 +167,8 @@ class _VisitorCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final v = visitor;
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -186,13 +193,16 @@ class _VisitorCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Daire: ${v.unitNo ?? '-'} · ${_fmtDateTime(v.createdAt.toLocal())}',
+                l10n.karDaireTarih(
+                  v.unitNo ?? '-',
+                  tarihSaatBicimi(v.createdAt, dil),
+                ),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               if (v.targetResidentAd != null) ...[
                 const SizedBox(height: 2),
                 Text(
-                  'Bildirilen sakin: ${v.targetResidentAd}',
+                  l10n.ziyaretBildirilenSakin(v.targetResidentAd!),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -218,13 +228,16 @@ void _showDetail(
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (sheetContext) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    builder: (sheetContext) {
+      final l10n = sheetContext.l10n;
+      final dil = sheetContext.dilKodu;
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Row(
               children: [
                 const Icon(Icons.person_outline),
@@ -241,24 +254,27 @@ void _showDetail(
               ],
             ),
             const SizedBox(height: 12),
-            Text('Daire: ${v.unitNo ?? '-'}'),
+            Text(l10n.karDaire(v.unitNo ?? '-')),
             const SizedBox(height: 4),
-            Text('Kayıt: ${_fmtDateTime(v.createdAt.toLocal())}'
-                '${v.kaydedenAd != null ? ' — ${v.kaydedenAd}' : ''}'),
+            Text('${l10n.karKayit(tarihSaatBicimi(v.createdAt, dil))}'
+                '${v.kaydedenAd != null ? l10n.karAdEki(v.kaydedenAd!) : ''}'),
             if (v.notlar != null && v.notlar!.isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text('Not: ${v.notlar}'),
+              Text(l10n.karNot(v.notlar!)),
             ],
             // Rol-bazli arama (C1a): güvenlik → HEDEF sakini arar; sakin →
             // kaydı açan GÜVENLİĞİ arar. Buton yalnız aranabilir (rıza) ise
             // etkinleşir; numara ekranda gösterilmez (/call-target kapısı).
             if (canRegister && v.targetResidentUserId.isNotEmpty) ...[
               const SizedBox(height: 12),
-              CallButton(userId: v.targetResidentUserId, label: 'Sakini ara'),
+              CallButton(
+                  userId: v.targetResidentUserId,
+                  label: l10n.ziyaretSakiniAra),
             ],
             if (!canRegister && v.kaydedenUserId.isNotEmpty) ...[
               const SizedBox(height: 12),
-              CallButton(userId: v.kaydedenUserId, label: 'Güvenliği ara'),
+              CallButton(
+                  userId: v.kaydedenUserId, label: l10n.ziyaretGuvenligiAra),
             ],
             // Guvenlik kaydi duzenler (ad/daire/hedef/not).
             if (canRegister) ...[
@@ -267,25 +283,26 @@ void _showDetail(
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Bilgileri düzenle'),
+                  label: Text(l10n.ziyaretBilgileriDuzenle),
                   onPressed: () async {
                     Navigator.of(sheetContext).pop();
                     final saved =
                         await _showVisitorForm(context, existing: v);
                     if (saved && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Ziyaretçi bilgileri güncellendi ✓')),
+                        SnackBar(
+                            content: Text(l10n.ziyaretGuncellendi)),
                       );
                     }
                   },
                 ),
               ),
             ],
-          ],
+            ],
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 
@@ -315,6 +332,8 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
   String? _targetId;
 
   bool get _isEdit => widget.existing != null;
+
+  AppLocalizations get _l10n => AppLocalizations.of(context);
 
   @override
   void initState() {
@@ -346,7 +365,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
   Future<void> _loadResidents({String? keepTarget}) async {
     final unitNo = _unitNo.text.trim();
     if (unitNo.isEmpty) {
-      setState(() => _residentsError = 'Önce daire no girin');
+      setState(() => _residentsError = _l10n.ziyaretOnceDaireNo);
       return;
     }
     setState(() {
@@ -381,7 +400,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
   Future<void> _submit() async {
     if (_busy || !(_formKey.currentState?.validate() ?? false)) return;
     if (_targetId == null) {
-      setState(() => _hata = 'Bildirilecek sakini seçin');
+      setState(() => _hata = _l10n.ziyaretSakiniSecin);
       return;
     }
     setState(() {
@@ -416,7 +435,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
       if (mounted) setState(() => _hata = e.message);
     } catch (_) {
       if (mounted) {
-        setState(() => _hata = 'Kayıt gönderilemedi. Tekrar deneyin.');
+        setState(() => _hata = _l10n.karGonderilemedi);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -425,6 +444,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final viewInsets = MediaQuery.of(context).viewInsets;
     return Padding(
       // Klavye acilinca form yukari itilsin.
@@ -436,15 +456,13 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _isEdit ? 'Ziyaretçi düzenle' : 'Yeni ziyaretçi',
+              _isEdit ? l10n.ziyaretDuzenleBaslik : l10n.ziyaretYeni,
               style:
                   const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Text(
-              _isEdit
-                  ? 'Ad, daire, bildirilen sakin ve notu güncelleyebilirsiniz.'
-                  : 'Sakine yalnızca bilgilendirme gider (onay istenmez).',
+              _isEdit ? l10n.ziyaretDuzenleAlt : l10n.ziyaretYeniAlt,
               style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -453,13 +471,14 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
             TextFormField(
               controller: _ad,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Ziyaretçi adı *',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.ziyaretAdAlan,
+                border: const OutlineInputBorder(),
               ),
               maxLength: 200,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Ziyaretçi adı gerekli' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l10n.ziyaretAdGerekli
+                  : null,
             ),
             const SizedBox(height: 8),
             Row(
@@ -468,13 +487,13 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
                 Expanded(
                   child: TextFormField(
                     controller: _unitNo,
-                    decoration: const InputDecoration(
-                      labelText: 'Daire no * (örn. A-12)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.karDaireNo,
+                      border: const OutlineInputBorder(),
                     ),
                     maxLength: 50,
                     validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Daire no gerekli'
+                        ? l10n.karDaireNoGerekli
                         : null,
                   ),
                 ),
@@ -489,7 +508,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Sakinleri getir'),
+                        : Text(l10n.ziyaretSakinleriGetir),
                   ),
                 ),
               ],
@@ -506,9 +525,9 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
             if (_residents != null && _residents!.isNotEmpty)
               DropdownButtonFormField<String>(
                 initialValue: _targetId,
-                decoration: const InputDecoration(
-                  labelText: 'Bildirilecek sakin *',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.ziyaretBildirilecekSakin,
+                  border: const OutlineInputBorder(),
                 ),
                 items: [
                   for (final r in _residents!)
@@ -519,9 +538,9 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
             const SizedBox(height: 8),
             TextFormField(
               controller: _notlar,
-              decoration: const InputDecoration(
-                labelText: 'Not (opsiyonel)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.ortakNotOpsiyonel,
+                border: const OutlineInputBorder(),
               ),
               maxLength: 1000,
               maxLines: 2,
@@ -541,7 +560,9 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Icon(_isEdit ? Icons.save_outlined : Icons.person_add_alt_1),
-                label: Text(_isEdit ? 'Güncelle' : 'Kaydet ve sakine bildir'),
+                label: Text(_isEdit
+                    ? l10n.ortakGuncelle
+                    : l10n.ziyaretKaydetVeBildir),
                 onPressed: _busy ? null : _submit,
               ),
             ),
@@ -550,9 +571,4 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
       ),
     );
   }
-}
-
-String _fmtDateTime(DateTime dt) {
-  String p(int n) => n.toString().padLeft(2, '0');
-  return '${p(dt.day)}.${p(dt.month)}.${dt.year} ${p(dt.hour)}:${p(dt.minute)}';
 }

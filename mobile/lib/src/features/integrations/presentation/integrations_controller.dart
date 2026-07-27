@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/integration_api.dart';
 import '../domain/integration_models.dart';
@@ -8,18 +9,24 @@ class IntegrationsState {
   const IntegrationsState({
     this.loading = false,
     this.errorMessage,
+    this.hataKimligi,
     this.items = const [],
     this.presets = const [],
   });
 
   final bool loading;
+
+  /// Hata KANALI ikilidir (README §15): sunucu metni + yerellestirilebilir
+  /// kimlik.
   final String? errorMessage;
+  final AkisHatasi? hataKimligi;
   final List<Integration> items;
   final List<IntegrationPreset> presets;
 
   IntegrationsState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     List<Integration>? items,
     List<IntegrationPreset>? presets,
   }) {
@@ -28,6 +35,9 @@ class IntegrationsState {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as AkisHatasi?,
       items: items ?? this.items,
       presets: presets ?? this.presets,
     );
@@ -48,7 +58,11 @@ class IntegrationsController extends Notifier<IntegrationsState> {
   Future<void> refresh() async {
     if (_refreshing) return;
     _refreshing = true;
-    state = state.copyWith(loading: true, errorMessage: null);
+    state = state.copyWith(
+      loading: true,
+      errorMessage: null,
+      hataKimligi: null,
+    );
     try {
       final api = ref.read(integrationApiProvider);
       final items = await api.fetchAll();
@@ -65,17 +79,23 @@ class IntegrationsController extends Notifier<IntegrationsState> {
       state = state.copyWith(
         loading: false,
         errorMessage: null,
+        hataKimligi: null,
         items: items,
         presets: presets,
       );
     } on ApiException catch (e) {
       if (!ref.mounted) return;
-      state = state.copyWith(loading: false, errorMessage: e.message);
+      state = state.copyWith(
+        loading: false,
+        errorMessage: e.message,
+        hataKimligi: null,
+      );
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: AkisHatasi.beklenmeyen,
       );
     } finally {
       _refreshing = false;
@@ -97,10 +117,17 @@ class IntegrationsController extends Notifier<IntegrationsState> {
     await refresh();
   }
 
-  Future<TriggerResult> trigger(String id) {
+  /// "Test" tetigi. Yuk metinleri DIS sisteme gider ve yoneticinin dilinde
+  /// olmalidir; denetleyicide `BuildContext` yok, bu yuzden CIZIM katmanindan
+  /// gecirilir (bkz. NFC iOS metinleri emsali, tur 9).
+  Future<TriggerResult> trigger(
+    String id, {
+    required String mesaj,
+    required String baslik,
+  }) {
     return ref
         .read(integrationApiProvider)
-        .trigger(id, message: 'Test mesajı', title: 'Test');
+        .trigger(id, message: mesaj, title: baslik);
   }
 }
 

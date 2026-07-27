@@ -3438,4 +3438,241 @@ class AppLocalizationsRu extends AppLocalizations {
   String ortakYuzde(Object yuzde) {
     return '$yuzde%';
   }
+
+  @override
+  String get entegYeni => 'Новая';
+
+  @override
+  String get entegYokMesaj =>
+      'Интеграций нет. Добавьте внешнюю систему (громкая связь/умный дом/webhook) кнопкой «Новая».';
+
+  @override
+  String get entegSilOnay => 'Удалить?';
+
+  @override
+  String entegSilGovde(Object ad) {
+    return 'Интеграция \"$ad\" будет удалена.';
+  }
+
+  @override
+  String entegSilinemedi(Object hata) {
+    return 'Не удалось удалить: $hata';
+  }
+
+  @override
+  String get entegAktifKisa => 'активна';
+
+  @override
+  String get entegPasifKisa => 'неактивна';
+
+  @override
+  String entegKimlikSatir(Object tip, Object kilit) {
+    return 'Аутентификация: $tip$kilit';
+  }
+
+  @override
+  String get entegTest => 'Тест';
+
+  @override
+  String entegTestBasarili(Object durum) {
+    return '✓ Успешно ($durum)';
+  }
+
+  @override
+  String entegTestBasarisiz(Object hata, Object durum) {
+    return '✗ $hata$durum';
+  }
+
+  @override
+  String get entegBasarisiz => 'Ошибка';
+
+  @override
+  String get entegDuzenleBaslik => 'Изменить интеграцию';
+
+  @override
+  String get entegYeniBaslik => 'Новая интеграция';
+
+  @override
+  String get entegPreset => 'Готовый шаблон (preset)';
+
+  @override
+  String get entegKanalTipi => 'Тип канала';
+
+  @override
+  String get entegUrl => 'URL эндпоинта (http/https)';
+
+  @override
+  String get entegUrlHelper =>
+      'Внутренние/частные адреса блокируются при вызове';
+
+  @override
+  String get entegUrlHata => 'Должен начинаться с http(s)';
+
+  @override
+  String get entegHttpMetodu => 'HTTP-метод';
+
+  @override
+  String get entegKimlikDogrulama => 'Аутентификация';
+
+  @override
+  String get entegSir => 'Секрет (bearer token / API key)';
+
+  @override
+  String get entegSirKayitli =>
+      'Сохранён — введите новое значение, чтобы изменить';
+
+  @override
+  String get entegSirYazmaOzel =>
+      'Только запись; сервер его никогда не возвращает';
+
+  @override
+  String get entegPayload => 'Шаблон payload';
+
+  @override
+  String entegPayloadHelper(Object sablonlar) {
+    return 'Заменители $sablonlar';
+  }
+
+  @override
+  String get entegTestMesaji => 'Тестовое сообщение';
+
+  @override
+  String get ortakAdGerekli => 'Название обязательно';
+
+  @override
+  String get ziyaretYeni => 'Новый посетитель';
+
+  @override
+  String get ziyaretKaydedildi => 'Посетитель записан — житель уведомлён ✓';
+
+  @override
+  String get ziyaretYokGuvenlik => 'Записей о посетителях пока нет.';
+
+  @override
+  String get ziyaretYokSakin => 'Вам не передавали записей о посетителях.';
+
+  @override
+  String ziyaretBildirilenSakin(Object ad) {
+    return 'Уведомлённый житель: $ad';
+  }
+
+  @override
+  String get ziyaretSakiniAra => 'Позвонить жителю';
+
+  @override
+  String get ziyaretGuvenligiAra => 'Позвонить охране';
+
+  @override
+  String get ziyaretBilgileriDuzenle => 'Изменить данные';
+
+  @override
+  String get ziyaretGuncellendi => 'Данные посетителя обновлены ✓';
+
+  @override
+  String get ziyaretOnceDaireNo => 'Сначала введите номер квартиры';
+
+  @override
+  String get ziyaretSakiniSecin => 'Выберите жителя для уведомления';
+
+  @override
+  String get ziyaretDuzenleBaslik => 'Изменить посетителя';
+
+  @override
+  String get ziyaretDuzenleAlt =>
+      'Можно изменить имя, квартиру, уведомлённого жителя и примечание.';
+
+  @override
+  String get ziyaretYeniAlt =>
+      'Жителю уходит только уведомление (согласие не запрашивается).';
+
+  @override
+  String get ziyaretAdAlan => 'Имя посетителя *';
+
+  @override
+  String get ziyaretAdGerekli => 'Имя посетителя обязательно';
+
+  @override
+  String get ziyaretSakinleriGetir => 'Загрузить жителей';
+
+  @override
+  String get ziyaretBildirilecekSakin => 'Кого уведомить *';
+
+  @override
+  String get ziyaretKaydetVeBildir => 'Сохранить и уведомить жителя';
+
+  @override
+  String get raporBaslik => 'Месячные отчёты';
+
+  @override
+  String get raporOncekiAy => 'Предыдущий месяц';
+
+  @override
+  String get raporSonrakiAy => 'Следующий месяц';
+
+  @override
+  String raporAyBaslik(Object ay, Object yil) {
+    return '$ay $yil';
+  }
+
+  @override
+  String get raporYetkiYok =>
+      'У вас нет прав на месячные отчёты. Этот экран доступен управляющему объектом.';
+
+  @override
+  String get raporGorevTamamlama => 'Выполнение задач';
+
+  @override
+  String get raporAidat => 'Взносы';
+
+  @override
+  String get raporSonTamamlamalar => 'Последние выполнения (первые 10)';
+
+  @override
+  String get raporPlanlananPencere => 'Запланированные окна';
+
+  @override
+  String raporTamamlanmaYuzde(Object yuzde) {
+    return 'Выполнение $yuzde%';
+  }
+
+  @override
+  String get raporPencereYok => 'В этом месяце обходы не планировались.';
+
+  @override
+  String get raporGorevYok => 'В этом месяце задачи не выполнялись.';
+
+  @override
+  String get raporToplamTamamlama => 'Всего выполнено';
+
+  @override
+  String get raporAidatKayitYok => 'За этот период нет начислений и платежей.';
+
+  @override
+  String raporTahakkukDaire(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Начислено ($n квартир)',
+      many: 'Начислено ($n квартир)',
+      few: 'Начислено ($n квартиры)',
+      one: 'Начислено ($n квартира)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String raporTahsilatOdeme(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Собрано ($n платежей)',
+      many: 'Собрано ($n платежей)',
+      few: 'Собрано ($n платежа)',
+      one: 'Собрано ($n платёж)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get raporKalanBakiye => 'Остаток';
 }

@@ -3376,4 +3376,237 @@ class AppLocalizationsEn extends AppLocalizations {
   String ortakYuzde(Object yuzde) {
     return '$yuzde%';
   }
+
+  @override
+  String get entegYeni => 'New';
+
+  @override
+  String get entegYokMesaj =>
+      'No integrations. Add an external system (PA/smart home/webhook) with \"New\".';
+
+  @override
+  String get entegSilOnay => 'Delete it?';
+
+  @override
+  String entegSilGovde(Object ad) {
+    return 'The \"$ad\" integration will be deleted.';
+  }
+
+  @override
+  String entegSilinemedi(Object hata) {
+    return 'Could not delete: $hata';
+  }
+
+  @override
+  String get entegAktifKisa => 'active';
+
+  @override
+  String get entegPasifKisa => 'inactive';
+
+  @override
+  String entegKimlikSatir(Object tip, Object kilit) {
+    return 'Auth: $tip$kilit';
+  }
+
+  @override
+  String get entegTest => 'Test';
+
+  @override
+  String entegTestBasarili(Object durum) {
+    return '✓ Success ($durum)';
+  }
+
+  @override
+  String entegTestBasarisiz(Object hata, Object durum) {
+    return '✗ $hata$durum';
+  }
+
+  @override
+  String get entegBasarisiz => 'Failed';
+
+  @override
+  String get entegDuzenleBaslik => 'Edit integration';
+
+  @override
+  String get entegYeniBaslik => 'New integration';
+
+  @override
+  String get entegPreset => 'Ready-made template (preset)';
+
+  @override
+  String get entegKanalTipi => 'Channel type';
+
+  @override
+  String get entegUrl => 'Endpoint URL (http/https)';
+
+  @override
+  String get entegUrlHelper =>
+      'Internal/private addresses are blocked when triggering';
+
+  @override
+  String get entegUrlHata => 'Must start with http(s)';
+
+  @override
+  String get entegHttpMetodu => 'HTTP method';
+
+  @override
+  String get entegKimlikDogrulama => 'Authentication';
+
+  @override
+  String get entegSir => 'Secret (bearer token / API key)';
+
+  @override
+  String get entegSirKayitli => 'Stored — enter a new value to change it';
+
+  @override
+  String get entegSirYazmaOzel => 'Write-only; never returned by the server';
+
+  @override
+  String get entegPayload => 'Payload template';
+
+  @override
+  String entegPayloadHelper(Object sablonlar) {
+    return '$sablonlar placeholders';
+  }
+
+  @override
+  String get entegTestMesaji => 'Test message';
+
+  @override
+  String get ortakAdGerekli => 'Name is required';
+
+  @override
+  String get ziyaretYeni => 'New visitor';
+
+  @override
+  String get ziyaretKaydedildi =>
+      'Visitor recorded — the resident was notified ✓';
+
+  @override
+  String get ziyaretYokGuvenlik => 'No visitor records yet.';
+
+  @override
+  String get ziyaretYokSakin => 'No visitor records were shared with you.';
+
+  @override
+  String ziyaretBildirilenSakin(Object ad) {
+    return 'Notified resident: $ad';
+  }
+
+  @override
+  String get ziyaretSakiniAra => 'Call resident';
+
+  @override
+  String get ziyaretGuvenligiAra => 'Call security';
+
+  @override
+  String get ziyaretBilgileriDuzenle => 'Edit details';
+
+  @override
+  String get ziyaretGuncellendi => 'Visitor details updated ✓';
+
+  @override
+  String get ziyaretOnceDaireNo => 'Enter a unit number first';
+
+  @override
+  String get ziyaretSakiniSecin => 'Select the resident to notify';
+
+  @override
+  String get ziyaretDuzenleBaslik => 'Edit visitor';
+
+  @override
+  String get ziyaretDuzenleAlt =>
+      'You can update the name, unit, notified resident and note.';
+
+  @override
+  String get ziyaretYeniAlt =>
+      'The resident only gets a notification (no approval is requested).';
+
+  @override
+  String get ziyaretAdAlan => 'Visitor name *';
+
+  @override
+  String get ziyaretAdGerekli => 'Visitor name is required';
+
+  @override
+  String get ziyaretSakinleriGetir => 'Load residents';
+
+  @override
+  String get ziyaretBildirilecekSakin => 'Resident to notify *';
+
+  @override
+  String get ziyaretKaydetVeBildir => 'Save and notify the resident';
+
+  @override
+  String get raporBaslik => 'Monthly reports';
+
+  @override
+  String get raporOncekiAy => 'Previous month';
+
+  @override
+  String get raporSonrakiAy => 'Next month';
+
+  @override
+  String raporAyBaslik(Object ay, Object yil) {
+    return '$ay $yil';
+  }
+
+  @override
+  String get raporYetkiYok =>
+      'You are not authorized for monthly reports. This screen is open to the site manager role.';
+
+  @override
+  String get raporGorevTamamlama => 'Task completion';
+
+  @override
+  String get raporAidat => 'Dues';
+
+  @override
+  String get raporSonTamamlamalar => 'Recent completions (first 10)';
+
+  @override
+  String get raporPlanlananPencere => 'Planned windows';
+
+  @override
+  String raporTamamlanmaYuzde(Object yuzde) {
+    return 'Completion $yuzde%';
+  }
+
+  @override
+  String get raporPencereYok => 'No patrol windows were planned this month.';
+
+  @override
+  String get raporGorevYok => 'No task completions this month.';
+
+  @override
+  String get raporToplamTamamlama => 'Total completions';
+
+  @override
+  String get raporAidatKayitYok =>
+      'No assessment/payment records for this period.';
+
+  @override
+  String raporTahakkukDaire(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Assessed ($n units)',
+      one: 'Assessed ($n unit)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String raporTahsilatOdeme(num n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Collected ($n payments)',
+      one: 'Collected ($n payment)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get raporKalanBakiye => 'Outstanding balance';
 }

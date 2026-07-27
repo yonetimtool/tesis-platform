@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../data/visitor_api.dart';
@@ -10,13 +11,17 @@ class VisitorsState {
   const VisitorsState({
     this.loading = false,
     this.errorMessage,
+    this.hataKimligi,
     this.items = const [],
     this.canRegister = false,
     this.refreshedAt,
   });
 
   final bool loading;
+  /// Hata KANALI ikilidir (README §15): sunucu metni + yerellestirilebilir
+  /// kimlik.
   final String? errorMessage;
+  final AkisHatasi? hataKimligi;
 
   /// Sunucu sirasi: created_at DESC (en yeni onde). Ziyaretci LOG kayitlaridir
   /// (onay/red yok). Sakin icin sunucu zaten YALNIZ kendine hedeflenen
@@ -32,6 +37,7 @@ class VisitorsState {
   VisitorsState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
+    Object? hataKimligi = _sentinel,
     List<Visitor>? items,
     bool? canRegister,
     DateTime? refreshedAt,
@@ -41,6 +47,9 @@ class VisitorsState {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      hataKimligi: hataKimligi == _sentinel
+          ? this.hataKimligi
+          : hataKimligi as AkisHatasi?,
       items: items ?? this.items,
       canRegister: canRegister ?? this.canRegister,
       refreshedAt: refreshedAt ?? this.refreshedAt,
@@ -64,7 +73,11 @@ class VisitorsController extends Notifier<VisitorsState> {
   Future<void> refresh() async {
     if (_refreshing) return;
     _refreshing = true;
-    state = state.copyWith(loading: true, errorMessage: null);
+    state = state.copyWith(
+      loading: true,
+      errorMessage: null,
+      hataKimligi: null,
+    );
     try {
       final role = await ref.read(currentUserRoleProvider.future);
       final items = await ref.read(visitorApiProvider).fetchAll();
@@ -72,18 +85,24 @@ class VisitorsController extends Notifier<VisitorsState> {
       state = state.copyWith(
         loading: false,
         errorMessage: null,
+        hataKimligi: null,
         items: items,
         canRegister: role.canRegisterVisitor,
         refreshedAt: DateTime.now(),
       );
     } on ApiException catch (e) {
       if (!ref.mounted) return;
-      state = state.copyWith(loading: false, errorMessage: e.message);
+      state = state.copyWith(
+        loading: false,
+        errorMessage: e.message,
+        hataKimligi: null,
+      );
     } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
+        errorMessage: null,
+        hataKimligi: AkisHatasi.beklenmeyen,
       );
     } finally {
       _refreshing = false;
