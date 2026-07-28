@@ -120,14 +120,16 @@ export default function TransparencyPage() {
                     v={tl(b.net_kurus)}
                     cls={b.net_kurus >= 0 ? "text-emerald-700 font-semibold" : "text-red-700 font-semibold"}
                   />
-                  {/* `dl` yalniz dt/dd (ve saran div) icerebilir; buradaki
-                      `p` axe'in `definition-list` kuralini kiriyordu. */}
-                  {b.onceki_ay_net_kurus != null && (
-                    <div className="pt-1 text-xs text-muted">
-                      {t("seffafOncekiAyNet", { tutar: tl(b.onceki_ay_net_kurus) })}
-                    </div>
-                  )}
                 </dl>
+                {/* NOT `dl` DISINDA: `dl` yalniz dt/dd ciftleri (ve onlari
+                    saran div) icerebilir — dt/dd tasimayan CIPLAK bir div de
+                    gecersizdir. Ilk denemede `p`yi `div` yapmak yetmemisti;
+                    ogeyi listenin DISINA almak gerekti (tur 30/31). */}
+                {b.onceki_ay_net_kurus != null && (
+                  <p className="pt-1 text-xs text-muted">
+                    {t("seffafOncekiAyNet", { tutar: tl(b.onceki_ay_net_kurus) })}
+                  </p>
+                )}
               </div>
 
               {/* Aidat */}

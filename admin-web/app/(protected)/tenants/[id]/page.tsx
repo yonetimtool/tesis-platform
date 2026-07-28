@@ -10,6 +10,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { tarihSaatUzun } from "@/lib/tarih";
 
 interface Yonetici {
   id: string;
@@ -28,7 +29,7 @@ interface TenantDetail {
 
 function fmtDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" });
+    return tarihSaatUzun(iso);
   } catch {
     return iso;
   }

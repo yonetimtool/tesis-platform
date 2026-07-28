@@ -1,4 +1,5 @@
 import { metin } from "./i18n/metin";
+import { tarihSaatBicimi } from "./tarih";
 // Istemci tarafi fetcher (SWR icin). Yalniz same-origin /api/* (BFF) cagrilir;
 // 401 => oturum bitti, /login'e don.
 
@@ -18,13 +19,8 @@ export async function jsonFetcher<T>(url: string): Promise<T> {
   return data as T;
 }
 
+/// Geriye uyumluluk sarmalayicisi: 12 cagri yeri degismesin diye imza
+/// korundu, bicimleme DILE DUYARLI `lib/tarih.ts`e devredildi (tur 31).
 export function formatDateTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString("tr-TR", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
-  } catch {
-    return iso;
-  }
+  return tarihSaatBicimi(iso);
 }

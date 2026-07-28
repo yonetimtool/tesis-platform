@@ -205,6 +205,28 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 31 — TARIH BICIMI dile duyarli
+
+Tur 17'de bulunup ayri alt is olarak kayda gecmisti: panel 7 dile acildi ama
+tarihler `toLocaleString("tr-TR")` ile SABITTI — Almanca arayuzde tarih TR
+biciminde kaliyordu. Mobil tarafta ayni sinif hata tur 15'te kapanmisti.
+
+`lib/tarih.ts`: `tarihSaatBicimi` / `tarihSaatUzun` / `tarihBicimi`. Dili
+cookie'den okur (React DISI modullerde de calisir — `lib/i18n/metin.ts` ile
+ayni desen). `formatDateTime` IMZASI KORUNDU: 12 cagri yeri degismeden dile
+duyarli hale geldi.
+
+**PARA BILINCLI OLARAK DISARIDA.** `lib/money.ts` ve seffaflik panosundaki
+`tl()` hala `tr-TR` kullanir — politika "TL + Turkce gruplama, arayuz dili ne
+olursa olsun" (mobil README §15). Bu, `tests/tarih.test.ts` icinde AYRICA
+dogrulanir ki ileride "tutarlilik" adina yanlislikla degistirilmesin.
+
+> **TESTIN BULDUGU ONCEDEN VAR OLAN HATA.** `toLocaleString` bozuk girdide
+> ISTISNA ATMAZ, `"Invalid Date"` DONDURUR — eski `formatDateTime`in
+> `try/catch`i bu yuzden hicbir sey yakalamiyordu ve gecersiz tarihler
+> ekrana "Invalid Date" diye basiliyordu. Artik `Number.isNaN(getTime())`
+> kontrolu ortak yardimcida; gecersiz girdi HAM degeriyle doner.
+
 ### Tur 30 — EKRAN OKUYUCU surusu (axe-core, WCAG 2.1 AA)
 
 `tools/okuyucu-surusu.mjs` gercek Chromium'da **axe-core** kosar:
@@ -221,13 +243,14 @@ npx next build && npx next start -p 3123
 node tools/okuyucu-surusu.mjs
 ```
 
-**Ilk kosum: 171 bulgu -> duzeltmelerden sonra temiz.**
+**171 -> 23 -> 17 -> 7 -> 0.** (Dort tur olcum; her adimda duzeltip
+YENIDEN kostum — "duzelttim" demeden once olcum tekrarlanir.)
 
 | Bulgu | Sebep | Duzeltme |
 |---|---|---|
 | ~148x `color-contrast` | marka teali `#0E9594`: beyazla **3.66**, acik teal zeminde **3.25** (esik 4.5) | `tealInk #0B7A79` (**5.15** / **4.58**) — YALNIZ metin + dugme zemini; gradyan/kenarlik/odak halkasi marka tonunda kaldi |
 | 11x `color-contrast` | sema hucrelerinde beyaz metin `bg-*-500` uzerinde (~2.1–2.5), kutucuklarda `slate-500`/`red-600` | zeminler `-600/-700`e; metinler `slate-700`/`red-700`. Yogunluk kodlamasi (yesil/sari/kirmizi) KORUNDU |
-| 7x `definition-list` | `<dl>` icinde `<p>` | `<div>`e cevrildi (dt/dd yapisi bozulmadan) |
+| 7x `definition-list` | `<dl>` icinde dt/dd tasimayan oge | ILK DENEME YETMEDI: `<p>`yi `<div>` yapmak da gecersiz — ciplak `div` de kabul edilmiyor. Oge listenin DISINA alindi. |
 | 6x "TR sizinti" | `alt="Image for {seed basligi}"` | **YANLIS ALARM** — dedektore VERI allowlist'i (mobil `surusVerisi` emsali) |
 
 > **OLCUM ARACININ KENDI HATASI (tur 28'in tekrari).** `/login` gonder

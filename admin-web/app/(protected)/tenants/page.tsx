@@ -13,6 +13,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
 import { ApiHatasi } from "@/lib/client";
+import { tarihSaatUzun } from "@/lib/tarih";
 
 interface TenantRow {
   id: string;
@@ -43,7 +44,7 @@ const EMPTY: FormState = { ad: "", yonetim_email: "", yoneticiler: [{ ...BOS_YON
 
 function fmtDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" });
+    return tarihSaatUzun(iso);
   } catch {
     return iso;
   }

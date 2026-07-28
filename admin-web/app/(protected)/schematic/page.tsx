@@ -7,6 +7,7 @@ import { ErrorBox, PageHeader, cardCls } from "@/components/form";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { tarihBicimi } from "@/lib/tarih";
 import type {
   BuildingMap,
   BuildingMapUnit,
@@ -43,10 +44,7 @@ const KATEGORI_ANAHTAR: Record<string, SozlukAnahtari> = {
   diger: "ortakDiger",
 };
 
-function fmtDate(s: string): string {
-  const d = new Date(s);
-  return Number.isNaN(d.getTime()) ? s : d.toLocaleDateString("tr-TR");
-}
+const fmtDate = tarihBicimi;
 
 function UnitCell({
   unit,
