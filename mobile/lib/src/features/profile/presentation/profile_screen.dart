@@ -354,6 +354,10 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                   prefixIcon: const Icon(Icons.lock_outline),
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
+                    // EKRAN OKUYUCU etiketi (tur 29) — duruma gore degisir.
+                    tooltip: _obscure
+                        ? l10n.ortakParolayiGoster
+                        : l10n.ortakParolayiGizle,
                     icon: Icon(_obscure
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined),

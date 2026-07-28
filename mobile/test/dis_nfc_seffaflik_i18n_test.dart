@@ -510,4 +510,16 @@ void main() {
   testWidgets('OLCEK 2x: seffaflik ekrani 6 dilde TASMAZ', (tester) async {
     await yaziOlcegiSurusu(tester, (dil) => _seffaflikEkrani(Locale(dil)), veri: surusVerisi);
   });
+
+  // ---- TUR 29: EKRAN OKUYUCU SURUSU ----
+  testWidgets('OKUYUCU: dis ekrani (etiket + dokunma hedefi + dil)',
+      (tester) async {
+    await ekranOkuyucuSurusu(tester, (dil) => _disEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('OKUYUCU: seffaflik ekrani (etiket + dokunma hedefi + dil)',
+      (tester) async {
+    await ekranOkuyucuSurusu(tester, (dil) => _seffaflikEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
 }

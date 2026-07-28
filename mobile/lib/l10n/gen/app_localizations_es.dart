@@ -4004,4 +4004,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String akisAltPlanAralik(Object plan, Object aralik) {
     return '$plan · $aralik';
   }
+
+  @override
+  String get ortakParolayiGoster => 'Mostrar contraseña';
+
+  @override
+  String get ortakParolayiGizle => 'Ocultar contraseña';
 }

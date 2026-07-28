@@ -395,6 +395,23 @@ void main() {
   testWidgets('OLCEK 2x: duzenleme ekrani 6 dilde TASMAZ', (tester) async {
     await yaziOlcegiSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)), veri: surusVerisi);
   });
+
+  // ---- TUR 29: EKRAN OKUYUCU SURUSU ----
+  testWidgets('OKUYUCU: talep ekrani (etiket + dokunma hedefi + dil)',
+      (tester) async {
+    await ekranOkuyucuSurusu(tester, (dil) => _talepEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('OKUYUCU: sema ekrani (etiket + dokunma hedefi + dil)',
+      (tester) async {
+    await ekranOkuyucuSurusu(tester, (dil) => _semaEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('OKUYUCU: duzenleme ekrani (etiket + dokunma hedefi + dil)',
+      (tester) async {
+    await ekranOkuyucuSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
 }
 
 class _PatlayanMapApi extends BuildingMapApi {

@@ -112,6 +112,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         prefixIcon: const Icon(Icons.lock_outline),
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
+                          // EKRAN OKUYUCU: etiketsiz dugme yalnizca "dugme"
+                          // diye okunur (tur 29 surusu yakaladi). Etiket
+                          // DURUMA gore degisir ki kullanici ne olacagini
+                          // bilsin — ve elbette cevrilidir.
+                          tooltip: _obscure
+                              ? l10n.ortakParolayiGoster
+                              : l10n.ortakParolayiGizle,
                           icon: Icon(
                             _obscure
                                 ? Icons.visibility_outlined

@@ -6814,6 +6814,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{plan} · {aralik}'**
   String akisAltPlanAralik(Object plan, Object aralik);
+
+  /// No description provided for @ortakParolayiGoster.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolayı göster'**
+  String get ortakParolayiGoster;
+
+  /// No description provided for @ortakParolayiGizle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolayı gizle'**
+  String get ortakParolayiGizle;
 }
 
 class _AppLocalizationsDelegate

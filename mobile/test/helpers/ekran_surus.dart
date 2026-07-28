@@ -2,6 +2,7 @@
 // GORUNEN metni tara. ARB denetimi sozlugu olcer; bu, EKRANI olcer:
 // sozlukte olmayan (kaynakta unutulmus) sabitleri ancak bu yakalar.
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 final _trHarf = RegExp('[ğışĞİŞ]');
 /// Turkce DISI diller — surusun asil hedefi (tr'de sizinti kavrami yok).
@@ -117,4 +118,68 @@ Future<void> yaziOlcegiSurusu(
     expect(hata, isNull,
         reason: '$dil (olcek ${olcek}x) tasti:\n${ayrinti.join("\n---\n")}');
   }
+}
+
+/// Anlamsal (semantics) agactaki TUM etiketleri toplar.
+///
+/// `Text` taramasi EKRANDA GORUNEN metni olcer; ekran okuyucu ise
+/// SEMANTICS agacini okur. Ikisi ayni degildir: `tooltip:`, `Semantics(label:)`,
+/// `IconButton` ipuclari ve gorsel alternatif metinleri yalniz burada gorunur.
+List<String> anlamsalEtiketler(WidgetTester tester) {
+  final out = <String>[];
+  void gez(SemanticsNode n) {
+    final e = n.label.trim();
+    if (e.isNotEmpty) out.add(e);
+    final ipucu = n.tooltip.trim();
+    if (ipucu.isNotEmpty) out.add(ipucu);
+    n.visitChildren((c) {
+      gez(c);
+      return true;
+    });
+  }
+  final kok = tester.binding.rootPipelineOwner.semanticsOwner?.rootSemanticsNode ??
+      tester.binding.renderViews.first.debugSemantics;
+  if (kok != null) gez(kok);
+  return out;
+}
+
+/// EKRAN OKUYUCU surusu (tur 29).
+///
+/// Uc sey birden olculur:
+///   1. dokunulabilir her ogenin ETIKETI var mi (etiketsiz dugme ekran
+///      okuyucuda "dugme" diye okunur — ne yaptigi bilinmez),
+///   2. dokunma hedefleri Android kilavuzunun 48x48 esigini tutuyor mu,
+///   3. SEMANTICS etiketleri cevrilmis mi — gorunen metin cevrilip
+///      `tooltip`/`Semantics(label:)` Turkce kalabilir; o zaman gormeyen
+///      kullanici Arapca arayuzde Turkce duyar.
+Future<void> ekranOkuyucuSurusu(
+  WidgetTester tester,
+  Widget Function(String dil) kur, {
+  Set<String> veri = const {},
+  bool dokunmaHedefi = true,
+}) async {
+  tester.view.physicalSize = const Size(430, 1400);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+  final tutamac = tester.ensureSemantics();
+  for (final dil in surusDilleri) {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(kur(dil));
+    await tester.pumpAndSettle();
+
+    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+    if (dokunmaHedefi) {
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    }
+    for (final etiket in anlamsalEtiketler(tester)) {
+      if (veri.any(etiket.contains)) continue;
+      if (etiket.contains('Yönetio') ||
+          etiket.contains('GÜVENLİK & DANIŞMANLIK')) {
+        continue;
+      }
+      expect(_trHarf.hasMatch(etiket), isFalse,
+          reason: '$dil ekran okuyucusunda TR: "$etiket"');
+    }
+  }
+  tutamac.dispose();
 }

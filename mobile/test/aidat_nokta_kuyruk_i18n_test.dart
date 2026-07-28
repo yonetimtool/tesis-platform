@@ -402,4 +402,16 @@ void main() {
   testWidgets('OLCEK 2x: nokta ekrani 6 dilde TASMAZ', (tester) async {
     await yaziOlcegiSurusu(tester, (dil) => _noktaEkrani(Locale(dil)), veri: surusVerisi);
   });
+
+  // ---- TUR 29: EKRAN OKUYUCU SURUSU ----
+  testWidgets('OKUYUCU: aidat ekrani (etiket + dokunma hedefi + dil)',
+      (tester) async {
+    await ekranOkuyucuSurusu(tester, (dil) => _aidatEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('OKUYUCU: nokta ekrani (etiket + dokunma hedefi + dil)',
+      (tester) async {
+    await ekranOkuyucuSurusu(tester, (dil) => _noktaEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
 }

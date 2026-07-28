@@ -580,4 +580,21 @@ void main() {
   testWidgets('OLCEK 2x: kargo ekrani 6 dilde TASMAZ', (tester) async {
     await yaziOlcegiSurusu(tester, (dil) => _kargoEkrani(Locale(dil)), veri: surusVerisi);
   });
+
+  // ---- TUR 29: EKRAN OKUYUCU SURUSU ----
+  testWidgets('OKUYUCU: butce ekrani (etiket + dokunma hedefi + dil)',
+      (tester) async {
+    await ekranOkuyucuSurusu(tester, (dil) => _butceEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('OKUYUCU: demirbas ekrani (etiket + dokunma hedefi + dil)',
+      (tester) async {
+    await ekranOkuyucuSurusu(tester, (dil) => _demirbasEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('OKUYUCU: kargo ekrani (etiket + dokunma hedefi + dil)',
+      (tester) async {
+    await ekranOkuyucuSurusu(tester, (dil) => _kargoEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
 }

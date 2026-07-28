@@ -1165,5 +1165,7 @@
       "plan": {},
       "aralik": {}
     }
-  }
+  },
+  "ortakParolayiGoster": "Afficher le mot de passe",
+  "ortakParolayiGizle": "Masquer le mot de passe"
 }

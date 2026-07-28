@@ -2087,6 +2087,27 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 29 — EKRAN OKUYUCU SÜRÜŞÜ.** `ekranOkuyucuSurusu` 24 ekranı 6 dilde
+semantics açık çizer ve üç şeyi birden ölçer:
+
+1. `labeledTapTargetGuideline` — dokunulabilir her öğenin **etiketi** var mı,
+2. `androidTapTargetGuideline` — dokunma hedefi 48×48'i tutuyor mu,
+3. **semantics etiketleri çevrilmiş mi** — `Text` taraması ekranda *görüneni*
+   ölçer; ekran okuyucu ise semantics ağacını okur. `tooltip:`,
+   `Semantics(label:)` ve ikon açıklamaları yalnız burada görünür.
+
+> **BULDUĞU HATA — etiketsiz parola göster/gizle düğmesi.** Giriş, parola
+> belirleme ve profil ekranlarındaki `suffixIcon` `IconButton`ının hiçbir
+> semantik etiketi yoktu: ekran okuyucu sadece **"düğme"** diyordu, ne
+> yaptığı bilinmiyordu. Üçüne de **duruma göre değişen** ve çevrilmiş
+> `tooltip` eklendi (`ortakParolayiGoster` / `ortakParolayiGizle`) — sabit
+> tek etiket ("Parola görünürlüğü") kullanıcıya *hangi yönde* değişeceğini
+> söylemezdi.
+>
+> Bu eksen öncekilerden farklı bir şey ölçüyor: metin doğru çevrilmiş,
+> yerleşim taşmıyor, ama **gören kullanıcı için var olan bilgi ikonun
+> kendisindeydi** — gören olmayan için hiç yoktu.
+
 **TUR 27 — YAZI TİPİ ÖLÇEĞİ SÜRÜŞÜ (2.0× × 6 dil).** `yaziOlcegiSurusu`
 ekranı `TextScaler.linear(2.0)` ile sarıp çizer: kullanıcı yazıyı iki katına
 çıkardığında **metin büyür, kutu büyümez**. Erişilebilirlik × i18n kesişimi

@@ -1655,5 +1655,7 @@
       "plan": {},
       "aralik": {}
     }
-  }
+  },
+  "ortakParolayiGoster": "Parolayı göster",
+  "ortakParolayiGizle": "Parolayı gizle"
 }

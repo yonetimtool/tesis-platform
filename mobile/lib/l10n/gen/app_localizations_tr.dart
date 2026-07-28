@@ -3867,4 +3867,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String akisAltPlanAralik(Object plan, Object aralik) {
     return '$plan · $aralik';
   }
+
+  @override
+  String get ortakParolayiGoster => 'Parolayı göster';
+
+  @override
+  String get ortakParolayiGizle => 'Parolayı gizle';
 }

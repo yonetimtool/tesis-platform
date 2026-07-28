@@ -1165,5 +1165,7 @@
       "plan": {},
       "aralik": {}
     }
-  }
+  },
+  "ortakParolayiGoster": "Показать пароль",
+  "ortakParolayiGizle": "Скрыть пароль"
 }
