@@ -205,6 +205,42 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 33 — KLAVYE surusu (odak sirasi + tuzak)
+
+`tools/klavye-surusu.mjs` gercek Chromium'da **TAB'a basar**: 24 sayfa x
+**tr (LTR) + ar (RTL)**. Klavye sirasi DOM sirasidir, dile gore degismez;
+degisen RTL'de GORSEL siradir — asil risk `start/end` yerine `left/right`
+kullanan bir yerlesimin sirayi tersine cevirmesidir. Bes sey olculur:
+pozitif `tabindex`, ULASILABILIRLIK (her etkilesimli oge TAB ile
+seciliyor mu), TUZAK, ODAK ISARETI (outline/ring), SIRA.
+
+**Urunde 0 bulgu.** Ilk kosum 68 bulgu verdi ve **hepsi TARAMANIN kendi
+hatasiydi** — bu turun asil urunu duzeltilmis dedektordur:
+
+| Yanlis alarm | Kok neden | Duzeltme |
+|---|---|---|
+| 44x `SIRA` | odaklanan oge kendini gorunume KAYDIRIR; gezinti sirasinda alinan dikdortgenler kiyaslanamaz (kenar cubugu 755 → 701 "geri zipliyor" gorunuyordu) | konumlar TAB'dan ONCE, tek seferde olculur |
+| `SIRA` (kalan) | yan yana kartlar / "solda icerik sagda eylemler" duzeni — izgarada yukari zipmak DOGRU okuma sirasi | satir ekseninde ilerleme (RTL'de ters) istisnasi |
+| 22x `ULASILAMAZ` | `<input type="date">` ic bolumleri (gg/aa/yyyy) arasinda TAB ayni ogede kalir; "daha once gorulen oge" ile kesen dongu taramasi erken bitiyordu | dongu yalniz ILK ogeye donunce kapanir |
+| 2x `TUZAK` | sabit 200 TAB tavani — `/tenants` seed'de **251** odaklanabilir oge tasiyor | tavan = sayfadaki oge sayisi + pay |
+| 2x `FARE-YALNIZ` | `<label>` icindeki "Beni hatirla" metni — tiklaninca kendi onay kutusunu etkinlestirir, o da odaklanabilir | denetim tasiyan `<label>` icerigi haric |
+
+> **DEDEKTOR SINAMASI (`DENEY=1`).** "0 bulgu" ancak tarama gercekten
+> olcuyorsa bir sey ifade eder. Deney kipi sayfaya BILEREK bes hata enjekte
+> eder (pozitif tabindex, fare-yalniz `div`, `outline:none`, TAB'i yutan
+> dugme) ve besinin de yakalandigini dogrular; yakalanmazsa **cikis kodu 1**.
+>
+> Ilk sinamada **TUZAK yakalanamadi**: TAB'i yutup odagi kendinde tutan
+> dugme, tarama acisindan "dongu ilk ogeye dondu" gibi gorunuyordu. Kural
+> duzeltildi — dongu kapandi AMA ogelerin yarisina bile ugranmadiysa bu bir
+> tuzaktir.
+
+```bash
+npx next build && npx next start -p 3127
+KOK=http://localhost:3127 node tools/klavye-surusu.mjs
+KOK=http://localhost:3127 DENEY=1 node tools/klavye-surusu.mjs   # dedektor sinamasi
+```
+
 ### Tur 32 — KOYU TEMA surusu (7 dil x 24 sayfa x 2 tema)
 
 Onceki dort surus (dil / dar ekran / yazi olcegi / ekran okuyucu) **hepsi

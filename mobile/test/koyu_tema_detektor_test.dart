@@ -1,4 +1,4 @@
-/// TUR 32 — DETEKTORUN KENDISINI SINA.
+/// TUR 32/33 — DETEKTORUN KENDISINI SINA.
 ///
 /// Koyu tema surusu `textContrastGuideline` uzerine kuruludur: gecen bir
 /// surus ancak kilavuz GERCEKTEN olcuyorsa bir sey soyler. Onceki turlarda
@@ -11,6 +11,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/theme/app_theme.dart';
 
@@ -71,5 +72,63 @@ void main() {
           const Scaffold(body: Text('x')),
           locale: Locale(dil),
         ));
+  });
+
+  // ---- TUR 33: KLAVYE SURUSU DEDEKTORU ----
+  //
+  // Klavye surusu de "bos kosabilir": widget testinde TAB tusu bir sey
+  // yapmazsa gezinti tek dugumde kalir ve HER ekran "temiz" gorunur.
+  testWidgets('DETEKTOR: TAB gercekten odagi ilerletir', (tester) async {
+    await tester.pumpWidget(l10nApp(Scaffold(
+      body: Column(children: [
+        ElevatedButton(onPressed: () {}, child: const Text('bir')),
+        ElevatedButton(onPressed: () {}, child: const Text('iki')),
+        ElevatedButton(onPressed: () {}, child: const Text('uc')),
+      ]),
+    )));
+    await tester.pumpAndSettle();
+    final gorulen = <FocusNode>{};
+    for (var i = 0; i < 6; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final f = FocusManager.instance.primaryFocus;
+      if (f == null || gorulen.contains(f)) break;
+      gorulen.add(f);
+    }
+    expect(gorulen.length, greaterThanOrEqualTo(3),
+        reason: 'TAB odagi ilerletmiyor — klavye surusu hicbir sey olcmuyor');
+  });
+
+  testWidgets('DETEKTOR: ciplak GestureDetector YAKALANIR', (tester) async {
+    // `InkWell` kendi `Focus`unu kurar (klavyeyle ulasilir); ciplak
+    // `GestureDetector` kurmaz. Surus ikisini AYIRT edebilmeli.
+    Object? hata;
+    try {
+      await klavyeSurusu(
+        tester,
+        (dil) => l10nApp(
+          Scaffold(
+            body: GestureDetector(onTap: () {}, child: const Text('dokun')),
+          ),
+          locale: Locale(dil),
+        ),
+      );
+    } catch (e) {
+      hata = e;
+    }
+    expect(hata, isNotNull,
+        reason: 'ciplak GestureDetector KACIRILDI — dokunma-yalniz taramasi '
+            'hicbir sey yakalamiyor demektir');
+
+    // Ayni icerik `InkWell` ile: SORUN YOK.
+    await klavyeSurusu(
+      tester,
+      (dil) => l10nApp(
+        Scaffold(
+          body: InkWell(onTap: () {}, child: const Text('dokun')),
+        ),
+        locale: Locale(dil),
+      ),
+    );
   });
 }

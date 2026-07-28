@@ -303,4 +303,11 @@ void main() {
         tester, (dil) => _app(UserRole.security, dil: Locale(dil)),
         veri: surusVerisi);
   });
+
+  // ---- TUR 33: KLAVYE ----
+  testWidgets('KLAVYE: ana ekran (odak sirasi + tuzak + dokunma-yalniz)',
+      (tester) async {
+    _tall(tester);
+    await klavyeSurusu(tester, (dil) => _app(UserRole.security, dil: Locale(dil)));
+  });
 }

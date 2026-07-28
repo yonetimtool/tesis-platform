@@ -503,8 +503,10 @@ class _GalleryPhoto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    // Klavyeyle de acilabilmeli (tur 33).
+    return InkWell(
       onTap: () => _openFullScreen(context),
+      borderRadius: BorderRadius.circular(8),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Image.network(
@@ -1054,8 +1056,9 @@ class _PhotoThumb extends StatelessWidget {
           // bu yuzden kimligi cozmeye gerek yok, VARLIGI yeterli.
           if ((slot.hata != null || slot.error != null) && !slot.busy)
             Positioned.fill(
-              child: GestureDetector(
+              child: InkWell(
                 onTap: onRetry,
+                borderRadius: BorderRadius.circular(8),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.45),
@@ -1076,8 +1079,9 @@ class _PhotoThumb extends StatelessWidget {
           Positioned(
             right: 0,
             top: 0,
-            child: GestureDetector(
+            child: InkWell(
               onTap: onRemove,
+              customBorder: const CircleBorder(),
               child: Container(
                 decoration: const BoxDecoration(
                   color: Colors.black54,

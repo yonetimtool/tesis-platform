@@ -240,8 +240,10 @@ class _AnnouncementPhoto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    // Klavyeyle de acilabilmeli (tur 33) — `InkWell` kendi `Focus`unu kurar.
+    return InkWell(
       onTap: () => _openFullScreen(context),
+      borderRadius: BorderRadius.circular(8),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Image.network(

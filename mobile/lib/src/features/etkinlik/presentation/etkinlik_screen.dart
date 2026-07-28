@@ -1009,7 +1009,8 @@ class _EtkinlikGorseli extends StatelessWidget {
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: const Center(child: Icon(Icons.image_outlined)),
     );
-    return GestureDetector(
+    // Klavyeyle de acilabilmeli (tur 33).
+    return InkWell(
       onTap: () => showDialog<void>(
         context: context,
         builder: (_) => Dialog(

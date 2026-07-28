@@ -2087,6 +2087,29 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 33 — KLAVYE SÜRÜŞÜ (odak sırası + tuzak + dokunma-yalnız).**
+`klavyeSurusu` 29 ekranı **tr (LTR) + ar (RTL)** çizip TAB'a basar. Mobilde
+de harici klavye, katlanabilir cihaz klavyesi ve **anahtar erişimi**
+(switch access) aynı gezinti ağacını kullanır. Ölçülen üç şey:
+
+1. **dokunma-yalnız öğe** — `onTap` taşıyan ama odaklanamayan
+   `GestureDetector`. `InkWell`/`IconButton` kendi `Focus`unu kurar, çıplak
+   `GestureDetector` **kurmaz**;
+2. **tuzak** — TAB döngüsü başa dönüyor mu;
+3. **sıra** — odak yukarı doğru geri zıplıyor mu (okuma sırasından kopuk).
+
+> **BULDUĞU HATA — 6 çıplak `GestureDetector`.** Talep/duyuru/etkinlik
+> fotoğraf küçük resimleri, yükleme yuvasının "yeniden dene" kaplaması,
+> fotoğraf kaldırma düğmesi ve kamera oynatıcının dokunma yüzeyi: hepsi
+> yalnız parmakla çalışıyordu. Altısı da `InkWell`e çevrildi (kamera
+> yüzeyinde dalga efekti kapatıldı — görünüm aynı).
+>
+> **SÜRÜŞ BUNLARI GÖREMEZDİ.** Bu öğeler yalnız fotoğraflı veriyle çizilir;
+> test koşumlarında fotoğraf yok. Bu yüzden kalıcı koruma **kaynak
+> denetimi** olarak yazıldı: `test/klavye_kaynak_denetimi_test.dart`
+> `lib/src` içinde çıplak `GestureDetector` bırakmıyor. Sürüşün *neyi
+> göremediğini* bilmek, sürüşün kendisi kadar önemli.
+
 **TUR 32 — KOYU TEMA SÜRÜŞÜ (7 dil × 26 ekran + 3 ana ekran).**
 `koyuTemaSurusu` aynı ekranları **koyu temada** çizer ve üç şeyi ölçer:
 `textContrastGuideline` (WCAG AA — çizilen **piksellerden**), taşma, ve TR

@@ -274,3 +274,91 @@ Future<void> koyuTemaSurusu(
     if (dil != 'tr') trSizintisiYok(tester, dil, veri: veri);
   }
 }
+
+/// KLAVYE surusu (tur 33) — ODAK SIRASI ve ODAK TUZAGI.
+///
+/// Onceki alti surus EKRANI olctu (dil / dar ekran / yazi olcegi / ekran
+/// okuyucu / koyu tema). Klavye baska bir sey olcer: mobilde de harici
+/// klavye, katlanabilir cihaz klavyesi ve ANAHTAR ERISIMI (switch access)
+/// ayni gezinti agacini kullanir. Dokunmayla calisan bir oge klavyeyle
+/// ULASILAMAZ olabilir.
+///
+/// Olculen uc sey:
+///   1. DOKUNMA-YALNIZ oge — `onTap` tasiyan ama odaklanamayan
+///      `GestureDetector`. `InkWell`/`IconButton` kendi `Focus`unu kurar;
+///      ciplak `GestureDetector` KURMAZ, dolayisiyla TAB ile secilemez.
+///   2. TUZAK — TAB dongusu basa donuyor mu, yoksa bir alt kumede mi
+///      kaliyor.
+///   3. SIRA — odak yukari dogru geri ziplamalari (okuma sirasindan kopuk).
+///
+/// Dil ekseni: sira DOM/agac sirasidir, dile gore degismez; degisen RTL'de
+/// GORSEL siradir. Bu yuzden tr (LTR) + ar (RTL) surulur.
+Future<void> klavyeSurusu(
+  WidgetTester tester,
+  Widget Function(String dil) kur, {
+  int azamiTab = 120,
+  bool sira = true,
+}) async {
+  tester.view.physicalSize = const Size(430, 1400);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+  for (final dil in ['tr', 'ar']) {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(kur(dil));
+    await tester.pumpAndSettle();
+
+    // --- 1) DOKUNMA-YALNIZ ogeler ---------------------------------------
+    final dokunmaYalniz = <String>[];
+    for (final el in tester.elementList(find.byType(GestureDetector))) {
+      final g = el.widget as GestureDetector;
+      if (g.onTap == null) continue;
+      // `InkWell`, `IconButton`, `ListTile`... ic yapilarinda GestureDetector
+      // kullanir AMA once bir `Focus` kurar. Ust ataları tarayip Focus varsa
+      // oge klavyeyle ulasilabilir demektir.
+      var odaklanabilir = false;
+      var derinlik = 0;
+      el.visitAncestorElements((ata) {
+        if (ata.widget is Focus || ata.widget is FocusableActionDetector) {
+          odaklanabilir = true;
+          return false;
+        }
+        return ++derinlik < 12;
+      });
+      if (!odaklanabilir) {
+        dokunmaYalniz.add(el.debugGetCreatorChain(3).split(' ← ').first);
+      }
+    }
+    expect(dokunmaYalniz, isEmpty,
+        reason: '$dil: onTap tasiyan ama KLAVYEYLE ULASILAMAYAN '
+            '${dokunmaYalniz.length} GestureDetector — dokunmayla calisir, '
+            'TAB ile secilemez: ${dokunmaYalniz.take(3).join(", ")}');
+
+    // --- 2) TAB dongusu --------------------------------------------------
+    final sirali = <Rect>[];
+    final gorulen = <FocusNode>{};
+    for (var i = 0; i < azamiTab; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final f = FocusManager.instance.primaryFocus;
+      if (f == null) break;
+      if (gorulen.contains(f)) break;      // dongu basa dondu — DOGRU
+      gorulen.add(f);
+      final r = f.rect;
+      if (r.isFinite) sirali.add(r);
+    }
+    expect(gorulen.length, lessThan(azamiTab),
+        reason: '$dil: $azamiTab TAB sonrasi odak hala YENI ogelere gidiyor '
+            '— dongu kapanmiyor (tuzak ya da sonsuz liste)');
+
+    // --- 3) SIRA ---------------------------------------------------------
+    if (sira) {
+      var geri = 0;
+      for (var i = 1; i < sirali.length; i++) {
+        if (sirali[i].top < sirali[i - 1].top - 40) geri++;
+      }
+      expect(geri, lessThanOrEqualTo(1),
+          reason: '$dil: odak $geri kez yukari geri zipladi — gezinti sirasi '
+              'okuma sirasindan kopuk');
+    }
+  }
+}

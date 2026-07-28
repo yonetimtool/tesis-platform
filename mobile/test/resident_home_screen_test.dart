@@ -320,4 +320,11 @@ void main() {
       veri: surusVerisi,
     );
   });
+
+  // ---- TUR 33: KLAVYE ----
+  testWidgets('KLAVYE: ana ekran (odak sirasi + tuzak + dokunma-yalniz)',
+      (tester) async {
+    _tall(tester);
+    await klavyeSurusu(tester, (dil) => _app(units: _borcsuz, dil: Locale(dil)));
+  });
 }

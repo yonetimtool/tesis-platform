@@ -429,6 +429,20 @@ void main() {
     await koyuTemaSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)),
         veri: surusVerisi);
   });
+
+  // ---- TUR 33: KLAVYE ----
+  testWidgets('KLAVYE: talepEkrani (odak sirasi + tuzak + dokunma-yalniz)',
+      (tester) async {
+    await klavyeSurusu(tester, (dil) => _talepEkrani(Locale(dil)));
+  });
+  testWidgets('KLAVYE: semaEkrani (odak sirasi + tuzak + dokunma-yalniz)',
+      (tester) async {
+    await klavyeSurusu(tester, (dil) => _semaEkrani(Locale(dil)));
+  });
+  testWidgets('KLAVYE: duzenlemeEkrani (odak sirasi + tuzak + dokunma-yalniz)',
+      (tester) async {
+    await klavyeSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)));
+  });
 }
 
 class _PatlayanMapApi extends BuildingMapApi {

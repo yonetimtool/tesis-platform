@@ -426,4 +426,14 @@ void main() {
     await koyuTemaSurusu(tester, (dil) => _noktaEkrani(Locale(dil)),
         veri: surusVerisi);
   });
+
+  // ---- TUR 33: KLAVYE ----
+  testWidgets('KLAVYE: aidatEkrani (odak sirasi + tuzak + dokunma-yalniz)',
+      (tester) async {
+    await klavyeSurusu(tester, (dil) => _aidatEkrani(Locale(dil)));
+  });
+  testWidgets('KLAVYE: noktaEkrani (odak sirasi + tuzak + dokunma-yalniz)',
+      (tester) async {
+    await klavyeSurusu(tester, (dil) => _noktaEkrani(Locale(dil)));
+  });
 }

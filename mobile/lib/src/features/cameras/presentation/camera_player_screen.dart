@@ -187,9 +187,15 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
     // Dokunma yuzeyi TUM govdedir (yalniz video dikdortgeni degil): siyah
     // kenarlara dokunmak da oynat/durdur yapar — telefonda yatay izlerken
     // video ekranin ortasinda kucuk bir seride dusebilir.
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
+    // `InkWell` (ciplak `GestureDetector` DEGIL): kendi `Focus`unu kurar,
+    // yani harici klavye/anahtar erisimi ile de oynat/durdur yapilabilir
+    // (tur 33). Dalga efekti video uzerinde istenmedigi icin kapatildi;
+    // gorunum aynen korunur.
+    return InkWell(
       onTap: _oynatDurdur,
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       child: Stack(
         fit: StackFit.expand,
         alignment: Alignment.center,
