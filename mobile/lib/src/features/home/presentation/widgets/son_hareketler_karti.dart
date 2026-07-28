@@ -31,14 +31,15 @@ class SonHareketlerKarti extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader(
-            title: context.l10n.bolumSonHareketler, onSeeAll: onSeeAll),
+          title: context.l10n.bolumSonHareketler,
+          onSeeAll: onSeeAll,
+        ),
         HomeCard(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Column(
             children: [
               for (var i = 0; i < satirlar.length; i++) ...[
-                if (i > 0)
-                  Divider(height: 1, thickness: 1, color: s.divider),
+                if (i > 0) Divider(height: 1, thickness: 1, color: s.divider),
                 ActivityRow(
                   icon: satirlar[i].ikon,
                   title: satirlar[i].baslik,
@@ -46,8 +47,7 @@ class SonHareketlerKarti extends StatelessWidget {
                   time: satirlar[i].zaman,
                   accent: satirlar[i].ikonAccent,
                   noktaRengi: satirlar[i].noktaRengi,
-                  onTap:
-                      onSatir == null ? null : () => onSatir!(satirlar[i]),
+                  onTap: onSatir == null ? null : () => onSatir!(satirlar[i]),
                 ),
               ],
             ],

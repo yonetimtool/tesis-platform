@@ -3873,4 +3873,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ortakParolayiGizle => 'Parolayı gizle';
+
+  @override
+  String get ortakFotograf => 'Fotoğraf';
+
+  @override
+  String get ortakFotografiBuyut => 'Fotoğrafı büyüt';
 }

@@ -131,8 +131,10 @@ Asset _asset() => Asset(
   ),
 );
 
-Kargo _kargo({bool bekliyor = true}) => Kargo(
+Kargo _kargo({bool bekliyor = true, String? fotoUrl}) => Kargo(
   id: 'k-1',
+  fotoKey: fotoUrl == null ? null : 't/kargo/x.jpg',
+  fotoUrl: fotoUrl,
   unitId: 'u-1',
   unitNo: 'A-12',
   firma: 'Aras Kargo',
@@ -160,10 +162,11 @@ Widget _demirbasEkrani(Locale locale) => ProviderScope(
   child: l10nApp(const AssetsScreen(), locale: locale),
 );
 
-Widget _kargoEkrani(Locale locale, {bool bekliyor = true}) => ProviderScope(
+Widget _kargoEkrani(Locale locale, {bool bekliyor = true, String? fotoUrl}) =>
+    ProviderScope(
   overrides: [
     kargoApiProvider.overrideWithValue(
-      _FakeKargoApi([_kargo(bekliyor: bekliyor)]),
+      _FakeKargoApi([_kargo(bekliyor: bekliyor, fotoUrl: fotoUrl)]),
     ),
     currentUserRoleProvider.overrideWith((ref) async => UserRole.security),
   ],
@@ -627,5 +630,14 @@ void main() {
   testWidgets('KLAVYE: kargoEkrani (odak sirasi + tuzak + dokunma-yalniz)',
       (tester) async {
     await klavyeSurusu(tester, (dil) => _kargoEkrani(Locale(dil)));
+  });
+
+  // ---- TUR 34: FOTOGRAFLI VERI ----
+  testWidgets('FOTOGRAFLI: kargo ekrani (bes eksen birden)', (tester) async {
+    await fotografliSurus(
+      tester,
+      (dil) => _kargoEkrani(Locale(dil), fotoUrl: 'https://ornek/kargo.jpg'),
+      veri: surusVerisi,
+    );
   });
 }

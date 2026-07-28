@@ -2087,6 +2087,48 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 34 — FOTOĞRAFLI VERİYLE SÜRÜŞ.** Tur 33'ün itirafını kapatır: fotoğraf
+taşıyan öğeler yalnız fotoğraflı veriyle çizilir, test koşumlarında fotoğraf
+yoktu ve **altı sürüş de** o kod yollarına hiç uğramamıştı.
+
+`test/helpers/gorsel_taklidi.dart` `Image.network`i testte gerçekten
+yükletir (1×1 saydam PNG). `fotografliSurus` aynı ekranı **beş eksende**
+sürer: dar ekran, yazı ölçeği 2×, ekran okuyucu, koyu tema, klavye. Sürüş
+önce fotoğrafın **gerçekten çizildiğini** doğrular — taklit çalışmazsa
+"fotoğrafsız" koşup boşuna "temiz" derdi.
+
+> **BULDUĞU HATALAR (9).**
+> 1. **Fotoğraflar ekran okuyucuda adsızdı** — talep, duyuru ve etkinlik
+>    küçük resimleri "resim, düğme" diye okunuyordu. `MergeSemantics` +
+>    çevrilmiş etiket (`ortakFotografiBuyut`); 12 `Image.network`in
+>    **hiçbirinde** `semanticLabel` yoktu, hepsine eklendi.
+> 2. **Ana ekranda avatar düğmesi adsızdı** ("düğme") + dokunma hedefi
+>    44×44 idi (48 olmalı).
+> 3. **"Tümünü Gör" bağlantısı 28 dp**, **"Geçmiş Ödemeler" düğmesi 35 dp**
+>    yüksekliğindeydi — ikisi de Android'in 48 dp eşiğinin altında.
+> 4. **Aidat kartı 320 dp'de Rusça 0.1 px taşıyordu** (çip esnek değildi).
+> 5. **Alt bar 2.0× ölçekte 10 px taşıyordu** — 64 dp sabit yükseklik artık
+>    yazı ölçeğiyle büyüyor (metni küçültmek değil, kutuyu büyütmek).
+> 6. **Yatay şeritler** (kamera/vardiya/hızlı erişim) ve **ızgara hücreleri**
+>    sabit ölçüdeydi; 320 dp'de 36 px, 2.0×'te 62 px taşıyordu.
+
+> **ANA EKRAN İLK KEZ TAM SÜRÜLDÜ.** Bu bulguların çoğu fotoğraftan değil,
+> ana ekranın o güne dek yalnız **koyu tema** ve **klavye** eksenlerinde
+> sürülmüş olmasından çıktı (tur 32/33). Fotoğraflı sürüş beş ekseni birden
+> koştuğu için açık kendiliğinden kapandı.
+
+> **TAKLİDİN İKİ TUZAĞI.** (a) `NetworkImage` izolasyon başına **tek bir
+> paylaşılan `HttpClient`** tutar ve ilk kullanımda yaratır: aynı dosyadaki
+> daha önceki bir test görsel istediyse taklit sonradan kurulsa bile
+> kullanılmaz — çözüm Flutter'ın test kancası
+> (`debugNetworkImageHttpClientProvider`). (b) O kanca **test gövdesi
+> bitmeden** geri alınmalıdır; `addTearDown` çerçevenin denetiminden sonra
+> koşar. İkisi de "tek başına geçer, tam süitte düşer" olarak göründü.
+
+> **ÖLÇÜLEMEYEN.** Taklit görsel saydamdır: "fotoğraf üzerindeki metin"
+> kontrastı bu yolla ölçülemez, çünkü gerçek fotoğrafın rengi keyfidir.
+> Ölçülen şey fotoğraflı **düzenin** kendisidir.
+
 **TUR 33 — KLAVYE SÜRÜŞÜ (odak sırası + tuzak + dokunma-yalnız).**
 `klavyeSurusu` 29 ekranı **tr (LTR) + ar (RTL)** çizip TAB'a basar. Mobilde
 de harici klavye, katlanabilir cihaz klavyesi ve **anahtar erişimi**

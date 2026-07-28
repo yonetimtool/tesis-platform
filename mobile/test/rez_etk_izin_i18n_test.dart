@@ -89,8 +89,10 @@ Rezervasyon _rez() => Rezervasyon(
       createdAt: DateTime.utc(2026, 7, 10, 9),
     );
 
-Etkinlik _etk() => Etkinlik(
+Etkinlik _etk({String? fotoUrl}) => Etkinlik(
       id: 'e-1',
+      fotoKey: fotoUrl == null ? null : 't/etkinlik/x.jpg',
+      fotoUrl: fotoUrl,
       baslik: 'Mac izleme aksami',
       aciklama: 'Buyuk ekranda milli mac.',
       tarih: DateTime.now().add(const Duration(days: 5)),
@@ -127,10 +129,12 @@ Widget _rezEkrani(Locale locale, {UserRole role = UserRole.resident}) =>
       child: l10nApp(const RezervasyonScreen(), locale: locale),
     );
 
-Widget _etkEkrani(Locale locale, {UserRole role = UserRole.yonetici}) =>
+Widget _etkEkrani(Locale locale,
+        {UserRole role = UserRole.yonetici, String? fotoUrl}) =>
     ProviderScope(
       overrides: [
-        etkinlikApiProvider.overrideWithValue(_FakeEtkApi([_etk()])),
+        etkinlikApiProvider
+            .overrideWithValue(_FakeEtkApi([_etk(fotoUrl: fotoUrl)])),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
       child: l10nApp(const EtkinlikScreen(), locale: locale),
@@ -458,5 +462,14 @@ void main() {
   testWidgets('KLAVYE: izinEkrani (odak sirasi + tuzak + dokunma-yalniz)',
       (tester) async {
     await klavyeSurusu(tester, (dil) => _izinEkrani(Locale(dil)));
+  });
+
+  // ---- TUR 34: FOTOGRAFLI VERI ----
+  testWidgets('FOTOGRAFLI: etkinlik ekrani (bes eksen birden)', (tester) async {
+    await fotografliSurus(
+      tester,
+      (dil) => _etkEkrani(Locale(dil), fotoUrl: 'https://ornek/etkinlik.jpg'),
+      veri: surusVerisi,
+    );
   });
 }

@@ -259,6 +259,8 @@ class _KargoCard extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(6),
                       child: Image.network(
                         k.fotoUrl!,
+                        // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+                        semanticLabel: context.l10n.ortakFotograf,
                         width: 40,
                         height: 40,
                         fit: BoxFit.cover,
@@ -433,6 +435,8 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
                     k.fotoUrl!,
+                    // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+                    semanticLabel: context.l10n.ortakFotograf,
                     height: 180,
                     width: double.infinity,
                     fit: BoxFit.cover,

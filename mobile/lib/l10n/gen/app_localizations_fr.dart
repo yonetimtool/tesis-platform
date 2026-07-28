@@ -4019,4 +4019,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ortakParolayiGizle => 'Masquer le mot de passe';
+
+  @override
+  String get ortakFotograf => 'Photo';
+
+  @override
+  String get ortakFotografiBuyut => 'Agrandir la photo';
 }

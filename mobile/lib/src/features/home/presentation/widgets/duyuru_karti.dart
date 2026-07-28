@@ -11,11 +11,7 @@ import 'section_header.dart';
 /// radius-12 gorsel (yoksa gri yer tutucu), sagda baslik (semibold), ozet
 /// (gri), tarih (gri) ve sag altta mavi tint "Yeni" cipi.
 class DuyuruKarti extends StatelessWidget {
-  const DuyuruKarti({
-    super.key,
-    required this.duyuru,
-    required this.onTumu,
-  });
+  const DuyuruKarti({super.key, required this.duyuru, required this.onTumu});
 
   final DuyuruOzeti duyuru;
   final VoidCallback onTumu;
@@ -67,8 +63,9 @@ class DuyuruKarti extends StatelessWidget {
                         ),
                         if (duyuru.yeni)
                           HomeChip(
-                              label: context.l10n.cipYeni,
-                              accent: HomeTokens.primary),
+                            label: context.l10n.cipYeni,
+                            accent: HomeTokens.primary,
+                          ),
                       ],
                     ),
                   ],
@@ -104,6 +101,8 @@ class _Gorsel extends StatelessWidget {
           ? placeholder
           : Image.network(
               url!,
+              // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+              semanticLabel: context.l10n.ortakFotograf,
               width: 96,
               height: 72,
               fit: BoxFit.cover,

@@ -1167,5 +1167,7 @@
     }
   },
   "ortakParolayiGoster": "Passwort anzeigen",
-  "ortakParolayiGizle": "Passwort verbergen"
+  "ortakParolayiGizle": "Passwort verbergen",
+  "ortakFotograf": "Foto",
+  "ortakFotografiBuyut": "Foto vergrößern"
 }

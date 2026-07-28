@@ -49,10 +49,13 @@ class _FakeDuyuruApi extends AnnouncementApi {
   Future<List<Announcement>> fetchAll() async => _items;
 }
 
-SiteKurali _kural({String baslik = 'Havuz Saatleri'}) => SiteKurali(
+SiteKurali _kural({String baslik = 'Havuz Saatleri', String? fotoUrl}) =>
+    SiteKurali(
       id: 'k-1',
       baslik: baslik,
       icerik: 'Havuz 08:00-22:00 arasi aciktir.',
+      fotoKey: fotoUrl == null ? null : 't/kural/x.jpg',
+      fotoUrl: fotoUrl,
       sira: 1,
       olusturanUserId: 'yon-1',
       olusturanAd: 'Acme Yonetici',
@@ -83,10 +86,12 @@ ResidentMember _sakin({String? unitNo = 'A-12', bool aktif = true}) =>
       isActive: aktif,
     );
 
-Widget _kuralEkrani(Locale locale, {UserRole role = UserRole.yonetici}) =>
+Widget _kuralEkrani(Locale locale,
+        {UserRole role = UserRole.yonetici, String? fotoUrl}) =>
     ProviderScope(
       overrides: [
-        siteKuraliApiProvider.overrideWithValue(_FakeKuralApi([_kural()])),
+        siteKuraliApiProvider
+            .overrideWithValue(_FakeKuralApi([_kural(fotoUrl: fotoUrl)])),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
       child: l10nApp(const SiteKuraliScreen(), locale: locale),
@@ -507,5 +512,29 @@ void main() {
   testWidgets('KLAVYE: sakinEkrani (odak sirasi + tuzak + dokunma-yalniz)',
       (tester) async {
     await klavyeSurusu(tester, (dil) => _sakinEkrani(Locale(dil)));
+  });
+
+  // ---- TUR 34: FOTOGRAFLI VERI ----
+  testWidgets('FOTOGRAFLI: duyuru ekrani (bes eksen birden)', (tester) async {
+    await fotografliSurus(
+      tester,
+      (dil) => _duyuruEkrani(Locale(dil), fotoUrl: 'https://ornek/duyuru.jpg'),
+      veri: surusVerisi,
+    );
+  });
+  testWidgets('FOTOGRAFLI: site kurali DETAYI (bes eksen birden)',
+      (tester) async {
+    // Kural gorseli LISTEDE degil DETAYDA cizilir (listede yalniz kucuk bir
+    // ikon vardir). Bulucu dilden bagimsiz: kuralin BASLIGI sunucu verisi.
+    await fotografliSurus(
+      tester,
+      (dil) => _kuralEkrani(Locale(dil), fotoUrl: 'https://ornek/kural.jpg'),
+      veri: surusVerisi,
+      hazirla: (t) async {
+        await t.tap(find.text('Havuz Saatleri').first);
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 400));
+      },
+    );
   });
 }

@@ -295,6 +295,8 @@ class _Thumbnail extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       child: Image.network(
         url,
+        // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+        semanticLabel: context.l10n.ortakFotograf,
         width: 72,
         height: 72,
         fit: BoxFit.cover,

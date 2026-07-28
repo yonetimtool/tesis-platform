@@ -89,23 +89,35 @@ class _FakeTalepApi extends ComplaintApi {
   Future<List<TaskCategory>> listTaskCategories() async => const [];
 }
 
-Complaint _talep({TalepDurum durum = TalepDurum.acik}) => Complaint(
+// TUR 34: fotografli talep. `fotograflar` bos oldugu surece kucuk resim
+// izgarasi ve tam ekran gorsel hic CIZILMEZ — alti surus de o kod yollarina
+// ugramamisti.
+const _fotolar = <ComplaintPhoto>[
+  ComplaintPhoto(
+      id: 'f1', fotoKey: 'k1', sira: 0, fotoUrl: 'https://ornek/talep-1.jpg'),
+  ComplaintPhoto(
+      id: 'f2', fotoKey: 'k2', sira: 1, fotoUrl: 'https://ornek/talep-2.jpg'),
+];
+
+Complaint _talep({TalepDurum durum = TalepDurum.acik, bool foto = false}) => Complaint(
       id: 'c-1',
       acanUserId: 'u-1',
       acanAd: 'Acme Sakin',
       baslik: 'Asansor arizali',
       mesaj: 'A blok asansoru durdu.',
       durum: durum,
-      fotograflar: const [],
+      fotograflar: foto ? _fotolar : const [],
       gecmis: const [],
       createdAt: DateTime.utc(2026, 7, 9, 10),
       updatedAt: DateTime.utc(2026, 7, 9, 10),
     );
 
-Widget _talepEkrani(Locale locale, {UserRole role = UserRole.yonetici}) =>
+Widget _talepEkrani(Locale locale,
+        {UserRole role = UserRole.yonetici, bool foto = false}) =>
     ProviderScope(
       overrides: [
-        complaintApiProvider.overrideWithValue(_FakeTalepApi([_talep()])),
+        complaintApiProvider
+            .overrideWithValue(_FakeTalepApi([_talep(foto: foto)])),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
       child: l10nApp(const ComplaintsScreen(), locale: locale),
@@ -442,6 +454,23 @@ void main() {
   testWidgets('KLAVYE: duzenlemeEkrani (odak sirasi + tuzak + dokunma-yalniz)',
       (tester) async {
     await klavyeSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)));
+  });
+
+  // ---- TUR 34: FOTOGRAFLI VERI ----
+  testWidgets('FOTOGRAFLI: talep DETAYI (bes eksen birden)', (tester) async {
+    // Foto galerisi LISTEDE degil DETAYDA cizilir; surus her dilde yeniden
+    // cizdigi icin detaya girisi de her seferinde tekrarlamak gerekir.
+    // Bulucu DILDEN BAGIMSIZ (sunucu verisi olan talep basligi).
+    await fotografliSurus(
+      tester,
+      (dil) => _talepEkrani(Locale(dil), foto: true),
+      veri: surusVerisi,
+      hazirla: (t) async {
+        await t.tap(find.text('Asansor arizali').first);
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 400)); // rota gecisi
+      },
+    );
   });
 }
 

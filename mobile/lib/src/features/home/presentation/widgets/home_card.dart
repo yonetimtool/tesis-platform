@@ -77,11 +77,7 @@ class HomeIconBox extends StatelessWidget {
 /// Tint zeminli + accent metinli kucuk rozet (AKTİF / PLANLANDI / YÖNETİCİ /
 /// Ödendi / Yeni). Radius 8, 11px semibold.
 class HomeChip extends StatelessWidget {
-  const HomeChip({
-    super.key,
-    required this.label,
-    required this.accent,
-  });
+  const HomeChip({super.key, required this.label, required this.accent});
 
   final String label;
   final Color accent;

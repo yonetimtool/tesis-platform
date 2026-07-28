@@ -4128,4 +4128,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ortakParolayiGizle => 'Скрыть пароль';
+
+  @override
+  String get ortakFotograf => 'Фото';
+
+  @override
+  String get ortakFotografiBuyut => 'Увеличить фото';
 }

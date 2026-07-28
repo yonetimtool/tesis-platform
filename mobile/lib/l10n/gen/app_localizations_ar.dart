@@ -4148,4 +4148,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ortakParolayiGizle => 'إخفاء كلمة المرور';
+
+  @override
+  String get ortakFotograf => 'صورة';
+
+  @override
+  String get ortakFotografiBuyut => 'تكبير الصورة';
 }

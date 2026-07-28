@@ -71,10 +71,7 @@ class ActivityRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              time,
-              style: HomeText.rowSub.copyWith(color: s.muted),
-            ),
+            Text(time, style: HomeText.rowSub.copyWith(color: s.muted)),
             const SizedBox(width: 8),
             HomeDot(color: noktaRengi ?? accentColor),
             const SizedBox(width: 6),

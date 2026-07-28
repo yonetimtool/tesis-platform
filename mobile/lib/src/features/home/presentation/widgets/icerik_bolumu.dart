@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/i18n/l10n.dart';
+
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
@@ -43,8 +45,7 @@ class IcerikBolumu extends StatelessWidget {
           if (i > 0) const SizedBox(height: HomeTokens.gridGap),
           _IcerikKarti(
             ozet: satirlar[i],
-            onTap: () =>
-                onSec == null ? onTumu() : onSec!(satirlar[i]),
+            onTap: () => onSec == null ? onTumu() : onSec!(satirlar[i]),
           ),
         ],
       ],
@@ -139,6 +140,8 @@ class _Gorsel extends StatelessWidget {
           ? placeholder
           : Image.network(
               url!,
+              // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+              semanticLabel: context.l10n.ortakFotograf,
               width: 96,
               height: 72,
               fit: BoxFit.cover,

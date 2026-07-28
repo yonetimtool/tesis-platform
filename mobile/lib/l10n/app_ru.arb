@@ -1167,5 +1167,7 @@
     }
   },
   "ortakParolayiGoster": "Показать пароль",
-  "ortakParolayiGizle": "Скрыть пароль"
+  "ortakParolayiGizle": "Скрыть пароль",
+  "ortakFotograf": "Фото",
+  "ortakFotografiBuyut": "Увеличить фото"
 }

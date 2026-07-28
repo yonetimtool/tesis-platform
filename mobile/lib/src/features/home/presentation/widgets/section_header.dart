@@ -26,7 +26,9 @@ class SectionHeader extends StatelessWidget {
     final s = HomeSurface.of(context);
     final etiket = seeAllLabel ?? context.l10n.ortakTumunuGor;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      // Baglanti dokunma hedefi 48 dp'ye cikinca satir zaten yukseldi:
+      // alt bosluk buyudugu kadar kisaltilir (gorsel ritim korunur).
+      padding: const EdgeInsets.only(bottom: 2),
       child: Row(
         children: [
           Expanded(
@@ -41,18 +43,37 @@ class SectionHeader extends StatelessWidget {
             InkWell(
               onTap: onSeeAll,
               borderRadius: BorderRadius.circular(HomeTokens.chipRadius),
+              // DOKUNMA HEDEFI 48 dp (tur 34): baglanti 28 dp yuksekligindeydi
+              // ve Android kilavuzunun altinda kaliyordu. Metin buyumez —
+              // yalnizca dokunulabilir alan bosluklarla 48'e cikar; bolum
+              // basligi satiri da bu yukseklige oturur.
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 14,
+                ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Koyu temada vurgu METNI acik tona cozulur (tur 32).
-                    Text(etiket,
-                        style: HomeText.link
-                            .copyWith(color: s.accentText(HomeTokens.primary))),
+                    // 2.0x olcekte uzun ceviri ("Alle anzeigen") satiri
+                    // tasiriyordu: baglanti metni de kisalabilmeli (tur 34).
+                    Flexible(
+                      child: Text(
+                        etiket,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: HomeText.link.copyWith(
+                          color: s.accentText(HomeTokens.primary),
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 2),
-                    const Icon(Icons.chevron_right,
-                        size: 18, color: HomeTokens.primary),
+                    const Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                      color: HomeTokens.primary,
+                    ),
                   ],
                 ),
               ),

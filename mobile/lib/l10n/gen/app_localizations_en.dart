@@ -4057,4 +4057,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ortakParolayiGizle => 'Hide password';
+
+  @override
+  String get ortakFotograf => 'Photo';
+
+  @override
+  String get ortakFotografiBuyut => 'Enlarge photo';
 }

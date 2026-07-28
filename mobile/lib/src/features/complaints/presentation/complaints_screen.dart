@@ -66,7 +66,10 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(complaintsControllerProvider);
     final controller = ref.read(complaintsControllerProvider.notifier);
-    ref.listen(complaintsControllerProvider, (_, next) => _maybeOpenInitial(next));
+    ref.listen(
+      complaintsControllerProvider,
+      (_, next) => _maybeOpenInitial(next),
+    );
     // Provider zaten yuklu geldiyse (listen tetiklenmez) mevcut durumu isle.
     _maybeOpenInitial(state);
 
@@ -74,8 +77,9 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
     // uyum: yeni bir sunucu durumu kaybolmasin). Durum degisince kayit
     // sekme degistirir (refresh sonrasi otomatik).
     final acik = state.items
-        .where((c) =>
-            c.durum == TalepDurum.acik || c.durum == TalepDurum.unknown)
+        .where(
+          (c) => c.durum == TalepDurum.acik || c.durum == TalepDurum.unknown,
+        )
         .toList(growable: false);
     final isEmri = state.items
         .where((c) => c.durum == TalepDurum.isEmri)
@@ -91,7 +95,9 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(baslikBuyuk(context.l10n.kartTalepAriza, context.dilKodu)),
+          title: Text(
+            baslikBuyuk(context.l10n.kartTalepAriza, context.dilKodu),
+          ),
           actions: [
             IconButton(
               tooltip: context.l10n.ortakYenile,
@@ -106,7 +112,9 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
               Tab(text: context.l10n.talepSekmeAcik('${acik.length}')),
               Tab(text: context.l10n.talepSekmeIsEmri('${isEmri.length}')),
               Tab(text: context.l10n.talepSekmeCozulen('${cozulen.length}')),
-              Tab(text: context.l10n.talepSekmeReddedilen('${reddedilen.length}')),
+              Tab(
+                text: context.l10n.talepSekmeReddedilen('${reddedilen.length}'),
+              ),
             ],
           ),
         ),
@@ -166,9 +174,9 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
       builder: (_) => const _ComplaintForm(),
     );
     if (saved == true && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.talepIletildi)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.talepIletildi)));
     }
   }
 }
@@ -191,8 +199,11 @@ class _Body extends ConsumerWidget {
     if (state.loading && state.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    final hataMetni =
-        akisHatasiCoz(context.l10n, state.hataKimligi, state.errorMessage);
+    final hataMetni = akisHatasiCoz(
+      context.l10n,
+      state.hataKimligi,
+      state.errorMessage,
+    );
     if (hataMetni != null && state.items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
@@ -208,18 +219,14 @@ class _Body extends ConsumerWidget {
     if (items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
-        children: [
-          Center(child: Text(emptyText, textAlign: TextAlign.center)),
-        ],
+        children: [Center(child: Text(emptyText, textAlign: TextAlign.center))],
       );
     }
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
       itemCount: items.length,
-      itemBuilder: (context, i) => _ComplaintCard(
-        complaint: items[i],
-        canRespond: state.canRespond,
-      ),
+      itemBuilder: (context, i) =>
+          _ComplaintCard(complaint: items[i], canRespond: state.canRespond),
     );
   }
 }
@@ -227,22 +234,22 @@ class _Body extends ConsumerWidget {
 /// Ticketing durum paleti (Task 11 brief): acik=amber, isEmri=blue,
 /// cozuldu=green, reddedildi=red, unknown=grey.
 Color _durumColor(TalepDurum d) => switch (d) {
-      TalepDurum.acik => Colors.amber,
-      TalepDurum.isEmri => Colors.blue,
-      TalepDurum.cozuldu => Colors.green,
-      TalepDurum.reddedildi => Colors.red,
-      TalepDurum.unknown => Colors.grey,
-    };
+  TalepDurum.acik => Colors.amber,
+  TalepDurum.isEmri => Colors.blue,
+  TalepDurum.cozuldu => Colors.green,
+  TalepDurum.reddedildi => Colors.red,
+  TalepDurum.unknown => Colors.grey,
+};
 
 /// Durum rozetinin AKTIF DILDEKI etiketi (enum METIN TASIMAZ; `default` dali
 /// yok — yeni durum eklenince derleyici ceviriyi zorlar).
 String _durumLabel(AppLocalizations l10n, TalepDurum d) => switch (d) {
-      TalepDurum.acik => l10n.talepDurumAcik,
-      TalepDurum.isEmri => l10n.talepDurumIsEmri,
-      TalepDurum.cozuldu => l10n.talepDurumCozuldu,
-      TalepDurum.reddedildi => l10n.talepDurumReddedildi,
-      TalepDurum.unknown => l10n.devriyeDurumBilinmiyor,
-    };
+  TalepDurum.acik => l10n.talepDurumAcik,
+  TalepDurum.isEmri => l10n.talepDurumIsEmri,
+  TalepDurum.cozuldu => l10n.talepDurumCozuldu,
+  TalepDurum.reddedildi => l10n.talepDurumReddedildi,
+  TalepDurum.unknown => l10n.devriyeDurumBilinmiyor,
+};
 
 /// Durum rozeti — [_durumColor] paletiyle renklenir.
 class _DurumChip extends StatelessWidget {
@@ -504,33 +511,43 @@ class _GalleryPhoto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Klavyeyle de acilabilmeli (tur 33).
-    return InkWell(
-      onTap: () => _openFullScreen(context),
-      borderRadius: BorderRadius.circular(8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          url,
-          height: 160,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, progress) => progress == null
-              ? child
-              : const SizedBox(
-                  height: 160,
-                  child: Center(child: CircularProgressIndicator()),
+    // Fotograf ekran okuyucuda ADSIZDI (tur 34): "resim, dugme" diye
+    // okunuyordu. Etiket DOKUNULABILIR dugumle birlesmeli —
+    // `MergeSemantics` olmadan ayri bir alt dugumde kalir.
+    return MergeSemantics(
+      child: Semantics(
+        label: context.l10n.ortakFotografiBuyut,
+        child: InkWell(
+          onTap: () => _openFullScreen(context),
+          borderRadius: BorderRadius.circular(8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              url,
+              // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+              semanticLabel: context.l10n.ortakFotograf,
+              height: 160,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) => progress == null
+                  ? child
+                  : const SizedBox(
+                      height: 160,
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+              errorBuilder: (context, _, _) => Container(
+                height: 48,
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: Row(
+                  children: [
+                    const Icon(Icons.broken_image_outlined, size: 20),
+                    const SizedBox(width: 8),
+                    Text(context.l10n.talepGorselYuklenemedi),
+                  ],
                 ),
-          errorBuilder: (context, _, _) => Container(
-            height: 48,
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: Row(
-              children: [
-                const Icon(Icons.broken_image_outlined, size: 20),
-                const SizedBox(width: 8),
-                Text(context.l10n.talepGorselYuklenemedi),
-              ],
+              ),
             ),
           ),
         ),
@@ -549,6 +566,8 @@ class _GalleryPhoto extends StatelessWidget {
               maxScale: 5,
               child: Image.network(
                 url,
+                // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+                semanticLabel: context.l10n.ortakFotograf,
                 errorBuilder: (_, _, _) => Text(
                   context.l10n.talepGorselYuklenemedi,
                   style: const TextStyle(color: Colors.white),
@@ -622,10 +641,7 @@ class _StatusTimeline extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (var i = 0; i < gecmis.length; i++)
-          _TimelineNode(
-            row: gecmis[i],
-            isLast: i == gecmis.length - 1,
-          ),
+          _TimelineNode(row: gecmis[i], isLast: i == gecmis.length - 1),
       ],
     );
   }
@@ -681,19 +697,22 @@ class _TimelineNode extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        tarihSaatBicimi(row.createdAt, context.dilKodu,
-                            ayirici: ''),
+                        tarihSaatBicimi(
+                          row.createdAt,
+                          context.dilKodu,
+                          ayirici: '',
+                        ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   ),
-                  Text(
-                    rolLabel,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  Text(rolLabel, style: Theme.of(context).textTheme.bodySmall),
                   if (row.sebep != null && row.sebep!.trim().isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(row.sebep!, style: Theme.of(context).textTheme.bodyMedium),
+                    Text(
+                      row.sebep!,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ],
                 ],
               ),
@@ -759,10 +778,13 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
     if (source == null) return;
     final ayrinti = await _form.addPhoto(source);
     if (ayrinti != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(talepHataMetni(
-            _l10n, TalepAkisHatasi.fotoAlinamadi, ayrinti)),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            talepHataMetni(_l10n, TalepAkisHatasi.fotoAlinamadi, ayrinti),
+          ),
+        ),
+      );
     }
   }
 
@@ -836,10 +858,9 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                   labelText: context.l10n.talepBaslikAlan,
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty)
-                        ? context.l10n.talepBaslikZorunlu
-                        : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? context.l10n.talepBaslikZorunlu
+                    : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -885,9 +906,11 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.send_outlined),
-                  label: Text(_saving
-                      ? context.l10n.gorevGonderiliyor
-                      : context.l10n.talepGonder),
+                  label: Text(
+                    _saving
+                        ? context.l10n.gorevGonderiliyor
+                        : context.l10n.talepGonder,
+                  ),
                 ),
               ),
             ],
@@ -929,8 +952,11 @@ class _CategoryPicker extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
           )
-        else if (talepHatasiCoz(context.l10n, state.categoriesHata,
-                state.categoriesError)
+        else if (talepHatasiCoz(
+              context.l10n,
+              state.categoriesHata,
+              state.categoriesError,
+            )
             case final kategoriHata?)
           Text(
             kategoriHata,
@@ -1124,8 +1150,10 @@ class _AddPhotoTile extends StatelessWidget {
             children: [
               const Icon(Icons.add_a_photo_outlined),
               const SizedBox(height: 4),
-              Text(context.l10n.ortakEkle,
-                  style: Theme.of(context).textTheme.bodySmall),
+              Text(
+                context.l10n.ortakEkle,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ],
           ),
         ),
@@ -1437,7 +1465,7 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
                         u.role.isEmpty
                             ? u.ad
                             : '${u.ad} '
-                                '(${rolAdi(context.l10n, UserRole.fromClaim(u.role))})',
+                                  '(${rolAdi(context.l10n, UserRole.fromClaim(u.role))})',
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1482,7 +1510,9 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   // Atanan secilene kadar pasif (convert atanan ZORUNLU).
-                  onPressed: (_saving || _atananUserId == null) ? null : _submit,
+                  onPressed: (_saving || _atananUserId == null)
+                      ? null
+                      : _submit,
                   icon: _saving
                       ? const SizedBox(
                           width: 18,
@@ -1490,9 +1520,11 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.assignment_turned_in_outlined),
-                  label: Text(_saving
-                      ? context.l10n.talepDonusturuluyor
-                      : context.l10n.talepDonustur),
+                  label: Text(
+                    _saving
+                        ? context.l10n.talepDonusturuluyor
+                        : context.l10n.talepDonustur,
+                  ),
                 ),
               ),
             ],
@@ -1656,7 +1688,9 @@ class _ResolveSheetState extends ConsumerState<_ResolveSheet> {
     });
     final not = _notCtrl.text.trim();
     try {
-      await ref.read(complaintsControllerProvider.notifier).resolve(
+      await ref
+          .read(complaintsControllerProvider.notifier)
+          .resolve(
             widget.complaint.id,
             ComplaintResolveDraft(cozumNotu: not.isEmpty ? null : not),
           );
@@ -1728,9 +1762,11 @@ class _ResolveSheetState extends ConsumerState<_ResolveSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check_circle_outline),
-                label: Text(_saving
-                    ? context.l10n.ortakKaydediliyor
-                    : context.l10n.talepCoz),
+                label: Text(
+                  _saving
+                      ? context.l10n.ortakKaydediliyor
+                      : context.l10n.talepCoz,
+                ),
               ),
             ),
           ],

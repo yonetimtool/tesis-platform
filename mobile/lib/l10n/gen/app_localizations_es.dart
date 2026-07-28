@@ -4010,4 +4010,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ortakParolayiGizle => 'Ocultar contraseña';
+
+  @override
+  String get ortakFotograf => 'Foto';
+
+  @override
+  String get ortakFotografiBuyut => 'Ampliar la foto';
 }

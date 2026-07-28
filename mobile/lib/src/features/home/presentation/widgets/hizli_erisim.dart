@@ -47,7 +47,8 @@ class HizliErisimKarti extends StatelessWidget {
     final s = HomeSurface.of(context);
     final l10n = context.l10n;
     // Sayac YOKSA sabit etiket (varsa) gosterilir; ikisi de yoksa iskelet.
-    final altSatir = kart.altMetin ??
+    final altSatir =
+        kart.altMetin ??
         (kart.etiketId == null ? null : kartEtiketi(l10n, kart.etiketId!));
     final kutu = hucreGenisligi == null
         ? HomeTokens.iconBox
@@ -95,7 +96,8 @@ class HizliErisimKarti extends StatelessWidget {
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
               style: HomeText.cardCounter.copyWith(
-                  color: s.accentText(kart.altMetinRengi ?? kart.accent)),
+                color: s.accentText(kart.altMetinRengi ?? kart.accent),
+              ),
             ),
           if (kart.ikinciAltMetin != null)
             AutoSizeText(
@@ -142,29 +144,32 @@ class _HizliErisimSeridiState extends State<HizliErisimSeridi> {
     final kartlar = widget.kartlar;
     if (kartlar.isEmpty) return const SizedBox.shrink();
 
-    return LayoutBuilder(builder: (context, c) {
-      final genislik = seritKartGenisligi(c.maxWidth);
-      return SizedBox(
-        height: 148,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: kHomePagePadding),
-          itemCount: kartlar.length,
-          separatorBuilder: (_, _) =>
-              const SizedBox(width: HomeTokens.gridGap),
-          itemBuilder: (context, i) => SizedBox(
-            width: genislik,
-            child: HizliErisimKarti(
-              kart: kartlar[i],
-              onTap: () => widget.onSec(kartlar[i]),
-              hucreGenisligi: genislik,
-              baslikGrubu: baslikGrubu,
-              sayacGrubu: sayacGrubu,
+    return LayoutBuilder(
+      builder: (context, c) {
+        final genislik = seritKartGenisligi(c.maxWidth);
+        return SizedBox(
+          // YAZI OLCEGIYLE BUYUR (tur 34).
+          height: seritYuksekligi(context, 148),
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: kHomePagePadding),
+            itemCount: kartlar.length,
+            separatorBuilder: (_, _) =>
+                const SizedBox(width: HomeTokens.gridGap),
+            itemBuilder: (context, i) => SizedBox(
+              width: genislik,
+              child: HizliErisimKarti(
+                kart: kartlar[i],
+                onTap: () => widget.onSec(kartlar[i]),
+                hucreGenisligi: genislik,
+                baslikGrubu: baslikGrubu,
+                sayacGrubu: sayacGrubu,
+              ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
@@ -205,30 +210,31 @@ class _HizliErisimIzgarasiState extends State<HizliErisimIzgarasi> {
     final kartlar = widget.kartlar;
     if (kartlar.isEmpty) return const SizedBox.shrink();
 
-    return LayoutBuilder(builder: (context, c) {
-      final sutun = hizliErisimSutun(c.maxWidth);
-      final hucre =
-          (c.maxWidth - HomeTokens.gridGap * (sutun - 1)) / sutun;
-      return GridView.count(
-        crossAxisCount: sutun,
-        shrinkWrap: true,
-        padding: EdgeInsets.zero,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: HomeTokens.gridGap,
-        crossAxisSpacing: HomeTokens.gridGap,
-        childAspectRatio: hizliErisimOran(sutun),
-        children: [
-          for (final k in kartlar)
-            HizliErisimKarti(
-              kart: k,
-              onTap: () => widget.onSec(k),
-              hucreGenisligi: hucre,
-              baslikGrubu: baslikGrubu,
-              sayacGrubu: sayacGrubu,
-            ),
-        ],
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, c) {
+        final sutun = hizliErisimSutun(c.maxWidth);
+        final hucre = (c.maxWidth - HomeTokens.gridGap * (sutun - 1)) / sutun;
+        return GridView.count(
+          crossAxisCount: sutun,
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: HomeTokens.gridGap,
+          crossAxisSpacing: HomeTokens.gridGap,
+          childAspectRatio: izgaraOrani(context, hizliErisimOran(sutun)),
+          children: [
+            for (final k in kartlar)
+              HizliErisimKarti(
+                kart: k,
+                onTap: () => widget.onSec(k),
+                hucreGenisligi: hucre,
+                baslikGrubu: baslikGrubu,
+                sayacGrubu: sayacGrubu,
+              ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -243,6 +249,16 @@ int hizliErisimSutun(double maxWidth) => maxWidth < 300 ? 2 : 4;
 /// sayac) → dikey dikdortgen; 2 sutunda genis hucre neredeyse kare.
 double hizliErisimOran(int sutun) => sutun == 4 ? 0.70 : 1.15;
 
+/// IZGARA HUCRE ORANI (tur 34) — sabit en/boy orani metin buyudugunde ya da
+/// ekran daraldiginda hucreyi KISA birakir ve icerik tasar. Oran iki etkenle
+/// kucultulur (hucre uzar): yazi olcegi ve dar ekran (320 dp'de basliklar
+/// daha cok satira sarar). Alt sinir hucrenin ekrani yutmasini onler.
+double izgaraOrani(BuildContext context, double taban) {
+  final olcek = MediaQuery.textScalerOf(context).scale(1.0);
+  final dar = MediaQuery.sizeOf(context).width < 360 ? 0.78 : 1.0;
+  return (taban * dar / olcek).clamp(taban * 0.30, taban);
+}
+
 /// Yatay seritteki (gorevli) kart genisligi.
 ///
 /// Spesifikasyon ~110dp der; referans gorselde ise 5 kartin TAMAMI ekrana
@@ -251,6 +267,18 @@ double hizliErisimOran(int sutun) => sutun == 4 ? 0.70 : 1.15;
 /// kart gorunecek sekilde olceklenir — referanstaki yogunluga yaklasir, 5.
 /// kart kenardan "gozukur" (serit kaydirilabilir kaldigi icin spesifikasyona
 /// da sadik). Genis ekranda spesifikasyonun 110dp'sine oturur.
+/// YATAY SERIT YUKSEKLIGI (tur 34).
+///
+/// Sabit yukseklikli seritler iki durumda tasiyordu: (1) yazi olcegi 2.0x —
+/// metin buyur, kutu buyumez; (2) 320 dp — kart daralir, basliklar daha cok
+/// satira sarar. Ikisi de eklenir; ust sinir seridin ekrani yutmasini onler.
+double seritYuksekligi(BuildContext context, double taban) {
+  final dar = MediaQuery.sizeOf(context).width < 360 ? 40.0 : 0.0;
+  return MediaQuery.textScalerOf(
+    context,
+  ).scale(taban + dar).clamp(taban + dar, (taban + dar) * 1.8);
+}
+
 double seritKartGenisligi(double maxWidth) {
   final kullanilabilir = maxWidth - kHomePagePadding * 2;
   final hedef = (kullanilabilir - HomeTokens.gridGap * 3.5) / 4.5;

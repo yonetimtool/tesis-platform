@@ -143,13 +143,12 @@ class _HavaBlogu extends StatelessWidget {
           children: [
             Text(
               hava.sicaklik,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)
-                  .copyWith(color: s.heading),
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+              ).copyWith(color: s.heading),
             ),
-            Text(
-              hava.sehir,
-              style: HomeText.rowSub.copyWith(color: s.muted),
-            ),
+            Text(hava.sehir, style: HomeText.rowSub.copyWith(color: s.muted)),
           ],
         ),
       ],

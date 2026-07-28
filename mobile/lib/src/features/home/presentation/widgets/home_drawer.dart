@@ -61,35 +61,40 @@ class HomeDrawer extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
                   for (final entry in moduller)
-                    Builder(builder: (context) {
-                      final spec = moduleCardSpec(entry);
-                      return ListTile(
-                        leading: HomeIconBox(
-                          icon: spec.icon,
-                          accent: spec.accent,
-                          size: 36,
-                          radius: 10,
-                          iconSize: 20,
-                        ),
-                        title: Text(
-                          moduleBaslik(context.l10n, entry),
-                          style:
-                              HomeText.cardTitle.copyWith(color: s.heading),
-                        ),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          onModul(spec.route);
-                        },
-                      );
-                    }),
+                    Builder(
+                      builder: (context) {
+                        final spec = moduleCardSpec(entry);
+                        return ListTile(
+                          leading: HomeIconBox(
+                            icon: spec.icon,
+                            accent: spec.accent,
+                            size: 36,
+                            radius: 10,
+                            iconSize: 20,
+                          ),
+                          title: Text(
+                            moduleBaslik(context.l10n, entry),
+                            style: HomeText.cardTitle.copyWith(
+                              color: s.heading,
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            onModul(spec.route);
+                          },
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
             Divider(height: 1, color: s.divider),
             ListTile(
               leading: Icon(Icons.person_outline, color: s.body),
-              title: Text(context.l10n.kabukProfil,
-                  style: HomeText.cardTitle.copyWith(color: s.heading)),
+              title: Text(
+                context.l10n.kabukProfil,
+                style: HomeText.cardTitle.copyWith(color: s.heading),
+              ),
               onTap: () {
                 Navigator.of(context).pop();
                 onProfile?.call();
@@ -97,8 +102,10 @@ class HomeDrawer extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.logout, color: HomeTokens.red),
-              title: Text(context.l10n.kabukCikisYap,
-                  style: HomeText.cardTitle.copyWith(color: HomeTokens.red)),
+              title: Text(
+                context.l10n.kabukCikisYap,
+                style: HomeText.cardTitle.copyWith(color: HomeTokens.red),
+              ),
               onTap: () {
                 Navigator.of(context).pop();
                 onLogout?.call();

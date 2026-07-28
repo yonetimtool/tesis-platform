@@ -310,4 +310,10 @@ void main() {
     _tall(tester);
     await klavyeSurusu(tester, (dil) => _app(UserRole.security, dil: Locale(dil)));
   });
+
+  // ---- TUR 34: FOTOGRAFLI VERI (avatar ucu + kart gorselleri) ----
+  testWidgets('FOTOGRAFLI: ana ekran (bes eksen birden)', (tester) async {
+    _tall(tester);
+    await fotografliSurus(tester, (dil) => _app(UserRole.security, dil: Locale(dil)), veri: surusVerisi);
+  });
 }

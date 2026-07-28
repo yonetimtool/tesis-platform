@@ -14,7 +14,7 @@ class HomeSectionPad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: kHomePagePadding),
-        child: child,
-      );
+    padding: const EdgeInsets.symmetric(horizontal: kHomePagePadding),
+    child: child,
+  );
 }

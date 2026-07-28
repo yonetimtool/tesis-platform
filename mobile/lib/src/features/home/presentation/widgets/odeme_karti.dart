@@ -44,7 +44,10 @@ class OdemeKarti extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: VerticalDivider(
-                      width: 1, thickness: 1, color: s.divider),
+                    width: 1,
+                    thickness: 1,
+                    color: s.divider,
+                  ),
                 ),
                 Expanded(
                   child: _SagSutun(ozet: ozet, onGecmis: onGecmis),
@@ -70,8 +73,10 @@ class _SolSutun extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(context.l10n.anaBuAykiAidat,
-            style: HomeText.rowSub.copyWith(color: s.muted)),
+        Text(
+          context.l10n.anaBuAykiAidat,
+          style: HomeText.rowSub.copyWith(color: s.muted),
+        ),
         const SizedBox(height: 8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -88,10 +93,21 @@ class _SolSutun extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            if (ozet.odendi)
-              HomeChip(label: context.l10n.anaOdendi, accent: HomeTokens.green)
-            else
-              HomeChip(label: context.l10n.anaOdenmedi, accent: HomeTokens.red),
+            // CIP DE ESNEK: 320 dp'de Rusca "Оплачено" tutarla birlikte
+            // satiri 0.1 px tasiriyordu (tur 34). Cipin kendi metni zaten
+            // tek satir + ellipsis; `Flexible` olmadan dogal genisliginde
+            // israr ediyordu.
+            Flexible(
+              child: ozet.odendi
+                  ? HomeChip(
+                      label: context.l10n.anaOdendi,
+                      accent: HomeTokens.green,
+                    )
+                  : HomeChip(
+                      label: context.l10n.anaOdenmedi,
+                      accent: HomeTokens.red,
+                    ),
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -119,8 +135,10 @@ class _SagSutun extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(context.l10n.anaGelecekOdeme,
-            style: HomeText.rowSub.copyWith(color: s.muted)),
+        Text(
+          context.l10n.anaGelecekOdeme,
+          style: HomeText.rowSub.copyWith(color: s.muted),
+        ),
         const SizedBox(height: 6),
         FittedBox(
           fit: BoxFit.scaleDown,
@@ -128,8 +146,10 @@ class _SagSutun extends StatelessWidget {
           child: Text(
             ozet.gelecekTarih,
             maxLines: 1,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)
-                .copyWith(color: s.heading),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ).copyWith(color: s.heading),
           ),
         ),
         const SizedBox(height: 2),
@@ -149,21 +169,26 @@ class _SagSutun extends StatelessWidget {
             onTap: onGecmis,
             borderRadius: BorderRadius.circular(10),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              // Dokunma hedefi 48 dp (tur 34): buton 35 dp yuksekligindeydi.
+              // Dikey bosluk 8 -> 15; metin/ikon olculeri degismez.
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.format_list_bulleted,
-                      size: 16, color: HomeTokens.primary),
+                  const Icon(
+                    Icons.format_list_bulleted,
+                    size: 16,
+                    color: HomeTokens.primary,
+                  ),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       context.l10n.anaGecmisOdemeler,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: HomeText.cardCounter
-                          .copyWith(color: s.accentText(HomeTokens.primary)),
+                      style: HomeText.cardCounter.copyWith(
+                        color: s.accentText(HomeTokens.primary),
+                      ),
                     ),
                   ),
                 ],

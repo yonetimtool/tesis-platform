@@ -38,21 +38,27 @@ Future<void> showBildirMenu(
             ListTile(
               enabled: !g.comingSoon,
               leading: CircleAvatar(
-                backgroundColor: (g.comingSoon
-                        ? Theme.of(ctx).disabledColor
-                        : YonetioColors.navy)
-                    .withValues(alpha: 0.12),
-                child: Icon(g.icon,
-                    size: 20,
-                    color: g.comingSoon
-                        ? Theme.of(ctx).disabledColor
-                        : YonetioColors.navy),
+                backgroundColor:
+                    (g.comingSoon
+                            ? Theme.of(ctx).disabledColor
+                            : YonetioColors.navy)
+                        .withValues(alpha: 0.12),
+                child: Icon(
+                  g.icon,
+                  size: 20,
+                  color: g.comingSoon
+                      ? Theme.of(ctx).disabledColor
+                      : YonetioColors.navy,
+                ),
               ),
               title: Text(g.label),
               trailing: g.comingSoon
-                  ? Text(context.l10n.ortakYakinda,
+                  ? Text(
+                      context.l10n.ortakYakinda,
                       style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(ctx).disabledColor))
+                        color: Theme.of(ctx).disabledColor,
+                      ),
+                    )
                   : const Icon(Icons.chevron_right, size: 18),
               onTap: g.comingSoon || g.route == null
                   ? null

@@ -1657,5 +1657,7 @@
     }
   },
   "ortakParolayiGoster": "Parolayı göster",
-  "ortakParolayiGizle": "Parolayı gizle"
+  "ortakParolayiGizle": "Parolayı gizle",
+  "ortakFotograf": "Fotoğraf",
+  "ortakFotografiBuyut": "Fotoğrafı büyüt"
 }

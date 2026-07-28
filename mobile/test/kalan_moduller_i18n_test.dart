@@ -525,4 +525,20 @@ void main() {
       (tester) async {
     await klavyeSurusu(tester, (dil) => _yoneticiEkrani(Locale(dil)));
   });
+
+  // ---- TUR 34: FOTOGRAFLI VERI ----
+  testWidgets('FOTOGRAFLI: destek ekrani (bes eksen birden)', (tester) async {
+    await fotografliSurus(
+      tester,
+      (dil) => _destekEkrani(Locale(dil), items: const [
+        SupportTicket(
+          id: 's-1',
+          konu: 'Acme kamera',
+          aciklama: 'Kamera goruntu vermiyor.',
+          fotoUrl: 'https://ornek/destek.jpg',
+        ),
+      ]),
+      veri: surusVerisi,
+    );
+  });
 }

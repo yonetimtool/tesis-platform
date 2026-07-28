@@ -327,4 +327,32 @@ void main() {
     _tall(tester);
     await klavyeSurusu(tester, (dil) => _app(units: _borcsuz, dil: Locale(dil)));
   });
+
+  // ---- TUR 34: FOTOGRAFLI VERI ----
+  testWidgets('FOTOGRAFLI: sakin ana ekrani (bes eksen birden)',
+      (tester) async {
+    _tall(tester);
+    await fotografliSurus(
+      tester,
+      (dil) => _app(
+        units: _borcsuz,
+        dil: Locale(dil),
+        duyurular: [
+          Announcement(
+            id: 'd1',
+            // Duyuru metni SUNUCU verisidir (cevrilmez) — surusun TR
+            // sizinti kilidine takilmamasi icin veri kumesinden secildi.
+            baslik: 'Acme duyuru',
+            govde: 'Demo duyuru govdesi.',
+            olusturanUserId: 'y1',
+            fotoKey: 't/duyuru/x.jpg',
+            fotoUrl: 'https://ornek/duyuru.jpg',
+            createdAt: DateTime.utc(2026, 7, 20),
+            updatedAt: DateTime.utc(2026, 7, 20),
+          ),
+        ],
+      ),
+      veri: surusVerisi,
+    );
+  });
 }

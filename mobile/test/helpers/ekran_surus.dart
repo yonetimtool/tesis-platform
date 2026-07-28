@@ -2,11 +2,12 @@
 // GORUNEN metni tara. ARB denetimi sozlugu olcer; bu, EKRANI olcer:
 // sozlukte olmayan (kaynakta unutulmus) sabitleri ancak bu yakalar.
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/theme/app_theme.dart';
 
+import 'gorsel_taklidi.dart';
 import 'l10n_test_app.dart';
 final _trHarf = RegExp('[ğışĞİŞ]');
 /// Turkce DISI diller — surusun asil hedefi (tr'de sizinti kavrami yok).
@@ -46,6 +47,64 @@ void trSizintisiYok(WidgetTester tester, String dil, {Set<String> veri = const {
   }
 }
 
+/// Ekrani ciz. [gorsel] ise cizim `runAsync` icinde yapilir: `Image.network`
+/// yalniz GERCEK zamanda cozulur (kodek motora gider), sahte zamanda gorsel
+/// SONSUZA DEK "yukleniyor" kalir ve fotografli duzen hic cizilmez (tur 34).
+/// [hazirla] cizimden SONRA calisir: ekrani olculecek DURUMA getirir
+/// (listeden detaya girmek, sekme acmak...). Surus her dilde yeniden
+/// cizdigi icin bu adim da her dilde tekrarlanir; bu yuzden DILDEN BAGIMSIZ
+/// bir bulucu kullanilmalidir (sunucu verisi, `Key`, ikon).
+///
+/// DIKKAT: fotografli suruste [hazirla] `pumpAndSettle` CAGIRMAMALIDIR.
+/// Gorsel yuklenirken cizilen `CircularProgressIndicator` SONSUZ bir
+/// animasyondur; oturma hicbir zaman gerceklesmez ("pumpAndSettle timed
+/// out"). Bunun yerine `pump()` + rota gecisi kadar `pump(sure)` kullanin;
+/// gorseller ardindan gercek zamanda yuklenir ve oturma o zaman yapilir.
+Future<void> _ciz(
+  WidgetTester tester,
+  Widget w, {
+  required bool gorsel,
+  Future<void> Function(WidgetTester)? hazirla,
+}) async {
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pumpWidget(w);
+  if (gorsel) {
+    // Gorsel yuklenmeden `pumpAndSettle` CAGRILMAZ: yuklenirken cizilen
+    // `CircularProgressIndicator` sonsuz animasyondur, oturma gerceklesmez.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await _gorselleriYukle(tester);
+  } else {
+    await tester.pumpAndSettle();
+  }
+  if (hazirla != null) {
+    await hazirla(tester);
+    // Hazirlik yeni bir ekran actiysa ONUN gorselleri de yuklenmeli.
+    if (gorsel) await _gorselleriYukle(tester);
+  }
+}
+
+/// Bekleyen `Image.network` isteklerini GERCEK zamanda tamamlat.
+///
+/// `pumpAndSettle` `runAsync` ICINDE KULLANILAMAZ (sahte zamanlayici devre
+/// disidir, "pumpAndSettle timed out" ile duser). Bu yuzden gercek zamanda
+/// yalnizca TEK kare cizilir + kisa bir bekleme yapilir (HTTP + kodek), sonra
+/// sahte zamana donup normal sekilde oturtulur.
+Future<void> _gorselleriYukle(WidgetTester tester) async {
+  // SABIT bekleme YETMEZ: tam suit dort izolasyonu paralel kosuyor ve kodek
+  // bazen 80 ms'i asiyor — tek basina gecen surus suitte "fotograf
+  // CIZILMEDI" ile duserdi. Cozulene kadar (ya da ust sinira kadar) beklenir.
+  for (var i = 0; i < 20; i++) {
+    await tester.runAsync(() async {
+      await tester.pump();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pumpAndSettle();
+    final resimler = tester.allWidgets.whereType<RawImage>();
+    if (resimler.isEmpty || resimler.any((r) => r.image != null)) return;
+  }
+}
+
 /// DAR EKRAN surusu (tur 26) — panelin `tools/dar-ekran-surusu.mjs`inin
 /// mobil karsiligi.
 ///
@@ -61,6 +120,8 @@ Future<void> darEkranSurusu(
   double genislik = 320,
   double yukseklik = 900,
   Set<String> veri = const {},
+  bool gorsel = false,
+  Future<void> Function(WidgetTester)? hazirla,
 }) async {
   tester.view.physicalSize = Size(genislik, yukseklik);
   tester.view.devicePixelRatio = 1.0;
@@ -74,9 +135,7 @@ Future<void> darEkranSurusu(
       ayrinti.add('${d.exception}\n${d.context}');
       eskiOnError?.call(d);
     };
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpWidget(kur(dil));
-    await tester.pumpAndSettle();
+    await _ciz(tester, kur(dil), gorsel: gorsel, hazirla: hazirla);
     FlutterError.onError = eskiOnError;
     // Tasma ISTISNASI: hangi dilde oldugu mesajda gorunsun.
     final hata = tester.takeException();
@@ -100,6 +159,8 @@ Future<void> yaziOlcegiSurusu(
   double genislik = 430,
   double yukseklik = 1600,
   Set<String> veri = const {},
+  bool gorsel = false,
+  Future<void> Function(WidgetTester)? hazirla,
 }) async {
   tester.view.physicalSize = Size(genislik, yukseklik);
   tester.view.devicePixelRatio = 1.0;
@@ -111,14 +172,15 @@ Future<void> yaziOlcegiSurusu(
       ayrinti.add('${d.exception}');
       eskiOnError?.call(d);
     };
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpWidget(
+    await _ciz(
+      tester,
       MediaQuery(
         data: MediaQueryData(textScaler: TextScaler.linear(olcek)),
         child: kur(dil),
       ),
+      gorsel: gorsel,
+      hazirla: hazirla,
     );
-    await tester.pumpAndSettle();
     FlutterError.onError = eskiOnError;
     final hata = tester.takeException();
     expect(hata, isNull,
@@ -163,15 +225,15 @@ Future<void> ekranOkuyucuSurusu(
   Widget Function(String dil) kur, {
   Set<String> veri = const {},
   bool dokunmaHedefi = true,
+  bool gorsel = false,
+  Future<void> Function(WidgetTester)? hazirla,
 }) async {
   tester.view.physicalSize = const Size(430, 1400);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
   final tutamac = tester.ensureSemantics();
   for (final dil in surusDilleri) {
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpWidget(kur(dil));
-    await tester.pumpAndSettle();
+    await _ciz(tester, kur(dil), gorsel: gorsel, hazirla: hazirla);
 
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     if (dokunmaHedefi) {
@@ -248,6 +310,8 @@ Future<void> koyuTemaSurusu(
   Widget Function(String dil) kur, {
   Set<String> veri = const {},
   bool kontrast = true,
+  bool gorsel = false,
+  Future<void> Function(WidgetTester)? hazirla,
 }) async {
   tester.view.physicalSize = const Size(430, 1400);
   tester.view.devicePixelRatio = 1.0;
@@ -258,9 +322,7 @@ Future<void> koyuTemaSurusu(
   // Turkce de sürülür: kontrast dilden bagimsizdir ve varsayilan dilin
   // koyu temada okunmasi en az cevirilerinki kadar onemlidir.
   for (final dil in ['tr', ...surusDilleri]) {
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpWidget(kur(dil));
-    await tester.pumpAndSettle();
+    await _ciz(tester, kur(dil), gorsel: gorsel, hazirla: hazirla);
     expect(tester.takeException(), isNull,
         reason: '$dil koyu temada tasti');
     // Surusun BOS KOSMADIGININ kaniti: ekran GERCEKTEN koyu temada cizildi.
@@ -298,14 +360,14 @@ Future<void> klavyeSurusu(
   Widget Function(String dil) kur, {
   int azamiTab = 120,
   bool sira = true,
+  bool gorsel = false,
+  Future<void> Function(WidgetTester)? hazirla,
 }) async {
   tester.view.physicalSize = const Size(430, 1400);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
   for (final dil in ['tr', 'ar']) {
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpWidget(kur(dil));
-    await tester.pumpAndSettle();
+    await _ciz(tester, kur(dil), gorsel: gorsel, hazirla: hazirla);
 
     // --- 1) DOKUNMA-YALNIZ ogeler ---------------------------------------
     final dokunmaYalniz = <String>[];
@@ -360,5 +422,55 @@ Future<void> klavyeSurusu(
           reason: '$dil: odak $geri kez yukari geri zipladi — gezinti sirasi '
               'okuma sirasindan kopuk');
     }
+  }
+}
+
+/// FOTOGRAFLI SURUS (tur 34) — tum eksenleri FOTOGRAFLI veriyle kosar.
+///
+/// Tur 33'un itirafi: fotograf tasiyan ogeler (kucuk resim izgarasi, yukleme
+/// yuvasi, kaplamalar) yalniz fotografli veriyle cizilir; test kosumlarinda
+/// fotograf olmadigi icin ALTI SURUS de bu kod yollarina hic ugramamisti.
+/// Bu yardimci acigi kapatir: taklit ag gorseli kurar (bkz.
+/// [gorselTaklidi]) ve ayni ekrani bes eksende surer.
+///
+/// [kur] FOTOGRAF ICEREN veriyle kurulmalidir — aksi halde bu surus normal
+/// surusun kopyasidir ve hicbir sey eklemez.
+Future<void> fotografliSurus(
+  WidgetTester tester,
+  Widget Function(String dil) kur, {
+  Set<String> veri = const {},
+  bool dokunmaHedefi = true,
+  Future<void> Function(WidgetTester)? hazirla,
+}) async {
+  gorselTaklidi();
+  // `runAsync` sahte zamani askiya alir; o an bekleyen platform kanali
+  // cagrilari GERCEKTEN cozulur ve mock yoksa `MissingPluginException`
+  // atarlar (tur 32'de ayni sebeple gerekmisti).
+  _guvenliDepoTaklidi();
+  // Once GORSELIN GERCEKTEN CIZILDIGINI dogrula: taklit calismazsa surus
+  // sessizce "fotografsiz" kosar ve hicbir sey eklemez.
+  await _ciz(tester, kur('tr'), gorsel: true, hazirla: hazirla);
+  final cizilenler = tester.allWidgets.whereType<RawImage>();
+  expect(cizilenler.any((r) => r.image != null), isTrue,
+      reason: 'fotograf CIZILMEDI — taklit ag gorseli calismiyor ya da '
+          'kurucu fotografsiz veri veriyor; bu surus bos kosardi');
+
+  try {
+    await darEkranSurusu(tester, kur,
+        veri: veri, gorsel: true, hazirla: hazirla);
+    await yaziOlcegiSurusu(tester, kur,
+        veri: veri, gorsel: true, hazirla: hazirla);
+    await ekranOkuyucuSurusu(tester, kur,
+        veri: veri,
+        dokunmaHedefi: dokunmaHedefi,
+        gorsel: true,
+        hazirla: hazirla);
+    await koyuTemaSurusu(tester, kur,
+        veri: veri, gorsel: true, hazirla: hazirla);
+    await klavyeSurusu(tester, kur, gorsel: true, hazirla: hazirla);
+  } finally {
+    // Cerceve, TEST GOVDESI biter bitmez cizim hata ayiklama degiskenlerinin
+    // sifirlandigini denetler; `addTearDown` bunun ICIN gec kalir.
+    gorselTaklidiKapat();
   }
 }

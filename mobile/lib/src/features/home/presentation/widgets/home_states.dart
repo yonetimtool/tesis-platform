@@ -16,11 +16,7 @@ import 'section_header.dart';
 
 /// Metin yuksekliginde notr gri cubuk — sayac/deger yer tutucusu.
 class HomeIskeletCubugu extends StatelessWidget {
-  const HomeIskeletCubugu({
-    super.key,
-    this.genislik = 44,
-    this.yukseklik = 11,
-  });
+  const HomeIskeletCubugu({super.key, this.genislik = 44, this.yukseklik = 11});
 
   final double genislik;
   final double yukseklik;
@@ -49,21 +45,15 @@ class HomeSayacIskeleti extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        height: 16,
-        child: Center(
-          child: HomeIskeletCubugu(genislik: genislik, yukseklik: 10),
-        ),
-      );
+    height: 16,
+    child: Center(child: HomeIskeletCubugu(genislik: genislik, yukseklik: 10)),
+  );
 }
 
 /// Bolum (Son Hareketler / Ödeme ve Aidat Durumu / Duyurular) yerine gecen
 /// yukleme karti: bolum basligi + kart icinde [satir] adet iskelet cizgisi.
 class HomeBolumIskeleti extends StatelessWidget {
-  const HomeBolumIskeleti({
-    super.key,
-    required this.baslik,
-    this.satir = 3,
-  });
+  const HomeBolumIskeleti({super.key, required this.baslik, this.satir = 3});
 
   final String baslik;
   final int satir;
@@ -155,8 +145,10 @@ class HomeBolumHatasi extends StatelessWidget {
                 key: const Key('bolum-yeniden-dene'),
                 onPressed: onYenile,
                 style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),

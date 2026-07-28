@@ -118,8 +118,10 @@ class HomeShell extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.logout, color: HomeTokens.red),
-              title: Text(context.l10n.kabukCikisYap,
-                  style: const TextStyle(color: HomeTokens.red)),
+              title: Text(
+                context.l10n.kabukCikisYap,
+                style: const TextStyle(color: HomeTokens.red),
+              ),
               onTap: () {
                 Navigator.of(ctx).pop();
                 onLogout?.call();
@@ -165,44 +167,59 @@ class _AvatarButonu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = HomeSurface.of(context);
-    return InkResponse(
-      key: const Key('home-avatar'),
-      onTap: onTap,
-      radius: 26,
-      child: SizedBox(
-        width: 44,
-        height: 44,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Consumer(builder: (context, ref, _) {
-              // Personel avatari varsa resimli goster; yoksa/hata varsa ikon
-              // fallback (ekran dusmez). Resident'ta uc 403 -> null -> ikon.
-              final url = ref.watch(myAvatarUrlProvider).value;
-              return CircleAvatar(
-                radius: 20,
-                backgroundColor: HomeTokens.tint(HomeTokens.primary),
-                backgroundImage: url != null ? NetworkImage(url) : null,
-                child: url == null
-                    ? const Icon(Icons.person_outline,
-                        size: 22, color: HomeTokens.primary)
-                    : null,
-              );
-            }),
-            Positioned(
-              right: 2,
-              bottom: 2,
-              child: Container(
-                width: 11,
-                height: 11,
-                decoration: BoxDecoration(
-                  color: HomeTokens.online,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: s.background, width: 2),
+    // Avatar dugmesi ekran okuyucuda ADSIZDI (tur 34): yalnizca "dugme"
+    // diye okunuyordu. `MergeSemantics` etiketi DOKUNULABILIR dugumle
+    // birlestirir (disardan `Semantics` sarmasi ayri dugum yaratir).
+    return MergeSemantics(
+      child: Semantics(
+        label: context.l10n.kabukProfil,
+        child: InkResponse(
+          key: const Key('home-avatar'),
+          onTap: onTap,
+          radius: 26,
+          child: SizedBox(
+            // Dokunma hedefi 48 dp (tur 34): avatar 44x44 idi. Gorsel cap
+            // (CircleAvatar radius 20) DEGISMEZ, yalniz dokunma kutusu buyur.
+            width: 48,
+            height: 48,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Consumer(
+                  builder: (context, ref, _) {
+                    // Personel avatari varsa resimli goster; yoksa/hata varsa ikon
+                    // fallback (ekran dusmez). Resident'ta uc 403 -> null -> ikon.
+                    final url = ref.watch(myAvatarUrlProvider).value;
+                    return CircleAvatar(
+                      radius: 20,
+                      backgroundColor: HomeTokens.tint(HomeTokens.primary),
+                      backgroundImage: url != null ? NetworkImage(url) : null,
+                      child: url == null
+                          ? const Icon(
+                              Icons.person_outline,
+                              size: 22,
+                              color: HomeTokens.primary,
+                            )
+                          : null,
+                    );
+                  },
                 ),
-              ),
+                Positioned(
+                  right: 2,
+                  bottom: 2,
+                  child: Container(
+                    width: 11,
+                    height: 11,
+                    decoration: BoxDecoration(
+                      color: HomeTokens.online,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: s.background, width: 2),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -231,9 +248,19 @@ class _HomeBottomBar extends StatelessWidget {
     final s = HomeSurface.of(context);
     final slots = homeShellSlots(context.l10n, role);
 
+    // Bar YUKSEKLIGI yazi olcegiyle BUYUR: 64 dp sabit yukseklik 2.0x
+    // olcekte etiketi 10 px tasiriyordu (tur 34 — ana ekran o zamana kadar
+    // yalniz koyu tema ve klavye eksenlerinde surulmustu). Ust sinir 100:
+    // bar ekrani yutmasin. Metni kucultmek yerine KUTUYU buyutmek dogru
+    // secim — erisilebilirlik ayari kullanicinin talebidir.
+    final barYuksekligi = MediaQuery.textScalerOf(context)
+        .scale(HomeTokens.bottomBarHeight)
+        .clamp(HomeTokens.bottomBarHeight, 100.0);
+
     return SizedBox(
       // FAB'in tasma payi + bar + cihaz alt guvenli alani.
-      height: HomeTokens.bottomBarHeight +
+      height:
+          barYuksekligi +
           HomeTokens.fabOverflow +
           MediaQuery.of(context).padding.bottom,
       child: Stack(
@@ -302,8 +329,11 @@ class _DestinationSlot extends StatelessWidget {
     // Etkin yuvanin ETIKETI de bu renkle cizilir; koyu temada ham vurgu
     // 11 punto icin 3.31:1 kaliyordu (tur 32).
     final color = active ? s.accentText(HomeTokens.primary) : s.muted;
-    final iconWidget =
-        Icon(active ? slot.activeIcon : slot.icon, size: 24, color: color);
+    final iconWidget = Icon(
+      active ? slot.activeIcon : slot.icon,
+      size: 24,
+      color: color,
+    );
     return InkResponse(
       onTap: onTap,
       child: Padding(

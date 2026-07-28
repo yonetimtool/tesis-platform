@@ -6,6 +6,7 @@ import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
 import 'home_states.dart';
+import 'hizli_erisim.dart';
 
 /// Referans "Hızlı Özet" kutusu (yonetici.jpeg): ortada tint ikon konteyneri,
 /// altinda 20 bold deger, 13 semibold etiket ve 12 gri alt-etiket.
@@ -128,29 +129,31 @@ class _HizliOzetIzgarasiState extends State<HizliOzetIzgarasi> {
     final kutular = widget.kutular;
     if (kutular.isEmpty) return const SizedBox.shrink();
 
-    return LayoutBuilder(builder: (context, c) {
-      // Esik hizli erisim izgarasiyla AYNI (bkz. hizliErisimSutun).
-      final sutun = c.maxWidth < 300 ? 2 : 4;
-      final hucre = (c.maxWidth - HomeTokens.gridGap * (sutun - 1)) / sutun;
-      return GridView.count(
-        crossAxisCount: sutun,
-        shrinkWrap: true,
-        padding: EdgeInsets.zero,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: HomeTokens.gridGap,
-        crossAxisSpacing: HomeTokens.gridGap,
-        childAspectRatio: sutun == 4 ? 0.66 : 1.1,
-        children: [
-          for (final k in kutular)
-            StatTile(
-              kutu: k,
-              onTap: widget.onSec == null ? null : () => widget.onSec!(k),
-              hucreGenisligi: hucre,
-              degerGrubu: degerGrubu,
-              etiketGrubu: etiketGrubu,
-            ),
-        ],
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, c) {
+        // Esik hizli erisim izgarasiyla AYNI (bkz. hizliErisimSutun).
+        final sutun = c.maxWidth < 300 ? 2 : 4;
+        final hucre = (c.maxWidth - HomeTokens.gridGap * (sutun - 1)) / sutun;
+        return GridView.count(
+          crossAxisCount: sutun,
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: HomeTokens.gridGap,
+          crossAxisSpacing: HomeTokens.gridGap,
+          childAspectRatio: izgaraOrani(context, sutun == 4 ? 0.66 : 1.1),
+          children: [
+            for (final k in kutular)
+              StatTile(
+                kutu: k,
+                onTap: widget.onSec == null ? null : () => widget.onSec!(k),
+                hucreGenisligi: hucre,
+                degerGrubu: degerGrubu,
+                etiketGrubu: etiketGrubu,
+              ),
+          ],
+        );
+      },
+    );
   }
 }

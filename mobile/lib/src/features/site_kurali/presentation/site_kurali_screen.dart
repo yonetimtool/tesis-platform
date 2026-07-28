@@ -234,6 +234,8 @@ void _showDetail(BuildContext context, SiteKurali k,
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
                     k.fotoUrl!,
+                    // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+                    semanticLabel: context.l10n.ortakFotograf,
                     height: 180,
                     width: double.infinity,
                     fit: BoxFit.cover,

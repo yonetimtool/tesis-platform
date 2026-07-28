@@ -11,16 +11,16 @@ import 'home_card.dart';
 extension VardiyaDurumStil on VardiyaDurum {
   /// Cip etiketi — AKTIF DILDEN (extension'da context yok, l10n gecilir).
   String etiket(AppLocalizations l10n) => switch (this) {
-        VardiyaDurum.aktif => l10n.anaVardiyaAktif,
-        VardiyaDurum.planlandi => l10n.anaVardiyaPlanlandi,
-        VardiyaDurum.yonetici => l10n.kartYonetici,
-      };
+    VardiyaDurum.aktif => l10n.anaVardiyaAktif,
+    VardiyaDurum.planlandi => l10n.anaVardiyaPlanlandi,
+    VardiyaDurum.yonetici => l10n.kartYonetici,
+  };
 
   Color get renk => switch (this) {
-        VardiyaDurum.aktif => HomeTokens.green,
-        VardiyaDurum.planlandi => HomeTokens.primary,
-        VardiyaDurum.yonetici => HomeTokens.purple,
-      };
+    VardiyaDurum.aktif => HomeTokens.green,
+    VardiyaDurum.planlandi => HomeTokens.primary,
+    VardiyaDurum.yonetici => HomeTokens.purple,
+  };
 }
 
 /// Referans "Vardiya Durumu" seridindeki tek kart: vardiya adi + saat araligi
@@ -35,7 +35,12 @@ class ShiftStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = HomeSurface.of(context);
     return HomeCard(
-      width: HomeTokens.shiftCardWidth,
+      // Kart GENISLIGI de yazi olcegiyle buyur (tur 34): 2.0x'te ic satir
+      // 30 px tasiyordu. Seridin kendisi kaydirilabilir oldugu icin genisleme
+      // duzeni bozmaz.
+      width: MediaQuery.textScalerOf(context)
+          .scale(HomeTokens.shiftCardWidth)
+          .clamp(HomeTokens.shiftCardWidth, HomeTokens.shiftCardWidth * 2),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -61,7 +66,9 @@ class ShiftStatusCard extends StatelessWidget {
           HomeChip(
             // BUYUK HARF dile duyarli (tr i→İ; Arapcada buyuk harf yok).
             label: baslikBuyuk(
-                kart.durum.etiket(context.l10n), context.dilKodu),
+              kart.durum.etiket(context.l10n),
+              context.dilKodu,
+            ),
             accent: kart.durum.renk,
           ),
           const SizedBox(height: 10),
@@ -111,8 +118,9 @@ class _Avatar extends StatelessWidget {
           CircleAvatar(
             radius: 28,
             backgroundColor: HomeTokens.tint(accent),
-            backgroundImage:
-                kart.avatarUrl != null ? NetworkImage(kart.avatarUrl!) : null,
+            backgroundImage: kart.avatarUrl != null
+                ? NetworkImage(kart.avatarUrl!)
+                : null,
             child: kart.avatarUrl == null
                 ? Icon(Icons.person, color: accent, size: 28)
                 : null,

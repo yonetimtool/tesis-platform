@@ -1167,5 +1167,7 @@
     }
   },
   "ortakParolayiGoster": "Afficher le mot de passe",
-  "ortakParolayiGizle": "Masquer le mot de passe"
+  "ortakParolayiGizle": "Masquer le mot de passe",
+  "ortakFotograf": "Photo",
+  "ortakFotografiBuyut": "Agrandir la photo"
 }

@@ -55,8 +55,12 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
     final e = hedef;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _showDetail(context, e,
-            canRsvp: state.canRsvp, canManage: state.canManage);
+        _showDetail(
+          context,
+          e,
+          canRsvp: state.canRsvp,
+          canManage: state.canManage,
+        );
       }
     });
   }
@@ -65,7 +69,10 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(etkinlikControllerProvider);
     final controller = ref.read(etkinlikControllerProvider.notifier);
-    ref.listen(etkinlikControllerProvider, (_, next) => _maybeOpenInitial(next));
+    ref.listen(
+      etkinlikControllerProvider,
+      (_, next) => _maybeOpenInitial(next),
+    );
     // Provider zaten yuklu geldiyse (listen tetiklenmez) mevcut durumu isle.
     _maybeOpenInitial(state);
 
@@ -78,7 +85,9 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(baslikBuyuk(context.l10n.modulEtkinlikler, context.dilKodu)),
+          title: Text(
+            baslikBuyuk(context.l10n.modulEtkinlikler, context.dilKodu),
+          ),
           actions: [
             IconButton(
               tooltip: context.l10n.ortakYenile,
@@ -135,9 +144,11 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
     if (saved == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(mevcut == null
-              ? context.l10n.etkDuyuruldu
-              : context.l10n.etkGuncellendi),
+          content: Text(
+            mevcut == null
+                ? context.l10n.etkDuyuruldu
+                : context.l10n.etkGuncellendi,
+          ),
         ),
       );
     }
@@ -175,9 +186,7 @@ class _Body extends ConsumerWidget {
     if (items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
-        children: [
-          Center(child: Text(emptyText, textAlign: TextAlign.center)),
-        ],
+        children: [Center(child: Text(emptyText, textAlign: TextAlign.center))],
       );
     }
     return ListView.builder(
@@ -207,19 +216,23 @@ class _SayacRow extends StatelessWidget {
         const Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
         const SizedBox(width: 4),
         Flexible(
-          child: Text(context.l10n.etkKatiliyorSayisi(etkinlik.katiliyorumSayisi),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall),
+          child: Text(
+            context.l10n.etkKatiliyorSayisi(etkinlik.katiliyorumSayisi),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ),
         const SizedBox(width: 12),
         const Icon(Icons.cancel_outlined, size: 16, color: Colors.red),
         const SizedBox(width: 4),
         Flexible(
-          child: Text(context.l10n.etkKatilmiyorSayisi(etkinlik.katilmiyorumSayisi),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall),
+          child: Text(
+            context.l10n.etkKatilmiyorSayisi(etkinlik.katilmiyorumSayisi),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ),
       ],
     );
@@ -304,8 +317,7 @@ class _BeyanChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final renk =
-        durum == KatilimDurum.katiliyorum ? Colors.green : Colors.red;
+    final renk = durum == KatilimDurum.katiliyorum ? Colors.green : Colors.red;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -314,7 +326,11 @@ class _BeyanChip extends StatelessWidget {
       ),
       child: Text(
         katilimDurumAdi(context.l10n, durum),
-        style: TextStyle(color: renk, fontSize: 12, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: renk,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -341,7 +357,11 @@ class _RecordedAnswer extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(katiliyor ? Icons.check_circle : Icons.cancel, color: renk, size: 18),
+          Icon(
+            katiliyor ? Icons.check_circle : Icons.cancel,
+            color: renk,
+            size: 18,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -384,7 +404,8 @@ class _RsvpButtonsState extends ConsumerState<_RsvpButtons> {
           .rsvp(widget.etkinlik.id, durum);
       messenger.showSnackBar(
         SnackBar(
-            content: Text(l10n.etkBeyanKaydedildi(katilimDurumAdi(l10n, durum)))),
+          content: Text(l10n.etkBeyanKaydedildi(katilimDurumAdi(l10n, durum))),
+        ),
       );
       widget.onAnswered?.call();
     } on ApiException catch (e) {
@@ -550,9 +571,7 @@ class _DeleteButton extends ConsumerWidget {
           context: context,
           builder: (dctx) => AlertDialog(
             title: Text(context.l10n.etkSilinsinMi),
-            content: Text(
-              context.l10n.etkSilOnay(etkinlik.baslik),
-            ),
+            content: Text(context.l10n.etkSilOnay(etkinlik.baslik)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dctx).pop(false),
@@ -571,12 +590,12 @@ class _DeleteButton extends ConsumerWidget {
           await ref
               .read(etkinlikControllerProvider.notifier)
               .delete(etkinlik.id);
-          messenger.showSnackBar(
-            SnackBar(content: Text(l10n.etkSilindi)),
-          );
+          messenger.showSnackBar(SnackBar(content: Text(l10n.etkSilindi)));
           onDeleted();
         } on ApiException catch (e) {
-          messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+          messenger.showSnackBar(
+            SnackBar(content: Text(apiHataMetni(l10n, e))),
+          );
         }
       },
     );
@@ -603,7 +622,8 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
   late final _baslik = TextEditingController(text: widget.mevcut?.baslik);
   late final _aciklama = TextEditingController(text: widget.mevcut?.aciklama);
   late final _konum = TextEditingController(text: widget.mevcut?.konum);
-  late DateTime _tarih = widget.mevcut?.tarih.toLocal() ??
+  late DateTime _tarih =
+      widget.mevcut?.tarih.toLocal() ??
       DateTime.now().add(const Duration(days: 1));
   late DateTime? _bitis = widget.mevcut?.bitisZamani?.toLocal();
   bool _busy = false;
@@ -640,7 +660,9 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
       _photoError = null;
     });
     try {
-      final file = await ref.read(imagePickerProvider).pickImage(
+      final file = await ref
+          .read(imagePickerProvider)
+          .pickImage(
             source: source,
             // Gorev/duyuru akisiyla AYNI sikistirma: yukleme boyutu makul.
             maxWidth: 1600,
@@ -818,9 +840,13 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.mevcut == null ? context.l10n.etkYeni : context.l10n.etkDuzenleBaslik,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                widget.mevcut == null
+                    ? context.l10n.etkYeni
+                    : context.l10n.etkDuzenleBaslik,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -831,8 +857,9 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                   border: OutlineInputBorder(),
                 ),
                 maxLength: 200,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? context.l10n.etkBaslikGerekli : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? context.l10n.etkBaslikGerekli
+                    : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -851,8 +878,11 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 icon: const Icon(Icons.schedule, size: 18),
-                label: Text(context.l10n.etkZamanSecim(
-                  tarihSaatBicimi(_tarih, context.dilKodu, ayirici: ''))),
+                label: Text(
+                  context.l10n.etkZamanSecim(
+                    tarihSaatBicimi(_tarih, context.dilKodu, ayirici: ''),
+                  ),
+                ),
                 onPressed: _busy ? null : _pickDateTime,
               ),
               const SizedBox(height: 8),
@@ -867,8 +897,13 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                       label: Text(
                         _bitis == null
                             ? context.l10n.etkBitisEkle
-                            : context.l10n.etkBitis(tarihSaatBicimi(
-                                _bitis!, context.dilKodu, ayirici: '')),
+                            : context.l10n.etkBitis(
+                                tarihSaatBicimi(
+                                  _bitis!,
+                                  context.dilKodu,
+                                  ayirici: '',
+                                ),
+                              ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -879,7 +914,9 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                     IconButton(
                       tooltip: context.l10n.etkBitisiKaldir,
                       icon: const Icon(Icons.close),
-                      onPressed: _busy ? null : () => setState(() => _bitis = null),
+                      onPressed: _busy
+                          ? null
+                          : () => setState(() => _bitis = null),
                     ),
                 ],
               ),
@@ -941,7 +978,11 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                         ? null
                         : () => _fotoSecVeYukle(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null ? context.l10n.gorevKamera : context.l10n.gorevYenidenCek),
+                    label: Text(
+                      _photoPath == null
+                          ? context.l10n.gorevKamera
+                          : context.l10n.gorevYenidenCek,
+                    ),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _busy
@@ -979,9 +1020,11 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.celebration_outlined),
-                  label: Text(widget.mevcut == null
-                      ? context.l10n.etkDuyurVeBildir
-                      : context.l10n.ortakKaydet),
+                  label: Text(
+                    widget.mevcut == null
+                        ? context.l10n.etkDuyurVeBildir
+                        : context.l10n.ortakKaydet,
+                  ),
                   onPressed: _busy ? null : _submit,
                 ),
               ),
@@ -1010,24 +1053,34 @@ class _EtkinlikGorseli extends StatelessWidget {
       child: const Center(child: Icon(Icons.image_outlined)),
     );
     // Klavyeyle de acilabilmeli (tur 33).
-    return InkWell(
-      onTap: () => showDialog<void>(
-        context: context,
-        builder: (_) => Dialog(
-          insetPadding: const EdgeInsets.all(12),
-          child: InteractiveViewer(
-            child: Image.network(url, errorBuilder: (_, _, _) => yerTutucu),
+    // Fotograf ekran okuyucuda ADSIZDI (tur 34): dokunulabilir dugumun
+    // etiketi yoktu. `MergeSemantics` gorselin etiketini o dugumle
+    // birlestirir.
+    return MergeSemantics(
+      child: Semantics(
+        label: context.l10n.ortakFotografiBuyut,
+        child: InkWell(
+          onTap: () => showDialog<void>(
+            context: context,
+            builder: (_) => Dialog(
+              insetPadding: const EdgeInsets.all(12),
+              child: InteractiveViewer(
+                child: Image.network(url, errorBuilder: (_, _, _) => yerTutucu),
+              ),
+            ),
           ),
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          url,
-          height: yukseklik,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => yerTutucu,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              url,
+              // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+              semanticLabel: context.l10n.ortakFotograf,
+              height: yukseklik,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => yerTutucu,
+            ),
+          ),
         ),
       ),
     );
@@ -1059,5 +1112,5 @@ String _fmtAralik(Etkinlik e, String dil) {
   return ayniGun
       ? '${_fmtAralikIc(e.tarih, dil)} – ${saatBicimi(e.bitisZamani!, dil)}'
       : '${_fmtAralikIc(e.tarih, dil)} – '
-          '${_fmtAralikIc(e.bitisZamani!, dil)}';
+            '${_fmtAralikIc(e.bitisZamani!, dil)}';
 }
