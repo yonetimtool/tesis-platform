@@ -13,6 +13,16 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:mobile/l10n/gen/app_localizations.dart';
 import 'package:mobile/src/core/i18n/locale_controller.dart';
 
+/// SURUS TEMASI (tur 32) — kurulunca [l10nApp] ile uretilen HER
+/// `MaterialApp` bu temayi alir.
+///
+/// Neden global bir anahtar: koyu tema surusu, mevcut surus kuruculariyla
+/// (`_destekEkrani(Locale)` gibi, her biri kendi `l10nApp`ini cagirir) ayni
+/// ekranlari surer. Her kurucuya tema parametresi eklemek yerine tek
+/// anahtar cevrilir; `koyuTemaSurusu` bunu kendi `addTearDown`unda geri
+/// alir, yani sizinti olmaz.
+ThemeData? testTemasi;
+
 const testLocalizationsDelegates = <LocalizationsDelegate<Object>>[
   AppLocalizations.delegate,
   GlobalMaterialLocalizations.delegate,
@@ -33,6 +43,7 @@ MaterialApp l10nApp(
       localizationsDelegates: testLocalizationsDelegates,
       navigatorKey: navigatorKey,
       navigatorObservers: navigatorObservers,
+      theme: testTemasi,
       home: home,
     );
 

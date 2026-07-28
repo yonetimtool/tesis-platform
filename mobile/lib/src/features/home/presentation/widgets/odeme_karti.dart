@@ -163,7 +163,7 @@ class _SagSutun extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: HomeText.cardCounter
-                          .copyWith(color: HomeTokens.primary),
+                          .copyWith(color: s.accentText(HomeTokens.primary)),
                     ),
                   ),
                 ],

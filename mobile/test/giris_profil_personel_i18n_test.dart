@@ -425,4 +425,21 @@ void main() {
     await ekranOkuyucuSurusu(tester, (dil) => _personelEkrani(Locale(dil)),
         veri: surusVerisi);
   });
+
+  // ---- TUR 32: KOYU TEMA ----
+  testWidgets('KOYU TEMA: girisEkrani 7 dilde (kontrast + tasma)',
+      (tester) async {
+    await koyuTemaSurusu(tester, (dil) => _girisEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('KOYU TEMA: profilEkrani 7 dilde (kontrast + tasma)',
+      (tester) async {
+    await koyuTemaSurusu(tester, (dil) => _profilEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
+  testWidgets('KOYU TEMA: personelEkrani 7 dilde (kontrast + tasma)',
+      (tester) async {
+    await koyuTemaSurusu(tester, (dil) => _personelEkrani(Locale(dil)),
+        veri: surusVerisi);
+  });
 }

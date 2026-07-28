@@ -2087,6 +2087,38 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 32 — KOYU TEMA SÜRÜŞÜ (7 dil × 26 ekran + 3 ana ekran).**
+`koyuTemaSurusu` aynı ekranları **koyu temada** çizer ve üç şeyi ölçer:
+`textContrastGuideline` (WCAG AA — çizilen **piksellerden**), taşma, ve TR
+sızıntısı. Tema `l10n_test_app.dart`teki `testTemasi` anahtarıyla verilir:
+mevcut sürüş kurucuları (`_destekEkrani(Locale)` gibi) **hiç değişmeden**
+koyu temada sürülür. Sürüş, ekranın gerçekten koyu çizildiğini
+`Theme.of(...).brightness` ile ayrıca doğrular — "boş koşan" bir sürüş
+"temiz" raporlardı.
+
+> **DEDEKTÖRÜN KENDİSİ SINANIR.** `test/koyu_tema_detektor_test.dart`
+> bilerek koyu-üzerine-koyu bir ekran çizip kılavuzun **düştüğünü**,
+> okunur bir ekranda **geçtiğini** doğrular. (Tur 25/30'da tarayıcı
+> yanlış **alarm** vermişti; buradaki risk tersi — sessizce hiçbir şey
+> ölçmemek.)
+
+> **BULDUĞU HATA — vurgu renkleri metin olarak koyu zeminde okunmuyor.**
+> `HomeTokens` paleti bilinçli olarak **tema-bağımsızdı** (yeşil=olumlu,
+> kırmızı=ihlal); bu ikon/dolgu için doğru, **metin** için değil:
+> `#2563EB` / `#0F131A` = **3.60:1** (eşik 4.5). Ana ekranda "Tümünü Gör",
+> "Geçmiş Ödemeler", alt bar etiketleri ve hızlı erişim sayaçları
+> etkileniyordu. Çözüm `HomeSurface.accentText(accent)`: koyu temada aynı
+> renk **ailesinin** açık tonu — anlam korunur, kontrast tutar. Ham vurgu
+> ikon/dolgu/tint'te aynen kalır.
+
+> **ÖLÇÜM ARACININ SINIRI — 11 punto + Kiril.** Kılavuz rengi değil
+> **mürekkep yoğunluğunu** ölçer (piksel histogramının modunu alır). Alt bar
+> etiketi 11 puntoda aynı renkte "Ana Sayfa"yı geçirip **"Главная"yı 2.18**
+> ile düşürdü. Rengi beyaza doğru açmak çözüm değildi (ölçtüm: `#C7D9FF`
+> hâlâ **3.64**) — marka rengini yok eder, ölçümü memnun etmezdi. Gerçek
+> düzeltme puntoyu **11 → 12** yapmaktı (`HomeText.navLabel`): tüm
+> dillerde geçti ve zaten en küçük kalıcı metindi.
+
 **TUR 29 — EKRAN OKUYUCU SÜRÜŞÜ.** `ekranOkuyucuSurusu` 24 ekranı 6 dilde
 semantics açık çizer ve üç şeyi birden ölçer:
 

@@ -46,7 +46,10 @@ class SectionHeader extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(etiket, style: HomeText.link),
+                    // Koyu temada vurgu METNI acik tona cozulur (tur 32).
+                    Text(etiket,
+                        style: HomeText.link
+                            .copyWith(color: s.accentText(HomeTokens.primary))),
                     const SizedBox(width: 2),
                     const Icon(Icons.chevron_right,
                         size: 18, color: HomeTokens.primary),

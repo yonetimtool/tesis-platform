@@ -3,7 +3,11 @@
 // sozlukte olmayan (kaynakta unutulmus) sabitleri ancak bu yakalar.
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/src/core/theme/app_theme.dart';
+
+import 'l10n_test_app.dart';
 final _trHarf = RegExp('[ğışĞİŞ]');
 /// Turkce DISI diller — surusun asil hedefi (tr'de sizinti kavrami yok).
 const surusDilleri = ['en', 'ar', 'ru', 'de', 'fr', 'es'];
@@ -28,6 +32,8 @@ const surusVerisi = <String>{
   'Mehmet', '34 ABC 123', 'Ana Kapı', 'Havuz temizliği', 'Kazan dairesi',
   'Gece devriyesi', 'Temizlik', 'Asansör arızası', 'Bahçe Düzenlemesi',
   'Mng Kargo', 'Aras Kargo', 'Yurtiçi', 'Kerem', 'Ayşe', 'Acme Plaza',
+  // Ana ekran kosumlarinin verisi (tur 32): profil adi + vardiya adi.
+  'Çiğdem', 'Sabah Vardiyası',
 };
 
 /// Marka + kullanici VERISI disinda Turkce sabit var mi?
@@ -182,4 +188,89 @@ Future<void> ekranOkuyucuSurusu(
     }
   }
   tutamac.dispose();
+}
+
+/// KOYU TEMA surusu (tur 32) — panelin `TEMALAR` eksenine karsilik gelir.
+///
+/// Neden ayri bir eksen: RENK temaya, METIN uzunlugu dile gore degisir ve
+/// ikisi kesisir. Onceki dort surus (dil / dar ekran / yazi olcegi / ekran
+/// okuyucu) HEPSI acik temada kostu; koyu zeminde okunmayan bir metin
+/// hicbirinde gorunmez.
+///
+/// Olculen:
+///   1. KONTRAST — `textContrastGuideline` cizilen pikselleri orneklder ve
+///      WCAG AA esigini uygular. SABIT renk kullanan (`Colors.white`,
+///      `Colors.black87`, `Colors.grey[200]`) bir ekran koyu temada burada
+///      duser: tema degisir, sabit renk degismez.
+///   2. TASMA — koyu tema farkli kenarlik/yogunluk verir.
+///   3. TR SIZINTISI — surusun degismeyen kilidi.
+///
+/// Tema [testTemasi] anahtariyla verilir; boylece mevcut surus kurucular
+/// (kur(dil)) HIC DEGISMEDEN koyu temada surulur.
+/// GUVENLI DEPO taklidi — YALNIZ koyu tema surusunde gerekir.
+///
+/// Kontrast kilavuzu ekrani PIKSEL olarak yakalar ve bunu `runAsync` icinde
+/// yapar; sahte-zaman askiya alinir. Diger suruslerde sahte-zaman altinda
+/// SESSIZCE bekleyen platform kanali cagrilari (`LocaleController._yukle`
+/// gizli depodan dili okur) o an gercekten cozulur ve mock yoksa
+/// `MissingPluginException` atar. Yani bu ekranin degil, olcum yonteminin
+/// gereksinimi.
+void _guvenliDepoTaklidi() {
+  const kanal = MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+  final kutu = <String, String>{};
+  final ileti =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  ileti.setMockMethodCallHandler(kanal, (cagri) async {
+    final a = (cagri.arguments as Map?) ?? const {};
+    switch (cagri.method) {
+      case 'read':
+        return kutu[a['key'] as String? ?? ''];
+      case 'readAll':
+        return Map<String, String>.from(kutu);
+      case 'write':
+        kutu[a['key'] as String? ?? ''] = a['value'] as String? ?? '';
+        return null;
+      case 'delete':
+        kutu.remove(a['key'] as String? ?? '');
+        return null;
+      case 'deleteAll':
+        kutu.clear();
+        return null;
+      default:
+        return null;
+    }
+  });
+  addTearDown(() => ileti.setMockMethodCallHandler(kanal, null));
+}
+
+Future<void> koyuTemaSurusu(
+  WidgetTester tester,
+  Widget Function(String dil) kur, {
+  Set<String> veri = const {},
+  bool kontrast = true,
+}) async {
+  tester.view.physicalSize = const Size(430, 1400);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+  testTemasi = buildDarkTheme();
+  addTearDown(() => testTemasi = null);
+  _guvenliDepoTaklidi();
+  // Turkce de sürülür: kontrast dilden bagimsizdir ve varsayilan dilin
+  // koyu temada okunmasi en az cevirilerinki kadar onemlidir.
+  for (final dil in ['tr', ...surusDilleri]) {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(kur(dil));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull,
+        reason: '$dil koyu temada tasti');
+    // Surusun BOS KOSMADIGININ kaniti: ekran GERCEKTEN koyu temada cizildi.
+    // Kurucu `l10nApp` disinda kendi `MaterialApp`ini kuruyorsa (temayi
+    // sabitliyorsa) burada duser — sessizce acik temada surmekten iyidir.
+    expect(Theme.of(tester.element(find.byType(Material).first)).brightness,
+        Brightness.dark, reason: '$dil: koyu tema uygulanmadi');
+    if (kontrast) {
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
+    }
+    if (dil != 'tr') trSizintisiYok(tester, dil, veri: veri);
+  }
 }

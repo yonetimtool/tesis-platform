@@ -18,6 +18,7 @@ import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/visitors/data/visitor_api.dart';
 import 'package:mobile/src/features/visitors/domain/visitor_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
+import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 import 'package:mobile/src/core/i18n/locale_controller.dart';
 
@@ -35,6 +36,7 @@ Widget _app({
   List<ActivityItem> hareketler = const [],
   bool hata = false,
   bool gecikme = false,
+  Locale dil = const Locale('tr'),
 }) {
   Future<T> uc<T>(T deger) async {
     if (hata) throw Exception('500');
@@ -66,9 +68,12 @@ Widget _app({
       sonHareketlerProvider.overrideWith((ref) => uc(hareketler)),
     ],
     child: MaterialApp(
-      locale: const Locale('tr'),
+      locale: dil,
       supportedLocales: supportedLocales,
       localizationsDelegates: testLocalizationsDelegates,
+      // Tur 32: koyu tema surusu bu anahtari cevirir (varsayilan null =
+      // acik tema, mevcut testler etkilenmez).
+      theme: testTemasi,
       home: ResidentHomeScreen()),
   );
 }
@@ -300,5 +305,19 @@ void main() {
     // Zamanlayicilari bosalt (aksi halde "Timer is still pending").
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
+  });
+
+  // ---- TUR 32: KOYU TEMA ----
+  // Ana ekran surusun EN RISKLI ekrani: yeniden tasarimda (README §16)
+  // lacivert/teal SABIT renkler ve degradeler geldi — bunlar temayla
+  // degismez, yani koyu zeminde okunmayabilirler.
+  testWidgets('KOYU TEMA: sakin ana ekrani 7 dilde (kontrast + tasma)',
+      (tester) async {
+    _tall(tester);
+    await koyuTemaSurusu(
+      tester,
+      (dil) => _app(units: _borcsuz, dil: Locale(dil)),
+      veri: surusVerisi,
+    );
   });
 }

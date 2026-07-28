@@ -18,6 +18,10 @@ const AXE = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
 const KOK = process.env.KOK ?? 'http://localhost:3120';
 const DILLER = ['tr', 'en', 'ar', 'ru', 'de', 'fr', 'es'];
+// TEMA da bir eksen (tur 32): kontrast KOYU zeminde bambaska cikar ve
+// tur 30 denetimi YALNIZ acik temada kosmustu. Tema `<html class="dark">`
+// ile ve `localStorage.theme` uzerinden kalicidir.
+const TEMALAR = ['light', 'dark'];
 const SAYFALAR = ['/login','/dashboard','/tenants','/shifts','/checkpoints','/patrol-plans',
   '/tasks','/assets','/units','/building-editor','/schematic','/dues','/reports/dues',
   '/reports/patrols','/reports/tasks','/transparency','/users','/announcements','/complaints',
@@ -36,6 +40,7 @@ const VERI = /Demo |Acme|Ana Kapı|Otopark|Havuz|Kazan|Bahçe|Asansör|kırık|K
 const tarayici = await chromium.launch();
 const bulgular = [];
 
+for (const tema of TEMALAR)
 for (const dil of DILLER) {
   // `reducedMotion`: framer-motion giris animasyonu SURERKEN olcum yapmak
   // yanlis kontrast verir — dugme zemini (#0B7A79) yari saydam oldugu icin
@@ -47,13 +52,21 @@ for (const dil of DILLER) {
     viewport: { width: 1280, height: 900 },
     locale: dil,
     reducedMotion: 'reduce',
+    // Isletim sistemi tercihi de temayla ayni olsun: `theme=system` yolunu
+    // ve `prefers-color-scheme` sorgularini da dogru tarafa dusurur.
+    colorScheme: tema,
   });
   const api = await ctx.request.post(`${KOK}/api/auth/login`, {
     data: { tenant_slug: 'acme-plaza', email: 'admin@acme.com', password: 'Admin123!' },
   });
-  if (!api.ok()) { bulgular.push([dil, '-', 'LOGIN BASARISIZ']); await ctx.close(); continue; }
+  if (!api.ok()) { bulgular.push([`${tema}/${dil}`, '-', 'LOGIN BASARISIZ']); await ctx.close(); continue; }
   await ctx.addCookies([{ name: 'ui.locale', value: dil, url: KOK }]);
   const sayfa = await ctx.newPage();
+  // Temayi ILK BOYAMADAN once ayarla: layout'taki satir-ici script
+  // localStorage'i okuyup `.dark` sinifini kendisi atar (FOUC yok).
+  await sayfa.addInitScript((t) => {
+    try { localStorage.setItem('theme', t); } catch { /* yok say */ }
+  }, tema);
 
   for (const yol of SAYFALAR) {
     await sayfa.goto(KOK + yol, { waitUntil: 'networkidle' }).catch(() => {});
@@ -79,14 +92,14 @@ for (const dil of DILLER) {
       };
     }).catch((e) => ({ hata: String(e).slice(0, 80) }));
 
-    if (sonuc.hata) { bulgular.push([dil, yol, sonuc.hata]); continue; }
+    if (sonuc.hata) { bulgular.push([`${tema}/${dil}`, yol, sonuc.hata]); continue; }
     for (const v of sonuc.ihlaller) {
-      bulgular.push([dil, yol, `AXE ${v.id} (${v.etki}, ${v.sayi}x): ${v.ornek}`]);
+      bulgular.push([`${tema}/${dil}`, yol, `AXE ${v.id} (${v.etki}, ${v.sayi}x): ${v.ornek}`]);
     }
     if (dil !== 'tr') {
       for (const m of sonuc.gizliMetinler) {
         if (TR.test(m) && !MARKA.test(m) && !VERI.test(m)) {
-          bulgular.push([dil, yol, `TR SIZINTI: ${m}`]);
+          bulgular.push([`${tema}/${dil}`, yol, `TR SIZINTI: ${m}`]);
         }
       }
     }
@@ -94,10 +107,15 @@ for (const dil of DILLER) {
   await ctx.close();
 }
 await tarayici.close();
-console.log(`kontrol: ${DILLER.length * SAYFALAR.length} sayfa-dil`);
+console.log(`kontrol: ${TEMALAR.length * DILLER.length * SAYFALAR.length} sayfa-dil-tema`);
 console.log(`BULGU: ${bulgular.length}`);
 const ozet = {};
 for (const [, , n] of bulgular) { const k = n.split(':')[0].slice(0, 45); ozet[k] = (ozet[k] ?? 0) + 1; }
 for (const [k, v] of Object.entries(ozet).sort((a, b) => b[1] - a[1])) console.log(`  ${v}x ${k}`);
-console.log('--- ornekler:');
-for (const b of bulgular.slice(0, 12)) console.log('  ' + b.join(' | '));
+// Ornekleri TEMA basina ayri bas: koyu temanin bulgulari acik temanin
+// listesi altinda gomulu kalmasin.
+for (const tema of TEMALAR) {
+  const t = bulgular.filter((b) => b[0].startsWith(tema + '/'));
+  console.log(`--- ${tema} (${t.length}):`);
+  for (const b of t.slice(0, 14)) console.log('  ' + b.join(' | '));
+}

@@ -94,8 +94,8 @@ class HizliErisimKarti extends StatelessWidget {
               minFontSize: 8,
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
-              style: HomeText.cardCounter
-                  .copyWith(color: kart.altMetinRengi ?? kart.accent),
+              style: HomeText.cardCounter.copyWith(
+                  color: s.accentText(kart.altMetinRengi ?? kart.accent)),
             ),
           if (kart.ikinciAltMetin != null)
             AutoSizeText(

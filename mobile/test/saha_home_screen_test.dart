@@ -21,6 +21,7 @@ import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
+import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
 /// Depoya dokunmayan sahte kuyruk (path_provider yok) — bekleyen sayisi
@@ -46,6 +47,7 @@ class _FakeOutbox extends ScanOutbox {
 
 Widget _app(
   UserRole role, {
+  Locale dil = const Locale('tr'),
   int pending = 0,
   int unread = 0,
   List<Shift> vardiyalar = const [
@@ -90,7 +92,7 @@ Widget _app(
               Camera(id: 'c1', ad: 'Ana Kapı', streamUrl: 'https://x/s.m3u8'),
             ]),
       ],
-      child: l10nApp(SahaHomeScreen(role: role)),
+      child: l10nApp(SahaHomeScreen(role: role), locale: dil),
     );
 
 void _tall(WidgetTester tester) {
@@ -291,5 +293,14 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Gönderim Kuyruğu'), findsNothing);
     });
+  });
+
+  // ---- TUR 32: KOYU TEMA ----
+  testWidgets('KOYU TEMA: saha ana ekrani 7 dilde (kontrast + tasma)',
+      (tester) async {
+    _tall(tester);
+    await koyuTemaSurusu(
+        tester, (dil) => _app(UserRole.security, dil: Locale(dil)),
+        veri: surusVerisi);
   });
 }

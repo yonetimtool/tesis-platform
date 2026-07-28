@@ -205,6 +205,37 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 32 — KOYU TEMA surusu (7 dil x 24 sayfa x 2 tema)
+
+Onceki dort surus (dil / dar ekran / yazi olcegi / ekran okuyucu) **hepsi
+acik temada** kostu. Renk temaya, metin uzunlugu dile gore degisir; koyu
+zeminde okunmayan bir metin digerlerinin hicbirinde gorunmez.
+
+`tools/okuyucu-surusu.mjs` artik `TEMALAR = ['light','dark']` ekseniyle
+kosar: **336 sayfa-dil-tema**. Tema ILK BOYAMADAN once kurulur
+(`addInitScript` ile `localStorage.theme`, ayrica `colorScheme` baglami) —
+`app/layout.tsx`teki satir-ici script `.dark` sinifini kendisi atar.
+
+**144 -> 0.** Acik tema **0** ile geldi (tur 31'in sonucunu dogruladi);
+bulgularin **tamami** koyu temadaydi ve **tek bir kok nedene** iniyordu:
+
+| Bulgu | Sebep | Duzeltme |
+|---|---|---|
+| 138x + 6x `color-contrast` (24 sayfanin HEPSI) | `text-brand-tealInk` (**#0B7A79**) tur 30'da ACIK tema icin koyulastirilmis marka tonuydu; koyu zeminde ayni koyuluk tersine calisiyor — slate-900 kart uzerinde **2.5:1**. `globals.css` yalniz `.dark .text-brand-teal` icin override tasiyordu, `tealInk` icin YOKTU | `.dark .text-brand-tealInk / .border-brand-tealInk -> #2cc4b7` (globals.css'te, dark mode'un tek merkezinde) |
+
+> Etkilenen ogeler her sayfada duruyordu: **etkin menu ogesi** (`AppShell`),
+> rapor **sekmesi** (`ReportsTabs`), dil seciciteki **etkin dil**,
+> `EmptyState` ikonu. Yani "bir sayfanin hatasi" degil, **kabugun** hatasi.
+>
+> **ZEMIN olarak kullanildigi yerler bilerek disarida** (`bg-brand-tealInk`
+> + beyaz yazi): orada kontrast zaten AA tutuyor, tonu aydinlatmak onu
+> BOZARDI. Duzeltme metin/kenarlik ile sinirli.
+
+```bash
+npx next build && npx next start -p 3126
+KOK=http://localhost:3126 node tools/okuyucu-surusu.mjs
+```
+
 ### Tur 31 — TARIH BICIMI dile duyarli
 
 Tur 17'de bulunup ayri alt is olarak kayda gecmisti: panel 7 dile acildi ama

@@ -299,7 +299,9 @@ class _DestinationSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = HomeSurface.of(context);
-    final color = active ? HomeTokens.primary : s.muted;
+    // Etkin yuvanin ETIKETI de bu renkle cizilir; koyu temada ham vurgu
+    // 11 punto icin 3.31:1 kaliyordu (tur 32).
+    final color = active ? s.accentText(HomeTokens.primary) : s.muted;
     final iconWidget =
         Icon(active ? slot.activeIcon : slot.icon, size: 24, color: color);
     return InkResponse(
@@ -323,7 +325,7 @@ class _DestinationSlot extends StatelessWidget {
               slot.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: HomeText.chip.copyWith(
+              style: HomeText.navLabel.copyWith(
                 color: color,
                 fontWeight: active ? FontWeight.w700 : FontWeight.w500,
               ),
@@ -367,8 +369,10 @@ class _FabSlot extends StatelessWidget {
             slot.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: HomeText.chip.copyWith(
-              color: HomeTokens.primary,
+            style: HomeText.navLabel.copyWith(
+              // FAB DAIRESI ham vurgu kalir (uzerinde beyaz ikon var);
+              // altindaki ETIKET bar zemininde okunmali (tur 32).
+              color: s.accentText(HomeTokens.primary),
               fontWeight: FontWeight.w700,
             ),
           ),

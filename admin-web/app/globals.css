@@ -46,6 +46,19 @@ textarea:focus-visible,
   border-color: #2cc4b7;
 }
 
+/* `tealInk` (#0B7A79) ACIK tema icin KOYULASTIRILMIS marka tonudur (tur 28/30).
+   Koyu zeminde ayni koyuluk tersine calisir: slate-900 kart uzerinde 2.5:1
+   kalir ve tur 32 olcumu 24 sayfanin HEPSINDE etkin menu ogesini + rapor
+   sekmesini ihlal olarak isaretledi. Koyu temada aydinlik marka tonu.
+   ZEMIN olarak kullanildigi yerler (`bg-brand-tealInk` + beyaz yazi) bilerek
+   DISARIDA: orada kontrast zaten AA tutuyor, aydinlatmak onu bozardi. */
+.dark .text-brand-tealInk {
+  color: #2cc4b7;
+}
+.dark .border-brand-tealInk {
+  border-color: #2cc4b7;
+}
+
 /* Hareket-azaltma: ambient orb animasyonlarini durdur. (framer-motion bilesen
    hareketini ayrica MotionConfig reducedMotion="user" ile kapatir.) */
 @media (prefers-reduced-motion: reduce) {

@@ -16,6 +16,7 @@ import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
+import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 import 'package:mobile/src/core/i18n/locale_controller.dart';
 
@@ -81,6 +82,8 @@ Widget _app({
       locale: dil,
       supportedLocales: supportedLocales,
       localizationsDelegates: testLocalizationsDelegates,
+      // Tur 32: koyu tema surusu anahtari (varsayilan null = acik tema).
+      theme: testTemasi,
       home: YoneticiHomeScreen()),
     );
 
@@ -321,5 +324,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('4'), findsNWidgets(2), reason: '$dil');
     }
+  });
+
+  // ---- TUR 32: KOYU TEMA ----
+  testWidgets('KOYU TEMA: yonetici ana ekrani 7 dilde (kontrast + tasma)',
+      (tester) async {
+    _tall(tester);
+    await koyuTemaSurusu(tester, (dil) => _app(dil: Locale(dil)),
+        veri: surusVerisi);
   });
 }

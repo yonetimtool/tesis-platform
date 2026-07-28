@@ -69,6 +69,21 @@ class HomeTokens {
 
   /// Accent'in "tint" zemini — %12 opaklik (brief: %10-12).
   static Color tint(Color accent) => accent.withValues(alpha: 0.12);
+
+  /// Vurgularin KOYU tema karsiligi — YALNIZ METIN icin.
+  ///
+  /// Vurgu paleti tema-bagimsizdir cunku ANLAM tasir (yesil=olumlu,
+  /// kirmizi=ihlal). Bu ikon ve dolgular icin dogru; METIN icin degil:
+  /// 600-tonu vurgular koyu zeminde WCAG AA'yi tutmaz (tur 32 olcumu —
+  /// #2563EB / #0F131A = 3.60:1, esik 4.5). Ayni RENK AILESININ acik tonu
+  /// anlami korur ve kontrasti tutar (400-tonlari).
+  static const _koyuMetin = <int, Color>{
+    0xFF2563EB: Color(0xFF7CA9FF), // blue-600  → acik mavi
+    0xFF16A34A: Color(0xFF4ADE80), // green-600 → green-400
+    0xFFF59E0B: Color(0xFFFBBF24), // amber-500 → amber-400
+    0xFF8B5CF6: Color(0xFFB69CFB), // violet-500→ acik mor
+    0xFFEF4444: Color(0xFFFCA5A5), // red-500   → red-300
+  };
 }
 
 /// Temaya gore cozulen yuzey + metin renkleri. Acik modda referans gorsellerin
@@ -132,6 +147,18 @@ class HomeSurface {
     placeholder: Color(0xFF232A36),
   );
 
+  /// Vurgu renginin BU YUZEYDE metin olarak kullanilacak bicimi.
+  ///
+  /// Acik temada vurgu aynen doner; koyu temada acik tonu (bkz.
+  /// [HomeTokens._koyuMetin]). Ikon/dolgu/tint icin ham vurgu kullanilmaya
+  /// devam eder — sorun yalniz METIN kontrastindadir.
+  Color accentText(Color accent) =>
+      koyu ? (HomeTokens._koyuMetin[accent.toARGB32()] ?? accent) : accent;
+
+  /// Bu yuzey koyu tema mi? (`accentText` disinda cagri yerlerinde de
+  /// tema sorgulamak yerine buradan okunur.)
+  bool get koyu => background == _dark.background;
+
   static HomeSurface of(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark ? _dark : _light;
 
@@ -177,6 +204,16 @@ class HomeText {
   /// Chip/rozet — 11 semibold.
   static const chip = TextStyle(
       fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2);
+
+  /// ALT BAR etiketi — 12 (chip'ten 1 punto buyuk).
+  ///
+  /// Neden ayri: 11 puntoda KOYU temada Kiril/Arap harfleri okunacak MUREKKEP
+  /// YOGUNLUGUNA ulasmiyor — tur 32 olcumu ayni renkte "Ana Sayfa"yi gecirip
+  /// "Главная"yi 2.18 ile dusurdu. Rengi beyaza kadar acmak (denendi: #C7D9FF
+  /// hala 3.64) markayi yok ederdi; 12 punto ise TUM dillerde gecti. Alt bar
+  /// etiketi zaten en kucuk kalici metindi.
+  static const navLabel = TextStyle(
+      fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.2);
 
   /// Istatistik degeri — 20 bold.
   static const statValue =
