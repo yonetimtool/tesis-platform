@@ -205,6 +205,35 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 28 — BUYUK YAZI surusu (kok yazi boyu)
+
+Mobil tur 27'nin web karsiligi. Tarayicinin **varsayilan yazi boyu** ayari
+(Chrome: Ayarlar > Gorunum) `rem` tabanli olculeri buyutur; Tailwind rem
+kullandigi icin **metin de bosluk da** buyur. Surus artik dort olcu kosar:
+
+| Olcu | Amac |
+|---|---|
+| 360 dp / 16 px | en dar telefon |
+| 414 dp / 16 px | tipik telefon |
+| **360 dp / 20 px** | dar ekran + buyuk yazi (en sert) |
+| **1280 px / 24 px** | masaustu + cok buyuk yazi |
+
+**7 dil x 24 sayfa x 4 olcu = 672 kontrol; duzeltmelerden sonra 0 bulgu.**
+
+> **NE BULDU.** Uc bulgunun ucu de **360 dp / 20 px**te cikti — yani ne dar
+> ekran ne buyuk yazi TEK BASINA yetiyor, kesisim gerekiyor:
+>
+> | Sayfa | Dil | Olcum | Sebep / cozum |
+> |---|---|---|---|
+> | `/notifications` | `tr` +9 px, `ru` **+79 px** | filtre dugmeleri tek satirda | `flex-wrap` (sekme degil dugme — sarmak dogru) |
+> | `/login` | `de` +6 px | `p-8` (2rem = 40 px x2) + Almanca birlesik sozcuk | dar ekranda `p-6`, basliga `break-words` |
+>
+> `ru`nun +79 px'i dikkat cekici: "Прочитанные/Непрочитанные" Turkce
+> karsiliklarinin nerdeyse iki kati. **Uzun ceviri + buyuk punto carpim
+> etkisi yapiyor** — biri tek basina sigan bir satir, ikisi birlikte
+> sigmiyor. `1280 px / 24 px` olcusu ise HIC bulgu vermedi: sorun buyuk
+> yazinin kendisi degil, DAR ALANLA carpimidir.
+
 > **DEDEKTOR HATASI da kayda gecti:** ilk surum yalniz `overflow-x: auto|
 > scroll` atalarini mesru sayiyordu; `hidden`/`clip` DE KIRPAR. Bu yuzden
 > giris ekranindaki bilincli dekoratif orb'ler 7 dilde birden "tasma" diye

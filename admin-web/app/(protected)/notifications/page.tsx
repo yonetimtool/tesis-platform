@@ -47,7 +47,10 @@ export default function NotificationsPage() {
     <div className="space-y-5">
       <PageHeader title={t("kabukBildirimler")} />
 
-      <div className="flex items-center gap-2">
+      {/* SARILABILIR: uc filtre dugmesi 360 dp + buyuk kok yazi boyunda tek
+          satira sigmiyordu (tur 28 surusu: tr +9 px, ru +79 px). Sekme
+          degil dugme oldugu icin sarmak dogru cozum — kaydirma gerekmez. */}
+      <div className="flex flex-wrap items-center gap-2">
         {([
           ["", t("ortakTumu")],
           ["false", t("bildirimOkunmamis")],

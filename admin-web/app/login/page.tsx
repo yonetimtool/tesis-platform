@@ -110,7 +110,9 @@ export default function LoginPage() {
     <MotionConfig reducedMotion="user">
       <main className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
         {/* ---- Sol: marka gradyan paneli (navy → teal) + suzulen orb'ler ---- */}
-        <section className="relative flex min-h-[36vh] flex-col justify-between overflow-hidden bg-brand-gradient p-8 lg:min-h-screen lg:p-12">
+        {/* `p-6` dar ekranda: 20 px kok yazi boyunda `p-8` (2rem = 40 px x2)
+            govdeyi tasiriyordu (tur 28 surusu, de +6 px). */}
+        <section className="relative flex min-h-[36vh] flex-col justify-between overflow-hidden bg-brand-gradient p-6 sm:p-8 lg:min-h-screen lg:p-12">
           {/* Imza: yumusak suzulen orb'ler (GPU transform; reduced-motion durur) */}
           <div aria-hidden className="pointer-events-none absolute inset-0">
             <div className="animate-drift absolute -left-16 top-8 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
@@ -143,10 +145,12 @@ export default function LoginPage() {
             transition={{ duration: 0.5, ease: EASE, delay: 0.12 }}
             className="relative z-10 max-w-md"
           >
-            <h1 className="text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+            {/* `break-words`: Almanca birlesik sozcukler ("Anlagenbetrieb")
+                buyuk puntoda satira sigmayip tasiyordu. */}
+            <h1 className="text-3xl font-semibold leading-tight tracking-tight text-white break-words sm:text-4xl">
               {t("girisSloganBaslik")}
             </h1>
-            <p className="mt-4 text-base leading-relaxed text-white/75">
+            <p className="mt-4 break-words text-base leading-relaxed text-white/75">
               {t("girisSloganAlt")}
             </p>
           </motion.div>

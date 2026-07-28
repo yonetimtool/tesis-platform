@@ -8,7 +8,16 @@ import { chromium } from 'playwright';
 
 const KOK = process.env.KOK ?? 'http://localhost:3115';
 const DILLER = ['tr','en','ar','ru','de','fr','es'];
-const OLCULER = [{ ad: '360dp', w: 360, h: 780 }, { ad: '414dp', w: 414, h: 896 }];
+// Olcu = viewport + KOK YAZI BOYU. Tarayicinin "varsayilan yazi boyu"
+// ayari (Chrome: Ayarlar > Gorunum > Yazi tipi boyutu) rem tabanli
+// olculeri buyutur; Tailwind rem kullandigi icin metin de bosluk da
+// buyur — mobil tur 27'deki TextScaler'in web karsiligi.
+const OLCULER = [
+  { ad: '360dp', w: 360, h: 780, kok: 16 },
+  { ad: '414dp', w: 414, h: 896, kok: 16 },
+  { ad: '360dp/20px', w: 360, h: 780, kok: 20 },
+  { ad: '1280px/24px', w: 1280, h: 900, kok: 24 },
+];
 const SAYFALAR = ['/dashboard','/tenants','/shifts','/checkpoints','/patrol-plans','/tasks',
   '/assets','/units','/building-editor','/schematic','/dues','/reports/dues','/reports/patrols',
   '/reports/tasks','/transparency','/users','/announcements','/complaints','/notifications',
@@ -31,6 +40,14 @@ for (const olcu of OLCULER) {
     if (!api.ok()) { bulgular.push([olcu.ad, dil, '-', 'LOGIN BASARISIZ']); await ctx.close(); continue; }
     await ctx.addCookies([{ name: 'ui.locale', value: dil, url: KOK }]);
     const sayfa = await ctx.newPage();
+    if (olcu.kok !== 16) {
+      // Kok yazi boyunu ilk boyamadan ONCE ayarla (yeniden akis olmasin).
+      await sayfa.addInitScript((px) => {
+        document.addEventListener('DOMContentLoaded', () => {
+          document.documentElement.style.fontSize = px + 'px';
+        });
+      }, olcu.kok);
+    }
 
     for (const yol of SAYFALAR) {
       await sayfa.goto(KOK + yol, { waitUntil: 'networkidle' }).catch(() => {});
