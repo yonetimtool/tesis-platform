@@ -205,6 +205,54 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 35 — FOTOGRAFLI VERIYLE surus (mobil tur 34'un web karsiligi)
+
+**BULUNAN KOK HATA: seed, MinIO'ya HIC YUKLENMEMIS anahtarlar yaziyordu.**
+`complaint_photo.foto_key` sabit `{tenant}/tasks/seed-foto-1.jpg` idi ve o
+obje hicbir zaman yuklenmiyordu: presigned URL gecerli, obje YOK
+(`NoSuchKey` / HTTP 404). Yani panel de mobil de **kirik gorsel** gosteriyordu
+ve onceki BUTUN suruslerin "temiz" dedigi sey aslinda KIRIK GORSEL halinin
+olcumuydu. Ayni hata tamamlama kanitinda da vardi. Duyuru ve destek bileti
+gorselleri ise seed'de HIC uretilmiyordu — o kod yollari (liste gorseli,
+destek detay bolmesi) hicbir suruste cizilmemisti.
+
+Duzeltme `backend/scripts/seed.py`: dordu de `_gorsel_yukle` ile GERCEKTEN
+yuklenir (var olan kayitlar icin `UPDATE`, eski kirik anahtarlar icin
+`DELETE`).
+
+`tools/foto-surusu.mjs` — 7 dil x 2 tema x 3 sayfa = **42 sayfa-dil-tema**,
+56 gorsel. Olculen: gorsel YUKLENDI MI, `alt` var mi/cevrilmis mi, DUZEN
+KAYMASI, axe (fotografli durumda), 360 dp yatay tasma. Destek biletinin
+gorseli detay bolmesindedir — `hazirla` ile acilir.
+
+| Bulgu | Sebep | Duzeltme |
+|---|---|---|
+| Kirik gorsel (tum talep fotograflari) | seed anahtari yuklenmemis obje | seed gercek PNG yukluyor |
+| Duyuru/destek gorseli hic cizilmiyor | seed'de foto_key uretilmiyordu | seed'e gorsel eklendi |
+| `DUZEN KAYMASI: 31px` (`/support`) | `max-h-48` yukseklik AYIRMAZ; gorsel gelince icerik asagi kayar | sabit `h-48 object-contain` |
+| Kirik URL'de ham tarayici ikonu | presigned URL 900 sn'de doluyor, `<img>` icin geri donus yok | `components/Foto.tsx` — `onError` ile cevrilmis yer tutucu (mobildeki `errorBuilder` karsiligi) |
+
+**Son olcum: 42 sayfa-dil-tema, 56 gorsel, BULGU 0.**
+
+> **DEDEKTOR SINAMASI (`DENEY=1`).** Sayfaya bilerek kirik ve `alt`siz gorsel
+> enjekte edilip ikisinin de yakalandigi dogrulanir. Ilk denemede `alt`siz
+> gorseli `/yonetio-deney.png` diye adlandirmistim — marka suzgeci onu
+> eledi, yani **kendi deneyimi kendim susturmustum**; ad degistirilince
+> yakalandi.
+>
+> **OLCUM ARACININ DEGIL, ORTAMIN HATASI.** Bir kosumda koyu temanin
+> TAMAMI "fotograf yok" verdi. Sebep uygulama degildi: surus koserken ayni
+> dizinde `next build` calistirmistim ve `.next/` altindan servis eden
+> `next start` ortasindan bozulmustu. Kural: **surus surerken sunucuyu
+> yeniden insa etme.** (Tarama artik bu durumda satir sayisi + sayfa
+> metnini de kaydediyor, boylece "veri yok" ile "fotograf yok" karismaz.)
+
+```bash
+npx next build && npx next start -p 3131
+KOK=http://localhost:3131 node tools/foto-surusu.mjs
+KOK=http://localhost:3131 DENEY=1 node tools/foto-surusu.mjs   # dedektor sinamasi
+```
+
 ### Tur 33 — KLAVYE surusu (odak sirasi + tuzak)
 
 `tools/klavye-surusu.mjs` gercek Chromium'da **TAB'a basar**: 24 sayfa x

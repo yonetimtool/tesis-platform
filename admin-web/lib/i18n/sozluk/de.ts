@@ -160,6 +160,7 @@ export const de: Sozluk = {
   vardiyaResmiTatil: "Feiertag",
   vardiyaYok: "Keine Schichten",
   vardiyaYokAlt: "Beginnen Sie mit der ersten Schicht.",
+  gorselGosterilemedi: "Bild konnte nicht angezeigt werden",
   duyuruGorselYuklenemedi: "Bild konnte nicht hochgeladen werden.",
   duyuruGorselBekleyin: "Das Bild wird noch hochgeladen – warten Sie ab oder entfernen Sie es.",
   duyuruGorselTekrarSecin: "Bild-Upload fehlgeschlagen. Erneut auswählen oder entfernen.",

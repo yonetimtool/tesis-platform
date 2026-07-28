@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR, { mutate } from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
+import { Foto } from "@/components/Foto";
 import { ErrorBox, Field, PageHeader, Pager, inputCls } from "@/components/form";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -219,11 +220,10 @@ export default function SupportPage() {
               {secili.aciklama}
             </p>
             {secili.foto_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Foto
                 src={secili.foto_url}
                 alt={t("destekTalepGorseli")}
-                className="mt-3 max-h-48 rounded-lg border border-slate-200 object-contain dark:border-slate-700"
+                className="mt-3 h-48 w-full rounded-lg border border-slate-200 object-contain dark:border-slate-700"
               />
             ) : null}
             <Field label={t("destekYanit")}>
@@ -237,11 +237,10 @@ export default function SupportPage() {
             {secili.admin_cevap_foto_url ? (
               <div className="mb-2">
                 <p className="text-xs text-slate-500">{t("destekMevcutYanitGorseli")}</p>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Foto
                   src={secili.admin_cevap_foto_url}
                   alt={t("destekYanitGorseli")}
-                  className="mt-1 max-h-40 rounded-lg border border-slate-200 object-contain dark:border-slate-700"
+                  className="mt-1 h-40 w-full rounded-lg border border-slate-200 object-contain dark:border-slate-700"
                 />
               </div>
             ) : null}

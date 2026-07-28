@@ -482,8 +482,9 @@ def main() -> int:
         #    ayni baslik varsa eklemeyerek idempotent kalinir.
         conn.execute(
             """
-            INSERT INTO announcement (tenant_id, baslik, govde, olusturan_user_id)
-            SELECT %(t)s, %(b)s, %(g)s, u.id
+            INSERT INTO announcement
+                (tenant_id, baslik, govde, olusturan_user_id, foto_key)
+            SELECT %(t)s, %(b)s, %(g)s, u.id, %(f)s
             FROM app_user u
             WHERE u.tenant_id = %(t)s AND u.email = 'yonetici@acme.com'
               AND NOT EXISTS (
@@ -495,9 +496,20 @@ def main() -> int:
                 "t": tenant_id,
                 "b": "Hoş geldiniz",
                 "g": "Tesis yönetim sistemi devrede. Duyurular bu ekranda yayınlanacak.",
+                "f": _gorsel_yukle(tenant_id, "duyuru-hosgeldiniz", (14, 149, 148)),
             },
         )
-        print("[seed] duyuru 'Hoş geldiniz' (yonetici imzali, idempotent)")
+        # Duyuru zaten varsa insert atlanir; gorseli ayrica yaz.
+        conn.execute(
+            """
+            UPDATE announcement SET foto_key = %(f)s
+             WHERE tenant_id = %(t)s AND baslik = 'Hoş geldiniz'
+               AND foto_key IS NULL
+            """,
+            {"t": tenant_id,
+             "f": _gorsel_yukle(tenant_id, "duyuru-hosgeldiniz", (14, 149, 148))},
+        )
+        print("[seed] duyuru 'Hoş geldiniz' (yonetici imzali, GORSELLI, idempotent)")
 
         # 5) ornek sikayet + oneri (resident acmis). Dogal benzersiz anahtar
         #    yok -> ayni baslik varsa eklemeyerek idempotent kalinir.
@@ -689,8 +701,17 @@ def main() -> int:
             "Otopark girişindeki bariyer kırıldı, araçlar giriş yapamıyor.",
             tesisat_kat_id,
         )
-        _add_photo(demo2_id, f"{tenant_id}/tasks/seed-foto-1.jpg", 0)
-        _add_photo(demo2_id, f"{tenant_id}/tasks/seed-foto-2.jpg", 1)
+        # Anahtarlar `_gorsel_yukle` ile URETILIR: eskiden sabit
+        # `{tenant}/tasks/seed-foto-1.jpg` yaziliyordu ama o obje MinIO'ya HIC
+        # yuklenmiyordu — presigned URL gecerli, obje YOK (NoSuchKey) ve panel
+        # de mobil de KIRIK GORSEL gosteriyordu (tur 35'te olculdu).
+        conn.execute(
+            "DELETE FROM complaint_photo WHERE tenant_id = %(t)s "
+            "AND foto_key LIKE %(k)s",
+            {"t": tenant_id, "k": f"{tenant_id}/tasks/seed-foto-%"},
+        )
+        _add_photo(demo2_id, _gorsel_yukle(tenant_id, "talep-bariyer-1", (220, 38, 38)), 0)
+        _add_photo(demo2_id, _gorsel_yukle(tenant_id, "talep-bariyer-2", (37, 99, 235)), 1)
         conn.execute(
             "INSERT INTO complaint_status_history "
             "(tenant_id, complaint_id, durum, actor_role, sebep) "
@@ -774,7 +795,8 @@ def main() -> int:
             """,
             (
                 tenant_id, demo4_task_id, cleaner_id,
-                f"{tenant_id}/tasks/seed-completion-1.jpg",
+                # Ayni sebep: sabit anahtar yerine GERCEKTEN yuklenen obje.
+                _gorsel_yukle(tenant_id, "tamamlama-kaniti-1", (22, 163, 74)),
                 "Sızıntı contası değiştirildi, kanıt fotoğrafı eklendi.",
                 "seed-demo-talep-4-completion",
             ),
@@ -1244,18 +1266,34 @@ def main() -> int:
         conn.execute(
             """
             INSERT INTO platform_support_ticket
-                (tenant_id, acan_user_id, konu, aciklama)
+                (tenant_id, acan_user_id, konu, aciklama, foto_key)
             SELECT %(t)s, %(u)s,
                    'Panel bildirim gecikmesi',
-                   'Duyuru yayınladıktan sonra mobil bildirimler geç geliyor.'
+                   'Duyuru yayınladıktan sonra mobil bildirimler geç geliyor.',
+                   %(f)s
             WHERE NOT EXISTS (
                 SELECT 1 FROM platform_support_ticket
                 WHERE tenant_id = %(t)s AND konu = 'Panel bildirim gecikmesi'
             )
             """,
-            {"t": tenant_id, "u": yonetici_id},
+            {"t": tenant_id, "u": yonetici_id,
+             # Destek biletinin GORSELI: panelin detay bolmesindeki fotograf
+             # yolu seed'de hic uretilmiyordu, dolayisiyla surulemiyordu.
+             "f": _gorsel_yukle(tenant_id, "destek-bildirim", (139, 92, 246))},
         )
-        print("[seed] destek bileti: 'Panel bildirim gecikmesi' (acik)")
+        # Bilet ZATEN VARSA insert atlanir; fotografi ayrica yaz (eski
+        # seed'lerde fotosuz olusmustu).
+        conn.execute(
+            """
+            UPDATE platform_support_ticket
+               SET foto_key = %(f)s
+             WHERE tenant_id = %(t)s AND konu = 'Panel bildirim gecikmesi'
+               AND foto_key IS NULL
+            """,
+            {"t": tenant_id,
+             "f": _gorsel_yukle(tenant_id, "destek-bildirim", (139, 92, 246))},
+        )
+        print("[seed] destek bileti: 'Panel bildirim gecikmesi' (acik, fotografli)")
 
         # --- Demo denetim kayitlari (audit_log, WP1) — dogal aksiyon ornekleri
         # Idempotent: tenant'ta zaten audit yoksa birkac ornek satir ekle.

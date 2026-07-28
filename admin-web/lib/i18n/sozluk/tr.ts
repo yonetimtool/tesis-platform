@@ -199,6 +199,7 @@ export const tr = {
   vardiyaYok: "Vardiya yok",
   vardiyaYokAlt: "İlk vardiyayı ekleyerek başlayın.",
   // tur 18 — duyuru / NFC noktasi / seffaflik
+  gorselGosterilemedi: "Görsel görüntülenemedi",
   duyuruGorselYuklenemedi: "Görsel yüklenemedi.",
   duyuruGorselBekleyin: "Görsel henüz yükleniyor — bitmesini bekleyin veya kaldırın.",
   duyuruGorselTekrarSecin: "Görsel yüklenemedi. Tekrar seçin veya kaldırın.",

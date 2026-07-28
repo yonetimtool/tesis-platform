@@ -160,6 +160,7 @@ export const fr: Sozluk = {
   vardiyaResmiTatil: "Jour férié",
   vardiyaYok: "Aucun poste",
   vardiyaYokAlt: "Commencez par ajouter le premier poste.",
+  gorselGosterilemedi: "Impossible d'afficher l'image",
   duyuruGorselYuklenemedi: "Impossible de téléverser l'image.",
   duyuruGorselBekleyin: "L'image est en cours de téléversement — attendez la fin ou retirez-la.",
   duyuruGorselTekrarSecin: "Échec du téléversement. Sélectionnez à nouveau ou retirez.",

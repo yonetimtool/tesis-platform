@@ -160,6 +160,7 @@ export const ru: Sozluk = {
   vardiyaResmiTatil: "Праздничный день",
   vardiyaYok: "Смен нет",
   vardiyaYokAlt: "Начните с добавления первой смены.",
+  gorselGosterilemedi: "Не удалось показать изображение",
   duyuruGorselYuklenemedi: "Не удалось загрузить изображение.",
   duyuruGorselBekleyin: "Изображение ещё загружается — дождитесь окончания или удалите его.",
   duyuruGorselTekrarSecin: "Не удалось загрузить изображение. Выберите снова или удалите.",

@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
+import { Foto } from "@/components/Foto";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, cardCls, panelCls, panelMotion } from "@/components/form";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -193,11 +194,10 @@ export default function AnnouncementsPage() {
             <div className="space-y-2">
               {/* Onizleme: yeni secim > mevcut gorsel (kaldirilmadiysa) */}
               {(photo.previewUrl || (editing?.foto_url && !photo.removed && !photo.fotoKey)) && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Foto
                   src={photo.previewUrl ?? editing?.foto_url ?? ""}
                   alt={t("duyuruGorseli")}
-                  className="max-h-40 rounded-lg border border-slate-200 object-cover"
+                  className="h-40 w-full rounded-lg border border-slate-200 object-cover"
                 />
               )}
               {photo.uploading && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
@@ -249,11 +249,10 @@ export default function AnnouncementsPage() {
                 {a.foto_url && (
                   // Presigned GET URL kisa omurlu — liste her yenilendiginde taze gelir.
                   <a href={a.foto_url} target="_blank" rel="noreferrer" className="mt-2 block w-fit">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Foto
                       src={a.foto_url}
                       alt={t("gorselAlt", { baslik: a.baslik })}
-                      className="max-h-40 rounded-lg border border-slate-200 object-cover"
+                      className="h-40 w-full rounded-lg border border-slate-200 object-cover"
                     />
                   </a>
                 )}

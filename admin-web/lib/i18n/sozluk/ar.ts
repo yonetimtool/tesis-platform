@@ -160,6 +160,7 @@ export const ar: Sozluk = {
   vardiyaResmiTatil: "عطلة رسمية",
   vardiyaYok: "لا توجد ورديات",
   vardiyaYokAlt: "ابدأ بإضافة أول وردية.",
+  gorselGosterilemedi: "تعذّر عرض الصورة",
   duyuruGorselYuklenemedi: "تعذّر رفع الصورة.",
   duyuruGorselBekleyin: "لا تزال الصورة قيد الرفع — انتظر انتهاءها أو أزلها.",
   duyuruGorselTekrarSecin: "فشل رفع الصورة. اخترها مجددًا أو أزلها.",

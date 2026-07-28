@@ -160,6 +160,7 @@ export const en: Sozluk = {
   vardiyaResmiTatil: "Public holiday",
   vardiyaYok: "No shifts",
   vardiyaYokAlt: "Start by adding the first shift.",
+  gorselGosterilemedi: "Image could not be displayed",
   duyuruGorselYuklenemedi: "Could not upload the image.",
   duyuruGorselBekleyin: "The image is still uploading — wait for it to finish or remove it.",
   duyuruGorselTekrarSecin: "Image upload failed. Select it again or remove it.",

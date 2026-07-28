@@ -160,6 +160,7 @@ export const es: Sozluk = {
   vardiyaResmiTatil: "Festivo",
   vardiyaYok: "Sin turnos",
   vardiyaYokAlt: "Empiece añadiendo el primer turno.",
+  gorselGosterilemedi: "No se pudo mostrar la imagen",
   duyuruGorselYuklenemedi: "No se pudo subir la imagen.",
   duyuruGorselBekleyin: "La imagen se está subiendo: espere a que termine o quítela.",
   duyuruGorselTekrarSecin: "No se pudo subir la imagen. Selecciónela de nuevo o quítela.",

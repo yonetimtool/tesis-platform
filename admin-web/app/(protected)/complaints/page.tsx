@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
+import { Foto } from "@/components/Foto";
 import { ErrorBox, Pager, PageHeader, btnPrimary, btnGhost, btnDanger, cardCls, inputCls, Field } from "@/components/form";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -176,8 +177,7 @@ function ComplaintCard({
                     rel="noreferrer"
                     className="block w-fit"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Foto
                       src={f.foto_url ?? undefined}
                       alt={t("gorselAlt", { baslik: c.baslik })}
                       className="h-24 w-24 rounded-lg border border-slate-200 object-cover"
