@@ -112,7 +112,7 @@ export default function LoginPage() {
         {/* ---- Sol: marka gradyan paneli (navy → teal) + suzulen orb'ler ---- */}
         {/* `p-6` dar ekranda: 20 px kok yazi boyunda `p-8` (2rem = 40 px x2)
             govdeyi tasiriyordu (tur 28 surusu, de +6 px). */}
-        <section className="relative flex min-h-[36vh] flex-col justify-between overflow-hidden bg-brand-gradient p-6 sm:p-8 lg:min-h-screen lg:p-12">
+        <section className="relative flex min-h-[36vh] min-w-0 flex-col justify-between overflow-hidden bg-brand-gradient p-6 sm:p-8 lg:min-h-screen lg:p-12">
           {/* Imza: yumusak suzulen orb'ler (GPU transform; reduced-motion durur) */}
           <div aria-hidden className="pointer-events-none absolute inset-0">
             <div className="animate-drift absolute -left-16 top-8 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
@@ -161,7 +161,12 @@ export default function LoginPage() {
         </section>
 
         {/* ---- Sag: temiz form karti ---- */}
-        <section className="relative flex items-center justify-center bg-[#fafbfc] px-4 py-10 sm:px-8 dark:bg-transparent">
+        {/* `min-w-0`: GRID OGESI varsayilan olarak min-content'in ALTINA
+            INMEZ. `break-words` (overflow-wrap) tasmayi onler ama intrinsic
+            min-content genisligini DUSURMEZ — bu yuzden 20 px kok yazi
+            boyunda uzun Almanca sozcuk izgarayi 366 px'e itiyordu (tur 28).
+            Cozum kelime kirma degil, ogenin KUCULEBILMESI. */}
+        <section className="relative flex min-w-0 items-center justify-center bg-[#fafbfc] px-4 py-10 sm:px-8 dark:bg-transparent">
           <div className="absolute end-4 top-4 z-20">
             <DilSecici />
           </div>

@@ -226,7 +226,19 @@ kullandigi icin **metin de bosluk da** buyur. Surus artik dort olcu kosar:
 > | Sayfa | Dil | Olcum | Sebep / cozum |
 > |---|---|---|---|
 > | `/notifications` | `tr` +9 px, `ru` **+79 px** | filtre dugmeleri tek satirda | `flex-wrap` (sekme degil dugme — sarmak dogru) |
-> | `/login` | `de` +6 px | `p-8` (2rem = 40 px x2) + Almanca birlesik sozcuk | dar ekranda `p-6`, basliga `break-words` |
+> | `/login` | `de` +6 px | GRID OGESI min-content'in altina inemiyor | `min-w-0` (asagi bak) |
+>
+> **`/login` ILK DUZELTME YETMEDI — dogrulama surusu yakaladi.** Once
+> semptomu hedefledim: `p-6` + `break-words` (uzun Almanca birlesik
+> sozcuk). Surus tekrar kosunca tasma AYNEN duruyordu. Sebep daha derinde:
+> `overflow-wrap: break-word` tasmayi onler ama **intrinsic min-content
+> genisligini DUSURMEZ**; grid ogesi de varsayilan `min-width: auto` ile
+> min-content'in ALTINA INMEZ. Yani kelimeyi kirmak degil, **ogenin
+> kuculebilmesi** gerekiyordu -> `min-w-0`.
+>
+> Ders: tasmayi gormek yetmiyor, DOGRU KATMANI bulmak gerekiyor — ve bunu
+> ancak olcumu TEKRARLAYARAK anlarsiniz. "Duzelttim" demeden once surusu
+> yeniden kosturun.
 >
 > `ru`nun +79 px'i dikkat cekici: "Прочитанные/Непрочитанные" Turkce
 > karsiliklarinin nerdeyse iki kati. **Uzun ceviri + buyuk punto carpim
