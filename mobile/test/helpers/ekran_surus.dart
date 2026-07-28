@@ -474,3 +474,30 @@ Future<void> fotografliSurus(
     gorselTaklidiKapat();
   }
 }
+
+/// TUM EKSENLER (tur 37) — fotografsiz ekranlar icin tek cagri.
+///
+/// [fotografliSurus]un fotograf gerektirmeyen kardesi: dar ekran, yazi
+/// olcegi, ekran okuyucu, koyu tema ve klavye eksenlerini sirayla kosar.
+/// Tur 36 envanteri "hic surulmemis ekran" listesi cikarinca, o ekranlari
+/// tek tek bes ayri testle eklemek yerine bu yardimci yazildi.
+Future<void> tumEksenlerSurusu(
+  WidgetTester tester,
+  Widget Function(String dil) kur, {
+  Set<String> veri = const {},
+  bool dokunmaHedefi = true,
+  bool kontrast = true,
+  bool sira = true,
+  Future<void> Function(WidgetTester)? hazirla,
+}) async {
+  // Bu ekranlarin cogu gizli depoya (dil/oturum) dokunur; koyu tema surusu
+  // `runAsync` kullandigi icin taklit gerekir (tur 32 notu).
+  _guvenliDepoTaklidi();
+  await darEkranSurusu(tester, kur, veri: veri, hazirla: hazirla);
+  await yaziOlcegiSurusu(tester, kur, veri: veri, hazirla: hazirla);
+  await ekranOkuyucuSurusu(tester, kur,
+      veri: veri, dokunmaHedefi: dokunmaHedefi, hazirla: hazirla);
+  await koyuTemaSurusu(tester, kur,
+      veri: veri, kontrast: kontrast, hazirla: hazirla);
+  await klavyeSurusu(tester, kur, sira: sira, hazirla: hazirla);
+}

@@ -26,6 +26,13 @@ da veritabanı sayımından geliyor.
 
 ---
 
+> **GÜNCELLEME (tur 37).** A bölümündeki saha akışı **kapatıldı**:
+> `saha_akisi_surus_test.dart` devriye / NFC / görev detayı / kuyruk /
+> kategoriler / daire kayıtları ekranlarını beş eksende sürüyor. Kapsam
+> %59,9 → **%65,3**; beş hata bulundu (dile duyarsız büyük harf, Riverpod
+> `onDispose` ihlali, iki taşma, koyu tema kontrastı). Kalan maddeler
+> (B–F) hâlâ açık; `set_password_screen` ve `temp_code_dialog` de açık.
+
 ## A. Hiç çizilmemiş ekranlar (mobil)
 
 Bu ekranlar **hiçbir** sürüş ekseninde çizilmedi: çevirisi, dar ekranda

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/text/tr_upper.dart';
 import '../../../core/error/api_exception.dart';
 import '../../kargo/data/kargo_api.dart';
 import '../../kargo/domain/kargo_models.dart';
@@ -86,7 +85,11 @@ class _UnitAccessRecordsScreenState
         ? ''
         : context.l10n.izinDaireEki(widget.unitNo!);
     return Scaffold(
-      appBar: AppBar(title: Text(trUpper('$baslik$daire'))),
+      // DILE DUYARLI buyuk harf: `trUpper` TURKCE kuralini (i -> İ) her dile
+      // uyguluyordu ve Fransizca "Colis" ekranda "COLİS" cikiyordu (tur 37).
+      // `baslikBuyuk` aktif dile gore davranir (Arapca'da hic buyutmez).
+      appBar: AppBar(
+          title: Text(baslikBuyuk('$baslik$daire', context.dilKodu))),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _loading

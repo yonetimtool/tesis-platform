@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/i18n/l10n.dart';
+import '../../../core/theme/home_tokens.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../data/task_category_api.dart';
@@ -191,17 +192,22 @@ class _InfoCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            // `Row` + `Spacer` 320 dp'de 238 px tasiyordu (tur 37): iki cip
+            // ayni satira sigmiyor. `Wrap` dar ekranda alt satira gecirir,
+            // genis ekranda gorunum aynidir.
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Icon(style.icon, color: style.color),
-                const SizedBox(width: 8),
+                Icon(style.icon, color: okunurVurgu(context, style.color)),
                 Chip(
                   label: Text(style.ad ?? l10n.gorevKategoriDiger),
                   backgroundColor: style.color.withValues(alpha: 0.15),
-                  labelStyle: TextStyle(color: style.color),
+                  // Koyu temada ham vurgu 2.58:1 kaliyordu (tur 37).
+                  labelStyle: TextStyle(color: okunurVurgu(context, style.color)),
                   visualDensity: VisualDensity.compact,
                 ),
-                const Spacer(),
                 if (task.isAssignedTo(currentUserId))
                   Chip(
                     label: Text(l10n.gorevSanaAtanmis),
@@ -349,7 +355,12 @@ class _PhotoStep extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            // Baslik + "foto zorunlu" cipi 320 dp'de tek satira sigmiyordu
+            // (tur 37: 238 px tasma). `Wrap` dar ekranda alt satira gecirir.
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Icon(
                   state.fotoYuklendi
@@ -357,22 +368,19 @@ class _PhotoStep extends StatelessWidget {
                       : Icons.photo_camera_outlined,
                   color: state.fotoYuklendi ? Colors.green : null,
                 ),
-                const SizedBox(width: 8),
                 Text(
                   fotoZorunlu
                       ? l10n.gorevAdim2Foto
                       : l10n.gorevAdim2FotoOpsiyonel,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-                if (fotoZorunlu) ...[
-                  const SizedBox(width: 8),
+                if (fotoZorunlu)
                   Chip(
                     label: Text(l10n.gorevFotoZorunlu),
                     labelStyle: const TextStyle(
                         color: Colors.deepOrange, fontSize: 12),
                     visualDensity: VisualDensity.compact,
                   ),
-                ],
               ],
             ),
             const SizedBox(height: 8),

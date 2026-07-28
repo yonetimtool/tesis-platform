@@ -2087,6 +2087,39 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 37 — SAHA AKIŞINI SÜR.** Tur 36 envanterinin 1 numaralı kör noktası:
+güvenlik/görevli rolünün günlük iş akışı — devriye ("Turlarım"), NFC okutma,
+görev detayı/tamamlama, çevrimdışı kuyruk — **yedi sürüş ekseninin
+hiçbirinde** çizilmemişti. `test/saha_akisi_surus_test.dart` bu ekranları
+`tumEksenlerSurusu` ile beş eksende sürer (dar ekran / yazı ölçeği / ekran
+okuyucu / koyu tema / klavye).
+
+Kapsam: `task_detail` 0→%42, `patrol_screen` %1→%62, `nfc_screen` %1→%33,
+`patrol_tracking` %2→%28, `outbox` %2→%88, `task_categories` %1→%38,
+`unit_access_records` 0→%56, `patrol_history_view` %1→%60.
+Presentation toplamı **%59,9 → %65,3**.
+
+> **BULDUĞU HATALAR (5).**
+> 1. **`trUpper` her dile TÜRKÇE büyük harf kuralını uyguluyordu.** Daire
+>    kayıtları ekranının başlığı Fransızca'da **"COLİS"** çıkıyordu (noktalı
+>    İ). `baslikBuyuk(dilKodu)`e çevrildi; `core/text/tr_upper.dart`
+>    **silindi** — tek doğruluk kaynağı kalsın.
+> 2. **NFC denetleyicisi `onDispose` içinde `ref.read` çağırıyordu.**
+>    Riverpod bunu yasaklar ("Cannot use Ref … inside life-cycles") ve ekran
+>    kapanırken assertion atıyordu. Servis referansı artık `build`de alınır.
+>    Ekran ilk kez çizilip **kapatıldığında** ortaya çıktı.
+> 3. Görev detayında kategori/`foto zorunlu` çipleri 320 dp'de **238 px**
+>    taşırıyordu (`Row` + `Spacer`) → `Wrap`.
+> 4. Kuyruk ekranında "Senkronla" düğmesi Almanca'da **66 px** taşırıyordu →
+>    `Flexible` + ellipsis.
+> 5. Görev kategorisi çipi koyu temada **2.58:1** kontrast veriyordu (eşik
+>    4.5). `okunurVurgu(context, renk)` eklendi: `HomeSurface.accentText`in
+>    **keyfi renkler** için genel sürümü (kategori renkleri koddan gelmez).
+
+> **SEKME İKİNCİ SAYFASI DA SÜRÜLDÜ.** "Turlarım"ın Geçmiş sekmesi yalnız
+> dokunulunca çizilir; `hazirla` ile sekme değiştirilerek `patrol_history_view`
+> ilk kez ölçüldü.
+
 **TUR 34 — FOTOĞRAFLI VERİYLE SÜRÜŞ.** Tur 33'ün itirafını kapatır: fotoğraf
 taşıyan öğeler yalnız fotoğraflı veriyle çizilir, test koşumlarında fotoğraf
 yoktu ve **altı sürüş de** o kod yollarına hiç uğramamıştı.

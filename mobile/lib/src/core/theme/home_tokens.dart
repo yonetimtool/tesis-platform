@@ -227,3 +227,21 @@ class HomeText {
   static const money =
       TextStyle(fontSize: 22, fontWeight: FontWeight.w700, height: 1.15);
 }
+
+/// Herhangi bir VURGU renginin, o temada METIN olarak okunur bicimi (tur 37).
+///
+/// [HomeSurface.accentText] ana ekranin SABIT paletini elle esler; buradaki
+/// surum ise KEYFI renkler icindir (gorev kategorisi renkleri gibi, kod
+/// disindan/dinamik gelir). Acik temada renk aynen doner; koyu temada ayni
+/// TON korunarak aydinlatilir — anlam degismez, kontrast tutar.
+///
+/// Neden gerekti: gorev detayinda kategori cipi etiketi ham vurgu rengiyle
+/// ciziliyordu ve koyu temada 2.58:1 kaliyordu (esik 4.5).
+Color okunurVurgu(BuildContext context, Color vurgu) {
+  if (Theme.of(context).brightness == Brightness.light) return vurgu;
+  final h = HSLColor.fromColor(vurgu);
+  return h
+      .withLightness((h.lightness + 0.35).clamp(0.68, 0.9))
+      .withSaturation((h.saturation * 0.85).clamp(0.0, 1.0))
+      .toColor();
+}

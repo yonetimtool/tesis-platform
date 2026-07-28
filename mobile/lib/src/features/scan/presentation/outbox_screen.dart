@@ -82,10 +82,18 @@ class _SyncBar extends StatelessWidget {
               ),
             )
           else
-            FilledButton.tonalIcon(
-              onPressed: state.pendingCount > 0 ? onSync : null,
-              icon: const Icon(Icons.sync),
-              label: Text(context.l10n.kuyrukSenkronla),
+            // 320 dp'de Almanca etiket ("Jetzt synchronisieren") satiri 66 px
+            // tasiriyordu (tur 37): dugme de kisalabilmeli.
+            Flexible(
+              child: FilledButton.tonalIcon(
+                onPressed: state.pendingCount > 0 ? onSync : null,
+                icon: const Icon(Icons.sync),
+                label: Text(
+                  context.l10n.kuyrukSenkronla,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
         ],
       ),

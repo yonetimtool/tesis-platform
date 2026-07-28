@@ -58,11 +58,14 @@ class NfcState {
 class NfcController extends Notifier<NfcState> {
   @override
   NfcState build() {
-    ref.onDispose(() {
-      // Ekran kapanirsa acik oturumu birak.
-      // context YOK: iOS sayfasi mesajsiz kapanir (bkz. cancel dokumani).
-      ref.read(nfcServiceProvider).cancel();
-    });
+    // Servis REFERANSI simdi alinir: `onDispose` GOVDESINDE `ref.read`
+    // cagirmak Riverpod'un yasakladigi seydir ("Cannot use Ref or modify
+    // other providers inside life-cycles") ve ekran kapanirken assertion
+    // atar. Tur 37'de bu ekran ILK KEZ cizilip kapatilinca ortaya cikti.
+    final servis = ref.read(nfcServiceProvider);
+    // Ekran kapanirsa acik oturumu birak.
+    // context YOK: iOS sayfasi mesajsiz kapanir (bkz. cancel dokumani).
+    ref.onDispose(servis.cancel);
     return const NfcState();
   }
 
