@@ -58,7 +58,7 @@ function StatCard({
 }) {
   const valueTone =
     tone === "teal"
-      ? "text-brand-teal"
+      ? "text-brand-tealInk"
       : tone === "amber"
         ? "text-amber-600"
         : tone === "red"

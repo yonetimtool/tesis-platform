@@ -205,6 +205,47 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 30 — EKRAN OKUYUCU surusu (axe-core, WCAG 2.1 AA)
+
+`tools/okuyucu-surusu.mjs` gercek Chromium'da **axe-core** kosar:
+**7 dil x 24 sayfa = 168 sayfa-dil**. Iki sey birden olculur:
+
+1. **axe denetimi** (wcag2a/2aa/21a/21aa) — etiketsiz dugme, kontrast,
+   bozuk liste/landmark yapisi...
+2. **erisilebilirlik METINLERI cevrilmis mi** — `aria-label`, `title`, `alt`
+   EKRANDA GORUNMEZ; gorunen metin cevrilip bunlar Turkce kalabilir
+   (mobil tur 29'da ayni sinif hata bulunmustu).
+
+```bash
+npx next build && npx next start -p 3123
+node tools/okuyucu-surusu.mjs
+```
+
+**Ilk kosum: 171 bulgu -> duzeltmelerden sonra temiz.**
+
+| Bulgu | Sebep | Duzeltme |
+|---|---|---|
+| ~148x `color-contrast` | marka teali `#0E9594`: beyazla **3.66**, acik teal zeminde **3.25** (esik 4.5) | `tealInk #0B7A79` (**5.15** / **4.58**) — YALNIZ metin + dugme zemini; gradyan/kenarlik/odak halkasi marka tonunda kaldi |
+| 11x `color-contrast` | sema hucrelerinde beyaz metin `bg-*-500` uzerinde (~2.1–2.5), kutucuklarda `slate-500`/`red-600` | zeminler `-600/-700`e; metinler `slate-700`/`red-700`. Yogunluk kodlamasi (yesil/sari/kirmizi) KORUNDU |
+| 7x `definition-list` | `<dl>` icinde `<p>` | `<div>`e cevrildi (dt/dd yapisi bozulmadan) |
+| 6x "TR sizinti" | `alt="Image for {seed basligi}"` | **YANLIS ALARM** — dedektore VERI allowlist'i (mobil `surusVerisi` emsali) |
+
+> **OLCUM ARACININ KENDI HATASI (tur 28'in tekrari).** `/login` gonder
+> dugmesi duzeltmeden SONRA da "kontrast 4.01" veriyordu. Tarayicida
+> olctum: gercek zemin `#0B7A79` (5.15, gecer). axe `#2b8c8b` goruyordu —
+> cunku **framer-motion giris animasyonu surerken** olcmustu; dugme yari
+> saydamken zemin beyazla karisiyordu.
+>
+> Cozum rengi daha da koyultmak DEGIL: surus artik `reducedMotion:
+> 'reduce'` ile kosuyor. Animasyon aninda biter, olcum dogru olur — ve bu
+> zaten erisilebilirlik kullanicisinin GERCEK deneyimidir (uygulama
+> `MotionConfig reducedMotion="user"` ile bunu onurlandiriyor).
+>
+> Iki turda iki kez ayni ders: **olcum aracina da hata payi birakin.**
+> Tur 28'de dedektor `overflow:hidden`i kirpma saymiyordu; burada animasyon
+> bitmeden olcuyordu. Ikisi de "gercek hata" gibi gorundu ve ancak
+> tarayicida ELLE dogrulayinca ortaya cikti.
+
 ### Tur 28 — BUYUK YAZI surusu (kok yazi boyu)
 
 Mobil tur 27'nin web karsiligi. Tarayicinin **varsayilan yazi boyu** ayari

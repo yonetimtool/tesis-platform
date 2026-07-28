@@ -504,4 +504,5 @@ export const es: Sozluk = {
   kullaniciGeciciKod: "Usuario creado.\nCódigo de acceso temporal: {kod}\n\nSe muestra una sola vez; entrégueselo. Entrará con su teléfono y este código y definirá una contraseña permanente.",
   daireBorcDurumu: "Vivienda {no} — estado de deuda",
   demirbasZimmetBaslik: "Entrega — {ad}",
+  seffafNet: "Neto",
 };

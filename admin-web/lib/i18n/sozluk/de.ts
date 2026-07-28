@@ -504,4 +504,5 @@ export const de: Sozluk = {
   kullaniciGeciciKod: "Benutzer erstellt.\nTemporärer Anmeldecode: {kod}\n\nDieser Code wird nur einmal angezeigt; geben Sie ihn dem Benutzer. Er meldet sich mit Telefon + Code an und legt ein dauerhaftes Passwort fest.",
   daireBorcDurumu: "Einheit {no} — Schuldenstand",
   demirbasZimmetBaslik: "Ausgabe — {ad}",
+  seffafNet: "Netto",
 };

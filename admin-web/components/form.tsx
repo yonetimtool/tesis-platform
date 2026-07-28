@@ -8,7 +8,7 @@ import { useT } from "@/lib/i18n/kullan";
 export const inputCls =
   "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/25 disabled:opacity-60";
 export const btnPrimary =
-  "inline-flex items-center justify-center gap-2 rounded-lg bg-brand-teal px-4 py-2 text-sm font-medium text-white shadow-soft transition-all hover:bg-[#0c8382] hover:shadow-lift active:translate-y-px disabled:opacity-60 disabled:shadow-none";
+  "inline-flex items-center justify-center gap-2 rounded-lg bg-brand-tealInk px-4 py-2 text-sm font-medium text-white shadow-soft transition-all hover:bg-[#0c8382] hover:shadow-lift active:translate-y-px disabled:opacity-60 disabled:shadow-none";
 export const btnGhost =
   "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-slate-100";
 export const btnDanger =

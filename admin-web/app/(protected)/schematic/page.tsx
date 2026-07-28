@@ -16,15 +16,19 @@ import type {
 } from "@/lib/types";
 
 // Renk API'den gelir (yesil/sari/kirmizi = 0-2/3-4/5+); panel ESIK HESAPLAMAZ.
+// HUCRE ZEMINI: uzerinde BEYAZ metin var, bu yuzden -500 tonlari yetmiyordu
+// (beyaz/amber-500 ~2.1, beyaz/emerald-500 ~2.5 — WCAG AA esigi 4.5).
+// Tur 30 axe denetimi yakaladi. Nokta (`dot`) ve etiket (`text`) tonlari
+// DEGISMEDI: onlar beyaz zemin uzerinde ve zaten gecerli.
 const RENK_CLS: Record<DensityRenk, { cell: string; dot: string; text: string }> = {
-  yesil: { cell: "bg-emerald-500 border-emerald-600", dot: "bg-emerald-500", text: "text-emerald-700" },
-  sari: { cell: "bg-amber-500 border-amber-600", dot: "bg-amber-500", text: "text-amber-700" },
-  kirmizi: { cell: "bg-red-500 border-red-600", dot: "bg-red-500", text: "text-red-700" },
+  yesil: { cell: "bg-emerald-700 border-emerald-800", dot: "bg-emerald-500", text: "text-emerald-700" },
+  sari: { cell: "bg-amber-700 border-amber-800", dot: "bg-amber-500", text: "text-amber-700" },
+  kirmizi: { cell: "bg-red-600 border-red-700", dot: "bg-red-500", text: "text-red-700" },
 };
 
 // Renk API'den gelir; null (yapi gorunumu) -> notr. admin/yonetici panelinde
 // harita hep yonetim modundadir (shows_density=true), yine de savunmaci.
-const NEUTRAL = { cell: "bg-slate-300 border-slate-400", dot: "bg-slate-300", text: "text-slate-600" };
+const NEUTRAL = { cell: "bg-slate-500 border-slate-600", dot: "bg-slate-300", text: "text-slate-600" };
 function cls(renk: DensityRenk | null | undefined) {
   return renk ? (RENK_CLS[renk] ?? RENK_CLS.yesil) : NEUTRAL;
 }

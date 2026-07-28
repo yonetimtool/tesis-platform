@@ -18,7 +18,13 @@ const config: Config = {
         muted: "#64748b",
         brand: {
           navy: "#1E3A5F",
+          // MARKA teali (gradyan/dolgu). Metin ve dugme zemini icin
+          // KULLANILMAZ: beyazla kontrasti 3.66, acik teal zeminle 3.25 —
+          // ikisi de WCAG AA esigi 4.5'in ALTINDA (tur 30 axe denetimi).
           teal: "#0E9594",
+          // Erisilebilir koyu ton: beyazla 5.15, acik teal zeminle 4.58.
+          // Dugme zemini ve acik zemindeki METIN bunu kullanir.
+          tealInk: "#0B7A79",
           // Koyu zeminde okunur kalan acik teal (accent pop).
           tealLight: "#2CC4B7",
         },

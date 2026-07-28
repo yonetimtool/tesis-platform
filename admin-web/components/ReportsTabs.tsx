@@ -29,7 +29,7 @@ export function ReportsTabs() {
             href={t.href}
             className={`-mb-px border-b-2 px-3 py-2 text-sm transition ${
               active
-                ? "border-brand-teal font-medium text-brand-teal"
+                ? "border-brand-teal font-medium text-brand-tealInk"
                 : "border-transparent text-slate-600 hover:text-ink"
             }`}
           >

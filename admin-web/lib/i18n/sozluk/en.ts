@@ -504,4 +504,5 @@ export const en: Sozluk = {
   kullaniciGeciciKod: "User created.\nTemporary sign-in code: {kod}\n\nThis code is shown only once; pass it to the user. They sign in with their phone number + this code and set a permanent password.",
   daireBorcDurumu: "Unit {no} — debt status",
   demirbasZimmetBaslik: "Checkout — {ad}",
+  seffafNet: "Net",
 };

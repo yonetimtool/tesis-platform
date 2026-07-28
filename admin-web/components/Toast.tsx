@@ -39,7 +39,7 @@ export function useToast(): ToastApi {
 const KIND_STYLE: Record<ToastKind, { dot: string; ring: string }> = {
   success: { dot: "bg-emerald-500", ring: "border-emerald-200" },
   error: { dot: "bg-red-500", ring: "border-red-200" },
-  info: { dot: "bg-brand-teal", ring: "border-slate-200" },
+  info: { dot: "bg-brand-tealInk", ring: "border-slate-200" },
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {

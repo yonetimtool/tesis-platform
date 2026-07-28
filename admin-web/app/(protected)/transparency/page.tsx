@@ -111,16 +111,21 @@ export default function TransparencyPage() {
                 <dl className="space-y-1.5 text-sm">
                   <Row k={t("seffafToplamGelir")} v={tl(b.toplam_gelir_kurus)} cls="text-emerald-700" />
                   <Row k={t("seffafToplamGider")} v={tl(b.toplam_gider_kurus)} cls="text-red-700" />
-                  <div className="my-2 border-t border-slate-100" />
+                  {/* `dl` yalniz `dt`/`dd` (ve onlari saran `div`) icerir;
+                      ciplak ayrac `div`i axe'in `definition-list` kuralini
+                      kiriyordu (tur 30). Ayirici gorsel — `dd`ye tasindi. */}
                   <Row
-                    k="Net"
+                    ayrac
+                    k={t("seffafNet")}
                     v={tl(b.net_kurus)}
                     cls={b.net_kurus >= 0 ? "text-emerald-700 font-semibold" : "text-red-700 font-semibold"}
                   />
+                  {/* `dl` yalniz dt/dd (ve saran div) icerebilir; buradaki
+                      `p` axe'in `definition-list` kuralini kiriyordu. */}
                   {b.onceki_ay_net_kurus != null && (
-                    <p className="pt-1 text-xs text-muted">
+                    <div className="pt-1 text-xs text-muted">
                       {t("seffafOncekiAyNet", { tutar: tl(b.onceki_ay_net_kurus) })}
-                    </p>
+                    </div>
                   )}
                 </dl>
               </div>
@@ -179,9 +184,21 @@ export default function TransparencyPage() {
   );
 }
 
-function Row({ k, v, cls }: { k: string; v: string; cls?: string }) {
+function Row({
+  k,
+  v,
+  cls,
+  ayrac,
+}: {
+  k: string;
+  v: string;
+  cls?: string;
+  ayrac?: boolean;
+}) {
   return (
-    <div className="flex justify-between">
+    <div
+      className={`flex justify-between${ayrac ? " mt-2 border-t border-slate-100 pt-2" : ""}`}
+    >
       <dt className="text-slate-600">{k}</dt>
       <dd className={cls}>{v}</dd>
     </div>

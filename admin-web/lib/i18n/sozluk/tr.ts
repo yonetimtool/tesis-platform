@@ -563,4 +563,6 @@ export const tr = {
   daireBorcDurumu: "Daire {no} — borç durumu",
   // tur 22 — demirbas zimmet basligi
   demirbasZimmetBaslik: "Zimmet — {ad}",
+  // tur 30 — seffaflik net
+  seffafNet: "Net",
 } as const;

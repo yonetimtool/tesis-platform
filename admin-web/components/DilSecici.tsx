@@ -67,7 +67,7 @@ export function DilSecici() {
                 aria-selected={d === dil}
                 onClick={() => sec(d)}
                 className={`block w-full px-3 py-1.5 text-start text-sm transition hover:bg-slate-100 ${
-                  d === dil ? "font-semibold text-brand-teal" : "text-slate-700"
+                  d === dil ? "font-semibold text-brand-tealInk" : "text-slate-700"
                 }`}
               >
                 {DIL_ADLARI[d]}

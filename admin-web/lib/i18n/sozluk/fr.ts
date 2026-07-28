@@ -504,4 +504,5 @@ export const fr: Sozluk = {
   kullaniciGeciciKod: "Utilisateur créé.\nCode de connexion temporaire : {kod}\n\nAffiché une seule fois ; transmettez-le. Il se connecte avec son téléphone + ce code et définit un mot de passe permanent.",
   daireBorcDurumu: "Logement {no} — situation de la dette",
   demirbasZimmetBaslik: "Attribution — {ad}",
+  seffafNet: "Net",
 };

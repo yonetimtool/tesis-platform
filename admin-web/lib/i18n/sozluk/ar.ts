@@ -504,4 +504,5 @@ export const ar: Sozluk = {
   kullaniciGeciciKod: "تم إنشاء المستخدم.\nرمز الدخول المؤقت: {kod}\n\nيظهر مرة واحدة فقط؛ سلّمه للمستخدم. يسجّل الدخول بهاتفه وهذا الرمز ثم يحدد كلمة مرور دائمة.",
   daireBorcDurumu: "الوحدة {no} — حالة الدين",
   demirbasZimmetBaslik: "العهدة — {ad}",
+  seffafNet: "الصافي",
 };
