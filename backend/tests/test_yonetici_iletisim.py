@@ -39,7 +39,7 @@ def test_saha_rolleri_ve_sakin_yoneticileri_gorur(client, world):
         assert len(body["yoneticiler"]) >= 1
         kart = body["yoneticiler"][0]
         assert kart["ad_soyad"] == "Yonetici A"
-        assert kart["telefon"] == "+905000000002"
+        assert kart["telefon"] == world["yonetici_a"]["phone"]
         assert "yonetim_email" in body
 
 
@@ -95,7 +95,9 @@ def test_aranabilir_false_olsa_bile_listelenir(client, world, owner_conn):
     assert r.status_code == 200, r.text
     kart = [y for y in r.json()["yoneticiler"] if y["ad_soyad"] == "Yonetici A"]
     assert kart, "aranabilir=false yonetici listeden DUSMEMELI"
-    assert kart[0]["telefon"] == "+905000000002", "numara riza olmadan da donmeli"
+    assert kart[0]["telefon"] == world["yonetici_a"]["phone"], (
+        "numara riza olmadan da donmeli"
+    )
 
 
 def test_pasif_yonetici_listelenmez(client, world, owner_conn):
@@ -127,7 +129,9 @@ def test_tenant_izolasyonu(client, world, owner_conn):
     assert body["yonetim_email"] == "a@a.com"
     adlar = [y["ad_soyad"] for y in body["yoneticiler"]]
     assert "Yonetici B" not in adlar
-    assert "+905000000007" not in [y["telefon"] for y in body["yoneticiler"]]
+    assert world["yonetici_b"]["phone"] not in [
+        y["telefon"] for y in body["yoneticiler"]
+    ]
 
 
 def test_kimliksiz_401(client):

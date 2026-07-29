@@ -28,7 +28,7 @@ def _tenant(conn, tzname="Europe/Istanbul") -> uuid.UUID:
     tid = uuid.uuid4()
     conn.execute(
         "INSERT INTO tenant (id, ad, slug, timezone) VALUES (%s,%s,%s,%s)",
-        (tid, "Sched", f"s-{tid.hex[:10]}", tzname),
+        (tid, "Sched", f"sched-{tid.hex[:10]}", tzname),
     )
     return tid
 

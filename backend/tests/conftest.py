@@ -33,6 +33,45 @@ def _connect(dsn: str, **kw):
         pytest.skip(f"DB erisilemiyor ({dsn.split('@')[-1]}): {exc}")
 
 
+# Fixture tenant'larinin slug ONEKLERI — hem uretim hem temizlik buradan.
+# Yeni bir fixture tenant oneki eklenirse BURAYA da yazilmali.
+FIXTURE_SLUG_ONEKLERI = (
+    "ca-", "cb-",      # world (CRUD/RBAC)
+    "rls-a-", "rls-b-",  # RLS izolasyonu
+    "ta-", "tb-",      # auth testleri
+    "cam-",            # kamera testleri
+    "sched-",          # scheduler testleri
+)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _artik_temizligi():
+    """Onceki kosumdan KALAN fixture tenant'larini siler (tur 46).
+
+    NEDEN: fixture tenant'lari `yield`den SONRA temizlenir; kosum ortadan
+    kesilirse (timeout, Ctrl-C, konteyner yeniden baslatma) o adim hic
+    calismaz ve satirlar kalir. Telefon GLOBAL benzersiz oldugu icin kalan
+    TEK bir kullanici sonraki butun kosumlari `UniqueViolation` ile
+    dusuruyordu — 700+ testlik suit tek bir artik satir yuzunden komple
+    kirmiziya donuyordu.
+
+    Temizlik yalniz FIXTURE oneklerine dokunur; seed tenant'i (`acme-plaza`)
+    ve gercek veriler etkilenmez.
+    """
+    try:
+        conn = psycopg.connect(OWNER_DSN, connect_timeout=5, autocommit=True)
+    except Exception:  # pragma: no cover - DB yoksa testler zaten atlanir
+        yield
+        return
+    try:
+        with conn.cursor() as cur:
+            for onek in FIXTURE_SLUG_ONEKLERI:
+                cur.execute("DELETE FROM tenant WHERE slug LIKE %s", (onek + "%",))
+        yield
+    finally:
+        conn.close()
+
+
 @pytest.fixture
 def owner_conn():
     """Owner (superuser) baglantisi — autocommit; RLS'i bypass eder."""
@@ -151,15 +190,50 @@ def client():
         c.close()
 
 
-@pytest.fixture
-def world(owner_conn):
-    """A ve B tenant'lari + admin/security kullanicilar (CRUD/RBAC testleri icin)."""
+def _telefonlar(tenant_id: uuid.UUID, adet: int = 8) -> list[str]:
+    """Kosuma OZEL, cakismayan E.164 numaralari (tur 46).
+
+    Bicim `+9054<7 hane><indeks>` = 13 karakter (TR cep formatiyla ayni
+    uzunluk; `normalize_phone` E.164 dogrulamasindan gecer). `+9054` oneki
+    seed'in kullandigi `+90532...` araligindan da ayridir.
+
+    Ayni tenant icin her zaman ayni diziyi verir (test icinde tekrar
+    cagrilabilir), farkli kosumlarda farklidir.
+    """
+    taban = tenant_id.int % 10_000_000  # 7 hane
+    return [f"+9054{taban:07d}{i}" for i in range(adet)]
+
+
+# bcrypt BILEREK yavastir (~50-100 ms). `world` her testte 7 kullanici
+# aciyor; parolalar ise SABIT. Hash'i test basina yeniden uretmek suit
+# genelinde bos yere dakikalar harciyordu — parola basina BIR KEZ uretilip
+# saklanir (dogrulama ayni parolayi kabul eder).
+_HASH_ONBELLEK: dict[str, str] = {}
+
+
+def _hash(parola: str) -> str:
     from app.security import hash_password
 
+    if parola not in _HASH_ONBELLEK:
+        _HASH_ONBELLEK[parola] = hash_password(parola)
+    return _HASH_ONBELLEK[parola]
+
+
+@pytest.fixture
+def world(owner_conn, request):
+    """A ve B tenant'lari + admin/security kullanicilar (CRUD/RBAC testleri icin)."""
     a = uuid.uuid4()
     b = uuid.uuid4()
     slug_a = f"ca-{a.hex[:8]}"
     slug_b = f"cb-{b.hex[:8]}"
+    # TEMIZLIK ONCE KAYDEDILIR: kurulum yarida hata verirse (ornegin bir
+    # kisit ihlali) `yield` sonrasi kod HIC calismaz ve tenant satiri
+    # kalirdi (tur 46).
+    def _sil() -> None:
+        with owner_conn.cursor() as cur:
+            cur.execute("DELETE FROM tenant WHERE id IN (%s,%s)", (a, b))
+
+    request.addfinalizer(_sil)
     with owner_conn.cursor() as cur:
         cur.execute(
             "INSERT INTO tenant (id, ad, slug) VALUES (%s,%s,%s),(%s,%s,%s)",
@@ -169,21 +243,28 @@ def world(owner_conn):
         # parola belli). email-login (/auth/login) VE telefon-login (/auth/
         # login-phone) ikisi de bu hesaplarla calisir. Numaralar seed'inkiyle
         # (+9053211122xx) cakismaz.
+        # TELEFON = GLOBAL BENZERSIZ login anahtari. Sabit numaralar
+        # (+90500000000x) kosumlar arasi CATISIYORDU: kesilmis bir kosumun
+        # birakti tek satir, sonraki kosumun TUM testlerini dusuruyordu.
+        # Numara artik tenant uuid'sinden turetilir — catisma imkansiz.
+        tel = _telefonlar(a)
         users = [
-            (a, "Admin A", SHARED_EMAIL, PW_ADMIN_A, "admin", "+905000000001"),
-            (a, "Yonetici A", YONETICI_EMAIL, PW_YONETICI_A, "yonetici", "+905000000002"),
-            (a, "Guard A", GUARD_EMAIL, PW_GUARD_A, "security", "+905000000003"),
-            (a, "Gorevli A", GOREVLI_EMAIL, PW_GOREVLI_A, "tesis_gorevlisi", "+905000000004"),
-            (a, "Resident A", RESIDENT_EMAIL, PW_RESIDENT_A, "resident", "+905000000005"),
-            (b, "Admin B", SHARED_EMAIL, PW_ADMIN_B, "admin", "+905000000006"),
-            (b, "Yonetici B", YONETICI_EMAIL, PW_YONETICI_B, "yonetici", "+905000000007"),
+            (a, "Admin A", SHARED_EMAIL, PW_ADMIN_A, "admin", tel[0]),
+            (a, "Yonetici A", YONETICI_EMAIL, PW_YONETICI_A, "yonetici", tel[1]),
+            (a, "Guard A", GUARD_EMAIL, PW_GUARD_A, "security", tel[2]),
+            (a, "Gorevli A", GOREVLI_EMAIL, PW_GOREVLI_A, "tesis_gorevlisi", tel[3]),
+            (a, "Resident A", RESIDENT_EMAIL, PW_RESIDENT_A, "resident", tel[4]),
+            (b, "Admin B", SHARED_EMAIL, PW_ADMIN_B, "admin", tel[5]),
+            (b, "Yonetici B", YONETICI_EMAIL, PW_YONETICI_B, "yonetici", tel[6]),
         ]
-        for tid, ad, email, pw, role, tel in users:
+        # Dongu degiskeni `tel` OLAMAZ: listeyi golgeler ve `yield` sozlugu
+        # numaralar yerine SON numaranin KARAKTERLERINI dagitirdi.
+        for tid, ad, email, pw, role, telefon in users:
             cur.execute(
                 "INSERT INTO app_user "
                 "(tenant_id, ad, email, telefon, password_hash, password_set, role) "
                 "VALUES (%s,%s,%s,%s,%s,true,%s::user_role)",
-                (tid, ad, email, tel, hash_password(pw), role),
+                (tid, ad, email, telefon, _hash(pw), role),
             )
 
     yield {
@@ -191,14 +272,17 @@ def world(owner_conn):
         "b": b,
         "slug_a": slug_a,
         "slug_b": slug_b,
-        "admin_a": {"email": SHARED_EMAIL, "password": PW_ADMIN_A, "phone": "+905000000001"},
-        "yonetici_a": {"email": YONETICI_EMAIL, "password": PW_YONETICI_A, "phone": "+905000000002"},
-        "guard_a": {"email": GUARD_EMAIL, "password": PW_GUARD_A, "phone": "+905000000003"},
-        "gorevli_a": {"email": GOREVLI_EMAIL, "password": PW_GOREVLI_A, "phone": "+905000000004"},
-        "resident_a": {"email": RESIDENT_EMAIL, "password": PW_RESIDENT_A, "phone": "+905000000005"},
-        "admin_b": {"email": SHARED_EMAIL, "password": PW_ADMIN_B, "phone": "+905000000006"},
-        "yonetici_b": {"email": YONETICI_EMAIL, "password": PW_YONETICI_B, "phone": "+905000000007"},
+        "admin_a": {"email": SHARED_EMAIL, "password": PW_ADMIN_A, "phone": tel[0]},
+        "yonetici_a": {"email": YONETICI_EMAIL, "password": PW_YONETICI_A, "phone": tel[1]},
+        "guard_a": {"email": GUARD_EMAIL, "password": PW_GUARD_A, "phone": tel[2]},
+        "gorevli_a": {"email": GOREVLI_EMAIL, "password": PW_GOREVLI_A, "phone": tel[3]},
+        "resident_a": {"email": RESIDENT_EMAIL, "password": PW_RESIDENT_A, "phone": tel[4]},
+        "admin_b": {"email": SHARED_EMAIL, "password": PW_ADMIN_B, "phone": tel[5]},
+        "yonetici_b": {"email": YONETICI_EMAIL, "password": PW_YONETICI_B, "phone": tel[6]},
+        # Testlerin KENDI olusturdugu numaralar da kosuma ozel olmali
+        # (kesilmis kosum artik satiri birakirsa global benzersizlik
+        # sonraki kosumu dusuruyordu).
+        "bos_telefonlar": _telefonlar(b, adet=4),
     }
 
-    with owner_conn.cursor() as cur:
-        cur.execute("DELETE FROM tenant WHERE id IN (%s,%s)", (a, b))
+

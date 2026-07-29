@@ -34,10 +34,14 @@ def test_phone_login_password_returns_tokens(client, world):
 
 
 def test_phone_login_normalizes_local_format(client, world):
-    # "+905000000002" yerel biçim "0500 000 00 02" -> aynı hesaba çözülür.
+    # E.164 numaranin YEREL biçimi ("+9054…" -> "0 54…", araya boşluklarla)
+    # aynı hesaba çözülmeli. Numara koşuma özel üretilir (tur 46).
+    e164 = world["yonetici_a"]["phone"]           # +90XXXXXXXXXX
+    yerel = "0" + e164[3:]                        # 0XXXXXXXXXX
+    bosluklu = f"{yerel[:4]} {yerel[4:7]} {yerel[7:9]} {yerel[9:]}"
     r = client.post(
         "/auth/login-phone",
-        json={"phone": "0500 000 00 02", "password": world["yonetici_a"]["password"]},
+        json={"phone": bosluklu, "password": world["yonetici_a"]["password"]},
     )
     assert r.status_code == 200, r.text
     assert r.json()["access_token"]
@@ -76,7 +80,7 @@ def test_first_login_temp_code_then_set_password(client, world):
     r = client.post(
         "/residents",
         headers=yon,
-        json={"unit_no": "P-1", "ad": "Telefon Sakin", "telefon": "+905000001001"},
+        json={"unit_no": "P-1", "ad": "Telefon Sakin", "telefon": world["bos_telefonlar"][0]},
     )
     assert r.status_code == 201, r.text
     temp_code = r.json()["temp_code"]
@@ -84,7 +88,7 @@ def test_first_login_temp_code_then_set_password(client, world):
     # Geçici kod ile telefon-login -> oturum YOK, setup_token döner.
     r = client.post(
         "/auth/login-phone",
-        json={"phone": "+905000001001", "password": temp_code},
+        json={"phone": world["bos_telefonlar"][0], "password": temp_code},
     )
     assert r.status_code == 200, r.text
     body = r.json()
@@ -102,11 +106,11 @@ def test_first_login_temp_code_then_set_password(client, world):
     # Artık kalıcı parola ile telefon-login çalışır; geçici kod geçmez.
     assert client.post(
         "/auth/login-phone",
-        json={"phone": "+905000001001", "password": "YeniSakin123!"},
+        json={"phone": world["bos_telefonlar"][0], "password": "YeniSakin123!"},
     ).status_code == 200
     assert client.post(
         "/auth/login-phone",
-        json={"phone": "+905000001001", "password": temp_code},
+        json={"phone": world["bos_telefonlar"][0], "password": temp_code},
     ).status_code == 401
 
 
@@ -114,7 +118,7 @@ def test_first_login_temp_code_then_set_password(client, world):
 def test_phone_globally_unique_across_tenants(client, world):
     # A tenant'ında bir numarayla sakin aç.
     yon_a = _yon_headers(client, world)
-    phone = "+905000002002"
+    phone = world["bos_telefonlar"][1]
     r = client.post(
         "/residents",
         headers=yon_a,

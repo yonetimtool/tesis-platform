@@ -59,6 +59,37 @@ Beklenen: `test_rls_isolation.py` → 4 test PASS
 > yok): `docker compose build api && docker compose up -d api`. Aksi halde
 > pytest ESKI kodu/testleri kosar ve anlasilmaz hatalar gorursun.
 
+
+### Fixture artiklari ve rasgele sira (tur 46)
+
+Suit **pytest-randomly** ile RASGELE SIRADA kosar. Iki yapisal kirilganlik
+vardi ve ikisi de "tek bir artik satir tum suiti kirmiziya dondurur" sinifina
+giriyordu:
+
+1. **SABIT TELEFON NUMARALARI.** `world` fixture'i kullanicilari
+   `+90500000000x` gibi sabit numaralarla aciyordu. `app_user.telefon`
+   **GLOBAL benzersizdir** (tenant'lar arasi). Kosum ortadan kesilirse
+   (timeout, Ctrl-C, konteyner restart) fixture temizligi hic calismaz;
+   kalan TEK kullanici sonraki kosumun HER testini `UniqueViolation` ile
+   dusururdu. Numaralar artik tenant uuid'sinden turetilir
+   (`_telefonlar`, `+9054<7 hane><indeks>`) — catisma imkansiz.
+   Testlerin kendi olusturdugu numaralar da (`world["bos_telefonlar"]`)
+   ayni kaynaktan gelir.
+
+2. **YARIDA KALAN KURULUM TEMIZLENMIYORDU.** Fixture `yield`den sonra
+   siliyordu; kurulum ortasinda hata olursa (ornegin yukaridaki kisit
+   ihlali) tenant satiri kaliyordu. Temizlik artik `request.addfinalizer`
+   ile INSERT'ten ONCE kaydedilir.
+
+Ayrica session basinda **artik temizligi** calisir: onceki kosumdan kalan
+fixture tenant'lari (`ca-`, `cb-`, `rls-a-`, `rls-b-`, `ta-`, `tb-`, `cam-`,
+`sched-` onekli) silinir. Seed tenant'i (`acme-plaza`) ve gercek veriler
+ETKILENMEZ. Yeni bir fixture tenant oneki eklenirse `FIXTURE_SLUG_ONEKLERI`
+listesine de yazilmalidir.
+
+> Dogrulama: kesilmis kosumun biraktigi artik ELLE olusturulup suit yeniden
+> kosuldu — eskiden komple duserdi, simdi geciyor ve artik temizleniyor.
+
 ### Zaman bagimli testler (saat flake'i)
 
 Testler CANLI sunucuya gider ve sunucu GERCEK saati kullanir; zamanlama kurallari
