@@ -141,6 +141,7 @@ Widget _duyuruEkrani(
   String? fotoUrl,
   YuklemeDavranisi? yukleme,
   String? fotoYolu,
+  bool fotoIptal = false,
   UserRole role = UserRole.yonetici,
 }) =>
     ProviderScope(
@@ -152,7 +153,8 @@ Widget _duyuruEkrani(
           ),
         ),
         if (fotoYolu != null)
-          imagePickerProvider.overrideWithValue(TaklitSecici(fotoYolu)),
+          imagePickerProvider
+              .overrideWithValue(TaklitSecici(fotoYolu, iptal: fotoIptal)),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
       child: l10nApp(const AnnouncementsScreen(), locale: locale),
@@ -756,5 +758,44 @@ void main() {
   testWidgets('ZINCIR: sakin SILME onayi (bes eksen)', (tester) async {
     await tumEksenlerSurusu(tester, (dil) => _sakinEkrani(Locale(dil)),
         veri: surusVerisi, hazirla: menuEylemi(2));
+  });
+
+  // ---- TUR 53: FOTO SECIMINDEN VAZGECME ----
+  // `file == null` dali: kullanici kamerayi acip VAZGECIYOR. Dort ekranda
+  // var, hicbirinde olculmemisti — form ONCEKI haline donmeli, kilitli
+  // kalmamali.
+  testWidgets('VAZGEC: foto secimi iptal edilince form kilitlenmez',
+      (tester) async {
+    final yol = taklitFotoDosyasi();
+    await tester.pumpWidget(
+        _duyuruEkrani(const Locale('tr'), fotoYolu: yol, fotoIptal: true));
+    await tester.pumpAndSettle();
+    await fabAc(tester);
+    await tester.tap(find.byIcon(Icons.photo_camera_outlined).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    // Form ACIK ve dugmeler ETKIN kalmali (yukleniyor gostergesi YOK).
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsNothing,
+        reason: 'vazgecmede yukleme gostergesi kalmamali');
+    final kameraDugmesi = tester.widget<TextButton>(
+        find.widgetWithIcon(TextButton, Icons.photo_camera_outlined).first);
+    expect(kameraDugmesi.onPressed, isNotNull,
+        reason: 'vazgecmeden sonra dugme PASIF kalmis (form kilitli)');
+  });
+
+  testWidgets('VAZGEC: iptal sonrasi duyuru formu (bes eksen)', (tester) async {
+    final yol = taklitFotoDosyasi();
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _duyuruEkrani(Locale(dil), fotoYolu: yol, fotoIptal: true),
+      veri: surusVerisi,
+      hazirla: (t) async {
+        await fabAc(t);
+        await t.tap(find.byIcon(Icons.photo_camera_outlined).first);
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 300));
+      },
+    );
   });
 }

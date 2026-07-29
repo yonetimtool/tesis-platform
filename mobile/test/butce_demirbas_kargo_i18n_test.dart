@@ -23,6 +23,7 @@ import 'package:mobile/src/core/i18n/l10n.dart';
 import 'package:mobile/src/features/assets/data/asset_api.dart';
 import 'package:mobile/src/features/assets/domain/asset_models.dart';
 import 'package:mobile/src/features/assets/domain/demirbas_mesaj.dart';
+import 'package:mobile/src/features/assets/presentation/assets_controller.dart';
 import 'package:mobile/src/features/assets/presentation/assets_screen.dart';
 import 'package:mobile/src/features/assets/presentation/demirbas_mesaj_metni.dart';
 import 'package:mobile/src/features/auth/data/current_user_provider.dart';
@@ -154,10 +155,56 @@ Widget _butceEkrani(Locale locale, {bool buyukTutar = false}) => ProviderScope(
   child: l10nApp(const BudgetScreen(), locale: locale),
 );
 
-Widget _demirbasEkrani(Locale locale) => ProviderScope(
+/// TUR 53: OKUTULMUS demirbas durumu. `_ScannedCard` ve `_HistoryCard`
+/// yalniz `state.scanned != null` iken cizilir; surus hic okutma yapmadigi
+/// icin bu iki kart (56 + 39 satir) hic olculmemisti.
+class _FakeAssetsController extends AssetsController {
+  _FakeAssetsController(this._ilk);
+  final AssetsState _ilk;
+
+  @override
+  AssetsState build() => _ilk;
+
+  // Kart dugmeleri gercek uca gitmesin.
+  @override
+  Future<void> checkoutScanned() async {}
+
+  @override
+  Future<void> checkinScanned() async {}
+}
+
+ScannedAssetInfo _okutulmus(ZimmetVerdict karar) => ScannedAssetInfo(
+      asset: _asset(),
+      verdict: karar,
+      scannedUid: '04A1B2C3D4E5F6',
+      recentHistory: [
+        AssetCheckout(
+          id: 'z-1',
+          assetId: 'a-1',
+          alanUserId: 'u-1',
+          alanUserAd: 'Ali Guard',
+          almaZamani: DateTime.now().toUtc().subtract(const Duration(hours: 3)),
+        ),
+        AssetCheckout(
+          id: 'z-2',
+          assetId: 'a-1',
+          alanUserId: 'u-2',
+          alanUserAd: 'Mehmet',
+          almaZamani: DateTime.now().toUtc().subtract(const Duration(days: 2)),
+          birakmaZamani:
+              DateTime.now().toUtc().subtract(const Duration(days: 1)),
+          notlar: 'Kazan dairesinde kullanildi',
+        ),
+      ],
+    );
+
+Widget _demirbasEkrani(Locale locale, {AssetsState? durum}) => ProviderScope(
   overrides: [
     assetApiProvider.overrideWithValue(_FakeAssetApi([_asset()])),
     currentUserIdProvider.overrideWith((ref) async => 'u-1'),
+    if (durum != null)
+      assetsControllerProvider
+          .overrideWith(() => _FakeAssetsController(durum)),
   ],
   child: l10nApp(const AssetsScreen(), locale: locale),
 );
@@ -645,5 +692,46 @@ void main() {
   testWidgets('FORM: kargo kaydi alt sayfasi (bes eksen)', (tester) async {
     await tumEksenlerSurusu(tester, (dil) => _kargoEkrani(Locale(dil)),
         veri: surusVerisi, hazirla: fabAc);
+  });
+
+  // ---- TUR 53: OKUTULMUS DEMIRBAS KARTLARI ----
+  for (final (ad, karar) in [
+    ('MUSAIT', ZimmetVerdict.kimsedeDegil),
+    ('BENDE', ZimmetVerdict.sende),
+    ('BASKASINDA', ZimmetVerdict.baskasinda),
+    ('BAKIMDA', ZimmetVerdict.bakimda),
+  ]) {
+    testWidgets('OKUTMA: $ad karti + zimmet gecmisi (bes eksen)',
+        (tester) async {
+      await tumEksenlerSurusu(
+        tester,
+        (dil) => _demirbasEkrani(
+          Locale(dil),
+          durum: AssetsState(
+            scanPhase: AssetScanPhase.done,
+            scanned: _okutulmus(karar),
+            currentUserId: 'u-1',
+          ),
+        ),
+        veri: surusVerisi,
+      );
+    });
+  }
+
+  testWidgets('OKUTMA: islem SURUYOR hali (bes eksen)', (tester) async {
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _demirbasEkrani(
+        Locale(dil),
+        durum: AssetsState(
+          scanPhase: AssetScanPhase.done,
+          scanned: _okutulmus(ZimmetVerdict.sende),
+          actionBusy: true,
+          currentUserId: 'u-1',
+        ),
+      ),
+      veri: surusVerisi,
+      bekleyen: true,
+    );
   });
 }

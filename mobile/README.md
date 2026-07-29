@@ -2087,6 +2087,21 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 53 — OKUTULMUŞ DEMİRBAŞ + FOTOĞRAF VAZGEÇME (A'nın kalanı).**
+`_ScannedCard` (56 satır) ve `_HistoryCard` (39 satır) yalnız
+`state.scanned != null` iken çizilir; sürüş hiç NFC okutması yapmadığı için
+ikisi de ölçülmemişti. Dört zimmet kararı (**müsait / bende / başkasında /
+bakımda**) + **işlem sürüyor** hâli beş eksende sürüldü.
+`assets_screen` %37 → **%84**; presentation toplamı %69,6 → **%70,3**.
+
+Ayrıca **fotoğraf seçiminden vazgeçme** dalı (`file == null`, dört ekranda
+var): kullanıcı kamerayı açıp iptal ettiğinde formun **kilitli kalmadığı**
+doğrulanıyor — yükleme göstergesi kalmıyor, kamera düğmesi etkin kalıyor.
+
+> Bu turda **bulgu çıkmadı**: beş okutma hâli ve vazgeçme dalı beş eksende de
+> temiz. Kartların `Wrap` + `Flexible` ile yazılmış olması ve karar metinlerinin
+> tema renklerinden gelmesi işe yaramış.
+
 **TUR 52 — TALEP ROZETLERİNİ SÜR.** `task_ticket_widgets.dart` **1/60**
 satır kapsamdaydı: bu parçalar (talepten-geldi rozeti, öncelik rozeti, bağlı
 talep kartı) yalnız görev bir **talepten dönüştürülmüşse** çizilir ve sürüş

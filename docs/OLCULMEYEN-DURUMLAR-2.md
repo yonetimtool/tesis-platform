@@ -12,6 +12,10 @@ Panelde 26 sayfanın 25'i en az bir sürüş listesinde.
 
 ---
 
+> **GÜNCELLEME (tur 53).** A **tamamen kapandı**: okutulmuş demirbaş kartları
+> (4 zimmet kararı + işlem sürüyor) ve fotoğraf vazgeçme dalı sürüldü.
+> `assets_screen` %37 → %84. Bulgu çıkmadı.
+>
 > **GÜNCELLEME (tur 50).** A'nın büyük kısmı kapatıldı: 7 eylem zinciri beş
 > eksende sürülüyor (personel/sakin menü eylemleri + vardiya atama). Bir
 > **layout assertion** bulundu (`ListTile.trailing` 320 dp'de tile'ı yiyor).
