@@ -4039,4 +4039,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get ortakGoster => 'Anzeigen';
+
+  @override
+  String get talepRedBaslik => 'Anfrage ablehnen';
+
+  @override
+  String get ziyaretciDaireSakinYok =>
+      'Kein aktiver Bewohner in dieser Einheit';
 }

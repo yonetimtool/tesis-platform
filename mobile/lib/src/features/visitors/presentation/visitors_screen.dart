@@ -381,7 +381,7 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
       setState(() {
         _residents = list;
         if (list.isEmpty) {
-          _residentsError = 'Bu dairede aktif sakin yok';
+          _residentsError = context.l10n.ziyaretciDaireSakinYok;
         } else if (keepTarget != null &&
             list.any((r) => r.userId == keepTarget)) {
           _targetId = keepTarget; // duzenlemede mevcut hedef korunur

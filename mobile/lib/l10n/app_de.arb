@@ -1170,5 +1170,7 @@
   "ortakParolayiGizle": "Passwort verbergen",
   "ortakFotograf": "Foto",
   "ortakFotografiBuyut": "Foto vergrößern",
-  "ortakGoster": "Anzeigen"
+  "ortakGoster": "Anzeigen",
+  "talepRedBaslik": "Anfrage ablehnen",
+  "ziyaretciDaireSakinYok": "Kein aktiver Bewohner in dieser Einheit"
 }

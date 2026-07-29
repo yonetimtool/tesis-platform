@@ -6844,6 +6844,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Göster'**
   String get ortakGoster;
+
+  /// No description provided for @talepRedBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talebi reddet'**
+  String get talepRedBaslik;
+
+  /// No description provided for @ziyaretciDaireSakinYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu dairede aktif sakin yok'**
+  String get ziyaretciDaireSakinYok;
 }
 
 class _AppLocalizationsDelegate

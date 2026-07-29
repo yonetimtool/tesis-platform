@@ -4019,4 +4019,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ortakGoster => 'Ver';
+
+  @override
+  String get talepRedBaslik => 'Rechazar solicitud';
+
+  @override
+  String get ziyaretciDaireSakinYok => 'No hay residente activo en esta unidad';
 }

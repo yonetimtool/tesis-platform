@@ -2087,6 +2087,34 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 48 — MOBİLDE KALAN SABİT METİNLER.** Tur 47'nin panelde bulduğu kör
+noktanın mobil karşılığı. `test/sabit_metin_denetimi_test.dart` çizim
+katmanındaki (`presentation/`, `core/ui/`) **dizge sabitlerini** tarar:
+sözlük denetimi *üretilmiş sözlüğü* ölçer, sürüşler *ekranı* ölçer — kaynakta
+`l10n` yerine doğrudan yazılmış bir dizge ikisinin arasından geçebiliyordu.
+
+> **BULDUĞU HATALAR (4 metin).** `'Talebi reddet'` (ret alt sayfası başlığı),
+> `'Reddediliyor...'` (düğme etiketi), `'Rezervasyonum (aktif)'` (renk
+> göstergesi — kardeşi `rezBenimGecti` çevriliydi, bu değildi) ve
+> `'Bu dairede aktif sakin yok'` (ziyaretçi formu hatası). Dördü de ARB'ye
+> alındı (7 dil).
+
+> **DEDEKTÖRÜN ÜÇ YANLIŞ ALARMI DA DÜZELTİLDİ** — sayıları değil, *sınıfları*
+> önemli:
+> 1. **Tırnak eşleştirme.** `ad: '', role: ''` satırında regex ikinci ve
+>    üçüncü tırnağı eşleştirip `", role: "` diye **olmayan bir dizge**
+>    uyduruyordu → karakter karakter yürüyen ayıklayıcı.
+> 2. **İç içe tırnaklı enterpolasyon.** `'${x ? '' : l10n.y}'` hiçbir
+>    ayıklayıcıyla doğru bölünemez; `${` içeren satır atlanır (öyle bir satır
+>    zaten ifadeden metin üretiyordur, olası sabit parçası sürüşün TR sızıntı
+>    kilidine takılır).
+> 3. **Satır sonu yorumu.** `// "ad (rol)" ...` yorumu dizge sanılıyordu.
+
+> **BİLEREK DIŞARIDA:** `PICCData` (NXP SDM protokol alanı) ve
+> `'(Kurulum bekliyor)'` — bu ikincisi **sunucunun yazdığı yer tutucu
+> DEĞER**; ekranda gösterilmez, yalnızca "alan hâlâ varsayılan mı"
+> karşılaştırmasında kullanılır. Çevrilirse karşılaştırma bozulur.
+
 **TUR 45 — PUSH BİLDİRİMİ GELİŞİNİ SÜR.** Tur 36 envanterinin son açık
 maddesi.
 

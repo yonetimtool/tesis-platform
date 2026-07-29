@@ -4066,4 +4066,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ortakGoster => 'View';
+
+  @override
+  String get talepRedBaslik => 'Reject request';
+
+  @override
+  String get ziyaretciDaireSakinYok => 'No active resident in this unit';
 }

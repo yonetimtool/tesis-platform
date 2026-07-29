@@ -1612,7 +1612,7 @@ class _DeclineSheetState extends ConsumerState<_DeclineSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Talebi reddet',
+              context.l10n.talepRedBaslik,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
@@ -1654,7 +1654,9 @@ class _DeclineSheetState extends ConsumerState<_DeclineSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.cancel_outlined),
-                label: Text(_saving ? 'Reddediliyor...' : 'Reddet'),
+                label: Text(_saving
+                    ? context.l10n.talepReddediliyor
+                    : context.l10n.talepReddet),
               ),
             ),
           ],

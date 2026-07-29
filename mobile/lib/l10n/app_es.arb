@@ -1170,5 +1170,7 @@
   "ortakParolayiGizle": "Ocultar contraseña",
   "ortakFotograf": "Foto",
   "ortakFotografiBuyut": "Ampliar la foto",
-  "ortakGoster": "Ver"
+  "ortakGoster": "Ver",
+  "talepRedBaslik": "Rechazar solicitud",
+  "ziyaretciDaireSakinYok": "No hay residente activo en esta unidad"
 }

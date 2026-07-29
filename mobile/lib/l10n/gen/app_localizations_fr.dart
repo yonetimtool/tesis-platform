@@ -4028,4 +4028,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ortakGoster => 'Afficher';
+
+  @override
+  String get talepRedBaslik => 'Rejeter la demande';
+
+  @override
+  String get ziyaretciDaireSakinYok => 'Aucun résident actif dans ce logement';
 }

@@ -1170,5 +1170,7 @@
   "ortakParolayiGizle": "إخفاء كلمة المرور",
   "ortakFotograf": "صورة",
   "ortakFotografiBuyut": "تكبير الصورة",
-  "ortakGoster": "عرض"
+  "ortakGoster": "عرض",
+  "talepRedBaslik": "رفض الطلب",
+  "ziyaretciDaireSakinYok": "لا يوجد ساكن نشط في هذه الوحدة"
 }

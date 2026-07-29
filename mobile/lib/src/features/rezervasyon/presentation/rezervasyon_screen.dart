@@ -1047,7 +1047,7 @@ class _SlotLegend extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Wrap(spacing: 12, runSpacing: 4, children: [
-        item(_slotYesil, 'Rezervasyonum (aktif)'),
+        item(_slotYesil, context.l10n.rezBenimAktif),
         item(_slotKirmizi, context.l10n.rezBenimGecti),
         item(Colors.blueGrey, context.l10n.rezDoluBaskasi),
       ]),

@@ -1660,5 +1660,7 @@
   "ortakParolayiGizle": "Parolayı gizle",
   "ortakFotograf": "Fotoğraf",
   "ortakFotografiBuyut": "Fotoğrafı büyüt",
-  "ortakGoster": "Göster"
+  "ortakGoster": "Göster",
+  "talepRedBaslik": "Talebi reddet",
+  "ziyaretciDaireSakinYok": "Bu dairede aktif sakin yok"
 }

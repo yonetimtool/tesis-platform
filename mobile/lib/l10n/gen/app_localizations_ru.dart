@@ -4137,4 +4137,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ortakGoster => 'Открыть';
+
+  @override
+  String get talepRedBaslik => 'Отклонить обращение';
+
+  @override
+  String get ziyaretciDaireSakinYok => 'В этой квартире нет активных жильцов';
 }

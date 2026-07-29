@@ -1170,5 +1170,7 @@
   "ortakParolayiGizle": "Скрыть пароль",
   "ortakFotograf": "Фото",
   "ortakFotografiBuyut": "Увеличить фото",
-  "ortakGoster": "Открыть"
+  "ortakGoster": "Открыть",
+  "talepRedBaslik": "Отклонить обращение",
+  "ziyaretciDaireSakinYok": "В этой квартире нет активных жильцов"
 }

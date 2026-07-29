@@ -3882,4 +3882,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ortakGoster => 'Göster';
+
+  @override
+  String get talepRedBaslik => 'Talebi reddet';
+
+  @override
+  String get ziyaretciDaireSakinYok => 'Bu dairede aktif sakin yok';
 }

@@ -4157,4 +4157,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ortakGoster => 'عرض';
+
+  @override
+  String get talepRedBaslik => 'رفض الطلب';
+
+  @override
+  String get ziyaretciDaireSakinYok => 'لا يوجد ساكن نشط في هذه الوحدة';
 }
