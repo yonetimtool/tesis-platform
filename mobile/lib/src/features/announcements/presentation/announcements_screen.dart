@@ -556,7 +556,8 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                       size: 20,
                     ),
                     const SizedBox(width: 8),
-                    Text(l10n.etkGorselAlan),
+                    // Uzun ceviri (ru/de) 320 dp'de satiri tasiriyordu (tur 38).
+                    Expanded(child: Text(l10n.etkGorselAlan)),
                   ],
                 ),
                 if (_photoPath != null) ...[
@@ -592,6 +593,8 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                         _photoPath == null
                             ? l10n.gorevKamera
                             : l10n.gorevYenidenCek,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     TextButton.icon(
@@ -599,19 +602,31 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                           ? null
                           : () => _pickAndUploadPhoto(ImageSource.gallery),
                       icon: const Icon(Icons.photo_library_outlined),
-                      label: Text(l10n.gorevGaleridenSec),
+                      label: Text(
+                        l10n.gorevGaleridenSec,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     if (_photoPath != null && _fotoKey == null)
                       TextButton.icon(
                         onPressed: _photoBusy || _saving ? null : _retryUpload,
                         icon: const Icon(Icons.refresh),
-                        label: Text(l10n.gorevTekrarYukle),
+                        label: Text(
+                          l10n.gorevTekrarYukle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     if (_photoPath != null)
                       TextButton.icon(
                         onPressed: _photoBusy || _saving ? null : _removePhoto,
                         icon: const Icon(Icons.delete_outline),
-                        label: Text(l10n.gorevKaldir),
+                        label: Text(
+                          l10n.gorevKaldir,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                   ],
                 ),

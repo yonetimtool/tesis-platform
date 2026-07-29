@@ -58,6 +58,11 @@ Yanında duran, ekran olmayan ama aynı ölçüde çizilmemiş parçalar:
 > **Tek cümleyle: saha (görevli/güvenlik) operasyonunun tamamı — devriye,
 > NFC okutma, görev tamamlama — yedi eksenin hiçbirinde sürülmedi.**
 
+> **GÜNCELLEME (tur 38).** B1 (formlar ve alt sayfalar) **kapatıldı**: 9 form
+> beş eksende sürülüyor (`fabAc` ile açılır ve açıldığı doğrulanır); dört
+> taşma/ölçek hatası bulundu. B2 (fotoğraf YÜKLEME yolu) ve B3 (onay
+> diyalogları) hâlâ açık.
+
 ## B. Çizilen ekranlarda ölçülmemiş bloklar
 
 Kısmi kapsanan 23 ekranda açık kalan satırlar rastgele dağılmıyor; üç

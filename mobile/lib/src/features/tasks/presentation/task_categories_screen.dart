@@ -79,14 +79,16 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
     try {
       await ref.read(taskCategoryApiProvider).create(ad);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.gorevKategoriEklendi(ad))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.gorevKategoriEklendi(ad))));
       await _yenile();
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.gorevKategoriEklenemedi(apiHataMetni(l10n, e)))),
+        SnackBar(
+          content: Text(l10n.gorevKategoriEklenemedi(apiHataMetni(l10n, e))),
+        ),
       );
     }
   }
@@ -121,7 +123,9 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.gorevKategoriSilinemedi(apiHataMetni(l10n, e)))),
+        SnackBar(
+          content: Text(l10n.gorevKategoriSilinemedi(apiHataMetni(l10n, e))),
+        ),
       );
     }
   }
@@ -132,7 +136,8 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
     final liste = _kategoriler;
     return Scaffold(
       appBar: AppBar(
-          title: Text(baslikBuyuk(l10n.gorevKategorileriBaslik, context.dilKodu))),
+        title: Text(baslikBuyuk(l10n.gorevKategorileriBaslik, context.dilKodu)),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _ekle,
         icon: const Icon(Icons.add),

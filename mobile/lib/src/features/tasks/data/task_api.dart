@@ -98,10 +98,7 @@ class TaskApi {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/uploads/presign',
-        data: {
-          'content_type': contentType,
-          'dosya_adi': ?dosyaAdi,
-        },
+        data: {'content_type': contentType, 'dosya_adi': ?dosyaAdi},
       );
       return PresignTicket.fromJson(res.data ?? const {});
     } on DioException catch (e) {
@@ -133,7 +130,6 @@ class TaskApi {
     }
   }
 }
-
 
 extension TaskManageApi on TaskApi {
   /// `POST /tasks` — gorev olustur (admin + yonetici; auth.md §4).
@@ -181,7 +177,11 @@ extension TaskManageApi on TaskApi {
       while (true) {
         final res = await _dio.get<Map<String, dynamic>>(
           '/users',
-          queryParameters: {'limit': limit, 'offset': offset, 'is_active': true},
+          queryParameters: {
+            'limit': limit,
+            'offset': offset,
+            'is_active': true,
+          },
         );
         final items = res.data?['items'];
         if (items is! List || items.isEmpty) break;

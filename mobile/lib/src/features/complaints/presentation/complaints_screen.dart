@@ -1137,8 +1137,10 @@ class _AddPhotoTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        width: 96,
-        height: 96,
+        // Kutu YAZI OLCEGIYLE buyur: 96x96 sabitken 2.0x olcekte icerik
+        // 30 px tasiyordu (tur 38). Ust sinir izgarayi bozmayacak kadar.
+        width: MediaQuery.textScalerOf(context).scale(96).clamp(96.0, 150.0),
+        height: MediaQuery.textScalerOf(context).scale(96).clamp(96.0, 150.0),
         decoration: BoxDecoration(
           border: Border.all(color: color),
           borderRadius: BorderRadius.circular(8),
@@ -1150,9 +1152,14 @@ class _AddPhotoTile extends StatelessWidget {
             children: [
               const Icon(Icons.add_a_photo_outlined),
               const SizedBox(height: 4),
-              Text(
-                context.l10n.ortakEkle,
-                style: Theme.of(context).textTheme.bodySmall,
+              Flexible(
+                child: Text(
+                  context.l10n.ortakEkle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ),
             ],
           ),

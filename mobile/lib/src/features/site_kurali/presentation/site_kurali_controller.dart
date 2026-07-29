@@ -19,6 +19,7 @@ class SiteKuraliState {
   });
 
   final bool loading;
+
   /// Hata KANALI ikilidir (README §15): [errorMessage] SUNUCU metnini,
   /// [hataKimligi] yerellestirilebilir kimligi tasir (denetleyicide
   /// `BuildContext` yok).
@@ -42,8 +43,8 @@ class SiteKuraliState {
   List<SiteKurali> get suzulmus => sorgu.trim().isEmpty
       ? items
       : items
-          .where((k) => k.baslikEslesir(sorgu.trim()))
-          .toList(growable: false);
+            .where((k) => k.baslikEslesir(sorgu.trim()))
+            .toList(growable: false);
 
   SiteKuraliState copyWith({
     bool? loading,
@@ -146,5 +147,5 @@ class SiteKuraliController extends Notifier<SiteKuraliState> {
 
 final siteKuraliControllerProvider =
     NotifierProvider<SiteKuraliController, SiteKuraliState>(
-  SiteKuraliController.new,
-);
+      SiteKuraliController.new,
+    );

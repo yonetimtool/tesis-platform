@@ -11,7 +11,7 @@ import '../../../core/i18n/l10n.dart';
 import '../domain/kargo_models.dart';
 
 String kargoDurumAdi(AppLocalizations l10n, KargoDurum d) => switch (d) {
-      KargoDurum.bekliyor => l10n.devriyeDurumBekliyor,
-      KargoDurum.teslimAlindi => l10n.kargoDurumTeslimAlindi,
-      KargoDurum.unknown => l10n.devriyeDurumBilinmiyor,
-    };
+  KargoDurum.bekliyor => l10n.devriyeDurumBekliyor,
+  KargoDurum.teslimAlindi => l10n.kargoDurumTeslimAlindi,
+  KargoDurum.unknown => l10n.devriyeDurumBilinmiyor,
+};

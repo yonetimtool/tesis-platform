@@ -77,8 +77,10 @@ class SiteKuraliScreen extends ConsumerWidget {
     );
   }
 
-  static Future<void> _openForm(BuildContext context,
-      {SiteKurali? mevcut}) async {
+  static Future<void> _openForm(
+    BuildContext context, {
+    SiteKurali? mevcut,
+  }) async {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -133,8 +135,8 @@ class _Body extends ConsumerWidget {
               state.sorgu.trim().isNotEmpty
                   ? l10n.kuralAramaBos
                   : state.canManage
-                      ? l10n.kuralYokYonetim
-                      : l10n.kuralYokSakin,
+                  ? l10n.kuralYokYonetim
+                  : l10n.kuralYokSakin,
               textAlign: TextAlign.center,
             ),
           ),
@@ -144,10 +146,8 @@ class _Body extends ConsumerWidget {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
       itemCount: items.length,
-      itemBuilder: (context, i) => _KuralCard(
-        kural: items[i],
-        canManage: state.canManage,
-      ),
+      itemBuilder: (context, i) =>
+          _KuralCard(kural: items[i], canManage: state.canManage),
     );
   }
 }
@@ -196,8 +196,11 @@ class _KuralCard extends ConsumerWidget {
 }
 
 /// Detay alt sayfasi — tam metin + gorsel; yonetimde duzenle/sil.
-void _showDetail(BuildContext context, SiteKurali k,
-    {required bool canManage}) {
+void _showDetail(
+  BuildContext context,
+  SiteKurali k, {
+  required bool canManage,
+}) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -211,91 +214,89 @@ void _showDetail(BuildContext context, SiteKurali k,
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              Row(
-                children: [
-                  const Icon(Icons.gavel_outlined),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      k.baslik,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(k.icerik),
-              if (k.fotoUrl != null) ...[
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    k.fotoUrl!,
-                    // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
-                    semanticLabel: context.l10n.ortakFotograf,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, progress) =>
-                        progress == null
-                            ? child
-                            : const SizedBox(
-                                height: 180,
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                    errorBuilder: (_, _, _) => Container(
-                      height: 48,
-                      // YON-DUYARLI: Arapca'da saga hizalanir.
-                      alignment: AlignmentDirectional.centerStart,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      color: Theme.of(context)
-                          .colorScheme
-                          .surfaceContainerHighest,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.broken_image_outlined, size: 20),
-                          const SizedBox(width: 8),
-                          // Dar ekranda (320 dp) satira sigmiyor — sar.
-                          Expanded(child: Text(l10n.talepGorselYuklenemedi)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-              if (canManage) ...[
-                const Divider(height: 24),
                 Row(
                   children: [
+                    const Icon(Icons.gavel_outlined),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.edit_outlined),
-                        label: Text(l10n.ortakDuzenle),
-                        onPressed: () async {
-                          Navigator.of(sheetContext).pop();
-                          await showModalBottomSheet<bool>(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (_) => _KuralForm(mevcut: k),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _DeleteButton(
-                        kural: k,
-                        onDeleted: () => Navigator.of(sheetContext).pop(),
+                      child: Text(
+                        k.baslik,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ],
+                const SizedBox(height: 12),
+                Text(k.icerik),
+                if (k.fotoUrl != null) ...[
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      k.fotoUrl!,
+                      // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+                      semanticLabel: context.l10n.ortakFotograf,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, progress) =>
+                          progress == null
+                          ? child
+                          : const SizedBox(
+                              height: 180,
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                      errorBuilder: (_, _, _) => Container(
+                        height: 48,
+                        // YON-DUYARLI: Arapca'da saga hizalanir.
+                        alignment: AlignmentDirectional.centerStart,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.broken_image_outlined, size: 20),
+                            const SizedBox(width: 8),
+                            // Dar ekranda (320 dp) satira sigmiyor — sar.
+                            Expanded(child: Text(l10n.talepGorselYuklenemedi)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                if (canManage) ...[
+                  const Divider(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.edit_outlined),
+                          label: Text(l10n.ortakDuzenle),
+                          onPressed: () async {
+                            Navigator.of(sheetContext).pop();
+                            await showModalBottomSheet<bool>(
+                              context: context,
+                              isScrollControlled: true,
+                              builder: (_) => _KuralForm(mevcut: k),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _DeleteButton(
+                          kural: k,
+                          onDeleted: () => Navigator.of(sheetContext).pop(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -345,12 +346,12 @@ class _DeleteButton extends ConsumerWidget {
           await ref
               .read(siteKuraliControllerProvider.notifier)
               .delete(kural.id);
-          messenger.showSnackBar(
-            SnackBar(content: Text(l10n.kuralSilindi)),
-          );
+          messenger.showSnackBar(SnackBar(content: Text(l10n.kuralSilindi)));
           onDeleted();
         } on ApiException catch (e) {
-          messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+          messenger.showSnackBar(
+            SnackBar(content: Text(apiHataMetni(l10n, e))),
+          );
         }
       },
     );
@@ -374,8 +375,9 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
   final _formKey = GlobalKey<FormState>();
   late final _baslik = TextEditingController(text: widget.mevcut?.baslik);
   late final _icerik = TextEditingController(text: widget.mevcut?.icerik);
-  late final _sira =
-      TextEditingController(text: widget.mevcut?.sira.toString() ?? '0');
+  late final _sira = TextEditingController(
+    text: widget.mevcut?.sira.toString() ?? '0',
+  );
   bool _busy = false;
   String? _hata;
 
@@ -408,7 +410,9 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
       _photoError = null;
     });
     try {
-      final file = await ref.read(imagePickerProvider).pickImage(
+      final file = await ref
+          .read(imagePickerProvider)
+          .pickImage(
             source: source,
             // Kural gorseli icin cozunurluk/kalite dusurulur (yukleme boyutu).
             maxWidth: 1600,
@@ -528,7 +532,9 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
     // Mevcut/yeni gorsel gostergesi: yeni secim onizlenir; duzenlemede
     // secim yoksa mevcut foto_key'in varligi metinle belirtilir.
     final mevcutFotoVar =
-        widget.mevcut?.fotoKey != null && !_fotoKaldirildi && _photoPath == null;
+        widget.mevcut?.fotoKey != null &&
+        !_fotoKaldirildi &&
+        _photoPath == null;
     return Padding(
       padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + viewInsets.bottom),
       child: Form(
@@ -542,8 +548,10 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
                 widget.mevcut == null
                     ? l10n.kuralYeni
                     : l10n.kuralDuzenleBaslik,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -600,9 +608,11 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
                   const SizedBox(width: 8),
                   // Dar ekranda satira sigmayabilir (uzun ceviriler) — sar.
                   Expanded(
-                    child: Text(mevcutFotoVar
-                        ? l10n.kuralMevcutGorsel
-                        : l10n.etkGorselAlan),
+                    child: Text(
+                      mevcutFotoVar
+                          ? l10n.kuralMevcutGorsel
+                          : l10n.etkGorselAlan,
+                    ),
                   ),
                 ],
               ),
@@ -635,22 +645,32 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null
-                        ? l10n.gorevKamera
-                        : l10n.gorevYenidenCek),
+                    label: Text(
+                      _photoPath == null
+                          ? l10n.gorevKamera
+                          : l10n.gorevYenidenCek,
+                    ),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _busy
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: Text(l10n.gorevGaleridenSec),
+                    label: Text(
+                      l10n.gorevGaleridenSec,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   if (_photoPath != null || mevcutFotoVar)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _removePhoto,
                       icon: const Icon(Icons.delete_outline),
-                      label: Text(l10n.gorevKaldir),
+                      label: Text(
+                        l10n.gorevKaldir,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                 ],
               ),
@@ -669,9 +689,11 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.post_add_outlined),
-                  label: Text(widget.mevcut == null
-                      ? l10n.kuralEkleButon
-                      : l10n.ortakKaydet),
+                  label: Text(
+                    widget.mevcut == null
+                        ? l10n.kuralEkleButon
+                        : l10n.ortakKaydet,
+                  ),
                   onPressed: _busy ? null : _submit,
                 ),
               ),

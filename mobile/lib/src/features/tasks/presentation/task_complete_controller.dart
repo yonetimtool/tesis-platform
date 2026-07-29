@@ -90,19 +90,20 @@ class TaskCompleteState {
       draft: draft ?? this.draft,
       nfcReading: nfcReading ?? this.nfcReading,
       nfcError: nfcError == _sentinel ? this.nfcError : nfcError as String?,
-      nfcKimlik:
-          nfcKimlik == _sentinel ? this.nfcKimlik : nfcKimlik as NfcHatasi?,
+      nfcKimlik: nfcKimlik == _sentinel
+          ? this.nfcKimlik
+          : nfcKimlik as NfcHatasi?,
       nfcKimlikDetay: nfcKimlikDetay == _sentinel
           ? this.nfcKimlikDetay
           : nfcKimlikDetay as String?,
       nfcHata: nfcHata == _sentinel
           ? this.nfcHata
           : nfcHata as GorevAkisHatasi?,
-      photoPath:
-          photoPath == _sentinel ? this.photoPath : photoPath as String?,
+      photoPath: photoPath == _sentinel ? this.photoPath : photoPath as String?,
       photoBusy: photoBusy ?? this.photoBusy,
-      photoError:
-          photoError == _sentinel ? this.photoError : photoError as String?,
+      photoError: photoError == _sentinel
+          ? this.photoError
+          : photoError as String?,
       photoHata: photoHata == _sentinel
           ? this.photoHata
           : photoHata as GorevAkisHatasi?,
@@ -113,7 +114,9 @@ class TaskCompleteState {
       submitHata: submitHata == _sentinel
           ? this.submitHata
           : submitHata as GorevAkisHatasi?,
-      result: result == _sentinel ? this.result : result as TaskCompletionResult?,
+      result: result == _sentinel
+          ? this.result
+          : result as TaskCompletionResult?,
     );
   }
 
@@ -177,7 +180,9 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
     if (state.photoBusy) return;
     state = state.copyWith(photoBusy: true, photoError: null);
     try {
-      final file = await ref.read(imagePickerProvider).pickImage(
+      final file = await ref
+          .read(imagePickerProvider)
+          .pickImage(
             source: source,
             // Kanit fotosu icin cozunurluk/kalite dusurulur (yukleme boyutu).
             maxWidth: 1600,
@@ -294,12 +299,14 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
       return;
     }
     if (state.fotoBekliyor) {
-      state = state.copyWith(
-          submitHata: GorevAkisHatasi.fotoHenuzYuklenmedi);
+      state = state.copyWith(submitHata: GorevAkisHatasi.fotoHenuzYuklenmedi);
       return;
     }
     state = state.copyWith(
-        submitting: true, submitError: null, submitHata: null);
+      submitting: true,
+      submitError: null,
+      submitHata: null,
+    );
     try {
       final result = await _api.submitCompletion(state.draft);
       if (!ref.mounted) return;
@@ -350,7 +357,7 @@ class TaskCompleteController extends Notifier<TaskCompleteState> {
 
 final imagePickerProvider = Provider<ImagePicker>((ref) => ImagePicker());
 
-final taskCompleteControllerProvider = NotifierProvider.family<
-    TaskCompleteController, TaskCompleteState, String>(
-  TaskCompleteController.new,
-);
+final taskCompleteControllerProvider =
+    NotifierProvider.family<TaskCompleteController, TaskCompleteState, String>(
+      TaskCompleteController.new,
+    );

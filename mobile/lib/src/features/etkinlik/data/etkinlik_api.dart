@@ -83,10 +83,7 @@ class EtkinlikApi {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/uploads/presign',
-        data: {
-          'content_type': contentType,
-          'dosya_adi': ?dosyaAdi,
-        },
+        data: {'content_type': contentType, 'dosya_adi': ?dosyaAdi},
       );
       return PresignTicket.fromJson(res.data ?? const {});
     } on DioException catch (e) {
@@ -171,7 +168,8 @@ final etkinlikApiProvider = Provider<EtkinlikApi>((ref) {
 /// Sakin ana ekraninin "Etkinlikler" bolumu — YAKLASAN etkinlikler (sunucu
 /// suzer: `?aktif=true`, en yakin once). Bolum 3 kayit gosterir; "Tümünü Gör"
 /// tam listeye gider. Hata → bolum sessizce gizlenir (ana ekran rehin degil).
-final yaklasanEtkinliklerProvider =
-    FutureProvider.autoDispose<List<Etkinlik>>((ref) {
+final yaklasanEtkinliklerProvider = FutureProvider.autoDispose<List<Etkinlik>>((
+  ref,
+) {
   return ref.watch(etkinlikApiProvider).fetchYaklasan(limit: 3);
 });

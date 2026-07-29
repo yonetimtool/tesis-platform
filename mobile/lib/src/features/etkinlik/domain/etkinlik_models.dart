@@ -91,23 +91,25 @@ class Etkinlik {
       tarih.isBefore(DateTime.now()) && bitis.isAfter(DateTime.now());
 
   factory Etkinlik.fromJson(Map<String, dynamic> json) => Etkinlik(
-        id: json['id'] as String? ?? '',
-        baslik: json['baslik'] as String? ?? '',
-        aciklama: json['aciklama'] as String? ?? '',
-        tarih: DateTime.tryParse(json['tarih'] as String? ?? '') ??
-            DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-        bitisZamani: DateTime.tryParse(json['bitis_zamani'] as String? ?? ''),
-        konum: json['konum'] as String?,
-        fotoKey: json['foto_key'] as String?,
-        fotoUrl: json['foto_url'] as String?,
-        olusturanUserId: json['olusturan_user_id'] as String? ?? '',
-        olusturanAd: json['olusturan_ad'] as String?,
-        katiliyorumSayisi: (json['katiliyorum_sayisi'] as num?)?.toInt() ?? 0,
-        katilmiyorumSayisi: (json['katilmiyorum_sayisi'] as num?)?.toInt() ?? 0,
-        benimDurumum: KatilimDurum.fromWire(json['benim_durumum'] as String?),
-        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
-            DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-      );
+    id: json['id'] as String? ?? '',
+    baslik: json['baslik'] as String? ?? '',
+    aciklama: json['aciklama'] as String? ?? '',
+    tarih:
+        DateTime.tryParse(json['tarih'] as String? ?? '') ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    bitisZamani: DateTime.tryParse(json['bitis_zamani'] as String? ?? ''),
+    konum: json['konum'] as String?,
+    fotoKey: json['foto_key'] as String?,
+    fotoUrl: json['foto_url'] as String?,
+    olusturanUserId: json['olusturan_user_id'] as String? ?? '',
+    olusturanAd: json['olusturan_ad'] as String?,
+    katiliyorumSayisi: (json['katiliyorum_sayisi'] as num?)?.toInt() ?? 0,
+    katilmiyorumSayisi: (json['katilmiyorum_sayisi'] as num?)?.toInt() ?? 0,
+    benimDurumum: KatilimDurum.fromWire(json['benim_durumum'] as String?),
+    createdAt:
+        DateTime.tryParse(json['created_at'] as String? ?? '') ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+  );
 }
 
 /// `POST /events` / `PATCH /events/{id}` govdesi (yonetim).
@@ -142,15 +144,15 @@ class EtkinlikDraft {
   final bool fotoKeyKaldir;
 
   Map<String, dynamic> toJson() => {
-        'baslik': baslik,
-        'aciklama': aciklama,
-        'tarih': tarih.toUtc().toIso8601String(),
-        if (bitisZamani != null)
-          'bitis_zamani': bitisZamani!.toUtc().toIso8601String(),
-        if (konum != null && konum!.isNotEmpty) 'konum': konum,
-        if (fotoKey != null)
-          'foto_key': fotoKey
-        else if (fotoKeyKaldir)
-          'foto_key': null,
-      };
+    'baslik': baslik,
+    'aciklama': aciklama,
+    'tarih': tarih.toUtc().toIso8601String(),
+    if (bitisZamani != null)
+      'bitis_zamani': bitisZamani!.toUtc().toIso8601String(),
+    if (konum != null && konum!.isNotEmpty) 'konum': konum,
+    if (fotoKey != null)
+      'foto_key': fotoKey
+    else if (fotoKeyKaldir)
+      'foto_key': null,
+  };
 }

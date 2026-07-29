@@ -25,9 +25,9 @@ enum KargoDurum {
   final String wire;
 
   static KargoDurum fromWire(String? value) => KargoDurum.values.firstWhere(
-        (d) => d.wire == value,
-        orElse: () => KargoDurum.unknown,
-      );
+    (d) => d.wire == value,
+    orElse: () => KargoDurum.unknown,
+  );
 }
 
 class Kargo {
@@ -80,24 +80,25 @@ class Kargo {
   bool get bekliyor => durum == KargoDurum.bekliyor;
 
   factory Kargo.fromJson(Map<String, dynamic> json) => Kargo(
-        id: json['id'] as String? ?? '',
-        unitId: json['unit_id'] as String? ?? '',
-        unitNo: json['unit_no'] as String?,
-        firma: json['firma'] as String? ?? '',
-        fotoKey: json['foto_key'] as String?,
-        fotoUrl: json['foto_url'] as String?,
-        notlar: json['notlar'] as String?,
-        durum: KargoDurum.fromWire(json['durum'] as String?),
-        kaydedenUserId: json['kaydeden_user_id'] as String? ?? '',
-        kaydedenAd: json['kaydeden_ad'] as String?,
-        teslimAlanUserId: json['teslim_alan_user_id'] as String?,
-        teslimAlanAd: json['teslim_alan_ad'] as String?,
-        teslimZamani: json['teslim_zamani'] == null
-            ? null
-            : DateTime.tryParse(json['teslim_zamani'] as String? ?? ''),
-        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
-            DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-      );
+    id: json['id'] as String? ?? '',
+    unitId: json['unit_id'] as String? ?? '',
+    unitNo: json['unit_no'] as String?,
+    firma: json['firma'] as String? ?? '',
+    fotoKey: json['foto_key'] as String?,
+    fotoUrl: json['foto_url'] as String?,
+    notlar: json['notlar'] as String?,
+    durum: KargoDurum.fromWire(json['durum'] as String?),
+    kaydedenUserId: json['kaydeden_user_id'] as String? ?? '',
+    kaydedenAd: json['kaydeden_ad'] as String?,
+    teslimAlanUserId: json['teslim_alan_user_id'] as String?,
+    teslimAlanAd: json['teslim_alan_ad'] as String?,
+    teslimZamani: json['teslim_zamani'] == null
+        ? null
+        : DateTime.tryParse(json['teslim_zamani'] as String? ?? ''),
+    createdAt:
+        DateTime.tryParse(json['created_at'] as String? ?? '') ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+  );
 }
 
 /// `POST /kargo` govdesi (yalniz guvenlik). Daire NUMARASIYLA girilir
@@ -119,9 +120,9 @@ class KargoDraft {
   final String? notlar;
 
   Map<String, dynamic> toJson() => {
-        'firma': firma,
-        'unit_no': unitNo,
-        if (fotoKey != null) 'foto_key': fotoKey,
-        if (notlar != null && notlar!.isNotEmpty) 'notlar': notlar,
-      };
+    'firma': firma,
+    'unit_no': unitNo,
+    if (fotoKey != null) 'foto_key': fotoKey,
+    if (notlar != null && notlar!.isNotEmpty) 'notlar': notlar,
+  };
 }

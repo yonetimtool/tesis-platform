@@ -537,4 +537,18 @@ void main() {
       },
     );
   });
+
+  // ---- TUR 38: FORMLAR VE ALT SAYFALAR ----
+  // Tur 36 envanteri: surusler listeyi ciziyor, FORMU ACMIYORDU. Olusturma
+  // formlari `FAB -> showModalBottomSheet` deseniyle acilir; `fabAc` bunu
+  // dilden bagimsiz yapar.
+  testWidgets('FORM: duyuru olusturma alt sayfasi (bes eksen)', (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _duyuruEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: fabAc);
+  });
+  testWidgets('FORM: site kurali olusturma alt sayfasi (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _kuralEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: fabAc);
+  });
 }

@@ -541,4 +541,11 @@ void main() {
       veri: surusVerisi,
     );
   });
+
+  // ---- TUR 38: FORMLAR VE ALT SAYFALAR ----
+  testWidgets('FORM: destek yeni talep alt sayfasi (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _destekEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: fabAc);
+  });
 }

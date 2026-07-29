@@ -26,6 +26,7 @@ class TasksState {
   });
 
   final bool loading;
+
   /// Hata KANALI ikilidir: `errorMessage` SUNUCU metnini, `hataKimligi`
   /// yerellestirilebilir KIMLIGI tasir (bkz. domain/*_hata.dart). Ekran once
   /// kimligi cozer (`*HatasiCoz`), yoksa sunucu metnini gosterir.
@@ -131,14 +132,20 @@ class TasksController extends Notifier<TasksState> {
     final done = Completer<void>();
     _inflight = done.future;
     if (!silent) {
-      state = state.copyWith(loading: true, errorMessage: null, hataKimligi: null);
+      state = state.copyWith(
+        loading: true,
+        errorMessage: null,
+        hataKimligi: null,
+      );
     }
     try {
       // JWT sub yalnizca "Sana atanmis" rozeti icin ("Tumu" gorunumunde);
       // suzme artik sunucuda.
       final userId = await ref.read(currentUserIdProvider.future);
       final role = await ref.read(currentUserRoleProvider.future);
-      final tasks = await ref.read(taskApiProvider).fetchTasks(
+      final tasks = await ref
+          .read(taskApiProvider)
+          .fetchTasks(
             kategoriFilter: state.kategoriFilter,
             assignedToMe: state.sadeceBenim,
           );
@@ -218,5 +225,6 @@ class TasksController extends Notifier<TasksState> {
   }
 }
 
-final tasksControllerProvider =
-    NotifierProvider<TasksController, TasksState>(TasksController.new);
+final tasksControllerProvider = NotifierProvider<TasksController, TasksState>(
+  TasksController.new,
+);

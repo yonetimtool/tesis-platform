@@ -221,7 +221,12 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
             maxLength: 4000,
           ),
           const SizedBox(height: 8),
-          Row(
+          // `Row` -> `Wrap`: Rusca "Прикрепить изображение" 320 dp'de satiri
+          // 60 px tasiriyordu (tur 38). Dar ekranda dugmeler alt satira gecer.
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               if (_onizleme != null) ...[
                 ClipRRect(
@@ -229,7 +234,6 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
                   child: Image.memory(_onizleme!,
                       width: 56, height: 56, fit: BoxFit.cover),
                 ),
-                const SizedBox(width: 8),
               ],
               OutlinedButton.icon(
                 onPressed: _fotoYukleniyor ? null : _fotoSecMenu,
@@ -240,9 +244,13 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2.5),
                       )
                     : const Icon(Icons.image_outlined, size: 18),
-                label: Text(_onizleme == null
-                    ? l10n.destekGorselEkle
-                    : l10n.destekGorseliDegistir),
+                label: Text(
+                  _onizleme == null
+                      ? l10n.destekGorselEkle
+                      : l10n.destekGorseliDegistir,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               if (_onizleme != null)
                 TextButton(

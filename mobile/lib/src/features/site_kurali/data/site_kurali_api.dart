@@ -120,10 +120,7 @@ class SiteKuraliApi {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/uploads/presign',
-        data: {
-          'content_type': contentType,
-          'dosya_adi': ?dosyaAdi,
-        },
+        data: {'content_type': contentType, 'dosya_adi': ?dosyaAdi},
       );
       return PresignTicket.fromJson(res.data ?? const {});
     } on DioException catch (e) {
@@ -158,8 +155,9 @@ class SiteKuraliApi {
 /// Sakin ana ekraninin "Site Kuralları" bolumu — ilk kurallar (sunucu `sira`
 /// ASC dondurur; bolum 3 kayit gosterir, "Tümünü Gör" tam listeye gider).
 /// Hata → bolum sessizce gizlenir (ana ekran rehin degil).
-final anaEkranKurallariProvider =
-    FutureProvider.autoDispose<List<SiteKurali>>((ref) {
+final anaEkranKurallariProvider = FutureProvider.autoDispose<List<SiteKurali>>((
+  ref,
+) {
   return ref.watch(siteKuraliApiProvider).fetchIlk(limit: 3);
 });
 

@@ -28,14 +28,13 @@ String? gorevHatasiCoz(
   AppLocalizations l10n,
   GorevAkisHatasi? kimlik,
   String? sunucuMetni,
-) =>
-    kimlik != null ? gorevHataMetni(l10n, kimlik) : sunucuMetni;
+) => kimlik != null ? gorevHataMetni(l10n, kimlik) : sunucuMetni;
 
 /// `ApiException`in AG kimligini bu modulun kimligine cevirir (tur 13).
 /// Sunucu metni geldiyse null doner — o zaman metin kanali kullanilir.
 GorevAkisHatasi? gorevAgHatasi(ApiException e) => switch (e.agHatasi) {
-      AkisHatasi.zamanAsimi => GorevAkisHatasi.agZamanAsimi,
-      AkisHatasi.sunucuyaUlasilamadi => GorevAkisHatasi.agUlasilamadi,
-      AkisHatasi.beklenmeyen => GorevAkisHatasi.beklenmeyen,
-      null => null,
-    };
+  AkisHatasi.zamanAsimi => GorevAkisHatasi.agZamanAsimi,
+  AkisHatasi.sunucuyaUlasilamadi => GorevAkisHatasi.agUlasilamadi,
+  AkisHatasi.beklenmeyen => GorevAkisHatasi.beklenmeyen,
+  null => null,
+};

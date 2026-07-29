@@ -640,4 +640,10 @@ void main() {
       veri: surusVerisi,
     );
   });
+
+  // ---- TUR 38: FORMLAR VE ALT SAYFALAR ----
+  testWidgets('FORM: kargo kaydi alt sayfasi (bes eksen)', (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _kargoEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: fabAc);
+  });
 }

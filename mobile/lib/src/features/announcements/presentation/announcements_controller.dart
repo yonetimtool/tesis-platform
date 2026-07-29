@@ -18,6 +18,7 @@ class AnnouncementsState {
   });
 
   final bool loading;
+
   /// Hata KANALI ikilidir (README §15): [errorMessage] SUNUCU metnini,
   /// [hataKimligi] yerellestirilebilir kimligi tasir (denetleyicide
   /// `BuildContext` yok).
@@ -127,5 +128,5 @@ class AnnouncementsController extends Notifier<AnnouncementsState> {
 
 final announcementsControllerProvider =
     NotifierProvider<AnnouncementsController, AnnouncementsState>(
-  AnnouncementsController.new,
-);
+      AnnouncementsController.new,
+    );

@@ -943,7 +943,8 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  Text(context.l10n.etkGorselAlan),
+                  // Uzun ceviri (ru/de) 320 dp'de satiri tasiriyordu (tur 38).
+                  Expanded(child: Text(context.l10n.etkGorselAlan)),
                 ],
               ),
               if (_photoPath != null) ...[
@@ -989,19 +990,31 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                         ? null
                         : () => _fotoSecVeYukle(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: Text(context.l10n.gorevGaleridenSec),
+                    label: Text(
+                      context.l10n.gorevGaleridenSec,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   if (_fotoBekliyor)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _fotoTekrarYukle,
                       icon: const Icon(Icons.refresh),
-                      label: Text(context.l10n.gorevTekrarYukle),
+                      label: Text(
+                        context.l10n.gorevTekrarYukle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   if (_photoPath != null || _mevcutFotoUrl != null)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _fotoKaldir,
                       icon: const Icon(Icons.delete_outline),
-                      label: Text(context.l10n.gorevKaldir),
+                      label: Text(
+                        context.l10n.gorevKaldir,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                 ],
               ),

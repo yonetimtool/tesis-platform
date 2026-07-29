@@ -6,14 +6,15 @@ import 'task_tip_style.dart';
 
 /// Oncelik etiketi — KIMLIKTEN cizim aninda cozulur (bkz. task_tip_style.dart).
 String oncelikEtiketi(AppLocalizations l10n, TaskOncelik o) => switch (o) {
-      TaskOncelik.dusuk => l10n.gorevOncelikDusuk,
-      TaskOncelik.orta => l10n.gorevOncelikOrta,
-      TaskOncelik.yuksek => l10n.gorevOncelikYuksek,
-      TaskOncelik.yok => l10n.gorevOncelik,
-    };
+  TaskOncelik.dusuk => l10n.gorevOncelikDusuk,
+  TaskOncelik.orta => l10n.gorevOncelikOrta,
+  TaskOncelik.yuksek => l10n.gorevOncelikYuksek,
+  TaskOncelik.yok => l10n.gorevOncelik,
+};
 
 /// Talep durumu (wire) -> gorunen metin. Wire degerleri TEKNIK SABITTIR.
-String talepDurumEtiketi(AppLocalizations l10n, String durum) => switch (durum) {
+String talepDurumEtiketi(AppLocalizations l10n, String durum) =>
+    switch (durum) {
       'acik' => l10n.talepDurumAcik,
       'is_emri' => l10n.talepDurumIsEmri,
       'cozuldu' => l10n.talepDurumCozuldu,
@@ -41,9 +42,14 @@ class TalepGeldiChip extends StatelessWidget {
         children: [
           const Icon(Icons.report_problem_outlined, size: 14, color: color),
           const SizedBox(width: 4),
-          Text(context.l10n.gorevTaleptenGeldi,
-              style: const TextStyle(
-                  color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(
+            context.l10n.gorevTaleptenGeldi,
+            style: const TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -66,9 +72,14 @@ class OncelikBadge extends StatelessWidget {
         color: renk.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(oncelikEtiketi(context.l10n, kimlik),
-          style: TextStyle(
-              color: renk, fontSize: 12, fontWeight: FontWeight.w600)),
+      child: Text(
+        oncelikEtiketi(context.l10n, kimlik),
+        style: TextStyle(
+          color: renk,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -104,27 +115,38 @@ class TicketBaglamKarti extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.report_problem_outlined, size: 20, color: color),
+                const Icon(
+                  Icons.report_problem_outlined,
+                  size: 20,
+                  color: color,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(l10n.gorevBagliTalep,
-                      style: Theme.of(context).textTheme.bodyMedium),
+                  child: Text(
+                    l10n.gorevBagliTalep,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 ),
                 Text(
                   talepDurumEtiketi(l10n, ticket.durum),
-                  style:
-                      const TextStyle(color: color, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            Text(ticket.baslik,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              ticket.baslik,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
             if (alt.isNotEmpty) ...[
               const SizedBox(height: 2),
-              Text(alt,
-                  style: TextStyle(
-                      fontSize: 12, color: scheme.onSurfaceVariant)),
+              Text(
+                alt,
+                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+              ),
             ],
           ],
         ),

@@ -32,15 +32,17 @@ class TaskDetailScreen extends ConsumerWidget {
     final l10n = context.l10n;
     final dil = context.dilKodu;
     final state = ref.watch(taskCompleteControllerProvider(task.id));
-    final controller =
-        ref.read(taskCompleteControllerProvider(task.id).notifier);
+    final controller = ref.read(
+      taskCompleteControllerProvider(task.id).notifier,
+    );
     // Gorev tipi = kategori adi (kategori_id -> ad, listeden cozulur); null = Diğer.
     final kategoriler = ref.watch(taskCategoriesProvider).value;
     final adlar = (kategoriler ?? const [])
         .where((k) => k.id == task.kategoriId)
         .map((k) => k.ad);
     final style = taskKategoriStyle(
-        task.kategoriId == null || adlar.isEmpty ? null : adlar.first);
+      task.kategoriId == null || adlar.isEmpty ? null : adlar.first,
+    );
     // Tamamlama akisi yalniz saha rollerinde (auth.md §4: POST completion
     // admin/security/tesis_gorevlisi). Rol cozulene kadar (kisa storage
     // okumasi) akis gosterilir — backend yine de 403 ile korur.
@@ -100,10 +102,7 @@ class TaskDetailScreen extends ConsumerWidget {
                 case final hata?)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  hata,
-                  style: const TextStyle(color: Colors.red),
-                ),
+                child: Text(hata, style: const TextStyle(color: Colors.red)),
               ),
             FilledButton.icon(
               onPressed: state.submitting || state.photoBusy
@@ -117,7 +116,8 @@ class TaskDetailScreen extends ConsumerWidget {
                     )
                   : const Icon(Icons.check),
               label: Text(
-                  state.submitting ? l10n.gorevGonderiliyor : l10n.gorevTamamla),
+                state.submitting ? l10n.gorevGonderiliyor : l10n.gorevTamamla,
+              ),
             ),
           ],
         ],
@@ -133,9 +133,7 @@ class TaskDetailScreen extends ConsumerWidget {
     final saved = await showTaskFormSheet(context, edit: task);
     if (saved == true && context.mounted) {
       Navigator.pop(context);
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.gorevGuncellendi)),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l10n.gorevGuncellendi)));
     }
   }
 
@@ -164,9 +162,7 @@ class TaskDetailScreen extends ConsumerWidget {
       await ref.read(tasksControllerProvider.notifier).deleteTask(task.id);
       if (context.mounted) {
         Navigator.pop(context);
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.gorevSilindi)),
-        );
+        messenger.showSnackBar(SnackBar(content: Text(l10n.gorevSilindi)));
       }
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
@@ -184,8 +180,9 @@ class _InfoCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final dil = context.dilKodu;
-    final currentUserId =
-        ref.watch(tasksControllerProvider.select((s) => s.currentUserId));
+    final currentUserId = ref.watch(
+      tasksControllerProvider.select((s) => s.currentUserId),
+    );
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -205,7 +202,9 @@ class _InfoCard extends ConsumerWidget {
                   label: Text(style.ad ?? l10n.gorevKategoriDiger),
                   backgroundColor: style.color.withValues(alpha: 0.15),
                   // Koyu temada ham vurgu 2.58:1 kaliyordu (tur 37).
-                  labelStyle: TextStyle(color: okunurVurgu(context, style.color)),
+                  labelStyle: TextStyle(
+                    color: okunurVurgu(context, style.color),
+                  ),
                   visualDensity: VisualDensity.compact,
                 ),
                 if (task.isAssignedTo(currentUserId))
@@ -235,7 +234,8 @@ class _InfoCard extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 l10n.gorevPlanlanan(
-                    tarihSaatBicimi(task.sonrakiPlanlanan!, dil)),
+                  tarihSaatBicimi(task.sonrakiPlanlanan!, dil),
+                ),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -294,16 +294,16 @@ class _NfcStep extends StatelessWidget {
             // akisinin kimligi / sunucu metni.
             if (state.nfcKimlik != null)
               Text(
-                nfcHataMetni(l10n, state.nfcKimlik!,
-                    detay: state.nfcKimlikDetay),
+                nfcHataMetni(
+                  l10n,
+                  state.nfcKimlik!,
+                  detay: state.nfcKimlikDetay,
+                ),
                 style: const TextStyle(color: Colors.red),
               )
             else if (gorevHatasiCoz(l10n, state.nfcHata, state.nfcError)
                 case final hata?)
-              Text(
-                hata,
-                style: const TextStyle(color: Colors.red),
-              ),
+              Text(hata, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: state.nfcReading
@@ -320,8 +320,8 @@ class _NfcStep extends StatelessWidget {
                 state.nfcReading
                     ? l10n.gorevEtiketBekleniyor
                     : state.nfcOkundu
-                        ? l10n.gorevYenidenOkut
-                        : l10n.gorevEtiketiOkut,
+                    ? l10n.gorevYenidenOkut
+                    : l10n.gorevEtiketiOkut,
               ),
             ),
           ],
@@ -378,7 +378,9 @@ class _PhotoStep extends StatelessWidget {
                   Chip(
                     label: Text(l10n.gorevFotoZorunlu),
                     labelStyle: const TextStyle(
-                        color: Colors.deepOrange, fontSize: 12),
+                      color: Colors.deepOrange,
+                      fontSize: 12,
+                    ),
                     visualDensity: VisualDensity.compact,
                   ),
               ],
@@ -417,10 +419,7 @@ class _PhotoStep extends StatelessWidget {
                 case final hata?)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  hata,
-                  style: const TextStyle(color: Colors.red),
-                ),
+                child: Text(hata, style: const TextStyle(color: Colors.red)),
               ),
             const SizedBox(height: 8),
             Wrap(
@@ -430,8 +429,7 @@ class _PhotoStep extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: state.photoBusy
                       ? null
-                      : () =>
-                          controller.pickAndUploadPhoto(ImageSource.camera),
+                      : () => controller.pickAndUploadPhoto(ImageSource.camera),
                   icon: const Icon(Icons.photo_camera),
                   label: Text(
                     state.photoPath == null
@@ -443,23 +441,33 @@ class _PhotoStep extends StatelessWidget {
                   onPressed: state.photoBusy
                       ? null
                       : () =>
-                          controller.pickAndUploadPhoto(ImageSource.gallery),
+                            controller.pickAndUploadPhoto(ImageSource.gallery),
                   icon: const Icon(Icons.photo_library_outlined),
-                  label: Text(l10n.gorevGaleridenSec),
+                  label: Text(
+                    l10n.gorevGaleridenSec,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 if (state.photoPath != null && !state.fotoYuklendi)
                   OutlinedButton.icon(
-                    onPressed:
-                        state.photoBusy ? null : controller.retryUpload,
+                    onPressed: state.photoBusy ? null : controller.retryUpload,
                     icon: const Icon(Icons.refresh),
-                    label: Text(l10n.gorevTekrarYukle),
+                    label: Text(
+                      l10n.gorevTekrarYukle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 if (state.photoPath != null)
                   TextButton.icon(
-                    onPressed:
-                        state.photoBusy ? null : controller.removePhoto,
+                    onPressed: state.photoBusy ? null : controller.removePhoto,
                     icon: const Icon(Icons.delete_outline),
-                    label: Text(l10n.gorevKaldir),
+                    label: Text(
+                      l10n.gorevKaldir,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
               ],
             ),
@@ -536,8 +544,9 @@ class _ResultCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               [
-                l10n.gorevZaman(tarihSaatBicimi(
-                    result.completion.tamamlanmaZamani, dil)),
+                l10n.gorevZaman(
+                  tarihSaatBicimi(result.completion.tamamlanmaZamani, dil),
+                ),
                 if (result.completion.fotoKey != null) l10n.gorevFotoKanitiVar,
                 if (result.completion.nfcTagUid != null)
                   l10n.gorevNfcDogrulandi,

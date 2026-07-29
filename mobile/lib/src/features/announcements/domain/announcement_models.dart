@@ -37,20 +37,20 @@ class Announcement {
   bool get duzenlendi => updatedAt.isAfter(createdAt);
 
   factory Announcement.fromJson(Map<String, dynamic> json) => Announcement(
-        id: json['id'] as String? ?? '',
-        baslik: json['baslik'] as String? ?? '',
-        govde: json['govde'] as String? ?? '',
-        olusturanUserId: json['olusturan_user_id'] as String? ?? '',
-        olusturanAd: json['olusturan_ad'] as String?,
-        fotoKey: json['foto_key'] as String?,
-        fotoUrl: json['foto_url'] as String?,
-        createdAt:
-            DateTime.tryParse(json['created_at'] as String? ?? '') ??
-                DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-        updatedAt:
-            DateTime.tryParse(json['updated_at'] as String? ?? '') ??
-                DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-      );
+    id: json['id'] as String? ?? '',
+    baslik: json['baslik'] as String? ?? '',
+    govde: json['govde'] as String? ?? '',
+    olusturanUserId: json['olusturan_user_id'] as String? ?? '',
+    olusturanAd: json['olusturan_ad'] as String?,
+    fotoKey: json['foto_key'] as String?,
+    fotoUrl: json['foto_url'] as String?,
+    createdAt:
+        DateTime.tryParse(json['created_at'] as String? ?? '') ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    updatedAt:
+        DateTime.tryParse(json['updated_at'] as String? ?? '') ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+  );
 }
 
 /// `POST /announcements` (ve PATCH) govdesi. Sunucu siniri: baslik <= 200,
@@ -69,8 +69,8 @@ class AnnouncementDraft {
   final String? fotoKey;
 
   Map<String, dynamic> toJson() => {
-        'baslik': baslik,
-        'govde': govde,
-        if (fotoKey != null) 'foto_key': fotoKey,
-      };
+    'baslik': baslik,
+    'govde': govde,
+    if (fotoKey != null) 'foto_key': fotoKey,
+  };
 }

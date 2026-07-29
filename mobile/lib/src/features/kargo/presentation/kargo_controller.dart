@@ -82,7 +82,11 @@ class KargoController extends Notifier<KargoState> {
   Future<void> refresh() async {
     if (_refreshing) return;
     _refreshing = true;
-    state = state.copyWith(loading: true, errorMessage: null, hataKimligi: null);
+    state = state.copyWith(
+      loading: true,
+      errorMessage: null,
+      hataKimligi: null,
+    );
     try {
       final role = await ref.read(currentUserRoleProvider.future);
       final items = await ref.read(kargoApiProvider).fetchAll();

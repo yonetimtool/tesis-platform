@@ -38,17 +38,18 @@ class SiteKurali {
   final DateTime createdAt;
 
   factory SiteKurali.fromJson(Map<String, dynamic> json) => SiteKurali(
-        id: json['id'] as String? ?? '',
-        baslik: json['baslik'] as String? ?? '',
-        icerik: json['icerik'] as String? ?? '',
-        fotoKey: json['foto_key'] as String?,
-        fotoUrl: json['foto_url'] as String?,
-        sira: (json['sira'] as num?)?.toInt() ?? 0,
-        olusturanUserId: json['olusturan_user_id'] as String? ?? '',
-        olusturanAd: json['olusturan_ad'] as String?,
-        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
-            DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-      );
+    id: json['id'] as String? ?? '',
+    baslik: json['baslik'] as String? ?? '',
+    icerik: json['icerik'] as String? ?? '',
+    fotoKey: json['foto_key'] as String?,
+    fotoUrl: json['foto_url'] as String?,
+    sira: (json['sira'] as num?)?.toInt() ?? 0,
+    olusturanUserId: json['olusturan_user_id'] as String? ?? '',
+    olusturanAd: json['olusturan_ad'] as String?,
+    createdAt:
+        DateTime.tryParse(json['created_at'] as String? ?? '') ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+  );
 
   /// Baslik aramasi es kurali (ekranin ANLIK suzgeci — sunucudaki ILIKE ile
   /// ayni anlam: buyuk/kucuk harf duyarsiz icerme).
@@ -78,12 +79,12 @@ class SiteKuraliDraft {
   final bool fotoKeyKaldir;
 
   Map<String, dynamic> toJson() => {
-        'baslik': baslik,
-        'icerik': icerik,
-        'sira': sira,
-        if (fotoKey != null)
-          'foto_key': fotoKey
-        else if (fotoKeyKaldir)
-          'foto_key': null,
-      };
+    'baslik': baslik,
+    'icerik': icerik,
+    'sira': sira,
+    if (fotoKey != null)
+      'foto_key': fotoKey
+    else if (fotoKeyKaldir)
+      'foto_key': null,
+  };
 }

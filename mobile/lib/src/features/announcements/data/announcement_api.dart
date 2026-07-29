@@ -19,7 +19,8 @@ import '../domain/announcement_models.dart';
 ///   * `POST   /uploads/presign`    → opsiyonel duyuru gorseli icin PUT URL
 ///   * presigned URL'e HTTP PUT     → dosya dogrudan MinIO'ya
 class AnnouncementApi {
-  AnnouncementApi(this._dio, {Dio? uploadDio}) : _uploadDio = uploadDio ?? Dio();
+  AnnouncementApi(this._dio, {Dio? uploadDio})
+    : _uploadDio = uploadDio ?? Dio();
 
   final Dio _dio;
 
@@ -95,10 +96,7 @@ class AnnouncementApi {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/uploads/presign',
-        data: {
-          'content_type': contentType,
-          'dosya_adi': ?dosyaAdi,
-        },
+        data: {'content_type': contentType, 'dosya_adi': ?dosyaAdi},
       );
       return PresignTicket.fromJson(res.data ?? const {});
     } on DioException catch (e) {
@@ -137,8 +135,9 @@ final announcementApiProvider = Provider<AnnouncementApi>((ref) {
 
 /// Son duyurular (EN-YENI-USTTE garantili) — ana ekran "Duyurular" karti.
 /// Sunucu sirasina guvenmek yerine istemcide siralanir. Hata → kart gizli.
-final sonDuyurularProvider =
-    FutureProvider.autoDispose<List<Announcement>>((ref) async {
+final sonDuyurularProvider = FutureProvider.autoDispose<List<Announcement>>((
+  ref,
+) async {
   final list = await ref.watch(announcementApiProvider).fetchAll();
   return [...list]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 });

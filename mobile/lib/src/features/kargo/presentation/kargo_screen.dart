@@ -64,10 +64,12 @@ class _KargoScreenState extends ConsumerState<KargoScreen> {
     // Provider zaten yuklu geldiyse (listen tetiklenmez) mevcut durumu isle.
     _maybeOpenInitial(state);
 
-    final bekleyen =
-        state.items.where((k) => k.bekliyor).toList(growable: false);
-    final teslim =
-        state.items.where((k) => !k.bekliyor).toList(growable: false);
+    final bekleyen = state.items
+        .where((k) => k.bekliyor)
+        .toList(growable: false);
+    final teslim = state.items
+        .where((k) => !k.bekliyor)
+        .toList(growable: false);
     final l10n = context.l10n;
 
     return DefaultTabController(
@@ -129,9 +131,9 @@ class _KargoScreenState extends ConsumerState<KargoScreen> {
       builder: (_) => const _KargoForm(),
     );
     if (saved == true && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.karKaydedildi)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.karKaydedildi)));
     }
   }
 }
@@ -174,18 +176,14 @@ class _Body extends ConsumerWidget {
     if (items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
-        children: [
-          Center(child: Text(emptyText, textAlign: TextAlign.center)),
-        ],
+        children: [Center(child: Text(emptyText, textAlign: TextAlign.center))],
       );
     }
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
       itemCount: items.length,
-      itemBuilder: (context, i) => _KargoCard(
-        kargo: items[i],
-        canReceive: state.canReceive,
-      ),
+      itemBuilder: (context, i) =>
+          _KargoCard(kargo: items[i], canReceive: state.canReceive),
     );
   }
 }
@@ -197,10 +195,10 @@ class _DurumChip extends StatelessWidget {
   final KargoDurum durum;
 
   Color get _color => switch (durum) {
-        KargoDurum.bekliyor => Colors.orange,
-        KargoDurum.teslimAlindi => Colors.green,
-        KargoDurum.unknown => Colors.grey,
-      };
+    KargoDurum.bekliyor => Colors.orange,
+    KargoDurum.teslimAlindi => Colors.green,
+    KargoDurum.unknown => Colors.grey,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -264,10 +262,8 @@ class _KargoCard extends ConsumerWidget {
                         width: 40,
                         height: 40,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.inventory_2_outlined,
-                          size: 32,
-                        ),
+                        errorBuilder: (_, _, _) =>
+                            const Icon(Icons.inventory_2_outlined, size: 32),
                       ),
                     )
                   else
@@ -361,9 +357,7 @@ class _ReceiveButtonState extends ConsumerState<_ReceiveButton> {
       messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
       widget.onReceived?.call();
     } catch (_) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.karIsaretlenemedi)),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l10n.karIsaretlenemedi)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -400,82 +394,82 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              Row(
-                children: [
-                  const Icon(Icons.inventory_2_outlined),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      k.firma,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                Row(
+                  children: [
+                    const Icon(Icons.inventory_2_outlined),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        k.firma,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-                  _DurumChip(durum: k.durum),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(l10n.karDaire(k.unitNo ?? '-')),
-              const SizedBox(height: 4),
-              Text('${l10n.karKayit(tarihSaatBicimi(k.createdAt, dil))}'
-                  '${k.kaydedenAd != null ? l10n.karAdEki(k.kaydedenAd!) : ''}'),
-              if (k.notlar != null && k.notlar!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(l10n.karNot(k.notlar!)),
-              ],
-              if (!k.bekliyor) ...[
-                const SizedBox(height: 4),
-                Text(_teslimSatiri(l10n, dil, k)),
-              ],
-              if (k.fotoUrl != null) ...[
+                    _DurumChip(durum: k.durum),
+                  ],
+                ),
                 const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    k.fotoUrl!,
-                    // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
-                    semanticLabel: context.l10n.ortakFotograf,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, progress) =>
-                        progress == null
-                            ? child
-                            : const SizedBox(
-                                height: 180,
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                    errorBuilder: (_, _, _) => Container(
-                      height: 48,
-                      // YON-DUYARLI: Arapca'da saga hizalanir.
-                      alignment: AlignmentDirectional.centerStart,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      color: Theme.of(context)
-                          .colorScheme
-                          .surfaceContainerHighest,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.broken_image_outlined, size: 20),
-                          const SizedBox(width: 8),
-                          // Dar ekranda (320 dp) satira sigmiyor — sar.
-                          Expanded(child: Text(l10n.talepGorselYuklenemedi)),
-                        ],
+                Text(l10n.karDaire(k.unitNo ?? '-')),
+                const SizedBox(height: 4),
+                Text(
+                  '${l10n.karKayit(tarihSaatBicimi(k.createdAt, dil))}'
+                  '${k.kaydedenAd != null ? l10n.karAdEki(k.kaydedenAd!) : ''}',
+                ),
+                if (k.notlar != null && k.notlar!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(l10n.karNot(k.notlar!)),
+                ],
+                if (!k.bekliyor) ...[
+                  const SizedBox(height: 4),
+                  Text(_teslimSatiri(l10n, dil, k)),
+                ],
+                if (k.fotoUrl != null) ...[
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      k.fotoUrl!,
+                      // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+                      semanticLabel: context.l10n.ortakFotograf,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, progress) =>
+                          progress == null
+                          ? child
+                          : const SizedBox(
+                              height: 180,
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                      errorBuilder: (_, _, _) => Container(
+                        height: 48,
+                        // YON-DUYARLI: Arapca'da saga hizalanir.
+                        alignment: AlignmentDirectional.centerStart,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.broken_image_outlined, size: 20),
+                            const SizedBox(width: 8),
+                            // Dar ekranda (320 dp) satira sigmiyor — sar.
+                            Expanded(child: Text(l10n.talepGorselYuklenemedi)),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-              if (k.bekliyor && canReceive) ...[
-                const SizedBox(height: 20),
-                _ReceiveButton(
-                  kargoId: k.id,
-                  onReceived: () => Navigator.of(sheetContext).pop(),
-                ),
-              ],
+                ],
+                if (k.bekliyor && canReceive) ...[
+                  const SizedBox(height: 20),
+                  _ReceiveButton(
+                    kargoId: k.id,
+                    onReceived: () => Navigator.of(sheetContext).pop(),
+                  ),
+                ],
               ],
             ),
           ),
@@ -535,7 +529,9 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
       _photoError = null;
     });
     try {
-      final file = await ref.read(imagePickerProvider).pickImage(
+      final file = await ref
+          .read(imagePickerProvider)
+          .pickImage(
             source: source,
             // Paket fotografi icin cozunurluk/kalite dusurulur (yukleme boyutu).
             maxWidth: 1600,
@@ -624,7 +620,9 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
       _hata = null;
     });
     try {
-      await ref.read(kargoControllerProvider.notifier).register(
+      await ref
+          .read(kargoControllerProvider.notifier)
+          .register(
             KargoDraft(
               firma: _firma.text.trim(),
               unitNo: _unitNo.text.trim(),
@@ -668,8 +666,10 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
             children: [
               Text(
                 l10n.karYeni,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -750,28 +750,42 @@ class _KargoFormState extends ConsumerState<_KargoForm> {
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.camera),
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: Text(_photoPath == null
-                        ? l10n.gorevKamera
-                        : l10n.gorevYenidenCek),
+                    label: Text(
+                      _photoPath == null
+                          ? l10n.gorevKamera
+                          : l10n.gorevYenidenCek,
+                    ),
                   ),
                   TextButton.icon(
                     onPressed: _photoBusy || _busy
                         ? null
                         : () => _pickAndUploadPhoto(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: Text(l10n.gorevGaleridenSec),
+                    label: Text(
+                      l10n.gorevGaleridenSec,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   if (_photoPath != null && _fotoKey == null)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _retryUpload,
                       icon: const Icon(Icons.refresh),
-                      label: Text(l10n.gorevTekrarYukle),
+                      label: Text(
+                        l10n.gorevTekrarYukle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   if (_photoPath != null)
                     TextButton.icon(
                       onPressed: _photoBusy || _busy ? null : _removePhoto,
                       icon: const Icon(Icons.delete_outline),
-                      label: Text(l10n.gorevKaldir),
+                      label: Text(
+                        l10n.gorevKaldir,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                 ],
               ),

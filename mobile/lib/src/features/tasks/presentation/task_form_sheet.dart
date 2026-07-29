@@ -108,8 +108,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
         _personel = users;
         // Duzenlemede atanan kisi pasiflestiyse listede olmayabilir —
         // secimi koru ama secenege "(pasif/bilinmiyor)" olarak ekle.
-        if (_atananUserId != null &&
-            !users.any((u) => u.id == _atananUserId)) {
+        if (_atananUserId != null && !users.any((u) => u.id == _atananUserId)) {
           _personel = [
             ...users,
             // Ad BOS: "listede degil" etiketi cizim aninda cozulur.
@@ -250,7 +249,9 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                     child: Text(
                       l10n.gorevTipiYokUyari,
                       style: const TextStyle(
-                          fontSize: 12, color: Colors.orange),
+                        fontSize: 12,
+                        color: Colors.orange,
+                      ),
                     ),
                   ),
               ],
@@ -310,10 +311,10 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                         child: Text(
                           u.role.isEmpty
                               ? (u.ad.isEmpty
-                                  ? l10n.gorevAtananListedeDegil
-                                  : u.ad)
+                                    ? l10n.gorevAtananListedeDegil
+                                    : u.ad)
                               : '${u.ad} '
-                                  '(${rolAdi(l10n, UserRole.fromClaim(u.role))})',
+                                    '(${rolAdi(l10n, UserRole.fromClaim(u.role))})',
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -332,39 +333,43 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
               const SizedBox(height: 8),
               // NFC kontrol noktasi (opsiyonel): baglanirsa gorev, atanan saha
               // calisani tarafindan ETIKET OKUTULARAK tamamlanir (backend zorlar).
-              Builder(builder: (context) {
-                final all =
-                    ref.watch(checkpointsProvider).value ?? const <Checkpoint>[];
-                final items = all.where((c) => c.aktif).toList();
-                // Secili nokta pasiflestiyse listede olmayabilir -> koru.
-                if (_checkpointId != null &&
-                    !items.any((c) => c.id == _checkpointId)) {
-                  final sel = all.where((c) => c.id == _checkpointId);
-                  if (sel.isNotEmpty) items.add(sel.first);
-                }
-                return DropdownButtonFormField<String?>(
-                  initialValue:
-                      items.any((c) => c.id == _checkpointId) ? _checkpointId : null,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: l10n.gorevKontrolNoktasiOpsiyonel,
-                    helperText: l10n.gorevKontrolNoktasiYardim,
-                    border: const OutlineInputBorder(),
-                  ),
-                  items: [
-                    DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text(l10n.gorevNfcYok),
+              Builder(
+                builder: (context) {
+                  final all =
+                      ref.watch(checkpointsProvider).value ??
+                      const <Checkpoint>[];
+                  final items = all.where((c) => c.aktif).toList();
+                  // Secili nokta pasiflestiyse listede olmayabilir -> koru.
+                  if (_checkpointId != null &&
+                      !items.any((c) => c.id == _checkpointId)) {
+                    final sel = all.where((c) => c.id == _checkpointId);
+                    if (sel.isNotEmpty) items.add(sel.first);
+                  }
+                  return DropdownButtonFormField<String?>(
+                    initialValue: items.any((c) => c.id == _checkpointId)
+                        ? _checkpointId
+                        : null,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: l10n.gorevKontrolNoktasiOpsiyonel,
+                      helperText: l10n.gorevKontrolNoktasiYardim,
+                      border: const OutlineInputBorder(),
                     ),
-                    for (final c in items)
+                    items: [
                       DropdownMenuItem<String?>(
-                        value: c.id,
-                        child: Text(c.ad, overflow: TextOverflow.ellipsis),
+                        value: null,
+                        child: Text(l10n.gorevNfcYok),
                       ),
-                  ],
-                  onChanged: (v) => setState(() => _checkpointId = v),
-                );
-              }),
+                      for (final c in items)
+                        DropdownMenuItem<String?>(
+                          value: c.id,
+                          child: Text(c.ad, overflow: TextOverflow.ellipsis),
+                        ),
+                    ],
+                    onChanged: (v) => setState(() => _checkpointId = v),
+                  );
+                },
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _periyotCtrl,
@@ -416,8 +421,8 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                     _saving
                         ? l10n.ortakKaydediliyor
                         : editing
-                            ? l10n.ortakKaydet
-                            : l10n.ortakOlustur,
+                        ? l10n.ortakKaydet
+                        : l10n.ortakOlustur,
                   ),
                 ),
               ),

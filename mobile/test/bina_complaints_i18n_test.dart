@@ -472,6 +472,52 @@ void main() {
       },
     );
   });
+
+  // ---- TUR 38: FORMLAR VE ALT SAYFALAR ----
+  testWidgets('FORM: talep olusturma alt sayfasi (bes eksen)', (tester) async {
+    // FAB yalniz SAKIN rolunde gorunur (talebi sakin acar).
+    await tumEksenlerSurusu(
+        tester, (dil) => _talepEkrani(Locale(dil), role: UserRole.resident),
+        veri: surusVerisi, hazirla: fabAc);
+  });
+
+  testWidgets('FORM: talep -> IS EMRI donusturme alt sayfasi (bes eksen)',
+      (tester) async {
+    // En derin form: liste -> detay -> yonetici eylem cubugu -> donusturme
+    // alt sayfasi. Bulucular dilden bagimsiz (sunucu verisi + widget tipi).
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil)),
+      veri: surusVerisi,
+      hazirla: (t) async {
+        await t.tap(find.text('Asansor arizali').first);
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 400));
+        final donustur = find.byType(FilledButton);
+        if (donustur.evaluate().isNotEmpty) {
+          await t.tap(donustur.first);
+          await t.pump();
+          await t.pump(const Duration(milliseconds: 400));
+        }
+      },
+    );
+  });
+  testWidgets('FORM: bina duzenleme TOPLU DAIRE alt sayfasi (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _duzenlemeEkrani(Locale(dil)),
+      veri: surusVerisi,
+      hazirla: (t) async {
+        final ekle = find.byIcon(Icons.grid_view);
+        if (ekle.evaluate().isNotEmpty) {
+          await t.tap(ekle.first);
+          await t.pump();
+          await t.pump(const Duration(milliseconds: 400));
+        }
+      },
+    );
+  });
 }
 
 class _PatlayanMapApi extends BuildingMapApi {

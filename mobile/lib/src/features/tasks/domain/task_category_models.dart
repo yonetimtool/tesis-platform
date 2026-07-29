@@ -4,17 +4,13 @@
 library;
 
 class TaskCategory {
-  const TaskCategory({
-    required this.id,
-    required this.ad,
-    required this.aktif,
-  });
+  const TaskCategory({required this.id, required this.ad, required this.aktif});
 
   factory TaskCategory.fromJson(Map<String, dynamic> json) => TaskCategory(
-        id: (json['id'] as String?) ?? '',
-        ad: (json['ad'] as String?) ?? '',
-        aktif: (json['aktif'] as bool?) ?? true,
-      );
+    id: (json['id'] as String?) ?? '',
+    ad: (json['ad'] as String?) ?? '',
+    aktif: (json['aktif'] as bool?) ?? true,
+  );
 
   final String id;
   final String ad;

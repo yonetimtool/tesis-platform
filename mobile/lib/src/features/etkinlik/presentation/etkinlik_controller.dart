@@ -19,6 +19,7 @@ class EtkinlikState {
   });
 
   final bool loading;
+
   /// Hata KANALI ikilidir: `errorMessage` SUNUCU metnini, `hataKimligi`
   /// yerellestirilebilir KIMLIGI tasir (bkz. core/error/akis_hatasi.dart).
   final String? errorMessage;
@@ -79,7 +80,11 @@ class EtkinlikController extends Notifier<EtkinlikState> {
   Future<void> refresh() async {
     if (_refreshing) return;
     _refreshing = true;
-    state = state.copyWith(loading: true, errorMessage: null, hataKimligi: null);
+    state = state.copyWith(
+      loading: true,
+      errorMessage: null,
+      hataKimligi: null,
+    );
     try {
       final role = await ref.read(currentUserRoleProvider.future);
       final items = await ref.read(etkinlikApiProvider).fetchAll();
@@ -138,6 +143,4 @@ class EtkinlikController extends Notifier<EtkinlikState> {
 }
 
 final etkinlikControllerProvider =
-    NotifierProvider<EtkinlikController, EtkinlikState>(
-  EtkinlikController.new,
-);
+    NotifierProvider<EtkinlikController, EtkinlikState>(EtkinlikController.new);

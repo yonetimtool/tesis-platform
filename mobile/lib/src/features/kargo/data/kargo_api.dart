@@ -95,10 +95,7 @@ class KargoApi {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/uploads/presign',
-        data: {
-          'content_type': contentType,
-          'dosya_adi': ?dosyaAdi,
-        },
+        data: {'content_type': contentType, 'dosya_adi': ?dosyaAdi},
       );
       return PresignTicket.fromJson(res.data ?? const {});
     } on DioException catch (e) {
@@ -138,7 +135,6 @@ final kargoApiProvider = Provider<KargoApi>((ref) {
 /// Kargo listesi — sakin ana ekran: "N Bekliyor" sayaci + Son Hareketler
 /// akisi AYNI fetch'ten turetilir (cift istek yok). Sunucu zaten rol suzer
 /// (sakin kendi dairesini gorur). Hata → izleyen ekran bolum/sayaci gizler.
-final kargoListProvider =
-    FutureProvider.autoDispose<List<Kargo>>((ref) {
+final kargoListProvider = FutureProvider.autoDispose<List<Kargo>>((ref) {
   return ref.watch(kargoApiProvider).fetchAll();
 });

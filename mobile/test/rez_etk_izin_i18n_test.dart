@@ -472,4 +472,11 @@ void main() {
       veri: surusVerisi,
     );
   });
+
+  // ---- TUR 38: FORMLAR VE ALT SAYFALAR ----
+  testWidgets('FORM: etkinlik olusturma alt sayfasi (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _etkEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: fabAc);
+  });
 }

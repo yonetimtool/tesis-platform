@@ -31,12 +31,12 @@ class TicketSummary {
   final String? unitLabel; // talebi acanin dairesi (varsa)
 
   factory TicketSummary.fromJson(Map<String, dynamic> json) => TicketSummary(
-        id: json['id'] as String,
-        baslik: json['baslik'] as String? ?? '',
-        durum: json['durum'] as String? ?? '',
-        kategoriAd: json['kategori_ad'] as String?,
-        unitLabel: json['unit_label'] as String?,
-      );
+    id: json['id'] as String,
+    baslik: json['baslik'] as String? ?? '',
+    durum: json['durum'] as String? ?? '',
+    kategoriAd: json['kategori_ad'] as String?,
+    unitLabel: json['unit_label'] as String?,
+  );
 }
 
 /// `GET /tasks` ogesi (Task semasi).
@@ -94,28 +94,27 @@ class Task {
   /// Gorev bir talepten mi geldi? (chip/rozet gorunurlugu).
   bool get fromTicket => ticketId != null;
 
-  bool isAssignedTo(String? userId) =>
-      userId != null && atananUserId == userId;
+  bool isAssignedTo(String? userId) => userId != null && atananUserId == userId;
 
   factory Task.fromJson(Map<String, dynamic> json) => Task(
-        id: json['id'] as String,
-        ad: json['ad'] as String? ?? '',
-        aciklama: json['aciklama'] as String?,
-        atananUserId: json['atanan_user_id'] as String?,
-        checkpointId: json['checkpoint_id'] as String?,
-        kategoriId: json['kategori_id'] as String?,
-        periyotDakika: (json['periyot_dakika'] as num?)?.toInt(),
-        sonrakiPlanlanan: json['sonraki_planlanan'] == null
-            ? null
-            : DateTime.parse(json['sonraki_planlanan'] as String).toUtc(),
-        aktif: json['aktif'] as bool? ?? true,
-        fotoZorunlu: json['foto_zorunlu'] as bool? ?? false,
-        ticketId: json['ticket_id'] as String?,
-        oncelik: json['oncelik'] as String?,
-        ticket: json['ticket'] == null
-            ? null
-            : TicketSummary.fromJson(json['ticket'] as Map<String, dynamic>),
-      );
+    id: json['id'] as String,
+    ad: json['ad'] as String? ?? '',
+    aciklama: json['aciklama'] as String?,
+    atananUserId: json['atanan_user_id'] as String?,
+    checkpointId: json['checkpoint_id'] as String?,
+    kategoriId: json['kategori_id'] as String?,
+    periyotDakika: (json['periyot_dakika'] as num?)?.toInt(),
+    sonrakiPlanlanan: json['sonraki_planlanan'] == null
+        ? null
+        : DateTime.parse(json['sonraki_planlanan'] as String).toUtc(),
+    aktif: json['aktif'] as bool? ?? true,
+    fotoZorunlu: json['foto_zorunlu'] as bool? ?? false,
+    ticketId: json['ticket_id'] as String?,
+    oncelik: json['oncelik'] as String?,
+    ticket: json['ticket'] == null
+        ? null
+        : TicketSummary.fromJson(json['ticket'] as Map<String, dynamic>),
+  );
 }
 
 /// `POST /tasks/{id}/completions` istek govdesi (TaskCompletionCreate) +
@@ -155,28 +154,26 @@ class TaskCompletionDraft {
     Object? nfcTagUid = _sentinel,
     Object? fotoKey = _sentinel,
     Object? notlar = _sentinel,
-  }) =>
-      TaskCompletionDraft(
-        taskId: taskId,
-        tamamlanmaZamani: tamamlanmaZamani,
-        nfcTagUid:
-            nfcTagUid == _sentinel ? this.nfcTagUid : nfcTagUid as String?,
-        fotoKey: fotoKey == _sentinel ? this.fotoKey : fotoKey as String?,
-        notlar: notlar == _sentinel ? this.notlar : notlar as String?,
-        gpsLat: gpsLat,
-        gpsLng: gpsLng,
-      );
+  }) => TaskCompletionDraft(
+    taskId: taskId,
+    tamamlanmaZamani: tamamlanmaZamani,
+    nfcTagUid: nfcTagUid == _sentinel ? this.nfcTagUid : nfcTagUid as String?,
+    fotoKey: fotoKey == _sentinel ? this.fotoKey : fotoKey as String?,
+    notlar: notlar == _sentinel ? this.notlar : notlar as String?,
+    gpsLat: gpsLat,
+    gpsLng: gpsLng,
+  );
 
   static const Object _sentinel = Object();
 
   Map<String, dynamic> toJson() => {
-        'tamamlanma_zamani': tamamlanmaZamani.toUtc().toIso8601String(),
-        if (nfcTagUid != null) 'nfc_tag_uid': nfcTagUid,
-        if (fotoKey != null) 'foto_key': fotoKey,
-        if (notlar != null) 'notlar': notlar,
-        if (gpsLat != null) 'gps_lat': gpsLat,
-        if (gpsLng != null) 'gps_lng': gpsLng,
-      };
+    'tamamlanma_zamani': tamamlanmaZamani.toUtc().toIso8601String(),
+    if (nfcTagUid != null) 'nfc_tag_uid': nfcTagUid,
+    if (fotoKey != null) 'foto_key': fotoKey,
+    if (notlar != null) 'notlar': notlar,
+    if (gpsLat != null) 'gps_lat': gpsLat,
+    if (gpsLng != null) 'gps_lng': gpsLng,
+  };
 }
 
 /// `POST/GET /tasks/{id}/completions` yaniti (TaskCompletion semasi).
@@ -202,16 +199,17 @@ class TaskCompletion {
   final String? notlar;
 
   factory TaskCompletion.fromJson(Map<String, dynamic> json) => TaskCompletion(
-        id: json['id'] as String,
-        taskId: json['task_id'] as String,
-        tamamlayanUserId: json['tamamlayan_user_id'] as String,
-        tamamlanmaZamani:
-            DateTime.parse(json['tamamlanma_zamani'] as String).toUtc(),
-        nfcTagUid: json['nfc_tag_uid'] as String?,
-        fotoKey: json['foto_key'] as String?,
-        fotoUrl: json['foto_url'] as String?,
-        notlar: json['notlar'] as String?,
-      );
+    id: json['id'] as String,
+    taskId: json['task_id'] as String,
+    tamamlayanUserId: json['tamamlayan_user_id'] as String,
+    tamamlanmaZamani: DateTime.parse(
+      json['tamamlanma_zamani'] as String,
+    ).toUtc(),
+    nfcTagUid: json['nfc_tag_uid'] as String?,
+    fotoKey: json['foto_key'] as String?,
+    fotoUrl: json['foto_url'] as String?,
+    notlar: json['notlar'] as String?,
+  );
 }
 
 /// Tamamlama gonderim sonucu: yanit + yeni kayit mi (201) yoksa idempotent
@@ -245,10 +243,10 @@ class PresignTicket {
   final int expiresIn;
 
   factory PresignTicket.fromJson(Map<String, dynamic> json) => PresignTicket(
-        fotoKey: json['foto_key'] as String,
-        uploadUrl: json['upload_url'] as String,
-        expiresIn: (json['expires_in'] as num?)?.toInt() ?? 0,
-      );
+    fotoKey: json['foto_key'] as String,
+    uploadUrl: json['upload_url'] as String,
+    expiresIn: (json['expires_in'] as num?)?.toInt() ?? 0,
+  );
 }
 
 /// Liste sirasi: `sonraki_planlanan` ASC (plansizlar sona), esitlikte ad.
@@ -256,14 +254,14 @@ class PresignTicket {
 /// (`?atanan_user_id=me`, §11 #1 kapandi).
 List<Task> sortTasksByPlan(List<Task> tasks) {
   return [...tasks]..sort((a, b) {
-      if (a.sonrakiPlanlanan == null && b.sonrakiPlanlanan == null) {
-        return a.ad.compareTo(b.ad);
-      }
-      if (a.sonrakiPlanlanan == null) return 1;
-      if (b.sonrakiPlanlanan == null) return -1;
-      final cmp = a.sonrakiPlanlanan!.compareTo(b.sonrakiPlanlanan!);
-      return cmp != 0 ? cmp : a.ad.compareTo(b.ad);
-    });
+    if (a.sonrakiPlanlanan == null && b.sonrakiPlanlanan == null) {
+      return a.ad.compareTo(b.ad);
+    }
+    if (a.sonrakiPlanlanan == null) return 1;
+    if (b.sonrakiPlanlanan == null) return -1;
+    final cmp = a.sonrakiPlanlanan!.compareTo(b.sonrakiPlanlanan!);
+    return cmp != 0 ? cmp : a.ad.compareTo(b.ad);
+  });
 }
 
 /// `POST /tasks` / `PATCH /tasks/{id}` govdesi — yonetim formu (admin +
@@ -301,32 +299,36 @@ class TaskDraft {
   final bool aktif;
 
   Map<String, dynamic> toJson() => {
-        'ad': ad,
-        'aciklama': aciklama,
-        'atanan_user_id': atananUserId,
-        'kategori_id': kategoriId,
-        'checkpoint_id': checkpointId,
-        'periyot_dakika': periyotDakika,
-        'foto_zorunlu': fotoZorunlu,
-        'aktif': aktif,
-      };
+    'ad': ad,
+    'aciklama': aciklama,
+    'atanan_user_id': atananUserId,
+    'kategori_id': kategoriId,
+    'checkpoint_id': checkpointId,
+    'periyot_dakika': periyotDakika,
+    'foto_zorunlu': fotoZorunlu,
+    'aktif': aktif,
+  };
 
   /// Duzenleme formunu mevcut gorevle doldurmak icin.
   factory TaskDraft.fromTask(Task task) => TaskDraft(
-        ad: task.ad,
-        aciklama: task.aciklama,
-        atananUserId: task.atananUserId,
-        kategoriId: task.kategoriId,
-        checkpointId: task.checkpointId,
-        periyotDakika: task.periyotDakika,
-        fotoZorunlu: task.fotoZorunlu,
-        aktif: task.aktif,
-      );
+    ad: task.ad,
+    aciklama: task.aciklama,
+    atananUserId: task.atananUserId,
+    kategoriId: task.kategoriId,
+    checkpointId: task.checkpointId,
+    periyotDakika: task.periyotDakika,
+    fotoZorunlu: task.fotoZorunlu,
+    aktif: task.aktif,
+  );
 }
 
 /// Atama secicisindeki kullanici (`GET /users` ogesinden).
 class AssignableUser {
-  const AssignableUser({required this.id, required this.ad, required this.role});
+  const AssignableUser({
+    required this.id,
+    required this.ad,
+    required this.role,
+  });
 
   final String id;
   final String ad;

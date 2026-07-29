@@ -55,9 +55,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(baslikBuyuk(
-            widget.yonetimGorunumu ? l10n.modulGorevYonetimi : l10n.modulGorevlerim,
-            dil)),
+        title: Text(
+          baslikBuyuk(
+            widget.yonetimGorunumu
+                ? l10n.modulGorevYonetimi
+                : l10n.modulGorevlerim,
+            dil,
+          ),
+        ),
         actions: [
           // Kategori yönetimi (A6) — yalnız yönetim görünümünde ve
           // yetkili rolde (canManage); backend RBAC yazmayı ayrıca zorlar.
@@ -103,11 +108,15 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                           _ErrorBanner(
                             message: state.forbidden
                                 ? l10n.gorevListesiYetkiYok
-                                : gorevHatasiCoz(l10n, state.hataKimligi,
-                                        state.errorMessage) ??
-                                    '',
-                            onRetry:
-                                state.forbidden ? null : controller.refresh,
+                                : gorevHatasiCoz(
+                                        l10n,
+                                        state.hataKimligi,
+                                        state.errorMessage,
+                                      ) ??
+                                      '',
+                            onRetry: state.forbidden
+                                ? null
+                                : controller.refresh,
                           ),
                         if (state.tasks.isEmpty &&
                             state.errorMessage == null &&
@@ -218,7 +227,8 @@ class _TaskTile extends ConsumerWidget {
         .where((k) => k.id == task.kategoriId)
         .map((k) => k.ad);
     final style = taskKategoriStyle(
-        task.kategoriId == null || adlar.isEmpty ? null : adlar.first);
+      task.kategoriId == null || adlar.isEmpty ? null : adlar.first,
+    );
     final mine = task.isAssignedTo(state.currentUserId);
     final completed = state.completedNow[task.id];
 
@@ -233,8 +243,10 @@ class _TaskTile extends ConsumerWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(style.ad ?? l10n.gorevKategoriDiger,
-                style: TextStyle(color: style.color)),
+            Text(
+              style.ad ?? l10n.gorevKategoriDiger,
+              style: TextStyle(color: style.color),
+            ),
             // Talepten gelen is emri: "Talepten geldi" chip + oncelik rozeti.
             if (task.fromTicket)
               Padding(
@@ -249,8 +261,11 @@ class _TaskTile extends ConsumerWidget {
                 ),
               ),
             if (task.sonrakiPlanlanan != null)
-              Text(l10n.gorevPlanlanan(
-                  tarihSaatBicimi(task.sonrakiPlanlanan!, dil))),
+              Text(
+                l10n.gorevPlanlanan(
+                  tarihSaatBicimi(task.sonrakiPlanlanan!, dil),
+                ),
+              ),
             // "Bana atanan" gorunumunde her satir zaten benim — rozet
             // yalnizca "Herkes" gorunumunde ayirt edicidir.
             if (mine && !state.sadeceBenim)

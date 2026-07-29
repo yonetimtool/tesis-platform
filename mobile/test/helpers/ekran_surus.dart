@@ -501,3 +501,29 @@ Future<void> tumEksenlerSurusu(
       veri: veri, kontrast: kontrast, hazirla: hazirla);
   await klavyeSurusu(tester, kur, sira: sira, hazirla: hazirla);
 }
+
+/// FORM/ALT SAYFA ACICI (tur 38) — surus `hazirla` parametresi icin.
+///
+/// Uygulamadaki olusturma formlarinin HEPSI ayni deseni kullanir:
+/// `FloatingActionButton` → `showModalBottomSheet`. Bu yardimci FAB'a
+/// dokunup sayfanin acilmasini bekler; bulucu DILDEN BAGIMSIZDIR (tur widget
+/// tipine bakar, metne degil).
+///
+/// `pumpAndSettle` KULLANILMAZ: alt sayfa acilirken donen gostergeler ya da
+/// surekli animasyonlar oturmayi engelleyebilir (tur 34 notu).
+Future<void> fabAc(WidgetTester tester) async {
+  final fab = find.byType(FloatingActionButton);
+  if (fab.evaluate().isEmpty) {
+    throw StateError('Ekranda FloatingActionButton yok — form acilamadi. '
+        'Rol kapisi FAB\'i gizliyor olabilir.');
+  }
+  await tester.tap(fab.first);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+  // ACILDIGINI DOGRULA: dokunma bir sey acmadiysa surus sessizce LISTEYI
+  // olcer ve "form temiz" raporu bos cikardi (tur 32/33'teki bos-surus
+  // riskinin ayni sinifi).
+  if (find.byType(BottomSheet).evaluate().isEmpty) {
+    throw StateError('FAB\'a dokunuldu ama alt sayfa acilmadi.');
+  }
+}

@@ -12,7 +12,9 @@ import 'package:flutter/material.dart';
 ///
 /// Renk: kategori adi SUNUCU verisidir (cevrilmez), bu yuzden hash'ten tureyen
 /// renk dilden BAGIMSIZ olarak sabit kalir.
-({Color color, IconData icon, String? ad}) taskKategoriStyle(String? kategoriAd) {
+({Color color, IconData icon, String? ad}) taskKategoriStyle(
+  String? kategoriAd,
+) {
   if (kategoriAd == null || kategoriAd.isEmpty) {
     return (
       color: Colors.blueGrey,
@@ -35,16 +37,16 @@ enum TaskOncelik { dusuk, orta, yuksek, yok }
 /// Wire degeri -> kimlik. Karsilastirma ASCII sabitler uzerinedir (dilden
 /// bagimsiz); etiket `oncelikEtiketi` ile cizim aninda cozulur.
 TaskOncelik taskOncelikKimligi(String? wire) => switch (wire) {
-      'dusuk' => TaskOncelik.dusuk,
-      'orta' => TaskOncelik.orta,
-      'yuksek' => TaskOncelik.yuksek,
-      _ => TaskOncelik.yok,
-    };
+  'dusuk' => TaskOncelik.dusuk,
+  'orta' => TaskOncelik.orta,
+  'yuksek' => TaskOncelik.yuksek,
+  _ => TaskOncelik.yok,
+};
 
 /// Oncelik rengi — complaints paletiyle uyumlu (yesil/amber/kirmizi).
 Color taskOncelikRengi(TaskOncelik o) => switch (o) {
-      TaskOncelik.dusuk => Colors.green,
-      TaskOncelik.orta => Colors.amber.shade800,
-      TaskOncelik.yuksek => Colors.red,
-      TaskOncelik.yok => Colors.blueGrey,
-    };
+  TaskOncelik.dusuk => Colors.green,
+  TaskOncelik.orta => Colors.amber.shade800,
+  TaskOncelik.yuksek => Colors.red,
+  TaskOncelik.yok => Colors.blueGrey,
+};

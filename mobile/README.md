@@ -2087,6 +2087,31 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 38 — FORMLARI VE ALT SAYFALARI SÜR.** Tur 36 envanterinin B maddesi:
+sürüşler listeyi çiziyor, **formu açmıyordu**. Uygulamadaki oluşturma
+formlarının hepsi aynı deseni kullanır (`FAB → showModalBottomSheet`);
+`fabAc` yardımcısı bunu dilden bağımsız açar ve **açıldığını doğrular**
+(`BottomSheet` yoksa hata — sessizce listeyi ölçen boş sürüş olmasın).
+Sürülen 9 form: duyuru, site kuralı, etkinlik, talep, kargo, destek, talep→iş
+emri dönüştürme, toplu daire, görev tamamlama.
+
+> **BULDUĞU HATALAR (4).**
+> 1. **Fotoğraf düğmeleri 320 dp'de taşıyordu.** Rusça/Almanca etiketler
+>    (`Выбрать из галереи`) tek satıra sığmıyordu; `TextButton.icon` etiketi
+>    zaten `Flexible` içindedir — **ellipsis verilince** kısalıyor. 5 ekranda
+>    15 etiket düzeltildi.
+> 2. **"Görsel (opsiyonel)" satırı** duyuru ve etkinlik formlarında `Row`
+>    içinde esnek değildi → 125 px taşma → `Expanded`.
+> 3. **Destek formundaki foto satırı** Rusça'da 60 px taşıyordu → `Row`
+>    yerine `Wrap`.
+> 4. **"Fotoğraf ekle" kutusu** 96×96 sabitti; 2.0× ölçekte içerik 30 px
+>    taşıyordu → kutu yazı ölçeğiyle büyüyor + etiket iki satıra sığıyor.
+
+> **KAPSAM AZ ARTTI, BU BEKLENEN.** Formların çoğu birim testlerde zaten
+> *çiziliyordu* (ör. `announcements_screen_test`); eksik olan **eksen**
+> ölçümüydü — dar ekran, yazı ölçeği, koyu tema, klavye, ekran okuyucu.
+> Dört hatanın hepsi o eksenlerden çıktı, kapsam sayısından değil.
+
 **TUR 37 — SAHA AKIŞINI SÜR.** Tur 36 envanterinin 1 numaralı kör noktası:
 güvenlik/görevli rolünün günlük iş akışı — devriye ("Turlarım"), NFC okutma,
 görev detayı/tamamlama, çevrimdışı kuyruk — **yedi sürüş ekseninin
