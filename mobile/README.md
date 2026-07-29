@@ -2087,6 +2087,14 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 44 — 403 ve İSKELET SÜRÜŞÜ.** Talep listesi iki yeni hâlde sürüldü:
+**403 yetki reddi** ve **yükleniyor** (uç hiç yanıt vermez). İkincisi için
+sürüş yardımcısına `bekleyen` seçeneği eklendi: dönen gösterge **sonsuz
+animasyondur**, `pumpAndSettle` asla dönmez — sabit kare pompalanır.
+
+> İki hâl de temiz çıktı: yetki reddi çevrilmiş mesaj gösteriyor, yükleniyor
+> hâli iskelet çiziyor.
+
 **TUR 43 — ROL VARYANTLARINI SÜR.** Tur 36'nın F maddesi: sürüşler ekran
 başına **tek rol** kullanıyordu (çoğunlukla `yonetici`), oysa 14 ekranda
 yönetim eylemleri role göre gizleniyor. Sekiz yeni sürüş: duyuru / site

@@ -205,6 +205,26 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 44 — 403 ve YUKLENIYOR (iskelet) surusu
+
+Tur 42'nin araci iki kip daha kazandi: **403** (kullanici GIRIS YAPMIS ama ucu
+goremiyor — 401'den farkli, yonlendirme yok) ve **yavas** (yanit hic gelmez,
+ekran YUKLENIYOR halinde olculur). 19 sayfa x 4 dil x 2 kip = **152
+sayfa-dil-kip**.
+
+`yavas` kipinde beklenen sey hata degil GERI BILDIRIMDIR: iskelet, spinner,
+`role="status"` ya da "Yukleniyor" metni. Hicbiri yoksa kullanici bos ekrani
+"kayit yok" saniyor.
+
+**4 -> 0.** Bulgular:
+
+| Bulgu | Sebep | Duzeltme |
+|---|---|---|
+| `/building-editor` ve `/dues` **yukleniyor gostergesi yok** | SWR `isLoading` hic okunmuyordu; veri gelene kadar sayfa bos gorunuyordu | `role="status"` + `ortakYukleniyor` |
+| 12 hardcoded Turkce | `Tutar (TL)`, `Tahakkuklar`, `Blok etiketi`, `Daire no`, `Kat`, `0 = zemin`, `+ Kat`, `sil`... — Turkce'ye ozgu harf tasimadiklari icin eski taramalar gormemisti | 9 yeni anahtar x 7 dil |
+
+> **403 tarafi TEMIZ cikti**: her sayfa yetki reddinde hata kutusu gosteriyor.
+
 ### Tur 42 — HATA ve CEVRIMDISI surusu
 
 Tur 36 envanterinin E maddesi: hicbir surus uctan HATA aldirmamisti; butun

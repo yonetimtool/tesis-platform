@@ -236,12 +236,20 @@ export default function BuildingEditorPage() {
 
       {loadError && <ErrorBox message={t("binaVerilerYuklenemedi")} />}
 
+      {/* YUKLENIYOR: veri gelene kadar ekran BOS gorunuyordu ve kullanici
+          "hic blok yok" saniyordu (tur 44 yavas-ag surusu). */}
+      {(blocks.isLoading || units.isLoading) && (
+        <p role="status" className="text-sm text-muted">
+          {t("ortakYukleniyor")}
+        </p>
+      )}
+
       {/* Blok ekle/duzenle formu */}
       {blockForm.open && (
         <form onSubmit={saveBlock} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{blockForm.editingId ? t("binaBlokDuzenle") : t("binaBlokYeni")}</h2>
           <div className="grid grid-cols-1 gap-4 sm:max-w-xs">
-            <Field label="Blok etiketi" hint={t("binaBlokIpucu")}>
+            <Field label={t("binaBlokEtiketi")} hint={t("binaBlokIpucu")}>
               <input
                 className={inputCls}
                 value={blockForm.ad}
@@ -276,7 +284,7 @@ export default function BuildingEditorPage() {
             </span>
           </h2>
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Daire no" hint={t("binaDaireNoIpucu")}>
+            <Field label={t("binaDaireNo")} hint={t("binaDaireNoIpucu")}>
               <input
                 className={inputCls}
                 value={unitForm.no}
@@ -288,7 +296,7 @@ export default function BuildingEditorPage() {
                 required
               />
             </Field>
-            <Field label="Kat" hint="0 = zemin">
+            <Field label={t("binaKat")} hint={t("binaZeminIpucu")}>
               <input
                 className={inputCls}
                 inputMode="numeric"
@@ -297,7 +305,7 @@ export default function BuildingEditorPage() {
                 placeholder="1"
               />
             </Field>
-            <Field label={t("binaSira")} hint="Kattaki konum">
+            <Field label={t("binaSira")} hint={t("binaKattakiKonum")}>
               <input
                 className={inputCls}
                 inputMode="numeric"
@@ -407,7 +415,7 @@ function BlockTiles({
         className="flex h-32 w-40 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-500 hover:bg-slate-50"
       >
         <span className="text-3xl leading-none">+</span>
-        <span className="text-sm">Blok ekle</span>
+        <span className="text-sm">{t("binaBlokEkle")}</span>
       </button>
     </div>
   );
@@ -440,7 +448,7 @@ function BlockDetail({
         <h2 className="font-medium">{blockless ? t("binaBloksuzDaireler") : `Blok ${label}`}</h2>
         {/* Bloksuz kovaya yeni daire EKLENMEZ (her daire bir bloga baglanir). */}
         {!blockless && (
-          <button className={btnGhost} onClick={onAddFloor}>+ Kat</button>
+          <button className={btnGhost} onClick={onAddFloor}>{t("binaKatEkleKisa")}</button>
         )}
       </div>
 
@@ -508,7 +516,7 @@ function FloorRow({
             {u.sira != null && <span className="text-[10px] opacity-90">#{u.sira}</span>}
             <div className="absolute inset-x-0 bottom-0 hidden justify-center gap-2 rounded-b-lg bg-black/40 py-0.5 text-[10px] group-hover:flex">
               <button className="hover:underline" onClick={() => onEditUnit(u)}>{t("binaDuzenleKucuk")}</button>
-              <button className="hover:underline" onClick={() => onRemoveUnit(u)}>sil</button>
+              <button className="hover:underline" onClick={() => onRemoveUnit(u)}>{t("ortakSil")}</button>
             </div>
           </div>
         ))}

@@ -40,6 +40,7 @@ export default function DuesPage() {
   const {
     data: assessments,
     error: aErr,
+    isLoading: aYukleniyor,
     mutate: mutateA,
   } = useSWR<DuesAssessmentList>(
     `/api/dues/assessments?limit=${LIMIT}&offset=${aOffset}${aQs}`,
@@ -47,7 +48,11 @@ export default function DuesPage() {
   );
 
   const [pOffset, setPOffset] = useState(0);
-  const { data: payments, error: pErr } = useSWR<DuesPaymentList>(
+  const {
+    data: payments,
+    error: pErr,
+    isLoading: pYukleniyor,
+  } = useSWR<DuesPaymentList>(
     `/api/dues/payments?limit=${LIMIT}&offset=${pOffset}`,
     jsonFetcher,
   );
@@ -84,6 +89,11 @@ export default function DuesPage() {
     <div className="space-y-6">
       <PageHeader title={t("aidatBaslik")} />
       {(aErr || pErr) && <ErrorBox message={(aErr ?? pErr).message} />}
+      {(aYukleniyor || pYukleniyor) && (
+        <p role="status" className="text-sm text-muted">
+          {t("ortakYukleniyor")}
+        </p>
+      )}
 
       {/* Toplu tahakkuk */}
       <motion.form {...panelMotion} onSubmit={bulk} className={`space-y-3 ${panelCls}`}>
@@ -101,7 +111,7 @@ export default function DuesPage() {
               required
             />
           </Field>
-          <Field label="Tutar (TL)">
+          <Field label={t("aidatTutarTl")}>
             <input
               className={inputCls}
               inputMode="decimal"
@@ -132,7 +142,7 @@ export default function DuesPage() {
       {/* Tahakkuk listesi */}
       <section className="space-y-3">
         <div className="flex items-end justify-between">
-          <h2 className="text-lg font-medium">Tahakkuklar</h2>
+          <h2 className="text-lg font-medium">{t("aidatTahakkuklar")}</h2>
           <div className="w-48">
             <Field label={t("aidatDonemFiltresi")}>
               <input
@@ -152,9 +162,9 @@ export default function DuesPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
-                  <th className="px-4 py-2.5 font-medium">Daire</th>
+                  <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("ortakDonem")}</th>
-                  <th className="px-4 py-2.5 font-medium">Tutar</th>
+                  <th className="px-4 py-2.5 font-medium">{t("raporTabloTutar")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("aidatSonOdemeKisa")}</th>
                 </tr>
               </thead>
@@ -197,11 +207,11 @@ export default function DuesPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
-                  <th className="px-4 py-2.5 font-medium">Daire</th>
+                  <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("aidatYontem")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
-                  <th className="px-4 py-2.5 font-medium">Tutar</th>
-                  <th className="px-4 py-2.5 font-medium">Zaman</th>
+                  <th className="px-4 py-2.5 font-medium">{t("raporTabloTutar")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("raporTabloZaman")}</th>
                 </tr>
               </thead>
               <tbody>

@@ -10,6 +10,8 @@
 ///     uzun Arapca/Almanca cevirilerde TASMA olmamali.
 library;
 
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -80,15 +82,20 @@ class _FakeSikayetApi extends UnitComplaintApi {
 }
 
 class _FakeTalepApi extends ComplaintApi {
-  _FakeTalepApi(this._items, {this.hata}) : super(Dio(), TaskCategoryApi(Dio()));
+  _FakeTalepApi(this._items, {this.hata, this.askida = false})
+      : super(Dio(), TaskCategoryApi(Dio()));
 
   final List<Complaint> _items;
 
   /// TUR 42: uc HATA verirse ekranin hangi hali cizilir? (null = basarili)
   final ApiException? hata;
 
+  /// TUR 44: yanit hic gelmezse — YUKLENIYOR (iskelet/spinner) hali.
+  final bool askida;
+
   @override
   Future<List<Complaint>> fetchAll({TalepDurum? durum}) async {
+    if (askida) return Completer<List<Complaint>>().future;
     if (hata != null) throw hata!;
     return _items;
   }
@@ -123,11 +130,12 @@ Complaint _talep({TalepDurum durum = TalepDurum.acik, bool foto = false}) => Com
 Widget _talepEkrani(Locale locale,
         {UserRole role = UserRole.yonetici,
         bool foto = false,
-        ApiException? hata}) =>
+        ApiException? hata,
+        bool askida = false}) =>
     ProviderScope(
       overrides: [
-        complaintApiProvider
-            .overrideWithValue(_FakeTalepApi([_talep(foto: foto)], hata: hata)),
+        complaintApiProvider.overrideWithValue(
+            _FakeTalepApi([_talep(foto: foto)], hata: hata, askida: askida)),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
       child: l10nApp(const ComplaintsScreen(), locale: locale),
@@ -586,6 +594,29 @@ void main() {
     await tumEksenlerSurusu(
         tester, (dil) => _duzenlemeEkrani(Locale(dil), role: UserRole.security),
         veri: surusVerisi);
+  });
+
+  // ---- TUR 44: 403 ve YUKLENIYOR ----
+  testWidgets('HATA: talep listesi 403 YETKI REDDI (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil),
+          hata: const ApiException(
+              code: 'forbidden', message: 'Yetkiniz yok', statusCode: 403)),
+      veri: surusVerisi,
+    );
+  });
+  testWidgets('ISKELET: talep listesi YUKLENIYOR hali (bes eksen)',
+      (tester) async {
+    // Yanit hic gelmez: donen gosterge SONSUZ animasyondur, bu yuzden surus
+    // `bekleyen: true` ile sabit kare pompalar (`pumpAndSettle` asla donmez).
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil), askida: true),
+      veri: surusVerisi,
+      bekleyen: true,
+    );
   });
 }
 

@@ -64,10 +64,19 @@ Future<void> _ciz(
   WidgetTester tester,
   Widget w, {
   required bool gorsel,
+  bool bekleyen = false,
   Future<void> Function(WidgetTester)? hazirla,
 }) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pumpWidget(w);
+  if (bekleyen) {
+    // YUKLENIYOR hali: donen gosterge SONSUZ animasyondur, `pumpAndSettle`
+    // asla donmez. Sabit kare pompalanir (tur 44).
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    if (hazirla != null) await hazirla(tester);
+    return;
+  }
   if (gorsel) {
     // Gorsel yuklenmeden `pumpAndSettle` CAGRILMAZ: yuklenirken cizilen
     // `CircularProgressIndicator` sonsuz animasyondur, oturma gerceklesmez.
@@ -121,6 +130,7 @@ Future<void> darEkranSurusu(
   double yukseklik = 900,
   Set<String> veri = const {},
   bool gorsel = false,
+  bool bekleyen = false,
   Future<void> Function(WidgetTester)? hazirla,
 }) async {
   tester.view.physicalSize = Size(genislik, yukseklik);
@@ -135,7 +145,8 @@ Future<void> darEkranSurusu(
       ayrinti.add('${d.exception}\n${d.context}');
       eskiOnError?.call(d);
     };
-    await _ciz(tester, kur(dil), gorsel: gorsel, hazirla: hazirla);
+    await _ciz(tester, kur(dil),
+        gorsel: gorsel, bekleyen: bekleyen, hazirla: hazirla);
     FlutterError.onError = eskiOnError;
     // Tasma ISTISNASI: hangi dilde oldugu mesajda gorunsun.
     final hata = tester.takeException();
@@ -160,6 +171,7 @@ Future<void> yaziOlcegiSurusu(
   double yukseklik = 1600,
   Set<String> veri = const {},
   bool gorsel = false,
+  bool bekleyen = false,
   Future<void> Function(WidgetTester)? hazirla,
 }) async {
   tester.view.physicalSize = Size(genislik, yukseklik);
@@ -179,6 +191,7 @@ Future<void> yaziOlcegiSurusu(
         child: kur(dil),
       ),
       gorsel: gorsel,
+      bekleyen: bekleyen,
       hazirla: hazirla,
     );
     FlutterError.onError = eskiOnError;
@@ -226,6 +239,7 @@ Future<void> ekranOkuyucuSurusu(
   Set<String> veri = const {},
   bool dokunmaHedefi = true,
   bool gorsel = false,
+  bool bekleyen = false,
   Future<void> Function(WidgetTester)? hazirla,
 }) async {
   tester.view.physicalSize = const Size(430, 1400);
@@ -233,7 +247,8 @@ Future<void> ekranOkuyucuSurusu(
   addTearDown(tester.view.reset);
   final tutamac = tester.ensureSemantics();
   for (final dil in surusDilleri) {
-    await _ciz(tester, kur(dil), gorsel: gorsel, hazirla: hazirla);
+    await _ciz(tester, kur(dil),
+        gorsel: gorsel, bekleyen: bekleyen, hazirla: hazirla);
 
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     if (dokunmaHedefi) {
@@ -311,6 +326,7 @@ Future<void> koyuTemaSurusu(
   Set<String> veri = const {},
   bool kontrast = true,
   bool gorsel = false,
+  bool bekleyen = false,
   Future<void> Function(WidgetTester)? hazirla,
 }) async {
   tester.view.physicalSize = const Size(430, 1400);
@@ -322,7 +338,8 @@ Future<void> koyuTemaSurusu(
   // Turkce de sürülür: kontrast dilden bagimsizdir ve varsayilan dilin
   // koyu temada okunmasi en az cevirilerinki kadar onemlidir.
   for (final dil in ['tr', ...surusDilleri]) {
-    await _ciz(tester, kur(dil), gorsel: gorsel, hazirla: hazirla);
+    await _ciz(tester, kur(dil),
+        gorsel: gorsel, bekleyen: bekleyen, hazirla: hazirla);
     expect(tester.takeException(), isNull,
         reason: '$dil koyu temada tasti');
     // Surusun BOS KOSMADIGININ kaniti: ekran GERCEKTEN koyu temada cizildi.
@@ -361,13 +378,15 @@ Future<void> klavyeSurusu(
   int azamiTab = 120,
   bool sira = true,
   bool gorsel = false,
+  bool bekleyen = false,
   Future<void> Function(WidgetTester)? hazirla,
 }) async {
   tester.view.physicalSize = const Size(430, 1400);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
   for (final dil in ['tr', 'ar']) {
-    await _ciz(tester, kur(dil), gorsel: gorsel, hazirla: hazirla);
+    await _ciz(tester, kur(dil),
+        gorsel: gorsel, bekleyen: bekleyen, hazirla: hazirla);
 
     // --- 1) DOKUNMA-YALNIZ ogeler ---------------------------------------
     final dokunmaYalniz = <String>[];
@@ -488,18 +507,25 @@ Future<void> tumEksenlerSurusu(
   bool dokunmaHedefi = true,
   bool kontrast = true,
   bool sira = true,
+  bool bekleyen = false,
   Future<void> Function(WidgetTester)? hazirla,
 }) async {
   // Bu ekranlarin cogu gizli depoya (dil/oturum) dokunur; koyu tema surusu
   // `runAsync` kullandigi icin taklit gerekir (tur 32 notu).
   _guvenliDepoTaklidi();
-  await darEkranSurusu(tester, kur, veri: veri, hazirla: hazirla);
-  await yaziOlcegiSurusu(tester, kur, veri: veri, hazirla: hazirla);
+  await darEkranSurusu(tester, kur,
+      veri: veri, bekleyen: bekleyen, hazirla: hazirla);
+  await yaziOlcegiSurusu(tester, kur,
+      veri: veri, bekleyen: bekleyen, hazirla: hazirla);
   await ekranOkuyucuSurusu(tester, kur,
-      veri: veri, dokunmaHedefi: dokunmaHedefi, hazirla: hazirla);
+      veri: veri,
+      dokunmaHedefi: dokunmaHedefi,
+      bekleyen: bekleyen,
+      hazirla: hazirla);
   await koyuTemaSurusu(tester, kur,
-      veri: veri, kontrast: kontrast, hazirla: hazirla);
-  await klavyeSurusu(tester, kur, sira: sira, hazirla: hazirla);
+      veri: veri, kontrast: kontrast, bekleyen: bekleyen, hazirla: hazirla);
+  await klavyeSurusu(tester, kur,
+      sira: sira, bekleyen: bekleyen, hazirla: hazirla);
 }
 
 /// FORM/ALT SAYFA ACICI (tur 38) — surus `hazirla` parametresi icin.

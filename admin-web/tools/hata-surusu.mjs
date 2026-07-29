@@ -5,8 +5,12 @@
 // kotu ekran budur: sunucu 500 verir ya da baglanti kopar.
 //
 // Iki kip:
-//   * `500`      — BFF ucu 500 doner (sunucu hatasi).
+//   * `500`        — BFF ucu 500 doner (sunucu hatasi).
 //   * `cevrimdisi` — istek hic tamamlanmaz (baglanti yok).
+//   * `403`        — yetki reddi: kullanici giris YAPMIS ama ucu goremiyor.
+//                    (401 farklidir: oturum bitti -> /login'e yonlendirme.)
+//   * `yavas`      — yanit 30 sn gecikir: EKRAN YUKLENIYOR HALINDE olculur
+//                    (iskelet/spinner). Tur 36'nin "yukleniyor" maddesi.
 //
 // Olculen:
 //   1. HATA GORUNUYOR MU — sayfa sessizce bos/iskelet kalirsa BULGUDUR:
@@ -26,7 +30,7 @@ const AXE = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
 const KOK = process.env.KOK ?? 'http://localhost:3134';
 const DILLER = (process.env.DILLER ?? 'tr,en,ar,de').split(',');
-const KIPLER = ['500', 'cevrimdisi'];
+const KIPLER = (process.env.KIPLER ?? '500,cevrimdisi,403,yavas').split(',');
 const SAYFALAR = ['/dashboard', '/tenants', '/shifts', '/checkpoints', '/patrol-plans',
   '/tasks', '/assets', '/units', '/building-editor', '/schematic', '/dues', '/transparency',
   '/users', '/announcements', '/complaints', '/notifications', '/integrations', '/support',
@@ -68,6 +72,18 @@ for (const kip of KIPLER)
           body: JSON.stringify({ code: 'server_error', message: 'Sunucu hatasi (surus)' }),
         });
       }
+      if (kip === '403') {
+        return route.fulfill({
+          status: 403,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: { code: 'forbidden', message: 'Yetkisiz (surus)' } }),
+        });
+      }
+      if (kip === 'yavas') {
+        // Yanit GELMEZ (sayfa yukleniyor halinde kalir) — istek askida
+        // birakilir; olcum bittikten sonra baglam kapanir.
+        return new Promise(() => {});
+      }
       return route.abort('failed');
     });
 
@@ -83,14 +99,26 @@ for (const kip of KIPLER)
           uzunluk: metin.length,
           // Hata kutusu: `role="alert"` ya da kirmizi tonlu kutu.
           uyari: govde.querySelectorAll('[role="alert"], .text-red-700, .text-red-600, [class*="bg-red"]').length,
+          // Yukleniyor isareti: iskelet kutusu (animate-pulse), spinner
+          // (animate-spin), `aria-busy` ya da "yukleniyor" metni.
+          yukleniyor: govde.querySelectorAll('[class*="animate-pulse"], [class*="animate-spin"], [aria-busy="true"], [role="status"]').length > 0
+            || /y[üu]kleniyor|loading|جار|загруз|wird geladen|chargement|cargando/i.test(govde.innerText),
           gizliMetinler: [...govde.querySelectorAll('[aria-label],[title]')]
             .map((e) => e.getAttribute('aria-label') || e.getAttribute('title'))
             .filter(Boolean),
         };
       });
 
-      // 1) Hata GORUNUYOR mu?
-      if (d.uyari === 0) {
+      // 1) Kipe gore beklenen GERI BILDIRIM var mi?
+      if (kip === 'yavas') {
+        // Yukleniyor halinde kullanici bir sey gormeli: iskelet, spinner ya
+        // da "Yukleniyor" metni. Hicbiri yoksa ekran BOS gorunur ve kullanici
+        // "veri yok" saniyor.
+        if (!d.yukleniyor) {
+          bulgular.push([`${kip}/${dil}`, yol,
+            `YUKLENIYOR GOSTERGESI YOK: ekranda "${d.metin.slice(0, 90)}"`]);
+        }
+      } else if (d.uyari === 0) {
         bulgular.push([`${kip}/${dil}`, yol,
           `SESSIZ HATA: uyari yok — ekranda "${d.metin.slice(0, 90)}"`]);
       }
