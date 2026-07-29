@@ -153,6 +153,17 @@ class PatrolErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CANLI BOLGE (tur 56): bant ekrana SONRADAN gelir; `liveRegion` olmadan
+    // ekran okuyucu yeni metni DUYURMAZ — gormeyen kullanici hata olustugunu
+    // ancak elle gezinirse anlar. (Flutter'in `SnackBar`i bunu zaten yapiyor;
+    // eksik olan STATIK bantlardi.)
+    return Semantics(
+      liveRegion: true,
+      child: _govde(context),
+    );
+  }
+
+  Widget _govde(BuildContext context) {
     return Card(
       color: Colors.red.withValues(alpha: 0.08),
       margin: const EdgeInsets.only(bottom: 16),

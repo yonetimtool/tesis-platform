@@ -106,7 +106,12 @@ export default function DashboardPage() {
       </div>
 
       {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        // CANLI BOLGE (tur 56): canli panel 15 sn'de bir yenilenir; hata
+        // kutusu SONRADAN gelir ve `role="alert"` olmadan duyurulmaz.
+        <p
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+        >
           {error.message}
         </p>
       )}

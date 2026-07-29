@@ -2087,6 +2087,17 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 56 — CANLI BÖLGE.** Ekrana **sonradan** gelen hata bantları
+`Semantics(liveRegion: true)` ile sarıldı (`PatrolErrorBanner` — devriye,
+aidat, raporlar; `tasks_screen._ErrorBanner`). Bunlar olmadan TalkBack yeni
+metni duyurmuyordu.
+
+> **ENVANTERDEKİ İDDİAMI DÜZELTTİM.** Tur 49'da "tur 45'te eklenen push
+> SnackBar'ı da sessiz" yazmıştım — **yanlış**. Flutter'ın `SnackBar`'ı
+> zaten `liveRegion: true` kullanıyor (kaynağı okudum:
+> `material/snack_bar.dart`). Gerçek boşluk **statik** hata bantlarındaydı;
+> düzeltilen de o.
+
 **TUR 53 — OKUTULMUŞ DEMİRBAŞ + FOTOĞRAF VAZGEÇME (A'nın kalanı).**
 `_ScannedCard` (56 satır) ve `_HistoryCard` (39 satır) yalnız
 `state.scanned != null` iken çizilir; sürüş hiç NFC okutması yapmadığı için

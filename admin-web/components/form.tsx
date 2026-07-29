@@ -79,7 +79,14 @@ export function Field({
 export function ErrorBox({ message }: { message?: string | null }) {
   if (!message) return null;
   return (
-    <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+    // CANLI BOLGE (tur 56): kutu ekrana SONRADAN gelir. `role="alert"`
+    // olmadan ekran okuyucu yeni metni DUYURMAZ — gormeyen kullanici
+    // kaydin neden gitmedigini anlamaz. `alert` zaten assertive'dir;
+    // ayrica `aria-live` vermek cift duyuruya yol acar.
+    <p
+      role="alert"
+      className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+    >
       {message}
     </p>
   );

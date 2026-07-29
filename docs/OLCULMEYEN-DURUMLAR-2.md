@@ -88,9 +88,11 @@ Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve
 
 * **Anlamsal okuma SIRASI.** Etiketlerin *varlığı* ölçüldü (tur 29/30), sırası
   değil. Ekran okuyucu yanlış sırada okuyabilir.
-* **Canlı bölge duyurusu.** SnackBar/hata metinleri ekran okuyucuya
-  duyuruluyor mu (`liveRegion` / `SemanticsService.announce`)? Kodda **hiç
-  kullanılmıyor** — tur 45'te eklenen push SnackBar'ı da sessiz.
+* ~~**Canlı bölge duyurusu.**~~ **KAPANDI (tur 56).** Panelde `ErrorBox`,
+  `/login` ve `/dashboard` hata kutularına `role="alert"`; mobilde statik hata
+  bantlarına `Semantics(liveRegion: true)`. **Bu maddedeki iddiam kısmen
+  yanlıştı:** Flutter'ın `SnackBar`'ı zaten `liveRegion: true` kullanıyor, yani
+  tur 45'in push bildirimi sessiz değildi; eksik olan statik bantlardı.
 * **Görsel regresyon.** Tek bir golden testi var
   (`test/tools/home_referans_golden_test.dart`); geri kalan 46 ekranın
   görünümü hiçbir yerde kilitli değil.

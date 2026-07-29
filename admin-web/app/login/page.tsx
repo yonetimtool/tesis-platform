@@ -236,6 +236,7 @@ export default function LoginPage() {
 
             {error && (
               <motion.p
+                role="alert"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"

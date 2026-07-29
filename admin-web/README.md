@@ -205,6 +205,30 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 56 — CANLI BOLGE (ekran okuyucu hatayi DUYURUYOR mu?)
+
+Tur 49 envanterinin E maddesi. Hata kutusu ekrana **sonradan** gelir;
+`role="alert"` yoksa ekran okuyucu yeni metni **duyurmaz** — gormeyen kullanici
+kaydin neden gitmedigini anlamaz, formda bekler. **axe bunu yakalamaz**: axe
+VAR OLAN yapiyi olcer, "duyurulmasi gerekirdi" demez.
+
+`tests/canli-bolge.test.ts`: tek bir `className` degeri icinde hem kutu zemini
+(`bg-red-50`) hem hata metni tonu (`text-red-6/7/800`) varsa o eleman canli
+bolge OLMALIDIR.
+
+**Duzeltilen 3 yer:** paylasilan `ErrorBox` (panelin her yerinde), `/login`
+hata bandi, `/dashboard` hata kutusu (canli panel 15 sn'de bir yenilenir —
+hata tam da sonradan gelir). `Toast`ta `aria-live="polite"` zaten vardi.
+
+> **DEDEKTORUN IKI YANLIS ALARMI DUZELTILDI.** (1) Ilk surum 400 karakterlik
+> pencereye bakiyordu ve `schematic`teki YOGUNLUK PALETINI (`bg-red-600` +
+> `text-red-700`, ayri alanlar) hata kutusu sanip alarm verdi — sart artik
+> "AYNI `className` dizgesinde" . (2) Satir numarasi `indexOf(blok)` ile
+> hesaplaniyordu; ayni metin birden cok yerde gecince yanlis satir
+> gosteriyordu — artik gercek karakter ofseti kullaniliyor.
+>
+> Sinama: `ErrorBox`tan `role="alert"` kaldirildi → tarama yakaladi.
+
 ### Tur 54 — MUTASYON AKISLARI (panelde YAZMA yolu)
 
 Tur 49 envanterinin C maddesi: butun panel surusleri YALNIZ OKUMA yapiyordu.

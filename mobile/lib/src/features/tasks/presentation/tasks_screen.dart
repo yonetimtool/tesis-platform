@@ -313,24 +313,35 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Colors.red.withValues(alpha: 0.08),
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(message, style: const TextStyle(color: Colors.red)),
-            ),
-            if (onRetry != null)
-              TextButton(
-                onPressed: () => onRetry!(),
-                child: Text(context.l10n.ortakYenidenDene),
+    // CANLI BOLGE (tur 56): bant ekrana SONRADAN gelir; `liveRegion` olmadan
+    // ekran okuyucu yeni metni DUYURMAZ.
+    return Semantics(
+      liveRegion: true,
+      child: Card(
+        color: Colors.red.withValues(alpha: 0.08),
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(message, style: const TextStyle(color: Colors.red)),
               ),
-          ],
+              if (onRetry != null)
+                Flexible(
+                  child: TextButton(
+                    onPressed: () => onRetry!(),
+                    child: Text(
+                      context.l10n.ortakYenidenDene,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
