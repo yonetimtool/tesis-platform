@@ -367,7 +367,10 @@ class _RecordedAnswer extends StatelessWidget {
           Expanded(
             child: Text(
               context.l10n.etkKatiliminiz(katilimDurumAdi(context.l10n, durum)),
-              style: TextStyle(color: renk, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: okunurVurgu(context, renk),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

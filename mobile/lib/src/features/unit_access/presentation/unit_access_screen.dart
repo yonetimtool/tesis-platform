@@ -8,6 +8,7 @@ import '../../../routing/app_router.dart';
 import '../domain/unit_access_models.dart';
 import 'unit_access_controller.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// Tek-seferlik daire goruntuleme izni ekrani (rol-uyarlamali, KVKK):
 ///   * admin/yonetici: "Yeni istek" ile TEK daire; "Tüm daireler" ile TOPLU
@@ -104,22 +105,29 @@ class UnitAccessScreen extends ConsumerWidget {
     );
     if (onay != true) return;
     try {
-      final res =
-          await ref.read(unitAccessControllerProvider.notifier).createBulkRequest();
+      final res = await ref
+          .read(unitAccessControllerProvider.notifier)
+          .createBulkRequest();
       if (context.mounted) {
-        final atlandi = res.skipped > 0 ? context.l10n.izinAtlandiEki('${res.skipped}') : '';
+        final atlandi = res.skipped > 0
+            ? context.l10n.izinAtlandiEki('${res.skipped}')
+            : '';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(context.l10n.izinTopluGonderildi(
-                '${res.created}', atlandi)),
+            content: Text(
+              context.l10n.izinTopluGonderildi('${res.created}', atlandi),
+            ),
           ),
         );
       }
     } on ApiException catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n
-              .izinGonderilemedi(apiHataMetni(context.l10n, e)))),
+          SnackBar(
+            content: Text(
+              context.l10n.izinGonderilemedi(apiHataMetni(context.l10n, e)),
+            ),
+          ),
         );
       }
     }
@@ -153,7 +161,9 @@ class UnitAccessScreen extends ConsumerWidget {
     );
     if (unitNo == null || unitNo.isEmpty) return;
     try {
-      await ref.read(unitAccessControllerProvider.notifier).createRequest(unitNo);
+      await ref
+          .read(unitAccessControllerProvider.notifier)
+          .createRequest(unitNo);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(context.l10n.izinIstekGonderildi)),
@@ -162,8 +172,11 @@ class UnitAccessScreen extends ConsumerWidget {
     } on ApiException catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n
-              .izinGonderilemedi(apiHataMetni(context.l10n, e)))),
+          SnackBar(
+            content: Text(
+              context.l10n.izinGonderilemedi(apiHataMetni(context.l10n, e)),
+            ),
+          ),
         );
       }
     }
@@ -229,9 +242,7 @@ class _RequestCard extends ConsumerWidget {
                   ],
                 ),
               ),
-            if (!canDecide &&
-                r.durum == AccessRequestDurum.onaylandi &&
-                r.used)
+            if (!canDecide && r.durum == AccessRequestDurum.onaylandi && r.used)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
@@ -309,14 +320,22 @@ class _DurumBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, text) = switch (durum) {
-      AccessRequestDurum.bekliyor =>
-        (Colors.orange, context.l10n.devriyeDurumBekliyor),
-      AccessRequestDurum.onaylandi => used
-          ? (Colors.grey, context.l10n.izinKullanildi)
-          : (Colors.green, context.l10n.izinOnayli),
-      AccessRequestDurum.reddedildi => (Colors.red, context.l10n.talepDurumReddedildi),
-      AccessRequestDurum.unknown =>
-        (Colors.grey, context.l10n.devriyeDurumBilinmiyor),
+      AccessRequestDurum.bekliyor => (
+        Colors.orange,
+        context.l10n.devriyeDurumBekliyor,
+      ),
+      AccessRequestDurum.onaylandi =>
+        used
+            ? (Colors.grey, context.l10n.izinKullanildi)
+            : (Colors.green, context.l10n.izinOnayli),
+      AccessRequestDurum.reddedildi => (
+        Colors.red,
+        context.l10n.talepDurumReddedildi,
+      ),
+      AccessRequestDurum.unknown => (
+        Colors.grey,
+        context.l10n.devriyeDurumBilinmiyor,
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -324,7 +343,10 @@ class _DurumBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(text, style: TextStyle(color: color, fontSize: 12)),
+      child: Text(
+        text,
+        style: TextStyle(color: okunurVurgu(context, color), fontSize: 12),
+      ),
     );
   }
 }
@@ -349,14 +371,20 @@ class _DecideButtonsState extends ConsumerState<_DecideButtons> {
           .decide(widget.id, onayla: onayla);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(onayla ? context.l10n.izinVerildi : context.l10n.talepDurumReddedildi)),
+          SnackBar(
+            content: Text(
+              onayla
+                  ? context.l10n.izinVerildi
+                  : context.l10n.talepDurumReddedildi,
+            ),
+          ),
         );
       }
     } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(apiHataMetni(context.l10n, e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(apiHataMetni(context.l10n, e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

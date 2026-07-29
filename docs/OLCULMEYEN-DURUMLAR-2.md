@@ -76,6 +76,12 @@ Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve
 | Yoğunluk | `devicePixelRatio = 1.0` | 2.0/3.0 (gerçek cihazlar) — piksel kırpma/kenar yuvarlama |
 | Sistem ayarı | tema (açık/koyu) | **kalın yazı** (bold text), yüksek kontrast, renk körlüğü filtreleri |
 
+> **GÜNCELLEME (tur 57).** Tint zemin kalıbı kapatıldı — ve içinden
+> beklenmedik bir bulgu çıktı: **açık tema da başarısızdı** (`Colors.orange`
+> 1,92; `green` 2,42; `blue` 2,66). `okunurVurgu` iki yönlü yapıldı ve
+> `test/tint_kontrast_denetimi_test.dart` ile hesap tabanlı olarak kilitlendi
+> (12 renk × 4 opaklık × 2 tema).
+>
 > **GÜNCELLEME (tur 52).** B kapandı (`task_ticket_widgets` %2 → %96).
 > **YENİ KÖR NOKTA (E'ye eklendi):** `textContrastGuideline` küçük/ince
 > metinde yetersiz — sabit renk + tint zemin kalıbı koyu temada 2.06:1

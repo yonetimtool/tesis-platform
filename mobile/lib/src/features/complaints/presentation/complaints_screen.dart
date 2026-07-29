@@ -618,7 +618,10 @@ class _LinkedWorkOrderCard extends StatelessWidget {
             ),
             Text(
               label,
-              style: TextStyle(color: color, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: okunurVurgu(context, color),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -1654,9 +1657,11 @@ class _DeclineSheetState extends ConsumerState<_DeclineSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.cancel_outlined),
-                label: Text(_saving
-                    ? context.l10n.talepReddediliyor
-                    : context.l10n.talepReddet),
+                label: Text(
+                  _saving
+                      ? context.l10n.talepReddediliyor
+                      : context.l10n.talepReddet,
+                ),
               ),
             ),
           ],

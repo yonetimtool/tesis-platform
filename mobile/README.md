@@ -2087,6 +2087,38 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 57 — TINT ZEMİN KONTRASTI: HESAPLA, GÖRÜNTÜYE GÜVENME.** Tur 52'de
+`textContrastGuideline`'ın küçük/ince metinde yetersiz olduğunu görmüştüm
+(indigo koyu temada **2.06:1** verirken kılavuz geçiyordu). Aynı kalıp
+`lib/src` içinde 32 yerde daha vardı: zemin = aynı rengin %8–15 opaklığı,
+metin = **ham renk**.
+
+> **BEKLEMEDİĞİM BULGU: AÇIK TEMA DA BAŞARISIZDI.** Hesap tabloya döküldü:
+>
+> | renk | açık | koyu |
+> |---|---|---|
+> | `Colors.orange` | **1,92** | 6,07 |
+> | `Colors.green` | **2,42** | 4,92 |
+> | `Colors.blue` | **2,66** | 4,49 |
+> | `Colors.red` | **3,03** | 3,98 |
+> | `HomeTokens.primary` | 4,20 | **2,91** |
+> | indigo `#3949AB` | 6,11 | **2,03** |
+>
+> Eşik 4,5 — yani çoğu kombinasyon **iki temada da** okunmuyordu. Tur 37'de
+> eklediğim `okunurVurgu` yalnız koyu temayı düzeltiyordu; **eksikti**. Artık
+> iki yönlü: açık temada rengi koyulaştırır (L −0,22), koyu temada açar
+> (L +0,35). Ton korunur — yeşil=olumlu / kırmızı=ihlal anlamı bozulmuyor.
+> Yedi renk de iki temada 5,4:1 üzerine çıkıyor.
+
+`test/tint_kontrast_denetimi_test.dart` bunu **görüntüye değil matematiğe**
+bakarak kilitler: 12 vurgu × 4 opaklık × 2 tema. İki testi var — biri
+`okunurVurgu`nun eşiği tuttuğunu, diğeri **ham rengin tutmadığını** (yani
+düzeltmenin gerekçesini) doğrular. Sınama: fonksiyon eski tek yönlü hâline
+döndürüldü → 68 kombinasyon yakalandı.
+
+Altı ekranda çip/rozet metni `okunurVurgu`ya geçirildi (demirbaş, talep,
+etkinlik, daire erişimi, şikayetlerim, aidat).
+
 **TUR 56 — CANLI BÖLGE.** Ekrana **sonradan** gelen hata bantları
 `Semantics(liveRegion: true)` ile sarıldı (`PatrolErrorBanner` — devriye,
 aidat, raporlar; `tasks_screen._ErrorBanner`). Bunlar olmadan TalkBack yeni

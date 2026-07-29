@@ -11,6 +11,7 @@ import '../../patrol/presentation/patrol_history_view.dart'
 import '../domain/dues_models.dart';
 import 'aidat_etiket.dart';
 import 'my_dues_controller.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// "Aidatim" — sakinin KENDI dairelerinin borc durumu (salt okuma).
 /// Odeme bu ekrandan YAPILAMAZ: odeme durumu yalnizca odeme saglayicisi
@@ -70,10 +71,7 @@ class _Body extends StatelessWidget {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Text(
-                l10n.aidatDaireYok,
-                textAlign: TextAlign.center,
-              ),
+              child: Text(l10n.aidatDaireYok, textAlign: TextAlign.center),
             ),
           ),
         if (state.units.length > 1) ...[
@@ -152,8 +150,9 @@ class _UnitCard extends StatelessWidget {
                           : context.l10n.aidatBorcYok,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    labelStyle:
-                        TextStyle(color: borc ? Colors.red : Colors.green),
+                    labelStyle: TextStyle(
+                      color: borc ? Colors.red : Colors.green,
+                    ),
                     backgroundColor: (borc ? Colors.red : Colors.green)
                         .withValues(alpha: 0.12),
                     visualDensity: VisualDensity.compact,
@@ -162,14 +161,21 @@ class _UnitCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            _row(context.l10n.aidatToplamTahakkuk,
-                tlSonEkli(unit.tahakkukKurus, context.dilKodu)),
-            _row(context.l10n.aidatToplamOdenen,
-                tlSonEkli(unit.odenenKurus, context.dilKodu),
-                valueColor: Colors.green),
-            _row(context.l10n.aidatBakiye,
-                tlSonEkli(unit.bakiyeKurus, context.dilKodu),
-                valueColor: borc ? Colors.red : Colors.green, bold: true),
+            _row(
+              context.l10n.aidatToplamTahakkuk,
+              tlSonEkli(unit.tahakkukKurus, context.dilKodu),
+            ),
+            _row(
+              context.l10n.aidatToplamOdenen,
+              tlSonEkli(unit.odenenKurus, context.dilKodu),
+              valueColor: Colors.green,
+            ),
+            _row(
+              context.l10n.aidatBakiye,
+              tlSonEkli(unit.bakiyeKurus, context.dilKodu),
+              valueColor: borc ? Colors.red : Colors.green,
+              bold: true,
+            ),
             // Hesap seffaf: bakiye nasil bulundu tek satirda gorunur.
             Padding(
               padding: const EdgeInsets.only(top: 2),
@@ -196,13 +202,17 @@ class _UnitCard extends StatelessWidget {
                       dense: true,
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.receipt_long_outlined),
-                      title: Text('${a.donem}'
-                          '${a.aciklama == null ? '' : ' — ${a.aciklama}'}'),
+                      title: Text(
+                        '${a.donem}'
+                        '${a.aciklama == null ? '' : ' — ${a.aciklama}'}',
+                      ),
                       subtitle: a.sonOdemeTarihi == null
                           ? null
-                          : Text(context.l10n.aidatSonOdeme(
-                              tarihBicimi(a.sonOdemeTarihi!, context.dilKodu),
-                            )),
+                          : Text(
+                              context.l10n.aidatSonOdeme(
+                                tarihBicimi(a.sonOdemeTarihi!, context.dilKodu),
+                              ),
+                            ),
                       trailing: Text(
                         tlSonEkli(a.tutarKurus, context.dilKodu),
                         style: const TextStyle(fontWeight: FontWeight.w600),
@@ -233,8 +243,12 @@ class _UnitCard extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String value,
-      {Color? valueColor, bool bold = false}) {
+  Widget _row(
+    String label,
+    String value, {
+    Color? valueColor,
+    bool bold = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -288,9 +302,7 @@ class _PaymentTile extends StatelessWidget {
         '${odemeYontemiAdi(l10n, p.yontem)}'
         '${p.donem == null ? '' : ' · ${p.donem}'}',
       ),
-      subtitle: p.makbuzNo == null
-          ? null
-          : Text(l10n.aidatMakbuz(p.makbuzNo!)),
+      subtitle: p.makbuzNo == null ? null : Text(l10n.aidatMakbuz(p.makbuzNo!)),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -299,8 +311,10 @@ class _PaymentTile extends StatelessWidget {
             tlSonEkli(p.tutarKurus, context.dilKodu),
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
-          Text(odemeDurumuAdi(l10n, p.durum),
-              style: TextStyle(color: color, fontSize: 12)),
+          Text(
+            odemeDurumuAdi(l10n, p.durum),
+            style: TextStyle(color: okunurVurgu(context, color), fontSize: 12),
+          ),
         ],
       ),
     );

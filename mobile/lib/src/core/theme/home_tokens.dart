@@ -228,23 +228,44 @@ class HomeText {
       TextStyle(fontSize: 22, fontWeight: FontWeight.w700, height: 1.15);
 }
 
-/// Herhangi bir VURGU renginin, o temada METIN olarak okunur bicimi (tur 37).
+/// Herhangi bir VURGU renginin, o temada METIN olarak okunur bicimi.
 ///
 /// [HomeSurface.accentText] ana ekranin SABIT paletini elle esler; buradaki
-/// surum ise KEYFI renkler icindir (gorev kategorisi renkleri gibi, kod
-/// disindan/dinamik gelir). Acik temada renk aynen doner; koyu temada ayni
-/// TON korunarak aydinlatilir — anlam degismez, kontrast tutar.
+/// surum KEYFI renkler icindir (gorev kategorisi, durum cipi, hata bandi...).
 ///
-/// Neden gerekti: gorev detayinda kategori cipi etiketi ham vurgu rengiyle
-/// ciziliyordu ve koyu temada 2.58:1 kaliyordu (esik 4.5).
+/// IKI YONLU (tur 57). Ilk surum (tur 37) yalniz KOYU temayi duzeltiyordu;
+/// olcum acik temanin de basarisiz oldugunu gosterdi. "Tint zemin" kalibinda
+/// — zemin = ayni rengin %8-15 opakligi — HAM renk METIN olarak:
+///
+///   renk              acik tema   koyu tema
+///   Colors.orange       1.92        6.07
+///   Colors.green        2.42        4.92
+///   Colors.blue         2.66        4.49
+///   Colors.red          3.03        3.98
+///   HomeTokens.primary  4.20        2.91
+///   indigo #3949AB      6.11        2.03
+///
+/// Esik 4.5 — yani cogu kombinasyon IKI TEMADA da okunmuyordu. Donusum:
+///   * acik tema: rengi KOYULASTIR (L -0.22, 0.24-0.34 bandina sikistir)
+///   * koyu tema: rengi ACIKLASTIR (L +0.35, 0.68-0.90 bandina)
+/// Ton (hue) korunur — yesil=olumlu / kirmizi=ihlal anlami bozulmaz. Yedi
+/// vurgu rengi de bu donusumle iki temada 5.4:1 uzerine cikar.
+///
+/// ZEMIN icin kullanilmaz: dolgu ham renk tintiyle kalir.
 Color okunurVurgu(BuildContext context, Color vurgu) {
-  if (Theme.of(context).brightness == Brightness.light) return vurgu;
+  final koyu = Theme.of(context).brightness == Brightness.dark;
   final h = HSLColor.fromColor(vurgu);
-  return h
-      .withLightness((h.lightness + 0.35).clamp(0.68, 0.9))
-      .withSaturation((h.saturation * 0.85).clamp(0.0, 1.0))
-      .toColor();
+  return koyu
+      ? h
+          .withLightness((h.lightness + 0.35).clamp(0.68, 0.9))
+          .withSaturation((h.saturation * 0.85).clamp(0.0, 1.0))
+          .toColor()
+      : h
+          .withLightness((h.lightness - 0.22).clamp(0.24, 0.34))
+          .withSaturation((h.saturation * 1.05).clamp(0.0, 1.0))
+          .toColor();
 }
+
 
 /// YIKICI EYLEM (silme) dugmesi stili — tur 40.
 ///

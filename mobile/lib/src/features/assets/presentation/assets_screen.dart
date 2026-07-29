@@ -6,6 +6,7 @@ import '../../nfc/presentation/nfc_hata_metni.dart';
 import '../domain/asset_models.dart';
 import 'assets_controller.dart';
 import 'demirbas_mesaj_metni.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// "Demirbas" — NFC-oncelikli zimmet ekrani.
 ///
@@ -20,8 +21,9 @@ class AssetsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final myCount =
-        ref.watch(assetsControllerProvider.select((s) => s.myItems.length));
+    final myCount = ref.watch(
+      assetsControllerProvider.select((s) => s.myItems.length),
+    );
     final l10n = context.l10n;
     return DefaultTabController(
       length: 2,
@@ -32,19 +34,12 @@ class AssetsScreen extends ConsumerWidget {
             tabs: [
               Tab(text: l10n.demEtiketOkut),
               Tab(
-                text: l10n.demUzerimdekiler(
-                  myCount > 0 ? ' ($myCount)' : '',
-                ),
+                text: l10n.demUzerimdekiler(myCount > 0 ? ' ($myCount)' : ''),
               ),
             ],
           ),
         ),
-        body: const TabBarView(
-          children: [
-            _ScanTab(),
-            _MyItemsTab(),
-          ],
-        ),
+        body: const TabBarView(children: [_ScanTab(), _MyItemsTab()]),
       ),
     );
   }
@@ -62,7 +57,8 @@ class _ScanTab extends ConsumerWidget {
     final state = ref.watch(assetsControllerProvider);
     final controller = ref.read(assetsControllerProvider.notifier);
     final l10n = context.l10n;
-    final busy = state.scanPhase == AssetScanPhase.reading ||
+    final busy =
+        state.scanPhase == AssetScanPhase.reading ||
         state.scanPhase == AssetScanPhase.resolving;
     final scanHatasi = demirbasMesajCoz(l10n, state.scanError);
 
@@ -99,8 +95,9 @@ class _ScanTab extends ConsumerWidget {
         SizedBox(
           height: 56,
           child: FilledButton.icon(
-            onPressed:
-                busy ? null : () => controller.scanTag(nfcIosMetinleri(l10n)),
+            onPressed: busy
+                ? null
+                : () => controller.scanTag(nfcIosMetinleri(l10n)),
             icon: busy
                 ? const SizedBox(
                     width: 20,
@@ -111,15 +108,14 @@ class _ScanTab extends ConsumerWidget {
                     ),
                   )
                 : const Icon(Icons.nfc),
-            label: Text(
-              switch (state.scanPhase) {
-                AssetScanPhase.reading => l10n.gorevEtiketBekleniyor,
-                AssetScanPhase.resolving => l10n.demTaniniyor,
-                _ => state.scanned == null
+            label: Text(switch (state.scanPhase) {
+              AssetScanPhase.reading => l10n.gorevEtiketBekleniyor,
+              AssetScanPhase.resolving => l10n.demTaniniyor,
+              _ =>
+                state.scanned == null
                     ? l10n.demEtiketOkut
                     : l10n.demBaskaEtiketOkut,
-              },
-            ),
+            }),
           ),
         ),
       ],
@@ -140,30 +136,30 @@ class _ScannedCard extends StatelessWidget {
     final l10n = context.l10n;
     final (icon, color, durumText) = switch (info.verdict) {
       ZimmetVerdict.kimsedeDegil => (
-          Icons.lock_open,
-          Colors.green,
-          l10n.demKimsedeDegil,
-        ),
+        Icons.lock_open,
+        Colors.green,
+        l10n.demKimsedeDegil,
+      ),
       ZimmetVerdict.sende => (
-          Icons.person,
-          Colors.blue,
-          l10n.demSende(_sinceText(l10n, info.acikZimmet?.alinmaZamani)),
-        ),
+        Icons.person,
+        Colors.blue,
+        l10n.demSende(_sinceText(l10n, info.acikZimmet?.alinmaZamani)),
+      ),
       ZimmetVerdict.baskasinda => (
-          Icons.person_outline,
-          Colors.orange,
-          info.acikZimmet == null
-              ? l10n.demBaskasininUzerinde
-              : l10n.demBaskasinda(
-                  _holderName(info.acikZimmet!),
-                  _sinceText(l10n, info.acikZimmet!.alinmaZamani),
-                ),
-        ),
+        Icons.person_outline,
+        Colors.orange,
+        info.acikZimmet == null
+            ? l10n.demBaskasininUzerinde
+            : l10n.demBaskasinda(
+                _holderName(info.acikZimmet!),
+                _sinceText(l10n, info.acikZimmet!.alinmaZamani),
+              ),
+      ),
       ZimmetVerdict.bakimda => (
-          Icons.build_circle_outlined,
-          Colors.grey,
-          l10n.demBakimda,
-        ),
+        Icons.build_circle_outlined,
+        Colors.grey,
+        l10n.demBakimda,
+      ),
     };
     final islemMesaji = demirbasMesajCoz(l10n, state.actionMessage);
     final islemHatasi = demirbasMesajCoz(l10n, state.actionError);
@@ -199,7 +195,10 @@ class _ScannedCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               durumText,
-              style: TextStyle(color: color, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: okunurVurgu(context, color),
+                fontWeight: FontWeight.w600,
+              ),
             ),
             if (info.verdict == ZimmetVerdict.baskasinda) ...[
               const SizedBox(height: 4),
@@ -220,23 +219,18 @@ class _ScannedCard extends StatelessWidget {
             ],
             if (islemHatasi != null) ...[
               const SizedBox(height: 8),
-              Text(
-                islemHatasi,
-                style: const TextStyle(color: Colors.red),
-              ),
+              Text(islemHatasi, style: const TextStyle(color: Colors.red)),
             ],
             const SizedBox(height: 12),
             if (info.verdict == ZimmetVerdict.kimsedeDegil)
               FilledButton.icon(
-                onPressed:
-                    state.actionBusy ? null : controller.checkoutScanned,
+                onPressed: state.actionBusy ? null : controller.checkoutScanned,
                 icon: _actionIcon(state.actionBusy, Icons.download),
                 label: Text(l10n.demZimmetineAl),
               )
             else if (info.verdict == ZimmetVerdict.sende)
               FilledButton.icon(
-                onPressed:
-                    state.actionBusy ? null : controller.checkinScanned,
+                onPressed: state.actionBusy ? null : controller.checkinScanned,
                 icon: _actionIcon(state.actionBusy, Icons.upload),
                 label: Text(l10n.demBirak),
               ),
@@ -353,10 +347,7 @@ class _MyItemsTab extends ConsumerWidget {
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text(
-                  l10n.demUzerindeYok,
-                  textAlign: TextAlign.center,
-                ),
+                child: Text(l10n.demUzerindeYok, textAlign: TextAlign.center),
               ),
             ),
           for (final item in state.myItems)
@@ -402,8 +393,8 @@ String _holderName(AcikZimmet z) =>
 
 String _userLabel(AssetCheckout co) =>
     (co.alanUserAd != null && co.alanUserAd!.trim().isNotEmpty)
-        ? co.alanUserAd!
-        : _shortId(co.alanUserId);
+    ? co.alanUserAd!
+    : _shortId(co.alanUserId);
 
 String _shortId(String userId) =>
     userId.length > 8 ? '${userId.substring(0, 8)}…' : userId;

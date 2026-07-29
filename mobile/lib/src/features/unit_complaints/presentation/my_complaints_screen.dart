@@ -6,6 +6,7 @@ import '../../../core/i18n/l10n.dart';
 import '../domain/unit_complaint_models.dart';
 import 'my_complaints_controller.dart';
 import 'kategori_adi.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// "Şikayetlerim" (D-viz Rev-1.1) — sakin KENDI actigi daire sikayetlerini
 /// (gitti mi geri bildirimi) gorur: hedef daire + kategori + tarih + durum.
@@ -90,10 +91,12 @@ class _ComplaintCard extends StatelessWidget {
           acik ? Icons.hourglass_bottom_outlined : Icons.check_circle_outline,
           color: acik ? Colors.orange : Colors.green,
         ),
-        title: Text(context.l10n.sikayetSatirBaslik(
-          c.unitNo ?? '-',
-          unitComplaintKategoriAdi(context.l10n, c.kategori),
-        )),
+        title: Text(
+          context.l10n.sikayetSatirBaslik(
+            c.unitNo ?? '-',
+            unitComplaintKategoriAdi(context.l10n, c.kategori),
+          ),
+        ),
         subtitle: Text(tarihSaatBicimi(c.createdAt, context.dilKodu)),
         trailing: _DurumChip(acik: acik),
       ),
@@ -117,7 +120,11 @@ class _DurumChip extends StatelessWidget {
       ),
       child: Text(
         acik ? context.l10n.talepDurumAcik : context.l10n.sikayetDurumKapandi,
-        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: okunurVurgu(context, color),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
