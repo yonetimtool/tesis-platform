@@ -1,5 +1,9 @@
 # Ölçülmeyen durumlar (tur 36 envanteri)
 
+> **BU BELGE KAPANDI (tur 45).** A–F bölümlerinin tamamı tur 37–48 arasında
+> kapatıldı. Kapanıştan SONRA kalan kör noktalar için bkz.
+> [OLCULMEYEN-DURUMLAR-2.md](OLCULMEYEN-DURUMLAR-2.md) (tur 49 envanteri).
+
 **Tarih:** 2026-07-29 · **Kapsam:** mobil (Flutter) + panel (admin-web)
 
 Tur 23–35 arası yedi sürüş ekseni kuruldu: dil, dar ekran, yazı ölçeği, ekran
