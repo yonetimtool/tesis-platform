@@ -278,9 +278,13 @@ class _NfcStep extends StatelessWidget {
                   color: state.nfcOkundu ? Colors.green : null,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  l10n.gorevAdim1Etiket,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                // Almanca baslik 320 dp'de 47 px tasiriyordu (tur 39);
+                // adim 2 basligi tur 37'de zaten esnetilmisti.
+                Expanded(
+                  child: Text(
+                    l10n.gorevAdim1Etiket,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),
@@ -406,7 +410,11 @@ class _PhotoStep extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                     const SizedBox(width: 8),
-                    Text(l10n.gorevYukleniyorNokta),
+                    // "Yukleniyor..." satiri da esnek olmali: Almanca metin
+                    // 320 dp'de 47 px tasiriyordu (tur 39). Bu satir YALNIZ
+                    // yukleme SURERKEN cizilir — kisa omurlu oldugu icin
+                    // hicbir eski suruste gorunmemisti.
+                    Expanded(child: Text(l10n.gorevYukleniyorNokta)),
                   ],
                 )
               else if (state.fotoYuklendi)
@@ -435,6 +443,10 @@ class _PhotoStep extends StatelessWidget {
                     state.photoPath == null
                         ? l10n.gorevKamera
                         : l10n.gorevYenidenCek,
+                    // Almanca "Erneut aufnehmen" 320 dp'de 47 px tasiriyordu
+                    // (tur 39). Kardes dugmelerde bu zaten yapilmisti.
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 OutlinedButton.icon(

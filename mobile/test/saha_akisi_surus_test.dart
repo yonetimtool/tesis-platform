@@ -14,6 +14,8 @@ library;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/data/current_user_provider.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
@@ -28,14 +30,19 @@ import 'package:mobile/src/features/patrol/presentation/patrol_tracking_screen.d
 import 'package:mobile/src/features/scan/data/scan_outbox.dart';
 import 'package:mobile/src/features/scan/domain/outbox_entry.dart';
 import 'package:mobile/src/features/scan/presentation/outbox_screen.dart';
+import 'package:mobile/src/core/error/api_exception.dart';
+import 'package:mobile/src/features/tasks/data/task_api.dart';
 import 'package:mobile/src/features/tasks/data/task_category_api.dart';
 import 'package:mobile/src/features/tasks/domain/task_category_models.dart';
 import 'package:mobile/src/features/tasks/domain/task_models.dart';
 import 'package:mobile/src/features/tasks/presentation/task_categories_screen.dart';
+import 'package:mobile/src/features/tasks/presentation/task_complete_controller.dart'
+    show imagePickerProvider;
 import 'package:mobile/src/features/tasks/presentation/task_detail_screen.dart';
 import 'package:mobile/src/features/unit_access/presentation/unit_access_records_screen.dart';
 
 import 'helpers/ekran_surus.dart';
+import 'helpers/foto_yukleme_taklidi.dart';
 import 'helpers/l10n_test_app.dart';
 
 // --------------------------------------------------------------------------
@@ -107,6 +114,40 @@ class _FakeKargoApi extends KargoApi {
 
   @override
   Future<List<Kargo>> fetchAll({String? unitId, String? durum}) async => _items;
+}
+
+/// TUR 39: gorev tamamlama fotografinin UC yukleme hali.
+class _FakeTaskApi extends TaskApi {
+  _FakeTaskApi(this.yukleme) : super(Dio());
+  final YuklemeDavranisi yukleme;
+
+  @override
+  Future<PresignTicket> presignUpload({
+    required String contentType,
+    String? dosyaAdi,
+  }) async =>
+      const PresignTicket(
+        fotoKey: 't/tasks/x.png',
+        uploadUrl: 'https://ornek/put',
+        expiresIn: 900,
+      );
+
+  @override
+  Future<void> uploadPhoto({
+    required PresignTicket ticket,
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    switch (yukleme) {
+      case YuklemeDavranisi.basarili:
+        return;
+      case YuklemeDavranisi.hata:
+        throw const ApiException(
+            code: 'upload_failed', message: 'PUT reddedildi', statusCode: 403);
+      case YuklemeDavranisi.askida:
+        return askidaKal<void>();
+    }
+  }
 }
 
 class _FakeTaskCategoryApi extends TaskCategoryApi {
@@ -256,9 +297,17 @@ Widget _kuyrukEkrani(Locale locale) => ProviderScope(
       child: l10nApp(const OutboxScreen(), locale: locale),
     );
 
-Widget _gorevDetayEkrani(Locale locale, {UserRole role = UserRole.security}) =>
+Widget _gorevDetayEkrani(
+  Locale locale, {
+  UserRole role = UserRole.security,
+  YuklemeDavranisi? yukleme,
+  String? fotoYolu,
+}) =>
     ProviderScope(
       overrides: [
+        if (yukleme != null) taskApiProvider.overrideWithValue(_FakeTaskApi(yukleme)),
+        if (fotoYolu != null)
+          imagePickerProvider.overrideWithValue(TaklitSecici(fotoYolu)),
         taskCategoryApiProvider.overrideWithValue(
           _FakeTaskCategoryApi(
               const [TaskCategory(id: 'kat-1', ad: 'Temizlik', aktif: true)]),
@@ -385,4 +434,68 @@ void main() {
     await tumEksenlerSurusu(tester, (dil) => _daireKayitlariEkrani(Locale(dil)),
         veri: _veri);
   });
+
+  // ---- TUR 39: FOTOGRAF YUKLEME YOLU (gorev tamamlama) ----
+  // "Foto zorunlu" gorevde kanit fotografi akisi: cek -> presign -> PUT.
+  // Uc hal de bes eksende surulur.
+  Future<void> Function(WidgetTester) gorevFotoSec() => (t) async {
+        // DUGMENIN ikonu `photo_camera`; `photo_camera_outlined` bolum
+        // BASLIGININ ikonudur. Ilk denemede baslik ikonuna dokunuyordum ve
+        // hicbir sey olmuyordu — surus sessizce "form acik" halini olcuyordu.
+        // (Dedektor testi tam bunu yakaladi.)
+        final kamera = find.widgetWithIcon(OutlinedButton, Icons.photo_camera);
+        expect(kamera, findsWidgets, reason: 'kamera dugmesi bulunamadi');
+        await t.tap(kamera.first);
+        await t.pump();
+        for (var i = 0; i < 6; i++) {
+          await t.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 40));
+          });
+          await t.pump();
+        }
+        await t.pump(const Duration(milliseconds: 300));
+      };
+
+  // DEDEKTOR: uc hal GERCEKTEN farkli ciziliyor mu? (Taklit secici ya da
+  // yukleme sahtesi calismazsa ucu de ayni ekran olur ve surus bos koserdi.)
+  testWidgets('YUKLEME DEDEKTORU: gorev kaniti uc hali ayirt edilebiliyor',
+      (tester) async {
+    final yol = taklitFotoDosyasi();
+    Future<void> ac(YuklemeDavranisi d) async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(
+          _gorevDetayEkrani(const Locale('tr'), fotoYolu: yol, yukleme: d));
+      await tester.pumpAndSettle();
+      await gorevFotoSec()(tester);
+    }
+
+    await ac(YuklemeDavranisi.askida);
+    expect(find.byType(CircularProgressIndicator), findsWidgets,
+        reason: 'askida yuklemede ilerleme gostergesi yok');
+
+    await ac(YuklemeDavranisi.hata);
+    expect(find.byIcon(Icons.refresh), findsWidgets,
+        reason: 'hata halinde "Tekrar yukle" dugmesi yok');
+
+    await ac(YuklemeDavranisi.basarili);
+    expect(find.byIcon(Icons.check_circle), findsWidgets,
+        reason: 'basarili yuklemede onay ikonu yok');
+  });
+
+  for (final (ad, davranis) in [
+    ('YUKLENDI', YuklemeDavranisi.basarili),
+    ('HATA', YuklemeDavranisi.hata),
+    ('YUKLENIYOR', YuklemeDavranisi.askida),
+  ]) {
+    testWidgets('YUKLEME: gorev kaniti $ad hali (bes eksen)', (tester) async {
+      final yol = taklitFotoDosyasi();
+      await tumEksenlerSurusu(
+        tester,
+        (dil) => _gorevDetayEkrani(Locale(dil),
+            fotoYolu: yol, yukleme: davranis),
+        veri: _veri,
+        hazirla: gorevFotoSec(),
+      );
+    });
+  }
 }

@@ -58,6 +58,10 @@ Yanında duran, ekran olmayan ama aynı ölçüde çizilmemiş parçalar:
 > **Tek cümleyle: saha (görevli/güvenlik) operasyonunun tamamı — devriye,
 > NFC okutma, görev tamamlama — yedi eksenin hiçbirinde sürülmedi.**
 
+> **GÜNCELLEME (tur 39).** B2 (fotoğraf YÜKLEME yolu) **kapatıldı**: üç hâl
+> (yükleniyor / hata / yüklendi) duyuru formu ve görev kanıtı için beş
+> eksende sürülüyor; iki taşma bulundu. B3 (onay diyalogları) hâlâ açık.
+>
 > **GÜNCELLEME (tur 38).** B1 (formlar ve alt sayfalar) **kapatıldı**: 9 form
 > beş eksende sürülüyor (`fabAc` ile açılır ve açıldığı doğrulanır); dört
 > taşma/ölçek hatası bulundu. B2 (fotoğraf YÜKLEME yolu) ve B3 (onay

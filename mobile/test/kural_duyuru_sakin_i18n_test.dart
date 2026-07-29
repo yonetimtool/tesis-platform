@@ -14,6 +14,8 @@ library;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/i18n/l10n.dart';
 import 'package:mobile/src/features/announcements/data/announcement_api.dart';
@@ -27,7 +29,13 @@ import 'package:mobile/src/features/site_kurali/data/site_kurali_api.dart';
 import 'package:mobile/src/features/site_kurali/domain/site_kurali_models.dart';
 import 'package:mobile/src/features/site_kurali/presentation/site_kurali_screen.dart';
 
+import 'package:mobile/src/core/error/api_exception.dart';
+import 'package:mobile/src/features/tasks/domain/task_models.dart';
+import 'package:mobile/src/features/tasks/presentation/task_complete_controller.dart'
+    show imagePickerProvider;
+
 import 'helpers/ekran_surus.dart';
+import 'helpers/foto_yukleme_taklidi.dart';
 import 'helpers/l10n_test_app.dart';
 
 // --------------------------------------------------------------------------
@@ -42,11 +50,41 @@ class _FakeKuralApi extends SiteKuraliApi {
 }
 
 class _FakeDuyuruApi extends AnnouncementApi {
-  _FakeDuyuruApi(this._items) : super(Dio());
+  _FakeDuyuruApi(this._items, {this.yukleme = YuklemeDavranisi.basarili})
+      : super(Dio());
   final List<Announcement> _items;
+
+  /// TUR 39: yukleme yolunun UC hali (basarili / hata / askida) buradan
+  /// surulur; ekran kodu degismez.
+  final YuklemeDavranisi yukleme;
 
   @override
   Future<List<Announcement>> fetchAll() async => _items;
+
+  @override
+  Future<PresignTicket> presignUpload({
+    required String contentType,
+    String? dosyaAdi,
+  }) async =>
+      const PresignTicket(
+          fotoKey: 't/duyuru/x.png', uploadUrl: 'https://ornek/put', expiresIn: 900);
+
+  @override
+  Future<void> uploadPhoto({
+    required PresignTicket ticket,
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    switch (yukleme) {
+      case YuklemeDavranisi.basarili:
+        return;
+      case YuklemeDavranisi.hata:
+        throw const ApiException(
+            code: 'upload_failed', message: 'PUT reddedildi', statusCode: 403);
+      case YuklemeDavranisi.askida:
+        return askidaKal<void>();
+    }
+  }
 }
 
 SiteKurali _kural({String baslik = 'Havuz Saatleri', String? fotoUrl}) =>
@@ -101,12 +139,19 @@ Widget _duyuruEkrani(
   Locale locale, {
   bool duzenlendi = false,
   String? fotoUrl,
+  YuklemeDavranisi? yukleme,
+  String? fotoYolu,
 }) =>
     ProviderScope(
       overrides: [
         announcementApiProvider.overrideWithValue(
-          _FakeDuyuruApi([_duyuru(duzenlendi: duzenlendi, fotoUrl: fotoUrl)]),
+          _FakeDuyuruApi(
+            [_duyuru(duzenlendi: duzenlendi, fotoUrl: fotoUrl)],
+            yukleme: yukleme ?? YuklemeDavranisi.basarili,
+          ),
         ),
+        if (fotoYolu != null)
+          imagePickerProvider.overrideWithValue(TaklitSecici(fotoYolu)),
         currentUserRoleProvider.overrideWith((ref) async => UserRole.yonetici),
       ],
       child: l10nApp(const AnnouncementsScreen(), locale: locale),
@@ -550,5 +595,96 @@ void main() {
       (tester) async {
     await tumEksenlerSurusu(tester, (dil) => _kuralEkrani(Locale(dil)),
         veri: surusVerisi, hazirla: fabAc);
+  });
+
+  // ---- TUR 39: FOTOGRAF YUKLEME YOLU ----
+  // Formu ac -> KAMERA dugmesine dokun (secici taklidi gercek bir PNG
+  // dondurur) -> yukleme davranisina gore uc ayri hal cizilir.
+  Future<void> Function(WidgetTester) fotoSec() => (t) async {
+        await fabAc(t);
+        final kamera = find.byIcon(Icons.photo_camera_outlined);
+        expect(kamera, findsWidgets, reason: 'kamera dugmesi bulunamadi');
+        await t.tap(kamera.first);
+        await t.pump();
+        // `XFile.readAsBytes()` GERCEK dosya okur: sahte zamanda hicbir zaman
+        // tamamlanmaz ve "yuklendi" hali cizilmez (tur 34'teki kodek notunun
+        // ayni sinifi). Bu yuzden kisa bir GERCEK zaman verilir.
+        // Tek tur yetmiyor: dosya okuma + yukleme zinciri birkac gercek
+        // olay dongusu turu ister.
+        for (var i = 0; i < 6; i++) {
+          await t.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 40));
+          });
+          await t.pump();
+        }
+        await t.pump(const Duration(milliseconds: 300));
+      };
+
+  // DEDEKTOR: uc halin GERCEKTEN cizildigini dogrula. Taklit secici
+  // calismazsa ucu de "form acildi" halinde kalir ve surus bos koserdi
+  // (tur 32/33/38'deki bos-surus riskinin ayni sinifi).
+  testWidgets('YUKLEME DEDEKTORU: uc hal de ayirt edilebiliyor',
+      (tester) async {
+    final yol = taklitFotoDosyasi();
+    Future<void> ac(YuklemeDavranisi d) async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(
+          _duyuruEkrani(const Locale('tr'), fotoYolu: yol, yukleme: d));
+      await tester.pumpAndSettle();
+      await fotoSec()(tester);
+    }
+
+    // 1) YUKLENIYOR: ilerleme gostergesi cizilir.
+    await ac(YuklemeDavranisi.askida);
+    expect(find.byType(LinearProgressIndicator), findsWidgets,
+        reason: 'askida yuklemede ilerleme gostergesi yok');
+
+    // 2) HATA: hata metni + "Tekrar yukle" dugmesi cikar.
+    await ac(YuklemeDavranisi.hata);
+    expect(find.byIcon(Icons.refresh), findsWidgets,
+        reason: 'hata halinde "Tekrar yukle" dugmesi yok');
+
+    // 3) YUKLENDI: onay ikonu + onizleme gorseli.
+    await ac(YuklemeDavranisi.basarili);
+    expect(find.byIcon(Icons.check_circle), findsWidgets,
+        reason: 'basarili yuklemede onay ikonu yok');
+    expect(find.byType(Image), findsWidgets,
+        reason: 'basarili yuklemede onizleme gorseli yok');
+  });
+
+  testWidgets('YUKLEME: duyuru fotografi YUKLENDI hali (bes eksen)',
+      (tester) async {
+    final yol = taklitFotoDosyasi();
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _duyuruEkrani(Locale(dil),
+          fotoYolu: yol, yukleme: YuklemeDavranisi.basarili),
+      veri: surusVerisi,
+      hazirla: fotoSec(),
+    );
+  });
+
+  testWidgets('YUKLEME: duyuru fotografi HATA hali (bes eksen)',
+      (tester) async {
+    final yol = taklitFotoDosyasi();
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _duyuruEkrani(Locale(dil),
+          fotoYolu: yol, yukleme: YuklemeDavranisi.hata),
+      veri: surusVerisi,
+      hazirla: fotoSec(),
+    );
+  });
+
+  testWidgets('YUKLEME: duyuru fotografi YUKLENIYOR hali (bes eksen)',
+      (tester) async {
+    final yol = taklitFotoDosyasi();
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _duyuruEkrani(Locale(dil),
+          fotoYolu: yol, yukleme: YuklemeDavranisi.askida),
+      veri: surusVerisi,
+      hazirla: fotoSec(),
+    );
   });
 }

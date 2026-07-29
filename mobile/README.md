@@ -2087,6 +2087,30 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 39 — FOTOĞRAF YÜKLEME YOLUNU SÜR.** Tur 34 fotoğrafı *göstermeyi*
+ölçtü; **yüklemeyi** değil. Yükleme yolu üç ayrı hâl çizer ve hiçbiri
+sürülmemişti: **yükleniyor** (ilerleme + düğmeler pasif), **hata** (mesaj +
+"Tekrar yükle"), **yüklendi** (onay ikonu + önizleme).
+`test/helpers/foto_yukleme_taklidi.dart`: gerçek geçici PNG döndüren
+`TaklitSecici` + api davranışı (`basarili` / `hata` / `askida`). Duyuru formu
+ve görev kanıtı için üçer hâl, beş eksende sürüldü.
+
+> **BULDUĞU HATALAR (2).** Görev tamamlama ekranında, **yalnız yükleme
+> sürerken** çizilen "Yükleniyor…" satırı ve **1. adım başlığı** Almanca'da
+> 320 dp'de **47 px** taşıyordu (`Row` içindeki `Text` esnek değildi).
+> Kısa ömürlü hâller oldukları için hiçbir eski sürüşte görünmemişlerdi.
+
+> **DEDEKTÖR ÖNCE KENDİ SÜRÜŞÜMÜ YAKALADI.** İlk denemede kamera düğmesi
+> yerine **bölüm başlığının ikonuna** dokunuyordum (`photo_camera_outlined`
+> başlığın, `photo_camera` düğmenin); hiçbir şey açılmıyordu ve üç "hâl"
+> de aslında aynı ekrandı — sürüş sessizce geçiyordu. Üç hâlin **ayırt
+> edilebildiğini** doğrulayan dedektör testi bunu yakaladı. Yükleme
+> sürüşleri artık `expect`'lerle korunuyor.
+
+> **GERÇEK ZAMAN GEREKİR.** `XFile.readAsBytes()` sahte zamanda hiçbir zaman
+> tamamlanmaz (tur 34'teki kodek notunun aynısı): seçim sonrası kısa
+> `runAsync` turları atılır, yoksa "yüklendi" hâli hiç çizilmez.
+
 **TUR 38 — FORMLARI VE ALT SAYFALARI SÜR.** Tur 36 envanterinin B maddesi:
 sürüşler listeyi çiziyor, **formu açmıyordu**. Uygulamadaki oluşturma
 formlarının hepsi aynı deseni kullanır (`FAB → showModalBottomSheet`);
