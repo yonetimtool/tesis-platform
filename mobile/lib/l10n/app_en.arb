@@ -1169,5 +1169,6 @@
   "ortakParolayiGoster": "Show password",
   "ortakParolayiGizle": "Hide password",
   "ortakFotograf": "Photo",
-  "ortakFotografiBuyut": "Enlarge photo"
+  "ortakFotografiBuyut": "Enlarge photo",
+  "ortakGoster": "View"
 }

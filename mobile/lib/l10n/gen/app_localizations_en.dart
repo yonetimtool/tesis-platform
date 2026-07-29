@@ -4063,4 +4063,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ortakFotografiBuyut => 'Enlarge photo';
+
+  @override
+  String get ortakGoster => 'View';
 }

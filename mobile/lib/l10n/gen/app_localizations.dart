@@ -6838,6 +6838,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Fotoğrafı büyüt'**
   String get ortakFotografiBuyut;
+
+  /// No description provided for @ortakGoster.
+  ///
+  /// In tr, this message translates to:
+  /// **'Göster'**
+  String get ortakGoster;
 }
 
 class _AppLocalizationsDelegate

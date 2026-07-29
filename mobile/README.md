@@ -2087,6 +2087,26 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 45 — PUSH BİLDİRİMİ GELİŞİNİ SÜR.** Tur 36 envanterinin son açık
+maddesi.
+
+> **BULDUĞU HATA — ön plandaki push hiç görünmüyordu.** FCM, uygulama
+> açıkken gelen mesajı sistem tepsisine **düşürmez**; göstermek uygulamanın
+> işidir. Mesaj `PushState.sonBildirim` alanına yazılıyordu ama **hiçbir
+> ekran okumuyordu**: bildirim geldiğinde kullanıcı hiçbir şey görmüyor,
+> zil rozeti de artmıyordu (rozet ayrı bir uçtan gelir, tazelenmesi gerekir).
+> `HomeShell` artık `ref.listen` ile SnackBar gösteriyor ("Göster" eylemi
+> bildirimler sekmesine geçirir) ve okunmamış sayacını **invalidate** ediyor.
+
+Sürülen dört hâl: push gelişi (beş eksen), boş yüklü push'ta çevrilmiş
+varsayılan metin (`Yeni bildirim` / `New notification`), rozet tazelenmesi ve
+**128 okunmamış** rozetli kabuk (üç haneli sayı taşma yapmıyor).
+
+> **SÜRÜŞ ÖNCE BOŞ KOŞTU.** `sonBildirim`i başlangıç durumunda vermek
+> `ref.listen`i tetiklemez — ilk yazdığım sürüş SnackBar hiç çizilmeden
+> "temiz" diyordu. Push artık **çizimden sonra** gönderiliyor ve `hazirla`
+> adımı SnackBar'ın gerçekten çizildiğini doğruluyor.
+
 **TUR 44 — 403 ve İSKELET SÜRÜŞÜ.** Talep listesi iki yeni hâlde sürüldü:
 **403 yetki reddi** ve **yükleniyor** (uç hiç yanıt vermez). İkincisi için
 sürüş yardımcısına `bekleyen` seçeneği eklendi: dönen gösterge **sonsuz

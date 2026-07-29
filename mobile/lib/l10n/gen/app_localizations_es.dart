@@ -4016,4 +4016,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ortakFotografiBuyut => 'Ampliar la foto';
+
+  @override
+  String get ortakGoster => 'Ver';
 }

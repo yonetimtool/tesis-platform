@@ -4134,4 +4134,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ortakFotografiBuyut => 'Увеличить фото';
+
+  @override
+  String get ortakGoster => 'Открыть';
 }

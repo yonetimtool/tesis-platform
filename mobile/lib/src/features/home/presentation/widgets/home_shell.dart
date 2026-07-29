@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
-
-import '../../../../core/i18n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/i18n/l10n.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../../auth/domain/user_role.dart';
+import '../../../notifications/data/notifications_controller.dart';
 import '../../../profile/data/avatar_api.dart';
+import '../../../push/domain/push_models.dart';
+import '../../../push/presentation/push_registrar.dart';
 import '../../domain/home_tabs.dart';
 import 'home_drawer.dart';
 import 'home_marka.dart';
+
+
 
 /// Referans ana ekranin ORTAK KABUGU — uc rol varyantinda da AYNI widget:
 ///   * app-bar: solda hamburger, yaninda marka kilidi, sagda rozetli zil +
@@ -20,7 +24,7 @@ import 'home_marka.dart';
 /// Rota cozumu DISARIDA: [onDestinationSelected] yuva indeksini verir, merkez
 /// FAB [onBildir]'i cagirir. Hamburger cekmecesi rolun tum modullerini
 /// listeler ([HomeDrawer]).
-class HomeShell extends StatelessWidget {
+class HomeShell extends ConsumerWidget {
   const HomeShell({
     super.key,
     required this.role,
@@ -59,8 +63,38 @@ class HomeShell extends StatelessWidget {
   final int unreadCount;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final s = HomeSurface.of(context);
+
+    // ON PLANDA gelen push: FCM bunu sistem tepsisine DUSURMEZ — uygulama
+    // acikken kullaniciya gostermek BIZIM isimiz. Tur 45'e kadar mesaj
+    // yalniz `PushState.sonBildirim` alanina yaziliyordu ve HICBIR EKRAN
+    // okumuyordu: bildirim geldiginde kullanici hicbir sey gormuyordu ve
+    // zil rozeti de artmiyordu (rozet ayri bir uctan geliyor, tazelenmesi
+    // gerekiyor).
+    ref.listen<PushMessageEvent?>(
+      pushRegistrarProvider.select((p) => p.sonBildirim),
+      (onceki, yeni) {
+        if (yeni == null || yeni == onceki) return;
+        final l10n = context.l10n;
+        // Metin SUNUCUDAN gelir (cihazin diline gore uretilir, tur 16);
+        // yuk bossa cizim katmani kendi cevrilmis metnini yazar.
+        final metin =
+            yeni.displayText.isEmpty ? l10n.bildirimYeniPush : yeni.displayText;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(
+            content: Text(metin, maxLines: 2, overflow: TextOverflow.ellipsis),
+            action: SnackBarAction(
+              label: l10n.ortakGoster,
+              onPressed: () => onDestinationSelected(1),
+            ),
+          ));
+        // Rozet sayaci ayri uctan gelir; push gelince TAZELENMELI.
+        ref.invalidate(unreadNotificationCountProvider);
+      },
+    );
+
     return Scaffold(
       backgroundColor: s.background,
       drawer: HomeDrawer(

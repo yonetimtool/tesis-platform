@@ -4154,4 +4154,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ortakFotografiBuyut => 'تكبير الصورة';
+
+  @override
+  String get ortakGoster => 'عرض';
 }

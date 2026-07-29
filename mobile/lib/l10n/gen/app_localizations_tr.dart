@@ -3879,4 +3879,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ortakFotografiBuyut => 'Fotoğrafı büyüt';
+
+  @override
+  String get ortakGoster => 'Göster';
 }
