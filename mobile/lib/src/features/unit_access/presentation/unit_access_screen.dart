@@ -375,16 +375,28 @@ class _DecideButtonsState extends ConsumerState<_DecideButtons> {
         ),
       );
     }
-    return Row(
+    // `Row` -> `Wrap`: 320 dp'de "Approve"/"Reject" ciftinin satiri 23 px
+    // tasiyordu (tur 43 — bu kart yalniz karar BEKLEYEN izinlerde ve karar
+    // verebilen rolde cizilir, o yuzden hic surulmemisti).
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
       children: [
         FilledButton(
           onPressed: () => _decide(true),
-          child: Text(context.l10n.izinOnayla),
+          child: Text(
+            context.l10n.izinOnayla,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-        const SizedBox(width: 8),
         OutlinedButton(
           onPressed: () => _decide(false),
-          child: Text(context.l10n.talepReddet),
+          child: Text(
+            context.l10n.talepReddet,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );

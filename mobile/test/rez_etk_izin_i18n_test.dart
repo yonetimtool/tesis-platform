@@ -495,4 +495,17 @@ void main() {
       },
     );
   });
+
+  // ---- TUR 43: ROL VARYANTLARI ----
+  testWidgets('ROL: etkinlik ekrani SAKIN gozuyle (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(
+        tester, (dil) => _etkEkrani(Locale(dil), role: UserRole.resident),
+        veri: surusVerisi);
+  });
+  testWidgets('ROL: izin ekrani SAKIN gozuyle (bes eksen)', (tester) async {
+    await tumEksenlerSurusu(
+        tester, (dil) => _izinEkrani(Locale(dil), role: UserRole.resident),
+        veri: surusVerisi);
+  });
 }

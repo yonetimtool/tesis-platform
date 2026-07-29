@@ -572,6 +572,21 @@ void main() {
       veri: surusVerisi,
     );
   });
+
+  // ---- TUR 43: ROL VARYANTLARI ----
+  testWidgets('ROL: talep ekrani SAKIN gozuyle (bes eksen)', (tester) async {
+    // `canRespond=false`: yonetici eylem cubugu cizilmez.
+    await tumEksenlerSurusu(
+        tester, (dil) => _talepEkrani(Locale(dil), role: UserRole.resident),
+        veri: surusVerisi);
+  });
+  testWidgets('ROL: bina duzenleme SALT-OKUNUR (saha) (bes eksen)',
+      (tester) async {
+    // `readOnly`: blok/daire ekleme ve yonetim kapali.
+    await tumEksenlerSurusu(
+        tester, (dil) => _duzenlemeEkrani(Locale(dil), role: UserRole.security),
+        veri: surusVerisi);
+  });
 }
 
 class _PatlayanMapApi extends BuildingMapApi {

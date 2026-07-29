@@ -273,14 +273,16 @@ const _gorev = Task(
 // --------------------------------------------------------------------------
 
 Widget _turlarimEkrani(Locale locale,
-        {List<OutboxEntry> kuyruk = const [], ApiException? hata}) =>
+        {List<OutboxEntry> kuyruk = const [],
+        ApiException? hata,
+        UserRole rol = UserRole.security}) =>
     ProviderScope(
       overrides: [
         patrolApiProvider.overrideWithValue(
           _FakePatrolApi(me: _pencere(), gecmis: _gecmisSayfa, hata: hata),
         ),
         scanOutboxProvider.overrideWith(() => _FakeOutbox(kuyruk)),
-        currentUserRoleProvider.overrideWith((ref) async => UserRole.security),
+        currentUserRoleProvider.overrideWith((ref) async => rol),
       ],
       child: l10nApp(const PatrolScreen(), locale: locale),
     );
@@ -539,5 +541,22 @@ void main() {
               agHatasi: AkisHatasi.sunucuyaUlasilamadi)),
       veri: _veri,
     );
+  });
+
+  // ---- TUR 43: ROL VARYANTLARI ----
+  testWidgets('ROL: gorev detayi YONETICI gozuyle (bes eksen)',
+      (tester) async {
+    // Yonetici rolunde duzenle/sil eylemleri EKLENIR; saha rolunde yoktur.
+    // Surus simdiye kadar yalniz saha rolunu ciziyordu.
+    await tumEksenlerSurusu(
+        tester, (dil) => _gorevDetayEkrani(Locale(dil), role: UserRole.yonetici),
+        veri: _veri);
+  });
+  testWidgets('ROL: Turlarim TESIS GOREVLISI gozuyle (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(
+        tester,
+        (dil) => _turlarimEkrani(Locale(dil), rol: UserRole.tesisGorevlisi),
+        veri: _veri);
   });
 }

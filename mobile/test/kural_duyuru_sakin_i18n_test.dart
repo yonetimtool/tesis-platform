@@ -141,6 +141,7 @@ Widget _duyuruEkrani(
   String? fotoUrl,
   YuklemeDavranisi? yukleme,
   String? fotoYolu,
+  UserRole role = UserRole.yonetici,
 }) =>
     ProviderScope(
       overrides: [
@@ -152,7 +153,7 @@ Widget _duyuruEkrani(
         ),
         if (fotoYolu != null)
           imagePickerProvider.overrideWithValue(TaklitSecici(fotoYolu)),
-        currentUserRoleProvider.overrideWith((ref) async => UserRole.yonetici),
+        currentUserRoleProvider.overrideWith((ref) async => role),
       ],
       child: l10nApp(const AnnouncementsScreen(), locale: locale),
     );
@@ -706,5 +707,21 @@ void main() {
         await silmeOnayiAc(t);
       },
     );
+  });
+
+  // ---- TUR 43: ROL VARYANTLARI ----
+  // Surusler ekran basina TEK rol kullaniyordu (cogunlukla yonetici). Yonetim
+  // eylemleri (FAB, duzenle/sil menusu) gizlendiginde duzen degisir; bu dal
+  // hic olculmemisti (tur 36 F maddesi).
+  testWidgets('ROL: duyuru ekrani SAKIN gozuyle (bes eksen)', (tester) async {
+    await tumEksenlerSurusu(
+        tester, (dil) => _duyuruEkrani(Locale(dil), role: UserRole.resident),
+        veri: surusVerisi);
+  });
+  testWidgets('ROL: site kurali ekrani SAKIN gozuyle (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(
+        tester, (dil) => _kuralEkrani(Locale(dil), role: UserRole.resident),
+        veri: surusVerisi);
   });
 }

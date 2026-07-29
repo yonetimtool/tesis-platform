@@ -138,6 +138,11 @@ Hiçbir sürüşte üretilmedi:
 * **Süresi dolmuş presigned URL** — tur 35'te `Foto` bileşeniyle karşılandı,
   ama gerçek 900 sn sonrası davranış sürülmedi.
 
+> **GÜNCELLEME (tur 43).** F **kapatıldı**: sekiz rol varyantı sürüldü
+> (sakin / salt-okunur saha / yönetici / tesis görevlisi). Bir bulgu —
+> izin kartının Onayla/Reddet çifti 320 dp'de taşıyordu. Kalan açık
+> maddeler: E'nin 403 / iskelet / push satırları.
+
 ## F. Rol varyantları
 
 Sürüş kurucuları ekran başına **tek rol** kullanıyor (çoğunlukla `yonetici`).

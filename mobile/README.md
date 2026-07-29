@@ -2087,6 +2087,18 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 43 — ROL VARYANTLARINI SÜR.** Tur 36'nın F maddesi: sürüşler ekran
+başına **tek rol** kullanıyordu (çoğunlukla `yonetici`), oysa 14 ekranda
+yönetim eylemleri role göre gizleniyor. Sekiz yeni sürüş: duyuru / site
+kuralı / etkinlik / izin / talep ekranları **sakin** gözüyle, bina düzenleme
+**salt-okunur** (saha), görev detayı **yönetici** gözüyle, "Turlarım"
+**tesis görevlisi** gözüyle. Presentation kapsamı **%65,9 → %67,7**.
+
+> **BULDUĞU HATA.** Daire erişim izni kartındaki **Onayla / Reddet** çifti
+> 320 dp'de İngilizce'de **23 px** taşırıyordu. Bu kart yalnız *karar
+> bekleyen* bir izin varken **ve** karar verebilen rolde çizilir — iki koşul
+> birden gerektiği için hiçbir sürüşte görünmemişti. `Row` → `Wrap`.
+
 **TUR 42 — HATA ve ÇEVRİMDIŞI SÜRÜŞÜ.** Mobil tarafta uçlar sahtelenip
 **sunucu hatası** (500) ve **çevrimdışı** (`AkisHatasi.sunucuyaUlasilamadi`)
 hâlleri beş eksende sürüldü: talep listesi ve "Turlarım" (ikincisi
