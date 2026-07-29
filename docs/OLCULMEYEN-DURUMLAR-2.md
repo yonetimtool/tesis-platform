@@ -48,6 +48,11 @@ toplanıyor:
 | `auth/presentation/set_password_screen.dart` | **1 / 83** | tur 36'da listelenmişti, hâlâ açık: geçici parola → kalıcı parola akışı (ilk giriş!) |
 | `tasks/presentation/task_ticket_widgets.dart` | **1 / 60** | talepten gelen iş emri rozetleri |
 
+> **GÜNCELLEME (tur 54).** C'nin mutasyon kısmı kapatıldı: 4 kip × 3 dil ×
+> 6 form = 72 gönderim, üründe **0 bulgu**. Üç yanlış alarm/kör nokta
+> dedektörde düzeltildi. Açık kalan: `/tenants/[id]` hâlâ hiçbir sürüş
+> listesinde yok.
+
 ## C. Panelde mutasyon akışları
 
 Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve

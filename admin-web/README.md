@@ -205,6 +205,44 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 54 — MUTASYON AKISLARI (panelde YAZMA yolu)
+
+Tur 49 envanterinin C maddesi: butun panel surusleri YALNIZ OKUMA yapiyordu.
+`tools/mutasyon-surusu.mjs` YAZMA isteklerini KESER (GET dokunulmaz, **urun
+verisi degismez**) ve panelin yanita verdigi tepkiyi olcer. Dort kip x 3 dil x
+6 form = **72 gonderim**:
+
+| Kip | Beklenen |
+|---|---|
+| `basari` (201) | basari bildirimi / toast cikmali |
+| `dogrulama` (422) | alan hatasi FORMDA gorunmeli (sessizce yutulmasin) |
+| `catisma` (409) | anlasilir mesaj |
+| `oturum` (401 mid-session) | `/login`e YONLENDIRME |
+
+**Urunde 0 bulgu** — dort kip de dogru davraniyor. Ama bu turun asil urunu
+gene DUZELTILMIS DEDEKTOR: uc yanlis alarm/kor nokta cikti.
+
+| Sorun | Kok neden | Duzeltme |
+|---|---|---|
+| "401'de yonlendirme yok" (`/users`) | Sayfada zaten bir form var — ARAMA/FILTRE formu (GET). Ona gonderim hicbir yazma istegi uretmiyor; olcum sessizce bos kaliyor ve YANLIS bulgu uretiyordu | `yazmaSayaci`: gonderim POST/PATCH uretmediyse olcum YAPILMAZ, "YAZMA ISTEGI GITMEDI" raporlanir |
+| Form hic gonderilemiyor | Her alana `SurusDeger1` yaziyordum; telefon/e-posta alanlarinda ISTEMCI dogrulamasi gonderimi engelliyor | alanlar TIPE UYGUN doldurulur (`tel` → numara, `email` → adres, `select` → ilk gecerli secenek) |
+| 12x "TR SIZINTI" | "Vardiyası" shift ADIDIR (seed verisi) | VERI allowlist'i (mobil `surusVerisi` emsali) |
+
+> **DENEY KIPININ KENDISI DE BOZULDU.** Dedektor sinamasi icin uyari
+> kutularini CSS ile gizlemistim; `shadow-lift` sinifini **form paneli de**
+> kullaniyor — formu gizleyip gonderimi engelledim, yani deney kendi kendini
+> bozdu. Simdi uyari dugumleri OLCUMDEN HEMEN ONCE DOM'dan kaldiriliyor
+> (form iceren kutular haric). Sinama: 12/12 yakalandi.
+>
+> **ACICI DUGME KABUGA DOKUNMAMALI.** Ilk denemede form acmak icin
+> `header button`a basiyordum ve "Cikis yap"i tetikleyip oturumu kapattim.
+> Artik yalniz `main` icindeki, form disindaki, submit olmayan dugmeler.
+
+```bash
+KOK=http://localhost:3150 node tools/mutasyon-surusu.mjs
+KOK=http://localhost:3150 DENEY=1 node tools/mutasyon-surusu.mjs   # dedektor
+```
+
 ### Tur 47 — KALAN SABIT METINLER (tarama KARAKTERE degil KONUMA bakar)
 
 Tur 41/42/44'te ayni sinif hata uc kez ust uste cikti: `Tahakkuklar`,
