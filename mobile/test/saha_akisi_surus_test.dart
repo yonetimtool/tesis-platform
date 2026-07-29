@@ -30,6 +30,7 @@ import 'package:mobile/src/features/patrol/presentation/patrol_tracking_screen.d
 import 'package:mobile/src/features/scan/data/scan_outbox.dart';
 import 'package:mobile/src/features/scan/domain/outbox_entry.dart';
 import 'package:mobile/src/features/scan/presentation/outbox_screen.dart';
+import 'package:mobile/src/core/error/akis_hatasi.dart';
 import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:mobile/src/features/tasks/data/task_api.dart';
 import 'package:mobile/src/features/tasks/data/task_category_api.dart';
@@ -70,6 +71,7 @@ class _FakeOutbox extends ScanOutbox {
 class _FakePatrolApi extends PatrolApi {
   _FakePatrolApi({
     required this.me,
+    this.hata,
     this.gecmis = const PatrolWindowHistoryPage(
       items: [],
       ozet: PatrolWindowOzet(),
@@ -79,8 +81,14 @@ class _FakePatrolApi extends PatrolApi {
   final MePatrolWindowResponse me;
   final PatrolWindowHistoryPage gecmis;
 
+  /// TUR 42: uc HATA verirse "Turlarim" hangi hali cizer?
+  final ApiException? hata;
+
   @override
-  Future<MePatrolWindowResponse> fetchMyPatrolWindow() async => me;
+  Future<MePatrolWindowResponse> fetchMyPatrolWindow() async {
+    if (hata != null) throw hata!;
+    return me;
+  }
 
   // Siradaki pencere karti bilgi amaclidir; surusde bos birakilir.
   @override
@@ -264,11 +272,12 @@ const _gorev = Task(
 // Ekran kuruculari
 // --------------------------------------------------------------------------
 
-Widget _turlarimEkrani(Locale locale, {List<OutboxEntry> kuyruk = const []}) =>
+Widget _turlarimEkrani(Locale locale,
+        {List<OutboxEntry> kuyruk = const [], ApiException? hata}) =>
     ProviderScope(
       overrides: [
         patrolApiProvider.overrideWithValue(
-          _FakePatrolApi(me: _pencere(), gecmis: _gecmisSayfa),
+          _FakePatrolApi(me: _pencere(), gecmis: _gecmisSayfa, hata: hata),
         ),
         scanOutboxProvider.overrideWith(() => _FakeOutbox(kuyruk)),
         currentUserRoleProvider.overrideWith((ref) async => UserRole.security),
@@ -504,5 +513,31 @@ void main() {
       (tester) async {
     await tumEksenlerSurusu(tester, (dil) => _kategoriEkrani(Locale(dil)),
         veri: _veri, hazirla: silmeOnayiAc);
+  });
+
+  // ---- TUR 42: HATA ve CEVRIMDISI ----
+  testWidgets('HATA: Turlarim SUNUCU HATASI (bes eksen)', (tester) async {
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _turlarimEkrani(Locale(dil),
+          hata: const ApiException(
+              code: 'server_error', message: 'Sunucu hatasi', statusCode: 500)),
+      veri: _veri,
+    );
+  });
+  testWidgets('HATA: Turlarim CEVRIMDISI + bekleyen kuyruk (bes eksen)',
+      (tester) async {
+    // Saha icin en gercekci senaryo: ag yok AMA cihazda gonderilmeyi bekleyen
+    // okutmalar var. Ikisi ayni ekranda gorunur.
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _turlarimEkrani(Locale(dil),
+          kuyruk: _kuyruk,
+          hata: const ApiException(
+              code: 'network_error',
+              message: '',
+              agHatasi: AkisHatasi.sunucuyaUlasilamadi)),
+      veri: _veri,
+    );
   });
 }

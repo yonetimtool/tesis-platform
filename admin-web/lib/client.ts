@@ -28,11 +28,18 @@ export async function apiSend<T = unknown>(
 ): Promise<T> {
   const h: Record<string, string> = { ...(headers ?? {}) };
   if (body !== undefined) h["Content-Type"] = "application/json";
-  const res = await fetch(url, {
-    method,
-    headers: Object.keys(h).length ? h : undefined,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  // Ag hatasi: ham "Failed to fetch" yerine cevrilmis metin (tur 42) —
+  // `jsonFetcher` ile ayni davranis.
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method,
+      headers: Object.keys(h).length ? h : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new ApiHatasi(metin("ortakBaglantiYok"));
+  }
   if (res.status === 401) {
     if (typeof window !== "undefined") window.location.href = "/login";
     throw new Error(metin("ortakOturumSuresiDoldu"));

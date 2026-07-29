@@ -35,6 +35,8 @@ import 'package:mobile/src/features/unit_complaints/data/unit_complaint_api.dart
 import 'package:mobile/src/features/unit_complaints/domain/unit_complaint_models.dart';
 import 'package:mobile/src/features/unit_complaints/presentation/kategori_adi.dart';
 
+import 'package:mobile/src/core/error/api_exception.dart';
+
 import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
@@ -78,12 +80,18 @@ class _FakeSikayetApi extends UnitComplaintApi {
 }
 
 class _FakeTalepApi extends ComplaintApi {
-  _FakeTalepApi(this._items) : super(Dio(), TaskCategoryApi(Dio()));
+  _FakeTalepApi(this._items, {this.hata}) : super(Dio(), TaskCategoryApi(Dio()));
 
   final List<Complaint> _items;
 
+  /// TUR 42: uc HATA verirse ekranin hangi hali cizilir? (null = basarili)
+  final ApiException? hata;
+
   @override
-  Future<List<Complaint>> fetchAll({TalepDurum? durum}) async => _items;
+  Future<List<Complaint>> fetchAll({TalepDurum? durum}) async {
+    if (hata != null) throw hata!;
+    return _items;
+  }
 
   @override
   Future<List<TaskCategory>> listTaskCategories() async => const [];
@@ -113,11 +121,13 @@ Complaint _talep({TalepDurum durum = TalepDurum.acik, bool foto = false}) => Com
     );
 
 Widget _talepEkrani(Locale locale,
-        {UserRole role = UserRole.yonetici, bool foto = false}) =>
+        {UserRole role = UserRole.yonetici,
+        bool foto = false,
+        ApiException? hata}) =>
     ProviderScope(
       overrides: [
         complaintApiProvider
-            .overrideWithValue(_FakeTalepApi([_talep(foto: foto)])),
+            .overrideWithValue(_FakeTalepApi([_talep(foto: foto)], hata: hata)),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
       child: l10nApp(const ComplaintsScreen(), locale: locale),
@@ -536,6 +546,30 @@ void main() {
         await t.pump(const Duration(milliseconds: 400));
         await silmeOnayiAc(t);
       },
+    );
+  });
+
+  // ---- TUR 42: HATA ve CEVRIMDISI ----
+  // Tur 36 envanterinin E maddesi: hicbir surus uctan HATA aldirmiyordu.
+  // Kullanicinin gordugu en kotu ekran budur.
+  testWidgets('HATA: talep listesi SUNUCU HATASI (bes eksen)', (tester) async {
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil),
+          hata: const ApiException(
+              code: 'server_error', message: 'Sunucu hatasi', statusCode: 500)),
+      veri: surusVerisi,
+    );
+  });
+  testWidgets('HATA: talep listesi CEVRIMDISI (bes eksen)', (tester) async {
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil),
+          hata: const ApiException(
+              code: 'network_error',
+              message: '',
+              agHatasi: AkisHatasi.sunucuyaUlasilamadi)),
+      veri: surusVerisi,
     );
   });
 }

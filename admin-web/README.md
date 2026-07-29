@@ -205,6 +205,31 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 42 — HATA ve CEVRIMDISI surusu
+
+Tur 36 envanterinin E maddesi: hicbir surus uctan HATA aldirmamisti; butun
+olcumler "her sey calisiyor" halindeydi. `tools/hata-surusu.mjs` iki kip
+enjekte eder — **500** (BFF ucu sunucu hatasi doner) ve **cevrimdisi**
+(istek hic tamamlanmaz) — 19 sayfa x 4 dil x 2 kip = **152 sayfa-dil-kip**.
+
+Olculen: hata GORUNUYOR mu (sessiz bos ekran bulgudur), HAM TEKNIK METIN var
+mi, TR sizintisi, axe, 360 dp tasma.
+
+**2 -> 0.** Bulgular:
+
+| Bulgu | Sebep | Duzeltme |
+|---|---|---|
+| `/dues` **sessiz hata** | SWR `error` hic okunmuyordu; uc dustugunde sayfa "Tahakkuk yok" gosteriyordu — kullanici "kayit yok" ile "sunucu dustu"yu ayirt edemiyordu | iki sorgunun hatasi `ErrorBox` ile gosterilir |
+| Cevrimdisi'nda **"Failed to fetch"** | `fetch` baglanti kuramayinca atilan HAM tarayici metni her dilde ekrana basiliyordu | `jsonFetcher` + `lib/client.ts` ag hatasini yakalar, `ortakBaglantiYok` (7 dil) doner |
+
+Ayrica `/dues` basligi ve "Tahakkuk yok" bos-durumu **cevrilmemisti** (Turkce'ye
+ozgu harf tasimadiklari icin eski taramalar gormemisti).
+
+> **YENI DEDEKTOR — HAM TEKNIK METIN.** Tarama artik `Failed to fetch`,
+> `TypeError`, `undefined`, `[object Object]` gibi dizgeleri **dilden bagimsiz**
+> arar. Tur 41'deki "undefined" kartlarini da bu yakalardi; TR-karakter
+> taramasi onlari goremiyordu.
+
 ### Tur 41 — DOLU VERIYLE surus (rapor sonuclari + devriye alani)
 
 Tur 36 envanterinin C maddesi. Iki ayri kok neden vardi:

@@ -120,6 +120,11 @@ Seed'deki dağılım (tur 36 sayımı):
 `rezervasyon_durum` (onaylandi + iptal) ve `user_role` (5 rolün hepsi)
 seed'de tam.
 
+> **GÜNCELLEME (tur 42).** E'nin ilk iki maddesi (**çevrimdışı/ağ hatası** ve
+> **sunucu hatası**) kapatıldı: panelde 152 sayfa-dil-kip, mobilde 4 sürüş.
+> Üç bulgu — `/dues` sessiz hatası, "Failed to fetch" ham metni, devriye hata
+> bandının taşması. Kalanlar açık: 403, yükleniyor/iskelet, push gelişi.
+
 ## E. Çalışma zamanı durumları
 
 Hiçbir sürüşte üretilmedi:

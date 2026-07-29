@@ -2087,6 +2087,20 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 42 — HATA ve ÇEVRİMDIŞI SÜRÜŞÜ.** Mobil tarafta uçlar sahtelenip
+**sunucu hatası** (500) ve **çevrimdışı** (`AkisHatasi.sunucuyaUlasilamadi`)
+hâlleri beş eksende sürüldü: talep listesi ve "Turlarım" (ikincisi
+çevrimdışıyken **bekleyen kuyruk** da doluyken — sahanın en gerçekçi
+senaryosu).
+
+> **BULDUĞU HATA.** Devriye hata bandındaki "Yeniden dene" düğmesi 320 dp'de
+> Almanca'da **18 px** taşırıyordu (`Row` içindeki `TextButton` esnek
+> değildi). Hata bandı ilk kez sürüldüğü için görünmemişti.
+
+> Hata METİNLERİ zaten doğruydu: sunucu metni tur 14'te dile duyarlı hâle
+> gelmiş, ağ hatası `AkisHatasi` kimliğiyle çevriliyordu — sürüş bunu da
+> doğruladı.
+
 **TUR 40 — ONAY DİYALOGLARINI SÜR.** Tur 36'nın B3 maddesi. Silme onayları
 iki desende tetiklenir (satır menüsündeki "Sil" ya da doğrudan bir çöp
 ikonu); `silmeOnayiAc` ikisini de dener ve **diyalogun açıldığını doğrular**.

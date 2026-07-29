@@ -4,7 +4,16 @@ import { tarihSaatBicimi } from "./tarih";
 // 401 => oturum bitti, /login'e don.
 
 export async function jsonFetcher<T>(url: string): Promise<T> {
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  // AG HATASI: `fetch` baglanti kurulamayinca `TypeError: Failed to fetch`
+  // atar ve bu HAM metin kullaniciya gosteriliyordu — her dilde, teknik ve
+  // anlamsiz (tur 42 cevrimdisi surusu). Mobil tarafta ayni durum
+  // `AkisHatasi.agHatasi` ile cevriliyor; panelin karsiligi budur.
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { Accept: "application/json" } });
+  } catch {
+    throw new Error(metin("ortakBaglantiYok"));
+  }
   if (res.status === 401) {
     if (typeof window !== "undefined") window.location.href = "/login";
     throw new Error(metin("ortakOturumSuresiDoldu"));

@@ -35,13 +35,19 @@ export default function DuesPage() {
   const [aDonem, setADonem] = useState("");
   const [aOffset, setAOffset] = useState(0);
   const aQs = aDonem ? `&donem=${encodeURIComponent(aDonem)}` : "";
-  const { data: assessments, mutate: mutateA } = useSWR<DuesAssessmentList>(
+  // HATA SESSIZ KALMAMALI: uc dustugunde sayfa "Tahakkuk yok" gosteriyordu —
+  // kullanici "kayit yok" ile "sunucu dustu"yu ayirt edemiyordu (tur 42).
+  const {
+    data: assessments,
+    error: aErr,
+    mutate: mutateA,
+  } = useSWR<DuesAssessmentList>(
     `/api/dues/assessments?limit=${LIMIT}&offset=${aOffset}${aQs}`,
     jsonFetcher,
   );
 
   const [pOffset, setPOffset] = useState(0);
-  const { data: payments } = useSWR<DuesPaymentList>(
+  const { data: payments, error: pErr } = useSWR<DuesPaymentList>(
     `/api/dues/payments?limit=${LIMIT}&offset=${pOffset}`,
     jsonFetcher,
   );
@@ -76,7 +82,8 @@ export default function DuesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Aidat" />
+      <PageHeader title={t("aidatBaslik")} />
+      {(aErr || pErr) && <ErrorBox message={(aErr ?? pErr).message} />}
 
       {/* Toplu tahakkuk */}
       <motion.form {...panelMotion} onSubmit={bulk} className={`space-y-3 ${panelCls}`}>
@@ -163,7 +170,7 @@ export default function DuesPage() {
                 {assessments && assessments.items.length === 0 && (
                   <tr>
                     <td colSpan={4}>
-                      <EmptyState title="Tahakkuk yok" description={t("aidatTahakkukYokAlt")} />
+                      <EmptyState title={t("aidatTahakkukYok")} description={t("aidatTahakkukYokAlt")} />
                     </td>
                   </tr>
                 )}

@@ -166,9 +166,17 @@ class PatrolErrorBanner extends StatelessWidget {
               child: Text(message, style: const TextStyle(color: Colors.red)),
             ),
             if (onRetry != null)
-              TextButton(
-                onPressed: () => onRetry!(),
-                child: Text(context.l10n.ortakYenidenDene),
+              // 320 dp'de Almanca "Erneut versuchen" satiri 18 px tasiriyordu
+              // (tur 42 — hata bandi ilk kez surulunce gorundu).
+              Flexible(
+                child: TextButton(
+                  onPressed: () => onRetry!(),
+                  child: Text(
+                    context.l10n.ortakYenidenDene,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
           ],
         ),
