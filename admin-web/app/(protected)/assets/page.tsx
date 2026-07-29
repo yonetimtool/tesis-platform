@@ -142,7 +142,7 @@ export default function AssetsPage() {
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-44">
-          <Field label="Kategori">
+          <Field label={t("gorevKategoriAlan")}>
             <select
               className={inputCls}
               value={kategori}
@@ -172,7 +172,7 @@ export default function AssetsPage() {
             >
               <option value="">{t("ortakTumu")}</option>
               <option value="musait">{t("demirbasMusait")}</option>
-              <option value="zimmetli">Zimmetli</option>
+              <option value="zimmetli">{t("demirbasZimmetli")}</option>
               <option value="bakimda">{t("demirbasBakimda")}</option>
             </select>
           </Field>
@@ -194,7 +194,7 @@ export default function AssetsPage() {
                 required
               />
             </Field>
-            <Field label="Kategori (opsiyonel)">
+            <Field label={t("demirbasKategoriOpsiyonel")}>
               <select
                 className={inputCls}
                 value={form.kategori}
@@ -209,7 +209,7 @@ export default function AssetsPage() {
               </select>
             </Field>
             <Field
-              label="NFC etiket UID (opsiyonel)"
+              label={t("demirbasNfcUidOpsiyonel")}
               hint={t("demirbasEtiketIpucu")}
             >
               <input
@@ -246,12 +246,12 @@ export default function AssetsPage() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
               <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
-              <th className="px-4 py-2.5 font-medium">Kategori</th>
+              <th className="px-4 py-2.5 font-medium">{t("gorevKategoriAlan")}</th>
               <th className="px-4 py-2.5 font-medium">NFC</th>
               <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
               <th className="px-4 py-2.5 font-medium">{t("ortakAktif")}</th>
@@ -323,12 +323,12 @@ export default function AssetsPage() {
             {t("demirbasPanelNotu")}
           </p>
           <div className="overflow-hidden rounded-lg border border-slate-200">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
               <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
-                  <th className="px-4 py-2.5 font-medium">Alan</th>
-                  <th className="px-4 py-2.5 font-medium">Alma</th>
+                  <th className="px-4 py-2.5 font-medium">{t("demirbasAlan")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("demirbasAlma")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("demirbasBirakma")}</th>
                 </tr>
               </thead>

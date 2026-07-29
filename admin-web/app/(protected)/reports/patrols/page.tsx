@@ -104,12 +104,12 @@ export default function PatrolReportPage() {
 
       <motion.form {...panelMotion} onSubmit={submit} className={`flex flex-wrap items-end gap-3 ${panelCls}`}>
         <div className="w-52">
-          <Field label={t("ortakBaslangic")} hint="Yerel saat (opsiyonel)">
+          <Field label={t("ortakBaslangic")} hint={t("ortakYerelSaatOpsiyonel")}>
             <input type="datetime-local" className={inputCls} value={bas} onChange={(e) => setBas(e.target.value)} />
           </Field>
         </div>
         <div className="w-52">
-          <Field label={t("ortakBitis")} hint="Yerel saat (opsiyonel)">
+          <Field label={t("ortakBitis")} hint={t("ortakYerelSaatOpsiyonel")}>
             <input type="datetime-local" className={inputCls} value={bit} onChange={(e) => setBit(e.target.value)} />
           </Field>
         </div>
@@ -124,7 +124,7 @@ export default function PatrolReportPage() {
           </Field>
         </div>
         <div className="w-52">
-          <Field label="Plan (opsiyonel)">
+          <Field label={t("devriyePlanOpsiyonel")}>
             <select className={inputCls} value={planId} onChange={(e) => setPlanId(e.target.value)}>
               <option value="">{t("ortakTumu")}</option>
               {(plans?.items ?? []).map((p) => (
@@ -164,7 +164,7 @@ export default function PatrolReportPage() {
               </button>
             </div>
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
@@ -196,7 +196,7 @@ export default function PatrolReportPage() {
                     {data.items.length === 0 && (
                       <tr>
                         <td colSpan={5}>
-                          <EmptyState title="Pencere yok" description={t("raporPencereYok")} />
+                          <EmptyState title={t("devriyePencereYok")} description={t("raporPencereYok")} />
                         </td>
                       </tr>
                     )}

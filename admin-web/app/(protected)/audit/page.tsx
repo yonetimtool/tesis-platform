@@ -114,7 +114,7 @@ export default function AuditPage() {
       {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>

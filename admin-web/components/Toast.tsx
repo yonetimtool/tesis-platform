@@ -10,6 +10,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { useT } from "@/lib/i18n/kullan";
+
 // Hafif toast sistemi (Faz 2). Harici bag yok — framer-motion zaten mevcut.
 // create/update/delete sonrasi kisa basari/hata geri bildirimi; NE iletildigini
 // degistirmez, yalniz gorunumu. Cok satirli kritik bilgiler (or. tek-seferlik
@@ -43,6 +45,9 @@ const KIND_STYLE: Record<ToastKind, { dot: string; ring: string }> = {
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  // `t` bu dosyada TOAST OGESIDIR (map degiskeni); ceviri fonksiyonu bu
+  // yuzden `ceviri` adiyla alinir (tur 47).
+  const ceviri = useT();
   const [items, setItems] = useState<ToastItem[]>([]);
   const idRef = useRef(0);
 
@@ -92,7 +97,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   <p className="flex-1 text-sm text-ink">{t.message}</p>
                   <button
                     onClick={() => remove(t.id)}
-                    aria-label="Kapat"
+                    aria-label={ceviri("ortakKapat")}
                     className="-mr-1 shrink-0 rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
                   >
                     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

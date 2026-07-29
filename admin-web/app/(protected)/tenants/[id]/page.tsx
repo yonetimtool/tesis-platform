@@ -249,7 +249,7 @@ export default function TenantDetailPage() {
                       {y.is_active ? "aktif" : "pasif"}
                     </span>
                   </dd>
-                  <dt className="text-slate-500">Kimlik</dt>
+                  <dt className="text-slate-500">{t("tesisKimlik")}</dt>
                   <dd className="text-slate-600">
                     {y.password_set ? "parola belirlendi" : t("tesisGeciciKodAsamasi")}
                   </dd>
@@ -280,7 +280,7 @@ export default function TenantDetailPage() {
                       minLength={2}
                     />
                   </Field>
-                  <Field label={t("kullaniciTelefon")} hint="Global benzersiz">
+                  <Field label={t("kullaniciTelefon")} hint={t("tesisGlobalBenzersiz")}>
                     <input
                       className={inputCls}
                       value={telefon}

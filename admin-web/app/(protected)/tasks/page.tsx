@@ -191,7 +191,7 @@ export default function TasksPage() {
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-44">
-          <Field label="Tip">
+          <Field label={t("raporTabloTip")}>
             <select
               className={inputCls}
               value={tip}
@@ -221,12 +221,12 @@ export default function TasksPage() {
             >
               <option value="">{t("ortakTumu")}</option>
               <option value="true">{t("ortakAktif")}</option>
-              <option value="false">Pasif</option>
+              <option value="false">{t("ortakPasif")}</option>
             </select>
           </Field>
         </div>
         <div className="w-56">
-          <Field label="Atanan">
+          <Field label={t("gorevAtanan")}>
             <select
               className={inputCls}
               value={atananFiltre}
@@ -253,7 +253,7 @@ export default function TasksPage() {
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{editingId ? t("gorevDuzenle") : t("gorevYeni")}</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Tip">
+            <Field label={t("raporTabloTip")}>
               <select
                 className={inputCls}
                 value={form.tip}
@@ -281,13 +281,13 @@ export default function TasksPage() {
                 onChange={(e) => setForm({ ...form, aciklama: e.target.value })}
               />
             </Field>
-            <Field label="Atanan personel (opsiyonel)">
+            <Field label={t("gorevAtananOpsiyonel")}>
               <select
                 className={inputCls}
                 value={form.atanan_user_id}
                 onChange={(e) => setForm({ ...form, atanan_user_id: e.target.value })}
               >
-                <option value="">— yok —</option>
+                <option value="">{t("ortakSecimYok")}</option>
                 {personel.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.ad} ({rolAdi(t, u.role)})
@@ -295,13 +295,13 @@ export default function TasksPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Kategori (opsiyonel)" hint={t("gorevKategoriIpucu")}>
+            <Field label={t("demirbasKategoriOpsiyonel")} hint={t("gorevKategoriIpucu")}>
               <select
                 className={inputCls}
                 value={form.kategori_id}
                 onChange={(e) => setForm({ ...form, kategori_id: e.target.value })}
               >
-                <option value="">— yok —</option>
+                <option value="">{t("ortakSecimYok")}</option>
                 {(kategoriler?.items ?? []).map((k) => (
                   <option key={k.id} value={k.id}>
                     {k.ad}
@@ -309,7 +309,7 @@ export default function TasksPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Periyot dakika (opsiyonel)" hint={t("gorevPeriyodikIpucu")}>
+            <Field label={t("gorevPeriyotDakikaOpsiyonel")} hint={t("gorevPeriyodikIpucu")}>
               <input
                 type="number"
                 min={1}
@@ -318,7 +318,7 @@ export default function TasksPage() {
                 onChange={(e) => setForm({ ...form, periyot_dakika: e.target.value })}
               />
             </Field>
-            <Field label="Sonraki planlanan (opsiyonel)" hint="Peyzaj takvimi; yerel saat girilir">
+            <Field label={t("gorevSonrakiPlanlananOpsiyonel")} hint={t("gorevPeriyodikSaatIpucu")}>
               <input
                 type="datetime-local"
                 className={inputCls}
@@ -356,15 +356,15 @@ export default function TasksPage() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
               <th className="px-4 py-2.5 font-medium">{t("ortakBaslik")}</th>
-              <th className="px-4 py-2.5 font-medium">Tip</th>
-              <th className="px-4 py-2.5 font-medium">Kategori</th>
-              <th className="px-4 py-2.5 font-medium">Atanan</th>
-              <th className="px-4 py-2.5 font-medium">Sonraki</th>
+              <th className="px-4 py-2.5 font-medium">{t("raporTabloTip")}</th>
+              <th className="px-4 py-2.5 font-medium">{t("gorevKategoriAlan")}</th>
+              <th className="px-4 py-2.5 font-medium">{t("gorevAtanan")}</th>
+              <th className="px-4 py-2.5 font-medium">{t("gorevSonraki")}</th>
               <th className="px-4 py-2.5 font-medium">{t("ortakAktif")}</th>
               <th className="px-4 py-2.5 font-medium" />
             </tr>
@@ -421,13 +421,13 @@ export default function TasksPage() {
             {t("gorevTamamlamaKayitlari", { ad: detail.ad })}
           </h2>
           <div className="overflow-hidden rounded-lg border border-slate-200">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
               <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
-                  <th className="px-4 py-2.5 font-medium">Zaman</th>
-                  <th className="px-4 py-2.5 font-medium">Tamamlayan</th>
-                  <th className="px-4 py-2.5 font-medium">Foto</th>
+                  <th className="px-4 py-2.5 font-medium">{t("raporTabloZaman")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("raporTabloTamamlayan")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("raporTabloFoto")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("raporNot")}</th>
                 </tr>
               </thead>
@@ -442,7 +442,7 @@ export default function TasksPage() {
                           foto var
                         </span>
                       ) : (
-                        <span className="text-muted">yok</span>
+                        <span className="text-muted">{t("raporYok")}</span>
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-slate-600">{c.notlar ?? "—"}</td>

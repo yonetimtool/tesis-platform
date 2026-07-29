@@ -185,7 +185,7 @@ export default function DuesReportPage() {
   return (
     <div className="space-y-6">
       <ReportsTabs />
-      <PageHeader title="Aidat Tahsilat Raporu" />
+      <PageHeader title={t("raporAidatTahsilatBaslik")} />
 
       <motion.form {...panelMotion} onSubmit={run} className={`flex items-end gap-3 ${panelCls}`}>
         <div className="w-56">
@@ -240,7 +240,7 @@ export default function DuesReportPage() {
               </button>
             </div>
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
@@ -278,7 +278,7 @@ export default function DuesReportPage() {
           <section className="space-y-2">
             <h2 className="text-lg font-medium">{t("raporDonemTahsilatlari")}</h2>
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>

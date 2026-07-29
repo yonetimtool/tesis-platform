@@ -119,7 +119,7 @@ export default function UnitsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Daireler"
+        title={t("kabukDaireler")}
         action={
           <button className={btnPrimary} onClick={openNew}>{t("daireYeni")}</button>
         }
@@ -127,7 +127,7 @@ export default function UnitsPage() {
 
       <div className="flex items-end gap-2">
         <div className="w-48">
-          <Field label="Blok filtresi">
+          <Field label={t("daireBlokFiltresi")}>
             <input
               className={inputCls}
               value={blok}
@@ -148,7 +148,7 @@ export default function UnitsPage() {
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{editingId ? t("daireDuzenle") : t("daireYeni")}</h2>
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Daire no" hint={t("daireNoIpucu")}>
+            <Field label={t("binaDaireNo")} hint={t("daireNoIpucu")}>
               <input
                 className={inputCls}
                 value={form.no}
@@ -159,7 +159,7 @@ export default function UnitsPage() {
                 required
               />
             </Field>
-            <Field label="Blok" hint={t("blokIpucu")}>
+            <Field label={t("ortakBlok")} hint={t("blokIpucu")}>
               <input
                 className={inputCls}
                 value={form.blok}
@@ -171,7 +171,7 @@ export default function UnitsPage() {
                 required
               />
             </Field>
-            <Field label="Metrekare (opsiyonel)">
+            <Field label={t("daireMetrekareOpsiyonel")}>
               <input
                 className={inputCls}
                 inputMode="decimal"
@@ -179,7 +179,7 @@ export default function UnitsPage() {
                 onChange={(e) => setForm({ ...form, metrekare: e.target.value })}
               />
             </Field>
-            <Field label="Kat (opsiyonel)" hint={t("katIpucu")}>
+            <Field label={t("daireKatOpsiyonel")} hint={t("katIpucu")}>
               <input
                 className={inputCls}
                 inputMode="numeric"
@@ -219,12 +219,12 @@ export default function UnitsPage() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <th className="px-4 py-2.5 font-medium">No</th>
-                <th className="px-4 py-2.5 font-medium">Blok</th>
+                <th className="px-4 py-2.5 font-medium">{t("daireNoKisa")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakBlok")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("daireKatSira")}</th>
                 <th className="px-4 py-2.5 font-medium">m²</th>
                 <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
@@ -270,7 +270,7 @@ export default function UnitsPage() {
               {data && data.items.length === 0 && (
                 <tr>
                   <td colSpan={6}>
-                    <EmptyState title="Daire yok" description={t("daireYokAlt")} />
+                    <EmptyState title={t("daireYok")} description={t("daireYokAlt")} />
                   </td>
                 </tr>
               )}

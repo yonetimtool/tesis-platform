@@ -90,7 +90,7 @@ export default function SupportPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Destek"
+        title={t("kabukDestek")}
         subtitle={t("destekAciklama")}
       />
 
@@ -109,7 +109,7 @@ export default function SupportPage() {
             <option value="cozuldu">{t("destekCozuldu")}</option>
           </select>
         </Field>
-        <Field label="Tesis (tenant id)">
+        <Field label={t("destekTesisTenantId")}>
           <input
             className={inputCls}
             value={tenantId}
@@ -129,17 +129,17 @@ export default function SupportPage() {
         <p className="text-sm text-slate-500">{t("ortakYukleniyor")}</p>
       ) : !data || data.items.length === 0 ? (
         <EmptyState
-          title="Destek talebi yok"
+          title={t("destekTalepYok")}
           description={t("destekBiletYok")}
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700" tabIndex={0}>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700">
                 <th className="px-3 py-2">{t("ortakTarih")}</th>
-                <th className="px-3 py-2">Tesis</th>
-                <th className="px-3 py-2">Konu</th>
+                <th className="px-3 py-2">{t("ortakTesis")}</th>
+                <th className="px-3 py-2">{t("destekKonu")}</th>
                 <th className="px-3 py-2">{t("ortakDurum")}</th>
                 <th className="px-3 py-2">{t("destekYanit")}</th>
                 <th className="px-3 py-2" />

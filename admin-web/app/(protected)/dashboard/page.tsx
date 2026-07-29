@@ -147,7 +147,7 @@ export default function DashboardPage() {
       <section className="space-y-3">
         <h2 className="text-lg font-medium">{t("panelBugunkuTurlar")}</h2>
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>

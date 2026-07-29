@@ -141,7 +141,7 @@ export default function ShiftsPage() {
             />
           </Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label={t("ortakBaslangic")} hint="24 saat (HH:MM)">
+            <Field label={t("ortakBaslangic")} hint={t("ortakSaat24")}>
               <input
                 type="time"
                 className={inputCls}
@@ -150,7 +150,7 @@ export default function ShiftsPage() {
                 required
               />
             </Field>
-            <Field label={t("ortakBitis")} hint="24 saat (HH:MM)">
+            <Field label={t("ortakBitis")} hint={t("ortakSaat24")}>
               <input
                 type="time"
                 className={inputCls}
@@ -191,7 +191,7 @@ export default function ShiftsPage() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>

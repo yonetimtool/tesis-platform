@@ -176,7 +176,7 @@ export default function IntegrationsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Entegrasyonlar"
+        title={t("kabukEntegrasyonlar")}
         subtitle={t("entegAciklama")}
         action={
           <button className={btnPrimary} onClick={openNew}>{t("entegYeni")}</button>
@@ -214,7 +214,7 @@ export default function IntegrationsPage() {
                 required
               />
             </Field>
-            <Field label="Kanal tipi">
+            <Field label={t("entegKanalTipi")}>
               <select
                 className={inputCls}
                 value={form.channel_type}
@@ -229,7 +229,7 @@ export default function IntegrationsPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Endpoint URL" hint={t("entegUrlIpucu")}>
+            <Field label={t("entegEndpointUrl")} hint={t("entegUrlIpucu")}>
               <input
                 className={inputCls}
                 value={form.endpoint_url}
@@ -238,7 +238,7 @@ export default function IntegrationsPage() {
                 required
               />
             </Field>
-            <Field label="HTTP metodu">
+            <Field label={t("entegHttpMetodu")}>
               <select
                 className={inputCls}
                 value={form.http_method}
@@ -282,7 +282,7 @@ export default function IntegrationsPage() {
               />
             </Field>
           </div>
-          <Field label="Header'lar (JSON, gizli olmayan)">
+          <Field label={t("entegHeaderlar")}>
             <textarea
               className={`${inputCls} font-mono`}
               rows={3}
@@ -317,14 +317,14 @@ export default function IntegrationsPage() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
-                <th className="px-4 py-2.5 font-medium">Kanal</th>
-                <th className="px-4 py-2.5 font-medium">Endpoint</th>
-                <th className="px-4 py-2.5 font-medium">Kimlik</th>
+                <th className="px-4 py-2.5 font-medium">{t("entegKanal")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("entegEndpoint")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("entegKimlik")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("ortakAktif")}</th>
                 <th className="px-4 py-2.5 font-medium" />
               </tr>
@@ -378,7 +378,7 @@ export default function IntegrationsPage() {
             {data && data.items.length === 0 && (
               <tr>
                 <td colSpan={6}>
-                  <EmptyState title="Entegrasyon yok." description={t("entegYokAlt")} />
+                  <EmptyState title={t("entegYok")} description={t("entegYokAlt")} />
                 </td>
               </tr>
             )}

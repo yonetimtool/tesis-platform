@@ -149,7 +149,7 @@ export default function TenantsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Tesisler"
+        title={t("kabukTesisler")}
         subtitle={t("tesisListeAciklama")}
         action={
           <button className={btnPrimary} onClick={openNew}>{t("tesisYeni")}</button>
@@ -217,7 +217,7 @@ export default function TenantsPage() {
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Ad soyad">
+                  <Field label={t("tesisAdSoyad")}>
                     <input
                       className={inputCls}
                       value={y.ad}
@@ -239,7 +239,7 @@ export default function TenantsPage() {
                     />
                   </Field>
                   <Field
-                    label="Parola (opsiyonel)"
+                    label={t("tesisParolaOpsiyonel")}
                     hint={t("kullaniciParolaBosYeni")}
                   >
                     <input
@@ -278,13 +278,13 @@ export default function TenantsPage() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t("ayarTesisAdi")}</th>
-                <th className="px-4 py-2.5 font-medium">Kimlik (ID)</th>
-                <th className="px-4 py-2.5 font-medium">Kurulum</th>
+                <th className="px-4 py-2.5 font-medium">{t("tesisKimlikId")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("tesisKurulum")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("tesisOlusturulma")}</th>
                 <th className="px-4 py-2.5 font-medium" />
               </tr>

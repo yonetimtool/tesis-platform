@@ -225,9 +225,9 @@ export function UnitDetail({ unit }: { unit: Unit }) {
 
       {pOpen && (
         <form onSubmit={pay} className="space-y-3 rounded-lg border border-slate-200 p-4">
-          <h3 className="font-medium">Manuel tahsilat</h3>
+          <h3 className="font-medium">{t("aidatManuelTahsilat")}</h3>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Tutar (TL)" hint={t("daireTutarOrnek")}>
+            <Field label={t("aidatTutarTl")} hint={t("daireTutarOrnek")}>
               <input
                 className={inputCls}
                 inputMode="decimal"
@@ -250,20 +250,20 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                 ))}
               </select>
             </Field>
-            <Field label="Makbuz no (opsiyonel)">
+            <Field label={t("aidatMakbuzNoOpsiyonel")}>
               <input
                 className={inputCls}
                 value={pMakbuz}
                 onChange={(e) => setPMakbuz(e.target.value)}
               />
             </Field>
-            <Field label="Tahakkuk (opsiyonel)">
+            <Field label={t("aidatTahakkukOpsiyonel")}>
               <select
                 className={inputCls}
                 value={pAssessment}
                 onChange={(e) => setPAssessment(e.target.value)}
               >
-                <option value="">— serbest —</option>
+                <option value="">{t("ortakSerbest")}</option>
                 {(dues?.assessments ?? []).map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.donem} · {kurusToTL(a.tutar_kurus)}
@@ -303,7 +303,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       {/* Tahakkuk + odeme listeleri */}
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <h3 className="mb-2 font-medium">Tahakkuklar</h3>
+          <h3 className="mb-2 font-medium">{t("aidatTahakkuklar")}</h3>
           <ul className="space-y-1 text-sm">
             {(dues?.assessments ?? []).map((a) => (
               <li key={a.id} className="flex justify-between rounded border border-slate-100 px-2 py-1">
@@ -315,7 +315,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               </li>
             ))}
             {dues && dues.assessments?.length === 0 && (
-              <li className="text-muted">Tahakkuk yok.</li>
+              <li className="text-muted">{t("aidatTahakkukYokNokta")}</li>
             )}
           </ul>
         </div>
@@ -338,7 +338,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
 
       {/* Tek daire tahakkuk ekle */}
       <form onSubmit={addAssessment} className="space-y-3 rounded-lg border border-slate-200 p-4">
-        <h3 className="font-medium">Tahakkuk ekle (bu daire)</h3>
+        <h3 className="font-medium">{t("aidatTahakkukEkleDaire")}</h3>
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("ortakDonem")} hint={t("daireDonemOrnek")}>
             <input
@@ -349,7 +349,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               required
             />
           </Field>
-          <Field label="Tutar (TL)">
+          <Field label={t("aidatTutarTl")}>
             <input
               className={inputCls}
               inputMode="decimal"
@@ -380,7 +380,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
 
       {/* Sakinler */}
       <div className="space-y-3 rounded-lg border border-slate-200 p-4">
-        <h3 className="font-medium">Sakinler</h3>
+        <h3 className="font-medium">{t("sakinlerBaslik")}</h3>
         <ul className="space-y-1 text-sm">
           {aktifSakinler.map((r) => (
             <li key={r.id} className="flex items-center justify-between rounded border border-slate-100 px-2 py-1">
@@ -398,7 +398,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         </ul>
         <form onSubmit={addResident} className="flex items-end gap-2">
           <div className="grow">
-            <Field label="Sakin ekle" hint={t("daireSakinIpucu")}>
+            <Field label={t("sakinEkle")} hint={t("daireSakinIpucu")}>
               <select
                 className={inputCls}
                 value={rUser}

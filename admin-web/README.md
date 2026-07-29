@@ -205,6 +205,48 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 47 — KALAN SABIT METINLER (tarama KARAKTERE degil KONUMA bakar)
+
+Tur 41/42/44'te ayni sinif hata uc kez ust uste cikti: `Tahakkuklar`,
+`Tutar (TL)`, `Blok etiketi`, `Kat`, `sil`, `Temizlik`, `Kontrol`,
+`CSV indir`, `var`/`yok`... Hicbiri Turkce'ye ozgu harf (ğ/ı/ş/İ) tasimiyor,
+bu yuzden eski taramalar **hicbirini** gormedi ve her biri ancak o sayfa
+surulunce tek tek ortaya cikti.
+
+`tests/sabit-metin.test.ts` bu koru kapatir: **karaktere degil KONUMA** bakar.
+JSX metin dugumu ve kullaniciya gorunen oznitelikler (`label`, `title`,
+`placeholder`, `hint`, `aria-label`, `alt`...) **dizge sabiti olamaz**;
+`t("anahtar")` uzerinden gelmelidir. Dil bilgisinden bagimsiz oldugu icin
+Ingilizce sabitleri de yakalar.
+
+**99 -> 0.** 16 dosyada 95 degisiklik; **61 yeni anahtar x 7 dil**, 18 metin
+mevcut anahtarlara baglandi (ornegin `Ad` -> `ortakAd`, `Blok` ->
+`ortakBlok`). Etkilenen sayfalar: gorevler (19), devriye planlari (11),
+daire detayi (11), entegrasyonlar (9), daireler (9), demirbas (7),
+kullanicilar (6), tesisler (5), destek (5), raporlar (9), vardiyalar (2),
+denetim, toast.
+
+> **DEDEKTOR SINANDI.** `EmptyState`e bilerek bir sabit metin + `title`
+> enjekte edildi; tarama ikisini de yakaladi. Sinama sonrasi dosya geri
+> alindi.
+
+> **BILEREK DISARIDA:** marka (`Yönetio`), teknik jetonlar (`NFC`, `CSV`,
+> `HTTP`, `JSON`, `app_user`), bicim ornekleri (`HH:MM`, `https://...`) ve
+> saf sayi/sembol degerleri. Cok satirli JSX ifadelerinin parcalari
+> (`(a.zaman`) dizge sabiti degildir — tarama operator/nokta iceren
+> parcalari eler.
+
+> **YAN BULGU — KAYDIRILABILIR TABLO KLAVYEYE KAPALIYDI.** Metinler
+> cevrilince `/audit` tablosu Arapca ve Fransizca'da genisledi ve
+> `overflow-x-auto` kabi GERCEKTEN kaydirilir hale geldi; axe
+> `scrollable-region-focusable` verdi (fare olmadan kaydirilamaz). 21 kaydirma
+> kabina `tabIndex={0}` eklendi — **her dilde** ayni riski tasidiklari icin
+> yalniz `/audit`e degil hepsine. 4 -> 0.
+
+> **MOBIL TARAFTA AYNI TARAMA 0 BULGU VERDI**: `Text('...')` kullanimlarinin
+> tamami interpolasyon (`'$sayi'`, `'${l10n.x}'`); ARB + uretilmis
+> `AppLocalizations` disiplini tutmus.
+
 ### Tur 44 — 403 ve YUKLENIYOR (iskelet) surusu
 
 Tur 42'nin araci iki kip daha kazandi: **403** (kullanici GIRIS YAPMIS ama ucu

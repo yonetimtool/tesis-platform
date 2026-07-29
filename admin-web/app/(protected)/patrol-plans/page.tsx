@@ -214,7 +214,7 @@ export default function PatrolPlansPage() {
           className={`space-y-4 ${panelCls}`}
         >
           <h2 className="font-medium">{editingId ? t("planDuzenle") : t("planYeni")}</h2>
-          <Field label="Ad">
+          <Field label={t("ortakAd")}>
             <input
               className={inputCls}
               value={form.ad}
@@ -222,13 +222,13 @@ export default function PatrolPlansPage() {
               required
             />
           </Field>
-          <Field label="Vardiya (opsiyonel)">
+          <Field label={t("devriyeVardiyaOpsiyonel")}>
             <select
               className={inputCls}
               value={form.shift_id}
               onChange={(e) => setForm({ ...form, shift_id: e.target.value })}
             >
-              <option value="">— yok —</option>
+              <option value="">{t("ortakSecimYok")}</option>
               {(shifts?.items ?? []).map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.ad}
@@ -237,7 +237,7 @@ export default function PatrolPlansPage() {
             </select>
           </Field>
           <div className="grid grid-cols-3 gap-4">
-            <Field label={t("ortakBaslangic")} hint="HH:MM">
+            <Field label={t("ortakBaslangic")} hint={t("ortakSaatBicimi")}>
               <input
                 type="time"
                 className={inputCls}
@@ -246,7 +246,7 @@ export default function PatrolPlansPage() {
                 required
               />
             </Field>
-            <Field label={t("ortakBitis")} hint="HH:MM">
+            <Field label={t("ortakBitis")} hint={t("ortakSaatBicimi")}>
               <input
                 type="time"
                 className={inputCls}
@@ -255,7 +255,7 @@ export default function PatrolPlansPage() {
                 required
               />
             </Field>
-            <Field label="Periyot (dk)">
+            <Field label={t("devriyePeriyotDk")}>
               <input
                 type="number"
                 min={1}
@@ -335,7 +335,7 @@ export default function PatrolPlansPage() {
 
           <div className="flex items-end gap-2">
             <div className="grow">
-              <Field label="Nokta ekle">
+              <Field label={t("devriyeNoktaEkle")}>
                 <select
                   className={inputCls}
                   value={addPick}
@@ -375,13 +375,13 @@ export default function PatrolPlansPage() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
-                <th className="px-4 py-2.5 font-medium">Ad</th>
-                <th className="px-4 py-2.5 font-medium">Vardiya</th>
-                <th className="px-4 py-2.5 font-medium">Saat / Periyot</th>
+                <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("devriyeVardiya")}</th>
+                <th className="px-4 py-2.5 font-medium">{t("devriyeSaatPeriyot")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
                 <th className="px-4 py-2.5 font-medium" />
               </tr>
@@ -421,7 +421,7 @@ export default function PatrolPlansPage() {
               {data && data.items.length === 0 && (
                 <tr>
                   <td colSpan={5}>
-                    <EmptyState title="Plan yok" description={t("planYokAlt")} />
+                    <EmptyState title={t("devriyePlanYok")} description={t("planYokAlt")} />
                   </td>
                 </tr>
               )}

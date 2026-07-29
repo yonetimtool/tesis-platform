@@ -183,17 +183,17 @@ export default function UsersPage() {
             <select className={inputCls} value={aktif} onChange={(e) => resetFilters({ aktif: e.target.value })}>
               <option value="">{t("ortakTumu")}</option>
               <option value="true">{t("ortakAktif")}</option>
-              <option value="false">Pasif</option>
+              <option value="false">{t("ortakPasif")}</option>
             </select>
           </Field>
         </div>
         <div className="grow">
-          <Field label="Arama (ad / email)">
+          <Field label={t("kullaniciArama")}>
             <input
               className={inputCls}
               value={q}
               onChange={(e) => resetFilters({ q: e.target.value })}
-              placeholder="ad veya email"
+              placeholder={t("kullaniciAramaIpucu")}
             />
           </Field>
         </div>
@@ -214,7 +214,7 @@ export default function UsersPage() {
                 required
               />
             </Field>
-            <Field label="E-posta (opsiyonel)" hint={t("kullaniciEpostaIpucu")}>
+            <Field label={t("kullaniciEpostaOpsiyonel")} hint={t("kullaniciEpostaIpucu")}>
               <input
                 type="email"
                 className={inputCls}
@@ -234,7 +234,7 @@ export default function UsersPage() {
                 required
               />
             </Field>
-            <Field label={t("kullaniciAranabilir")} hint="Numara aramaya izin verildi mi?">
+            <Field label={t("kullaniciAranabilir")} hint={t("kullaniciAranabilirIpucu")}>
               <label className="flex h-10 items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -290,13 +290,13 @@ export default function UsersPage() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("girisEposta")}</th>
-                <th className="px-4 py-2.5 font-medium">Aranabilir</th>
+                <th className="px-4 py-2.5 font-medium">{t("kullaniciAranabilir")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("ortakRol")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
                 <th className="px-4 py-2.5 font-medium" />
