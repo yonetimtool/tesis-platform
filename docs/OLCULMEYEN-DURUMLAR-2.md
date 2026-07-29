@@ -105,6 +105,12 @@ Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve
 | kargo `teslim_alindi` | yok | |
 | `patrol_window` `bekliyor` | **artık yok** | seed "bugün" penceresi açtı, zamanla `kacirildi`ya döndü |
 
+> **GÜNCELLEME (tur 55).** Bayatlama **kapatıldı**: devriye pencereleri saat
+> başına hizalandı (idempotent — 22 → 3 pencere) ve yaklaşan etkinliklerin
+> tarihi her koşumda tazeleniyor. Seed artık kendi çıktısını denetleyip
+> `tazelik:` satırları basıyor; sıfır çıkan `BAYAT/BOS` işaretlenir.
+> Kalan boş veri durumları (F tablosu) tur 58'de.
+>
 > **SEED ZAMAN İÇİNDE BAYATLIYOR** — bu ayrı bir kör nokta sınıfı. Tur 41'de
 > eklenen "bugün aktif tur" penceresi artık kaçırılmış görünüyor; yani
 > `/dashboard`ın **aktif tur** hâli bugün sürülse yine boş çıkar. Sabit

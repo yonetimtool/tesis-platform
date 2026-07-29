@@ -90,6 +90,40 @@ listesine de yazilmalidir.
 > Dogrulama: kesilmis kosumun biraktigi artik ELLE olusturulup suit yeniden
 > kosuldu — eskiden komple duserdi, simdi geciyor ve artik temizleniyor.
 
+### Seed'in BAYATLAMASI ve tazelik denetimi (tur 55)
+
+Goreli tarihli seed verisi zamanla bayatlar ve bayatlama **SESSIZDIR**: panel
+o durumu bos olcer, kimse fark etmez. Tur 49 envanterinde tam bu gorulmustu —
+tur 41'de eklenen "bugun aktif devriye penceresi" `kacirildi`ya donmustu, yani
+`/dashboard`in AKTIF TUR hali artik hic surulemiyordu.
+
+Iki ayri sorun vardi:
+
+1. **DEVRIYE PENCERELERI IDEMPOTENT DEGILDI.** Var-mi kontrolunun anahtari
+   `pencere_baslangic` idi ve deger `now()`dan turiyordu; **her kosum ucer yeni
+   pencere ekliyordu** (22 pencere birikmisti). Artik zaman **saat basina
+   hizalanir** — ayni saat icinde tekrar kosum ayni satiri bulur — ve planin
+   onceki seed pencereleri silinir. Iki kosum ust uste: 3 pencere, sabit.
+
+2. **YAKLASAN ETKINLIKLER TAZELENMIYORDU.** `WHERE NOT EXISTS (baslik)`
+   idempotentti ama tarihi ILK kosumdan kaliyordu; 4 etkinlikten yalniz 1'i
+   "yaklasan" kalmisti. Tarih artik her kosumda `UPDATE` ile tazelenir.
+
+**TAZELIK DENETIMI.** Seed sonunda kendi ciktisini denetler ve basar:
+
+```
+[seed] tazelik: aktif devriye penceresi = 1 (OK)
+[seed] tazelik: yaklasan etkinlik = 2 (OK)
+[seed] tazelik: okunmamis bildirim = 10 (OK)
+[seed] tazelik: fotografli talep = 2 (OK)
+```
+
+Sifir cikan satir `BAYAT/BOS` isaretlenir — surus o durumu bos olcecek demektir.
+
+> Denetim blogu `with psycopg.connect(...)` GOVDESININ ICINDE olmalidir; disarida
+> `conn` kapali ve execute "connection is closed" verir (tur 41'de ayni tuzaga
+> dusuldu, tur 55'te ilk denemede tekrarlandi).
+
 ### Zaman bagimli testler (saat flake'i)
 
 Testler CANLI sunucuya gider ve sunucu GERCEK saati kullanir; zamanlama kurallari

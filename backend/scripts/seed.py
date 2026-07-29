@@ -1159,6 +1159,19 @@ def main() -> int:
                 {"t": tenant_id, "b": baslik, "a": aciklama, "k": konum,
                  "f": foto_key, "y": yonetici_id},
             )
+            # BAYATLAMA ONLEMI (tur 55): kayit zaten varsa INSERT atlanir ve
+            # tarih ILK kosumdan kalirdi — zamanla gecmise duser, "yaklasan
+            # etkinlikler" bolumu bosalir. Tarih her kosumda tazelenir.
+            conn.execute(
+                f"""
+                UPDATE etkinlik
+                   SET tarih = now() + interval '{sonra}',
+                       bitis_zamani = now() + interval '{sonra}'
+                                      + interval '{sure}'
+                 WHERE tenant_id = %(t)s AND baslik = %(b)s
+                """,
+                {"t": tenant_id, "b": baslik},
+            )
         print("[seed] YAKLASAN etkinlikler (gorselli): 'Bahar şenliği' (+3g, 5s) + "
               "'Aidat bilgilendirme toplantısı' (+10g, 2s) -> ?aktif=true = 2")
 
@@ -1338,6 +1351,24 @@ def main() -> int:
         # Pencereler: BUGUN aktif (bekliyor) + dun tamamlandi + onceki gun
         # kacirildi. Panelin "Bugunku Turlar" tablosu ve rapor sayfalari
         # ancak bu satirlarla cizilir.
+        #
+        # IKI SORUN VARDI (tur 55):
+        #   * IDEMPOTENT DEGILDI: anahtar `pencere_baslangic` idi ve deger
+        #     `now()`dan turedigi icin HER KOSUM ucer yeni pencere ekliyordu
+        #     (22 pencere birikmisti).
+        #   * BAYATLIYORDU: eski kosumun "bugun" penceresi gecmise dusuyor,
+        #     scheduler onu `kacirildi` yapiyor; panelin AKTIF TUR hali
+        #     ölçülemez hale geliyordu.
+        # Cozum: zaman SAAT BASINA hizalanir (ayni saat icinde tekrar kosum
+        # ayni satiri bulur) ve bu planin ONCEKI seed pencereleri silinir.
+        conn.execute(
+            "DELETE FROM patrol_window WHERE tenant_id = %(t)s "
+            "AND patrol_plan_id = %(p)s",
+            {"t": tenant_id, "p": plan_id},
+        )
+        saat_basi = datetime.now(timezone.utc).replace(
+            minute=0, second=0, microsecond=0
+        )
         pencereler = []
         for gun, saat, durum in [
             (0, 1, "bekliyor"),      # bugun, +1 saat sonra biter
@@ -1367,10 +1398,8 @@ def main() -> int:
                 """,
                 {
                     "t": tenant_id, "p": plan_id, "d": durum,
-                    "b": datetime.now(timezone.utc)
-                        - timedelta(days=gun, hours=-saat + 2),
-                    "e": datetime.now(timezone.utc)
-                        - timedelta(days=gun, hours=-saat),
+                    "b": saat_basi - timedelta(days=gun, hours=-saat + 2),
+                    "e": saat_basi - timedelta(days=gun, hours=-saat),
                 },
             ).fetchone()[0])
 
@@ -1481,6 +1510,35 @@ def main() -> int:
         )
         print("[seed] destek bileti: 'Panel bildirim gecikmesi' (acik, "
               "fotografli) + 'Rapor ekrani yavas' (cozuldu, cevap gorselli)")
+
+        # ------------------------------------------------------------------
+        # TAZELIK DENETIMI (tur 55) — "bugun"/"yaklasan" veri GERCEKTEN oyle mi?
+        #
+        # Goreli tarihli seed verisi zamanla BAYATLAR ve bayatlama SESSIZDIR:
+        # panel/mobil o durumu bos olcer, kimse fark etmez. Tur 49 envanterinde
+        # tam bu gorulmustu (aktif tur penceresi kacirildiya donmus). Seed artik
+        # kendi ciktisini denetler.
+        #
+        # NOT: bu blok `with psycopg.connect(...)` GOVDESININ ICINDE olmali —
+        # disarida `conn` kapali ve execute "connection is closed" verir
+        # (tur 41'de ayni tuzaga dusuldu).
+        # ------------------------------------------------------------------
+        for _ad, _sorgu in [
+            ("aktif devriye penceresi",
+             "SELECT count(*) FROM patrol_window WHERE tenant_id = %(t)s "
+             "AND pencere_baslangic <= now() AND pencere_bitis > now()"),
+            ("yaklasan etkinlik",
+             "SELECT count(*) FROM etkinlik WHERE tenant_id = %(t)s "
+             "AND COALESCE(bitis_zamani, tarih) >= now()"),
+            ("okunmamis bildirim",
+             "SELECT count(*) FROM notification WHERE tenant_id = %(t)s "
+             "AND okundu = false"),
+            ("fotografli talep",
+             "SELECT count(*) FROM complaint_photo WHERE tenant_id = %(t)s"),
+        ]:
+            _sayi = conn.execute(_sorgu, {"t": tenant_id}).fetchone()[0]
+            _isaret = "OK" if _sayi else "BAYAT/BOS"
+            print(f"[seed] tazelik: {_ad} = {_sayi} ({_isaret})")
 
         # --- Demo denetim kayitlari (audit_log, WP1) — dogal aksiyon ornekleri
         # Idempotent: tenant'ta zaten audit yoksa birkac ornek satir ekle.
