@@ -2087,6 +2087,26 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 50 — EYLEM ZİNCİRLERİNİ SÜR.** Tur 49 envanterinin A maddesi:
+sürüşler ekranı çiziyor, formu (t38) ve onay diyaloğunu (t40) açıyordu; ama
+**satır menüsü → eylem → sonuç** zinciri hiç yürütülmüyordu — kapsam açığı
+tam o bloklarda toplanmıştı. `menuEylemi(sıra)` yardımcısı üç-nokta menüsünü
+açıp *sıraya göre* (dilden bağımsız) öğe seçer ve **bir sonuç çizildiğini
+doğrular** (alt sayfa / diyalog / bildirim yoksa hata).
+
+Sürülen 7 zincir: personel düzenle / parola sıfırla / pasifleştir, sakin
+düzenle / parola sıfırla / sil, vardiya personel atama.
+Kapsam: `staff_screen` %44→**%56**, `residents_screen` %47→**%66**,
+`vardiyalar_screen` %30→**%61**; presentation toplamı %67,7→**%68,5**.
+
+> **BULDUĞU HATA — LAYOUT ASSERTION (taşma değil, ÇÖKME).** Vardiya
+> satırındaki "Personel ata" düğmesi `ListTile.trailing`di; 320 dp'de uzun
+> çeviriyle Flutter **"Trailing widget consumes the entire tile width"**
+> assertion'ı atıyor ve tile hiç yerleşemiyordu. Bugüne kadarki sürüşler bu
+> satırı yalnız **boş listeyle** çizdiği için (düğme yalnız dolu listede ve
+> yönetim rolünde var) görünmemişti. Düğme `ConstrainedBox(maxWidth: 140)`
+> içine alındı, etiket tek satır + ellipsis.
+
 **TUR 48 — MOBİLDE KALAN SABİT METİNLER.** Tur 47'nin panelde bulduğu kör
 noktanın mobil karşılığı. `test/sabit_metin_denetimi_test.dart` çizim
 katmanındaki (`presentation/`, `core/ui/`) **dizge sabitlerini** tarar:

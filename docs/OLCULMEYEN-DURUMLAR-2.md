@@ -12,6 +12,12 @@ Panelde 26 sayfanın 25'i en az bir sürüş listesinde.
 
 ---
 
+> **GÜNCELLEME (tur 50).** A'nın büyük kısmı kapatıldı: 7 eylem zinciri beş
+> eksende sürülüyor (personel/sakin menü eylemleri + vardiya atama). Bir
+> **layout assertion** bulundu (`ListTile.trailing` 320 dp'de tile'ı yiyor).
+> Açık kalan: `assets` `_ScannedCard`/`_HistoryCard` (NFC ile okutulmuş
+> demirbaş durumu) ve fotoğraf seçiminden **vazgeçme** dalı.
+
 ## A. Kullanıcı EYLEMİ sonrası durumlar (en büyük küme)
 
 Sürüşler ekranı çiziyor (tur 23–37), formu açıyor (tur 38), fotoğraf

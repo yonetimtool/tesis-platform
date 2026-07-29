@@ -75,9 +75,21 @@ class VardiyalarScreen extends ConsumerWidget {
                   ),
                   isThreeLine: v.personel.isNotEmpty,
                   trailing: atayabilir
-                      ? TextButton(
-                          onPressed: () => _atamaSheet(context, ref, v),
-                          child: Text(l10n.vardiyaPersonelAta),
+                      // GENISLIK SINIRI: `ListTile`in trailing'i tum satiri
+                      // yerse Flutter LAYOUT ASSERTION'i atar ("Trailing
+                      // widget consumes the entire tile width") — 320 dp'de
+                      // uzun ceviriyle tam bu oluyordu (tur 50). Etiket
+                      // korunur, gerekirse kisalir.
+                      ? ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 140),
+                          child: TextButton(
+                            onPressed: () => _atamaSheet(context, ref, v),
+                            child: Text(
+                              l10n.vardiyaPersonelAta,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         )
                       : null,
                 ),

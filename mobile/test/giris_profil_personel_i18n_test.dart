@@ -11,6 +11,7 @@
 ///     "oturum sona erdi" artik cevrilir.
 library;
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -54,10 +55,27 @@ Widget _profilEkrani(Locale locale, {Profile? profil}) => ProviderScope(
       child: l10nApp(const ProfileScreen(), locale: locale),
     );
 
+/// TUR 50: eylem zinciri sahtesi — menu ogeleri gercek uca gitmez.
+class _FakeStaffApi extends StaffApi {
+  _FakeStaffApi(this._items) : super(Dio());
+  final List<StaffMember> _items;
+
+  @override
+  Future<List<StaffMember>> getFieldStaff() async => _items;
+
+  @override
+  Future<void> setActive(String id, bool active) async {}
+
+  @override
+  Future<String> resetPassword(String id) async => '482913';
+}
+
 Widget _personelEkrani(Locale locale, {List<StaffMember>? items}) =>
     ProviderScope(
       overrides: [
         fieldStaffProvider.overrideWith((ref) async => items ?? [_personel()]),
+        staffApiProvider
+            .overrideWithValue(_FakeStaffApi(items ?? [_personel()])),
       ],
       child: l10nApp(const StaffScreen(), locale: locale),
     );
@@ -455,5 +473,26 @@ void main() {
   testWidgets('KLAVYE: personelEkrani (odak sirasi + tuzak + dokunma-yalniz)',
       (tester) async {
     await klavyeSurusu(tester, (dil) => _personelEkrani(Locale(dil)));
+  });
+
+  // ---- TUR 50: EYLEM ZINCIRLERI ----
+  // Tur 49 envanterinin A maddesi: surusler ekrani ciziyor, formu ve
+  // diyalogu aciyor; ama SATIR MENUSU -> EYLEM -> SONUC zinciri hic
+  // yurutulmuyordu. Kapsam acigi tam bu bloklardaydi.
+  testWidgets('ZINCIR: personel DUZENLEME alt sayfasi (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _personelEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: menuEylemi(0));
+  });
+  testWidgets('ZINCIR: personel PAROLA SIFIRLAMA onayi (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _personelEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: menuEylemi(1));
+  });
+  testWidgets('ZINCIR: personel PASIFLESTIRME sonucu (bes eksen)',
+      (tester) async {
+    // Sonuc bir SnackBar'dir (diyalog degil): eylem dogrudan uca gider.
+    await tumEksenlerSurusu(tester, (dil) => _personelEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: menuEylemi(2), bekleyen: true);
   });
 }

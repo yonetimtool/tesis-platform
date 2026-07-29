@@ -158,10 +158,27 @@ Widget _duyuruEkrani(
       child: l10nApp(const AnnouncementsScreen(), locale: locale),
     );
 
+/// TUR 50: eylem zinciri sahtesi.
+class _FakeSakinApi extends ResidentsApi {
+  _FakeSakinApi(this._items) : super(Dio());
+  final List<ResidentMember> _items;
+
+  @override
+  Future<List<ResidentMember>> getResidents() async => _items;
+
+  @override
+  Future<String> resetPassword(String userId) async => '571304';
+
+  @override
+  Future<bool> removeResident(String userId) async => true;
+}
+
 Widget _sakinEkrani(Locale locale, {List<ResidentMember>? items}) =>
     ProviderScope(
       overrides: [
         residentsProvider.overrideWith((ref) async => items ?? [_sakin()]),
+        residentsApiProvider
+            .overrideWithValue(_FakeSakinApi(items ?? [_sakin()])),
       ],
       child: l10nApp(const ResidentsScreen(), locale: locale),
     );
@@ -723,5 +740,21 @@ void main() {
     await tumEksenlerSurusu(
         tester, (dil) => _kuralEkrani(Locale(dil), role: UserRole.resident),
         veri: surusVerisi);
+  });
+
+  // ---- TUR 50: EYLEM ZINCIRLERI ----
+  testWidgets('ZINCIR: sakin DUZENLEME alt sayfasi (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _sakinEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: menuEylemi(0));
+  });
+  testWidgets('ZINCIR: sakin PAROLA SIFIRLAMA onayi (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _sakinEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: menuEylemi(1));
+  });
+  testWidgets('ZINCIR: sakin SILME onayi (bes eksen)', (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _sakinEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: menuEylemi(2));
   });
 }

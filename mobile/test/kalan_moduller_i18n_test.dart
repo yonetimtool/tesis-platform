@@ -33,6 +33,9 @@ import 'package:mobile/src/features/yonetici_iletisim/data/yonetici_iletisim_api
 import 'package:mobile/src/features/yonetici_iletisim/domain/yonetici_iletisim_models.dart';
 import 'package:mobile/src/features/yonetici_iletisim/presentation/yonetici_iletisim_screen.dart';
 
+import 'package:mobile/src/features/profile/data/profile_api.dart';
+import 'package:mobile/src/features/profile/domain/profile.dart';
+
 import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
@@ -75,9 +78,25 @@ Widget _tesisEkrani(Locale locale) => ProviderScope(
       child: l10nApp(const SetupTenantScreen(), locale: locale),
     );
 
-Widget _vardiyaEkrani(Locale locale, {List<Shift>? items}) => ProviderScope(
+/// TUR 50: atama alt sayfasi icin DOLU vardiya (bos listede dugme cizilmez).
+Shift _vardiya() => const Shift(
+      id: 'v-1',
+      // SUNUCU verisi (surusVerisi'nde kayitli — cevrilmez).
+      ad: 'Gece devriyesi',
+      baslangicSaat: '22:00',
+      bitisSaat: '06:00',
+      gunTipi: 'her_gun',
+    );
+
+Widget _vardiyaEkrani(Locale locale,
+        {List<Shift>? items, String rol = 'security'}) =>
+    ProviderScope(
       overrides: [
         shiftsApiProvider.overrideWithValue(_FakeVardiyaApi(items ?? const [])),
+        // "Personel ata" YALNIZ yonetim rolunde cizilir (tur 50).
+        profileProvider.overrideWith(
+          (ref) async => Profile(ad: 'Acme Yonetici', role: rol, aranabilir: false),
+        ),
       ],
       child: l10nApp(const VardiyalarScreen(), locale: locale),
     );
@@ -547,5 +566,27 @@ void main() {
       (tester) async {
     await tumEksenlerSurusu(tester, (dil) => _destekEkrani(Locale(dil)),
         veri: surusVerisi, hazirla: fabAc);
+  });
+
+  // ---- TUR 50: EYLEM ZINCIRLERI ----
+  testWidgets('ZINCIR: vardiya PERSONEL ATAMA alt sayfasi (bes eksen)',
+      (tester) async {
+    // Atama alt sayfasi satirdaki "Personel ata" dugmesiyle acilir; dugme
+    // yalniz vardiya listesi DOLUYKEN cizilir.
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _vardiyaEkrani(Locale(dil), items: [_vardiya()], rol: 'yonetici'),
+      veri: surusVerisi,
+      hazirla: (t) async {
+        final dugme = find.byType(TextButton);
+        expect(dugme, findsWidgets, reason: '"Personel ata" dugmesi yok');
+        await t.tap(dugme.first);
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 400));
+        if (find.byType(BottomSheet).evaluate().isEmpty) {
+          throw StateError('atama alt sayfasi acilmadi');
+        }
+      },
+    );
   });
 }

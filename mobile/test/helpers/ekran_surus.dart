@@ -589,3 +589,39 @@ Future<void> silmeOnayiAc(WidgetTester tester) async {
     throw StateError('Silme dokunuldu ama ONAY DIYALOGU acilmadi.');
   }
 }
+
+/// SATIR MENUSU EYLEMI (tur 50) — `hazirla` icin.
+///
+/// Listelerdeki uc-nokta menusu (`PopupMenuButton`) acilir ve [sira]
+/// numarali oge secilir; ardindan acilan alt sayfa/diyalog cizilir.
+/// Bulucu DILDEN BAGIMSIZDIR: metne degil menudeki SIRAYA bakar.
+///
+/// Acildigi DOGRULANIR: dokunma bosa giderse surus sessizce LISTEYI olcer ve
+/// "eylem hali temiz" raporu bos cikardi (tur 39/45'te tam bu oldu).
+Future<void> Function(WidgetTester) menuEylemi(
+  int sira, {
+  bool sonucBekle = true,
+}) =>
+    (tester) async {
+      final menu = find.byType(PopupMenuButton<String>);
+      expect(menu, findsWidgets, reason: 'satir menusu bulunamadi');
+      await tester.tap(menu.first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      final ogeler = find.byType(PopupMenuItem<String>);
+      expect(ogeler.evaluate().length, greaterThan(sira),
+          reason: 'menude $sira numarali oge yok');
+      await tester.tap(ogeler.at(sira));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      if (sonucBekle) {
+        final acildi = find.byType(BottomSheet).evaluate().isNotEmpty ||
+            find.byType(AlertDialog).evaluate().isNotEmpty ||
+            find.byType(Dialog).evaluate().isNotEmpty ||
+            find.byType(SnackBar).evaluate().isNotEmpty;
+        if (!acildi) {
+          throw StateError('menu ogesi secildi ama hicbir sonuc cizilmedi '
+              '(alt sayfa / diyalog / bildirim yok).');
+        }
+      }
+    };
