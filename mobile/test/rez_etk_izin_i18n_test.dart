@@ -140,10 +140,13 @@ Widget _etkEkrani(Locale locale,
       child: l10nApp(const EtkinlikScreen(), locale: locale),
     );
 
-Widget _izinEkrani(Locale locale, {UserRole role = UserRole.yonetici}) =>
+Widget _izinEkrani(Locale locale,
+        {UserRole role = UserRole.yonetici,
+        AccessRequestDurum durum = AccessRequestDurum.bekliyor}) =>
     ProviderScope(
       overrides: [
-        unitAccessApiProvider.overrideWithValue(_FakeIzinApi([_izin()])),
+        unitAccessApiProvider
+            .overrideWithValue(_FakeIzinApi([_izin(durum: durum)])),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
       child: l10nApp(const UnitAccessScreen(), locale: locale),
@@ -508,4 +511,19 @@ void main() {
         tester, (dil) => _izinEkrani(Locale(dil), role: UserRole.resident),
         veri: surusVerisi);
   });
+
+  // ---- TUR 58: ERISIM IZNI UC DURUM ----
+  for (final (ad, durum) in [
+    ('BEKLIYOR', AccessRequestDurum.bekliyor),
+    ('ONAYLANDI', AccessRequestDurum.onaylandi),
+    ('REDDEDILDI', AccessRequestDurum.reddedildi),
+  ]) {
+    testWidgets('DURUM: erisim izni $ad (bes eksen)', (tester) async {
+      await tumEksenlerSurusu(
+        tester,
+        (dil) => _izinEkrani(Locale(dil), durum: durum),
+        veri: surusVerisi,
+      );
+    });
+  }
 }

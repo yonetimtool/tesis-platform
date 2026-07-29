@@ -104,6 +104,12 @@ Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve
   görünümü hiçbir yerde kilitli değil.
 * **Performans.** Uzun listede kaydırma, büyük fotoğrafın bellek etkisi.
 
+> **GÜNCELLEME (tur 58).** F **kapandı**: complaint `reddedildi`, kargo
+> `teslim_alindi` ve `unit_access_permission` (3 durum) seed'e eklendi.
+> Tazelik denetimi artık **durum kapsamasını** da ölçüyor (4/4, 2/2, 3/3,
+> 3/3). Mobilde talep-reddedildi ve erişim izninin üç durumu beş eksende
+> sürüldü; panel sürüşü 336/0.
+
 ## F. Veri durumu — hâlâ boş ya da BAYATLAYAN
 
 | Durum | Şu an | Not |

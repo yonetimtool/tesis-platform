@@ -129,13 +129,15 @@ Complaint _talep({TalepDurum durum = TalepDurum.acik, bool foto = false}) => Com
 
 Widget _talepEkrani(Locale locale,
         {UserRole role = UserRole.yonetici,
+        TalepDurum durum = TalepDurum.acik,
         bool foto = false,
         ApiException? hata,
         bool askida = false}) =>
     ProviderScope(
       overrides: [
         complaintApiProvider.overrideWithValue(
-            _FakeTalepApi([_talep(foto: foto)], hata: hata, askida: askida)),
+            _FakeTalepApi([_talep(durum: durum, foto: foto)],
+                hata: hata, askida: askida)),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
       child: l10nApp(const ComplaintsScreen(), locale: locale),
@@ -616,6 +618,17 @@ void main() {
       (dil) => _talepEkrani(Locale(dil), askida: true),
       veri: surusVerisi,
       bekleyen: true,
+    );
+  });
+
+  // ---- TUR 58: EKSIK DURUMLAR ----
+  // `reddedildi` dort talep durumundan biriydi ve seed'de HIC YOKTU; ekranin
+  // bu hali surulemiyordu (tur 36'dan beri acik).
+  testWidgets('DURUM: talep REDDEDILDI (bes eksen)', (tester) async {
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil), durum: TalepDurum.reddedildi),
+      veri: surusVerisi,
     );
   });
 }

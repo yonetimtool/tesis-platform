@@ -1512,6 +1512,87 @@ def main() -> int:
               "fotografli) + 'Rapor ekrani yavas' (cozuldu, cevap gorselli)")
 
         # ------------------------------------------------------------------
+        # EKSIK VERI DURUMLARI (tur 58) — envanterin F tablosu.
+        #
+        # Bir DURUM seed'de yoksa o ekran hali HIC SURULEMEZ. Su uc durum
+        # tur 36'dan beri bostu:
+        #   * complaint 'reddedildi'      (dort durumdan biri)
+        #   * kargo 'teslim_alindi'
+        #   * unit_access_permission      (tablo TAMAMEN bos)
+        # ------------------------------------------------------------------
+        red_id = _upsert_complaint(
+            "Demo talep 5: Balkona kamera talebi (reddedildi)",
+            "Balkonuma guvenlik kamerasi takilmasini istiyorum.",
+            None,
+        )
+        # Ret SEBEBI complaint tablosunda DEGIL, durum gecmisindedir
+        # (`complaint_status_history.sebep`) — sema boyle.
+        conn.execute(
+            "UPDATE complaint SET durum = 'reddedildi' "
+            "WHERE id = %(c)s AND tenant_id = %(t)s AND durum <> 'reddedildi'",
+            {"t": tenant_id, "c": red_id},
+        )
+        conn.execute(
+            "INSERT INTO complaint_status_history "
+            "(tenant_id, complaint_id, durum, actor_role, sebep) "
+            "SELECT %(t)s, %(c)s, 'reddedildi', 'yonetici'::user_role, "
+            "       'Ortak alan disina kamera kurulamaz (KVKK).' "
+            "WHERE NOT EXISTS (SELECT 1 FROM complaint_status_history "
+            "WHERE tenant_id=%(t)s AND complaint_id=%(c)s "
+            "AND durum='reddedildi')",
+            {"t": tenant_id, "c": red_id},
+        )
+
+        # TESLIM ALINMIS kargo (ikinci kayit; bekleyen kargo korunur).
+        conn.execute(
+            """
+            INSERT INTO kargo (tenant_id, unit_id, firma, durum,
+                               kaydeden_user_id, teslim_alan_user_id,
+                               teslim_zamani, notlar)
+            SELECT %(t)s, %(u)s, 'Yurtiçi Kargo', 'teslim_alindi',
+                   %(g)s, %(r)s, now() - interval '2 hours',
+                   'Kapida teslim edildi.'
+            WHERE NOT EXISTS (
+                SELECT 1 FROM kargo
+                WHERE tenant_id = %(t)s AND durum = 'teslim_alindi'
+            )
+            """,
+            {"t": tenant_id, "u": unit_id, "g": guard_id, "r": resident_id},
+        )
+
+        # DAIRE ERISIM IZNI — uc durum: bekliyor / onaylandi / reddedildi.
+        # `durum` + `unit_id` cifti idempotency anahtari.
+        for _durum, _kullanildi in [
+            ("bekliyor", False),
+            ("onaylandi", True),
+            ("reddedildi", False),
+        ]:
+            conn.execute(
+                """
+                INSERT INTO unit_access_permission
+                    (tenant_id, unit_id, granted_to_yonetici_user_id,
+                     granted_by_resident_user_id, durum, used,
+                     requested_at, decided_at)
+                SELECT %(t)s, %(u)s, %(y)s,
+                       CASE WHEN %(d)s = 'bekliyor' THEN NULL ELSE %(r)s END,
+                       %(d)s::access_request_durum, %(k)s,
+                       now() - interval '3 hours',
+                       CASE WHEN %(d)s = 'bekliyor' THEN NULL
+                            ELSE now() - interval '2 hours' END
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM unit_access_permission
+                    WHERE tenant_id = %(t)s AND unit_id = %(u)s
+                      AND durum = %(d)s::access_request_durum
+                )
+                """,
+                {"t": tenant_id, "u": unit_id, "y": yonetici_id,
+                 "r": resident_id, "d": _durum, "k": _kullanildi},
+            )
+        print("[seed] eksik durumlar: talep 'reddedildi' + kargo "
+              "'teslim_alindi' + daire erisim izni (bekliyor/onaylandi/"
+              "reddedildi)")
+
+        # ------------------------------------------------------------------
         # TAZELIK DENETIMI (tur 55) — "bugun"/"yaklasan" veri GERCEKTEN oyle mi?
         #
         # Goreli tarihli seed verisi zamanla BAYATLAR ve bayatlama SESSIZDIR:
@@ -1535,6 +1616,21 @@ def main() -> int:
              "AND okundu = false"),
             ("fotografli talep",
              "SELECT count(*) FROM complaint_photo WHERE tenant_id = %(t)s"),
+            # DURUM KAPSAMASI (tur 58): bir durum seed'de yoksa o ekran hali
+            # HIC SURULEMEZ. Enum'un TAMAMI temsil edilmeli.
+            ("talep durumu (4/4)",
+             "SELECT count(DISTINCT durum) FILTER (WHERE durum IN "
+             "('acik','is_emri','cozuldu','reddedildi')) = 4 "
+             "FROM complaint WHERE tenant_id = %(t)s"),
+            ("kargo durumu (2/2)",
+             "SELECT count(DISTINCT durum) = 2 FROM kargo "
+             "WHERE tenant_id = %(t)s"),
+            ("erisim izni durumu (3/3)",
+             "SELECT count(DISTINCT durum) = 3 FROM unit_access_permission "
+             "WHERE tenant_id = %(t)s"),
+            ("devriye pencere durumu (3/3)",
+             "SELECT count(DISTINCT durum) = 3 FROM patrol_window "
+             "WHERE tenant_id = %(t)s"),
         ]:
             _sayi = conn.execute(_sorgu, {"t": tenant_id}).fetchone()[0]
             _isaret = "OK" if _sayi else "BAYAT/BOS"

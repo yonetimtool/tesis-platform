@@ -124,6 +124,33 @@ Sifir cikan satir `BAYAT/BOS` isaretlenir — surus o durumu bos olcecek demekti
 > `conn` kapali ve execute "connection is closed" verir (tur 41'de ayni tuzaga
 > dusuldu, tur 55'te ilk denemede tekrarlandi).
 
+### Eksik veri durumlari ve DURUM KAPSAMASI (tur 58)
+
+Bir DURUM seed'de yoksa o ekran hali **hic surulemez** — surus "temiz" der ama
+o kod yoluna hic ugramamistir. Uc durum tur 36'dan beri bostu:
+
+| Durum | Eklendi |
+|---|---|
+| complaint `reddedildi` | "Demo talep 5: Balkona kamera talebi" + durum gecmisinde ret sebebi |
+| kargo `teslim_alindi` | ikinci kargo kaydi (bekleyen kargo korunur) |
+| `unit_access_permission` (tablo TAMAMEN bos) | uc kayit: bekliyor / onaylandi / reddedildi |
+
+> **SEMA SURPRIZI.** Ret sebebi `complaint` tablosunda DEGIL,
+> `complaint_status_history.sebep` icindedir. `ret_sebebi` kolonu var
+> sanip yazdim, `UndefinedColumn` aldim ve semayi okuyup duzelttim.
+
+Tazelik denetimi artik DURUM KAPSAMASINI da olcer:
+
+```
+[seed] tazelik: talep durumu (4/4) = True (OK)
+[seed] tazelik: kargo durumu (2/2) = True (OK)
+[seed] tazelik: erisim izni durumu (3/3) = True (OK)
+[seed] tazelik: devriye pencere durumu (3/3) = True (OK)
+```
+
+Bir enum degeri seed'den duserse satir `BAYAT/BOS` olur — yani "bu durumu
+kimse olcmuyor" uyarisi.
+
 ### Zaman bagimli testler (saat flake'i)
 
 Testler CANLI sunucuya gider ve sunucu GERCEK saati kullanir; zamanlama kurallari
