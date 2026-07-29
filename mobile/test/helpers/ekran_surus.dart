@@ -527,3 +527,39 @@ Future<void> fabAc(WidgetTester tester) async {
     throw StateError('FAB\'a dokunuldu ama alt sayfa acilmadi.');
   }
 }
+
+/// ONAY DIYALOGU ACICI (tur 40).
+///
+/// Silme onaylari iki desende tetiklenir: (a) satir sonundaki `PopupMenuButton`
+/// icindeki "Sil" ogesi, (b) dogrudan bir `Icons.delete_outline` dugmesi.
+/// Bu yardimci ikisini de dener ve diyalogun ACILDIGINI dogrular — dokunma
+/// bos giderse surus sessizce LISTEYI olcerdi.
+///
+/// Bulucular DILDEN BAGIMSIZDIR: menu ogesi metne gore degil, menudeki
+/// SIRAYA/ikona gore secilir.
+Future<void> silmeOnayiAc(WidgetTester tester) async {
+  final menu = find.byType(PopupMenuButton<String>);
+  if (menu.evaluate().isNotEmpty) {
+    await tester.tap(menu.first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    // Menudeki SON oge "Sil"dir (duzenle, sil sirasi tum ekranlarda ayni).
+    final ogeler = find.byType(PopupMenuItem<String>);
+    if (ogeler.evaluate().isNotEmpty) {
+      await tester.tap(ogeler.last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+  } else {
+    final sil = find.byIcon(Icons.delete_outline);
+    if (sil.evaluate().isEmpty) {
+      throw StateError('Silme tetigi yok: ne PopupMenuButton ne delete ikonu.');
+    }
+    await tester.tap(sil.first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+  }
+  if (find.byType(AlertDialog).evaluate().isEmpty) {
+    throw StateError('Silme dokunuldu ama ONAY DIYALOGU acilmadi.');
+  }
+}

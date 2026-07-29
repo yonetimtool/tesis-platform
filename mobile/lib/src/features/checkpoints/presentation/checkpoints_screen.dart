@@ -5,6 +5,7 @@ import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../data/checkpoint_api.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// Kontrol noktalari (NFC) yonetimi — yonetici/admin ekler/duzenler/siler
 /// (Parca D). Guvenlik/tesis gorevlisi bu noktalari NFC ile okutur; okutmalar
@@ -128,7 +129,7 @@ class _CheckpointTile extends ConsumerWidget {
               onPressed: () => Navigator.of(dctx).pop(false),
               child: Text(l10n.ortakVazgec)),
           FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              style: yikiciDugmeStili(dctx),
               onPressed: () => Navigator.of(dctx).pop(true),
               child: Text(l10n.ortakSil)),
         ],

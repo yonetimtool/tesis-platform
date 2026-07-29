@@ -8,6 +8,7 @@ import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../data/dis_hizmet_api.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// Dis Hizmetler — guvenilir esnaf/hizmet kisileri (cilingir/elektrik/tesisat)
 /// + yonetici notu. Yonetici/admin ekler/duzenler/siler + notu yazar; guvenlik
@@ -242,7 +243,7 @@ class _HizmetTile extends ConsumerWidget {
               onPressed: () => Navigator.of(dctx).pop(false),
               child: Text(l10n.ortakVazgec)),
           FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              style: yikiciDugmeStili(dctx),
               onPressed: () => Navigator.of(dctx).pop(true),
               child: Text(l10n.ortakSil)),
         ],

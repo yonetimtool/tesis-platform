@@ -9,6 +9,7 @@ import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../domain/bina_duzenleme_models.dart';
 import 'bina_duzenleme_controller.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// "Bina Düzenleme" (D-viz Rev-2) — yonetim GORSEL olarak binayi kurar:
 /// blok ekle → blok kutucugu belirir → icine gir → kat + daire ekle. Daireler
@@ -807,7 +808,7 @@ class _CascadeDeleteDialogState extends State<_CascadeDeleteDialog> {
           child: Text(l10n.ortakVazgec),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: Colors.red),
+          style: yikiciDugmeStili(context),
           onPressed: match ? () => Navigator.of(context).pop(true) : null,
           child: Text(l10n.binaSilNDaire('${widget.block.unitSayisi}')),
         ),

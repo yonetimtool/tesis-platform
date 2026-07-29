@@ -245,3 +245,21 @@ Color okunurVurgu(BuildContext context, Color vurgu) {
       .withSaturation((h.saturation * 0.85).clamp(0.0, 1.0))
       .toColor();
 }
+
+/// YIKICI EYLEM (silme) dugmesi stili — tur 40.
+///
+/// Onceden `backgroundColor: Colors.red` yaziliyordu. Iki sorunu vardi:
+///   * #F44336 uzerinde BEYAZ yazi 3.99:1 — WCAG AA esigi (14 punto) 4.5;
+///   * renk TEMA-BAGIMSIZDI: koyu temada kirmizi dolgu koyu yuzeyle
+///     karisiyor, dugme kendi zemininden zor ayirt ediliyordu.
+///
+/// M3'un `colorScheme.error` / `onError` cifti ikisini de tema basina
+/// cozer (koyu temada acik kirmizi zemin + koyu yazi). Silme dugmelerinin
+/// TAMAMI bunu kullanir — tek kaynak.
+ButtonStyle yikiciDugmeStili(BuildContext context) {
+  final cs = Theme.of(context).colorScheme;
+  return FilledButton.styleFrom(
+    backgroundColor: cs.error,
+    foregroundColor: cs.onError,
+  );
+}

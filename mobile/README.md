@@ -2087,6 +2087,27 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 40 — ONAY DİYALOGLARINI SÜR.** Tur 36'nın B3 maddesi. Silme onayları
+iki desende tetiklenir (satır menüsündeki "Sil" ya da doğrudan bir çöp
+ikonu); `silmeOnayiAc` ikisini de dener ve **diyalogun açıldığını doğrular**.
+Sürülen 5 onay: duyuru, site kuralı, etkinlik, görev kategorisi, blok
+(cascade).
+
+> **BULDUĞU HATA — yıkıcı düğme koyu temada.** Silme düğmeleri
+> `backgroundColor: Colors.red` ile sabitti. İki sorunu vardı: (a) #F44336
+> üzerinde beyaz yazı **3.99:1** (eşik 4.5), (b) renk **tema-bağımsızdı** —
+> koyu temada kırmızı dolgu koyu yüzeyle karışıyordu (ölçüm 2.64:1).
+> Çözüm M3'ün `colorScheme.error`/`onError` çifti: koyu temada açık kırmızı
+> zemin + koyu yazı. **8 ekranda** `yikiciDugmeStili(context)` tek kaynak.
+
+> **ARADA DÜZELTTİĞİM HATA (kendi hatam).** `dart format lib/src` çalıştırıp
+> 156 dosyayı yeniden biçimlendirmiştim; turla ilgisiz 4 000 satırlık bir
+> fark oluştu. Geri alındı — biçimlendirme yalnız dokunulan dosyalara.
+
+> **UZUN BASMA AFFORDANSI.** Blok yönetimi (düzenle/sil) yalnız **uzun
+> basmayla** açılıyor; görünür bir düğmesi yok. Sürüş bunu `longPress` ile
+> açtı, ama keşfedilebilirlik açısından ayrı bir konu olarak duruyor.
+
 **TUR 39 — FOTOĞRAF YÜKLEME YOLUNU SÜR.** Tur 34 fotoğrafı *göstermeyi*
 ölçtü; **yüklemeyi** değil. Yükleme yolu üç ayrı hâl çizer ve hiçbiri
 sürülmemişti: **yükleniyor** (ilerleme + düğmeler pasif), **hata** (mesaj +

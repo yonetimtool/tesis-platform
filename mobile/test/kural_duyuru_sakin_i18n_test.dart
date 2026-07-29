@@ -687,4 +687,24 @@ void main() {
       hazirla: fotoSec(),
     );
   });
+
+  // ---- TUR 40: ONAY DIYALOGLARI ----
+  testWidgets('ONAY: duyuru silme diyalogu (bes eksen)', (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _duyuruEkrani(Locale(dil)),
+        veri: surusVerisi, hazirla: silmeOnayiAc);
+  });
+  testWidgets('ONAY: site kurali silme diyalogu (bes eksen)', (tester) async {
+    // Silme dugmesi LISTEDE degil DETAY alt sayfasindadir: once kural acilir.
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _kuralEkrani(Locale(dil)),
+      veri: surusVerisi,
+      hazirla: (t) async {
+        await t.tap(find.text('Havuz Saatleri').first);
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 400));
+        await silmeOnayiAc(t);
+      },
+    );
+  });
 }

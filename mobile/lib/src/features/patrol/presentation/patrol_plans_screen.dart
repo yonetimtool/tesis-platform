@@ -8,6 +8,7 @@ import '../data/patrol_plan_api.dart';
 import '../domain/patrol_hata.dart';
 import 'devriye_hata_metni.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// Devriye planlari yonetimi — yonetici/admin: her gun tekrar eden devriye
 /// planlari (ad + baslangic/bitis saati + tur sikligi + kontrol noktalari).
@@ -131,7 +132,7 @@ class _PlanTile extends ConsumerWidget {
               onPressed: () => Navigator.of(dctx).pop(false),
               child: Text(l10n.ortakVazgec)),
           FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              style: yikiciDugmeStili(dctx),
               onPressed: () => Navigator.of(dctx).pop(true),
               child: Text(l10n.ortakSil)),
         ],

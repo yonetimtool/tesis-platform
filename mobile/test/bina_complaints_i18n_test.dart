@@ -518,6 +518,26 @@ void main() {
       },
     );
   });
+
+  // ---- TUR 40: ONAY DIYALOGLARI ----
+  testWidgets('ONAY: bina duzenleme BLOK silme diyalogu (bes eksen)',
+      (tester) async {
+    // Blok yonetimi UZUN BASMA ile acilir (gorunur bir dugmesi yok):
+    // uzun bas -> yonetim alt sayfasi -> "Blogu sil" -> onay diyalogu.
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _duzenlemeEkrani(Locale(dil)),
+      veri: surusVerisi,
+      hazirla: (t) async {
+        final blok = find.byIcon(Icons.domain);
+        expect(blok, findsWidgets, reason: 'blok kutucugu yok');
+        await t.longPress(blok.first);
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 400));
+        await silmeOnayiAc(t);
+      },
+    );
+  });
 }
 
 class _PatlayanMapApi extends BuildingMapApi {

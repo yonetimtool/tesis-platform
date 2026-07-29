@@ -19,6 +19,7 @@ import '../domain/complaint_models.dart';
 import '../domain/talep_hata.dart';
 import 'talep_hata_metni.dart';
 import 'complaints_controller.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// "Talep / Arıza" (İş Emri) — yasayan/calisandan yonetime kanal (auth.md §4
 /// kesin kurali, UX aynasi):
@@ -1641,7 +1642,7 @@ class _DeclineSheetState extends ConsumerState<_DeclineSheet> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                style: yikiciDugmeStili(context),
                 // Sebep bosken pasif.
                 onPressed: (_saving || _sebepCtrl.text.trim().isEmpty)
                     ? null

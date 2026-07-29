@@ -7,6 +7,7 @@ import '../domain/rezervasyon_models.dart';
 import 'rez_etiket.dart';
 import 'rezervasyon_controller.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// "Rezervasyon" — ortak alan rezervasyonu (auth.md §4 kesin kurali, UX aynasi).
 /// Iki sekme; ICERIK role gore degisir (slot izgarasi paylasilan bilesen):
@@ -347,7 +348,7 @@ class _CancelButtonState extends ConsumerState<_CancelButton> {
             child: Text(context.l10n.ortakVazgec),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: yikiciDugmeStili(dctx),
             onPressed: () => Navigator.of(dctx).pop(true),
             child: Text(context.l10n.rezEvetIptalEt),
           ),

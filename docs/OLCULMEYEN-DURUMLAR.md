@@ -58,6 +58,10 @@ Yanında duran, ekran olmayan ama aynı ölçüde çizilmemiş parçalar:
 > **Tek cümleyle: saha (görevli/güvenlik) operasyonunun tamamı — devriye,
 > NFC okutma, görev tamamlama — yedi eksenin hiçbirinde sürülmedi.**
 
+> **GÜNCELLEME (tur 40).** B3 (onay diyalogları) **kapatıldı**: 5 silme onayı
+> beş eksende sürülüyor; yıkıcı düğmenin kontrastı düzeltildi. B bölümünün
+> tamamı kapandı — sırada C (panelde dolu veri) ve E (hata/çevrimdışı).
+>
 > **GÜNCELLEME (tur 39).** B2 (fotoğraf YÜKLEME yolu) **kapatıldı**: üç hâl
 > (yükleniyor / hata / yüklendi) duyuru formu ve görev kanıtı için beş
 > eksende sürülüyor; iki taşma bulundu. B3 (onay diyalogları) hâlâ açık.

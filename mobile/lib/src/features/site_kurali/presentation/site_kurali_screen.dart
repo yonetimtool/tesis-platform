@@ -14,6 +14,7 @@ import '../../tasks/presentation/task_complete_controller.dart'
 import '../data/site_kurali_api.dart';
 import '../domain/site_kurali_models.dart';
 import 'site_kurali_controller.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// "Site Kurallari" — blog-tarzi kural listesi (auth.md §4, UX aynasi):
 ///   * herkes: sira'ya gore sirali liste (baslik + metin + varsa gorsel) +
@@ -334,7 +335,7 @@ class _DeleteButton extends ConsumerWidget {
                 child: Text(l10n.ortakVazgec),
               ),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                style: yikiciDugmeStili(dctx),
                 onPressed: () => Navigator.of(dctx).pop(true),
                 child: Text(l10n.ortakSil),
               ),

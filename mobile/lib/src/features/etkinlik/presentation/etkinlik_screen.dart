@@ -14,6 +14,7 @@ import '../domain/etkinlik_models.dart';
 import 'etk_etiket.dart';
 import 'etkinlik_controller.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/theme/home_tokens.dart';
 
 /// "Etkinlikler" — etkinlik + RSVP (auth.md §4 kesin kurali, UX aynasi):
 ///   * yonetim (admin/yonetici): "Yeni etkinlik" FAB'i + detayda duzenle/sil;
@@ -578,7 +579,7 @@ class _DeleteButton extends ConsumerWidget {
                 child: Text(context.l10n.ortakVazgec),
               ),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                style: yikiciDugmeStili(dctx),
                 onPressed: () => Navigator.of(dctx).pop(true),
                 child: Text(context.l10n.ortakSil),
               ),

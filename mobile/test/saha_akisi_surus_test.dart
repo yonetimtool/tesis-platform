@@ -498,4 +498,11 @@ void main() {
       );
     });
   }
+
+  // ---- TUR 40: ONAY DIYALOGLARI ----
+  testWidgets('ONAY: gorev kategorisi silme diyalogu (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(tester, (dil) => _kategoriEkrani(Locale(dil)),
+        veri: _veri, hazirla: silmeOnayiAc);
+  });
 }

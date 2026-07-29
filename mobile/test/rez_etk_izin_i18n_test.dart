@@ -479,4 +479,20 @@ void main() {
     await tumEksenlerSurusu(tester, (dil) => _etkEkrani(Locale(dil)),
         veri: surusVerisi, hazirla: fabAc);
   });
+
+  // ---- TUR 40: ONAY DIYALOGLARI ----
+  testWidgets('ONAY: etkinlik silme diyalogu (bes eksen)', (tester) async {
+    // Silme dugmesi DETAY alt sayfasindadir.
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _etkEkrani(Locale(dil)),
+      veri: surusVerisi,
+      hazirla: (t) async {
+        await t.tap(find.text('Mac izleme aksami').first);
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 400));
+        await silmeOnayiAc(t);
+      },
+    );
+  });
 }
