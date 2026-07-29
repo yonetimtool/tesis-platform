@@ -19,6 +19,7 @@ Parolalar dev amaclidir; env ile override edilebilir.
 from __future__ import annotations
 
 import os
+from datetime import datetime, timedelta, timezone
 
 import psycopg
 
@@ -1261,6 +1262,170 @@ def main() -> int:
         print("[seed] kameralar: 5 kayit (3 hls + 1 mp4 + 1 rtsp) — sakin/gorevli "
               "YALNIZ 'Ana Kapı' + 'Otopark' gorur (aktif+sakin_gorebilir)")
 
+
+        # ------------------------------------------------------------------
+        # DEVRIYE ALANI (tur 41) — checkpoint + plan + pencereler + okutmalar.
+        #
+        # Seed'de bu alan HIC YOKTU: /dashboard tum sayaclari 0, /checkpoints
+        # ve /patrol-plans bos, /reports/patrols bos, bildirim tablosu bos.
+        # Yani panelin ANA EKRANI ve devriye modulu her suruste BOS DURUMDA
+        # olculuyordu (tur 36 envanteri).
+        # ------------------------------------------------------------------
+        gece_shift_id = conn.execute(
+            "SELECT id FROM shift WHERE tenant_id=%s AND ad='Gece Vardiyası'",
+            (tenant_id,),
+        ).fetchone()[0]
+
+        cp_ids = []
+        for cp_ad, uid in [
+            ("Ana Kapı", "04A1B2C3D4E5F6"),
+            ("Otopark", "04B2C3D4E5F6A1"),
+            ("Havuz", "04C3D4E5F6A1B2"),
+        ]:
+            cp_ids.append(conn.execute(
+                """
+                WITH yeni AS (
+                    INSERT INTO checkpoint (tenant_id, ad, nfc_tag_uid, aktif)
+                    SELECT %(t)s, %(a)s, %(u)s, true
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM checkpoint
+                        WHERE tenant_id = %(t)s AND nfc_tag_uid = %(u)s
+                    )
+                    RETURNING id
+                )
+                SELECT id FROM yeni
+                UNION ALL
+                SELECT id FROM checkpoint
+                 WHERE tenant_id = %(t)s AND nfc_tag_uid = %(u)s
+                LIMIT 1
+                """,
+                {"t": tenant_id, "a": cp_ad, "u": uid},
+            ).fetchone()[0])
+
+        plan_id = conn.execute(
+            """
+            WITH yeni AS (
+                INSERT INTO patrol_plan
+                    (tenant_id, ad, shift_id, baslangic_saat, bitis_saat,
+                     periyot_dakika, aktif)
+                SELECT %(t)s, 'Gece devriyesi', %(s)s, '22:00', '06:00', 120, true
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM patrol_plan
+                    WHERE tenant_id = %(t)s AND ad = 'Gece devriyesi'
+                )
+                RETURNING id
+            )
+            SELECT id FROM yeni
+            UNION ALL
+            SELECT id FROM patrol_plan
+             WHERE tenant_id = %(t)s AND ad = 'Gece devriyesi'
+            LIMIT 1
+            """,
+            {"t": tenant_id, "s": gece_shift_id},
+        ).fetchone()[0]
+
+        for sira, cp in enumerate(cp_ids, start=1):
+            conn.execute(
+                """
+                INSERT INTO patrol_plan_checkpoint
+                    (tenant_id, patrol_plan_id, checkpoint_id, sira)
+                VALUES (%(t)s, %(p)s, %(c)s, %(s)s)
+                ON CONFLICT DO NOTHING
+                """,
+                {"t": tenant_id, "p": plan_id, "c": cp, "s": sira},
+            )
+
+        # Pencereler: BUGUN aktif (bekliyor) + dun tamamlandi + onceki gun
+        # kacirildi. Panelin "Bugunku Turlar" tablosu ve rapor sayfalari
+        # ancak bu satirlarla cizilir.
+        pencereler = []
+        for gun, saat, durum in [
+            (0, 1, "bekliyor"),      # bugun, +1 saat sonra biter
+            (1, -2, "tamamlandi"),
+            (2, -2, "kacirildi"),
+        ]:
+            pencereler.append(conn.execute(
+                """
+                WITH yeni AS (
+                    INSERT INTO patrol_window
+                        (tenant_id, patrol_plan_id, pencere_baslangic,
+                         pencere_bitis, durum)
+                    SELECT %(t)s, %(p)s, %(b)s, %(e)s, %(d)s::patrol_window_durum
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM patrol_window
+                        WHERE tenant_id = %(t)s AND patrol_plan_id = %(p)s
+                          AND pencere_baslangic = %(b)s
+                    )
+                    RETURNING id
+                )
+                SELECT id FROM yeni
+                UNION ALL
+                SELECT id FROM patrol_window
+                 WHERE tenant_id = %(t)s AND patrol_plan_id = %(p)s
+                   AND pencere_baslangic = %(b)s
+                LIMIT 1
+                """,
+                {
+                    "t": tenant_id, "p": plan_id, "d": durum,
+                    "b": datetime.now(timezone.utc)
+                        - timedelta(days=gun, hours=-saat + 2),
+                    "e": datetime.now(timezone.utc)
+                        - timedelta(days=gun, hours=-saat),
+                },
+            ).fetchone()[0])
+
+        # Okutmalar: tamamlanan pencerede UC nokta, aktif pencerede BIR nokta
+        # (ilerleme "1/3" gorunsun; rapor sayfasi da dolsun).
+        for pw, kapsam in [(pencereler[1], cp_ids), (pencereler[0], cp_ids[:1])]:
+            for i, cp in enumerate(kapsam):
+                conn.execute(
+                    """
+                    INSERT INTO scan_event
+                        (tenant_id, guard_id, checkpoint_id, patrol_window_id,
+                         nfc_tag_uid, okutma_zamani, imza_dogrulandi,
+                         idempotency_key)
+                    SELECT %(t)s, %(g)s, %(c)s, %(w)s, cp.nfc_tag_uid,
+                           now() - (%(i)s || ' minutes')::interval, false, %(k)s
+                    FROM checkpoint cp
+                    WHERE cp.id = %(c)s AND cp.tenant_id = %(t)s
+                    ON CONFLICT DO NOTHING
+                    """,
+                    {"t": tenant_id, "g": guard_id, "c": cp, "w": pw,
+                     "i": (i + 1) * 7, "k": f"seed-scan-{pw}-{cp}"},
+                )
+        print("[seed] devriye: 3 nokta + 'Gece devriyesi' plani + 3 pencere "
+              "(bugun/tamamlandi/kacirildi) + okutmalar")
+
+        # Bildirimler (tur 41) — panelde /notifications hep BOSTU. Metin
+        # KIMLIKTEN uretilir (tur 16): `mesaj` alani geri uyumluluk icin
+        # doldurulur ama okuma yolu `mesaj_kimlik`i kullanir.
+        for tip, kimlik, veri, okundu, dedup in [
+            ("kacirilan_tur", "kacirilan_tur",
+             '{"plan": "Gece devriyesi", "eksik": "2"}', False, "seed-bildirim-1"),
+            ("talep_cozuldu", "talep_cozuldu",
+             '{"baslik": "Demo talep 4: Su sızıntısı onarıldı"}', False,
+             "seed-bildirim-2"),
+            ("is_emri_atandi", "is_emri_atandi",
+             '{"baslik": "Demo talep 3: Gece geç saatte müzik"}', True,
+             "seed-bildirim-3"),
+        ]:
+            conn.execute(
+                """
+                INSERT INTO notification
+                    (tenant_id, tip, mesaj, mesaj_kimlik, mesaj_veri, okundu,
+                     dedup_key)
+                SELECT %(t)s, %(tip)s::notification_tip, '', %(k)s, %(v)s::jsonb,
+                       %(o)s, %(d)s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM notification
+                    WHERE tenant_id = %(t)s AND dedup_key = %(d)s
+                )
+                """,
+                {"t": tenant_id, "tip": tip, "k": kimlik, "v": veri,
+                 "o": okundu, "d": dedup},
+            )
+        print("[seed] bildirim: 3 kayit (2 okunmamis + 1 okunmus)")
+
         # Platform destek kanali (WP1): 1 demo bilet — panel/mobil listeler
         # bos gorunmesin. (tenant_id, konu) NOT EXISTS ile idempotent.
         conn.execute(
@@ -1293,7 +1458,29 @@ def main() -> int:
             {"t": tenant_id,
              "f": _gorsel_yukle(tenant_id, "destek-bildirim", (139, 92, 246))},
         )
-        print("[seed] destek bileti: 'Panel bildirim gecikmesi' (acik, fotografli)")
+        # Ikinci bilet COZULDU + admin cevap gorseli: panelin destek
+        # detayindaki "cevap gorseli" dali ve `cozuldu` rozeti hic
+        # cizilmemisti (tur 41).
+        conn.execute(
+            """
+            INSERT INTO platform_support_ticket
+                (tenant_id, acan_user_id, konu, aciklama, durum,
+                 admin_cevap, admin_cevap_foto_key)
+            SELECT %(t)s, %(u)s,
+                   'Rapor ekrani yavas',
+                   'Aidat tahsilat raporu 10 saniyede geliyor.',
+                   'cozuldu', 'Sorgu indeksi eklendi, rapor artik hizli.',
+                   %(f)s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM platform_support_ticket
+                WHERE tenant_id = %(t)s AND konu = 'Rapor ekrani yavas'
+            )
+            """,
+            {"t": tenant_id, "u": yonetici_id,
+             "f": _gorsel_yukle(tenant_id, "destek-cevap", (37, 99, 235))},
+        )
+        print("[seed] destek bileti: 'Panel bildirim gecikmesi' (acik, "
+              "fotografli) + 'Rapor ekrani yavas' (cozuldu, cevap gorselli)")
 
         # --- Demo denetim kayitlari (audit_log, WP1) — dogal aksiyon ornekleri
         # Idempotent: tenant'ta zaten audit yoksa birkac ornek satir ekle.

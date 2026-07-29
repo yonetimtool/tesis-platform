@@ -86,6 +86,12 @@ kümede toplanıyor:
 3. **Onay diyalogları ve hata dalları.** `_confirmDelete`, `if (!mounted)
    return` sonrası hata gösterimi, `uploadPending` uyarıları.
 
+> **GÜNCELLEME (tur 41).** C **kapatıldı**: seed'e devriye alanı + bildirim +
+> çözülmüş destek bileti eklendi; rapor sonuçları `tools/rapor-surusu.mjs`
+> ile sürülüyor (42 sonuçlu ölçüm). Beş bulgu — en ağırı `/reports/tasks`
+> özet kartlarındaki **"undefined"** (panel, kaldırılmış API alanlarını
+> okuyordu). Sırada E (hata/çevrimdışı) ve F (rol varyantları).
+
 ## C. Panelde veri olmadan sürülen sayfalar
 
 `durum-envanteri.mjs` çıktısından (canlı seed):

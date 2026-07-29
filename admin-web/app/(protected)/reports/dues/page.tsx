@@ -220,7 +220,7 @@ export default function DuesReportPage() {
             <Card baslik={t("raporTahsilatOrani")} deger={`% ${report.oranYuzde}`} />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
-            <Card baslik="Tahakkuk edilen daire" deger={String(report.daireTahakkuk)} />
+            <Card baslik={t("raporTahakkukEdilenDaire")} deger={String(report.daireTahakkuk)} />
             <Card baslik={t("raporTamOdeyen")} deger={String(report.daireTamOdeyen)} tone="emerald" />
             <Card baslik={t("raporBorcluDaire")} deger={String(report.daireBorclu)} tone={report.daireBorclu > 0 ? "red" : "emerald"} />
           </div>
@@ -236,7 +236,7 @@ export default function DuesReportPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-medium">{t("raporBorcluDaireler")}</h2>
               <button className={btnGhost} onClick={exportBorclular} disabled={report.borclular.length === 0}>
-                CSV indir
+                {t("raporCsvIndir")}
               </button>
             </div>
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
@@ -244,8 +244,8 @@ export default function DuesReportPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
-                      <th className="px-4 py-2.5 font-medium">Daire</th>
-                      <th className="px-4 py-2.5 font-medium">Tahakkuk</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloTahakkuk")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("raporOdenen")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("raporKalanBorc")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("aidatSonOdemeKisa")}</th>
@@ -282,10 +282,10 @@ export default function DuesReportPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
-                      <th className="px-4 py-2.5 font-medium">Daire</th>
-                      <th className="px-4 py-2.5 font-medium">Tutar</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloTutar")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("aidatYontem")}</th>
-                      <th className="px-4 py-2.5 font-medium">Zaman</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloZaman")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -332,7 +332,7 @@ function Card({
         : "bg-slate-50 text-slate-800";
   return (
     <div className={`rounded-xl p-4 ${cls}`}>
-      <div className="text-xs text-muted">{baslik}</div>
+      <div className="text-xs text-slate-600">{baslik}</div>
       <div className="text-xl font-semibold">{deger}</div>
     </div>
   );

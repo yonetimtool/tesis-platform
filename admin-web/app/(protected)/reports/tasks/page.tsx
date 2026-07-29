@@ -9,30 +9,21 @@ import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, pan
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
-import type { TaskCompletionHistoryResponse, TaskCompletionRow, UserListResponse } from "@/lib/types";
+import type {
+  TaskCategoryList,
+  TaskCompletionHistoryResponse,
+  TaskCompletionRow,
+  UserListResponse,
+} from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
-import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+
 
 const LIMIT = 20;
-// METIN DEGIL KIMLIK (modul duzeyinde `t()` yok — bkz. README tur 18 dersi).
-const TIPLER: { value: string; anahtar: SozlukAnahtari }[] = [
-  { value: "temizlik", anahtar: "gorevTipiTemizlik" },
-  { value: "kontrol", anahtar: "gorevTipiKontrol" },
-  { value: "ilaclama", anahtar: "gorevTipiIlaclama" },
-  { value: "peyzaj", anahtar: "gorevTipiPeyzaj" },
-];
-const TIP_STYLE: Record<string, string> = {
-  temizlik: "bg-teal-100 text-teal-800",
-  kontrol: "bg-blue-100 text-blue-800",
-  ilaclama: "bg-violet-100 text-violet-800",
-  peyzaj: "bg-emerald-100 text-emerald-800",
-};
-/// Gorev tipi ADI — `ceviri` cizim katmanindan gelir; taninmayan deger HAM
-/// gosterilir (sunucu yeni tip eklerse rozet bos kalmasin).
-function tipAdi(ceviri: (a: SozlukAnahtari) => string, v: string): string {
-  const o = TIPLER.find((x) => x.value === v);
-  return o ? ceviri(o.anahtar) : v;
-}
+// GOREV TIPI = DINAMIK KATEGORI. Sabit dort tip (temizlik/kontrol/ilaclama/
+// peyzaj) backend'den kaldirilmisti; panel eski alanlari okumaya devam
+// ediyordu ve rapor ozet kartlari ekrana "undefined" yaziyordu (tur 41).
+// Kategori adlari SUNUCU VERISIDIR — cevrilmez, oldugu gibi gosterilir.
+const KART_TONLARI = ["teal", "blue", "violet", "emerald"] as const;
 
 function toIso(local: string): string {
   if (!local) return "";
@@ -56,12 +47,16 @@ export default function TaskReportPage() {
   const t = useT();
   const [bas, setBas] = useState("");
   const [bit, setBit] = useState("");
-  const [tip, setTip] = useState("");
   const [tamamlayan, setTamamlayan] = useState("");
   const [committed, setCommitted] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
 
   const { data: users } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
+  // Suzgec KATEGORI uzerinden (sunucu `kategori_id` bekler). Eskiden sabit
+  // `tip` degeri gonderiliyordu — sunucu o parametreyi hic okumuyordu, yani
+  // suzgec SESSIZCE ETKISIZDI (tur 41).
+  const { data: kategoriler } = useSWR<TaskCategoryList>("/api/task-categories", jsonFetcher);
+  const [kategoriId, setKategoriId] = useState("");
   function userName(id: string): string {
     return users?.items.find((u) => u.id === id)?.ad ?? id.slice(0, 8);
   }
@@ -72,7 +67,7 @@ export default function TaskReportPage() {
     if (b) qs.set("baslangic", b);
     const e = toIso(bit);
     if (e) qs.set("bitis", e);
-    if (tip) qs.set("tip", tip);
+    if (kategoriId) qs.set("kategori_id", kategoriId);
     if (tamamlayan) qs.set("tamamlayan_user_id", tamamlayan);
     return qs.toString();
   }
@@ -100,7 +95,7 @@ export default function TaskReportPage() {
     for (const c of items) {
       rows.push([
         c.task_adi ?? "",
-        c.tip,
+        c.kategori_ad,
         userName(c.tamamlayan_user_id),
         c.tamamlanma_zamani,
         c.foto_var ? "var" : "yok",
@@ -127,13 +122,17 @@ export default function TaskReportPage() {
             <input type="datetime-local" className={inputCls} value={bit} onChange={(e) => setBit(e.target.value)} />
           </Field>
         </div>
-        <div className="w-44">
-          <Field label="Tip">
-            <select className={inputCls} value={tip} onChange={(e) => setTip(e.target.value)}>
+        <div className="w-52">
+          <Field label={t("gorevKategoriAlan")}>
+            <select
+              className={inputCls}
+              value={kategoriId}
+              onChange={(e) => setKategoriId(e.target.value)}
+            >
               <option value="">{t("ortakTumu")}</option>
-              {TIPLER.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {t(o.anahtar)}
+              {(kategoriler?.items ?? []).map((k) => (
+                <option key={k.id} value={k.id}>
+                  {k.ad}
                 </option>
               ))}
             </select>
@@ -166,17 +165,21 @@ export default function TaskReportPage() {
         <>
           <div className="grid gap-3 md:grid-cols-5">
             <Card baslik={t("raporToplamTamamlama")} deger={String(data.ozet.toplam)} />
-            <Card baslik="Temizlik" deger={String(data.ozet.temizlik)} tone="teal" />
-            <Card baslik="Kontrol" deger={String(data.ozet.kontrol)} tone="blue" />
-            <Card baslik={t("gorevTipiIlaclama")} deger={String(data.ozet.ilaclama)} tone="violet" />
-            <Card baslik="Peyzaj" deger={String(data.ozet.peyzaj)} tone="emerald" />
+            {data.ozet.kalemler.map((k, i) => (
+              <Card
+                key={k.kategori_ad}
+                baslik={k.kategori_ad}
+                deger={String(k.sayi)}
+                tone={KART_TONLARI[i % KART_TONLARI.length]}
+              />
+            ))}
           </div>
 
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Tamamlamalar</h2>
+              <h2 className="text-lg font-medium">{t("raporTamamlamalar")}</h2>
               <button className={btnGhost} onClick={exportCsv} disabled={data.items.length === 0}>
-                CSV indir
+                {t("raporCsvIndir")}
               </button>
             </div>
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
@@ -185,11 +188,11 @@ export default function TaskReportPage() {
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
                       <th className="px-4 py-2.5 font-medium">{t("raporGorev")}</th>
-                      <th className="px-4 py-2.5 font-medium">Tip</th>
-                      <th className="px-4 py-2.5 font-medium">Tamamlayan</th>
-                      <th className="px-4 py-2.5 font-medium">Zaman</th>
-                      <th className="px-4 py-2.5 font-medium">Foto</th>
-                      <th className="px-4 py-2.5 font-medium">NFC</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloTip")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloTamamlayan")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloZaman")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloFoto")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloNfc")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("raporNot")}</th>
                     </tr>
                   </thead>
@@ -199,18 +202,18 @@ export default function TaskReportPage() {
                         <td className="px-4 py-2.5">{c.task_adi ?? "—"}</td>
                         <td className="px-4 py-2.5">
                           <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${TIP_STYLE[c.tip] ?? "bg-slate-100 text-slate-700"}`}
+                            className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700"
                           >
-                            {tipAdi(t, c.tip)}
+                            {c.kategori_ad}
                           </span>
                         </td>
                         <td className="px-4 py-2.5">{userName(c.tamamlayan_user_id)}</td>
                         <td className="px-4 py-2.5 text-slate-600">{formatDateTime(c.tamamlanma_zamani)}</td>
                         <td className="px-4 py-2.5">
                           {c.foto_var ? (
-                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">var</span>
+                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">{t("raporVar")}</span>
                           ) : (
-                            <span className="text-muted">yok</span>
+                            <span className="text-muted">{t("raporYok")}</span>
                           )}
                         </td>
                         <td className="px-4 py-2.5">
@@ -269,7 +272,7 @@ function Card({
             : "bg-slate-50 text-slate-800";
   return (
     <div className={`rounded-xl p-4 ${cls}`}>
-      <div className="text-xs text-muted">{baslik}</div>
+      <div className="text-xs text-slate-600">{baslik}</div>
       <div className="text-xl font-semibold">{deger}</div>
     </div>
   );

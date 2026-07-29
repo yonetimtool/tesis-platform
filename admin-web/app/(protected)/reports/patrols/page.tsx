@@ -158,9 +158,9 @@ export default function PatrolReportPage() {
 
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Pencereler</h2>
+              <h2 className="text-lg font-medium">{t("raporPencereler")}</h2>
               <button className={btnGhost} onClick={exportCsv} disabled={data.items.length === 0}>
-                CSV indir
+                {t("raporCsvIndir")}
               </button>
             </div>
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
@@ -168,11 +168,11 @@ export default function PatrolReportPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
-                      <th className="px-4 py-2.5 font-medium">Plan</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloPlan")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("ortakBaslangic")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("ortakBitis")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
-                      <th className="px-4 py-2.5 font-medium">Checkpoint</th>
+                      <th className="px-4 py-2.5 font-medium">{t("raporTabloCheckpoint")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -237,7 +237,7 @@ function Card({
           : "bg-slate-50 text-slate-800";
   return (
     <div className={`rounded-xl p-4 ${cls}`}>
-      <div className="text-xs text-muted">{baslik}</div>
+      <div className="text-xs text-slate-600">{baslik}</div>
       <div className="text-xl font-semibold">{deger}</div>
     </div>
   );

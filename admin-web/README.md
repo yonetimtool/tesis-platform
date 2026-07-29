@@ -205,6 +205,39 @@ node tools/dar-ekran-surusu.mjs
 > Sekmeler **sarmaz** (alt cizgi bozulur) — serit kendi icinde kaydirilir.
 > Izgara dar ekranda 2 sutuna duser (`sm:`den itibaren 4).
 >
+### Tur 41 — DOLU VERIYLE surus (rapor sonuclari + devriye alani)
+
+Tur 36 envanterinin C maddesi. Iki ayri kok neden vardi:
+
+**1) Seed'de DEVRIYE ALANI hic yoktu.** `checkpoint`, `patrol_plan`,
+`patrol_window`, `scan_event` ve `notification` tablolari BOSTU. Bu yuzden
+`/dashboard` tum sayaclari 0 ("Bugun icin tur yok"), `/checkpoints` ve
+`/patrol-plans` bos, `/notifications` "Toplam 0" halinde olculuyordu — yani
+panelin ANA EKRANI hicbir suruste dolu gorulmemisti. Seed'e 3 nokta +
+"Gece devriyesi" plani + 3 pencere (bugun / tamamlandi / kacirildi) +
+okutmalar + 3 bildirim + `cozuldu` destek bileti (cevap gorselli) eklendi.
+
+**2) Rapor sonuclarina hicbir surus basmiyordu.** `/reports/*` yalniz SORGU
+FORMU halinde olculuyordu. `tools/rapor-surusu.mjs` formu doldurup "Raporu
+getir"e basar, SONUCUN GELDIGINI dogrular (satir sayisi), sonra olcer:
+7 dil x 2 tema x 3 rapor = **42 sonuclu olcum**.
+
+**32 -> 0.** Bulunanlar:
+
+| Bulgu | Sebep | Duzeltme |
+|---|---|---|
+| `/reports/tasks` ozet kartlarinda **"undefined"** | Gorev tipi DINAMIK KATEGORIYE gecince backend `ozet.temizlik/kontrol/ilaclama/peyzaj` alanlarini kaldirmisti; panel hala onlari okuyordu | `ozet.kalemler[]` (kategori adi + sayi) uzerinden kart uretilir |
+| "Tip" suzgeci sessizce ETKISIZ | panel `tip=` gonderiyordu, sunucu `kategori_id` bekliyor | suzgec kategori ucundan beslenir |
+| 20+ hardcoded Turkce | rapor SONUC alanindaki tablo basliklari + kart etiketleri (`Temizlik`, `Kontrol`, `Tamamlamalar`, `Daire`, `Tutar`, `var`/`yok`, `CSV indir`...) | 16 yeni anahtar x 7 dil |
+| `text-muted` kart etiketi | tintli zeminde 12 puntoda **4.4:1** | `text-slate-600` |
+| koyu temada teal/violet kartlar | `.dark` override'i yoktu (emerald/blue/amber vardi) | zemin + metin override'i eklendi |
+
+> **KENDI ACTIGIM GERILEME.** Koyu tema icin `text-violet-700/800`
+> override'ini eklerken ESLESEN ZEMIN override'ini unutmustum: `/users`
+> rol rozeti (`bg-violet-100 text-violet-800`) 6 dilde kontrast ihlali
+> verdi. Tam surus (336 sayfa-dil-tema) bunu yakaladi; `-100` zeminleri de
+> eklendi.
+
 ### Tur 35 — FOTOGRAFLI VERIYLE surus (mobil tur 34'un web karsiligi)
 
 **BULUNAN KOK HATA: seed, MinIO'ya HIC YUKLENMEMIS anahtarlar yaziyordu.**

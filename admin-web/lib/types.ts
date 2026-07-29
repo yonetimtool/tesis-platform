@@ -448,19 +448,25 @@ export interface TaskCompletionRow {
   id: string;
   task_id: string;
   task_adi?: string | null;
-  tip: string;
+  /// Kategori adi (NULL kategori sunucuda "Diğer"e cozulur).
+  kategori_ad: string;
   tamamlayan_user_id: string;
   tamamlanma_zamani: string;
   foto_var: boolean;
   nfc_dogrulandi: boolean;
   notlar?: string | null;
 }
+export interface TaskCompletionKategoriSayi {
+  kategori_ad: string;
+  sayi: number;
+}
+/// Gorev tipi ARTIK DINAMIK KATEGORIDIR (sabit temizlik/kontrol/ilaclama/
+/// peyzaj kirilimi backend'den kaldirilmisti). Panel eski alanlari okumaya
+/// devam ediyordu ve rapor kartlari ekrana "undefined" yaziyordu — tur 41'de
+/// rapor SONUCU ilk kez cizilince gorundu.
 export interface TaskCompletionOzet {
   toplam: number;
-  temizlik: number;
-  kontrol: number;
-  ilaclama: number;
-  peyzaj: number;
+  kalemler: TaskCompletionKategoriSayi[];
 }
 export interface TaskCompletionHistoryResponse {
   meta: PageMeta;

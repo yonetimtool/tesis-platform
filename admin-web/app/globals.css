@@ -120,6 +120,10 @@ textarea:focus-visible,
 .dark .bg-blue-50, .dark .bg-blue-100 { background-color: rgba(59, 130, 246, 0.15); }
 .dark .bg-green-50, .dark .bg-green-100 { background-color: rgba(34, 197, 94, 0.15); }
 .dark .bg-indigo-50 { background-color: rgba(99, 102, 241, 0.15); }
+/* Rapor ozet kartlari (tur 41): koyu temada ACIK kalan iki tint daha —
+   sayfa koyu, kart beyaz kaliyordu ve etiket okunmuyordu. */
+.dark .bg-teal-50, .dark .bg-teal-100 { background-color: rgba(20, 184, 166, 0.15); }
+.dark .bg-violet-50, .dark .bg-violet-100 { background-color: rgba(139, 92, 246, 0.15); }
 .dark .bg-orange-100 { background-color: rgba(249, 115, 22, 0.15); }
 
 .dark .text-red-600, .dark .text-red-700, .dark .text-red-800 { color: #fca5a5; }
@@ -128,6 +132,9 @@ textarea:focus-visible,
 .dark .text-blue-700, .dark .text-blue-800 { color: #93c5fd; }
 .dark .text-green-700 { color: #86efac; }
 .dark .text-indigo-900 { color: #a5b4fc; }
+/* Rapor ozet kartlarinin DEGER rengi (tur 41). */
+.dark .text-teal-700, .dark .text-teal-800 { color: #5eead4; }
+.dark .text-violet-700, .dark .text-violet-800 { color: #c4b5fd; }
 .dark .text-orange-700 { color: #fdba74; }
 
 .dark .border-red-300 { border-color: rgba(239, 68, 68, 0.4); }
