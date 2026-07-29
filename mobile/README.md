@@ -2087,6 +2087,20 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 51 — PAROLA BELİRLEME EKRANINI SÜR.** Tur 36 *ve* tur 49
+envanterlerinin ikisinde de açık kalan tek ekran: `set_password_screen`
+**1/83** satır kapsamla duruyordu — oysa sakinin **ilk girişinin tek yolu**,
+geçici kodla giren herkes buradan geçiyor.
+
+Sürülen dört hâl (beş eksende): boş form, **doğrulama hatası** (parolalar
+uyuşmuyor), **sunucu hatası bandı**, **gönderiliyor** (buton spinner'ı —
+sonsuz animasyon olduğu için `bekleyen: true`).
+Kapsam **%1 → %88**; presentation toplamı %68,5 → **%69,1**.
+
+> Dört eksende de temiz çıktı. Ayrıca bir dedektör testi, uyuşmayan parolada
+> gönderimin **engellendiğini** ve hata metninin çizildiğini doğruluyor —
+> "sürüş boş koştu" riskine karşı.
+
 **TUR 50 — EYLEM ZİNCİRLERİNİ SÜR.** Tur 49 envanterinin A maddesi:
 sürüşler ekranı çiziyor, formu (t38) ve onay diyaloğunu (t40) açıyordu; ama
 **satır menüsü → eylem → sonuç** zinciri hiç yürütülmüyordu — kapsam açığı

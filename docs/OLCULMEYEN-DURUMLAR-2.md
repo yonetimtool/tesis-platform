@@ -33,6 +33,10 @@ toplanıyor:
 | `vardiyalar_screen` `_AtamaSheet` | 116‑193 | vardiya atama alt sayfası |
 | foto seçiminden VAZGEÇME dalı (`file == null`) | 4 ekranda | kullanıcı kamerayı kapatınca ne oluyor |
 
+> **GÜNCELLEME (tur 51).** `set_password_screen` kapatıldı: dört hâl beş
+> eksende sürülüyor, kapsam %1 → **%88**. Açık kalan tek dosya
+> `task_ticket_widgets` (1/60).
+
 ## B. Hiç çizilmemiş kalan iki dosya
 
 | Dosya | Kapsam | Not |
