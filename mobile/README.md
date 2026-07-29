@@ -2087,6 +2087,30 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 52 — TALEP ROZETLERİNİ SÜR.** `task_ticket_widgets.dart` **1/60**
+satır kapsamdaydı: bu parçalar (talepten-geldi rozeti, öncelik rozeti, bağlı
+talep kartı) yalnız görev bir **talepten dönüştürülmüşse** çizilir ve sürüş
+verisinde `ticket` hiç yoktu. Kapsam **%2 → %96**; presentation toplamı
+%69,1 → **%69,6**.
+
+> **BULDUĞU HATALAR (2).**
+> 1. **Taşma:** "Talepten geldi" rozeti Fransızca'da (`Issu d'une demande`)
+>    320 dp'de **6,5 px** taşıyordu; bağlı talep kartındaki durum metni de
+>    esnek değildi. İkisi de `Flexible` + ellipsis.
+> 2. **Koyu temada okunmayan indigo** — aşağıdaki not.
+
+> **ÖLÇÜM ARACININ GEÇMESİ KANIT DEĞİL.** Sabit `#3949AB` indigo, koyu temada
+> %12 tint zemin üzerinde **2.06:1** veriyor (eşik 4.5). `textContrastGuideline`
+> bunu **geçirdi**: kılavuz piksel histogramının modunu alıyor, rozet küçük ve
+> yazı ince olduğu için baskın renkler zemin tonları çıkıyor — tur 32'de
+> "Главная" 11 puntoda düşerken "Ana Sayfa" geçmesinin aynı sınırı. Kontrastı
+> **elle hesaplayıp** doğruladım, sonra `okunurVurgu(context, renk)` ile
+> düzelttim: **8.46:1**. Zemin ham indigo tinti kaldı (anlam taşır), yalnız
+> metin/ikon temaya göre çözülüyor.
+>
+> **Aynı kalıp `lib/src` içinde 29 yerde daha var** (sabit renk + tint zemin).
+> Bu turun kapsamı dışında; envantere yazıldı.
+
 **TUR 51 — PAROLA BELİRLEME EKRANINI SÜR.** Tur 36 *ve* tur 49
 envanterlerinin ikisinde de açık kalan tek ekran: `set_password_screen`
 **1/83** satır kapsamla duruyordu — oysa sakinin **ilk girişinin tek yolu**,

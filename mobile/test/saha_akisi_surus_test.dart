@@ -257,6 +257,26 @@ final _kuyruk = <OutboxEntry>[
   ),
 ];
 
+/// TUR 52: TALEPTEN GELEN is emri — `task_ticket_widgets` YALNIZ bu durumda
+/// cizilir (rozetler + bagli talep karti). Kapsam 1/60 idi.
+const _talepGorevi = Task(
+  id: 't2',
+  ad: 'Havuz temizliği',
+  aktif: true,
+  aciklama: 'Talepten donusturuldu.',
+  atananUserId: 'u-saha',
+  kategoriId: 'kat-1',
+  oncelik: 'yuksek',
+  ticketId: 'c-1',
+  ticket: TicketSummary(
+    id: 'c-1',
+    baslik: 'Otopark bariyeri kırık',
+    durum: 'is_emri',
+    kategoriAd: 'Temizlik',
+    unitLabel: 'A-12',
+  ),
+);
+
 const _gorev = Task(
   id: 't1',
   ad: 'Havuz temizliği',
@@ -313,6 +333,7 @@ Widget _gorevDetayEkrani(
   UserRole role = UserRole.security,
   YuklemeDavranisi? yukleme,
   String? fotoYolu,
+  Task gorev = _gorev,
 }) =>
     ProviderScope(
       overrides: [
@@ -326,7 +347,7 @@ Widget _gorevDetayEkrani(
         scanOutboxProvider.overrideWith(() => _FakeOutbox(const [])),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
-      child: l10nApp(const TaskDetailScreen(task: _gorev), locale: locale),
+      child: l10nApp(TaskDetailScreen(task: gorev), locale: locale),
     );
 
 Widget _tirTakipEkrani(Locale locale) => ProviderScope(
@@ -379,6 +400,8 @@ const _veri = {
   // ayni VERI iki bicimde ekrana gelir, ikisi de allowlist'te olmali.
   'HAVUZ TEMIZLIĞI', 'HAVUZ TEMİZLİĞİ',
   '04A2B3C4D5', '04FFEE1122', 'Temizlik', 'Teknik', 'Aras Kargo', 'A-12',
+  // Tur 52: talepten gelen is emri verisi.
+  'Otopark bariyeri kırık', 'OTOPARK BARIYERI KIRIK', 'OTOPARK BARİYERİ KIRIK',
 };
 
 void main() {
@@ -558,5 +581,18 @@ void main() {
         tester,
         (dil) => _turlarimEkrani(Locale(dil), rol: UserRole.tesisGorevlisi),
         veri: _veri);
+  });
+
+  // ---- TUR 52: TALEP ROZETLERI + BAGLI TALEP KARTI ----
+  // `task_ticket_widgets.dart` 1/60 satir kapsamdaydi: bu parcalar YALNIZ
+  // gorev bir TALEPTEN donusturulmusse cizilir ve surus verisinde ticket
+  // hic yoktu.
+  testWidgets('TALEP: is emri rozetleri + bagli talep karti (bes eksen)',
+      (tester) async {
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _gorevDetayEkrani(Locale(dil), gorev: _talepGorevi),
+      veri: _veri,
+    );
   });
 }

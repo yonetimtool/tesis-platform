@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/i18n/l10n.dart';
+import '../../../core/theme/home_tokens.dart';
 import '../domain/task_models.dart';
 import 'task_tip_style.dart';
 
@@ -31,6 +32,10 @@ class TalepGeldiChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const color = Color(0xFF3949AB); // marka indigo (bilgi/baglam)
+    // ZEMIN ham indigo tinti kalir (anlam tasir); METIN temaya gore cozulur.
+    // Tur 52: koyu temada ham indigo, %12 tint zemin uzerinde 2.06:1 veriyor
+    // (esik 4.5) — `okunurVurgu` 8.46'ya cikarir.
+    final metin = okunurVurgu(context, color);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -40,14 +45,21 @@ class TalepGeldiChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.report_problem_outlined, size: 14, color: color),
+          Icon(Icons.report_problem_outlined, size: 14, color: metin),
           const SizedBox(width: 4),
-          Text(
-            context.l10n.gorevTaleptenGeldi,
-            style: const TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+          // Rozet metni de kisalabilmeli: Fransizca "Issu d'une demande"
+          // 320 dp'de satiri 6.5 px tasiriyordu (tur 52). `Wrap` kaba genislik
+          // sinirini verir; `Flexible` o sinirda metni sikistirir.
+          Flexible(
+            child: Text(
+              context.l10n.gorevTaleptenGeldi,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: metin,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -66,6 +78,8 @@ class OncelikBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final kimlik = taskOncelikKimligi(oncelik);
     final renk = taskOncelikRengi(kimlik);
+    // Zemin ham renk tinti; metin temaya gore (tur 52).
+    final metin = okunurVurgu(context, renk);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -75,7 +89,7 @@ class OncelikBadge extends StatelessWidget {
       child: Text(
         oncelikEtiketi(context.l10n, kimlik),
         style: TextStyle(
-          color: renk,
+          color: metin,
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
@@ -95,6 +109,7 @@ class TicketBaglamKarti extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const color = Color(0xFF3949AB);
+    final metin = okunurVurgu(context, color);
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final alt = <String>[
@@ -115,10 +130,10 @@ class TicketBaglamKarti extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.report_problem_outlined,
                   size: 20,
-                  color: color,
+                  color: metin,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -127,11 +142,19 @@ class TicketBaglamKarti extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
-                Text(
-                  talepDurumEtiketi(l10n, ticket.durum),
-                  style: const TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.w600,
+                // DURUM metni de esnek olmali: Fransizca "Ordre de travail"
+                // 320 dp'de satiri 6.5 px tasiriyordu (tur 52 — bu kart ilk
+                // kez surulunce gorundu).
+                Flexible(
+                  child: Text(
+                    talepDurumEtiketi(l10n, ticket.durum),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      color: metin,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],

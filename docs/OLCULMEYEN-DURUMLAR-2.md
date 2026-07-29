@@ -67,6 +67,14 @@ Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve
 | Yoğunluk | `devicePixelRatio = 1.0` | 2.0/3.0 (gerçek cihazlar) — piksel kırpma/kenar yuvarlama |
 | Sistem ayarı | tema (açık/koyu) | **kalın yazı** (bold text), yüksek kontrast, renk körlüğü filtreleri |
 
+> **GÜNCELLEME (tur 52).** B kapandı (`task_ticket_widgets` %2 → %96).
+> **YENİ KÖR NOKTA (E'ye eklendi):** `textContrastGuideline` küçük/ince
+> metinde yetersiz — sabit renk + tint zemin kalıbı koyu temada 2.06:1
+> verirken kılavuz geçiyor. Bu kalıp `lib/src` içinde **29 yerde daha** var
+> (`withValues(alpha: 0.1x)` ile tint zemin): complaints (3), transparency
+> (2), reports (2), patrol_tracking (2), etkinlik (2), … Elle hesap ya da
+> daha sıkı bir ölçüm gerekiyor.
+
 ## E. Kalite eksenleri (hiç kurulmamış)
 
 * **Anlamsal okuma SIRASI.** Etiketlerin *varlığı* ölçüldü (tur 29/30), sırası
