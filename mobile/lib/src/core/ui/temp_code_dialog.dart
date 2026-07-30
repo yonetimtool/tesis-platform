@@ -33,11 +33,18 @@ Future<void> showTempCodeDialog(
                   color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
+                // `height: 2.2` KASITLIDIR (tur 79). `SelectableText` uzun
+                // basmayla secilebilir, yani ANDROID icin bir dokunma
+                // hedefidir; 22 punto tek satir 31 dp kutu veriyordu ve
+                // `androidTapTargetGuideline` (48x48) burada dusuyordu.
+                // Satir yuksekligi carpani kutuyu 48 dp'ye cikarir, yaziyi
+                // dikeyde ortalar ve yazi olcegiyle birlikte buyur.
                 child: SelectableText(
                   code,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 22,
+                    height: 2.2,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.5,
                   ),

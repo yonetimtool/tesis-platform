@@ -910,6 +910,21 @@ List<OkunanDugum> gezinmeSirasi(WidgetTester tester) {
     );
     if (cocuklar.isEmpty) {
       final d = n.getSemanticsData();
+      // MODAL PERDESI (tur 79 dedektor duzeltmesi). `showDialog` diyalogun
+      // ALTINA tum ekrani kaplayan, "Kapat" etiketli ve `dismiss` eylemi
+      // tasiyan bir `ModalBarrier` koyar. Gezinme sirasinda EN SONA gelir ve
+      // kutusu her seyi kestigi icin dedektor onu "yukari geri atlama" sayip
+      // her diyalog surusunde YANLIS ALARM veriyordu. Perde okuma akisinin
+      // parcasi degildir (ekran okuyucu icin "geri/kapat" jesti); disarida
+      // birakilir.
+      final ekran = tester.binding.renderViews.first.size;
+      final perde =
+          d.hasAction(SemanticsAction.dismiss) &&
+          MatrixUtils.transformRect(m, n.rect).size.width >=
+              ekran.width * 0.95 &&
+          MatrixUtils.transformRect(m, n.rect).size.height >=
+              ekran.height * 0.95;
+      if (perde) return;
       final etiket = d.label.trim().isNotEmpty
           ? d.label.trim()
           : d.value.trim().isNotEmpty

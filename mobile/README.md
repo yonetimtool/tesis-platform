@@ -2087,6 +2087,50 @@ en dar telefon + en büyük yazı tipi ölçeği.
 > ile tutar gösteriyordu — `_AmountCard`ta çözülmüş olan kalıp burada
 > uygulanmamıştı (etiket ellipsis + tutar `FittedBox` ile küçülür).
 
+**TUR 79 — SERİNİN KAPANIŞI (P3).** Tur ~36–52 arasında yürütülen kapsama
+serisinin B envanteri (`set_password_screen` 1/83, `task_ticket_widgets` 1/60)
+tur 51 ve 52'de kapanmıştı; **kapanışta ölçüm yeniden koşuldu** ve seri notunun
+listelemediği bir dosya çıktı: `core/ui/temp_code_dialog.dart` **0 / 25**.
+Envanterin A maddesi bu diyalogu adıyla ("geçici kod diyalogu") yazmıştı ama
+hiçbir turda çizilmemişti — oysa **sakin ve personelin ilk girişinin tek yolu**
+buradan geçen geçici koddur; yanlış çizilirse kullanıcı sisteme hiç giremez.
+
+`test/gecici_kod_diyalogu_test.dart` iki hâli (açılış + KOPYALANDI) beş eksende
+sürer, pano yazımını taklit kanalla **gerçekten doğrular** (kanal kurulmazsa
+kopyalama dalı sessizce yutulur ve doğrulama boş koşardı) ve iki dedektör testi
+ekler. Kapsam **0/25 → 25/25**.
+
+> **ÜRÜN BULGUSU.** `androidTapTargetGuideline` düştü: kod kutusu
+> `SelectableText`tir (uzun basmayla seçilir, yani dokunma hedefidir) ve 22
+> puntoluk tek satır **278×31 dp** veriyordu — 48 dp eşiğinin altında. Düzeltme
+> `height: 2.2` satır yüksekliği çarpanı: kutu 48 dp'ye çıkar, yazı dikeyde
+> ortalanır ve yazı ölçeğiyle birlikte büyür.
+>
+> **DEDEKTÖR BULGUSU.** `okumaSirasiSurusu` her modal diyalogda yanlış alarm
+> veriyordu: `showDialog` diyaloğun altına tüm ekranı kaplayan, "Kapat" etiketli
+> `ModalBarrier` koyar; gezinme sırasında **en sona** gelir ve kutusu her şeyi
+> kestiği için dedektör bunu "yukarı geri atlama" sayıyordu. Perde (dismiss
+> eylemi + ekranın ≥%95'i) artık gezinme sırasından çıkarılıyor. Bu yanlış alarm
+> **bugüne kadar hiç görünmemişti** çünkü seride hiçbir tur okuma sırasını bir
+> diyalog üstünde koşmamıştı.
+
+Ayrıca sıfır kapsamlı kalan `yonetici_iletisim_models.dart` (0/12 → 12/12)
+kapatıldı. Seri sonu durumu: **17.522 / 27.325 satır = %64,1** (247 dosya),
+sıfır kapsamlı dosya **2**:
+
+| Dosya | Neden açık | Kayıt |
+|---|---|---|
+| `features/push/data/push_messaging.dart` (0/25) | Firebase kimlik bilgileri yok — gerçek FCM yolu kurulmadan sürülemez | MASTER-PLAN **P12** [DIŞ] |
+| `core/config/app_config.dart` (0/1) | Tek satırlık derleme-zamanı sabiti (`String.fromEnvironment`) — çalıştırılabilir dal yok | bilinçli istisna |
+
+**Serinin sayıları:** ~44 tur (tur 36 envanteri → tur 79 kapanışı), 140 test
+dosyası, 1357 test. Serinin ürettiği en değerli bulgular ölçüm araçlarının
+kendisindeydi: boş koşan sürüşler (tur 32/33/39/45), açık temada da düşen tint
+kontrastı (tur 57 — sanılanın aksine sorun koyu temaya özgü değildi), çok
+kolonlu ızgarada yanlış alarm veren okuma sırası (tur 60) ve şimdi modal perdesi
+(tur 79). Ders sabit: **bir ölçüm yeşil dönüyorsa, önce ölçümün gerçekten bir
+şey ölçtüğünü kanıtla.**
+
 **TUR 57 — TINT ZEMİN KONTRASTI: HESAPLA, GÖRÜNTÜYE GÜVENME.** Tur 52'de
 `textContrastGuideline`'ın küçük/ince metinde yetersiz olduğunu görmüştüm
 (indigo koyu temada **2.06:1** verirken kılavuz geçiyordu). Aynı kalıp

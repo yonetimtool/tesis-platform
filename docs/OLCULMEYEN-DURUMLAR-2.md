@@ -41,12 +41,28 @@ toplanıyor:
 > eksende sürülüyor, kapsam %1 → **%88**. Açık kalan tek dosya
 > `task_ticket_widgets` (1/60).
 
-## B. Hiç çizilmemiş kalan iki dosya
+## B. Hiç çizilmemiş kalan iki dosya — **KAPANDI (tur 79)**
 
-| Dosya | Kapsam | Not |
-|---|---|---|
-| `auth/presentation/set_password_screen.dart` | **1 / 83** | tur 36'da listelenmişti, hâlâ açık: geçici parola → kalıcı parola akışı (ilk giriş!) |
-| `tasks/presentation/task_ticket_widgets.dart` | **1 / 60** | talepten gelen iş emri rozetleri |
+| Dosya | Kapsam (tur 49) | Şimdi | Kapatan tur |
+|---|---|---|---|
+| `auth/presentation/set_password_screen.dart` | 1 / 83 | **73 / 83 (%88)** | tur 51 |
+| `tasks/presentation/task_ticket_widgets.dart` | 1 / 60 | **66 / 69 (%96)** | tur 52 |
+| `core/ui/temp_code_dialog.dart` — *envanterde yoktu, kapanışta ölçüldü* | 0 / 25 | **25 / 25 (%100)** | tur 79 |
+| `yonetici_iletisim/domain/yonetici_iletisim_models.dart` — *aynı şekilde* | 0 / 12 | **12 / 12 (%100)** | tur 79 |
+
+> **KAPANIŞ ÖZETİ (tur 79, MASTER-PLAN P3).** Seri sonu: **17.522 / 27.325
+> satır = %64,1** (247 dosya), 140 test dosyası, **1357 test**. Sıfır kapsamlı
+> dosya **2**: `push/data/push_messaging.dart` (0/25 — Firebase kimliği yok,
+> P12 [DIŞ]) ve `core/config/app_config.dart` (0/1 — derleme-zamanı sabiti,
+> çalıştırılabilir dal yok). İkisi de kayıtlı istisnadır; **envanterde açık
+> dosya kalmadı.**
+>
+> Kapanış turu iki bulgu üretti: (1) ÜRÜN — geçici kod kutusu 278×31 dp
+> dokunma hedefiydi (48 dp eşiğinin altında), satır yüksekliğiyle düzeltildi;
+> (2) DEDEKTÖR — `okumaSirasiSurusu` modal perdesini ("Kapat", tam ekran)
+> okuma sırası ihlali sanıyordu, yani **her diyalog sürüşü yanlış alarm
+> verecekti**; seride hiçbir tur okuma sırasını diyalog üstünde koşmadığı için
+> bugüne dek görünmemişti. Ayrıntı: `mobile/README.md` "TUR 79".
 
 > **GÜNCELLEME (tur 54).** C'nin mutasyon kısmı kapatıldı: 4 kip × 3 dil ×
 > 6 form = 72 gönderim, üründe **0 bulgu**. Üç yanlış alarm/kör nokta

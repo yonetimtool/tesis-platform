@@ -76,11 +76,33 @@ Agent's part: keep the runbook accurate if anything changes; nothing else.
 Acceptance: Kerem reports migrate exit 0 + §14.2 checks pass + ru translation fetched.
 
 ### P3 — Close the coverage series
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: task_ticket_widgets is the last open file (1/60) in the B inventory of the
 coverage series (rounds ~36–52). Cover it per the series' own standard, then write a
 closing summary (final coverage %, rounds, notable bugs found) into the series notes.
 Acceptance: B inventory 0 open files; suite green; closing summary committed.
+Notes (2026-07-30, tur 79): Plandaki varsayım BAYATTI — `task_ticket_widgets`
+tur 52'de (1/60 → 66/69 = %96), `set_password_screen` tur 51'de (1/83 → 73/83 = %88)
+kapatılmıştı. Kapanışta lcov YENİDEN ölçüldü ve envanterin listelemediği iki
+sıfır-kapsamlı dosya çıktı; ikisi de kapatıldı:
+`core/ui/temp_code_dialog.dart` 0/25 → **25/25** (yeni
+`test/gecici_kod_diyalogu_test.dart`: 2 dedektör + beş eksen × 2 hâl + eksen
+kombinasyonları + okuma sırası) ve `yonetici_iletisim_models.dart` 0/12 → **12/12**.
+İki bulgu: (a) ÜRÜN — geçici kod kutusu `SelectableText` olduğu için dokunma
+hedefidir ama 278×31 dp'ydi, `androidTapTargetGuideline` düşüyordu; `height: 2.2`
+ile 48 dp'ye çıkarıldı. (b) DEDEKTÖR — `okumaSirasiSurusu` modal perdesini
+(tam ekran, "Kapat", dismiss eylemi) okuma sırası ihlali sanıyordu; her diyalog
+sürüşünde yanlış alarm verecekti, perde artık gezinme sırasından çıkarılıyor.
+Kapanış özeti: `mobile/README.md` "TUR 79" + `docs/OLCULMEYEN-DURUMLAR-2.md` B bloğu.
+Seri sonu: 17.522/27.325 = **%64,1**, 247 dosya, 140 test dosyası, 1357 test.
+Kalan sıfır kapsam 2 dosya, ikisi de kayıtlı istisna (push_messaging → P12 [DIŞ];
+app_config → tek satırlık derleme sabiti).
+KAPILAR: `flutter analyze` → "No issues found!"; `flutter test` → **1357 geçti,
+3 atlandı, 1 düştü** — düşen test `cevrimdisi_kuyruk_senaryo_test.dart`
+"KALICILIK: uzun kesinti sonrasi YENI OTURUM kuyrugu devralir", yani **P10'un
+konusu olan bilinen kalıcılık yarışı**; bu turdan ÖNCE de aynı şekilde düşüyordu
+(değişiklikten bağımsız, kanıt: aynı komut değişiklik öncesi 1345+/1 ile
+düşmüştü). P10'da düzeltilecek. `flutter build apk --debug` ✓.
 
 ### P4 — i18n round 4: building_map + complaints
 Status: BEKLIYOR · Depends-on: —
@@ -147,6 +169,15 @@ walkthrough of localized modules (overflow + missing-translation hunt); 4-role
 general pass. Agents APPEND to this checklist per rule 9; never remove entries —
 Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
+
+Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P3 · Geçici giriş kodu diyaloğu.** Yönetici olarak Sakinler (veya
+  Personel) ekranından yeni kişi ekle → geçici kod diyaloğu açılır. Kontrol:
+  kod kutusu eskisinden BELİRGİN ŞEKİLDE daha yüksek (48 dp) ve yazı kutunun
+  dikey ortasında duruyor; "Kopyala"ya bas → ikon tike döner ve kod panoya
+  gerçekten yapışıyor (bir mesaj kutusuna yapıştırıp dene); aynı kontrolü
+  parola sıfırlama akışında da yap. Koyu temada ve yazı boyutu büyütülmüş
+  cihazda da bir kez bak.
 
 ### P12 — [DIŞ] Firebase credentials → real push
 Status: BLOKE(dış bağımlılık) · Depends-on: —
@@ -500,4 +531,5 @@ Acceptance: before/after load numbers committed; zero correctness regressions
 ## CHANGELOG
 <!-- date · item ID · commit hash · one line. STATUS REPORTs and the FINAL REPORT land here, newest first. -->
 
+- 2026-07-30 · P3 · 22a172c · Kapsama serisi KAPANDI: temp_code_dialog 0/25 → 25/25 (dokunma hedefi bulgusu + modal perde dedektor duzeltmesi), yonetici_iletisim_models 0/12 → 12/12, kapanis ozeti yazildi.
 - 2026-07-30 · P1 · 9d92d6b · Prod göç uyumlama paketi origin/main'de doğrulandı (9f4ee74); kod değişikliği yok.
