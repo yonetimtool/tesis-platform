@@ -530,6 +530,9 @@ Acceptance: before/after load numbers committed; zero correctness regressions
 
 ## CHANGELOG
 <!-- date · item ID · commit hash · one line. STATUS REPORTs and the FINAL REPORT land here, newest first. -->
+<!-- HASH KURALI: bir commit kendi hash'ini iceremez. Satir once "(bu commit)"
+     ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
+     (kural 13, liste A) doldurulur. -->
 
-- 2026-07-30 · P3 · 22a172c · Kapsama serisi KAPANDI: temp_code_dialog 0/25 → 25/25 (dokunma hedefi bulgusu + modal perde dedektor duzeltmesi), yonetici_iletisim_models 0/12 → 12/12, kapanis ozeti yazildi.
-- 2026-07-30 · P1 · 9d92d6b · Prod göç uyumlama paketi origin/main'de doğrulandı (9f4ee74); kod değişikliği yok.
+- 2026-07-30 · P3 · 10015b2 · Kapsama serisi KAPANDI: temp_code_dialog 0/25 → 25/25 (dokunma hedefi bulgusu + modal perde dedektor duzeltmesi), yonetici_iletisim_models 0/12 → 12/12, kapanis ozeti yazildi.
+- 2026-07-30 · P1 · 0b9267b · Prod göç uyumlama paketi origin/main'de doğrulandı (9f4ee74); kod değişikliği yok.
