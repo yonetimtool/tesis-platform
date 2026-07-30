@@ -128,6 +128,10 @@ services:
     restart: "no"
 
   # One-shot: CANONICAL migration'lari OWNER ile uygular + app_rw rolunu kurar.
+  # NOT: "kanonik" = gocler icin TEK KAYNAK /contracts/db'dir. Revizyon
+  # dosyalarini YERINDE duzenleme kurali DEVRE DISI — bkz.
+  # docs/MIGRATION-POLITIKASI.md (prod bir kez goc ettikten sonra yerinde
+  # duzenleme ona ULASMIYOR; 0008b_uyum_yakalama tam bu yuzden gerekti).
   migrate:
     build:
       context: ../backend

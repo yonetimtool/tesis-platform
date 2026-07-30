@@ -32,15 +32,24 @@ ayni sorgu 200 binde `Incremental Sort + Index Scan` (21 satir okuyor). Yani
 sorun olculebilir hale geldigi hacimde plan zaten dogru. 13 tabloya ucuncu
 kolon eklemenin yazma maliyeti bu yuzden alinmadi.
 
+ONCESINDE 0008b GELIR: bu revizyondaki `ix_visitor_tenant_cikis`
+`visitor.cikis_zamani` kolonuna baglidir ve o kolon, ZATEN GOC ETMIS bir
+veritabaninda (prod) YOKTU — kanonik 0001 dosyasina prod'un gocundan SONRA
+yerinde eklenmisti. Prod `upgrade head` tam burada patliyordu. Eksigi kapatan
+`0008b_uyum_yakalama` bu revizyondan ONCE kosmali; bu yuzden `down_revision`
+0008 yerine 0008b'yi gosteriyor. (Bu degisiklik guvenli: 0009 hicbir
+dagitilmis ortamda uygulanmamisti — prod'un basarisiz kosumu tek islemde
+atomik geri alinmisti.)
+
 Revision ID: 0009_akis_indeksleri
-Revises: 0008_bildirim_kimlik
+Revises: 0008b_uyum_yakalama
 """
 from __future__ import annotations
 
 from alembic import op
 
 revision = "0009_akis_indeksleri"
-down_revision = "0008_bildirim_kimlik"
+down_revision = "0008b_uyum_yakalama"
 branch_labels = None
 depends_on = None
 

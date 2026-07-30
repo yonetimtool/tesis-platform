@@ -225,11 +225,140 @@ $C ps                     # sağlık durumları
 | **Push gelmiyor** | Beklenen (varsayılan noop). FCM için §5 + `PUSH_PROVIDER=fcm`; `$C logs worker` "unconfigured" diyorsa JSON yolu/`project_id` eksik. |
 | **Çeviri gelmiyor (içerik hep Türkçe)** | Beklenen olabilir: modeller inmemiş olabilir (`$C logs libretranslate`, `$C ps`). Kontrol: `$C exec api python -c "import urllib.request;print(urllib.request.urlopen('http://libretranslate:5000/languages').status)"` → 200 olmalı. `TRANSLATE_PROVIDER=libretranslate` mi? `worker` ayakta mı (çeviri işi orada koşar)? |
 | **`ceviri_durumu: hata` kalıyor** | Motor erişilemiyor ya da model yok. İçerik **etkilenmez** (orijinal servis edilir). `$C logs worker` çeviri hatasını yazar; motor healthy olunca içerik düzenlenince (ya da yeniden kuyruklanınca) tekrar denenir. |
+| **`migrate` exit 1, "column ... does not exist"** | §14. Veri kaybı yok (tek işlem, atomik geri alma); güncel kodu çekip `up -d` yeterli. |
 | **create_admin "OWNER_DSN tanımsız"** | Komutu `api` değil **`worker`** ile çalıştırın (`run --rm worker ...`); OWNER_DSN yalnız worker/beat'te tanımlıdır. `--env-file .env.prod` verildiğinden emin olun. |
+
+
+---
+
+## 14. Şema uyumlama — "migrate exit 1" (bir kez yapılır)
+
+**Belirti:** `docker compose ... up -d` sırasında
+`service "migrate" didn't complete successfully: exit 1` ve migrate loglarında:
+
+```
+psycopg.errors.UndefinedColumn: column "cikis_zamani" does not exist
+[SQL: CREATE INDEX IF NOT EXISTS ix_visitor_tenant_cikis ON visitor (...)]
+File "/contracts/db/migrations/versions/0009_akis_indeksleri.py", line 65
+```
+
+**Sebep:** Prod göç ettikten sonra bazı şema eklemeleri, yeni revizyon yerine
+mevcut revizyon dosyalarına **yerinde** yazılmıştı (bkz.
+`docs/MIGRATION-POLITIKASI.md`). Alembic o revizyonları uygulanmış saydığı için
+eklemeler prod'a hiç gitmedi.
+
+**Veri durumu — önemli:** `env.py` tüm revizyonları **tek işlemde** koşar.
+0009 patladığında aynı işlemdeki 0007/0008 de geri alındı. Yani **kısmi
+uygulama yok**: veritabanınız hâlâ eski, tutarlı revizyonunda. Elle temizlik
+gerekmiyor.
+
+**Çözüm:** `0008b_uyum_yakalama` revizyonu (0008 ile 0009 arasında koşar)
+eksikleri ekleyici ve idempotent biçimde tamamlıyor. Yapılacak tek şey güncel
+kodu çekip `up -d` demek.
+
+### 14.1 Komutlar (sırayla, kopyala-yapıştır)
+
+```bash
+cd /opt/yonetio/tesis-platform/infra
+C="docker compose -f docker-compose.prod.yml --env-file .env.prod"
+# Asagidaki psql komutlari $POSTGRES_USER / $POSTGRES_DB kullaniyor; yukle:
+set -a; . ./.env.prod; set +a
+
+# 1) TAZE YEDEK (bu dağıtımda alınmış olsa bile bir kez daha alın)
+./backup.sh
+ls -lt "${BACKUP_DIR:-/opt/yonetio/backups}" | head -3     # yeni dosya görünmeli
+
+# 2) Mevcut revizyonu KAYDEDIN (sorun olursa referans)
+$C run --rm migrate sh -c 'alembic -c /contracts/db/alembic.ini current'
+
+# 3) Güncel kodu çek
+cd /opt/yonetio/tesis-platform && git pull && cd infra
+
+# 4) Uygula (migrate + servisler)
+$C up -d --build
+
+# 5) migrate 0 ile bitti mi?
+$C ps migrate            # State: exited (0) olmalı
+$C logs migrate | tail -25
+```
+
+### 14.2 Başarı doğrulaması (spot-check)
+
+```bash
+# a) Revizyon head'te mi
+$C run --rm migrate sh -c 'alembic -c /contracts/db/alembic.ini current'
+#    -> 0010_devriye_okutma_indeksi (head)
+
+# b) Eklenen TABLOLAR var mı (2 satır dönmeli)
+$C exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc \
+  "select tablename from pg_tables where schemaname='public'
+     and tablename in ('vehicle_pass','violation') order by 1;"
+
+# c) Eklenen KOLONLAR var mı (8 satır dönmeli)
+$C exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc \
+  "select table_name||'.'||column_name from information_schema.columns
+    where table_schema='public' and
+      (table_name,column_name) in (('camera','tur'),('camera','aktif'),
+        ('camera','konum'),('camera','sakin_gorebilir'),
+        ('etkinlik','bitis_zamani'),('etkinlik','foto_key'),
+        ('tenant','otopark_kapasite'),('visitor','cikis_zamani'))
+    order by 1;"
+
+# d) Yeni tablolar RLS altında mı (ikisi de enable=true force=true olmalı)
+$C exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc \
+  "select relname||' enable='||relrowsecurity||' force='||relforcerowsecurity
+     from pg_class where relname in ('vehicle_pass','violation') order by 1;"
+
+# e) VERİ YERİNDE mi (sayılar yedek öncesiyle aynı olmalı)
+$C exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc \
+  "select 'tenant='||(select count(*) from tenant)
+       ||' app_user='||(select count(*) from app_user)
+       ||' unit='||(select count(*) from unit)
+       ||' scan_event='||(select count(*) from scan_event);"
+
+# f) Uygulama ayakta mı
+curl -sS https://api.yonetio.site/health          # {"status":"ok",...}
+$C ps                                              # api & admin-web healthy
+```
+
+### 14.3 YAPILMAYACAKLAR
+
+| ❌ Asla | Neden |
+|---|---|
+| `docker compose ... down -v` | `-v` **named volume'ları siler** → `pgdata` ve `miniodata` gider, yani tüm veritabanı ve fotoğraflar. Prod'da **hiçbir koşulda**. Servisleri durdurmak gerekirse `down` (v'siz) ya da `stop`. |
+| `alembic downgrade ...` | Uyumlama ileri yönlüdür; geri almak eklenen kolonları düşürür. Gerekmiyor. |
+| `alembic stamp head` | Revizyonu koşmadan "koşmuş" işaretler — eksik kolonlar eksik kalır ve sorun sessizleşir. |
+| Tabloyu elle `DROP`/`CREATE` | Uyumlama zaten idempotent; elle müdahale şemayı revizyon geçmişinden ayırır. |
+| Yedek almadan başlamak | §14.1 adım 1 atlanmaz. |
+
+### 14.4 Bir şeyler ters giderse
+
+`migrate` yine exit 1 verirse: **veri kaybı olmaz** (tek işlem, atomik geri
+alma). Logları alın ve revizyonu bildirin:
+
+```bash
+$C logs migrate | tail -40
+$C run --rm migrate sh -c 'alembic -c /contracts/db/alembic.ini current'
+```
+
+Geri yükleme gerekirse §10'daki "Geri yükleme" adımları geçerlidir.
+
+### 14.5 Doğrulama kanıtı (dev'de koşuldu)
+
+`infra/goc-uyum-dogrula.sh` iki yolu karşılaştırır:
+
+* **A** taze veritabanı → güncel dosyalar → head
+* **B** taze veritabanı → prod'un göç ettiği ağacın dosyaları → head, sonra
+  güncel dosyalar → head (0008b burada koşar)
+
+Sonuç: **1323 şema olgusunda fark yok.** İki farklı "eski ağaç" referansıyla
+(`bf1dc84^` ve `f72467f`) ayrı ayrı doğrulandı; 0008b ikinci kez koşturulduğunda
+da şema değişmedi (idempotent).
 
 ---
 
 ### İçindekiler (TOC)
 0. Ön koşul: DNS · 1. Sunucu hazırlığı · 2. Docker kurulumu · 3. Repo klonlama ·
 4. .env.prod · 5. FCM (ops.) · 6. Ayağa kaldırma · 7. İlk admin · 8. Duman testleri ·
-9. Mobil APK · 10. Yedekleme cron · 11. Güncelleme · 12. Loglar · 13. Sorun giderme
+9. Mobil APK · 10. Yedekleme cron · 11. Güncelleme · 12. Loglar · 13. Sorun giderme ·
+14. Şema uyumlama ("migrate exit 1")

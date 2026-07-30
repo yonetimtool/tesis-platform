@@ -1,5 +1,9 @@
 """Alembic environment.
 
+POLITIKA: sema degisiklikleri YENI REVIZYON olarak yazilir; mevcut revizyon
+dosyalari yerinde DUZENLENMEZ (dagitilmis bir ortam var oldugundan beri).
+Gerekce ve istisnalar: docs/MIGRATION-POLITIKASI.md
+
 URL ortam degiskeninden okunur: DATABASE_URL.
 Bu migration paketi sema icin tek dogruluk kaynagidir; ORM metadata'sina
 bagimli degildir (autogenerate kullanilmaz, migration'lar elle yazilir).
