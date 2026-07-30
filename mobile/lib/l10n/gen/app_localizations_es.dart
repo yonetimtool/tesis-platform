@@ -4050,4 +4050,185 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ceviriYapilamadiKisa => 'Error de traducción';
+
+  @override
+  String get modulAracGecis => 'Pasos de vehículos';
+
+  @override
+  String get modulOtopark => 'Aparcamiento';
+
+  @override
+  String get modulIhlaller => 'Infracciones';
+
+  @override
+  String get aracSuzgecTumu => 'Todos';
+
+  @override
+  String get aracSuzgecIceride => 'Dentro';
+
+  @override
+  String get aracSuzgecCikmis => 'Salidos';
+
+  @override
+  String get aracPlakaAra => 'Buscar matrícula';
+
+  @override
+  String get aracListeBos => 'No hay pasos de vehículos registrados';
+
+  @override
+  String get aracAramaBos => 'Ningún paso coincide con esa matrícula';
+
+  @override
+  String get aracRozetIceride => 'Dentro';
+
+  @override
+  String get aracRozetCikti => 'Salió';
+
+  @override
+  String get aracRozetZiyaretci => 'Visitante';
+
+  @override
+  String aracGirisZamani(Object zaman) {
+    return 'Entrada: $zaman';
+  }
+
+  @override
+  String aracCikisZamani(Object zaman) {
+    return 'Salida: $zaman';
+  }
+
+  @override
+  String aracDaire(Object no) {
+    return 'Vivienda $no';
+  }
+
+  @override
+  String get aracCikisVer => 'Registrar salida';
+
+  @override
+  String get aracCikisOnayBaslik => '¿Registrar la salida?';
+
+  @override
+  String get aracCikisVerildi => 'Salida registrada';
+
+  @override
+  String get aracZatenKapali => 'Este paso ya está cerrado';
+
+  @override
+  String get aracYeniGiris => 'Nueva entrada';
+
+  @override
+  String get aracGirisKaydedildi => 'Entrada del vehículo registrada';
+
+  @override
+  String get aracPlaka => 'Matrícula';
+
+  @override
+  String get aracPlakaZorunlu => 'La matrícula es obligatoria';
+
+  @override
+  String get aracTanimAlani => 'Descripción del vehículo (opcional)';
+
+  @override
+  String get aracDaireAlani => 'N.º de vivienda (opcional)';
+
+  @override
+  String get aracZiyaretciMi => 'Vehículo de visitante';
+
+  @override
+  String get aracZatenIceride =>
+      'Esta matrícula ya tiene un paso abierto (vehículo dentro)';
+
+  @override
+  String get aracErisimYok =>
+      'La lista de pasos está reservada a la administración y la seguridad';
+
+  @override
+  String aracKaydeden(Object ad) {
+    return 'Registrado por: $ad';
+  }
+
+  @override
+  String get otoparkDoluEtiket => 'Ocupadas';
+
+  @override
+  String get otoparkBosEtiket => 'Libres';
+
+  @override
+  String get otoparkKapasiteEtiket => 'Capacidad';
+
+  @override
+  String get otoparkKapasiteTanimsiz =>
+      'Capacidad no definida: solo se muestra el número de vehículos dentro';
+
+  @override
+  String get otoparkAracListesi => 'Abrir los pasos de vehículos';
+
+  @override
+  String get ihlalDurumYeni => 'Nueva';
+
+  @override
+  String get ihlalDurumInceleniyor => 'En revisión';
+
+  @override
+  String get ihlalDurumKapatildi => 'Cerrada';
+
+  @override
+  String get ihlalKaynakKamera => 'Cámara';
+
+  @override
+  String get ihlalKaynakManuel => 'Manual';
+
+  @override
+  String get ihlalKaynakDevriye => 'Ronda';
+
+  @override
+  String get ihlalListeBos => 'No hay infracciones registradas';
+
+  @override
+  String get ihlalYeni => 'Nueva infracción';
+
+  @override
+  String get ihlalAcildi => 'Infracción registrada';
+
+  @override
+  String get ihlalBaslikAlani => 'Título';
+
+  @override
+  String get ihlalBaslikZorunlu => 'El título es obligatorio';
+
+  @override
+  String get ihlalAciklamaAlani => 'Descripción (opcional)';
+
+  @override
+  String get ihlalKonumAlani => 'Ubicación (opcional)';
+
+  @override
+  String get ihlalKaynakAlani => 'Fuente de detección';
+
+  @override
+  String get ihlalIncelemeyeAl => 'Iniciar revisión';
+
+  @override
+  String get ihlalKapat => 'Cerrar registro';
+
+  @override
+  String get ihlalDurumGuncellendi => 'Estado de la infracción actualizado';
+
+  @override
+  String get ihlalKapatmaOnay =>
+      '¿Cerrar el registro? Una infracción cerrada no puede reabrirse.';
+
+  @override
+  String get ihlalKapaliDegistirilemez =>
+      'Una infracción cerrada no puede reabrirse';
+
+  @override
+  String get ihlalErisimYok =>
+      'Las infracciones están reservadas a la administración y la seguridad';
+
+  @override
+  String ihlalKaydeden(Object ad) {
+    return 'Abierta por: $ad';
+  }
 }

@@ -42,11 +42,11 @@ class MockHomeRepository implements HomeRepository {
 
   @override
   List<HizliErisimKart> hizliErisim(HomeVaryant varyant) => switch (varyant) {
-        HomeVaryant.gorevli => _gorevliErisim,
-        HomeVaryant.tesisGorevlisi => _tesisGorevlisiErisim,
-        HomeVaryant.sakin => _sakinErisim,
-        HomeVaryant.yonetici => _yoneticiErisim,
-      };
+    HomeVaryant.gorevli => _gorevliErisim,
+    HomeVaryant.tesisGorevlisi => _tesisGorevlisiErisim,
+    HomeVaryant.sakin => _sakinErisim,
+    HomeVaryant.yonetici => _yoneticiErisim,
+  };
 
   /// gorevli.jpeg duzeni 4'LU IZGARAYA tasindi (yonetici izgarasiyla ayni
   /// kart tipi/olcusu): 8 kart = 4x2 dengeli iki satir. Serit 5 kartta
@@ -78,16 +78,16 @@ class MockHomeRepository implements HomeRepository {
       id: HomeKartId.aracPlaka,
       accent: HomeTokens.purple,
       // GET /vehicle-passes?baslangic=<gun basi> → meta.total ("N Giriş").
-      // Liste/detay ekrani henuz yok → rota null (dokununca "yakında").
       altMetin: null,
+      rota: AppRoutes.aracGecis,
     ),
     HizliErisimKart(
       ikon: Icons.error_outline,
       id: HomeKartId.ihlaller,
       accent: HomeTokens.red,
       // GET /violations?durum=yeni → meta.total ("N Yeni").
-      // Liste ekrani yok → rotasiz.
       altMetin: null,
+      rota: AppRoutes.ihlaller,
     ),
     // Saha personelinin GUNLUK isleri: gorev + zimmet + devriye. Bunlar
     // eskiden yalniz cekmecede duruyordu; izgaraya cikti.
@@ -148,7 +148,8 @@ class MockHomeRepository implements HomeRepository {
       ikon: Icons.rate_review_outlined,
       id: HomeKartId.talepAriza,
       accent: HomeTokens.red,
-      altMetin: null, // GET /complaints?durum=acik → meta.total (kendi actiklari)
+      altMetin:
+          null, // GET /complaints?durum=acik → meta.total (kendi actiklari)
       rota: AppRoutes.complaints,
     ),
     HizliErisimKart(
@@ -288,13 +289,17 @@ class MockHomeRepository implements HomeRepository {
       id: HomeKartId.otoparkKullanimi,
       accent: HomeTokens.purple,
       // GET /parking/occupancy → "dolu / kapasite" (kapasite yoksa "N araç").
+      // Yonetici PLAKA listesini goremez (KVKK); AGREGAT otopark ekranina gider.
       altMetin: null,
+      rota: AppRoutes.otopark,
     ),
     HizliErisimKart(
       ikon: Icons.error_outline,
       id: HomeKartId.ihlaller,
       accent: HomeTokens.red,
       altMetin: null, // GET /violations?durum=yeni → meta.total
+      // yonetici ihlalleri OKUR (acamaz/degistiremez — ekran dugme gostermez).
+      rota: AppRoutes.ihlaller,
     ),
     HizliErisimKart(
       ikon: Icons.mode_comment_outlined,
@@ -323,47 +328,48 @@ class MockHomeRepository implements HomeRepository {
 
   @override
   List<OzetKutusu> ozet() => const [
-        OzetKutusu(
-          ikon: Icons.groups,
-          deger: null, // GET /units?limit=1 → meta.total
-          id: OzetKutuId.toplamDaire,
-          accent: HomeTokens.primary,
-          // Daire listesi/duzenlemesi: blok → kat → daire editoru.
-          rota: AppRoutes.binaDuzenleme,
-        ),
-        OzetKutusu(
-          ikon: Icons.paid_outlined,
-          deger: null, // GET /reports/financial-summary → tahsilat_kurus
-          id: OzetKutuId.toplamTahsilat,
-          accent: HomeTokens.green,
-          rota: AppRoutes.financialSummary,
-        ),
-        OzetKutusu(
-          ikon: Icons.percent,
-          deger: null, // .. → tahsilat_orani_yuzde
-          id: OzetKutuId.tahsilatOrani,
-          accent: HomeTokens.orange,
-          // Ayni yanittan beslenen tahsilat raporu ekrani.
-          rota: AppRoutes.financialSummary,
-        ),
-        // GET /parking/occupancy → `oran` ("%2"); kapasite tanimsizsa sunucu
-        // oran'i null doner → kutu '—' gosterir (uydurma yuzde YOK).
-        //
-        // ROTA YOK: mobilde arac gecisi/otopark EKRANI henuz yok (sayac var,
-        // liste yok). Dokunma "yakında" bilgilendirmesi verir; uydurma bir
-        // hedefe (orn. kameralar) yonlendirmek yanlis olurdu.
-        OzetKutusu(
-          ikon: Icons.directions_car,
-          deger: null,
-          id: OzetKutuId.otoparkDoluluk,
-          accent: HomeTokens.purple,
-        ),
-      ];
+    OzetKutusu(
+      ikon: Icons.groups,
+      deger: null, // GET /units?limit=1 → meta.total
+      id: OzetKutuId.toplamDaire,
+      accent: HomeTokens.primary,
+      // Daire listesi/duzenlemesi: blok → kat → daire editoru.
+      rota: AppRoutes.binaDuzenleme,
+    ),
+    OzetKutusu(
+      ikon: Icons.paid_outlined,
+      deger: null, // GET /reports/financial-summary → tahsilat_kurus
+      id: OzetKutuId.toplamTahsilat,
+      accent: HomeTokens.green,
+      rota: AppRoutes.financialSummary,
+    ),
+    OzetKutusu(
+      ikon: Icons.percent,
+      deger: null, // .. → tahsilat_orani_yuzde
+      id: OzetKutuId.tahsilatOrani,
+      accent: HomeTokens.orange,
+      // Ayni yanittan beslenen tahsilat raporu ekrani.
+      rota: AppRoutes.financialSummary,
+    ),
+    // GET /parking/occupancy → `oran` ("%2"); kapasite tanimsizsa sunucu
+    // oran'i null doner → kutu '—' gosterir (uydurma yuzde YOK).
+    //
+    // Rota AGREGAT otopark ekranidir (P8): ayni ucu buyutulmus halde
+    // gosterir. Plaka LISTESI degil — yonetici plakayi goremez (KVKK).
+    OzetKutusu(
+      ikon: Icons.directions_car,
+      deger: null,
+      id: OzetKutuId.otoparkDoluluk,
+      accent: HomeTokens.purple,
+      rota: AppRoutes.otopark,
+    ),
+  ];
 }
 
 /// Referans gorsellerde ACIKLAMA alt metinleri gridir (sayac degil).
 const _gri = Color(0xFF6B7280);
 
 /// Ana ekran taban duzeni. Testte `overrideWithValue` ile degistirilebilir.
-final homeRepositoryProvider =
-    Provider<HomeRepository>((ref) => const MockHomeRepository());
+final homeRepositoryProvider = Provider<HomeRepository>(
+  (ref) => const MockHomeRepository(),
+);

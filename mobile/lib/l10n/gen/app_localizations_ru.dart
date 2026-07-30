@@ -4167,4 +4167,185 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ceviriYapilamadiKisa => 'Ошибка перевода';
+
+  @override
+  String get modulAracGecis => 'Проезды автомобилей';
+
+  @override
+  String get modulOtopark => 'Парковка';
+
+  @override
+  String get modulIhlaller => 'Нарушения';
+
+  @override
+  String get aracSuzgecTumu => 'Все';
+
+  @override
+  String get aracSuzgecIceride => 'Внутри';
+
+  @override
+  String get aracSuzgecCikmis => 'Выехали';
+
+  @override
+  String get aracPlakaAra => 'Поиск по номеру';
+
+  @override
+  String get aracListeBos => 'Нет записей о проездах';
+
+  @override
+  String get aracAramaBos => 'Нет проездов с таким номером';
+
+  @override
+  String get aracRozetIceride => 'Внутри';
+
+  @override
+  String get aracRozetCikti => 'Выехал';
+
+  @override
+  String get aracRozetZiyaretci => 'Гость';
+
+  @override
+  String aracGirisZamani(Object zaman) {
+    return 'Въезд: $zaman';
+  }
+
+  @override
+  String aracCikisZamani(Object zaman) {
+    return 'Выезд: $zaman';
+  }
+
+  @override
+  String aracDaire(Object no) {
+    return 'Квартира $no';
+  }
+
+  @override
+  String get aracCikisVer => 'Отметить выезд';
+
+  @override
+  String get aracCikisOnayBaslik => 'Отметить выезд автомобиля?';
+
+  @override
+  String get aracCikisVerildi => 'Выезд записан';
+
+  @override
+  String get aracZatenKapali => 'Этот проезд уже закрыт';
+
+  @override
+  String get aracYeniGiris => 'Новый въезд';
+
+  @override
+  String get aracGirisKaydedildi => 'Въезд автомобиля записан';
+
+  @override
+  String get aracPlaka => 'Номер';
+
+  @override
+  String get aracPlakaZorunlu => 'Номер обязателен';
+
+  @override
+  String get aracTanimAlani => 'Описание автомобиля (необязательно)';
+
+  @override
+  String get aracDaireAlani => 'Номер квартиры (необязательно)';
+
+  @override
+  String get aracZiyaretciMi => 'Автомобиль гостя';
+
+  @override
+  String get aracZatenIceride =>
+      'У этого номера уже есть открытый проезд (автомобиль внутри)';
+
+  @override
+  String get aracErisimYok =>
+      'Список проездов доступен только администрации и охране';
+
+  @override
+  String aracKaydeden(Object ad) {
+    return 'Записал: $ad';
+  }
+
+  @override
+  String get otoparkDoluEtiket => 'Занято';
+
+  @override
+  String get otoparkBosEtiket => 'Свободно';
+
+  @override
+  String get otoparkKapasiteEtiket => 'Вместимость';
+
+  @override
+  String get otoparkKapasiteTanimsiz =>
+      'Вместимость не задана — показано только число автомобилей внутри';
+
+  @override
+  String get otoparkAracListesi => 'Открыть проезды';
+
+  @override
+  String get ihlalDurumYeni => 'Новое';
+
+  @override
+  String get ihlalDurumInceleniyor => 'На рассмотрении';
+
+  @override
+  String get ihlalDurumKapatildi => 'Закрыто';
+
+  @override
+  String get ihlalKaynakKamera => 'Камера';
+
+  @override
+  String get ihlalKaynakManuel => 'Вручную';
+
+  @override
+  String get ihlalKaynakDevriye => 'Обход';
+
+  @override
+  String get ihlalListeBos => 'Нет записей о нарушениях';
+
+  @override
+  String get ihlalYeni => 'Новое нарушение';
+
+  @override
+  String get ihlalAcildi => 'Запись о нарушении создана';
+
+  @override
+  String get ihlalBaslikAlani => 'Заголовок';
+
+  @override
+  String get ihlalBaslikZorunlu => 'Заголовок обязателен';
+
+  @override
+  String get ihlalAciklamaAlani => 'Описание (необязательно)';
+
+  @override
+  String get ihlalKonumAlani => 'Место (необязательно)';
+
+  @override
+  String get ihlalKaynakAlani => 'Источник обнаружения';
+
+  @override
+  String get ihlalIncelemeyeAl => 'Взять на рассмотрение';
+
+  @override
+  String get ihlalKapat => 'Закрыть запись';
+
+  @override
+  String get ihlalDurumGuncellendi => 'Статус нарушения обновлён';
+
+  @override
+  String get ihlalKapatmaOnay =>
+      'Закрыть запись? Закрытое нарушение нельзя открыть снова.';
+
+  @override
+  String get ihlalKapaliDegistirilemez =>
+      'Закрытое нарушение нельзя открыть снова';
+
+  @override
+  String get ihlalErisimYok =>
+      'Записи о нарушениях доступны только администрации и охране';
+
+  @override
+  String ihlalKaydeden(Object ad) {
+    return 'Открыл: $ad';
+  }
 }

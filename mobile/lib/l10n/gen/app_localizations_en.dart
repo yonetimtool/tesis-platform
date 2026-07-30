@@ -4097,4 +4097,185 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ceviriYapilamadiKisa => 'Translation failed';
+
+  @override
+  String get modulAracGecis => 'Vehicle passes';
+
+  @override
+  String get modulOtopark => 'Parking';
+
+  @override
+  String get modulIhlaller => 'Violations';
+
+  @override
+  String get aracSuzgecTumu => 'All';
+
+  @override
+  String get aracSuzgecIceride => 'Inside';
+
+  @override
+  String get aracSuzgecCikmis => 'Left';
+
+  @override
+  String get aracPlakaAra => 'Search plate';
+
+  @override
+  String get aracListeBos => 'No vehicle passes recorded';
+
+  @override
+  String get aracAramaBos => 'No pass matches this plate';
+
+  @override
+  String get aracRozetIceride => 'Inside';
+
+  @override
+  String get aracRozetCikti => 'Left';
+
+  @override
+  String get aracRozetZiyaretci => 'Visitor';
+
+  @override
+  String aracGirisZamani(Object zaman) {
+    return 'Entry: $zaman';
+  }
+
+  @override
+  String aracCikisZamani(Object zaman) {
+    return 'Exit: $zaman';
+  }
+
+  @override
+  String aracDaire(Object no) {
+    return 'Unit $no';
+  }
+
+  @override
+  String get aracCikisVer => 'Check out';
+
+  @override
+  String get aracCikisOnayBaslik => 'Check this vehicle out?';
+
+  @override
+  String get aracCikisVerildi => 'Exit recorded';
+
+  @override
+  String get aracZatenKapali => 'This pass is already closed';
+
+  @override
+  String get aracYeniGiris => 'New entry';
+
+  @override
+  String get aracGirisKaydedildi => 'Vehicle entry recorded';
+
+  @override
+  String get aracPlaka => 'Plate';
+
+  @override
+  String get aracPlakaZorunlu => 'Plate is required';
+
+  @override
+  String get aracTanimAlani => 'Vehicle description (optional)';
+
+  @override
+  String get aracDaireAlani => 'Unit no (optional)';
+
+  @override
+  String get aracZiyaretciMi => 'Visitor vehicle';
+
+  @override
+  String get aracZatenIceride =>
+      'This plate already has an open pass (vehicle inside)';
+
+  @override
+  String get aracErisimYok =>
+      'The vehicle pass list is restricted to management and security';
+
+  @override
+  String aracKaydeden(Object ad) {
+    return 'Recorded by: $ad';
+  }
+
+  @override
+  String get otoparkDoluEtiket => 'Occupied';
+
+  @override
+  String get otoparkBosEtiket => 'Free';
+
+  @override
+  String get otoparkKapasiteEtiket => 'Capacity';
+
+  @override
+  String get otoparkKapasiteTanimsiz =>
+      'Capacity is not set — only the number of vehicles inside is shown';
+
+  @override
+  String get otoparkAracListesi => 'Open vehicle passes';
+
+  @override
+  String get ihlalDurumYeni => 'New';
+
+  @override
+  String get ihlalDurumInceleniyor => 'Under review';
+
+  @override
+  String get ihlalDurumKapatildi => 'Closed';
+
+  @override
+  String get ihlalKaynakKamera => 'Camera';
+
+  @override
+  String get ihlalKaynakManuel => 'Manual';
+
+  @override
+  String get ihlalKaynakDevriye => 'Patrol';
+
+  @override
+  String get ihlalListeBos => 'No violation records';
+
+  @override
+  String get ihlalYeni => 'New violation';
+
+  @override
+  String get ihlalAcildi => 'Violation record created';
+
+  @override
+  String get ihlalBaslikAlani => 'Title';
+
+  @override
+  String get ihlalBaslikZorunlu => 'Title is required';
+
+  @override
+  String get ihlalAciklamaAlani => 'Description (optional)';
+
+  @override
+  String get ihlalKonumAlani => 'Location (optional)';
+
+  @override
+  String get ihlalKaynakAlani => 'Detection source';
+
+  @override
+  String get ihlalIncelemeyeAl => 'Start review';
+
+  @override
+  String get ihlalKapat => 'Close record';
+
+  @override
+  String get ihlalDurumGuncellendi => 'Violation status updated';
+
+  @override
+  String get ihlalKapatmaOnay =>
+      'Close this record? A closed violation cannot be reopened.';
+
+  @override
+  String get ihlalKapaliDegistirilemez =>
+      'A closed violation cannot be reopened';
+
+  @override
+  String get ihlalErisimYok =>
+      'Violation records are restricted to management and security';
+
+  @override
+  String ihlalKaydeden(Object ad) {
+    return 'Opened by: $ad';
+  }
 }

@@ -4072,4 +4072,185 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get ceviriYapilamadiKisa => 'Übersetzung fehlgeschlagen';
+
+  @override
+  String get modulAracGecis => 'Fahrzeugdurchfahrten';
+
+  @override
+  String get modulOtopark => 'Parkplatz';
+
+  @override
+  String get modulIhlaller => 'Verstöße';
+
+  @override
+  String get aracSuzgecTumu => 'Alle';
+
+  @override
+  String get aracSuzgecIceride => 'Drinnen';
+
+  @override
+  String get aracSuzgecCikmis => 'Ausgefahren';
+
+  @override
+  String get aracPlakaAra => 'Kennzeichen suchen';
+
+  @override
+  String get aracListeBos => 'Keine Fahrzeugdurchfahrten erfasst';
+
+  @override
+  String get aracAramaBos => 'Keine Durchfahrt zu diesem Kennzeichen';
+
+  @override
+  String get aracRozetIceride => 'Drinnen';
+
+  @override
+  String get aracRozetCikti => 'Ausgefahren';
+
+  @override
+  String get aracRozetZiyaretci => 'Besucher';
+
+  @override
+  String aracGirisZamani(Object zaman) {
+    return 'Einfahrt: $zaman';
+  }
+
+  @override
+  String aracCikisZamani(Object zaman) {
+    return 'Ausfahrt: $zaman';
+  }
+
+  @override
+  String aracDaire(Object no) {
+    return 'Wohnung $no';
+  }
+
+  @override
+  String get aracCikisVer => 'Ausfahrt buchen';
+
+  @override
+  String get aracCikisOnayBaslik => 'Ausfahrt buchen?';
+
+  @override
+  String get aracCikisVerildi => 'Ausfahrt erfasst';
+
+  @override
+  String get aracZatenKapali => 'Diese Durchfahrt ist bereits abgeschlossen';
+
+  @override
+  String get aracYeniGiris => 'Neue Einfahrt';
+
+  @override
+  String get aracGirisKaydedildi => 'Fahrzeugeinfahrt erfasst';
+
+  @override
+  String get aracPlaka => 'Kennzeichen';
+
+  @override
+  String get aracPlakaZorunlu => 'Kennzeichen ist erforderlich';
+
+  @override
+  String get aracTanimAlani => 'Fahrzeugbeschreibung (optional)';
+
+  @override
+  String get aracDaireAlani => 'Wohnungsnr. (optional)';
+
+  @override
+  String get aracZiyaretciMi => 'Besucherfahrzeug';
+
+  @override
+  String get aracZatenIceride =>
+      'Für dieses Kennzeichen existiert bereits eine offene Durchfahrt (Fahrzeug ist drinnen)';
+
+  @override
+  String get aracErisimYok =>
+      'Die Durchfahrtsliste ist Verwaltung und Sicherheit vorbehalten';
+
+  @override
+  String aracKaydeden(Object ad) {
+    return 'Erfasst von: $ad';
+  }
+
+  @override
+  String get otoparkDoluEtiket => 'Belegt';
+
+  @override
+  String get otoparkBosEtiket => 'Frei';
+
+  @override
+  String get otoparkKapasiteEtiket => 'Kapazität';
+
+  @override
+  String get otoparkKapasiteTanimsiz =>
+      'Kapazität nicht festgelegt — es wird nur die Anzahl der Fahrzeuge im Objekt angezeigt';
+
+  @override
+  String get otoparkAracListesi => 'Fahrzeugdurchfahrten öffnen';
+
+  @override
+  String get ihlalDurumYeni => 'Neu';
+
+  @override
+  String get ihlalDurumInceleniyor => 'In Prüfung';
+
+  @override
+  String get ihlalDurumKapatildi => 'Geschlossen';
+
+  @override
+  String get ihlalKaynakKamera => 'Kamera';
+
+  @override
+  String get ihlalKaynakManuel => 'Manuell';
+
+  @override
+  String get ihlalKaynakDevriye => 'Rundgang';
+
+  @override
+  String get ihlalListeBos => 'Keine Verstoßmeldungen';
+
+  @override
+  String get ihlalYeni => 'Neuer Verstoß';
+
+  @override
+  String get ihlalAcildi => 'Verstoßmeldung angelegt';
+
+  @override
+  String get ihlalBaslikAlani => 'Titel';
+
+  @override
+  String get ihlalBaslikZorunlu => 'Titel ist erforderlich';
+
+  @override
+  String get ihlalAciklamaAlani => 'Beschreibung (optional)';
+
+  @override
+  String get ihlalKonumAlani => 'Ort (optional)';
+
+  @override
+  String get ihlalKaynakAlani => 'Erfassungsquelle';
+
+  @override
+  String get ihlalIncelemeyeAl => 'Prüfung starten';
+
+  @override
+  String get ihlalKapat => 'Meldung schließen';
+
+  @override
+  String get ihlalDurumGuncellendi => 'Status des Verstoßes aktualisiert';
+
+  @override
+  String get ihlalKapatmaOnay =>
+      'Meldung schließen? Ein geschlossener Verstoß kann nicht wieder geöffnet werden.';
+
+  @override
+  String get ihlalKapaliDegistirilemez =>
+      'Ein geschlossener Verstoß kann nicht wieder geöffnet werden';
+
+  @override
+  String get ihlalErisimYok =>
+      'Verstoßmeldungen sind Verwaltung und Sicherheit vorbehalten';
+
+  @override
+  String ihlalKaydeden(Object ad) {
+    return 'Eröffnet von: $ad';
+  }
 }

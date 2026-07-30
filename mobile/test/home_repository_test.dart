@@ -86,16 +86,24 @@ void main() {
       expect(_mock.hizliErisim(HomeVaryant.gorevli).length % 4, 0);
     });
 
-    test('sayaci VAR ama liste ekrani olmayan kartlar rotasiz kalir '
-        '(dokununca "yakında"); sayac yine de GERCEK uctan gelir', () {
+    test('P8: ROTASIZ KART KALMADI — arac plaka + ihlaller ekranlari acildi',
+        () {
+      // Tur ~P8'e kadar bu iki kart "Bu bölüm yakında" diyordu (rota null).
+      // Ekranlar yazilinca rotalandi; iddia TERSINE cevrildi ki kart yeniden
+      // rotasiz birakilirsa test dussun.
       final rotasiz = [
         for (final k in _mock.hizliErisim(HomeVaryant.gorevli))
-          if (k.rota == null) k
+          if (k.rota == null) k.id
       ];
-      expect([for (final k in rotasiz) k.id],
-          [HomeKartId.aracPlaka, HomeKartId.ihlaller]);
+      expect(rotasiz, isEmpty);
+      final kartlar = {
+        for (final k in _mock.hizliErisim(HomeVaryant.gorevli)) k.id: k
+      };
+      expect(kartlar[HomeKartId.aracPlaka]!.rota, '/arac-gecisleri');
+      expect(kartlar[HomeKartId.ihlaller]!.rota, '/ihlaller');
       // Sabit metin YOK: sayac gercek uctan gelene kadar iskelet.
-      expect([for (final k in rotasiz) k.altMetin], [null, null]);
+      expect(kartlar[HomeKartId.aracPlaka]!.altMetin, isNull);
+      expect(kartlar[HomeKartId.ihlaller]!.altMetin, isNull);
     });
   });
 
@@ -190,15 +198,21 @@ void main() {
       );
     });
 
-    test('liste ekrani olmayan kartlar rotasiz: Otopark Kullanımı + İhlaller '
-        '(sayaclari GERCEK uctan)', () {
+    test('P8: ROTASIZ KART KALMADI — Otopark + İhlaller ekranlari acildi', () {
       final rotasiz = [
         for (final k in _mock.hizliErisim(HomeVaryant.yonetici))
-          if (k.rota == null) k
+          if (k.rota == null) k.id
       ];
-      expect([for (final k in rotasiz) k.id],
-          [HomeKartId.otoparkKullanimi, HomeKartId.ihlaller]);
-      expect([for (final k in rotasiz) k.altMetin], [null, null]);
+      expect(rotasiz, isEmpty);
+      final kartlar = {
+        for (final k in _mock.hizliErisim(HomeVaryant.yonetici)) k.id: k
+      };
+      // Yonetici PLAKA listesini goremez (KVKK) — AGREGAT otopark ekranina
+      // gider; ihlalleri okur (ekran ona eylem dugmesi gostermez).
+      expect(kartlar[HomeKartId.otoparkKullanimi]!.rota, '/otopark');
+      expect(kartlar[HomeKartId.ihlaller]!.rota, '/ihlaller');
+      expect(kartlar[HomeKartId.otoparkKullanimi]!.altMetin, isNull);
+      expect(kartlar[HomeKartId.ihlaller]!.altMetin, isNull);
     });
   });
 }

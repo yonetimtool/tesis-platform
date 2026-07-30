@@ -1670,5 +1670,85 @@
   "ceviriHazirlaniyor": "Çeviri hazırlanıyor — orijinal gösteriliyor",
   "ceviriHazirlaniyorKisa": "Çeviri hazırlanıyor",
   "ceviriYapilamadi": "Çeviri yapılamadı — orijinal gösteriliyor",
-  "ceviriYapilamadiKisa": "Çeviri yapılamadı"
+  "ceviriYapilamadiKisa": "Çeviri yapılamadı",
+  "modulAracGecis": "Araç Geçişleri",
+  "modulOtopark": "Otopark",
+  "modulIhlaller": "İhlaller",
+  "aracSuzgecTumu": "Tümü",
+  "aracSuzgecIceride": "İçeride",
+  "aracSuzgecCikmis": "Çıkmış",
+  "aracPlakaAra": "Plaka ara",
+  "aracListeBos": "Kayıtlı araç geçişi yok",
+  "aracAramaBos": "Bu plakayla eşleşen geçiş yok",
+  "aracRozetIceride": "İçeride",
+  "aracRozetCikti": "Çıktı",
+  "aracRozetZiyaretci": "Ziyaretçi",
+  "aracGirisZamani": "Giriş: {zaman}",
+  "@aracGirisZamani": {
+    "placeholders": {
+      "zaman": {}
+    }
+  },
+  "aracCikisZamani": "Çıkış: {zaman}",
+  "@aracCikisZamani": {
+    "placeholders": {
+      "zaman": {}
+    }
+  },
+  "aracDaire": "Daire {no}",
+  "@aracDaire": {
+    "placeholders": {
+      "no": {}
+    }
+  },
+  "aracCikisVer": "Çıkış ver",
+  "aracCikisOnayBaslik": "Çıkış verilsin mi?",
+  "aracCikisVerildi": "Çıkış kaydedildi",
+  "aracZatenKapali": "Bu geçiş zaten kapatılmış",
+  "aracYeniGiris": "Yeni giriş",
+  "aracGirisKaydedildi": "Araç girişi kaydedildi",
+  "aracPlaka": "Plaka",
+  "aracPlakaZorunlu": "Plaka zorunlu",
+  "aracTanimAlani": "Araç tanımı (isteğe bağlı)",
+  "aracDaireAlani": "Daire no (isteğe bağlı)",
+  "aracZiyaretciMi": "Ziyaretçi aracı",
+  "aracZatenIceride": "Bu plakanın açık geçişi zaten var (araç içeride)",
+  "aracErisimYok": "Araç geçiş listesi yalnız yönetim ve güvenlik içindir",
+  "aracKaydeden": "Kaydeden: {ad}",
+  "@aracKaydeden": {
+    "placeholders": {
+      "ad": {}
+    }
+  },
+  "otoparkDoluEtiket": "Dolu",
+  "otoparkBosEtiket": "Boş",
+  "otoparkKapasiteEtiket": "Kapasite",
+  "otoparkKapasiteTanimsiz": "Kapasite tanımlı değil — yalnız içerideki araç sayısı gösterilir",
+  "otoparkAracListesi": "Araç geçişlerini aç",
+  "ihlalDurumYeni": "Yeni",
+  "ihlalDurumInceleniyor": "İnceleniyor",
+  "ihlalDurumKapatildi": "Kapatıldı",
+  "ihlalKaynakKamera": "Kamera",
+  "ihlalKaynakManuel": "Manuel",
+  "ihlalKaynakDevriye": "Devriye",
+  "ihlalListeBos": "İhlal kaydı yok",
+  "ihlalYeni": "Yeni ihlal",
+  "ihlalAcildi": "İhlal kaydı açıldı",
+  "ihlalBaslikAlani": "Başlık",
+  "ihlalBaslikZorunlu": "Başlık zorunlu",
+  "ihlalAciklamaAlani": "Açıklama (isteğe bağlı)",
+  "ihlalKonumAlani": "Konum (isteğe bağlı)",
+  "ihlalKaynakAlani": "Tespit kaynağı",
+  "ihlalIncelemeyeAl": "İncelemeye al",
+  "ihlalKapat": "Kaydı kapat",
+  "ihlalDurumGuncellendi": "İhlal durumu güncellendi",
+  "ihlalKapatmaOnay": "Kayıt kapatılsın mı? Kapatılan ihlal yeniden açılamaz.",
+  "ihlalKapaliDegistirilemez": "Kapatılmış ihlal yeniden açılamaz",
+  "ihlalErisimYok": "İhlal kayıtları yalnız yönetim ve güvenlik içindir",
+  "ihlalKaydeden": "Açan: {ad}",
+  "@ihlalKaydeden": {
+    "placeholders": {
+      "ad": {}
+    }
+  }
 }

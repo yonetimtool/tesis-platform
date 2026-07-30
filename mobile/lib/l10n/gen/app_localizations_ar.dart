@@ -4187,4 +4187,182 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ceviriYapilamadiKisa => 'تعذّرت الترجمة';
+
+  @override
+  String get modulAracGecis => 'مرور المركبات';
+
+  @override
+  String get modulOtopark => 'موقف السيارات';
+
+  @override
+  String get modulIhlaller => 'المخالفات';
+
+  @override
+  String get aracSuzgecTumu => 'الكل';
+
+  @override
+  String get aracSuzgecIceride => 'بالداخل';
+
+  @override
+  String get aracSuzgecCikmis => 'غادرت';
+
+  @override
+  String get aracPlakaAra => 'البحث عن لوحة';
+
+  @override
+  String get aracListeBos => 'لا توجد حركات مرور مسجّلة';
+
+  @override
+  String get aracAramaBos => 'لا توجد حركة مطابقة لهذه اللوحة';
+
+  @override
+  String get aracRozetIceride => 'بالداخل';
+
+  @override
+  String get aracRozetCikti => 'غادرت';
+
+  @override
+  String get aracRozetZiyaretci => 'زائر';
+
+  @override
+  String aracGirisZamani(Object zaman) {
+    return 'الدخول: $zaman';
+  }
+
+  @override
+  String aracCikisZamani(Object zaman) {
+    return 'الخروج: $zaman';
+  }
+
+  @override
+  String aracDaire(Object no) {
+    return 'الشقة $no';
+  }
+
+  @override
+  String get aracCikisVer => 'تسجيل الخروج';
+
+  @override
+  String get aracCikisOnayBaslik => 'هل تُسجَّل مغادرة المركبة؟';
+
+  @override
+  String get aracCikisVerildi => 'تم تسجيل الخروج';
+
+  @override
+  String get aracZatenKapali => 'تم إغلاق هذه الحركة مسبقًا';
+
+  @override
+  String get aracYeniGiris => 'دخول جديد';
+
+  @override
+  String get aracGirisKaydedildi => 'تم تسجيل دخول المركبة';
+
+  @override
+  String get aracPlaka => 'اللوحة';
+
+  @override
+  String get aracPlakaZorunlu => 'اللوحة مطلوبة';
+
+  @override
+  String get aracTanimAlani => 'وصف المركبة (اختياري)';
+
+  @override
+  String get aracDaireAlani => 'رقم الشقة (اختياري)';
+
+  @override
+  String get aracZiyaretciMi => 'مركبة زائر';
+
+  @override
+  String get aracZatenIceride =>
+      'لهذه اللوحة حركة مفتوحة بالفعل (المركبة بالداخل)';
+
+  @override
+  String get aracErisimYok => 'قائمة مرور المركبات مخصّصة للإدارة والأمن فقط';
+
+  @override
+  String aracKaydeden(Object ad) {
+    return 'سجّلها: $ad';
+  }
+
+  @override
+  String get otoparkDoluEtiket => 'مشغول';
+
+  @override
+  String get otoparkBosEtiket => 'شاغر';
+
+  @override
+  String get otoparkKapasiteEtiket => 'السعة';
+
+  @override
+  String get otoparkKapasiteTanimsiz =>
+      'لم تُحدَّد السعة — يُعرض عدد المركبات بالداخل فقط';
+
+  @override
+  String get otoparkAracListesi => 'فتح حركات المركبات';
+
+  @override
+  String get ihlalDurumYeni => 'جديد';
+
+  @override
+  String get ihlalDurumInceleniyor => 'قيد المراجعة';
+
+  @override
+  String get ihlalDurumKapatildi => 'مغلق';
+
+  @override
+  String get ihlalKaynakKamera => 'كاميرا';
+
+  @override
+  String get ihlalKaynakManuel => 'يدوي';
+
+  @override
+  String get ihlalKaynakDevriye => 'دورية';
+
+  @override
+  String get ihlalListeBos => 'لا توجد سجلات مخالفات';
+
+  @override
+  String get ihlalYeni => 'مخالفة جديدة';
+
+  @override
+  String get ihlalAcildi => 'تم إنشاء سجل المخالفة';
+
+  @override
+  String get ihlalBaslikAlani => 'العنوان';
+
+  @override
+  String get ihlalBaslikZorunlu => 'العنوان مطلوب';
+
+  @override
+  String get ihlalAciklamaAlani => 'الوصف (اختياري)';
+
+  @override
+  String get ihlalKonumAlani => 'الموقع (اختياري)';
+
+  @override
+  String get ihlalKaynakAlani => 'مصدر الرصد';
+
+  @override
+  String get ihlalIncelemeyeAl => 'بدء المراجعة';
+
+  @override
+  String get ihlalKapat => 'إغلاق السجل';
+
+  @override
+  String get ihlalDurumGuncellendi => 'تم تحديث حالة المخالفة';
+
+  @override
+  String get ihlalKapatmaOnay =>
+      'هل تُغلق هذا السجل؟ لا يمكن إعادة فتح المخالفة المغلقة.';
+
+  @override
+  String get ihlalKapaliDegistirilemez => 'لا يمكن إعادة فتح مخالفة مغلقة';
+
+  @override
+  String get ihlalErisimYok => 'سجلات المخالفات مخصّصة للإدارة والأمن فقط';
+
+  @override
+  String ihlalKaydeden(Object ad) {
+    return 'فتحها: $ad';
+  }
 }

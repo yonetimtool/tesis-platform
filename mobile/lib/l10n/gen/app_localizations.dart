@@ -6904,6 +6904,336 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Çeviri yapılamadı'**
   String get ceviriYapilamadiKisa;
+
+  /// No description provided for @modulAracGecis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Araç Geçişleri'**
+  String get modulAracGecis;
+
+  /// No description provided for @modulOtopark.
+  ///
+  /// In tr, this message translates to:
+  /// **'Otopark'**
+  String get modulOtopark;
+
+  /// No description provided for @modulIhlaller.
+  ///
+  /// In tr, this message translates to:
+  /// **'İhlaller'**
+  String get modulIhlaller;
+
+  /// No description provided for @aracSuzgecTumu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümü'**
+  String get aracSuzgecTumu;
+
+  /// No description provided for @aracSuzgecIceride.
+  ///
+  /// In tr, this message translates to:
+  /// **'İçeride'**
+  String get aracSuzgecIceride;
+
+  /// No description provided for @aracSuzgecCikmis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkmış'**
+  String get aracSuzgecCikmis;
+
+  /// No description provided for @aracPlakaAra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plaka ara'**
+  String get aracPlakaAra;
+
+  /// No description provided for @aracListeBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıtlı araç geçişi yok'**
+  String get aracListeBos;
+
+  /// No description provided for @aracAramaBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu plakayla eşleşen geçiş yok'**
+  String get aracAramaBos;
+
+  /// No description provided for @aracRozetIceride.
+  ///
+  /// In tr, this message translates to:
+  /// **'İçeride'**
+  String get aracRozetIceride;
+
+  /// No description provided for @aracRozetCikti.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıktı'**
+  String get aracRozetCikti;
+
+  /// No description provided for @aracRozetZiyaretci.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçi'**
+  String get aracRozetZiyaretci;
+
+  /// No description provided for @aracGirisZamani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Giriş: {zaman}'**
+  String aracGirisZamani(Object zaman);
+
+  /// No description provided for @aracCikisZamani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkış: {zaman}'**
+  String aracCikisZamani(Object zaman);
+
+  /// No description provided for @aracDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire {no}'**
+  String aracDaire(Object no);
+
+  /// No description provided for @aracCikisVer.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkış ver'**
+  String get aracCikisVer;
+
+  /// No description provided for @aracCikisOnayBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkış verilsin mi?'**
+  String get aracCikisOnayBaslik;
+
+  /// No description provided for @aracCikisVerildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkış kaydedildi'**
+  String get aracCikisVerildi;
+
+  /// No description provided for @aracZatenKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu geçiş zaten kapatılmış'**
+  String get aracZatenKapali;
+
+  /// No description provided for @aracYeniGiris.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni giriş'**
+  String get aracYeniGiris;
+
+  /// No description provided for @aracGirisKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Araç girişi kaydedildi'**
+  String get aracGirisKaydedildi;
+
+  /// No description provided for @aracPlaka.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plaka'**
+  String get aracPlaka;
+
+  /// No description provided for @aracPlakaZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plaka zorunlu'**
+  String get aracPlakaZorunlu;
+
+  /// No description provided for @aracTanimAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Araç tanımı (isteğe bağlı)'**
+  String get aracTanimAlani;
+
+  /// No description provided for @aracDaireAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire no (isteğe bağlı)'**
+  String get aracDaireAlani;
+
+  /// No description provided for @aracZiyaretciMi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçi aracı'**
+  String get aracZiyaretciMi;
+
+  /// No description provided for @aracZatenIceride.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu plakanın açık geçişi zaten var (araç içeride)'**
+  String get aracZatenIceride;
+
+  /// No description provided for @aracErisimYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Araç geçiş listesi yalnız yönetim ve güvenlik içindir'**
+  String get aracErisimYok;
+
+  /// No description provided for @aracKaydeden.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydeden: {ad}'**
+  String aracKaydeden(Object ad);
+
+  /// No description provided for @otoparkDoluEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dolu'**
+  String get otoparkDoluEtiket;
+
+  /// No description provided for @otoparkBosEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş'**
+  String get otoparkBosEtiket;
+
+  /// No description provided for @otoparkKapasiteEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapasite'**
+  String get otoparkKapasiteEtiket;
+
+  /// No description provided for @otoparkKapasiteTanimsiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapasite tanımlı değil — yalnız içerideki araç sayısı gösterilir'**
+  String get otoparkKapasiteTanimsiz;
+
+  /// No description provided for @otoparkAracListesi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Araç geçişlerini aç'**
+  String get otoparkAracListesi;
+
+  /// No description provided for @ihlalDurumYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni'**
+  String get ihlalDurumYeni;
+
+  /// No description provided for @ihlalDurumInceleniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'İnceleniyor'**
+  String get ihlalDurumInceleniyor;
+
+  /// No description provided for @ihlalDurumKapatildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapatıldı'**
+  String get ihlalDurumKapatildi;
+
+  /// No description provided for @ihlalKaynakKamera.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kamera'**
+  String get ihlalKaynakKamera;
+
+  /// No description provided for @ihlalKaynakManuel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Manuel'**
+  String get ihlalKaynakManuel;
+
+  /// No description provided for @ihlalKaynakDevriye.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devriye'**
+  String get ihlalKaynakDevriye;
+
+  /// No description provided for @ihlalListeBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'İhlal kaydı yok'**
+  String get ihlalListeBos;
+
+  /// No description provided for @ihlalYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni ihlal'**
+  String get ihlalYeni;
+
+  /// No description provided for @ihlalAcildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İhlal kaydı açıldı'**
+  String get ihlalAcildi;
+
+  /// No description provided for @ihlalBaslikAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlık'**
+  String get ihlalBaslikAlani;
+
+  /// No description provided for @ihlalBaslikZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlık zorunlu'**
+  String get ihlalBaslikZorunlu;
+
+  /// No description provided for @ihlalAciklamaAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama (isteğe bağlı)'**
+  String get ihlalAciklamaAlani;
+
+  /// No description provided for @ihlalKonumAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konum (isteğe bağlı)'**
+  String get ihlalKonumAlani;
+
+  /// No description provided for @ihlalKaynakAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tespit kaynağı'**
+  String get ihlalKaynakAlani;
+
+  /// No description provided for @ihlalIncelemeyeAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'İncelemeye al'**
+  String get ihlalIncelemeyeAl;
+
+  /// No description provided for @ihlalKapat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydı kapat'**
+  String get ihlalKapat;
+
+  /// No description provided for @ihlalDurumGuncellendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İhlal durumu güncellendi'**
+  String get ihlalDurumGuncellendi;
+
+  /// No description provided for @ihlalKapatmaOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt kapatılsın mı? Kapatılan ihlal yeniden açılamaz.'**
+  String get ihlalKapatmaOnay;
+
+  /// No description provided for @ihlalKapaliDegistirilemez.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapatılmış ihlal yeniden açılamaz'**
+  String get ihlalKapaliDegistirilemez;
+
+  /// No description provided for @ihlalErisimYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'İhlal kayıtları yalnız yönetim ve güvenlik içindir'**
+  String get ihlalErisimYok;
+
+  /// No description provided for @ihlalKaydeden.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açan: {ad}'**
+  String ihlalKaydeden(Object ad);
 }
 
 class _AppLocalizationsDelegate

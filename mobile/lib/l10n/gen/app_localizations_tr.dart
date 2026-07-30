@@ -3913,4 +3913,184 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ceviriYapilamadiKisa => 'Çeviri yapılamadı';
+
+  @override
+  String get modulAracGecis => 'Araç Geçişleri';
+
+  @override
+  String get modulOtopark => 'Otopark';
+
+  @override
+  String get modulIhlaller => 'İhlaller';
+
+  @override
+  String get aracSuzgecTumu => 'Tümü';
+
+  @override
+  String get aracSuzgecIceride => 'İçeride';
+
+  @override
+  String get aracSuzgecCikmis => 'Çıkmış';
+
+  @override
+  String get aracPlakaAra => 'Plaka ara';
+
+  @override
+  String get aracListeBos => 'Kayıtlı araç geçişi yok';
+
+  @override
+  String get aracAramaBos => 'Bu plakayla eşleşen geçiş yok';
+
+  @override
+  String get aracRozetIceride => 'İçeride';
+
+  @override
+  String get aracRozetCikti => 'Çıktı';
+
+  @override
+  String get aracRozetZiyaretci => 'Ziyaretçi';
+
+  @override
+  String aracGirisZamani(Object zaman) {
+    return 'Giriş: $zaman';
+  }
+
+  @override
+  String aracCikisZamani(Object zaman) {
+    return 'Çıkış: $zaman';
+  }
+
+  @override
+  String aracDaire(Object no) {
+    return 'Daire $no';
+  }
+
+  @override
+  String get aracCikisVer => 'Çıkış ver';
+
+  @override
+  String get aracCikisOnayBaslik => 'Çıkış verilsin mi?';
+
+  @override
+  String get aracCikisVerildi => 'Çıkış kaydedildi';
+
+  @override
+  String get aracZatenKapali => 'Bu geçiş zaten kapatılmış';
+
+  @override
+  String get aracYeniGiris => 'Yeni giriş';
+
+  @override
+  String get aracGirisKaydedildi => 'Araç girişi kaydedildi';
+
+  @override
+  String get aracPlaka => 'Plaka';
+
+  @override
+  String get aracPlakaZorunlu => 'Plaka zorunlu';
+
+  @override
+  String get aracTanimAlani => 'Araç tanımı (isteğe bağlı)';
+
+  @override
+  String get aracDaireAlani => 'Daire no (isteğe bağlı)';
+
+  @override
+  String get aracZiyaretciMi => 'Ziyaretçi aracı';
+
+  @override
+  String get aracZatenIceride =>
+      'Bu plakanın açık geçişi zaten var (araç içeride)';
+
+  @override
+  String get aracErisimYok =>
+      'Araç geçiş listesi yalnız yönetim ve güvenlik içindir';
+
+  @override
+  String aracKaydeden(Object ad) {
+    return 'Kaydeden: $ad';
+  }
+
+  @override
+  String get otoparkDoluEtiket => 'Dolu';
+
+  @override
+  String get otoparkBosEtiket => 'Boş';
+
+  @override
+  String get otoparkKapasiteEtiket => 'Kapasite';
+
+  @override
+  String get otoparkKapasiteTanimsiz =>
+      'Kapasite tanımlı değil — yalnız içerideki araç sayısı gösterilir';
+
+  @override
+  String get otoparkAracListesi => 'Araç geçişlerini aç';
+
+  @override
+  String get ihlalDurumYeni => 'Yeni';
+
+  @override
+  String get ihlalDurumInceleniyor => 'İnceleniyor';
+
+  @override
+  String get ihlalDurumKapatildi => 'Kapatıldı';
+
+  @override
+  String get ihlalKaynakKamera => 'Kamera';
+
+  @override
+  String get ihlalKaynakManuel => 'Manuel';
+
+  @override
+  String get ihlalKaynakDevriye => 'Devriye';
+
+  @override
+  String get ihlalListeBos => 'İhlal kaydı yok';
+
+  @override
+  String get ihlalYeni => 'Yeni ihlal';
+
+  @override
+  String get ihlalAcildi => 'İhlal kaydı açıldı';
+
+  @override
+  String get ihlalBaslikAlani => 'Başlık';
+
+  @override
+  String get ihlalBaslikZorunlu => 'Başlık zorunlu';
+
+  @override
+  String get ihlalAciklamaAlani => 'Açıklama (isteğe bağlı)';
+
+  @override
+  String get ihlalKonumAlani => 'Konum (isteğe bağlı)';
+
+  @override
+  String get ihlalKaynakAlani => 'Tespit kaynağı';
+
+  @override
+  String get ihlalIncelemeyeAl => 'İncelemeye al';
+
+  @override
+  String get ihlalKapat => 'Kaydı kapat';
+
+  @override
+  String get ihlalDurumGuncellendi => 'İhlal durumu güncellendi';
+
+  @override
+  String get ihlalKapatmaOnay =>
+      'Kayıt kapatılsın mı? Kapatılan ihlal yeniden açılamaz.';
+
+  @override
+  String get ihlalKapaliDegistirilemez => 'Kapatılmış ihlal yeniden açılamaz';
+
+  @override
+  String get ihlalErisimYok =>
+      'İhlal kayıtları yalnız yönetim ve güvenlik içindir';
+
+  @override
+  String ihlalKaydeden(Object ad) {
+    return 'Açan: $ad';
+  }
 }

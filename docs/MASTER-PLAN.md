@@ -241,13 +241,53 @@ KAPILAR: `flutter analyze` temiz; `flutter test` **1380 geçti / 3 atlandı /
 `flutter build apk --debug` ✓. Sözleşme değişmedi (salt okuma).
 
 ### P8 — Missing list/detail screens: Araç Plaka, İhlaller, Otopark
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: Endpoints exist (G1/G2/G4). Build the three screens in the approved design
 language: vehicle-pass list (open/closed filter, checkout action for authorized
 roles), violations list (durum filter + transitions per RBAC), parking/occupancy
 view; wire the home cards + Hızlı Özet Otopark tile that currently route to
 "Bu bölüm yakında". All strings via ARB (7 locales).
 Acceptance: cards navigate to real screens; role-correct actions; quality gates.
+Notes (2026-07-30): Üç ekran da yazıldı; ana ekranda ROTASIZ KART KALMADI.
+Yeni modüller: `features/vehicle_pass/` (model+api+controller+2 ekran) ve
+`features/violations/` (model+api+controller+1 ekran). Rotalar:
+`/arac-gecisleri`, `/otopark`, `/ihlaller`.
+- **Araç Geçişleri** (G1, admin+security): Tümü/İçeride/Çıkmış süzgeci, plaka
+  araması **SUNUCUDA** (normalize eşleşme "34 abc" == "34ABC" yalnız orada
+  doğru çalışır), açık geçişte **Çıkış ver** (onay + 409 → "zaten kapatılmış"),
+  yeni giriş formu (409 → "bu plakanın açık geçişi zaten var"). Üstte agregat
+  doluluk bandı.
+- **Otopark** (G4, TÜM roller): dolu/kapasite + yüzde çubuğu + Dolu/Boş
+  kutuları. Kapasite tanımsızsa **uydurma yüzde üretilmez** — "N araç" + "—" +
+  açıklayıcı not (sunucu da `oran: null` döner). Geçiş listesine bağlantı
+  YALNIZ yetkili rolde çizilir (yetkisiz kullanıcı 403 duvarına çarpmasın).
+- **İhlaller** (G2): durum süzgeci (Tümü/Yeni/İnceleniyor/Kapatıldı), akış
+  yeni→inceleniyor→kapatıldı, **kapatma yalnız admin** (dört-göz kuralı) ve
+  onay ister; `kapatildi` TERMINAL (kapalı kartta hiçbir geçiş düğmesi yok);
+  yönetici OKUR ama hiçbir eylem düğmesi görmez; 409 → "yeniden açılamaz".
+RBAC: `user_role.dart`'a beş yeni yetenek bayrağı eklendi
+(`canViewVehiclePasses`, `canManageVehiclePasses`, `canViewParking`,
+`canViewViolations`, `canManageViolations`, `canCloseViolations`) — hepsi
+sözleşmedeki RBAC notlarının birebir aynası, testle kilitli.
+403 TASARIM KARARI: yetkisiz rol için hata bandı DEĞİL, kilit ikonu + açıklayıcı
+metin çizilir — "yetkin yok" bir ağ hatası değildir ve kullanıcı yeniden
+denemeye teşvik edilmemelidir.
+BULGU (kendi kodumda): ilk sürümde süzgeç şeridi `SizedBox(height:)` içindeydi;
+sabit yükseklik çipi 40 dp'ye sıkıştırıyor ve `androidTapTargetGuideline`
+(48 dp) düşüyordu. `tasks_screen` kalıbına (kaydırılabilir Row, yükseklik
+içerikten) geçildi.
+i18n: 51 yeni ARB anahtarı × 7 dil (1.226 → 1.286 tr). §15 ölçümü DEĞİŞMEDİ:
+**8 string / 5 dosya** (hepsi kayıtlı istisna). Sözlük denetimi iki gerçek
+KOGNAT yakaladı (`Kamera` tr==de, `Manuel` tr==fr) — istisna listesine
+gerekçesiyle eklendi.
+GÜNCELLENEN TESTLER: `home_repository_test` iki testi "bu kartlar ROTASIZ"
+diye iddia ediyordu (eski durumu kodluyordu); iddia TERSİNE çevrildi —
+rotasız kart kalmadığı + rotaların doğru hedefler olduğu kilitlendi.
+TESTLER: `test/arac_ihlal_otopark_test.dart` — 24 test (model + RBAC + ekran
+davranışı + 409 yolları + üç ekranın beş eksen sürüşü).
+KAPILAR: `flutter analyze` temiz; `flutter test` **1405 geçti / 3 atlandı /
+0 düştü**; `flutter build apk --debug` ✓. Sözleşme değişmedi (uçlar zaten
+belgeliydi).
 
 ### P9 — Contract backfill: undocumented live endpoints
 Status: BEKLIYOR · Depends-on: —
@@ -272,6 +312,21 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P8 · Üç yeni ekran.** (a) **Güvenlik** ile gir → ana ekranda "Araç
+  Plaka" kartına bas: liste açılmalı (eskiden "Bu bölüm yakında" diyordu).
+  Süzgeçleri dene (Tümü/İçeride/Çıkmış), plaka kutusuna bir plakanın ilk
+  birkaç karakterini yazıp klavyeden ara → süzülmeli; boşluklu yaz ("34 abc")
+  → yine bulmalı. İçerideki bir araçta **Çıkış ver** → onay → liste tazelenip
+  rozet "Çıktı" olmalı. FAB'dan yeni giriş kaydet; AYNI plakayı tekrar
+  kaydetmeyi dene → "bu plakanın açık geçişi zaten var" uyarısı çıkmalı.
+  (b) **Yönetici** ile gir → "Otopark Kullanımı" kartı ve Hızlı Özet'teki
+  otopark kutusu Otopark ekranını açmalı; yüzde çubuğu ve Dolu/Boş kutuları
+  doğru olmalı; yöneticide "Araç geçişlerini aç" düğmesi GÖRÜNMEMELİ.
+  (c) "İhlaller" kartı → yöneticide liste okunur ama hiçbir eylem düğmesi
+  olmamalı. **Güvenlik**te "İncelemeye al" var, "Kaydı kapat" YOK.
+  **Admin**de "Kaydı kapat" var, onay soruyor ve kapattıktan sonra o kartta
+  hiçbir düğme kalmamalı. **Sakin** ile İhlaller'e erişmeye çalış → kilit
+  ikonlu açıklama çıkmalı (hata bandı değil).
 - [ ] **P7 · Otomatik çeviri notu.** Uygulama dilini **Rusça** (veya Arapça) yap.
   Duyurular: kart metni Rusça gelmeli ve altında "Bu içerik otomatik
   çevrilmiştir · **Orijinali gör**" satırı olmalı; bas → Türkçe orijinal
@@ -645,6 +700,7 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+- 2026-07-30 · P8 · b54ab59 · Arac Gecisleri + Otopark + Ihlaller ekranlari yazildi; ana ekranda ROTASIZ KART KALMADI; 51 ARB anahtari x 7 dil; 24 test.
 - 2026-07-30 · P7 · 10fbd12 · Icerik cevirisi MOBILE baglandi: IcerikCeviri modeli + CeviriNotu/CeviriRozeti + duyuru/kural/etkinlik ekranlari; 8 ARB anahtari x 7 dil; 23 test.
 - 2026-07-30 · P6 · 6a9f846 · Sunucu yerellestirmesi (Accept-Language) ZATEN BITMISTI (tur 14/15/16); sinir isaretleri + sozlesme + katalog dogrulandi.
 - 2026-07-30 · P5 · fde3a4f · i18n tur 5 ve sonrasi ZATEN BITMISTI; §15 = 8 (hepsi kayitli istisna), nihai istisna listesi plana yazildi.

@@ -38,6 +38,10 @@ const _tumKopyaIstisnalari = {
   'entegTest', 'entegTestBasarisiz', 'entegUrl', 'gorevKamera',
   'kabukProfil', 'nfcUidSatir', 'otoparkDoluKapasite', 'profilTelefon',
   'rezSlotAralik', 'seffafNet', 'vardiyaSaatAraligi',
+  // P8: gercek KOGNAT'lar — ceviri unutulmasi degil.
+  //   Kamera: tr == de ("Kamera"), fr "Caméra", ru "Камера" AYRI.
+  //   Manuel: tr == fr ("Manuel"), de "Manuell", es "Manual" AYRI.
+  'ihlalKaynakKamera', 'ihlalKaynakManuel',
 };
 
 Map<String, dynamic> _arb(String dil) => jsonDecode(

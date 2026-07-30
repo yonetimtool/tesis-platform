@@ -36,9 +36,9 @@ enum UserRole {
   final String wire;
 
   static UserRole fromClaim(String? value) => UserRole.values.firstWhere(
-        (r) => r.wire == value,
-        orElse: () => UserRole.unknown,
-      );
+    (r) => r.wire == value,
+    orElse: () => UserRole.unknown,
+  );
 
   /// Turlarim (`GET /me/patrol-window`) — auth.md: admin + security.
   bool get canViewMyPatrol => this == admin || this == security;
@@ -148,4 +148,36 @@ enum UserRole {
   /// Dis sistem entegrasyonlari (`/integrations`, C1b — CRUD + tetik) —
   /// admin + yonetici. admin panelden, yonetici mobilden yonetir (auth.md §4).
   bool get canManageIntegrations => this == admin || this == yonetici;
+
+  // ---------------------------------------------------------------------- //
+  // Arac gecisi (G1) + Otopark (G4) + Ihlal (G2)
+  // ---------------------------------------------------------------------- //
+
+  /// Arac gecisi LISTESI (`GET /vehicle-passes`) — YALNIZ admin + security.
+  /// PLAKA kisisel veriye baglanabilir (KVKK), bu yuzden yonetici/resident/
+  /// tesis_gorevlisi listeyi GORMEZ (403). Yonetimin ihtiyaci olan AGREGAT
+  /// doluluk `/parking/occupancy` ile herkese aciktir.
+  bool get canViewVehiclePasses => this == admin || this == security;
+
+  /// Arac GIRISI kaydi + CIKIS damgasi (`POST /vehicle-passes`,
+  /// `.../checkout`) — okuma ile ayni kume (kapi operasyonu).
+  bool get canManageVehiclePasses => canViewVehiclePasses;
+
+  /// Otopark AGREGAT dolulugu (`GET /parking/occupancy`) — plaka/daire
+  /// icermez, bu yuzden bilinen tum rollere aciktir.
+  bool get canViewParking => this != unknown;
+
+  /// Ihlal kaydi OKUMA (`GET /violations`) — admin + yonetici + security.
+  /// resident ve tesis_gorevlisi ERISMEZ (403): kayit komsu davranisi
+  /// hakkinda veri tasir (KVKK).
+  bool get canViewViolations =>
+      this == admin || this == yonetici || this == security;
+
+  /// Ihlal ACMA (`POST /violations`) + durum ilerletme — admin + security.
+  /// yonetici OKUR ama acmaz/degistiremez (403).
+  bool get canManageViolations => this == admin || this == security;
+
+  /// Ihlal KAPATMA (`PATCH durum=kapatildi`) — YALNIZ admin. Dort-goz
+  /// kurali: inceleyen personel kendi kaydini kapatamaz.
+  bool get canCloseViolations => this == admin;
 }

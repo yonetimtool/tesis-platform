@@ -46,6 +46,9 @@ import '../features/tasks/presentation/tasks_screen.dart';
 import '../features/unit_access/presentation/unit_access_records_screen.dart';
 import '../features/integrations/presentation/integrations_screen.dart';
 import '../features/unit_access/presentation/unit_access_screen.dart';
+import '../features/vehicle_pass/presentation/parking_screen.dart';
+import '../features/vehicle_pass/presentation/vehicle_pass_screen.dart';
+import '../features/violations/presentation/violations_screen.dart';
 import '../features/visitors/presentation/visitors_screen.dart';
 import 'splash_screen.dart';
 
@@ -93,6 +96,9 @@ class AppRoutes {
   static const profile = '/profile';
   static const personel = '/personel';
   static const sakinler = '/sakinler';
+  static const aracGecis = '/arac-gecisleri';
+  static const otopark = '/otopark';
+  static const ihlaller = '/ihlaller';
 }
 
 /// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
@@ -269,6 +275,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: AppRoutes.aracGecis,
+        builder: (context, state) => const VehiclePassScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.otopark,
+        builder: (context, state) => const ParkingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.ihlaller,
+        builder: (context, state) => const ViolationsScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.visitors,
         // Push tiklamasindan gelinirse ?visitor_id=... ile ilgili kaydin
         // detayi otomatik acilir (onay bekleyen kartta Onayla/Reddet).
@@ -280,9 +298,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.kargo,
         // Push tiklamasindan gelinirse ?kargo_id=... ile ilgili kaydin
         // detayi otomatik acilir (bekleyen pakette "Teslim aldim").
-        builder: (context, state) => KargoScreen(
-          initialKargoId: state.uri.queryParameters['kargo_id'],
-        ),
+        builder: (context, state) =>
+            KargoScreen(initialKargoId: state.uri.queryParameters['kargo_id']),
       ),
       GoRoute(
         path: AppRoutes.unitAccess,
@@ -295,8 +312,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         // geri don.
         redirect: (context, state) =>
             (state.uri.queryParameters['unit_id'] ?? '').isEmpty
-                ? AppRoutes.unitAccess
-                : null,
+            ? AppRoutes.unitAccess
+            : null,
         builder: (context, state) => UnitAccessRecordsScreen(
           unitId: state.uri.queryParameters['unit_id']!,
           unitNo: state.uri.queryParameters['unit_no'],
@@ -397,7 +414,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       final loggedIn = status == AuthStatus.authenticated;
-      final onAuthFlow = location == AppRoutes.login ||
+      final onAuthFlow =
+          location == AppRoutes.login ||
           location == AppRoutes.splash ||
           location == AppRoutes.setPassword;
 
