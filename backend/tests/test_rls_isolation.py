@@ -60,8 +60,15 @@ def test_app_rw_no_tenant_context_no_rows(app_conn, two_tenants):
 
 # --------------------------------------------------------------------------- #
 # Yeni tablolar (G1/G2): vehicle_pass + violation da RLS altinda mi?
-# Tablo eklenip _enable_rls listesine yazilmayi UNUTMAK sessiz bir cross-tenant
-# sizintisidir; bu test onu yakalar.
+#
+# DUZELTME (tur 73): burada eskiden "tablo eklenip _enable_rls listesine
+# yazilmayi UNUTMAK sessiz bir cross-tenant sizintisidir; bu test onu yakalar"
+# yaziyordu. YAKALAMIYORDU: asagidaki parametrize listesi de ELLE yazili, yani
+# _enable_rls'e yazmayi unutan kisi buraya da yazmayi unutur. Semada 48 tablo
+# var, bu dosya 6'sina bakiyor. O bosluk artik `test_rls_kapsam.py` ile
+# kapatildi: orada hicbir tablo adi YOK, her sey pg_class/pg_policy
+# katalogundan okunur. Buradaki testler DAVRANISSAL katman olarak duruyor
+# (politika gercekten satir filtreliyor mu).
 # --------------------------------------------------------------------------- #
 import uuid as _uuid  # noqa: E402
 
