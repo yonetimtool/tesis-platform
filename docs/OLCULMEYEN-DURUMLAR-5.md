@@ -258,6 +258,59 @@ eşit zamanlı olaylarda sayfalama kaybı/tekrarı arar.
    Ayrıca ilk muhakememde "kayıp olmaz, yalnız sıra bozulur" demiştim; deney
    bunun da yanlış olduğunu gösterdi.
 
+## KAPANDI (tur 78) — hacim kapsamı 8 tablodan **tüm şemaya**; `/dashboard/live` 200.000 satır okuyordu
+
+Tur 77'nin ölçümü yalnız 8 tabloya hacim yazıyordu. Kalan ~40 tablo **boştu** ve
+boş tabloda tam tarama 0 satır okur — yani o uçlar için "bulgu yok" **kanıt
+değildi**. `infra/hacim-uret.py` şemayı kendisi okuyup eksik tabloları
+dolduruyor: FK bağımlılıklarına göre topolojik sıra, ebeveyn id'lerinden dizi
+indeksiyle FK değerleri (satır başına alt sorgu O(N×M) olurdu), gerçek enum
+etiketleri, açıkça dağıtılmış zaman damgaları. **Boş kalan tablo: yok.**
+
+Kapsam genişleyince yeni bir sınıf çıktı — ve bu `meta.total` sınıfından
+farklıydı:
+
+**`GET /dashboard/live` tek istekte 200.000 `scan_event` okuyordu.** Panelin
+*pollanan* canlı özeti. `_AKTIF_TURLAR_SQL` okutmaları
+`s.checkpoint_id = c.id AND s.okutma_zamani ∈ [pencere)` ile birleştiriyor;
+mevcut indekslerden `ix_scan_checkpoint (checkpoint_id)` zaman aralığını
+taşımıyor (bir checkpoint'in tüm geçmişini getirir),
+`ix_scan_okutma_zamani (tenant_id, okutma_zamani)` checkpoint'e göre
+daraltmıyor. Planlayıcı bu yüzden tabloyu tamamen tarıyordu.
+
+Migrasyon **0010**: `(tenant_id, checkpoint_id, okutma_zamani)`.
+
+| | seq scan | Index Only Scan |
+|---|---|---|
+| 200 bin okutma, 1434 pencere | **784,9 ms** | **43,7 ms** (~18×) |
+
+Aynı erişim deseni **üç yerde**: `dashboard.py` (pollanan), `me_patrol.py`
+(görevlinin penceresi) ve `scheduler/service.py` (periyodik pencere tespiti,
+checkpoint *başına* aralık sorgusu). Tek indeks üçünü karşılıyor.
+
+Ölçüm sonrası: `/dashboard/live` **0**, `/patrol-windows` 200.000+60.000 → **0**.
+
+**Kalan 29 ucun karakterizasyonu** (kusur listesi *değil*): hiçbiri artık kendi
+dışındaki büyük bir tabloyu sıralı okumuyor. Hepsi ya (a) `meta.total` için tam
+`COUNT` — ürün kararı, tur 77'de bildirildi — ya da (b) 20 binlik boyut
+tablolarına hash join (kategori, ortak alan, plan-checkpoint). İkisi de bu
+boyutlarda doğru plan; ikisi de doğrusal büyüyor.
+
+**Üreticinin sınırı açıkça yazılı:** rastgele CHECK kısıtlarını genel bir üretici
+sağlayamaz. Üretilen dosya `ON_ERROR_STOP` kullanmaz; kısıtı karşılanamayan
+tablo atlanır ve betik **atlananları listeler**. İlk koşumlarda beş tablo
+takıldı (`ck_*_ceviri_dil`, `ck_vehicle_pass_plaka`, `ck_rezervasyon_aralik`,
+`ck_etkinlik_bitis`) ve alan-özel ipuçlarıyla (dil listesi, plaka formatı,
+"bitiş" kolonlarına ileri damga) kapatıldı.
+
+**Üreticinin kendi hatası kayda geçiyor:**
+`information_schema.constraint_column_usage` bileşik FK'larda kolon
+**çiftleşmesini korumaz**. `(olusturan_user_id, tenant_id) REFERENCES
+app_user(id, tenant_id)` kısıtında adla eşleştirmek `tenant_id`'yi
+`app_user.tenant_id`'ye bağlıyor, `olusturan_user_id`'yi ise hiçbir şeye — ilk
+üretimde o kolona `gen_random_uuid()` yazıldı. Doğru eşleme
+`pg_constraint.conkey`/`confkey` **sıralarından** gelir.
+
 ## Açık kalanlar
 
 1. **Canlı prod yığın sürüşü** (tur 72'den devir). Prod compose'u yerelde
@@ -282,7 +335,7 @@ eşit zamanlı olaylarda sayfalama kaybı/tekrarı arar.
 2. **`meta.total` kararı** — beş liste ucunda tam sayım O(tablo). Yaklaşık
    sayıma geçmek ya da `total`ı kaldırmak istemci sözleşmesini değiştirir;
    karar kullanıcıya ait.
-3. **Hacim kapsamının genişletilmesi** — `hacim-verisi.sql` 8 tabloya yazıyor;
-   kalan 40 tablo için tarama davranışı hâlâ ölçülmedi.
+3. ~~Hacim kapsamının genişletilmesi~~ — **kapandı, tur 78**; boş kalan tablo
+   yok, `/dashboard/live` bulgusu bu sayede çıktı.
 4. Canlı prod sürüşü (1) — izin gerektiriyor.
 5. Kare bütçesi (2) — ortam kurulumu gerektiriyor.

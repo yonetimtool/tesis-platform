@@ -23,10 +23,11 @@
 # sayilir. Agregat uclar (SUM) icin tam tarama DOGRU plandir; bu yuzden cikti
 # bir KUSUR LISTESI degil, INCELEME listesidir.
 #
-# KAPSAM SINIRI: hacim yalniz 8 tabloya yazilir (scan_event, notification,
-# audit_log, dues_payment, visitor, kargo, task, dues_assessment). Bos
-# tablolar uzerinden gecen uclar bu olcumde SESSIZ kalir — "bulgu yok" onlar
-# icin kanit DEGILDIR.
+# KAPSAM (tur 78): temel dosya 8 tabloya buyuk hacim yazar; kalan tablolar
+# `hacim-uret.py` ile SEMADAN turetilir. Onceden yalniz 8 tablo doluydu ve bos
+# tablolar uzerinden gecen uclar SESSIZ kaliyordu — "bulgu yok" onlar icin
+# kanit DEGILDI. Betik artik hem ATLANAN (kisit karsilanamayan) hem BOS kalan
+# tablolari LISTELER.
 #
 # KULLANIM:  infra/tarama-olcumu.sh
 #            KORU=1 infra/tarama-olcumu.sh   (olcum db'sini silmez)
@@ -61,6 +62,23 @@ echo "== [2/5] sema + app_rw rolu"
 
 echo "== [3/5] sentetik hacim yukleniyor (dakikalar surebilir)"
 "${C[@]}" exec -T db psql -U "$POSTGRES_USER" -d "$DB" -q < hacim-verisi.sql 2>&1 | grep -i error || true
+# Tur 78: kalan tablolar SEMADAN turetilir. Onceden yalniz 8 tabloya hacim
+# yaziliyordu; bos tabloda tam tarama 0 satir okur ve olcum SESSIZ kalirdi —
+# yani o uclar icin "bulgu yok" KANIT DEGILDI.
+if [ "${EK_HACIM:-1}" = "1" ]; then
+  OLCUM_DB="$DB" POSTGRES_USER="$POSTGRES_USER" HACIM_ADET="${HACIM_ADET:-20000}" \
+    python3 hacim-uret.py > /tmp/hacim-verisi-ek.sql
+  "${C[@]}" exec -T db psql -U "$POSTGRES_USER" -d "$DB" -q < /tmp/hacim-verisi-ek.sql \
+    > /dev/null 2> /tmp/hacim-ek-hata.txt || true
+  # Karsilanamayan CHECK kisiti olan tablolar ATLANIR — SESSIZ kalmasin.
+  if grep -q "^ERROR" /tmp/hacim-ek-hata.txt 2>/dev/null; then
+    echo "   ATLANAN tablolar (kisit karsilanamadi) — bunlar icin 'bulgu yok' KANIT DEGIL:"
+    grep "^ERROR" /tmp/hacim-ek-hata.txt | sed 's/.*relation "\([^"]*\)".*/     \1/' | sort -u
+  fi
+fi
+"${C[@]}" exec -T db psql -U "$POSTGRES_USER" -d "$DB" -Atc \
+  "select 'BOS kalan tablo: '||coalesce(string_agg(relname,', ' order by relname),'(yok)') \
+   from pg_stat_user_tables where schemaname='public' and n_live_tup=0;"
 "${C[@]}" exec -T db psql -U "$POSTGRES_USER" -d "$DB" -Atc \
   "select 'satir toplami = '||coalesce(sum(n_live_tup),0) from pg_stat_user_tables where schemaname='public';"
 # Giris icin gecerli bir admin (e-posta dogrulayici `.test` TLD'sini REDDEDER;
