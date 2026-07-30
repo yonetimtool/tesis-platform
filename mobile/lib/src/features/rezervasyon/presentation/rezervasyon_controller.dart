@@ -154,8 +154,18 @@ class RezervasyonController extends Notifier<RezervasyonState> {
   }
 
   Future<void> request(RezervasyonDraft draft) async {
-    await ref.read(rezervasyonApiProvider).createReservation(draft);
-    await refresh();
+    // YARIS (tur 64): iki kullanici ayni slotu isteyince ikincisi 409 alir.
+    // Onceki surum hatayi firlatip cikiyordu ve TAZELEME YAPMIYORDU; yani
+    // yarisi kaybeden kullanici slotun artik dolu oldugunu GORMUYORDU (izgara
+    // eski haliyle kaliyor, tekrar deniyor). `cancel` bunu `finally` ile
+    // cozuyordu; `request` cozmuyordu — tutarsizlik olcumle ortaya cikti.
+    try {
+      await ref.read(rezervasyonApiProvider).createReservation(draft);
+    } finally {
+      // Hata halinde de guncel durum cekilir; hata YINE cagirana firlar
+      // (mesaj ekranda gosterilir).
+      await refresh();
+    }
   }
 
   /// Alanin secili gunune ait slot izgarasi (dolu/bos) — talep formu kullanir.

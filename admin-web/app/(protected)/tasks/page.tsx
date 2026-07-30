@@ -356,7 +356,7 @@ export default function TasksPage() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-        <div className="overflow-x-auto" tabIndex={0}>
+        <div className="odak-ic overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
@@ -421,7 +421,7 @@ export default function TasksPage() {
             {t("gorevTamamlamaKayitlari", { ad: detail.ad })}
           </h2>
           <div className="overflow-hidden rounded-lg border border-slate-200">
-            <div className="overflow-x-auto" tabIndex={0}>
+            <div className="odak-ic overflow-x-auto" tabIndex={0}>
               <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>

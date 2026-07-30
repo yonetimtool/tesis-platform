@@ -253,7 +253,7 @@ export default function LoginPage() {
               whileTap={{ y: 1 }}
               type="submit"
               disabled={loading}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-tealInk py-2.5 text-sm font-medium text-white shadow-soft transition-shadow hover:shadow-lift disabled:opacity-60"
+              className="odak-ters inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-tealInk py-2.5 text-sm font-medium text-white shadow-soft transition-shadow hover:shadow-lift disabled:opacity-60"
             >
               {loading && (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />

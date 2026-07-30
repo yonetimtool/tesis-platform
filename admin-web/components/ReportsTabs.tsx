@@ -19,7 +19,7 @@ export function ReportsTabs() {
     // SAYFAYI yana kaydiriyordu (tur 25 surusu +84 px olctu). Sekmeler
     // sarmamali (alt cizgi bozulur) — bu yuzden serit KENDI ICINDE
     // kaydirilir; sayfa govdesi sabit kalir.
-    <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" tabIndex={0}>
+    <div className="odak-ic -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" tabIndex={0}>
       <div className="flex min-w-max gap-1 border-b border-slate-200">
       {TABS.map((t) => {
         const active = pathname === t.href;
@@ -27,7 +27,7 @@ export function ReportsTabs() {
           <Link
             key={t.href}
             href={t.href}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm transition ${
+            className={`odak-ic -mb-px border-b-2 px-3 py-2 text-sm transition ${
               active
                 ? "border-brand-teal font-medium text-brand-tealInk"
                 : "border-transparent text-slate-600 hover:text-ink"

@@ -182,7 +182,7 @@ export default function SupportPage() {
                   </td>
                   <td className="px-3 py-2 text-right">
                     <button
-                      className="rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                      className="odak-ic rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
                       onClick={() => {
                         setSecili(bilet);
                         setCevap(bilet.admin_cevap ?? "");

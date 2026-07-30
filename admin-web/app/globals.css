@@ -38,6 +38,41 @@ textarea:focus-visible,
   border-radius: 8px;
 }
 
+/* TUR 64 — ODAK HALKASININ GORUNURLUGU (WCAG 2.4.11 + 1.4.11).
+ *
+ * Odak surusu (tools/odak-gorunurlugu-surusu.mjs) 102 ihlal buldu, uc kok neden:
+ *
+ *  1. KIRPILMA (88x): `outline-offset: 2px` halkayi ogenin DISINA tasiyor;
+ *     oge `overflow-y-auto` kenar cubugunun ya da `overflow-x-auto` tablo
+ *     kapsayicisinin kenarindaysa halka kesiliyor. Cozum: bu ogelerde halka
+ *     ICE cizilir (`.odak-ic`) — gorunurluk korunur, kirpilma biter.
+ *  2. TEAL ZEMINDE TEAL HALKA (`/login` gonder dugmesi 1.41:1): zemin marka
+ *     tealken ayni tonda halka GORUNMEZ. Cozum: `.odak-ters` ile beyaz halka.
+ *  3. KOYU TEMADA ton (2.83:1): #0e9594 koyu slate zeminde esigin altinda.
+ *     Cozum: koyu temada acik teal (#2cc4b7).
+ */
+.odak-ic:focus-visible {
+  outline-offset: -2px;
+}
+.odak-ters:focus-visible {
+  outline-color: #ffffff;
+}
+.dark a:focus-visible,
+.dark button:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark textarea:focus-visible,
+.dark [role="button"]:focus-visible,
+.dark [tabindex]:focus-visible {
+  outline-color: #2cc4b7;
+}
+/* Koyu temada da TERS halka beyaz kalmali. Ustteki `.dark button:focus-visible`
+ * kuralinin ozgullugu (0,2,1) `.odak-ters:focus-visible`i (0,2,0) yenip beyaz
+ * halkayi teale ceviriyordu; surus bunu 2.38/2.53 kontrastla gosterdi. */
+.dark .odak-ters:focus-visible {
+  outline-color: #ffffff;
+}
+
 /* Marka teal metin/kenar koyu zeminde okunur/parlar. */
 .dark .text-brand-teal {
   color: #2cc4b7;

@@ -109,20 +109,18 @@ taraması `activity.py`nin bilinçli olarak kullanmadığını gösteriyor
 `/notifications` üzerinden gidiyor. Yani bilinen tüketici kalmadı — ama bu
 **kod okuma**, ölçüm değil.
 
-## E. Hâlâ kurulmamış kalite eksenleri
+## E. Hâlâ kurulmamış kalite eksenleri ✔ **İKİSİ KAPANDI (tur 64)**
 
-* **Eşzamanlılık / yarış.** İki sekmede aynı kaydı düzenleme (409) tur 54'te
-  panelde denendi ama mobilde hiç: iki cihazdan aynı görevi tamamlama, aynı
-  slotu rezerve etme (backend `reservations_timing` kuralları var, istemci
-  tarafı ölçülmedi).
+* ~~**Eşzamanlılık / yarış.**~~ **KAPANDI (tur 64)** — rezervasyonda 409 yarışı
+  ölçüldü ve bir tutarsızlık bulundu (aşağıda). Demirbaş 409'u tur 63'te
+  ölçülmüştü.
 * **Çevrimdışı kuyruk davranışı.** `scan_outbox` testleri var; ama uzun
   çevrimdışı süre + yeniden bağlanma + çakışma senaryosu sürülmedi.
 * **Bellek/kare bütçesi gerçek cihazda.** Tur 61 çözme sınırını **kodda**
   kilitledi; gerçek bir 4000 px fotoğrafla bellek ölçümü yapılmadı (widget
   testinde taklit görsel minik PNG).
-* **Erişilebilirlik: odak GÖRÜNÜRLÜĞÜ.** Odak sırası (tur 33) ve okuma sırası
-  (tur 60) ölçüldü; odak halkasının **görünür** olduğu (kontrast, kırpılmama)
-  ölçülmedi.
+* ~~**Erişilebilirlik: odak GÖRÜNÜRLÜĞÜ.**~~ **KAPANDI (tur 64)** — yeni araç
+  `tools/odak-gorunurlugu-surusu.mjs`; 102 ihlal bulundu, 0'a indirildi.
 
 ## F. Veri durumu — kalan boşluklar
 
@@ -255,3 +253,48 @@ hatasının nöbetçisi).
 `task_categories_screen` (%49), `patrol_plans_screen` (%52) — bunlar ekran, yani
 denetleyici deseni doğrudan uygulanmıyor; canlı tur takibi konum akışı
 gerektiriyor.
+
+---
+
+## Tur 64'te kapatılanlar (E maddesi — odak görünürlüğü + eşzamanlılık)
+
+### Odak görünürlüğü: 102 → 0
+
+`globals.css` bütün etkileşimli ögelere teal bir `outline` veriyordu, yani
+"odak halkası var" sanılıyordu. Yeni sürüş (`tools/odak-gorunurlugu-surusu.mjs`)
+**klavyeyle** TAB gezinip her aktif ögede üç şeyi ölçüyor: halka var mı, halka
+rengi arkasındaki zeminle **3:1** (WCAG 1.4.11) tutuyor mu, ve halka
+`overflow` kapsayıcısında **kırpılıyor** mu. Sonuç 25 sayfa × 2 tema:
+**102 ihlal**, üç kök neden:
+
+| Kök neden | Adet | Düzeltme |
+|---|---|---|
+| Halka kırpılıyor (kenar çubuğu, tablo kapsayıcıları, rapor sekmeleri) | 88 | `.odak-ic` → halka **içe** çizilir (`outline-offset: -2px`) |
+| Teal zeminde teal halka (`/login` gönder, şematik daire kartları) | 5+ | `.odak-ters` → beyaz halka |
+| Koyu temada ton yetersiz (2.83:1) | 14 | koyu temada açık teal `#2cc4b7` |
+
+Düzeltirken **CSS özgüllük tuzağı** çıktı: `.dark button:focus-visible` (0,2,1)
+`.odak-ters:focus-visible`i (0,2,0) yeniyordu, yani koyu temada beyaz halka
+teale dönüyordu — sürüş bunu 2.38/2.53 kontrastla gösterdi. `.dark
+.odak-ters:focus-visible` eklendi.
+
+**Ve dedektörün kendi sınaması ölçümün geçersiz olduğunu gösterdi.** İlk sürümde
+odağı `el.focus()` ile veriyordum; `DENEY=1` "KOR" dedi. Sebep: Chromium
+`:focus-visible`i **programatik** odakta (metin alanları dışında) uygulamıyor —
+yani `globals.css`teki halka hiç devreye girmiyordu ve ölçtüğüm şey tarayıcının
+varsayılan çizgisiydi. Odak artık `Tab` tuşuyla veriliyor (tur 33'ün klavye
+sürüşüyle aynı yol). Bu, "detektörü sınamasan ölçüm yaptığını sanırsın"
+dersinin en net örneği: araç çalışıyor **görünüyordu** ve iki gerçek bulgu bile
+üretmişti.
+
+### Eşzamanlılık: rezervasyonda bir tutarsızlık
+
+Ölçüm (`test/rezervasyon_yaris_dallari_test.dart`, 11 test): iki kullanıcı aynı
+slotu isteyince ikincisi 409 alıyor. İstemci hatayı doğru şekilde yukarı
+fırlatıyordu **ama listeyi tazelemiyordu** — yani yarışı kaybeden kullanıcı
+slotun artık dolu olduğunu görmüyor, ızgara eski hâliyle kalıyordu. `cancel`
+aynı sınıf durumu `finally` ile çözüyordu; `request` çözmüyordu. Düzeltildi:
+`request` artık başarısızlıkta da tazeliyor (hata yine çağırana fırlıyor).
+
+Ayrıca ölçülen dallar: saha rolü `/reservations` isteğini **hiç atmıyor** (403
+savunması), yeniden-girme kilidi, alan CRUD'unun her birinin ardından tazeleme.

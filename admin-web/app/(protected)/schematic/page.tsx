@@ -61,7 +61,7 @@ function UnitCell({
     <button
       onClick={() => onSelect(unit)}
       title={t("haritaKartBaslik", { daire: unit.unit_no, sayi: unit.complaint_count ?? 0 })}
-      className={`flex h-16 w-20 flex-col items-center justify-center rounded-lg border text-white transition ${c.cell} ${
+      className={`odak-ters flex h-16 w-20 flex-col items-center justify-center rounded-lg border text-white transition ${c.cell} ${
         selected ? "ring-2 ring-ink ring-offset-2" : "hover:opacity-90"
       }`}
     >
