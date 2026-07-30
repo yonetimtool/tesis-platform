@@ -388,4 +388,15 @@ void main() {
       (dil) => _app(units: _borcsuz, dil: Locale(dil)),
     );
   });
+
+  // ---- TUR 60: YERLESIM KILIDI ----
+  testWidgets('KILIT: sakin_ana_ekran yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'sakin_ana_ekran', (dil) => _app(units: _borcsuz, dil: Locale(dil)));
+  });
+
+  // ---- TUR 60: OKUMA SIRASI ----
+  testWidgets('SIRA: sakin ana ekrani ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _app(units: _borcsuz, dil: Locale(dil)));
+  });
 }

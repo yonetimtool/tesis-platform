@@ -589,4 +589,85 @@ void main() {
       },
     );
   });
+
+  // ---- TUR 60: YERLESIM KILIDI ----
+  testWidgets('KILIT: destek yerlesimi', (tester) async {
+    // Bos liste bos hal cizer, kilit anlamsiz kalir — dolu veri verilir.
+    await yerlesimKilidi(
+      tester,
+      'destek',
+      (dil) => _destekEkrani(Locale(dil), items: const [
+        SupportTicket(
+          id: 's-1',
+          konu: 'Acme kamera',
+          aciklama: 'Kamera goruntu vermiyor.',
+        ),
+      ]),
+    );
+  });
+  testWidgets('KILIT: tesis_kurulum yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'tesis_kurulum', (dil) => _tesisEkrani(Locale(dil)));
+  });
+  testWidgets('KILIT: vardiyalar yerlesimi', (tester) async {
+    // Tek vardiya 4 yazi cizer ve `enAz` esigini gecmez — iki kayit.
+    await yerlesimKilidi(
+      tester,
+      'vardiyalar',
+      (dil) => _vardiyaEkrani(Locale(dil), items: [
+        _vardiya(),
+        const Shift(
+          id: 'v-2',
+          ad: 'Gunduz devriyesi',
+          baslangicSaat: '08:00',
+          bitisSaat: '16:00',
+          gunTipi: 'hafta_ici',
+        ),
+      ]),
+    );
+  });
+  testWidgets('KILIT: yonetici_iletisim yerlesimi', (tester) async {
+    // Bos veriyle yalniz 4 yazi kalir (bos hal); `enAz` esigi bunu yakaladi.
+    await yerlesimKilidi(
+      tester,
+      'yonetici_iletisim',
+      (dil) => _yoneticiEkrani(
+        Locale(dil),
+        veri: const YoneticiIletisim(
+          yoneticiler: [
+            YoneticiKart(
+              userId: 'y-1',
+              adSoyad: 'Mehmet Yilmaz',
+              telefon: '+905550000000',
+            ),
+          ],
+          yonetimEmail: 'yonetim@example.com',
+        ),
+      ),
+    );
+  });
+
+  // ---- TUR 60: OKUMA SIRASI ----
+  testWidgets('SIRA: tesis kurulumu ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _tesisEkrani(Locale(dil)));
+  });
+  testWidgets('SIRA: yonetici iletisim ekran okuyucu sirasi', (tester) async {
+    // Bos veriyle 2 etiketli dugum kalir; `enAz` esigi bunu yakaladi.
+    await okumaSirasiSurusu(
+      tester,
+      (dil) => _yoneticiEkrani(
+        Locale(dil),
+        veri: const YoneticiIletisim(
+          yoneticiler: [
+            YoneticiKart(
+              userId: 'y-1',
+              adSoyad: 'Mehmet Yilmaz',
+              telefon: '+905550000000',
+            ),
+          ],
+          yonetimEmail: 'yonetim@example.com',
+        ),
+      ),
+    );
+  });
 }

@@ -1,0 +1,11 @@
+  14,  16  286x28  TALEP / ARIZA
+  16, 354  24x24  U+E514
+  69,  68  113x20  Açık (1)
+  69, 213  155x20  İş Emri (0)
+  69, 400  155x20  Çözülen (0)
+  69, 587  197x20  Reddedilen (0)
+ 137,  32  261x20  Asansor arizali
+ 138, 301  49x17  Açık
+ 161,  32  314x20  A blok asansoru durdu.
+ 189,  32  308x32  Acme Sakin · GG.AA.YYYY  SS:DD
+ 196, 340  18x18  U+E15F

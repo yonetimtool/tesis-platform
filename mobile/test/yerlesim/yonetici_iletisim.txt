@@ -1,0 +1,8 @@
+  14,  16  358x28  YÖNETİCİ İLETİŞİM
+  92,  36  210x24  Mehmet Yilmaz
+ 120,  36  185x20  +905550000000
+ 166,  78  197x20  Yöneticiyi Ara
+ 167,  52  18x18  U+E4A2
+ 240,  76  270x24  Yönetim maili
+ 260,  36  24x24  U+E3C4
+ 264,  76  270x40  yonetim@example.com

@@ -1,6 +1,9 @@
 // TUR 23 — EKRAN SURUSU: mevcut test kosumlarindaki ekranlari 7 dilde cizip
 // GORUNEN metni tara. ARB denetimi sozlugu olcer; bu, EKRANI olcer:
 // sozlukte olmayan (kaynakta unutulmus) sabitleri ancak bu yakalar.
+import 'dart:io';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -863,4 +866,315 @@ Future<void> animasyonSurusu(
     FlutterError.onError = eskiOnError;
     expect(tester.takeException(), isNull, reason: '$dil: oturma sonrasi');
   }
+}
+
+/// ---- TUR 60: ANLAMSAL OKUMA SIRASI ----
+///
+/// Tur 29/30 etiketlerin VARLIGINI olctu, SIRASINI degil. Ekran okuyucu
+/// gezinme sirasini `SemanticsNode` agacinin TRAVERSAL siralamasindan alir;
+/// Flutter bunu cogu zaman geometriden dogru hesaplar ama `sortKey`,
+/// `MergeSemantics`, `Semantics(container:)` gruplari, `Stack`/`Overlay`
+/// katmanlari ve ayri kaydirma alanlari bu sirayi bozabilir. Bozulunca ekran
+/// GORSEL olarak kusursuz kalir — hicbir tasma/kontrast olcumu bunu gormez.
+///
+/// Bu surus gezinme sirasini GERCEK API'den okur
+/// (`debugListChildrenInOrder(DebugSemanticsDumpOrder.traversalOrder)`) ve
+/// GERIYE ATLAMA arar: bir dugum, kendisinden gorunur bicimde ASAGIDA olan bir
+/// dugumden SONRA okunuyorsa ihlal vardir. Ayni bantta da yon denetlenir
+/// (LTR'de sola, RTL'de saga geri gitmek ihlal).
+class OkunanDugum {
+  OkunanDugum(this.etiket, this.kutu);
+  final String etiket;
+  final Rect kutu;
+  @override
+  String toString() =>
+      '"$etiket" @(${kutu.left.round()},${kutu.top.round()})'
+      '-(${kutu.right.round()},${kutu.bottom.round()})';
+}
+
+/// Yalniz YAPRAK dugumler toplanir: birlestirilmis (merged) semantik dugum
+/// zaten yapraktir, kapsayici dugumlerin kutusu ise bircok bandi kesip
+/// yanlis alarm uretir.
+List<OkunanDugum> gezinmeSirasi(WidgetTester tester) {
+  final out = <OkunanDugum>[];
+  final kok = _kokSemantik(tester);
+  if (kok == null) return out;
+
+  // `SemanticsNode.rect` EBEVEYN koordinatlarindadir; `transform` de dugumden
+  // ebeveyne gecisi verir. Genel (ekran) kutusu icin zincir carpilir.
+  void yuru(SemanticsNode n, Matrix4 ust) {
+    final m = ust.clone();
+    if (n.transform != null) m.multiply(n.transform!);
+    final cocuklar = n.debugListChildrenInOrder(
+      DebugSemanticsDumpOrder.traversalOrder,
+    );
+    if (cocuklar.isEmpty) {
+      final d = n.getSemanticsData();
+      final etiket = d.label.trim().isNotEmpty
+          ? d.label.trim()
+          : d.value.trim().isNotEmpty
+          ? d.value.trim()
+          : d.tooltip.trim();
+      if (etiket.isNotEmpty && !n.rect.isEmpty) {
+        out.add(
+          OkunanDugum(
+            etiket.replaceAll('\n', ' '),
+            MatrixUtils.transformRect(m, n.rect),
+          ),
+        );
+      }
+      return;
+    }
+    for (final c in cocuklar) {
+      yuru(c, m);
+    }
+  }
+
+  yuru(kok, Matrix4.identity());
+  return out;
+}
+
+/// Semantik agacin KOKU: herhangi bir dugumden ebeveyn zinciriyle yukari cik.
+SemanticsNode? _kokSemantik(WidgetTester tester) {
+  for (final ro in tester.allRenderObjects) {
+    var n = ro.debugSemantics;
+    if (n == null) continue;
+    while (n!.parent != null) {
+      n = n.parent;
+    }
+    return n;
+  }
+  return null;
+}
+
+/// Gezinme sirasindaki GERIYE ATLAMALARI dondurur (bos liste = sira dogru).
+///
+/// [esik]: bir bandin icinde sayilmak icin izin verilen ortusme payi. Satir
+/// icindeki ogeler (baslik + rozet + saat) birbirini dikey olarak keser;
+/// bunlar AYNI bant kabul edilir ve aralarinda yalniz YON denetlenir.
+List<String> okumaSirasiIhlalleri(
+  List<OkunanDugum> dizi, {
+  bool rtl = false,
+  double esik = 4,
+}) {
+  final ihlal = <String>[];
+  for (var i = 1; i < dizi.length; i++) {
+    final a = dizi[i - 1], b = dizi[i];
+    // Dikey ORTUSME: iki dugum ayni "bantta" mi (satir icindeki baslik+rozet
+    // gibi) yoksa ayri satirlarda mi?
+    //
+    // ILK SURUM YANLISTI: "b tamamen a'nin ustunde" (b.bottom < a.top) kosulu
+    // ARAYA BOSLUK olmasini gerektiriyordu. Bitisik satirlarda (b.bottom ==
+    // a.top) ters okuma YAKALANMIYORDU — dedektorun kendi testi (tur 60,
+    // DEDEKTOR 2) tam bunu gosterdi.
+    final ortusme =
+        math.min(a.kutu.bottom, b.kutu.bottom) -
+        math.max(a.kutu.top, b.kutu.top);
+    // AYNI KOLON mu? Cok kolonlu kart izgarasinda okuyucu bir karti BITIRIP
+    // sonraki kartin basina doner; bu DOGRU davranistir. Ayni satirin sag
+    // ucundaki zaman damgasi da boyle. Panel tarafinda ayni kural once bu
+    // ayrimi yapmiyordu ve panonun dort KPI kartinda yanlis alarm verdi.
+    final yatayOrtusme =
+        math.min(a.kutu.right, b.kutu.right) -
+        math.max(a.kutu.left, b.kutu.left);
+    if (ortusme <= esik) {
+      if (b.kutu.top < a.kutu.top - esik && yatayOrtusme > esik) {
+        ihlal.add('DIKEY GERI: $a  ->  $b');
+      }
+      continue;
+    }
+    // Ayni bant: yon denetimi (LTR'de sola, RTL'de saga gitmek geri gitmektir).
+    final geri = rtl
+        ? b.kutu.right > a.kutu.right + esik
+        : b.kutu.left < a.kutu.left - esik;
+    if (geri) ihlal.add('YATAY GERI (${rtl ? "rtl" : "ltr"}): $a  ->  $b');
+  }
+  return ihlal;
+}
+
+/// Ekrani kur, gezinme sirasini oku, ihlal varsa DUS.
+Future<void> okumaSirasiSurusu(
+  WidgetTester tester,
+  Widget Function(String dil) kur, {
+  List<String> diller = const ['tr', 'ar'],
+  Future<void> Function(WidgetTester)? hazirla,
+  bool bekleyen = false,
+  int enAz = 3,
+}) async {
+  _guvenliDepoTaklidi();
+  tester.view.physicalSize = const Size(390, 844);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+  // Tutamak GOVDE icinde kapatilir: `addTearDown` cerceve dogrulamasindan
+  // sonra kosuyor ve "SemanticsHandle was active at the end of the test"
+  // hatasi veriyor (tur 34'teki `gorselTaklidiKapat` dersinin aynisi).
+  final tutamak = tester.ensureSemantics();
+
+  for (final dil in diller) {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(kur(dil));
+    if (bekleyen) {
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    } else {
+      await tester.pumpAndSettle();
+    }
+    if (hazirla != null) await hazirla(tester);
+
+    final dizi = gezinmeSirasi(tester);
+    // OLCUM BOS KOSMASIN: etiketli dugum yoksa surus hicbir sey denetlemez.
+    expect(
+      dizi.length,
+      greaterThanOrEqualTo(enAz),
+      reason:
+          '$dil: gezinme sirasinda yalniz ${dizi.length} etiketli dugum '
+          'bulundu — surus bos kosuyor olabilir',
+    );
+    if (const bool.fromEnvironment('SIRA_SAY')) {
+      debugPrint('SIRA_SAY $dil: ${dizi.length} etiketli dugum');
+    }
+    final ihlal = okumaSirasiIhlalleri(dizi, rtl: dil == 'ar');
+    if (ihlal.isNotEmpty) tutamak.dispose();
+    expect(
+      ihlal,
+      isEmpty,
+      reason:
+          '$dil: ekran okuyucu sirasi gorsel siradan sapiyor:\n'
+          '${ihlal.join("\n")}',
+    );
+  }
+  tutamak.dispose();
+}
+
+/// ---- TUR 60: YERLESIM KILIDI (gorsel regresyonun metin karsiligi) ----
+///
+/// Envanterin E maddesi: "47 ekranin 1'i golden ile kilitli". PIKSEL golden'i
+/// bilincli olarak regresyon testi yapilmadi (`test/tools/home_referans_golden_test`
+/// dosya basindaki nota bakin): font/Skia surumune duyarli ve diff'i
+/// okunamiyor. Buradaki kilit ayni isi METIN olarak yapar: her gorunur yazinin
+/// KONUMU + OLCUSU + icerigi siralanip dosyaya yazilir.
+///
+/// * Diff okunabilir: "su yazi 12 px asagi kaydi" dogrudan gorulur.
+/// * Yerlesim degisikligi (padding, siralama, sarma) yakalanir.
+/// * Renk/golge degisikligi yakalanmaz — onu kontrast surusleri olcuyor.
+///
+/// Kilit dosyalari degistiginde BILINCLI guncellenir:
+/// `flutter test --dart-define=KILIT_GUNCELLE=true`
+const bool kilitGuncelle = bool.fromEnvironment('KILIT_GUNCELLE');
+
+/// Gorunur yazilarin (ikonlar dahil) konum/olcu dokumu, y sonra x sirasiyla.
+List<String> yerlesimDokumu(WidgetTester tester) {
+  final kayitlar = <(double, double, String)>[];
+  // `allRenderObjects` ELEMENT agacini gezer; birden fazla element ayni render
+  // nesnesini paylastigi icin AYNI `RenderParagraph` birkac kez gelir (basit
+  // bir `Text` icin alti kez). Kimlige gore tekillestirilmezse kilit dosyasi
+  // ayni satiri tekrarlar ve diff okunmaz olur.
+  final gorulen = <RenderParagraph>{};
+  for (final ro in tester.allRenderObjects) {
+    if (ro is! RenderParagraph) continue;
+    if (!gorulen.add(ro)) continue;
+    if (!ro.attached || !ro.hasSize) continue;
+    var metin = ro.text.toPlainText().replaceAll('\n', ' ').trim();
+    if (metin.isEmpty) continue;
+    // Ikonlar ozel-kullanim kod noktalaridir; okunur bicime cevir.
+    metin = metin.runes
+        .map(
+          (r) => r >= 0xE000 && r <= 0xF8FF
+              ? 'U+${r.toRadixString(16).toUpperCase()}'
+              : String.fromCharCode(r),
+        )
+        .join();
+    metin = _zamanMaskesi(metin);
+    final p = ro.localToGlobal(Offset.zero);
+    kayitlar.add((
+      p.dy,
+      p.dx,
+      '${ro.size.width.round()}x${ro.size.height.round()}  $metin',
+    ));
+  }
+  kayitlar.sort((a, b) {
+    final dy = a.$1.compareTo(b.$1);
+    return dy != 0 ? dy : a.$2.compareTo(b.$2);
+  });
+  return [
+    for (final (y, x, govde) in kayitlar)
+      '${y.round().toString().padLeft(4)},'
+          '${x.round().toString().padLeft(4)}  $govde',
+  ];
+}
+
+/// SAAT/TARIH maskesi.
+///
+/// Fikstur verisi bilincli olarak "simdi"ye GORELIDIR (tur 55: sabit tarihli
+/// seed bayatliyor). Bunun bedeli: ekranda "04.08.2026 00:46" gibi bir yazi
+/// varsa kilit HER DAKIKA saptigini soyler. Ilk kosumda tam bunu yasadi
+/// (etkinlik ve Turlarim ekranlari). Cozum: KONUM ve OLCU aynen korunur —
+/// yerlesim duyarliligi kaybolmaz — yalniz yazinin saat/tarih PARCASI
+/// maskelenir.
+String _zamanMaskesi(String s) => s
+    .replaceAll(RegExp(r'\d{2}\.\d{2}\.\d{4}'), 'GG.AA.YYYY')
+    .replaceAll(RegExp(r'\d{4}-\d{2}-\d{2}'), 'YYYY-AA-GG')
+    .replaceAll(RegExp(r'\b\d{2}:\d{2}\b'), 'SS:DD');
+
+/// Ekranin yerlesimini `test/yerlesim/<ad>.txt` ile karsilastir.
+Future<void> yerlesimKilidi(
+  WidgetTester tester,
+  String ad,
+  Widget Function(String dil) kur, {
+  String dil = 'tr',
+  Future<void> Function(WidgetTester)? hazirla,
+  int enAz = 5,
+}) async {
+  _guvenliDepoTaklidi();
+  tester.view.physicalSize = const Size(390, 844);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pumpWidget(kur(dil));
+  await tester.pumpAndSettle();
+  if (hazirla != null) await hazirla(tester);
+
+  final dokum = yerlesimDokumu(tester);
+  // OLCUM BOS KOSMASIN: bes satirdan az dokum, ekranin cizilmedigini gosterir.
+  expect(
+    dokum.length,
+    greaterThanOrEqualTo(enAz),
+    reason:
+        '$ad: yalniz ${dokum.length} yazi bulundu — ekran cizilmemis '
+        'olabilir (kilit bos kosuyor)',
+  );
+
+  final dosya = File('test/yerlesim/$ad.txt');
+  final govde = '${dokum.join('\n')}\n';
+  if (kilitGuncelle) {
+    dosya.parent.createSync(recursive: true);
+    dosya.writeAsStringSync(govde);
+    return;
+  }
+  if (!dosya.existsSync()) {
+    fail(
+      '$ad: kilit dosyasi yok. Uretmek icin:\n'
+      'flutter test --dart-define=KILIT_GUNCELLE=true',
+    );
+  }
+  final beklenen = dosya.readAsStringSync();
+  if (beklenen == govde) return;
+  // Ilk farkli satiri gostererek dus: tam dokum cok uzun olabilir.
+  final b = beklenen.trimRight().split('\n'), y = dokum;
+  final fark = <String>[];
+  for (var i = 0; i < math.max(b.length, y.length); i++) {
+    final eski = i < b.length ? b[i] : '(yok)';
+    final yeni = i < y.length ? y[i] : '(yok)';
+    if (eski != yeni) {
+      fark.add('satir ${i + 1}:\n  kilit: $eski\n  simdi: $yeni');
+    }
+    if (fark.length >= 5) break;
+  }
+  fail(
+    '$ad: yerlesim kilitten sapti (${b.length} -> ${y.length} yazi).\n'
+    '${fark.join("\n")}\n'
+    'Degisiklik BILINCLI ise: flutter test --dart-define=KILIT_GUNCELLE=true',
+  );
 }

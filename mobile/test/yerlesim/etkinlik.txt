@@ -1,0 +1,14 @@
+  14,  16  242x28  ETKİNLİKLER
+  16, 354  24x24  U+E514
+  69,  16  163x20  Yaklaşan (1)
+  69, 222  141x20  Geçmiş (0)
+ 136,  32  20x20  U+EF38
+ 136,  58  300x20  Mac izleme aksami
+ 160,  32  326x32  GG.AA.YYYY  SS:DD · Sosyal tesis salonu
+ 196,  32  326x40  Buyuk ekranda milli mac.
+ 244,  32  16x16  U+E15A
+ 244,  52  136x16  5 katılıyor
+ 244, 200  16x16  U+EF28
+ 244, 220  137x16  2 katılmıyor
+ 788, 139  24x24  U+EF38
+ 790, 171  183x20  Yeni etkinlik

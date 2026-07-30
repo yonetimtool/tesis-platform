@@ -346,4 +346,15 @@ void main() {
     _tall(tester);
     await fotografliSurus(tester, (dil) => _app(dil: Locale(dil)), veri: surusVerisi);
   });
+
+  // ---- TUR 60: YERLESIM KILIDI ----
+  testWidgets('KILIT: yonetici_ana_ekran yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'yonetici_ana_ekran', (dil) => _app(dil: Locale(dil)));
+  });
+
+  // ---- TUR 60: OKUMA SIRASI ----
+  testWidgets('SIRA: yonetici ana ekrani ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _app(dil: Locale(dil)));
+  });
 }

@@ -1,0 +1,7 @@
+ 198, 163  64x64  U+EE7A
+ 278,  24  342x64  Tesisinizi tanımlayın
+ 350,  24  342x140  Yönetici olarak ilk girişinizi yaptınız. Devam etmek için sitenizin/tesisinizin adını girin. Bu adı daha sonra ayarlardan değiştirebilirsiniz.
+ 530,  36  24x24  U+EF0B
+ 530,  76  274x24  Örn. Örnek Sitesi
+ 534,  76  149x16  Tesis adı
+ 610,  96  197x20  Tesisi oluştur

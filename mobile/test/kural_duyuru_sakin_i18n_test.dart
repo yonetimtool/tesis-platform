@@ -798,4 +798,29 @@ void main() {
       },
     );
   });
+
+  // ---- TUR 60: YERLESIM KILIDI ----
+  testWidgets('KILIT: site_kurali yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'site_kurali', (dil) => _kuralEkrani(Locale(dil)));
+  });
+  testWidgets('KILIT: duyurular yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'duyurular', (dil) => _duyuruEkrani(Locale(dil)));
+  });
+  testWidgets('KILIT: sakinler yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'sakinler', (dil) => _sakinEkrani(Locale(dil)));
+  });
+
+  // ---- TUR 60: OKUMA SIRASI ----
+  testWidgets('SIRA: site kurali ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _kuralEkrani(Locale(dil)));
+  });
+  testWidgets('SIRA: duyurular ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _duyuruEkrani(Locale(dil)));
+  });
+  testWidgets('SIRA: sakinler ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _sakinEkrani(Locale(dil)));
+  });
 }

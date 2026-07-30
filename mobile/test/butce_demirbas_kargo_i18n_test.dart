@@ -794,4 +794,15 @@ void main() {
       hazirla: fabAc,
     );
   });
+
+  // ---- TUR 60: YERLESIM KILIDI ----
+  testWidgets('KILIT: kargo_listesi yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'kargo_listesi', (dil) => _kargoEkrani(Locale(dil)));
+  });
+
+  // ---- TUR 60: OKUMA SIRASI ----
+  testWidgets('SIRA: kargo listesi ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _kargoEkrani(Locale(dil)));
+  });
 }

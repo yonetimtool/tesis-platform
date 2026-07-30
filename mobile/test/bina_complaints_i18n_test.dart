@@ -796,6 +796,17 @@ void main() {
       hazirla: fabAc,
     );
   });
+
+  // ---- TUR 60: YERLESIM KILIDI ----
+  testWidgets('KILIT: talep_listesi yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'talep_listesi', (dil) => _talepEkrani(Locale(dil)));
+  });
+
+  // ---- TUR 60: OKUMA SIRASI ----
+  testWidgets('SIRA: talep listesi ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _talepEkrani(Locale(dil)));
+  });
 }
 
 class _PatlayanMapApi extends BuildingMapApi {

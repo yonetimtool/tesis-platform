@@ -526,4 +526,29 @@ void main() {
       );
     });
   }
+
+  // ---- TUR 60: YERLESIM KILIDI ----
+  testWidgets('KILIT: rezervasyon yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'rezervasyon', (dil) => _rezEkrani(Locale(dil)));
+  });
+  testWidgets('KILIT: etkinlik yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'etkinlik', (dil) => _etkEkrani(Locale(dil)));
+  });
+  testWidgets('KILIT: daire_izin yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'daire_izin', (dil) => _izinEkrani(Locale(dil)));
+  });
+
+  // ---- TUR 60: OKUMA SIRASI ----
+  testWidgets('SIRA: rezervasyon ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _rezEkrani(Locale(dil)));
+  });
+  testWidgets('SIRA: etkinlik ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _etkEkrani(Locale(dil)));
+  });
+  testWidgets('SIRA: daire izni ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _izinEkrani(Locale(dil)));
+  });
 }

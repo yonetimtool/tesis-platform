@@ -1,0 +1,26 @@
+  14,  16  176x28  TURLARIM
+  16, 354  24x24  U+F247
+  69,  62  71x20  Aktif
+  69, 250  85x20  Geçmiş
+ 140,  36  24x24  U+E1E1
+ 140,  68  286x24  Gece devriyesi
+ 172,  36  314x20  Pencere: SS:DD – SS:DD
+ 196,  36  299x20  Pencere süresi doldu.
+ 228, 226  128x20  1/3 nokta
+ 274,  91  226x20  Nokta okut (NFC)
+ 275,  65  18x18  U+E42B
+ 344,  20  240x20  Kontrol noktaları
+ 380,  72  246x24  Ana Kapı
+ 400,  32  24x24  U+E159
+ 402, 336  14x20  2
+ 404,  72  246x40  Okutuldu ✓ · SS:DD
+ 468,  72  246x24  Otopark
+ 477,  32  24x24  U+E504
+ 479, 336  14x20  3
+ 492,  72  246x20  Bekliyor
+ 541,  72  246x24  Havuz
+ 550,  32  24x24  U+E504
+ 552, 336  14x20  4
+ 565,  72  246x20  Bekliyor
+ 606,  20  350x96  Nokta durumları sunucudandır; tüm görevlilerin okutmaları ✓ görünür. "Gönderiliyor" satırlar bu cihazın henüz gönderilmemiş okutmalarıdır.
+ 734,  16  358x32  Son güncelleme: SS:DD (otomatik yenileme: 60 sn)

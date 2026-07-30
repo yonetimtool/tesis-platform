@@ -1,0 +1,58 @@
+  17,  94  134x24  Yönetio
+  20,  16  24x24  U+E3DC
+  20, 290  24x24  U+F237
+  21, 343  22x22  U+E497
+  38,  94  222x11  GÜVENLİK & DANIŞMANLIK
+  72,  16  368x30  Merhaba, Kerem
+ 105,  16  214x20  Yönetici Paneli
+ 172,  47  19x19  U+E3A2
+ 172, 232  19x19  U+EFAE
+ 172, 324  19x19  U+E1D7
+ 177, 139  19x19  U+EE9B
+ 207,  22  69x20  Vardiya Durumu
+ 207, 207  69x20  Aidat Durumu
+ 207, 300  69x20  Otopark Kullanımı
+ 212, 116  66x10  Görevler
+ 225, 145  8x11  —
+ 230,  27  58x11  0 Aktif
+ 230, 212  58x11  4 Daire
+ 230, 305  58x11  3 / 120
+ 299, 139  19x19  U+F1D6
+ 299, 232  19x19  U+EF27
+ 304,  47  19x19  U+E238
+ 304, 324  19x19  U+E0CC
+ 334, 115  69x20  Geri Bildirim
+ 334, 207  69x20  Şikayetler
+ 339,  23  66x10  İhlaller
+ 339, 301  66x10  Raporlar
+ 352,  52  8x11  —
+ 352, 300  69x11  Aylık Özet
+ 357, 145  8x11  —
+ 357, 237  8x11  —
+ 427,  16  358x26  Hızlı Özet
+ 486,  47  18x18  U+E2EE
+ 486, 140  18x18  U+F24E
+ 486, 232  18x18  󰕇
+ 486, 325  18x18  U+E1D7
+ 517,  51  11x12  —
+ 517, 115  69x12  ₺248.750,00
+ 517, 224  34x12  %86
+ 517, 323  23x12  %2
+ 531,  22  69x11  Toplam Daire
+ 531, 115  69x11  Toplam Tahsilat
+ 531, 207  69x11  Aidat Tahsilat Oranı
+ 531, 300  69x11  Otopark Doluluk
+ 543,  23  66x11  Tüm Site
+ 543, 128  41x11  Bu Ay
+ 543, 221  41x11  Bu Ay
+ 543, 313  41x11  Şu An
+ 776, 181  28x28  U+E047
+ 790,  27  24x24  U+E318
+ 790, 105  24x24  U+F237
+ 790, 261  24x24  U+F12A
+ 790, 339  24x24  U+F36E
+ 818,   0  78x17  Ana Sayfa
+ 818,  78  78x17  Bildirimler
+ 818, 234  78x17  Raporlar
+ 818, 312  78x17  Ayarlar
+ 820, 156  78x17  Olay Bildir

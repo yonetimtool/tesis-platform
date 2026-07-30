@@ -1,0 +1,6 @@
+  14,  16  132x28  Destek
+  91,  34  256x20  Acme kamera
+  93, 300  46x16  Açık
+ 118,  34  298x16  Kamera goruntu vermiyor.
+ 788, 181  24x24  U+E047
+ 790, 213  141x20  Yeni Talep

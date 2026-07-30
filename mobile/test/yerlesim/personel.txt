@@ -1,0 +1,7 @@
+  14,  16  308x28  SAHA PERSONELİ
+  87,  88  198x24  Guard A
+  96,  40  24x24  U+F379
+  96, 314  24x24  U+E404
+ 111,  88  198x20  Güvenlik
+ 788, 139  24x24  U+E494
+ 790, 171  183x20  Personel ekle

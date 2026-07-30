@@ -1,0 +1,7 @@
+  14,  16  310x28  GÖRÜNTÜLEME İZNİ
+  16, 354  24x24  U+EE7A
+  84,  28  220x60  Daire görüntüleme isteği — A-12
+ 106, 256  98x17  Bekliyor
+ 148,  28  314x20  İsteyen: Acme Yonetici
+ 788, 181  24x24  U+E047
+ 790, 213  141x20  Yeni istek

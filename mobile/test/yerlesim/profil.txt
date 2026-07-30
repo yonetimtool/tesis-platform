@@ -1,0 +1,25 @@
+  14,  16  132x28  PROFİL
+  72,  88  237x26  Mehmet Yilmaz
+  91,  28  32x32  U+E497
+ 100,  88  214x20  Site Yöneticisi
+ 122,  88  225x19  Numara girilmemiş
+ 177, 116  238x48  Profil fotoğrafı
+ 212,  51  34x34  U+E497
+ 247, 158  169x20  Fotoğraf seç
+ 248, 132  18x18  U+EE39
+ 337,  36  318x24  Parola değiştir
+ 389,  48  24x24  U+E3B1
+ 389, 318  24x24  U+F4A1
+ 393,  88  214x16  Mevcut parola
+ 457,  48  24x24  󰘮
+ 461,  88  182x16  Yeni parola
+ 525,  48  24x24  󰘮
+ 529,  88  250x16  Yeni parola (tekrar)
+ 595,  75  240x20  Parolayı güncelle
+ 685,  36  318x24  İletişim
+ 737,  48  24x24  U+F290
+ 737,  88  250x24  örn. +905551112233
+ 741,  88  116x16  Telefon
+ 785,  36  242x24  Aranabilir
+ 809,  36  242x100  Yetkili roller (rıza gerektiren arama) numaranıza ulaşabilir
+ 939,  82  226x20  İletişimi kaydet

@@ -1,0 +1,9 @@
+  14,  16  308x28  SİTE KURALLARI
+  16, 354  24x24  U+E514
+  80,  68  290x24  Başlıkta ara (örn. havuz)
+  83,  31  18x18  U+E567
+ 144,  32  20x20  U+F0C0
+ 144,  58  300x20  Havuz Saatleri
+ 168,  32  326x40  Havuz SS:DD-SS:DD arasi aciktir.
+ 788, 181  24x24  U+F2C2
+ 790, 213  141x20  Yeni kural

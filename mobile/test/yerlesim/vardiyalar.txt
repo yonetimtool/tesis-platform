@@ -1,0 +1,5 @@
+  14,  16  220x28  VARDİYALAR
+  80,  32  318x24  Gece devriyesi
+ 104,  32  318x40  SS:DD - SS:DD • Her gün
+ 176,  32  318x24  Gunduz devriyesi
+ 200,  32  318x40  SS:DD - SS:DD • Hafta içi

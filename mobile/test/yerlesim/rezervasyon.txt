@@ -1,0 +1,10 @@
+  14,  16  242x28  REZERVASYON
+  16, 354  24x24  U+E514
+  69,  16  163x20  Rezervasyonlar (1)
+  69, 215  155x20  Alanlar (1)
+ 137,  32  20x20  U+F02F
+ 137,  58  211x20  Havuz
+ 138, 277  74x17  Onaylı
+ 161,  32  326x32  YYYY-AA-GG · SS:DD-SS:DD · 4 kişi
+ 219, 148  113x20  İptal et
+ 220, 122  18x18  U+EF28

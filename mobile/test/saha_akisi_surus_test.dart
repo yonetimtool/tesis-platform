@@ -675,4 +675,22 @@ void main() {
   testWidgets('ANIMASYON: Turlarim her karede tasmaz', (tester) async {
     await animasyonSurusu(tester, (dil) => _turlarimEkrani(Locale(dil)));
   });
+
+  // ---- TUR 60: YERLESIM KILIDI ----
+  testWidgets('KILIT: turlarim yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'turlarim', (dil) => _turlarimEkrani(Locale(dil)));
+  });
+  testWidgets('KILIT: gorev_detay yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'gorev_detay', (dil) => _gorevDetayEkrani(Locale(dil)));
+  });
+
+  // ---- TUR 60: OKUMA SIRASI ----
+  testWidgets('SIRA: Turlarim ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _turlarimEkrani(Locale(dil)));
+  });
+  testWidgets('SIRA: gorev detayi ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _gorevDetayEkrani(Locale(dil)));
+  });
 }

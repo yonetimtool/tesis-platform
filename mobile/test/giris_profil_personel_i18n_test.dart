@@ -495,4 +495,29 @@ void main() {
     await tumEksenlerSurusu(tester, (dil) => _personelEkrani(Locale(dil)),
         veri: surusVerisi, hazirla: menuEylemi(2), bekleyen: true);
   });
+
+  // ---- TUR 60: YERLESIM KILIDI ----
+  testWidgets('KILIT: giris yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'giris', (dil) => _girisEkrani(Locale(dil)));
+  });
+  testWidgets('KILIT: profil yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'profil', (dil) => _profilEkrani(Locale(dil)));
+  });
+  testWidgets('KILIT: personel yerlesimi', (tester) async {
+    await yerlesimKilidi(
+        tester, 'personel', (dil) => _personelEkrani(Locale(dil)));
+  });
+
+  // ---- TUR 60: OKUMA SIRASI ----
+  testWidgets('SIRA: giris ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _girisEkrani(Locale(dil)));
+  });
+  testWidgets('SIRA: profil ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _profilEkrani(Locale(dil)));
+  });
+  testWidgets('SIRA: personel ekran okuyucu sirasi', (tester) async {
+    await okumaSirasiSurusu(tester, (dil) => _personelEkrani(Locale(dil)));
+  });
 }

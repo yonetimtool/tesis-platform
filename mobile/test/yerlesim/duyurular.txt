@@ -1,0 +1,8 @@
+  14,  16  198x28  DUYURULAR
+  16, 354  24x24  U+E514
+  96, 330  24x24  U+E404
+  98,  32  286x20  Su kesintisi
+ 136,  32  257x20  Yarin SS:DD-SS:DD.
+ 164,  32  334x32  Yönetim · GG.AA.YYYY · SS:DD
+ 788, 167  24x24  U+EF27
+ 790, 199  155x20  Yeni duyuru

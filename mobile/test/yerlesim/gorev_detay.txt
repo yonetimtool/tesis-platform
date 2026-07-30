@@ -1,0 +1,15 @@
+  14,  16  330x28  HAVUZ TEMİZLİĞİ
+ 100,  36  24x24  U+E364
+ 102,  85  113x20  Temizlik
+ 140,  36  318x40  Havuz filtresi temizlenecek.
+ 236,  36  24x24  U+F29B
+ 238,  68  200x20  2. Foto kanıtı
+ 276,  53  145x17  Foto zorunlu
+ 334,  78  85x20  Kamera
+ 335,  52  18x18  U+E4B6
+ 386,  78  183x20  Galeriden seç
+ 387,  52  18x18  U+F29D
+ 472,  36  299x20  3. Not (isteğe bağlı)
+ 516,  52  286x72  Örn. çöp konteynerleri boşaltıldı
+ 654, 155  99x20  Tamamla
+ 655, 129  18x18  U+E156

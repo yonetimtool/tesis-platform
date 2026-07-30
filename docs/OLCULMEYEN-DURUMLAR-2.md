@@ -153,18 +153,80 @@ Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve
 > **138/0** (önce 54 satır / 9 ayrı kusur), panel birim testleri 105/105,
 > mobil dedektör 5/5.
 
+> **GÜNCELLEME (tur 60).** E'nin iki maddesi kapandı: **okuma sırası** ve
+> **görsel regresyon**.
+>
+> **Okuma sırası.** Mobilde sıra artık gerçek API'den okunuyor
+> (`debugListChildrenInOrder(traversalOrder)`) ve *geriye atlama* aranıyor;
+> 19 ekran × 2 dil (tr + ar), **0 ihlal**. Panelde karşılığı yeni bir araç:
+> `tools/okuma-sirasi-surusu.mjs` — DOM sırası ile görsel sıra karşılaştırılıyor
+> (CSS `order-*`, `flex-*-reverse`, absolute yerleşim sırayı bozabilir; axe
+> buna bakmaz), 24 sayfa × 2 dil = **48/0**.
+>
+> Kural iki kez düzeltildi, ikisi de dedektörün kendi sınaması sayesinde:
+> (1) ilk sürüm "arada boşluk olsun" istiyordu, bu yüzden **bitişik** satırların
+> ters okunmasını yakalamıyordu; (2) çok kolonlu kart ızgarasında yanlış alarm
+> veriyordu — okuyucu bir kartı bitirip sonraki kartın başına dönmesi
+> **doğru** davranıştır, bu yüzden dikey geri atlama artık yalnız **aynı
+> kolonda** ihlal sayılıyor. Panelde bu düzeltme panonun dört KPI kartındaki
+> dört yanlış alarmı kaldırdı.
+>
+> RTL'de bir ayrım öğrendim: Flutter gezinme sırasını semantik ağaçtaki
+> `textDirection`a göre kuruyor; **çıplak `Directionality` yetmiyor**,
+> `Localizations`/`MaterialApp` zinciri gerekiyor. Sentetik kurguyla yapılan
+> RTL ölçümü ürünü değil kurguyu ölçer — dedektör testi bu yüzden gerçek
+> `l10nApp(locale: ar)` yolunu kullanıyor.
+>
+> **Görsel regresyon.** Piksel golden'ı bilinçli olarak regresyon testi
+> yapılmamıştı (font/Skia'ya duyarlı, diff'i okunamaz). Yerine **yerleşim
+> kilidi**: her görünür yazının konumu + ölçüsü + içeriği sıralanıp
+> `test/yerlesim/<ad>.txt` dosyasına yazılıyor; diff okunabilir ("şu yazı 12 px
+> aşağı kaydı"). **19 ekran kilitlendi** (önce 1 golden vardı, o da regresyon
+> değildi). Bilinçli güncelleme:
+> `flutter test --dart-define=KILIT_GUNCELLE=true`.
+>
+> Kilit ilk kuruluşunda üç şey buldu: (1) `allRenderObjects` aynı
+> `RenderParagraph`ı altı kez veriyor — tekilleştirmeden diff okunmaz;
+> (2) fikstür verisi bilinçli olarak "şimdi"ye göreli olduğu için ekrandaki
+> saat/tarih **her dakika** sapma raporluyordu (konum/ölçü aynen korunup yalnız
+> saat/tarih parçası maskelendi); (3) üç ekran (`destek`, `vardiyalar`,
+> `yonetici_iletisim`) **boş hâl** çiziyordu — `enAz` eşiği yakaladı, dolu veri
+> verildi. Kilidin kendi testi kararlılığı ve **8 px'lik bir dolgu farkına
+> duyarlılığı** kanıtlıyor.
+>
+> **Panel dedektöründe bir tuzak daha:** `DENEY=1` enjeksiyonu
+> `DOMContentLoaded`da yapılınca React hidrasyonu düğümü **siliyor** ve dedektör
+> kendi kusurunu göremiyor. Enjeksiyon ölçümün hemen öncesine alındı (tur
+> 54'teki dersin aynısı). Ayrıca ihlal listesindeki **6'lık tavan** artık
+> "(+N ihlal daha — tavan)" satırıyla bildiriliyor: sessiz tavan, ölçülmemiş
+> alan demektir — ilk sürümde enjekte edilen kusur tam bu yüzden görünmedi.
+>
+> **Bir de kendi hatam:** `dart format test/*.dart` çalıştırdım ve 112 dosya
+> yeniden biçimlendi (tur 40'ta aynı hatayı yapmıştım). Depodaki dosyalar eski
+> formatter stilinde; yeni SDK stili her dosyayı baştan sona değiştiriyor.
+> İlgisiz 107 dosya geri alındı. Bu sırada ikinci bir hata ortaya çıktı: yeni
+> test bloklarını "son `});`den sonra" ekleyen betiğim blokları bir `for`
+> döngüsünün/grubun içine koymuş, bu yüzden bazı testler iki-üç kez
+> kaydolmuştu; ayrıca `main`den sonra üst düzey sınıf tanımı olan dosyalarda
+> (`bina_complaints`'te `_PatlayanMapApi`) blok sınıfın içine düşüyordu.
+> Ekleme artık `void main(` satırından sonraki ilk sıfır-girintili `}` önüne
+> yapılıyor ve her test bir kez koşuyor.
+>
+> **Sayılar:** okuma sırası mobil 19 ekran × 2 dil → **0 ihlal**; panel
+> **48/0**; yerleşim kilidi **19 ekran** (kilit dosyaları git'te); dedektör
+> testleri mobil **4 + 3**, panel `DENEY=1` **OK**.
+
 ## E. Kalite eksenleri (hiç kurulmamış)
 
-* **Anlamsal okuma SIRASI.** Etiketlerin *varlığı* ölçüldü (tur 29/30), sırası
-  değil. Ekran okuyucu yanlış sırada okuyabilir.
+* ~~**Anlamsal okuma SIRASI.**~~ **KAPANDI (tur 60).** Etiketlerin *varlığı*
+  tur 29/30'da ölçülmüştü, sırası ölçülmüyordu.
 * ~~**Canlı bölge duyurusu.**~~ **KAPANDI (tur 56).** Panelde `ErrorBox`,
   `/login` ve `/dashboard` hata kutularına `role="alert"`; mobilde statik hata
   bantlarına `Semantics(liveRegion: true)`. **Bu maddedeki iddiam kısmen
   yanlıştı:** Flutter'ın `SnackBar`'ı zaten `liveRegion: true` kullanıyor, yani
   tur 45'in push bildirimi sessiz değildi; eksik olan statik bantlardı.
-* **Görsel regresyon.** Tek bir golden testi var
-  (`test/tools/home_referans_golden_test.dart`); geri kalan 46 ekranın
-  görünümü hiçbir yerde kilitli değil.
+* ~~**Görsel regresyon.**~~ **KAPANDI (tur 60)** — piksel yerine yerleşim
+  kilidiyle: `test/yerlesim/*.txt`, 19 ekran.
 * **Performans.** Uzun listede kaydırma, büyük fotoğrafın bellek etkisi.
 
 > **GÜNCELLEME (tur 58).** F **kapandı**: complaint `reddedildi`, kargo
