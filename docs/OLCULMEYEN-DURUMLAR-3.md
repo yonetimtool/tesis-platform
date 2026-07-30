@@ -21,7 +21,7 @@ araçların kendi kodundan geliyor.
 
 ---
 
-## A. Denetleyiciler (controller) — kapsam açığının yeni merkezi
+## A. Denetleyiciler (controller) — kapsam açığının yeni merkezi ✔ **KISMEN KAPANDI (tur 63)**
 
 Ekranlar sürülüyor, ama **denetleyicilerin dalları** sürülmüyor. Sürüşler API'yi
 sahteliyor ve sahte **başarı** dönüyor; hata/yeniden dene/iptal/eşzamanlılık
@@ -208,3 +208,50 @@ dönüyordu; `mesaj_kimlik` + `mesaj_veri`den okuma anında üretmeye çevrildi 
 
 **Sırada (A ve E):** denetleyici dalları (kapsam açığının merkezi) ve
 eşzamanlılık + odak görünürlüğü.
+
+---
+
+## Tur 63'te kapatılanlar (A maddesi — dört denetleyici)
+
+Denetleyiciler **widget çizmeden** sürüldü: `ProviderContainer` + sahte API/servis
+ile doğrudan durum geçişleri ölçülüyor. Bu, sürüş yardımcılarının yapamadığı şey
+— onlar ekranı boyar, karar dallarına girmez.
+
+| Dosya | Önce | Sonra | Test |
+|---|---|---|---|
+| `nfc_controller` | %26 | **%96,3** | 7 |
+| `assets_controller` | %28 | **%98,6** | 22 |
+| `complaints_controller` | %35 | **%93,4** | 21 |
+| `task_complete_controller` | %48 | **%99,3** | 22 |
+
+Ölçülen dal sınıfları: ağ / ağ-dışı hata ayrımı (mesaj kanalı vs kimlik
+kanalı), beklenmeyen hata, **409 yarışı** (başkası aldı → kart taze durumla
+yeniden çizilir; tazeleme de patlarsa kart eski kalır, çökme yok), 403 →
+`forbidden`, çevrimdışı, yeniden-girme kilitleri (eşzamanlı iki çağrı → tek
+istek), iptal/vazgeçme, yeniden dene, 3-yuva sınırı, foto **zorunlu** kapısı ve
+"foto henüz yüklenmedi" kapısı (ikisi de **sunucuya gitmeden** durdurur — istek
+sayacıyla doğrulandı), `onDispose`ta NFC oturumunun bırakılması (tur 37'nin ürün
+hatasının nöbetçisi).
+
+**Test yazarken öğrenilen üç şey — hepsi ölçümü sessizce bozabilirdi:**
+
+1. **Dinleyicisiz `ProviderContainer` ölçmüyor.** `build()` içindeki
+   `Future.microtask` dinleyicisi olmayan sağlayıcıda `ref.mounted == false`
+   görüp **durumu yazmadan** dönüyor; ayrıca sağlayıcı okumalar arasında yeniden
+   kurulup durumu sıfırlıyor (bir foto yuvası "kayboldu" sanıldı). Kap artık her
+   sağlayıcıyı dinliyor.
+2. **`retry` fotoğrafı YOLDAN yeniden okuyor.** Uydurma yol verilirse tekrar
+   deneme daima genel hataya düşer. Testte gerçek geçici dosya kullanılıyor — ve
+   bu arada bir **ürün davranışı** kayda geçti: geçici dosya silinmişse kullanıcı
+   "dosya artık yok" değil "yüklenemedi" görüyor.
+3. **`submit` başarı dalı liste rozetini güncelliyor** (`markCompleted`); gerçek
+   liste denetleyicisi kendi bağımlılıklarını istediği için test patlıyordu.
+   Sahte denetleyici hem patlamayı önlüyor hem rozet güncellemesini doğruluyor.
+
+**Sayılar:** mobil test **1 216 → 1 288**; `presentation` kapsamı
+**%70,4 → %72,4**; `lib/src` %61,4 → %62,4; `flutter analyze` temiz.
+
+**Kalan (A):** `patrol_tracking_screen` (%28), `settings_screen` (%36),
+`task_categories_screen` (%49), `patrol_plans_screen` (%52) — bunlar ekran, yani
+denetleyici deseni doğrudan uygulanmıyor; canlı tur takibi konum akışı
+gerektiriyor.
