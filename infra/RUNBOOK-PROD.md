@@ -117,9 +117,16 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod ps
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.prod \
-  run --rm api python -m scripts.create_admin --email admin@firmaniz.com
+  run --rm worker python -m scripts.create_admin --email admin@firmaniz.com
 # Parola güvenli şekilde sorulur (ekranda görünmez, 8+ karakter, büyük harf+rakam+sembol).
 ```
+
+> ⚠️ **`worker`, `api` değil.** Betik RLS'i bypass etmek için OWNER (superuser)
+> bağlantısı ister; prod'da `api` servisine superuser DSN'i **bilinçli olarak
+> verilmez** (internete bakan süreç yalnız RLS'e tabi `app_rw` taşır).
+> `worker`/`beat` aynı imajdır ve `OWNER_DSN` taşır. (Tur 72'ye kadar burada
+> `api` yazıyordu — prod'da `OWNER_DSN` tanımsız olduğu için komut
+> "password authentication failed for user" ile düşerdi.)
 
 Çıktıdaki **Tenant (slug)** değeri (varsayılan `yonetio`) panel girişindeki
 "Tesis" alanına yazılır. (Bu komut idempotenttir; tekrar çalıştırmak admin
@@ -218,7 +225,7 @@ $C ps                     # sağlık durumları
 | **Push gelmiyor** | Beklenen (varsayılan noop). FCM için §5 + `PUSH_PROVIDER=fcm`; `$C logs worker` "unconfigured" diyorsa JSON yolu/`project_id` eksik. |
 | **Çeviri gelmiyor (içerik hep Türkçe)** | Beklenen olabilir: modeller inmemiş olabilir (`$C logs libretranslate`, `$C ps`). Kontrol: `$C exec api python -c "import urllib.request;print(urllib.request.urlopen('http://libretranslate:5000/languages').status)"` → 200 olmalı. `TRANSLATE_PROVIDER=libretranslate` mi? `worker` ayakta mı (çeviri işi orada koşar)? |
 | **`ceviri_durumu: hata` kalıyor** | Motor erişilemiyor ya da model yok. İçerik **etkilenmez** (orijinal servis edilir). `$C logs worker` çeviri hatasını yazar; motor healthy olunca içerik düzenlenince (ya da yeniden kuyruklanınca) tekrar denenir. |
-| **create_admin RLS hatası** | Komut `api` imajından `run --rm` ile çalışmalı (OWNER_DSN taşır); `--env-file .env.prod` verildiğinden emin olun. |
+| **create_admin "OWNER_DSN tanımsız"** | Komutu `api` değil **`worker`** ile çalıştırın (`run --rm worker ...`); OWNER_DSN yalnız worker/beat'te tanımlıdır. `--env-file .env.prod` verildiğinden emin olun. |
 
 ---
 

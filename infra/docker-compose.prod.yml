@@ -7,8 +7,10 @@
 # Kullanim (bkz. infra/RUNBOOK-PROD.md):
 #   cd infra && cp .env.prod.example .env.prod && $EDITOR .env.prod
 #   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
-#   docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm api \
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm worker \
 #       python -m scripts.create_admin --email you@firma.com
+#   (worker, api DEGIL: OWNER_DSN yalniz worker/beat'te tanimli — api'ye
+#    superuser DSN'i bilincli olarak verilmez.)
 #
 # NOT: seed servisi YOKTUR (prod'da demo veri uretilmez). Ilk admin
 # scripts/create_admin.py ile kurulur.
@@ -52,7 +54,7 @@ services:
     environment:
       <<: *tz
       POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -89,7 +91,7 @@ services:
     environment:
       <<: *tz
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD gerekli}
       MINIO_BROWSER: "off"   # web konsolu prod'da kapali
     volumes:
       - miniodata:/data
@@ -106,7 +108,7 @@ services:
     environment:
       <<: *tz
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD gerekli}
       MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
     entrypoint:
       - /bin/sh
@@ -183,10 +185,10 @@ services:
         condition: service_healthy
     environment:
       <<: *tz
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
+      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       APP_DB_USER: ${APP_DB_USER}
-      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}
     volumes:
       - ../contracts:/contracts:ro
       - ./scripts:/scripts:ro
@@ -217,9 +219,9 @@ services:
     environment:
       <<: *tz
       # Uygulama app_rw (async asyncpg) ile baglanir — RLS'e TABI.
-      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET gerekli (bos birakilirsa token BOS anahtarla imzalanir)}
       SDM_KEK: ${SDM_KEK}
       # CORS: panel origin'i (tarayici -> API dogrudan cagri; prod'da acilir).
       CORS_ORIGINS: ${CORS_ORIGINS}
@@ -227,7 +229,7 @@ services:
       # api sunucu-tarafi MinIO cagrisi YAPMAZ (presign yerel imzalanir).
       MINIO_ENDPOINT: ${MINIO_PUBLIC_URL}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD gerekli}
       MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
       # Odeme (opsiyonel; varsayilan manual — gercek anahtar yoksa dokunma).
       PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-manual}
@@ -271,14 +273,14 @@ services:
         condition: service_completed_successfully
     environment:
       <<: *tz
-      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET}
-      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET gerekli (bos birakilirsa token BOS anahtarla imzalanir)}
+      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
+      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       MINIO_ENDPOINT: ${MINIO_PUBLIC_URL}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD gerekli}
       MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-noop}
       # Icerik cevirisi: prod'da GERCEK motor (ic ag). Kapatmak icin
@@ -304,11 +306,11 @@ services:
         condition: service_completed_successfully
     environment:
       <<: *tz
-      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET}
-      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET gerekli (bos birakilirsa token BOS anahtarla imzalanir)}
+      OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
+      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
     command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
     networks: [tesisnet]
     restart: unless-stopped

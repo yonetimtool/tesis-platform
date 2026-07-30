@@ -8,9 +8,15 @@ Neden tenant gerekir? Login `(tenant_slug, email, parola)` ile calisir ve her
 app_user bir tenant'a baglidir; bu yuzden admin'i barindiran minimal bir tenant
 sart. Bu tenant'in slug'i panel giris ekranindaki "Tesis (slug)" alanina yazilir.
 
-Calistirma (api imaji icinden — app modullerini ve OWNER_DSN'i tasir):
+Calistirma — `worker` servisinden (app modullerini VE OWNER_DSN'i tasir):
     docker compose -f docker-compose.prod.yml --env-file .env.prod \
-        run --rm api python -m scripts.create_admin --email you@firma.com
+        run --rm worker python -m scripts.create_admin --email you@firma.com
+
+    DIKKAT: `api` DEGIL. Prod'da api servisine superuser (OWNER) DSN'i BILINCLI
+    olarak verilmez — internete (Caddy uzerinden) bakan surec yalniz RLS'e tabi
+    app_rw kimligini tasir. `worker`/`beat` ayni imajdir ve OWNER_DSN'i tasir.
+    (Tur 72'ye kadar bu dosya ve runbook `api` diyordu; prod'da OWNER_DSN
+    tanimsiz oldugu icin komut "password authentication failed" ile duserdi.)
 
     # parola bayragi verilmezse guvenli sekilde sorulur (ekranda gorunmez):
     #   ... python -m scripts.create_admin --email you@firma.com
@@ -36,10 +42,11 @@ import psycopg
 
 from app.security import hash_password
 
-OWNER_DSN = os.getenv(
-    "OWNER_DSN",
-    "postgresql://tesis_owner:owner_secret_change_me@db:5432/tesis",
-)
+# OWNER_DSN'in SABIT KODLU bir yedegi YOK. Onceden dev parolasini
+# ("owner_secret_change_me") iceren bir yedek vardi; dev'de kaza eseri dogru
+# oldugu icin calisiyor, prod'da ise sessizce YANLIS parolayla baglanmayi
+# deneyip anlasilmaz bir kimlik hatasi veriyordu. Eksikse ERKEN ve NET patlar.
+OWNER_DSN = os.getenv("OWNER_DSN", "")
 
 # schemas.validate_password_strength ile ayni kurallar (panel/mobil ile tutarli).
 _PW_UPPER = re.compile(r"[A-ZĞÜŞİÖÇ]")
@@ -91,6 +98,17 @@ def main() -> int:
         "--tenant-name", default="Yönetio Platform", help="Bootstrap tenant adi."
     )
     args = ap.parse_args()
+
+    if not OWNER_DSN:
+        print(
+            "OWNER_DSN tanimsiz. Bu betik RLS'i bypass etmek icin OWNER "
+            "(superuser) baglantisi ister.\n"
+            "  Prod: `run --rm worker python -m scripts.create_admin ...` "
+            "(api DEGIL — api'de superuser DSN'i bilincli olarak yoktur).\n"
+            "  Elle: OWNER_DSN=postgresql://<owner>:<parola>@db:5432/<db>",
+            file=sys.stderr,
+        )
+        return 2
 
     email = (args.email or input("Admin e-postasi: ")).strip().lower()
     if "@" not in email:

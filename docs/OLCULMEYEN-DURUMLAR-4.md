@@ -173,9 +173,53 @@ gerekçesiyle yazılı.
    *satır* düzeyinde ölçüm yok; React bileşenlerini jsdom ile test etmek ayrı
    bir altyapı kararı (bilinçli olarak yapılmamıştı — `vitest.config.ts`
    başındaki nota bakın).
-4. **Prod dağıtım yolu.** `infra/*.prod`, Caddy TLS, yedekleme betiği ve
-   `RUNBOOK-PROD.md` hiçbir otomatik ölçümde yok; tur 41'de prod erişimi
-   kullanıcıya bırakılmıştı ve teyit edilmedi.
+4. **Prod dağıtım yolu.** **KISMEN KAPANDI (tur 72)** —
+   `infra/prod-denetimi.py`. Prod yığını *yerelde ayağa kaldırılmadan* da
+   ölçülebilen bir şey vardı: **dosyalar arası tutarlılık**. Dokuz kontrol
+   (A–I), her biri "operatör runbook'u harfiyen uygular ve yine de bozuk bir
+   kurulum elde eder" sınıfından bir hata arıyor. İlk koşumda **iki gerçek
+   bulgu**:
+
+   **(1) Prod ilk-admin komutu ÇALIŞAMAZ.** Runbook §7 ve compose başlığı
+   `run --rm api python -m scripts.create_admin` diyordu; troubleshooting
+   tablosu da "`api` imajı OWNER_DSN taşır" diye yazıyordu. Prod compose'da
+   api servisinde `OWNER_DSN` **yok** — ve bilinçli olarak yok: internete
+   (Caddy) bakan süreç yalnız RLS'e tabi `app_rw` taşır. Betik ise eksik
+   değişkende **sabit kodlu, dev parolası içeren** bir DSN'e düşüyordu
+   (`tesis_owner:owner_secret_change_me@db:5432/tesis`). Dev'de bu parola
+   *tesadüfen doğru* olduğu için komut dev'de çalışıyor, prod'da
+   `password authentication failed for user "tesis_owner"` veriyordu. Yani
+   prod yığını runbook izlenerek **bootstrap edilemezdi**.
+   Düzeltme: komut `worker` (aynı imaj, OWNER_DSN taşır); sabit kodlu yedek
+   kaldırıldı, eksikse betik net mesajla `exit 2` veriyor. İki yol da yeniden
+   derlenmiş imajla koşturularak doğrulandı.
+
+   **(2) `JWT_SECRET` boşken API ayağa kalkıyor.** compose `${JWT_SECRET}`
+   muhafızsızdı; eksik/boş değişken **boş string** olarak geçiyor ve
+   `config.py`'deki varsayılanı eziyor. Konteynerde ölçüldü:
+   `JWT_SECRET= → settings.jwt_secret == ''` — tokenlar **boş HMAC
+   anahtarıyla** imzalanır. Düzeltme: kritik sırlara `:?` muhafızı
+   (`JWT_SECRET`, `POSTGRES_PASSWORD`, `APP_DB_PASSWORD`,
+   `MINIO_ROOT_PASSWORD`); muhafız hem eksik hem **boş** değeri reddediyor
+   (ikisi de doğrulandı).
+
+   Muaf tutulanlar gerekçeleriyle araca yazıldı: `SDM_KEK` boşken **kapanır**
+   (nfc_sdm ValueError → 500 config_error, bilinçli tasarım);
+   `BACKUP_GPG_PASSPHRASE` kendi muhafızını backup.sh'de yapıyor; api'de
+   `OWNER_DSN`/`APP_DSN` yokluğu **tasarım**; `minio:9000` imaj varsayılanı.
+
+   Araç `DENEY=1..6` ile sınandı — tanımsız değişken, host portu sızıntısı,
+   çözük runbook servisi, bozuk Caddy upstream'i, uyuşmayan alan adı ve
+   silinmiş `.gitignore` deseni enjekte edildiğinde ilgili kontrol kırmızı
+   döndü.
+
+   **AÇIK KALAN:** yığının *canlı* sürüşü. Prod compose'u yerelde
+   (`.localhost` alanları + Caddy iç CA'sı ile, ayrı proje/volume) kaldırıp
+   TLS, güvenlik başlıkları, HTTP→HTTPS ve **presigned PUT/GET zinciri**
+   (Host korunuyor mu → s3v4 imzası geçerli mi) ölçülecekti; `up -d --build`
+   komutu izin katmanı tarafından "prod'a dağıtım" olarak engellendi.
+   Ölçülmemiş kalan: sertifika/başlık davranışı, storage imza zinciri,
+   libretranslate ilk-açılış modeli (~1-2 GB).
 5. ~~**Migrasyon geri alma (rollback).**~~ **KAPANDI (tur 71)** —
    `infra/goc-tersinirlik.sh`. Sekiz migrasyonun `downgrade()` kodu yazılmıştı
    ama **hiç çalıştırılmamıştı**: `migrate` servisi yalnızca `upgrade head`
@@ -215,5 +259,6 @@ gerekçesiyle yazılı.
 1. **Backend kapsamının düşük bölgeleri** (D2) — sayı artık var, hedefleme
    yapılabilir.
 2. ~~Migrasyon geri alma~~ (D5) — **kapandı, tur 71**; üç kontrol de temiz.
-3. **Prod dağıtım yolu** (D4) — en riskli ama en zor ölçülen.
+3. **Prod dağıtım yolu** (D4) — statik denetim kapandı (tur 72, 2 gerçek
+   bulgu); **canlı yığın sürüşü** hâlâ açık.
 4. Kare bütçesi (D1) — ortam kurulumu gerektiriyor.
