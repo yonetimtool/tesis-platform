@@ -4889,6 +4889,12 @@ paths:
       tags: [health]
       summary: Servis sagligi (altyapi kontrolu)
       description: Kimlik gerektirmez; yukleyici/izleme icin.
+      # PUBLIC BEYANI (tur 74). Global `security: [bearerAuth]` gecerliyken bu
+      # uc kimliksiz 200 donuyordu ama beyan edilmemisti; yetki supurmesi
+      # (tests/test_yetki_kapsam.py) bunu sapma olarak bildirdi. Kimliksiz
+      # erisilebilen her uc BURADA beyan edilmeli — beyan, koddaki davranisin
+      # tek denetlenebilir kaydidir.
+      security: []
       responses:
         '200': { description: ayakta }
   /me:
