@@ -150,6 +150,43 @@ Sondanın "her şeye 403 diyor" olmadığı da gösterildi: aynı yönetici toke
 geçer (panelin işi tam olarak bu). Ölçülen şey admin'in kısıtlanması değil,
 admin *olmayan* hiçbir rolün bu yüzeye erişememesi.
 
+## KAPANDI (tur 76) — yabancı anahtar indeksleri; ve ölçüm aracının kendisi üç kez yanlıştı
+
+Postgres bir yabancı anahtar tanımlarken **referans eden** taraf için indeks
+oluşturmaz. İndeks yoksa üst satır silinince RI tetiği referans eden tabloyu
+seq scan eder (`delete_tenant` 47 tabloya dokunuyor) ve o kolon üzerinden her
+join veri büyüdükçe doğrusal yavaşlar. Veri küçükken **görünmeyen** bir sınıf.
+
+**Ölçüm (108 yabancı anahtar):** 69'unun kolon *kümesini* tam kapsayan indeksi
+var, 39'unun **öncü kolonunu** kapsayan indeksi var (hepsi `(<x>_id, tenant_id)`
+biçimi bileşik FK; `(<x>_id)` üzerindeki tek-kolon indeks RI sorgusunda
+kullanılır, kalan kolon filtreyle elenir), **0 tanesi indekssiz**. Kusur yok;
+`backend/tests/test_indeks_kapsam.py` durumu kilitliyor — yeni bir FK
+indekssiz eklenirse test kırılır (enjeksiyonla doğrulandı: indekssiz FK →
+kırmızı, indeks eklenince → yeşil).
+
+**Bu turun asıl bulgusu ölçüm aracıydı.** Sorgu üç kez yanlış yazıldı:
+
+1. **İlk hâli sıra-duyarlıydı** — `(a,b)` FK'sını yalnız `(a,b)` sıralı indeks
+   karşılıyor sandım. Oysa RI sorgusu `WHERE a=$1 AND b=$2`, yani küme yeter.
+2. **Küme karşılaştırmasına geçtim, sayı değişmedi (78/108)** — bu bir uyarı
+   işaretiydi ve ilk anda öyle okumadım.
+3. **Gerçek hata:** `pg_index.indkey` bir `int2vector`'dür ve dizi olarak
+   **0-tabanlıdır**. `(indkey::int2[])[1:n]` yazmak **ilk kolonu atlar**. Doğru
+   dilim `[0:n-1]`. Bu off-by-one, "108 FK'nin 78'i indekssiz" gibi tamamen
+   uydurma ama tamamen makul görünen bir sayı üretti.
+
+Yakalanmasının tek yolu **tek bir satırı elde doğrulamak** oldu: `scan_event`
+için `pg_indexes`'e bakıldığında `ix_scan_tenant ON (tenant_id)` apaçık
+duruyordu, oysa araç o FK'yı "indekssiz" diye bildiriyordu. Yani sayıyı değil,
+sayının bir örneğini bağımsız kaynakla karşılaştırmak kurtardı — tur 69'daki
+(erişim günlüğü ile kapsam raporu) ve tur 68'deki (bilinen-test-edilmiş dosya)
+aynı yöntem.
+
+Not: **indeks kullanımı** (EXPLAIN, gerçek veri hacmiyle) hâlâ ölçülmedi.
+Şemada indeks *var mı* sorusu ile sorgunun onu *kullanıyor mu* sorusu ayrı;
+ikincisi temsil edici hacim gerektiriyor.
+
 ## Açık kalanlar
 
 1. **Canlı prod yığın sürüşü** (tur 72'den devir). Prod compose'u yerelde
@@ -164,12 +201,16 @@ admin *olmayan* hiçbir rolün bu yüzeye erişememesi.
 4. ~~**Yetkilendirme matrisi.**~~ **KAPANDI (tur 74)** — yukarıya bakın.
    Kalan alt katman: **handler içinde role göre içerik daraltma** (aynı uç,
    farklı gövde). Kilit bunu görmüyor.
-5. **Sıcak sorgularda indeks kullanımı.** `EXPLAIN` hiçbir ölçümde yok; N+1
-   ya da seq-scan regresyonu görünmez.
+5. **Sıcak sorgularda indeks KULLANIMI.** Şema tarafı tur 76'da kapandı
+   (indekssiz FK yok). Ama `EXPLAIN` hiçbir ölçümde yok: sorgunun indeksi
+   gerçekten kullandığı, N+1 olmadığı ve seq-scan regresyonu girmediği
+   ölçülmüyor. Temsil edici veri hacmi gerektiriyor (dev'de tek tenant var).
 
 ## Öneri sırası
 
 1. ~~`SECURITY DEFINER` fonksiyonları~~ — **kapandı, tur 75**; üçü de temiz.
-2. **Sıcak sorgu indeksleri** (5) — ölçülebilir, kalıcı çıktı üretir.
+2. **Sıcak sorgu `EXPLAIN`'i hacimli veriyle** (5) — şema tarafı tur 76'da
+   kapandı; kullanım tarafı için tek-kullanımlık bir veritabanına sentetik
+   hacim yazmak gerekiyor.
 3. Canlı prod sürüşü (1) — izin gerektiriyor.
 4. Kare bütçesi (2) — ortam kurulumu gerektiriyor.
