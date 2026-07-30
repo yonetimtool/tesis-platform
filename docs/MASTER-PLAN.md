@@ -557,11 +557,29 @@ Belge açık bir **KARAR SATIRI** ile bitiyor; karar "git" olursa ilk adım kod
 değil, aydınlatma metni + rıza formunun hukukçuya yazdırılması.
 
 ### P21 — "Translate this content" button: evaluation note
-Status: BEKLIYOR · Depends-on: P7
+Status: BITTI · Depends-on: P7
 Scope: Short design note for on-demand translation of user-generated text
 (complaints/comments): where it appears, "otomatik çevrilmiştir" labeling, cost
 implications, provider reuse. Low priority; note only.
 Acceptance: note committed.
+Notes (2026-07-30): `docs/talep-uzerine-ceviri-notu.md`. Ana argüman: yayın
+içeriği (az sayıda, uzun ömürlü, çoktan-aza) YAZMA ANINDA 6 dile çevrilir —
+doğru karar. Kullanıcı metni tersidir (binlerce, 1–2 okuyucu, kapanınca ölü):
+1.000 şikâyet × 6 dil = 6.000 çevirinin çoğu HİÇ OKUNMAYACAK. Bu yüzden doğru
+şekil **talep üzerine, tek dile**: metnin altında "Çevir" bağlantısı, basınca
+yalnız o metin ve yalnız okuyanın diline.
+Uygulanacaksa yeni sağlayıcı/şema/görsel dil GEREKMEZ: hız sınırlı bir uç +
+`(metin_hash, hedef_dil)` önbelleği (mevcut `kaynak_ozet` kalıbının aynısı) +
+P7'nin `CeviriNotu` bileşeninin yeniden kullanımı.
+ŞİMDİ YAPILMAMA GEREKÇESİ: (1) kalite engeli önce çözülmeli — P14 ölçümü alan
+terimlerinin bozulduğunu gösterdi, şikâyet metni (yazım hatası/argo/eksik
+cümle) daha da zor; bugünkü kaliteyle düğme anlaşılmaz çıktı verip güveni
+düşürür; (2) çok dilli sakin kütlesi oluşmadan ölü kod olur.
+KVKK NOTU (yeni bulgu): kullanıcı metni ÜÇÜNCÜ KİŞİ verisi içerebilir
+("3. kattaki Ahmet Bey…"). LibreTranslate kendi barındırmamızda dışarı
+çıkmaz; **DeepL'e geçilirse bu metinler yurt dışına aktarılır** — yayın
+içeriği kararı bunu KAPSAMAZ, ayrıca değerlendirilmelidir.
+Uygulama YOK.
 
 ### P22 — Mobile UX fix package
 Status: BEKLIYOR · Depends-on: —
@@ -841,6 +859,7 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+- 2026-07-30 · P21 · (bu commit) · Talep-uzerine ceviri DEGERLENDIRME NOTU (uygulama yok): yazma-aninda degil talep-uzerine + tek dil; kalite engeli once, DeepL'de ucuncu kisi verisi uyarisi.
 - 2026-07-30 · P20 · d8c552e · Yuz tanima v2 TASARIM NOTU (kod yok): kapsam 1:1 dogrulama, sablon cihazda, KVKK kosullari + "once P34'u olc" tavsiyesi + karar satiri.
 - 2026-07-30 · P15 · 7cfb492 · Frigate PoC ayri yiginda kosuldu: restream oynatilabilir dogrulandi, MQTT konu envanteri + olay yuku yakalandi, kaynak olculdu; ANPR ingest olay semasi taslagi yazildi.
 - 2026-07-30 · P14 · 395605c · Ceviri kalite kapisi: ar+ru anadil inceleme paketi (1.186 anahtar x 2) + LibreTranslate olcumu (48 ceviri) — TR kaynak icin YETERSIZ, uc secenekli saglayici karar notu (degisiklik YAPILMADI).
