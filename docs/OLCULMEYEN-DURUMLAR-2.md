@@ -331,12 +331,14 @@ Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve
 > karşılaştırma **harf duyarlı** kaldı, kelime sınırı korundu, ve varyant
 > sınıfı **kaynakta** yakalanıyor (statik tarama o dördünü zaten buldu).
 >
-> **Açık kalan (yeni):** panonun alarm metinleri **backend'de Türkçe üretilip
-> saklanıyor**; hangi dilde okunursa okunsun Türkçe görünüyor. Bildirim
-> gövdeleri için `push_metinleri.py`/`akis_metinleri.py` var ama `alarm`
-> tablosuna yazılan metin çeviriden geçmiyor. Bu ayrı bir tasarım kararı
-> (saklanan metni mi çevirmeli, yoksa yapı taşıyıp okuma anında mı üretmeli) —
-> bu turda dokunulmadı.
+> **~~Açık kalan (yeni)~~ — BU NOTUM YANLIŞTI, tur 62'de düzeltildi.** "Panonun
+> alarm metinleri backend'de Türkçe üretilip saklanıyor, ayrı bir tasarım
+> kararı" diye yazmıştım. Tasarım **zaten doğruydu**: kayıt tur 16'dan beri
+> metin değil **kimlik + veri** taşıyor (`mesaj_kimlik`, `mesaj_veri`) ve
+> `/notifications` bunu okuma anında istenen dilde üretiyor. Kusur tek bir
+> uçtaydı: `/dashboard/live` **deprecated** `mesaj` kolonunu dönüyordu. Yani bu
+> bir tasarım kararı değil, düzeltilebilir bir hataydı — "veri" etiketi bulguyu
+> kapatmanın en kolay ve en tehlikeli yolu.
 >
 > **Sayılar:** dar-ekran **1150** sayfa-dil-ölçü (`/tenants/[id]` dahil) → 3
 > bulgu → düzeltme sonrası 0; TR sızıntı **144/0**; okuyucu **350/0**; klavye

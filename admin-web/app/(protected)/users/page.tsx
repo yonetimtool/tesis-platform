@@ -308,11 +308,11 @@ export default function UsersPage() {
             </thead>
             <tbody>
               {(data?.items ?? []).map((u) => (
-                <tr key={u.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${u.is_active ? "" : "opacity-60"}`}>
+                <tr key={u.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${u.is_active ? "" : "bg-slate-50"}`}>
                   <td className="px-4 py-2.5">{u.ad}</td>
                   <td className="px-4 py-2.5 text-slate-600">{u.email}</td>
                   <td className="px-4 py-2.5 text-slate-600">
-                    {u.aranabilir ? "Evet" : "—"}
+                    {u.aranabilir ? t("ortakEvet") : "—"}
                   </td>
                   <td className="px-4 py-2.5">
                     <span

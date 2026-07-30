@@ -333,7 +333,7 @@ export default function IntegrationsPage() {
             {(data?.items ?? []).map((it) => {
               const tr = testResult[it.id];
               return (
-                <tr key={it.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${it.aktif ? "" : "opacity-60"}`}>
+                <tr key={it.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${it.aktif ? "" : "bg-slate-50"}`}>
                   <td className="px-4 py-2.5">{it.ad}</td>
                   <td className="px-4 py-2.5 text-slate-600">{it.channel_type}</td>
                   <td className="px-4 py-2.5 text-slate-600 max-w-[280px] truncate">
@@ -343,7 +343,7 @@ export default function IntegrationsPage() {
                     {it.auth_type}
                     {it.auth_secret_set ? " 🔒" : ""}
                   </td>
-                  <td className="px-4 py-2.5">{it.aktif ? "Evet" : "—"}</td>
+                  <td className="px-4 py-2.5">{it.aktif ? t("ortakEvet") : "—"}</td>
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex justify-end gap-2">

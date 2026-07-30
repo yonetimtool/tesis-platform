@@ -19,15 +19,40 @@ const require = createRequire(import.meta.url);
 const AXE = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
 const KOK = process.env.KOK ?? 'http://localhost:3120';
-const DILLER = ['tr', 'en', 'ar', 'ru', 'de', 'fr', 'es'];
+// DEDEKTOR SINAMASI (DENEY=1) — TUR 62.
+//
+// Ucuncu envanterin C maddesi: bu arac 350 kosumluk EN BUYUK surus ve
+// kendisini hic sinamiyordu. `DENEY=1` olcumden hemen once sayfaya IKI kasitli
+// kusur enjekte eder:
+//   1. `alt`siz gorsel   -> axe `image-alt` ihlali gormeli,
+//   2. `aria-label` icinde TURKCE metin -> TR SIZINTI gormeli.
+// Enjeksiyon hidrasyondan SONRA yapilir: `DOMContentLoaded`da eklenen dugumu
+// React siliyor (tur 60'ta bu tuzaga dusuldu).
+const DENEY = process.env.DENEY === '1';
+const _DILLER_TAM = ['tr', 'en', 'ar', 'ru', 'de', 'fr', 'es'];
 // TEMA da bir eksen (tur 32): kontrast KOYU zeminde bambaska cikar ve
 // tur 30 denetimi YALNIZ acik temada kosmustu. Tema `<html class="dark">`
 // ile ve `localStorage.theme` uzerinden kalicidir.
-const TEMALAR = ['light', 'dark'];
-const SAYFALAR = ['/login','/dashboard','/tenants','/shifts','/checkpoints','/patrol-plans',
+const TEMALAR_TAM = ['light', 'dark'];
+const SAYFALAR_TAM = ['/login','/dashboard','/tenants','/shifts','/checkpoints','/patrol-plans',
   '/tasks','/assets','/units','/building-editor','/schematic','/dues','/reports/dues',
   '/reports/patrols','/reports/tasks','/transparency','/users','/announcements','/complaints',
   '/notifications','/integrations','/support','/audit','/settings','/tenants/:id'];
+// DENEY kipinde tek dil/tema/sayfa: sinama hizli olsun.
+// DENEY dili `en`: TR sizinti kurali YALNIZ tr disi dillerde kosar, `tr` ile
+// sinasak o kural hic denenmemis olurdu (ilk sinamada "KOR" cikti ve sebebi
+// buydu — dedektorun dedektoru).
+const DILLER = DENEY ? ['en'] : _DILLER_TAM;
+const TEMALAR = DENEY ? ['light'] : TEMALAR_TAM;
+// SADECE='/integrations,/users' → yalniz o sayfalar. Bir bulgu duzeltildikten
+// sonra 350 kosumluk tam surusu beklemeden dogrulamak icin (tur 62;
+// `dar-ekran-surusu`daki ayni kolaylik).
+const _SUZGEC = (process.env.SADECE ?? '').split(',').filter(Boolean);
+const SAYFALAR = DENEY
+  ? ['/dashboard']
+  : _SUZGEC.length
+    ? SAYFALAR_TAM.filter((y) => _SUZGEC.some((f) => y.includes(f)))
+    : SAYFALAR_TAM;
 
 // YALNIZ Turkcede bulunan harfler (ç/ö/ü Almanca/Fransizca'da da var).
 const TR = /[ğışĞİŞ]/;
@@ -74,6 +99,22 @@ for (const dil of DILLER) {
   const yollar = await tesisYollariCoz(ctx, KOK, SAYFALAR);
   for (const yol of yollar) {
     await sayfa.goto(KOK + yol, { waitUntil: 'networkidle' }).catch(() => {});
+    if (DENEY) {
+      // Hidrasyon bitti; simdi kasitli kusurlari ekle (bkz. dosya basi).
+      await sayfa.evaluate(() => {
+        const kap = document.querySelector('main') ?? document.body;
+        const img = document.createElement('img');
+        img.src =
+          'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        img.width = 24;
+        img.height = 24;
+        kap.appendChild(img);          // alt YOK -> axe image-alt
+        const b = document.createElement('button');
+        b.setAttribute('aria-label', 'Deney: kayıt sil');  // TR sizinti
+        b.textContent = 'x';
+        kap.appendChild(b);
+      });
+    }
     await sayfa.addScriptTag({ content: AXE }).catch(() => {});
     const sonuc = await sayfa.evaluate(async () => {
       const r = await window.axe.run(document, {
@@ -112,6 +153,12 @@ for (const dil of DILLER) {
 }
 await tarayici.close();
 console.log(`kontrol: ${TEMALAR.length * DILLER.length * SAYFALAR.length} sayfa-dil-tema`);
+if (DENEY) {
+  const axeGordu = bulgular.some((b) => /AXE image-alt/.test(b[2]));
+  const trGordu = bulgular.some((b) => /TR SIZINTI/.test(b[2]));
+  console.log(`DEDEKTOR axe(image-alt): ${axeGordu ? 'OK' : 'KOR'}`);
+  console.log(`DEDEKTOR TR sizinti:     ${trGordu ? 'OK' : 'KOR'}`);
+}
 console.log(`BULGU: ${bulgular.length}`);
 const ozet = {};
 for (const [, , n] of bulgular) { const k = n.split(':')[0].slice(0, 45); ozet[k] = (ozet[k] ?? 0) + 1; }

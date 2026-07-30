@@ -632,4 +632,6 @@ export const ru: Sozluk = {
   daireTahsilEt: "Принять оплату",
   ortakEkleniyor: "Добавление...",
   aidatTahakkukEkle: "Добавить начисление",
+  ortakEvet2: "да",
+  tesisYoneticiBirincilEki: " (основной)",
 };

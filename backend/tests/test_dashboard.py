@@ -128,3 +128,33 @@ def test_e2e_missed_tour_appears_in_dashboard_alarms(client, world, owner_conn):
     assert alarm is not None
     assert alarm["tip"] == "kacirilan_tur"
     assert "mesaj" in alarm and alarm["mesaj"]
+
+
+def test_dashboard_alarm_mesaji_istegin_dilinde(client, world, owner_conn):
+    """TUR 62: alarm metni ISTEGIN dilinde uretilir.
+
+    Kayit tur 16'dan beri metin degil KIMLIK tasiyor (`mesaj_kimlik` +
+    `mesaj_veri`) — "ilk yazanin dili kalici olmasin" diye. `/notifications`
+    bunu kullaniyordu ama `/dashboard/live` DEPRECATED `mesaj` kolonunu
+    donuyordu; panonun alarm listesi alti dilde Turkce goruntuluyordu.
+    """
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    cp = _checkpoint(client, admin)
+    plan = _plan_with_checkpoints(client, admin, [cp["id"]])
+    _ins_window(owner_conn, world["a"], plan["id"], PAST_START, PAST_END)
+    detect_missed(now=NOW_AFTER)
+
+    def mesajlar(dil: str) -> list[str]:
+        h = dict(admin)
+        h["Accept-Language"] = dil
+        body = client.get("/dashboard/live", headers=h).json()
+        return [a["mesaj"] for a in body["son_alarmlar"]]
+
+    tr, en, de = mesajlar("tr"), mesajlar("en"), mesajlar("de")
+    assert tr and en and de
+    # Ayni kayit, UC AYRI metin: ceviri okuma aninda uretiliyor.
+    assert any("kaçırıldı" in m for m in tr), tr
+    assert any("was missed" in m for m in en), en
+    assert any("verpasst" in m for m in de), de
+    # Ve Ingilizce yanitta TURKCE metin KALMAMALI (eski davranisin nobetcisi).
+    assert not any("kaçırıldı" in m for m in en), en

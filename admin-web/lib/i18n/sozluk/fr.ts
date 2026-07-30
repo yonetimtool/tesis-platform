@@ -632,4 +632,6 @@ export const fr: Sozluk = {
   daireTahsilEt: "Encaisser",
   ortakEkleniyor: "Ajout...",
   aidatTahakkukEkle: "Ajouter une charge",
+  ortakEvet2: "oui",
+  tesisYoneticiBirincilEki: " (principal)",
 };

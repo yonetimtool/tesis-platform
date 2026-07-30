@@ -692,4 +692,6 @@ export const tr = {
   daireTahsilEt: "Tahsil et",
   ortakEkleniyor: "Ekleniyor...",
   aidatTahakkukEkle: "Tahakkuk ekle",
+  ortakEvet2: "evet",
+  tesisYoneticiBirincilEki: " (birincil)",
 } as const;

@@ -69,11 +69,11 @@ const KARISIK = [/>([^<>{}]{2,80})\{/g, /\}([^<>{}]{2,80})</g];
  * SURUSU de kacirmisti: sozlukte "Aktif" buyuk harfle, sayfada "aktif" —
  * birebir eslesme olmadigi icin gorunmedi (surus artik buyuk/kucuk harf
  * duyarsiz karsilastiriyor). */
-const UCLU = /[?:]\s*("([^"]{2,80})"|'([^']{2,80})')/g;
+const UCLU = /([?:])\s*("([^"]{2,80})"|'([^']{2,80})')/g;
 
 /** Ucluda cevrilmesi GEREKMEYEN teknik degerler. */
 const UCLU_TEKNIK =
-  /^(rtl|ltr|asc|desc|GET|POST|PATCH|PUT|DELETE|true|false|light|dark|auto|none|row|col|small|medium|large|default|platform|tenant|security|resident|yonetici|temizlik|kontrol|emerald|teal|amber|red|slate|indigo|application[/]json|[a-z_]+_[a-z_]+)$/;
+  /^(rtl|ltr|asc|desc|GET|POST|PATCH|PUT|DELETE|true|false|light|dark|auto|none|row|col|small|medium|large|default|platform|tenant|security|resident|yonetici|temizlik|kontrol|emerald|teal|amber|red|slate|indigo|application[/]json|page|[a-z_]+_[a-z_]+)$/;
 
 /** TAILWIND sinif dizgesi mi? Uclularin cogu `className` secimidir:
  * `kosul ? "bg-ink text-white" : "text-slate-600"`. Bunlar metin DEGIL. */
@@ -145,15 +145,25 @@ describe("sabit metin taramasi (tur 47)", () => {
           bulgular.push(`${yol}:${i + 1}  ${m[1]}="${t}"`);
         }
         for (const m of l.matchAll(UCLU)) {
-          const t = (m[2] ?? m[3] ?? "").trim();
+          const t = (m[3] ?? m[4] ?? "").trim();
           if (!harfVar(t) || IZINLI.test(t) || UCLU_TEKNIK.test(t)) continue;
           if (sinifMi(t)) continue;
+          // URL/sorgu parcasi metin degildir: `?cascade=true`, `&x=1`.
+          if (/^[?&]/.test(t) || /=/.test(t)) continue;
           // `t("anahtar")` argumani degil, DOGRUDAN dizge olmali.
           const onceki = l.slice(0, m.index);
           if (/\b(t|metin|ceviri)\s*\($/.test(onceki.trimEnd())) continue;
-          // Nesne/dizi anahtari ya da tip birlesimi olabilir: `{ ad: "x" }`,
-          // `"a" | "b"`. Iki nokta ONCESINDE tanimlayici varsa anahtar say.
-          if (/[\w\]]\s*$/.test(onceki.replace(/["'][^"']*["']$/, "").trimEnd())) {
+          // Nesne/dizi anahtari ya da tip birlesimi olabilir: `{ ad: "x" }`.
+          // TUR 62 DUZELTMESI: bu kontrol ONCE her iki operatore uygulaniyordu
+          // ve uclunun ILK dalini (`kosul ? "TR"`) HER ZAMAN atliyordu —
+          // cunku oncesinde daima bir tanimlayici (`it.aktif`) durur. Sonuc:
+          // `{it.aktif ? "Evet" : "—"}` gibi sizintilar gorunmuyordu (ikinci
+          // dal "—" izinli oldugu icin hic bulgu cikmiyordu). `?` oncesinde
+          // anahtar OLAMAZ; kontrol yalniz `:` icin anlamlidir.
+          if (
+            m[1] === ":" &&
+            /[\w\]]\s*$/.test(onceki.replace(/["'][^"']*["']$/, "").trimEnd())
+          ) {
             continue;
           }
           bulgular.push(`${yol}:${i + 1}  ucluda sabit: ${t}`);

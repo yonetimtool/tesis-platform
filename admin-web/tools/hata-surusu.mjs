@@ -29,9 +29,21 @@ const require = createRequire(import.meta.url);
 const AXE = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
 const KOK = process.env.KOK ?? 'http://localhost:3134';
-const DILLER = (process.env.DILLER ?? 'tr,en,ar,de').split(',');
-const KIPLER = (process.env.KIPLER ?? '500,cevrimdisi,403,yavas').split(',');
-const SAYFALAR = ['/dashboard', '/tenants', '/shifts', '/checkpoints', '/patrol-plans',
+const DILLER = process.env.DENEY === '1'
+  ? ['tr']
+  : (process.env.DILLER ?? 'tr,en,ar,de').split(',');
+// DEDEKTOR SINAMASI (DENEY=1) — TUR 62.
+//
+// Ucuncu envanterin C maddesi: bu arac dort HATA KIPI kosuyor ama kiplerin
+// gercekten uygulandigini kanitlayan hicbir sey yoktu. `DENEY=1` iki sey
+// dogrular:
+//   1. `500` kipinde sayfa GERCEKTEN hata gordu mu (API yaniti kesiliyor mu),
+//   2. "SESSIZ HATA" kurali calisiyor mu — uyari kutulari olcumden hemen once
+//      DOM'dan SILINIR ve bulgu cikmali (tur 54'te `mutasyon-surusu`nda ayni
+//      sinama kurulmustu).
+const DENEY = process.env.DENEY === '1';
+const KIPLER = DENEY ? ['500'] : (process.env.KIPLER ?? '500,cevrimdisi,403,yavas').split(',');
+const SAYFALAR = DENEY ? ['/dashboard'] : ['/dashboard', '/tenants', '/shifts', '/checkpoints', '/patrol-plans',
   '/tasks', '/assets', '/units', '/building-editor', '/schematic', '/dues', '/transparency',
   '/users', '/announcements', '/complaints', '/notifications', '/integrations', '/support',
   '/audit'];
@@ -91,6 +103,18 @@ for (const kip of KIPLER)
       await sayfa.goto(KOK + yol, { waitUntil: 'domcontentloaded' }).catch(() => {});
       await sayfa.waitForTimeout(1500);
 
+      if (DENEY) {
+        // Kasitli korluk: uyari/hata kutularini DOM'dan cikar. CSS ile
+        // gizlemek YETMEZ — tur 54'te gizleme form panelini de gizleyip
+        // dedektorun kendisini bozmustu.
+        await sayfa.evaluate(() => {
+          for (const el of document.querySelectorAll(
+            '[role=alert],[aria-live],.bg-red-50,.bg-amber-50',
+          )) {
+            el.remove();
+          }
+        });
+      }
       const d = await sayfa.evaluate(() => {
         const govde = document.querySelector('main') ?? document.body;
         const metin = govde.innerText.replace(/\s+/g, ' ').trim();
@@ -110,6 +134,8 @@ for (const kip of KIPLER)
       });
 
       // 1) Kipe gore beklenen GERI BILDIRIM var mi?
+      //    (DENEY kipinde uyari dugumleri olcumden ONCE silindi; bulgu
+      //    cikmazsa kural kordur.)
       if (kip === 'yavas') {
         // Yukleniyor halinde kullanici bir sey gormeli: iskelet, spinner ya
         // da "Yukleniyor" metni. Hicbiri yoksa ekran BOS gorunur ve kullanici
@@ -169,6 +195,10 @@ await tarayici.close();
 
 console.log(`kontrol: ${KIPLER.length * DILLER.length * SAYFALAR.length} sayfa-dil-kip`);
 console.log(`BULGU: ${bulgular.length}`);
+if (DENEY) {
+  const sessiz = bulgular.some((b) => /SESSIZ HATA/.test(b[2]));
+  console.log(`DEDEKTOR "SESSIZ HATA" kurali: ${sessiz ? 'OK' : 'KOR'}`);
+}
 const ozet = {};
 for (const [, , n] of bulgular) { const k = n.split(':')[0].slice(0, 45); ozet[k] = (ozet[k] ?? 0) + 1; }
 for (const [k, v] of Object.entries(ozet).sort((a, b) => b[1] - a[1])) console.log(`  ${v}x ${k}`);

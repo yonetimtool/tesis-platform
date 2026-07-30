@@ -24,6 +24,14 @@ const TEMALAR = ['light', 'dark'];
 // Doneme bagli rapor: seed verisi 2026 ortasinda — gecerli bir donem verilir.
 const DONEM = process.env.DONEM ?? '2026-06';
 
+// DEDEKTOR SINAMASI (DENEY=1) — TUR 62.
+//
+// Ucuncu envanterin C maddesi: bu arac formu gonderip sonuc satiri sayiyor ama
+// "gonderim GERCEKTEN oldu mu, satir sayimi calisiyor mu" hic kanitlanmamisti.
+// `DENEY=1` sonuc tablosunu olcumden hemen ONCE DOM'dan silip "SONUC YOK"
+// kuralinin devreye girdigini dogrular; ayrica gonderim sayaci raporlanir.
+const DENEY = process.env.DENEY === '1';
+
 const SAYFALAR = [
   {
     yol: '/reports/dues',
@@ -75,6 +83,13 @@ for (const tema of TEMALAR)
       }
       await dugme.click();
       await sayfa.waitForTimeout(1200);
+      if (DENEY) {
+        // Kasitli korluk: sonuc satirlarini kaldir. Kural calisiyorsa
+        // "SONUC YOK" bulgusu cikar.
+        await sayfa.evaluate(() => {
+          for (const tr of document.querySelectorAll('tbody tr')) tr.remove();
+        });
+      }
 
       // SONUC GELDI MI? Tablo satiri ya da bilinen bos-durum. Gelmediyse
       // olcum yapmanin anlami yok — "temiz" raporu bos cikardi.
@@ -142,5 +157,9 @@ console.log(`BULGU: ${bulgular.length}`);
 const ozet = {};
 for (const [, , n] of bulgular) { const k = n.split(':')[0].slice(0, 45); ozet[k] = (ozet[k] ?? 0) + 1; }
 for (const [k, v] of Object.entries(ozet).sort((a, b) => b[1] - a[1])) console.log(`  ${v}x ${k}`);
+if (DENEY) {
+  const gordu = bulgular.some((b) => /SONUC YOK/.test(b[2]));
+  console.log(`DEDEKTOR "SONUC YOK" kurali: ${gordu ? 'OK' : 'KOR'}`);
+}
 console.log('--- ornekler:');
 for (const b of bulgular.slice(0, 16)) console.log('  ' + b.join(' | '));

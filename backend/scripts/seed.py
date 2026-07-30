@@ -1604,6 +1604,105 @@ def main() -> int:
         # disarida `conn` kapali ve execute "connection is closed" verir
         # (tur 41'de ayni tuzaga dusuldu).
         # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # TUR 62 — DEMIRBAS / DIS HIZMET / ENTEGRASYON verisi.
+        #
+        # Ucuncu envanterin B maddesi: bu uc tablo dev veritabaninda TAMAMEN
+        # BOSTU. Panelin `/assets` sayfasi YEDI surus listesinde var ve
+        # yedisi de "Demirbas yok · Toplam 0" halini olcuyordu; satir, durum
+        # rozeti ve zimmet eylemlerinin koduna hic ugranmiyordu. `/integrations`
+        # ve mobil dis hizmet ekrani icin de ayni durum.
+        #
+        # Idempotent: ad bazli `ON CONFLICT DO NOTHING` yerine "yoksa ekle"
+        # (tabloda ad uzerinde kisit yok). NFC etiketi olan demirbas, `uq_asset_
+        # tenant_nfc` yuzunden tekrar eklenemez — bu da idempotensi saglar.
+        # ------------------------------------------------------------------
+        if conn.execute(
+            "SELECT count(*) FROM asset WHERE tenant_id=%s", (tenant_id,)
+        ).fetchone()[0] == 0:
+            # Enum'un UC durumu birden temsil edilir: musait / zimmetli /
+            # bakimda. Bir durum yoksa o ekran hali HIC surulemez (tur 58).
+            _demirbaslar = [
+                ("Dewalt matkap", "alet", "04AA11BB22", "musait",
+                 "Sarj adaptoru dahil."),
+                ("Telsiz seti (4'lu)", "ekipman", "04CC33DD44", "zimmetli",
+                 "Guvenlik ekibi kullaniyor."),
+                ("Elektrikli supurge", "ekipman", None, "bakimda",
+                 "Motor arizasi — servise gonderildi."),
+                ("Servis araci", "arac", None, "musait", "Plaka: 34 ABC 123"),
+            ]
+            _asset_ids = {}
+            for _ad, _kat, _uid, _durum, _acik in _demirbaslar:
+                _asset_ids[_ad] = conn.execute(
+                    "INSERT INTO asset (tenant_id, ad, kategori, nfc_tag_uid, "
+                    "durum, aciklama) VALUES (%s,%s,%s,%s,%s,%s) RETURNING id",
+                    (tenant_id, _ad, _kat, _uid, _durum, _acik),
+                ).fetchone()[0]
+
+            # ZIMMET GECMISI: biri ACIK (birakma_zamani NULL -> "islem
+            # suruyor" kartini besler), biri KAPALI (gecmis karti).
+            _guard = conn.execute(
+                "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
+                (tenant_id, "guard@acme.com"),
+            ).fetchone()[0]
+            conn.execute(
+                "INSERT INTO asset_checkout (tenant_id, asset_id, alan_user_id, "
+                "alma_zamani, alma_nfc_tag_uid, notlar, idempotency_key) "
+                "VALUES (%s,%s,%s, now() - interval '3 hours', %s,%s,%s)",
+                (tenant_id, _asset_ids["Telsiz seti (4'lu)"], _guard,
+                 "04CC33DD44", "Gece vardiyasi icin alindi.",
+                 "seed-zimmet-acik"),
+            )
+            conn.execute(
+                "INSERT INTO asset_checkout (tenant_id, asset_id, alan_user_id, "
+                "birakan_user_id, alma_zamani, birakma_zamani, notlar, "
+                "idempotency_key, birakma_idempotency_key) "
+                "VALUES (%s,%s,%s,%s, now() - interval '2 days', "
+                "now() - interval '2 days' + interval '6 hours', %s,%s,%s)",
+                (tenant_id, _asset_ids["Dewalt matkap"], _guard, _guard,
+                 "Kat koridoru tamiri.", "seed-zimmet-kapali-al",
+                 "seed-zimmet-kapali-birak"),
+            )
+
+        if conn.execute(
+            "SELECT count(*) FROM dis_hizmet WHERE tenant_id=%s", (tenant_id,)
+        ).fetchone()[0] == 0:
+            for _tur, _ad, _soyad, _tel, _acik in [
+                ("tesisatci", "Hasan", "Kaya", "+905321110001",
+                 "Hafta ici 09:00-18:00"),
+                ("elektrikci", "Ayse", "Demir", "+905321110002",
+                 "Acil cagri 7/24"),
+                ("asansor", "Mert", "Yildiz", "+905321110003",
+                 "Aylik bakim sozlesmesi"),
+            ]:
+                conn.execute(
+                    "INSERT INTO dis_hizmet (tenant_id, tur, ad, soyad, "
+                    "telefon, aciklama) VALUES (%s,%s,%s,%s,%s,%s)",
+                    (tenant_id, _tur, _ad, _soyad, _tel, _acik),
+                )
+
+        if conn.execute(
+            "SELECT count(*) FROM integration WHERE tenant_id=%s", (tenant_id,)
+        ).fetchone()[0] == 0:
+            # SSRF korumasi gercek isteklerde devrede; seed yalniz KAYIT
+            # olusturur (tetikleme yok). Biri PASIF: aktif/pasif rozeti de
+            # boylece surulur.
+            for _ad, _kanal, _url, _aktif in [
+                ("Megafon (anons)", "megaphone",
+                 "https://ornek.invalid/anons", True),
+                ("Akilli ev kopru", "smarthome",
+                 "https://ornek.invalid/smart", True),
+                ("Genel webhook", "webhook",
+                 "https://ornek.invalid/hook", False),
+            ]:
+                conn.execute(
+                    "INSERT INTO integration (tenant_id, ad, channel_type, "
+                    "endpoint_url, payload_template, aktif) "
+                    "VALUES (%s,%s,%s,%s,%s,%s)",
+                    (tenant_id, _ad, _kanal, _url,
+                     '{"mesaj": "{{mesaj}}"}', _aktif),
+                )
+
         for _ad, _sorgu in [
             ("aktif devriye penceresi",
              "SELECT count(*) FROM patrol_window WHERE tenant_id = %(t)s "
@@ -1630,6 +1729,21 @@ def main() -> int:
              "WHERE tenant_id = %(t)s"),
             ("devriye pencere durumu (3/3)",
              "SELECT count(DISTINCT durum) = 3 FROM patrol_window "
+             "WHERE tenant_id = %(t)s"),
+            # TUR 62: bu uc tablo tamamen bostu; sayfalar BOS olculuyordu.
+            ("demirbas durumu (3/3)",
+             "SELECT count(DISTINCT durum) = 3 FROM asset "
+             "WHERE tenant_id = %(t)s"),
+            ("acik zimmet",
+             "SELECT count(*) FROM asset_checkout WHERE tenant_id = %(t)s "
+             "AND birakma_zamani IS NULL"),
+            ("kapali zimmet (gecmis)",
+             "SELECT count(*) FROM asset_checkout WHERE tenant_id = %(t)s "
+             "AND birakma_zamani IS NOT NULL"),
+            ("dis hizmet",
+             "SELECT count(*) FROM dis_hizmet WHERE tenant_id = %(t)s"),
+            ("entegrasyon (aktif+pasif)",
+             "SELECT count(DISTINCT aktif) = 2 FROM integration "
              "WHERE tenant_id = %(t)s"),
         ]:
             _sayi = conn.execute(_sorgu, {"t": tenant_id}).fetchone()[0]

@@ -260,7 +260,7 @@ export default function AssetsPage() {
           </thead>
           <tbody>
             {(data?.items ?? []).map((a) => (
-              <tr key={a.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${a.aktif ? "" : "opacity-60"}`}>
+              <tr key={a.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${a.aktif ? "" : "bg-slate-50"}`}>
                 <td className="px-4 py-2.5">{a.ad}</td>
                 <td className="px-4 py-2.5 text-slate-600">{a.kategori ?? "—"}</td>
                 <td className="px-4 py-2.5 font-mono text-slate-600">{a.nfc_tag_uid ?? "—"}</td>
@@ -271,7 +271,7 @@ export default function AssetsPage() {
                     {a.durum}
                   </span>
                 </td>
-                <td className="px-4 py-2.5 text-slate-600">{a.aktif ? "evet" : t("ortakHayir2")}</td>
+                <td className="px-4 py-2.5 text-slate-600">{a.aktif ? t("ortakEvet2") : t("ortakHayir2")}</td>
                 <td className="px-4 py-2.5 text-right">
                   <div className="flex justify-end gap-2">
                     <button

@@ -117,7 +117,7 @@ export default function TenantsPage() {
         window.alert(
           t("tesisKodlarBaslik") +
             kodlar
-              .map((y) => `• ${y.ad}${y.birincil ? " (birincil)" : ""}: ${y.temp_code}`)
+              .map((y) => `• ${y.ad}${y.birincil ? t("tesisYoneticiBirincilEki") : ""}: ${y.temp_code}`)
               .join("\n") +
             t("tesisKodlarNot"),
         );

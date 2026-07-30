@@ -12,12 +12,14 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..deps import get_tenant_db, require_role
+from ..hata_metinleri import istek_dili
 from ..models import AppUser
+from ..push_metinleri import push_govdesi
 from ..schemas import AktifTurOut, AlarmOut, DashboardLiveOut
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -54,7 +56,8 @@ _AKTIF_TURLAR_SQL = text(
 # olarak DUSMEZ (onlar /notifications altinda gorulur).
 _ALARMLAR_SQL = text(
     """
-    SELECT tip, patrol_window_id, checkpoint_id, mesaj, created_at
+    SELECT tip, patrol_window_id, checkpoint_id, mesaj,
+           mesaj_kimlik, mesaj_veri, created_at
     FROM notification
     WHERE tip IN ('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma')
     -- Tum alarmlar esit oncelikli => en yeni ustte. (Oncelik yukseltmesi
@@ -68,10 +71,12 @@ _ALARMLAR_SQL = text(
 @router.get("/live", response_model=DashboardLiveOut)
 async def dashboard_live(
     alarm_limit: int = Query(20, ge=1, le=100),
+    accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_VIEWER),
 ) -> DashboardLiveOut:
     now = datetime.now(tz=timezone.utc)
+    dil = istek_dili(accept_language)
 
     # tenant.timezone (RLS: kendi tenant satiri gorunur) -> bugunun yerel siniri
     tzname = (
@@ -107,7 +112,20 @@ async def dashboard_live(
         AlarmOut(
             tip=r["tip"],
             olusma_zamani=r["created_at"],
-            mesaj=r["mesaj"],
+            # TUR 62: metin ISTEGIN dilinde uretilir.
+            #
+            # Kayit tur 16'dan beri METIN DEGIL KIMLIK tasiyor
+            # (`mesaj_kimlik` + `mesaj_veri`) — tam olarak "ilk yazanin dili
+            # kalici olmasin" diye. `/notifications` bunu kullaniyordu, bu uc
+            # ise DEPRECATED `mesaj` kolonunu donuyordu; sonuc: panonun alarm
+            # listesi ALTI DILDE Turkce goruntuluyordu. TR sizinti surusu bunu
+            # gordu ama ben "backend verisi" diye siniflandirip yanlis
+            # kaydetmistim (tur 61 notu); asil sebep bu uctu.
+            mesaj=(
+                push_govdesi(r["mesaj_kimlik"], dil, r["mesaj_veri"] or {})
+                if r["mesaj_kimlik"]
+                else r["mesaj"]
+            ),
             patrol_window_id=r["patrol_window_id"],
             checkpoint_id=r["checkpoint_id"],
         )

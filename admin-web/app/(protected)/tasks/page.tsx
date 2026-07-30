@@ -371,7 +371,7 @@ export default function TasksPage() {
           </thead>
           <tbody>
             {(data?.items ?? []).map((gorev) => (
-              <tr key={gorev.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${gorev.aktif ? "" : "opacity-60"}`}>
+              <tr key={gorev.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${gorev.aktif ? "" : "bg-slate-50"}`}>
                 <td className="px-4 py-2.5">
                   {gorev.ad}
                   {gorev.foto_zorunlu && (
@@ -386,7 +386,7 @@ export default function TasksPage() {
                 <td className="px-4 py-2.5 text-slate-600">
                   {gorev.sonraki_planlanan ? formatDateTime(gorev.sonraki_planlanan) : "—"}
                 </td>
-                <td className="px-4 py-2.5 text-slate-600">{gorev.aktif ? "evet" : t("ortakHayir2")}</td>
+                <td className="px-4 py-2.5 text-slate-600">{gorev.aktif ? t("ortakEvet2") : t("ortakHayir2")}</td>
                 <td className="px-4 py-2.5 text-right">
                   <div className="flex justify-end gap-2">
                     <button

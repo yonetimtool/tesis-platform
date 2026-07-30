@@ -632,4 +632,6 @@ export const ar: Sozluk = {
   daireTahsilEt: "تحصيل",
   ortakEkleniyor: "جارٍ الإضافة...",
   aidatTahakkukEkle: "إضافة استحقاق",
+  ortakEvet2: "نعم",
+  tesisYoneticiBirincilEki: " (أساسي)",
 };
