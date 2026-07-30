@@ -9,7 +9,9 @@ import 'package:mobile/src/core/theme/app_theme.dart';
 
 import 'gorsel_taklidi.dart';
 import 'l10n_test_app.dart';
+
 final _trHarf = RegExp('[ğışĞİŞ]');
+
 /// Turkce DISI diller — surusun asil hedefi (tr'de sizinti kavrami yok).
 const surusDilleri = ['en', 'ar', 'ru', 'de', 'fr', 'es'];
 
@@ -38,9 +40,13 @@ const surusVerisi = <String>{
 };
 
 /// Marka + kullanici VERISI disinda Turkce sabit var mi?
-void trSizintisiYok(WidgetTester tester, String dil, {Set<String> veri = const {}}) {
+void trSizintisiYok(
+  WidgetTester tester,
+  String dil, {
+  Set<String> veri = const {},
+}) {
   for (final m in gorunenMetinler(tester)) {
-    if (veri.any(m.contains)) continue;           // sunucu/test VERISI
+    if (veri.any(m.contains)) continue; // sunucu/test VERISI
     // MARKA KILIDI (README §15): kelime isareti + logo alt basligi.
     if (m.contains('Yönetio') || m.contains('GÜVENLİK & DANIŞMANLIK')) continue;
     expect(_trHarf.hasMatch(m), isFalse, reason: '$dil ekraninda TR: "$m"');
@@ -145,14 +151,23 @@ Future<void> darEkranSurusu(
       ayrinti.add('${d.exception}\n${d.context}');
       eskiOnError?.call(d);
     };
-    await _ciz(tester, kur(dil),
-        gorsel: gorsel, bekleyen: bekleyen, hazirla: hazirla);
+    await _ciz(
+      tester,
+      kur(dil),
+      gorsel: gorsel,
+      bekleyen: bekleyen,
+      hazirla: hazirla,
+    );
     FlutterError.onError = eskiOnError;
     // Tasma ISTISNASI: hangi dilde oldugu mesajda gorunsun.
     final hata = tester.takeException();
-    expect(hata, isNull,
-        reason: '$dil ($genislik dp) tasti:\n'
-            '${ayrinti.join("\n---\n")}');
+    expect(
+      hata,
+      isNull,
+      reason:
+          '$dil ($genislik dp) tasti:\n'
+          '${ayrinti.join("\n---\n")}',
+    );
     trSizintisiYok(tester, dil, veri: veri);
   }
 }
@@ -196,8 +211,11 @@ Future<void> yaziOlcegiSurusu(
     );
     FlutterError.onError = eskiOnError;
     final hata = tester.takeException();
-    expect(hata, isNull,
-        reason: '$dil (olcek ${olcek}x) tasti:\n${ayrinti.join("\n---\n")}');
+    expect(
+      hata,
+      isNull,
+      reason: '$dil (olcek ${olcek}x) tasti:\n${ayrinti.join("\n---\n")}',
+    );
   }
 }
 
@@ -218,7 +236,9 @@ List<String> anlamsalEtiketler(WidgetTester tester) {
       return true;
     });
   }
-  final kok = tester.binding.rootPipelineOwner.semanticsOwner?.rootSemanticsNode ??
+
+  final kok =
+      tester.binding.rootPipelineOwner.semanticsOwner?.rootSemanticsNode ??
       tester.binding.renderViews.first.debugSemantics;
   if (kok != null) gez(kok);
   return out;
@@ -247,8 +267,13 @@ Future<void> ekranOkuyucuSurusu(
   addTearDown(tester.view.reset);
   final tutamac = tester.ensureSemantics();
   for (final dil in surusDilleri) {
-    await _ciz(tester, kur(dil),
-        gorsel: gorsel, bekleyen: bekleyen, hazirla: hazirla);
+    await _ciz(
+      tester,
+      kur(dil),
+      gorsel: gorsel,
+      bekleyen: bekleyen,
+      hazirla: hazirla,
+    );
 
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     if (dokunmaHedefi) {
@@ -260,8 +285,11 @@ Future<void> ekranOkuyucuSurusu(
           etiket.contains('GÜVENLİK & DANIŞMANLIK')) {
         continue;
       }
-      expect(_trHarf.hasMatch(etiket), isFalse,
-          reason: '$dil ekran okuyucusunda TR: "$etiket"');
+      expect(
+        _trHarf.hasMatch(etiket),
+        isFalse,
+        reason: '$dil ekran okuyucusunda TR: "$etiket"',
+      );
     }
   }
   tutamac.dispose();
@@ -338,15 +366,22 @@ Future<void> koyuTemaSurusu(
   // Turkce de sürülür: kontrast dilden bagimsizdir ve varsayilan dilin
   // koyu temada okunmasi en az cevirilerinki kadar onemlidir.
   for (final dil in ['tr', ...surusDilleri]) {
-    await _ciz(tester, kur(dil),
-        gorsel: gorsel, bekleyen: bekleyen, hazirla: hazirla);
-    expect(tester.takeException(), isNull,
-        reason: '$dil koyu temada tasti');
+    await _ciz(
+      tester,
+      kur(dil),
+      gorsel: gorsel,
+      bekleyen: bekleyen,
+      hazirla: hazirla,
+    );
+    expect(tester.takeException(), isNull, reason: '$dil koyu temada tasti');
     // Surusun BOS KOSMADIGININ kaniti: ekran GERCEKTEN koyu temada cizildi.
     // Kurucu `l10nApp` disinda kendi `MaterialApp`ini kuruyorsa (temayi
     // sabitliyorsa) burada duser — sessizce acik temada surmekten iyidir.
-    expect(Theme.of(tester.element(find.byType(Material).first)).brightness,
-        Brightness.dark, reason: '$dil: koyu tema uygulanmadi');
+    expect(
+      Theme.of(tester.element(find.byType(Material).first)).brightness,
+      Brightness.dark,
+      reason: '$dil: koyu tema uygulanmadi',
+    );
     if (kontrast) {
       await expectLater(tester, meetsGuideline(textContrastGuideline));
     }
@@ -385,8 +420,13 @@ Future<void> klavyeSurusu(
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
   for (final dil in ['tr', 'ar']) {
-    await _ciz(tester, kur(dil),
-        gorsel: gorsel, bekleyen: bekleyen, hazirla: hazirla);
+    await _ciz(
+      tester,
+      kur(dil),
+      gorsel: gorsel,
+      bekleyen: bekleyen,
+      hazirla: hazirla,
+    );
 
     // --- 1) DOKUNMA-YALNIZ ogeler ---------------------------------------
     final dokunmaYalniz = <String>[];
@@ -409,10 +449,14 @@ Future<void> klavyeSurusu(
         dokunmaYalniz.add(el.debugGetCreatorChain(3).split(' ← ').first);
       }
     }
-    expect(dokunmaYalniz, isEmpty,
-        reason: '$dil: onTap tasiyan ama KLAVYEYLE ULASILAMAYAN '
-            '${dokunmaYalniz.length} GestureDetector — dokunmayla calisir, '
-            'TAB ile secilemez: ${dokunmaYalniz.take(3).join(", ")}');
+    expect(
+      dokunmaYalniz,
+      isEmpty,
+      reason:
+          '$dil: onTap tasiyan ama KLAVYEYLE ULASILAMAYAN '
+          '${dokunmaYalniz.length} GestureDetector — dokunmayla calisir, '
+          'TAB ile secilemez: ${dokunmaYalniz.take(3).join(", ")}',
+    );
 
     // --- 2) TAB dongusu --------------------------------------------------
     final sirali = <Rect>[];
@@ -422,14 +466,18 @@ Future<void> klavyeSurusu(
       await tester.pump();
       final f = FocusManager.instance.primaryFocus;
       if (f == null) break;
-      if (gorulen.contains(f)) break;      // dongu basa dondu — DOGRU
+      if (gorulen.contains(f)) break; // dongu basa dondu — DOGRU
       gorulen.add(f);
       final r = f.rect;
       if (r.isFinite) sirali.add(r);
     }
-    expect(gorulen.length, lessThan(azamiTab),
-        reason: '$dil: $azamiTab TAB sonrasi odak hala YENI ogelere gidiyor '
-            '— dongu kapanmiyor (tuzak ya da sonsuz liste)');
+    expect(
+      gorulen.length,
+      lessThan(azamiTab),
+      reason:
+          '$dil: $azamiTab TAB sonrasi odak hala YENI ogelere gidiyor '
+          '— dongu kapanmiyor (tuzak ya da sonsuz liste)',
+    );
 
     // --- 3) SIRA ---------------------------------------------------------
     if (sira) {
@@ -437,9 +485,13 @@ Future<void> klavyeSurusu(
       for (var i = 1; i < sirali.length; i++) {
         if (sirali[i].top < sirali[i - 1].top - 40) geri++;
       }
-      expect(geri, lessThanOrEqualTo(1),
-          reason: '$dil: odak $geri kez yukari geri zipladi — gezinti sirasi '
-              'okuma sirasindan kopuk');
+      expect(
+        geri,
+        lessThanOrEqualTo(1),
+        reason:
+            '$dil: odak $geri kez yukari geri zipladi — gezinti sirasi '
+            'okuma sirasindan kopuk',
+      );
     }
   }
 }
@@ -470,22 +522,44 @@ Future<void> fotografliSurus(
   // sessizce "fotografsiz" kosar ve hicbir sey eklemez.
   await _ciz(tester, kur('tr'), gorsel: true, hazirla: hazirla);
   final cizilenler = tester.allWidgets.whereType<RawImage>();
-  expect(cizilenler.any((r) => r.image != null), isTrue,
-      reason: 'fotograf CIZILMEDI — taklit ag gorseli calismiyor ya da '
-          'kurucu fotografsiz veri veriyor; bu surus bos kosardi');
+  expect(
+    cizilenler.any((r) => r.image != null),
+    isTrue,
+    reason:
+        'fotograf CIZILMEDI — taklit ag gorseli calismiyor ya da '
+        'kurucu fotografsiz veri veriyor; bu surus bos kosardi',
+  );
 
   try {
-    await darEkranSurusu(tester, kur,
-        veri: veri, gorsel: true, hazirla: hazirla);
-    await yaziOlcegiSurusu(tester, kur,
-        veri: veri, gorsel: true, hazirla: hazirla);
-    await ekranOkuyucuSurusu(tester, kur,
-        veri: veri,
-        dokunmaHedefi: dokunmaHedefi,
-        gorsel: true,
-        hazirla: hazirla);
-    await koyuTemaSurusu(tester, kur,
-        veri: veri, gorsel: true, hazirla: hazirla);
+    await darEkranSurusu(
+      tester,
+      kur,
+      veri: veri,
+      gorsel: true,
+      hazirla: hazirla,
+    );
+    await yaziOlcegiSurusu(
+      tester,
+      kur,
+      veri: veri,
+      gorsel: true,
+      hazirla: hazirla,
+    );
+    await ekranOkuyucuSurusu(
+      tester,
+      kur,
+      veri: veri,
+      dokunmaHedefi: dokunmaHedefi,
+      gorsel: true,
+      hazirla: hazirla,
+    );
+    await koyuTemaSurusu(
+      tester,
+      kur,
+      veri: veri,
+      gorsel: true,
+      hazirla: hazirla,
+    );
     await klavyeSurusu(tester, kur, gorsel: true, hazirla: hazirla);
   } finally {
     // Cerceve, TEST GOVDESI biter bitmez cizim hata ayiklama degiskenlerinin
@@ -513,19 +587,43 @@ Future<void> tumEksenlerSurusu(
   // Bu ekranlarin cogu gizli depoya (dil/oturum) dokunur; koyu tema surusu
   // `runAsync` kullandigi icin taklit gerekir (tur 32 notu).
   _guvenliDepoTaklidi();
-  await darEkranSurusu(tester, kur,
-      veri: veri, bekleyen: bekleyen, hazirla: hazirla);
-  await yaziOlcegiSurusu(tester, kur,
-      veri: veri, bekleyen: bekleyen, hazirla: hazirla);
-  await ekranOkuyucuSurusu(tester, kur,
-      veri: veri,
-      dokunmaHedefi: dokunmaHedefi,
-      bekleyen: bekleyen,
-      hazirla: hazirla);
-  await koyuTemaSurusu(tester, kur,
-      veri: veri, kontrast: kontrast, bekleyen: bekleyen, hazirla: hazirla);
-  await klavyeSurusu(tester, kur,
-      sira: sira, bekleyen: bekleyen, hazirla: hazirla);
+  await darEkranSurusu(
+    tester,
+    kur,
+    veri: veri,
+    bekleyen: bekleyen,
+    hazirla: hazirla,
+  );
+  await yaziOlcegiSurusu(
+    tester,
+    kur,
+    veri: veri,
+    bekleyen: bekleyen,
+    hazirla: hazirla,
+  );
+  await ekranOkuyucuSurusu(
+    tester,
+    kur,
+    veri: veri,
+    dokunmaHedefi: dokunmaHedefi,
+    bekleyen: bekleyen,
+    hazirla: hazirla,
+  );
+  await koyuTemaSurusu(
+    tester,
+    kur,
+    veri: veri,
+    kontrast: kontrast,
+    bekleyen: bekleyen,
+    hazirla: hazirla,
+  );
+  await klavyeSurusu(
+    tester,
+    kur,
+    sira: sira,
+    bekleyen: bekleyen,
+    hazirla: hazirla,
+  );
 }
 
 /// FORM/ALT SAYFA ACICI (tur 38) — surus `hazirla` parametresi icin.
@@ -540,8 +638,10 @@ Future<void> tumEksenlerSurusu(
 Future<void> fabAc(WidgetTester tester) async {
   final fab = find.byType(FloatingActionButton);
   if (fab.evaluate().isEmpty) {
-    throw StateError('Ekranda FloatingActionButton yok — form acilamadi. '
-        'Rol kapisi FAB\'i gizliyor olabilir.');
+    throw StateError(
+      'Ekranda FloatingActionButton yok — form acilamadi. '
+      'Rol kapisi FAB\'i gizliyor olabilir.',
+    );
   }
   await tester.tap(fab.first);
   await tester.pump();
@@ -601,27 +701,166 @@ Future<void> silmeOnayiAc(WidgetTester tester) async {
 Future<void> Function(WidgetTester) menuEylemi(
   int sira, {
   bool sonucBekle = true,
-}) =>
-    (tester) async {
-      final menu = find.byType(PopupMenuButton<String>);
-      expect(menu, findsWidgets, reason: 'satir menusu bulunamadi');
-      await tester.tap(menu.first);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      final ogeler = find.byType(PopupMenuItem<String>);
-      expect(ogeler.evaluate().length, greaterThan(sira),
-          reason: 'menude $sira numarali oge yok');
-      await tester.tap(ogeler.at(sira));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
-      if (sonucBekle) {
-        final acildi = find.byType(BottomSheet).evaluate().isNotEmpty ||
-            find.byType(AlertDialog).evaluate().isNotEmpty ||
-            find.byType(Dialog).evaluate().isNotEmpty ||
-            find.byType(SnackBar).evaluate().isNotEmpty;
-        if (!acildi) {
-          throw StateError('menu ogesi secildi ama hicbir sonuc cizilmedi '
-              '(alt sayfa / diyalog / bildirim yok).');
+}) => (tester) async {
+  final menu = find.byType(PopupMenuButton<String>);
+  expect(menu, findsWidgets, reason: 'satir menusu bulunamadi');
+  await tester.tap(menu.first);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+  final ogeler = find.byType(PopupMenuItem<String>);
+  expect(
+    ogeler.evaluate().length,
+    greaterThan(sira),
+    reason: 'menude $sira numarali oge yok',
+  );
+  await tester.tap(ogeler.at(sira));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
+  if (sonucBekle) {
+    final acildi =
+        find.byType(BottomSheet).evaluate().isNotEmpty ||
+        find.byType(AlertDialog).evaluate().isNotEmpty ||
+        find.byType(Dialog).evaluate().isNotEmpty ||
+        find.byType(SnackBar).evaluate().isNotEmpty;
+    if (!acildi) {
+      throw StateError(
+        'menu ogesi secildi ama hicbir sonuc cizilmedi '
+        '(alt sayfa / diyalog / bildirim yok).',
+      );
+    }
+  }
+};
+
+/// EKSEN KOMBINASYONLARI (tur 59).
+///
+/// Suruslerin eksen DEGERLERI bugune kadar sabitti ve tur 49 envanteri bunu
+/// kor nokta olarak yazdi:
+///   * hareket: her sey `pumpAndSettle` SONRASI olculuyordu — animasyon
+///     SURERKEN hicbir sey olculmedi (tur 30'da panel tarafinda tam bu
+///     yanlis alarm vermisti; mobilde ise hic bakilmadi),
+///   * yon: yalniz dikey; TABLET/YATAY yerlesim hic cizilmedi,
+///   * yazi olcegi: yalniz 1.0 ve 2.0 — 0.85 (kucultme) ve 1.3 (yaygin ara
+///     deger) atlandi,
+///   * yogunluk: `devicePixelRatio` sabit 1.0 — gercek cihazlar 2.0/3.0,
+///   * sistem ayari: KALIN YAZI (`boldText`) hic denenmedi.
+///
+/// Bu yardimci hepsini tek cagrida surer. Her kombinasyon TASMA ve TR
+/// sizintisi icin denetlenir.
+Future<void> eksenKombinasyonSurusu(
+  WidgetTester tester,
+  Widget Function(String dil) kur, {
+  Set<String> veri = const {},
+  Future<void> Function(WidgetTester)? hazirla,
+  bool bekleyen = false,
+}) async {
+  _guvenliDepoTaklidi();
+  addTearDown(tester.view.reset);
+
+  // (ad, genislik, yukseklik, olcek, dpr, kalinYazi)
+  const kombinasyonlar = <(String, double, double, double, double, bool)>[
+    ('kucuk yazi 0.85x', 430, 900, 0.85, 1.0, false),
+    ('ara olcek 1.3x', 430, 900, 1.3, 1.0, false),
+    ('tablet dikey 768', 768, 1024, 1.0, 2.0, false),
+    ('tablet YATAY 1024', 1024, 768, 1.0, 2.0, false),
+    ('telefon YATAY 800', 800, 400, 1.0, 3.0, false),
+    ('KALIN YAZI', 430, 900, 1.0, 1.0, true),
+    ('kalin + 1.3x + dar', 320, 800, 1.3, 3.0, true),
+  ];
+
+  for (final (ad, g, y, olcek, dpr, kalin) in kombinasyonlar) {
+    tester.view.physicalSize = Size(g * dpr, y * dpr);
+    tester.view.devicePixelRatio = dpr;
+    for (final dil in ['tr', 'de', 'ar']) {
+      final ayrinti = <String>[];
+      final eskiOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        ayrinti.add('${d.exception}');
+        eskiOnError?.call(d);
+      };
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(
+        MediaQuery(
+          data: MediaQueryData(
+            size: Size(g, y),
+            devicePixelRatio: dpr,
+            textScaler: TextScaler.linear(olcek),
+            boldText: kalin,
+          ),
+          child: kur(dil),
+        ),
+      );
+      if (bekleyen) {
+        // Sonsuz animasyon (spinner) varsa `pumpAndSettle` asla donmez.
+        for (var i = 0; i < 5; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
         }
+      } else {
+        await tester.pumpAndSettle();
       }
+      // Ekrani ACAN adim (FAB, menu, diyalog) bu eksende de kosmali:
+      // tasma cogunlukla FORMDA olur, listede degil.
+      if (hazirla != null) await hazirla(tester);
+      FlutterError.onError = eskiOnError;
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: '$ad / $dil tasti:\n${ayrinti.join("\n---\n")}',
+      );
+      if (dil != 'tr') trSizintisiYok(tester, dil, veri: veri);
+    }
+  }
+}
+
+/// ANIMASYON SURERKEN olcum (tur 59).
+///
+/// Butun surusler `pumpAndSettle` sonrasi olcuyordu; giris animasyonunun
+/// ORTASI hic gorulmedi. Yari yolda kalan bir yerlesim tasabilir ya da
+/// gecici olarak okunmaz olabilir. Burada kare kare ilerlenir ve HER KARE
+/// tasma icin denetlenir.
+Future<void> animasyonSurusu(
+  WidgetTester tester,
+  Widget Function(String dil) kur, {
+  int kare = 8,
+  Duration adim = const Duration(milliseconds: 40),
+  bool bekleyen = false,
+}) async {
+  _guvenliDepoTaklidi();
+  tester.view.physicalSize = const Size(320, 800);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+  for (final dil in ['tr', 'de']) {
+    final ayrinti = <String>[];
+    final eskiOnError = FlutterError.onError;
+    FlutterError.onError = (d) {
+      ayrinti.add('${d.exception}');
+      eskiOnError?.call(d);
     };
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(kur(dil));
+    for (var i = 0; i < kare; i++) {
+      await tester.pump(adim);
+      final hata = tester.takeException();
+      expect(
+        hata,
+        isNull,
+        reason:
+            '$dil: animasyonun ${i + 1}. karesinde tasma:\n'
+            '${ayrinti.join("\n---\n")}',
+      );
+    }
+    // SONSUZ animasyonlu ekranda (spinner, `repeat()`) `pumpAndSettle`
+    // ZAMAN ASIMINA DUSER. Kendi dedektorumuz (tur 59, DEDEKTOR 5) tam bunu
+    // yakaladi: son oturma denetimi, surusun kapsamak icin var oldugu ekran
+    // sinifinda surusun kendisini dusuruyordu. Bu yuzden `bekleyen` ekranda
+    // oturma beklenmez, yalnizca birkac kare daha pompalanir.
+    if (bekleyen) {
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(adim);
+      }
+    } else {
+      await tester.pumpAndSettle();
+    }
+    FlutterError.onError = eskiOnError;
+    expect(tester.takeException(), isNull, reason: '$dil: oturma sonrasi');
+  }
+}

@@ -219,7 +219,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
 
       <div className="flex gap-2">
         <button className={btnPrimary} onClick={openPay}>
-          Tahsilat kaydet
+          {t("daireTahsilatKaydet")}
         </button>
       </div>
 

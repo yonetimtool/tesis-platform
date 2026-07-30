@@ -159,7 +159,7 @@ export default function TenantDetailPage() {
     <div className="space-y-5">
       <div className="flex items-center gap-3">
         <Link href="/tenants" className={btnGhost}>
-          ← Tesisler
+          <span aria-hidden="true">←</span> {t("kabukTesisler")}
         </Link>
       </div>
 

@@ -199,7 +199,7 @@ export default function DuesReportPage() {
           </Field>
         </div>
         <button type="submit" className={btnPrimary} disabled={busy}>
-          {busy ? t("raporHesaplaniyor") : "Raporu getir"}
+          {busy ? t("raporHesaplaniyor") : t("raporGetir")}
         </button>
       </motion.form>
 

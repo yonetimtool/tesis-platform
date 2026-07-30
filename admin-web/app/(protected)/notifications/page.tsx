@@ -4,7 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
-import { ErrorBox, PageHeader, cardCls } from "@/components/form";
+import { ErrorBox, PageHeader, Pager, cardCls } from "@/components/form";
 import { useToast } from "@/components/Toast";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AppNotification, NotificationList } from "@/lib/types";
@@ -40,8 +40,6 @@ export default function NotificationsPage() {
   }
 
   const total = data?.meta.total ?? 0;
-  const canPrev = offset > 0;
-  const canNext = offset + LIMIT < total;
 
   return (
     <div className="space-y-5">
@@ -75,14 +73,14 @@ export default function NotificationsPage() {
         {(data?.items ?? []).map((n: AppNotification) => (
           <li
             key={n.id}
-            className={`flex items-start justify-between gap-3 ${cardCls} px-3 py-2`}
+            className={`flex flex-wrap items-start justify-between gap-3 ${cardCls} px-3 py-2`}
           >
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-500">{n.tip}</span>
                 {!n.okundu && (
                   <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-                    yeni
+                    {t("bildirimYeniRozet")}
                   </span>
                 )}
               </div>
@@ -94,7 +92,7 @@ export default function NotificationsPage() {
                 onClick={() => markRead(n.id)}
                 className="shrink-0 rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
               >
-                Okundu
+                {t("bildirimOkunduIsaretle")}
               </button>
             )}
           </li>
@@ -106,27 +104,13 @@ export default function NotificationsPage() {
         )}
       </ul>
 
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-muted">
-          Toplam {total} · {offset + 1}-{Math.min(offset + LIMIT, total)}
-        </span>
-        <div className="flex gap-2">
-          <button
-            disabled={!canPrev}
-            onClick={() => setOffset(Math.max(0, offset - LIMIT))}
-            className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-50"
-          >
-            {t("ortakOnceki")}
-          </button>
-          <button
-            disabled={!canNext}
-            onClick={() => setOffset(offset + LIMIT)}
-            className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-50"
-          >
-            {t("ortakSonraki")}
-          </button>
-        </div>
-      </div>
+      <Pager
+        offset={offset}
+        limit={LIMIT}
+        total={total}
+        onPrev={() => setOffset(Math.max(0, offset - LIMIT))}
+        onNext={() => setOffset(offset + LIMIT)}
+      />
     </div>
   );
 }

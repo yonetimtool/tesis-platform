@@ -380,8 +380,12 @@ function BlockTiles({
           className="relative flex h-32 w-40 flex-col rounded-xl border border-indigo-200 bg-indigo-50 p-3"
         >
           <button className="flex flex-1 flex-col items-center justify-center" onClick={() => onOpen(label)}>
-            <span className="text-lg font-semibold text-indigo-900">Blok {label}</span>
-            <span className="text-xs text-slate-700">{unitCountFor(label)} daire</span>
+            <span className="text-lg font-semibold text-indigo-900">
+              {t("blokEtiketi", { ad: label })}
+            </span>
+            <span className="text-xs text-slate-700">
+              {t("daireSayisiN", { n: unitCountFor(label) })}
+            </span>
             {!registeredFor(label) && (
               <span className="mt-1 text-[10px] text-amber-600">{t("binaKayitsiz")}</span>
             )}
@@ -406,7 +410,9 @@ function BlockTiles({
           className="flex h-32 w-40 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50"
         >
           <span className="text-lg font-semibold text-slate-700">{t("daireBlokAtanmamis")}</span>
-          <span className="text-xs text-slate-700">{blocklessCount} daire</span>
+          <span className="text-xs text-slate-700">
+            {t("daireSayisiN", { n: blocklessCount })}
+          </span>
         </button>
       )}
 

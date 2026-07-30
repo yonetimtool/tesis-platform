@@ -104,8 +104,7 @@ class _FakePatrolApi extends PatrolApi {
     int offset = 0,
     PatrolWindowDurum? durum,
     DateTime? bitisBefore,
-  }) async =>
-      gecmis;
+  }) async => gecmis;
 }
 
 class _FakeCheckpointApi extends CheckpointApi {
@@ -133,12 +132,11 @@ class _FakeTaskApi extends TaskApi {
   Future<PresignTicket> presignUpload({
     required String contentType,
     String? dosyaAdi,
-  }) async =>
-      const PresignTicket(
-        fotoKey: 't/tasks/x.png',
-        uploadUrl: 'https://ornek/put',
-        expiresIn: 900,
-      );
+  }) async => const PresignTicket(
+    fotoKey: 't/tasks/x.png',
+    uploadUrl: 'https://ornek/put',
+    expiresIn: 900,
+  );
 
   @override
   Future<void> uploadPhoto({
@@ -151,7 +149,10 @@ class _FakeTaskApi extends TaskApi {
         return;
       case YuklemeDavranisi.hata:
         throw const ApiException(
-            code: 'upload_failed', message: 'PUT reddedildi', statusCode: 403);
+          code: 'upload_failed',
+          message: 'PUT reddedildi',
+          statusCode: 403,
+        );
       case YuklemeDavranisi.askida:
         return askidaKal<void>();
     }
@@ -292,41 +293,44 @@ const _gorev = Task(
 // Ekran kuruculari
 // --------------------------------------------------------------------------
 
-Widget _turlarimEkrani(Locale locale,
-        {List<OutboxEntry> kuyruk = const [],
-        ApiException? hata,
-        UserRole rol = UserRole.security}) =>
-    ProviderScope(
-      overrides: [
-        patrolApiProvider.overrideWithValue(
-          _FakePatrolApi(me: _pencere(), gecmis: _gecmisSayfa, hata: hata),
-        ),
-        scanOutboxProvider.overrideWith(() => _FakeOutbox(kuyruk)),
-        currentUserRoleProvider.overrideWith((ref) async => rol),
-      ],
-      child: l10nApp(const PatrolScreen(), locale: locale),
-    );
+Widget _turlarimEkrani(
+  Locale locale, {
+  List<OutboxEntry> kuyruk = const [],
+  ApiException? hata,
+  UserRole rol = UserRole.security,
+}) => ProviderScope(
+  overrides: [
+    patrolApiProvider.overrideWithValue(
+      _FakePatrolApi(me: _pencere(), gecmis: _gecmisSayfa, hata: hata),
+    ),
+    scanOutboxProvider.overrideWith(() => _FakeOutbox(kuyruk)),
+    currentUserRoleProvider.overrideWith((ref) async => rol),
+  ],
+  child: l10nApp(const PatrolScreen(), locale: locale),
+);
 
 Widget _nfcEkrani(Locale locale) => ProviderScope(
-      overrides: [
-        scanOutboxProvider.overrideWith(() => _FakeOutbox(const [])),
-        checkpointApiProvider.overrideWithValue(
-          _FakeCheckpointApi(const [
-            Checkpoint(
-                id: 'c1', ad: 'Ana Kapı', nfcTagUid: '04A2B3C4D5', aktif: true),
-          ]),
+  overrides: [
+    scanOutboxProvider.overrideWith(() => _FakeOutbox(const [])),
+    checkpointApiProvider.overrideWithValue(
+      _FakeCheckpointApi(const [
+        Checkpoint(
+          id: 'c1',
+          ad: 'Ana Kapı',
+          nfcTagUid: '04A2B3C4D5',
+          aktif: true,
         ),
-        currentUserRoleProvider.overrideWith((ref) async => UserRole.security),
-      ],
-      child: l10nApp(const NfcScreen(), locale: locale),
-    );
+      ]),
+    ),
+    currentUserRoleProvider.overrideWith((ref) async => UserRole.security),
+  ],
+  child: l10nApp(const NfcScreen(), locale: locale),
+);
 
 Widget _kuyrukEkrani(Locale locale) => ProviderScope(
-      overrides: [
-        scanOutboxProvider.overrideWith(() => _FakeOutbox(_kuyruk)),
-      ],
-      child: l10nApp(const OutboxScreen(), locale: locale),
-    );
+  overrides: [scanOutboxProvider.overrideWith(() => _FakeOutbox(_kuyruk))],
+  child: l10nApp(const OutboxScreen(), locale: locale),
+);
 
 Widget _gorevDetayEkrani(
   Locale locale, {
@@ -334,64 +338,67 @@ Widget _gorevDetayEkrani(
   YuklemeDavranisi? yukleme,
   String? fotoYolu,
   Task gorev = _gorev,
-}) =>
-    ProviderScope(
-      overrides: [
-        if (yukleme != null) taskApiProvider.overrideWithValue(_FakeTaskApi(yukleme)),
-        if (fotoYolu != null)
-          imagePickerProvider.overrideWithValue(TaklitSecici(fotoYolu)),
-        taskCategoryApiProvider.overrideWithValue(
-          _FakeTaskCategoryApi(
-              const [TaskCategory(id: 'kat-1', ad: 'Temizlik', aktif: true)]),
-        ),
-        scanOutboxProvider.overrideWith(() => _FakeOutbox(const [])),
-        currentUserRoleProvider.overrideWith((ref) async => role),
-      ],
-      child: l10nApp(TaskDetailScreen(task: gorev), locale: locale),
-    );
+}) => ProviderScope(
+  overrides: [
+    if (yukleme != null)
+      taskApiProvider.overrideWithValue(_FakeTaskApi(yukleme)),
+    if (fotoYolu != null)
+      imagePickerProvider.overrideWithValue(TaklitSecici(fotoYolu)),
+    taskCategoryApiProvider.overrideWithValue(
+      _FakeTaskCategoryApi(const [
+        TaskCategory(id: 'kat-1', ad: 'Temizlik', aktif: true),
+      ]),
+    ),
+    scanOutboxProvider.overrideWith(() => _FakeOutbox(const [])),
+    currentUserRoleProvider.overrideWith((ref) async => role),
+  ],
+  child: l10nApp(TaskDetailScreen(task: gorev), locale: locale),
+);
 
 Widget _tirTakipEkrani(Locale locale) => ProviderScope(
-      overrides: [
-        patrolApiProvider.overrideWithValue(
-          _FakePatrolApi(me: _pencere(), gecmis: _gecmisSayfa),
-        ),
-        scanOutboxProvider.overrideWith(() => _FakeOutbox(const [])),
-        currentUserRoleProvider.overrideWith((ref) async => UserRole.yonetici),
-      ],
-      child: l10nApp(const PatrolTrackingScreen(), locale: locale),
-    );
+  overrides: [
+    patrolApiProvider.overrideWithValue(
+      _FakePatrolApi(me: _pencere(), gecmis: _gecmisSayfa),
+    ),
+    scanOutboxProvider.overrideWith(() => _FakeOutbox(const [])),
+    currentUserRoleProvider.overrideWith((ref) async => UserRole.yonetici),
+  ],
+  child: l10nApp(const PatrolTrackingScreen(), locale: locale),
+);
 
 Widget _kategoriEkrani(Locale locale) => ProviderScope(
-      overrides: [
-        taskCategoryApiProvider.overrideWithValue(
-          _FakeTaskCategoryApi(const [
-            TaskCategory(id: 'kat-1', ad: 'Temizlik', aktif: true),
-            TaskCategory(id: 'kat-2', ad: 'Teknik', aktif: true),
-          ]),
-        ),
-      ],
-      child: l10nApp(const TaskCategoriesScreen(), locale: locale),
-    );
+  overrides: [
+    taskCategoryApiProvider.overrideWithValue(
+      _FakeTaskCategoryApi(const [
+        TaskCategory(id: 'kat-1', ad: 'Temizlik', aktif: true),
+        TaskCategory(id: 'kat-2', ad: 'Teknik', aktif: true),
+      ]),
+    ),
+  ],
+  child: l10nApp(const TaskCategoriesScreen(), locale: locale),
+);
 
 Widget _daireKayitlariEkrani(Locale locale) => ProviderScope(
-      overrides: [
-        kargoApiProvider.overrideWithValue(_FakeKargoApi([
-          Kargo(
-            id: 'kg1',
-            unitId: 'u1',
-            unitNo: 'A-12',
-            firma: 'Aras Kargo',
-            durum: KargoDurum.bekliyor,
-            kaydedenUserId: 'g1',
-            createdAt: _simdi.subtract(const Duration(hours: 2)),
-          ),
-        ])),
-      ],
-      child: l10nApp(
-        const UnitAccessRecordsScreen(unitId: 'u1', kind: 'kargo'),
-        locale: locale,
-      ),
-    );
+  overrides: [
+    kargoApiProvider.overrideWithValue(
+      _FakeKargoApi([
+        Kargo(
+          id: 'kg1',
+          unitId: 'u1',
+          unitNo: 'A-12',
+          firma: 'Aras Kargo',
+          durum: KargoDurum.bekliyor,
+          kaydedenUserId: 'g1',
+          createdAt: _simdi.subtract(const Duration(hours: 2)),
+        ),
+      ]),
+    ),
+  ],
+  child: l10nApp(
+    const UnitAccessRecordsScreen(unitId: 'u1', kind: 'kargo'),
+    locale: locale,
+  ),
+);
 
 // SUNUCU verisi: cevrilmemesi DOGRU olan metinler.
 const _veri = {
@@ -406,32 +413,47 @@ const _veri = {
 
 void main() {
   testWidgets('SAHA: Turlarim ekrani (bes eksen)', (tester) async {
-    await tumEksenlerSurusu(tester, (dil) => _turlarimEkrani(Locale(dil)),
-        veri: _veri);
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _turlarimEkrani(Locale(dil)),
+      veri: _veri,
+    );
   });
 
-  testWidgets('SAHA: Turlarim — CEVRIMDISI kuyruk bindirmesi (bes eksen)',
-      (tester) async {
+  testWidgets('SAHA: Turlarim — CEVRIMDISI kuyruk bindirmesi (bes eksen)', (
+    tester,
+  ) async {
     // Bekleyen okutmalar "gonderiliyor" olarak nokta listesine BINDIRILIR;
     // bu dal yalniz kuyruk DOLUYKEN cizilir (tur 36'da hic olculmemisti).
     await tumEksenlerSurusu(
-        tester, (dil) => _turlarimEkrani(Locale(dil), kuyruk: _kuyruk),
-        veri: _veri);
+      tester,
+      (dil) => _turlarimEkrani(Locale(dil), kuyruk: _kuyruk),
+      veri: _veri,
+    );
   });
 
   testWidgets('SAHA: NFC okutma ekrani (bes eksen)', (tester) async {
-    await tumEksenlerSurusu(tester, (dil) => _nfcEkrani(Locale(dil)),
-        veri: _veri);
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _nfcEkrani(Locale(dil)),
+      veri: _veri,
+    );
   });
 
   testWidgets('SAHA: cevrimdisi kuyruk ekrani (bes eksen)', (tester) async {
-    await tumEksenlerSurusu(tester, (dil) => _kuyrukEkrani(Locale(dil)),
-        veri: _veri);
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _kuyrukEkrani(Locale(dil)),
+      veri: _veri,
+    );
   });
 
   testWidgets('SAHA: gorev detayi + tamamlama (bes eksen)', (tester) async {
-    await tumEksenlerSurusu(tester, (dil) => _gorevDetayEkrani(Locale(dil)),
-        veri: _veri);
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _gorevDetayEkrani(Locale(dil)),
+      veri: _veri,
+    );
   });
 
   testWidgets('SAHA: Turlarim GECMIS sekmesi (bes eksen)', (tester) async {
@@ -454,66 +476,87 @@ void main() {
   });
 
   testWidgets('SAHA: tur takip ekrani (bes eksen)', (tester) async {
-    await tumEksenlerSurusu(tester, (dil) => _tirTakipEkrani(Locale(dil)),
-        veri: _veri);
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _tirTakipEkrani(Locale(dil)),
+      veri: _veri,
+    );
   });
 
   testWidgets('SAHA: gorev kategorileri ekrani (bes eksen)', (tester) async {
-    await tumEksenlerSurusu(tester, (dil) => _kategoriEkrani(Locale(dil)),
-        veri: _veri);
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _kategoriEkrani(Locale(dil)),
+      veri: _veri,
+    );
   });
 
-  testWidgets('SAHA: daire kayitlari (kargo) ekrani (bes eksen)',
-      (tester) async {
-    await tumEksenlerSurusu(tester, (dil) => _daireKayitlariEkrani(Locale(dil)),
-        veri: _veri);
+  testWidgets('SAHA: daire kayitlari (kargo) ekrani (bes eksen)', (
+    tester,
+  ) async {
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _daireKayitlariEkrani(Locale(dil)),
+      veri: _veri,
+    );
   });
 
   // ---- TUR 39: FOTOGRAF YUKLEME YOLU (gorev tamamlama) ----
   // "Foto zorunlu" gorevde kanit fotografi akisi: cek -> presign -> PUT.
   // Uc hal de bes eksende surulur.
   Future<void> Function(WidgetTester) gorevFotoSec() => (t) async {
-        // DUGMENIN ikonu `photo_camera`; `photo_camera_outlined` bolum
-        // BASLIGININ ikonudur. Ilk denemede baslik ikonuna dokunuyordum ve
-        // hicbir sey olmuyordu — surus sessizce "form acik" halini olcuyordu.
-        // (Dedektor testi tam bunu yakaladi.)
-        final kamera = find.widgetWithIcon(OutlinedButton, Icons.photo_camera);
-        expect(kamera, findsWidgets, reason: 'kamera dugmesi bulunamadi');
-        await t.tap(kamera.first);
-        await t.pump();
-        for (var i = 0; i < 6; i++) {
-          await t.runAsync(() async {
-            await Future<void>.delayed(const Duration(milliseconds: 40));
-          });
-          await t.pump();
-        }
-        await t.pump(const Duration(milliseconds: 300));
-      };
+    // DUGMENIN ikonu `photo_camera`; `photo_camera_outlined` bolum
+    // BASLIGININ ikonudur. Ilk denemede baslik ikonuna dokunuyordum ve
+    // hicbir sey olmuyordu — surus sessizce "form acik" halini olcuyordu.
+    // (Dedektor testi tam bunu yakaladi.)
+    final kamera = find.widgetWithIcon(OutlinedButton, Icons.photo_camera);
+    expect(kamera, findsWidgets, reason: 'kamera dugmesi bulunamadi');
+    await t.tap(kamera.first);
+    await t.pump();
+    for (var i = 0; i < 6; i++) {
+      await t.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+      });
+      await t.pump();
+    }
+    await t.pump(const Duration(milliseconds: 300));
+  };
 
   // DEDEKTOR: uc hal GERCEKTEN farkli ciziliyor mu? (Taklit secici ya da
   // yukleme sahtesi calismazsa ucu de ayni ekran olur ve surus bos koserdi.)
-  testWidgets('YUKLEME DEDEKTORU: gorev kaniti uc hali ayirt edilebiliyor',
-      (tester) async {
+  testWidgets('YUKLEME DEDEKTORU: gorev kaniti uc hali ayirt edilebiliyor', (
+    tester,
+  ) async {
     final yol = taklitFotoDosyasi();
     Future<void> ac(YuklemeDavranisi d) async {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpWidget(
-          _gorevDetayEkrani(const Locale('tr'), fotoYolu: yol, yukleme: d));
+        _gorevDetayEkrani(const Locale('tr'), fotoYolu: yol, yukleme: d),
+      );
       await tester.pumpAndSettle();
       await gorevFotoSec()(tester);
     }
 
     await ac(YuklemeDavranisi.askida);
-    expect(find.byType(CircularProgressIndicator), findsWidgets,
-        reason: 'askida yuklemede ilerleme gostergesi yok');
+    expect(
+      find.byType(CircularProgressIndicator),
+      findsWidgets,
+      reason: 'askida yuklemede ilerleme gostergesi yok',
+    );
 
     await ac(YuklemeDavranisi.hata);
-    expect(find.byIcon(Icons.refresh), findsWidgets,
-        reason: 'hata halinde "Tekrar yukle" dugmesi yok');
+    expect(
+      find.byIcon(Icons.refresh),
+      findsWidgets,
+      reason: 'hata halinde "Tekrar yukle" dugmesi yok',
+    );
 
     await ac(YuklemeDavranisi.basarili);
-    expect(find.byIcon(Icons.check_circle), findsWidgets,
-        reason: 'basarili yuklemede onay ikonu yok');
+    expect(
+      find.byIcon(Icons.check_circle),
+      findsWidgets,
+      reason: 'basarili yuklemede onay ikonu yok',
+    );
   });
 
   for (final (ad, davranis) in [
@@ -525,8 +568,8 @@ void main() {
       final yol = taklitFotoDosyasi();
       await tumEksenlerSurusu(
         tester,
-        (dil) => _gorevDetayEkrani(Locale(dil),
-            fotoYolu: yol, yukleme: davranis),
+        (dil) =>
+            _gorevDetayEkrani(Locale(dil), fotoYolu: yol, yukleme: davranis),
         veri: _veri,
         hazirla: gorevFotoSec(),
       );
@@ -534,65 +577,102 @@ void main() {
   }
 
   // ---- TUR 40: ONAY DIYALOGLARI ----
-  testWidgets('ONAY: gorev kategorisi silme diyalogu (bes eksen)',
-      (tester) async {
-    await tumEksenlerSurusu(tester, (dil) => _kategoriEkrani(Locale(dil)),
-        veri: _veri, hazirla: silmeOnayiAc);
+  testWidgets('ONAY: gorev kategorisi silme diyalogu (bes eksen)', (
+    tester,
+  ) async {
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _kategoriEkrani(Locale(dil)),
+      veri: _veri,
+      hazirla: silmeOnayiAc,
+    );
   });
 
   // ---- TUR 42: HATA ve CEVRIMDISI ----
   testWidgets('HATA: Turlarim SUNUCU HATASI (bes eksen)', (tester) async {
     await tumEksenlerSurusu(
       tester,
-      (dil) => _turlarimEkrani(Locale(dil),
-          hata: const ApiException(
-              code: 'server_error', message: 'Sunucu hatasi', statusCode: 500)),
+      (dil) => _turlarimEkrani(
+        Locale(dil),
+        hata: const ApiException(
+          code: 'server_error',
+          message: 'Sunucu hatasi',
+          statusCode: 500,
+        ),
+      ),
       veri: _veri,
     );
   });
-  testWidgets('HATA: Turlarim CEVRIMDISI + bekleyen kuyruk (bes eksen)',
-      (tester) async {
+  testWidgets('HATA: Turlarim CEVRIMDISI + bekleyen kuyruk (bes eksen)', (
+    tester,
+  ) async {
     // Saha icin en gercekci senaryo: ag yok AMA cihazda gonderilmeyi bekleyen
     // okutmalar var. Ikisi ayni ekranda gorunur.
     await tumEksenlerSurusu(
       tester,
-      (dil) => _turlarimEkrani(Locale(dil),
-          kuyruk: _kuyruk,
-          hata: const ApiException(
-              code: 'network_error',
-              message: '',
-              agHatasi: AkisHatasi.sunucuyaUlasilamadi)),
+      (dil) => _turlarimEkrani(
+        Locale(dil),
+        kuyruk: _kuyruk,
+        hata: const ApiException(
+          code: 'network_error',
+          message: '',
+          agHatasi: AkisHatasi.sunucuyaUlasilamadi,
+        ),
+      ),
       veri: _veri,
     );
   });
 
   // ---- TUR 43: ROL VARYANTLARI ----
-  testWidgets('ROL: gorev detayi YONETICI gozuyle (bes eksen)',
-      (tester) async {
+  testWidgets('ROL: gorev detayi YONETICI gozuyle (bes eksen)', (tester) async {
     // Yonetici rolunde duzenle/sil eylemleri EKLENIR; saha rolunde yoktur.
     // Surus simdiye kadar yalniz saha rolunu ciziyordu.
     await tumEksenlerSurusu(
-        tester, (dil) => _gorevDetayEkrani(Locale(dil), role: UserRole.yonetici),
-        veri: _veri);
+      tester,
+      (dil) => _gorevDetayEkrani(Locale(dil), role: UserRole.yonetici),
+      veri: _veri,
+    );
   });
-  testWidgets('ROL: Turlarim TESIS GOREVLISI gozuyle (bes eksen)',
-      (tester) async {
+  testWidgets('ROL: Turlarim TESIS GOREVLISI gozuyle (bes eksen)', (
+    tester,
+  ) async {
     await tumEksenlerSurusu(
-        tester,
-        (dil) => _turlarimEkrani(Locale(dil), rol: UserRole.tesisGorevlisi),
-        veri: _veri);
+      tester,
+      (dil) => _turlarimEkrani(Locale(dil), rol: UserRole.tesisGorevlisi),
+      veri: _veri,
+    );
   });
 
   // ---- TUR 52: TALEP ROZETLERI + BAGLI TALEP KARTI ----
   // `task_ticket_widgets.dart` 1/60 satir kapsamdaydi: bu parcalar YALNIZ
   // gorev bir TALEPTEN donusturulmusse cizilir ve surus verisinde ticket
   // hic yoktu.
-  testWidgets('TALEP: is emri rozetleri + bagli talep karti (bes eksen)',
-      (tester) async {
+  testWidgets('TALEP: is emri rozetleri + bagli talep karti (bes eksen)', (
+    tester,
+  ) async {
     await tumEksenlerSurusu(
       tester,
       (dil) => _gorevDetayEkrani(Locale(dil), gorev: _talepGorevi),
       veri: _veri,
     );
+  });
+
+  // ---- TUR 59: EKSEN KOMBINASYONLARI ----
+  testWidgets('EKSEN: Turlarim (7 kombinasyon x 3 dil)', (tester) async {
+    await eksenKombinasyonSurusu(
+      tester,
+      (dil) => _turlarimEkrani(Locale(dil)),
+      veri: _veri,
+    );
+  });
+  testWidgets('EKSEN: gorev detayi (7 kombinasyon x 3 dil)', (tester) async {
+    await eksenKombinasyonSurusu(
+      tester,
+      (dil) => _gorevDetayEkrani(Locale(dil)),
+      veri: _veri,
+    );
+  });
+  testWidgets('ANIMASYON: Turlarim her karede tasmaz', (tester) async {
+    await animasyonSurusu(tester, (dil) => _turlarimEkrani(Locale(dil)));
   });
 }

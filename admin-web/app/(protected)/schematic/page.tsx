@@ -173,12 +173,12 @@ export default function SchematicPage() {
               key={blok.blok}
               className={`space-y-3 ${cardCls} p-5`}
             >
-              <h2 className="font-medium">Blok {blok.blok}</h2>
+              <h2 className="font-medium">{t("blokEtiketi", { ad: blok.blok })}</h2>
               {/* building-map kat'i ARTAN doner; kat plani icin AZALAN goster */}
               {[...blok.katlar].reverse().map((kat) => (
                 <div key={kat.kat} className="flex items-start gap-3">
                   <span className="w-14 shrink-0 pt-5 text-xs text-slate-500">
-                    Kat {kat.kat}
+                    {t("haritaKat", { kat: kat.kat })}
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {kat.units.map((u) => (
@@ -201,7 +201,6 @@ export default function SchematicPage() {
               <h2 className="font-medium">{t("haritaYerlesimYok")}</h2>
               <p className="text-xs text-muted">
                 {t("haritaYerlesimNotu")}
-                eklenebilir.
               </p>
               <div className="flex flex-wrap gap-2">
                 {(data?.unplaced ?? []).map((u) => (

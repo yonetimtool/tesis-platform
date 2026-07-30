@@ -115,7 +115,7 @@ export default function ComplaintsPage() {
         ))}
         {data && data.items.length === 0 && (
           <EmptyState
-            title={durum ? "Bu durumda talep yok." : t("talepYok")}
+            title={durum ? t("talepDurumdaYok") : t("talepYok")}
             description={
               durum
                 ? t("talepFiltreDegistir")
@@ -188,11 +188,11 @@ function ComplaintCard({
           )}
 
           <p className="mt-2 text-xs text-muted">
-            {c.acan_ad ?? "Sakin"} · {formatDateTime(c.created_at)}
+            {c.acan_ad ?? t("rolSiteSakini")} · {formatDateTime(c.created_at)}
           </p>
 
           {c.is_emri_id && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm">
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm">
               <span className="text-blue-700">{t("talepBagliIsEmri")}</span>
               <span className="ml-auto font-medium text-blue-700">
                 {t(isEmriAnahtari(c.is_emri_durum))}
@@ -209,7 +209,7 @@ function ComplaintCard({
           <div className="flex shrink-0 flex-col gap-2">
             <button className={btnPrimary} onClick={() => setAction("coz")}>{t("talepCoz")}</button>
             <button className={btnDanger} onClick={() => setAction("reddet")}>
-              Reddet
+              {t("talepReddet")}
             </button>
           </div>
         )}
@@ -314,7 +314,7 @@ function ActionForm({
   return (
     <form onSubmit={submit} className="mt-4 space-y-4 border-t border-slate-100 pt-4">
       <Field
-        label={isReddet ? "Red sebebi" : t("talepCozumNotu")}
+        label={isReddet ? t("talepRedSebebi") : t("talepCozumNotu")}
         hint={
           isReddet
             ? t("talepNotZorunlu")

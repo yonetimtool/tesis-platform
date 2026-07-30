@@ -376,7 +376,7 @@ export default function TasksPage() {
                   {gorev.ad}
                   {gorev.foto_zorunlu && (
                     <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
-                      foto zorunlu
+                      {t("gorevFotoZorunluRozet")}
                     </span>
                   )}
                 </td>
@@ -439,7 +439,7 @@ export default function TasksPage() {
                     <td className="px-4 py-2.5">
                       {c.foto_key ? (
                         <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">
-                          foto var
+                          {t("gorevFotoVarRozet")}
                         </span>
                       ) : (
                         <span className="text-muted">{t("raporYok")}</span>

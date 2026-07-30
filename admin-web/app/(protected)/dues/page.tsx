@@ -141,9 +141,9 @@ export default function DuesPage() {
 
       {/* Tahakkuk listesi */}
       <section className="space-y-3">
-        <div className="flex items-end justify-between">
+        <div className="flex flex-wrap items-end justify-between gap-2">
           <h2 className="text-lg font-medium">{t("aidatTahakkuklar")}</h2>
-          <div className="w-48">
+          <div className="w-full sm:w-48">
             <Field label={t("aidatDonemFiltresi")}>
               <input
                 className={inputCls}

@@ -90,6 +90,69 @@ Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve
 > (2), reports (2), patrol_tracking (2), etkinlik (2), … Elle hesap ya da
 > daha sıkı bir ölçüm gerekiyor.
 
+> **GÜNCELLEME (tur 59).** D **kapandı** — ve en verimli tur bu oldu.
+> Eksen değerleri genişletildi: mobilde 7 kombinasyon × 3 dil
+> (`eksenKombinasyonSurusu`: 0,85×/1,3× ölçek, tablet dikey/**yatay**,
+> telefon yatay, **kalın yazı**, dpr 2,0/3,0) + `animasyonSurusu` (kare kare,
+> sonsuz animasyonlu ekranlarda da). Panelde 5 yeni ölçü + **`ANIMASYON
+> sururken`** kipi (`networkidle` yerine `domcontentloaded`).
+>
+> **Mobilde bulgu çıkmadı, panelde 63 bulgu çıktı.** Hepsi tek eksende
+> yoğunlaştı: `320 px + 22 px kök yazı` (kalın yazı/büyük font kullanan
+> erişilebilirlik ayarı). Düzeltilenler: sayfa başlığı uzun Almanca bileşik
+> kelimede taşıyordu (`min-w-0` + `break-words`), sabit genişlikli filtre
+> kutuları (`w-52/48/64` → `w-full sm:w-*`), bildirim satırı, duyuru eylem
+> çifti, talep iş-emri şeridi, şeffaflık kartı, alarm satırı, giriş başlığı ve
+> pano KPI ızgarası (2 kolonda 70 px içerik kalıyordu).
+>
+> **YAN BULGU — asıl değerli olan:** kalın yazı sürüşü Almanca `/notifications`
+> sayfasında **"Okundu"** butonunu gösterdi. Bu bir TR sızıntısıydı ve tur
+> 47'nin taraması onu görmemişti: `METIN` kalıbı `\n` hariç tutuyordu, yani
+> Prettier'in kendi satırına sardığı metin düğümleri **hiç taranmıyordu**.
+> Tarama düzeltilince **17 sızıntı** çıktı; ardından iki kalıp daha eklendi
+> (süslü parantezli prop `detail={...}` ve karışık metin düğümü
+> `>Toplam {n} · …<`) ve **11 sızıntı daha** çıktı. Toplam **28**.
+>
+> En çarpıcısı: panonun dört KPI açıklaması (`{n} plan penceresi`,
+> `{n} turdan`, `tur yok`, `ilgilenilmeli`) ile `haritaKat` — **sözlük
+> anahtarları zaten vardı ve yedi dile çevrilmişti**, sayfa hiçbirini
+> kullanmıyordu. Panelin amiral sayfası altı dilde Türkçe gösteriyordu.
+>
+> **YENİ ARAÇ: `tools/tr-sizinti-surusu.mjs`** — mobilde her sürüşte çalışan
+> `trSizintisiYok`ın panel karşılığı yoktu (bu yüzden yukarıdaki hata yıllarca
+> hayatta kaldı). Karaktere ("ğışç") değil **sözlüğe** bakar: sayfa `de`
+> boyanırken TR sözlüğünün bir değeri birebir geçiyorsa sızıntıdır. 23 sayfa ×
+> 6 dil = 138 koşum, `DENEY=1` kendi kendini sınar, VERİ izin listesi
+> (`(Kurulum bekliyor)` yer tutucu adı, vardiya adları, kategori adları)
+> gerekçeleriyle yazılıdır. Şu an **138/0**.
+>
+> **BİR OLAY: ölçüm GEÇERSİZ olabilir ve fark edilmez.** Sürüş koşarken
+> `next build` çalıştırdım; çalışan sunucunun altından `.next` değişti, CSS
+> **400** döndü ve sayfa **stilsiz** boyandı. O hâlde "taşma" ölçümü tamamen
+> anlamsızdır (`overflow-hidden` bile uygulanmıyordu) ama araç yine de düzgün
+> görünen bir rapor üretti — 63 yerine sahte bir tablo taşması. Artık sürüş her
+> bağlamda ölçümden **önce** stilin uygulandığını doğruluyor; doğrulanamazsa
+> `CSS UYGULANMADI — olcum GECERSIZ` basıp o bağlamı atlıyor.
+>
+> **DEDEKTÖRÜN KENDİ TESTİ** (`test/eksen_kombinasyon_dedektor_test.dart`, 5
+> test): yedi kombinasyonun agaca **ayrı ayrı** ulaştığı (yedi farklı eksen
+> imzası — `MaterialApp` kendi `MediaQuery`sini eklerse hepsi aynılaşırdı),
+> yalnız 320 dp'de ve yalnız kalın yazıda taşan kusurların yakalandığı, ve
+> `animasyonSurusu`nun **hiç durmayan** ekranda ölçüm yapabildiği kanıtlanıyor.
+> Bu son test kendi helper'ımdaki gerçek kusuru buldu: sondaki `pumpAndSettle`,
+> sürüşün kapsamak için var olduğu ekran sınıfında sürüşün kendisini
+> düşürüyordu (`bekleyen` bayrağı eklendi).
+>
+> **Ayrıca:** tam suite `00:24`'te koşarken `rezervasyon_screen_test` düştü —
+> kurgu "00:00–00:30 geçmiş, 23:00–23:59 aktif" varsayımına dayanıyordu ve gece
+> yarısından sonra tersine dönüyor. Tur 53'ün backend'de çözdüğü sınıfın aynısı.
+> `_gecti`nin saati artık dışarıdan verilebiliyor (`rezSimdi`,
+> `@visibleForTesting`) ve test bugünün 12:00'sini sabitliyor.
+>
+> **Sayılar:** panel dar-ekran sürüşü **1104/0** (önce 63), TR sızıntı sürüşü
+> **138/0** (önce 54 satır / 9 ayrı kusur), panel birim testleri 105/105,
+> mobil dedektör 5/5.
+
 ## E. Kalite eksenleri (hiç kurulmamış)
 
 * **Anlamsal okuma SIRASI.** Etiketlerin *varlığı* ölçüldü (tur 29/30), sırası

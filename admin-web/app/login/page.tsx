@@ -178,7 +178,9 @@ export default function LoginPage() {
             className="w-full max-w-sm space-y-5 rounded-2xl border border-slate-200 bg-white p-8 shadow-card"
           >
             <motion.div variants={item}>
-              <h2 className="text-xl font-semibold tracking-tight">{t("girisYonetimPaneli")}</h2>
+              <h2 className="text-xl font-semibold tracking-tight break-words">
+                {t("girisYonetimPaneli")}
+              </h2>
               <p className="mt-1 text-sm text-muted">
                 {t("girisYalnizAdmin")}
               </p>

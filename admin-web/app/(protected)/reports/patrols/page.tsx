@@ -103,12 +103,12 @@ export default function PatrolReportPage() {
       <PageHeader title={t("raporTurGecmisiBaslik")} />
 
       <motion.form {...panelMotion} onSubmit={submit} className={`flex flex-wrap items-end gap-3 ${panelCls}`}>
-        <div className="w-52">
+        <div className="w-full sm:w-52">
           <Field label={t("ortakBaslangic")} hint={t("ortakYerelSaatOpsiyonel")}>
             <input type="datetime-local" className={inputCls} value={bas} onChange={(e) => setBas(e.target.value)} />
           </Field>
         </div>
-        <div className="w-52">
+        <div className="w-full sm:w-52">
           <Field label={t("ortakBitis")} hint={t("ortakYerelSaatOpsiyonel")}>
             <input type="datetime-local" className={inputCls} value={bit} onChange={(e) => setBit(e.target.value)} />
           </Field>
@@ -123,7 +123,7 @@ export default function PatrolReportPage() {
             </select>
           </Field>
         </div>
-        <div className="w-52">
+        <div className="w-full sm:w-52">
           <Field label={t("devriyePlanOpsiyonel")}>
             <select className={inputCls} value={planId} onChange={(e) => setPlanId(e.target.value)}>
               <option value="">{t("ortakTumu")}</option>
@@ -136,7 +136,7 @@ export default function PatrolReportPage() {
           </Field>
         </div>
         <button type="submit" className={btnPrimary}>
-          Raporu getir
+          {t("raporGetir")}
         </button>
       </motion.form>
 

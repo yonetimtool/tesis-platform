@@ -53,53 +53,52 @@ class _FakeBudgetApi extends BudgetApi {
 
   @override
   Future<BudgetSummary> fetchSummary({String? donem}) async => BudgetSummary(
-        toplamGelirKurus: _kat,
-        toplamGiderKurus: 75000,
-        bakiyeKurus: 170000,
-        kategoriler: [
-          BudgetCategorySummaryItem(
-            kategoriId: 'k-aidat',
-            ad: 'Aidat',
-            tip: BudgetTip.gelir,
-            toplamKurus: _kat,
-          ),
-        ],
-      );
+    toplamGelirKurus: _kat,
+    toplamGiderKurus: 75000,
+    bakiyeKurus: 170000,
+    kategoriler: [
+      BudgetCategorySummaryItem(
+        kategoriId: 'k-aidat',
+        ad: 'Aidat',
+        tip: BudgetTip.gelir,
+        toplamKurus: _kat,
+      ),
+    ],
+  );
 
   @override
   Future<List<BudgetEntry>> fetchEntries({
     BudgetTip? tip,
     String? kategoriId,
     String? donem,
-  }) async =>
-      [
-        BudgetEntry(
-          id: 'e-1',
-          kategoriId: 'k-elektrik',
-          tip: BudgetTip.gider,
-          tutarKurus: buyukTutar ? 75000000 : 75000,
-          tarih: DateTime.utc(2026, 7, 3),
-          kaynak: 'aidat_odeme',
-          kategoriAd: 'Elektrik',
-        ),
-      ];
+  }) async => [
+    BudgetEntry(
+      id: 'e-1',
+      kategoriId: 'k-elektrik',
+      tip: BudgetTip.gider,
+      tutarKurus: buyukTutar ? 75000000 : 75000,
+      tarih: DateTime.utc(2026, 7, 3),
+      kaynak: 'aidat_odeme',
+      kategoriAd: 'Elektrik',
+    ),
+  ];
 
   @override
   Future<List<BudgetCategory>> fetchCategories({BudgetTip? tip}) async =>
       const [
-    BudgetCategory(
-      id: 'k-elektrik',
-      ad: 'Elektrik',
-      tip: BudgetTip.gider,
-      aktif: true,
-    ),
-    BudgetCategory(
-      id: 'k-eski',
-      ad: 'Eski',
-      tip: BudgetTip.gelir,
-      aktif: false,
-    ),
-  ];
+        BudgetCategory(
+          id: 'k-elektrik',
+          ad: 'Elektrik',
+          tip: BudgetTip.gider,
+          aktif: true,
+        ),
+        BudgetCategory(
+          id: 'k-eski',
+          ad: 'Eski',
+          tip: BudgetTip.gelir,
+          aktif: false,
+        ),
+      ];
 }
 
 class _FakeAssetApi extends AssetApi {
@@ -148,9 +147,7 @@ Kargo _kargo({bool bekliyor = true, String? fotoUrl}) => Kargo(
 
 Widget _butceEkrani(Locale locale, {bool buyukTutar = false}) => ProviderScope(
   overrides: [
-    budgetApiProvider.overrideWithValue(
-      _FakeBudgetApi(buyukTutar: buyukTutar),
-    ),
+    budgetApiProvider.overrideWithValue(_FakeBudgetApi(buyukTutar: buyukTutar)),
   ],
   child: l10nApp(const BudgetScreen(), locale: locale),
 );
@@ -174,51 +171,49 @@ class _FakeAssetsController extends AssetsController {
 }
 
 ScannedAssetInfo _okutulmus(ZimmetVerdict karar) => ScannedAssetInfo(
-      asset: _asset(),
-      verdict: karar,
-      scannedUid: '04A1B2C3D4E5F6',
-      recentHistory: [
-        AssetCheckout(
-          id: 'z-1',
-          assetId: 'a-1',
-          alanUserId: 'u-1',
-          alanUserAd: 'Ali Guard',
-          almaZamani: DateTime.now().toUtc().subtract(const Duration(hours: 3)),
-        ),
-        AssetCheckout(
-          id: 'z-2',
-          assetId: 'a-1',
-          alanUserId: 'u-2',
-          alanUserAd: 'Mehmet',
-          almaZamani: DateTime.now().toUtc().subtract(const Duration(days: 2)),
-          birakmaZamani:
-              DateTime.now().toUtc().subtract(const Duration(days: 1)),
-          notlar: 'Kazan dairesinde kullanildi',
-        ),
-      ],
-    );
+  asset: _asset(),
+  verdict: karar,
+  scannedUid: '04A1B2C3D4E5F6',
+  recentHistory: [
+    AssetCheckout(
+      id: 'z-1',
+      assetId: 'a-1',
+      alanUserId: 'u-1',
+      alanUserAd: 'Ali Guard',
+      almaZamani: DateTime.now().toUtc().subtract(const Duration(hours: 3)),
+    ),
+    AssetCheckout(
+      id: 'z-2',
+      assetId: 'a-1',
+      alanUserId: 'u-2',
+      alanUserAd: 'Mehmet',
+      almaZamani: DateTime.now().toUtc().subtract(const Duration(days: 2)),
+      birakmaZamani: DateTime.now().toUtc().subtract(const Duration(days: 1)),
+      notlar: 'Kazan dairesinde kullanildi',
+    ),
+  ],
+);
 
 Widget _demirbasEkrani(Locale locale, {AssetsState? durum}) => ProviderScope(
   overrides: [
     assetApiProvider.overrideWithValue(_FakeAssetApi([_asset()])),
     currentUserIdProvider.overrideWith((ref) async => 'u-1'),
     if (durum != null)
-      assetsControllerProvider
-          .overrideWith(() => _FakeAssetsController(durum)),
+      assetsControllerProvider.overrideWith(() => _FakeAssetsController(durum)),
   ],
   child: l10nApp(const AssetsScreen(), locale: locale),
 );
 
 Widget _kargoEkrani(Locale locale, {bool bekliyor = true, String? fotoUrl}) =>
     ProviderScope(
-  overrides: [
-    kargoApiProvider.overrideWithValue(
-      _FakeKargoApi([_kargo(bekliyor: bekliyor, fotoUrl: fotoUrl)]),
-    ),
-    currentUserRoleProvider.overrideWith((ref) async => UserRole.security),
-  ],
-  child: l10nApp(KargoScreen(), locale: locale),
-);
+      overrides: [
+        kargoApiProvider.overrideWithValue(
+          _FakeKargoApi([_kargo(bekliyor: bekliyor, fotoUrl: fotoUrl)]),
+        ),
+        currentUserRoleProvider.overrideWith((ref) async => UserRole.security),
+      ],
+      child: l10nApp(KargoScreen(), locale: locale),
+    );
 
 void _ekran(WidgetTester tester, {double g = 430, double h = 1400}) {
   tester.view.physicalSize = Size(g, h);
@@ -580,7 +575,9 @@ void main() {
     }
   });
 
-  testWidgets('SURUS: demirbas ekrani 6 dilde TR sabit tasimaz', (tester) async {
+  testWidgets('SURUS: demirbas ekrani 6 dilde TR sabit tasimaz', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(430, 1400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -604,78 +601,124 @@ void main() {
     }
   });
 
-
-
   // ---- TUR 26: DAR EKRAN SURUSU (320 dp x 6 dil) ----
   testWidgets('DAR 320dp: butce ekrani 6 dilde TASMAZ', (tester) async {
-    await darEkranSurusu(tester, (dil) => _butceEkrani(Locale(dil)),
-        veri: surusVerisi);
+    await darEkranSurusu(
+      tester,
+      (dil) => _butceEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
   testWidgets('DAR 320dp: demirbas ekrani 6 dilde TASMAZ', (tester) async {
-    await darEkranSurusu(tester, (dil) => _demirbasEkrani(Locale(dil)),
-        veri: surusVerisi);
+    await darEkranSurusu(
+      tester,
+      (dil) => _demirbasEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
   testWidgets('DAR 320dp: kargo ekrani 6 dilde TASMAZ', (tester) async {
-    await darEkranSurusu(tester, (dil) => _kargoEkrani(Locale(dil)),
-        veri: surusVerisi);
+    await darEkranSurusu(
+      tester,
+      (dil) => _kargoEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
 
   // ---- TUR 27: YAZI OLCEGI SURUSU (2.0x x 6 dil) ----
   testWidgets('OLCEK 2x: butce ekrani 6 dilde TASMAZ', (tester) async {
-    await yaziOlcegiSurusu(tester, (dil) => _butceEkrani(Locale(dil)), veri: surusVerisi);
+    await yaziOlcegiSurusu(
+      tester,
+      (dil) => _butceEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
   testWidgets('OLCEK 2x: demirbas ekrani 6 dilde TASMAZ', (tester) async {
-    await yaziOlcegiSurusu(tester, (dil) => _demirbasEkrani(Locale(dil)), veri: surusVerisi);
+    await yaziOlcegiSurusu(
+      tester,
+      (dil) => _demirbasEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
   testWidgets('OLCEK 2x: kargo ekrani 6 dilde TASMAZ', (tester) async {
-    await yaziOlcegiSurusu(tester, (dil) => _kargoEkrani(Locale(dil)), veri: surusVerisi);
+    await yaziOlcegiSurusu(
+      tester,
+      (dil) => _kargoEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
 
   // ---- TUR 29: EKRAN OKUYUCU SURUSU ----
-  testWidgets('OKUYUCU: butce ekrani (etiket + dokunma hedefi + dil)',
-      (tester) async {
-    await ekranOkuyucuSurusu(tester, (dil) => _butceEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('OKUYUCU: butce ekrani (etiket + dokunma hedefi + dil)', (
+    tester,
+  ) async {
+    await ekranOkuyucuSurusu(
+      tester,
+      (dil) => _butceEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
-  testWidgets('OKUYUCU: demirbas ekrani (etiket + dokunma hedefi + dil)',
-      (tester) async {
-    await ekranOkuyucuSurusu(tester, (dil) => _demirbasEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('OKUYUCU: demirbas ekrani (etiket + dokunma hedefi + dil)', (
+    tester,
+  ) async {
+    await ekranOkuyucuSurusu(
+      tester,
+      (dil) => _demirbasEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
-  testWidgets('OKUYUCU: kargo ekrani (etiket + dokunma hedefi + dil)',
-      (tester) async {
-    await ekranOkuyucuSurusu(tester, (dil) => _kargoEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('OKUYUCU: kargo ekrani (etiket + dokunma hedefi + dil)', (
+    tester,
+  ) async {
+    await ekranOkuyucuSurusu(
+      tester,
+      (dil) => _kargoEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
 
   // ---- TUR 32: KOYU TEMA ----
-  testWidgets('KOYU TEMA: butceEkrani 7 dilde (kontrast + tasma)',
-      (tester) async {
-    await koyuTemaSurusu(tester, (dil) => _butceEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('KOYU TEMA: butceEkrani 7 dilde (kontrast + tasma)', (
+    tester,
+  ) async {
+    await koyuTemaSurusu(
+      tester,
+      (dil) => _butceEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
-  testWidgets('KOYU TEMA: demirbasEkrani 7 dilde (kontrast + tasma)',
-      (tester) async {
-    await koyuTemaSurusu(tester, (dil) => _demirbasEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('KOYU TEMA: demirbasEkrani 7 dilde (kontrast + tasma)', (
+    tester,
+  ) async {
+    await koyuTemaSurusu(
+      tester,
+      (dil) => _demirbasEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
-  testWidgets('KOYU TEMA: kargoEkrani 7 dilde (kontrast + tasma)',
-      (tester) async {
-    await koyuTemaSurusu(tester, (dil) => _kargoEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('KOYU TEMA: kargoEkrani 7 dilde (kontrast + tasma)', (
+    tester,
+  ) async {
+    await koyuTemaSurusu(
+      tester,
+      (dil) => _kargoEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
 
   // ---- TUR 33: KLAVYE ----
-  testWidgets('KLAVYE: butceEkrani (odak sirasi + tuzak + dokunma-yalniz)',
-      (tester) async {
+  testWidgets('KLAVYE: butceEkrani (odak sirasi + tuzak + dokunma-yalniz)', (
+    tester,
+  ) async {
     await klavyeSurusu(tester, (dil) => _butceEkrani(Locale(dil)));
   });
-  testWidgets('KLAVYE: demirbasEkrani (odak sirasi + tuzak + dokunma-yalniz)',
-      (tester) async {
+  testWidgets('KLAVYE: demirbasEkrani (odak sirasi + tuzak + dokunma-yalniz)', (
+    tester,
+  ) async {
     await klavyeSurusu(tester, (dil) => _demirbasEkrani(Locale(dil)));
   });
-  testWidgets('KLAVYE: kargoEkrani (odak sirasi + tuzak + dokunma-yalniz)',
-      (tester) async {
+  testWidgets('KLAVYE: kargoEkrani (odak sirasi + tuzak + dokunma-yalniz)', (
+    tester,
+  ) async {
     await klavyeSurusu(tester, (dil) => _kargoEkrani(Locale(dil)));
   });
 
@@ -690,8 +733,12 @@ void main() {
 
   // ---- TUR 38: FORMLAR VE ALT SAYFALAR ----
   testWidgets('FORM: kargo kaydi alt sayfasi (bes eksen)', (tester) async {
-    await tumEksenlerSurusu(tester, (dil) => _kargoEkrani(Locale(dil)),
-        veri: surusVerisi, hazirla: fabAc);
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _kargoEkrani(Locale(dil)),
+      veri: surusVerisi,
+      hazirla: fabAc,
+    );
   });
 
   // ---- TUR 53: OKUTULMUS DEMIRBAS KARTLARI ----
@@ -701,8 +748,9 @@ void main() {
     ('BASKASINDA', ZimmetVerdict.baskasinda),
     ('BAKIMDA', ZimmetVerdict.bakimda),
   ]) {
-    testWidgets('OKUTMA: $ad karti + zimmet gecmisi (bes eksen)',
-        (tester) async {
+    testWidgets('OKUTMA: $ad karti + zimmet gecmisi (bes eksen)', (
+      tester,
+    ) async {
       await tumEksenlerSurusu(
         tester,
         (dil) => _demirbasEkrani(
@@ -732,6 +780,18 @@ void main() {
       ),
       veri: surusVerisi,
       bekleyen: true,
+    );
+  });
+
+  // ---- TUR 59: EKSEN KOMBINASYONLARI ----
+  testWidgets('EKSEN: kargo FORMU acik (7 kombinasyon x 3 dil)', (
+    tester,
+  ) async {
+    await eksenKombinasyonSurusu(
+      tester,
+      (dil) => _kargoEkrani(Locale(dil)),
+      veri: surusVerisi,
+      hazirla: fabAc,
     );
   });
 }

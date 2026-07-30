@@ -275,7 +275,7 @@ export default function PatrolPlansPage() {
               checked={form.aktif}
               onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
             />
-            Aktif
+            {t("ortakAktif")}
           </label>
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
@@ -291,7 +291,7 @@ export default function PatrolPlansPage() {
 
       {assignPlan && (
         <motion.div {...panelMotion} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">Noktalar: {assignPlan.ad}</h2>
+          <h2 className="font-medium">{t("planNoktalariBaslik", { ad: assignPlan.ad })}</h2>
           <p className="text-xs text-muted">
             {t("planSiraliListe")}
           </p>
@@ -392,7 +392,8 @@ export default function PatrolPlansPage() {
                   <td className="px-4 py-2.5">{p.ad}</td>
                   <td className="px-4 py-2.5 text-slate-600">{shiftName(p.shift_id)}</td>
                   <td className="px-4 py-2.5 text-slate-600">
-                    {p.baslangic_saat}–{p.bitis_saat} · {p.periyot_dakika} dk
+                    {p.baslangic_saat}–{p.bitis_saat} ·{" "}
+                    {t("devriyePeriyotN", { n: p.periyot_dakika })}
                   </td>
                   <td className="px-4 py-2.5">
                     <span
@@ -406,7 +407,7 @@ export default function PatrolPlansPage() {
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex justify-end gap-2">
                       <button className={btnGhost} onClick={() => openAssign(p)}>
-                        Noktalar
+                        {t("planNoktalar")}
                       </button>
                       <button className={btnGhost} onClick={() => openEdit(p)}>
                         {t("ortakDuzenle")}

@@ -112,17 +112,17 @@ export default function TaskReportPage() {
       <PageHeader title={t("raporGorevGecmisiBaslik")} />
 
       <motion.form {...panelMotion} onSubmit={submit} className={`flex flex-wrap items-end gap-3 ${panelCls}`}>
-        <div className="w-52">
+        <div className="w-full sm:w-52">
           <Field label={t("ortakBaslangic")} hint={t("ortakYerelSaatOpsiyonel")}>
             <input type="datetime-local" className={inputCls} value={bas} onChange={(e) => setBas(e.target.value)} />
           </Field>
         </div>
-        <div className="w-52">
+        <div className="w-full sm:w-52">
           <Field label={t("ortakBitis")} hint={t("ortakYerelSaatOpsiyonel")}>
             <input type="datetime-local" className={inputCls} value={bit} onChange={(e) => setBit(e.target.value)} />
           </Field>
         </div>
-        <div className="w-52">
+        <div className="w-full sm:w-52">
           <Field label={t("gorevKategoriAlan")}>
             <select
               className={inputCls}
@@ -138,7 +138,7 @@ export default function TaskReportPage() {
             </select>
           </Field>
         </div>
-        <div className="w-52">
+        <div className="w-full sm:w-52">
           <Field label={t("raporTamamlayanOpsiyonel")}>
             <select className={inputCls} value={tamamlayan} onChange={(e) => setTamamlayan(e.target.value)}>
               <option value="">{t("ortakTumu")}</option>
@@ -151,7 +151,7 @@ export default function TaskReportPage() {
           </Field>
         </div>
         <button type="submit" className={btnPrimary}>
-          Raporu getir
+          {t("raporGetir")}
         </button>
       </motion.form>
 

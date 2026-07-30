@@ -23,8 +23,8 @@ function DurumRozet({ durum }: { durum: string }) {
 
 function AlarmSatir({ alarm }: { alarm: Alarm }) {
   return (
-    <li className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
-      <div>
+    <li className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-slate-500">{alarm.tip}</span>
         </div>
@@ -97,7 +97,9 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("kabukCanliPanel")}</h1>
+        <h1 className="min-w-0 text-2xl font-semibold tracking-tight break-words">
+          {t("kabukCanliPanel")}
+        </h1>
         {data && (
           <span className="text-xs text-muted">
             {t("panelGuncellendiTam", { zaman: formatDateTime(data.generated_at) })}
@@ -121,18 +123,18 @@ export default function DashboardPage() {
         variants={grid}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 gap-4 lg:grid-cols-4"
+        className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 lg:grid-cols-4"
       >
         <StatCard
           label={t("panelBugunkuTurlar")}
           value={turlar.length}
-          detail={`${turlar.length} plan penceresi`}
+          detail={t("panelPlanPenceresi", { n: turlar.length })}
           tone="default"
         />
         <StatCard
           label={t("panelTamamlanan")}
           value={tamamlanan}
-          detail={turlar.length ? `${turlar.length} turdan` : "tur yok"}
+          detail={turlar.length ? t("panelTurdan", { n: turlar.length }) : t("panelTurYok")}
           tone="teal"
         />
         <StatCard
@@ -144,7 +146,7 @@ export default function DashboardPage() {
         <StatCard
           label={t("panelAktifAlarm")}
           value={alarmSayisi}
-          detail={alarmSayisi ? "ilgilenilmeli" : t("panelHerSeyYolunda")}
+          detail={alarmSayisi ? t("panelIlgilenilmeli") : t("panelHerSeyYolunda")}
           tone={alarmSayisi ? "red" : "default"}
         />
       </motion.div>
@@ -198,7 +200,7 @@ export default function DashboardPage() {
           ))}
           {data && data.son_alarmlar.length === 0 && (
             <li className="rounded-2xl border border-slate-200 bg-white px-3 py-8 text-center text-muted shadow-card">
-              Alarm yok.
+              {t("panelAlarmYok")}
             </li>
           )}
         </ul>

@@ -241,7 +241,7 @@ export default function UsersPage() {
                   checked={form.aranabilir}
                   onChange={(e) => setForm({ ...form, aranabilir: e.target.checked })}
                 />
-                Telefonla aranmaya izin ver
+                {t("kullaniciAranabilirOnay")}
               </label>
             </Field>
             <Field label={t("ortakRol")}>

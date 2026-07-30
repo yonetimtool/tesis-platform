@@ -341,6 +341,14 @@ void main() {
       // Sunucu resident'a benim=true doner (kendi rezervasyonu). Aktif/gecmis
       // ayrimini istemci bitis+simdi ile yapar; gunun sonu (23:59) aktif,
       // basi (00:30) gecmis kabul edilir (test ortami gun-ici saatte kosar).
+      // SAAT BAGIMSIZLIGI (tur 59): kurgu "gun-ici" varsayimina dayaniyor;
+      // 00:24'te kosuldugunda 00:00-00:30 HENUZ gecmemis oluyordu ve test
+      // kodla ilgisi olmayan bir nedenle dusuyordu. Simdi saat sabitlenir
+      // (bugunun 12:00'si — secili tarih de bugun oldugu icin tutarli).
+      final bugun = DateTime.now();
+      rezSimdi = () => DateTime(bugun.year, bugun.month, bugun.day, 12);
+      addTearDown(() => rezSimdi = DateTime.now);
+
       final ownSlots = <Slot>[
         const Slot(
             baslangic: '23:00',

@@ -48,11 +48,10 @@ Widget _app({
 
   return ProviderScope(
     overrides: [
-      profileProvider.overrideWith((ref) async => const Profile(
-            ad: 'Çiğdem',
-            role: 'resident',
-            aranabilir: false,
-          )),
+      profileProvider.overrideWith(
+        (ref) async =>
+            const Profile(ad: 'Çiğdem', role: 'resident', aranabilir: false),
+      ),
       // Hava ucu testte aga cikmasin — hata → baslik hava blogu cizilmez.
       weatherProvider.overrideWith((ref) async => throw Exception('offline')),
       myDuesProvider.overrideWith((ref) => uc(units)),
@@ -62,8 +61,9 @@ Widget _app({
       acikSikayetSayisiProvider.overrideWith((ref) => uc(acikTalep)),
       kendiDaireSikayetSayisiProvider.overrideWith((ref) => uc(daireSikayet)),
       // G6: gurultu sayaci — kategori suzgeci sunucuda.
-      kendiGurultuSikayetSayisiProvider
-          .overrideWith((ref) => uc(gurultuSikayet)),
+      kendiGurultuSikayetSayisiProvider.overrideWith(
+        (ref) => uc(gurultuSikayet),
+      ),
       // G5: akis TEK uctan (/activity) — istemci birlestirmesi YOK.
       sonHareketlerProvider.overrideWith((ref) => uc(hareketler)),
     ],
@@ -74,7 +74,8 @@ Widget _app({
       // Tur 32: koyu tema surusu bu anahtari cevirir (varsayilan null =
       // acik tema, mevcut testler etkilenmez).
       theme: testTemasi,
-      home: ResidentHomeScreen()),
+      home: ResidentHomeScreen(),
+    ),
   );
 }
 
@@ -91,9 +92,7 @@ final _borcsuz = [
     tahakkukKurus: 125000,
     odenenKurus: 125000,
     bakiyeKurus: 0,
-    assessments: [
-      DuesAssessment(donem: '2026-06', tutarKurus: 125000),
-    ],
+    assessments: [DuesAssessment(donem: '2026-06', tutarKurus: 125000)],
   ),
 ];
 
@@ -104,42 +103,43 @@ final _borclu = [
     tahakkukKurus: 250000,
     odenenKurus: 125000,
     bakiyeKurus: 125000,
-    assessments: [
-      DuesAssessment(donem: '2026-07', tutarKurus: 125000),
-    ],
+    assessments: [DuesAssessment(donem: '2026-07', tutarKurus: 125000)],
   ),
 ];
 
 Kargo _kargo(String id, {KargoDurum durum = KargoDurum.bekliyor}) => Kargo(
-      id: id,
-      unitId: 'u1',
-      unitNo: '12',
-      firma: 'Mng',
-      durum: durum,
-      kaydedenUserId: 'g1',
-      createdAt: DateTime(2026, 7, 23, 9),
-    );
+  id: id,
+  unitId: 'u1',
+  unitNo: '12',
+  firma: 'Mng',
+  durum: durum,
+  kaydedenUserId: 'g1',
+  createdAt: DateTime(2026, 7, 23, 9),
+);
 
 void main() {
   testWidgets('referans bolum SIRASI (site-sakini.jpeg): karsilama → 4x2 '
-      'izgara → Ödeme ve Aidat Durumu → Son Hareketler → Duyurular',
-      (tester) async {
+      'izgara → Ödeme ve Aidat Durumu → Son Hareketler → Duyurular', (
+    tester,
+  ) async {
     _tall(tester);
-    await tester.pumpWidget(_app(
-      units: _borcsuz,
-      kargolar: [_kargo('k1')],
-      hareketler: [
-        ActivityItem(
-          id: 'kargo:k1',
-          tur: ActivityTur.kargo,
-          baslikKimlik: AkisBaslik.kargo,
-          sunucuBaslik: 'Kargo Kaydedildi',
-          sunucuAltMetin: 'Mng — Daire 12',
-          zaman: DateTime(2026, 7, 23, 9),
-          kaynakId: 'k1',
-        ),
-      ],
-    ));
+    await tester.pumpWidget(
+      _app(
+        units: _borcsuz,
+        kargolar: [_kargo('k1')],
+        hareketler: [
+          ActivityItem(
+            id: 'kargo:k1',
+            tur: ActivityTur.kargo,
+            baslikKimlik: AkisBaslik.kargo,
+            sunucuBaslik: 'Kargo Kaydedildi',
+            sunucuAltMetin: 'Mng — Daire 12',
+            zaman: DateTime(2026, 7, 23, 9),
+            kaynakId: 'k1',
+          ),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Merhaba, Çiğdem'), findsOneWidget);
@@ -170,7 +170,7 @@ void main() {
         'Ödeme ve Aidat Durumu',
         'Son Hareketler',
       ])
-        tester.getTopLeft(find.text(baslik).first).dy
+        tester.getTopLeft(find.text(baslik).first).dy,
     ];
     expect(sira[0] < sira[1], isTrue);
     expect(sira[1] < sira[2], isTrue);
@@ -190,46 +190,51 @@ void main() {
   testWidgets('borclu sakin: izgara sayaci borc tutari + "Borç Var"; kargo '
       'sayaci listeden turetilir', (tester) async {
     _tall(tester);
-    await tester.pumpWidget(_app(
-      units: _borclu,
-      kargolar: [_kargo('k1'), _kargo('k2'), _kargo('k3')],
-    ));
+    await tester.pumpWidget(
+      _app(
+        units: _borclu,
+        kargolar: [_kargo('k1'), _kargo('k2'), _kargo('k3')],
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Borç Var'), findsOneWidget);
     expect(find.text('3 Bekliyor'), findsOneWidget); // Kargolarım sayaci
   });
 
-  testWidgets('sayaclar GERCEK uctan: ziyaretci/talep/daire sikayeti/duyuru',
-      (tester) async {
+  testWidgets('sayaclar GERCEK uctan: ziyaretci/talep/daire sikayeti/duyuru', (
+    tester,
+  ) async {
     _tall(tester);
-    await tester.pumpWidget(_app(
-      units: _borcsuz,
-      ziyaretciler: [
-        Visitor(
-          id: 'z1',
-          unitId: 'u1',
-          unitNo: '12',
-          ziyaretciAd: 'Ahmet Yılmaz',
-          kaydedenUserId: 'g1',
-          targetResidentUserId: 'r1',
-          createdAt: DateTime(2026, 7, 23, 10),
-        ),
-      ],
-      acikTalep: 2,
-      daireSikayet: 1,
-      gurultuSikayet: 3,
-      duyurular: [
-        Announcement(
-          id: 'd1',
-          baslik: 'Asansör Bakımı',
-          govde: 'Perşembe günü asansör bakımı yapılacaktır.',
-          olusturanUserId: 'y1',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      ],
-    ));
+    await tester.pumpWidget(
+      _app(
+        units: _borcsuz,
+        ziyaretciler: [
+          Visitor(
+            id: 'z1',
+            unitId: 'u1',
+            unitNo: '12',
+            ziyaretciAd: 'Ahmet Yılmaz',
+            kaydedenUserId: 'g1',
+            targetResidentUserId: 'r1',
+            createdAt: DateTime(2026, 7, 23, 10),
+          ),
+        ],
+        acikTalep: 2,
+        daireSikayet: 1,
+        gurultuSikayet: 3,
+        duyurular: [
+          Announcement(
+            id: 'd1',
+            baslik: 'Asansör Bakımı',
+            govde: 'Perşembe günü asansör bakımı yapılacaktır.',
+            olusturanUserId: 'y1',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('1 Kayıt'), findsOneWidget); // Ziyaretçiler
@@ -245,26 +250,30 @@ void main() {
   testWidgets('Son Hareketler TEK uctan (/activity): sunucu metinleri aynen '
       'cizilir, istemci birlestirmez', (tester) async {
     _tall(tester);
-    await tester.pumpWidget(_app(hareketler: [
-      ActivityItem(
-        id: 'kargo:k1',
-        tur: ActivityTur.kargo,
-        baslikKimlik: AkisBaslik.kargo,
-        sunucuBaslik: 'Kargo Kaydedildi',
-        sunucuAltMetin: 'Aras Kargo — Daire A-12',
-        zaman: DateTime(2026, 7, 23, 11),
-        kaynakId: 'k1',
+    await tester.pumpWidget(
+      _app(
+        hareketler: [
+          ActivityItem(
+            id: 'kargo:k1',
+            tur: ActivityTur.kargo,
+            baslikKimlik: AkisBaslik.kargo,
+            sunucuBaslik: 'Kargo Kaydedildi',
+            sunucuAltMetin: 'Aras Kargo — Daire A-12',
+            zaman: DateTime(2026, 7, 23, 11),
+            kaynakId: 'k1',
+          ),
+          ActivityItem(
+            id: 'ziyaretci_giris:z1',
+            tur: ActivityTur.ziyaretciGiris,
+            baslikKimlik: AkisBaslik.ziyaretciGiris,
+            sunucuBaslik: 'Ziyaretçi Girişi',
+            sunucuAltMetin: 'Ahmet Yılmaz — Daire A-12',
+            zaman: DateTime(2026, 7, 23, 10),
+            kaynakId: 'z1',
+          ),
+        ],
       ),
-      ActivityItem(
-        id: 'ziyaretci_giris:z1',
-        tur: ActivityTur.ziyaretciGiris,
-        baslikKimlik: AkisBaslik.ziyaretciGiris,
-        sunucuBaslik: 'Ziyaretçi Girişi',
-        sunucuAltMetin: 'Ahmet Yılmaz — Daire A-12',
-        zaman: DateTime(2026, 7, 23, 10),
-        kaynakId: 'z1',
-      ),
-    ]));
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Son Hareketler'), findsOneWidget);
@@ -290,8 +299,9 @@ void main() {
     expect(find.text('—'), findsWidgets);
   });
 
-  testWidgets('UYDURMA SAYI YOK: veri gelmeden sayac yerine iskelet cizilir',
-      (tester) async {
+  testWidgets('UYDURMA SAYI YOK: veri gelmeden sayac yerine iskelet cizilir', (
+    tester,
+  ) async {
     _tall(tester);
     await tester.pumpWidget(_app(units: _borcsuz, gecikme: true));
     await tester.pump(); // uclar henuz cevap vermedi
@@ -311,8 +321,9 @@ void main() {
   // Ana ekran surusun EN RISKLI ekrani: yeniden tasarimda (README §16)
   // lacivert/teal SABIT renkler ve degradeler geldi — bunlar temayla
   // degismez, yani koyu zeminde okunmayabilirler.
-  testWidgets('KOYU TEMA: sakin ana ekrani 7 dilde (kontrast + tasma)',
-      (tester) async {
+  testWidgets('KOYU TEMA: sakin ana ekrani 7 dilde (kontrast + tasma)', (
+    tester,
+  ) async {
     _tall(tester);
     await koyuTemaSurusu(
       tester,
@@ -322,15 +333,20 @@ void main() {
   });
 
   // ---- TUR 33: KLAVYE ----
-  testWidgets('KLAVYE: ana ekran (odak sirasi + tuzak + dokunma-yalniz)',
-      (tester) async {
+  testWidgets('KLAVYE: ana ekran (odak sirasi + tuzak + dokunma-yalniz)', (
+    tester,
+  ) async {
     _tall(tester);
-    await klavyeSurusu(tester, (dil) => _app(units: _borcsuz, dil: Locale(dil)));
+    await klavyeSurusu(
+      tester,
+      (dil) => _app(units: _borcsuz, dil: Locale(dil)),
+    );
   });
 
   // ---- TUR 34: FOTOGRAFLI VERI ----
-  testWidgets('FOTOGRAFLI: sakin ana ekrani (bes eksen birden)',
-      (tester) async {
+  testWidgets('FOTOGRAFLI: sakin ana ekrani (bes eksen birden)', (
+    tester,
+  ) async {
     _tall(tester);
     await fotografliSurus(
       tester,
@@ -353,6 +369,23 @@ void main() {
         ],
       ),
       veri: surusVerisi,
+    );
+  });
+
+  // ---- TUR 59: EKSEN KOMBINASYONLARI ----
+  testWidgets('EKSEN: sakin ana ekrani (7 kombinasyon x 3 dil)', (
+    tester,
+  ) async {
+    await eksenKombinasyonSurusu(
+      tester,
+      (dil) => _app(units: _borcsuz, dil: Locale(dil)),
+      veri: surusVerisi,
+    );
+  });
+  testWidgets('ANIMASYON: sakin ana ekrani her karede tasmaz', (tester) async {
+    await animasyonSurusu(
+      tester,
+      (dil) => _app(units: _borcsuz, dil: Locale(dil)),
     );
   });
 }

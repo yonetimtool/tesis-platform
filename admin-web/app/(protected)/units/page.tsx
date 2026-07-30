@@ -126,7 +126,7 @@ export default function UnitsPage() {
       />
 
       <div className="flex items-end gap-2">
-        <div className="w-48">
+        <div className="w-full sm:w-48">
           <Field label={t("daireBlokFiltresi")}>
             <input
               className={inputCls}
@@ -204,7 +204,7 @@ export default function UnitsPage() {
               checked={form.aktif}
               onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
             />
-            Aktif
+            {t("ortakAktif")}
           </label>
           <ErrorBox message={formErr} />
           <div className="flex gap-2">

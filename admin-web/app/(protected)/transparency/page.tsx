@@ -72,7 +72,7 @@ export default function TransparencyPage() {
 
       {months.length > 0 && (
         <>
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <Field label={t("ortakDonem")}>
               <select
                 className={inputCls}
@@ -82,7 +82,7 @@ export default function TransparencyPage() {
                 {months.map((m) => (
                   <option key={m.ay} value={m.ay}>
                     {ayBaslik(m.ay, dil)}
-                    {m.yayinlandi ? "" : " • taslak"}
+                    {m.yayinlandi ? "" : ` • ${t("seffafTaslak")}`}
                   </option>
                 ))}
               </select>
@@ -91,11 +91,11 @@ export default function TransparencyPage() {
 
           {board.error && <ErrorBox message={t("seffafOzetYuklenemedi")} />}
           {b && (
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
               {/* Özet */}
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="font-medium">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="min-w-0 font-medium break-words">
                     {t("seffafOzetBasligi", { ay: ayBaslik(b.ay, dil) })}
                   </h2>
                   <span
@@ -105,7 +105,7 @@ export default function TransparencyPage() {
                         : "bg-slate-100 text-slate-600"
                     }`}
                   >
-                    {b.yayinlandi ? t("seffafYayinda") : "taslak"}
+                    {b.yayinlandi ? t("seffafYayinda") : t("seffafTaslak")}
                   </span>
                 </div>
                 <dl className="space-y-1.5 text-sm">
@@ -147,13 +147,16 @@ export default function TransparencyPage() {
                     </div>
                     <Bar value={b.aidat.daire_orani_yuzde} />
                     <p className="mt-2 text-xs text-muted">
-                      Tahsilat: {tl(b.aidat.tahsilat_kurus)} / {tl(b.aidat.tahakkuk_kurus)}{" "}
-                      (tutar: %{b.aidat.tutar_orani_yuzde ?? 0})
+                      {t("seffafTahsilatOrani", {
+                        tahsil: tl(b.aidat.tahsilat_kurus),
+                        tahakkuk: tl(b.aidat.tahakkuk_kurus),
+                        oran: b.aidat.tutar_orani_yuzde ?? 0,
+                      })}
                     </p>
                   </>
                 )}
                 <p className="mt-3 text-sm">
-                  Gecikmede <span className="font-semibold">{b.aidat.geciken_daire_sayisi}</span> daire
+                  {t("seffafGecikenDaire", { sayi: b.aidat.geciken_daire_sayisi })}
                 </p>
               </div>
 

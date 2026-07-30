@@ -242,8 +242,8 @@ export default function AnnouncementsPage() {
       <ul className="space-y-3">
         {(data?.items ?? []).map((a) => (
           <li key={a.id} className={`${cardCls} p-5`}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
                 <h3 className="font-medium">{a.baslik}</h3>
                 <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{a.govde}</p>
                 {a.foto_url && (
@@ -261,7 +261,7 @@ export default function AnnouncementsPage() {
                   {a.updated_at !== a.created_at && ` ${t("duyuruDuzenlendiEki")}`}
                 </p>
               </div>
-              <div className="flex shrink-0 gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button className={btnGhost} onClick={() => openEdit(a)}>
                   {t("ortakDuzenle")}
                 </button>

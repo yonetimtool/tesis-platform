@@ -17,14 +17,49 @@ import { join } from "node:path";
 
 /** Cevrilmesi GEREKMEYEN degerler: marka, teknik jeton, ornek/bicim. */
 const IZINLI =
-  /^(Yönetio|yonetio|NFC|CSV|TL|TRY|ID|URL|API|SMS|QR|GPS|MinIO|JSON|HTTP|app_user|HH:MM|https?:\/\/\.\.\.|—|·|✓|→|[\d.,:/+-]+|[A-Z]-\d+|.{0,1})$/;
+  /^(Yönetio|yonetio|yönetio|NFC|CSV|TL|TRY|ID|URL|API|SMS|QR|GPS|MinIO|JSON|HTTP|app_user|HH:MM|https?:\/\/\.\.\.|—|·|✓|→|[\d.,:/+-]+|[A-Z]-\d+|.{0,1})$/;
 
 /** Kullaniciya GORUNEN oznitelikler. */
-const OZNITELIK =
-  /\b(label|title|placeholder|hint|baslik|subtitle|description|aria-label|alt)="([^"]{2,80})"/g;
+const GORUNEN_PROP =
+  "label|title|placeholder|hint|baslik|subtitle|description|detail|aria-label|alt|emptyText|boslukMetni";
+const OZNITELIK = new RegExp(`\\b(${GORUNEN_PROP})="([^"]{2,80})"`, "g");
 
-/** JSX metin dugumu: `>metin<` (ifade `{...}` degil). */
-const METIN = />([^<>{}\n]{2,80})</g;
+/** TUR 59 — SUSLU PARANTEZLI dizge sabiti: `detail={"..."}`,
+ * `label={'...'}`, `` detail={`${n} plan penceresi`} ``.
+ *
+ * Panonun dort KPI etiketi (`{turlar.length} plan penceresi`, `tur yok`,
+ * `ilgilenilmeli`, `{n} turdan`) tam bu kalipla yazilmisti; SOZLUK ANAHTARLARI
+ * ZATEN VARDI ve yedi dile cevrilmisti ama sayfa hicbirini kullanmiyordu.
+ * Yani panonun amiral sayfasi alti dilde Turkce gosteriyordu ve ne panel
+ * surusleri (TR sizintisina bakmiyorlar) ne de tur 47'nin taramasi (yalniz
+ * `="..."` bicimine bakiyordu) bunu gordu. */
+const IFADE_PROP = new RegExp(
+  `\\b(${GORUNEN_PROP})=\\{([^}]*?)(?:"([^"]{2,80})"|'([^']{2,80})'|\`([^\`]{2,80})\`)`,
+  "g",
+);
+
+/** JSX metin dugumu: `>metin<` (ifade `{...}` degil).
+ *
+ * TUR 59 DUZELTMESI — `\n` HARIC TUTULMUSTU, yani metin kendi satirindaysa
+ * (Prettier uzun butonlari boyle sarar) tarama onu HIC GORMEDI:
+ *
+ *     <button ...>
+ *       Okundu          <- bu satirda ne `>` ne `<` var
+ *     </button>
+ *
+ * Panelde tam bu kalipla kalmis bir TR sizintisi vardi ve tur 59'un "kalin
+ * yazi" surusu onu ALMANCA sayfada gosterdi. Simdi tarama satir satir degil
+ * DOSYA BOYUNCA yapiliyor; satir numarasi eslesme konumundan hesaplanir. */
+const METIN = />([^<>{}]{2,80})</g;
+
+/** TUR 59 — KARISIK metin dugumu: metin + ifade ayni dugumde.
+ *
+ *     <span>Toplam {total} · {bas}-{son}</span>
+ *
+ * `METIN` suslu parantez GORDUGU ICIN bunu atliyordu; oysa "Toplam" cevrilmemis
+ * bir metindir ve `ortakSayfalayici` anahtari ZATEN vardi. Panelin bildirim
+ * sayfasi bu yuzden alti dilde "Toplam" yaziyordu. */
+const KARISIK = [/>([^<>{}]{2,80})\{/g, /\}([^<>{}]{2,80})</g];
 
 function dosyalar(kok: string): string[] {
   const out: string[] = [];
@@ -36,6 +71,17 @@ function dosyalar(kok: string): string[] {
   return out;
 }
 
+/** Yorumlari sil: yorum metni Turkce olabilir ve TARAMA DISIDIR.
+ * (`https://` gibi protokol ciftini korumak icin `//` yalniz basi ya da
+ * bosluktan sonra geldiginde yorum sayilir.) */
+function yorumsuz(s: string): string {
+  return s
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ""))
+    .split("\n")
+    .map((l) => l.replace(/(^|\s)\/\/.*$/, "$1"))
+    .join("\n");
+}
+
 function harfVar(s: string): boolean {
   return /[A-Za-zÇĞİÖŞÜçğıöşü]{2}/.test(s);
 }
@@ -44,21 +90,46 @@ describe("sabit metin taramasi (tur 47)", () => {
   it("JSX metinleri ve gorunen oznitelikler t() uzerinden gelir", () => {
     const bulgular: string[] = [];
     for (const yol of [...dosyalar("app"), ...dosyalar("components")]) {
-      const satirlar = readFileSync(yol, "utf8").split("\n");
+      const kaynak = yorumsuz(readFileSync(yol, "utf8"));
+      // Dosya boyunca metin dugumleri (cok satirli olanlar dahil).
+      for (const m of kaynak.matchAll(METIN)) {
+        const t = m[1].trim();
+        // Cok satirli JSX ifadelerinin PARCASI (`(a.zaman`, `=== 1 && i`)
+        // dizge sabiti degildir: operator/nokta iceren parcalari ele.
+        if (!harfVar(t) || IZINLI.test(t)) continue;
+        if (/[(){}[\]=&|!<>+*/]|\w\.\w|["`;]/.test(t)) continue;
+        const satir = kaynak.slice(0, m.index).split("\n").length;
+        if (kaynak.split("\n")[satir - 1]?.includes("eslint")) continue;
+        bulgular.push(`${yol}:${satir}  ${t}`);
+      }
+      for (const kalip of KARISIK) {
+        for (const m of kaynak.matchAll(kalip)) {
+          const t = m[1].trim();
+          if (!harfVar(t) || IZINLI.test(t)) continue;
+          if (/[(){}[\]=&|!<>+*/]|\w\.\w|["`;,]/.test(t)) continue;
+          const parcalar = m[1].split("\n").map((x) => x.trim()).filter(Boolean);
+          if (parcalar.length !== 1) continue; // birden fazla parca = kod
+          if (/\b(const|let|var|function|return|type|interface|import|export|class|new|await|Record|Promise)\b/.test(t)) continue;
+          if (/:\s*[A-Za-z]/.test(t)) continue; // tip anotasyonu
+          const satir = kaynak.slice(0, m.index).split("\n").length;
+          bulgular.push(`${yol}:${satir}  ${t}`);
+        }
+      }
+      const satirlar = kaynak.split("\n");
       satirlar.forEach((l, i) => {
         if (l.includes("eslint")) return;
-        for (const m of l.matchAll(METIN)) {
-          const t = m[1].trim();
-          // Cok satirli JSX ifadelerinin PARCASI (`(a.zaman`, `=== 1 && i`)
-          // dizge sabiti degildir: operator/nokta iceren parcalari ele.
-          if (!harfVar(t) || IZINLI.test(t)) continue;
-          if (/[(){}[\]=&|!<>+*/]|\w\.\w/.test(t)) continue;
-          bulgular.push(`${yol}:${i + 1}  ${t}`);
-        }
         for (const m of l.matchAll(OZNITELIK)) {
           const t = m[2].trim();
           if (!harfVar(t) || IZINLI.test(t)) continue;
           bulgular.push(`${yol}:${i + 1}  ${m[1]}="${t}"`);
+        }
+        for (const m of l.matchAll(IFADE_PROP)) {
+          // Dizge `t(...)`/`metin(...)` ARGUMANI ise anahtardir, metin degil.
+          if (/\b(t|metin|ceviri)\s*\(/.test(m[2])) continue;
+          // `${...}` yer tutucularini cikar: kalan METIN cevrilmeli.
+          const ham = (m[3] ?? m[4] ?? m[5] ?? "").replace(/\$\{[^}]*\}/g, "").trim();
+          if (!harfVar(ham) || IZINLI.test(ham)) continue;
+          bulgular.push(`${yol}:${i + 1}  ${m[1]}={...${ham}...}`);
         }
       });
     }

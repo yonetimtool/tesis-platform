@@ -58,14 +58,14 @@ class _FakeBinaApi extends BinaDuzenlemeApi {
 
   @override
   Future<List<BuildingBlock>> listBlocks() async => const [
-        BuildingBlock(id: 'b1', ad: 'A'),
-      ];
+    BuildingBlock(id: 'b1', ad: 'A'),
+  ];
 
   @override
   Future<List<EditorUnit>> listUnits() async => const [
-        EditorUnit(id: 'u1', no: 'A-1', blok: 'A', kat: 1, sira: 1),
-        EditorUnit(id: 'u2', no: 'A-2', blok: 'A', kat: 1, sira: 2),
-      ];
+    EditorUnit(id: 'u1', no: 'A-1', blok: 'A', kat: 1, sira: 1),
+    EditorUnit(id: 'u2', no: 'A-2', blok: 'A', kat: 1, sira: 2),
+  ];
 }
 
 /// Daire detay sayfasi sikayet listesi ceker — ag YOK.
@@ -73,9 +73,10 @@ class _FakeSikayetApi extends UnitComplaintApi {
   _FakeSikayetApi() : super(Dio());
 
   @override
-  Future<List<UnitComplaint>> fetchForUnit(String unitId,
-          {bool acikOnly = true}) async =>
-      const [];
+  Future<List<UnitComplaint>> fetchForUnit(
+    String unitId, {
+    bool acikOnly = true,
+  }) async => const [];
 
   @override
   Future<List<UnitComplaint>> fetchMine() async => const [];
@@ -83,7 +84,7 @@ class _FakeSikayetApi extends UnitComplaintApi {
 
 class _FakeTalepApi extends ComplaintApi {
   _FakeTalepApi(this._items, {this.hata, this.askida = false})
-      : super(Dio(), TaskCategoryApi(Dio()));
+    : super(Dio(), TaskCategoryApi(Dio()));
 
   final List<Complaint> _items;
 
@@ -109,12 +110,21 @@ class _FakeTalepApi extends ComplaintApi {
 // ugramamisti.
 const _fotolar = <ComplaintPhoto>[
   ComplaintPhoto(
-      id: 'f1', fotoKey: 'k1', sira: 0, fotoUrl: 'https://ornek/talep-1.jpg'),
+    id: 'f1',
+    fotoKey: 'k1',
+    sira: 0,
+    fotoUrl: 'https://ornek/talep-1.jpg',
+  ),
   ComplaintPhoto(
-      id: 'f2', fotoKey: 'k2', sira: 1, fotoUrl: 'https://ornek/talep-2.jpg'),
+    id: 'f2',
+    fotoKey: 'k2',
+    sira: 1,
+    fotoUrl: 'https://ornek/talep-2.jpg',
+  ),
 ];
 
-Complaint _talep({TalepDurum durum = TalepDurum.acik, bool foto = false}) => Complaint(
+Complaint _talep({TalepDurum durum = TalepDurum.acik, bool foto = false}) =>
+    Complaint(
       id: 'c-1',
       acanUserId: 'u-1',
       acanAd: 'Acme Sakin',
@@ -127,27 +137,36 @@ Complaint _talep({TalepDurum durum = TalepDurum.acik, bool foto = false}) => Com
       updatedAt: DateTime.utc(2026, 7, 9, 10),
     );
 
-Widget _talepEkrani(Locale locale,
-        {UserRole role = UserRole.yonetici,
-        TalepDurum durum = TalepDurum.acik,
-        bool foto = false,
-        ApiException? hata,
-        bool askida = false}) =>
-    ProviderScope(
-      overrides: [
-        complaintApiProvider.overrideWithValue(
-            _FakeTalepApi([_talep(durum: durum, foto: foto)],
-                hata: hata, askida: askida)),
-        currentUserRoleProvider.overrideWith((ref) async => role),
-      ],
-      child: l10nApp(const ComplaintsScreen(), locale: locale),
-    );
+Widget _talepEkrani(
+  Locale locale, {
+  UserRole role = UserRole.yonetici,
+  TalepDurum durum = TalepDurum.acik,
+  bool foto = false,
+  ApiException? hata,
+  bool askida = false,
+}) => ProviderScope(
+  overrides: [
+    complaintApiProvider.overrideWithValue(
+      _FakeTalepApi(
+        [_talep(durum: durum, foto: foto)],
+        hata: hata,
+        askida: askida,
+      ),
+    ),
+    currentUserRoleProvider.overrideWith((ref) async => role),
+  ],
+  child: l10nApp(const ComplaintsScreen(), locale: locale),
+);
 
 BuildingMap _yonetimHaritasi() => BuildingMap(
-      showsDensity: true,
-      bloklar: [
-        BuildingMapBlok(blok: 'A', katlar: [
-          BuildingMapKat(kat: 1, units: [
+  showsDensity: true,
+  bloklar: [
+    BuildingMapBlok(
+      blok: 'A',
+      katlar: [
+        BuildingMapKat(
+          kat: 1,
+          units: [
             const BuildingMapUnit(
               unitId: 'id-A-2',
               unitNo: 'A-2',
@@ -157,16 +176,20 @@ BuildingMap _yonetimHaritasi() => BuildingMap(
               complaintCount: 6,
               color: DensityRenk.kirmizi,
             ),
-          ]),
-        ]),
+          ],
+        ),
       ],
-      unplaced: const [],
-    );
+    ),
+  ],
+  unplaced: const [],
+);
 
 Widget _semaEkrani(Locale locale, {UserRole role = UserRole.yonetici}) =>
     ProviderScope(
       overrides: [
-        buildingMapApiProvider.overrideWithValue(_FakeMapApi(_yonetimHaritasi())),
+        buildingMapApiProvider.overrideWithValue(
+          _FakeMapApi(_yonetimHaritasi()),
+        ),
         unitComplaintApiProvider.overrideWithValue(_FakeSikayetApi()),
         currentUserRoleProvider.overrideWith((ref) async => role),
       ],
@@ -190,34 +213,37 @@ void _ekran(WidgetTester tester, {double h = 1400}) {
 
 void main() {
   // ============================== BINA ==================================
-  testWidgets('SEMA: tr → en → ru dil degisimi metinleri cevirir, duzeni korur',
-      (tester) async {
-    _ekran(tester);
-    for (final (locale, yogunluk, sikayet) in [
-      (const Locale('tr'), 'Yoğunluk:', '6 açık şikayet'),
-      (const Locale('en'), 'Density:', '6 open complaints'),
-      (const Locale('ru'), 'Плотность:', '6 открытых жалоб'),
-    ]) {
-      await tester.pumpWidget(_semaEkrani(locale));
-      await tester.pumpAndSettle();
+  testWidgets(
+    'SEMA: tr → en → ru dil degisimi metinleri cevirir, duzeni korur',
+    (tester) async {
+      _ekran(tester);
+      for (final (locale, yogunluk, sikayet) in [
+        (const Locale('tr'), 'Yoğunluk:', '6 açık şikayet'),
+        (const Locale('en'), 'Density:', '6 open complaints'),
+        (const Locale('ru'), 'Плотность:', '6 открытых жалоб'),
+      ]) {
+        await tester.pumpWidget(_semaEkrani(locale));
+        await tester.pumpAndSettle();
 
-      expect(find.text(yogunluk), findsOneWidget, reason: '$locale gosterge');
-      // Esik ETIKETLERI sayidir — her dilde ayni (bilincli).
-      expect(find.text('0–2'), findsOneWidget);
-      expect(find.text('5+'), findsOneWidget);
-      // Daire no SUNUCU verisi — cevrilmez.
-      expect(find.text('A-2'), findsWidgets);
-      // ICU cogul: sayac metni dile gore.
-      await tester.tap(find.text('A-2').first);
-      await tester.pumpAndSettle();
-      expect(find.text(sikayet), findsOneWidget, reason: '$locale sayac');
-      Navigator.of(tester.element(find.text(sikayet))).pop();
-      await tester.pumpAndSettle();
-    }
-  });
+        expect(find.text(yogunluk), findsOneWidget, reason: '$locale gosterge');
+        // Esik ETIKETLERI sayidir — her dilde ayni (bilincli).
+        expect(find.text('0–2'), findsOneWidget);
+        expect(find.text('5+'), findsOneWidget);
+        // Daire no SUNUCU verisi — cevrilmez.
+        expect(find.text('A-2'), findsWidgets);
+        // ICU cogul: sayac metni dile gore.
+        await tester.tap(find.text('A-2').first);
+        await tester.pumpAndSettle();
+        expect(find.text(sikayet), findsOneWidget, reason: '$locale sayac');
+        Navigator.of(tester.element(find.text(sikayet))).pop();
+        await tester.pumpAndSettle();
+      }
+    },
+  );
 
-  testWidgets('BINA DUZENLEME: tr → de dil degisimi (yerlesim korunur)',
-      (tester) async {
+  testWidgets('BINA DUZENLEME: tr → de dil degisimi (yerlesim korunur)', (
+    tester,
+  ) async {
     _ekran(tester);
     for (final (locale, blokEkle, daire) in [
       (const Locale('tr'), 'Blok', '2 daire'),
@@ -235,19 +261,29 @@ void main() {
 
   test('KIMLIK: DensityRenk ve kategori enum\'lari METIN TASIMAZ', () async {
     // DensityRenk yalniz wire tasir (label alani KALDIRILDI — olu TR metindi).
-    expect(DensityRenk.values.map((r) => r.wire).toList(),
-        ['yesil', 'sari', 'kirmizi', 'unknown']);
+    expect(DensityRenk.values.map((r) => r.wire).toList(), [
+      'yesil',
+      'sari',
+      'kirmizi',
+      'unknown',
+    ]);
     expect(DensityRenk.fromWire('sari'), DensityRenk.sari);
 
     // Kategori adi DILDEN cozulur (enum'un `label` alani cevrilmez sabittir).
     final tr = await AppLocalizations.delegate.load(const Locale('tr'));
     final en = await AppLocalizations.delegate.load(const Locale('en'));
-    expect(unitComplaintKategoriAdi(tr, UnitComplaintKategori.gurultu),
-        'Gürültü');
-    expect(unitComplaintKategoriAdi(en, UnitComplaintKategori.gurultu),
-        'Noise');
-    expect(unitComplaintKategoriAdi(en, UnitComplaintKategori.zararVerme),
-        'Damage');
+    expect(
+      unitComplaintKategoriAdi(tr, UnitComplaintKategori.gurultu),
+      'Gürültü',
+    );
+    expect(
+      unitComplaintKategoriAdi(en, UnitComplaintKategori.gurultu),
+      'Noise',
+    );
+    expect(
+      unitComplaintKategoriAdi(en, UnitComplaintKategori.zararVerme),
+      'Damage',
+    );
   });
 
   test('KIMLIK: hata kimliklerinin HEPSI 7 dilde karsilik bulur', () async {
@@ -257,26 +293,35 @@ void main() {
         expect(akisHataMetni(l10n, h).trim(), isNotEmpty, reason: '$dil/$h');
       }
       for (final h in TalepAkisHatasi.values) {
-        expect(talepHataMetni(l10n, h, 'x').trim(), isNotEmpty,
-            reason: '$dil/$h');
+        expect(
+          talepHataMetni(l10n, h, 'x').trim(),
+          isNotEmpty,
+          reason: '$dil/$h',
+        );
       }
     }
   });
 
-  testWidgets('SEMA: denetleyici hata KIMLIGI ekranda cevrilir',
-      (tester) async {
+  testWidgets('SEMA: denetleyici hata KIMLIGI ekranda cevrilir', (
+    tester,
+  ) async {
     _ekran(tester, h: 600);
     // Harita ucu patlar -> denetleyici AkisHatasi.beklenmeyen uretir.
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        buildingMapApiProvider.overrideWithValue(_PatlayanMapApi()),
-        unitComplaintApiProvider.overrideWithValue(_FakeSikayetApi()),
-        currentUserRoleProvider
-            .overrideWith((ref) async => UserRole.yonetici),
-      ],
-      child: l10nApp(const BuildingSchematicScreen(),
-          locale: const Locale('en')),
-    ));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          buildingMapApiProvider.overrideWithValue(_PatlayanMapApi()),
+          unitComplaintApiProvider.overrideWithValue(_FakeSikayetApi()),
+          currentUserRoleProvider.overrideWith(
+            (ref) async => UserRole.yonetici,
+          ),
+        ],
+        child: l10nApp(
+          const BuildingSchematicScreen(),
+          locale: const Locale('en'),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     // TR sabiti DEGIL, aktif dilin metni.
     expect(find.textContaining('Beklenmeyen'), findsNothing);
@@ -284,8 +329,9 @@ void main() {
   });
 
   // ============================== TALEP =================================
-  testWidgets('TALEP: tr → en → fr dil degisimi (sekme sayaclari + durum)',
-      (tester) async {
+  testWidgets('TALEP: tr → en → fr dil degisimi (sekme sayaclari + durum)', (
+    tester,
+  ) async {
     _ekran(tester);
     for (final (locale, acikSekme, durum) in [
       (const Locale('tr'), 'Açık (1)', 'Açık'),
@@ -305,17 +351,21 @@ void main() {
   });
 
   // ============================== RTL ===================================
-  testWidgets('RTL: TALEP Arapca (form-yogun) — yeni talep formu TASMAZ',
-      (tester) async {
+  testWidgets('RTL: TALEP Arapca (form-yogun) — yeni talep formu TASMAZ', (
+    tester,
+  ) async {
     _ekran(tester);
     // "Yeni talep" FAB'i YALNIZ talep ACAN rollerde (yonetici yanitlar) —
     // form denetimi bu yuzden resident ile yapilir (auth.md §4).
     await tester.pumpWidget(
-        _talepEkrani(const Locale('ar'), role: UserRole.resident));
+      _talepEkrani(const Locale('ar'), role: UserRole.resident),
+    );
     await tester.pumpAndSettle();
 
-    expect(Directionality.of(tester.element(find.text('مفتوح (1)'))),
-        TextDirection.rtl);
+    expect(
+      Directionality.of(tester.element(find.text('مفتوح (1)'))),
+      TextDirection.rtl,
+    );
     expect(tester.takeException(), isNull);
 
     // "Yeni talep" formu (form-yogun): baslik + aciklama + kategori + gorseller.
@@ -323,8 +373,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('العنوان'), findsOneWidget);
     expect(find.text('الوصف'), findsOneWidget);
-    expect(tester.takeException(), isNull,
-        reason: 'yeni talep formu Arapca metinlerle tasmamali');
+    expect(
+      tester.takeException(),
+      isNull,
+      reason: 'yeni talep formu Arapca metinlerle tasmamali',
+    );
   });
 
   testWidgets('RTL: SEMA Arapca — yon rtl, yerlesim TASMAZ', (tester) async {
@@ -332,20 +385,25 @@ void main() {
     await tester.pumpWidget(_semaEkrani(const Locale('ar')));
     await tester.pumpAndSettle();
 
-    expect(Directionality.of(tester.element(find.text('الكثافة:'))),
-        TextDirection.rtl);
+    expect(
+      Directionality.of(tester.element(find.text('الكثافة:'))),
+      TextDirection.rtl,
+    );
     // Yerlesim-yogun ekran: hicbir RenderFlex tasmasi olmamali.
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('RTL: BINA DUZENLEME Arapca (form-yogun) — kutucuk TASMAZ',
-      (tester) async {
+  testWidgets('RTL: BINA DUZENLEME Arapca (form-yogun) — kutucuk TASMAZ', (
+    tester,
+  ) async {
     _ekran(tester);
     await tester.pumpWidget(_duzenlemeEkrani(const Locale('ar')));
     await tester.pumpAndSettle();
 
-    expect(Directionality.of(tester.element(find.text('مبنى').first)),
-        TextDirection.rtl);
+    expect(
+      Directionality.of(tester.element(find.text('مبنى').first)),
+      TextDirection.rtl,
+    );
     expect(tester.takeException(), isNull);
 
     // Blok kutucuguna dokun -> kat/daire yerlesimi (uzun Arapca yardim metni).
@@ -353,8 +411,11 @@ void main() {
     // kutucugu ise yalin ("مبنى").
     await tester.tap(find.text('المبنى A'));
     await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull,
-        reason: 'blok ici yerlesim Arapca metinlerle tasmamali');
+    expect(
+      tester.takeException(),
+      isNull,
+      reason: 'blok ici yerlesim Arapca metinlerle tasmamali',
+    );
 
     // TOPLU DAIRE formunu ac (form-yogun; etiketli dugme -> deterministik):
     // uc sayi alani + uzun Arapca aciklama ayni ekranda.
@@ -362,8 +423,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('عدد الطوابق'), findsOneWidget);
     expect(find.text('رقم البداية'), findsOneWidget);
-    expect(tester.takeException(), isNull,
-        reason: 'toplu daire formu Arapca metinlerle tasmamali');
+    expect(
+      tester.takeException(),
+      isNull,
+      reason: 'toplu daire formu Arapca metinlerle tasmamali',
+    );
   });
 
   // ---- TUR 24: EKRAN SURUSU ----
@@ -378,7 +442,9 @@ void main() {
       trSizintisiYok(tester, dil, veri: surusVerisi);
     }
   });
-  testWidgets('SURUS: bina semasi ekrani 6 dilde TR sabit tasimaz', (tester) async {
+  testWidgets('SURUS: bina semasi ekrani 6 dilde TR sabit tasimaz', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(430, 1400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -392,8 +458,9 @@ void main() {
   // Her dil AYRI test: bir dilin tasmasi digerlerini maskelemesin ve
   // rapor "hangi dil" sorusunu dogrudan yanitlasin.
   for (final dil in surusDilleri) {
-    testWidgets('SURUS: bina duzenleme ekrani ($dil) TR sabit tasimaz',
-        (tester) async {
+    testWidgets('SURUS: bina duzenleme ekrani ($dil) TR sabit tasimaz', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(430, 1400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -405,76 +472,127 @@ void main() {
 
   // ---- TUR 26: DAR EKRAN SURUSU (320 dp x 6 dil) ----
   testWidgets('DAR 320dp: talep ekrani 6 dilde TASMAZ', (tester) async {
-    await darEkranSurusu(tester, (dil) => _talepEkrani(Locale(dil)),
-        veri: surusVerisi);
+    await darEkranSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
   testWidgets('DAR 320dp: bina semasi ekrani 6 dilde TASMAZ', (tester) async {
-    await darEkranSurusu(tester, (dil) => _semaEkrani(Locale(dil)),
-        veri: surusVerisi);
+    await darEkranSurusu(
+      tester,
+      (dil) => _semaEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
-  testWidgets('DAR 320dp: bina duzenleme ekrani 6 dilde TASMAZ', (tester) async {
-    await darEkranSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('DAR 320dp: bina duzenleme ekrani 6 dilde TASMAZ', (
+    tester,
+  ) async {
+    await darEkranSurusu(
+      tester,
+      (dil) => _duzenlemeEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
 
   // ---- TUR 27: YAZI OLCEGI SURUSU (2.0x x 6 dil) ----
   testWidgets('OLCEK 2x: talep ekrani 6 dilde TASMAZ', (tester) async {
-    await yaziOlcegiSurusu(tester, (dil) => _talepEkrani(Locale(dil)), veri: surusVerisi);
+    await yaziOlcegiSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
   testWidgets('OLCEK 2x: sema ekrani 6 dilde TASMAZ', (tester) async {
-    await yaziOlcegiSurusu(tester, (dil) => _semaEkrani(Locale(dil)), veri: surusVerisi);
+    await yaziOlcegiSurusu(
+      tester,
+      (dil) => _semaEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
   testWidgets('OLCEK 2x: duzenleme ekrani 6 dilde TASMAZ', (tester) async {
-    await yaziOlcegiSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)), veri: surusVerisi);
+    await yaziOlcegiSurusu(
+      tester,
+      (dil) => _duzenlemeEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
 
   // ---- TUR 29: EKRAN OKUYUCU SURUSU ----
-  testWidgets('OKUYUCU: talep ekrani (etiket + dokunma hedefi + dil)',
-      (tester) async {
-    await ekranOkuyucuSurusu(tester, (dil) => _talepEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('OKUYUCU: talep ekrani (etiket + dokunma hedefi + dil)', (
+    tester,
+  ) async {
+    await ekranOkuyucuSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
-  testWidgets('OKUYUCU: sema ekrani (etiket + dokunma hedefi + dil)',
-      (tester) async {
-    await ekranOkuyucuSurusu(tester, (dil) => _semaEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('OKUYUCU: sema ekrani (etiket + dokunma hedefi + dil)', (
+    tester,
+  ) async {
+    await ekranOkuyucuSurusu(
+      tester,
+      (dil) => _semaEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
-  testWidgets('OKUYUCU: duzenleme ekrani (etiket + dokunma hedefi + dil)',
-      (tester) async {
-    await ekranOkuyucuSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('OKUYUCU: duzenleme ekrani (etiket + dokunma hedefi + dil)', (
+    tester,
+  ) async {
+    await ekranOkuyucuSurusu(
+      tester,
+      (dil) => _duzenlemeEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
 
   // ---- TUR 32: KOYU TEMA ----
-  testWidgets('KOYU TEMA: talepEkrani 7 dilde (kontrast + tasma)',
-      (tester) async {
-    await koyuTemaSurusu(tester, (dil) => _talepEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('KOYU TEMA: talepEkrani 7 dilde (kontrast + tasma)', (
+    tester,
+  ) async {
+    await koyuTemaSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
-  testWidgets('KOYU TEMA: semaEkrani 7 dilde (kontrast + tasma)',
-      (tester) async {
-    await koyuTemaSurusu(tester, (dil) => _semaEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('KOYU TEMA: semaEkrani 7 dilde (kontrast + tasma)', (
+    tester,
+  ) async {
+    await koyuTemaSurusu(
+      tester,
+      (dil) => _semaEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
-  testWidgets('KOYU TEMA: duzenlemeEkrani 7 dilde (kontrast + tasma)',
-      (tester) async {
-    await koyuTemaSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)),
-        veri: surusVerisi);
+  testWidgets('KOYU TEMA: duzenlemeEkrani 7 dilde (kontrast + tasma)', (
+    tester,
+  ) async {
+    await koyuTemaSurusu(
+      tester,
+      (dil) => _duzenlemeEkrani(Locale(dil)),
+      veri: surusVerisi,
+    );
   });
 
   // ---- TUR 33: KLAVYE ----
-  testWidgets('KLAVYE: talepEkrani (odak sirasi + tuzak + dokunma-yalniz)',
-      (tester) async {
+  testWidgets('KLAVYE: talepEkrani (odak sirasi + tuzak + dokunma-yalniz)', (
+    tester,
+  ) async {
     await klavyeSurusu(tester, (dil) => _talepEkrani(Locale(dil)));
   });
-  testWidgets('KLAVYE: semaEkrani (odak sirasi + tuzak + dokunma-yalniz)',
-      (tester) async {
+  testWidgets('KLAVYE: semaEkrani (odak sirasi + tuzak + dokunma-yalniz)', (
+    tester,
+  ) async {
     await klavyeSurusu(tester, (dil) => _semaEkrani(Locale(dil)));
   });
-  testWidgets('KLAVYE: duzenlemeEkrani (odak sirasi + tuzak + dokunma-yalniz)',
-      (tester) async {
-    await klavyeSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)));
-  });
+  testWidgets(
+    'KLAVYE: duzenlemeEkrani (odak sirasi + tuzak + dokunma-yalniz)',
+    (tester) async {
+      await klavyeSurusu(tester, (dil) => _duzenlemeEkrani(Locale(dil)));
+    },
+  );
 
   // ---- TUR 34: FOTOGRAFLI VERI ----
   testWidgets('FOTOGRAFLI: talep DETAYI (bes eksen birden)', (tester) async {
@@ -497,12 +615,16 @@ void main() {
   testWidgets('FORM: talep olusturma alt sayfasi (bes eksen)', (tester) async {
     // FAB yalniz SAKIN rolunde gorunur (talebi sakin acar).
     await tumEksenlerSurusu(
-        tester, (dil) => _talepEkrani(Locale(dil), role: UserRole.resident),
-        veri: surusVerisi, hazirla: fabAc);
+      tester,
+      (dil) => _talepEkrani(Locale(dil), role: UserRole.resident),
+      veri: surusVerisi,
+      hazirla: fabAc,
+    );
   });
 
-  testWidgets('FORM: talep -> IS EMRI donusturme alt sayfasi (bes eksen)',
-      (tester) async {
+  testWidgets('FORM: talep -> IS EMRI donusturme alt sayfasi (bes eksen)', (
+    tester,
+  ) async {
     // En derin form: liste -> detay -> yonetici eylem cubugu -> donusturme
     // alt sayfasi. Bulucular dilden bagimsiz (sunucu verisi + widget tipi).
     await tumEksenlerSurusu(
@@ -522,8 +644,9 @@ void main() {
       },
     );
   });
-  testWidgets('FORM: bina duzenleme TOPLU DAIRE alt sayfasi (bes eksen)',
-      (tester) async {
+  testWidgets('FORM: bina duzenleme TOPLU DAIRE alt sayfasi (bes eksen)', (
+    tester,
+  ) async {
     await tumEksenlerSurusu(
       tester,
       (dil) => _duzenlemeEkrani(Locale(dil)),
@@ -540,8 +663,9 @@ void main() {
   });
 
   // ---- TUR 40: ONAY DIYALOGLARI ----
-  testWidgets('ONAY: bina duzenleme BLOK silme diyalogu (bes eksen)',
-      (tester) async {
+  testWidgets('ONAY: bina duzenleme BLOK silme diyalogu (bes eksen)', (
+    tester,
+  ) async {
     // Blok yonetimi UZUN BASMA ile acilir (gorunur bir dugmesi yok):
     // uzun bas -> yonetim alt sayfasi -> "Blogu sil" -> onay diyalogu.
     await tumEksenlerSurusu(
@@ -565,20 +689,28 @@ void main() {
   testWidgets('HATA: talep listesi SUNUCU HATASI (bes eksen)', (tester) async {
     await tumEksenlerSurusu(
       tester,
-      (dil) => _talepEkrani(Locale(dil),
-          hata: const ApiException(
-              code: 'server_error', message: 'Sunucu hatasi', statusCode: 500)),
+      (dil) => _talepEkrani(
+        Locale(dil),
+        hata: const ApiException(
+          code: 'server_error',
+          message: 'Sunucu hatasi',
+          statusCode: 500,
+        ),
+      ),
       veri: surusVerisi,
     );
   });
   testWidgets('HATA: talep listesi CEVRIMDISI (bes eksen)', (tester) async {
     await tumEksenlerSurusu(
       tester,
-      (dil) => _talepEkrani(Locale(dil),
-          hata: const ApiException(
-              code: 'network_error',
-              message: '',
-              agHatasi: AkisHatasi.sunucuyaUlasilamadi)),
+      (dil) => _talepEkrani(
+        Locale(dil),
+        hata: const ApiException(
+          code: 'network_error',
+          message: '',
+          agHatasi: AkisHatasi.sunucuyaUlasilamadi,
+        ),
+      ),
       veri: surusVerisi,
     );
   });
@@ -587,30 +719,42 @@ void main() {
   testWidgets('ROL: talep ekrani SAKIN gozuyle (bes eksen)', (tester) async {
     // `canRespond=false`: yonetici eylem cubugu cizilmez.
     await tumEksenlerSurusu(
-        tester, (dil) => _talepEkrani(Locale(dil), role: UserRole.resident),
-        veri: surusVerisi);
-  });
-  testWidgets('ROL: bina duzenleme SALT-OKUNUR (saha) (bes eksen)',
-      (tester) async {
-    // `readOnly`: blok/daire ekleme ve yonetim kapali.
-    await tumEksenlerSurusu(
-        tester, (dil) => _duzenlemeEkrani(Locale(dil), role: UserRole.security),
-        veri: surusVerisi);
-  });
-
-  // ---- TUR 44: 403 ve YUKLENIYOR ----
-  testWidgets('HATA: talep listesi 403 YETKI REDDI (bes eksen)',
-      (tester) async {
-    await tumEksenlerSurusu(
       tester,
-      (dil) => _talepEkrani(Locale(dil),
-          hata: const ApiException(
-              code: 'forbidden', message: 'Yetkiniz yok', statusCode: 403)),
+      (dil) => _talepEkrani(Locale(dil), role: UserRole.resident),
       veri: surusVerisi,
     );
   });
-  testWidgets('ISKELET: talep listesi YUKLENIYOR hali (bes eksen)',
-      (tester) async {
+  testWidgets('ROL: bina duzenleme SALT-OKUNUR (saha) (bes eksen)', (
+    tester,
+  ) async {
+    // `readOnly`: blok/daire ekleme ve yonetim kapali.
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _duzenlemeEkrani(Locale(dil), role: UserRole.security),
+      veri: surusVerisi,
+    );
+  });
+
+  // ---- TUR 44: 403 ve YUKLENIYOR ----
+  testWidgets('HATA: talep listesi 403 YETKI REDDI (bes eksen)', (
+    tester,
+  ) async {
+    await tumEksenlerSurusu(
+      tester,
+      (dil) => _talepEkrani(
+        Locale(dil),
+        hata: const ApiException(
+          code: 'forbidden',
+          message: 'Yetkiniz yok',
+          statusCode: 403,
+        ),
+      ),
+      veri: surusVerisi,
+    );
+  });
+  testWidgets('ISKELET: talep listesi YUKLENIYOR hali (bes eksen)', (
+    tester,
+  ) async {
     // Yanit hic gelmez: donen gosterge SONSUZ animasyondur, bu yuzden surus
     // `bekleyen: true` ile sabit kare pompalar (`pumpAndSettle` asla donmez).
     await tumEksenlerSurusu(
@@ -629,6 +773,27 @@ void main() {
       tester,
       (dil) => _talepEkrani(Locale(dil), durum: TalepDurum.reddedildi),
       veri: surusVerisi,
+    );
+  });
+  // ---- TUR 59: EKSEN KOMBINASYONLARI ----
+  // YUKLENIYOR hali SONSUZ animasyondur: `pumpAndSettle` orada donmedigi icin
+  // simdiye dek yalniz sabit kare pompalanip TEK an olculuyordu. Burada
+  // spinner donerken HER KARE denetlenir.
+  testWidgets('ANIMASYON: talep YUKLENIYOR her karede tasmaz', (tester) async {
+    await animasyonSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil), askida: true),
+      bekleyen: true,
+    );
+  });
+  testWidgets('EKSEN: talep FORMU acik (7 kombinasyon x 3 dil)', (
+    tester,
+  ) async {
+    await eksenKombinasyonSurusu(
+      tester,
+      (dil) => _talepEkrani(Locale(dil), role: UserRole.resident),
+      veri: surusVerisi,
+      hazirla: fabAc,
     );
   });
 }

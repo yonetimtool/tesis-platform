@@ -925,7 +925,7 @@ class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
   /// Kendi (benim) rezervasyonu gecmis mi (bitis simdiyi gecti mi) → kirmizi.
   bool _gecti(Slot s) {
     final end = _bitisAni(s);
-    return end != null && DateTime.now().isAfter(end);
+    return end != null && rezSimdi().isAfter(end);
   }
 
   @override
@@ -1018,6 +1018,18 @@ class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
     );
   }
 }
+
+/// GECMIS/AKTIF karari icin "simdi".
+///
+/// Uretimde `DateTime.now()`. Testte degistirilebilir olmasinin sebebi somut:
+/// slot saatleri `HH:mm` oldugu icin "00:00-00:30 gecmis, 23:00-23:59 aktif"
+/// gibi bir kurgu YALNIZ gun-ici saatlerde dogrudur; gece yarisindan hemen
+/// sonra kosuldugunda ayni kurgu tersine doner ve test KODA BAGLI OLMAYAN bir
+/// nedenle duser (tur 59'da 00:24'te tam bunu yasadi). Tur 53'te backend
+/// testleri icin ayni sinif sorun tenant saat diliminin guvenli banda
+/// alinmasiyla cozulmustu; burada saatin kendisi disaridan verilir.
+@visibleForTesting
+DateTime Function() rezSimdi = DateTime.now;
 
 // Slot renkleri (yesil=benim aktif, kirmizi=benim gecti; blueGrey=baskasi/dolu).
 const Color _slotYesil = Color(0xFF2E7D32);

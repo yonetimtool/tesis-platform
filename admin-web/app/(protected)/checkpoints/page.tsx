@@ -181,7 +181,7 @@ export default function CheckpointsPage() {
               checked={form.aktif}
               onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
             />
-            Aktif
+            {t("ortakAktif")}
           </label>
           <ErrorBox message={formErr} />
           <div className="flex gap-2">
