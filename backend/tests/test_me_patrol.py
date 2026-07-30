@@ -8,8 +8,35 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 UTC = timezone.utc
+
+# Endpoint "bugun"u TENANT saat diliminde hesaplar (me_patrol.py: tenant.timezone
+# yoksa Europe/Istanbul). Testler de ayni sinirdan bakmalidir.
+_TENANT_TZ = ZoneInfo("Europe/Istanbul")
+
+
+def _bugune_ait_pasif_pencere(now):
+    """AKTIF OLMAYAN ama BUGUNE (tenant tz) ait bir pencere araligi.
+
+    NEDEN HELPER: `now + 1s .. now + 2s` sabiti GECE YARISINDA SARIYORDU.
+    Yerel saat 23:5x iken bir saat sonrasi ERTESI GUNE duser, endpoint'in
+    `pencere_baslangic < day_end` suzgeci onu haklı olarak eler ve test
+    "bugunun penceresi listede yok" diye duser — urun dogru, olcum yanlisti.
+    Tam bu sekilde 2026-07-30 gecesi (yerel 00:0x) tam suit kosumunda dustu.
+
+    Cozum: gunun NERESINDE oldugumuza gore taraf secilir —
+      * gun bitmesine 2 saatten fazla varsa YAKLASAN (now+1s .. now+2s),
+      * yoksa GECMIS-BUGUN (now-3s .. now-2s).
+    Iddia degismez: pencere aktif DEGILDIR ama bugune aittir. Gecmis dal
+    yalniz yerel >= 22:00'de secilir, yani now-3s hep ayni yerel gundedir.
+    """
+    yerel = now.astimezone(_TENANT_TZ)
+    gun_sonu = yerel.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    if yerel + timedelta(hours=2) < gun_sonu:
+        return now + timedelta(hours=1), now + timedelta(hours=2)
+    return now - timedelta(hours=3), now - timedelta(hours=2)
 
 
 def _headers(client, slug, cred):
@@ -258,8 +285,11 @@ def _scan(client, guard, nfc, when):
 
 
 def test_bugun_pencereleri_aktif_olmayan_dahil(client, world, owner_conn):
-    """Bugune ait pencereler (aktif olmayan YAKLASAN dahil) windows[] icinde
-    doner; window (ODAK) yalniz SU AN aktif olandir."""
+    """Bugune ait pencereler (aktif OLMAYAN dahil) windows[] icinde doner;
+    window (ODAK) yalniz SU AN aktif olandir.
+
+    Aktif olmayan pencere `_bugune_ait_pasif_pencere` ile secilir: gece
+    yarisina yakin saatlerde sabit "now+1s" ERTESI GUNE dusuyordu."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
     guard = _headers(client, world["slug_a"], world["guard_a"])
     cp = _checkpoint(client, admin)
@@ -268,9 +298,8 @@ def test_bugun_pencereleri_aktif_olmayan_dahil(client, world, owner_conn):
     aktif = _ins_window(
         owner_conn, world["a"], plan["id"], now - timedelta(minutes=5), now + timedelta(minutes=30)
     )
-    yaklasan = _ins_window(
-        owner_conn, world["a"], plan["id"], now + timedelta(hours=1), now + timedelta(hours=2)
-    )
+    pasif_bas, pasif_bit = _bugune_ait_pasif_pencere(now)
+    yaklasan = _ins_window(owner_conn, world["a"], plan["id"], pasif_bas, pasif_bit)
     body = client.get("/me/patrol-window", headers=guard).json()
     ids = {w["id"] for w in body["windows"]}
     assert str(aktif) in ids and str(yaklasan) in ids  # ikisi de BUGUN listesinde
@@ -301,3 +330,23 @@ def test_scan_pencereyi_aninda_tamamlar(client, world, owner_conn):
     # cp2 tara -> HEMEN tamamlandi (2/2)
     assert _scan(client, guard, cp2["nfc_tag_uid"], now).status_code == 201
     assert _durum() == "tamamlandi"
+
+
+def test_pasif_pencere_helper_gun_sinirini_asmaz():
+    """DEDEKTOR: `_bugune_ait_pasif_pencere` GUNUN HER SAATINDE yerel gunun
+    icinde kalir ve `now`u kapsamaz (yani aktif olmaz).
+
+    Bu test olmadan duzeltme yalniz "su anki saatte" dogrulanmis olurdu —
+    dusuren hal (yerel 23:5x) gunde bir kez, birkac dakika yasanir.
+    """
+    gun = datetime(2026, 7, 30, tzinfo=_TENANT_TZ)
+    for dakika in range(0, 24 * 60, 7):  # gunun her 7 dakikasi
+        yerel = gun + timedelta(minutes=dakika)
+        now = yerel.astimezone(UTC)
+        bas, bit = _bugune_ait_pasif_pencere(now)
+        gun_son = gun + timedelta(days=1)
+        assert gun <= bas < gun_son, f"{yerel}: baslangic gun disinda ({bas})"
+        assert gun < bit <= gun_son, f"{yerel}: bitis gun disinda ({bit})"
+        assert bas < bit
+        # AKTIF OLMAMALI: pencere `now`u kapsamamali, yoksa odak iddiasi bozulur.
+        assert not (bas <= now < bit), f"{yerel}: pencere aktif cikti"
