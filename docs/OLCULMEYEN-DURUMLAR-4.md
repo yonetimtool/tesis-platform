@@ -90,12 +90,12 @@ gövdelerini güvenilmez şekilde izliyor. Python 3.12'nin `sys.monitoring`
 > görünen ama yanlış olan bir sayı — ve bu kez tuzak **ölçüm aracının
 > kendisindeydi**.
 
-Doğru komut:
+Doğru komut artık **betikte kilitli**: `backend/scripts/kapsam.sh`. Üç tuzağın
+hepsi orada gerekçesiyle yazılı; ezberden komut yazmak yerine
 
 ```
-COVERAGE_CORE=sysmon coverage run --source=app -m uvicorn app.main:app --port 8001 &
-API_URL=http://127.0.0.1:8001 pytest -q
-coverage report
+docker compose exec -T api sh /app/scripts/kapsam.sh            # tam suite
+docker compose exec -T api sh /app/scripts/kapsam.sh tests/x.py # tek dosya
 ```
 
 ### DOĞRU SAYI: backend `app/` kapsamı **%89**
@@ -122,6 +122,33 @@ Yani **düşük görünen her yer bir boşluk değil**: yarısı dev ortamında 
 olarak devre dışı bırakılmış sağlayıcılar, diğer yarısı da ölçüm yönteminin
 görmediği süreçler. Bu ayrımı yapmadan "kapsamı artır" demek, yanlış yere test
 yazmak olurdu.
+
+### DÖRDÜNCÜ ÖLÇÜM: iki süreç birleştirildi → **%94**
+
+Tur 70: yukarıdaki tablo hâlâ **tek sürecin** ölçümüydü. Zamanlayıcı/Celery
+kodu testlerden **doğrudan** çağrılıyor, yani pytest sürecinde koşuyor. İki
+süreç de `--parallel-mode` ile araçlandırılıp `coverage combine` yapıldı:
+
+| Ölçüm | Toplam |
+|---|---|
+| yanlış izleyici (C tracer), tek süreç | %72 ❌ |
+| doğru izleyici (`sysmon`), tek süreç | %89 |
+| doğru izleyici, **iki süreç birleşik** | **%94** |
+
+**Artık %55'in altında dosya yok.** Önceki tabloda "%0" görünenler gerçekte:
+`retention.py` **%88**, `tasks.py` **%71**, `scheduler/*` %64–100. Yani o
+modüllerin testleri **vardı** — ölçüm onları görmüyordu.
+
+Bilinçli devre dışı sağlayıcılar da düzeldi: `push` %47 → **%88**,
+`payments` %57 → **%89**, `ceviri_service` %25 → (test sürecinde çağrıldığı
+için) yüksek. Yani "dev'de kapalı sağlayıcı" açıklamamın da bir kısmı
+ölçüm hatasıydı.
+
+Gerçek en düşük beş: `db.py` %55, `akis_metinleri` %64, `tasks.py` %71,
+`routers/scans` %78, `storage.py` %80.
+
+Doğru komut `backend/scripts/kapsam.sh`'de kilitli — üç tuzağın hepsi orada
+gerekçesiyle yazılı.
 ## C. Ölçüm araçlarının durumu — temiz
 
 * Panel sürüşlerinin **11'inin 11'i** `DENEY=1` ile kendini sınıyor
@@ -137,9 +164,11 @@ yazmak olurdu.
    ölçmeyi başardı; kare süresi için aynı yol yok.)
 2. ~~**Backend kapsamının DÜŞÜK bölgeleri.**~~ **ÖLÇÜLDÜ: %89**, router'ların
    hepsi %78 üstünde. Kalan düşük yerler bilinçli devre dışı sağlayıcılar
-   (`push` noop, `payments` sandbox, `ceviri` echo) ya da ölçüm yönteminin
-   görmediği süreçler (zamanlayıcı/Celery). **Yeni açık kalem:** bu iki sürecin
-   (pytest süreci + Celery işçisi) kapsamını birleştiren bir ölçüm yok.
+   sanılmıştı — ama **tur 70'te iki süreç birleştirilince toplam %94 çıktı** ve
+   %55 altında dosya kalmadı. Gerçek en düşük beş: `db.py` %55,
+   `akis_metinleri` %64, `tasks.py` %71, `routers/scans` %78, `storage.py` %80.
+   Bu seviyede "kapsam açığı" bir kör nokta değil; hedefli test yazmak için
+   yeterli gerekçe yok.
 3. **Panel UI birim kapsamı %26,8.** UI'yi Playwright sürüşleri kapsıyor ama
    *satır* düzeyinde ölçüm yok; React bileşenlerini jsdom ile test etmek ayrı
    bir altyapı kararı (bilinçli olarak yapılmamıştı — `vitest.config.ts`
