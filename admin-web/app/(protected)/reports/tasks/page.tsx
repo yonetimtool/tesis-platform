@@ -98,8 +98,8 @@ export default function TaskReportPage() {
         c.kategori_ad,
         userName(c.tamamlayan_user_id),
         c.tamamlanma_zamani,
-        c.foto_var ? "var" : "yok",
-        c.nfc_dogrulandi ? "evet" : "hayir",
+        c.foto_var ? t("raporVar") : t("raporYok"),
+        c.nfc_dogrulandi ? t("ortakEvet") : t("ortakHayir"),
         c.notlar ?? "",
       ]);
     }

@@ -401,7 +401,7 @@ export default function PatrolPlansPage() {
                         p.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
                       }`}
                     >
-                      {p.aktif ? "aktif" : "pasif"}
+                      {p.aktif ? t("ortakAktif") : t("ortakPasif")}
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-right">

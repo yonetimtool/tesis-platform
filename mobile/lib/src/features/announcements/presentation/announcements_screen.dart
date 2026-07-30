@@ -14,6 +14,7 @@ import '../../tasks/presentation/task_complete_controller.dart'
 import '../data/announcement_api.dart';
 import '../domain/announcement_models.dart';
 import 'announcements_controller.dart';
+import '../../../core/ui/gorsel_cozme.dart';
 
 /// "Duyurular" — tum roller okur; admin/yonetici olusturur/duzenler/siler
 /// (FAB + kart menusu yalniz onlarda gorunur; gercek yetki backend'de).
@@ -259,6 +260,7 @@ class _AnnouncementPhoto extends StatelessWidget {
               semanticLabel: context.l10n.ortakFotograf,
               height: 160,
               width: double.infinity,
+              cacheHeight: cozmeSiniri(context, 160),
               fit: BoxFit.cover,
               loadingBuilder: (context, child, progress) => progress == null
                   ? child
@@ -301,6 +303,13 @@ class _AnnouncementPhoto extends StatelessWidget {
                 url,
                 // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
                 semanticLabel: context.l10n.ortakFotograf,
+                // TAM EKRAN + yakinlastirma: sinir ekran genisliginin IKI
+                // KATI. 4000 px'lik ham fotografi cozmek yerine 2x zoom'a
+                // kadar net kalan bir sinir (tur 61).
+                cacheWidth: cozmeSiniri(
+                  routeContext,
+                  MediaQuery.sizeOf(routeContext).width * 2,
+                ),
                 errorBuilder: (_, _, _) => Text(
                   routeContext.l10n.talepGorselYuklenemedi,
                   style: const TextStyle(color: Colors.white),

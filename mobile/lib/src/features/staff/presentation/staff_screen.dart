@@ -14,6 +14,7 @@ import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../data/staff_api.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/ui/gorsel_cozme.dart';
 
 /// Saha Personeli (Ozellik 3) — yonetici/admin: guvenlik + tesis gorevlisi
 /// hesaplarini listeler ve ekler. yonetici backend'de YALNIZ saha personeli
@@ -81,7 +82,7 @@ class _StaffTile extends ConsumerWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundImage: member.avatarUrl != null
-              ? NetworkImage(member.avatarUrl!)
+              ? sinirliGorsel(context, NetworkImage(member.avatarUrl!), 40)
               : null,
           child: member.avatarUrl == null
               ? Icon(
@@ -388,7 +389,8 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
                   backgroundImage: _onizleme != null
                       ? MemoryImage(_onizleme!)
                       : (_mevcutUrl != null
-                          ? NetworkImage(_mevcutUrl!) as ImageProvider
+                          ? sinirliGorsel(
+                              context, NetworkImage(_mevcutUrl!), 56)
                           : null),
                   child: (_onizleme == null && _mevcutUrl == null)
                       ? const Icon(Icons.person_outline)

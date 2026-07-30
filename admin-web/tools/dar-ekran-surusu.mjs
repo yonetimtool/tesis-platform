@@ -6,6 +6,8 @@
 // govde kendi genisliginden genis olur ve sayfa yana kayar.
 import { chromium } from 'playwright';
 
+import { tesisYollariCoz } from './tesis-id.mjs';
+
 const KOK = process.env.KOK ?? 'http://localhost:3115';
 // DEDEKTOR SINAMASI (DENEY=1): her sayfaya, YALNIZ yeni eksenlerde tasan bir
 // oge enjekte edilir (genislik = viewport + 40px, kirpan atasi YOK) ve tek
@@ -43,7 +45,7 @@ const OLCULER = [
 const SAYFALAR = DENEY ? ['/dashboard'] : ['/dashboard','/tenants','/shifts','/checkpoints','/patrol-plans','/tasks',
   '/assets','/units','/building-editor','/schematic','/dues','/reports/dues','/reports/patrols',
   '/reports/tasks','/transparency','/users','/announcements','/complaints','/notifications',
-  '/integrations','/support','/audit','/settings','/login'];
+  '/integrations','/support','/audit','/settings','/login','/tenants/:id'];
 
 // SADECE='dar + buyuk yazi,360dp' → yalniz adi eslesen olculeri kosar.
 // Bir bulgu duzeltildikten sonra tam sürüşü (35 dk) beklemeden dogrulamak
@@ -118,7 +120,9 @@ for (const olcu of KOSULACAK) {
       }
     }
 
-    for (const yol of SAYFALAR) {
+    // `/tenants/:id` calisma aninda cozulur (tur 61).
+    const yollar = await tesisYollariCoz(ctx, KOK, SAYFALAR);
+    for (const yol of yollar) {
       if (olcu.hemen) {
         // Yalniz DOM: veri istekleri ve CSS gecisleri surerken olc.
         await sayfa.goto(KOK + yol, { waitUntil: 'domcontentloaded' }).catch(() => {});

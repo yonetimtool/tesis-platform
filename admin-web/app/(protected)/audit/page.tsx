@@ -71,7 +71,7 @@ export default function AuditPage() {
           >
             {ACTIONS.map((a) => (
               <option key={a} value={a}>
-                {a === "" ? "Tümü" : a}
+                {a === "" ? t("ortakTumu") : a}
               </option>
             ))}
           </select>

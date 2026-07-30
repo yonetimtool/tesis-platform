@@ -94,46 +94,62 @@ class _UnitAccessRecordsScreenState
         onRefresh: _load,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                children: [
-                  if (_forbidden)
-                    Card(
-                      color: Colors.orange.withValues(alpha: 0.10),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text(
-                          context.l10n.izinSuresiDoldu,
-                          style: const TextStyle(color: Colors.orange),
+            : Builder(
+                builder: (context) {
+                  // TUR 61 — TEMBEL LISTE.
+                  //
+                  // Onceki surum `ListView(children: [..._kargolar.map(...)])`
+                  // kullaniyordu. Iki API de (`visitor_api`, `kargo_api`)
+                  // 200'luk sayfalarla TUM veriyi cekiyor, ust sinir YOK.
+                  //
+                  // OLCULEN FARK (test/uzun_liste_tembellik_test.dart):
+                  // `children:` kalibi ELEMAN duzeyinde zaten tembeldi —
+                  // yerlesim/boyama yalniz gorunen satirlar icin olurdu. Asil
+                  // maliyet, ekran her yeniden insa edildiginde 500 satir
+                  // WIDGET NESNESININ kurulmasiydi (liste literali `build`
+                  // icinde materyallesir). `builder` yalniz gorunenleri kurar:
+                  // 500 -> ~10. Yani kazanc yerlesimde degil, her karedeki
+                  // O(N) nesne insasinda.
+                  //
+                  // Basliklar ve bos-hal karti indeks eslemesiyle korunur.
+                  final kayitSayisi =
+                      _isKargo ? _kargolar.length : _visitors.length;
+                  final basliklar = <Widget>[
+                    if (_forbidden)
+                      Card(
+                        color: Colors.orange.withValues(alpha: 0.10),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            context.l10n.izinSuresiDoldu,
+                            style: const TextStyle(color: Colors.orange),
+                          ),
                         ),
-                      ),
-                    )
-                  else if (_error != null)
-                    Card(
-                      color: Colors.red.withValues(alpha: 0.08),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          _error!,
-                          style: const TextStyle(color: Colors.red),
+                      )
+                    else if (_error != null)
+                      Card(
+                        color: Colors.red.withValues(alpha: 0.08),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            _error!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
                         ),
-                      ),
-                    )
-                  else ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        context.l10n.izinTekSeferlikUyari,
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    if (_isKargo)
-                      ..._kargolar.map((k) => _KargoTile(kargo: k))
+                      )
                     else
-                      ..._visitors.map((v) => _VisitorTile(visitor: v)),
-                    if (_isKargo && _kargolar.isEmpty ||
-                        !_isKargo && _visitors.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          context.l10n.izinTekSeferlikUyari,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                  ];
+                  // Kayit gosterilmeyen hallerde (403/hata) satir da yoktur.
+                  final satirVar = !_forbidden && _error == null;
+                  final kuyruk = <Widget>[
+                    if (satirVar && kayitSayisi == 0)
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
@@ -143,8 +159,26 @@ class _UnitAccessRecordsScreenState
                           ),
                         ),
                       ),
-                  ],
-                ],
+                  ];
+                  final toplam = basliklar.length +
+                      (satirVar ? kayitSayisi : 0) +
+                      kuyruk.length;
+                  return ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: toplam,
+                    itemBuilder: (context, i) {
+                      if (i < basliklar.length) return basliklar[i];
+                      final j = i - basliklar.length;
+                      if (satirVar && j < kayitSayisi) {
+                        return _isKargo
+                            ? _KargoTile(kargo: _kargolar[j])
+                            : _VisitorTile(visitor: _visitors[j]);
+                      }
+                      return kuyruk[j - (satirVar ? kayitSayisi : 0)];
+                    },
+                  );
+                },
               ),
       ),
     );

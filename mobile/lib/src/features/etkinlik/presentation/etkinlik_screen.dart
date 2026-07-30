@@ -15,6 +15,7 @@ import 'etk_etiket.dart';
 import 'etkinlik_controller.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
+import '../../../core/ui/gorsel_cozme.dart';
 
 /// "Etkinlikler" — etkinlik + RSVP (auth.md §4 kesin kurali, UX aynasi):
 ///   * yonetim (admin/yonetici): "Yeni etkinlik" FAB'i + detayda duzenle/sil;
@@ -1082,7 +1083,15 @@ class _EtkinlikGorseli extends StatelessWidget {
             builder: (_) => Dialog(
               insetPadding: const EdgeInsets.all(12),
               child: InteractiveViewer(
-                child: Image.network(url, errorBuilder: (_, _, _) => yerTutucu),
+                child: Image.network(
+                  url,
+                  // TAM EKRAN + yakinlastirma: ekran genisliginin IKI KATI.
+                  cacheWidth: cozmeSiniri(
+                    context,
+                    MediaQuery.sizeOf(context).width * 2,
+                  ),
+                  errorBuilder: (_, _, _) => yerTutucu,
+                ),
               ),
             ),
           ),
@@ -1094,6 +1103,7 @@ class _EtkinlikGorseli extends StatelessWidget {
               semanticLabel: context.l10n.ortakFotograf,
               height: yukseklik,
               width: double.infinity,
+              cacheHeight: cozmeSiniri(context, yukseklik),
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => yerTutucu,
             ),

@@ -18,6 +18,8 @@
 // DEDEKTOR SINAMASI (DENEY=1): sayfaya TR sozlugunden bir deger enjekte
 //           edilir; BULGU=0 cikarsa olcum kordur.
 import { chromium } from "playwright";
+
+import { tesisYollariCoz } from "./tesis-id.mjs";
 import { readFileSync } from "node:fs";
 
 const KOK = process.env.KOK ?? "http://localhost:3170";
@@ -28,7 +30,8 @@ const SAYFALAR = DENEY
   : ["/dashboard", "/tenants", "/shifts", "/checkpoints", "/patrol-plans", "/tasks",
      "/assets", "/units", "/building-editor", "/schematic", "/dues", "/reports/dues",
      "/reports/patrols", "/reports/tasks", "/transparency", "/users", "/announcements",
-     "/complaints", "/notifications", "/integrations", "/support", "/audit", "/settings"];
+     "/complaints", "/notifications", "/integrations", "/support", "/audit", "/settings",
+     "/tenants/:id"];
 
 /** `  anahtar: "deger",` satirlarini oku (sozlukler duz nesne). */
 function sozlukOku(dil) {
@@ -74,7 +77,19 @@ for (const dil of DILLER) {
     // Hedef dilin cevirisi TR parcasini iceriyorsa ayirt edilemez.
     if (hedefDeger.includes(parca)) continue;
     if (VERI.has(anahtar)) continue;
-    aranacak.push([anahtar, parca]);
+    // KELIME SINIRI (tur 61): harf duyarsizliga gecince alt-dize eslesmeleri
+    // patladi — "Pencere" seed verisindeki "penceresi" kelimesinin ICINDE
+    // bulunuyordu ve alti dilde yanlis alarm veriyordu. `\b` Turkce harflerde
+    // yanlis calisir (ç/ı/ş ASCII "word" degil), bu yuzden Unicode harf
+    // sinifiyla bakilir.
+    aranacak.push([
+      anahtar,
+      new RegExp(
+        `(?<!\\p{L})${parca.replace(/[.*+?^$()[\]{}|\\]/g, '\\$&')}(?!\\p{L})`,
+        'u',
+      ),
+      parca,
+    ]);
   }
 
   const ctx = await tarayici.newContext({ viewport: { width: 1280, height: 900 }, locale: dil });
@@ -96,14 +111,31 @@ for (const dil of DILLER) {
     }, tr.panelTurYok);
   }
 
-  for (const yol of SAYFALAR) {
+  // `/tenants/:id` calisma aninda cozulur (tur 61).
+  const yollar = await tesisYollariCoz(ctx, KOK, SAYFALAR);
+  for (const yol of yollar) {
     await sayfa.goto(KOK + yol, { waitUntil: "networkidle" }).catch(() => {});
+    // HARF DUYARLI karsilastirma — BILINCLI KARAR (tur 61).
+    //
+    // `/tenants/[id]` sayfasinda dort sizinti vardi ("aktif", "pasif",
+    // "kurulum bekliyor", "parola belirlendi") ve bu surus HICBIRINI gormedi:
+    // sozlukte "Aktif"/"Pasif" buyuk harfle yaziliyor, sayfada kucuk harfle.
+    // Duyarsiz karsilastirma denendi ve **76 bulgu** verdi; hepsi VERI cikti —
+    // backend'in urettigi Turkce alarm metinleri ("Gece devriyesi turu
+    // kaçırıldı (3 eksik kontrol noktası)") ve seed'deki Turkce talep/destek
+    // icerigi sozluk degerlerini alt-dize olarak icermeye basladi. Yani
+    // duyarsizlik dedektoru korlestiriyor: 13 anahtar izin listesine girmek
+    // zorunda kalacakti.
+    //
+    // Karar: karsilastirma HARF DUYARLI kalir; buyuk/kucuk varyant sinifini
+    // KAYNAKTA yakalayan ayri bir net var (`tests/sabit-metin.test.ts`, tur
+    // 61'de eklenen "ucluda sabit" kurali) ve o dort sizintiyi zaten buldu.
     const metin = await sayfa
       .evaluate(() => document.body.innerText.replace(/\s+/g, " "))
       .catch(() => "");
     if (!metin) { bulgular.push([dil, yol, "SAYFA OKUNAMADI"]); continue; }
-    for (const [anahtar, parca] of aranacak) {
-      if (metin.includes(parca)) bulgular.push([dil, yol, `${anahtar}: "${parca}"`]);
+    for (const [anahtar, kalip, parca] of aranacak) {
+      if (kalip.test(metin)) bulgular.push([dil, yol, `${anahtar}: "${parca}"`]);
     }
   }
   await ctx.close();

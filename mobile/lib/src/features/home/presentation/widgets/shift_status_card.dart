@@ -5,6 +5,7 @@ import '../../../../core/i18n/l10n.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
+import '../../../../core/ui/gorsel_cozme.dart';
 
 /// [VardiyaDurum] → cip etiketi + rengi (referans: AKTİF yesil, PLANLANDI
 /// mavi, YÖNETİCİ mor).
@@ -119,7 +120,7 @@ class _Avatar extends StatelessWidget {
             radius: 28,
             backgroundColor: HomeTokens.tint(accent),
             backgroundImage: kart.avatarUrl != null
-                ? NetworkImage(kart.avatarUrl!)
+                ? sinirliGorsel(context, NetworkImage(kart.avatarUrl!), 56)
                 : null,
             child: kart.avatarUrl == null
                 ? Icon(Icons.person, color: accent, size: 28)

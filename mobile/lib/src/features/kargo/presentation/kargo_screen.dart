@@ -15,6 +15,7 @@ import '../data/kargo_api.dart';
 import '../domain/kargo_models.dart';
 import 'kargo_controller.dart';
 import 'kargo_durum_adi.dart';
+import '../../../core/ui/gorsel_cozme.dart';
 
 /// "Kargo" — paket takibi (auth.md §4 kesin kurali, UX aynasi):
 ///   * security: "Yeni kargo" FAB'i (daire no + firma + opsiyonel foto/not,
@@ -261,6 +262,8 @@ class _KargoCard extends ConsumerWidget {
                         semanticLabel: context.l10n.ortakFotograf,
                         width: 40,
                         height: 40,
+                        cacheWidth: cozmeSiniri(context, 40),
+                        cacheHeight: cozmeSiniri(context, 40),
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) =>
                             const Icon(Icons.inventory_2_outlined, size: 32),
@@ -435,6 +438,7 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
                       semanticLabel: context.l10n.ortakFotograf,
                       height: 180,
                       width: double.infinity,
+                      cacheHeight: cozmeSiniri(context, 180),
                       fit: BoxFit.cover,
                       loadingBuilder: (context, child, progress) =>
                           progress == null

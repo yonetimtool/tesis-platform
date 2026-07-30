@@ -132,10 +132,12 @@ export default function BuildingEditorPage() {
       if (openBlock === b.ad) closeDetail();
       refresh();
       toast.success(
-        cascade ? `Blok ${b.ad} ve ${count} daire silindi.` : "Blok silindi.",
+        cascade
+          ? t("blokVeDaireSilindi", { ad: b.ad, n: count })
+          : t("blokSilindi"),
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Blok silinemedi.");
+      toast.error(err instanceof Error ? err.message : t("blokSilinemedi"));
     }
   }
 
@@ -280,7 +282,9 @@ export default function BuildingEditorPage() {
           <h2 className="font-medium">
             {unitForm.editingId ? t("daireDuzenle") : t("daireYeni")}
             <span className="ml-2 text-sm text-muted">
-              {unitForm.blok ? `· Blok ${unitForm.blok}` : "· Bloksuz"}
+              {unitForm.blok
+                ? t("daireBlokEki", { ad: unitForm.blok })
+                : t("daireBloksuzEki")}
             </span>
           </h2>
           <div className="grid grid-cols-3 gap-4">

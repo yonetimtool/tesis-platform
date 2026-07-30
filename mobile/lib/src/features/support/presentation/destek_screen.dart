@@ -11,6 +11,7 @@ import '../data/support_api.dart';
 import '../domain/support_models.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/ui/gorsel_cozme.dart';
 
 const _green = Color(0xFF16A34A);
 const _amber = Color(0xFFD97706);
@@ -307,6 +308,8 @@ class _Thumbnail extends StatelessWidget {
         semanticLabel: context.l10n.ortakFotograf,
         width: 72,
         height: 72,
+        cacheWidth: cozmeSiniri(context, 72),
+        cacheHeight: cozmeSiniri(context, 72),
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => const SizedBox.shrink(),
       ),

@@ -20,6 +20,7 @@ import '../domain/talep_hata.dart';
 import 'talep_hata_metni.dart';
 import 'complaints_controller.dart';
 import '../../../core/theme/home_tokens.dart';
+import '../../../core/ui/gorsel_cozme.dart';
 
 /// "Talep / Arıza" (İş Emri) — yasayan/calisandan yonetime kanal (auth.md §4
 /// kesin kurali, UX aynasi):
@@ -529,6 +530,7 @@ class _GalleryPhoto extends StatelessWidget {
               semanticLabel: context.l10n.ortakFotograf,
               height: 160,
               width: double.infinity,
+              cacheHeight: cozmeSiniri(context, 160),
               fit: BoxFit.cover,
               loadingBuilder: (context, child, progress) => progress == null
                   ? child
@@ -569,6 +571,11 @@ class _GalleryPhoto extends StatelessWidget {
                 url,
                 // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
                 semanticLabel: context.l10n.ortakFotograf,
+                // TAM EKRAN + yakinlastirma: ekran genisliginin IKI KATI.
+                cacheWidth: cozmeSiniri(
+                  context,
+                  MediaQuery.sizeOf(context).width * 2,
+                ),
                 errorBuilder: (_, _, _) => Text(
                   context.l10n.talepGorselYuklenemedi,
                   style: const TextStyle(color: Colors.white),

@@ -246,7 +246,7 @@ export default function UnitsPage() {
                         u.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
                       }`}
                     >
-                      {u.aktif ? "aktif" : "pasif"}
+                      {u.aktif ? t("ortakAktif") : t("ortakPasif")}
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-right">
@@ -255,7 +255,7 @@ export default function UnitsPage() {
                         className={btnGhost}
                         onClick={() => setDetail(detail?.id === u.id ? null : u)}
                       >
-                        {detail?.id === u.id ? "Kapat" : "Detay / Aidat"}
+                        {detail?.id === u.id ? t("ortakKapat") : t("daireDetayAidat")}
                       </button>
                       <button className={btnGhost} onClick={() => openEdit(u)}>
                         {t("ortakDuzenle")}

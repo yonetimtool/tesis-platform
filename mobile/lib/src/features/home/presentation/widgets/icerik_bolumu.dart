@@ -6,6 +6,7 @@ import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
 import 'section_header.dart';
+import '../../../../core/ui/gorsel_cozme.dart';
 
 /// Sakin ana ekraninin ICERIK BOLUMU — "Duyurular" kartiyla AYNI gorsel
 /// desen (solda 96x72 gorsel/yer tutucu, sagda baslik + ozet + alt satir +
@@ -144,6 +145,8 @@ class _Gorsel extends StatelessWidget {
               semanticLabel: context.l10n.ortakFotograf,
               width: 96,
               height: 72,
+              cacheWidth: cozmeSiniri(context, 96),
+              cacheHeight: cozmeSiniri(context, 72),
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => placeholder,
             ),

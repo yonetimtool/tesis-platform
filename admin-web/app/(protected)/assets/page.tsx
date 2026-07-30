@@ -278,7 +278,7 @@ export default function AssetsPage() {
                       className={btnGhost}
                       onClick={() => setDetail(detail?.id === a.id ? null : a)}
                     >
-                      {detail?.id === a.id ? "Kapat" : "Zimmet"}
+                      {detail?.id === a.id ? t("ortakKapat") : t("demirbasZimmet")}
                     </button>
                     <button className={btnGhost} onClick={() => openEdit(a)}>
                       {t("ortakDuzenle")}

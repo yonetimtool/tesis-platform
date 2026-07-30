@@ -11,6 +11,7 @@ import '../../../push/presentation/push_registrar.dart';
 import '../../domain/home_tabs.dart';
 import 'home_drawer.dart';
 import 'home_marka.dart';
+import '../../../../core/ui/gorsel_cozme.dart';
 
 
 
@@ -227,7 +228,9 @@ class _AvatarButonu extends StatelessWidget {
                     return CircleAvatar(
                       radius: 20,
                       backgroundColor: HomeTokens.tint(HomeTokens.primary),
-                      backgroundImage: url != null ? NetworkImage(url) : null,
+                      backgroundImage: url != null
+                          ? sinirliGorsel(context, NetworkImage(url), 40)
+                          : null,
                       child: url == null
                           ? const Icon(
                               Icons.person_outline,

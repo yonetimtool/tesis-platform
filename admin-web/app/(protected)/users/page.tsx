@@ -258,10 +258,14 @@ export default function UsersPage() {
               </select>
             </Field>
             <Field
-              label={editingId ? t("kullaniciYeniParola") : "Parola (opsiyonel)"}
+              label={
+                editingId
+                  ? t("kullaniciYeniParola")
+                  : t("kullaniciParolaOpsiyonel")
+              }
               hint={
                 editingId
-                  ? "En az 8 karakter"
+                  ? t("kullaniciEnAz8")
                   : t("kullaniciParolaBosYeni")
               }
             >
@@ -323,7 +327,7 @@ export default function UsersPage() {
                         u.is_active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-600"
                       }`}
                     >
-                      {u.is_active ? "aktif" : "pasif"}
+                      {u.is_active ? t("ortakAktif") : t("ortakPasif")}
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-right">

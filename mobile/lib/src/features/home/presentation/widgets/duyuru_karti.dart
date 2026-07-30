@@ -6,6 +6,7 @@ import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
 import 'section_header.dart';
+import '../../../../core/ui/gorsel_cozme.dart';
 
 /// Sakin ana ekraninin "Duyurular" karti (site-sakini.jpeg): solda 96x72
 /// radius-12 gorsel (yoksa gri yer tutucu), sagda baslik (semibold), ozet
@@ -105,6 +106,9 @@ class _Gorsel extends StatelessWidget {
               semanticLabel: context.l10n.ortakFotograf,
               width: 96,
               height: 72,
+              // Bellekte de 96x72'yi cozer (tur 61).
+              cacheWidth: cozmeSiniri(context, 96),
+              cacheHeight: cozmeSiniri(context, 72),
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => placeholder,
             ),

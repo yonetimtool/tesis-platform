@@ -291,7 +291,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
           <ErrorBox message={pErr} />
           <div className="flex gap-2">
             <button type="submit" className={btnPrimary} disabled={pBusy}>
-              {pBusy ? "Kaydediliyor..." : "Tahsil et"}
+              {pBusy ? t("ortakKaydediliyor") : t("daireTahsilEt")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setPOpen(false)}>
               {t("ortakIptal")}
@@ -374,7 +374,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         <ErrorBox message={aErr} />
         {aOk && <p className="text-sm text-emerald-700">{aOk}</p>}
         <button type="submit" className={btnPrimary} disabled={aBusy}>
-          {aBusy ? "Ekleniyor..." : "Tahakkuk ekle"}
+          {aBusy ? t("ortakEkleniyor") : t("aidatTahakkukEkle")}
         </button>
       </form>
 

@@ -19,6 +19,8 @@
 //           olcum kordur.
 import { chromium } from "playwright";
 
+import { tesisYollariCoz } from "./tesis-id.mjs";
+
 const KOK = process.env.KOK ?? "http://localhost:3180";
 const DENEY = process.env.DENEY === "1";
 const DILLER = DENEY ? ["tr"] : ["tr", "ar"];
@@ -28,6 +30,7 @@ const SAYFALAR = DENEY
      "/assets", "/units", "/building-editor", "/schematic", "/dues", "/reports/dues",
      "/reports/patrols", "/reports/tasks", "/transparency", "/users", "/announcements",
      "/complaints", "/notifications", "/integrations", "/support", "/audit", "/settings",
+     "/tenants/:id",
      "/login"];
 
 /** Ortusme payi (px). Satir icindeki baslik+rozet birbirini keser. */
@@ -48,7 +51,9 @@ for (const dil of DILLER) {
   await ctx.addCookies([{ name: "ui.locale", value: dil, url: KOK }]);
   const sayfa = await ctx.newPage();
 
-  for (const yol of SAYFALAR) {
+  // `/tenants/:id` calisma aninda cozulur (tur 61).
+  const yollar = await tesisYollariCoz(ctx, KOK, SAYFALAR);
+  for (const yol of yollar) {
     await sayfa.goto(KOK + yol, { waitUntil: "networkidle" }).catch(() => {});
     if (DENEY) {
       // Kasitli kusur: gorsel sira DOM sirasinin TERSI.

@@ -29,6 +29,8 @@
 //           KOK=http://localhost:3127 node tools/klavye-surusu.mjs
 import { chromium } from 'playwright';
 
+import { tesisYollariCoz } from './tesis-id.mjs';
+
 const KOK = process.env.KOK ?? 'http://localhost:3127';
 // DEDEKTOR SINAMASI (DENEY=1): sayfaya BILEREK uc hata enjekte edilir ve
 // taramanin UCUNU DE yakaladigi dogrulanir. "0 bulgu" ancak tarama gercekten
@@ -39,7 +41,7 @@ const DILLER = DENEY ? ['tr'] : ['tr', 'ar'];
 const SAYFALAR = ['/login', '/dashboard', '/tenants', '/shifts', '/checkpoints', '/patrol-plans',
   '/tasks', '/assets', '/units', '/building-editor', '/schematic', '/dues', '/reports/dues',
   '/reports/patrols', '/reports/tasks', '/transparency', '/users', '/announcements', '/complaints',
-  '/notifications', '/integrations', '/support', '/audit', '/settings'];
+  '/notifications', '/integrations', '/support', '/audit', '/settings', '/tenants/:id'];
 if (DENEY) SAYFALAR.length = 2;
 
 // TAB ust siniri SAYFAYA GORE belirlenir: odaklanabilir oge sayisi + pay.
@@ -64,7 +66,9 @@ for (const dil of DILLER) {
   await ctx.addCookies([{ name: 'ui.locale', value: dil, url: KOK }]);
   const sayfa = await ctx.newPage();
 
-  for (const yol of SAYFALAR) {
+  // `/tenants/:id` calisma aninda cozulur (tur 61).
+  const yollar = await tesisYollariCoz(ctx, KOK, SAYFALAR);
+  for (const yol of yollar) {
     await sayfa.goto(KOK + yol, { waitUntil: 'networkidle' }).catch(() => {});
 
     if (DENEY) {
@@ -84,7 +88,7 @@ for (const dil of DILLER) {
         b.textContent = 'deney tabindex';
         document.body.prepend(b);
       });
-      if (yol === SAYFALAR[1]) {
+      if (yol === yollar[1]) {
         // (d) GERCEK ODAK TUZAGI — TAB'i yutan bir dugme. Odak bir daha
         // ilerlemez; hem TUZAK hem de ARDINDAKI her sey ULASILAMAZ olmali.
         await sayfa.evaluate(() => {

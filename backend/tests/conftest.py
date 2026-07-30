@@ -41,6 +41,17 @@ FIXTURE_SLUG_ONEKLERI = (
     "ta-", "tb-",      # auth testleri
     "cam-",            # kamera testleri
     "sched-",          # scheduler testleri
+    # TUR 61: `POST /tenants` ADSIZ cagrildiginda backend tesise
+    # "(Kurulum bekliyor)" yer tutucu adini verir ve slug ondan turer
+    # (`kurulum-bekliyor-<6 hex>`). `test_tenants.py` bu ucu onlarca kez
+    # cagiriyor ama YALNIZ silme testi kendi kaydini siliyor. Sonuc: her tam
+    # kosum dev veritabaninda kalici tesisler biriktirdi — 2026-07-29'da
+    # **100 tesis** vardi (seed tesisi dahil 101) ve panelin `/tenants`
+    # sayfasi tamamen bu curufla doluydu. Bu yalniz kirlilik degil OLCUM
+    # sorunu: her surus o sayfayi bu hâlde olcuyordu ve TR sizinti surusu
+    # "Kurulum"/"bekliyor" kelimelerini VERI diye izin listesine almak
+    # zorunda kaldi.
+    "kurulum-bekliyor-",
 )
 
 

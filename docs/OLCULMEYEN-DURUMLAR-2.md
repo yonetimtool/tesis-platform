@@ -63,7 +63,7 @@ Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve
 * **doğrulama hataları** (422 alan hataları formda nasıl görünüyor),
 * **çakışma** (409 — aynı kaydı iki sekmede düzenleme),
 * **oturum düşmesi** (401 mid-session → `/login`e yönlendirme).
-* `/tenants/[id]` **hiçbir sürüş listesinde yok** (26 sayfanın 1'i).
+* ~~`/tenants/[id]` **hiçbir sürüş listesinde yok**~~ **KAPANDI (tur 61).**
 
 ## D. Eksen değerleri sabit — ölçülmeyen kombinasyonlar
 
@@ -227,7 +227,8 @@ Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve
   tur 45'in push bildirimi sessiz değildi; eksik olan statik bantlardı.
 * ~~**Görsel regresyon.**~~ **KAPANDI (tur 60)** — piksel yerine yerleşim
   kilidiyle: `test/yerlesim/*.txt`, 19 ekran.
-* **Performans.** Uzun listede kaydırma, büyük fotoğrafın bellek etkisi.
+* ~~**Performans.**~~ **KAPANDI (tur 61)** — uzun listede kaydırma ve büyük
+  fotoğrafın bellek etkisi ölçüldü; ikisinde de gerçek bulgu çıktı.
 
 > **GÜNCELLEME (tur 58).** F **kapandı**: complaint `reddedildi`, kargo
 > `teslim_alindi` ve `unit_access_permission` (3 durum) seed'e eklendi.
@@ -254,6 +255,93 @@ Bütün panel sürüşleri **yalnız okuma** yapıyor: `rapor-surusu` ve
 > eklenen "bugün aktif tur" penceresi artık kaçırılmış görünüyor; yani
 > `/dashboard`ın **aktif tur** hâli bugün sürülse yine boş çıkar. Sabit
 > tarihli seed verisi, ölçümün sonucunu **takvime bağımlı** yapıyor.
+
+
+> **GÜNCELLEME (tur 61).** Envanterde açık kalan son iki kalem kapandı ve
+> ikisinden de gerçek bulgu çıktı.
+>
+> **`/tenants/[id]` (C).** Dinamik rota olduğu için hiçbir sürüş listesinde
+> yoktu. Listeye `/tenants/:id` yer tutucusu yazılıyor,
+> `tools/tesis-id.mjs` oturum açıldıktan sonra **kurulumu tamamlanmış** bir
+> tesisin kimliğiyle değiştiriyor (yer tutucu tesisin detayı yönetici formunu
+> çizmez, ölçüm zayıf kalır). Kimlik çözülemezse yol **atılır** — uydurma bir
+> id ile 404 sayfasını ölçüp "temiz" demek, ölçmemekten kötüdür. Beş sürüşe
+> eklendi: dar-ekran, okuyucu, klavye, TR-sızıntı, okuma-sırası. Bulgu yok.
+>
+> **YAN BULGU — ölçümü kirleten test artığı.** `/tenants` sayfasını açınca
+> **101 tesis** göründü; 100'ü `(Kurulum bekliyor)` yer tutucusu. Kök neden:
+> `test_tenants.py` `POST /tenants` ucunu onlarca kez çağırıyor ama yalnız
+> silme testi kendi kaydını siliyor; her koşum kalıcı satır bırakıyor (yalnız
+> `test_tenants.py` bile **10 tesis** bırakıyor — ölçtüm). Yani panelin
+> `/tenants` sayfası aylardır bu hâlde ölçülüyordu ve TR-sızıntı sürüşü
+> "Kurulum"/"bekliyor" kelimelerini VERİ diye izin listesine almak zorunda
+> kaldı. `kurulum-bekliyor-` öneki `FIXTURE_SLUG_ONEKLERI`ne eklendi (tur
+> 46'nın artık temizliği); 100 satır silindi.
+>
+> **Büyük fotoğrafın belleği (E).** `lib/src` içindeki **17** ağ görseli
+> çağrısının **hiçbiri** çözme sınırı vermiyordu: 40×40 dp'lik avatar da 96
+> dp'lik liste minyatürü de fotoğrafı **tam çözünürlükte** belleğe açıyordu
+> (4000×3000 JPEG ≈ 48 MB RGBA). Hiçbir sürüş bunu göremezdi — görsel taklidi
+> (tur 34) minik bir PNG servis ediyor, yani çözme boyutu hiç zorlanmıyor.
+> Kusur ölçümle değil **kod okumayla** bulundu. `cozmeSiniri(context, dp)` ve
+> `sinirliGorsel(...)` eklendi, 17 çağrı sınırlandı; tam ekran görüntüleyiciler
+> (`InteractiveViewer`) ekran genişliğinin iki katıyla sınırlı. Kural
+> `test/gorsel_cozme_denetimi_test.dart` ile kilitli: statik tarama + `cacheWidth`ın
+> gerçekten `ResizeImage` ürettiğinin çalışma-anı kanıtı + taramanın kasıtlı
+> kusuru gördüğü sınama.
+>
+> **Uzun liste (E) — ve düzelttiğim bir iddia.** Tarama tek eager veri listesi
+> buldu (`unit_access_records_screen`). İlk iddiam "500 satır yerleşime
+> giriyordu" idi; **yanlış.** Dedektör testi gösterdi ki `ListView(children:)`
+> eleman düzeyinde zaten tembeldir (`SliverChildListDelegate`). Gerçek fark:
+> `children:` kalıbı ekran her yeniden inşa edildiğinde **500 widget nesnesi**
+> kuruyordu (liste literali `build` içinde materyalleşir); `builder` yalnız
+> görünenleri kuruyor — ölçülen 500 → ~10. Kazanç yerleşimde değil, her
+> karedeki O(N) nesne inşasında. Ekran `ListView.builder`a çevrildi ve üç test
+> bu ayrımı kayda geçiriyor. Not: iki API de (`visitor_api`, `kargo_api`)
+> 200'lük sayfalarla **tüm** veriyi çekiyor, üst sınır yok — bu ayrı bir konu,
+> dokunulmadı.
+>
+> **`/tenants/[id]` sürülünce çıkanlar.** Sayfa ilk kez ölçüldü ve iki şey
+> buldu: (1) 320 px + 22 px kök yazıda **+14px taşma** — üç dilde de aynı, yani
+> metin uzunluğu değil yerleşim: 36 karakterlik UUID sarılamıyordu
+> (`break-all` + `min-w-0`), `justify-between` satırları sarmıyordu, iki
+> kolonlu `dl` bölünmeyen telefon/kimlik değerlerinde kolonu aşıyordu.
+> (2) **dört TR sızıntısı** ("kurulum bekliyor", "aktif", "pasif", "parola
+> belirlendi") — hepsi `{koşul ? t(...) : "TR metin"}` kalıbında.
+>
+> **Tarayıcıya üçüncü kalıp (tur 61).** Tur 59 bu kalıbı yalnız
+> **özniteliklerde** yakalıyordu, JSX **çocuğu** olarak değil. Üçlü ifade
+> kuralı eklendi ve **16 sızıntı** daha çıktı: `Zimmet`, `Tümü`,
+> `Blok silindi.`, `· Bloksuz`, `pasif` (dört sayfada), `Test`,
+> `Detay / Aidat`, `Parola (opsiyonel)`, `En az 8 karakter`, `Tahsil et`,
+> `Tahakkuk ekle` ve **CSV çıktısındaki** `var/yok`, `evet/hayir`. Yanlış
+> alarmlar için iki süzgeç yazıldı: Tailwind sınıf dizgeleri (üçlülerin çoğu
+> `className` seçimidir) ve teknik değer listesi (`emerald`, `security`,
+> `application/json`…).
+>
+> **Bir denemeyi geri aldım.** TR sızıntı sürüşünü harf duyarsız yaptım —
+> mantık şuydu: sözlükte "Aktif", sayfada "aktif" olduğu için sürüş o dördü
+> kaçırmıştı. Sonuç **76 bulgu** ve hepsi VERİ: backend'in ürettiği Türkçe
+> alarm metni ("Gece devriyesi turu kaçırıldı (3 eksik kontrol noktası)") ve
+> seed'deki Türkçe talep/destek içeriği sözlük değerlerini alt-dize olarak
+> içermeye başladı. Kelime sınırı eklemek (Unicode harf sınıfıyla; `\b`
+> Türkçe harflerde yanlış çalışıyor) 76'yı 13'e indirdi ama 13'ü de izin
+> listesine almak gerekecekti — yani dedektör körleşecekti. Karar:
+> karşılaştırma **harf duyarlı** kaldı, kelime sınırı korundu, ve varyant
+> sınıfı **kaynakta** yakalanıyor (statik tarama o dördünü zaten buldu).
+>
+> **Açık kalan (yeni):** panonun alarm metinleri **backend'de Türkçe üretilip
+> saklanıyor**; hangi dilde okunursa okunsun Türkçe görünüyor. Bildirim
+> gövdeleri için `push_metinleri.py`/`akis_metinleri.py` var ama `alarm`
+> tablosuna yazılan metin çeviriden geçmiyor. Bu ayrı bir tasarım kararı
+> (saklanan metni mi çevirmeli, yoksa yapı taşıyıp okuma anında mı üretmeli) —
+> bu turda dokunulmadı.
+>
+> **Sayılar:** dar-ekran **1150** sayfa-dil-ölçü (`/tenants/[id]` dahil) → 3
+> bulgu → düzeltme sonrası 0; TR sızıntı **144/0**; okuyucu **350/0**; klavye
+> **50/0**; okuma sırası **50/0**; mobil **1216** test; panel birim 105/105.
+> Tesis sayısı 101 → 11 ve artık büyümüyor.
 
 ## Kör nokta OLMAYANLAR (bilerek dışarıda)
 

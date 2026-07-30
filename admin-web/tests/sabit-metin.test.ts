@@ -61,6 +61,27 @@ const METIN = />([^<>{}]{2,80})</g;
  * sayfasi bu yuzden alti dilde "Toplam" yaziyordu. */
 const KARISIK = [/>([^<>{}]{2,80})\{/g, /\}([^<>{}]{2,80})</g];
 
+/** TUR 61 — UCLU IFADEDEKI dizge sabiti: `{kosul ? t("x") : "TR metin"}`.
+ *
+ * Tur 59 bu kalibi OZNITELIKLERDE (`label={...}`) yakaliyordu, JSX COCUGU
+ * olarak degil. `/tenants/[id]` sayfasinda dort sizinti bu bicimde duruyordu
+ * ("kurulum bekliyor", "aktif", "pasif", "parola belirlendi"). TR sizinti
+ * SURUSU de kacirmisti: sozlukte "Aktif" buyuk harfle, sayfada "aktif" —
+ * birebir eslesme olmadigi icin gorunmedi (surus artik buyuk/kucuk harf
+ * duyarsiz karsilastiriyor). */
+const UCLU = /[?:]\s*("([^"]{2,80})"|'([^']{2,80})')/g;
+
+/** Ucluda cevrilmesi GEREKMEYEN teknik degerler. */
+const UCLU_TEKNIK =
+  /^(rtl|ltr|asc|desc|GET|POST|PATCH|PUT|DELETE|true|false|light|dark|auto|none|row|col|small|medium|large|default|platform|tenant|security|resident|yonetici|temizlik|kontrol|emerald|teal|amber|red|slate|indigo|application[/]json|[a-z_]+_[a-z_]+)$/;
+
+/** TAILWIND sinif dizgesi mi? Uclularin cogu `className` secimidir:
+ * `kosul ? "bg-ink text-white" : "text-slate-600"`. Bunlar metin DEGIL. */
+const SINIF_DIZGESI = /^[A-Za-z0-9\s:\/\[\]().%-]+$/;
+function sinifMi(s: string): boolean {
+  return SINIF_DIZGESI.test(s) && /[-:]/.test(s);
+}
+
 function dosyalar(kok: string): string[] {
   const out: string[] = [];
   for (const ad of readdirSync(kok)) {
@@ -122,6 +143,20 @@ describe("sabit metin taramasi (tur 47)", () => {
           const t = m[2].trim();
           if (!harfVar(t) || IZINLI.test(t)) continue;
           bulgular.push(`${yol}:${i + 1}  ${m[1]}="${t}"`);
+        }
+        for (const m of l.matchAll(UCLU)) {
+          const t = (m[2] ?? m[3] ?? "").trim();
+          if (!harfVar(t) || IZINLI.test(t) || UCLU_TEKNIK.test(t)) continue;
+          if (sinifMi(t)) continue;
+          // `t("anahtar")` argumani degil, DOGRUDAN dizge olmali.
+          const onceki = l.slice(0, m.index);
+          if (/\b(t|metin|ceviri)\s*\($/.test(onceki.trimEnd())) continue;
+          // Nesne/dizi anahtari ya da tip birlesimi olabilir: `{ ad: "x" }`,
+          // `"a" | "b"`. Iki nokta ONCESINDE tanimlayici varsa anahtar say.
+          if (/[\w\]]\s*$/.test(onceki.replace(/["'][^"']*["']$/, "").trimEnd())) {
+            continue;
+          }
+          bulgular.push(`${yol}:${i + 1}  ucluda sabit: ${t}`);
         }
         for (const m of l.matchAll(IFADE_PROP)) {
           // Dizge `t(...)`/`metin(...)` ARGUMANI ise anahtardir, metin degil.

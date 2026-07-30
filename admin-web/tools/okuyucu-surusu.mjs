@@ -10,6 +10,8 @@
 //
 // KULLANIM: npx next start -p 3120 && node tools/okuyucu-surusu.mjs
 import { chromium } from 'playwright';
+
+import { tesisYollariCoz } from './tesis-id.mjs';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
@@ -25,7 +27,7 @@ const TEMALAR = ['light', 'dark'];
 const SAYFALAR = ['/login','/dashboard','/tenants','/shifts','/checkpoints','/patrol-plans',
   '/tasks','/assets','/units','/building-editor','/schematic','/dues','/reports/dues',
   '/reports/patrols','/reports/tasks','/transparency','/users','/announcements','/complaints',
-  '/notifications','/integrations','/support','/audit','/settings'];
+  '/notifications','/integrations','/support','/audit','/settings','/tenants/:id'];
 
 // YALNIZ Turkcede bulunan harfler (ç/ö/ü Almanca/Fransizca'da da var).
 const TR = /[ğışĞİŞ]/;
@@ -68,7 +70,9 @@ for (const dil of DILLER) {
     try { localStorage.setItem('theme', t); } catch { /* yok say */ }
   }, tema);
 
-  for (const yol of SAYFALAR) {
+  // `/tenants/:id` calisma aninda cozulur (tur 61).
+  const yollar = await tesisYollariCoz(ctx, KOK, SAYFALAR);
+  for (const yol of yollar) {
     await sayfa.goto(KOK + yol, { waitUntil: 'networkidle' }).catch(() => {});
     await sayfa.addScriptTag({ content: AXE }).catch(() => {});
     const sonuc = await sayfa.evaluate(async () => {

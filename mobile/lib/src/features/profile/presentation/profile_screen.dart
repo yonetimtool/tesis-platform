@@ -13,6 +13,7 @@ import '../data/avatar_api.dart';
 import '../data/profile_api.dart';
 import '../domain/profile.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/ui/gorsel_cozme.dart';
 
 /// Self-servis profil ekrani — kullanici KENDI parolasini ve telefon/arama
 /// rizasini gunceller (contracts/auth.md self-servis profil). Sag-ust profil
@@ -222,7 +223,9 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
             CircleAvatar(
               radius: 32,
               backgroundColor: scheme.primaryContainer,
-              backgroundImage: url != null ? NetworkImage(url) : null,
+              backgroundImage: url != null
+                  ? sinirliGorsel(context, NetworkImage(url), 64)
+                  : null,
               child: url == null
                   ? Icon(Icons.person_outline,
                       size: 34, color: scheme.onPrimaryContainer)

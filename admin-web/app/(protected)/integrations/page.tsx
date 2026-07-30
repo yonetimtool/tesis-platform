@@ -352,7 +352,7 @@ export default function IntegrationsPage() {
                           onClick={() => test(it)}
                           disabled={testing === it.id}
                         >
-                          {testing === it.id ? "Test ediliyor..." : "Test"}
+                          {testing === it.id ? t("entegTestEdiliyor") : t("entegTest")}
                         </button>
                         <button className={btnGhost} onClick={() => openEdit(it)}>
                           {t("ortakDuzenle")}

@@ -127,7 +127,13 @@ void main() {
         )));
         await tester.pumpAndSettle();
         final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
-        expect(avatar.backgroundImage, isA<NetworkImage>());
+        // TUR 61: avatar artik COZME SINIRLI (`sinirliGorsel`) — saglayici
+        // `ResizeImage` ile sarilir, sardigi kaynak `NetworkImage` kalir.
+        expect(avatar.backgroundImage, isA<ResizeImage>());
+        expect(
+          (avatar.backgroundImage! as ResizeImage).imageProvider,
+          isA<NetworkImage>(),
+        );
       }, createHttpClient: (c) => _PngHttpClient());
     });
   });
