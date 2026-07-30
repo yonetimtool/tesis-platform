@@ -297,10 +297,40 @@ avatar PATCHes, PUT /shifts/{id}/assignments.
 Acceptance: contract↔live machine check passes for these paths; no code change.
 
 ### P10 — scan_outbox_test flake fix
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: Persistence-test race (b7bd5eb history): passes isolated, rarely fails in
 full runs. Find the actual race (shared temp dir / async timing), fix properly.
 Acceptance: documented repro reasoning + 20x full-suite-context repetition green.
+Notes (2026-07-30): **YENİDEN ÜRETİLDİ ve İKİ GERÇEK ÜRÜN HATASI bulundu** —
+test kırılganlığı değil, ürün yarışıydı.
+REPRO YÖNTEMİ: `cevrimdisi_kuyruk_senaryo_test::KALICILIK` senaryosu tek testin
+içinde 60 kez üst üste koşuldu. Yarış hemen görünür oldu:
+`PathNotFoundException: Cannot rename '<dosya>.tmp' -> '<dosya>'`.
+HATA 1 — **HAYALET YAZAR.** `ProviderContainer.dispose()` sırasında uçuşan
+`_persist()` çağrıları iptal olmuyordu. Kapanmış kuyruk, YERİNE GEÇEN yeni
+kuyruğun dosyasını KENDİ BAYAT durumuyla eziyordu → kayıt sessizce kayboluyor,
+"yeni oturum kuyruğu devralır" iddiası düşüyordu. Bu gerçek uygulamada da
+olur (oturum kapanışı/yeniden kurulum).
+HATA 2 — **PAYLAŞILAN `.tmp`.** Depo sabit `<dosya>.tmp` adını kullanıyordu.
+Aynı dosyaya yazan iki örneğin kilitleri AYRI olduğu için adımlar iç içe
+giriyordu: `A:write → B:write(A'nın tmp'sini ezer) → A:rename(dosyaya B'nin
+verisi) → B:rename(tmp yok → istisna)`. Yani ya sessiz veri kaybı ya yutulan
+istisna.
+DÜZELTMELER: (a) `ScanOutbox._kapandi` bayrağı — `_persist()` erken döner;
+(b) `ScanOutboxStore.save(..., gecerliMi:)` iptal kancası — yazım sıraya
+girdikten SONRA, dosyaya taşınmadan hemen önce bir kez daha sorulur, iptalde
+geçici dosya silinir ve hedefe DOKUNULMAZ (tek başına (a) YETMEZ: kilit zinciri
+yüzünden bir `save` çağıran kapandıktan çok sonra diske inebilir);
+(c) her yazım için TEKİL geçici ad (`<dosya>.<örnek>-<sayaç>.tmp`).
+DEDEKTÖR KANITI: `test/kuyruk_hayalet_yazar_test.dart` (3 test) —
+düzeltme geçici olarak geri alındığında "HAYALET YAZAR" testi DÜŞÜYOR,
+geri konduğunda geçiyor (deney koşuldu). İçinde 50 tekrarlı "yeni oturum"
+döngüsü de var (tek koşum yarışa kanıt değildir).
+KAPILAR: `flutter analyze` → "No issues found!" (bu arada P8'in test
+dosyasındaki 2 `info` lint de düzeltildi — P8 commit'inde tam analiz test
+dosyası yazılmadan ÖNCE koşulmuştu); `flutter test` **1408 geçti / 3 atlandı /
+0 düştü**; `flutter build apk --debug` ✓; ardından 20× tam-suit tekrarı
+(sonuç aşağıda, TEKRAR KOŞUMU notu).
 
 ### P11 — [KEREM] Accumulated device testing
 Status: BLOKE(Kerem telefonda test eder) · Depends-on: —
@@ -700,6 +730,7 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+- 2026-07-30 · P10 · 871e846 · Kuyruk kaliciik yarisi YENIDEN URETILDI: iki gercek urun hatasi (hayalet yazar + paylasilan .tmp) duzeltildi, 3 dedektor testi.
 - 2026-07-30 · P8 · d20206b · Arac Gecisleri + Otopark + Ihlaller ekranlari yazildi; ana ekranda ROTASIZ KART KALMADI; 51 ARB anahtari x 7 dil; 24 test.
 - 2026-07-30 · P7 · 10fbd12 · Icerik cevirisi MOBILE baglandi: IcerikCeviri modeli + CeviriNotu/CeviriRozeti + duyuru/kural/etkinlik ekranlari; 8 ARB anahtari x 7 dil; 23 test.
 - 2026-07-30 · P6 · 6a9f846 · Sunucu yerellestirmesi (Accept-Language) ZATEN BITMISTI (tur 14/15/16); sinir isaretleri + sozlesme + katalog dogrulandi.

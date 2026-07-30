@@ -17,6 +17,13 @@ Bu test iki yonu de kilitler:
   * belgede olup uygulamada olmayan yol → OLU BELGE (uc kaldirilmis ama
     sozlesme guncellenmemis).
 
+GENISLETME (P9): ilk surum yalniz YOL karsilastiriyordu. Ayni yol uzerinde
+uygulamanin ekstra bir METODU olabilir (orn. belgede yalniz `GET /x/{id}`
+varken kodda `DELETE /x/{id}` de bulunur) ve yol-duzeyinde karsilastirma
+bunu GORMEZ — kapsam gercekte olcuyor gorunup olcmez. Artik
+(METOT, yol) ciftleri karsilastiriliyor: olcum anında 201 operasyonun
+201'i iki yonde de ortusuyor.
+
 IZIN LISTESI: `/docs`, `/openapi.json` gibi FastAPI'nin kendi ekledigi
 yollar sozlesmeye girmez. `/health` bilincli olarak belgelendi (altyapi
 kontrolu, istemci sozlesmesi degil ama izleme icin sozlesmede olmasi
@@ -33,6 +40,10 @@ from app.main import app
 
 #: FastAPI'nin OTOMATIK ekledigi yollar — sozlesmeye girmezler.
 OTOMATIK = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
+
+#: OpenAPI operasyon anahtarlari (`parameters`, `summary` gibi kardesleri
+#: ayiklamak icin).
+METOTLAR = {"get", "post", "patch", "put", "delete", "head", "options", "trace"}
 
 
 def _normalize(yol: str) -> str:
@@ -81,6 +92,46 @@ def _sozlesme_yollari() -> set[str]:
     return yollar
 
 
+def _sozlesme_operasyonlari() -> set[tuple[str, str]]:
+    """(METOT, normalize yol) ciftleri.
+
+    Ayristirici yine YAML kutuphanesi ISTEMEZ: `paths:` blogunda iki bosluk
+    girintili `/...:` satirlari yol, dort bosluk girintili `get:`/`post:`...
+    satirlari operasyondur. `parameters:` gibi metot OLMAYAN anahtarlar
+    listeye girmez (METOTLAR kumesi ile suzuluyor).
+    """
+    metin = _sozlesme_dosyasi().read_text(encoding="utf-8")
+    ciftler: set[tuple[str, str]] = set()
+    icinde = False
+    yol: str | None = None
+    for satir in metin.splitlines():
+        if satir.startswith("paths:"):
+            icinde = True
+            continue
+        if not icinde:
+            continue
+        if satir and not satir.startswith(" "):
+            break
+        if re.match(r"^  /\S*:", satir):
+            yol = _normalize(satir.strip().rstrip(":"))
+            continue
+        m = re.match(r"^    (\w+):", satir)
+        if yol and m and m.group(1) in METOTLAR:
+            ciftler.add((m.group(1).upper(), yol))
+    return ciftler
+
+
+def _uygulama_operasyonlari() -> set[tuple[str, str]]:
+    sema = app.openapi()["paths"]
+    return {
+        (yontem.upper(), _normalize(yol))
+        for yol, ops in sema.items()
+        if yol not in OTOMATIK
+        for yontem in ops
+        if yontem in METOTLAR
+    }
+
+
 def test_sozlesme_yollari_okunabiliyor():
     """DEDEKTOR SINAMASI: ayristirici gercekten yol buluyor mu?
 
@@ -113,4 +164,36 @@ def test_sozlesmedeki_her_yol_uygulamada_var():
     assert not olu, (
         "Bu yollar SOZLESMEDE var ama uygulamada YOK "
         f"({len(olu)}):\n  " + "\n  ".join(olu)
+    )
+
+
+def test_operasyon_ayristirici_calisiyor():
+    """DEDEKTOR SINAMASI: (METOT, yol) ayristiricisi gercekten is goruyor mu?
+
+    Bos/eksik bir kume donseydi asagidaki iki test SESSIZCE gecerdi — tam da
+    yol-duzeyi olcumunun metotlari kacirmasi gibi.
+    """
+    ops = _sozlesme_operasyonlari()
+    assert len(ops) > 150, f"sozlesmede yalniz {len(ops)} operasyon goruldu"
+    assert ("GET", "/tasks") in ops
+    assert ("DELETE", "/tasks/{}") in ops
+    assert len(_uygulama_operasyonlari()) > 150
+
+
+def test_uygulamadaki_her_OPERASYON_sozlesmede_var():
+    """Yol belgeli olsa bile METOT belgesiz kalmis olabilir."""
+    eksik = sorted(_uygulama_operasyonlari() - _sozlesme_operasyonlari())
+    assert not eksik, (
+        "Bu OPERASYONLAR uygulamada var ama sozlesmede YOK "
+        f"({len(eksik)}):\n  "
+        + "\n  ".join(f"{y} {p}" for y, p in eksik)
+    )
+
+
+def test_sozlesmedeki_her_OPERASYON_uygulamada_var():
+    """Olu belge: metot kaldirilmis ama sozlesmede duruyor."""
+    olu = sorted(_sozlesme_operasyonlari() - _uygulama_operasyonlari())
+    assert not olu, (
+        "Bu OPERASYONLAR sozlesmede var ama uygulamada YOK "
+        f"({len(olu)}):\n  " + "\n  ".join(f"{y} {p}" for y, p in olu)
     )

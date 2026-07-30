@@ -135,8 +135,8 @@ Ihlal _ihlal({
   updatedAt: DateTime.utc(2026, 7, 8, 10),
 );
 
-const _403 = ApiException(code: 'forbidden', message: '', statusCode: 403);
-const _409 = ApiException(code: 'conflict', message: '', statusCode: 409);
+const yetkisiz403 = ApiException(code: 'forbidden', message: '', statusCode: 403);
+const cakisma409 = ApiException(code: 'conflict', message: '', statusCode: 409);
 
 Widget _aracEkrani(
   UserRole rol,
@@ -314,7 +314,7 @@ void main() {
 
     testWidgets('CIKIS 409: "zaten kapatilmis" gosterilir', (tester) async {
       final api = _SahteAracApi(items: [_gecis(id: 'g1')])
-        ..cikisHatasi = _409;
+        ..cikisHatasi = cakisma409;
       await tester.pumpWidget(_aracEkrani(UserRole.security, api));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Çıkış ver'));
@@ -325,7 +325,7 @@ void main() {
     });
 
     testWidgets('403: hata bandi DEGIL aciklayici bos durum', (tester) async {
-      final api = _SahteAracApi(listeHatasi: _403);
+      final api = _SahteAracApi(listeHatasi: yetkisiz403);
       await tester.pumpWidget(_aracEkrani(UserRole.yonetici, api));
       await tester.pumpAndSettle();
       expect(
@@ -398,7 +398,7 @@ void main() {
     });
 
     testWidgets('403: aciklayici bos durum', (tester) async {
-      final api = _SahteIhlalApi(listeHatasi: _403);
+      final api = _SahteIhlalApi(listeHatasi: yetkisiz403);
       await tester.pumpWidget(_ihlalEkrani(UserRole.resident, api));
       await tester.pumpAndSettle();
       expect(

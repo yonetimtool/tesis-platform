@@ -4900,7 +4900,14 @@ paths:
   /me:
     get:
       tags: [me]
-      summary: Oturumdaki kullanicinin ozeti (rol, tenant, profil)
+      summary: Oturumdaki kullanici (rol + tenant token'dan)
+      description: |
+        Access token'daki kullaniciyi doner. Tenant context ISTEKTEN ALINMAZ —
+        token'daki `tenant_id` kullanilir. `avatar_url` alani `avatar_key`
+        varsa kisa omurlu presigned GET URL'i olarak doldurulur (obje anahtari
+        istemciye verilmez).
+
+        Bilinen TUM roller kendi kaydini gorur.
       responses:
         '200': { description: kullanici }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -4908,34 +4915,91 @@ paths:
     patch:
       tags: [me]
       summary: Kendi avatarini guncelle (presigned foto_key)
+      description: |
+        SELF-SERVIS profil fotografi. RBAC: **yalniz `yonetici` + `resident`**
+        (auth.md). Saha personelinin (security / tesis_gorevlisi) fotografini
+        yonetim `PATCH /users/{id}/avatar` ile yonetir; admin'in self-servise
+        ihtiyaci yoktur → digerleri 403.
+
+        `avatar_key` KENDI TENANT namespace'inde olmalidir (`<tenant_id>/...`);
+        degilse **422 `invalid_foto_key`** — duyuru fotografiyla ayni IDOR
+        engeli. `avatar_key: null` fotografi KALDIRIR. Degisen/kaldirilan eski
+        obje MinIO'dan SILINIR (erisilemez cop birakilmaz). Islem
+        `audit_log`'a `avatar_update` olarak yazilir.
       responses:
         '200': { description: guncellendi }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /me/checkpoints:
     get:
       tags: [me]
-      summary: Kullaniciya atanmis kontrol noktalari
+      summary: Token'daki TENANT'in kontrol noktalari (ad'a gore sirali)
+      description: |
+        DIKKAT — ad yaniltici olabilir: uc kullaniciya ATANMIS noktalari
+        degil, **token'daki tenant'in TUM aktif olmayan/olan kontrol
+        noktalarini** doner (ad ASC), RLS ile izole. Faz-0'da tenant
+        izolasyonunu uctan uca dogrulamak icin eklendi ve oyle kaldi;
+        devriye plani bazli nokta listesi icin
+        `GET /patrol-plans/{id}/checkpoints` kullanilir.
+
+        RBAC: kimlikli her rol (ek rol kapisi YOK).
       responses:
         '200': { description: liste }
         '401': { $ref: '#/components/responses/Unauthorized' }
   /admin/overview:
     get:
       tags: [me, admin]
-      summary: Platform admin ozeti (tesis/kullanici sayilari)
+      summary: Platform admin RBAC yoklama ucu (Faz-0 iskeleti)
+      description: |
+        DIKKAT — SAYAC DONDURMEZ. Govde sabittir:
+        `{"status": "ok", "role": "admin"}`. Faz-0'da rol matrisini uctan uca
+        dogrulamak icin eklenmis bir YOKLAMA ucudur; panel ozet sayilarini
+        `GET /admin/tenants` ve `GET /reports/*` verir.
+
+        RBAC: **yalniz `admin`** (yonetici dahil digerleri 403).
       responses:
-        '200': { description: ozet }
+        '200': { description: "sabit govde: {status, role}" }
         '403': { $ref: '#/components/responses/Forbidden' }
   /audit:
     get:
       tags: [audit]
-      summary: Denetim kaydi listesi (KVKK; append-only)
+      summary: Denetim kaydi listesi — CAPRAZ TENANT (platform admin)
+      description: |
+        KVKK denetim goruntuleyicisi. `audit_log` APPEND-ONLY'dir (migration
+        0002: `app_role`'dan UPDATE/DELETE geri alinmistir).
+
+        RLS `FORCE` oldugu icin normal uygulama rolu yalniz KENDI tenant'ini
+        gorur; bu uc owner-sahipli **SECURITY DEFINER** `audit_log_list`
+        fonksiyonu uzerinden TUM tenant'lari dondurur (mevcut
+        `list_all_tenants` deseninin aynisi) ve `set_tenant` YAPILMAMIS bir
+        oturum kullanir — RLS bypass'i fonksiyonun icindedir, uc katmaninda
+        degil.
+
+        RBAC: **yalniz `admin`** (site `yonetici`si DEGIL — capraz-tenant veri).
+      parameters:
+        - { name: tenant_id, in: query, required: false, description: tenant filtresi, schema: { type: string, format: uuid } }
+        - { name: action, in: query, required: false, schema: { type: string } }
+        - { name: resource_type, in: query, required: false, schema: { type: string } }
+        - { name: from, in: query, required: false, description: "date_from (>=)", schema: { type: string, format: date-time } }
+        - { name: to, in: query, required: false, description: "date_to (<)", schema: { type: string, format: date-time } }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+        - { name: offset, in: query, required: false, schema: { type: integer, minimum: 0, default: 0 } }
       responses:
         '200': { description: liste }
         '403': { $ref: '#/components/responses/Forbidden' }
   /users/{user_id}/avatar:
     patch:
       tags: [users]
-      summary: Kullanici avatarini guncelle (yonetim)
+      summary: BASKA bir kullanicinin avatarini guncelle (yonetim)
+      description: |
+        `PATCH /me/avatar`in yonetim karsiligi: saha personelinin (security /
+        tesis_gorevlisi) fotografini yonetim yukler — o roller self-servis
+        avatar ucuna erisemez.
+
+        `avatar_key` HEDEF kullanicinin tenant namespace'inde olmalidir
+        (`<tenant_id>/...`); degilse 422. `null` fotografi kaldirir; eski obje
+        MinIO'dan silinir. Islem `audit_log`'a yazilir.
       parameters:
         - { name: user_id, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
@@ -4944,36 +5008,70 @@ paths:
   /shifts/{shift_id}/assignments:
     put:
       tags: [shifts]
-      summary: Vardiya atamalarini TOPTAN degistir
+      summary: Vardiya personelini TAM LISTE olarak degistir (admin + yonetici)
+      description: |
+        PUT semantigi: govdedeki `user_ids` vardiyanin YENI TAM personel
+        listesidir — mevcut atamalar SILINIR ve liste yeniden yazilir. Bos
+        liste vardiyayi personelsiz birakir (silme ucu ayri degildir).
+
+        Liste SIRALI TEKILLESTIRILIR (ayni id iki kez gelirse bir kez yazilir,
+        siralama korunur).
+
+        ROL KISITI: yalniz SAHA rolleri atanabilir
+        (`security` | `tesis_gorevlisi`). Listede baska rolden ya da var
+        olmayan bir kullanici id'si varsa TUM istek **422
+        `invalid_assignment`** ile reddedilir (kismi yazma YOK).
+
+        RLS: baska tenant'in vardiyasi **404** (403 degil — kaydin varligi da
+        sizmaz). Islem `audit_log`'a `shift_assign` olarak, atanan id
+        listesiyle yazilir.
       parameters:
         - { name: shift_id, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
         '200': { description: atamalar guncellendi }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /support:
     get:
       tags: [support]
-      summary: Kendi platform destek taleplerim (tesis yoneticisi)
+      summary: KENDI platform destek taleplerim
+      description: |
+        SITE ↔ PLATFORM kanalidir (site ICI talep/sikayet degil — onlar
+        `/complaints` ve `/unit-complaints`). Cagiran kendi tenant'inin
+        actigi talepleri gorur; capraz-tenant gorunum `/support/all`dedir.
       responses:
         '200': { description: liste }
         '401': { $ref: '#/components/responses/Unauthorized' }
     post:
       tags: [support]
       summary: Platform destek talebi olustur
+      description: |
+        Talep cagiranin tenant'ina ve kullanicisina baglanir (ikisi de
+        ISTEKTEN alinmaz, token'dan gelir). Ekli gorseller `foto_key`
+        listesiyle verilir (presign akisi — `POST /uploads/presign`).
       responses:
         '201': { description: olusturuldu }
         '422': { $ref: '#/components/responses/ValidationError' }
   /support/all:
     get:
       tags: [support]
-      summary: TUM destek talepleri (platform admin)
+      summary: TUM tenant'larin destek talepleri (platform admin)
+      description: |
+        CAPRAZ TENANT gorunum — `/audit` ile ayni ilke: RLS'i asan okuma
+        yalniz platform `admin`ine aciktir; site `yonetici`si 403 alir.
+        Yanit her satirda tenant kimligini de tasir (hangi siteden geldigi).
       responses:
         '200': { description: liste }
         '403': { $ref: '#/components/responses/Forbidden' }
   /support/{ticket_id}:
     patch:
       tags: [support]
-      summary: Destek talebini yanitla / cozuldu isaretle (platform admin)
+      summary: Destek talebini yanitla / durumunu degistir (platform admin)
+      description: |
+        Yalniz platform `admin`i yanit yazar ve durumu ilerletir; talebi ACAN
+        taraf yanitlayamaz (kanalin karsi ucu). Yanit yazildiginda talep
+        sahibine bildirim uretilir.
       parameters:
         - { name: ticket_id, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
@@ -4982,13 +5080,23 @@ paths:
   /transparency:
     get:
       tags: [transparency]
-      summary: Seffaflik panosu — yayinlanmis ay listesi
+      summary: Seffaflik panosu — ay listesi
+      description: |
+        Aylik ANONIM finans ozeti. Kisi/daire bazli hicbir alan DONMEZ —
+        pano bilincli olarak agregattir; bu yuzden sakin dahil bilinen tum
+        roller okur.
+
+        YAYIN KAPISI: yayinlanmamis aylar yalniz yonetime (admin/yonetici)
+        gorunur; sakin yalniz `yayinlandi` aylari gorur.
       responses:
         '200': { description: aylar }
   /transparency/{ay}:
     get:
       tags: [transparency]
       summary: Bir ayin anonim finans ozeti
+      description: |
+        `ay` bicimi `YYYY-AA`. Yayinlanmamis bir ay yetkisiz role **404**
+        doner (403 degil: ayin VARLIGI da bilgi sizdirmasin).
       parameters:
         - { name: ay, in: path, required: true, schema: { type: string, example: '2026-07' } }
       responses:
@@ -4998,6 +5106,10 @@ paths:
     put:
       tags: [transparency]
       summary: Ayi yayinla / yayindan kaldir (yonetim)
+      description: |
+        admin + yonetici. Yayindan kaldirma da bu uctandir (idempotent:
+        ayni duruma set etmek 200 doner, kayit degismez). Yayin durumu
+        `transparency_publication` tablosunda tutulur (migration 0003).
       parameters:
         - { name: ay, in: path, required: true, schema: { type: string, example: '2026-07' } }
       responses:

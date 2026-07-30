@@ -46,12 +46,11 @@ class ScanOutboxState {
     List<OutboxEntry>? entries,
     bool? loaded,
     bool? syncing,
-  }) =>
-      ScanOutboxState(
-        entries: entries ?? this.entries,
-        loaded: loaded ?? this.loaded,
-        syncing: syncing ?? this.syncing,
-      );
+  }) => ScanOutboxState(
+    entries: entries ?? this.entries,
+    loaded: loaded ?? this.loaded,
+    syncing: syncing ?? this.syncing,
+  );
 }
 
 /// Kalici offline kuyruk + senkron motoru ("en az bir kez gonder").
@@ -68,6 +67,16 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
   bool _pumping = false;
   bool _pumpAgain = false;
 
+  /// Bu bildirici KAPANDI mi (`ref.onDispose`).
+  ///
+  /// NEDEN AYRI BAYRAK (P10, olculdu): `ref.mounted` kapanmayi dogru soyler
+  /// ama gec kalan bir `await`ten SONRA bakildiginda is islenmis olur.
+  /// Kritik nokta DISKE YAZMAKTIR: kapanmis bir kuyruk hala `_persist()`
+  /// yaparsa, YERINE GECEN yeni kuyrugun dosyasini KENDI BAYAT durumuyla
+  /// ezer — kayit sessizce kaybolur. Bayrak `_persist()`in basinda
+  /// denetlenir; boylece "hayalet yazar" hic olusmaz.
+  bool _kapandi = false;
+
   /// `gonderildi` kayitlardan en fazla bu kadari tutulur (UI geri bildirimi
   /// icin); eskiler budanir ki dosya sinirsiz buyumesin.
   static const _maxSentKept = 20;
@@ -76,12 +85,16 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
   /// manuel senkronda sayac sifirlanir → beklemeden dener.
   /// Ilk geri cekilme suresi (bkz. [geriCekilmeSuresi]).
   static const baseBackoff = Duration(seconds: 15);
+
   /// Geri cekilme TAVANI.
   static const maxBackoff = Duration(minutes: 10);
 
   @override
   ScanOutboxState build() {
-    ref.onDispose(() => _retryTimer?.cancel());
+    ref.onDispose(() {
+      _kapandi = true;
+      _retryTimer?.cancel();
+    });
     Future.microtask(_init);
     return const ScanOutboxState();
   }
@@ -160,27 +173,31 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
           final result = await ref.read(scanApiProvider).submit(next.toDraft());
           if (!ref.mounted) return;
           _consecutiveFailures = 0;
-          _replace(next.copyWith(
-            status: OutboxStatus.gonderildi,
-            attemptCount: next.attemptCount + 1,
-            lastError: null,
-            hataKodu: null,
-            outcome: result.wasDuplicate
-                ? OutboxOutcome.duplicate
-                : OutboxOutcome.created,
-          ));
+          _replace(
+            next.copyWith(
+              status: OutboxStatus.gonderildi,
+              attemptCount: next.attemptCount + 1,
+              lastError: null,
+              hataKodu: null,
+              outcome: result.wasDuplicate
+                  ? OutboxOutcome.duplicate
+                  : OutboxOutcome.created,
+            ),
+          );
           await _persist();
         } on ApiException catch (e) {
           if (!ref.mounted) return;
           if (_isPermanent(e)) {
             // Etiket sistemde yok vb. — tekrar gondermek anlamsiz.
-            _replace(next.copyWith(
-              status: OutboxStatus.kaliciHata,
-              attemptCount: next.attemptCount + 1,
-              // METIN DEGIL KOD: kayit diske yazilir (bkz. OutboxEntry.hataKodu).
-              lastError: e.message,
-              hataKodu: okutmaAgKodu(e) ?? e.code,
-            ));
+            _replace(
+              next.copyWith(
+                status: OutboxStatus.kaliciHata,
+                attemptCount: next.attemptCount + 1,
+                // METIN DEGIL KOD: kayit diske yazilir (bkz. OutboxEntry.hataKodu).
+                lastError: e.message,
+                hataKodu: okutmaAgKodu(e) ?? e.code,
+              ),
+            );
             await _persist();
             continue; // siradaki kayit denenebilir
           }
@@ -230,12 +247,14 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
     String message, {
     String? kod,
   }) async {
-    _replace(entry.copyWith(
-      status: OutboxStatus.bekliyor,
-      attemptCount: entry.attemptCount + 1,
-      lastError: message,
-      hataKodu: kod,
-    ));
+    _replace(
+      entry.copyWith(
+        status: OutboxStatus.bekliyor,
+        attemptCount: entry.attemptCount + 1,
+        lastError: message,
+        hataKodu: kod,
+      ),
+    );
     await _persist();
     _consecutiveFailures++;
     _scheduleRetry();
@@ -249,13 +268,19 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
   }
 
   void _replace(OutboxEntry updated) {
-    state = state.copyWith(entries: [
-      for (final e in state.entries)
-        e.idempotencyKey == updated.idempotencyKey ? updated : e,
-    ]);
+    state = state.copyWith(
+      entries: [
+        for (final e in state.entries)
+          e.idempotencyKey == updated.idempotencyKey ? updated : e,
+      ],
+    );
   }
 
   Future<void> _persist() async {
+    // HAYALET YAZAR ENGELI (P10): kapanmis bildirici diske DOKUNMAZ.
+    // Kapanistan sonra `state` okumak zaten hatadir; daha onemlisi bu yazim
+    // yerine gecen kuyrugun dosyasini bayat veriyle ezerdi.
+    if (_kapandi) return;
     // gonderildi kayitlarin yalnizca en yeni _maxSentKept tanesini tut.
     final entries = state.entries;
     final sent = entries
@@ -270,7 +295,7 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
       ];
       state = state.copyWith(entries: pruned);
     }
-    await _store.save(pruned);
+    await _store.save(pruned, gecerliMi: () => !_kapandi);
   }
 
   Future<void> _waitUntilLoaded() async {
@@ -280,8 +305,9 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
   }
 }
 
-final scanOutboxProvider =
-    NotifierProvider<ScanOutbox, ScanOutboxState>(ScanOutbox.new);
+final scanOutboxProvider = NotifierProvider<ScanOutbox, ScanOutboxState>(
+  ScanOutbox.new,
+);
 
 /// Otomatik senkron tetikleyicileri. Uygulama kokunde watch edilir; su
 /// durumlarda pump'i tetikler:

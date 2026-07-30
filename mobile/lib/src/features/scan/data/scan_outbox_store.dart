@@ -18,21 +18,24 @@ import '../domain/outbox_entry.dart';
 /// shared_preferences ise buyukce listeler ve atomiklik icin uygun degildir.
 class ScanOutboxStore {
   ScanOutboxStore({Future<File> Function()? resolveFile})
-      : _resolveFile = resolveFile ?? _defaultFile;
+    : _resolveFile = resolveFile ?? _defaultFile;
 
   final Future<File> Function() _resolveFile;
 
   /// Yazimlari serilestiren kilit zinciri: eszamanli [save] cagrilari
-  /// (enqueue + pump ayni anda persist edebilir) sirayla diske iner; aksi
-  /// halde `.tmp` + rename adimlar birbirinin dosyasini kapabilir.
+  /// (enqueue + pump ayni anda persist edebilir) sirayla diske iner.
   ///
-  /// KILIT ORNEK BASINADIR: bu sinif TEK YAZAR varsayar (uygulamada
-  /// [scanOutboxStoreProvider] tek ornek verir). AYNI dosyaya yazan IKI ornek
-  /// olusturmayin — kilitleri ayri oldugu icin paylasilan `.tmp` uzerinde
-  /// yarisirlar (testte bu yasandi: bkz. test/scan_outbox_test.dart
-  /// "kalicilik" testindeki ON KOSUL notu). Okuma ([load]) icin ek ornek
-  /// olusturmak guvenlidir.
+  /// Kilit ORNEK BASINADIR. Iki ornek ayni dosyaya yazarsa kilitler ayridir —
+  /// eskiden bu bir VERI KAYBI yariciydi (asagidaki [_tmpDosya] notuna bakin);
+  /// artik en kotu ihtimalle "son yazan kazanir" olur.
   Future<void> _writeLock = Future.value();
+
+  /// Bu ORNEGE ozgu gecici dosya sayaci — bkz. [_tmpDosya].
+  int _tmpSayac = 0;
+
+  /// Ornek kimligi: ayni surecte iki store ayni tmp adini SECEMESIN.
+  static int _ornekSayaci = 0;
+  final int _ornekNo = ++_ornekSayaci;
 
   static Future<File> _defaultFile() async {
     final dir = await getApplicationDocumentsDirectory();
@@ -56,7 +59,9 @@ class ScanOutboxStore {
       debugPrint('ScanOutboxStore: bozuk dosya, kenara aliniyor: $e');
       try {
         await file.rename('${file.path}.corrupt');
-      } catch (_) {/* kenara alinamadiysa da uygulama acilabilsin */}
+      } catch (_) {
+        /* kenara alinamadiysa da uygulama acilabilsin */
+      }
       return const [];
     }
   }
@@ -65,22 +70,65 @@ class ScanOutboxStore {
   /// Boylece yazim ortasinda kapanma/kilitlenme eski gecerli dosyayi bozamaz.
   /// Cagri anindaki liste aninda serilestirilir (snapshot), yazim ise kilit
   /// zinciri uzerinden sirayla yapilir.
-  Future<void> save(List<OutboxEntry> entries) {
+  /// [gecerliMi] verilirse yazim SIRAYA GIRDIKTEN sonra, dosyaya TASINMADAN
+  /// hemen once bir kez daha sorulur. `false` donerse yazim IPTAL edilir
+  /// (gecici dosya silinir, hedef dosyaya DOKUNULMAZ).
+  ///
+  /// NEDEN (P10): kilit zinciri yuzunden bir `save` cagrisi, cagiran kuyruk
+  /// kapandiktan cok sonra diske inebilir. O an dosya artik YENI kuyrugundur;
+  /// bayat veriyi uzerine yazmak kayit kaybettirir. Iptal kancasi bu
+  /// "hayalet yazar"i kesin olarak durdurur — cagiranin `_persist()`
+  /// basindaki denetimi TEK BASINA yetmez, cunku o denetim yazim SIRAYA
+  /// GIRMEDEN once yapilir.
+  Future<void> save(List<OutboxEntry> entries, {bool Function()? gecerliMi}) {
     final payload = jsonEncode({
       'version': 1,
       'entries': entries.map((e) => e.toJson()).toList(),
     });
-    final write = _writeLock.then((_) => _write(payload));
-    _writeLock = write.catchError((_) {/* zinciri kirma */});
+    final write = _writeLock.then((_) => _write(payload, gecerliMi));
+    _writeLock = write.catchError((_) {
+      /* zinciri kirma */
+    });
     return write;
   }
 
-  Future<void> _write(String payload) async {
+  Future<void> _write(String payload, [bool Function()? gecerliMi]) async {
     final file = await _resolveFile();
-    final tmp = File('${file.path}.tmp');
+    final tmp = _tmpDosya(file);
     await tmp.writeAsString(payload, flush: true);
+    if (gecerliMi != null && !gecerliMi()) {
+      // Iptal: hedef dosyaya DOKUNMA, gecici dosyayi topla.
+      try {
+        await tmp.delete();
+      } catch (_) {
+        /* zaten yoksa sorun degil */
+      }
+      return;
+    }
     await tmp.rename(file.path);
   }
+
+  /// TEKIL gecici dosya adi — ayni dizine yazan HER YAZIM kendi `.tmp`sini
+  /// kullanir.
+  ///
+  /// NEDEN (P10, olculdu): eski surum sabit `<dosya>.tmp` kullaniyordu. Ayni
+  /// dosyaya yazan iki ornek (uygulamada oturum degisiminde, testte "yeni
+  /// oturum" senaryosunda) SIRAYLA degil IC ICE calisir ve su dizilim
+  /// olusur:
+  ///
+  ///   A: tmp.write(veriA)
+  ///   B: tmp.write(veriB)      <- A'nin tmp'sini EZER
+  ///   A: tmp.rename(dosya)     <- dosyaya B'NIN verisi yazilir (A sanir)
+  ///   B: tmp.rename(dosya)     <- tmp artik yok: PathNotFoundException
+  ///
+  /// Yani ya SESSIZ VERI KAYBI (kuyruktan kayit dusuyordu) ya da yutulan bir
+  /// istisna. Stres kosumunda ikisi de gozlendi. Tekil ad ile iki yazim
+  /// birbirinin gecicisine dokunamaz; `rename` POSIX'te atomik oldugu icin
+  /// dosya her an GECERLI bir surumdedir — yalnizca hangi surum oldugu
+  /// zamanlamaya baglidir ("son yazan kazanir"), ki tek-yazarli normal
+  /// kullanimda bu durum zaten olusmaz.
+  File _tmpDosya(File file) =>
+      File('${file.path}.$_ornekNo-${_tmpSayac++}.tmp');
 }
 
 final scanOutboxStoreProvider = Provider<ScanOutboxStore>((ref) {
