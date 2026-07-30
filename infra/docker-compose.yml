@@ -203,6 +203,12 @@ services:
       TRANSLATE_URL: ${TRANSLATE_URL:-http://libretranslate:5000}
     ports:
       - "8000:8000"
+    volumes:
+      # TUR 68 — SOZLESME TESTI icin: `contracts/openapi.yaml` sozlesmedir ve
+      # `tests/test_sozlesme_sapmasi.py` onu uygulamayla karsilastirir. Imaj
+      # yalniz `backend/`i kopyaliyor, bu yuzden sozlesme SALT OKUNUR baglanir.
+      # (Yalniz gelistirme compose'unda; prod imaji test kosmuyor.)
+      - ../contracts:/contracts:ro
     healthcheck:
       test:
         - CMD

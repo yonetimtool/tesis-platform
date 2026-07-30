@@ -4874,6 +4874,130 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+
+  # ------------------------------------------------------------------------
+  # TUR 68 — BELGELENMEMIS UCLAR.
+  #
+  # Olcum (backend/tests/test_sozlesme_sapmasi.py): FastAPI 133 yol suniyordu,
+  # sozlesme 119 tanimliyordu; parametre adlari normalize edilince 14 yol
+  # BELGELENMEMIS cikti — arasinda tum moduller vardi. Sozlesme bu projede
+  # kaynak gosterildigi icin (mobil domain testleri ona atif yapiyor) bu
+  # gercek bir sapmaydi ve hicbir sey kontrol etmiyordu. Artik test ediliyor.
+  # ------------------------------------------------------------------------
+  /health:
+    get:
+      tags: [health]
+      summary: Servis sagligi (altyapi kontrolu)
+      description: Kimlik gerektirmez; yukleyici/izleme icin.
+      responses:
+        '200': { description: ayakta }
+  /me:
+    get:
+      tags: [me]
+      summary: Oturumdaki kullanicinin ozeti (rol, tenant, profil)
+      responses:
+        '200': { description: kullanici }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /me/avatar:
+    patch:
+      tags: [me]
+      summary: Kendi avatarini guncelle (presigned foto_key)
+      responses:
+        '200': { description: guncellendi }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /me/checkpoints:
+    get:
+      tags: [me]
+      summary: Kullaniciya atanmis kontrol noktalari
+      responses:
+        '200': { description: liste }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /admin/overview:
+    get:
+      tags: [me, admin]
+      summary: Platform admin ozeti (tesis/kullanici sayilari)
+      responses:
+        '200': { description: ozet }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /audit:
+    get:
+      tags: [audit]
+      summary: Denetim kaydi listesi (KVKK; append-only)
+      responses:
+        '200': { description: liste }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /users/{user_id}/avatar:
+    patch:
+      tags: [users]
+      summary: Kullanici avatarini guncelle (yonetim)
+      parameters:
+        - { name: user_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: guncellendi }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /shifts/{shift_id}/assignments:
+    put:
+      tags: [shifts]
+      summary: Vardiya atamalarini TOPTAN degistir
+      parameters:
+        - { name: shift_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: atamalar guncellendi }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /support:
+    get:
+      tags: [support]
+      summary: Kendi platform destek taleplerim (tesis yoneticisi)
+      responses:
+        '200': { description: liste }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [support]
+      summary: Platform destek talebi olustur
+      responses:
+        '201': { description: olusturuldu }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /support/all:
+    get:
+      tags: [support]
+      summary: TUM destek talepleri (platform admin)
+      responses:
+        '200': { description: liste }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /support/{ticket_id}:
+    patch:
+      tags: [support]
+      summary: Destek talebini yanitla / cozuldu isaretle (platform admin)
+      parameters:
+        - { name: ticket_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: guncellendi }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /transparency:
+    get:
+      tags: [transparency]
+      summary: Seffaflik panosu — yayinlanmis ay listesi
+      responses:
+        '200': { description: aylar }
+  /transparency/{ay}:
+    get:
+      tags: [transparency]
+      summary: Bir ayin anonim finans ozeti
+      parameters:
+        - { name: ay, in: path, required: true, schema: { type: string, example: '2026-07' } }
+      responses:
+        '200': { description: ozet }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /transparency/{ay}/publish:
+    put:
+      tags: [transparency]
+      summary: Ayi yayinla / yayindan kaldir (yonetim)
+      parameters:
+        - { name: ay, in: path, required: true, schema: { type: string, example: '2026-07' } }
+      responses:
+        '200': { description: durum degisti }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
 # =================================================================== #
 components:
   securitySchemes:
