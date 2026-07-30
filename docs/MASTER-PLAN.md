@@ -55,11 +55,17 @@
 ## ITEMS
 
 ### P1 — Prod migrate reconciliation: verify push
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: Confirm the catch-up revision, infra/goc-uyum-dogrula.sh, infra/sema-olgular.sql,
 docs/MIGRATION-POLITIKASI.md and infra/RUNBOOK-PROD.md §14 are all committed and pushed
 to origin/main. Code-complete item; nothing new to build.
 Acceptance: `git log` hashes listed in Notes; working tree clean; origin/main in sync.
+Notes (2026-07-30): Doğrulandı. Beş dosyanın beşi de tek commit'te — `9f4ee74`
+"fix(migrations): 0008b uyum yakalama …":
+contracts/db/migrations/versions/0008b_uyum_yakalama.py, infra/goc-uyum-dogrula.sh,
+infra/sema-olgular.sql, docs/MIGRATION-POLITIKASI.md, infra/RUNBOOK-PROD.md
+(§14 + §14.1–§14.5 satır 234–346'da mevcut). Çalışma ağacı temiz;
+HEAD == origin/main == db09192 (kontrol anında). Yeni kod yok, yalnız doğrulama.
 
 ### P2 — [KEREM] Prod runbook execution + smoke test
 Status: BLOKE(Kerem sunucuda uygular) · Depends-on: P1
@@ -493,3 +499,5 @@ Acceptance: before/after load numbers committed; zero correctness regressions
 
 ## CHANGELOG
 <!-- date · item ID · commit hash · one line. STATUS REPORTs and the FINAL REPORT land here, newest first. -->
+
+- 2026-07-30 · P1 · 9d92d6b · Prod göç uyumlama paketi origin/main'de doğrulandı (9f4ee74); kod değişikliği yok.
