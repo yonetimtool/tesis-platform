@@ -116,9 +116,9 @@ taraması `activity.py`nin bilinçli olarak kullanmadığını gösteriyor
   ölçülmüştü.
 * ~~**Çevrimdışı kuyruk davranışı.**~~ **KAPANDI (tur 66)** — uzun kesinti,
   yeniden bağlanma, çakışma ve geri çekilme ölçüldü (aşağıda).
-* **Bellek/kare bütçesi gerçek cihazda.** Tur 61 çözme sınırını **kodda**
-  kilitledi; gerçek bir 4000 px fotoğrafla bellek ölçümü yapılmadı (widget
-  testinde taklit görsel minik PNG).
+* ~~**Bellek/kare bütçesi gerçek cihazda.**~~ **BELLEK KAPANDI (tur 67)** —
+  ve "gerçek cihaz gerekir" iddiam **yanlıştı**: çözme süreç içinde ölçülebiliyor
+  (aşağıda). Kare bütçesi (jank) ölçümü hâlâ cihaz gerektiriyor.
 * ~~**Erişilebilirlik: odak GÖRÜNÜRLÜĞÜ.**~~ **KAPANDI (tur 64)** — yeni araç
   `tools/odak-gorunurlugu-surusu.mjs`; 102 ihlal bulundu, 0'a indirildi.
 
@@ -369,3 +369,41 @@ saniye sonra ateşliyor mu" ölçülemez. Bu yüzden hesap saf bir fonksiyona
 çıkarıldı (`geriCekilmeSuresi`, davranış değişmedi) ve invariant orada
 kilitlendi: 15s → 30s → 60s → 120s, **10 dakikada tavan**, monoton, ve
 0/negatif sayaçta tabana düşüyor (çökme yok).
+
+---
+
+## Tur 67'de kapatılanlar (E — görsel belleğinin gerçek ölçümü)
+
+**Envantere yazdığım "gerçek cihaz gerekir" notu yanlıştı.** Flutter'ın görsel
+önbelleği (`imageCache.currentSizeBytes`) çözülen görüntünün kaç bayt tuttuğunu
+bildiriyor; yani çözme maliyeti **süreç içinde** ölçülebiliyor.
+
+**Ölçülen gerçek** (1200×800 tek renk PNG, **4,5 KB dosya**):
+
+| | Bayt |
+|---|---|
+| ham çözüm | **3 840 000** (1200 × 800 × 4) |
+| 96×64 sınırlı | **24 576** |
+
+**156 kat** fark. Dosya 5 KB'ın altında ama bellekte ~3,8 MB — sıkıştırılmış
+boyut aldatıcı, bunu kod okumakla değil ölçümle görüyorsun. Tur 61 yalnızca
+"`ResizeImage` kuruldu mu" diye doğruluyordu; artık **tasarrufun kendisi**
+ölçülüyor (5 test), üretim yardımcısı `sinirliGorsel` dahil (56 dp avatar,
+dpr 2 → 112×112×4 bayt).
+
+**İki engel ve çözümleri** — ikisi de "ölçüm mümkün değil" demeden önce
+denenmesi gereken şeylerdi:
+
+1. `Picture.toImage` ile büyük PNG üretmek **başsız testte kilitleniyor**
+   (rasterizer yok; test 400 saniyede bitmedi). Çözüm: PNG'yi **elle** kodlamak
+   — IHDR + zlib IDAT + IEND. Rasterizer gerekmez, gerçek **çözücü** çalışır.
+2. Çözme `runAsync` içinde yapılmalı; sahte zamanda görsel akışı hiç
+   tamamlanmıyor.
+
+**Bir de kendi araç hatam:** `pkill -f "flutter_tools.snapshot test"` deseni
+**kendi kabuk komutumu** da eşleştirip öldürüyordu — bu yüzden üç ardışık dosya
+yazma denemem hiç gerçekleşmedi ve eski dosya koşmaya devam etti. Belirti
+"aynı hata tekrar ediyor" gibi görünüyordu; sebep dosyanın hiç değişmemesiydi.
+
+**Hâlâ açık:** kare bütçesi / jank ölçümü. Bu gerçekten cihaz (ya da
+`flutter drive` + emülatör) gerektiriyor; süreç içinde eşdeğeri yok.
