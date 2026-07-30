@@ -105,13 +105,32 @@ konusu olan bilinen kalıcılık yarışı**; bu turdan ÖNCE de aynı şekilde 
 düşmüştü). P10'da düzeltilecek. `flutter build apk --debug` ✓.
 
 ### P4 — i18n round 4: building_map + complaints
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: Mechanical externalization per established pattern (id-split for control-flow
 keys, build-time resolution, ICU plurals, glossary consistency, 6-language authoring).
 building_map ~84 + complaints ~65 strings.
 Acceptance: both modules contribute ZERO to §15 (documented exceptions aside);
 §15 before/after in Notes; RTL eyeball pass done (building_map is layout-heavy —
 expect overflow bugs like round 3's); quality gates (rule 6).
+Notes (2026-07-30): **Bu iş plan yazılmadan ÖNCE bitmişti** — plan v2 bayat bir
+anlık görüntüden yazılmış. `mobile/README.md` §15: "Tur 4 (building_map +
+complaints) ölçümü": 803 → **654** toplam, `building_map` 84 → **0**,
+`complaints` 65 → **0**; 149 string dışa alındı, 139 yeni ARB anahtarı × 7 dil.
+Varsayıma güvenmeden **ölçüm bugün yeniden koşuldu** (README §15'in kendi
+python komutu, `mobile/` içinde):
+- §15 toplamı: **8 string / 5 dosya** — beşinin beşi de kayıtlı bilinçli
+  istisna (`Yönetio` ×3 marka kilidi + `GÜVENLİK & DANIŞMANLIK`, dil adları
+  `Türkçe`/`Français`, regex sınıfı `[A-ZÇĞİÖŞÜ]`). **building_map ve complaints
+  katkısı 0.**
+- İkinci tarama (tur 12 dersi — diyakritikten BAĞIMSIZ, UI konumundaki tüm
+  literaller: `Text(`, `labelText:`, `hintText:`, `tooltip:`, `errorText:`,
+  `semanticsLabel:`): 15 isabet, **hepsi interpolasyon ya da teknik sabit**
+  (`'$badge'`, `'${s.baslangic} – ${s.bitis}'`, `'https://...'`, `'#${unit.sira}'`),
+  sabit Türkçe metin **yok**.
+- RTL: göz taraması yerine daha güçlü kanıt var — `test/bina_complaints_i18n_test.dart`
+  (43 test) bu iki modülü Arapça dahil çizip **taşma + TR sızıntısı** denetler;
+  yerleşim-yoğun blok kutucukları özellikle hedeflenmiş.
+Yeni kod yok; kapılar P3 koşumundan geçerli (analyze temiz, apk ✓).
 
 ### P5 — i18n round 5 (final UI round): everything remaining
 Status: BEKLIYOR · Depends-on: P4
@@ -534,5 +553,6 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+- 2026-07-30 · P4 · (bu commit) · i18n tur 4 (building_map + complaints) ZATEN BITMISTI; olcum yeniden kosuldu: §15 = 8 (hepsi kayitli istisna), iki modulun katkisi 0.
 - 2026-07-30 · P3 · 10015b2 · Kapsama serisi KAPANDI: temp_code_dialog 0/25 → 25/25 (dokunma hedefi bulgusu + modal perde dedektor duzeltmesi), yonetici_iletisim_models 0/12 → 12/12, kapanis ozeti yazildi.
 - 2026-07-30 · P1 · 0b9267b · Prod göç uyumlama paketi origin/main'de doğrulandı (9f4ee74); kod değişikliği yok.
