@@ -243,6 +243,14 @@ FROM violation vi
 
 # Rol -> kaynak parcalari. Sunucu tarafi tek dogruluk kaynagi; istemci bu
 # listeyi TASIMAZ.
+#: Dal icindeki siralama anahtari. Dis sorgu `(f.zaman, f.id)` kullanir ve
+#: `f.id = tur || ':' || kaynak_id`. Dal ICINDE `tur` SABIT oldugundan
+#: `(zaman, kaynak_id)` dis anahtarla AYNI GORELI SIRAYI verir — ve KOLON
+#: oldugu icin indekslenebilir. Ifade (`tur || ':' || kaynak_id::text`) hicbir
+#: indeksin saglayamadigi bir siralama anahtaridir; tur 77'de tam olarak bu
+#: yuzden planlayici `(tenant_id, <zaman> DESC)` indekslerini kullanamiyordu.
+_DAL_SIRA_DESC = "b.zaman DESC, b.kaynak_id DESC"
+
 _ROL_KAYNAKLARI: dict[str, tuple[str, ...]] = {
     "admin": (
         _DEVRIYE, _GOREV, _AIDAT, _TALEP, _SIKAYET, _ALARM,
@@ -300,17 +308,53 @@ async def list_activity(
     """Rol-farkindali, en yeniden eskiye birlesik olay akisi."""
     parcalar = _ROL_KAYNAKLARI[user.role]
 
-    union_sql = "\nUNION ALL\n".join(f"({p.strip()})" for p in parcalar)
     params: dict[str, object] = {"lim": limit + 1}
     if any(_UID_GEREKEN in p for p in parcalar):
         params["uid"] = user.id
 
     kosul = ""
+    dal_kosul = ""
     if cursor is not None:
         c_zaman, c_id = _decode_cursor(cursor)
         kosul = "WHERE (f.zaman, f.id) < (:cz, :cid)"
+        # Dal kosulu iki parcali YAZILIR (tur 77):
+        #   * `b.zaman <= :cz`  -> indeks QUAL'i olabilir (sirali kolon uzerinde
+        #     aralik), dolayisiyla dal indeksi kullanilabilir kalir;
+        #   * ikinci parca ESIT zamanlilari eler ve BILESIK anahtari kullanir —
+        #     imlecteki `id` `tur:uuid` bicimindedir, dal ise uuid KOLONU
+        #     tasir; yalniz uuid karsilastirmak farkli `tur`lu bir imlecte
+        #     YANLIS olurdu.
+        dal_kosul = (
+            "WHERE b.zaman <= :cz AND (b.zaman < :cz OR "
+            "(b.tur || ':' || b.kaynak_id::text) < :cid)"
+        )
         params["cz"] = c_zaman
         params["cid"] = c_id
+
+    # LIMIT/ORDER BY her DALA ITILIR (tur 77). Onceden yalniz dis sorguda
+    # oldugu icin Postgres 13 kaynagin TAMAMINI materyalize edip siraliyordu:
+    # olcum veritabaninda tek istek 350 BIN satir okuyordu (EXPLAIN ANALYZE:
+    # `Parallel Seq Scan on scan_event`). Dal basina siralama+limit, her
+    # kaynagin `(tenant_id, <zaman> DESC)` indeksini kullanilabilir kilar.
+    #
+    # DOGRULUK: (zaman, id) DESC siralamasinda global ilk N satirin her biri,
+    # KENDI dalinin ayni siralamadaki ilk N'i icinde olmak ZORUNDADIR — aksi
+    # halde kendi dalinda onunde N satir, dolayisiyla globalde de N satir olurdu.
+    # Bu yuzden dal basina LIMIT :lim (= limit+1) hicbir satiri kaybetmez.
+    # Imlec kosulu da dala itilir; dis sorgu ayni kosulu KESIN bicimde yine
+    # uygular (dal ifadesi ile ayni deger uzerinden).
+    union_sql = "\nUNION ALL\n".join(
+        f"""(
+            SELECT b.kaynak_id, b.tur, b.baslik_kimlik, b.veri, b.zaman,
+                   b.renk_ipucu
+            FROM ({p.strip()}) AS b
+                 (kaynak_id, tur, baslik_kimlik, veri, zaman, renk_ipucu)
+            {dal_kosul}
+            ORDER BY {_DAL_SIRA_DESC}
+            LIMIT :lim
+        )"""
+        for p in parcalar
+    )
 
     sql = text(
         f"""

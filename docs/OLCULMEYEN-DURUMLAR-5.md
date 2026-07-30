@@ -187,6 +187,77 @@ Not: **indeks kullanımı** (EXPLAIN, gerçek veri hacmiyle) hâlâ ölçülmedi
 Şemada indeks *var mı* sorusu ile sorgunun onu *kullanıyor mu* sorusu ayrı;
 ikincisi temsil edici hacim gerektiriyor.
 
+## KAPANDI (tur 77) — indeks KULLANIMI: `/activity` tek istekte 350.000 satır okuyordu
+
+Tur 76 şemadaki indeksleri doğruladı ama **kullanımı** ölçmedi. Dev
+veritabanında ölçmek işe yaramaz: tablolarda 2–8 satır var ve o hacimde
+Postgres zaten seq scan seçer — orada tam tarama kusur *değildir*. Bu yüzden
+tek-kullanımlık bir veritabanına **762.555 satır** sentetik hacim yazıldı,
+API'nin geçici bir örneği ona yönlendirildi ve tüm GET uçları sürülerek
+`seq_tup_read` sayaçları **uca atfedildi**.
+
+**BULGU — `GET /activity` tek istekte 350.000 satır okuyordu.** 13 kaynak
+`UNION ALL` ile birleşiyor ve `LIMIT` **yalnız dış sorguda** uygulanıyordu;
+Postgres her kaynağın tamamını materyalize edip sıralıyordu.
+`EXPLAIN ANALYZE`: `Parallel Seq Scan on scan_event`, top-N heapsort tüm
+birleşim üzerinde, 21 satır döndürmek için 350.000 satır üretiliyor. Bu, mobil
+ana ekranın akış ucu.
+
+**Düzeltme:** sıralama + `LIMIT` her dala itildi. Doğruluk argümanı:
+`(zaman, id) DESC` sıralamasında global ilk N satırın her biri, kendi dalının
+aynı sıralamadaki ilk N'i içinde olmak *zorundadır*. Ayrıca dal sıralaması
+**indekslenebilir kolonlara** çevrildi — `tur || ':' || id::text` ifadesi hiçbir
+indeksin sağlayamadığı bir anahtardı ve asıl engel buydu. Eksik altı dal
+indeksi migrasyon **0009** ile eklendi.
+
+**Sonuç:** aynı ölçüm sonrasında 3 istek toplam **4 satır** sıralı okuma;
+`scan_event` 200.000 seq → 22 satır indeks getirmesi. `/activity` listeden düştü.
+
+Üç kolonlu indeks *gerekmedi* ve bu ölçüldü: iki kolonlu indeks tam sırayı
+vermez, Postgres `Incremental Sort` ile tamamlar; planlayıcı bunu küçük tabloda
+maliyetli bulup seq scan seçse de tablo büyüdükçe kendiliğinden çevirir
+(`dues_payment` 50 binde seq scan, 200 binde `Incremental Sort + Index Scan`).
+13 tabloya üçüncü kolon eklemenin yazma maliyeti bu yüzden alınmadı.
+
+### Ölçülen ama DEĞİŞTİRİLMEYEN: `meta.total` O(tablo)
+
+Kalan beş uç bir tam tarama yapıyor ve **mekanizma tek**: sayfalı liste uçları
+`select(func.count()).select_from(X).where(...)` ile **tam sayım** yapıyor.
+
+| Uç | Sıralı okunan | Tür |
+|---|---|---|
+| `/dues/payments` | 200.000 | liste + total |
+| `/reports/financial-summary` | 200.000 + 12.000 | agregat (SUM) — tam tarama **doğru plan** |
+| `/notifications` | 100.000 | liste + total |
+| `/tasks` | 100.000 | liste + total |
+| `/dues/assessments` | 24.000 | liste + total |
+| `/transparency` | 12.000 | agregat |
+
+`meta.total` bir **API sözleşmesi özelliği**; kaldırmak ya da yaklaşık sayıma
+çevirmek istemci davranışını değiştirir. Tek taraflı değiştirilmedi — ölçümle
+bildiriliyor. (İlginç olan, `/activity`in kendi docstring'inin `meta.total`ı
+"13 kaynağın birleşik sayımı her istekte tam tarama demektir" diye **bilinçli
+olarak dışarıda bıraktığını** yazması: aynı gerekçe diğer liste uçlarında
+uygulanmamış.)
+
+**Kalıcı çıktı:** `infra/tarama-olcumu.sh` + `infra/hacim-verisi.sql` — ölçüm
+tek komutla yeniden koşulabilir. Ve `backend/tests/test_activity_sayfalama.py`:
+eşit zamanlı olaylarda sayfalama kaybı/tekrarı arar.
+
+**İki ölçüm tuzağı kayda geçti:**
+
+1. **`pg_stat` flush yarışı.** Sayaçlar asenkron yazılır (~500 ms). Reset ile
+   istek arasında beklenmezse bir ucun taraması *başkasına* atfedilir. İlk
+   koşumda `/dues/payments` 125.754 + `/budget/categories` 74.246 = tam
+   200.000 çıktı — bir tablonun tamamı iki uca **bölünmüş** görünüyordu.
+   Beklemeler eklenince `/budget/categories` listeden düştü.
+2. **Dedektörün kendisi kördü.** Sayfalama testi ilk hâlinde `ADET=5` eşit
+   zamanlı olayla kuruluyordu ve dal sıralamasından tie-break'i **kaldırdığım
+   deneyde bile yeşil kaldı** (5 eşitten keyfi 3'ü tesadüfen doğru sırayla
+   çakışıyordu). `ADET=40` ile aynı deney **59 olayın kaybolduğunu** gösterdi.
+   Ayrıca ilk muhakememde "kayıp olmaz, yalnız sıra bozulur" demiştim; deney
+   bunun da yanlış olduğunu gösterdi.
+
 ## Açık kalanlar
 
 1. **Canlı prod yığın sürüşü** (tur 72'den devir). Prod compose'u yerelde
@@ -201,16 +272,17 @@ ikincisi temsil edici hacim gerektiriyor.
 4. ~~**Yetkilendirme matrisi.**~~ **KAPANDI (tur 74)** — yukarıya bakın.
    Kalan alt katman: **handler içinde role göre içerik daraltma** (aynı uç,
    farklı gövde). Kilit bunu görmüyor.
-5. **Sıcak sorgularda indeks KULLANIMI.** Şema tarafı tur 76'da kapandı
-   (indekssiz FK yok). Ama `EXPLAIN` hiçbir ölçümde yok: sorgunun indeksi
-   gerçekten kullandığı, N+1 olmadığı ve seq-scan regresyonu girmediği
-   ölçülmüyor. Temsil edici veri hacmi gerektiriyor (dev'de tek tenant var).
+5. ~~**Sıcak sorgularda indeks KULLANIMI.**~~ **KAPANDI (tur 77)** — yukarıya
+   bakın. Kalan: `meta.total` tam sayımı (ürün kararı) ve hacmin yazılmadığı
+   40 tablo — o uçlar için "bulgu yok" kanıt değil.
 
 ## Öneri sırası
 
 1. ~~`SECURITY DEFINER` fonksiyonları~~ — **kapandı, tur 75**; üçü de temiz.
-2. **Sıcak sorgu `EXPLAIN`'i hacimli veriyle** (5) — şema tarafı tur 76'da
-   kapandı; kullanım tarafı için tek-kullanımlık bir veritabanına sentetik
-   hacim yazmak gerekiyor.
-3. Canlı prod sürüşü (1) — izin gerektiriyor.
-4. Kare bütçesi (2) — ortam kurulumu gerektiriyor.
+2. **`meta.total` kararı** — beş liste ucunda tam sayım O(tablo). Yaklaşık
+   sayıma geçmek ya da `total`ı kaldırmak istemci sözleşmesini değiştirir;
+   karar kullanıcıya ait.
+3. **Hacim kapsamının genişletilmesi** — `hacim-verisi.sql` 8 tabloya yazıyor;
+   kalan 40 tablo için tarama davranışı hâlâ ölçülmedi.
+4. Canlı prod sürüşü (1) — izin gerektiriyor.
+5. Kare bütçesi (2) — ortam kurulumu gerektiriyor.
