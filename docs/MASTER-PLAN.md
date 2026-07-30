@@ -158,7 +158,7 @@ Nihai istisna listesi (README §15 "Kalan 8 string" tablosuyla birebir):
 hepsi interpolasyon/teknik sabit. Yeni kod yok; kapılar P3 koşumundan geçerli.
 
 ### P6 — Backend localization (Accept-Language for server strings)
-Status: BEKLIYOR · Depends-on: P5
+Status: BITTI · Depends-on: P5
 Scope: ApiException messages + activity feed baslik/alt_metin localized server-side
 via Accept-Language (7 locales). Boundary is already marked: grep
 "SERVER-LOCALIZED(next round)" in mobile lib/. Backend emits locale-aware text
@@ -166,6 +166,31 @@ via Accept-Language (7 locales). Boundary is already marked: grep
 mobile sends Accept-Language and removes the boundary markers it can now retire.
 Acceptance: activity feed + surfaced API errors render in the app locale for all 7;
 contract documents the header behavior; markers retired or re-scoped; quality gates.
+Notes (2026-07-30): P4/P5 ile aynı — iş plan yazılmadan önce bitmiş, üç turda:
+- **tur 14** `backend/app/hata_metinleri.py`: `APIError` artık CÜMLE değil KİMLİK
+  taşır; metin yalnız hata işleyicisinde (`errors.py`) istemcinin
+  `Accept-Language`ine göre üretilir. Dil çözümleme İÇERİK ÇEVİRİSİYLE AYNI
+  zinciri kullanır (`ceviri.accept_language_coz`) — bir istek hem duyuruyu hem
+  hatayı aynı dilde alır. 7 dilin hepsi katalogda; eksik dil
+  `tests/test_hata_i18n.py::test_katalog_tam` ile yakalanır ve çalışma anında
+  sessizce tr'ye düşer.
+- **tur 15** `/activity` satırları kimliğe çevrildi (`akis_metinleri.py`; sunucu
+  `baslik_kimlik` + `veri` gönderir, cümleyi istemci kurar) — yani akış metni
+  sunucuda hiç üretilmiyor, dil sorunu kaynağında çözülmüş.
+- **tur 16** push + uygulama-içi bildirim metinleri 7 dile alındı; push asenkron
+  olduğu için dil `user_device.dil`den okunur (`scheduler/notify.py`), istek
+  başlığından değil — doğru karar, notlarda gerekçeli.
+SINIR İŞARETLERİ: `SERVER-LOCALIZED(next round)` işareti mobil `lib/` içinde
+KALMADI; yerine 7 dosyada kalıcı `SERVER-LOCALIZED sınırı` notu var — "sunucu
+metni geldiğinde istemci onu çevirmez" kuralını belgeleyen yerleşik tasarım
+notu, açık iş değil.
+SÖZLEŞME: `contracts/openapi.yaml` `Accept-Language`i 9 yerde belgeliyor —
+başlık parametresi (satır 5033), geri-düşme zinciri `?dil=` → Accept-Language →
+kaynak dil (5049), `?dil=` ezmesi (5062), hata zarfı (5131), push istisnası
+(5188) ve üç yayın tipinin çeviri notları.
+KAPI: tam `pytest` koşuldu — **788 test**, 1 düşen vardı ve o da bu maddeden
+bağımsız gece-yarısı kırılganlığıydı (`test_me_patrol.py`, ayrı commit'te
+düzeltildi + dedektör testi eklendi); düzeltme sonrası dosya 11/11 yeşil.
 
 ### P7 — Content-translation mobile wiring
 Status: BEKLIYOR · Depends-on: P6
@@ -571,7 +596,8 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
-- 2026-07-30 · P5 · (bu commit) · i18n tur 5 ve sonrasi ZATEN BITMISTI; §15 = 8 (hepsi kayitli istisna), nihai istisna listesi plana yazildi.
+- 2026-07-30 · P6 · (bu commit) · Sunucu yerellestirmesi (Accept-Language) ZATEN BITMISTI (tur 14/15/16); sinir isaretleri + sozlesme + katalog dogrulandi.
+- 2026-07-30 · P5 · fde3a4f · i18n tur 5 ve sonrasi ZATEN BITMISTI; §15 = 8 (hepsi kayitli istisna), nihai istisna listesi plana yazildi.
 - 2026-07-30 · P4 · f9837cf · i18n tur 4 (building_map + complaints) ZATEN BITMISTI; olcum yeniden kosuldu: §15 = 8 (hepsi kayitli istisna), iki modulun katkisi 0.
 - 2026-07-30 · P3 · 10015b2 · Kapsama serisi KAPANDI: temp_code_dialog 0/25 → 25/25 (dokunma hedefi bulgusu + modal perde dedektor duzeltmesi), yonetici_iletisim_models 0/12 → 12/12, kapanis ozeti yazildi.
 - 2026-07-30 · P1 · 0b9267b · Prod göç uyumlama paketi origin/main'de doğrulandı (9f4ee74); kod değişikliği yok.
