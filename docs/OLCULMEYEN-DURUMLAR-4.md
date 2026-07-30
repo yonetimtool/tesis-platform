@@ -60,6 +60,25 @@ API_URL=http://127.0.0.1:8001 pytest -q
 coverage report
 ```
 
+**Sonuç (ilk kez ölçüldü): backend `app/` kapsamı %72** — 8 119 satırın
+2 301'i kapsanmamış; 766 test 13:46'da geçti (araçlı sunucu suite'i ~2× yavaşlattı).
+
+**Hiç koşmayan dört dosya** (bunlar HTTP ile değil, zamanlayıcı/Celery ile
+çalışıyor; test süreci onları ayrı ayrı import ediyor ama sunucu süreci hiç
+çalıştırmıyor — yani bu %0'lar "test yok" demek değil, "sunucu sürecinde
+çalışmıyor" demek):
+
+| Dosya | Kapsam |
+|---|---|
+| `app/retention.py` | %0 |
+| `app/scheduler/service.py` | %0 |
+| `app/scheduler/windows.py` | %0 |
+| `app/tasks.py` (Celery) | %0 |
+
+**En düşük gerçek router'lar:** `residents` %31, `dues` %37,
+`common_areas` %42, `units` %44, `blocks` %44, `assets` %45, `tasks` %45,
+`patrol_plans` %47. Bunlar D2 maddesinin hedef listesi.
+
 Panel sonucu ise bir **payda tuzağı** ortaya çıkardı:
 
 | Ölçüm | Sonuç |
@@ -88,8 +107,10 @@ Playwright sürüşleriyle kapsanıyor ve o sürüşler kapsam üretmiyor. Yapı
 1. **Kare bütçesi / jank.** Gerçek cihaz ya da `flutter drive` + emülatör
    gerektiriyor; süreç içinde eşdeğeri yok. (Tur 67 belleği süreç içinde
    ölçmeyi başardı; kare süresi için aynı yol yok.)
-2. **Backend kapsamının DÜŞÜK bölgeleri.** Sayı bu turda ilk kez alındı; hangi
-   modüllerin zayıf olduğu ayrı bir tur konusu.
+2. **Backend kapsamının DÜŞÜK bölgeleri.** Sayı alındı (%72) ve hedef liste
+   çıktı: `residents` %31, `dues` %37, `common_areas` %42, `units`/`blocks` %44,
+   `assets`/`tasks` %45, `patrol_plans` %47. Ayrıca zamanlayıcı/Celery dosyaları
+   sunucu sürecinde hiç koşmuyor — onların ölçümü ayrı bir yol gerektiriyor.
 3. **Panel UI birim kapsamı %26,8.** UI'yi Playwright sürüşleri kapsıyor ama
    *satır* düzeyinde ölçüm yok; React bileşenlerini jsdom ile test etmek ayrı
    bir altyapı kararı (bilinçli olarak yapılmamıştı — `vitest.config.ts`
