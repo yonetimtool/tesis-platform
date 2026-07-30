@@ -21,7 +21,7 @@ araçların kendi kodundan geliyor.
 
 ---
 
-## A. Denetleyiciler (controller) — kapsam açığının yeni merkezi ✔ **KISMEN KAPANDI (tur 63)**
+## A. Denetleyiciler (controller) — kapsam açığının yeni merkezi ✔ **KAPANDI (tur 63 + 65)**
 
 Ekranlar sürülüyor, ama **denetleyicilerin dalları** sürülmüyor. Sürüşler API'yi
 sahteliyor ve sahte **başarı** dönüyor; hata/yeniden dene/iptal/eşzamanlılık
@@ -298,3 +298,37 @@ aynı sınıf durumu `finally` ile çözüyordu; `request` çözmüyordu. Düzel
 
 Ayrıca ölçülen dallar: saha rolü `/reservations` isteğini **hiç atmıyor** (403
 savunması), yeniden-girme kilidi, alan CRUD'unun her birinin ardından tazeleme.
+
+---
+
+## Tur 65'te kapatılanlar (A maddesinin ekran kısmı)
+
+Tur 63 denetleyicileri kapatmıştı; kalan dört dosya **ekran**dı ve hepsi zaten
+"sürülüyordu" — ama yalnız **açıldığı hâlde**. Ölçüm gösterdi ki asıl kod
+sekmelerde, alt sayfalarda ve diyaloglarda:
+
+| Dosya | Önce | Sonra | Ne eksikti |
+|---|---|---|---|
+| `patrol_tracking_screen` | %28 | **%88,9** | üç sekmeden ikisi hiç açılmıyordu; `_WindowCard`ın beş durum dalından dördü karanlıktı |
+| `settings_screen` | %36 | **%98,5** | dil alt sayfası açılmıyor, tema segmenti değişmiyor, tesis adı kaydetme (3 dal) koşmuyor, rol kapıları tek rolle ölçülüyordu |
+| `task_categories_screen` | %49 | **%88,7** | ekle/sil diyalogları, iptal dalı, boş ad dalı, API hatası |
+| `patrol_plans_screen` | %52 | **%89,5** | plan formu (yeni + düzenle), periyot doğrulaması, nokta ataması ve **sırası**, silme onayı + hata |
+| `patrol_history_view` | — | %80,6 | ikinci sekme açılınca birlikte kapsandı |
+
+**Ölçülen davranışlar (çizim değil, sonuç):** hangi API hangi argümanla
+çağrıldı, liste tazelendi mi, hangi mesaj çizildi, ve **istek atılmaması
+gereken yerlerde atılmadı mı**. Üç kapı bu şekilde kilitlendi: boş tesis adı,
+boş kategori adı, ve pozitif olmayan devriye periyodu — üçü de sunucuya
+gitmeden duruyor ve testler istek sayacına bakıyor.
+
+Nokta atamasında **sıra** ayrıca doğrulanıyor: `setCheckpoints` listedeki sırayı
+değil **seçim sırasını** gönderiyor (kullanıcı turun gezinme sırasını böyle
+belirliyor).
+
+**Sayılar:** mobil test **1 288 → 1 329**; `presentation` kapsamı
+**%72,4 → %75,0** (tur 62'de %70,4); `lib/src` %63,5.
+
+**İki test yazım tuzağı:** (1) `settings_screen`in tema kartı listenin altında
+kalıyor ve varsayılan 800×600 görüntüde `ListView` onu **hiç kurmuyor** — tembel
+liste; görüntü büyütülmeden ölçüm boş koşuyordu. (2) `TabBarView`in bir çocuğu
+yalnız **sekmeye dokununca** kuruluyor; sekmeyi programatik seçmek yetmiyor.
