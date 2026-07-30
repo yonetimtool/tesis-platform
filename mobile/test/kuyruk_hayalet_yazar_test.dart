@@ -73,7 +73,13 @@ void main() {
   setUp(() async {
     dizin = await Directory.systemTemp.createTemp('hayalet_yazar');
   });
-  tearDown(() async => dizin.delete(recursive: true));
+  // Temizlik BASARISIZLIGI test basarisizligi DEGILDIR: gecici dizin yuk
+  // altinda zaten gitmis olabilir; bunun urunle ilgisi yoktur.
+  tearDown(() async {
+    try {
+      await dizin.delete(recursive: true);
+    } catch (_) {/* onemli degil */}
+  });
 
   File dosya() => File('${dizin.path}/outbox.json');
 
@@ -120,9 +126,16 @@ void main() {
       // Ayni senaryonun sikistirilmis hali. Yaris zamanlamaya bagli oldugu
       // icin TEK kosum kanit degildir; tekrar sayisi dedektoru anlamli kilar
       // (duzeltme oncesi bu dongu ilk birkac turda dusuyordu).
+      //
+      // TEK ust dizin, tur basina AYRI DOSYA — tur basina yeni gecici DIZIN
+      // acilmaz. NEDEN (olculdu): ilk surum her turda `systemTemp.createTemp`
+      // acip sonunda siliyordu; tam suit yuku altinda (dort izolasyon paralel)
+      // bu temizlik `PathNotFoundException: Deletion failed` ile patliyordu —
+      // URUN yolunda degil, TESTIN KENDI EV ISLERINDE. 20x tekrar kosumunun
+      // 15. turunda tam bu gorundu ve ilk bakista "yaris hala var" gibi
+      // okundu; degildi. Dizin yonetimi tek noktaya (setUp/tearDown) alindi.
       for (var tur = 0; tur < 50; tur++) {
-        final alt = await Directory.systemTemp.createTemp('yeni_oturum');
-        final dosya = File('${alt.path}/outbox.json');
+        final dosya = File('${dizin.path}/oturum-$tur.json');
         final api = _SahteScanApi();
         ProviderContainer kap() => ProviderContainer(
           overrides: [
@@ -165,7 +178,6 @@ void main() {
           reason: 'tur $tur: diskteki kuyruk FIFO devralinmadi',
         );
         c2.dispose();
-        await alt.delete(recursive: true);
       }
     },
     timeout: const Timeout(Duration(minutes: 3)),

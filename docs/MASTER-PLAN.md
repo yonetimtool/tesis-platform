@@ -323,7 +323,7 @@ KAPILAR: tam `pytest` → **792 geçti / 0 düştü** (yeni 3 test dahil).
 Kod değişmedi — yalnız sözleşme + test.
 
 ### P10 — scan_outbox_test flake fix
-Status: BITTI · Depends-on: —
+Status: BEKLIYOR(urun duzeltmesi girdi; 20x kaniti yeniden olculuyor) · Depends-on: —
 Scope: Persistence-test race (b7bd5eb history): passes isolated, rarely fails in
 full runs. Find the actual race (shared temp dir / async timing), fix properly.
 Acceptance: documented repro reasoning + 20x full-suite-context repetition green.
@@ -355,8 +355,26 @@ döngüsü de var (tek koşum yarışa kanıt değildir).
 KAPILAR: `flutter analyze` → "No issues found!" (bu arada P8'in test
 dosyasındaki 2 `info` lint de düzeltildi — P8 commit'inde tam analiz test
 dosyası yazılmadan ÖNCE koşulmuştu); `flutter test` **1408 geçti / 3 atlandı /
-0 düştü**; `flutter build apk --debug` ✓; ardından 20× tam-suit tekrarı
-(sonuç aşağıda, TEKRAR KOŞUMU notu).
+0 düştü**; `flutter build apk --debug` ✓.
+**TEKRAR KOŞUMU #1 (20×) — 18 geçti / 2 düştü. YANİ KABUL ÖLÇÜTÜ HENÜZ
+KARŞILANMADI**; madde BITTI'den geri alındı. İki düşüşün analizi:
+- **Koşum 15 — TEŞHİS EDİLDİ ve DÜZELTİLDİ, ürün değil TESTİN kendi ev işi.**
+  `kuyruk_hayalet_yazar_test` "50 tekrar" döngüsü her turda
+  `Directory.systemTemp.createTemp` açıp sonunda siliyordu; tam suit yükü
+  altında (dört izolasyon paralel) bu temizlik
+  `PathNotFoundException: Deletion failed` ile patlıyordu. Yük altında
+  **yeniden üretildi** (12 denemenin 6.'sında) ve tam mesaj yakalandı: hata
+  `alt.delete()` satırında, ürün yolunda DEĞİL. FIFO/devralma iddialarının
+  hiçbiri düşmedi. Düzeltme: tur başına yeni DİZİN açılmıyor, tek üst dizinde
+  tur başına AYRI DOSYA kullanılıyor; `tearDown` temizliği toleranslı.
+  İlk bakışta "yarış hâlâ var" gibi okunan bulgunun aslında ölçüm aracının
+  kendi hatası olduğu — bu deponun tekrar eden dersi.
+- **Koşum 17 — TEŞHİS EDİLEMEDİ (açık kayıt).** `bina_complaints_i18n_test`
+  16 test birden düştü. Sonradan hem izole hem TAM SUİT YÜKÜ ALTINDA
+  yeniden koşuldu: **ikisinde de 48/48 geçti**. Tekrar koşumunun günlüğü
+  yalnız test adlarını sakladığı için geriye dönük tanı yapılamıyor. Tek
+  seferlik ortam takılması olarak İZLENİYOR; tekrarlarsa günlükleme
+  genişletilip ayrı madde açılacak.
 
 ### P11 — [KEREM] Accumulated device testing
 Status: BLOKE(Kerem telefonda test eder) · Depends-on: —
