@@ -109,6 +109,47 @@ Kilit üretimi iki adımlı (imaj kodu bake ediyor): konteynerde üret, `docker
 compose cp` ile depoya al. Kopyalamayı atlamak "kilidi güncelledim" sanıp eski
 kilidi sürdürmek demektir — dosyanın başında yazılı.
 
+## KAPANDI (tur 75) — `SECURITY DEFINER` yüzeyi: izolasyonun tek gerçek deliği
+
+Tur 73'ün ölçümü 48 tablonun politikalarını doğruladı — ama `SECURITY DEFINER`
+fonksiyonlar o politikaların **tamamını** atlar: owner yetkisiyle koşarlar ve
+owner'da `rolbypassrls=true`. Yani bu fonksiyonlar çok-kiracılı izolasyonun tek
+gerçek deliği ve tur 73 onlara **hiç bakmıyordu**.
+
+Sayıldı: **13 fonksiyon**. Üç bağımsız hata sınıfı ölçüldü, üçü de **temiz**:
+
+| Ölçüm | Sonuç |
+|---|---|
+| `search_path` sabitlenmiş mi (klasik SECURITY DEFINER açığı) | 13/13 `search_path=""` |
+| `EXECUTE` PUBLIC'e açık mı | hiçbiri; yalnız owner + `app_rw` |
+| Çağıran ucun rol kapısı | 10'u `require_role("admin")`, 3'ü bilinçli kimlik-öncesi |
+
+Kimlik-öncesi üçü: `tenant_id_by_slug` / `tenant_id_by_phone` (girişte kullanıcı
+henüz kimliklenmemiş, tenant'ı çözmek için bypass şart; ikisi de yalnız bir uuid
+döner) ve `payment_tenant_by_ref` (imzayla doğrulanan sağlayıcı webhook'u).
+
+**Kalıcı çıktı:** `backend/tests/test_secdef_kapsam.py`. Katalogdan
+(`pg_proc.prosecdef`) türer ve dosyadaki **ENVANTER** ile iki yönlü
+karşılaştırır: envanterde olmayan yeni bir `SECURITY DEFINER` fonksiyonu
+şemaya giremez, envanterde olup şemada olmayan kayıt da ölü sayılır. Envanter
+süsleme kalmasın diye `admin` kapısı **davranışsal** olarak da doğrulanıyor:
+yönetici rolü, o on ucun her birinde **başka tenant'ın id'siyle** 403 alıyor.
+
+**Dedektörler ayrıştırılarak sınandı** (geçici veritabanı):
+
+| Enjeksiyon | Kırmızı dönen |
+|---|---|
+| `search_path`'siz + PUBLIC `EXECUTE` + envanter dışı fonksiyon | 1 + 2 + 3 |
+| `search_path` sabit, PUBLIC `EXECUTE` | 2 + 3 |
+| `search_path` sabit, `EXECUTE` PUBLIC'ten alınmış | yalnız 3 |
+
+Sondanın "her şeye 403 diyor" olmadığı da gösterildi: aynı yönetici token'ı ile
+`GET /audit` → 403, `GET /support` → 200.
+
+**Bu ölçümün ölçmediği şey:** `admin` bu uçlarda tenant sınırını **bilinçli**
+geçer (panelin işi tam olarak bu). Ölçülen şey admin'in kısıtlanması değil,
+admin *olmayan* hiçbir rolün bu yüzeye erişememesi.
+
 ## Açık kalanlar
 
 1. **Canlı prod yığın sürüşü** (tur 72'den devir). Prod compose'u yerelde
@@ -128,12 +169,7 @@ kilidi sürdürmek demektir — dosyanın başında yazılı.
 
 ## Öneri sırası
 
-1. **`SECURITY DEFINER` fonksiyonları.** 0001 migrasyonu owner yetkisiyle
-   koşan ve **RLS'i bypass eden** fonksiyonlar tanımlıyor (`tenant_detail`,
-   `list_all_tenants`, `update_tenant_*`, `delete_tenant`,
-   `create_tenant_with_yoneticis`, `payment_tenant_by_ref`). RLS kapsamı
-   ölçümü bunlara BAKMIYOR — politika bypass edildiğinde 48 politikanın
-   hiçbiri devrede değil. Her çağırıcının rol kapısı doğrulanmalı.
+1. ~~`SECURITY DEFINER` fonksiyonları~~ — **kapandı, tur 75**; üçü de temiz.
 2. **Sıcak sorgu indeksleri** (5) — ölçülebilir, kalıcı çıktı üretir.
 3. Canlı prod sürüşü (1) — izin gerektiriyor.
 4. Kare bütçesi (2) — ortam kurulumu gerektiriyor.
