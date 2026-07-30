@@ -530,12 +530,31 @@ endpoint. Simulated-payload tests (real device tests are field work).
 Acceptance: recorded/sample payloads from both brands map correctly; docs committed.
 
 ### P20 — Face recognition v2: design note only
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: DESIGN NOTE, no implementation: staff-only face verification (explicit
 written consent, tenant-default OFF, KVKK analysis summary, scope strictly
 excludes residents/visitors and any bulk identification). Ends with an explicit
 "requires Kerem go decision" line.
 Acceptance: docs/face-recognition-v2-design.md committed; nothing else changes.
+Notes (2026-07-30): `docs/face-recognition-v2-design.md` yazıldı; **başka
+hiçbir şey değişmedi** (kod yok, şema yok, uç yok).
+Belgenin omurgası: kapsam **1:1 kimlik DOĞRULAMA**, 1:N kimlik TESPİTİ DEĞİL;
+sakinler/ziyaretçiler/toplu tarama/kamera akışında pasif tanıma **pazarlığa
+kapalı biçimde** kapsam dışı. KVKK: biyometri m.6 özel nitelikli veri →
+iş sözleşmesinden AYRI yazılı açık rıza, **reddetme cezasız** (fallback'siz
+tasarlanamaz), tenant varsayılanı KAPALI, **şablon cihazda** (sunucuya yalnız
+"doğrulandı/doğrulanmadı" gider), iş ilişkisi bitiminde derhal silme, rıza
+sürümleme (P36 mekanizması), audit'e yüz verisi yazılmaz.
+DÜRÜST DEĞERLENDİRME EKLENDİ: NTAG424 SDM zaten etiketin fiziksel varlığını
+kriptografik olarak kanıtlıyor; P34 GPS + tur başı fotoğrafla birlikte kalan
+risk dar. Yüz verisi ise geri alınamaz (parola değişir, yüz değişmez).
+Tavsiye: **önce P34'ü sahada ölç**, kaçak hâlâ anlamlıysa yeniden değerlendir.
+Ayrıca "canlılık kontrolü olmadan bu özellik güvenlik HİSSİ verir ama güvenlik
+vermez — bu hiç yapmamaktan kötüdür" uyarısı yazıldı.
+Reddedilen kolay yollar gerekçeleriyle kayıtlı: bulut yüz API'si (yurtdışı
+aktarım), merkezî şablon veritabanı (tek sızıntıda geri alınamaz zarar).
+Belge açık bir **KARAR SATIRI** ile bitiyor; karar "git" olursa ilk adım kod
+değil, aydınlatma metni + rıza formunun hukukçuya yazdırılması.
 
 ### P21 — "Translate this content" button: evaluation note
 Status: BEKLIYOR · Depends-on: P7
@@ -822,6 +841,7 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+- 2026-07-30 · P20 · (bu commit) · Yuz tanima v2 TASARIM NOTU (kod yok): kapsam 1:1 dogrulama, sablon cihazda, KVKK kosullari + "once P34'u olc" tavsiyesi + karar satiri.
 - 2026-07-30 · P15 · 7cfb492 · Frigate PoC ayri yiginda kosuldu: restream oynatilabilir dogrulandi, MQTT konu envanteri + olay yuku yakalandi, kaynak olculdu; ANPR ingest olay semasi taslagi yazildi.
 - 2026-07-30 · P14 · 395605c · Ceviri kalite kapisi: ar+ru anadil inceleme paketi (1.186 anahtar x 2) + LibreTranslate olcumu (48 ceviri) — TR kaynak icin YETERSIZ, uc secenekli saglayici karar notu (degisiklik YAPILMADI).
 - 2026-07-30 · P9 · e6d0941 · Sozlesme kontrolu METOT duzeyine cikarildi (201/201 ortusuyor); /me/checkpoints ve /admin/overview beyanlari koddan SAPMISTI, duzeltildi; adi gecen uclara tam aciklama yazildi.
