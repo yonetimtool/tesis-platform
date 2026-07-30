@@ -414,13 +414,42 @@ verified, receipt states correct in app + panel.
 Acceptance: sandbox payment completes and reflects everywhere.
 
 ### P14 — Translation quality gate
-Status: BEKLIYOR · Depends-on: P7
+Status: BITTI · Depends-on: P7
 Scope: (a) ARB handoff prep for native review — export/notes for ar+ru minimum,
 glossary included; (b) evaluate LibreTranslate content quality on real prod-style
 samples (tr→ar/ru/de/fr/es/en), write a short quality note; (c) if weak, a provider
 swap decision note (DeepL) — abstraction already exists, note the config change only.
 No provider swap without Kerem's go.
 Acceptance: handoff package in docs/ + quality note committed.
+Notes (2026-07-30): Üçü de yapıldı.
+(a) **TESLİM PAKETİ** — `docs/ceviri-teslim/`: `ar-inceleme.csv` ve
+`ru-inceleme.csv` (her biri **1.186 anahtar**; sütunlar: modül, anahtar,
+yer_tutucular, Türkçe kaynak, mevcut çeviri, boş düzeltme sütunu, not) +
+`README.md` (inceleyene verilecek 7 maddelik talimat, sözlük tablosu, geri
+dönüşün nasıl işleneceği, paketin NEYİ KAPSAMADIĞI). Yer tutucu sütunu
+bilinçli: `{dolu} / {kapasite}` gibi ifadelerin korunması en sık kırılan
+kural.
+(b) **KALİTE ÖLÇÜMÜ** — `docs/ceviri-kalite-notu.md`. 8 gerçek prod-tipi örnek
+× 6 dil = **48 çeviri**, 37,3 sn. Sonuç: **Türkçe kaynak için YETERSİZ**.
+En ağır bulgu finansal: "**Aidat** borcunuz için son ödeme tarihi **ayın
+10'u**" → İngilizce "The deadline for your **regimen** is **10 months**" (hem
+terim hem TARİH yanlış). Diğerleri: "tadilat" hiç çevrilmemiş, "soru-cevap"
+yarı Türkçe kalmış, "aidat kalemleri" → *tokens* / Arapçada *şırıngalar* +
+cümle düşmüş, "her daireye bir otopark yeri" anlamı TERSİNE dönmüş, güvenlik
+kuralı Arapçada geçmiş zamana kaymış (yasak ifadesi kaybolmuş), "kazan
+dairesi" → *boiler apartment*. Kalıp net: hata **alan terimlerinde**
+yoğunlaşıyor; kısa ve terimsiz cümleler altı dilde de doğru.
+(c) **SAĞLAYICI KARARI NOTU** — üç seçenek yazıldı: (A) DeepL'e geçiş
+(soyutlama hazır, değişiklik yalnız bir sağlayıcı sınıfı + config; BEDELİ
+içeriğin dışarı çıkması → **KVKK kararıdır, teknik karar değil**), (B)
+LibreTranslate'te kalıp sözlük ön-işleme (sekiz hatanın altısını kapatır,
+içerik dışarı çıkmaz), (C) karma — B'yi hemen, A'yı Kerem'in KVKK kararına
+bırak; A gelirse B'nin sözlüğü DeepL glossary'sine aynen taşınır.
+**SAĞLAYICI DEĞİŞTİRİLMEDİ, ön-işleme de EKLENMEDİ** — P14 bir değerlendirme
+kalemi; ikisi de ürün davranışını değiştirir ve Kerem'in "git" demesini bekler.
+YAN BULGU: ölçüm, P7'deki "orijinali gör" bağlantısının bir süs değil
+**emniyet supabı** olduğunu doğruladı.
+Kod değişikliği YOK (yalnız docs/) — kapı gerekmez.
 
 ### P15 — Frigate Phase 1: PoC
 Status: BEKLIYOR · Depends-on: —
@@ -756,6 +785,7 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+- 2026-07-30 · P14 · 2e8d927 · Ceviri kalite kapisi: ar+ru anadil inceleme paketi (1.186 anahtar x 2) + LibreTranslate olcumu (48 ceviri) — TR kaynak icin YETERSIZ, uc secenekli saglayici karar notu (degisiklik YAPILMADI).
 - 2026-07-30 · P9 · e6d0941 · Sozlesme kontrolu METOT duzeyine cikarildi (201/201 ortusuyor); /me/checkpoints ve /admin/overview beyanlari koddan SAPMISTI, duzeltildi; adi gecen uclara tam aciklama yazildi.
 - 2026-07-30 · P10 · 4509ca8 · Kuyruk kaliciik yarisi YENIDEN URETILDI: iki gercek urun hatasi (hayalet yazar + paylasilan .tmp) duzeltildi, 3 dedektor testi.
 - 2026-07-30 · P8 · d20206b · Arac Gecisleri + Otopark + Ihlaller ekranlari yazildi; ana ekranda ROTASIZ KART KALMADI; 51 ARB anahtari x 7 dil; 24 test.
