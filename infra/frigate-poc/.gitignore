@@ -1,0 +1,8 @@
+# Frigate PoC CALISMA VERISI — depoya girmez.
+#
+# Frigate konteyneri `config/` icine kendi durum dosyalarini (sqlite, jwt
+# secret, model onbellegi) ROOT sahipliginde yazar; `storage/` altina da
+# kayit/klip koyar. Yalniz ELLE yazdigimiz `config.yml` izlenir.
+config/*
+!config/config.yml
+storage/

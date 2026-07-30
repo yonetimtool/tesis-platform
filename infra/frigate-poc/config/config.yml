@@ -1,0 +1,60 @@
+# Frigate PoC yapilandirmasi (MASTER-PLAN P15).
+#
+# AMAC: olay akisini, restream URL bicimlerini ve kaynak tuketimini OLCMEK —
+# uretim ayari degildir.
+mqtt:
+  enabled: true
+  host: mqtt
+  port: 1883
+  topic_prefix: frigate
+
+# go2rtc: Frigate'in ICINDEKI restream motoru. Kameranin RTSP'sini ALIR ve
+# kendi uzerinden yeniden yayinlar. MOBIL ICIN KRITIK OLAN BUDUR: telefon
+# kameraya DOGRUDAN baglanmaz, buraya baglanir (bkz. P17).
+go2rtc:
+  streams:
+    kapi:
+      - rtsp://kaynak:8554/kapi
+
+cameras:
+  kapi:
+    enabled: true
+    ffmpeg:
+      # Kamera degil, go2rtc'nin RESTREAM'i tuketilir — kaynak TEK BAGLANTI
+      # acar (kamera baglanti limitleri gercek sahada sorun olur).
+      inputs:
+        - path: rtsp://127.0.0.1:8554/kapi
+          input_args: preset-rtsp-restream
+          roles: [detect, record]
+    detect:
+      enabled: true
+      width: 1280
+      height: 720
+      fps: 5
+    motion:
+      # PoC'ta hareket esigi DUSURULDU: sentetik test deseni gercek sahne
+      # kadar "gurultulu" degil.
+      threshold: 20
+      contour_area: 10
+    record:
+      enabled: true
+      continuous:
+        days: 0
+      motion:
+        days: 1
+    snapshots:
+      enabled: true
+      retain:
+        default: 1
+
+detectors:
+  cpu1:
+    type: cpu
+
+# Plaka okuma (LPR). Frigate'in kendi LPR'i `lpr` blogu ile acilir; PLAKA
+# okumak icin once ARAC tespiti gerekir, o da GERCEK goruntu ister.
+# PoC'ta acik birakilir ki yapilandirmanin gecerli oldugu dogrulansin.
+lpr:
+  enabled: true
+
+version: 0.17-0

@@ -452,13 +452,50 @@ YAN BULGU: ölçüm, P7'deki "orijinali gör" bağlantısının bir süs değil
 Kod değişikliği YOK (yalnız docs/) — kapı gerekmez.
 
 ### P15 — Frigate Phase 1: PoC
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: Frigate in dev docker (separate compose or profile; NOT in prod compose),
 sample RTSP/HLS input, LPR enabled; explore event flow (MQTT and/or API), restream
 URL shapes (go2rtc), snapshot access. Deliverable: findings doc + draft event schema
 for the source-agnostic ingest endpoint (plate, time, direction, camera, confidence,
 photo ref) + resource notes (CPU, model needs).
 Acceptance: docs/frigate-poc.md with reproducible setup + captured sample events.
+Notes (2026-07-30): `infra/frigate-poc/` — **prod compose'a DOKUNULMADI**, ayrı
+yığın (`docker compose -f infra/frigate-poc/docker-compose.yml up -d`). Üç
+servis: mediamtx+ffmpeg ile SENTETİK RTSP kaynağı (gerçek kamera gerekmez),
+mosquitto, Frigate **0.17.2**. Belge: `docs/frigate-poc.md`.
+ÖLÇÜLENLER (hepsi canlı koşumdan):
+- **go2rtc restream oynatılabilir** — `rtsp://frigate:8554/kapi` ffprobe ile
+  doğrulandı: h264 Constrained Baseline 1280×720 @10fps. P17'nin temel taşı.
+- **MQTT konu envanteri** 70 sn'lik `frigate/#` aboneliğiyle çıkarıldı:
+  `frigate/available`, `frigate/stats`, `frigate/model_state`,
+  `frigate/<kam>/status/detect` + 16 adet `<kam>/<anahtar>/state`.
+  YAN KAZANÇ: kamera çevrimdışı alarmı için ayrı yoklama yazmaya GEREK YOK.
+- **Olay yükü yakalandı** — `POST /api/events/kapi/car/create` ile tetiklendi;
+  `frigate/reviews` MQTT yükü ve `GET /api/events` gövdesi belgeye tam olarak
+  işlendi (alan alan).
+- **Kaynak tüketimi**: tek kamera 1280×720 @5fps tespit → frigate %17,1 CPU /
+  972 MiB; dedektör inference **~10 ms/kare**. `/dev/shm` uyarısı: Frigate'in
+  kendi hesabı `min_shm: 146 MB` derken compose'ta 128 MB verilmişti — tek
+  kamerada bile SINIRDA, çok kamerada kamera başına büyütülmeli (belgeye
+  yazıldı).
+MİMARİ BULGU (P18'i doğrudan etkiler): dedektör modelinin `attributes_map`'i
+`license_plate`'i **`car`/`motorcycle`'ın ÖZNİTELİĞİ** olarak tanımlıyor —
+yani **plaka okumak için önce ARAÇ tespit edilmeli**. Kamera yalnız plakaya
+zoom yapıyorsa LPR çalışmaz; bu doğrudan kamera-açısı kılavuzuna girer.
+OLAY ŞEMASI TASLAĞI (P16 girdisi) belgede: `kaynak, kaynak_olay_id, plaka,
+zaman, kamera, yon, guven, foto_ref, ham` + Frigate→şema eşleme tablosu.
+Üç kritik çıkarım: (1) Frigate aynı olayı `update`+`end` ile BİRDEN ÇOK KEZ
+yayınlar → `(tenant, kaynak, kaynak_olay_id)` tekilliği ZORUNLU;
+(2) `recognition_threshold` 0.9 + `match_distance: 1` → yanlış okuma BEKLENEN
+durumdur, eşik altı okumalar geçiş AÇMAMALI, onay kuyruğuna düşmeli;
+(3) `yon` alanını **Frigate VERMEZ** — kamera başına sabit yön (basit) ya da
+zone geçiş sırası (çift yönlü geçit) ile türetilir; P16'da (a) ile başlanması,
+şemanın (b)'yi taşıyacak biçimde bırakılması önerildi.
+DÜRÜST KAYIT — ÖLÇÜLEMEYEN: sentetik yayında araç YOK (`detection_fps: 0.0`),
+dolayısıyla **gerçek plaka okuma doğruluğu ÖLÇÜLMEDİ**. Olay boru hattı manuel
+olayla uçtan uca doğrulandı ama LPR doğruluğu saha görüntüsü ister → P18.
+Coral TPU da denenmedi (donanım yok); kazancı ölçüme değil mimariye dayanarak
+açıklandı. PoC yığını koşum sonunda `down` edildi (`down -v` KULLANILMADI).
 
 ### P16 — Frigate Phase 2: source-agnostic ANPR ingest (backend)
 Status: BEKLIYOR · Depends-on: P15
@@ -785,6 +822,7 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+- 2026-07-30 · P15 · 8d5bb2a · Frigate PoC ayri yiginda kosuldu: restream oynatilabilir dogrulandi, MQTT konu envanteri + olay yuku yakalandi, kaynak olculdu; ANPR ingest olay semasi taslagi yazildi.
 - 2026-07-30 · P14 · 395605c · Ceviri kalite kapisi: ar+ru anadil inceleme paketi (1.186 anahtar x 2) + LibreTranslate olcumu (48 ceviri) — TR kaynak icin YETERSIZ, uc secenekli saglayici karar notu (degisiklik YAPILMADI).
 - 2026-07-30 · P9 · e6d0941 · Sozlesme kontrolu METOT duzeyine cikarildi (201/201 ortusuyor); /me/checkpoints ve /admin/overview beyanlari koddan SAPMISTI, duzeltildi; adi gecen uclara tam aciklama yazildi.
 - 2026-07-30 · P10 · 4509ca8 · Kuyruk kaliciik yarisi YENIDEN URETILDI: iki gercek urun hatasi (hayalet yazar + paylasilan .tmp) duzeltildi, 3 dedektor testi.
