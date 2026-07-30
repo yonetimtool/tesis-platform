@@ -514,6 +514,23 @@ violations where applicable; low-confidence events land in an approval queue
 New schema via NEW revisions (rule 7).
 Acceptance: simulated Frigate events create/close vehicle passes correctly;
 confidence threshold configurable per tenant; full pytest; contract updated.
+HAZIRLIK NOTU (2026-07-30 — İŞ BAŞLAMADI, yalnız keşif): P15 sırasında
+şema tarafında bir **engel** görüldü, sonraki oturum bunu bilerek başlasın:
+`vehicle_pass.kaydeden_user_id` **NOT NULL** ve `app_user`'a **ON DELETE
+RESTRICT** FK ile bağlı. ANPR olayını bir İNSAN kaydetmediği için bu kolon
+olduğu gibi kullanılamaz. Üç seçenek: (a) kolonu **nullable** yapıp
+`vehicle_pass.kaynak` (manuel|anpr) enum'u eklemek — en dürüst modelleme,
+NEW revizyon ister ve mevcut sorguların null'a dayanıklı olduğu
+denetlenmelidir; (b) tenant başına bir **sistem kullanıcısı** yaratmak — şema
+değişmez ama sahte bir kullanıcı üretir ve RBAC/denetim kayıtlarını kirletir;
+(c) ANPR geçişlerini ayrı tabloda tutup vehicle_pass'e hiç dokunmamak —
+otopark doluluğu ikiye bölünür, "sayım ile kayıt asla ayrışamaz" ilkesini
+BOZAR. **Öneri: (a).**
+Ayrıca gereken yeni tablolar: `anpr_api_key` (tenant başına anahtar HASH'i,
+ad, aktif, son_kullanim) ve `anpr_event` (ham olay + `(tenant, kaynak,
+kaynak_olay_id)` TEKİL — P15'te ölçüldü: Frigate aynı olayı `update` ve `end`
+ile iki kez yayınlar, idempotency zorunlu). Olay şeması ve Frigate eşleme
+tablosu `docs/frigate-poc.md` §6'da hazır.
 
 ### P17 — Frigate Phase 3: mobile
 Status: BEKLIYOR · Depends-on: P16
