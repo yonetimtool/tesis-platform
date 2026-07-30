@@ -114,8 +114,8 @@ taraması `activity.py`nin bilinçli olarak kullanmadığını gösteriyor
 * ~~**Eşzamanlılık / yarış.**~~ **KAPANDI (tur 64)** — rezervasyonda 409 yarışı
   ölçüldü ve bir tutarsızlık bulundu (aşağıda). Demirbaş 409'u tur 63'te
   ölçülmüştü.
-* **Çevrimdışı kuyruk davranışı.** `scan_outbox` testleri var; ama uzun
-  çevrimdışı süre + yeniden bağlanma + çakışma senaryosu sürülmedi.
+* ~~**Çevrimdışı kuyruk davranışı.**~~ **KAPANDI (tur 66)** — uzun kesinti,
+  yeniden bağlanma, çakışma ve geri çekilme ölçüldü (aşağıda).
 * **Bellek/kare bütçesi gerçek cihazda.** Tur 61 çözme sınırını **kodda**
   kilitledi; gerçek bir 4000 px fotoğrafla bellek ölçümü yapılmadı (widget
   testinde taklit görsel minik PNG).
@@ -332,3 +332,40 @@ belirliyor).
 kalıyor ve varsayılan 800×600 görüntüde `ListView` onu **hiç kurmuyor** — tembel
 liste; görüntü büyütülmeden ölçüm boş koşuyordu. (2) `TabBarView`in bir çocuğu
 yalnız **sekmeye dokununca** kuruluyor; sekmeyi programatik seçmek yetmiyor.
+
+---
+
+## Tur 66'da kapatılanlar (E — çevrimdışı kuyruk)
+
+Mevcut `scan_outbox` testleri tek kayıt / tek hata üzerineydi. Yeni dosya
+(`test/cevrimdisi_kuyruk_senaryo_test.dart`, 12 test) senaryoyu ölçüyor:
+
+* **Pil/veri koruması:** tek pump turunda ilk ağ hatasından sonra sıradakiler
+  denenmiyor (istek sayacıyla).
+* **Yeniden bağlanma:** kuyruk FIFO sırayla tamamen boşalıyor; yeni oturum
+  diskteki kuyruğu devralıyor.
+* **Çakışma:** kesinti sırasında sunucu kaydı zaten almışsa (200 duplicate)
+  kayıt `gönderildi` + `duplicate` oluyor — kullanıcıya hata değil "gönderildi".
+* **Karışık kuyruk:** kalıcı hata (404) turu **kesmiyor**, geçici hata
+  **kesiyor**.
+* **401 kalıcı değil:** oturum dönünce gönderiliyor.
+* **Yeniden girme:** pump sürerken gelen ikinci pump kaybolmuyor.
+
+**İki şeyi burada öğrendim, ikisi de ölçümü yanlış yapmama neden olmuştu:**
+
+1. **Her `enqueue` kendi pump'ını tetikliyor.** İlk sürümde "üç kayıt = bir
+   deneme" bekliyordum ve test üç deneme gördü. Doğru okuma: yeni bir okutma
+   denemeye **değer**; ölçülecek değişmez "tek tur içinde tek deneme". Test
+   buna göre yazıldı.
+2. **`await syncNow()` turun koştuğunu garanti etmiyor.** Önceki tur hâlâ
+   `_pumping` ise çağrı erken dönüyor ve tur sonradan koşuyor (`_pumpAgain`).
+   Beklemeyi duruma göre yapmak gerekiyor.
+
+**Ölçülemeyen bir şeyi de kayda geçirdim:** üstel geri çekilmenin
+**zamanlayıcısını** sahte saatle ilerletmeyi denedim — test **askıda kaldı**.
+Sebep: kuyruk her durum geçişinde **gerçek disk yazması** yapıyor ve
+`testWidgets`in sahte zamanı bununla kilitleniyor. Bu ortamda "zamanlayıcı 15
+saniye sonra ateşliyor mu" ölçülemez. Bu yüzden hesap saf bir fonksiyona
+çıkarıldı (`geriCekilmeSuresi`, davranış değişmedi) ve invariant orada
+kilitlendi: 15s → 30s → 60s → 120s, **10 dakikada tavan**, monoton, ve
+0/negatif sayaçta tabana düşüyor (çökme yok).

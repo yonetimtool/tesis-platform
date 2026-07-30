@@ -74,8 +74,10 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
 
   /// Backoff: 15s * 2^(ardisik hata - 1), tavan 10 dk. Bag geldiginde /
   /// manuel senkronda sayac sifirlanir → beklemeden dener.
-  static const _baseBackoff = Duration(seconds: 15);
-  static const _maxBackoff = Duration(minutes: 10);
+  /// Ilk geri cekilme suresi (bkz. [geriCekilmeSuresi]).
+  static const baseBackoff = Duration(seconds: 15);
+  /// Geri cekilme TAVANI.
+  static const maxBackoff = Duration(minutes: 10);
 
   @override
   ScanOutboxState build() {
@@ -240,13 +242,8 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
   }
 
   void _scheduleRetry() {
-    final exp = math.min(_consecutiveFailures - 1, 10);
-    final delayMs = math.min(
-      _baseBackoff.inMilliseconds * math.pow(2, exp).toInt(),
-      _maxBackoff.inMilliseconds,
-    );
     _retryTimer?.cancel();
-    _retryTimer = Timer(Duration(milliseconds: delayMs), () {
+    _retryTimer = Timer(geriCekilmeSuresi(_consecutiveFailures), () {
       unawaited(pump());
     });
   }
@@ -315,3 +312,22 @@ final outboxAutoSyncProvider = Provider<void>((ref) {
     lifecycle.dispose();
   });
 });
+
+/// USTEL GERI CEKILME suresi — ard arda [ardArdaHata] hatadan sonra ne kadar
+/// beklenecek.
+///
+/// TUR 66: bu hesap `_scheduleRetry` icinde GOMULUYDU ve OLCULEMIYORDU.
+/// Zamanlayiciyi sahte saatle ilerletmeyi denedim: `testWidgets`in sahte
+/// zamani `_persist()`in GERCEK disk yazmasiyla kilitleniyor (test asildi).
+/// Yani tek olculebilir yol hesabi SAF FONKSIYONA cikarmak. Davranis
+/// degismedi; yalniz sinanabilir hale geldi.
+///
+/// 15s → 30s → 60s → ... → 10 dakikada tavanlanir.
+Duration geriCekilmeSuresi(int ardArdaHata) {
+  final exp = math.min(math.max(ardArdaHata - 1, 0), 10);
+  final ms = math.min(
+    ScanOutbox.baseBackoff.inMilliseconds * math.pow(2, exp).toInt(),
+    ScanOutbox.maxBackoff.inMilliseconds,
+  );
+  return Duration(milliseconds: ms);
+}
