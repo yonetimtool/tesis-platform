@@ -290,11 +290,37 @@ KAPILAR: `flutter analyze` temiz; `flutter test` **1405 geçti / 3 atlandı /
 belgeliydi).
 
 ### P9 — Contract backfill: undocumented live endpoints
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: Document in openapi.yaml exactly as implemented (audit code, no behavior
 change): /audit, /support*, /transparency*, /admin/overview, /me, /me/checkpoints,
 avatar PATCHes, PUT /shifts/{id}/assignments.
 Acceptance: contract↔live machine check passes for these paths; no code change.
+Notes (2026-07-30): Yolların BEYANI tur 68'de kapanmıştı (`test_sozlesme_sapmasi.py`
++ 14 belgesiz yolun eklenmesi). Bu turda üç şey yapıldı:
+1. **ÖLÇÜM DERİNLEŞTİRİLDİ.** Mevcut makine kontrolü yalnız YOL karşılaştırıyordu;
+   aynı yol üzerinde uygulamanın fazladan bir METODU olabilir (belgede `GET
+   /x/{id}` varken kodda `DELETE /x/{id}` de bulunması) ve yol-düzeyi ölçüm
+   bunu GÖREMEZ — kapsam ölçüyor görünüp ölçmez. Test artık **(METOT, yol)**
+   çiftlerini karşılaştırıyor + bir dedektör sınaması içeriyor (ayrıştırıcı
+   gerçekten iş görüyor mu). Sonuç: **201 operasyonun 201'i iki yönde de
+   örtüşüyor**, sapma 0.
+2. **İKİ SAPMA DÜZELTİLDİ** (kod değil, BELGE yanlıştı):
+   - `/me/checkpoints` özeti "Kullanıcıya atanmış kontrol noktaları" diyordu;
+     kod **tenant'ın TÜM kontrol noktalarını** döndürüyor (ad ASC, RLS izole).
+     Faz-0 doğrulama ucu; plan bazlı liste `GET /patrol-plans/{id}/checkpoints`.
+   - `/admin/overview` özeti "tesis/kullanıcı sayıları" diyordu; kod sabit
+     `{"status":"ok","role":"admin"}` döndürüyor — RBAC yoklama ucu, sayaç YOK.
+   İkisi de artık koddaki gerçek davranışı anlatıyor ve "DİKKAT" ile işaretli.
+3. **AÇIKLAMALAR YAZILDI** (P9'un adıyla saydığı uçlar): `/audit` (SECURITY
+   DEFINER ile çapraz-tenant, yalnız admin, append-only, 7 sorgu parametresi),
+   `/support` ×4 (site↔platform kanalı, çapraz-tenant liste yalnız admin),
+   `/transparency` ×3 (anonim agregat, yayın kapısı, yayınlanmamış ay 404 —
+   403 değil: ayın VARLIĞI da sızmasın), `/me`, `/me/avatar` +
+   `/users/{id}/avatar` (rol kümesi, tenant namespace IDOR engeli, eski obje
+   silinir, audit), `/shifts/{id}/assignments` (PUT = tam liste, sıralı
+   tekilleştirme, yalnız saha rolleri 422, yabancı tenant 404, kısmi yazma yok).
+KAPILAR: tam `pytest` → **792 geçti / 0 düştü** (yeni 3 test dahil).
+Kod değişmedi — yalnız sözleşme + test.
 
 ### P10 — scan_outbox_test flake fix
 Status: BITTI · Depends-on: —
@@ -730,6 +756,7 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+- 2026-07-30 · P9 · af75fba · Sozlesme kontrolu METOT duzeyine cikarildi (201/201 ortusuyor); /me/checkpoints ve /admin/overview beyanlari koddan SAPMISTI, duzeltildi; adi gecen uclara tam aciklama yazildi.
 - 2026-07-30 · P10 · 4509ca8 · Kuyruk kaliciik yarisi YENIDEN URETILDI: iki gercek urun hatasi (hayalet yazar + paylasilan .tmp) duzeltildi, 3 dedektor testi.
 - 2026-07-30 · P8 · d20206b · Arac Gecisleri + Otopark + Ihlaller ekranlari yazildi; ana ekranda ROTASIZ KART KALMADI; 51 ARB anahtari x 7 dil; 24 test.
 - 2026-07-30 · P7 · 10fbd12 · Icerik cevirisi MOBILE baglandi: IcerikCeviri modeli + CeviriNotu/CeviriRozeti + duyuru/kural/etkinlik ekranlari; 8 ARB anahtari x 7 dil; 23 test.
