@@ -368,6 +368,14 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P10 · Çevrimdışı okutma kuyruğu (dayanıklılık).** Telefonu **uçak
+  moduna** al → 2–3 NFC noktası okut (kuyrukta bekliyor görünmeli) →
+  **uygulamayı tamamen kapat** (arka plandan da at) → uçak modunu kapat →
+  uygulamayı yeniden aç. Beklenen: bekleyen okutmaların **HEPSİ** ve **okutma
+  sırasıyla** gönderilmeli, hiçbiri kaybolmamalı. Aynı denemeyi bir de
+  **çıkış yapıp tekrar giriş** yaparak tekrarla (kuyruk oturumdan bağımsız
+  yaşamalı). Bu, sessiz kayıt kaybı veren bir yarışın düzeltmesidir — kanıt
+  ancak cihazda görülür.
 - [ ] **P8 · Üç yeni ekran.** (a) **Güvenlik** ile gir → ana ekranda "Araç
   Plaka" kartına bas: liste açılmalı (eskiden "Bu bölüm yakında" diyordu).
   Süzgeçleri dene (Tümü/İçeride/Çıkmış), plaka kutusuna bir plakanın ilk
