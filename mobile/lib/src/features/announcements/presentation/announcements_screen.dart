@@ -6,7 +6,9 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/icerik_ceviri.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/ceviri_notu.dart';
 // imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev foto akisiyla
 // ayni saglayici (testlerde tek noktadan override edilir).
 import '../../tasks/presentation/task_complete_controller.dart'
@@ -121,7 +123,7 @@ class _Body extends ConsumerWidget {
   }
 }
 
-class _AnnouncementCard extends ConsumerWidget {
+class _AnnouncementCard extends ConsumerStatefulWidget {
   const _AnnouncementCard({
     required this.announcement,
     required this.canManage,
@@ -133,9 +135,32 @@ class _AnnouncementCard extends ConsumerWidget {
   final void Function(Announcement) onEdit;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final a = announcement;
+  ConsumerState<_AnnouncementCard> createState() => _AnnouncementCardState();
+}
+
+class _AnnouncementCardState extends ConsumerState<_AnnouncementCard> {
+  /// Kullanici "orijinali gör" dedi mi? Kart BASINA tutulur: bir duyurunun
+  /// orijinaline bakmak digerlerini etkilemez.
+  bool _orijinal = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final a = widget.announcement;
+    final canManage = widget.canManage;
+    final onEdit = widget.onEdit;
     final l10n = context.l10n;
+    final baslik = ceviriMetni(
+      a.ceviri,
+      'baslik',
+      a.baslik,
+      orijinalGoster: _orijinal,
+    );
+    final govde = ceviriMetni(
+      a.ceviri,
+      'govde',
+      a.govde,
+      orijinalGoster: _orijinal,
+    );
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -147,7 +172,7 @@ class _AnnouncementCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    a.baslik,
+                    baslik,
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -172,7 +197,14 @@ class _AnnouncementCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Text(a.govde),
+            Text(govde),
+            // Ceviri notu METNIN hemen altinda: rozet gorselin ya da meta
+            // satirinin arasina girerse hangi metne ait oldugu belirsizlesir.
+            CeviriNotu(
+              ceviri: a.ceviri,
+              orijinalGoster: _orijinal,
+              onDegistir: (v) => setState(() => _orijinal = v),
+            ),
             if (a.fotoUrl != null) ...[
               const SizedBox(height: 8),
               _AnnouncementPhoto(url: a.fotoUrl!),

@@ -6856,6 +6856,54 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Bu dairede aktif sakin yok'**
   String get ziyaretciDaireSakinYok;
+
+  /// No description provided for @ceviriOtomatik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu içerik otomatik çevrilmiştir'**
+  String get ceviriOtomatik;
+
+  /// No description provided for @ceviriOtomatikKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Otomatik çeviri'**
+  String get ceviriOtomatikKisa;
+
+  /// No description provided for @ceviriOrijinaliGor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Orijinali gör'**
+  String get ceviriOrijinaliGor;
+
+  /// No description provided for @ceviriCeviriyiGor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çeviriyi gör'**
+  String get ceviriCeviriyiGor;
+
+  /// No description provided for @ceviriHazirlaniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çeviri hazırlanıyor — orijinal gösteriliyor'**
+  String get ceviriHazirlaniyor;
+
+  /// No description provided for @ceviriHazirlaniyorKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çeviri hazırlanıyor'**
+  String get ceviriHazirlaniyorKisa;
+
+  /// No description provided for @ceviriYapilamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çeviri yapılamadı — orijinal gösteriliyor'**
+  String get ceviriYapilamadi;
+
+  /// No description provided for @ceviriYapilamadiKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çeviri yapılamadı'**
+  String get ceviriYapilamadiKisa;
 }
 
 class _AppLocalizationsDelegate

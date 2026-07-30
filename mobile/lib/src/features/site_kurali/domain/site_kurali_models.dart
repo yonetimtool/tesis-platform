@@ -7,6 +7,8 @@
 /// kurallar duyuru degil basvuru icerigi.
 library;
 
+import '../../../core/i18n/icerik_ceviri.dart';
+
 class SiteKurali {
   const SiteKurali({
     required this.id,
@@ -18,6 +20,7 @@ class SiteKurali {
     this.fotoKey,
     this.fotoUrl,
     this.olusturanAd,
+    this.ceviri,
   });
 
   final String id;
@@ -37,6 +40,9 @@ class SiteKurali {
   final String? olusturanAd;
   final DateTime createdAt;
 
+  /// Ceviri ustverisi (`CeviriAlanlari`); sunucu gondermezse null.
+  final IcerikCeviri? ceviri;
+
   factory SiteKurali.fromJson(Map<String, dynamic> json) => SiteKurali(
     id: json['id'] as String? ?? '',
     baslik: json['baslik'] as String? ?? '',
@@ -49,6 +55,7 @@ class SiteKurali {
     createdAt:
         DateTime.tryParse(json['created_at'] as String? ?? '') ??
         DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    ceviri: IcerikCeviri.fromJson(json),
   );
 
   /// Baslik aramasi es kurali (ekranin ANLIK suzgeci — sunucudaki ILIKE ile

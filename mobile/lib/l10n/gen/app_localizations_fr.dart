@@ -4034,4 +4034,30 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ziyaretciDaireSakinYok => 'Aucun résident actif dans ce logement';
+
+  @override
+  String get ceviriOtomatik => 'Ce contenu a été traduit automatiquement';
+
+  @override
+  String get ceviriOtomatikKisa => 'Traduction automatique';
+
+  @override
+  String get ceviriOrijinaliGor => 'Voir l’original';
+
+  @override
+  String get ceviriCeviriyiGor => 'Voir la traduction';
+
+  @override
+  String get ceviriHazirlaniyor =>
+      'Traduction en cours — l’original est affiché';
+
+  @override
+  String get ceviriHazirlaniyorKisa => 'Traduction en cours';
+
+  @override
+  String get ceviriYapilamadi =>
+      'Échec de la traduction — l’original est affiché';
+
+  @override
+  String get ceviriYapilamadiKisa => 'Échec de la traduction';
 }

@@ -193,13 +193,52 @@ bağımsız gece-yarısı kırılganlığıydı (`test_me_patrol.py`, ayrı comm
 düzeltildi + dedektör testi eklendi); düzeltme sonrası dosya 11/11 yeşil.
 
 ### P7 — Content-translation mobile wiring
-Status: BEKLIYOR · Depends-on: P6
+Status: BITTI · Depends-on: P6
 Scope: Mobile consumes the write-time-translated broadcast content (announcements,
 site rules, events): sends Accept-Language; shows translated title/body; UI states:
 "otomatik çevrilmiştir · orijinali gör" (toggle to original) and "çeviri hazırlanıyor"
 (durum=bekliyor → original + note). Manual-override/hazir/hata states handled.
 Acceptance: with app language ru/ar, seeded content renders translated with the
 machine-translation affordances; original always reachable; quality gates.
+Notes (2026-07-30): GERÇEK İŞ — sunucu tarafı hazırdı ama mobil ustveriyi HİÇ
+okumuyordu: Rusça arayüzde makine çevirisi bir duyuruyu okuyan kullanıcı bunun
+çeviri olduğunu bilmiyor, orijinaline de ULAŞAMIYORDU.
+Yeni dosyalar:
+- `core/i18n/icerik_ceviri.dart` — `CeviriAlanlari` aynası (`orijinal_dil`,
+  `gosterilen_dil`, `ceviri_durumu`, `cevirildi_mi`, `orijinal`). Savunmalar:
+  ustveri HİÇ gelmezse `null` (eski sunucu davranışı bozulmaz), bilinmeyen durum
+  `hazir` sayılır (yanlış "hazırlanıyor" uyarısı göstermek metni olduğu gibi
+  göstermekten kötüdür), bozuk `orijinal` (liste/sayı) çökertmez, orijinalde o
+  alan yoksa servis edilene düşülür (boş ekran yok).
+- `core/ui/ceviri_notu.dart` — `CeviriNotu` (not + geçiş) ve `CeviriRozeti`
+  (geçişsiz kısa rozet).
+Bağlanan üç entity: Announcement, SiteKurali, Etkinlik (+ ekranları).
+TASARIM KARARLARI (gerekçeli):
+1. **Nerede geçiş var:** TAM metnin göründüğü yerde (duyuru kartı — duyurunun
+   ayrı detayı yok; kural/etkinlik DETAYI) not + "orijinali gör"/"çeviriyi gör";
+   KIRPILMIŞ önizlemede (kural/etkinlik liste kartı) yalnız rozet — üç satırlık
+   kırık metinde geçiş gürültüdür ve kullanıcı zaten detaya girecektir.
+2. **Elle düzeltilmiş çeviride rozet YOK** — sunucu `cevirildi_mi=false` döner;
+   yöneticinin düzelttiği metin makine çıktısı değildir.
+3. **Kaynak dili (tr) okuyan kullanıcıda hiçbir not yok** — `notVar` üç halin de
+   yanlış olduğu durumda false.
+4. **Geçiş `TextButton`** (çıplak `InkWell` değil): 48 dp dokunma hedefi + kendi
+   `Focus`u (tur 33 dersi). Renkler `okunurVurgu`dan geçer (tur 57 dersi).
+5. Alt sayfa detayları FONKSİYON olduğu için geçiş durumu `StatefulBuilder` ile
+   yerel tutulur; ekranın durumuna dokunulmaz.
+CANLI KANIT (dev API, `Accept-Language: ru`): `/announcements` →
+`cevirildi_mi:true, gosterilen_dil:ru, orijinal:{baslik:"Asansor bakimi",…}`;
+`/site-rules` → aynı; `/events` → `ceviri_durumu:"bekliyor", cevirildi_mi:false`
+(yani "çeviri hazırlanıyor" hâli seed veriyle GERÇEKTEN oluşuyor). `tr` ile üçü
+de `cevirildi_mi:false` → not gösterilmez.
+i18n: 8 yeni ARB anahtarı × 7 dil (1.218 → 1.226 tr anahtarı). §15 ölçümü
+değişmedi: **8 string / 5 dosya**, hepsi kayıtlı istisna.
+TESTLER: `test/icerik_ceviri_test.dart` — 23 test (model çözümleme + savunmalar,
+metin seçimi, üç entity bağlaması, bileşenin üç hâli, beş eksen sürüşü ve EKRAN
+testi: duyuru kartında "Orijinali gör" gerçekten orijinali çizer, geri de döner).
+KAPILAR: `flutter analyze` temiz; `flutter test` **1380 geçti / 3 atlandı /
+1 düştü** (düşen = P10'un bilinen kalıcılık yarışı, bu değişiklikten bağımsız);
+`flutter build apk --debug` ✓. Sözleşme değişmedi (salt okuma).
 
 ### P8 — Missing list/detail screens: Araç Plaka, İhlaller, Otopark
 Status: BEKLIYOR · Depends-on: —
@@ -233,6 +272,16 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P7 · Otomatik çeviri notu.** Uygulama dilini **Rusça** (veya Arapça) yap.
+  Duyurular: kart metni Rusça gelmeli ve altında "Bu içerik otomatik
+  çevrilmiştir · **Orijinali gör**" satırı olmalı; bas → Türkçe orijinal
+  gelmeli, etiket "Çeviriyi gör" olmalı, tekrar bas → Rusçaya dönmeli.
+  Site Kuralları: LİSTEDE yalnız küçük "Otomatik çeviri" rozeti olmalı (geçiş
+  yok), karta bas → detayda not + geçiş çalışmalı. Etkinlikler: aynı; ayrıca
+  seed'deki etkinlikte "Çeviri hazırlanıyor — orijinal gösteriliyor" satırını
+  görmelisin (geçiş butonu OLMAMALI, metin zaten orijinal). Dili **Türkçe**ye
+  al: üç ekranda da hiçbir çeviri notu/rozeti GÖRÜNMEMELİ. Arapçada (RTL) not
+  satırının taşmadığını ve sağa hizalandığını da kontrol et.
 - [ ] **P3 · Geçici giriş kodu diyaloğu.** Yönetici olarak Sakinler (veya
   Personel) ekranından yeni kişi ekle → geçici kod diyaloğu açılır. Kontrol:
   kod kutusu eskisinden BELİRGİN ŞEKİLDE daha yüksek (48 dp) ve yazı kutunun
@@ -596,7 +645,8 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
-- 2026-07-30 · P6 · (bu commit) · Sunucu yerellestirmesi (Accept-Language) ZATEN BITMISTI (tur 14/15/16); sinir isaretleri + sozlesme + katalog dogrulandi.
+- 2026-07-30 · P7 · (bu commit) · Icerik cevirisi MOBILE baglandi: IcerikCeviri modeli + CeviriNotu/CeviriRozeti + duyuru/kural/etkinlik ekranlari; 8 ARB anahtari x 7 dil; 23 test.
+- 2026-07-30 · P6 · 6a9f846 · Sunucu yerellestirmesi (Accept-Language) ZATEN BITMISTI (tur 14/15/16); sinir isaretleri + sozlesme + katalog dogrulandi.
 - 2026-07-30 · P5 · fde3a4f · i18n tur 5 ve sonrasi ZATEN BITMISTI; §15 = 8 (hepsi kayitli istisna), nihai istisna listesi plana yazildi.
 - 2026-07-30 · P4 · f9837cf · i18n tur 4 (building_map + complaints) ZATEN BITMISTI; olcum yeniden kosuldu: §15 = 8 (hepsi kayitli istisna), iki modulun katkisi 0.
 - 2026-07-30 · P3 · 10015b2 · Kapsama serisi KAPANDI: temp_code_dialog 0/25 → 25/25 (dokunma hedefi bulgusu + modal perde dedektor duzeltmesi), yonetici_iletisim_models 0/12 → 12/12, kapanis ozeti yazildi.

@@ -4163,4 +4163,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ziyaretciDaireSakinYok => 'لا يوجد ساكن نشط في هذه الوحدة';
+
+  @override
+  String get ceviriOtomatik => 'تمت ترجمة هذا المحتوى تلقائيًا';
+
+  @override
+  String get ceviriOtomatikKisa => 'ترجمة تلقائية';
+
+  @override
+  String get ceviriOrijinaliGor => 'عرض النص الأصلي';
+
+  @override
+  String get ceviriCeviriyiGor => 'عرض الترجمة';
+
+  @override
+  String get ceviriHazirlaniyor => 'جارٍ إعداد الترجمة — يتم عرض النص الأصلي';
+
+  @override
+  String get ceviriHazirlaniyorKisa => 'جارٍ الترجمة';
+
+  @override
+  String get ceviriYapilamadi => 'تعذّرت الترجمة — يتم عرض النص الأصلي';
+
+  @override
+  String get ceviriYapilamadiKisa => 'تعذّرت الترجمة';
 }

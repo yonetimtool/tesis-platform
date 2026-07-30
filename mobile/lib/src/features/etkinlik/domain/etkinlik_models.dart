@@ -9,6 +9,8 @@
 /// sayi + kullanicinin KENDI beyani (benimDurumum).
 library;
 
+import '../../../core/i18n/icerik_ceviri.dart';
+
 /// `katilim_durum` enum'unun istemci aynasi (RSVP beyani).
 ///
 /// KIMLIK / METIN AYRIMI (README §15): enum GORUNEN METIN TASIMAZ — etiket
@@ -47,6 +49,7 @@ class Etkinlik {
     this.fotoUrl,
     this.olusturanAd,
     this.benimDurumum,
+    this.ceviri,
   });
 
   final String id;
@@ -79,6 +82,9 @@ class Etkinlik {
 
   final DateTime createdAt;
 
+  /// Ceviri ustverisi (`CeviriAlanlari`); sunucu gondermezse null.
+  final IcerikCeviri? ceviri;
+
   /// Etkinligin BITTIGI an — bitis verilmemisse baslangic (sunucudaki
   /// COALESCE(bitis_zamani, tarih) ile ayni kural).
   DateTime get bitis => bitisZamani ?? tarih;
@@ -109,6 +115,7 @@ class Etkinlik {
     createdAt:
         DateTime.tryParse(json['created_at'] as String? ?? '') ??
         DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    ceviri: IcerikCeviri.fromJson(json),
   );
 }
 

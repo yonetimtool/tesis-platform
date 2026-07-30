@@ -6,7 +6,9 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/i18n/icerik_ceviri.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/ceviri_notu.dart';
 // imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev/duyuru/talep/
 // kargo foto akisiyla ayni saglayici (testlerde tek noktadan override).
 import '../../tasks/presentation/task_complete_controller.dart'
@@ -189,6 +191,9 @@ class _KuralCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(k.icerik, maxLines: 3, overflow: TextOverflow.ellipsis),
+              // Kirpilmis onizlemede yalniz ROZET: "orijinali gör" gecisi uc
+              // satirlik kirik metinde gurultu olurdu, kullanici detaya girer.
+              CeviriRozeti(ceviri: k.ceviri),
             ],
           ),
         ),
@@ -208,99 +213,125 @@ void _showDetail(
     isScrollControlled: true,
     builder: (sheetContext) {
       final l10n = sheetContext.l10n;
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.gavel_outlined),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        k.baslik,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(k.icerik),
-                if (k.fotoUrl != null) ...[
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      k.fotoUrl!,
-                      // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
-                      semanticLabel: context.l10n.ortakFotograf,
-                      height: 180,
-                      width: double.infinity,
-                      cacheHeight: cozmeSiniri(context, 180),
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, progress) =>
-                          progress == null
-                          ? child
-                          : const SizedBox(
-                              height: 180,
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                      errorBuilder: (_, _, _) => Container(
-                        height: 48,
-                        // YON-DUYARLI: Arapca'da saga hizalanir.
-                        alignment: AlignmentDirectional.centerStart,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerHighest,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.broken_image_outlined, size: 20),
-                            const SizedBox(width: 8),
-                            // Dar ekranda (320 dp) satira sigmiyor — sar.
-                            Expanded(child: Text(l10n.talepGorselYuklenemedi)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-                if (canManage) ...[
-                  const Divider(height: 24),
+      // Alt sayfa bir FONKSIYONDUR; "orijinali gör" gecisi durum tasidigi
+      // icin yerel bir kurucuyla sarilir (ekranin durumuna dokunmaz).
+      var orijinal = false;
+      return StatefulBuilder(
+        builder: (ctx, setLocal) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Row(
                     children: [
+                      const Icon(Icons.gavel_outlined),
+                      const SizedBox(width: 8),
                       Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.edit_outlined),
-                          label: Text(l10n.ortakDuzenle),
-                          onPressed: () async {
-                            Navigator.of(sheetContext).pop();
-                            await showModalBottomSheet<bool>(
-                              context: context,
-                              isScrollControlled: true,
-                              builder: (_) => _KuralForm(mevcut: k),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _DeleteButton(
-                          kural: k,
-                          onDeleted: () => Navigator.of(sheetContext).pop(),
+                        child: Text(
+                          ceviriMetni(
+                            k.ceviri,
+                            'baslik',
+                            k.baslik,
+                            orijinalGoster: orijinal,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  Text(
+                    ceviriMetni(
+                      k.ceviri,
+                      'icerik',
+                      k.icerik,
+                      orijinalGoster: orijinal,
+                    ),
+                  ),
+                  CeviriNotu(
+                    ceviri: k.ceviri,
+                    orijinalGoster: orijinal,
+                    onDegistir: (v) => setLocal(() => orijinal = v),
+                  ),
+                  if (k.fotoUrl != null) ...[
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        k.fotoUrl!,
+                        // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+                        semanticLabel: context.l10n.ortakFotograf,
+                        height: 180,
+                        width: double.infinity,
+                        cacheHeight: cozmeSiniri(context, 180),
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, progress) =>
+                            progress == null
+                            ? child
+                            : const SizedBox(
+                                height: 180,
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                        errorBuilder: (_, _, _) => Container(
+                          height: 48,
+                          // YON-DUYARLI: Arapca'da saga hizalanir.
+                          alignment: AlignmentDirectional.centerStart,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.broken_image_outlined, size: 20),
+                              const SizedBox(width: 8),
+                              // Dar ekranda (320 dp) satira sigmiyor — sar.
+                              Expanded(
+                                child: Text(l10n.talepGorselYuklenemedi),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (canManage) ...[
+                    const Divider(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.edit_outlined),
+                            label: Text(l10n.ortakDuzenle),
+                            onPressed: () async {
+                              Navigator.of(sheetContext).pop();
+                              await showModalBottomSheet<bool>(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (_) => _KuralForm(mevcut: k),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _DeleteButton(
+                            kural: k,
+                            onDeleted: () => Navigator.of(sheetContext).pop(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

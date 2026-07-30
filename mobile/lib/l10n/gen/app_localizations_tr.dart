@@ -3888,4 +3888,29 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ziyaretciDaireSakinYok => 'Bu dairede aktif sakin yok';
+
+  @override
+  String get ceviriOtomatik => 'Bu içerik otomatik çevrilmiştir';
+
+  @override
+  String get ceviriOtomatikKisa => 'Otomatik çeviri';
+
+  @override
+  String get ceviriOrijinaliGor => 'Orijinali gör';
+
+  @override
+  String get ceviriCeviriyiGor => 'Çeviriyi gör';
+
+  @override
+  String get ceviriHazirlaniyor =>
+      'Çeviri hazırlanıyor — orijinal gösteriliyor';
+
+  @override
+  String get ceviriHazirlaniyorKisa => 'Çeviri hazırlanıyor';
+
+  @override
+  String get ceviriYapilamadi => 'Çeviri yapılamadı — orijinal gösteriliyor';
+
+  @override
+  String get ceviriYapilamadiKisa => 'Çeviri yapılamadı';
 }

@@ -1172,5 +1172,13 @@
   "ortakFotografiBuyut": "Foto vergrößern",
   "ortakGoster": "Anzeigen",
   "talepRedBaslik": "Anfrage ablehnen",
-  "ziyaretciDaireSakinYok": "Kein aktiver Bewohner in dieser Einheit"
+  "ziyaretciDaireSakinYok": "Kein aktiver Bewohner in dieser Einheit",
+  "ceviriOtomatik": "Dieser Inhalt wurde automatisch übersetzt",
+  "ceviriOtomatikKisa": "Automatisch übersetzt",
+  "ceviriOrijinaliGor": "Original anzeigen",
+  "ceviriCeviriyiGor": "Übersetzung anzeigen",
+  "ceviriHazirlaniyor": "Übersetzung wird erstellt — Original wird angezeigt",
+  "ceviriHazirlaniyorKisa": "Wird übersetzt",
+  "ceviriYapilamadi": "Übersetzung fehlgeschlagen — Original wird angezeigt",
+  "ceviriYapilamadiKisa": "Übersetzung fehlgeschlagen"
 }

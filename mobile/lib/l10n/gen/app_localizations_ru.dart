@@ -4143,4 +4143,28 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ziyaretciDaireSakinYok => 'В этой квартире нет активных жильцов';
+
+  @override
+  String get ceviriOtomatik => 'Этот текст переведён автоматически';
+
+  @override
+  String get ceviriOtomatikKisa => 'Автоперевод';
+
+  @override
+  String get ceviriOrijinaliGor => 'Показать оригинал';
+
+  @override
+  String get ceviriCeviriyiGor => 'Показать перевод';
+
+  @override
+  String get ceviriHazirlaniyor => 'Перевод готовится — показан оригинал';
+
+  @override
+  String get ceviriHazirlaniyorKisa => 'Перевод готовится';
+
+  @override
+  String get ceviriYapilamadi => 'Не удалось перевести — показан оригинал';
+
+  @override
+  String get ceviriYapilamadiKisa => 'Ошибка перевода';
 }

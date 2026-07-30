@@ -5,6 +5,8 @@
 /// admin + yonetici (yonetici panele girmedigi icin mobilden yonetir).
 library;
 
+import '../../../core/i18n/icerik_ceviri.dart';
+
 class Announcement {
   const Announcement({
     required this.id,
@@ -16,6 +18,7 @@ class Announcement {
     this.olusturanAd,
     this.fotoKey,
     this.fotoUrl,
+    this.ceviri,
   });
 
   final String id;
@@ -32,6 +35,10 @@ class Announcement {
 
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  /// Ceviri ustverisi (`CeviriAlanlari`). Sunucu gondermezse null — ekran
+  /// hicbir not gostermez.
+  final IcerikCeviri? ceviri;
 
   /// Yayin sonrasi duzenlenmis mi ("duzenlendi" rozeti icin).
   bool get duzenlendi => updatedAt.isAfter(createdAt);
@@ -50,6 +57,7 @@ class Announcement {
     updatedAt:
         DateTime.tryParse(json['updated_at'] as String? ?? '') ??
         DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    ceviri: IcerikCeviri.fromJson(json),
   );
 }
 

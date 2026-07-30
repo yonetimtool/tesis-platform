@@ -1172,5 +1172,13 @@
   "ortakFotografiBuyut": "Enlarge photo",
   "ortakGoster": "View",
   "talepRedBaslik": "Reject request",
-  "ziyaretciDaireSakinYok": "No active resident in this unit"
+  "ziyaretciDaireSakinYok": "No active resident in this unit",
+  "ceviriOtomatik": "This content was translated automatically",
+  "ceviriOtomatikKisa": "Auto-translated",
+  "ceviriOrijinaliGor": "View original",
+  "ceviriCeviriyiGor": "View translation",
+  "ceviriHazirlaniyor": "Translation in progress — showing the original",
+  "ceviriHazirlaniyorKisa": "Translating…",
+  "ceviriYapilamadi": "Translation failed — showing the original",
+  "ceviriYapilamadiKisa": "Translation failed"
 }

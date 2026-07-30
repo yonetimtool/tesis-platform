@@ -1172,5 +1172,13 @@
   "ortakFotografiBuyut": "Agrandir la photo",
   "ortakGoster": "Afficher",
   "talepRedBaslik": "Rejeter la demande",
-  "ziyaretciDaireSakinYok": "Aucun résident actif dans ce logement"
+  "ziyaretciDaireSakinYok": "Aucun résident actif dans ce logement",
+  "ceviriOtomatik": "Ce contenu a été traduit automatiquement",
+  "ceviriOtomatikKisa": "Traduction automatique",
+  "ceviriOrijinaliGor": "Voir l’original",
+  "ceviriCeviriyiGor": "Voir la traduction",
+  "ceviriHazirlaniyor": "Traduction en cours — l’original est affiché",
+  "ceviriHazirlaniyorKisa": "Traduction en cours",
+  "ceviriYapilamadi": "Échec de la traduction — l’original est affiché",
+  "ceviriYapilamadiKisa": "Échec de la traduction"
 }

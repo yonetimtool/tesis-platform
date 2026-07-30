@@ -1172,5 +1172,13 @@
   "ortakFotografiBuyut": "تكبير الصورة",
   "ortakGoster": "عرض",
   "talepRedBaslik": "رفض الطلب",
-  "ziyaretciDaireSakinYok": "لا يوجد ساكن نشط في هذه الوحدة"
+  "ziyaretciDaireSakinYok": "لا يوجد ساكن نشط في هذه الوحدة",
+  "ceviriOtomatik": "تمت ترجمة هذا المحتوى تلقائيًا",
+  "ceviriOtomatikKisa": "ترجمة تلقائية",
+  "ceviriOrijinaliGor": "عرض النص الأصلي",
+  "ceviriCeviriyiGor": "عرض الترجمة",
+  "ceviriHazirlaniyor": "جارٍ إعداد الترجمة — يتم عرض النص الأصلي",
+  "ceviriHazirlaniyorKisa": "جارٍ الترجمة",
+  "ceviriYapilamadi": "تعذّرت الترجمة — يتم عرض النص الأصلي",
+  "ceviriYapilamadiKisa": "تعذّرت الترجمة"
 }

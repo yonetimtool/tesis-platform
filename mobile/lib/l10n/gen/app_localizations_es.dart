@@ -4025,4 +4025,29 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ziyaretciDaireSakinYok => 'No hay residente activo en esta unidad';
+
+  @override
+  String get ceviriOtomatik => 'Este contenido se tradujo automáticamente';
+
+  @override
+  String get ceviriOtomatikKisa => 'Traducción automática';
+
+  @override
+  String get ceviriOrijinaliGor => 'Ver el original';
+
+  @override
+  String get ceviriCeviriyiGor => 'Ver la traducción';
+
+  @override
+  String get ceviriHazirlaniyor =>
+      'Traducción en curso: se muestra el original';
+
+  @override
+  String get ceviriHazirlaniyorKisa => 'Traduciendo';
+
+  @override
+  String get ceviriYapilamadi => 'No se pudo traducir: se muestra el original';
+
+  @override
+  String get ceviriYapilamadiKisa => 'Error de traducción';
 }

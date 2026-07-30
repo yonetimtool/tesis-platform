@@ -1662,5 +1662,13 @@
   "ortakFotografiBuyut": "Fotoğrafı büyüt",
   "ortakGoster": "Göster",
   "talepRedBaslik": "Talebi reddet",
-  "ziyaretciDaireSakinYok": "Bu dairede aktif sakin yok"
+  "ziyaretciDaireSakinYok": "Bu dairede aktif sakin yok",
+  "ceviriOtomatik": "Bu içerik otomatik çevrilmiştir",
+  "ceviriOtomatikKisa": "Otomatik çeviri",
+  "ceviriOrijinaliGor": "Orijinali gör",
+  "ceviriCeviriyiGor": "Çeviriyi gör",
+  "ceviriHazirlaniyor": "Çeviri hazırlanıyor — orijinal gösteriliyor",
+  "ceviriHazirlaniyorKisa": "Çeviri hazırlanıyor",
+  "ceviriYapilamadi": "Çeviri yapılamadı — orijinal gösteriliyor",
+  "ceviriYapilamadiKisa": "Çeviri yapılamadı"
 }

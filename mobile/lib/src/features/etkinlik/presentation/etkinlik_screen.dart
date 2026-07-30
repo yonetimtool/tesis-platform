@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/icerik_ceviri.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/ceviri_notu.dart';
 import '../../../core/error/api_exception.dart';
 // Foto akisi GOREV KANITI ile ayni: ayni picker saglayicisi, ayni presign uc.
 import '../../tasks/presentation/task_complete_controller.dart'
@@ -288,6 +290,8 @@ class _EtkinlikCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(e.aciklama, maxLines: 2, overflow: TextOverflow.ellipsis),
+              // Kirpik onizleme: yalniz rozet (gecis detayda).
+              CeviriRozeti(ceviri: e.ceviri),
               if (e.fotoUrl != null) ...[
                 const SizedBox(height: 8),
                 _EtkinlikGorseli(url: e.fotoUrl!, yukseklik: 120),
@@ -461,97 +465,121 @@ void _showDetail(
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (sheetContext) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    builder: (sheetContext) {
+      // "orijinali gör" gecisi durum tasir; alt sayfa fonksiyon oldugu icin
+      // yerel kurucu ile sarilir (site kurali detayiyla ayni desen).
+      var orijinal = false;
+      return StatefulBuilder(
+        builder: (ctx, setLocal) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.celebration_outlined),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      e.baslik,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                  Row(
+                    children: [
+                      const Icon(Icons.celebration_outlined),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          ceviriMetni(
+                            e.ceviri,
+                            'baslik',
+                            e.baslik,
+                            orijinalGoster: orijinal,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
+                      if (e.benimDurumum != null)
+                        _BeyanChip(durum: e.benimDurumum!),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(context.l10n.etkZaman(_fmtAralik(e, context.dilKodu))),
+                  if (e.konum != null) ...[
+                    const SizedBox(height: 4),
+                    Text(context.l10n.etkYer(e.konum!)),
+                  ],
+                  if (e.fotoUrl != null) ...[
+                    const SizedBox(height: 12),
+                    _EtkinlikGorseli(url: e.fotoUrl!, yukseklik: 180),
+                  ],
+                  const SizedBox(height: 8),
+                  Text(
+                    ceviriMetni(
+                      e.ceviri,
+                      'aciklama',
+                      e.aciklama,
+                      orijinalGoster: orijinal,
                     ),
                   ),
-                  if (e.benimDurumum != null)
-                    _BeyanChip(durum: e.benimDurumum!),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(context.l10n.etkZaman(_fmtAralik(e, context.dilKodu))),
-              if (e.konum != null) ...[
-                const SizedBox(height: 4),
-                Text(context.l10n.etkYer(e.konum!)),
-              ],
-              if (e.fotoUrl != null) ...[
-                const SizedBox(height: 12),
-                _EtkinlikGorseli(url: e.fotoUrl!, yukseklik: 180),
-              ],
-              const SizedBox(height: 8),
-              Text(e.aciklama),
-              const SizedBox(height: 12),
-              _SayacRow(etkinlik: e),
-              if (e.olusturanAd != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  context.l10n.etkDuyuran(e.olusturanAd!),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-              if (canRsvp && !e.gecmis) ...[
-                const SizedBox(height: 20),
-                // Beyan KILITLI: cevaplanmamissa butonlar; cevaplanmissa
-                // yalniz kayitli yanit (tekrar oy yok).
-                if (e.benimDurumum == null)
-                  _RsvpButtons(
-                    etkinlik: e,
-                    onAnswered: () => Navigator.of(sheetContext).pop(),
-                  )
-                else
-                  _RecordedAnswer(durum: e.benimDurumum!),
-              ],
-              if (canManage) ...[
-                const Divider(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.edit_outlined),
-                        label: Text(context.l10n.ortakDuzenle),
-                        onPressed: () async {
-                          Navigator.of(sheetContext).pop();
-                          await showModalBottomSheet<bool>(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (_) => _EtkinlikForm(mevcut: e),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _DeleteButton(
-                        etkinlik: e,
-                        onDeleted: () => Navigator.of(sheetContext).pop(),
-                      ),
+                  CeviriNotu(
+                    ceviri: e.ceviri,
+                    orijinalGoster: orijinal,
+                    onDegistir: (v) => setLocal(() => orijinal = v),
+                  ),
+                  const SizedBox(height: 12),
+                  _SayacRow(etkinlik: e),
+                  if (e.olusturanAd != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      context.l10n.etkDuyuran(e.olusturanAd!),
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
-                ),
-              ],
-            ],
+                  if (canRsvp && !e.gecmis) ...[
+                    const SizedBox(height: 20),
+                    // Beyan KILITLI: cevaplanmamissa butonlar; cevaplanmissa
+                    // yalniz kayitli yanit (tekrar oy yok).
+                    if (e.benimDurumum == null)
+                      _RsvpButtons(
+                        etkinlik: e,
+                        onAnswered: () => Navigator.of(sheetContext).pop(),
+                      )
+                    else
+                      _RecordedAnswer(durum: e.benimDurumum!),
+                  ],
+                  if (canManage) ...[
+                    const Divider(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.edit_outlined),
+                            label: Text(context.l10n.ortakDuzenle),
+                            onPressed: () async {
+                              Navigator.of(sheetContext).pop();
+                              await showModalBottomSheet<bool>(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (_) => _EtkinlikForm(mevcut: e),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _DeleteButton(
+                            etkinlik: e,
+                            onDeleted: () => Navigator.of(sheetContext).pop(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 

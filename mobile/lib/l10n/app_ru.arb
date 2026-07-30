@@ -1172,5 +1172,13 @@
   "ortakFotografiBuyut": "Увеличить фото",
   "ortakGoster": "Открыть",
   "talepRedBaslik": "Отклонить обращение",
-  "ziyaretciDaireSakinYok": "В этой квартире нет активных жильцов"
+  "ziyaretciDaireSakinYok": "В этой квартире нет активных жильцов",
+  "ceviriOtomatik": "Этот текст переведён автоматически",
+  "ceviriOtomatikKisa": "Автоперевод",
+  "ceviriOrijinaliGor": "Показать оригинал",
+  "ceviriCeviriyiGor": "Показать перевод",
+  "ceviriHazirlaniyor": "Перевод готовится — показан оригинал",
+  "ceviriHazirlaniyorKisa": "Перевод готовится",
+  "ceviriYapilamadi": "Не удалось перевести — показан оригинал",
+  "ceviriYapilamadiKisa": "Ошибка перевода"
 }
