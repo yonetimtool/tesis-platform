@@ -176,8 +176,32 @@ gerekçesiyle yazılı.
 4. **Prod dağıtım yolu.** `infra/*.prod`, Caddy TLS, yedekleme betiği ve
    `RUNBOOK-PROD.md` hiçbir otomatik ölçümde yok; tur 41'de prod erişimi
    kullanıcıya bırakılmıştı ve teyit edilmedi.
-5. **Migrasyon geri alma (rollback).** `0002`–`0008` migrasyonları ileri yönde
-   test ediliyor; geri alma yolu ölçülmedi.
+5. ~~**Migrasyon geri alma (rollback).**~~ **KAPANDI (tur 71)** —
+   `infra/goc-tersinirlik.sh`. Sekiz migrasyonun `downgrade()` kodu yazılmıştı
+   ama **hiç çalıştırılmamıştı**: `migrate` servisi yalnızca `upgrade head`
+   yapar, testler zaten kurulu şemaya bağlanır.
+
+   Üç ayrı hata sınıfı ölçüldü, üçü de **temiz** çıktı:
+
+   | Kontrol | Ne bulur | Sonuç |
+   |---|---|---|
+   | ARTIK | `downgrade base` bir nesneyi düşürmeyi atlıyor mu | public şema **boş** |
+   | TERSİNİRLİK | gidiş-dönüş şeması düz `upgrade` ile aynı mı | **4790 satır bit-aynı** |
+   | SALINIM | tek adım geri al/yeniden uygula bozuyor mu | **8 sınır × 2 tur** temiz |
+
+   "Hata vermedi" tek başına yetmiyordu: geri alma sessizce nesne bırakabilir
+   ya da yeniden ileri gidişte şema kaybı verebilir. Bu yüzden iki
+   tek-kullanımlık veritabanı (`goc_a` düz, `goc_b` gidiş-dönüş) kurulup
+   `pg_dump --schema-only` çıktıları karşılaştırıldı. `pg_dump` her koşumda
+   rastgele bir `\restrict` belirteci basıyor — o satırlar süzülmeden diff
+   **her zaman** fark gösterir (ilk koşumda oldu).
+
+   Aracın kendisi de sınandı (`DENEY=1..3`): artık tablo, düşürülmüş kolon ve
+   `DROP TABLE`'ı bloke eden bağımlılık enjekte edildiğinde ilgili kontrol
+   kırmızı döndü (5, 1 ve 5 bulgu). Yani üç kontrolün hiçbiri kör değil.
+
+   Geçerlilik koşulu: dev veritabanına dokunulmaz — ölçüm sonrası dev'de 11
+   tenant yerinde, `/health` 200.
 
 ## Kör nokta OLMAYANLAR (bilerek dışarıda)
 
@@ -190,6 +214,6 @@ gerekçesiyle yazılı.
 
 1. **Backend kapsamının düşük bölgeleri** (D2) — sayı artık var, hedefleme
    yapılabilir.
-2. **Migrasyon geri alma** (D5) — üretimde geri dönüş yolu ölçülmemiş.
+2. ~~Migrasyon geri alma~~ (D5) — **kapandı, tur 71**; üç kontrol de temiz.
 3. **Prod dağıtım yolu** (D4) — en riskli ama en zor ölçülen.
 4. Kare bütçesi (D1) — ortam kurulumu gerektiriyor.
