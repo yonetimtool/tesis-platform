@@ -12,15 +12,24 @@ export default defineConfig({
     exclude: ["node_modules/**", ".next/**"],
     // TUR 68 — KAPSAM PAYDASI.
     //
-    // Varsayilan olarak v8 yalniz testlerin IMPORT ETTIGI dosyalari sayar; bu
-    // yuzden rapor "%95,7" gosteriyordu ama paydasi 211 satirdi: yalniz
+    // Eski v8 varsayilani YALNIZ testlerin IMPORT ETTIGI dosyalari sayiyordu;
+    // bu yuzden rapor "%95,7" gosteriyordu ama paydasi 211 satirdi: yalniz
     // `lib/`. Panelin ASIL kodu (26 sayfa + bilesenler) hic sayilmiyordu ve
-    // "kapsam yuksek" izlenimi veriyordu. `all: true` ile TUM kaynak dosyalar
-    // paydaya girer; boylece birim testlerin gercekte nereye dokundugu
-    // gorulur (UI'yi Playwright surusleri kapsiyor, birim testler kapsamiyor).
+    // "kapsam yuksek" izlenimi veriyordu. Payda, asagidaki `include`
+    // desenleriyle TUM kaynak dosyalari kapsar; boylece birim testlerin
+    // gercekte nereye dokundugu gorulur (UI'yi Playwright surusleri kapsiyor,
+    // birim testler kapsamiyor).
+    //
+    // Bu paydayi eskiden `all: true` sagliyordu. O SECENEK ARTIK YOK: Vitest
+    // (kurulu surum 4.1.10) `include` ile eslesen her dosyayi paydaya koymayi
+    // VARSAYILAN yaptigi icin `all`i kaldirdi ve `CoverageOptions` tipinde
+    // artik tanimli degil. Satir kaldirildi cunku `next build` (Docker prod
+    // derlemesinin kostugu komut) bu dosyayi da tip denetiminden geciriyor ve
+    // "'all' does not exist in type 'CoverageOptions'" ile PATLIYORDU.
+    // Payda korundu, olculdu: 724 ifade / 620 satir (kaldirma oncesi ve
+    // sonrasi AYNI).
     coverage: {
       provider: "v8",
-      all: true,
       include: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
       exclude: ["**/*.d.ts", "app/**/layout.tsx", "app/**/loading.tsx"],
       reporter: ["text-summary"],
