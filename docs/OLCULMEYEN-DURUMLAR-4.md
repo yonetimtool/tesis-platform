@@ -98,6 +98,30 @@ API_URL=http://127.0.0.1:8001 pytest -q
 coverage report
 ```
 
+### DOĞRU SAYI: backend `app/` kapsamı **%89**
+
+Tam koşum doğru çekirdekle yapıldı: **8 119 satırın 865'i kapsanmamış → %89**
+(766 test, 13:28). Yanlış ölçümün verdiği "%72" **17 puan** düşüktü.
+
+**Router'ların hepsi %78 üstünde** — yani tur 68'de çıkardığım "en düşük
+router'lar" listesi tamamen kurgusaldı. En düşük dördü: `scans` %78,
+`units` %80, `integrations` %82, `budget`/`dues` %85.
+
+Gerçek düşük bölge **router'lar değil, altyapı modülleri**:
+
+| Dosya | Kapsam | Neden |
+|---|---|---|
+| `retention.py`, `scheduler/service.py`, `scheduler/windows.py`, `tasks.py` | **%0** | HTTP ile değil zamanlayıcı/Celery ile çalışıyor; sunucu sürecinde hiç yürütülmüyor. Bu %0'lar "test yok" demek DEĞİL — bu modüllerin kendi testleri var ama onlar **pytest sürecinde** koşuyor ve o süreç ölçülmüyor. |
+| `ceviri_service.py` | %25 | dev'de `echo` sağlayıcı kullanılıyor (bilinçli) |
+| `translate.py` | %38 | aynı |
+| `push.py` | %47 | dev'de `noop` sağlayıcı (bilinçli) |
+| `payments.py` | %57 | sandbox/manual sağlayıcı (bilinçli) |
+| `safe_http.py` | %56 | SSRF koruması — dış istek atılmıyor |
+
+Yani **düşük görünen her yer bir boşluk değil**: yarısı dev ortamında bilinçli
+olarak devre dışı bırakılmış sağlayıcılar, diğer yarısı da ölçüm yönteminin
+görmediği süreçler. Bu ayrımı yapmadan "kapsamı artır" demek, yanlış yere test
+yazmak olurdu.
 ## C. Ölçüm araçlarının durumu — temiz
 
 * Panel sürüşlerinin **11'inin 11'i** `DENEY=1` ile kendini sınıyor
@@ -111,11 +135,11 @@ coverage report
 1. **Kare bütçesi / jank.** Gerçek cihaz ya da `flutter drive` + emülatör
    gerektiriyor; süreç içinde eşdeğeri yok. (Tur 67 belleği süreç içinde
    ölçmeyi başardı; kare süresi için aynı yol yok.)
-2. **Backend kapsamının DÜŞÜK bölgeleri.** İlk sayı (%72) ve ondan çıkan hedef
-   liste **geçersizdi** (yukarıdaki üçüncü tuzak). Doğru çekirdekle yeniden
-   ölçüldü; hedef liste o sayılara göre çıkarılacak. Zamanlayıcı/Celery
-   dosyaları sunucu sürecinde hiç koşmuyor — onların ölçümü yine ayrı bir yol
-   gerektiriyor.
+2. ~~**Backend kapsamının DÜŞÜK bölgeleri.**~~ **ÖLÇÜLDÜ: %89**, router'ların
+   hepsi %78 üstünde. Kalan düşük yerler bilinçli devre dışı sağlayıcılar
+   (`push` noop, `payments` sandbox, `ceviri` echo) ya da ölçüm yönteminin
+   görmediği süreçler (zamanlayıcı/Celery). **Yeni açık kalem:** bu iki sürecin
+   (pytest süreci + Celery işçisi) kapsamını birleştiren bir ölçüm yok.
 3. **Panel UI birim kapsamı %26,8.** UI'yi Playwright sürüşleri kapsıyor ama
    *satır* düzeyinde ölçüm yok; React bileşenlerini jsdom ile test etmek ayrı
    bir altyapı kararı (bilinçli olarak yapılmamıştı — `vitest.config.ts`
