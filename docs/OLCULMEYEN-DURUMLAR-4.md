@@ -60,39 +60,43 @@ API_URL=http://127.0.0.1:8001 pytest -q
 coverage report
 ```
 
-**Sonuç (ilk kez ölçüldü): backend `app/` kapsamı %72** — 8 119 satırın
-2 301'i kapsanmamış; 766 test 13:46'da geçti (araçlı sunucu suite'i ~2× yavaşlattı).
+**Sonuç (ilk kez ölçüldü): backend `app/` kapsamı %72** — ama **bu sayı da
+yanlıştı.** Üçüncü tuzak:
 
-**Hiç koşmayan dört dosya** (bunlar HTTP ile değil, zamanlayıcı/Celery ile
-çalışıyor; test süreci onları ayrı ayrı import ediyor ama sunucu süreci hiç
-çalıştırmıyor — yani bu %0'lar "test yok" demek değil, "sunucu sürecinde
-çalışmıyor" demek):
+### ÜÇÜNCÜ TUZAK: ölçüm aracının kendisi async gövdeleri kaçırıyordu
 
-| Dosya | Kapsam |
-|---|---|
-| `app/retention.py` | %0 |
-| `app/scheduler/service.py` | %0 |
-| `app/scheduler/windows.py` | %0 |
-| `app/tasks.py` (Celery) | %0 |
+Sayıyı yayınladıktan sonra doğruladım (bu programın kuralı: ölçüm de ölçülür) ve
+tutarsızlık buldum: `residents.py` **%31** görünüyordu, oysa o router'ın beş ucu
+7 testle sürülüyor. Kanıt zinciri:
 
-**En düşük gerçek router'lar:** `residents` %31, `dues` %37,
-`common_areas` %42, `units` %44, `blocks` %44, `assets` %45, `tasks` %45,
-`patrol_plans` %47. Bunlar D2 maddesinin hedef listesi.
+1. Yalnız `test_residents.py` koşuldu → aynı %31, eksik satırlar `57-115`
+   (yani `create_resident`'ın tüm gövdesi).
+2. `uvloop` şüphesi → `--loop asyncio` ile de aynı.
+3. Rota gerçekten o fonksiyon mu? `app.routes` incelendi: `POST /residents` →
+   `app.routers.residents`, satır 46. Evet.
+4. Dosya konteynerde farklı mı? `md5sum` host = konteyner. Hayır.
+5. **Uvicorn erişim günlüğü:** `"POST /residents HTTP/1.1" 201 Created`. Yani
+   gövde KESİNLİKLE çalıştı ama kapsanmamış görünüyordu.
+6. Aynı dosyanın **GET** gövdesi (125-155) kapsanmış görünüyordu — yani hata
+   dosya bazlı değil, **çağrı bazlı** ve tutarsız.
 
-Panel sonucu ise bir **payda tuzağı** ortaya çıkardı:
+Sebep: coverage'ın **varsayılan C izleyicisi** bu kurulumda async uç
+gövdelerini güvenilmez şekilde izliyor. Python 3.12'nin `sys.monitoring`
+çekirdeği (`COVERAGE_CORE=sysmon`) ile aynı 7 test `residents.py`'yi
+**%31 → %92** yapıyor.
 
-| Ölçüm | Sonuç |
-|---|---|
-| v8 varsayılanı (yalnız import edilen dosyalar) | **%95,73** (202/211 satır) |
-| `all: true` (tüm kaynak dosyalar paydada) | **%26,79** (194/724 satır) |
+> Yani "%72" ve ondan çıkardığım "en düşük router'lar" listesi **geçersizdi**.
+> Bu, aynı belgede belgelediğim hata sınıfının üçüncü örneği: ölçüm yapıyor
+> görünen ama yanlış olan bir sayı — ve bu kez tuzak **ölçüm aracının
+> kendisindeydi**.
 
-%95,7 rakamı **yanıltıcıydı**: paydası yalnız `lib/`ydi, çünkü birim testler
-`app/` ve `components/` altındaki gerçek UI'yi hiç import etmiyor. Panelin UI'si
-Playwright sürüşleriyle kapsanıyor ve o sürüşler kapsam üretmiyor. Yapılandırma
-`all: true` ile düzeltildi; artık rapor gerçeği söylüyor.
+Doğru komut:
 
-> Bu tam olarak bu programın var olma sebebi olan hata sınıfı: **ölçüm yapıyor
-> görünen ama paydası yanlış olan bir sayı.**
+```
+COVERAGE_CORE=sysmon coverage run --source=app -m uvicorn app.main:app --port 8001 &
+API_URL=http://127.0.0.1:8001 pytest -q
+coverage report
+```
 
 ## C. Ölçüm araçlarının durumu — temiz
 
@@ -107,10 +111,11 @@ Playwright sürüşleriyle kapsanıyor ve o sürüşler kapsam üretmiyor. Yapı
 1. **Kare bütçesi / jank.** Gerçek cihaz ya da `flutter drive` + emülatör
    gerektiriyor; süreç içinde eşdeğeri yok. (Tur 67 belleği süreç içinde
    ölçmeyi başardı; kare süresi için aynı yol yok.)
-2. **Backend kapsamının DÜŞÜK bölgeleri.** Sayı alındı (%72) ve hedef liste
-   çıktı: `residents` %31, `dues` %37, `common_areas` %42, `units`/`blocks` %44,
-   `assets`/`tasks` %45, `patrol_plans` %47. Ayrıca zamanlayıcı/Celery dosyaları
-   sunucu sürecinde hiç koşmuyor — onların ölçümü ayrı bir yol gerektiriyor.
+2. **Backend kapsamının DÜŞÜK bölgeleri.** İlk sayı (%72) ve ondan çıkan hedef
+   liste **geçersizdi** (yukarıdaki üçüncü tuzak). Doğru çekirdekle yeniden
+   ölçüldü; hedef liste o sayılara göre çıkarılacak. Zamanlayıcı/Celery
+   dosyaları sunucu sürecinde hiç koşmuyor — onların ölçümü yine ayrı bir yol
+   gerektiriyor.
 3. **Panel UI birim kapsamı %26,8.** UI'yi Playwright sürüşleri kapsıyor ama
    *satır* düzeyinde ölçüm yok; React bileşenlerini jsdom ile test etmek ayrı
    bir altyapı kararı (bilinçli olarak yapılmamıştı — `vitest.config.ts`
