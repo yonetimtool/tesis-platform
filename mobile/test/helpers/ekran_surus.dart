@@ -117,10 +117,28 @@ Future<void> _gorselleriYukle(WidgetTester tester) async {
       await tester.pump();
       await Future<void>.delayed(const Duration(milliseconds: 50));
     });
-    await tester.pumpAndSettle();
+    // OTURMA, GORSEL COZULMEDEN DENENMEZ (yuk altinda olculdu).
+    //
+    // Gorsel yuklenirken ekranda `CircularProgressIndicator` vardir; o SONSUZ
+    // bir animasyondur ve `pumpAndSettle` ASLA oturamaz — 10 dakikalik ust
+    // sinira dayanip "pumpAndSettle timed out" ile duser. Normal kosumda
+    // gorsel ilk 50 ms'de cozulup gosterge kalktigi icin bu hic gorunmez;
+    // TAM SUIT yuku altinda (dort izolasyon + baska is) kodek gecikince
+    // ortaya cikar. 20x tekrar kosumunun 20. turunda tam bu dustu
+    // (`FOTOGRAFLI: duyuru ekrani`) — urun degil, OLCUM ARACI hatasi.
+    //
+    // Cozum: her turda SABIT kare pompala, oturmayi yalniz gorseller
+    // cozuldukten SONRA dene.
+    await tester.pump(const Duration(milliseconds: 50));
     final resimler = tester.allWidgets.whereType<RawImage>();
-    if (resimler.isEmpty || resimler.any((r) => r.image != null)) return;
+    if (resimler.isEmpty || resimler.any((r) => r.image != null)) {
+      await tester.pumpAndSettle();
+      return;
+    }
   }
+  // Ust sinira gelindi (gorsel hala cozulmedi): oturmayi ZORLAMA — cagiran
+  // zaten "fotograf CIZILMEDI" iddiasiyla duser ve tanı ORADA daha nettir.
+  await tester.pump(const Duration(milliseconds: 100));
 }
 
 /// DAR EKRAN surusu (tur 26) — panelin `tools/dar-ekran-surusu.mjs`inin
