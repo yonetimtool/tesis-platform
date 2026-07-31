@@ -410,6 +410,14 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P31 · Raporlar (API — panel ekranı finans bölümüyle gelecek).**
+  Şimdilik uçtan doğrulanabilir: **admin** ile
+  `POST /raporlar/borc_alacak?bicim=pdf` → inen PDF'te **site adı, dönem,
+  zaman damgası ve "Sayfa 1 / N"** görünmeli. `?bicim=excel` → Excel'de
+  tutar sütunlarında **toplam alınabilmeli** (metin değil sayı).
+  `{"ismi_goster": false}` ile → **ad sütunu hiç olmamalı**.
+  `/raporlar/ihtar_yazisi?bicim=pdf` → borçlu daire başına metin, KMK m.20
+  ve 7 gün süre geçmeli.
 - [ ] **P30 · Sakin "Öde".** **Sakin** ile Aidatım → başlıktaki **"Öde"**.
   (a) Site'de **banka kasası tanımlı değilken** havale bölümü yerine
   "banka hesabı tanımlamamış" yazmalı. (b) Yönetici bir **banka kasası**
@@ -1650,7 +1658,7 @@ yüksüz tam koşum **1483/0**. Ürün kusuru değil, ölçüm koşulu.
 zaten böyle yazılıydı.
 
 ### P31 — Report engine & catalog
-Status: BEKLIYOR · Depends-on: P29
+Status: BITTI · Depends-on: P29
 Scope (ref parameter-modal + PDF screenshots in docs/design-refs/apsiyon/):
 shared report framework — parameter modal (tarih aralığı, tazminat hesaplama
 tarihi, blok, borçlandırma türü, listeleme tipi, min/maks tutar, sıralama, flags:
@@ -1667,6 +1675,97 @@ critical: design it well), Denetim Raporu (auditor format: dönem gelir-gider,
 kasa mutabakatı, karar defteri referansları — the Word doc's denetçi requirement).
 Acceptance: framework + full catalog wired; PDF/Excel outputs verified; column
 correctness tests for both debt reports; gates.
+Notes (2026-07-31): **ŞEMA GEREKMEDİ** — raporlar mevcut defterlerden okur.
+Yeni bağımlılık: `openpyxl` + `reportlab` (ikisi de **saf Python**;
+weasyprint/wkhtmltopdf sistem paketi + font zinciri isterdi).
+
+**TEK UÇ, ÜÇ BİÇİM.** `POST /raporlar/{kod}?bicim=tablo|excel|pdf`. Biçim
+başına ayrı uç açmak, aynı parametre modelini üç kez doğrulamak ve üç yerde
+değiştirmek demekti. **Üçü de AYNI satırlardan** üretilir — ayrı üretmek aynı
+raporun üç yerde farklı rakam göstermesine yol açardı (yuvarlama, para
+birimi, tarih biçimi sessizce ayrılır). **Çıktı üretimi sunucuda**: istemcide
+XLSX/PDF üretmek, panelin ve mobilin aynı raporu iki kez (ve farklı)
+biçimlendirmesi olurdu.
+
+**PARAMETRE MODALI TEK MODEL.** Rapor başına ayrı model, modal bileşeninin
+her rapor için yeniden yazılması olurdu. `tazminat_tarihi` **ayrı alan**:
+dönem raporunu **bugünün** tazminatıyla almak isteyen yönetim var.
+`min/max` sınırları **DAHİL** — 100 TL borçlu tam sınırdadır ve "en az
+100 TL" listesinde olmalıdır. Sıralama anahtarı **bilinmiyorsa varsayılana
+düşer**: istemciden geleni doğrudan kullanmak `KeyError` ile 500 verirdi.
+
+**`ismi_goster=false` SÜTUNU DA KALDIRIR**, değeri boşaltmaz — boş bir ad
+sütunu "adı neden yok" sorusunu doğururdu. Kapıya asılacak listede ad
+olmamalı (KVKK).
+
+**DETAYLI BORÇ LİSTESİ SÜTUNLARI DİNAMİK** (P27 tanımlarından). Elektrik/Su/
+Doğal Gaz **sabit sütun olarak yazılmadı**: her sitenin kalem listesi
+farklıdır; sabit sütunlar kalemi olmayan siteye boş sütun, fazladan kalemi
+olana "Diğer"e sıkışmış rakam gösterirdi. Tanımsız borçlar **"Diğer"e
+toplanır — kaybolmaz**.
+
+**BORÇ-ALACAK BAKİYE FORMÜLÜ.** dönem başı + dönem içi borç + gecikme +
+**iade** − tahsilat. **İade tahsilatı geri alır, yani bakiyeyi ARTIRIR** —
+"eksi tahsilat" diye yazmak işareti iki kez uygulamak olurdu.
+
+**TAHSİLAT PERFORMANSI (Kerem kritik dedi).** Oran = `tahsil /
+borçlandırılan`, **"tahsil / toplam açık borç" değil**: ikincisi geçmiş
+dönemlerin birikmiş borcunu paya katar ve iyi bir ayı kötü gösterir. Sıfıra
+bölmede oran **`null`**, 0 değil — 0 yazmak "hiç tahsil edemedik" diye
+okunurdu. Yaşlandırma kovaları 0-30/31-60/61-90/90+ gün ve raporun **alt
+bölümü** (ayrı rapor olsaydı yönetim ikisini yan yana koymak zorunda
+kalırdı).
+
+**DENETİM RAPORU = KASA MUTABAKATI.** Açılış + giriş − çıkış = bakiye
+**satır satır**; denetçi "rakam nereden geliyor" sorusunu tabloda
+cevaplayabilmeli — tek bir toplam yazmak mutabakat değil **beyandır**. Karar
+defteri referansları **bilinçli olarak eklenmedi** ve bu rapora yazıldı:
+karar defteri ayrı bir kayıttır ve denetçiye **aslıyla** sunulur.
+
+**İHTAR YAZISI ŞABLONU KODDA**, veritabanında değil: metin hukuki olarak
+sabittir (KMK m.20, 7 gün) ve tenant başına düzenlenebilir yapmak, yanlış
+kurgulanmış bir ihtarın hukuki geçerliliğini riske atardı. Tek PDF'te ardı
+ardına üretilir — daire başına ayrı dosya, 40 daireli sitede 40 indirme
+demekti.
+
+**PDF SABLONU İKİ GEÇİŞLİ**: sayfa sayısı önceden bilinmediği için önce
+sayılır, sonra çizilir — resmi bir çıktıda "Sayfa 1 / ?" kabul edilemez.
+Logo **opsiyonel**; bozuk logo raporu düşürmez (logo süsdür, rapor gerekli).
+6'dan fazla sütunlu raporlar **yatay** sayfaya geçer.
+
+**EXCEL'DE PARA HÜCRELERİ SAYIDIR** (TL cinsinden), metin değil: kuruşu
+metin yazmak kullanıcının Excel'de toplam almasını engellerdi — rapor zaten
+"üzerinde çalışılsın" diye Excel'e verilir.
+
+**BULGU:** `func.to_char(...)` **bind parametresi** üretiyor ve Postgres
+`GROUP BY`daki ifadeyle eşleştiremiyor (`GroupingError`) — dönemsel bakiye
+ucu 500 veriyordu. Bu tuzak şeffaflık panosunda da yaşanmıştı;
+`literal_column` ile çözüldü ve ifade **tek sabitte** toplandı.
+
+KATALOG (12 rapor, hepsi çalışır durumda ve test her birini çağırır):
+Borç-Alacak · Detaylı Borç · Site Sakinleri · Dönemsel Bakiye · Kasa/Hesap
+Ekstresi · İşletme Defteri · Finansal Hareketler · Makbuz Dökümü ·
+Gelir-Gider Özet · Tahsilat Performansı · İhtar Yazısı · Denetim Raporu.
+Dört hareket raporu **aynı sorgudan farklı süzgeçle** çıkar — dört ayrı
+sorgu, "işletme defterindeki tutar finansal hareketlerde neden yok" tipi
+sessiz farklar üretirdi.
+
+TESTLER: `test_rapor_motoru.py` **24/24** — çekirdek (kuruş biçimi, bakiye
+formülü, ad gizleme, icra süzgeci, listeleme tipi, toplamlar, **dinamik
+sütunlar**, tahsilat oranı + sıfıra bölme, yaşlandırma, sınır-dahil süzgeç,
+güvenli sıralama, ihtar metni) + uç (katalogdaki **her rapor** çağrılır, üç
+biçim, XLSX `PK` imzası, PDF `%PDF-` imzası, geçersiz kod/biçim, parametre
+doğrulaması, **kasa mutabakatı**, RBAC).
+KAPILAR: backend `pytest` **986 geçti / 1 atlandı / 0 düştü**; sözleşme 2 yol + 5 şema (sapma testi
+temiz); rol matrisi iki yeni ucu yakaladı (yönetim).
+
+**AÇIK BIRAKILAN (bilinçli):** (a) **"Notlar" raporu** katalogda YOK —
+karşılığı bir **veri kaynağı bulunmuyor** (not tutan bir varlık henüz
+tanımlı değil); uydurma bir kaynağa bağlamak boş bir rapor üretirdi.
+Not varlığı tanımlanınca katalog tek satırla genişler.
+(b) **Panel/mobil rapor ekranları** yapılmadı — P28/P29'un finans
+ekranlarıyla **tek bölüm** olarak tasarlanmalı (STATUS REPORT #4'te yazılı
+finans panel borcu).
 
 ### P32 — Communication suite (SMS + e-mail templates)
 Status: BEKLIYOR · Depends-on: P28; live SMS sending additionally [DIŞ]
@@ -1941,6 +2040,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P31 · (bu commit) · Rapor motoru + 12 raporluk katalog: TEK UC UC BICIM (tablo/Excel/PDF, ucu de ayni satirlardan), parametre modali TEK MODEL, detayli borc sutunlari P27 tanimlarindan DINAMIK, tahsilat orani = tahsil/borclandirilan, denetim raporu = kasa mutabakati; to_char GroupingError bulgusu.
 - 2026-07-31 · P30 · e48db6a · Sakin "Öde" akisi (0020): havale aciklama KODU (sabit, elle yazilabilir alfabe) eslestirmeyi KESINLESTIRIR; IBAN P27 banka kasasindan (ayri alan YOK); kart mevcut saglayici soyutlamasi uzerinden (P13 ile canliya); mobil /ode tek sayfa, kopyala + kalin kod.
 - 2026-07-31 · P29 · a283054 · Tahsilat/kasa/finansal hareketler (0019): TEK DEFTER (tahsilat|gider|gelir|virman|iade|acilis), bakiye SAKLANMAZ defterden TURETILIR, virman iki satir, iade ters yonlu yeni kayit, banka eslestirme ONERIDIR (belirsizde uretmez), icra dosyasi borcu kopyalamaz + banka entegrasyonu belge notu.
 - 2026-07-31 · P28 · 51a73db · Borclandirma motoru (0018): mevcut aidat modulu GENISLETILDI (paralel sistem YOK); benzersizlik (daire, donem, TUR) oldu — ayni ay birden fazla kalem; hedefleme kurali TANIMDA (kiraci_oncelikli|malik); gecikme ANLIK hesaplanir; toplu onizleme→isleme, sayac sihirbazi, satir-bazli ice aktarim.

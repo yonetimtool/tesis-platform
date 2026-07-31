@@ -3478,6 +3478,76 @@ paths:
               schema: { $ref: "#/components/schemas/FinansOzet" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  # ================================================================= #
+  # RAPOR MOTORU + KATALOG (P31)
+  # TEK UC, UC BICIM: bicim basina ayri uc acmak, ayni parametre modelini
+  # uc kez dogrulamak ve uc yerde degistirmek demekti.
+  # UCU DE AYNI SATIRLARDAN uretilir — ayri uretmek ayni raporun uc yerde
+  # farkli rakam gostermesine yol acardi.
+  # CIKTI URETIMI SUNUCUDA: istemcide XLSX/PDF uretmek, panelin ve mobilin
+  # ayni raporu iki kez (ve farkli) bicimlendirmesi olurdu.
+  # RBAC: admin + yonetici (raporlar site finansini ve kisi adlarini tasir).
+  # ================================================================= #
+  /raporlar/katalog:
+    get:
+      tags: [raporlar]
+      summary: Rapor katalogu (admin+yonetici)
+      description: >
+        Listede gorunup CALISMAYAN bir rapor OLAMAZ: katalog ve yonlendirme
+        AYNI sozlukten okur (test her kodu tablo bicimiyle cagirip dogrular).
+      responses:
+        "200":
+          description: Katalog
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaporKatalog" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /raporlar/{kod}:
+    post:
+      tags: [raporlar]
+      summary: Raporu uret — tablo | excel | pdf (admin+yonetici)
+      description: >
+        `bicim=tablo` JSON tablo doner; `excel` bir XLSX, `pdf` kurumsal
+        sablonlu bir PDF **indirir** (`Content-Disposition: attachment`).
+
+        PDF sablonu: site adi (+ logo varsa) · rapor adi · donem · zaman
+        damgasi · her sayfada "Sayfa n / m". Sayfa sayisi onceden bilinmedigi
+        icin **iki gecisli** uretilir — resmi bir ciktida "n / ?" kabul
+        edilemez. Logo OPSIYONELDIR; yoksa baslik kayar (logoyu zorunlu
+        kilmak, logo yuklememis siteye rapor urettirmemek olurdu).
+
+        Excel'de para hucreleri **SAYIDIR** (TL cinsinden), metin degil:
+        kurusu metin yazmak kullanicinin Excel'de toplam almasini
+        engellerdi.
+      parameters:
+        - name: kod
+          in: path
+          required: true
+          schema: { type: string }
+          description: Katalog kodu (orn. borc_alacak)
+        - name: bicim
+          in: query
+          schema: { type: string, enum: [tablo, excel, pdf], default: tablo }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RaporParametre" }
+      responses:
+        "200":
+          description: Rapor
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaporTablo" }
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+            application/pdf:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /me/odeme-bilgileri:
     get:
       tags: [aidat]
@@ -9327,6 +9397,89 @@ components:
     # ------------------ P27 "Tanimlar" katmani semalari ---------------- #
     # PARA HER YERDE KURUS (int64). Acilis bakiyeleri ISARETSIZ tutar + AYRI
     # yon tasir (bkz. yol yorumlari).
+    RaporParametre:
+      type: object
+      description: >
+        Parametre modali — **TEK MODEL**, her rapor alt kumesini kullanir.
+        Rapor basina ayri model, modal bileseninin her rapor icin yeniden
+        yazilmasi olurdu.
+      properties:
+        baslangic: { type: string, format: date, nullable: true }
+        bitis: { type: string, format: date, nullable: true }
+        tazminat_tarihi:
+          type: string
+          format: date
+          nullable: true
+          description: >
+            Gecikme tazminatinin HANGI TARIHE gore hesaplanacagi. Ayri alan
+            olmasi sart: donem raporunu BUGUNUN tazminatiyla almak isteyen
+            yonetim var. Verilmezse `bitis`, o da yoksa bugun.
+        blok: { type: string, nullable: true }
+        gelir_gider_tanim_id: { type: string, format: uuid, nullable: true }
+        listeleme_tipi:
+          type: string
+          nullable: true
+          maxLength: 30
+          description: "Raporun anlamlandirdigi anahtar (orn. borclu | alacakli)"
+        min_tutar_kurus:
+          type: integer
+          format: int64
+          nullable: true
+          description: SINIRLAR DAHIL (100 TL borclu "en az 100 TL" listesinde OLMALI)
+        max_tutar_kurus: { type: integer, format: int64, nullable: true }
+        siralama: { type: string, nullable: true, maxLength: 30 }
+        ismi_goster:
+          type: boolean
+          default: true
+          description: >
+            **KVKK**: `false` iken ad SUTUNU da kalkar (degeri bosaltmak
+            yetmez — bos sutun "adi neden yok" sorusunu dogururdu). Kapiya
+            asilacak listede ad OLMAMALI.
+        icradakileri_goster: { type: boolean, default: true }
+    RaporSutun:
+      type: object
+      required: [anahtar, baslik]
+      properties:
+        anahtar: { type: string }
+        baslik: { type: string }
+        tip: { type: string, enum: [metin, kurus, tarih, sayi], default: metin }
+    RaporTablo:
+      type: object
+      required: [kod, baslik, sutunlar, satirlar]
+      properties:
+        kod: { type: string }
+        baslik: { type: string }
+        sutunlar:
+          type: array
+          items: { $ref: "#/components/schemas/RaporSutun" }
+        satirlar:
+          type: array
+          items: { type: object, additionalProperties: true }
+        toplamlar:
+          type: object
+          additionalProperties: true
+          description: Sutun basina alt toplam (Excel/PDF'te kalin satir)
+        metin:
+          type: string
+          nullable: true
+          description: >
+            Serbest metin bolumu — yaslandirma ozeti, ihtar govdesi, denetim
+            notu. Tablo sablonuna sikistirilmadi: ihtar bir YAZIDIR ve
+            hucrelere bolunurdu.
+    RaporKatalogOgesi:
+      type: object
+      required: [kod, baslik, aciklama]
+      properties:
+        kod: { type: string }
+        baslik: { type: string }
+        aciklama: { type: string }
+    RaporKatalog:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RaporKatalogOgesi" }
     OdemeBilgileri:
       type: object
       required: [odeme_kodu, borc_kurus, kart_aktif]

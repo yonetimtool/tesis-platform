@@ -4141,3 +4141,74 @@ class KartOdemeSonuc(BaseModel):
     durum: str
     odeme_url: str | None = None
     hareket_id: uuid.UUID | None = None
+
+
+# ============================ P31 RAPOR MOTORU ============================== #
+class RaporParametre(BaseModel):
+    """Parametre modali — TEK MODEL, her rapor alt kumesini kullanir.
+
+    Rapor basina ayri model, modal bileseninin her rapor icin yeniden
+    yazilmasi olurdu.
+    """
+
+    baslangic: date | None = None
+    bitis: date | None = None
+    #: Gecikme tazminatinin HANGI TARIHE gore hesaplanacagi (ayri alan:
+    #: donem raporunu BUGUNUN tazminatiyla almak isteyen yonetim var).
+    tazminat_tarihi: date | None = None
+    blok: str | None = None
+    gelir_gider_tanim_id: uuid.UUID | None = None
+    listeleme_tipi: str | None = Field(None, max_length=30)
+    min_tutar_kurus: int | None = None
+    max_tutar_kurus: int | None = None
+    siralama: str | None = Field(None, max_length=30)
+    #: KVKK: kapiya asilacak listede ad OLMAMALI.
+    ismi_goster: bool = True
+    icradakileri_goster: bool = True
+
+    @model_validator(mode="after")
+    def _aralik_tutarli(self) -> "RaporParametre":
+        if self.baslangic and self.bitis and self.bitis < self.baslangic:
+            raise ValueError("bitis tarihi baslangictan once olamaz")
+        if (
+            self.min_tutar_kurus is not None
+            and self.max_tutar_kurus is not None
+            and self.max_tutar_kurus < self.min_tutar_kurus
+        ):
+            raise ValueError("maks tutar minden kucuk olamaz")
+        return self
+
+    def model_dump(self, **kw):  # type: ignore[override]
+        veri = super().model_dump(**kw)
+        # Cekirdek saf Python calisir: UUID'yi metne cevir.
+        if veri.get("gelir_gider_tanim_id") is not None:
+            veri["gelir_gider_tanim_id"] = str(veri["gelir_gider_tanim_id"])
+        return veri
+
+
+class RaporSutun(BaseModel):
+    anahtar: str
+    baslik: str
+    tip: str = "metin"
+
+
+class RaporTablo(BaseModel):
+    """"Göster" ciktisi — Excel/PDF ile AYNI satirlardan uretilir."""
+
+    kod: str
+    baslik: str
+    sutunlar: list[RaporSutun]
+    satirlar: list[dict[str, Any]]
+    toplamlar: dict[str, Any] = Field(default_factory=dict)
+    #: Serbest metin bolumu (yaslandirma, ihtar govdesi, denetim notu).
+    metin: str | None = None
+
+
+class RaporKatalogOgesi(BaseModel):
+    kod: str
+    baslik: str
+    aciklama: str
+
+
+class RaporKatalogResponse(BaseModel):
+    items: list[RaporKatalogOgesi]

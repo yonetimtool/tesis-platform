@@ -28,6 +28,7 @@ from .routers import muhasebe_tanimlari as muhasebe_tanimlari_router
 from .routers import borclandirma_uc as borclandirma_router
 from .routers import finans as finans_router
 from .routers import sakin_odeme as sakin_odeme_router
+from .routers import rapor_motoru as rapor_motoru_router
 from .routers import dashboard as dashboard_router
 from .routers import devices as devices_router
 from .routers import dues as dues_router
@@ -119,6 +120,7 @@ app.include_router(muhasebe_tanimlari_router.router)
 app.include_router(borclandirma_router.router)
 app.include_router(finans_router.router)
 app.include_router(sakin_odeme_router.router)
+app.include_router(rapor_motoru_router.router)
 app.include_router(visitors_router.router)
 app.include_router(kargo_router.router)
 app.include_router(unit_access_router.router)
