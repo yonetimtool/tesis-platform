@@ -1799,6 +1799,56 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+## STATUS REPORT — 2026-07-31 #4 (kural 10: bağlam doldu, devir)
+
+**FINAL REPORT değildir** — uygun madde tükenmedi. **P31'den** devam
+edilebilir; plan dosyası tüm durumu taşıyor. `/clear` + standart kickoff.
+
+### Bu turda biten (hepsi `origin/main`'de)
+
+| Madde | Hash | Şema | Özet |
+|---|---|---|---|
+| P27 | `059eb61` | 0017 | Muhasebe "Tanımlar": kasa/gelir-gider/firma/personel/araç/sayaç + evrak & para birimi; admin-web `/tanimlar` |
+| P28 | `51a73db` | 0018 | Borçlandırma motoru — mevcut aidat modülü **genişletildi**; benzersizlik `(daire, dönem, TÜR)`; hedefleme kuralı; gecikme anlık |
+| P29 | `a283054` | 0019 | **TEK DEFTER** finansal hareket; bakiye türetilir; virman/iade; banka eşleştirme önerisi; icra dosyası |
+| P30 | `e48db6a` | 0020 | Sakin "Öde": havale **kodu** + IBAN + kart; mobil `/ode` |
+
+### Bu turda bulunan gerçek kusurlar
+
+1. **P28 — `hedef_kurali` şemalara eklenmemişti** (P27'de modele eklenmiş
+   ama API'den ayarlanamıyordu; her tanım varsayılan kalıyordu). Hedefleme
+   testi yakaladı.
+2. **P29 — `min(uuid)` Postgres'te yok**; banka eşleştirme ucu 500
+   veriyordu. Test yakaladı; örnek `assessment_id` döndürme fikri zaten
+   yanlıştı (öneri kişiyi hedefler).
+3. **P27 — `npm run build` `tsc --noEmit`in yakalamadığını yakaladı**:
+   Next.js yol işleyicileri rastgele `export` edemez. Panel kapısı
+   **tsc + vitest + build** üçlüsüdür.
+
+### Ölçüm notu (tekrar eden bir tuzak)
+
+Makine yüklüyken (backend suiti + docker aynı anda) mobil tam koşumda
+**bilinen ölçüm-aracı flake'leri** çıkıyor: `pumpAndSettle timed out`
+(görsel yükleme) ve "painting debug variable changed" (görsel taklidi
+teardown'ı). P30'da 16 test böyle düştü; dosyalar tek tek geçiyordu, yüksüz
+tam koşum **1483/0**. **Mobil tam koşumu backend suitiyle aynı anda
+başlatmayın.**
+
+### Sıradaki
+
+**P31** (rapor motoru + katalog; Depends-on P29 ✔ → uygun). Ardından
+P32–P39.
+
+**Finans panel borcu (bilinçli, iki maddede yazılı):** P28 ve P29 API
+yüzeyini ve tutarlılık kurallarını kurdu ama **panel ekranları yapılmadı** —
+borç ve tahsilat aynı ekranda görünmeli, iki maddeye bölünmüş bir panel iki
+farklı düzen üretirdi. P31'in rapor ekranlarıyla birlikte **tek finans
+bölümü** olarak tasarlanmalı.
+
+Kalan: P31–P39. Bloke/Kerem'de: P2, P11 (device-verify listesi **14 madde**),
+P12/P13 (dış kimlik bilgileri — P30'un kart yolu bunu bekliyor), P18
+(donanım/saha), P22(a). Karar bekleyen: çeviri sağlayıcı, yüz tanıma.
+
 ## STATUS REPORT — 2026-07-31 #3 (kural 10: bağlam doldu, devir)
 
 **FINAL REPORT değildir** — uygun madde tükenmedi. P27'den itibaren devam
