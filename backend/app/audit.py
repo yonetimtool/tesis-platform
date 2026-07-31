@@ -94,6 +94,7 @@ class Action:
     UNIT_ACCESS_DECIDE = "unit_access_decide"
     COMPLAINT_CREATE = "complaint_create"
     GUVENLIK_MODU = "guvenlik_modu"
+    UYARI_MANUEL = "uyari_manuel"
     KVKK_YAYIN = "kvkk_yayin"
     KVKK_ONAY = "kvkk_onay"
     PAZARLAMA_RIZA = "pazarlama_riza"

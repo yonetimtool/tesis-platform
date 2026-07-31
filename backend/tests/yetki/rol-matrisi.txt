@@ -262,6 +262,9 @@ GET    /unit-tipleri                                        IZIN   IZIN   IZIN  
 POST   /unit-tipleri                                        IZIN   IZIN   RED    RED    RED    RED   
 DELETE /unit-tipleri/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
 PATCH  /unit-tipleri/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
+GET    /unit-uyarilari                                      IZIN   IZIN   RED    RED    RED    RED   
+POST   /unit-uyarilari/kuyruk-isle                          IZIN   RED    RED    RED    RED    RED   
+POST   /unit-uyarilari/{uyari_id}/yapildi                   IZIN   IZIN   RED    RED    RED    RED   
 GET    /units                                               IZIN   IZIN   IZIN   IZIN   RED    RED   
 POST   /units                                               IZIN   IZIN   RED    RED    RED    RED   
 POST   /units/bulk                                          IZIN   IZIN   RED    RED    RED    RED   

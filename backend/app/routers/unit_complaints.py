@@ -29,6 +29,8 @@ yapilandirilabilir hale getirmek icin degistirilecek tek yer burasidir.
 """
 from __future__ import annotations
 
+import logging
+
 import uuid
 
 from fastapi import APIRouter, Depends, Query
@@ -39,6 +41,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
+from ..gurultu_akisi import esik_kontrol
 from ..errors import APIError
 from ..models import AppUser, Unit, UnitComplaint, UnitComplaintOkuma, UnitResident
 from ..schemas import (
@@ -55,6 +58,8 @@ from ..schemas import (
     UnitDensityItem,
     UnitDensityResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/unit-complaints", tags=["unit-complaints"])
 
@@ -169,6 +174,14 @@ async def file_unit_complaint(
         db, user, Action.UNIT_COMPLAINT_FILE, resource_type="unit_complaint",
         resource_id=obj.id, meta={"target_unit_id": str(obj.target_unit_id)},
     )
+    # (P37) CAYDIRICI KANCASI: esik asildiysa uyari uretilir ve o dairenin
+    # gurultu sayaci SIFIRLANIR. Sikayet kaydi bunun sonucuna BAGLI DEGILDIR
+    # — caydiricinin basarisiz olmasi kullanicinin beyanini dusurmemeli.
+    try:
+        await esik_kontrol(db, tenant_id=user.tenant_id, unit=unit)
+    except Exception:  # noqa: BLE001 — kanca ucu ASLA dusurmez
+        logger.exception("gurultu caydiricisi basarisiz (sikayet kaydi durur)")
+
     # Sikayet acan kendi kaydini gorur (kendi notu) — complainant kimligini
     # tekrar donmeye gerek yok (kendisi zaten biliyor; residentta hep None).
     return UnitComplaintOut.from_model(obj, unit_no=unit.no, include_note=True)

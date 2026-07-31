@@ -1984,6 +1984,10 @@ class TenantSettings(BaseModel):
     anpr_otomatik_cikis: bool = True
     # (P35) Guvenligi kim yonetir (bkz. deps.GUVENLIK_YAZAN).
     guvenlik_modu: GuvenlikModu = "yonetim_ici"
+    # (P37) Gurultu caydiricisi. `gurultu_integration_id` NULL = MANUEL MOD.
+    gurultu_esigi: int = 5
+    gurultu_uyari_metni: str | None = None
+    gurultu_integration_id: uuid.UUID | None = None
     # (P34) Tur gecikme alarmi. Tolerans TENANT AYARIDIR: 10 dk bir sitede
     # makul, kampus buyuklugunde erken alarm demektir. Tekrar 0 = KAPALI.
     tur_gecikme_toleransi_dk: int = 10
@@ -2018,6 +2022,11 @@ class TenantSettingsUpdate(BaseModel):
     #: (bkz. router). Yoneticinin kendi yetkisini kendine geri verebilmesi,
     #: dis sirkete devri anlamsizlastirirdi.
     guvenlik_modu: GuvenlikModu | None = None
+    #: (P37) Sinir DB CHECK'iyle ayni. `gurultu_uyari_metni: null` gonderimi
+    #: metni VARSAYILANA dondurur (silmek degil, varsayilana donmek).
+    gurultu_esigi: int | None = Field(None, ge=1, le=50)
+    gurultu_uyari_metni: str | None = Field(None, max_length=1000)
+    gurultu_integration_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "TenantSettingsUpdate":
@@ -4615,3 +4624,26 @@ class PazarlamaTercihUpdate(BaseModel):
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
         return self
+
+
+# ============================ P37 GURULTU UYARISI =========================== #
+class UnitUyariOut(BaseModel):
+    """Verilen caydirici uyari kaydi — DENETIM gorunumu."""
+
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    unit_id: uuid.UUID
+    unit_no: str | None = None
+    esik: int
+    sayac: int
+    metin: str
+    kanal: Literal["webhook", "manuel"]
+    durum: Literal["gonderildi", "basarisiz", "manuel_bekliyor", "manuel_yapildi"]
+    deneme: int
+    hata: str | None = None
+    created_at: datetime
+
+
+class UnitUyariListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[UnitUyariOut]

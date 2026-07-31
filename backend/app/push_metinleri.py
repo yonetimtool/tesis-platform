@@ -121,6 +121,28 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('plan', 'dakika'),
     ),
+    # (P37) MANUEL MOD: entegrasyonu olmayan sitede anonsu YONETICI yapar.
+    "gurultu_uyarisi": PushMetni(
+        baslik={
+            "tr": "Gürültü uyarısı gerekiyor",
+            "en": "Noise warning needed",
+            "ar": "مطلوب تحذير بشأن الضوضاء",
+            "ru": "Требуется предупреждение о шуме",
+            "de": "Lärmwarnung erforderlich",
+            "fr": "Avertissement bruit requis",
+            "es": "Se requiere aviso por ruido",
+        },
+        govde={
+            "tr": "{daire} dairesi eşiğe ulaştı ({sayi} şikâyet). Lütfen uyarı anonsunu yapın.",
+            "en": "Unit {daire} reached the threshold ({sayi} complaints). Please make the announcement.",
+            "ar": "وصلت الوحدة {daire} إلى الحد ({sayi} شكاوى). يرجى إجراء الإعلان.",
+            "ru": "Квартира {daire} достигла порога ({sayi} жалоб). Пожалуйста, сделайте объявление.",
+            "de": "Einheit {daire} hat den Schwellenwert erreicht ({sayi} Beschwerden). Bitte Durchsage machen.",
+            "fr": "Le logement {daire} a atteint le seuil ({sayi} plaintes). Veuillez faire l'annonce.",
+            "es": "La vivienda {daire} alcanzó el umbral ({sayi} quejas). Haga el aviso, por favor.",
+        },
+        params=('daire', 'sayi'),
+    ),
     "yeni_talep": PushMetni(
         baslik={
             "tr": "Talep / Arıza",

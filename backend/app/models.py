@@ -66,6 +66,13 @@ KONUM_DURUMU = ENUM(
     "var", "izin_yok", "servis_kapali", "zaman_asimi", "bilinmiyor",
     name="konum_durumu", create_type=False,
 )
+UYARI_KANAL = ENUM(
+    "webhook", "manuel", name="uyari_kanal", create_type=False,
+)
+UYARI_DURUM = ENUM(
+    "gonderildi", "basarisiz", "manuel_bekliyor", "manuel_yapildi",
+    name="uyari_durum", create_type=False,
+)
 NOTIFICATION_TIP = ENUM(
     "kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma",
     "peyzaj_yaklasan", "peyzaj_kacirilan",
@@ -290,6 +297,19 @@ class Tenant(Base):
     #: gecmis kayitlar tutarsiz kalirdi.
     gecikme_aylik_yuzde = mapped_column(
         Numeric(5, 2), nullable=False, server_default=text("0")
+    )
+    #: (P37) Gurultu caydiricisi: daire basina ACIK gurultu sikayeti bu
+    #: sayiya ULASINCA (sinir DAHIL) uyari tetiklenir ve sayac SIFIRLANIR.
+    gurultu_esigi: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("5")
+    )
+    #: (P37) NULL = varsayilan metin. Bos metin de varsayilana duser
+    #: (iceriksiz anons kullanicinin niyeti olamaz).
+    gurultu_uyari_metni: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P37) NULL = MANUEL MOD (hata degil, birinci sinif mod): yoneticiye
+    #: bildirim gider, anonsu o yapar.
+    gurultu_integration_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
     )
     #: (P35) Guvenligi KIM yonetir? `yonetim_ici` (varsayilan, bugunku
     #: davranis: yonetici planlar) | `dis_sirket` (amir planlar, yonetici
@@ -2934,3 +2954,44 @@ class KvkkOnay(Base):
     #: surumu onayladi" sorusu yanitlanabilir kalmali.
     surum: Mapped[int] = mapped_column(Integer, nullable=False)
     onay_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class UnitUyari(Base):
+    """(P37) Esige varinca verilen caydirici uyari kaydi.
+
+    AYRI TABLO: "bu daireye ne zaman, hangi sayacla, hangi metinle uyari
+    verildi" sorusu denetlenebilir olmali. Sikayet satirlarina gomulu bir
+    bayrak, uyariyi bir sikayetin alt-ozelligi yapardi.
+
+    `esik`, `sayac` ve `metin` O ANKI degerleriyle KOPYALANIR: ayar/sablon
+    sonradan degisse de gecmis uyari ne oldugunu soylemeye devam eder.
+    """
+
+    __tablename__ = "unit_uyari"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_unit_uyari_id_tenant"),
+        ForeignKeyConstraint(
+            ["unit_id", "tenant_id"],
+            ["unit.id", "unit.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_unit_uyari_unit",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    esik: Mapped[int] = mapped_column(Integer, nullable=False)
+    sayac: Mapped[int] = mapped_column(Integer, nullable=False)
+    metin: Mapped[str] = mapped_column(Text, nullable=False)
+    kanal: Mapped[str] = mapped_column(UYARI_KANAL, nullable=False)
+    durum: Mapped[str] = mapped_column(UYARI_DURUM, nullable=False)
+    deneme: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    hata: Mapped[str | None] = mapped_column(Text, nullable=True)
+    son_deneme_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()

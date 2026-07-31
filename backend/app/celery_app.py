@@ -41,6 +41,12 @@ celery_app.conf.beat_schedule = {
         "task": "scheduler.detect_late_patrols",
         "schedule": float(settings.scheduler_gecikme_interval_seconds),
     },
+    # (P37) Caydirici webhook yeniden deneme kuyrugu — geri cekilme
+    # dakikalar mertebesinde oldugu icin dakikada bir bakmak yeterli.
+    "gurultu-kuyrugu": {
+        "task": "scheduler.gurultu_kuyrugu",
+        "schedule": 60.0,
+    },
     # KVKK saklama & imha — her gece 04:00 Europe/Istanbul. App TZ = UTC; TR
     # yil boyu UTC+3 (DST yok) => 01:00 UTC = 04:00 Istanbul.
     "run-retention": {

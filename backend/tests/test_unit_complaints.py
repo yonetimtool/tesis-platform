@@ -253,6 +253,15 @@ def test_renk_esikleri_ve_kapatma_feedback(ucworld, client):
     unit = ucworld["unit1"]
     res = ucworld["residents"]
 
+    # (P37 ETKILESIMI) Caydirici esigi VARSAYILAN 5'tir ve 5. gurultu
+    # sikayetinde sayaci SIFIRLAR — yani varsayilan ayarda `mor` kademesi
+    # gurultu icin ULASILAMAZ olur. Bu OLCUM renk skalasini olcuyor,
+    # caydiriciyi degil: esik kaldirilir ki skala sonuna kadar gorunsun.
+    # (Caydiricinin kendisi test_gurultu_caydirici.py'de olculur.)
+    yonetici_h = _headers(client, slug, ucworld["yonetici_a"])
+    assert client.patch("/tenant/settings", headers=yonetici_h,
+                        json={"gurultu_esigi": 50}).status_code == 200
+
     # P24: DORT KADEME — 0 yesil · 1-2 sari · 3-4 kirmizi · 5+ mor.
     assert _density_for(client, admin, unit)["renk"] == "yesil"
     assert _file(client, slug, res[0], unit).status_code == 201
@@ -268,7 +277,7 @@ def test_renk_esikleri_ve_kapatma_feedback(ucworld, client):
     assert _file(client, slug, res[4], unit).status_code == 201
     assert _density_for(client, admin, unit)["renk"] == "mor"
 
-    yon = _headers(client, slug, ucworld["yonetici_a"])
+    yon = yonetici_h
     cid = client.get(
         "/unit-complaints", headers=yon, params={"target_unit_id": unit}
     ).json()["items"][0]["id"]

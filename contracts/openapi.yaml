@@ -3550,6 +3550,65 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
   # ================================================================= #
+  # GURULTU CAYDIRICI (P37) — esik -> eylem -> sifirlama
+  # AYRI BIR WEBHOOK KONFIGURASYONU ACILMADI: C1b'nin `integration` tablosu
+  # zaten SSRF-korumali gonderim, KEK ile sifreli sir ve tenant izolasyonu
+  # sunuyor. Tenant yalnizca HANGI entegrasyonun caydirici oldugunu secer
+  # (`gurultu_integration_id`); NULL olmasi MANUEL MOD demektir — bir hata
+  # durumu degil, cogu sitenin normali.
+  # SIFIRLAMA KAYIT SILMEZ: esige varinca o dairenin ACIK gurultu
+  # sikayetleri `kapali`ya cekilir; kayitlar gecmiste durur, P24 renk
+  # skalasi dogal olarak yesile doner.
+  # ================================================================= #
+  /unit-uyarilari:
+    get:
+      tags: [gurultu]
+      summary: Verilen caydirici uyarilar (admin + yonetici)
+      description: >
+        Uyari kaydi KOMSU DAVRANISI hakkinda veri tasir (P24 ile ayni
+        gerekce): yalniz yonetim gorur. `esik`, `sayac` ve `metin` o anki
+        degerleriyle KOPYALANMISTIR — ayar/sablon sonradan degisse de gecmis
+        uyari ne oldugunu soylemeye devam eder.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: unit_id
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: uyarilar }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /unit-uyarilari/{uyari_id}/yapildi:
+    post:
+      tags: [gurultu]
+      summary: Manuel modda anonsun YAPILDIGINI isaretle
+      description: >
+        SUNUCU BUNU KENDILIGINDEN VARSAYAMAZ: anonsun gercekten yapilip
+        yapilmadigini yalniz insan bilir. Isaretlenmeyen kayit
+        `manuel_bekliyor` olarak DURUR — sessizce "yapildi" saymak,
+        denetimde yapilmamis bir isi yapilmis gostermek olurdu. Zaten
+        isaretlenmis kayit **409**.
+      parameters:
+        - { name: uyari_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: isaretlendi }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /unit-uyarilari/kuyruk-isle:
+    post:
+      tags: [gurultu]
+      summary: Basarisiz webhook uyarilarini ELLE yeniden dene (admin)
+      description: >
+        Normalde bunu zamanlanmis gorev yapar (`scheduler.gurultu_kuyrugu`,
+        dakikada bir); bu uc beat'i beklemeden dogrulamak icindir.
+        Geri cekilme KATLANIR (1, 5, 25 dk) ve en fazla 3 deneme yapilir;
+        tukenirse kayit MANUEL MODA duser — sistem sessizce pes etmez.
+      responses:
+        "200": { description: "{islenen: n}" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  # ================================================================= #
   # KVKK AYDINLATMA + ONAY + PAZARLAMA IZINLERI (P36)
   # METIN TENANT ICERIGIDIR, urun sabiti DEGIL: her tesisin veri sorumlusu
   # kendisidir. Platforma gomulu tek bir metin, 200 tesise BASKASININ
@@ -10128,6 +10187,31 @@ components:
             (P34) Tur penceresinin ilk okutmasinda kamera fotografi
             zorunlu mu? Urun kurali DEGIL tenant tercihi: gece vardiyasinda
             kamera kullanimi her sitede kabul gormez.
+        gurultu_esigi:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 5
+          description: >
+            (P37) Daire basina ACIK **gurultu** sikayeti bu sayiya ULASINCA
+            (sinir DAHIL) uyari tetiklenir ve o dairenin sayaci SIFIRLANIR.
+            `>` degil `>=`: aksi halde esik ayari kullaniciya soyledigi
+            sayidan bir fazlasinda calisirdi.
+        gurultu_uyari_metni:
+          type: string
+          nullable: true
+          maxLength: 1000
+          description: >
+            (P37) NULL veya bos = varsayilan metin. Bos metni "bilerek
+            bosalttim" saymak, iceriksiz bir anons gondermek olurdu.
+        gurultu_integration_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: >
+            (P37) Caydirici webhook'u olarak kullanilacak `/integrations`
+            kaydi. **NULL = MANUEL MOD** (hata degil): esik asilinca
+            yoneticiye bildirim gider ve anonsu o yapar.
         guvenlik_modu:
           type: string
           enum: [yonetim_ici, dis_sirket]
@@ -10199,6 +10283,17 @@ components:
           type: string
           enum: [yonetim_ici, dis_sirket]
           description: "(P35) YALNIZ admin gonderebilir (yonetici 403); denetlenir"
+        gurultu_esigi: { type: integer, minimum: 1, maximum: 50 }
+        gurultu_uyari_metni:
+          type: string
+          nullable: true
+          maxLength: 1000
+          description: "(P37) null gonderimi metni VARSAYILANA dondurur"
+        gurultu_integration_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P37) null = manuel mod"
 
     # ---------------------- yonetici iletisim ---------------------- #
     YoneticiKart:

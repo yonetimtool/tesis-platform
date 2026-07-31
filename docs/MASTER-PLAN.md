@@ -2257,7 +2257,7 @@ temiz, `flutter test` 1509, apk debug build başarılı; `goc-tersinirlik` bulgu
 maddede kural). Rol matrisi kilidi 7 satır büyüdü.
 
 ### P37 — Noise-deterrent automation (threshold → action → reset)
-Status: BEKLIYOR · Depends-on: P24
+Status: BITTI · Depends-on: P24
 Scope: when a unit's noise-complaint count reaches the tenant-configured
 threshold (default 5): fire the deterrent action, create an auditable
 "uyarı verildi" record, then RESET that unit's noise counter (complaint records
@@ -2271,6 +2271,81 @@ vendor hardware drivers — write a short design note listing candidate protocol
 (MQTT, KNX bridges) for later; the webhook is the product boundary.
 Acceptance: threshold boundary tests (4→no, 5→fire+reset), audit record, mock
 webhook receiver test incl. signature, manual mode; gates.
+Notes (2026-07-31):
+**AYRI BİR WEBHOOK KONFİGÜRASYONU AÇILMADI.** C1b'nin `integration` tablosu
+zaten SSRF-korumalı gönderim, KEK ile şifreli sır ve tenant izolasyonu
+sunuyor; ikinci bir URL/sır alanı **aynı güvenlik kontrollerini ikinci kez
+yazmak** ve birini güncelleyip diğerini unutmak demekti. Tenant yalnızca
+hangi entegrasyonun caydırıcı olduğunu seçer (`gurultu_integration_id`).
+
+**MANUEL MOD BİR HATA DURUMU DEĞİL, BİRİNCİ SINIF MOD.** Çoğu sitede
+entegrasyon hiç olmayacak; `NULL` olması "özellik çalışmıyor" değil "anonsu
+yönetici yapıyor" demektir. Eşik aşılınca yöneticiye push gider ve kayıt
+`manuel_bekliyor` olarak durur. **Sunucu "yapıldı" varsayamaz** — anonsun
+gerçekten yapılıp yapılmadığını yalnız insan bilir; işaretlenmeyen kayıt
+bekler, sessizce yapılmış saymak denetimde yapılmamış bir işi yapılmış
+göstermek olurdu.
+
+**SINIR DAHİLDİR (`>=`).** 4 tetiklemez, 5 tetikler. `>` olsaydı eşik ayarı
+kullanıcıya söylediği sayıdan **bir fazlasında** çalışırdı. Eşik 0/negatifse
+caydırıcı **kapalıdır** (kaza sonucu her şikâyette anons yapılmasın).
+
+**YALNIZ `gurultu` KATEGORİSİ SAYILIR.** P24'ün renk skalası tüm kategorileri
+sayar ama caydırıcı gürültüye özeldir: kapı önüne ayakkabı bırakan daireye
+"gürültü uyarısı" anonsu yapmak caydırıcıyı anlamsız kılardı.
+
+**SIFIRLAMA KAYIT SİLMEZ.** Eşiğe varınca o dairenin açık gürültü şikâyetleri
+`kapali`ya çekilir; satırlar geçmişte durur — silmek **uyarının dayanağını**
+yok etmek olurdu. P24 rengi açık sayısından hesaplandığı için daire doğal
+olarak yeşile döner; ayrı bir "sıfırlama rengi" yoktur. Sıfırlama özelliği
+kapatmaz: daire tekrar eşiğe varırsa ikinci uyarı verilir.
+
+**KANCA UCU ASLA DÜŞÜRMEZ.** Caydırıcının başarısız olması şikâyetin
+kaydedilmesini engellemez — şikâyet kullanıcının beyanıdır, caydırıcı
+sistemin tepkisidir. `try/except` + log.
+
+**İMZA.** `HMAC-SHA256(secret, "<timestamp>.<body>")` — GitHub/Stripe deseni.
+**Zaman damgası imzaya girer**: yalnız gövdeyi imzalamak, ele geçirilmiş bir
+isteğin sonsuza dek yeniden oynatılabilmesi demekti. Gövde **deterministik**
+(sıralı anahtar, boşluksuz) ki alıcı yeniden serileştirip aynı imzayı
+hesaplayabilsin. **Sır yoksa imza başlığı da gönderilmez**: boş bir sırla imza
+üretmek, alıcının doğruladığını sanıp aslında hiçbir şey doğrulamaması olurdu.
+
+**YENİDEN DENEME İSTEK YOLUNDA DEĞİL.** Kullanıcının şikâyet kaydını dış bir
+ucun yavaşlığına bağlamak olurdu. Ayrı bir beat görevi (`scheduler.
+gurultu_kuyrugu`, dakikada bir) **katlanan aralıklarla** (1, 5, 25 dk) en
+fazla 3 kez dener; tükenirse kayıt **manuel moda düşer** — sistem sessizce pes
+etmez, iş bir insana devredilir. Entegrasyon sonradan kaldırılırsa kuyrukta
+sonsuza dek beklemek yerine yine manuel moda düşer.
+
+**DONANIM SÜRÜCÜSÜ YAZILMADI** (kapsam gereği): `docs/caydirici-protokol-notu.md`
+MQTT / KNX-IP / SIP-paging / Home Assistant köprülerini ve köprü yazacak olana
+asgari sözleşmeyi belgeliyor. Ürün sınırı webhook'tur — sürücü yazmak, ürünü
+donanım envanterine bağlamak ve her firmware güncellemesinde bakım borcu
+üretmek demekti.
+
+**BULGU — P24 İLE ETKİLEŞİM.** Varsayılan eşik 5, P24 renk skalasının `mor`
+kademesi de 5+. Yani **varsayılan ayarda mor, gürültü şikâyetleri için
+ulaşılamaz**: daire mora dönmeden uyarı alır ve yeşile döner. Bu doğru
+davranıştır (caydırıcının amacı dairenin morda oturması değil, uyarılmasıdır)
+ama P24'ün skala testini düşürdü — o test skalayı ölçüyor, caydırıcıyı değil,
+bu yüzden eşiği kaldırıp ölçüyor. Diğer kategoriler mora ulaşmaya devam eder.
+
+**BULGU — İNDEKSSİZ FK.** `tenant.gurultu_integration_id` FK'sinin öncü
+kolonunu kapsayan indeks yoktu; indeks kapsamı envanteri yakaladı ("üst satır
+silinince RI tetiği tenant'ı seq scan eder"). Kısmî indeks eklendi (0026,
+yerinde düzenleme istisnası dosyada gerekçelendirildi).
+
+Kanıt: `backend/tests/test_gurultu_caydirici.py` **17 test** yeşil (sınır
+4→hayır / 5→tetikle+sıfırla, yalnız-gürültü, manuel mod, manuel-yapıldı +
+409, tenant eşiği, eşik sınırları, RBAC, yeniden birikme, tenant izolasyonu,
+webhook modu + SSRF reddi + kuyruk penceresi, alıcı imza doğrulaması, saf
+çekirdek: eşik/metin/gövde/imza/geri-çekilme); tam pytest yeşil;
+`goc-tersinirlik` bulgu 0 (27 sınır), `goc-uyum-dogrula` bulgu 0; seed koştu.
+Rol matrisi kilidi 3 satır büyüdü.
+
+**AÇIK BIRAKILAN (panel borcuna eklendi):** eşik/metin/entegrasyon seçimi ve
+uyarı geçmişi **ekranı** yok (API + tenant ayarları hazır).
 
 ### P38 — Site web portal + surveys (anket)
 Status: BEKLIYOR · Depends-on: P29; nice-to-have reuse from P7
@@ -2548,7 +2623,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P36 · (bu commit) · KVKK aydinlatma kapisi + pazarlama izinleri (0025): METIN TENANT ICERIGIDIR (gomulu tek metin 200 tesise BASKASININ metnini imzalatirdi), SURUM VAR YERINDE DUZENLEME YOK (dun verilen onay bugun baska metne ait gorunurdu), onay eski surume yazilmaz (409) ve IDEMPOTENT; kaydirma kilidi 24 px esikli ve SIGAN icerikte ZATEN ACIK; sunucu navigasyonu kilitlemez (onay vermemis kullanici metni OKUYABILMELI), ag hatasinda kapi ACILMAZ; P32 pazarlama gonderimi artik GERCEK ve KANAL BAZLI rizayi okuyor; BULGU: izinler kartinin donen gostergesi dokuz ayar testini pumpAndSettle zaman asimiyla dusurdu.\n- 2026-07-31 · P35 · 458dc75 · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
+- 2026-07-31 · P37 · (bu commit) · Gurultu caydirici otomasyonu (0026): AYRI webhook konfigurasyonu ACILMADI (C1b integration zaten SSRF+KEK+izolasyon veriyor), MANUEL MOD birinci sinif (cogu sitede entegrasyon yok) ve sunucu 'yapildi' VARSAYAMAZ; sinir DAHIL (4 hayir, 5 evet), YALNIZ gurultu kategorisi, SIFIRLAMA KAYIT SILMEZ (kapali'ya ceker — uyarinin dayanagi durur); HMAC imzasi ZAMAN DAMGASINI kapsar (replay), sir yoksa imza da yok; yeniden deneme istek yolunda DEGIL, katlanan aralikla ve tukenince MANUEL MODA duser; BULGU: FK indekssizdi (RI tetigi tenant'i seq scan ederdi).\n- 2026-07-31 · P36 · (bu commit) · KVKK aydinlatma kapisi + pazarlama izinleri (0025): METIN TENANT ICERIGIDIR (gomulu tek metin 200 tesise BASKASININ metnini imzalatirdi), SURUM VAR YERINDE DUZENLEME YOK (dun verilen onay bugun baska metne ait gorunurdu), onay eski surume yazilmaz (409) ve IDEMPOTENT; kaydirma kilidi 24 px esikli ve SIGAN icerikte ZATEN ACIK; sunucu navigasyonu kilitlemez (onay vermemis kullanici metni OKUYABILMELI), ag hatasinda kapi ACILMAZ; P32 pazarlama gonderimi artik GERCEK ve KANAL BAZLI rizayi okuyor; BULGU: izinler kartinin donen gostergesi dokuz ayar testini pumpAndSettle zaman asimiyla dusurdu.\n- 2026-07-31 · P35 · 458dc75 · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
 - 2026-07-31 · P34 · 4395fdc · Tur butunlugu (0023): KONUM BIR KANITTIR ON KOSUL DEGIL — izin reddi/servis kapali okutmayi dusurmez ama SESSIZ DE KALMAZ (konum_durumu + konumsuz_sayisi + suzgec); gecikme alarmi 'kacirildi'dan AYRI, araliklari KATLANAN tekrarli bildirim (gorevliye kisi, yonetime rol) ve bildirim TEKLIGI kismi indekse cevrildi (ikinci alarm sessizce dusuyordu); baslangic fotografi '1 metre gidip gel' YERINE (SDM zaten fiziksel varligi kanitliyor; fotograf ORTAM+SAAT boyutu ekler), kamera-only + ayri hata kodu.
 - 2026-07-31 · P33 · 236f70b · Yonetisim modulleri (0022): IS TAKIBI denetimi omurganin ZATEN VAR OLDUGUNU gosterdi — birlestirme degil GENISLETME (complaint + unit_id/oncelik/atanan_personel; oncelik durumdan BAGIMSIZ ayri ucta, atanan personel_kayit'tir app_user degil); karar defteri uyeleri AYRI TABLODA + metin sablonlu PDF; dokuman arsivi USTVERI-ONLY (obje silinmez); site aktarimi KURU CALISMALI ve SATIR BAZLI hata raporlu, idempotent.
 - 2026-07-31 · P32 · 47ac96c · Mesaj sablonlari + gonderim (0021): gonderilen metin GECMISE KOPYALANIR (sablon degisse de kanit durur), amac SABLONDA (pazarlama riza olmadan HIC gonderilmez ve atlananlar SAYILIR), SMS sayaci Turkce tuzagini gosterir (kucuk c/i/g/s UCS-2'ye dusurur), saglayici takasi yapilandirma ile; P28 seed regresyonu bulundu ve duzeltildi.

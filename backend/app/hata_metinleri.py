@@ -406,6 +406,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Un chef de la sécurité ne peut créer que des comptes d'agents de sécurité.",
         "es": "Un jefe de seguridad solo puede crear cuentas de personal de seguridad.",
     },
+    "uyari_manuel_beklemiyor": {
+        "tr": "Bu uyarı manuel işaretleme beklemiyor.",
+        "en": "This warning is not awaiting manual confirmation.",
+        "ar": "هذا التحذير لا ينتظر تأكيدًا يدويًا.",
+        "ru": "Это предупреждение не ожидает ручного подтверждения.",
+        "de": "Diese Warnung wartet nicht auf manuelle Bestätigung.",
+        "fr": "Cet avertissement n'attend pas de confirmation manuelle.",
+        "es": "Esta advertencia no está esperando confirmación manual.",
+    },
     "kvkk_metni_yayinlanmamis": {
         "tr": "Bu tesis için aydınlatma metni henüz yayınlanmamış.",
         "en": "No privacy notice has been published for this site yet.",

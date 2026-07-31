@@ -44,6 +44,21 @@ def detect_late_patrols() -> dict:
     return {"alarm": detect_gecikmis()}
 
 
+@celery_app.task(name="scheduler.gurultu_kuyrugu")
+def gurultu_kuyrugu() -> dict:
+    """(P37) Beat: basarisiz caydirici webhook'larini geri-cekilmeli dener.
+
+    ISTEK YOLUNDA DEGIL: kullanicinin sikayet kaydini dis bir ucun
+    yavasligina baglamak olurdu. Tenant enumerasyonu OWNER ile (RLS
+    bootstrap), asil is her tenant icin app_rw + tenant baglami altinda.
+    """
+    import asyncio
+
+    from .gurultu_kuyruk import tum_tenantlar_icin
+
+    return {"islenen": asyncio.run(tum_tenantlar_icin())}
+
+
 @celery_app.task(name="ceviri.translate_entity", bind=True, max_retries=3)
 def translate_entity(self, tip_ad: str, entity_id: str, tenant_id: str) -> dict:
     """Yayin iceriginin (duyuru/kural/etkinlik) eksik cevirilerini uretir.

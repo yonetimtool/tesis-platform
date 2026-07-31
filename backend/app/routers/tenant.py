@@ -47,6 +47,9 @@ _YONETICI_YAZABILIR = {
     # talebine cevirirdi.
     "tur_gecikme_toleransi_dk", "tur_alarm_tekrar_sayisi",
     "tur_baslangic_foto_zorunlu",
+    # (P37) Gurultu caydiricisi SITE YONETIMININ isidir: esigi ve anons
+    # metnini komsuluk iliskisini bilen kisi ayarlar.
+    "gurultu_esigi", "gurultu_uyari_metni", "gurultu_integration_id",
 }
 
 
@@ -65,6 +68,9 @@ def _to_settings(t: Tenant) -> TenantSettings:
         tur_alarm_tekrar_sayisi=t.tur_alarm_tekrar_sayisi,
         tur_baslangic_foto_zorunlu=t.tur_baslangic_foto_zorunlu,
         guvenlik_modu=t.guvenlik_modu,
+        gurultu_esigi=t.gurultu_esigi,
+        gurultu_uyari_metni=t.gurultu_uyari_metni,
+        gurultu_integration_id=t.gurultu_integration_id,
     )
 
 
