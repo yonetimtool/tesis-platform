@@ -1124,61 +1124,53 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
-## STATUS REPORT — 2026-07-31 (kural 10: bağlam ağırlaştı, devir)
+## STATUS REPORT — 2026-07-31 #2 (kural 10: bağlam doldu, devir)
 
-**Bu bir FINAL REPORT değildir** — uygun madde tükenmedi; oturumun bağlamı
-doldu. Plan dosyası tüm durumu taşıyor; `/clear` + standart kickoff ile
-kaldığı yerden devam edilebilir.
+**FINAL REPORT değildir** — uygun madde tükenmedi. Plan dosyası tüm durumu
+taşıyor; `/clear` + standart kickoff ile devam edilebilir.
 
-### Biten (13 madde, hepsi `origin/main`'de)
+### Biten (19 madde, hepsi `origin/main`'de)
+
+P1, P3, P4, P5, P6, P7, P8, P9, P10, P14, P15, P16, P17, P19, P20, P21
+(+ P2/P11/P12/P13/P18 blokeli).
+
+Bu oturumun ikinci yarısında eklenenler:
 
 | Madde | Sonuç |
 |---|---|
-| P1 | Prod göç paketi origin/main'de doğrulandı (kod yok) |
-| P3 | Kapsama serisi KAPANDI; `temp_code_dialog` 0/25→25/25; 2 bulgu |
-| P4, P5 | i18n zaten bitmiş — ölçüm yeniden koşuldu, §15 = 8 (hepsi istisna) |
-| P6 | Sunucu yerelleştirmesi zaten bitmiş — sınır/sözleşme/katalog doğrulandı |
-| P7 | **İçerik çevirisi mobile bağlandı** (yeni iş) — 23 test |
-| P8 | **Araç Geçişleri + Otopark + İhlaller ekranları** (yeni iş) — 24 test |
-| P9 | Sözleşme kontrolü METOT düzeyine çıkarıldı; 2 beyan sapması düzeltildi |
-| P10 | **İki gerçek ürün yarışı** düzeltildi; 20× tekrar 20/20 yeşil |
-| P14 | Çeviri kalite kapısı: teslim paketi + ölçüm + karar notu |
-| P15 | Frigate PoC koşuldu; ANPR olay şeması taslağı |
-| P20 | Yüz tanıma v2 tasarım notu (uygulama yok) |
-| P21 | Talep-üzerine çeviri değerlendirme notu (uygulama yok) |
-
-Ek olarak üç **ölçüm aracı** hatası bulunup düzeltildi (ayrı commit'ler):
-backend `/me/patrol-window` testinin gece-yarısı sarması, kuyruk testinin
-geçici-dizin ev işi, fotoğraflı sürüşün `pumpAndSettle` stratejisi.
+| **P16** | ANPR ingest: migration 0011 (anpr_api_key + anpr_event + vehicle_pass.kaynak), `X-ANPR-Key` kimliği (SECURITY DEFINER çözümleme), dört adaptör, eşik + onay kuyruğu, 27 test |
+| **P17** | RTSP kameralar restream ile OYNATILABİLİR (migration 0012) + Plaka Okumaları ekranı (onay kuyruğu + OCR düzeltmesi), 18+5 test |
+| **P19** | Hikvision/Dahua gerçekçi tam gövdelerle kilitlendi (3 bulgu) + `docs/anpr-kamera-kurulumu.md` |
 
 ### Kapılar (son durum)
 
-* backend `pytest`: **792 geçti / 0 düştü**
-* mobil `flutter analyze`: temiz · `flutter test`: **1408 geçti / 0 düştü**
-  (20× tekrar 20/20) · `flutter build apk --debug` ✓
-* admin-web: **105 test geçti** · `npm run build` ✓
-* sözleşme↔canlı: **201/201 operasyon** iki yönde örtüşüyor
+* backend `pytest`: **828 geçti / 0 düştü**
+* mobil `flutter analyze` temiz · `flutter test` **1426 geçti / 0 düştü**
+  (P10 için 20× tam-suit tekrarı 20/20) · `flutter build apk --debug` ✓
+* admin-web: 105 test + `npm run build` ✓
+* sözleşme↔canlı: **207/207 operasyon** iki yönde örtüşüyor
+* göç tersinirliği: 0 bulgu (12 sınır)
 
-### Blokeli (Kerem'i bekliyor)
+### Sıradaki iş
 
-* **P2** — prod runbook'u sunucuda uygulama (yalnız Kerem).
-* **P11** — cihaz testleri; listeye bu oturumda **4 yeni madde** eklendi
-  (P3 geçici kod diyaloğu, P7 çeviri notu, P8 üç ekran, P10 çevrimdışı kuyruk).
-* **P12/P13** — Firebase ve iyzico/PayTR kimlik bilgileri (dış bağımlılık).
-* **P18** — donanım + saha.
+**P22** — mobil UX paketi. **(a) denendi ve GERİ ALINDI**; tam tanı P22
+Notes'unda (üç ölçüm, ikisi çözüldü, biri açık: dokunma hit-test'i barrier'a
+gidiyor). Önerilen yol: dönüşümü TEK ekranla başlat, beş eksen sürüşünü yeşile
+al, sonra yay. **(b)–(g) hiç ellenmedi** ve bağımsızdır — oradan da
+başlanabilir.
 
-### Kerem'in karar vermesi gerekenler (iş bu kararla açılıyor)
+Ardından P23–P39.
 
-1. **Çeviri sağlayıcısı** — `docs/ceviri-kalite-notu.md`. LibreTranslate
-   Türkçe kaynakta alan terimlerini bozuyor ("aidat" → *regimen*, son ödeme
-   "ayın 10'u" → *10 months*). Üç seçenek yazıldı; DeepL bir **KVKK kararı**
-   olduğu için ajan tarafından yapılmadı.
+### Kerem'in karar vermesi gerekenler (değişmedi)
+
+1. **Çeviri sağlayıcısı** — `docs/ceviri-kalite-notu.md` (DeepL bir KVKK
+   kararı; ajan yapmadı).
 2. **Yüz tanıma** — `docs/face-recognition-v2-design.md` karar satırı.
-3. **P16'nın şema kararı** — `vehicle_pass.kaydeden_user_id` NOT NULL engeli;
-   P16 Notes'unda üç seçenek gerekçeleriyle yazılı (öneri: kolonu nullable
-   yapıp `kaynak` enum'u eklemek).
 
-### Sıradaki uygun madde
+### Blokeli
+
+P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumda
+**6 madde** eklendi), P12/P13 (dış kimlik bilgileri), P18 (donanım + saha).
 
 **P16** (ANPR ingest backend) — hazırlık notu P16'ya işlendi, olay şeması
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
