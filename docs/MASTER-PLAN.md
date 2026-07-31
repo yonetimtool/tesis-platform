@@ -717,11 +717,44 @@ optional), camera-angle guidance for LPR, remote update strategy note.
 Acceptance: runbook committed; field execution is Kerem's.
 
 ### P19 — Hikvision/Dahua adapters
-Status: BEKLIYOR · Depends-on: P16
+Status: BITTI · Depends-on: P16
 Scope: Adapters translating Hikvision (ISAPI event notification) and Dahua HTTP
 push payloads into the P16 ingest format. Config docs for pointing cameras at our
 endpoint. Simulated-payload tests (real device tests are field work).
 Acceptance: recorded/sample payloads from both brands map correctly; docs committed.
+Notes (2026-07-31): Adaptörlerin KENDİSİ P16'da yazılmıştı (kaynaktan bağımsız
+mimarinin doğal parçası); bu madde iki eksiği kapattı.
+**(a) GERÇEKÇİ YÜK TESTLERİ.** P16'daki adaptör testleri MİNİMUM alanlarla
+koşuyordu. Sahadaki gövdeler onlarca alan taşır ve asıl risk eksik değil
+**FAZLA** alandır — yanlış alanı okumak. Marka belgelerindeki tam gövdeler
+yazıldı (`HIKVISION_TAM`: ipAddress/macAddress/channelID/eventType/country/
+plateColor/vehicleType/picName…; `DAHUA_TAM`: Code/Action/PlateColor/
+VehicleColor/Speed/Lane/GroupID…) ve adaptörlerin doğru alanları seçtiği
+kilitlendi. Ayrıca **uçtan uca**: iki marka gövdesi de gerçek geçiş açıyor ve
+tekrarında idempotent kalıyor.
+BULGU: Hikvision'ın `ANPR.direction: "forward"` alanı YÖN DEĞİLDİR (şerit
+yönü, geçiş yönü değil) — adaptörün bunu yön sanmadığı testle kilitlendi.
+BULGU 2: `_utc` adını taşıyan fonksiyon Hikvision'ın `+03:00` ofsetini
+KORUYORDU. Yanlış sonuç vermiyordu (an aynı) ama akış aşağısında ofsetli/
+ofsetsiz karışımı üretirdi ve fonksiyonun adı bunu vaat ediyordu; artık her
+zaman UTC'ye normalize ediyor.
+BULGU 3: Hikvision kimliksiz gövde gönderdiğinde türevsel kimliğin
+**KARARLI** olduğu (kamera "retry" yapınca ikinci geçiş AÇILMAMASI) uçtan uca
+testle kilitlendi — bu, sahada en pahalı hata sınıfıdır.
+**(b) KURULUM DOKÜMANI** — `docs/anpr-kamera-kurulumu.md`: anahtar üretimi
+(kamera başına ayrı anahtar önerisi + `son_kullanim` ile teşhis), Hikvision
+ISAPI ayarları (+ XML gönderen eski firmware için dönüştürücü notu), Dahua
+HTTP push, Frigate MQTT köprüsü ("köprüde ayıklama YAPMAYIN — uç zaten
+idempotent; ayıklarsanız `end` yükündeki nihai plakayı kaçırırsınız"),
+**yön ayarının en sık atlanan ayar olduğu** (tek yönlü kapıda
+`anpr_otomatik_cikis` kapatılmalı), güven eşiği rehberi (1.0 = yeni kamerayı
+gözlem altında çalıştırma), **kamera açısı** (P15'in mimari bulgusu: plaka
+aracın özniteliğidir → gövde görünmeli; 100–150 px plaka genişliği; gece IR
+parlaması), doğrulama `curl`'ü ve belirti→neden tablosu, ağ/güvenlik notları.
+Sözleşmeden bu dokümana bağlantı verildi.
+GERÇEK CİHAZ TESTİ SAHA İŞİDİR (P18) — burada simüle yükler kilitlendi.
+KAPILAR: `pytest` **828 geçti / 0 düştü** (P19 öncesi 824 → +4); `tests/test_anpr.py` 31/31. Mobil
+dokunulmadı.
 
 ### P20 — Face recognition v2: design note only
 Status: BITTI · Depends-on: —
@@ -1113,6 +1146,7 @@ geçici-dizin ev işi, fotoğraflı sürüşün `pumpAndSettle` stratejisi.
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P19 · (bu commit) · Hikvision/Dahua adaptorleri GERCEKCI tam govdelerle kilitlendi (uc bulgu: direction yon degil, _utc ofseti koruyordu, kimliksiz govdede turevsel kimlik kararli) + kamera kurulum dokumani.
 - 2026-07-31 · P17 · 4cf269e · RTSP kameralar restream ile OYNATILABILIR (0012) + Plaka Okumalari ekrani (onay kuyrugu + OCR duzeltmesi); 26 ARB anahtari x 7 dil; 18+5 test.
 - 2026-07-31 · P16 · ee77535 · ANPR ingest: 0011 revizyonu (anpr_api_key + anpr_event + vehicle_pass.kaynak), X-ANPR-Key kimligi (SECURITY DEFINER cozumleme), dort adaptor, esik/onay kuyrugu, 27 test; deponun dort envanter kilidi de karsilandi.
 - 2026-07-30 · P21 · 10cf95f · Talep-uzerine ceviri DEGERLENDIRME NOTU (uygulama yok): yazma-aninda degil talep-uzerine + tek dil; kalite engeli once, DeepL'de ucuncu kisi verisi uyarisi.

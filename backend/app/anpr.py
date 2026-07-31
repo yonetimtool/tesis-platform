@@ -92,21 +92,28 @@ class Karar:
 def _utc(deger: Any) -> datetime:
     """Kaynaklardan gelen zamani UTC `datetime`a cevir.
 
-    Frigate UNIX float SANIYE kullanir; Hikvision/Dahua ISO8601 metin.
-    Naive bir zaman gelirse UTC kabul edilir — sunucu ile kamera arasinda
-    saat dilimi tahmini yapmak sessiz hata uretir; sozlesme UTC ister.
+    Frigate UNIX float SANIYE kullanir; Hikvision/Dahua ISO8601 metin
+    (Hikvision cogunlukla `+03:00` gibi bir OFSETLE gonderir).
+
+    ONEMLI: donus HER ZAMAN UTC'ye NORMALIZE edilir. Ofseti oldugu gibi
+    tasimak yanlis SONUC vermezdi (an aynidir) ama akis asagisinda karsilastirma
+    ve gunluk sinirlarinda ofsetli/ofsetsiz karisimi uretirdi; fonksiyonun adi
+    da bunu vaat ediyor. Naive bir zaman gelirse UTC KABUL EDILIR — sunucu ile
+    kamera arasinda saat dilimi TAHMIN etmek sessiz hata uretir.
     """
     if isinstance(deger, (int, float)):
         return datetime.fromtimestamp(float(deger), tz=UTC)
     if isinstance(deger, datetime):
-        return deger if deger.tzinfo else deger.replace(tzinfo=UTC)
+        d = deger if deger.tzinfo else deger.replace(tzinfo=UTC)
+        return d.astimezone(UTC)
     if isinstance(deger, str) and deger:
         metin = deger.replace("Z", "+00:00")
         try:
             d = datetime.fromisoformat(metin)
         except ValueError:
             raise APIError(422, "validation_error", "anpr_zaman_bicimi")
-        return d if d.tzinfo else d.replace(tzinfo=UTC)
+        d = d if d.tzinfo else d.replace(tzinfo=UTC)
+        return d.astimezone(UTC)
     raise APIError(422, "validation_error", "anpr_zaman_bicimi")
 
 

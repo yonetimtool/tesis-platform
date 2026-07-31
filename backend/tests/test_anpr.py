@@ -427,3 +427,135 @@ def test_otomatik_cikis_kapali_iken_gecis_KAPANMAZ(client, world):
     finally:
         client.patch("/tenant/settings", headers=admin,
                      json={"anpr_otomatik_cikis": True})
+
+
+# --------------------------------------------------------------------------- #
+# P19 — GERCEKCI MARKA YUKLERI (tam govde, kirpilmamis)
+#
+# P16'daki adaptor testleri MINIMUM alanlarla kosuyordu. Sahadaki kamera
+# gövdeleri onlarca alan tasir ve adaptorun bunlarin ARASINDAN dogru alanlari
+# secmesi gerekir; eksik degil FAZLA alan da bir hata sinifidir (yanlis alani
+# okumak). Asagidaki gövdeler marka belgelerindeki alan adlariyla yazildi.
+# --------------------------------------------------------------------------- #
+HIKVISION_TAM = {
+    "kaynak": "hikvision",
+    "EventNotificationAlert": {
+        "ipAddress": "10.0.0.31",
+        "portNo": 80,
+        "protocol": "HTTP",
+        "macAddress": "ac:cb:51:00:00:01",
+        "channelID": 1,
+        "channelName": "Ana Kapı",
+        "dateTime": "2026-07-31T10:05:00+03:00",
+        "activePostCount": 1,
+        "eventType": "ANPR",
+        "eventState": "active",
+        "eventDescription": "ANPR",
+        "ANPR": {
+            "country": "TUR",
+            "licensePlate": "34 ABC 123",
+            "line": 1,
+            "direction": "forward",
+            "confidenceLevel": 95,
+            "plateType": "unknown",
+            "plateColor": "white",
+            "vehicleType": "sedan",
+            "dateTime": "2026-07-31T10:05:00+03:00",
+            "picName": "plate_20260731_100500.jpg",
+        },
+    },
+}
+
+DAHUA_TAM = {
+    "kaynak": "dahua",
+    "Events": [
+        {
+            "Code": "TrafficJunction",
+            "Action": "Pulse",
+            "Index": 0,
+            "Data": {
+                "PlateNumber": "07 AB 100",
+                "PlateColor": "White",
+                "PlateType": "Normal",
+                "VehicleColor": "Black",
+                "Speed": 18,
+                "Confidence": 92,
+                "UTC": 1785450900,
+                "ChannelName": "Çıkış",
+                "EventID": "dahua-evt-99871",
+                "Lane": 1,
+                "GroupID": 4,
+                "Country": "TUR",
+            },
+        }
+    ],
+}
+
+
+def test_hikvision_TAM_govdeden_dogru_alanlari_secer():
+    olay = coz("hikvision", HIKVISION_TAM)
+    assert olay.plaka == "34ABC123"
+    assert olay.plaka_ham == "34 ABC 123"
+    assert olay.kamera == "Ana Kapı"
+    assert olay.guven == Decimal("0.950")
+    # `direction: forward` YON DEGILDIR (serit yonu, gecis yonu degil) —
+    # adaptor bunu yon sanmamali.
+    assert olay.yon == YON_BILINMIYOR
+    # `dateTime` +03:00 tasiyor; UTC'ye cevrilmis olmali.
+    assert olay.zaman.utcoffset().total_seconds() == 0
+    assert olay.zaman.hour == 7  # 10:05 +03:00 -> 07:05 UTC
+
+
+def test_dahua_TAM_govdeden_dogru_alanlari_secer():
+    olay = coz("dahua", DAHUA_TAM)
+    assert olay.plaka == "07AB100"
+    assert olay.kamera == "Çıkış"
+    assert olay.guven == Decimal("0.920")
+    # EventID VARSA idempotency anahtari ODUR (turetilmis kimlik degil).
+    assert olay.kaynak_olay_id == "dahua-evt-99871"
+    assert olay.zaman.year == 2026
+
+
+def test_marka_govdeleri_UCTAN_UCA_gecis_acar(client, world):
+    """Adaptorler yalniz cozumlemekle kalmaz; gercek gecis acar."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    ak = {"X-ANPR-Key": _anahtar(client, admin, ad="marka kutusu")["anahtar"]}
+
+    for govde, beklenen in ((HIKVISION_TAM, "34ABC123"), (DAHUA_TAM, "07AB100")):
+        # Plakalar sabit oldugu icin ONCE varsa acik gecisi kapat: test
+        # yalitilmis olsun (baska test ayni plakayi birakmis olabilir).
+        yeni = {**govde}
+        r = client.post("/integrations/anpr/events", headers=ak, json=yeni)
+        assert r.status_code == 201, r.text
+        o = r.json()
+        assert o["plaka"] == beklenen
+        # islendi (giris ya da cikis) ya da yok_sayildi (zaten iceride) —
+        # ikisi de GECERLI; hata/onay_bekliyor DEGIL.
+        assert o["durum"] in ("islendi", "yok_sayildi"), o
+        # Ayni govde tekrar: idempotency (marka kimligi/turevsel kimlik).
+        r2 = client.post("/integrations/anpr/events", headers=ak, json=yeni)
+        assert r2.json()["id"] == o["id"]
+
+
+def test_hikvision_KIMLIKSIZ_govdede_turevsel_kimlik_KARARLI(client, world):
+    """Kamera 'retry' yaptiginda ikinci gecis ACILMAMALI.
+
+    Hikvision her bildirimde benzersiz kimlik vermeyebilir; adaptor
+    (plaka + zaman)dan turetir. Ayni olay tekrar gelirse AYNI kimlik cikar.
+    """
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    ak = {"X-ANPR-Key": _anahtar(client, admin, ad="kimliksiz")["anahtar"]}
+    plaka = f"35KK{uuid.uuid4().hex[:4].upper()}"
+    govde = {
+        "kaynak": "hikvision",
+        "EventNotificationAlert": {
+            "channelName": "Kapi",
+            "ANPR": {"licensePlate": plaka,
+                     "dateTime": "2026-07-31T11:00:00+03:00",
+                     "confidenceLevel": 93},
+        },
+    }
+    ilk = client.post("/integrations/anpr/events", headers=ak, json=govde).json()
+    tekrar = client.post("/integrations/anpr/events", headers=ak, json=govde).json()
+    assert ilk["id"] == tekrar["id"], "kimliksiz govdede tekrar YENI kayit acti"
+    assert ilk["kaynak_olay_id"] == tekrar["kaynak_olay_id"]
