@@ -323,7 +323,7 @@ KAPILAR: tam `pytest` → **792 geçti / 0 düştü** (yeni 3 test dahil).
 Kod değişmedi — yalnız sözleşme + test.
 
 ### P10 — scan_outbox_test flake fix
-Status: BEKLIYOR(urun duzeltmesi girdi; 20x kaniti yeniden olculuyor) · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: Persistence-test race (b7bd5eb history): passes isolated, rarely fails in
 full runs. Find the actual race (shared temp dir / async timing), fix properly.
 Acceptance: documented repro reasoning + 20x full-suite-context repetition green.
@@ -374,7 +374,31 @@ KARŞILANMADI**; madde BITTI'den geri alındı. İki düşüşün analizi:
   yeniden koşuldu: **ikisinde de 48/48 geçti**. Tekrar koşumunun günlüğü
   yalnız test adlarını sakladığı için geriye dönük tanı yapılamıyor. Tek
   seferlik ortam takılması olarak İZLENİYOR; tekrarlarsa günlükleme
-  genişletilip ayrı madde açılacak.
+  genişletilip ayrı madde açılacak. (Not: koşum #2 ve #3'te bir daha
+  görülmedi — 40 koşumda 1.)
+
+**TEKRAR KOŞUMU #2 (20×, TAM GÜNLÜK saklandı) — 19 geçti / 1 düştü.**
+Kuyruk testleri **20/20** geçti, yani P10'un asıl ürün düzeltmesi sağlam.
+Tek düşüş BAŞKA bir testte: `kural_duyuru_sakin_i18n_test` "FOTOGRAFLI: duyuru
+ekrani". Tam günlük saklandığı için bu kez TEŞHİS EDİLDİ:
+`pumpAndSettle timed out` — `ekran_surus.dart::_gorselleriYukle` her turda
+görsel ÇÖZÜLMEDEN `pumpAndSettle` çağırıyordu; görsel yüklenirken ekranda
+duran `CircularProgressIndicator` SONSUZ animasyondur ve oturma asla
+gerçekleşmez. Normal koşumda görsel ilk 50 ms'de çözülüp gösterge kalktığı
+için hiç görünmüyordu; TAM SUİT yükü altında kodek gecikince ortaya çıkıyor.
+**Yine ürün değil, ÖLÇÜM ARACI hatası** — ayrı commit'te düzeltildi
+(`fix(tests): fotografli surus yuk altinda "pumpAndSettle timed out"`);
+doğrulama: dosya izole 50/50, iki eşzamanlı suit koşarken üç kez üst üste
+49/49.
+
+**TEKRAR KOŞUMU #3 (20×) — 20 GEÇTİ / 0 DÜŞTÜ. ✅ KABUL ÖLÇÜTÜ KARŞILANDI.**
+
+DERS (bu deponun tekrar eden dersi, üçüncü kez): P10'un "kırılgan test"
+etiketi yanlıştı — altında **iki gerçek ürün yarışı** vardı. Ama kanıtı
+toplarken çıkan iki düşüş ürün değil, **ölçüm araçlarının kendi hatalarıydı**
+(testin geçici-dizin ev işi + fotoğraf sürüşünün oturma stratejisi). Yani
+hem "test kırılgan" hem "ürün bozuk" ilk teşhisleri yanlış olabilir; ölçümün
+kendisi de her seferinde sanık listesindedir.
 
 ### P11 — [KEREM] Accumulated device testing
 Status: BLOKE(Kerem telefonda test eder) · Depends-on: —
