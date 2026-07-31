@@ -30,6 +30,7 @@ const LINKS: { href: string; anahtar: SozlukAnahtari; icon: IconName }[] = [
   { href: "/units", anahtar: "kabukDaireler", icon: "home" },
   { href: "/building-editor", anahtar: "kabukBinaDuzenleme", icon: "edit" },
   { href: "/schematic", anahtar: "kabukSikayetHaritasi", icon: "pin" },
+  { href: "/tanimlar", anahtar: "kabukTanimlar", icon: "box" },
   { href: "/dues", anahtar: "kabukAidat", icon: "money" },
   { href: "/reports/dues", anahtar: "kabukRaporlar", icon: "chart" },
   { href: "/transparency", anahtar: "kabukSeffaflik", icon: "money" },

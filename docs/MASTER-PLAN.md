@@ -410,6 +410,17 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P27 · Muhasebe Tanımları (PANEL).** **Admin** ile panelde
+  **Tanımlar** menüsü: (a) Kasalar → yeni kasa, "Banka hesabı" KAPALIYKEN
+  IBAN gir → kaydet → **hata** almalı; banka açıkken IBAN kabul edilmeli.
+  (b) Gelir/Gider Kalemleri → tip **gelir** + dağıtım şekli seç → **hata**;
+  gider ile kabul. (c) Firmalar → açılış bakiyesi 500 + yön **alacak** →
+  kaydet → listede görünmeli. (d) Araçlar → plakayı **boşluklu** gir
+  ("34 abc 123") → kaydet → listede **34ABC123** görünmeli; aynı plakayı
+  tekrar ekle → **hata**. (e) Sayaçlar → yeni ana sayaç. (f) Muhasebe
+  Ayarları → para birimi alanının altında "**yalnız gösterim**" notu
+  görünmeli. (g) Dili **Arapça**ya çevir → tüm alan etiketleri çevrilmeli
+  (sabit Türkçe kalmamalı).
 - [ ] **P26 · Bağımsız bölüm tipleri/grupları.** **Yönetici** ile ana ekranda
   **"Bağımsız Bölüm Tanımları"** kartı görünmeli (sakin/güvenlikte GÖRÜNMEMELİ).
   (a) Tipler sekmesinde yeni tip: ad `2+1`, aidat `1250,50` → kaydet → kartta
@@ -1253,7 +1264,7 @@ birlikte tek seferde yapılmalı — o madde zaten kasa/gelir-gider/firma
 tanımlarını panele getiriyor ve dördü tek bir "Tanımlar" bölümü olmalı.
 
 ### P27 — Accounting definitions layer (Tanımlar)
-Status: BEKLIYOR · Depends-on: P23, P26
+Status: BITTI · Depends-on: P23, P26
 Scope (ref docs/design-refs/apsiyon/): Kasa definitions (kod, ad, açılış tarihi,
 açılış bakiyesi, aktif, banka bilgisi flag + IBAN/banka alanları); Gelir/Gider
 tanımları (ad; tip: gelir|gider|her_ikisi; grup; dağıtım şekli enum — start with
@@ -1269,6 +1280,95 @@ tesisat no/ilk okuma). Settings: evrak seri-sıra no, para birimi (display only 
 money stays ₺ policy holds until a real multi-currency decision). All tenant-
 scoped, NEW revisions, RLS, seeded realistically.
 Acceptance: full CRUD + contract + seed; pytest incl. RLS; panel build; gates.
+Notes (2026-07-31): **YENİ ŞEMA: `0017`** — yedi kayıt defteri + `tenant`
+ayar sütunları. Hepsi RLS'li ve tenant kapsamlı.
+
+**PARA HER YERDE `bigint` KURUŞ.** `numeric` ile bile "0.1 + 0.2" tartışması
+açılır; iki farklı sütun tipi raporda toplanırken sessiz yuvarlama üretirdi.
+
+**AÇILIŞ BAKİYESİ = İŞARETSİZ TUTAR + AYRI YÖN (`borc|alacak`)**, negatif
+sayı değil. "-500" bir firmada **"biz mi borçluyuz, o mu"** sorusunu
+yanıtlamaz; yön açıkça saklanır (`CHECK … >= 0` zorlar).
+
+**`gelir_gider_dagitim` ENUM'UNDA ŞİMDİLİK İKİ DEĞER** —
+`bagimsiz_bolumlere_esit`, `tipe_gore`. `arsa_payi`/`kisi_sayisi` **bilerek
+eklenmedi**: enum'a koyup P28'de uygulamamak, kullanıcıya **seçilebilir ama
+yanlış borçlandıran** bir seçenek gösterirdi. Genişleme tek satırdır
+(`ALTER TYPE … ADD VALUE`, 0013'te aynısı yapıldı). **Gelir kaleminde dağıtım
+şekli olmaz** (CHECK + 422): bir gelir tahsil edilir, dağıtılmaz — ve
+`PATCH` yalnız `tip`i `gelir`e çevirdiğinde eski dağıtım kalırdı, o birleşik
+durum ayrıca yakalanıyor.
+
+**PERSONEL KAYDI `app_user`DAN AYRI.** Her personelin uygulama hesabı yoktur
+(temizlik, bahçıvan) ve her kullanıcı personel değildir (sakin). Örtüşenler
+`app_user_id` ile bağlanır; hesap silinirse **kayıt durur** (SET NULL) —
+bordro geçmişi kimlik kaydına bağlı olmamalı.
+
+**ARAÇ KAYDI plakayı `vehicle_pass` ile AYNI kuralla normalize eder** ve
+`norm_plaka`yı yeniden kullanır; iki farklı normalizasyon **iki farklı cevap**
+verirdi ve P17 rozetleri bu tablodan "kayıtlı mı" diye soracak. Bir plaka
+site içinde **tektir** (409) — iki daireye kayıtlı bir araç, rozetin hangi
+daireyi göstereceğini belirsiz bırakırdı. Arama da normalize edilir.
+
+**SAYAÇLAR İKİ TABLO.** `sayac_ana` (site geneli + ortak alan dağıtımı) ve
+`sayac_bolum` (daire sayacı). Tek tabloda "ana mı" bayrağıyla tutmak, ana
+sayaca özgü alanları (ortak alan yüzdesi) daire satırlarında anlamsızca null
+bırakırdı. **Otomatik üretim ucu YENİDEN ÇALIŞTIRILABİLİR**: zaten sayacı
+olan daireler atlanır, yani yeni daire eklendikçe tekrar çağrılır ve
+benzersizlik kısıtına çarpıp 409 vermez.
+
+**IBAN YALNIZ BANKA KASASINDA** (CHECK + 422): banka olmayan bir kasada dolu
+IBAN, ödemeyi yanlış hesaba yönlendirme riskidir. `banka_mi` kapatılırken
+IBAN gönderilmemiş olabilir — o birleşik durum router'da ayrıca ölçülüyor,
+yoksa DB kısıtı 500 gibi okunan bir ihlal verirdi.
+
+**`para_birimi` YALNIZ GÖSTERİM** — depo ve hesaplama ₺ kalır. Çok para
+birimi (kur, çeviri tarihi, raporlama para birimi) ayrı bir karardır ve bu
+alanı "destekleniyor" saymak **sessiz yanlış toplamlar** üretirdi. Panelde bu
+not ekranda yazıyor.
+
+**RBAC: HEPSİ admin+yönetici.** P26'nın daire tip/grup tanımları saha
+rollerine okuma açıyordu (daire listelerinde görünüyorlar); muhasebe
+tanımlarının böyle bir görünümü yok. Rol matrisi kilidi 30 yeni ucu yakaladı
+ve ölçülen matris tam amaçlanan: yönetim İZİN, saha/sakin RED.
+
+**PANEL (P26'nın açık bıraktığı parça KAPANDI).** admin-web'e `/tanimlar`
+sayfası eklendi: dokuz defter **tek sayfada sekmeli**, çünkü hepsi kurulum
+adımıdır ve menüye dokuz giriş koymak günlük sayfaları aşağı iterdi. Sayfa
+**veri-sürücülü**: her defter bir ALAN TANIMI listesiyle anlatılır, tablo ve
+form ondan üretilir — dokuz defter için dokuz form bileşeni aynı kodun dokuz
+kopyası olurdu. Vekil uç TEK dinamik yoldur ve **beyaz liste** ile korunur:
+istemciden gelen kaynak adı hiçbir zaman doğrudan URL'e girmez.
+**ÜÇ PANEL KİLİDİ SAYFAYI YAKALADI** ve düzeltildi: (1) sabit Türkçe etiketler
+→ 31 yeni sözlük anahtarı × 7 dil; (2) `middleware` matcher'ına `/tanimlar`;
+(3) JSX içindeki üçlü ifadelerdeki `date`/`text`/`decimal` — bunlar teknik
+HTML değerleri ama tarayıcı onları çevrilmemiş metin sayıyor, **tabloya**
+çevrildi (`Record<AlanTip, …>` ayrıca yeni tip eklendiğinde derleyiciyi
+uyarır).
+**DÖRDÜNCÜ KUSURU `npm run build` YAKALADI, `tsc --noEmit` YAKALAMADI:**
+Next.js yol işleyicileri yalnız HTTP metotlarını ve belirli yapılandırma
+değerlerini dışa aktarabilir; beyaz listeyi `route.ts` içinde `export`
+etmek derleme hatasıydı. Liste `lib/tanimlar.ts`e taşındı — ders: panel
+kapısı **tsc + vitest + build**tir, üçü de koşulmalı.
+
+TESTLER: `test_muhasebe_tanimlari.py` **33/33** (kurus, IBAN kuralı + birleşik
+kapatma, gelir/dağıtım, enum sınırı, grup silme, firma yön/vergi no, personel
+bağı + tarih sırası, plaka normalizasyonu + teklik, otomatik sayaç
+tekrarlanabilirliği, ana sayaç silme, yüzde sınırları, ayar biçimleri,
+9 uçta RBAC, tenant izolasyonu).
+SEED: 2 kasa (biri IBAN'lı banka), 4 grup, 8 kalem, 3 firma, 3 personel
+(biri `app_user`a bağlı), 3 araç, 2 ana sayaç + tüm dairelere su sayacı —
+**idempotent** (ikinci koşumda sayılar değişmiyor).
+KAPILAR: backend `pytest` **897 geçti / 0 düştü**; göç tersinirliği (0017 dahil) **3/3 OK,
+bulgu 0** (18 sınır); admin-web `tsc` temiz + `vitest` **105/105** +
+`npm run build` ✓; sözleşme 9 kaynak + 20 şema ile güncellendi
+(sözleşme sapması testi temiz).
+
+**AÇIK BIRAKILAN (bilinçli):** mobil yüzey YOK. Bu tanımlar masa başı
+kurulum işidir (IBAN, vergi no, maaş, tesisat no) ve mobil formda girmek
+gerçekçi değil; ayrıca panel girişi admin-only olduğu için **yöneticinin
+mobil ihtiyacı P28'de** (borçlandırma) ortaya çıkacak — o zaman hangi
+tanımların mobile taşınacağı belli olur.
 
 ### P28 — Debiting engine (borçlandırma)
 Status: BEKLIYOR · Depends-on: P27
@@ -1561,6 +1661,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P27 · (bu commit) · Muhasebe "Tanimlar" katmani (0017): kasa/gelir-gider/firma/personel/arac/sayac defterleri + evrak-seri & para birimi (GOSTERIM); para kurus, acilis bakiyesi isaretsiz+yonlu, dagitim enum'u BILEREK iki degerli; admin-web /tanimlar sayfasi (P26'nin acik parcasi kapandi).
 - 2026-07-31 · P26 · 760a812 · Bagimsiz Bolum TIP + GRUP tanimlari (0016): tip = buyukluk + VARSAYILAN AIDAT (null "tanimsiz" != 0 "muaf"), grup = ne oldugu; tanim silinince daire SILINMEZ; daire/toplu olusturmada atama; bilesik FK + SET NULL bulgusu.
 - 2026-07-31 · P25 · 33a7d75 · Kamera sertlestirme: 2048 karakter siniri (0015, uc katman) + "kamu yayinlari oynamiyor"un KOK NEDENI (cleartext yalniz debug manifestindeydi; P17 restream'i de vuruyordu) + hata artik NEDENE gore konusuyor + ana ekran seridi dortlu ve yonetici/sakin ekranlarina da eklendi.
 - 2026-07-31 · P24 · a26bb7c · Sikayet renk skalasi DORT KADEMEYE cikti (tek sikayet artik gorunur; esikler tek tabloda, P37 icin hazir) + KISI BASINA okuma durumu (0014) ve "Yeni / Okunmamis" triyaj kuyrugu (rozet = meta.total, ayri uc yok).

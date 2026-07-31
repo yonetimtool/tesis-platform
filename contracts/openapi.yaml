@@ -3158,6 +3158,758 @@ paths:
   # RBAC: yazma admin+yonetici; OKUMA saha rollerine de acik (daire
   # listeleri tip/grup adini gosterir); sakin ERISEMEZ.
   # ================================================================= #
+  # ================================================================= #
+  # MUHASEBE "TANIMLAR" KATMANI (P27)
+  # Yedi kayit defteri + tenant ayarlari. RBAC: HEPSI admin+yonetici —
+  # bunlar site YONETIM tanimlaridir; saha ve sakin ERISEMEZ. (P26'nin
+  # daire tip/grup tanimlari saha rollerine okuma aciyordu cunku daire
+  # listelerinde gorunuyorlar; muhasebe tanimlarinin boyle bir gorunumu
+  # yok.)
+  # PARA HER YERDE KURUS. Acilis bakiyeleri ISARETSIZ tutar + AYRI yon
+  # (borc|alacak) tasir: "-500" bir firmada "biz mi borcluyuz, o mu"
+  # sorusunu yanitlamaz.
+  # SILME: bagli kayit varsa 409 VERILMEZ; baglar SET NULL ile bosalir
+  # ve yanit KAC kaydin etkilendigini doner.
+  # ================================================================= #
+  /kasalar:
+    get:
+      tags: [muhasebe-tanimlari]
+      summary: Kasa/banka hesabi listesi (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Kasa" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [muhasebe-tanimlari]
+      summary: Kasa/banka hesabi olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KasaCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Kasa" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Benzersizlik ihlali (ayni ad/kod/plaka)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /kasalar/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [muhasebe-tanimlari]
+      summary: Kasa guncelle (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KasaUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Kasa" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Benzersizlik ihlali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [muhasebe-tanimlari]
+      summary: Kasa sil (admin+yonetici)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /gelir-gider-gruplari:
+    get:
+      tags: [muhasebe-tanimlari]
+      summary: Gelir/gider grubu listesi (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/GelirGiderGrup" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [muhasebe-tanimlari]
+      summary: Gelir/gider grubu olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GelirGiderGrupCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GelirGiderGrup" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Benzersizlik ihlali (ayni ad/kod/plaka)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /gelir-gider-gruplari/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [muhasebe-tanimlari]
+      summary: Gelir/gider grubu guncelle (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GelirGiderGrupUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GelirGiderGrup" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Benzersizlik ihlali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [muhasebe-tanimlari]
+      summary: Gelir/gider grubu sil (admin+yonetici)
+      description: >
+        Grup silinir; bagli TANIMLAR **DURUR**, yalniz gruplari bosalir (SET NULL). Yanit etkilenen tanim sayisini doner.
+      responses:
+        "200":
+          description: Silindi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [etkilenen_tanim]
+                properties:
+                  etkilenen_tanim: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /gelir-gider-tanimlari:
+    get:
+      tags: [muhasebe-tanimlari]
+      summary: Gelir/gider tanimi listesi (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+        - name: tip
+          in: query
+          schema: { type: string, enum: [gelir, gider, her_ikisi] }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/GelirGiderTanim" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [muhasebe-tanimlari]
+      summary: Gelir/gider tanimi olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GelirGiderTanimCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GelirGiderTanim" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Benzersizlik ihlali (ayni ad/kod/plaka)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /gelir-gider-tanimlari/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [muhasebe-tanimlari]
+      summary: Gelir/gider tanimi guncelle (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GelirGiderTanimUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GelirGiderTanim" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Benzersizlik ihlali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [muhasebe-tanimlari]
+      summary: Gelir/gider tanimi sil (admin+yonetici)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /firmalar:
+    get:
+      tags: [muhasebe-tanimlari]
+      summary: Firma listesi (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Firma" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [muhasebe-tanimlari]
+      summary: Firma olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FirmaCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Firma" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Benzersizlik ihlali (ayni ad/kod/plaka)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /firmalar/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [muhasebe-tanimlari]
+      summary: Firma guncelle (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FirmaUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Firma" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Benzersizlik ihlali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [muhasebe-tanimlari]
+      summary: Firma sil (admin+yonetici)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /personel-kayitlari:
+    get:
+      tags: [muhasebe-tanimlari]
+      summary: Personel kaydi listesi (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/PersonelKayit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [muhasebe-tanimlari]
+      summary: Personel kaydi olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PersonelKayitCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PersonelKayit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Benzersizlik ihlali (ayni ad/kod/plaka)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /personel-kayitlari/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [muhasebe-tanimlari]
+      summary: Personel kaydi guncelle (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PersonelKayitUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PersonelKayit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Benzersizlik ihlali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [muhasebe-tanimlari]
+      summary: Personel kaydi sil (admin+yonetici)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /arac-kayitlari:
+    get:
+      tags: [muhasebe-tanimlari]
+      summary: Kayitli arac listesi (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+        - name: plaka
+          in: query
+          description: "Tam plaka — sunucu NORMALIZE eder (bosluklu yazilabilir)"
+          schema: { type: string }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/AracKayit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [muhasebe-tanimlari]
+      summary: Kayitli arac olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AracKayitCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AracKayit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Benzersizlik ihlali (ayni ad/kod/plaka)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /arac-kayitlari/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [muhasebe-tanimlari]
+      summary: Kayitli arac guncelle (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AracKayitUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AracKayit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Benzersizlik ihlali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [muhasebe-tanimlari]
+      summary: Kayitli arac sil (admin+yonetici)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /sayaclar/ana:
+    get:
+      tags: [muhasebe-tanimlari]
+      summary: Ana sayac listesi (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/SayacAna" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [muhasebe-tanimlari]
+      summary: Ana sayac olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SayacAnaCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SayacAna" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Benzersizlik ihlali (ayni ad/kod/plaka)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /sayaclar/ana/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [muhasebe-tanimlari]
+      summary: Ana sayac guncelle (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SayacAnaUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SayacAna" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Benzersizlik ihlali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [muhasebe-tanimlari]
+      summary: Ana sayac sil (admin+yonetici)
+      description: >
+        Ana sayac silinir; DAIRE SAYACLARI **DURUR**, yalniz baglari bosalir.
+      responses:
+        "200":
+          description: Silindi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [etkilenen_bolum_sayaci]
+                properties:
+                  etkilenen_bolum_sayaci: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /sayaclar/bolum:
+    get:
+      tags: [muhasebe-tanimlari]
+      summary: Bagimsiz bolum sayaci listesi (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+        - name: ana_sayac_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: unit_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/SayacBolum" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [muhasebe-tanimlari]
+      summary: Bagimsiz bolum sayaci olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SayacBolumCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SayacBolum" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Benzersizlik ihlali (ayni ad/kod/plaka)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /sayaclar/bolum/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [muhasebe-tanimlari]
+      summary: Bagimsiz bolum sayaci guncelle (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SayacBolumUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SayacBolum" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Benzersizlik ihlali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [muhasebe-tanimlari]
+      summary: Bagimsiz bolum sayaci sil (admin+yonetici)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /sayaclar/bolum/otomatik:
+    post:
+      tags: [muhasebe-tanimlari]
+      summary: Bir ana sayac icin TUM aktif dairelere sayac uret (admin+yonetici)
+      description: >
+        Elle 200 daire icin sayac acmak gercekci degildir. **ZATEN sayaci
+        olan daireler ATLANIR**, yani uc YENIDEN CALISTIRILABILIR: yeni
+        daireler eklendikce tekrar cagrilir ve benzersizlik kisitina carpip
+        409 vermez.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ana_sayac_id]
+              properties:
+                ana_sayac_id: { type: string, format: uuid }
+      responses:
+        "201":
+          description: Uretildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [olusturulan, atlanan]
+                properties:
+                  olusturulan: { type: integer }
+                  atlanan: { type: integer, description: Zaten sayaci olan daireler }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /muhasebe-ayarlari:
+    get:
+      tags: [muhasebe-tanimlari]
+      summary: Evrak seri/sira + para birimi (admin+yonetici)
+      responses:
+        "200":
+          description: Ayarlar
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MuhasebeAyar" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    patch:
+      tags: [muhasebe-tanimlari]
+      summary: Muhasebe ayarlarini guncelle (admin+yonetici)
+      description: >
+        `para_birimi` **YALNIZ GOSTERIMDIR**: depo ve hesaplama ₺ kalir.
+        Cok para birimi (kur, ceviri tarihi, raporlama para birimi) AYRI bir
+        karardir ve bu alani "destekleniyor" saymak sessiz yanlis toplamlar
+        uretirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MuhasebeAyarUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MuhasebeAyar" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /unit-tipleri:
     get:
       tags: [aidat]
@@ -8073,6 +8825,393 @@ components:
       type: string
       enum: [basarili, bekliyor, iptal]
 
+    # ------------------ P27 "Tanimlar" katmani semalari ---------------- #
+    # PARA HER YERDE KURUS (int64). Acilis bakiyeleri ISARETSIZ tutar + AYRI
+    # yon tasir (bkz. yol yorumlari).
+    Kasa:
+      type: object
+      required: [id, kod, ad, acilis_bakiye_kurus, banka_mi, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kod: { type: string, minLength: 1, maxLength: 20, example: "KASA01" }
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        acilis_tarihi: { type: string, format: date, nullable: true }
+        acilis_bakiye_kurus: { type: integer, format: int64 }
+        banka_mi: { type: boolean }
+        iban:
+          type: string
+          nullable: true
+          pattern: "^TR[0-9]{24}$"
+          description: >
+            YALNIZ `banka_mi=true` iken dolabilir (422). Banka olmayan bir
+            kasada dolu IBAN, odemeyi yanlis hesaba yonlendirme riskidir.
+        banka_adi: { type: string, nullable: true }
+        sube: { type: string, nullable: true }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    KasaCreate:
+      type: object
+      required: [kod, ad]
+      properties:
+        kod: { type: string, minLength: 1, maxLength: 20 }
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        acilis_tarihi: { type: string, format: date, nullable: true }
+        acilis_bakiye_kurus: { type: integer, format: int64, default: 0 }
+        banka_mi: { type: boolean, default: false }
+        iban: { type: string, nullable: true, pattern: "^TR[0-9]{24}$" }
+        banka_adi: { type: string, nullable: true, maxLength: 100 }
+        sube: { type: string, nullable: true, maxLength: 100 }
+        aktif: { type: boolean, default: true }
+    KasaUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        kod: { type: string, minLength: 1, maxLength: 20 }
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        acilis_tarihi: { type: string, format: date, nullable: true }
+        acilis_bakiye_kurus: { type: integer, format: int64 }
+        banka_mi: { type: boolean }
+        iban: { type: string, nullable: true, pattern: "^TR[0-9]{24}$" }
+        banka_adi: { type: string, nullable: true, maxLength: 100 }
+        sube: { type: string, nullable: true, maxLength: 100 }
+        aktif: { type: boolean }
+    GelirGiderGrup:
+      type: object
+      required: [id, ad, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    GelirGiderGrupCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        aktif: { type: boolean, default: true }
+    GelirGiderGrupUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        aktif: { type: boolean }
+    GelirGiderTanim:
+      type: object
+      description: >
+        Gelir/gider kalemi — **P28'in borclandirma TURUDUR**.
+      required: [id, ad, tip, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        tip: { type: string, enum: [gelir, gider, her_ikisi] }
+        grup_id: { type: string, format: uuid, nullable: true }
+        grup_ad:
+          type: string
+          nullable: true
+          description: Grup ADI — istemci ayri istek yapmadan listeyi cizsin
+        dagitim_sekli:
+          type: string
+          nullable: true
+          enum: [bagimsiz_bolumlere_esit, tipe_gore]
+          description: |
+            **SIMDILIK IKI DEGER.** `arsa_payi` / `kisi_sayisi` BILEREK yok:
+            enum'a koyup P28'de uygulamamak, SECILEBILIR ama YANLIS
+            BORCLANDIRAN bir secenek gosterirdi. Genisleme tek
+            `ALTER TYPE ... ADD VALUE` satiridir.
+
+            `tip=gelir` iken **NULL olmali** (422): bir gelir kalemi bagimsiz
+            bolumlere dagitilmaz, tahsil edilir.
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    GelirGiderTanimCreate:
+      type: object
+      required: [ad, tip]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        tip: { type: string, enum: [gelir, gider, her_ikisi] }
+        grup_id: { type: string, format: uuid, nullable: true }
+        dagitim_sekli:
+          type: string
+          nullable: true
+          enum: [bagimsiz_bolumlere_esit, tipe_gore]
+        aktif: { type: boolean, default: true }
+    GelirGiderTanimUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        tip: { type: string, enum: [gelir, gider, her_ikisi] }
+        grup_id: { type: string, format: uuid, nullable: true }
+        dagitim_sekli:
+          type: string
+          nullable: true
+          enum: [bagimsiz_bolumlere_esit, tipe_gore]
+        aktif: { type: boolean }
+    Firma:
+      type: object
+      required: [id, ad, acilis_bakiye_kurus, acilis_bakiye_yon, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, minLength: 1, maxLength: 150 }
+        vergi_no:
+          type: string
+          nullable: true
+          pattern: "^[0-9]{10,11}$"
+          description: 10 hane (tuzel) ya da 11 hane (sahis/TC)
+        vergi_dairesi: { type: string, nullable: true }
+        telefon: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        adres: { type: string, nullable: true }
+        yetkili_ad: { type: string, nullable: true }
+        yetkili_telefon: { type: string, nullable: true }
+        acilis_bakiye_kurus:
+          type: integer
+          format: int64
+          minimum: 0
+          description: ISARETSIZ tutar; yon ayri alanda
+        acilis_bakiye_yon: { type: string, enum: [borc, alacak] }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    FirmaCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 150 }
+        vergi_no: { type: string, nullable: true, pattern: "^[0-9]{10,11}$" }
+        vergi_dairesi: { type: string, nullable: true, maxLength: 100 }
+        telefon: { type: string, nullable: true, maxLength: 30 }
+        email: { type: string, format: email, nullable: true }
+        adres: { type: string, nullable: true, maxLength: 500 }
+        yetkili_ad: { type: string, nullable: true, maxLength: 150 }
+        yetkili_telefon: { type: string, nullable: true, maxLength: 30 }
+        acilis_bakiye_kurus: { type: integer, format: int64, minimum: 0, default: 0 }
+        acilis_bakiye_yon: { type: string, enum: [borc, alacak], default: borc }
+        aktif: { type: boolean, default: true }
+    FirmaUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 150 }
+        vergi_no: { type: string, nullable: true, pattern: "^[0-9]{10,11}$" }
+        vergi_dairesi: { type: string, nullable: true, maxLength: 100 }
+        telefon: { type: string, nullable: true, maxLength: 30 }
+        email: { type: string, format: email, nullable: true }
+        adres: { type: string, nullable: true, maxLength: 500 }
+        yetkili_ad: { type: string, nullable: true, maxLength: 150 }
+        yetkili_telefon: { type: string, nullable: true, maxLength: 30 }
+        acilis_bakiye_kurus: { type: integer, format: int64, minimum: 0 }
+        acilis_bakiye_yon: { type: string, enum: [borc, alacak] }
+        aktif: { type: boolean }
+    PersonelKayit:
+      type: object
+      description: >
+        Personel kaydi — **`app_user`DAN AYRI**. Her personelin uygulama
+        hesabi yoktur (temizlik, bahcivan) ve her kullanici personel degildir
+        (sakin). Ortusenler `app_user_id` ile baglanir; hesap silinirse kayit
+        DURUR (bordro gecmisi kimlik kaydina bagli olmamali).
+      required: [id, ad, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, minLength: 1, maxLength: 150 }
+        tc: { type: string, nullable: true, pattern: "^[0-9]{11}$" }
+        gorev: { type: string, nullable: true }
+        telefon: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        giris_tarihi: { type: string, format: date, nullable: true }
+        cikis_tarihi:
+          type: string
+          format: date
+          nullable: true
+          description: Giris tarihinden ONCE olamaz (422)
+        maas_kurus: { type: integer, format: int64, nullable: true, minimum: 0 }
+        app_user_id: { type: string, format: uuid, nullable: true }
+        app_user_ad: { type: string, nullable: true }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    PersonelKayitCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 150 }
+        tc: { type: string, nullable: true, pattern: "^[0-9]{11}$" }
+        gorev: { type: string, nullable: true, maxLength: 100 }
+        telefon: { type: string, nullable: true, maxLength: 30 }
+        email: { type: string, format: email, nullable: true }
+        giris_tarihi: { type: string, format: date, nullable: true }
+        cikis_tarihi: { type: string, format: date, nullable: true }
+        maas_kurus: { type: integer, format: int64, nullable: true, minimum: 0 }
+        app_user_id: { type: string, format: uuid, nullable: true }
+        aktif: { type: boolean, default: true }
+    PersonelKayitUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 150 }
+        tc: { type: string, nullable: true, pattern: "^[0-9]{11}$" }
+        gorev: { type: string, nullable: true, maxLength: 100 }
+        telefon: { type: string, nullable: true, maxLength: 30 }
+        email: { type: string, format: email, nullable: true }
+        giris_tarihi: { type: string, format: date, nullable: true }
+        cikis_tarihi: { type: string, format: date, nullable: true }
+        maas_kurus: { type: integer, format: int64, nullable: true, minimum: 0 }
+        app_user_id: { type: string, format: uuid, nullable: true }
+        aktif: { type: boolean }
+    AracKayit:
+      type: object
+      description: >
+        KAYITLI arac — **P17 rozetlerinin "kayitli mi" kaynagi**. Plaka
+        `vehicle_pass` ile AYNI kuralla normalize saklanir (bosluksuz +
+        BUYUK); iki farkli normalizasyon iki farkli cevap verirdi.
+        Bir plaka site icinde TEKTIR (409).
+      required: [id, plaka, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        plaka: { type: string, pattern: "^[A-Z0-9]{2,20}$", example: "34ABC123" }
+        user_id: { type: string, format: uuid, nullable: true }
+        user_ad: { type: string, nullable: true }
+        unit_id: { type: string, format: uuid, nullable: true }
+        unit_no: { type: string, nullable: true }
+        marka: { type: string, nullable: true }
+        model: { type: string, nullable: true }
+        renk: { type: string, nullable: true }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    AracKayitCreate:
+      type: object
+      required: [plaka]
+      properties:
+        plaka:
+          type: string
+          minLength: 2
+          maxLength: 30
+          description: Sunucu NORMALIZE eder (bosluklu gonderilebilir)
+        user_id: { type: string, format: uuid, nullable: true }
+        unit_id: { type: string, format: uuid, nullable: true }
+        marka: { type: string, nullable: true, maxLength: 50 }
+        model: { type: string, nullable: true, maxLength: 50 }
+        renk: { type: string, nullable: true, maxLength: 30 }
+        aktif: { type: boolean, default: true }
+    AracKayitUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        plaka: { type: string, minLength: 2, maxLength: 30 }
+        user_id: { type: string, format: uuid, nullable: true }
+        unit_id: { type: string, format: uuid, nullable: true }
+        marka: { type: string, nullable: true, maxLength: 50 }
+        model: { type: string, nullable: true, maxLength: 50 }
+        renk: { type: string, nullable: true, maxLength: 30 }
+        aktif: { type: boolean }
+    SayacAna:
+      type: object
+      description: >
+        ANA sayac — site geneli; ortak alan tuketimi buradan dagitilir.
+        Daire sayaciyla TEK TABLODA birlestirilmedi: ana sayaca ozgu alanlar
+        (ortak alan yuzdesi) daire satirlarinda anlamsizca null kalirdi.
+      required: [id, ad, tip, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        tip: { type: string, enum: [su, elektrik, dogalgaz, isi, diger] }
+        tesisat_no: { type: string, nullable: true }
+        ortak_alan_dagitim:
+          type: string
+          nullable: true
+          enum: [bagimsiz_bolumlere_esit, tipe_gore]
+        ortak_alan_yuzde:
+          type: number
+          format: double
+          nullable: true
+          minimum: 0
+          maximum: 100
+        aktif: { type: boolean }
+        bolum_sayaci_sayisi: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    SayacAnaCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        tip: { type: string, enum: [su, elektrik, dogalgaz, isi, diger], default: diger }
+        tesisat_no: { type: string, nullable: true, maxLength: 50 }
+        ortak_alan_dagitim: { type: string, nullable: true, enum: [bagimsiz_bolumlere_esit, tipe_gore] }
+        ortak_alan_yuzde: { type: number, format: double, nullable: true, minimum: 0, maximum: 100 }
+        aktif: { type: boolean, default: true }
+    SayacAnaUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        tip: { type: string, enum: [su, elektrik, dogalgaz, isi, diger] }
+        tesisat_no: { type: string, nullable: true, maxLength: 50 }
+        ortak_alan_dagitim: { type: string, nullable: true, enum: [bagimsiz_bolumlere_esit, tipe_gore] }
+        ortak_alan_yuzde: { type: number, format: double, nullable: true, minimum: 0, maximum: 100 }
+        aktif: { type: boolean }
+    SayacBolum:
+      type: object
+      description: >
+        BAGIMSIZ BOLUM sayaci — bir daireye ait, bir ana sayaca bagli.
+        Bir daire bir ANA SAYAC icin tek sayac tasir (409); su + elektrik
+        AYRI ana sayaclardir, yani ikisi de kaydedilebilir.
+        **Dairesi silinirse bu kayit da SILINIR** (CASCADE) — dairesiz bir
+        daire sayaci anlamsizdir.
+      required: [id, unit_id, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        unit_id: { type: string, format: uuid }
+        unit_no: { type: string, nullable: true }
+        ana_sayac_id: { type: string, format: uuid, nullable: true }
+        ana_sayac_ad: { type: string, nullable: true }
+        tesisat_no: { type: string, nullable: true }
+        ilk_okuma: { type: number, format: double, nullable: true, minimum: 0 }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    SayacBolumCreate:
+      type: object
+      required: [unit_id]
+      properties:
+        unit_id: { type: string, format: uuid }
+        ana_sayac_id: { type: string, format: uuid, nullable: true }
+        tesisat_no: { type: string, nullable: true, maxLength: 50 }
+        ilk_okuma: { type: number, format: double, nullable: true, minimum: 0 }
+        aktif: { type: boolean, default: true }
+    SayacBolumUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ana_sayac_id: { type: string, format: uuid, nullable: true }
+        tesisat_no: { type: string, nullable: true, maxLength: 50 }
+        ilk_okuma: { type: number, format: double, nullable: true, minimum: 0 }
+        aktif: { type: boolean }
+    MuhasebeAyar:
+      type: object
+      required: [evrak_seri, evrak_sira, para_birimi]
+      properties:
+        evrak_seri: { type: string, pattern: "^[A-Z]{1,5}$", example: "A" }
+        evrak_sira: { type: integer, format: int64, minimum: 1 }
+        para_birimi:
+          type: string
+          pattern: "^[A-Z]{3}$"
+          example: "TRY"
+          description: |
+            **YALNIZ GOSTERIM.** Depo ve hesaplama ₺ kalir; cok para birimi
+            (kur, ceviri tarihi, raporlama para birimi) AYRI bir karardir ve
+            bu alani "destekleniyor" saymak sessiz yanlis toplamlar uretirdi.
+    MuhasebeAyarUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        evrak_seri: { type: string, pattern: "^[A-Z]{1,5}$" }
+        evrak_sira: { type: integer, format: int64, minimum: 1 }
+        para_birimi: { type: string, pattern: "^[A-Z]{3}$" }
     UnitTip:
       type: object
       description: >

@@ -28,6 +28,7 @@ export const config = {
     "/patrol-plans/:path*",
     "/units/:path*",
     "/building-editor/:path*",
+    "/tanimlar/:path*",
     "/dues/:path*",
     "/users/:path*",
     "/assets/:path*",

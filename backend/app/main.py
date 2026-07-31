@@ -24,6 +24,7 @@ from .routers import common_areas as common_areas_router
 from .routers import complaints as complaints_router
 from .routers import unit_complaints as unit_complaints_router
 from .routers import unit_tanimlari as unit_tanimlari_router
+from .routers import muhasebe_tanimlari as muhasebe_tanimlari_router
 from .routers import dashboard as dashboard_router
 from .routers import devices as devices_router
 from .routers import dues as dues_router
@@ -111,6 +112,7 @@ app.include_router(announcements_router.router)
 app.include_router(complaints_router.router)
 app.include_router(unit_complaints_router.router)
 app.include_router(unit_tanimlari_router.router)
+app.include_router(muhasebe_tanimlari_router.router)
 app.include_router(visitors_router.router)
 app.include_router(kargo_router.router)
 app.include_router(unit_access_router.router)

@@ -1277,6 +1277,185 @@ def main() -> int:
 
 
         # ------------------------------------------------------------------
+        # MUHASEBE "TANIMLAR" KATMANI (P27) — gercekci bir site kurulumu.
+        # Hepsi IDEMPOTENT: `WHERE NOT EXISTS` ile ad/kod uzerinden.
+        # ------------------------------------------------------------------
+        kasalar = [
+            ("KASA01", "Merkez Kasa", False, None, None, 250000),
+            ("BNK01", "Ziraat Bankası - Site Hesabı", True,
+             "TR330006100519786457841326", "Ziraat Bankası", 12500000),
+        ]
+        for kod, ad, banka, iban, banka_adi, acilis in kasalar:
+            conn.execute(
+                """
+                INSERT INTO kasa (tenant_id, kod, ad, banka_mi, iban, banka_adi,
+                                  acilis_bakiye_kurus, acilis_tarihi)
+                SELECT %(t)s, %(kod)s, %(ad)s, %(b)s, %(iban)s, %(ba)s,
+                       %(ac)s, DATE '2026-01-01'
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM kasa WHERE tenant_id = %(t)s AND kod = %(kod)s
+                )
+                """,
+                {"t": tenant_id, "kod": kod, "ad": ad, "b": banka,
+                 "iban": iban, "ba": banka_adi, "ac": acilis},
+            )
+
+        for grup in ("Sabit Giderler", "Bakım-Onarım", "Personel", "Gelirler"):
+            conn.execute(
+                """
+                INSERT INTO gelir_gider_grup (tenant_id, ad)
+                SELECT %(t)s, %(ad)s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM gelir_gider_grup
+                     WHERE tenant_id = %(t)s AND ad = %(ad)s
+                )
+                """,
+                {"t": tenant_id, "ad": grup},
+            )
+
+        def _grup_id(ad: str):
+            return conn.execute(
+                "SELECT id FROM gelir_gider_grup WHERE tenant_id = %s AND ad = %s",
+                (tenant_id, ad),
+            ).fetchone()[0]
+
+        # GELIR kalemlerinde dagitim sekli YOKTUR (tahsil edilir, dagitilmaz).
+        gg_tanimlari = [
+            ("Aidat", "gelir", "Gelirler", None),
+            ("Kira Geliri (dükkan)", "gelir", "Gelirler", None),
+            ("Elektrik", "gider", "Sabit Giderler", "bagimsiz_bolumlere_esit"),
+            ("Su", "gider", "Sabit Giderler", "bagimsiz_bolumlere_esit"),
+            ("Doğalgaz", "gider", "Sabit Giderler", "tipe_gore"),
+            ("Asansör Bakımı", "gider", "Bakım-Onarım", "bagimsiz_bolumlere_esit"),
+            ("Personel Maaşı", "gider", "Personel", "bagimsiz_bolumlere_esit"),
+            ("Demirbaş Alımı", "her_ikisi", "Bakım-Onarım", "tipe_gore"),
+        ]
+        for ad, tip, grup, dagitim in gg_tanimlari:
+            conn.execute(
+                """
+                INSERT INTO gelir_gider_tanim (tenant_id, ad, tip, grup_id,
+                                               dagitim_sekli)
+                SELECT %(t)s, %(ad)s, %(tip)s::gelir_gider_tip, %(g)s,
+                       %(d)s::gelir_gider_dagitim
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM gelir_gider_tanim
+                     WHERE tenant_id = %(t)s AND ad = %(ad)s
+                )
+                """,
+                {"t": tenant_id, "ad": ad, "tip": tip, "g": _grup_id(grup),
+                 "d": dagitim},
+            )
+
+        firmalar = [
+            ("Kone Asansör A.Ş.", "1234567890", "Kadıköy", "+902161112233",
+             "Mehmet Yıldız", 0, "borc"),
+            ("Yeşil Peyzaj Ltd.", "9876543210", "Ataşehir", "+902164445566",
+             "Ayşe Demir", 750000, "borc"),
+            ("Temiz Su Arıtma", "5555544444", "Ümraniye", "+902167778899",
+             "Can Kara", 120000, "alacak"),
+        ]
+        for ad, vno, vd, tel, yetkili, acilis, yon in firmalar:
+            conn.execute(
+                """
+                INSERT INTO firma (tenant_id, ad, vergi_no, vergi_dairesi,
+                                   telefon, yetkili_ad, acilis_bakiye_kurus,
+                                   acilis_bakiye_yon)
+                SELECT %(t)s, %(ad)s, %(v)s, %(vd)s, %(tel)s, %(y)s, %(ac)s,
+                       %(yon)s::bakiye_yon
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM firma WHERE tenant_id = %(t)s AND ad = %(ad)s
+                )
+                """,
+                {"t": tenant_id, "ad": ad, "v": vno, "vd": vd, "tel": tel,
+                 "y": yetkili, "ac": acilis, "yon": yon},
+            )
+
+        # Personel: BIRI uygulama hesabina bagli (guvenlik), digerleri degil —
+        # "her personelin hesabi yoktur" kurali seed'de de gorunsun.
+        guard_uid = conn.execute(
+            "SELECT id FROM app_user WHERE tenant_id = %s AND email = %s",
+            (tenant_id, "guard@acme.com"),
+        ).fetchone()
+        personeller = [
+            ("Hasan Güvenlik", "Güvenlik Görevlisi", 4200000,
+             guard_uid[0] if guard_uid else None),
+            ("Fatma Temizlik", "Temizlik Personeli", 3500000, None),
+            ("Ali Bahçıvan", "Bahçıvan", 3300000, None),
+        ]
+        for ad, gorev, maas, uid in personeller:
+            conn.execute(
+                """
+                INSERT INTO personel_kayit (tenant_id, ad, gorev, maas_kurus,
+                                            app_user_id, giris_tarihi)
+                SELECT %(t)s, %(ad)s, %(g)s, %(m)s, %(u)s, DATE '2025-09-01'
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM personel_kayit
+                     WHERE tenant_id = %(t)s AND ad = %(ad)s
+                )
+                """,
+                {"t": tenant_id, "ad": ad, "g": gorev, "m": maas, "u": uid},
+            )
+
+        # Araclar: plaka NORMALIZE (bosluksuz + BUYUK) — vehicle_pass ile ayni.
+        araclar = [
+            ("34ABC123", "Fiat", "Egea", "Beyaz"),
+            ("06XYZ789", "Renault", "Clio", "Gri"),
+            ("35DEF456", "Toyota", "Corolla", "Siyah"),
+        ]
+        for plaka, marka, model, renk in araclar:
+            conn.execute(
+                """
+                INSERT INTO arac_kayit (tenant_id, plaka, marka, model, renk)
+                SELECT %(t)s, %(p)s, %(ma)s, %(mo)s, %(r)s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM arac_kayit
+                     WHERE tenant_id = %(t)s AND plaka = %(p)s
+                )
+                """,
+                {"t": tenant_id, "p": plaka, "ma": marka, "mo": model, "r": renk},
+            )
+
+        for ad, tip, yuzde in [("Ana Su Sayacı", "su", 10.00),
+                               ("Ana Elektrik Sayacı", "elektrik", 15.00)]:
+            conn.execute(
+                """
+                INSERT INTO sayac_ana (tenant_id, ad, tip, ortak_alan_dagitim,
+                                       ortak_alan_yuzde)
+                SELECT %(t)s, %(ad)s, %(tip)s::sayac_tip,
+                       'bagimsiz_bolumlere_esit'::gelir_gider_dagitim, %(y)s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM sayac_ana WHERE tenant_id = %(t)s AND ad = %(ad)s
+                )
+                """,
+                {"t": tenant_id, "ad": ad, "tip": tip, "y": yuzde},
+            )
+
+        # Daire sayaclari: ana su sayacina bagli TUM aktif daireler
+        # (uretim ucuyla AYNI kural — zaten olanlar atlanir).
+        ana_su = conn.execute(
+            "SELECT id FROM sayac_ana WHERE tenant_id = %s AND ad = %s",
+            (tenant_id, "Ana Su Sayacı"),
+        ).fetchone()[0]
+        conn.execute(
+            """
+            INSERT INTO sayac_bolum (tenant_id, unit_id, ana_sayac_id)
+            SELECT %(t)s, u.id, %(a)s
+              FROM unit u
+             WHERE u.tenant_id = %(t)s AND u.aktif
+               AND NOT EXISTS (
+                   SELECT 1 FROM sayac_bolum sb
+                    WHERE sb.tenant_id = %(t)s AND sb.unit_id = u.id
+                      AND sb.ana_sayac_id = %(a)s
+               )
+            """,
+            {"t": tenant_id, "a": ana_su},
+        )
+        print("[seed] muhasebe tanimlari: 2 kasa, 4 gelir/gider grubu, "
+              "8 kalem, 3 firma, 3 personel, 3 arac, 2 ana sayac + daire "
+              "sayaclari (idempotent).")
+
+
+        # ------------------------------------------------------------------
         # DEVRIYE ALANI (tur 41) — checkpoint + plan + pencereler + okutmalar.
         #
         # Seed'de bu alan HIC YOKTU: /dashboard tum sayaclari 0, /checkpoints

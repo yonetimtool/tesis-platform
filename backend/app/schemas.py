@@ -3316,3 +3316,429 @@ class AnprApiKeyCreated(AnprApiKeyOut):
     """
 
     anahtar: str
+
+
+# ====================== P27 "Tanimlar" katmani semalari ===================== #
+# PARA HER YERDE KURUS (`*_kurus`, int). Acilis bakiyeleri ISARETSIZ tutar +
+# AYRI yon tasir: "-500" bir firmada "biz mi borcluyuz, o mu" sorusunu
+# yanitlamaz.
+GelirGiderTip = Literal["gelir", "gider", "her_ikisi"]
+#: SIMDILIK IKI DEGER — "arsa_payi"/"kisi_sayisi" BILEREK yok: secilebilir ama
+#: P28'de uygulanmayan bir secenek YANLIS BORCLANDIRIRDI. Genisleme tek
+#: `ALTER TYPE ... ADD VALUE` satiridir.
+GelirGiderDagitim = Literal["bagimsiz_bolumlere_esit", "tipe_gore"]
+BakiyeYon = Literal["borc", "alacak"]
+SayacTip = Literal["su", "elektrik", "dogalgaz", "isi", "diger"]
+
+#: TR IBAN: "TR" + 24 rakam (bosluklar istemcide temizlenir).
+_IBAN_PATTERN = r"^TR[0-9]{24}$"
+#: Vergi no 10 hane (tuzel) ya da TC 11 hane (sahis) — ikisi de kabul.
+_VERGI_NO_PATTERN = r"^[0-9]{10,11}$"
+
+
+class _TanimBase(BaseModel):
+    """Tum tanim ciktilarinin ortak kuyrugu."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    aktif: bool
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+# --------------------------------- kasa ------------------------------------ #
+class KasaCreate(BaseModel):
+    kod: str = Field(..., min_length=1, max_length=20)
+    ad: str = Field(..., min_length=1, max_length=100)
+    acilis_tarihi: date | None = None
+    acilis_bakiye_kurus: int = 0
+    banka_mi: bool = False
+    iban: str | None = Field(None, pattern=_IBAN_PATTERN)
+    banka_adi: str | None = Field(None, max_length=100)
+    sube: str | None = Field(None, max_length=100)
+    aktif: bool = True
+
+    @model_validator(mode="after")
+    def _banka_alanlari(self) -> "KasaCreate":
+        # IBAN yalniz BANKA kasasinda anlamlidir: banka olmayan bir kasada
+        # dolu IBAN, odemeyi yanlis hesaba yonlendirme riskidir.
+        if not self.banka_mi and (self.iban or self.banka_adi or self.sube):
+            raise ValueError("banka bilgileri yalniz banka kasasinda girilebilir")
+        return self
+
+
+class KasaUpdate(BaseModel):
+    kod: str | None = Field(None, min_length=1, max_length=20)
+    ad: str | None = Field(None, min_length=1, max_length=100)
+    acilis_tarihi: date | None = None
+    acilis_bakiye_kurus: int | None = None
+    banka_mi: bool | None = None
+    iban: str | None = Field(None, pattern=_IBAN_PATTERN)
+    banka_adi: str | None = Field(None, max_length=100)
+    sube: str | None = Field(None, max_length=100)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "KasaUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class KasaOut(_TanimBase):
+    kod: str
+    ad: str
+    acilis_tarihi: date | None = None
+    acilis_bakiye_kurus: int
+    banka_mi: bool
+    iban: str | None = None
+    banka_adi: str | None = None
+    sube: str | None = None
+
+
+class KasaListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[KasaOut]
+
+
+# --------------------------- gelir/gider grubu ------------------------------ #
+class GelirGiderGrupCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=100)
+    aktif: bool = True
+
+
+class GelirGiderGrupUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=100)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "GelirGiderGrupUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class GelirGiderGrupOut(_TanimBase):
+    ad: str
+
+
+class GelirGiderGrupListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[GelirGiderGrupOut]
+
+
+# --------------------------- gelir/gider tanimi ----------------------------- #
+class GelirGiderTanimCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=100)
+    tip: GelirGiderTip
+    grup_id: uuid.UUID | None = None
+    dagitim_sekli: GelirGiderDagitim | None = None
+    aktif: bool = True
+
+    @model_validator(mode="after")
+    def _dagitim_gelirde_olmaz(self) -> "GelirGiderTanimCreate":
+        # Bir GELIR kalemi bagimsiz bolumlere "dagitilmaz", tahsil edilir.
+        if self.tip == "gelir" and self.dagitim_sekli is not None:
+            raise ValueError("gelir kaleminde dagitim sekli olmaz")
+        return self
+
+
+class GelirGiderTanimUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=100)
+    tip: GelirGiderTip | None = None
+    grup_id: uuid.UUID | None = None
+    dagitim_sekli: GelirGiderDagitim | None = None
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "GelirGiderTanimUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class GelirGiderTanimOut(_TanimBase):
+    ad: str
+    tip: str
+    grup_id: uuid.UUID | None = None
+    #: Grup ADI da doner — istemci ayri istek yapmadan listeyi cizsin.
+    grup_ad: str | None = None
+    dagitim_sekli: str | None = None
+
+
+class GelirGiderTanimListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[GelirGiderTanimOut]
+
+
+# -------------------------------- firma ------------------------------------- #
+class FirmaCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=150)
+    vergi_no: str | None = Field(None, pattern=_VERGI_NO_PATTERN)
+    vergi_dairesi: str | None = Field(None, max_length=100)
+    telefon: str | None = Field(None, max_length=30)
+    email: EmailStr | None = None
+    adres: str | None = Field(None, max_length=500)
+    yetkili_ad: str | None = Field(None, max_length=150)
+    yetkili_telefon: str | None = Field(None, max_length=30)
+    acilis_bakiye_kurus: int = Field(0, ge=0)
+    acilis_bakiye_yon: BakiyeYon = "borc"
+    aktif: bool = True
+
+
+class FirmaUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=150)
+    vergi_no: str | None = Field(None, pattern=_VERGI_NO_PATTERN)
+    vergi_dairesi: str | None = Field(None, max_length=100)
+    telefon: str | None = Field(None, max_length=30)
+    email: EmailStr | None = None
+    adres: str | None = Field(None, max_length=500)
+    yetkili_ad: str | None = Field(None, max_length=150)
+    yetkili_telefon: str | None = Field(None, max_length=30)
+    acilis_bakiye_kurus: int | None = Field(None, ge=0)
+    acilis_bakiye_yon: BakiyeYon | None = None
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "FirmaUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class FirmaOut(_TanimBase):
+    ad: str
+    vergi_no: str | None = None
+    vergi_dairesi: str | None = None
+    telefon: str | None = None
+    email: str | None = None
+    adres: str | None = None
+    yetkili_ad: str | None = None
+    yetkili_telefon: str | None = None
+    acilis_bakiye_kurus: int
+    acilis_bakiye_yon: str
+
+
+class FirmaListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[FirmaOut]
+
+
+# ------------------------------- personel ----------------------------------- #
+class PersonelKayitCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=150)
+    tc: str | None = Field(None, pattern=r"^[0-9]{11}$")
+    gorev: str | None = Field(None, max_length=100)
+    telefon: str | None = Field(None, max_length=30)
+    email: EmailStr | None = None
+    giris_tarihi: date | None = None
+    cikis_tarihi: date | None = None
+    maas_kurus: int | None = Field(None, ge=0)
+    #: Uygulama hesabiyla BAG (opsiyonel) — her personelin hesabi yoktur.
+    app_user_id: uuid.UUID | None = None
+    aktif: bool = True
+
+    @model_validator(mode="after")
+    def _tarih_sirasi(self) -> "PersonelKayitCreate":
+        if (
+            self.cikis_tarihi is not None
+            and self.giris_tarihi is not None
+            and self.cikis_tarihi < self.giris_tarihi
+        ):
+            raise ValueError("cikis tarihi giris tarihinden once olamaz")
+        return self
+
+
+class PersonelKayitUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=150)
+    tc: str | None = Field(None, pattern=r"^[0-9]{11}$")
+    gorev: str | None = Field(None, max_length=100)
+    telefon: str | None = Field(None, max_length=30)
+    email: EmailStr | None = None
+    giris_tarihi: date | None = None
+    cikis_tarihi: date | None = None
+    maas_kurus: int | None = Field(None, ge=0)
+    app_user_id: uuid.UUID | None = None
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "PersonelKayitUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class PersonelKayitOut(_TanimBase):
+    ad: str
+    tc: str | None = None
+    gorev: str | None = None
+    telefon: str | None = None
+    email: str | None = None
+    giris_tarihi: date | None = None
+    cikis_tarihi: date | None = None
+    maas_kurus: int | None = None
+    app_user_id: uuid.UUID | None = None
+    #: Bagli kullanicinin adi (varsa) — "bu personel kim olarak giris yapiyor".
+    app_user_ad: str | None = None
+
+
+class PersonelKayitListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[PersonelKayitOut]
+
+
+# --------------------------------- arac -------------------------------------- #
+class AracKayitCreate(BaseModel):
+    #: Sunucu NORMALIZE eder (bosluksuz + BUYUK) — `vehicle_pass` ile ayni kural.
+    plaka: str = Field(..., min_length=2, max_length=30)
+    user_id: uuid.UUID | None = None
+    unit_id: uuid.UUID | None = None
+    marka: str | None = Field(None, max_length=50)
+    model: str | None = Field(None, max_length=50)
+    renk: str | None = Field(None, max_length=30)
+    aktif: bool = True
+
+
+class AracKayitUpdate(BaseModel):
+    plaka: str | None = Field(None, min_length=2, max_length=30)
+    user_id: uuid.UUID | None = None
+    unit_id: uuid.UUID | None = None
+    marka: str | None = Field(None, max_length=50)
+    model: str | None = Field(None, max_length=50)
+    renk: str | None = Field(None, max_length=30)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "AracKayitUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class AracKayitOut(_TanimBase):
+    plaka: str
+    user_id: uuid.UUID | None = None
+    user_ad: str | None = None
+    unit_id: uuid.UUID | None = None
+    unit_no: str | None = None
+    marka: str | None = None
+    model: str | None = None
+    renk: str | None = None
+
+
+class AracKayitListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AracKayitOut]
+
+
+# ------------------------------- sayaclar ------------------------------------ #
+class SayacAnaCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=100)
+    tip: SayacTip = "diger"
+    tesisat_no: str | None = Field(None, max_length=50)
+    ortak_alan_dagitim: GelirGiderDagitim | None = None
+    ortak_alan_yuzde: float | None = Field(None, ge=0, le=100)
+    aktif: bool = True
+
+
+class SayacAnaUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=100)
+    tip: SayacTip | None = None
+    tesisat_no: str | None = Field(None, max_length=50)
+    ortak_alan_dagitim: GelirGiderDagitim | None = None
+    ortak_alan_yuzde: float | None = Field(None, ge=0, le=100)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "SayacAnaUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class SayacAnaOut(_TanimBase):
+    ad: str
+    tip: str
+    tesisat_no: str | None = None
+    ortak_alan_dagitim: str | None = None
+    ortak_alan_yuzde: float | None = None
+    #: Bu ana sayaca bagli bagimsiz bolum sayaci sayisi.
+    bolum_sayaci_sayisi: int = 0
+
+
+class SayacAnaListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[SayacAnaOut]
+
+
+class SayacBolumCreate(BaseModel):
+    unit_id: uuid.UUID
+    ana_sayac_id: uuid.UUID | None = None
+    tesisat_no: str | None = Field(None, max_length=50)
+    ilk_okuma: float | None = Field(None, ge=0)
+    aktif: bool = True
+
+
+class SayacBolumUpdate(BaseModel):
+    ana_sayac_id: uuid.UUID | None = None
+    tesisat_no: str | None = Field(None, max_length=50)
+    ilk_okuma: float | None = Field(None, ge=0)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "SayacBolumUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class SayacBolumOut(_TanimBase):
+    unit_id: uuid.UUID
+    unit_no: str | None = None
+    ana_sayac_id: uuid.UUID | None = None
+    ana_sayac_ad: str | None = None
+    tesisat_no: str | None = None
+    ilk_okuma: float | None = None
+
+
+class SayacBolumListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[SayacBolumOut]
+
+
+class SayacBolumOtomatikOlustur(BaseModel):
+    """Bir ana sayac icin TUM aktif dairelere sayac uret (P27).
+
+    Elle 200 daire icin sayac acmak gercekci degildir; zaten sayaci olan
+    daireler ATLANIR (yeniden calistirilabilir).
+    """
+
+    ana_sayac_id: uuid.UUID
+
+
+class SayacOtomatikSonuc(BaseModel):
+    olusturulan: int
+    atlanan: int
+
+
+# --------------------------- tenant muhasebe ayarlari ------------------------ #
+class MuhasebeAyarOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    evrak_seri: str
+    evrak_sira: int
+    #: YALNIZ GOSTERIM — depo ve hesaplama ₺ kalir (cok para birimi ayri karar).
+    para_birimi: str
+
+
+class MuhasebeAyarUpdate(BaseModel):
+    evrak_seri: str | None = Field(None, pattern=r"^[A-Z]{1,5}$")
+    evrak_sira: int | None = Field(None, ge=1)
+    para_birimi: str | None = Field(None, pattern=r"^[A-Z]{3}$")
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "MuhasebeAyarUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self

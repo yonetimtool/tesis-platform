@@ -128,6 +128,24 @@ INTEGRATION_CHANNEL = ENUM(
     "webhook", "megaphone", "smarthome",
     name="integration_channel", create_type=False,
 )
+# ---------------------- P27 "Tanimlar" katmani enum'lari -------------------- #
+GELIR_GIDER_TIP = ENUM(
+    "gelir", "gider", "her_ikisi",
+    name="gelir_gider_tip", create_type=False,
+)
+#: Dagitim sekli — SIMDILIK IKI DEGER. "arsa_payi"/"kisi_sayisi" BILEREK yok:
+#: enum'a koyup P28'de uygulamamak, SECILEBILIR ama YANLIS BORCLANDIRAN bir
+#: secenek gosterirdi. Genisleme tek satirdir (ALTER TYPE ... ADD VALUE).
+GELIR_GIDER_DAGITIM = ENUM(
+    "bagimsiz_bolumlere_esit", "tipe_gore",
+    name="gelir_gider_dagitim", create_type=False,
+)
+BAKIYE_YON = ENUM("borc", "alacak", name="bakiye_yon", create_type=False)
+SAYAC_TIP = ENUM(
+    "su", "elektrik", "dogalgaz", "isi", "diger",
+    name="sayac_tip", create_type=False,
+)
+
 UNIT_COMPLAINT_KATEGORI = ENUM(
     # `goruntu_kirliligi` 0013'te eklendi (P22g) — hurda arac, dagilmis esya,
     # cop yigini; otopark baglamindan da bildirilebilir.
@@ -212,6 +230,19 @@ class Tenant(Base):
     # (yalniz giris kamerasi) kapatan olmaz — site bunu kapatabilmeli.
     anpr_otomatik_cikis: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
+    )
+    # --- MUHASEBE AYARLARI (P27) — tenant basina TEK satir oldugu icin ayri
+    # tablo DEGIL. `para_birimi` YALNIZ GOSTERIMDIR: depo ve hesaplama ₺
+    # kalir; cok para birimi (kur, ceviri tarihi) AYRI bir karardir ve bu
+    # alani "destekleniyor" saymak sessiz yanlis toplamlar uretirdi.
+    evrak_seri: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'A'")
+    )
+    evrak_sira: Mapped[int] = mapped_column(
+        BigInteger, nullable=False, server_default=text("1")
+    )
+    para_birimi: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'TRY'")
     )
     # Hava durumu konumu (0005) — baslikta gorunen ad + Open-Meteo koordinati.
     konum_ad: Mapped[str] = mapped_column(
@@ -2213,3 +2244,254 @@ class AnprEvent(Base):
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
     created_at = _created_at()
+
+
+# ======================= P27 "Tanimlar" katmani ============================= #
+# Yedi kayit defteri. PARA HER YERDE `bigint` KURUS; acilis bakiyeleri
+# ISARETSIZ tutar + AYRI yon (`borc|alacak`) tasir — "-500" bir firmada
+# "biz mi borcluyuz, o mu" sorusunu yanitlamaz.
+class Kasa(Base):
+    """Kasa/banka hesabi tanimi (P27)."""
+
+    __tablename__ = "kasa"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_kasa_id_tenant"),
+        UniqueConstraint("tenant_id", "kod", name="uq_kasa_tenant_kod"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    kod: Mapped[str] = mapped_column(Text, nullable=False)
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    acilis_tarihi = mapped_column(Date, nullable=True)
+    acilis_bakiye_kurus: Mapped[int] = mapped_column(
+        BigInteger, nullable=False, server_default=text("0")
+    )
+    #: IBAN/banka alanlari YALNIZ banka kasasinda dolabilir (CHECK zorlar):
+    #: banka olmayan bir kasada dolu IBAN, odemeyi yanlis hesaba yonlendirirdi.
+    banka_mi: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    iban: Mapped[str | None] = mapped_column(Text, nullable=True)
+    banka_adi: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sube: Mapped[str | None] = mapped_column(Text, nullable=True)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class GelirGiderGrup(Base):
+    """Gelir/gider tanimlarinin ust kirilimi (P27)."""
+
+    __tablename__ = "gelir_gider_grup"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_gg_grup_id_tenant"),
+        UniqueConstraint("tenant_id", "ad", name="uq_gg_grup_tenant_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class GelirGiderTanim(Base):
+    """Gelir/gider kalemi tanimi (P27) — P28 borclandirmasinin TURUDUR.
+
+    `dagitim_sekli` YALNIZ gider/her_ikisi icin anlamlidir (CHECK zorlar): bir
+    GELIR kalemi bagimsiz bolumlere "dagitilmaz", tahsil edilir.
+    """
+
+    __tablename__ = "gelir_gider_tanim"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_gg_tanim_id_tenant"),
+        UniqueConstraint("tenant_id", "ad", name="uq_gg_tanim_tenant_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    tip: Mapped[str] = mapped_column(GELIR_GIDER_TIP, nullable=False)
+    grup_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    dagitim_sekli: Mapped[str | None] = mapped_column(
+        GELIR_GIDER_DAGITIM, nullable=True
+    )
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class Firma(Base):
+    """Tedarikci/hizmet firmasi kaydi (P27)."""
+
+    __tablename__ = "firma"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_firma_id_tenant"),
+        UniqueConstraint("tenant_id", "ad", name="uq_firma_tenant_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    #: 10 hane (tuzel) ya da 11 hane (sahis/TC) — ikisi de kabul (CHECK).
+    vergi_no: Mapped[str | None] = mapped_column(Text, nullable=True)
+    vergi_dairesi: Mapped[str | None] = mapped_column(Text, nullable=True)
+    telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    email: Mapped[str | None] = mapped_column(Text, nullable=True)
+    adres: Mapped[str | None] = mapped_column(Text, nullable=True)
+    yetkili_ad: Mapped[str | None] = mapped_column(Text, nullable=True)
+    yetkili_telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    acilis_bakiye_kurus: Mapped[int] = mapped_column(
+        BigInteger, nullable=False, server_default=text("0")
+    )
+    acilis_bakiye_yon: Mapped[str] = mapped_column(
+        BAKIYE_YON, nullable=False, server_default=text("'borc'")
+    )
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class PersonelKayit(Base):
+    """Personel kaydi (P27) — `app_user`DAN AYRI.
+
+    Her personelin uygulama hesabi yoktur (temizlik, bahcivan) ve her
+    kullanici personel degildir (sakin). Ortusenler `app_user_id` ile
+    BAGLANIR; hesap silinirse kayit DURUR (bordro gecmisi kimlik kaydina
+    bagli olmamali).
+    """
+
+    __tablename__ = "personel_kayit"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_personel_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    tc: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gorev: Mapped[str | None] = mapped_column(Text, nullable=True)
+    telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    email: Mapped[str | None] = mapped_column(Text, nullable=True)
+    giris_tarihi = mapped_column(Date, nullable=True)
+    cikis_tarihi = mapped_column(Date, nullable=True)
+    maas_kurus: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    app_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class AracKayit(Base):
+    """KAYITLI arac (P27) — P17 rozetlerinin "kayitli mi" kaynagi.
+
+    Plaka `vehicle_pass` ile AYNI kuralla normalize saklanir (bosluksuz +
+    BUYUK); iki farkli normalizasyon iki farkli cevap verirdi.
+    """
+
+    __tablename__ = "arac_kayit"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_arac_id_tenant"),
+        UniqueConstraint("tenant_id", "plaka", name="uq_arac_tenant_plaka"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    plaka: Mapped[str] = mapped_column(Text, nullable=False)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    unit_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    marka: Mapped[str | None] = mapped_column(Text, nullable=True)
+    model: Mapped[str | None] = mapped_column(Text, nullable=True)
+    renk: Mapped[str | None] = mapped_column(Text, nullable=True)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class SayacAna(Base):
+    """ANA sayac (P27) — site geneli; ortak alan tuketimi buradan dagitilir."""
+
+    __tablename__ = "sayac_ana"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_sayac_ana_id_tenant"),
+        UniqueConstraint("tenant_id", "ad", name="uq_sayac_ana_tenant_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    tip: Mapped[str] = mapped_column(
+        SAYAC_TIP, nullable=False, server_default=text("'diger'")
+    )
+    tesisat_no: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ortak_alan_dagitim: Mapped[str | None] = mapped_column(
+        GELIR_GIDER_DAGITIM, nullable=True
+    )
+    ortak_alan_yuzde = mapped_column(Numeric(5, 2), nullable=True)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class SayacBolum(Base):
+    """BAGIMSIZ BOLUM sayaci (P27) — bir daireye ait, bir ana sayaca bagli.
+
+    Ana sayacla TEK TABLODA birlestirilmedi: ana sayaca ozgu alanlar (ortak
+    alan yuzdesi) daire satirlarinda anlamsizca null kalirdi.
+    """
+
+    __tablename__ = "sayac_bolum"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_sayac_bolum_id_tenant"),
+        UniqueConstraint(
+            "tenant_id", "unit_id", "ana_sayac_id", name="uq_sayac_bolum_unit_ana"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    ana_sayac_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    tesisat_no: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ilk_okuma = mapped_column(Numeric(12, 3), nullable=True)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
