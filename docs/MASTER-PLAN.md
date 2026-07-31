@@ -410,6 +410,11 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P28 · Borçlandırma (API — panel ekranı P29 ile gelecek).** Şimdilik
+  **mobil "Aidatım" ekranının BOZULMADIĞI** doğrulanmalı: **sakin** ile gir →
+  aidat tutarı ve borç durumu eskisi gibi görünmeli (P28 alanları eklendi ama
+  eski akış değişmedi). **Yönetici**de Aidat ekranı da eskisi gibi
+  çalışmalı.
 - [ ] **P27 · Muhasebe Tanımları (PANEL).** **Admin** ile panelde
   **Tanımlar** menüsü: (a) Kasalar → yeni kasa, "Banka hesabı" KAPALIYKEN
   IBAN gir → kaydet → **hata** almalı; banka açıkken IBAN kabul edilmeli.
@@ -1371,7 +1376,7 @@ mobil ihtiyacı P28'de** (borçlandırma) ortaya çıkacak — o zaman hangi
 tanımların mobile taşınacağı belli olur.
 
 ### P28 — Debiting engine (borçlandırma)
-Status: BEKLIYOR · Depends-on: P27
+Status: BITTI · Depends-on: P27
 Scope: FIRST audit the existing dues module and EXTEND it (no parallel duplicate
 system; record the merge decision). Then: single debit entry (kişi + bağımsız
 bölüm, açıklama, borçlandırma türü = P27 tanımı, tarih, son ödeme tarihi, tutar,
@@ -1387,6 +1392,94 @@ default malik.
 Acceptance: all three debit paths E2E; targeting-rule tests (tenant present/
 absent/both); existing dues flows and mobile dues screens unbroken; Excel import
 handles malformed rows gracefully; contract; gates.
+Notes (2026-07-31): **YENİ ŞEMA: `0018`**.
+
+**BİRLEŞTİRME KARARI (kapsamın ilk cümlesi): PARALEL SİSTEM YOK.** Mevcut
+aidat modülü denetlendi; `dues_assessment` zaten "bir daireye bir dönem için
+borç" kaydıdır ve ihtiyaç duyulan her şey ona **SÜTUN** olarak eklendi. Ayrı
+bir `borclandirma` tablosu, `dues_payment`in neye bağlanacağını ikiye böler,
+mobil "Aidatım" ekranı ile `/reports/financial-summary` iki kaynağı toplamak
+zorunda kalırdı. **Tekil yol için ayrı uç bile açılmadı**: `POST
+/dues/assessments` zaten odur, P28 alanları ona **opsiyonel** eklendi —
+mevcut çağıranlar (mobil, panel, testler) hiçbir şey değiştirmeden çalışır
+(`test_dues.py` 10/10 dokunulmadan geçiyor).
+
+**BU MADDENİN OMURGASI — BENZERSİZLİK.** Eski kısıt
+`UNIQUE (tenant, unit, donem)` idi: bir daireye bir dönemde **yalnız bir
+borç** açılabiliyordu. Oysa gerçek bir sitede aynı ay hem aidat hem elektrik
+hem demirbaş borçlandırılır. Kısıt `(tenant, unit, donem,
+COALESCE(gelir_gider_tanim_id, nöbetçi))` **benzersiz indeksine** çevrildi:
+* tür belirtilmeden açılan kayıtlar için **eski davranış aynen korunur**
+  (hepsi aynı COALESCE değerine düşer → dönem başına tek kayıt, 409),
+* tür belirtilince her tür için ayrı kayıt açılabilir.
+Postgres'te NULL'lar benzersizlik açısından **farklı** sayıldığı için düz bir
+`UNIQUE (…, gelir_gider_tanim_id)` eski korumayı **sessizce kaldırırdı** —
+test bunu ayrıca kilitliyor.
+
+**HEDEFLEME KURALI TANIMDA DURUR**, borçlandırma anında seçilmez; aksi halde
+aynı kalem farklı aylarda farklı kişiye yazılabilirdi. `kiraci_oncelikli`
+(aidat, faturalar: kullanan öder) / `malik` (yatırım, demirbaş: kiracı
+taşınsa da yükümlülük malikte kalır). **Kimse bulunamazsa borç DAİREYE
+yazılır** — uydurma bir kişi seçmek ("ilk bağ") yanlış kişiyi borçlandırırdı.
+**`rol_tipi` BOŞ olan bağ MALİK SAYILMAZ**: P23'te tip opsiyoneldir ve
+"bilinmiyor"u malik saymak yatırım giderini yanlış kişiye yazardı; böyle bir
+bağ yalnızca `kiraci_oncelikli` kuralının son çaresidir.
+
+**GECİKME TAZMİNATI ANLIK HESAPLANIR, SAKLANMAZ.** Oran değiştiğinde geçmiş
+kayıtlar da yeni orana göre okunur; saklansaydı aynı borç listede ve
+tahsilatta iki farklı tutar gösterirdi (test oranı 0→2→4 yapıp tutarın
+ikiye katlandığını doğruluyor). **BASİT faiz, TAM AY** üzerinden: bileşik
+faiz uzun gecikmelerde ana paranın katlarına çıkar, kısmi ay ise mevzuatta
+orantılanmaz — gün bazlı hesap her gün değişen bir borç üretir ve
+kullanıcıya gösterilen tutar ertesi gün tutmazdı. Vadesi olmayan borç
+gecikmiş **sayılmaz**.
+
+**KURUŞ KAYBI YOK.** `esit_dagit` kalan kuruşu ilk dairelere birer birer
+dağıtır; `toplam // adet` ile geçmek 100,01 TL'yi 3 daireye bölerken 1 kuruş
+**buharlaştırırdı**. Test 4 farklı bölünmede toplamın girdiye eşit kaldığını
+kilitliyor.
+
+**ÖNİZLEME → İŞLEME AYNI GÖVDE, AYNI PLAN.** Önizleme **hiçbir şey yazmaz**
+(test bunu doğruluyor) ve "500 daireden 3'ü tipsiz" bilgisini işlemeden önce
+verir; sonra fark edilirse eksik tahakkuk sessizce yayılır. Tutarı
+çözülemeyen daire **atlanır** — sessizce 0 borçlandırmak, yönetimin fark
+etmediği eksik tahakkuk üretirdi. Elle seçim (`unit_ids`) süzgeci **ezer**.
+
+**SAYAÇ SİHİRBAZI TEK İSTEK.** Dört adımın ilk üçü istemcide toplanır; ara
+adımlarda sunucu durumu tutmak, yarım kalmış sihirbazları temizlemek zorunda
+bırakırdı. Ortak alan = ana sayaç − daire toplamı; `ortak_alan_yuzde` kadarı
+dairelere **eşit** dağıtılır. **Negatif fark sıfırlanır** (ölçüm hatası);
+dairelere negatif borç yazmak **alacak** üretirdi.
+
+**İÇE AKTARIM: BOZUK SATIR TÜM İŞLEMİ DÜŞÜRMEZ.** 400 satırlık bir dosyada
+3 hatalı satır yüzünden 397 doğru satırı reddetmek, kullanıcıyı dosyayı elle
+ayıklamaya zorlardı; hatalar satır numarasıyla ve **çözülmüş metinle**
+(isteğin dilinde) döner. **XLSX AYRIŞTIRMA SUNUCUDA DEĞİL**: xlsx ayrıştırma
+bir saldırı yüzeyidir (zip bombası, XXE, formül enjeksiyonu) ve panel dosyayı
+zaten okuyup önizleme göstermek zorunda; sunucu **yapılandırılmış satır
+listesi** alır ve her satırı doğrular.
+
+**BULGU:** `hedef_kurali` P27'de modele eklenmişti ama **şemalara
+eklenmemişti** — yani API'den ayarlanamıyordu ve her tanım varsayılan
+`kiraci_oncelikli` kalıyordu. Hedefleme testi yakaladı (malik kuralı kiracıyı
+döndürdü); `Create`/`Update`/`Out` şemalarına ve sözleşmeye eklendi.
+
+TESTLER: `test_borclandirma_cekirdek.py` **22/22** (saf hesap: hedefleme 6,
+gecikme 5, kuruş kaybı 5, tipe göre 2, sayaç 4) + `test_borclandirma_uc.py`
+**18/18** (tekil+tür+hedef, tür yoksa eski davranış, gelir kalemi 422, aynı
+dönem farklı tür, tursuz mükerrer koruması, hedefleme 3 senaryo, önizleme
+yazmaz, önizleme=işleme, tip varsayılanı+atlama, elle seçim, tekrar
+çalıştırma, sayaç ortak alan, içe aktarım hata raporu + mükerrer, gecikme
+anlık + kapalı kalem, RBAC).
+KAPILAR: backend `pytest` **937 geçti / 0 düştü**; göç tersinirliği **3/3 OK, bulgu 0** (19 sınır); sözleşme
+5 yeni yol + 9 şema + `DuesAssessment(Create)` genişletmesi (sapma testi
+temiz); rol matrisi 6 yeni ucu yakaladı.
+
+**AÇIK BIRAKILAN (bilinçli):** (a) makbuz göster/yazdır — bu bir ÇIKTI
+işidir ve P29'un tahsilat makbuzuyla **tek şablonda** yapılmalı, yoksa iki
+farklı makbuz düzeni çıkar; (b) panel/mobil ekranları — motor ve sözleşme
+hazır, yüzeyler P29'un tahsilat ekranlarıyla birlikte tasarlanacak (borç ve
+tahsilat aynı ekranda görünmeli).
 
 ### P29 — Collections, cash & financial movements
 Status: BEKLIYOR · Depends-on: P28
@@ -1661,7 +1754,8 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P27 · (bu commit) · Muhasebe "Tanimlar" katmani (0017): kasa/gelir-gider/firma/personel/arac/sayac defterleri + evrak-seri & para birimi (GOSTERIM); para kurus, acilis bakiyesi isaretsiz+yonlu, dagitim enum'u BILEREK iki degerli; admin-web /tanimlar sayfasi (P26'nin acik parcasi kapandi).
+- 2026-07-31 · P28 · (bu commit) · Borclandirma motoru (0018): mevcut aidat modulu GENISLETILDI (paralel sistem YOK); benzersizlik (daire, donem, TUR) oldu — ayni ay birden fazla kalem; hedefleme kurali TANIMDA (kiraci_oncelikli|malik); gecikme ANLIK hesaplanir; toplu onizleme→isleme, sayac sihirbazi, satir-bazli ice aktarim.
+- 2026-07-31 · P27 · 059eb61 · Muhasebe "Tanimlar" katmani (0017): kasa/gelir-gider/firma/personel/arac/sayac defterleri + evrak-seri & para birimi (GOSTERIM); para kurus, acilis bakiyesi isaretsiz+yonlu, dagitim enum'u BILEREK iki degerli; admin-web /tanimlar sayfasi (P26'nin acik parcasi kapandi).
 - 2026-07-31 · P26 · 760a812 · Bagimsiz Bolum TIP + GRUP tanimlari (0016): tip = buyukluk + VARSAYILAN AIDAT (null "tanimsiz" != 0 "muaf"), grup = ne oldugu; tanim silinince daire SILINMEZ; daire/toplu olusturmada atama; bilesik FK + SET NULL bulgusu.
 - 2026-07-31 · P25 · 33a7d75 · Kamera sertlestirme: 2048 karakter siniri (0015, uc katman) + "kamu yayinlari oynamiyor"un KOK NEDENI (cleartext yalniz debug manifestindeydi; P17 restream'i de vuruyordu) + hata artik NEDENE gore konusuyor + ana ekran seridi dortlu ve yonetici/sakin ekranlarina da eklendi.
 - 2026-07-31 · P24 · a26bb7c · Sikayet renk skalasi DORT KADEMEYE cikti (tek sikayet artik gorunur; esikler tek tabloda, P37 icin hazir) + KISI BASINA okuma durumu (0014) ve "Yeni / Okunmamis" triyaj kuyrugu (rozet = meta.total, ayri uc yok).

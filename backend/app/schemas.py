@@ -2466,6 +2466,16 @@ class DuesAssessmentOut(BaseModel):
     tutar_kurus: int
     son_odeme_tarihi: date | None = None
     aciklama: str | None = None
+    # --- P28 (ADDITIVE — eski alanlar aynen durur) ------------------------- #
+    gelir_gider_tanim_id: uuid.UUID | None = None
+    gelir_gider_tanim_ad: str | None = None
+    hedef_user_id: uuid.UUID | None = None
+    hedef_ad: str | None = None
+    tarih: date | None = None
+    gecikme_uygula: bool = True
+    kaynak: str = "tekil"
+    #: ANLIK hesaplanir, SAKLANMAZ — oran degistiginde gecmis tutarsiz kalirdi.
+    gecikme_kurus: int = 0
     created_at: datetime
 
 
@@ -2476,6 +2486,10 @@ class DuesAssessmentCreate(BaseModel):
     unit_ids: list[uuid.UUID] | None = None  # toplu hedef; yoksa tum aktif daireler
     son_odeme_tarihi: date | None = None
     aciklama: str | None = None
+    # --- P28 (hepsi OPSIYONEL: mevcut cagiranlar aynen calisir) ------------ #
+    gelir_gider_tanim_id: uuid.UUID | None = None
+    tarih: date | None = None
+    gecikme_uygula: bool = True
 
 
 class DuesAssessmentResult(BaseModel):
@@ -3327,6 +3341,8 @@ GelirGiderTip = Literal["gelir", "gider", "her_ikisi"]
 #: P28'de uygulanmayan bir secenek YANLIS BORCLANDIRIRDI. Genisleme tek
 #: `ALTER TYPE ... ADD VALUE` satiridir.
 GelirGiderDagitim = Literal["bagimsiz_bolumlere_esit", "tipe_gore"]
+#: (P28) Borcun KIME yazilacagi — kural TANIMDA durur (bkz. models).
+BorcHedefKurali = Literal["kiraci_oncelikli", "malik"]
 BakiyeYon = Literal["borc", "alacak"]
 SayacTip = Literal["su", "elektrik", "dogalgaz", "isi", "diger"]
 
@@ -3434,6 +3450,9 @@ class GelirGiderTanimCreate(BaseModel):
     tip: GelirGiderTip
     grup_id: uuid.UUID | None = None
     dagitim_sekli: GelirGiderDagitim | None = None
+    #: (P28) Borc KIME yazilir. Varsayilan `kiraci_oncelikli` (aidat,
+    #: faturalar: kullanan oder); yatirim/demirbas icin `malik` secilir.
+    hedef_kurali: BorcHedefKurali = "kiraci_oncelikli"
     aktif: bool = True
 
     @model_validator(mode="after")
@@ -3449,6 +3468,7 @@ class GelirGiderTanimUpdate(BaseModel):
     tip: GelirGiderTip | None = None
     grup_id: uuid.UUID | None = None
     dagitim_sekli: GelirGiderDagitim | None = None
+    hedef_kurali: BorcHedefKurali | None = None
     aktif: bool | None = None
 
     @model_validator(mode="after")
@@ -3465,6 +3485,7 @@ class GelirGiderTanimOut(_TanimBase):
     #: Grup ADI da doner — istemci ayri istek yapmadan listeyi cizsin.
     grup_ad: str | None = None
     dagitim_sekli: str | None = None
+    hedef_kurali: str = "kiraci_oncelikli"
 
 
 class GelirGiderTanimListResponse(BaseModel):
@@ -3742,3 +3763,132 @@ class MuhasebeAyarUpdate(BaseModel):
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
         return self
+
+
+# ========================= P28 BORCLANDIRMA MOTORU ========================== #
+# Uc yol da AYNI kayda (`dues_assessment`) yazar — paralel bir sistem YOK.
+BorclandirmaKaynak = Literal["tekil", "toplu", "sayac", "ice_aktarim"]
+
+
+class TopluBorcSuzgec(BaseModel):
+    """Toplu borclandirmanin HEDEF SUZGECI (P26 tip/grup + blok)."""
+
+    blok: str | None = None
+    unit_tip_id: uuid.UUID | None = None
+    unit_grup_id: uuid.UUID | None = None
+    #: Verilirse suzgec YERINE bu daireler (elle secim).
+    unit_ids: list[uuid.UUID] | None = None
+
+
+class TopluBorcIstek(BaseModel):
+    """Toplu borclandirma — ONIZLEME ve ISLEME AYNI govdeyi kullanir.
+
+    Ayni govde olmasi bilincli: onizlemede gorulen ile islenen arasinda
+    fark kalmasin. `tutar_kurus` verilirse HER daireye o tutar; verilmezse
+    P26'nin TIP VARSAYILANI kullanilir (`tipe_gore`).
+    """
+
+    donem: str = Field(..., min_length=1, max_length=7)
+    gelir_gider_tanim_id: uuid.UUID
+    suzgec: TopluBorcSuzgec = Field(default_factory=TopluBorcSuzgec)
+    tutar_kurus: int | None = Field(None, ge=1)
+    #: `tutar_kurus` yoksa tipi/tutari olmayan daireler icin yedek tutar.
+    yedek_tutar_kurus: int | None = Field(None, ge=1)
+    son_odeme_tarihi: date | None = None
+    tarih: date | None = None
+    aciklama: str | None = Field(None, max_length=500)
+    gecikme_uygula: bool = True
+
+
+class TopluBorcSatir(BaseModel):
+    unit_id: uuid.UUID
+    unit_no: str
+    tutar_kurus: int | None = None
+    hedef_user_id: uuid.UUID | None = None
+    hedef_ad: str | None = None
+    #: Bu satir neden ATLANACAK (None ise islenecek).
+    atlama_nedeni: str | None = None
+
+
+class TopluBorcOnizleme(BaseModel):
+    """Onizleme: NE OLACAGINI gosterir, HICBIR SEY YAZMAZ.
+
+    `atlanacak` ayri sayilir cunku "500 daireden 3'u tipsiz" bilgisi
+    islemeden ONCE gorulmelidir — sonra fark edilirse eksik tahakkuk
+    sessizce yayilir.
+    """
+
+    satirlar: list[TopluBorcSatir]
+    islenecek: int
+    atlanacak: int
+    toplam_kurus: int
+
+
+class SayacBorcIstek(BaseModel):
+    """Sayac ile borclandirma sihirbazinin SON adimi (4/4).
+
+    Adimlar: dagitim sekli -> ana sayac -> tuketim degerleri -> borclandirma.
+    Ilk uc adim istemcide toplanir; sunucuya TEK istek gelir — ara adimlarda
+    sunucu durumu tutmak, yarim kalmis sihirbazlari temizlemek zorunda
+    birakirdi.
+    """
+
+    donem: str = Field(..., min_length=1, max_length=7)
+    gelir_gider_tanim_id: uuid.UUID
+    ana_sayac_id: uuid.UUID
+    #: Ana sayacin DONEM TUKETIMI (birim).
+    ana_tuketim: float = Field(..., ge=0)
+    #: Birim fiyat, KURUS (orn. 1 m3 su = 3550 kurus).
+    birim_fiyat_kurus: int = Field(..., ge=1)
+    #: daire sayac id -> donem tuketimi.
+    bolum_tuketimleri: dict[uuid.UUID, float]
+    son_odeme_tarihi: date | None = None
+    tarih: date | None = None
+    aciklama: str | None = Field(None, max_length=500)
+
+
+class BorcIceAktarimSatir(BaseModel):
+    """Excel/CSV ice aktarim SATIRI — hatali satirlar tek tek raporlanir."""
+
+    satir_no: int
+    unit_no: str
+    tutar_kurus: int | None = None
+    aciklama: str | None = None
+
+
+class BorcIceAktarimIstek(BaseModel):
+    donem: str = Field(..., min_length=1, max_length=7)
+    gelir_gider_tanim_id: uuid.UUID
+    satirlar: list[BorcIceAktarimSatir]
+    son_odeme_tarihi: date | None = None
+    tarih: date | None = None
+
+
+class BorcIceAktarimHata(BaseModel):
+    satir_no: int
+    unit_no: str | None = None
+    #: Katalog KIMLIGI degil, cozulmus METIN (satir basina, istegin dilinde).
+    hata: str
+
+
+class BorcIceAktarimSonuc(BaseModel):
+    """Satir-bazli hata raporu.
+
+    BOZUK SATIR TUM ICE AKTARIMI DUSURMEZ: 400 satirlik bir dosyada 3 hatali
+    satir yuzunden 397 dogru satiri reddetmek, kullaniciyi dosyayi elle
+    ayiklamaya zorlardi.
+    """
+
+    olusturulan: int
+    atlanan: int
+    hatalar: list[BorcIceAktarimHata]
+
+
+class GecikmeAyarOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    gecikme_aylik_yuzde: float
+
+
+class GecikmeAyarUpdate(BaseModel):
+    gecikme_aylik_yuzde: float = Field(..., ge=0, le=100)

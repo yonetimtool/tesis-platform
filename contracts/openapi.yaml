@@ -3171,6 +3171,151 @@ paths:
   # SILME: bagli kayit varsa 409 VERILMEZ; baglar SET NULL ile bosalir
   # ve yanit KAC kaydin etkilendigini doner.
   # ================================================================= #
+  # ================================================================= #
+  # BORCLANDIRMA MOTORU (P28)
+  # BIRLESTIRME KARARI: paralel bir sistem YOK — dort yol da mevcut
+  # `dues_assessment` kaydina yazar; mobil "Aidatim", /units/{id}/dues ve
+  # /reports/financial-summary degismeden calisir.
+  # TEKIL yol icin ayri uc ACILMADI: `POST /dues/assessments` zaten odur ve
+  # P28 alanlari ona OPSIYONEL eklendi (geriye uyum).
+  # ================================================================= #
+  /borclandirma/toplu/onizleme:
+    post:
+      tags: [aidat]
+      summary: Toplu borclandirma ONIZLEMESI (admin) — HICBIR SEY YAZMAZ
+      description: >
+        Ne olacagini gosterir. "500 daireden 3'u tipsiz" bilgisi islemeden
+        ONCE gorulmelidir; sonra fark edilirse eksik tahakkuk sessizce
+        yayilir. Isleme ucu AYNI govdeyi alir ve AYNI plani uretir —
+        gorulen ile yazilan arasinda fark kalmasin diye.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TopluBorcIstek" }
+      responses:
+        "200":
+          description: Onizleme
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TopluBorcOnizleme" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /borclandirma/toplu:
+    post:
+      tags: [aidat]
+      summary: Toplu borclandirmayi ISLE (admin)
+      description: >
+        Onizlemedeki plani isler. Mukerrer tahakkuklar ATLANIR (uc yeniden
+        calistirilabilir). Yanitta `created` **BOS** doner: 500 satirlik bir
+        yanit istemciyi bogar ve ayrintiyi onizleme zaten verdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TopluBorcIstek" }
+      responses:
+        "201":
+          description: Islendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DuesAssessmentResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /borclandirma/sayac:
+    post:
+      tags: [aidat]
+      summary: Sayac ile borclandirma — sihirbazin 4. adimi (admin)
+      description: >
+        Sihirbaz: dagitim sekli -> ana sayac -> tuketim degerleri ->
+        borclandirma. Ilk uc adim istemcide toplanir ve sunucuya TEK istek
+        gelir; ara adimlarda sunucu durumu tutmak, yarim kalmis sihirbazlari
+        temizlemek zorunda birakirdi.
+
+        ORTAK ALAN: ana sayac ile daire sayaclarinin toplami arasindaki fark
+        ortak tuketimdir; `sayac_ana.ortak_alan_yuzde` verilmisse o yuzdesi
+        dairelere ESIT dagitilir. NEGATIF fark (olcum hatasi) sifirlanir —
+        dairelere negatif borc yazmak ALACAK uretirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SayacBorcIstek" }
+      responses:
+        "201":
+          description: Islendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DuesAssessmentResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /borclandirma/ice-aktarim:
+    post:
+      tags: [aidat]
+      summary: Satir listesinden borclandirma — SATIR BAZLI hata raporu (admin)
+      description: >
+        **BOZUK SATIR TUM ICE AKTARIMI DUSURMEZ**: 400 satirlik bir dosyada
+        3 hatali satir yuzunden 397 dogru satiri reddetmek, kullaniciyi
+        dosyayi elle ayiklamaya zorlardi. Hatalar satir numarasiyla doner.
+
+        **DOSYA AYRISTIRMA ISTEMCIDE**: sunucu XLSX ayristirmaz. Gerekce —
+        xlsx ayristirma bir SALDIRI YUZEYIDIR (zip bombasi, XXE, formul
+        enjeksiyonu) ve panel dosyayi zaten okuyup onizleme gostermek
+        zorunda. Sunucu YAPILANDIRILMIS satir listesi alir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BorcIceAktarimIstek" }
+      responses:
+        "201":
+          description: Islendi (hatali satirlar raporlanir)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BorcIceAktarimSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /borclandirma/gecikme-ayari:
+    get:
+      tags: [aidat]
+      summary: Aylik gecikme tazminati orani (admin+yonetici)
+      responses:
+        "200":
+          description: Oran
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GecikmeAyar" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    patch:
+      tags: [aidat]
+      summary: Gecikme oranini guncelle (admin)
+      description: >
+        Tazminat **TUTARI SAKLANMAZ**; raporlama/tahsilat aninda hesaplanir.
+        Oran degistiginde GECMIS kayitlar da yeni orana gore okunur —
+        saklansaydi ayni borc iki farkli yerde iki farkli tutar gosterirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [gecikme_aylik_yuzde]
+              properties:
+                gecikme_aylik_yuzde: { type: number, format: double, minimum: 0, maximum: 100 }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GecikmeAyar" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /kasalar:
     get:
       tags: [muhasebe-tanimlari]
@@ -8828,6 +8973,124 @@ components:
     # ------------------ P27 "Tanimlar" katmani semalari ---------------- #
     # PARA HER YERDE KURUS (int64). Acilis bakiyeleri ISARETSIZ tutar + AYRI
     # yon tasir (bkz. yol yorumlari).
+    TopluBorcSuzgec:
+      type: object
+      description: >
+        Hedef suzgeci. `unit_ids` verilirse **suzgeci EZER** (elle secim):
+        kullanici tek tek sectiyse blok/tip kisitlarini ayrica uygulamak
+        "sectigim daire neden yok" uretirdi.
+      properties:
+        blok: { type: string, nullable: true }
+        unit_tip_id: { type: string, format: uuid, nullable: true }
+        unit_grup_id: { type: string, format: uuid, nullable: true }
+        unit_ids:
+          type: array
+          nullable: true
+          items: { type: string, format: uuid }
+    TopluBorcIstek:
+      type: object
+      required: [donem, gelir_gider_tanim_id]
+      properties:
+        donem: { type: string, maxLength: 7, example: "2026-07" }
+        gelir_gider_tanim_id: { type: string, format: uuid }
+        suzgec: { $ref: "#/components/schemas/TopluBorcSuzgec" }
+        tutar_kurus:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: >
+            Verilirse HER daireye bu tutar; verilmezse P26'nin TIP
+            VARSAYILANI kullanilir.
+        yedek_tutar_kurus:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Tipi/tutari olmayan daireler icin yedek
+        son_odeme_tarihi: { type: string, format: date, nullable: true }
+        tarih: { type: string, format: date, nullable: true }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+        gecikme_uygula: { type: boolean, default: true }
+    TopluBorcSatir:
+      type: object
+      required: [unit_id, unit_no]
+      properties:
+        unit_id: { type: string, format: uuid }
+        unit_no: { type: string }
+        tutar_kurus: { type: integer, nullable: true }
+        hedef_user_id: { type: string, format: uuid, nullable: true }
+        hedef_ad: { type: string, nullable: true }
+        atlama_nedeni:
+          type: string
+          nullable: true
+          description: Dolu ise bu satir ISLENMEZ (orn. tutar_cozulemedi)
+    TopluBorcOnizleme:
+      type: object
+      required: [satirlar, islenecek, atlanacak, toplam_kurus]
+      properties:
+        satirlar:
+          type: array
+          items: { $ref: "#/components/schemas/TopluBorcSatir" }
+        islenecek: { type: integer }
+        atlanacak: { type: integer }
+        toplam_kurus: { type: integer, format: int64 }
+    SayacBorcIstek:
+      type: object
+      required: [donem, gelir_gider_tanim_id, ana_sayac_id, ana_tuketim, birim_fiyat_kurus, bolum_tuketimleri]
+      properties:
+        donem: { type: string, maxLength: 7 }
+        gelir_gider_tanim_id: { type: string, format: uuid }
+        ana_sayac_id: { type: string, format: uuid }
+        ana_tuketim: { type: number, format: double, minimum: 0 }
+        birim_fiyat_kurus: { type: integer, minimum: 1, description: "Birim fiyat, KURUS" }
+        bolum_tuketimleri:
+          type: object
+          description: "daire sayac id -> donem tuketimi"
+          additionalProperties: { type: number, format: double }
+        son_odeme_tarihi: { type: string, format: date, nullable: true }
+        tarih: { type: string, format: date, nullable: true }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    BorcIceAktarimSatir:
+      type: object
+      required: [satir_no, unit_no]
+      properties:
+        satir_no: { type: integer, description: Kaynak dosyadaki satir numarasi }
+        unit_no: { type: string }
+        tutar_kurus: { type: integer, nullable: true }
+        aciklama: { type: string, nullable: true }
+    BorcIceAktarimIstek:
+      type: object
+      required: [donem, gelir_gider_tanim_id, satirlar]
+      properties:
+        donem: { type: string, maxLength: 7 }
+        gelir_gider_tanim_id: { type: string, format: uuid }
+        satirlar:
+          type: array
+          items: { $ref: "#/components/schemas/BorcIceAktarimSatir" }
+        son_odeme_tarihi: { type: string, format: date, nullable: true }
+        tarih: { type: string, format: date, nullable: true }
+    BorcIceAktarimHata:
+      type: object
+      required: [satir_no, hata]
+      properties:
+        satir_no: { type: integer }
+        unit_no: { type: string, nullable: true }
+        hata:
+          type: string
+          description: COZULMUS metin (katalog kimligi degil), istegin dilinde
+    BorcIceAktarimSonuc:
+      type: object
+      required: [olusturulan, atlanan, hatalar]
+      properties:
+        olusturulan: { type: integer }
+        atlanan: { type: integer }
+        hatalar:
+          type: array
+          items: { $ref: "#/components/schemas/BorcIceAktarimHata" }
+    GecikmeAyar:
+      type: object
+      required: [gecikme_aylik_yuzde]
+      properties:
+        gecikme_aylik_yuzde: { type: number, format: double, minimum: 0, maximum: 100 }
     Kasa:
       type: object
       required: [id, kod, ad, acilis_bakiye_kurus, banka_mi, aktif, created_at]
@@ -8923,6 +9186,17 @@ components:
 
             `tip=gelir` iken **NULL olmali** (422): bir gelir kalemi bagimsiz
             bolumlere dagitilmaz, tahsil edilir.
+        hedef_kurali:
+          type: string
+          enum: [kiraci_oncelikli, malik]
+          default: kiraci_oncelikli
+          description: |
+            **(P28)** Borc KIME yazilir. `kiraci_oncelikli` — kiraci varsa
+            ona, yoksa malike (aidat, faturalar: kullanan oder).
+            `malik` — her zaman malike (yatirim, demirbas: kiraci tasinsa da
+            yukumluluk malikte kalir). Kural **TANIMDA** durur, borclandirma
+            aninda secilmez — aksi halde ayni kalem farkli aylarda farkli
+            kisiye yazilabilirdi.
         aktif: { type: boolean }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
@@ -8937,6 +9211,7 @@ components:
           type: string
           nullable: true
           enum: [bagimsiz_bolumlere_esit, tipe_gore]
+        hedef_kurali: { type: string, enum: [kiraci_oncelikli, malik], default: kiraci_oncelikli }
         aktif: { type: boolean, default: true }
     GelirGiderTanimUpdate:
       type: object
@@ -8949,6 +9224,7 @@ components:
           type: string
           nullable: true
           enum: [bagimsiz_bolumlere_esit, tipe_gore]
+        hedef_kurali: { type: string, enum: [kiraci_oncelikli, malik] }
         aktif: { type: boolean }
     Firma:
       type: object
@@ -9435,6 +9711,35 @@ components:
           description: "KURUS (minor units); para asla float degil"
         son_odeme_tarihi: { type: string, format: date, nullable: true }
         aciklama: { type: string, nullable: true }
+        # --- P28 (ADDITIVE — eski alanlar aynen durur) ------------------- #
+        gelir_gider_tanim_id: { type: string, format: uuid, nullable: true }
+        gelir_gider_tanim_ad: { type: string, nullable: true }
+        hedef_user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: >
+            (P28) Borcun YAZILDIGI kisi — `gelir_gider_tanim.hedef_kurali` ve
+            P23 bag verisinden cozulur. `null` = borc DAIREYE yazildi (tursuz
+            tahakkukun eski davranisi).
+        hedef_ad: { type: string, nullable: true }
+        tarih:
+          type: string
+          format: date
+          nullable: true
+          description: >
+            Islem gunu. `donem` (YYYY-MM) MUHASEBE DONEMIDIR ve ikisi ayni
+            sey DEGILDIR: Ocak doneminin borcu Subat'ta acilabilir.
+        gecikme_uygula: { type: boolean, default: true }
+        kaynak: { type: string, enum: [tekil, toplu, sayac, ice_aktarim] }
+        gecikme_kurus:
+          type: integer
+          format: int64
+          description: |
+            **ANLIK HESAPLANIR, SAKLANMAZ.** Oran degistiginde gecmis
+            kayitlar da yeni orana gore okunur; saklansaydi ayni borc listede
+            ve tahsilatta iki farkli tutar gosterirdi. BASIT faiz, TAM AY
+            uzerinden (kismi ay orantilanmaz).
         created_at: { type: string, format: date-time }
     DuesAssessmentCreate:
       type: object
@@ -9454,6 +9759,17 @@ components:
         tutar_kurus: { type: integer, minimum: 1 }
         son_odeme_tarihi: { type: string, format: date, nullable: true }
         aciklama: { type: string, nullable: true }
+        # --- P28: hepsi OPSIYONEL, mevcut cagiranlar aynen calisir -------- #
+        gelir_gider_tanim_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: >
+            (P28) Borclandirma TURU. Verilirse hedef kisi de tanimin
+            `hedef_kurali`ndan cozulur. GELIR kalemi verilirse 422 —
+            bir gelir borclandirilmaz, tahsil edilir.
+        tarih: { type: string, format: date, nullable: true }
+        gecikme_uygula: { type: boolean, default: true }
     DuesAssessmentResult:
       type: object
       required: [created, atlanan]
@@ -9463,7 +9779,13 @@ components:
           items: { $ref: "#/components/schemas/DuesAssessment" }
         atlanan:
           type: integer
-          description: "Zaten var olan (donem) tahakkuk sayisi (toplu modda atlanan)"
+          description: |
+            Atlanan tahakkuk sayisi. **(P28)** Benzersizlik artik
+            `(daire, donem, TUR)` uzerindedir: ayni ay hem aidat hem elektrik
+            borclandirilabilir. TUR VERILMEYEN kayitlarda eski koruma AYNEN
+            durur (donem basina tek kayit) — Postgres'te NULL'lar
+            benzersizlikte farkli sayildigi icin bu, `COALESCE`li bir
+            benzersiz indeksle saglanir.
 
     DuesPayment:
       type: object

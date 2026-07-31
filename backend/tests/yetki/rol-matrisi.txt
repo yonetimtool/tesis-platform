@@ -27,6 +27,12 @@ GET    /blocks                                              IZIN   IZIN   IZIN  
 POST   /blocks                                              IZIN   IZIN   RED    RED    RED   
 DELETE /blocks/{id}                                         IZIN   IZIN   RED    RED    RED   
 PATCH  /blocks/{id}                                         IZIN   IZIN   RED    RED    RED   
+GET    /borclandirma/gecikme-ayari                          IZIN   IZIN   RED    RED    RED   
+PATCH  /borclandirma/gecikme-ayari                          IZIN   RED    RED    RED    RED   
+POST   /borclandirma/ice-aktarim                            IZIN   RED    RED    RED    RED   
+POST   /borclandirma/sayac                                  IZIN   RED    RED    RED    RED   
+POST   /borclandirma/toplu                                  IZIN   RED    RED    RED    RED   
+POST   /borclandirma/toplu/onizleme                         IZIN   RED    RED    RED    RED   
 GET    /budget/categories                                   IZIN   IZIN   RED    RED    RED   
 POST   /budget/categories                                   IZIN   IZIN   RED    RED    RED   
 PATCH  /budget/categories/{category_id}                     IZIN   IZIN   RED    RED    RED   

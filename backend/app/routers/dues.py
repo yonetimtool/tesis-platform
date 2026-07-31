@@ -20,7 +20,16 @@ from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, DuesAssessment, DuesPayment, Unit, UnitResident
+from ..borclandirma import Bag, gecikme_kurus, hedef_sec
+from ..models import (
+    AppUser,
+    DuesAssessment,
+    DuesPayment,
+    GelirGiderTanim,
+    Tenant,
+    Unit,
+    UnitResident,
+)
 from ..payments import get_payment_provider
 from .budget import ensure_dues_income_entry
 from ..schemas import (
@@ -40,6 +49,92 @@ router = APIRouter(tags=["aidat"])
 _ADMIN = require_role("admin")
 _REPORT = require_role("admin", "yonetici")
 _RESIDENT = require_role("resident")
+
+
+async def _tanim_coz(db: AsyncSession, tanim_id) -> GelirGiderTanim | None:
+    """(P28) Borclandirma turunu coz ve DOGRULA.
+
+    Alan OPSIYONELDIR: verilmezse eski davranis (tursuz tahakkuk) aynen
+    surer, yani mevcut cagiranlar (mobil, panel, testler) bozulmaz.
+    """
+    if tanim_id is None:
+        return None
+    obj = (
+        await db.execute(
+            select(GelirGiderTanim).where(GelirGiderTanim.id == tanim_id)
+        )
+    ).scalar_one_or_none()
+    if obj is None:
+        raise APIError(422, "invalid_reference", "gelir_gider_tanim_yok")
+    if obj.tip == "gelir":
+        # Bir GELIR kalemi BORCLANDIRILMAZ; tahsil edilir.
+        raise APIError(422, "validation_error", "gelir_kalemi_borclandirilmaz")
+    return obj
+
+
+async def _hedef_coz(db: AsyncSession, unit_id, tanim: GelirGiderTanim | None):
+    """(P28) Borcun KIME yazilacagini P23 bag verisinden coz.
+
+    Tanim yoksa hedef de yoktur: tursuz bir tahakkuk ESKI DAVRANISTIR ve
+    daireye yazilir.
+    """
+    if tanim is None:
+        return None
+    rows = (
+        await db.execute(
+            select(UnitResident.user_id, UnitResident.rol_tipi).where(
+                UnitResident.unit_id == unit_id, UnitResident.bitis.is_(None)
+            )
+        )
+    ).all()
+    secilen = hedef_sec([Bag(str(u), r) for u, r in rows], tanim.hedef_kurali)
+    return uuid.UUID(secilen) if secilen else None
+
+
+async def _zenginlestir(
+    db: AsyncSession, kayitlar: list[DuesAssessment]
+) -> list[DuesAssessmentOut]:
+    """(P28) Tahakkuklari TUR ADI + HEDEF ADI + GECIKME ile serilestir.
+
+    GECIKME ANLIK HESAPLANIR, SAKLANMAZ: oran degistiginde gecmis kayitlar da
+    yeni orana gore okunur. Saklansaydi ayni borc listede ve tahsilatta iki
+    farkli tutar gosterirdi.
+
+    Adlar TEK sorguda cozulur (kayit basina iki istek, 200 satirlik listede
+    400 ek sorgu demekti).
+    """
+    if not kayitlar:
+        return []
+    oran = (
+        await db.execute(select(Tenant.gecikme_aylik_yuzde))
+    ).scalar_one_or_none() or 0
+    bugun = datetime.now(timezone.utc).date()
+
+    t_idler = {k.gelir_gider_tanim_id for k in kayitlar if k.gelir_gider_tanim_id}
+    h_idler = {k.hedef_user_id for k in kayitlar if k.hedef_user_id}
+    t_ad = dict(
+        (await db.execute(
+            select(GelirGiderTanim.id, GelirGiderTanim.ad)
+            .where(GelirGiderTanim.id.in_(t_idler))
+        )).all()
+    ) if t_idler else {}
+    h_ad = dict(
+        (await db.execute(
+            select(AppUser.id, AppUser.ad).where(AppUser.id.in_(h_idler))
+        )).all()
+    ) if h_idler else {}
+
+    return [
+        DuesAssessmentOut.model_validate(k).model_copy(update={
+            "gelir_gider_tanim_ad": t_ad.get(k.gelir_gider_tanim_id),
+            "hedef_ad": h_ad.get(k.hedef_user_id),
+            "gecikme_kurus": gecikme_kurus(
+                k.tutar_kurus, k.son_odeme_tarihi, bugun, oran,
+                uygula=k.gecikme_uygula,
+            ),
+        })
+        for k in kayitlar
+    ]
 
 
 async def _unit_status(db: AsyncSession, unit: Unit) -> UnitDuesStatus:
@@ -77,18 +172,28 @@ async def create_assessments(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADMIN),
 ) -> DuesAssessmentResult:
+    tanim = await _tanim_coz(db, body.gelir_gider_tanim_id)
     common = dict(
         donem=body.donem,
         tutar_kurus=body.tutar_kurus,
         son_odeme_tarihi=body.son_odeme_tarihi,
         aciklama=body.aciklama,
+        # (P28) Hepsi OPSIYONEL — verilmezse eski davranis.
+        gelir_gider_tanim_id=body.gelir_gider_tanim_id,
+        gecikme_uygula=body.gecikme_uygula,
     )
+    if body.tarih is not None:
+        common["tarih"] = body.tarih
 
     # TEK daire modu: unit_id verildi -> dup donem 409
     if body.unit_id is not None:
         if (await db.execute(select(Unit.id).where(Unit.id == body.unit_id))).scalar_one_or_none() is None:
             raise APIError(422, "invalid_reference", "daire_bulunamadi")
-        obj = DuesAssessment(tenant_id=user.tenant_id, unit_id=body.unit_id, **common)
+        hedef = await _hedef_coz(db, body.unit_id, tanim)
+        obj = DuesAssessment(
+            tenant_id=user.tenant_id, unit_id=body.unit_id,
+            hedef_user_id=hedef, **common,
+        )
         db.add(obj)
         try:
             await db.flush()
@@ -101,7 +206,9 @@ async def create_assessments(
             db, user, Action.DUES_ASSESSMENT_CREATE, resource_type="dues_assessment",
             resource_id=obj.id, meta={"unit_id": str(body.unit_id)},
         )
-        return DuesAssessmentResult(created=[DuesAssessmentOut.model_validate(obj)], atlanan=0)
+        return DuesAssessmentResult(
+            created=await _zenginlestir(db, [obj]), atlanan=0
+        )
 
     # TOPLU mod: unit_ids verildiyse dogrula, yoksa tum aktif daireler
     if body.unit_ids is not None:
@@ -125,7 +232,10 @@ async def create_assessments(
     created: list[DuesAssessmentOut] = []
     atlanan = 0
     for uid in targets:
-        obj = DuesAssessment(tenant_id=user.tenant_id, unit_id=uid, **common)
+        obj = DuesAssessment(
+            tenant_id=user.tenant_id, unit_id=uid,
+            hedef_user_id=await _hedef_coz(db, uid, tanim), **common,
+        )
         try:
             async with db.begin_nested():
                 db.add(obj)
@@ -155,6 +265,12 @@ async def list_assessments(
     offset: int = Query(0, ge=0),
     unit_id: uuid.UUID | None = Query(None),
     donem: str | None = Query(None),
+    gelir_gider_tanim_id: uuid.UUID | None = Query(
+        None, description="(P28) Borclandirma turune gore suzgec"
+    ),
+    hedef_user_id: uuid.UUID | None = Query(
+        None, description="(P28) Borcun yazildigi kisiye gore suzgec"
+    ),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_REPORT),
 ) -> DuesAssessmentListResponse:
@@ -163,13 +279,20 @@ async def list_assessments(
         where.append(DuesAssessment.unit_id == unit_id)
     if donem is not None:
         where.append(DuesAssessment.donem == donem)
+    if gelir_gider_tanim_id is not None:
+        where.append(DuesAssessment.gelir_gider_tanim_id == gelir_gider_tanim_id)
+    if hedef_user_id is not None:
+        where.append(DuesAssessment.hedef_user_id == hedef_user_id)
     total = (await db.execute(select(func.count()).select_from(DuesAssessment).where(*where))).scalar_one()
     rows = (
         await db.execute(
             select(DuesAssessment).where(*where).order_by(DuesAssessment.created_at.desc()).limit(limit).offset(offset)
         )
     ).scalars().all()
-    return DuesAssessmentListResponse(meta={"limit": limit, "offset": offset, "total": total}, items=list(rows))
+    return DuesAssessmentListResponse(
+        meta={"limit": limit, "offset": offset, "total": total},
+        items=await _zenginlestir(db, list(rows)),
+    )
 
 
 # ------------------------------- odeme ------------------------------------- #

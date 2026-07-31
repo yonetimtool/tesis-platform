@@ -141,6 +141,15 @@ GELIR_GIDER_DAGITIM = ENUM(
     name="gelir_gider_dagitim", create_type=False,
 )
 BAKIYE_YON = ENUM("borc", "alacak", name="bakiye_yon", create_type=False)
+#: Borcun KIME yazilacagi (P28) — kural TANIMDA durur, borclandirma aninda
+#: secilmez; aksi halde ayni kalem farkli aylarda farkli kisiye yazilabilirdi.
+BORC_HEDEF_KURALI = ENUM(
+    "kiraci_oncelikli", "malik", name="borc_hedef_kurali", create_type=False
+)
+BORCLANDIRMA_KAYNAK = ENUM(
+    "tekil", "toplu", "sayac", "ice_aktarim",
+    name="borclandirma_kaynak", create_type=False,
+)
 SAYAC_TIP = ENUM(
     "su", "elektrik", "dogalgaz", "isi", "diger",
     name="sayac_tip", create_type=False,
@@ -243,6 +252,12 @@ class Tenant(Base):
     )
     para_birimi: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("'TRY'")
+    )
+    #: (P28) Aylik gecikme tazminati orani (%). Tazminat TUTARI SAKLANMAZ,
+    #: raporlama/tahsilat aninda hesaplanir — saklansaydi oran degistiginde
+    #: gecmis kayitlar tutarsiz kalirdi.
+    gecikme_aylik_yuzde = mapped_column(
+        Numeric(5, 2), nullable=False, server_default=text("0")
     )
     # Hava durumu konumu (0005) — baslikta gorunen ad + Open-Meteo koordinati.
     konum_ad: Mapped[str] = mapped_column(
@@ -1013,6 +1028,24 @@ class DuesAssessment(Base):
     tutar_kurus: Mapped[int] = mapped_column(Integer, nullable=False)
     son_odeme_tarihi = mapped_column(Date, nullable=True)
     aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # --- P28 BORCLANDIRMA ALANLARI (paralel tablo DEGIL, ayni kayit) ------- #
+    #: Borclandirma TURU (P27 tanimi). NULL = eski kayitlar / tursuz aidat.
+    gelir_gider_tanim_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    #: Borcun KIME yazildigi. NULL = "daireye" (eski davranis).
+    hedef_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    #: Islem gunu. `donem` (YYYY-MM) MUHASEBE DONEMIDIR ve ikisi ayni sey
+    #: DEGILDIR: Ocak doneminin borcu Subat'ta acilabilir.
+    tarih = mapped_column(Date, nullable=False, server_default=text("CURRENT_DATE"))
+    gecikme_uygula: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    kaynak: Mapped[str] = mapped_column(
+        BORCLANDIRMA_KAYNAK, nullable=False, server_default=text("'tekil'")
+    )
     created_at = _created_at()
 
 
@@ -2327,6 +2360,12 @@ class GelirGiderTanim(Base):
     grup_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     dagitim_sekli: Mapped[str | None] = mapped_column(
         GELIR_GIDER_DAGITIM, nullable=True
+    )
+    #: (P28) Borc KIME yazilir: aidat/faturalar kiraci oncelikli, yatirim/
+    #: demirbas malik. Kural TANIMDA durur — borclandirma aninda secilseydi
+    #: ayni kalem farkli aylarda farkli kisiye yazilabilirdi.
+    hedef_kurali: Mapped[str] = mapped_column(
+        BORC_HEDEF_KURALI, nullable=False, server_default=text("'kiraci_oncelikli'")
     )
     aktif: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
