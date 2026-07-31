@@ -142,6 +142,7 @@ export const ru: Sozluk = {
   rolGuvenlik: "Охрана",
   rolTesisGorevlisi: "Сотрудник объекта",
   rolSiteSakini: "Житель",
+  rolGuvenlikAmiri: "Начальник охраны",
   panelBugunkuTurlar: "Сегодняшние обходы",
   panelKacirilanYok: "пропусков нет",
   panelAktifAlarm: "Активные тревоги",

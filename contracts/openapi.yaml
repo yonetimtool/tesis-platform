@@ -7474,7 +7474,13 @@ components:
 
     UserRole:
       type: string
-      enum: [admin, yonetici, security, tesis_gorevlisi, resident]
+      description: >
+        (P35) `guvenlik_amiri` altinci roldur: guvenligi DIS BIR SIRKET
+        yurutuyorsa vardiya/tur planlamasinin sahibi. Sakin, finans, kargo ve
+        ziyaretci alanlari ona BILINCLI olarak KAPALIDIR (dis sirket = en az
+        yetki, KVKK).
+      enum:
+        [admin, yonetici, security, tesis_gorevlisi, resident, guvenlik_amiri]
 
     # --------------------------- devices --------------------------- #
     DevicePlatform:
@@ -8759,7 +8765,8 @@ components:
         durum: { type: string, enum: [acik, is_emri, cozuldu, reddedildi] }
         actor_role:
           type: string
-          enum: [admin, yonetici, security, tesis_gorevlisi, resident]
+          enum:
+            [admin, yonetici, security, tesis_gorevlisi, resident, guvenlik_amiri]
         sebep:
           type: string
           nullable: true
@@ -9938,6 +9945,20 @@ components:
             (P34) Tur penceresinin ilk okutmasinda kamera fotografi
             zorunlu mu? Urun kurali DEGIL tenant tercihi: gece vardiyasinda
             kamera kullanimi her sitede kabul gormez.
+        guvenlik_modu:
+          type: string
+          enum: [yonetim_ici, dis_sirket]
+          default: yonetim_ici
+          description: >
+            (P35) Guvenligi KIM yonetir. `yonetim_ici` bugunku davranistir
+            (yonetici planlar); `dis_sirket`te vardiya/tur/kontrol noktasi
+            YAZMA yetkisi `guvenlik_amiri`ne GECER ve yonetici SALT-OKUR.
+            OKUMA HER IKI MODDA ACIK KALIR — dis sirkete devretmek DENETIMI
+            devretmek degildir. `admin` her iki modda yazar (mod yanlis
+            ayarlandiginda tesis kilitli kalmasin). **Yalniz admin
+            degistirebilir** ve degisim `audit_log`a yazilir: sahipligi
+            devreden bir ayarin izsiz degismesi, "turleri kim planliyordu"
+            sorusunu sonradan yanitlanamaz kilardi.
         anpr_otomatik_cikis:
           type: boolean
           default: true
@@ -9991,6 +10012,10 @@ components:
         tur_baslangic_foto_zorunlu:
           type: boolean
           description: (P34) Tur baslangicinda kamera fotografi zorunlu mu
+        guvenlik_modu:
+          type: string
+          enum: [yonetim_ici, dis_sirket]
+          description: "(P35) YALNIZ admin gonderebilir (yonetici 403); denetlenir"
 
     # ---------------------- yonetici iletisim ---------------------- #
     YoneticiKart:

@@ -28,7 +28,8 @@ from ..ceviri import VARSAYILAN_DIL
 logger = logging.getLogger("scheduler.notify")
 
 # Alarm bildirimlerini push olarak alacak roller (dashboard alarm mantigiyla tutarli).
-_ALARM_ROLES: tuple[str, ...] = ("admin", "security")
+# (P35) Amir de alarm alir: dis sirket modunda turun sahibi odur.
+_ALARM_ROLES: tuple[str, ...] = ("admin", "security", "guvenlik_amiri")
 
 # Bildirim kimligi = `notification.tip` = `data.tip` (tek deger, uc yerde ayni).
 _KACIRILAN_TUR = "kacirilan_tur"
@@ -36,7 +37,10 @@ _GECIKMIS_OKUTMA = "gecikmis_okutma"
 # (P34) Gecikme alarmini ROL olarak alanlar. Gorevlinin KENDISI ayrica
 # KISI olarak hedeflenir (asagida) — rol yayinina birakmak, o vardiyada
 # olmayan tum guvenlik personelini de titretirdi.
-_GECIKME_ROLLERI: tuple[str, ...] = ("admin", "yonetici")
+# (P35) Yonetim VE amir: hangi mod aktif olursa olsun izleyen taraf
+# haberdar olmali — mod'a gore daraltmak, mod yanlis ayarlandiginda
+# alarmi kimsenin gormemesi demekti.
+_GECIKME_ROLLERI: tuple[str, ...] = ("admin", "yonetici", "guvenlik_amiri")
 
 
 def dispatch_external(

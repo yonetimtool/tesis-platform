@@ -4518,4 +4518,7 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get nfcKonumServisKapali =>
       'Los servicios de ubicación están desactivados — escaneo sin ubicación.';
+
+  @override
+  String get rolGuvenlikAmiri => 'Jefe de seguridad';
 }

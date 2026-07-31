@@ -4635,4 +4635,7 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get nfcKonumServisKapali =>
       'Службы геолокации выключены — отметка сохранена без них.';
+
+  @override
+  String get rolGuvenlikAmiri => 'Начальник охраны';
 }

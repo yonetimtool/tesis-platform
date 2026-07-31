@@ -93,6 +93,7 @@ class Action:
     UNIT_ACCESS_REQUEST = "unit_access_request"
     UNIT_ACCESS_DECIDE = "unit_access_decide"
     COMPLAINT_CREATE = "complaint_create"
+    GUVENLIK_MODU = "guvenlik_modu"
     COMPLAINT_UPDATE = "complaint_update"
     COMPLAINT_CONVERT = "complaint_convert"
     COMPLAINT_RESOLVE = "complaint_resolve"

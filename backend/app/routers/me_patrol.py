@@ -33,7 +33,7 @@ from ..schemas import (
 
 router = APIRouter(tags=["me"])
 
-_VIEWER = require_role("admin", "security")
+_VIEWER = require_role("admin", "security", "guvenlik_amiri")
 
 # Aktif pencereler + plana atanmis aktif checkpoint'ler (sira ile) + her
 # checkpoint icin penceredeki ILK scan (LATERAL) — tek set-tabanli sorgu.

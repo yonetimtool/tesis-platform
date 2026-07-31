@@ -4541,4 +4541,7 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get nfcKonumServisKapali =>
       'Ortungsdienste sind aus — Erfassung ohne Standort gespeichert.';
+
+  @override
+  String get rolGuvenlikAmiri => 'Sicherheitsleiter';
 }

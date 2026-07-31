@@ -30,6 +30,10 @@ HomeVaryant homeVaryantForRole(UserRole role) => switch (role) {
       // Platform admini yonetim duzenini gorur (brief: admin→yönetici).
       UserRole.admin || UserRole.yonetici => HomeVaryant.yonetici,
       UserRole.security => HomeVaryant.gorevli,
+      // (P35) Amirin isi GUVENLIK OPERASYONUDUR: yonetici duzenine (finans
+      // ozeti, odeme) koymak, dis sirket personeline site yonetimi ekrani
+      // vermek olurdu. Gorevli duzeni + amir menusu dogru esleme.
+      UserRole.guvenlikAmiri => HomeVaryant.gorevli,
       UserRole.tesisGorevlisi => HomeVaryant.tesisGorevlisi,
       UserRole.unknown => HomeVaryant.gorevli,
     };

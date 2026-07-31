@@ -161,6 +161,8 @@ PW_YONETICI_A = "yoneticipassA1"
 PW_GUARD_A = "guardpassA1"
 PW_GOREVLI_A = "gorevlipassA1"
 PW_RESIDENT_A = "residentpassA1"
+AMIR_EMAIL = "amir@example.com"
+PW_AMIR_A = "amirpassA1"
 PW_ADMIN_B = "passwordB1"
 PW_YONETICI_B = "yoneticipassB1"
 
@@ -267,6 +269,9 @@ def world(owner_conn, request):
             (a, "Resident A", RESIDENT_EMAIL, PW_RESIDENT_A, "resident", tel[4]),
             (b, "Admin B", SHARED_EMAIL, PW_ADMIN_B, "admin", tel[5]),
             (b, "Yonetici B", YONETICI_EMAIL, PW_YONETICI_B, "yonetici", tel[6]),
+            # (P35) Guvenlik amiri — rol matrisi kilidi ALTINCI sutunu bundan
+            # surer; fixture'a eklenmezse yeni rol hic olculmezdi.
+            (a, "Amir A", AMIR_EMAIL, PW_AMIR_A, "guvenlik_amiri", tel[7]),
         ]
         # Dongu degiskeni `tel` OLAMAZ: listeyi golgeler ve `yield` sozlugu
         # numaralar yerine SON numaranin KARAKTERLERINI dagitirdi.
@@ -293,6 +298,7 @@ def world(owner_conn, request):
         # Testlerin KENDI olusturdugu numaralar da kosuma ozel olmali
         # (kesilmis kosum artik satiri birakirsa global benzersizlik
         # sonraki kosumu dusuruyordu).
+        "amir_a": {"email": AMIR_EMAIL, "password": PW_AMIR_A, "phone": tel[7]},
         "bos_telefonlar": _telefonlar(b, adet=4),
     }
 

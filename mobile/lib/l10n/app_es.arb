@@ -1355,5 +1355,6 @@
   "nfcFotoYuklenemedi": "No se pudo subir la foto: {hata}",
   "nfcKonumYok": "Ubicación no disponible — el escaneo se registró sin ella.",
   "nfcKonumIzinYok": "Permiso de ubicación denegado — el escaneo se registró sin ella.",
-  "nfcKonumServisKapali": "Los servicios de ubicación están desactivados — escaneo sin ubicación."
+  "nfcKonumServisKapali": "Los servicios de ubicación están desactivados — escaneo sin ubicación.",
+  "rolGuvenlikAmiri": "Jefe de seguridad"
 }

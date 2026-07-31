@@ -54,12 +54,17 @@ from ..schemas import (
 router = APIRouter(prefix="/cameras", tags=["cameras"])
 
 _READER = require_role(
-    "admin", "yonetici", "security", "tesis_gorevlisi", "resident"
+    "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
+    # (P35) Kamera izleme guvenlik hizmetinin CEKIRDEGIDIR; amiri disarida
+    # birakmak, guvenligi yurutene isini yapamayacagi bir sistem vermekti.
+    "guvenlik_amiri",
 )
 _WRITER = require_role("admin", "yonetici")
 
 # Tum kameralari (pasif/gizli dahil) goren roller — operasyon + yonetim.
-_TAM_GORUS: frozenset[str] = frozenset({"admin", "yonetici", "security"})
+_TAM_GORUS: frozenset[str] = frozenset(
+    {"admin", "yonetici", "security", "guvenlik_amiri"}
+)
 
 
 def _out(obj: Camera) -> CameraOut:

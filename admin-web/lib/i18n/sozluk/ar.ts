@@ -142,6 +142,7 @@ export const ar: Sozluk = {
   rolGuvenlik: "الأمن",
   rolTesisGorevlisi: "موظف المنشأة",
   rolSiteSakini: "ساكن",
+  rolGuvenlikAmiri: "رئيس الأمن",
   panelBugunkuTurlar: "جولات اليوم",
   panelKacirilanYok: "لا يوجد فائت",
   panelAktifAlarm: "التنبيهات النشطة",

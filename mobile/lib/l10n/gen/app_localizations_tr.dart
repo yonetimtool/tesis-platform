@@ -4378,4 +4378,7 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get nfcKonumServisKapali =>
       'Konum servisi kapalı — okutma konumsuz kaydedildi.';
+
+  @override
+  String get rolGuvenlikAmiri => 'Güvenlik Amiri';
 }

@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
 from ..crud_helpers import get_or_404, translate_integrity
-from ..deps import get_tenant_db, require_role
+from ..deps import get_tenant_db, require_guvenlik_yazma, require_role
 from ..errors import APIError
 from ..models import AppUser, Checkpoint
 from ..nfc_sdm import encrypt_key
@@ -32,8 +32,12 @@ router = APIRouter(prefix="/checkpoints", tags=["checkpoints"])
 _ADMIN = require_role("admin")
 # Checkpoint CRUD (tanim) admin + yonetici (Parca D: yonetici uygulamada
 # kontrol noktasi tanimlar). SDM-key provizyonu (NTAG424 kripto) admin-only kalir.
-_WRITER = require_role("admin", "yonetici")
-_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+# (P35) Kontrol noktalari TUR ALTYAPISIDIR: sahipligi tur planlamasiyla
+# ayni elde olmali, yoksa amir plan kurup nokta ekleyemezdi.
+_WRITER = require_guvenlik_yazma()
+_READER = require_role(
+    "admin", "yonetici", "security", "tesis_gorevlisi", "guvenlik_amiri"
+)
 
 _NFC_CONFLICT = APIError(409, "conflict", "nfc_uid_zaten_kayitli")
 

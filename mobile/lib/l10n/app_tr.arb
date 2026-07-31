@@ -1882,5 +1882,6 @@
   },
   "nfcKonumYok": "Konum alınamadı — okutma konumsuz kaydedildi.",
   "nfcKonumIzinYok": "Konum izni verilmedi — okutma konumsuz kaydedildi.",
-  "nfcKonumServisKapali": "Konum servisi kapalı — okutma konumsuz kaydedildi."
+  "nfcKonumServisKapali": "Konum servisi kapalı — okutma konumsuz kaydedildi.",
+  "rolGuvenlikAmiri": "Güvenlik Amiri"
 }

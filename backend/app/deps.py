@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .db import SessionLocal, set_tenant
 from .errors import APIError
-from .models import AppUser
+from .models import AppUser, Tenant
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -82,6 +82,54 @@ def require_role(*roles: str):
     async def _dep(user: AppUser = Depends(get_current_user)) -> AppUser:
         if user.role not in allowed:
             raise APIError(403, "forbidden", "yetkiniz_yok")
+        return user
+
+    return _dep
+
+
+# --------------------------- guvenlik sahipligi (P35) ----------------------- #
+#: Guvenligi KIMIN yonettigi TENANT MODUNA baglidir; bir rol listesine
+#: gomulemez cunku mod calisma aninda degisir.
+#:
+#:   yonetim_ici (VARSAYILAN) — bugunku davranis: YONETICI planlar,
+#:   dis_sirket               — AMIR planlar, yonetici SALT-OKUR izler.
+#:
+#: admin HER IKI MODDA yazabilir: platform operatoru bir tesisi kilitli
+#: birakamamali (mod yanlis ayarlandiginda kimse duzeltemezdi).
+GUVENLIK_YAZAN = {
+    "yonetim_ici": ("admin", "yonetici"),
+    "dis_sirket": ("admin", "guvenlik_amiri"),
+}
+
+
+async def guvenlik_modu(db: AsyncSession) -> str:
+    """Gecerli tenant'in guvenlik modu (RLS altinda tek satir)."""
+    mod = (await db.execute(select(Tenant.guvenlik_modu))).scalar_one_or_none()
+    return mod or "yonetim_ici"
+
+
+def require_guvenlik_yazma():
+    """(P35) Vardiya/tur PLANLAMA yetkisi — moda gore SAHIPLIK DEGISIR.
+
+    Salt-okuma bundan AYRIDIR: `dis_sirket` modunda yonetici turleri ve
+    vardiyalari GORMEYE devam eder; goremeseydi kendi sitesinin guvenlik
+    hizmetini denetleyemezdi — dis sirkete devretmek denetimi devretmek
+    DEGILDIR.
+    """
+
+    async def _dep(
+        db: AsyncSession = Depends(get_tenant_db),
+        user: AppUser = Depends(get_current_user),
+    ) -> AppUser:
+        mod = await guvenlik_modu(db)
+        if user.role not in GUVENLIK_YAZAN[mod]:
+            # Mesaj MODU soyler: "yetkiniz yok" demek, yoneticiye ayarin
+            # degistigini hic anlatmazdi.
+            raise APIError(
+                403, "forbidden",
+                "guvenlik_dis_sirkette" if mod == "dis_sirket"
+                else "guvenlik_yonetimde",
+            )
         return user
 
     return _dep

@@ -168,6 +168,7 @@ export const tr = {
   rolGuvenlik: "Güvenlik",
   rolTesisGorevlisi: "Tesis Görevlisi",
   rolSiteSakini: "Site Sakini",
+  rolGuvenlikAmiri: "Güvenlik Amiri",
 
   // ------------------------------ canli panel -----------------------------
   panelBugunkuTurlar: "Bugünkü Turlar",

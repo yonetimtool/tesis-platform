@@ -130,7 +130,12 @@ class AvatarUpdate(BaseModel):
     avatar_key: str | None
 
 
-UserRoleLiteral = Literal["admin", "yonetici", "security", "tesis_gorevlisi", "resident"]
+UserRoleLiteral = Literal[
+    "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
+    # (P35) Dis guvenlik sirketinin amiri.
+    "guvenlik_amiri",
+]
+GuvenlikModu = Literal["yonetim_ici", "dis_sirket"]
 
 
 # Admin kullanici yonetimi ciktisi (TEK kayit) — password_hash ASLA yok.
@@ -1977,6 +1982,8 @@ class TenantSettings(BaseModel):
     # Cikis olayinda acik gecis otomatik kapansin mi? Tek yonlu kapida
     # (yalniz giris kamerasi) kapatan olmaz — site bunu kapatabilmeli.
     anpr_otomatik_cikis: bool = True
+    # (P35) Guvenligi kim yonetir (bkz. deps.GUVENLIK_YAZAN).
+    guvenlik_modu: GuvenlikModu = "yonetim_ici"
     # (P34) Tur gecikme alarmi. Tolerans TENANT AYARIDIR: 10 dk bir sitede
     # makul, kampus buyuklugunde erken alarm demektir. Tekrar 0 = KAPALI.
     tur_gecikme_toleransi_dk: int = 10
@@ -2007,6 +2014,10 @@ class TenantSettingsUpdate(BaseModel):
     tur_gecikme_toleransi_dk: int | None = Field(None, ge=1, le=240)
     tur_alarm_tekrar_sayisi: int | None = Field(None, ge=0, le=10)
     tur_baslangic_foto_zorunlu: bool | None = None
+    #: (P35) Mod degisimi SAHIPLIGI devreder — bu yuzden YALNIZ admin
+    #: (bkz. router). Yoneticinin kendi yetkisini kendine geri verebilmesi,
+    #: dis sirkete devri anlamsizlastirirdi.
+    guvenlik_modu: GuvenlikModu | None = None
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "TenantSettingsUpdate":

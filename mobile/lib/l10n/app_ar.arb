@@ -1355,5 +1355,6 @@
   "nfcFotoYuklenemedi": "فشل رفع الصورة: {hata}",
   "nfcKonumYok": "تعذّر تحديد الموقع — تم تسجيل المسح بدون موقع.",
   "nfcKonumIzinYok": "لم يُمنح إذن الموقع — تم تسجيل المسح بدون موقع.",
-  "nfcKonumServisKapali": "خدمة الموقع مغلقة — تم تسجيل المسح بدون موقع."
+  "nfcKonumServisKapali": "خدمة الموقع مغلقة — تم تسجيل المسح بدون موقع.",
+  "rolGuvenlikAmiri": "رئيس الأمن"
 }

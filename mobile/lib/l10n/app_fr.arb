@@ -1355,5 +1355,6 @@
   "nfcFotoYuklenemedi": "Échec de l'envoi de la photo : {hata}",
   "nfcKonumYok": "Position indisponible — le scan a été enregistré sans elle.",
   "nfcKonumIzinYok": "Autorisation de localisation refusée — scan enregistré sans position.",
-  "nfcKonumServisKapali": "Services de localisation désactivés — scan enregistré sans position."
+  "nfcKonumServisKapali": "Services de localisation désactivés — scan enregistré sans position.",
+  "rolGuvenlikAmiri": "Chef de la sécurité"
 }

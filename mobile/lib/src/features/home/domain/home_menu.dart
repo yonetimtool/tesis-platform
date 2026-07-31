@@ -104,6 +104,8 @@ enum HomeMenuEntry {
   /// tesis gorevlisi hesaplarini listeler ve ekler (telefon + gecici kod).
   /// yonetici backend'de YALNIZ saha personeli acabilir (RBAC zorlar); admin
   /// tum kullanicilari PANELDEN yonetir (mobil menude yok).
+  /// (P35) Guvenlik amiri de gorur — ama YALNIZ guvenlik personeli acabilir
+  /// (RBAC zorlar; tesis gorevlisi site isidir, dis sirketin degil).
   personel,
 
   /// Site Sakinleri — YALNIZ yonetici mobil menusunde: sakinleri listeler, yeni
@@ -156,6 +158,19 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
         HomeMenuEntry.daireTanimlari,
+        HomeMenuEntry.outbox,
+      ];
+    case UserRole.guvenlikAmiri:
+      // (P35) GUVENLIK ALANI + EKIP: tur/vardiya planlama sunucuda moda
+      // baglidir, ama menu her iki modda AYNIDIR — dis_sirket modunda
+      // ekranlar salt-okur calisir. Ziyaretci/kargo/sakin/finans girisleri
+      // YOK: dis sirket = en az yetki (KVKK).
+      return const [
+        HomeMenuEntry.announcements,
+        HomeMenuEntry.siteKurallari,
+        HomeMenuEntry.complaints,
+        HomeMenuEntry.patrol,
+        HomeMenuEntry.personel,
         HomeMenuEntry.outbox,
       ];
     case UserRole.security:

@@ -4648,4 +4648,7 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get nfcKonumServisKapali =>
       'خدمة الموقع مغلقة — تم تسجيل المسح بدون موقع.';
+
+  @override
+  String get rolGuvenlikAmiri => 'رئيس الأمن';
 }

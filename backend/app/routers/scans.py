@@ -47,9 +47,12 @@ from ..schemas import (
 
 router = APIRouter(prefix="/scans", tags=["scans"])
 
-_SCANNER = require_role("admin", "security", "tesis_gorevlisi")
+_SCANNER = require_role(
+    "admin", "security", "tesis_gorevlisi", "guvenlik_amiri"
+)
 # Gun-gun tarama raporu (yonetici takibi) — okuma admin + yonetici.
-_REPORT_READER = require_role("admin", "yonetici")
+# (P35) Amir de okur: kendi ekibinin turlerini denetleyen kisidir.
+_REPORT_READER = require_role("admin", "yonetici", "guvenlik_amiri")
 
 
 @router.get("", response_model=ScanReportResponse)

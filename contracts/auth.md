@@ -204,7 +204,48 @@ SECURITY DEFINER (`tenant_detail` / `update_tenant_yonetici` /
 Roller: **admin** (platform admini — biz/gelistirici; TUM tesisler, panel),
 **yonetici** (site yoneticisi — musteri; KENDI tenant'i, mobil),
 **security** (guvenlik gorevlisi), **tesis_gorevlisi** (temizlik + bahcivan +
-teknik — birlesik saha rolu), **resident** (site sakini).
+teknik — birlesik saha rolu), **resident** (site sakini),
+**guvenlik_amiri** (P35 — dis guvenlik sirketinin amiri; bkz. §4a).
+
+### 4a. Guvenlik amiri ve ikili guvenlik mimarisi (P35)
+
+Asagidaki tablo BES sutunludur ve `guvenlik_amiri` SUTUNU YOKTUR — yuzlerce
+satiri altinci bir sutunla genisletmek okunabilirligi bitirirdi. Amirin
+erisiminin **makinece dogrulanan** kaydi
+`backend/tests/yetki/rol-matrisi.txt` kilidindedir (6 rol x tum operasyonlar,
+`test_yetki_kapsam.py` her kosumda karsilastirir). Bu bolum KURALI yazar:
+
+**Neden ayri bir rol:** bugune kadar guvenligi HER ZAMAN yonetici
+planliyordu. Guvenligi DIS bir sirketin yurutttugu tesislerde vardiyayi ve
+tur penceresini kuran kisi site yoneticisi degil, sirketin amiridir. Mevcut
+rollerden birine yamamak ("amiri de yonetici yapalim") DIS bir sirketin
+personeline finansi, sakin verisini ve tesis ayarlarini acardi.
+
+**Tenant modu** (`tenant.guvenlik_modu`, varsayilan `yonetim_ici`):
+
+| Mod            | Vardiya / tur / kontrol noktasi YAZMA | Okuma |
+|----------------|---------------------------------------|-------|
+| `yonetim_ici`  | admin + **yonetici**                   | degismez |
+| `dis_sirket`   | admin + **guvenlik_amiri**             | degismez |
+
+* **Okuma HER IKI MODDA acik kalir.** Dis sirkete devretmek DENETIMI
+  devretmek degildir: yonetici planlari, turleri, vardiyalari ve tarama
+  raporunu gormeye devam eder.
+* **admin her iki modda yazar** — mod yanlis ayarlandiginda tesis kilitli
+  kalmamali.
+* **Modu yalniz `admin` degistirir** (yonetici 403) ve degisim `audit_log`a
+  `guvenlik_modu` olarak yazilir. Yoneticinin kendi yetkisini kendine geri
+  verebilmesi, devri anlamsizlastirirdi.
+
+**Amirin erisimi — EN AZ YETKI:** tur/vardiya/kontrol noktasi (moda gore
+yazma), tarama raporu, kamera, pano, bildirimler, arac gecisi ve ihlal
+okuma, `POST /scans`. **KAPALI:** sakin listesi, aidat/finans, kargo,
+ziyaretci, rezervasyon, tesis ayarlari. Gerekce KVKK'dir: dis bir sirketin
+personeline sakin kisisel verisi acmak savunulamaz.
+
+**Ekip yonetimi:** amir YALNIZ `security` rolunde hesap acar/duzenler/parola
+sifirlar. `tesis_gorevlisi` SITE isidir; `guvenlik_amiri` rolunu de acamaz
+(yetki cogaltma yok) ve kendi rolunu yukseltemez.
 
 > **PANEL (admin-web) YALNIZ `admin` icindir.** `yonetici` panele GIRMEZ;
 > tum islerini mobil uygulamadan yapar. `yonetici` kendi tenant'iyla

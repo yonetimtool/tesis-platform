@@ -19,7 +19,8 @@ from ..schemas import NotificationListResponse, NotificationOut, NotificationUpd
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
-_VIEWER = require_role("admin", "yonetici", "security")
+# (P35) Amir P34 alarmlarinin MUHATABIDIR: gormezse turu devralamaz.
+_VIEWER = require_role("admin", "yonetici", "security", "guvenlik_amiri")
 
 
 def _out(row: Notification, dil: str) -> NotificationOut:

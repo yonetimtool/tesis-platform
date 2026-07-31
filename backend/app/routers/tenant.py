@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Tenant
@@ -63,6 +64,7 @@ def _to_settings(t: Tenant) -> TenantSettings:
         tur_gecikme_toleransi_dk=t.tur_gecikme_toleransi_dk,
         tur_alarm_tekrar_sayisi=t.tur_alarm_tekrar_sayisi,
         tur_baslangic_foto_zorunlu=t.tur_baslangic_foto_zorunlu,
+        guvenlik_modu=t.guvenlik_modu,
     )
 
 
@@ -96,6 +98,15 @@ async def update_settings(
     if user.role == "yonetici" and not set(data) <= _YONETICI_YAZABILIR:
         raise APIError(403, "forbidden", "yonetici_sinirli_alan_degistirir")
     t = await _current_tenant(db)
+    # (P35) MOD DEGISIMI DENETLENIR: guvenlik sahipligini devreden bir
+    # ayarin izsiz degismesi, "turleri kim planliyordu" sorusunu sonradan
+    # yanitlanamaz kilardi.
+    if "guvenlik_modu" in data and data["guvenlik_modu"] != t.guvenlik_modu:
+        await audit_user(
+            db, user, Action.GUVENLIK_MODU, resource_type="tenant",
+            resource_id=t.id,
+            meta={"eski": t.guvenlik_modu, "yeni": data["guvenlik_modu"]},
+        )
     for key, value in data.items():
         setattr(t, key, value)
     await db.flush()

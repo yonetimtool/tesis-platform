@@ -310,7 +310,14 @@ export interface ComplaintDeclineRequest {
 }
 
 // -------------------------------- users ------------------------------------ #
-export type UserRole = "admin" | "yonetici" | "security" | "tesis_gorevlisi" | "resident";
+export type UserRole =
+  | "admin"
+  | "yonetici"
+  | "security"
+  | "tesis_gorevlisi"
+  | "resident"
+  // (P35) Guvenlik amiri — dis guvenlik sirketinin tur/vardiya sahibi.
+  | "guvenlik_amiri";
 
 // password_hash ASLA gelmez (backend User semasinda yok).
 // Liste ogesi — telefon YOK (KVKK: numaralar toplu listelenmez). aranabilir

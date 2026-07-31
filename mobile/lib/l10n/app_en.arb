@@ -1355,5 +1355,6 @@
   "nfcFotoYuklenemedi": "Photo upload failed: {hata}",
   "nfcKonumYok": "Location unavailable — the scan was recorded without it.",
   "nfcKonumIzinYok": "Location permission denied — the scan was recorded without it.",
-  "nfcKonumServisKapali": "Location services are off — the scan was recorded without it."
+  "nfcKonumServisKapali": "Location services are off — the scan was recorded without it.",
+  "rolGuvenlikAmiri": "Security Chief"
 }

@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..celery_app import celery_app
 from ..crud_helpers import ensure_checkpoints_in_tenant, get_or_404, translate_integrity
-from ..deps import get_tenant_db, require_role
+from ..deps import get_tenant_db, require_guvenlik_yazma, require_role
 from ..errors import APIError
 from ..models import AppUser, PatrolPlan, PatrolPlanCheckpoint, Shift
 from ..schemas import (
@@ -42,8 +42,14 @@ router = APIRouter(prefix="/patrol-plans", tags=["patrol-plans"])
 # Devriye plani CRUD + checkpoint atama: admin + yonetici (yonetici uygulamada
 # devriye plani tanimlar — checkpoint kumesi + saatler + tur sikligi). Saha
 # rolleri yalniz OKUR.
-_WRITER = require_role("admin", "yonetici")
-_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+# (P35) YAZMA SAHIBI MODA BAGLI: yonetim_ici -> yonetici, dis_sirket ->
+# guvenlik_amiri. admin her iki modda yazar (tesis kilitli kalmasin).
+_WRITER = require_guvenlik_yazma()
+# OKUMA HERKESE ACIK KALIR: dis sirkete devretmek DENETIMI devretmek
+# degildir — yonetici planlari gormeye devam eder.
+_READER = require_role(
+    "admin", "yonetici", "security", "tesis_gorevlisi", "guvenlik_amiri"
+)
 
 
 def _regen_windows() -> None:

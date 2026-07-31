@@ -410,6 +410,18 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P35 · Güvenlik amiri (MOBİL).** **Admin** ile
+  `POST /users` `role=guvenlik_amiri` bir hesap aç (geçici kod dönecek).
+  (a) O hesapla mobile gir → ana ekran **görevli düzeni** olmalı; menüde
+  **Turlar** ve **Saha Personeli** olmalı, **Kargo / Ziyaretçiler / Site
+  Sakinleri / Aidat** OLMAMALI. (b) Saha Personeli'nden yeni hesap açmayı
+  dene → rol seçiminde yalnız **güvenlik** kabul edilmeli (tesis görevlisi
+  denenirse hata). (c) **Admin** `PATCH /tenant/settings`
+  `{"guvenlik_modu":"dis_sirket"}` yapsın → **yönetici** ile mobilde tur
+  planı/vardiya düzenlemeyi dene → **"güvenlik planlaması dış güvenlik
+  şirketindedir"** mesajı gelmeli; ama tur ve vardiya listelerini **görmeye
+  devam etmeli**. Amir aynı ekranlarda **düzenleyebilmeli**. (d) Modu
+  `yonetim_ici`e geri al → roller yer değiştirmeli.
 - [ ] **P34 · Tur konumu + fotoğraf kapısı (MOBİL).** **Güvenlik** rolüyle:
   (a) Konum izni **verili** iken NFC okut → okutma geçmeli; **admin** ile
   `GET /scans` → o satırda `konum_durumu = "var"` ve `gps_dogruluk_m` dolu
@@ -2059,7 +2071,7 @@ ortama gitmemişti, geliştirici veritabanı downgrade→upgrade ile yeniden
 kuruldu.
 
 ### P35 — Security-chief role & dual security architecture
-Status: BEKLIYOR · Depends-on: P34
+Status: BITTI · Depends-on: P34
 Scope: new role guvenlik_amiri + tenant security mode: yonetim_ici (today's
 behavior — yönetici plans shifts/patrols) | dis_sirket (an external security
 company runs site security: the amir owns security staff profiles, shift and
@@ -2071,6 +2083,87 @@ active. Mode changes audited.
 Acceptance: ownership flip proven by tests (yönetici cannot edit patrols in
 dis_sirket; amir cannot in yonetim_ici); amir login lands on an appropriate home;
 contract; gates.
+Notes (2026-07-31):
+**NEDEN AYRI BİR ROL.** Bugüne kadar güvenliği **her zaman yönetici**
+planlıyordu. Güvenliği **dış bir şirketin** yürüttüğü tesislerde vardiyayı ve
+tur penceresini kuran kişi site yöneticisi değil, şirketin amiridir. Mevcut
+rollerden birine yamamak ("amiri de yönetici yapalım") **dış bir şirketin
+personeline** finansı, sakin verisini ve tesis ayarlarını açardı.
+
+**SAHİPLİK ŞEMADA DEĞİL KODDA.** "Kim planlayabilir" sorusu **moda** bağlıdır
+ve mod çalışma anında değişir; tabloya gömülü bir yetki matrisi her mod
+değişiminde satır güncellemek demekti. Çözüm `deps.require_guvenlik_yazma()`:
+tenant modunu okur, `GUVENLIK_YAZAN[mod]` kümesine bakar.
+- `yonetim_ici` (**varsayılan — mevcut tesislerin hiçbiri etkilenmez**):
+  admin + yönetici. `dis_sirket`: admin + güvenlik amiri.
+- **admin her iki modda yazar**: mod yanlış ayarlandığında tesis kilitli
+  kalmamalı — kimse düzeltemezdi.
+- **Okuma her iki modda açık kalır.** Dış şirkete devretmek **denetimi**
+  devretmek değildir; yönetici planları, turları, vardiyaları ve tarama
+  raporunu görmeye devam eder.
+- Hata mesajı **modu söyler** (`guvenlik_dis_sirkette` / `guvenlik_yonetimde`):
+  "yetkiniz yok" demek, yöneticiye ayarın değiştiğini hiç anlatmazdı.
+- Devir **checkpoint ve vardiyayı da kapsar**: plan kurup nokta ekleyemeyen ya
+  da vardiya kuramayan bir sahiplik yarım sahipliktir. **Vardiya CRUD'u
+  bilinçli olarak genişletildi** — önceki durum yalnız `admin`di ve "vardiyayı
+  planlayan kişi" tanımı geldiğinde vardiyayı kuramaması tutarsızdı. Bu
+  genişletme `test_yonetici.py`de admin-only'ı savunan assert'i düşürdü; test
+  yeni davranışa **gerekçesiyle** güncellendi (403 → 201, ve devrin iki yönü
+  `test_guvenlik_amiri.py`de ölçülüyor).
+
+**MOD AYARININ KENDİSİ.** Yalnız `admin` değiştirebilir; yöneticinin kendi
+yetkisini kendine geri verebilmesi devri anlamsızlaştırırdı. Değişim
+`audit_log`a `guvenlik_modu` olarak, **eski→yeni** ile yazılır — sahipliği
+devreden bir ayarın izsiz değişmesi, "turları kim planlıyordu" sorusunu
+sonradan yanıtlanamaz kılardı. **Aynı değere set etmek satır üretmez**
+(gürültü denetim kaydını okunamaz hale getirirdi).
+
+**AMİRİN ERİŞİMİ — EN AZ YETKİ (KVKK).** Açık: tur/vardiya/kontrol noktası
+(moda göre yazma), tarama raporu, kamera, pano, bildirimler, araç geçişi ve
+ihlal okuma, `POST /scans`, `/me/checkpoints`. **Kapalı:** sakin listesi,
+aidat/finans, kargo, ziyaretçi, rezervasyon, tesis ayarları. Gerekçe: dış bir
+şirketin personeline sakin kişisel verisi açmak savunulamaz. "security rolü ne
+görüyorsa amir de görsün" gibi kolay bir kural KARGO ve ZİYARETÇİYİ de
+açardı — bilinçli olarak **daha dar** bir küme seçildi.
+
+**BULGU — YETKİ YÜKSELTME.** `/users` okumasını amire açmak, aynı bağımlılığı
+paylaşan `PATCH /users/{id}` ve `POST /users/{id}/reset-password` uçlarını da
+açtı: amir **kendi rolünü admin yapabilir** ya da **yöneticinin parolasını
+sıfırlayabilirdi**. Rol matrisi kilidinin altıncı sütunu bunu diff olarak
+gösterdi. Yöneticide zaten var olan daraltmanın aynısı amir için de yazıldı ve
+küme daha dar tutuldu: amir **yalnız `security`** açar/düzenler/parola
+sıfırlar — `tesis_gorevlisi` site işidir, `guvenlik_amiri` rolünü de açamaz
+(yetki çoğaltma yok).
+
+**ALARMLAR.** P34'ün kaçırılan-tur ve gecikme alarmları artık amire de gider:
+`dis_sirket` modunda turun sahibi odur. Gecikme alarmı **hem yöneticiye hem
+amire** gönderilir — moda göre daraltmak, mod yanlış ayarlandığında alarmı
+kimsenin görmemesi demekti.
+
+**İSTEMCİLER.** Mobil: `UserRole.guvenlikAmiri` + `isGuvenlikYonetimi`; ana
+ekran **görevli düzeni** (yönetici düzeni finans özeti ve ödeme taşır —
+dış şirket personeline site yönetimi ekranı vermek olurdu); menü tur + ekip +
+duyuru/kural/talep, sakin-finans-kargo girişleri **yok**. Panel: `UserRole`
+birliği + rol rozeti + 7 dilde ad; panel girişi hâlâ **yalnız admin**dir
+(P35 bunu değiştirmez).
+
+**BELGELEME.** `contracts/auth.md` §4a: altıncı sütunu yüzlerce satırlık
+tabloya eklemek okunabilirliği bitirirdi; bölüm **kuralı** yazar ve makinece
+doğrulanan kaydın `backend/tests/yetki/rol-matrisi.txt` (6 rol × tüm
+operasyonlar) olduğunu söyler.
+
+**MİGRASYON NOTU.** `ALTER TYPE ... ADD VALUE` geri alınamaz. `downgrade`
+etiketi **bırakır** ve yalnız onu kullanan her şeyi geri alır (kolon, mod
+tipi, amir kullanıcıların rolü → `security`; kullanıcı **silinmez**). Tipi
+yeniden kurmak, `user_role`a bağlı **RLS politikalarını** yeniden yazmayı
+gerektirirdi — bir geri alma adımının güvenlik politikalarını yeniden yazması
+kabul edilemez risk.
+
+Kanıt: `backend/tests/test_guvenlik_amiri.py` **15 test** + `mobile/test/
+guvenlik_amiri_test.dart` **5 test** yeşil; rol matrisi kilidi **6 sütuna**
+çıktı; tam pytest yeşil; `flutter analyze` temiz, `flutter test` 1497,
+apk debug build başarılı; admin-web `tsc` + `vitest` (105) + `npm run build`
+yeşil; `goc-tersinirlik` bulgu 0 (25 sınır), `goc-uyum-dogrula` bulgu 0.
 
 ### P36 — Onboarding consents & KVKK gate
 Status: BEKLIYOR · Depends-on: —
@@ -2321,8 +2414,9 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P34 · (bu commit) · Tur butunlugu (0023): KONUM BIR KANITTIR ON KOSUL DEGIL — izin reddi/servis kapali okutmayi dusurmez ama SESSIZ DE KALMAZ (konum_durumu + konumsuz_sayisi + suzgec); gecikme alarmi 'kacirildi'dan AYRI, araliklari KATLANAN tekrarli bildirim (gorevliye kisi, yonetime rol) ve bildirim TEKLIGI kismi indekse cevrildi (ikinci alarm sessizce dusuyordu); baslangic fotografi '1 metre gidip gel' YERINE (SDM zaten fiziksel varligi kanitliyor; fotograf ORTAM+SAAT boyutu ekler), kamera-only + ayri hata kodu.
-- 2026-07-31 · P33 · (bu commit) · Yonetisim modulleri (0022): IS TAKIBI denetimi omurganin ZATEN VAR OLDUGUNU gosterdi — birlestirme degil GENISLETME (complaint + unit_id/oncelik/atanan_personel; oncelik durumdan BAGIMSIZ ayri ucta, atanan personel_kayit'tir app_user degil); karar defteri uyeleri AYRI TABLODA + metin sablonlu PDF; dokuman arsivi USTVERI-ONLY (obje silinmez); site aktarimi KURU CALISMALI ve SATIR BAZLI hata raporlu, idempotent.
+- 2026-07-31 · P35 · (bu commit) · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
+- 2026-07-31 · P34 · 4395fdc · Tur butunlugu (0023): KONUM BIR KANITTIR ON KOSUL DEGIL — izin reddi/servis kapali okutmayi dusurmez ama SESSIZ DE KALMAZ (konum_durumu + konumsuz_sayisi + suzgec); gecikme alarmi 'kacirildi'dan AYRI, araliklari KATLANAN tekrarli bildirim (gorevliye kisi, yonetime rol) ve bildirim TEKLIGI kismi indekse cevrildi (ikinci alarm sessizce dusuyordu); baslangic fotografi '1 metre gidip gel' YERINE (SDM zaten fiziksel varligi kanitliyor; fotograf ORTAM+SAAT boyutu ekler), kamera-only + ayri hata kodu.
+- 2026-07-31 · P33 · 236f70b · Yonetisim modulleri (0022): IS TAKIBI denetimi omurganin ZATEN VAR OLDUGUNU gosterdi — birlestirme degil GENISLETME (complaint + unit_id/oncelik/atanan_personel; oncelik durumdan BAGIMSIZ ayri ucta, atanan personel_kayit'tir app_user degil); karar defteri uyeleri AYRI TABLODA + metin sablonlu PDF; dokuman arsivi USTVERI-ONLY (obje silinmez); site aktarimi KURU CALISMALI ve SATIR BAZLI hata raporlu, idempotent.
 - 2026-07-31 · P32 · 47ac96c · Mesaj sablonlari + gonderim (0021): gonderilen metin GECMISE KOPYALANIR (sablon degisse de kanit durur), amac SABLONDA (pazarlama riza olmadan HIC gonderilmez ve atlananlar SAYILIR), SMS sayaci Turkce tuzagini gosterir (kucuk c/i/g/s UCS-2'ye dusurur), saglayici takasi yapilandirma ile; P28 seed regresyonu bulundu ve duzeltildi.
 - 2026-07-31 · P31 · a7e2217 · Rapor motoru + 12 raporluk katalog: TEK UC UC BICIM (tablo/Excel/PDF, ucu de ayni satirlardan), parametre modali TEK MODEL, detayli borc sutunlari P27 tanimlarindan DINAMIK, tahsilat orani = tahsil/borclandirilan, denetim raporu = kasa mutabakati; to_char GroupingError bulgusu.
 - 2026-07-31 · P30 · e48db6a · Sakin "Öde" akisi (0020): havale aciklama KODU (sabit, elle yazilabilir alfabe) eslestirmeyi KESINLESTIRIR; IBAN P27 banka kasasindan (ayri alan YOK); kart mevcut saglayici soyutlamasi uzerinden (P13 ile canliya); mobil /ode tek sayfa, kopyala + kalin kod.

@@ -38,13 +38,19 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 _ADMIN = require_role("admin")
 # yonetici gorev atamak icin kullanici listesini OKUR; CRUD admin-only (auth.md §4).
-_READER = require_role("admin", "yonetici")
-# Kullanici OLUSTURMA: admin (her rol) + yonetici (YALNIZ saha personeli).
-_USER_CREATOR = require_role("admin", "yonetici")
+# (P35) Amir de okur: kendi ekibini yonetebilmesi icin listeyi gormeli.
+_READER = require_role("admin", "yonetici", "guvenlik_amiri")
+# Kullanici OLUSTURMA: admin (her rol) + yonetici (YALNIZ saha personeli)
+# + (P35) guvenlik amiri (YALNIZ guvenlik personeli — kendi ekibi).
+_USER_CREATOR = require_role("admin", "yonetici", "guvenlik_amiri")
 # yonetici kendi tenant'inda saha personeli (security/tesis_gorevlisi) acar;
 # admin/yonetici/resident ACAMAZ
 # (yetki yukseltme yok — resident'lar POST /residents ile acilir).
 _YONETICI_CREATABLE_ROLES = frozenset({"security", "tesis_gorevlisi"})
+# (P35) Amir YALNIZ guvenlik personeli acar — `tesis_gorevlisi` bile degil:
+# tesis gorevlisi site isidir, dis guvenlik sirketinin personeli degildir.
+# Amirin kendi rolunu de acamamasi bilinclidir (yetki cogaltma yok).
+_AMIR_CREATABLE_ROLES = frozenset({"security"})
 # Iletisim ayari (telefon + arama rizasi) admin + yonetici yonetir (rol/parola
 # gibi hassas alanlara dokunmadan — yetki yukseltme yok).
 _CONTACT_MANAGER = require_role("admin", "yonetici")
@@ -115,6 +121,9 @@ async def create_user(
     # yonetici YALNIZ saha personeli acabilir (yetki yukseltme yok).
     if user.role == "yonetici" and body.role not in _YONETICI_CREATABLE_ROLES:
         raise APIError(403, "forbidden", "rol_olusturulamaz_yalniz_saha")
+    # (P35) Amir YALNIZ guvenlik personeli acar.
+    if user.role == "guvenlik_amiri" and body.role not in _AMIR_CREATABLE_ROLES:
+        raise APIError(403, "forbidden", "rol_olusturulamaz_yalniz_guvenlik")
     # password verilirse admin parolayi dogrudan belirler (password_set=true);
     # verilmezse TEK SEFERLIK gecici kod uretilir (temp password first) —
     # kod yanitta bir kez doner, kullanici telefonla girip parola belirler.
@@ -181,6 +190,15 @@ async def update_user(
             raise APIError(403, "forbidden", "yalniz_saha_personeli_duzenlenir")
         if body.role is not None and body.role not in _YONETICI_CREATABLE_ROLES:
             raise APIError(403, "forbidden", "rol_yalniz_saha_yapilabilir")
+    # (P35) Amir icin AYNI DARALTMA — ama daha dar kume: yalniz guvenlik
+    # personeli. Bu kontrol olmasaydi amir KENDI ROLUNU yukseltebilir veya
+    # yoneticinin parolasini degistirebilirdi (dis sirket personeli icin
+    # bunu acik birakmak site yonetimini devretmek olurdu).
+    if user.role == "guvenlik_amiri":
+        if obj.role not in _AMIR_CREATABLE_ROLES:
+            raise APIError(403, "forbidden", "yalniz_guvenlik_personeli_duzenlenir")
+        if body.role is not None and body.role not in _AMIR_CREATABLE_ROLES:
+            raise APIError(403, "forbidden", "rol_yalniz_guvenlik_yapilabilir")
     data = body.model_dump(exclude_unset=True)
     new_password = data.pop("password", None)
     if "email" in data and data["email"] is not None:
@@ -218,6 +236,9 @@ async def reset_user_password(
     obj = await get_or_404(db, AppUser, user_id)
     if user.role == "yonetici" and obj.role not in _YONETICI_CREATABLE_ROLES:
         raise APIError(403, "forbidden", "yalniz_saha_personeli_parola")
+    # (P35) Amir yalniz KENDI ekibinin parolasini sifirlar.
+    if user.role == "guvenlik_amiri" and obj.role not in _AMIR_CREATABLE_ROLES:
+        raise APIError(403, "forbidden", "yalniz_guvenlik_personeli_parola")
     temp_code = generate_temp_code()
     obj.password_hash = None
     obj.password_set = False

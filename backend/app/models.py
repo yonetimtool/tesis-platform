@@ -41,7 +41,14 @@ class Base(DeclarativeBase):
 # --- native enum tipleri (migration olusturur; SQLAlchemy yeniden olusturmaz) ---
 USER_ROLE = ENUM(
     "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
+    # (P35) Guvenlik amiri: guvenligi DIS BIR SIRKET yurutuyorsa vardiya ve
+    # tur penceresini kuran kisi site yoneticisi DEGIL bu roldur.
+    "guvenlik_amiri",
     name="user_role", create_type=False,
+)
+GUVENLIK_MODU = ENUM(
+    "yonetim_ici", "dis_sirket",
+    name="guvenlik_modu", create_type=False,
 )
 GUN_TIPI = ENUM(
     "her_gun", "hafta_ici", "hafta_sonu", "resmi_tatil",
@@ -283,6 +290,12 @@ class Tenant(Base):
     #: gecmis kayitlar tutarsiz kalirdi.
     gecikme_aylik_yuzde = mapped_column(
         Numeric(5, 2), nullable=False, server_default=text("0")
+    )
+    #: (P35) Guvenligi KIM yonetir? `yonetim_ici` (varsayilan, bugunku
+    #: davranis: yonetici planlar) | `dis_sirket` (amir planlar, yonetici
+    #: SALT-OKUR izler). Mevcut tesisler etkilenmez.
+    guvenlik_modu: Mapped[str] = mapped_column(
+        GUVENLIK_MODU, nullable=False, server_default=text("'yonetim_ici'")
     )
     #: (P34) Tur gecikme alarmi: pencere acildiktan sonra bu kadar dakika
     #: icinde okutma gelmezse alarm baslar. 10 dk bir sitede makul, kampus

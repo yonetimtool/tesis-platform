@@ -27,6 +27,11 @@ enum UserRole {
   /// Site sakini — v0'da operasyon erisimi yok.
   resident('resident'),
 
+  /// (P35) Guvenlik amiri — guvenligi DIS BIR SIRKET yurutuyorsa vardiya ve
+  /// tur planlamasinin sahibi. Sakin/finans/kargo alanlari BILINCLI olarak
+  /// KAPALIDIR (dis sirket = en az yetki).
+  guvenlikAmiri('guvenlik_amiri'),
+
   /// Claim yok/bilinmeyen deger (eski token, bozuk payload).
   unknown('unknown');
 
@@ -40,13 +45,23 @@ enum UserRole {
     orElse: () => UserRole.unknown,
   );
 
-  /// Turlarim (`GET /me/patrol-window`) — auth.md: admin + security.
-  bool get canViewMyPatrol => this == admin || this == security;
+  /// Turlarim (`GET /me/patrol-window`) — auth.md: admin + security
+  /// (+ P35 guvenlik amiri: kendi ekibinin turlerini yurutur/izler).
+  bool get canViewMyPatrol =>
+      this == admin || this == security || this == guvenlikAmiri;
+
+  /// (P35) Guvenlik ALANI: tur/vardiya/kamera/alarm ekranlari. Yazma yetkisi
+  /// TENANT MODUNA baglidir ve SUNUCUDA belirlenir — istemci yalnizca
+  /// ekranin GORUNURLUGUNU secer.
+  bool get isGuvenlikYonetimi =>
+      this == admin || this == yonetici || this == guvenlikAmiri;
 
   /// Saha kaniti ureten akislar: scan gonderme, gorev tamamlama, zimmet,
   /// foto yukleme — admin + security + tesis_gorevlisi.
   bool get isFieldWorker =>
-      this == admin || this == security || this == tesisGorevlisi;
+      this == admin || this == security || this == tesisGorevlisi ||
+      // Amir de saha kaniti uretir: turu bizzat yurutebilir.
+      this == guvenlikAmiri;
 
   /// Gorev listesi/detayi okuma — saha rolleri + yonetici (takip).
   bool get canViewTasks => isFieldWorker || this == yonetici;
@@ -157,7 +172,8 @@ enum UserRole {
   /// PLAKA kisisel veriye baglanabilir (KVKK), bu yuzden yonetici/resident/
   /// tesis_gorevlisi listeyi GORMEZ (403). Yonetimin ihtiyaci olan AGREGAT
   /// doluluk `/parking/occupancy` ile herkese aciktir.
-  bool get canViewVehiclePasses => this == admin || this == security;
+  bool get canViewVehiclePasses =>
+      this == admin || this == security || this == guvenlikAmiri;
 
   /// Arac GIRISI kaydi + CIKIS damgasi (`POST /vehicle-passes`,
   /// `.../checkout`) — okuma ile ayni kume (kapi operasyonu).
@@ -171,7 +187,8 @@ enum UserRole {
   /// resident ve tesis_gorevlisi ERISMEZ (403): kayit komsu davranisi
   /// hakkinda veri tasir (KVKK).
   bool get canViewViolations =>
-      this == admin || this == yonetici || this == security;
+      this == admin || this == yonetici || this == security ||
+      this == guvenlikAmiri;
 
   /// Ihlal ACMA (`POST /violations`) + durum ilerletme — admin + security.
   /// yonetici OKUR ama acmaz/degistiremez (403).

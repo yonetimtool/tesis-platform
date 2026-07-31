@@ -7744,6 +7744,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Konum servisi kapalı — okutma konumsuz kaydedildi.'**
   String get nfcKonumServisKapali;
+
+  /// No description provided for @rolGuvenlikAmiri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvenlik Amiri'**
+  String get rolGuvenlikAmiri;
 }
 
 class _AppLocalizationsDelegate

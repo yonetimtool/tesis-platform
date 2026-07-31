@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
-from ..deps import get_tenant_db, require_role
+from ..deps import get_tenant_db, require_guvenlik_yazma, require_role
 from ..errors import APIError
 from ..models import AppUser, Shift, ShiftAssignment
 from ..schemas import (
@@ -33,9 +33,14 @@ from ..storage import presign_get
 
 router = APIRouter(prefix="/shifts", tags=["shifts"])
 
-_ADMIN = require_role("admin")
-_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
-_ASSIGNER = require_role("admin", "yonetici")
+# (P35) Vardiya CRUD'u da moda bagli sahiplige gecti. ONCEKI DURUM
+# yalniz `admin`di; bu BILINCLI bir GENISLETMEDIR — "vardiyayi planlayan
+# kisi" tanimi geldiginde vardiyayi kuramamasi tutarsizdi.
+_ADMIN = require_guvenlik_yazma()
+_READER = require_role(
+    "admin", "yonetici", "security", "tesis_gorevlisi", "guvenlik_amiri"
+)
+_ASSIGNER = require_guvenlik_yazma()
 _ATANABILIR = {"security", "tesis_gorevlisi"}
 
 

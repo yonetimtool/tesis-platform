@@ -142,6 +142,7 @@ export const fr: Sozluk = {
   rolGuvenlik: "Sécurité",
   rolTesisGorevlisi: "Agent technique",
   rolSiteSakini: "Résident",
+  rolGuvenlikAmiri: "Chef de la sécurité",
   panelBugunkuTurlar: "Rondes du jour",
   panelKacirilanYok: "aucune manquée",
   panelAktifAlarm: "Alertes actives",

@@ -24,7 +24,7 @@ from ..schemas import AktifTurOut, AlarmOut, DashboardLiveOut
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
-_VIEWER = require_role("admin", "yonetici", "security")
+_VIEWER = require_role("admin", "yonetici", "security", "guvenlik_amiri")
 
 # Bugunku pencereler + beklenen (atanmis aktif checkpoint) ve okutulan
 # (pencere araliginda okutulmus, beklenen) sayilari — tek set-tabanli sorgu.

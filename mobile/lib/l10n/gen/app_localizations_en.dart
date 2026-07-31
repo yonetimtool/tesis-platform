@@ -4565,4 +4565,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get nfcKonumServisKapali =>
       'Location services are off — the scan was recorded without it.';
+
+  @override
+  String get rolGuvenlikAmiri => 'Security Chief';
 }
