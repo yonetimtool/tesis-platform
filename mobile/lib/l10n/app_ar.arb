@@ -1356,5 +1356,19 @@
   "nfcKonumYok": "تعذّر تحديد الموقع — تم تسجيل المسح بدون موقع.",
   "nfcKonumIzinYok": "لم يُمنح إذن الموقع — تم تسجيل المسح بدون موقع.",
   "nfcKonumServisKapali": "خدمة الموقع مغلقة — تم تسجيل المسح بدون موقع.",
-  "rolGuvenlikAmiri": "رئيس الأمن"
+  "rolGuvenlikAmiri": "رئيس الأمن",
+  "kvkkBaslik": "إشعار الخصوصية",
+  "kvkkSonaKaydir": "مرّر إلى نهاية النص للموافقة.",
+  "kvkkOnayliyorum": "قرأت وأوافق",
+  "kvkkYuklenemedi": "تعذّر تحميل إشعار الخصوصية.",
+  "kvkkTekrarDene": "حاول مجددًا",
+  "kvkkSurumDegisti": "تم تحديث النص؛ يرجى قراءة الإصدار الجديد.",
+  "kvkkIzinBaslik": "الحملات والعروض الخاصة بي",
+  "kvkkIzinAciklama": "اختياري تمامًا؛ يمكنك المتابعة دون الموافقة. يمكنك تغييره في أي وقت من الإعدادات.",
+  "kvkkIzinEposta": "أرغب في تلقي البريد الإلكتروني",
+  "kvkkIzinSms": "أرغب في تلقي الرسائل النصية",
+  "kvkkIzinArama": "أرغب في تلقي المكالمات",
+  "kvkkIzinKaydedilemedi": "تعذّر حفظ التفضيل.",
+  "kvkkAyarlarBaslik": "الأذونات وإشعار الخصوصية",
+  "kvkkMetniGoruntule": "عرض إشعار الخصوصية"
 }

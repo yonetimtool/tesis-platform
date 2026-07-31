@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
+import '../../kvkk/data/kvkk_api.dart';
+import '../../kvkk/presentation/kvkk_onay_screen.dart';
 import '../../profile/data/profile_api.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../tenant/presentation/setup_tenant_screen.dart';
@@ -23,6 +25,14 @@ class HomeGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // (P36) KVKK KAPISI ROL AYRIMINDAN ONCE: aydinlatma metni HERKES icindir
+    // ve onay verilmeden hicbir ana ekran gosterilmez. Kapi yalniz tenant
+    // metin YAYINLADIYSA kurulur; ag/uc hatasinda ACILMAZ (bkz.
+    // KvkkDurum.kapaliVarsayilan) — metni getiremeyen bir ekranda
+    // kullaniciyi kilitlemek, onu uygulamadan tamamen dislamak olurdu.
+    final kvkk = ref.watch(kvkkDurumProvider).value;
+    if (kvkk != null && kvkk.onayGerekli) return const KvkkOnayScreen();
+
     final role = ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
     // Tum bilinen roller yeni tasarim ana ekranlarinda (eski izgara
     // HomeScreen EMEKLI). 'unknown' rol cozulmeden gecen saniye-alti

@@ -1356,5 +1356,19 @@
   "nfcKonumYok": "Ubicación no disponible — el escaneo se registró sin ella.",
   "nfcKonumIzinYok": "Permiso de ubicación denegado — el escaneo se registró sin ella.",
   "nfcKonumServisKapali": "Los servicios de ubicación están desactivados — escaneo sin ubicación.",
-  "rolGuvenlikAmiri": "Jefe de seguridad"
+  "rolGuvenlikAmiri": "Jefe de seguridad",
+  "kvkkBaslik": "Aviso de privacidad",
+  "kvkkSonaKaydir": "Desplácese hasta el final del texto para aprobar.",
+  "kvkkOnayliyorum": "He leído y apruebo",
+  "kvkkYuklenemedi": "No se pudo cargar el aviso de privacidad.",
+  "kvkkTekrarDene": "Reintentar",
+  "kvkkSurumDegisti": "El texto se actualizó; lea la nueva versión.",
+  "kvkkIzinBaslik": "Campañas y ofertas para mí",
+  "kvkkIzinAciklama": "Totalmente opcional; puede continuar sin aprobar. Puede cambiarlo cuando quiera en Ajustes.",
+  "kvkkIzinEposta": "Quiero recibir correos electrónicos",
+  "kvkkIzinSms": "Quiero recibir SMS",
+  "kvkkIzinArama": "Quiero recibir llamadas",
+  "kvkkIzinKaydedilemedi": "No se pudo guardar la preferencia.",
+  "kvkkAyarlarBaslik": "Permisos y aviso de privacidad",
+  "kvkkMetniGoruntule": "Ver el aviso de privacidad"
 }

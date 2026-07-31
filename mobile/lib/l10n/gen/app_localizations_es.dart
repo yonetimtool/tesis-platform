@@ -4521,4 +4521,48 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get rolGuvenlikAmiri => 'Jefe de seguridad';
+
+  @override
+  String get kvkkBaslik => 'Aviso de privacidad';
+
+  @override
+  String get kvkkSonaKaydir =>
+      'Desplácese hasta el final del texto para aprobar.';
+
+  @override
+  String get kvkkOnayliyorum => 'He leído y apruebo';
+
+  @override
+  String get kvkkYuklenemedi => 'No se pudo cargar el aviso de privacidad.';
+
+  @override
+  String get kvkkTekrarDene => 'Reintentar';
+
+  @override
+  String get kvkkSurumDegisti => 'El texto se actualizó; lea la nueva versión.';
+
+  @override
+  String get kvkkIzinBaslik => 'Campañas y ofertas para mí';
+
+  @override
+  String get kvkkIzinAciklama =>
+      'Totalmente opcional; puede continuar sin aprobar. Puede cambiarlo cuando quiera en Ajustes.';
+
+  @override
+  String get kvkkIzinEposta => 'Quiero recibir correos electrónicos';
+
+  @override
+  String get kvkkIzinSms => 'Quiero recibir SMS';
+
+  @override
+  String get kvkkIzinArama => 'Quiero recibir llamadas';
+
+  @override
+  String get kvkkIzinKaydedilemedi => 'No se pudo guardar la preferencia.';
+
+  @override
+  String get kvkkAyarlarBaslik => 'Permisos y aviso de privacidad';
+
+  @override
+  String get kvkkMetniGoruntule => 'Ver el aviso de privacidad';
 }

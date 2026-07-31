@@ -3550,6 +3550,142 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
   # ================================================================= #
+  # KVKK AYDINLATMA + ONAY + PAZARLAMA IZINLERI (P36)
+  # METIN TENANT ICERIGIDIR, urun sabiti DEGIL: her tesisin veri sorumlusu
+  # kendisidir. Platforma gomulu tek bir metin, 200 tesise BASKASININ
+  # metnini imzalatmak olurdu. Metin ORIJINAL DILINDE gosterilir (hukuki
+  # metnin makine cevirisi yanlis bir taahhut uretirdi).
+  #
+  # SUNUCU NAVIGASYONU KILITLEMEZ, kapiyi ISTEMCI kurar (`onay_gerekli`).
+  # Gerekce: onay vermemis bir kullanici METNI OKUYABILMELI ve cikis
+  # yapabilmelidir; her ucu 403'lemek metni gostermeyi de imkansiz kilar.
+  # RIZANIN GERCEK ZORLAMASI GONDERIM UCUNDADIR (P32): pazarlama mesajlari
+  # yalniz O KANALA izin vermis kisilere gider.
+  # ================================================================= #
+  /kvkk/metin:
+    get:
+      tags: [kvkk]
+      summary: Tenant'in GUNCEL aydinlatma metni (bilinen tum roller)
+      description: >
+        Rol suzgeci YOK: metin kullanicinin KENDI verisi hakkindadir,
+        okuyamamak aydinlatmanin kendisini imkansiz kilardi. Tenant metin
+        yayinlamadiysa **404**.
+      responses:
+        "200": { description: guncel surum }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      tags: [kvkk]
+      summary: YENI SURUM yayinla (admin + yonetici)
+      description: |
+        **Duzenleme ucu YOKTUR.** Yayinlanmis bir metnin govdesi
+        degistirilemez; yerinde duzenlemeye izin verilseydi dun onay vermis
+        bir kullanicinin onayi bugun **baska bir metne** ait gorunurdu.
+
+        Surum ISTEMCIDEN ALINMAZ, sunucu artirir (ilk surum 1): istemcinin
+        secmesi, iki yoneticinin ayni numarayi vermesi ya da numara atlamasi
+        demekti. Surum artmasi TUM kullanicilarda yeniden onay ister.
+
+        **Ayni govde yeniden yayinlanamaz (409 `kvkk_metni_degismedi`):**
+        degismemis bir metin icin herkesi yeniden onaya zorlamak, onayi
+        anlamsiz bir tikla dondururdu.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KvkkMetinCreate" }
+      responses:
+        "201": { description: yayinlandi }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /kvkk/metinler:
+    get:
+      tags: [kvkk]
+      summary: Tum surumler (admin + yonetici)
+      description: >
+        Eski surumler SILINMEZ: onay kayitlari onlara referans verir ve
+        "hangi metne onay verildi" sorusu yanitlanabilir kalmalidir.
+      responses:
+        "200": { description: surum gecmisi }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /kvkk/durum:
+    get:
+      tags: [kvkk]
+      summary: Kendi onay durumum — onay kapisinin TEK girdisi
+      responses:
+        "200":
+          description: durum
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KvkkDurum" }
+  /kvkk/onay:
+    post:
+      tags: [kvkk]
+      summary: Ekranda GORULEN surumu onayla
+      description: |
+        Surum govdede tasinir ve guncel surumle KARSILASTIRILIR: kullanici
+        metni okurken yeni surum yayinlandiysa onayi ESKI METNE aitti —
+        sessizce yeni surume yazmak, okumadigi bir metni onaylatmak olurdu
+        (**409 `kvkk_surumu_degisti`**).
+
+        IDEMPOTENT: ayni surum icin ikinci cagri yeni satir uretmez.
+
+        Onay satiri SILINMEZ ve GUNCELLENMEZ. Onayi "geri almak" onay
+        kaydini silmek DEGILDIR: aydinlatma bir BILDIRIMDIR — geri alinabilen
+        sey PAZARLAMA RIZASIDIR.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [surum]
+              properties:
+                surum: { type: integer, minimum: 1 }
+      responses:
+        "201":
+          description: onaylandi (guncel durum doner)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KvkkDurum" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /me/pazarlama-tercihleri:
+    get:
+      tags: [kvkk]
+      summary: Kendi pazarlama izinlerim
+      responses:
+        "200":
+          description: tercihler
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PazarlamaTercihleri" }
+    patch:
+      tags: [kvkk]
+      summary: Pazarlama izinlerini guncelle (KISMI)
+      description: |
+        UC BAGIMSIZ KANAL. Tek bir "pazarlama" bayragi, kisiyi istemedigi
+        kanaldan mesaj almak ile hic almamak arasinda secmeye zorlardi.
+        Gonderilmeyen kanal DEGISMEZ. Ucu de VARSAYILAN KAPALIDIR (KVKK:
+        riza ACIK olmali, varsayilan olamaz) ve HER AN geri alinabilir.
+
+        Tercih HER ZAMAN KENDISI icindir — baskasinin rizasini kimse
+        veremez, bu yuzden `/users/{id}` altinda bir ikizi YOKTUR.
+        Degisim `audit_log`a yazilir (KVKK: ispat yukumlulugu veri
+        sorumlusundadir).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PazarlamaTercihUpdate" }
+      responses:
+        "200":
+          description: guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PazarlamaTercihleri" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
   # YONETISIM (P33) — KARAR DEFTERI + DOKUMAN ARSIVI + SITE AKTARIM
   # IS TAKIBI icin AYRI UC ACILMADI: denetim omurganin ZATEN VAR OLDUGUNU
   # gosterdi (`complaint` = Talep/Ariza, `task` = Is Emri, Ticketing v1'de
@@ -8861,6 +8997,53 @@ components:
           maxItems: 3
           default: []
           description: "Opsiyonel gorseller (en fazla 3); her biri /uploads/presign ile alinan obje anahtari"
+    KvkkMetinCreate:
+      type: object
+      required: [baslik, govde]
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        govde: { type: string, minLength: 1, maxLength: 100000 }
+    KvkkMetin:
+      type: object
+      required: [id, surum, baslik, govde, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        surum: { type: integer, minimum: 1 }
+        baslik: { type: string }
+        govde: { type: string }
+        created_at: { type: string, format: date-time }
+    KvkkDurum:
+      type: object
+      required: [metin_var, onay_gerekli]
+      properties:
+        metin_var:
+          type: boolean
+          description: >
+            Tenant metin yayinlamadiysa false — istemci kapiyi KURMAZ.
+            Metinsiz bir kapi, kullaniciya OKUMADAN onaylatmak olurdu.
+        guncel_surum: { type: integer, nullable: true }
+        onayladigi_surum: { type: integer, nullable: true }
+        onay_at: { type: string, format: date-time, nullable: true }
+        onay_gerekli:
+          type: boolean
+          description: true ise istemci onay kapisini acar (surum artinca yeniden true)
+    PazarlamaTercihleri:
+      type: object
+      required: [eposta, sms, arama]
+      properties:
+        eposta: { type: boolean, default: false }
+        sms: { type: boolean, default: false }
+        arama: { type: boolean, default: false }
+        guncelleme_at: { type: string, format: date-time, nullable: true }
+    PazarlamaTercihUpdate:
+      type: object
+      description: En az bir alan; gonderilmeyen kanal DEGISMEZ.
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        eposta: { type: boolean }
+        sms: { type: boolean }
+        arama: { type: boolean }
     KararUyesi:
       type: object
       description: >

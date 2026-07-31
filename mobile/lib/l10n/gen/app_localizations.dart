@@ -7750,6 +7750,90 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Güvenlik Amiri'**
   String get rolGuvenlikAmiri;
+
+  /// No description provided for @kvkkBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aydınlatma Metni'**
+  String get kvkkBaslik;
+
+  /// No description provided for @kvkkSonaKaydir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onaylamak için metnin sonuna kadar okuyun.'**
+  String get kvkkSonaKaydir;
+
+  /// No description provided for @kvkkOnayliyorum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okudum, onaylıyorum'**
+  String get kvkkOnayliyorum;
+
+  /// No description provided for @kvkkYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aydınlatma metni yüklenemedi.'**
+  String get kvkkYuklenemedi;
+
+  /// No description provided for @kvkkTekrarDene.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tekrar dene'**
+  String get kvkkTekrarDene;
+
+  /// No description provided for @kvkkSurumDegisti.
+  ///
+  /// In tr, this message translates to:
+  /// **'Metin güncellendi; lütfen yeni metni okuyun.'**
+  String get kvkkSurumDegisti;
+
+  /// No description provided for @kvkkIzinBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bana özel kampanya ve teklifler'**
+  String get kvkkIzinBaslik;
+
+  /// No description provided for @kvkkIzinAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamen isteğe bağlıdır; onaylamadan devam edebilirsiniz. İstediğiniz zaman Ayarlar\'dan değiştirebilirsiniz.'**
+  String get kvkkIzinAciklama;
+
+  /// No description provided for @kvkkIzinEposta.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta almak istiyorum'**
+  String get kvkkIzinEposta;
+
+  /// No description provided for @kvkkIzinSms.
+  ///
+  /// In tr, this message translates to:
+  /// **'SMS almak istiyorum'**
+  String get kvkkIzinSms;
+
+  /// No description provided for @kvkkIzinArama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aranmak istiyorum'**
+  String get kvkkIzinArama;
+
+  /// No description provided for @kvkkIzinKaydedilemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tercih kaydedilemedi.'**
+  String get kvkkIzinKaydedilemedi;
+
+  /// No description provided for @kvkkAyarlarBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'İzinler ve Aydınlatma Metni'**
+  String get kvkkAyarlarBaslik;
+
+  /// No description provided for @kvkkMetniGoruntule.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aydınlatma metnini görüntüle'**
+  String get kvkkMetniGoruntule;
 }
 
 class _AppLocalizationsDelegate

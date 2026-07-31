@@ -1488,6 +1488,55 @@ def main() -> int:
 
 
         # ------------------------------------------------------------------
+        # KVKK AYDINLATMA METNI (P36) — ORNEK surum 1.
+        #
+        # NEDEN SEED'DE: metin olmadan onay kapisi HIC KURULMAZ ve akis
+        # gelistirme/demo ortaminda uctan uca denenemezdi. Metin TENANT
+        # ICERIGIDIR — buradaki ORNEKTIR ve gercek tesis kendi hukuk
+        # danismaninin metnini yayinlar (yeni SURUM olarak; yerinde
+        # duzenleme yok).
+        # ------------------------------------------------------------------
+        conn.execute(
+            """
+            INSERT INTO kvkk_metin (tenant_id, surum, baslik, govde)
+            SELECT %(t)s, 1, %(b)s, %(g)s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM kvkk_metin WHERE tenant_id = %(t)s
+            )
+            """,
+            {
+                "t": tenant_id,
+                "b": "Kişisel Verilerin Korunması Hakkında Aydınlatma Metni",
+                "g": (
+                    "Bu metin ÖRNEKTİR; tesis yönetimi kendi hukuk "
+                    "danışmanının hazırladığı metni yeni sürüm olarak "
+                    "yayınlamalıdır.\n\n"
+                    "1) VERİ SORUMLUSU\nSite/tesis yönetimi, 6698 sayılı "
+                    "Kanun kapsamında veri sorumlusudur.\n\n"
+                    "2) İŞLENEN VERİLER\nAd-soyad, telefon, e-posta, "
+                    "bağımsız bölüm bilgisi; personel için tur okutma "
+                    "kayıtları ve okutma anındaki konum (sürekli takip "
+                    "YAPILMAZ).\n\n"
+                    "3) AMAÇ VE HUKUKİ SEBEP\nSite yönetim hizmetinin "
+                    "ifası, KMK'dan doğan yükümlülükler ve güvenliğin "
+                    "sağlanmasındaki meşru menfaat.\n\n"
+                    "4) AKTARIM\nVeriler yalnızca hizmetin ifası için "
+                    "zorunlu olduğu ölçüde ve mevzuatın izin verdiği "
+                    "hallerde aktarılır.\n\n"
+                    "5) HAKLARINIZ\nKanun'un 11. maddesindeki haklarınızı "
+                    "yönetime başvurarak kullanabilirsiniz.\n\n"
+                    "6) PAZARLAMA İZNİ\nKampanya/teklif iletileri AYRI ve "
+                    "İSTEĞE BAĞLI bir izne tabidir; bu metni onaylamanız "
+                    "pazarlama izni vermek anlamına GELMEZ ve izni "
+                    "istediğiniz zaman geri alabilirsiniz."
+                ),
+            },
+        )
+        print("[seed] kvkk aydinlatma metni: surum 1 (ORNEK — gercek metin "
+              "tesisin kendi hukuk metnidir).")
+
+
+        # ------------------------------------------------------------------
         # DEVRIYE ALANI (tur 41) — checkpoint + plan + pencereler + okutmalar.
         #
         # Seed'de bu alan HIC YOKTU: /dashboard tum sayaclari 0, /checkpoints

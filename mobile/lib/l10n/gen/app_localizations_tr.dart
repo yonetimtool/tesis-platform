@@ -4381,4 +4381,47 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rolGuvenlikAmiri => 'Güvenlik Amiri';
+
+  @override
+  String get kvkkBaslik => 'Aydınlatma Metni';
+
+  @override
+  String get kvkkSonaKaydir => 'Onaylamak için metnin sonuna kadar okuyun.';
+
+  @override
+  String get kvkkOnayliyorum => 'Okudum, onaylıyorum';
+
+  @override
+  String get kvkkYuklenemedi => 'Aydınlatma metni yüklenemedi.';
+
+  @override
+  String get kvkkTekrarDene => 'Tekrar dene';
+
+  @override
+  String get kvkkSurumDegisti => 'Metin güncellendi; lütfen yeni metni okuyun.';
+
+  @override
+  String get kvkkIzinBaslik => 'Bana özel kampanya ve teklifler';
+
+  @override
+  String get kvkkIzinAciklama =>
+      'Tamamen isteğe bağlıdır; onaylamadan devam edebilirsiniz. İstediğiniz zaman Ayarlar\'dan değiştirebilirsiniz.';
+
+  @override
+  String get kvkkIzinEposta => 'E-posta almak istiyorum';
+
+  @override
+  String get kvkkIzinSms => 'SMS almak istiyorum';
+
+  @override
+  String get kvkkIzinArama => 'Aranmak istiyorum';
+
+  @override
+  String get kvkkIzinKaydedilemedi => 'Tercih kaydedilemedi.';
+
+  @override
+  String get kvkkAyarlarBaslik => 'İzinler ve Aydınlatma Metni';
+
+  @override
+  String get kvkkMetniGoruntule => 'Aydınlatma metnini görüntüle';
 }

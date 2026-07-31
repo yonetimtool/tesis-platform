@@ -4568,4 +4568,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rolGuvenlikAmiri => 'Security Chief';
+
+  @override
+  String get kvkkBaslik => 'Privacy Notice';
+
+  @override
+  String get kvkkSonaKaydir => 'Scroll to the end of the text to approve.';
+
+  @override
+  String get kvkkOnayliyorum => 'I have read and approve';
+
+  @override
+  String get kvkkYuklenemedi => 'The privacy notice could not be loaded.';
+
+  @override
+  String get kvkkTekrarDene => 'Try again';
+
+  @override
+  String get kvkkSurumDegisti =>
+      'The text was updated; please read the new version.';
+
+  @override
+  String get kvkkIzinBaslik => 'Campaigns and offers for me';
+
+  @override
+  String get kvkkIzinAciklama =>
+      'Entirely optional; you can continue without approving. You can change this at any time in Settings.';
+
+  @override
+  String get kvkkIzinEposta => 'I want to receive e-mail';
+
+  @override
+  String get kvkkIzinSms => 'I want to receive SMS';
+
+  @override
+  String get kvkkIzinArama => 'I want to be called';
+
+  @override
+  String get kvkkIzinKaydedilemedi => 'The preference could not be saved.';
+
+  @override
+  String get kvkkAyarlarBaslik => 'Permissions and Privacy Notice';
+
+  @override
+  String get kvkkMetniGoruntule => 'View the privacy notice';
 }

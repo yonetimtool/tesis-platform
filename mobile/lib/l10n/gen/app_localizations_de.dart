@@ -4544,4 +4544,51 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get rolGuvenlikAmiri => 'Sicherheitsleiter';
+
+  @override
+  String get kvkkBaslik => 'Datenschutzerklärung';
+
+  @override
+  String get kvkkSonaKaydir =>
+      'Scrollen Sie bis zum Ende des Textes, um zuzustimmen.';
+
+  @override
+  String get kvkkOnayliyorum => 'Gelesen und akzeptiert';
+
+  @override
+  String get kvkkYuklenemedi =>
+      'Die Datenschutzerklärung konnte nicht geladen werden.';
+
+  @override
+  String get kvkkTekrarDene => 'Erneut versuchen';
+
+  @override
+  String get kvkkSurumDegisti =>
+      'Der Text wurde aktualisiert; bitte lesen Sie die neue Fassung.';
+
+  @override
+  String get kvkkIzinBaslik => 'Aktionen und Angebote für mich';
+
+  @override
+  String get kvkkIzinAciklama =>
+      'Vollständig freiwillig; Sie können ohne Zustimmung fortfahren. Jederzeit in den Einstellungen änderbar.';
+
+  @override
+  String get kvkkIzinEposta => 'Ich möchte E-Mails erhalten';
+
+  @override
+  String get kvkkIzinSms => 'Ich möchte SMS erhalten';
+
+  @override
+  String get kvkkIzinArama => 'Ich möchte angerufen werden';
+
+  @override
+  String get kvkkIzinKaydedilemedi =>
+      'Die Einstellung konnte nicht gespeichert werden.';
+
+  @override
+  String get kvkkAyarlarBaslik => 'Berechtigungen und Datenschutzerklärung';
+
+  @override
+  String get kvkkMetniGoruntule => 'Datenschutzerklärung ansehen';
 }

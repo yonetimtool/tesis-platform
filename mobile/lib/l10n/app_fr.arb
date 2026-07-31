@@ -1356,5 +1356,19 @@
   "nfcKonumYok": "Position indisponible — le scan a été enregistré sans elle.",
   "nfcKonumIzinYok": "Autorisation de localisation refusée — scan enregistré sans position.",
   "nfcKonumServisKapali": "Services de localisation désactivés — scan enregistré sans position.",
-  "rolGuvenlikAmiri": "Chef de la sécurité"
+  "rolGuvenlikAmiri": "Chef de la sécurité",
+  "kvkkBaslik": "Notice d'information",
+  "kvkkSonaKaydir": "Faites défiler jusqu'à la fin du texte pour approuver.",
+  "kvkkOnayliyorum": "J'ai lu et j'approuve",
+  "kvkkYuklenemedi": "Impossible de charger la notice.",
+  "kvkkTekrarDene": "Réessayer",
+  "kvkkSurumDegisti": "Le texte a été mis à jour ; veuillez lire la nouvelle version.",
+  "kvkkIzinBaslik": "Campagnes et offres pour moi",
+  "kvkkIzinAciklama": "Entièrement facultatif ; vous pouvez continuer sans approuver. Modifiable à tout moment dans les Réglages.",
+  "kvkkIzinEposta": "Je souhaite recevoir des e-mails",
+  "kvkkIzinSms": "Je souhaite recevoir des SMS",
+  "kvkkIzinArama": "Je souhaite être appelé(e)",
+  "kvkkIzinKaydedilemedi": "Impossible d'enregistrer la préférence.",
+  "kvkkAyarlarBaslik": "Autorisations et notice d'information",
+  "kvkkMetniGoruntule": "Consulter la notice d'information"
 }

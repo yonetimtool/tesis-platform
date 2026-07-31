@@ -4531,4 +4531,50 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rolGuvenlikAmiri => 'Chef de la sécurité';
+
+  @override
+  String get kvkkBaslik => 'Notice d\'information';
+
+  @override
+  String get kvkkSonaKaydir =>
+      'Faites défiler jusqu\'à la fin du texte pour approuver.';
+
+  @override
+  String get kvkkOnayliyorum => 'J\'ai lu et j\'approuve';
+
+  @override
+  String get kvkkYuklenemedi => 'Impossible de charger la notice.';
+
+  @override
+  String get kvkkTekrarDene => 'Réessayer';
+
+  @override
+  String get kvkkSurumDegisti =>
+      'Le texte a été mis à jour ; veuillez lire la nouvelle version.';
+
+  @override
+  String get kvkkIzinBaslik => 'Campagnes et offres pour moi';
+
+  @override
+  String get kvkkIzinAciklama =>
+      'Entièrement facultatif ; vous pouvez continuer sans approuver. Modifiable à tout moment dans les Réglages.';
+
+  @override
+  String get kvkkIzinEposta => 'Je souhaite recevoir des e-mails';
+
+  @override
+  String get kvkkIzinSms => 'Je souhaite recevoir des SMS';
+
+  @override
+  String get kvkkIzinArama => 'Je souhaite être appelé(e)';
+
+  @override
+  String get kvkkIzinKaydedilemedi =>
+      'Impossible d\'enregistrer la préférence.';
+
+  @override
+  String get kvkkAyarlarBaslik => 'Autorisations et notice d\'information';
+
+  @override
+  String get kvkkMetniGoruntule => 'Consulter la notice d\'information';
 }

@@ -1356,5 +1356,19 @@
   "nfcKonumYok": "Location unavailable — the scan was recorded without it.",
   "nfcKonumIzinYok": "Location permission denied — the scan was recorded without it.",
   "nfcKonumServisKapali": "Location services are off — the scan was recorded without it.",
-  "rolGuvenlikAmiri": "Security Chief"
+  "rolGuvenlikAmiri": "Security Chief",
+  "kvkkBaslik": "Privacy Notice",
+  "kvkkSonaKaydir": "Scroll to the end of the text to approve.",
+  "kvkkOnayliyorum": "I have read and approve",
+  "kvkkYuklenemedi": "The privacy notice could not be loaded.",
+  "kvkkTekrarDene": "Try again",
+  "kvkkSurumDegisti": "The text was updated; please read the new version.",
+  "kvkkIzinBaslik": "Campaigns and offers for me",
+  "kvkkIzinAciklama": "Entirely optional; you can continue without approving. You can change this at any time in Settings.",
+  "kvkkIzinEposta": "I want to receive e-mail",
+  "kvkkIzinSms": "I want to receive SMS",
+  "kvkkIzinArama": "I want to be called",
+  "kvkkIzinKaydedilemedi": "The preference could not be saved.",
+  "kvkkAyarlarBaslik": "Permissions and Privacy Notice",
+  "kvkkMetniGoruntule": "View the privacy notice"
 }

@@ -8,6 +8,9 @@ import '../../../core/i18n/locale_controller.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../routing/app_router.dart';
 import '../../auth/data/current_user_provider.dart';
+import '../../kvkk/data/kvkk_api.dart';
+import '../../kvkk/presentation/kvkk_onay_screen.dart'
+    show PazarlamaAnahtarlari;
 import '../../auth/domain/user_role.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../../core/error/akis_hatasi.dart';
@@ -108,6 +111,21 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
+          const SizedBox(height: 24),
+          // -------------------- IZINLER + AYDINLATMA (P36) -------------- #
+          // Listenin SONUNDA: gorunum/dil gunluk ayarlardir, izinler nadiren
+          // ziyaret edilir. Ustte olsaydi her kullanici her acilista once
+          // pazarlama anahtarlarini gorurdu — ve dil satirini ekrandan
+          // asagi iterdi.
+          //
+          // Tercihler SONRADAN degistirilebilir olmali: riza her an geri
+          // alinabilir (KVKK). Onay ekranindaki blokla AYNI widget kullanilir
+          // — iki ayri liste, birinde eklenen kanalin digerinde unutulmasi
+          // demekti.
+          Text(l10n.kvkkAyarlarBaslik,
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          const _IzinlerKarti(),
         ],
       ),
     );
@@ -295,6 +313,79 @@ class _TesisAdiKartiState extends ConsumerState<_TesisAdiKarti> {
                     : Text(l10n.ortakKaydet),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+/// (P36) Pazarlama izinleri + aydinlatma metnine erisim.
+///
+/// Metin baglantisi burada durur: kullanici NEYI onayladigini sonradan
+/// gorebilmelidir — onayi bir kez alip metni saklamak, aydinlatmanin
+/// amacini bosa cikarirdi.
+class _IzinlerKarti extends ConsumerWidget {
+  const _IzinlerKarti();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final tercihAsync = ref.watch(pazarlamaTercihProvider);
+    final durum = ref.watch(kvkkDurumProvider).value;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            Text(l10n.kvkkIzinBaslik,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(
+              l10n.kvkkIzinAciklama,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            tercihAsync.when(
+              // YUKLENIRKEN DONEN BIR HALKA YOK: Ayarlar listesinde
+              // surekli donen bir gosterge hem gorsel gurultudur hem de
+              // ekrani ASLA DURULMAYAN bir animasyona baglar (widget
+              // testlerinde `pumpAndSettle` zaman asimina ugrar). Yerine
+              // ayni yuksekliği tutan SESSIZ bir yer tutucu: anahtarlar
+              // yuklenince yerinde belirir, liste zıplamaz.
+              loading: () => const SizedBox(height: 168),
+              // Yuklenemediyse anahtar GOSTERILMEZ: bilinmeyen bir durumu
+              // "kapali" diye cizmek, verilmis bir rizayi yok gostermekti.
+              error: (_, _) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(l10n.kvkkIzinKaydedilemedi),
+              ),
+              data: (tercih) => PazarlamaAnahtarlari(
+                tercih: tercih,
+                onDegis: (kanal, deger) async {
+                  final api = ref.read(kvkkApiProvider);
+                  try {
+                    await api.tercihGuncelle({kanal: deger});
+                  } finally {
+                    ref.invalidate(pazarlamaTercihProvider);
+                  }
+                },
+              ),
+            ),
+            if (durum?.metinVar ?? false)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.description_outlined),
+                title: Text(l10n.kvkkMetniGoruntule),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(AppRoutes.kvkkMetin),
+              ),
           ],
         ),
       ),

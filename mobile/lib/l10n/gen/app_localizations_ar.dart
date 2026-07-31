@@ -4651,4 +4651,47 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get rolGuvenlikAmiri => 'رئيس الأمن';
+
+  @override
+  String get kvkkBaslik => 'إشعار الخصوصية';
+
+  @override
+  String get kvkkSonaKaydir => 'مرّر إلى نهاية النص للموافقة.';
+
+  @override
+  String get kvkkOnayliyorum => 'قرأت وأوافق';
+
+  @override
+  String get kvkkYuklenemedi => 'تعذّر تحميل إشعار الخصوصية.';
+
+  @override
+  String get kvkkTekrarDene => 'حاول مجددًا';
+
+  @override
+  String get kvkkSurumDegisti => 'تم تحديث النص؛ يرجى قراءة الإصدار الجديد.';
+
+  @override
+  String get kvkkIzinBaslik => 'الحملات والعروض الخاصة بي';
+
+  @override
+  String get kvkkIzinAciklama =>
+      'اختياري تمامًا؛ يمكنك المتابعة دون الموافقة. يمكنك تغييره في أي وقت من الإعدادات.';
+
+  @override
+  String get kvkkIzinEposta => 'أرغب في تلقي البريد الإلكتروني';
+
+  @override
+  String get kvkkIzinSms => 'أرغب في تلقي الرسائل النصية';
+
+  @override
+  String get kvkkIzinArama => 'أرغب في تلقي المكالمات';
+
+  @override
+  String get kvkkIzinKaydedilemedi => 'تعذّر حفظ التفضيل.';
+
+  @override
+  String get kvkkAyarlarBaslik => 'الأذونات وإشعار الخصوصية';
+
+  @override
+  String get kvkkMetniGoruntule => 'عرض إشعار الخصوصية';
 }

@@ -2174,7 +2174,7 @@ apk debug build başarılı; admin-web `tsc` + `vitest` (105) + `npm run build`
 yeşil; `goc-tersinirlik` bulgu 0 (25 sınır), `goc-uyum-dogrula` bulgu 0.
 
 ### P36 — Onboarding consents & KVKK gate
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: first-login/post-registration flow: mandatory KVKK aydınlatma pop-up —
 the "Onaylıyorum" button stays DISABLED until the user scrolls to the bottom of
 the text; approval stored with timestamp + text version; text version bump forces
@@ -2185,6 +2185,76 @@ reads these for pazarlama sends. UI strings via ARB; the KVKK legal text itself
 is tenant content (original-language rule).
 Acceptance: gate unbypassable (navigation locked before consent); scroll-gating
 widget test; consent versioning test; settings editing; gates.
+Notes (2026-07-31):
+**METİN TENANT İÇERİĞİDİR, ürün sabiti değil.** Her tesisin veri sorumlusu
+kendisidir ve aydınlatma metnini kendi hukuk danışmanı yazar; platforma gömülü
+tek bir metin **200 tesise başkasının metnini imzalatmak** olurdu. Metin
+orijinal dilinde gösterilir — hukuki metnin makine çevirisi yanlış bir taahhüt
+üretirdi. Seed'e **örnek** bir sürüm 1 konuldu (metin olmadan kapı hiç
+kurulmaz ve akış uçtan uca denenemezdi); gerçek tesis kendi metnini **yeni
+sürüm** olarak yayınlar.
+
+**SÜRÜM VAR, YERİNDE DÜZENLEME YOK.** Yayınlanmış metnin gövdesi
+değiştirilemez; düzenleme ucu **hiç yazılmadı**. İzin verilseydi dün onay
+vermiş bir kullanıcının onayı bugün **başka bir metne** ait görünürdü — onay
+kaydının tek değeri "hangi metne, ne zaman" olmasıdır. Sürüm istemciden
+alınmaz (iki yöneticinin aynı numarayı vermesi ya da numara atlaması demekti).
+**Aynı gövde yeniden yayınlanamaz (409):** değişmemiş bir metin için herkesi
+yeniden onaya zorlamak, onayı anlamsız bir tıkla döndürürdü.
+
+**ONAY ESKİ SÜRÜME YAZILMAZ (409).** Kullanıcı metni okurken yönetim yeni
+sürüm yayınladıysa, onayı eski metne aitti; sessizce yeni sürüme yazmak
+okumadığı bir metni onaylatmak olurdu. İstemci 409'da yeni metni çeker ve
+**kaydırma kilidini sıfırlar**. Onay **idempotent**tir (çift dokunuş/ağ
+tekrarı onayı çoğaltmaz) ve satır **silinmez/güncellenmez**: aydınlatma bir
+bildirimdir, geri alınabilen şey **pazarlama rızasıdır**.
+
+**KAYDIRMA KİLİDİ.** Buton, kullanıcı metnin sonuna gelene kadar kapalı. Tam
+eşitlik yerine **24 px eşik**: cihaz ölçümlerinde son piksel çoğu zaman
+yakalanmaz (kesirli yükseklik, üst-asma) ve buton hiç etkinleşmezdi. **İçerik
+ekrana sığıyorsa kapı zaten açık** — kısa metinli bir tesiste "sona kaydır"
+beklemek butonu sonsuza dek kapalı bırakırdı; ilk karede bir kez ölçülür.
+
+**SUNUCU NAVİGASYONU KİLİTLEMEZ, kapıyı istemci kurar** (`onay_gerekli`).
+Onay vermemiş bir kullanıcı **metni okuyabilmeli**, çıkış yapabilmeli ve
+dilini değiştirebilmelidir; her ucu 403'lemek metni göstermeyi de imkânsız
+kılar ve kullanıcıyı kapalı bir kapıya kilitlerdi. Aynı nedenle istemcide
+**ağ hatası kapıyı AÇMAZ**: metni getiremeyen bir ekranda kilitlenen kullanıcı
+uygulamaya hiç giremezdi. **Rızanın gerçek zorlaması gönderim ucundadır** —
+kapı UX'tir, denetim koddadır.
+
+**P32 BAĞLANDI.** Pazarlama gönderimi artık gerçek rızayı okur ve **kanal
+bazlıdır**: e-postaya izin veren kişi SMS'e izin vermiş sayılmaz. Tek bir
+"pazarlama" bayrağı bunu kaybederdi. Rızası olmayan alıcı **sessizce
+düşürülmez, sayılır** (`riza_yok`). Operasyonel mesaj (KMK yükümlülüğü) rıza
+istemez — farklı hukuki temeller birbirine koşullanamaz.
+
+**İZİNLER AYNI EKRANDA AMA AYRI BLOKTA** ve üçü de kapalı başlar. Onay
+butonuyla aynı kutuya koymak, aydınlatma onayını pazarlama rızasıyla
+karıştırırdı: izin vermeden de devam edilebilir. Ayarlar'da **aynı widget**
+kullanılır — iki ayrı liste, birinde eklenen kanalın diğerinde unutulması
+demekti. Ayarlar'da blok **listenin sonundadır**: görünüm/dil günlük
+ayarlardır, izinler nadiren ziyaret edilir (üstte olsaydı dil satırını
+ekrandan aşağı iterdi — mevcut ayar testleri bunu yakaladı).
+
+**BULGU — SONSUZ DÖNEN GÖSTERGE.** İzinler kartının ilk sürümü yüklenirken
+`CircularProgressIndicator` çiziyordu; bu ekranı **asla durulmayan** bir
+animasyona bağlar ve dokuz ayar testi `pumpAndSettle` zaman aşımıyla düştü.
+Yerine aynı yüksekliği tutan **sessiz yer tutucu** kondu (liste zıplamaz).
+Yüklenemediğinde anahtarlar **gösterilmez**: bilinmeyen bir durumu "kapalı"
+diye çizmek, verilmiş bir rızayı yok göstermekti. Anahtar değişimi
+kaydedilemezse **geri alınır** — kaydedilmemiş bir izni açık göstermek,
+kullanıcıya vermediği bir rızayı vermiş gibi gösterirdi.
+
+**AÇIK BIRAKILAN (panel borcuna eklendi):** metni **yayınlama ekranı** yok
+(API hazır; seed örnek sürüm koyuyor). Yönetişim/finans panel bölümüyle
+birlikte yapılacak.
+
+Kanıt: `backend/tests/test_kvkk_riza.py` **19 test** + `mobile/test/
+kvkk_onay_test.dart` **11 test** yeşil; tam pytest yeşil; `flutter analyze`
+temiz, `flutter test` 1509, apk debug build başarılı; `goc-tersinirlik` bulgu 0
+(26 sınır), `goc-uyum-dogrula` bulgu 0; seed koştu (şema kısıtı değiştiren her
+maddede kural). Rol matrisi kilidi 7 satır büyüdü.
 
 ### P37 — Noise-deterrent automation (threshold → action → reset)
 Status: BEKLIYOR · Depends-on: P24
@@ -2478,7 +2548,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P35 · 458dc75 · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
+- 2026-07-31 · P36 · (bu commit) · KVKK aydinlatma kapisi + pazarlama izinleri (0025): METIN TENANT ICERIGIDIR (gomulu tek metin 200 tesise BASKASININ metnini imzalatirdi), SURUM VAR YERINDE DUZENLEME YOK (dun verilen onay bugun baska metne ait gorunurdu), onay eski surume yazilmaz (409) ve IDEMPOTENT; kaydirma kilidi 24 px esikli ve SIGAN icerikte ZATEN ACIK; sunucu navigasyonu kilitlemez (onay vermemis kullanici metni OKUYABILMELI), ag hatasinda kapi ACILMAZ; P32 pazarlama gonderimi artik GERCEK ve KANAL BAZLI rizayi okuyor; BULGU: izinler kartinin donen gostergesi dokuz ayar testini pumpAndSettle zaman asimiyla dusurdu.\n- 2026-07-31 · P35 · 458dc75 · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
 - 2026-07-31 · P34 · 4395fdc · Tur butunlugu (0023): KONUM BIR KANITTIR ON KOSUL DEGIL — izin reddi/servis kapali okutmayi dusurmez ama SESSIZ DE KALMAZ (konum_durumu + konumsuz_sayisi + suzgec); gecikme alarmi 'kacirildi'dan AYRI, araliklari KATLANAN tekrarli bildirim (gorevliye kisi, yonetime rol) ve bildirim TEKLIGI kismi indekse cevrildi (ikinci alarm sessizce dusuyordu); baslangic fotografi '1 metre gidip gel' YERINE (SDM zaten fiziksel varligi kanitliyor; fotograf ORTAM+SAAT boyutu ekler), kamera-only + ayri hata kodu.
 - 2026-07-31 · P33 · 236f70b · Yonetisim modulleri (0022): IS TAKIBI denetimi omurganin ZATEN VAR OLDUGUNU gosterdi — birlestirme degil GENISLETME (complaint + unit_id/oncelik/atanan_personel; oncelik durumdan BAGIMSIZ ayri ucta, atanan personel_kayit'tir app_user degil); karar defteri uyeleri AYRI TABLODA + metin sablonlu PDF; dokuman arsivi USTVERI-ONLY (obje silinmez); site aktarimi KURU CALISMALI ve SATIR BAZLI hata raporlu, idempotent.
 - 2026-07-31 · P32 · 47ac96c · Mesaj sablonlari + gonderim (0021): gonderilen metin GECMISE KOPYALANIR (sablon degisse de kanit durur), amac SABLONDA (pazarlama riza olmadan HIC gonderilmez ve atlananlar SAYILIR), SMS sayaci Turkce tuzagini gosterir (kucuk c/i/g/s UCS-2'ye dusurur), saglayici takasi yapilandirma ile; P28 seed regresyonu bulundu ve duzeltildi.

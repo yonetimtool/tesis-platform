@@ -4638,4 +4638,48 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get rolGuvenlikAmiri => 'Начальник охраны';
+
+  @override
+  String get kvkkBaslik => 'Уведомление о конфиденциальности';
+
+  @override
+  String get kvkkSonaKaydir => 'Прокрутите текст до конца, чтобы принять.';
+
+  @override
+  String get kvkkOnayliyorum => 'Прочитал(а) и принимаю';
+
+  @override
+  String get kvkkYuklenemedi => 'Не удалось загрузить уведомление.';
+
+  @override
+  String get kvkkTekrarDene => 'Повторить';
+
+  @override
+  String get kvkkSurumDegisti =>
+      'Текст обновлён; пожалуйста, прочитайте новую версию.';
+
+  @override
+  String get kvkkIzinBaslik => 'Персональные кампании и предложения';
+
+  @override
+  String get kvkkIzinAciklama =>
+      'Полностью по желанию; можно продолжить без согласия. Изменить можно в любой момент в настройках.';
+
+  @override
+  String get kvkkIzinEposta => 'Хочу получать электронные письма';
+
+  @override
+  String get kvkkIzinSms => 'Хочу получать SMS';
+
+  @override
+  String get kvkkIzinArama => 'Хочу принимать звонки';
+
+  @override
+  String get kvkkIzinKaydedilemedi => 'Не удалось сохранить настройку.';
+
+  @override
+  String get kvkkAyarlarBaslik => 'Разрешения и уведомление';
+
+  @override
+  String get kvkkMetniGoruntule => 'Открыть уведомление';
 }

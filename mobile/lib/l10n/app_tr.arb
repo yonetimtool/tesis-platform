@@ -1883,5 +1883,19 @@
   "nfcKonumYok": "Konum alınamadı — okutma konumsuz kaydedildi.",
   "nfcKonumIzinYok": "Konum izni verilmedi — okutma konumsuz kaydedildi.",
   "nfcKonumServisKapali": "Konum servisi kapalı — okutma konumsuz kaydedildi.",
-  "rolGuvenlikAmiri": "Güvenlik Amiri"
+  "rolGuvenlikAmiri": "Güvenlik Amiri",
+  "kvkkBaslik": "Aydınlatma Metni",
+  "kvkkSonaKaydir": "Onaylamak için metnin sonuna kadar okuyun.",
+  "kvkkOnayliyorum": "Okudum, onaylıyorum",
+  "kvkkYuklenemedi": "Aydınlatma metni yüklenemedi.",
+  "kvkkTekrarDene": "Tekrar dene",
+  "kvkkSurumDegisti": "Metin güncellendi; lütfen yeni metni okuyun.",
+  "kvkkIzinBaslik": "Bana özel kampanya ve teklifler",
+  "kvkkIzinAciklama": "Tamamen isteğe bağlıdır; onaylamadan devam edebilirsiniz. İstediğiniz zaman Ayarlar'dan değiştirebilirsiniz.",
+  "kvkkIzinEposta": "E-posta almak istiyorum",
+  "kvkkIzinSms": "SMS almak istiyorum",
+  "kvkkIzinArama": "Aranmak istiyorum",
+  "kvkkIzinKaydedilemedi": "Tercih kaydedilemedi.",
+  "kvkkAyarlarBaslik": "İzinler ve Aydınlatma Metni",
+  "kvkkMetniGoruntule": "Aydınlatma metnini görüntüle"
 }

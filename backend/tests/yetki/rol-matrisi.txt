@@ -137,6 +137,11 @@ GET    /kasalar                                             IZIN   IZIN   RED   
 POST   /kasalar                                             IZIN   IZIN   RED    RED    RED    RED   
 DELETE /kasalar/{id}                                        IZIN   IZIN   RED    RED    RED    RED   
 PATCH  /kasalar/{id}                                        IZIN   IZIN   RED    RED    RED    RED   
+GET    /kvkk/durum                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /kvkk/metin                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /kvkk/metin                                          IZIN   IZIN   RED    RED    RED    RED   
+GET    /kvkk/metinler                                       IZIN   IZIN   RED    RED    RED    RED   
+POST   /kvkk/onay                                           IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /me                                                  IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 PATCH  /me/avatar                                           RED    IZIN   RED    RED    IZIN   RED   
 GET    /me/checkpoints                                      IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
@@ -146,6 +151,8 @@ GET    /me/odeme-bilgileri                                  RED    RED    RED   
 POST   /me/odeme/kart                                       RED    RED    RED    RED    IZIN   RED   
 PATCH  /me/password                                         IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /me/patrol-window                                    IZIN   RED    IZIN   RED    RED    IZIN  
+GET    /me/pazarlama-tercihleri                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+PATCH  /me/pazarlama-tercihleri                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /me/profile                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /mesaj-sablonlari                                    IZIN   IZIN   RED    RED    RED    RED   
 POST   /mesaj-sablonlari                                    IZIN   IZIN   RED    RED    RED    RED   
