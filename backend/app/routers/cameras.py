@@ -44,6 +44,7 @@ from ..schemas import (
     CameraOut,
     CameraUpdate,
     UrlTurUyusmazligi,
+    dogrula_restream,
     dogrula_url_tur,
     oynatilabilir_mi,
 )
@@ -61,7 +62,7 @@ _TAM_GORUS: frozenset[str] = frozenset({"admin", "yonetici", "security"})
 
 def _out(obj: Camera) -> CameraOut:
     out = CameraOut.model_validate(obj)
-    out.oynatilabilir = oynatilabilir_mi(obj.tur)
+    out.oynatilabilir = oynatilabilir_mi(obj.tur, obj.restream_url)
     return out
 
 
@@ -76,6 +77,22 @@ def _url_tur_dogrula(stream_url: str, tur: str) -> None:
             "kamera_url_semasi",
             tur=exc.tur,
             semalar=" / ".join(exc.semalar),
+        ) from exc
+
+
+def _restream_dogrula(restream_url: str | None) -> None:
+    """Restream YALNIZ http(s) — katalog metniyle 422.
+
+    Sema katmani da dogrular (pydantic), ama oradaki hata GENERIK bir 422
+    verir; kullaniciya gosterilecek cumle burada, istegin dilinde uretilir
+    (`stream_url` ile ayni desen).
+    """
+    try:
+        dogrula_restream(restream_url)
+    except UrlTurUyusmazligi as exc:
+        raise APIError(
+            422, "invalid_stream_url", "kamera_restream_semasi",
+            tur=exc.tur, semalar=" / ".join(exc.semalar),
         ) from exc
 
 
@@ -122,6 +139,7 @@ async def create_camera(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_WRITER),
 ) -> CameraOut:
+    _restream_dogrula(body.restream_url)
     obj = Camera(tenant_id=user.tenant_id, **body.model_dump())
     db.add(obj)
     try:
@@ -151,6 +169,8 @@ async def update_camera(
         alanlar.get("stream_url", obj.stream_url),
         alanlar.get("tur", obj.tur),
     )
+    if "restream_url" in alanlar:
+        _restream_dogrula(alanlar["restream_url"])
     for key, value in alanlar.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()

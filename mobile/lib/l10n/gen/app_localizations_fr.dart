@@ -4241,4 +4241,95 @@ class AppLocalizationsFr extends AppLocalizations {
   String ihlalKaydeden(Object ad) {
     return 'Ouverte par : $ad';
   }
+
+  @override
+  String get kameraRestream => 'URL de rediffusion (facultatif)';
+
+  @override
+  String get kameraRestreamAlt =>
+      'Rend une caméra RTSP lisible. L’adresse HLS de la passerelle Frigate/go2rtc.';
+
+  @override
+  String get kameraRestreamHata =>
+      'L’adresse de rediffusion doit commencer par http:// ou https://';
+
+  @override
+  String get kameraRestreamRozet => 'Via la passerelle';
+
+  @override
+  String get modulPlakaOlaylari => 'Lectures de plaques';
+
+  @override
+  String get anprDurumIslendi => 'Traité';
+
+  @override
+  String get anprDurumOnayBekliyor => 'En attente d’approbation';
+
+  @override
+  String get anprDurumYokSayildi => 'Ignorée';
+
+  @override
+  String get anprDurumHata => 'Erreur';
+
+  @override
+  String get anprYonGiris => 'Entrée';
+
+  @override
+  String get anprYonCikis => 'Sortie';
+
+  @override
+  String get anprYonBilinmiyor => 'Direction inconnue';
+
+  @override
+  String get anprListeBos => 'Aucune lecture de plaque';
+
+  @override
+  String get anprErisimYok =>
+      'Les lectures de plaques sont réservées à la gestion et à la sécurité';
+
+  @override
+  String anprGuven(Object oran) {
+    return 'Confiance $oran %';
+  }
+
+  @override
+  String get anprOnayla => 'Approuver';
+
+  @override
+  String get anprReddet => 'Rejeter';
+
+  @override
+  String get anprOnayBaslik => 'Approuver la lecture';
+
+  @override
+  String get anprOnayAciklama =>
+      'Vous pouvez corriger la plaque si elle a été mal lue. L’approbation ouvre ou clôt le passage.';
+
+  @override
+  String get anprKararUygulandi => 'Décision appliquée';
+
+  @override
+  String get anprOnayBeklemiyor =>
+      'Cette lecture n’est plus en attente d’approbation';
+
+  @override
+  String get anprNedenDusukGuven => 'Faible confiance';
+
+  @override
+  String get anprNedenZatenIceride => 'Véhicule déjà à l’intérieur';
+
+  @override
+  String get anprNedenAcikGecisYok => 'Aucun passage ouvert';
+
+  @override
+  String get anprNedenOtomatikCikisKapali => 'Sortie automatique désactivée';
+
+  @override
+  String get anprNedenElleReddedildi => 'Rejetée manuellement';
+
+  @override
+  String get anprNedenPlakaBicimi => 'Plaque illisible';
+
+  @override
+  String get aracPlakaOkumalari => 'Lectures de plaques';
 }

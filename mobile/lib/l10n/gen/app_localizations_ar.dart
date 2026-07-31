@@ -4365,4 +4365,93 @@ class AppLocalizationsAr extends AppLocalizations {
   String ihlalKaydeden(Object ad) {
     return 'فتحها: $ad';
   }
+
+  @override
+  String get kameraRestream => 'عنوان إعادة البث (اختياري)';
+
+  @override
+  String get kameraRestreamAlt =>
+      'يجعل كاميرا RTSP قابلة للتشغيل. عنوان HLS لبوابة Frigate/go2rtc.';
+
+  @override
+  String get kameraRestreamHata =>
+      'يجب أن يبدأ عنوان إعادة البث بـ http:// أو https://';
+
+  @override
+  String get kameraRestreamRozet => 'عبر البوابة';
+
+  @override
+  String get modulPlakaOlaylari => 'قراءات اللوحات';
+
+  @override
+  String get anprDurumIslendi => 'تمت المعالجة';
+
+  @override
+  String get anprDurumOnayBekliyor => 'بانتظار الموافقة';
+
+  @override
+  String get anprDurumYokSayildi => 'تم التجاهل';
+
+  @override
+  String get anprDurumHata => 'خطأ';
+
+  @override
+  String get anprYonGiris => 'دخول';
+
+  @override
+  String get anprYonCikis => 'خروج';
+
+  @override
+  String get anprYonBilinmiyor => 'الاتجاه غير معروف';
+
+  @override
+  String get anprListeBos => 'لا توجد قراءات لوحات';
+
+  @override
+  String get anprErisimYok => 'قراءات اللوحات مخصّصة للإدارة والأمن فقط';
+
+  @override
+  String anprGuven(Object oran) {
+    return 'الثقة $oran%';
+  }
+
+  @override
+  String get anprOnayla => 'موافقة';
+
+  @override
+  String get anprReddet => 'رفض';
+
+  @override
+  String get anprOnayBaslik => 'الموافقة على القراءة';
+
+  @override
+  String get anprOnayAciklama =>
+      'يمكنك تصحيح اللوحة إذا قُرئت خطأً. الموافقة تفتح أو تغلق حركة المركبة.';
+
+  @override
+  String get anprKararUygulandi => 'تم تطبيق القرار';
+
+  @override
+  String get anprOnayBeklemiyor => 'لم تعد هذه القراءة بانتظار الموافقة';
+
+  @override
+  String get anprNedenDusukGuven => 'ثقة منخفضة';
+
+  @override
+  String get anprNedenZatenIceride => 'المركبة بالداخل بالفعل';
+
+  @override
+  String get anprNedenAcikGecisYok => 'لا توجد حركة مفتوحة';
+
+  @override
+  String get anprNedenOtomatikCikisKapali => 'الخروج التلقائي مُعطَّل';
+
+  @override
+  String get anprNedenElleReddedildi => 'رُفضت يدويًا';
+
+  @override
+  String get anprNedenPlakaBicimi => 'تعذّرت قراءة اللوحة';
+
+  @override
+  String get aracPlakaOkumalari => 'قراءات اللوحات';
 }

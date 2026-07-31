@@ -377,8 +377,29 @@ _TUR_SEMALARI: dict[str, tuple[str, ...]] = {
 }
 
 
-def oynatilabilir_mi(tur: str) -> bool:
-    """Istemci bu turu NATIVE oynatabilir mi? rtsp icin HAYIR."""
+def dogrula_restream(restream_url: str | None) -> None:
+    """Restream YALNIZ http(s) olabilir.
+
+    Gecit HLS yayinlar ve istemci onu oynatir; buraya bir `rtsp://` adresi
+    yazmak "oynatilabilir" isaretli ama OYNAMAYAN bir kamera uretirdi — yani
+    tam da bu ozelligin cozdugu sorunu geri getirirdi.
+    """
+    if restream_url is None:
+        return
+    if not restream_url.startswith(("http://", "https://")):
+        raise UrlTurUyusmazligi("restream", ("http://", "https://"))
+
+
+def oynatilabilir_mi(tur: str, restream_url: str | None = None) -> bool:
+    """Istemci bu kamerayi oynatabilir mi?
+
+    `hls`/`mp4` NATIVE oynar. `rtsp` kendi basina OYNAMAZ — ama bir RESTREAM
+    adresi (Frigate/go2rtc HLS gecidi) tanimliysa istemci ONU oynatir ve
+    kamera oynatilabilir hale gelir (0012 / P17). P15'te olculdu: go2rtc'nin
+    yeniden yayini gercekten oynatilabilir.
+    """
+    if restream_url:
+        return True
     return tur in ("hls", "mp4")
 
 
@@ -419,10 +440,15 @@ class CameraCreate(BaseModel):
     aktif: bool = True
     # KVKK: sakin/tesis gorevlisi gorunurlugu YALNIZ bu bayrakla acilir.
     sakin_gorebilir: bool = False
+    # RESTREAM (0012 / P17): RTSP kamerayi oynatilabilir yapan HLS gecidi
+    # (Frigate/go2rtc). Dolu ise istemci BUNU oynatir. Yalniz http(s) —
+    # istemci HLS oynatir, rtsp gecit adresi anlamsizdir.
+    restream_url: str | None = Field(None, max_length=2048)
 
     @model_validator(mode="after")
     def _v_url_tur(self) -> "CameraCreate":
         dogrula_url_tur(self.stream_url, self.tur)
+        dogrula_restream(self.restream_url)
         return self
 
 
@@ -436,11 +462,16 @@ class CameraUpdate(BaseModel):
     tur: CameraTur | None = None
     aktif: bool | None = None
     sakin_gorebilir: bool | None = None
+    # RESTREAM (0012 / P17): RTSP kamerayi oynatilabilir yapan HLS gecidi
+    # (Frigate/go2rtc). Dolu ise istemci BUNU oynatir. Yalniz http(s) —
+    # istemci HLS oynatir, rtsp gecit adresi anlamsizdir.
+    restream_url: str | None = Field(None, max_length=2048)
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "CameraUpdate":
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
+        dogrula_restream(self.restream_url)
         return self
 
 
@@ -451,10 +482,13 @@ class CameraOut(BaseModel):
     ad: str
     konum: str | None = None
     stream_url: str
+    # Restream gecidi (0012). Dolu ise istemci BUNU oynatmalidir.
+    restream_url: str | None = None
     tur: CameraTur
     aktif: bool
     sakin_gorebilir: bool
-    # TURETILMIS (saklanmaz): istemci bu yayini native oynatabilir mi.
+    # TURETILMIS (saklanmaz): istemci bu kamerayi oynatabilir mi. `rtsp` bile
+    # `restream_url` doluysa TRUE olur.
     oynatilabilir: bool = True
     created_at: datetime
     updated_at: datetime

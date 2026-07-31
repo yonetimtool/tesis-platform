@@ -351,6 +351,11 @@ class Camera(Base):
     ad: Mapped[str] = mapped_column(Text, nullable=False)
     konum: Mapped[str | None] = mapped_column(Text, nullable=True)
     stream_url: Mapped[str] = mapped_column(Text, nullable=False)
+    # RESTREAM (0012): RTSP kamerayi OYNATILABILIR yapan gecit adresi
+    # (Frigate/go2rtc HLS). Dolu ise istemci BUNU oynatir ve `oynatilabilir`
+    # true olur. `stream_url` kameranin KENDI adresidir ve korunur — restream
+    # bozulunca gercek adres kaybolmasin.
+    restream_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     tur: Mapped[str] = mapped_column(
         CAMERA_TUR, nullable=False, server_default=text("'hls'")
     )

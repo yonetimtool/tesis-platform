@@ -4093,4 +4093,94 @@ class AppLocalizationsTr extends AppLocalizations {
   String ihlalKaydeden(Object ad) {
     return 'Açan: $ad';
   }
+
+  @override
+  String get kameraRestream => 'Restream adresi (isteğe bağlı)';
+
+  @override
+  String get kameraRestreamAlt =>
+      'RTSP kamerayı oynatılabilir yapar. Frigate/go2rtc geçidinin HLS adresi.';
+
+  @override
+  String get kameraRestreamHata =>
+      'Restream adresi http:// veya https:// ile başlamalı';
+
+  @override
+  String get kameraRestreamRozet => 'Geçit üzerinden';
+
+  @override
+  String get modulPlakaOlaylari => 'Plaka Okumaları';
+
+  @override
+  String get anprDurumIslendi => 'İşlendi';
+
+  @override
+  String get anprDurumOnayBekliyor => 'Onay bekliyor';
+
+  @override
+  String get anprDurumYokSayildi => 'Yok sayıldı';
+
+  @override
+  String get anprDurumHata => 'Hata';
+
+  @override
+  String get anprYonGiris => 'Giriş';
+
+  @override
+  String get anprYonCikis => 'Çıkış';
+
+  @override
+  String get anprYonBilinmiyor => 'Yön bilinmiyor';
+
+  @override
+  String get anprListeBos => 'Plaka okuma kaydı yok';
+
+  @override
+  String get anprErisimYok =>
+      'Plaka okumaları yalnız yönetim ve güvenlik içindir';
+
+  @override
+  String anprGuven(Object oran) {
+    return 'Güven %$oran';
+  }
+
+  @override
+  String get anprOnayla => 'Onayla';
+
+  @override
+  String get anprReddet => 'Reddet';
+
+  @override
+  String get anprOnayBaslik => 'Okumayı onayla';
+
+  @override
+  String get anprOnayAciklama =>
+      'Plaka yanlış okunduysa düzeltebilirsiniz. Onaylarsanız araç geçişi açılır/kapanır.';
+
+  @override
+  String get anprKararUygulandi => 'Karar uygulandı';
+
+  @override
+  String get anprOnayBeklemiyor => 'Bu okuma artık onay beklemiyor';
+
+  @override
+  String get anprNedenDusukGuven => 'Düşük güven';
+
+  @override
+  String get anprNedenZatenIceride => 'Araç zaten içeride';
+
+  @override
+  String get anprNedenAcikGecisYok => 'Açık geçiş yok';
+
+  @override
+  String get anprNedenOtomatikCikisKapali => 'Otomatik çıkış kapalı';
+
+  @override
+  String get anprNedenElleReddedildi => 'Elle reddedildi';
+
+  @override
+  String get anprNedenPlakaBicimi => 'Plaka okunamadı';
+
+  @override
+  String get aracPlakaOkumalari => 'Plaka okumaları';
 }

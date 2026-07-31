@@ -4231,4 +4231,95 @@ class AppLocalizationsEs extends AppLocalizations {
   String ihlalKaydeden(Object ad) {
     return 'Abierta por: $ad';
   }
+
+  @override
+  String get kameraRestream => 'URL de retransmisión (opcional)';
+
+  @override
+  String get kameraRestreamAlt =>
+      'Hace reproducible una cámara RTSP. La dirección HLS de la pasarela Frigate/go2rtc.';
+
+  @override
+  String get kameraRestreamHata =>
+      'La dirección de retransmisión debe empezar por http:// o https://';
+
+  @override
+  String get kameraRestreamRozet => 'Vía pasarela';
+
+  @override
+  String get modulPlakaOlaylari => 'Lecturas de matrículas';
+
+  @override
+  String get anprDurumIslendi => 'Procesada';
+
+  @override
+  String get anprDurumOnayBekliyor => 'Pendiente de aprobación';
+
+  @override
+  String get anprDurumYokSayildi => 'Ignorada';
+
+  @override
+  String get anprDurumHata => 'Error';
+
+  @override
+  String get anprYonGiris => 'Entrada';
+
+  @override
+  String get anprYonCikis => 'Salida';
+
+  @override
+  String get anprYonBilinmiyor => 'Dirección desconocida';
+
+  @override
+  String get anprListeBos => 'No hay lecturas de matrículas';
+
+  @override
+  String get anprErisimYok =>
+      'Las lecturas de matrículas están reservadas a la administración y la seguridad';
+
+  @override
+  String anprGuven(Object oran) {
+    return 'Confianza $oran %';
+  }
+
+  @override
+  String get anprOnayla => 'Aprobar';
+
+  @override
+  String get anprReddet => 'Rechazar';
+
+  @override
+  String get anprOnayBaslik => 'Aprobar la lectura';
+
+  @override
+  String get anprOnayAciklama =>
+      'Puede corregir la matrícula si se leyó mal. Al aprobar se abre o cierra el paso del vehículo.';
+
+  @override
+  String get anprKararUygulandi => 'Decisión aplicada';
+
+  @override
+  String get anprOnayBeklemiyor =>
+      'Esta lectura ya no está pendiente de aprobación';
+
+  @override
+  String get anprNedenDusukGuven => 'Confianza baja';
+
+  @override
+  String get anprNedenZatenIceride => 'El vehículo ya está dentro';
+
+  @override
+  String get anprNedenAcikGecisYok => 'No hay paso abierto';
+
+  @override
+  String get anprNedenOtomatikCikisKapali => 'Salida automática desactivada';
+
+  @override
+  String get anprNedenElleReddedildi => 'Rechazada manualmente';
+
+  @override
+  String get anprNedenPlakaBicimi => 'No se pudo leer la matrícula';
+
+  @override
+  String get aracPlakaOkumalari => 'Lecturas de matrículas';
 }

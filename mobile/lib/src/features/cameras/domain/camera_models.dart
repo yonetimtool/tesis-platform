@@ -6,9 +6,11 @@
 /// Istemci bu suzgeci TEKRARLAMAZ — gelen liste dogrudur; `sakinGorebilir`
 /// alani yalniz YONETIM formunda (anahtar) ve rozette kullanilir.
 ///
-/// `oynatilabilir` SUNUCUDAN gelir (turden turer): hls/mp4 -> true,
-/// rtsp -> false. Istemci RTSP'yi natively oynatamaz; kart rozet gosterir ve
-/// dokunma oynatici yerine bilgi kartini acar.
+/// `oynatilabilir` SUNUCUDAN gelir: hls/mp4 -> true, rtsp -> false —
+/// **AMA `restream_url` doluysa rtsp de true olur** (P17). Restream, RTSP
+/// kamerayi oynatilabilir yapan HLS gecididir (Frigate/go2rtc); P15'te
+/// olculdu ve gercekten oynatilabilir oldugu dogrulandi. Istemci oynatirken
+/// `oynatilacakUrl` kullanir: restream varsa ONU, yoksa `streamUrl`i.
 library;
 
 /// Yayin URL'si dogrulama hatasinin TURU (metin degil — i18n icin).
@@ -41,8 +43,9 @@ enum CameraTur {
   final String ornek;
 
   /// Bu turun URL'i hangi sema(lar) ile baslamali (sunucu 422 kurali).
-  List<String> get semalar =>
-      this == CameraTur.rtsp ? const ['rtsp://'] : const ['http://', 'https://'];
+  List<String> get semalar => this == CameraTur.rtsp
+      ? const ['rtsp://']
+      : const ['http://', 'https://'];
 
   /// Istemci bu turu NATIVE oynatabilir mi (sunucudaki `oynatilabilir` ile
   /// ayni kural — yanit alani yoksa geri dusus icin).
@@ -66,9 +69,9 @@ class Camera {
     this.tur = CameraTur.hls,
     this.aktif = true,
     this.sakinGorebilir = false,
+    this.restreamUrl,
     bool? oynatilabilir,
   }) : _oynatilabilir = oynatilabilir; // ignore: prefer_initializing_formals
-
 
   final String id;
   final String ad;
@@ -77,6 +80,11 @@ class Camera {
   final String? konum;
 
   final String streamUrl;
+
+  /// RTSP kamerayi oynatilabilir yapan HLS gecidi (P17); yoksa null.
+  /// `streamUrl` KORUNUR — o kameranin KENDI adresidir.
+  final String? restreamUrl;
+
   final CameraTur tur;
 
   /// Pasif kamera yonetimde gorunur, sakine HIC gonderilmez (sunucu suzer).
@@ -87,19 +95,32 @@ class Camera {
 
   final bool? _oynatilabilir;
 
-  /// Sunucunun `oynatilabilir` alani; yoksa turden turetilir.
-  bool get oynatilabilir => _oynatilabilir ?? tur.oynatilabilir;
+  /// Sunucunun `oynatilabilir` alani; yoksa YERELDE ayni kural uygulanir
+  /// (restream varsa true, yoksa ture bak) — eski sunucuya karsi geri dusus.
+  bool get oynatilabilir =>
+      _oynatilabilir ?? (restreamUrl != null ? true : tur.oynatilabilir);
+
+  /// OYNATICIYA verilecek adres: restream varsa ONU, yoksa kameranin kendi
+  /// adresini. Oynatici bu ayrimi bilmez — tek alan okur.
+  String get oynatilacakUrl => (restreamUrl != null && restreamUrl!.isNotEmpty)
+      ? restreamUrl!
+      : streamUrl;
+
+  /// Oynatilan sey bir GECIT mi (rozet/aciklama icin).
+  bool get restreamUzerinden =>
+      restreamUrl != null && restreamUrl!.isNotEmpty && tur == CameraTur.rtsp;
 
   factory Camera.fromJson(Map<String, dynamic> json) => Camera(
-        id: json['id'] as String? ?? '',
-        ad: json['ad'] as String? ?? '',
-        konum: json['konum'] as String?,
-        streamUrl: json['stream_url'] as String? ?? '',
-        tur: CameraTur.fromWire(json['tur'] as String?),
-        aktif: json['aktif'] as bool? ?? true,
-        sakinGorebilir: json['sakin_gorebilir'] as bool? ?? false,
-        oynatilabilir: json['oynatilabilir'] as bool?,
-      );
+    id: json['id'] as String? ?? '',
+    ad: json['ad'] as String? ?? '',
+    konum: json['konum'] as String?,
+    streamUrl: json['stream_url'] as String? ?? '',
+    tur: CameraTur.fromWire(json['tur'] as String?),
+    aktif: json['aktif'] as bool? ?? true,
+    sakinGorebilir: json['sakin_gorebilir'] as bool? ?? false,
+    restreamUrl: json['restream_url'] as String?,
+    oynatilabilir: json['oynatilabilir'] as bool?,
+  );
 }
 
 /// `POST /cameras` / `PATCH /cameras/{id}` govdesi (admin + yonetici).
@@ -111,6 +132,7 @@ class CameraDraft {
     required this.aktif,
     required this.sakinGorebilir,
     this.konum,
+    this.restreamUrl,
   });
 
   final String ad;
@@ -123,26 +145,35 @@ class CameraDraft {
   final bool aktif;
   final bool sakinGorebilir;
 
+  /// Opsiyonel HLS gecidi (P17). Bos ise gonderilmez/temizlenir.
+  final String? restreamUrl;
+
   /// Olusturma govdesi — bos konum HIC yazilmaz (sunucu minLength 1).
   Map<String, dynamic> toCreateJson() => {
-        'ad': ad,
-        if (konum != null && konum!.isNotEmpty) 'konum': konum,
-        'stream_url': streamUrl,
-        'tur': tur.wire,
-        'aktif': aktif,
-        'sakin_gorebilir': sakinGorebilir,
-      };
+    'ad': ad,
+    if (konum != null && konum!.isNotEmpty) 'konum': konum,
+    'stream_url': streamUrl,
+    'tur': tur.wire,
+    'aktif': aktif,
+    'sakin_gorebilir': sakinGorebilir,
+    if (restreamUrl != null && restreamUrl!.isNotEmpty)
+      'restream_url': restreamUrl,
+  };
 
   /// Guncelleme govdesi — tum alanlar gonderilir; bos konum ACIK null
   /// (sunucu sozlesmesi: acik null alani temizler).
   Map<String, dynamic> toUpdateJson() => {
-        'ad': ad,
-        'konum': (konum == null || konum!.isEmpty) ? null : konum,
-        'stream_url': streamUrl,
-        'tur': tur.wire,
-        'aktif': aktif,
-        'sakin_gorebilir': sakinGorebilir,
-      };
+    'ad': ad,
+    'konum': (konum == null || konum!.isEmpty) ? null : konum,
+    'stream_url': streamUrl,
+    'tur': tur.wire,
+    'aktif': aktif,
+    'sakin_gorebilir': sakinGorebilir,
+    // ACIK null: bos birakilirsa gecit KALDIRILIR (sunucu sozlesmesi).
+    'restream_url': (restreamUrl == null || restreamUrl!.isEmpty)
+        ? null
+        : restreamUrl,
+  };
 
   /// Istemci tarafi URL/tur tutarlilik kontrolu — sunucudaki 422 kuralinin
   /// AYNISI (hls/mp4 -> http(s), rtsp -> rtsp://).
@@ -150,6 +181,15 @@ class CameraDraft {
   /// METIN DONDURMEZ: domain katmani dil bilmez (i18n). Hata TURU doner;
   /// kullaniciya gosterilecek metni form katmani aktif dilden secer
   /// (bkz. kamera_form_sheet.dart).
+  /// Restream adresi dogrulamasi — YALNIZ http(s) (sunucudaki kuralin
+  /// aynisi). Bos/null gecerlidir (gecit yok demektir).
+  static CameraUrlHatasi? restreamHatasi(String? url) {
+    final u = (url ?? '').trim();
+    if (u.isEmpty) return null;
+    if (u.startsWith('http://') || u.startsWith('https://')) return null;
+    return CameraUrlHatasi.httpSemasiGerekli;
+  }
+
   static CameraUrlHatasi? urlHatasi(String url, CameraTur tur) {
     final u = url.trim();
     if (u.isEmpty) return CameraUrlHatasi.bos;

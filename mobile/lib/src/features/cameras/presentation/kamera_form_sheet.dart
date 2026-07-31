@@ -38,12 +38,19 @@ class KameraFormSheet extends ConsumerStatefulWidget {
 
 class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _adCtrl =
-      TextEditingController(text: widget.mevcut?.ad ?? '');
-  late final TextEditingController _konumCtrl =
-      TextEditingController(text: widget.mevcut?.konum ?? '');
-  late final TextEditingController _urlCtrl =
-      TextEditingController(text: widget.mevcut?.streamUrl ?? '');
+  late final TextEditingController _adCtrl = TextEditingController(
+    text: widget.mevcut?.ad ?? '',
+  );
+  late final TextEditingController _konumCtrl = TextEditingController(
+    text: widget.mevcut?.konum ?? '',
+  );
+  late final TextEditingController _urlCtrl = TextEditingController(
+    text: widget.mevcut?.streamUrl ?? '',
+  );
+  // P17: RTSP kamerayi oynatilabilir yapan HLS gecidi (Frigate/go2rtc).
+  late final TextEditingController _restreamCtrl = TextEditingController(
+    text: widget.mevcut?.restreamUrl ?? '',
+  );
 
   late CameraTur _tur = widget.mevcut?.tur ?? CameraTur.hls;
   late bool _aktif = widget.mevcut?.aktif ?? true;
@@ -57,6 +64,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
     _adCtrl.dispose();
     _konumCtrl.dispose();
     _urlCtrl.dispose();
+    _restreamCtrl.dispose();
     super.dispose();
   }
 
@@ -73,6 +81,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
       tur: _tur,
       aktif: _aktif,
       sakinGorebilir: _sakinGorebilir,
+      restreamUrl: _restreamCtrl.text.trim(),
     );
     try {
       final api = ref.read(camerasApiProvider);
@@ -167,11 +176,11 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                   onSelectionChanged: _kaydediyor
                       ? null
                       : (secim) => setState(() {
-                            _tur = secim.first;
-                            // Tur degisti → URL kurali degisti: alani yeniden
-                            // dogrula (hata metni aninda guncellenir).
-                            _formKey.currentState?.validate();
-                          }),
+                          _tur = secim.first;
+                          // Tur degisti → URL kurali degisti: alani yeniden
+                          // dogrula (hata metni aninda guncellenir).
+                          _formKey.currentState?.validate();
+                        }),
                 ),
               ),
               if (_tur == CameraTur.rtsp) ...[
@@ -204,14 +213,37 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                 ),
                 validator: (v) => _urlHataMetni(l10n, v ?? ''),
               ),
+              // RESTREAM — YALNIZ rtsp turunde anlamlidir; hls/mp4 zaten
+              // oynatilabilir oldugu icin alan GOSTERILMEZ (gereksiz alan
+              // formu uzatir ve "bunu da doldurayim mi" tereddudu yaratir).
+              if (_tur == CameraTur.rtsp) ...[
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _restreamCtrl,
+                  enabled: !_kaydediyor,
+                  keyboardType: TextInputType.url,
+                  autocorrect: false,
+                  decoration: InputDecoration(
+                    labelText: l10n.kameraRestream,
+                    helperText: l10n.kameraRestreamAlt,
+                    helperMaxLines: 3,
+                    hintText: 'https://... .m3u8',
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (v) => CameraDraft.restreamHatasi(v) == null
+                      ? null
+                      : l10n.kameraRestreamHata,
+                ),
+              ],
               const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(l10n.kameraAktif),
                 subtitle: Text(l10n.kameraAktifAlt),
                 value: _aktif,
-                onChanged:
-                    _kaydediyor ? null : (v) => setState(() => _aktif = v),
+                onChanged: _kaydediyor
+                    ? null
+                    : (v) => setState(() => _aktif = v),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -237,7 +269,8 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                       )
                     : const Icon(Icons.save_outlined),
                 label: Text(
-                    _kaydediyor ? l10n.ortakKaydediliyor : l10n.ortakKaydet),
+                  _kaydediyor ? l10n.ortakKaydediliyor : l10n.ortakKaydet,
+                ),
               ),
             ],
           ),

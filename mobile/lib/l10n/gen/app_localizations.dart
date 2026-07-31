@@ -7234,6 +7234,174 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Açan: {ad}'**
   String ihlalKaydeden(Object ad);
+
+  /// No description provided for @kameraRestream.
+  ///
+  /// In tr, this message translates to:
+  /// **'Restream adresi (isteğe bağlı)'**
+  String get kameraRestream;
+
+  /// No description provided for @kameraRestreamAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'RTSP kamerayı oynatılabilir yapar. Frigate/go2rtc geçidinin HLS adresi.'**
+  String get kameraRestreamAlt;
+
+  /// No description provided for @kameraRestreamHata.
+  ///
+  /// In tr, this message translates to:
+  /// **'Restream adresi http:// veya https:// ile başlamalı'**
+  String get kameraRestreamHata;
+
+  /// No description provided for @kameraRestreamRozet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçit üzerinden'**
+  String get kameraRestreamRozet;
+
+  /// No description provided for @modulPlakaOlaylari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plaka Okumaları'**
+  String get modulPlakaOlaylari;
+
+  /// No description provided for @anprDurumIslendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşlendi'**
+  String get anprDurumIslendi;
+
+  /// No description provided for @anprDurumOnayBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onay bekliyor'**
+  String get anprDurumOnayBekliyor;
+
+  /// No description provided for @anprDurumYokSayildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yok sayıldı'**
+  String get anprDurumYokSayildi;
+
+  /// No description provided for @anprDurumHata.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hata'**
+  String get anprDurumHata;
+
+  /// No description provided for @anprYonGiris.
+  ///
+  /// In tr, this message translates to:
+  /// **'Giriş'**
+  String get anprYonGiris;
+
+  /// No description provided for @anprYonCikis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkış'**
+  String get anprYonCikis;
+
+  /// No description provided for @anprYonBilinmiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yön bilinmiyor'**
+  String get anprYonBilinmiyor;
+
+  /// No description provided for @anprListeBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plaka okuma kaydı yok'**
+  String get anprListeBos;
+
+  /// No description provided for @anprErisimYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plaka okumaları yalnız yönetim ve güvenlik içindir'**
+  String get anprErisimYok;
+
+  /// No description provided for @anprGuven.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güven %{oran}'**
+  String anprGuven(Object oran);
+
+  /// No description provided for @anprOnayla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onayla'**
+  String get anprOnayla;
+
+  /// No description provided for @anprReddet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Reddet'**
+  String get anprReddet;
+
+  /// No description provided for @anprOnayBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okumayı onayla'**
+  String get anprOnayBaslik;
+
+  /// No description provided for @anprOnayAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plaka yanlış okunduysa düzeltebilirsiniz. Onaylarsanız araç geçişi açılır/kapanır.'**
+  String get anprOnayAciklama;
+
+  /// No description provided for @anprKararUygulandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Karar uygulandı'**
+  String get anprKararUygulandi;
+
+  /// No description provided for @anprOnayBeklemiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu okuma artık onay beklemiyor'**
+  String get anprOnayBeklemiyor;
+
+  /// No description provided for @anprNedenDusukGuven.
+  ///
+  /// In tr, this message translates to:
+  /// **'Düşük güven'**
+  String get anprNedenDusukGuven;
+
+  /// No description provided for @anprNedenZatenIceride.
+  ///
+  /// In tr, this message translates to:
+  /// **'Araç zaten içeride'**
+  String get anprNedenZatenIceride;
+
+  /// No description provided for @anprNedenAcikGecisYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık geçiş yok'**
+  String get anprNedenAcikGecisYok;
+
+  /// No description provided for @anprNedenOtomatikCikisKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Otomatik çıkış kapalı'**
+  String get anprNedenOtomatikCikisKapali;
+
+  /// No description provided for @anprNedenElleReddedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Elle reddedildi'**
+  String get anprNedenElleReddedildi;
+
+  /// No description provided for @anprNedenPlakaBicimi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plaka okunamadı'**
+  String get anprNedenPlakaBicimi;
+
+  /// No description provided for @aracPlakaOkumalari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plaka okumaları'**
+  String get aracPlakaOkumalari;
 }
 
 class _AppLocalizationsDelegate

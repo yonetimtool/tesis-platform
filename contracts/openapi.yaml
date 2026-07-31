@@ -8507,6 +8507,20 @@ components:
             Istemcinin oynattigi yayin. Backend bu URL'i HIC cekmez (SSRF
             yuzeyi yok). Sema `tur` ile tutarlidir: hls/mp4 -> http(s)://,
             rtsp -> rtsp://.
+        restream_url:
+          type: string
+          nullable: true
+          maxLength: 2048
+          example: "http://frigate.site.local:5000/api/kapi/stream.m3u8"
+          description: >
+            (0012 / P17) RTSP kamerayi OYNATILABILIR yapan HLS gecidi
+            (Frigate/go2rtc yeniden yayini). Dolu ise istemci `stream_url`
+            yerine **BUNU** oynatir ve `oynatilabilir` true olur.
+            YALNIZ http(s) — buraya `rtsp://` yazmak "oynatilabilir isaretli
+            ama oynamayan" bir kamera uretirdi (422 `invalid_stream_url`).
+            `stream_url` KORUNUR: o kameranin KENDI adresidir (envanter, saha
+            teshisi, Frigate yapilandirmasi) ve gecit yeniden kurulunca
+            degisen adres bu alandir.
         tur:
           type: string
           enum: [hls, mp4, rtsp]
@@ -8527,9 +8541,10 @@ components:
         oynatilabilir:
           type: boolean
           description: >
-            TURETILMIS (saklanmaz): istemci bu yayini NATIVE oynatabilir mi.
-            hls/mp4 -> true; **rtsp -> false** (kayit tutulur ama oynatilamaz;
-            ileride medya gecidi). Istemci false ise oynat dugmesini pasifler.
+            TURETILMIS (saklanmaz): istemci bu kamerayi oynatabilir mi.
+            hls/mp4 -> true; rtsp -> false **AMA `restream_url` doluysa
+            rtsp de true olur** (0012 / P17). Istemci false ise oynat
+            dugmesini pasifler.
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
     CameraCreate:
@@ -8549,6 +8564,15 @@ components:
           type: boolean
           default: false
           description: Verilmezse KAPALI — sakin/tesis gorevlisi gormez
+        restream_url:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: >
+            (0012 / P17) Opsiyonel HLS gecidi (Frigate/go2rtc). YALNIZ
+            http(s) — `rtsp://` 422 verir. Dolu ise `oynatilabilir` true
+            olur; `null` gonderilirse gecit kaldirilir ve rtsp kamera yeniden
+            oynatilamaz hale gelir.
     CameraUpdate:
       type: object
       description: >
@@ -8562,3 +8586,12 @@ components:
         tur: { type: string, enum: [hls, mp4, rtsp] }
         aktif: { type: boolean }
         sakin_gorebilir: { type: boolean }
+        restream_url:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: >
+            (0012 / P17) Opsiyonel HLS gecidi (Frigate/go2rtc). YALNIZ
+            http(s) — `rtsp://` 422 verir. Dolu ise `oynatilabilir` true
+            olur; `null` gonderilirse gecit kaldirilir ve rtsp kamera yeniden
+            oynatilamaz hale gelir.

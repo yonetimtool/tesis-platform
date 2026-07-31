@@ -46,6 +46,7 @@ import '../features/tasks/presentation/tasks_screen.dart';
 import '../features/unit_access/presentation/unit_access_records_screen.dart';
 import '../features/integrations/presentation/integrations_screen.dart';
 import '../features/unit_access/presentation/unit_access_screen.dart';
+import '../features/anpr/presentation/anpr_screen.dart';
 import '../features/vehicle_pass/presentation/parking_screen.dart';
 import '../features/vehicle_pass/presentation/vehicle_pass_screen.dart';
 import '../features/violations/presentation/violations_screen.dart';
@@ -99,6 +100,7 @@ class AppRoutes {
   static const aracGecis = '/arac-gecisleri';
   static const otopark = '/otopark';
   static const ihlaller = '/ihlaller';
+  static const plakaOlaylari = '/plaka-okumalari';
 }
 
 /// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
@@ -285,6 +287,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.ihlaller,
         builder: (context, state) => const ViolationsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.plakaOlaylari,
+        builder: (context, state) => const AnprScreen(),
       ),
       GoRoute(
         path: AppRoutes.visitors,

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
+import '../../../routing/app_router.dart';
 import '../domain/vehicle_pass_models.dart';
 import 'vehicle_pass_controller.dart';
 
@@ -32,6 +34,14 @@ class VehiclePassScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(baslikBuyuk(l10n.modulAracGecis, context.dilKodu)),
         actions: [
+          // ANPR defteri (P17): gecislerin NEREDEN geldigini gormek ve dusuk
+          // guvenli okumalari karara baglamak icin. Yalniz yetkili rolde.
+          if (!state.erisimYok)
+            IconButton(
+              tooltip: l10n.aracPlakaOkumalari,
+              icon: const Icon(Icons.document_scanner_outlined),
+              onPressed: () => context.push(AppRoutes.plakaOlaylari),
+            ),
           IconButton(
             tooltip: l10n.ortakYenile,
             icon: const Icon(Icons.refresh),

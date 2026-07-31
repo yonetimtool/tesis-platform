@@ -1750,5 +1750,38 @@
     "placeholders": {
       "ad": {}
     }
-  }
+  },
+  "kameraRestream": "Restream adresi (isteğe bağlı)",
+  "kameraRestreamAlt": "RTSP kamerayı oynatılabilir yapar. Frigate/go2rtc geçidinin HLS adresi.",
+  "kameraRestreamHata": "Restream adresi http:// veya https:// ile başlamalı",
+  "kameraRestreamRozet": "Geçit üzerinden",
+  "modulPlakaOlaylari": "Plaka Okumaları",
+  "anprDurumIslendi": "İşlendi",
+  "anprDurumOnayBekliyor": "Onay bekliyor",
+  "anprDurumYokSayildi": "Yok sayıldı",
+  "anprDurumHata": "Hata",
+  "anprYonGiris": "Giriş",
+  "anprYonCikis": "Çıkış",
+  "anprYonBilinmiyor": "Yön bilinmiyor",
+  "anprListeBos": "Plaka okuma kaydı yok",
+  "anprErisimYok": "Plaka okumaları yalnız yönetim ve güvenlik içindir",
+  "anprGuven": "Güven %{oran}",
+  "@anprGuven": {
+    "placeholders": {
+      "oran": {}
+    }
+  },
+  "anprOnayla": "Onayla",
+  "anprReddet": "Reddet",
+  "anprOnayBaslik": "Okumayı onayla",
+  "anprOnayAciklama": "Plaka yanlış okunduysa düzeltebilirsiniz. Onaylarsanız araç geçişi açılır/kapanır.",
+  "anprKararUygulandi": "Karar uygulandı",
+  "anprOnayBeklemiyor": "Bu okuma artık onay beklemiyor",
+  "anprNedenDusukGuven": "Düşük güven",
+  "anprNedenZatenIceride": "Araç zaten içeride",
+  "anprNedenAcikGecisYok": "Açık geçiş yok",
+  "anprNedenOtomatikCikisKapali": "Otomatik çıkış kapalı",
+  "anprNedenElleReddedildi": "Elle reddedildi",
+  "anprNedenPlakaBicimi": "Plaka okunamadı",
+  "aracPlakaOkumalari": "Plaka okumaları"
 }

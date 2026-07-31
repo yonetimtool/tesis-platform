@@ -50,8 +50,11 @@ class KameraKarti extends StatelessWidget {
                 child: Center(
                   child: oynar
                       ? const _OynatButonu()
-                      : Icon(Icons.videocam_off_outlined,
-                          color: s.muted, size: 26),
+                      : Icon(
+                          Icons.videocam_off_outlined,
+                          color: s.muted,
+                          size: 26,
+                        ),
                 ),
               ),
             ),
@@ -78,15 +81,19 @@ class KameraKarti extends StatelessWidget {
               children: [
                 const HomeDot(color: HomeTokens.online, size: 7),
                 const SizedBox(width: 5),
-                Text(context.l10n.kameraCanli,
-                    style: HomeText.rowSub.copyWith(color: HomeTokens.green)),
+                Text(
+                  context.l10n.kameraCanli,
+                  style: HomeText.rowSub.copyWith(color: HomeTokens.green),
+                ),
               ],
             )
           else
             // Sunucu RTSP'yi oynatilamaz isaretledi — kart LISTEDE KALIR,
             // yalniz beklenti dogru kurulur (sessizce kaybolmaz).
-            Text(context.l10n.kameraOynatilamiyor,
-                style: HomeText.rowSub.copyWith(color: s.muted)),
+            Text(
+              context.l10n.kameraOynatilamiyor,
+              style: HomeText.rowSub.copyWith(color: s.muted),
+            ),
         ],
       ),
     );

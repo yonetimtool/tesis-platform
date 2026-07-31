@@ -410,6 +410,25 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P16/P17 · Plaka okuma (ANPR) zinciri.** (a) **Admin** ile panel/mobil
+  fark etmez, `POST /integrations/anpr/keys` ile bir anahtar üret (yanıt bir
+  kez gösterir — kaydet). (b) Bu anahtarla sahte bir Frigate olayı gönder
+  (`curl -H "X-ANPR-Key: <anahtar>" -d '{"kaynak":"frigate","after":{"id":"t1",
+  "camera":"kapi","sub_label":"34 ABC 123","start_time":1785450578,
+  "plate_score":0.97}}'`). Beklenen: Araç Geçişleri listesinde **34ABC123
+  İçeride** görünmeli ve otopark doluluğu 1 artmalı. (c) Aynı isteği TEKRAR
+  gönder → yeni kayıt OLUŞMAMALI. (d) `plate_score`u 0.4 yapıp farklı bir
+  `id` ile gönder → Araç Geçişleri başlığındaki **tarayıcı ikonundan** Plaka
+  Okumaları'na gir; okuma "Onay bekliyor · Düşük güven" görünmeli. **Onayla**
+  → açılan kutuda plakayı bir karakter değiştir → onayla → geçiş açılmalı.
+  (e) **Sakin** ile Plaka Okumaları'na erişmeye çalış → kilit ikonlu açıklama.
+- [ ] **P17 · RTSP kamera restream.** Kameralar'da yeni kamera ekle, tür
+  **RTSP** seç → altta "Restream adresi" alanı BELİRMELİ (hls/mp4 seçince
+  kaybolmalı). Restream boş bırakılırsa kamera kartında oynat pasif olmalı.
+  Restream'e Frigate'in HLS adresini yaz (`http://<kutu>:5000/api/<kamera>/
+  stream.m3u8`) → kaydet → **oynat aktifleşmeli ve görüntü gelmeli**. Sonra
+  restream'i temizleyip kaydet → yeniden oynatılamaz olmalı; kameranın
+  `rtsp://` adresi kayıtta DURMAYA devam etmeli.
 - [ ] **P10 · Çevrimdışı okutma kuyruğu (dayanıklılık).** Telefonu **uçak
   moduna** al → 2–3 NFC noktası okut (kuyrukta bekliyor görünmeli) →
   **uygulamayı tamamen kapat** (arka plandan da at) → uçak modunu kapat →
@@ -638,13 +657,58 @@ ile iki kez yayınlar, idempotency zorunlu). Olay şeması ve Frigate eşleme
 tablosu `docs/frigate-poc.md` §6'da hazır.
 
 ### P17 — Frigate Phase 3: mobile
-Status: BEKLIYOR · Depends-on: P16
+Status: BITTI · Depends-on: P16
 Scope: RTSP cameras playable via Frigate restream (camera record gains optional
 restream URL; player uses it when present → oynatilabilir flips); plate-event
 screens (live-ish list, registered/unknown badges via the P27 vehicle registry —
 cross-check plate normalization); approval queue UI for low-confidence reads
 (authorized roles).
 Acceptance: RTSP camera plays through restream in dev; plate events visible; quality gates.
+Notes (2026-07-31): İki parça.
+**(a) RESTREAM — RTSP kameralar artık oynatılabilir.** Yeni revizyon
+`0012_kamera_restream`: `camera.restream_url` (nullable, `ck_camera_restream_sema`
+ile YALNIZ http(s)). `oynatilabilir` artık türden değil **türden + restream**
+türetiliyor: `hls/mp4 → true`, `rtsp → false`, **ama restream doluysa rtsp de
+true**. P15 ölçümü bunu mümkün kıldı (go2rtc yeniden yayını gerçekten
+oynatılabilir: h264 1280×720).
+TASARIM KARARI — neden yeni KOLON, `stream_url`i değiştirmek değil: iki adres
+AYRI şeylerdir. `stream_url` kameranın KENDİ adresidir (envanter, saha teşhisi,
+Frigate yapılandırması); `restream_url` geçidin adresidir ve geçit yeniden
+kurulunca DEĞİŞİR. Tek kolona sıkıştırmak, restream bozulunca kameranın gerçek
+adresini KAYBETMEK demekti.
+Mobil: `Camera.oynatilacakUrl` (restream varsa onu, yoksa kendi adresi) —
+oynatıcı bu ayrımı bilmez, tek alan okur. Form alanı **yalnız `tur=rtsp`
+seçiliyken** görünür (hls/mp4 zaten oynatılabilir; gereksiz alan formu uzatır).
+PATCH'te boş bırakmak geçidi KALDIRIR (açık null).
+**(b) PLAKA OKUMALARI ekranı** (`/plaka-okumalari`) — P16'nın olay defteri +
+**onay kuyruğu**. Durum süzgeci, güven yüzdesi, sunucunun KISA KODUNUN
+çevrilmiş hâli; onayda **OCR düzeltmesi** (bir-iki karakter yanlış okunması en
+yaygın hata — Frigate'in kendi toleransı da 1 karakter). 409 → "artık onay
+beklemiyor". 403 → hata bandı değil, kilit ikonu + açıklama.
+Ekrana giriş: Araç Geçişleri başlığındaki tarayıcı ikonu (yalnız yetkili rolde).
+KENDİ KODUMDA İKİ BULGU (beş eksen sürüşü yakaladı):
+1. Rusça "Ожидает подтверждения" 320 dp'de plakayla aynı satıra sığmayıp **33 px
+   taşıyordu**; `Row` → `Wrap`. Kırpma YAPILMADI bilinçli olarak: durum metni
+   kırpılırsa kullanıcı "Onay bek…" okur, bu bilgi kaybıdır.
+2. Onay diyaloğunun `TextEditingController`ını `showDialog` döner dönmez
+   dispose ediyordum; diyalog KAPANIŞ ANİMASYONU sırasında hâlâ çizildiği için
+   *"A TextEditingController was used after being disposed"* atıyordu. Diyalog
+   kendi widget'ına alındı (denetleyicinin sahibi diyalog oldu) ve içeriği
+   kaydırılabilir yapıldı (dar/kısa ekranda `Column` taşıyordu).
+KAPSAM DIŞI BIRAKILAN (gerekçeli): "kayıtlı/bilinmeyen araç rozetleri **P27
+araç kayıt defteri** üzerinden" — P27 (Tanımlar katmanı) henüz yok, dolayısıyla
+karşılaştırılacak bir kayıt kümesi de yok. Rozet, P27 bittiğinde tek bir
+`kayitli_mi` alanıyla eklenir; plaka normalizasyonu ZATEN ortak
+(`norm_plaka`/`norm_plaka_yumusak` aynı kural) olduğu için çapraz kontrol
+sorunsuz olacak.
+i18n: 4 + 22 = **26 yeni ARB anahtarı × 7 dil**. §15 ölçümü DEĞİŞMEDİ: **8**.
+TESTLER: `test/anpr_restream_test.dart` — 18 test (restream modeli + doğrulama
++ draft gövdesi, ANPR modeli, neden kodu çevirisi ve BİLİNMEYEN kodun
+GÖSTERİLMEMESİ, ekran davranışı, beş eksen sürüşü);
+`tests/test_cameras.py` +5 (restream uçtan uca).
+KAPILAR: `flutter analyze` temiz; `flutter test` **1426 geçti / 0 düştü**;
+`flutter build apk --debug` ✓; backend `pytest` **824 geçti / 0 düştü** (P17 öncesi 819 → +5);
+sözleşme güncellendi (Camera/CameraCreate/CameraUpdate + restream açıklaması).
 
 ### P18 — [KEREM+DONANIM] Frigate Phase 4: pilot site
 Status: BLOKE(donanım+saha) · Depends-on: P17
@@ -1049,6 +1113,7 @@ geçici-dizin ev işi, fotoğraflı sürüşün `pumpAndSettle` stratejisi.
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P17 · (bu commit) · RTSP kameralar restream ile OYNATILABILIR (0012) + Plaka Okumalari ekrani (onay kuyrugu + OCR duzeltmesi); 26 ARB anahtari x 7 dil; 18+5 test.
 - 2026-07-31 · P16 · ee77535 · ANPR ingest: 0011 revizyonu (anpr_api_key + anpr_event + vehicle_pass.kaynak), X-ANPR-Key kimligi (SECURITY DEFINER cozumleme), dort adaptor, esik/onay kuyrugu, 27 test; deponun dort envanter kilidi de karsilandi.
 - 2026-07-30 · P21 · 10cf95f · Talep-uzerine ceviri DEGERLENDIRME NOTU (uygulama yok): yazma-aninda degil talep-uzerine + tek dil; kalite engeli once, DeepL'de ucuncu kisi verisi uyarisi.
 - 2026-07-30 · P20 · d8c552e · Yuz tanima v2 TASARIM NOTU (kod yok): kapsam 1:1 dogrulama, sablon cihazda, KVKK kosullari + "once P34'u olc" tavsiyesi + karar satiri.

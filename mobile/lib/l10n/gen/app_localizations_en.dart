@@ -4278,4 +4278,95 @@ class AppLocalizationsEn extends AppLocalizations {
   String ihlalKaydeden(Object ad) {
     return 'Opened by: $ad';
   }
+
+  @override
+  String get kameraRestream => 'Restream URL (optional)';
+
+  @override
+  String get kameraRestreamAlt =>
+      'Makes an RTSP camera playable. The HLS address of the Frigate/go2rtc gateway.';
+
+  @override
+  String get kameraRestreamHata =>
+      'The restream URL must start with http:// or https://';
+
+  @override
+  String get kameraRestreamRozet => 'Via gateway';
+
+  @override
+  String get modulPlakaOlaylari => 'Plate readings';
+
+  @override
+  String get anprDurumIslendi => 'Processed';
+
+  @override
+  String get anprDurumOnayBekliyor => 'Awaiting approval';
+
+  @override
+  String get anprDurumYokSayildi => 'Ignored';
+
+  @override
+  String get anprDurumHata => 'Error';
+
+  @override
+  String get anprYonGiris => 'Entry';
+
+  @override
+  String get anprYonCikis => 'Exit';
+
+  @override
+  String get anprYonBilinmiyor => 'Direction unknown';
+
+  @override
+  String get anprListeBos => 'No plate readings';
+
+  @override
+  String get anprErisimYok =>
+      'Plate readings are restricted to management and security';
+
+  @override
+  String anprGuven(Object oran) {
+    return 'Confidence $oran%';
+  }
+
+  @override
+  String get anprOnayla => 'Approve';
+
+  @override
+  String get anprReddet => 'Reject';
+
+  @override
+  String get anprOnayBaslik => 'Approve reading';
+
+  @override
+  String get anprOnayAciklama =>
+      'You can correct the plate if it was misread. Approving opens or closes the vehicle pass.';
+
+  @override
+  String get anprKararUygulandi => 'Decision applied';
+
+  @override
+  String get anprOnayBeklemiyor =>
+      'This reading is no longer awaiting approval';
+
+  @override
+  String get anprNedenDusukGuven => 'Low confidence';
+
+  @override
+  String get anprNedenZatenIceride => 'Vehicle already inside';
+
+  @override
+  String get anprNedenAcikGecisYok => 'No open pass';
+
+  @override
+  String get anprNedenOtomatikCikisKapali => 'Automatic exit is off';
+
+  @override
+  String get anprNedenElleReddedildi => 'Manually rejected';
+
+  @override
+  String get anprNedenPlakaBicimi => 'Plate could not be read';
+
+  @override
+  String get aracPlakaOkumalari => 'Plate readings';
 }

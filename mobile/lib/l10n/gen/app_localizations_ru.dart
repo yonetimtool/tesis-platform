@@ -4348,4 +4348,95 @@ class AppLocalizationsRu extends AppLocalizations {
   String ihlalKaydeden(Object ad) {
     return 'Открыл: $ad';
   }
+
+  @override
+  String get kameraRestream => 'Адрес рестрима (необязательно)';
+
+  @override
+  String get kameraRestreamAlt =>
+      'Делает RTSP-камеру воспроизводимой. HLS-адрес шлюза Frigate/go2rtc.';
+
+  @override
+  String get kameraRestreamHata =>
+      'Адрес рестрима должен начинаться с http:// или https://';
+
+  @override
+  String get kameraRestreamRozet => 'Через шлюз';
+
+  @override
+  String get modulPlakaOlaylari => 'Считывания номеров';
+
+  @override
+  String get anprDurumIslendi => 'Обработано';
+
+  @override
+  String get anprDurumOnayBekliyor => 'Ожидает подтверждения';
+
+  @override
+  String get anprDurumYokSayildi => 'Пропущено';
+
+  @override
+  String get anprDurumHata => 'Ошибка';
+
+  @override
+  String get anprYonGiris => 'Въезд';
+
+  @override
+  String get anprYonCikis => 'Выезд';
+
+  @override
+  String get anprYonBilinmiyor => 'Направление неизвестно';
+
+  @override
+  String get anprListeBos => 'Нет считываний номеров';
+
+  @override
+  String get anprErisimYok =>
+      'Считывания номеров доступны только администрации и охране';
+
+  @override
+  String anprGuven(Object oran) {
+    return 'Точность $oran%';
+  }
+
+  @override
+  String get anprOnayla => 'Подтвердить';
+
+  @override
+  String get anprReddet => 'Отклонить';
+
+  @override
+  String get anprOnayBaslik => 'Подтвердить считывание';
+
+  @override
+  String get anprOnayAciklama =>
+      'Если номер распознан неверно, его можно исправить. Подтверждение откроет или закроет проезд.';
+
+  @override
+  String get anprKararUygulandi => 'Решение применено';
+
+  @override
+  String get anprOnayBeklemiyor =>
+      'Это считывание больше не ожидает подтверждения';
+
+  @override
+  String get anprNedenDusukGuven => 'Низкая точность';
+
+  @override
+  String get anprNedenZatenIceride => 'Автомобиль уже внутри';
+
+  @override
+  String get anprNedenAcikGecisYok => 'Нет открытого проезда';
+
+  @override
+  String get anprNedenOtomatikCikisKapali => 'Автовыезд отключён';
+
+  @override
+  String get anprNedenElleReddedildi => 'Отклонено вручную';
+
+  @override
+  String get anprNedenPlakaBicimi => 'Номер не распознан';
+
+  @override
+  String get aracPlakaOkumalari => 'Считывания номеров';
 }

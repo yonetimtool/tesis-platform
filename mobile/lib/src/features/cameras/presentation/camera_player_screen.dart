@@ -67,8 +67,13 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
     eski?.removeListener(_controllerDegisti);
     await eski?.dispose();
 
-    final c = widget.controllerYapici?.call(widget.kamera) ??
-        VideoPlayerController.networkUrl(Uri.parse(widget.kamera.streamUrl));
+    final c =
+        widget.controllerYapici?.call(widget.kamera) ??
+        VideoPlayerController.networkUrl(
+          // RESTREAM ONCELIKLI (P17): gecit varsa oynatici ONU calar; kameranin
+          // kendi rtsp adresi oynatilamaz ama kayitta KORUNUR.
+          Uri.parse(widget.kamera.oynatilacakUrl),
+        );
     try {
       await c.initialize();
       if (!mounted) {
@@ -156,8 +161,11 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.videocam_off_outlined,
-                color: Colors.white54, size: 44),
+            const Icon(
+              Icons.videocam_off_outlined,
+              color: Colors.white54,
+              size: 44,
+            ),
             const SizedBox(height: 12),
             Text(
               l10n.kameraYayinAcilamadi,
@@ -202,16 +210,19 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
         children: [
           Center(
             child: AspectRatio(
-              aspectRatio:
-                  c.value.aspectRatio == 0 ? 16 / 9 : c.value.aspectRatio,
+              aspectRatio: c.value.aspectRatio == 0
+                  ? 16 / 9
+                  : c.value.aspectRatio,
               child: VideoPlayer(c),
             ),
           ),
           // Duraklatildiginda buyuk oynat ikonu (dokun → devam).
           if (!c.value.isPlaying)
             const DecoratedBox(
-              decoration:
-                  BoxDecoration(color: Color(0x8C000000), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: Color(0x8C000000),
+                shape: BoxShape.circle,
+              ),
               child: Padding(
                 padding: EdgeInsets.all(10),
                 child: Icon(Icons.play_arrow, color: Colors.white, size: 40),
@@ -257,8 +268,10 @@ class CameraBilgiSheet extends StatelessWidget {
               children: [
                 const Icon(Icons.videocam_off_outlined, size: 20),
                 const SizedBox(width: 8),
-                Text(context.l10n.kameraTurEtiket(kamera.tur.label),
-                    style: metin.bodyMedium),
+                Text(
+                  context.l10n.kameraTurEtiket(kamera.tur.label),
+                  style: metin.bodyMedium,
+                ),
               ],
             ),
             const SizedBox(height: 12),

@@ -901,6 +901,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Le passage du véhicule a déjà été clôturé.",
         "es": "El pase del vehículo ya fue cerrado.",
     },
+    "kamera_restream_semasi": {
+        "tr": "Restream adresi http:// veya https:// ile başlamalı.",
+        "en": "The restream URL must start with http:// or https://.",
+        "ar": "يجب أن يبدأ عنوان إعادة البث بـ http:// أو https://.",
+        "ru": "Адрес рестрима должен начинаться с http:// или https://.",
+        "de": "Die Restream-Adresse muss mit http:// oder https:// beginnen.",
+        "fr": "L’adresse de rediffusion doit commencer par http:// ou https://.",
+        "es": "La dirección de retransmisión debe empezar por http:// o https://.",
+    },
     # --- ANPR girisi (P16) ---
     "anpr_anahtar_gecersiz": {
         "tr": "ANPR anahtarı geçersiz.",

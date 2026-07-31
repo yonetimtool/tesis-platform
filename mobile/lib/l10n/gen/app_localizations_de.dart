@@ -4253,4 +4253,95 @@ class AppLocalizationsDe extends AppLocalizations {
   String ihlalKaydeden(Object ad) {
     return 'Eröffnet von: $ad';
   }
+
+  @override
+  String get kameraRestream => 'Restream-Adresse (optional)';
+
+  @override
+  String get kameraRestreamAlt =>
+      'Macht eine RTSP-Kamera abspielbar. Die HLS-Adresse des Frigate/go2rtc-Gateways.';
+
+  @override
+  String get kameraRestreamHata =>
+      'Die Restream-Adresse muss mit http:// oder https:// beginnen';
+
+  @override
+  String get kameraRestreamRozet => 'Über Gateway';
+
+  @override
+  String get modulPlakaOlaylari => 'Kennzeichenlesungen';
+
+  @override
+  String get anprDurumIslendi => 'Verarbeitet';
+
+  @override
+  String get anprDurumOnayBekliyor => 'Wartet auf Freigabe';
+
+  @override
+  String get anprDurumYokSayildi => 'Ignoriert';
+
+  @override
+  String get anprDurumHata => 'Fehler';
+
+  @override
+  String get anprYonGiris => 'Einfahrt';
+
+  @override
+  String get anprYonCikis => 'Ausfahrt';
+
+  @override
+  String get anprYonBilinmiyor => 'Richtung unbekannt';
+
+  @override
+  String get anprListeBos => 'Keine Kennzeichenlesungen';
+
+  @override
+  String get anprErisimYok =>
+      'Kennzeichenlesungen sind Verwaltung und Sicherheit vorbehalten';
+
+  @override
+  String anprGuven(Object oran) {
+    return 'Konfidenz $oran %';
+  }
+
+  @override
+  String get anprOnayla => 'Freigeben';
+
+  @override
+  String get anprReddet => 'Ablehnen';
+
+  @override
+  String get anprOnayBaslik => 'Lesung freigeben';
+
+  @override
+  String get anprOnayAciklama =>
+      'Sie können das Kennzeichen korrigieren, falls es falsch gelesen wurde. Eine Freigabe öffnet oder schließt die Durchfahrt.';
+
+  @override
+  String get anprKararUygulandi => 'Entscheidung angewendet';
+
+  @override
+  String get anprOnayBeklemiyor =>
+      'Diese Lesung wartet nicht mehr auf Freigabe';
+
+  @override
+  String get anprNedenDusukGuven => 'Geringe Konfidenz';
+
+  @override
+  String get anprNedenZatenIceride => 'Fahrzeug ist bereits drinnen';
+
+  @override
+  String get anprNedenAcikGecisYok => 'Keine offene Durchfahrt';
+
+  @override
+  String get anprNedenOtomatikCikisKapali => 'Automatische Ausfahrt ist aus';
+
+  @override
+  String get anprNedenElleReddedildi => 'Manuell abgelehnt';
+
+  @override
+  String get anprNedenPlakaBicimi => 'Kennzeichen nicht lesbar';
+
+  @override
+  String get aracPlakaOkumalari => 'Kennzeichenlesungen';
 }

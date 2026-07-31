@@ -52,7 +52,9 @@ class KameralarScreen extends ConsumerWidget {
               Text(
                 // SUNUCU metni (tur 14'ten beri istegin dilinde): ApiException.message
                 // gelir (su an yalniz TR). Sunucu yerelestirmesi ayri turda.
-                e is ApiException ? apiHataMetni(l10n, e) : l10n.kameraListeHata,
+                e is ApiException
+                    ? apiHataMetni(l10n, e)
+                    : l10n.kameraListeHata,
                 textAlign: TextAlign.center,
               ),
             ],

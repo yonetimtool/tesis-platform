@@ -304,3 +304,73 @@ def test_camera_rls_tenant_izole(app_conn, iki_tenant_kamera):
 def test_camera_rls_baglamsiz_bos(app_conn, iki_tenant_kamera):
     # app.current_tenant_id set edilmedi => guvenli varsayilan: 0 satir.
     assert app_conn.execute("SELECT tenant_id FROM camera").fetchall() == []
+
+
+# --------------------------------------------------------------------------- #
+# RESTREAM (0012 / P17) — RTSP kamerayi OYNATILABILIR yapar
+# --------------------------------------------------------------------------- #
+def test_rtsp_restreamsiz_OYNATILAMAZ(client, world):
+    """Davranis DEGISMEDI: restream yoksa rtsp hala oynatilamaz."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post("/cameras", headers=admin, json={
+        "ad": f"rtsp-yalin-{uuid.uuid4().hex[:6]}",
+        "stream_url": "rtsp://10.0.0.5:554/stream1", "tur": "rtsp",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["oynatilabilir"] is False
+    assert r.json()["restream_url"] is None
+
+
+def test_restream_RTSP_kamerayi_oynatilabilir_yapar(client, world):
+    """P15'te olculdu: go2rtc'nin yeniden yayini gercekten oynatilabilir."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post("/cameras", headers=admin, json={
+        "ad": f"rtsp-gecitli-{uuid.uuid4().hex[:6]}",
+        "stream_url": "rtsp://10.0.0.5:554/stream1", "tur": "rtsp",
+        "restream_url": "http://frigate.local:5000/api/kapi/stream.m3u8",
+    })
+    assert r.status_code == 201, r.text
+    govde = r.json()
+    assert govde["oynatilabilir"] is True, "restream varken rtsp OYNATILABILIR"
+    # Kameranin KENDI adresi KORUNUR — gecit bozulunca kaybolmasin.
+    assert govde["stream_url"] == "rtsp://10.0.0.5:554/stream1"
+
+
+def test_restream_SONRADAN_eklenip_kaldirilabilir(client, world):
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    kid = client.post("/cameras", headers=admin, json={
+        "ad": f"rtsp-sonradan-{uuid.uuid4().hex[:6]}",
+        "stream_url": "rtsp://10.0.0.6:554/s", "tur": "rtsp",
+    }).json()["id"]
+
+    r = client.patch(f"/cameras/{kid}", headers=admin, json={
+        "restream_url": "https://gecit.example/api/kapi/stream.m3u8"})
+    assert r.status_code == 200 and r.json()["oynatilabilir"] is True
+
+    # null gonderilince gecit KALKAR ve kamera yeniden oynatilamaz olur.
+    r2 = client.patch(f"/cameras/{kid}", headers=admin,
+                      json={"restream_url": None})
+    assert r2.status_code == 200
+    assert r2.json()["restream_url"] is None
+    assert r2.json()["oynatilabilir"] is False
+
+
+def test_restream_YALNIZ_http_olabilir(client, world):
+    """rtsp gecit adresi "oynatilabilir isaretli ama OYNAMAYAN" kamera uretirdi."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post("/cameras", headers=admin, json={
+        "ad": f"kotu-gecit-{uuid.uuid4().hex[:6]}",
+        "stream_url": "rtsp://10.0.0.7:554/s", "tur": "rtsp",
+        "restream_url": "rtsp://10.0.0.7:8554/kapi",
+    })
+    assert r.status_code == 422
+
+
+def test_hls_kamerada_restream_davranisi_bozmaz(client, world):
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post("/cameras", headers=admin, json={
+        "ad": f"hls-{uuid.uuid4().hex[:6]}",
+        "stream_url": "https://ornek/stream.m3u8", "tur": "hls",
+    })
+    assert r.json()["oynatilabilir"] is True
+    assert r.json()["restream_url"] is None
