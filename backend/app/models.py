@@ -151,6 +151,10 @@ HAREKET_TIP = ENUM(
     name="hareket_tip", create_type=False,
 )
 HAREKET_YON = ENUM("giris", "cikis", name="hareket_yon", create_type=False)
+TALEP_ONCELIK = ENUM(
+    "dusuk", "normal", "yuksek", "acil",
+    name="talep_oncelik", create_type=False,
+)
 MESAJ_KANAL = ENUM("sms", "eposta", name="mesaj_kanal", create_type=False)
 MESAJ_AMAC = ENUM(
     "pazarlama", "operasyonel", name="mesaj_amac", create_type=False
@@ -1287,6 +1291,17 @@ class Complaint(Base):
     kategori_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     durum: Mapped[str] = mapped_column(
         COMPLAINT_DURUM, nullable=False, server_default=text("'acik'")
+    )
+    # --- P33 IS TAKIBI GENISLETMESI (birlestirme DEGIL) ------------------ #
+    #: Talebin ait oldugu bagimsiz bolum (yoktu).
+    unit_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    oncelik: Mapped[str] = mapped_column(
+        TALEP_ONCELIK, nullable=False, server_default=text("'normal'")
+    )
+    #: Atanan personel — P27 kaydi, `app_user` DEGIL: temizlik/bahcivan gibi
+    #: uygulama hesabi OLMAYAN personele de is atanabilmeli.
+    atanan_personel_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
     )
     created_at = _created_at()
     updated_at = _created_at()
@@ -2708,6 +2723,79 @@ class MesajGonderim(Base):
     hata: Mapped[str | None] = mapped_column(Text, nullable=True)
     saglayici: Mapped[str | None] = mapped_column(Text, nullable=True)
     gonderen_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    created_at = _created_at()
+
+
+# ========================== P33 YONETISIM MODULLERI ========================= #
+class KararDefteri(Base):
+    """Yonetim kurulu karar defteri (P33)."""
+
+    __tablename__ = "karar_defteri"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_karar_id_tenant"),
+        UniqueConstraint("tenant_id", "karar_no", name="uq_karar_tenant_no"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    karar_no: Mapped[str] = mapped_column(Text, nullable=False)
+    konu: Mapped[str] = mapped_column(Text, nullable=False)
+    tarih = mapped_column(Date, nullable=False, server_default=text("CURRENT_DATE"))
+    metin: Mapped[str] = mapped_column(Text, nullable=False)
+    baskan_ad: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class KararUyesi(Base):
+    """Karara katilan uye (P33).
+
+    UYE ADI SAKLANIR, kullaniciya referans DEGIL: uye site disindan biri
+    olabilir (denetci, avukat) ve kullanici kaydi silinse bile gecmis karar
+    KIMLERIN katildigini gostermeli. Ayri tablo olmasi da bilincli — tek
+    metin sutununa virgulle yazmak, "bu karara kim katildi" sorgusunu metin
+    aramasina cevirirdi.
+    """
+
+    __tablename__ = "karar_uyesi"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_karar_uyesi_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    karar_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    gorev: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class TenantDokuman(Base):
+    """Site dokuman arsivi (P33) — YALNIZ META; dosya MinIO'da."""
+
+    __tablename__ = "tenant_dokuman"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_dokuman_id_tenant"),
+        UniqueConstraint(
+            "tenant_id", "obje_anahtari", name="uq_dokuman_tenant_anahtar"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    obje_anahtari: Mapped[str] = mapped_column(Text, nullable=False)
+    icerik_tipi: Mapped[str | None] = mapped_column(Text, nullable=True)
+    boyut_bayt: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    yukleyen_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
     created_at = _created_at()

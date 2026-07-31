@@ -27,11 +27,13 @@ from ..errors import APIError
 from ..models import (
     AppUser,
     Complaint,
+    PersonelKayit,
     ComplaintPhoto,
     ComplaintStatusHistory,
     Task,
     TaskCategory,
     TaskCompletion,
+    Unit,
 )
 from ..scheduler.notify import dispatch_external
 from ..schemas import (
@@ -44,6 +46,8 @@ from ..schemas import (
     ComplaintPhotoOut,
     ComplaintResolveRequest,
     ComplaintStatusHistoryOut,
+    ComplaintUpdate,
+    TalepOncelik,
 )
 from ..storage import presign_get
 from ..ticketing import add_history, assert_transition, notify_opener
@@ -116,6 +120,37 @@ async def _build_outs(
         for out in outs:
             if out.kategori_id is not None:
                 out.kategori_ad = adlar.get(out.kategori_id)
+
+    # (P33) daire no + atanan personel adi — is takibi listesi bunlari
+    # KOLON olarak gosterir; istemcinin daire basina ayri istek atmasi
+    # 50 satirlik bir listede 50 istek demekti.
+    unit_ids = {o.unit_id for o in outs if o.unit_id is not None}
+    if unit_ids:
+        nolar = dict(
+            (
+                await db.execute(
+                    select(Unit.id, Unit.no).where(Unit.id.in_(unit_ids))
+                )
+            ).all()
+        )
+        for out in outs:
+            if out.unit_id is not None:
+                out.unit_no = nolar.get(out.unit_id)
+
+    personel_ids = {o.atanan_personel_id for o in outs if o.atanan_personel_id}
+    if personel_ids:
+        p_adlar = dict(
+            (
+                await db.execute(
+                    select(PersonelKayit.id, PersonelKayit.ad).where(
+                        PersonelKayit.id.in_(personel_ids)
+                    )
+                )
+            ).all()
+        )
+        for out in outs:
+            if out.atanan_personel_id is not None:
+                out.atanan_personel_ad = p_adlar.get(out.atanan_personel_id)
 
     # fotolar
     photos = (
@@ -208,6 +243,8 @@ async def _get_or_404(
 @router.get("", response_model=ComplaintListResponse)
 async def list_complaints(
     durum: ComplaintDurum | None = Query(None),
+    oncelik: TalepOncelik | None = Query(None),
+    unit_id: uuid.UUID | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
@@ -218,6 +255,10 @@ async def list_complaints(
     )
     if durum is not None:
         stmt = stmt.where(Complaint.durum == durum)
+    if oncelik is not None:
+        stmt = stmt.where(Complaint.oncelik == oncelik)
+    if unit_id is not None:
+        stmt = stmt.where(Complaint.unit_id == unit_id)
     stmt = _own_scope(stmt, user)
 
     total = (
@@ -258,6 +299,7 @@ async def create_complaint(
         baslik=body.baslik,
         mesaj=body.mesaj,
         kategori_id=body.kategori_id,
+        unit_id=body.unit_id,
     )
     db.add(obj)
     try:
@@ -283,6 +325,60 @@ async def create_complaint(
     )
     await audit_user(db, user, Action.COMPLAINT_CREATE, resource_type="complaint", resource_id=obj.id)
     return await _load_out(db, obj, user.ad)
+
+
+@router.patch("/{complaint_id}", response_model=ComplaintOut)
+async def update_complaint(
+    complaint_id: uuid.UUID,
+    body: ComplaintUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_MANAGER),
+) -> ComplaintOut:
+    """(P33) Is takibi alanlari: daire, oncelik, personel atamasi.
+
+    DURUMA DOKUNMAZ — durum yalniz makine gecisleriyle (convert/resolve/
+    decline) degisir; buradan da degistirilebilseydi gecis kurallari ve
+    history satirlari atlanabilirdi.
+
+    ATANAN PERSONEL `personel_kayit`tir, `app_user` degil: temizlikcinin
+    uygulama hesabi olmayabilir ama isi ona verilir. Uygulamali (bildirim
+    alan) atama hala `convert` ucundadir.
+    """
+    obj, acan_ad = await _get_or_404(db, complaint_id, user)
+    veri = body.model_dump(exclude_unset=True)
+    if not veri:
+        raise APIError(422, "validation_error", "en_az_bir_alan")
+
+    if veri.get("unit_id") is not None:
+        varmi = (
+            await db.execute(select(Unit.id).where(Unit.id == veri["unit_id"]))
+        ).scalar_one_or_none()
+        if varmi is None:
+            raise APIError(422, "validation_error", "daire_bulunamadi")
+    if veri.get("atanan_personel_id") is not None:
+        varmi = (
+            await db.execute(
+                select(PersonelKayit.id).where(
+                    PersonelKayit.id == veri["atanan_personel_id"]
+                )
+            )
+        ).scalar_one_or_none()
+        if varmi is None:
+            raise APIError(422, "validation_error", "personel_bulunamadi")
+    # `oncelik: null` gonderilmesi anlamsiz (NOT NULL, varsayilani var):
+    # sessizce yok saymak yerine acikca reddedilir.
+    if "oncelik" in veri and veri["oncelik"] is None:
+        raise APIError(422, "validation_error", "gecersiz_oncelik")
+
+    for alan, deger in veri.items():
+        setattr(obj, alan, deger)
+    await db.flush()
+    await db.refresh(obj)
+    await audit_user(
+        db, user, Action.COMPLAINT_UPDATE, resource_type="complaint",
+        resource_id=obj.id, meta={k: str(v) for k, v in veri.items()},
+    )
+    return await _load_out(db, obj, acan_ad)
 
 
 @router.post("/{complaint_id}/convert", response_model=ComplaintOut)

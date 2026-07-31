@@ -1087,6 +1087,16 @@ paths:
           in: query
           required: false
           schema: { type: string, enum: [acik, is_emri, cozuldu, reddedildi] }
+        - name: oncelik
+          in: query
+          required: false
+          description: (P33) is takibi onceligi
+          schema: { type: string, enum: [dusuk, normal, yuksek, acil] }
+        - name: unit_id
+          in: query
+          required: false
+          description: (P33) talebin ilgili oldugu daire
+          schema: { type: string, format: uuid }
       responses:
         "200":
           description: Liste
@@ -1150,6 +1160,35 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [complaints]
+      summary: (P33) Is takibi alanlari — daire, oncelik, personel (admin+yonetici)
+      description: |
+        DURUMA DOKUNMAZ: durum yalniz makine gecisleriyle
+        (convert/resolve/decline) degisir; buradan da degistirilebilseydi
+        gecis kurallari ve timeline satirlari atlanabilirdi. Oncelik/atama
+        talebin yasam dongusunden BAGIMSIZDIR — acik bir talebin onceligi
+        is emrine donusmeden de yukselebilir.
+
+        `atanan_personel_id` bir `personel_kayit`tir, `app_user` DEGIL:
+        temizlikcinin uygulama hesabi olmayabilir ama isi ona verilir
+        (bkz. P27). Bildirim alan uygulamali atama hala `convert`
+        ucundadir. Var olmayan daire/personel **422** — sessizce yazilsaydi
+        is emri hicbir zaman ulasmayacagi bir kisiye atanmis gorunurdu.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ComplaintUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Complaint" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
 
   /complaints/{id}/convert:
     parameters:
@@ -3477,6 +3516,158 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/FinansOzet" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  # ================================================================= #
+  # YONETISIM (P33) — KARAR DEFTERI + DOKUMAN ARSIVI + SITE AKTARIM
+  # IS TAKIBI icin AYRI UC ACILMADI: denetim omurganin ZATEN VAR OLDUGUNU
+  # gosterdi (`complaint` = Talep/Ariza, `task` = Is Emri, Ticketing v1'de
+  # bagli). Yapilan sey birlestirme degil GENISLETMEDIR: `complaint` uc alan
+  # kazandi (`unit_id`, `oncelik`, `atanan_personel_id`) ve mevcut
+  # `/complaints` uclari bunlari tasiyor. `unit_complaint` ile birlestirmek
+  # P22(e)'nin BILINCLI ayrimini bozardi.
+  # RBAC: hepsi admin + yonetici.
+  # ================================================================= #
+  /karar-defteri:
+    get:
+      tags: [yonetisim]
+      summary: Karar defteri kayitlari (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: kararlar (uyeleriyle birlikte) }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [yonetisim]
+      summary: Karar olustur
+      description: |
+        `karar_no` tenant icinde TEKTIR (cakisma 409). Uyeler AYRI tabloda
+        (`karar_uyesi`) tutulur: tek metin sutununa virgulle yazmak, "bu
+        karara kim katildi" sorgusunu metin aramasina cevirirdi. Uye bir
+        ADDIR, kullanici referansi DEGILDIR — yonetim kurulu uyesi
+        uygulamada hesabi olmayan biri olabilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KararDefteriCreate" }
+      responses:
+        "201": { description: olusturuldu }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /karar-defteri/{karar_id}:
+    patch:
+      tags: [yonetisim]
+      summary: Karari guncelle
+      description: |
+        `uyeler` GONDERILIRSE liste TAMAMEN DEGISTIRILIR (kismi
+        ekleme/cikarma yok — hangi uyenin kaldirildigi belirsizligini
+        istemciye birakirdi). Gonderilmezse uyelere DOKUNULMAZ.
+      parameters:
+        - { name: karar_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: guncellendi }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [yonetisim]
+      summary: Karari sil (uyeleriyle birlikte)
+      parameters:
+        - { name: karar_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: silindi }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /karar-defteri/{karar_id}/pdf:
+    get:
+      tags: [yonetisim]
+      summary: Karari PDF olarak indir
+      description: |
+        METIN sablonu kullanilir (P31 `metin_pdf`), tablo sablonu DEGIL:
+        karar bir YAZIDIR ve tabloya sikistirmak metni hucrelere bolerdi.
+        Baskan ve uyeler imza satiri olarak alta yazilir.
+      parameters:
+        - { name: karar_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: PDF
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /dokumanlar:
+    get:
+      tags: [yonetisim]
+      summary: Site dokuman arsivi (admin+yonetici)
+      description: |
+        Sunucu DOSYAYI TASIMAZ, yalniz USTVERIYI tutar. Yukleme/indirme
+        mevcut presign akisiyla dogrudan MinIO'ya yapilir; dosyayi API
+        uzerinden gecirmek 25 MB'lik bir yuku is parcaciginda tutmak olurdu.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: dokumanlar }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [yonetisim]
+      summary: Yuklenen dosyanin kaydini olustur
+      description: |
+        `boyut_bayt` EN FAZLA 25 MB (26214400) — daha buyugu presign
+        akisinda zaman asimina ve mobilde bellek baskisina yol acar. Sinir
+        ayrica veritabani CHECK'i ile de korunur (migration 0022).
+        Ayni `obje_anahtari` iki kez kaydedilemez (409).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DokumanCreate" }
+      responses:
+        "201": { description: kaydedildi }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /dokumanlar/{dokuman_id}:
+    delete:
+      tags: [yonetisim]
+      summary: Dokuman kaydini sil
+      description: |
+        Yalniz KAYIT silinir; MinIO objesi DURUR. Sunucunun tek istekte
+        depoyu da silmesi, yanlislikla silinen bir yonetim planinin geri
+        alinamamasi demekti — obje yasam dongusu depo politikasina birakildi.
+      parameters:
+        - { name: dokuman_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: silindi }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /site-aktar/sablon:
+    get:
+      tags: [yonetisim]
+      summary: Toplu kurulum sablonunun basliklari + ornek satir
+      description: |
+        Sunucu XLSX URETMEZ: panel bu basliklardan dosyayi kendisi kurar.
+        Boylece sablon ile kabul edilen bicim TEK KAYNAKTAN gelir ve
+        "indirdigim sablon reddedildi" durumu olusmaz.
+      responses:
+        "200": { description: "basliklar: blok, daire_no, ad, telefon, rol_tipi" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /site-aktar:
+    post:
+      tags: [yonetisim]
+      summary: Toplu site kurulumu (blok + daire + kisi)
+      description: |
+        SATIR BAZLI HATA RAPORU: 300 satirlik bir dosyada 4 hatali satir
+        yuzunden 296 dogru satiri reddetmek, kullaniciyi dosyayi elle
+        ayiklamaya zorlardi. Her hata `satir_no` + `alan` + mesaj dondurur.
+
+        `yalniz_dogrula=true` HICBIR SEY YAZMAZ (onizleme). Kurulum tek
+        seferlik ve GERI ALMASI ZOR bir islemdir.
+
+        IDEMPOTENT: var olan blok/daire/kisi ATLANIR, dosya yeniden
+        yuklenebilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SiteAktarIstek" }
+      responses:
+        "201": { description: aktarim raporu (sayaclar + satir hatalari) }
         "403": { $ref: "#/components/responses/Forbidden" }
   # ================================================================= #
   # RAPOR MOTORU + KATALOG (P31)
@@ -8517,6 +8708,29 @@ components:
           nullable: true
           description: Kategori adi (join ile doldurulur)
         durum: { type: string, enum: [acik, is_emri, cozuldu, reddedildi] }
+        unit_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: (P33) Talebin ilgili oldugu daire
+        unit_no:
+          type: string
+          nullable: true
+          description: (P33) Daire numarasi (join ile doldurulur)
+        oncelik:
+          type: string
+          enum: [dusuk, normal, yuksek, acil]
+          default: normal
+          description: (P33) Is takibi onceligi — durumdan BAGIMSIZ
+        atanan_personel_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P33) `personel_kayit` kaydi (app_user DEGIL)"
+        atanan_personel_ad:
+          type: string
+          nullable: true
+          description: (P33) Atanan personelin adi (join ile doldurulur)
         fotograflar:
           type: array
           items: { $ref: "#/components/schemas/ComplaintPhoto" }
@@ -8546,12 +8760,124 @@ components:
           format: uuid
           nullable: true
           description: Opsiyonel talep kategorisi (task_category); verilmezse null
+        unit_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: >
+            (P33) Talebin ILGILI OLDUGU daire. Acanin kendi dairesi
+            OTOMATIK varsayilmaz: sakin ortak alan icin de talep acar
+            ("asansor bozuk") ve talebi kendi dairesine yapistirmak, is
+            emrini yanlis yere yonlendirirdi.
         foto_keys:
           type: array
           items: { type: string }
           maxItems: 3
           default: []
           description: "Opsiyonel gorseller (en fazla 3); her biri /uploads/presign ile alinan obje anahtari"
+    KararUyesi:
+      type: object
+      description: >
+        (P33) Karara katilan yonetim kurulu uyesi. Bir ADDIR, kullanici
+        referansi DEGILDIR — uye uygulamada hesabi olmayan biri olabilir.
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 150 }
+        gorev: { type: string, nullable: true, maxLength: 100 }
+    KararDefteriCreate:
+      type: object
+      required: [karar_no, konu, metin]
+      properties:
+        karar_no:
+          type: string
+          maxLength: 30
+          description: Tenant icinde TEKTIR (cakisma 409)
+        tarih: { type: string, format: date, description: Verilmezse bugun }
+        konu: { type: string, minLength: 1, maxLength: 200 }
+        metin: { type: string, minLength: 1, maxLength: 20000 }
+        baskan_ad: { type: string, nullable: true, maxLength: 150 }
+        uyeler:
+          type: array
+          items: { $ref: "#/components/schemas/KararUyesi" }
+          default: []
+    DokumanCreate:
+      type: object
+      description: >
+        (P33) Sunucu DOSYAYI TASIMAZ, yalniz USTVERIYI tutar; yukleme
+        presign ile dogrudan MinIO'ya yapilir.
+      required: [ad, obje_anahtari]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 200 }
+        obje_anahtari:
+          type: string
+          maxLength: 500
+          description: Ayni anahtar iki kez kaydedilemez (409)
+        icerik_tipi: { type: string, nullable: true, maxLength: 150 }
+        boyut_bayt:
+          type: integer
+          nullable: true
+          maximum: 26214400
+          description: EN FAZLA 25 MB — veritabani CHECK'i ile de korunur
+        aciklama: { type: string, nullable: true, maxLength: 1000 }
+    SiteAktarSatir:
+      type: object
+      description: >
+        (P33) Kurulum dosyasinin BIR SATIRI. `satir_no` dosyadaki gercek
+        satir numarasidir (basliksiz 1. veri satiri genelde 2) — hata raporu
+        bunu geri verir ki kullanici hucreyi bulabilsin.
+      required: [satir_no]
+      properties:
+        satir_no: { type: integer, minimum: 1 }
+        blok:
+          type: string
+          nullable: true
+          maxLength: 8
+          description: >
+            Sema duzeyinde opsiyonel, IS KURALI olarak zorunlu: bos ise
+            satir REDDEDILIR ama diger satirlar islenir. Sema
+            zorunlulugu tum istegi 422 yapardi ve satir bazli rapor
+            imkansizlasirdi.
+        daire_no:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Bos ise satir reddedilir (bkz. blok)
+        ad: { type: string, nullable: true, maxLength: 150 }
+        telefon: { type: string, nullable: true, maxLength: 30 }
+        rol_tipi:
+          type: string
+          nullable: true
+          maxLength: 20
+          description: "malik | kiraci; baskasi 422 degil SATIR HATASI verir"
+    SiteAktarIstek:
+      type: object
+      required: [satirlar]
+      properties:
+        yalniz_dogrula:
+          type: boolean
+          default: false
+          description: true ise HICBIR SEY YAZILMAZ (onizleme)
+        satirlar:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items: { $ref: "#/components/schemas/SiteAktarSatir" }
+    ComplaintUpdate:
+      type: object
+      description: >
+        (P33) Is takibi alanlari. En az bir alan zorunlu (bos govde 422
+        `en_az_bir_alan`). `oncelik: null` gonderilemez — alan NOT NULL ve
+        varsayilani vardir; sessizce yok saymak yerine acikca reddedilir.
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        unit_id: { type: string, format: uuid, nullable: true }
+        oncelik: { type: string, enum: [dusuk, normal, yuksek, acil] }
+        atanan_personel_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "`personel_kayit` kaydi (app_user DEGIL)"
     ComplaintConvertRequest:
       type: object
       description: Talebi is emrine donustur (admin + yonetici)

@@ -896,10 +896,18 @@ class ComplaintStatusHistoryOut(BaseModel):
     created_at: datetime
 
 
+# ========================= P33 YONETISIM MODULLERI ========================== #
+TalepOncelik = Literal["dusuk", "normal", "yuksek", "acil"]
+
+
 class ComplaintCreate(BaseModel):
     baslik: str = Field(..., min_length=1, max_length=200)
     mesaj: str = Field(..., min_length=1, max_length=5000)
     kategori_id: uuid.UUID | None = None
+    # (P33) Talebin ILGILI OLDUGU daire. Acanin kendi dairesi OTOMATIK
+    # varsayilmaz: sakin ortak alan icin de talep acar ("asansor bozuk") ve
+    # talebi kendi dairesine yapistirmak, is emrini yanlis yere yonlendirirdi.
+    unit_id: uuid.UUID | None = None
     # En fazla 3 gorsel; her biri /uploads/presign obje anahtari.
     foto_keys: list[str] = Field(default_factory=list, max_length=3)
 
@@ -914,6 +922,12 @@ class ComplaintOut(BaseModel):
     kategori_id: uuid.UUID | None = None
     kategori_ad: str | None = None
     durum: str
+    # (P33) Is takibi alanlari.
+    unit_id: uuid.UUID | None = None
+    unit_no: str | None = None
+    oncelik: TalepOncelik = "normal"
+    atanan_personel_id: uuid.UUID | None = None
+    atanan_personel_ad: str | None = None
     fotograflar: list[ComplaintPhotoOut] = Field(default_factory=list)
     gecmis: list[ComplaintStatusHistoryOut] = Field(default_factory=list)
     # Bagli is emri (varsa): task ozeti.
@@ -921,6 +935,22 @@ class ComplaintOut(BaseModel):
     is_emri_durum: str | None = None  # 'acik' (atandi) | 'tamamlandi'
     created_at: datetime
     updated_at: datetime
+
+
+class ComplaintUpdate(BaseModel):
+    """(P33) Yonetimin is takibi alanlari — durum makinesine DOKUNMAZ.
+
+    Oncelik/atama, talebin YASAM DONGUSUNDEN bagimsizdir: acik bir talebin
+    onceligi is emrine donusmeden de yukselebilir. Bu yuzden ayri bir uc,
+    convert govdesine sikistirilmis alanlar degil.
+    """
+
+    unit_id: uuid.UUID | None = None
+    oncelik: TalepOncelik | None = None
+    #: `personel_kayit` kaydi (app_user DEGIL): her personelin uygulama
+    #: hesabi yoktur (bkz. P27). Uygulamali atama `convert` ile yapilir.
+    atanan_personel_id: uuid.UUID | None = None
+    model_config = ConfigDict(extra="forbid")
 
 
 class ComplaintListResponse(BaseModel):
@@ -4346,3 +4376,127 @@ class MesajGonderSonuc(BaseModel):
     riza_yok: int
     #: Adresi/numarasi olmayanlar.
     adres_yok: int
+
+
+
+
+class KararUyesiIn(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=150)
+    gorev: str | None = Field(None, max_length=100)
+
+
+class KararDefteriCreate(BaseModel):
+    karar_no: str = Field(..., min_length=1, max_length=30)
+    konu: str = Field(..., min_length=1, max_length=200)
+    tarih: date | None = None
+    metin: str = Field(..., min_length=1, max_length=20000)
+    baskan_ad: str | None = Field(None, max_length=150)
+    uyeler: list[KararUyesiIn] = Field(default_factory=list, max_length=50)
+
+
+class KararDefteriUpdate(BaseModel):
+    karar_no: str | None = Field(None, min_length=1, max_length=30)
+    konu: str | None = Field(None, min_length=1, max_length=200)
+    tarih: date | None = None
+    metin: str | None = Field(None, min_length=1, max_length=20000)
+    baskan_ad: str | None = Field(None, max_length=150)
+    #: Verilirse uye listesi TAMAMEN DEGISTIRILIR (kismi ekleme/cikarma
+    #: yerine): kismi islem, "uyeyi cikardim mi ekledim mi" belirsizligini
+    #: istemciye birakirdi.
+    uyeler: list[KararUyesiIn] | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "KararDefteriUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class KararDefteriOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    karar_no: str
+    konu: str
+    tarih: date
+    metin: str
+    baskan_ad: str | None = None
+    uyeler: list[KararUyesiIn] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class KararDefteriListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[KararDefteriOut]
+
+
+class DokumanCreate(BaseModel):
+    """Dokuman KAYDI — dosya MinIO'ya presign ile ayrica yuklenir."""
+
+    ad: str = Field(..., min_length=1, max_length=200)
+    obje_anahtari: str = Field(..., min_length=1, max_length=500)
+    icerik_tipi: str | None = Field(None, max_length=150)
+    #: 25 MB ust sinir (CHECK de zorlar) — daha buyugu presign akisinda
+    #: zaman asimina ve mobilde bellek baskisina yol acar.
+    boyut_bayt: int | None = Field(None, ge=1, le=26_214_400)
+    aciklama: str | None = Field(None, max_length=1000)
+
+
+class DokumanOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    obje_anahtari: str
+    icerik_tipi: str | None = None
+    boyut_bayt: int | None = None
+    aciklama: str | None = None
+    yukleyen_user_id: uuid.UUID | None = None
+    yukleyen_ad: str | None = None
+    created_at: datetime
+
+
+class DokumanListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[DokumanOut]
+
+
+class SiteAktarSatir(BaseModel):
+    """Excel'den gelen TEK satir — istemci ayristirir (P28/P29 ile ayni
+    gerekce: xlsx ayristirma bir saldiri yuzeyidir)."""
+
+    satir_no: int
+    blok: str | None = Field(None, max_length=8)
+    daire_no: str | None = Field(None, max_length=50)
+    ad: str | None = Field(None, max_length=150)
+    telefon: str | None = Field(None, max_length=30)
+    rol_tipi: str | None = Field(None, max_length=20)
+
+
+class SiteAktarIstek(BaseModel):
+    satirlar: list[SiteAktarSatir] = Field(..., min_length=1, max_length=1000)
+    #: True ise HICBIR SEY YAZILMAZ, yalnizca dogrulama raporu doner.
+    yalniz_dogrula: bool = False
+
+
+class SiteAktarHata(BaseModel):
+    satir_no: int
+    alan: str | None = None
+    hata: str
+
+
+class SiteAktarSonuc(BaseModel):
+    blok_olusan: int = 0
+    daire_olusan: int = 0
+    kisi_olusan: int = 0
+    atlanan: int = 0
+    hatalar: list[SiteAktarHata] = Field(default_factory=list)
+
+
+class SiteAktarSablonSatiri(BaseModel):
+    """Indirilebilir sablonun basliklari + ornek satiri."""
+
+    basliklar: list[str]
+    ornek: list[str]
+    aciklama: str

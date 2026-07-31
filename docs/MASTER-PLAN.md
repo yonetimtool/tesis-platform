@@ -1863,7 +1863,7 @@ dashboard hızlı-eylem kancaları** panel ekranıyla birlikte bağlanacak.
 — gerçek sağlayıcı gelince webhook'la yazılacak.
 
 ### P33 — Governance & ops modules
-Status: BEKLIYOR · Depends-on: P27 (personel), P9 (audit contract)
+Status: BITTI · Depends-on: P27 (personel), P9 (audit contract)
 Scope: Karar Defteri (konu, no, tarih, karar metni, başkan + multiple üyeler;
 PDF output on the P31 template); Doküman Yönetimi (tenant file archive on MinIO:
 upload/download/delete, type+size limits, list with dates); İş Takibi — AUDIT the
@@ -1876,6 +1876,68 @@ surfaces: yetki matrix view, Excel ile Site Aktar (bulk import: bloklar + dairel
 seri-sıra no + para birimi (P27 settings) UI.
 Acceptance: each module CRUD + RBAC; site import E2E with a sample file; panel
 build; gates.
+Notes (2026-07-31):
+**İŞ TAKİBİ — DENETİM SONUCU: BİRLEŞTİRME DEĞİL GENİŞLETME.** Kapsam "unify into
+one ticket backbone" diyordu; denetim omurganın **zaten var olduğunu** gösterdi:
+`complaint` = Talep/Arıza, `task` = İş Emri, ikisi Ticketing v1'de
+`task.ticket_id` ile bağlı ve durum makinesi (`acik → is_emri → cozuldu |
+reddedildi`) çalışıyor. `unit_complaint` ile birleştirmek **P22(e)'nin bilinçli
+ayrımını bozardı** (o kanal komşudan komşuya şikâyet, bu kanal sakinden
+yönetime talep). Bu yüzden yapılan iş `complaint`i **üç alanla genişletmek**
+oldu: `unit_id` (ilgili bağımsız bölüm), `oncelik` (talep_oncelik:
+düşük|normal|yüksek|acil), `atanan_personel_id`. Mobil akışların hiçbiri
+değişmedi — üç alan da opsiyonel.
+- **Öncelik/atama durumdan BAĞIMSIZ ayrı bir uçtadır** (`PATCH /complaints/{id}`,
+  admin+yönetici). Durum yalnız makine geçişleriyle değişir; PATCH'ten de
+  değiştirilebilseydi geçiş kuralları ve timeline satırları atlanabilirdi.
+- **Atanan personel `personel_kayit`tır, `app_user` DEĞİL** (P27 gerekçesi):
+  temizlikçinin uygulama hesabı olmayabilir ama iş ona verilir. Bildirim alan
+  uygulamalı atama hâlâ `convert` ucunda. Var olmayan daire/personel **422** —
+  sessizce yazılsaydı iş emri hiç ulaşmayacağı birine atanmış görünürdü.
+- `unit_no` ve `atanan_personel_ad` listede **join ile** dolar; istemcinin satır
+  başına istek atması 50 satırlık listede 50 istek demekti.
+
+**KARAR DEFTERİ.** Üyeler ayrı tabloda (`karar_uyesi`): tek metin sütununa
+virgülle yazmak "bu karara kim katıldı" sorgusunu metin aramasına çevirirdi.
+Üye bir **addır, kullanıcı referansı değildir** — yönetim kurulu üyesi
+uygulamada hesabı olmayan biri olabilir. PATCH'te `uyeler` gönderilirse liste
+**tamamen değiştirilir** (kısmî ekleme/çıkarma, hangi üyenin kaldırıldığı
+belirsizliğini istemciye bırakırdı); gönderilmezse dokunulmaz. PDF **metin
+şablonuyla** üretilir (P31 `metin_pdf`), tablo şablonuyla değil: karar bir
+yazıdır, tabloya sıkıştırmak metni hücrelere bölerdi.
+
+**DOKÜMAN ARŞİVİ.** Sunucu **dosyayı taşımaz, yalnız üstveriyi tutar**;
+yükleme/indirme mevcut presign akışıyla doğrudan MinIO'ya. 25 MB sınırı üç
+katmanda (pydantic + CHECK + sözleşme). Kayıt silinince **MinIO objesi durur**:
+tek istekte depoyu da silmek, yanlışlıkla silinen bir yönetim planının geri
+alınamaması demekti.
+
+**SİTE AKTARIM (Excel ile).** Sunucu XLSX **ayrıştırmaz ve üretmez** (P28/P29
+ile aynı gerekçe: xlsx ayrıştırma bir saldırı yüzeyidir) — panel satırları
+JSON'a çevirir, `/site-aktar/sablon` başlıkları tek kaynaktan verir.
+`yalniz_dogrula=true` **hiçbir şey yazmaz**: kurulum tek seferlik ve geri
+alması zordur, önizlemesiz yapılması yanlış bir dosyayı 300 satır boyunca
+uygulamak olurdu. **Satır bazlı hata raporu** (`satir_no` + `alan` + mesaj) —
+4 hatalı satır yüzünden 296 doğru satırı reddetmek kullanıcıyı dosyayı elle
+ayıklamaya zorlardı. **İdempotent**: var olan blok/daire/kişi atlanır, dosya
+yeniden yüklenebilir.
+
+Kanıt: `backend/tests/test_yonetisim.py` **20 test** yeşil (karar CRUD + üye
+listesi replace + karar_no tekliği 409 + PDF `%PDF-` imzası + cascade silme;
+doküman CRUD + 25 MB sınır + aynı anahtar 409; şablon başlıkları + kuru çalışma
+hiçbir şey yazmıyor + blok/daire/kişi oluşumu + satır bazlı hata seti {3,4,5}
+ve alanları {blok, telefon, rol_tipi} + idempotentlik + kişisiz satır; iş takibi
+üç alanı + öncelik/daire süzgeci + yalnız-yönetim + dört doğrulama; RBAC dört
+rol + tenant izolasyonu, aynı karar_no B tenant'ta serbest). Migration `0022`
+uygulandı, `infra/goc-tersinirlik.sh` bulgu 0. Rol matrisi kilidi 11 satır
+büyüdü. Tam pytest yeşil.
+
+**AÇIK BIRAKILAN (bilinçli, panel borcuna eklendi):** İşlem Geçmişi panel
+ekranı, yetki matrisi görünümü, evrak seri-sıra + para birimi UI'ı ve karar
+defteri/doküman/site-aktarım **panel ekranları**. Gerekçe P28/P29/P31/P32 ile
+aynı: bu yüzeyler tek bir panel bölümü olarak birlikte tasarlanmalı; parça
+parça eklemek panelde altı ayrı gezinme deseni bırakırdı. API yüzeyi ve
+sözleşme hazır.
 
 ### P34 — Patrol integrity package
 Status: BEKLIYOR · Depends-on: —
@@ -2159,6 +2221,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P33 · (bu commit) · Yonetisim modulleri (0022): IS TAKIBI denetimi omurganin ZATEN VAR OLDUGUNU gosterdi — birlestirme degil GENISLETME (complaint + unit_id/oncelik/atanan_personel; oncelik durumdan BAGIMSIZ ayri ucta, atanan personel_kayit'tir app_user degil); karar defteri uyeleri AYRI TABLODA + metin sablonlu PDF; dokuman arsivi USTVERI-ONLY (obje silinmez); site aktarimi KURU CALISMALI ve SATIR BAZLI hata raporlu, idempotent.
 - 2026-07-31 · P32 · 47ac96c · Mesaj sablonlari + gonderim (0021): gonderilen metin GECMISE KOPYALANIR (sablon degisse de kanit durur), amac SABLONDA (pazarlama riza olmadan HIC gonderilmez ve atlananlar SAYILIR), SMS sayaci Turkce tuzagini gosterir (kucuk c/i/g/s UCS-2'ye dusurur), saglayici takasi yapilandirma ile; P28 seed regresyonu bulundu ve duzeltildi.
 - 2026-07-31 · P31 · a7e2217 · Rapor motoru + 12 raporluk katalog: TEK UC UC BICIM (tablo/Excel/PDF, ucu de ayni satirlardan), parametre modali TEK MODEL, detayli borc sutunlari P27 tanimlarindan DINAMIK, tahsilat orani = tahsil/borclandirilan, denetim raporu = kasa mutabakati; to_char GroupingError bulgusu.
 - 2026-07-31 · P30 · e48db6a · Sakin "Öde" akisi (0020): havale aciklama KODU (sabit, elle yazilabilir alfabe) eslestirmeyi KESINLESTIRIR; IBAN P27 banka kasasindan (ayri alan YOK); kart mevcut saglayici soyutlamasi uzerinden (P13 ile canliya); mobil /ode tek sayfa, kopyala + kalin kod.
