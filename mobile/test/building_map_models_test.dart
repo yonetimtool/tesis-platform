@@ -7,11 +7,14 @@ void main() {
       expect(DensityRenk.fromWire('yesil'), DensityRenk.yesil);
       expect(DensityRenk.fromWire('sari'), DensityRenk.sari);
       expect(DensityRenk.fromWire('kirmizi'), DensityRenk.kirmizi);
+      // P24 dorduncu kademe (5+) — eskiden bu deger BILINMEYENDI.
+      expect(DensityRenk.fromWire('mor'), DensityRenk.mor);
     });
 
     test('null/bilinmeyen deger unknown (ileri surum COKMEZ)', () {
       expect(DensityRenk.fromWire(null), DensityRenk.unknown);
-      expect(DensityRenk.fromWire('mor'), DensityRenk.unknown);
+      // Sunucu ileride BESINCI bir kademe eklerse istemci COKMEMELI.
+      expect(DensityRenk.fromWire('lacivert'), DensityRenk.unknown);
     });
   });
 

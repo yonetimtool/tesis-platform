@@ -1793,5 +1793,19 @@
   "sakinRolAlt": "Aidat kiracıya, yatırım gideri malike borçlandırılır.",
   "sakinEposta": "E-posta",
   "sakinEpostaTemizle": "E-postayı kaldır",
-  "sakinRolBagYok": "İlişki tipi için sakinin bir daireye bağlı olması gerekir"
+  "sakinRolBagYok": "İlişki tipi için sakinin bir daireye bağlı olması gerekir",
+  "sikayetKuyruguBaslik": "Şikayet Kuyruğu",
+  "sikayetSekmeYeni": "Yeni",
+  "sikayetSekmeTumu": "Tümü",
+  "sikayetOkunmamisYok": "Okunmamış şikayet yok.",
+  "sikayetYokYonetim": "Henüz şikayet yok.",
+  "sikayetOkunduIsaretle": "Okundu işaretle",
+  "sikayetOkunmamisRozet": "{sayi} okunmamış şikayet",
+  "@sikayetOkunmamisRozet": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  }
 }

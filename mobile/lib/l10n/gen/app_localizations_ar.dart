@@ -4485,4 +4485,27 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sakinRolBagYok => 'يجب ربط الساكن بشقة لتحديد نوع العلاقة';
+
+  @override
+  String get sikayetKuyruguBaslik => 'قائمة الشكاوى';
+
+  @override
+  String get sikayetSekmeYeni => 'جديد';
+
+  @override
+  String get sikayetSekmeTumu => 'الكل';
+
+  @override
+  String get sikayetOkunmamisYok => 'لا توجد شكاوى غير مقروءة.';
+
+  @override
+  String get sikayetYokYonetim => 'لا توجد شكاوى بعد.';
+
+  @override
+  String get sikayetOkunduIsaretle => 'وضع علامة كمقروء';
+
+  @override
+  String sikayetOkunmamisRozet(int sayi) {
+    return '$sayi شكاوى غير مقروءة';
+  }
 }

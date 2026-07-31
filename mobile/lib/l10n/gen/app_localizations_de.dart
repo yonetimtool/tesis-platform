@@ -4376,4 +4376,27 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get sakinRolBagYok =>
       'Für die Beziehungsart muss der Bewohner einer Wohnung zugeordnet sein';
+
+  @override
+  String get sikayetKuyruguBaslik => 'Beschwerde-Warteschlange';
+
+  @override
+  String get sikayetSekmeYeni => 'Neu';
+
+  @override
+  String get sikayetSekmeTumu => 'Alle';
+
+  @override
+  String get sikayetOkunmamisYok => 'Keine ungelesenen Beschwerden.';
+
+  @override
+  String get sikayetYokYonetim => 'Noch keine Beschwerden.';
+
+  @override
+  String get sikayetOkunduIsaretle => 'Als gelesen markieren';
+
+  @override
+  String sikayetOkunmamisRozet(int sayi) {
+    return '$sayi ungelesene Beschwerden';
+  }
 }

@@ -4215,4 +4215,27 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get sakinRolBagYok =>
       'İlişki tipi için sakinin bir daireye bağlı olması gerekir';
+
+  @override
+  String get sikayetKuyruguBaslik => 'Şikayet Kuyruğu';
+
+  @override
+  String get sikayetSekmeYeni => 'Yeni';
+
+  @override
+  String get sikayetSekmeTumu => 'Tümü';
+
+  @override
+  String get sikayetOkunmamisYok => 'Okunmamış şikayet yok.';
+
+  @override
+  String get sikayetYokYonetim => 'Henüz şikayet yok.';
+
+  @override
+  String get sikayetOkunduIsaretle => 'Okundu işaretle';
+
+  @override
+  String sikayetOkunmamisRozet(int sayi) {
+    return '$sayi okunmamış şikayet';
+  }
 }

@@ -1273,5 +1273,19 @@
   "sakinRolAlt": "Hausgeld wird dem Mieter, Investitionskosten dem Eigentümer belastet.",
   "sakinEposta": "E-Mail",
   "sakinEpostaTemizle": "E-Mail entfernen",
-  "sakinRolBagYok": "Für die Beziehungsart muss der Bewohner einer Wohnung zugeordnet sein"
+  "sakinRolBagYok": "Für die Beziehungsart muss der Bewohner einer Wohnung zugeordnet sein",
+  "sikayetKuyruguBaslik": "Beschwerde-Warteschlange",
+  "sikayetSekmeYeni": "Neu",
+  "sikayetSekmeTumu": "Alle",
+  "sikayetOkunmamisYok": "Keine ungelesenen Beschwerden.",
+  "sikayetYokYonetim": "Noch keine Beschwerden.",
+  "sikayetOkunduIsaretle": "Als gelesen markieren",
+  "sikayetOkunmamisRozet": "{sayi} ungelesene Beschwerden",
+  "@sikayetOkunmamisRozet": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  }
 }

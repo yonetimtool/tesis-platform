@@ -1273,5 +1273,19 @@
   "sakinRolAlt": "Les charges sont imputées au locataire, les investissements au propriétaire.",
   "sakinEposta": "E-mail",
   "sakinEpostaTemizle": "Supprimer l’e-mail",
-  "sakinRolBagYok": "Le résident doit être rattaché à un logement pour définir le type de relation"
+  "sakinRolBagYok": "Le résident doit être rattaché à un logement pour définir le type de relation",
+  "sikayetKuyruguBaslik": "File des plaintes",
+  "sikayetSekmeYeni": "Nouvelles",
+  "sikayetSekmeTumu": "Toutes",
+  "sikayetOkunmamisYok": "Aucune plainte non lue.",
+  "sikayetYokYonetim": "Aucune plainte pour l'instant.",
+  "sikayetOkunduIsaretle": "Marquer comme lu",
+  "sikayetOkunmamisRozet": "{sayi} plaintes non lues",
+  "@sikayetOkunmamisRozet": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  }
 }

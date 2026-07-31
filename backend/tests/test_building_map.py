@@ -147,7 +147,9 @@ def test_building_map_yonetim_sayim_renk_ve_unplaced(mapworld, client):
     assert nos.index(f"A1-{sfx}") < nos.index(f"A2-{sfx}")
 
     by_id = {u["unit_id"]: u for u in kat1["units"]}
-    assert by_id[ua["id"]]["complaint_count"] == 3 and by_id[ua["id"]]["color"] == "sari"
+    # P24 DORT KADEME (0 yesil / 1-2 sari / 3-4 kirmizi / 5+ mor): uc sikayet
+    # eskiden "sari"ydi. Renk SUNUCUDAN gelir; esikler _ESIKLER tablosunda.
+    assert by_id[ua["id"]]["complaint_count"] == 3 and by_id[ua["id"]]["color"] == "kirmizi"
     assert by_id[ub["id"]]["complaint_count"] == 0 and by_id[ub["id"]]["color"] == "yesil"
 
     unplaced_ids = {u["unit_id"] for u in body["unplaced"]}
@@ -291,7 +293,9 @@ def test_building_map_yonetici_sayim_renk_gorur_complainant_gormez(mapworld, cli
     body = client.get("/unit-complaints/building-map", headers=yon).json()
     assert body["shows_density"] is True
     u = next(u for u in _all_units(body) if u["unit_id"] == ua["id"])
-    assert u["complaint_count"] == 1 and u["color"] == "yesil"
+    # P24: TEK sikayet artik gorunur — eskiden hic sikayet almamis daireyle
+    # ayni renkteydi (0-2 yesil) ve yonetim ILK sinyali goremiyordu.
+    assert u["complaint_count"] == 1 and u["color"] == "sari"
 
     # 2) YONETICI daire detayi (liste): 'sikayet edildigini' gorur (200) ama
     #    complainant kimligi/ad DONMEZ; sikayet edenin id'si hic sizmaz

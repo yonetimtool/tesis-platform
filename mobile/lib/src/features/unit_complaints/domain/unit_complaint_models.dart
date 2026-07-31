@@ -44,6 +44,7 @@ class UnitComplaint {
     this.notlar,
     this.complainantUserId,
     this.complainantAd,
+    this.okundu,
   });
 
   final String id;
@@ -64,7 +65,33 @@ class UnitComplaint {
   final String? complainantUserId;
   final String? complainantAd;
 
+  /// (P24) ISTEGI YAPAN yoneticiye gore okundu mu — okuma durumu KISI
+  /// BASINADIR. Sakin uclarinda (`/mine`) null gelir: okunmamis kuyrugu bir
+  /// YONETIM kavramidir, sakine sizmaz.
+  ///
+  /// `null` "okunmus" DEMEK DEGILDIR; "bu uc okuma durumu bildirmiyor"
+  /// demektir. Kuyruk gorunumu bu ayrimi korur (bkz. `okunmamisMi`).
+  final bool? okundu;
+
+  /// Kuyrukta ROZET/VURGU gerektiren satir: yalnizca uc okuma durumu
+  /// bildirdiyse ve okunmamissa true.
+  bool get okunmamisMi => okundu == false;
+
   bool get acik => durum == 'acik';
+
+  /// Okundu isaretlendikten sonraki kopya (kuyrugu YERINDE gunceller).
+  UnitComplaint okunduKopya() => UnitComplaint(
+        id: id,
+        targetUnitId: targetUnitId,
+        kategori: kategori,
+        durum: durum,
+        createdAt: createdAt,
+        unitNo: unitNo,
+        notlar: notlar,
+        complainantUserId: complainantUserId,
+        complainantAd: complainantAd,
+        okundu: true,
+      );
 
   factory UnitComplaint.fromJson(Map<String, dynamic> json) => UnitComplaint(
         id: json['id'] as String? ?? '',
@@ -75,6 +102,7 @@ class UnitComplaint {
         durum: json['durum'] as String? ?? 'acik',
         complainantUserId: json['complainant_user_id'] as String?,
         complainantAd: json['complainant_ad'] as String?,
+        okundu: json['okundu'] as bool?,
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       );

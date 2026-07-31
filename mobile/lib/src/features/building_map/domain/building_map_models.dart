@@ -15,10 +15,14 @@ library;
 /// `label` alani vardi (TR sabitleri) ama HICBIR YERDE cizilmiyordu — gosterge
 /// esik SAYILARINI yazar ("0–2", "3–4", "5+"). Olu TR metni domain'de tutmak
 /// yerine kaldirildi; renk esleme `densityColor` ile cizim katmanindadir.
+/// DORT KADEME (P24): 0 yesil · 1-2 sari · 3-4 kirmizi · 5+ mor.
+/// Esikler SUNUCUDA (tek dogruluk kaynagi); istemci yalniz gelen degeri
+/// renge cevirir — esikleri burada TEKRARLAMAK iki kaynak yaratirdi.
 enum DensityRenk {
   yesil('yesil'),
   sari('sari'),
   kirmizi('kirmizi'),
+  mor('mor'),
   unknown('unknown');
 
   const DensityRenk(this.wire);

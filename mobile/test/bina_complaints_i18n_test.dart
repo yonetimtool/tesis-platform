@@ -227,7 +227,9 @@ void main() {
 
         expect(find.text(yogunluk), findsOneWidget, reason: '$locale gosterge');
         // Esik ETIKETLERI sayidir — her dilde ayni (bilincli).
-        expect(find.text('0–2'), findsOneWidget);
+        // P24 DORT KADEME: 0 / 1–2 / 3–4 / 5+.
+        expect(find.text('1–2'), findsOneWidget);
+        expect(find.text('3–4'), findsOneWidget);
         expect(find.text('5+'), findsOneWidget);
         // Daire no SUNUCU verisi — cevrilmez.
         expect(find.text('A-2'), findsWidgets);
@@ -265,6 +267,9 @@ void main() {
       'yesil',
       'sari',
       'kirmizi',
+      // P24 dorduncu kademe (5+) — 0 ile 1 arasindaki fark gorunsun diye
+      // skala dorde cikti; kimlik hala METINSIZDIR.
+      'mor',
       'unknown',
     ]);
     expect(DensityRenk.fromWire('sari'), DensityRenk.sari);

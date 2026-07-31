@@ -1273,5 +1273,19 @@
   "sakinRolAlt": "Dues are charged to the tenant, investment costs to the owner.",
   "sakinEposta": "E-mail",
   "sakinEpostaTemizle": "Remove e-mail",
-  "sakinRolBagYok": "The resident must be linked to a unit to set a relationship type"
+  "sakinRolBagYok": "The resident must be linked to a unit to set a relationship type",
+  "sikayetKuyruguBaslik": "Complaint Queue",
+  "sikayetSekmeYeni": "New",
+  "sikayetSekmeTumu": "All",
+  "sikayetOkunmamisYok": "No unread complaints.",
+  "sikayetYokYonetim": "No complaints yet.",
+  "sikayetOkunduIsaretle": "Mark as read",
+  "sikayetOkunmamisRozet": "{sayi} unread complaints",
+  "@sikayetOkunmamisRozet": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  }
 }

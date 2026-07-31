@@ -4471,4 +4471,27 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get sakinRolBagYok =>
       'Чтобы задать тип отношения, житель должен быть привязан к квартире';
+
+  @override
+  String get sikayetKuyruguBaslik => 'Очередь жалоб';
+
+  @override
+  String get sikayetSekmeYeni => 'Новые';
+
+  @override
+  String get sikayetSekmeTumu => 'Все';
+
+  @override
+  String get sikayetOkunmamisYok => 'Непрочитанных жалоб нет.';
+
+  @override
+  String get sikayetYokYonetim => 'Жалоб пока нет.';
+
+  @override
+  String get sikayetOkunduIsaretle => 'Отметить прочитанным';
+
+  @override
+  String sikayetOkunmamisRozet(int sayi) {
+    return '$sayi непрочитанных жалоб';
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/i18n/l10n.dart';
@@ -9,6 +10,8 @@ import '../../auth/domain/user_role.dart';
 import '../../unit_complaints/data/unit_complaint_api.dart';
 import '../../unit_complaints/domain/unit_complaint_models.dart';
 import '../../unit_complaints/presentation/kategori_adi.dart';
+import '../../unit_complaints/presentation/sikayet_kuyrugu_controller.dart';
+import '../../../routing/app_router.dart';
 import '../domain/building_map_models.dart';
 import 'building_map_controller.dart';
 
@@ -38,6 +41,11 @@ class BuildingSchematicScreen extends ConsumerWidget {
         title: Text(baslikBuyuk(
             context.l10n.modulSikayetHaritasi, context.dilKodu)),
         actions: [
+          // TRIYAJ KUYRUGU (P24) — YALNIZ yonetim. Sikayet Haritasi bir
+          // GENEL BAKISTIR (hangi daire ne durumda); kuyruk ise "bugun neye
+          // bakmam gerekiyor" sorusunun cevabidir. Rozet okunmamis sayisini
+          // gosterir ve okuma durumu KISI BASINADIR.
+          if (!isResident) const _KuyrukEylemi(),
           IconButton(
             tooltip: context.l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
@@ -53,6 +61,31 @@ class BuildingSchematicScreen extends ConsumerWidget {
   }
 }
 
+/// Sikayet kuyruguna gecis + okunmamis ROZETI.
+///
+/// Rozet sifirken CIZILMEZ: bos bir rozet "ilgilenilecek bir sey var"
+/// sinyalini yanlis verirdi.
+class _KuyrukEylemi extends ConsumerWidget {
+  const _KuyrukEylemi();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sayi = ref.watch(
+      sikayetKuyruguControllerProvider.select((s) => s.okunmamisSayisi),
+    );
+    final ikon = IconButton(
+      tooltip: context.l10n.sikayetKuyruguBaslik,
+      icon: const Icon(Icons.inbox_outlined),
+      onPressed: () => context.push(AppRoutes.sikayetKuyrugu),
+    );
+    if (sayi <= 0) return ikon;
+    return Semantics(
+      label: context.l10n.sikayetOkunmamisRozet(sayi),
+      child: Badge.count(count: sayi, child: ikon),
+    );
+  }
+}
+
 /// Yogunluk rengini Flutter rengine cevirir (API'nin dondurdugu renk).
 Color densityColor(DensityRenk? renk) {
   switch (renk) {
@@ -62,6 +95,11 @@ Color densityColor(DensityRenk? renk) {
       return const Color(0xFFF9A825);
     case DensityRenk.kirmizi:
       return const Color(0xFFE53935);
+    case DensityRenk.mor:
+      // P24 dorduncu kademe (5+): kirmizinin "daha kotusu" gorsel olarak
+      // kirmiziyi koyulastirmakla anlatilamaz (renk korlugunde ayrilmaz);
+      // MOR ayri bir ton oldugu icin ayirt edilebilir kaliyor.
+      return const Color(0xFF8E24AA);
     case DensityRenk.unknown:
     case null:
       return Colors.blueGrey; // yapi gorunumu (yogunluk yok)
@@ -144,9 +182,11 @@ class _Legend extends StatelessWidget {
           children: [
             Text(context.l10n.semaYogunluk,
                 style: const TextStyle(fontWeight: FontWeight.w600)),
-            item(DensityRenk.yesil, '0–2'),
-            item(DensityRenk.sari, '3–4'),
-            item(DensityRenk.kirmizi, '5+'),
+            // Esik metinleri SUNUCUDAKI `_ESIKLER` tablosuyla ayni (P24).
+            item(DensityRenk.yesil, '0'),
+            item(DensityRenk.sari, '1–2'),
+            item(DensityRenk.kirmizi, '3–4'),
+            item(DensityRenk.mor, '5+'),
           ],
         ),
       ),

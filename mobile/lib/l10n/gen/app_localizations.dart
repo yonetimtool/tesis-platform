@@ -7462,6 +7462,48 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'İlişki tipi için sakinin bir daireye bağlı olması gerekir'**
   String get sakinRolBagYok;
+
+  /// No description provided for @sikayetKuyruguBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikayet Kuyruğu'**
+  String get sikayetKuyruguBaslik;
+
+  /// No description provided for @sikayetSekmeYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni'**
+  String get sikayetSekmeYeni;
+
+  /// No description provided for @sikayetSekmeTumu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümü'**
+  String get sikayetSekmeTumu;
+
+  /// No description provided for @sikayetOkunmamisYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okunmamış şikayet yok.'**
+  String get sikayetOkunmamisYok;
+
+  /// No description provided for @sikayetYokYonetim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz şikayet yok.'**
+  String get sikayetYokYonetim;
+
+  /// No description provided for @sikayetOkunduIsaretle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okundu işaretle'**
+  String get sikayetOkunduIsaretle;
+
+  /// No description provided for @sikayetOkunmamisRozet.
+  ///
+  /// In tr, this message translates to:
+  /// **'{sayi} okunmamış şikayet'**
+  String sikayetOkunmamisRozet(int sayi);
 }
 
 class _AppLocalizationsDelegate

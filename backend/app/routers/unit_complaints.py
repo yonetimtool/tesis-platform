@@ -14,7 +14,18 @@ GIZLILIK KADEMESI (Rev-2, auth.md §4):
 Spam korumasi (Rev-1.1 — HAFTALIK + KATEGORI-BAZLI): ayni sakin ayni daireye
 ayni KATEGORIDE 7 gunde en fazla 1 sikayet (farkli kategori serbest; durumdan
 bagimsiz). advisory xact-lock + sliding 7-gun penceresi ile YARISSIZ -> 409.
-Renk (ACIK sikayet sayisi): 0-2 yesil, 3-4 sari, 5+ kirmizi.
+Renk (ACIK sikayet sayisi) — P24'te DORT KADEMEYE cikti:
+  0 yesil · 1-2 sari · 3-4 kirmizi · 5+ mor
+
+Eskiden uc kademeydi (0-2 yesil, 3-4 sari, 5+ kirmizi) ve TEK sikayet almis
+bir daire, hic sikayet almamis daireyle AYNI renkteydi — yonetim ilk sinyali
+goremiyordu. Yeni skalada 0 ile 1 arasindaki fark GORUNUR.
+
+ESIKLERIN OKUNUSU (Kerem'in "0=yesil, 1-2=sari, 3-4=kirmizi, 4+=mor"
+ifadesinde 3-4 ile 4+ CAKISIYOR): cakismayan tek okuma 5+ = mor'dur ve oyle
+uygulandi. Esikler `_ESIKLER` tablosunda TEK YERDE durur — P37'nin sifirlama
+kurali sayaci sifirlayinca skala kendiliginden yesile doner ve tenant basina
+yapilandirilabilir hale getirmek icin degistirilecek tek yer burasidir.
 """
 from __future__ import annotations
 
@@ -29,7 +40,7 @@ from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Unit, UnitComplaint, UnitResident
+from ..models import AppUser, Unit, UnitComplaint, UnitComplaintOkuma, UnitResident
 from ..schemas import (
     BuildingMapBlok,
     BuildingMapKat,
@@ -57,12 +68,27 @@ _MANAGER = require_role("admin", "yonetici")
 _MANAGEMENT = {"admin", "yonetici"}
 
 
+#: (ust sinir DAHIL, renk) — son satir yakalayici (None = sinirsiz).
+#: Tek dogruluk kaynagi: istemci bunu TEKRARLAMAZ, rengi sunucudan alir.
+_ESIKLER: tuple[tuple[int | None, str], ...] = (
+    (0, "yesil"),
+    (2, "sari"),
+    (4, "kirmizi"),
+    (None, "mor"),
+)
+
+
 def _color(count: int) -> str:
-    if count <= 2:
-        return "yesil"
-    if count <= 4:
-        return "sari"
-    return "kirmizi"
+    """ACIK sikayet sayisindan renk (P24 — dort kademe).
+
+    Sayim tabani ACIK sikayetlerdir (`durum='acik'`): kapatilan sikayet
+    skalayi dusurur. P37 esige varinca sayaci SIFIRLAR — o zaman da bu ayni
+    fonksiyon dogal olarak yesile doner; ayri bir "sifirlama rengi" yoktur.
+    """
+    for ust, renk in _ESIKLER:
+        if ust is None or count <= ust:
+            return renk
+    return _ESIKLER[-1][1]
 
 
 async def _resident_blocks(db: AsyncSession, user: AppUser) -> set[str | None]:
@@ -349,19 +375,44 @@ async def list_unit_complaints(
     kategori: UnitComplaintKategori | None = Query(
         None, description="Kategori suzgeci (orn. gurultu)"
     ),
+    okunmamis: bool | None = Query(
+        None,
+        description=(
+            "true: YALNIZ isteyen yoneticinin okumadiklari (Yeni sekmesi). "
+            "false: yalniz okuduklari. Bos: hepsi."
+        ),
+    ),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_MANAGER),
+    user: AppUser = Depends(_MANAGER),
 ) -> UnitComplaintListResponse:
     """Daire sikayetleri — YALNIZ YONETIM. kategori + tarih + durum + not.
     SIKAYET EDEN kimligi (complainant) ARTIK DONMEZ (gizlilik: yonetim yalniz
     'sikayet edildigini' gorur, KIMIN ettigini degil). residentlar bu uca
-    ERISEMEZ (403)."""
-    base = (
-        select(UnitComplaint, Unit.no)
-        .join(Unit, Unit.id == UnitComplaint.target_unit_id)
+    ERISEMEZ (403).
+
+    `okunmamis` suzgeci ISTEYEN yoneticiye goredir (P24): okuma durumu kisi
+    basinadir, bir yoneticinin okumasi digerinin kuyrugunu bosaltmaz. Rozet
+    sayisi ayri bir uc gerektirmez — `?okunmamis=true&limit=1` cagrisinin
+    `meta.total` degeri rozetin ta kendisidir.
+    """
+    # Okuma kaydini LEFT JOIN ile getir: `okundu` alanini doldurmak icin her
+    # kosulda gerekli (suzgec verilmese de listede rozet gosterilir).
+    okuma = (
+        select(UnitComplaintOkuma.unit_complaint_id)
+        .where(UnitComplaintOkuma.user_id == user.id)
+        .subquery()
     )
+    base = (
+        select(UnitComplaint, Unit.no, okuma.c.unit_complaint_id)
+        .join(Unit, Unit.id == UnitComplaint.target_unit_id)
+        .join(okuma, okuma.c.unit_complaint_id == UnitComplaint.id, isouter=True)
+    )
+    if okunmamis is True:
+        base = base.where(okuma.c.unit_complaint_id.is_(None))
+    elif okunmamis is False:
+        base = base.where(okuma.c.unit_complaint_id.is_not(None))
     if target_unit_id is not None:
         base = base.where(UnitComplaint.target_unit_id == target_unit_id)
     if durum is not None:
@@ -381,9 +432,52 @@ async def list_unit_complaints(
         meta={"limit": limit, "offset": offset, "total": total},
         items=[
             # complainant ARTIK DONMEZ (include_complainant=False, gizlilik).
-            UnitComplaintOut.from_model(obj, unit_no=no, include_note=True)
-            for obj, no in rows
+            UnitComplaintOut.from_model(
+                obj, unit_no=no, include_note=True, okundu=okundu_id is not None
+            )
+            for obj, no, okundu_id in rows
         ],
+    )
+
+
+@router.post("/{complaint_id}/okundu", response_model=UnitComplaintOut)
+async def mark_unit_complaint_read(
+    complaint_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_MANAGER),
+) -> UnitComplaintOut:
+    """Sikayeti ISTEYEN yonetici icin okundu isaretler (P24 triyaj).
+
+    IDEMPOTENT: ikinci cagri 409 vermez, ayni sonucu doner (istemci listeyi
+    tazelerken ayni satiri iki kez isaretleyebilir). Geri alma yoktur —
+    "okunmamis" kuyrugu bir is listesidir, gecmis degil.
+    """
+    await get_or_404(db, UnitComplaint, complaint_id)  # tenant + varlik denetimi
+    var = (
+        await db.execute(
+            select(UnitComplaintOkuma.id).where(
+                and_(
+                    UnitComplaintOkuma.unit_complaint_id == complaint_id,
+                    UnitComplaintOkuma.user_id == user.id,
+                )
+            )
+        )
+    ).scalar_one_or_none()
+    if var is None:
+        db.add(
+            UnitComplaintOkuma(
+                tenant_id=user.tenant_id,
+                unit_complaint_id=complaint_id,
+                user_id=user.id,
+            )
+        )
+        await db.flush()
+    obj = await get_or_404(db, UnitComplaint, complaint_id)
+    unit_no = (
+        await db.execute(select(Unit.no).where(Unit.id == obj.target_unit_id))
+    ).scalar_one_or_none()
+    return UnitComplaintOut.from_model(
+        obj, unit_no=unit_no, include_note=True, okundu=True
     )
 
 
@@ -411,6 +505,18 @@ async def close_unit_complaint(
             select(Unit.no).where(Unit.id == obj.target_unit_id)
         )
     ).scalar_one_or_none()
+    # Okuma durumu da donsun: istemci kapattigi satiri listede yerinde
+    # tazeliyor; None donseydi okunmus satir tekrar OKUNMAMIS gorunurdu.
+    okundu = (
+        await db.execute(
+            select(UnitComplaintOkuma.id).where(
+                and_(
+                    UnitComplaintOkuma.unit_complaint_id == obj.id,
+                    UnitComplaintOkuma.user_id == user.id,
+                )
+            )
+        )
+    ).scalar_one_or_none() is not None
     return UnitComplaintOut.from_model(
-        obj, unit_no=unit_no, include_note=True
+        obj, unit_no=unit_no, include_note=True, okundu=okundu
     )

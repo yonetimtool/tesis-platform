@@ -1704,6 +1704,44 @@ class UnitComplaint(Base):
     updated_at = _created_at()
 
 
+class UnitComplaintOkuma(Base):
+    """Sikayet okuma durumu — KISI BASINA (P24).
+
+    Satir VARSA o kullanici o sikayeti okumustur; YOKSA okunmamistir. Boylece
+    yeni sikayet dogal olarak okunmamis baslar (ek yazma yok) ve bir
+    yoneticinin okumasi digerinin triyaj kuyrugunu bosaltmaz.
+    """
+
+    __tablename__ = "unit_complaint_okuma"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "unit_complaint_id", "user_id", name="uq_unit_complaint_okuma"
+        ),
+        ForeignKeyConstraint(
+            ["unit_complaint_id", "tenant_id"],
+            ["unit_complaint.id", "unit_complaint.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_unit_complaint_okuma_complaint",
+        ),
+        ForeignKeyConstraint(
+            ["user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_unit_complaint_okuma_user",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_complaint_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    okundu_at = _created_at()
+
+
 # --------------------------------------------------------------------------- #
 class VehiclePass(Base):
     """Arac giris/cikis gecisi (G1) — TEK satir gecisin tamamini tutar.

@@ -4401,4 +4401,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sakinRolBagYok =>
       'The resident must be linked to a unit to set a relationship type';
+
+  @override
+  String get sikayetKuyruguBaslik => 'Complaint Queue';
+
+  @override
+  String get sikayetSekmeYeni => 'New';
+
+  @override
+  String get sikayetSekmeTumu => 'All';
+
+  @override
+  String get sikayetOkunmamisYok => 'No unread complaints.';
+
+  @override
+  String get sikayetYokYonetim => 'No complaints yet.';
+
+  @override
+  String get sikayetOkunduIsaretle => 'Mark as read';
+
+  @override
+  String sikayetOkunmamisRozet(int sayi) {
+    return '$sayi unread complaints';
+  }
 }

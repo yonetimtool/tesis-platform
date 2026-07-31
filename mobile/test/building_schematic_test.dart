@@ -127,7 +127,11 @@ void main() {
     testWidgets('legend + hucre sayilari gorunur', (tester) async {
       await tester.pumpWidget(_app(UserRole.yonetici, map: _mgmtMap()));
       await tester.pumpAndSettle();
-      expect(find.text('0–2'), findsOneWidget); // legend
+      // P24 DORT KADEME: 0 / 1–2 / 3–4 / 5+ (eskiden 0–2 / 3–4 / 5+).
+      // "0" hem gostergede hem SIFIR sikayetli hucrede gecer -> findsWidgets.
+      expect(find.text('0'), findsWidgets); // legend
+      expect(find.text('1–2'), findsOneWidget);
+      expect(find.text('3–4'), findsOneWidget);
       expect(find.text('5+'), findsOneWidget);
       expect(find.text('A-1'), findsOneWidget);
       expect(find.text('A-2'), findsOneWidget);

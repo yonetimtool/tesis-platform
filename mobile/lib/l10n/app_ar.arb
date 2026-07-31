@@ -1273,5 +1273,19 @@
   "sakinRolAlt": "تُحمّل الرسوم على المستأجر ونفقات الاستثمار على المالك.",
   "sakinEposta": "البريد الإلكتروني",
   "sakinEpostaTemizle": "إزالة البريد الإلكتروني",
-  "sakinRolBagYok": "يجب ربط الساكن بشقة لتحديد نوع العلاقة"
+  "sakinRolBagYok": "يجب ربط الساكن بشقة لتحديد نوع العلاقة",
+  "sikayetKuyruguBaslik": "قائمة الشكاوى",
+  "sikayetSekmeYeni": "جديد",
+  "sikayetSekmeTumu": "الكل",
+  "sikayetOkunmamisYok": "لا توجد شكاوى غير مقروءة.",
+  "sikayetYokYonetim": "لا توجد شكاوى بعد.",
+  "sikayetOkunduIsaretle": "وضع علامة كمقروء",
+  "sikayetOkunmamisRozet": "{sayi} شكاوى غير مقروءة",
+  "@sikayetOkunmamisRozet": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -1273,5 +1273,19 @@
   "sakinRolAlt": "Las cuotas se cargan al inquilino y las inversiones al propietario.",
   "sakinEposta": "Correo electrónico",
   "sakinEpostaTemizle": "Eliminar el correo",
-  "sakinRolBagYok": "El residente debe estar vinculado a una vivienda para definir el tipo de relación"
+  "sakinRolBagYok": "El residente debe estar vinculado a una vivienda para definir el tipo de relación",
+  "sikayetKuyruguBaslik": "Cola de quejas",
+  "sikayetSekmeYeni": "Nuevas",
+  "sikayetSekmeTumu": "Todas",
+  "sikayetOkunmamisYok": "No hay quejas sin leer.",
+  "sikayetYokYonetim": "Aún no hay quejas.",
+  "sikayetOkunduIsaretle": "Marcar como leída",
+  "sikayetOkunmamisRozet": "{sayi} quejas sin leer",
+  "@sikayetOkunmamisRozet": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  }
 }

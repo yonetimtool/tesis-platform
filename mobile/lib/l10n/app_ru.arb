@@ -1273,5 +1273,19 @@
   "sakinRolAlt": "Взносы начисляются арендатору, инвестиционные расходы — собственнику.",
   "sakinEposta": "Эл. почта",
   "sakinEpostaTemizle": "Удалить эл. почту",
-  "sakinRolBagYok": "Чтобы задать тип отношения, житель должен быть привязан к квартире"
+  "sakinRolBagYok": "Чтобы задать тип отношения, житель должен быть привязан к квартире",
+  "sikayetKuyruguBaslik": "Очередь жалоб",
+  "sikayetSekmeYeni": "Новые",
+  "sikayetSekmeTumu": "Все",
+  "sikayetOkunmamisYok": "Непрочитанных жалоб нет.",
+  "sikayetYokYonetim": "Жалоб пока нет.",
+  "sikayetOkunduIsaretle": "Отметить прочитанным",
+  "sikayetOkunmamisRozet": "{sayi} непрочитанных жалоб",
+  "@sikayetOkunmamisRozet": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  }
 }

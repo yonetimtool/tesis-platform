@@ -4364,4 +4364,27 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get sakinRolBagYok =>
       'Le résident doit être rattaché à un logement pour définir le type de relation';
+
+  @override
+  String get sikayetKuyruguBaslik => 'File des plaintes';
+
+  @override
+  String get sikayetSekmeYeni => 'Nouvelles';
+
+  @override
+  String get sikayetSekmeTumu => 'Toutes';
+
+  @override
+  String get sikayetOkunmamisYok => 'Aucune plainte non lue.';
+
+  @override
+  String get sikayetYokYonetim => 'Aucune plainte pour l\'instant.';
+
+  @override
+  String get sikayetOkunduIsaretle => 'Marquer comme lu';
+
+  @override
+  String sikayetOkunmamisRozet(int sayi) {
+    return '$sayi plaintes non lues';
+  }
 }

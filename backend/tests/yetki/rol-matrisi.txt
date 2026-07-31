@@ -170,6 +170,7 @@ GET    /unit-complaints/building-map                        IZIN   IZIN   IZIN  
 GET    /unit-complaints/density                             IZIN   IZIN   RED    RED    RED   
 GET    /unit-complaints/mine                                RED    RED    RED    RED    IZIN  
 PATCH  /unit-complaints/{id}                                IZIN   IZIN   RED    RED    RED   
+POST   /unit-complaints/{id}/okundu                         IZIN   IZIN   RED    RED    RED   
 GET    /units                                               IZIN   IZIN   IZIN   IZIN   RED   
 POST   /units                                               IZIN   IZIN   RED    RED    RED   
 POST   /units/bulk                                          IZIN   IZIN   RED    RED    RED   

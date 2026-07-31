@@ -2686,7 +2686,7 @@ UnitComplaintKategori = Literal[
 UnitComplaintDurum = Literal["acik", "kapali"]
 # P24 — DORT KADEME: 0 yesil · 1-2 sari · 3-4 kirmizi · 5+ mor.
 # Esikler `routers/unit_complaints._ESIKLER` tablosundadir (tek kaynak).
-DensityRenk = Literal["yesil", "sari", "kirmizi"]
+DensityRenk = Literal["yesil", "sari", "kirmizi", "mor"]
 
 
 class UnitComplaintCreate(BaseModel):
@@ -2720,6 +2720,9 @@ class UnitComplaintOut(BaseModel):
     # actigi kaydin yanitinda da None gorur (kendi kimligini tekrar donmeye gerek yok).
     complainant_user_id: uuid.UUID | None = None
     complainant_ad: str | None = None
+    #: ISTEYEN yoneticiye gore okunmus mu (P24 triyaj). Yonetim uclarinda dolu,
+    #: sakin uclarinda None — okuma durumu bir YONETIM kuyrugu kavramidir.
+    okundu: bool | None = None
 
     @classmethod
     def from_model(
@@ -2730,8 +2733,10 @@ class UnitComplaintOut(BaseModel):
         include_note: bool,
         include_complainant: bool = False,
         complainant_ad: str | None = None,
+        okundu: bool | None = None,
     ) -> "UnitComplaintOut":
         return cls(
+            okundu=okundu,
             id=obj.id,
             target_unit_id=obj.target_unit_id,
             unit_no=unit_no,

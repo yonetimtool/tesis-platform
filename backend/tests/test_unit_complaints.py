@@ -253,17 +253,20 @@ def test_renk_esikleri_ve_kapatma_feedback(ucworld, client):
     unit = ucworld["unit1"]
     res = ucworld["residents"]
 
+    # P24: DORT KADEME — 0 yesil · 1-2 sari · 3-4 kirmizi · 5+ mor.
     assert _density_for(client, admin, unit)["renk"] == "yesil"
-    for i in range(2):
-        assert _file(client, slug, res[i], unit).status_code == 201
+    assert _file(client, slug, res[0], unit).status_code == 201
     d = _density_for(client, admin, unit)
-    assert d["acik_sayisi"] == 2 and d["renk"] == "yesil"
+    # TEK sikayet artik GORUNUR (eskiden 0-2 hepsi yesildi).
+    assert d["acik_sayisi"] == 1 and d["renk"] == "sari"
+    assert _file(client, slug, res[1], unit).status_code == 201
+    assert _density_for(client, admin, unit)["renk"] == "sari"
     assert _file(client, slug, res[2], unit).status_code == 201
-    assert _density_for(client, admin, unit)["renk"] == "sari"
-    assert _file(client, slug, res[3], unit).status_code == 201
-    assert _density_for(client, admin, unit)["renk"] == "sari"
-    assert _file(client, slug, res[4], unit).status_code == 201
     assert _density_for(client, admin, unit)["renk"] == "kirmizi"
+    assert _file(client, slug, res[3], unit).status_code == 201
+    assert _density_for(client, admin, unit)["renk"] == "kirmizi"
+    assert _file(client, slug, res[4], unit).status_code == 201
+    assert _density_for(client, admin, unit)["renk"] == "mor"
 
     yon = _headers(client, slug, ucworld["yonetici_a"])
     cid = client.get(
@@ -272,8 +275,9 @@ def test_renk_esikleri_ve_kapatma_feedback(ucworld, client):
     assert client.patch(
         f"/unit-complaints/{cid}", headers=yon, json={"durum": "kapali"}
     ).status_code == 200
+    # Kapatma skalayi DUSURUR: 5 -> 4 = mor -> kirmizi.
     d2 = _density_for(client, admin, unit)
-    assert d2["acik_sayisi"] == 4 and d2["renk"] == "sari"
+    assert d2["acik_sayisi"] == 4 and d2["renk"] == "kirmizi"
 
 
 # ------------------------- kategori (Rev-1 genisleme) ----------------------- #
@@ -367,3 +371,175 @@ def test_tenant_izolasyonu(ucworld, client):
         "/unit-complaints", headers=admin_b, params={"target_unit_id": ucworld["unit1"]}
     ).json()["items"]
     assert lst_b == []
+
+
+# --------------------------------------------------------------------------- #
+# P24 — DORT KADEMELI renk skalasi
+# --------------------------------------------------------------------------- #
+def test_p24_renk_esikleri_SINIR_SINIR(client, world):
+    """0/1/2/3/4/5 — her sinir tek tek kilitli.
+
+    Eskiden uc kademeydi ve TEK sikayet almis daire, hic sikayet almamis
+    daireyle AYNI renkteydi (0-2 yesil); yonetim ILK sinyali goremiyordu.
+    """
+    from app.routers.unit_complaints import _color
+
+    assert _color(0) == "yesil"
+    assert _color(1) == "sari", "TEK sikayet artik gorunur olmali"
+    assert _color(2) == "sari"
+    assert _color(3) == "kirmizi"
+    assert _color(4) == "kirmizi"
+    assert _color(5) == "mor"
+    assert _color(99) == "mor"
+
+
+def test_p24_esik_tablosu_TEK_KAYNAK(client, world):
+    """Esikler tabloda; kod dallarina dagilmis olsa P37 sifirlamasi ve
+    tenant-basi yapilandirma iki yerde degistirilmek zorunda kalirdi."""
+    from app.routers.unit_complaints import _ESIKLER, _color
+
+    # Tablo ARTAN sirada ve son satir YAKALAYICI (None) olmali.
+    ustler = [u for u, _ in _ESIKLER]
+    assert ustler[-1] is None, "son satir sinirsiz yakalayici olmali"
+    sonlu = [u for u in ustler if u is not None]
+    assert sonlu == sorted(sonlu), "esikler artan sirada degil"
+    # Tablodaki her renk gercekten uretilebiliyor mu (olu satir yok).
+    uretilen = {_color(n) for n in range(0, 20)}
+    assert uretilen == {renk for _, renk in _ESIKLER}
+
+
+# ------------------------- P24: okuma durumu (triyaj) ----------------------- #
+# "Yeni / Okunmamis" sekmesi KISI BASINADIR: iki yonetici ayni siteye bakarken
+# birinin okumasi digerinin kuyrugunu bosaltmamalidir. Rozet sayisi ayri bir uc
+# degil, `?okunmamis=true&limit=1` -> meta.total'dir.
+def _liste(client, headers, **q):
+    r = client.get("/unit-complaints", headers=headers, params=q)
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def _rozet(client, headers) -> int:
+    """Okunmamis rozeti — istemcinin yaptigi cagrinin AYNISI."""
+    return _liste(client, headers, okunmamis="true", limit=1)["meta"]["total"]
+
+
+def test_p24_yeni_sikayet_OKUNMAMIS_baslar(ucworld, client):
+    """Satir YOKSA okunmamis: yeni kayit icin ek yazma gerekmemeli."""
+    admin = _headers(client, ucworld["slug_a"], ucworld["admin_a"])
+    once = _rozet(client, admin)
+    assert _file(client, ucworld["slug_a"], ucworld["residents"][0],
+                 ucworld["unit1"]).status_code == 201
+    assert _rozet(client, admin) == once + 1
+
+    yeni = _liste(client, admin, target_unit_id=ucworld["unit1"])["items"][0]
+    assert yeni["okundu"] is False, "yeni sikayet OKUNMUS baslamamali"
+
+
+def test_p24_okundu_isaretleme_kuyruktan_dusurur(ucworld, client):
+    admin = _headers(client, ucworld["slug_a"], ucworld["admin_a"])
+    r = _file(client, ucworld["slug_a"], ucworld["residents"][0], ucworld["unit1"])
+    assert r.status_code == 201
+    cid = r.json()["id"]
+    once = _rozet(client, admin)
+
+    m = client.post(f"/unit-complaints/{cid}/okundu", headers=admin)
+    assert m.status_code == 200, m.text
+    assert m.json()["okundu"] is True
+    assert _rozet(client, admin) == once - 1
+
+    # "Yeni" sekmesinde ARTIK YOK, tam listede HALA VAR (arsiv degil, sekme).
+    yeni_ids = [i["id"] for i in _liste(client, admin, okunmamis="true")["items"]]
+    assert cid not in yeni_ids
+    tum = {i["id"]: i for i in _liste(client, admin)["items"]}
+    assert cid in tum and tum[cid]["okundu"] is True
+    # `okunmamis=false` tersini verir (okunmuslar sekmesi).
+    okunanlar = [i["id"] for i in _liste(client, admin, okunmamis="false")["items"]]
+    assert cid in okunanlar
+
+
+def test_p24_okundu_IDEMPOTENT(ucworld, client):
+    """Istemci listeyi tazelerken ayni satiri iki kez isaretleyebilir; ikinci
+    cagri 409 vermemeli ve rozeti EKSIYE dusurmemeli."""
+    admin = _headers(client, ucworld["slug_a"], ucworld["admin_a"])
+    cid = _file(client, ucworld["slug_a"], ucworld["residents"][0],
+                ucworld["unit1"]).json()["id"]
+    assert client.post(f"/unit-complaints/{cid}/okundu", headers=admin).status_code == 200
+    ara = _rozet(client, admin)
+    assert client.post(f"/unit-complaints/{cid}/okundu", headers=admin).status_code == 200
+    assert _rozet(client, admin) == ara
+
+
+def test_p24_okuma_durumu_KISI_BASINA(ucworld, client):
+    """EN KRITIK KURAL: admin'in okumasi yonetici'nin kuyrugunu BOSALTMAZ."""
+    admin = _headers(client, ucworld["slug_a"], ucworld["admin_a"])
+    yonetici = _headers(client, ucworld["slug_a"], ucworld["yonetici_a"])
+    cid = _file(client, ucworld["slug_a"], ucworld["residents"][0],
+                ucworld["unit1"]).json()["id"]
+    y_once = _rozet(client, yonetici)
+
+    client.post(f"/unit-complaints/{cid}/okundu", headers=admin)
+
+    assert _rozet(client, yonetici) == y_once, "digerinin kuyrugu bosaldi"
+    y_yeni = {i["id"]: i for i in _liste(client, yonetici, okunmamis="true")["items"]}
+    assert cid in y_yeni and y_yeni[cid]["okundu"] is False
+
+
+def test_p24_okunmamis_diger_suzgeclerle_BIRLIKTE_calisir(ucworld, client):
+    """Sekme + kategori/durum suzgeci ayni anda kullanilir (VE mantigi)."""
+    admin = _headers(client, ucworld["slug_a"], ucworld["admin_a"])
+    g = _file(client, ucworld["slug_a"], ucworld["residents"][0], ucworld["unit1"],
+              kategori="gurultu").json()["id"]
+    z = _file(client, ucworld["slug_a"], ucworld["residents"][1], ucworld["unit1"],
+              kategori="zarar_verme").json()["id"]
+
+    ids = [i["id"] for i in _liste(
+        client, admin, okunmamis="true", kategori="gurultu",
+        target_unit_id=ucworld["unit1"])["items"]]
+    assert g in ids and z not in ids
+
+    client.post(f"/unit-complaints/{g}/okundu", headers=admin)
+    ids = [i["id"] for i in _liste(
+        client, admin, okunmamis="true", kategori="gurultu",
+        target_unit_id=ucworld["unit1"])["items"]]
+    assert g not in ids
+
+
+def test_p24_kapatma_okuma_durumunu_KORUR(ucworld, client):
+    """Kapatma yaniti okuma durumunu da doner; istemci satiri yerinde
+    tazeliyor ve None donseydi okunmus satir tekrar OKUNMAMIS gorunurdu."""
+    admin = _headers(client, ucworld["slug_a"], ucworld["admin_a"])
+    cid = _file(client, ucworld["slug_a"], ucworld["residents"][0],
+                ucworld["unit1"]).json()["id"]
+    client.post(f"/unit-complaints/{cid}/okundu", headers=admin)
+    r = client.patch(f"/unit-complaints/{cid}", headers=admin, json={"durum": "kapali"})
+    assert r.status_code == 200, r.text
+    assert r.json()["okundu"] is True
+
+
+def test_p24_okundu_YONETIM_DISINA_KAPALI(ucworld, client):
+    """Okuma kuyrugu bir YONETIM kavramidir: sakin/saha isaretleyemez."""
+    cid = _file(client, ucworld["slug_a"], ucworld["residents"][0],
+                ucworld["unit1"]).json()["id"]
+    for kim in ("resident_a", "guard_a", "gorevli_a"):
+        h = _headers(client, ucworld["slug_a"], ucworld[kim])
+        assert client.post(
+            f"/unit-complaints/{cid}/okundu", headers=h
+        ).status_code == 403, kim
+    # Sakin kendi kaydinda okuma durumu GORMEZ (yonetim kuyrugu sizmaz).
+    sakin = _headers(client, ucworld["slug_a"], ucworld["residents"][0])
+    benim = client.get("/unit-complaints/mine", headers=sakin).json()["items"]
+    assert all(i["okundu"] is None for i in benim)
+
+
+def test_p24_okundu_TENANT_izolasyonu(ucworld, client):
+    """Baska tenant'in sikayeti isaretlenemez (404 — varligi bile sizmaz)."""
+    cid = _file(client, ucworld["slug_a"], ucworld["residents"][0],
+                ucworld["unit1"]).json()["id"]
+    b = _headers(client, ucworld["slug_b"], ucworld["admin_b"])
+    assert client.post(f"/unit-complaints/{cid}/okundu", headers=b).status_code == 404
+
+
+def test_p24_olmayan_sikayet_404(ucworld, client):
+    admin = _headers(client, ucworld["slug_a"], ucworld["admin_a"])
+    r = client.post(f"/unit-complaints/{uuid.uuid4()}/okundu", headers=admin)
+    assert r.status_code == 404

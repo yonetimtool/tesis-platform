@@ -410,6 +410,25 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P23 · Sakin yaşam döngüsü.** **Yönetici** (admin DEĞİL) ile Sakinler →
+  bir sakin aç: (a) **daire ata** — sonradan atama artık çalışmalı (eskiden
+  yönetici bu ucu göremiyordu, 403 alırdı); (b) **e-posta** alanını doldur →
+  kaydet → geri gel, dolu kalmalı; sonra **"E-postayı kaldır"** anahtarını aç →
+  kaydet → alan BOŞ olmalı (kutuda eski metin dursa bile silinmeli);
+  (c) **İlişki tipi**ni Kiracı ↔ Kat maliki arasında değiştir → kaydet → daire
+  listesinde/karttaki tip değişmeli. Dairesi OLMAYAN bir sakinde ilişki tipi
+  kaydetmeye çalış → anlaşılır bir hata çıkmalı (sessizce kaydetmemeli).
+- [ ] **P24 · Şikayet triyaj kuyruğu + dört kademeli renk.** (a) **Yönetici**
+  ile Şikayet Haritası → başlıkta **gelen kutusu ikonu + rozet** görünmeli
+  (okunmamış yoksa rozet OLMAMALI). (b) Kuyruğa gir → **Yeni** sekmesinde
+  okunmamışlar kalın yazıyla; bir satırda **"Okundu işaretle"** → satır
+  Yeni'den DÜŞMELİ, rozet 1 azalmalı; **Tümü** sekmesine geç → satır ORADA
+  DURMALI (arşiv değil). (c) **İKİNCİ bir yönetici hesabıyla** aynı siteye gir
+  → onun kuyruğu **BOŞALMAMIŞ** olmalı (okuma kişi başınadır — bu maddenin
+  asıl testi budur). (d) Uçağ modunda "Okundu işaretle" → rozet
+  **AZALMAMALI** (iyimser güncelleme yok). (e) Haritada bir daireye **1**
+  şikayet aç → hücre **SARI** olmalı (eskiden yeşil kalıyordu); 3'te
+  **KIRMIZI**, 5'te **MOR**; göstergede `0 / 1–2 / 3–4 / 5+` yazmalı.
 - [ ] **P22 · Mobil UX düzeltmeleri.** (b) **Yönetici/güvenlik** ile
   Bildirimler'e gir; **okunmuş** bir bildirime dokun → ilgili ekran açılmalı
   (eskiden hiçbir şey olmuyordu). Okunmamışa dokun → hem "Yeni" rozeti
@@ -989,7 +1008,7 @@ beklentileriydi ve P24 commit'inde düzeltildi); P23'ün dokunduğu dört dosya
 güncellendi (ResidentUpdate + üç bağ ucunun RBAC'i ve gerekçesi).
 
 ### P24 — Complaint triage tabs + 4-tier unit color scale
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: complaint management views gain a "Yeni / Okunmamış" tab separate from the
 full list, with per-admin read state; unit color scale driven by noise/complaint
 count: 0=yeşil, 1–2=sarı, 3–4=kırmızı, 4+=mor — one shared component used in the
@@ -997,6 +1016,62 @@ building map and unit lists. Counter window ties into P37's reset rule (reset
 zeroes the scale); make the counting basis explicit and configurable-ready.
 Acceptance: tab + unread badge behavior tested; color boundaries tested at
 0/1/2/3/4/5; quality gates.
+Notes (2026-07-31): iki yarım; ikisi de bitti.
+
+**(1) DÖRT KADEMELİ RENK SKALASI.** Eskiden üç kademeydi (`0-2 yeşil`,
+`3-4 sarı`, `5+ kırmızı`) ve **tek şikayet almış daire, hiç şikayet almamış
+daireyle AYNI renkteydi** — yönetim ilk sinyali göremiyordu. Yeni skala:
+`0 yeşil · 1-2 sarı · 3-4 kırmızı · 5+ mor`.
+* **Eşiklerin okunuşu:** Kerem'in "0=yeşil, 1-2=sarı, 3-4=kırmızı, 4+=mor"
+  ifadesinde **3-4 ile 4+ ÇAKIŞIYOR**; çakışmayan tek okuma `5+ = mor`dur ve
+  öyle uygulandı.
+* Eşikler `_ESIKLER` **tablosunda TEK YERDE** durur — P37'nin sıfırlama
+  kuralı sayacı sıfırlayınca skala kendiliğinden yeşile döner ve tenant başına
+  yapılandırılabilir hale getirmek için değiştirilecek tek yer burasıdır.
+* **Mor bilinçli seçim:** kırmızının "daha kötüsü" kırmızıyı koyulaştırmakla
+  anlatılamaz (renk körlüğünde ayrılmaz); mor ayrı bir ton olduğu için ayırt
+  edilebilir kalıyor.
+* Renk **SUNUCUDAN** gelir; istemci eşikleri tekrarlamaz.
+
+**(2) "Yeni / Okunmamış" TRİYAJ KUYRUĞU — YENİ ŞEMA (0014).** `unit_complaint`
+satırında okuma durumu **YOKTU**; eklendi.
+* **Okuma durumu KİŞİ BAŞINADIR** — asıl kural bu. İki yönetici aynı siteye
+  bakarken birinin okuması diğerinin kuyruğunu **boşaltmamalı**. Bu yüzden
+  `(sikayet, kullanıcı)` çiftine satır yazılır; **satır YOKSA okunmamıştır**
+  (yeni şikayet ek yazma olmadan doğal olarak kuyruğa düşer).
+* **Watermark ("son okuma zamanı") REDDEDİLDİ:** tek satırla çözülürdü ama
+  sekmeyi açmak HEPSİNİ okundu yapardı; triyajda kullanıcı beş şikayetten
+  ikisini ele alıp gerisini kuyrukta **BIRAKMAK** ister. Büyüme kaygısı yok:
+  yönetici sayısı site başına birkaç kişidir.
+* **Rozet sayısı için AYRI UÇ YOK:** `?okunmamis=true&limit=1` çağrısının
+  `meta.total` değeri rozetin ta kendisidir.
+* `POST /unit-complaints/{id}/okundu` **IDEMPOTENT** (istemci listeyi
+  tazelerken aynı satırı iki kez işaretleyebilir) ve **geri alma yoktur** —
+  "okunmamış" bir iş kuyruğudur, geçmiş değil.
+* Kapatma (`PATCH`) yanıtı da `okundu` döner: istemci satırı yerinde
+  tazeliyor, `null` dönseydi okunmuş satır tekrar **okunmamış** görünürdü.
+* Mobil: `/sikayet-kuyrugu` ekranı iki sekme (**Yeni** rozetli / **Tümü**);
+  Şikayet Haritası'nın başlığına rozetli kuyruk girişi eklendi (yalnız
+  yönetim). Rozet **sıfırken çizilmez** — boş rozet "ilgilenilecek bir şey
+  var" sinyalini yanlış verirdi. Okunmamış satır **KALIN**: renk tek başına
+  ayırt edici değildir.
+* İstemci **iyimser güncelleme YAPMAZ**: istek düşerse rozet azalmaz, yoksa
+  triyaj kuyruğu sessizce eksilirdi.
+
+TESTLER: `test_unit_complaints.py` **24/24** (sınır sınır 0/1/2/3/4/5/99 +
+eşik tablosunun bütünlüğü + 9 okuma-durumu testi: kişi-başına izolasyon,
+idempotentlik, süzgeç birleşimi, yönetim-dışına 403, tenant izolasyonu);
+`p24_sikayet_kuyrugu_test.dart` **9/9** (gerçek `Dio` üzerinden sürülür).
+**ÜÇ ESKİ BEKLENTİ DÜZELTİLDİ** (ürün doğru, ölçüm bayattı):
+`test_building_map.py` 3 şikayet artık `kirmizi`, 1 şikayet artık `sari`;
+mobilde gösterge etiketleri ve `DensityRenk` kimlik listesi dört kademeye
+güncellendi (`fromWire('mor')` artık **bilinmeyen değil**).
+i18n: 7 yeni ARB anahtarı × 7 dil; §15 kontrol-akışı taraması dokunulan iki
+modülde **boş**.
+KAPILAR: `flutter analyze` temiz; `flutter test` **1449 geçti / 0 düştü**;
+`flutter build apk --debug` ✓; backend `pytest` **842 geçti / 0 düştü**; göç tersinirliği (0014 dahil) **3/3 OK, bulgu 0**; sözleşme
+güncellendi (`okunmamis` süzgeci + `/okundu` ucu + `okundu` alanı + dört
+kademeli renk enum'u); rol matrisi kilidi yeni ucu yakaladı ve güncellendi.
 
 ### P25 — Camera hardening + full home grid
 Status: BEKLIYOR · Depends-on: —
@@ -1290,6 +1365,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P24 · (bu commit) · Sikayet renk skalasi DORT KADEMEYE cikti (tek sikayet artik gorunur; esikler tek tabloda, P37 icin hazir) + KISI BASINA okuma durumu (0014) ve "Yeni / Okunmamis" triyaj kuyrugu (rozet = meta.total, ayri uc yok).
 - 2026-07-31 · P23 · (bu commit) · Sakin yaşam döngüsü: bağ uçları yöneticiye açıldı (sonradan daire atama artık ULAŞILABİLİR), `ResidentUpdate` e-posta + rol_tipi kazandı ("boş bırak" ile "SİL" ayrı), rol_tipi AKTİF bağların hepsine uygulanır (bağsız → 422); yeni şema GEREKMEDİ.
 - 2026-07-31 · P22 (b-g) · 6755a05 · Bildirime dokunma bir yere gidiyor, bildir kisayolu ana ekrana doner (tam yukleme yok), talep/sikayet AYRI akislar, kural gorseli listede, goruntu_kirliligi kategorisi (0013). (a) geri alindi — tani planda.
 - 2026-07-31 · P19 · df8cda3 · Hikvision/Dahua adaptorleri GERCEKCI tam govdelerle kilitlendi (uc bulgu: direction yon degil, _utc ofseti koruyordu, kimliksiz govdede turevsel kimlik kararli) + kamera kurulum dokumani.

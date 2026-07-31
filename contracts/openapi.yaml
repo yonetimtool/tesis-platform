@@ -4268,6 +4268,19 @@ paths:
           required: false
           description: "(G6, ADDITIVE) Kategori suzgeci"
           schema: { type: string, enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, goruntu_kirliligi, diger] }
+        - name: okunmamis
+          in: query
+          required: false
+          description: |
+            **(P24, ADDITIVE) "Yeni / Okunmamis" sekmesi.** `true` -> yalniz
+            ISTEYEN yoneticinin okumadiklari; `false` -> yalniz okuduklari;
+            bos -> hepsi. Okuma durumu KISI BASINADIR: bir yoneticinin
+            okumasi digerinin triyaj kuyrugunu bosaltmaz.
+
+            **Rozet sayisi icin ayri uc YOKTUR**:
+            `?okunmamis=true&limit=1` cagrisinin `meta.total` degeri rozetin
+            kendisidir.
+          schema: { type: boolean }
       responses:
         "200":
           description: Liste
@@ -4358,7 +4371,8 @@ paths:
       summary: Daire-basi yogunluk (sayi + renk) — YALNIZ yonetim
       description: >
         Rev-1: YALNIZ admin+yonetici. Her daire icin ACIK sikayet sayisi + renk
-        (0-2 yesil, 3-4 sari, 5+ kirmizi). residentlar sayilari GOREMEZ (403);
+        (P24 DORT KADEME: 0 yesil, 1-2 sari, 3-4 kirmizi, 5+ mor).
+        residentlar sayilari GOREMEZ (403);
         yapi gorunumu icin /building-map (rol-farkinda) kullanilir.
       responses:
         "200":
@@ -4386,6 +4400,26 @@ paths:
               schema: { $ref: "#/components/schemas/BuildingMap" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /unit-complaints/{id}/okundu:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [unit-complaints]
+      summary: Sikayeti OKUNDU isaretle (admin+yonetici) — kisi basina
+      description: >
+        (P24) Sikayeti YALNIZ istegi yapan yonetici icin okundu isaretler;
+        diger yoneticilerin "Yeni" kuyrugu etkilenmez. IDEMPOTENT: ikinci
+        cagri 409 vermez, ayni sonucu doner. GERI ALMA YOKTUR — "okunmamis"
+        bir is kuyrugudur, gecmis degil.
+      responses:
+        "200":
+          description: Isaretlendi (okundu=true)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitComplaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
   /unit-complaints/{id}:
     parameters:
       - $ref: "#/components/parameters/PathId"
@@ -5782,6 +5816,14 @@ components:
           nullable: true
           description: YALNIZ yonetim (denetim) icin dolu; resident/saha icin null
         complainant_ad: { type: string, nullable: true, description: Sikayet edenin adi (yalniz yonetim) }
+        okundu:
+          type: boolean
+          nullable: true
+          description: |
+            **(P24)** ISTEGI YAPAN yoneticiye gore okundu mu. Yonetim
+            uclarinda (liste / kapatma / okundu) dolu; sakin uclarinda
+            (`POST /unit-complaints`, `/mine`) null — okuma durumu bir
+            YONETIM kuyrugu kavramidir.
     UnitComplaintCreate:
       type: object
       required: [target_unit_id]
@@ -5812,8 +5854,16 @@ components:
         acik_sayisi: { type: integer, description: ACIK sikayet sayisi }
         renk:
           type: string
-          enum: [yesil, sari, kirmizi]
-          description: Sunucudan gelir; istemci esik HESAPLAMAZ
+          enum: [yesil, sari, kirmizi, mor]
+          description: |
+            **DORT KADEME (P24)**: `0 → yesil`, `1-2 → sari`, `3-4 → kirmizi`,
+            `5+ → mor`. Eskiden uc kademeydi (0-2 yesil...) ve TEK sikayet
+            almis daire, hic sikayet almamis daireyle AYNI renkteydi —
+            yonetim ilk sinyali goremiyordu.
+
+            Renk SUNUCUDAN gelir; istemci esikleri TEKRARLAMAZ (tek dogruluk
+            kaynagi). Sayim tabani ACIK sikayetlerdir: kapatma skalayi
+            dusurur, P37'nin sifirlamasi da dogal olarak yesile dondurur.
     UnitDensity:
       type: object
       required: [items]
@@ -5844,9 +5894,18 @@ components:
           description: ACIK sikayet sayisi — yalniz yonetim; digerinde null
         color:
           type: string
-          enum: [yesil, sari, kirmizi]
+          enum: [yesil, sari, kirmizi, mor]
           nullable: true
-          description: Yogunluk rengi — yalniz yonetim; digerinde null
+          description: |
+            Yogunluk rengi — yalniz yonetim; digerinde null.
+            **DORT KADEME (P24)**: `0 → yesil`, `1-2 → sari`, `3-4 → kirmizi`,
+            `5+ → mor`. Eskiden uc kademeydi (0-2 yesil...) ve TEK sikayet
+            almis daire, hic sikayet almamis daireyle AYNI renkteydi —
+            yonetim ilk sinyali goremiyordu.
+
+            Renk SUNUCUDAN gelir; istemci esikleri TEKRARLAMAZ (tek dogruluk
+            kaynagi). Sayim tabani ACIK sikayetlerdir: kapatma skalayi
+            dusurur, P37'nin sifirlamasi da dogal olarak yesile dondurur.
         benim_sikayetim:
           type: boolean
           default: false
