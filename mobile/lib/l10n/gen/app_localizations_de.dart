@@ -4591,4 +4591,35 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get kvkkMetniGoruntule => 'Datenschutzerklärung ansehen';
+
+  @override
+  String get anketBaslik => 'Umfragen';
+
+  @override
+  String get anketYok => 'Derzeit gibt es keine offene Umfrage.';
+
+  @override
+  String get anketKapali => 'Geschlossen';
+
+  @override
+  String get anketOyVerdiniz => 'Ihre Stimme wurde erfasst';
+
+  @override
+  String get anketOyVer => 'Abstimmen';
+
+  @override
+  String anketToplamOy(int sayi) {
+    return '$sayi Stimmen';
+  }
+
+  @override
+  String anketOyHatasi(String hata) {
+    return 'Stimme konnte nicht gesendet werden: $hata';
+  }
+
+  @override
+  String get anketSonucKapali => 'Ergebnisse erscheinen nach Umfrageschluss.';
+
+  @override
+  String get modulAnketler => 'Umfragen';
 }

@@ -4694,4 +4694,35 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get kvkkMetniGoruntule => 'عرض إشعار الخصوصية';
+
+  @override
+  String get anketBaslik => 'الاستطلاعات';
+
+  @override
+  String get anketYok => 'لا يوجد استطلاع مفتوح حاليًا.';
+
+  @override
+  String get anketKapali => 'مغلق';
+
+  @override
+  String get anketOyVerdiniz => 'تم تسجيل صوتك';
+
+  @override
+  String get anketOyVer => 'صوّت';
+
+  @override
+  String anketToplamOy(int sayi) {
+    return '$sayi صوت';
+  }
+
+  @override
+  String anketOyHatasi(String hata) {
+    return 'تعذّر إرسال التصويت: $hata';
+  }
+
+  @override
+  String get anketSonucKapali => 'تظهر النتائج عند إغلاق الاستطلاع.';
+
+  @override
+  String get modulAnketler => 'الاستطلاعات';
 }

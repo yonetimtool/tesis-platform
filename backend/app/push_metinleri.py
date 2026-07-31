@@ -143,6 +143,28 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('daire', 'sayi'),
     ),
+    # (P38) Portal iletisim formu — KAYIT ONCE, BILDIRIM SONRA.
+    "portal_iletisim": PushMetni(
+        baslik={
+            "tr": "Site sayfasından mesaj",
+            "en": "Message from the site page",
+            "ar": "رسالة من صفحة الموقع",
+            "ru": "Сообщение со страницы объекта",
+            "de": "Nachricht von der Seite",
+            "fr": "Message depuis la page du site",
+            "es": "Mensaje desde la página del sitio",
+        },
+        govde={
+            "tr": "{ad} iletişim formundan mesaj gönderdi.",
+            "en": "{ad} sent a message through the contact form.",
+            "ar": "أرسل {ad} رسالة عبر نموذج الاتصال.",
+            "ru": "{ad} отправил(а) сообщение через форму связи.",
+            "de": "{ad} hat eine Nachricht über das Kontaktformular gesendet.",
+            "fr": "{ad} a envoyé un message via le formulaire de contact.",
+            "es": "{ad} envió un mensaje mediante el formulario de contacto.",
+        },
+        params=('ad',),
+    ),
     "yeni_talep": PushMetni(
         baslik={
             "tr": "Talep / Arıza",

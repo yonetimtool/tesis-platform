@@ -1370,5 +1370,14 @@
   "kvkkIzinArama": "Ich möchte angerufen werden",
   "kvkkIzinKaydedilemedi": "Die Einstellung konnte nicht gespeichert werden.",
   "kvkkAyarlarBaslik": "Berechtigungen und Datenschutzerklärung",
-  "kvkkMetniGoruntule": "Datenschutzerklärung ansehen"
+  "kvkkMetniGoruntule": "Datenschutzerklärung ansehen",
+  "anketBaslik": "Umfragen",
+  "anketYok": "Derzeit gibt es keine offene Umfrage.",
+  "anketKapali": "Geschlossen",
+  "anketOyVerdiniz": "Ihre Stimme wurde erfasst",
+  "anketOyVer": "Abstimmen",
+  "anketToplamOy": "{sayi} Stimmen",
+  "anketOyHatasi": "Stimme konnte nicht gesendet werden: {hata}",
+  "anketSonucKapali": "Ergebnisse erscheinen nach Umfrageschluss.",
+  "modulAnketler": "Umfragen"
 }

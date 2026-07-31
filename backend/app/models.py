@@ -2995,3 +2995,155 @@ class UnitUyari(Base):
     hata: Mapped[str | None] = mapped_column(Text, nullable=True)
     son_deneme_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class TenantPortal(Base):
+    """(P38) Tesisin PUBLIC web sayfasi icerigi.
+
+    VARSAYILAN KAPALI (`yayinda=false`): bir tesisin adi, adresi ve
+    fotograflari yonetim ACIKCA yayinlamadan internete cikmamalidir.
+    """
+
+    __tablename__ = "tenant_portal"
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    yayinda: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    hero_baslik: Mapped[str | None] = mapped_column(Text, nullable=True)
+    hero_alt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    hakkimizda: Mapped[str | None] = mapped_column(Text, nullable=True)
+    iletisim_adres: Mapped[str | None] = mapped_column(Text, nullable=True)
+    iletisim_telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    iletisim_email: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class PortalGaleri(Base):
+    """(P38) Portal galerisi — sunucu dosyayi TASIMAZ, anahtari tutar."""
+
+    __tablename__ = "portal_galeri"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_portal_galeri_id_tenant"),
+        UniqueConstraint("tenant_id", "obje_anahtari", name="uq_portal_galeri_obje"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    obje_anahtari: Mapped[str] = mapped_column(Text, nullable=False)
+    baslik: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sira: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    created_at = _created_at()
+
+
+class Anket(Base):
+    """(P38) Sakin oylamasi. Anket bir yoklama degil KARAR aracidir."""
+
+    __tablename__ = "anket"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_anket_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    baslik: Mapped[str] = mapped_column(Text, nullable=False)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kapanis_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class AnketSecenek(Base):
+    __tablename__ = "anket_secenek"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_anket_secenek_id_tenant"),
+        ForeignKeyConstraint(
+            ["anket_id", "tenant_id"],
+            ["anket.id", "anket.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_anket_secenek_anket",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    anket_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    metin: Mapped[str] = mapped_column(Text, nullable=False)
+    sira: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+
+
+class AnketOy(Base):
+    """(P38) TEK OY, DEGISTIRILEMEZ.
+
+    `user_id` tek-oy kuralini zorlamak icin sarttir; hicbir uc oy verenin
+    kimligini DONDURMEZ (`UnitComplaint.complainant_user_id` deseni).
+    """
+
+    __tablename__ = "anket_oy"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "anket_id", "user_id", name="uq_anket_oy"),
+        ForeignKeyConstraint(
+            ["anket_id", "tenant_id"],
+            ["anket.id", "anket.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_anket_oy_anket",
+        ),
+        ForeignKeyConstraint(
+            ["secenek_id", "tenant_id"],
+            ["anket_secenek.id", "anket_secenek.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_anket_oy_secenek",
+        ),
+        ForeignKeyConstraint(
+            ["user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_anket_oy_user",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    anket_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    secenek_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    created_at = _created_at()
+
+
+class IletisimMesaji(Base):
+    """(P38) Portal iletisim formu.
+
+    TENANT'A YAZILIR, e-postaya DEGIL: e-posta gonderimi yapilandirmaya
+    baglidir ve yapilandirilmamis bir sitede mesaj SESSIZCE KAYBOLURDU.
+    """
+
+    __tablename__ = "iletisim_mesaji"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    email: Mapped[str | None] = mapped_column(Text, nullable=True)
+    mesaj: Mapped[str] = mapped_column(Text, nullable=False)
+    okundu: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    created_at = _created_at()

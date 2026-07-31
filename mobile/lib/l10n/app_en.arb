@@ -1370,5 +1370,14 @@
   "kvkkIzinArama": "I want to be called",
   "kvkkIzinKaydedilemedi": "The preference could not be saved.",
   "kvkkAyarlarBaslik": "Permissions and Privacy Notice",
-  "kvkkMetniGoruntule": "View the privacy notice"
+  "kvkkMetniGoruntule": "View the privacy notice",
+  "anketBaslik": "Surveys",
+  "anketYok": "There is no open survey right now.",
+  "anketKapali": "Closed",
+  "anketOyVerdiniz": "Your vote was recorded",
+  "anketOyVer": "Vote",
+  "anketToplamOy": "{sayi} votes",
+  "anketOyHatasi": "Vote could not be sent: {hata}",
+  "anketSonucKapali": "Results appear once the survey closes.",
+  "modulAnketler": "Surveys"
 }

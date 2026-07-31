@@ -1,6 +1,10 @@
 # admin  yonetici security tesis_gorevlisi resident guvenlik_amiri
 GET    /activity                                            IZIN   IZIN   IZIN   IZIN   IZIN   RED   
 GET    /admin/overview                                      IZIN   RED    RED    RED    RED    RED   
+GET    /anketler                                            IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /anketler                                            IZIN   IZIN   RED    RED    RED    RED   
+PATCH  /anketler/{anket_id}                                 IZIN   IZIN   RED    RED    RED    RED   
+POST   /anketler/{anket_id}/oy                              RED    RED    RED    RED    IZIN   RED   
 GET    /announcements                                       IZIN   IZIN   IZIN   IZIN   IZIN   RED   
 POST   /announcements                                       IZIN   IZIN   RED    RED    RED    RED   
 DELETE /announcements/{id}                                  IZIN   IZIN   RED    RED    RED    RED   
@@ -178,6 +182,14 @@ GET    /personel-kayitlari                                  IZIN   IZIN   RED   
 POST   /personel-kayitlari                                  IZIN   IZIN   RED    RED    RED    RED   
 DELETE /personel-kayitlari/{id}                             IZIN   IZIN   RED    RED    RED    RED   
 PATCH  /personel-kayitlari/{id}                             IZIN   IZIN   RED    RED    RED    RED   
+GET    /portal                                              IZIN   IZIN   RED    RED    RED    RED   
+PATCH  /portal                                              IZIN   IZIN   RED    RED    RED    RED   
+GET    /portal/galeri                                       IZIN   IZIN   RED    RED    RED    RED   
+POST   /portal/galeri                                       IZIN   IZIN   RED    RED    RED    RED   
+DELETE /portal/galeri/{galeri_id}                           IZIN   IZIN   RED    RED    RED    RED   
+GET    /portal/iletisim                                     IZIN   IZIN   RED    RED    RED    RED   
+GET    /public/{slug}                                       IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /public/{slug}/iletisim                              IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /raporlar/katalog                                    IZIN   IZIN   RED    RED    RED    RED   
 POST   /raporlar/{kod}                                      IZIN   IZIN   RED    RED    RED    RED   
 GET    /reports/financial-summary                           IZIN   IZIN   IZIN   IZIN   IZIN   RED   

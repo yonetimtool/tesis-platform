@@ -2,6 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/home/domain/home_menu.dart';
 
+// (P38) `anketler` girisi BILINEN TUM ROLLERDE durur: anket OKUMASI
+// herkese aciktir (site kararlarinin seffafligi — seffaflik panosuyla ayni
+// gerekce), OY ise YALNIZ sakindedir ve bunu sunucu zorlar. Menuden saklamak,
+// personelin sitesinde alinan karari hic gormemesi olurdu.
 void main() {
   group('homeMenuForRole (auth.md §4 UX aynasi)', () {
     test('admin: ziyaretci/kargo DOGRUDAN GORMEZ (KVKK) — yerine unitAccess; '
@@ -9,6 +13,7 @@ void main() {
       expect(homeMenuForRole(UserRole.admin), const [
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
         HomeMenuEntry.sikayetHaritasi,
@@ -26,6 +31,7 @@ void main() {
       expect(homeMenuForRole(UserRole.security), const [
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
         HomeMenuEntry.complaints,
@@ -98,6 +104,7 @@ void main() {
         const [
           HomeMenuEntry.announcements,
           HomeMenuEntry.etkinlik,
+          HomeMenuEntry.anketler,
           HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
           HomeMenuEntry.sikayetHaritasi,
@@ -229,6 +236,7 @@ void main() {
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
         HomeMenuEntry.sikayetHaritasi,

@@ -31,6 +31,7 @@ from .routers import sakin_odeme as sakin_odeme_router
 from .routers import rapor_motoru as rapor_motoru_router
 from .routers import mesajlar as mesajlar_router
 from .routers import gurultu_uc as gurultu_router
+from .routers import portal as portal_router
 from .routers import kvkk as kvkk_router
 from .routers import yonetisim as yonetisim_router
 from .routers import dashboard as dashboard_router
@@ -129,6 +130,7 @@ app.include_router(mesajlar_router.router)
 app.include_router(yonetisim_router.router)
 app.include_router(kvkk_router.router)
 app.include_router(gurultu_router.router)
+app.include_router(portal_router.router)
 app.include_router(visitors_router.router)
 app.include_router(kargo_router.router)
 app.include_router(unit_access_router.router)

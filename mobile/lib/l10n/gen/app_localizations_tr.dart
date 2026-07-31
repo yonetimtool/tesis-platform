@@ -4424,4 +4424,35 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get kvkkMetniGoruntule => 'Aydınlatma metnini görüntüle';
+
+  @override
+  String get anketBaslik => 'Anketler';
+
+  @override
+  String get anketYok => 'Şu an açık anket yok.';
+
+  @override
+  String get anketKapali => 'Kapandı';
+
+  @override
+  String get anketOyVerdiniz => 'Oyunuz alındı';
+
+  @override
+  String get anketOyVer => 'Oy ver';
+
+  @override
+  String anketToplamOy(int sayi) {
+    return '$sayi oy';
+  }
+
+  @override
+  String anketOyHatasi(String hata) {
+    return 'Oy gönderilemedi: $hata';
+  }
+
+  @override
+  String get anketSonucKapali => 'Sonuçlar anket kapanınca görünür.';
+
+  @override
+  String get modulAnketler => 'Anketler';
 }

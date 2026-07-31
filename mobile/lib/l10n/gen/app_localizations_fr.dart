@@ -4577,4 +4577,35 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get kvkkMetniGoruntule => 'Consulter la notice d\'information';
+
+  @override
+  String get anketBaslik => 'Sondages';
+
+  @override
+  String get anketYok => 'Aucun sondage ouvert pour le moment.';
+
+  @override
+  String get anketKapali => 'Clos';
+
+  @override
+  String get anketOyVerdiniz => 'Votre vote a été enregistré';
+
+  @override
+  String get anketOyVer => 'Voter';
+
+  @override
+  String anketToplamOy(int sayi) {
+    return '$sayi votes';
+  }
+
+  @override
+  String anketOyHatasi(String hata) {
+    return 'Le vote n\'a pas pu être envoyé : $hata';
+  }
+
+  @override
+  String get anketSonucKapali => 'Les résultats s\'affichent à la clôture.';
+
+  @override
+  String get modulAnketler => 'Sondages';
 }

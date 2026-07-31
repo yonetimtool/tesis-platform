@@ -4612,4 +4612,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get kvkkMetniGoruntule => 'View the privacy notice';
+
+  @override
+  String get anketBaslik => 'Surveys';
+
+  @override
+  String get anketYok => 'There is no open survey right now.';
+
+  @override
+  String get anketKapali => 'Closed';
+
+  @override
+  String get anketOyVerdiniz => 'Your vote was recorded';
+
+  @override
+  String get anketOyVer => 'Vote';
+
+  @override
+  String anketToplamOy(int sayi) {
+    return '$sayi votes';
+  }
+
+  @override
+  String anketOyHatasi(String hata) {
+    return 'Vote could not be sent: $hata';
+  }
+
+  @override
+  String get anketSonucKapali => 'Results appear once the survey closes.';
+
+  @override
+  String get modulAnketler => 'Surveys';
 }

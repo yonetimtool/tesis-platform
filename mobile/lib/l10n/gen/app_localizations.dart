@@ -7834,6 +7834,60 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Aydınlatma metnini görüntüle'**
   String get kvkkMetniGoruntule;
+
+  /// No description provided for @anketBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anketler'**
+  String get anketBaslik;
+
+  /// No description provided for @anketYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şu an açık anket yok.'**
+  String get anketYok;
+
+  /// No description provided for @anketKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapandı'**
+  String get anketKapali;
+
+  /// No description provided for @anketOyVerdiniz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Oyunuz alındı'**
+  String get anketOyVerdiniz;
+
+  /// No description provided for @anketOyVer.
+  ///
+  /// In tr, this message translates to:
+  /// **'Oy ver'**
+  String get anketOyVer;
+
+  /// No description provided for @anketToplamOy.
+  ///
+  /// In tr, this message translates to:
+  /// **'{sayi} oy'**
+  String anketToplamOy(int sayi);
+
+  /// No description provided for @anketOyHatasi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Oy gönderilemedi: {hata}'**
+  String anketOyHatasi(String hata);
+
+  /// No description provided for @anketSonucKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sonuçlar anket kapanınca görünür.'**
+  String get anketSonucKapali;
+
+  /// No description provided for @modulAnketler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anketler'**
+  String get modulAnketler;
 }
 
 class _AppLocalizationsDelegate

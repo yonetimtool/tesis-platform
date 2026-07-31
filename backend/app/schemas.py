@@ -4647,3 +4647,193 @@ class UnitUyariOut(BaseModel):
 class UnitUyariListResponse(BaseModel):
     meta: PageMetaOut
     items: list[UnitUyariOut]
+
+
+# ========================= P38 PORTAL + ANKET =============================== #
+class PortalIcerikUpdate(BaseModel):
+    """Portal icerigi — KISMI guncelleme (gonderilmeyen alan degismez)."""
+
+    yayinda: bool | None = None
+    hero_baslik: str | None = Field(None, max_length=200)
+    hero_alt: str | None = Field(None, max_length=400)
+    hakkimizda: str | None = Field(None, max_length=20_000)
+    iletisim_adres: str | None = Field(None, max_length=500)
+    iletisim_telefon: str | None = Field(None, max_length=40)
+    iletisim_email: str | None = Field(None, max_length=200)
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def _en_az_bir(self) -> "PortalIcerikUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class GaleriOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    obje_anahtari: str
+    baslik: str | None = None
+    sira: int
+    #: Kisa omurlu imzali GET (depo yapilandirilmamissa null).
+    foto_url: str | None = None
+
+
+class GaleriCreate(BaseModel):
+    obje_anahtari: str = Field(..., min_length=1, max_length=500)
+    baslik: str | None = Field(None, max_length=200)
+    sira: int = Field(0, ge=0, le=9999)
+
+
+class PortalIcerikOut(BaseModel):
+    """Yonetim gorunumu — `yayinda` dahil."""
+
+    model_config = ConfigDict(from_attributes=True)
+    yayinda: bool = False
+    hero_baslik: str | None = None
+    hero_alt: str | None = None
+    hakkimizda: str | None = None
+    iletisim_adres: str | None = None
+    iletisim_telefon: str | None = None
+    iletisim_email: str | None = None
+
+
+class PortalDuyuruOzet(BaseModel):
+    """Portalda gosterilen duyuru — YALNIZ baslik + ozet + tarih.
+
+    Tam govde PUBLIC uce KOYULMAZ: duyuru site ICINE yoneliktir ve tamamini
+    internete acmak, sakinlere yazilmis bir metni herkese yayinlamak olurdu.
+    """
+
+    id: uuid.UUID
+    baslik: str
+    ozet: str
+    created_at: datetime
+
+
+class PortalAnketSecenek(BaseModel):
+    id: uuid.UUID
+    metin: str
+    sira: int
+    #: Oy sayisi — YALNIZ sonuc gorunur oldugunda dolar (bkz. AnketOut).
+    oy: int | None = None
+
+
+class AnketOut(BaseModel):
+    """Anket + secenekler (+ kosullu sonuc).
+
+    SONUC KAPANANA KADAR GIZLI: acik bir ankette guncel dagilimi gostermek,
+    sonraki oy verenleri etkiler (surusel etki) ve oylamanin kendisini
+    bozardi. Yonetim sonucu HER ZAMAN gorur (kararin sahibi odur).
+    """
+
+    id: uuid.UUID
+    baslik: str
+    aciklama: str | None = None
+    kapanis_at: datetime | None = None
+    aktif: bool
+    #: Anket oy almaya acik mi (aktif + kapanis gecmemis).
+    acik: bool
+    #: Istegi yapan kisi oy verdi mi (anonim public uc icin None).
+    oy_verdim: bool | None = None
+    #: Toplam oy — sonuc gorunur degilse None.
+    toplam_oy: int | None = None
+    secenekler: list[PortalAnketSecenek]
+    created_at: datetime
+
+
+class AnketListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AnketOut]
+
+
+class AnketSecenekIn(BaseModel):
+    metin: str = Field(..., min_length=1, max_length=200)
+    sira: int = Field(0, ge=0, le=999)
+
+
+class AnketCreate(BaseModel):
+    baslik: str = Field(..., min_length=1, max_length=200)
+    aciklama: str | None = Field(None, max_length=2000)
+    kapanis_at: datetime | None = None
+    #: EN AZ IKI secenek: tek secenekli bir anket oy toplamaz, onay toplar.
+    secenekler: list[AnketSecenekIn] = Field(..., min_length=2, max_length=20)
+
+
+class AnketUpdate(BaseModel):
+    """Secenekler DEGISTIRILEMEZ: oy verilmis bir anketin seceneklerini
+    degistirmek, verilmis oylari baska bir soruya tasimak olurdu."""
+
+    baslik: str | None = Field(None, min_length=1, max_length=200)
+    aciklama: str | None = Field(None, max_length=2000)
+    kapanis_at: datetime | None = None
+    aktif: bool | None = None
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def _en_az_bir(self) -> "AnketUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class AnketOyIstek(BaseModel):
+    secenek_id: uuid.UUID
+
+
+class IletisimMesajIstek(BaseModel):
+    """Portal iletisim formu — PUBLIC.
+
+    Telefon VEYA e-posta ZORUNLU: ikisi de olmayan bir mesaja yonetim cevap
+    veremezdi (DB CHECK'i de ayni sozu tutar).
+    """
+
+    ad: str = Field(..., min_length=2, max_length=150)
+    telefon: str | None = Field(None, max_length=40)
+    email: str | None = Field(None, max_length=200)
+    mesaj: str = Field(..., min_length=5, max_length=5000)
+
+    @model_validator(mode="after")
+    def _donus_yolu(self) -> "IletisimMesajIstek":
+        if not (self.telefon or self.email):
+            raise ValueError("telefon veya e-posta gerekli")
+        return self
+
+
+class IletisimMesajOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    ad: str
+    telefon: str | None = None
+    email: str | None = None
+    mesaj: str
+    okundu: bool
+    created_at: datetime
+
+
+class IletisimMesajListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[IletisimMesajOut]
+
+
+class PortalPublicOut(BaseModel):
+    """PUBLIC portal yaniti — kimlik DOGRULAMASI YOK.
+
+    Icerigin tamami BILINCLI olarak secilmistir: sakin listesi, daire
+    sayisi, finans ve personel BURADA YOKTUR.
+    """
+
+    slug: str
+    tesis_adi: str
+    hero_baslik: str | None = None
+    hero_alt: str | None = None
+    hakkimizda: str | None = None
+    iletisim_adres: str | None = None
+    iletisim_telefon: str | None = None
+    iletisim_email: str | None = None
+    #: Harita gomulusu icin (tenant ayarlarindan).
+    konum_lat: float | None = None
+    konum_lon: float | None = None
+    galeri: list[GaleriOut] = Field(default_factory=list)
+    duyurular: list[PortalDuyuruOzet] = Field(default_factory=list)
+    anketler: list[AnketOut] = Field(default_factory=list)

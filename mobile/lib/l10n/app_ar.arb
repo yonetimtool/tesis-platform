@@ -1370,5 +1370,14 @@
   "kvkkIzinArama": "أرغب في تلقي المكالمات",
   "kvkkIzinKaydedilemedi": "تعذّر حفظ التفضيل.",
   "kvkkAyarlarBaslik": "الأذونات وإشعار الخصوصية",
-  "kvkkMetniGoruntule": "عرض إشعار الخصوصية"
+  "kvkkMetniGoruntule": "عرض إشعار الخصوصية",
+  "anketBaslik": "الاستطلاعات",
+  "anketYok": "لا يوجد استطلاع مفتوح حاليًا.",
+  "anketKapali": "مغلق",
+  "anketOyVerdiniz": "تم تسجيل صوتك",
+  "anketOyVer": "صوّت",
+  "anketToplamOy": "{sayi} صوت",
+  "anketOyHatasi": "تعذّر إرسال التصويت: {hata}",
+  "anketSonucKapali": "تظهر النتائج عند إغلاق الاستطلاع.",
+  "modulAnketler": "الاستطلاعات"
 }

@@ -3550,6 +3550,185 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
   # ================================================================= #
+  # SITE WEB PORTALI + ANKET (P38)
+  # IKI YUZ: `/public/{slug}/...` KIMLIK ISTEMEZ (`security: []`),
+  # `/portal` ve `/anketler` kimliklidir.
+  # PUBLIC ICERIK BILINCLI SECILMISTIR: sakin listesi, daire sayisi, finans
+  # ve personel BURADA YOKTUR; duyurunun yalniz OZETI cikar — tam govde
+  # site ICINE yoneliktir.
+  # YAYIN KAPISI: `yayinda=false` ise PUBLIC uc **404** doner (403 degil).
+  # 403, "bu tesis var ama kapali" bilgisini sizdirir ve slug tahminiyle
+  # tesis envanteri cikarilabilirdi.
+  # ================================================================= #
+  /public/{slug}:
+    get:
+      tags: [portal]
+      summary: Tesisin PUBLIC web sayfasi (kimlik YOK)
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: portal icerigi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PortalPublic" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /public/{slug}/iletisim:
+    post:
+      tags: [portal]
+      summary: Iletisim formu (kimlik YOK)
+      security: []
+      description: |
+        KAYIT ONCE, BILDIRIM SONRA: mesaji dogrudan e-postaya cevirmek,
+        SMTP yapilandirilmamis bir sitede mesajin **sessizce kaybolmasi**
+        demekti. Once tenant'a yazilir (yonetim panelden gorur), sonra push
+        denenir — push hatasi kaydi ETKILEMEZ.
+
+        Telefon VEYA e-posta ZORUNLU (422): ikisi de olmayan bir mesaja
+        yonetim cevap veremezdi (DB CHECK'i de ayni sozu tutar).
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IletisimMesajIstek" }
+      responses:
+        "201": { description: alindi }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /portal:
+    get:
+      tags: [portal]
+      summary: Portal icerigi (admin + yonetici)
+      responses:
+        "200": { description: icerik }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    patch:
+      tags: [portal]
+      summary: Portal icerigi + YAYIN anahtari (admin + yonetici)
+      description: >
+        VARSAYILAN KAPALI: bir tesisin adi, adresi ve fotograflari yonetim
+        ACIKCA yayinlamadan internete cikmamalidir. Yayin acma/kapama
+        `audit_log`a yazilir.
+      responses:
+        "200": { description: guncellendi }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /portal/galeri:
+    get:
+      tags: [portal]
+      summary: Galeri (admin + yonetici)
+      responses:
+        "200": { description: gorseller }
+    post:
+      tags: [portal]
+      summary: Galeriye gorsel ekle
+      description: >
+        `obje_anahtari` tenant ad-alaninda dogrulanir — baska tenant'in
+        objesini kendi galerisine koymak IDOR olurdu (422
+        `invalid_foto_key`). Ayni anahtar iki kez eklenemez (409).
+      responses:
+        "201": { description: eklendi }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /portal/galeri/{galeri_id}:
+    delete:
+      tags: [portal]
+      summary: Galeriden kaldir
+      parameters:
+        - { name: galeri_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: silindi }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /portal/iletisim:
+    get:
+      tags: [portal]
+      summary: Gelen iletisim mesajlari (admin + yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: mesajlar }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /anketler:
+    get:
+      tags: [portal]
+      summary: Anketler (bilinen TUM roller okur)
+      description: |
+        SONUC KAPANANA KADAR GIZLI: acik bir ankette guncel dagilimi
+        gostermek sonraki oy verenleri etkiler (surusel etki) ve oylamanin
+        kendisini bozardi — `toplam_oy` ve secenek `oy` alanlari **null**
+        doner. Yonetim (admin+yonetici) sonucu HER ZAMAN gorur: kararin
+        sahibi odur.
+
+        `oy_verdim` istegi yapan kisiye aittir; kendi oyunu bilmek
+        baskasinin oyunu gormek DEGILDIR.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: anketler }
+    post:
+      tags: [portal]
+      summary: Anket olustur (admin + yonetici)
+      description: >
+        EN AZ IKI secenek: tek secenekli bir anket oy toplamaz, ONAY toplar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnketCreate" }
+      responses:
+        "201": { description: olusturuldu }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /anketler/{anket_id}:
+    patch:
+      tags: [portal]
+      summary: Anketi guncelle (admin + yonetici)
+      description: >
+        SECENEKLER DEGISTIRILEMEZ (govdede kabul EDILMEZ): oy verilmis bir
+        anketin seceneklerini degistirmek, verilmis oylari BASKA BIR SORUYA
+        tasimak olurdu.
+      parameters:
+        - { name: anket_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: guncellendi }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /anketler/{anket_id}/oy:
+    post:
+      tags: [portal]
+      summary: Oy ver (YALNIZ resident)
+      description: |
+        TEK OY, DEGISTIRILEMEZ. "Oyumu degistireyim" akisi BILINCLI OLARAK
+        YOKTUR: degistirilebilir oy, kapanis anina kadar sonucun anlamsiz
+        olmasi ve kimin ne zaman dondugunun kayda gecmesi demekti. Ikinci
+        oy **409 `anket_zaten_oy_verdiniz`**; kapali anket **409
+        `anket_kapali`**; baska anketin secenegi **422**.
+
+        Oy YALNIZ sakinde: anket sakinlerin karar aracidir, personelin oyu
+        site kararina girmez.
+
+        Oy verildikten SONRA bile acik anketin sonucu GIZLIDIR.
+      parameters:
+        - { name: anket_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [secenek_id]
+              properties:
+                secenek_id: { type: string, format: uuid }
+      responses:
+        "201": { description: oy alindi }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
   # GURULTU CAYDIRICI (P37) — esik -> eylem -> sifirlama
   # AYRI BIR WEBHOOK KONFIGURASYONU ACILMADI: C1b'nin `integration` tablosu
   # zaten SSRF-korumali gonderim, KEK ile sifreli sir ve tenant izolasyonu
@@ -9056,6 +9235,58 @@ components:
           maxItems: 3
           default: []
           description: "Opsiyonel gorseller (en fazla 3); her biri /uploads/presign ile alinan obje anahtari"
+    AnketCreate:
+      type: object
+      required: [baslik, secenekler]
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        aciklama: { type: string, nullable: true, maxLength: 2000 }
+        kapanis_at: { type: string, format: date-time, nullable: true }
+        secenekler:
+          type: array
+          minItems: 2
+          maxItems: 20
+          items:
+            type: object
+            required: [metin]
+            properties:
+              metin: { type: string, minLength: 1, maxLength: 200 }
+              sira: { type: integer, minimum: 0, maximum: 999, default: 0 }
+    IletisimMesajIstek:
+      type: object
+      required: [ad, mesaj]
+      description: Telefon VEYA e-posta zorunlu (donus yolu olmayan mesaja cevap verilemez)
+      properties:
+        ad: { type: string, minLength: 2, maxLength: 150 }
+        telefon: { type: string, nullable: true, maxLength: 40 }
+        email: { type: string, nullable: true, maxLength: 200 }
+        mesaj: { type: string, minLength: 5, maxLength: 5000 }
+    PortalPublic:
+      type: object
+      description: >
+        PUBLIC portal yaniti. Icerigin tamami BILINCLI secilmistir: sakin
+        listesi, daire sayisi, finans ve personel BURADA YOKTUR.
+      required: [slug, tesis_adi]
+      properties:
+        slug: { type: string }
+        tesis_adi: { type: string }
+        hero_baslik: { type: string, nullable: true }
+        hero_alt: { type: string, nullable: true }
+        hakkimizda: { type: string, nullable: true }
+        iletisim_adres: { type: string, nullable: true }
+        iletisim_telefon: { type: string, nullable: true }
+        iletisim_email: { type: string, nullable: true }
+        konum_lat: { type: number, format: double, nullable: true }
+        konum_lon: { type: number, format: double, nullable: true }
+        galeri: { type: array, items: { type: object } }
+        duyurular:
+          type: array
+          description: YALNIZ baslik + OZET + tarih (tam govde public'e cikmaz)
+          items: { type: object }
+        anketler:
+          type: array
+          description: "`oy_verdim` null, acik anketin sonucu null"
+          items: { type: object }
     KvkkMetinCreate:
       type: object
       required: [baslik, govde]

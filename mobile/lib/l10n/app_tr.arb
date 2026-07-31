@@ -1897,5 +1897,28 @@
   "kvkkIzinArama": "Aranmak istiyorum",
   "kvkkIzinKaydedilemedi": "Tercih kaydedilemedi.",
   "kvkkAyarlarBaslik": "İzinler ve Aydınlatma Metni",
-  "kvkkMetniGoruntule": "Aydınlatma metnini görüntüle"
+  "kvkkMetniGoruntule": "Aydınlatma metnini görüntüle",
+  "anketBaslik": "Anketler",
+  "anketYok": "Şu an açık anket yok.",
+  "anketKapali": "Kapandı",
+  "anketOyVerdiniz": "Oyunuz alındı",
+  "anketOyVer": "Oy ver",
+  "anketToplamOy": "{sayi} oy",
+  "@anketToplamOy": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "anketOyHatasi": "Oy gönderilemedi: {hata}",
+  "@anketOyHatasi": {
+    "placeholders": {
+      "hata": {
+        "type": "String"
+      }
+    }
+  },
+  "anketSonucKapali": "Sonuçlar anket kapanınca görünür.",
+  "modulAnketler": "Anketler"
 }

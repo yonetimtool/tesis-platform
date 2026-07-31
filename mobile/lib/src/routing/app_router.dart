@@ -38,6 +38,7 @@ import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
 import '../features/notifications/presentation/notifications_screen.dart';
 import '../features/support/presentation/destek_screen.dart';
+import '../features/anket/presentation/anket_screen.dart';
 import '../features/kvkk/presentation/kvkk_metin_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/staff/presentation/staff_screen.dart';
@@ -102,6 +103,8 @@ class AppRoutes {
   /// (P36) Aydinlatma metni SALT-OKUMA (onay kapisindan AYRI rota:
   /// kullanici NEYI onayladigini sonradan gorebilmeli).
   static const kvkkMetin = '/kvkk-metin';
+  /// (P38) Anketler — sakin oy verir; olusturma YONETIM/panel isidir.
+  static const anketler = '/anketler';
   static const notifications = '/notifications';
   static const destek = '/destek';
   static const profile = '/profile';
@@ -405,6 +408,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         // ekranindaki AppBar aksiyonundan. Backend RBAC yazmayi zorlar.
         path: AppRoutes.taskCategories,
         builder: (context, state) => const TaskCategoriesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.anketler,
+        builder: (context, state) => const AnketScreen(),
       ),
       GoRoute(
         path: AppRoutes.kvkkMetin,

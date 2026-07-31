@@ -4682,4 +4682,35 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get kvkkMetniGoruntule => 'Открыть уведомление';
+
+  @override
+  String get anketBaslik => 'Опросы';
+
+  @override
+  String get anketYok => 'Сейчас нет открытых опросов.';
+
+  @override
+  String get anketKapali => 'Закрыт';
+
+  @override
+  String get anketOyVerdiniz => 'Ваш голос учтён';
+
+  @override
+  String get anketOyVer => 'Голосовать';
+
+  @override
+  String anketToplamOy(int sayi) {
+    return '$sayi голосов';
+  }
+
+  @override
+  String anketOyHatasi(String hata) {
+    return 'Не удалось отправить голос: $hata';
+  }
+
+  @override
+  String get anketSonucKapali => 'Результаты появятся после закрытия опроса.';
+
+  @override
+  String get modulAnketler => 'Опросы';
 }

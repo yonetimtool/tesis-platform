@@ -135,6 +135,11 @@ enum HomeMenuEntry {
   /// sayfaya yonlendirilmez. Enum + rota ekran yeniden kullanim icin korunur.
   sikayetlerim,
 
+  /// (P38) Anketler — sakin oy verir, yonetim sonucu panelden gorur.
+  /// Menude TUM rollerde durur (herkes okur) ama OY YALNIZ sakinde:
+  /// anket sakinlerin karar aracidir, personelin oyu site kararina girmez.
+  anketler,
+
   /// Yonetici Iletisim — tenant'in yoneticileri (ad + telefon + arama) +
   /// yonetim maili. Saha rolleri + sakin gorur; YONETICI kendisi GORMEZ.
   yoneticiIletisim,
@@ -148,6 +153,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
         HomeMenuEntry.sikayetHaritasi,
@@ -182,6 +188,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
         HomeMenuEntry.complaints,
@@ -202,6 +209,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
         HomeMenuEntry.complaints,
@@ -217,6 +225,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
       return const [
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
         HomeMenuEntry.sikayetHaritasi,
@@ -246,6 +255,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.announcements,
         HomeMenuEntry.etkinlik,
+        HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
         // Sikayet Haritasi: resident KENDI sikayetlerini de HARITA uzerinde

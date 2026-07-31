@@ -1370,5 +1370,14 @@
   "kvkkIzinArama": "Quiero recibir llamadas",
   "kvkkIzinKaydedilemedi": "No se pudo guardar la preferencia.",
   "kvkkAyarlarBaslik": "Permisos y aviso de privacidad",
-  "kvkkMetniGoruntule": "Ver el aviso de privacidad"
+  "kvkkMetniGoruntule": "Ver el aviso de privacidad",
+  "anketBaslik": "Encuestas",
+  "anketYok": "No hay encuestas abiertas ahora.",
+  "anketKapali": "Cerrada",
+  "anketOyVerdiniz": "Su voto fue registrado",
+  "anketOyVer": "Votar",
+  "anketToplamOy": "{sayi} votos",
+  "anketOyHatasi": "No se pudo enviar el voto: {hata}",
+  "anketSonucKapali": "Los resultados aparecen al cerrar la encuesta.",
+  "modulAnketler": "Encuestas"
 }

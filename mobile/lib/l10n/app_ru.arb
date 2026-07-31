@@ -1370,5 +1370,14 @@
   "kvkkIzinArama": "Хочу принимать звонки",
   "kvkkIzinKaydedilemedi": "Не удалось сохранить настройку.",
   "kvkkAyarlarBaslik": "Разрешения и уведомление",
-  "kvkkMetniGoruntule": "Открыть уведомление"
+  "kvkkMetniGoruntule": "Открыть уведомление",
+  "anketBaslik": "Опросы",
+  "anketYok": "Сейчас нет открытых опросов.",
+  "anketKapali": "Закрыт",
+  "anketOyVerdiniz": "Ваш голос учтён",
+  "anketOyVer": "Голосовать",
+  "anketToplamOy": "{sayi} голосов",
+  "anketOyHatasi": "Не удалось отправить голос: {hata}",
+  "anketSonucKapali": "Результаты появятся после закрытия опроса.",
+  "modulAnketler": "Опросы"
 }

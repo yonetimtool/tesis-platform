@@ -95,6 +95,8 @@ class Action:
     COMPLAINT_CREATE = "complaint_create"
     GUVENLIK_MODU = "guvenlik_modu"
     UYARI_MANUEL = "uyari_manuel"
+    PORTAL_YAYIN = "portal_yayin"
+    ANKET_OLUSTUR = "anket_olustur"
     KVKK_YAYIN = "kvkk_yayin"
     KVKK_ONAY = "kvkk_onay"
     PAZARLAMA_RIZA = "pazarlama_riza"

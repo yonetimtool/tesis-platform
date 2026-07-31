@@ -1370,5 +1370,14 @@
   "kvkkIzinArama": "Je souhaite être appelé(e)",
   "kvkkIzinKaydedilemedi": "Impossible d'enregistrer la préférence.",
   "kvkkAyarlarBaslik": "Autorisations et notice d'information",
-  "kvkkMetniGoruntule": "Consulter la notice d'information"
+  "kvkkMetniGoruntule": "Consulter la notice d'information",
+  "anketBaslik": "Sondages",
+  "anketYok": "Aucun sondage ouvert pour le moment.",
+  "anketKapali": "Clos",
+  "anketOyVerdiniz": "Votre vote a été enregistré",
+  "anketOyVer": "Voter",
+  "anketToplamOy": "{sayi} votes",
+  "anketOyHatasi": "Le vote n'a pas pu être envoyé : {hata}",
+  "anketSonucKapali": "Les résultats s'affichent à la clôture.",
+  "modulAnketler": "Sondages"
 }

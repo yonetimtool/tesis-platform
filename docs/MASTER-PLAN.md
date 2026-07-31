@@ -2348,7 +2348,7 @@ Rol matrisi kilidi 3 satır büyüdü.
 uyarı geçmişi **ekranı** yok (API + tenant ayarları hazır).
 
 ### P38 — Site web portal + surveys (anket)
-Status: BEKLIYOR · Depends-on: P29; nice-to-have reuse from P7
+Status: BITTI · Depends-on: P29; nice-to-have reuse from P7
 Scope (ref web-sitesi screenshots): per-tenant public web page + resident login
 area, "son derece user friendly": hero + site adı; Hakkımızda (editable rich
 text + görsel); Duyuru & ANKET feed — announcements reused; NEW anket module
@@ -2362,6 +2362,76 @@ public multi-tenant routes (slug-based) vs separate app — decide, justify in
 Notes; basic SEO/meta.
 Acceptance: portal renders per tenant with real data; anket vote E2E (tek
 oy/sakin) + results; contact form delivers; `npm run build`; gates.
+Notes (2026-07-31):
+**TEKNİK KARAR — AYRI UYGULAMA DEĞİL, admin-web içinde public rota.**
+Sözlük (7 dil), tasarım belirteçleri, `API_BASE` çözümü ve derleme/dağıtım
+hattı **zaten orada**; ikinci bir Next uygulaması bunların hepsini kopyalar ve
+biri güncellenip diğeri unutulurdu. Caddy de zaten bu uygulamaya yönlendiriyor
+— ayrı bir upstream, ayrı TLS/health yapılandırması demekti. Oturum kapısı
+`middleware.config.matcher` ile **yol bazlıdır**; `/site/[slug]` listede
+olmadığı için public kalır. **Yeni kilit:** `tests/portal-public.test.ts` —
+mevcut kapsam kilidi yalnız "korunan sayfa matcher'da mı" diye bakıyordu; ters
+yönü (public bir rotanın yanlışlıkla matcher'a girmesi) kimse kontrol
+etmiyordu ve girseydi site sayfası ziyaretçiyi `/login`'e atardı.
+
+**YAYIN VARSAYILAN KAPALI ve kapalıyken PUBLIC uç 404 döner — 403 değil.**
+403, "bu tesis var ama kapalı" bilgisini sızdırır ve slug tahminiyle **tesis
+envanteri** çıkarılabilirdi. Olmayan slug ile kapalı portal **aynı** yanıtı
+verir. Yayın açma/kapama `audit_log`a yazılır: tesisin adı ve adresi internete
+çıkıyor, kimin ne zaman açtığı sorulabilmeli.
+
+**PUBLIC İÇERİK BİLİNÇLİ SEÇİLDİ.** Sakin listesi, daire sayısı, finans ve
+personel **yok**. Duyurunun yalnız **özeti** çıkar — tam gövde site içine
+yöneliktir ve tamamını internete açmak, sakinlere yazılmış bir metni herkese
+yayınlamak olurdu. Hakkımızda **düz metin** olarak çizilir: HTML kabul etmek,
+panelden gelen içeriği XSS yüzeyine çevirirdi. Harita **anahtarsız** gömülür —
+API anahtarını public bir sayfaya koymak, anahtarı herkese vermek olurdu.
+
+**ANKET BİR YOKLAMA DEĞİL KARAR ARACIDIR.**
+- **Tek oy, değiştirilemez.** "Oyumu değiştireyim" akışı bilinçli olarak yok:
+  değiştirilebilir oy, kapanış anına kadar sonucun anlamsız olması ve kimin ne
+  zaman döndüğünün kayda geçmesi demekti. İkinci oy 409.
+- **Sonuç kapanana kadar gizli.** Açık bir ankette güncel dağılımı göstermek
+  sonraki oy verenleri etkiler (sürüsel etki) ve oylamanın kendisini bozardı.
+  Oy verdikten **sonra bile** gizli: kendi oyunu bilmek başkasınınkini görmek
+  değildir. Yönetim sonucu **her zaman** görür — kararın sahibi odur.
+- **Oy yalnız sakinde**, okuma bilinen tüm rollerde: personelin oyu site
+  kararına girmez ama sitesinde alınan kararı görmemesi de doğru olmazdı.
+- **Seçenekler değiştirilemez** (`extra="forbid"`): oy verilmiş bir anketin
+  seçeneklerini değiştirmek, verilmiş oyları başka bir soruya taşımak olurdu.
+- **En az iki seçenek**: tek seçenekli bir anket oy toplamaz, onay toplar.
+- `user_id` tek-oy kuralını zorlamak için saklanır ama **hiçbir uç
+  döndürmez** (`unit_complaint.complainant_user_id` deseni).
+
+**İLETİŞİM: KAYIT ÖNCE, BİLDİRİM SONRA.** Mesajı doğrudan e-postaya çevirmek,
+SMTP yapılandırılmamış bir sitede mesajın **sessizce kaybolması** demekti.
+Telefon **veya** e-posta zorunlu (üç katman: pydantic + DB CHECK + sözleşme):
+ikisi de olmayan bir mesaja yönetim cevap veremezdi.
+
+**MOBİL HOOK MİNİMAL.** Anket oluşturma/kapatma yönetim işidir ve panele
+aittir; mobilde "gör ve oy ver" var. Oy verilmiş ankette oy butonu **hiç
+çizilmez** — sunucu 409 döndürüp hata göstermek yerine yapılamayacak şeyi
+teklif etmiyoruz.
+
+**AÇIK BIRAKILAN — kimlikli sakin alanı (panel borcuna).** Kapsamdaki
+"authenticated resident area: Ödenmemiş Borçlar + Öde" **yapılmadı** ve
+gerekçesi mimaridir: admin-web girişi **yalnız admin**dir (bkz. auth.md); web
+tarafına ikinci bir sakin oturumu (token saklama, yenileme, çıkış, cihaz
+güveni) eklemek, mobilde P29/P30 ile zaten çalışan bir akışın **ikinci bir
+kimlik modelini** kurmak olurdu. Portal, mobil uygulama yönlendirmesiyle o
+akışa bağlanır; kimlikli web alanı finans panel bölümüyle birlikte
+tasarlanmalı. Portal içerik/anket **yönetim ekranları** da aynı borçta.
+
+Kanıt: `backend/tests/test_portal_anket.py` **23 test** + `mobile/test/
+anket_test.dart` **7 test** + `admin-web/tests/portal-public.test.ts` **4
+test** yeşil; tam pytest yeşil; `flutter analyze` temiz, `flutter test` 1516,
+apk debug build başarılı; admin-web `tsc` + `vitest` + `npm run build`
+(`/site/[slug]` rotası derlendi); `goc-tersinirlik` bulgu 0 (28 sınır),
+`goc-uyum-dogrula` bulgu 0. Rol matrisi kilidi 12 satır büyüdü.
+
+**BULGU — indekssiz FK.** `anket_secenek(tenant_id)` FK'sinin öncü kolonunu
+kapsayan indeks yoktu (tenant silinince RI tetiği tabloyu seq scan ederdi);
+indeks kapsamı envanteri yakaladı.
 
 ### P39 — Scale & load readiness
 Status: BEKLIYOR · Depends-on: best after P29–P31 land
@@ -2623,7 +2693,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P37 · (bu commit) · Gurultu caydirici otomasyonu (0026): AYRI webhook konfigurasyonu ACILMADI (C1b integration zaten SSRF+KEK+izolasyon veriyor), MANUEL MOD birinci sinif (cogu sitede entegrasyon yok) ve sunucu 'yapildi' VARSAYAMAZ; sinir DAHIL (4 hayir, 5 evet), YALNIZ gurultu kategorisi, SIFIRLAMA KAYIT SILMEZ (kapali'ya ceker — uyarinin dayanagi durur); HMAC imzasi ZAMAN DAMGASINI kapsar (replay), sir yoksa imza da yok; yeniden deneme istek yolunda DEGIL, katlanan aralikla ve tukenince MANUEL MODA duser; BULGU: FK indekssizdi (RI tetigi tenant'i seq scan ederdi).\n- 2026-07-31 · P36 · (bu commit) · KVKK aydinlatma kapisi + pazarlama izinleri (0025): METIN TENANT ICERIGIDIR (gomulu tek metin 200 tesise BASKASININ metnini imzalatirdi), SURUM VAR YERINDE DUZENLEME YOK (dun verilen onay bugun baska metne ait gorunurdu), onay eski surume yazilmaz (409) ve IDEMPOTENT; kaydirma kilidi 24 px esikli ve SIGAN icerikte ZATEN ACIK; sunucu navigasyonu kilitlemez (onay vermemis kullanici metni OKUYABILMELI), ag hatasinda kapi ACILMAZ; P32 pazarlama gonderimi artik GERCEK ve KANAL BAZLI rizayi okuyor; BULGU: izinler kartinin donen gostergesi dokuz ayar testini pumpAndSettle zaman asimiyla dusurdu.\n- 2026-07-31 · P35 · 458dc75 · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
+- 2026-07-31 · P38 · (bu commit) · Site web portali + anket (0027): AYRI UYGULAMA DEGIL admin-web icinde public rota (sozluk/tasarim/derleme hatti zaten orada) + yeni kilit public rotanin matcher'a SIZMADIGINI olcuyor; yayin VARSAYILAN KAPALI ve kapaliyken 404 (403 tesis envanteri sizdirirdi); public icerik BILINCLI (duyurunun yalniz OZETI, hakkimizda DUZ METIN, harita ANAHTARSIZ); anket TEK OY ve DEGISTIRILEMEZ, sonuc KAPANANA KADAR GIZLI (surusel etki) ama yonetim her zaman gorur; iletisim KAYIT ONCE BILDIRIM SONRA; kimlikli sakin web alani gerekcesiyle panel borcunda.\n- 2026-07-31 · P37 · (bu commit) · Gurultu caydirici otomasyonu (0026): AYRI webhook konfigurasyonu ACILMADI (C1b integration zaten SSRF+KEK+izolasyon veriyor), MANUEL MOD birinci sinif (cogu sitede entegrasyon yok) ve sunucu 'yapildi' VARSAYAMAZ; sinir DAHIL (4 hayir, 5 evet), YALNIZ gurultu kategorisi, SIFIRLAMA KAYIT SILMEZ (kapali'ya ceker — uyarinin dayanagi durur); HMAC imzasi ZAMAN DAMGASINI kapsar (replay), sir yoksa imza da yok; yeniden deneme istek yolunda DEGIL, katlanan aralikla ve tukenince MANUEL MODA duser; BULGU: FK indekssizdi (RI tetigi tenant'i seq scan ederdi).\n- 2026-07-31 · P36 · (bu commit) · KVKK aydinlatma kapisi + pazarlama izinleri (0025): METIN TENANT ICERIGIDIR (gomulu tek metin 200 tesise BASKASININ metnini imzalatirdi), SURUM VAR YERINDE DUZENLEME YOK (dun verilen onay bugun baska metne ait gorunurdu), onay eski surume yazilmaz (409) ve IDEMPOTENT; kaydirma kilidi 24 px esikli ve SIGAN icerikte ZATEN ACIK; sunucu navigasyonu kilitlemez (onay vermemis kullanici metni OKUYABILMELI), ag hatasinda kapi ACILMAZ; P32 pazarlama gonderimi artik GERCEK ve KANAL BAZLI rizayi okuyor; BULGU: izinler kartinin donen gostergesi dokuz ayar testini pumpAndSettle zaman asimiyla dusurdu.\n- 2026-07-31 · P35 · 458dc75 · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
 - 2026-07-31 · P34 · 4395fdc · Tur butunlugu (0023): KONUM BIR KANITTIR ON KOSUL DEGIL — izin reddi/servis kapali okutmayi dusurmez ama SESSIZ DE KALMAZ (konum_durumu + konumsuz_sayisi + suzgec); gecikme alarmi 'kacirildi'dan AYRI, araliklari KATLANAN tekrarli bildirim (gorevliye kisi, yonetime rol) ve bildirim TEKLIGI kismi indekse cevrildi (ikinci alarm sessizce dusuyordu); baslangic fotografi '1 metre gidip gel' YERINE (SDM zaten fiziksel varligi kanitliyor; fotograf ORTAM+SAAT boyutu ekler), kamera-only + ayri hata kodu.
 - 2026-07-31 · P33 · 236f70b · Yonetisim modulleri (0022): IS TAKIBI denetimi omurganin ZATEN VAR OLDUGUNU gosterdi — birlestirme degil GENISLETME (complaint + unit_id/oncelik/atanan_personel; oncelik durumdan BAGIMSIZ ayri ucta, atanan personel_kayit'tir app_user degil); karar defteri uyeleri AYRI TABLODA + metin sablonlu PDF; dokuman arsivi USTVERI-ONLY (obje silinmez); site aktarimi KURU CALISMALI ve SATIR BAZLI hata raporlu, idempotent.
 - 2026-07-31 · P32 · 47ac96c · Mesaj sablonlari + gonderim (0021): gonderilen metin GECMISE KOPYALANIR (sablon degisse de kanit durur), amac SABLONDA (pazarlama riza olmadan HIC gonderilmez ve atlananlar SAYILIR), SMS sayaci Turkce tuzagini gosterir (kucuk c/i/g/s UCS-2'ye dusurur), saglayici takasi yapilandirma ile; P28 seed regresyonu bulundu ve duzeltildi.
