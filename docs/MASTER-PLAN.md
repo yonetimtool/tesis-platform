@@ -1469,6 +1469,46 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+## STATUS REPORT — 2026-07-31 #3 (kural 10: bağlam doldu, devir)
+
+**FINAL REPORT değildir** — uygun madde tükenmedi. P27'den itibaren devam
+edilebilir; plan dosyası tüm durumu taşıyor. `/clear` + standart kickoff.
+
+### Bu turda biten (hepsi `origin/main`'de)
+
+| Madde | Hash | Özet |
+|---|---|---|
+| P23 | `b5416a1` | Sakin yaşam döngüsü: bağ uçları yöneticiye açıldı (sonradan daire atama **ulaşılamazdı**), e-posta + rol_tipi düzenlenebilir |
+| P24 | `a26bb7c` | Şikayet skalası 4 kademe + **kişi başına** okuma durumu (0014) ve "Yeni/Okunmamış" triyaj kuyruğu |
+| P24 düzeltme | `a64701b` | `flutter analyze` kapısı testler yazılmadan önce ölçülmüştü — ders plana yazıldı |
+| P25 | `33a7d75` | Kamera: 2048 sınırı (0015) + **"yayınlar oynamıyor"un kök nedeni** (cleartext yalnız debug manifestindeydi) + hata nedene göre + dörtlü şerit |
+| P26 | `760a812` | Bağımsız bölüm **tip/grup** tanımları (0016), tip varsayılan aidatı taşır |
+
+### Bu turda bulunan üç GERÇEK kusur (özellik değil, hata)
+
+1. **P25b — cleartext yalnız `src/debug` manifestindeydi.** Sürüm
+   derlemesinde her `http://` yayın sessizce düşüyordu; bu **P17'nin restream
+   özelliğini de** çalışmaz yapıyordu (Frigate/go2rtc geçidi düz http'tir) ve
+   geliştirmede çalıştığı için görülmemişti.
+2. **P25a — "açık Türkçe hata" oluşturma yolunda hiç çalışmıyordu.** URL
+   doğrulaması `model_validator` içindeydi; pydantic onu kendi
+   `validation_error` zarfına çevirip **ham İngilizce** döndürüyordu. Mevcut
+   testler yalnız `422` beklediği için görünmemişti.
+3. **P26 — bileşik FK + `ON DELETE SET NULL` anahtarın tamamını null'lar.**
+   `unit.tenant_id` NOT NULL olduğu için tanım silme **500** veriyordu; sütun
+   listesi (`SET NULL (unit_tip_id)`) ile düzeltildi.
+
+### Sıradaki
+
+**P27** (muhasebe Tanımlar katmanı — kasa/gelir-gider/firma/personel;
+Depends-on P23✔ P26✔ → **artık uygun**). P26'nın notunda yazılı bilinçli
+açık: admin-web "Tanımlar" paneli P27 ile **tek seferde** yapılmalı (bölüm
+dört tanım listesini birlikte taşımalı).
+
+Kalan: P28–P39. Bloke/Kerem'de: P2, P11 (device-verify listesi **11 madde**),
+P12/P13 (dış kimlik bilgileri), P18 (donanım/saha), P22(a) (geri alındı, tanı
+yazılı). Karar bekleyen: çeviri sağlayıcı (DeepL = KVKK kararı), yüz tanıma.
+
 ## STATUS REPORT — 2026-07-31 #2 (kural 10: bağlam doldu, devir)
 
 **FINAL REPORT değildir** — uygun madde tükenmedi. Plan dosyası tüm durumu
@@ -1521,7 +1561,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P26 · (bu commit) · Bagimsiz Bolum TIP + GRUP tanimlari (0016): tip = buyukluk + VARSAYILAN AIDAT (null "tanimsiz" != 0 "muaf"), grup = ne oldugu; tanim silinince daire SILINMEZ; daire/toplu olusturmada atama; bilesik FK + SET NULL bulgusu.
+- 2026-07-31 · P26 · 760a812 · Bagimsiz Bolum TIP + GRUP tanimlari (0016): tip = buyukluk + VARSAYILAN AIDAT (null "tanimsiz" != 0 "muaf"), grup = ne oldugu; tanim silinince daire SILINMEZ; daire/toplu olusturmada atama; bilesik FK + SET NULL bulgusu.
 - 2026-07-31 · P25 · 33a7d75 · Kamera sertlestirme: 2048 karakter siniri (0015, uc katman) + "kamu yayinlari oynamiyor"un KOK NEDENI (cleartext yalniz debug manifestindeydi; P17 restream'i de vuruyordu) + hata artik NEDENE gore konusuyor + ana ekran seridi dortlu ve yonetici/sakin ekranlarina da eklendi.
 - 2026-07-31 · P24 · a26bb7c · Sikayet renk skalasi DORT KADEMEYE cikti (tek sikayet artik gorunur; esikler tek tabloda, P37 icin hazir) + KISI BASINA okuma durumu (0014) ve "Yeni / Okunmamis" triyaj kuyrugu (rozet = meta.total, ayri uc yok).
 - 2026-07-31 · P23 · b5416a1 · Sakin yaşam döngüsü: bağ uçları yöneticiye açıldı (sonradan daire atama artık ULAŞILABİLİR), `ResidentUpdate` e-posta + rol_tipi kazandı ("boş bırak" ile "SİL" ayrı), rol_tipi AKTİF bağların hepsine uygulanır (bağsız → 422); yeni şema GEREKMEDİ.
