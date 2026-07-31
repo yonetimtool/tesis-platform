@@ -126,10 +126,22 @@ class ResidentHomeScreen extends ConsumerWidget {
       onDestinationSelected: (i) => _onTab(context, i),
       onModul: (rota) => context.push(rota),
       onBildir: () => showBildirMenu(context, girisler: [
+        // TALEP/ARIZA ve SIKAYET AYRI AKISLARDIR (P22 d+e).
+        //
+        // Eskiden sakinin tek "bildir" girisi Talep/Ariza idi; komsudan
+        // sikayetci olan sakin de oraya giriyor, yani YANLIS KANALA
+        // yaziyordu (talep yonetime is emri olarak akar, sikayet ise ANONIM
+        // ve DAIRE hedeflidir). Iki giris ayrildi:
+        //   * Talep/Ariza  -> /complaints   (takip: Taleplerim)
+        //   * Komsu sikayeti -> /sikayet-haritasi (takip: Sikayetlerim)
         BildirGiris(
-            icon: Icons.rate_review_outlined,
+            icon: Icons.build_outlined,
             label: l10n.fabTalepArizaBildir,
-            route: AppRoutes.complaints),
+            route: '${AppRoutes.complaints}?bildir=1'),
+        BildirGiris(
+            icon: Icons.campaign_outlined,
+            label: l10n.fabSikayetBildir,
+            route: AppRoutes.sikayetHaritasi),
         BildirGiris(
             icon: Icons.event_available_outlined,
             label: l10n.fabRezervasyonYap,

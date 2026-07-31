@@ -1263,5 +1263,7 @@
   "anprNedenOtomatikCikisKapali": "Automatic exit is off",
   "anprNedenElleReddedildi": "Manually rejected",
   "anprNedenPlakaBicimi": "Plate could not be read",
-  "aracPlakaOkumalari": "Plate readings"
+  "aracPlakaOkumalari": "Plate readings",
+  "kategoriGoruntuKirliligi": "Visual pollution",
+  "fabSikayetBildir": "Report a neighbour complaint"
 }

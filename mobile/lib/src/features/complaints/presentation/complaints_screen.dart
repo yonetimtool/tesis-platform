@@ -33,9 +33,26 @@ import '../../../core/ui/gorsel_cozme.dart';
 /// yuklendiginde ilgili talebin detayi BIR KEZ otomatik acilir; kayit
 /// listede yoksa (silinmis/yetki disi) sessizce listede kalinir.
 class ComplaintsScreen extends ConsumerStatefulWidget {
-  const ComplaintsScreen({super.key, this.initialComplaintId});
+  const ComplaintsScreen({
+    super.key,
+    this.initialComplaintId,
+    this.bildirModu = false,
+  });
 
   final String? initialComplaintId;
+
+  /// "Olay Bildir" KISAYOLU (P22c). Ana ekranin FAB menusunden gelindiginde
+  /// true olur: form ANINDA acilir ve gonderim basarili olunca EKRAN
+  /// KAPANIR — kullanici ana ekrana doner.
+  ///
+  /// NEDEN: eskiden FAB kullaniciyi talep LISTESINE birakiyordu; oradan bir
+  /// FAB daha, sonra elle geri. Uc dokunus, ikisi gereksiz.
+  ///
+  /// TAM YENIDEN YUKLEME YOK: donus `Navigator.pop` iledir, yani ana ekran
+  /// yeniden KURULMAZ — `homeRouteObserver` (`didPopNext`) yumusak yenilemeyi
+  /// tetikler ve `ref.invalidate` onceki degeri koruyarak sayaclari
+  /// tazeler (iskelet/titreme YOK, bkz. home_refresh.dart).
+  final bool bildirModu;
 
   @override
   ConsumerState<ComplaintsScreen> createState() => _ComplaintsScreenState();
@@ -43,6 +60,19 @@ class ComplaintsScreen extends ConsumerStatefulWidget {
 
 class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
   bool _initialHandled = false;
+  bool _bildirAcildi = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.bildirModu) return;
+    // Ilk kareden SONRA ac: `showDialog`/sheet build sirasinda cagrilamaz.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _bildirAcildi) return;
+      _bildirAcildi = true;
+      _openForm(context, bildirKisayolu: true);
+    });
+  }
 
   void _maybeOpenInitial(ComplaintsState state) {
     if (_initialHandled || widget.initialComplaintId == null) return;
@@ -169,12 +199,27 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
     );
   }
 
-  Future<void> _openForm(BuildContext context) async {
+  Future<void> _openForm(
+    BuildContext context, {
+    bool bildirKisayolu = false,
+  }) async {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       builder: (_) => const _ComplaintForm(),
     );
+    // KISAYOL: gonderildiyse listede kalma, ana ekrana DON. Bilgi mesajini
+    // burada gostermeyiz — ekran kapaniyor; kullanici zaten formun
+    // kapandigini gordu ve ana ekrandaki sayac tazelenecek.
+    if (bildirKisayolu && context.mounted) {
+      if (saved == true) {
+        Navigator.of(context).pop();
+        return;
+      }
+      // Vazgectiyse de kisayoldan gelindigi icin listede birakmayiz.
+      Navigator.of(context).pop();
+      return;
+    }
     if (saved == true && context.mounted) {
       ScaffoldMessenger.of(
         context,

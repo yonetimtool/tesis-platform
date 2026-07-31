@@ -1263,5 +1263,7 @@
   "anprNedenOtomatikCikisKapali": "Automatische Ausfahrt ist aus",
   "anprNedenElleReddedildi": "Manuell abgelehnt",
   "anprNedenPlakaBicimi": "Kennzeichen nicht lesbar",
-  "aracPlakaOkumalari": "Kennzeichenlesungen"
+  "aracPlakaOkumalari": "Kennzeichenlesungen",
+  "kategoriGoruntuKirliligi": "Optische Verschmutzung",
+  "fabSikayetBildir": "Nachbarschaftsbeschwerde melden"
 }

@@ -18,5 +18,6 @@ String unitComplaintKategoriAdi(
       UnitComplaintKategori.gurultu => l10n.kategoriGurultu,
       UnitComplaintKategori.kapiOnuAyakkabi => l10n.kategoriKapiOnuAyakkabi,
       UnitComplaintKategori.zararVerme => l10n.kategoriZararVerme,
+      UnitComplaintKategori.goruntuKirliligi => l10n.kategoriGoruntuKirliligi,
       UnitComplaintKategori.diger => l10n.gorevKategoriDiger,
     };

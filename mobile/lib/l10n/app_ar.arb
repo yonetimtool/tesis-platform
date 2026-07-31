@@ -1263,5 +1263,7 @@
   "anprNedenOtomatikCikisKapali": "الخروج التلقائي مُعطَّل",
   "anprNedenElleReddedildi": "رُفضت يدويًا",
   "anprNedenPlakaBicimi": "تعذّرت قراءة اللوحة",
-  "aracPlakaOkumalari": "قراءات اللوحات"
+  "aracPlakaOkumalari": "قراءات اللوحات",
+  "kategoriGoruntuKirliligi": "تلوّث بصري",
+  "fabSikayetBildir": "الإبلاغ عن شكوى جار"
 }

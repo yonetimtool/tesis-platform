@@ -47,6 +47,19 @@ MaterialApp l10nApp(
       home: home,
     );
 
+/// `GoRouter` ile yerellestirilmis uygulama — yonlendirme YAPAN ekranlar
+/// icin (`context.push` duz `MaterialApp`ta "No GoRouter found" atar).
+MaterialApp l10nRouterApp(
+  RouterConfig<Object> router, {
+  Locale locale = const Locale('tr'),
+}) => MaterialApp.router(
+  locale: locale,
+  supportedLocales: supportedLocales,
+  localizationsDelegates: testLocalizationsDelegates,
+  theme: testTemasi,
+  routerConfig: router,
+);
+
 /// Kaydirilabilir `Scaffold` govdesi + yerellestirme (widget parcalari icin).
 MaterialApp l10nScaffold(Widget child, {Locale locale = const Locale('tr')}) =>
     l10nApp(

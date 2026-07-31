@@ -4369,4 +4369,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aracPlakaOkumalari => 'Plate readings';
+
+  @override
+  String get kategoriGoruntuKirliligi => 'Visual pollution';
+
+  @override
+  String get fabSikayetBildir => 'Report a neighbour complaint';
 }

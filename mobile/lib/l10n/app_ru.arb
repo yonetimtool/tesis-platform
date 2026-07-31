@@ -1263,5 +1263,7 @@
   "anprNedenOtomatikCikisKapali": "Автовыезд отключён",
   "anprNedenElleReddedildi": "Отклонено вручную",
   "anprNedenPlakaBicimi": "Номер не распознан",
-  "aracPlakaOkumalari": "Считывания номеров"
+  "aracPlakaOkumalari": "Считывания номеров",
+  "kategoriGoruntuKirliligi": "Визуальный мусор",
+  "fabSikayetBildir": "Пожаловаться на соседа"
 }

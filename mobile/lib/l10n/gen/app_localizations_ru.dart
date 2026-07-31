@@ -4439,4 +4439,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get aracPlakaOkumalari => 'Считывания номеров';
+
+  @override
+  String get kategoriGoruntuKirliligi => 'Визуальный мусор';
+
+  @override
+  String get fabSikayetBildir => 'Пожаловаться на соседа';
 }

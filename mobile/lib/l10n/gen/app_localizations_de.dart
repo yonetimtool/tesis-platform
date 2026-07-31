@@ -4344,4 +4344,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aracPlakaOkumalari => 'Kennzeichenlesungen';
+
+  @override
+  String get kategoriGoruntuKirliligi => 'Optische Verschmutzung';
+
+  @override
+  String get fabSikayetBildir => 'Nachbarschaftsbeschwerde melden';
 }

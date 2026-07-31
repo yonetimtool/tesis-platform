@@ -4322,4 +4322,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get aracPlakaOkumalari => 'Lecturas de matrículas';
+
+  @override
+  String get kategoriGoruntuKirliligi => 'Contaminación visual';
+
+  @override
+  String get fabSikayetBildir => 'Informar de una queja vecinal';
 }

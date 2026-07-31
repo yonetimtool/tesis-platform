@@ -272,8 +272,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.complaints,
         // Push tiklamasindan gelinirse ?complaint_id=... ile ilgili talep
         // detayi otomatik acilir.
+        // `?bildir=1` — ana ekranin "Olay/Talep bildir" kisayolu (P22c):
+        // form aninda acilir, gonderimden sonra ana ekrana donulur.
         builder: (context, state) => ComplaintsScreen(
           initialComplaintId: state.uri.queryParameters['complaint_id'],
+          bildirModu: state.uri.queryParameters['bildir'] == '1',
         ),
       ),
       GoRoute(

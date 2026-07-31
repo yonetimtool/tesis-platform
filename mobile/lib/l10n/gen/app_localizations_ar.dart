@@ -4454,4 +4454,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get aracPlakaOkumalari => 'قراءات اللوحات';
+
+  @override
+  String get kategoriGoruntuKirliligi => 'تلوّث بصري';
+
+  @override
+  String get fabSikayetBildir => 'الإبلاغ عن شكوى جار';
 }

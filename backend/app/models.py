@@ -129,7 +129,10 @@ INTEGRATION_CHANNEL = ENUM(
     name="integration_channel", create_type=False,
 )
 UNIT_COMPLAINT_KATEGORI = ENUM(
-    "gurultu", "kapi_onu_ayakkabi", "zarar_verme", "diger",
+    # `goruntu_kirliligi` 0013'te eklendi (P22g) — hurda arac, dagilmis esya,
+    # cop yigini; otopark baglamindan da bildirilebilir.
+    "gurultu", "kapi_onu_ayakkabi", "zarar_verme", "goruntu_kirliligi",
+    "diger",
     name="unit_complaint_kategori", create_type=False,
 )
 UNIT_COMPLAINT_DURUM = ENUM(

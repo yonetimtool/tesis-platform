@@ -17,6 +17,9 @@ enum UnitComplaintKategori {
   gurultu('gurultu'),
   kapiOnuAyakkabi('kapi_onu_ayakkabi'),
   zararVerme('zarar_verme'),
+  /// P22g (0013) — hurda arac, dagilmis esya, cop yigini; otopark
+  /// baglamindan da bildirilebilir.
+  goruntuKirliligi('goruntu_kirliligi'),
   diger('diger');
 
   const UnitComplaintKategori(this.wire);

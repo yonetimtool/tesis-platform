@@ -4253,7 +4253,7 @@ paths:
           in: query
           required: false
           description: "(G6, ADDITIVE) Kategori suzgeci"
-          schema: { type: string, enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, diger] }
+          schema: { type: string, enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, goruntu_kirliligi, diger] }
       responses:
         "200":
           description: Liste
@@ -4321,7 +4321,7 @@ paths:
           in: query
           required: false
           description: "(G6, ADDITIVE) Kategori suzgeci — orn. gurultu"
-          schema: { type: string, enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, diger] }
+          schema: { type: string, enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, goruntu_kirliligi, diger] }
       responses:
         "200":
           description: Kendi sikayet listem
@@ -5755,7 +5755,7 @@ components:
         id: { type: string, format: uuid }
         target_unit_id: { type: string, format: uuid }
         unit_no: { type: string, nullable: true }
-        kategori: { type: string, enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, diger] }
+        kategori: { type: string, enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, goruntu_kirliligi, diger] }
         notlar:
           type: string
           nullable: true
@@ -5779,7 +5779,7 @@ components:
             Bildirilen HEDEF daire — sakinin KENDI blogunda olmali (blok disi 403).
         kategori:
           type: string
-          enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, diger]
+          enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, goruntu_kirliligi, diger]
           default: diger
         notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
     UnitComplaintDecision:

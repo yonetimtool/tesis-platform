@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile/src/features/notifications/data/notifications_controller.dart';
 import 'package:mobile/src/features/notifications/domain/notification_models.dart';
 import 'package:mobile/src/features/notifications/presentation/notifications_screen.dart';
@@ -26,10 +27,37 @@ class _FakeNotifications extends NotificationsController {
   }
 }
 
-Widget _app(_FakeNotifications fake) => ProviderScope(
-      overrides: [notificationsProvider.overrideWith(() => fake)],
-      child: l10nApp(const NotificationsScreen()),
-    );
+/// P22b sonrasi bildirime dokunmak ILGILI EKRANI da acar; bu yuzden ekran
+/// artik bir `GoRouter` baglaminda cizilmelidir (duz `MaterialApp` ile
+/// "No GoRouter found in context" atar). Router BURADA kurulur ve gidilen
+/// rota [gidilen] listesine yazilir — yonlendirme de olculebilsin.
+final gidilen = <String>[];
+
+Widget _app(_FakeNotifications fake) {
+  gidilen.clear();
+  final router = GoRouter(
+    initialLocation: '/bildirimler',
+    routes: [
+      GoRoute(
+        path: '/bildirimler',
+        builder: (_, _) => const NotificationsScreen(),
+      ),
+      // Bildirimlerin gidebilecegi hedefler (bkz. bildirim_rotasi.dart).
+      for (final r in ['/patrol-tracking', '/complaints', '/tasks'])
+        GoRoute(
+          path: r,
+          builder: (_, _) {
+            gidilen.add(r);
+            return Scaffold(body: Text('HEDEF $r'));
+          },
+        ),
+    ],
+  );
+  return ProviderScope(
+    overrides: [notificationsProvider.overrideWith(() => fake)],
+    child: l10nRouterApp(router),
+  );
+}
 
 void main() {
   final ornekler = [
@@ -88,5 +116,31 @@ void main() {
     await tester.pumpWidget(_app(_FakeNotifications(const [])));
     await tester.pumpAndSettle();
     expect(find.text('Bildirim yok'), findsOneWidget);
+  });
+
+  testWidgets('P22b: dokunma ILGILI EKRANI acar (okunmus satirda da)',
+      (tester) async {
+    final fake = _FakeNotifications(ornekler);
+    await tester.pumpWidget(_app(fake));
+    await tester.pumpAndSettle();
+
+    // OKUNMUS satir (n2, eksik_checkpoint) — eskiden dokunma OLUYDU.
+    await tester.tap(find.text('B Blok noktası okutulmadı'));
+    await tester.pumpAndSettle();
+    expect(gidilen, ['/patrol-tracking']);
+    // Okunmusta gereksiz PATCH yok (eski davranis KORUNDU).
+    expect(fake.marked, isEmpty);
+  });
+
+  testWidgets('P22b: okunmamis satir hem okundu isaretler HEM gider',
+      (tester) async {
+    final fake = _FakeNotifications(ornekler);
+    await tester.pumpWidget(_app(fake));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Gece turu kaçırıldı'));
+    await tester.pumpAndSettle();
+    expect(fake.marked, ['n1']);
+    expect(gidilen, ['/patrol-tracking']);
   });
 }

@@ -2665,7 +2665,9 @@ class IntegrationPresetOut(BaseModel):
 # ------------------- unit complaints (D1 — daire sikayeti) ------------------ #
 # TAM ANONIM: hicbir semada complainant_user_id YOKTUR (kasitli). Yonetimin
 # ayri 'complaint' modulunden bagimsizdir.
-UnitComplaintKategori = Literal["gurultu", "kapi_onu_ayakkabi", "zarar_verme", "diger"]
+UnitComplaintKategori = Literal[
+    "gurultu", "kapi_onu_ayakkabi", "zarar_verme", "goruntu_kirliligi", "diger"
+]
 UnitComplaintDurum = Literal["acik", "kapali"]
 DensityRenk = Literal["yesil", "sari", "kirmizi"]
 

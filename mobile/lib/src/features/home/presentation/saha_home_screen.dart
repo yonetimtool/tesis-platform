@@ -180,7 +180,7 @@ class SahaHomeScreen extends ConsumerWidget {
         BildirGiris(
             icon: Icons.rate_review_outlined,
             label: l10n.fabOlayBildir,
-            route: AppRoutes.complaints),
+            route: '${AppRoutes.complaints}?bildir=1'),
         BildirGiris(
             icon: Icons.task_alt,
             label: l10n.kartGorevlerim,

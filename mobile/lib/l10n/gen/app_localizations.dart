@@ -7402,6 +7402,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Plaka okumaları'**
   String get aracPlakaOkumalari;
+
+  /// No description provided for @kategoriGoruntuKirliligi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görüntü kirliliği'**
+  String get kategoriGoruntuKirliligi;
+
+  /// No description provided for @fabSikayetBildir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Komşu şikayeti bildir'**
+  String get fabSikayetBildir;
 }
 
 class _AppLocalizationsDelegate

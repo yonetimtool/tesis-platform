@@ -185,12 +185,58 @@ class _KuralCard extends ConsumerWidget {
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
-                  if (k.fotoUrl != null)
-                    const Icon(Icons.image_outlined, size: 16),
                 ],
               ),
               const SizedBox(height: 4),
               Text(k.icerik, maxLines: 3, overflow: TextOverflow.ellipsis),
+              // GORSEL LISTEDE, METINLE BIRLIKTE (P22f).
+              //
+              // Eskiden yalniz kucuk bir "resim var" IKONU vardi ve gorsel
+              // ancak karta dokununca gorunuyordu. Site kurallarinin gorseli
+              // cogu zaman kuralin KENDISIDIR (otopark plani, konteyner yeri,
+              // yasak alan krokisi) — metnin yaninda gorunmesi gerekir.
+              // Kartta ONIZLEME yuksekligi sinirli tutulur (120 dp): liste
+              // gezilebilir kalsin, tam boy detayda gorulsun.
+              if (k.fotoUrl != null) ...[
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    k.fotoUrl!,
+                    // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
+                    semanticLabel: context.l10n.ortakFotograf,
+                    height: 120,
+                    width: double.infinity,
+                    cacheHeight: cozmeSiniri(context, 120),
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, progress) =>
+                        progress == null
+                        ? child
+                        : const SizedBox(
+                            height: 120,
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                    // Kirik gorsel KARTI BOZMAZ: liste okunur kalir.
+                    errorBuilder: (_, _, _) => Container(
+                      height: 40,
+                      alignment: AlignmentDirectional.centerStart,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.broken_image_outlined, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(context.l10n.talepGorselYuklenemedi),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               // Kirpilmis onizlemede yalniz ROZET: "orijinali gör" gecisi uc
               // satirlik kirik metinde gurultu olurdu, kullanici detaya girer.
               CeviriRozeti(ceviri: k.ceviri),

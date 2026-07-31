@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../home/presentation/widgets/activity_row.dart';
 import '../data/notifications_controller.dart';
 import '../domain/notification_models.dart';
+import 'bildirim_rotasi.dart';
 
 const _red = Color(0xFFDC2626);
 const _amber = Color(0xFFD97706);
 const _navy = Color(0xFF0E3C91);
 
 /// Bildirimler inbox'i (yonetici + guvenlik; RBAC sakin/tesis gorevlisine
-/// kapali). Liste en-yeni-ustte; okunmamis satirda "Yeni" rozeti, dokununca
-/// okundu isaretlenir (iyimser) — okunmusa dokunmak PATCH uretmez.
+/// kapali). Liste en-yeni-ustte; okunmamis satirda "Yeni" rozeti.
+///
+/// DOKUNMA (P22b): okundu isaretler VE bildirimin isaret ettigi ekrani ACAR.
+/// Eskiden dokunma yalnizca okundu isaretliyordu, okunmus satirda ise HICBIR
+/// SEY yapmiyordu (olu dokunma). Okunmus satirda PATCH yine uretilmez —
+/// yalniz yonlendirme yapilir.
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
@@ -83,11 +89,18 @@ class _NotificationRow extends ConsumerWidget {
             subtitle: bildirim.tip.replaceAll('_', ' '),
             time: zaman,
             accent: _accent,
-            onTap: bildirim.okundu
-                ? null
-                : () => ref
+            onTap: () {
+              // Okunmamissa okundu isaretle (iyimser); okunmusa PATCH YOK.
+              if (!bildirim.okundu) {
+                ref
                     .read(notificationsProvider.notifier)
-                    .markRead(bildirim.id),
+                    .markRead(bildirim.id);
+              }
+              // Hedefi olan bildirim ilgili ekrani acar; hedefi yoksa
+              // dokunma yalnizca okundu isaretlemis olur.
+              final rota = bildirimRotasi(bildirim);
+              if (rota != null) context.push(rota);
+            },
           ),
         ),
         if (!bildirim.okundu)

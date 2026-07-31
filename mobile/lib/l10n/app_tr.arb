@@ -1783,5 +1783,7 @@
   "anprNedenOtomatikCikisKapali": "Otomatik çıkış kapalı",
   "anprNedenElleReddedildi": "Elle reddedildi",
   "anprNedenPlakaBicimi": "Plaka okunamadı",
-  "aracPlakaOkumalari": "Plaka okumaları"
+  "aracPlakaOkumalari": "Plaka okumaları",
+  "kategoriGoruntuKirliligi": "Görüntü kirliliği",
+  "fabSikayetBildir": "Komşu şikayeti bildir"
 }

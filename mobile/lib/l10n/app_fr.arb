@@ -1263,5 +1263,7 @@
   "anprNedenOtomatikCikisKapali": "Sortie automatique désactivée",
   "anprNedenElleReddedildi": "Rejetée manuellement",
   "anprNedenPlakaBicimi": "Plaque illisible",
-  "aracPlakaOkumalari": "Lectures de plaques"
+  "aracPlakaOkumalari": "Lectures de plaques",
+  "kategoriGoruntuKirliligi": "Pollution visuelle",
+  "fabSikayetBildir": "Signaler une plainte de voisinage"
 }

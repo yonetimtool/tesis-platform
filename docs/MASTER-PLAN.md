@@ -410,6 +410,19 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P22 · Mobil UX düzeltmeleri.** (b) **Yönetici/güvenlik** ile
+  Bildirimler'e gir; **okunmuş** bir bildirime dokun → ilgili ekran açılmalı
+  (eskiden hiçbir şey olmuyordu). Okunmamışa dokun → hem "Yeni" rozeti
+  kalkmalı hem ekran açılmalı. (c) Ana ekranda FAB → "Talep/Arıza bildir"
+  (sakin) veya "Olay bildir" (saha) → form DOĞRUDAN açılmalı; gönder →
+  **ana ekrana dönmeli** ve ana ekran sıfırdan yüklenmemeli (sayaçlar yerinde
+  güncellenmeli, iskelet/beyaz ekran görmemelisin). Vazgeç dediğinde de ana
+  ekrana dönmeli. (d)+(e) **Sakin** ile FAB → menüde İKİ ayrı giriş olmalı:
+  "Talep/Arıza bildir" ve "Komşu şikayeti bildir"; ikincisi şikayet
+  haritasına gitmeli, takip Şikayetlerim'de kalmalı. (f) Site Kuralları
+  listesinde fotoğraflı bir kuralın görseli **kartta** görünmeli (karta
+  dokunmadan). (g) Şikayet formunda kategori listesinde **"Görüntü
+  kirliliği"** çıkmalı ve seçilip gönderilebilmeli.
 - [ ] **P16/P17 · Plaka okuma (ANPR) zinciri.** (a) **Admin** ile panel/mobil
   fark etmez, `POST /integrations/anpr/keys` ile bir anahtar üret (yanıt bir
   kez gösterir — kaydet). (b) Bu anahtarla sahte bir Frigate olayı gönder
@@ -809,7 +822,7 @@ içeriği kararı bunu KAPSAMAZ, ayrıca değerlendirilmelidir.
 Uygulama YOK.
 
 ### P22 — Mobile UX fix package
-Status: BEKLIYOR · Depends-on: —
+Status: BLOKE(a maddesi geri alindi; b-g BITTI) · Depends-on: —
 Scope: (a) ALL modals/pop-ups open CENTERED, not as bottom sheets — one shared
 dialog style app-wide; (b) tapping a notification opens its detail (currently
 dead); (c) after "Olay Bildir" submit, return to home WITHOUT a full-screen
@@ -823,6 +836,62 @@ tap); (g) add "görüntü kirliliği" as a violation/complaint kategori usable f
 the parking context (backend enum addition via NEW revision if needed).
 Acceptance: each fix individually demonstrable; routing + dialog tests where
 feasible; ARB for all new strings; quality gates.
+
+(b)–(g) BİTTİ (2026-07-31) — aşağıda madde madde. (a) DENENDİ VE GERİ ALINDI;
+tanısı en altta. Madde (a) kapanmadan bütün P22 BITTI sayılmaz.
+
+**(b) Bildirime dokunmak artık bir yere GİDİYOR.** Eskiden dokunma yalnız
+"okundu" işaretliyordu; **okunmuş** bildirime dokunmak ise HİÇBİR ŞEY
+yapmıyordu (ölü dokunma). Yeni `presentation/bildirim_rotasi.dart`: devriye
+alarmları → tur takibi, talep akışı → talep listesi, iş emri → görev listesi.
+TASARIM SINIRI (bilinçli, belgede yazılı): `notification` satırı yalnız
+`patrol_window_id / patrol_plan_id / checkpoint_id / task_id` taşır —
+`complaint_id` YOKTUR (push `data`sında var, kayıtta yok) ve görev DETAYI
+`Task` nesnesi ister (rota `extra` bekler). Bu yüzden hedef LİSTEDİR, tekil
+kayıt değil: uydurma bir derin bağlantı kurmak yerine kullanıcıyı doğru
+listeye bırakmak doğru davranış. Tip bilinmiyorsa kayıttaki REFERANSTAN
+türetilir (tip listesi bayatlasa bile dokunma ölü kalmasın); hiçbiri yoksa
+`null` döner ve ekran yalnız okundu işaretler.
+**(c) "Olay/Talep Bildir" kısayolu — tam yeniden yükleme YOK.** Eskiden FAB
+kullanıcıyı talep LİSTESİNE bırakıyordu; oradan bir FAB daha, sonra elle geri
+— üç dokunuş, ikisi gereksiz. Artık rota `?bildir=1` taşıyor: form ANINDA
+açılıyor, gönderim (ya da vazgeçme) sonrası ekran `Navigator.pop` ile
+kapanıyor. Ana ekran YENİDEN KURULMUYOR — `homeRouteObserver`
+(`didPopNext`) yumuşak yenilemeyi tetikliyor ve `ref.invalidate` önceki değeri
+koruduğu için iskelet/titreme yok (mevcut refresh-scope aynen kullanıldı).
+**(d)+(e) Talep/Arıza ile Şikayet AYRI AKIŞLAR.** Sakinin tek "bildir" girişi
+Talep/Arıza idi; komşusundan şikayetçi olan sakin de oraya yazıyordu — yani
+YANLIŞ KANALA. İkisi farklı şeyler: talep yönetime iş emri olarak akar,
+şikayet ANONİM ve DAİRE hedeflidir. FAB menüsüne ikinci giriş eklendi:
+`Talep/Arıza → /complaints` (takip: Taleplerim) ve **`Komşu şikayeti →
+/sikayet-haritasi`** (takip: Şikayetlerim). İkonlar da ayrıştırıldı
+(`build_outlined` vs `campaign_outlined`) — aynı ikon iki farklı kanalı
+temsil etmesin.
+**(f) Site kuralı görseli LİSTEDE.** Eskiden yalnız küçük bir "resim var"
+ikonu vardı, görsel ancak karta dokununca görünüyordu. Oysa kuralın görseli
+çoğu zaman **kuralın kendisidir** (otopark planı, konteyner yeri, yasak alan
+krokisi). Kartta 120 dp önizleme; liste gezilebilir kalsın diye sınırlı,
+tam boy detayda. Kırık görsel kartı bozmuyor (ayrı hata satırı).
+**(g) "Görüntü kirliliği" kategorisi** — migration `0013_goruntu_kirliligi`
+(`ALTER TYPE ... ADD VALUE IF NOT EXISTS`). NEDEN ŞİKAYET KATEGORİSİ, İHLAL
+DEĞİL: `violation` serbest metin `baslik` + `kaynak` taşır, sabit kategori
+enum'u YOKTUR — eklenecek yer yok; `unit_complaint` ise zaten kategorili ve
+sakinin açtığı kanal odur. Geri alma: Postgres enum değeri düşürmeyi
+desteklemez → `downgrade` o değeri kullanan satırları `diger`e çeker, veri
+kaybettirmez.
+i18n: 2 yeni ARB anahtarı × 7 dil. §15 ölçümü DEĞİŞMEDİ: **8**.
+TESTLER: `test/p22_ux_paketi_test.dart` (8 test: yönlendirme tablosu +
+bilinmeyen tip savunması + kategori 7 dilde boş değil/TR sızmıyor + görselin
+listede ÇİZİLDİĞİ ve fotoğrafsız kartta çizilmediği) ve
+`test/notifications_screen_test.dart` +2 (dokunma gerçekten gidiyor; okunmuşta
+gereksiz PATCH hâlâ yok). Bildirim testleri artık `GoRouter` bağlamında
+koşuyor (`l10nRouterApp` yardımcısı eklendi) — `context.push` düz
+`MaterialApp`ta "No GoRouter found" atıyordu.
+KAPILAR: `flutter analyze` temiz; `flutter test` **1436 geçti / 0 düştü**;
+`flutter build apk --debug` ✓; `infra/goc-tersinirlik.sh` → **0 bulgu**
+(14 sınır); backend `pytest` **828 geçti / 0 düştü**.
+
+---
 
 DENENDI VE GERI ALINDI — (a) maddesi (2026-07-31). Bir sonraki oturum bunu
 bilerek başlasın; aşağıdaki tanı YENİDEN ÜRETİLMİŞ ölçümdür.
@@ -1176,6 +1245,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P22 (b-g) · (bu commit) · Bildirime dokunma bir yere gidiyor, bildir kisayolu ana ekrana doner (tam yukleme yok), talep/sikayet AYRI akislar, kural gorseli listede, goruntu_kirliligi kategorisi (0013). (a) geri alindi — tani planda.
 - 2026-07-31 · P19 · df8cda3 · Hikvision/Dahua adaptorleri GERCEKCI tam govdelerle kilitlendi (uc bulgu: direction yon degil, _utc ofseti koruyordu, kimliksiz govdede turevsel kimlik kararli) + kamera kurulum dokumani.
 - 2026-07-31 · P17 · 4cf269e · RTSP kameralar restream ile OYNATILABILIR (0012) + Plaka Okumalari ekrani (onay kuyrugu + OCR duzeltmesi); 26 ARB anahtari x 7 dil; 18+5 test.
 - 2026-07-31 · P16 · ee77535 · ANPR ingest: 0011 revizyonu (anpr_api_key + anpr_event + vehicle_pass.kaynak), X-ANPR-Key kimligi (SECURITY DEFINER cozumleme), dort adaptor, esik/onay kuyrugu, 27 test; deponun dort envanter kilidi de karsilandi.

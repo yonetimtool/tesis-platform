@@ -4183,4 +4183,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get aracPlakaOkumalari => 'Plaka okumaları';
+
+  @override
+  String get kategoriGoruntuKirliligi => 'Görüntü kirliliği';
+
+  @override
+  String get fabSikayetBildir => 'Komşu şikayeti bildir';
 }

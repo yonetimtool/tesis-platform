@@ -1263,5 +1263,7 @@
   "anprNedenOtomatikCikisKapali": "Salida automática desactivada",
   "anprNedenElleReddedildi": "Rechazada manualmente",
   "anprNedenPlakaBicimi": "No se pudo leer la matrícula",
-  "aracPlakaOkumalari": "Lecturas de matrículas"
+  "aracPlakaOkumalari": "Lecturas de matrículas",
+  "kategoriGoruntuKirliligi": "Contaminación visual",
+  "fabSikayetBildir": "Informar de una queja vecinal"
 }
