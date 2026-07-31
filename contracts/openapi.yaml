@@ -5077,6 +5077,198 @@ paths:
       responses:
         '200': { description: guncellendi }
         '403': { $ref: '#/components/responses/Forbidden' }
+  # ================================================================= #
+  # ANPR (P16) — kaynaktan bagimsiz plaka okuma girisi.
+  # Kimlik JWT DEGIL, tenant basina API ANAHTARI (`X-ANPR-Key`).
+  # ================================================================= #
+  /integrations/anpr/events:
+    post:
+      tags: [anpr]
+      summary: Plaka okuma olayi al (KAMERA KUTUSU — X-ANPR-Key)
+      # PUBLIC DEGIL: JWT yerine apiKey semasi kullanilir. `security: []`
+      # yazmak sozlesmeyi YANILTICI yapardi (uc 401 doner).
+      security:
+        - anprApiKey: []
+      description: |
+        Frigate / Hikvision / Dahua ve elle giris AYNI uca yazar; kaynaga ozgu
+        bicim `kaynak` alanina gore ADAPTOR katmaninda tek gövdeye cevrilir
+        (esleme tablosu: `docs/frigate-poc.md` §6).
+
+        **KIMLIK — JWT DEGIL.** Kamera kutusunun kullanici oturumu yoktur ve
+        token yenileyemez; `X-ANPR-Key: <kimlik>.<sir>` basligi kullanilir.
+        Sunucu yalniz `sir`in sha256 ozetini saklar. Gecersiz/pasif/bicimsiz
+        anahtarin HEPSI ayni **401**'i doner — hangi asamada dusuldugunu
+        soylemek, gecerli bir `kimlik` arayan birine bilgi verir.
+
+        **IDEMPOTENT.** Ayni `(kaynak, kaynak_olay_id)` ikinci kez gelirse YENI
+        kayit acilmaz, MEVCUT olay doner. Bu susleme degil, olculmus bir
+        gerekliliktir: Frigate ayni olayi `update` ve `end` olarak birden cok
+        kez yayinlar; tekillik olmadan tek arac iki gecis acardi.
+
+        **OLAY HER ZAMAN DEFTERE YAZILIR.** Gecersiz plaka bile `durum='hata'`
+        ile kaydedilir ve **201** doner — istek DUSURULMEZ. Kutunun yeniden
+        denemesi bozuk bir okumayi duzeltmez; saha "kamera sacmaliyor"
+        diyebilsin diye iz birakilir. Tek istisna bilinmeyen `kaynak`: o bir
+        SOZLESME hatasidir (422).
+
+        **KARAR KURALLARI**
+
+        | Kosul | Sonuc |
+        |---|---|
+        | `guven` < tenant esigi (`anpr_guven_esigi`, varsayilan 0.850) | gecis ACILMAZ, `onay_bekliyor` |
+        | `guven` HIC verilmemis | islenir (her kaynak guven uretmez) |
+        | `yon` = `bilinmiyor` + plakanin acik gecisi VAR | CIKIS sayilir |
+        | `yon` = `bilinmiyor` + acik gecis YOK | GIRIS sayilir |
+        | GIRIS ama arac zaten iceride | `yok_sayildi` (`zaten_iceride`) |
+        | CIKIS ama acik gecis yok | `yok_sayildi` (`acik_gecis_yok`) |
+        | CIKIS ama `anpr_otomatik_cikis=false` | `yok_sayildi` |
+
+        `yon` alanini **Frigate URETMEZ** (P15'te olculdu); `bilinmiyor`
+        gercek bir haldir ve sessizce "giris" sayilmaz.
+
+        Acilan gecis `vehicle_pass` satiridir (`kaynak='anpr'`,
+        `kaydeden_user_id=null`) — otopark dolulugu ve `/activity` akisi
+        AYRI kod gerektirmeden calisir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnprEventIn" }
+      responses:
+        "201":
+          description: Olay deftere yazildi (tekrar da 201 + MEVCUT kayit doner)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnprEventOut" }
+        "401":
+          description: Anahtar yok / bicimsiz / bulunamadi / pasif (ayrim YAPILMAZ)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    get:
+      tags: [anpr]
+      summary: Olay defteri (admin + security)
+      description: |
+        `created_at DESC`. `?durum=onay_bekliyor` ONAY KUYRUGUDUR.
+        RBAC arac gecisi listesiyle AYNI kume: plaka kisisel veriye
+        baglanabilir (KVKK), yonetici/resident/tesis_gorevlisi **403** alir.
+
+        `?plaka=` ONEK aramasidir ve sunucuda normalize edilir; gecersiz arama
+        metni BOS SONUC verir (422 degil — yarim plaka yazmak hata degildir).
+      parameters:
+        - name: durum
+          in: query
+          required: false
+          schema: { type: string, enum: [islendi, onay_bekliyor, yok_sayildi, hata] }
+        - name: plaka
+          in: query
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 64 }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnprEventListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /integrations/anpr/events/{event_id}/onay:
+    parameters:
+      - { name: event_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [anpr]
+      summary: Dusuk guvenli okumanin INSAN karari (admin + security)
+      description: |
+        `onay=true` → okuma kabul edilir ve normal karar akisi UYGULANIR
+        (giris ac / cikis kapat). `plaka` verilirse OCR duzeltilir — bir-iki
+        karakter yanlis okunmasi en yaygin hatadir.
+        `onay=false` → olay `yok_sayildi` olur, gecis ACILMAZ.
+
+        **Insan onayladiginda guven esigi ARTIK UYGULANMAZ** — esik zaten
+        insani cagirmak icindi.
+
+        YALNIZ `onay_bekliyor` durumundaki olay karara acilir; islenmis bir
+        olayi yeniden karara sokmak CIFT GECIS uretirdi (**409**).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnprOnayIn" }
+      responses:
+        "200":
+          description: Karar uygulandi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnprEventOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Olay onay beklemiyor (zaten islenmis/reddedilmis)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /integrations/anpr/keys:
+    get:
+      tags: [anpr]
+      summary: ANPR anahtarlari (YALNIZ admin)
+      description: |
+        Anahtarin DEGERI donmez — yalniz `kimlik` yarisi. RBAC yalniz
+        `admin`: anahtar, tenant'in tum gecis akisini yazma yetkisidir ve
+        site yoneticisine acilmaz.
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AnprApiKeyOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [anpr]
+      summary: Yeni ANPR anahtari uret (YALNIZ admin)
+      description: |
+        Anahtar degeri **YALNIZ BU YANITTA, BIR KEZ** doner. Sunucuda `sir`in
+        sha256 ozeti saklanir; anahtarin kendisi hicbir yerde tutulmaz.
+        Kaybedilirse yenisi uretilir — bu, sizan bir yedekten anahtarin geri
+        uretilememesi icin bilincli bir bedeldir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnprApiKeyCreate" }
+      responses:
+        "201":
+          description: Uretildi (`anahtar` alani bir kez doner)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnprApiKeyCreated" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /integrations/anpr/keys/{key_id}:
+    parameters:
+      - { name: key_id, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      tags: [anpr]
+      summary: Anahtari PASIFLESTIR (YALNIZ admin)
+      description: |
+        Satir SILINMEZ, `aktif=false` yapilir — "kim ne zaman kullandi" izi
+        (`son_kullanim`) korunur. Pasif anahtarla gelen istek 401 alir.
+      responses:
+        "204": { description: Pasiflestirildi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /transparency:
     get:
       tags: [transparency]
@@ -5124,6 +5316,16 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: "JWT access token. `Authorization: Bearer <token>`. Bkz. /contracts/auth.md"
+    anprApiKey:
+      type: apiKey
+      in: header
+      name: X-ANPR-Key
+      description: |
+        ANPR girisi (P16) icin TENANT BASINA uzun omurlu anahtar:
+        `<kimlik>.<sir>`. Kamera kutusunun kullanici oturumu yoktur ve token
+        yenileyemez, bu yuzden JWT KULLANILMAZ. Sunucu yalniz `sir`in sha256
+        ozetini saklar; anahtar `POST /integrations/anpr/keys` ile uretilir ve
+        deger YALNIZ O YANITTA bir kez doner.
 
   parameters:
     Limit:
@@ -7472,13 +7674,32 @@ components:
             (G4, ADDITIVE) Otopark kapasitesi. **null = TANIMSIZ** —
             `GET /parking/occupancy` `kapasite` ve `oran` alanlarini null
             doner (istemci "—" gosterir).
+        anpr_guven_esigi:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          default: 0.85
+          description: >
+            (P16) Plaka okuma GUVEN esigi. Bu degerin ALTINDAKI okuma gecis
+            ACMAZ, `onay_bekliyor` durumuna duser. `1.0` = hicbir okumaya
+            guvenme (hepsi onaya), `0.0` = hepsini isle — ikisi de gecerli
+            ayarlardir.
+        anpr_otomatik_cikis:
+          type: boolean
+          default: true
+          description: >
+            (P16) Cikis olayinda acik gecis otomatik kapansin mi? Tek yonlu
+            kapida (yalniz giris kamerasi) kapatan olmaz — site kapatabilir.
     TenantSettingsUpdate:
       type: object
       description: >
         En az bir alan gerekli. admin TUM alanlari gonderebilir; `yonetici`
-        YALNIZ `ad`, `konum_ad`, `konum_lat`, `konum_lon` ve `otopark_kapasite`
-        gonderebilir (baska alan gonderirse 403). `slug` ve tenant `id` bu
-        uctan ASLA degismez.
+        YALNIZ `ad`, `konum_ad`, `konum_lat`, `konum_lon`, `otopark_kapasite`,
+        `anpr_guven_esigi` ve `anpr_otomatik_cikis` gonderebilir (baska alan
+        gonderirse 403). ANPR ayarlari yoneticidedir cunku bunlar SAHA
+        kararidir — kameranin nerede durdugunu ve yanlis okumanin ne siklikta
+        oldugunu site bilir. `slug` ve tenant `id` bu uctan ASLA degismez.
       minProperties: 1
       properties:
         timezone: { type: string }
@@ -7495,6 +7716,15 @@ components:
           description: >
             (G4, ADDITIVE) Acikca `null` gonderilirse kapasite TANIMSIZ'a
             doner ve `oran` yeniden null olur.
+        anpr_guven_esigi:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: "(P16) Plaka okuma guven esigi (0..1)"
+        anpr_otomatik_cikis:
+          type: boolean
+          description: "(P16) Cikis olayinda acik gecis otomatik kapatilsin mi"
 
     # ---------------------- yonetici iletisim ---------------------- #
     YoneticiKart:
@@ -8010,6 +8240,137 @@ components:
       required: [durum]
       properties:
         durum: { type: string, enum: [yeni, inceleniyor, kapatildi] }
+
+    # ----------------------------- ANPR (P16) ------------------------------- #
+    AnprEventIn:
+      type: object
+      description: |
+        Kaynaktan bagimsiz ANPR olay govdesi. `kaynak` hangi ADAPTORUN
+        calisacagini secer; `frigate|hikvision|dahua` icin govdenin geri kalani
+        O MARKANIN kendi bicimi olabilir (ek alanlara IZIN VERILIR ve `ham`
+        olarak saklanir), `manuel|standart` icin asagidaki alanlar dogrudan
+        okunur.
+
+        Adaptorlerin okudugu alanlar:
+        * **frigate** — `after.id` (ya da `event.id`) kimlik, `after.sub_label`
+          PLAKA (LPR sonucu; `label` "car"dir), `after.start_time` UNIX float
+          SANIYE, `after.plate_score` guven.
+        * **hikvision** — `EventNotificationAlert.ANPR.licensePlate`,
+          `.dateTime` (ISO8601), `.confidenceLevel` (0-100). Olay kimligi
+          yoksa `(plaka + zaman)`dan TUREVSEL uretilir — tekrar ayni kimligi
+          verir, idempotency korunur.
+        * **dahua** — `Events[0].Data.PlateNumber`, `.UTC` (UNIX) ya da
+          `.Time`, `.Confidence`.
+      required: [kaynak]
+      properties:
+        kaynak:
+          type: string
+          enum: [frigate, hikvision, dahua, manuel, standart]
+        kaynak_olay_id:
+          type: string
+          maxLength: 200
+          description: >
+            Kaynagin KENDI olay kimligi — IDEMPOTENCY anahtari. Marka
+            govdelerinde adaptor bunu kendi alanindan okur.
+        plaka:
+          type: string
+          maxLength: 64
+          description: "Serbest bicim; sunucu normalize eder (\"34 abc 123\" -> \"34ABC123\")"
+        zaman: { type: string, format: date-time }
+        kamera: { type: string, maxLength: 120, nullable: true }
+        yon:
+          type: string
+          enum: [giris, cikis, bilinmiyor]
+          default: bilinmiyor
+          description: >
+            Frigate yon URETMEZ; verilmezse `bilinmiyor` kabul edilir ve karar
+            acik gecise gore verilir (bkz. uc aciklamasi).
+        guven:
+          type: number
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: "0..1 ya da 0..100 — 1'i asan deger YUZDE sayilir"
+        foto_key: { type: string, maxLength: 500, nullable: true }
+        ham:
+          type: object
+          description: Kaynagin ham govdesi (denetim + adaptor hata ayiklama)
+    AnprEventOut:
+      type: object
+      required: [id, kaynak, kaynak_olay_id, plaka, zaman, yon, durum, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kaynak: { type: string }
+        kaynak_olay_id: { type: string }
+        plaka: { type: string, description: NORMALIZE plaka, example: "34ABC123" }
+        zaman: { type: string, format: date-time }
+        kamera: { type: string, nullable: true }
+        yon: { type: string, enum: [giris, cikis, bilinmiyor] }
+        guven: { type: number, nullable: true }
+        durum:
+          type: string
+          enum: [islendi, onay_bekliyor, yok_sayildi, hata]
+        durum_nedeni:
+          type: string
+          nullable: true
+          description: >
+            Kisa KOD (PII tasimaz): `dusuk_guven`, `zaten_iceride`,
+            `acik_gecis_yok`, `otomatik_cikis_kapali`, `elle_reddedildi`,
+            `anpr_plaka_bicimi`, `anpr_zaman_bicimi`.
+        vehicle_pass_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Acilan/kapanan gecis; onay bekleyen ve yok sayilan olayda null
+        created_at: { type: string, format: date-time }
+    AnprEventListResponse:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/AnprEventOut" }
+    AnprOnayIn:
+      type: object
+      required: [onay]
+      properties:
+        onay: { type: boolean }
+        plaka:
+          type: string
+          minLength: 1
+          maxLength: 64
+          nullable: true
+          description: Verilirse OCR duzeltilir; verilmezse okunan plaka kabul edilir
+    AnprApiKeyCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 120, example: "Ana kapi kutusu" }
+    AnprApiKeyOut:
+      type: object
+      required: [id, ad, kimlik, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string }
+        kimlik:
+          type: string
+          description: Anahtarin ACIK yarisi (`<kimlik>.<sir>` icindeki kimlik)
+        aktif: { type: boolean }
+        son_kullanim: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    AnprApiKeyCreated:
+      allOf:
+        - $ref: "#/components/schemas/AnprApiKeyOut"
+        - type: object
+          required: [anahtar]
+          properties:
+            anahtar:
+              type: string
+              description: >
+                TAM anahtar (`<kimlik>.<sir>`) — YALNIZ BU YANITTA, BIR KEZ
+                doner. Sunucuda saklanmaz.
 
     # ------------------------ birlesik akis (G5) ---------------------------- #
     ActivityItem:

@@ -33,8 +33,13 @@ _ADMIN_VEYA_YONETICI = require_role("admin", "yonetici")
 # Yonetici tesis adini, hava durumu konumunu VE otopark kapasitesini
 # degistirebilir (hepsi tesis isletme verisi); geri kalan yapilandirma
 # (timezone, yonetim_email) admin'de kalir (yetki yukseltme yok).
+#
+# ANPR ayarlari da yoneticide: esik ve otomatik-cikis SAHA kararidir
+# (kameranin nerede durdugunu, yanlis okumanin ne siklikta oldugunu site
+# bilir) — yetki yukseltmesi degildir, isletme ayaridir.
 _YONETICI_YAZABILIR = {
     "ad", "konum_ad", "konum_lat", "konum_lon", "otopark_kapasite",
+    "anpr_guven_esigi", "anpr_otomatik_cikis",
 }
 
 
@@ -47,6 +52,8 @@ def _to_settings(t: Tenant) -> TenantSettings:
         konum_lat=float(t.konum_lat),
         konum_lon=float(t.konum_lon),
         otopark_kapasite=t.otopark_kapasite,
+        anpr_guven_esigi=float(t.anpr_guven_esigi),
+        anpr_otomatik_cikis=t.anpr_otomatik_cikis,
     )
 
 

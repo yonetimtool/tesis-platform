@@ -66,6 +66,12 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     "tenant_id_by_phone": ("public", None),
     # Saglayici webhook'u imzayla dogrulanir; tenant provider_ref'ten cozulur.
     "payment_tenant_by_ref": ("public", None),
+    # ANPR girisi (P16): kamera kutusu JWT tasimaz, kimlik `X-ANPR-Key`
+    # basligiyla kurulur. Istek geldiginde tenant HENUZ BILINMEDIGI icin RLS
+    # baglami kurulamaz — cozumleme burada olur. Fonksiyon YALNIZ
+    # (tenant_id, key_id) doner: satirin geri kalanini (ad, hash) sizdirmaz
+    # ve `aktif=false` anahtari HIC dondurmez.
+    "anpr_key_coz": ("public", None),
 }
 
 

@@ -74,6 +74,12 @@ PATCH  /external-services/{id}                              IZIN   IZIN   RED   
 GET    /health                                              IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /integrations                                        IZIN   IZIN   RED    RED    RED   
 POST   /integrations                                        IZIN   IZIN   RED    RED    RED   
+GET    /integrations/anpr/events                            IZIN   RED    IZIN   RED    RED   
+POST   /integrations/anpr/events                            KIMLIK KIMLIK KIMLIK KIMLIK KIMLIK
+POST   /integrations/anpr/events/{event_id}/onay            IZIN   RED    IZIN   RED    RED   
+GET    /integrations/anpr/keys                              IZIN   RED    RED    RED    RED   
+POST   /integrations/anpr/keys                              IZIN   RED    RED    RED    RED   
+DELETE /integrations/anpr/keys/{key_id}                     IZIN   RED    RED    RED    RED   
 GET    /integrations/presets                                IZIN   IZIN   RED    RED    RED   
 DELETE /integrations/{id}                                   IZIN   IZIN   RED    RED    RED   
 GET    /integrations/{id}                                   IZIN   IZIN   RED    RED    RED   

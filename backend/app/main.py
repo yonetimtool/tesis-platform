@@ -55,6 +55,7 @@ from .routers import integrations as integrations_router
 from .routers import users as users_router
 from .routers import uploads as uploads_router
 from .routers import unit_access as unit_access_router
+from .routers import anpr as anpr_router
 from .routers import vehicle_passes as vehicle_passes_router
 from .routers import violations as violations_router
 from .routers import visitors as visitors_router
@@ -142,6 +143,8 @@ app.include_router(cameras_router.router)
 app.include_router(vehicle_passes_router.router)
 app.include_router(vehicle_passes_router.parking_router)
 app.include_router(violations_router.router)
+# P16: kaynaktan bagimsiz ANPR girisi (kamera kutusu API anahtariyla yazar).
+app.include_router(anpr_router.router)
 # G5: birlesik "Son Hareketler" akisi (istemci tarafi birlestirmeyi kaldirir).
 app.include_router(activity_router.router)
 

@@ -1848,6 +1848,12 @@ class TenantSettings(BaseModel):
     # Otopark kapasitesi (G4). null = tanimsiz -> /parking/occupancy kapasite
     # ve oran alanlarini null doner (ana ekran "—" gosterir).
     otopark_kapasite: int | None = None
+    # ANPR (P16): esik ALTINDAKI plaka okumalari gecis ACMAZ, onay kuyruguna
+    # duser. Varsayilan 0.850.
+    anpr_guven_esigi: float = 0.850
+    # Cikis olayinda acik gecis otomatik kapansin mi? Tek yonlu kapida
+    # (yalniz giris kamerasi) kapatan olmaz — site bunu kapatabilmeli.
+    anpr_otomatik_cikis: bool = True
 
 
 class TenantSettingsUpdate(BaseModel):
@@ -1862,6 +1868,10 @@ class TenantSettingsUpdate(BaseModel):
     konum_lon: float | None = Field(None, ge=-180, le=180)
     # Acikca null gonderilirse kapasite TANIMSIZ'a doner (oran yeniden null).
     otopark_kapasite: int | None = Field(None, ge=0, le=100000)
+    # ANPR esigi 0..1. 1.0 = "hicbir okumaya guvenme" (hepsi onaya duser);
+    # 0.0 = "hepsini isle". Ikisi de GECERLI ayarlardir.
+    anpr_guven_esigi: float | None = Field(None, ge=0, le=1)
+    anpr_otomatik_cikis: bool | None = None
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "TenantSettingsUpdate":
@@ -3036,3 +3046,92 @@ class ActivityMetaOut(BaseModel):
 class ActivityResponse(BaseModel):
     meta: ActivityMetaOut
     items: list[ActivityItemOut]
+
+
+# --------------------------------------------------------------------------- #
+# ANPR — kaynaktan bagimsiz plaka okuma girisi (0011 / P16)
+# --------------------------------------------------------------------------- #
+class AnprEventIn(BaseModel):
+    """Kaynaktan bagimsiz ANPR olay govdesi.
+
+    `kaynak` hangi ADAPTORUN calisacagini secer. `frigate|hikvision|dahua`
+    icin govdenin geri kalani O MARKANIN kendi bicimi olabilir (`ham` icinde
+    ya da dogrudan); `manuel`/`standart` icin asagidaki alanlar dogrudan
+    okunur. Adaptor esleme tablosu: `docs/frigate-poc.md` §6.
+    """
+
+    kaynak: str = Field(..., examples=["frigate"])
+    # Kaynagin KENDI olay kimligi — IDEMPOTENCY anahtari. Frigate ayni olayi
+    # `update` ve `end` olarak iki kez yayinlar; bu alan olmadan tek arac iki
+    # gecis acardi (P15'te olculdu).
+    kaynak_olay_id: str | None = Field(None, max_length=200)
+    plaka: str | None = Field(None, max_length=64)
+    zaman: datetime | None = None
+    kamera: str | None = Field(None, max_length=120)
+    yon: str | None = Field(None, examples=["giris"])
+    guven: float | None = Field(None, ge=0, le=100)
+    foto_key: str | None = Field(None, max_length=500)
+    ham: dict[str, Any] = Field(default_factory=dict)
+
+    model_config = {"extra": "allow"}
+
+
+class AnprEventOut(BaseModel):
+    """Islenmis olay — kamera kutusuna DA bu doner (tani icin)."""
+
+    id: uuid.UUID
+    kaynak: str
+    kaynak_olay_id: str
+    plaka: str
+    zaman: datetime
+    kamera: str | None = None
+    yon: str
+    guven: float | None = None
+    durum: str
+    durum_nedeni: str | None = None
+    vehicle_pass_id: uuid.UUID | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AnprEventListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AnprEventOut]
+
+
+class AnprOnayIn(BaseModel):
+    """Onay kuyrugundaki bir okumanin insan karari.
+
+    `plaka` verilirse OCR duzeltilir (bir-iki karakter yanlis okunmasi en
+    yaygin hatadir); verilmezse okunan plaka kabul edilir.
+    """
+
+    onay: bool
+    plaka: str | None = Field(None, min_length=1, max_length=64)
+
+
+class AnprApiKeyCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=120, examples=["Ana kapi kutusu"])
+
+
+class AnprApiKeyOut(BaseModel):
+    id: uuid.UUID
+    ad: str
+    kimlik: str
+    aktif: bool
+    son_kullanim: datetime | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AnprApiKeyCreated(AnprApiKeyOut):
+    """Olusturma yaniti — `anahtar` YALNIZ BURADA, BIR KEZ doner.
+
+    Sunucuda anahtarin kendisi saklanmaz (yalniz sha256 ozeti); kaybedilirse
+    yenisi uretilir. Bu, sizan bir yedekten anahtarin geri uretilememesi
+    icindir.
+    """
+
+    anahtar: str

@@ -56,6 +56,13 @@ class Action:
     VISITOR_UPDATE = "visitor_update"
     VISITOR_CHECKOUT = "visitor_checkout"         # ziyaretci cikis damgasi (G3)
     VEHICLE_PASS_CREATE = "vehicle_pass_create"   # arac girisi (G1)
+    # --- ANPR (P16) ---
+    # Olay ALIMI audit'e YAZILMAZ: `anpr_event` tablosunun kendisi bir
+    # defterdir ve saniyede onlarca olay gelebilir — audit_log'u bogardi.
+    # Yalniz INSAN kararlari ve ANAHTAR yasam donusu yazilir.
+    ANPR_ONAY = "anpr_onay"                       # dusuk guvenli okuma karari
+    ANPR_KEY_CREATE = "anpr_key_create"
+    ANPR_KEY_REVOKE = "anpr_key_revoke"
     VEHICLE_PASS_CHECKOUT = "vehicle_pass_checkout"
     VIOLATION_CREATE = "violation_create"         # ihlal kaydi (G2)
     VIOLATION_UPDATE = "violation_update"         # ihlal durum gecisi

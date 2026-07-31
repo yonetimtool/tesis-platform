@@ -136,6 +136,18 @@ UNIT_COMPLAINT_DURUM = ENUM(
     "acik", "kapali",
     name="unit_complaint_durum", create_type=False,
 )
+GECIS_KAYNAK = ENUM(
+    "manuel", "anpr",
+    name="gecis_kaynak", create_type=False,
+)
+ANPR_OLAY_DURUM = ENUM(
+    "islendi", "onay_bekliyor", "yok_sayildi", "hata",
+    name="anpr_olay_durum", create_type=False,
+)
+ANPR_YON = ENUM(
+    "giris", "cikis", "bilinmiyor",
+    name="anpr_yon", create_type=False,
+)
 VIOLATION_KAYNAK = ENUM(
     "kamera", "manuel", "devriye",
     name="violation_kaynak", create_type=False,
@@ -187,6 +199,17 @@ class Tenant(Base):
     # Otopark kapasitesi (G4). NULL = tanimsiz -> /parking/occupancy kapasite +
     # oran NULL doner (ana ekran "—" gosterir, uydurma sayi yok).
     otopark_kapasite: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # ANPR (0011): esik ALTINDAKI okumalar gecis ACMAZ, onay kuyruguna duser.
+    # Varsayilan 0.850 — P15 olcumu Frigate'in kendi tanima esigini 0.9,
+    # OCR toleransini 1 karakter gosterdi; yani yanlis okuma BEKLENIR.
+    anpr_guven_esigi: Mapped[float] = mapped_column(
+        Numeric(4, 3), nullable=False, server_default=text("0.850")
+    )
+    # Cikis olayinda acik gecis otomatik kapansin mi? Tek yonlu kapida
+    # (yalniz giris kamerasi) kapatan olmaz — site bunu kapatabilmeli.
+    anpr_otomatik_cikis: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     # Hava durumu konumu (0005) — baslikta gorunen ad + Open-Meteo koordinati.
     konum_ad: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("'İstanbul'")
@@ -1720,7 +1743,16 @@ class VehiclePass(Base):
     ziyaretci_mi: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
-    kaydeden_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    # ANPR gecisini BIR INSAN KAYDETMEZ (0011) — bu yuzden nullable.
+    # `ck_vehicle_pass_kaydeden` kisiti elle kayitta ZORUNLU tutmayi surdurur:
+    # kolonu nullable yapmak izlenebilirligi kaybetmek DEMEK DEGILDIR.
+    kaydeden_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    # Gecisin kokeni: elle kayit mi, plaka okuma mi (0011).
+    kaynak: Mapped[str] = mapped_column(
+        GECIS_KAYNAK, nullable=False, server_default=text("'manuel'")
+    )
     created_at = _created_at()
 
 
@@ -1983,3 +2015,88 @@ class EtkinlikCeviri(_CeviriTaban, Base):
     )
 
     etkinlik_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+
+
+# --------------------------------------------------------------------------- #
+class AnprApiKey(Base):
+    """Tenant basina ANPR giris anahtari (0011).
+
+    Kamera kutusu JWT tasiyamaz (kullanici oturumu yok, token yenilenemez);
+    uzun omurlu bir anahtar gerekir. Anahtar `<kimlik>.<sir>` bicimindedir:
+    `kimlik` ACIK saklanir (tenant bilinmeden aranabilmesi icin, global
+    TEKIL), `sir` yalniz sha256 OZETIYLE. Anahtarin kendisi HICBIR YERDE
+    saklanmaz — olusturma yanitinda BIR KEZ gosterilir.
+    """
+
+    __tablename__ = "anpr_api_key"
+    __table_args__ = (
+        UniqueConstraint("kimlik", name="uq_anpr_api_key_kimlik"),
+        UniqueConstraint("id", "tenant_id", name="uq_anpr_api_key_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    kimlik: Mapped[str] = mapped_column(Text, nullable=False)
+    sir_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    son_kullanim = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class AnprEvent(Base):
+    """Gelen HAM plaka okuma olayi + islenme sonucu (0011).
+
+    `(tenant_id, kaynak, kaynak_olay_id)` TEKILDIR ve bu bir susleme degil,
+    P15'te OLCULMUS bir gerekliliktir: Frigate ayni olayi `update` ve `end`
+    olarak birden cok kez yayinlar. Tekillik olmasa tek bir aracin girisi iki
+    gecis kaydi acardi.
+
+    Olay bir DEFTER kaydidir: islense de islenmese de saklanir. Iliskili
+    gecis silinirse `vehicle_pass_id` NULL'a duser, olay KALIR.
+    """
+
+    __tablename__ = "anpr_event"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "kaynak", "kaynak_olay_id", name="uq_anpr_event_kaynak"
+        ),
+        ForeignKeyConstraint(
+            ["vehicle_pass_id", "tenant_id"],
+            ["vehicle_pass.id", "vehicle_pass.tenant_id"],
+            ondelete="SET NULL",
+            name="anpr_event_vehicle_pass_id_tenant_id_fkey",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    kaynak: Mapped[str] = mapped_column(Text, nullable=False)
+    kaynak_olay_id: Mapped[str] = mapped_column(Text, nullable=False)
+    plaka: Mapped[str] = mapped_column(Text, nullable=False)
+    plaka_ham: Mapped[str | None] = mapped_column(Text, nullable=True)
+    zaman = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    kamera: Mapped[str | None] = mapped_column(Text, nullable=True)
+    yon: Mapped[str] = mapped_column(
+        ANPR_YON, nullable=False, server_default=text("'bilinmiyor'")
+    )
+    guven: Mapped[float | None] = mapped_column(Numeric(4, 3), nullable=True)
+    foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    durum: Mapped[str] = mapped_column(
+        ANPR_OLAY_DURUM, nullable=False, server_default=text("'islendi'")
+    )
+    durum_nedeni: Mapped[str | None] = mapped_column(Text, nullable=True)
+    vehicle_pass_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    ham: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    created_at = _created_at()

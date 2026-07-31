@@ -548,7 +548,7 @@ Coral TPU da denenmedi (donanım yok); kazancı ölçüme değil mimariye dayana
 açıklandı. PoC yığını koşum sonunda `down` edildi (`down -v` KULLANILMADI).
 
 ### P16 — Frigate Phase 2: source-agnostic ANPR ingest (backend)
-Status: BEKLIYOR · Depends-on: P15
+Status: BITTI · Depends-on: P15
 Scope: POST /integrations/anpr/events — per-tenant API key auth; standard body per
 P15 schema; adapter layer mapping events → vehicle_pass open/close (entry/exit) and
 violations where applicable; low-confidence events land in an approval queue
@@ -556,7 +556,70 @@ violations where applicable; low-confidence events land in an approval queue
 New schema via NEW revisions (rule 7).
 Acceptance: simulated Frigate events create/close vehicle passes correctly;
 confidence threshold configurable per tenant; full pytest; contract updated.
-HAZIRLIK NOTU (2026-07-30 — İŞ BAŞLAMADI, yalnız keşif): P15 sırasında
+Notes (2026-07-31): Uygulandı. Yeni dosyalar: `contracts/db/migrations/versions/
+0011_anpr_ingest.py`, `backend/app/anpr.py` (SAF çekirdek: adaptörler + karar),
+`backend/app/routers/anpr.py`, `backend/tests/test_anpr.py` (25 test).
+**ŞEMA KARARI** — hazırlık notundaki (a) seçildi: `vehicle_pass.kaydeden_user_id`
+NULLABLE yapıldı + `kaynak` (manuel|anpr) enum'u eklendi. Sahte bir "sistem
+kullanıcısı" uydurmak (seçenek b) RBAC ve denetim kayıtlarını kirletirdi;
+ANPR'ı ayrı tabloda tutmak (c) otopark doluluğunu ikiye böler ve **"sayım ile
+kayıt asla ayrışamaz"** ilkesini bozardı. İzlenebilirlik KAYBOLMADI:
+`ck_vehicle_pass_kaydeden` kısıtı `kaynak='manuel'` iken kaydedeni ZORUNLU
+tutuyor.
+Yeni tablolar: `anpr_api_key` (kimlik açık + sır **yalnız sha256**),
+`anpr_event` (ham olay defteri). Yeni tenant ayarları: `anpr_guven_esigi`
+(0.850) ve `anpr_otomatik_cikis` (true).
+**KİMLİK — JWT DEĞİL.** Kamera kutusunun kullanıcı oturumu yok, token
+yenileyemez; `X-ANPR-Key: <kimlik>.<sır>`. Çözümleme `anpr_key_coz` SECURITY
+DEFINER fonksiyonuyla (istek geldiğinde tenant HENÜZ BİLİNMEDİĞİ için RLS
+bağlamı kurulamaz — mevcut `audit_log_list` deseni). Geçersiz/pasif/biçimsiz
+anahtarın hepsi AYNI 401'i döner; aşama sızdırmaz.
+**İDEMPOTENCY** `(tenant, kaynak, kaynak_olay_id)` üzerinde tekil — P15'te
+ölçülen gereklilik (Frigate aynı olayı `update`+`end` ile iki kez yayınlar).
+**ADAPTÖRLER**: frigate (`after.sub_label` plaka, `start_time` UNIX float),
+hikvision (ISAPI `EventNotificationAlert.ANPR`; olay kimliği yoksa
+`(plaka+zaman)`dan TÜREVSEL kimlik → tekrar aynı kimliği verir), dahua
+(`Events[0].Data`), manuel/standart. Yeni marka = tek fonksiyon + kayıt satırı.
+**KARAR KURALLARI** (hepsi testle kilitli): eşik altı okuma geçiş AÇMAZ →
+onay kuyruğu; güven HİÇ verilmemişse işlenir (eksik veri ≠ kötü veri; her
+kaynak güven üretmez); `yon=bilinmiyor` ise açık geçiş VARSA çıkış, YOKSA
+giriş (tek kameralı çift yönlü geçidin doğru davranışı); zaten içerideyken
+giriş ve açık geçiş yokken çıkış sessizce yok sayılır; `anpr_otomatik_cikis`
+kapalıysa çıkış yok sayılır (tek yönlü kapıda yanlış kapatma olmasın).
+**OLAY HER ZAMAN DEFTERE YAZILIR** — bozuk plaka bile `durum='hata'` ile 201
+döner; istek DÜŞÜRÜLMEZ, çünkü kutunun yeniden denemesi bozuk okumayı
+düzeltmez. Tek istisna bilinmeyen `kaynak` (sözleşme hatası, 422).
+**AKIŞ FEED'İ AYRI KOD GEREKTİRMEDİ**: ANPR geçişi bir `vehicle_pass`
+satırıdır, `/activity`nin mevcut `arac_giris`/`arac_cikis` dallarından zaten
+akar. Otopark doluluğu da aynı sayımı kullanır (canlı doğrulandı: ANPR girişi
+`dolu` sayısını 1 artırdı).
+AUDIT: olay ALIMI audit'e yazılmaz (saniyede onlarca olay `audit_log`'u
+boğardı; `anpr_event` zaten bir defterdir) — yalnız İNSAN kararları ve anahtar
+yaşam döngüsü (`anpr_onay`, `anpr_key_create`, `anpr_key_revoke`).
+CANLI DOĞRULAMA (dev API): anahtar üretimi, Frigate/Hikvision/Dahua gövdeleri,
+idempotent tekrar, giriş→çıkış zinciri, düşük güven→kuyruk→onay+OCR düzeltmesi,
+geçersiz anahtar 401, bozuk plaka→defter, otopark doluluğu — hepsi geçti.
+EŞİK YAPILANDIRMASI: `PATCH /tenant/settings` iki yeni alan alıyor
+(`anpr_guven_esigi`, `anpr_otomatik_cikis`) ve bunları **yönetici de**
+yazabiliyor — bu bir SAHA kararıdır (kameranın nerede durduğunu ve yanlış
+okumanın ne sıklıkta olduğunu site bilir), yetki yükseltmesi değil. Uçtan uca
+testle kilitli: eşik 0.99'a çekilince 0.97'lik okuma onaya düşüyor, 0.10'a
+çekilince aynı okuma işleniyor.
+DEPONUN KİLİTLERİ (dördü de yeni kodu yakaladı ve hepsi karşılandı):
+(1) `test_hata_i18n::test_kaynakta_ham_cumle_kalmadi` → 8 yeni hata kimliği
+**7 dile** yazıldı; (2) `test_secdef_kapsam` → `anpr_key_coz` envantere rol
+kapısıyla (`public`, gerekçesiyle) eklendi; (3) `test_yetki_kapsam::
+test_public_beyan_edilenler` → sözleşmede `security: []` yazmıştım, bu
+YANILTICIYDI (uç 401 döner); doğru beyan `anprApiKey` adında bir **apiKey
+güvenlik şeması**; (4) rol matrisi kilidine 6 yeni satır girdi ve ölçülen
+matris tasarımla birebir: `POST .../events` tüm rollerde **KIMLIK** (JWT
+erişim vermez), listeleme/onay admin+security, anahtarlar yalnız admin.
+KAPILAR: `tests/test_anpr.py` **27/27**; sözleşme↔canlı **207/207 operasyon**
+iki yönde örtüşüyor; `infra/goc-tersinirlik.sh` → **0 bulgu** (12 sınır, üç
+kontrol: artık yok, gidiş-dönüş şeması aynı, her revizyon iki kez salındı);
+tam `pytest` **819 geçti / 0 düştü** (P16 öncesi 792 → +27).
+
+HAZIRLIK NOTU (2026-07-30 — keşif, karar yukarıda uygulandı): P15 sırasında
 şema tarafında bir **engel** görüldü, sonraki oturum bunu bilerek başlasın:
 `vehicle_pass.kaydeden_user_id` **NOT NULL** ve `app_user`'a **ON DELETE
 RESTRICT** FK ile bağlı. ANPR olayını bir İNSAN kaydetmediği için bu kolon
@@ -986,6 +1049,7 @@ geçici-dizin ev işi, fotoğraflı sürüşün `pumpAndSettle` stratejisi.
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P16 · (bu commit) · ANPR ingest: 0011 revizyonu (anpr_api_key + anpr_event + vehicle_pass.kaynak), X-ANPR-Key kimligi (SECURITY DEFINER cozumleme), dort adaptor, esik/onay kuyrugu, 27 test; deponun dort envanter kilidi de karsilandi.
 - 2026-07-30 · P21 · 10cf95f · Talep-uzerine ceviri DEGERLENDIRME NOTU (uygulama yok): yazma-aninda degil talep-uzerine + tek dil; kalite engeli once, DeepL'de ucuncu kisi verisi uyarisi.
 - 2026-07-30 · P20 · d8c552e · Yuz tanima v2 TASARIM NOTU (kod yok): kapsam 1:1 dogrulama, sablon cihazda, KVKK kosullari + "once P34'u olc" tavsiyesi + karar satiri.
 - 2026-07-30 · P15 · 7cfb492 · Frigate PoC ayri yiginda kosuldu: restream oynatilabilir dogrulandi, MQTT konu envanteri + olay yuku yakalandi, kaynak olculdu; ANPR ingest olay semasi taslagi yazildi.
