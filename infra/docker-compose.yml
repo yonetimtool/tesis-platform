@@ -198,6 +198,13 @@ services:
       # Push: varsayilan noop; gercek FCM icin .env'de PUSH_PROVIDER=fcm +
       # kimlik mount'u docker-compose.push.yml override'iyla baglanir.
       PUSH_PROVIDER: ${PUSH_PROVIDER:-noop}
+      # (P39) Olcumle secilir; bkz. docs/scaling-runbook.md.
+      # TOPLAM BAGLANTI = API_WORKERS x (DB_POOL_SIZE + DB_MAX_OVERFLOW)
+      # ve bu, Postgres `max_connections` (100) - diger servisler'den
+      # KUCUK olmali.
+      API_WORKERS: ${API_WORKERS:-1}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
+      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-5}
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
       # Icerik cevirisi. DEV VARSAYILANI `echo` (deterministik sahte ceviri):
       # test kosumu model indirmesine/CPU'ya bagli olmasin ve 600+ testin her

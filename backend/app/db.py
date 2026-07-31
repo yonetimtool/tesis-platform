@@ -24,10 +24,18 @@ from sqlalchemy.ext.asyncio import (
 
 from .config import settings
 
+# (P39) Havuz ACIKCA boyutlandirilir. Varsayilanlara birakmak, coklu
+# isciye gecildiginde toplam baglantinin sessizce `max_connections`i
+# asmasi demekti; `pool_timeout` de sonsuz beklemeyi keser (yuk altinda
+# asili kalan istek, hata donen istekten daha kotudur — istemci zaman
+# asimina kadar bekler ve yeniden dener, yuk KATLANIR).
 engine = create_async_engine(
     settings.database_url,
     echo=settings.sql_echo,
     pool_pre_ping=True,
+    pool_size=settings.db_pool_size,
+    max_overflow=settings.db_max_overflow,
+    pool_timeout=settings.db_pool_timeout,
 )
 
 SessionLocal = async_sessionmaker(

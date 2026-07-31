@@ -2434,7 +2434,7 @@ kapsayan indeks yoktu (tenant silinince RI tetiği tabloyu seq scan ederdi);
 indeks kapsamı envanteri yakaladı.
 
 ### P39 — Scale & load readiness
-Status: BEKLIYOR · Depends-on: best after P29–P31 land
+Status: BITTI · Depends-on: best after P29–P31 land
 Scope: translate the "millions of concurrent users" goal into engineering:
 load-test suite (k6 or locust) against a staging profile covering login, home
 bundle, /activity, dues, scan submission; measure baseline; fix the top
@@ -2446,6 +2446,72 @@ measured sustainable RPS now + the compose→multi-node growth path. No prematur
 microservices.
 Acceptance: before/after load numbers committed; zero correctness regressions
 (all suites green); runbook in docs/.
+Notes (2026-07-31):
+**k6, KONTEYNERDEN.** Host'a kurulum yok (`grafana/k6` imajı, `load` profili
+altında — normal `up` ile başlamaz) ve `api` ile **aynı ağda**: ölçüme
+internet gecikmesi girmez. İki senaryo: `senaryo.js` (karma profil) ve
+`tekil.js` (tek uç — darboğazın çerçevede mi sorguda mı olduğunu ayırmak
+için).
+
+**PROFİL "EN ÇOK ÇAĞRILAN UÇ" DEĞİL, KULLANICININ GÜNÜ.** Giriş `setup()`ta
+bir kez alınır: her yinelemede giriş yapmak, ölçümü **bcrypt maliyetiyle**
+doldurup gerçek kullanımı yanlış temsil ederdi (kullanıcı günde bir kez
+girer). `Idempotency-Key` her yinelemede farklıdır — aynı anahtarı
+tekrarlamak yazma yolunu değil idempotent dönüş yolunu ölçerdi.
+
+**ÖLÇÜLEN TABAN** (8 çekirdek; api+db+redis+k6 aynı kutuda):
+| Uç (20 VU, düşünme yok) | RPS | p95 |
+|---|---:|---:|
+| `GET /me` | 283 | 100 ms |
+| `GET /dashboard/live` | 177 | 155 ms |
+| `GET /activity?limit=20` | 168 | 167 ms |
+
+Karma profil (10 VU, 1 sn düşünme): ana ekran demeti p95 **2.08 s → 1.35 s**
+(havuz açıkça boyutlandırıldı + ısınma), 4 işçiyle **1.26 s**; toplam
+27.6 → 29.3 istek/sn; **%0 hata**. Okunuş: tek düğüm ~30 etkileşim/sn ≈
+**~300 eşzamanlı aktif kullanıcı**.
+
+**DÜZELTİLEN GERÇEK RİSK — GÖRÜNMEZ HAVUZ.** `create_async_engine`
+varsayılanlarla çağrılıyordu ve `uvicorn` tek işçiye sabitti. Tehlike
+varsayılanlar değil **görünmez olmalarıydı**: çok işçiye geçen ilk kişi
+`API_WORKERS × (POOL + OVERFLOW)` formülünü hiç görmeden `--workers 8`
+yazsaydı 120 > 100 (`max_connections`) olur ve sistem yük altında
+`too many clients` ile düşerdi. Üçü de env oldu (1/5/5) ve
+`pool_timeout=10 sn` kondu: **sonsuz bekleme yük altında isteği sessizce
+asılı bırakırdı** — istemci kendi zaman aşımına kadar bekler, yeniden dener,
+yük **katlanır**.
+
+**ÖNBELLEK EKLENMEDİ — gerekçe ÖLÇÜMDÜR.** Kapsam "sıcak sayaçlar için kısa
+TTL'li önbellek" diyordu; ölçüm bunu gerektirmedi (en ağır uç 20 VU'da p95
+167 ms / 168 RPS). Bu sayılarda önbellek, kazandırdığı milisaniyeden çok
+**bayat veri sınıfı bir hata türü** getirirdi. Eklenmesi gereken gün geldiğinde
+ilk aday `/dashboard/live` sayaçlarıdır — runbook bunu yazıyor.
+
+**4 İŞÇİ BU PROFİLDE YALNIZCA %6 KAZANDIRDI** ve bu da bir bulgudur:
+darboğaz CPU değil, düşünme süresidir. Varsayılan `API_WORKERS=1` bırakıldı
+(geliştirmede tek süreç hata ayıklamayı kolaylaştırır); prod değeri runbook
+formülüyle verilir.
+
+**YATAY ÖLÇEK DENETİMİ — tek gerçek engel `beat`.** api durumsuz (oturum
+Redis'te, dosyalar MinIO'da), worker çoğaltılabilir (görevler idempotent:
+`ON CONFLICT DO NOTHING`, `dedup_key`, deneme sayacı), RLS bağlamı
+**transaction** kapsamlı olduğu için havuz paylaşımı güvenli ve ileride
+PgBouncer **transaction** modunda kullanılabilir. `beat` ise **tek örnek
+olmalıdır** — iki beat, her işin iki kez kuyruklanması demek. Bu, çok
+düğüme geçmeden önce karara bağlanacak tek şey.
+
+**Büyüme yolu** (runbook §5): dikey işçi → **veritabanını ayır** (ilk gerçek
+sıçrama, kod değişikliği yok) → api'yi çoğalt → PgBouncer → okuma replikası.
+**Mikroservis yok**: ölçüm tek uygulamanın rahat çalıştığını gösteriyor;
+bölmek bugün yalnızca dağıtık işlem ve ağ gecikmesi sınıfında yeni hata
+türleri eklerdi.
+
+**Eşikler HEDEF DEĞİL TABAN**: `http_req_failed < %1`, `sure_home p95 <
+1.5 sn`, `sure_activity p95 < 1.5 sn` — altına düşülürse regresyon vardır.
+
+Kanıt: `docs/scaling-runbook.md` (öncesi/sonrası tablolar + denetim +
+formül), `infra/load/*.js`, `infra/docker-compose.load.yml`; tam pytest
+yeşil (4 işçi altında da) — sıfır doğruluk regresyonu.
 
 ## CHANGELOG
 <!-- date · item ID · commit hash · one line. STATUS REPORTs and the FINAL REPORT land here, newest first. -->
@@ -2693,7 +2759,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P38 · (bu commit) · Site web portali + anket (0027): AYRI UYGULAMA DEGIL admin-web icinde public rota (sozluk/tasarim/derleme hatti zaten orada) + yeni kilit public rotanin matcher'a SIZMADIGINI olcuyor; yayin VARSAYILAN KAPALI ve kapaliyken 404 (403 tesis envanteri sizdirirdi); public icerik BILINCLI (duyurunun yalniz OZETI, hakkimizda DUZ METIN, harita ANAHTARSIZ); anket TEK OY ve DEGISTIRILEMEZ, sonuc KAPANANA KADAR GIZLI (surusel etki) ama yonetim her zaman gorur; iletisim KAYIT ONCE BILDIRIM SONRA; kimlikli sakin web alani gerekcesiyle panel borcunda.\n- 2026-07-31 · P37 · (bu commit) · Gurultu caydirici otomasyonu (0026): AYRI webhook konfigurasyonu ACILMADI (C1b integration zaten SSRF+KEK+izolasyon veriyor), MANUEL MOD birinci sinif (cogu sitede entegrasyon yok) ve sunucu 'yapildi' VARSAYAMAZ; sinir DAHIL (4 hayir, 5 evet), YALNIZ gurultu kategorisi, SIFIRLAMA KAYIT SILMEZ (kapali'ya ceker — uyarinin dayanagi durur); HMAC imzasi ZAMAN DAMGASINI kapsar (replay), sir yoksa imza da yok; yeniden deneme istek yolunda DEGIL, katlanan aralikla ve tukenince MANUEL MODA duser; BULGU: FK indekssizdi (RI tetigi tenant'i seq scan ederdi).\n- 2026-07-31 · P36 · (bu commit) · KVKK aydinlatma kapisi + pazarlama izinleri (0025): METIN TENANT ICERIGIDIR (gomulu tek metin 200 tesise BASKASININ metnini imzalatirdi), SURUM VAR YERINDE DUZENLEME YOK (dun verilen onay bugun baska metne ait gorunurdu), onay eski surume yazilmaz (409) ve IDEMPOTENT; kaydirma kilidi 24 px esikli ve SIGAN icerikte ZATEN ACIK; sunucu navigasyonu kilitlemez (onay vermemis kullanici metni OKUYABILMELI), ag hatasinda kapi ACILMAZ; P32 pazarlama gonderimi artik GERCEK ve KANAL BAZLI rizayi okuyor; BULGU: izinler kartinin donen gostergesi dokuz ayar testini pumpAndSettle zaman asimiyla dusurdu.\n- 2026-07-31 · P35 · 458dc75 · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
+- 2026-07-31 · P39 · (bu commit) · Olcek ve yuk hazirligi: k6 KONTEYNERDEN ve api ile ayni agda; profil 'en cok cagrilan uc' degil KULLANICININ GUNU (giris setup'ta — her yinelemede giris bcrypt maliyetiyle olcumu bozardi); olculen taban /me 283 RPS, /activity 168 RPS, ana ekran p95 2.08s -> 1.26s; DUZELTILEN RISK: havuz/isci sayisi GORUNMEZ varsayilanlardaydi ve coklu isciye gecen ilk kisi max_connections'i sessizce asardi (formul + env + pool_timeout); ONBELLEK EKLENMEDI cunku olcum gerektirmedi (bayat veri sinifi hata getirirdi); yatay olcekte TEK GERCEK ENGEL beat'in tek ornek olmasi; docs/scaling-runbook.md.\n- 2026-07-31 · P38 · (bu commit) · Site web portali + anket (0027): AYRI UYGULAMA DEGIL admin-web icinde public rota (sozluk/tasarim/derleme hatti zaten orada) + yeni kilit public rotanin matcher'a SIZMADIGINI olcuyor; yayin VARSAYILAN KAPALI ve kapaliyken 404 (403 tesis envanteri sizdirirdi); public icerik BILINCLI (duyurunun yalniz OZETI, hakkimizda DUZ METIN, harita ANAHTARSIZ); anket TEK OY ve DEGISTIRILEMEZ, sonuc KAPANANA KADAR GIZLI (surusel etki) ama yonetim her zaman gorur; iletisim KAYIT ONCE BILDIRIM SONRA; kimlikli sakin web alani gerekcesiyle panel borcunda.\n- 2026-07-31 · P37 · (bu commit) · Gurultu caydirici otomasyonu (0026): AYRI webhook konfigurasyonu ACILMADI (C1b integration zaten SSRF+KEK+izolasyon veriyor), MANUEL MOD birinci sinif (cogu sitede entegrasyon yok) ve sunucu 'yapildi' VARSAYAMAZ; sinir DAHIL (4 hayir, 5 evet), YALNIZ gurultu kategorisi, SIFIRLAMA KAYIT SILMEZ (kapali'ya ceker — uyarinin dayanagi durur); HMAC imzasi ZAMAN DAMGASINI kapsar (replay), sir yoksa imza da yok; yeniden deneme istek yolunda DEGIL, katlanan aralikla ve tukenince MANUEL MODA duser; BULGU: FK indekssizdi (RI tetigi tenant'i seq scan ederdi).\n- 2026-07-31 · P36 · (bu commit) · KVKK aydinlatma kapisi + pazarlama izinleri (0025): METIN TENANT ICERIGIDIR (gomulu tek metin 200 tesise BASKASININ metnini imzalatirdi), SURUM VAR YERINDE DUZENLEME YOK (dun verilen onay bugun baska metne ait gorunurdu), onay eski surume yazilmaz (409) ve IDEMPOTENT; kaydirma kilidi 24 px esikli ve SIGAN icerikte ZATEN ACIK; sunucu navigasyonu kilitlemez (onay vermemis kullanici metni OKUYABILMELI), ag hatasinda kapi ACILMAZ; P32 pazarlama gonderimi artik GERCEK ve KANAL BAZLI rizayi okuyor; BULGU: izinler kartinin donen gostergesi dokuz ayar testini pumpAndSettle zaman asimiyla dusurdu.\n- 2026-07-31 · P35 · 458dc75 · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
 - 2026-07-31 · P34 · 4395fdc · Tur butunlugu (0023): KONUM BIR KANITTIR ON KOSUL DEGIL — izin reddi/servis kapali okutmayi dusurmez ama SESSIZ DE KALMAZ (konum_durumu + konumsuz_sayisi + suzgec); gecikme alarmi 'kacirildi'dan AYRI, araliklari KATLANAN tekrarli bildirim (gorevliye kisi, yonetime rol) ve bildirim TEKLIGI kismi indekse cevrildi (ikinci alarm sessizce dusuyordu); baslangic fotografi '1 metre gidip gel' YERINE (SDM zaten fiziksel varligi kanitliyor; fotograf ORTAM+SAAT boyutu ekler), kamera-only + ayri hata kodu.
 - 2026-07-31 · P33 · 236f70b · Yonetisim modulleri (0022): IS TAKIBI denetimi omurganin ZATEN VAR OLDUGUNU gosterdi — birlestirme degil GENISLETME (complaint + unit_id/oncelik/atanan_personel; oncelik durumdan BAGIMSIZ ayri ucta, atanan personel_kayit'tir app_user degil); karar defteri uyeleri AYRI TABLODA + metin sablonlu PDF; dokuman arsivi USTVERI-ONLY (obje silinmez); site aktarimi KURU CALISMALI ve SATIR BAZLI hata raporlu, idempotent.
 - 2026-07-31 · P32 · 47ac96c · Mesaj sablonlari + gonderim (0021): gonderilen metin GECMISE KOPYALANIR (sablon degisse de kanit durur), amac SABLONDA (pazarlama riza olmadan HIC gonderilmez ve atlananlar SAYILIR), SMS sayaci Turkce tuzagini gosterir (kucuk c/i/g/s UCS-2'ye dusurur), saglayici takasi yapilandirma ile; P28 seed regresyonu bulundu ve duzeltildi.

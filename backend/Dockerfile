@@ -18,4 +18,9 @@ COPY scripts ./scripts
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# (P39) ISCI SAYISI ENV ILE: tek isci, olcumde ana ekran demetini 10 es
+# zamanli kullanicida p95 ~2 sn'ye cikariyordu (istekler tek olay
+# dongusunde sirayla isleniyor). `API_WORKERS` varsayilani 1'dir —
+# gelistirmede tek surec hata ayiklamayi kolaylastirir; prod'da
+# scaling-runbook.md'deki formulle verilir.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${API_WORKERS:-1}"]

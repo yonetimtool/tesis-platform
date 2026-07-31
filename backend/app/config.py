@@ -64,6 +64,18 @@ class Settings(BaseSettings):
     # 15. dakikada haber verirdi.
     scheduler_gecikme_interval_seconds: int = 120     # 2 dk
 
+    # (P39) Veritabani havuzu — YUK ALTINDA OLCULDU. Varsayilan SQLAlchemy
+    # havuzu (5 + 10) tek uvicorn isciyle bile yetiyordu; COKLU ISCIYE
+    # gecince toplam baglanti = isci x (havuz + tasma) olur ve Postgres'in
+    # `max_connections` (100) siniri ASILIRSA istekler "too many clients"
+    # ile DUSER. Bu yuzden isci basina havuz KUCUK tutulur ve toplam,
+    # scaling-runbook.md'deki formulle secilir.
+    db_pool_size: int = 5
+    db_max_overflow: int = 5
+    #: Havuz doluyken bir istegin baglanti icin bekleyecegi sure. Sinirsiz
+    #: bekleme, yuk altinda istegi sessizce ASILI birakirdi.
+    db_pool_timeout: int = 10
+
     # --- MinIO (S3-uyumlu foto kanit deposu) ---
     # PUBLIC endpoint: presigned URL host'u (istemci buraya PUT'lar). dev: localhost.
     minio_endpoint: str = "http://localhost:9000"
