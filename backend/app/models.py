@@ -146,6 +146,15 @@ BAKIYE_YON = ENUM("borc", "alacak", name="bakiye_yon", create_type=False)
 BORC_HEDEF_KURALI = ENUM(
     "kiraci_oncelikli", "malik", name="borc_hedef_kurali", create_type=False
 )
+HAREKET_TIP = ENUM(
+    "tahsilat", "gider", "gelir", "virman", "iade", "acilis",
+    name="hareket_tip", create_type=False,
+)
+HAREKET_YON = ENUM("giris", "cikis", name="hareket_yon", create_type=False)
+ICRA_DURUM = ENUM(
+    "acik", "takipte", "tahsil_edildi", "kapandi",
+    name="icra_durum", create_type=False,
+)
 BORCLANDIRMA_KAYNAK = ENUM(
     "tekil", "toplu", "sayac", "ice_aktarim",
     name="borclandirma_kaynak", create_type=False,
@@ -2532,5 +2541,89 @@ class SayacBolum(Base):
     aktif: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+# ===================== P29 FINANSAL HAREKET DEFTERI ========================= #
+class FinansalHareket(Base):
+    """TEK DEFTER (P29): tahsilat, gider, gelir, virman, iade, acilis.
+
+    Alti ayri tablo YERINE tek defter, cunku "kasa bakiyesi = hareket
+    toplami" tutarliligi ancak TEK kaynak varken KANITLANABILIR; alti
+    tabloda bakiye, alti toplami dogru birlestirmeye bagli olurdu ve bir
+    tabloyu unutmak SESSIZ bir fark uretirdi.
+
+    TUTAR HER ZAMAN POZITIF; isaret `yon` sutunundadir. Negatif tutar
+    saklamak "iade" ile "eksi gider"i ayirt edilemez kilardi.
+
+    VIRMAN IKI SATIRDIR (cikis + giris), `virman_grup_id` ile eslesir.
+    IADE, iade ettigi hareketi `iade_edilen_id` ile GOSTERIR — "hangi
+    tahsilat iade edildi" sorusu aciklama metnine birakilamaz.
+    """
+
+    __tablename__ = "finansal_hareket"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_hareket_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    tip: Mapped[str] = mapped_column(HAREKET_TIP, nullable=False)
+    yon: Mapped[str] = mapped_column(HAREKET_YON, nullable=False)
+    tutar_kurus: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    tarih = mapped_column(Date, nullable=False, server_default=text("CURRENT_DATE"))
+    kasa_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    unit_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    firma_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    gelir_gider_tanim_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    assessment_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    belge_no: Mapped[str | None] = mapped_column(Text, nullable=True)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    virman_grup_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    iade_edilen_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    kaydeden_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    created_at = _created_at()
+
+
+class IcraDosyasi(Base):
+    """Icra dosyasi (P29) — PARA HAREKETI DEGIL, hukuki surec kaydi.
+
+    Borclar zaten `dues_assessment`ta durur ve buraya KOPYALANMAZ: iki yerde
+    tutulan borc, biri guncellenip digeri unutuldugunda hangi rakamin dogru
+    oldugunu belirsiz birakirdi.
+    """
+
+    __tablename__ = "icra_dosyasi"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_icra_id_tenant"),
+        UniqueConstraint("tenant_id", "dosya_no", name="uq_icra_tenant_dosya_no"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    dosya_no: Mapped[str] = mapped_column(Text, nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    veris_tarihi = mapped_column(Date, nullable=True)
+    avukat: Mapped[str | None] = mapped_column(Text, nullable=True)
+    durum: Mapped[str] = mapped_column(
+        ICRA_DURUM, nullable=False, server_default=text("'acik'")
+    )
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()

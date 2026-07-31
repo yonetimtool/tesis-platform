@@ -1482,7 +1482,7 @@ hazır, yüzeyler P29'un tahsilat ekranlarıyla birlikte tasarlanacak (borç ve
 tahsilat aynı ekranda görünmeli).
 
 ### P29 — Collections, cash & financial movements
-Status: BEKLIYOR · Depends-on: P28
+Status: BITTI · Depends-on: P28
 Scope: tahsilat (tekil: kişi, yöntem otomatik/nakit/banka, kasa, tutar, tarih,
 açıklama; toplu tahsilat); gider & gelir hareketleri (row-based entry: hareket
 tipi, belge no, tarih, firma, tür, durum, kasa, tutar, açıklama; multi-row "Yeni
@@ -1499,6 +1499,72 @@ Tahsilat; e-posta/SMS entries stubbed until P32).
 Acceptance: consistency tests (kasa bakiye ≡ hareket toplamı; virman/iade edge
 cases), Excel import robustness, dashboard numbers match DB truth; panel
 `npm run build`; contract; gates.
+Notes (2026-07-31): **YENİ ŞEMA: `0019`** — `finansal_hareket` + `icra_dosyasi`.
+
+**TEK DEFTER KARARI.** Tahsilat, gider, gelir, virman, iade ve açılış fişi
+**ayrı tablolar değil**, tek `finansal_hareket` defterinde `tip` ile ayrılır.
+Gerekçe: kabul ölçütü olan **"kasa bakiye ≡ hareket toplamı"** tutarlılığı
+ancak TEK kaynak varken **kanıtlanabilir**; altı ayrı tabloda bakiye, altı
+toplamı doğru birleştirmeye bağlı olurdu ve bir tabloyu unutmak **sessiz bir
+fark** üretirdi.
+
+**BAKİYE SAKLANMAZ, TÜRETİLİR** (`kasa.acilis_bakiye_kurus` + işaretli
+toplam). Saklanan bir bakiye her yazma yolunda elle güncellenmek zorunda
+kalır ve bir yol unutulduğunda defterle bakiye sessizce ayrılır — testler
+bakiyeyi hareketlerden bağımsız olarak doğruluyor.
+
+**TUTAR HER ZAMAN POZİTİF; işaret `yon` sütununda.** Negatif tutar saklamak
+"iade" ile "eksi gider"i ayırt edilemez kılardı ve raporda mutlak değer
+almak zorunda bırakırdı. **Yön istemciden ALINMAZ**: gider kasadan çıkar,
+gelir kasaya girer — alınsaydı "giriş yönlü gider" gibi imkânsız bir satır
+yazılabilirdi.
+
+**VİRMAN İKİ SATIRDIR** (çıkış + giriş, aynı `virman_grup_id`). Tek satırla
+iki kasayı etkilemek, "bu kasadan ne çıktı" sorgusunu kasa başına değil
+hareket başına cevaplamak zorunda bırakırdı. Aynı kasaya virman **422**
+(bakiyeyi değiştirmeyen ama defteri şişiren iki satır). Test genel toplamın
+**değişmediğini** de kilitliyor — para site içinde yer değiştirdi.
+
+**İADE TERS YÖNLÜ YENİ KAYITTIR**, orijinal **silinmez**: defter append-only
+okunur, silinen bir tahsilat geçmiş raporları geriye dönük değiştirirdi.
+Kısmi iade serbest ama **toplam iade orijinali aşamaz**; bir iade tekrar
+**iade edilemez**.
+
+**BANKA EŞLEŞTİRME = ÖNERİ, otomatik tahsilat DEĞİL.** Banka açıklaması
+serbest metindir; yanlış eşleşen bir satır **başkasının borcunu kapatıp
+gerçek borçlunun borcunu açık bırakırdı**. **Belirsizlikte (iki aday aynı
+puan) öneri hiç üretilmez** — boş bırakmak yanlış eşleştirmekten iyidir.
+Öneri **kişiyi** hedefler, belirli bir borcu değil: bir ödeme birden fazla
+borca yayılabilir. Ad karşılaştırması aksansız/büyük harfe indirgenir ve
+**Türkçe tuzağı** gözetilir (`İ`nin küçüğü `i` değil). Banka API'si
+**kod değil belge notudur**: `docs/banka-entegrasyonu-notu.md` — hangi
+kararların önce verilmesi gerektiği ve **otomatik tahsilatın varsayılan
+kapalı kalması gerektiği** yazılı.
+
+**İCRA DOSYASI BORCU KOPYALAMAZ**, anlık okur. İki yerde tutulan borç, biri
+güncellenip diğeri unutulduğunda hangi rakamın doğru olduğunu belirsiz
+bırakırdı; test tahsilat sonrası dosyaya **dokunulmadan** borcun düştüğünü
+doğruluyor.
+
+**BULGU:** ilk sürüm banka eşleştirmesinde `min(uuid)` kullanıyordu —
+Postgres'te böyle bir toplama **yoktur** ve uç 500 veriyordu. Test yakaladı;
+örnek `assessment_id` döndürme fikri zaten yanlıştı (öneri kişiyi hedefler),
+kaldırıldı.
+
+TESTLER: `test_finans.py` **17/17** (bakiye=açılış+hareket, yön türetimi,
+virman iki satır + genel toplam sabit + aynı kasa 422, iade ters yön +
+orijinal durur + kısmi/aşım/iade-iade, açılış fişi, toplu tahsilat, banka
+eşleştirme üç senaryo, icra borç anlık + dosya no tek + durum, özet, RBAC,
+tenant izolasyonu).
+KAPILAR: backend `pytest` **954 geçti / 0 düştü**; göç tersinirliği **3/3 OK, bulgu 0** (20 sınır); sözleşme
+12 yol + 17 şema (sapma testi temiz); rol matrisi 13 yeni ucu yakaladı.
+
+**AÇIK BIRAKILAN (bilinçli):** panel ekranları (tahsilat/hareket/kasa/icra
++ dashboard kartları + global "+" menüsü) **YAPILMADI**. Gerekçe: bu madde
+API yüzeyini ve tutarlılık kurallarını kurdu; panelin tamamı (P28'in borç
+ekranları dahil) **tek bir finans bölümü** olarak tasarlanmalı — borç ve
+tahsilat aynı ekranda görünmeli ve iki maddeye bölünmüş bir panel iki farklı
+düzen üretirdi. E-posta/SMS hızlı eylemleri zaten P32'ye bağlı.
 
 ### P30 — Dues payment flow (resident)
 Status: BEKLIYOR · Depends-on: P29 (iyzico live path additionally needs P13)
@@ -1754,7 +1820,8 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P28 · (bu commit) · Borclandirma motoru (0018): mevcut aidat modulu GENISLETILDI (paralel sistem YOK); benzersizlik (daire, donem, TUR) oldu — ayni ay birden fazla kalem; hedefleme kurali TANIMDA (kiraci_oncelikli|malik); gecikme ANLIK hesaplanir; toplu onizleme→isleme, sayac sihirbazi, satir-bazli ice aktarim.
+- 2026-07-31 · P29 · (bu commit) · Tahsilat/kasa/finansal hareketler (0019): TEK DEFTER (tahsilat|gider|gelir|virman|iade|acilis), bakiye SAKLANMAZ defterden TURETILIR, virman iki satir, iade ters yonlu yeni kayit, banka eslestirme ONERIDIR (belirsizde uretmez), icra dosyasi borcu kopyalamaz + banka entegrasyonu belge notu.
+- 2026-07-31 · P28 · 51a73db · Borclandirma motoru (0018): mevcut aidat modulu GENISLETILDI (paralel sistem YOK); benzersizlik (daire, donem, TUR) oldu — ayni ay birden fazla kalem; hedefleme kurali TANIMDA (kiraci_oncelikli|malik); gecikme ANLIK hesaplanir; toplu onizleme→isleme, sayac sihirbazi, satir-bazli ice aktarim.
 - 2026-07-31 · P27 · 059eb61 · Muhasebe "Tanimlar" katmani (0017): kasa/gelir-gider/firma/personel/arac/sayac defterleri + evrak-seri & para birimi (GOSTERIM); para kurus, acilis bakiyesi isaretsiz+yonlu, dagitim enum'u BILEREK iki degerli; admin-web /tanimlar sayfasi (P26'nin acik parcasi kapandi).
 - 2026-07-31 · P26 · 760a812 · Bagimsiz Bolum TIP + GRUP tanimlari (0016): tip = buyukluk + VARSAYILAN AIDAT (null "tanimsiz" != 0 "muaf"), grup = ne oldugu; tanim silinince daire SILINMEZ; daire/toplu olusturmada atama; bilesik FK + SET NULL bulgusu.
 - 2026-07-31 · P25 · 33a7d75 · Kamera sertlestirme: 2048 karakter siniri (0015, uc katman) + "kamu yayinlari oynamiyor"un KOK NEDENI (cleartext yalniz debug manifestindeydi; P17 restream'i de vuruyordu) + hata artik NEDENE gore konusuyor + ana ekran seridi dortlu ve yonetici/sakin ekranlarina da eklendi.

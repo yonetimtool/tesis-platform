@@ -3179,6 +3179,305 @@ paths:
   # TEKIL yol icin ayri uc ACILMADI: `POST /dues/assessments` zaten odur ve
   # P28 alanlari ona OPSIYONEL eklendi (geriye uyum).
   # ================================================================= #
+  # ================================================================= #
+  # TAHSILAT, KASA VE FINANSAL HAREKETLER (P29)
+  # TEK DEFTER: tahsilat/gider/gelir/virman/iade/acilis ayni
+  # `finansal_hareket` kaydinda `tip` ile ayrilir — "kasa bakiyesi =
+  # hareket toplami" tutarliligi ancak TEK kaynak varken KANITLANABILIR.
+  # BAKIYE SAKLANMAZ, TURETILIR. TUTAR HER ZAMAN POZITIF; isaret `yon`da.
+  # RBAC: yazma admin; okuma admin+yonetici.
+  # ================================================================= #
+  /finans/tahsilat:
+    post:
+      tags: [finans]
+      summary: Tekil tahsilat (admin) — kasaya GIRIS
+      description: >
+        `dues_payment` tablosuyla YARISMAZ: o tablo cevrimici odeme
+        saglayicisi (idempotency, provider referansi) icindir; buradaki
+        hareket VEZNE kaydidir ve kasayi etkiler. Ikisini birlestirmek,
+        saglayici alanlarini her nakit tahsilatta bos birakmak demekti.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TahsilatCreate" }
+      responses:
+        "201":
+          description: Kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareket" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /finans/tahsilat/toplu:
+    post:
+      tags: [finans]
+      summary: Cok satirli tahsilat (admin) — HEPSI ya da HICBIRI
+      description: >
+        Kismi basari, kullaniciya "kac satir gecti" diye saydirmak ve
+        kalanlari elle tekrar girdirmek demekti; tahsilatta bu, ayni parayi
+        IKI KEZ kaydetme riskidir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TopluTahsilatIstek" }
+      responses:
+        "201":
+          description: Kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareketListe" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /finans/hareketler:
+    get:
+      tags: [finans]
+      summary: Finansal hareket listesi (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: tip
+          in: query
+          schema: { type: string, enum: [tahsilat, gider, gelir, virman, iade, acilis] }
+        - name: kasa_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: user_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareketListe" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [finans]
+      summary: Cok satirli gider/gelir girisi (admin)
+      description: >
+        **YON ISTEMCIDEN ALINMAZ**: gider kasadan CIKAR, gelir kasaya GIRER.
+        Alinsaydi "giris yonlu gider" gibi imkansiz bir satir yazilabilirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HareketToplu" }
+      responses:
+        "201":
+          description: Kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareketListe" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /finans/virman:
+    post:
+      tags: [finans]
+      summary: Hesaplar arasi virman (admin) — IKI SATIR uretir
+      description: >
+        Cikis + giris, ayni `virman_grup_id` ile eslesir. Tek satirla iki
+        kasayi etkilemek, "bu kasadan ne cikti" sorgusunu kasa basina degil
+        hareket basina cevaplamak zorunda birakirdi. Ayni kasaya virman 422.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VirmanIstek" }
+      responses:
+        "201":
+          description: Iki satir olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareketListe" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /finans/iade:
+    post:
+      tags: [finans]
+      summary: Odeme iadesi (admin) — TERS YONLU yeni hareket
+      description: >
+        Orijinal kayit SILINMEZ ya da degistirilmez: defter append-only
+        okunur, silinen bir tahsilat gecmis raporlari geriye donuk
+        degistirirdi. Kismi iade serbest ama TOPLAM iade orijinali ASAMAZ
+        (422). Bir IADE tekrar iade EDILEMEZ (422).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IadeIstek" }
+      responses:
+        "201":
+          description: Iade kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareket" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /finans/acilis:
+    post:
+      tags: [finans]
+      summary: Acilis fisi (admin) — kisi/kasa baslangic bakiyesi
+      description: >
+        `kasa.acilis_bakiye_kurus` KASANIN kendi acilisidir; bu fis KISI
+        bazli acilistir (devreden borc/alacak) ve ikisi ayni toplama girer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AcilisFisi" }
+      responses:
+        "201":
+          description: Kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareket" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /finans/kasa-bakiyeleri:
+    get:
+      tags: [finans]
+      summary: Kasa bakiyeleri (admin+yonetici) — DEFTERDEN TURETILIR
+      description: >
+        Bakiye SAKLANMAZ: saklanan bir bakiye her yazma yolunda elle
+        guncellenmek zorunda kalir ve bir yol unutuldugunda defterle bakiye
+        SESSIZCE ayrilir.
+      responses:
+        "200":
+          description: Bakiyeler
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KasaBakiyeResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /finans/banka-eslestir:
+    post:
+      tags: [finans]
+      summary: Banka ekstresi satirlarina ESLESTIRME ONERISI (admin)
+      description: >
+        **ONERI'dir, otomatik tahsilat DEGILDIR**: banka aciklamasi serbest
+        metindir ve yanlis eslesen bir satir, BASKASININ borcunu kapatip
+        gercek borclunun borcunu ACIK birakirdi. Belirsizlikte (iki aday ayni
+        puan) ONERI URETILMEZ — secmek kullanicinin isidir.
+
+        Oneri KISIYI hedefler, belirli bir borcu degil: bir odeme birden
+        fazla borca yayilabilir ve hangisinin kapatilacagi tahsilat
+        ekraninin isidir.
+
+        DOSYA AYRISTIRMA ISTEMCIDE (P28 ice aktarimla ayni gerekce).
+        **BANKA API ENTEGRASYONU KOD DEGIL BELGE NOTUDUR** (kapsam boyle
+        diyor): her bankanin ayri sozlesmesi ve kimlik akisi var, once bir
+        banka secilmeli.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BankaEslestirIstek" }
+      responses:
+        "200":
+          description: Oneriler
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BankaEslestirSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /finans/icra-dosyalari:
+    get:
+      tags: [finans]
+      summary: Icra dosyalari (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: durum
+          in: query
+          schema: { type: string, enum: [acik, takipte, tahsil_edildi, kapandi] }
+        - name: user_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/IcraDosyasi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [finans]
+      summary: Icra dosyasi ac (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IcraDosyasiCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IcraDosyasi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Ayni dosya no zaten var
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /finans/icra-dosyalari/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [finans]
+      summary: Icra dosyasi guncelle (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IcraDosyasiUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IcraDosyasi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Ayni dosya no zaten var
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /finans/ozet:
+    get:
+      tags: [finans]
+      summary: Panel ozet kartlari (admin+yonetici) — hepsi DEFTERDEN
+      responses:
+        "200":
+          description: Ozet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansOzet" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /borclandirma/toplu/onizleme:
     post:
       tags: [aidat]
@@ -8973,6 +9272,242 @@ components:
     # ------------------ P27 "Tanimlar" katmani semalari ---------------- #
     # PARA HER YERDE KURUS (int64). Acilis bakiyeleri ISARETSIZ tutar + AYRI
     # yon tasir (bkz. yol yorumlari).
+    FinansalHareket:
+      type: object
+      description: >
+        TEK DEFTER kaydi. **TUTAR HER ZAMAN POZITIF**; isaret `yon`dadir —
+        negatif tutar saklamak "iade" ile "eksi gider"i ayirt edilemez
+        kilardi.
+      required: [id, tip, yon, tutar_kurus, tarih, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        tip: { type: string, enum: [tahsilat, gider, gelir, virman, iade, acilis] }
+        yon: { type: string, enum: [giris, cikis] }
+        tutar_kurus: { type: integer, format: int64, minimum: 1 }
+        tarih: { type: string, format: date }
+        kasa_id: { type: string, format: uuid, nullable: true }
+        kasa_ad: { type: string, nullable: true }
+        user_id: { type: string, format: uuid, nullable: true }
+        user_ad: { type: string, nullable: true }
+        unit_id: { type: string, format: uuid, nullable: true }
+        firma_id: { type: string, format: uuid, nullable: true }
+        gelir_gider_tanim_id: { type: string, format: uuid, nullable: true }
+        assessment_id: { type: string, format: uuid, nullable: true }
+        belge_no: { type: string, nullable: true, maxLength: 50 }
+        aciklama: { type: string, nullable: true }
+        virman_grup_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Virmanin IKI satirini eslestirir
+        iade_edilen_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: >
+            Iade edilen hareket — "hangi tahsilat iade edildi" sorusu
+            aciklama metnine birakilamaz.
+        created_at: { type: string, format: date-time }
+    FinansalHareketListe:
+      type: object
+      required: [meta, items]
+      properties:
+        meta: { $ref: "#/components/schemas/PageMeta" }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/FinansalHareket" }
+    TahsilatCreate:
+      type: object
+      required: [kasa_id, tutar_kurus]
+      properties:
+        user_id: { type: string, format: uuid, nullable: true }
+        unit_id: { type: string, format: uuid, nullable: true }
+        assessment_id: { type: string, format: uuid, nullable: true }
+        kasa_id: { type: string, format: uuid }
+        tutar_kurus: { type: integer, format: int64, minimum: 1 }
+        tarih: { type: string, format: date, nullable: true }
+        belge_no: { type: string, nullable: true, maxLength: 50 }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    TopluTahsilatSatir:
+      type: object
+      required: [tutar_kurus]
+      properties:
+        user_id: { type: string, format: uuid, nullable: true }
+        unit_id: { type: string, format: uuid, nullable: true }
+        assessment_id: { type: string, format: uuid, nullable: true }
+        tutar_kurus: { type: integer, format: int64, minimum: 1 }
+        aciklama: { type: string, nullable: true }
+    TopluTahsilatIstek:
+      type: object
+      required: [kasa_id, satirlar]
+      properties:
+        kasa_id: { type: string, format: uuid }
+        tarih: { type: string, format: date, nullable: true }
+        satirlar:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { $ref: "#/components/schemas/TopluTahsilatSatir" }
+    HareketSatir:
+      type: object
+      required: [tip, tutar_kurus, kasa_id]
+      properties:
+        tip: { type: string, enum: [gider, gelir] }
+        tutar_kurus: { type: integer, format: int64, minimum: 1 }
+        kasa_id: { type: string, format: uuid }
+        firma_id: { type: string, format: uuid, nullable: true }
+        gelir_gider_tanim_id: { type: string, format: uuid, nullable: true }
+        tarih: { type: string, format: date, nullable: true }
+        belge_no: { type: string, nullable: true, maxLength: 50 }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    HareketToplu:
+      type: object
+      required: [satirlar]
+      properties:
+        satirlar:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items: { $ref: "#/components/schemas/HareketSatir" }
+    VirmanIstek:
+      type: object
+      required: [kaynak_kasa_id, hedef_kasa_id, tutar_kurus]
+      properties:
+        kaynak_kasa_id: { type: string, format: uuid }
+        hedef_kasa_id: { type: string, format: uuid }
+        tutar_kurus: { type: integer, format: int64, minimum: 1 }
+        tarih: { type: string, format: date, nullable: true }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    IadeIstek:
+      type: object
+      required: [hareket_id]
+      properties:
+        hareket_id: { type: string, format: uuid }
+        tutar_kurus:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+          description: Verilmezse KALAN iade edilebilir tutarin tamami
+        tarih: { type: string, format: date, nullable: true }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    AcilisFisi:
+      type: object
+      required: [kasa_id, yon, tutar_kurus]
+      properties:
+        kasa_id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid, nullable: true }
+        yon: { type: string, enum: [giris, cikis] }
+        tutar_kurus: { type: integer, format: int64, minimum: 1 }
+        tarih: { type: string, format: date, nullable: true }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    KasaBakiye:
+      type: object
+      required: [kasa_id, kod, ad, acilis_bakiye_kurus, hareket_kurus, bakiye_kurus]
+      properties:
+        kasa_id: { type: string, format: uuid }
+        kod: { type: string }
+        ad: { type: string }
+        acilis_bakiye_kurus: { type: integer, format: int64 }
+        hareket_kurus: { type: integer, format: int64 }
+        bakiye_kurus: { type: integer, format: int64 }
+    KasaBakiyeResponse:
+      type: object
+      required: [items, genel_toplam_kurus]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/KasaBakiye" }
+        genel_toplam_kurus: { type: integer, format: int64 }
+    BankaSatirIn:
+      type: object
+      required: [satir_no, aciklama, tutar_kurus]
+      properties:
+        satir_no: { type: integer }
+        aciklama: { type: string, maxLength: 500 }
+        tutar_kurus: { type: integer, format: int64, minimum: 1 }
+    BankaEslestirIstek:
+      type: object
+      required: [satirlar]
+      properties:
+        satirlar:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { $ref: "#/components/schemas/BankaSatirIn" }
+    BankaEslestirOneri:
+      type: object
+      required: [satir_no, guven, neden]
+      properties:
+        satir_no: { type: integer }
+        user_id: { type: string, format: uuid, nullable: true }
+        user_ad: { type: string, nullable: true }
+        assessment_id: { type: string, format: uuid, nullable: true }
+        guven:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 0 = oneri yok
+        neden:
+          type: string
+          description: "ad / soyad / tutar_tam / tutar_kismi / belirsiz / eslesme_yok"
+    BankaEslestirSonuc:
+      type: object
+      required: [oneriler]
+      properties:
+        oneriler:
+          type: array
+          items: { $ref: "#/components/schemas/BankaEslestirOneri" }
+    IcraDosyasi:
+      type: object
+      description: >
+        Hukuki surec kaydi — PARA HAREKETI DEGIL. Borclar `dues_assessment`ta
+        durur ve buraya KOPYALANMAZ: iki yerde tutulan borc, biri guncellenip
+        digeri unutuldugunda hangi rakamin dogru oldugunu belirsiz birakirdi.
+      required: [id, dosya_no, user_id, durum, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        dosya_no: { type: string, maxLength: 50 }
+        user_id: { type: string, format: uuid }
+        user_ad: { type: string, nullable: true }
+        veris_tarihi: { type: string, format: date, nullable: true }
+        avukat: { type: string, nullable: true }
+        durum: { type: string, enum: [acik, takipte, tahsil_edildi, kapandi] }
+        aciklama: { type: string, nullable: true }
+        acik_borc_kurus:
+          type: integer
+          format: int64
+          description: ANLIK okunur (kopyalanmaz)
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    IcraDosyasiCreate:
+      type: object
+      required: [dosya_no, user_id]
+      properties:
+        dosya_no: { type: string, minLength: 1, maxLength: 50 }
+        user_id: { type: string, format: uuid }
+        veris_tarihi: { type: string, format: date, nullable: true }
+        avukat: { type: string, nullable: true, maxLength: 150 }
+        durum: { type: string, enum: [acik, takipte, tahsil_edildi, kapandi], default: acik }
+        aciklama: { type: string, nullable: true, maxLength: 1000 }
+    IcraDosyasiUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        dosya_no: { type: string, minLength: 1, maxLength: 50 }
+        veris_tarihi: { type: string, format: date, nullable: true }
+        avukat: { type: string, nullable: true, maxLength: 150 }
+        durum: { type: string, enum: [acik, takipte, tahsil_edildi, kapandi] }
+        aciklama: { type: string, nullable: true, maxLength: 1000 }
+    FinansOzet:
+      type: object
+      required: [borclandirilan_ay_kurus, tahsil_edilen_ay_kurus, acik_borc_kurus, kasa_toplam_kurus, icra_acik_dosya]
+      properties:
+        borclandirilan_ay_kurus: { type: integer, format: int64 }
+        tahsil_edilen_ay_kurus: { type: integer, format: int64 }
+        acik_borc_kurus: { type: integer, format: int64 }
+        kasa_toplam_kurus: { type: integer, format: int64 }
+        icra_acik_dosya: { type: integer }
     TopluBorcSuzgec:
       type: object
       description: >

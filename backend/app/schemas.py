@@ -3892,3 +3892,215 @@ class GecikmeAyarOut(BaseModel):
 
 class GecikmeAyarUpdate(BaseModel):
     gecikme_aylik_yuzde: float = Field(..., ge=0, le=100)
+
+
+# ==================== P29 FINANSAL HAREKET / TAHSILAT ======================= #
+# TEK DEFTER: tahsilat, gider, gelir, virman, iade, acilis ayni kayitta `tip`
+# ile ayrilir. TUTAR HER ZAMAN POZITIF; isaret `yon`dadir.
+HareketTip = Literal["tahsilat", "gider", "gelir", "virman", "iade", "acilis"]
+HareketYon = Literal["giris", "cikis"]
+IcraDurum = Literal["acik", "takipte", "tahsil_edildi", "kapandi"]
+
+
+class HareketOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tip: str
+    yon: str
+    tutar_kurus: int
+    tarih: date
+    kasa_id: uuid.UUID | None = None
+    kasa_ad: str | None = None
+    user_id: uuid.UUID | None = None
+    user_ad: str | None = None
+    unit_id: uuid.UUID | None = None
+    firma_id: uuid.UUID | None = None
+    gelir_gider_tanim_id: uuid.UUID | None = None
+    assessment_id: uuid.UUID | None = None
+    belge_no: str | None = None
+    aciklama: str | None = None
+    virman_grup_id: uuid.UUID | None = None
+    iade_edilen_id: uuid.UUID | None = None
+    created_at: datetime
+
+
+class HareketListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[HareketOut]
+
+
+class TahsilatCreate(BaseModel):
+    """Tekil tahsilat. `assessment_id` verilirse o borca sayilir."""
+
+    user_id: uuid.UUID | None = None
+    unit_id: uuid.UUID | None = None
+    assessment_id: uuid.UUID | None = None
+    kasa_id: uuid.UUID
+    tutar_kurus: int = Field(..., ge=1)
+    tarih: date | None = None
+    belge_no: str | None = Field(None, max_length=50)
+    aciklama: str | None = Field(None, max_length=500)
+
+
+class TopluTahsilatSatir(BaseModel):
+    user_id: uuid.UUID | None = None
+    unit_id: uuid.UUID | None = None
+    assessment_id: uuid.UUID | None = None
+    tutar_kurus: int = Field(..., ge=1)
+    aciklama: str | None = None
+
+
+class TopluTahsilatIstek(BaseModel):
+    """Cok satirli tahsilat — "Yeni Satır" akisinin sunucu karsiligi."""
+
+    kasa_id: uuid.UUID
+    tarih: date | None = None
+    satirlar: list[TopluTahsilatSatir] = Field(..., min_length=1, max_length=500)
+
+
+class HareketSatir(BaseModel):
+    """Gider/gelir hareketi satiri (cok satirli giris)."""
+
+    tip: Literal["gider", "gelir"]
+    tutar_kurus: int = Field(..., ge=1)
+    kasa_id: uuid.UUID
+    firma_id: uuid.UUID | None = None
+    gelir_gider_tanim_id: uuid.UUID | None = None
+    tarih: date | None = None
+    belge_no: str | None = Field(None, max_length=50)
+    aciklama: str | None = Field(None, max_length=500)
+
+
+class HareketToplu(BaseModel):
+    satirlar: list[HareketSatir] = Field(..., min_length=1, max_length=200)
+
+
+class VirmanIstek(BaseModel):
+    """Hesaplar arasi virman — IKI SATIR uretir (cikis + giris)."""
+
+    kaynak_kasa_id: uuid.UUID
+    hedef_kasa_id: uuid.UUID
+    tutar_kurus: int = Field(..., ge=1)
+    tarih: date | None = None
+    aciklama: str | None = Field(None, max_length=500)
+
+    @model_validator(mode="after")
+    def _ayni_kasa_olmaz(self) -> "VirmanIstek":
+        # Ayni kasaya virman, bakiyeyi degistirmeyen ama defteri sisiren
+        # anlamsiz iki satir uretirdi.
+        if self.kaynak_kasa_id == self.hedef_kasa_id:
+            raise ValueError("kaynak ve hedef kasa ayni olamaz")
+        return self
+
+
+class IadeIstek(BaseModel):
+    """Odeme iadesi — IADE ETTIGI hareketi gosterir."""
+
+    hareket_id: uuid.UUID
+    tutar_kurus: int | None = Field(None, ge=1)
+    tarih: date | None = None
+    aciklama: str | None = Field(None, max_length=500)
+
+
+class AcilisFisi(BaseModel):
+    """Acilis fisi: kisi ya da kasa baslangic bakiyesi."""
+
+    kasa_id: uuid.UUID
+    user_id: uuid.UUID | None = None
+    yon: HareketYon
+    tutar_kurus: int = Field(..., ge=1)
+    tarih: date | None = None
+    aciklama: str | None = Field(None, max_length=500)
+
+
+class KasaBakiye(BaseModel):
+    kasa_id: uuid.UUID
+    kod: str
+    ad: str
+    acilis_bakiye_kurus: int
+    hareket_kurus: int
+    bakiye_kurus: int
+
+
+class KasaBakiyeResponse(BaseModel):
+    items: list[KasaBakiye]
+    genel_toplam_kurus: int
+
+
+class BankaSatirIn(BaseModel):
+    satir_no: int
+    aciklama: str = Field(..., max_length=500)
+    tutar_kurus: int = Field(..., ge=1)
+
+
+class BankaEslestirIstek(BaseModel):
+    satirlar: list[BankaSatirIn] = Field(..., min_length=1, max_length=500)
+
+
+class BankaEslestirOneri(BaseModel):
+    satir_no: int
+    user_id: uuid.UUID | None = None
+    user_ad: str | None = None
+    assessment_id: uuid.UUID | None = None
+    guven: int
+    neden: str
+
+
+class BankaEslestirSonuc(BaseModel):
+    oneriler: list[BankaEslestirOneri]
+
+
+class IcraDosyasiCreate(BaseModel):
+    dosya_no: str = Field(..., min_length=1, max_length=50)
+    user_id: uuid.UUID
+    veris_tarihi: date | None = None
+    avukat: str | None = Field(None, max_length=150)
+    durum: IcraDurum = "acik"
+    aciklama: str | None = Field(None, max_length=1000)
+
+
+class IcraDosyasiUpdate(BaseModel):
+    dosya_no: str | None = Field(None, min_length=1, max_length=50)
+    veris_tarihi: date | None = None
+    avukat: str | None = Field(None, max_length=150)
+    durum: IcraDurum | None = None
+    aciklama: str | None = Field(None, max_length=1000)
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "IcraDosyasiUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class IcraDosyasiOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    dosya_no: str
+    user_id: uuid.UUID
+    user_ad: str | None = None
+    veris_tarihi: date | None = None
+    avukat: str | None = None
+    durum: str
+    aciklama: str | None = None
+    #: Kisinin ACIK borc toplami — dosya kaydina KOPYALANMAZ, anlik okunur.
+    acik_borc_kurus: int = 0
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class IcraDosyasiListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[IcraDosyasiOut]
+
+
+class FinansOzet(BaseModel):
+    """Panel ozet kartlari (P29)."""
+
+    borclandirilan_ay_kurus: int
+    tahsil_edilen_ay_kurus: int
+    acik_borc_kurus: int
+    kasa_toplam_kurus: int
+    icra_acik_dosya: int
