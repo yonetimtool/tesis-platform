@@ -1049,7 +1049,7 @@ geçici-dizin ev işi, fotoğraflı sürüşün `pumpAndSettle` stratejisi.
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P16 · (bu commit) · ANPR ingest: 0011 revizyonu (anpr_api_key + anpr_event + vehicle_pass.kaynak), X-ANPR-Key kimligi (SECURITY DEFINER cozumleme), dort adaptor, esik/onay kuyrugu, 27 test; deponun dort envanter kilidi de karsilandi.
+- 2026-07-31 · P16 · ee77535 · ANPR ingest: 0011 revizyonu (anpr_api_key + anpr_event + vehicle_pass.kaynak), X-ANPR-Key kimligi (SECURITY DEFINER cozumleme), dort adaptor, esik/onay kuyrugu, 27 test; deponun dort envanter kilidi de karsilandi.
 - 2026-07-30 · P21 · 10cf95f · Talep-uzerine ceviri DEGERLENDIRME NOTU (uygulama yok): yazma-aninda degil talep-uzerine + tek dil; kalite engeli once, DeepL'de ucuncu kisi verisi uyarisi.
 - 2026-07-30 · P20 · d8c552e · Yuz tanima v2 TASARIM NOTU (kod yok): kapsam 1:1 dogrulama, sablon cihazda, KVKK kosullari + "once P34'u olc" tavsiyesi + karar satiri.
 - 2026-07-30 · P15 · 7cfb492 · Frigate PoC ayri yiginda kosuldu: restream oynatilabilir dogrulandi, MQTT konu envanteri + olay yuku yakalandi, kaynak olculdu; ANPR ingest olay semasi taslagi yazildi.
