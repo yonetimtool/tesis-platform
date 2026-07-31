@@ -50,6 +50,12 @@ enum UserRole {
   bool get canViewMyPatrol =>
       this == admin || this == security || this == guvenlikAmiri;
 
+  /// Bildirim kutusu (`GET /notifications`) — admin + yonetici + security
+  /// (+ P35 amir: P34 alarmlarinin muhatabi). tesis_gorevlisi ERISMEZ.
+  bool get canViewNotifications =>
+      this == admin || this == yonetici || this == security ||
+      this == guvenlikAmiri;
+
   /// (P35) Guvenlik ALANI: tur/vardiya/kamera/alarm ekranlari. Yazma yetkisi
   /// TENANT MODUNA baglidir ve SUNUCUDA belirlenir — istemci yalnizca
   /// ekranin GORUNURLUGUNU secer.

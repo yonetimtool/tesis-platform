@@ -2159,8 +2159,16 @@ yeniden kurmak, `user_role`a bağlı **RLS politikalarını** yeniden yazmayı
 gerektirirdi — bir geri alma adımının güvenlik politikalarını yeniden yazması
 kabul edilemez risk.
 
+**TAKİP DÜZELTMESİ (aynı gün, `HomeGate`).** İlk sürümde amir `HomeGate`in
+hiçbir dalına uymuyor ve **splash ekranında kilitli kalıyordu** —
+`homeVaryantForRole` doğru varyantı söylüyordu ama `HomeGate` onu
+kullanmıyordu. Ayrıca saha ana ekranı tek bir `role == security` bayrağına
+bakıyordu; amir için bu ya 403 üretecek istekler atardı (kargo/ziyaretçi) ya
+da görmesi gereken kartları gizlerdi (bildirim/araç/ihlal). Kartlar artık
+rolün **yetenek bayraklarına** bakıyor.
+
 Kanıt: `backend/tests/test_guvenlik_amiri.py` **15 test** + `mobile/test/
-guvenlik_amiri_test.dart` **5 test** yeşil; rol matrisi kilidi **6 sütuna**
+guvenlik_amiri_test.dart` **6 test** yeşil; rol matrisi kilidi **6 sütuna**
 çıktı; tam pytest yeşil; `flutter analyze` temiz, `flutter test` 1497,
 apk debug build başarılı; admin-web `tsc` + `vitest` (105) + `npm run build`
 yeşil; `goc-tersinirlik` bulgu 0 (25 sınır), `goc-uyum-dogrula` bulgu 0.

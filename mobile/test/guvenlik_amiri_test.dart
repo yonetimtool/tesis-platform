@@ -53,6 +53,20 @@ void main() {
     expect(amir.canPublishTransparency, isFalse);
   });
 
+  test('KART BAYRAKLARI: bildirim/arac/ihlal ACIK, kargo/ziyaretci KAPALI', () {
+    // BULGU: saha ana ekrani tek bir `role == security` bayragina bakiyordu;
+    // amir icin bu ya 403 uretecek istekler atardi ya da gordugu kartlari
+    // gizlerdi. Kartlar artik YETENEK bayraklarina bakiyor.
+    expect(amir.canViewNotifications, isTrue);
+    expect(amir.canViewVehiclePasses, isTrue);
+    expect(amir.canViewViolations, isTrue);
+    expect(amir.canViewKargo, isFalse);
+    expect(amir.canViewVisitors, isFalse);
+    // Tesis gorevlisi bildirim GORMEZ (mevcut davranis korunuyor).
+    expect(UserRole.tesisGorevlisi.canViewNotifications, isFalse);
+    expect(UserRole.security.canViewNotifications, isTrue);
+  });
+
   test('DIGER ROLLER degismedi (regresyon)', () {
     // P35 yalniz EKLEME olmali: mevcut rollerin yetenekleri aynen durmali.
     expect(UserRole.yonetici.isGuvenlikYonetimi, isTrue);

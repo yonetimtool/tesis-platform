@@ -4552,3 +4552,66 @@ class SiteAktarSablonSatiri(BaseModel):
     basliklar: list[str]
     ornek: list[str]
     aciklama: str
+
+
+# ======================== P36 KVKK ONAY + PAZARLAMA ========================= #
+class KvkkMetinCreate(BaseModel):
+    """Yeni SURUM yayinla. `surum` ISTEMCIDEN ALINMAZ — sunucu artirir:
+    istemcinin surum secmesi, iki yoneticinin ayni numarayi vermesi ya da
+    numara atlamasi demekti."""
+
+    baslik: str = Field(..., min_length=1, max_length=200)
+    govde: str = Field(..., min_length=1, max_length=100_000)
+
+
+class KvkkMetinOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    surum: int
+    baslik: str
+    govde: str
+    created_at: datetime
+
+
+class KvkkDurumOut(BaseModel):
+    """Kullanicinin onay DURUMU — istemci kapiyi buna gore kurar."""
+
+    #: Tenant henuz metin yayinlamadiysa False (kapi kurulamaz; metin yok).
+    metin_var: bool
+    guncel_surum: int | None = None
+    onayladigi_surum: int | None = None
+    onay_at: datetime | None = None
+    #: True ise istemci ONAY KAPISINI acar. Surum artinca yeniden True olur.
+    onay_gerekli: bool
+
+
+class KvkkOnayIstek(BaseModel):
+    """Onaylanan SURUM govdede TASINIR: istemci ekranda gordugu surumu
+    bildirir. Sunucu guncel surumle karsilastirir — arada metin
+    degistiyse onay ESKI METNE ait olurdu ve 409 doner."""
+
+    surum: int = Field(..., ge=1)
+
+
+class PazarlamaTercihleri(BaseModel):
+    """Uc BAGIMSIZ kanal. Tek bir "pazarlama" bayragi, kisiyi istemedigi
+    kanaldan mesaj almak ile hic almamak arasinda secmeye zorlardi."""
+
+    model_config = ConfigDict(from_attributes=True)
+    eposta: bool = False
+    sms: bool = False
+    arama: bool = False
+    guncelleme_at: datetime | None = None
+
+
+class PazarlamaTercihUpdate(BaseModel):
+    eposta: bool | None = None
+    sms: bool | None = None
+    arama: bool | None = None
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def _en_az_bir(self) -> "PazarlamaTercihUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self

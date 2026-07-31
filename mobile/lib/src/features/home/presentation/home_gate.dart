@@ -31,6 +31,13 @@ class HomeGate extends ConsumerWidget {
     if (role == UserRole.security || role == UserRole.tesisGorevlisi) {
       return SahaHomeScreen(role: role);
     }
+    // (P35 duzeltmesi) Guvenlik amiri de SAHA duzeni gorur. Bu dal
+    // eklenmeseydi amir asagidaki `role != yonetici` dalina duser ve
+    // SPLASH ekraninda KILITLI kalirdi — `homeVaryantForRole` dogru
+    // varyanti soyluyordu ama HomeGate onu kullanmiyor.
+    if (role == UserRole.guvenlikAmiri) {
+      return SahaHomeScreen(role: role);
+    }
     // Platform admini yonetim duzenini gorur (brief: admin→yönetici varyanti).
     if (role == UserRole.admin) {
       return const YoneticiHomeScreen(role: UserRole.admin);

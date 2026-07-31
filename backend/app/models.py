@@ -347,6 +347,23 @@ class AppUser(Base):
     telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Rol-bazli arama rizasi (C1a): numara YALNIZ riza=true iken ve yetkili
     # arayan role /call-target ile aciklanir (KVKK — amaç-sınırlı).
+    #: (P36) Pazarlama izinleri — UC AYRI KANAL, tek bayrak DEGIL: kisi
+    #: e-posta isteyip SMS istemeyebilir. UCU DE VARSAYILAN KAPALI
+    #: (KVKK: riza ACIK olmali, varsayilan olamaz).
+    pazarlama_eposta: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    pazarlama_sms: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    pazarlama_arama: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    #: (P36) Rizanin NE ZAMAN degistigi — KVKK'da ispat yukumlulugu veri
+    #: sorumlusundadir.
+    pazarlama_guncelleme_at = mapped_column(
+        TIMESTAMP(timezone=True), nullable=True
+    )
     aranabilir: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
@@ -2842,3 +2859,78 @@ class TenantDokuman(Base):
         UUID(as_uuid=True), nullable=True
     )
     created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class KvkkMetin(Base):
+    """(P36) Aydinlatma metni — TENANT ICERIGI, urun sabiti DEGIL.
+
+    Her tesisin veri sorumlusu kendisidir; platforma gomulu tek bir metin
+    200 tesise BASKASININ metnini imzalatmak olurdu.
+
+    YAYINLANMIS METIN DEGISTIRILEMEZ, yeni SURUM acilir: yerinde duzenlemeye
+    izin verilseydi dun onay vermis bir kullanicinin onayi BUGUN BASKA BIR
+    METNE ait gorunurdu.
+    """
+
+    __tablename__ = "kvkk_metin"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_kvkk_metin_id_tenant"),
+        UniqueConstraint("tenant_id", "surum", name="uq_kvkk_metin_surum"),
+        ForeignKeyConstraint(
+            ["yayinlayan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_kvkk_metin_yayinlayan",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    surum: Mapped[int] = mapped_column(Integer, nullable=False)
+    baslik: Mapped[str] = mapped_column(Text, nullable=False)
+    govde: Mapped[str] = mapped_column(Text, nullable=False)
+    yayinlayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class KvkkOnay(Base):
+    """(P36) Kullanicinin BELIRLI BIR SURUME verdigi onay.
+
+    Satir SILINMEZ ve GUNCELLENMEZ. Onayi "geri almak" onay kaydini silmek
+    DEGILDIR: aydinlatma bir BILDIRIMDIR ve geri alinmaz — geri alinabilen
+    sey PAZARLAMA RIZASIDIR (app_user kolonlari).
+    """
+
+    __tablename__ = "kvkk_onay"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "user_id", "surum", name="uq_kvkk_onay"),
+        ForeignKeyConstraint(
+            ["user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_kvkk_onay_user",
+        ),
+        ForeignKeyConstraint(
+            ["kvkk_metin_id", "tenant_id"],
+            ["kvkk_metin.id", "kvkk_metin.tenant_id"],
+            ondelete="RESTRICT",
+            name="fk_kvkk_onay_metin",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    kvkk_metin_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    #: Surum AYRICA kopyalanir: metin satiri bir gun silinse bile "hangi
+    #: surumu onayladi" sorusu yanitlanabilir kalmali.
+    surum: Mapped[int] = mapped_column(Integer, nullable=False)
+    onay_at = _created_at()

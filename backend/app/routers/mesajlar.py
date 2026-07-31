@@ -348,12 +348,17 @@ async def gonder(
         kisi = kisiler.get(kid)
         if kisi is None:
             continue
-        # PAZARLAMA -> RIZA ZORUNLU. Riza kaydi P36'nin isidir; o gelene
-        # kadar pazarlama gonderimi HIC yapilmaz. "Simdilik gonderelim,
-        # rizayi sonra ekleriz" demek KVKK ihlalini urune yerlestirmekti.
+        # PAZARLAMA -> RIZA ZORUNLU (P36 ile GERCEK riza kaydi baglandi).
+        # Riza KANAL BAZLIDIR: e-postaya izin veren kisi SMS'e izin vermis
+        # sayilmaz — tek bir "pazarlama" bayragi bunu kaybederdi.
         if sablon.amac == "pazarlama":
-            riza_yok += 1
-            continue
+            izinli = (
+                kisi.pazarlama_sms if sablon.kanal == "sms"
+                else kisi.pazarlama_eposta
+            )
+            if not izinli:
+                riza_yok += 1
+                continue
         hedef = (
             kisi.telefon if sablon.kanal == "sms" else kisi.email
         )

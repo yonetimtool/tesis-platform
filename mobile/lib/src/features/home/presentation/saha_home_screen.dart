@@ -72,13 +72,20 @@ class SahaHomeScreen extends ConsumerWidget {
     final dil = context.dilKodu;
     final taban = ref.watch(homeRepositoryProvider);
     final ad = ref.watch(profileProvider).value?.ad ?? '';
+    // (P35) TEK BAYRAK YETMEZ: amir bildirimi ve arac/ihlal sayacini
+    // GORUR ama kargo/ziyaretci ona KAPALIDIR (KVKK). Kartlar artik rolun
+    // YETENEK bayraklarina bakar — `role == security` kisayolu amir icin
+    // 403 uretecek istekler atardi.
     final guvenlik = role == UserRole.security;
+    final kapiOps = role.canViewKargo;          // kargo + ziyaretci
+    final aracIhlal = role.canViewVehiclePasses;
     final now = DateTime.now();
 
     // /notifications RBAC: security izinli, tesis_gorevlisi DEGIL — izinsiz
     // rolde provider hic izlenmez (401 uretecek istek atilmaz), rozet yok.
-    final unread =
-        guvenlik ? ref.watch(unreadNotificationCountProvider).value ?? 0 : 0;
+    final unread = role.canViewNotifications
+        ? ref.watch(unreadNotificationCountProvider).value ?? 0
+        : 0;
 
     final hava = ref.watch(weatherProvider).value;
     final tesisAd = ref.watch(tenantSettingsProvider).value?.ad ?? '';
@@ -86,17 +93,18 @@ class SahaHomeScreen extends ConsumerWidget {
     final vardiyalar = vardiyaAsync.value ?? const [];
     // KVKK: kargo/ziyaretci UCLARI tesis_gorevlisine kapali — o rolde hic
     // izlenmez (403 uretecek istek atilmaz).
-    final kargoAsync = guvenlik
+    final kargoAsync = kapiOps
         ? ref.watch(kargoListProvider)
         : const AsyncValue<List<Kargo>>.data([]);
     // /visitors + /vehicle-passes + /violations: RBAC'i security'dir; hepsi
     // ?limit=1 sayacidir (liste tasinmaz). tesis_gorevlisi rolunde kart
     // cizilmedigi icin saglayici hic izlenmez.
     final icerdeAsync =
-        guvenlik ? ref.watch(icerdekiZiyaretciSayisiProvider) : null;
+        kapiOps ? ref.watch(icerdekiZiyaretciSayisiProvider) : null;
     final aracAsync =
-        guvenlik ? ref.watch(bugunkuAracGirisSayisiProvider) : null;
-    final ihlalAsync = guvenlik ? ref.watch(yeniIhlalSayisiProvider) : null;
+        aracIhlal ? ref.watch(bugunkuAracGirisSayisiProvider) : null;
+    final ihlalAsync =
+        role.canViewViolations ? ref.watch(yeniIhlalSayisiProvider) : null;
     // Saha personelinin gunluk isleri — iki rolde de izlenir (/tasks ve
     // /assets saha rollerine aciktir; sunucu kendi kapsamiyla suzer).
     final gorevAsync = ref.watch(aktifGorevSayisiProvider);
@@ -275,7 +283,7 @@ class SahaHomeScreen extends ConsumerWidget {
     switch (index) {
       case 1: // Bildirimler: security inbox'a gider; tesis gorevlisi RBAC
         // disi — durust mesaj (sahte bos ekran degil).
-        if (role == UserRole.security) {
+        if (role.canViewNotifications) {
           context.push(AppRoutes.notifications);
         } else {
           ScaffoldMessenger.of(context)
