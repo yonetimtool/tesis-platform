@@ -1891,7 +1891,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P30 · (bu commit) · Sakin "Öde" akisi (0020): havale aciklama KODU (sabit, elle yazilabilir alfabe) eslestirmeyi KESINLESTIRIR; IBAN P27 banka kasasindan (ayri alan YOK); kart mevcut saglayici soyutlamasi uzerinden (P13 ile canliya); mobil /ode tek sayfa, kopyala + kalin kod.
+- 2026-07-31 · P30 · e48db6a · Sakin "Öde" akisi (0020): havale aciklama KODU (sabit, elle yazilabilir alfabe) eslestirmeyi KESINLESTIRIR; IBAN P27 banka kasasindan (ayri alan YOK); kart mevcut saglayici soyutlamasi uzerinden (P13 ile canliya); mobil /ode tek sayfa, kopyala + kalin kod.
 - 2026-07-31 · P29 · a283054 · Tahsilat/kasa/finansal hareketler (0019): TEK DEFTER (tahsilat|gider|gelir|virman|iade|acilis), bakiye SAKLANMAZ defterden TURETILIR, virman iki satir, iade ters yonlu yeni kayit, banka eslestirme ONERIDIR (belirsizde uretmez), icra dosyasi borcu kopyalamaz + banka entegrasyonu belge notu.
 - 2026-07-31 · P28 · 51a73db · Borclandirma motoru (0018): mevcut aidat modulu GENISLETILDI (paralel sistem YOK); benzersizlik (daire, donem, TUR) oldu — ayni ay birden fazla kalem; hedefleme kurali TANIMDA (kiraci_oncelikli|malik); gecikme ANLIK hesaplanir; toplu onizleme→isleme, sayac sihirbazi, satir-bazli ice aktarim.
 - 2026-07-31 · P27 · 059eb61 · Muhasebe "Tanimlar" katmani (0017): kasa/gelir-gider/firma/personel/arac/sayac defterleri + evrak-seri & para birimi (GOSTERIM); para kurus, acilis bakiyesi isaretsiz+yonlu, dagitim enum'u BILEREK iki degerli; admin-web /tanimlar sayfasi (P26'nin acik parcasi kapandi).
