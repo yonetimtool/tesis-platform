@@ -2230,6 +2230,62 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+## STATUS REPORT — 2026-07-31 #6 (kural 10: bağlam doldu, devir)
+
+**FINAL REPORT değildir.** **P36'dan** devam edilebilir. `/clear` + standart
+kickoff.
+
+### Bu turda biten
+
+| Madde | Hash | Şema | Özet |
+|---|---|---|---|
+| P33 | `236f70b` | 0022 | Karar defteri + doküman arşivi + site aktarımı + iş takibi genişletmesi |
+| P34 | `4395fdc` | 0023 | Tur bütünlüğü: konum kanıtı, gecikme alarmı, başlangıç fotoğrafı |
+| P35 | `458dc75` | 0024 | Güvenlik amiri rolü + ikili güvenlik mimarisi |
+
+### Bu turda bulunan gerçek kusurlar
+
+1. **P34 — bildirim tekliği ikinci alarmı SESSİZCE DÜŞÜRÜYORDU.**
+   `uq_notification_tenant_tip_window` (tenant, tip, pencere) kaçırılan tur
+   için doğruydu ama gecikme alarmı **tekrar etmek zorundadır**; `ON CONFLICT`
+   başka bir indeksi hedeflediği için ikinci alarm kısıt ihlaline düşüyordu.
+   Teklik **kısmi indekse** çevrildi (`gecikmis_okutma` hariç); alarmın
+   idempotency'si `dedup_key = tip:pencere:ADIM`.
+2. **P35 — YETKİ YÜKSELTME.** `/users` okumasını amire açmak, aynı bağımlılığı
+   paylaşan `PATCH /users/{id}` ve `POST /users/{id}/reset-password` uçlarını
+   da açtı: amir **kendi rolünü admin yapabilir** ya da **yöneticinin
+   parolasını sıfırlayabilirdi**. **Rol matrisi kilidinin altıncı sütunu**
+   bunu diff olarak gösterdi — yeni bir rol eklerken kilidi genişletmemek,
+   rolün tüm yetkilerinin ölçülmeden geçmesi demek olurdu.
+3. **P33 — `complaint` genişletmesi denetimle başladı.** Kapsam "unify into
+   one ticket backbone" diyordu; denetim omurganın **zaten var olduğunu**
+   gösterdi ve `unit_complaint` ile birleştirmenin P22(e)'nin bilinçli
+   ayrımını bozacağını. Birleştirme değil **genişletme** yapıldı.
+
+### Bilinçli davranış değişiklikleri (regresyon değil)
+
+- **Vardiya CRUD** artık admin-only değil; sahiplik **moda** bağlı
+  (`test_yonetici.py`deki assert gerekçesiyle güncellendi).
+- **Migration 0023**, yerinde düzenleme istisnasını (politika kural 3)
+  kullandı ve gerekçesi dosyanın docstring'ine yazıldı.
+
+### Sıradaki
+
+**P36** (KVKK onboarding rızaları — P32'nin pazarlama gönderimi bunu
+bekliyor), sonra P37 (gürültü caydırıcı; P24'ün eşik tablosunu tüketir),
+P38 (web portalı + anketler), P39 (ölçek/yük).
+
+### Biriken teknik borç (değişmedi, tek işte kapanmalı)
+
+**FİNANS + RAPOR + MESAJ + YÖNETİŞİM PANELİ.** P28–P33 API yüzeylerini kurdu
+ama panel/mobil ekranları yapılmadı: borç, tahsilat, rapor, mesaj, karar
+defteri, doküman, site aktarımı, İşlem Geçmişi ve yetki matrisi görünümü.
+Tek bölüm olarak tasarlanmalı — ayrı ayrı yapılırsa panelde sekiz farklı
+gezinme deseni kalır. P29'un dashboard hızlı-eylem kancaları da buraya bağlı.
+
+Kalan: P36–P39 + panel borcu. Bloke/Kerem'de: P2, P11 (device-verify
+**18 madde**), P12/P13 (dış kimlik bilgileri), P18, P22(a).
+
 ## STATUS REPORT — 2026-07-31 #5 (kural 10: bağlam doldu, devir)
 
 **FINAL REPORT değildir.** **P33'ten** devam edilebilir. `/clear` + standart
@@ -2414,7 +2470,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P35 · (bu commit) · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
+- 2026-07-31 · P35 · 458dc75 · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
 - 2026-07-31 · P34 · 4395fdc · Tur butunlugu (0023): KONUM BIR KANITTIR ON KOSUL DEGIL — izin reddi/servis kapali okutmayi dusurmez ama SESSIZ DE KALMAZ (konum_durumu + konumsuz_sayisi + suzgec); gecikme alarmi 'kacirildi'dan AYRI, araliklari KATLANAN tekrarli bildirim (gorevliye kisi, yonetime rol) ve bildirim TEKLIGI kismi indekse cevrildi (ikinci alarm sessizce dusuyordu); baslangic fotografi '1 metre gidip gel' YERINE (SDM zaten fiziksel varligi kanitliyor; fotograf ORTAM+SAAT boyutu ekler), kamera-only + ayri hata kodu.
 - 2026-07-31 · P33 · 236f70b · Yonetisim modulleri (0022): IS TAKIBI denetimi omurganin ZATEN VAR OLDUGUNU gosterdi — birlestirme degil GENISLETME (complaint + unit_id/oncelik/atanan_personel; oncelik durumdan BAGIMSIZ ayri ucta, atanan personel_kayit'tir app_user degil); karar defteri uyeleri AYRI TABLODA + metin sablonlu PDF; dokuman arsivi USTVERI-ONLY (obje silinmez); site aktarimi KURU CALISMALI ve SATIR BAZLI hata raporlu, idempotent.
 - 2026-07-31 · P32 · 47ac96c · Mesaj sablonlari + gonderim (0021): gonderilen metin GECMISE KOPYALANIR (sablon degisse de kanit durur), amac SABLONDA (pazarlama riza olmadan HIC gonderilmez ve atlananlar SAYILIR), SMS sayaci Turkce tuzagini gosterir (kucuk c/i/g/s UCS-2'ye dusurur), saglayici takasi yapilandirma ile; P28 seed regresyonu bulundu ve duzeltildi.
