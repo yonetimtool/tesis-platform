@@ -824,6 +824,44 @@ the parking context (backend enum addition via NEW revision if needed).
 Acceptance: each fix individually demonstrable; routing + dialog tests where
 feasible; ARB for all new strings; quality gates.
 
+DENENDI VE GERI ALINDI — (a) maddesi (2026-07-31). Bir sonraki oturum bunu
+bilerek başlasın; aşağıdaki tanı YENİDEN ÜRETİLMİŞ ölçümdür.
+YAPILAN: `core/ui/merkez_diyalog.dart` (`merkezSayfaAc`) yazıldı ve
+`showModalBottomSheet` çağrılarının **51'i / 28 dosyada** ona çevrildi
+(`isScrollControlled`/`showDragHandle`/`useSafeArea` parametreleri kaldırıldı,
+`context:` konumsal argümana döndü). `flutter analyze` temiz kaldı.
+ÖLÇÜLEN ÜÇ ŞEY (ikisi düzeltildi, üçüncüsü açık kaldı):
+1. **KONTRAST — düzeltildi.** M3'te `Dialog` varsayılan zemini
+   `surfaceContainerHigh`, `BottomSheet`inki `surfaceContainerLow`. Zemin
+   koyulaşınca site kuralı detayındaki ikincil metin **3.90** kontrasta
+   düştü (eşik 4.5). Çözüm: diyalog zeminini alt sayfanınkiyle aynı yüzeye
+   sabitlemek — metin renklerini tek tek kovalamaktan iyidir.
+2. **SIFIR VIEWPORT — düzeltildi.** `ConstrainedBox` yalnız ÜST SINIR verir;
+   çocuk SINIRSIZ yükseklik alır. Gövdelerin içindeki mevcut
+   `SingleChildScrollView` sınırsız yükseklikte **viewport'u 0** olur
+   (ölçüm: `viewport: 0.0, range: 0..378`) ve HİÇ kaydırmaz. Çözüm:
+   `Column(mainAxisSize.min)` + `Flexible`. (Ayrıca dışarıya İKİNCİ bir
+   kaydırma alanı koymak iç içe kaydırma üretiyordu — kaldırıldı.)
+3. **AÇIK KALAN — dokunma perdeye gidiyor.** `kural_duyuru_sakin_i18n_test::
+   ONAY: site kurali silme diyalogu` düşüyor. Ölçüm: silme ikonunun rect'i
+   320×900 ekranda **y≈511–529** (yani görünür alanda) ve o anda **1 Dialog
+   açık**; buna rağmen dokunma hit-test'i **barrier**'a gidiyor
+   (`HitTestResult` ilk öğe `_RenderColoredBox` = perde) ve detay diyaloğu
+   KAPANIYOR (`dialog=0`), onay penceresi hiç açılmıyor. Yani öğe ÇİZİLİYOR
+   ama ebeveyninin sınırları dışında — bir taşma. Denenen ve YETMEYEN
+   çözümler: `ensureVisible`, `scrollUntilVisible`, `Clip.antiAlias`
+   kaldırma, `pumpAndSettle`, eylem satırını kaydırma alanının dışına
+   sabitleme (bu sonuncusu UX açısından yine de doğru ve tekrar yapılmalı).
+KARAR: Kural 6 (suit yeşil olmalı) gereği **tüm dönüşüm geri alındı**;
+yarım/kırık bir dönüşümü commit'lemek 28 dosyayı riske atardı. Sıradaki
+oturum için öneri: dönüşümü **tek ekranla** başlat (örn. yalnız
+`site_kurali`), o ekranın beş eksen sürüşünü yeşile al, ANCAK ONDAN SONRA
+kalanları çevir. Muhtemel kök neden, gövdelerin kendi `SafeArea`+`Padding`+
+`SingleChildScrollView` sarmalayıcılarının diyalog içinde farklı davranması;
+gövdeleri sarmalayıcısız hâle getirip düzeni tamamen `merkezSayfaAc`a
+bırakmak en temiz yol görünüyor.
+(b)–(g) maddelerine HİÇ dokunulmadı.
+
 ### P23 — Resident lifecycle: unit assignment + full edit + malik/kiracı
 Status: BEKLIYOR · Depends-on: —
 Scope: (a) assign unit(s) to an EXISTING resident (currently impossible after
