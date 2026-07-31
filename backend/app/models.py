@@ -151,6 +151,14 @@ HAREKET_TIP = ENUM(
     name="hareket_tip", create_type=False,
 )
 HAREKET_YON = ENUM("giris", "cikis", name="hareket_yon", create_type=False)
+MESAJ_KANAL = ENUM("sms", "eposta", name="mesaj_kanal", create_type=False)
+MESAJ_AMAC = ENUM(
+    "pazarlama", "operasyonel", name="mesaj_amac", create_type=False
+)
+MESAJ_DURUM = ENUM(
+    "kuyrukta", "gonderildi", "iletildi", "okundu", "basarisiz",
+    name="mesaj_durum", create_type=False,
+)
 ICRA_DURUM = ENUM(
     "acik", "takipte", "tahsil_edildi", "kapandi",
     name="icra_durum", create_type=False,
@@ -2631,3 +2639,75 @@ class IcraDosyasi(Base):
     aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
+
+
+# ======================= P32 MESAJ SABLONU / GECMIS ========================= #
+class MesajSablonu(Base):
+    """SMS/e-posta sablonu (P32) — etiket interpolasyonlu govde.
+
+    `amac` SABLONDA durur, gonderim aninda secilmez: ayni sablonun bir gun
+    pazarlama bir gun operasyonel gonderilmesi, riza denetimini anlamsiz
+    kilardi.
+    """
+
+    __tablename__ = "mesaj_sablonu"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_sablon_id_tenant"),
+        UniqueConstraint(
+            "tenant_id", "kanal", "ad", name="uq_sablon_tenant_kanal_ad"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    kanal: Mapped[str] = mapped_column(MESAJ_KANAL, nullable=False)
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    konu: Mapped[str | None] = mapped_column(Text, nullable=True)
+    govde: Mapped[str] = mapped_column(Text, nullable=False)
+    amac: Mapped[str] = mapped_column(
+        MESAJ_AMAC, nullable=False, server_default=text("'operasyonel'")
+    )
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class MesajGonderim(Base):
+    """Gonderim GECMISI (P32).
+
+    GONDERILEN METIN KOPYALANIR (`govde`), sablona referans YETMEZ: sablon
+    sonradan degistirilirse gecmis kayit "ne gonderdik" sorusuna YANLIS
+    cevap verirdi — bu bir KVKK ve hukuk sorusudur (bildirim kaniti).
+    """
+
+    __tablename__ = "mesaj_gonderim"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_gonderim_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    sablon_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    kanal: Mapped[str] = mapped_column(MESAJ_KANAL, nullable=False)
+    amac: Mapped[str] = mapped_column(MESAJ_AMAC, nullable=False)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    hedef: Mapped[str] = mapped_column(Text, nullable=False)
+    konu: Mapped[str | None] = mapped_column(Text, nullable=True)
+    govde: Mapped[str] = mapped_column(Text, nullable=False)
+    durum: Mapped[str] = mapped_column(
+        MESAJ_DURUM, nullable=False, server_default=text("'kuyrukta'")
+    )
+    hata: Mapped[str | None] = mapped_column(Text, nullable=True)
+    saglayici: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gonderen_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    created_at = _created_at()

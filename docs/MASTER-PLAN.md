@@ -1768,7 +1768,7 @@ ekranlarıyla **tek bölüm** olarak tasarlanmalı (STATUS REPORT #4'te yazılı
 finans panel borcu).
 
 ### P32 — Communication suite (SMS + e-mail templates)
-Status: BEKLIYOR · Depends-on: P28; live SMS sending additionally [DIŞ]
+Status: BITTI · Depends-on: P28; live SMS sending additionally [DIŞ]
 Scope (ref screenshots): template CRUD for SMS + e-posta with tag interpolation
 ({bakiye}, {borc}, {adi_soyadi}, {adres}, {tarih}, {odeme_linki}, {site_adi},
 {aidat_tutari}, {kiraci_bakiyesi}, {bakiye_detayli}, {borcu_detayli}); SMS
@@ -1784,6 +1784,83 @@ pazarlama|operasyonel flag and sending enforces it. Wire the dashboard quick-
 action stubs from P29.
 Acceptance: CRUD + interpolation tests; mock-send E2E with history; consent
 enforcement tests; gates.
+Notes (2026-07-31): **YENİ ŞEMA: `0021`** (`mesaj_sablonu` + `mesaj_gonderim`).
+
+**GÖNDERİLEN METİN GEÇMİŞE KOPYALANIR**, şablona referans **yetmez**: şablon
+sonradan değiştirilirse geçmiş kayıt "ne gönderdik" sorusuna **yanlış** cevap
+verirdi — bu bir KVKK ve hukuk sorusudur (bildirim kanıtı). Test şablonu
+değiştirip geçmişin **değişmediğini** doğruluyor. Şablon silinse de geçmiş
+durur.
+
+**AMAÇ (`pazarlama | operasyonel`) ŞABLONDA DURUR**, gönderim anında
+seçilmez: aynı şablonun bir gün pazarlama bir gün operasyonel gönderilmesi
+rıza denetimini anlamsız kılardı. **Pazarlama gönderimi rıza olmadan HİÇ
+YAPILMAZ** ve atlananlar sayılır — rıza kaydı P36'nın işidir; "şimdilik
+gönderelim, rızayı sonra ekleriz" demek KVKK ihlalini ürüne yerleştirmekti.
+Operasyonel finansal bildirim **ayrı bir hukuki dayanaktır** (KMK
+yükümlülük).
+
+**SESSİZ DÜŞÜRME YOK.** Rızası olmayan (`riza_yok`) ve adresi olmayan
+(`adres_yok`) alıcılar **ayrı sayılır ve yanıtta döner** — "gönderdim" deyip
+40 kişiyi atlamak, yönetimin haberi olmadan bildirimsiz kalması demekti.
+
+**SMS SAYACI — TÜRKÇE TUZAĞI.** GSM-7 kümesinde `Ç` (BÜYÜK), `ö`, `ü`
+**vardır** ama `ç` (KÜÇÜK), `ı`, `ğ`, `ş`, `İ`, `Ğ`, `Ş` **yoktur**. Bunlardan
+biri mesajı UCS-2'ye düşürür ve sınır **160'tan 70'e** iner — "biraz uzun" bir
+mesaj birden **üç SMS** olur. Sayaç parça sayısını **ve zorlayan
+karakterleri** döndürür ki kullanıcı bilinçli seçsin; önizlemede verilir
+çünkü kaydettikten sonra öğrenmek geç. Test bunu harf harf kilitliyor
+("Çöp" düşmez, "çöp" düşer).
+
+**BİLİNMEYEN ETİKET METİNDE OLDUĞU GİBİ KALIR**, boş bırakılmaz: `{bakiyee}`
+yazan kullanıcı mesajda boş bir boşluk görüp sorunu fark etmezdi; etiketi
+görmek yazım hatasını anında gösterir. Şablon çıktısında ayrıca
+`bilinmeyen_etiketler` **uyarı olarak** döner (hata değil — şablon kaydedilir).
+`None` değer **boş** yazılır, "None" metni mesaja girmez.
+
+**SMS ŞABLONUNDA KONU OLMAZ** (şema + CHECK + PATCH'te birleşik kural): dolu
+konu, gönderilen metne **girmeyen** bir alan olurdu — kullanıcı yazar ve
+kaybeder.
+
+**SAĞLAYICI TAKASI YAPILANDIRMA İLE.** SMS varsayılanı **log**tur (gerçek
+hesap **[DIŞ]**); e-posta SMTP yapılandırılmışsa gerçekten gönderir, değilse
+loglar (`smtp_*` ayarları eklendi). Gönderim yolu **bugün de sonuna kadar
+çalışır** (geçmiş yazılır, durum işaretlenir) ve yalnızca sağlayıcı sınıfı
+değişir. Durum `gonderildi` yazılır, **`iletildi` yazılmaz**: iletim bilgisini
+yalnızca gerçek sağlayıcı verebilir ve uydurmak panelde **yanlış bir teslim
+kanıtı** gösterirdi.
+
+**BİREYSEL + TOPLU TEK UÇTAN**: iki ayrı uç, aynı rıza/geçmiş mantığını iki
+kez yazmak olurdu. Tek istekte en fazla **500** alıcı — sınırsız bırakmak tek
+isteğin dakikalarca sürmesine ve zaman aşımıyla **yarım gönderilmiş** bir
+kampanyaya yol açardı.
+
+**BULGU — P28 REGRESYONU, SEED YAKALADI.** `seed.py`, P28'in **kaldırdığı**
+`UNIQUE (tenant_id, unit_id, donem)` kısıtına `ON CONFLICT` yapıyordu;
+benzersizlik `COALESCE(...)` içeren bir **indekse** çevrildiği için hedefli
+`ON CONFLICT` hiçbir kısıtla eşleşmiyor ve **seed düşüyordu**. P28'den beri
+seed çalıştırılmamıştı. Hedefsiz `ON CONFLICT DO NOTHING`e çevrildi.
+
+**VARSAYILAN ŞABLON SETİ (8 adet, seed):** Bakiye Bildirimi (SMS+e-posta),
+Borç Girişi, Tahsilat Girişi, Toplantı Çağrısı, Davetiye, Yeni Duyuru, Kiracı
+Bakiyesi. **Hepsi operasyonel** — hazır gelen bir pazarlama şablonu, yönetimi
+farkında olmadan izinsiz gönderime iterdi.
+
+TESTLER: `test_mesajlar.py` **22/22** (çekirdek: interpolasyon, bilinmeyen
+etiket korunur, None boş, GSM-7 harf harf, 160/161 sınırı, boş metin; uç:
+CRUD, SMS'te konu yasağı + PATCH birleşik kuralı, aynı kanalda 409 / farklı
+kanalda serbest, önizleme çözülmüş metin + sayaç, geçmişe çözülmüş metin +
+şablon değişince geçmiş sabit, pazarlama rıza engeli, pasif şablon, adres yok
+sayacı, varsayılan set, RBAC, tenant izolasyonu).
+KAPILAR: backend `pytest` **1008 geçti / 1 atlandı / 0 düştü**; göç tersinirliği **3/3 OK, bulgu 0** (22 sınır); sözleşme
+6 yol + 9 şema (sapma testi temiz); rol matrisi 7 yeni ucu yakaladı.
+
+**AÇIK BIRAKILAN (bilinçli):** (a) **e-posta zengin metin editörü** ve
+panel/mobil gönderim ekranları — API ve sayaç hazır; editör bir panel işidir
+ve finans/rapor bölümüyle birlikte tek seferde yapılmalı. (b) **P29'un
+dashboard hızlı-eylem kancaları** panel ekranıyla birlikte bağlanacak.
+(c) `iletildi`/`okundu` durumları şemada var ama **hiçbir zaman uydurulmuyor**
+— gerçek sağlayıcı gelince webhook'la yazılacak.
 
 ### P33 — Governance & ops modules
 Status: BEKLIYOR · Depends-on: P27 (personel), P9 (audit contract)
@@ -2040,6 +2117,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P32 · (bu commit) · Mesaj sablonlari + gonderim (0021): gonderilen metin GECMISE KOPYALANIR (sablon degisse de kanit durur), amac SABLONDA (pazarlama riza olmadan HIC gonderilmez ve atlananlar SAYILIR), SMS sayaci Turkce tuzagini gosterir (kucuk c/i/g/s UCS-2'ye dusurur), saglayici takasi yapilandirma ile; P28 seed regresyonu bulundu ve duzeltildi.
 - 2026-07-31 · P31 · a7e2217 · Rapor motoru + 12 raporluk katalog: TEK UC UC BICIM (tablo/Excel/PDF, ucu de ayni satirlardan), parametre modali TEK MODEL, detayli borc sutunlari P27 tanimlarindan DINAMIK, tahsilat orani = tahsil/borclandirilan, denetim raporu = kasa mutabakati; to_char GroupingError bulgusu.
 - 2026-07-31 · P30 · e48db6a · Sakin "Öde" akisi (0020): havale aciklama KODU (sabit, elle yazilabilir alfabe) eslestirmeyi KESINLESTIRIR; IBAN P27 banka kasasindan (ayri alan YOK); kart mevcut saglayici soyutlamasi uzerinden (P13 ile canliya); mobil /ode tek sayfa, kopyala + kalin kod.
 - 2026-07-31 · P29 · a283054 · Tahsilat/kasa/finansal hareketler (0019): TEK DEFTER (tahsilat|gider|gelir|virman|iade|acilis), bakiye SAKLANMAZ defterden TURETILIR, virman iki satir, iade ters yonlu yeni kayit, banka eslestirme ONERIDIR (belirsizde uretmez), icra dosyasi borcu kopyalamaz + banka entegrasyonu belge notu.

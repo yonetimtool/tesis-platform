@@ -3488,6 +3488,199 @@ paths:
   # ayni raporu iki kez (ve farkli) bicimlendirmesi olurdu.
   # RBAC: admin + yonetici (raporlar site finansini ve kisi adlarini tasir).
   # ================================================================= #
+  # ================================================================= #
+  # MESAJ SABLONLARI + GONDERIM (P32)
+  # RIZA DENETIMI: `amac='pazarlama'` sablonlar YALNIZCA rizasi olan
+  # kisilere gonderilir. Riza kaydi P36'nin isidir; o gelene kadar bu uc
+  # pazarlama gonderimini HIC yapmaz ve atlananlari SAYAR. "Simdilik
+  # gonderelim, rizayi sonra ekleriz" demek KVKK ihlalini urune
+  # yerlestirmek olurdu. OPERASYONEL finansal bildirim AYRI bir hukuki
+  # dayanaktir (KMK yukumluluk) ve riza gerektirmez.
+  # ================================================================= #
+  /mesaj-sablonlari:
+    get:
+      tags: [mesajlar]
+      summary: Mesaj sablonlari (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: kanal
+          in: query
+          schema: { type: string, enum: [sms, eposta] }
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/MesajSablonu" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [mesajlar]
+      summary: Sablon olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MesajSablonuCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MesajSablonu" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Ayni KANALDA ayni ad zaten var (farkli kanalda serbest)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /mesaj-sablonlari/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [mesajlar]
+      summary: Sablon guncelle (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MesajSablonuUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MesajSablonu" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Ayni kanalda ayni ad
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [mesajlar]
+      summary: Sablon sil (admin+yonetici) — GECMIS DURUR
+      description: >
+        Gonderim gecmisi metni KOPYALADIGI icin sablon silinse de "ne
+        gonderdik" sorusu cevaplanabilir kalir.
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /mesajlar/onizleme:
+    post:
+      tags: [mesajlar]
+      summary: Etiketleri COZULMUS onizleme + SMS sayaci (admin+yonetici)
+      description: >
+        Sayac ONIZLEMEDE verilir, kaydetmede degil: kullanici yazarken parca
+        sayisinin arttigini GORMELI.
+
+        **TURKCE TUZAGI**: GSM-7 kumesinde `Ç` (BUYUK), `ö`, `ü` VARDIR ama
+        `ç` (KUCUK), `ı`, `ğ`, `ş`, `İ`, `Ğ`, `Ş` YOKTUR. Bunlardan biri
+        mesaji UCS-2'ye dusurur ve sinir **160'tan 70'e** iner — "biraz
+        uzun" bir mesaj birden UC SMS olur. Yanit ZORLAYAN karakterleri
+        dondurur ki kullanici bilincli secsin.
+      parameters:
+        - name: kanal
+          in: query
+          schema: { type: string, enum: [sms, eposta], default: sms }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MesajOnizlemeIstek" }
+      responses:
+        "200":
+          description: Onizleme
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MesajOnizleme" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /mesajlar/gonder:
+    post:
+      tags: [mesajlar]
+      summary: Bireysel + toplu gonderim TEK UCTAN (admin+yonetici)
+      description: >
+        `user_ids` verilirse o kisilere; verilmezse `blok`/`borc_durumu`
+        suzgeci uygulanir. Iki ayri uc, ayni riza/gecmis mantigini iki kez
+        yazmak olurdu. Tek istekte en fazla **500** alici.
+
+        **SESSIZ DUSURME YOK**: rizasi olmayan (`riza_yok`) ve adresi
+        olmayan (`adres_yok`) aliciler AYRI SAYILIR ve yanitta doner —
+        "gonderdim" deyip 40 kisiyi atlamak, yonetimin haberi olmadan
+        bildirimsiz kalmasi demekti.
+
+        **SAGLAYICI**: SMS varsayilani LOG'dur (gercek hesap [DIŞ]);
+        e-posta SMTP yapilandirilmissa gercekten gonderir, degilse loglar.
+        Mimari saglayiciyi bir YAPILANDIRMA degisikligiyle degistirir.
+        Durum `gonderildi` yazilir, `iletildi` YAZILMAZ: iletim bilgisini
+        yalnizca gercek saglayici verebilir ve uydurmak panelde YANLIS bir
+        teslim kaniti gosterirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MesajGonderIstek" }
+      responses:
+        "201":
+          description: Gonderim sonucu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MesajGonderSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /mesajlar/gecmis:
+    get:
+      tags: [mesajlar]
+      summary: Gonderim gecmisi (admin+yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: kanal
+          in: query
+          schema: { type: string, enum: [sms, eposta] }
+        - name: user_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: durum
+          in: query
+          schema: { type: string, enum: [kuyrukta, gonderildi, iletildi, okundu, basarisiz] }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/MesajGonderim" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /raporlar/katalog:
     get:
       tags: [raporlar]
@@ -9397,6 +9590,148 @@ components:
     # ------------------ P27 "Tanimlar" katmani semalari ---------------- #
     # PARA HER YERDE KURUS (int64). Acilis bakiyeleri ISARETSIZ tutar + AYRI
     # yon tasir (bkz. yol yorumlari).
+    MesajSablonu:
+      type: object
+      required: [id, kanal, ad, govde, amac, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kanal: { type: string, enum: [sms, eposta] }
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        konu:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: >
+            YALNIZ e-postada. SMS'te dolu konu, gonderilen metne GIRMEYEN
+            bir alan olurdu (kullanici yazar ve kaybeder) — 422.
+        govde: { type: string, minLength: 1, maxLength: 4000 }
+        amac:
+          type: string
+          enum: [pazarlama, operasyonel]
+          default: operasyonel
+          description: >
+            **SABLONDA durur, gonderim aninda secilmez**: ayni sablonun bir
+            gun pazarlama bir gun operasyonel gonderilmesi, riza denetimini
+            anlamsiz kilardi.
+        aktif: { type: boolean }
+        etiketler:
+          type: array
+          items: { type: string }
+          description: Sablonda gecen etiketler (sirali, tekrarsiz)
+        bilinmeyen_etiketler:
+          type: array
+          items: { type: string }
+          description: >
+            Desteklenmeyen etiketler — **UYARIDIR, hata degil**: sablon
+            kaydedilir ama kullanici yazim hatasini gorur. Bilinmeyen etiket
+            gonderilen metinde de OLDUGU GIBI KALIR (bos birakmak hatayi
+            gizlerdi).
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    MesajSablonuCreate:
+      type: object
+      required: [kanal, ad, govde]
+      properties:
+        kanal: { type: string, enum: [sms, eposta] }
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        konu: { type: string, nullable: true, maxLength: 200 }
+        govde: { type: string, minLength: 1, maxLength: 4000 }
+        amac: { type: string, enum: [pazarlama, operasyonel], default: operasyonel }
+        aktif: { type: boolean, default: true }
+    MesajSablonuUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        konu: { type: string, nullable: true, maxLength: 200 }
+        govde: { type: string, minLength: 1, maxLength: 4000 }
+        amac: { type: string, enum: [pazarlama, operasyonel] }
+        aktif: { type: boolean }
+    SmsOlcum:
+      type: object
+      required: [karakter, unicode_mi, parca, kalan, zorlayan]
+      properties:
+        karakter: { type: integer }
+        unicode_mi:
+          type: boolean
+          description: True ise sinir 160 degil 70
+        parca: { type: integer }
+        kalan: { type: integer }
+        zorlayan:
+          type: array
+          items: { type: string }
+          description: UCS-2'ye zorlayan karakterler (orn. ı, ğ, ş, kucuk ç)
+    MesajOnizlemeIstek:
+      type: object
+      required: [govde]
+      properties:
+        govde: { type: string, minLength: 1, maxLength: 4000 }
+        konu: { type: string, nullable: true, maxLength: 200 }
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Verilmezse ORNEK degerlerle onizlenir
+    MesajOnizleme:
+      type: object
+      required: [govde, etiketler, bilinmeyen_etiketler]
+      properties:
+        konu: { type: string, nullable: true }
+        govde: { type: string }
+        etiketler: { type: array, items: { type: string } }
+        bilinmeyen_etiketler: { type: array, items: { type: string } }
+        sms:
+          allOf: [{ $ref: "#/components/schemas/SmsOlcum" }]
+          nullable: true
+          description: YALNIZ kanal=sms iken dolu
+    MesajGonderIstek:
+      type: object
+      required: [sablon_id]
+      properties:
+        sablon_id: { type: string, format: uuid }
+        user_ids:
+          type: array
+          nullable: true
+          items: { type: string, format: uuid }
+          description: Verilirse suzgec YERINE bu kisiler
+        blok: { type: string, nullable: true }
+        borc_durumu: { type: string, nullable: true, enum: [borclu, tumu] }
+    MesajGonderSonuc:
+      type: object
+      required: [gonderildi, basarisiz, riza_yok, adres_yok]
+      properties:
+        gonderildi: { type: integer }
+        basarisiz: { type: integer }
+        riza_yok:
+          type: integer
+          description: Pazarlama rizasi olmadigi icin ATLANANLAR (sessizce dusurulmez)
+        adres_yok: { type: integer, description: Telefonu/e-postasi olmayanlar }
+    MesajGonderim:
+      type: object
+      required: [id, kanal, amac, hedef, govde, durum, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kanal: { type: string, enum: [sms, eposta] }
+        amac: { type: string, enum: [pazarlama, operasyonel] }
+        user_id: { type: string, format: uuid, nullable: true }
+        user_ad: { type: string, nullable: true }
+        hedef:
+          type: string
+          description: >
+            Gonderildigi ADRES/NUMARA — kullanici sonradan degistirse bile
+            "nereye gonderdik" cevaplanabilmeli.
+        konu: { type: string, nullable: true }
+        govde:
+          type: string
+          description: >
+            **COZULMUS metin** (etiketler yerine konmus hali). Sablona
+            referans YETMEZ: sablon sonradan degistirilirse gecmis kayit
+            "ne gonderdik" sorusuna YANLIS cevap verirdi — bu bir KVKK ve
+            hukuk sorusudur (bildirim kaniti).
+        durum: { type: string, enum: [kuyrukta, gonderildi, iletildi, okundu, basarisiz] }
+        hata: { type: string, nullable: true }
+        saglayici: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
     RaporParametre:
       type: object
       description: >

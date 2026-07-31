@@ -294,7 +294,12 @@ def main() -> int:
             """
             INSERT INTO dues_assessment (tenant_id, unit_id, donem, tutar_kurus, aciklama)
             VALUES (%s, %s, '2026-06', 75000, 'Haziran aidatı')
-            ON CONFLICT (tenant_id, unit_id, donem) DO NOTHING
+            -- P28 REGRESYONU: `(tenant_id, unit_id, donem)` KISITI ARTIK
+            -- YOK — benzersizlik `COALESCE(gelir_gider_tanim_id, ...)`
+            -- iceren bir INDEKSE cevrildi. Hedefli `ON CONFLICT` hicbir
+            -- kisitla eslesmiyor ve seed'i DUSURUYORDU. Hedefsiz bicim
+            -- hangi kisit ihlal olursa olsun calisir.
+            ON CONFLICT DO NOTHING
             """,
             (tenant_id, unit_id),
         )
@@ -1453,6 +1458,33 @@ def main() -> int:
         print("[seed] muhasebe tanimlari: 2 kasa, 4 gelir/gider grubu, "
               "8 kalem, 3 firma, 3 personel, 3 arac, 2 ana sayac + daire "
               "sayaclari (idempotent).")
+
+
+        # ------------------------------------------------------------------
+        # MESAJ SABLONLARI (P32) — varsayilan set. HEPSI OPERASYONEL:
+        # finansal bildirim ve toplanti cagrisi KMK yukumluluguyle
+        # gonderilir; PAZARLAMA sablonu VARSAYILAN OLARAK YOKTUR (riza
+        # gerektirir, bkz. P36).
+        # ------------------------------------------------------------------
+        from app.mesajlasma import VARSAYILAN_SABLONLAR
+
+        for kanal, ad, konu, govde, amac in VARSAYILAN_SABLONLAR:
+            conn.execute(
+                """
+                INSERT INTO mesaj_sablonu (tenant_id, kanal, ad, konu, govde, amac)
+                SELECT %(t)s, %(k)s::mesaj_kanal, %(ad)s, %(konu)s, %(g)s,
+                       %(a)s::mesaj_amac
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM mesaj_sablonu
+                     WHERE tenant_id = %(t)s AND kanal = %(k)s::mesaj_kanal
+                       AND ad = %(ad)s
+                )
+                """,
+                {"t": tenant_id, "k": kanal, "ad": ad, "konu": konu,
+                 "g": govde, "a": amac},
+            )
+        print(f"[seed] mesaj sablonlari: {len(VARSAYILAN_SABLONLAR)} kayit "
+              "(hepsi OPERASYONEL — pazarlama rizasi P36).")
 
 
         # ------------------------------------------------------------------

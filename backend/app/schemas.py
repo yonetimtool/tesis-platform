@@ -4212,3 +4212,137 @@ class RaporKatalogOgesi(BaseModel):
 
 class RaporKatalogResponse(BaseModel):
     items: list[RaporKatalogOgesi]
+
+
+# ========================= P32 MESAJ SABLONLARI ============================= #
+MesajKanal = Literal["sms", "eposta"]
+#: Amac SABLONDA durur, gonderim aninda secilmez: ayni sablonun bir gun
+#: pazarlama bir gun operasyonel gonderilmesi riza denetimini anlamsiz
+#: kilardi.
+MesajAmac = Literal["pazarlama", "operasyonel"]
+MesajDurum = Literal["kuyrukta", "gonderildi", "iletildi", "okundu", "basarisiz"]
+
+
+class MesajSablonuCreate(BaseModel):
+    kanal: MesajKanal
+    ad: str = Field(..., min_length=1, max_length=100)
+    konu: str | None = Field(None, max_length=200)
+    govde: str = Field(..., min_length=1, max_length=4000)
+    amac: MesajAmac = "operasyonel"
+    aktif: bool = True
+
+    @model_validator(mode="after")
+    def _konu_yalniz_epostada(self) -> "MesajSablonuCreate":
+        # SMS'te dolu konu, gonderilen metne GIRMEYEN bir alan olurdu:
+        # kullanici yazar ve kaybeder.
+        if self.kanal == "sms" and self.konu:
+            raise ValueError("SMS sablonunda konu olmaz")
+        return self
+
+
+class MesajSablonuUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=100)
+    konu: str | None = Field(None, max_length=200)
+    govde: str | None = Field(None, min_length=1, max_length=4000)
+    amac: MesajAmac | None = None
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "MesajSablonuUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class MesajSablonuOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    kanal: str
+    ad: str
+    konu: str | None = None
+    govde: str
+    amac: str
+    aktif: bool
+    #: Sablonda gecen etiketler (onizleme/dogrulama).
+    etiketler: list[str] = Field(default_factory=list)
+    #: Desteklenmeyen etiketler — UYARIDIR, hata degil: sablon kaydedilir
+    #: ama kullanici yazim hatasini gorur.
+    bilinmeyen_etiketler: list[str] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class MesajSablonuListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[MesajSablonuOut]
+
+
+class SmsOlcumOut(BaseModel):
+    karakter: int
+    unicode_mi: bool
+    parca: int
+    kalan: int
+    #: UCS-2'ye ZORLAYAN karakterler (Turkce `ı/ğ/ş` sinirlari 160'tan 70'e
+    #: dusurur) — kullanici gorup bilincli secsin.
+    zorlayan: list[str]
+
+
+class MesajOnizlemeIstek(BaseModel):
+    govde: str = Field(..., min_length=1, max_length=4000)
+    konu: str | None = Field(None, max_length=200)
+    #: Onizleme icin ornek kisi (verilmezse ornek degerler kullanilir).
+    user_id: uuid.UUID | None = None
+
+
+class MesajOnizlemeOut(BaseModel):
+    konu: str | None = None
+    govde: str
+    etiketler: list[str]
+    bilinmeyen_etiketler: list[str]
+    sms: SmsOlcumOut | None = None
+
+
+class MesajGonderIstek(BaseModel):
+    """Bireysel + toplu gonderim TEK govdede.
+
+    `user_ids` verilirse o kisilere; verilmezse suzgec uygulanir. Iki ayri
+    uc, ayni riza/gecmis mantigini iki kez yazmak olurdu.
+    """
+
+    sablon_id: uuid.UUID
+    user_ids: list[uuid.UUID] | None = None
+    blok: str | None = None
+    #: "borclu" | "tumu" — borc durumuna gore suzgec.
+    borc_durumu: str | None = Field(None, max_length=20)
+
+
+class MesajGonderimOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    kanal: str
+    amac: str
+    user_id: uuid.UUID | None = None
+    user_ad: str | None = None
+    hedef: str
+    konu: str | None = None
+    govde: str
+    durum: str
+    hata: str | None = None
+    saglayici: str | None = None
+    created_at: datetime
+
+
+class MesajGonderimListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[MesajGonderimOut]
+
+
+class MesajGonderSonuc(BaseModel):
+    gonderildi: int
+    basarisiz: int
+    #: Riza YOKLUGU nedeniyle atlananlar — sessizce dusurulmez, SAYILIR.
+    riza_yok: int
+    #: Adresi/numarasi olmayanlar.
+    adres_yok: int

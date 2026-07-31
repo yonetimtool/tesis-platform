@@ -138,6 +138,13 @@ POST   /me/odeme/kart                                       RED    RED    RED   
 PATCH  /me/password                                         IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /me/patrol-window                                    IZIN   RED    IZIN   RED    RED   
 GET    /me/profile                                          IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /mesaj-sablonlari                                    IZIN   IZIN   RED    RED    RED   
+POST   /mesaj-sablonlari                                    IZIN   IZIN   RED    RED    RED   
+DELETE /mesaj-sablonlari/{id}                               IZIN   IZIN   RED    RED    RED   
+PATCH  /mesaj-sablonlari/{id}                               IZIN   IZIN   RED    RED    RED   
+GET    /mesajlar/gecmis                                     IZIN   IZIN   RED    RED    RED   
+POST   /mesajlar/gonder                                     IZIN   IZIN   RED    RED    RED   
+POST   /mesajlar/onizleme                                   IZIN   IZIN   RED    RED    RED   
 GET    /muhasebe-ayarlari                                   IZIN   IZIN   RED    RED    RED   
 PATCH  /muhasebe-ayarlari                                   IZIN   IZIN   RED    RED    RED   
 GET    /notifications                                       IZIN   IZIN   IZIN   RED    RED   

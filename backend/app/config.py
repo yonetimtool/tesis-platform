@@ -72,6 +72,15 @@ class Settings(BaseSettings):
     # --- Odeme saglayici (kart) ---
     # manual | iyzico | paytr. GERCEK ANAHTAR YOK — placeholder'lar (sandbox sonra).
     payment_provider: str = "manual"
+
+    # --- E-posta (P32) — SMTP YAPILANDIRILMAMISSA saglayici LOG'a duser.
+    # Mimarinin kosulu buydu: gercek gonderim bir YAPILANDIRMA degisikligi
+    # olmali, kod degisikligi degil.
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str | None = None
     iyzico_api_key: str = ""
     iyzico_secret: str = ""
     iyzico_base_url: str = "https://sandbox-api.iyzipay.com"
