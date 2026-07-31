@@ -1068,10 +1068,15 @@ mobilde gösterge etiketleri ve `DensityRenk` kimlik listesi dört kademeye
 güncellendi (`fromWire('mor')` artık **bilinmeyen değil**).
 i18n: 7 yeni ARB anahtarı × 7 dil; §15 kontrol-akışı taraması dokunulan iki
 modülde **boş**.
-KAPILAR: `flutter analyze` temiz; `flutter test` **1449 geçti / 0 düştü**;
+KAPILAR: `flutter test` **1449 geçti / 0 düştü**;
 `flutter build apk --debug` ✓; backend `pytest` **842 geçti / 0 düştü**; göç tersinirliği (0014 dahil) **3/3 OK, bulgu 0**; sözleşme
 güncellendi (`okunmamis` süzgeci + `/okundu` ucu + `okundu` alanı + dört
 kademeli renk enum'u); rol matrisi kilidi yeni ucu yakaladı ve güncellendi.
+**DÜZELTME (aynı gün, ayrı commit):** P24 commit'i `flutter analyze` temiz
+diyordu; **DEĞİLDİ** — `analyze` testler yazılmadan ÖNCE koşulmuştu ve
+`p24_sikayet_kuyrugu_test.dart` iki uyarı taşıyordu (kullanılmayan import +
+`(_, __)`). Kapı ölçümü, kapıyı geçirdiği kodun TAMAMI yazıldıktan sonra
+koşulmalı; ders bu. Uyarılar giderildi, `flutter analyze` artık temiz.
 
 ### P25 — Camera hardening + full home grid
 Status: BEKLIYOR · Depends-on: —
@@ -1365,8 +1370,8 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P24 · (bu commit) · Sikayet renk skalasi DORT KADEMEYE cikti (tek sikayet artik gorunur; esikler tek tabloda, P37 icin hazir) + KISI BASINA okuma durumu (0014) ve "Yeni / Okunmamis" triyaj kuyrugu (rozet = meta.total, ayri uc yok).
-- 2026-07-31 · P23 · (bu commit) · Sakin yaşam döngüsü: bağ uçları yöneticiye açıldı (sonradan daire atama artık ULAŞILABİLİR), `ResidentUpdate` e-posta + rol_tipi kazandı ("boş bırak" ile "SİL" ayrı), rol_tipi AKTİF bağların hepsine uygulanır (bağsız → 422); yeni şema GEREKMEDİ.
+- 2026-07-31 · P24 · a26bb7c · Sikayet renk skalasi DORT KADEMEYE cikti (tek sikayet artik gorunur; esikler tek tabloda, P37 icin hazir) + KISI BASINA okuma durumu (0014) ve "Yeni / Okunmamis" triyaj kuyrugu (rozet = meta.total, ayri uc yok).
+- 2026-07-31 · P23 · b5416a1 · Sakin yaşam döngüsü: bağ uçları yöneticiye açıldı (sonradan daire atama artık ULAŞILABİLİR), `ResidentUpdate` e-posta + rol_tipi kazandı ("boş bırak" ile "SİL" ayrı), rol_tipi AKTİF bağların hepsine uygulanır (bağsız → 422); yeni şema GEREKMEDİ.
 - 2026-07-31 · P22 (b-g) · 6755a05 · Bildirime dokunma bir yere gidiyor, bildir kisayolu ana ekrana doner (tam yukleme yok), talep/sikayet AYRI akislar, kural gorseli listede, goruntu_kirliligi kategorisi (0013). (a) geri alindi — tani planda.
 - 2026-07-31 · P19 · df8cda3 · Hikvision/Dahua adaptorleri GERCEKCI tam govdelerle kilitlendi (uc bulgu: direction yon degil, _utc ofseti koruyordu, kimliksiz govdede turevsel kimlik kararli) + kamera kurulum dokumani.
 - 2026-07-31 · P17 · 4cf269e · RTSP kameralar restream ile OYNATILABILIR (0012) + Plaka Okumalari ekrani (onay kuyrugu + OCR duzeltmesi); 26 ARB anahtari x 7 dil; 18+5 test.

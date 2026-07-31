@@ -16,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/network/dio_provider.dart';
-import 'package:mobile/src/features/unit_complaints/domain/unit_complaint_models.dart';
 import 'package:mobile/src/features/unit_complaints/presentation/sikayet_kuyrugu_controller.dart';
 import 'package:mobile/src/features/unit_complaints/presentation/sikayet_kuyrugu_screen.dart';
 
@@ -118,7 +117,7 @@ ProviderContainer _kap(_SahteSunucu sunucu) {
 Future<SikayetKuyruguState> _yuklenmis(
   ProviderContainer kap,
 ) async {
-  kap.listen(sikayetKuyruguControllerProvider, (_, __) {});
+  kap.listen(sikayetKuyruguControllerProvider, (_, _) {});
   await kap.read(sikayetKuyruguControllerProvider.notifier).refresh();
   return kap.read(sikayetKuyruguControllerProvider);
 }
