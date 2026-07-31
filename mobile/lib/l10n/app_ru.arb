@@ -1336,5 +1336,17 @@
   "daireTanimYeni": "Новое определение",
   "daireTipiSecici": "Тип помещения",
   "daireGrubuSecici": "Группа помещений",
-  "daireTanimSecilmedi": "Не выбрано"
+  "daireTanimSecilmedi": "Не выбрано",
+  "odeBaslik": "Оплатить",
+  "odeBorcunuz": "Непогашенная сумма",
+  "odeHavaleBaslik": "Банковский перевод",
+  "odeHavaleAdim": "Переведите на IBAN и укажите код ниже в назначении платежа. Без кода платёж может не сопоставиться.",
+  "odeKodBaslik": "Ваш код платежа",
+  "odeKopyala": "Копировать",
+  "odeKopyalandi": "Скопировано",
+  "odeKartBaslik": "Оплата картой",
+  "odeKartKapali": "Оплата картой пока не включена. Пока используйте банковский перевод.",
+  "odeHavaleKapali": "Для комплекса ещё не задан банковский счёт. Обратитесь в управление.",
+  "odeBorcYok": "У вас нет задолженности.",
+  "odeBasarili": "Ваш платёж получен."
 }

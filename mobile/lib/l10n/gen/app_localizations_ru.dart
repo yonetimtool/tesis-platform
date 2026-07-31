@@ -4570,4 +4570,43 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get daireTanimSecilmedi => 'Не выбрано';
+
+  @override
+  String get odeBaslik => 'Оплатить';
+
+  @override
+  String get odeBorcunuz => 'Непогашенная сумма';
+
+  @override
+  String get odeHavaleBaslik => 'Банковский перевод';
+
+  @override
+  String get odeHavaleAdim =>
+      'Переведите на IBAN и укажите код ниже в назначении платежа. Без кода платёж может не сопоставиться.';
+
+  @override
+  String get odeKodBaslik => 'Ваш код платежа';
+
+  @override
+  String get odeKopyala => 'Копировать';
+
+  @override
+  String get odeKopyalandi => 'Скопировано';
+
+  @override
+  String get odeKartBaslik => 'Оплата картой';
+
+  @override
+  String get odeKartKapali =>
+      'Оплата картой пока не включена. Пока используйте банковский перевод.';
+
+  @override
+  String get odeHavaleKapali =>
+      'Для комплекса ещё не задан банковский счёт. Обратитесь в управление.';
+
+  @override
+  String get odeBorcYok => 'У вас нет задолженности.';
+
+  @override
+  String get odeBasarili => 'Ваш платёж получен.';
 }

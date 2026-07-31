@@ -1336,5 +1336,17 @@
   "daireTanimYeni": "Nouvelle définition",
   "daireTipiSecici": "Type de lot",
   "daireGrubuSecici": "Groupe de lots",
-  "daireTanimSecilmedi": "Non sélectionné"
+  "daireTanimSecilmedi": "Non sélectionné",
+  "odeBaslik": "Payer",
+  "odeBorcunuz": "Montant impayé",
+  "odeHavaleBaslik": "Virement bancaire",
+  "odeHavaleAdim": "Virez sur l'IBAN et indiquez le code ci-dessous en libellé. Sans ce code, votre paiement risque de ne pas être rapproché.",
+  "odeKodBaslik": "Votre code de référence",
+  "odeKopyala": "Copier",
+  "odeKopyalandi": "Copié",
+  "odeKartBaslik": "Payer par carte",
+  "odeKartKapali": "Le paiement par carte n'est pas encore activé. Utilisez un virement pour l'instant.",
+  "odeHavaleKapali": "Aucun compte bancaire n'a encore été défini pour la résidence. Contactez la gestion.",
+  "odeBorcYok": "Vous n'avez aucune dette en cours.",
+  "odeBasarili": "Votre paiement a été reçu."
 }

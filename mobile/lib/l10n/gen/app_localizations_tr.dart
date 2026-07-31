@@ -4314,4 +4314,43 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get daireTanimSecilmedi => 'Seçilmedi';
+
+  @override
+  String get odeBaslik => 'Öde';
+
+  @override
+  String get odeBorcunuz => 'Ödenmemiş tutar';
+
+  @override
+  String get odeHavaleBaslik => 'Banka havalesi';
+
+  @override
+  String get odeHavaleAdim =>
+      'IBAN’a havale yapın ve açıklamaya aşağıdaki kodu yazın. Kod olmadan ödemeniz eşleşmeyebilir.';
+
+  @override
+  String get odeKodBaslik => 'Açıklama kodunuz';
+
+  @override
+  String get odeKopyala => 'Kopyala';
+
+  @override
+  String get odeKopyalandi => 'Kopyalandı';
+
+  @override
+  String get odeKartBaslik => 'Kartla öde';
+
+  @override
+  String get odeKartKapali =>
+      'Kart ödemesi henüz açık değil. Şimdilik banka havalesi kullanabilirsiniz.';
+
+  @override
+  String get odeHavaleKapali =>
+      'Site henüz banka hesabı tanımlamamış. Yönetime başvurun.';
+
+  @override
+  String get odeBorcYok => 'Ödenmemiş borcunuz yok.';
+
+  @override
+  String get odeBasarili => 'Ödemeniz alındı.';
 }

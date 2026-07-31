@@ -410,6 +410,15 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P30 · Sakin "Öde".** **Sakin** ile Aidatım → başlıktaki **"Öde"**.
+  (a) Site'de **banka kasası tanımlı değilken** havale bölümü yerine
+  "banka hesabı tanımlamamış" yazmalı. (b) Yönetici bir **banka kasası**
+  (IBAN'lı) tanımlasın → sakin ekranı yenilesin → IBAN + **kod** görünmeli;
+  **Kopyala**ya bas → panoya gitmeli. (c) Kodu not al, **çıkış yapıp tekrar
+  gir** → kod **AYNI** kalmalı. (d) Kart bölümü "henüz açık değil" demeli
+  (P13 anahtarları gelene kadar). (e) **Yönetici**: banka ekstresi
+  eşleştirmesinde açıklamaya o kodu yazan bir satır → öneri **%100 güvenle**
+  o sakini göstermeli.
 - [ ] **P28 · Borçlandırma (API — panel ekranı P29 ile gelecek).** Şimdilik
   **mobil "Aidatım" ekranının BOZULMADIĞI** doğrulanmalı: **sakin** ile gir →
   aidat tutarı ve borç durumu eskisi gibi görünmeli (P28 alanları eklendi ama
@@ -1567,7 +1576,7 @@ tahsilat aynı ekranda görünmeli ve iki maddeye bölünmüş bir panel iki far
 düzen üretirdi. E-posta/SMS hızlı eylemleri zaten P32'ye bağlı.
 
 ### P30 — Dues payment flow (resident)
-Status: BEKLIYOR · Depends-on: P29 (iyzico live path additionally needs P13)
+Status: BITTI · Depends-on: P29 (iyzico live path additionally needs P13)
 Scope: resident "Öde" flow: method 1 KART (iyzico) behind the existing/new
 payment-provider abstraction — implement fully with mock-provider tests now; goes
 live automatically when P13 keys arrive; method 2 BANKA HAVALESİ — show the
@@ -1577,6 +1586,68 @@ the debt. Any successful payment → tahsilat record → kasa/gelir reflection v
 the P29 pipeline, idempotent webhooks.
 Acceptance: mock-card path E2E + IBAN path E2E incl. auto-match; accounting
 reflection verified; mobile UX simple (Kerem's emphasis: "çok kolay"); gates.
+Notes (2026-07-31): **YENİ ŞEMA: `0020`** (`app_user.odeme_kodu`).
+
+**HAVALE AÇIKLAMA KODU — bu maddenin kilidi.** Sakin havale açıklamasına
+`TS-XXXXXX` yazar; yönetim ekstreyi yükleyince (P29) kod **eşleştirmeyi
+kesinleştirir** (güven 100) ve ad benzerliği/tutar tahminine gerek kalmaz.
+* **Kod TÜRETİLMEZ, saklanır.** `unit_no + kısa id` gibi türetilseydi daire
+  numarası değişince (P23'te oluyor) kod da değişir ve sakinin bankadaki
+  **düzenli talimatı sessizce eşleşmez** olurdu. Kod bir kez üretilir, sabit
+  kalır.
+* **Alfabede `0/O/1/I` yok**: kullanıcı kodu **elle** yazacak ve telefonda bu
+  ayrım okunmaz. (`L` çıkarılmadı — karışan şey küçük `l`dir, kod büyük
+  harftir.)
+* Kod **tembel** üretilir: her kullanıcıya peşin kod üretmek, hiçbir zaman
+  havale yapmayacak on binlerce kaydı doldururdu.
+* Metinden **arama** ile ayıklanır, eşitlikle değil: açıklamada başka metin
+  de olur ("AIDAT TS-A7K2M9 TEŞEKKÜRLER").
+* Eşleştirmede **kod her şeyi ezer**: ad/tutar puanlamasına sonra bakmak,
+  kodu doğru yazmış bir sakini "belirsiz" saymak olurdu.
+
+**IBAN AYRI ALAN DEĞİL, P27'nin BANKA KASASINDAN gelir.** İki yerde tutulan
+IBAN, biri güncellenip diğeri unutulduğunda parayı **yanlış hesaba**
+yollardı. Banka kasası tanımlı değilse `iban: null` döner ve mobil havale
+seçeneğini **hiç çizmez** — yanlış/boş IBAN göstermektense seçeneği hiç
+sunmamak doğru.
+
+**KART: AYRI ENTEGRASYON YAZILMADI.** Mevcut `PaymentProvider` soyutlaması
+kullanıldı; manuel/sahte sağlayıcıyla **bugün** çalışıyor, gerçek anahtarlar
+(P13) gelince **aynı kod** canlıya geçiyor. İki ödeme yolu iki tahsilat kaydı
+biçimi üretirdi. `kart_aktif` manuel sağlayıcıda **false**: seçeneği açmak
+sakini çalışmayan bir akışa sokardı.
+
+**MUHASEBE YANSIMASI TEKRARLANMADI.** Başarılı ödeme P29 defterine
+`tahsilat` olarak yazılır; kasa/gelir yansıması oradan gelir.
+
+**MOBİL "ÇOK KOLAY".** `/ode` tek sayfadır ve iki yolu **alt alta** gösterir
+— sekmeler kullanıcıyı bir yolu seçmeden önce "hangisi bana lazım" diye
+düşündürürdü. IBAN ve kod **tek aralıklı yazıyla** ve **kopyala** düğmesiyle
+verilir (elle yazılamayacak kadar uzun); kod ayrıca **kalın**dır çünkü
+açıklamaya onu yazacak. "Aidatım" ekranı başlıktan tek dokunuşla `/ode`ye
+geçiş verir ama **ödeme orada yapılmaz**: salt-okuma bir listeye yazma
+eylemi gömmek yanlış olurdu.
+
+TESTLER: `test_sakin_odeme.py` **8/8 + 1 atlandı** (kod biçimi/ayıklama,
+kodun sabit kalması, IBAN kasadan, hedefsiz tahakkuk borca sayılır, manuel
+sağlayıcıda kart kapalı, RBAC yalnız sakin, kart ödemesi tahsilat yazar, kod
+eşleştirmeyi kesinleştirir). Atlanan test `world` fixture'ında daireye bağlı
+sakin bulunmadığında kendini atlar — sessizce geçmek yerine **açıkça**
+atlıyor. `p30_ode_test.dart` **9/9**.
+KAPILAR: `flutter analyze` temiz; `flutter build apk --debug` ✓;
+`flutter test` **1483 geçti / 0 düştü**; backend `pytest`
+**962 geçti / 1 atlandı / 0 düştü**; göç tersinirliği **3/3 OK, bulgu 0** (21 sınır); sözleşme 2 yol + 2 şema + eşleştirme
+`neden` genişletmesi (sapma testi temiz); rol matrisi iki yeni ucu yakaladı
+(**yalnız sakin**).
+**ÖLÇÜM NOTU:** ilk tam mobil koşumda **16 test düştü**; hepsi bilinen
+ölçüm-aracı flake'leri (`pumpAndSettle timed out` — görsel yükleme; "painting
+debug variable changed" — görsel taklidi teardown'ı) ve **makine yüklüyken**
+(backend suiti + docker aynı anda) çıktı. Dosyalar **tek tek geçiyordu**;
+yüksüz tam koşum **1483/0**. Ürün kusuru değil, ölçüm koşulu.
+
+**AÇIK BIRAKILAN:** iyzico canlı yolu **P13'ün anahtarlarını bekliyor**
+(kod hazır, yapılandırma gelince açılır) — bu maddenin kendi kapsamında
+zaten böyle yazılıydı.
 
 ### P31 — Report engine & catalog
 Status: BEKLIYOR · Depends-on: P29
@@ -1820,7 +1891,8 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P29 · (bu commit) · Tahsilat/kasa/finansal hareketler (0019): TEK DEFTER (tahsilat|gider|gelir|virman|iade|acilis), bakiye SAKLANMAZ defterden TURETILIR, virman iki satir, iade ters yonlu yeni kayit, banka eslestirme ONERIDIR (belirsizde uretmez), icra dosyasi borcu kopyalamaz + banka entegrasyonu belge notu.
+- 2026-07-31 · P30 · (bu commit) · Sakin "Öde" akisi (0020): havale aciklama KODU (sabit, elle yazilabilir alfabe) eslestirmeyi KESINLESTIRIR; IBAN P27 banka kasasindan (ayri alan YOK); kart mevcut saglayici soyutlamasi uzerinden (P13 ile canliya); mobil /ode tek sayfa, kopyala + kalin kod.
+- 2026-07-31 · P29 · a283054 · Tahsilat/kasa/finansal hareketler (0019): TEK DEFTER (tahsilat|gider|gelir|virman|iade|acilis), bakiye SAKLANMAZ defterden TURETILIR, virman iki satir, iade ters yonlu yeni kayit, banka eslestirme ONERIDIR (belirsizde uretmez), icra dosyasi borcu kopyalamaz + banka entegrasyonu belge notu.
 - 2026-07-31 · P28 · 51a73db · Borclandirma motoru (0018): mevcut aidat modulu GENISLETILDI (paralel sistem YOK); benzersizlik (daire, donem, TUR) oldu — ayni ay birden fazla kalem; hedefleme kurali TANIMDA (kiraci_oncelikli|malik); gecikme ANLIK hesaplanir; toplu onizleme→isleme, sayac sihirbazi, satir-bazli ice aktarim.
 - 2026-07-31 · P27 · 059eb61 · Muhasebe "Tanimlar" katmani (0017): kasa/gelir-gider/firma/personel/arac/sayac defterleri + evrak-seri & para birimi (GOSTERIM); para kurus, acilis bakiyesi isaretsiz+yonlu, dagitim enum'u BILEREK iki degerli; admin-web /tanimlar sayfasi (P26'nin acik parcasi kapandi).
 - 2026-07-31 · P26 · 760a812 · Bagimsiz Bolum TIP + GRUP tanimlari (0016): tip = buyukluk + VARSAYILAN AIDAT (null "tanimsiz" != 0 "muaf"), grup = ne oldugu; tanim silinince daire SILINMEZ; daire/toplu olusturmada atama; bilesik FK + SET NULL bulgusu.

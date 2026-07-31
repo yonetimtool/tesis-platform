@@ -4104,3 +4104,40 @@ class FinansOzet(BaseModel):
     acik_borc_kurus: int
     kasa_toplam_kurus: int
     icra_acik_dosya: int
+
+
+# ======================= P30 SAKIN ODEME AKISI ============================== #
+class OdemeBilgileri(BaseModel):
+    """Sakinin "Öde" ekrani icin gereken HER SEY tek yanitta.
+
+    Iki cagri yapmak (IBAN ayri, kod ayri) ekrani iki yukleme durumuna
+    bolerdi; bu ekranin tek isi "nereye, ne kadar, hangi kodla" demektir.
+    """
+
+    #: Site'nin anlasmali banka kasasinin IBAN'i. Tanimli banka kasasi yoksa
+    #: `null` — istemci havale secenegini GIZLER (yanlis IBAN gostermektense
+    #: hic gostermemek dogru).
+    iban: str | None = None
+    banka_adi: str | None = None
+    #: Havale aciklamasina yazilacak BENZERSIZ kod.
+    odeme_kodu: str
+    #: Odenmemis toplam (kurus) — ekranda onerilen tutar.
+    borc_kurus: int
+    #: Kart odemesi acik mi (saglayici yapilandirilmis mi).
+    kart_aktif: bool
+
+
+class KartOdemeBaslat(BaseModel):
+    tutar_kurus: int = Field(..., ge=1)
+
+
+class KartOdemeSonuc(BaseModel):
+    """Saglayici soyutlamasinin dondurdugu sonuc.
+
+    `odeme_url` doluysa istemci 3D akisina yonlendirir; `durum` `basarili`
+    ise (sahte saglayici) tahsilat ANINDA yazilmistir.
+    """
+
+    durum: str
+    odeme_url: str | None = None
+    hareket_id: uuid.UUID | None = None

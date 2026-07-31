@@ -1856,5 +1856,17 @@
   "daireTanimYeni": "Yeni tanım",
   "daireTipiSecici": "Bağımsız bölüm tipi",
   "daireGrubuSecici": "Bağımsız bölüm grubu",
-  "daireTanimSecilmedi": "Seçilmedi"
+  "daireTanimSecilmedi": "Seçilmedi",
+  "odeBaslik": "Öde",
+  "odeBorcunuz": "Ödenmemiş tutar",
+  "odeHavaleBaslik": "Banka havalesi",
+  "odeHavaleAdim": "IBAN’a havale yapın ve açıklamaya aşağıdaki kodu yazın. Kod olmadan ödemeniz eşleşmeyebilir.",
+  "odeKodBaslik": "Açıklama kodunuz",
+  "odeKopyala": "Kopyala",
+  "odeKopyalandi": "Kopyalandı",
+  "odeKartBaslik": "Kartla öde",
+  "odeKartKapali": "Kart ödemesi henüz açık değil. Şimdilik banka havalesi kullanabilirsiniz.",
+  "odeHavaleKapali": "Site henüz banka hesabı tanımlamamış. Yönetime başvurun.",
+  "odeBorcYok": "Ödenmemiş borcunuz yok.",
+  "odeBasarili": "Ödemeniz alındı."
 }

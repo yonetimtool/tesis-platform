@@ -133,6 +133,8 @@ PATCH  /me/avatar                                           RED    IZIN   RED   
 GET    /me/checkpoints                                      IZIN   IZIN   IZIN   IZIN   IZIN  
 PATCH  /me/contact                                          IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /me/dues                                             RED    RED    RED    RED    IZIN  
+GET    /me/odeme-bilgileri                                  RED    RED    RED    RED    IZIN  
+POST   /me/odeme/kart                                       RED    RED    RED    RED    IZIN  
 PATCH  /me/password                                         IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /me/patrol-window                                    IZIN   RED    IZIN   RED    RED   
 GET    /me/profile                                          IZIN   IZIN   IZIN   IZIN   IZIN  

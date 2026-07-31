@@ -298,6 +298,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Le logement est introuvable dans cet établissement.",
         "es": "No se encontró la vivienda en esta instalación.",
     },
+    "odeme_kodu_uretilemedi": {
+        "tr": "Ödeme kodu üretilemedi. Lütfen tekrar deneyin.",
+        "en": "The payment code could not be generated. Please try again.",
+        "ar": "تعذر إنشاء رمز الدفع. حاول مرة أخرى.",
+        "ru": "Не удалось создать код платежа. Повторите попытку.",
+        "de": "Der Zahlungscode konnte nicht erzeugt werden. Bitte erneut versuchen.",
+        "fr": "Le code de paiement n'a pas pu être généré. Réessayez.",
+        "es": "No se pudo generar el código de pago. Inténtelo de nuevo.",
+    },
     "kasa_bulunamadi": {
         "tr": "Kasa bulunamadı.",
         "en": "Cash account not found.",

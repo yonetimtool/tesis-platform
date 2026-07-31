@@ -4475,4 +4475,43 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get daireTanimSecilmedi => 'Nicht ausgewählt';
+
+  @override
+  String get odeBaslik => 'Bezahlen';
+
+  @override
+  String get odeBorcunuz => 'Offener Betrag';
+
+  @override
+  String get odeHavaleBaslik => 'Banküberweisung';
+
+  @override
+  String get odeHavaleAdim =>
+      'Überweisen Sie an die IBAN und geben Sie den untenstehenden Code im Verwendungszweck an. Ohne Code wird Ihre Zahlung möglicherweise nicht zugeordnet.';
+
+  @override
+  String get odeKodBaslik => 'Ihr Verwendungszweck-Code';
+
+  @override
+  String get odeKopyala => 'Kopieren';
+
+  @override
+  String get odeKopyalandi => 'Kopiert';
+
+  @override
+  String get odeKartBaslik => 'Mit Karte zahlen';
+
+  @override
+  String get odeKartKapali =>
+      'Kartenzahlung ist noch nicht aktiviert. Nutzen Sie vorerst eine Banküberweisung.';
+
+  @override
+  String get odeHavaleKapali =>
+      'Für die Anlage wurde noch kein Bankkonto hinterlegt. Wenden Sie sich an die Verwaltung.';
+
+  @override
+  String get odeBorcYok => 'Sie haben keine offenen Schulden.';
+
+  @override
+  String get odeBasarili => 'Ihre Zahlung ist eingegangen.';
 }

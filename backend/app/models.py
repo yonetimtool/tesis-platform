@@ -325,6 +325,10 @@ class AppUser(Base):
     # Personel profil fotografi (0005) — MinIO obje anahtari; yalniz personel
     # rolleri yazar (PATCH /me/avatar), resident'a 403.
     avatar_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # (P30) Havale aciklama kodu — BIR KEZ uretilir ve SABIT KALIR.
+    # Turetilseydi (orn. daire no + kisa id) daire numarasi degisince kod da
+    # degisir ve sakinin bankadaki duzenli talimati SESSIZCE eslesmez olurdu.
+    odeme_kodu: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 

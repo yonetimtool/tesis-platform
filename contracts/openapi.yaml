@@ -3478,6 +3478,61 @@ paths:
               schema: { $ref: "#/components/schemas/FinansOzet" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /me/odeme-bilgileri:
+    get:
+      tags: [aidat]
+      summary: Sakinin odeme bilgileri (YALNIZ resident) — IBAN + KOD + borc
+      description: >
+        **(P30)** "Öde" ekraninin ihtiyaci olan HER SEY tek yanitta: iki cagri
+        yapmak ekrani iki yukleme durumuna bolerdi.
+
+        `iban` sitenin **anlasmali BANKA kasasindan** gelir (P27) — ayri bir
+        "anlasmali IBAN" tenant alani ACILMADI, cunku iki yerde tutulan IBAN
+        biri guncellenip digeri unutuldugunda parayi **YANLIS HESABA**
+        yollardi. Banka kasasi yoksa `null` doner ve istemci havale
+        secenegini **gizler**.
+
+        `odeme_kodu` sakine ozel, **BIR KEZ uretilir ve SABIT KALIR** —
+        turetilseydi (orn. daire no + id) daire numarasi degisince kod da
+        degisir ve sakinin bankadaki duzenli talimati SESSIZCE eslesmez
+        olurdu. Bicim `TS-XXXXXX`; alfabede `0/O/1/I` YOKTUR (kod elle
+        yazilir).
+      responses:
+        "200":
+          description: Odeme bilgileri
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OdemeBilgileri" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /me/odeme/kart:
+    post:
+      tags: [aidat]
+      summary: Kart odemesi baslat (YALNIZ resident)
+      description: >
+        Mevcut `PaymentProvider` soyutlamasi uzerinden. AYRI BIR KART
+        ENTEGRASYONU YAZILMADI: iki odeme yolu iki tahsilat kaydi bicimi
+        uretirdi. Manuel/sahte saglayici ANINDA `basarili` doner ve tahsilat
+        P29 defterine yazilir; gercek saglayici bir `odeme_url` dondurur ve
+        tahsilat webhook ile yazilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tutar_kurus]
+              properties:
+                tutar_kurus: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "201":
+          description: Baslatildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KartOdemeSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /borclandirma/toplu/onizleme:
     post:
       tags: [aidat]
@@ -9272,6 +9327,39 @@ components:
     # ------------------ P27 "Tanimlar" katmani semalari ---------------- #
     # PARA HER YERDE KURUS (int64). Acilis bakiyeleri ISARETSIZ tutar + AYRI
     # yon tasir (bkz. yol yorumlari).
+    OdemeBilgileri:
+      type: object
+      required: [odeme_kodu, borc_kurus, kart_aktif]
+      properties:
+        iban:
+          type: string
+          nullable: true
+          description: Anlasmali banka kasasinin IBAN'i; yoksa null (havale gizlenir)
+        banka_adi: { type: string, nullable: true }
+        odeme_kodu:
+          type: string
+          pattern: "^TS-[A-Z2-9]{6}$"
+          description: Havale aciklamasina yazilacak BENZERSIZ kod (sabit)
+        borc_kurus: { type: integer, format: int64 }
+        kart_aktif:
+          type: boolean
+          description: >
+            Saglayici yapilandirilmis mi. Manuel saglayici "kart" DEGILDIR —
+            secenegi acmak sakini calismayan bir akisa sokardi.
+    KartOdemeSonuc:
+      type: object
+      required: [durum]
+      properties:
+        durum: { type: string, example: basarili }
+        odeme_url:
+          type: string
+          nullable: true
+          description: Doluysa istemci 3D akisina yonlendirir
+        hareket_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Aninda basarili ise yazilan tahsilat hareketi
     FinansalHareket:
       type: object
       description: >
@@ -9450,7 +9538,11 @@ components:
           description: 0 = oneri yok
         neden:
           type: string
-          description: "ad / soyad / tutar_tam / tutar_kismi / belirsiz / eslesme_yok"
+          description: |
+            `odeme_kodu` (P30 — KESIN, guven 100) / ad / soyad /
+            tutar_tam / tutar_kismi / belirsiz / eslesme_yok.
+            **Kod HER SEYI EZER**: ad/tutar tahminine sonra bakmak,
+            kodu dogru yazmis bir sakini "belirsiz" saymak olurdu.
     BankaEslestirSonuc:
       type: object
       required: [oneriler]

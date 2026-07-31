@@ -433,6 +433,8 @@ async def banka_eslestirme(
                 DuesAssessment.hedef_user_id,
                 AppUser.ad,
                 func.sum(DuesAssessment.tutar_kurus),
+                # (P30) Havale kodu — aciklamada gecerse eslestirme KESIN.
+                func.max(AppUser.odeme_kodu),
             )
             .join(AppUser, AppUser.id == DuesAssessment.hedef_user_id)
             .where(DuesAssessment.hedef_user_id.is_not(None))
@@ -455,10 +457,10 @@ async def banka_eslestirme(
         ).all()
     )
     adaylar = []
-    for uid, ad, borc in rows:
+    for uid, ad, borc, kod in rows:
         kalan = int(borc) - int(tahsil.get(uid, 0))
         if kalan > 0:
-            adaylar.append(BorcAdayi(str(uid), ad, kalan))
+            adaylar.append(BorcAdayi(str(uid), ad, kalan, odeme_kodu=kod))
 
     oneriler = banka_eslestir(
         [BankaSatiri(s.satir_no, s.aciklama, s.tutar_kurus) for s in body.satirlar],

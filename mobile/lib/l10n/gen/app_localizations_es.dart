@@ -4453,4 +4453,43 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get daireTanimSecilmedi => 'Sin seleccionar';
+
+  @override
+  String get odeBaslik => 'Pagar';
+
+  @override
+  String get odeBorcunuz => 'Importe pendiente';
+
+  @override
+  String get odeHavaleBaslik => 'Transferencia bancaria';
+
+  @override
+  String get odeHavaleAdim =>
+      'Transfiera al IBAN e indique el código de abajo en el concepto. Sin el código su pago puede no conciliarse.';
+
+  @override
+  String get odeKodBaslik => 'Su código de referencia';
+
+  @override
+  String get odeKopyala => 'Copiar';
+
+  @override
+  String get odeKopyalandi => 'Copiado';
+
+  @override
+  String get odeKartBaslik => 'Pagar con tarjeta';
+
+  @override
+  String get odeKartKapali =>
+      'El pago con tarjeta aún no está habilitado. Puede usar una transferencia bancaria.';
+
+  @override
+  String get odeHavaleKapali =>
+      'La comunidad aún no ha definido una cuenta bancaria. Contacte con la administración.';
+
+  @override
+  String get odeBorcYok => 'No tiene deudas pendientes.';
+
+  @override
+  String get odeBasarili => 'Se ha recibido su pago.';
 }

@@ -1336,5 +1336,17 @@
   "daireTanimYeni": "New definition",
   "daireTipiSecici": "Unit type",
   "daireGrubuSecici": "Unit group",
-  "daireTanimSecilmedi": "Not selected"
+  "daireTanimSecilmedi": "Not selected",
+  "odeBaslik": "Pay",
+  "odeBorcunuz": "Outstanding amount",
+  "odeHavaleBaslik": "Bank transfer",
+  "odeHavaleAdim": "Transfer to the IBAN and write the code below in the description. Without the code your payment may not be matched.",
+  "odeKodBaslik": "Your reference code",
+  "odeKopyala": "Copy",
+  "odeKopyalandi": "Copied",
+  "odeKartBaslik": "Pay by card",
+  "odeKartKapali": "Card payment is not enabled yet. You can use a bank transfer for now.",
+  "odeHavaleKapali": "The site has not defined a bank account yet. Please contact the management.",
+  "odeBorcYok": "You have no outstanding debt.",
+  "odeBasarili": "Your payment was received."
 }

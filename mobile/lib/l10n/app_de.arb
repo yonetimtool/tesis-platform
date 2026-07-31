@@ -1336,5 +1336,17 @@
   "daireTanimYeni": "Neue Definition",
   "daireTipiSecici": "Einheitentyp",
   "daireGrubuSecici": "Einheitengruppe",
-  "daireTanimSecilmedi": "Nicht ausgewählt"
+  "daireTanimSecilmedi": "Nicht ausgewählt",
+  "odeBaslik": "Bezahlen",
+  "odeBorcunuz": "Offener Betrag",
+  "odeHavaleBaslik": "Banküberweisung",
+  "odeHavaleAdim": "Überweisen Sie an die IBAN und geben Sie den untenstehenden Code im Verwendungszweck an. Ohne Code wird Ihre Zahlung möglicherweise nicht zugeordnet.",
+  "odeKodBaslik": "Ihr Verwendungszweck-Code",
+  "odeKopyala": "Kopieren",
+  "odeKopyalandi": "Kopiert",
+  "odeKartBaslik": "Mit Karte zahlen",
+  "odeKartKapali": "Kartenzahlung ist noch nicht aktiviert. Nutzen Sie vorerst eine Banküberweisung.",
+  "odeHavaleKapali": "Für die Anlage wurde noch kein Bankkonto hinterlegt. Wenden Sie sich an die Verwaltung.",
+  "odeBorcYok": "Sie haben keine offenen Schulden.",
+  "odeBasarili": "Ihre Zahlung ist eingegangen."
 }

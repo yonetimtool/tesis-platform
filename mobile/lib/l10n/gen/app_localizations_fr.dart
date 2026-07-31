@@ -4463,4 +4463,43 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get daireTanimSecilmedi => 'Non sélectionné';
+
+  @override
+  String get odeBaslik => 'Payer';
+
+  @override
+  String get odeBorcunuz => 'Montant impayé';
+
+  @override
+  String get odeHavaleBaslik => 'Virement bancaire';
+
+  @override
+  String get odeHavaleAdim =>
+      'Virez sur l\'IBAN et indiquez le code ci-dessous en libellé. Sans ce code, votre paiement risque de ne pas être rapproché.';
+
+  @override
+  String get odeKodBaslik => 'Votre code de référence';
+
+  @override
+  String get odeKopyala => 'Copier';
+
+  @override
+  String get odeKopyalandi => 'Copié';
+
+  @override
+  String get odeKartBaslik => 'Payer par carte';
+
+  @override
+  String get odeKartKapali =>
+      'Le paiement par carte n\'est pas encore activé. Utilisez un virement pour l\'instant.';
+
+  @override
+  String get odeHavaleKapali =>
+      'Aucun compte bancaire n\'a encore été défini pour la résidence. Contactez la gestion.';
+
+  @override
+  String get odeBorcYok => 'Vous n\'avez aucune dette en cours.';
+
+  @override
+  String get odeBasarili => 'Votre paiement a été reçu.';
 }

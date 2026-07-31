@@ -4584,4 +4584,43 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get daireTanimSecilmedi => 'لم يتم الاختيار';
+
+  @override
+  String get odeBaslik => 'ادفع';
+
+  @override
+  String get odeBorcunuz => 'المبلغ المستحق';
+
+  @override
+  String get odeHavaleBaslik => 'حوالة بنكية';
+
+  @override
+  String get odeHavaleAdim =>
+      'حوّل إلى الآيبان واكتب الرمز أدناه في الوصف. بدون الرمز قد لا تتم مطابقة دفعتك.';
+
+  @override
+  String get odeKodBaslik => 'رمز المرجع الخاص بك';
+
+  @override
+  String get odeKopyala => 'نسخ';
+
+  @override
+  String get odeKopyalandi => 'تم النسخ';
+
+  @override
+  String get odeKartBaslik => 'الدفع بالبطاقة';
+
+  @override
+  String get odeKartKapali =>
+      'الدفع بالبطاقة غير مفعّل بعد. يمكنك استخدام الحوالة البنكية حاليًا.';
+
+  @override
+  String get odeHavaleKapali =>
+      'لم يحدد المجمع حسابًا بنكيًا بعد. يرجى مراجعة الإدارة.';
+
+  @override
+  String get odeBorcYok => 'ليس لديك دين مستحق.';
+
+  @override
+  String get odeBasarili => 'تم استلام دفعتك.';
 }

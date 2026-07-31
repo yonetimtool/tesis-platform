@@ -18,6 +18,7 @@ import '../features/building_map/presentation/building_schematic_screen.dart';
 import '../features/unit_complaints/presentation/my_complaints_screen.dart';
 import '../features/unit_complaints/presentation/sikayet_kuyrugu_screen.dart';
 import '../features/unit_tanimlari/presentation/unit_tanimlari_screen.dart';
+import '../features/dues/presentation/ode_screen.dart';
 import '../features/budget/presentation/financial_summary_screen.dart';
 import '../features/budget/presentation/site_budget_screen.dart';
 import '../features/transparency/presentation/transparency_screen.dart';
@@ -77,6 +78,7 @@ class AppRoutes {
   static const siteBudget = '/site-budget';
   static const transparency = '/transparency';
   static const myDues = '/my-dues';
+  static const ode = '/ode';
   static const complaints = '/complaints';
   static const visitors = '/visitors';
   static const kargo = '/kargo';
@@ -376,6 +378,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.sikayetKuyrugu,
         builder: (context, state) => const SikayetKuyruguScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.ode,
+        builder: (context, state) => const OdeScreen(),
       ),
       GoRoute(
         path: AppRoutes.daireTanimlari,

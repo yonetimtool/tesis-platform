@@ -1336,5 +1336,17 @@
   "daireTanimYeni": "تعريف جديد",
   "daireTipiSecici": "نوع الوحدة",
   "daireGrubuSecici": "مجموعة الوحدة",
-  "daireTanimSecilmedi": "لم يتم الاختيار"
+  "daireTanimSecilmedi": "لم يتم الاختيار",
+  "odeBaslik": "ادفع",
+  "odeBorcunuz": "المبلغ المستحق",
+  "odeHavaleBaslik": "حوالة بنكية",
+  "odeHavaleAdim": "حوّل إلى الآيبان واكتب الرمز أدناه في الوصف. بدون الرمز قد لا تتم مطابقة دفعتك.",
+  "odeKodBaslik": "رمز المرجع الخاص بك",
+  "odeKopyala": "نسخ",
+  "odeKopyalandi": "تم النسخ",
+  "odeKartBaslik": "الدفع بالبطاقة",
+  "odeKartKapali": "الدفع بالبطاقة غير مفعّل بعد. يمكنك استخدام الحوالة البنكية حاليًا.",
+  "odeHavaleKapali": "لم يحدد المجمع حسابًا بنكيًا بعد. يرجى مراجعة الإدارة.",
+  "odeBorcYok": "ليس لديك دين مستحق.",
+  "odeBasarili": "تم استلام دفعتك."
 }

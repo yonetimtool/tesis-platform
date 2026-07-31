@@ -1336,5 +1336,17 @@
   "daireTanimYeni": "Nueva definición",
   "daireTipiSecici": "Tipo de unidad",
   "daireGrubuSecici": "Grupo de unidades",
-  "daireTanimSecilmedi": "Sin seleccionar"
+  "daireTanimSecilmedi": "Sin seleccionar",
+  "odeBaslik": "Pagar",
+  "odeBorcunuz": "Importe pendiente",
+  "odeHavaleBaslik": "Transferencia bancaria",
+  "odeHavaleAdim": "Transfiera al IBAN e indique el código de abajo en el concepto. Sin el código su pago puede no conciliarse.",
+  "odeKodBaslik": "Su código de referencia",
+  "odeKopyala": "Copiar",
+  "odeKopyalandi": "Copiado",
+  "odeKartBaslik": "Pagar con tarjeta",
+  "odeKartKapali": "El pago con tarjeta aún no está habilitado. Puede usar una transferencia bancaria.",
+  "odeHavaleKapali": "La comunidad aún no ha definido una cuenta bancaria. Contacte con la administración.",
+  "odeBorcYok": "No tiene deudas pendientes.",
+  "odeBasarili": "Se ha recibido su pago."
 }

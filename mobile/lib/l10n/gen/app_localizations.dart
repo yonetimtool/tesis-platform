@@ -7630,6 +7630,78 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Seçilmedi'**
   String get daireTanimSecilmedi;
+
+  /// No description provided for @odeBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Öde'**
+  String get odeBaslik;
+
+  /// No description provided for @odeBorcunuz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödenmemiş tutar'**
+  String get odeBorcunuz;
+
+  /// No description provided for @odeHavaleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Banka havalesi'**
+  String get odeHavaleBaslik;
+
+  /// No description provided for @odeHavaleAdim.
+  ///
+  /// In tr, this message translates to:
+  /// **'IBAN’a havale yapın ve açıklamaya aşağıdaki kodu yazın. Kod olmadan ödemeniz eşleşmeyebilir.'**
+  String get odeHavaleAdim;
+
+  /// No description provided for @odeKodBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama kodunuz'**
+  String get odeKodBaslik;
+
+  /// No description provided for @odeKopyala.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kopyala'**
+  String get odeKopyala;
+
+  /// No description provided for @odeKopyalandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kopyalandı'**
+  String get odeKopyalandi;
+
+  /// No description provided for @odeKartBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kartla öde'**
+  String get odeKartBaslik;
+
+  /// No description provided for @odeKartKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kart ödemesi henüz açık değil. Şimdilik banka havalesi kullanabilirsiniz.'**
+  String get odeKartKapali;
+
+  /// No description provided for @odeHavaleKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Site henüz banka hesabı tanımlamamış. Yönetime başvurun.'**
+  String get odeHavaleKapali;
+
+  /// No description provided for @odeBorcYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödenmemiş borcunuz yok.'**
+  String get odeBorcYok;
+
+  /// No description provided for @odeBasarili.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödemeniz alındı.'**
+  String get odeBasarili;
 }
 
 class _AppLocalizationsDelegate

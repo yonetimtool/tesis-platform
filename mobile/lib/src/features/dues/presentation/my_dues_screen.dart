@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../routing/app_router.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../core/error/akis_hatasi.dart';
@@ -13,10 +16,12 @@ import 'aidat_etiket.dart';
 import 'my_dues_controller.dart';
 import '../../../core/theme/home_tokens.dart';
 
-/// "Aidatim" — sakinin KENDI dairelerinin borc durumu (salt okuma).
-/// Odeme bu ekrandan YAPILAMAZ: odeme durumu yalnizca odeme saglayicisi
-/// webhook'uyla degisir (auth.md §4) — ekran yonetime odenen tutarlari ve
-/// tahakkuklari seffaf gosterir.
+/// "Aidatim" — sakinin KENDI dairelerinin borc durumu.
+///
+/// (P30) Ekran artik "Öde"ye GECIS verir. Odeme burada YAPILMAZ: tutarlar
+/// yine yalnizca tahsilat kaydiyla degisir (auth.md §4); bu ekran seffaf
+/// gorunum, /ode ise odeme yoludur. Ikisini birlestirmek, salt-okuma bir
+/// listeye yazma eylemi gomerdi.
 class MyDuesScreen extends ConsumerWidget {
   const MyDuesScreen({super.key});
 
@@ -30,6 +35,11 @@ class MyDuesScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(baslikBuyuk(l10n.aidatBaslik, context.dilKodu)),
         actions: [
+          // (P30) "Öde" — sakinin en sik ihtiyaci; basliktan tek dokunusla.
+          TextButton(
+            onPressed: () => context.push(AppRoutes.ode),
+            child: Text(l10n.odeBaslik),
+          ),
           IconButton(
             tooltip: l10n.ortakYenile,
             icon: const Icon(Icons.refresh),

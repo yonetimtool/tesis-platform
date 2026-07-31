@@ -9,6 +9,8 @@ import re
 import unicodedata
 from dataclasses import dataclass
 
+from .odeme_kodu import ayikla as _kod_ayikla
+
 #: `yon` -> bakiyeye etkisi. Tutar HER ZAMAN POZITIF saklanir; isaret
 #: burada uygulanir (negatif tutar "iade" ile "eksi gider"i ayirt edilemez
 #: kilardi).
@@ -57,6 +59,9 @@ class BorcAdayi:
     ad: str
     kalan_kurus: int
     assessment_id: str | None = None
+    #: (P30) Sakine ozel havale aciklama kodu. Aciklamada gecerse eslestirme
+    #: KESINDIR — ad benzerligi ve tutar tahminine gerek kalmaz.
+    odeme_kodu: str | None = None
 
 
 @dataclass(frozen=True)
@@ -92,8 +97,19 @@ def banka_eslestir(
     Ayni satir icin en yuksek puanli aday secilir; berabere kalirsa ONERI
     URETILMEZ (iki kisi ayni tutari yatirdiysa secmek kullanicinin isidir).
     """
+    kodlu = {a.odeme_kodu: a for a in adaylar if a.odeme_kodu}
     oneriler: list[EslestirmeOnerisi] = []
     for satir in satirlar:
+        # (P30) KOD VARSA HER SEYI EZER: kod sakine ozeldir ve aciklamaya
+        # ELLE yazilmistir; ad/tutar tahminine gore SONRA bakmak, kodu
+        # dogru yazmis bir sakini "belirsiz" saymak olurdu.
+        kod = _kod_ayikla(satir.aciklama)
+        if kod and kod in kodlu:
+            aday = kodlu[kod]
+            oneriler.append(EslestirmeOnerisi(
+                satir.satir_no, aday.user_id, aday.assessment_id, 100, "odeme_kodu"
+            ))
+            continue
         aciklama = _sadelestir(satir.aciklama)
         puanli: list[tuple[int, BorcAdayi, str]] = []
         for aday in adaylar:

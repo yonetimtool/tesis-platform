@@ -4500,4 +4500,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get daireTanimSecilmedi => 'Not selected';
+
+  @override
+  String get odeBaslik => 'Pay';
+
+  @override
+  String get odeBorcunuz => 'Outstanding amount';
+
+  @override
+  String get odeHavaleBaslik => 'Bank transfer';
+
+  @override
+  String get odeHavaleAdim =>
+      'Transfer to the IBAN and write the code below in the description. Without the code your payment may not be matched.';
+
+  @override
+  String get odeKodBaslik => 'Your reference code';
+
+  @override
+  String get odeKopyala => 'Copy';
+
+  @override
+  String get odeKopyalandi => 'Copied';
+
+  @override
+  String get odeKartBaslik => 'Pay by card';
+
+  @override
+  String get odeKartKapali =>
+      'Card payment is not enabled yet. You can use a bank transfer for now.';
+
+  @override
+  String get odeHavaleKapali =>
+      'The site has not defined a bank account yet. Please contact the management.';
+
+  @override
+  String get odeBorcYok => 'You have no outstanding debt.';
+
+  @override
+  String get odeBasarili => 'Your payment was received.';
 }
