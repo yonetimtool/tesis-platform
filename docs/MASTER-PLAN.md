@@ -1975,6 +1975,48 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+## STATUS REPORT — 2026-07-31 #5 (kural 10: bağlam doldu, devir)
+
+**FINAL REPORT değildir.** **P33'ten** devam edilebilir. `/clear` + standart
+kickoff.
+
+### Bu turda biten
+
+| Madde | Hash | Şema | Özet |
+|---|---|---|---|
+| P31 | `a7e2217` | — | Rapor motoru + 12 raporluk katalog (tablo/Excel/PDF) |
+| P32 | `47ac96c` | 0021 | Mesaj şablonları + gönderim, rıza denetimi, SMS sayacı |
+
+### Bu turda bulunan gerçek kusurlar
+
+1. **P31 — `func.to_char(...)` bind parametresi üretiyor** ve Postgres
+   `GROUP BY`daki ifadeyle eşleştiremiyor (`GroupingError`); dönemsel bakiye
+   ucu 500 veriyordu. `literal_column` ile çözüldü. **Bu tuzak şeffaflık
+   panosunda da yaşanmıştı — üçüncü kez çıkarsa `literal_column` sarmalayıcı
+   bir yardımcıya alınmalı.**
+2. **P32 — P28 REGRESYONU, seed yakaladı.** `seed.py`, P28'in kaldırdığı
+   `UNIQUE (tenant_id, unit_id, donem)` kısıtına `ON CONFLICT` yapıyordu ve
+   **seed düşüyordu**; P28'den beri seed koşulmamıştı. Ders: **şema kısıtı
+   değiştiren her maddede `docker compose run --rm seed` koşulmalı** — tam
+   pytest bunu yakalamıyor (testler seed'i kullanmıyor).
+
+### Sıradaki
+
+**P33** ve sonrası. Bağımlılık durumu: P33–P39 arasında P29/P31/P32'ye bağlı
+olanlar artık uygun.
+
+### Biriken teknik borç (üç maddede yazılı, tek işte kapanmalı)
+
+**FİNANS + RAPOR + MESAJ PANELİ.** P28, P29, P31 ve P32 API yüzeylerini ve
+tutarlılık kurallarını kurdu ama **panel/mobil ekranları yapılmadı**. Bunlar
+tek bir bölüm olarak tasarlanmalı: borç, tahsilat, rapor ve mesaj aynı
+akışın parçaları — ayrı ayrı yapılırsa dört farklı düzen çıkar. P29'un
+dashboard hızlı-eylem kancaları da buraya bağlı.
+
+Kalan: P33–P39 + finans paneli borcu. Bloke/Kerem'de: P2, P11 (device-verify
+**15 madde**), P12/P13 (dış kimlik bilgileri — P30 kart yolu ve P32 SMS
+hesabı bunu bekliyor), P18, P22(a).
+
 ## STATUS REPORT — 2026-07-31 #4 (kural 10: bağlam doldu, devir)
 
 **FINAL REPORT değildir** — uygun madde tükenmedi. **P31'den** devam
