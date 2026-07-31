@@ -1287,5 +1287,17 @@
         "type": "int"
       }
     }
-  }
+  },
+  "kameraHataAdresBozuk": "L'adresse du flux est invalide. Elle contient peut-être un espace ou un saut de ligne.",
+  "kameraHataSemaDesteklenmiyor": "Ce type d'adresse ne peut pas être lu directement. Définissez une adresse de rediffusion pour la caméra.",
+  "kameraHataSifrelenmemis": "Le flux non chiffré (http) a été bloqué par l'appareil. Un profil professionnel ou un VPN peut l'interdire.",
+  "kameraUrlCokUzun": "L'adresse du flux est trop longue (maximum {sinir} caractères).",
+  "@kameraUrlCokUzun": {
+    "placeholders": {
+      "sinir": {
+        "type": "int"
+      }
+    }
+  },
+  "kameraUrlSifrelenmemisUyari": "Cette adresse n'est pas chiffrée (http). Utilisez https si possible."
 }

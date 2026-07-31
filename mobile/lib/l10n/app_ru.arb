@@ -1287,5 +1287,17 @@
         "type": "int"
       }
     }
-  }
+  },
+  "kameraHataAdresBozuk": "Адрес потока недействителен. Возможно, в нём остался пробел или перенос строки.",
+  "kameraHataSemaDesteklenmiyor": "Этот тип адреса нельзя воспроизвести напрямую. Задайте адрес рестрима для камеры.",
+  "kameraHataSifrelenmemis": "Незашифрованный (http) поток заблокирован устройством. Возможно, его запрещает рабочий профиль или VPN.",
+  "kameraUrlCokUzun": "Адрес потока слишком длинный (максимум {sinir} символов).",
+  "@kameraUrlCokUzun": {
+    "placeholders": {
+      "sinir": {
+        "type": "int"
+      }
+    }
+  },
+  "kameraUrlSifrelenmemisUyari": "Этот адрес не зашифрован (http). По возможности используйте https."
 }

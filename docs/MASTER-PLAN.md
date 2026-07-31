@@ -410,6 +410,24 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P25 · Kamera yayınları — ASIL ÖLÇÜM SÜRÜM DERLEMESİYLE.** Bu maddenin
+  hatası **debug derlemede HİÇ GÖRÜNMEZ** (`flutter run` varsayılan olarak
+  debug derler ve orada cleartext zaten açıktı); bu yüzden
+  `flutter build apk --release` ile kurulan bir APK gerekir.
+  (a) **Yönetici** ile Kameralar → yeni kamera: `http://` ile başlayan bir HLS
+  adresi gir (örn. sahadaki Frigate/go2rtc geçidi) → form **"şifrelenmemiş"
+  uyarısı** göstermeli (hata değil) → kaydet → kart açılınca **yayın
+  OYNAMALI** (P25 öncesi sürüm derlemesinde sessizce düşüyordu).
+  (b) `rtsp://` bir kamerayı restream adresi vermeden aç → **"Bu adres türü
+  doğrudan oynatılamaz…"** çıkmalı (eski genel cümle değil).
+  (c) Adresin ortasına bir boşluk koy → **"Yayın adresi geçersiz…"** çıkmalı
+  (eskiden uygulama bu adreste çakılıyordu).
+  (d) 3 KB'lik bir metni URL alanına yapıştır → form **uzunluk** hatası
+  vermeli ("https ile başlamalı" DEĞİL); sunucuya gönderilirse Türkçe
+  "çok uzun" hatası dönmeli.
+  (e) Ana ekranda "Canlı Kamera" şeridinde **dört kart** yan yana görünmeli
+  (eskiden iki). **Yönetici VE sakin** ana ekranlarında da bölüm çıkmalı —
+  sakin yalnız kendisine açılmış kameraları görmeli.
 - [ ] **P23 · Sakin yaşam döngüsü.** **Yönetici** (admin DEĞİL) ile Sakinler →
   bir sakin aç: (a) **daire ata** — sonradan atama artık çalışmalı (eskiden
   yönetici bu ucu göremiyordu, 403 alırdı); (b) **e-posta** alanını doldur →
@@ -1079,7 +1097,7 @@ diyordu; **DEĞİLDİ** — `analyze` testler yazılmadan ÖNCE koşulmuştu ve
 koşulmalı; ders bu. Uyarılar giderildi, `flutter analyze` artık temiz.
 
 ### P25 — Camera hardening + full home grid
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: (a) stream URL max length (2048) + validation on both ends with clear
 Turkish errors; (b) INVESTIGATE & FIX "public internet streams don't play":
 assemble a set of known-good public HLS/MP4 URLs, reproduce, diagnose (CORS,
@@ -1090,6 +1108,71 @@ a 4-wide horizontally scrollable grid (not a fixed 2); tap → existing fullscre
 player.
 Acceptance: overlong/invalid URLs rejected; documented public test URLs play in
 a device build; grid shows the full visible set per role; quality gates.
+Notes (2026-07-31): üç parça; hepsi bitti. Ayrıntılı teşhis:
+`docs/kamera-yayin-destek.md`.
+
+**(a) 2048 KARAKTER SINIRI — ve yolda bulunan asıl kusur.** `stream_url`
+sınırsız `text` idi. Sınır **üç katmanda**: mobil form → `dogrula_url_tur` /
+`dogrula_restream` (422 `kamera_url_cok_uzun`, 7 dil) → `0015` `CHECK` kısıtı.
+Uzunluk **şemadan ÖNCE** ölçülür: 3 KB'lik bir yapıştırmada "https ile
+başlamalı" demek yanıltıcı olurdu, adres zaten https ile başlıyor.
+**BULGU — "açık Türkçe hata" OLUŞTURMA YOLUNDA HİÇ ÇALIŞMIYORDU.** URL
+doğrulaması `CameraCreate` üzerinde bir `model_validator` içindeydi; pydantic
+oradan çıkan `ValueError`ı kendi `validation_error` zarfına çevirip
+kullanıcıya **ham İngilizce** bir cümle döndürüyordu. Katalog metnini yalnız
+`PATCH` yolu üretiyordu (orada doğrulama zaten router'daydı). Mevcut testler
+sadece `422` beklediği için bu yıllardır görünmemişti. Doğrulama **tek yere,
+router'a** taşındı; artık her iki uç da katalog metni döndürüyor.
+Veritabanı kısıtı bilinçli olarak `CHECK` (varchar(2048) DEĞİL): tür değişimi
+tabloyu yeniden yazardı. Mevcut uzun satırlar göçü **düşürmez, kesilir** ve
+`NOTICE` ile bildirilir — dağıtılmış prod varken bir kamera kaydı yüzünden
+göçün durması daha kötü bir sonuçtur.
+
+**(b) "İNTERNETTEKİ YAYINLAR OYNAMIYOR" — KÖK NEDEN BULUNDU.**
+`usesCleartextTraffic="true"` **yalnızca `src/debug/AndroidManifest.xml`**
+içindeydi. Android 9'dan beri cleartext varsayılan olarak yasaktır; yani
+**sürüm derlemesinde her `http://` yayın sessizce düşüyordu** ve oynatıcı tek
+bir genel cümle gösteriyordu. Bu yalnız kamu test yayınlarını değil
+**P17'nin restream özelliğini de** vuruyordu: Frigate/go2rtc geçidi neredeyse
+her zaman düz `http`tir — özellik geliştirmede çalıştığı için fark
+edilmemişti. Düzeltme: Android'de `network_security_config.xml`, iOS'ta
+`NSAllowsArbitraryLoadsForMedia` (**kapsamı dar**: yalnız AVFoundation medya;
+`URLSession`/API ATS korumasında kalır).
+**İKİNCİ KUSUR:** `Uri.parse` oynatıcıda `try` bloğunun **DIŞINDAYDI** —
+içinde boşluk taşıyan bir adres **yakalanmamış** `FormatException` atıyordu.
+Ayrıca `Uri.tryParse` tek başına yetmiyor: Dart'ın çözümleyicisi hoşgörülü,
+`https://ornek /a.m3u8` gibi **içinde boşluk olan** adresi hatasız çözüyor
+(test bunu yakaladı) — artık boşluk açıkça reddediliyor.
+Hata artık **NEDENE göre** konuşuyor (`YayinHatasi`: adresBozuk /
+semaDesteklenmiyor / sifrelenmemisEngellendi / ulasilamadi). Eski tek cümle
+adres yanlış yazıldığında kullanıcıyı **kamerayı kontrol etmeye** yolluyordu.
+Kamu adresleri `curl` ile ölçüldü: HLS çalma listeleri **üç farklı içerik
+tipiyle** sunuluyor (hepsi tanınır → içerik tipi neden DEĞİL), örneklemde
+**çapraz protokol yönlendirmesi yok**. İki adres 403 döndü; **cihazda
+denenmeden** "desteklenmiyor" diye yazılmadı.
+
+**(c) DÖRTLÜ IZGARA + eksik ekranlar.** Kart sabit 168 dp idi ve tipik
+telefonda ekrana **iki** kamera sığıyordu. Genişlik artık ekrandan hesaplanır
+(`(ekran − kenarlar − aralıklar) / 4`, 80–168 dp arasında kısıtlı); yükseklik
+de genişliğe bağlandı (sabit 196 değil). **Bölüm yalnız saha ana ekranındaydı**
+— yönetici ve sakin, görme yetkileri olan kameraları ana ekranda hiç
+göremiyordu; ikisine de eklendi (liste sunucuda role göre süzülür, istemci ek
+süzgeç uygulamaz).
+**REGRESYON YAKALANDI:** dar kartta `KameraKarti`'nin "• Canlı" satırı
+**taşıyordu** (`home_i18n_test` RTL/Arapça sürüşleri yakaladı) — satır
+`Flexible` + ellipsis ile dar genişliğe dayanıklı hale getirildi.
+
+TESTLER: `test_cameras.py` **31/31** (+7: sınır 2048 dahil kabul / 2049 ret,
+uzunluk hatası şema hatasından ayrı, **7 dilde ayrı metin**, restream de
+sınırlı, PATCH yolunda da ölçülür + yarım güncelleme yok, `CHECK` kısıtı
+uygulamayı atlayanı da durdurur); `p25_kamera_sertlestirme_test.dart`
+**14/14** (sınır, neden sınıflandırması, 7 dilde dört AYRI cümle, dörtlü
+genişlik + alt/üst sınır).
+i18n: 5 yeni ARB anahtarı × 7 dil.
+KAPILAR: `flutter analyze` temiz; `flutter test` **1463 geçti / 0 düştü**;
+`flutter build apk --debug` ✓; backend `pytest` **848 geçti /
+0 düştü**; göç tersinirliği (0015 dahil) **3/3 OK, bulgu 0** (16 sınır ikişer kez sallandı); sözleşme güncellendi
+(`stream_url` maxLength + katalog hata kimliği).
 
 ### P26 — Unit types & groups with per-type dues
 Status: BEKLIYOR · Depends-on: —
@@ -1370,6 +1453,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P25 · (bu commit) · Kamera sertlestirme: 2048 karakter siniri (0015, uc katman) + "kamu yayinlari oynamiyor"un KOK NEDENI (cleartext yalniz debug manifestindeydi; P17 restream'i de vuruyordu) + hata artik NEDENE gore konusuyor + ana ekran seridi dortlu ve yonetici/sakin ekranlarina da eklendi.
 - 2026-07-31 · P24 · a26bb7c · Sikayet renk skalasi DORT KADEMEYE cikti (tek sikayet artik gorunur; esikler tek tabloda, P37 icin hazir) + KISI BASINA okuma durumu (0014) ve "Yeni / Okunmamis" triyaj kuyrugu (rozet = meta.total, ayri uc yok).
 - 2026-07-31 · P23 · b5416a1 · Sakin yaşam döngüsü: bağ uçları yöneticiye açıldı (sonradan daire atama artık ULAŞILABİLİR), `ResidentUpdate` e-posta + rol_tipi kazandı ("boş bırak" ile "SİL" ayrı), rol_tipi AKTİF bağların hepsine uygulanır (bağsız → 422); yeni şema GEREKMEDİ.
 - 2026-07-31 · P22 (b-g) · 6755a05 · Bildirime dokunma bir yere gidiyor, bildir kisayolu ana ekrana doner (tam yukleme yok), talep/sikayet AYRI akislar, kural gorseli listede, goruntu_kirliligi kategorisi (0013). (a) geri alindi — tani planda.

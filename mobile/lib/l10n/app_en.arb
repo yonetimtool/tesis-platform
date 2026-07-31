@@ -1287,5 +1287,17 @@
         "type": "int"
       }
     }
-  }
+  },
+  "kameraHataAdresBozuk": "The stream address is invalid. It may contain a stray space or line break.",
+  "kameraHataSemaDesteklenmiyor": "This address type cannot be played directly. Define a restream address for the camera.",
+  "kameraHataSifrelenmemis": "The unencrypted (http) stream was blocked by the device. A work profile or VPN may be disallowing it.",
+  "kameraUrlCokUzun": "The stream address is too long (maximum {sinir} characters).",
+  "@kameraUrlCokUzun": {
+    "placeholders": {
+      "sinir": {
+        "type": "int"
+      }
+    }
+  },
+  "kameraUrlSifrelenmemisUyari": "This address is unencrypted (http). Use https if possible."
 }

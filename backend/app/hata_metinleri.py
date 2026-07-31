@@ -1303,6 +1303,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "La clé de l'avatar est en dehors de l'espace de cet établissement.",
         "es": "La clave del avatar está fuera del espacio de esta instalación.",
     },
+    "kamera_url_cok_uzun": {
+        "tr": "Yayın adresi çok uzun ({uzunluk} karakter); en fazla {sinir} olabilir.",
+        "en": "The stream URL is too long ({uzunluk} characters); the maximum is {sinir}.",
+        "ar": "عنوان البث طويل جدًا ({uzunluk} حرفًا)؛ الحد الأقصى {sinir}.",
+        "ru": "Адрес потока слишком длинный ({uzunluk} символов); максимум — {sinir}.",
+        "de": "Die Stream-Adresse ist zu lang ({uzunluk} Zeichen); maximal {sinir}.",
+        "fr": "L'adresse du flux est trop longue ({uzunluk} caractères) ; maximum {sinir}.",
+        "es": "La dirección de emisión es demasiado larga ({uzunluk} caracteres); el máximo es {sinir}.",
+    },
     "kamera_url_semasi": {
         "tr": "{tur} türü için yayın adresi {semalar} ile başlamalı.",
         "en": "For type {tur}, the stream URL must start with {semalar}.",

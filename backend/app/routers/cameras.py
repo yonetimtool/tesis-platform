@@ -43,6 +43,8 @@ from ..schemas import (
     CameraListResponse,
     CameraOut,
     CameraUpdate,
+    URL_UST_SINIR,
+    UrlCokUzun,
     UrlTurUyusmazligi,
     dogrula_restream,
     dogrula_url_tur,
@@ -70,6 +72,8 @@ def _url_tur_dogrula(stream_url: str, tur: str) -> None:
     """Sema/tur tutarliligi — ValueError'i 422 API hatasina cevirir."""
     try:
         dogrula_url_tur(stream_url, tur)
+    except UrlCokUzun as exc:
+        raise _cok_uzun(exc) from exc
     except UrlTurUyusmazligi as exc:
         raise APIError(
             422,
@@ -78,6 +82,18 @@ def _url_tur_dogrula(stream_url: str, tur: str) -> None:
             tur=exc.tur,
             semalar=" / ".join(exc.semalar),
         ) from exc
+
+
+def _cok_uzun(exc: UrlCokUzun) -> APIError:
+    """Uzunluk asimi -> katalog metniyle 422 (P25).
+
+    Pydantic'in `max_length`i yerine burada olculur: onun uretecegi 422 ham
+    Ingilizce bir cumle olurdu ve kullanici NE KADAR uzun oldugunu gormezdi.
+    """
+    return APIError(
+        422, "invalid_stream_url", "kamera_url_cok_uzun",
+        uzunluk=exc.uzunluk, sinir=URL_UST_SINIR,
+    )
 
 
 def _restream_dogrula(restream_url: str | None) -> None:
@@ -89,6 +105,8 @@ def _restream_dogrula(restream_url: str | None) -> None:
     """
     try:
         dogrula_restream(restream_url)
+    except UrlCokUzun as exc:
+        raise _cok_uzun(exc) from exc
     except UrlTurUyusmazligi as exc:
         raise APIError(
             422, "invalid_stream_url", "kamera_restream_semasi",
@@ -139,6 +157,9 @@ async def create_camera(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_WRITER),
 ) -> CameraOut:
+    # URL kurallari TEK YERDE, burada (P25): semadaki bir `model_validator`
+    # pydantic'in ham Ingilizce `validation_error`ini uretirdi.
+    _url_tur_dogrula(body.stream_url, body.tur)
     _restream_dogrula(body.restream_url)
     obj = Camera(tenant_id=user.tenant_id, **body.model_dump())
     db.add(obj)

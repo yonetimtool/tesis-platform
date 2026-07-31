@@ -4424,4 +4424,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String sikayetOkunmamisRozet(int sayi) {
     return '$sayi unread complaints';
   }
+
+  @override
+  String get kameraHataAdresBozuk =>
+      'The stream address is invalid. It may contain a stray space or line break.';
+
+  @override
+  String get kameraHataSemaDesteklenmiyor =>
+      'This address type cannot be played directly. Define a restream address for the camera.';
+
+  @override
+  String get kameraHataSifrelenmemis =>
+      'The unencrypted (http) stream was blocked by the device. A work profile or VPN may be disallowing it.';
+
+  @override
+  String kameraUrlCokUzun(int sinir) {
+    return 'The stream address is too long (maximum $sinir characters).';
+  }
+
+  @override
+  String get kameraUrlSifrelenmemisUyari =>
+      'This address is unencrypted (http). Use https if possible.';
 }

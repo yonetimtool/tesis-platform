@@ -1807,5 +1807,17 @@
         "type": "int"
       }
     }
-  }
+  },
+  "kameraHataAdresBozuk": "Yayın adresi geçersiz. Adreste boşluk ya da satır sonu kalmış olabilir.",
+  "kameraHataSemaDesteklenmiyor": "Bu adres türü doğrudan oynatılamaz. Kamera için bir yeniden yayın (restream) adresi tanımlayın.",
+  "kameraHataSifrelenmemis": "Şifrelenmemiş (http) yayın cihaz tarafından engellendi. Kurumsal profil ya da VPN buna izin vermiyor olabilir.",
+  "kameraUrlCokUzun": "Yayın adresi çok uzun (en fazla {sinir} karakter).",
+  "@kameraUrlCokUzun": {
+    "placeholders": {
+      "sinir": {
+        "type": "int"
+      }
+    }
+  },
+  "kameraUrlSifrelenmemisUyari": "Bu adres şifrelenmemiş (http). Mümkünse https kullanın."
 }

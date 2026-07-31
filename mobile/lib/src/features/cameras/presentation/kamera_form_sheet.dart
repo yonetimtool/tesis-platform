@@ -104,6 +104,10 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
     }
   }
 
+  /// Adres sifrelenmemis mi (uyari gosterilsin mi).
+  static bool _sifrelenmemis(String url) =>
+      url.trim().toLowerCase().startsWith('http://');
+
   /// Domain'den gelen hata TURUNU aktif dildeki metne cevirir (metin domain
   /// katmaninda tutulmaz — bkz. [CameraDraft.urlHatasi]).
   String? _urlHataMetni(AppLocalizations l10n, String url) {
@@ -112,6 +116,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
       CameraUrlHatasi.bos => l10n.kameraUrlZorunlu,
       CameraUrlHatasi.rtspSemasiGerekli => l10n.kameraUrlHataRtsp,
       CameraUrlHatasi.httpSemasiGerekli => l10n.kameraUrlHataHttp(_tur.label),
+      CameraUrlHatasi.cokUzun => l10n.kameraUrlCokUzun(kCameraUrlUstSinir),
     };
   }
 
@@ -212,7 +217,28 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                   border: const OutlineInputBorder(),
                 ),
                 validator: (v) => _urlHataMetni(l10n, v ?? ''),
+                // Sifrelenmemis adres UYARISI (P25b): hata DEGIL — http
+                // yayinlar artik oynatiliyor, ama kullanici sifresiz
+                // gonderdigini bilmeli.
+                onChanged: (_) => setState(() {}),
               ),
+              if (_sifrelenmemis(_urlCtrl.text)) ...[
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.lock_open_outlined, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        l10n.kameraUrlSifrelenmemisUyari,
+                        key: const Key('kamera-http-uyari'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               // RESTREAM — YALNIZ rtsp turunde anlamlidir; hls/mp4 zaten
               // oynatilabilir oldugu icin alan GOSTERILMEZ (gereksiz alan
               // formu uzatir ve "bunu da doldurayim mi" tereddudu yaratir).
@@ -230,9 +256,18 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                     hintText: 'https://... .m3u8',
                     border: const OutlineInputBorder(),
                   ),
-                  validator: (v) => CameraDraft.restreamHatasi(v) == null
-                      ? null
-                      : l10n.kameraRestreamHata,
+                  validator: (v) => switch (CameraDraft.restreamHatasi(v)) {
+                    null => null,
+                    // Uzunluk asimi ayri metin ister: "http(s) ile baslamali"
+                    // demek, zaten https ile baslayan 3 KB'lik bir adreste
+                    // yaniltici olurdu.
+                    CameraUrlHatasi.cokUzun =>
+                      l10n.kameraUrlCokUzun(kCameraUrlUstSinir),
+                    CameraUrlHatasi.bos ||
+                    CameraUrlHatasi.httpSemasiGerekli ||
+                    CameraUrlHatasi.rtspSemasiGerekli =>
+                      l10n.kameraRestreamHata,
+                  },
                 ),
               ],
               const SizedBox(height: 8),

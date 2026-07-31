@@ -4494,4 +4494,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String sikayetOkunmamisRozet(int sayi) {
     return '$sayi непрочитанных жалоб';
   }
+
+  @override
+  String get kameraHataAdresBozuk =>
+      'Адрес потока недействителен. Возможно, в нём остался пробел или перенос строки.';
+
+  @override
+  String get kameraHataSemaDesteklenmiyor =>
+      'Этот тип адреса нельзя воспроизвести напрямую. Задайте адрес рестрима для камеры.';
+
+  @override
+  String get kameraHataSifrelenmemis =>
+      'Незашифрованный (http) поток заблокирован устройством. Возможно, его запрещает рабочий профиль или VPN.';
+
+  @override
+  String kameraUrlCokUzun(int sinir) {
+    return 'Адрес потока слишком длинный (максимум $sinir символов).';
+  }
+
+  @override
+  String get kameraUrlSifrelenmemisUyari =>
+      'Этот адрес не зашифрован (http). По возможности используйте https.';
 }

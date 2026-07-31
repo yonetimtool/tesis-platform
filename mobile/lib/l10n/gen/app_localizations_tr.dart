@@ -4238,4 +4238,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String sikayetOkunmamisRozet(int sayi) {
     return '$sayi okunmamış şikayet';
   }
+
+  @override
+  String get kameraHataAdresBozuk =>
+      'Yayın adresi geçersiz. Adreste boşluk ya da satır sonu kalmış olabilir.';
+
+  @override
+  String get kameraHataSemaDesteklenmiyor =>
+      'Bu adres türü doğrudan oynatılamaz. Kamera için bir yeniden yayın (restream) adresi tanımlayın.';
+
+  @override
+  String get kameraHataSifrelenmemis =>
+      'Şifrelenmemiş (http) yayın cihaz tarafından engellendi. Kurumsal profil ya da VPN buna izin vermiyor olabilir.';
+
+  @override
+  String kameraUrlCokUzun(int sinir) {
+    return 'Yayın adresi çok uzun (en fazla $sinir karakter).';
+  }
+
+  @override
+  String get kameraUrlSifrelenmemisUyari =>
+      'Bu adres şifrelenmemiş (http). Mümkünse https kullanın.';
 }

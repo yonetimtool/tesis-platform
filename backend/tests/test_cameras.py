@@ -374,3 +374,115 @@ def test_hls_kamerada_restream_davranisi_bozmaz(client, world):
     })
     assert r.json()["oynatilabilir"] is True
     assert r.json()["restream_url"] is None
+
+
+# ------------------------- P25a: adres UZUNLUK siniri ----------------------- #
+# Sinirsiz `text` sutunu, yapistirilan bir DVR yapilandirmasinin tamamini
+# kabul edip listeyi ve mobil kart cizimini sisiriyordu. Sinir UC katmanda:
+# mobil form, sema dogrulayicisi (422 katalog metni) ve 0015 CHECK kisiti.
+def _uzun(n: int) -> str:
+    """Tam `n` karakterlik GECERLI bir https adresi."""
+    onek = "https://ornek.test/"
+    return onek + "a" * (n - len(onek))
+
+
+def test_p25_stream_url_SINIR_KABUL_asim_RET(client, world):
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    tam = _uzun(2048)
+    assert len(tam) == 2048
+    r = client.post("/cameras", headers=admin, json={
+        "ad": f"sinir-{uuid.uuid4().hex[:6]}", "stream_url": tam, "tur": "hls",
+    })
+    assert r.status_code == 201, "TAM 2048 kabul edilmeli (sinir DAHIL)"
+
+    r2 = client.post("/cameras", headers=admin, json={
+        "ad": f"asim-{uuid.uuid4().hex[:6]}", "stream_url": _uzun(2049),
+        "tur": "hls",
+    })
+    assert r2.status_code == 422
+    assert r2.json()["error"]["code"] == "invalid_stream_url"
+
+
+def test_p25_uzunluk_hatasi_SEMA_hatasindan_AYRI(client, world):
+    """Uzunluk SEMADAN ONCE olculur: 3 KB'lik bir yapistirmada
+    "https ile baslamali" demek yaniltici olurdu — adres zaten https."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post("/cameras", headers=admin, json={
+        "ad": f"uzun-hls-{uuid.uuid4().hex[:6]}", "stream_url": _uzun(3000),
+        "tur": "hls",
+    })
+    assert r.status_code == 422
+    mesaj = r.json()["error"]["message"]
+    # Katalog metni UZUNLUGU ve SINIRI soyler; sema cumlesi degildir.
+    assert "2048" in mesaj and "3000" in mesaj, mesaj
+    assert "https" not in mesaj.lower(), f"sema cumlesi sizmis: {mesaj}"
+
+
+def test_p25_uzunluk_hatasi_YEDI_DILDE(client, world):
+    """Hata METNI kimlik uzerinden cevrilir (ham cumle degil)."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    gorulen = set()
+    for dil in ("tr", "en", "ar", "ru", "de", "fr", "es"):
+        r = client.post(
+            "/cameras",
+            headers={**admin, "Accept-Language": dil},
+            json={"ad": f"dil-{dil}-{uuid.uuid4().hex[:6]}",
+                  "stream_url": _uzun(2100), "tur": "hls"},
+        )
+        assert r.status_code == 422, dil
+        m = r.json()["error"]["message"]
+        assert m.strip(), dil
+        assert "2048" in m and "2100" in m, (dil, m)
+        gorulen.add(m)
+    assert len(gorulen) == 7, "diller ayni metni donduruyor (ceviri eksik)"
+
+
+def test_p25_restream_de_SINIRLI(client, world):
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post("/cameras", headers=admin, json={
+        "ad": f"gecit-uzun-{uuid.uuid4().hex[:6]}",
+        "stream_url": "rtsp://10.0.0.9:554/s", "tur": "rtsp",
+        "restream_url": _uzun(2049),
+    })
+    assert r.status_code == 422
+    assert "2049" in r.json()["error"]["message"]
+
+
+def test_p25_PATCH_te_de_olculur(client, world):
+    """Guncelleme yolu ayri bir kod yolu — sinir orada da gecerli."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    kid = client.post("/cameras", headers=admin, json={
+        "ad": f"patch-{uuid.uuid4().hex[:6]}",
+        "stream_url": "https://ornek/stream.m3u8", "tur": "hls",
+    }).json()["id"]
+    r = client.patch(f"/cameras/{kid}", headers=admin,
+                     json={"stream_url": _uzun(2049)})
+    assert r.status_code == 422
+    # Kayit DEGISMEDI (yarim guncelleme yok). Tekil GET ucu YOK — listeden
+    # okunur.
+    liste = client.get("/cameras", headers=admin,
+                       params={"limit": 200}).json()["items"]
+    kalan = next(k for k in liste if k["id"] == kid)
+    assert kalan["stream_url"] == "https://ornek/stream.m3u8"
+
+
+def test_p25_veritabani_kisiti_UYGULAMAYI_ATLAYANI_da_durdurur(
+    owner_conn, world
+):
+    """Uygulama katmani tek savunma OLMAMALI: bu sutunlara ileride bir toplu
+    ice aktarma ya da bakim betigi de yazabilir (0015 CHECK)."""
+    import psycopg
+
+    with owner_conn.cursor() as cur:
+        try:
+            cur.execute(
+                "INSERT INTO camera (tenant_id, ad, stream_url, tur) "
+                "VALUES (%s, %s, %s, 'hls'::camera_tur)",
+                (world["a"], f"ham-{uuid.uuid4().hex[:6]}", "x" * 2049),
+            )
+        except psycopg.errors.CheckViolation as exc:
+            owner_conn.rollback()
+            assert "uzunluk" in str(exc)
+        else:
+            owner_conn.rollback()
+            raise AssertionError("2049 karakterlik adres CHECK'e takilmadi")

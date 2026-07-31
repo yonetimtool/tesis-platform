@@ -7504,6 +7504,36 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{sayi} okunmamış şikayet'**
   String sikayetOkunmamisRozet(int sayi);
+
+  /// No description provided for @kameraHataAdresBozuk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yayın adresi geçersiz. Adreste boşluk ya da satır sonu kalmış olabilir.'**
+  String get kameraHataAdresBozuk;
+
+  /// No description provided for @kameraHataSemaDesteklenmiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu adres türü doğrudan oynatılamaz. Kamera için bir yeniden yayın (restream) adresi tanımlayın.'**
+  String get kameraHataSemaDesteklenmiyor;
+
+  /// No description provided for @kameraHataSifrelenmemis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şifrelenmemiş (http) yayın cihaz tarafından engellendi. Kurumsal profil ya da VPN buna izin vermiyor olabilir.'**
+  String get kameraHataSifrelenmemis;
+
+  /// No description provided for @kameraUrlCokUzun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yayın adresi çok uzun (en fazla {sinir} karakter).'**
+  String kameraUrlCokUzun(int sinir);
+
+  /// No description provided for @kameraUrlSifrelenmemisUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu adres şifrelenmemiş (http). Mümkünse https kullanın.'**
+  String get kameraUrlSifrelenmemisUyari;
 }
 
 class _AppLocalizationsDelegate

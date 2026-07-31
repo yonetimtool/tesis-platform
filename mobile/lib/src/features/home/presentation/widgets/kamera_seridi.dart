@@ -43,31 +43,62 @@ class KameraSeridi extends StatelessWidget {
             onSeeAll: onSeeAll,
           ),
         ),
-        SizedBox(
-          // 168 genislik − 16 kart boslugu = 152 gorsel; 16:10 → 95px. Ustune
-          // ad (17) + konum (15) + durum (15) satirlari ve boslukiar: 196
-          // hepsini KONUMLU kartta da tasmadan alir (testle kilitli).
-          // YAZI OLCEGIYLE BUYUR (tur 34): sabit 196 dp, 2.0x olcekte ve
-          // dar ekranda serit kartlarini tasiriyordu. Ust sinir 320: serit
-          // ekrani yutmasin.
-          height: seritYuksekligi(context, 196),
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: kHomePagePadding),
-            itemCount: kameralar.length,
-            separatorBuilder: (_, _) =>
-                const SizedBox(width: HomeTokens.gridGap),
-            itemBuilder: (context, i) => KameraKarti(
-              kamera: kameralar[i],
-              // Kart GENISLIGI de yazi olcegiyle buyur (tur 34).
-              width: MediaQuery.textScalerOf(
-                context,
-              ).scale(168).clamp(168.0, 336.0),
-              onTap: () => onAc(kameralar[i]),
-            ),
-          ),
+        Builder(
+          builder: (context) {
+            final kartGenislik = kameraKartGenisligi(context);
+            return SizedBox(
+              height: kameraSeritYuksekligi(context, kartGenislik),
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: kHomePagePadding),
+                itemCount: kameralar.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(width: HomeTokens.gridGap),
+                itemBuilder: (context, i) => KameraKarti(
+                  kamera: kameralar[i],
+                  width: kartGenislik,
+                  onTap: () => onAc(kameralar[i]),
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
   }
+}
+
+/// Ana ekranda AYNI ANDA gorunmesi hedeflenen kamera sayisi (P25c).
+///
+/// Eskiden kart sabit 168 dp idi ve tipik bir telefonda ekrana yalnizca IKI
+/// kamera sigiyordu: sekiz kameralik bir sitede yonetici ana ekranda ne
+/// oldugunu goremiyor, her seferinde yatay kaydiriyordu. Genislik artik
+/// EKRANDAN hesaplanir.
+const int kKameraGorunenKart = 4;
+
+/// Serit karti genisligi — ekrana [kKameraGorunenKart] tanesi sigacak sekilde.
+///
+/// ALT SINIR 80 dp: tipik telefonlarda (>= 390 dp) dordu TAM sigar; 320 dp
+/// gibi cok dar bir ekranda dortte bir 63 dp'ye duser ve ad satiri okunmaz
+/// olurdu — orada dordu zorlamak yerine "sigdigi kadar" gosterilir (yatay
+/// kaydirma zaten var). UST SINIR 168: genis tablette kartlar devlesmesin.
+/// YAZI OLCEGI kart genisligini BUYUTMEZ — yukseklik zaten olcekle buyur ve
+/// genisligi de buyutmek 2.0x olcekte ekrana tek kart birakirdi.
+double kameraKartGenisligi(BuildContext context) {
+  final ekran = MediaQuery.sizeOf(context).width;
+  final kullanilabilir = ekran -
+      2 * kHomePagePadding -
+      (kKameraGorunenKart - 1) * HomeTokens.gridGap;
+  return (kullanilabilir / kKameraGorunenKart).clamp(80.0, 168.0);
+}
+
+/// Serit yuksekligi — kart genisligine BAGLI (sabit 196 degil).
+///
+/// Kart: 8 dp ic bosluk x2 + 16:10 gorsel + ad/konum/durum satirlari.
+/// Genislik kuculuyorsa gorsel de kuculur; sabit yukseklik bosluk birakirdi.
+double kameraSeritYuksekligi(BuildContext context, double kartGenislik) {
+  final gorsel = (kartGenislik - 16) * 10 / 16;
+  // 3 metin satiri + araliklar + kart ic boslugu (olculdu: 101 dp).
+  return seritYuksekligi(context, gorsel + 101);
 }

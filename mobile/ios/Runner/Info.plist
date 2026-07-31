@@ -20,6 +20,19 @@
 	<array>
 		<string>tel</string>
 	</array>
+	<!-- KAMERA YAYINLARI ICIN ATS ISTISNASI (P25b).
+	     iOS'ta App Transport Security duz http yuklemelerini engeller; saha
+	     kameralarinin restream gecidi (Frigate/go2rtc) neredeyse her zaman duz
+	     http'tir, dolayisiyla oynatici sessizce dusuyordu.
+	     `NSAllowsArbitraryLoadsForMedia` KAPSAMI DAR bir istisnadir: yalnizca
+	     AVFoundation medya yuklemelerini kapsar — URLSession trafigi (API
+	     cagrilari) ATS korumasinda KALIR. Android'de medyaya ozel bir
+	     karsiligi yoktur (bkz. res/xml/network_security_config.xml). -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoadsForMedia</key>
+		<true/>
+	</dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

@@ -377,6 +377,14 @@ _TUR_SEMALARI: dict[str, tuple[str, ...]] = {
 }
 
 
+#: Yayin adresi UST SINIRI (P25). 2048, HTTP yiginlarinin fiili URL
+#: siniridir (IE mirasi; Nginx/Apache varsayilan istek satiri da bu
+#: mertebede). Daha uzunu zaten AGIN oteki ucunda kirilirdi — ama sinirsiz
+#: `text` sutunu, yapistirilan bir DVR yapilandirmasinin tamamini (kilobaytlar)
+#: kabul edip listeyi ve mobil kart cizimini sisiriyordu.
+URL_UST_SINIR = 2048
+
+
 def dogrula_restream(restream_url: str | None) -> None:
     """Restream YALNIZ http(s) olabilir.
 
@@ -386,6 +394,8 @@ def dogrula_restream(restream_url: str | None) -> None:
     """
     if restream_url is None:
         return
+    if len(restream_url) > URL_UST_SINIR:
+        raise UrlCokUzun("restream_url", len(restream_url))
     if not restream_url.startswith(("http://", "https://")):
         raise UrlTurUyusmazligi("restream", ("http://", "https://"))
 
@@ -401,6 +411,19 @@ def oynatilabilir_mi(tur: str, restream_url: str | None = None) -> bool:
     if restream_url:
         return True
     return tur in ("hls", "mp4")
+
+
+class UrlCokUzun(ValueError):
+    """Yayin adresi [URL_UST_SINIR] karakteri asiyor.
+
+    METIN DEGIL VERI tasir ([UrlTurUyusmazligi] ile ayni gerekce): cumle
+    router'da istegin dilinde uretilir.
+    """
+
+    def __init__(self, alan: str, uzunluk: int) -> None:
+        self.alan = alan
+        self.uzunluk = uzunluk
+        super().__init__(f"{alan} too long: {uzunluk} > {URL_UST_SINIR}")
 
 
 class UrlTurUyusmazligi(ValueError):
@@ -425,6 +448,8 @@ def dogrula_url_tur(stream_url: str, tur: str) -> None:
     yuzden sema kontrolu SSRF icin degil, "kayit ile gerceklik tutarli
     kalsin" diyedir (yanlis semali kayit istemcide sessizce bozulur).
     """
+    if len(stream_url) > URL_UST_SINIR:
+        raise UrlCokUzun("stream_url", len(stream_url))
     izinli = _TUR_SEMALARI[tur]
     if not stream_url.startswith(izinli):
         raise UrlTurUyusmazligi(tur, tuple(izinli))
@@ -443,13 +468,17 @@ class CameraCreate(BaseModel):
     # RESTREAM (0012 / P17): RTSP kamerayi oynatilabilir yapan HLS gecidi
     # (Frigate/go2rtc). Dolu ise istemci BUNU oynatir. Yalniz http(s) —
     # istemci HLS oynatir, rtsp gecit adresi anlamsizdir.
-    restream_url: str | None = Field(None, max_length=2048)
+    # NOT: `max_length` BILEREK KOYULMADI — pydantic'in kendi 422'si ham
+    # Ingilizce bir cumle dondururdu; sinir `dogrula_url_tur`/`dogrula_restream`
+    # icinde olculur ve router katalogdan istegin dilinde metin uretir.
+    restream_url: str | None = None
 
-    @model_validator(mode="after")
-    def _v_url_tur(self) -> "CameraCreate":
-        dogrula_url_tur(self.stream_url, self.tur)
-        dogrula_restream(self.restream_url)
-        return self
+    # NOT: URL/tur ve uzunluk dogrulamasi BURADA YAPILMAZ — ROUTER'da yapilir.
+    # (P25 bulgusu) Buradaki bir `model_validator`, ValueError'i pydantic'in
+    # KENDI `validation_error` zarfina cevirir ve kullaniciya ham INGILIZCE
+    # bir cumle doner; yani "acik Turkce hata" hedefi olusturma yolunda HIC
+    # calismiyordu (yalniz PATCH yolu katalog metnini uretiyordu, cunku orada
+    # dogrulama zaten router'daydi). Kural: URL kurallari tek yerde, router'da.
 
 
 class CameraUpdate(BaseModel):
@@ -465,13 +494,14 @@ class CameraUpdate(BaseModel):
     # RESTREAM (0012 / P17): RTSP kamerayi oynatilabilir yapan HLS gecidi
     # (Frigate/go2rtc). Dolu ise istemci BUNU oynatir. Yalniz http(s) —
     # istemci HLS oynatir, rtsp gecit adresi anlamsizdir.
-    restream_url: str | None = Field(None, max_length=2048)
+    # Sinir dogrulayicida olculur (bkz. CameraCreate notu).
+    restream_url: str | None = None
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "CameraUpdate":
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
-        dogrula_restream(self.restream_url)
+        # URL kurallari router'da (bkz. CameraCreate notu).
         return self
 
 

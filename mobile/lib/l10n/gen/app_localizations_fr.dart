@@ -4387,4 +4387,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String sikayetOkunmamisRozet(int sayi) {
     return '$sayi plaintes non lues';
   }
+
+  @override
+  String get kameraHataAdresBozuk =>
+      'L\'adresse du flux est invalide. Elle contient peut-être un espace ou un saut de ligne.';
+
+  @override
+  String get kameraHataSemaDesteklenmiyor =>
+      'Ce type d\'adresse ne peut pas être lu directement. Définissez une adresse de rediffusion pour la caméra.';
+
+  @override
+  String get kameraHataSifrelenmemis =>
+      'Le flux non chiffré (http) a été bloqué par l\'appareil. Un profil professionnel ou un VPN peut l\'interdire.';
+
+  @override
+  String kameraUrlCokUzun(int sinir) {
+    return 'L\'adresse du flux est trop longue (maximum $sinir caractères).';
+  }
+
+  @override
+  String get kameraUrlSifrelenmemisUyari =>
+      'Cette adresse n\'est pas chiffrée (http). Utilisez https si possible.';
 }

@@ -1287,5 +1287,17 @@
         "type": "int"
       }
     }
-  }
+  },
+  "kameraHataAdresBozuk": "عنوان البث غير صالح. قد يحتوي على مسافة أو سطر جديد زائد.",
+  "kameraHataSemaDesteklenmiyor": "لا يمكن تشغيل هذا النوع من العناوين مباشرة. حدّد عنوان إعادة بث للكاميرا.",
+  "kameraHataSifrelenmemis": "حظر الجهاز البث غير المشفّر (http). قد يمنعه ملف تعريف العمل أو شبكة VPN.",
+  "kameraUrlCokUzun": "عنوان البث طويل جدًا (بحد أقصى {sinir} حرفًا).",
+  "@kameraUrlCokUzun": {
+    "placeholders": {
+      "sinir": {
+        "type": "int"
+      }
+    }
+  },
+  "kameraUrlSifrelenmemisUyari": "هذا العنوان غير مشفّر (http). استخدم https إن أمكن."
 }

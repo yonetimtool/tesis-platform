@@ -23,7 +23,16 @@ enum CameraUrlHatasi {
 
   /// rtsp icin rtsp:// gerekli.
   rtspSemasiGerekli,
+
+  /// Adres [kCameraUrlUstSinir] karakteri asiyor (P25a). Sunucu da reddeder;
+  /// istemci ONCE yakalar ki kullanici gonderip beklemesin.
+  cokUzun,
 }
+
+/// Yayin adresi UST SINIRI — sunucudaki `URL_UST_SINIR` ile AYNI sayi.
+/// Iki yerde durmasi bilincli: istemci sunucuya sormadan uyarabilmeli, ama
+/// KARAR sunucunundur (istemci sinirsizca gonderse de 422 alir).
+const int kCameraUrlUstSinir = 2048;
 
 /// `camera_tur` enum'unun istemci aynasi.
 enum CameraTur {
@@ -186,6 +195,7 @@ class CameraDraft {
   static CameraUrlHatasi? restreamHatasi(String? url) {
     final u = (url ?? '').trim();
     if (u.isEmpty) return null;
+    if (u.length > kCameraUrlUstSinir) return CameraUrlHatasi.cokUzun;
     if (u.startsWith('http://') || u.startsWith('https://')) return null;
     return CameraUrlHatasi.httpSemasiGerekli;
   }
@@ -193,6 +203,9 @@ class CameraDraft {
   static CameraUrlHatasi? urlHatasi(String url, CameraTur tur) {
     final u = url.trim();
     if (u.isEmpty) return CameraUrlHatasi.bos;
+    // UZUNLUK SEMADAN ONCE: 3 KB'lik bir yapistirmada "https ile baslamali"
+    // demek yaniltici olurdu — adres zaten https ile BASLIYOR olabilir.
+    if (u.length > kCameraUrlUstSinir) return CameraUrlHatasi.cokUzun;
     if (tur.semalar.any(u.startsWith)) return null;
     return tur == CameraTur.rtsp
         ? CameraUrlHatasi.rtspSemasiGerekli

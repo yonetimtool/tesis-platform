@@ -8,6 +8,9 @@ import '../../announcements/domain/announcement_models.dart';
 import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/rol_adi.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../cameras/data/cameras_api.dart';
+import '../../cameras/domain/camera_models.dart';
+import '../../cameras/presentation/kameralar_screen.dart' show kameraAc;
 import '../../complaints/data/complaint_api.dart';
 import '../../dues/data/dues_api.dart';
 import '../../etkinlik/data/etkinlik_api.dart';
@@ -31,6 +34,7 @@ import 'widgets/bildir_menu_sheet.dart';
 import 'widgets/duyuru_karti.dart';
 import 'widgets/icerik_bolumu.dart';
 import 'widgets/hizli_erisim.dart';
+import 'widgets/kamera_seridi.dart';
 import 'widgets/home_govde.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_shell.dart';
@@ -77,6 +81,8 @@ class ResidentHomeScreen extends ConsumerWidget {
     // Son Hareketler TEK uctan (/activity); sunucu sakini KENDI olaylariyla
     // sinirlar — istemci artik kargo/ziyaretci/odeme/talep birlestirmez.
     final hareketler = ref.watch(sonHareketlerProvider);
+    // Sunucu suzgeci: sakine YALNIZ `aktif && sakin_gorebilir` doner.
+    final kameralar = ref.watch(camerasProvider).value ?? const <Camera>[];
     // Ana ekran icerik bolumleri (3 kayit): kurallar sira ASC, etkinlikler
     // ?aktif=true + en yakin once — ikisi de sunucudan sirali gelir.
     final kurallar = ref.watch(anaEkranKurallariProvider).value ?? const [];
@@ -241,6 +247,15 @@ class ResidentHomeScreen extends ConsumerWidget {
               ),
             ),
           ),
+          // CANLI KAMERA (P25c) — sakin YALNIZ `aktif && sakin_gorebilir`
+          // kameralari alir (KVKK: gorunurlugu sunucu belirler, istemci ek
+          // suzgec uygulamaz). Liste bossa bolum hic cizilmez.
+          if (kameralar.isNotEmpty)
+            KameraSeridi(
+              kameralar: kameralar,
+              onSeeAll: () => context.push(AppRoutes.kameralar),
+              onAc: (kamera) => kameraAc(context, kamera),
+            ),
         ],
       ),
       ),

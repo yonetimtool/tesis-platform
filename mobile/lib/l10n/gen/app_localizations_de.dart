@@ -4399,4 +4399,25 @@ class AppLocalizationsDe extends AppLocalizations {
   String sikayetOkunmamisRozet(int sayi) {
     return '$sayi ungelesene Beschwerden';
   }
+
+  @override
+  String get kameraHataAdresBozuk =>
+      'Die Stream-Adresse ist ungültig. Möglicherweise enthält sie ein Leerzeichen oder einen Zeilenumbruch.';
+
+  @override
+  String get kameraHataSemaDesteklenmiyor =>
+      'Dieser Adresstyp kann nicht direkt abgespielt werden. Legen Sie eine Restream-Adresse für die Kamera fest.';
+
+  @override
+  String get kameraHataSifrelenmemis =>
+      'Der unverschlüsselte (http) Stream wurde vom Gerät blockiert. Ein Arbeitsprofil oder VPN kann dies verbieten.';
+
+  @override
+  String kameraUrlCokUzun(int sinir) {
+    return 'Die Stream-Adresse ist zu lang (maximal $sinir Zeichen).';
+  }
+
+  @override
+  String get kameraUrlSifrelenmemisUyari =>
+      'Diese Adresse ist unverschlüsselt (http). Verwenden Sie nach Möglichkeit https.';
 }

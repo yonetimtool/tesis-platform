@@ -4508,4 +4508,25 @@ class AppLocalizationsAr extends AppLocalizations {
   String sikayetOkunmamisRozet(int sayi) {
     return '$sayi شكاوى غير مقروءة';
   }
+
+  @override
+  String get kameraHataAdresBozuk =>
+      'عنوان البث غير صالح. قد يحتوي على مسافة أو سطر جديد زائد.';
+
+  @override
+  String get kameraHataSemaDesteklenmiyor =>
+      'لا يمكن تشغيل هذا النوع من العناوين مباشرة. حدّد عنوان إعادة بث للكاميرا.';
+
+  @override
+  String get kameraHataSifrelenmemis =>
+      'حظر الجهاز البث غير المشفّر (http). قد يمنعه ملف تعريف العمل أو شبكة VPN.';
+
+  @override
+  String kameraUrlCokUzun(int sinir) {
+    return 'عنوان البث طويل جدًا (بحد أقصى $sinir حرفًا).';
+  }
+
+  @override
+  String get kameraUrlSifrelenmemisUyari =>
+      'هذا العنوان غير مشفّر (http). استخدم https إن أمكن.';
 }

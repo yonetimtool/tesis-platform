@@ -4,6 +4,8 @@ import 'package:video_player/video_player.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../domain/camera_models.dart';
+import '../domain/yayin_hatasi.dart';
+import 'yayin_hatasi_metni.dart';
 
 /// Tam ekran canli yayin oynatici — HLS (`.m3u8`) ve MP4 icin.
 ///
@@ -38,9 +40,9 @@ class CameraPlayerScreen extends StatefulWidget {
 class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
   VideoPlayerController? _controller;
 
-  /// Hata VAR MI (metin degil!): mesaj cizim aninda aktif dilden okunur —
-  /// boylece dil degisince ekrandaki hata metni de degisir.
-  bool _hataVar = false;
+  /// Hata NEDENI (metin degil!): cumle cizim aninda aktif dilden okunur —
+  /// boylece dil degisince ekrandaki hata metni de degisir. `null` = hata yok.
+  YayinHatasi? _hataNedeni;
   bool _hazirlaniyor = true;
 
   @override
@@ -59,7 +61,7 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
   Future<void> _baslat() async {
     setState(() {
       _hazirlaniyor = true;
-      _hataVar = false;
+      _hataNedeni = null;
     });
     // Yeniden denemede ONCEKI controller atilir (sizinti yok).
     final eski = _controller;
@@ -67,13 +69,24 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
     eski?.removeListener(_controllerDegisti);
     await eski?.dispose();
 
+    // RESTREAM ONCELIKLI (P17): gecit varsa oynatici ONU calar; kameranin
+    // kendi rtsp adresi oynatilamaz ama kayitta KORUNUR.
+    // ADRES ONCE COZULUR (P25b): eskiden `Uri.parse` `try` blogunun DISINDA
+    // cagriliyordu ve bosluk/satir sonu tasiyan bir adres, ekrana hic
+    // ulasmadan YAKALANMAMIS bir `FormatException` firlatiyordu.
+    final adres = widget.kamera.oynatilacakUrl.trim();
+    if (widget.controllerYapici == null && !adresOynatilabilirMi(adres)) {
+      setState(() {
+        _controller = null;
+        _hazirlaniyor = false;
+        _hataNedeni = YayinHatasi.adresBozuk;
+      });
+      return;
+    }
+
     final c =
         widget.controllerYapici?.call(widget.kamera) ??
-        VideoPlayerController.networkUrl(
-          // RESTREAM ONCELIKLI (P17): gecit varsa oynatici ONU calar; kameranin
-          // kendi rtsp adresi oynatilamaz ama kayitta KORUNUR.
-          Uri.parse(widget.kamera.oynatilacakUrl),
-        );
+        VideoPlayerController.networkUrl(Uri.parse(adres));
     try {
       await c.initialize();
       if (!mounted) {
@@ -87,13 +100,15 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
         _controller = c;
         _hazirlaniyor = false;
       });
-    } catch (_) {
+    } catch (hata) {
       await c.dispose();
       if (!mounted) return;
       setState(() {
         _controller = null;
         _hazirlaniyor = false;
-        _hataVar = true;
+        // Neden ADRESTEN + platform hatasindan turetilir; tek bir genel
+        // cumle kullaniciyi yanlis ise yolluyordu (bkz. YayinHatasi).
+        _hataNedeni = yayinHatasiCoz(adres, hata);
       });
     }
   }
@@ -155,7 +170,8 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
 
   Widget _govde(VideoPlayerController? c) {
     final l10n = context.l10n;
-    if (_hataVar) {
+    final neden = _hataNedeni;
+    if (neden != null) {
       return Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -175,7 +191,8 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              l10n.kameraYayinAcilamadiAlt,
+              yayinHatasiMetni(l10n, neden),
+              key: const Key('kamera-hata-neden'),
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white38, fontSize: 12),
             ),

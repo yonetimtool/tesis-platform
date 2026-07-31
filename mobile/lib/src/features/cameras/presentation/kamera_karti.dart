@@ -81,9 +81,17 @@ class KameraKarti extends StatelessWidget {
               children: [
                 const HomeDot(color: HomeTokens.online, size: 7),
                 const SizedBox(width: 5),
-                Text(
-                  context.l10n.kameraCanli,
-                  style: HomeText.rowSub.copyWith(color: HomeTokens.green),
+                // DAR KARTA DAYANIKLI (P25c): serit karti artik ekrandan
+                // hesaplanir ve dar telefonda ~83 dp'ye duser. Cipsiz `Text`
+                // dogal genisligini isterdi ve "• Canlı" satiri TASARDI —
+                // Arapca/Rusca gibi uzun cevirilerde daha da erken.
+                Flexible(
+                  child: Text(
+                    context.l10n.kameraCanli,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: HomeText.rowSub.copyWith(color: HomeTokens.green),
+                  ),
                 ),
               ],
             )
@@ -92,6 +100,8 @@ class KameraKarti extends StatelessWidget {
             // yalniz beklenti dogru kurulur (sessizce kaybolmaz).
             Text(
               context.l10n.kameraOynatilamiyor,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: HomeText.rowSub.copyWith(color: s.muted),
             ),
         ],

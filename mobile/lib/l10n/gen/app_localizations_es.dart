@@ -4377,4 +4377,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String sikayetOkunmamisRozet(int sayi) {
     return '$sayi quejas sin leer';
   }
+
+  @override
+  String get kameraHataAdresBozuk =>
+      'La dirección de emisión no es válida. Puede contener un espacio o un salto de línea.';
+
+  @override
+  String get kameraHataSemaDesteklenmiyor =>
+      'Este tipo de dirección no se puede reproducir directamente. Defina una dirección de retransmisión para la cámara.';
+
+  @override
+  String get kameraHataSifrelenmemis =>
+      'El dispositivo bloqueó la emisión sin cifrar (http). Un perfil de trabajo o una VPN puede estar impidiéndolo.';
+
+  @override
+  String kameraUrlCokUzun(int sinir) {
+    return 'La dirección de emisión es demasiado larga (máximo $sinir caracteres).';
+  }
+
+  @override
+  String get kameraUrlSifrelenmemisUyari =>
+      'Esta dirección no está cifrada (http). Use https si es posible.';
 }

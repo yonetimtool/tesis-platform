@@ -8603,11 +8603,14 @@ components:
           description: Serbest konum metni (checkpoint FK DEGIL)
         stream_url:
           type: string
+          maxLength: 2048
           example: "https://cam.example.com/hls/1/index.m3u8"
           description: >
             Istemcinin oynattigi yayin. Backend bu URL'i HIC cekmez (SSRF
             yuzeyi yok). Sema `tur` ile tutarlidir: hls/mp4 -> http(s)://,
-            rtsp -> rtsp://.
+            rtsp -> rtsp://. **(P25) EN FAZLA 2048 karakter** — asilirsa 422
+            `invalid_stream_url` (`kamera_url_cok_uzun`). Sinir 0015
+            revizyonunda CHECK kisiti olarak da vardir.
         restream_url:
           type: string
           nullable: true
@@ -8656,9 +8659,12 @@ components:
         konum: { type: string, nullable: true, minLength: 1, maxLength: 200 }
         stream_url:
           type: string
+          maxLength: 2048
           description: >
             Sema `tur` ile tutarli olmali (aksi 422 invalid_stream_url):
-            hls/mp4 -> http:// | https://, rtsp -> rtsp://
+            hls/mp4 -> http:// | https://, rtsp -> rtsp://.
+            **(P25) EN FAZLA 2048 karakter** — asilirsa 422
+            `invalid_stream_url` (`kamera_url_cok_uzun`).
         tur: { type: string, enum: [hls, mp4, rtsp], default: hls }
         aktif: { type: boolean, default: true }
         sakin_gorebilir:
@@ -8683,7 +8689,7 @@ components:
       properties:
         ad: { type: string, minLength: 1, maxLength: 100 }
         konum: { type: string, nullable: true, maxLength: 200 }
-        stream_url: { type: string }
+        stream_url: { type: string, maxLength: 2048 }
         tur: { type: string, enum: [hls, mp4, rtsp] }
         aktif: { type: boolean }
         sakin_gorebilir: { type: boolean }

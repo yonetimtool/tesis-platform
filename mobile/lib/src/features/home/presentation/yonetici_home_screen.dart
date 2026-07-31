@@ -6,6 +6,9 @@ import '../../../routing/app_router.dart';
 import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../budget/data/budget_api.dart';
+import '../../cameras/data/cameras_api.dart';
+import '../../cameras/domain/camera_models.dart';
+import '../../cameras/presentation/kameralar_screen.dart' show kameraAc;
 import '../../budget/domain/budget_models.dart';
 import '../../complaints/data/complaint_api.dart';
 import '../../notifications/data/notifications_controller.dart';
@@ -25,6 +28,7 @@ import 'home_refresh.dart';
 import 'home_mappers.dart';
 import 'widgets/bildir_menu_sheet.dart';
 import 'widgets/hizli_erisim.dart';
+import 'widgets/kamera_seridi.dart';
 import 'widgets/home_govde.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_shell.dart';
@@ -77,6 +81,9 @@ class YoneticiHomeScreen extends ConsumerWidget {
     // Son Hareketler TEK uctan (/activity); sunucu rol suzer. KVKK: yonetim
     // bu akista ziyaretci/kargo olaylarini GORMEZ — istemci geri EKLEMEZ.
     final hareketler = ref.watch(sonHareketlerProvider);
+    // Kamera listesi SUNUCUDA role gore suzuludur; istemci ek suzgec
+    // UYGULAMAZ. Hata -> bolum sessizce gizlenir (ana ekran rehin degil).
+    final kameralar = ref.watch(camerasProvider).value ?? const <Camera>[];
 
     final aktifVardiya = vardiyalar.where((v) => v.aktifMi(now)).length;
     final erisim = [
@@ -189,6 +196,18 @@ class YoneticiHomeScreen extends ConsumerWidget {
               ),
             ),
           ),
+          // CANLI KAMERA (P25c) — liste SUNUCUDA role gore suzuludur;
+          // yonetim tumunu, sakin yalniz `aktif && sakin_gorebilir`
+          // kameralari alir. Bolum eskiden YALNIZ saha ana ekranindaydi:
+          // yonetici ve sakin, gorme yetkileri olan kameralari ana ekranda
+          // hic goremiyordu.
+          if (kameralar.isNotEmpty)
+            KameraSeridi(
+              kameralar: kameralar,
+              onSeeAll: () => context.push(AppRoutes.kameralar),
+              // Oynatilabilirse oynatici, RTSP ise bilgi karti (tek kural).
+              onAc: (kamera) => kameraAc(context, kamera),
+            ),
         ],
       ),
       ),
