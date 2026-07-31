@@ -926,6 +926,66 @@ Acceptance: before/after load numbers committed; zero correctness regressions
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+## STATUS REPORT — 2026-07-31 (kural 10: bağlam ağırlaştı, devir)
+
+**Bu bir FINAL REPORT değildir** — uygun madde tükenmedi; oturumun bağlamı
+doldu. Plan dosyası tüm durumu taşıyor; `/clear` + standart kickoff ile
+kaldığı yerden devam edilebilir.
+
+### Biten (13 madde, hepsi `origin/main`'de)
+
+| Madde | Sonuç |
+|---|---|
+| P1 | Prod göç paketi origin/main'de doğrulandı (kod yok) |
+| P3 | Kapsama serisi KAPANDI; `temp_code_dialog` 0/25→25/25; 2 bulgu |
+| P4, P5 | i18n zaten bitmiş — ölçüm yeniden koşuldu, §15 = 8 (hepsi istisna) |
+| P6 | Sunucu yerelleştirmesi zaten bitmiş — sınır/sözleşme/katalog doğrulandı |
+| P7 | **İçerik çevirisi mobile bağlandı** (yeni iş) — 23 test |
+| P8 | **Araç Geçişleri + Otopark + İhlaller ekranları** (yeni iş) — 24 test |
+| P9 | Sözleşme kontrolü METOT düzeyine çıkarıldı; 2 beyan sapması düzeltildi |
+| P10 | **İki gerçek ürün yarışı** düzeltildi; 20× tekrar 20/20 yeşil |
+| P14 | Çeviri kalite kapısı: teslim paketi + ölçüm + karar notu |
+| P15 | Frigate PoC koşuldu; ANPR olay şeması taslağı |
+| P20 | Yüz tanıma v2 tasarım notu (uygulama yok) |
+| P21 | Talep-üzerine çeviri değerlendirme notu (uygulama yok) |
+
+Ek olarak üç **ölçüm aracı** hatası bulunup düzeltildi (ayrı commit'ler):
+backend `/me/patrol-window` testinin gece-yarısı sarması, kuyruk testinin
+geçici-dizin ev işi, fotoğraflı sürüşün `pumpAndSettle` stratejisi.
+
+### Kapılar (son durum)
+
+* backend `pytest`: **792 geçti / 0 düştü**
+* mobil `flutter analyze`: temiz · `flutter test`: **1408 geçti / 0 düştü**
+  (20× tekrar 20/20) · `flutter build apk --debug` ✓
+* admin-web: **105 test geçti** · `npm run build` ✓
+* sözleşme↔canlı: **201/201 operasyon** iki yönde örtüşüyor
+
+### Blokeli (Kerem'i bekliyor)
+
+* **P2** — prod runbook'u sunucuda uygulama (yalnız Kerem).
+* **P11** — cihaz testleri; listeye bu oturumda **4 yeni madde** eklendi
+  (P3 geçici kod diyaloğu, P7 çeviri notu, P8 üç ekran, P10 çevrimdışı kuyruk).
+* **P12/P13** — Firebase ve iyzico/PayTR kimlik bilgileri (dış bağımlılık).
+* **P18** — donanım + saha.
+
+### Kerem'in karar vermesi gerekenler (iş bu kararla açılıyor)
+
+1. **Çeviri sağlayıcısı** — `docs/ceviri-kalite-notu.md`. LibreTranslate
+   Türkçe kaynakta alan terimlerini bozuyor ("aidat" → *regimen*, son ödeme
+   "ayın 10'u" → *10 months*). Üç seçenek yazıldı; DeepL bir **KVKK kararı**
+   olduğu için ajan tarafından yapılmadı.
+2. **Yüz tanıma** — `docs/face-recognition-v2-design.md` karar satırı.
+3. **P16'nın şema kararı** — `vehicle_pass.kaydeden_user_id` NOT NULL engeli;
+   P16 Notes'unda üç seçenek gerekçeleriyle yazılı (öneri: kolonu nullable
+   yapıp `kaynak` enum'u eklemek).
+
+### Sıradaki uygun madde
+
+**P16** (ANPR ingest backend) — hazırlık notu P16'ya işlendi, olay şeması
+`docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
+
+
 - 2026-07-30 · P21 · 10cf95f · Talep-uzerine ceviri DEGERLENDIRME NOTU (uygulama yok): yazma-aninda degil talep-uzerine + tek dil; kalite engeli once, DeepL'de ucuncu kisi verisi uyarisi.
 - 2026-07-30 · P20 · d8c552e · Yuz tanima v2 TASARIM NOTU (kod yok): kapsam 1:1 dogrulama, sablon cihazda, KVKK kosullari + "once P34'u olc" tavsiyesi + karar satiri.
 - 2026-07-30 · P15 · 7cfb492 · Frigate PoC ayri yiginda kosuldu: restream oynatilabilir dogrulandi, MQTT konu envanteri + olay yuku yakalandi, kaynak olculdu; ANPR ingest olay semasi taslagi yazildi.
