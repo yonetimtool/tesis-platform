@@ -4514,4 +4514,31 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get odeBasarili => 'Ihre Zahlung ist eingegangen.';
+
+  @override
+  String get nfcFotoGerekli =>
+      'Für den Rundgangsstart ist ein Foto erforderlich.';
+
+  @override
+  String get nfcFotoCek => 'Foto aufnehmen und senden';
+
+  @override
+  String get nfcFotoYukleniyor => 'Foto wird hochgeladen...';
+
+  @override
+  String nfcFotoYuklenemedi(String hata) {
+    return 'Foto-Upload fehlgeschlagen: $hata';
+  }
+
+  @override
+  String get nfcKonumYok =>
+      'Standort nicht verfügbar — Erfassung ohne Standort gespeichert.';
+
+  @override
+  String get nfcKonumIzinYok =>
+      'Standortberechtigung verweigert — Erfassung ohne Standort gespeichert.';
+
+  @override
+  String get nfcKonumServisKapali =>
+      'Ortungsdienste sind aus — Erfassung ohne Standort gespeichert.';
 }

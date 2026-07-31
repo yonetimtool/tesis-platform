@@ -4492,4 +4492,30 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get odeBasarili => 'Se ha recibido su pago.';
+
+  @override
+  String get nfcFotoGerekli => 'Se requiere una foto para iniciar la ronda.';
+
+  @override
+  String get nfcFotoCek => 'Hacer foto y enviar';
+
+  @override
+  String get nfcFotoYukleniyor => 'Subiendo la foto...';
+
+  @override
+  String nfcFotoYuklenemedi(String hata) {
+    return 'No se pudo subir la foto: $hata';
+  }
+
+  @override
+  String get nfcKonumYok =>
+      'Ubicación no disponible — el escaneo se registró sin ella.';
+
+  @override
+  String get nfcKonumIzinYok =>
+      'Permiso de ubicación denegado — el escaneo se registró sin ella.';
+
+  @override
+  String get nfcKonumServisKapali =>
+      'Los servicios de ubicación están desactivados — escaneo sin ubicación.';
 }

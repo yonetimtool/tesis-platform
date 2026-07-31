@@ -97,6 +97,30 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('plan', 'eksik'),
     ),
+    # (P34) Gecikmis okutma: pencere ACILDI ama tolerans suresi icinde
+    # okutma GELMEDI. "Kacirildi"dan farki: tur HALA KURTARILABILIR —
+    # bu yuzden metin gecmis zaman degil UYARI dilidir.
+    "gecikmis_okutma": PushMetni(
+        baslik={
+            "tr": "Tur başlamadı",
+            "en": "Patrol not started",
+            "ar": "لم تبدأ الجولة",
+            "ru": "Обход не начат",
+            "de": "Rundgang nicht begonnen",
+            "fr": "Ronde non commencée",
+            "es": "Ronda no iniciada",
+        },
+        govde={
+            "tr": "{plan} turunda {dakika} dakikadır okutma yok.",
+            "en": "No scan for {dakika} minutes on the {plan} patrol.",
+            "ar": "لا يوجد مسح منذ {dakika} دقيقة في جولة {plan}.",
+            "ru": "В обходе «{plan}» нет отметок уже {dakika} мин.",
+            "de": "Seit {dakika} Minuten keine Erfassung im Rundgang {plan}.",
+            "fr": "Aucun scan depuis {dakika} minutes sur la ronde {plan}.",
+            "es": "Sin escaneos desde hace {dakika} minutos en la ronda {plan}.",
+        },
+        params=('plan', 'dakika'),
+    ),
     "yeni_talep": PushMetni(
         baslik={
             "tr": "Talep / Arıza",

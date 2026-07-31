@@ -55,6 +55,10 @@ CEVIRI_DURUM = ENUM(
     "hazir", "bekliyor", "hata",
     name="ceviri_durum", create_type=False,
 )
+KONUM_DURUMU = ENUM(
+    "var", "izin_yok", "servis_kapali", "zaman_asimi", "bilinmiyor",
+    name="konum_durumu", create_type=False,
+)
 NOTIFICATION_TIP = ENUM(
     "kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma",
     "peyzaj_yaklasan", "peyzaj_kacirilan",
@@ -279,6 +283,23 @@ class Tenant(Base):
     #: gecmis kayitlar tutarsiz kalirdi.
     gecikme_aylik_yuzde = mapped_column(
         Numeric(5, 2), nullable=False, server_default=text("0")
+    )
+    #: (P34) Tur gecikme alarmi: pencere acildiktan sonra bu kadar dakika
+    #: icinde okutma gelmezse alarm baslar. 10 dk bir sitede makul, kampus
+    #: buyuklugunde erken alarm demektir — bu yuzden AYAR.
+    tur_gecikme_toleransi_dk: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("10")
+    )
+    #: (P34) Alarm KAC KEZ tekrarlanir (0 = kapali). Sonsuz tekrar bildirim
+    #: yorgunlugu uretir ve alarm ANLAMINI kaybeder.
+    tur_alarm_tekrar_sayisi: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("3")
+    )
+    #: (P34) Turun ILK okutmasindan once kamera fotografi zorunlu mu?
+    #: Gece vardiyasinda kamera kullanimi her sitede kabul gormez
+    #: (personel mahremiyeti) — bu yuzden urun kurali degil TENANT ANAHTARI.
+    tur_baslangic_foto_zorunlu: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
     )
     # Hava durumu konumu (0005) — baslikta gorunen ad + Open-Meteo koordinati.
     konum_ad: Mapped[str] = mapped_column(
@@ -629,6 +650,15 @@ class ScanEvent(Base):
     okutma_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     gps_lat = mapped_column(Numeric(9, 6), nullable=True)
     gps_lng = mapped_column(Numeric(9, 6), nullable=True)
+    # (P34) NULL'un ANLAMI: "izin verilmedi" mi, "sinyal yok" mu, "eski
+    # istemci" mi? Uc durum ayni gorunurken amir konumsuz okutmanin
+    # OLDUGUNU bile fark edemezdi.
+    konum_durumu: Mapped[str] = mapped_column(
+        KONUM_DURUMU, nullable=False, server_default=text("'bilinmiyor'")
+    )
+    #: (P34) 5 m ile 2 km dogruluk ekranda AYNI gorunurdu; ikincisi kanit
+    #: degeri tasimaz.
+    gps_dogruluk_m = mapped_column(Numeric(7, 1), nullable=True)
     foto_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     imza_dogrulandi: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")

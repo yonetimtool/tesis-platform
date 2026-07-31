@@ -7702,6 +7702,48 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Ödemeniz alındı.'**
   String get odeBasarili;
+
+  /// No description provided for @nfcFotoGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tura başlamak için fotoğraf gerekli.'**
+  String get nfcFotoGerekli;
+
+  /// No description provided for @nfcFotoCek.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf çek ve gönder'**
+  String get nfcFotoCek;
+
+  /// No description provided for @nfcFotoYukleniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf yükleniyor...'**
+  String get nfcFotoYukleniyor;
+
+  /// No description provided for @nfcFotoYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf yüklenemedi: {hata}'**
+  String nfcFotoYuklenemedi(String hata);
+
+  /// No description provided for @nfcKonumYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konum alınamadı — okutma konumsuz kaydedildi.'**
+  String get nfcKonumYok;
+
+  /// No description provided for @nfcKonumIzinYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konum izni verilmedi — okutma konumsuz kaydedildi.'**
+  String get nfcKonumIzinYok;
+
+  /// No description provided for @nfcKonumServisKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konum servisi kapalı — okutma konumsuz kaydedildi.'**
+  String get nfcKonumServisKapali;
 }
 
 class _AppLocalizationsDelegate

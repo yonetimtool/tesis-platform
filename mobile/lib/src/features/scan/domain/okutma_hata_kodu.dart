@@ -10,6 +10,12 @@ library;
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 
+/// (P34) Sunucu kodu: tura baslarken fotograf zorunlu (tenant ayari).
+/// Bu kayit KALICI HATA degil TAMAMLANABILIR bir bekleyistir — kullanici
+/// kamerayla fotograf ceker ve AYNI anahtarla yeniden gonderilir (ilk deneme
+/// reddedildigi icin sunucuda kayit yoktur, cakisma olmaz).
+const okutmaFotoGerekliKod = 'foto_gerekli';
+
 /// Beklenmeyen istemci hatasi (sozlesmede yok).
 const okutmaBeklenmeyenKod = 'client_unexpected';
 

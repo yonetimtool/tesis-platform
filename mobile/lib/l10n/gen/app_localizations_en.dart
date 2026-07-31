@@ -4539,4 +4539,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get odeBasarili => 'Your payment was received.';
+
+  @override
+  String get nfcFotoGerekli => 'A photo is required to start the patrol.';
+
+  @override
+  String get nfcFotoCek => 'Take a photo and send';
+
+  @override
+  String get nfcFotoYukleniyor => 'Uploading photo...';
+
+  @override
+  String nfcFotoYuklenemedi(String hata) {
+    return 'Photo upload failed: $hata';
+  }
+
+  @override
+  String get nfcKonumYok =>
+      'Location unavailable — the scan was recorded without it.';
+
+  @override
+  String get nfcKonumIzinYok =>
+      'Location permission denied — the scan was recorded without it.';
+
+  @override
+  String get nfcKonumServisKapali =>
+      'Location services are off — the scan was recorded without it.';
 }

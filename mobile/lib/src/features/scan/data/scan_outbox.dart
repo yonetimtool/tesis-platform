@@ -224,6 +224,29 @@ class ScanOutbox extends Notifier<ScanOutboxState> {
     }
   }
 
+  /// (P34) Fotograf kapisina takilan kayda fotograf ekler ve yeniden
+  /// kuyruga alir.
+  ///
+  /// ANAHTAR DEGISMEZ: ilk deneme 422 ile REDDEDILDIGI icin sunucuda kayit
+  /// olusmadi — ayni Idempotency-Key ile fotografli govde gondermek cakisma
+  /// degil ILK basarili gonderimdir. Anahtari degistirmek, okutma anini
+  /// (dolayisiyla kanitin zamanini) tazelemek olurdu.
+  Future<void> fotografEkle(String idempotencyKey, String fotoKey) async {
+    final entry = state.byKey(idempotencyKey);
+    if (entry == null) return;
+    _replace(
+      entry.copyWith(
+        fotoKey: fotoKey,
+        status: OutboxStatus.bekliyor,
+        lastError: null,
+        hataKodu: null,
+      ),
+    );
+    await _persist();
+    _consecutiveFailures = 0;
+    unawaited(pump());
+  }
+
   /// Kalici hatalari (404 vb.) kuyruktan temizler.
   Future<void> clearFailed() async {
     state = state.copyWith(

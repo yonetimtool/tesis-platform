@@ -34,6 +34,13 @@ celery_app.conf.beat_schedule = {
         "task": "scheduler.detect_missed_tours",
         "schedule": float(settings.scheduler_detect_interval_seconds),
     },
+    # (P34) Gecikme alarmi: tespitten DAHA SIK — pencere aciktir ve tur
+    # hala kurtarilabilir; gec gonderilen bir "tur baslamadi" alarmi
+    # kimseyi harekete geciremez.
+    "detect-late-patrols": {
+        "task": "scheduler.detect_late_patrols",
+        "schedule": float(settings.scheduler_gecikme_interval_seconds),
+    },
     # KVKK saklama & imha — her gece 04:00 Europe/Istanbul. App TZ = UTC; TR
     # yil boyu UTC+3 (DST yok) => 01:00 UTC = 04:00 Istanbul.
     "run-retention": {

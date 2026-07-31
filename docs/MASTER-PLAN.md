@@ -410,6 +410,25 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P34 · Tur konumu + fotoğraf kapısı (MOBİL).** **Güvenlik** rolüyle:
+  (a) Konum izni **verili** iken NFC okut → okutma geçmeli; **admin** ile
+  `GET /scans` → o satırda `konum_durumu = "var"` ve `gps_dogruluk_m` dolu
+  olmalı. (b) Telefonun **konum servisini kapat** → tekrar okut → okutma
+  YİNE kaydedilmeli ve ekranda **"Konum servisi kapalı — okutma konumsuz
+  kaydedildi"** yazmalı; raporda `konum_durumu = "servis_kapali"` ve
+  `konumsuz_sayisi` artmalı. (c) Uygulamanın konum iznini **reddet** →
+  okutma yine geçmeli, durum `izin_yok` olmalı. (d) **Yönetici** ile
+  Ayarlar'dan `tur_baslangic_foto_zorunlu` açık iken (şimdilik
+  `PATCH /tenant/settings`) bir tur penceresi içinde ilk okutmayı yap →
+  ekranda **"Tura başlamak için fotoğraf gerekli"** + kamera butonu
+  çıkmalı; butona bas → **yalnız kamera** açılmalı (galeri seçeneği
+  ÇIKMAMALI) → çek → kayıt kendiliğinden gönderilmeli. Aynı pencerede
+  **ikinci** okutma fotoğraf İSTEMEMELİ.
+- [ ] **P34 · Gecikme alarmı (PUSH).** Yakın bir tur penceresi olan bir plan
+  kur, **hiç okutma yapma**. Tolerans (varsayılan 10 dk) dolunca **görevlinin
+  telefonuna** ve **yöneticiye** "Tur başlamadı" push'u gelmeli; okutma
+  yapılınca alarm **susmalı**. Tekrarların 10 → 30 → 70. dakikada geldiği
+  (araların katlandığı) gözlenmeli.
 - [ ] **P31 · Raporlar (API — panel ekranı finans bölümüyle gelecek).**
   Şimdilik uçtan doğrulanabilir: **admin** ile
   `POST /raporlar/borc_alacak?bicim=pdf` → inen PDF'te **site adı, dönem,
@@ -1940,7 +1959,7 @@ parça eklemek panelde altı ayrı gezinme deseni bırakırdı. API yüzeyi ve
 sözleşme hazır.
 
 ### P34 — Patrol integrity package
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: (a) NFC scan attaches GPS (lat/lon/accuracy) when available; permission
 denied → scan still records with konum_yok flag, visibly surfaced to amir/
 yönetici (no silent gaps); location shown on scan detail for authorized roles;
@@ -1957,6 +1976,87 @@ proves physical tag presence — photo adds environment/time-of-day evidence
 Notes; photo requirement is a tenant toggle. Contract via NEW revisions.
 Acceptance: extended scan payload in contract; alarm scheduler start/stop tests;
 photo-gated flow testable on device (P11 append); gates.
+Notes (2026-07-31):
+**(a) KONUM BİR KANITTIR, ÖN KOŞUL DEĞİL.** `scan_event` zaten `gps_lat/lng`
+tutuyordu ama **NULL'un anlamı yoktu**: "izin verilmedi" mi, "sinyal yok" mu,
+"eski istemci hiç göndermedi" mi ayırt edilemiyordu — üç durum aynı görünürken
+amir *konumsuz okutma diye bir şey olduğunu* fark edemezdi. `konum_durumu`
+eklendi (`var|izin_yok|servis_kapali|zaman_asimi|bilinmiyor`) ve mevcut satırlar
+**korunarak** sınıflandırıldı: koordinatı olan `var`, olmayan `bilinmiyor`
+(uydurma yok — eski satırların nedeni gerçekten bilinmiyor). Alanı hiç
+göndermeyen istemciyi `izin_yok` saymak **olmayan bir izin reddini raporlamak**
+olurdu.
+- `gps_dogruluk_m` **ayrı** alandır: 5 m ile 2 km doğrulukla alınmış konum
+  ekranda aynı görünürdü ve ikincisi kanıt değeri taşımaz.
+- Sessiz boşluk yok: `GET /scans` artık `konumsuz_sayisi` döndürür ve
+  `?konumsuz=true` süzgeci vardır; **sayı süzgeçten bağımsız** hesaplanır.
+  Kısmi indeks (`ix_scan_konumsuz`) yalnız konumsuz satırları indeksler.
+- Mobil: konum **okutma anında** ölçülür, gönderim anında değil — kuyrukta
+  bekleyen kayıt saatler sonra **başka bir yerde** gönderilebilir ve o konum
+  okutmanın konumu olmazdı. Ölçüm okutmayı **asla engellemez** (6 sn zaman
+  aşımı, her hata bir duruma dönüşür) ve boşluk kullanıcıya **yazıyla**
+  gösterilir.
+- KVKK: `docs/personel-konum-kvkk.md` — sürekli takip YOK, tekil kanıt noktası;
+  meşru menfaat (m.5/2-f), amaçla sınırlılık, kimlerin gördüğü, aydınlatma.
+
+**(b) GECİKME ALARMI — "kaçırıldı" ile "gecikti" AYNI ŞEY DEĞİL.** Kaçırıldı
+pencere **bittikten sonra** sabittir ve yapılacak bir şey kalmamıştır; gecikti
+pencere **açıkken** olur ve tur **hâlâ kurtarılabilir**. Bu yüzden ayrı görev
+(`scheduler.detect_late_patrols`, 2 dk periyot — tespitten sık), ayrı bildirim
+tipi (`gecikmis_okutma`, enum'da zaten vardı) ve ayrı metin (geçmiş zaman
+değil **uyarı dili**).
+- **Aralıklar katlanır**: tolerans, 2×, 4× → 10 dk toleransta 10/30/70.
+  dakikalar. Sabit aralık dakikada bir titreyen bir cihaz üretirdi; tek
+  bildirim ise telefon sessizdeyken kaybolurdu. Tolerans + tekrar sayısı
+  **tenant ayarıdır** (0 tekrar = kapalı, geçerli bir tercih).
+- **Birikmiş adımlar toptan gönderilmez**: yalnız *en son vadesi gelen* adım
+  gider — scheduler duraksadıysa görevliye aynı saniyede üç bildirim atmak
+  olurdu.
+- Durdurma **doğaldır**: ilk okutma gelince sorgu pencereyi artık seçmez;
+  pencere bitince `vadesi_gelen_adim` None döner (bitmiş pencere zaten
+  `kacirildi` alarmına konudur — ikisini birden göndermek aynı olayı iki kez
+  bildirmek olurdu).
+- Hedef **hem kişi hem rol**: görevli `shift_assignment` üzerinden **kişi**
+  olarak (rol yayını o vardiyada olmayan tüm güvenliği de titretirdi), yönetim
+  ayrıca **rol** olarak (görevli telefonu duymuyorsa turu başkası devralsın —
+  tek kişiye bağlı alarm sessiz boşluk üretirdi).
+- **BULGU (0023'te düzeltildi):** `uq_notification_tenant_tip_window` tekliği
+  kaçırılan tur için doğruydu ama gecikme alarmı **tekrar etmek zorundadır**;
+  kısıtlama olduğu gibi kalsaydı ikinci alarm **sessizce düşerdi** (ON CONFLICT
+  başka indeksi hedefliyor). Teklik **kısmi indekse** çevrildi
+  (`gecikmis_okutma` hariç); alarmın idempotency'si `dedup_key =
+  tip:pencere:ADIM` ile sağlanır.
+
+**(c) BAŞLANGIÇ FOTOĞRAFI — "1 metre gidip gel" YERİNE.** Kapsamdaki hareket
+kanıtı fikri **uygulanmadı** ve gerekçesi şudur: NTAG424 SDM zaten etiketin
+**fiziksel varlığını kriptografik olarak** kanıtlıyor; hareket kanıtı bunun
+üzerine bir şey eklemez. Fotoğrafın eklediği şey **başka bir boyuttur** —
+ortam ve günün saati (gündüz/gece); GPS de konumu ekler. Üçü birlikte "etiket
+oradaydı + kişi oradaydı + o saatte oradaydı" der.
+- **Yalnız ilk okutma**: her noktada fotoğraf turu iki katına çıkarırdı ve
+  görevliyi cezalandırırdı. Kapı yalnız bir **tur penceresi** içinde çalışır;
+  plansız/pencere dışı okutma bir tur başlangıcı değildir.
+- **Kamera-only** (galeri yok): eski bir fotoğrafı seçmek tura hiç çıkmadan tur
+  başlatmak olurdu.
+- **Ayrı hata kodu** `foto_gerekli`: istemci "fotoğraf çek ve tekrar gönder"
+  eylemini genel bir doğrulama hatasından ayırt edebilmeli. Mobil bunu kalıcı
+  hata olarak DEĞİL kamera butonuyla gösterir; fotoğraf **aynı
+  Idempotency-Key** ile gönderilir (ilk deneme reddedildiği için sunucuda kayıt
+  yoktur — çakışma olmaz; anahtarı değiştirmek okutma anını, dolayısıyla kanıtın
+  zamanını tazelemek olurdu).
+- `foto_key` **tenant ad-alanında** doğrulanır (IDOR); eski `foto_url` alanı
+  deprecated ve doğrulanmadan kabul edilir.
+- Fotoğraf zorunluluğu **tenant anahtarıdır**, ürün kuralı değil: gece
+  vardiyasında kamera kullanımı her sitede kabul görmez.
+
+Kanıt: `backend/tests/test_tur_butunlugu.py` **23 test** + `mobile/test/
+tur_konum_test.dart` **9 test** yeşil; tam pytest yeşil; `flutter analyze`
+temiz, `flutter test` 1492 geçti, `flutter build apk --debug` başarılı;
+`goc-tersinirlik` bulgu 0 (24 sınır), `goc-uyum-dogrula` bulgu 0. Sözleşme +
+rol matrisi güncel. Migration `0023` — dosyada **yerinde düzenleme
+istisnası** (politika kural 3) gerekçesiyle belgelendi: revizyon hiçbir
+ortama gitmemişti, geliştirici veritabanı downgrade→upgrade ile yeniden
+kuruldu.
 
 ### P35 — Security-chief role & dual security architecture
 Status: BEKLIYOR · Depends-on: P34
@@ -2221,6 +2321,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P34 · (bu commit) · Tur butunlugu (0023): KONUM BIR KANITTIR ON KOSUL DEGIL — izin reddi/servis kapali okutmayi dusurmez ama SESSIZ DE KALMAZ (konum_durumu + konumsuz_sayisi + suzgec); gecikme alarmi 'kacirildi'dan AYRI, araliklari KATLANAN tekrarli bildirim (gorevliye kisi, yonetime rol) ve bildirim TEKLIGI kismi indekse cevrildi (ikinci alarm sessizce dusuyordu); baslangic fotografi '1 metre gidip gel' YERINE (SDM zaten fiziksel varligi kanitliyor; fotograf ORTAM+SAAT boyutu ekler), kamera-only + ayri hata kodu.
 - 2026-07-31 · P33 · (bu commit) · Yonetisim modulleri (0022): IS TAKIBI denetimi omurganin ZATEN VAR OLDUGUNU gosterdi — birlestirme degil GENISLETME (complaint + unit_id/oncelik/atanan_personel; oncelik durumdan BAGIMSIZ ayri ucta, atanan personel_kayit'tir app_user degil); karar defteri uyeleri AYRI TABLODA + metin sablonlu PDF; dokuman arsivi USTVERI-ONLY (obje silinmez); site aktarimi KURU CALISMALI ve SATIR BAZLI hata raporlu, idempotent.
 - 2026-07-31 · P32 · 47ac96c · Mesaj sablonlari + gonderim (0021): gonderilen metin GECMISE KOPYALANIR (sablon degisse de kanit durur), amac SABLONDA (pazarlama riza olmadan HIC gonderilmez ve atlananlar SAYILIR), SMS sayaci Turkce tuzagini gosterir (kucuk c/i/g/s UCS-2'ye dusurur), saglayici takasi yapilandirma ile; P28 seed regresyonu bulundu ve duzeltildi.
 - 2026-07-31 · P31 · a7e2217 · Rapor motoru + 12 raporluk katalog: TEK UC UC BICIM (tablo/Excel/PDF, ucu de ayni satirlardan), parametre modali TEK MODEL, detayli borc sutunlari P27 tanimlarindan DINAMIK, tahsilat orani = tahsil/borclandirilan, denetim raporu = kasa mutabakati; to_char GroupingError bulgusu.

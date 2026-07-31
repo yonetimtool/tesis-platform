@@ -4609,4 +4609,30 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get odeBasarili => 'Ваш платёж получен.';
+
+  @override
+  String get nfcFotoGerekli => 'Для начала обхода требуется фото.';
+
+  @override
+  String get nfcFotoCek => 'Сделать фото и отправить';
+
+  @override
+  String get nfcFotoYukleniyor => 'Загрузка фото...';
+
+  @override
+  String nfcFotoYuklenemedi(String hata) {
+    return 'Не удалось загрузить фото: $hata';
+  }
+
+  @override
+  String get nfcKonumYok =>
+      'Местоположение недоступно — отметка сохранена без него.';
+
+  @override
+  String get nfcKonumIzinYok =>
+      'Доступ к местоположению запрещён — отметка сохранена без него.';
+
+  @override
+  String get nfcKonumServisKapali =>
+      'Службы геолокации выключены — отметка сохранена без них.';
 }

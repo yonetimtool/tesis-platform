@@ -1348,5 +1348,12 @@
   "odeKartKapali": "Kartenzahlung ist noch nicht aktiviert. Nutzen Sie vorerst eine Banküberweisung.",
   "odeHavaleKapali": "Für die Anlage wurde noch kein Bankkonto hinterlegt. Wenden Sie sich an die Verwaltung.",
   "odeBorcYok": "Sie haben keine offenen Schulden.",
-  "odeBasarili": "Ihre Zahlung ist eingegangen."
+  "odeBasarili": "Ihre Zahlung ist eingegangen.",
+  "nfcFotoGerekli": "Für den Rundgangsstart ist ein Foto erforderlich.",
+  "nfcFotoCek": "Foto aufnehmen und senden",
+  "nfcFotoYukleniyor": "Foto wird hochgeladen...",
+  "nfcFotoYuklenemedi": "Foto-Upload fehlgeschlagen: {hata}",
+  "nfcKonumYok": "Standort nicht verfügbar — Erfassung ohne Standort gespeichert.",
+  "nfcKonumIzinYok": "Standortberechtigung verweigert — Erfassung ohne Standort gespeichert.",
+  "nfcKonumServisKapali": "Ortungsdienste sind aus — Erfassung ohne Standort gespeichert."
 }

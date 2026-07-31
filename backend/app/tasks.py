@@ -30,6 +30,20 @@ def detect_missed_tours() -> dict:
     return detect_missed()
 
 
+@celery_app.task(name="scheduler.detect_late_patrols")
+def detect_late_patrols() -> dict:
+    """(P34) Beat: ACIK pencerede tolerans asildi ve hic okutma yok -> alarm.
+
+    `detect_missed_tours`DAN AYRI CALISIR ve DAHA SIK kosar: kacirildi
+    damgasi pencere bitince bir kez vurulur, gecikme alarmi ise pencere
+    ACIKKEN anlamlidir — seyrek kosan bir gorev alarmi tolerans suresinden
+    cok sonra gonderirdi.
+    """
+    from .scheduler.service import detect_gecikmis
+
+    return {"alarm": detect_gecikmis()}
+
+
 @celery_app.task(name="ceviri.translate_entity", bind=True, max_retries=3)
 def translate_entity(self, tip_ad: str, entity_id: str, tenant_id: str) -> dict:
     """Yayin iceriginin (duyuru/kural/etkinlik) eksik cevirilerini uretir.

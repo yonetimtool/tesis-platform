@@ -4502,4 +4502,30 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get odeBasarili => 'Votre paiement a été reçu.';
+
+  @override
+  String get nfcFotoGerekli => 'Une photo est requise pour démarrer la ronde.';
+
+  @override
+  String get nfcFotoCek => 'Prendre une photo et envoyer';
+
+  @override
+  String get nfcFotoYukleniyor => 'Envoi de la photo...';
+
+  @override
+  String nfcFotoYuklenemedi(String hata) {
+    return 'Échec de l\'envoi de la photo : $hata';
+  }
+
+  @override
+  String get nfcKonumYok =>
+      'Position indisponible — le scan a été enregistré sans elle.';
+
+  @override
+  String get nfcKonumIzinYok =>
+      'Autorisation de localisation refusée — scan enregistré sans position.';
+
+  @override
+  String get nfcKonumServisKapali =>
+      'Services de localisation désactivés — scan enregistré sans position.';
 }

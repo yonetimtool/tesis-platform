@@ -1348,5 +1348,12 @@
   "odeKartKapali": "Le paiement par carte n'est pas encore activé. Utilisez un virement pour l'instant.",
   "odeHavaleKapali": "Aucun compte bancaire n'a encore été défini pour la résidence. Contactez la gestion.",
   "odeBorcYok": "Vous n'avez aucune dette en cours.",
-  "odeBasarili": "Votre paiement a été reçu."
+  "odeBasarili": "Votre paiement a été reçu.",
+  "nfcFotoGerekli": "Une photo est requise pour démarrer la ronde.",
+  "nfcFotoCek": "Prendre une photo et envoyer",
+  "nfcFotoYukleniyor": "Envoi de la photo...",
+  "nfcFotoYuklenemedi": "Échec de l'envoi de la photo : {hata}",
+  "nfcKonumYok": "Position indisponible — le scan a été enregistré sans elle.",
+  "nfcKonumIzinYok": "Autorisation de localisation refusée — scan enregistré sans position.",
+  "nfcKonumServisKapali": "Services de localisation désactivés — scan enregistré sans position."
 }

@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     # Beat periyotlari (saniye).
     scheduler_generate_interval_seconds: int = 3600   # saat basi
     scheduler_detect_interval_seconds: int = 300      # 5 dk
+    # (P34) Gecikme alarmi tespitten SIK kosar: pencere aciktir ve tur hala
+    # kurtarilabilir; 5 dakikada bir bakan bir gorev, 10 dakikalik toleransi
+    # 15. dakikada haber verirdi.
+    scheduler_gecikme_interval_seconds: int = 120     # 2 dk
 
     # --- MinIO (S3-uyumlu foto kanit deposu) ---
     # PUBLIC endpoint: presigned URL host'u (istemci buraya PUT'lar). dev: localhost.

@@ -56,6 +56,9 @@ class OutboxEntry {
     this.checkpointId,
     this.gpsLat,
     this.gpsLng,
+    this.konumDurumu,
+    this.gpsDogrulukM,
+    this.fotoKey,
     this.sdmPiccData,
     this.sdmCmac,
     this.status = OutboxStatus.bekliyor,
@@ -81,6 +84,17 @@ class OutboxEntry {
   final String? checkpointId;
   final double? gpsLat;
   final double? gpsLng;
+
+  /// (P34) Konum durumu + dogrulugu; offline bekleyen kayitta kaybolmasin
+  /// diye diske yazilir (konum OKUTMA aninda olculur, gonderim aninda degil —
+  /// gonderim saatler sonra baska bir yerde olabilir).
+  final String? konumDurumu;
+  final double? gpsDogrulukM;
+
+  /// (P34) Tur baslangic fotografinin depo anahtari. Fotograf kapisina
+  /// takilan bir kayda SONRADAN eklenir ve ayni anahtarla yeniden gonderilir
+  /// (ilk deneme reddedildigi icin sunucuda kayit YOKTUR — cakisma olmaz).
+  final String? fotoKey;
 
   /// NTAG424 SDM alanlari (varsa) — offline bekleyen kayitta kaybolmamalari
   /// icin taslakla birlikte diske yazilir. Tekrar gonderimde ayni Idempotency-
@@ -120,6 +134,9 @@ class OutboxEntry {
         checkpointId: checkpointId,
         gpsLat: gpsLat,
         gpsLng: gpsLng,
+        konumDurumu: konumDurumu,
+        gpsDogrulukM: gpsDogrulukM,
+        fotoKey: fotoKey,
         sdmPiccData: sdmPiccData,
         sdmCmac: sdmCmac,
       );
@@ -133,12 +150,16 @@ class OutboxEntry {
         checkpointId: draft.checkpointId,
         gpsLat: draft.gpsLat,
         gpsLng: draft.gpsLng,
+        konumDurumu: draft.konumDurumu,
+        gpsDogrulukM: draft.gpsDogrulukM,
+        fotoKey: draft.fotoKey,
         sdmPiccData: draft.sdmPiccData,
         sdmCmac: draft.sdmCmac,
       );
 
   OutboxEntry copyWith({
     OutboxStatus? status,
+    Object? fotoKey = _sentinel,
     int? attemptCount,
     Object? lastError = _sentinel,
     Object? hataKodu = _sentinel,
@@ -152,6 +173,9 @@ class OutboxEntry {
       checkpointId: checkpointId,
       gpsLat: gpsLat,
       gpsLng: gpsLng,
+      konumDurumu: konumDurumu,
+      gpsDogrulukM: gpsDogrulukM,
+      fotoKey: fotoKey == _sentinel ? this.fotoKey : fotoKey as String?,
       sdmPiccData: sdmPiccData,
       sdmCmac: sdmCmac,
       status: status ?? this.status,
@@ -173,6 +197,9 @@ class OutboxEntry {
         if (checkpointId != null) 'checkpoint_id': checkpointId,
         if (gpsLat != null) 'gps_lat': gpsLat,
         if (gpsLng != null) 'gps_lng': gpsLng,
+        if (konumDurumu != null) 'konum_durumu': konumDurumu,
+        if (gpsDogrulukM != null) 'gps_dogruluk_m': gpsDogrulukM,
+        if (fotoKey != null) 'foto_key': fotoKey,
         if (sdmPiccData != null) 'sdm_picc_data': sdmPiccData,
         if (sdmCmac != null) 'sdm_cmac': sdmCmac,
         'status': _statusJson[status],
@@ -190,6 +217,9 @@ class OutboxEntry {
         checkpointId: json['checkpoint_id'] as String?,
         gpsLat: (json['gps_lat'] as num?)?.toDouble(),
         gpsLng: (json['gps_lng'] as num?)?.toDouble(),
+        konumDurumu: json['konum_durumu'] as String?,
+        gpsDogrulukM: (json['gps_dogruluk_m'] as num?)?.toDouble(),
+        fotoKey: json['foto_key'] as String?,
         sdmPiccData: json['sdm_picc_data'] as String?,
         sdmCmac: json['sdm_cmac'] as String?,
         status: _statusFromJson(json['status'] as String?),

@@ -2,13 +2,19 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../routing/app_router.dart';
 import '../../checkpoints/data/checkpoint_api.dart';
+import '../../scan/data/konum_servisi.dart';
 import '../../scan/data/scan_outbox.dart';
+import '../../scan/domain/okutma_hata_kodu.dart';
 import '../../scan/domain/outbox_entry.dart';
 import '../../scan/domain/scan.dart';
+import '../../tasks/data/task_api.dart';
+import '../../tasks/presentation/task_complete_controller.dart'
+    show imagePickerProvider;
 import '../domain/nfc_hatasi.dart';
 import '../domain/nfc_read_result.dart';
 import 'nfc_hata_metni.dart';
@@ -28,6 +34,14 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
   /// Bu ekranda son okutulan kaydin outbox anahtari — durum kutusu bunu izler.
   String? _currentKey;
 
+  /// Fotograf kapisi icin yukleme suruyor mu (buton kilitlenir).
+  bool _fotoYukleniyor = false;
+
+  /// Son okutmanin konum sonucu — kullaniciya BOSLUK GOSTERILIR.
+  /// Sessizce konumsuz gondermek, gorevlinin konum izninin kapali oldugunu
+  /// hic ogrenmemesi demekti.
+  KonumSonucu? _sonKonum;
+
   Future<void> _startNewRead() async {
     setState(() => _currentKey = null);
     await ref
@@ -41,10 +55,20 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
     // Okuma aninda taslak uret: okutma zamani + idempotency-key SABITLENIR.
     // NTAG424 SDM alanlari (varsa) taslaga eklenir; NTAG21x'te null kalir ve
     // govdeye hic girmez — mevcut akis degismez.
+    // KONUM OKUTMA ANINDA olculur, gonderim aninda degil: kuyrukta bekleyen
+    // bir kayit saatler sonra BASKA BIR YERDE gonderilebilir ve o konum
+    // okutmanin konumu OLMAZDI.
+    final konum = await _konumAl();
+    if (!mounted) return;
+
     final sdm = result.sdmData;
     final draft = ScanDraft(
       nfcTagUid: result.uid!,
       okutmaZamani: result.readAt ?? DateTime.now().toUtc(),
+      gpsLat: konum.lat,
+      gpsLng: konum.lng,
+      konumDurumu: konumDurumuKodu[konum.durum],
+      gpsDogrulukM: konum.dogrulukM,
       sdmPiccData: sdm?.piccData,
       sdmCmac: sdm?.cmac,
     );
@@ -97,12 +121,67 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
       ),
     );
     if (secilen == null) return;
+    final konum = await _konumAl();
+    if (!mounted) return;
     final draft = ScanDraft(
       nfcTagUid: secilen.nfcTagUid,
       okutmaZamani: DateTime.now().toUtc(),
+      gpsLat: konum.lat,
+      gpsLng: konum.lng,
+      konumDurumu: konumDurumuKodu[konum.durum],
+      gpsDogrulukM: konum.dogrulukM,
     );
     setState(() => _currentKey = draft.idempotencyKey);
     await ref.read(scanOutboxProvider.notifier).enqueue(draft);
+  }
+
+  /// Konumu alir; SONUC NE OLURSA OLSUN okutma devam eder.
+  Future<KonumSonucu> _konumAl() async {
+    final sonuc = await ref.read(konumKaynagiProvider).al(
+          zamanAsimi: const Duration(seconds: 6),
+        );
+    if (mounted) setState(() => _sonKonum = sonuc);
+    return sonuc;
+  }
+
+  /// (P34) Fotograf kapisi: KAMERA ONLY — galeriden secim YOK.
+  ///
+  /// Galeriye izin vermek, kanit degerini sifirlardi: eski bir fotografi
+  /// secmek tura hic cikmadan tur baslatmak olurdu. Kamera yolu ise fotografi
+  /// O AN uretir; sunucu da zaman ve konumu ayrica kaydeder.
+  Future<void> _fotografCekVeGonder(OutboxEntry entry) async {
+    if (_fotoYukleniyor) return;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _fotoYukleniyor = true);
+    try {
+      final file = await ref.read(imagePickerProvider).pickImage(
+            source: ImageSource.camera,
+            maxWidth: 1600,
+            imageQuality: 80,
+          );
+      if (file == null || !mounted) return;
+      final api = ref.read(taskApiProvider);
+      const contentType = 'image/jpeg';
+      final ticket = await api.presignUpload(
+        contentType: contentType,
+        dosyaAdi: file.name,
+      );
+      await api.uploadPhoto(
+        ticket: ticket,
+        bytes: await file.readAsBytes(),
+        contentType: contentType,
+      );
+      if (!mounted) return;
+      await ref
+          .read(scanOutboxProvider.notifier)
+          .fotografEkle(entry.idempotencyKey, ticket.fotoKey);
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(_l10n.nfcFotoYuklenemedi('$e'))),
+      );
+    } finally {
+      if (mounted) setState(() => _fotoYukleniyor = false);
+    }
   }
 
   @override
@@ -145,6 +224,27 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
                 _ResultCard(result: state.result!),
                 const SizedBox(height: 16),
                 _OutboxOutcome(entry: currentEntry),
+                if (_sonKonum != null && !_sonKonum!.konumVar)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      _konumUyarisi(l10n, _sonKonum!.durum),
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                if (currentEntry?.hataKodu == okutmaFotoGerekliKod) ...[
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: _fotoYukleniyor
+                        ? null
+                        : () => _fotografCekVeGonder(currentEntry!),
+                    icon: const Icon(Icons.photo_camera_outlined),
+                    label: Text(_fotoYukleniyor
+                        ? l10n.nfcFotoYukleniyor
+                        : l10n.nfcFotoCek),
+                  ),
+                ],
               ],
               if (state.status == NfcStatus.error)
                 _ErrorBox(
@@ -183,6 +283,13 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
   }
 
   AppLocalizations get _l10n => AppLocalizations.of(context);
+
+  String _konumUyarisi(AppLocalizations l10n, KonumDurumu durum) =>
+      switch (durum) {
+        KonumDurumu.izinYok => l10n.nfcKonumIzinYok,
+        KonumDurumu.servisKapali => l10n.nfcKonumServisKapali,
+        _ => l10n.nfcKonumYok,
+      };
 
   String _statusLabel(AppLocalizations l10n, NfcStatus status) {
     return switch (status) {
@@ -266,11 +373,20 @@ class _OutboxOutcome extends StatelessWidget {
             ),
       // `lastError` SUNUCU metnidir (tur 14'ten beri istegin dilinde;
       // tur 14 oncesi kuyruga yazilmis eski kayitlar Turkce kalir).
-      OutboxStatus.kaliciHata => _ScanOutcome(
-          icon: Icons.link_off,
-          color: Colors.orange,
-          text: e.lastError ?? l10n.nfcEslesmeYok,
-        ),
+      // (P34) Fotograf kapisi KALICI BIR HATA DEGIL: yapilacak sey bellidir
+      // ve ekran altta kamera butonunu gosterir — "eslesmedi" ikonuyla
+      // gostermek kullaniciya kaydin kaybedildigini dusundururdu.
+      OutboxStatus.kaliciHata => e.hataKodu == okutmaFotoGerekliKod
+          ? _ScanOutcome(
+              icon: Icons.photo_camera_outlined,
+              color: Colors.orange,
+              text: l10n.nfcFotoGerekli,
+            )
+          : _ScanOutcome(
+              icon: Icons.link_off,
+              color: Colors.orange,
+              text: e.lastError ?? l10n.nfcEslesmeYok,
+            ),
     };
   }
 }

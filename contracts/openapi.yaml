@@ -711,6 +711,14 @@ paths:
           required: false
           schema: { type: string, format: date }
           description: "YYYY-MM-DD (tenant tz); verilmezse bugun"
+        - name: konumsuz
+          in: query
+          required: false
+          schema: { type: boolean, default: false }
+          description: >
+            (P34) Yalniz konumu OLMAYAN okutmalar. `konumsuz_sayisi` alani
+            bu suzgecten BAGIMSIZ hesaplanir — aksi halde suzgeci acan amir
+            "kac tanesi" sorusunu ancak satirlari sayarak yanitlardi.
       responses:
         "200":
           description: Gunun taramalari
@@ -725,7 +733,26 @@ paths:
       description: |
         Mobil istemcinin checkpoint okutma kanitini gonderdigi endpoint.
         Offline kuyruktan cift gonderimi engellemek icin `Idempotency-Key`
-        header'i ZORUNLUDUR. Ayni key ile ikinci istek 200 + ilk kaydi doner
+        header'i ZORUNLUDUR.
+
+        (P34) KONUM BIR KANITTIR, ON KOSUL DEGIL: izin reddedilse veya sinyal
+        gelmese de okutma KAYDEDILIR — ama SESSIZ KALMAZ. `konum_durumu`
+        NEDENI tasir (`var` | `izin_yok` | `servis_kapali` | `zaman_asimi` |
+        `bilinmiyor`); gonderilmezse sunucu turetir (koordinat varsa `var`,
+        yoksa `bilinmiyor` — alan yoklugunu "izin reddi" saymak OLMAYAN bir
+        reddi raporlamak olurdu). `konum_durumu: var` iken koordinat zorunlu
+        (422; DB CHECK'i de ayni sozu tutar).
+
+        (P34) BASLANGIC FOTOGRAFI (tenant ayari
+        `tur_baslangic_foto_zorunlu`): acikken, bir tur penceresinin ILK
+        okutmasi `foto_key` olmadan **422 `foto_gerekli`** doner. Neden
+        fotograf: NTAG424 SDM zaten etiketin FIZIKSEL varligini
+        kriptografik olarak kanitliyor — "1 metre gidip gel" turu bir hareket
+        kanitina gerek YOK. Fotografin ekledigi sey BASKA bir boyut: ortam ve
+        gunun saati (gunduz/gece); GPS de konumu ekler. Yalniz ILK okutma
+        istenir — her noktada fotograf turu iki katina cikarirdi. Istemci
+        AYNI Idempotency-Key ile fotografli govdeyi yeniden gonderir (ilk
+        deneme reddedildigi icin sunucuda kayit yoktur, cakisma olmaz). Ayni key ile ikinci istek 200 + ilk kaydi doner
         (yeni kayit olusturmaz).
 
         nfc_tag_uid -> checkpoint eslesmesi NORMALIZE edilir (strip + upper;
@@ -2988,9 +3015,14 @@ paths:
       tags: [tenant]
       summary: "Tenant ayarlarini guncelle (admin: tum alanlar / yonetici: yalniz ad)"
       description: >
-        admin `ad` + `timezone` + `yonetim_email` gonderebilir. `yonetici` YALNIZ
-        `ad` gonderebilir (tesisini yeniden adlandirir) — baska alan gonderirse
-        403. Diger roller 403. `slug` ve tenant `id` ASLA degismez.
+        admin TUM alanlari gonderebilir. `yonetici` SAHA ISLETMESI alanlarini
+        gonderebilir: `ad`, konum (`konum_ad`/`konum_lat`/`konum_lon`),
+        `otopark_kapasite`, ANPR esigi/otomatik cikis ve (P34) tur alarmi
+        ayarlari (`tur_gecikme_toleransi_dk`, `tur_alarm_tekrar_sayisi`,
+        `tur_baslangic_foto_zorunlu`) — turu PLANLAYAN kisi toleransi da
+        ayarlayabilmeli; platform operatorune birakmak her esik degisikligini
+        destek talebine cevirirdi. Baska alan gonderirse 403. Diger roller
+        403. `slug` ve tenant `id` ASLA degismez.
       requestBody:
         required: true
         content:
@@ -8358,6 +8390,12 @@ components:
         okutma_zamani: { type: string, format: date-time }
         gps_lat: { type: number, format: double, nullable: true }
         gps_lng: { type: number, format: double, nullable: true }
+        konum_durumu:
+          type: string
+          enum: [var, izin_yok, servis_kapali, zaman_asimi, bilinmiyor]
+          default: bilinmiyor
+          description: (P34) Konumun NEDEN yok oldugu
+        gps_dogruluk_m: { type: number, format: double, nullable: true }
         imza_dogrulandi: { type: boolean }
     ScanReportResponse:
       type: object
@@ -8367,6 +8405,12 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/ScanReportItem" }
+        konumsuz_sayisi:
+          type: integer
+          default: 0
+          description: >
+            (P34) O gunun konumsuz okutma sayisi — `konumsuz` suzgecinden
+            BAGIMSIZ hesaplanir.
     ScanCreate:
       type: object
       required: [nfc_tag_uid, okutma_zamani]
@@ -8391,10 +8435,39 @@ components:
           description: "Cihazin okuttugu an (UTC). Offline gecikmeli gonderilebilir."
         gps_lat: { type: number, format: double, nullable: true }
         gps_lng: { type: number, format: double, nullable: true }
+        konum_durumu:
+          type: string
+          enum: [var, izin_yok, servis_kapali, zaman_asimi, bilinmiyor]
+          nullable: true
+          description: >
+            (P34) Konum NEDEN yok? Verilmezse SUNUCU TURETIR: koordinat varsa
+            `var`, yoksa `bilinmiyor`. Uc farkli durumun tek bir NULL'a inmesi,
+            amirin "konumsuz okutma" diye bir sey OLDUGUNU fark etmesini
+            engellerdi. `var` gonderilirse koordinat ZORUNLUDUR (422).
+        gps_dogruluk_m:
+          type: number
+          format: double
+          nullable: true
+          minimum: 0
+          description: >
+            (P34) Metre. AYRI alandir: 5 m ile 2 km dogrulukla alinmis konum
+            ekranda AYNI gorunurdu ve ikincisi kanit degeri tasimaz.
+        foto_key:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: >
+            (P34) Tur baslangic fotografinin DEPO ANAHTARI
+            (`POST /uploads/presign` ile alinir). Tenant namespace'i
+            dogrulanir — baska tenant'in objesini tur kaniti diye baglamak
+            IDOR olurdu (422 `invalid_foto_key`).
         foto_url:
           type: string
           nullable: true
-          description: "Onceden yuklenmis fotografin URL'i"
+          deprecated: true
+          description: >-
+            Sozlesmenin ilk surumunden kalma; DOGRULANMAZ. Yeni istemciler
+            `foto_key` gonderir (ikisi de ayni kolona yazilir).
         imza_dogrulandi:
           type: boolean
           default: false
@@ -8432,6 +8505,12 @@ components:
         okutma_zamani: { type: string, format: date-time }
         gps_lat: { type: number, format: double, nullable: true }
         gps_lng: { type: number, format: double, nullable: true }
+        konum_durumu:
+          type: string
+          enum: [var, izin_yok, servis_kapali, zaman_asimi, bilinmiyor]
+          default: bilinmiyor
+          description: (P34) Konumun NEDEN yok oldugu
+        gps_dogruluk_m: { type: number, format: double, nullable: true }
         foto_url: { type: string, nullable: true }
         imza_dogrulandi:
           type: boolean
@@ -9834,6 +9913,31 @@ components:
             ACMAZ, `onay_bekliyor` durumuna duser. `1.0` = hicbir okumaya
             guvenme (hepsi onaya), `0.0` = hepsini isle — ikisi de gecerli
             ayarlardir.
+        tur_gecikme_toleransi_dk:
+          type: integer
+          minimum: 1
+          maximum: 240
+          default: 10
+          description: >
+            (P34) Tur penceresi acildiktan sonra bu kadar dakika icinde
+            okutma gelmezse gecikme alarmi baslar. TENANT AYARIDIR: 10 dk
+            bir sitede makul, kampus buyuklugunde erken alarm demektir.
+        tur_alarm_tekrar_sayisi:
+          type: integer
+          minimum: 0
+          maximum: 10
+          default: 3
+          description: >
+            (P34) Alarm kac kez tekrarlanir. Araliklar KATLANIR (tolerans,
+            2x, 4x...). **0 = alarm KAPALI** ve gecerli bir tercihtir; ust
+            sinir bildirim yorgunlugunu onler.
+        tur_baslangic_foto_zorunlu:
+          type: boolean
+          default: false
+          description: >
+            (P34) Tur penceresinin ilk okutmasinda kamera fotografi
+            zorunlu mu? Urun kurali DEGIL tenant tercihi: gece vardiyasinda
+            kamera kullanimi her sitede kabul gormez.
         anpr_otomatik_cikis:
           type: boolean
           default: true
@@ -9874,6 +9978,19 @@ components:
         anpr_otomatik_cikis:
           type: boolean
           description: "(P16) Cikis olayinda acik gecis otomatik kapatilsin mi"
+        tur_gecikme_toleransi_dk:
+          type: integer
+          minimum: 1
+          maximum: 240
+          description: (P34) Tur gecikme alarmi toleransi (dakika)
+        tur_alarm_tekrar_sayisi:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: "(P34) Alarm tekrar sayisi; 0 = KAPALI"
+        tur_baslangic_foto_zorunlu:
+          type: boolean
+          description: (P34) Tur baslangicinda kamera fotografi zorunlu mu
 
     # ---------------------- yonetici iletisim ---------------------- #
     YoneticiKart:

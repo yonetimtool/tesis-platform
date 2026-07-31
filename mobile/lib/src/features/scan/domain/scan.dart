@@ -11,6 +11,9 @@ class ScanDraft {
     this.checkpointId,
     this.gpsLat,
     this.gpsLng,
+    this.konumDurumu,
+    this.gpsDogrulukM,
+    this.fotoKey,
     this.sdmPiccData,
     this.sdmCmac,
   });
@@ -24,6 +27,17 @@ class ScanDraft {
   final String? checkpointId;
   final double? gpsLat;
   final double? gpsLng;
+
+  /// (P34) Konum NEDEN yok? Gonderilmezse sunucu turetir ('bilinmiyor').
+  /// Uc farkli durumun tek bir NULL'a inmesi, amirin "konumsuz okutma" diye
+  /// bir sey OLDUGUNU fark etmesini engellerdi.
+  final String? konumDurumu;
+
+  /// (P34) Konum dogrulugu (metre).
+  final double? gpsDogrulukM;
+
+  /// (P34) Tur baslangic fotografinin DEPO ANAHTARI (/uploads/presign).
+  final String? fotoKey;
 
   /// NTAG424 SDM ENCPICCData (32 hex) — etiketin NDEF URL'inden. NTAG21x'te
   /// veya ayristirilamadiginda null; scan SDM'siz de kabul edilir
@@ -39,6 +53,9 @@ class ScanDraft {
         if (checkpointId != null) 'checkpoint_id': checkpointId,
         if (gpsLat != null) 'gps_lat': gpsLat,
         if (gpsLng != null) 'gps_lng': gpsLng,
+        if (konumDurumu != null) 'konum_durumu': konumDurumu,
+        if (gpsDogrulukM != null) 'gps_dogruluk_m': gpsDogrulukM,
+        if (fotoKey != null) 'foto_key': fotoKey,
         // Sozlesme: iki alan BIRLIKTE gonderilir; biri eksikse ikisi de
         // atlanir (backend anahtarsiz/alansiz scan'i yine kabul eder).
         if (sdmPiccData != null && sdmCmac != null) ...{

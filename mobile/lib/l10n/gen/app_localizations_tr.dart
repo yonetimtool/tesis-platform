@@ -4353,4 +4353,29 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get odeBasarili => 'Ödemeniz alındı.';
+
+  @override
+  String get nfcFotoGerekli => 'Tura başlamak için fotoğraf gerekli.';
+
+  @override
+  String get nfcFotoCek => 'Fotoğraf çek ve gönder';
+
+  @override
+  String get nfcFotoYukleniyor => 'Fotoğraf yükleniyor...';
+
+  @override
+  String nfcFotoYuklenemedi(String hata) {
+    return 'Fotoğraf yüklenemedi: $hata';
+  }
+
+  @override
+  String get nfcKonumYok => 'Konum alınamadı — okutma konumsuz kaydedildi.';
+
+  @override
+  String get nfcKonumIzinYok =>
+      'Konum izni verilmedi — okutma konumsuz kaydedildi.';
+
+  @override
+  String get nfcKonumServisKapali =>
+      'Konum servisi kapalı — okutma konumsuz kaydedildi.';
 }

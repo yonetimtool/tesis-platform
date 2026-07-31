@@ -1348,5 +1348,12 @@
   "odeKartKapali": "El pago con tarjeta aún no está habilitado. Puede usar una transferencia bancaria.",
   "odeHavaleKapali": "La comunidad aún no ha definido una cuenta bancaria. Contacte con la administración.",
   "odeBorcYok": "No tiene deudas pendientes.",
-  "odeBasarili": "Se ha recibido su pago."
+  "odeBasarili": "Se ha recibido su pago.",
+  "nfcFotoGerekli": "Se requiere una foto para iniciar la ronda.",
+  "nfcFotoCek": "Hacer foto y enviar",
+  "nfcFotoYukleniyor": "Subiendo la foto...",
+  "nfcFotoYuklenemedi": "No se pudo subir la foto: {hata}",
+  "nfcKonumYok": "Ubicación no disponible — el escaneo se registró sin ella.",
+  "nfcKonumIzinYok": "Permiso de ubicación denegado — el escaneo se registró sin ella.",
+  "nfcKonumServisKapali": "Los servicios de ubicación están desactivados — escaneo sin ubicación."
 }

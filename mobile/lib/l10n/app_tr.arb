@@ -1868,5 +1868,19 @@
   "odeKartKapali": "Kart ödemesi henüz açık değil. Şimdilik banka havalesi kullanabilirsiniz.",
   "odeHavaleKapali": "Site henüz banka hesabı tanımlamamış. Yönetime başvurun.",
   "odeBorcYok": "Ödenmemiş borcunuz yok.",
-  "odeBasarili": "Ödemeniz alındı."
+  "odeBasarili": "Ödemeniz alındı.",
+  "nfcFotoGerekli": "Tura başlamak için fotoğraf gerekli.",
+  "nfcFotoCek": "Fotoğraf çek ve gönder",
+  "nfcFotoYukleniyor": "Fotoğraf yükleniyor...",
+  "nfcFotoYuklenemedi": "Fotoğraf yüklenemedi: {hata}",
+  "@nfcFotoYuklenemedi": {
+    "placeholders": {
+      "hata": {
+        "type": "String"
+      }
+    }
+  },
+  "nfcKonumYok": "Konum alınamadı — okutma konumsuz kaydedildi.",
+  "nfcKonumIzinYok": "Konum izni verilmedi — okutma konumsuz kaydedildi.",
+  "nfcKonumServisKapali": "Konum servisi kapalı — okutma konumsuz kaydedildi."
 }

@@ -4623,4 +4623,29 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get odeBasarili => 'تم استلام دفعتك.';
+
+  @override
+  String get nfcFotoGerekli => 'الصورة مطلوبة لبدء الجولة.';
+
+  @override
+  String get nfcFotoCek => 'التقاط صورة وإرسال';
+
+  @override
+  String get nfcFotoYukleniyor => 'جارٍ رفع الصورة...';
+
+  @override
+  String nfcFotoYuklenemedi(String hata) {
+    return 'فشل رفع الصورة: $hata';
+  }
+
+  @override
+  String get nfcKonumYok => 'تعذّر تحديد الموقع — تم تسجيل المسح بدون موقع.';
+
+  @override
+  String get nfcKonumIzinYok =>
+      'لم يُمنح إذن الموقع — تم تسجيل المسح بدون موقع.';
+
+  @override
+  String get nfcKonumServisKapali =>
+      'خدمة الموقع مغلقة — تم تسجيل المسح بدون موقع.';
 }

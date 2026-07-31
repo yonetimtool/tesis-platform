@@ -1348,5 +1348,12 @@
   "odeKartKapali": "Card payment is not enabled yet. You can use a bank transfer for now.",
   "odeHavaleKapali": "The site has not defined a bank account yet. Please contact the management.",
   "odeBorcYok": "You have no outstanding debt.",
-  "odeBasarili": "Your payment was received."
+  "odeBasarili": "Your payment was received.",
+  "nfcFotoGerekli": "A photo is required to start the patrol.",
+  "nfcFotoCek": "Take a photo and send",
+  "nfcFotoYukleniyor": "Uploading photo...",
+  "nfcFotoYuklenemedi": "Photo upload failed: {hata}",
+  "nfcKonumYok": "Location unavailable — the scan was recorded without it.",
+  "nfcKonumIzinYok": "Location permission denied — the scan was recorded without it.",
+  "nfcKonumServisKapali": "Location services are off — the scan was recorded without it."
 }

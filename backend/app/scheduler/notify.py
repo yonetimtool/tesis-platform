@@ -1,7 +1,9 @@
 """Bildirim kancasi — kacirilan turu KALICI notification kaydina yazar.
 
 Idempotent: ON CONFLICT (tenant_id, tip, patrol_window_id) DO NOTHING — ayni
-kacirilan pencere icin tekrar kayit uretmez. Yazma, cagiranin (scheduler) ACTIVE
+kacirilan pencere icin tekrar kayit uretmez. (0023'ten sonra bu teklik KISMI
+bir indekstir: `gecikmis_okutma` haric — o alarm TEKRAR ETMEK ZORUNDADIR ve
+idempotencysi `dedup_key` = tip:pencere:ADIM ile saglanir.) Yazma, cagiranin (scheduler) ACTIVE
 psycopg baglantisi + tenant context'i (SET LOCAL app.current_tenant_id) icinde
 yapilir; boylece RLS WITH CHECK saglanir.
 
@@ -30,6 +32,11 @@ _ALARM_ROLES: tuple[str, ...] = ("admin", "security")
 
 # Bildirim kimligi = `notification.tip` = `data.tip` (tek deger, uc yerde ayni).
 _KACIRILAN_TUR = "kacirilan_tur"
+_GECIKMIS_OKUTMA = "gecikmis_okutma"
+# (P34) Gecikme alarmini ROL olarak alanlar. Gorevlinin KENDISI ayrica
+# KISI olarak hedeflenir (asagida) — rol yayinina birakmak, o vardiyada
+# olmayan tum guvenlik personelini de titretirdi.
+_GECIKME_ROLLERI: tuple[str, ...] = ("admin", "yonetici")
 
 
 def dispatch_external(
@@ -171,7 +178,9 @@ def notify_missed_tour(
         "INSERT INTO notification (tenant_id, tip, patrol_window_id, patrol_plan_id, "
         "mesaj, mesaj_kimlik, mesaj_veri) "
         "VALUES (%s, 'kacirilan_tur', %s, %s, %s, %s, %s::jsonb) "
-        "ON CONFLICT (tenant_id, tip, patrol_window_id) DO NOTHING",
+        # KISMI indeks (0023): cikarim icin WHERE yuklemi de verilir.
+        "ON CONFLICT (tenant_id, tip, patrol_window_id) "
+        "WHERE tip <> 'gecikmis_okutma'::notification_tip DO NOTHING",
         (tenant_id, window_id, plan_id, mesaj, _KACIRILAN_TUR, json.dumps(veri)),
     )
     logger.warning(
@@ -185,3 +194,62 @@ def notify_missed_tour(
         params=veri,
         data={"tip": _KACIRILAN_TUR, "patrol_window_id": str(window_id)},
     )
+
+
+def notify_gecikmis_okutma(
+    *,
+    conn,
+    tenant_id: uuid.UUID,
+    plan_id: uuid.UUID,
+    window_id: uuid.UUID,
+    plan_adi: str | None,
+    dakika: int,
+    adim: int,
+    gorevli_ids: Sequence[uuid.UUID],
+) -> bool:
+    """(P34) Pencere acik ama okutma gelmedi — TEKRARLI alarm.
+
+    IDEMPOTENCY `dedup_key` ILEDIR, (tip, window) ile DEGIL: kacirilan tur
+    icin pencere basina TEK kayit dogruydu, burada AMAC tekrar etmektir.
+    Anahtara `adim` girer; boylece scheduler ayni dakikada iki kez kossa
+    bile ayni adim iki bildirim uretmez.
+
+    Donus: yeni bildirim yazildi mi (True) — cagiran sayaci buna gore artirir.
+    """
+    veri = {"plan": plan_adi or "-", "dakika": dakika}
+    mesaj = push_govdesi(_GECIKMIS_OKUTMA, VARSAYILAN_DIL, veri)
+    dedup = f"{_GECIKMIS_OKUTMA}:{window_id}:{adim}"
+    cur = conn.execute(
+        "INSERT INTO notification (tenant_id, tip, patrol_window_id, patrol_plan_id, "
+        "dedup_key, mesaj, mesaj_kimlik, mesaj_veri) "
+        "VALUES (%s, 'gecikmis_okutma', %s, %s, %s, %s, %s, %s::jsonb) "
+        "ON CONFLICT (tenant_id, dedup_key) DO NOTHING",
+        (tenant_id, window_id, plan_id, dedup, mesaj, _GECIKMIS_OKUTMA,
+         json.dumps(veri)),
+    )
+    if cur.rowcount == 0:
+        return False  # bu adim zaten bildirildi
+    logger.warning(
+        "LATE_PATROL tenant=%s plan=%s window=%s adim=%s dakika=%s",
+        tenant_id, plan_id, window_id, adim, dakika,
+    )
+    data = {"tip": _GECIKMIS_OKUTMA, "patrol_window_id": str(window_id)}
+    # GOREVLIYE KISI OLARAK: alarmin muhatabi turu yapacak kisidir.
+    if gorevli_ids:
+        dispatch_external(
+            _GECIKMIS_OKUTMA,
+            tenant_id=tenant_id,
+            target_user_ids=list(gorevli_ids),
+            params=veri,
+            data=data,
+        )
+    # YONETIME ROL OLARAK: gorevli telefonu duymuyorsa turu baskasi
+    # devralabilsin — tek kisiye bagli alarm SESSIZ BOSLUK uretirdi.
+    dispatch_external(
+        _GECIKMIS_OKUTMA,
+        tenant_id=tenant_id,
+        target_roles=_GECIKME_ROLLERI,
+        params=veri,
+        data=data,
+    )
+    return True

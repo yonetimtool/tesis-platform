@@ -57,6 +57,9 @@ async def list_scans(
     tarih: date | None = Query(
         None, description="YYYY-MM-DD (tenant timezone); verilmezse bugun"
     ),
+    konumsuz: bool = Query(
+        False, description="(P34) yalniz konumu olmayan okutmalar"
+    ),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_REPORT_READER),
 ) -> ScanReportResponse:
@@ -75,20 +78,30 @@ async def list_scans(
     end = start + timedelta(days=1)
 
     guard = aliased(AppUser)
+    kosullar = [ScanEvent.okutma_zamani >= start, ScanEvent.okutma_zamani < end]
+    # (P34) Sayi SUZGECTEN BAGIMSIZ: `konumsuz=true` ile listeyi daraltan amir
+    # "kac tanesi" sorusunu satirlari sayarak yanitlamak zorunda kalmasin.
+    konumsuz_sayisi = (
+        await db.execute(
+            select(func.count())
+            .select_from(ScanEvent)
+            .where(*kosullar, ScanEvent.konum_durumu != "var")
+        )
+    ).scalar_one()
+    if konumsuz:
+        kosullar.append(ScanEvent.konum_durumu != "var")
     rows = (
         await db.execute(
             select(ScanEvent, Checkpoint.ad, guard.ad)
             .join(Checkpoint, Checkpoint.id == ScanEvent.checkpoint_id)
             .join(guard, guard.id == ScanEvent.guard_id)
-            .where(
-                ScanEvent.okutma_zamani >= start,
-                ScanEvent.okutma_zamani < end,
-            )
+            .where(*kosullar)
             .order_by(ScanEvent.okutma_zamani)
         )
     ).all()
     return ScanReportResponse(
         tarih=day,
+        konumsuz_sayisi=konumsuz_sayisi,
         items=[
             ScanReportItem(
                 id=s.id,
@@ -99,6 +112,10 @@ async def list_scans(
                 okutma_zamani=s.okutma_zamani,
                 gps_lat=float(s.gps_lat) if s.gps_lat is not None else None,
                 gps_lng=float(s.gps_lng) if s.gps_lng is not None else None,
+                konum_durumu=s.konum_durumu,
+                gps_dogruluk_m=(
+                    float(s.gps_dogruluk_m) if s.gps_dogruluk_m is not None else None
+                ),
                 imza_dogrulandi=s.imza_dogrulandi,
             )
             for s, cad, gad in rows
@@ -106,10 +123,91 @@ async def list_scans(
     )
 
 
+def _konum_durumu(body: ScanCreate) -> str:
+    """(P34) Istemci soylemediyse SUNUCU TURETIR.
+
+    Eski istemciler `konum_durumu` gondermez; koordinat varsa 'var',
+    yoksa 'bilinmiyor'. Yoklugu 'izin_yok' saymak, OLMAYAN bir izin
+    reddini raporlamak olurdu.
+    """
+    if body.konum_durumu is not None:
+        return body.konum_durumu
+    return "var" if (body.gps_lat is not None and body.gps_lng is not None) else "bilinmiyor"
+
+
+#: (P34) Okutmanin dustugu AKTIF pencere — baslangic fotografi kapisi bunu
+#: kullanir. `patrol_window_id` gonderilmemis olsa da bulunur: kapinin
+#: istemcinin gonullu bir alan doldurmasina bagli olmasi, kapiyi alani
+#: bos birakarak asmak demekti.
+_PENCERE_BUL_SQL = text(
+    """
+    SELECT w.id, w.pencere_baslangic, w.pencere_bitis
+    FROM patrol_window w
+    JOIN patrol_plan_checkpoint ppc ON ppc.patrol_plan_id = w.patrol_plan_id
+    WHERE ppc.checkpoint_id = :cp_id
+      AND :okutma >= w.pencere_baslangic
+      AND :okutma <  w.pencere_bitis
+    ORDER BY w.pencere_baslangic
+    LIMIT 1
+    """
+)
+
+
+async def _foto_kapisi(
+    db: AsyncSession, *, user: AppUser, checkpoint_id, okutma, foto_url: str | None
+) -> None:
+    """(P34) Tenant acmissa: turun ILK okutmasi fotografsiz kabul edilmez.
+
+    NEDEN FOTOGRAF: NTAG424 SDM zaten etiketin FIZIKSEL varligini
+    kriptografik olarak kanitliyor — "1 metre gidip gel" turu bir hareket
+    kanitina gerek yok. Fotografin ekledigi sey BASKA bir boyut: ortam ve
+    gunun saati (gunduz/gece) kanidi; GPS de konumu ekler. Ucu birlikte
+    "etiket oradaydi + kisi oradaydi + o saatte oradaydi" der.
+
+    YALNIZ ILK OKUTMA: her noktada fotograf istemek turu iki katina
+    cikarirdi ve gorevliyi cezalandirirdi.
+    """
+    if foto_url:
+        return
+    ayar = (
+        await db.execute(select(Tenant.tur_baslangic_foto_zorunlu))
+    ).scalar_one_or_none()
+    if not ayar:
+        return
+    pencere = (
+        await db.execute(
+            _PENCERE_BUL_SQL, {"cp_id": checkpoint_id, "okutma": okutma}
+        )
+    ).first()
+    if pencere is None:
+        return  # plansiz/pencere disi okutma — tur baslangici degil
+    _, w_start, w_end = pencere
+    onceki = (
+        await db.execute(
+            select(ScanEvent.id).where(
+                ScanEvent.guard_id == user.id,
+                ScanEvent.okutma_zamani >= w_start,
+                ScanEvent.okutma_zamani < w_end,
+            ).limit(1)
+        )
+    ).scalar_one_or_none()
+    if onceki is None:
+        # AYRI KOD: istemci bunu "govde gecersiz"den ayirt edebilmeli —
+        # yapilacak sey belli (fotograf cek, ayni anahtarla yeniden gonder)
+        # ve genel bir dogrulama hatasi bu eylemi gizlerdi.
+        raise APIError(422, "foto_gerekli", "tur_baslangic_fotografi_gerekli")
+
+
 def _is_unique_violation(exc: IntegrityError) -> bool:
     orig = getattr(exc, "orig", None)
     code = getattr(orig, "sqlstate", None) or getattr(orig, "pgcode", None)
     return code == "23505"
+
+
+def _dogruluk_eq(a, b) -> bool:
+    if a is None or b is None:
+        return a is b
+    return round(float(a), 1) == round(float(b), 1)
 
 
 def _coord_eq(a, b) -> bool:
@@ -158,7 +256,8 @@ async def _mark_completed_windows(db: AsyncSession, checkpoint_id, okutma) -> No
 
 
 def _same_request(existing: ScanEvent, *, guard_id, checkpoint_id, patrol_window_id,
-                  nfc_tag_uid, okutma_zamani, gps_lat, gps_lng, foto_url) -> bool:
+                  nfc_tag_uid, okutma_zamani, gps_lat, gps_lng, foto_url,
+                  konum_durumu, gps_dogruluk_m) -> bool:
     """Idempotent tekrar mi (ayni govde) yoksa cakisma mi (farkli govde)?
 
     imza_dogrulandi KARSILASTIRILMAZ: artik sunucu-turetilmis deger (govde girdisi
@@ -175,6 +274,10 @@ def _same_request(existing: ScanEvent, *, guard_id, checkpoint_id, patrol_window
         and _coord_eq(existing.gps_lat, gps_lat)
         and _coord_eq(existing.gps_lng, gps_lng)
         and existing.foto_url == foto_url
+        # (P34) Konum alanlari da govdenin parcasidir: ayni anahtarla
+        # "konumsuz" gonderip sonra konum eklemek SESSIZCE yutulmamali.
+        and existing.konum_durumu == konum_durumu
+        and _dogruluk_eq(existing.gps_dogruluk_m, gps_dogruluk_m)
     )
 
 
@@ -249,6 +352,22 @@ async def create_scan(
     if okutma.tzinfo is None:  # zamanlar UTC (konvansiyon)
         okutma = okutma.replace(tzinfo=timezone.utc)
 
+    # (P34) Fotograf: yeni istemciler DEPO ANAHTARI gonderir (dogrulanir),
+    # eski `foto_url` alani dogrulanmadan kabul edilir (geriye donuk uyum).
+    if body.foto_key is not None and not body.foto_key.startswith(
+        f"{user.tenant_id}/"
+    ):
+        # Baska tenant'in objesini tur kaniti diye baglamak IDOR olurdu.
+        raise APIError(422, "invalid_foto_key", "foto_key_alan_disi")
+    foto = body.foto_key or body.foto_url
+
+    # (P34) Konum durumu: istemci soylemediyse turetilir. 'var' dendiyse
+    # koordinat ZORUNLUDUR — aksi halde rapor "konumu var" deyip
+    # gosteremezdi (CHECK de ayni sozu DB'de tutar).
+    konum_durumu = _konum_durumu(body)
+    if konum_durumu == "var" and (body.gps_lat is None or body.gps_lng is None):
+        raise APIError(422, "validation_error", "konum_var_ama_koordinat_yok")
+
     def _idempotent_yanit(existing: ScanEvent) -> JSONResponse:
         if _same_request(
             existing,
@@ -259,7 +378,9 @@ async def create_scan(
             okutma_zamani=okutma,
             gps_lat=body.gps_lat,
             gps_lng=body.gps_lng,
-            foto_url=body.foto_url,
+            foto_url=foto,
+            konum_durumu=konum_durumu,
+            gps_dogruluk_m=body.gps_dogruluk_m,
         ):
             return JSONResponse(
                 status_code=200, content=ScanEventOut.model_validate(existing).model_dump(mode="json")
@@ -274,7 +395,15 @@ async def create_scan(
     if existing is not None:
         return _idempotent_yanit(existing)
 
-    # 4) SDM dogrulamasi (karar tablosu) — imza_dogrulandi YALNIZ buradan.
+    # 4) BASLANGIC FOTOGRAFI KAPISI — SDM'DEN ONCE: reddedilecek bir
+    # okutma icin SDM sayacini ilerletmek, etiketi bir sonraki gecerli
+    # okutmada replay saydirabilirdi.
+    await _foto_kapisi(
+        db, user=user, checkpoint_id=checkpoint.id, okutma=okutma,
+        foto_url=foto,
+    )
+
+    # 5) SDM dogrulamasi (karar tablosu) — imza_dogrulandi YALNIZ buradan.
     imza_dogrulandi, sdm_sayac = await _verify_sdm_or_422(db, checkpoint, body)
 
     obj = ScanEvent(
@@ -286,7 +415,9 @@ async def create_scan(
         okutma_zamani=okutma,
         gps_lat=body.gps_lat,
         gps_lng=body.gps_lng,
-        foto_url=body.foto_url,
+        konum_durumu=konum_durumu,
+        gps_dogruluk_m=body.gps_dogruluk_m,
+        foto_url=foto,
         imza_dogrulandi=imza_dogrulandi,
         idempotency_key=idempotency_key,
     )

@@ -40,6 +40,12 @@ _ADMIN_VEYA_YONETICI = require_role("admin", "yonetici")
 _YONETICI_YAZABILIR = {
     "ad", "konum_ad", "konum_lat", "konum_lon", "otopark_kapasite",
     "anpr_guven_esigi", "anpr_otomatik_cikis",
+    # (P34) Tur alarmi ve baslangic fotografi SAHA ISLETMESIDIR: turu
+    # planlayan yonetici toleransi da ayarlayabilmeli. Platform
+    # operatorune (admin) birakmak, her esik degisikligini destek
+    # talebine cevirirdi.
+    "tur_gecikme_toleransi_dk", "tur_alarm_tekrar_sayisi",
+    "tur_baslangic_foto_zorunlu",
 }
 
 
@@ -54,6 +60,9 @@ def _to_settings(t: Tenant) -> TenantSettings:
         otopark_kapasite=t.otopark_kapasite,
         anpr_guven_esigi=float(t.anpr_guven_esigi),
         anpr_otomatik_cikis=t.anpr_otomatik_cikis,
+        tur_gecikme_toleransi_dk=t.tur_gecikme_toleransi_dk,
+        tur_alarm_tekrar_sayisi=t.tur_alarm_tekrar_sayisi,
+        tur_baslangic_foto_zorunlu=t.tur_baslangic_foto_zorunlu,
     )
 
 

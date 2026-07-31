@@ -12,7 +12,11 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 
-from app.scheduler.service import detect_missed, materialize_windows
+from app.scheduler.service import (
+    detect_gecikmis,
+    detect_missed,
+    materialize_windows,
+)
 
 
 def _parse_now(value: str | None) -> datetime | None:
@@ -29,13 +33,16 @@ def main() -> int:
     p.add_argument("--once", action="store_true", help="uretim + tespit")
     p.add_argument("--generate", action="store_true", help="pencere uretimi")
     p.add_argument("--detect", action="store_true", help="kacirilan tur tespiti")
+    p.add_argument("--gecikme", action="store_true", help="(P34) gecikme alarmi")
     p.add_argument("--now", default=None, help="ISO8601 UTC sabit an (test)")
     p.add_argument("--horizon", type=int, default=None, help="kac gun ileri uret")
     args = p.parse_args()
 
     now = _parse_now(args.now)
-    do_gen = args.once or args.generate or not (args.generate or args.detect)
-    do_det = args.once or args.detect or not (args.generate or args.detect)
+    secili = args.generate or args.detect or args.gecikme
+    do_gen = args.once or args.generate or not secili
+    do_det = args.once or args.detect or not secili
+    do_gec = args.once or args.gecikme or not secili
 
     if do_gen:
         created = materialize_windows(now=now, horizon_days=args.horizon)
@@ -43,6 +50,9 @@ def main() -> int:
     if do_det:
         summary = detect_missed(now=now)
         print(f"[scheduler] detect   -> {summary}")
+    if do_gec:
+        alarm = detect_gecikmis(now=now)
+        print(f"[scheduler] gecikme  -> {alarm} alarm")
     return 0
 
 

@@ -663,6 +663,14 @@ class PatrolPlanCheckpointAssign(BaseModel):
 
 
 # -------------------------------- scans ------------------------------------ #
+#: (P34) Konum NEDEN yok? Uc farkli durum (izin reddi / servis kapali /
+#: zaman asimi) tek bir NULL'a inseydi, amir "konumsuz okutma" diye bir sey
+#: OLDUGUNU bile fark edemezdi. `bilinmiyor` = alan hic gonderilmedi
+#: (eski istemci) — bunu `izin_yok` saymak OLMAYAN bir izin reddi
+#: raporlamak olurdu.
+KonumDurumu = Literal["var", "izin_yok", "servis_kapali", "zaman_asimi", "bilinmiyor"]
+
+
 class ScanCreate(BaseModel):
     nfc_tag_uid: str = Field(..., min_length=1)
     # istemci biliyorsa verir; yoksa nfc_tag_uid ile cozulur (nfc kaynak-dogru).
@@ -671,6 +679,17 @@ class ScanCreate(BaseModel):
     okutma_zamani: datetime
     gps_lat: float | None = None
     gps_lng: float | None = None
+    # (P34) Verilmezse SUNUCU TURETIR: koordinat varsa 'var', yoksa
+    # 'bilinmiyor'. Eski istemciler bu alani hic gondermez ve kirilmaz.
+    konum_durumu: KonumDurumu | None = None
+    #: (P34) Metre. 5 m ile 2 km dogruluk ekranda AYNI gorunurdu; ikincisi
+    #: "gorevli noktadaydi" kanit degeri tasimaz.
+    gps_dogruluk_m: float | None = Field(None, ge=0, le=1_000_000)
+    #: (P34) Tur baslangic fotografinin DEPO ANAHTARI (/uploads/presign ile
+    #: alinir, tenant namespace'i dogrulanir). `foto_url` alani sozlesmenin
+    #: ilk surumunden kalmadir ve dogrulanmaz — yeni istemciler `foto_key`
+    #: gonderir; ikisi de ayni kolona yazilir.
+    foto_key: str | None = Field(None, max_length=500)
     foto_url: str | None = None
     # DEPRECATED + YOK SAYILIR: deger artik SUNUCUDA SDM dogrulamasiyla belirlenir.
     # Eski mobil surumler kirilmasin diye govdede kabul edilir ama etkisizdir.
@@ -693,6 +712,8 @@ class ScanEventOut(BaseModel):
     okutma_zamani: datetime
     gps_lat: float | None = None
     gps_lng: float | None = None
+    konum_durumu: KonumDurumu = "bilinmiyor"
+    gps_dogruluk_m: float | None = None
     foto_url: str | None = None
     imza_dogrulandi: bool
     idempotency_key: str
@@ -711,6 +732,10 @@ class ScanReportItem(BaseModel):
     okutma_zamani: datetime
     gps_lat: float | None = None
     gps_lng: float | None = None
+    # (P34) Konum raporda GORUNUR: amir "kac okutma konumsuz" sorusunu
+    # satirlari tek tek acmadan yanitlayabilmeli.
+    konum_durumu: KonumDurumu = "bilinmiyor"
+    gps_dogruluk_m: float | None = None
     imza_dogrulandi: bool
 
 
@@ -719,6 +744,10 @@ class ScanReportResponse(BaseModel):
 
     tarih: date
     items: list[ScanReportItem]
+    #: (P34) O gunun konumsuz okutma sayisi. SESSIZ BOSLUK OLMAZ: sayi
+    #: filtreden BAGIMSIZ hesaplanir, yoksa `konumsuz=true` suzgecini acan
+    #: amir "kac tanesi" sorusunu ancak satirlari sayarak yanitlardi.
+    konumsuz_sayisi: int = 0
 
 
 # ------------------------------ dashboard ---------------------------------- #
@@ -1948,6 +1977,13 @@ class TenantSettings(BaseModel):
     # Cikis olayinda acik gecis otomatik kapansin mi? Tek yonlu kapida
     # (yalniz giris kamerasi) kapatan olmaz — site bunu kapatabilmeli.
     anpr_otomatik_cikis: bool = True
+    # (P34) Tur gecikme alarmi. Tolerans TENANT AYARIDIR: 10 dk bir sitede
+    # makul, kampus buyuklugunde erken alarm demektir. Tekrar 0 = KAPALI.
+    tur_gecikme_toleransi_dk: int = 10
+    tur_alarm_tekrar_sayisi: int = 3
+    # (P34) Kamera fotografi urun kurali DEGIL tenant tercihi: gece
+    # vardiyasinda kamera kullanimi her sitede kabul gormez.
+    tur_baslangic_foto_zorunlu: bool = False
 
 
 class TenantSettingsUpdate(BaseModel):
@@ -1966,6 +2002,11 @@ class TenantSettingsUpdate(BaseModel):
     # 0.0 = "hepsini isle". Ikisi de GECERLI ayarlardir.
     anpr_guven_esigi: float | None = Field(None, ge=0, le=1)
     anpr_otomatik_cikis: bool | None = None
+    # (P34) 0 tekrar = alarm kapali (gecerli tercih); ust sinir bildirim
+    # yorgunlugunu onler. Sinirlar DB CHECK'i ile aynidir.
+    tur_gecikme_toleransi_dk: int | None = Field(None, ge=1, le=240)
+    tur_alarm_tekrar_sayisi: int | None = Field(None, ge=0, le=10)
+    tur_baslangic_foto_zorunlu: bool | None = None
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "TenantSettingsUpdate":
