@@ -126,6 +126,8 @@ class BinaDuzenlemeApi {
     required int katSayisi,
     required int katBasiDaire,
     required int baslangicNo,
+    String? unitTipId,
+    String? unitGrupId,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -135,6 +137,9 @@ class BinaDuzenlemeApi {
           'kat_sayisi': katSayisi,
           'kat_basi_daire': katBasiDaire,
           'baslangic_no': baslangicNo,
+          // (P26) Verilirse PARTININ TAMAMINA uygulanir.
+          'unit_tip_id': ?unitTipId,
+          'unit_grup_id': ?unitGrupId,
         },
       );
       final d = res.data ?? const {};

@@ -17,6 +17,7 @@ import '../features/building_map/presentation/bina_duzenleme_screen.dart';
 import '../features/building_map/presentation/building_schematic_screen.dart';
 import '../features/unit_complaints/presentation/my_complaints_screen.dart';
 import '../features/unit_complaints/presentation/sikayet_kuyrugu_screen.dart';
+import '../features/unit_tanimlari/presentation/unit_tanimlari_screen.dart';
 import '../features/budget/presentation/financial_summary_screen.dart';
 import '../features/budget/presentation/site_budget_screen.dart';
 import '../features/transparency/presentation/transparency_screen.dart';
@@ -90,6 +91,7 @@ class AppRoutes {
   static const sikayetHaritasi = '/sikayet-haritasi';
   static const sikayetlerim = '/sikayetlerim';
   static const sikayetKuyrugu = '/sikayet-kuyrugu';
+  static const daireTanimlari = '/daire-tanimlari';
   static const vardiyalar = '/vardiyalar';
   static const kameralar = '/kameralar';
   static const kameraIzle = '/kamera-izle';
@@ -374,6 +376,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.sikayetKuyrugu,
         builder: (context, state) => const SikayetKuyruguScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.daireTanimlari,
+        builder: (context, state) => const UnitTanimlariScreen(),
       ),
       GoRoute(
         path: AppRoutes.taskDetail,

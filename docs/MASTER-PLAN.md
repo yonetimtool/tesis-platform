@@ -410,6 +410,16 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P26 · Bağımsız bölüm tipleri/grupları.** **Yönetici** ile ana ekranda
+  **"Bağımsız Bölüm Tanımları"** kartı görünmeli (sakin/güvenlikte GÖRÜNMEMELİ).
+  (a) Tipler sekmesinde yeni tip: ad `2+1`, aidat `1250,50` → kaydet → kartta
+  **₺1.250,50** yazmalı. (b) Aidatı **boşalt** → kaydet → **"Tanımsız"**
+  yazmalı; `0` yaz → kaydet → **₺0,00** yazmalı (ikisi AYNI görünmemeli).
+  (c) Gruplar sekmesinde aidat alanı **olmamalı**. (d) Bina Düzenleme'de bir
+  daire aç → **tip/grup seçicileri** çıkmalı; seç → kaydet → daire listesinde
+  tip adı görünmeli. (e) **Toplu daire ekle** → tip seç → oluştur → oluşan
+  dairelerin **hepsi** o tipte olmalı. (f) Bir tipi **sil** → onay "bağlı N
+  daire SİLİNMEZ" demeli → sil → **daireler durmalı**, tipleri boşalmalı.
 - [ ] **P25 · Kamera yayınları — ASIL ÖLÇÜM SÜRÜM DERLEMESİYLE.** Bu maddenin
   hatası **debug derlemede HİÇ GÖRÜNMEZ** (`flutter run` varsayılan olarak
   debug derler ve orada cleartext zaten açıktı); bu yüzden
@@ -1175,7 +1185,7 @@ KAPILAR: `flutter analyze` temiz; `flutter test` **1463 geçti / 0 düştü**;
 (`stream_url` maxLength + katalog hata kimliği).
 
 ### P26 — Unit types & groups with per-type dues
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope (ref docs/design-refs/apsiyon/): Bağımsız Bölüm Tipleri — a freely
 editable, modular list (user types any label: 1+0, 1+1, 2+1, dubleks…), each with
 a default aidat tutarı; Bağımsız Bölüm Grupları (Daire / Villa / Dükkan style).
@@ -1183,6 +1193,64 @@ Units carry tip + grup; building/bulk unit creation allows picking type per unit
 or per batch. NEW revisions; RLS; panel + (where units are shown) mobile surfaces.
 Acceptance: CRUD for types/groups; assignment on units incl. bulk create; per-type
 default dues consumed by P28; contract; quality gates.
+Notes (2026-07-31): **YENİ ŞEMA: `0016`** (`unit_grup`, `unit_tip`, `unit`'e
+iki nullable bağ).
+
+**İKİ AYRI TABLO, BİLEREK.** `unit_grup` = bölümün NE OLDUĞU (Daire / Villa /
+Dükkan); `unit_tip` = BÜYÜKLÜK/düzen (1+0, 2+1, dubleks) + **varsayılan aidat**.
+Tek tabloda birleştirmek (tek "tip" alanı hem Villa hem 2+1 tutsun) **her grup
+× tip kombinasyonunu ayrı satıra zorlardı** ve varsayılan aidat tanımını
+anlamsızlaştırırdı.
+* **Ad SERBEST metin** — desen konmadı: sabit bir enum "1+1,5" ya da "stüdyo"
+  diyen siteyi dışarıda bırakırdı.
+* **Aidat KURUŞ (bigint)**, TL değil (repo geneli `*_kurus` kuralı).
+* **`null` "tanımsız"dır, `0` DEĞİL** — 0 geçerli bir tutardır (muaf daire) ve
+  ikisini karıştırmak P28'de **sessiz sıfır aidat** üretirdi. Bu ayrım
+  sunucuda (`exclude_unset`), sözleşmede, mobil modelde ve testte kilitli.
+* **Bağlar `ON DELETE SET NULL`** — tanım silinince daireler **silinmez**,
+  yalnız sınıflandırması boşalır. Silme 409 vermez: "önce 400 daireyi
+  değiştir" demek kullanıcıyı tanımı pasife alıp listede bırakmaya iterdi.
+  Yanıt **kaç daireyi etkilediğini döner**, yani işlem sessiz değil.
+
+**BULGU — BİLEŞİK FK + `SET NULL` ANAHTARIN TAMAMINI NULL'LAR.** FK
+`(unit_tip_id, tenant_id)` bileşiktir; sütun listesi verilmezse PostgreSQL
+`unit.tenant_id`i de null'lamaya çalışır ve o sütun NOT NULL olduğu için tip
+silme **500** verir. Test yakaladı; `ON DELETE SET NULL (unit_tip_id)`
+(PG 15+ sözdizimi, yığın PG 16) ile düzeltildi. 0016 henüz hiçbir commit'te
+yayınlanmadığı için düzeltme aynı revizyonda yapıldı ve yerel şema
+`downgrade`→`upgrade` ile yeniden kuruldu.
+
+**YÜZEYLER.** Mobil `/daire-tanimlari` ekranı iki sekme (Tipler/Gruplar) —
+tek ekran, çünkü ikisi de aynı küçük tanım listesidir ve kullanıcı site
+kurarken art arda ikisini de doldurur. Daire düzenleme formu ve **toplu daire
+oluşturma** tip/grup seçicisi kazandı; toplu oluşturmada seçim **partinin
+tamamına** uygulanır (bir blok genelde tek tiptir). Seçici: seçenek yoksa
+**çizilmez**, "Seçilmedi" **her zaman durur** (yanlış seçim geri alınabilsin),
+ve **silinmiş bir tanım seçili kalırsa çökmez**.
+Menü girişi yalnız **admin + yönetici**de (site kurulum adımı); saha rolleri
+tanımları OKUYABİLİR (daire listeleri tip/grup adını gösterir) ama yönetemez,
+sakin hiç erişemez — rol matrisi kilidi bunu doğruladı.
+`Unit` çıktısı tip/grup **ADINI da** döner (istemci ayrı istek yapmadan
+listeyi çizsin); adlar **tek sorguda** çözülür — daire başına iki istek, 200
+daire çizen panelde 400 ek sorgu demekti.
+
+TESTLER: `test_unit_tanimlari.py` **16/16** (serbest ad, tip≠grup, aynı adda
+409, null≠0, silme daireyi silmez + etkilenen sayısı, gönderilmeyen alan
+dokunulmaz, toplu atama, tenant izolasyonu, RBAC);
+`p26_daire_tanimlari_test.dart` **11/11**. Menü kilidi (`home_menu_test`,
+auth.md §4 aynası) yeni girişi yakaladı ve admin+yönetici listelerine eklendi
+— saha/sakin listelerine DEĞİL.
+i18n: 16 yeni ARB anahtarı × 7 dil.
+KAPILAR: `flutter analyze` temiz; `flutter test` **1474 geçti / 0 düştü**;
+`flutter build apk --debug` ✓; backend `pytest` **864 geçti / 0 düştü**;
+göç tersinirliği **3/3 OK, bulgu 0** (17 sınır ikişer kez sallandı); sözleşme güncellendi (iki yeni kaynak + `Unit`
+alanları + `/units` süzgeçleri); rol matrisi kilidi 8 yeni ucu yakaladı.
+
+**AÇIK BIRAKILAN (bilinçli):** admin-web paneline tanım sayfası
+EKLENMEDİ. Gerekçe: panel girişi **admin-only**dir ve bu tanımları kuran rol
+pratikte **yönetici**dir (mobil). Panel sayfası P27'nin "Tanımlar" katmanıyla
+birlikte tek seferde yapılmalı — o madde zaten kasa/gelir-gider/firma
+tanımlarını panele getiriyor ve dördü tek bir "Tanımlar" bölümü olmalı.
 
 ### P27 — Accounting definitions layer (Tanımlar)
 Status: BEKLIYOR · Depends-on: P23, P26
@@ -1453,7 +1521,8 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P25 · (bu commit) · Kamera sertlestirme: 2048 karakter siniri (0015, uc katman) + "kamu yayinlari oynamiyor"un KOK NEDENI (cleartext yalniz debug manifestindeydi; P17 restream'i de vuruyordu) + hata artik NEDENE gore konusuyor + ana ekran seridi dortlu ve yonetici/sakin ekranlarina da eklendi.
+- 2026-07-31 · P26 · (bu commit) · Bagimsiz Bolum TIP + GRUP tanimlari (0016): tip = buyukluk + VARSAYILAN AIDAT (null "tanimsiz" != 0 "muaf"), grup = ne oldugu; tanim silinince daire SILINMEZ; daire/toplu olusturmada atama; bilesik FK + SET NULL bulgusu.
+- 2026-07-31 · P25 · 33a7d75 · Kamera sertlestirme: 2048 karakter siniri (0015, uc katman) + "kamu yayinlari oynamiyor"un KOK NEDENI (cleartext yalniz debug manifestindeydi; P17 restream'i de vuruyordu) + hata artik NEDENE gore konusuyor + ana ekran seridi dortlu ve yonetici/sakin ekranlarina da eklendi.
 - 2026-07-31 · P24 · a26bb7c · Sikayet renk skalasi DORT KADEMEYE cikti (tek sikayet artik gorunur; esikler tek tabloda, P37 icin hazir) + KISI BASINA okuma durumu (0014) ve "Yeni / Okunmamis" triyaj kuyrugu (rozet = meta.total, ayri uc yok).
 - 2026-07-31 · P23 · b5416a1 · Sakin yaşam döngüsü: bağ uçları yöneticiye açıldı (sonradan daire atama artık ULAŞILABİLİR), `ResidentUpdate` e-posta + rol_tipi kazandı ("boş bırak" ile "SİL" ayrı), rol_tipi AKTİF bağların hepsine uygulanır (bağsız → 422); yeni şema GEREKMEDİ.
 - 2026-07-31 · P22 (b-g) · 6755a05 · Bildirime dokunma bir yere gidiyor, bildir kisayolu ana ekrana doner (tam yukleme yok), talep/sikayet AYRI akislar, kural gorseli listede, goruntu_kirliligi kategorisi (0013). (a) geri alindi — tani planda.

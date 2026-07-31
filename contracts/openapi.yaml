@@ -3149,6 +3149,206 @@ paths:
   # ================================================================= #
   # AIDAT — unit (daire) + sakin + tahakkuk + odeme
   # ================================================================= #
+  # ================================================================= #
+  # BAGIMSIZ BOLUM TIPLERI + GRUPLARI (P26)
+  # IKI AYRI KAVRAM: GRUP bolumun NE OLDUGU (Daire/Villa/Dukkan),
+  # TIP buyukluk/duzen (1+0, 2+1, dubleks) + VARSAYILAN AIDAT TUTARI.
+  # Tek tabloda birlestirmek her grup x tip kombinasyonunu ayri satira
+  # zorlar ve varsayilan aidat tanimini anlamsizlastirirdi.
+  # RBAC: yazma admin+yonetici; OKUMA saha rollerine de acik (daire
+  # listeleri tip/grup adini gosterir); sakin ERISEMEZ.
+  # ================================================================= #
+  /unit-tipleri:
+    get:
+      tags: [aidat]
+      summary: Bagimsiz bolum tipleri (okuma - sakin haric tum roller)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/UnitTip" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [aidat]
+      summary: Tip olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitTipCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitTip" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Ayni ADDA tip zaten var
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /unit-tipleri/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [aidat]
+      summary: Tip guncelle (admin+yonetici)
+      description: >
+        `varsayilan_aidat_kurus: null` GONDERILEBILIR ve tutari KALDIRIR.
+        "Gonderilmedi" ile "null gonderildi" AYRI islenir — bu ayrim onemli:
+        **0 gecerli bir tutardir** (muaf daire), `null` ise "tanimsiz".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitTipUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitTip" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Ayni ADDA tip zaten var
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [aidat]
+      summary: Tip sil (admin+yonetici) — DAIRELER SILINMEZ
+      description: >
+        Tanim silinir; bagli daireler **DURUR**, yalniz tipleri bosalir
+        (`ON DELETE SET NULL`). Silme 409 VERMEZ: tanim listesi temizlemek
+        yaygin bir bakimdir ve "once 400 daireyi degistir" demek kullaniciyi
+        tanimi pasife alip listede birakmaya iterdi. Yanit KAC daireyi
+        etkiledigini doner — islem sessiz degildir.
+      responses:
+        "200":
+          description: Silindi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [etkilenen_daire]
+                properties:
+                  etkilenen_daire:
+                    type: integer
+                    description: Siniflandirmasi bosalan daire sayisi
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /unit-gruplari:
+    get:
+      tags: [aidat]
+      summary: Bagimsiz bolum gruplari (okuma - sakin haric tum roller)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: aktif
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/UnitGrup" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [aidat]
+      summary: Grup olustur (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitGrupCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitGrup" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Ayni ADDA grup zaten var
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /unit-gruplari/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [aidat]
+      summary: Grup guncelle (admin+yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitGrupUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitGrup" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Ayni ADDA grup zaten var
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [aidat]
+      summary: Grup sil (admin+yonetici) — DAIRELER SILINMEZ
+      description: >
+        Bkz. `DELETE /unit-tipleri/{id}` — ayni kural: daireler durur,
+        gruplari bosalir, yanit etkilenen daire sayisini doner.
+      responses:
+        "200":
+          description: Silindi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [etkilenen_daire]
+                properties:
+                  etkilenen_daire: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
   /units:
     get:
       tags: [aidat]
@@ -3162,6 +3362,14 @@ paths:
         - name: aktif
           in: query
           schema: { type: boolean }
+        - name: unit_tip_id
+          in: query
+          description: "(P26) Tipe gore suzgec"
+          schema: { type: string, format: uuid }
+        - name: unit_grup_id
+          in: query
+          description: "(P26) Gruba gore suzgec"
+          schema: { type: string, format: uuid }
       responses:
         "200":
           description: Liste
@@ -7865,6 +8073,70 @@ components:
       type: string
       enum: [basarili, bekliyor, iptal]
 
+    UnitTip:
+      type: object
+      description: >
+        Bagimsiz bolum TIPI (P26): buyukluk/duzen + VARSAYILAN AIDAT.
+        `ad` SERBEST metindir (1+0, dubleks, "Stüdyo") — sabit bir enum
+        "1+1,5" diyen siteyi disarida birakirdi.
+      required: [id, ad, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, minLength: 1, maxLength: 60, example: "2+1" }
+        varsayilan_aidat_kurus:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 0
+          description: |
+            Varsayilan aidat, **KURUS** (TL degil). `null` **"tanimsiz"**
+            demektir, **0 DEGIL** — 0 gecerli bir tutardir (muaf daire) ve
+            ikisini karistirmak P28'de sessiz sifir aidat uretirdi.
+        aktif: { type: boolean }
+        daire_sayisi:
+          type: integer
+          description: Bu tipe bagli daire sayisi (silmeden once "kac daireyi etkiler")
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    UnitTipCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 60 }
+        varsayilan_aidat_kurus: { type: integer, format: int64, nullable: true, minimum: 0 }
+        aktif: { type: boolean, default: true }
+    UnitTipUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 60 }
+        varsayilan_aidat_kurus: { type: integer, format: int64, nullable: true, minimum: 0 }
+        aktif: { type: boolean }
+    UnitGrup:
+      type: object
+      description: >
+        Bagimsiz bolum GRUBU (P26): bolumun NE OLDUGU — Daire / Villa /
+        Dukkan / Depo. Raporlama kirilimi; TIPTEN ayridir.
+      required: [id, ad, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, minLength: 1, maxLength: 60, example: "Villa" }
+        aktif: { type: boolean }
+        daire_sayisi: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    UnitGrupCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 60 }
+        aktif: { type: boolean, default: true }
+    UnitGrupUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 60 }
+        aktif: { type: boolean }
     Unit:
       type: object
       required: [id, no, aktif, created_at]
@@ -7877,6 +8149,24 @@ components:
         sira: { type: integer, nullable: true, description: "Kattaki sira/konum" }
         metrekare: { type: number, format: double, nullable: true }
         aktif: { type: boolean }
+        unit_tip_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P26) Bagimsiz bolum TIPI (1+1, 2+1, dubleks…) — varsayilan aidati tasir"
+        unit_grup_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P26) Bagimsiz bolum GRUBU (Daire / Villa / Dukkan)"
+        unit_tip_ad:
+          type: string
+          nullable: true
+          description: >
+            (P26) Tip ADI — istemci ayri bir istek yapmadan listeyi cizebilsin
+            diye doner. Tanim silinmisse/siniflandirma yoksa `null`
+            (uydurma etiket YOK).
+        unit_grup_ad: { type: string, nullable: true, description: "(P26) Grup adi" }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
     UnitCreate:
@@ -7889,6 +8179,16 @@ components:
         sira: { type: integer, nullable: true, minimum: 0, maximum: 999 }
         metrekare: { type: number, format: double, nullable: true }
         aktif: { type: boolean, default: true }
+        unit_tip_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P26) Bagimsiz bolum TIPI (1+1, 2+1, dubleks…) — varsayilan aidati tasir"
+        unit_grup_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P26) Bagimsiz bolum GRUBU (Daire / Villa / Dukkan)"
     UnitBulkCreate:
       type: object
       description: >
@@ -7900,6 +8200,16 @@ components:
         kat_sayisi: { type: integer, minimum: 1, maximum: 200 }
         kat_basi_daire: { type: integer, minimum: 1, maximum: 999 }
         baslangic_no: { type: integer, minimum: 0, maximum: 999999 }
+        unit_tip_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P26) PARTININ TAMAMINA uygulanir — bir blok genelde tek tiptir"
+        unit_grup_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P26) Bagimsiz bolum GRUBU (Daire / Villa / Dukkan)"
     UnitBulkResult:
       type: object
       required: [olusturulan, atlanan, bitis_no]
@@ -7922,6 +8232,16 @@ components:
         sira: { type: integer, nullable: true, minimum: 0, maximum: 999 }
         metrekare: { type: number, format: double, nullable: true }
         aktif: { type: boolean }
+        unit_tip_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P26) `null` GONDERILEBILIR: siniflandirmayi KALDIRIR. Gonderilmezse dokunulmaz."
+        unit_grup_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P26) Bagimsiz bolum GRUBU (Daire / Villa / Dukkan)"
     UnitLayoutUpdate:
       type: object
       minProperties: 1

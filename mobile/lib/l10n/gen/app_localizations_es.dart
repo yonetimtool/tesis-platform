@@ -4398,4 +4398,59 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get kameraUrlSifrelenmemisUyari =>
       'Esta dirección no está cifrada (http). Use https si es posible.';
+
+  @override
+  String get modulDaireTanimlari => 'Definiciones de unidades';
+
+  @override
+  String get daireTanimSekmeTipler => 'Tipos';
+
+  @override
+  String get daireTanimSekmeGruplar => 'Grupos';
+
+  @override
+  String get daireTanimAd => 'Nombre';
+
+  @override
+  String get daireTanimAdIpucu => 'p. ej. 2+1, dúplex, Villa';
+
+  @override
+  String get daireTanimVarsayilanAidat => 'Cuota predeterminada';
+
+  @override
+  String get daireTanimAidatBos => 'Sin definir';
+
+  @override
+  String get daireTanimAidatAlt =>
+      'Vacío significa sin definir; 0 significa exento.';
+
+  @override
+  String daireTanimDaireSayisi(int sayi) {
+    return '$sayi unidades';
+  }
+
+  @override
+  String daireTanimSilOnay(int sayi) {
+    return '¿Eliminar esta definición? Las $sayi unidades vinculadas NO se eliminan; solo se borra su clasificación.';
+  }
+
+  @override
+  String daireTanimSilindiEtki(int sayi) {
+    return 'Eliminado. $sayi unidades perdieron su clasificación.';
+  }
+
+  @override
+  String get daireTanimYok => 'Aún no hay definiciones.';
+
+  @override
+  String get daireTanimYeni => 'Nueva definición';
+
+  @override
+  String get daireTipiSecici => 'Tipo de unidad';
+
+  @override
+  String get daireGrubuSecici => 'Grupo de unidades';
+
+  @override
+  String get daireTanimSecilmedi => 'Sin seleccionar';
 }

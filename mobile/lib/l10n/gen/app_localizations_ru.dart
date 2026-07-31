@@ -4515,4 +4515,59 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get kameraUrlSifrelenmemisUyari =>
       'Этот адрес не зашифрован (http). По возможности используйте https.';
+
+  @override
+  String get modulDaireTanimlari => 'Определения помещений';
+
+  @override
+  String get daireTanimSekmeTipler => 'Типы';
+
+  @override
+  String get daireTanimSekmeGruplar => 'Группы';
+
+  @override
+  String get daireTanimAd => 'Название';
+
+  @override
+  String get daireTanimAdIpucu => 'Напр. 2+1, дуплекс, вилла';
+
+  @override
+  String get daireTanimVarsayilanAidat => 'Взнос по умолчанию';
+
+  @override
+  String get daireTanimAidatBos => 'Не задано';
+
+  @override
+  String get daireTanimAidatAlt =>
+      'Пустое поле — не задано; 0 означает освобождение.';
+
+  @override
+  String daireTanimDaireSayisi(int sayi) {
+    return '$sayi помещений';
+  }
+
+  @override
+  String daireTanimSilOnay(int sayi) {
+    return 'Удалить это определение? Связанные помещения ($sayi) НЕ удаляются — очищается только их классификация.';
+  }
+
+  @override
+  String daireTanimSilindiEtki(int sayi) {
+    return 'Удалено. Классификация $sayi помещений очищена.';
+  }
+
+  @override
+  String get daireTanimYok => 'Определений пока нет.';
+
+  @override
+  String get daireTanimYeni => 'Новое определение';
+
+  @override
+  String get daireTipiSecici => 'Тип помещения';
+
+  @override
+  String get daireGrubuSecici => 'Группа помещений';
+
+  @override
+  String get daireTanimSecilmedi => 'Не выбрано';
 }

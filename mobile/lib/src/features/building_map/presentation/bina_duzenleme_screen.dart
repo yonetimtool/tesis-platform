@@ -7,6 +7,8 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
+import '../../unit_tanimlari/data/unit_tanim_api.dart';
+import '../../unit_tanimlari/domain/unit_tanim_models.dart';
 import '../domain/bina_duzenleme_models.dart';
 import 'bina_duzenleme_controller.dart';
 import '../../../core/theme/home_tokens.dart';
@@ -964,6 +966,9 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
       text: (widget.existing?.sira ?? widget.initialSira)?.toString() ?? '');
   bool _busy = false;
   String? _error;
+  // (P26) Siniflandirma secimleri — mevcut daireden onceden dolar.
+  late String? _tipId = widget.existing?.unitTipId;
+  late String? _grupId = widget.existing?.unitGrupId;
 
   /// `setState` yollarinda kullanilan yerellestirme (build disi).
   AppLocalizations get _l10n => AppLocalizations.of(context);
@@ -996,7 +1001,10 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
       _busy = true;
       _error = null;
     });
-    final draft = EditorUnitDraft(no: no, blok: widget.blok, kat: kat, sira: sira);
+    final draft = EditorUnitDraft(
+      no: no, blok: widget.blok, kat: kat, sira: sira,
+      unitTipId: _tipId, unitGrupId: _grupId,
+    );
     final controller = ref.read(binaDuzenlemeControllerProvider.notifier);
     try {
       if (widget.existing != null) {
@@ -1110,6 +1118,21 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
               ),
             ],
           ),
+          // (P26) TIP + GRUP secicileri. Liste BOSSA alan hic cizilmez:
+          // henuz tanim kurmamis bir sitede bos bir acilir kutu, "bir sey
+          // secmem mi gerekiyor" tereddudu yaratirdi.
+          _TanimSecici(
+            etiket: l10n.daireTipiSecici,
+            secili: _tipId,
+            secenekler: ref.watch(unitTipleriProvider).value ?? const [],
+            onSec: _busy ? null : (v) => setState(() => _tipId = v),
+          ),
+          _TanimSecici(
+            etiket: l10n.daireGrubuSecici,
+            secili: _grupId,
+            secenekler: ref.watch(unitGruplariProvider).value ?? const [],
+            onSec: _busy ? null : (v) => setState(() => _grupId = v),
+          ),
           if (_error != null) ...[
             const SizedBox(height: 8),
             Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
@@ -1179,6 +1202,11 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
   final _baslangic = TextEditingController(text: '1');
   bool _busy = false;
   String? _error;
+  // (P26) Siniflandirma PARTININ TAMAMINA uygulanir — bir blok genelde tek
+  // tiptir; daire basina secmek toplu olusturmanin amacini bozardi. Daire
+  // basi istisnalar sonradan daire duzenlemeden degistirilir.
+  String? _tipId;
+  String? _grupId;
 
   /// `setState` yollarinda kullanilan yerellestirme (build disi).
   AppLocalizations get _l10n => AppLocalizations.of(context);
@@ -1231,6 +1259,8 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
                 katSayisi: k,
                 katBasiDaire: m,
                 baslangicNo: b,
+                unitTipId: _tipId,
+                unitGrupId: _grupId,
               );
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -1327,6 +1357,19 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
                   style: const TextStyle(fontWeight: FontWeight.w600)),
             ),
           ],
+          // (P26) Siniflandirma PARTININ TAMAMINA uygulanir.
+          _TanimSecici(
+            etiket: context.l10n.daireTipiSecici,
+            secili: _tipId,
+            secenekler: ref.watch(unitTipleriProvider).value ?? const [],
+            onSec: _busy ? null : (v) => setState(() => _tipId = v),
+          ),
+          _TanimSecici(
+            etiket: context.l10n.daireGrubuSecici,
+            secili: _grupId,
+            secenekler: ref.watch(unitGruplariProvider).value ?? const [],
+            onSec: _busy ? null : (v) => setState(() => _grupId = v),
+          ),
           if (_error != null) ...[
             const SizedBox(height: 8),
             Text(_error!, style: const TextStyle(color: Colors.red)),
@@ -1347,6 +1390,56 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Tip/grup acilir kutusu (P26).
+///
+/// Secenek YOKSA hic cizilmez: tanim kurmamis bir sitede bos bir acilir kutu
+/// "bir sey secmem mi gerekiyor" tereddudu yaratirdi.
+///
+/// "Secilmedi" secenegi HER ZAMAN durur — siniflandirmayi KALDIRMAK
+/// mumkun olmali (yanlis secilen tip geri alinabilsin).
+class _TanimSecici extends StatelessWidget {
+  const _TanimSecici({
+    required this.etiket,
+    required this.secili,
+    required this.secenekler,
+    required this.onSec,
+  });
+
+  final String etiket;
+  final String? secili;
+  final List<UnitTanim> secenekler;
+  final ValueChanged<String?>? onSec;
+
+  @override
+  Widget build(BuildContext context) {
+    if (secenekler.isEmpty) return const SizedBox.shrink();
+    // Secili tanim silinmis olabilir: listede yoksa deger null'a duser,
+    // yoksa DropdownButton "iki esleme yok" assertion'i atardi.
+    final gecerli = secenekler.any((t) => t.id == secili) ? secili : null;
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: DropdownButtonFormField<String?>(
+        // Uzun tip adlari dar ekranda tasmasin (repo kurali).
+        isExpanded: true,
+        initialValue: gecerli,
+        decoration: InputDecoration(labelText: etiket),
+        items: [
+          DropdownMenuItem<String?>(
+            value: null,
+            child: Text(context.l10n.daireTanimSecilmedi),
+          ),
+          for (final t in secenekler)
+            DropdownMenuItem<String?>(
+              value: t.id,
+              child: Text(t.ad, overflow: TextOverflow.ellipsis),
+            ),
+        ],
+        onChanged: onSec,
       ),
     );
   }

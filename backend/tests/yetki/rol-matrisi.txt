@@ -171,6 +171,14 @@ GET    /unit-complaints/density                             IZIN   IZIN   RED   
 GET    /unit-complaints/mine                                RED    RED    RED    RED    IZIN  
 PATCH  /unit-complaints/{id}                                IZIN   IZIN   RED    RED    RED   
 POST   /unit-complaints/{id}/okundu                         IZIN   IZIN   RED    RED    RED   
+GET    /unit-gruplari                                       IZIN   IZIN   IZIN   IZIN   RED   
+POST   /unit-gruplari                                       IZIN   IZIN   RED    RED    RED   
+DELETE /unit-gruplari/{id}                                  IZIN   IZIN   RED    RED    RED   
+PATCH  /unit-gruplari/{id}                                  IZIN   IZIN   RED    RED    RED   
+GET    /unit-tipleri                                        IZIN   IZIN   IZIN   IZIN   RED   
+POST   /unit-tipleri                                        IZIN   IZIN   RED    RED    RED   
+DELETE /unit-tipleri/{id}                                   IZIN   IZIN   RED    RED    RED   
+PATCH  /unit-tipleri/{id}                                   IZIN   IZIN   RED    RED    RED   
 GET    /units                                               IZIN   IZIN   IZIN   IZIN   RED   
 POST   /units                                               IZIN   IZIN   RED    RED    RED   
 POST   /units/bulk                                          IZIN   IZIN   RED    RED    RED   

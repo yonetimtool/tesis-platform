@@ -18,7 +18,7 @@ from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Unit, UnitResident
+from ..models import AppUser, Unit, UnitGrup, UnitResident, UnitTip
 from ..schemas import (
     ResidentAssign,
     UnitBulkCreate,
@@ -33,6 +33,60 @@ from ..schemas import (
 )
 
 router = APIRouter(prefix="/units", tags=["aidat"])
+
+
+async def _tanim_dogrula(
+    db: AsyncSession, tip_id: uuid.UUID | None, grup_id: uuid.UUID | None
+) -> None:
+    """Verilen tip/grup BU TENANT'ta var mi (P26).
+
+    Bilesik FK zaten baska tenant'in tanimina baglanmayi engelliyor, ama o
+    ihlal bir IntegrityError uretir ve kullaniciya "veri butunlugu" gibi
+    okunur. Burada ONCEDEN olculur ve 422 `invalid_reference` doner.
+    """
+    for kimlik, model, metin in (
+        (tip_id, UnitTip, "daire_tipi_bulunamadi"),
+        (grup_id, UnitGrup, "daire_grubu_bulunamadi"),
+    ):
+        if kimlik is None:
+            continue
+        var = (
+            await db.execute(select(model.id).where(model.id == kimlik))
+        ).scalar_one_or_none()
+        if var is None:
+            raise APIError(422, "invalid_reference", metin)
+
+
+async def _adlarla(db: AsyncSession, unitler: list[Unit]) -> list[UnitOut]:
+    """Daireleri tip/grup ADLARIYLA birlikte serilestir (P26).
+
+    Adlar TEK sorguda cozulur: liste basina daire x 2 istek (N+1) yapmak,
+    200 daire cizen panelde 400 ek sorgu demekti. Ad yoksa (siniflandirmasiz
+    ya da tanim silinmis daire) `null` doner — uydurma etiket YOK.
+    """
+    tip_idler = {u.unit_tip_id for u in unitler if u.unit_tip_id}
+    grup_idler = {u.unit_grup_id for u in unitler if u.unit_grup_id}
+    tip_ad: dict[uuid.UUID, str] = {}
+    grup_ad: dict[uuid.UUID, str] = {}
+    if tip_idler:
+        tip_ad = dict(
+            (await db.execute(
+                select(UnitTip.id, UnitTip.ad).where(UnitTip.id.in_(tip_idler))
+            )).all()
+        )
+    if grup_idler:
+        grup_ad = dict(
+            (await db.execute(
+                select(UnitGrup.id, UnitGrup.ad).where(UnitGrup.id.in_(grup_idler))
+            )).all()
+        )
+    return [
+        UnitOut.model_validate(u).model_copy(update={
+            "unit_tip_ad": tip_ad.get(u.unit_tip_id),
+            "unit_grup_ad": grup_ad.get(u.unit_grup_id),
+        })
+        for u in unitler
+    ]
 
 _ADMIN = require_role("admin")
 # Fiziksel yerlesim (blok/kat/sira) girisi — yonetim: admin + yonetici.
@@ -60,6 +114,12 @@ async def list_units(
     offset: int = Query(0, ge=0),
     blok: str | None = Query(None),
     aktif: bool | None = Query(None),
+    unit_tip_id: uuid.UUID | None = Query(
+        None, description="(P26) Tipe gore suzgec"
+    ),
+    unit_grup_id: uuid.UUID | None = Query(
+        None, description="(P26) Gruba gore suzgec"
+    ),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_LAYOUT_READER),
 ) -> UnitListResponse:
@@ -68,11 +128,18 @@ async def list_units(
         where.append(Unit.blok == blok)
     if aktif is not None:
         where.append(Unit.aktif == aktif)
+    if unit_tip_id is not None:
+        where.append(Unit.unit_tip_id == unit_tip_id)
+    if unit_grup_id is not None:
+        where.append(Unit.unit_grup_id == unit_grup_id)
     total = (await db.execute(select(func.count()).select_from(Unit).where(*where))).scalar_one()
     rows = (
         await db.execute(select(Unit).where(*where).order_by(Unit.no).limit(limit).offset(offset))
     ).scalars().all()
-    return UnitListResponse(meta={"limit": limit, "offset": offset, "total": total}, items=list(rows))
+    return UnitListResponse(
+        meta={"limit": limit, "offset": offset, "total": total},
+        items=await _adlarla(db, list(rows)),
+    )
 
 
 @router.get("/{unit_id}", response_model=UnitOut)
@@ -80,8 +147,9 @@ async def get_unit(
     unit_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_LAYOUT_READER),
-) -> Unit:
-    return await get_or_404(db, Unit, unit_id)
+) -> UnitOut:
+    obj = await get_or_404(db, Unit, unit_id)
+    return (await _adlarla(db, [obj]))[0]
 
 
 @router.get("/by-no/{unit_no}/residents", response_model=list[UnitResidentBriefOut])
@@ -117,7 +185,8 @@ async def create_unit(
     body: UnitCreate,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_LAYOUT_EDITOR),
-) -> Unit:
+) -> UnitOut:
+    await _tanim_dogrula(db, body.unit_tip_id, body.unit_grup_id)
     obj = Unit(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
     db.add(obj)
     try:
@@ -128,7 +197,7 @@ async def create_unit(
         raise translate_integrity(exc)
     await db.refresh(obj)
     await audit_user(db, user, Action.UNIT_CREATE, resource_type="unit", resource_id=obj.id)
-    return obj
+    return (await _adlarla(db, [obj]))[0]
 
 
 @router.post("/bulk", response_model=UnitBulkResult, status_code=201)
@@ -140,7 +209,12 @@ async def bulk_create_units(
     """Toplu daire olustur: kat_sayisi × kat_basi_daire adet, baslangic_no'dan
     ARDISIK (kat kat dolar). no = blok varsa '{blok}-{n}' yoksa '{n}'; zaten var
     olan no'lar ATLANIR (kalanlar olusturulur). Katlar 1..kat_sayisi, sira
-    1..kat_basi_daire. RBAC admin+yonetici (create ile ayni)."""
+    1..kat_basi_daire. RBAC admin+yonetici (create ile ayni).
+
+    (P26) `unit_tip_id` / `unit_grup_id` verilirse PARTININ TAMAMINA uygulanir:
+    toplu olusturmada daire basina tip secmek anlamsizdir, bir blok genelde
+    tek tiptir. Daire basi istisnalar sonradan PATCH ile duzeltilir."""
+    await _tanim_dogrula(db, body.unit_tip_id, body.unit_grup_id)
     # Plani kur: (no, kat, sira) — kat kat, ardisik numaralandirma.
     plan: list[tuple[str, int, int]] = []
     n = body.baslangic_no
@@ -162,7 +236,10 @@ async def bulk_create_units(
         if no in mevcut:
             atlanan.append(no)
             continue
-        obj = Unit(tenant_id=user.tenant_id, no=no, blok=body.blok, kat=kat, sira=sira)
+        obj = Unit(
+            tenant_id=user.tenant_id, no=no, blok=body.blok, kat=kat, sira=sira,
+            unit_tip_id=body.unit_tip_id, unit_grup_id=body.unit_grup_id,
+        )
         db.add(obj)
         olusturulan.append(obj)
 
@@ -177,7 +254,7 @@ async def bulk_create_units(
         await db.refresh(obj)
 
     return UnitBulkResult(
-        olusturulan=[UnitOut.model_validate(o) for o in olusturulan],
+        olusturulan=await _adlarla(db, olusturulan),
         atlanan=atlanan,
         bitis_no=body.bitis_no,
     )
@@ -189,9 +266,13 @@ async def update_unit(
     body: UnitUpdate,
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_LAYOUT_EDITOR),
-) -> Unit:
+) -> UnitOut:
     obj = await get_or_404(db, Unit, unit_id)
-    for key, value in body.model_dump(exclude_unset=True).items():
+    veri = body.model_dump(exclude_unset=True)
+    # `null` GONDERILDIYSE siniflandirma KALDIRILIR; gonderilmediyse dokunulmaz
+    # (`exclude_unset` ikisini ayirir). Dogrulama yalniz DOLU degerler icin.
+    await _tanim_dogrula(db, veri.get("unit_tip_id"), veri.get("unit_grup_id"))
+    for key, value in veri.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()
     try:
@@ -201,7 +282,7 @@ async def update_unit(
             raise APIError(409, "conflict", "daire_no_zaten_kayitli")
         raise translate_integrity(exc)
     await db.refresh(obj)
-    return obj
+    return (await _adlarla(db, [obj]))[0]
 
 
 @router.patch("/{unit_id}/layout", response_model=UnitOut)

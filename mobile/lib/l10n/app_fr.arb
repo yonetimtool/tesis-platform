@@ -1299,5 +1299,42 @@
       }
     }
   },
-  "kameraUrlSifrelenmemisUyari": "Cette adresse n'est pas chiffrée (http). Utilisez https si possible."
+  "kameraUrlSifrelenmemisUyari": "Cette adresse n'est pas chiffrée (http). Utilisez https si possible.",
+  "modulDaireTanimlari": "Définitions des lots",
+  "daireTanimSekmeTipler": "Types",
+  "daireTanimSekmeGruplar": "Groupes",
+  "daireTanimAd": "Nom",
+  "daireTanimAdIpucu": "p. ex. 2+1, duplex, Villa",
+  "daireTanimVarsayilanAidat": "Charges par défaut",
+  "daireTanimAidatBos": "Non défini",
+  "daireTanimAidatAlt": "Vide signifie non défini ; 0 signifie exonéré.",
+  "daireTanimDaireSayisi": "{sayi} lots",
+  "@daireTanimDaireSayisi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilOnay": "Supprimer cette définition ? Les {sayi} lots liés ne sont PAS supprimés ; seule leur classification est effacée.",
+  "@daireTanimSilOnay": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilindiEtki": "Supprimé. {sayi} lots ont perdu leur classification.",
+  "@daireTanimSilindiEtki": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimYok": "Aucune définition.",
+  "daireTanimYeni": "Nouvelle définition",
+  "daireTipiSecici": "Type de lot",
+  "daireGrubuSecici": "Groupe de lots",
+  "daireTanimSecilmedi": "Non sélectionné"
 }

@@ -1299,5 +1299,42 @@
       }
     }
   },
-  "kameraUrlSifrelenmemisUyari": "هذا العنوان غير مشفّر (http). استخدم https إن أمكن."
+  "kameraUrlSifrelenmemisUyari": "هذا العنوان غير مشفّر (http). استخدم https إن أمكن.",
+  "modulDaireTanimlari": "تعريفات الوحدات",
+  "daireTanimSekmeTipler": "الأنواع",
+  "daireTanimSekmeGruplar": "المجموعات",
+  "daireTanimAd": "الاسم",
+  "daireTanimAdIpucu": "مثال: 2+1، دوبلكس، فيلا",
+  "daireTanimVarsayilanAidat": "الرسوم الافتراضية",
+  "daireTanimAidatBos": "غير محدد",
+  "daireTanimAidatAlt": "تركه فارغًا يعني غير محدد؛ وكتابة 0 تعني معفى.",
+  "daireTanimDaireSayisi": "{sayi} وحدة",
+  "@daireTanimDaireSayisi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilOnay": "حذف هذا التعريف؟ لن تُحذف الوحدات المرتبطة ({sayi})، بل يُمسح تصنيفها فقط.",
+  "@daireTanimSilOnay": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilindiEtki": "تم الحذف. فقدت {sayi} وحدة تصنيفها.",
+  "@daireTanimSilindiEtki": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimYok": "لا توجد تعريفات بعد.",
+  "daireTanimYeni": "تعريف جديد",
+  "daireTipiSecici": "نوع الوحدة",
+  "daireGrubuSecici": "مجموعة الوحدة",
+  "daireTanimSecilmedi": "لم يتم الاختيار"
 }

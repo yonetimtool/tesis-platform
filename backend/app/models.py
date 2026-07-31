@@ -831,7 +831,74 @@ class Unit(Base):
     kat: Mapped[int | None] = mapped_column(Integer, nullable=True)  # kat (0=zemin)
     sira: Mapped[int | None] = mapped_column(Integer, nullable=True)  # kattaki sira/konum
     metrekare = mapped_column(Numeric(8, 2), nullable=True)
+    # SINIFLANDIRMA (P26) — ikisi de NULLABLE: tip/grup TANIM'dir, dairenin
+    # varligi onlara bagli degildir. Tanim silinirse daire silinmez, yalniz
+    # siniflandirmasiz kalir (ON DELETE SET NULL).
+    unit_tip_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    unit_grup_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class UnitGrup(Base):
+    """Bagimsiz Bolum GRUBU (P26) — bolumun NE OLDUGU: Daire / Villa / Dukkan.
+
+    Kucuk, yavas degisen liste; raporlamada kirilim eksenidir. Tipten (1+1,
+    2+1) AYRIDIR: tek tabloda birlestirmek her grup x tip kombinasyonunu ayri
+    satira zorlardi.
+    """
+
+    __tablename__ = "unit_grup"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_unit_grup_id_tenant"),
+        UniqueConstraint("tenant_id", "ad", name="uq_unit_grup_tenant_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class UnitTip(Base):
+    """Bagimsiz Bolum TIPI (P26) — buyukluk/duzen + VARSAYILAN AIDAT.
+
+    Ad tamamen SERBEST metindir (1+0, 2+1, dubleks, stüdyo…): sabit bir enum,
+    "1+1,5" diyen siteyi disarida birakirdi.
+
+    `varsayilan_aidat_kurus` NULL ise "tanimsiz"dir, 0 DEGIL — 0 gecerli bir
+    tutardir (muaf daire) ve ikisini karistirmak P28'de sessiz sifir aidat
+    uretirdi.
+    """
+
+    __tablename__ = "unit_tip"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_unit_tip_id_tenant"),
+        UniqueConstraint("tenant_id", "ad", name="uq_unit_tip_tenant_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    varsayilan_aidat_kurus: Mapped[int | None] = mapped_column(
+        BigInteger, nullable=True
+    )
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     created_at = _created_at()
     updated_at = _created_at()
 

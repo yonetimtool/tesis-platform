@@ -1299,5 +1299,42 @@
       }
     }
   },
-  "kameraUrlSifrelenmemisUyari": "Этот адрес не зашифрован (http). По возможности используйте https."
+  "kameraUrlSifrelenmemisUyari": "Этот адрес не зашифрован (http). По возможности используйте https.",
+  "modulDaireTanimlari": "Определения помещений",
+  "daireTanimSekmeTipler": "Типы",
+  "daireTanimSekmeGruplar": "Группы",
+  "daireTanimAd": "Название",
+  "daireTanimAdIpucu": "Напр. 2+1, дуплекс, вилла",
+  "daireTanimVarsayilanAidat": "Взнос по умолчанию",
+  "daireTanimAidatBos": "Не задано",
+  "daireTanimAidatAlt": "Пустое поле — не задано; 0 означает освобождение.",
+  "daireTanimDaireSayisi": "{sayi} помещений",
+  "@daireTanimDaireSayisi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilOnay": "Удалить это определение? Связанные помещения ({sayi}) НЕ удаляются — очищается только их классификация.",
+  "@daireTanimSilOnay": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilindiEtki": "Удалено. Классификация {sayi} помещений очищена.",
+  "@daireTanimSilindiEtki": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimYok": "Определений пока нет.",
+  "daireTanimYeni": "Новое определение",
+  "daireTipiSecici": "Тип помещения",
+  "daireGrubuSecici": "Группа помещений",
+  "daireTanimSecilmedi": "Не выбрано"
 }

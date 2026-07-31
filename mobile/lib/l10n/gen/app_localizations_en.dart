@@ -4445,4 +4445,59 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get kameraUrlSifrelenmemisUyari =>
       'This address is unencrypted (http). Use https if possible.';
+
+  @override
+  String get modulDaireTanimlari => 'Unit Definitions';
+
+  @override
+  String get daireTanimSekmeTipler => 'Types';
+
+  @override
+  String get daireTanimSekmeGruplar => 'Groups';
+
+  @override
+  String get daireTanimAd => 'Name';
+
+  @override
+  String get daireTanimAdIpucu => 'e.g. 2+1, duplex, Villa';
+
+  @override
+  String get daireTanimVarsayilanAidat => 'Default dues';
+
+  @override
+  String get daireTanimAidatBos => 'Not set';
+
+  @override
+  String get daireTanimAidatAlt =>
+      'Leaving it empty means not set; entering 0 means exempt.';
+
+  @override
+  String daireTanimDaireSayisi(int sayi) {
+    return '$sayi units';
+  }
+
+  @override
+  String daireTanimSilOnay(int sayi) {
+    return 'Delete this definition? The $sayi linked units are NOT deleted; only their classification is cleared.';
+  }
+
+  @override
+  String daireTanimSilindiEtki(int sayi) {
+    return 'Deleted. $sayi units lost their classification.';
+  }
+
+  @override
+  String get daireTanimYok => 'No definitions yet.';
+
+  @override
+  String get daireTanimYeni => 'New definition';
+
+  @override
+  String get daireTipiSecici => 'Unit type';
+
+  @override
+  String get daireGrubuSecici => 'Unit group';
+
+  @override
+  String get daireTanimSecilmedi => 'Not selected';
 }

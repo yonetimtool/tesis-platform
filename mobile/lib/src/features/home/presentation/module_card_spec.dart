@@ -165,6 +165,11 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.apartment_outlined,
           accent: _navy,
           route: AppRoutes.binaDuzenleme);
+    case HomeMenuEntry.daireTanimlari:
+      return const ModuleCardSpec(
+          icon: Icons.category_outlined,
+          accent: _navy,
+          route: AppRoutes.daireTanimlari);
     case HomeMenuEntry.sikayetHaritasi:
       return const ModuleCardSpec(
           icon: Icons.grid_view_outlined,
@@ -214,6 +219,7 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.personel => l10n.modulPersonel,
       HomeMenuEntry.sakinler => l10n.modulSakinler,
       HomeMenuEntry.binaDuzenleme => l10n.modulBinaYapisi,
+      HomeMenuEntry.daireTanimlari => l10n.modulDaireTanimlari,
       HomeMenuEntry.sikayetHaritasi => l10n.modulSikayetHaritasi,
       HomeMenuEntry.sikayetlerim => l10n.modulSikayetlerim,
       HomeMenuEntry.yoneticiIletisim => l10n.modulYoneticiIletisim,

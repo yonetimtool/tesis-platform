@@ -117,6 +117,12 @@ enum HomeMenuEntry {
   /// uclarini kullanir; Sikayet Haritasi bu yapiyi yansitir.
   binaDuzenleme,
 
+  /// Bagimsiz Bolum Tanimlari (P26) — TIP (1+1, 2+1, dubleks + varsayilan
+  /// aidat) ve GRUP (Daire / Villa / Dukkan) listeleri. Site KURULUM adimidir:
+  /// yalniz yonetim (admin + yonetici) gorur; saha ve sakin GORMEZ (tanimlari
+  /// okuyabilirler ama yonetmezler).
+  daireTanimlari,
+
   /// Sikayet Haritasi (D-viz-2) — 2D bina semasi: blok->kat->renkli daire
   /// hucreleri (ANONIM yogunluk). TUM roller gorur; SAKIN daireyi sikayet
   /// edebilir (mevcut POST /unit-complaints). Renk API'den (0-2/3-4/5+).
@@ -149,6 +155,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
+        HomeMenuEntry.daireTanimlari,
         HomeMenuEntry.outbox,
       ];
     case UserRole.security:
@@ -211,6 +218,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.sakinler,
         HomeMenuEntry.integrations,
         HomeMenuEntry.binaDuzenleme,
+        HomeMenuEntry.daireTanimlari,
       ];
     case UserRole.resident:
       // Sakinin kaynaklari: duyuru okuma + sikayet/oneri kanali + kendi aidat

@@ -1299,5 +1299,42 @@
       }
     }
   },
-  "kameraUrlSifrelenmemisUyari": "Diese Adresse ist unverschlüsselt (http). Verwenden Sie nach Möglichkeit https."
+  "kameraUrlSifrelenmemisUyari": "Diese Adresse ist unverschlüsselt (http). Verwenden Sie nach Möglichkeit https.",
+  "modulDaireTanimlari": "Einheitendefinitionen",
+  "daireTanimSekmeTipler": "Typen",
+  "daireTanimSekmeGruplar": "Gruppen",
+  "daireTanimAd": "Name",
+  "daireTanimAdIpucu": "z. B. 2+1, Maisonette, Villa",
+  "daireTanimVarsayilanAidat": "Standardbeitrag",
+  "daireTanimAidatBos": "Nicht festgelegt",
+  "daireTanimAidatAlt": "Leer bedeutet nicht festgelegt; 0 bedeutet befreit.",
+  "daireTanimDaireSayisi": "{sayi} Einheiten",
+  "@daireTanimDaireSayisi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilOnay": "Diese Definition löschen? Die {sayi} verknüpften Einheiten werden NICHT gelöscht; nur ihre Klassifizierung wird entfernt.",
+  "@daireTanimSilOnay": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilindiEtki": "Gelöscht. {sayi} Einheiten haben ihre Klassifizierung verloren.",
+  "@daireTanimSilindiEtki": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimYok": "Noch keine Definitionen.",
+  "daireTanimYeni": "Neue Definition",
+  "daireTipiSecici": "Einheitentyp",
+  "daireGrubuSecici": "Einheitengruppe",
+  "daireTanimSecilmedi": "Nicht ausgewählt"
 }

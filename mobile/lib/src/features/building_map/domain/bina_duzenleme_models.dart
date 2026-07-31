@@ -41,6 +41,10 @@ class EditorUnit {
     this.kat,
     this.sira,
     this.aktif = true,
+    this.unitTipId,
+    this.unitTipAd,
+    this.unitGrupId,
+    this.unitGrupAd,
   });
 
   final String id;
@@ -50,6 +54,13 @@ class EditorUnit {
   final int? sira;
   final bool aktif;
 
+  /// (P26) Siniflandirma. Ad da tasinir: hucre/liste ayri istek yapmadan
+  /// etiketi cizebilsin. Tanim silinmisse `null` — uydurma etiket YOK.
+  final String? unitTipId;
+  final String? unitTipAd;
+  final String? unitGrupId;
+  final String? unitGrupAd;
+
   factory EditorUnit.fromJson(Map<String, dynamic> json) => EditorUnit(
         id: json['id'] as String? ?? '',
         no: json['no'] as String? ?? '',
@@ -57,6 +68,10 @@ class EditorUnit {
         kat: (json['kat'] as num?)?.toInt(),
         sira: (json['sira'] as num?)?.toInt(),
         aktif: json['aktif'] as bool? ?? true,
+        unitTipId: json['unit_tip_id'] as String?,
+        unitTipAd: json['unit_tip_ad'] as String?,
+        unitGrupId: json['unit_grup_id'] as String?,
+        unitGrupAd: json['unit_grup_ad'] as String?,
       );
 }
 
@@ -80,6 +95,8 @@ class EditorUnitDraft {
     this.blok,
     this.kat,
     this.sira,
+    this.unitTipId,
+    this.unitGrupId,
   });
 
   final String no;
@@ -87,11 +104,19 @@ class EditorUnitDraft {
   final int? kat;
   final int? sira;
 
+  /// (P26) Siniflandirma — `null` gonderilir ve bu KALDIRMAK demektir
+  /// (sunucu `exclude_unset` ile "gonderilmedi"den ayirir; burada alan HER
+  /// ZAMAN gonderildigi icin form neyi secmisse o gecerlidir).
+  final String? unitTipId;
+  final String? unitGrupId;
+
   /// POST icin tam govde (yerlesim alanlari null olabilir).
   Map<String, dynamic> toJson() => {
         'no': no,
         'blok': blok,
         'kat': kat,
         'sira': sira,
+        'unit_tip_id': unitTipId,
+        'unit_grup_id': unitGrupId,
       };
 }

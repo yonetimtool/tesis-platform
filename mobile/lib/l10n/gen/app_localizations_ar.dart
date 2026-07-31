@@ -4529,4 +4529,59 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get kameraUrlSifrelenmemisUyari =>
       'هذا العنوان غير مشفّر (http). استخدم https إن أمكن.';
+
+  @override
+  String get modulDaireTanimlari => 'تعريفات الوحدات';
+
+  @override
+  String get daireTanimSekmeTipler => 'الأنواع';
+
+  @override
+  String get daireTanimSekmeGruplar => 'المجموعات';
+
+  @override
+  String get daireTanimAd => 'الاسم';
+
+  @override
+  String get daireTanimAdIpucu => 'مثال: 2+1، دوبلكس، فيلا';
+
+  @override
+  String get daireTanimVarsayilanAidat => 'الرسوم الافتراضية';
+
+  @override
+  String get daireTanimAidatBos => 'غير محدد';
+
+  @override
+  String get daireTanimAidatAlt =>
+      'تركه فارغًا يعني غير محدد؛ وكتابة 0 تعني معفى.';
+
+  @override
+  String daireTanimDaireSayisi(int sayi) {
+    return '$sayi وحدة';
+  }
+
+  @override
+  String daireTanimSilOnay(int sayi) {
+    return 'حذف هذا التعريف؟ لن تُحذف الوحدات المرتبطة ($sayi)، بل يُمسح تصنيفها فقط.';
+  }
+
+  @override
+  String daireTanimSilindiEtki(int sayi) {
+    return 'تم الحذف. فقدت $sayi وحدة تصنيفها.';
+  }
+
+  @override
+  String get daireTanimYok => 'لا توجد تعريفات بعد.';
+
+  @override
+  String get daireTanimYeni => 'تعريف جديد';
+
+  @override
+  String get daireTipiSecici => 'نوع الوحدة';
+
+  @override
+  String get daireGrubuSecici => 'مجموعة الوحدة';
+
+  @override
+  String get daireTanimSecilmedi => 'لم يتم الاختيار';
 }

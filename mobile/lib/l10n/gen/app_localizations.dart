@@ -7534,6 +7534,102 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Bu adres şifrelenmemiş (http). Mümkünse https kullanın.'**
   String get kameraUrlSifrelenmemisUyari;
+
+  /// No description provided for @modulDaireTanimlari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağımsız Bölüm Tanımları'**
+  String get modulDaireTanimlari;
+
+  /// No description provided for @daireTanimSekmeTipler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tipler'**
+  String get daireTanimSekmeTipler;
+
+  /// No description provided for @daireTanimSekmeGruplar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gruplar'**
+  String get daireTanimSekmeGruplar;
+
+  /// No description provided for @daireTanimAd.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad'**
+  String get daireTanimAd;
+
+  /// No description provided for @daireTanimAdIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Örn. 2+1, dubleks, Villa'**
+  String get daireTanimAdIpucu;
+
+  /// No description provided for @daireTanimVarsayilanAidat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Varsayılan aidat'**
+  String get daireTanimVarsayilanAidat;
+
+  /// No description provided for @daireTanimAidatBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tanımsız'**
+  String get daireTanimAidatBos;
+
+  /// No description provided for @daireTanimAidatAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş bırakılırsa tanımsız kalır; 0 yazmak “muaf” demektir.'**
+  String get daireTanimAidatAlt;
+
+  /// No description provided for @daireTanimDaireSayisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{sayi} daire'**
+  String daireTanimDaireSayisi(int sayi);
+
+  /// No description provided for @daireTanimSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu tanım silinsin mi? Bağlı {sayi} daire SİLİNMEZ, yalnız sınıflandırması boşalır.'**
+  String daireTanimSilOnay(int sayi);
+
+  /// No description provided for @daireTanimSilindiEtki.
+  ///
+  /// In tr, this message translates to:
+  /// **'Silindi. {sayi} dairenin sınıflandırması boşaldı.'**
+  String daireTanimSilindiEtki(int sayi);
+
+  /// No description provided for @daireTanimYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz tanım yok.'**
+  String get daireTanimYok;
+
+  /// No description provided for @daireTanimYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni tanım'**
+  String get daireTanimYeni;
+
+  /// No description provided for @daireTipiSecici.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağımsız bölüm tipi'**
+  String get daireTipiSecici;
+
+  /// No description provided for @daireGrubuSecici.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağımsız bölüm grubu'**
+  String get daireGrubuSecici;
+
+  /// No description provided for @daireTanimSecilmedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçilmedi'**
+  String get daireTanimSecilmedi;
 }
 
 class _AppLocalizationsDelegate

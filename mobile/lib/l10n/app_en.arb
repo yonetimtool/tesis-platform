@@ -1299,5 +1299,42 @@
       }
     }
   },
-  "kameraUrlSifrelenmemisUyari": "This address is unencrypted (http). Use https if possible."
+  "kameraUrlSifrelenmemisUyari": "This address is unencrypted (http). Use https if possible.",
+  "modulDaireTanimlari": "Unit Definitions",
+  "daireTanimSekmeTipler": "Types",
+  "daireTanimSekmeGruplar": "Groups",
+  "daireTanimAd": "Name",
+  "daireTanimAdIpucu": "e.g. 2+1, duplex, Villa",
+  "daireTanimVarsayilanAidat": "Default dues",
+  "daireTanimAidatBos": "Not set",
+  "daireTanimAidatAlt": "Leaving it empty means not set; entering 0 means exempt.",
+  "daireTanimDaireSayisi": "{sayi} units",
+  "@daireTanimDaireSayisi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilOnay": "Delete this definition? The {sayi} linked units are NOT deleted; only their classification is cleared.",
+  "@daireTanimSilOnay": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilindiEtki": "Deleted. {sayi} units lost their classification.",
+  "@daireTanimSilindiEtki": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimYok": "No definitions yet.",
+  "daireTanimYeni": "New definition",
+  "daireTipiSecici": "Unit type",
+  "daireGrubuSecici": "Unit group",
+  "daireTanimSecilmedi": "Not selected"
 }

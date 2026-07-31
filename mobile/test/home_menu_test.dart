@@ -18,6 +18,9 @@ void main() {
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
+        // (P26) Bagimsiz Bolum Tanimlari — site KURULUM adimi; yalniz
+        // yonetim gorur.
+        HomeMenuEntry.daireTanimlari,
         HomeMenuEntry.outbox,
       ]);
       expect(homeMenuForRole(UserRole.security), const [
@@ -111,6 +114,8 @@ void main() {
           HomeMenuEntry.sakinler,
           HomeMenuEntry.integrations,
           HomeMenuEntry.binaDuzenleme,
+          // (P26) Bagimsiz Bolum Tanimlari — yonetim kurulum adimi.
+          HomeMenuEntry.daireTanimlari,
         ],
       );
       // ziyaretci/kargo DOGRUDAN GORMEZ (KVKK — varsayilan kapali)

@@ -2089,6 +2089,82 @@ DuesYontem = Literal["elden", "havale", "kart", "diger"]
 DuesDurum = Literal["basarili", "bekliyor", "iptal"]
 
 
+# ---------------------- Bagimsiz Bolum tip/grup (P26) ---------------------- #
+#: Tanim adi: SERBEST metin (1+0, dubleks, "Dükkan"), yalniz uzunluk sinirli.
+#: Desen KOYULMADI — kullanicinin yazacagi etiketi tahmin etmek, "1+1,5" ya da
+#: "stüdyo" diyen siteyi disarida birakirdi.
+_TANIM_AD = Field(..., min_length=1, max_length=60)
+
+
+class UnitGrupCreate(BaseModel):
+    ad: str = _TANIM_AD
+    aktif: bool = True
+
+
+class UnitGrupUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=60)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "UnitGrupUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class UnitGrupOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    aktif: bool
+    #: Bu gruba bagli daire sayisi (silmeden once "kac daireyi etkiler").
+    daire_sayisi: int = 0
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class UnitGrupListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[UnitGrupOut]
+
+
+class UnitTipCreate(BaseModel):
+    ad: str = _TANIM_AD
+    #: NULL "tanimsiz"dir, 0 DEGIL — 0 gecerli bir tutardir (muaf daire).
+    varsayilan_aidat_kurus: int | None = Field(None, ge=0)
+    aktif: bool = True
+
+
+class UnitTipUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=60)
+    varsayilan_aidat_kurus: int | None = Field(None, ge=0)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "UnitTipUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class UnitTipOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    varsayilan_aidat_kurus: int | None = None
+    aktif: bool
+    daire_sayisi: int = 0
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class UnitTipListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[UnitTipOut]
+
+
 class UnitOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -2101,6 +2177,12 @@ class UnitOut(BaseModel):
     sira: int | None = None
     metrekare: float | None = None
     aktif: bool
+    # SINIFLANDIRMA (P26). Ad da doner: istemci ayri bir istek yapmadan
+    # listeyi cizebilsin (daire listesi tip/grup adini gosterir).
+    unit_tip_id: uuid.UUID | None = None
+    unit_tip_ad: str | None = None
+    unit_grup_id: uuid.UUID | None = None
+    unit_grup_ad: str | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -2124,6 +2206,8 @@ class UnitCreate(BaseModel):
     sira: int | None = Field(None, ge=_SIRA_MIN, le=_SIRA_MAX)
     metrekare: float | None = None
     aktif: bool = True
+    unit_tip_id: uuid.UUID | None = None
+    unit_grup_id: uuid.UUID | None = None
 
 
 _BULK_MAX = 500  # tek istekte en fazla daire
@@ -2141,6 +2225,11 @@ class UnitBulkCreate(BaseModel):
     kat_sayisi: int = Field(..., ge=1, le=_KAT_MAX)
     kat_basi_daire: int = Field(..., ge=1, le=_SIRA_MAX)
     baslangic_no: int = Field(..., ge=0, le=999999)
+    # PARTI BASINA siniflandirma (P26): toplu olusturmada her daireye tek tek
+    # tip secmek anlamsizdir — bir blok genelde tek tiptir. Daire basi
+    # istisnalar sonradan PATCH ile duzeltilir.
+    unit_tip_id: uuid.UUID | None = None
+    unit_grup_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
     def _cap(self) -> "UnitBulkCreate":
@@ -2173,6 +2262,10 @@ class UnitUpdate(BaseModel):
     sira: int | None = Field(None, ge=_SIRA_MIN, le=_SIRA_MAX)
     metrekare: float | None = None
     aktif: bool | None = None
+    # `None` GONDERILEBILIR: siniflandirmayi KALDIRMAK icin (bkz. router —
+    # `exclude_unset` ile "gonderilmedi" ile "null gonderildi" ayrilir).
+    unit_tip_id: uuid.UUID | None = None
+    unit_grup_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "UnitUpdate":

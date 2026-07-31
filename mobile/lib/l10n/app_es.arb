@@ -1299,5 +1299,42 @@
       }
     }
   },
-  "kameraUrlSifrelenmemisUyari": "Esta dirección no está cifrada (http). Use https si es posible."
+  "kameraUrlSifrelenmemisUyari": "Esta dirección no está cifrada (http). Use https si es posible.",
+  "modulDaireTanimlari": "Definiciones de unidades",
+  "daireTanimSekmeTipler": "Tipos",
+  "daireTanimSekmeGruplar": "Grupos",
+  "daireTanimAd": "Nombre",
+  "daireTanimAdIpucu": "p. ej. 2+1, dúplex, Villa",
+  "daireTanimVarsayilanAidat": "Cuota predeterminada",
+  "daireTanimAidatBos": "Sin definir",
+  "daireTanimAidatAlt": "Vacío significa sin definir; 0 significa exento.",
+  "daireTanimDaireSayisi": "{sayi} unidades",
+  "@daireTanimDaireSayisi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilOnay": "¿Eliminar esta definición? Las {sayi} unidades vinculadas NO se eliminan; solo se borra su clasificación.",
+  "@daireTanimSilOnay": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilindiEtki": "Eliminado. {sayi} unidades perdieron su clasificación.",
+  "@daireTanimSilindiEtki": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimYok": "Aún no hay definiciones.",
+  "daireTanimYeni": "Nueva definición",
+  "daireTipiSecici": "Tipo de unidad",
+  "daireGrubuSecici": "Grupo de unidades",
+  "daireTanimSecilmedi": "Sin seleccionar"
 }

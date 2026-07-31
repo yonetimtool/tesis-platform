@@ -4408,4 +4408,59 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get kameraUrlSifrelenmemisUyari =>
       'Cette adresse n\'est pas chiffrée (http). Utilisez https si possible.';
+
+  @override
+  String get modulDaireTanimlari => 'Définitions des lots';
+
+  @override
+  String get daireTanimSekmeTipler => 'Types';
+
+  @override
+  String get daireTanimSekmeGruplar => 'Groupes';
+
+  @override
+  String get daireTanimAd => 'Nom';
+
+  @override
+  String get daireTanimAdIpucu => 'p. ex. 2+1, duplex, Villa';
+
+  @override
+  String get daireTanimVarsayilanAidat => 'Charges par défaut';
+
+  @override
+  String get daireTanimAidatBos => 'Non défini';
+
+  @override
+  String get daireTanimAidatAlt =>
+      'Vide signifie non défini ; 0 signifie exonéré.';
+
+  @override
+  String daireTanimDaireSayisi(int sayi) {
+    return '$sayi lots';
+  }
+
+  @override
+  String daireTanimSilOnay(int sayi) {
+    return 'Supprimer cette définition ? Les $sayi lots liés ne sont PAS supprimés ; seule leur classification est effacée.';
+  }
+
+  @override
+  String daireTanimSilindiEtki(int sayi) {
+    return 'Supprimé. $sayi lots ont perdu leur classification.';
+  }
+
+  @override
+  String get daireTanimYok => 'Aucune définition.';
+
+  @override
+  String get daireTanimYeni => 'Nouvelle définition';
+
+  @override
+  String get daireTipiSecici => 'Type de lot';
+
+  @override
+  String get daireGrubuSecici => 'Groupe de lots';
+
+  @override
+  String get daireTanimSecilmedi => 'Non sélectionné';
 }

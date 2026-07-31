@@ -4259,4 +4259,59 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get kameraUrlSifrelenmemisUyari =>
       'Bu adres şifrelenmemiş (http). Mümkünse https kullanın.';
+
+  @override
+  String get modulDaireTanimlari => 'Bağımsız Bölüm Tanımları';
+
+  @override
+  String get daireTanimSekmeTipler => 'Tipler';
+
+  @override
+  String get daireTanimSekmeGruplar => 'Gruplar';
+
+  @override
+  String get daireTanimAd => 'Ad';
+
+  @override
+  String get daireTanimAdIpucu => 'Örn. 2+1, dubleks, Villa';
+
+  @override
+  String get daireTanimVarsayilanAidat => 'Varsayılan aidat';
+
+  @override
+  String get daireTanimAidatBos => 'Tanımsız';
+
+  @override
+  String get daireTanimAidatAlt =>
+      'Boş bırakılırsa tanımsız kalır; 0 yazmak “muaf” demektir.';
+
+  @override
+  String daireTanimDaireSayisi(int sayi) {
+    return '$sayi daire';
+  }
+
+  @override
+  String daireTanimSilOnay(int sayi) {
+    return 'Bu tanım silinsin mi? Bağlı $sayi daire SİLİNMEZ, yalnız sınıflandırması boşalır.';
+  }
+
+  @override
+  String daireTanimSilindiEtki(int sayi) {
+    return 'Silindi. $sayi dairenin sınıflandırması boşaldı.';
+  }
+
+  @override
+  String get daireTanimYok => 'Henüz tanım yok.';
+
+  @override
+  String get daireTanimYeni => 'Yeni tanım';
+
+  @override
+  String get daireTipiSecici => 'Bağımsız bölüm tipi';
+
+  @override
+  String get daireGrubuSecici => 'Bağımsız bölüm grubu';
+
+  @override
+  String get daireTanimSecilmedi => 'Seçilmedi';
 }

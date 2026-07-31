@@ -1819,5 +1819,42 @@
       }
     }
   },
-  "kameraUrlSifrelenmemisUyari": "Bu adres şifrelenmemiş (http). Mümkünse https kullanın."
+  "kameraUrlSifrelenmemisUyari": "Bu adres şifrelenmemiş (http). Mümkünse https kullanın.",
+  "modulDaireTanimlari": "Bağımsız Bölüm Tanımları",
+  "daireTanimSekmeTipler": "Tipler",
+  "daireTanimSekmeGruplar": "Gruplar",
+  "daireTanimAd": "Ad",
+  "daireTanimAdIpucu": "Örn. 2+1, dubleks, Villa",
+  "daireTanimVarsayilanAidat": "Varsayılan aidat",
+  "daireTanimAidatBos": "Tanımsız",
+  "daireTanimAidatAlt": "Boş bırakılırsa tanımsız kalır; 0 yazmak “muaf” demektir.",
+  "daireTanimDaireSayisi": "{sayi} daire",
+  "@daireTanimDaireSayisi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilOnay": "Bu tanım silinsin mi? Bağlı {sayi} daire SİLİNMEZ, yalnız sınıflandırması boşalır.",
+  "@daireTanimSilOnay": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimSilindiEtki": "Silindi. {sayi} dairenin sınıflandırması boşaldı.",
+  "@daireTanimSilindiEtki": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "daireTanimYok": "Henüz tanım yok.",
+  "daireTanimYeni": "Yeni tanım",
+  "daireTipiSecici": "Bağımsız bölüm tipi",
+  "daireGrubuSecici": "Bağımsız bölüm grubu",
+  "daireTanimSecilmedi": "Seçilmedi"
 }

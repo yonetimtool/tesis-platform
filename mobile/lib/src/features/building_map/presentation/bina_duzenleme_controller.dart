@@ -154,12 +154,16 @@ class BinaDuzenlemeController extends Notifier<BinaDuzenlemeState> {
     required int katSayisi,
     required int katBasiDaire,
     required int baslangicNo,
+    String? unitTipId,
+    String? unitGrupId,
   }) async {
     final res = await ref.read(binaDuzenlemeApiProvider).bulkCreateUnits(
           blok: blok,
           katSayisi: katSayisi,
           katBasiDaire: katBasiDaire,
           baslangicNo: baslangicNo,
+          unitTipId: unitTipId,
+          unitGrupId: unitGrupId,
         );
     await refresh();
     return res;
