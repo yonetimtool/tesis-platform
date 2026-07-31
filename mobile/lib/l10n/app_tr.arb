@@ -1785,5 +1785,13 @@
   "anprNedenPlakaBicimi": "Plaka okunamadı",
   "aracPlakaOkumalari": "Plaka okumaları",
   "kategoriGoruntuKirliligi": "Görüntü kirliliği",
-  "fabSikayetBildir": "Komşu şikayeti bildir"
+  "fabSikayetBildir": "Komşu şikayeti bildir",
+  "sakinRolTipi": "İlişki tipi",
+  "sakinRolMalik": "Kat maliki",
+  "sakinRolKiraci": "Kiracı",
+  "sakinRolDegisme": "Değiştirme",
+  "sakinRolAlt": "Aidat kiracıya, yatırım gideri malike borçlandırılır.",
+  "sakinEposta": "E-posta",
+  "sakinEpostaTemizle": "E-postayı kaldır",
+  "sakinRolBagYok": "İlişki tipi için sakinin bir daireye bağlı olması gerekir"
 }

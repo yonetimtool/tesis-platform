@@ -3334,7 +3334,13 @@ paths:
       - $ref: "#/components/parameters/PathId"
     get:
       tags: [aidat]
-      summary: Dairenin sakinleri
+      summary: Dairenin sakinleri (admin + yonetici)
+      description: |
+        RBAC **P23a'da genisletildi**: `admin` + `yonetici`. Gerekce — sakin
+        CRUD'u (`/residents`) zaten admin+yonetici; "kim nerede oturuyor"
+        ayni sinif veridir ve bagi admin-only birakmak, mobilde sakin yoneten
+        yoneticinin VAR OLAN bir sakine daire ATAYAMAMASI demekti. Genel
+        daire CRUD'u admin-only KALIR; acilan yalniz BAG uclaridir.
       responses:
         "200":
           description: Sakin listesi
@@ -3348,7 +3354,15 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
     post:
       tags: [aidat]
-      summary: Daireye sakin ata (admin)
+      summary: Daireye sakin ata (admin + yonetici)
+      description: |
+        VAR OLAN bir sakini bir daireye baglar (P23a) — sakin olusturmadan
+        SONRA da daire atanabilir ve bir sakin BIRDEN COK daireye baglanabilir.
+        `rol_tipi` (malik | kiraci) bag uzerinde durur; ayni dairede hem malik
+        hem kiraci olabilir (ayri kayitlar).
+
+        Hedef kullanici `resident` DEGILSE 422; ayni (daire, kullanici) bagi
+        zaten varsa 409.
       requestBody:
         required: true
         content:
@@ -3376,7 +3390,7 @@ paths:
         schema: { type: string, format: uuid }
     delete:
       tags: [aidat]
-      summary: Sakini daireden cikar (bitis=now) (admin)
+      summary: Sakini daireden cikar (bitis=now) (admin + yonetici)
       responses:
         "204": { description: Cikarildi }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -5796,7 +5810,10 @@ components:
         unit_no: { type: string }
         blok: { type: string, nullable: true }
         acik_sayisi: { type: integer, description: ACIK sikayet sayisi }
-        renk: { type: string, enum: [yesil, sari, kirmizi] }
+        renk:
+          type: string
+          enum: [yesil, sari, kirmizi]
+          description: Sunucudan gelir; istemci esik HESAPLAMAZ
     UnitDensity:
       type: object
       required: [items]
@@ -6147,11 +6164,36 @@ components:
           items: { $ref: "#/components/schemas/ResidentListItem" }
     ResidentUpdate:
       type: object
-      description: Sakin duzenle — en az bir alan; telefon global benzersiz (normalize)
+      description: |
+        Sakin duzenle — en az bir alan. **KURAL (P23b): olusturmada girilebilen
+        HER ALAN sonradan da duzenlenebilir.** Eskiden yalniz `ad` + `telefon`
+        vardi; `email` ve `rol_tipi` olusturmada giriliyor ama bir daha
+        DEGISTIRILEMIYORDU — kiraci cikip malik oturunca kayit yanlis kaliyor
+        ve bu muhasebe hedeflemesini (P28) dogrudan bozuyordu.
+
+        * `telefon` global benzersizdir (normalize; cakisma **409**).
+        * `email` acikca `null` gonderilerek TEMIZLENEBILIR (sakinde opsiyonel).
+        * `rol_tipi` kullanicinin **AKTIF** daire baglarinin HEPSINE uygulanir
+          (`bitis IS NULL`). Aktif bag yoksa **422 `invalid_reference`** —
+          once daire atanmalidir (`POST /units/{id}/residents`).
+        * Gonderilmeyen alan DEGISMEZ.
       minProperties: 1
       properties:
         ad: { type: string, minLength: 1 }
         telefon: { type: string, minLength: 1, example: "+905321112203" }
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: "Acikca `null` = temizle"
+        rol_tipi:
+          type: string
+          enum: [malik, kiraci]
+          nullable: true
+          description: >
+            AKTIF daire baglarina uygulanir. Bir dairede hem malik hem kiraci
+            olabilir (ayri kayitlar); muhasebede aidat KIRACI ONCELIKLI,
+            yatirim/demirbas MALIK hedeflidir (P28).
     ResidentResetPasswordOut:
       type: object
       required: [temp_code]

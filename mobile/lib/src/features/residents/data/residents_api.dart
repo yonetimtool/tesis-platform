@@ -19,11 +19,11 @@ class ResidentMember {
   final bool isActive;
 
   factory ResidentMember.fromJson(Map<String, dynamic> json) => ResidentMember(
-        userId: json['user_id'] as String,
-        ad: json['ad'] as String,
-        unitNo: json['unit_no'] as String?,
-        isActive: (json['is_active'] as bool?) ?? true,
-      );
+    userId: json['user_id'] as String,
+    ad: json['ad'] as String,
+    unitNo: json['unit_no'] as String?,
+    isActive: (json['is_active'] as bool?) ?? true,
+  );
 }
 
 /// Site sakini yonetimi ince istemcisi (yonetici/admin) — listele/ekle/cikar.
@@ -56,22 +56,40 @@ class ResidentsApi {
     };
     if (password != null && password.isNotEmpty) data['password'] = password;
     try {
-      final res = await _dio.post<Map<String, dynamic>>('/residents', data: data);
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/residents',
+        data: data,
+      );
       return res.data!['temp_code'] as String?;
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
 
-  /// Sakini duzenle: ad ve/veya cep telefonu (bos alanlar gonderilmez).
+  /// Sakini duzenle (P23b) — OLUSTURMADAKI TUM ALANLAR.
+  ///
+  /// Bos birakilan alan GONDERILMEZ (degismez). Iki istisna:
+  ///   * [emailTemizle] true ise `email: null` ACIKCA gonderilir (sunucu
+  ///     alani temizler) — "bos birakmak" ile "silmek" ayri seylerdir.
+  ///   * [rolTipi] verilirse kullanicinin AKTIF daire baglarinin HEPSINE
+  ///     uygulanir; aktif bagi yoksa sunucu 422 doner.
   Future<void> updateResident(
     String userId, {
     String? ad,
     String? telefon,
+    String? email,
+    bool emailTemizle = false,
+    String? rolTipi,
   }) async {
     final data = <String, dynamic>{};
     if (ad != null && ad.isNotEmpty) data['ad'] = ad;
     if (telefon != null && telefon.isNotEmpty) data['telefon'] = telefon;
+    if (emailTemizle) {
+      data['email'] = null;
+    } else if (email != null && email.isNotEmpty) {
+      data['email'] = email;
+    }
+    if (rolTipi != null && rolTipi.isNotEmpty) data['rol_tipi'] = rolTipi;
     try {
       await _dio.patch<void>('/residents/$userId', data: data);
     } on DioException catch (e) {
@@ -103,8 +121,9 @@ class ResidentsApi {
   }
 }
 
-final residentsApiProvider =
-    Provider<ResidentsApi>((ref) => ResidentsApi(ref.watch(dioProvider)));
+final residentsApiProvider = Provider<ResidentsApi>(
+  (ref) => ResidentsApi(ref.watch(dioProvider)),
+);
 
 final residentsProvider = FutureProvider.autoDispose<List<ResidentMember>>(
   (ref) => ref.watch(residentsApiProvider).getResidents(),

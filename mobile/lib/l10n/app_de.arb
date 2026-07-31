@@ -1265,5 +1265,13 @@
   "anprNedenPlakaBicimi": "Kennzeichen nicht lesbar",
   "aracPlakaOkumalari": "Kennzeichenlesungen",
   "kategoriGoruntuKirliligi": "Optische Verschmutzung",
-  "fabSikayetBildir": "Nachbarschaftsbeschwerde melden"
+  "fabSikayetBildir": "Nachbarschaftsbeschwerde melden",
+  "sakinRolTipi": "Beziehungsart",
+  "sakinRolMalik": "Eigentümer",
+  "sakinRolKiraci": "Mieter",
+  "sakinRolDegisme": "Unverändert lassen",
+  "sakinRolAlt": "Hausgeld wird dem Mieter, Investitionskosten dem Eigentümer belastet.",
+  "sakinEposta": "E-Mail",
+  "sakinEpostaTemizle": "E-Mail entfernen",
+  "sakinRolBagYok": "Für die Beziehungsart muss der Bewohner einer Wohnung zugeordnet sein"
 }

@@ -41,6 +41,14 @@ _LAYOUT_EDITOR = require_role("admin", "yonetici")
 # Yerlesim OKUMA: yonetim + saha (security/tesis_gorevlisi) — "Bina Duzenleme"
 # ekranini SALT-OKUMA gorurler (yazma yine _LAYOUT_EDITOR = 403).
 _LAYOUT_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+# SAKIN-DAIRE BAGI (P23a) — admin + yonetici.
+#
+# Gerekce: sakin CRUD'u (`/residents`) ZATEN admin+yonetici. "Kim nerede
+# oturuyor" ayni sinif veridir; bagi admin-only birakmak, mobilde sakin
+# yoneten yoneticinin var olan bir sakine daire ATAYAMAMASI demekti — yani
+# P23(a) uygulamadan ULASILAMAZ kaliyordu. Genel daire CRUD'u admin-only
+# KALIR; acilan yalniz bagdir.
+_BAG_YONETICI = require_role("admin", "yonetici")
 # Hedef sakin secicisi (guvenlik ziyaretci kaydinda kullanir) — okuma
 # guvenlik + yonetim; sakin komsularini LISTELEYEMEZ (403).
 _RESIDENT_LISTER = require_role("security", "admin", "yonetici")
@@ -235,7 +243,7 @@ async def delete_unit(
 async def list_residents(
     unit_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_BAG_YONETICI),
 ) -> list[UnitResident]:
     await get_or_404(db, Unit, unit_id)
     rows = (
@@ -253,7 +261,7 @@ async def assign_resident(
     unit_id: uuid.UUID,
     body: ResidentAssign,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_BAG_YONETICI),
 ) -> UnitResident:
     await get_or_404(db, Unit, unit_id)
     target = (
@@ -291,7 +299,7 @@ async def remove_resident(
     unit_id: uuid.UUID,
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_BAG_YONETICI),
 ) -> Response:
     await get_or_404(db, Unit, unit_id)
     binding = (

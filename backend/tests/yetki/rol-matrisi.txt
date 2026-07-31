@@ -179,9 +179,9 @@ GET    /units/{id}                                          IZIN   IZIN   IZIN  
 PATCH  /units/{id}                                          IZIN   IZIN   RED    RED    RED   
 GET    /units/{id}/dues                                     IZIN   IZIN   RED    RED    RED   
 PATCH  /units/{id}/layout                                   IZIN   IZIN   RED    RED    RED   
-GET    /units/{id}/residents                                IZIN   RED    RED    RED    RED   
-POST   /units/{id}/residents                                IZIN   RED    RED    RED    RED   
-DELETE /units/{id}/residents/{user_id}                      IZIN   RED    RED    RED    RED   
+GET    /units/{id}/residents                                IZIN   IZIN   RED    RED    RED   
+POST   /units/{id}/residents                                IZIN   IZIN   RED    RED    RED   
+DELETE /units/{id}/residents/{user_id}                      IZIN   IZIN   RED    RED    RED   
 POST   /uploads/presign                                     IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /users                                               IZIN   IZIN   RED    RED    RED   
 POST   /users                                               IZIN   IZIN   RED    RED    RED   

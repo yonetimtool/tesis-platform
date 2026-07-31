@@ -4445,4 +4445,30 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get fabSikayetBildir => 'Пожаловаться на соседа';
+
+  @override
+  String get sakinRolTipi => 'Тип отношения';
+
+  @override
+  String get sakinRolMalik => 'Собственник';
+
+  @override
+  String get sakinRolKiraci => 'Арендатор';
+
+  @override
+  String get sakinRolDegisme => 'Не менять';
+
+  @override
+  String get sakinRolAlt =>
+      'Взносы начисляются арендатору, инвестиционные расходы — собственнику.';
+
+  @override
+  String get sakinEposta => 'Эл. почта';
+
+  @override
+  String get sakinEpostaTemizle => 'Удалить эл. почту';
+
+  @override
+  String get sakinRolBagYok =>
+      'Чтобы задать тип отношения, житель должен быть привязан к квартире';
 }

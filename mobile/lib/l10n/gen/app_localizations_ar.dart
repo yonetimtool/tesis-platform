@@ -4460,4 +4460,29 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fabSikayetBildir => 'الإبلاغ عن شكوى جار';
+
+  @override
+  String get sakinRolTipi => 'نوع العلاقة';
+
+  @override
+  String get sakinRolMalik => 'المالك';
+
+  @override
+  String get sakinRolKiraci => 'مستأجر';
+
+  @override
+  String get sakinRolDegisme => 'دون تغيير';
+
+  @override
+  String get sakinRolAlt =>
+      'تُحمّل الرسوم على المستأجر ونفقات الاستثمار على المالك.';
+
+  @override
+  String get sakinEposta => 'البريد الإلكتروني';
+
+  @override
+  String get sakinEpostaTemizle => 'إزالة البريد الإلكتروني';
+
+  @override
+  String get sakinRolBagYok => 'يجب ربط الساكن بشقة لتحديد نوع العلاقة';
 }

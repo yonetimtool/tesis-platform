@@ -932,7 +932,7 @@ bırakmak en temiz yol görünüyor.
 (b)–(g) maddelerine HİÇ dokunulmadı.
 
 ### P23 — Resident lifecycle: unit assignment + full edit + malik/kiracı
-Status: BEKLIYOR · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: (a) assign unit(s) to an EXISTING resident (currently impossible after
 creation); (b) full resident edit — every field enterable at creation is editable
 later (backend + panel + mobile where resident editing exists); (c) unit-person
@@ -942,6 +942,51 @@ the MALİK; regular dues bind the current KİRACI if present, else malik. NEW
 revisions for schema.
 Acceptance: create→later-assign→edit E2E; relation types stored + surfaced;
 RBAC correct; contract updated; quality gates.
+Notes (2026-07-31): **YENİ ŞEMA GEREKMEDİ** — denetim, planın varsaydığından
+fazlasının hazır olduğunu gösterdi: `unit_resident.rol_tipi` zaten
+`resident_rol` enum'u (`malik | kiraci`) ile vardı ve
+`POST /units/{id}/residents` bağlama ucu da vardı. Gerçek boşluklar
+başkaydı:
+**(a) Sonradan daire atama — UCU VARDI AMA ULAŞILAMIYORDU.** Bağ uçları
+(`GET/POST/DELETE /units/{id}/residents`) **admin-only**'di; oysa mobilde
+sakini yöneten roldür **yönetici** (`/residents` zaten admin+yönetici). Yani
+yönetici var olan bir sakine daire ATAYAMIYORDU — madde uygulamadan
+ulaşılamaz durumdaydı. Üç uç `admin + yonetici`ye açıldı; **genel daire CRUD'u
+admin-only KALDI** (açılan yalnız bağ). Rol matrisi kilidi bu değişimi
+yakaladı ve güncellendi — ölçülen matris tam olarak amaçlanan: yönetici İZİN,
+güvenlik/sakin/tesis görevlisi RED.
+**(b) Tam düzenleme — asıl eksik buydu.** `ResidentUpdate` yalnız `ad` +
+`telefon` alıyordu; oysa oluşturmada `email` ve `rol_tipi` de giriliyordu ve
+bir daha DEĞİŞTİRİLEMİYORDU. Kiracı çıkıp malik oturmaya başlayınca kayıt
+yanlış kalıyordu — ve bu, aidatın KİME borçlandırılacağını belirlediği için
+(P28) muhasebeyi doğrudan bozacak bir hataydı. İkisi de eklendi.
+İKİ İNCE KARAR:
+1. **"Boş bırakmak" ile "SİLMEK" ayrı şeylerdir.** `email` açıkça `null`
+   gönderilerek temizlenebilir; boş metin ise "değiştirme" demektir. Mobilde
+   bunun için ayrı bir anahtar var ve kutu dolu olsa bile anahtar kazanır —
+   kullanıcı "sil" dediyse eski metnin gönderilmesi sessiz bir hata olurdu.
+   Sunucuda `exclude_unset` + `_ATLA` nöbetçisi bu ayrımı korur.
+2. **`rol_tipi` kullanıcıda değil BAĞDA durur** ve AKTİF bağların (bitiş
+   IS NULL) HEPSİNE uygulanır. Aktif bağ yoksa **422 `invalid_reference`** —
+   bağsız bir ilişki tipi anlamsızdır ve P28'in hedeflemesi tamamen bağa
+   dayanır.
+**(c) Yüzeye çıkarma:** mobil sakin düzenleme sayfası e-posta alanı,
+"e-postayı kaldır" anahtarı ve ilişki tipi seçicisi kazandı; seçicinin alt
+metni kuralı açıkça yazıyor ("Aidat kiracıya, yatırım gideri malike
+borçlandırılır") — yönetici neyi neden seçtiğini bilsin.
+TESTLER: `test_residents.py` +3 (oluştur→ikinci daire ata→e-posta ekle→
+e-postayı AÇIKÇA temizle→rol_tipi değiştir E2E; bağsız rol_tipi 422; bağ
+uçlarının RBAC'i) ve `test/p23_sakin_yasam_donusu_test.dart` (4 test).
+Mobil test **gerçek `ResidentsApi`yi sürer**: ilk sürümde `updateResident`
+override edilip gövde elle kuruluyordu — o test ürünü değil KENDİ KOPYASINI
+ölçerdi; Dio interceptor'a çevrildi.
+i18n: 8 yeni ARB anahtarı × 7 dil. §15 ölçümü DEĞİŞMEDİ: **8**.
+KAPILAR: `flutter analyze` temiz; `flutter test` **1440 geçti / 0 düştü**;
+`flutter build apk --debug` ✓; backend `pytest` tam takım **842 test**, P23 kaynaklı düşüş **YOK** (aynı
+çalışma ağacındaki iki düşüş P24'ün dört-kademeli renk skalasının eski
+beklentileriydi ve P24 commit'inde düzeltildi); P23'ün dokunduğu dört dosya
+**43/43**; sözleşme
+güncellendi (ResidentUpdate + üç bağ ucunun RBAC'i ve gerekçesi).
 
 ### P24 — Complaint triage tabs + 4-tier unit color scale
 Status: BEKLIYOR · Depends-on: —
@@ -1245,6 +1290,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
+- 2026-07-31 · P23 · (bu commit) · Sakin yaşam döngüsü: bağ uçları yöneticiye açıldı (sonradan daire atama artık ULAŞILABİLİR), `ResidentUpdate` e-posta + rol_tipi kazandı ("boş bırak" ile "SİL" ayrı), rol_tipi AKTİF bağların hepsine uygulanır (bağsız → 422); yeni şema GEREKMEDİ.
 - 2026-07-31 · P22 (b-g) · 6755a05 · Bildirime dokunma bir yere gidiyor, bildir kisayolu ana ekrana doner (tam yukleme yok), talep/sikayet AYRI akislar, kural gorseli listede, goruntu_kirliligi kategorisi (0013). (a) geri alindi — tani planda.
 - 2026-07-31 · P19 · df8cda3 · Hikvision/Dahua adaptorleri GERCEKCI tam govdelerle kilitlendi (uc bulgu: direction yon degil, _utc ofseti koruyordu, kimliksiz govdede turevsel kimlik kararli) + kamera kurulum dokumani.
 - 2026-07-31 · P17 · 4cf269e · RTSP kameralar restream ile OYNATILABILIR (0012) + Plaka Okumalari ekrani (onay kuyrugu + OCR duzeltmesi); 26 ARB anahtari x 7 dil; 18+5 test.

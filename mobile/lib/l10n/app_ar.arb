@@ -1265,5 +1265,13 @@
   "anprNedenPlakaBicimi": "تعذّرت قراءة اللوحة",
   "aracPlakaOkumalari": "قراءات اللوحات",
   "kategoriGoruntuKirliligi": "تلوّث بصري",
-  "fabSikayetBildir": "الإبلاغ عن شكوى جار"
+  "fabSikayetBildir": "الإبلاغ عن شكوى جار",
+  "sakinRolTipi": "نوع العلاقة",
+  "sakinRolMalik": "المالك",
+  "sakinRolKiraci": "مستأجر",
+  "sakinRolDegisme": "دون تغيير",
+  "sakinRolAlt": "تُحمّل الرسوم على المستأجر ونفقات الاستثمار على المالك.",
+  "sakinEposta": "البريد الإلكتروني",
+  "sakinEpostaTemizle": "إزالة البريد الإلكتروني",
+  "sakinRolBagYok": "يجب ربط الساكن بشقة لتحديد نوع العلاقة"
 }

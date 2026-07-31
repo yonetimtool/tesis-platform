@@ -4350,4 +4350,30 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get fabSikayetBildir => 'Nachbarschaftsbeschwerde melden';
+
+  @override
+  String get sakinRolTipi => 'Beziehungsart';
+
+  @override
+  String get sakinRolMalik => 'Eigentümer';
+
+  @override
+  String get sakinRolKiraci => 'Mieter';
+
+  @override
+  String get sakinRolDegisme => 'Unverändert lassen';
+
+  @override
+  String get sakinRolAlt =>
+      'Hausgeld wird dem Mieter, Investitionskosten dem Eigentümer belastet.';
+
+  @override
+  String get sakinEposta => 'E-Mail';
+
+  @override
+  String get sakinEpostaTemizle => 'E-Mail entfernen';
+
+  @override
+  String get sakinRolBagYok =>
+      'Für die Beziehungsart muss der Bewohner einer Wohnung zugeordnet sein';
 }

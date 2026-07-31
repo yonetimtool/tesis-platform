@@ -2286,8 +2286,23 @@ class ResidentListResponse(BaseModel):
 # Sakin duzenleme (PATCH /residents/{id}) — en az bir alan. telefon normalize +
 # global benzersiz. Numara bos birakmak = degismez (exclude_unset).
 class ResidentUpdate(BaseModel):
+    """Sakin duzenleme (P23b).
+
+    KURAL: olusturmada girilebilen HER ALAN sonradan da duzenlenebilir.
+    Eskiden yalniz `ad` + `telefon` vardi; `email` ve `rol_tipi`
+    (malik/kiraci) olusturmada giriliyor ama BIR DAHA degistirilemiyordu —
+    kiraci cikip malik oturmaya baslayinca kayit yanlis kaliyordu ve bu,
+    muhasebe hedeflemesini (P28) dogrudan bozacak bir hataydi.
+
+    `rol_tipi` kullanicinin AKTIF daire baglarina (bitis IS NULL) uygulanir;
+    aktif bagi yoksa 422 (once daire atanmali).
+    `email` acikca `null` gonderilerek TEMIZLENEBILIR — sakinde opsiyoneldir.
+    """
+
     ad: str | None = Field(None, min_length=1)
     telefon: str | None = Field(None, min_length=1)
+    email: EmailStr | None = None
+    rol_tipi: ResidentRol | None = None
 
     @field_validator("telefon")
     @classmethod
@@ -2669,6 +2684,8 @@ UnitComplaintKategori = Literal[
     "gurultu", "kapi_onu_ayakkabi", "zarar_verme", "goruntu_kirliligi", "diger"
 ]
 UnitComplaintDurum = Literal["acik", "kapali"]
+# P24 — DORT KADEME: 0 yesil · 1-2 sari · 3-4 kirmizi · 5+ mor.
+# Esikler `routers/unit_complaints._ESIKLER` tablosundadir (tek kaynak).
 DensityRenk = Literal["yesil", "sari", "kirmizi"]
 
 

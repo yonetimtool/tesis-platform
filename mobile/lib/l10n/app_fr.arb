@@ -1265,5 +1265,13 @@
   "anprNedenPlakaBicimi": "Plaque illisible",
   "aracPlakaOkumalari": "Lectures de plaques",
   "kategoriGoruntuKirliligi": "Pollution visuelle",
-  "fabSikayetBildir": "Signaler une plainte de voisinage"
+  "fabSikayetBildir": "Signaler une plainte de voisinage",
+  "sakinRolTipi": "Type de relation",
+  "sakinRolMalik": "Propriétaire",
+  "sakinRolKiraci": "Locataire",
+  "sakinRolDegisme": "Ne pas modifier",
+  "sakinRolAlt": "Les charges sont imputées au locataire, les investissements au propriétaire.",
+  "sakinEposta": "E-mail",
+  "sakinEpostaTemizle": "Supprimer l’e-mail",
+  "sakinRolBagYok": "Le résident doit être rattaché à un logement pour définir le type de relation"
 }

@@ -901,6 +901,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Le passage du véhicule a déjà été clôturé.",
         "es": "El pase del vehículo ya fue cerrado.",
     },
+    "sakin_daireye_bagli_degil": {
+        "tr": "İlişki tipi için sakinin bir daireye bağlı olması gerekir.",
+        "en": "The resident must be linked to a unit to set a relationship type.",
+        "ar": "يجب ربط الساكن بشقة لتحديد نوع العلاقة.",
+        "ru": "Чтобы задать тип отношения, житель должен быть привязан к квартире.",
+        "de": "Für die Beziehungsart muss der Bewohner einer Wohnung zugeordnet sein.",
+        "fr": "Le résident doit être rattaché à un logement pour définir le type de relation.",
+        "es": "El residente debe estar vinculado a una vivienda para definir el tipo de relación.",
+    },
     "kamera_restream_semasi": {
         "tr": "Restream adresi http:// veya https:// ile başlamalı.",
         "en": "The restream URL must start with http:// or https://.",

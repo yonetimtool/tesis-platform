@@ -4189,4 +4189,30 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get fabSikayetBildir => 'Komşu şikayeti bildir';
+
+  @override
+  String get sakinRolTipi => 'İlişki tipi';
+
+  @override
+  String get sakinRolMalik => 'Kat maliki';
+
+  @override
+  String get sakinRolKiraci => 'Kiracı';
+
+  @override
+  String get sakinRolDegisme => 'Değiştirme';
+
+  @override
+  String get sakinRolAlt =>
+      'Aidat kiracıya, yatırım gideri malike borçlandırılır.';
+
+  @override
+  String get sakinEposta => 'E-posta';
+
+  @override
+  String get sakinEpostaTemizle => 'E-postayı kaldır';
+
+  @override
+  String get sakinRolBagYok =>
+      'İlişki tipi için sakinin bir daireye bağlı olması gerekir';
 }

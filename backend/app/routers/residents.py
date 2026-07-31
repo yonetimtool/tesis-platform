@@ -42,6 +42,10 @@ router = APIRouter(prefix="/residents", tags=["auth"])
 
 _YONETIM = require_role("admin", "yonetici")
 
+#: `exclude_unset` ile "hic gonderilmedi"yi "acikca null gonderildi"den
+#: ayirmak icin nobetci — `None` gecerli bir DEGERDIR (email temizleme).
+_ATLA = object()
+
 
 @router.post("", response_model=ResidentCreatedOut, status_code=201)
 async def create_resident(
@@ -183,11 +187,34 @@ async def update_resident(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_YONETIM),
 ) -> Response:
-    """Sakini duzenle (yonetici/admin): ad ve/veya cep telefonu. telefon global
-    benzersiz (cakisma 409). Numarayi bos birakmak = degismez."""
+    """Sakini duzenle (yonetici/admin) — P23b: olusturmadaki TUM alanlar.
+
+    `ad`, `telefon` (global benzersiz; cakisma 409), `email` (acikca null =
+    temizle) ve `rol_tipi` (malik/kiraci). `rol_tipi` kullanicinin AKTIF
+    daire baglarina uygulanir; aktif bagi yoksa **422** — once daire
+    atanmalidir (`POST /units/{id}/residents`).
+
+    Gonderilmeyen alan DEGISMEZ (`exclude_unset`).
+    """
     resident = await _resident_or_404(db, user_id)
-    fields = list(body.model_dump(exclude_unset=True).keys())
-    for key, value in body.model_dump(exclude_unset=True).items():
+    alanlar = body.model_dump(exclude_unset=True)
+    fields = list(alanlar.keys())
+    # rol_tipi kullanicinin kendi satirinda DEGIL, daire BAGINDA durur.
+    rol_tipi = alanlar.pop("rol_tipi", _ATLA)
+    if rol_tipi is not _ATLA:
+        baglar = (
+            await db.execute(
+                select(UnitResident).where(
+                    UnitResident.user_id == user_id,
+                    UnitResident.bitis.is_(None),
+                )
+            )
+        ).scalars().all()
+        if not baglar:
+            raise APIError(422, "invalid_reference", "sakin_daireye_bagli_degil")
+        for bag in baglar:
+            bag.rol_tipi = rol_tipi
+    for key, value in alanlar.items():
         setattr(resident, key, value)
     resident.updated_at = func.now()
     try:

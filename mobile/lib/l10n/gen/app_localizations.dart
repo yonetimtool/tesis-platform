@@ -7414,6 +7414,54 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Komşu şikayeti bildir'**
   String get fabSikayetBildir;
+
+  /// No description provided for @sakinRolTipi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlişki tipi'**
+  String get sakinRolTipi;
+
+  /// No description provided for @sakinRolMalik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kat maliki'**
+  String get sakinRolMalik;
+
+  /// No description provided for @sakinRolKiraci.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kiracı'**
+  String get sakinRolKiraci;
+
+  /// No description provided for @sakinRolDegisme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Değiştirme'**
+  String get sakinRolDegisme;
+
+  /// No description provided for @sakinRolAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat kiracıya, yatırım gideri malike borçlandırılır.'**
+  String get sakinRolAlt;
+
+  /// No description provided for @sakinEposta.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta'**
+  String get sakinEposta;
+
+  /// No description provided for @sakinEpostaTemizle.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-postayı kaldır'**
+  String get sakinEpostaTemizle;
+
+  /// No description provided for @sakinRolBagYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlişki tipi için sakinin bir daireye bağlı olması gerekir'**
+  String get sakinRolBagYok;
 }
 
 class _AppLocalizationsDelegate

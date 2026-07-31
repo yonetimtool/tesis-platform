@@ -18,7 +18,9 @@ class ResidentsScreen extends ConsumerWidget {
     final async = ref.watch(residentsProvider);
     final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(baslikBuyuk(l10n.sakinBaslik, context.dilKodu))),
+      appBar: AppBar(
+        title: Text(baslikBuyuk(l10n.sakinBaslik, context.dilKodu)),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddSheet(context, ref),
         icon: const Icon(Icons.person_add_alt_1),
@@ -29,7 +31,9 @@ class ResidentsScreen extends ConsumerWidget {
         error: (e, _) => _ErrorState(
           // Sunucu metni varsa o gosterilir (SERVER-LOCALIZED siniri);
           // yoksa yerellestirilmis genel metin.
-          message: e is ApiException ? apiHataMetni(l10n, e) : l10n.sakinListelenemedi,
+          message: e is ApiException
+              ? apiHataMetni(l10n, e)
+              : l10n.sakinListelenemedi,
           onRetry: () => ref.invalidate(residentsProvider),
         ),
         data: (list) => list.isEmpty
@@ -73,7 +77,9 @@ class _ResidentTile extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: CircleAvatar(
-          child: Icon(member.isActive ? Icons.home_outlined : Icons.person_off_outlined),
+          child: Icon(
+            member.isActive ? Icons.home_outlined : Icons.person_off_outlined,
+          ),
         ),
         title: Text(member.ad),
         subtitle: Text(subtitle),
@@ -84,8 +90,9 @@ class _ResidentTile extends StatelessWidget {
               Chip(
                 label: Text(l10n.devriyePasif),
                 visualDensity: VisualDensity.compact,
-                backgroundColor:
-                    Theme.of(context).colorScheme.surfaceContainerHighest,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
               ),
             PopupMenuButton<String>(
               tooltip: l10n.sakinIslemleri,
@@ -141,7 +148,9 @@ class _ResidentTile extends StatelessWidget {
     );
     if (ok != true) return;
     try {
-      final code = await ref.read(residentsApiProvider).resetPassword(member.userId);
+      final code = await ref
+          .read(residentsApiProvider)
+          .resetPassword(member.userId);
       if (!context.mounted) return;
       await showTempCodeDialog(
         context,
@@ -179,21 +188,32 @@ class _ResidentTile extends StatelessWidget {
     );
     if (ok != true) return;
     try {
-      final deleted =
-          await ref.read(residentsApiProvider).removeResident(member.userId);
+      final deleted = await ref
+          .read(residentsApiProvider)
+          .removeResident(member.userId);
       ref.invalidate(residentsProvider);
-      messenger.showSnackBar(SnackBar(
-        content: Text(deleted
-            ? l10n.sakinSilindi(member.ad)
-            : l10n.sakinPasiflestirildi(member.ad)),
-      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            deleted
+                ? l10n.sakinSilindi(member.ad)
+                : l10n.sakinPasiflestirildi(member.ad),
+          ),
+        ),
+      );
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 }
 
-/// Sakin düzenle alt sayfası — Ad + (opsiyonel) yeni cep telefonu.
+/// Sakin duzenle alt sayfasi (P23b) — OLUSTURMADAKI TUM ALANLAR.
+///
+/// Eskiden yalniz Ad + telefon vardi; e-posta ve ilişki tipi (kat maliki /
+/// kiraci) olusturmada giriliyor ama BIR DAHA degistirilemiyordu. Kiraci
+/// cikip malik oturmaya baslayinca kayit yanlis kaliyordu — ve bu, aidatin
+/// KIME borclandirilacagini belirledigi icin (P28) muhasebeyi dogrudan
+/// bozacak bir hataydi.
 class _EditResidentSheet extends ConsumerStatefulWidget {
   const _EditResidentSheet({required this.member});
 
@@ -205,15 +225,22 @@ class _EditResidentSheet extends ConsumerStatefulWidget {
 
 class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _adCtrl =
-      TextEditingController(text: widget.member.ad);
+  late final TextEditingController _adCtrl = TextEditingController(
+    text: widget.member.ad,
+  );
   final _phoneCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+
+  /// null = "degistirme" (gonderilmez).
+  String? _rolTipi;
+  bool _emailTemizle = false;
   bool _submitting = false;
 
   @override
   void dispose() {
     _adCtrl.dispose();
     _phoneCtrl.dispose();
+    _emailCtrl.dispose();
     super.dispose();
   }
 
@@ -225,10 +252,15 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
     final l10n = context.l10n;
     setState(() => _submitting = true);
     try {
-      await ref.read(residentsApiProvider).updateResident(
+      await ref
+          .read(residentsApiProvider)
+          .updateResident(
             widget.member.userId,
             ad: _adCtrl.text.trim(),
             telefon: _phoneCtrl.text.trim(),
+            email: _emailCtrl.text.trim(),
+            emailTemizle: _emailTemizle,
+            rolTipi: _rolTipi,
           );
       if (!mounted) return;
       navigator.pop(true);
@@ -252,8 +284,10 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l10n.sakinDuzenleBaslik,
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              l10n.sakinDuzenleBaslik,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _adCtrl,
@@ -279,11 +313,66 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
                 border: const OutlineInputBorder(),
               ),
             ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _emailCtrl,
+              enabled: !_submitting && !_emailTemizle,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              decoration: InputDecoration(
+                labelText: l10n.sakinEposta,
+                helperText: l10n.sakinBosBirakDegismez,
+                prefixIcon: const Icon(Icons.mail_outline),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            // "Bos birakmak" ile "SILMEK" ayri seylerdir: bos alan alani
+            // degistirmez, bu anahtar ACIKCA null gonderir.
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.sakinEpostaTemizle),
+              value: _emailTemizle,
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _emailTemizle = v),
+            ),
+            const SizedBox(height: 4),
+            // `isExpanded` ZORUNLU (§15 kalibi): uzun ceviri + prefixIcon
+            // 320 dp'de tasirir.
+            DropdownButtonFormField<String?>(
+              isExpanded: true,
+              initialValue: _rolTipi,
+              decoration: InputDecoration(
+                labelText: l10n.sakinRolTipi,
+                helperText: l10n.sakinRolAlt,
+                helperMaxLines: 3,
+                prefixIcon: const Icon(Icons.key_outlined),
+                border: const OutlineInputBorder(),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: null,
+                  child: Text(l10n.sakinRolDegisme),
+                ),
+                DropdownMenuItem(
+                  value: 'malik',
+                  child: Text(l10n.sakinRolMalik),
+                ),
+                DropdownMenuItem(
+                  value: 'kiraci',
+                  child: Text(l10n.sakinRolKiraci),
+                ),
+              ],
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _rolTipi = v),
+            ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _submitting ? null : _submit,
-              style:
-                  FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
               child: _submitting
                   ? const SizedBox(
                       height: 20,
@@ -331,7 +420,9 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
     final l10n = context.l10n;
     setState(() => _submitting = true);
     try {
-      final tempCode = await ref.read(residentsApiProvider).addResident(
+      final tempCode = await ref
+          .read(residentsApiProvider)
+          .addResident(
             ad: _adCtrl.text.trim(),
             telefon: _phoneCtrl.text.trim(),
             unitNo: _unitCtrl.text.trim(),
@@ -367,8 +458,10 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l10n.sakinEkle,
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              l10n.sakinEkle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _adCtrl,
@@ -406,9 +499,8 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
                 prefixIcon: const Icon(Icons.door_front_door_outlined),
                 border: const OutlineInputBorder(),
               ),
-              validator: (v) => (v?.trim() ?? '').isEmpty
-                  ? l10n.sakinDaireNoZorunlu
-                  : null,
+              validator: (v) =>
+                  (v?.trim() ?? '').isEmpty ? l10n.sakinDaireNoZorunlu : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -427,8 +519,9 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _submitting ? null : _submit,
-              style:
-                  FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
               child: _submitting
                   ? const SizedBox(
                       height: 20,

@@ -1265,5 +1265,13 @@
   "anprNedenPlakaBicimi": "Номер не распознан",
   "aracPlakaOkumalari": "Считывания номеров",
   "kategoriGoruntuKirliligi": "Визуальный мусор",
-  "fabSikayetBildir": "Пожаловаться на соседа"
+  "fabSikayetBildir": "Пожаловаться на соседа",
+  "sakinRolTipi": "Тип отношения",
+  "sakinRolMalik": "Собственник",
+  "sakinRolKiraci": "Арендатор",
+  "sakinRolDegisme": "Не менять",
+  "sakinRolAlt": "Взносы начисляются арендатору, инвестиционные расходы — собственнику.",
+  "sakinEposta": "Эл. почта",
+  "sakinEpostaTemizle": "Удалить эл. почту",
+  "sakinRolBagYok": "Чтобы задать тип отношения, житель должен быть привязан к квартире"
 }

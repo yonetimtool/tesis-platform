@@ -4328,4 +4328,30 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get fabSikayetBildir => 'Informar de una queja vecinal';
+
+  @override
+  String get sakinRolTipi => 'Tipo de relación';
+
+  @override
+  String get sakinRolMalik => 'Propietario';
+
+  @override
+  String get sakinRolKiraci => 'Inquilino';
+
+  @override
+  String get sakinRolDegisme => 'Sin cambios';
+
+  @override
+  String get sakinRolAlt =>
+      'Las cuotas se cargan al inquilino y las inversiones al propietario.';
+
+  @override
+  String get sakinEposta => 'Correo electrónico';
+
+  @override
+  String get sakinEpostaTemizle => 'Eliminar el correo';
+
+  @override
+  String get sakinRolBagYok =>
+      'El residente debe estar vinculado a una vivienda para definir el tipo de relación';
 }

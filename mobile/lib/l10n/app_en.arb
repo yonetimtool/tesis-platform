@@ -1265,5 +1265,13 @@
   "anprNedenPlakaBicimi": "Plate could not be read",
   "aracPlakaOkumalari": "Plate readings",
   "kategoriGoruntuKirliligi": "Visual pollution",
-  "fabSikayetBildir": "Report a neighbour complaint"
+  "fabSikayetBildir": "Report a neighbour complaint",
+  "sakinRolTipi": "Relationship type",
+  "sakinRolMalik": "Owner",
+  "sakinRolKiraci": "Tenant",
+  "sakinRolDegisme": "Leave unchanged",
+  "sakinRolAlt": "Dues are charged to the tenant, investment costs to the owner.",
+  "sakinEposta": "E-mail",
+  "sakinEpostaTemizle": "Remove e-mail",
+  "sakinRolBagYok": "The resident must be linked to a unit to set a relationship type"
 }

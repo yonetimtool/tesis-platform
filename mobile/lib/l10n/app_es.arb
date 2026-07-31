@@ -1265,5 +1265,13 @@
   "anprNedenPlakaBicimi": "No se pudo leer la matrícula",
   "aracPlakaOkumalari": "Lecturas de matrículas",
   "kategoriGoruntuKirliligi": "Contaminación visual",
-  "fabSikayetBildir": "Informar de una queja vecinal"
+  "fabSikayetBildir": "Informar de una queja vecinal",
+  "sakinRolTipi": "Tipo de relación",
+  "sakinRolMalik": "Propietario",
+  "sakinRolKiraci": "Inquilino",
+  "sakinRolDegisme": "Sin cambios",
+  "sakinRolAlt": "Las cuotas se cargan al inquilino y las inversiones al propietario.",
+  "sakinEposta": "Correo electrónico",
+  "sakinEpostaTemizle": "Eliminar el correo",
+  "sakinRolBagYok": "El residente debe estar vinculado a una vivienda para definir el tipo de relación"
 }

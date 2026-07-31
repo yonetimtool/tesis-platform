@@ -4375,4 +4375,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fabSikayetBildir => 'Report a neighbour complaint';
+
+  @override
+  String get sakinRolTipi => 'Relationship type';
+
+  @override
+  String get sakinRolMalik => 'Owner';
+
+  @override
+  String get sakinRolKiraci => 'Tenant';
+
+  @override
+  String get sakinRolDegisme => 'Leave unchanged';
+
+  @override
+  String get sakinRolAlt =>
+      'Dues are charged to the tenant, investment costs to the owner.';
+
+  @override
+  String get sakinEposta => 'E-mail';
+
+  @override
+  String get sakinEpostaTemizle => 'Remove e-mail';
+
+  @override
+  String get sakinRolBagYok =>
+      'The resident must be linked to a unit to set a relationship type';
 }

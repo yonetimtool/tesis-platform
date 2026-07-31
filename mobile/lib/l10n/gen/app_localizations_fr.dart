@@ -4338,4 +4338,30 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get fabSikayetBildir => 'Signaler une plainte de voisinage';
+
+  @override
+  String get sakinRolTipi => 'Type de relation';
+
+  @override
+  String get sakinRolMalik => 'Propriétaire';
+
+  @override
+  String get sakinRolKiraci => 'Locataire';
+
+  @override
+  String get sakinRolDegisme => 'Ne pas modifier';
+
+  @override
+  String get sakinRolAlt =>
+      'Les charges sont imputées au locataire, les investissements au propriétaire.';
+
+  @override
+  String get sakinEposta => 'E-mail';
+
+  @override
+  String get sakinEpostaTemizle => 'Supprimer l’e-mail';
+
+  @override
+  String get sakinRolBagYok =>
+      'Le résident doit être rattaché à un logement pour définir le type de relation';
 }
