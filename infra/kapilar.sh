@@ -29,8 +29,13 @@ kapi() {
   printf '== %s\n' "$ad"
   ( "$@" ) >"$log" 2>&1
   local kod=$?
+  # OZET: SON ANLAMLI SATIR. Once `tail -n 3 | tr '\n' ' '` kullaniliyordu
+  # ve sonuc yaniltici oluyordu: uc satirlik pencerenin BASI gorunuyordu,
+  # yani `flutter test`in son satiri "+1559 All tests passed!" iken ozette
+  # ara satirdaki "+1557" yaziyordu. P89'da bunu "flutter'in sayaci
+  # kirpiliyor" diye NOT DUSTUM — yanlisti; sebep bu satirdi (P90).
   local ozet
-  ozet="$(tail -n 3 "$log" | tr -d '\r' | tr '\n' ' ' | cut -c1-90)"
+  ozet="$(grep -v '^[[:space:]]*$' "$log" | tail -n 1 | tr -d '\r' | cut -c1-90)"
   if [ "$kod" -eq 0 ]; then
     SONUC+=("OK   $ad — $ozet")
   else
