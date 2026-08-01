@@ -473,6 +473,7 @@ export const ar: Sozluk = {
   ortakSecenekYuklenemedi: "تعذّر تحميل بعض الخيارات — قد تكون القائمة ناقصة.",
   tesisSilOnayEtiketi: "كلمة التأكيد",
   finansTipSuzgeci: "تصفية النوع",
+  raporEskiOdemeKesildi: "بلغ فحص المدفوعات القديمة (بلا فترة) الحد الأقصى — قد يكون إجمالي التحصيل ناقصاً.",
   daireMetrekareGecersiz: "المساحة غير صالحة. مثال: 120,5",
   binaBlokBasitSilOnay: "هل تريد حذف المبنى {blok}؟",
   odemeElden: "نقدًا",

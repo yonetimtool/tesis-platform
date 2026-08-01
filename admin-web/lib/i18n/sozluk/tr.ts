@@ -522,6 +522,7 @@ export const tr = {
   ortakSecenekYuklenemedi: "Bazı seçenekler yüklenemedi — liste eksik olabilir.",
   tesisSilOnayEtiketi: "Onay kelimesi",
   finansTipSuzgeci: "Tür süzgeci",
+  raporEskiOdemeKesildi: "Eski (dönemsiz) ödeme taraması üst sınıra takıldı — bu dönemin tahsilat toplamı eksik olabilir.",
   daireMetrekareGecersiz: "Metrekare geçersiz. Örnek: 120,5",
   binaBlokBasitSilOnay: "{blok} bloğu silinsin mi?",
   // tur 20 — odeme yontemi / sakin rolu

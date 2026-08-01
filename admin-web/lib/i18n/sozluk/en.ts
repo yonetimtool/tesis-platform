@@ -473,6 +473,7 @@ export const en: Sozluk = {
   ortakSecenekYuklenemedi: "Some options could not be loaded — the list may be incomplete.",
   tesisSilOnayEtiketi: "Confirmation word",
   finansTipSuzgeci: "Type filter",
+  raporEskiOdemeKesildi: "The legacy (period-less) payment scan hit its limit — this period's collection total may be incomplete.",
   daireMetrekareGecersiz: "Invalid area. Example: 120.5",
   binaBlokBasitSilOnay: "Delete block {blok}?",
   odemeElden: "Cash",

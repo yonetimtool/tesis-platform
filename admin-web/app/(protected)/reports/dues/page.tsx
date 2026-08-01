@@ -11,7 +11,7 @@ import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, 
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { kisaKimlik } from "@/lib/kimlik";
 import { ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
-import { fetchAllItems } from "@/lib/client";
+import { fetchAllPaged, fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { kurusToTL } from "@/lib/money";
 import type { DuesAssessment, DuesPayment, UnitList } from "@/lib/types";
@@ -64,6 +64,8 @@ export default function DuesReportPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
+  /** (P65) Eski odeme taramasi ust sinira takildi mi — rapor EKSIKTIR. */
+  const [eskiKesildi, setEskiKesildi] = useState(false);
 
   // Daire no haritasi (ilk 200; daha fazlasi varsa not dusulur).
   const { data: units, error: unitsErr } = useSWR<UnitList>("/api/units?limit=200&offset=0", jsonFetcher);
@@ -86,11 +88,17 @@ export default function DuesReportPage() {
       // donem'li odemeler SUNUCUDAN suzulur (payment.donem — backend yeni alan);
       // tum liste yalniz ESKI (donem'i null) kayitlarin tahakkuk uzerinden
       // atfedilmesi + "donemsiz" uyarisi icin cekilir.
-      const [assessments, donemPayments, allPayments] = await Promise.all([
+      // (P65) UCUNCU CEKIM SUZGECSIZDIR ve BUYUR: yalnizca ESKI (donem'i
+      // null) kayitlari tahakkuk uzerinden atfetmek icin var. 200.000
+      // odemesi olan bir sitede tarayici 1.000 ardisik istek atardi.
+      // Artik ust sinirli ve kirpilirsa KULLANICIYA SOYLENIYOR.
+      const [assessments, donemPayments, eski] = await Promise.all([
         fetchAllItems<DuesAssessment>(`/api/dues/assessments?donem=${encodeURIComponent(d)}`),
         fetchAllItems<DuesPayment>(`/api/dues/payments?donem=${encodeURIComponent(d)}`),
-        fetchAllItems<DuesPayment>("/api/dues/payments"),
+        fetchAllPaged<DuesPayment>("/api/dues/payments"),
       ]);
+      const allPayments = eski.items;
+      setEskiKesildi(eski.kesildi);
 
       // Donem tahakkuklari (kurus, tam sayi).
       const tahakkukByUnit = new Map<string, number>();
@@ -212,6 +220,11 @@ export default function DuesReportPage() {
       </motion.form>
 
       {err && <ErrorBox message={err} />}
+      {/* (P65) SESSIZ KIRPMA YOK: ust sinira takilan tarama, EKSIK bir
+          raporu tam sanmak demektir. */}
+      {eskiKesildi && (
+        <p className="text-xs text-amber-700">{t("raporEskiOdemeKesildi")}</p>
+      )}
       {unitTruncated && (
         <p className="text-xs text-amber-700">
           {t("raporDaireNotu")}

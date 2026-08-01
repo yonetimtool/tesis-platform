@@ -59,12 +59,33 @@ export async function apiSend<T = unknown>(
   return data as T;
 }
 
-/** Sayfali bir BFF list ucundaki TUM kayitlari ceker (rapor/aggregate icin). */
-export async function fetchAllItems<T>(baseUrl: string, pageSize = 200): Promise<T[]> {
+/** Sayfali bir BFF list ucundaki TUM kayitlari ceker (rapor/aggregate icin).
+ *
+ * (P65) UST SINIR VAR ve SESSIZ DEGIL. Eskiden dongu `total`a kadar
+ * kosardi: 200.000 odemesi olan bir sitede tarayici **1.000 ardisik istek**
+ * atar, sayfa dakikalarca kilitli gorunurdu. Artik [enCok] kayitta durur ve
+ * `kesildi` bayragini doner — cagiran bunu KULLANICIYA SOYLEMEK zorundadir.
+ * Sessiz kirpma, eksik bir raporu tam sanmak demektir.
+ */
+export interface TumKayitSonuc<T> {
+  items: T[];
+  /** Ust sinira takildi mi — rapor EKSIKTIR ve bu soylenmelidir. */
+  kesildi: boolean;
+}
+
+export async function fetchAllPaged<T>(
+  baseUrl: string,
+  { pageSize = 200, enCok = 5000 }: { pageSize?: number; enCok?: number } = {},
+): Promise<TumKayitSonuc<T>> {
   const out: T[] = [];
   let offset = 0;
+  let kesildi = false;
   const sep = baseUrl.includes("?") ? "&" : "?";
   for (;;) {
+    if (out.length >= enCok) {
+      kesildi = true;
+      break;
+    }
     const res = await fetch(`${baseUrl}${sep}limit=${pageSize}&offset=${offset}`);
     if (res.status === 401) {
       if (typeof window !== "undefined") window.location.href = "/login";
@@ -82,7 +103,12 @@ export async function fetchAllItems<T>(baseUrl: string, pageSize = 200): Promise
     offset += pageSize;
     if (items.length === 0 || offset >= total) break;
   }
-  return out;
+  return { items: out, kesildi };
+}
+
+/** Geriye donuk sade bicim — kirpilma bilgisi GEREKMEYEN cagirilar icin. */
+export async function fetchAllItems<T>(baseUrl: string, pageSize = 200): Promise<T[]> {
+  return (await fetchAllPaged<T>(baseUrl, { pageSize })).items;
 }
 
 /** Idempotency-Key uretir (cift odeme kaydi korumasi). */

@@ -473,6 +473,7 @@ export const es: Sozluk = {
   ortakSecenekYuklenemedi: "No se pudieron cargar algunas opciones: la lista puede estar incompleta.",
   tesisSilOnayEtiketi: "Palabra de confirmación",
   finansTipSuzgeci: "Filtro por tipo",
+  raporEskiOdemeKesildi: "El barrido de pagos antiguos (sin periodo) alcanzó el límite: el total cobrado puede estar incompleto.",
   daireMetrekareGecersiz: "Superficie no válida. Ejemplo: 120,5",
   binaBlokBasitSilOnay: "¿Eliminar el bloque {blok}?",
   odemeElden: "Efectivo",

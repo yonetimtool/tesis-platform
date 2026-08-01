@@ -473,6 +473,7 @@ export const de: Sozluk = {
   ortakSecenekYuklenemedi: "Einige Optionen konnten nicht geladen werden — die Liste ist möglicherweise unvollständig.",
   tesisSilOnayEtiketi: "Bestätigungswort",
   finansTipSuzgeci: "Typfilter",
+  raporEskiOdemeKesildi: "Die Prüfung alter (periodenloser) Zahlungen hat das Limit erreicht — die Inkassosumme kann unvollständig sein.",
   daireMetrekareGecersiz: "Ungültige Fläche. Beispiel: 120,5",
   binaBlokBasitSilOnay: "Block {blok} löschen?",
   odemeElden: "Bar",

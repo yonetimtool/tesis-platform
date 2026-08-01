@@ -473,6 +473,7 @@ export const fr: Sozluk = {
   ortakSecenekYuklenemedi: "Certaines options n'ont pas pu être chargées — la liste peut être incomplète.",
   tesisSilOnayEtiketi: "Mot de confirmation",
   finansTipSuzgeci: "Filtre de type",
+  raporEskiOdemeKesildi: "L'analyse des anciens paiements (sans période) a atteint la limite — le total encaissé peut être incomplet.",
   daireMetrekareGecersiz: "Surface invalide. Exemple : 120,5",
   binaBlokBasitSilOnay: "Supprimer le bloc {blok} ?",
   odemeElden: "Espèces",
