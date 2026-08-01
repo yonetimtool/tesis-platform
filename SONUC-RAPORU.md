@@ -1,167 +1,141 @@
 # Oturum Sonuç Raporu — 2026-08-01
 
-Bu oturumda **P51 → P87 arası 37 madde** kapandı. Aşağıda ne yapıldığı, ne
-bulunduğu ve **ne yapılmadığı** var.
+**P51 → P100 arası 50 madde** kapandı. Aşağıda ne yapıldığı, ne bulunduğu ve
+**ne yapılmadığı** var.
 
 ---
 
-## 1. Kapılar (son ölçülen durum)
+## 1. Kapılar (hepsi `infra/kapilar.sh` ile, borusuz, çıkış kodu okunarak)
 
-| Alan | Sonuç | Ne zaman ölçüldü |
-|---|---|---|
-| backend `pytest` | **1138 passed, 1 skipped, EXIT=0** (20 dk 49 sn) | P75 — tek koşum, borusuz |
-| göç uyumu (`goc-uyum-dogrula.sh`) | **bulgu 0**, EXIT=0 | P76 |
-| göç tersinirliği (`goc-tersinirlik.sh`) | **bulgu 0**, EXIT=0 — 28 sınır | P76 |
-| admin-web `vitest` | **280 passed** (45 dosya) | P85 |
-| admin-web `tsc` + `npm run build` | temiz / yeşil | P85 |
-| mobile `flutter analyze` | temiz | P85 |
-| mobile `flutter test` | **1559 passed** | P86 |
-| mobile `flutter build apk --debug` | başarılı | P82 |
-
-> **Kovalandı (P87).** O anomali **5 ardışık tam koşumda tekrarlamadı**.
-> Bu "flake yoktu" demek **değildir** — 1/5'ten seyrek bir olay bu ölçümle
-> ayırt edilemez; kaydedilen şey bir **sayı**, bir sonuç değil. Kök neden
-> bulunamadı çünkü **kanıt ilk seferde yok edilmişti**: komut `| tail -1`
-> ile koşmuştu ve başarısızlık listesi kaybolmuştu. Kural 6 artık
-> `flutter test` için de "çıktıyı boruya sokma" diyor.
+| Kapı | Sonuç |
+|---|---|
+| `backend-pytest` | **1143 passed, 1 skipped** — çıkış 0 (20 dk 53 sn) |
+| `goc-uyum` / `goc-tersinir` | **bulgu 0** / **bulgu 0** (28 sınır) |
+| `web-tsc` / `web-vitest` / `web-build` | temiz / **282 passed** / yeşil |
+| `mobil-analyze` / `mobil-test` / `mobil-apk` | temiz / **1561 passed** / APK |
 
 ---
 
-## 2. Bulunan gerçek kusurlar (hepsi düzeltildi)
+## 2. Bulunan gerçek kusurlar
 
 ### Sessiz başarısızlık / sessiz veri kaybı
-1. **P51** — Bildirimlerde ham `fetch`: sunucu **500 dönse bile** "okundu
-   olarak işaretlendi" deniyordu.
-2. **P52** — **Çıkış**: istek düşerse çerezler kalıyor ama kullanıcı giriş
-   ekranını görüp çıktığını sanıyordu. Ortak bilgisayarda bedeli oturum devri.
-3. **P55/P56** — `Number()` → `NaN` → `null` → **alan silinir**. Altı yerde.
-   En ağırı: **tanımlar sayfası `1.250` yazan yöneticiye 1,25 TL kaydediyordu**
-   (bin katlık, sessiz, her daireye yazılan aidat tutarında).
-4. **P57** — Mobilde Türkçe klavyeyle girilen **koordinat sessizce siliniyordu**
-   (ondalık tuşu virgül, `double.tryParse` null döner).
-5. **P60/P61** — Hata varken "kayıt yok" iddiası: destek, şikayet haritası
-   ("3 açık şikayet" ile "açık şikayet yok" **yan yana**), bina düzenleme,
-   tanımlar.
-6. **P58/P59** — İkincil arama düşünce açılır liste boş kalıyor ve "kayıt yok"
-   gibi okunuyordu; ad sütununda kimlik parçası (`3f2a91c8`) **ad sanılıyordu**.
-7. **P65** — Aidat raporu tarayıcıdan **1.000 ardışık istek** atabiliyordu;
-   sınır kondu **ve** kırpma kullanıcıya söyleniyor.
+1. **P51** — Bildirimlerde ham `fetch`: 500 dönse bile "okundu işaretlendi".
+2. **P52** — **Çıkış**: istek düşerse çerezler kalıyor ama kullanıcı çıktığını
+   sanıyordu. Ortak bilgisayarda bedeli oturum devri.
+3. **P55/P56** — `Number()` → `NaN` → `null` → **alan silinir**, altı yerde.
+   En ağırı: **tanımlar sayfası `1.250` yazana 1,25 TL kaydediyordu.**
+4. **P57** — Mobilde Türkçe klavyeyle girilen **koordinat sessizce siliniyordu**.
+5. **P60/P61** — Hata varken "kayıt yok" iddiası (destek, harita, bina, tanımlar).
+   Haritada "3 açık şikayet" ile "açık şikayet yok" **yan yanaydı**.
+6. **P58/P59** — Düşen aramada boş liste "kayıt yok" gibi okunuyordu; kimlik
+   parçası **ad sanılıyordu**.
+7. **P65** — Aidat raporu tarayıcıdan **1.000 ardışık istek** atabiliyordu.
 
 ### Görünen ama yanlış bilgi
-8. **P53** — Ham tel değeri **sekiz yerde** ekrandaydı; en ağırı **pano**.
-9. **P66** — Denetim kaydında rol `yonetici` diye ham çiziliyordu.
-10. **P47/P48/P49/P50** (önceki turlardan devam) + **P62** — koyu temada
-    devrilmemiş renkler; ilki **benim eklediğim** uyarıydı.
-11. **P54** — **Sekiz silme onayı** İngilizce arayüzde de Türkçe çıkıyordu.
-12. **P68** — Yönetici satırlarında `key={i}` (parola yöneticisi yanlış satıra
-    bağlanabilir) + gizli sabit Türkçe başlık.
-13. **P63** — **Dört form denetiminin adı yoktu**; biri **tesis silme onayı**.
+8. **P53/P66** — Ham tel değeri **dokuz yerde** ekrandaydı (en ağırı pano ve
+   denetim kaydı).
+9. **P54** — **Sekiz silme onayı** İngilizce arayüzde de Türkçe çıkıyordu.
+10. **P62** — Koyu temada devrilmemiş renkler; ilki **benim eklediğimdi**.
+11. **P63** — Dört form denetiminin adı yoktu; biri **tesis silme onayı**.
+12. **P68** — `key={i}` (parola yöneticisi yanlış satıra bağlanabilir).
+
+### Güvenlik / veri bütünlüğü
+13. **P96** — `dial` iki yoldan çağrılıyor, **biri doğrulanmıyordu**: sunucu
+    JSON'undan gelen `tel_uri` `launchUrl`a gidiyordu.
+14. **P97** — `PATCH /users/{id} {"telefon": "//evil.example/x"}` → **200**,
+    ham saklanıyordu. Telefon **global benzersiz giriş kimliği**.
+15. **P99** — `yonetim_email`: `" "` truthy olduğu için "e-posta var" sayılıp
+    boş adrese gönderim denenirdi.
 
 ---
 
-## 3. Kalıcı hale getirilenler (kilitler)
+## 3. Kalıcı hale getirilenler
 
-Her biri **kusuru geri koyarak** doğrulandı — yakaladığı görülmeden kilit
-sayılmadı.
+Her biri **kusuru geri koyarak** doğrulandı.
 
 | Kilit | Ne tutuyor |
 |---|---|
-| `sessiz-fetch.test.ts` | Ham `fetch` yanıt denetimi |
-| `ham-enum.test.ts` | Tel değeri ekranda (önek toleranslı — P67) |
-| `hata-mesaji.test.ts` | Korumasız `String(hata)` + boş-durum çelişkisi |
-| `koyu-tema.test.ts` | Devrilmemiş renk sınıfları (gerekçeli liste) |
-| `erisilebilir-etiket.test.ts` | Adsız form denetimi |
-| `i18n.test.ts` (+3 tarama) | `toast()`, tarayıcı diyalogları, şablon dizgeleri |
-| `conftest.py` koşum kilidi | İki eşzamanlı pytest koşumu |
-| `enterpolasyon_sabit_metin_test.dart` | Enterpolasyonlu dizgede sabit metin (P86) |
+| `sessiz-fetch` | Ham `fetch` yanıt denetimi |
+| `ham-enum` | Tel değeri ekranda (önek toleranslı) |
+| `hata-mesaji` | Korumasız `String(hata)` + boş-durum çelişkisi |
+| `koyu-tema` | Devrilmemiş renk sınıfları |
+| `erisilebilir-etiket` | Adsız form denetimi |
+| `i18n` (+3 tarama) | `toast()`, tarayıcı diyalogları, şablon dizgeleri |
+| `guvenlik-hijyeni` | `rel`siz `_blank`, değişkenli `dangerouslySetInnerHTML` |
+| `enterpolasyon_sabit_metin` (mobil) | Enterpolasyonlu dizgede sabit metin |
+| `conftest` koşum kilidi | İki eşzamanlı pytest koşumu |
 
 ### Çapraz bağ zinciri (P77–P85)
-İki yerde tutulan aynı gerçeğin **sessizce ayrışmasını** engeller:
+Aynı gerçeğin iki yerde tutulup **sessizce ayrışmasını** engeller: ayrıştırma
+kuralı (iki istemci), biçimlendirme çıktısı, rol listesi (panel + mobil), altı
+enum haritası, ayar anahtarları, BFF beyaz listesi ↔ `openapi.yaml`, dil
+listeleri (panel ↔ mobil ↔ ARB).
 
-1. **P77** — mobil para ↔ mobil sayı (ayırıcı kuralı)
-2. **P78** — panel para ↔ panel sayı **+ iki istemcinin listeleri**
-3. **P79** — panel ↔ mobil **biçimlendirme çıktısı** (yol farkı bilinçli)
-4. **P80** — panel rol listesi ↔ backend `user_role`
-5. **P81** — altı enum haritası ↔ backend enum'ları (istisnalar **denetimli**)
-6. **P82** — mobil `UserRole` ↔ backend (bedeli en ağır: rol **ekran seçer**)
-7. **P83** — panel ayar anahtarları ↔ `schemas.py` (alt küme kararı yazılı)
-8. **P84** — BFF beyaz listesi ↔ `openapi.yaml` (var olan sözleşme zincirine ek)
-9. **P85** — dil listeleri: panel ↔ mobil enum ↔ ARB dosyaları (**sıra dahil**)
+### Kapı altyapısı (P88–P94)
+`infra/kapilar.sh` — çıktı dosyaya, çıkış kodu doğrudan, imaj önce.
+Kural 6 artık **betiği işaret ediyor** (P93).
 
 ---
 
 ## 4. Panel bileşen kapsamı
 
-**12 → 280 test.** Kapsamı olmayan sayfa kalmadı (`integrations` sonuncusuydu,
-P73). İlke baştan sona aynıydı: **hedef yüzde değil hata sınıfı.**
+**12 → 282 test.** Kapsamı olmayan sayfa kalmadı (`integrations` sonuncusuydu).
+İlke baştan sona aynıydı: **hedef yüzde değil hata sınıfı.**
 
 ---
 
-## 5. Kendi hatalarım (ölçümle yakalandı)
+## 5. Kendi hatalarım (hepsi ölçümle yakalandı)
 
-Bunları saklamak yerine yazıyorum, çünkü ikisi de yeşil bir suite'i yanlış
-güvene çevirebilirdi:
-
-1. **P62** — Kilit **sessizce geçiyordu**: kaçış katmanları fazlaydı, üretilen
-   düzenli ifade hiçbir şeyle eşleşmiyordu. Enjekte edilen renk yakalanmayınca
-   ortaya çıktı.
-2. **P65** — Üst sınırı sarmalayıcının **arkasına** koymuştum: dört çağıran da
-   sessizce kırpılırdı. "Sessiz kırpma yapma" kuralını tam da onu koyarken
-   bozuyordum.
-3. **P70** — Kilit doğrulanamadı, bu yüzden **eklenmedi**. P86'da nedeni
-   bulundu ve kilit doğrulanabilir biçimde yazıldı.
-4. **P74/P75** — "Suite'te 1 ERROR var" dedim; **yanlıştı**. Sebep benim
-   eşzamanlı ikinci koşumumdu. Bu sırada üç kez "ölçtüm" sandığım şey ölçüm
-   değildi: `ps` konteynerde **yok** (sıfır bir komut hatasıydı),
-   `pytest | tail` **çıkış kodunu maskeliyor**, konteynerde **eski kod** vardı.
+1. **P62** — Kilit **sessizce geçiyordu**; enjekte edilen renk yakalanmayınca çıktı.
+2. **P65** — Sessiz kırpmayı **kendi elimle** koydum.
+3. **P70** — Kilit doğrulanamadı → **eklenmedi**; P86'da nedeni bulundu (sıra).
+4. **P74/P75** — "Suite'te 1 ERROR var" dedim, **yanlıştı**: sebep benim
+   eşzamanlı ikinci koşumumdu. Üç kez "ölçtüm" sandığım şey ölçüm değildi
+   (`ps` yok, `| tail` çıkış kodunu maskeliyor, konteynerde eski kod).
 5. **P77** — Sanity kontrolü ilk denemede **anlamsızdı** (boş gövdeli `if`).
-6. **P68** — Yazdığım testin `key={i}` ile de geçtiğini ölçtüm ve **"kararlı
-   anahtar testi" diye sunmadım**.
-
-7. **P87** — Aynı boru tuzağı mobilde de ısırdı: gördüğüm başarısızlık
-   listesi `| tail -1` yüzünden kayboldu ve kök neden **bulunamaz** oldu.
+6. **P89/P90** — "Ölçüm farkı" diye yazdığım şey **kendi özet satırımdı**;
+   açıklamayı **ölçmeden** yazmıştım.
+7. **P91/P92** — Özet, hata durumunda "ne kadar sürdü"yü söylüyordu.
+8. **P97/P98** — Doğrulayıcım **doğrulaması gerekmeyen bir değeri** (`""` =
+   "numarayı kaldır") reddetti ve bir testi kırdı; var olan sözleşmeyi
+   okumamıştım.
 
 **Ortak ders:** sessizlik, sıfır ve yeşil — üçü de tek başına kanıt değil.
-Ve **kaybolan kanıt, olmayan kanıttan kötüdür**: insan "gördüm ama
-bulamadım" diye bir şey bilmenin yükünü taşır.
+**Kaybolan kanıt, olmayan kanıttan kötüdür.**
 
 ---
 
 ## 6. YAPILMAYANLAR
 
-### Bilerek yapılmadı (gerekçesi planda)
-- ~~**P70** — Mobil enterpolasyonlu dizge kilidi.~~ **KAPANDI (P86).** P70'te
-  bölge ölçülmüş (7 satır, yedisi de `debugPrint` → sızan metin yok) ama kilit
-  üç denemede doğrulanamadığı için **commit edilmemişti**. P86'da neden
-  başarısız olduğu çözüldü — **sıra**: kilit mevcut testin *içine* ekleniyordu
-  ve o dosyanın süzgeçleri araya giriyordu. Ayrı bir dosyaya, **önce kendini
-  test eden** bir belirteçleyiciyle yazıldı; iki ayrı enjeksiyonla doğrulandı.
-- **P79** — Mobil `NumberFormat` panelin elle gruplamasıyla **birleştirilmedi**:
-  iki ortamın risk profili farklı (mobilde yerel veri paketin içinde).
-- **P83** — Ayarlarda **ters yön** zorlanmadı: `OPERASYON` bilinçli bir alt küme.
-- **P66/P73** — `action` kodları ve `channel_type`/`auth_type` **çevrilmedi**:
-  teknik terimler; çevirmek aranabilirliği ve belge eşleşmesini bozardı.
+### Bilerek (gerekçesi planda)
+- **P79** — Mobil `NumberFormat` panelin elle gruplamasıyla birleştirilmedi:
+  iki ortamın risk profili farklı.
+- **P83** — Ayarlarda ters yön zorlanmadı: `OPERASYON` bilinçli alt küme.
+- **P97** — Firma/personel/dış hizmet telefonları normalize edilmedi: giriş
+  kimliği değiller, dahili numara içerebilirler.
+- **P99** — "Create doğrular, Update doğrulamaz" kuralına **kilit yazılmadı**:
+  9 yanlış pozitif, doğrulama üç ayrı biçimde yapılıyor.
+- **P94** — `goc` hata yolu sürülmedi: kırık bir Alembic revizyonu üretmek göç
+  politikasını çiğnerdi.
+- **P66/P73** — `action` kodları, `channel_type`/`auth_type` çevrilmedi.
 
 ### Sende bekleyenler ([KEREM]/[DIŞ])
 | Madde | Ne gerekiyor |
 |---|---|
 | **P2** | Prod runbook — prod yalnız sende |
-| **P11** | **Cihaz doğrulama listesi — 45+ madde** birikti |
+| **P11** | **Cihaz doğrulama listesi — 45+ madde** |
 | **P12/P13** | Firebase + ödeme kimlik bilgileri |
 | **P18** | Frigate pilotu |
-| **P64** | **Vezne hareketinde çift kayıt riski** — ürün kararı (üç seçenek planda, önerim: `dues/payments` deseni) |
-| — | `meta.total` O(tablo) sayımı — sözleşme değişikliği |
+| **P64** | **Vezne çift kayıt riski** — ürün kararı (üç seçenek planda) |
+| — | `meta.total` O(tablo) — sözleşme değişikliği |
 
 ---
 
 ## 7. Nerede duruyor
 
-- Plan: `docs/MASTER-PLAN.md` — **87 madde**, açık hash yer tutucusu yok.
-- Cihaz listesi: P11 içinde, her kullanıcıya görünür değişiklik için bir madde.
-- Devir notu: **STATUS REPORT #10** (P61–P65 devri) hâlâ geçerli; sonraki tur
-  **P88**'den devam edebilir.
+- Plan: `docs/MASTER-PLAN.md` — **100 madde**, açık hash yer tutucusu yok.
+- Kapılar: `infra/kapilar.sh [web|mobile|backend|goc]`, günlükler `.kapilar/`.
 - Tüm iş `main` üzerinde ve push'lu.
 
-**Not:** bağlam penceresi bu oturumun sonunda tamamen doldu. Son turlarda tek
-tek satır aralıkları okuyarak ilerledim; bu, P70'te hata ayıklamayı güvenilmez
-hale getirdi. `/clear` + aynı kickoff sonraki turların derinliğini geri getirir.
+**Not:** bağlam penceresi doldu. `/clear` + aynı kickoff, sonraki turların
+derinliğini geri getirir; devir notu STATUS REPORT #10'da.
