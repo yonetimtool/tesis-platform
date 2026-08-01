@@ -340,4 +340,67 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
       `cevrilmemis diyalog metni:\n${sizanlar.slice(0, 10).join("\n")}`,
     ).toEqual([]);
   });
+  // (P69) SABLON DIZGESI ICINDEKI METIN — taramanin UCUNCU kor noktasi.
+  //
+  // P68'de bulundu: bir baslik `` `Yönetici ${i + 1}` `` diye yaziliydi ve
+  // UC tarama da goremedi — JSX metin dugumu degil (sablon dizgesi),
+  // gorunen oznitelik degil, ve P54'un taramasi yalniz `window.*`
+  // diyaloglarina bakiyor. Kullanici arayuz dilini degistirdiginde o
+  // baslik Turkce kaliyordu.
+  //
+  // KURAL: yorumlar ve sinif dizgeleri disinda, icinde ${'$'}{...} disi
+  // BOSLUKLU METIN gecen sablon dizgesi sizintidir. URL/yol kaliplari
+  // (bosluk icermez) dogal olarak elenir.
+  it("sablon dizgelerinde sabit metin YOK (P69)", () => {
+    const harf = /[A-Za-zÇĞİÖŞÜçğıöşü]{3}/;
+    const sizanlar: string[] = [];
+    const tara = (dizin: string) => {
+      for (const ad of fs.readdirSync(path.join(KOK, dizin))) {
+        const göreli = `${dizin}/${ad}`;
+        const tam = path.join(KOK, göreli);
+        if (fs.statSync(tam).isDirectory()) {
+          tara(göreli);
+          continue;
+        }
+        if (!ad.endsWith(".tsx")) continue;
+        // YORUMLAR SILINIR ama SATIR SAYISI KORUNUR: kilidin kendi
+        // gerekcesi de bu kalibi anlatmak zorunda ve kendi aciklamasina
+        // takilan bir kilit yazilamaz.
+        const kaynak = fs
+          .readFileSync(tam, "utf8")
+          .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));
+        kaynak.split("\n").forEach((satir, i) => {
+          if (/^\s*\/\//.test(satir)) return;
+          if (/className|class=/.test(satir)) return;
+          // COK SATIRLI SABLON: satirdaki ters tirnak sayisi TEK ise
+          // dizge bu satirda bitmiyor demektir ve satir icinde eslesen
+          // "cift", aslinda IKI AYRI dizgenin parcalari olur. Olculdu:
+          // dar kural `/api/...?limit=${x}` gibi coksatirli URL'leri
+          // sizinti sayiyordu.
+          if ((satir.match(/`/g) ?? []).length % 2 !== 0) return;
+          // TARAYICI ONYUKLEME BETIGI: `layout.tsx` icindeki tema betigi
+          // METIN DEGIL KOD tasir (`dangerouslySetInnerHTML`); cevrilecek
+          // bir sey yok.
+          if (/dangerouslySetInnerHTML|localStorage\.getItem/.test(satir)) return;
+          // IC ICE SABLON: `` `...${x ? `...` : ""}` `` gibi satirlarda
+          // ters tirnaklar SATIR ICINDE eslesir ama dogru eslesmez —
+          // tarama satir tabanlidir ve ic ice dizgeleri ayristiramaz.
+          // KILIDIN SINIRI BUDUR ve gizlenmiyor: bu satirlar URL ya da
+          // durum SIMGESI kurar, cevrilecek metin tasimaz.
+          if (/\$\{[^}]*`/.test(satir)) return;
+          for (const m of satir.matchAll(/`([^`]*)`/g)) {
+            const duz = m[1].replace(/\$\{[^}]*\}/g, "").trim();
+            if (!harf.test(duz)) continue;
+            if (!/\s/.test(duz)) continue; // url/yol/jeton — bosluk icermez
+            sizanlar.push(`${göreli}:${i + 1} ${duz.slice(0, 50)}`);
+          }
+        });
+      }
+    };
+    ["app", "components"].forEach(tara);
+    expect(
+      sizanlar,
+      `sablon dizgesinde sabit metin:\n${sizanlar.slice(0, 10).join("\n")}`,
+    ).toEqual([]);
+  });
 });
