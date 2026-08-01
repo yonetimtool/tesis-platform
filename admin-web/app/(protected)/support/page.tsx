@@ -6,6 +6,7 @@ import useSWR, { mutate } from "swr";
 import { EmptyState } from "@/components/EmptyState";
 import { Foto } from "@/components/Foto";
 import { ErrorBox, Field, PageHeader, Pager, inputCls } from "@/components/form";
+import { oturumDustu } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 
@@ -61,6 +62,7 @@ export default function SupportPage() {
         const fd = new FormData();
         fd.append("file", dosya);
         const up = await fetch("/api/uploads", { method: "POST", body: fd });
+        if (oturumDustu(up)) return; // (P101) oturum bitti -> yonlendirildi
         if (!up.ok) throw new Error(t("destekGorselYuklenemediKod", { kod: up.status }));
         adminCevapFotoKey = ((await up.json()) as { foto_key: string }).foto_key;
       }
@@ -75,6 +77,7 @@ export default function SupportPage() {
             : {}),
         }),
       });
+      if (oturumDustu(res)) return; // (P101)
       if (!res.ok) throw new Error(t("destekYanitKaydedilemedi", { kod: res.status }));
       setSecili(null);
       setCevap("");

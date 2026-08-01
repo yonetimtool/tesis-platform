@@ -20,6 +20,23 @@ export class ApiHatasi extends Error {
   }
 }
 
+/** (P101) 401 ISLEME — HAM `fetch` KULLANAN CAGRI YERLERI ICIN.
+ *
+ * `apiSend`, `jsonFetcher` ve `fetchAllPaged` 401'de giris ekranina
+ * yonlendirir. Ama uc cagri yeri ham `fetch` kullaniyor (FormData ya da
+ * ikili govde gerektirdikleri icin) ve 401'i SIRADAN bir hata gibi
+ * isliyordu: kullaniciya "Yanit kaydedilemedi (401)" gibi bir KOD
+ * gosteriliyor, oturumun bittigi soylenmiyor ve sayfa olu kaliyordu.
+ * Ayni gercek dort yerde, ucu farkli davraniyordu.
+ *
+ * `true` donerse cagiran BASKA BIR SEY YAPMAMALI: yonlendirme baslatildi.
+ */
+export function oturumDustu(res: Response): boolean {
+  if (res.status !== 401) return false;
+  if (typeof window !== "undefined") window.location.href = "/login";
+  return true;
+}
+
 export async function apiSend<T = unknown>(
   url: string,
   method: string,
