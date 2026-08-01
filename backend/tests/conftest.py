@@ -55,6 +55,10 @@ FIXTURE_SLUG_ONEKLERI = (
 )
 
 
+#: (P75) Kosum kilidi anahtari — sabit ve keyfi; yalniz bu suit kullanir.
+_KOSUM_KILIDI = 815_074_001
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _artik_temizligi():
     """Onceki kosumdan KALAN fixture tenant'larini siler (tur 46).
@@ -76,6 +80,28 @@ def _artik_temizligi():
         return
     try:
         with conn.cursor() as cur:
+            # (P75) AYNI ANDA IKI KOSUM OLMAZ.
+            #
+            # Bu temizlik `slug LIKE 'ca-%'` ile TUM fixture tenant'larini
+            # siler — BASKA BIR KOSUMUN CANLI tenant'lari dahil. Ikinci bir
+            # pytest baslatmak, birincinin verisini ortasindan siliyordu ve
+            # birinci kosum alfabetik olarak sonlardaki dosyalarda fixture
+            # ERROR'u veriyordu. Olculdu: tam boyle bir "1 error" bulunmus
+            # ve suit kusuru sanilmisti (P74) — oysa sebep ikinci kosumdu.
+            #
+            # Oneri lock, kosum boyunca ACIK KALAN bu baglantiya baglidir;
+            # kosum nasil biterse bitsin (Ctrl-C, timeout) baglanti kapanir
+            # ve kilit DUSER. Bekleme YOK, hemen hata: iki kosumun sirayla
+            # beklemesi 22 dakikalik bir suitte sessiz bir takilma gibi
+            # gorunurdu.
+            cur.execute("SELECT pg_try_advisory_lock(%s)", (_KOSUM_KILIDI,))
+            if not cur.fetchone()[0]:
+                raise RuntimeError(
+                    "Baska bir pytest kosumu bu veritabaninda ZATEN calisiyor. "
+                    "Iki kosum ayni fixture tenant'larini paylasir ve bu "
+                    "temizlik digerinin verisini siler. Once o kosumun "
+                    "bitmesini bekleyin."
+                )
             for onek in FIXTURE_SLUG_ONEKLERI:
                 cur.execute("DELETE FROM tenant WHERE slug LIKE %s", (onek + "%",))
         yield
