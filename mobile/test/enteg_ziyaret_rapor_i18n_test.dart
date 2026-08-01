@@ -328,14 +328,28 @@ void main() {
   testWidgets('RAPOR: tr → en → fr dil degisimi (baslik + bolumler)',
       (tester) async {
     _ekran(tester);
+    // (P49) AY ADI SABIT YAZILMAZ — BEKLENEN DEGER DE HESAPLANIR.
+    //
+    // Burada "Temmuz 2026" sabit duruyordu ve ekran `DateTime.now()`
+    // kullaniyor: takvim Agustos'a donunce test HER AY kirilacakti (ve
+    // kirildi). Sabit tarihi guncellemek sorunu bir ay erteler; olcum
+    // AY ADININ DILE GORE degistigini kontrol ediyor, HANGI ay oldugunu
+    // degil. Bu yuzden beklenen deger, ekranin kullandigi ayni kaynaktan
+    // (`ayAdi` + `DateTime.now()`) uretilir.
+    final simdi = DateTime.now();
+    String beklenenAy(String dil) =>
+        '${ayAdi(simdi.month, dil)} ${simdi.year}';
+
     for (final (locale, baslik, bolum, ay) in [
-      (const Locale('tr'), 'AYLIK RAPORLAR', 'Görev tamamlama', 'Temmuz 2026'),
-      (const Locale('en'), 'MONTHLY REPORTS', 'Task completion', 'July 2026'),
+      (const Locale('tr'), 'AYLIK RAPORLAR', 'Görev tamamlama',
+          beklenenAy('tr')),
+      (const Locale('en'), 'MONTHLY REPORTS', 'Task completion',
+          beklenenAy('en')),
       (
         const Locale('fr'),
         'RAPPORTS MENSUELS',
         'Achèvement des tâches',
-        'juillet 2026'
+        beklenenAy('fr')
       ),
     ]) {
       await _sifirla(tester);

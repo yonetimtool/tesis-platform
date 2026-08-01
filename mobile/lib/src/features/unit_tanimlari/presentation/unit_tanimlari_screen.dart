@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/para.dart';
 import '../data/unit_tanim_api.dart';
 import '../domain/unit_tanim_models.dart';
 
@@ -234,7 +235,9 @@ class _TanimFormuState extends ConsumerState<_TanimFormu> {
       // KURUS -> TL: kullanici lira girer, sunucu kurus bekler.
       text: tip?.varsayilanAidatKurus == null
           ? ''
-          : (tip!.varsayilanAidatKurus! / 100).toStringAsFixed(2),
+          // Gosterilen bicimle AYNI (`1.250,00`): kullanicinin gordugu
+          // bicimi form da kabul etmeli — ortak ayristirici bunu anlar.
+          : tlTutar(tip!.varsayilanAidatKurus!),
     );
     _aktif = m?.aktif ?? true;
   }
@@ -248,13 +251,13 @@ class _TanimFormuState extends ConsumerState<_TanimFormu> {
 
   /// TL metnini KURUS'a cevirir. Bos metin `null` doner — "tanimsiz" ile
   /// "0 (muaf)" AYRI seylerdir.
-  int? _kurus(String metin) {
-    final temiz = metin.trim().replaceAll(',', '.');
-    if (temiz.isEmpty) return null;
-    final lira = double.tryParse(temiz);
-    if (lira == null) return null;
-    return (lira * 100).round();
-  }
+  ///
+  /// (P49) Eskiden burada NAIF bir kopya vardi: `replaceAll(',', '.')` +
+  /// `double.tryParse`. O kopya Turkce binlik ayiricisini ANLAMIYORDU —
+  /// kullanici uygulamanin BASKA YERDE gosterdigi `1.250,00` bicimini
+  /// yazinca "gecersiz tutar" aliyordu. Artik ortak cekirdek kullaniliyor;
+  /// 0 (muaf) burada GECERLI kalir cunku politika cagirana aittir.
+  int? _kurus(String metin) => tlMetniniKurusaCevir(metin);
 
   Future<void> _kaydet() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;

@@ -6,6 +6,8 @@
 /// gruplamanin iki uygulamasi vardi, tek kaynak `tlTutar` oldu.
 library;
 
+import '../../../core/para.dart';
+
 /// `budget_tip` enum'unun istemci aynasi.
 ///
 /// KIMLIK / METIN AYRIMI (README §15): tur 6'da `label` (TR sabiti) KALDIRILDI;
@@ -222,34 +224,11 @@ class FinancialSummary {
 ///     aksi halde '.'lar binlik sayilir ("1.234").
 ///   * En fazla 2 ondalik hane.
 int? parseTlToKurus(String input) {
-  var s = input.trim().replaceAll('TL', '').replaceAll(' ', '');
-  if (s.isEmpty || s.startsWith('-')) return null;
-
-  String tamKisim;
-  String ondalik = '';
-  if (s.contains(',')) {
-    final parts = s.split(',');
-    if (parts.length != 2) return null;
-    tamKisim = parts[0].replaceAll('.', '');
-    ondalik = parts[1];
-  } else {
-    final dot = s.lastIndexOf('.');
-    if (dot != -1 && s.length - dot - 1 <= 2 && s.indexOf('.') == dot) {
-      tamKisim = s.substring(0, dot);
-      ondalik = s.substring(dot + 1);
-    } else {
-      tamKisim = s.replaceAll('.', '');
-    }
-  }
-
-  if (ondalik.length > 2) return null;
-  if (tamKisim.isEmpty && ondalik.isEmpty) return null;
-  final tam = int.tryParse(tamKisim.isEmpty ? '0' : tamKisim);
-  final kurusPart =
-      ondalik.isEmpty ? 0 : int.tryParse(ondalik.padRight(2, '0'));
-  if (tam == null || kurusPart == null) return null;
-
-  final kurus = tam * 100 + kurusPart;
+  // (P49) AYRISTIRMA `core/para.dart`ta, POLITIKA burada: butce satirinda
+  // 0 TL anlamsizdir. Bagimsiz bolum tanimlarinda ise 0 = MUAF gecerlidir;
+  // ayni fonksiyonu paylasmak, birinin kuralini digerine dayatmak olurdu.
+  final kurus = tlMetniniKurusaCevir(input);
+  if (kurus == null) return null;
   return kurus > 0 ? kurus : null;
 }
 
