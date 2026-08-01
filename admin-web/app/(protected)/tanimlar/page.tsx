@@ -348,7 +348,8 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
           {t("tanimYeniKayit")}
         </button>
       </div>
-      {error ? <ErrorBox message={String(error)} /> : null}
+      {/* (P60) `String(error)` "Error: " onekini de yazardi. */}
+      {error instanceof Error ? <ErrorBox message={error.message} /> : null}
       {isLoading ? <p>{t("ortakYukleniyor")}</p> : null}
       {!isLoading && kayitlar.length === 0 ? (
         <EmptyState title={t("tanimKayitYok")} />

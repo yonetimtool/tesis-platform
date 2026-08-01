@@ -122,12 +122,21 @@ export default function SupportPage() {
         </Field>
       </div>
 
-      <ErrorBox message={error ? String(error) : null} />
+      {/* (P60) `String(error)` DEGIL `error.message`: `String(hata)` bir
+          `Error` nesnesinde **"Error: "** onekini de yazar ve kullanici
+          "Error: Baglanti yok." gorurdu — `jsonFetcher`in ozenle cevirdigi
+          metin, tek bir cagri yerinde teknik bir onekle bozuluyordu. */}
+      <ErrorBox message={error instanceof Error ? error.message : null} />
       <ErrorBox message={hata} />
 
       {isLoading ? (
         <p className="text-sm text-slate-500">{t("ortakYukleniyor")}</p>
-      ) : !data || data.items.length === 0 ? (
+      ) : /* (P60) HATA VARKEN "TALEP YOK" YAZILMAZ. Eski kosul `!data ||
+             ...` idi: istek dustugunde `data` tanimsiz olur ve sayfa
+             **"Destek talebi yok"** derdi — hemen ustundeki hata kutusuyla
+             CELISEREK. "Yuklenemedi" ile "hic yok" ayri seylerdir ve
+             ikincisi bir iddiadir. */
+        error ? null : !data || data.items.length === 0 ? (
         <EmptyState
           title={t("destekTalepYok")}
           description={t("destekBiletYok")}
