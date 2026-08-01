@@ -6,7 +6,7 @@ import useSWR, { mutate } from "swr";
 import { EmptyState } from "@/components/EmptyState";
 import { Foto } from "@/components/Foto";
 import { ErrorBox, Field, PageHeader, Pager, inputCls } from "@/components/form";
-import { agIstegi } from "@/lib/client";
+import { agIstegi, sunucuMesaji } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 
@@ -64,7 +64,13 @@ export default function SupportPage() {
         // (P102) `agIstegi`: ag hatasi CEVRILIR, 401 islenir (null doner).
         const up = await agIstegi("/api/uploads", { method: "POST", body: fd });
         if (up === null) return;
-        if (!up.ok) throw new Error(t("destekGorselYuklenemediKod", { kod: up.status }));
+        // (P103) SUNUCUNUN MESAJI ONCE. Backend hata zarfinda
+        // (`{error:{code,message}}`) KULLANICI DILINDE ve SEBEBE OZEL bir
+        // metin doner ("Dosya cok buyuk", "Desteklenmeyen bicim"...).
+        // Burasi onu ATIP yerine "Gorsel yuklenemedi (413)" gibi bir KOD
+        // gosteriyordu: kullanici NEDEN olmadigini ogrenemiyordu. Zarf
+        // yoksa (vekil/ag katmani) genel metne dusulur.
+        if (!up.ok) throw new Error(await sunucuMesaji(up, t("destekGorselYuklenemediKod", { kod: up.status })));
         adminCevapFotoKey = ((await up.json()) as { foto_key: string }).foto_key;
       }
       const res = await agIstegi(`/api/support/${secili.id}`, {
@@ -79,7 +85,7 @@ export default function SupportPage() {
         }),
       });
       if (res === null) return;
-      if (!res.ok) throw new Error(t("destekYanitKaydedilemedi", { kod: res.status }));
+      if (!res.ok) throw new Error(await sunucuMesaji(res, t("destekYanitKaydedilemedi", { kod: res.status })));
       setSecili(null);
       setCevap("");
       setDosya(null);

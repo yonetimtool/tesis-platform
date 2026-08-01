@@ -61,6 +61,23 @@ export async function agIstegi(
   return oturumDustu(res) ? null : res;
 }
 
+/** (P103) Hata zarfindaki SUNUCU MESAJINI oku; yoksa [yedek] metni doner.
+ *
+ * Backend `{error:{code,message}}` zarfinda KULLANICI DILINDE ve sebebe
+ * ozel bir metin doner. Ham `fetch` kullanan cagri yerleri bunu ATIP
+ * "... (413)" gibi bir KOD gosteriyordu; kullanici neden olmadigini
+ * ogrenemiyordu. `apiSend` zaten zarfi okur — bu, ayni davranisi ikili
+ * govde kullanan yerlere tasir.
+ *
+ * Govde okunamazsa (vekil/ag katmani duz metin dondurebilir) yedek metin
+ * kullanilir: zarf YOKLUGU bir hata degil, beklenen bir durumdur.
+ */
+export async function sunucuMesaji(res: Response, yedek: string): Promise<string> {
+  const veri: unknown = await res.json().catch(() => null);
+  const mesaj = (veri as { error?: { message?: string } } | null)?.error?.message;
+  return mesaj && mesaj.trim() ? mesaj : yedek;
+}
+
 export async function apiSend<T = unknown>(
   url: string,
   method: string,

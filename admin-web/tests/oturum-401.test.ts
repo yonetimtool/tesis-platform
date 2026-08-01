@@ -10,7 +10,7 @@
 // eden sinifi ("tek gercek, iki yer"), bu kez OTURUM YONETIMINDE.
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { agIstegi, oturumDustu } from "@/lib/client";
+import { agIstegi, oturumDustu, sunucuMesaji } from "@/lib/client";
 
 function sahteKonum() {
   const konum = { href: "" };
@@ -63,5 +63,31 @@ describe("agIstegi (P102)", () => {
     expect(r?.status).toBe(200);
     // IKILI GOVDE ICIN VAR: `apiSend` JSON varsayar, bu yardimci varsaymaz.
     expect(await r?.text()).toBe("govde");
+  });
+});
+
+describe("sunucuMesaji (P103)", () => {
+  const zarf = (mesaj: string) =>
+    new Response(JSON.stringify({ error: { code: "x", message: mesaj } }), {
+      status: 413,
+      headers: { "Content-Type": "application/json" },
+    });
+
+  it("zarftaki SUNUCU MESAJINI doner (kod DEGIL)", async () => {
+    expect(await sunucuMesaji(zarf("Dosya çok büyük."), "yedek")).toBe(
+      "Dosya çok büyük.",
+    );
+  });
+
+  it("zarf YOKSA yedek metne duser", async () => {
+    // Vekil/ag katmani duz metin dondurebilir; zarf YOKLUGU bir hata
+    // degil, BEKLENEN bir durumdur.
+    const duz = new Response("<html>502</html>", { status: 502 });
+    expect(await sunucuMesaji(duz, "yedek")).toBe("yedek");
+  });
+
+  it("zarf BOS mesaj tasirsa yedek kullanilir", async () => {
+    // Bos bir mesaj gostermek, hicbir sey soylememektir.
+    expect(await sunucuMesaji(zarf("   "), "yedek")).toBe("yedek");
   });
 });
