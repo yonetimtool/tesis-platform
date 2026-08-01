@@ -78,3 +78,22 @@ def test_BOS_DIZGE_numarayi_kaldirir_gecersiz_SAYILMAZ(client, world):
     assert r.status_code == 200, r.text
     # Numara artik yok -> arama hedefi 404 (numara ASLA donmez).
     assert not (r.json().get("telefon") or "").strip()
+
+
+def test_yonetim_email_BOSLUK_None_olur(client, world):
+    """(P99) Aynı asimetri `yonetim_email`de de vardı.
+
+    `TenantAdminCreate` boş/boşluk değeri `None`a çeviriyordu; ama
+    `TenantSettingsUpdate` çevirmiyordu ve `" "` OLDUGU GIBI saklaniyordu.
+    `" "` TRUTHY oldugu icin "yonetim e-postasi var" sayilir ve bildirim
+    yolu BOS bir adrese gitmeye calisirdi.
+    """
+    h = _admin(client, world)
+    r = client.patch("/tenant/settings", headers=h, json={"yonetim_email": "   "})
+    assert r.status_code == 200, r.text
+    assert r.json().get("yonetim_email") is None
+
+    r2 = client.patch("/tenant/settings", headers=h,
+                      json={"yonetim_email": " yonetim@acme.com "})
+    assert r2.status_code == 200, r2.text
+    assert r2.json().get("yonetim_email") == "yonetim@acme.com"

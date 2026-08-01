@@ -2078,6 +2078,18 @@ class TenantSettingsUpdate(BaseModel):
     gurultu_uyari_metni: str | None = Field(None, max_length=1000)
     gurultu_integration_id: uuid.UUID | None = None
 
+
+    # (P99) `TenantAdminCreate` ile AYNI normalizasyon. Orada vardi, burada
+    # yoktu: yaratma yolu bos/bosluk degeri `None`a ceviriyor, GUNCELLEME
+    # yolu ise `" "` gibi bir degeri OLDUGU GIBI sakliyordu. `" "` TRUTHY
+    # oldugu icin "yonetim e-postasi var" sayilir ve bildirim yolu bos bir
+    # adrese gitmeye calisirdi. (P97'nin telefonda bulunan asimetrisinin
+    # aynisi: ayni alan, iki yazma yolu, tek dogrulayici.)
+    @field_validator("yonetim_email")
+    @classmethod
+    def _bos_ise_none_upd(cls, v: str | None) -> str | None:
+        return (v.strip() or None) if v is not None else None
+
     @model_validator(mode="after")
     def _at_least_one(self) -> "TenantSettingsUpdate":
         if not self.model_fields_set:
