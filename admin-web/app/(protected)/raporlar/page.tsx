@@ -16,7 +16,7 @@ import {
   panelMotion,
 } from "@/components/form";
 import { useToast } from "@/components/Toast";
-import { oturumDustu } from "@/lib/client";
+import { agIstegi } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 
@@ -90,12 +90,12 @@ export default function RaporlarPage() {
     setHata(null);
     setMesgul(true);
     try {
-      const res = await fetch(`/api/panel/rapor/${kod}?bicim=tablo`, {
+      const res = await agIstegi(`/api/panel/rapor/${kod}?bicim=tablo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parametreler()),
       });
-      if (oturumDustu(res)) return; // (P101) oturum bitti -> yonlendirildi
+      if (res === null) return; // (P101/P102) oturum bitti -> yonlendirildi
       const veri = await res.json();
       if (!res.ok) throw new Error(veri?.error?.message ?? String(res.status));
       setTablo(veri as Tablo);
@@ -111,12 +111,12 @@ export default function RaporlarPage() {
     setHata(null);
     setMesgul(true);
     try {
-      const res = await fetch(`/api/panel/rapor/${kod}?bicim=${bicim}`, {
+      const res = await agIstegi(`/api/panel/rapor/${kod}?bicim=${bicim}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parametreler()),
       });
-      if (oturumDustu(res)) return; // (P101)
+      if (res === null) return;
       if (!res.ok) {
         const veri = await res.json().catch(() => null);
         throw new Error(veri?.error?.message ?? String(res.status));

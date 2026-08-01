@@ -10,7 +10,7 @@
 // eden sinifi ("tek gercek, iki yer"), bu kez OTURUM YONETIMINDE.
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { oturumDustu } from "@/lib/client";
+import { agIstegi, oturumDustu } from "@/lib/client";
 
 function sahteKonum() {
   const konum = { href: "" };
@@ -37,5 +37,31 @@ describe("oturumDustu (P101)", () => {
     // Ikisini karistirmak, yetkisiz bir sayfaya bakan kullaniciyi
     // sebepsizce giris ekranina atardi.
     expect(konum.href).toBe("");
+  });
+});
+
+describe("agIstegi (P102)", () => {
+  it("AG HATASINDA cevrilmis metin firlatir (ham 'Failed to fetch' DEGIL)", async () => {
+    sahteKonum();
+    vi.stubGlobal("fetch", () => Promise.reject(new TypeError("Failed to fetch")));
+    await expect(agIstegi("/api/x")).rejects.toThrow(/bağlantı|Bağlantı/i);
+  });
+
+  it("401'de null doner (cagiran baska bir sey YAPMAMALI)", async () => {
+    const konum = sahteKonum();
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve(new Response(null, { status: 401 })));
+    expect(await agIstegi("/api/x")).toBeNull();
+    expect(konum.href).toBe("/login");
+  });
+
+  it("basarili yanit OLDUGU GIBI doner (govde okumasi cagirana ait)", async () => {
+    sahteKonum();
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve(new Response("govde", { status: 200 })));
+    const r = await agIstegi("/api/x");
+    expect(r?.status).toBe(200);
+    // IKILI GOVDE ICIN VAR: `apiSend` JSON varsayar, bu yardimci varsaymaz.
+    expect(await r?.text()).toBe("govde");
   });
 });

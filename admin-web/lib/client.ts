@@ -37,6 +37,30 @@ export function oturumDustu(res: Response): boolean {
   return true;
 }
 
+/** (P102) HAM `fetch` ICIN ORTAK GIRIS: ag hatasi CEVRILIR, 401 ISLENIR.
+ *
+ * P101 401'i ortakladi ama ikinci bir sapma kaldi: ag koptugunda tarayici
+ * `TypeError: Failed to fetch` atar ve ham `fetch` kullanan cagri yerleri
+ * bunu OLDUGU GIBI gosteriyordu — her dilde, teknik ve anlamsiz. Oysa
+ * `apiSend`/`jsonFetcher` ayni durumu `ortakBaglantiYok` diye cevirir
+ * (tur 42'de tam bu kusur olculmustu). Ayni gercek, yine iki davranis.
+ *
+ * `null` donerse cagiran BASKA BIR SEY YAPMAMALI: oturum bitti ve
+ * yonlendirme baslatildi.
+ */
+export async function agIstegi(
+  url: string,
+  init?: RequestInit,
+): Promise<Response | null> {
+  let res: Response;
+  try {
+    res = await fetch(url, init);
+  } catch {
+    throw new ApiHatasi(metin("ortakBaglantiYok"));
+  }
+  return oturumDustu(res) ? null : res;
+}
+
 export async function apiSend<T = unknown>(
   url: string,
   method: string,

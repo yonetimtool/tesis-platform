@@ -40,7 +40,7 @@ describe("ham fetch denetimi", () => {
         // `.ok` okuyan tek satirlik kullanim da gecerlidir.
         const pencere = satirlar.slice(i, i + 12).join("\n");
         if (/\.ok\b|\.status\b|FETCH-DENETIMSIZ/.test(pencere)) return;
-        if (/oturumDustu/.test(pencere)) return; // (P101) 401 ele alindi
+        if (/oturumDustu|agIstegi/.test(pencere)) return; // (P101/P102)
         sizanlar.push(`${yol}:${i + 1}`);
       });
     }

@@ -6,7 +6,7 @@ import useSWR, { mutate } from "swr";
 import { EmptyState } from "@/components/EmptyState";
 import { Foto } from "@/components/Foto";
 import { ErrorBox, Field, PageHeader, Pager, inputCls } from "@/components/form";
-import { oturumDustu } from "@/lib/client";
+import { agIstegi } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 
@@ -61,12 +61,13 @@ export default function SupportPage() {
       if (dosya) {
         const fd = new FormData();
         fd.append("file", dosya);
-        const up = await fetch("/api/uploads", { method: "POST", body: fd });
-        if (oturumDustu(up)) return; // (P101) oturum bitti -> yonlendirildi
+        // (P102) `agIstegi`: ag hatasi CEVRILIR, 401 islenir (null doner).
+        const up = await agIstegi("/api/uploads", { method: "POST", body: fd });
+        if (up === null) return;
         if (!up.ok) throw new Error(t("destekGorselYuklenemediKod", { kod: up.status }));
         adminCevapFotoKey = ((await up.json()) as { foto_key: string }).foto_key;
       }
-      const res = await fetch(`/api/support/${secili.id}`, {
+      const res = await agIstegi(`/api/support/${secili.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -77,7 +78,7 @@ export default function SupportPage() {
             : {}),
         }),
       });
-      if (oturumDustu(res)) return; // (P101)
+      if (res === null) return;
       if (!res.ok) throw new Error(t("destekYanitKaydedilemedi", { kod: res.status }));
       setSecili(null);
       setCevap("");
