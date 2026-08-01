@@ -5,7 +5,9 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
+  EksikVeriUyarisi,
+} from "@/components/form";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { TUR_DURUM, enumAdi } from "@/lib/enum-adlari";
 import { fetchAllItems } from "@/lib/client";
@@ -47,7 +49,7 @@ export default function PatrolReportPage() {
   const [committed, setCommitted] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
 
-  const { data: plans } = useSWR<PatrolPlanList>("/api/patrol-plans?limit=200&offset=0", jsonFetcher);
+  const { data: plans, error: plansErr } = useSWR<PatrolPlanList>("/api/patrol-plans?limit=200&offset=0", jsonFetcher);
 
   function buildFilters(): string {
     const qs = new URLSearchParams();
@@ -102,6 +104,10 @@ export default function PatrolReportPage() {
     <div className="space-y-6">
       <ReportsTabs />
       <PageHeader title={t("raporTurGecmisiBaslik")} />
+
+      <EksikVeriUyarisi
+        mesaj={plansErr ? t("ortakSecenekYuklenemedi") : null}
+      />
 
       <motion.form {...panelMotion} onSubmit={submit} className={`flex flex-wrap items-end gap-3 ${panelCls}`}>
         <div className="w-full sm:w-52">

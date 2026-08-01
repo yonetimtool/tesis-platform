@@ -519,6 +519,7 @@ export const tr = {
   ortakSilinemedi: "Silinemedi.",
   gorevSilOnay: "{ad} silinsin mi?",
   ortakSilOnay: "{ad} silinsin mi?",
+  ortakSecenekYuklenemedi: "Bazı seçenekler yüklenemedi — liste eksik olabilir.",
   daireMetrekareGecersiz: "Metrekare geçersiz. Örnek: 120,5",
   binaBlokBasitSilOnay: "{blok} bloğu silinsin mi?",
   // tur 20 — odeme yontemi / sakin rolu

@@ -470,6 +470,7 @@ export const fr: Sozluk = {
   ortakSilinemedi: "Suppression impossible.",
   gorevSilOnay: "Supprimer {ad} ?",
   ortakSilOnay: "Supprimer {ad} ?",
+  ortakSecenekYuklenemedi: "Certaines options n'ont pas pu être chargées — la liste peut être incomplète.",
   daireMetrekareGecersiz: "Surface invalide. Exemple : 120,5",
   binaBlokBasitSilOnay: "Supprimer le bloc {blok} ?",
   odemeElden: "Espèces",

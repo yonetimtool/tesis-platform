@@ -470,6 +470,7 @@ export const es: Sozluk = {
   ortakSilinemedi: "No se pudo eliminar.",
   gorevSilOnay: "¿Eliminar {ad}?",
   ortakSilOnay: "¿Eliminar {ad}?",
+  ortakSecenekYuklenemedi: "No se pudieron cargar algunas opciones: la lista puede estar incompleta.",
   daireMetrekareGecersiz: "Superficie no válida. Ejemplo: 120,5",
   binaBlokBasitSilOnay: "¿Eliminar el bloque {blok}?",
   odemeElden: "Efectivo",

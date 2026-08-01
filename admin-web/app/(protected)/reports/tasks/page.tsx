@@ -5,8 +5,11 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
+  EksikVeriUyarisi,
+} from "@/components/form";
 import { ReportsTabs } from "@/components/ReportsTabs";
+import { kisaKimlik } from "@/lib/kimlik";
 import { fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type {
@@ -51,14 +54,14 @@ export default function TaskReportPage() {
   const [committed, setCommitted] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
 
-  const { data: users } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
+  const { data: users, error: usersErr } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
   // Suzgec KATEGORI uzerinden (sunucu `kategori_id` bekler). Eskiden sabit
   // `tip` degeri gonderiliyordu — sunucu o parametreyi hic okumuyordu, yani
   // suzgec SESSIZCE ETKISIZDI (tur 41).
-  const { data: kategoriler } = useSWR<TaskCategoryList>("/api/task-categories", jsonFetcher);
+  const { data: kategoriler, error: kategorilerErr } = useSWR<TaskCategoryList>("/api/task-categories", jsonFetcher);
   const [kategoriId, setKategoriId] = useState("");
   function userName(id: string): string {
-    return users?.items.find((u) => u.id === id)?.ad ?? id.slice(0, 8);
+    return users?.items.find((u) => u.id === id)?.ad ?? kisaKimlik(id);
   }
 
   function buildFilters(): string {
@@ -110,6 +113,10 @@ export default function TaskReportPage() {
     <div className="space-y-6">
       <ReportsTabs />
       <PageHeader title={t("raporGorevGecmisiBaslik")} />
+
+      <EksikVeriUyarisi
+        mesaj={usersErr || kategorilerErr ? t("ortakSecenekYuklenemedi") : null}
+      />
 
       <motion.form {...panelMotion} onSubmit={submit} className={`flex flex-wrap items-end gap-3 ${panelCls}`}>
         <div className="w-full sm:w-52">

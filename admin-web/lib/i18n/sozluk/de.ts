@@ -470,6 +470,7 @@ export const de: Sozluk = {
   ortakSilinemedi: "Löschen fehlgeschlagen.",
   gorevSilOnay: "{ad} löschen?",
   ortakSilOnay: "{ad} löschen?",
+  ortakSecenekYuklenemedi: "Einige Optionen konnten nicht geladen werden — die Liste ist möglicherweise unvollständig.",
   daireMetrekareGecersiz: "Ungültige Fläche. Beispiel: 120,5",
   binaBlokBasitSilOnay: "Block {blok} löschen?",
   odemeElden: "Bar",

@@ -5,8 +5,11 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
+  EksikVeriUyarisi,
+} from "@/components/form";
 import { useToast } from "@/components/Toast";
+import { kisaKimlik } from "@/lib/kimlik";
 import { DEMIRBAS_DURUM, DEMIRBAS_KATEGORI, enumAdi } from "@/lib/enum-adlari";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
@@ -58,7 +61,7 @@ export default function AssetsPage() {
     `/api/assets?${qs.toString()}`,
     jsonFetcher,
   );
-  const { data: users } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
+  const { data: users, error: usersErr } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -73,7 +76,7 @@ export default function AssetsPage() {
   );
 
   function userName(id: string): string {
-    return users?.items.find((u) => u.id === id)?.ad ?? id.slice(0, 8);
+    return users?.items.find((u) => u.id === id)?.ad ?? kisaKimlik(id);
   }
 
   function openNew() {
@@ -139,6 +142,10 @@ export default function AssetsPage() {
         action={
           <button className={btnPrimary} onClick={openNew}>{t("demirbasYeni")}</button>
         }
+      />
+
+      <EksikVeriUyarisi
+        mesaj={usersErr ? t("ortakSecenekYuklenemedi") : null}
       />
 
       <div className="flex flex-wrap items-end gap-3">

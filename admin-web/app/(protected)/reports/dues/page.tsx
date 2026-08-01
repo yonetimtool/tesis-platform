@@ -5,8 +5,11 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
+import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
+  EksikVeriUyarisi,
+} from "@/components/form";
 import { ReportsTabs } from "@/components/ReportsTabs";
+import { kisaKimlik } from "@/lib/kimlik";
 import { ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
 import { fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
@@ -63,10 +66,10 @@ export default function DuesReportPage() {
   const [report, setReport] = useState<Report | null>(null);
 
   // Daire no haritasi (ilk 200; daha fazlasi varsa not dusulur).
-  const { data: units } = useSWR<UnitList>("/api/units?limit=200&offset=0", jsonFetcher);
+  const { data: units, error: unitsErr } = useSWR<UnitList>("/api/units?limit=200&offset=0", jsonFetcher);
   const unitTruncated = Boolean(units && units.meta.total > units.items.length);
   function unitNo(id: string): string {
-    return units?.items.find((u) => u.id === id)?.no ?? id.slice(0, 8);
+    return units?.items.find((u) => u.id === id)?.no ?? kisaKimlik(id);
   }
 
   async function run(e: React.FormEvent) {
@@ -187,6 +190,10 @@ export default function DuesReportPage() {
     <div className="space-y-6">
       <ReportsTabs />
       <PageHeader title={t("raporAidatTahsilatBaslik")} />
+
+      <EksikVeriUyarisi
+        mesaj={unitsErr ? t("ortakSecenekYuklenemedi") : null}
+      />
 
       <motion.form {...panelMotion} onSubmit={run} className={`flex items-end gap-3 ${panelCls}`}>
         <div className="w-56">

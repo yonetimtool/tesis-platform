@@ -470,6 +470,7 @@ export const en: Sozluk = {
   ortakSilinemedi: "Could not delete.",
   gorevSilOnay: "Delete {ad}?",
   ortakSilOnay: "Delete {ad}?",
+  ortakSecenekYuklenemedi: "Some options could not be loaded — the list may be incomplete.",
   daireMetrekareGecersiz: "Invalid area. Example: 120.5",
   binaBlokBasitSilOnay: "Delete block {blok}?",
   odemeElden: "Cash",

@@ -470,6 +470,7 @@ export const ru: Sozluk = {
   ortakSilinemedi: "Не удалось удалить.",
   gorevSilOnay: "Удалить {ad}?",
   ortakSilOnay: "Удалить {ad}?",
+  ortakSecenekYuklenemedi: "Некоторые варианты не загрузились — список может быть неполным.",
   daireMetrekareGecersiz: "Неверная площадь. Пример: 120,5",
   binaBlokBasitSilOnay: "Удалить блок {blok}?",
   odemeElden: "Наличные",

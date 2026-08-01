@@ -128,3 +128,27 @@ export function Pager({
     </div>
   );
 }
+
+/** (P58) IKINCIL YUKLEME UYARISI — hata DEGIL, EKSIKLIK bildirir.
+ *
+ * Sayfalarin cogu ana listenin yaninda bir ARAMA listesi ceker (vardiyalar,
+ * kullanicilar, daireler, kategoriler). O istek dustugunde sayfa
+ * calismaya devam eder ama sonuc YANILTICIDIR: acilir liste bos kalir ve
+ * "kayit yok" gibi okunur, ya da daire numarasi yerine kimlik parcasi
+ * gorunur ve VERI SANILIR.
+ *
+ * `ErrorBox` (kirmizi, `role="alert"`) burada dogru degil: islem
+ * BASARISIZ OLMADI, eksik yuklendi. Bu yuzden ayri, sessiz bir gorunum ve
+ * `role="status"` — ekran okuyucu duyurur ama araya girmez.
+ */
+export function EksikVeriUyarisi({ mesaj }: { mesaj?: string | null }) {
+  if (!mesaj) return null;
+  return (
+    <p
+      role="status"
+      className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-800"
+    >
+      {mesaj}
+    </p>
+  );
+}

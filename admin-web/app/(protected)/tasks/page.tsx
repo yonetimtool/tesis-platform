@@ -5,8 +5,11 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion } from "@/components/form";
+import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion,
+  EksikVeriUyarisi,
+} from "@/components/form";
 import { useToast } from "@/components/Toast";
+import { kisaKimlik } from "@/lib/kimlik";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { SAHA_ROLLERI, rolAdi } from "@/lib/roles";
@@ -90,19 +93,19 @@ export default function TasksPage() {
     jsonFetcher,
   );
   // Atanan picker: saha personeli (security + tesis_gorevlisi — lib/roles SAHA_ROLLERI).
-  const { data: users } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
+  const { data: users, error: usersErr } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
   // Kategori picker: yonetici-tanimli aktif kategoriler (A6).
-  const { data: kategoriler } = useSWR<TaskCategoryList>("/api/task-categories", jsonFetcher);
+  const { data: kategoriler, error: kategorilerErr } = useSWR<TaskCategoryList>("/api/task-categories", jsonFetcher);
   function kategoriAd(id?: string | null): string {
     if (!id) return "—";
-    return kategoriler?.items.find((k) => k.id === id)?.ad ?? id.slice(0, 8);
+    return kategoriler?.items.find((k) => k.id === id)?.ad ?? kisaKimlik(id);
   }
   const personel = (users?.items ?? []).filter(
     (u) => u.is_active && (SAHA_ROLLERI as string[]).includes(u.role),
   );
   function userName(id?: string | null): string {
     if (!id) return "—";
-    return users?.items.find((u) => u.id === id)?.ad ?? id.slice(0, 8);
+    return users?.items.find((u) => u.id === id)?.ad ?? kisaKimlik(id);
   }
 
   const [open, setOpen] = useState(false);
@@ -194,6 +197,10 @@ export default function TasksPage() {
         action={
           <button className={btnPrimary} onClick={openNew}>{t("gorevYeni")}</button>
         }
+      />
+
+      <EksikVeriUyarisi
+        mesaj={usersErr || kategorilerErr ? t("ortakSecenekYuklenemedi") : null}
       />
 
       <div className="flex flex-wrap items-end gap-3">

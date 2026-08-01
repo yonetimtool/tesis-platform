@@ -16,8 +16,10 @@ import {
   btnDanger,
   panelCls,
   panelMotion,
+  EksikVeriUyarisi,
 } from "@/components/form";
 import { useToast } from "@/components/Toast";
+import { kisaKimlik } from "@/lib/kimlik";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { tamsayiCoz } from "@/lib/sayi";
@@ -66,7 +68,7 @@ export default function PatrolPlansPage() {
     `/api/patrol-plans?limit=${LIMIT}&offset=${offset}`,
     jsonFetcher,
   );
-  const { data: shifts } = useSWR<ShiftList>("/api/shifts?limit=200&offset=0", jsonFetcher);
+  const { data: shifts, error: shiftsErr } = useSWR<ShiftList>("/api/shifts?limit=200&offset=0", jsonFetcher);
   const { data: checkpoints } = useSWR<CheckpointList>(
     "/api/checkpoints?limit=200&offset=0",
     jsonFetcher,
@@ -183,11 +185,11 @@ export default function PatrolPlansPage() {
   }
 
   function cpName(id: string): string {
-    return checkpoints?.items.find((c) => c.id === id)?.ad ?? id.slice(0, 8);
+    return checkpoints?.items.find((c) => c.id === id)?.ad ?? kisaKimlik(id);
   }
   function shiftName(id?: string | null): string {
     if (!id) return "—";
-    return shifts?.items.find((s) => s.id === id)?.ad ?? id.slice(0, 8);
+    return shifts?.items.find((s) => s.id === id)?.ad ?? kisaKimlik(id);
   }
   function move(i: number, dir: -1 | 1) {
     const j = i + dir;
@@ -211,6 +213,10 @@ export default function PatrolPlansPage() {
         action={
           <button className={btnPrimary} onClick={openNew}>{t("planYeni")}</button>
         }
+      />
+
+      <EksikVeriUyarisi
+        mesaj={shiftsErr ? t("ortakSecenekYuklenemedi") : null}
       />
 
       {error && <ErrorBox message={error.message} />}
