@@ -47,3 +47,6 @@ mobile/.flutter-plugins-dependencies
 # Firebase kimlikleri (ASLA commit'lenmez)
 infra/secrets/
 mobile/android/app/google-services.json
+
+# Kapı koşum günlükleri (infra/kapilar.sh) — yerel, sürüm kontrolüne girmez.
+.kapilar/
