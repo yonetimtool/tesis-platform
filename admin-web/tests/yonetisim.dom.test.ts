@@ -55,7 +55,12 @@ describe("Site aktarimi (istemci ayristirmasi)", () => {
     ciz(YonetisimPage);
     await waitFor(() => expect(screen.getByText("Excel ile site aktarımı")).toBeInTheDocument());
 
-    const alan = screen.getByRole("textbox", { name: "" }) as HTMLTextAreaElement;
+    // (P63) ESKIDEN `name: ""` ILE ARANIYORDU — yani test, kutunun
+    // ERISILEBILIR ADI OLMAMASINA dayaniyordu. Ad eklenince kirildi;
+    // kirilmasi DOGRUDUR: eski hali kusuru sabitliyordu.
+    const alan = screen.getByRole("textbox", {
+      name: /Site aktarımı/i,
+    }) as HTMLTextAreaElement;
     void alan;
     const metinKutulari = screen.getAllByRole("textbox");
     const aktarKutusu = metinKutulari[metinKutulari.length - 1];

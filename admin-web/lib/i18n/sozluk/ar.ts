@@ -471,6 +471,8 @@ export const ar: Sozluk = {
   gorevSilOnay: "هل تريد حذف {ad}؟",
   ortakSilOnay: "هل تريد حذف {ad}؟",
   ortakSecenekYuklenemedi: "تعذّر تحميل بعض الخيارات — قد تكون القائمة ناقصة.",
+  tesisSilOnayEtiketi: "كلمة التأكيد",
+  finansTipSuzgeci: "تصفية النوع",
   daireMetrekareGecersiz: "المساحة غير صالحة. مثال: 120,5",
   binaBlokBasitSilOnay: "هل تريد حذف المبنى {blok}؟",
   odemeElden: "نقدًا",

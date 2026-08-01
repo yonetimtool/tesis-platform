@@ -314,7 +314,12 @@ export default function TenantDetailPage() {
               {t("tesisSilUyari", { kelime: t("tesisSilOnayKelimesi") })}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
+              {/* (P63) YER TUTUCU ETIKET DEGILDIR: yazmaya baslayinca
+                  KAYBOLUR ve ekran okuyucularin bir kismi hic okumaz.
+                  Burasi bir TESISI SILME onayidir — adini duyamayan
+                  kullanicinin ne yazdigini bilmeden onaylamasi demekti. */}
               <input
+                aria-label={t("tesisSilOnayEtiketi")}
                 className={`${inputCls} max-w-xs`}
                 value={confirmAd}
                 onChange={(e) => setConfirmAd(e.target.value)}

@@ -453,7 +453,10 @@ export default function YonetisimPage() {
       <motion.section {...panelMotion} className={panelCls}>
         <h2 className="mb-3 text-sm font-semibold">{t("yonAktar")}</h2>
         <p className="mb-2 text-xs text-slate-500">{t("yonAktarIpucu")}</p>
+        {/* (P63) Baslik gorsel olarak yakin ama BAGLI degil; ekran
+            okuyucu metin kutusunu adsiz duyururdu. */}
         <textarea
+          aria-label={t("yonAktar")}
           className={`${inputCls} min-h-32 font-mono text-xs`}
           value={aktarMetin}
           onChange={(e) => setAktarMetin(e.target.value)}

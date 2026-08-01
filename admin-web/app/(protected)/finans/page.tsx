@@ -239,7 +239,10 @@ export default function FinansPage() {
       <motion.section {...panelMotion} className={panelCls}>
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold">{t("finansHareketler")}</h2>
+          {/* (P63) Suzgecin HICBIR etiketi yoktu: ekran okuyucu yalnizca
+              "acilir liste" der ve kullanici neyi suzdugunu bilmez. */}
           <select
+            aria-label={t("finansTipSuzgeci")}
             className={inputCls}
             style={{ maxWidth: 200 }}
             value={tip}

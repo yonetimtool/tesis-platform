@@ -471,6 +471,8 @@ export const de: Sozluk = {
   gorevSilOnay: "{ad} löschen?",
   ortakSilOnay: "{ad} löschen?",
   ortakSecenekYuklenemedi: "Einige Optionen konnten nicht geladen werden — die Liste ist möglicherweise unvollständig.",
+  tesisSilOnayEtiketi: "Bestätigungswort",
+  finansTipSuzgeci: "Typfilter",
   daireMetrekareGecersiz: "Ungültige Fläche. Beispiel: 120,5",
   binaBlokBasitSilOnay: "Block {blok} löschen?",
   odemeElden: "Bar",

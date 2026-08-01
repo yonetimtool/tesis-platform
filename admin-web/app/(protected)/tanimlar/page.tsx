@@ -431,7 +431,9 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                     ))}
                   </select>
                 ) : (
+                  // (P63) ACIK `aria-label` — settings ile ayni gerekce.
                   <input
+                    aria-label={t(a.etiket)}
                     className={inputCls}
                     type={girisTipi(a.tip)}
                     inputMode={girisModu(a.tip)}

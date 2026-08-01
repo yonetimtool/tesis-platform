@@ -47,7 +47,9 @@ export default function YetkiPage() {
       <ErrorBox message={error ? t("yetkiHata") : null} />
 
       <motion.section {...panelMotion} className={panelCls}>
+        {/* (P63) Yer tutucu tek basina erisilebilir AD saglamaz. */}
         <input
+          aria-label={t("yetkiAra")}
           className={`${inputCls} mb-3`}
           placeholder={t("yetkiAra")}
           value={ara}

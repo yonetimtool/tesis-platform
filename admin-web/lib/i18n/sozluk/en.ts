@@ -471,6 +471,8 @@ export const en: Sozluk = {
   gorevSilOnay: "Delete {ad}?",
   ortakSilOnay: "Delete {ad}?",
   ortakSecenekYuklenemedi: "Some options could not be loaded — the list may be incomplete.",
+  tesisSilOnayEtiketi: "Confirmation word",
+  finansTipSuzgeci: "Type filter",
   daireMetrekareGecersiz: "Invalid area. Example: 120.5",
   binaBlokBasitSilOnay: "Delete block {blok}?",
   odemeElden: "Cash",

@@ -235,7 +235,13 @@ export default function SettingsPage() {
                     ))}
                   </select>
                 ) : (
+                  // (P63) ACIK `aria-label`: bu girdi `<Field>`in UC DALLI
+                  // icerigindeki son daldir ve sarmalayici onlarca satir
+                  // yukarida kalir. Ad zaten `Field`ten geliyor; burada
+                  // TEKRAR etmek, dallanma buyudukce sessizce kopmasini
+                  // engeller (kilit de bu yuzden bu dosyayi isaret etti).
                   <input
+                    aria-label={t(a.etiket)}
                     className={inputCls}
                     type={GIRDI_TIPI[a.tip]}
                     min={a.min}
