@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import useSWR from "swr";
 
+import { BILDIRIM_TIP, TUR_DURUM, enumAdi } from "@/lib/enum-adlari";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AktifTur, Alarm, DashboardLive } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
@@ -13,20 +14,27 @@ const DURUM_STYLE: Record<string, string> = {
   kacirildi: "bg-red-100 text-red-800",
 };
 
+// (P53) RENK ve AD AYRI: renk haritasi burada (gorunum karari), ad
+// sozlukte (dil karari). Rozet artik `bekliyor` degil "bekliyor"/"pending"
+// yazar; taninmayan durum HAM kalir ki rozet bos gorunmesin.
 function DurumRozet({ durum }: { durum: string }) {
+  const t = useT();
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[durum] ?? "bg-slate-100 text-slate-700"}`}>
-      {durum}
+      {enumAdi(t, TUR_DURUM, durum)}
     </span>
   );
 }
 
 function AlarmSatir({ alarm }: { alarm: Alarm }) {
+  const t = useT();
   return (
     <li className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-slate-500">{alarm.tip}</span>
+          <span className="text-xs font-semibold text-slate-500">
+            {enumAdi(t, BILDIRIM_TIP, alarm.tip)}
+          </span>
         </div>
         <p className="text-sm text-slate-800">{alarm.mesaj}</p>
       </div>

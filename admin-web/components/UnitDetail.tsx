@@ -5,6 +5,7 @@ import useSWR from "swr";
 
 import { ErrorBox, Field, btnDanger, btnGhost, btnPrimary, cardCls, inputCls } from "@/components/form";
 import { useToast } from "@/components/Toast";
+import { ODEME_DURUM, ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { kurusToTL, tlToKurus } from "@/lib/money";
@@ -325,7 +326,8 @@ export function UnitDetail({ unit }: { unit: Unit }) {
             {(dues?.payments ?? []).map((p) => (
               <li key={p.id} className="flex justify-between rounded border border-slate-100 px-2 py-1">
                 <span>
-                  {p.yontem} · {p.durum}
+                  {enumAdi(t, ODEME_YONTEM, p.yontem)} ·{" "}
+                  {enumAdi(t, ODEME_DURUM, p.durum)}
                   {p.donem ? ` · ${p.donem}` : ""}
                 </span>
                 <span className="font-medium">{kurusToTL(p.tutar_kurus)}</span>

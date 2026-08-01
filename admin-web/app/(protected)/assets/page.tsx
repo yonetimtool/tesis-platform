@@ -7,6 +7,7 @@ import useSWR from "swr";
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
 import { useToast } from "@/components/Toast";
+import { DEMIRBAS_DURUM, DEMIRBAS_KATEGORI, enumAdi } from "@/lib/enum-adlari";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -262,13 +263,13 @@ export default function AssetsPage() {
             {(data?.items ?? []).map((a) => (
               <tr key={a.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${a.aktif ? "" : "bg-slate-50"}`}>
                 <td className="px-4 py-2.5">{a.ad}</td>
-                <td className="px-4 py-2.5 text-slate-600">{a.kategori ?? "—"}</td>
+                <td className="px-4 py-2.5 text-slate-600">{enumAdi(t, DEMIRBAS_KATEGORI, a.kategori)}</td>
                 <td className="px-4 py-2.5 font-mono text-slate-600">{a.nfc_tag_uid ?? "—"}</td>
                 <td className="px-4 py-2.5">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[a.durum] ?? "bg-slate-100 text-slate-700"}`}
                   >
-                    {a.durum}
+                    {enumAdi(t, DEMIRBAS_DURUM, a.durum)}
                   </span>
                 </td>
                 <td className="px-4 py-2.5 text-slate-600">{a.aktif ? t("ortakEvet2") : t("ortakHayir2")}</td>

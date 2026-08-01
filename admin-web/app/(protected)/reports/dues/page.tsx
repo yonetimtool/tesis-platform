@@ -7,6 +7,7 @@ import useSWR from "swr";
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
 import { ReportsTabs } from "@/components/ReportsTabs";
+import { ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
 import { fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { kurusToTL } from "@/lib/money";
@@ -293,7 +294,7 @@ export default function DuesReportPage() {
                       <tr key={o.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
                         <td className="px-4 py-2.5">{o.no}</td>
                         <td className="px-4 py-2.5 font-medium tabular-nums">{kurusToTL(o.tutar)}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{o.yontem}</td>
+                        <td className="px-4 py-2.5 text-slate-600">{enumAdi(t, ODEME_YONTEM, o.yontem)}</td>
                         <td className="px-4 py-2.5 text-slate-600">{formatDateTime(o.zaman)}</td>
                       </tr>
                     ))}

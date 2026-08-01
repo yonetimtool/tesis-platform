@@ -7,6 +7,7 @@ import useSWR from "swr";
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
 import { ReportsTabs } from "@/components/ReportsTabs";
+import { TUR_DURUM, enumAdi } from "@/lib/enum-adlari";
 import { fetchAllItems } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type { PatrolPlanList, PatrolWindowListResponse, PatrolWindowRow } from "@/lib/types";
@@ -185,7 +186,7 @@ export default function PatrolReportPage() {
                           <span
                             className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[w.durum] ?? "bg-slate-100 text-slate-700"}`}
                           >
-                            {w.durum}
+                            {enumAdi(t, TUR_DURUM, w.durum)}
                           </span>
                         </td>
                         <td className="px-4 py-2.5 text-slate-600 tabular-nums">

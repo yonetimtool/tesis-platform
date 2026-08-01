@@ -7,6 +7,7 @@ import useSWR from "swr";
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, panelCls, panelMotion } from "@/components/form";
 import { useToast } from "@/components/Toast";
+import { ODEME_DURUM, ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { kurusToTL, tlToKurus } from "@/lib/money";
@@ -218,7 +219,7 @@ export default function DuesPage() {
                 {(payments?.items ?? []).map((p) => (
                   <tr key={p.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
                     <td className="px-4 py-2.5 font-mono text-slate-600">{p.unit_id.slice(0, 8)}</td>
-                    <td className="px-4 py-2.5">{p.yontem}</td>
+                    <td className="px-4 py-2.5">{enumAdi(t, ODEME_YONTEM, p.yontem)}</td>
                     <td className="px-4 py-2.5">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -229,7 +230,7 @@ export default function DuesPage() {
                               : "bg-slate-100 text-slate-600"
                         }`}
                       >
-                        {p.durum}
+                        {enumAdi(t, ODEME_DURUM, p.durum)}
                       </span>
                     </td>
                     <td className="px-4 py-2.5 font-medium tabular-nums">{kurusToTL(p.tutar_kurus)}</td>
