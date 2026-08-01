@@ -90,8 +90,14 @@ describe("Ayarlar — operasyon", () => {
   it("DEGISMEYEN ALAN gonderilmez", async () => {
     const govdeler = govdeYakala({ "/api/tenant/settings": AYARLAR });
     ciz(SettingsPage);
+    // (P55) ETIKETIN VARLIGI YETMEZ, DEGERIN GELMESI BEKLENIR. Form
+    // sunucu yanitiyla BIR KEZ dolar; alan cizildigi anda hala bostur.
+    // Bos alanda `clear()` bir sey yapmaz, sonra doldurma etkisi kosar ve
+    // yazilan metin sunucu degerinin ARDINA eklenirdi: 10 + "25" = 1025.
+    // Test 14 kosumun 1'inde boyle duserdi — urun kodu saglam, yaris
+    // testin kendisindeydi.
     await waitFor(() =>
-      expect(screen.getByLabelText(/Tur gecikme toleransı/)).toBeInTheDocument(),
+      expect(screen.getByLabelText(/Tur gecikme toleransı/)).toHaveValue(10),
     );
 
     const alan = screen.getByLabelText(/Tur gecikme toleransı/);

@@ -10,6 +10,7 @@ import { useToast } from "@/components/Toast";
 import { UnitDetail } from "@/components/UnitDetail";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { sayiBicimi, sayiCoz } from "@/lib/sayi";
 import type { Unit, UnitList } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
 
@@ -25,12 +26,11 @@ interface FormState {
 }
 const EMPTY: FormState = { no: "", blok: "", kat: "", sira: "", metrekare: "", aktif: true };
 
-function numOrNull(s: string): number | null {
-  const t = s.trim();
-  if (t === "") return null;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : null;
-}
+// (P55) `numOrNull` KALDIRILDI. `Number("120,5")` NaN doner ve eski
+// surum bunu `null`a cevirip sunucuya "alani temizle" diye gonderiyordu:
+// metrekareyi TURKCE YAZIMLA giren kullanici alani SESSIZCE SILDIRIYORDU.
+// `sayiCoz` bos girdi ile gecersiz girdiyi AYIRIR; gecersizde istek hic
+// atilmaz ve neden soylenir.
 
 // Yerlesim: kat/sira tam sayi olmali (ondalik girilirse null -> gonderilmez).
 function intOrNull(s: string): number | null {
@@ -71,7 +71,10 @@ export default function UnitsPage() {
       blok: u.blok ?? "",
       kat: u.kat != null ? String(u.kat) : "",
       sira: u.sira != null ? String(u.sira) : "",
-      metrekare: u.metrekare != null ? String(u.metrekare) : "",
+      // ON-DOLGU GOSTERILEN BICIMDE: `String(120.5)` "120.5" verirdi ve
+      // kullanici duzenlemeye acinca tablodakinden FARKLI bir metin
+      // gorurdu (P49/P50'nin ayni bulgusu).
+      metrekare: u.metrekare != null ? sayiBicimi(u.metrekare, "") : "",
       aktif: u.aktif,
     });
     setFormErr(null);
@@ -82,12 +85,18 @@ export default function UnitsPage() {
     e.preventDefault();
     setSaving(true);
     setFormErr(null);
+    const m2 = sayiCoz(form.metrekare);
+    if (m2.tur === "gecersiz") {
+      setFormErr(t("daireMetrekareGecersiz"));
+      setSaving(false);
+      return;
+    }
     const body = {
       no: form.no.trim(),
       blok: form.blok.trim(),  // blok ZORUNLU (canli-site kurali)
       kat: intOrNull(form.kat),
       sira: intOrNull(form.sira),
-      metrekare: numOrNull(form.metrekare),
+      metrekare: m2.tur === "sayi" ? m2.deger : null,
       aktif: form.aktif,
     };
     try {
@@ -239,7 +248,7 @@ export default function UnitsPage() {
                   <td className="px-4 py-2.5 text-slate-600 tabular-nums">
                     {u.kat != null || u.sira != null ? `${u.kat ?? "—"} / ${u.sira ?? "—"}` : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-slate-600 tabular-nums">{u.metrekare ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-slate-600 tabular-nums">{sayiBicimi(u.metrekare)}</td>
                   <td className="px-4 py-2.5">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${

@@ -464,6 +464,7 @@ export const es: Sozluk = {
   ortakSilinemedi: "No se pudo eliminar.",
   gorevSilOnay: "¿Eliminar {ad}?",
   ortakSilOnay: "¿Eliminar {ad}?",
+  daireMetrekareGecersiz: "Superficie no válida. Ejemplo: 120,5",
   binaBlokBasitSilOnay: "¿Eliminar el bloque {blok}?",
   odemeElden: "Efectivo",
   odemeHavale: "Transferencia",

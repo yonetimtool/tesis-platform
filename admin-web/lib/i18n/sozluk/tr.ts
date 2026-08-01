@@ -513,6 +513,7 @@ export const tr = {
   ortakSilinemedi: "Silinemedi.",
   gorevSilOnay: "{ad} silinsin mi?",
   ortakSilOnay: "{ad} silinsin mi?",
+  daireMetrekareGecersiz: "Metrekare geçersiz. Örnek: 120,5",
   binaBlokBasitSilOnay: "{blok} bloğu silinsin mi?",
   // tur 20 — odeme yontemi / sakin rolu
   odemeElden: "Elden",

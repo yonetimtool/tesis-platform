@@ -1,5 +1,10 @@
 // Para = KURUS (integer minor units). Backend hep kurus verir/alir.
 // UI'da TL<->kurus donusumu TAM SAYI aritmetigiyle yapilir; float kullanilmaz.
+//
+// (P55) GRUPLAMA BURADA DEGIL `lib/sayi.ts`te: ayni kural para olmayan
+// sayilarda da gerekiyor (metrekare) ve iki kopya tutmak, birinin
+// duzeltilip digerinin unutulmasi demekti.
+import { binlikAyir } from "./sayi";
 
 /** "750" / "750,50" / "750.5" / "1.250,00" -> kurus. Gecersizse null.
  *
@@ -63,27 +68,6 @@ export function tlToKurus(input: string): number | null {
   const kr = ondalik === "" ? 0 : parseInt(ondalik.padEnd(2, "0"), 10);
   if (Number.isNaN(lira) || Number.isNaN(kr)) return null;
   return lira * 100 + kr;
-}
-
-/** Binlik ayirici — KENDIMIZ koyariz, `toLocaleString` KULLANMAYIZ.
- *
- * (P48) NEDEN: `toLocaleString("tr-TR")` ICU verisine baglidir. TAM ICU'lu
- * bir calisma zamaninda `5.000` verir; **kucuk-ICU** ile derlenmis bir
- * Node/tarayicida `tr-TR` desteklenmez ve `en-US`a duser: `5,000`. O
- * durumda para `5,000,00 ₺` gorunurdu — hem yanlis hem OKUNAMAZ, ve hata
- * yalniz BAZI ortamlarda ciktigi icin gelistirmede fark edilmezdi.
- *
- * Uc haneli gruplama dilden bagimsiz basit bir kuraldir; ICU'ya bagimli
- * olmak, kazanci olmayan bir ortam riski almakti.
- */
-function binlikAyir(tamsayi: number): string {
-  const s = String(tamsayi);
-  let out = "";
-  for (let i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 === 0) out += ".";
-    out += s[i];
-  }
-  return out;
 }
 
 /** 75000 -> "750,00 ₺" (integer bolme/mod; float yok). */

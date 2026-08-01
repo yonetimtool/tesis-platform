@@ -464,6 +464,7 @@ export const en: Sozluk = {
   ortakSilinemedi: "Could not delete.",
   gorevSilOnay: "Delete {ad}?",
   ortakSilOnay: "Delete {ad}?",
+  daireMetrekareGecersiz: "Invalid area. Example: 120.5",
   binaBlokBasitSilOnay: "Delete block {blok}?",
   odemeElden: "Cash",
   odemeHavale: "Bank transfer",

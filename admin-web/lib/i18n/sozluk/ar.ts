@@ -464,6 +464,7 @@ export const ar: Sozluk = {
   ortakSilinemedi: "تعذّر الحذف.",
   gorevSilOnay: "هل تريد حذف {ad}؟",
   ortakSilOnay: "هل تريد حذف {ad}؟",
+  daireMetrekareGecersiz: "المساحة غير صالحة. مثال: 120,5",
   binaBlokBasitSilOnay: "هل تريد حذف المبنى {blok}؟",
   odemeElden: "نقدًا",
   odemeHavale: "حوالة",

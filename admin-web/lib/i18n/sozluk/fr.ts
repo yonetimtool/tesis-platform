@@ -464,6 +464,7 @@ export const fr: Sozluk = {
   ortakSilinemedi: "Suppression impossible.",
   gorevSilOnay: "Supprimer {ad} ?",
   ortakSilOnay: "Supprimer {ad} ?",
+  daireMetrekareGecersiz: "Surface invalide. Exemple : 120,5",
   binaBlokBasitSilOnay: "Supprimer le bloc {blok} ?",
   odemeElden: "Espèces",
   odemeHavale: "Virement",

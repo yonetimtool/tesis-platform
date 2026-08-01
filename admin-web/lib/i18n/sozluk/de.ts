@@ -464,6 +464,7 @@ export const de: Sozluk = {
   ortakSilinemedi: "Löschen fehlgeschlagen.",
   gorevSilOnay: "{ad} löschen?",
   ortakSilOnay: "{ad} löschen?",
+  daireMetrekareGecersiz: "Ungültige Fläche. Beispiel: 120,5",
   binaBlokBasitSilOnay: "Block {blok} löschen?",
   odemeElden: "Bar",
   odemeHavale: "Überweisung",
