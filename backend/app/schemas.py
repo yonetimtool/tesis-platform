@@ -224,6 +224,7 @@ class UserCreatedOut(BaseModel):
 
 
 class UserUpdate(BaseModel):
+    # (P97) telefon E.164 NORMALIZE EDILIR — asagidaki dogrulayiciya bak.
     ad: str | None = Field(None, min_length=1)
     email: EmailStr | None = None
     telefon: str | None = None
@@ -231,6 +232,35 @@ class UserUpdate(BaseModel):
     role: UserRoleLiteral | None = None
     is_active: bool | None = None
     password: str | None = Field(None, min_length=8)
+
+    # (P97) TELEFON NORMALIZE EDILMIYORDU. Olculdu:
+    # `PATCH /users/{id} {"telefon": "//evil.example/x"}` -> **200** ve deger
+    # HAM saklaniyordu. Iki sonucu vardi:
+    #   * telefon GLOBAL BENZERSIZ bir GIRIS KIMLIGIDIR (telefonla giris);
+    #     normalize edilmemis deger benzersizlik varsayimini bozar
+    #     (`0532…` ile `+90532…` ayni kisi, farkli satir),
+    #   * `resolve_phone_target` `tel:{numara}` kurar; ham deger
+    #     `tel://evil.example/x` gibi bir URI uretir ve istemcinin sema
+    #     kontrolu (P96) bunu GECIRIR cunku sema hala `tel`.
+    # Ayni alanin YARATMA yolunda (UserCreate) dogrulayici zaten vardi;
+    # GUNCELLEME yolunda yoktu — ayni gercek iki yerde, biri korumasiz.
+    @field_validator("telefon")
+    @classmethod
+    def _normalize_telefon_upd(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        # (P98) BOS DIZGE "NUMARAYI KALDIR" DEMEKTIR, gecersiz numara degil.
+        # Mevcut sozlesme bu: `PATCH /users/{id}/contact {"telefon": ""}`
+        # numarayi siler ve `resolve_phone_target` da `(telefon or "").strip()`
+        # ile bos degeri "numara yok" sayar. Ilk surumde bunu 422 yaptim ve
+        # `test_riza_yoksa_numara_aciklanmaz_404` dustu — dogrulayici,
+        # dogrulamasi gerekmeyen bir DEGERI reddediyordu.
+        if not v.strip():
+            return v
+        try:
+            return normalize_phone(v)
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
 
     @field_validator("password")
     @classmethod
@@ -249,6 +279,26 @@ class UserUpdate(BaseModel):
 class UserContactUpdate(BaseModel):
     telefon: str | None = Field(None, max_length=40)
     aranabilir: bool | None = None
+
+    # (P97) UserUpdate ile AYNI gerekce; sakinin KENDI numarasini
+    # guncelledigi yol da normalize edilmeli.
+    @field_validator("telefon")
+    @classmethod
+    def _normalize_telefon_contact(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        # (P98) BOS DIZGE "NUMARAYI KALDIR" DEMEKTIR, gecersiz numara degil.
+        # Mevcut sozlesme bu: `PATCH /users/{id}/contact {"telefon": ""}`
+        # numarayi siler ve `resolve_phone_target` da `(telefon or "").strip()`
+        # ile bos degeri "numara yok" sayar. Ilk surumde bunu 422 yaptim ve
+        # `test_riza_yoksa_numara_aciklanmaz_404` dustu — dogrulayici,
+        # dogrulamasi gerekmeyen bir DEGERI reddediyordu.
+        if not v.strip():
+            return v
+        try:
+            return normalize_phone(v)
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "UserContactUpdate":
