@@ -3549,6 +3549,60 @@ paths:
               schema: { $ref: "#/components/schemas/FinansOzet" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /yetki-matrisi:
+    get:
+      tags: [yetki]
+      summary: Yetki matrisi — KODUN KENDISINDEN uretilir (admin + yonetici)
+      description: |
+        (P41) Her (METOT, yol) icin hangi rollerin kapidan gectigi.
+        Matris ELLE TUTULAN bir listeden DEGIL, `require_role`un uretilen
+        bagimliliga isledigi `izinli_roller` ozniteliginden turer: elle
+        liste, ayni gercegi ikinci bir yerden uretmek ve bir uc
+        degistiginde panelin YANLIS yetki tablosu gostermesi demekti.
+
+        `roller: null` **"herkese acik" DEMEK DEGILDIR**: ucta ROL kapisi
+        yoktur ama kimlik dogrulamasi yine gerekebilir. Ikisini
+        karistirmak, kimliksiz erisilebilir bir uc varmis gibi gostermek
+        olurdu.
+
+        `moda_bagli: true` (P35): yazma sahibi TENANT MODUNA baglidir ve
+        `roller` iki modun BIRLESIMIDIR — sabit tek bir kume gostermek
+        `dis_sirket` modundaki gercek davranisi yanlis anlatirdi.
+
+        OLCMEDIGI SEY: `IZIN` "ayni veriyi goruyor" demek degildir; bazi
+        uclar tum rollere aciktir ama ICERIK role gore daralir. Matris
+        ERISILEBILIRLIGI gosterir.
+
+        RBAC: admin + yonetici. Saha/sakin rollerine kapali — tum sistemin
+        yetki haritasini gostermek gereksiz bir kesif yuzeyi acardi.
+      responses:
+        "200":
+          description: matris
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [roller, items]
+                properties:
+                  roller:
+                    type: array
+                    items: { type: string }
+                    description: Sutun sirasi — test kilidiyle AYNI
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [metot, yol]
+                      properties:
+                        metot: { type: string }
+                        yol: { type: string }
+                        roller:
+                          type: array
+                          nullable: true
+                          items: { type: string }
+                        moda_bagli: { type: boolean, default: false }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   # ================================================================= #
   # SITE WEB PORTALI + ANKET (P38)
   # IKI YUZ: `/public/{slug}/...` KIMLIK ISTEMEZ (`security: []`),

@@ -51,5 +51,9 @@ describe("panel vekili — beyaz liste", () => {
     expect(YAZMA["site-aktar-sablon"]).toBeUndefined();
     expect(YAZMA["kasa-bakiyeleri"]).toBeUndefined();
     expect(YAZMA["portal-iletisim"]).toBeUndefined();
+    // (P41) Yetki matrisi SALT OKUMADIR: yazmaya acmak, yetki tablosunun
+    // panelden degistirilebilir sanilmasi demekti (o tablo KODDAN uretilir).
+    expect(YAZMA["yetki-matrisi"]).toBeUndefined();
+    expect(OKUMA["yetki-matrisi"]).toBe("/yetki-matrisi");
   });
 });

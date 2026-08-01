@@ -43,6 +43,8 @@ export const OKUMA: Record<string, string> = {
   "portal-galeri": "/portal/galeri",
   "portal-iletisim": "/portal/iletisim",
   anketler: "/anketler",
+  // --- yetki matrisi (P41) — SALT OKUMA ---
+  "yetki-matrisi": "/yetki-matrisi",
 };
 
 /** POST ile YAZILAN kaynaklar (okumadan AYRI: bir ucu yanlislikla yazmaya

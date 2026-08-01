@@ -312,4 +312,5 @@ PATCH  /visitors/{id}                                       RED    RED    IZIN  
 POST   /visitors/{id}/checkout                              RED    RED    IZIN   RED    RED    RED   
 GET    /weather                                             IZIN   IZIN   IZIN   IZIN   IZIN   RED   
 POST   /webhooks/payments/{provider}                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /yetki-matrisi                                       IZIN   IZIN   RED    RED    RED    RED   
 GET    /yonetici-iletisim                                   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  

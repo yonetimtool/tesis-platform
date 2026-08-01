@@ -76,14 +76,22 @@ async def get_current_user(
 
 
 def require_role(*roles: str):
-    """RBAC dependency uretici — /contracts/auth.md §4 matrisine gore."""
-    allowed = set(roles)
+    """RBAC dependency uretici — /contracts/auth.md §4 matrisine gore.
+
+    (P41) Izin verilen roller uretilen fonksiyona OZNITELIK olarak
+    IsLENIR. Amac: yetki matrisini KODUN KENDISINDEN uretebilmek.
+    Alternatif — matrisi elle bir listede tutmak — ayni gercegi ikinci bir
+    yerden uretmek ve iki kaynagin ayrismasi demekti; oznitelik ise
+    dogruluk kaynagini TEK tutar (`require_role` cagrisi).
+    """
+    allowed = frozenset(roles)
 
     async def _dep(user: AppUser = Depends(get_current_user)) -> AppUser:
         if user.role not in allowed:
             raise APIError(403, "forbidden", "yetkiniz_yok")
         return user
 
+    _dep.izinli_roller = allowed  # type: ignore[attr-defined]
     return _dep
 
 
@@ -132,4 +140,11 @@ def require_guvenlik_yazma():
             )
         return user
 
+    # (P41) MODA BAGLI yetki: tek bir rol kumesi YOKTUR. Matris bunu
+    # "moda gore degisir" diye gosterir — sabit bir kume yazmak,
+    # `dis_sirket` modundaki gercek davranisi YANLIS gosterirdi.
+    _dep.izinli_roller = frozenset(
+        GUVENLIK_YAZAN["yonetim_ici"] + GUVENLIK_YAZAN["dis_sirket"]
+    )  # type: ignore[attr-defined]
+    _dep.moda_bagli = True  # type: ignore[attr-defined]
     return _dep

@@ -4837,3 +4837,24 @@ class PortalPublicOut(BaseModel):
     galeri: list[GaleriOut] = Field(default_factory=list)
     duyurular: list[PortalDuyuruOzet] = Field(default_factory=list)
     anketler: list[AnketOut] = Field(default_factory=list)
+
+
+# ============================ P41 YETKI MATRISI ============================= #
+class YetkiSatiri(BaseModel):
+    """Tek bir (METOT, yol) icin rol kapisi."""
+
+    metot: str
+    yol: str
+    #: `None` = ucta ROL KAPISI YOK. Bu "herkese acik" DEMEK DEGILDIR;
+    #: kimlik dogrulamasi yine gerekebilir. Ikisini karistirmak, kimliksiz
+    #: erisilebilir bir uc varmis gibi gostermek olurdu.
+    roller: list[str] | None = None
+    #: (P35) Yazma sahibi TENANT MODUNA bagli. Sabit bir kume gostermek,
+    #: `dis_sirket` modundaki gercek davranisi yanlis anlatirdi.
+    moda_bagli: bool = False
+
+
+class YetkiMatrisiResponse(BaseModel):
+    #: Sutun sirasi — panel ile test kilidi yan yana okunabilsin.
+    roller: list[str]
+    items: list[YetkiSatiri]

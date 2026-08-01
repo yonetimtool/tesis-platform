@@ -53,6 +53,9 @@ const LINKS: { href: string; anahtar: SozlukAnahtari; icon: IconName }[] = [
   // alindi, kim ne yapti" sorusunu yanitlar.
   { href: "/yonetisim", anahtar: "kabukYonetisim", icon: "building" },
   { href: "/audit", anahtar: "kabukDenetimKaydi", icon: "scan" },
+  // (P41) Yetki matrisi denetimin YANINDA: ikisi de "kim ne yapabilir /
+  // ne yapti" sorusunu yanitlar.
+  { href: "/yetki", anahtar: "kabukYetki", icon: "users" },
   { href: "/settings", anahtar: "kabukAyarlar", icon: "gear" },
 ];
 

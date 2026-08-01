@@ -46,6 +46,7 @@ export const config = {
     "/mesajlar/:path*",
     "/yonetisim/:path*",
     "/portal/:path*",
+    "/yetki/:path*",
     "/audit/:path*",
     "/complaints/:path*",
     "/integrations/:path*",
