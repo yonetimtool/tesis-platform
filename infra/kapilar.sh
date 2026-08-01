@@ -35,11 +35,24 @@ kapi() {
   # ara satirdaki "+1557" yaziyordu. P89'da bunu "flutter'in sayaci
   # kirpiliyor" diye NOT DUSTUM — yanlisti; sebep bu satirdi (P90).
   local ozet
-  ozet="$(grep -v '^[[:space:]]*$' "$log" | tail -n 1 | tr -d '\r' | cut -c1-90)"
+  ozet="$(grep -v '^[[:space:]]*$' "$log" | tail -n 1 | tr -d '\r' | cut -c1-88)"
+  # BOS GUNLUK SESSIZ BASARIDIR (orn. `tsc` bir sey yazmaz). Ozeti bos
+  # birakmak "okuyamadim" ile "diyecek bir sey yok"u ayirt edilemez
+  # kilardi (P61'in bos-durum dersi, arac tarafinda).
+  [ -z "$ozet" ] && ozet="(cikti yok)"
   if [ "$kod" -eq 0 ]; then
     SONUC+=("OK   $ad — $ozet")
   else
-    SONUC+=("HATA $ad (cikis $kod) — $log")
+    # HATADA SON SATIR YETMEZ. Ilk denemede "son anlamli satir"
+    # basiliyordu ve `vitest` icin bu **Duration** satiriydi — yani ozet,
+    # "neden dustu"yu degil "ne kadar surdu"yu soyluyordu. Once BASARISIZLIK
+    # IMZASI aranir; yoksa son satira dusulur.
+    local sebep
+    sebep="$(grep -aiE "([0-9]+ (failed|error))|^(FAIL|ERROR)|Tests +[0-9]+ failed|Failing tests" "$log" \
+             | tail -n 1 | tr -d '\r' | sed 's/^[[:space:]]*//' | cut -c1-88)"
+    [ -z "$sebep" ] && sebep="$ozet"
+    SONUC+=("HATA $ad (cikis $kod) — $sebep")
+    SONUC+=("     gunluk: $log")
     HATA=1
   fi
 }
