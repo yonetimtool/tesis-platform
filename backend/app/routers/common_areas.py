@@ -56,7 +56,7 @@ async def list_areas(
         await db.execute(select(func.count()).select_from(stmt.subquery()))
     ).scalar_one()
     rows = (
-        await db.execute(stmt.order_by(OrtakAlan.ad).limit(limit).offset(offset))
+        await db.execute(stmt.order_by(OrtakAlan.ad, OrtakAlan.id).limit(limit).offset(offset))
     ).scalars().all()
     return OrtakAlanListResponse(
         meta={"limit": limit, "offset": offset, "total": total},

@@ -58,7 +58,7 @@ async def list_categories(
     ).scalar_one()
     rows = (
         await db.execute(
-            select(TaskCategory).where(*where).order_by(TaskCategory.ad).limit(limit).offset(offset)
+            select(TaskCategory).where(*where).order_by(TaskCategory.ad, TaskCategory.id).limit(limit).offset(offset)
         )
     ).scalars().all()
     return TaskCategoryListResponse(

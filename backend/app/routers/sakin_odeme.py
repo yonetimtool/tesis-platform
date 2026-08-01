@@ -116,7 +116,7 @@ async def _banka_kasasi(db: AsyncSession) -> Kasa | None:
             select(Kasa)
             .where(Kasa.banka_mi.is_(True), Kasa.aktif.is_(True),
                    Kasa.iban.is_not(None))
-            .order_by(Kasa.kod)
+            .order_by(Kasa.kod, Kasa.id)
             .limit(1)
         )
     ).scalar_one_or_none()

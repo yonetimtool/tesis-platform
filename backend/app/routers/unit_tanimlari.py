@@ -80,7 +80,7 @@ async def list_unit_gruplari(
         await db.execute(select(func.count()).select_from(base.subquery()))
     ).scalar_one()
     kayitlar = (
-        (await db.execute(base.order_by(UnitGrup.ad).limit(limit).offset(offset)))
+        (await db.execute(base.order_by(UnitGrup.ad, UnitGrup.id).limit(limit).offset(offset)))
         .scalars()
         .all()
     )
@@ -186,7 +186,7 @@ async def list_unit_tipleri(
         await db.execute(select(func.count()).select_from(base.subquery()))
     ).scalar_one()
     kayitlar = (
-        (await db.execute(base.order_by(UnitTip.ad).limit(limit).offset(offset)))
+        (await db.execute(base.order_by(UnitTip.ad, UnitTip.id).limit(limit).offset(offset)))
         .scalars()
         .all()
     )

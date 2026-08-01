@@ -95,7 +95,7 @@ async def list_users(
         where.append(or_(AppUser.ad.ilike(like), AppUser.email.ilike(like)))
     total = (await db.execute(select(func.count()).select_from(AppUser).where(*where))).scalar_one()
     rows = (
-        await db.execute(select(AppUser).where(*where).order_by(AppUser.ad).limit(limit).offset(offset))
+        await db.execute(select(AppUser).where(*where).order_by(AppUser.ad, AppUser.id).limit(limit).offset(offset))
     ).scalars().all()
     return UserAdminListResponse(
         meta={"limit": limit, "offset": offset, "total": total},

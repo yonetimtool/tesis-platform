@@ -148,7 +148,7 @@ async def list_cameras(
 
     total = (await db.execute(sayim)).scalar_one()
     rows = (
-        await db.execute(stmt.order_by(Camera.ad).limit(limit).offset(offset))
+        await db.execute(stmt.order_by(Camera.ad, Camera.id).limit(limit).offset(offset))
     ).scalars().all()
     return CameraListResponse(
         meta={"limit": limit, "offset": offset, "total": total},

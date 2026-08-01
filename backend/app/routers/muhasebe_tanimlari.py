@@ -330,7 +330,7 @@ async def list_gg_tanimlari(
     ).scalar_one()
     kayitlar = (
         (await db.execute(
-            base.order_by(GelirGiderTanim.ad).limit(limit).offset(offset)
+            base.order_by(GelirGiderTanim.ad, GelirGiderTanim.id).limit(limit).offset(offset)
         )).scalars().all()
     )
     return GelirGiderTanimListResponse(
@@ -628,7 +628,7 @@ async def list_arac_kayitlari(
     ).scalar_one()
     kayitlar = (
         (await db.execute(
-            base.order_by(AracKayit.plaka).limit(limit).offset(offset)
+            base.order_by(AracKayit.plaka, AracKayit.id).limit(limit).offset(offset)
         )).scalars().all()
     )
     return AracKayitListResponse(

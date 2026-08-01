@@ -134,7 +134,7 @@ async def list_units(
         where.append(Unit.unit_grup_id == unit_grup_id)
     total = (await db.execute(select(func.count()).select_from(Unit).where(*where))).scalar_one()
     rows = (
-        await db.execute(select(Unit).where(*where).order_by(Unit.no).limit(limit).offset(offset))
+        await db.execute(select(Unit).where(*where).order_by(Unit.no, Unit.id).limit(limit).offset(offset))
     ).scalars().all()
     return UnitListResponse(
         meta={"limit": limit, "offset": offset, "total": total},

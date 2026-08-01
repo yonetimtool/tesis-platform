@@ -110,7 +110,7 @@ async def list_integrations(
     ).scalar_one()
     rows = (
         await db.execute(
-            select(Integration).where(*where).order_by(Integration.ad).limit(limit).offset(offset)
+            select(Integration).where(*where).order_by(Integration.ad, Integration.id).limit(limit).offset(offset)
         )
     ).scalars().all()
     return IntegrationListResponse(
