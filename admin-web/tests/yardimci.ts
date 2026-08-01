@@ -65,8 +65,20 @@ export function fetchSahtele(
         headers: { "Content-Type": "application/json" },
       });
     }
-    return new Response(JSON.stringify(harita[anahtar]), {
-      status: opts.durum ?? 200,
+    // UC BASINA DURUM: `opts.durum` TUM uclari birden bozar; oysa gercek
+    // kusurlarin cogu "liste geldi ama YAZMA dustu" seklindedir. Govdede
+    // `__durum` varsa o uca ozel HTTP durumu olur (isaretci govdeden
+    // ayiklanir, sayfa gormez).
+    const govde = harita[anahtar];
+    let durum = opts.durum ?? 200;
+    let cikti = govde;
+    if (govde && typeof govde === "object" && "__durum" in govde) {
+      const { __durum, ...kalan } = govde as { __durum: number };
+      durum = __durum;
+      cikti = kalan;
+    }
+    return new Response(JSON.stringify(cikti), {
+      status: durum,
       headers: { "Content-Type": "application/json" },
     });
   }) as typeof fetch;

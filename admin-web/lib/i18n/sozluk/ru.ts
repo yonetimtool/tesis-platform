@@ -647,6 +647,13 @@ export const ru: Sozluk = {
   // tur 59 — kalin yazi surusunun ortaya cikardigi sabit metinler
   panelAlarmYok: "Тревог нет.",
   bildirimYeniRozet: "новое",
+  bildirimTipKacirilanTur: "пропущенный обход",
+  bildirimTipEksikCheckpoint: "пропущенная точка",
+  bildirimTipGecikmisOkutma: "опоздавшее сканирование",
+  bildirimTipTalepIsEmri: "заявка → наряд",
+  bildirimTipTalepCozuldu: "заявка решена",
+  bildirimTipTalepReddedildi: "заявка отклонена",
+  bildirimTipIsEmriAtandi: "наряд назначен",
   bildirimOkunduIsaretle: "Прочитано",
   planNoktalar: "Точки",
   raporGetir: "Получить отчёт",

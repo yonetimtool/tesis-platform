@@ -707,6 +707,13 @@ export const tr = {
   // tur 59 — kalin yazi surusunun ortaya cikardigi sabit metinler
   panelAlarmYok: "Alarm yok.",
   bildirimYeniRozet: "yeni",
+  bildirimTipKacirilanTur: "kaçırılan tur",
+  bildirimTipEksikCheckpoint: "eksik nokta",
+  bildirimTipGecikmisOkutma: "gecikmiş okutma",
+  bildirimTipTalepIsEmri: "talep → iş emri",
+  bildirimTipTalepCozuldu: "talep çözüldü",
+  bildirimTipTalepReddedildi: "talep reddedildi",
+  bildirimTipIsEmriAtandi: "iş emri atandı",
   bildirimOkunduIsaretle: "Okundu",
   planNoktalar: "Noktalar",
   raporGetir: "Raporu getir",

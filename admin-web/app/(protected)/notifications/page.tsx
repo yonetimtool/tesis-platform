@@ -6,12 +6,31 @@ import useSWR from "swr";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorBox, PageHeader, Pager, cardCls } from "@/components/form";
 import { useToast } from "@/components/Toast";
+import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AppNotification, NotificationList } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 type OkunduFiltre = "" | "true" | "false";
 const LIMIT = 20;
+
+// METIN DEGIL KIMLIK: anahtar sunucunun `notification_tip` tel degeri.
+// Cevirisi olmayan bir tip (sunucu yenisini ekler ya da urunden kaldirilmis
+// eski bir kayit gorunur) HAM gosterilir — rozet bos kalmasin.
+const TIP_ANAHTAR: Record<string, SozlukAnahtari> = {
+  kacirilan_tur: "bildirimTipKacirilanTur",
+  eksik_checkpoint: "bildirimTipEksikCheckpoint",
+  gecikmis_okutma: "bildirimTipGecikmisOkutma",
+  talep_is_emri: "bildirimTipTalepIsEmri",
+  talep_cozuldu: "bildirimTipTalepCozuldu",
+  talep_reddedildi: "bildirimTipTalepReddedildi",
+  is_emri_atandi: "bildirimTipIsEmriAtandi",
+};
+function tipAdi(t: (a: SozlukAnahtari) => string, tip: string): string {
+  const a = TIP_ANAHTAR[tip];
+  return a ? t(a) : tip;
+}
 
 export default function NotificationsPage() {
   const t = useT();
@@ -24,14 +43,18 @@ export default function NotificationsPage() {
   }`;
   const { data, error, isLoading, mutate } = useSWR<NotificationList>(key, jsonFetcher);
 
+  // HAM `fetch` DEGIL `apiSend`: ham fetch basarisiz yanitta da cozulur,
+  // yani 401/500 sonrasi "okundu olarak isaretlendi" BASARI bildirimi
+  // cikiyordu — kullanici isaretledigini saniyor, bildirim okunmamis
+  // kaliyordu. apiSend hata govdesini APIError mesajina cevirir.
   async function markRead(id: string) {
-    await fetch(`/api/notifications/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ okundu: true }),
-    });
-    mutate();
-    toast.success(t("bildirimOkunduIsaretlendi"));
+    try {
+      await apiSend(`/api/notifications/${id}`, "PATCH", { okundu: true });
+      mutate();
+      toast.success(t("bildirimOkunduIsaretlendi"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("ortakIslemBasarisiz"));
+    }
   }
 
   function setFilter(v: OkunduFiltre) {
@@ -77,7 +100,7 @@ export default function NotificationsPage() {
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500">{n.tip}</span>
+                <span className="text-xs font-semibold text-slate-500">{tipAdi(t, n.tip)}</span>
                 {!n.okundu && (
                   <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
                     {t("bildirimYeniRozet")}

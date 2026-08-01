@@ -647,6 +647,13 @@ export const ar: Sozluk = {
   // tur 59 — kalin yazi surusunun ortaya cikardigi sabit metinler
   panelAlarmYok: "لا توجد تنبيهات.",
   bildirimYeniRozet: "جديد",
+  bildirimTipKacirilanTur: "جولة فائتة",
+  bildirimTipEksikCheckpoint: "نقطة فائتة",
+  bildirimTipGecikmisOkutma: "مسح متأخر",
+  bildirimTipTalepIsEmri: "طلب ← أمر عمل",
+  bildirimTipTalepCozuldu: "تم حل الطلب",
+  bildirimTipTalepReddedildi: "تم رفض الطلب",
+  bildirimTipIsEmriAtandi: "تم إسناد أمر العمل",
   bildirimOkunduIsaretle: "مقروء",
   planNoktalar: "النقاط",
   raporGetir: "جلب التقرير",
