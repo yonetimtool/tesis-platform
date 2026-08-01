@@ -70,11 +70,23 @@ export function tlToKurus(input: string): number | null {
   return lira * 100 + kr;
 }
 
-/** 75000 -> "750,00 ₺" (integer bolme/mod; float yok). */
-export function kurusToTL(kurus: number): string {
+/** 75000 -> "750,00" — SIMGESIZ; FORM ON-DOLGUSU icindir.
+ *
+ * (P56) Neden ayri: bir metin kutusuna `₺` yazmak tuhaftir, ama on-dolgunun
+ * [tlToKurus] tarafindan GERI OKUNABILIR olmasi sarttir. Eski surum
+ * `(kurus/100).toFixed(2)` ile `5000.00` yaziyordu; kullanici bunu
+ * duzeltmeye kalkip Turkce yazimla `5.000,00` yazdiginda eski ayristirici
+ * `Number("5.000.00")` -> NaN uretiyordu.
+ */
+export function kurusToTLSade(kurus: number): string {
   const neg = kurus < 0;
   const abs = Math.abs(kurus);
   const lira = Math.floor(abs / 100);
   const kr = abs % 100;
-  return `${neg ? "-" : ""}${binlikAyir(lira)},${String(kr).padStart(2, "0")} ₺`;
+  return `${neg ? "-" : ""}${binlikAyir(lira)},${String(kr).padStart(2, "0")}`;
+}
+
+/** 75000 -> "750,00 ₺" (integer bolme/mod; float yok). */
+export function kurusToTL(kurus: number): string {
+  return `${kurusToTLSade(kurus)} ₺`;
 }

@@ -20,6 +20,7 @@ import {
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { tamsayiCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
 import type {
   CheckpointList,
@@ -108,12 +109,20 @@ export default function PatrolPlansPage() {
     e.preventDefault();
     setSaving(true);
     setFormErr(null);
+    // (P56) `Number(...)` NaN uretebiliyordu ve JSON'da **null** olurdu:
+    // sunucuya periyotsuz bir plan gidiyordu.
+    const per = tamsayiCoz(form.periyot_dakika);
+    if (per.tur !== "sayi") {
+      setFormErr(t("planPeriyotGecersiz"));
+      setSaving(false);
+      return;
+    }
     const body = {
       ad: form.ad,
       shift_id: form.shift_id || null,
       baslangic_saat: form.baslangic_saat,
       bitis_saat: form.bitis_saat,
-      periyot_dakika: Number(form.periyot_dakika),
+      periyot_dakika: per.deger,
       aktif: form.aktif,
     };
     try {

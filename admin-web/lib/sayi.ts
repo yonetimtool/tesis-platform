@@ -99,3 +99,14 @@ export function sayiCoz(girdi: string): SayiSonuc {
   if (!Number.isFinite(deger)) return { tur: "gecersiz" };
   return { tur: "sayi", deger: neg ? -deger : deger };
 }
+
+/** `sayiCoz` + TAM SAYI kisiti (kat, sira, periyot dakikasi...).
+ *
+ * Ondalikli girdi GECERSIZDIR, `Math.round` ILE YUVARLANMAZ: `2,5`inci kat
+ * diye bir sey yok ve sessizce 3 yapmak kullanicinin adina karar vermekti.
+ */
+export function tamsayiCoz(girdi: string): SayiSonuc {
+  const sonuc = sayiCoz(girdi);
+  if (sonuc.tur !== "sayi") return sonuc;
+  return Number.isInteger(sonuc.deger) ? sonuc : { tur: "gecersiz" };
+}

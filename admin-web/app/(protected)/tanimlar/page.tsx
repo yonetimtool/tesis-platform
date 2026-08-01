@@ -20,7 +20,8 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
-import { kurusToTL } from "@/lib/money";
+import { kurusToTL, kurusToTLSade, tlToKurus } from "@/lib/money";
+import { sayiCoz } from "@/lib/sayi";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 /**
@@ -169,16 +170,16 @@ const DEFTERLER: Defter[] = [
 
 type Kayit = Record<string, unknown>;
 
-/** Kurus <-> TL: kullanici lira girer, sunucu kurus bekler. */
-function kurusaCevir(metin: string): number | null {
-  const t = metin.trim().replace(",", ".");
-  if (t === "") return null;
-  const n = Number(t);
-  return Number.isFinite(n) ? Math.round(n * 100) : null;
-}
+// (P56) UCUNCU PARA AYRISTIRICISI KALDIRILDI. Eskisi soyleydi:
+//   metin.replace(",", ".") -> Number -> Math.round(n * 100)
+// `1.250` girdisinde `Number("1.250")` = **1,25** verir: kullanici bin iki
+// yuz elli lira yazip **1,25 TL** kaydediyordu — sessiz, BIN KATLIK bir
+// hata, hem de her daireye yazilan aidat tutarinda. `5.000,00` gibi
+// panelin KENDI gosterdigi bicim ise `Number("5.000.00")` -> NaN olurdu.
+// Artik tek kural: `lib/money.ts` (bkz. P50).
 function liraya(kurus: unknown): string {
   if (typeof kurus !== "number") return "";
-  return (kurus / 100).toFixed(2);
+  return kurusToTLSade(kurus);
 }
 
 /** HTML `type`/`inputMode` — UCLU DEGIL TABLO: sabit-metin tarayicisi
@@ -286,9 +287,25 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
         govde[a.ad] = null;
         continue;
       }
-      if (a.tip === "kurus") govde[a.ad] = kurusaCevir(metin);
-      else if (a.tip === "sayi") govde[a.ad] = Number(metin);
-      else govde[a.ad] = metin;
+      // GECERSIZ GIRDI ISTEK ATMADAN DURDURULUR. Eskiden `Number("abc")`
+      // NaN uretiyor, `JSON.stringify` onu **null**a ceviriyordu: sunucu
+      // "alani temizle" diye anliyordu ve kullanici degeri sildigini
+      // hic bilmiyordu.
+      if (a.tip === "kurus") {
+        const kurus = tlToKurus(metin);
+        if (kurus === null) {
+          setFormHata(t("tanimTutarGecersiz", { alan: t(a.etiket) }));
+          return;
+        }
+        govde[a.ad] = kurus;
+      } else if (a.tip === "sayi") {
+        const sonuc = sayiCoz(metin);
+        if (sonuc.tur !== "sayi") {
+          setFormHata(t("tanimSayiGecersiz", { alan: t(a.etiket) }));
+          return;
+        }
+        govde[a.ad] = sonuc.deger;
+      } else govde[a.ad] = metin;
     }
     setKaydediyor(true);
     setFormHata(null);

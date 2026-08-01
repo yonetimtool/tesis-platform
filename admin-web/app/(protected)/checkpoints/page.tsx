@@ -21,6 +21,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { Checkpoint, CheckpointList } from "@/lib/types";
+import { sayiCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
 
 const LIMIT = 20;
@@ -36,12 +37,9 @@ interface FormState {
 }
 const EMPTY: FormState = { ad: "", nfc_tag_uid: "", gps_lat: "", gps_lng: "", aktif: true };
 
-function numOrNull(s: string): number | null {
-  const t = s.trim();
-  if (t === "") return null;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : null;
-}
+// (P56) `numOrNull` KALDIRILDI: `Number("41,0082")` NaN doner ve NaN
+// `null`a cevriliyordu — yani GPS'i Turkce yazimla giren kullanici
+// koordinati SESSIZCE SILDIRIYORDU. `sayiCoz` bos ile gecersizi ayirir.
 
 export default function CheckpointsPage() {
   const t = useT();
@@ -81,11 +79,18 @@ export default function CheckpointsPage() {
     e.preventDefault();
     setSaving(true);
     setFormErr(null);
+    const lat = sayiCoz(form.gps_lat);
+    const lng = sayiCoz(form.gps_lng);
+    if (lat.tur === "gecersiz" || lng.tur === "gecersiz") {
+      setFormErr(t("noktaKonumGecersiz"));
+      setSaving(false);
+      return;
+    }
     const body = {
       ad: form.ad,
       nfc_tag_uid: form.nfc_tag_uid.trim(),
-      gps_lat: numOrNull(form.gps_lat),
-      gps_lng: numOrNull(form.gps_lng),
+      gps_lat: lat.tur === "sayi" ? lat.deger : null,
+      gps_lng: lng.tur === "sayi" ? lng.deger : null,
       aktif: form.aktif,
     };
     try {

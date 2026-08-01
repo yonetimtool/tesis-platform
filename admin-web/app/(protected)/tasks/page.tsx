@@ -10,6 +10,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { SAHA_ROLLERI, rolAdi } from "@/lib/roles";
+import { tamsayiCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
@@ -143,14 +144,20 @@ export default function TasksPage() {
     e.preventDefault();
     setSaving(true);
     setFormErr(null);
-    const per = form.periyot_dakika.trim();
+    // (P56) `Number(per)` NaN uretebiliyordu ve `JSON.stringify(NaN)`
+    // **null**dur: gecersiz periyot sessizce "periyot yok"a donusuyordu.
+    const per = tamsayiCoz(form.periyot_dakika);
+    if (per.tur === "gecersiz") {
+      setFormErr(t("gorevPeriyotGecersiz"));
+      return;
+    }
     const body = {
       tip: form.tip,
       ad: form.ad,
       aciklama: form.aciklama || null,
       atanan_user_id: form.atanan_user_id || null,
       kategori_id: form.kategori_id || null,
-      periyot_dakika: per ? Number(per) : null,
+      periyot_dakika: per.tur === "sayi" ? per.deger : null,
       sonraki_planlanan: toIso(form.sonraki_planlanan),
       foto_zorunlu: form.foto_zorunlu,
       aktif: form.aktif,

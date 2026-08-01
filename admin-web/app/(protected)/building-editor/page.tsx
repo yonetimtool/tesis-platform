@@ -8,18 +8,16 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { Block, BlockList, Unit, UnitList } from "@/lib/types";
+import { tamsayiCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
 
 // Bloksuz kova (implicit tek blok) icin sentinel — gercek blok etiketi
 // alfanumerik ve >=1 karakter, bu deger asla cakismaz.
 const BLOCKLESS = "__bloksuz__";
 
-function intOrNull(s: string): number | null {
-  const t = s.trim();
-  if (t === "") return null;
-  const n = Number(t);
-  return Number.isInteger(n) ? n : null;
-}
+// (P56) `intOrNull` KALDIRILDI: gecersiz girdi de `null` donuyordu ve
+// `null` "alani temizle" demek — kullanici kat/sira degerini yanlis
+// yazdiginda alan SESSIZCE siliniyordu. `tamsayiCoz` ucunu ayirir.
 
 interface BlockFormState {
   open: boolean;
@@ -144,12 +142,18 @@ export default function BuildingEditorPage() {
   // --- unit CRUD -----------------------------------------------------------
   async function saveUnit(e: React.FormEvent) {
     e.preventDefault();
+    const kat = tamsayiCoz(unitForm.kat);
+    const sira = tamsayiCoz(unitForm.sira);
+    if (kat.tur === "gecersiz" || sira.tur === "gecersiz") {
+      setUnitForm((f) => ({ ...f, err: t("daireKatSiraGecersiz") }));
+      return;
+    }
     setUnitForm((f) => ({ ...f, saving: true, err: null }));
     const body = {
       no: unitForm.no.trim(),
       blok: unitForm.blok,
-      kat: intOrNull(unitForm.kat),
-      sira: intOrNull(unitForm.sira),
+      kat: kat.tur === "sayi" ? kat.deger : null,
+      sira: sira.tur === "sayi" ? sira.deger : null,
       aktif: true,
     };
     try {

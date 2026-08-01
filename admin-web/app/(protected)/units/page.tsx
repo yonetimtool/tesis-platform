@@ -10,7 +10,7 @@ import { useToast } from "@/components/Toast";
 import { UnitDetail } from "@/components/UnitDetail";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
-import { sayiBicimi, sayiCoz } from "@/lib/sayi";
+import { sayiBicimi, sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import type { Unit, UnitList } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
 
@@ -32,13 +32,8 @@ const EMPTY: FormState = { no: "", blok: "", kat: "", sira: "", metrekare: "", a
 // `sayiCoz` bos girdi ile gecersiz girdiyi AYIRIR; gecersizde istek hic
 // atilmaz ve neden soylenir.
 
-// Yerlesim: kat/sira tam sayi olmali (ondalik girilirse null -> gonderilmez).
-function intOrNull(s: string): number | null {
-  const t = s.trim();
-  if (t === "") return null;
-  const n = Number(t);
-  return Number.isInteger(n) ? n : null;
-}
+// (P56) `intOrNull` KALDIRILDI — metrekareyle ayni gerekce: gecersiz
+// girdi `null` donuyordu ve `null` "alani temizle" demekti.
 
 export default function UnitsPage() {
   const t = useT();
@@ -85,6 +80,13 @@ export default function UnitsPage() {
     e.preventDefault();
     setSaving(true);
     setFormErr(null);
+    const kat = tamsayiCoz(form.kat);
+    const sira = tamsayiCoz(form.sira);
+    if (kat.tur === "gecersiz" || sira.tur === "gecersiz") {
+      setFormErr(t("daireKatSiraGecersiz"));
+      setSaving(false);
+      return;
+    }
     const m2 = sayiCoz(form.metrekare);
     if (m2.tur === "gecersiz") {
       setFormErr(t("daireMetrekareGecersiz"));
@@ -94,8 +96,8 @@ export default function UnitsPage() {
     const body = {
       no: form.no.trim(),
       blok: form.blok.trim(),  // blok ZORUNLU (canli-site kurali)
-      kat: intOrNull(form.kat),
-      sira: intOrNull(form.sira),
+      kat: kat.tur === "sayi" ? kat.deger : null,
+      sira: sira.tur === "sayi" ? sira.deger : null,
       metrekare: m2.tur === "sayi" ? m2.deger : null,
       aktif: form.aktif,
     };
