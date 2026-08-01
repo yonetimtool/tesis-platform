@@ -320,8 +320,17 @@ app_user(id, tenant_id)` kısıtında adla eşleştirmek `tenant_id`'yi
    tarafından engellendi. Statik denetim (`infra/prod-denetimi.py`) yapıldı.
 2. **Kare bütçesi / jank.** Gerçek cihaz ya da `flutter drive` + emülatör
    gerektiriyor.
-3. **Panel UI birim kapsamı %26,8.** React bileşenlerini jsdom ile test etmek
-   ayrı bir altyapı kararı (bilinçli yapılmamıştı).
+3. ~~**Panel UI birim kapsamı %26,8.**~~ **ALTYAPI KURULDU (P43, tur 89)**:
+   jsdom + Testing Library, aynı koşumda iki ortam (`node` + dosya başındaki
+   `@vitest-environment jsdom`). Kurulum üç gerçek engelde ölçümle ilerledi:
+   `@vitejs/plugin-react` **`next build`i kırdı** (test bağımlılığı ürün
+   derlemesini kıramaz → JSX yerine `createElement`); `esbuild` anahtarı yok
+   sayılıyor (Vitest 4 = rolldown/**oxc**); **SWR önbelleği testler arası
+   taşınıyordu** ve "uç düştü" senaryosu yanlışlıkla geçiyordu.
+   **Kapsam sayısı:** ifade **%9,66 (322/3 330)** — %26,8'den *düşük* çünkü
+   payda P40'ın ~2 000 ifadesiyle büyüdü. Bu turda eklenen şey altyapı + en
+   yeni üç sayfanın davranış testleridir; kapsamı yükseltmek ayrı ve sürekli
+   bir iştir.
 4. ~~**Yetkilendirme matrisi.**~~ **KAPANDI (tur 74)** — yukarıya bakın.
    ~~Kalan alt katman: **handler içinde role göre içerik daraltma** (aynı uç,
    farklı gövde).~~ **KAPANDI (P42, tur 88)**:

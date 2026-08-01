@@ -1,13 +1,24 @@
 import { defineConfig } from "vitest/config";
 
-// Panelin BIRIM testleri: saf mantik (lib/) + middleware yonlendirmesi.
-// React/sayfa testleri BU TURUN DISINDA (jsdom + Testing Library gerektirir);
-// bu yuzden ortam "node" ve ek bagimlilik yok. `window`a dokunan modullerde
-// (fetcher/client) global test icinde stub'lanir.
+// Panelin BIRIM testleri: saf mantik (lib/) + middleware + (P43) React
+// BILESEN testleri.
+//
+// (P43) IKI ORTAM, TEK KOSUM: saf mantik ve middleware `node` ortaminda
+// kalir (hizli ve jsdom'un yan etkilerinden bagimsiz); `*.dom.test.tsx`
+// dosyalari DOSYA BASINDAKI `@vitest-environment jsdom` yorumuyla jsdom'a
+// gecer. Ortam secimi dosyanin KENDISINDE durur: merkezi bir glob listesi,
+// yeni bir dosya eklenip listeye yazilmadiginda testin sessizce YANLIS
+// ortamda kosmasi demekti (ve o hata "document is not defined" olarak
+// baska bir yerde patlardi). Hepsini jsdom'a almak, `next/server`
+// kullanan middleware testini gereksizce tarayici taklidine sokardi;
+// hepsini node'da birakmak ise sayfa testini IMKANSIZ kilardi — envanterin
+// "panel UI birim kapsami %26,8" maddesi tam olarak bu kararin
+// ertelenmesinden dogmustu.
 export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
+    setupFiles: ["tests/kurulum.ts"],
     // Next derlemesi ve uretilen tipler test kapsamina girmesin.
     exclude: ["node_modules/**", ".next/**"],
     // TUR 68 — KAPSAM PAYDASI.
@@ -35,6 +46,24 @@ export default defineConfig({
       reporter: ["text-summary"],
     },
   },
+  // (P43) JSX YOK — ve bu BILINCLI.
+  //
+  // Bilesen testleri once `.tsx` yazildi; Vitest 4 (rolldown) JSX'i
+  // ayristirmadi ve `@vitejs/plugin-react` gerekti. Eklenti kuruldugunda
+  // `next build` PATLADI: eklentinin `.d.ts` dosyasi bu depodaki
+  // TypeScript surumunun ayristiramadigi bir sozdizimi kullaniyor
+  // (`as "module.exports"`), tsconfig `**/*.ts` ile vitest.config.ts'i de
+  // denetledigi icin hata URUN DERLEMESINE tasindi.
+  //
+  // Karar: test bagimliligi urun derlemesini KIRAMAZ. Testler JSX yerine
+  // `createElement` kullanir; eklenti ve `vite` bagimliligi kaldirildi.
+  //
+  // SAYFALARIN KENDISI yine `.tsx`tir ve donusturulmesi gerekir: tsconfig
+  // `jsx: "preserve"` (Next kendi derleyicisini kullanir) oldugu icin
+  // Vitest'e ACIKCA soylenir. Bu ayar YALNIZ test kosumunu etkiler; urun
+  // derlemesi Next'in kendi ayarindan gecer.
+  // Vitest 4 rolldown/oxc kullanir; `esbuild` anahtari YOK SAYILIR.
+  oxc: { jsx: { runtime: "automatic", importSource: "react" } },
   resolve: {
     // tsconfig'deki "@/*" -> proje koku takma adi.
     alias: { "@": new URL("./", import.meta.url).pathname },
