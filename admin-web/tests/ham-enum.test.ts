@@ -18,10 +18,6 @@ import { describe, expect, it } from "vitest";
 // Sunucu semasinda numaralandirma olan alan adlari.
 const ENUM_ALANLARI = [
   "durum", "tip", "kategori", "yontem", "kanal", "rol", "oncelik", "gun_tipi",
-  // (P66) `actor_rol` denetim kaydindaki roldur. Liste "rol" ile bitiyordu
-  // ve `\b` siniri yuzunden `actor_rol` ESLESMIYORDU — sizinti tam orada
-  // duruyordu. Alan adi ONEK ALABILIR; kilit bunu bilmeliydi.
-  "actor_rol",
 ];
 
 function dosyalar(kok: string): string[] {
@@ -39,8 +35,12 @@ describe("ham numaralandirma taramasi", () => {
     // `{x.durum}` / `{x.durum ?? "—"}` gibi dugumler. `t(...)`,
     // `enumAdi(...)` ya da bir bilesene PROP olarak verilenler
     // (`durum={x.durum}`) kapsam disidir — onlar zaten cevirir.
+    // (P66/P67) ALAN ADI ONEK ALABILIR. Once liste `actor_rol`u kacirmisti:
+    // "rol" yaziliydi ama alan `actor_rol`du ve `\\b` sinirina takilmiyordu.
+    // Tek tek onek eklemek, bir sonraki `xxx_durum`u yine kacirmak demekti;
+    // kalip artik `(\\w+_)?<alan>` kabul eder.
     const kalip = new RegExp(
-      `(^|[^=\\w])\\{\\s*[a-z]\\w*\\.(${ENUM_ALANLARI.join("|")})\\b\\s*(\\?\\?[^}]*)?\\}`,
+      `(^|[^=\\w])\\{\\s*[a-z]\\w*\\.(?:\\w+_)?(${ENUM_ALANLARI.join("|")})\\b\\s*(\\?\\?[^}]*)?\\}`,
     );
     // SABLON DIZGELERI ONCE SILINIR: `t(`mesajDurum_${g.durum}`)` ve
     // `key={`${a.tip}-...`}` bir sizinti DEGILDIR — ilki sozluk anahtari
