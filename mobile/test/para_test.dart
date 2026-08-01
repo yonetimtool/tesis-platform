@@ -42,6 +42,19 @@ void main() {
       expect(tlMetniniKurusaCevir('1,234'), isNull, reason: 'ondalik > 2 hane');
       expect(tlMetniniKurusaCevir('-5'), isNull, reason: 'isaret bicim degil');
     });
+
+    test('(P50) YARIM giris ve ICERIDE bosluk REDDEDILIR', () {
+      // `750,` ve `,50` yazmayi bitirmemis girislerdir; sessizce 750,00 /
+      // 0,50 saymak kullanicinin adina karar vermek olurdu.
+      expect(tlMetniniKurusaCevir('750,'), isNull);
+      expect(tlMetniniKurusaCevir(',50'), isNull);
+      expect(tlMetniniKurusaCevir('750.'), isNull);
+      expect(tlMetniniKurusaCevir('.50'), isNull);
+      // `1 000` Turkce yazimda bir sayi DEGILDIR; icerideki bosluklari
+      // silmek `1 2 3`u de kabul etmek olurdu.
+      expect(tlMetniniKurusaCevir('1 000'), isNull);
+      expect(tlMetniniKurusaCevir('1 2 3'), isNull);
+    });
   });
 
   group('POLITIKA cagirana ait', () {

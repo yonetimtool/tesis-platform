@@ -22,21 +22,39 @@ library;
 /// bicim degil, alan kuralidir), ama 0 GECERLIDIR — "muaf" ile "tanimsiz"
 /// ayrimini cagiran yapar.
 int? tlMetniniKurusaCevir(String input) {
-  final s = input.trim().replaceAll('TL', '').replaceAll('₺', '').replaceAll(' ', '');
-  if (s.isEmpty || s.startsWith('-')) return null;
+  // (P50) Para birimi jetonu ve UC BOSLUKLARI temizlenir; ICERIDEKI bosluk
+  // BIRAKILIR ve reddedilir: `1 000` Turkce yazimda bir sayi DEGILDIR ve
+  // icerideki bosluklari silmek `1 2 3`u de kabul etmek olurdu. Panel de
+  // AYNI kurali uygular.
+  final s = input.replaceAll('TL', '').replaceAll('₺', '').trim();
+  if (s.isEmpty || s.startsWith('-') || RegExp(r'\s').hasMatch(s)) return null;
 
   String tamKisim;
   String ondalik = '';
   if (s.contains(',')) {
     final parts = s.split(',');
-    if (parts.length != 2) return null;
+    // (P50) ONDALIK AYIRICI VARSA ARDINDA HANE OLMALI: `750,` YARIM bir
+    // giristir ve sessizce 750,00 saymak, kullanicinin yazmayi bitirmedigi
+    // bir tutari kaydetmek olurdu. Panel de AYNI kurali uygular — iki
+    // istemcinin ayni metni farkli ayristirmasi, ayni sitede farkli tutar
+    // girilebilmesi demekti.
+    // Ayiricinin ONUNDE de hane olmali: `,50` yine YARIM bir giristir.
+    if (parts.length != 2 || parts[1].isEmpty || parts[0].isEmpty) {
+      return null;
+    }
     tamKisim = parts[0].replaceAll('.', '');
     ondalik = parts[1];
   } else {
     final dot = s.lastIndexOf('.');
-    if (dot != -1 && s.length - dot - 1 <= 2 && s.indexOf('.') == dot) {
+    if (dot != -1 &&
+        s.length - dot - 1 >= 1 &&
+        s.length - dot - 1 <= 2 &&
+        s.indexOf('.') == dot) {
+      if (dot == 0) return null; // `.50` — yarim giris
       tamKisim = s.substring(0, dot);
       ondalik = s.substring(dot + 1);
+    } else if (dot == s.length - 1) {
+      return null; // `750.` — yarim giris
     } else {
       tamKisim = s.replaceAll('.', '');
     }

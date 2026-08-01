@@ -26,6 +26,27 @@ describe("tlToKurus", () => {
     expect(tlToKurus("  750,50  ")).toBe(75050);
   });
 
+  // (P50) BINLIK AYIRICI ARTIK DESTEKLENIYOR — bilincli davranis degisikligi.
+  //
+  // Burada `1.000,50` GECERSIZ sayiliyordu ("belirsiz" gerekcesiyle). Ama
+  // panelin kendisi ayni tutari `kurusToTL` ile `1.000,50 ₺` diye GOSTERIYOR:
+  // uygulama, gosterdigi bicimi geri KABUL ETMIYORDU ve kullanici gordugu
+  // sayiyi yazip "gecersiz tutar" aliyordu. Belirsizlik de gercekte yok:
+  // virgul varsa nokta BINLIKTIR. Ayni kural mobilde de uygulanir (P49/P50)
+  // — iki istemcinin ayni metni farkli ayristirmasi, ayni sitede farkli
+  // tutar girilebilmesi demekti.
+  it("BINLIK AYIRICILI bicim kabul edilir (panelin GOSTERDIGI bicim)", () => {
+    expect(tlToKurus("1.000,50")).toBe(100050);
+    expect(tlToKurus("1.250,00")).toBe(125000);
+    expect(tlToKurus("1.234.567,89")).toBe(123456789);
+    // Virgul yoksa TEK nokta + en fazla iki hane ONDALIKTIR (sayisal klavye).
+    expect(tlToKurus("1250.00")).toBe(125000);
+    // Aksi halde nokta BINLIKTIR.
+    expect(tlToKurus("1.250")).toBe(125000);
+    // Para birimi jetonu ve uc bosluklari yok sayilir.
+    expect(tlToKurus(" 1.250,00 ₺ ")).toBe(125000);
+  });
+
   it("GECERSIZ girdi null doner — 0 DEGIL (sessiz sifir tutar yazamaz)", () => {
     for (const v of [
       "",
@@ -36,7 +57,6 @@ describe("tlToKurus", () => {
       ",50",
       "-750", // negatif tutar girisi yok (iade ayri akis)
       "1 000",
-      "1.000,50", // binlik ayirici DESTEKLENMEZ (belirsiz)
       "7e2",
       "+750",
     ]) {
