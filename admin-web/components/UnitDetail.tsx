@@ -83,7 +83,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       setAOk("Tahakkuk eklendi.");
       mutateDues();
     } catch (err) {
-      const m = err instanceof Error ? err.message : "Hata";
+      const m = err instanceof Error ? err.message : t("ortakHataOlustu");
       setAErr(
         /zaten var|conflict|donem/i.test(m)
           ? t("daireTahakkukVar")
@@ -172,7 +172,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       setRRol("");
       mutateRes();
     } catch (err) {
-      setRErr(err instanceof Error ? err.message : "Eklenemedi.");
+      setRErr(err instanceof Error ? err.message : t("ortakKaydedilemedi"));
     } finally {
       setRBusy(false);
     }

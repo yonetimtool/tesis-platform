@@ -469,6 +469,7 @@ export const es: Sozluk = {
   talepReddedildi: "Rechazada",
   talepReddedilen: "Rechazadas",
   ortakSilinemedi: "No se pudo eliminar.",
+  ortakKaydedilemedi: "No se pudo guardar.",
   gorevSilOnay: "¿Eliminar {ad}?",
   ortakSilOnay: "¿Eliminar {ad}?",
   ortakSecenekYuklenemedi: "No se pudieron cargar algunas opciones: la lista puede estar incompleta.",

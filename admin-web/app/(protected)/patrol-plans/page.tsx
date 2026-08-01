@@ -134,7 +134,7 @@ export default function PatrolPlansPage() {
       mutate();
       toast.success(editingId ? t("planGuncellendi") : t("planOlusturuldu"));
     } catch (err) {
-      setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
+      setFormErr(err instanceof Error ? err.message : t("ortakKaydedilemedi"));
     } finally {
       setSaving(false);
     }
@@ -147,7 +147,7 @@ export default function PatrolPlansPage() {
       mutate();
       toast.success(t("planSilindi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
     }
   }
 
@@ -178,7 +178,7 @@ export default function PatrolPlansPage() {
       setAssignPlan(null);
       toast.success(t("atamaKaydedildi"));
     } catch (err) {
-      setAssignErr(err instanceof Error ? err.message : "Atama kaydedilemedi.");
+      setAssignErr(err instanceof Error ? err.message : t("ortakKaydedilemedi"));
     } finally {
       setAssignSaving(false);
     }

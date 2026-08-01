@@ -469,6 +469,7 @@ export const fr: Sozluk = {
   talepReddedildi: "Rejetée",
   talepReddedilen: "Rejetées",
   ortakSilinemedi: "Suppression impossible.",
+  ortakKaydedilemedi: "Enregistrement impossible.",
   gorevSilOnay: "Supprimer {ad} ?",
   ortakSilOnay: "Supprimer {ad} ?",
   ortakSecenekYuklenemedi: "Certaines options n'ont pas pu être chargées — la liste peut être incomplète.",

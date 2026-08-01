@@ -469,6 +469,7 @@ export const ar: Sozluk = {
   talepReddedildi: "مرفوض",
   talepReddedilen: "المرفوضة",
   ortakSilinemedi: "تعذّر الحذف.",
+  ortakKaydedilemedi: "تعذّر الحفظ.",
   gorevSilOnay: "هل تريد حذف {ad}؟",
   ortakSilOnay: "هل تريد حذف {ad}؟",
   ortakSecenekYuklenemedi: "تعذّر تحميل بعض الخيارات — قد تكون القائمة ناقصة.",

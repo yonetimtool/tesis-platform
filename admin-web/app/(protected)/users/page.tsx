@@ -135,7 +135,7 @@ export default function UsersPage() {
       mutate();
       toast.success(editingId ? t("kullaniciGuncellendi") : t("kullaniciOlusturuldu"));
     } catch (err) {
-      const m = err instanceof Error ? err.message : "Kaydedilemedi.";
+      const m = err instanceof Error ? err.message : t("ortakKaydedilemedi");
       setFormErr(
         /email|e-posta|telefon|zaten kayitli|conflict/i.test(m)
           ? t("kullaniciZatenKayitli")

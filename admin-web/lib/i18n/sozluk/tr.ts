@@ -518,6 +518,7 @@ export const tr = {
   talepReddedilen: "Reddedilen",
   // tur 20 — silme onayi
   ortakSilinemedi: "Silinemedi.",
+  ortakKaydedilemedi: "Kaydedilemedi.",
   gorevSilOnay: "{ad} silinsin mi?",
   ortakSilOnay: "{ad} silinsin mi?",
   ortakSecenekYuklenemedi: "Bazı seçenekler yüklenemedi — liste eksik olabilir.",

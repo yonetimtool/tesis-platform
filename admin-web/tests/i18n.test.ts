@@ -436,4 +436,41 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
       `BFF rotasinda sabit metin (istekMetni kullanin):\n${sizanlar.join("\n")}`,
     ).toEqual([]);
   });
+  // (P105) HATA YEDEK METNI — `catch` icindeki son care.
+  //
+  // `err instanceof Error ? err.message : "Kaydedilemedi."` kalibi 26
+  // yerde vardi ve yedek metin SABIT TURKCE'ydi. Yalniz Error OLMAYAN
+  // bir firlatmada gorunur — nadir, ama nadir olmasi CEVRILMEMESINI
+  // gerektirmez; ustelik nadir oldugu icin kimse fark etmez ve dil
+  // degistiren kullanici tek bir Turkce cumleyle karsilasir.
+  //
+  // Kalip dar tutuldu: yalniz `: "..."` yedegi olan ucluler. `String(e)`
+  // dali P60'ta ayrica ele alindi.
+  it("catch yedek metinleri t() uzerinden gelir (P105)", () => {
+    const sizanlar: string[] = [];
+    const tara = (dizin: string) => {
+      for (const ad of fs.readdirSync(path.join(KOK, dizin))) {
+        const göreli = `${dizin}/${ad}`;
+        const tam = path.join(KOK, göreli);
+        if (fs.statSync(tam).isDirectory()) {
+          tara(göreli);
+          continue;
+        }
+        if (!/\.tsx?$/.test(ad)) continue;
+        fs.readFileSync(tam, "utf8")
+          .split("\n")
+          .forEach((satir, i) => {
+            const m = /instanceof Error \?\s*\w+\.message\s*:\s*"([^"]{2,})"/.exec(
+              satir,
+            );
+            if (m) sizanlar.push(`${göreli}:${i + 1} ${m[1].slice(0, 40)}`);
+          });
+      }
+    };
+    ["app", "components"].forEach(tara);
+    expect(
+      sizanlar,
+      `cevrilmemis hata yedegi:\n${sizanlar.slice(0, 10).join("\n")}`,
+    ).toEqual([]);
+  });
 });

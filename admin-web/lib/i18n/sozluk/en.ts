@@ -469,6 +469,7 @@ export const en: Sozluk = {
   talepReddedildi: "Rejected",
   talepReddedilen: "Rejected",
   ortakSilinemedi: "Could not delete.",
+  ortakKaydedilemedi: "Could not be saved.",
   gorevSilOnay: "Delete {ad}?",
   ortakSilOnay: "Delete {ad}?",
   ortakSecenekYuklenemedi: "Some options could not be loaded — the list may be incomplete.",

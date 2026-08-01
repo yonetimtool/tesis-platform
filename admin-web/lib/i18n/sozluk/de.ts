@@ -469,6 +469,7 @@ export const de: Sozluk = {
   talepReddedildi: "Abgelehnt",
   talepReddedilen: "Abgelehnte",
   ortakSilinemedi: "Löschen fehlgeschlagen.",
+  ortakKaydedilemedi: "Konnte nicht gespeichert werden.",
   gorevSilOnay: "{ad} löschen?",
   ortakSilOnay: "{ad} löschen?",
   ortakSecenekYuklenemedi: "Einige Optionen konnten nicht geladen werden — die Liste ist möglicherweise unvollständig.",

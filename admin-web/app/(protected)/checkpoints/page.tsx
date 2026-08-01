@@ -100,7 +100,7 @@ export default function CheckpointsPage() {
       mutate();
       toast.success(editingId ? t("noktaGuncellendi") : t("noktaOlusturuldu"));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Kaydedilemedi.";
+      const msg = err instanceof Error ? err.message : t("ortakKaydedilemedi");
       // nfc cakismasi (409) -> anlamli mesaj
       setFormErr(
         /nfc/i.test(msg)
@@ -119,7 +119,7 @@ export default function CheckpointsPage() {
       mutate();
       toast.success(t("noktaSilindi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
     }
   }
 

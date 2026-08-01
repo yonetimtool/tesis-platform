@@ -141,7 +141,7 @@ export default function AnnouncementsPage() {
       mutate();
       toast.success(t("duyuruGuncellendi"));
     } catch (err) {
-      setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
+      setFormErr(err instanceof Error ? err.message : t("ortakKaydedilemedi"));
     } finally {
       setSaving(false);
     }
@@ -154,7 +154,7 @@ export default function AnnouncementsPage() {
       mutate();
       toast.success(t("duyuruSilindi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
     }
   }
 

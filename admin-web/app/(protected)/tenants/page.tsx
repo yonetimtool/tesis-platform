@@ -96,7 +96,7 @@ export default function TenantsPage() {
       mutate();
       toast.success(t("tesisSilindi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
     }
   }
 

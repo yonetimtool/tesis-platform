@@ -137,7 +137,7 @@ export default function IntegrationsPage() {
       mutate();
       toast.success(editingId ? t("entegGuncellendi") : t("entegOlusturuldu"));
     } catch (err) {
-      setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
+      setFormErr(err instanceof Error ? err.message : t("ortakKaydedilemedi"));
     } finally {
       setSaving(false);
     }
@@ -150,7 +150,7 @@ export default function IntegrationsPage() {
       mutate();
       toast.success(t("entegrasyonSilindi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
     }
   }
 
@@ -166,7 +166,7 @@ export default function IntegrationsPage() {
     } catch (err) {
       setTestResult((m) => ({
         ...m,
-        [it.id]: { ok: false, error: err instanceof Error ? err.message : "Hata" },
+        [it.id]: { ok: false, error: err instanceof Error ? err.message : t("ortakHataOlustu") },
       }));
     } finally {
       setTesting(null);

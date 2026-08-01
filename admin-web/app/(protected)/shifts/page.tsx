@@ -98,7 +98,7 @@ export default function ShiftsPage() {
       mutate();
       toast.success(editingId ? t("vardiyaGuncellendi") : t("vardiyaOlusturuldu"));
     } catch (err) {
-      setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
+      setFormErr(err instanceof Error ? err.message : t("ortakKaydedilemedi"));
     } finally {
       setSaving(false);
     }
@@ -111,7 +111,7 @@ export default function ShiftsPage() {
       mutate();
       toast.success(t("vardiyaSilindi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
     }
   }
 

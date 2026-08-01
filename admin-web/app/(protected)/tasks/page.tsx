@@ -172,7 +172,7 @@ export default function TasksPage() {
       mutate();
       toast.success(editingId ? t("gorevGuncellendi") : t("gorevOlusturuldu"));
     } catch (err) {
-      setFormErr(err instanceof Error ? err.message : "Kaydedilemedi.");
+      setFormErr(err instanceof Error ? err.message : t("ortakKaydedilemedi"));
     } finally {
       setSaving(false);
     }

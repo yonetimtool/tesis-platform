@@ -76,7 +76,7 @@ export default function TenantDetailPage() {
       mutate();
       toast.success(t("tesisAdiGuncellendi"));
     } catch (err) {
-      setNameErr(err instanceof Error ? err.message : "Kaydedilemedi.");
+      setNameErr(err instanceof Error ? err.message : t("ortakKaydedilemedi"));
     } finally {
       setNameSaving(false);
     }
@@ -102,7 +102,7 @@ export default function TenantDetailPage() {
       mutate();
       toast.success(t("tesisYoneticiGuncellendi"));
     } catch (err) {
-      const m = err instanceof Error ? err.message : "Kaydedilemedi.";
+      const m = err instanceof Error ? err.message : t("ortakKaydedilemedi");
       setFormErr(/telefon|zaten kay/i.test(m) ? t("tesisTelefonKayitli") : m);
     } finally {
       setSaving(false);
@@ -150,7 +150,7 @@ export default function TenantDetailPage() {
       await apiSend(`/api/tenants/${id}`, "DELETE");
       router.push("/tenants");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
       setBusy(false);
     }
   }

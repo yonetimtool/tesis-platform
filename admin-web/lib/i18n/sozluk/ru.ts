@@ -469,6 +469,7 @@ export const ru: Sozluk = {
   talepReddedildi: "Отклонено",
   talepReddedilen: "Отклонённые",
   ortakSilinemedi: "Не удалось удалить.",
+  ortakKaydedilemedi: "Не удалось сохранить.",
   gorevSilOnay: "Удалить {ad}?",
   ortakSilOnay: "Удалить {ad}?",
   ortakSecenekYuklenemedi: "Некоторые варианты не загрузились — список может быть неполным.",

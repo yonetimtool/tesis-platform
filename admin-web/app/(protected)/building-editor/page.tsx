@@ -99,7 +99,7 @@ export default function BuildingEditorPage() {
       refresh();
       toast.success(blockForm.editingId ? t("binaBlokGuncellendi") : t("binaBlokOlusturuldu"));
     } catch (err) {
-      const m = err instanceof Error ? err.message : "Kaydedilemedi.";
+      const m = err instanceof Error ? err.message : t("ortakKaydedilemedi");
       setBlockForm((f) => ({
         ...f,
         saving: false,
@@ -163,7 +163,7 @@ export default function BuildingEditorPage() {
       refresh();
       toast.success(unitForm.editingId ? t("daireGuncellendi") : t("daireOlusturuldu"));
     } catch (err) {
-      const m = err instanceof Error ? err.message : "Kaydedilemedi.";
+      const m = err instanceof Error ? err.message : t("ortakKaydedilemedi");
       setUnitForm((f) => ({
         ...f,
         saving: false,
@@ -179,7 +179,7 @@ export default function BuildingEditorPage() {
       refresh();
       toast.success(t("daireSilindi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
     }
   }
 

@@ -108,7 +108,7 @@ export default function UnitsPage() {
       mutate();
       toast.success(editingId ? t("daireGuncellendi") : t("daireOlusturuldu"));
     } catch (err) {
-      const m = err instanceof Error ? err.message : "Kaydedilemedi.";
+      const m = err instanceof Error ? err.message : t("ortakKaydedilemedi");
       setFormErr(/zaten kayitli|conflict|no /i.test(m) ? t("daireNoZatenKayitli") : m);
     } finally {
       setSaving(false);
@@ -123,7 +123,7 @@ export default function UnitsPage() {
       mutate();
       toast.success(t("daireSilindi"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Silinemedi.");
+      toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
     }
   }
 

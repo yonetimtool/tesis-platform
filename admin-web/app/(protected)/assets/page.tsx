@@ -116,7 +116,7 @@ export default function AssetsPage() {
       mutate();
       toast.success(editingId ? t("demirbasGuncellendi") : t("demirbasOlusturuldu"));
     } catch (err) {
-      const m = err instanceof Error ? err.message : "Kaydedilemedi.";
+      const m = err instanceof Error ? err.message : t("ortakKaydedilemedi");
       setFormErr(/nfc/i.test(m) ? t("demirbasEtiketKullanimda") : m);
     } finally {
       setSaving(false);
