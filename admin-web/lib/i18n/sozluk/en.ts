@@ -117,6 +117,7 @@ export const en: Sozluk = {
   kabukMenuyuAc: "Open menu",
   kabukMenuyuKapat: "Close menu",
   kabukCikisYap: "Sign out",
+  kabukCikisYapilamadi: "Sign-out failed — you are still signed in.",
   temaAcik: "Light",
   temaKoyu: "Dark",
   temaSistem: "System",

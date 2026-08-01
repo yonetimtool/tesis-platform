@@ -129,6 +129,7 @@ export const tr = {
   kabukMenuyuAc: "Menüyü aç",
   kabukMenuyuKapat: "Menüyü kapat",
   kabukCikisYap: "Çıkış yap",
+  kabukCikisYapilamadi: "Çıkış yapılamadı — hâlâ oturumunuz açık.",
 
   // ------------------------------ tema / dil ------------------------------
   temaAcik: "Açık",

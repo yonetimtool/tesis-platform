@@ -16,3 +16,20 @@ import { afterEach } from "vitest";
 afterEach(() => {
   cleanup();
 });
+
+// (P52) `matchMedia` jsdom'da YOKTUR ve tema anahtari onu `useEffect`
+// icinde cagirir: kabugu (AppShell) cizen her test, urun kodunda hicbir
+// sorun olmadigi halde duserdi. Varsayilan ACIK TEMA ("dark" eslesmiyor)
+// — testin gordugu tema, testin konusu degildir.
+if (typeof window !== "undefined" && !window.matchMedia) {
+  window.matchMedia = ((sorgu: string) => ({
+    matches: false,
+    media: sorgu,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  })) as typeof window.matchMedia;
+}

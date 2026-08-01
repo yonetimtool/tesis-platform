@@ -117,6 +117,7 @@ export const de: Sozluk = {
   kabukMenuyuAc: "Menü öffnen",
   kabukMenuyuKapat: "Menü schließen",
   kabukCikisYap: "Abmelden",
+  kabukCikisYapilamadi: "Abmeldung fehlgeschlagen — Sie sind weiterhin angemeldet.",
   temaAcik: "Hell",
   temaKoyu: "Dunkel",
   temaSistem: "System",

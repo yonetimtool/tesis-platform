@@ -117,6 +117,7 @@ export const ru: Sozluk = {
   kabukMenuyuAc: "Открыть меню",
   kabukMenuyuKapat: "Закрыть меню",
   kabukCikisYap: "Выйти",
+  kabukCikisYapilamadi: "Не удалось выйти — вы всё ещё в системе.",
   temaAcik: "Светлая",
   temaKoyu: "Тёмная",
   temaSistem: "Системная",

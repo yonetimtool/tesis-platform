@@ -129,9 +129,24 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useT();
+  const [cikisHatasi, setCikisHatasi] = useState(false);
 
+  // CIKIS BASARISIZSA GIRIS EKRANINA GIDILMEZ. Cerezleri temizleyen bu
+  // istek dusebilir (ag, dagitim). Yanit denetlenmeden /login'e gecmek,
+  // OTURUMU ACIK KALMIS bir kullaniciya cikmis gibi gostermek demekti —
+  // ortak bir bilgisayarda bunun bedeli oturumun devri olur. Basarisizsa
+  // ekranda kalinir ve DURUM SOYLENIR.
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+    let ok = false;
+    try {
+      ok = (await fetch("/api/auth/logout", { method: "POST" })).ok;
+    } catch {
+      ok = false;
+    }
+    if (!ok) {
+      setCikisHatasi(true);
+      return;
+    }
     router.replace("/login");
     router.refresh();
   }
@@ -186,6 +201,11 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         >
           {t("kabukCikisYap")}
         </button>
+        {cikisHatasi && (
+          <p role="alert" className="text-xs text-rose-700">
+            {t("kabukCikisYapilamadi")}
+          </p>
+        )}
       </div>
     </div>
   );

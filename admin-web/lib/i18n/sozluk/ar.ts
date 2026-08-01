@@ -117,6 +117,7 @@ export const ar: Sozluk = {
   kabukMenuyuAc: "فتح القائمة",
   kabukMenuyuKapat: "إغلاق القائمة",
   kabukCikisYap: "تسجيل الخروج",
+  kabukCikisYapilamadi: "تعذّر تسجيل الخروج — لا تزال جلستك مفتوحة.",
   temaAcik: "فاتح",
   temaKoyu: "داكن",
   temaSistem: "النظام",

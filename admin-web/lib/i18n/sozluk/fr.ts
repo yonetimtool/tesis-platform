@@ -117,6 +117,7 @@ export const fr: Sozluk = {
   kabukMenuyuAc: "Ouvrir le menu",
   kabukMenuyuKapat: "Fermer le menu",
   kabukCikisYap: "Se déconnecter",
+  kabukCikisYapilamadi: "Échec de la déconnexion — vous êtes toujours connecté.",
   temaAcik: "Clair",
   temaKoyu: "Sombre",
   temaSistem: "Système",

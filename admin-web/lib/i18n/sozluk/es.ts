@@ -117,6 +117,7 @@ export const es: Sozluk = {
   kabukMenuyuAc: "Abrir menú",
   kabukMenuyuKapat: "Cerrar menú",
   kabukCikisYap: "Cerrar sesión",
+  kabukCikisYapilamadi: "No se pudo cerrar sesión: tu sesión sigue abierta.",
   temaAcik: "Claro",
   temaKoyu: "Oscuro",
   temaSistem: "Sistema",
