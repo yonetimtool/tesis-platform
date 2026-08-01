@@ -323,8 +323,18 @@ app_user(id, tenant_id)` kısıtında adla eşleştirmek `tenant_id`'yi
 3. **Panel UI birim kapsamı %26,8.** React bileşenlerini jsdom ile test etmek
    ayrı bir altyapı kararı (bilinçli yapılmamıştı).
 4. ~~**Yetkilendirme matrisi.**~~ **KAPANDI (tur 74)** — yukarıya bakın.
-   Kalan alt katman: **handler içinde role göre içerik daraltma** (aynı uç,
-   farklı gövde). Kilit bunu görmüyor.
+   ~~Kalan alt katman: **handler içinde role göre içerik daraltma** (aynı uç,
+   farklı gövde).~~ **KAPANDI (P42, tur 88)**:
+   `backend/tests/test_icerik_daraltma.py` altı daraltmayı tek tek sürüyor
+   (finansal özet `tahsilat` bloğu, `/activity` kaynak kümesi, gizli kamera,
+   kendi-kapsamlı talepler, anket sonucu, harita sayım/renk). Aynı turda
+   **latent bir 500 tuzağı** bulundu: `/activity` kaynak kümesini
+   `_ROL_KAYNAKLARI[user.role]` ile seçiyor ve uca yeni bir rol eklenip
+   sözlüğe satır eklenmezse `KeyError → 500` dönerdi — yetki kilidi 500'ü
+   "IZIN" saydığı için hiçbir ölçüm bunu yakalamazdı. Artık `require_role`un
+   `izinli_roller` özniteliğiyle (P41) doğrulanıyor.
+   **Ölçümün sınırı:** kapsam otomatik değil; "hangi uç daraltmalı" bir ürün
+   kararı olduğu için dosya bir envanterdir.
 5. ~~**Sıcak sorgularda indeks KULLANIMI.**~~ **KAPANDI (tur 77)** — yukarıya
    bakın. Kalan: `meta.total` tam sayımı (ürün kararı) ve hacmin yazılmadığı
    40 tablo — o uçlar için "bulgu yok" kanıt değil.
