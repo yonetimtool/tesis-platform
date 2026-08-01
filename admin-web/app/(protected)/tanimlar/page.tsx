@@ -351,7 +351,9 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
       {/* (P60) `String(error)` "Error: " onekini de yazardi. */}
       {error instanceof Error ? <ErrorBox message={error.message} /> : null}
       {isLoading ? <p>{t("ortakYukleniyor")}</p> : null}
-      {!isLoading && kayitlar.length === 0 ? (
+      {/* (P61) `!error` SART: yukleme dustugunde de liste bostur ve sayfa
+          "Kayit yok" derdi — ustundeki hata kutusuyla celiserek. */}
+      {!isLoading && !error && kayitlar.length === 0 ? (
         <EmptyState title={t("tanimKayitYok")} />
       ) : null}
       {kayitlar.length > 0 ? (

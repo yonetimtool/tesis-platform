@@ -341,6 +341,7 @@ export default function BuildingEditorPage() {
           label={isBlockless ? BLOCKLESS : (openBlock as string)}
           units={isBlockless ? blocklessUnits : unitItems.filter((u) => u.blok === openBlock)}
           pendingFloors={pendingFloors}
+          yuklemeHatasi={Boolean(loadError)}
           onAddFloor={addFloor}
           onAddUnit={(kat) => openNewUnit(isBlockless ? null : (openBlock as string), kat)}
           onEditUnit={openEditUnit}
@@ -436,10 +437,14 @@ function BlockTiles({
 }
 
 function BlockDetail({
-  label, units, pendingFloors, onAddFloor, onAddUnit, onEditUnit, onRemoveUnit,
+  label, units, pendingFloors, yuklemeHatasi,
+  onAddFloor, onAddUnit, onEditUnit, onRemoveUnit,
 }: {
   label: string;
   units: Unit[];
+  /** (P61) Liste `data?.items ?? []`den turer: yukleme dustugunde de BOS
+   *  gorunur. Bu bayrak olmadan "Kat yok" iddiasi hatayla CELISIRDI. */
+  yuklemeHatasi: boolean;
   pendingFloors: number[];
   onAddFloor: () => void;
   onAddUnit: (kat?: number) => void;
@@ -472,7 +477,11 @@ function BlockDetail({
         </p>
       )}
 
-      {!blockless && floors.length === 0 && katsiz.length === 0 && (
+      {/* (P61) `!loadError` SART: kat listesi `data?.items ?? []`den
+          turer, yani istek dustugunde de BOS gorunur ve sayfa "Kat yok"
+          derdi — hemen ustundeki "Veriler yuklenemedi" kutusuyla
+          celiserek. */}
+      {!yuklemeHatasi && !blockless && floors.length === 0 && katsiz.length === 0 && (
         <p className="py-6 text-center text-sm text-muted">
           {t("binaKatYok")}
         </p>

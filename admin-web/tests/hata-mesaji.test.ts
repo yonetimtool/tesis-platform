@@ -47,3 +47,33 @@ describe("hata metni hijyeni", () => {
     expect(sizanlar).toEqual([]);
   });
 });
+
+describe("bos-durum iddiasi", () => {
+  // (P61) "YUKLENIYOR DEGIL" ile "HATA YOK" AYNI SEY DEGILDIR.
+  //
+  // Iki sayfa bos-durum metnini yalniz `!isLoading` ile kosullamisti.
+  // Istek dustugunde `isLoading` false olur ve liste bostur; sonuc:
+  // hata kutusu ile "kayit yok" YAN YANA cikardi. Haritada durum daha
+  // da acikti — baslikta "3 acik sikayet" yazarken altta "Acik sikayet
+  // yok".
+  //
+  // KILIDIN SINIRI ACIK: yalniz `isLoading` ile kosullanmis bos-durum
+  // ifadelerini yakalar. `building-editor`daki ikinci ornek TUREV bir
+  // listeden geliyordu (`data?.items ?? []`) ve hicbir statik kural onu
+  // yakalamazdi — o OKUYARAK bulundu. Yakalayamadigi seyi yakalıyormus
+  // gibi anlatan bir kilit, yanlis guven verir.
+  it("bos-durum kosulu YALNIZ isLoading'e dayanmaz", () => {
+    const sizanlar: string[] = [];
+    for (const yol of [...dosyalar("app"), ...dosyalar("components")]) {
+      readFileSync(yol, "utf8")
+        .split("\n")
+        .forEach((satir, i) => {
+          if (!/\.length === 0/.test(satir)) return;
+          if (!/isLoading/.test(satir)) return;
+          if (/error/i.test(satir)) return;
+          sizanlar.push(`${yol}:${i + 1} ${satir.trim()}`);
+        });
+    }
+    expect(sizanlar).toEqual([]);
+  });
+});

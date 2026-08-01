@@ -120,7 +120,12 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
       )}
       {error && <ErrorBox message={t("haritaYuklenemedi")} />}
       {isLoading && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
-      {!isLoading && items.length === 0 && (
+      {/* (P61) `!error` SART. Eski kosul yalniz `!isLoading`e bakiyordu:
+          istek dustugunde "Harita yuklenemedi" ile "Acik sikayet yok" YAN
+          YANA cikiyordu — ustelik basliktaki sayac haritadan gelip "3 acik
+          sikayet" yazarken. "Yuklenemedi" bir durumdur, "yok" bir
+          IDDIADIR. */}
+      {!isLoading && !error && items.length === 0 && (
         <p className="text-sm text-muted">{t("haritaAcikSikayetYok")}</p>
       )}
       <ul className="space-y-1 text-sm">
