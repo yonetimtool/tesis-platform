@@ -18,6 +18,10 @@ import { describe, expect, it } from "vitest";
 // Sunucu semasinda numaralandirma olan alan adlari.
 const ENUM_ALANLARI = [
   "durum", "tip", "kategori", "yontem", "kanal", "rol", "oncelik", "gun_tipi",
+  // (P66) `actor_rol` denetim kaydindaki roldur. Liste "rol" ile bitiyordu
+  // ve `\b` siniri yuzunden `actor_rol` ESLESMIYORDU — sizinti tam orada
+  // duruyordu. Alan adi ONEK ALABILIR; kilit bunu bilmeliydi.
+  "actor_rol",
 ];
 
 function dosyalar(kok: string): string[] {

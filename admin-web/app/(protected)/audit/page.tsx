@@ -5,6 +5,7 @@ import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorBox, Field, PageHeader, Pager, inputCls } from "@/components/form";
+import { rolAdi } from "@/lib/roles";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AuditLog, AuditLogList } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
@@ -137,7 +138,14 @@ export default function AuditPage() {
                       {r.action}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-600">{r.actor_rol ?? "—"}</td>
+                  {/* (P66) HAM TEL DEGERI DEGIL: denetim kaydinda rol
+                      `admin`/`yonetici` diye ciziliyordu, oysa panelin geri
+                      kalani `rolAdi` ile cevirir. Denetim kaydi "kim ne
+                      yapti"nin kanitidir; orada kullanicinin taniyamadigi
+                      bir jeton gostermek, kaydi okunamaz kilar. */}
+                  <td className="px-4 py-2.5 text-slate-600">
+                    {r.actor_rol ? rolAdi(t, r.actor_rol) : "—"}
+                  </td>
                   <td className="px-4 py-2.5 text-slate-600">
                     {r.resource_type ? (
                       <span className="font-mono text-xs">
