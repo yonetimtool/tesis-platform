@@ -32,14 +32,26 @@ const LINKS: { href: string; anahtar: SozlukAnahtari; icon: IconName }[] = [
   { href: "/schematic", anahtar: "kabukSikayetHaritasi", icon: "pin" },
   { href: "/tanimlar", anahtar: "kabukTanimlar", icon: "box" },
   { href: "/dues", anahtar: "kabukAidat", icon: "money" },
+  // (P40) Finans: aidat TAHAKKUKUNUN yanindadir — kullanici borcu burada
+  // olusturur, tahsilati ve kasayi yaninda gorur.
+  { href: "/finans", anahtar: "kabukFinans", icon: "money" },
   { href: "/reports/dues", anahtar: "kabukRaporlar", icon: "chart" },
+  // (P40) 12 raporluk katalog — mevcut `/reports/dues` tek raporluk eski
+  // sayfadir; ikisi YAN YANA durur ki eski baglantilar kirilmasin.
+  { href: "/raporlar", anahtar: "kabukRaporMotoru", icon: "chart" },
   { href: "/transparency", anahtar: "kabukSeffaflik", icon: "money" },
   { href: "/users", anahtar: "kabukKullanicilar", icon: "users" },
   { href: "/announcements", anahtar: "kabukDuyurular", icon: "megaphone" },
+  // (P40) Mesajlar duyurunun YANINDA: ikisi de "siteye seslenme"dir.
+  { href: "/mesajlar", anahtar: "kabukMesajlar", icon: "megaphone" },
+  { href: "/portal", anahtar: "kabukPortal", icon: "building" },
   { href: "/complaints", anahtar: "kabukTalepler", icon: "chat" },
   { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell" },
   { href: "/integrations", anahtar: "kabukEntegrasyonlar", icon: "hub" },
   { href: "/support", anahtar: "kabukDestek", icon: "chat" },
+  // (P40) Yonetisim, denetim kaydinin YANINDA: ikisi de "ne karar
+  // alindi, kim ne yapti" sorusunu yanitlar.
+  { href: "/yonetisim", anahtar: "kabukYonetisim", icon: "building" },
   { href: "/audit", anahtar: "kabukDenetimKaydi", icon: "scan" },
   { href: "/settings", anahtar: "kabukAyarlar", icon: "gear" },
 ];

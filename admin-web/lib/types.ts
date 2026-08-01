@@ -491,6 +491,16 @@ export interface TenantSettings {
   kurulum_tamamlandi: boolean;
   // Tesis yonetim maili (tenant seviyesi) — yonetici iletisim kartinda gorunur.
   yonetim_email?: string | null;
+  // --- (P40) operasyon ayarlari: P34 tur alarmi, P35 guvenlik modu,
+  // P37 gurultu caydiricisi. Hepsi OPSIYONEL isaretli cunku eski bir
+  // backend surumu bunlari donmez ve panel yine acilmalidir.
+  tur_gecikme_toleransi_dk?: number;
+  tur_alarm_tekrar_sayisi?: number;
+  tur_baslangic_foto_zorunlu?: boolean;
+  guvenlik_modu?: "yonetim_ici" | "dis_sirket";
+  gurultu_esigi?: number;
+  gurultu_uyari_metni?: string | null;
+  gurultu_integration_id?: string | null;
 }
 
 // ------------------------ tenant olusturma (admin) ------------------------- #

@@ -40,6 +40,12 @@ export const config = {
     // (oturumsuz kullanici panel kabugunu goruyordu; veri sizmiyordu cunku
     // /api/* 401 doner). tests/middleware.test.ts artik app/(protected)
     // agacini gezip her sayfanin burada bir girisi oldugunu dogruluyor.
+    // --- P40 panel bolumu ---
+    "/finans/:path*",
+    "/raporlar/:path*",
+    "/mesajlar/:path*",
+    "/yonetisim/:path*",
+    "/portal/:path*",
     "/audit/:path*",
     "/complaints/:path*",
     "/integrations/:path*",

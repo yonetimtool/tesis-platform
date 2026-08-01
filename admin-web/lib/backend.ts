@@ -173,3 +173,69 @@ export async function proxyJson(
 
   return passthrough(res);
 }
+
+
+/**
+ * (P40) IKILI (binary) vekil — Excel/PDF indirmeleri icin.
+ *
+ * NEDEN AYRI: `proxyJson` yaniti `res.json()` ile okur ve XLSX/PDF
+ * baytlarini JSON diye ayristirmaya calisip BOZARDI. Burada govde
+ * `arrayBuffer` olarak gecer ve `Content-Type` / `Content-Disposition`
+ * OLDUGU GIBI aktarilir — dosya adini panelde yeniden uydurmak, sunucunun
+ * urettigi addan sapmak olurdu.
+ *
+ * 401 yolu `proxyJson` ile AYNIDIR (tek-ucus refresh); iki ayri yenileme
+ * mantigi, birinde duzeltilen bir hatanin digerinde kalmasi demekti — bu
+ * yuzden ayni `refreshSingleFlight` kullanilir.
+ */
+export async function proxyBinary(
+  path: string,
+  method: string,
+  body?: unknown,
+): Promise<NextResponse> {
+  const jar = cookies();
+  const access = jar.get(ACCESS_COOKIE)?.value;
+  const refresh = jar.get(REFRESH_COOKIE)?.value;
+
+  let res = await callBackend(path, method, access, body);
+  let yeniPair: TokenPair | null = null;
+
+  if (res.status === 401 && refresh) {
+    yeniPair = await refreshSingleFlight(refresh);
+    if (!yeniPair) {
+      const out = NextResponse.json(
+        {
+          error: {
+            code: "unauthorized",
+            message: SOZLUKLER[await panelDili()].ortakOturumSuresiDoldu,
+          },
+        },
+        { status: 401 },
+      );
+      clearAuthCookies(out);
+      return out;
+    }
+    res = await callBackend(path, method, yeniPair.access, body);
+  }
+
+  // HATA GOVDESI JSON'DUR: ikili yol yalniz BASARIDA bayt tasir; hatayi
+  // bayt olarak gecirmek, panelde "bozuk dosya" gostermek olurdu.
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    const out = NextResponse.json(data, { status: res.status });
+    if (yeniPair) setAuthCookies(out, yeniPair.access, yeniPair.refresh);
+    return out;
+  }
+
+  const buf = await res.arrayBuffer();
+  const out = new NextResponse(buf, {
+    status: res.status,
+    headers: {
+      "Content-Type": res.headers.get("content-type") ?? "application/octet-stream",
+      "Content-Disposition":
+        res.headers.get("content-disposition") ?? "attachment",
+    },
+  });
+  if (yeniPair) setAuthCookies(out, yeniPair.access, yeniPair.refresh);
+  return out;
+}

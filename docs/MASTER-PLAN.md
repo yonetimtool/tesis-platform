@@ -2514,7 +2514,7 @@ formül), `infra/load/*.js`, `infra/docker-compose.load.yml`; tam pytest
 yeşil (4 işçi altında da) — sıfır doğruluk regresyonu.
 
 ### P40 — Panel bölümü: finans + rapor + mesaj + yönetişim + portal
-Status: BEKLIYOR · Depends-on: P28–P33, P36–P38 (hepsi BITTI — API yüzeyleri hazır)
+Status: BITTI · Depends-on: P28–P33, P36–P38 (hepsi BITTI — API yüzeyleri hazır)
 Scope: P28'den P38'e kadar biriken ve **bilinçli olarak ertelenen** panel/mobil
 ekranları TEK BÖLÜM olarak tasarlanıp yapılır. Neden tek bölüm: borç, tahsilat,
 rapor, mesaj, karar defteri, doküman ve portal aynı akışın parçaları — ayrı ayrı
@@ -2532,6 +2532,81 @@ iletişim mesajları (P38).
 Acceptance: her bölüm gerçek veriyle çiziliyor; `tsc` + `vitest` + `npm run
 build`; sabit-metin ve i18n kilitleri yeşil; middleware kapsam kilidi yeni
 sayfaları kapsıyor; P11'e cihaz/panel doğrulama maddeleri eklenir.
+Notes (2026-08-01):
+**BEŞ SAYFA, TEK VEKİL.** P40 yirmiden fazla backend ucunu panele açtı. Her
+uç için ayrı `route.ts` yazmak aynı on satırı yirmi kez kopyalamak olurdu
+(P27'nin `[kaynak]` deseni aynı gerekçeyle seçilmişti). Güvenlik **beyaz
+liste** ile: istemciden gelen ad hiçbir zaman doğrudan URL'e girmez.
+- **Okuma ve yazma AYRI sözlüklerdir.** Tek sözlüğe indirmek, okumaya açmak
+  isterken yazmaya da açmak olurdu; `rapor-katalog`, `site-aktar-sablon`,
+  `kasa-bakiyeleri` ve `portal-iletisim` **yazmaya kapalıdır**.
+- "Önek eşleşmesi" (`/finans/...`) yeterli **görünür** ama `finans/../users`
+  gibi girdilerle aşılmaya çalışılır; tam eşleşen sözlük o sınıfı tümden
+  ortadan kaldırır. `[id]` yolunda kimlik **UUID doğrulanır**.
+- **Yeni kilit** `tests/panel-vekil.test.ts`: sözlüğün kendisi denetlenir
+  (mutlak yol, gezinme parçası yok, `/users`–`/tenants`–`/auth` yazmaya
+  kapalı, süzgeç adları bilinen kaynaklara ait).
+
+**İKİLİ VEKİL AYRI** (`proxyBinary`): `proxyJson` yanıtı `res.json()` ile
+okur ve XLSX/PDF baytlarını JSON diye ayrıştırıp **bozardı**. 401 yolu
+`proxyJson` ile aynı `refreshSingleFlight`ı kullanır — iki ayrı yenileme
+mantığı, birinde düzeltilen bir hatanın diğerinde kalması demekti. Dosya adı
+**sunucudan** gelir (`Content-Disposition`); panelde yeniden uydurmak,
+indirilen dosyanın adıyla raporun adının ayrışması olurdu.
+
+**SAYFALAR.**
+- **Finans** (`/finans`): aylık özet + kasa bakiyeleri + hareket listesi +
+  hareket girişi. Sayfa **bakiyeyi kendisi hesaplamaz** — P29'un kararı
+  gereği bakiye defterden türetilir ve istemcide toplam almak iki yerde iki
+  farklı rakam demekti. Yön rengi `yon` alanından gelir; tutar her zaman
+  pozitiftir.
+- **Raporlar** (`/raporlar`): katalog **sunucudan** gelir; sayfa hiçbir rapor
+  adını kendisi taşımaz — taşısaydı sunucuya eklenen bir rapor panelde
+  unutulurdu. Tablo/Excel/PDF aynı parametrelerden.
+- **Mesajlar** (`/mesajlar`): şablon CRUD + önizleme + geçmiş. **SMS sayacı
+  ekranda**: Türkçe harf tuzağı mesajı UCS-2'ye düşürür ve sınır 70'e iner;
+  sayacı gizlemek, kullanıcının faturayı gönderdikten **sonra** görmesi
+  demekti. Zorlayan karakterler de gösterilir.
+- **Yönetişim** (`/yonetisim`): karar defteri (+PDF), doküman arşivi, **KVKK
+  metni yayınlama**, gürültü uyarı geçmişi (+manuel "anons yapıldı"), Excel
+  ile site aktarımı. Aktarımda **kuru çalışma varsayılan açıktır**; panel bu
+  adımı atlatmaz. Ayırıcı olarak `;` **ve** TAB kabul edilir — Excel'den
+  kopyalama TAB üretir, elle yazan `;` kullanır; birini desteklemek diğerini
+  sessizce boş satıra çevirirdi. Satır numarası **2'den başlar** ki hata
+  raporundaki numara kullanıcının Excel'indeki satırla örtüşsün.
+- **Portal** (`/portal`): yayın anahtarı **en üstte** (altta kalması,
+  "doldurdum ama yayınlamadım" ile "yayınladım" farkını görünmez kılardı) +
+  içerik + anket yönetimi + gelen iletişim mesajları.
+- **Ayarlar** (`/settings`): P34 tur alarmı, P35 güvenlik modu, P37 gürültü
+  eşiği/metni — **veri sürücülü**, on `<input>` yerine bir alan tanımı
+  listesi. **Değişmeyen alan gönderilmez**: `guvenlik_modu`nu her kayıtta
+  göndermek, değişmese bile yöneticiye 403 verirdi (o alanı yalnız admin
+  gönderebilir).
+
+**KİLİTLERİN YAKALADIKLARI (üçü de gerçek).**
+1. `middleware` kapsam kilidi beş yeni sayfanın **her birini** matcher'a
+   eklemeye zorladı — biri unutulsaydı oturumsuz ziyaretçi panel kabuğunu
+   görürdü.
+2. Sabit-metin taraması iki **üçlü içi dizge** yakaladı (`"xlsx"/"pdf"` ve
+   `"number"/"text"`). İkisi de kullanıcı metni değil teknik jeton;
+   taramayı gevşetmek yerine ikisi de **haritaya** taşındı.
+3. i18n taraması dosya başlığındaki bir yorumda Türkçe harf gördü; yorum
+   ASCII'ye çevrildi (depo yorumları zaten ASCII).
+
+Ayrıca **yedi dilde sözlük tekrarı** oluştu (aynı anahtarın iki kez
+eklenmesi) ve `tsc` bunu TS1117 ile durdurdu — tekrarlar temizlendi.
+
+**KAPSAMDA OLUP YAPILMAYAN — yetki matrisi görünümü.** RBAC'in tek doğruluk
+kaynağı `backend/tests/yetki/rol-matrisi.txt` kilidi ve onu üreten
+`test_yetki_kapsam.py`dir (6 rol × 314 operasyon). Paneldeki bir görünüm
+için yeni bir uç açmak, **aynı gerçeği ikinci bir yerden üretmek** ve ikisinin
+ayrışması riskini almak olurdu. Karar: kilit dosyası **kaynak olarak kalsın**;
+panele taşınacaksa o dosyayı servis eden bir uç yazılmalı — bu ayrı bir
+maddedir. İşlem Geçmişi ise zaten `/audit` sayfasında.
+
+Kanıt: `admin-web` `tsc` temiz, `vitest` **114 test** yeşil (yeni:
+`panel-vekil.test.ts` 5 test), `npm run build` — `/finans`, `/raporlar`,
+`/mesajlar`, `/yonetisim`, `/portal` ve güncellenen `/settings` derlendi.
 
 ## CHANGELOG
 <!-- date · item ID · commit hash · one line. STATUS REPORTs and the FINAL REPORT land here, newest first. -->
@@ -2862,7 +2937,7 @@ P2 (prod runbook — Kerem sunucuda), P11 (cihaz testleri — listeye bu oturumd
 `docs/frigate-poc.md` §6'da hazır. Sonrasında P17/P19, ardından P22+ paketi.
 
 
-- 2026-07-31 · P39 · 26dc585 · Olcek ve yuk hazirligi: k6 KONTEYNERDEN ve api ile ayni agda; profil 'en cok cagrilan uc' degil KULLANICININ GUNU (giris setup'ta — her yinelemede giris bcrypt maliyetiyle olcumu bozardi); olculen taban /me 283 RPS, /activity 168 RPS, ana ekran p95 2.08s -> 1.26s; DUZELTILEN RISK: havuz/isci sayisi GORUNMEZ varsayilanlardaydi ve coklu isciye gecen ilk kisi max_connections'i sessizce asardi (formul + env + pool_timeout); ONBELLEK EKLENMEDI cunku olcum gerektirmedi (bayat veri sinifi hata getirirdi); yatay olcekte TEK GERCEK ENGEL beat'in tek ornek olmasi; docs/scaling-runbook.md.\n- 2026-07-31 · P38 · 16ce180 · Site web portali + anket (0027): AYRI UYGULAMA DEGIL admin-web icinde public rota (sozluk/tasarim/derleme hatti zaten orada) + yeni kilit public rotanin matcher'a SIZMADIGINI olcuyor; yayin VARSAYILAN KAPALI ve kapaliyken 404 (403 tesis envanteri sizdirirdi); public icerik BILINCLI (duyurunun yalniz OZETI, hakkimizda DUZ METIN, harita ANAHTARSIZ); anket TEK OY ve DEGISTIRILEMEZ, sonuc KAPANANA KADAR GIZLI (surusel etki) ama yonetim her zaman gorur; iletisim KAYIT ONCE BILDIRIM SONRA; kimlikli sakin web alani gerekcesiyle panel borcunda.\n- 2026-07-31 · P37 · 1002576 · Gurultu caydirici otomasyonu (0026): AYRI webhook konfigurasyonu ACILMADI (C1b integration zaten SSRF+KEK+izolasyon veriyor), MANUEL MOD birinci sinif (cogu sitede entegrasyon yok) ve sunucu 'yapildi' VARSAYAMAZ; sinir DAHIL (4 hayir, 5 evet), YALNIZ gurultu kategorisi, SIFIRLAMA KAYIT SILMEZ (kapali'ya ceker — uyarinin dayanagi durur); HMAC imzasi ZAMAN DAMGASINI kapsar (replay), sir yoksa imza da yok; yeniden deneme istek yolunda DEGIL, katlanan aralikla ve tukenince MANUEL MODA duser; BULGU: FK indekssizdi (RI tetigi tenant'i seq scan ederdi).\n- 2026-07-31 · P36 · 1415874 · KVKK aydinlatma kapisi + pazarlama izinleri (0025): METIN TENANT ICERIGIDIR (gomulu tek metin 200 tesise BASKASININ metnini imzalatirdi), SURUM VAR YERINDE DUZENLEME YOK (dun verilen onay bugun baska metne ait gorunurdu), onay eski surume yazilmaz (409) ve IDEMPOTENT; kaydirma kilidi 24 px esikli ve SIGAN icerikte ZATEN ACIK; sunucu navigasyonu kilitlemez (onay vermemis kullanici metni OKUYABILMELI), ag hatasinda kapi ACILMAZ; P32 pazarlama gonderimi artik GERCEK ve KANAL BAZLI rizayi okuyor; BULGU: izinler kartinin donen gostergesi dokuz ayar testini pumpAndSettle zaman asimiyla dusurdu.\n- 2026-07-31 · P35 · 458dc75 · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
+- 2026-08-01 · P40 · (bu commit) · Panel bolumu: finans + rapor + mesaj + yonetisim + portal + genisletilmis ayarlar. TEK VEKIL + BEYAZ LISTE (okuma ve yazma AYRI sozluk — tek sozluk okumaya acarken yazmaya da acardi); IKILI vekil ayri (proxyJson XLSX/PDF baytlarini JSON diye ayristirip bozardi) ve dosya adi SUNUCUDAN; rapor katalogu SUNUCUDAN (panel rapor adi TASIMAZ); site aktariminda KURU CALISMA varsayilan acik ve satir no 2'den baslar; ayarlarda DEGISMEYEN ALAN GONDERILMEZ (guvenlik_modu yoneticiye 403 verirdi); uc kilit uc gercek kusur yakaladi (matcher kapsami, ucludaki teknik jetonlar, yorumda Turkce harf) + yedi dilde sozluk tekrari tsc ile durduruldu.\n- 2026-07-31 · P39 · 26dc585 · Olcek ve yuk hazirligi: k6 KONTEYNERDEN ve api ile ayni agda; profil 'en cok cagrilan uc' degil KULLANICININ GUNU (giris setup'ta — her yinelemede giris bcrypt maliyetiyle olcumu bozardi); olculen taban /me 283 RPS, /activity 168 RPS, ana ekran p95 2.08s -> 1.26s; DUZELTILEN RISK: havuz/isci sayisi GORUNMEZ varsayilanlardaydi ve coklu isciye gecen ilk kisi max_connections'i sessizce asardi (formul + env + pool_timeout); ONBELLEK EKLENMEDI cunku olcum gerektirmedi (bayat veri sinifi hata getirirdi); yatay olcekte TEK GERCEK ENGEL beat'in tek ornek olmasi; docs/scaling-runbook.md.\n- 2026-07-31 · P38 · 16ce180 · Site web portali + anket (0027): AYRI UYGULAMA DEGIL admin-web icinde public rota (sozluk/tasarim/derleme hatti zaten orada) + yeni kilit public rotanin matcher'a SIZMADIGINI olcuyor; yayin VARSAYILAN KAPALI ve kapaliyken 404 (403 tesis envanteri sizdirirdi); public icerik BILINCLI (duyurunun yalniz OZETI, hakkimizda DUZ METIN, harita ANAHTARSIZ); anket TEK OY ve DEGISTIRILEMEZ, sonuc KAPANANA KADAR GIZLI (surusel etki) ama yonetim her zaman gorur; iletisim KAYIT ONCE BILDIRIM SONRA; kimlikli sakin web alani gerekcesiyle panel borcunda.\n- 2026-07-31 · P37 · 1002576 · Gurultu caydirici otomasyonu (0026): AYRI webhook konfigurasyonu ACILMADI (C1b integration zaten SSRF+KEK+izolasyon veriyor), MANUEL MOD birinci sinif (cogu sitede entegrasyon yok) ve sunucu 'yapildi' VARSAYAMAZ; sinir DAHIL (4 hayir, 5 evet), YALNIZ gurultu kategorisi, SIFIRLAMA KAYIT SILMEZ (kapali'ya ceker — uyarinin dayanagi durur); HMAC imzasi ZAMAN DAMGASINI kapsar (replay), sir yoksa imza da yok; yeniden deneme istek yolunda DEGIL, katlanan aralikla ve tukenince MANUEL MODA duser; BULGU: FK indekssizdi (RI tetigi tenant'i seq scan ederdi).\n- 2026-07-31 · P36 · 1415874 · KVKK aydinlatma kapisi + pazarlama izinleri (0025): METIN TENANT ICERIGIDIR (gomulu tek metin 200 tesise BASKASININ metnini imzalatirdi), SURUM VAR YERINDE DUZENLEME YOK (dun verilen onay bugun baska metne ait gorunurdu), onay eski surume yazilmaz (409) ve IDEMPOTENT; kaydirma kilidi 24 px esikli ve SIGAN icerikte ZATEN ACIK; sunucu navigasyonu kilitlemez (onay vermemis kullanici metni OKUYABILMELI), ag hatasinda kapi ACILMAZ; P32 pazarlama gonderimi artik GERCEK ve KANAL BAZLI rizayi okuyor; BULGU: izinler kartinin donen gostergesi dokuz ayar testini pumpAndSettle zaman asimiyla dusurdu.\n- 2026-07-31 · P35 · 458dc75 · Guvenlik amiri + ikili guvenlik mimarisi (0024): SAHIPLIK SEMADA DEGIL KODDA — tenant modu (yonetim_ici|dis_sirket) vardiya/tur/nokta YAZMA sahibini belirler, OKUMA her iki modda acik kalir (devir DENETIMI devretmez), admin her iki modda yazar, modu YALNIZ admin degistirir ve degisim denetlenir; amire EN AZ YETKI (sakin/finans/kargo/ziyaretci KAPALI, KVKK); BULGU: /users okumasini acmak PATCH ve parola sifirlamayi da acti — amir kendi rolunu yukseltebiliyordu, rol matrisi kilidinin ALTINCI SUTUNU yakaladi.
 - 2026-07-31 · P34 · 4395fdc · Tur butunlugu (0023): KONUM BIR KANITTIR ON KOSUL DEGIL — izin reddi/servis kapali okutmayi dusurmez ama SESSIZ DE KALMAZ (konum_durumu + konumsuz_sayisi + suzgec); gecikme alarmi 'kacirildi'dan AYRI, araliklari KATLANAN tekrarli bildirim (gorevliye kisi, yonetime rol) ve bildirim TEKLIGI kismi indekse cevrildi (ikinci alarm sessizce dusuyordu); baslangic fotografi '1 metre gidip gel' YERINE (SDM zaten fiziksel varligi kanitliyor; fotograf ORTAM+SAAT boyutu ekler), kamera-only + ayri hata kodu.
 - 2026-07-31 · P33 · 236f70b · Yonetisim modulleri (0022): IS TAKIBI denetimi omurganin ZATEN VAR OLDUGUNU gosterdi — birlestirme degil GENISLETME (complaint + unit_id/oncelik/atanan_personel; oncelik durumdan BAGIMSIZ ayri ucta, atanan personel_kayit'tir app_user degil); karar defteri uyeleri AYRI TABLODA + metin sablonlu PDF; dokuman arsivi USTVERI-ONLY (obje silinmez); site aktarimi KURU CALISMALI ve SATIR BAZLI hata raporlu, idempotent.
 - 2026-07-31 · P32 · 47ac96c · Mesaj sablonlari + gonderim (0021): gonderilen metin GECMISE KOPYALANIR (sablon degisse de kanit durur), amac SABLONDA (pazarlama riza olmadan HIC gonderilmez ve atlananlar SAYILIR), SMS sayaci Turkce tuzagini gosterir (kucuk c/i/g/s UCS-2'ye dusurur), saglayici takasi yapilandirma ile; P28 seed regresyonu bulundu ve duzeltildi.
