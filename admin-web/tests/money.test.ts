@@ -4,7 +4,7 @@
 // hatasi para hatasidir.
 import { describe, expect, it } from "vitest";
 
-import { kurusToTL, tlToKurus } from "@/lib/money";
+import { kurusToTL, kurusToTLSade, tlToKurus } from "@/lib/money";
 
 describe("tlToKurus", () => {
   it("tam lira: kurus kismi 00 ile doldurulur", () => {
@@ -127,5 +127,35 @@ describe("gidis-donus (round-trip)", () => {
     expect(kurusToTL(100000)).toBe("1.000,00 ₺");
     expect(kurusToTL(99999900)).toBe("999.999,00 ₺");
     expect(kurusToTL(100000000)).toBe("1.000.000,00 ₺");
+  });
+});
+
+// (P79) IKI ISTEMCI AYNI GRUPLAMAYI URETIR — capraz bag.
+//
+// Panel ve mobil AYRI yollarla bicimlendirir ve bu BILINCLIDIR:
+//   * panel: gruplamayi KENDI yapar (`binlikAyir`). `toLocaleString` bir
+//     CALISMA ZAMANI bagimliligidir — kucuk-ICU'lu bir Node/tarayicida
+//     `tr-TR` desteklenmez ve `en-US`a duser (P48'de olculdu: `5,000,00 ₺`).
+//   * mobil: `intl` paketinin `NumberFormat('#,##0.00', 'tr_TR')`i.
+//     Orada risk YOKTUR cunku yerel veri PAKETIN ICINDE gelir, calisma
+//     zamanindan okunmaz.
+//
+// Yollar farkli olduguna gore CIKTININ ayni oldugunu bir sey tutmali.
+// `mobile/test/i18n_test.dart` asagidaki AYNI degerleri surer; biri
+// degistirilirse digeri de degistirilmelidir.
+describe("panel ve mobil AYNI gruplamayi uretir (P79)", () => {
+  it("mobil `tlTutar` ile ayni govde", () => {
+    // mobile/test/i18n_test.dart: tlTutar(125000) == '1.250,00'
+    expect(kurusToTLSade(125000)).toBe("1.250,00");
+    // mobile/test/i18n_test.dart: tlTutar(99) == '0,99'
+    expect(kurusToTLSade(99)).toBe("0,99");
+  });
+
+  it("simge YERI iki istemcide FARKLIDIR ve bu bilinclidir", () => {
+    // Panel: son ek (`1.250,00 ₺`). Mobil: on ek (`₺1.250,00`) ya da
+    // `1.250,00 TL`. Govde ayni, yerlesim urun karari — bkz. mobil
+    // README §15. Bunu "tutarsizlik" diye duzeltmek, iki uygulamanin
+    // yerlesik gorunumunu tek bir turda degistirmek olurdu.
+    expect(kurusToTL(125000)).toBe("1.250,00 ₺");
   });
 });
