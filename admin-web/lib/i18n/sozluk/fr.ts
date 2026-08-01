@@ -475,6 +475,7 @@ export const fr: Sozluk = {
   finansTipSuzgeci: "Filtre de type",
   raporEskiOdemeKesildi: "L'analyse des anciens paiements (sans période) a atteint la limite — le total encaissé peut être incomplet.",
   raporKesildi: "Le nombre d'enregistrements a atteint la limite — le rapport peut être incomplet. Réduisez la plage de dates.",
+  tesisYoneticiSira: "Gestionnaire {n}",
   daireMetrekareGecersiz: "Surface invalide. Exemple : 120,5",
   binaBlokBasitSilOnay: "Supprimer le bloc {blok} ?",
   odemeElden: "Espèces",

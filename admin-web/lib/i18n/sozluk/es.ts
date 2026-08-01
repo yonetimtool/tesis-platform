@@ -475,6 +475,7 @@ export const es: Sozluk = {
   finansTipSuzgeci: "Filtro por tipo",
   raporEskiOdemeKesildi: "El barrido de pagos antiguos (sin periodo) alcanzó el límite: el total cobrado puede estar incompleto.",
   raporKesildi: "El número de registros alcanzó el límite: el informe puede estar incompleto. Reduce el intervalo de fechas.",
+  tesisYoneticiSira: "Administrador {n}",
   daireMetrekareGecersiz: "Superficie no válida. Ejemplo: 120,5",
   binaBlokBasitSilOnay: "¿Eliminar el bloque {blok}?",
   odemeElden: "Efectivo",

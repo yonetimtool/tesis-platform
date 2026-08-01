@@ -475,6 +475,7 @@ export const en: Sozluk = {
   finansTipSuzgeci: "Type filter",
   raporEskiOdemeKesildi: "The legacy (period-less) payment scan hit its limit — this period's collection total may be incomplete.",
   raporKesildi: "The record count hit the limit — the report may be incomplete. Narrow the date range.",
+  tesisYoneticiSira: "Manager {n}",
   daireMetrekareGecersiz: "Invalid area. Example: 120.5",
   binaBlokBasitSilOnay: "Delete block {blok}?",
   odemeElden: "Cash",

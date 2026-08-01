@@ -28,19 +28,33 @@ interface TenantListResponse {
 // Formdaki tek yonetici satiri. Parola bos string = "verilmedi" (govdeye hic
 // konmaz) -> backend tek seferlik gecici kod uretir.
 interface YoneticiForm {
+  /** (P68) KARARLI ANAHTAR. Liste `key={i}` kullaniyordu ve ORTADAN satir
+   *  SILINEBILIYOR: React o durumda DOM dugumlerini yeniden kullanir ve
+   *  imlec/odak, tarayicinin otomatik doldurmasi, parola yoneticisinin
+   *  bagi BIR ALT satira kayar. Satirda PAROLA alani var — yanlis satira
+   *  baglanan bir parola yoneticisi ciddi bir kusurdur. */
+  anahtar: string;
   ad: string;
   phone: string;
   password: string;
+}
+let _sayac = 0;
+function bosYonetici(): YoneticiForm {
+  _sayac += 1;
+  return { anahtar: `y${_sayac}`, ad: "", phone: "", password: "" };
 }
 interface FormState {
   ad: string;
   yonetim_email: string;
   yoneticiler: YoneticiForm[];
 }
-const BOS_YONETICI: YoneticiForm = { ad: "", phone: "", password: "" };
 // Ilk satir HER ZAMAN vardir ve BIRINCIL'dir (kaldirilamaz) — backend en az bir
 // yonetici bekler ve listenin ilkini birincil isaretler.
-const EMPTY: FormState = { ad: "", yonetim_email: "", yoneticiler: [{ ...BOS_YONETICI }] };
+const bosForm = (): FormState => ({
+  ad: "",
+  yonetim_email: "",
+  yoneticiler: [bosYonetici()],
+});
 
 function fmtDate(iso: string): string {
   try {
@@ -59,12 +73,12 @@ export default function TenantsPage() {
   );
 
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<FormState>(EMPTY);
+  const [form, setForm] = useState<FormState>(bosForm);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   function openNew() {
-    setForm(EMPTY);
+    setForm(bosForm());
     setFormErr(null);
     setOpen(true);
   }
@@ -191,11 +205,13 @@ export default function TenantsPage() {
 
           <div className="space-y-4">
             {form.yoneticiler.map((y, i) => (
-              <div key={i} className="rounded-lg border border-slate-200 p-4">
+              <div key={y.anahtar} className="rounded-lg border border-slate-200 p-4">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-medium">
-                      {i === 0 ? t("tesisBirincilYonetici") : `Yönetici ${i + 1}`}
+                      {i === 0
+                        ? t("tesisBirincilYonetici")
+                        : t("tesisYoneticiSira", { n: i + 1 })}
                     </h3>
                     {i === 0 && (
                       <p className="text-xs text-muted">{t("tesisIlkGirisAdlandirir")}</p>
@@ -258,7 +274,7 @@ export default function TenantsPage() {
               type="button"
               className={btnGhost}
               onClick={() =>
-                setForm({ ...form, yoneticiler: [...form.yoneticiler, { ...BOS_YONETICI }] })
+                setForm({ ...form, yoneticiler: [...form.yoneticiler, bosYonetici()] })
               }
             >
               {t("tesisYoneticiEkle")}

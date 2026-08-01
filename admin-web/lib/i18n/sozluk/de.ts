@@ -475,6 +475,7 @@ export const de: Sozluk = {
   finansTipSuzgeci: "Typfilter",
   raporEskiOdemeKesildi: "Die Prüfung alter (periodenloser) Zahlungen hat das Limit erreicht — die Inkassosumme kann unvollständig sein.",
   raporKesildi: "Die Anzahl der Datensätze hat das Limit erreicht — der Bericht kann unvollständig sein. Grenzen Sie den Zeitraum ein.",
+  tesisYoneticiSira: "Verwalter {n}",
   daireMetrekareGecersiz: "Ungültige Fläche. Beispiel: 120,5",
   binaBlokBasitSilOnay: "Block {blok} löschen?",
   odemeElden: "Bar",
