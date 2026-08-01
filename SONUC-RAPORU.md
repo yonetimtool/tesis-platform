@@ -1,6 +1,6 @@
 # Oturum Sonuç Raporu — 2026-08-01
 
-Bu oturumda **P51 → P85 arası 35 madde** kapandı. Aşağıda ne yapıldığı, ne
+Bu oturumda **P51 → P86 arası 36 madde** kapandı. Aşağıda ne yapıldığı, ne
 bulunduğu ve **ne yapılmadığı** var.
 
 ---
@@ -15,7 +15,7 @@ bulunduğu ve **ne yapılmadığı** var.
 | admin-web `vitest` | **280 passed** (45 dosya) | P85 |
 | admin-web `tsc` + `npm run build` | temiz / yeşil | P85 |
 | mobile `flutter analyze` | temiz | P85 |
-| mobile `flutter test` | **1553 passed** | P85 |
+| mobile `flutter test` | **1559 passed** | P86 |
 | mobile `flutter build apk --debug` | başarılı | P82 |
 
 > **Bir uyarı:** mobil suite'in bir koşumunda "… and 12 more" ile başlayan
@@ -72,6 +72,7 @@ sayılmadı.
 | `erisilebilir-etiket.test.ts` | Adsız form denetimi |
 | `i18n.test.ts` (+3 tarama) | `toast()`, tarayıcı diyalogları, şablon dizgeleri |
 | `conftest.py` koşum kilidi | İki eşzamanlı pytest koşumu |
+| `enterpolasyon_sabit_metin_test.dart` | Enterpolasyonlu dizgede sabit metin (P86) |
 
 ### Çapraz bağ zinciri (P77–P85)
 İki yerde tutulan aynı gerçeğin **sessizce ayrışmasını** engeller:
@@ -106,7 +107,8 @@ güvene çevirebilirdi:
 2. **P65** — Üst sınırı sarmalayıcının **arkasına** koymuştum: dört çağıran da
    sessizce kırpılırdı. "Sessiz kırpma yapma" kuralını tam da onu koyarken
    bozuyordum.
-3. **P70** — Kilit doğrulanamadı, bu yüzden **eklenmedi** (aşağıya bakın).
+3. **P70** — Kilit doğrulanamadı, bu yüzden **eklenmedi**. P86'da nedeni
+   bulundu ve kilit doğrulanabilir biçimde yazıldı.
 4. **P74/P75** — "Suite'te 1 ERROR var" dedim; **yanlıştı**. Sebep benim
    eşzamanlı ikinci koşumumdu. Bu sırada üç kez "ölçtüm" sandığım şey ölçüm
    değildi: `ps` konteynerde **yok** (sıfır bir komut hatasıydı),
@@ -122,10 +124,12 @@ güvene çevirebilirdi:
 ## 6. YAPILMAYANLAR
 
 ### Bilerek yapılmadı (gerekçesi planda)
-- **P70** — Mobil enterpolasyonlu dizge kilidi. Bölge **ölçüldü** (7 satır,
-  yedisi de `debugPrint` → kullanıcıya sızan metin yok) ama kilit üç denemede
-  doğrulanamadı, bu yüzden **commit edilmedi**. Doğru çözüm bir Dart dizge
-  belirteçleyicisi; temiz bağlamda yazılabilir.
+- ~~**P70** — Mobil enterpolasyonlu dizge kilidi.~~ **KAPANDI (P86).** P70'te
+  bölge ölçülmüş (7 satır, yedisi de `debugPrint` → sızan metin yok) ama kilit
+  üç denemede doğrulanamadığı için **commit edilmemişti**. P86'da neden
+  başarısız olduğu çözüldü — **sıra**: kilit mevcut testin *içine* ekleniyordu
+  ve o dosyanın süzgeçleri araya giriyordu. Ayrı bir dosyaya, **önce kendini
+  test eden** bir belirteçleyiciyle yazıldı; iki ayrı enjeksiyonla doğrulandı.
 - **P79** — Mobil `NumberFormat` panelin elle gruplamasıyla **birleştirilmedi**:
   iki ortamın risk profili farklı (mobilde yerel veri paketin içinde).
 - **P83** — Ayarlarda **ters yön** zorlanmadı: `OPERASYON` bilinçli bir alt küme.
@@ -146,10 +150,10 @@ güvene çevirebilirdi:
 
 ## 7. Nerede duruyor
 
-- Plan: `docs/MASTER-PLAN.md` — **85 madde**, açık hash yer tutucusu yok.
+- Plan: `docs/MASTER-PLAN.md` — **86 madde**, açık hash yer tutucusu yok.
 - Cihaz listesi: P11 içinde, her kullanıcıya görünür değişiklik için bir madde.
 - Devir notu: **STATUS REPORT #10** (P61–P65 devri) hâlâ geçerli; sonraki tur
-  **P86**'dan devam edebilir.
+  **P87**'den devam edebilir.
 - Tüm iş `main` üzerinde ve push'lu.
 
 **Not:** bağlam penceresi bu oturumun sonunda tamamen doldu. Son turlarda tek
