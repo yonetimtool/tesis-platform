@@ -106,10 +106,11 @@ export async function fetchAllPaged<T>(
   return { items: out, kesildi };
 }
 
-/** Geriye donuk sade bicim — kirpilma bilgisi GEREKMEYEN cagirilar icin. */
-export async function fetchAllItems<T>(baseUrl: string, pageSize = 200): Promise<T[]> {
-  return (await fetchAllPaged<T>(baseUrl, { pageSize })).items;
-}
+// (P65) `fetchAllItems` KALDIRILDI. Once geriye donuk uyum icin
+// birakilmisti; ama ust siniri o sarmalayicinin ARKASINA koymak, "sessiz
+// kirpma yapma" kuralini kendi elimle bozmakti: dort cagiran da 5.000'de
+// kirpilir ve HICBIRI bunu soylemezdi. Sinir varsa cagiran onu GORMELI —
+// bu yuzden tek giris `fetchAllPaged`tir ve `kesildi` doner.
 
 /** Idempotency-Key uretir (cift odeme kaydi korumasi). */
 export function genIdempotencyKey(): string {

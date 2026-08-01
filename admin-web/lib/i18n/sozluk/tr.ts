@@ -523,6 +523,7 @@ export const tr = {
   tesisSilOnayEtiketi: "Onay kelimesi",
   finansTipSuzgeci: "Tür süzgeci",
   raporEskiOdemeKesildi: "Eski (dönemsiz) ödeme taraması üst sınıra takıldı — bu dönemin tahsilat toplamı eksik olabilir.",
+  raporKesildi: "Kayıt sayısı üst sınıra takıldı — rapor eksik olabilir. Tarih aralığını daraltın.",
   daireMetrekareGecersiz: "Metrekare geçersiz. Örnek: 120,5",
   binaBlokBasitSilOnay: "{blok} bloğu silinsin mi?",
   // tur 20 — odeme yontemi / sakin rolu

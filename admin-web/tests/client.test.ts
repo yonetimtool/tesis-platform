@@ -1,10 +1,10 @@
 // Istemci mutasyon yardimcisi + sayfali cekme + idempotency anahtari.
-// `fetchAllItems` raporlarda TUM kayitlari toplar; durma kosulu yanlissa ya
+// `fetchAllPaged` raporlarda TUM kayitlari toplar; durma kosulu yanlissa ya
 // eksik rapor uretir ya SONSUZ dongude kalir — bu yuzden sinirlar burada
 // kilitli.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { apiSend, fetchAllItems, genIdempotencyKey } from "@/lib/client";
+import { apiSend, fetchAllPaged, genIdempotencyKey } from "@/lib/client";
 import { SOZLUKLER } from "@/lib/i18n/sozluk";
 
 interface SahteYanit {
@@ -90,20 +90,20 @@ describe("apiSend", () => {
   });
 });
 
-describe("fetchAllItems (sayfali toplama)", () => {
+describe("fetchAllPaged (sayfali toplama)", () => {
   beforeEach(() => vi.unstubAllGlobals());
   afterEach(() => vi.unstubAllGlobals());
 
   it("tek sayfa: limit/offset eklenir, ? ayiricisi kullanilir", async () => {
     const cagrilar = stubFetchSeq([{ body: { items: [{ id: 1 }], meta: { total: 1 } } }]);
-    const out = await fetchAllItems<{ id: number }>("/api/units");
+    const out = (await fetchAllPaged<{ id: number }>("/api/units")).items;
     expect(out).toHaveLength(1);
     expect(cagrilar[0][0]).toBe("/api/units?limit=200&offset=0");
   });
 
   it("URL'de zaten sorgu varsa & ile eklenir (sorgu bozulmaz)", async () => {
     const cagrilar = stubFetchSeq([{ body: { items: [], meta: { total: 0 } } }]);
-    await fetchAllItems("/api/tasks?durum=acik");
+    (await fetchAllPaged("/api/tasks?durum=acik")).items;
     expect(cagrilar[0][0]).toBe("/api/tasks?durum=acik&limit=200&offset=0");
   });
 
@@ -112,7 +112,7 @@ describe("fetchAllItems (sayfali toplama)", () => {
       body: { items: Array.from({ length: n }, (_, i) => ({ i })), meta: { total: 5 } },
     });
     const cagrilar = stubFetchSeq([sayfa(3), sayfa(2)]);
-    const out = await fetchAllItems<{ i: number }>("/api/x", 3);
+    const out = (await fetchAllPaged<{ i: number }>("/api/x", { pageSize: 3 })).items;
     expect(out).toHaveLength(5);
     expect(cagrilar.map((c) => c[0])).toEqual([
       "/api/x?limit=3&offset=0",
@@ -127,14 +127,14 @@ describe("fetchAllItems (sayfali toplama)", () => {
         { body: { items: [{ i: 0 }], meta: { total: 999 } } },
         { body: { items: [], meta: { total: 999 } } },
       ]);
-      const out = await fetchAllItems<{ i: number }>("/api/x", 1);
+      const out = (await fetchAllPaged<{ i: number }>("/api/x", { pageSize: 1 })).items;
       expect(out).toHaveLength(1);
       expect(cagrilar).toHaveLength(2);
     });
 
   it("meta YOKSA tek turda durur (total = toplanan sayisi)", async () => {
     const cagrilar = stubFetchSeq([{ body: { items: [{ i: 0 }, { i: 1 }] } }]);
-    const out = await fetchAllItems<{ i: number }>("/api/x", 200);
+    const out = (await fetchAllPaged<{ i: number }>("/api/x", { pageSize: 200 })).items;
     expect(out).toHaveLength(2);
     expect(cagrilar).toHaveLength(1);
   });
@@ -145,14 +145,16 @@ describe("fetchAllItems (sayfali toplama)", () => {
       { body: { items: [{ i: 0 }], meta: { total: 4 } } },
       { status: 401 },
     ]);
-    await expect(fetchAllItems("/api/x", 1)).rejects.toThrow("Oturum süresi doldu.");
+    await expect(
+      fetchAllPaged("/api/x", { pageSize: 1 }),
+    ).rejects.toThrow("Oturum süresi doldu.");
     expect(w.location.href).toBe("/login");
   });
 
   it("hata: zarf mesaji yoksa GENEL metinle firlatir (tur 18: sozlukten)", async () => {
     stubFetchSeq([{ status: 500, body: null }]);
     // Metin artik sabit degil, aktif dilden gelir; testte varsayilan `tr`.
-    await expect(fetchAllItems("/api/x")).rejects.toThrow(
+    await expect(fetchAllPaged("/api/x")).rejects.toThrow(
       SOZLUKLER.tr.ortakHataOlustu,
     );
   });

@@ -474,6 +474,7 @@ export const ru: Sozluk = {
   tesisSilOnayEtiketi: "Слово подтверждения",
   finansTipSuzgeci: "Фильтр по типу",
   raporEskiOdemeKesildi: "Просмотр старых (без периода) платежей достиг предела — итог сбора за период может быть неполным.",
+  raporKesildi: "Число записей достигло предела — отчёт может быть неполным. Сузьте диапазон дат.",
   daireMetrekareGecersiz: "Неверная площадь. Пример: 120,5",
   binaBlokBasitSilOnay: "Удалить блок {blok}?",
   odemeElden: "Наличные",

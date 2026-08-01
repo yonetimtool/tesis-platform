@@ -11,7 +11,7 @@ import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, 
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { kisaKimlik } from "@/lib/kimlik";
 import { ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
-import { fetchAllPaged, fetchAllItems } from "@/lib/client";
+import { fetchAllPaged } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { kurusToTL } from "@/lib/money";
 import type { DuesAssessment, DuesPayment, UnitList } from "@/lib/types";
@@ -93,18 +93,23 @@ export default function DuesReportPage() {
       // odemesi olan bir sitede tarayici 1.000 ardisik istek atardi.
       // Artik ust sinirli ve kirpilirsa KULLANICIYA SOYLENIYOR.
       const [assessments, donemPayments, eski] = await Promise.all([
-        fetchAllItems<DuesAssessment>(`/api/dues/assessments?donem=${encodeURIComponent(d)}`),
-        fetchAllItems<DuesPayment>(`/api/dues/payments?donem=${encodeURIComponent(d)}`),
+        fetchAllPaged<DuesAssessment>(`/api/dues/assessments?donem=${encodeURIComponent(d)}`),
+        fetchAllPaged<DuesPayment>(`/api/dues/payments?donem=${encodeURIComponent(d)}`),
         fetchAllPaged<DuesPayment>("/api/dues/payments"),
       ]);
       const allPayments = eski.items;
-      setEskiKesildi(eski.kesildi);
+      // Donem suzgecli iki cekim de kirpilabilir; UCUNU DE ayni not
+      // kapsar — hangisinin kirpildigini soylemek kullaniciya bir sey
+      // katmaz, "bu rapor eksik olabilir" bilgisi katar.
+      setEskiKesildi(
+        eski.kesildi || assessments.kesildi || donemPayments.kesildi,
+      );
 
       // Donem tahakkuklari (kurus, tam sayi).
       const tahakkukByUnit = new Map<string, number>();
       const sonOdemeByUnit = new Map<string, string | null>();
       const periodAssessmentIds = new Set<string>();
-      for (const a of assessments) {
+      for (const a of assessments.items) {
         tahakkukByUnit.set(a.unit_id, (tahakkukByUnit.get(a.unit_id) ?? 0) + a.tutar_kurus);
         sonOdemeByUnit.set(a.unit_id, a.son_odeme_tarihi ?? null);
         periodAssessmentIds.add(a.id);
@@ -114,7 +119,7 @@ export default function DuesReportPage() {
       //  1) payment.donem == secili donem (sunucu suzdu; serbest odemeler DAHIL)
       //  2) eski kayitlar (donem null) — bu donemin tahakkuguna bagliysa
       const atfedilen = new Map<string, DuesPayment>();
-      for (const p of donemPayments) {
+      for (const p of donemPayments.items) {
         if (p.durum === "basarili") atfedilen.set(p.id, p);
       }
       let serbestBasariliSayi = 0; // hala doneme atfedilemeyenler (eski: donem null + tahakkuksuz)

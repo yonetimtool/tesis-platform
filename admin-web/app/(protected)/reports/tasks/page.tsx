@@ -10,7 +10,7 @@ import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, pan
 } from "@/components/form";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { kisaKimlik } from "@/lib/kimlik";
-import { fetchAllItems } from "@/lib/client";
+import { fetchAllPaged } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type {
   TaskCategoryList,
@@ -52,6 +52,8 @@ export default function TaskReportPage() {
   const [bit, setBit] = useState("");
   const [tamamlayan, setTamamlayan] = useState("");
   const [committed, setCommitted] = useState<string | null>(null);
+  /** (P65) Cekim ust sinira takildi mi — rapor EKSIKTIR. */
+  const [kesildi, setKesildi] = useState(false);
   const [offset, setOffset] = useState(0);
 
   const { data: users, error: usersErr } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
@@ -91,7 +93,11 @@ export default function TaskReportPage() {
 
   async function exportCsv() {
     if (committed === null) return;
-    const items = await fetchAllItems<TaskCompletionRow>(`/api/task-completions?${committed}`);
+    const cekim = await fetchAllPaged<TaskCompletionRow>(
+      `/api/task-completions?${committed}`,
+    );
+    setKesildi(cekim.kesildi);
+    const items = cekim.items;
     const rows: string[][] = [
       ["Gorev", "Tip", "Tamamlayan", "Zaman", "Foto", "NFC", t("raporNot")],
     ];
@@ -163,6 +169,12 @@ export default function TaskReportPage() {
       </motion.form>
 
       {error && <ErrorBox message={error.message} />}
+
+      {kesildi && (
+
+        <p className="text-xs text-amber-700">{t("raporKesildi")}</p>
+
+      )}
       {committed === null && (
         <p className="text-sm text-muted">{t("raporFiltreSecin")}</p>
       )}

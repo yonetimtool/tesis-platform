@@ -10,7 +10,7 @@ import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, pan
 } from "@/components/form";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { TUR_DURUM, enumAdi } from "@/lib/enum-adlari";
-import { fetchAllItems } from "@/lib/client";
+import { fetchAllPaged } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type { PatrolPlanList, PatrolWindowListResponse, PatrolWindowRow } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
@@ -46,6 +46,8 @@ export default function PatrolReportPage() {
   const [bit, setBit] = useState("");
   const [durum, setDurum] = useState("");
   const [planId, setPlanId] = useState("");
+  /** (P65) Cekim ust sinira takildi mi — rapor EKSIKTIR. */
+  const [kesildi, setKesildi] = useState(false);
   const [committed, setCommitted] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
 
@@ -83,7 +85,11 @@ export default function PatrolReportPage() {
 
   async function exportCsv() {
     if (committed === null) return;
-    const items = await fetchAllItems<PatrolWindowRow>(`/api/patrol-windows?${committed}`);
+    const cekim = await fetchAllPaged<PatrolWindowRow>(
+      `/api/patrol-windows?${committed}`,
+    );
+    setKesildi(cekim.kesildi);
+    const items = cekim.items;
     const rows: string[][] = [
       ["Plan", "Baslangic", "Bitis", t("ortakDurum"), "Okutulan", "Beklenen"],
     ];
@@ -148,6 +154,12 @@ export default function PatrolReportPage() {
       </motion.form>
 
       {error && <ErrorBox message={error.message} />}
+
+      {kesildi && (
+
+        <p className="text-xs text-amber-700">{t("raporKesildi")}</p>
+
+      )}
       {committed === null && (
         <p className="text-sm text-muted">{t("raporFiltreSecin")}</p>
       )}

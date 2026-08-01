@@ -3764,14 +3764,18 @@ demektir — ve bu rapor **tahsilat toplamıdır**. Bu yüzden `fetchAllPaged`
 zorundadır**. Sayfada zaten aynı deseni izleyen bir örnek vardı
 (`unitTruncated` → "ilk 200 daire" notu); yenisi onun yanına kondu.
 
-**GERİYE DÖNÜK UYUMLU.** `fetchAllItems` duruyor ve `fetchAllPaged`i sarıyor;
-kırpılma bilgisi gerekmeyen çağrılar (dönem süzgeçli iki çekim — doğaları
-gereği küçük) değişmedi. Hepsini yeni imzaya çevirmek, ilgilenmeyen
-çağıranları da `kesildi` taşımaya zorlardı.
+**KENDİ KURALIMI BİR KEZ ÇİĞNEDİM, SONRA DÜZELTTİM.** İlk hâlde
+`fetchAllItems` geriye dönük uyum için bırakılmıştı ve `fetchAllPaged`i
+sarıyordu — yani üst sınır **sarmalayıcının arkasındaydı**. Sonuç:
+**dört çağıranın hepsi 5.000'de kırpılır ve hiçbiri bunu söylemezdi.**
+"Sessiz kırpma yapma" kuralını tam da onu koyarken bozuyordum. Sarmalayıcı
+kaldırıldı; tek giriş `fetchAllPaged`tir ve dört çağıranın **hepsi** artık
+`kesildi`yi ekrana taşıyor: aidat raporu (üç çekimin herhangi biri),
+görev raporu ve tur raporu (tarih aralığını daraltma önerisiyle).
 
 Kanıt: `tests/sayfali-cekim.test.ts` **3 test** (sınıra ulaşmayan veri
 kırpılmaz; üst sınırda durur **ve söyler**; boş uç tek istekte biter),
-`raporEskiOdemeKesildi` × 7 dil. `vitest` **199** yeşil (35 dosya, 3 ardışık
+`raporEskiOdemeKesildi` + `raporKesildi` × 7 dil; `tests/client.test.ts` yeni imzaya taşındı. `vitest` **199** yeşil (35 dosya, 3 ardışık
 tam koşum), `tsc` temiz, `npm run build` yeşil.
 
 ## STATUS REPORT — 2026-08-01 #9 (kural 10: bağlam doldu, devir)

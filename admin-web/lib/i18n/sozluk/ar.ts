@@ -474,6 +474,7 @@ export const ar: Sozluk = {
   tesisSilOnayEtiketi: "كلمة التأكيد",
   finansTipSuzgeci: "تصفية النوع",
   raporEskiOdemeKesildi: "بلغ فحص المدفوعات القديمة (بلا فترة) الحد الأقصى — قد يكون إجمالي التحصيل ناقصاً.",
+  raporKesildi: "بلغ عدد السجلات الحد الأقصى — قد يكون التقرير ناقصاً. ضيّق النطاق الزمني.",
   daireMetrekareGecersiz: "المساحة غير صالحة. مثال: 120,5",
   binaBlokBasitSilOnay: "هل تريد حذف المبنى {blok}؟",
   odemeElden: "نقدًا",
