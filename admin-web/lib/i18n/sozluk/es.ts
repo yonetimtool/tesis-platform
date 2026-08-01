@@ -463,6 +463,8 @@ export const es: Sozluk = {
   talepReddedilen: "Rechazadas",
   ortakSilinemedi: "No se pudo eliminar.",
   gorevSilOnay: "¿Eliminar {ad}?",
+  ortakSilOnay: "¿Eliminar {ad}?",
+  binaBlokBasitSilOnay: "¿Eliminar el bloque {blok}?",
   odemeElden: "Efectivo",
   odemeHavale: "Transferencia",
   daireMalik: "Propietario",

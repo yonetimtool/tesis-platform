@@ -512,6 +512,8 @@ export const tr = {
   // tur 20 — silme onayi
   ortakSilinemedi: "Silinemedi.",
   gorevSilOnay: "{ad} silinsin mi?",
+  ortakSilOnay: "{ad} silinsin mi?",
+  binaBlokBasitSilOnay: "{blok} bloğu silinsin mi?",
   // tur 20 — odeme yontemi / sakin rolu
   odemeElden: "Elden",
   odemeHavale: "Havale",

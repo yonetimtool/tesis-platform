@@ -105,7 +105,7 @@ export default function UnitsPage() {
   }
 
   async function remove(u: Unit) {
-    if (!window.confirm(`${u.no} silinsin mi?`)) return;
+    if (!window.confirm(t("ortakSilOnay", { ad: u.no }))) return;
     try {
       await apiSend(`/api/units/${u.id}`, "DELETE");
       if (detail?.id === u.id) setDetail(null);

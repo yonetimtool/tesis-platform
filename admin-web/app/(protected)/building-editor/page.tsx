@@ -114,7 +114,7 @@ export default function BuildingEditorPage() {
     const count = unitItems.filter((u) => u.blok === b.ad).length;
     let cascade = false;
     if (count === 0) {
-      if (!window.confirm(`Blok ${b.ad} silinsin mi?`)) return;
+      if (!window.confirm(t("binaBlokBasitSilOnay", { blok: b.ad }))) return;
     } else {
       // Yikici: daireleri + bagli kayitlari siler. Sert onay: blok adini yaz.
       const typed = window.prompt(
@@ -169,7 +169,7 @@ export default function BuildingEditorPage() {
   }
 
   async function removeUnit(u: Unit) {
-    if (!window.confirm(`${u.no} silinsin mi?`)) return;
+    if (!window.confirm(t("ortakSilOnay", { ad: u.no }))) return;
     try {
       await apiSend(`/api/units/${u.id}`, "DELETE");
       refresh();

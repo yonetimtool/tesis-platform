@@ -130,7 +130,7 @@ export default function PatrolPlansPage() {
   }
 
   async function remove(p: PatrolPlan) {
-    if (!window.confirm(`${p.ad} silinsin mi?`)) return;
+    if (!window.confirm(t("ortakSilOnay", { ad: p.ad }))) return;
     try {
       await apiSend(`/api/patrol-plans/${p.id}`, "DELETE");
       mutate();

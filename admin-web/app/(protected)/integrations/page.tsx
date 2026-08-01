@@ -144,7 +144,7 @@ export default function IntegrationsPage() {
   }
 
   async function remove(it: Integration) {
-    if (!window.confirm(`"${it.ad}" silinsin mi?`)) return;
+    if (!window.confirm(t("ortakSilOnay", { ad: it.ad }))) return;
     try {
       await apiSend(`/api/integrations/${it.id}`, "DELETE");
       mutate();

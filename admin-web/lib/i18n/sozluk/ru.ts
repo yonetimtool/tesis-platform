@@ -463,6 +463,8 @@ export const ru: Sozluk = {
   talepReddedilen: "Отклонённые",
   ortakSilinemedi: "Не удалось удалить.",
   gorevSilOnay: "Удалить {ad}?",
+  ortakSilOnay: "Удалить {ad}?",
+  binaBlokBasitSilOnay: "Удалить блок {blok}?",
   odemeElden: "Наличные",
   odemeHavale: "Банковский перевод",
   daireMalik: "Собственник",

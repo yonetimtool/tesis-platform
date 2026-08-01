@@ -105,7 +105,7 @@ export default function ShiftsPage() {
   }
 
   async function remove(s: Shift) {
-    if (!window.confirm(`${s.ad} silinsin mi?`)) return;
+    if (!window.confirm(t("ortakSilOnay", { ad: s.ad }))) return;
     try {
       await apiSend(`/api/shifts/${s.id}`, "DELETE");
       mutate();

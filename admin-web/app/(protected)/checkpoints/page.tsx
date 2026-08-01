@@ -108,7 +108,7 @@ export default function CheckpointsPage() {
   }
 
   async function remove(c: Checkpoint) {
-    if (!window.confirm(`${c.ad} silinsin mi?`)) return;
+    if (!window.confirm(t("ortakSilOnay", { ad: c.ad }))) return;
     try {
       await apiSend(`/api/checkpoints/${c.id}`, "DELETE");
       mutate();

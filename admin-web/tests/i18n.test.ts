@@ -303,4 +303,41 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
       `cevrilmemis bildirim metni:\n${sizanlar.slice(0, 10).join("\n")}`,
     ).toEqual([]);
   });
+  // (P54) TARAYICI DIYALOGLARI — taramanin IKINCI kor noktasi.
+  //
+  // `window.confirm/alert/prompt` metni JSX degildir, oznitelik degildir
+  // ve P46 taramasi YALNIZ `toast.*`a bakiyordu. Olculdu: panelde
+  // **sekiz** sabit Turkce onay diyalogu vardi ("... silinsin mi?") ve
+  // ingilizce arayuzde bile Turkce cikiyordu. Bunlar SILME onaylaridir:
+  // anlasilmayan bir metne "Tamam" demek, kullanicinin okuyamadigi bir
+  // uyariyi onaylamasi demektir — sinifin en pahali ornegi.
+  it("tarayici diyaloglari (confirm/alert/prompt) t() uzerinden gelir (P54)", () => {
+    const sizanlar: string[] = [];
+    const tara = (dizin: string) => {
+      for (const ad of fs.readdirSync(path.join(KOK, dizin))) {
+        const göreli = `${dizin}/${ad}`;
+        const tam = path.join(KOK, göreli);
+        if (fs.statSync(tam).isDirectory()) {
+          tara(göreli);
+          continue;
+        }
+        if (!/\.tsx?$/.test(ad)) continue;
+        fs.readFileSync(tam, "utf8")
+          .split("\n")
+          .forEach((satir, i) => {
+            const m = /window\.(confirm|alert|prompt)\(\s*["\'`]([^"\'`]{2,})/.exec(
+              satir,
+            );
+            if (m) {
+              sizanlar.push(`${göreli}:${i + 1} (${m[1]}) ${m[2].slice(0, 60)}`);
+            }
+          });
+      }
+    };
+    ["app", "components"].forEach(tara);
+    expect(
+      sizanlar,
+      `cevrilmemis diyalog metni:\n${sizanlar.slice(0, 10).join("\n")}`,
+    ).toEqual([]);
+  });
 });

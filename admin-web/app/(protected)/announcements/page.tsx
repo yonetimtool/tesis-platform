@@ -148,7 +148,7 @@ export default function AnnouncementsPage() {
   }
 
   async function remove(a: Announcement) {
-    if (!window.confirm(`"${a.baslik}" duyurusu silinsin mi?`)) return;
+    if (!window.confirm(t("ortakSilOnay", { ad: a.baslik }))) return;
     try {
       await apiSend(`/api/announcements/${a.id}`, "DELETE");
       mutate();
