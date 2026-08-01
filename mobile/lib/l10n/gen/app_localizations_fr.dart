@@ -3705,6 +3705,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noktaKonumGecersiz => 'Position invalide. Exemple : 41,0082';
 
   @override
+  String get ortakSecenekYuklenemedi =>
+      'Certaines options n\'ont pas pu être chargées — la liste peut être incomplète.';
+
+  @override
   String get noktaBoylam => 'Longitude (opt.)';
 
   @override

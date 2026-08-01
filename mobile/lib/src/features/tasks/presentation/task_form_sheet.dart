@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/eksik_veri_uyarisi.dart';
 import '../../auth/domain/user_role.dart';
 import '../../checkpoints/data/checkpoint_api.dart';
 import '../data/task_api.dart';
@@ -335,9 +336,11 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
               // calisani tarafindan ETIKET OKUTULARAK tamamlanir (backend zorlar).
               Builder(
                 builder: (context) {
-                  final all =
-                      ref.watch(checkpointsProvider).value ??
-                      const <Checkpoint>[];
+                  // (P59) HATA AYRI OKUNUR: `.value ?? []` bir hatayi da
+                  // "hic kayit yok"a cevirirdi ve kullanici noktayi neden
+                  // secemedigini anlamazdi.
+                  final durum = ref.watch(checkpointsProvider);
+                  final all = durum.value ?? const <Checkpoint>[];
                   final items = all.where((c) => c.aktif).toList();
                   // Secili nokta pasiflestiyse listede olmayabilir -> koru.
                   if (_checkpointId != null &&
@@ -345,28 +348,37 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                     final sel = all.where((c) => c.id == _checkpointId);
                     if (sel.isNotEmpty) items.add(sel.first);
                   }
-                  return DropdownButtonFormField<String?>(
-                    initialValue: items.any((c) => c.id == _checkpointId)
-                        ? _checkpointId
-                        : null,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: l10n.gorevKontrolNoktasiOpsiyonel,
-                      helperText: l10n.gorevKontrolNoktasiYardim,
-                      border: const OutlineInputBorder(),
-                    ),
-                    items: [
-                      DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text(l10n.gorevNfcYok),
-                      ),
-                      for (final c in items)
-                        DropdownMenuItem<String?>(
-                          value: c.id,
-                          child: Text(c.ad, overflow: TextOverflow.ellipsis),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      EksikVeriUyarisi(goster: durum.hasError),
+                      DropdownButtonFormField<String?>(
+                        initialValue: items.any((c) => c.id == _checkpointId)
+                            ? _checkpointId
+                            : null,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          labelText: l10n.gorevKontrolNoktasiOpsiyonel,
+                          helperText: l10n.gorevKontrolNoktasiYardim,
+                          border: const OutlineInputBorder(),
                         ),
+                        items: [
+                          DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text(l10n.gorevNfcYok),
+                          ),
+                          for (final c in items)
+                            DropdownMenuItem<String?>(
+                              value: c.id,
+                              child: Text(
+                                c.ad,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        onChanged: (v) => setState(() => _checkpointId = v),
+                      ),
                     ],
-                    onChanged: (v) => setState(() => _checkpointId = v),
                   );
                 },
               ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/eksik_veri_uyarisi.dart';
 import '../../checkpoints/data/checkpoint_api.dart';
 import '../data/patrol_plan_api.dart';
 import '../domain/patrol_hata.dart';
@@ -22,8 +23,8 @@ class PatrolPlansScreen extends ConsumerWidget {
     final async = ref.watch(patrolPlansProvider);
     return Scaffold(
       appBar: AppBar(
-          title: Text(
-              baslikBuyuk(l10n.devriyePlanlariBaslik, context.dilKodu))),
+        title: Text(baslikBuyuk(l10n.devriyePlanlariBaslik, context.dilKodu)),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
@@ -35,7 +36,9 @@ class PatrolPlansScreen extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              e is ApiException ? apiHataMetni(l10n, e) : l10n.devriyePlanlarListelenemedi,
+              e is ApiException
+                  ? apiHataMetni(l10n, e)
+                  : l10n.devriyePlanlarListelenemedi,
               textAlign: TextAlign.center,
             ),
           ),
@@ -82,11 +85,13 @@ class _PlanTile extends ConsumerWidget {
           child: Icon(plan.aktif ? Icons.route_outlined : Icons.block),
         ),
         title: Text(plan.ad),
-        subtitle: Text(l10n.devriyePlanAralik(
-          plan.baslangicHHMM,
-          plan.bitisHHMM,
-          '${plan.periyotDakika}',
-        )),
+        subtitle: Text(
+          l10n.devriyePlanAralik(
+            plan.baslangicHHMM,
+            plan.bitisHHMM,
+            '${plan.periyotDakika}',
+          ),
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -129,12 +134,14 @@ class _PlanTile extends ConsumerWidget {
         content: Text(l10n.devriyePlanSilOnay(plan.ad)),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(dctx).pop(false),
-              child: Text(l10n.ortakVazgec)),
+            onPressed: () => Navigator.of(dctx).pop(false),
+            child: Text(l10n.ortakVazgec),
+          ),
           FilledButton(
-              style: yikiciDugmeStili(dctx),
-              onPressed: () => Navigator.of(dctx).pop(true),
-              child: Text(l10n.ortakSil)),
+            style: yikiciDugmeStili(dctx),
+            onPressed: () => Navigator.of(dctx).pop(true),
+            child: Text(l10n.ortakSil),
+          ),
         ],
       ),
     );
@@ -143,8 +150,7 @@ class _PlanTile extends ConsumerWidget {
     try {
       await ref.read(patrolPlanApiProvider).delete(plan.id);
       ref.invalidate(patrolPlansProvider);
-      messenger.showSnackBar(
-          SnackBar(content: Text(l10n.devriyePlanSilindi)));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.devriyePlanSilindi)));
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
@@ -287,12 +293,15 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
-    final checkpoints =
-        (ref.watch(checkpointsProvider).value ?? const <Checkpoint>[])
-            .where((c) => c.aktif)
-            .toList();
+    // (P59) HATA AYRI OKUNUR: `.value ?? []` bir hatayi da "hic nokta yok"a
+    // cevirirdi ve kullanici plana nokta ekleyemedigini anlamazdi.
+    final noktaDurum = ref.watch(checkpointsProvider);
+    final checkpoints = (noktaDurum.value ?? const <Checkpoint>[])
+        .where((c) => c.aktif)
+        .toList();
     final allSelected =
-        checkpoints.isNotEmpty && checkpoints.every((c) => _selected.contains(c.id));
+        checkpoints.isNotEmpty &&
+        checkpoints.every((c) => _selected.contains(c.id));
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
       child: Form(
@@ -303,11 +312,13 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                  _isEdit
-                      ? l10n.devriyePlanDuzenleBaslik
-                      : l10n.devriyePlanYeniBaslik,
-                  style: Theme.of(context).textTheme.titleMedium),
+                _isEdit
+                    ? l10n.devriyePlanDuzenleBaslik
+                    : l10n.devriyePlanYeniBaslik,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 12),
+              EksikVeriUyarisi(goster: noktaDurum.hasError),
               TextFormField(
                 controller: _ad,
                 enabled: !_busy,
@@ -325,8 +336,11 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.schedule),
-                      label: Text(l10n.devriyeBaslangicSaat(
-                          _fmt(_baslangic).substring(0, 5))),
+                      label: Text(
+                        l10n.devriyeBaslangicSaat(
+                          _fmt(_baslangic).substring(0, 5),
+                        ),
+                      ),
                       onPressed: _busy ? null : () => _pickTime(true),
                     ),
                   ),
@@ -334,8 +348,9 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.schedule),
-                      label: Text(l10n.devriyeBitisSaat(
-                          _fmt(_bitis).substring(0, 5))),
+                      label: Text(
+                        l10n.devriyeBitisSaat(_fmt(_bitis).substring(0, 5)),
+                      ),
                       onPressed: _busy ? null : () => _pickTime(false),
                     ),
                   ),
@@ -362,25 +377,29 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(l10n.devriyeKontrolNoktalari,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    child: Text(
+                      l10n.devriyeKontrolNoktalari,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ),
                   if (checkpoints.isNotEmpty)
                     TextButton(
                       onPressed: _busy
                           ? null
                           : () => setState(() {
-                                if (allSelected) {
-                                  _selected.clear();
-                                } else {
-                                  _selected
-                                    ..clear()
-                                    ..addAll(checkpoints.map((c) => c.id));
-                                }
-                              }),
-                      child: Text(allSelected
-                          ? l10n.devriyeTumunuKaldir
-                          : l10n.devriyeTumunuSec),
+                              if (allSelected) {
+                                _selected.clear();
+                              } else {
+                                _selected
+                                  ..clear()
+                                  ..addAll(checkpoints.map((c) => c.id));
+                              }
+                            }),
+                      child: Text(
+                        allSelected
+                            ? l10n.devriyeTumunuKaldir
+                            : l10n.devriyeTumunuSec,
+                      ),
                     ),
                 ],
               ),
@@ -403,18 +422,19 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     title: Text(c.ad),
-                    subtitle: Text(l10n.devriyeUidEtiket(
-                        ltrIzole(c.nfcTagUid))),
+                    subtitle: Text(
+                      l10n.devriyeUidEtiket(ltrIzole(c.nfcTagUid)),
+                    ),
                     value: _selected.contains(c.id),
                     onChanged: _busy
                         ? null
                         : (v) => setState(() {
-                              if (v == true) {
-                                _selected.add(c.id);
-                              } else {
-                                _selected.remove(c.id);
-                              }
-                            }),
+                            if (v == true) {
+                              _selected.add(c.id);
+                            } else {
+                              _selected.remove(c.id);
+                            }
+                          }),
                   ),
               if (devriyeHatasiCoz(l10n, _hataKimligi, _error)
                   case final hata?) ...[
@@ -425,7 +445,8 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
               FilledButton(
                 onPressed: _busy ? null : _submit,
                 style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48)),
+                  minimumSize: const Size.fromHeight(48),
+                ),
                 child: _busy
                     ? const SizedBox(
                         height: 20,
@@ -459,7 +480,8 @@ class _Empty extends StatelessWidget {
               context.l10n.devriyePlanYokBos,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),

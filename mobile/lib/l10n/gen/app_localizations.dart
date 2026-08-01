@@ -6287,6 +6287,12 @@ abstract class AppLocalizations {
   /// **'Konum geçersiz. Örnek: 41,0082'**
   String get noktaKonumGecersiz;
 
+  /// No description provided for @ortakSecenekYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bazı seçenekler yüklenemedi — liste eksik olabilir.'**
+  String get ortakSecenekYuklenemedi;
+
   /// No description provided for @noktaBoylam.
   ///
   /// In tr, this message translates to:

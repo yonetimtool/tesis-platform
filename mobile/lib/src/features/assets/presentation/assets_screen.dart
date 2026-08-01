@@ -396,8 +396,11 @@ String _userLabel(AssetCheckout co) =>
     ? co.alanUserAd!
     : _shortId(co.alanUserId);
 
+/// (P59) `#` ONEKI: bu deger KISININ ADININ yerinde gorunur ve onek
+/// olmadan bir ad ya da kisaltma sanilabilirdi. Yanlis bilgi, bilgi
+/// yoklugundan kotudur. (Panelde ayni karar `lib/kimlik.ts`te.)
 String _shortId(String userId) =>
-    userId.length > 8 ? '${userId.substring(0, 8)}…' : userId;
+    userId.length > 8 ? '#${userId.substring(0, 8)}' : '#$userId';
 
 /// "Ne zamandan beri" PARCASI — cumleye `{sure}` olarak girer. EDAT parcanin
 /// kendisindedir (bkz. `@demSende` notu): sablon yalniz yerlestirir, boylece

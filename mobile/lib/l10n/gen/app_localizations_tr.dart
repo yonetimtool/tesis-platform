@@ -3562,6 +3562,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noktaKonumGecersiz => 'Konum geçersiz. Örnek: 41,0082';
 
   @override
+  String get ortakSecenekYuklenemedi =>
+      'Bazı seçenekler yüklenemedi — liste eksik olabilir.';
+
+  @override
   String get noktaBoylam => 'Boylam (ops.)';
 
   @override

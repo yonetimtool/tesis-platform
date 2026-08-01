@@ -3746,6 +3746,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noktaKonumGecersiz => 'Invalid location. Example: 41.0082';
 
   @override
+  String get ortakSecenekYuklenemedi =>
+      'Some options could not be loaded — the list may be incomplete.';
+
+  @override
   String get noktaBoylam => 'Longitude (opt.)';
 
   @override

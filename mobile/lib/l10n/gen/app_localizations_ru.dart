@@ -3815,6 +3815,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noktaKonumGecersiz => 'Неверные координаты. Пример: 41,0082';
 
   @override
+  String get ortakSecenekYuklenemedi =>
+      'Некоторые варианты не загрузились — список может быть неполным.';
+
+  @override
   String get noktaBoylam => 'Долгота (опц.)';
 
   @override

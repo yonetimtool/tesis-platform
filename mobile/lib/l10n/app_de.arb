@@ -1029,6 +1029,7 @@
   "noktaUidHelper": "Die eindeutige Kennung des Tags (hex).",
   "noktaEnlem": "Breitengrad (opt.)",
   "noktaKonumGecersiz": "Ungültige Position. Beispiel: 41,0082",
+  "ortakSecenekYuklenemedi": "Einige Optionen konnten nicht geladen werden — die Liste ist möglicherweise unvollständig.",
   "noktaBoylam": "Längengrad (opt.)",
   "noktaPasifAlt": "Ein inaktiver Punkt wird beim Scannen nicht erkannt",
   "noktaYok": "Noch keine Kontrollpunkte.\nUnten rechts einen NFC-Punkt hinzufügen.",

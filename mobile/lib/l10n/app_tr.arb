@@ -1485,6 +1485,7 @@
   "noktaUidHelper": "Etiketin benzersiz kimliği (hex).",
   "noktaEnlem": "Enlem (ops.)",
   "noktaKonumGecersiz": "Konum geçersiz. Örnek: 41,0082",
+  "ortakSecenekYuklenemedi": "Bazı seçenekler yüklenemedi — liste eksik olabilir.",
   "noktaBoylam": "Boylam (ops.)",
   "noktaPasifAlt": "Pasif nokta okutmada eşleşmez",
   "noktaYok": "Henüz kontrol noktası yok.\nSağ alttan NFC noktası ekleyin.",

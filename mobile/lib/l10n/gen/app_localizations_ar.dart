@@ -3838,6 +3838,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noktaKonumGecersiz => 'الموقع غير صالح. مثال: 41,0082';
 
   @override
+  String get ortakSecenekYuklenemedi =>
+      'تعذّر تحميل بعض الخيارات — قد تكون القائمة ناقصة.';
+
+  @override
   String get noktaBoylam => 'خط الطول (اختياري)';
 
   @override
