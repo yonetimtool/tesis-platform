@@ -76,3 +76,42 @@ describe("SAHA_ROLLERI (gorev atanabilir roller)", () => {
     for (const r of SAHA_ROLLERI) expect(BILINEN_ROLLER).toContain(r);
   });
 });
+
+// (P80) ROL LISTESI SUNUCUYLA ORTUSUR — capraz bag.
+//
+// `ROLE_OPTIONS` panelin rol listesidir: acilir menuleri doldurur ve
+// `rolAdi` cevirisini saglar. Sunucu `user_role` enum'una YENI bir deger
+// eklerse ve bu liste guncellenmezse iki sey birden bozulur:
+//   * yeni rol acilir menude HIC gorunmez (yonetici o rolu ATAYAMAZ),
+//   * mevcut kayitlarda rol adi HAM tel degeriyle cizilir — P66'da
+//     denetim kaydinda tam bu oldu.
+// Ikisi de SESSIZDIR: hicbir sey patlamaz, panel eksik calisir.
+//
+// Bag tek yonlu DEGIL: fazladan bir deger de sizintidir (sunucunun
+// tanimadigi bir rol atanmaya calisilirsa istek 422 doner ve kullanici
+// nedenini anlamaz).
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+describe("rol listesi sunucu enum'uyla ortusur (P80)", () => {
+  it("ROLE_OPTIONS degerleri = backend USER_ROLE degerleri", () => {
+    const kaynak = readFileSync(
+      join(__dirname, "..", "..", "backend", "app", "models.py"),
+      "utf8",
+    );
+    const blok = /USER_ROLE = ENUM\(([\s\S]*?)name="user_role"/.exec(kaynak);
+    expect(blok, "backend/app/models.py icinde USER_ROLE bulunamadi").not.toBeNull();
+
+    // Yorum satirlari atilir; kalanlardan tirnak icindeki degerler alinir.
+    const sunucu = (blok as RegExpExecArray)[1]
+      .split("\n")
+      .filter((l) => !/^\s*#/.test(l))
+      .join("\n")
+      .match(/"([a-z_]+)"/g)!
+      .map((x) => x.slice(1, -1));
+
+    expect([...ROLE_OPTIONS.map((r) => r.value)].sort()).toEqual(
+      [...sunucu].sort(),
+    );
+  });
+});
