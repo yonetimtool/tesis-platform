@@ -53,7 +53,12 @@ export function fetchSahtele(
   globalThis.fetch = (async (girdi: RequestInfo | URL) => {
     const url = String(girdi);
     cagrilar.push(url);
-    const anahtar = Object.keys(harita).find((k) => url.startsWith(k));
+    // EN UZUN ONEK KAZANIR: `/api/panel/portal` ile
+    // `/api/panel/portal-iletisim` ayni oneki paylasir; ekleme sirasina
+    // gore eslestirmek, iletisim listesine PORTAL govdesini dondururdu.
+    const anahtar = Object.keys(harita)
+      .filter((k) => url.startsWith(k))
+      .sort((a, b) => b.length - a.length)[0];
     if (anahtar === undefined) {
       return new Response(JSON.stringify({ error: { message: "yok" } }), {
         status: 404,
