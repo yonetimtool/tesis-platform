@@ -139,6 +139,7 @@ export const fr: Sozluk = {
   girisYap: "Se connecter",
   girisYapiliyor: "Connexion...",
   girisBasarisiz: "Échec de la connexion.",
+  girisAlanZorunlu: "Le code du site, l'e-mail et le mot de passe sont obligatoires.",
   girisSloganBaslik: "Vos opérations, dans un seul panneau.",
   girisSloganAlt: "Gérez rondes, tâches, charges et démarches des résidents au même endroit — état en direct, rapports clairs, interface sobre.",
   girisAltBilgi: "Yönetio · plateforme multi-locataires d'exploitation d'établissements",

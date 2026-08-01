@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { istekMetni } from "@/lib/i18n/istek-metni";
 
 import { backendLogin, loginResponse } from "@/lib/backend";
 
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   };
   if (!body.tenant_slug || !body.email || !body.password) {
     return NextResponse.json(
-      { error: { code: "validation_error", message: "tenant_slug, email ve parola zorunlu." } },
+      { error: { code: "validation_error", message: istekMetni(req, "girisAlanZorunlu") } },
       { status: 400 },
     );
   }
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   if (!ok) {
     return NextResponse.json(
-      data ?? { error: { code: "error", message: "Giris basarisiz." } },
+      data ?? { error: { code: "error", message: istekMetni(req, "girisBasarisiz") } },
       { status },
     );
   }

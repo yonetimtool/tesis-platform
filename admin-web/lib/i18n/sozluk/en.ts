@@ -139,6 +139,7 @@ export const en: Sozluk = {
   girisYap: "Sign in",
   girisYapiliyor: "Signing in...",
   girisBasarisiz: "Sign-in failed.",
+  girisAlanZorunlu: "Facility code, e-mail and password are required.",
   girisSloganBaslik: "Your facility operations, in one panel.",
   girisSloganAlt: "Manage patrols, tasks, dues and resident flows from one place — live status, clear reports, a simple interface.",
   girisAltBilgi: "Yönetio · multi-tenant facility operations platform",

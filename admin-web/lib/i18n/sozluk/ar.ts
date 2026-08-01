@@ -139,6 +139,7 @@ export const ar: Sozluk = {
   girisYap: "تسجيل الدخول",
   girisYapiliyor: "جارٍ تسجيل الدخول...",
   girisBasarisiz: "فشل تسجيل الدخول.",
+  girisAlanZorunlu: "رمز المنشأة والبريد الإلكتروني وكلمة المرور مطلوبة.",
   girisSloganBaslik: "عمليات منشأتك في لوحة واحدة.",
   girisSloganAlt: "أدِر الدوريات والمهام والرسوم وتدفقات السكان من مكان واحد — حالة مباشرة وتقارير واضحة وواجهة بسيطة.",
   girisAltBilgi: "Yönetio · منصة عمليات المنشآت متعددة المستأجرين",

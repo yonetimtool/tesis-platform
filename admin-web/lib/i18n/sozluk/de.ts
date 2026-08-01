@@ -139,6 +139,7 @@ export const de: Sozluk = {
   girisYap: "Anmelden",
   girisYapiliyor: "Anmeldung läuft...",
   girisBasarisiz: "Anmeldung fehlgeschlagen.",
+  girisAlanZorunlu: "Anlagencode, E-Mail und Passwort sind erforderlich.",
   girisSloganBaslik: "Ihr Anlagenbetrieb – in einem Panel.",
   girisSloganAlt: "Verwalten Sie Rundgänge, Aufgaben, Beiträge und Bewohnerabläufe an einem Ort – Live-Status, klare Berichte, eine schlichte Oberfläche.",
   girisAltBilgi: "Yönetio · mandantenfähige Plattform für den Anlagenbetrieb",

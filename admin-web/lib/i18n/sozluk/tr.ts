@@ -155,6 +155,7 @@ export const tr = {
   girisYap: "Giriş yap",
   girisYapiliyor: "Giriş yapılıyor...",
   girisBasarisiz: "Giriş başarısız.",
+  girisAlanZorunlu: "Tesis kodu, e-posta ve parola zorunlu.",
   girisSloganBaslik: "Tesis operasyonunuz, tek panelden.",
   girisSloganAlt:
     "Devriye, görev, aidat ve sakin akışlarını tek yerden yönetin — canlı durum, net raporlar, sade bir arayüz.",

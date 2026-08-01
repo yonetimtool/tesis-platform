@@ -403,4 +403,37 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
       `sablon dizgesinde sabit metin:\n${sizanlar.slice(0, 10).join("\n")}`,
     ).toEqual([]);
   });
+  // (P104) BFF ROTALARI — taramanin DORDUNCU kor noktasi.
+  //
+  // Yukaridaki taramalar `.tsx` okur; BFF rota islerleri `route.ts`tir ve
+  // HIC taranmamisti. Oysa onlar kullaniciya DOGRUDAN metin dondurur
+  // (`{error:{message}}`) ve giris rotasinda iki sabit Turkce metin
+  // bulundu. Sunucuda `metin()` calismaz (cerez `document`tan okunur);
+  // dogru arac `istekMetni(req, anahtar)`dir.
+  it("BFF rotalarinda sabit hata metni YOK (P104)", () => {
+    const sizanlar: string[] = [];
+    const tara = (dizin: string) => {
+      for (const ad of fs.readdirSync(path.join(KOK, dizin))) {
+        const göreli = `${dizin}/${ad}`;
+        const tam = path.join(KOK, göreli);
+        if (fs.statSync(tam).isDirectory()) {
+          tara(göreli);
+          continue;
+        }
+        if (!ad.endsWith(".ts")) continue;
+        fs.readFileSync(tam, "utf8")
+          .split("\n")
+          .forEach((satir, i) => {
+            if (/^\s*(\/\/|\*)/.test(satir)) return;
+            const m = /message:\s*"([^"]{2,})"/.exec(satir);
+            if (m) sizanlar.push(`${göreli}:${i + 1} ${m[1].slice(0, 60)}`);
+          });
+      }
+    };
+    tara("app/api");
+    expect(
+      sizanlar,
+      `BFF rotasinda sabit metin (istekMetni kullanin):\n${sizanlar.join("\n")}`,
+    ).toEqual([]);
+  });
 });

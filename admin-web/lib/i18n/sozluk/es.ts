@@ -139,6 +139,7 @@ export const es: Sozluk = {
   girisYap: "Iniciar sesión",
   girisYapiliyor: "Iniciando sesión...",
   girisBasarisiz: "No se pudo iniciar sesión.",
+  girisAlanZorunlu: "El código de la instalación, el correo y la contraseña son obligatorios.",
   girisSloganBaslik: "Las operaciones de su instalación, en un solo panel.",
   girisSloganAlt: "Gestione rondas, tareas, cuotas y flujos de residentes desde un solo lugar: estado en vivo, informes claros, una interfaz sencilla.",
   girisAltBilgi: "Yönetio · plataforma multiinquilino de operaciones de instalaciones",
