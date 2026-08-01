@@ -47,9 +47,21 @@ kapi() {
     # basiliyordu ve `vitest` icin bu **Duration** satiriydi — yani ozet,
     # "neden dustu"yu degil "ne kadar surdu"yu soyluyordu. Once BASARISIZLIK
     # IMZASI aranir; yoksa son satira dusulur.
-    local sebep
-    sebep="$(grep -aiE "([0-9]+ (failed|error))|^(FAIL|ERROR)|Tests +[0-9]+ failed|Failing tests" "$log" \
-             | tail -n 1 | tr -d '\r' | sed 's/^[[:space:]]*//' | cut -c1-88)"
+    local sebep=""
+    # (P92) FLUTTER ONCE: `flutter test` bir "Failing tests:" blogu basar
+    # ve ise yarar bilgi o blogun ILK SATIRIDIR (dusun testin adi).
+    # Imza taramasi burada `tail -1` ile blogun BASLIGINI secerdi ("Failing
+    # tests:"), yani "dustu" der ama NE dustugunu soylemezdi.
+    if grep -qaE '^Failing tests' "$log"; then
+      sebep="$(grep -aA1 -E '^Failing tests' "$log" | sed -n '2p' \
+               | tr -d '\r' | sed 's/^[[:space:]]*//' | cut -c1-88)"
+    fi
+    # Genel imzalar: pytest ("1 error", "3 failed"), vitest ("Tests N failed"),
+    # flutter ozet satiri ("Some tests failed"), yapim ("Failed to compile").
+    if [ -z "$sebep" ]; then
+      sebep="$(grep -aiE "([0-9]+ (failed|error))|^(FAIL|ERROR)|Tests +[0-9]+ failed|Some tests failed|Failed to compile" "$log" \
+               | tail -n 1 | tr -d '\r' | sed 's/^[[:space:]]*//' | cut -c1-88)"
+    fi
     [ -z "$sebep" ] && sebep="$ozet"
     SONUC+=("HATA $ad (cikis $kod) — $sebep")
     SONUC+=("     gunluk: $log")
