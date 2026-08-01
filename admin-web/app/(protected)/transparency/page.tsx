@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorBox, Field, PageHeader, inputCls } from "@/components/form";
 import { jsonFetcher } from "@/lib/fetcher";
+import { kurusToTL } from "@/lib/money";
 import type { TransparencyBoard, TransparencyList } from "@/lib/types";
 import { useI18n } from "@/lib/i18n/kullan";
 
@@ -24,15 +25,16 @@ function ayBaslik(ay: string, dil: string): string {
   return `${ad} ${y}`;
 }
 
-function tl(kurus: number): string {
-  const neg = kurus < 0;
-  const abs = Math.abs(kurus);
-  const tam = Math.floor(abs / 100)
-    .toLocaleString("tr-TR")
-    .replace(/ /g, ".");
-  const ond = String(abs % 100).padStart(2, "0");
-  return `${neg ? "-" : ""}${tam},${ond} TL`;
-}
+// (P48) UCUNCU PARA BICIMLENDIRICISI KALDIRILDI.
+//
+// Burada `... TL` yazan ozel bir `tl()` vardi; panelin geri kalani
+// `kurusToTL` ile `... ₺` yaziyordu — ayni deger iki sayfada iki farkli
+// bicimde gorunuyordu. Ayrica bu surum `toLocaleString`in DAR BOSLUKLU
+// (U+00A0) ciktisini nokta ile yamiyordu: yama, kucuk-ICU ortamindaki
+// asil sorunu (VIRGULLU gruplama) hic cozmuyordu.
+//
+// Artik tek kaynak `lib/money.ts`tir ve ICU'ya hic bagimli degildir.
+const tl = kurusToTL;
 
 export default function TransparencyPage() {
   const { t, dil } = useI18n();

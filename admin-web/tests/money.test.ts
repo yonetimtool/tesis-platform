@@ -80,4 +80,32 @@ describe("gidis-donus (round-trip)", () => {
       expect(tlToKurus(metin), `kurus: ${kurus}`).toBe(kurus);
     }
   });
+
+  // (P48) BINLIK AYIRICI — ICU'YA BAGIMLI DEGIL.
+  //
+  // Eski surum `toLocaleString("tr-TR")` kullaniyordu. Tam ICU'lu bir
+  // calisma zamaninda `5.000` verir; KUCUK-ICU ile derlenmis bir
+  // Node/tarayicida `tr-TR` desteklenmez ve `en-US`a duser: `5,000`. O
+  // durumda para `5,000,00 ₺` gorunurdu — hem yanlis hem OKUNAMAZ, ve hata
+  // YALNIZ BAZI ORTAMLARDA ciktigi icin gelistirmede fark edilmezdi.
+  it("binlik ayirici NOKTA, ondalik VIRGUL — her ortamda", () => {
+    expect(kurusToTL(500000)).toBe("5.000,00 ₺");
+    expect(kurusToTL(123456789)).toBe("1.234.567,89 ₺");
+    expect(kurusToTL(99)).toBe("0,99 ₺");
+    expect(kurusToTL(100)).toBe("1,00 ₺");
+    expect(kurusToTL(0)).toBe("0,00 ₺");
+  });
+
+  it("NEGATIF tutar isaretini KORUR", () => {
+    expect(kurusToTL(-500000)).toBe("-5.000,00 ₺");
+    expect(kurusToTL(-99)).toBe("-0,99 ₺");
+  });
+
+  it("gruplama SINIRLARI dogru (3, 4, 6, 7 hane)", () => {
+    // Uc haneden kisa sayida ayirici OLMAMALI.
+    expect(kurusToTL(99900)).toBe("999,00 ₺");
+    expect(kurusToTL(100000)).toBe("1.000,00 ₺");
+    expect(kurusToTL(99999900)).toBe("999.999,00 ₺");
+    expect(kurusToTL(100000000)).toBe("1.000.000,00 ₺");
+  });
 });
