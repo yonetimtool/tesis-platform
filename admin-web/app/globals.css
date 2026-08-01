@@ -172,6 +172,25 @@ textarea:focus-visible,
 .dark .text-violet-700, .dark .text-violet-800 { color: #c4b5fd; }
 .dark .text-orange-700 { color: #fdba74; }
 
+/* (P62) EKSIK KALAN AILELER — olcumle bulundu.
+   `rose` ve `sky` aileleri hicbir zaman devrilmemisti: `text-rose-600/700`
+   SAYDAM bir yuzeyde kullaniliyor (mesajlar hata eki, finans "cikis"
+   tutari, cikis uyarisi), yani koyu temada koyu gul rengi KOYU zemine
+   dusuyordu. `text-emerald-600` de ayni durumdaydi — `-700/-800` devrilmis
+   ama `-600` unutulmustu. `text-sky-800` ve `text-amber-900` rozet
+   metinleridir; zeminleri asagida devrildigi icin metinleri de devrilir. */
+.dark .bg-rose-50, .dark .bg-rose-100 { background-color: rgba(244, 63, 94, 0.15); }
+.dark .bg-sky-50, .dark .bg-sky-100 { background-color: rgba(14, 165, 233, 0.15); }
+.dark .text-rose-600, .dark .text-rose-700, .dark .text-rose-800,
+.dark .text-rose-900 { color: #fda4af; }
+.dark .text-emerald-600 { color: #6ee7b7; }
+.dark .text-sky-700, .dark .text-sky-800 { color: #7dd3fc; }
+.dark .text-amber-900 { color: #fcd34d; }
+.dark .border-rose-200 { border-color: rgba(244, 63, 94, 0.4); }
+.dark .border-emerald-200 { border-color: rgba(16, 185, 129, 0.4); }
+.dark .border-blue-200 { border-color: rgba(59, 130, 246, 0.4); }
+.dark .hover\:bg-rose-50:hover { background-color: rgba(244, 63, 94, 0.15); }
+
 .dark .border-red-300 { border-color: rgba(239, 68, 68, 0.4); }
 .dark .border-indigo-200 { border-color: rgba(99, 102, 241, 0.4); }
 .dark .border-amber-200 { border-color: rgba(245, 158, 11, 0.4); }
