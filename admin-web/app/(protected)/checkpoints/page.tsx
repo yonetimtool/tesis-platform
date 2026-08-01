@@ -112,7 +112,7 @@ export default function CheckpointsPage() {
     try {
       await apiSend(`/api/checkpoints/${c.id}`, "DELETE");
       mutate();
-      toast.success("Nokta silindi.");
+      toast.success(t("noktaSilindi"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }

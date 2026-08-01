@@ -915,4 +915,12 @@ export const es: Sozluk = {
   rol_resident: "Residente",
   rol_guvenlik_amiri: "Jefe de seguridad",
   kabukYetki: "Matriz de permisos",
+  noktaSilindi: "Punto eliminado.",
+  tesisSilindi: "Sitio eliminado.",
+  planSilindi: "Plan eliminado.",
+  atamaKaydedildi: "Asignación guardada.",
+  vardiyaSilindi: "Turno eliminado.",
+  daireSilindi: "Vivienda eliminada.",
+  entegrasyonSilindi: "Integración eliminada.",
+  duyuruSilindi: "Anuncio eliminado.",
 };

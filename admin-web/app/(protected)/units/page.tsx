@@ -110,7 +110,7 @@ export default function UnitsPage() {
       await apiSend(`/api/units/${u.id}`, "DELETE");
       if (detail?.id === u.id) setDetail(null);
       mutate();
-      toast.success("Daire silindi.");
+      toast.success(t("daireSilindi"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }

@@ -975,4 +975,12 @@ export const tr = {
   rol_resident: "Sakin",
   rol_guvenlik_amiri: "Güv. amiri",
   kabukYetki: "Yetki matrisi",
+  noktaSilindi: "Nokta silindi.",
+  tesisSilindi: "Tesis silindi.",
+  planSilindi: "Plan silindi.",
+  atamaKaydedildi: "Atama kaydedildi.",
+  vardiyaSilindi: "Vardiya silindi.",
+  daireSilindi: "Daire silindi.",
+  entegrasyonSilindi: "Entegrasyon silindi.",
+  duyuruSilindi: "Duyuru silindi.",
 } as const;

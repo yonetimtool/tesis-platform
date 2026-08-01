@@ -915,4 +915,12 @@ export const de: Sozluk = {
   rol_resident: "Bewohner",
   rol_guvenlik_amiri: "Sicherheitsleiter",
   kabukYetki: "Berechtigungsmatrix",
+  noktaSilindi: "Kontrollpunkt gelöscht.",
+  tesisSilindi: "Anlage gelöscht.",
+  planSilindi: "Plan gelöscht.",
+  atamaKaydedildi: "Zuweisung gespeichert.",
+  vardiyaSilindi: "Schicht gelöscht.",
+  daireSilindi: "Einheit gelöscht.",
+  entegrasyonSilindi: "Integration gelöscht.",
+  duyuruSilindi: "Ankündigung gelöscht.",
 };

@@ -152,7 +152,7 @@ export default function AnnouncementsPage() {
     try {
       await apiSend(`/api/announcements/${a.id}`, "DELETE");
       mutate();
-      toast.success("Duyuru silindi.");
+      toast.success(t("duyuruSilindi"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }

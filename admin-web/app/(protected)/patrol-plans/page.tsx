@@ -134,7 +134,7 @@ export default function PatrolPlansPage() {
     try {
       await apiSend(`/api/patrol-plans/${p.id}`, "DELETE");
       mutate();
-      toast.success("Plan silindi.");
+      toast.success(t("planSilindi"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }
@@ -165,7 +165,7 @@ export default function PatrolPlansPage() {
         items: selected.map((cid, i) => ({ checkpoint_id: cid, sira: i })),
       });
       setAssignPlan(null);
-      toast.success("Atama kaydedildi.");
+      toast.success(t("atamaKaydedildi"));
     } catch (err) {
       setAssignErr(err instanceof Error ? err.message : "Atama kaydedilemedi.");
     } finally {

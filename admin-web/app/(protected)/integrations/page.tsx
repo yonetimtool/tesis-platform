@@ -148,7 +148,7 @@ export default function IntegrationsPage() {
     try {
       await apiSend(`/api/integrations/${it.id}`, "DELETE");
       mutate();
-      toast.success("Entegrasyon silindi.");
+      toast.success(t("entegrasyonSilindi"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }

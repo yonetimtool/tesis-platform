@@ -915,4 +915,12 @@ export const ar: Sozluk = {
   rol_resident: "ساكن",
   rol_guvenlik_amiri: "رئيس الأمن",
   kabukYetki: "مصفوفة الصلاحيات",
+  noktaSilindi: "تم حذف النقطة.",
+  tesisSilindi: "تم حذف الموقع.",
+  planSilindi: "تم حذف الخطة.",
+  atamaKaydedildi: "تم حفظ التعيين.",
+  vardiyaSilindi: "تم حذف الوردية.",
+  daireSilindi: "تم حذف الوحدة.",
+  entegrasyonSilindi: "تم حذف التكامل.",
+  duyuruSilindi: "تم حذف الإعلان.",
 };

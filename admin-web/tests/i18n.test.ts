@@ -265,4 +265,42 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
       `kalan ${sizanlar.length} satir:\n${sizanlar.slice(0, 10).join("\n")}`,
     ).toBeLessThanOrEqual(KALAN_ESIK);
   });
+
+  // (P46) BILDIRIM (toast) METINLERI — taramanin KOR NOKTASIYDI.
+  //
+  // Yukaridaki taramalar JSX metin dugumlerine, gorunen ozniteliklere ve
+  // (tur 22) TUM kaynaktaki Turkce sabitlere bakiyor. Ama son tarama
+  // TURKCE HARFE bakar: `toast.success("Assignment saved.")` gibi
+  // Turkce-harfsiz bir sabit gorunmezdi. Olculdu: panelde 10 sabit
+  // bildirim metni vardi (dokuzu Turkce oldugu icin tur 22 taramasinin
+  // ESIGINE takiliyordu ama esik "circir" oldugundan gecmisti).
+  //
+  // Bu olcum DILDEN BAGIMSIZDIR: bildirim metni tirnak icinde ise
+  // sizintidir, hangi dilde oldugu fark etmez. Kullanicinin gordugu SON
+  // mesaj en cok fark edilen yerdir.
+  it("bildirim (toast) metinleri t() uzerinden gelir (P46)", () => {
+    const sizanlar: string[] = [];
+    const tara = (dizin: string) => {
+      for (const ad of fs.readdirSync(path.join(KOK, dizin))) {
+        const göreli = `${dizin}/${ad}`;
+        const tam = path.join(KOK, göreli);
+        if (fs.statSync(tam).isDirectory()) {
+          tara(göreli);
+          continue;
+        }
+        if (!/\.tsx?$/.test(ad)) continue;
+        fs.readFileSync(tam, "utf8")
+          .split("\n")
+          .forEach((satir, i) => {
+            const m = /toast\.[a-z]+\(\s*["\'`]([^"\'`]{2,})/.exec(satir);
+            if (m) sizanlar.push(`${göreli}:${i + 1} (toast) ${m[1].slice(0, 60)}`);
+          });
+      }
+    };
+    ["app", "components"].forEach(tara);
+    expect(
+      sizanlar,
+      `cevrilmemis bildirim metni:\n${sizanlar.slice(0, 10).join("\n")}`,
+    ).toEqual([]);
+  });
 });

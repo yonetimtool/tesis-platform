@@ -915,4 +915,12 @@ export const ru: Sozluk = {
   rol_resident: "Житель",
   rol_guvenlik_amiri: "Нач. охраны",
   kabukYetki: "Матрица прав",
+  noktaSilindi: "Точка удалена.",
+  tesisSilindi: "Объект удалён.",
+  planSilindi: "План удалён.",
+  atamaKaydedildi: "Назначение сохранено.",
+  vardiyaSilindi: "Смена удалена.",
+  daireSilindi: "Квартира удалена.",
+  entegrasyonSilindi: "Интеграция удалена.",
+  duyuruSilindi: "Объявление удалено.",
 };

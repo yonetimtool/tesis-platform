@@ -80,7 +80,7 @@ export default function TenantsPage() {
     try {
       await apiSend(`/api/tenants/${tesis.id}`, "DELETE");
       mutate();
-      toast.success("Tesis silindi.");
+      toast.success(t("tesisSilindi"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }

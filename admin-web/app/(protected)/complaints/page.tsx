@@ -295,7 +295,7 @@ function ActionForm({
         await apiSend(`/api/complaints/${c.id}/decline`, "POST", {
           sebep: text.trim(),
         });
-        toast.success("Talep reddedildi.");
+        toast.success(t("talepReddedildi"));
       } else {
         const notu = text.trim();
         await apiSend(`/api/complaints/${c.id}/resolve`, "POST", {

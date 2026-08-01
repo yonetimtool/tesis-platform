@@ -173,7 +173,7 @@ export default function BuildingEditorPage() {
     try {
       await apiSend(`/api/units/${u.id}`, "DELETE");
       refresh();
-      toast.success("Daire silindi.");
+      toast.success(t("daireSilindi"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }

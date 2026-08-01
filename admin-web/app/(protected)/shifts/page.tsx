@@ -109,7 +109,7 @@ export default function ShiftsPage() {
     try {
       await apiSend(`/api/shifts/${s.id}`, "DELETE");
       mutate();
-      toast.success("Vardiya silindi.");
+      toast.success(t("vardiyaSilindi"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Silinemedi.");
     }
