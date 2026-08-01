@@ -3812,6 +3812,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noktaEnlem => 'Широта (опц.)';
 
   @override
+  String get noktaKonumGecersiz => 'Неверные координаты. Пример: 41,0082';
+
+  @override
   String get noktaBoylam => 'Долгота (опц.)';
 
   @override

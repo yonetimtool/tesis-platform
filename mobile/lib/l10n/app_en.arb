@@ -1028,6 +1028,7 @@
   "noktaUidIpucu": "e.g. 04A2B3C4D5",
   "noktaUidHelper": "The tag's unique identifier (hex).",
   "noktaEnlem": "Latitude (opt.)",
+  "noktaKonumGecersiz": "Invalid location. Example: 41.0082",
   "noktaBoylam": "Longitude (opt.)",
   "noktaPasifAlt": "An inactive checkpoint will not match a scan",
   "noktaYok": "No checkpoints yet.\nAdd an NFC checkpoint from the bottom right.",

@@ -6281,6 +6281,12 @@ abstract class AppLocalizations {
   /// **'Enlem (ops.)'**
   String get noktaEnlem;
 
+  /// No description provided for @noktaKonumGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konum geçersiz. Örnek: 41,0082'**
+  String get noktaKonumGecersiz;
+
   /// No description provided for @noktaBoylam.
   ///
   /// In tr, this message translates to:

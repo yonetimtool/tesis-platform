@@ -3835,6 +3835,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noktaEnlem => 'خط العرض (اختياري)';
 
   @override
+  String get noktaKonumGecersiz => 'الموقع غير صالح. مثال: 41,0082';
+
+  @override
   String get noktaBoylam => 'خط الطول (اختياري)';
 
   @override

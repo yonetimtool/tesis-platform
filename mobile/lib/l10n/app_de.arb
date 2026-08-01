@@ -1028,6 +1028,7 @@
   "noktaUidIpucu": "z. B. 04A2B3C4D5",
   "noktaUidHelper": "Die eindeutige Kennung des Tags (hex).",
   "noktaEnlem": "Breitengrad (opt.)",
+  "noktaKonumGecersiz": "Ungültige Position. Beispiel: 41,0082",
   "noktaBoylam": "Längengrad (opt.)",
   "noktaPasifAlt": "Ein inaktiver Punkt wird beim Scannen nicht erkannt",
   "noktaYok": "Noch keine Kontrollpunkte.\nUnten rechts einen NFC-Punkt hinzufügen.",

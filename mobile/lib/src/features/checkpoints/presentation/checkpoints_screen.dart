@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/sayi.dart';
 import '../data/checkpoint_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
@@ -193,8 +194,20 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
-    final lat = double.tryParse(_lat.text.trim());
-    final lng = double.tryParse(_lng.text.trim());
+    // (P57) `double.tryParse` KULLANILMIYOR: Turkce klavyede ondalik tusu
+    // VIRGULDUR ve `double.tryParse("41,0082")` null doner. Eskiden bu null
+    // dogrudan `gpsLat`a gidiyordu ve null "alani temizle" demek — yani
+    // koordinati Turkce yazimla giren kullanici onu SESSIZCE SILDIRIYORDU.
+    // `sayiCoz` bos girdi ile gecersiz girdiyi ayirir; asagidaki
+    // dogrulayici gecersizi zaten formda durdurur, bu ikinci savunmadir.
+    final latSonuc = sayiCoz(_lat.text);
+    final lngSonuc = sayiCoz(_lng.text);
+    if (!latSonuc.gecerli || !lngSonuc.gecerli) {
+      setState(() => _error = context.l10n.noktaKonumGecersiz);
+      return;
+    }
+    final lat = latSonuc.deger;
+    final lng = lngSonuc.deger;
     setState(() {
       _busy = true;
       _error = null;
@@ -298,6 +311,9 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
                       labelText: l10n.noktaEnlem,
                       border: const OutlineInputBorder(),
                     ),
+                    validator: (v) => sayiCoz(v ?? '').gecerli
+                        ? null
+                        : l10n.noktaKonumGecersiz,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -311,6 +327,9 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
                       labelText: l10n.noktaBoylam,
                       border: const OutlineInputBorder(),
                     ),
+                    validator: (v) => sayiCoz(v ?? '').gecerli
+                        ? null
+                        : l10n.noktaKonumGecersiz,
                   ),
                 ),
               ],

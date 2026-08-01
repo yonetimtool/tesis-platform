@@ -3693,6 +3693,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noktaEnlem => 'Latitud (opc.)';
 
   @override
+  String get noktaKonumGecersiz => 'Ubicación no válida. Ejemplo: 41,0082';
+
+  @override
   String get noktaBoylam => 'Longitud (opc.)';
 
   @override

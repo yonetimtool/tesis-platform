@@ -3712,6 +3712,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noktaEnlem => 'Breitengrad (opt.)';
 
   @override
+  String get noktaKonumGecersiz => 'Ungültige Position. Beispiel: 41,0082';
+
+  @override
   String get noktaBoylam => 'Längengrad (opt.)';
 
   @override

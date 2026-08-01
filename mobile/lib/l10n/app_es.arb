@@ -1028,6 +1028,7 @@
   "noktaUidIpucu": "ej. 04A2B3C4D5",
   "noktaUidHelper": "Identificador único de la etiqueta (hex).",
   "noktaEnlem": "Latitud (opc.)",
+  "noktaKonumGecersiz": "Ubicación no válida. Ejemplo: 41,0082",
   "noktaBoylam": "Longitud (opc.)",
   "noktaPasifAlt": "Un punto inactivo no coincide al escanear",
   "noktaYok": "Aún no hay puntos de control.\nAñada un punto NFC desde abajo a la derecha.",

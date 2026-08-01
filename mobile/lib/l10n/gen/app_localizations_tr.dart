@@ -3559,6 +3559,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noktaEnlem => 'Enlem (ops.)';
 
   @override
+  String get noktaKonumGecersiz => 'Konum geçersiz. Örnek: 41,0082';
+
+  @override
   String get noktaBoylam => 'Boylam (ops.)';
 
   @override

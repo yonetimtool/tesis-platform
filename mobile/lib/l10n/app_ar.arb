@@ -1028,6 +1028,7 @@
   "noktaUidIpucu": "مثال: 04A2B3C4D5",
   "noktaUidHelper": "المعرّف الفريد للوسم (hex).",
   "noktaEnlem": "خط العرض (اختياري)",
+  "noktaKonumGecersiz": "الموقع غير صالح. مثال: 41,0082",
   "noktaBoylam": "خط الطول (اختياري)",
   "noktaPasifAlt": "النقطة غير النشطة لا تُطابق أي مسح",
   "noktaYok": "لا توجد نقاط تفتيش بعد.\nأضف نقطة NFC من أسفل اليمين.",

@@ -1028,6 +1028,7 @@
   "noktaUidIpucu": "ex. 04A2B3C4D5",
   "noktaUidHelper": "Identifiant unique du tag (hex).",
   "noktaEnlem": "Latitude (opt.)",
+  "noktaKonumGecersiz": "Position invalide. Exemple : 41,0082",
   "noktaBoylam": "Longitude (opt.)",
   "noktaPasifAlt": "Un point inactif ne correspond à aucun scan",
   "noktaYok": "Aucun point de contrôle.\nAjoutez un point NFC depuis le bas à droite.",
