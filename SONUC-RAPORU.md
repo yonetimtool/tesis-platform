@@ -1,6 +1,6 @@
 # Oturum Sonuç Raporu — 2026-08-01
 
-Bu oturumda **P51 → P86 arası 36 madde** kapandı. Aşağıda ne yapıldığı, ne
+Bu oturumda **P51 → P87 arası 37 madde** kapandı. Aşağıda ne yapıldığı, ne
 bulunduğu ve **ne yapılmadığı** var.
 
 ---
@@ -18,11 +18,12 @@ bulunduğu ve **ne yapılmadığı** var.
 | mobile `flutter test` | **1559 passed** | P86 |
 | mobile `flutter build apk --debug` | başarılı | P82 |
 
-> **Bir uyarı:** mobil suite'in bir koşumunda "… and 12 more" ile başlayan
-> bir başarısızlık listesi göründü; hemen ardından iki tam koşum sorunsuz
-> geçti. Yakalayamadım, dolayısıyla **flake olduğunu iddia etmiyorum** —
-> yalnızca gördüğümü kaydediyorum. Bir sonraki turda `flutter test`
-> çıktısını dosyaya alıp tekrar tekrar koşturmak gerekir.
+> **Kovalandı (P87).** O anomali **5 ardışık tam koşumda tekrarlamadı**.
+> Bu "flake yoktu" demek **değildir** — 1/5'ten seyrek bir olay bu ölçümle
+> ayırt edilemez; kaydedilen şey bir **sayı**, bir sonuç değil. Kök neden
+> bulunamadı çünkü **kanıt ilk seferde yok edilmişti**: komut `| tail -1`
+> ile koşmuştu ve başarısızlık listesi kaybolmuştu. Kural 6 artık
+> `flutter test` için de "çıktıyı boruya sokma" diyor.
 
 ---
 
@@ -117,7 +118,12 @@ güvene çevirebilirdi:
 6. **P68** — Yazdığım testin `key={i}` ile de geçtiğini ölçtüm ve **"kararlı
    anahtar testi" diye sunmadım**.
 
+7. **P87** — Aynı boru tuzağı mobilde de ısırdı: gördüğüm başarısızlık
+   listesi `| tail -1` yüzünden kayboldu ve kök neden **bulunamaz** oldu.
+
 **Ortak ders:** sessizlik, sıfır ve yeşil — üçü de tek başına kanıt değil.
+Ve **kaybolan kanıt, olmayan kanıttan kötüdür**: insan "gördüm ama
+bulamadım" diye bir şey bilmenin yükünü taşır.
 
 ---
 
@@ -150,10 +156,10 @@ güvene çevirebilirdi:
 
 ## 7. Nerede duruyor
 
-- Plan: `docs/MASTER-PLAN.md` — **86 madde**, açık hash yer tutucusu yok.
+- Plan: `docs/MASTER-PLAN.md` — **87 madde**, açık hash yer tutucusu yok.
 - Cihaz listesi: P11 içinde, her kullanıcıya görünür değişiklik için bir madde.
 - Devir notu: **STATUS REPORT #10** (P61–P65 devri) hâlâ geçerli; sonraki tur
-  **P87**'den devam edebilir.
+  **P88**'den devam edebilir.
 - Tüm iş `main` üzerinde ve push'lu.
 
 **Not:** bağlam penceresi bu oturumun sonunda tamamen doldu. Son turlarda tek
