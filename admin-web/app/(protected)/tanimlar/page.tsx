@@ -20,6 +20,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { kurusToTL } from "@/lib/money";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 /**
@@ -358,7 +359,14 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                           ? "✓"
                           : "—"
                         : a.tip === "kurus"
-                          ? liraya(k[a.ad])
+                          ? // (P47) TABLODA `kurusToTL`, FORMDA `liraya`.
+                            // Ikisi AYNI DEGILDIR ve olmamalidir: form girdisi
+                            // AYRISTIRILABILIR olmali (`5000.00`), tablo ise
+                            // OKUNABILIR (`5.000,00 ₺`). Tabloda `liraya`
+                            // kullanmak, Turkce'de BINLIK ayirici olan noktayi
+                            // ondalik yerine koymak demekti: `5000.00` okuyan
+                            // kullanici bes yuz bin sanabilirdi.
+                            kurusToTL(Number(k[a.ad] ?? 0))
                           : String(k[a.ad] ?? "—")}
                     </td>
                   ))}
