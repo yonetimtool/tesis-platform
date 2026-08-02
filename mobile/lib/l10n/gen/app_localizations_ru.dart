@@ -4773,4 +4773,15 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get ayarlarBelgeAcilamadi =>
       'Не удалось открыть страницу. Проверьте подключение к интернету.';
+
+  @override
+  String get demoSimuleOkutma => 'Имитация отметки';
+
+  @override
+  String demoSimuleOkutmaBasarili(String nokta) {
+    return 'Имитация отметки записана: $nokta';
+  }
+
+  @override
+  String get demoSimuleOkutmaHata => 'Не удалось записать имитацию отметки.';
 }

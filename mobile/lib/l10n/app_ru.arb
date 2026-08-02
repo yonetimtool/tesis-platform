@@ -1397,5 +1397,15 @@
   "ayarlarHukuki": "Правовая информация",
   "ayarlarGizlilik": "Политика конфиденциальности",
   "ayarlarKosullar": "Условия использования",
-  "ayarlarBelgeAcilamadi": "Не удалось открыть страницу. Проверьте подключение к интернету."
+  "ayarlarBelgeAcilamadi": "Не удалось открыть страницу. Проверьте подключение к интернету.",
+  "demoSimuleOkutma": "Имитация отметки",
+  "demoSimuleOkutmaBasarili": "Имитация отметки записана: {nokta}",
+  "@demoSimuleOkutmaBasarili": {
+    "placeholders": {
+      "nokta": {
+        "type": "String"
+      }
+    }
+  },
+  "demoSimuleOkutmaHata": "Не удалось записать имитацию отметки."
 }

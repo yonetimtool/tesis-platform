@@ -873,6 +873,56 @@ paths:
   # ================================================================= #
   # DASHBOARD
   # ================================================================= #
+  /scans/simule:
+    post:
+      tags: [scans]
+      summary: SIMULE okutma — YALNIZ demo modundaki tesiste (P115)
+      description: |
+        App Store denetcisi ne fiziksel NFC etiketini okutabilir ne de bir
+        sitede durabilir. Uygulamanin omurgasi (devriye turu) donanima
+        bagli oldugu icin denetci onu HIC goremeden reddedebilir.
+
+        **KAPI TENANT BAYRAGINDA** (`tenant.demo_mod`), istemcide DEGIL:
+        istemci bayragi olsaydi herhangi bir kullanici GERCEK bir tesiste
+        sahte tur kaydi uretebilir ve tur kaydinin KANIT degeri
+        sifirlanirdi. Bayrak yalniz platform operatorunce acilir; yazma
+        yolu uygulama arayuzunde YOKTUR.
+
+        **KAPALIYKEN 404** (403 degil): "yetkin yok" demek, ucun
+        VARLIGINI sizdirirdi. Demo tesisi disinda bu uc YOKTUR.
+
+        **GERCEK YOLDAN AYRILMAZ:** `checkpoint_id`den etiketin UID'si
+        cozulur ve AYNI `POST /scans` islevi cagrilir. Ayri bir yazma
+        yolu, denetciye urunun gercek akisini degil taklidini gostermek
+        olurdu. SDM imzasi bulunmadigi icin kayit `imza_dogrulandi =
+        false` duser — simule okutma gercek okutmadan AYIRT EDILEBILIR.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SimuleScanCreate" }
+      responses:
+        "201":
+          description: Simule okutma kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScanEvent" }
+        "200":
+          description: Ayni Idempotency-Key ile tekrar — ilk kayit doner
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScanEvent" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Demo modu KAPALI ya da checkpoint yok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /dashboard/live:
     get:
       tags: [dashboard]
@@ -8988,6 +9038,23 @@ components:
           description: >
             (P34) O gunun konumsuz okutma sayisi — `konumsuz` suzgecinden
             BAGIMSIZ hesaplanir.
+    SimuleScanCreate:
+      type: object
+      required: [checkpoint_id]
+      description: >
+        `nfc_tag_uid` YOKTUR ve olamaz: etiket UID'sini istemciden almak,
+        "hangi etiket okutuldu" sorusunu istemcinin uydurmasina birakmak
+        olurdu. Sunucu UID'yi `checkpoint_id`den kendisi cozer.
+      properties:
+        checkpoint_id: { type: string, format: uuid }
+        patrol_window_id: { type: string, format: uuid, nullable: true }
+        okutma_zamani:
+          type: string
+          format: date-time
+          nullable: true
+          description: Verilmezse SUNUCU SAATI kullanilir.
+        gps_lat: { type: number, nullable: true }
+        gps_lng: { type: number, nullable: true }
     ScanCreate:
       type: object
       required: [nfc_tag_uid, okutma_zamani]

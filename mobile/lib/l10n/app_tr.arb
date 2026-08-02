@@ -1938,5 +1938,15 @@
   "ayarlarHukuki": "Yasal",
   "ayarlarGizlilik": "Gizlilik Politikası",
   "ayarlarKosullar": "Kullanım Koşulları",
-  "ayarlarBelgeAcilamadi": "Sayfa açılamadı. İnternet bağlantınızı kontrol edin."
+  "ayarlarBelgeAcilamadi": "Sayfa açılamadı. İnternet bağlantınızı kontrol edin.",
+  "demoSimuleOkutma": "Simüle okutma",
+  "demoSimuleOkutmaBasarili": "Simüle okutma kaydedildi: {nokta}",
+  "@demoSimuleOkutmaBasarili": {
+    "placeholders": {
+      "nokta": {
+        "type": "String"
+      }
+    }
+  },
+  "demoSimuleOkutmaHata": "Simüle okutma yapılamadı."
 }

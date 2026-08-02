@@ -31,6 +31,34 @@ class ScanApi {
       throw ApiException.fromDio(e);
     }
   }
+
+  /// `POST /scans/simule` — SIMULE OKUTMA (P115).
+  ///
+  /// YALNIZ demo modundaki tesiste calisir; baska bir tesiste sunucu
+  /// **404** doner (uc "yok" gibi davranir). Istemci bu ucu ancak
+  /// `TenantSettings.demoMod` acikken cagirir.
+  ///
+  /// Govdede `nfc_tag_uid` YOKTUR: etiketin kimligini istemciden almak,
+  /// demo tesisinde bile "hangi etiket okutuldu"yu istemcinin
+  /// uydurmasina birakmak olurdu — sunucu onu `checkpointId`den cozer.
+  Future<ScanSubmitResult> submitSimule({
+    required String checkpointId,
+    required String idempotencyKey,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/scans/simule',
+        data: {'checkpoint_id': checkpointId},
+        options: Options(headers: {'Idempotency-Key': idempotencyKey}),
+      );
+      return ScanSubmitResult(
+        event: ScanEvent.fromJson(res.data!),
+        wasDuplicate: res.statusCode == 200,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }
 
 final scanApiProvider = Provider<ScanApi>((ref) {

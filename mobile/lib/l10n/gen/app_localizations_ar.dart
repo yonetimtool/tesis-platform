@@ -4784,4 +4784,15 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get ayarlarBelgeAcilamadi =>
       'تعذّر فتح الصفحة. تحقّق من اتصالك بالإنترنت.';
+
+  @override
+  String get demoSimuleOkutma => 'مسح محاكى';
+
+  @override
+  String demoSimuleOkutmaBasarili(String nokta) {
+    return 'تم تسجيل المسح المحاكى: $nokta';
+  }
+
+  @override
+  String get demoSimuleOkutmaHata => 'تعذّر تسجيل المسح المحاكى.';
 }

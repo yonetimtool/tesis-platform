@@ -302,6 +302,18 @@ METINLER: dict[str, dict[str, str]] = {
               "la administración a otro administrador antes de eliminar su "
               "cuenta.",
     },
+    # (P115) Demo modu KAPALIYKEN simule okutma ucunun yaniti. 403
+    # ("yetkin yok") demek ucun VARLIGINI sizdirirdi; metin de o yuzden
+    # nesnenin degil UCUN bulunamadigini soyler.
+    "uc_bulunamadi": {
+        "tr": "Bu özellik bu tesiste kullanılamıyor.",
+        "en": "This feature is not available for this site.",
+        "ar": "هذه الميزة غير متاحة لهذا الموقع.",
+        "ru": "Эта функция недоступна для этого объекта.",
+        "de": "Diese Funktion ist für diese Anlage nicht verfügbar.",
+        "fr": "Cette fonctionnalité n'est pas disponible pour ce site.",
+        "es": "Esta función no está disponible para esta comunidad.",
+    },
     "yetkiniz_yok": {
         "tr": "Bu işlem için yetkiniz yok.",
         "en": "You are not authorized to perform this action.",

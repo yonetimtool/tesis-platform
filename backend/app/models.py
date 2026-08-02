@@ -279,6 +279,14 @@ class Tenant(Base):
     anpr_otomatik_cikis: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    #: (P115) DEMO MODU — YALNIZ App Store denetim tesisi icin true.
+    #: Acikken "simule okutma" ucu calisir; kapaliyken o uc YOK gibi
+    #: davranir (404). Bayrak SUNUCUDA durur: istemci bayragi olsaydi
+    #: herhangi bir kullanici gercek bir tesiste sahte tur kaydi
+    #: uretebilirdi ve tur kaydinin KANIT degeri sifirlanirdi.
+    demo_mod: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     # --- MUHASEBE AYARLARI (P27) — tenant basina TEK satir oldugu icin ayri
     # tablo DEGIL. `para_birimi` YALNIZ GOSTERIMDIR: depo ve hesaplama ₺
     # kalir; cok para birimi (kur, ceviri tarihi) AYRI bir karardir ve bu

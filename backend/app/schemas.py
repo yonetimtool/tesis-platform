@@ -744,6 +744,25 @@ class PatrolPlanCheckpointAssign(BaseModel):
 KonumDurumu = Literal["var", "izin_yok", "servis_kapali", "zaman_asimi", "bilinmiyor"]
 
 
+class SimuleScanCreate(BaseModel):
+    """(P115) SIMULE OKUTMA govdesi — YALNIZ demo modundaki tesiste.
+
+    `nfc_tag_uid` YOKTUR ve olamaz: etiketin UID'sini istemciden almak,
+    demo tesisinde bile "hangi etiket okutuldu" sorusunu istemcinin
+    uydurmasina birakmak olurdu. Sunucu UID'yi `checkpoint_id`den kendisi
+    cozer.
+
+    `okutma_zamani` opsiyoneldir; verilmezse SUNUCU SAATI kullanilir —
+    denetci elle zaman girmek zorunda kalmasin.
+    """
+
+    checkpoint_id: uuid.UUID
+    patrol_window_id: uuid.UUID | None = None
+    okutma_zamani: datetime | None = None
+    gps_lat: float | None = None
+    gps_lng: float | None = None
+
+
 class ScanCreate(BaseModel):
     nfc_tag_uid: str = Field(..., min_length=1)
     # istemci biliyorsa verir; yoksa nfc_tag_uid ile cozulur (nfc kaynak-dogru).
@@ -2050,6 +2069,11 @@ class TenantSettings(BaseModel):
     # Cikis olayinda acik gecis otomatik kapansin mi? Tek yonlu kapida
     # (yalniz giris kamerasi) kapatan olmaz — site bunu kapatabilmeli.
     anpr_otomatik_cikis: bool = True
+    #: (P115) Demo modu — istemci "simule okutma" dugmesini YALNIZ bu
+    #: bayrak acikken cizer. Yazma yolu YOK (TenantSettingsUpdate'te
+    #: bulunmuyor): bayragi uygulamadan acabilmek, korumayi anlamsiz
+    #: kilardi.
+    demo_mod: bool = False
     # (P35) Guvenligi kim yonetir (bkz. deps.GUVENLIK_YAZAN).
     guvenlik_modu: GuvenlikModu = "yonetim_ici"
     # (P37) Gurultu caydiricisi. `gurultu_integration_id` NULL = MANUEL MOD.

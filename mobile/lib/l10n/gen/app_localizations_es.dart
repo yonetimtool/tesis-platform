@@ -4658,4 +4658,16 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get ayarlarBelgeAcilamadi =>
       'No se pudo abrir la página. Compruebe su conexión a Internet.';
+
+  @override
+  String get demoSimuleOkutma => 'Escaneo simulado';
+
+  @override
+  String demoSimuleOkutmaBasarili(String nokta) {
+    return 'Escaneo simulado registrado: $nokta';
+  }
+
+  @override
+  String get demoSimuleOkutmaHata =>
+      'No se pudo registrar el escaneo simulado.';
 }

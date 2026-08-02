@@ -4515,4 +4515,15 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get ayarlarBelgeAcilamadi =>
       'Sayfa açılamadı. İnternet bağlantınızı kontrol edin.';
+
+  @override
+  String get demoSimuleOkutma => 'Simüle okutma';
+
+  @override
+  String demoSimuleOkutmaBasarili(String nokta) {
+    return 'Simüle okutma kaydedildi: $nokta';
+  }
+
+  @override
+  String get demoSimuleOkutmaHata => 'Simüle okutma yapılamadı.';
 }

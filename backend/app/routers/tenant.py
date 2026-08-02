@@ -64,6 +64,8 @@ def _to_settings(t: Tenant) -> TenantSettings:
         otopark_kapasite=t.otopark_kapasite,
         anpr_guven_esigi=float(t.anpr_guven_esigi),
         anpr_otomatik_cikis=t.anpr_otomatik_cikis,
+        # (P115) Istemci "simule okutma" dugmesini bu bayrakla cizer.
+        demo_mod=t.demo_mod,
         tur_gecikme_toleransi_dk=t.tur_gecikme_toleransi_dk,
         tur_alarm_tekrar_sayisi=t.tur_alarm_tekrar_sayisi,
         tur_baslangic_foto_zorunlu=t.tur_baslangic_foto_zorunlu,

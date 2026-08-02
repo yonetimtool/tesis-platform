@@ -4702,4 +4702,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get ayarlarBelgeAcilamadi =>
       'The page could not be opened. Check your internet connection.';
+
+  @override
+  String get demoSimuleOkutma => 'Simulated scan';
+
+  @override
+  String demoSimuleOkutmaBasarili(String nokta) {
+    return 'Simulated scan recorded: $nokta';
+  }
+
+  @override
+  String get demoSimuleOkutmaHata =>
+      'The simulated scan could not be recorded.';
 }

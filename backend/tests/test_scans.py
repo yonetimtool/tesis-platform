@@ -240,3 +240,80 @@ def test_scans_report_rbac(client, world):
     for role in ("admin_a", "yonetici_a"):
         h = _headers(client, world["slug_a"], world[role])
         assert client.get("/scans", headers=h).status_code == 200, role
+
+
+# ========================= SIMULE OKUTMA (P115) ============================= #
+#
+# App Store denetcisi fiziksel etiket okutamaz. Simule okutma bu bosluğu
+# kapatir ama GERCEK tesislerde YOK olmalidir — aksi halde tur kaydinin
+# kanit degeri sifirlanirdi. Asagidaki testler tam olarak bunu olcer.
+
+
+def _demo_ac(owner_conn, tenant_id, acik: bool = True) -> None:
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE tenant SET demo_mod = %s WHERE id = %s", (acik, tenant_id)
+        )
+
+
+def test_simule_DEMO_KAPALIYKEN_404(client, world, owner_conn):
+    """403 DEGIL 404: "yetkin yok" demek ucun VARLIGINI sizdirirdi."""
+    _demo_ac(owner_conn, world["a"], False)
+    h = _headers(client, world["slug_a"], world["admin_a"])
+    cp = _new_checkpoint(client, h)
+    r = client.post(
+        "/scans/simule",
+        headers={**h, "Idempotency-Key": f"sim-{uuid.uuid4()}"},
+        json={"checkpoint_id": cp["id"]},
+    )
+    assert r.status_code == 404, r.text
+
+
+def test_simule_DEMO_ACIKKEN_kayit_olusur_ve_IMZASIZ(client, world, owner_conn):
+    """Kayit gercek yoldan gecer ama `imza_dogrulandi=false` duser —
+    yani simule okutma gercek okutmadan AYIRT EDILEBILIR kalir."""
+    _demo_ac(owner_conn, world["a"], True)
+    try:
+        h = _headers(client, world["slug_a"], world["admin_a"])
+        cp = _new_checkpoint(client, h)
+        r = client.post(
+            "/scans/simule",
+            headers={**h, "Idempotency-Key": f"sim-{uuid.uuid4()}"},
+            json={"checkpoint_id": cp["id"]},
+        )
+        assert r.status_code == 201, r.text
+        govde = r.json()
+        assert govde["checkpoint_id"] == cp["id"]
+        assert govde["imza_dogrulandi"] is False
+        # Zaman verilmedi -> SUNUCU doldurdu (denetci elle zaman girmesin).
+        assert govde["okutma_zamani"]
+    finally:
+        _demo_ac(owner_conn, world["a"], False)
+
+
+def test_simule_AYNI_anahtar_ikinci_kayit_ACMAZ(client, world, owner_conn):
+    """Gercek yolla ayni idempotency davranisi — ayri bir yazma yolu
+    olsaydi bu garanti de ikiye bolunurdu."""
+    _demo_ac(owner_conn, world["a"], True)
+    try:
+        h = _headers(client, world["slug_a"], world["admin_a"])
+        cp = _new_checkpoint(client, h)
+        anahtar = f"sim-{uuid.uuid4()}"
+        govde = {"checkpoint_id": cp["id"], "okutma_zamani": "2026-08-02T10:00:00Z"}
+        a = client.post("/scans/simule", headers={**h, "Idempotency-Key": anahtar}, json=govde)
+        b = client.post("/scans/simule", headers={**h, "Idempotency-Key": anahtar}, json=govde)
+        assert a.status_code == 201, a.text
+        assert b.status_code == 200, b.text
+        assert a.json()["id"] == b.json()["id"]
+    finally:
+        _demo_ac(owner_conn, world["a"], False)
+
+
+def test_simule_BAYRAK_uygulamadan_ACILAMAZ(client, world):
+    """Bayrak SUNUCUDA durur: yazma yolu olsaydi koruma anlamsizdi."""
+    h = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.patch("/tenant/settings", headers=h, json={"demo_mod": True})
+    # Alan semada YOK -> ya 422 ya da SESSIZCE yok sayilir; ikisinde de
+    # bayrak ACILMAMIS olmali.
+    ayarlar = client.get("/tenant/settings", headers=h).json()
+    assert ayarlar["demo_mod"] is False, r.text

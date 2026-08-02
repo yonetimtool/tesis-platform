@@ -4669,4 +4669,16 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get ayarlarBelgeAcilamadi =>
       'La page n\'a pas pu être ouverte. Vérifiez votre connexion Internet.';
+
+  @override
+  String get demoSimuleOkutma => 'Scan simulé';
+
+  @override
+  String demoSimuleOkutmaBasarili(String nokta) {
+    return 'Scan simulé enregistré : $nokta';
+  }
+
+  @override
+  String get demoSimuleOkutmaHata =>
+      'Le scan simulé n\'a pas pu être enregistré.';
 }

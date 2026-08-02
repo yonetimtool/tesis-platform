@@ -5,6 +5,8 @@ import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/sayi.dart';
 import '../data/checkpoint_api.dart';
+import '../../scan/data/scan_api.dart';
+import '../../tenant/data/tenant_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -72,6 +74,11 @@ class _CheckpointTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    // (P115) Bayrak BUILD ICINDE okunur. `itemBuilder` bir GERI CAGRIDIR
+    // ve orada `ref.watch` cagirmak aboneligi kurmaz: saglayici hic
+    // baslatilmaz, deger surekli "yukleniyor" kalir ve dugme demo
+    // tesisinde bile HIC gorunmezdi (test bunu yakaladi).
+    final demoMod = ref.watch(tenantSettingsProvider).value?.demoMod ?? false;
     return Card(
       child: ListTile(
         leading: CircleAvatar(
@@ -97,16 +104,60 @@ class _CheckpointTile extends ConsumerWidget {
               onSelected: (v) {
                 if (v == 'edit') _edit(context, ref);
                 if (v == 'delete') _delete(context, ref);
+                if (v == 'simule') _simuleOkut(context, ref);
               },
               itemBuilder: (_) => [
                 PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
                 PopupMenuItem(value: 'delete', child: Text(l10n.ortakSil)),
+                // (P115) SIMULE OKUTMA — YALNIZ demo tesisinde.
+                //
+                // App Store denetcisi fiziksel NFC etiketi okutamaz ve
+                // uygulamanin omurgasi (devriye turu) etiketle calisir;
+                // yani denetci onu HIC goremeden reddedebilir.
+                //
+                // Bayrak SUNUCUDAN gelir (`tenant.demo_mod`), istemcide
+                // tutulsaydi herhangi bir kullanici GERCEK bir tesiste
+                // sahte tur kaydi uretebilir ve tur kaydinin KANIT
+                // degeri sifirlanirdi. Ayar yuklenmediyse dugme
+                // CIZILMEZ: olmayan bir uca dokunduran olu dugme
+                // denetimde ret sebebidir.
+                if (demoMod)
+                  PopupMenuItem(
+                    value: 'simule',
+                    child: Text(l10n.demoSimuleOkutma),
+                  ),
               ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// (P115) Sunucuya SIMULE okutma gonderir. Gercek okutma yolundan
+  /// AYRILMAZ: sunucu ayni `create_scan` islevini cagirir ve kayit
+  /// `imza_dogrulandi = false` duser — yani simule okutma gercek bir
+  /// okutmadan ayirt edilebilir kalir.
+  Future<void> _simuleOkut(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(scanApiProvider).submitSimule(
+            checkpointId: cp.id,
+            idempotencyKey: 'sim-${cp.id}-${DateTime.now().microsecondsSinceEpoch}',
+          );
+      messenger.showSnackBar(SnackBar(
+        content: Text(l10n.demoSimuleOkutmaBasarili(cp.ad)),
+      ));
+    } on ApiException catch (e) {
+      // SESSIZ KALMAZ: demo modu kapaliysa sunucu 404 doner ve denetci
+      // "dokundum, hicbir sey olmadi" gorurdu.
+      messenger.showSnackBar(SnackBar(
+        content: Text(e.statusCode == 404
+            ? l10n.demoSimuleOkutmaHata
+            : apiHataMetni(l10n, e)),
+      ));
+    }
   }
 
   Future<void> _edit(BuildContext context, WidgetRef ref) async {

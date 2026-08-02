@@ -1397,5 +1397,15 @@
   "ayarlarHukuki": "Mentions légales",
   "ayarlarGizlilik": "Politique de confidentialité",
   "ayarlarKosullar": "Conditions d'utilisation",
-  "ayarlarBelgeAcilamadi": "La page n'a pas pu être ouverte. Vérifiez votre connexion Internet."
+  "ayarlarBelgeAcilamadi": "La page n'a pas pu être ouverte. Vérifiez votre connexion Internet.",
+  "demoSimuleOkutma": "Scan simulé",
+  "demoSimuleOkutmaBasarili": "Scan simulé enregistré : {nokta}",
+  "@demoSimuleOkutmaBasarili": {
+    "placeholders": {
+      "nokta": {
+        "type": "String"
+      }
+    }
+  },
+  "demoSimuleOkutmaHata": "Le scan simulé n'a pas pu être enregistré."
 }

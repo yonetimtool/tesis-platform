@@ -1397,5 +1397,15 @@
   "ayarlarHukuki": "قانوني",
   "ayarlarGizlilik": "سياسة الخصوصية",
   "ayarlarKosullar": "شروط الاستخدام",
-  "ayarlarBelgeAcilamadi": "تعذّر فتح الصفحة. تحقّق من اتصالك بالإنترنت."
+  "ayarlarBelgeAcilamadi": "تعذّر فتح الصفحة. تحقّق من اتصالك بالإنترنت.",
+  "demoSimuleOkutma": "مسح محاكى",
+  "demoSimuleOkutmaBasarili": "تم تسجيل المسح المحاكى: {nokta}",
+  "@demoSimuleOkutmaBasarili": {
+    "placeholders": {
+      "nokta": {
+        "type": "String"
+      }
+    }
+  },
+  "demoSimuleOkutmaHata": "تعذّر تسجيل المسح المحاكى."
 }

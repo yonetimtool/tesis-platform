@@ -7996,6 +7996,24 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Sayfa açılamadı. İnternet bağlantınızı kontrol edin.'**
   String get ayarlarBelgeAcilamadi;
+
+  /// No description provided for @demoSimuleOkutma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Simüle okutma'**
+  String get demoSimuleOkutma;
+
+  /// No description provided for @demoSimuleOkutmaBasarili.
+  ///
+  /// In tr, this message translates to:
+  /// **'Simüle okutma kaydedildi: {nokta}'**
+  String demoSimuleOkutmaBasarili(String nokta);
+
+  /// No description provided for @demoSimuleOkutmaHata.
+  ///
+  /// In tr, this message translates to:
+  /// **'Simüle okutma yapılamadı.'**
+  String get demoSimuleOkutmaHata;
 }
 
 class _AppLocalizationsDelegate

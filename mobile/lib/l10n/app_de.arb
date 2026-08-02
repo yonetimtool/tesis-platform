@@ -1397,5 +1397,15 @@
   "ayarlarHukuki": "Rechtliches",
   "ayarlarGizlilik": "Datenschutzerklärung",
   "ayarlarKosullar": "Nutzungsbedingungen",
-  "ayarlarBelgeAcilamadi": "Die Seite konnte nicht geöffnet werden. Prüfen Sie Ihre Internetverbindung."
+  "ayarlarBelgeAcilamadi": "Die Seite konnte nicht geöffnet werden. Prüfen Sie Ihre Internetverbindung.",
+  "demoSimuleOkutma": "Simulierter Scan",
+  "demoSimuleOkutmaBasarili": "Simulierter Scan erfasst: {nokta}",
+  "@demoSimuleOkutmaBasarili": {
+    "placeholders": {
+      "nokta": {
+        "type": "String"
+      }
+    }
+  },
+  "demoSimuleOkutmaHata": "Der simulierte Scan konnte nicht erfasst werden."
 }

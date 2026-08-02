@@ -214,6 +214,7 @@ DELETE /sayaclar/bolum/{id}                                 IZIN   IZIN   RED   
 PATCH  /sayaclar/bolum/{id}                                 IZIN   IZIN   RED    RED    RED    RED   
 GET    /scans                                               IZIN   IZIN   RED    RED    RED    IZIN  
 POST   /scans                                               IZIN   RED    IZIN   IZIN   RED    IZIN  
+POST   /scans/simule                                        IZIN   RED    IZIN   IZIN   RED    IZIN  
 GET    /shifts                                              IZIN   IZIN   IZIN   IZIN   RED    IZIN  
 POST   /shifts                                              IZIN   IZIN   RED    RED    RED    RED   
 DELETE /shifts/{id}                                         IZIN   IZIN   RED    RED    RED    RED   

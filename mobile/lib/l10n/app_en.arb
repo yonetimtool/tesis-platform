@@ -1397,5 +1397,15 @@
   "ayarlarHukuki": "Legal",
   "ayarlarGizlilik": "Privacy Policy",
   "ayarlarKosullar": "Terms of Use",
-  "ayarlarBelgeAcilamadi": "The page could not be opened. Check your internet connection."
+  "ayarlarBelgeAcilamadi": "The page could not be opened. Check your internet connection.",
+  "demoSimuleOkutma": "Simulated scan",
+  "demoSimuleOkutmaBasarili": "Simulated scan recorded: {nokta}",
+  "@demoSimuleOkutmaBasarili": {
+    "placeholders": {
+      "nokta": {
+        "type": "String"
+      }
+    }
+  },
+  "demoSimuleOkutmaHata": "The simulated scan could not be recorded."
 }

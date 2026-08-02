@@ -33,7 +33,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from ..config import settings
-from ..crud_helpers import norm_nfc, translate_integrity
+from ..crud_helpers import get_or_404, norm_nfc, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Checkpoint, PatrolWindow, ScanEvent, Tenant
@@ -43,6 +43,7 @@ from ..schemas import (
     ScanEventOut,
     ScanReportItem,
     ScanReportResponse,
+    SimuleScanCreate,
 )
 
 router = APIRouter(prefix="/scans", tags=["scans"])
@@ -315,6 +316,55 @@ async def _verify_sdm_or_422(
         # cmac/uid/format ayrintisi sizdirilmaz (tasarim: hata yonetimi).
         raise APIError(422, "invalid_signature", "sdm_imza_dogrulanamadi")
     return True, res.sayac
+
+
+@router.post("/simule")
+async def simule_scan(
+    body: SimuleScanCreate,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_SCANNER),
+) -> JSONResponse:
+    """SIMULE OKUTMA (P115) — YALNIZ demo modundaki tesiste.
+
+    NEDEN VAR: App Store denetcisi ne fiziksel NFC etiketimizi okutabilir
+    ne de bir sitede durabilir. Uygulamanin omurgasi (devriye turu)
+    donanima bagli oldugu icin denetci onu HIC goremeden reddedebilir.
+
+    KAPI TENANT BAYRAGINDA (`tenant.demo_mod`), istemcide DEGIL: istemci
+    bayragi olsaydi herhangi bir kullanici gercek bir tesiste sahte tur
+    kaydi uretebilir ve tur kaydinin KANIT degeri sifirlanirdi.
+
+    KAPALIYKA 404, 403 DEGIL: "yetkin yok" demek, ucun VARLIGINI ve
+    dolayisiyla boyle bir yolun bulundugunu sizdirirdi. Demo tesisi
+    disinda bu uc YOKTUR.
+
+    GERCEK YOLDAN AYRILMAZ: govde `checkpoint_id`den etiketin UID'sini
+    cozer ve AYNI `create_scan` islevini cagirir. Ayri bir yazma yolu
+    yazmak, denetciye urunun GERCEK akisini degil onun taklidini
+    gostermek olurdu — ve iki yolun zamanla ayrismasi kacinilmazdi.
+
+    SDM imzasi YOKTUR: kayit `imza_dogrulandi = false` olarak duser, yani
+    simule okutma gercek bir okutmadan AYIRT EDILEBILIR kalir.
+    """
+    tenant = (await db.execute(select(Tenant))).scalar_one_or_none()
+    if tenant is None or not tenant.demo_mod:
+        raise APIError(404, "not_found", "uc_bulunamadi")
+
+    checkpoint = await get_or_404(db, Checkpoint, body.checkpoint_id)
+    return await create_scan(
+        ScanCreate(
+            nfc_tag_uid=checkpoint.nfc_tag_uid,
+            checkpoint_id=checkpoint.id,
+            patrol_window_id=body.patrol_window_id,
+            okutma_zamani=body.okutma_zamani or datetime.now(tz=timezone.utc),
+            gps_lat=body.gps_lat,
+            gps_lng=body.gps_lng,
+        ),
+        idempotency_key=idempotency_key,
+        db=db,
+        user=user,
+    )
 
 
 @router.post("")
