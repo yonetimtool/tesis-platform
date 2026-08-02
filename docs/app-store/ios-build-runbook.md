@@ -121,6 +121,8 @@ maddesini doğrulayın) ve **simgede alfa kanalı** (P114'te kaldırıldı).
 - [ ] **App Privacy** anketi: `docs/app-store/app-privacy.md` tablosu
 - [ ] **App Review Information → Notes**:
       `docs/app-store/review-notes.md` sonundaki İngilizce blok
+- [ ] **Demo tenant prod'da tohumlandı** (`review-notes.md` §1'deki
+      `run --rm … worker …` komutu; `api` değil)
 - [ ] Demo hesap alanına: `sakin@demo.yonetio.site` + `DEMO_PAROLA`
       (denetçi rol değiştirmek isterse notlarda diğer hesaplar yazılı)
 - [ ] Privacy Policy URL: `https://yonetio.site/gizlilik`

@@ -6,11 +6,35 @@
 
 ## 1. Demo hesapları
 
-Tohumlama (prod'a benzer veriyle, **tekrar çalıştırılabilir**):
+Tohumlama (**tekrar çalıştırılabilir** — aynı komut ikinci kez koşulabilir):
+
+**PROD:**
 
 ```bash
-docker compose exec -e DEMO_PAROLA='<parola>' api python -m scripts.demo_tenant
+cd infra && docker compose -f docker-compose.prod.yml --env-file .env.prod \
+  run --rm -e DEMO_PAROLA='<parola>' worker python -m scripts.demo_tenant
 ```
+
+**DEV** (aynı biçim, yalnız compose dosyası farklı):
+
+```bash
+docker compose -f infra/docker-compose.yml \
+  run --rm -e DEMO_PAROLA='<parola>' worker python -m scripts.demo_tenant
+```
+
+> **`worker`, `api` DEĞİL.** Betik RLS'i bypass etmek için OWNER
+> (superuser) bağlantısı ister; prod'da `OWNER_DSN` **yalnız**
+> `migrate`/`worker`/`beat` servislerinde tanımlıdır — `api`ye superuser
+> DSN'i **bilinçli olarak** verilmez. `scripts/create_admin.py` ile aynı
+> sınır ve aynı komut biçimi.
+>
+> `exec` değil **`run --rm`**: `worker` uzun ömürlü bir süreçtir ve
+> tohumlama tek seferlik bir iştir; `run --rm` kendi kabını açıp kapatır.
+>
+> **`DEMO_PAROLA` zorunludur, varsayılanı yoktur** (en az 8 karakter).
+> Sabit bir varsayılan, internete açık bir tenant'ta herkesin bildiği bir
+> demo hesabı bırakırdı — hem de tam olarak denetçiye verilen hesaplarda.
+> Parolayı App Store Connect'in parola alanına da **aynen** girin.
 
 | Rol | E-posta | Ne görür |
 |---|---|---|

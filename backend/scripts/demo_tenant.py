@@ -1,6 +1,15 @@
 """(P115) APP STORE DENETIM TESISI — tohumlama.
 
-    docker compose exec api python -m scripts.demo_tenant
+KOSUM (dev VE prod, AYNI bicim — `worker`, `api` DEGIL):
+
+    docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod \
+        run --rm -e DEMO_PAROLA='<parola>' worker python -m scripts.demo_tenant
+
+NEDEN `worker`: bu betik RLS'i bypass etmek icin OWNER (superuser)
+baglantisi ister ve prod'da `OWNER_DSN` **yalniz** `migrate`/`worker`/
+`beat` servislerinde tanimlidir — `api`ye superuser DSN'i BILINCLI olarak
+verilmez (bkz. docker-compose.prod.yml basligi). `create_admin.py` ile
+ayni sinir; komut bicimi de kasten ayni.
 
 NE YAPAR: `demo_mod = true` olan bir tesis acar, her rol icin BIR hesap
 kurar ve denetcinin gorecegi ekranlarin BOS KALMAMASI icin en az veriyi
@@ -15,26 +24,36 @@ bulunmasinin en kisa yoludur.
 IDEMPOTENT: slug ve (tenant_id, email) benzersizligi uzerinden UPSERT.
 Denetim turlari arasinda tekrar kosulabilir.
 
-PAROLALAR: env ile verilir; varsayilanlar YALNIZ yerel deneme icindir.
-App Store Connect'e girilecek gercek parola Kerem tarafindan
-`DEMO_PAROLA` ile verilir ve `docs/app-store/review-notes.md`e yazilir.
+PAROLA: `DEMO_PAROLA` ile verilir ve VARSAYILANI YOKTUR (bkz. asagida).
+App Store Connect'e girilen parola ile AYNI olmalidir; degeri
+`docs/app-store/review-notes.md` §1'de degil, App Store Connect'in
+parola alaninda tutulur.
 """
 from __future__ import annotations
 
 import os
+import sys
 from datetime import datetime, timedelta, timezone
 
 import psycopg
 
 from app.security import hash_password
 
-OWNER_DSN = os.getenv(
-    "OWNER_DSN",
-    "postgresql://tesis_owner:owner_secret_change_me@db:5432/tesis",
-)
+# OWNER_DSN'in SABIT KODLU bir yedegi YOK — `create_admin.py` ile ayni
+# gerekce (tur 72'de orada duzeltilmisti, bu betik onu YENIDEN URETMISTI):
+# dev parolasini ("owner_secret_change_me") iceren bir yedek, dev'de kaza
+# eseri dogru oldugu icin calisir; prod'da ise sessizce YANLIS parolayla
+# baglanmayi deneyip anlasilmaz bir kimlik hatasi verir
+# ("password authentication failed for user"). Eksikse ERKEN ve NET patlar.
+OWNER_DSN = os.getenv("OWNER_DSN", "")
 
 SLUG = os.getenv("DEMO_SLUG", "demo")
-PAROLA = os.getenv("DEMO_PAROLA", "AppReview2026!")
+
+# PAROLANIN DA VARSAYILANI YOK. Bir varsayilan, PROD'da internete acik bir
+# tenant'ta HERKESIN BILDIGI bir parola birakirdi — hem de tam olarak
+# denetciye verilen hesaplarda. Komut zaten `-e DEMO_PAROLA=...` ile
+# cagriliyor (bkz. modul basligi ve review-notes.md §1).
+PAROLA = os.getenv("DEMO_PAROLA", "")
 
 #: Her rol icin BIR hesap. Denetci rolleri tek tek gormek isteyebilir;
 #: tek hesap vermek "yonetici ekranlarini gosteremedik" demek olurdu.
@@ -55,6 +74,28 @@ NOKTALAR = [
 
 
 def main() -> int:
+    if not OWNER_DSN:
+        print(
+            "OWNER_DSN tanimsiz. Bu betik RLS'i bypass etmek icin OWNER "
+            "(superuser) baglantisi ister.\n"
+            "  Prod: `run --rm -e DEMO_PAROLA=... worker python -m "
+            "scripts.demo_tenant` (api DEGIL — api'de superuser DSN'i "
+            "bilincli olarak yoktur).\n"
+            "  Elle: OWNER_DSN=postgresql://<owner>:<parola>@db:5432/<db>",
+            file=sys.stderr,
+        )
+        return 2
+    if len(PAROLA) < 8:
+        print(
+            "DEMO_PAROLA gerekli (en az 8 karakter). Varsayilan YOKTUR: "
+            "sabit bir parola, prod'da herkesin bildigi bir demo hesabi "
+            "birakirdi.\n"
+            "  Ornek: run --rm -e DEMO_PAROLA='<parola>' worker "
+            "python -m scripts.demo_tenant",
+            file=sys.stderr,
+        )
+        return 2
+
     with psycopg.connect(OWNER_DSN, autocommit=True) as conn:
         tenant_id = conn.execute(
             """
