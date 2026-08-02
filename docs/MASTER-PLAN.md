@@ -618,6 +618,21 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P112 · Hesap silme (MOBİL, SAKİN).** Test hesabıyla gir →
+  **Ayarlar → en alt → "Hesabımı sil"**. (1) Onay penceresi hem **ne
+  silineceğini** hem **aidat kayıtlarının kalacağını** yazmalı; (2) parola
+  girmeden "Hesabımı kalıcı olarak sil" → uyarı çıkmalı, istek **gitmemeli**;
+  (3) **yanlış** parola → hata; (4) doğru parola → mesaj gelmeli ve uygulama
+  **giriş ekranına dönmeli**; (5) aynı hesapla **tekrar giriş denemesi
+  başarısız** olmalı.
+- [ ] **P112 · Son yönetici engeli (MOBİL, YÖNETİCİ).** Tesiste **tek**
+  yönetici olan bir hesapla Ayarlar → Hesabımı sil → doğru parola →
+  "**başka bir yöneticiye yetki devredin**" mesajı çıkmalı ve hesap
+  **silinmemeli**. Sonra ikinci bir yönetici ekle, tekrar dene → bu kez
+  **silinmeli**.
+- [ ] **P112 · Silinen sakin yönetim tarafında (PANEL/MOBİL, YÖNETİCİ).**
+  Yukarıda silinen sakinin adı listede "**Silinmiş Kullanıcı**" görünmeli;
+  o sakinin **eski talebi/aidatı duruyor** olmalı (kayıt kaybolmamalı).
 - [ ] **P111 · Bölüm sayaçları (PANEL).** **Tanımlar → Bölüm Sayaçları**:
   (1) tabloda **daire numarası ve ana sayaç adı** görünmeli, ham kimlik
   (UUID) **görünmemeli**; (2) **Yeni kayıt** → "Daire" ve "Ana sayaç"
@@ -3301,6 +3316,13 @@ yeşil.
 <!-- HASH KURALI: bir commit kendi hash'ini iceremez. Satir once "(bu commit)"
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
+
+### 2026-08-02 · P112 · 8e20af1 (+ bu commit)
+Uygulama içi hesap silme (App Store 5.1.1(v)): `POST /me/hesap-sil` +
+Ayarlar'da "Hesabımı sil". Kural tek yerde (`app/hesap_silme.py`); yönetim
+yolu da aynı çekirdeği kullanıyor. Yeni göç `0029` kalıcı silme **kanıtı**
+tutuyor (audit purge edilir, kanıt edilmez). Son yönetici engeli 409.
+Rol matrisi kilidi yeni ucu yakaladı. Belge: `docs/hesap-silme-kvkk.md`.
 
 ## FINAL REPORT — 2026-08-02 (kural 13): denetimin bulduğu iş bitti
 
@@ -6060,7 +6082,7 @@ vardı), şema değişikliği ve yeni göç **YOK**.
 > tarafındaki her şeydir. Sıra bağlayıcıdır: P112 → P118.
 
 ### P112 — Hesap silme (App Store 5.1.1(v), ZORUNLU)
-Status: SIRADA · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: Uygulama içinde **"Hesabımı Sil"** (Ayarlar): onay + **yeniden kimlik
 doğrulama**; KVKK'ya uygun sunucu ucu (kişisel veri anonimleştirilir/silinir,
 **yasal olarak saklanması gereken finans/denetim kayıtları KALIR** — ayrımı
@@ -6068,6 +6090,50 @@ belgele); tenant-yönetici uç durumları (**son admin devretmeden kendini
 silemez**). Sözleşme + gerekiyorsa YENİ revizyon + testler + 7 dil ARB.
 Acceptance: uçtan uca silme uygulamadan yapılabiliyor; ayrım belgeli; testler
 yeşil; §15 envanteri artmıyor.
+
+Notes (2026-08-02) — **BİTTİ.** Commit: `8e20af1`. Ayrıntılı belge:
+`docs/hesap-silme-kvkk.md`.
+
+**KURAL TEK YERDE** (`backend/app/hesap_silme.py`). Yönetim yolu
+(`DELETE /residents/{id}`) de artık aynı çekirdeği çağırıyor; mantık oradan
+**çıkarıldı**. İki uygulama yazmak, KVKK ayrımını iki yerde tutmak ve birinde
+düzeltilip diğerinde unutulan bir alanın **silinmiş sanılan kişisel veri**
+bırakması demekti.
+
+**İKİ MOD — TAHMİN EDİLMEZ, DENENİR.** Silme önce bir SAVEPOINT içinde
+denenir; veritabanı `RESTRICT` ile itiraz ederse anonimleştirmeye düşülür.
+Önce "geçmişi var mı" diye saymak, yeni bir tabloyu listeye eklemeyi unutunca
+**sessizce yanlış mod** seçerdi. `deleted=false` **başarıdır** ve uygulama
+bunu ayrı bir cümleyle söyler — aidat kaydının durduğunu sonradan öğrenen
+kullanıcı kandırıldığını düşünürdü.
+
+**AYRIM.** Silinen: ad → yer tutucu; e-posta/telefon/avatar → NULL; parola ve
+geçici kod hash'leri → NULL; `user_device` satırları; aktif daire bağları;
+`is_active=false`. Kalan: finans satırları + `audit_log` + talep/tur kayıtları
+— TTK ve vergi mevzuatı defterlerin saklanmasını **emreder** ve KVKK md. 7
+silme hakkı başka bir kanunun öngördüğü saklama yükümlülüğünü kaldırmaz.
+Ödemeyi silmek kasa bakiyesini geçmişe dönük değiştirir ve **başka
+sakinlerin** mutabakatını bozardı.
+
+**YENİ GÖÇ `0029` — kalıcı kanıt.** `audit_log` yetmez: saklama politikası
+gereği 24 ayda **purge** edilir ve silme talebinde bulunan kişi bundan
+**sonra** sorabilir. `hesap_silme_kaydi` retention motoruna dâhil değil,
+içinde kişisel veri yok, `app_rw` yalnız SELECT/INSERT alır —
+değiştirilebilen bir kanıt kanıt değildir.
+
+**İKİ ENGEL.** (a) Yeniden kimlik doğrulama (parola): ödünç alınmış telefonda
+tek dokunuşla silme olmamalı. (b) **Son yönetici** → 409: tesis sahipsiz
+kalırdı. Apple kuralına aykırı değil — kural "hesap silinebilmeli" der,
+"tesisi kullanılamaz bırak" demez; hata metni **ne yapılacağını** söyler ve
+ikinci yönetici varken silme çalışır (testli).
+
+**ROL MATRİSİ KİLİDİ (P41) yeni ucu YAKALADI** ve güncellendi — altı rolün
+altısı da kendi hesabını silebiliyor. Kilidin karşılığını verdiği tur.
+
+KAPILAR: `pytest` **1159 geçti / 1 atlandı** (taban 1151, +8) · `goc-uyum` ve
+`goc-tersinir` **bulgu 0** · `flutter analyze` temiz · `flutter test`
+**1573 geçti / 3 atlandı** (taban 1567, +6) · apk ✓ · `tsc` temiz ·
+`vitest` **50 dosya / 308 test**. §15 envanteri **değişmedi** (8/5).
 
 ### P113 — Gizlilik politikası + koşullar + yapay zekâ/çeviri beyanı
 Status: SIRADA · Depends-on: —
