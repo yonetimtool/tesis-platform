@@ -36,18 +36,32 @@ docker compose -f infra/docker-compose.yml \
 > demo hesabı bırakırdı — hem de tam olarak denetçiye verilen hesaplarda.
 > Parolayı App Store Connect'in parola alanına da **aynen** girin.
 
-| Rol | E-posta | Ne görür |
-|---|---|---|
-| Yönetici | `yonetici@demo.yonetio.site` | Tam yönetim: aidat, talepler, duyurular, tur planları, tanımlar |
-| Güvenlik | `guvenlik@demo.yonetio.site` | Devriye turları, ziyaretçi, olay bildirimi |
-| Tesis görevlisi | `gorevli@demo.yonetio.site` | Görevler, iş emirleri |
-| Sakin | `sakin@demo.yonetio.site` | Aidatım, talep aç, duyurular, rezervasyon |
+> **GİRİŞ TELEFONLADIR — e-posta ile DEĞİL.** İlk TestFlight yapımında
+> bu satır yanlıştı: not "e-posta + tesis kodu" diyordu ama **mobil giriş
+> ekranında öyle bir alan yok** (telefon + parola). Denetçi giriş
+> yapamazdı → kesin ret. Ürün tasarımı bilinçlidir: **yönetim paneli**
+> e-posta + tesis kodu ile, **mobil uygulama** telefonla girer. Not
+> gerçeğe uyduruldu; uygulamaya denetçi için ayrı bir giriş yolu
+> **eklenmedi**.
 
-**Tesis kodu (tenant):** `demo` · **Parola:** App Store Connect'e Kerem
+| Rol | Telefon (giriş) | E-posta (yalnız kayıt) | Ne görür |
+|---|---|---|---|
+| Yönetici | `05000000101` | `yonetici@demo.yonetio.site` | Tam yönetim: aidat, talepler, duyurular, tur planları, tanımlar |
+| Güvenlik | `05000000102` | `guvenlik@demo.yonetio.site` | Devriye turları, ziyaretçi, olay bildirimi |
+| Tesis görevlisi | `05000000103` | `gorevli@demo.yonetio.site` | Görevler, iş emirleri |
+| Sakin | `05000000104` | `sakin@demo.yonetio.site` | Aidatım, talep aç, duyurular, rezervasyon |
+
+**Parola:** dördü de aynı — App Store Connect'in parola alanına Kerem
 girer (`DEMO_PAROLA`).
 
-Girişte **telefon** ya da **e-posta + tesis kodu** kullanılabilir; demo
-hesapları e-posta ile girer.
+**Tesis kodu (`demo`) mobilde SORULMAZ:** telefon numarası global
+benzersizdir, sunucu tesisi ondan çözer. Tesis kodu yalnız yönetim
+panelinde (e-posta girişi) gerekir.
+
+Numara üç biçimde de yazılabilir — `05000000101`, `5000000101`,
+`+90 500 000 01 01` — sunucu E.164'e normalleştirir (uçtan uca
+doğrulandı). Hesaplar kalıcı parolayla açıldığı için **ilk giriş / kod
+adımı yoktur**; doğrudan uygulamaya girilir.
 
 ## 2. NFC — donanımsız nasıl denenir
 
@@ -141,13 +155,20 @@ HTTPS zorunludur. Genel `NSAllowsArbitraryLoads` **kullanılmamaktadır**.
 # Denetçiye not (İngilizce — App Store Connect'e yapıştırılacak)
 
 ```
-DEMO ACCOUNT
-Site code (tenant): demo
-Manager:  yonetici@demo.yonetio.site
-Security: guvenlik@demo.yonetio.site
-Staff:    gorevli@demo.yonetio.site
-Resident: sakin@demo.yonetio.site
-Password: <see App Store Connect password field>
+DEMO ACCOUNTS - SIGN IN WITH PHONE NUMBER (not e-mail)
+The app's sign-in screen asks for a phone number and a password. The site
+code is NOT required on mobile: phone numbers are globally unique and the
+server resolves the site from them.
+
+Manager:  0500 000 01 01
+Security: 0500 000 01 02
+Staff:    0500 000 01 03
+Resident: 0500 000 01 04
+Password: <see App Store Connect password field> (same for all four)
+
+Any of these formats is accepted: 05000000101 / 5000000101 /
++90 500 000 01 01. There is no first-time-code step; these accounts sign
+in directly.
 
 Yönetio is a B2B property-management app for apartment buildings and
 gated communities. Accounts are created by the site management; there is

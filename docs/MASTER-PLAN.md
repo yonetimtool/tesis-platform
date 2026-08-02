@@ -622,6 +622,11 @@ Device-verify (biriken liste — agent ekler, Kerem işaretler):
   ekranında **her modül kartına** tek tek dokun → hepsi bir ekrana
   gitmeli; **"Bu bölüm yakında"** mesajı **hiçbirinde çıkmamalı**. FAB
   (+) menüsünde **pasif/"Yakında"** satır olmamalı.
+- [ ] **P115 · Denetçinin GİRİŞİ (MOBİL, GÜVENLİK).** Denetim notlarındaki
+  akışı **birebir** dene: giriş ekranına **telefon** `0500 000 01 02` +
+  demo parolası → girmeli. **E-posta alanı aranmamalı** (mobilde yok).
+  Diğer üç hesabı da (`…01 01/03/04`) aynı biçimde dene. (Build 1'de not
+  e-posta giriş vaat ediyordu; denetçi giremezdi.)
 - [ ] **P115 · Demo tesisi (MOBİL, GÜVENLİK).** `scripts/demo_tenant.py`
   koşulduktan sonra demo hesabıyla gir → **Kontrol Noktaları** → bir
   satırın üç-nokta menüsü → **"Simüle okutma"** görünmeli ve dokununca
@@ -6496,6 +6501,39 @@ KAPILAR: `pytest` **1163 geçti / 1 atlandı** (taban 1159, +4) ·
 `goc-uyum`/`goc-tersinir` **bulgu 0** · `flutter analyze` temiz ·
 `flutter test` **1595 geçti / 3 atlandı** (taban 1592, +3) · apk ✓.
 §15 envanteri **değişmedi** (8/5).
+
+Notes (2026-08-02, EK — **DENETİM NOTU GERÇEĞE UYMUYORDU**): TestFlight
+Build 1 cihaz bulgusu — §1, demo hesapları için **"e-posta + tesis kodu
+ile giriş"** vaat ediyordu; mobil giriş ekranında ise **yalnız telefon +
+parola** var. Denetçi giremezdi → **kesin ret**. Kod doğruydu, **belge**
+yanlıştı.
+
+**ÜÇ SEÇENEKTEN (c) SEÇİLDİ — ve sıfır kod gerektirdi.** (a) "arka uç
+e-postayı zaten kabul ediyorsa alanı gevşet": `/auth/login` e-posta ile
+birlikte **açık `tenant_slug`** ister (telefon global benzersiz, e-posta
+değil), yani (a) arka uç değişikliği demekti — kullanıcının kendi tercih
+sırasına göre elendi. (b) "mobile kurumsal giriş anahtarı ekle": mobile
+**yalnız denetçinin kullanacağı** bir giriş yolu koymak olurdu; oysa
+ayrım bilinçli — **panel** e-posta + tesis kodu, **mobil** telefon.
+(c) tohumlamada telefon: `scripts/demo_tenant.py` **zaten**
+`+90 500 000 01 01…04` yazıyordu. Kusur tamamen belgede idi.
+
+**DEV'DE UÇTAN UCA ÖLÇÜLDÜ:** dört hesabın dördü de `POST
+/auth/login-phone` ile `access_token` alıyor, **parola kurulum adımı
+yok**; `05000000102` → `/me` = Demo Güvenlik/security → `demo_mod: true`
+→ `POST /scans/simule` **201**, `imza_dogrulandi: false`. Üç yazım biçimi
+de (`05000000101`, `5000000101`, `+90 500 000 01 01`) geçiyor —
+sunucudaki `normalize_phone` sayesinde; denetçi hangi biçimi yazarsa
+yazsın giriyor.
+
+**KİLİT — `mobile/test/denetim_notlari_test.dart` (4 test).** Bu hata
+sınıfını hiçbir kod testi göremezdi, çünkü hata **belgedeydi**. Test
+belgeyi sözleşme sayar: (1) not, mobilde olmayan bir giriş yolu vaat
+etmiyor, (2) nottaki telefonlar ve e-postalar **tohumlama betiğinden**
+okunanlarla birebir aynı, (3) giriş ekranı gerçekten `TextInputType.phone`
+çiziyor — ekran bir gün e-postaya çevrilirse test düşer ve **notun da**
+güncellenmesi gerektiğini söyler. **Mutasyonla doğrulandı:** eski yanlış
+cümle geri konunca ve tohumdaki bir numara değiştirilince testler düştü.
 
 ### P116 — Yer tutucu / boş ekran süpürmesi
 Status: BITTI · Depends-on: P115
