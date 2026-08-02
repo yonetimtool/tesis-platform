@@ -618,6 +618,19 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P113 · Yasal belgeler (MOBİL, HER ROL).** **Ayarlar → Yasal** →
+  "Gizlilik Politikası" ve "Kullanım Koşulları" → her ikisi de
+  **tarayıcıda açılmalı** (uygulama içinde değil). Uçak moduna alıp tekrar
+  dene → "sayfa açılamadı" uyarısı çıkmalı, **sessiz kalmamalı**.
+- [ ] **P113 · Belgelerin dili (MOBİL/TARAYICI).** Uygulama dilini
+  **İngilizce** yapıp aynı bağlantıları aç → sayfa **İngilizce** gelmeli ve
+  üstte "bağlayıcı sürüm Türkçedir" uyarısı bulunmalı. Türkçeye dönünce
+  bu uyarı **kaybolmalı**.
+- [ ] **P113 · Otomatik çeviri göstergesi (MOBİL, SAKİN).** Uygulama dilini
+  Türkçe **dışında** bir dile al ve **Duyurular**, **Site Kuralları**,
+  **Etkinlikler** listelerinden birer kayıt aç → her birinde "otomatik
+  çevrilmiştir" notu ve **"Orijinali gör"** bağlantısı olmalı; bağlantıya
+  basınca **Türkçe orijinal** görünmeli.
 - [ ] **P112 · Hesap silme (MOBİL, SAKİN).** Test hesabıyla gir →
   **Ayarlar → en alt → "Hesabımı sil"**. (1) Onay penceresi hem **ne
   silineceğini** hem **aidat kayıtlarının kalacağını** yazmalı; (2) parola
@@ -3316,6 +3329,13 @@ yeşil.
 <!-- HASH KURALI: bir commit kendi hash'ini iceremez. Satir once "(bu commit)"
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
+
+### 2026-08-02 · P113 · 4d0fa01 (+ bu commit)
+`/gizlilik` ve `/kosullar` sabit public adreslerde, 7 dilde, JS'siz sunucu
+bileşeni olarak yayında; mobil Ayarlar'dan bağlı. Bağlayıcı sürüm TR ve
+bunu sayfanın üstü söylüyor. Yapay zekâ beyanı (üretken YZ yok; yalnız
+kendi sunucumuzda makine çevirisi) `ceviri_seffafligi_test.dart` ile
+kilitlendi — mutasyon denetimi kilidi iki kez düzeltti.
 
 ### 2026-08-02 · P112 · 8e20af1 (+ bu commit)
 Uygulama içi hesap silme (App Store 5.1.1(v)): `POST /me/hesap-sil` +
@@ -6136,7 +6156,7 @@ KAPILAR: `pytest` **1159 geçti / 1 atlandı** (taban 1151, +8) · `goc-uyum` ve
 `vitest` **50 dosya / 308 test**. §15 envanteri **değişmedi** (8/5).
 
 ### P113 — Gizlilik politikası + koşullar + yapay zekâ/çeviri beyanı
-Status: SIRADA · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: Gizlilik politikası + kullanım koşulları yaz (kaynak TR, 6 dile bizim
 çeviri hattımızın kurallarıyla; **hukukçu incelemesi sonra [KEREM]**): toplanan
 veri ve amaçlar, **işleyiciler adıyla** (kendi altyapımızdaki LibreTranslate —
@@ -6148,6 +6168,54 @@ göstergesini (P7) koruduğunu doğrula — yapay zekâ şeffaflığı hikâyemi
 uygulama içinde **üretken yapay zekâ YOK**, denetim notlarında bunu yaz.
 Acceptance: iki sayfa 7 dilde yayında; uygulamadan bağlantı çalışıyor; P7
 göstergesi taranarak doğrulandı.
+
+Notes (2026-08-02) — **BİTTİ.** Commit: `4d0fa01`.
+
+**SABİT PUBLIC ADRESLER** `/gizlilik` ve `/kosullar`. Tenant kapsamlı
+(`/site/<slug>/…`) olamazdı: politika **ürünün** politikasıdır, tek bir
+tesisin değil — ve bu URL'ler App Store Connect ile Google Play'e girilip
+bir daha değişmemeli. Sayfalar **sunucu bileşeni** ve **JS taşımıyor**:
+denetçi, arama motoru ve JS'i kapalı tarayıcı **aynı** metni görmeli. Dil
+sunucuda çözülür (çerez > `Accept-Language`), yani Apple denetçisi
+İngilizce görür.
+
+**İÇERİKTEKİ ÜÇ ASIL KARAR:**
+1. **ROL AYRIMI** — KVKK anlamında **veri sorumlusu her tesisin
+   yönetimidir**; Yönetio **veri işleyendir**. Bunu yazmamak 200 tesisin
+   sorumluluğunu platforma yıkmak ve kullanıcıya yanlış muhatabı
+   göstermek olurdu.
+2. **İŞLEYİCİLER ADIYLA** sayılır ve şu an geçerli olmayanlar "etkin
+   değil" diye işaretlenir. "Ödeme sağlayıcısı kullanabiliriz" gibi
+   ihtimalli bir cümle App Store gizlilik anketiyle **çelişirdi**.
+   LibreTranslate **kendi altyapımızda**: metin üçüncü tarafa gitmez.
+3. **ÖDEME MODELİ (3.1.3(e))** koşullarda açıkça yazılı: aidat, uygulama
+   **dışında** tüketilen gerçek dünya hizmetinin bedelidir; bu yüzden
+   uygulama içi satın alma kullanılmaz.
+
+**BAĞLAYICI SÜRÜM TÜRKÇEDİR**; diğer altı dil bilgilendirme amaçlıdır ve
+bunu sayfanın **üstünde** yazar (altta dipnot olsaydı, okumayı yarıda
+bırakan kullanıcı çeviriyi bağlayıcı sanırdı). **Hukukçu incelemesi
+[KEREM]** ve yalnız TR metne yapılacak.
+
+**YAPAY ZEKÂ BEYANI KOD TARAFINDAN DESTEKLENİYOR** —
+`test/ceviri_seffafligi_test.dart` (4 test). "Çevrilen her içerik bunu
+söylüyor" bir **iddiadır**; kaynak taraması `ceviriMetni(` çağıran her
+ekranda göstergeyi arar, davranış testleri göstergenin **çevrilmemiş**
+içerikte görünmediğini ve "orijinali gör"ün gerçekten orijinali verdiğini
+kilitler.
+
+**MUTASYON DENETİMİ KİLİDİ İKİ KEZ DÜZELTTİ:** (1) yorumlar hiç
+atılmıyordu — çağrıyı yoruma almak taramayı değiştirmiyordu; (2) yalnız
+satır **başı** yorumlarını atmak da yetmedi. Üçüncü yazımda mutasyon
+düşürdü. Kilit "dosyada bu harfler geçiyor mu"yu değil **çizimi** ölçüyor.
+
+**DOĞRULAMA:** çeviri gösteren **üç** yüzey var (duyuru, site kuralı,
+etkinlik) ve üçünde de gösterge yerinde. Public portal (`/site/<slug>`)
+**çevrilmemiş orijinali** sunuyor — gösterge gerekmiyor; kayda geçti.
+
+KAPILAR: `tsc` temiz · `vitest` **50/308** · `npm run build` **39 sayfa**
+· `flutter analyze` temiz · `flutter test` **1577 geçti / 3 atlandı**
+(taban 1573, +4) · apk ✓. §15 envanteri **değişmedi** (8/5).
 
 ### P114 — iOS proje hazırlığı (yalnız yapılandırma; derleme sonra Mac'te)
 Status: SIRADA · Depends-on: —
