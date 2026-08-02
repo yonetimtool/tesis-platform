@@ -66,6 +66,195 @@
     commit hash; (B) TEST EDİLECEKLER — every device/manual verification Kerem must
     do, concrete step-by-step, grouped by screen/role, in Turkish. Then stop.
 
+## DURUM DENETİMİ — 2026-08-02
+
+> Bu bölüm bir **denetim** çıktısıdır: her maddenin **beyan edilen** durumu ile
+> **doğrulanan** durumu yan yana konur. Hiçbir madde yeniden numaralanmadı ya
+> da yer değiştirmedi; yalnız gerçeğe uymayan `Status` alanları düzeltildi ve
+> eksik iş, ilgili maddenin Notes'una **somut** olarak yazıldı.
+
+### Yöntem (ne yapıldı, ne yapılmadı)
+
+**Yapılan:**
+1. **Tam kapı koşumu** — `infra/kapilar.sh` (web + mobil + backend + göç),
+   tek koşum, borusuz, imaj önce. Sonuçlar aşağıda.
+2. **Yeniden ölçüm** (changelog'a güvenmeden, komut yeniden koşuldu):
+   * §15 i18n envanteri (README'nin kendi python komutu) → **8 string / 5 dosya**,
+     sekizinin sekizi de P5'teki istisna tablosuyla **birebir** aynı.
+   * Kararsız sıralama çırçır eşiği → `test_sayfalama_siralamasi.py::ESIK = 3`
+     (P108'in iddiası).
+   * Vezne idempotency'si → `finans.py`de **yok** (P64 hâlâ gerçekten açık),
+     `dues.py:314`te **var** (P64'ün tablosu doğru).
+   * Koşum kilidi → `conftest.py:97` `pg_try_advisory_lock` (P75).
+   * `guvenlik_amiri` rolü → `models.py:46`, `deps.py:109`, `schemas.py:136` (P35).
+   * `merkez_diyalog.dart` → depoda **yok** (P22(a) gerçekten geri alınmış).
+   * Sayaç arayüzü → `tanimlar/page.tsx:153` `kaynak: "sayaclar-ana"` **var**,
+     bölüm sayacı kaynağı ve sihirbaz **yok** (P111'in ölçümü doğru).
+3. **Yapıt varlığı** — her maddenin Notes'unda adı geçen göç, yönlendirici,
+   ekran, modül ve test dosyaları diskte arandı. 27 Alembic revizyonu
+   (0001–0027 + 0008b), 57 backend yönlendirici, 41 mobil özellik modülü,
+   49 panel test dosyası, 161 mobil test dosyası, 98 backend test dosyası.
+4. **Çalışma ağacı** — `git status` **temiz**; yarım kalmış iş yok.
+
+**Yapılmayan (dürüstçe):** her BITTI maddenin kabul kanıtı **tek tek yeniden
+üretilmedi**; ~90 maddede bu, oturumun tamamını yeniden koşmak demekti.
+Özellikle **P10'un 20× tekrar koşumu bu turda yeniden koşulmadı** — kabul
+kanıtı P10 Notes'undaki koşum #3 kaydıdır; bu denetimde yalnız **tek** tam
+mobil koşum yeşildi. Doğrulama gücü şuradan gelir: kapılar bugün baştan sona
+yeşil, yapıtların hepsi yerinde ve **rastgele seçilmiş yedi iddia yeniden
+ölçüldüğünde yedisi de tuttu**.
+
+### Kapı sonuçları (bu denetimde koşuldu)
+
+| Kapı | Sonuç |
+|---|---|
+| `web-tsc` | GEÇTİ (çıktı yok — `tsc` sessiz başarı) |
+| `web-vitest` | GEÇTİ — **49 dosya / 297 test** |
+| `web-build` | GEÇTİ — `next build`, 36 statik sayfa |
+| `mobil-analyze` | GEÇTİ — `No issues found!` |
+| `mobil-test` | GEÇTİ — **1562 geçti / 3 atlandı / 0 düştü** |
+| `mobil-apk` | GEÇTİ — `flutter build apk --debug` |
+| `backend-build` / `backend-up` | GEÇTİ |
+| `backend-pytest` | GEÇTİ — **1145 passed, 1 skipped, 2 warnings** (20 dk 37 sn) |
+| `goc-uyum` | GEÇTİ — `bulgu: 0` |
+| `goc-tersinir` | GEÇTİ — `bulgu: 0` |
+
+**Sessiz regresyon YOK.** Onbir kapının onbiri tek koşumda yeşil.
+
+### Uzlaştırma tablosu
+
+Kategoriler: **DOĞRULANDI-BİTTİ** · **KISMEN** · **HİÇ BAŞLANMADI** ·
+**BLOKE(sebep)** · **SPEC-HAZIR-KOD-YOK**
+
+| # | Beyan | DOĞRULANAN | Kanıt / eksik olan |
+|---|---|---|---|
+| P1 | BITTI | DOĞRULANDI-BİTTİ | `0008b_uyum_yakalama.py`, `goc-uyum-dogrula.sh`, `sema-olgular.sql`, `MIGRATION-POLITIKASI.md`, `RUNBOOK-PROD.md` — beşi de diskte; ağaç temiz |
+| P2 | BLOKE | BLOKE(sunucu erişimi Kerem'de) | Ajanın parçası (runbook güncelliği) hazır; koşum prod'da |
+| P3 | BITTI | DOĞRULANDI-BİTTİ | `gecici_kod_diyalogu_test.dart` + 161 mobil test dosyası; suite bugün yeşil |
+| P4 | BITTI | DOĞRULANDI-BİTTİ | §15 **yeniden ölçüldü**: 8/5, `building_map`+`complaints` katkısı **0** |
+| P5 | BITTI | DOĞRULANDI-BİTTİ | Aynı ölçüm; 8 istisnanın 8'i P5 tablosuyla birebir |
+| P6 | BITTI | DOĞRULANDI-BİTTİ | `hata_metinleri.py`, `akis_metinleri.py`, `test_hata_i18n.py`; pytest yeşil |
+| P7 | BITTI | DOĞRULANDI-BİTTİ | `icerik_ceviri.dart`, `ceviri_notu.dart`, `icerik_ceviri_test.dart` |
+| P8 | BITTI | DOĞRULANDI-BİTTİ | `features/vehicle_pass`, `features/violations`, `arac_ihlal_otopark_test.dart` |
+| P9 | BITTI | DOĞRULANDI-BİTTİ | `test_sozlesme_sapmasi.py` suitte yeşil (201 operasyon iki yönlü) |
+| P10 | BITTI | DOĞRULANDI-BİTTİ (kayıt kanıtı) | `kuyruk_hayalet_yazar_test.dart` var, suite yeşil. **20× tekrar bu turda koşulmadı**; kabul kanıtı Notes'taki koşum #3 |
+| P11 | BLOKE | BLOKE(cihaz testi Kerem'de) | Listede **64 birikmiş madde** — kural 9 fiilen işliyor |
+| P12 | BLOKE | BLOKE(dış: Firebase kimlik) | Kimlik yok; `push_messaging` kayıtlı kapsam istisnası |
+| P13 | BLOKE | BLOKE(dış: iyzico/PayTR) | Sandbox anahtarı yok |
+| P14 | BITTI | DOĞRULANDI-BİTTİ | `docs/ceviri-kalite-notu.md` + `docs/ceviri-teslim/` |
+| P15 | BITTI | DOĞRULANDI-BİTTİ | `infra/frigate-poc/` (config, mediamtx, storage) + `docs/frigate-poc.md` |
+| P16 | BITTI | DOĞRULANDI-BİTTİ | `routers/anpr.py` + `0011_anpr_ingest.py` |
+| P17 | BITTI | DOĞRULANDI-BİTTİ | `features/anpr/` + `0012_kamera_restream.py` |
+| P18 | BLOKE | BLOKE(donanım + saha) | Pilot site gerekiyor |
+| P19 | BITTI | DOĞRULANDI-BİTTİ | `app/anpr.py` adaptörleri + `docs/anpr-kamera-kurulumu.md` |
+| P20 | BITTI | DOĞRULANDI-BİTTİ (kapsamı **not**) | `docs/face-recognition-v2-design.md`; Scope zaten "design note only" |
+| P21 | BITTI | DOĞRULANDI-BİTTİ (kapsamı **not**) | `docs/talep-uzerine-ceviri-notu.md`; Scope "evaluation note" |
+| **P22** | ~~BLOKE~~ | **KISMEN** | (b)–(g) kanıtlı ve testli. **(a) YOK**: iki deneme, iki geri alma; `merkez_diyalog.dart` depoda yok. Kalan iş P22 Notes'unda madde madde |
+| P23 | BITTI | DOĞRULANDI-BİTTİ | `features/residents`, `unit_access` uçları |
+| P24 | BITTI | DOĞRULANDI-BİTTİ | `0014_sikayet_okuma.py` + şikayet triyajı |
+| P25 | BITTI | DOĞRULANDI-BİTTİ | `0015_kamera_url_siniri.py` + `routers/cameras.py` |
+| P26 | BITTI | DOĞRULANDI-BİTTİ | `0016_daire_tip_grup.py` + `routers/unit_tanimlari.py` |
+| P27 | BITTI | DOĞRULANDI-BİTTİ | `0017_muhasebe_tanimlari.py` + `routers/muhasebe_tanimlari.py` + `/tanimlar` |
+| P28 | BITTI | DOĞRULANDI-BİTTİ | `0018_borclandirma.py` + `routers/borclandirma_uc.py` |
+| P29 | BITTI | DOĞRULANDI-BİTTİ | `0019_finansal_hareket.py` + `routers/finans.py` + `/finans` |
+| P30 | BITTI | DOĞRULANDI-BİTTİ | `0020_odeme_kodu.py` + `routers/sakin_odeme.py` + mobil `/ode` |
+| P31 | BITTI | DOĞRULANDI-BİTTİ | `routers/rapor_motoru.py` + `/raporlar` + `rapor.dom.test.ts` |
+| P32 | BITTI | DOĞRULANDI-BİTTİ | `0021_mesaj_sablonu.py` + `routers/mesajlar.py` + `mesaj.dom.test.ts` |
+| P33 | BITTI | DOĞRULANDI-BİTTİ | `0022_yonetisim.py` + `routers/yonetisim.py` + `/yonetisim` + `yonetisim.dom.test.ts` |
+| P34 | BITTI | DOĞRULANDI-BİTTİ | `0023_tur_butunlugu.py` + `docs/personel-konum-kvkk.md` |
+| P35 | BITTI | DOĞRULANDI-BİTTİ | `0024_guvenlik_amiri.py`; rol **üç yerde** (`models.py:46`, `deps.py:109`, `schemas.py:136`) |
+| P36 | BITTI | DOĞRULANDI-BİTTİ | `0025_kvkk_riza.py` + `routers/kvkk.py` + `features/kvkk` |
+| P37 | BITTI | DOĞRULANDI-BİTTİ | `0026_gurultu_caydirici.py` + `routers/gurultu_uc.py` + `docs/caydirici-protokol-notu.md` |
+| P38 | BITTI | DOĞRULANDI-BİTTİ | `0027_portal_anket.py` + `routers/portal.py` + `app/site/[slug]` + `features/anket` + `portal-public.test.ts` |
+| P39 | BITTI | DOĞRULANDI-BİTTİ | `infra/load/{senaryo,tekil}.js`, `docker-compose.load.yml`, `docs/scaling-runbook.md` |
+| P40 | BITTI | DOĞRULANDI-BİTTİ | Panel sayfaları: `finans`, `raporlar`, `mesajlar`, `yonetisim`, `portal`, `settings` — hepsi mevcut ve build'e giriyor |
+| P41 | BITTI | DOĞRULANDI-BİTTİ | `routers/yetki_matrisi.py` + `/yetki` + `yetki-matris.dom.test.ts` |
+| P42 | BITTI | DOĞRULANDI-BİTTİ | Backend suite yeşil (rol bazlı gövde testleri) |
+| P43 | BITTI | DOĞRULANDI-BİTTİ | jsdom altyapısı (`tests/kurulum.ts`, `yardimci.ts`) + `vitest.config.ts` |
+| P44 | BITTI | DOĞRULANDI-BİTTİ | `rapor/mesaj/portal-ayar` dom testleri |
+| P45 | BITTI | DOĞRULANDI-BİTTİ | `aidat-kullanici.dom.test.ts` |
+| P46 | BITTI | DOĞRULANDI-BİTTİ | `talep.dom.test.ts` + toast i18n kilidi |
+| P47 | BITTI | DOĞRULANDI-BİTTİ | `pano-daire-tanim.dom.test.ts` |
+| P48 | BITTI | DOĞRULANDI-BİTTİ | `money.test.ts` (tek biçimlendirici) |
+| P49 | BITTI | DOĞRULANDI-BİTTİ | Mobil para ayrıştırma çekirdeği; suite yeşil |
+| P50 | BITTI | DOĞRULANDI-BİTTİ | `money.test.ts` çift yönlü (biçimlendir↔ayrıştır) |
+| P51 | BITTI | DOĞRULANDI-BİTTİ | `vardiya-nokta.dom.test.ts` |
+| P52 | BITTI | DOĞRULANDI-BİTTİ | `sessiz-fetch.test.ts` + `cikis.dom.test.ts` |
+| P53 | BITTI | DOĞRULANDI-BİTTİ | `ham-enum.test.ts` + `enum-adlari.dom.test.ts` |
+| P54 | BITTI | DOĞRULANDI-BİTTİ | `sabit-metin.test.ts` (tarayıcı diyalogları) |
+| P55 | BITTI | DOĞRULANDI-BİTTİ | `sayi-girdi.dom.test.ts` |
+| P56 | BITTI | DOĞRULANDI-BİTTİ | `sayi.test.ts` |
+| P57 | BITTI | DOĞRULANDI-BİTTİ | Mobil koordinat ayrıştırma; suite yeşil |
+| P58 | BITTI | DOĞRULANDI-BİTTİ | `eksik-veri.dom.test.ts` |
+| P59 | BITTI | DOĞRULANDI-BİTTİ | Mobil boş-seçici hâli; suite yeşil |
+| P60 | BITTI | DOĞRULANDI-BİTTİ | `destek.dom.test.ts` |
+| P61 | BITTI | DOĞRULANDI-BİTTİ | `harita-bina.dom.test.ts` |
+| P62 | BITTI | DOĞRULANDI-BİTTİ | `koyu-tema.test.ts` |
+| P63 | BITTI | DOĞRULANDI-BİTTİ | `erisilebilir-etiket.test.ts` |
+| P64 | BLOKE | BLOKE(ürün kararı — **teyit edildi**) | `finans.py`de idempotency **hâlâ yok**, `dues.py:314`te var. Risk ve üç seçenek yerinde; karar Kerem'de |
+| P65 | BITTI | DOĞRULANDI-BİTTİ | `sayfali-cekim.test.ts` |
+| P66 | BITTI | DOĞRULANDI-BİTTİ | `denetim.dom.test.ts` |
+| P67 | BITTI | DOĞRULANDI-BİTTİ | `sabit-metin.test.ts` kural genişletmesi |
+| P68 | BITTI | DOĞRULANDI-BİTTİ | `tesis-yonetici.dom.test.ts` |
+| P69 | BITTI | DOĞRULANDI-BİTTİ | Panel şablon dizgesi taraması; vitest yeşil |
+| P70 | BITTI(ölçüm) | DOĞRULANDI-BİTTİ (açık işi **P86**'da kapandı) | Ölçüm 7/7 `debugPrint`; kilit P86'da yazıldı |
+| P71 | BITTI | DOĞRULANDI-BİTTİ | `seffaflik.dom.test.ts` |
+| P72 | BITTI | DOĞRULANDI-BİTTİ | `duyuru.dom.test.ts` |
+| P73 | BITTI | DOĞRULANDI-BİTTİ | `entegrasyon.dom.test.ts` |
+| P74 | BITTI(ölçüm) | DOĞRULANDI-BİTTİ | Taban sayı ölçümü; kök neden P75'te kapandı |
+| P75 | BITTI | DOĞRULANDI-BİTTİ | `conftest.py:97` `pg_try_advisory_lock` — koşum kilidi yerinde |
+| P76 | BITTI | DOĞRULANDI-BİTTİ | `kapilar.sh goc` bu turda yeşil |
+| P77 | BITTI | DOĞRULANDI-BİTTİ | Mobil çapraz kilit; suite yeşil |
+| P78 | BITTI | DOĞRULANDI-BİTTİ | `ayirici-tutarlilik.test.ts` |
+| P79 | BITTI | DOĞRULANDI-BİTTİ | İki istemci aynı gruplama; vitest yeşil |
+| P80 | BITTI | DOĞRULANDI-BİTTİ | `roles.test.ts` + `enum-bag.test.ts` |
+| P81 | BITTI | DOĞRULANDI-BİTTİ | `enum-bag.test.ts` (altı harita) |
+| P82 | BITTI | DOĞRULANDI-BİTTİ | Mobil rol enum'u sunucuya bağlı; suite yeşil |
+| P83 | BITTI | DOĞRULANDI-BİTTİ | `ayar-bag.test.ts` |
+| P84 | BITTI | DOĞRULANDI-BİTTİ | `vekil-bag.test.ts` + `panel-vekil.test.ts` |
+| P85 | BITTI | DOĞRULANDI-BİTTİ | `dil-bag.test.ts` |
+| P86 | BITTI | DOĞRULANDI-BİTTİ | `enterpolasyon_sabit_metin_test.dart` (5 birim + 1 tarama) |
+| P87 | BITTI(ölçüm) | DOĞRULANDI-BİTTİ | 5 temiz koşum kaydı; bu turda 6.'sı da temiz |
+| P88 | BITTI | DOĞRULANDI-BİTTİ | `infra/kapilar.sh` — bu denetimin kendi aracı |
+| P89 | BITTI | DOĞRULANDI-BİTTİ | 11 kapı, bu turda tekrar tek koşumda yeşil |
+| P90 | BITTI | DOĞRULANDI-BİTTİ | Özet satırı `tail -n 1` mantığı betikte |
+| P91 | BITTI | DOĞRULANDI-BİTTİ | Boş günlük → `(cikti yok)` ayrımı betikte |
+| P92 | BITTI | DOĞRULANDI-BİTTİ | `Failing tests` bloğu önceliği betikte |
+| P93 | BITTI | DOĞRULANDI-BİTTİ | Kural 6 betiğe bağlı (plan satır 26) |
+| P94 | BITTI | DOĞRULANDI-BİTTİ | Mobil hata yolu sürüşü; suite yeşil |
+| P95 | BITTI | DOĞRULANDI-BİTTİ | `guvenlik-hijyeni.test.ts` |
+| P96 | BITTI | DOĞRULANDI-BİTTİ | `call` modülü tek yol; suite yeşil |
+| P97/P98 | BITTI | DOĞRULANDI-BİTTİ | Telefon normalizasyonu güncelleme yolunda; pytest yeşil |
+| P99 | BITTI | DOĞRULANDI-BİTTİ | Yaratma/güncelleme doğrulama sınıfı; pytest yeşil |
+| P100 | BITTI | DOĞRULANDI-BİTTİ | Sonuç raporu bu dosyada |
+| P101 | BITTI | DOĞRULANDI-BİTTİ | `oturum-401.test.ts` |
+| P102 | BITTI | DOĞRULANDI-BİTTİ | `hata-mesaji.test.ts` |
+| P103 | BITTI | DOĞRULANDI-BİTTİ | `hata-mesaji.test.ts` (sunucu mesajı korunuyor) |
+| P104 | BITTI | DOĞRULANDI-BİTTİ | `istek-metni.test.ts` (BFF rotaları) |
+| P105 | BITTI | DOĞRULANDI-BİTTİ | `sabit-metin.test.ts` `catch` yedekleri |
+| P106 | BITTI | DOĞRULANDI-BİTTİ | `test_sayfalama_siralamasi.py` (2 test) |
+| P107 | BITTI | DOĞRULANDI-BİTTİ | Dengeli parantez sayımı testte |
+| P108 | BITTI | DOĞRULANDI-BİTTİ | **`ESIK = 3` yeniden okundu** (satır 35); kalan 3'ün gerekçesi yazılı |
+| P109 | BITTI(ölçüm) | DOĞRULANDI-BİTTİ (düzeltme **P110**'da) | Ölçüm kaydı + çöken düzeltmenin gerekçesi |
+| P110 | BITTI | DOĞRULANDI-BİTTİ | `metin_iste_diyalogu.dart` + `denetleyici_atma_test.dart`; atılmayan denetleyici 3→0 |
+| **P111** | ~~ACIK(spec hazır)~~ | **SPEC-HAZIR-KOD-YOK** | `tanimlar/page.tsx:153` `sayaclar-ana` **var**; bölüm sayacı kaynağı ve 4 adımlı sihirbaz **yok**. Yazılacak sıra P111 Notes'unda |
+
+### Özet
+
+| Kategori | Sayı | Maddeler |
+|---|---|---|
+| DOĞRULANDI-BİTTİ | **102 satır** (103 madde kimliği; P97/P98 tek satır) | P1, P3–P10, P14–P17, P19–P21, P23–P110 (P22 ve P64 hariç) |
+| KISMEN | **1** | P22 (yalnız (a) maddesi) |
+| BLOKE | **6** | P2, P11, P12, P13, P18, P64 |
+| SPEC-HAZIR-KOD-YOK | **1** | P111 |
+| HİÇ BAŞLANMADI | **0** | — |
+
+**Denetimin bulduğu tek beyan hatası:** P22 `BLOKE` etiketiyle duruyordu, ama
+bloke eden bir dış bağımlılık **yok** — iş ajanın kendi elindeydi ve iki kez
+denenip geri alındı. Doğru etiket **KISMEN**'dir; `BLOKE` maddesi kural 1
+gereği **atlanan** bir madde olduğu için bu etiket, yapılabilir bir işi
+kalıcı olarak görünmez kılıyordu. Bu, denetimin asıl karşılığıdır.
+
 ## ITEMS
 
 ### P1 — Prod migrate reconciliation: verify push
@@ -1044,7 +1233,22 @@ içeriği kararı bunu KAPSAMAZ, ayrıca değerlendirilmelidir.
 Uygulama YOK.
 
 ### P22 — Mobile UX fix package
-Status: BLOKE(a maddesi geri alindi; b-g BITTI) · Depends-on: —
+Status: KISMEN((b)-(g) BITTI; (a) YAZILMADI) · Depends-on: —
+<!-- DURUM DENETİMİ 2026-08-02: eski etiket BLOKE idi. YANLIŞTI — bloke eden
+     bir dış bağımlılık yok, iş ajanın kendi elinde. BLOKE maddeleri kural 1
+     gereği ATLANIR; bu etiket yapılabilir bir işi kalıcı görünmez kılıyordu.
+     KALAN İŞ (somut, sırayla):
+     1. `ONAY: site kurali silme diyalogu` sürüşünde silme ikonunun HANGİ
+        widget ağacında olduğunu YAZDIR (hit-test yığınında `_RenderTheater`
+        var → Overlay katmanı; offset y=1154, ekran 900).
+     2. Gövde soyma ZATEN DENENDİ ve offset'i değiştirmedi — tekrarlama.
+     3. Ağaç bulunduktan sonra pilot ekranı (`site_kurali`) çevir, beş eksen
+        sürüşünü yeşile al.
+     4. Ancak ondan sonra kalan `showModalBottomSheet` çağrılarını
+        (tur 31 ölçümü: 51 çağrı / 28 dosya) `merkezSayfaAc`a taşı.
+     5. `merkez_diyalog.dart` şu an depoda YOK; her deneme onu yeniden yazıyor
+        — bir sonraki denemede önce onu commit'le (kural 10'un alt-adım kuralı). -->
+
 Scope: (a) ALL modals/pop-ups open CENTERED, not as bottom sheets — one shared
 dialog style app-wide; (b) tapping a notification opens its detail (currently
 dead); (c) after "Olay Bildir" submit, return to home WITHOUT a full-screen
@@ -5350,7 +5554,12 @@ doğrulandı), atılmayan denetleyici **3 → 0**. `infra/kapilar.sh mobile` →
 üç kapı yeşil, `flutter test` **1562**, çıkış **0**.
 
 ### P111 — [SIRADAKI] Sayaç takibi: gerçekten eksik olan parça ölçüldü
-Status: ACIK(spec hazır) · Depends-on: —
+Status: SPEC-HAZIR-KOD-YOK · Depends-on: —
+<!-- DURUM DENETİMİ 2026-08-02: doğrulandı. `tanimlar/page.tsx:153`
+     `kaynak: "sayaclar-ana"` VAR; bölüm sayacı kaynağı ve dört adımlı
+     sihirbaz YOK. Ölçüm, uygulama yok — sıradaki tur doğrudan yazmaya
+     başlayabilir (yazılacak sıra en altta). -->
+
 Scope: Yol haritasındaki "Sayaç takibi + sihirbaz → YOK" kaleminin **hangi
 parçasının** eksik olduğunu ölç; bir sonraki tur doğrudan yazmaya başlasın.
 Notes (2026-08-02):
