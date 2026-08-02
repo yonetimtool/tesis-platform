@@ -3342,6 +3342,13 @@ yeşil.
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+### 2026-08-02 · P114 DÜZELTME · 98160c9
+P114'ün yarattığı dosyalar depoya **girmemişti**: kök `.gitignore`daki
+`mobile/ios/` toptan kuralı yuttu, `project.pbxproj` izlendiği için
+güncellendi ve depo "tutarlı görünüp" eksik kaldı. Aynı sınıfın Android
+karşılığı (`network_security_config.xml`) de hâlâ açıkmış. 11 dosya
+kurtarıldı, iki toptan kural kaldırıldı, yeni **`depo` kapısı** eklendi.
+
 ## FINAL REPORT — 2026-08-02 #2 (kural 13): App Store hazırlığı P112–P118
 
 Kerem'in App Store paketi (P112–P118) plana işlendi ve **sırayla**
@@ -6376,6 +6383,27 @@ doğrulamasından** geçti: parantez dengesi, kimlik benzersizliği, her
 `PBXBuildFile`ın `fileRef`inin tanımlı olması, bölüm sınırları. İlk
 denemede betik **kendi denetimine takıldı** (`PBXVariantGroup` bölümü
 zaten vardı) — yeniden oluşturmak dosyayı bozardı.
+
+
+**DÜZELTME (2026-08-02, `98160c9`) — DOSYALAR DEPOYA GİRMEMİŞTİ.**
+Kerem'in taze Mac klonunda `PrivacyInfo.xcprivacy` **yoktu**. Suçlu tek
+satırdı: kök `.gitignore`da **`mobile/ios/`** — bütün platform ağacını
+toptan yok sayıyor. Yeni dosyaların hiçbiri (`PrivacyInfo.xcprivacy`,
+`Runner.entitlements`, `en/tr.lproj/InfoPlist.strings`, altı simge)
+eklenmedi; `project.pbxproj` **izlendiği** için güncellendi ve o
+dosyalara referans verdi — yani depo **"tutarlı görünüp" eksikti** ve
+`git status` temizdi.
+
+Aynı satırın kardeşi `mobile/android/` de aynı sınıftaydı ve orada
+**önceki olay hâlâ açıktı**: `network_security_config.xml`
+(AndroidManifest'in referans verdiği dosya) hiç commit'lenmemiş.
+
+İki toptan satır **kaldırıldı**; yerlerine bir şey konmadı çünkü
+Flutter'ın kendi şablon `.gitignore` dosyaları zaten doğru kapsamda.
+Yeni kapı: **`infra/izlenmeyen-kaynak.py`** (`kapilar.sh depo`) — yapı
+yapılandırmasının adını geçtiği her dosyanın `git ls-files`ta olup
+olmadığına bakar; mutasyonla sınandı. Temiz çıkarım (`git archive`)
+doğrulaması geçti.
 
 KAPILAR: `flutter analyze` temiz · `flutter test` **1592 geçti / 3
 atlandı** (taban 1577, +15) · `flutter build apk --debug` ✓ (Android
