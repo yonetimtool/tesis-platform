@@ -7,8 +7,85 @@ import 'package:nfc_manager/nfc_manager.dart';
 import 'package:nfc_manager/nfc_manager_android.dart';
 import 'package:nfc_manager/nfc_manager_ios.dart';
 
+import '../../../core/teshis/teshis.dart';
 import '../domain/nfc_read_result.dart';
 import '../domain/nfc_hatasi.dart';
+
+/// OKUMA OTURUMUNUN TARAMA SEÇENEKLERİ — iOS'ta yetkilendirme kapısıdır.
+///
+/// **`iso18092` (FeliCa) BİLEREK YOKTUR ve geri EKLENMEMELİDİR.** İkinci
+/// iOS turunun kök nedeni buydu: CoreNFC, `.iso18092` isteyen bir
+/// `NFCTagReaderSession`ı ancak uygulama `Info.plist`te
+/// `com.apple.developer.nfc.readersession.felica.systemcodes` altında
+/// okuyacağı FeliCa sistem kodlarını BEYAN ETMİŞSE açar. Beyan yoksa
+/// oturum `begin()` anında **NFCError code 2 — "Missing required
+/// entitlement"** ile geçersiz kılınır.
+///
+/// Hata mesajı yanıltıcıdır: `formats` yetkilendirmesi, portal yeteneği ve
+/// profil DOĞRUYDU (imzada ve profilde doğrulandı) — eksik olan bir
+/// **yetkilendirme** değil, bir `Info.plist` beyanıydı. Aynı belirtiyi
+/// birebir aynı üç seçenekle bildiren iki forum kaydı var
+/// (developer.apple.com/forums/thread/811220 ve .../735183; ikincisinde
+/// bildiren kişi "`.iso18092`yi çıkarınca her şey çalıştı" diyor).
+///
+/// FELICA SİSTEM KODU BEYAN EDİLMEDİ, seçenek ÇIKARILDI: FeliCa Japonya'ya
+/// özgü ulaşım/e-para kart ailesidir; tur noktası etiketlerimiz NTAG424 DNA
+/// (ISO 14443 Type A). Kullanmadığımız bir sistem kodunu beyan etmek,
+/// denetimde savunamayacağımız gerçek dışı bir beyan olurdu — AID
+/// listesinde de aynı ilke uygulandı (bkz. `ios/Runner/Info.plist`).
+///
+/// `iso15693` KALDI: ek beyan gerektirmez ve "yanlış kart" durumunu
+/// algılamamızı sağlar.
+const pollingSecenekleri = {
+  NfcPollingOption.iso14443,
+  NfcPollingOption.iso15693,
+};
+
+/// Teşhis günlüğü için okunur ad listesi.
+final _pollingAdlari = pollingSecenekleri.map((o) => o.name).join(',');
+
+/// iOS oturum geçersizleştirme KODUNU ürün kimliğine çevirir.
+///
+/// Eskiden bu eşleme YOKTU: her geçersizleştirme [NfcHatasi.okumaIptal]
+/// sayılıyordu. Kullanıcı açısından fark büyüktür — iptal "tekrar deneyin"
+/// demektir, yapılandırma hatası ise **hiçbir denemenin tutmayacağı**
+/// anlamına gelir; ikincisini birincisi gibi göstermek, sahadaki görevliyi
+/// (ve iki tur boyunca bizi) yanlış yöne saldı.
+///
+/// `default` dalı YOKTUR: eklenti yeni bir kod eklerse derleyici burayı
+/// gösterir.
+NfcHatasi iosHatasiCoz(NfcReaderErrorCodeIos kod) => switch (kod) {
+      // YAPIM/BEYAN eksikligi — kullanicinin yapabilecegi bir sey yok.
+      NfcReaderErrorCodeIos.readerErrorSecurityViolation ||
+      NfcReaderErrorCodeIos.readerErrorUnsupportedFeature ||
+      NfcReaderErrorCodeIos.readerErrorInvalidParameter ||
+      NfcReaderErrorCodeIos.readerErrorInvalidParameterLength ||
+      NfcReaderErrorCodeIos.readerErrorParameterOutOfBound ||
+      NfcReaderErrorCodeIos.tagCommandConfigurationErrorInvalidParameters =>
+        NfcHatasi.yapilandirmaEksik,
+      // NFC kapali.
+      NfcReaderErrorCodeIos.readerErrorRadioDisabled => NfcHatasi.kapali,
+      // Gercekten iptal/zaman asimi/sistem mesgul: tekrar denemek anlamli.
+      NfcReaderErrorCodeIos.readerSessionInvalidationErrorUserCanceled ||
+      NfcReaderErrorCodeIos.readerSessionInvalidationErrorSessionTimeout ||
+      NfcReaderErrorCodeIos.readerSessionInvalidationErrorSystemIsBusy ||
+      NfcReaderErrorCodeIos.readerSessionInvalidationErrorFirstNDEFTagRead ||
+      NfcReaderErrorCodeIos
+            .readerSessionInvalidationErrorSessionTerminatedUnexpectedly =>
+        NfcHatasi.okumaIptal,
+      // Etiketle konusurken dusen aktarim: etiket cekildi/uzaklasti.
+      NfcReaderErrorCodeIos.readerTransceiveErrorRetryExceeded ||
+      NfcReaderErrorCodeIos.readerTransceiveErrorTagConnectionLost ||
+      NfcReaderErrorCodeIos.readerTransceiveErrorTagNotConnected ||
+      NfcReaderErrorCodeIos.readerTransceiveErrorTagResponseError ||
+      NfcReaderErrorCodeIos.readerTransceiveErrorSessionInvalidated ||
+      NfcReaderErrorCodeIos.readerTransceiveErrorPacketTooLong ||
+      NfcReaderErrorCodeIos.ndefReaderSessionErrorTagNotWritable ||
+      NfcReaderErrorCodeIos.ndefReaderSessionErrorTagSizeTooSmall ||
+      NfcReaderErrorCodeIos.ndefReaderSessionErrorTagUpdateFailure ||
+      NfcReaderErrorCodeIos.ndefReaderSessionErrorZeroLengthMessage =>
+        NfcHatasi.cozumlenemedi,
+    };
 
 /// Uint8List UID'i sozlesme (contracts/openapi.yaml) formatina cevirir:
 /// BUYUK HARF, IKI NOKTA (`:`) AYRACLI. Ornek: [0x04, 0xA3, 0xB2] -> "04:A3:B2".
@@ -141,14 +218,9 @@ class NfcService {
       if (_oturum != NfcOturum.bosta) await _durdurIc();
       _oturum = NfcOturum.basliyor;
       try {
+        teshisYaz('NFC', 'startSession — $_pollingAdlari');
         await NfcManager.instance.startSession(
-          // NTAG2xx/NTAG424 ISO 14443'tedir; digerlerini de tarayalim ki
-          // "yanlis kart" durumunu da algilayip anlamli sonuc dondurelim.
-          pollingOptions: {
-            NfcPollingOption.iso14443,
-            NfcPollingOption.iso15693,
-            NfcPollingOption.iso18092,
-          },
+          pollingOptions: pollingSecenekleri,
           alertMessageIos: ios.yaklastir,
           onDiscovered: (tag) async {
             final result = _parseTag(tag);
@@ -166,11 +238,19 @@ class NfcService {
             // native tarafta `tagSession`i NIL'LEMEZ; `stopSession`
             // cagrilmazsa referans asili kalir ve SONRAKI okuma
             // `session_already_exists` alir.
+            teshisYaz('NFC', 'gecersiz kilindi — kod=${error.code.name} '
+                'mesaj="${error.message}"');
             _durdur().ignore();
             _tamamla(
               NfcReadResult.failure(
-                NfcHatasi.okumaIptal,
-                detay: error.message,
+                // KOD, MESAJDAN ONCE GELIR. Eskiden HER gecersiz kilma
+                // `okumaIptal` diye etiketleniyordu; cihazda "Missing
+                // required entitlement" ekrana **"Okuma iptal edildi:
+                // Missing required entitlement"** diye ciktu ve iki tur
+                // boyunca yanlis yerde arandi. Eklenti kodu ZATEN
+                // veriyordu (`NfcReaderErrorCodeIos`), biz atiyorduk.
+                iosHatasiCoz(error.code),
+                detay: '${error.code.name}: ${error.message}',
               ),
             );
           },

@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 import '../../../core/i18n/l10n.dart';
 import '../domain/camera_models.dart';
 import '../domain/yayin_hatasi.dart';
+import '../../../core/teshis/teshis.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import 'yayin_hatasi_metni.dart';
 
@@ -118,6 +119,16 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
     // cagriliyordu ve bosluk/satir sonu tasiyan bir adres, ekrana hic
     // ulasmadan YAKALANMAMIS bir `FormatException` firlatiyordu.
     final adres = widget.kamera.oynatilacakUrl.trim();
+    // TESHIS (P119): iki tur korlemesine gecti cunku CIHAZDA hangi adresin
+    // denendigi hic gorulmedi. Yayin yapiminda da yazar.
+    YayinTeshis.acildi(
+      ad: widget.kamera.ad,
+      tur: widget.kamera.tur.name,
+      oynatilabilir: widget.kamera.oynatilabilir,
+      streamUrl: widget.kamera.streamUrl,
+      restreamUrl: widget.kamera.restreamUrl,
+      secilenUrl: adres,
+    );
     if (widget.controllerYapici == null && !adresOynatilabilirMi(adres)) {
       setState(() {
         _controller = null;
@@ -130,11 +141,14 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
     final c =
         widget.controllerYapici?.call(widget.kamera) ??
         VideoPlayerController.networkUrl(Uri.parse(adres));
+    final saat = Stopwatch()..start();
     try {
       // UST SINIR: bkz. [_hazirlanmaSiniri]. iOS'ta yanit vermeyen bir
       // yayin ne hazir ne hatali olur; sinir olmadan gosterge sonsuza
       // kadar donerdi.
+      YayinTeshis.hazirlaniyor();
       await c.initialize().timeout(_hazirlanmaSiniri);
+      YayinTeshis.hazir(saat.elapsed, '${c.value.size}');
       // ESKIMIS CAGRI: bu arada yeniden denenmisse sonucu YOK SAY ve
       // controller'i AT — yoksa hayalet oynatici kalirdi.
       if (!mounted || kusak != _kusak) {
@@ -149,6 +163,7 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
         _hazirlaniyor = false;
       });
     } catch (hata) {
+      YayinTeshis.dustu(saat.elapsed, hata);
       await c.dispose();
       if (!mounted || kusak != _kusak) return;
       setState(() {
@@ -198,6 +213,7 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
     final c = _controller;
     if (c != null && c.value.hasError && _hataNedeni == null) {
       final mesaj = c.value.errorDescription;
+      YayinTeshis.sonradanHata(mesaj);
       _controller = null;
       c.removeListener(_controllerDegisti);
       // Atma BEKLENMEZ: dinleyici icindeyiz ve cizim gecikmemeli.

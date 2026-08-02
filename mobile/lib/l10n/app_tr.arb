@@ -1261,6 +1261,7 @@
   "nfcHataCozumlenemedi": "Etiket çözümlenemedi: {detay}",
   "nfcHataOturum": "NFC oturumu başlatılamadı: {detay}",
   "nfcHataOkumaIptal": "Okuma iptal edildi: {detay}",
+  "nfcHataYapilandirma": "NFC bu yapımda kullanılamıyor: {detay}. Uygulamanın güncellenmesi gerekiyor; tekrar denemek sonucu değiştirmez.",
   "nfcHataBilinmeyen": "Bilinmeyen bir hata oluştu.",
   "nfcIosYaklastir": "Etiketi telefonun arkasına yaklaştırın.",
   "@nfcIosYaklastir": {

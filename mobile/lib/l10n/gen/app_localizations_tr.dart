@@ -3123,6 +3123,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String nfcHataYapilandirma(Object detay) {
+    return 'NFC bu yapımda kullanılamıyor: $detay. Uygulamanın güncellenmesi gerekiyor; tekrar denemek sonucu değiştirmez.';
+  }
+
+  @override
   String get nfcHataBilinmeyen => 'Bilinmeyen bir hata oluştu.';
 
   @override

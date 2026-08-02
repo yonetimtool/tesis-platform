@@ -901,6 +901,7 @@
   "nfcHataCozumlenemedi": "Le tag n'a pas pu être analysé : {detay}",
   "nfcHataOturum": "Impossible de démarrer la session NFC : {detay}",
   "nfcHataOkumaIptal": "Lecture annulée : {detay}",
+  "nfcHataYapilandirma": "NFC est indisponible dans cette version : {detay}. L'application doit être mise à jour ; réessayer ne changera rien.",
   "nfcHataBilinmeyen": "Une erreur inconnue s'est produite.",
   "nfcIosYaklastir": "Approchez le tag de l'arrière du téléphone.",
   "nfcIosOkundu": "Lu",

@@ -3353,6 +3353,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String nfcHataYapilandirma(Object detay) {
+    return 'لا يمكن استخدام NFC في هذه النسخة: $detay. يلزم تحديث التطبيق؛ إعادة المحاولة لن تُجدي.';
+  }
+
+  @override
   String get nfcHataBilinmeyen => 'حدث خطأ غير معروف.';
 
   @override

@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'l10n/gen/app_localizations.dart';
 import 'src/core/i18n/locale_controller.dart';
 import 'src/core/startup/acilis_tercihleri.dart';
+import 'src/core/teshis/teshis.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/core/theme/theme_controller.dart';
 import 'src/features/push/presentation/push_registrar.dart';
@@ -25,6 +26,10 @@ Future<void> main() async {
   // Eskiden bunlar asenkron okunuyordu → ilk kare varsayilan dille cizilip
   // hemen yenileniyordu; kullanicinin gordugu METIN TITREMESI buydu.
   final tercihler = await acilisTercihleriniOku();
+  // (P119) CALISAN PAKETIN GERCEKLERI konsola yazilir (yalniz iOS).
+  // Beklenmez: `await` etmek ilk kareyi bir platform cagrisi kadar
+  // geciktirirdi ve teshis, acilis hizindan onemli degildir.
+  teshisBlogunuYazdir().ignore();
   runApp(ProviderScope(
     overrides: [acilisTercihleriProvider.overrideWithValue(tercihler)],
     child: const TesisGuvenlikApp(),

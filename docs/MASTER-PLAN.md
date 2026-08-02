@@ -622,6 +622,15 @@ Device-verify (biriken liste — agent ekler, Kerem işaretler):
   ekranında **her modül kartına** tek tek dokun → hepsi bir ekrana
   gitmeli; **"Bu bölüm yakında"** mesajı **hiçbirinde çıkmamalı**. FAB
   (+) menüsünde **pasif/"Yakında"** satır olmamalı.
+- [ ] **P119 · TEŞHİS KOŞUMU (MOBİL, iOS — TEK KOŞUM).**
+  `docs/ios-teshis-turu.md` adım adım anlatıyor: `flutter run --release`
+  → açılıştaki `=== PAKET GERCEKLERI ===` bloğu + bir kamera açıp çıkan
+  `[YAYIN]` satırları + bir NFC okutmadan çıkan `[NFC]` satırları.
+  **Üçünü de yapıştırın**; kamera kök nedeni bu çıktıyla belirlenecek.
+- [ ] **P119 · NFC artık AÇILMALI (MOBİL, GÜVENLİK).** `.iso18092`
+  kaldırıldı. Okutma hâlâ düşerse ekrandaki cümle "Okuma iptal edildi"
+  **olmamalı**; "NFC bu yapımda kullanılamıyor: `<kod>`…" yazmalı ve o
+  `<kod>` günlükte de görünmeli.
 - [ ] **P115 · Denetçinin GİRİŞİ (MOBİL, GÜVENLİK).** Denetim notlarındaki
   akışı **birebir** dene: giriş ekranına **telefon** `0500 000 01 02` +
   demo parolası → girmeli. **E-posta alanı aranmamalı** (mobilde yok).
@@ -6620,6 +6629,96 @@ derlenir ama NFC **sessizce çalışmaz**. iPhone 7+ sınırı ve SDM'in
 `submit_to_app_store: false` bilinçli — denetim notları, gizlilik anketi
 ve ekran görüntüleri elle girilir, eksik biriyle göndermek reddedilip
 kuyruğa yeniden girmektir.
+
+### P119 — iOS teşhis turu: kamera yayını + NFC
+Status: KISMEN(NFC kök neden BULUNDU + düzeltildi · KAMERA teşhis bekliyor —
+cihaz koşumu Kerem'de) · Depends-on: P114, P115
+Scope: TestFlight yapım 2'de iki hata da düştü. Bu tur **kör düzeltmeyi
+bıraktı**: ürün koduna teşhis eklendi, tek bir `flutter run` çıktısı iki
+soruyu da kapatacak biçimde tasarlandı. Belge: `docs/ios-teshis-turu.md`.
+
+**NFC — KÖK NEDEN BULUNDU, düzeltildi.** Hata bir yetkilendirme eksikliği
+DEĞİLDİ; Kerem'in kanıtları doğruydu (imzada + gömülü profilde NDEF/TAG,
+portalda yetenek açık, temiz kurulum, yeniden başlatma). Eksik olan
+`Info.plist`teki bir **beyandı**: oturum `.iso18092` (FeliCa) tarama
+seçeneğiyle açılıyordu ve CoreNFC, `.iso18092` isteyen bir
+`NFCTagReaderSession`ı ancak uygulama
+`com.apple.developer.nfc.readersession.felica.systemcodes` altında sistem
+kodlarını beyan etmişse açar; beyan yoksa `begin()` anında **NFCError
+code 2 — "Missing required entitlement"** ile geçersiz kılar. Mesaj
+yanıltıcıdır: kırmızı ışık yetkilendirmeyi gösterir, sorun beyandadır.
+İki forum kaydı belirtiyi **birebir aynı üç seçenekle** bildiriyor
+(`developer.apple.com/forums/thread/811220` — iPhone 15 / iOS 26.2,
+bizimkiyle neredeyse aynı yapılandırma; ve `.../735183` — "`.iso18092`yi
+çıkarınca her şey çalıştı").
+
+**FELICA BEYAN EDİLMEDİ, SEÇENEK ÇIKARILDI.** Kullanmadığımız bir sistem
+kodunu beyan etmek denetimde savunulamayacak gerçek dışı bir beyan olurdu
+— AID listesinde de aynı ilke uygulanmıştı. `iso15693` kaldı (ek beyan
+istemez, "yanlış kart" durumunu ayırt ettirir).
+
+**YETKİLENDİRME DOSYASINA DOKUNULMADI** (TAG-only kaldı). Build 2
+NDEF+TAG ile imzalanmıştı ve **yine düştü** — yani NDEF bu hatanın
+değişkeni değil. Kanıtla elenmiş bir değişkeni kurcalamak, bu turda
+bırakılan alışkanlığın ta kendisi olurdu.
+
+**İKİNCİ HATA — YANLIŞ ADLANDIRMA.** Eklenti oturum hatasının **kodunu**
+veriyordu (`NfcReaderErrorCodeIos`); bizim kod yalnız `message`i alıp HER
+geçersizleştirmeyi `okumaIptal` sayıyordu. Cihazda "Missing required
+entitlement" ekrana **"Okuma iptal edildi: …"** diye çıktı. İptal "tekrar
+deneyin" demektir; yapım düzelmeden hiçbir deneme tutmaz — iki tur tam bu
+yüzden yanlış yerde arandı. Artık 22 kodun tamamı sınıflanıyor ve
+yapılandırma hataları ayrı bir kimliğe düşüyor (`yapilandirmaEksik`,
+7 dilde).
+
+**KAMERA — kök neden YOK, hipotezler sıralı.** H1 (en olası): iki platform
+**aynı kaydı oynatmıyor**. Android karşılaştırması dev'deki tohumlanmış
+genel HLS yayınlarıyla, iOS ise prod'daki gerçek tesisle yapıldıysa ortada
+iOS hatası yoktur — sahadaki kamera ya `rtsp://` (AVPlayer bunu **hiç**
+oynatamaz, ExoPlayer oynatabilir) ya da telefonun erişemediği bir yerel ağ
+adresidir. *Tohumlanan demo tesisinde kamera **hiç yok** —
+`demo_tenant.py` kamera yazmaz; yani prod'da görülen kameralar Kerem'in
+kendi tesisine ait.* H2: ATS anahtarı pakete girmemiş olabilir. H3:
+hazırlık sonrası reddedilen varyant/kodek. H4: 15 sn'de yanıt yok
+(erişilemez adres). H5 (en düşük): `video_player`/iOS 26 gerilemesi —
+bu belirtiyi bildiren güncel bir kayıt bulunamadı.
+
+**TEŞHİS KANALI — "kaynakta ne yazıyor" değil, PAKETTE ne var.**
+`ios/Runner/AppDelegate.swift` içine bir yöntem kanalı eklendi; çalışan
+paketin **kendi `Info.plist`ini** okuyup ATS/NFC anahtarlarını Dart'a
+verir. "Kaynak doğru ama pakete girdi mi?" sorusunun tek kesin cevabı bu
+(`GENERATE_INFOPLIST_FILE`, yanlış `INFOPLIST_FILE`, hedef karışması, eski
+bir TestFlight yapımı…). **Yeni çerçeve eklenmedi** (`CoreNFC`/`Security`
+ithal edilmedi): Mac'siz düzenlenen bir projede derlemeyi riske atmamak
+için yalnız `Bundle.main` okunuyor. Ayrı bir `.swift` dosyası da
+**açılmadı** — pbxproj'a yeni kaynak eklemek aynı riski taşırdı.
+
+**ADRESLER MASKELENİR:** saha kameralarının adresleri gerçek dünyada
+`rtsp://kullanici:parola@10.0.0.5/…` biçimindedir ve teşhis günlüğü ekran
+görüntüsüyle paylaşılır. Kimlik `***@` olur, sorgu dizesi `+sorgu(41)`ya
+iner; konak/port/yol korunur (teşhisi yapan şey zaten onlar).
+
+**TEST BİR KUSURU YAKALADI:** maskeleme `Uri.tryParse`e güveniyordu, o da
+hoşgörülüdür — `https://ornek /gizli-yol?token=…` gibi yapıştırma artığı
+bir adresi boşluğu `%20` yapıp çözer, maskeleme de geçerli bir adresmiş
+gibi yolu **yazardı**. Oynatıcıdaki boşluk kuralı maskelemeye de taşındı.
+
+**KİLİTLER (17 test, beşi mutasyonla doğrulandı):**
+`test/ios_nfc_polling_kilidi_test.dart` — `.iso18092` seçiliyse FeliCa
+sistem kodları **beyan edilmiş olmalı** (çapraz dosya: `nfc_service.dart`
+↔ `Info.plist`), böylece hata sessizce geri gelemez; ayrıca kod→kimlik
+eşlemesinin 22 kodu da ölçülüyor. `test/teshis_test.dart` — maskeleme
+(parola/jeton sızmaz), kanal adının **iki ucunun** aynı olması (ayrışırsa
+teşhis sessizce çalışmazdı) ve ATS anahtarlarının kaynakta bulunması.
+Mutasyonlar: iso18092 geri kondu → düştü · güvenlik ihlali yine
+`okumaIptal`e eşlendi → düştü · maskeleme kimliği bıraktı → düştü · sorgu
+maskelenmedi → düştü · Swift kanal adı ayrıştı → düştü.
+
+KAPILAR: `flutter analyze` temiz · `flutter test` **1632 geçti / 3
+atlandı** (taban 1615, +17) · apk ✓.
+
+Acceptance: Kerem `docs/ios-teshis-turu.md`deki tek koşumu yapar ve üç
+blok günlüğü yapıştırır; kamera kök nedeni o çıktıyla belirlenir.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook

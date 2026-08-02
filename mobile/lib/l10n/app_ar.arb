@@ -901,6 +901,7 @@
   "nfcHataCozumlenemedi": "تعذّر تحليل الوسم: {detay}",
   "nfcHataOturum": "تعذّر بدء جلسة NFC: {detay}",
   "nfcHataOkumaIptal": "أُلغيت القراءة: {detay}",
+  "nfcHataYapilandirma": "لا يمكن استخدام NFC في هذه النسخة: {detay}. يلزم تحديث التطبيق؛ إعادة المحاولة لن تُجدي.",
   "nfcHataBilinmeyen": "حدث خطأ غير معروف.",
   "nfcIosYaklastir": "قرّب الوسم من ظهر الهاتف.",
   "nfcIosOkundu": "تم القراءة",

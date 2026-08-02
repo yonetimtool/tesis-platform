@@ -3335,6 +3335,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String nfcHataYapilandirma(Object detay) {
+    return 'NFC недоступен в этой сборке: $detay. Требуется обновление приложения; повторная попытка не поможет.';
+  }
+
+  @override
   String get nfcHataBilinmeyen => 'Произошла неизвестная ошибка.';
 
   @override

@@ -901,6 +901,7 @@
   "nfcHataCozumlenemedi": "Das Tag konnte nicht ausgewertet werden: {detay}",
   "nfcHataOturum": "Die NFC-Sitzung konnte nicht gestartet werden: {detay}",
   "nfcHataOkumaIptal": "Lesen abgebrochen: {detay}",
+  "nfcHataYapilandirma": "NFC ist in diesem Build nicht verfügbar: {detay}. Die App muss aktualisiert werden; ein erneuter Versuch hilft nicht.",
   "nfcHataBilinmeyen": "Ein unbekannter Fehler ist aufgetreten.",
   "nfcIosYaklastir": "Halten Sie das Tag an die Rückseite des Telefons.",
   "nfcIosOkundu": "Gelesen",

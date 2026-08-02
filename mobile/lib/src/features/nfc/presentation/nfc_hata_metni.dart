@@ -17,6 +17,7 @@ String nfcHataMetni(AppLocalizations l10n, NfcHatasi hata, {String? detay}) {
     NfcHatasi.cozumlenemedi => l10n.nfcHataCozumlenemedi(d),
     NfcHatasi.oturumBaslatilamadi => l10n.nfcHataOturum(d),
     NfcHatasi.okumaIptal => l10n.nfcHataOkumaIptal(d),
+    NfcHatasi.yapilandirmaEksik => l10n.nfcHataYapilandirma(d),
     NfcHatasi.bilinmeyen => l10n.nfcHataBilinmeyen,
   };
 }

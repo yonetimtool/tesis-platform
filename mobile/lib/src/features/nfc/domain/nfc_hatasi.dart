@@ -31,6 +31,17 @@ enum NfcHatasi {
   /// iOS oturumu kullanici/sistem tarafindan iptal edildi ([detay]).
   okumaIptal,
 
+  /// UYGULAMANIN YAPILANDIRMASI EKSIK — cihaz/kullanici kaynakli DEGIL.
+  ///
+  /// iOS `NFCReaderError` kodlari `readerErrorSecurityViolation` (kod 2,
+  /// "Missing required entitlement"), `readerErrorUnsupportedFeature`,
+  /// `readerErrorInvalidParameter*` ve `readerErrorAccessNotAccepted`
+  /// bu kimlige duser. AYRI BIR KIMLIK OLMASININ SEBEBI: bunlar
+  /// `okumaIptal` diye etiketlenince kullaniciya "tekrar deneyin"
+  /// denir — oysa YAPIM duzelmeden hicbir deneme tutmaz. Iki tur
+  /// boyunca hata tam bu yuzden yanlis yerde arandi.
+  yapilandirmaEksik,
+
   /// Siniflandirilamayan hata.
   bilinmeyen,
 }

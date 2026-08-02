@@ -901,6 +901,7 @@
   "nfcHataCozumlenemedi": "Не удалось разобрать метку: {detay}",
   "nfcHataOturum": "Не удалось начать NFC-сессию: {detay}",
   "nfcHataOkumaIptal": "Чтение отменено: {detay}",
+  "nfcHataYapilandirma": "NFC недоступен в этой сборке: {detay}. Требуется обновление приложения; повторная попытка не поможет.",
   "nfcHataBilinmeyen": "Произошла неизвестная ошибка.",
   "nfcIosYaklastir": "Поднесите метку к задней части телефона.",
   "nfcIosOkundu": "Прочитано",

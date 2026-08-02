@@ -5519,6 +5519,12 @@ abstract class AppLocalizations {
   /// **'Okuma iptal edildi: {detay}'**
   String nfcHataOkumaIptal(Object detay);
 
+  /// No description provided for @nfcHataYapilandirma.
+  ///
+  /// In tr, this message translates to:
+  /// **'NFC bu yapımda kullanılamıyor: {detay}. Uygulamanın güncellenmesi gerekiyor; tekrar denemek sonucu değiştirmez.'**
+  String nfcHataYapilandirma(Object detay);
+
   /// No description provided for @nfcHataBilinmeyen.
   ///
   /// In tr, this message translates to:

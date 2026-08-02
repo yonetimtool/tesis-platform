@@ -3231,6 +3231,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String nfcHataYapilandirma(Object detay) {
+    return 'NFC est indisponible dans cette version : $detay. L\'application doit être mise à jour ; réessayer ne changera rien.';
+  }
+
+  @override
   String get nfcHataBilinmeyen => 'Une erreur inconnue s\'est produite.';
 
   @override

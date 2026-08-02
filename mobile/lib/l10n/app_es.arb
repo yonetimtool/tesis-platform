@@ -901,6 +901,7 @@
   "nfcHataCozumlenemedi": "No se pudo interpretar la etiqueta: {detay}",
   "nfcHataOturum": "No se pudo iniciar la sesión NFC: {detay}",
   "nfcHataOkumaIptal": "Lectura cancelada: {detay}",
+  "nfcHataYapilandirma": "NFC no está disponible en esta compilación: {detay}. La aplicación necesita una actualización; reintentar no servirá.",
   "nfcHataBilinmeyen": "Se ha producido un error desconocido.",
   "nfcIosYaklastir": "Acerque la etiqueta a la parte trasera del teléfono.",
   "nfcIosOkundu": "Leída",

@@ -901,6 +901,7 @@
   "nfcHataCozumlenemedi": "The tag could not be parsed: {detay}",
   "nfcHataOturum": "The NFC session could not be started: {detay}",
   "nfcHataOkumaIptal": "Reading was cancelled: {detay}",
+  "nfcHataYapilandirma": "NFC is unavailable in this build: {detay}. The app needs an update; retrying will not help.",
   "nfcHataBilinmeyen": "An unknown error occurred.",
   "nfcIosYaklastir": "Hold the tag against the back of the phone.",
   "nfcIosOkundu": "Read",
