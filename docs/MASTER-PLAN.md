@@ -150,7 +150,7 @@ Kategoriler: **DOĞRULANDI-BİTTİ** · **KISMEN** · **HİÇ BAŞLANMADI** ·
 | P15 | BITTI | DOĞRULANDI-BİTTİ | `infra/frigate-poc/` (config, mediamtx, storage) + `docs/frigate-poc.md` |
 | P16 | BITTI | DOĞRULANDI-BİTTİ | `routers/anpr.py` + `0011_anpr_ingest.py` |
 | P17 | BITTI | DOĞRULANDI-BİTTİ | `features/anpr/` + `0012_kamera_restream.py` |
-| P18 | BLOKE | BLOKE(donanım + saha) | Pilot site gerekiyor |
+| P18 | BLOKE | BLOKE(donanım + saha) — **ajanın payı 2026-08-02'de kapandı** | Pilot site gerekiyor. Kabul ölçütündeki runbook eksikti; `docs/saha-kutusu-runbook.md` yazıldı |
 | P19 | BITTI | DOĞRULANDI-BİTTİ | `app/anpr.py` adaptörleri + `docs/anpr-kamera-kurulumu.md` |
 | P20 | BITTI | DOĞRULANDI-BİTTİ (kapsamı **not**) | `docs/face-recognition-v2-design.md`; Scope zaten "design note only" |
 | P21 | BITTI | DOĞRULANDI-BİTTİ (kapsamı **not**) | `docs/talep-uzerine-ceviri-notu.md`; Scope "evaluation note" |
@@ -1176,10 +1176,35 @@ KAPILAR: `flutter analyze` temiz; `flutter test` **1426 geçti / 0 düştü**;
 sözleşme güncellendi (Camera/CameraCreate/CameraUpdate + restream açıklaması).
 
 ### P18 — [KEREM+DONANIM] Frigate Phase 4: pilot site
-Status: BLOKE(donanım+saha) · Depends-on: P17
+Status: BLOKE(donanım+saha — AJANIN PAYI BİTTİ) · Depends-on: P17
 Scope: Agent's part only: install/ops runbook for a site box (mini PC class; Coral
 optional), camera-angle guidance for LPR, remote update strategy note.
 Acceptance: runbook committed; field execution is Kerem's.
+
+Notes (2026-08-02) — **AJANIN PAYI TAMAMLANDI.**
+BLOKE maddeleri denetlenirken bulundu: bu maddenin **kabul ölçütü**
+("runbook committed") ajanın işiydi ve **karşılanmamıştı** — donanım
+beklemek bunu gerektirmiyordu. Kalan boşluklar somuttu: kamera açısı
+kılavuzu vardı (`anpr-kamera-kurulumu.md` §6), boyutlandırma ölçümü vardı
+(`frigate-poc.md` §5), ama **saha kutusu kurulum/işletim runbook'u** ve
+**uzaktan güncelleme notu** yoktu.
+
+`docs/saha-kutusu-runbook.md` yazıldı. İçindeki iki asıl karar:
+* **MİMARİ:** ham video merkeze taşınmaz; kutu videoyu yerelde tüketir,
+  dışarı **olay** çıkar. Hem bant genişliği hem KVKK açısından doğru yön
+  (görüntü sitede kalır, merkeze karar çıkar).
+* **UZAKTAN GÜNCELLEME: ÇEKME, İTME DEĞİL — ve OTOMATİK DEĞİL.** Kutuya
+  **gelen port açılmaz** (SSH dâhil); erişim ters tünelle, kutu merkeze
+  bağlanır. İmaj sürümü **sabitlenir** (`stable` etiketi kullanılmaz —
+  farklı sitelerde farklı sürüm demektir ve hata raporu "hangi sürüm"
+  sorusunu cevaplayamaz). Watchtower sınıfı otomatik güncelleme
+  **önerilmez**: gece kendiliğinden yükselen kutu sabah "plaka okumuyor"
+  olarak döner ve değişimin ne zaman olduğu bilinmez.
+
+Belge, **doğrulanmamış** olanları ayrı bir bölümde açıkça sayıyor (5–6
+kamera boyutlandırması ekstrapolasyondur; Coral hiç denenmedi; gerçek
+plaka doğruluğu ölçülmedi; tünel ürünü seçilmedi). **Statü BLOKE kalıyor**
+— kalan iş donanım ve saha, ikisi de Kerem'de.
 
 ### P19 — Hikvision/Dahua adapters
 Status: BITTI · Depends-on: P16
