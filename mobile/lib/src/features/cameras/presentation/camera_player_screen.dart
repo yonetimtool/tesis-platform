@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
@@ -39,12 +42,41 @@ class CameraPlayerScreen extends StatefulWidget {
 }
 
 class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
+  /// HAZIRLANMA UST SINIRI.
+  ///
+  /// iOS'ta `AVPlayerItem.status` `.unknown`ta TAKILI KALABILIR: CDN
+  /// yanit vermiyorsa ya da varyant listesi cozulemiyorsa AVFoundation
+  /// ne `readyToPlay` ne de HATA uretir. Eklenti de o zaman
+  /// `initialize()`in Future'ini HIC tamamlamaz. Ust sinir olmadan ekran
+  /// SONSUZA KADAR donen gostergede kalirdi — ve "yeniden dene" dugmesi
+  /// YALNIZ hata ekraninda oldugu icin kullanicinin cikistan baska yolu
+  /// olmazdi. (Android'de ExoPlayer bu durumda hata uretiyor; belirti bu
+  /// yuzden iOS'a ozgu gorunuyor.)
+  static const _hazirlanmaSiniri = Duration(seconds: 15);
+
   VideoPlayerController? _controller;
 
   /// Hata NEDENI (metin degil!): cumle cizim aninda aktif dilden okunur —
   /// boylece dil degisince ekrandaki hata metni de degisir. `null` = hata yok.
   YayinHatasi? _hataNedeni;
+
+  /// Platformun HAM hata metni — YALNIZ hata ayiklama yapiminda gosterilir.
+  ///
+  /// Neden: "yayin acilamadi" cumlesi kullaniciya yeter ama CIHAZDA TEsHIS
+  /// koymaya yetmez; AVFoundation'in kendi mesaji (kodek, 403, ATS...)
+  /// tek ayirt edici bilgidir. Yayin yapiminda GIZLENIR: son kullaniciya
+  /// ic ayrinti gostermek hem gurultu hem bilgi sizintisidir.
+  String? _hamHata;
+
   bool _hazirlaniyor = true;
+
+  /// AYNI ANDA TEK OYNATICI. "Yeniden dene" arka arkaya basildiginda
+  /// birden cok `initialize()` ucusta olabilir; kusak numarasi, GECIKMIS
+  /// olanin sonucunu YOK SAYMAYI saglar. Aksi halde eski cagri yeni
+  /// controller'i EZER ve ezilen `AVPlayer` HIC atilmazdi — iOS'ta bu,
+  /// ses oturumunu tutan bir hayalet oynatici birakir (NFC turundaki
+  /// asili oturum hatasinin ayni sinifi).
+  int _kusak = 0;
 
   @override
   void initState() {
@@ -59,10 +91,20 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
     _baslat();
   }
 
+  /// TEST KAPISI — es zamanli yeniden denemeyi kurmak icin.
+  ///
+  /// Uretimde kullanilmaz: "yeniden dene" dugmesi zaten `_baslat`i cagirir
+  /// ama gosterge ekranindayken dugme YOKTUR; es zamanlilik ancak
+  /// buradan kurulabilir.
+  @visibleForTesting
+  void baslatTest() => _baslat();
+
   Future<void> _baslat() async {
+    final kusak = ++_kusak;
     setState(() {
       _hazirlaniyor = true;
       _hataNedeni = null;
+      _hamHata = null;
     });
     // Yeniden denemede ONCEKI controller atilir (sizinti yok).
     final eski = _controller;
@@ -89,8 +131,13 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
         widget.controllerYapici?.call(widget.kamera) ??
         VideoPlayerController.networkUrl(Uri.parse(adres));
     try {
-      await c.initialize();
-      if (!mounted) {
+      // UST SINIR: bkz. [_hazirlanmaSiniri]. iOS'ta yanit vermeyen bir
+      // yayin ne hazir ne hatali olur; sinir olmadan gosterge sonsuza
+      // kadar donerdi.
+      await c.initialize().timeout(_hazirlanmaSiniri);
+      // ESKIMIS CAGRI: bu arada yeniden denenmisse sonucu YOK SAY ve
+      // controller'i AT — yoksa hayalet oynatici kalirdi.
+      if (!mounted || kusak != _kusak) {
         await c.dispose();
         return;
       }
@@ -103,13 +150,21 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
       });
     } catch (hata) {
       await c.dispose();
-      if (!mounted) return;
+      if (!mounted || kusak != _kusak) return;
       setState(() {
         _controller = null;
         _hazirlaniyor = false;
         // Neden ADRESTEN + platform hatasindan turetilir; tek bir genel
         // cumle kullaniciyi yanlis ise yolluyordu (bkz. YayinHatasi).
-        _hataNedeni = yayinHatasiCoz(adres, hata);
+        _hataNedeni = hata is TimeoutException
+            ? YayinHatasi.ulasilamadi
+            : yayinHatasiCoz(adres, hata);
+        // Platformun/istisnanin KENDI metni. `TimeoutException` zaten
+        // sureyi tasir ("TimeoutException after 0:00:15.000000"), yani
+        // elle cumle kurmaya gerek yok — kurmak, cizim katmanina
+        // enterpolasyonlu sabit metin sokmak olurdu (i18n kilidi bunu
+        // hakli olarak reddetti).
+        _hamHata = '$hata';
       });
     }
   }
@@ -129,8 +184,32 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
   }
 
   /// Controller degeri degisti (oynuyor/duraklatildi/tamponluyor) → yeniden ciz.
+  ///
+  /// HAZIRLIK SONRASI HATA BURADA YAKALANIR — eskiden HIC yakalanmiyordu.
+  /// `video_player`in hata dinleyicisi, hata `initialize()` TAMAMLANDIKTAN
+  /// SONRA gelirse Future'i degil YALNIZCA `value`yu isaretler
+  /// (`VideoPlayerValue.erroneous`). HLS'te tipik akis tam olarak budur:
+  /// ana liste yuklenir, oynatici "hazir" olur, sonra varyant/parca ya da
+  /// kodek reddedilir. Eski kod yalniz `try/catch`e bakiyordu; boyle bir
+  /// hatada ekran SIYAH kalir, uzerinde oynat ikonu durur ve kullaniciya
+  /// HICBIR sey soylenmezdi — "yeniden dene" dugmesi de gorunmezdi.
   void _controllerDegisti() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    final c = _controller;
+    if (c != null && c.value.hasError && _hataNedeni == null) {
+      final mesaj = c.value.errorDescription;
+      _controller = null;
+      c.removeListener(_controllerDegisti);
+      // Atma BEKLENMEZ: dinleyici icindeyiz ve cizim gecikmemeli.
+      c.dispose();
+      setState(() {
+        _hazirlaniyor = false;
+        _hataNedeni = yayinHatasiCoz(widget.kamera.oynatilacakUrl.trim(), mesaj);
+        _hamHata = mesaj;
+      });
+      return;
+    }
+    setState(() {});
   }
 
   @override
@@ -197,6 +276,22 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white38, fontSize: 12),
             ),
+            // PLATFORMUN HAM MESAJI — YALNIZ hata ayiklama yapiminda.
+            //
+            // Cihazda teshis koymanin tek ayirt edici bilgisi budur:
+            // AVFoundation "cannot decode" mi diyor, 403 mu, ATS mi?
+            // Yayin yapiminda gizlenir (son kullaniciya ic ayrinti
+            // gostermek hem gurultu hem sizinti olurdu). Metin
+            // PLATFORMDAN gelir, cevrilmez ve cevrilmemelidir.
+            if (kDebugMode && _hamHata != null) ...[
+              const SizedBox(height: 8),
+              SelectableText(
+                _hamHata!,
+                key: const Key('kamera-hata-ham'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white24, fontSize: 10),
+              ),
+            ],
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: _baslat,
