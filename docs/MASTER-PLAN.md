@@ -1153,6 +1153,38 @@ gövdeleri sarmalayıcısız hâle getirip düzeni tamamen `merkezSayfaAc`a
 bırakmak en temiz yol görünüyor.
 (b)–(g) maddelerine HİÇ dokunulmadı.
 
+İKİNCİ DENEME (2026-08-02) — YİNE GERİ ALINDI, AMA TANI İLERLEDİ.
+Tur 31'in üç ölçümü bu kez **önceden** uygulandı (`merkez_diyalog.dart`:
+zemin `surfaceContainerLow`, `Column.min`+`Flexible`, dış kaydırma yok) ve
+**pilot tek ekranla** başlandı (`site_kurali`) — planın kendi önerisi.
+
+İLERLEME:
+* `merkezSayfaAc` yazıldı; pilot ekranın **üç** açılışı (form ×2 + detay)
+  çevrildi; `flutter analyze` temiz.
+* **Sürüş yardımcısı düzeltildi:** `fabAc` yalnız `BottomSheet` arıyordu ve
+  dönüşüm sonrası **doğru ekranı kırıyordu**. Koruduğu invaryant "dokunma
+  BİR ŞEY açtı mı"dır; artık `BottomSheet` **ya da** `Dialog` kabul ediyor.
+  Bu düzeltmeyle `FORM: site kurali olusturma` sürüşü **yeşile döndü**.
+* Geriye **tek** sürüş kaldı: `ONAY: site kurali silme diyalogu`.
+
+YENİ ÖLÇÜM — ÖNCEKİ TANI EKSİKMİŞ:
+* Silme ikonunun offset'i **y = 1154** (ekran 900). Tur 31'de "y≈511–529,
+  görünür alanda" yazılmıştı; **bu doğru değilmiş** ya da koşullar farklıymış.
+* Gövdenin kendi `SafeArea`+`Padding`+`SingleChildScrollView` zinciri
+  **soyuldu** (planın önerdiği yol) → offset **hiç değişmedi** (yine 1154).
+  Yani ikon, soyduğum detay gövdesinde **DEĞİL**. Tur 31'in "gövde
+  sarmalayıcıları" hipotezi **elenmiş oldu**.
+* Hit-test yığınında `_RenderTheater` var → öğe **Overlay** katmanında.
+
+SONRAKİ OTURUM İÇİN: ikonun hangi ağaçta olduğunu **önce** bul
+(`ONAY` sürüşünün açtığı widget'ı yazdır), sonra dönüştür. Gövde
+soyma denendi ve **yetmedi**; aynı yolu tekrar denemek zaman kaybı olur.
+
+KARAR: kural 6 gereği yine geri alındı (suit yeşil bırakıldı). Pilot
+yaklaşımı doğru — bir sürüş dışında hepsi geçti; kalan tek sürüş için
+yukarıdaki eleme sonucu bir sonraki denemeyi kısaltır.
+
+
 ### P23 — Resident lifecycle: unit assignment + full edit + malik/kiracı
 Status: BITTI · Depends-on: —
 Scope: (a) assign unit(s) to an EXISTING resident (currently impossible after
