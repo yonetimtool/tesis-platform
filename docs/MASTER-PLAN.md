@@ -1506,7 +1506,7 @@ boşluğu gövdeye **0** gider ve pencere klavyenin üstünde kalır,
 KAPILAR: `flutter analyze` temiz · `flutter test` **1567 geçti /
 3 atlandı / 0 düştü** · `flutter build apk --debug` ✓.
 Commit'ler: `f7d18c0` (kabuk) · `5316c95` (pilot) · `761c6d6` (1. parti)
-· `f3f3b0f` (2. parti) · `60cbd4c` (kalan + klavye + kilit).
+· `f3f3b0f` (2. parti) · `67ecc2e` (kalan + klavye + kilit).
 
 
 ### P23 — Resident lifecycle: unit assignment + full edit + malik/kiracı
@@ -3302,6 +3302,189 @@ yeşil.
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+## FINAL REPORT — 2026-08-02 (kural 13): denetimin bulduğu iş bitti
+
+Bu tur, **2026-08-02 DURUM DENETİMİ**nin açık bıraktığı iki maddeyle
+başladı (P22 KISMEN, P111 SPEC-HAZIR-KOD-YOK) ve BLOKE listesinin
+denetlenmesiyle bitti. Denetimden çıkan asıl ders — *"`BLOKE` etiketi
+yapılabilir bir işi kalıcı olarak görünmez kılabiliyor"* — bu turda **iki
+kez daha** karşılığını verdi: **P64** ve **P18/P2'nin ajan payı**.
+
+### (A) YAPILAN İŞLER
+
+| # | İş | Commit |
+|---|---|---|
+| 1 | **P22(a) kabuk** — `merkezSayfaAc` tek dosyada (henüz çağrılmıyor) | `f7d18c0` |
+| 2 | **P22(a) pilot** — `site_kurali` ekranının 3 açılışı merkeze taşındı; `fabAc` sürüş yardımcısı tür-bağımsız yapıldı | `5316c95` |
+| 3 | **P22(a) 1. parti** — duyuru / sakin / personel / talep: 10 açılış | `761c6d6` |
+| 4 | **P22(a) 2. parti** — bina / kroki / rezervasyon / etkinlik / ziyaret / destek: 18 açılış | `f3f3b0f` |
+| 5 | **P22(a) kalan** — 23 açılış + klavye boşluğu düzeltmesi + 5 testlik kilit | `67ecc2e` |
+| 6 | **P22 BITTI** — plan durumu, CHANGELOG, 3 cihaz-doğrulama girdisi | `ddeeca4` |
+| 7 | **P111** — bölüm sayaçları defteri (referans alan tipi) + toplu üretim + 4 adımlı sayaç okuma sihirbazı + 40 anahtar × 7 dil + 9 test | `4a1b38c` |
+| 8 | **P111 BITTI** — plan durumu, CHANGELOG, 4 cihaz-doğrulama girdisi | `1972e8d` |
+| 9 | **P64** — vezne çift kayıt riski kapatıldı: `0028_vezne_idempotency` + altı vezne ucu + panel anahtarı + sözleşme + 8 test | `23bec66` |
+| 10 | **P64 BITTI** — plan durumu + gerekçe + denetim tablosu (BLOKE 6 → 5) | `0e3d488` |
+| 11 | **P18 ajan payı** — `docs/saha-kutusu-runbook.md` (kabul ölçütündeki eksik runbook) | `40192b9` |
+| 12 | **P2 ajan payı** — prod runbook'un head revizyon spot-check'i 0010 → 0028 | `d1c58e8` |
+
+**ÜÇ ŞEY ÖLÇÜLDÜ VE YANLIŞ ÇIKTI** (hepsi kayda geçti):
+
+1. **P22'nin iki turdur kovaladığı tanı yanlıştı.** "Silme ikonu başka bir
+   widget ağacında / `_RenderTheater` / y=1154" ölçümü **eski kabuğun kendi
+   kusurundan** geliyormuş. Kabuk `Column.min + Flexible` ile yazılınca
+   sorun **hiç ortaya çıkmadı**; ikon 320×900'de y=511'de ve hit-test
+   doğrudan düğmeye gidiyor. İki tur boyunca kovalanan şey ölçüm aracının
+   kendi gölgesiydi.
+2. **Yeni kilit testi iki gerçek kusur buldu** (ikisi de düzeltildi):
+   klavye boşluğunun **iki kez** sayılması ve kaldırma işleminin gövde
+   **kurucusuna** ulaşmaması.
+3. **P111'in önizlemesi `ortak_alan_yuzde`yi atlıyordu** — yüzde kullanan
+   sitede tahmini tutarı **olduğundan büyük** gösterirdi. Test kilitledi.
+
+**BEŞ KAPI TESTİ KIRMIZI VERDİ VE HEPSİ GERÇEK KUSURDU:** panel
+`middleware` matcher'ı (yeni sayfa **kapı dışında** kalmıştı — oturumsuz
+kullanıcı kabuğu görürdü), sabit-metin taraması, erişilebilir-etiket ve iki
+tür-bağımlı test iddiası.
+
+### KAPILAR (bu turun sonunda, tek koşum)
+
+| Kapı | Sonuç |
+|---|---|
+| `web-tsc` | GEÇTİ |
+| `web-vitest` | GEÇTİ — **50 dosya / 308 test** (denetim tabanı 49/297) |
+| `web-build` | GEÇTİ — 37 statik sayfa (taban 36) |
+| `mobil-analyze` | GEÇTİ |
+| `mobil-test` | GEÇTİ — **1567 geçti / 3 atlandı** (taban 1562/3) |
+| `mobil-apk` | GEÇTİ |
+| `backend-pytest` | GEÇTİ — **1151 passed / 1 skipped** (taban 1145/1) |
+| `goc-uyum` / `goc-tersinir` | GEÇTİ — `bulgu: 0` (0028 dâhil) |
+
+### KALAN İŞ — **beşi de gerçekten dış**
+
+| # | Neden bekliyor | Kimde |
+|---|---|---|
+| P2 | Prod sunucuda koşum (dev makineden prod'a erişim yok) | Kerem |
+| P11 | Cihazda elle test | Kerem |
+| P12 | Firebase kimlik bilgisi **yok** | Dış |
+| P13 | iyzico/PayTR sandbox anahtarı **yok** | Dış |
+| P18 | Pilot site + donanım (ajan payı bitti) | Kerem + donanım |
+
+**Ajanın yapabileceği hiçbir iş kalmadı.**
+
+---
+
+### (B) TEST EDİLECEKLER
+
+> Her madde **ekran ve rol** ile başlar. Sırayı takip et; bir madde
+> düşerse not al ve devam et.
+
+#### 1. MOBİL — açılır pencereler (HER ROL, en çok zaman burada)
+
+Bu turda uygulamadaki **bütün** form ve detay pencereleri ekranın altından
+değil **ORTADAN** açılır hâle geldi (54 çağrının 54'ü). En çok kullanılan
+beş yerden geç:
+
+1. **Site Kuralları** → bir karta dokun (detay açılmalı) → kapat →
+   **+ Yeni kural** → kapat.
+2. **Duyurular** → **+** → kapat.
+3. **Talep/Arıza** → **+** → kapat.
+4. **Sakinler** → **+** → kapat; sonra bir satırda **Düzenle** → kapat.
+5. **Rezervasyon** → yeni rezervasyon → kapat.
+
+Her birinde şu **üç** şeye bak:
+* pencere **ekranın ortasında** mı açılıyor (aşağıdan kaymıyor),
+* **perdeye (dışına) dokununca kapanıyor** mu,
+* uzun formda **kaydırma çalışıyor** mu — içerik kesilmemeli, alta
+  sıkışmamalı.
+
+#### 2. MOBİL — klavye açıkken form (SAKİN ya da YÖNETİCİ)
+
+**Talep/Arıza → +** ile uzun bir form aç ve bir metin alanına dokun ki
+klavye açılsın.
+* Pencere **klavyenin üstünde** kalmalı.
+* Formun altında **bir klavye boyu boş alan OLMAMALI**. (Eski alt-sayfa
+  dolgusundan kalma bir kusurdu; düzeltildi ama gözle doğrulanmalı.)
+* Klavyeyi kapat → pencere normal boyuna dönmeli.
+
+#### 3. MOBİL — fotoğraf kaynağı seçimi (SAKİN)
+
+Talep formunda **fotoğraf ekle** → "Kamera / Galeri" seçimi de artık ortada
+bir pencere.
+* İki seçenek de çalışmalı.
+* **Vazgeç** → form **kilitlenmemeli** (düğmeler etkin kalmalı, yükleniyor
+  göstergesi asılı kalmamalı).
+
+#### 4. PANEL — Bölüm Sayaçları (ADMIN/YÖNETİCİ) — YENİ
+
+**Tanımlar → Bölüm Sayaçları** sekmesi (yeni).
+1. Tabloda **daire numarası** ve **ana sayaç adı** görünmeli; ham kimlik
+   (uzun UUID) **görünmemeli**.
+2. **Yeni kayıt** → "Daire" ve "Ana sayaç" açılır listeleri **dolu**
+   gelmeli. Bir daire seç, kaydet.
+3. Mevcut bir satırda **Düzenle** → **"Daire" seçici pasif olmalı** (bir
+   sayacın dairesi taşınamaz), diğer alanlar kaydedilebilmeli.
+
+#### 5. PANEL — toplu sayaç üretimi (ADMIN) — YENİ
+
+Aynı sekmede **Toplu sayaç üretimi**:
+1. Bir **ana sayaç** seç → **Sayaçları üret**.
+2. Mesaj "**N sayaç açıldı, M daire atlandı**" demeli ve liste tazelenmeli.
+3. **İkinci kez** çalıştır: bu kez "**0 sayaç açıldı, N daire atlandı**"
+   demeli ve **hata vermemeli** (uç bilerek yeniden çalıştırılabilir).
+
+#### 6. PANEL — Sayaç Okuma sihirbazı (ADMIN) — YENİ SAYFA
+
+Sol menüde **Sayaç Okuma** (Tanımlar ile Aidat arasında).
+1. 1. adımda **kalem seçmeden** İleri → uyarı çıkmalı, adım ilerlememeli.
+2. Bir gelir/gider kalemi seç → İleri.
+3. 2. adımda döneme **"Ağustos"** yaz → **"YYYY-AA"** uyarısı çıkmalı ve
+   adım **ilerlememeli**.
+4. Dönemi `2026-08` yap, ana sayaç seç, ana tüketim ve birim fiyat gir →
+   İleri.
+5. 3. adımda **her daire için ayrı bir alan** olmalı; birkaçını doldur →
+   İleri.
+6. 4. adımda **Tahmini toplam tutar** mantıklı olmalı. (Ana sayaçta *ortak
+   alan payı %* doluysa tutar, farkın **yalnız o yüzdesini** içerir.)
+7. **Borçlandır** → mesaj gelmeli, sihirbaz başa dönmeli.
+8. **Aidat** sayfasında o dönemin tahakkukları **görünmeli**.
+
+#### 7. PANEL — bağlı sayaç yokken (ADMIN)
+
+Sihirbazda **hiç daire sayacı olmayan** bir ana sayaç seç.
+* 3. adımda "**daire sayacı yok**" açıklaması çıkmalı.
+* 4. adımda **Borçlandır düğmesi pasif** olmalı.
+
+#### 8. PANEL — vezne çift kayıt koruması (ADMIN) — DAVRANIŞ DEĞİŞTİ
+
+**Finans → Yeni hareket**. Bu turda çift kayıt koruması eklendi.
+1. Normal bir hareket gir (tutar + kasa) → **Hareketi kaydet**. Listeye
+   **bir** satır düşmeli.
+2. **Aynı** tutarla ikinci bir hareket gir → yine kaydet. Bu **ayrı** bir
+   işlemdir; listede **iki** satır olmalı. (Yani koruma meşru arka arkaya
+   girişleri engellememeli — bunu doğrulamak önemli.)
+3. **Kasa bakiyesi** iki hareketin toplamı kadar değişmiş olmalı.
+
+> Asıl korunan durum (zaman aşımı sonrası tekrar) elde tetiklenemez;
+> sunucu tarafında testle kilitlendi. Senin bakman gereken şey, korumanın
+> **normal kullanımı bozmadığıdır**.
+
+#### 9. PANEL — dil kontrolü (herhangi bir rol)
+
+Dili **İngilizce** (ve mümkünse **Arapça**) yap ve şu üç yeni yüzeye bak:
+**Tanımlar → Bölüm Sayaçları** sekme adı ve alan etiketleri, **Sayaç
+Okuma** sayfasının dört adım başlığı, toplu üretim mesajı. Türkçe metin
+**kalmamalı**; Arapçada düzen **sağdan sola** olmalı.
+
+#### 10. PROD (Kerem) — göç
+
+Bu turda **yeni bir Alembic revizyonu** var: `0028_vezne_idempotency`
+(`finansal_hareket`e iki nullable sütun + kısmi benzersiz indeks).
+`infra/RUNBOOK-PROD.md` §14 akışını uygula; §14.2 (a) maddesinde çıktının
+**`(head)`** ile bittiğini doğrula (ad artık `0028_vezne_idempotency`).
+Revizyon **geriye uyumludur**: eski istemciler `Idempotency-Key`
+göndermeden çalışmaya devam eder.
+
+
 ### 2026-08-02 · P111 · 4a1b38c
 Sayaç takibinin eksik iki parçası yazıldı: `tanimlar` sayfasına **referans
 alan tipi** + **Bölüm Sayaçları** defteri (+ toplu üretim düğmesi) ve
@@ -3309,7 +3492,7 @@ alan tipi** + **Bölüm Sayaçları** defteri (+ toplu üretim düğmesi) ve
 aynen). 40 anahtar × 7 dil; 9 testlik kilit, mutasyon denetimli. Üç panel
 kapısı gerçek kusur buldu (matcher, sabit metin, erişilebilir etiket).
 
-### 2026-08-02 · P22 · f7d18c0 5316c95 761c6d6 f3f3b0f 60cbd4c (+ bu commit)
+### 2026-08-02 · P22 · f7d18c0 5316c95 761c6d6 f3f3b0f 67ecc2e (+ bu commit)
 (a) maddesi BİTTİ — uygulamadaki bütün açılır pencereler artık ORTADAN
 açılıyor (`showModalBottomSheet` çağrısı 54 → 0, 28 dosya). Üçüncü deneme
 beş alt-adıma bölündü; iki turdur kovalanan "öğe başka bir ağaçta" tanısı
