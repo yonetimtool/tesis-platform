@@ -242,7 +242,7 @@ Kategoriler: **DOĞRULANDI-BİTTİ** · **KISMEN** · **HİÇ BAŞLANMADI** ·
 | P108 | BITTI | DOĞRULANDI-BİTTİ | **`ESIK = 3` yeniden okundu** (satır 35); kalan 3'ün gerekçesi yazılı |
 | P109 | BITTI(ölçüm) | DOĞRULANDI-BİTTİ (düzeltme **P110**'da) | Ölçüm kaydı + çöken düzeltmenin gerekçesi |
 | P110 | BITTI | DOĞRULANDI-BİTTİ | `metin_iste_diyalogu.dart` + `denetleyici_atma_test.dart`; atılmayan denetleyici 3→0 |
-| **P111** | ~~ACIK(spec hazır)~~ | **SPEC-HAZIR-KOD-YOK** | `tanimlar/page.tsx:153` `sayaclar-ana` **var**; bölüm sayacı kaynağı ve 4 adımlı sihirbaz **yok**. Yazılacak sıra P111 Notes'unda |
+| **P111** | ~~ACIK(spec hazır)~~ | **BITTI (2026-08-02)** | Denetimin "yok" dediği iki parça da yazıldı: `sayaclar-bolum` defteri (referans alan tipi) + `/sayac-okuma` 4 adımlı sihirbaz; 9 testlik kilit, mutasyon denetimli |
 
 ### Özet
 
@@ -251,7 +251,7 @@ Kategoriler: **DOĞRULANDI-BİTTİ** · **KISMEN** · **HİÇ BAŞLANMADI** ·
 | DOĞRULANDI-BİTTİ | **102 satır** (103 madde kimliği; P97/P98 tek satır) | P1, P3–P10, P14–P17, P19–P21, P23–P110 (P22 ve P64 hariç) |
 | KISMEN | ~~1~~ **0** | P22 — **denetimden sonra kapandı** (2026-08-02) |
 | BLOKE | **6** | P2, P11, P12, P13, P18, P64 |
-| SPEC-HAZIR-KOD-YOK | **1** | P111 |
+| SPEC-HAZIR-KOD-YOK | ~~1~~ **0** | P111 — **denetimden sonra yazıldı** (2026-08-02) |
 | HİÇ BAŞLANMADI | **0** | — |
 
 **Denetimin bulduğu tek beyan hatası:** P22 `BLOKE` etiketiyle duruyordu, ama
@@ -618,6 +618,27 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P111 · Bölüm sayaçları (PANEL).** **Tanımlar → Bölüm Sayaçları**:
+  (1) tabloda **daire numarası ve ana sayaç adı** görünmeli, ham kimlik
+  (UUID) **görünmemeli**; (2) **Yeni kayıt** → "Daire" ve "Ana sayaç"
+  açılır listeleri **dolu gelmeli**; (3) mevcut bir satırda **Düzenle** →
+  "Daire" seçici **pasif** olmalı (daire taşınamaz), diğer alanlar
+  kaydedilebilmeli.
+- [ ] **P111 · Toplu sayaç üretimi (PANEL).** Aynı sekmede bir **ana
+  sayaç** seç → **Sayaçları üret**. Mesaj "**N sayaç açıldı, M daire
+  atlandı**" demeli. **İkinci kez** çalıştır: bu kez "0 sayaç açıldı,
+  N daire atlandı" demeli ve **hata vermemeli** (uç yeniden
+  çalıştırılabilir).
+- [ ] **P111 · Sayaç okuma sihirbazı (PANEL).** Menüden **Sayaç Okuma**:
+  (1) 1. adımda kalem seçmeden **İleri** → uyarı çıkmalı; (2) 2. adımda
+  döneme "Ağustos" yaz → **"YYYY-AA"** uyarısı çıkmalı, adım
+  **ilerlememeli**; (3) `2026-08`, ana sayaç, tüketim ve birim fiyatla
+  ilerle → 3. adımda **her daire için ayrı alan** olmalı; (4) 4. adımda
+  **Tahmini toplam tutar** mantıklı olmalı; (5) **Borçlandır** → mesaj
+  gelmeli ve **Aidat** sayfasında o dönemin tahakkukları görünmeli.
+- [ ] **P111 · Bağlı sayaç yokken (PANEL).** Sihirbazda **hiç daire sayacı
+  olmayan** bir ana sayaç seç → 3. adımda "**daire sayacı yok**" açıklaması
+  çıkmalı ve 4. adımda **Borçlandır düğmesi pasif** olmalı.
 - [ ] **P22(a) · Ortadan açılan pencereler (MOBİL, HER ROL).** Uygulamadaki
   **bütün** form/detay pencereleri artık ekranın altından değil **ORTADAN**
   açılır. Şu beş yerde aç-kapa yap: **Site Kuralları → karta dokun** (detay)
@@ -3256,6 +3277,13 @@ yeşil.
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+### 2026-08-02 · P111 · 4a1b38c
+Sayaç takibinin eksik iki parçası yazıldı: `tanimlar` sayfasına **referans
+alan tipi** + **Bölüm Sayaçları** defteri (+ toplu üretim düğmesi) ve
+**`/sayac-okuma`** dört adımlı sihirbaz (sunucunun "tek istek" sözleşmesi
+aynen). 40 anahtar × 7 dil; 9 testlik kilit, mutasyon denetimli. Üç panel
+kapısı gerçek kusur buldu (matcher, sabit metin, erişilebilir etiket).
+
 ### 2026-08-02 · P22 · f7d18c0 5316c95 761c6d6 f3f3b0f 60cbd4c (+ bu commit)
 (a) maddesi BİTTİ — uygulamadaki bütün açılır pencereler artık ORTADAN
 açılıyor (`showModalBottomSheet` çağrısı 54 → 0, 28 dosya). Üçüncü deneme
@@ -5635,8 +5663,8 @@ Kanıt: `mobile/lib/src/core/ui/metin_iste_diyalogu.dart` (yeni),
 doğrulandı), atılmayan denetleyici **3 → 0**. `infra/kapilar.sh mobile` →
 üç kapı yeşil, `flutter test` **1562**, çıkış **0**.
 
-### P111 — [SIRADAKI] Sayaç takibi: gerçekten eksik olan parça ölçüldü
-Status: SPEC-HAZIR-KOD-YOK · Depends-on: —
+### P111 — Sayaç takibi: bölüm sayaçları paneli + 4 adımlı okuma sihirbazı
+Status: BITTI · Depends-on: —
 <!-- DURUM DENETİMİ 2026-08-02: doğrulandı. `tanimlar/page.tsx:153`
      `kaynak: "sayaclar-ana"` VAR; bölüm sayacı kaynağı ve dört adımlı
      sihirbaz YOK. Ölçüm, uygulama yok — sıradaki tur doğrudan yazmaya
@@ -5676,6 +5704,67 @@ zorunda bırakırdı". Gövde: `donem`, `gelir_gider_tanim_id`,
 **SONRAKİ TUR İÇİN SIRA:** (1) `tanimlar`a referans alan tipi + bölüm
 sayaçları kaynağı; (2) otomatik üretim düğmesi; (3) dört adımlı sihirbaz
 sayfası; (4) ARB/sözlük 7 dil + bileşen testleri.
+
+---
+
+UYGULAMA (2026-08-02) — **BİTTİ**, yukarıdaki dört maddenin dördü de.
+Commit: `4a1b38c`.
+
+**(1) REFERANS ALAN TİPİ.** `tanimlar` sayfasının alan tipleri
+`metin | sayi | kurus | tarih | bool | secim` idi; `referans` eklendi.
+Her referans alanı **kendi** `ReferansSecici` bileşenidir — üst bileşende
+alanlar üzerinde döngüyle kanca çağırmak, sekme değişince kanca
+**sayısını** değiştirirdi (React'in kanca sırası kuralı). Üç ayrı karar
+kaydedildi:
+* `sutunAlani` — form **kimlik** taşır, tablo sunucunun **çözdüğü** adı
+  (`unit_no`, `ana_sayac_ad`) gösterir; tabloda ham UUID okumak
+  kullanıcıya hiçbir şey anlatmaz.
+* `sadeceOlustur` — daire alanı **PATCH gövdesinde gönderilmez**. Sunucu
+  `SayacBolumUpdate`te `unit_id` **kabul etmiyor**; göndermek pydantic'in
+  onu **sessizce atması** demekti ve kullanıcı daireyi taşıdığını sanırdı.
+  Düzenlemede seçici **pasif çizilir** (gizlemek, hangi daire olduğunu
+  görememek olurdu).
+* Yüklenemeyen liste **sessiz kalmaz**: seçici devre dışı kalır ve durum
+  metni yazar — boş bir açılır liste "hiç daire yok" derdi ki bu yanlıştır.
+
+**(2) TOPLU ÜRETİM.** `Defter.ekEylem` kancasıyla — `DefterGorunumu` tek
+bir kaynağın adını bile bilmez, veri-sürücülü mimari korunur. Sonuç metni
+**oluşturulan ve atlanan** sayısını birlikte söyler; yalnız "oluşturulan"
+gösterilseydi ikinci çalıştırmada kullanıcı "hiçbir şey olmadı" sanırdı
+(uç yeniden çalıştırılabilir, zaten sayacı olan daireler atlanır).
+BFF: `sayaclar-bolum-otomatik` beyaz listeye eklendi (ayrı `route.ts`
+yerine — güvenlik kuralı tek yerde kalsın).
+
+**(3) DÖRT ADIMLI SİHİRBAZ** — `/sayac-okuma` (menüde Tanımlar ile Aidat
+arasında: tanımlardan beslenir, çıktısı bir tahakkuktur).
+Sunucunun sözleşmesi **aynen** uygulandı: ilk üç adım **istemcide**
+toplanır, sunucuya **TEK** istek gider; ara adım için vekil uç
+**açılmadı**. Üç ölçülmüş karar:
+* Doğrulama **adım başına** (dönem biçimi 2. adımda) — hepsini sona
+  bırakmak kullanıcıyı üç adım geri göndermekti.
+* Bağlı daire sayacı yoksa **boş hâl** + "Borçlandır" **pasif**: boş
+  listeyle ilerlemek, hiçbir daireyi borçlandırmayan bir istek atmaktı
+  (sunucu 201 döner, kullanıcı "oldu" sanır).
+* **ÖNİZLEME sunucunun dağıtım kuralını AYNEN uygular**: negatif fark
+  sıfırlanır, `ortak_alan_yuzde` verilmişse farkın **yalnız o yüzdesi**
+  dağıtılır. İlk yazımda yüzde atlanmıştı — yüzde kullanan sitede
+  önizleme **olduğundan büyük** çıkardı; test bunu kilitliyor.
+
+**(4) i18n + TESTLER.** 40 yeni anahtar × 7 dil (sözlük tipi `tr`den
+türer; eksik çeviri **derlenmez**). `tests/sayac.dom.test.ts` — **9 test**.
+**MUTASYON DENETİMİ yapıldı:** `sadeceOlustur` kaldırılınca, `sutunAlani`
+ham kimliğe çevrilince, kuruş yerine TL gönderilince ve dönem doğrulaması
+sona bırakılınca testler **düştü** — yani boş koşmuyorlar.
+
+**ÜÇ PANEL KAPISI AÇIKÇA KIRMIZI VERDİ** (hepsi gerçek kusurdu):
+`middleware` matcher (yeni sayfa **kapı dışında** kalmıştı — oturumsuz
+kullanıcı kabuğu görürdü), sabit-metin taraması (JSX üçlüsündeki `"ad"`)
+ve erişilebilir-etiket (referans dalı araya girince `secim` select'inin
+`Field` sarmalayıcısı 16 satırlık pencereden çıktı → açık `aria-label`).
+
+KAPILAR: `tsc` temiz · `vitest` **50 dosya / 306 test** · `npm run build`
+başarılı (37 sayfa). **Backend'e dokunulmadı** (beş ucun beşi de zaten
+vardı), şema değişikliği ve yeni göç **YOK**.
 
 ## STATUS REPORT — 2026-08-01 #10 (kural 10: bağlam DOLDU, devir)
 
