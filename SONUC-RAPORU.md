@@ -1,6 +1,6 @@
 # Oturum Sonuç Raporu — 2026-08-01
 
-**P51 → P100 arası 50 madde** kapandı. Aşağıda ne yapıldığı, ne bulunduğu ve
+**P51 → P110 arası 60 madde** kapandı. Aşağıda ne yapıldığı, ne bulunduğu ve
 **ne yapılmadığı** var.
 
 ---
@@ -9,10 +9,10 @@
 
 | Kapı | Sonuç |
 |---|---|
-| `backend-pytest` | **1143 passed, 1 skipped** — çıkış 0 (20 dk 53 sn) |
+| `backend-pytest` | **1145 passed, 1 skipped** — çıkış 0 (P108) |
 | `goc-uyum` / `goc-tersinir` | **bulgu 0** / **bulgu 0** (28 sınır) |
-| `web-tsc` / `web-vitest` / `web-build` | temiz / **282 passed** / yeşil |
-| `mobil-analyze` / `mobil-test` / `mobil-apk` | temiz / **1561 passed** / APK |
+| `web-tsc` / `web-vitest` / `web-build` | temiz / **297 passed** / yeşil (P105) |
+| `mobil-analyze` / `mobil-test` / `mobil-apk` | temiz / **1562 passed** / APK (P110) |
 
 ---
 
@@ -38,6 +38,28 @@
 10. **P62** — Koyu temada devrilmemiş renkler; ilki **benim eklediğimdi**.
 11. **P63** — Dört form denetiminin adı yoktu; biri **tesis silme onayı**.
 12. **P68** — `key={i}` (parola yöneticisi yanlış satıra bağlanabilir).
+
+### Oturum/hata yolu (P101–P105)
+16. **P101** — 401 dört yerde, **üçü farklı** davranıyordu: ham `fetch`
+    kullanan yerler oturum bitişini sıradan hata sayıyor, kullanıcıya
+    **kod** gösteriyordu.
+17. **P102** — Aynı üç yerde **ağ hatası** da ham gösteriliyordu
+    (`TypeError: Failed to fetch`).
+18. **P103** — Sunucunun **çevrilmiş hata mesajı atılıp** yerine kod
+    gösteriliyordu.
+19. **P104** — **BFF rotaları hiç taranmamıştı**: sunucuda iki sabit Türkçe
+    metin; `metin()` sunucuda **sessizce** varsayılana düşüyor.
+20. **P105** — `catch` yedek metinleri **26 yerde** sabit Türkçe.
+
+### Veri doğruluğu (P106–P108)
+21. **Kararsız sayfalama**: `ORDER BY created_at LIMIT/OFFSET` eşitlikte
+    satır **tekrarlatır/kaybettirir**; toplu üretilen satırlar aynı zaman
+    damgasını paylaşır. **25 → 3** (kalan üçü toplulaştırma/benzersiz —
+    gerekçeli).
+
+### Kaynak sızıntısı (P109–P110)
+22. Üç diyalog denetleyicisi hiç atılmıyordu. İlk düzeltme **çöktü**
+    (use-after-dispose); doğru çözüm sahipliği diyaloğa taşımaktı.
 
 ### Güvenlik / veri bütünlüğü
 13. **P96** — `dial` iki yoldan çağrılıyor, **biri doğrulanmıyordu**: sunucu
@@ -133,7 +155,7 @@ Kural 6 artık **betiği işaret ediyor** (P93).
 
 ## 7. Nerede duruyor
 
-- Plan: `docs/MASTER-PLAN.md` — **100 madde**, açık hash yer tutucusu yok.
+- Plan: `docs/MASTER-PLAN.md` — **110 madde**, açık hash yer tutucusu yok.
 - Kapılar: `infra/kapilar.sh [web|mobile|backend|goc]`, günlükler `.kapilar/`.
 - Tüm iş `main` üzerinde ve push'lu.
 
