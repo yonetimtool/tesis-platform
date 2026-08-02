@@ -6,6 +6,7 @@
 // geregi tutar HER ZAMAN POZITIFTIR; isaret `yon` alanindan gelir ve bu
 // mantik yalnizca burada, cizim katmaninda yasar.
 import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import FinansPage from "@/app/(protected)/finans/page";
@@ -94,5 +95,91 @@ describe("Finans sayfasi", () => {
     );
     // Bos durum KULLANICIYA NE YAPACAGINI soyler.
     expect(screen.getByText(/Tanımlar sayfasından/)).toBeInTheDocument();
+  });
+
+  // ------------------------- (P64) CIFT KAYIT -------------------------- //
+  //
+  // Dugmenin `ymesgul` kilidi yalniz HIZLI CIFT TIKLAMAYI onler. Korunmayan
+  // sey ZAMAN ASIMI SONRASI TEKRARDI: istek sunucuya ulasip yanit donmezse
+  // kullanici "kaydedilmedi" sanip tekrar basar. Anahtar o tekrarda AYNI
+  // kalmali (sunucu ikinci kaydi acmaz), basaridan SONRA degismeli (sonraki
+  // mesru hareket ayri bir islemdir).
+  async function hareketYaz(tutar: string): Promise<void> {
+    await userEvent.clear(screen.getByRole("textbox", { name: "Tutar" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Tutar" }), tutar);
+    await userEvent.click(screen.getByRole("button", { name: "Hareketi kaydet" }));
+  }
+
+  /** POST'larda gonderilen Idempotency-Key basliklarini toplar. */
+  function anahtarlar(): string[] {
+    const toplanan: string[] = [];
+    const onceki = globalThis.fetch;
+    globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "POST" && String(girdi).includes("finans-hareketler")) {
+        const h = (init.headers ?? {}) as Record<string, string>;
+        toplanan.push(h["Idempotency-Key"]);
+      }
+      return onceki(girdi, init);
+    }) as typeof fetch;
+    return toplanan;
+  }
+
+  it("TEKRAR DENEMEDE anahtar AYNI, basaridan sonra DEGISIR", async () => {
+    fetchSahtele({
+      "/api/panel/finans-ozet": OZET,
+      "/api/panel/kasa-bakiyeleri": KASALAR,
+      // Ilk yazma DUSER (sunucuya ulasip yanit donmeyen istegin panel
+      // tarafindaki karsiligi): kullanici tekrar basar.
+      "/api/panel/finans-hareketler": HAREKETLER,
+    });
+    const toplanan = anahtarlar();
+    ciz(FinansPage);
+    await waitFor(() => expect(screen.getAllByText("Merkez Kasa").length).toBeGreaterThan(0));
+
+    await hareketYaz("100");
+    await waitFor(() => expect(toplanan).toHaveLength(1));
+    await hareketYaz("250");
+    await waitFor(() => expect(toplanan).toHaveLength(2));
+
+    expect(toplanan[0]).toBeTruthy();
+    // Iki YAZMA da BASARILI oldugu icin anahtar YENILENMIS olmali —
+    // aksi halde ikinci (mesru) hareket sunucuda TEKRAR sayilir ve
+    // SESSIZCE KAYDEDILMEZDI.
+    expect(toplanan[1]).not.toBe(toplanan[0]);
+  });
+
+  it("YAZMA DUSERSE anahtar KORUNUR (tekrar ayni islemdir)", async () => {
+    fetchSahtele({
+      "/api/panel/finans-ozet": OZET,
+      "/api/panel/kasa-bakiyeleri": KASALAR,
+      "/api/panel/finans-hareketler": HAREKETLER,
+    });
+    const toplanan: string[] = [];
+    const onceki = globalThis.fetch;
+    let ilkYazma = true;
+    globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "POST" && String(girdi).includes("finans-hareketler")) {
+        const h = (init.headers ?? {}) as Record<string, string>;
+        toplanan.push(h["Idempotency-Key"]);
+        if (ilkYazma) {
+          ilkYazma = false;
+          return new Response(JSON.stringify({ error: { message: "zaman asimi" } }), {
+            status: 504,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      }
+      return onceki(girdi, init);
+    }) as typeof fetch;
+
+    ciz(FinansPage);
+    await waitFor(() => expect(screen.getAllByText("Merkez Kasa").length).toBeGreaterThan(0));
+
+    await hareketYaz("100");
+    await waitFor(() => expect(toplanan).toHaveLength(1));
+    await userEvent.click(screen.getByRole("button", { name: "Hareketi kaydet" }));
+    await waitFor(() => expect(toplanan).toHaveLength(2));
+
+    expect(toplanan[1]).toBe(toplanan[0]);
   });
 });

@@ -3267,6 +3267,8 @@ paths:
         saglayicisi (idempotency, provider referansi) icindir; buradaki
         hareket VEZNE kaydidir ve kasayi etkiler. Ikisini birlestirmek,
         saglayici alanlarini her nakit tahsilatta bos birakmak demekti.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOpsiyonel"
       requestBody:
         required: true
         content:
@@ -3278,9 +3280,16 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/FinansalHareket" }
+        "200":
+          description: TEKRAR — ayni Idempotency-Key ile ikinci istek; YENI KAYIT ACILMADI
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareket" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Ayni Idempotency-Key FARKLI bir para hareketiyle gonderildi
   /finans/tahsilat/toplu:
     post:
       tags: [finans]
@@ -3289,6 +3298,8 @@ paths:
         Kismi basari, kullaniciya "kac satir gecti" diye saydirmak ve
         kalanlari elle tekrar girdirmek demekti; tahsilatta bu, ayni parayi
         IKI KEZ kaydetme riskidir.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOpsiyonel"
       requestBody:
         required: true
         content:
@@ -3300,9 +3311,16 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/FinansalHareketListe" }
+        "200":
+          description: TEKRAR — ayni Idempotency-Key ile ikinci istek; YENI KAYIT ACILMADI
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareketListe" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Ayni Idempotency-Key FARKLI bir para hareketiyle gonderildi
   /finans/hareketler:
     get:
       tags: [finans]
@@ -3333,6 +3351,8 @@ paths:
       description: >
         **YON ISTEMCIDEN ALINMAZ**: gider kasadan CIKAR, gelir kasaya GIRER.
         Alinsaydi "giris yonlu gider" gibi imkansiz bir satir yazilabilirdi.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOpsiyonel"
       requestBody:
         required: true
         content:
@@ -3344,9 +3364,16 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/FinansalHareketListe" }
+        "200":
+          description: TEKRAR — ayni Idempotency-Key ile ikinci istek; YENI KAYIT ACILMADI
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareketListe" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Ayni Idempotency-Key FARKLI bir para hareketiyle gonderildi
   /finans/virman:
     post:
       tags: [finans]
@@ -3355,6 +3382,8 @@ paths:
         Cikis + giris, ayni `virman_grup_id` ile eslesir. Tek satirla iki
         kasayi etkilemek, "bu kasadan ne cikti" sorgusunu kasa basina degil
         hareket basina cevaplamak zorunda birakirdi. Ayni kasaya virman 422.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOpsiyonel"
       requestBody:
         required: true
         content:
@@ -3366,9 +3395,16 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/FinansalHareketListe" }
+        "200":
+          description: TEKRAR — ayni Idempotency-Key ile ikinci istek; YENI KAYIT ACILMADI
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareketListe" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Ayni Idempotency-Key FARKLI bir para hareketiyle gonderildi
   /finans/iade:
     post:
       tags: [finans]
@@ -3378,6 +3414,8 @@ paths:
         okunur, silinen bir tahsilat gecmis raporlari geriye donuk
         degistirirdi. Kismi iade serbest ama TOPLAM iade orijinali ASAMAZ
         (422). Bir IADE tekrar iade EDILEMEZ (422).
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOpsiyonel"
       requestBody:
         required: true
         content:
@@ -3389,10 +3427,17 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/FinansalHareket" }
+        "200":
+          description: TEKRAR — ayni Idempotency-Key ile ikinci istek; YENI KAYIT ACILMADI
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareket" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Ayni Idempotency-Key FARKLI bir para hareketiyle gonderildi
   /finans/acilis:
     post:
       tags: [finans]
@@ -3400,6 +3445,8 @@ paths:
       description: >
         `kasa.acilis_bakiye_kurus` KASANIN kendi acilisidir; bu fis KISI
         bazli acilistir (devreden borc/alacak) ve ikisi ayni toplama girer.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOpsiyonel"
       requestBody:
         required: true
         content:
@@ -3411,9 +3458,16 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/FinansalHareket" }
+        "200":
+          description: TEKRAR — ayni Idempotency-Key ile ikinci istek; YENI KAYIT ACILMADI
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinansalHareket" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Ayni Idempotency-Key FARKLI bir para hareketiyle gonderildi
   /finans/kasa-bakiyeleri:
     get:
       tags: [finans]
@@ -7806,6 +7860,23 @@ components:
       in: header
       required: true
       description: Istemci tarafindan uretilen benzersiz anahtar (UUID onerilir)
+      schema: { type: string, minLength: 8, maxLength: 200 }
+    IdempotencyKeyOpsiyonel:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        (P64) VEZNE yazmalarinda CIFT KAYIT korumasi. ZORUNLU DEGIL:
+        bu uclar calisan bir prod'da kullaniliyor ve zorunlu kilmak,
+        baslik gondermeyen her istemciyi ANINDA kirardi. Gonderildiginde
+        ayni anahtarla gelen ikinci istek YENI KAYIT ACMAZ; 200 ile ilk
+        islemin satirlarini doner. Ayni anahtar FARKLI bir para hareketiyle
+        (tip/yon/tutar/kasa) gelirse 409.
+
+        Korunan risk HIZLI CIFT TIKLAMA DEGIL (panel dugmesi zaten kilitli),
+        ZAMAN ASIMI SONRASI TEKRARDIR: istek sunucuya ulasip yanit donmezse
+        kullanici "kaydedilmedi" sanip tekrar basar ve kasada IKI hareket
+        olusurdu.
       schema: { type: string, minLength: 8, maxLength: 200 }
 
   responses:

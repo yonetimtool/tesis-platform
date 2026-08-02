@@ -16,7 +16,7 @@ import {
   panelMotion,
 } from "@/components/form";
 import { useToast } from "@/components/Toast";
-import { apiSend } from "@/lib/client";
+import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, tlToKurus } from "@/lib/money";
@@ -93,6 +93,14 @@ export default function FinansPage() {
   const [yAciklama, setYAciklama] = useState("");
   const [yHata, setYHata] = useState<string | null>(null);
   const [ymesgul, setYMesgul] = useState(false);
+  // (P64) CIFT KAYIT KORUMASI. Dugmenin `ymesgul` kilidi yalniz HIZLI CIFT
+  // TIKLAMAYI onler; korunmayan sey ZAMAN ASIMI SONRASI TEKRARDI — istek
+  // sunucuya ulasip yanit donmezse kullanici "kaydedilmedi" sanip tekrar
+  // basar ve kasada IKI hareket olusurdu. Anahtar FORM DOLDURMA ANINDA
+  // uretilir ve BASARIYA KADAR sabit kalir: tekrar denemeler ayni anahtarla
+  // gider, sunucu ikinci kaydi acmaz. Basarinin ardindan yenilenir ki
+  // SONRAKI (mesru) hareket ayri bir islem sayilsin.
+  const [yAnahtar, setYAnahtar] = useState(() => genIdempotencyKey());
 
   async function hareketEkle(): Promise<void> {
     setYHata(null);
@@ -115,7 +123,8 @@ export default function FinansPage() {
             aciklama: yAciklama || null,
           },
         ],
-      });
+      }, { "Idempotency-Key": yAnahtar });
+      setYAnahtar(genIdempotencyKey());
       setYTutar("");
       setYAciklama("");
       toast.success(t("finansHareketEklendi"));

@@ -34,7 +34,11 @@ export async function POST(
   const yol = yazmaYolu(params.kaynak);
   if (!yol) return YOK;
   const body = await req.json().catch(() => ({}));
-  return proxyJson(yol, "POST", body);
+  // (P64) `Idempotency-Key` ISTEMCIDEN gelir ve backend'e ILETILIR.
+  // Vekilde uretmek ise yaramazdi: her istek yeni bir anahtar alirdi ve
+  // korunmasi gereken sey tam olarak "ayni istegin TEKRARI"dir.
+  const idem = req.headers.get("Idempotency-Key");
+  return proxyJson(yol, "POST", body, idem ? { "Idempotency-Key": idem } : undefined);
 }
 
 export async function PATCH(

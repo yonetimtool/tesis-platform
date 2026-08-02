@@ -15,13 +15,13 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
-from ..crud_helpers import get_or_404, translate_integrity
+from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..finans import BankaSatiri, BorcAdayi, banka_eslestir, kasa_bakiye
@@ -101,10 +101,114 @@ def _hareket(user: AppUser, **alanlar) -> FinansalHareket:
     return obj
 
 
+# ============================ IDEMPOTENCY (P64) ============================= #
+#
+# OLCULEN RISK: panelin dugmesi ucus sirasinda kilitli oldugu icin HIZLI
+# CIFT TIKLAMA zaten korunuyordu; korunmayan sey ZAMAN ASIMI SONRASI
+# TEKRARDI — istek sunucuya ulasip yanit donmezse kullanici "kaydedilmedi"
+# sanip tekrar basar ve kasada IKI hareket olusur. Yonetici bunu ancak
+# mutabakatta fark eder.
+#
+# BASLIK ZORUNLU DEGIL (`dues/payments`ten farkli olarak): bu uclar
+# calisan bir prod'da kullaniliyor ve zorunlu kilmak, baslik gondermeyen
+# her istemciyi ANINDA kirardi. Gonderildiginde koruma TAM;
+# gonderilmediginde eski davranis aynen surer. Panel gonderir.
+#
+# TEKRAR = AYNI YANIT, YENI KAYIT DEGIL. Govde farkliysa 409: ayni
+# kimlikle baska bir tutar gondermek istemci kusurudur ve sessizce eski
+# kaydi dondurmek, kullaniciya "kaydedildi" deyip PARAYI KAYDETMEMEK
+# olurdu.
+
+
+def _idem(anahtar: str | None) -> str | None:
+    """Basligi normalize et; bos/bosluk = YOK."""
+    if anahtar is None:
+        return None
+    kirpik = anahtar.strip()
+    return kirpik or None
+
+
+def _imza(kayitlar: list[FinansalHareket]) -> list[tuple]:
+    """Islemin OZU — tekrar gelen istegin ayni is olup olmadigi buradan.
+
+    Aciklama/belge no gibi serbest metinler DISARIDA: kullanici tekrar
+    denerken aciklamayi duzeltmis olabilir; para hareketinin kendisi
+    (tip, yon, tutar, kasa) aynıysa bu AYNI islemdir.
+    """
+    return [(k.tip, k.yon, k.tutar_kurus, str(k.kasa_id)) for k in kayitlar]
+
+
+async def _idem_mevcut(
+    db: AsyncSession, anahtar: str | None
+) -> list[FinansalHareket]:
+    if anahtar is None:
+        return []
+    return list(
+        (
+            await db.execute(
+                select(FinansalHareket)
+                .where(FinansalHareket.idempotency_key == anahtar)
+                .order_by(FinansalHareket.idem_satir)
+            )
+        ).scalars().all()
+    )
+
+
+async def _idem_yaz(
+    db: AsyncSession,
+    response: Response,
+    anahtar: str | None,
+    kayitlar: list[FinansalHareket],
+) -> tuple[list[FinansalHareket], bool]:
+    """Kayitlari idempotent yaz. Doner: (satirlar, TEKRAR miydi).
+
+    Uc yol:
+      1. Kimlik yok  -> eski davranis (duz ekle).
+      2. Kimlik daha once gorulmus -> mevcut satirlar, 200, YENI KAYIT YOK.
+      3. Kimlik yeni -> yazilir; ARADA baska bir istek ayni kimligi
+         yazdiysa benzersizlik ihlali gelir ve o zaman da (2)'ye duseriz.
+         Bu ucuncu dal, iki istegin AYNI ANDA gelmesini kapsar — tek
+         basina "once oku sonra yaz" yarisi acik birakirdi.
+    """
+    if anahtar is not None:
+        mevcut = await _idem_mevcut(db, anahtar)
+        if mevcut:
+            if _imza(mevcut) != _imza(kayitlar):
+                raise APIError(409, "conflict", "idempotency_key_govde_farkli")
+            response.status_code = 200
+            return mevcut, True
+        for i, k in enumerate(kayitlar):
+            k.idempotency_key = anahtar
+            k.idem_satir = i
+    try:
+        async with db.begin_nested():
+            db.add_all(kayitlar)
+            await db.flush()
+    except IntegrityError as exc:
+        for k in kayitlar:
+            # Savepoint geri alinca nesneler zaten oturumdan dusmus
+            # olabilir; `expunge` o zaman atar ve ASIL hatayi golgelerdi.
+            try:
+                db.expunge(k)
+            except Exception:
+                pass
+        if anahtar is not None and is_unique_violation(exc):
+            mevcut = await _idem_mevcut(db, anahtar)
+            if mevcut:
+                response.status_code = 200
+                return mevcut, True
+        raise translate_integrity(exc)
+    for k in kayitlar:
+        await db.refresh(k)
+    return kayitlar, False
+
+
 # =============================== TAHSILAT =================================== #
 @router.post("/finans/tahsilat", response_model=HareketOut, status_code=201)
 async def tahsilat(
     body: TahsilatCreate,
+    response: Response,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADMIN),
 ) -> HareketOut:
@@ -124,22 +228,24 @@ async def tahsilat(
         assessment_id=body.assessment_id, belge_no=body.belge_no,
         aciklama=body.aciklama, tarih=body.tarih,
     )
-    db.add(obj)
-    try:
-        await db.flush()
-    except IntegrityError as exc:
-        raise translate_integrity(exc)
-    await db.refresh(obj)
-    await audit_user(
-        db, user, Action.FINANS_HAREKET_CREATE, resource_type="finansal_hareket",
-        resource_id=obj.id, meta={"tip": "tahsilat", "tutar": obj.tutar_kurus},
-    )
-    return (await _adlarla(db, [obj]))[0]
+    satirlar, tekrar = await _idem_yaz(db, response, _idem(idempotency_key), [obj])
+    # TEKRAR DENETIME YAZILMAZ: hicbir yeni para hareketi olusmadi ve
+    # denetim kaydi "iki tahsilat girildi" gibi okunurdu.
+    if not tekrar:
+        await audit_user(
+            db, user, Action.FINANS_HAREKET_CREATE,
+            resource_type="finansal_hareket",
+            resource_id=satirlar[0].id,
+            meta={"tip": "tahsilat", "tutar": satirlar[0].tutar_kurus},
+        )
+    return (await _adlarla(db, satirlar))[0]
 
 
 @router.post("/finans/tahsilat/toplu", response_model=HareketListResponse, status_code=201)
 async def toplu_tahsilat(
     body: TopluTahsilatIstek,
+    response: Response,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADMIN),
 ) -> HareketListResponse:
@@ -158,21 +264,19 @@ async def toplu_tahsilat(
             assessment_id=satir.assessment_id, aciklama=satir.aciklama,
             tarih=body.tarih,
         )
-        db.add(obj)
         kayitlar.append(obj)
-    try:
-        await db.flush()
-    except IntegrityError as exc:
-        raise translate_integrity(exc)
-    for o in kayitlar:
-        await db.refresh(o)
-    await audit_user(
-        db, user, Action.FINANS_HAREKET_CREATE, resource_type="finansal_hareket",
-        meta={"tip": "tahsilat_toplu", "adet": len(kayitlar)},
+    satirlar, tekrar = await _idem_yaz(
+        db, response, _idem(idempotency_key), kayitlar
     )
+    if not tekrar:
+        await audit_user(
+            db, user, Action.FINANS_HAREKET_CREATE,
+            resource_type="finansal_hareket",
+            meta={"tip": "tahsilat_toplu", "adet": len(satirlar)},
+        )
     return HareketListResponse(
-        meta={"limit": len(kayitlar), "offset": 0, "total": len(kayitlar)},
-        items=await _adlarla(db, kayitlar),
+        meta={"limit": len(satirlar), "offset": 0, "total": len(satirlar)},
+        items=await _adlarla(db, satirlar),
     )
 
 
@@ -180,6 +284,8 @@ async def toplu_tahsilat(
 @router.post("/finans/hareketler", response_model=HareketListResponse, status_code=201)
 async def hareket_ekle(
     body: HareketToplu,
+    response: Response,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADMIN),
 ) -> HareketListResponse:
@@ -198,21 +304,18 @@ async def hareket_ekle(
             gelir_gider_tanim_id=satir.gelir_gider_tanim_id,
             belge_no=satir.belge_no, aciklama=satir.aciklama, tarih=satir.tarih,
         ))
-    for o in kayitlar:
-        db.add(o)
-    try:
-        await db.flush()
-    except IntegrityError as exc:
-        raise translate_integrity(exc)
-    for o in kayitlar:
-        await db.refresh(o)
-    await audit_user(
-        db, user, Action.FINANS_HAREKET_CREATE, resource_type="finansal_hareket",
-        meta={"adet": len(kayitlar)},
+    satirlar, tekrar = await _idem_yaz(
+        db, response, _idem(idempotency_key), kayitlar
     )
+    if not tekrar:
+        await audit_user(
+            db, user, Action.FINANS_HAREKET_CREATE,
+            resource_type="finansal_hareket",
+            meta={"adet": len(satirlar)},
+        )
     return HareketListResponse(
-        meta={"limit": len(kayitlar), "offset": 0, "total": len(kayitlar)},
-        items=await _adlarla(db, kayitlar),
+        meta={"limit": len(satirlar), "offset": 0, "total": len(satirlar)},
+        items=await _adlarla(db, satirlar),
     )
 
 
@@ -254,6 +357,8 @@ async def hareket_listesi(
 @router.post("/finans/virman", response_model=HareketListResponse, status_code=201)
 async def virman(
     body: VirmanIstek,
+    response: Response,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADMIN),
 ) -> HareketListResponse:
@@ -276,21 +381,19 @@ async def virman(
         kasa_id=body.hedef_kasa_id, virman_grup_id=grup,
         aciklama=body.aciklama, tarih=body.tarih,
     )
-    db.add_all([cikis, giris])
-    try:
-        await db.flush()
-    except IntegrityError as exc:
-        raise translate_integrity(exc)
-    await db.refresh(cikis)
-    await db.refresh(giris)
-    await audit_user(
-        db, user, Action.FINANS_HAREKET_CREATE, resource_type="finansal_hareket",
-        resource_id=cikis.id,
-        meta={"tip": "virman", "grup": str(grup), "tutar": body.tutar_kurus},
+    satirlar, tekrar = await _idem_yaz(
+        db, response, _idem(idempotency_key), [cikis, giris]
     )
+    if not tekrar:
+        await audit_user(
+            db, user, Action.FINANS_HAREKET_CREATE,
+            resource_type="finansal_hareket",
+            resource_id=satirlar[0].id,
+            meta={"tip": "virman", "grup": str(grup), "tutar": body.tutar_kurus},
+        )
     return HareketListResponse(
-        meta={"limit": 2, "offset": 0, "total": 2},
-        items=await _adlarla(db, [cikis, giris]),
+        meta={"limit": len(satirlar), "offset": 0, "total": len(satirlar)},
+        items=await _adlarla(db, satirlar),
     )
 
 
@@ -298,6 +401,8 @@ async def virman(
 @router.post("/finans/iade", response_model=HareketOut, status_code=201)
 async def iade(
     body: IadeIstek,
+    response: Response,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADMIN),
 ) -> HareketOut:
@@ -329,20 +434,23 @@ async def iade(
         unit_id=orijinal.unit_id, iade_edilen_id=orijinal.id,
         aciklama=body.aciklama, tarih=body.tarih,
     )
-    db.add(obj)
-    await db.flush()
-    await db.refresh(obj)
-    await audit_user(
-        db, user, Action.FINANS_HAREKET_CREATE, resource_type="finansal_hareket",
-        resource_id=obj.id, meta={"tip": "iade", "orijinal": str(orijinal.id)},
-    )
-    return (await _adlarla(db, [obj]))[0]
+    satirlar, tekrar = await _idem_yaz(db, response, _idem(idempotency_key), [obj])
+    if not tekrar:
+        await audit_user(
+            db, user, Action.FINANS_HAREKET_CREATE,
+            resource_type="finansal_hareket",
+            resource_id=satirlar[0].id,
+            meta={"tip": "iade", "orijinal": str(orijinal.id)},
+        )
+    return (await _adlarla(db, satirlar))[0]
 
 
 # ============================== ACILIS FISI ================================= #
 @router.post("/finans/acilis", response_model=HareketOut, status_code=201)
 async def acilis_fisi(
     body: AcilisFisi,
+    response: Response,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADMIN),
 ) -> HareketOut:
@@ -358,14 +466,14 @@ async def acilis_fisi(
         kasa_id=body.kasa_id, user_id=body.user_id, aciklama=body.aciklama,
         tarih=body.tarih,
     )
-    db.add(obj)
-    await db.flush()
-    await db.refresh(obj)
-    await audit_user(
-        db, user, Action.FINANS_HAREKET_CREATE, resource_type="finansal_hareket",
-        resource_id=obj.id, meta={"tip": "acilis"},
-    )
-    return (await _adlarla(db, [obj]))[0]
+    satirlar, tekrar = await _idem_yaz(db, response, _idem(idempotency_key), [obj])
+    if not tekrar:
+        await audit_user(
+            db, user, Action.FINANS_HAREKET_CREATE,
+            resource_type="finansal_hareket",
+            resource_id=satirlar[0].id, meta={"tip": "acilis"},
+        )
+    return (await _adlarla(db, satirlar))[0]
 
 
 # ============================== KASA BAKIYE ================================= #

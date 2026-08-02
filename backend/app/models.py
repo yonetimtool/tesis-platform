@@ -2667,6 +2667,15 @@ class FinansalHareket(Base):
     VIRMAN IKI SATIRDIR (cikis + giris), `virman_grup_id` ile eslesir.
     IADE, iade ettigi hareketi `iade_edilen_id` ile GOSTERIR — "hangi
     tahsilat iade edildi" sorusu aciklama metnine birakilamaz.
+
+    IDEMPOTENCY (P64): `idempotency_key` NULLABLE'dir ve tekillik KISMI
+    bir indeksle zorlanir (`uq_hareket_tenant_idem`, 0028). Zorunlu
+    kilmak, tabloda duran GECMIS kayitlara uydurma kimlik yazmak
+    demekti; kimlik gonderilmediginde eski davranis aynen surer.
+    `idem_satir` islemin KACINCI satiri oldugudur: virman iki, toplu
+    tahsilat N satir yazar ve kimligi tek satira yazmak, tekrar gelen
+    istekte islemin oteki satirlarini bulunamaz kilardi.
+
     """
 
     __tablename__ = "finansal_hareket"
@@ -2703,6 +2712,9 @@ class FinansalHareket(Base):
     kaydeden_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
+    #: Vezne yazmalarinda CIFT KAYIT korumasi (P64). Bkz. sinif belgesi.
+    idempotency_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    idem_satir: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     created_at = _created_at()
 
 

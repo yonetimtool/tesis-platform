@@ -294,3 +294,113 @@ def test_tenant_izolasyonu(client, world):
     r = client.post("/finans/tahsilat", headers=b, json={
         "kasa_id": kasa["id"], "tutar_kurus": 100})
     assert r.status_code == 422
+
+
+# ======================= IDEMPOTENCY / CIFT KAYIT (P64) ===================== #
+#
+# OLCULEN RISK: panelin dugmesi ucus sirasinda kilitli oldugu icin HIZLI
+# CIFT TIKLAMA zaten korunuyordu; korunmayan sey ZAMAN ASIMI SONRASI
+# TEKRARDI. Asagidaki testler "tekrar" davranisini defterin KENDISINDEN
+# (kasa bakiyesi) dogruluyor: yalniz yanit govdesine bakmak, ikinci bir
+# satirin sessizce yazildigini KACIRABILIRDI.
+
+
+def _idem() -> dict:
+    return {"Idempotency-Key": f"vezne-{uuid.uuid4()}"}
+
+
+def test_tekrar_AYNI_anahtarla_IKINCI_kayit_ACILMAZ(client, adm, kasa):
+    """Ayni anahtarla ikinci istek: 200 + AYNI kayit; bakiye DEGISMEZ."""
+    basta = _bakiye(client, adm, kasa["id"])["bakiye_kurus"]
+    h = _idem()
+    govde = {"kasa_id": kasa["id"], "tutar_kurus": 50000}
+
+    ilk = client.post("/finans/tahsilat", headers={**adm, **h}, json=govde)
+    assert ilk.status_code == 201, ilk.text
+    ikinci = client.post("/finans/tahsilat", headers={**adm, **h}, json=govde)
+    assert ikinci.status_code == 200, ikinci.text
+    assert ikinci.json()["id"] == ilk.json()["id"]
+
+    # DEFTERIN KENDISI: bakiye TEK tahsilat kadar artmis olmali.
+    assert _bakiye(client, adm, kasa["id"])["bakiye_kurus"] == basta + 50000
+
+
+def test_tekrar_ANAHTARSIZ_istek_ESKI_davranisi_surdurur(client, adm, kasa):
+    """Baslik ZORUNLU DEGIL: gonderilmeyince iki ayri kayit olusur.
+
+    Zorunlu kilmak, calisan prod'da baslik gondermeyen her istemciyi
+    ANINDA kirardi; bu test o geriye uyumu kilitler.
+    """
+    basta = _bakiye(client, adm, kasa["id"])["bakiye_kurus"]
+    govde = {"kasa_id": kasa["id"], "tutar_kurus": 1500}
+    a = client.post("/finans/tahsilat", headers=adm, json=govde)
+    b = client.post("/finans/tahsilat", headers=adm, json=govde)
+    assert a.status_code == 201 and b.status_code == 201
+    assert a.json()["id"] != b.json()["id"]
+    assert _bakiye(client, adm, kasa["id"])["bakiye_kurus"] == basta + 3000
+
+
+def test_tekrar_AYNI_anahtar_FARKLI_tutar_409(client, adm, kasa):
+    """Ayni kimlikle baska bir para hareketi ISTEMCI KUSURUDUR.
+
+    Sessizce eski kaydi dondurmek, kullaniciya "kaydedildi" deyip PARAYI
+    KAYDETMEMEK olurdu.
+    """
+    h = _idem()
+    ilk = client.post("/finans/tahsilat", headers={**adm, **h},
+                      json={"kasa_id": kasa["id"], "tutar_kurus": 7000})
+    assert ilk.status_code == 201, ilk.text
+    catisma = client.post("/finans/tahsilat", headers={**adm, **h},
+                          json={"kasa_id": kasa["id"], "tutar_kurus": 9999})
+    assert catisma.status_code == 409, catisma.text
+
+
+def test_tekrar_ACIKLAMA_farki_AYNI_islem_sayilir(client, adm, kasa):
+    """Serbest metin imzada YOK: kullanici tekrar denerken aciklamayi
+    duzeltmis olabilir; para hareketi ayniysa bu AYNI islemdir."""
+    basta = _bakiye(client, adm, kasa["id"])["bakiye_kurus"]
+    h = _idem()
+    a = client.post("/finans/tahsilat", headers={**adm, **h},
+                    json={"kasa_id": kasa["id"], "tutar_kurus": 2500,
+                          "aciklama": "elden"})
+    b = client.post("/finans/tahsilat", headers={**adm, **h},
+                    json={"kasa_id": kasa["id"], "tutar_kurus": 2500,
+                          "aciklama": "elden tahsilat"})
+    assert a.status_code == 201 and b.status_code == 200
+    assert _bakiye(client, adm, kasa["id"])["bakiye_kurus"] == basta + 2500
+
+
+def test_tekrar_COK_SATIRLI_islem_TUM_satirlari_dondurur(client, adm, kasa):
+    """VIRMAN IKI SATIRDIR: kimlik satirlarin yalnizca birine yazilsaydi,
+    tekrar gelen istek islemin OTEKI satirini bulamazdi (eksik yanit)."""
+    r = client.post("/kasalar", headers=adm, json={
+        "kod": f"K{_sfx()}", "ad": "Hedef Kasa", "acilis_bakiye_kurus": 0})
+    hedef = r.json()
+    h = _idem()
+    govde = {"kaynak_kasa_id": kasa["id"], "hedef_kasa_id": hedef["id"],
+             "tutar_kurus": 12000}
+
+    ilk = client.post("/finans/virman", headers={**adm, **h}, json=govde)
+    assert ilk.status_code == 201, ilk.text
+    assert len(ilk.json()["items"]) == 2
+
+    ikinci = client.post("/finans/virman", headers={**adm, **h}, json=govde)
+    assert ikinci.status_code == 200, ikinci.text
+    assert len(ikinci.json()["items"]) == 2
+    assert (sorted(k["id"] for k in ikinci.json()["items"])
+            == sorted(k["id"] for k in ilk.json()["items"]))
+    # Hedef kasa YALNIZ BIR KEZ artmis olmali.
+    assert _bakiye(client, adm, hedef["id"])["bakiye_kurus"] == 12000
+
+
+def test_tekrar_VEZNE_hareket_ucunda_da_gecerli(client, adm, kasa):
+    """Panelin gercekten kullandigi uc `POST /finans/hareketler`tir."""
+    basta = _bakiye(client, adm, kasa["id"])["bakiye_kurus"]
+    h = _idem()
+    govde = {"satirlar": [
+        {"tip": "gider", "tutar_kurus": 4000, "kasa_id": kasa["id"]}]}
+    a = client.post("/finans/hareketler", headers={**adm, **h}, json=govde)
+    b = client.post("/finans/hareketler", headers={**adm, **h}, json=govde)
+    assert a.status_code == 201, a.text
+    assert b.status_code == 200, b.text
+    assert _bakiye(client, adm, kasa["id"])["bakiye_kurus"] == basta - 4000
