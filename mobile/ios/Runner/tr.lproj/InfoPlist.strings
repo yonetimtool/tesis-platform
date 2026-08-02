@@ -1,0 +1,8 @@
+/* (P114) iOS izin metinleri — Turkce.
+   Kullanicilarin cogunlugu Turkce cihaz kullaniyor; izin penceresi
+   uygulamanin ilk izlenimidir ve orada Ingilizce metin gormek, izni
+   reddetme oranini artirir. */
+"NFCReaderUsageDescription" = "Devriye noktalarındaki NFC etiketlerini okumak için kullanılır; okutma, turun gerçekten yapıldığının kanıtı olarak kaydedilir.";
+"NSCameraUsageDescription" = "Görev, talep/arıza, etkinlik, kargo ve site kuralı kayıtlarına eklediğiniz fotoğrafları çekmek için kullanılır.";
+"NSPhotoLibraryUsageDescription" = "Görev, talep/arıza, etkinlik ve duyuru kayıtlarına eklemek üzere galerinizden fotoğraf seçmek için kullanılır.";
+"NSLocationWhenInUseUsageDescription" = "Devriye noktası okuttuğunuzda veya acil durum bildirimi gönderdiğinizde olayın nerede gerçekleştiğini kaydetmek için kullanılır. Uygulama arka planda konumunuzu izlemez.";

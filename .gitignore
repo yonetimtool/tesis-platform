@@ -27,22 +27,45 @@ infra/unpacking
 .idea/
 *.iml
 
+# --------------------------------------------------------------------------- #
+# FLUTTER — PLATFORM AGACLARI ARTIK BLOKE EDILMEZ
+#
+# BURADA BIR KEZ `mobile/android/` ve `mobile/ios/` satirlari vardi ve iki
+# kez KAYBA yol acti:
+#   1. `android/app/src/main/res/xml/network_security_config.xml` —
+#      AndroidManifest'in `android:networkSecurityConfig` ile REFERANS
+#      VERDIGI dosya hic commit'lenmedi; taze klonda Android yapisi
+#      "resource not found" ile duserdi.
+#   2. `ios/Runner/PrivacyInfo.xcprivacy`, `Runner.entitlements`,
+#      `en/tr.lproj/InfoPlist.strings` ve alti simge (P114) — Kerem'in
+#      taze klonunda YOKTU. `project.pbxproj` IZLENDIGI icin guncellendi
+#      ve dosyalara referans verdi; yani depo "tutarli gorunup" eksikti.
+#
+# HATA SINIFI: kaynak/yapilandirma ile derleme ARTIGINI ayni kural
+# altinda toplamak. Bir dizini toptan yok saymak, o dizine SONRADAN
+# eklenen her kaynagi da sessizce yutar — ve `git status` temiz oldugu
+# icin fark edilmez.
+#
+# DOGRUSU: platform artiklari, Flutter'in KENDI sablon `.gitignore`
+# dosyalarinda zaten tanimli ve dogru kapsamda:
+#   * `mobile/ios/.gitignore`     -> Flutter/ephemeral, Generated.xcconfig,
+#                                    GeneratedPluginRegistrant.*, Pods/,
+#                                    .symlinks/, DerivedData/, xcuserdata
+#   * `mobile/android/.gitignore` -> .gradle, local.properties, .cxx,
+#                                    GeneratedPluginRegistrant.java,
+#                                    keystore/key.properties
+# Kok dosyada onlari TEKRARLAMAK ya da genisletmek gereksiz; tehlikeli
+# olan da tam olarak bu genisletmeydi.
+# --------------------------------------------------------------------------- #
+
 # Flutter (mobile kendi .gitignore'una sahip)
 mobile/.flutter-plugins-dependencies
 mobile/.idea/
 mobile/mobile.iml
 
-# Flutter/mobile derleme artiklari (dev-b'ye ait, main'e karismasin)
+# Flutter derleme artiklari (KAYNAK DEGIL — platform agaclari haric)
 mobile/.dart_tool/
 mobile/build/
-mobile/android/
-mobile/ios/
-mobile/.flutter-plugins-dependencies
-
-# Flutter derleme artiklari (kaynak degil)
-mobile/.dart_tool/
-mobile/build/
-mobile/.flutter-plugins-dependencies
 
 # Firebase kimlikleri (ASLA commit'lenmez)
 infra/secrets/

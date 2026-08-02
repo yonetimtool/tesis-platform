@@ -11,7 +11,7 @@
 # Betik ikisini de yapısal olarak engeller: çıktı DOSYAYA yazılır, çıkış
 # kodu doğrudan okunur, backend'de imaj önce yeniden kurulur.
 #
-# Kullanım:  infra/kapilar.sh [web] [mobile] [backend] [goc]
+# Kullanım:  infra/kapilar.sh [depo] [web] [mobile] [backend] [goc]
 #            (argümansız: hepsi)
 set -uo pipefail
 
@@ -95,11 +95,25 @@ goc() {
   kapi goc-tersinir   bash -c "cd '$KOK' && bash infra/goc-tersinirlik.sh"
 }
 
+# DEPO KAPISI — "yapi referans veriyor ama depoda yok".
+#
+# Bu sinif iki kez gerceklesti (android network_security_config, iOS
+# PrivacyInfo/entitlements/simgeler) ve IKISINDE DE `git status` TEMIZ
+# gorundugu icin fark edilmedi: kok `.gitignore` platform agaclarini
+# toptan yok sayiyordu. Diger kapilar YEREL agaci olcer; bu kapi
+# DEPONUN KENDISINI olcer — taze klonda ne bulunacagini.
+#
+# ALAN LISTESINE DAHIL: argumansiz kosumda calisir. Saniyeler surer,
+# derleme gerektirmez.
+depo() {
+  kapi depo-izlenmeyen bash -c "cd '$KOK' && python3 infra/izlenmeyen-kaynak.py"
+}
+
 ALANLAR=("$@")
-[ ${#ALANLAR[@]} -eq 0 ] && ALANLAR=(web mobile backend goc)
+[ ${#ALANLAR[@]} -eq 0 ] && ALANLAR=(depo web mobile backend goc)
 for a in "${ALANLAR[@]}"; do
   case "$a" in
-    web|mobile|backend|goc) "$a" ;;
+    depo|web|mobile|backend|goc) "$a" ;;
     *) echo "bilinmeyen alan: $a" >&2; exit 2 ;;
   esac
 done

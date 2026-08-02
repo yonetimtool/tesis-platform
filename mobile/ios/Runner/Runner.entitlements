@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- (P114) CORE NFC. Bu yetkilendirme olmadan `nfc_manager` iOS'ta
+	     SESSIZCE calismaz: okuma oturumu acilir gibi gorunur ama etiket
+	     hic okunmaz. Yetkilendirme dosyasi TEK BASINA yetmez — Apple
+	     Developer portalinda App ID'ye "NFC Tag Reading" yetenegi de
+	     eklenmelidir (bkz. docs/app-store/ios-build-runbook.md).
+
+	     NDEF: tur noktasi etiketlerinin ortak bicimi.
+	     TAG: NTAG424 SDM dogrulamasi ISO7816 komutu ister; NDEF tek
+	     basina o yolu KAPATIRDI. -->
+	<key>com.apple.developer.nfc.readersession.formats</key>
+	<array>
+		<string>NDEF</string>
+		<string>TAG</string>
+	</array>
+</dict>
+</plist>

@@ -1,0 +1,7 @@
+/* (P114) iOS izin metinleri — TEMEL DIL (en).
+   Info.plist'teki degerlerle AYNI olmali: bu dosya, Info.plist'i EZER ve
+   ikisinin ayrismasi "Ingilizce cihazda Turkce metin" demek olurdu. */
+"NFCReaderUsageDescription" = "Used to read the NFC tags at patrol checkpoints so a scan can be recorded as proof that the round was walked.";
+"NSCameraUsageDescription" = "Used to take photos you attach to tasks, maintenance requests, events, parcels and site rules.";
+"NSPhotoLibraryUsageDescription" = "Used to pick existing photos to attach to tasks, maintenance requests, events and announcements.";
+"NSLocationWhenInUseUsageDescription" = "Used while you are scanning a patrol checkpoint or sending an emergency alert, to record where it happened. The app never tracks your location in the background.";

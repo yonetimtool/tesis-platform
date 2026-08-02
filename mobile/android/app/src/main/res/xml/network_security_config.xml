@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  KAMERA YAYINLARI ICIN CLEARTEXT (P25b).
+
+  SORUN: Android 9'dan (targetSdk >= 28) beri cleartext HTTP VARSAYILAN OLARAK
+  KAPALIDIR. Yalnizca `src/debug/AndroidManifest.xml` acmisti, yani RELEASE
+  derlemesinde her `http://` yayin adresi SESSIZCE dusuyordu:
+    * saha kameralarinin restream gecidi (Frigate/go2rtc) neredeyse her zaman
+      duz http'tir — yani P17'nin "RTSP kamerayi oynatilabilir yap" ozelligi
+      yayinda CALISMIYORDU,
+    * kamu test yayinlarinin bir kismi da http'tir.
+  Oynatici bunlari ayirt edemeyip tek bir genel hata gosteriyordu.
+
+  NEDEN ALAN ADI KAPSAMI YOK: kamera adresleri KULLANICI tarafindan calisma
+  aninda girilir; derleme aninda bilinen bir alan adi listesi yoktur. Bu
+  yuzden cleartext genel olarak acilir.
+
+  BU NEYI ZAYIFLATMAZ: cleartext izni https'i DUSURMEZ — yalnizca acikca
+  http istenirse buna izin verir. Uygulamanin API adresi derleme aninda
+  sabittir (AppConfig.apiBaseUrl) ve uretimde https'tir; yani API trafigi
+  bundan etkilenmez. Kullaniciya sifrelenmemis adres girdiginde uyari
+  gosterilir (kamera formu).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
