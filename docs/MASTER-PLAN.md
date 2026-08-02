@@ -51,9 +51,14 @@
    New hardcoded user-facing strings are a regression — not acceptable in ANY item.
 9. Every item that changes user-visible behavior ends with a "Device-verify"
    checklist appended to item P11's Notes (Kerem tests in batches).
-10. Long sessions: if context grows heavy mid-plan, finish and commit the current
-    item, write the STATUS REPORT, and tell Kerem to /clear and restart with the
-    standard kickoff prompt — the plan file carries all state.
+10. UNINTERRUPTED MODE: never end your turn to report progress or ask for /clear.
+    When context grows heavy: finish the current item, commit it, append a STATUS
+    REPORT line to CHANGELOG, then IMMEDIATELY re-read docs/MASTER-PLAN.md and continue
+    with the next eligible item in the same turn. If an automatic context compaction
+    occurs, your FIRST action afterwards is to re-read docs/MASTER-PLAN.md and the top
+    of CHANGELOG to re-anchor, then continue. Multi-file features are not a reason to
+    defer an item: split it into committable sub-steps (schema → API → UI → tests),
+    committing each sub-step so nothing is ever half-done in the working tree.
 11. FULLY AUTONOMOUS: never ask Kerem for permission, confirmation, or preference
     mid-run ("should I commit?", "which approach?", "say the word"). Decide, record
     the decision + reasoning in the item's Notes, and keep moving. Commits and
