@@ -1,0 +1,63 @@
+# (P118) iOS yayin is akisi — Mac satin almadan ilk yapimi almanin yolu.
+#
+# NEDEN DEPODA: ilk derlemenin adimlari Kerem'in ekraninda kalirsa, ikinci
+# kez (ya da baska biri) kosarken tahmin edilir. Dosya, runbook'un
+# calistirilabilir halidir: docs/app-store/ios-build-runbook.md §6.
+#
+# DIKKAT — CI "basarili derleme" derken pbxproj'daki bir eksikligi de
+# gecebilir (hedefe baglanmamis bir kaynak SESSIZCE pakete girmez); bu
+# yuzden runbook'un §1 Xcode gozle dogrulamasi ATLANAMAZ.
+workflows:
+  ios-release:
+    name: Yönetio iOS (TestFlight)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      groups:
+        # API_BASE_URL ve WEB_BASE_URL burada tanimlanir. Varsayilanlara
+        # DUSMEK felaket olurdu: AppConfig varsayilani Android emulator
+        # adresidir (10.0.2.2) ve uygulama hicbir sunucuya baglanamaz.
+        - yonetio
+      vars:
+        BUNDLE_ID: site.yonetio.app
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: site.yonetio.app
+    scripts:
+      - name: Bagimliliklar
+        script: |
+          cd mobile
+          flutter pub get
+      - name: Kapilar (analyze + test)
+        script: |
+          cd mobile
+          flutter analyze
+          # iOS yapilandirma kilidi BURADA da kosar: yapilandirmanin
+          # geri gittigi bir yapimi TestFlight'a yollamak, hatayi
+          # denetciye bulduran en pahali yoldur.
+          flutter test
+      - name: Imzalama profilini uygula
+        script: |
+          xcode-project use-profiles
+      - name: IPA
+        script: |
+          cd mobile
+          flutter build ipa --release \
+            --dart-define=API_BASE_URL=$API_BASE_URL \
+            --dart-define=WEB_BASE_URL=$WEB_BASE_URL \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - mobile/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        # OTOMATIK DENETIME GONDERME YOK: submit_to_app_store false.
+        # Denetim notlari, gizlilik anketi ve ekran goruntuleri ELLE
+        # girilir (runbook §5); eksik biriyle gonderim, reddedilip
+        # kuyruga yeniden girmek demektir.
+        submit_to_testflight: true
+        submit_to_app_store: false
