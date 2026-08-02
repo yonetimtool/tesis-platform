@@ -6052,6 +6052,97 @@ KAPILAR: `tsc` temiz · `vitest` **50 dosya / 306 test** · `npm run build`
 başarılı (37 sayfa). **Backend'e dokunulmadı** (beş ucun beşi de zaten
 vardı), şema değişikliği ve yeni göç **YOK**.
 
+## APP STORE HAZIRLIĞI — P112–P118 (2026-08-02, Kerem'in paketi)
+
+> iOS yayını için Apple denetim listesine göre açılan yeni kalemler. **iOS
+> DERLEMESİNİN KENDİSİ [KEREM]'dedir** (macOS/CI gerekir); ajanın işi, ilk
+> Mac derlemesi **denetime hazır** olsun diye kod/yapılandırma/belge
+> tarafındaki her şeydir. Sıra bağlayıcıdır: P112 → P118.
+
+### P112 — Hesap silme (App Store 5.1.1(v), ZORUNLU)
+Status: SIRADA · Depends-on: —
+Scope: Uygulama içinde **"Hesabımı Sil"** (Ayarlar): onay + **yeniden kimlik
+doğrulama**; KVKK'ya uygun sunucu ucu (kişisel veri anonimleştirilir/silinir,
+**yasal olarak saklanması gereken finans/denetim kayıtları KALIR** — ayrımı
+belgele); tenant-yönetici uç durumları (**son admin devretmeden kendini
+silemez**). Sözleşme + gerekiyorsa YENİ revizyon + testler + 7 dil ARB.
+Acceptance: uçtan uca silme uygulamadan yapılabiliyor; ayrım belgeli; testler
+yeşil; §15 envanteri artmıyor.
+
+### P113 — Gizlilik politikası + koşullar + yapay zekâ/çeviri beyanı
+Status: SIRADA · Depends-on: —
+Scope: Gizlilik politikası + kullanım koşulları yaz (kaynak TR, 6 dile bizim
+çeviri hattımızın kurallarıyla; **hukukçu incelemesi sonra [KEREM]**): toplanan
+veri ve amaçlar, **işleyiciler adıyla** (kendi altyapımızdaki LibreTranslate —
+veri dışarı ÇIKMAZ; iyzico devreye girince; Firebase/FCM açılınca), saklama
+süreleri, KVKK+GDPR temelleri, iletişim. Web portalında **sabit adreslerde**
+yayınla (`/gizlilik`, `/kosullar`) ve uygulamadaki Ayarlar'dan bağla. Makine
+çevirisi gösteren **her yüzeyin** "otomatik çevrilmiştir · orijinali gör"
+göstergesini (P7) koruduğunu doğrula — yapay zekâ şeffaflığı hikâyemiz budur;
+uygulama içinde **üretken yapay zekâ YOK**, denetim notlarında bunu yaz.
+Acceptance: iki sayfa 7 dilde yayında; uygulamadan bağlantı çalışıyor; P7
+göstergesi taranarak doğrulandı.
+
+### P114 — iOS proje hazırlığı (yalnız yapılandırma; derleme sonra Mac'te)
+Status: SIRADA · Depends-on: —
+Scope: Depoda `ios/` Flutter iskelesini kur/tamamla: **bundle id kararı**
+(`site.yonetio.app` ya da eşdeğeri — kaydet), görünen ad, **dokunduğumuz HER
+İZİN için** Türkçe+İngilizce `Info.plist` kullanım metinleri (NFC okuyucu,
+kamera [tur/görev fotoğrafı], fotoğraf kitaplığı [etkinlik görselleri],
+konum-kullanırken [tur GPS], bildirimler), **ATS varsayılan** (yalnız HTTPS —
+yayın politikamızla aynı), **`PrivacyInfo.xcprivacy`** gizlilik bildirimi (API
+kullanımımız + gerekçe-zorunlu API'ler), marka varlıklarından uygulama
+simgeleri + açılış ekranı (**yer tutucu YOK**). `nfc_manager` iOS yetkilendirme
+notları belgeli olsun (Core NFC yeteneği — **uyarı: NFC tur okutma iPhone 7+
+ister; SDM okuma yolu cihazda doğrulanmalı [KEREM]**).
+Acceptance: `ios/` ağacı derlenebilir yapılandırmada; her izin dizesi iki dilde;
+manifest dosyası mevcut; UIDeviceFamily kararı yazılı.
+
+### P115 — Denetçi demo modu + denetim paketi
+Status: SIRADA · Depends-on: P114
+Scope: Apple denetçisi ne fiziksel NFC etiketimizi okutabilir ne de sahada
+durabilir. **Tenant kapsamlı DEMO MODU**: prod benzeri veriyle tohumlanmış bir
+**denetim tenant'ı**, her rol için bir demo hesabı ve **yalnız denetim
+tenant'ında** açık (sunucu bayraklı) bir **"simüle okutma"** yolu — böylece tur
+akışı donanımsız gösterilebilir. `docs/app-store/review-notes.md`: demo
+kimlikleri, rol haritası, NFC/kamera/konum nerede ve **niçin**, ödeme modeli
+gerekçesi (aidat = gerçek dünya hizmeti → **3.1.3(e), IAP YOK**), uzaktan kod
+çalıştırma yok beyanı (2.5.2), yapay zekâ/çeviri beyanı özeti. Ayrıca App Store
+Connect için **App Privacy anketi cevap tablosu** (veri tipi → toplanıyor mu?
+kimliğe bağlı mı? izleme mi?).
+Acceptance: demo tenant tohumlanabiliyor; simüle okutma YALNIZ o tenant'ta
+açılıyor (test); denetim notları ve gizlilik tablosu yazılı.
+
+### P116 — Yer tutucu / boş ekran süpürmesi
+Status: SIRADA · Depends-on: P115
+Scope: Denetimi düşüren şeyler için her ekranı tara: **ölü düğmeler**, denetim
+tenant'ından erişilebilen **"Yakında"** rotaları, içeriksiz **boş durumlar**.
+DEMO tenant'ında görünen her şey ya **çalışmalı** ya da özellik bayrağıyla
+**gizlenmeli**. Listele + düzelt.
+Acceptance: ölçülmüş liste + her maddenin karşılığı (düzeltildi/gizlendi).
+
+### P117 — Ekran görüntüsü betiği
+Status: SIRADA · Depends-on: P116
+Scope: `docs/app-store/screenshots.md`: rol başına **tam ekran listesi**,
+6.7"/6.1" için (iPad gönderilecekse onun için de — **karar: ilk sürüm yalnız
+iPhone önerilir**; `UIDeviceFamily` P114'te ona göre ayarlanır), ekranlar
+gerçek görünsün diye **tohumlanmış veriyle**. Çekimin kendisi [KEREM].
+Acceptance: belge yazılı; her satır hangi hesapla, hangi rotadan, hangi veriyle.
+
+### P118 — [KEREM] İlk Mac derlemesi + TestFlight
+Status: SIRADA · Depends-on: P114, P115
+Scope: Kerem tarafı runbook: `docs/app-store/ios-build-runbook.md` — Codemagic
+**ya da** yerel Xcode için tam adımlar: imzalama, yetenekler (NFC; P12 gelince
+Push), derleme, yükleme, TestFlight iç test. Ajan runbook'u ve varsa
+`codemagic.yaml`'ı yazar; **koşum Kerem'in**.
+Acceptance: runbook + CI dosyası commit'li; Kerem tek geçişte izleyebiliyor.
+
+### NOT — Sign in with Apple (4.8)
+**GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
+girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız
+üçüncü taraf giriş SUNAN uygulamaları bağlar. Denetim notlarına yazılacak
+(P115).
+
 ## STATUS REPORT — 2026-08-01 #10 (kural 10: bağlam DOLDU, devir)
 
 **FINAL REPORT değildir.** #9'un üstüne **P61–P65** eklendi. **P66'dan**
