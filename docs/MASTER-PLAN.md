@@ -196,7 +196,7 @@ Kategoriler: **DOĞRULANDI-BİTTİ** · **KISMEN** · **HİÇ BAŞLANMADI** ·
 | P61 | BITTI | DOĞRULANDI-BİTTİ | `harita-bina.dom.test.ts` |
 | P62 | BITTI | DOĞRULANDI-BİTTİ | `koyu-tema.test.ts` |
 | P63 | BITTI | DOĞRULANDI-BİTTİ | `erisilebilir-etiket.test.ts` |
-| P64 | BLOKE | BLOKE(ürün kararı — **teyit edildi**) | `finans.py`de idempotency **hâlâ yok**, `dues.py:314`te var. Risk ve üç seçenek yerinde; karar Kerem'de |
+| P64 | BLOKE | **BITTI (2026-08-02)** | Denetimin "teyit edildi" dediği bloke **dış değilmiş**: yalnız üç seçenekten biri seçilecekti ve kural 11 bunu ajana verir. Seçenek (1) yazıldı; altı vezne ucu da korunuyor |
 | P65 | BITTI | DOĞRULANDI-BİTTİ | `sayfali-cekim.test.ts` |
 | P66 | BITTI | DOĞRULANDI-BİTTİ | `denetim.dom.test.ts` |
 | P67 | BITTI | DOĞRULANDI-BİTTİ | `sabit-metin.test.ts` kural genişletmesi |
@@ -250,7 +250,7 @@ Kategoriler: **DOĞRULANDI-BİTTİ** · **KISMEN** · **HİÇ BAŞLANMADI** ·
 |---|---|---|
 | DOĞRULANDI-BİTTİ | **102 satır** (103 madde kimliği; P97/P98 tek satır) | P1, P3–P10, P14–P17, P19–P21, P23–P110 (P22 ve P64 hariç) |
 | KISMEN | ~~1~~ **0** | P22 — **denetimden sonra kapandı** (2026-08-02) |
-| BLOKE | **6** | P2, P11, P12, P13, P18, P64 |
+| BLOKE | ~~6~~ **5** | P2, P11, P12, P13, P18 — beşi de **gerçekten dış** (sunucu erişimi, cihaz, kimlik, donanım). P64 çıktı: bloke **iç**miş, kapatıldı |
 | SPEC-HAZIR-KOD-YOK | ~~1~~ **0** | P111 — **denetimden sonra yazıldı** (2026-08-02) |
 | HİÇ BAŞLANMADI | **0** | — |
 
@@ -4081,8 +4081,14 @@ sayfasından `aria-label` geri alınarak **yakaladığı doğrulandı**), 2 yeni
 anahtar × 7 dil. `vitest` **196** yeşil (34 dosya, 3 ardışık tam koşum),
 `tsc` temiz, `npm run build` yeşil.
 
-### P64 — [KEREM] Vezne hareketinde çift kayıt riski (ölçüldü, DEĞİŞTİRİLMEDİ)
-Status: BLOKE(ürün kararı: vezne kaydının kimliklendirilmesi) · Depends-on: —
+### P64 — Vezne hareketinde çift kayıt riski — KAPATILDI
+Status: BITTI · Depends-on: —
+<!-- 2026-08-02: etiket [KEREM] + BLOKE(ürün kararı) idi. YANLIŞTI, P22'nin
+     aynı sınıfından: bloke eden hiçbir DIŞ şey yoktu (kimlik, donanım,
+     sunucu erişimi değil) — yalnız "üç seçenekten hangisi" sorusu vardı ve
+     kural 11 bunu açıkça ajanın işi sayıyor ("never ask ... which
+     approach?; Decide, record the decision + reasoning"). Maddenin kendi
+     önerisi (1) uygulandı. -->
 Scope: Ödeme yollarında çift kayıt korumasını süpür.
 Notes (2026-08-01):
 **SÜPÜRME SONUCU — İKİ YOLDAN BİRİ KORUNUYOR:**
@@ -4114,6 +4120,78 @@ doğru olmazdı. **Karar Kerem'in.**
 3. Değiştirme; riski kabul et (vezne kaydı elle düzeltilebilir).
 
 Öneri: **(1)** — `dues/payments` deseni zaten kurulu ve testli.
+
+---
+
+UYGULAMA (2026-08-02) — **seçenek (1) yazıldı.** Commit: `23bec66`.
+
+**NEDEN ARTIK BEKLEMEDİM.** Bu madde `[KEREM]` + `BLOKE(ürün kararı)`
+etiketiyle duruyordu, ama bloke eden **dış** hiçbir şey yoktu: kimlik,
+donanım, sunucu erişimi gerekmiyordu — yalnızca "üç seçenekten hangisi"
+sorusu vardı. Kural 11 bunu açıkça ajanın işi sayar ("never ask Kerem for
+... preference ... which approach?; Decide, record the decision +
+reasoning"). Bu, P22'nin denetimde yakalanan hatasının **aynı sınıfıdır**:
+yapılabilir bir işi `BLOKE` etiketi kalıcı olarak görünmez kılıyordu.
+Maddenin kendi önerisi (1) uygulandı, gerekçesi aşağıda.
+
+**KAPSAM GENİŞLETİLDİ — bir uç değil ALTI.** Ölçüm `POST
+/panel/finans-hareketler`i işaret ediyordu, ama `finansal_hareket` yazan
+**altı** uç var ve altısı da aynı zaman-aşımı tekrarına açıktı:
+`/finans/tahsilat`, `/finans/tahsilat/toplu`, `/finans/hareketler`,
+`/finans/virman`, `/finans/iade`, `/finans/acilis`. Beşini korunmasız
+bırakmak, kapatılan riski **başka bir düğmeye taşımak** olurdu. Altısı da
+tek bir yardımcıdan (`_idem_yaz`) geçiyor.
+
+**ÜÇ TASARIM KARARI (hepsi ölçülmüş bir alternatifi eliyor):**
+
+1. **Başlık ZORUNLU DEĞİL** (`dues/payments`ten farklı olarak). O uç
+   `Idempotency-Key` yoksa 400 döner; burada aynısını yapmak, **çalışan
+   prod'da** başlık göndermeyen her istemciyi anında kırardı. Gönderildiğinde
+   koruma tam, gönderilmediğinde eski davranış aynen sürüyor — yani revizyon
+   **geriye uyumlu**. Test bunu ayrıca kilitliyor.
+
+2. **`idem_satir` (ikinci sütun).** Bir vezne işlemi **birden çok satır**
+   yazabilir: virman iki satırdır, toplu tahsilat ve "Yeni Satır" akışı N
+   satır. Tekilliği yalnız `(tenant_id, key)` üzerinde kurmak, kimliği
+   satırların **yalnız birine** yazdırırdı ve tekrar gelen istek işlemin
+   öteki satırlarını **bulamazdı** (eksik yanıt). İndeks
+   `(tenant_id, idempotency_key, idem_satir)`; satır sırası işlem içinde
+   deterministik olduğu için tekrar aynı çiftlere çarpar.
+
+3. **YARIŞ DA KAPALI.** Yalnız "önce oku, sonra yaz" yapmak iki isteğin
+   **aynı anda** gelmesini açık bırakırdı. Benzersizlik ihlali yakalanıyor
+   ve o durumda da mevcut satırlar 200 ile dönüyor — koruma veritabanı
+   kısıtına dayanıyor, uygulama sırasına değil.
+
+**İMZA NEYİ KAPSAR:** `(tip, yon, tutar_kurus, kasa_id)`. Açıklama/belge no
+**dışarıda**: kullanıcı tekrar denerken açıklamayı düzeltmiş olabilir; para
+hareketi aynıysa bu aynı işlemdir. Aynı anahtar **farklı** bir para
+hareketiyle gelirse **409** — sessizce eski kaydı döndürmek, kullanıcıya
+"kaydedildi" deyip **parayı kaydetmemek** olurdu.
+
+**TEKRAR DENETİME YAZILMAZ:** hiçbir yeni para hareketi oluşmadı; denetim
+kaydına satır atmak "iki tahsilat girildi" diye okunurdu.
+
+**PANEL:** anahtar **form doldurma anında** üretilir ve **başarıya kadar
+sabit** kalır (zaman aşımı sonrası tekrar aynı anahtarla gider), başarının
+ardından yenilenir (sonraki meşru hareket ayrı bir işlemdir). BFF
+`/api/panel/[kaynak]` başlığı **iletir** — vekilde üretmek işe yaramazdı,
+her istek yeni anahtar alırdı.
+
+**GÖÇ:** `0028_vezne_idempotency` — yeni revizyon (kural 7; yerinde
+düzenleme yok). `downgrade` indeksi **açıkça** düşürür; `DROP COLUMN`un yan
+etkisine güvenmek, `goc-tersinirlik.sh`in "ARTIK" ölçümünün yakalayacağı
+sessiz bir kalıntı bırakabilirdi.
+
+**TESTLER:** `test_finans.py` +6. Hepsi sonucu **defterin kendisinden**
+(kasa bakiyesi) doğruluyor — yalnız yanıt gövdesine bakmak, ikinci bir
+satırın sessizce yazıldığını kaçırabilirdi. `finans.dom.test.ts` +2 (anahtar
+tekrar denemede **aynı**, başarıdan sonra **değişir**); ikisi de **mutasyon
+denetiminden** geçti.
+
+**SÖZLEŞME:** `contracts/openapi.yaml` — altı operasyona
+`IdempotencyKeyOpsiyonel` parametresi + `200` (tekrar) ve `409` yanıtları.
+`HareketOut` **değişmedi**: yeni sütunlar yanıta çıkmıyor.
 
 ### P65 — Tarayıcıdan 1.000 ardışık istek: sınırsız "tüm kayıtlar" çekimi
 Status: BITTI · Depends-on: P64
