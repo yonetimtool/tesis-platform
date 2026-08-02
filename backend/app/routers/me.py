@@ -10,13 +10,17 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..audit import Action, audit_user
+from ..audit import Action, record_audit
+from ..audit import audit_user
 from ..deps import get_current_user, get_tenant_db, require_role
 from ..errors import APIError
+from ..hesap_silme import hesabi_sil_veya_anonimlestir, son_admin_mi
 from ..models import AppUser, Checkpoint
 from ..schemas import (
     AvatarUpdate,
     CheckpointBrief,
+    HesapSilmeIstek,
+    HesapSilmeSonuc,
     MeProfileOut,
     PasswordChangeRequest,
     UserContactUpdate,
@@ -107,6 +111,58 @@ async def change_my_password(
     )
     # get_tenant_db transaction'i cikista commit eder (user ayni oturuma bagli).
     return Response(status_code=204)
+
+
+@router.post("/me/hesap-sil", response_model=HesapSilmeSonuc)
+async def delete_my_account(
+    body: HesapSilmeIstek,
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> HesapSilmeSonuc:
+    """SELF-SERVIS HESAP SILME (App Store 5.1.1(v), P112).
+
+    Apple'in kurali net: hesap acilabiliyorsa **uygulama icinden**
+    silinebilmeli — destege yazdirmak, e-posta gonderttirmek ya da web
+    sitesine yonlendirmek **reddedilme sebebidir**.
+
+    YENIDEN KIMLIK DOGRULAMA ZORUNLU. Access token'i olan biri (odunc
+    alinmis, kilidi acik birakilmis telefon) tek dokunusla baskasinin
+    hesabini silememeli. `PATCH /me/password` ile AYNI desen: mevcut parola
+    dogrulanir, hata 400 `invalid_credentials`.
+
+    SON YONETICI ENGELI: tesisin tek admin/yoneticisi kendini silerse tesis
+    **sahipsiz** kalir (kimse yeni yonetici atayamaz, aidat isleyemez).
+    409 doner ve ne yapilmasi gerektigini soyler: **once devret**. Bu Apple
+    kuralina aykiri degildir — kural "hesap silinebilmeli" der, "tesisi
+    kullanilamaz hale getir" demez; kullanicinin onunde acik ve tek adimlik
+    bir yol vardir.
+
+    NE SILINIR / NE KALIR: bkz. `app/hesap_silme.py` (tek kaynak). Ozet:
+    kimlik alanlari + cihaz kayitlari gider; yasal saklama yukumlulugu olan
+    finans/denetim satirlari **anonim** olarak kalir.
+    """
+    if not verify_password(body.current_password, user.password_hash):
+        raise APIError(400, "invalid_credentials", "mevcut_parola_hatali")
+    if await son_admin_mi(db, user):
+        raise APIError(409, "conflict", "son_yonetici_devretmeden_silinemez")
+
+    # Aktor bilgisi ONCE kopyalanir: `hard_delete` yolunda `user` satiri
+    # kalkar ve ORM nesnesinden okuma yapmak guvenli degildir.
+    aktor_id, aktor_rol, aktor_tenant = user.id, user.role, user.tenant_id
+
+    tam_silindi = await hesabi_sil_veya_anonimlestir(db, user, kendi_istegi=True)
+
+    await record_audit(
+        db,
+        action=Action.ACCOUNT_SELF_DELETE,
+        tenant_id=aktor_tenant,
+        actor_user_id=aktor_id,
+        actor_rol=aktor_rol,
+        resource_type="app_user",
+        resource_id=aktor_id,
+        meta={"mode": "hard_delete" if tam_silindi else "anonymize"},
+    )
+    return HesapSilmeSonuc(deleted=tam_silindi)
 
 
 @router.patch("/me/contact", response_model=MeProfileOut)

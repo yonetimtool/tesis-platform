@@ -276,6 +276,24 @@ class UserUpdate(BaseModel):
 
 # Rol-bazli arama iletisim ayari (C1a) — YALNIZ telefon + riza; admin+yonetici
 # yonetir (rol/parola gibi hassas alanlara dokunmadan — yetki yukseltme yok).
+class HesapSilmeIstek(BaseModel):
+    """(P112) Self-servis hesap silme — YENIDEN KIMLIK DOGRULAMA zorunlu.
+
+    Access token'i olan biri (odunc alinmis telefon) tek dokunusla
+    baskasinin hesabini silememeli; `PATCH /me/password` ile ayni desen.
+    """
+
+    current_password: str = Field(..., min_length=1, max_length=200)
+
+
+class HesapSilmeSonuc(BaseModel):
+    """`deleted=true` -> satir tamamen silindi (hicbir gecmisi yoktu).
+    `deleted=false` -> yasal saklama geregi satir KALDI, kimlik alanlari
+    temizlendi (anonimlestirme). Istemci ikisinde de OTURUMU KAPATIR."""
+
+    deleted: bool
+
+
 class UserContactUpdate(BaseModel):
     telefon: str | None = Field(None, max_length=40)
     aranabilir: bool | None = None

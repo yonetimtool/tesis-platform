@@ -2969,6 +2969,40 @@ class KvkkOnay(Base):
 
 
 # --------------------------------------------------------------------------- #
+class HesapSilmeKaydi(Base):
+    """(P112) Hesap silindiginin KALICI kaniti — App Store 5.1.1(v) + KVKK.
+
+    Kisisel verinin kendisi gittigi icin kanit ondan BAGIMSIZ olmak zorunda.
+    `audit_log` yetmez: o, saklama politikasi geregi PURGE edilir
+    (`retention_audit_months`); silme talebini eden kisi ya da denetleyen
+    kurum bundan SONRA sorabilir. Bu tablo retention motoruna DAHIL DEGILDIR.
+
+    ICINDE KISISEL VERI YOKTUR ve olamaz: tam olarak kisisel veriyi
+    sildigimizi kanitlamak icin var.
+
+    `user_id`de FK YOKTUR (bilincli): `hard_delete` modunda `app_user`
+    satiri artik mevcut degildir.
+    """
+
+    __tablename__ = "hesap_silme_kaydi"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "user_id", name="uq_hesap_silme_user"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    rol: Mapped[str] = mapped_column(USER_ROLE, nullable=False)
+    #: `hard_delete` (gecmis yok, satir gitti) | `anonymize` (defter kaldi).
+    mod: Mapped[str] = mapped_column(Text, nullable=False)
+    #: true = kullanicinin KENDISI sildi (5.1.1(v) akisi); false = yonetim.
+    kendi_istegi: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
 class UnitUyari(Base):
     """(P37) Esige varinca verilen caydirici uyari kaydi.
 

@@ -7900,6 +7900,78 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Anketler'**
   String get modulAnketler;
+
+  /// No description provided for @hesapSilBolum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesap'**
+  String get hesapSilBolum;
+
+  /// No description provided for @hesapSilBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabımı sil'**
+  String get hesapSilBaslik;
+
+  /// No description provided for @hesapSilAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınızı ve kişisel verilerinizi kalıcı olarak silin'**
+  String get hesapSilAlt;
+
+  /// No description provided for @hesapSilOnayBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınızı silmek istiyor musunuz?'**
+  String get hesapSilOnayBaslik;
+
+  /// No description provided for @hesapSilOnayGovde.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adınız, telefonunuz, e-postanız ve cihaz kayıtlarınız silinir; hesabınıza bir daha giriş yapamazsınız. Aidat ve ödeme kayıtları yasal saklama yükümlülüğü nedeniyle silinemez; bu kayıtlar adınızla değil, anonim olarak saklanmaya devam eder.'**
+  String get hesapSilOnayGovde;
+
+  /// No description provided for @hesapSilParolaEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolanız'**
+  String get hesapSilParolaEtiket;
+
+  /// No description provided for @hesapSilParolaAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvenlik için parolanızı yeniden girin.'**
+  String get hesapSilParolaAciklama;
+
+  /// No description provided for @hesapSilOnayla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabımı kalıcı olarak sil'**
+  String get hesapSilOnayla;
+
+  /// No description provided for @hesapSilSonucSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınız silindi.'**
+  String get hesapSilSonucSilindi;
+
+  /// No description provided for @hesapSilSonucAnonim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınız silindi. Yasal olarak saklanması gereken kayıtlar anonim hâle getirildi.'**
+  String get hesapSilSonucAnonim;
+
+  /// No description provided for @hesapSilParolaGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devam etmek için parolanızı girin.'**
+  String get hesapSilParolaGerekli;
+
+  /// No description provided for @hesapSilSiliniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Siliniyor...'**
+  String get hesapSilSiliniyor;
 }
 
 class _AppLocalizationsDelegate

@@ -4604,4 +4604,45 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get modulAnketler => 'Encuestas';
+
+  @override
+  String get hesapSilBolum => 'Cuenta';
+
+  @override
+  String get hesapSilBaslik => 'Eliminar mi cuenta';
+
+  @override
+  String get hesapSilAlt =>
+      'Elimine su cuenta y sus datos personales de forma permanente';
+
+  @override
+  String get hesapSilOnayBaslik => '¿Eliminar su cuenta?';
+
+  @override
+  String get hesapSilOnayGovde =>
+      'Se eliminarán su nombre, su teléfono, su correo electrónico y los registros de sus dispositivos, y ya no podrá iniciar sesión. Los registros de cuotas y pagos no se pueden eliminar porque la ley nos obliga a conservarlos; seguirán almacenados de forma anónima y dejarán de estar vinculados a su nombre.';
+
+  @override
+  String get hesapSilParolaEtiket => 'Su contraseña';
+
+  @override
+  String get hesapSilParolaAciklama =>
+      'Introduzca su contraseña de nuevo por seguridad.';
+
+  @override
+  String get hesapSilOnayla => 'Eliminar mi cuenta permanentemente';
+
+  @override
+  String get hesapSilSonucSilindi => 'Su cuenta ha sido eliminada.';
+
+  @override
+  String get hesapSilSonucAnonim =>
+      'Su cuenta ha sido eliminada. Los registros que la ley nos obliga a conservar se han anonimizado.';
+
+  @override
+  String get hesapSilParolaGerekli =>
+      'Introduzca su contraseña para continuar.';
+
+  @override
+  String get hesapSilSiliniyor => 'Eliminando...';
 }

@@ -1381,5 +1381,17 @@
   "anketToplamOy": "{sayi} votos",
   "anketOyHatasi": "No se pudo enviar el voto: {hata}",
   "anketSonucKapali": "Los resultados aparecen al cerrar la encuesta.",
-  "modulAnketler": "Encuestas"
+  "modulAnketler": "Encuestas",
+  "hesapSilBolum": "Cuenta",
+  "hesapSilBaslik": "Eliminar mi cuenta",
+  "hesapSilAlt": "Elimine su cuenta y sus datos personales de forma permanente",
+  "hesapSilOnayBaslik": "¿Eliminar su cuenta?",
+  "hesapSilOnayGovde": "Se eliminarán su nombre, su teléfono, su correo electrónico y los registros de sus dispositivos, y ya no podrá iniciar sesión. Los registros de cuotas y pagos no se pueden eliminar porque la ley nos obliga a conservarlos; seguirán almacenados de forma anónima y dejarán de estar vinculados a su nombre.",
+  "hesapSilParolaEtiket": "Su contraseña",
+  "hesapSilParolaAciklama": "Introduzca su contraseña de nuevo por seguridad.",
+  "hesapSilOnayla": "Eliminar mi cuenta permanentemente",
+  "hesapSilSonucSilindi": "Su cuenta ha sido eliminada.",
+  "hesapSilSonucAnonim": "Su cuenta ha sido eliminada. Los registros que la ley nos obliga a conservar se han anonimizado.",
+  "hesapSilParolaGerekli": "Introduzca su contraseña para continuar.",
+  "hesapSilSiliniyor": "Eliminando..."
 }

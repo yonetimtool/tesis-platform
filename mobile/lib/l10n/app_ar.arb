@@ -1381,5 +1381,17 @@
   "anketToplamOy": "{sayi} صوت",
   "anketOyHatasi": "تعذّر إرسال التصويت: {hata}",
   "anketSonucKapali": "تظهر النتائج عند إغلاق الاستطلاع.",
-  "modulAnketler": "الاستطلاعات"
+  "modulAnketler": "الاستطلاعات",
+  "hesapSilBolum": "الحساب",
+  "hesapSilBaslik": "حذف حسابي",
+  "hesapSilAlt": "احذف حسابك وبياناتك الشخصية نهائيًا",
+  "hesapSilOnayBaslik": "هل تريد حذف حسابك؟",
+  "hesapSilOnayGovde": "سيتم حذف اسمك ورقم هاتفك وبريدك الإلكتروني وسجلات أجهزتك، ولن تتمكن من تسجيل الدخول مرة أخرى. لا يمكن حذف سجلات الرسوم والمدفوعات لأننا ملزمون قانونًا بحفظها؛ ستبقى مخزَّنة بشكل مجهول الهوية وغير مرتبطة باسمك.",
+  "hesapSilParolaEtiket": "كلمة المرور",
+  "hesapSilParolaAciklama": "أدخل كلمة المرور مرة أخرى للتحقق من هويتك.",
+  "hesapSilOnayla": "احذف حسابي نهائيًا",
+  "hesapSilSonucSilindi": "تم حذف حسابك.",
+  "hesapSilSonucAnonim": "تم حذف حسابك. تم جعل السجلات التي يلزمنا القانون بحفظها مجهولة الهوية.",
+  "hesapSilParolaGerekli": "أدخل كلمة المرور للمتابعة.",
+  "hesapSilSiliniyor": "جارٍ الحذف..."
 }

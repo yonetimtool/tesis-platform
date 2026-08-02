@@ -14,7 +14,10 @@ import '../../kvkk/presentation/kvkk_onay_screen.dart'
 import '../../auth/domain/user_role.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/theme/home_tokens.dart';
 import '../../../core/ui/merkez_diyalog.dart';
+import '../../auth/presentation/auth_controller.dart';
+import '../../profile/data/profile_api.dart';
 
 /// Ayarlar — kullanici tercihleri (DIL + tema modu) + yonetici'ye ozel tesis
 /// adlandirmasi. Iki tercih de kalicidir (guvenli depo) ve ANINDA uygulanir;
@@ -127,6 +130,19 @@ class SettingsScreen extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           const _IzinlerKarti(),
+          const SizedBox(height: 24),
+          // ----------------------- HESAP (P112) ------------------------- #
+          // App Store 5.1.1(v): hesap acilabiliyorsa UYGULAMA ICINDEN
+          // silinebilmeli. Destege yazdirmak ya da web sitesine
+          // yonlendirmek REDDEDILME sebebidir.
+          //
+          // EN ALTTA ve YIKICI RENKTE: gunluk kullanilan bir ayar degil,
+          // geri donusu olmayan bir islem. Ustte olsaydi dil satirini
+          // ararken yanlislikla dokunulabilirdi.
+          Text(l10n.hesapSilBolum,
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          const _HesapSilKarti(),
         ],
       ),
     );
@@ -387,6 +403,169 @@ class _IzinlerKarti extends ConsumerWidget {
                 onTap: () => context.push(AppRoutes.kvkkMetin),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+
+/// HESAP SILME karti (P112) — App Store 5.1.1(v).
+///
+/// Uc kademe: (1) liste satiri, (2) NE SILINIP ne kalacagini ACIKCA yazan
+/// onay penceresi + parola, (3) sonuc. Tek dokunuslu silme YOK: geri
+/// donusu olmayan bir islem icin onay + yeniden kimlik dogrulama sarttir.
+class _HesapSilKarti extends ConsumerWidget {
+  const _HesapSilKarti();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final renk = Theme.of(context).colorScheme.error;
+    return Card(
+      child: ListTile(
+        leading: Icon(Icons.person_remove_outlined, color: renk),
+        title: Text(l10n.hesapSilBaslik, style: TextStyle(color: renk)),
+        subtitle: Text(l10n.hesapSilAlt),
+        onTap: () => _onayAc(context, ref),
+      ),
+    );
+  }
+
+  Future<void> _onayAc(BuildContext context, WidgetRef ref) async {
+    final silindi = await merkezSayfaAc<bool>(
+      context,
+      builder: (_) => const _HesapSilDiyalogu(),
+    );
+    if (silindi == null || !context.mounted) return;
+    // Hesap artik yok (ya da anonim): OTURUMU KAPAT. Ekranda birakmak,
+    // her istegi 401 alan bir arayuz gostermek olurdu.
+    await ref.read(authControllerProvider.notifier).logout();
+  }
+}
+
+class _HesapSilDiyalogu extends ConsumerStatefulWidget {
+  const _HesapSilDiyalogu();
+
+  @override
+  ConsumerState<_HesapSilDiyalogu> createState() => _HesapSilDiyaloguState();
+}
+
+class _HesapSilDiyaloguState extends ConsumerState<_HesapSilDiyalogu> {
+  final _parola = TextEditingController();
+  bool _calisiyor = false;
+  String? _hata;
+
+  @override
+  void dispose() {
+    _parola.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sil() async {
+    final l10n = context.l10n;
+    if (_parola.text.isEmpty) {
+      setState(() => _hata = l10n.hesapSilParolaGerekli);
+      return;
+    }
+    setState(() {
+      _calisiyor = true;
+      _hata = null;
+    });
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      final tamSilindi = await ref
+          .read(profileApiProvider)
+          .deleteAccount(currentPassword: _parola.text);
+      // IKI SONUC DA OLUMLUDUR. `false` "silinemedi" demek DEGIL, "yasal
+      // olarak saklanmasi gereken kayitlar anonimlestirildi" demektir;
+      // kullaniciya bunu soylemek, sonradan "verim duruyor mu" sorusunu
+      // dogurmamak icin gerekli.
+      messenger.showSnackBar(SnackBar(
+        content: Text(tamSilindi
+            ? l10n.hesapSilSonucSilindi
+            : l10n.hesapSilSonucAnonim),
+      ));
+      navigator.pop(true);
+    } on ApiException catch (e) {
+      // Sunucu metni AYNEN gosterilir: son-yonetici engeli (409) NE
+      // YAPILACAGINI soyleyen bir cumledir ve istemcide yeniden yazmak
+      // onu iki yerde tutmak olurdu.
+      setState(() {
+        _calisiyor = false;
+        _hata = apiHataMetni(l10n, e);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final renk = Theme.of(context).colorScheme.error;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.hesapSilOnayBaslik,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 12),
+              // NE SILINIP NE KALACAGI ACIKCA YAZAR. "Hesabiniz silinecek"
+              // demek yetmezdi: aidat kaydinin kaldigini sonradan ogrenen
+              // kullanici kandirildigini dusunurdu.
+              Text(l10n.hesapSilOnayGovde),
+              const SizedBox(height: 16),
+              Text(
+                l10n.hesapSilParolaAciklama,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _parola,
+                obscureText: true,
+                enabled: !_calisiyor,
+                decoration: InputDecoration(
+                  labelText: l10n.hesapSilParolaEtiket,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              if (_hata != null) ...[
+                const SizedBox(height: 12),
+                Text(_hata!, style: TextStyle(color: renk)),
+              ],
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed:
+                          _calisiyor ? null : () => Navigator.of(context).pop(),
+                      child: Text(l10n.ortakVazgec),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      style: yikiciDugmeStili(context),
+                      onPressed: _calisiyor ? null : _sil,
+                      child: Text(
+                        _calisiyor ? l10n.hesapSilSiliniyor : l10n.hesapSilOnayla,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

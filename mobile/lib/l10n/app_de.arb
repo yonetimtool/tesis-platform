@@ -1381,5 +1381,17 @@
   "anketToplamOy": "{sayi} Stimmen",
   "anketOyHatasi": "Stimme konnte nicht gesendet werden: {hata}",
   "anketSonucKapali": "Ergebnisse erscheinen nach Umfrageschluss.",
-  "modulAnketler": "Umfragen"
+  "modulAnketler": "Umfragen",
+  "hesapSilBolum": "Konto",
+  "hesapSilBaslik": "Mein Konto löschen",
+  "hesapSilAlt": "Konto und persönliche Daten dauerhaft löschen",
+  "hesapSilOnayBaslik": "Konto wirklich löschen?",
+  "hesapSilOnayGovde": "Ihr Name, Ihre Telefonnummer, Ihre E-Mail-Adresse und Ihre Geräteeinträge werden gelöscht; eine Anmeldung ist danach nicht mehr möglich. Beitrags- und Zahlungsbelege können nicht gelöscht werden, weil wir gesetzlich zur Aufbewahrung verpflichtet sind; sie bleiben anonym gespeichert und sind nicht mehr mit Ihrem Namen verknüpft.",
+  "hesapSilParolaEtiket": "Ihr Passwort",
+  "hesapSilParolaAciklama": "Geben Sie Ihr Passwort zur Sicherheit erneut ein.",
+  "hesapSilOnayla": "Mein Konto dauerhaft löschen",
+  "hesapSilSonucSilindi": "Ihr Konto wurde gelöscht.",
+  "hesapSilSonucAnonim": "Ihr Konto wurde gelöscht. Gesetzlich aufzubewahrende Belege wurden anonymisiert.",
+  "hesapSilParolaGerekli": "Geben Sie Ihr Passwort ein, um fortzufahren.",
+  "hesapSilSiliniyor": "Wird gelöscht..."
 }

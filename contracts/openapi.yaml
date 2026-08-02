@@ -300,6 +300,59 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  /me/hesap-sil:
+    post:
+      tags: [me]
+      summary: Hesabimi SIL (self-servis — App Store 5.1.1(v))
+      description: |
+        (P112) Kullanici KENDI hesabini uygulama icinden siler. Apple'in
+        kurali: hesap acilabiliyorsa uygulama icinden silinebilmeli —
+        destege yazdirmak ya da web sitesine yonlendirmek REDDEDILME
+        sebebidir.
+
+        **YENIDEN KIMLIK DOGRULAMA ZORUNLU** (`current_password`): access
+        token'i olan biri (odunc alinmis telefon) tek dokunusla baskasinin
+        hesabini silememeli. Hatali parola -> 400 `invalid_credentials`.
+
+        **SON YONETICI ENGELI** -> 409 `conflict`: tesisin tek
+        admin/yoneticisi kendini silerse tesis SAHIPSIZ kalir. Hata metni
+        ne yapilacagini soyler (once devret). Apple kuralina aykiri
+        degildir: kural "hesap silinebilmeli" der, "tesisi kullanilamaz
+        birak" demez.
+
+        **NE SILINIR:** ad -> yer tutucu; e-posta, telefon, avatar -> NULL;
+        parola/gecici kod hash'leri -> NULL; cihaz+push kayitlari SILINIR;
+        aktif daire baglantilari kapatilir; `is_active=false`.
+
+        **NE KALIR (yasal saklama):** finans satirlari (tahakkuk, odeme,
+        kasa hareketi) ve denetim kaydi. TTK/vergi mevzuati defterlerin
+        saklanmasini emreder; KVKK md. 7 silme hakki baska bir kanunun
+        ongordugu saklama yukumlulugunu kaldirmaz. Bu satirlar artik
+        ANONIM bir kullaniciya isaret eder.
+
+        `deleted=false` donmesi silme YAPILMADI demek DEGILDIR: hesabin
+        gecmisi oldugu icin satir anonimlestirilerek korundu demektir.
+        Istemci iki durumda da OTURUMU KAPATIR.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HesapSilmeIstek" }
+      responses:
+        "200":
+          description: Hesap silindi ya da anonimlestirildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HesapSilmeSonuc" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "409":
+          description: Son yonetici — once devredilmeli
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
   /me/contact:
     patch:
       tags: [me]
@@ -8112,6 +8165,25 @@ components:
       properties:
         telefon: { type: string, nullable: true, maxLength: 40 }
         aranabilir: { type: boolean }
+    HesapSilmeIstek:
+      type: object
+      required: [current_password]
+      properties:
+        current_password:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Yeniden kimlik dogrulama — mevcut parola.
+    HesapSilmeSonuc:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          type: boolean
+          description: >
+            true = satir tamamen silindi (hesabin hicbir gecmisi yoktu).
+            false = yasal saklama geregi satir KALDI, kimlik alanlari
+            temizlendi (anonimlestirme). Ikisi de BASARIDIR.
     PasswordChangeRequest:
       type: object
       description: Self-servis parola degisimi (PATCH /me/password) — mevcut parola zorunlu

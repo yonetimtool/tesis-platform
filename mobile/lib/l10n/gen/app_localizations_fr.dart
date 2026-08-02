@@ -4615,4 +4615,45 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get modulAnketler => 'Sondages';
+
+  @override
+  String get hesapSilBolum => 'Compte';
+
+  @override
+  String get hesapSilBaslik => 'Supprimer mon compte';
+
+  @override
+  String get hesapSilAlt =>
+      'Supprimer définitivement votre compte et vos données personnelles';
+
+  @override
+  String get hesapSilOnayBaslik => 'Supprimer votre compte ?';
+
+  @override
+  String get hesapSilOnayGovde =>
+      'Votre nom, votre numéro de téléphone, votre adresse e-mail et vos enregistrements d\'appareils seront supprimés et vous ne pourrez plus vous connecter. Les enregistrements de charges et de paiements ne peuvent pas être supprimés car la loi nous oblige à les conserver ; ils resteront stockés de manière anonyme et ne seront plus liés à votre nom.';
+
+  @override
+  String get hesapSilParolaEtiket => 'Votre mot de passe';
+
+  @override
+  String get hesapSilParolaAciklama =>
+      'Saisissez à nouveau votre mot de passe par sécurité.';
+
+  @override
+  String get hesapSilOnayla => 'Supprimer définitivement mon compte';
+
+  @override
+  String get hesapSilSonucSilindi => 'Votre compte a été supprimé.';
+
+  @override
+  String get hesapSilSonucAnonim =>
+      'Votre compte a été supprimé. Les enregistrements que la loi nous oblige à conserver ont été anonymisés.';
+
+  @override
+  String get hesapSilParolaGerekli =>
+      'Saisissez votre mot de passe pour continuer.';
+
+  @override
+  String get hesapSilSiliniyor => 'Suppression...';
 }

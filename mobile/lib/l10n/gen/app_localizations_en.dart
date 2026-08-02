@@ -4650,4 +4650,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get modulAnketler => 'Surveys';
+
+  @override
+  String get hesapSilBolum => 'Account';
+
+  @override
+  String get hesapSilBaslik => 'Delete my account';
+
+  @override
+  String get hesapSilAlt => 'Permanently delete your account and personal data';
+
+  @override
+  String get hesapSilOnayBaslik => 'Delete your account?';
+
+  @override
+  String get hesapSilOnayGovde =>
+      'Your name, phone number, e-mail address and device records will be deleted and you will no longer be able to sign in. Dues and payment records cannot be deleted because we are legally required to keep them; they will remain stored anonymously, no longer linked to your name.';
+
+  @override
+  String get hesapSilParolaEtiket => 'Your password';
+
+  @override
+  String get hesapSilParolaAciklama =>
+      'Enter your password again for security.';
+
+  @override
+  String get hesapSilOnayla => 'Permanently delete my account';
+
+  @override
+  String get hesapSilSonucSilindi => 'Your account has been deleted.';
+
+  @override
+  String get hesapSilSonucAnonim =>
+      'Your account has been deleted. Records we are legally required to keep were made anonymous.';
+
+  @override
+  String get hesapSilParolaGerekli => 'Enter your password to continue.';
+
+  @override
+  String get hesapSilSiliniyor => 'Deleting...';
 }

@@ -1381,5 +1381,17 @@
   "anketToplamOy": "{sayi} votes",
   "anketOyHatasi": "Le vote n'a pas pu être envoyé : {hata}",
   "anketSonucKapali": "Les résultats s'affichent à la clôture.",
-  "modulAnketler": "Sondages"
+  "modulAnketler": "Sondages",
+  "hesapSilBolum": "Compte",
+  "hesapSilBaslik": "Supprimer mon compte",
+  "hesapSilAlt": "Supprimer définitivement votre compte et vos données personnelles",
+  "hesapSilOnayBaslik": "Supprimer votre compte ?",
+  "hesapSilOnayGovde": "Votre nom, votre numéro de téléphone, votre adresse e-mail et vos enregistrements d'appareils seront supprimés et vous ne pourrez plus vous connecter. Les enregistrements de charges et de paiements ne peuvent pas être supprimés car la loi nous oblige à les conserver ; ils resteront stockés de manière anonyme et ne seront plus liés à votre nom.",
+  "hesapSilParolaEtiket": "Votre mot de passe",
+  "hesapSilParolaAciklama": "Saisissez à nouveau votre mot de passe par sécurité.",
+  "hesapSilOnayla": "Supprimer définitivement mon compte",
+  "hesapSilSonucSilindi": "Votre compte a été supprimé.",
+  "hesapSilSonucAnonim": "Votre compte a été supprimé. Les enregistrements que la loi nous oblige à conserver ont été anonymisés.",
+  "hesapSilParolaGerekli": "Saisissez votre mot de passe pour continuer.",
+  "hesapSilSiliniyor": "Suppression..."
 }

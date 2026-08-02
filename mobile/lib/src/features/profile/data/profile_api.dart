@@ -40,6 +40,27 @@ class ProfileApi {
     }
   }
 
+  /// `POST /me/hesap-sil` — SELF-SERVIS HESAP SILME (P112).
+  ///
+  /// App Store 5.1.1(v): hesap acilabiliyorsa UYGULAMA ICINDEN
+  /// silinebilmeli. Parola YENIDEN sorulur (odunc alinmis telefonla tek
+  /// dokunusta silme olmasin).
+  ///
+  /// Doner: **tam silindi mi**. `false` BASARISIZLIK DEGILDIR — hesabin
+  /// gecmisi (aidat/odeme) oldugu icin satir anonimlestirilerek korundu
+  /// demektir; kullaniciya iki durumda da farkli ama OLUMLU metin gosterilir.
+  Future<bool> deleteAccount({required String currentPassword}) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/me/hesap-sil',
+        data: {'current_password': currentPassword},
+      );
+      return res.data?['deleted'] == true;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// `PATCH /me/contact` — kendi telefon + arama rizasi (en az bir alan).
   Future<Profile> updateContact({String? telefon, bool? aranabilir}) async {
     final data = <String, dynamic>{};

@@ -4462,4 +4462,44 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get modulAnketler => 'Anketler';
+
+  @override
+  String get hesapSilBolum => 'Hesap';
+
+  @override
+  String get hesapSilBaslik => 'Hesabımı sil';
+
+  @override
+  String get hesapSilAlt =>
+      'Hesabınızı ve kişisel verilerinizi kalıcı olarak silin';
+
+  @override
+  String get hesapSilOnayBaslik => 'Hesabınızı silmek istiyor musunuz?';
+
+  @override
+  String get hesapSilOnayGovde =>
+      'Adınız, telefonunuz, e-postanız ve cihaz kayıtlarınız silinir; hesabınıza bir daha giriş yapamazsınız. Aidat ve ödeme kayıtları yasal saklama yükümlülüğü nedeniyle silinemez; bu kayıtlar adınızla değil, anonim olarak saklanmaya devam eder.';
+
+  @override
+  String get hesapSilParolaEtiket => 'Parolanız';
+
+  @override
+  String get hesapSilParolaAciklama =>
+      'Güvenlik için parolanızı yeniden girin.';
+
+  @override
+  String get hesapSilOnayla => 'Hesabımı kalıcı olarak sil';
+
+  @override
+  String get hesapSilSonucSilindi => 'Hesabınız silindi.';
+
+  @override
+  String get hesapSilSonucAnonim =>
+      'Hesabınız silindi. Yasal olarak saklanması gereken kayıtlar anonim hâle getirildi.';
+
+  @override
+  String get hesapSilParolaGerekli => 'Devam etmek için parolanızı girin.';
+
+  @override
+  String get hesapSilSiliniyor => 'Siliniyor...';
 }

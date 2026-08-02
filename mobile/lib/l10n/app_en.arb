@@ -1381,5 +1381,17 @@
   "anketToplamOy": "{sayi} votes",
   "anketOyHatasi": "Vote could not be sent: {hata}",
   "anketSonucKapali": "Results appear once the survey closes.",
-  "modulAnketler": "Surveys"
+  "modulAnketler": "Surveys",
+  "hesapSilBolum": "Account",
+  "hesapSilBaslik": "Delete my account",
+  "hesapSilAlt": "Permanently delete your account and personal data",
+  "hesapSilOnayBaslik": "Delete your account?",
+  "hesapSilOnayGovde": "Your name, phone number, e-mail address and device records will be deleted and you will no longer be able to sign in. Dues and payment records cannot be deleted because we are legally required to keep them; they will remain stored anonymously, no longer linked to your name.",
+  "hesapSilParolaEtiket": "Your password",
+  "hesapSilParolaAciklama": "Enter your password again for security.",
+  "hesapSilOnayla": "Permanently delete my account",
+  "hesapSilSonucSilindi": "Your account has been deleted.",
+  "hesapSilSonucAnonim": "Your account has been deleted. Records we are legally required to keep were made anonymous.",
+  "hesapSilParolaGerekli": "Enter your password to continue.",
+  "hesapSilSiliniyor": "Deleting..."
 }

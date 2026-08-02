@@ -280,6 +280,28 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Le mot de passe actuel est incorrect.",
         "es": "La contraseña actual es incorrecta.",
     },
+    # (P112) Son yonetici kendini silemez — tesis sahipsiz kalirdi.
+    # Metin YALNIZ engellemez, NE YAPILACAGINI da soyler: aksi halde
+    # kullanici "silemiyorum" deyip destege yazar.
+    "son_yonetici_devretmeden_silinemez": {
+        "tr": "Bu tesisin tek yöneticisi sizsiniz. Hesabınızı silmeden önce "
+              "başka bir yöneticiye yetki devredin.",
+        "en": "You are the only manager of this site. Transfer management to "
+              "another manager before deleting your account.",
+        "ar": "أنت المدير الوحيد لهذا الموقع. انقل الإدارة إلى مدير آخر قبل "
+              "حذف حسابك.",
+        "ru": "Вы единственный управляющий этого объекта. Прежде чем удалить "
+              "учётную запись, передайте управление другому управляющему.",
+        "de": "Sie sind der einzige Verwalter dieser Anlage. Übertragen Sie "
+              "die Verwaltung an eine andere Person, bevor Sie Ihr Konto "
+              "löschen.",
+        "fr": "Vous êtes le seul gestionnaire de ce site. Transférez la "
+              "gestion à un autre gestionnaire avant de supprimer votre "
+              "compte.",
+        "es": "Usted es el único administrador de esta comunidad. Transfiera "
+              "la administración a otro administrador antes de eliminar su "
+              "cuenta.",
+    },
     "yetkiniz_yok": {
         "tr": "Bu işlem için yetkiniz yok.",
         "en": "You are not authorized to perform this action.",

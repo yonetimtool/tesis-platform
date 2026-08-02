@@ -12,10 +12,9 @@ yoneticinin sakin acma akisidir ve unit'i gerekirse ortulu olusturur).
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Response
-from sqlalchemy import and_, delete as sa_delete, func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,10 +22,8 @@ from ..audit import Action, audit_user
 from ..crud_helpers import is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Unit, UnitResident, UserDevice
-
-# KVKK anonimlestirme yer tutucusu (ad NOT NULL — NULL yerine sabit metin).
-ANONYMIZED_NAME = "Silinmiş Kullanıcı"
+from ..hesap_silme import hesabi_sil_veya_anonimlestir
+from ..models import AppUser, Unit, UnitResident
 from ..schemas import (
     ResidentCreate,
     ResidentCreatedOut,
@@ -262,56 +259,28 @@ async def remove_resident_from_site(
 ) -> ResidentDeleteOut:
     """Sakini SIL / ANONIMLESTIR (KVKK silme hakki; yonetici/admin).
 
-    Gecmissiz sakin (yeni/hatali kayit) TAMAMEN silinir (unit_resident/rsvp/
-    device CASCADE ile gider) -> deleted=true (audit: resident_delete). Gecmisi
-    olan sakin (FK RESTRICT: aidat/sikayet/rezervasyon vb.) silinemez; SAVEPOINT
-    geri alinir ve ANONIMLESTIRILIR -> deleted=false (audit: resident_erasure):
-      * ad -> 'Silinmiş Kullanıcı', email/telefon -> NULL, parola/gecici-kod
-        hash'leri temizlenir (kimlik dogrulama gecersizlesir),
-      * FCM/cihaz token'lari (user_device) SILINIR (push kesilir),
-      * aktif daire-sakin baglantilari kapatilir, is_active=false.
-    FINANSAL/denetim satirlari (dues_payment kaydeden, complaint acan vb.) DEFTER
-    butunlugu icin KALIR — yazari anonim kullaniciya isaret eder. Yuklenen
-    sikayet fotograflari KALIR (kisiyi degil, tesis sorununu belgeler). role=
-    resident degilse 404."""
-    resident = await _resident_or_404(db, user_id)
+    (P112) KURAL TEK YERDE: ne silinip ne kaldigi `app/hesap_silme.py`de
+    yazilidir ve self-servis silme (`POST /me/hesap-sil`) AYNI cekirdegi
+    kullanir. Eskiden mantik burada gomuluydu; ikinci cagirani eklerken
+    kopyalamak, KVKK ayrimini iki yerde tutmak ve birinde duzeltilip
+    digerinde unutulan bir alanin **silinmis sanilan kisisel veri**
+    birakmasi demekti.
 
-    try:
-        async with db.begin_nested():
-            await db.execute(sa_delete(AppUser).where(AppUser.id == user_id))
-        await audit_user(
-            db, user, Action.RESIDENT_DELETE, resource_type="app_user",
-            resource_id=user_id, meta={"mode": "hard_delete"},
-        )
-        return ResidentDeleteOut(deleted=True)
-    except IntegrityError:
-        # Gecmis kayitlari var (RESTRICT) -> savepoint geri alindi; ANONIMLESTIR.
-        now = datetime.now(tz=timezone.utc)
-        bindings = (
-            await db.execute(
-                select(UnitResident).where(
-                    UnitResident.user_id == user_id,
-                    UnitResident.bitis.is_(None),
-                )
-            )
-        ).scalars().all()
-        for binding in bindings:
-            binding.bitis = now
-        # Cihaz/push token'larini sil (kisisel + artik gecersiz).
-        await db.execute(sa_delete(UserDevice).where(UserDevice.user_id == user_id))
-        # Kimlik alanlarini anonimlestir.
-        resident.ad = ANONYMIZED_NAME
-        resident.email = None
-        resident.telefon = None
-        resident.password_hash = None
-        resident.temp_code_hash = None
-        resident.password_set = False
-        resident.aranabilir = False
-        resident.is_active = False
-        resident.updated_at = func.now()
-        await db.flush()
-        await audit_user(
-            db, user, Action.RESIDENT_ERASURE, resource_type="app_user",
-            resource_id=user_id, meta={"mode": "anonymize"},
-        )
-        return ResidentDeleteOut(deleted=False)
+    `deleted=true`  -> gecmissiz sakin, satir tamamen silindi.
+    `deleted=false` -> gecmisi var (FK RESTRICT); satir kaldi, kimlik
+                       alanlari temizlendi. Finans/denetim satirlari yasal
+                       saklama geregi KALIR ve artik anonim kullaniciya
+                       isaret eder.
+    role=resident degilse 404.
+    """
+    resident = await _resident_or_404(db, user_id)
+    tam_silindi = await hesabi_sil_veya_anonimlestir(
+        db, resident, kendi_istegi=False
+    )
+    await audit_user(
+        db, user,
+        Action.RESIDENT_DELETE if tam_silindi else Action.RESIDENT_ERASURE,
+        resource_type="app_user", resource_id=user_id,
+        meta={"mode": "hard_delete" if tam_silindi else "anonymize"},
+    )
+    return ResidentDeleteOut(deleted=tam_silindi)

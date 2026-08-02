@@ -4720,4 +4720,44 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get modulAnketler => 'Опросы';
+
+  @override
+  String get hesapSilBolum => 'Учётная запись';
+
+  @override
+  String get hesapSilBaslik => 'Удалить мою учётную запись';
+
+  @override
+  String get hesapSilAlt =>
+      'Безвозвратно удалить учётную запись и личные данные';
+
+  @override
+  String get hesapSilOnayBaslik => 'Удалить учётную запись?';
+
+  @override
+  String get hesapSilOnayGovde =>
+      'Ваше имя, номер телефона, адрес электронной почты и записи об устройствах будут удалены, и вы больше не сможете войти. Записи о взносах и платежах удалить нельзя: закон обязывает нас их хранить. Они останутся в системе анонимно и больше не будут связаны с вашим именем.';
+
+  @override
+  String get hesapSilParolaEtiket => 'Ваш пароль';
+
+  @override
+  String get hesapSilParolaAciklama =>
+      'В целях безопасности введите пароль ещё раз.';
+
+  @override
+  String get hesapSilOnayla => 'Удалить учётную запись навсегда';
+
+  @override
+  String get hesapSilSonucSilindi => 'Ваша учётная запись удалена.';
+
+  @override
+  String get hesapSilSonucAnonim =>
+      'Ваша учётная запись удалена. Записи, которые мы обязаны хранить по закону, обезличены.';
+
+  @override
+  String get hesapSilParolaGerekli => 'Введите пароль, чтобы продолжить.';
+
+  @override
+  String get hesapSilSiliniyor => 'Удаление...';
 }

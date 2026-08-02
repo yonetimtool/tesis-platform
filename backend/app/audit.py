@@ -41,6 +41,11 @@ class Action:
     RESIDENT_DELETE = "resident_delete"    # tam silme (ledger referansi yoksa)
     RESIDENT_ERASURE = "resident_erasure"  # anonimlestirme (ledger korunur)
     RESIDENT_RESET_PASSWORD = "resident_reset_password"
+    #: (P112) Kullanicinin KENDI hesabini silmesi — App Store 5.1.1(v).
+    #: `resident_delete`ten AYRI tutulur: "kim sildi" sorusunun cevabi
+    #: farklidir (kullanicinin kendisi mi, yonetim mi) ve bu ayrim
+    #: KVKK acisindan anlamlidir.
+    ACCOUNT_SELF_DELETE = "account_self_delete"
     USER_CREATE = "user_create"
     USER_UPDATE = "user_update"
     USER_RESET_PASSWORD = "user_reset_password"

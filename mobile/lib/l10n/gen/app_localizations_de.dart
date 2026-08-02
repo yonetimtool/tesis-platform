@@ -4629,4 +4629,44 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get modulAnketler => 'Umfragen';
+
+  @override
+  String get hesapSilBolum => 'Konto';
+
+  @override
+  String get hesapSilBaslik => 'Mein Konto löschen';
+
+  @override
+  String get hesapSilAlt => 'Konto und persönliche Daten dauerhaft löschen';
+
+  @override
+  String get hesapSilOnayBaslik => 'Konto wirklich löschen?';
+
+  @override
+  String get hesapSilOnayGovde =>
+      'Ihr Name, Ihre Telefonnummer, Ihre E-Mail-Adresse und Ihre Geräteeinträge werden gelöscht; eine Anmeldung ist danach nicht mehr möglich. Beitrags- und Zahlungsbelege können nicht gelöscht werden, weil wir gesetzlich zur Aufbewahrung verpflichtet sind; sie bleiben anonym gespeichert und sind nicht mehr mit Ihrem Namen verknüpft.';
+
+  @override
+  String get hesapSilParolaEtiket => 'Ihr Passwort';
+
+  @override
+  String get hesapSilParolaAciklama =>
+      'Geben Sie Ihr Passwort zur Sicherheit erneut ein.';
+
+  @override
+  String get hesapSilOnayla => 'Mein Konto dauerhaft löschen';
+
+  @override
+  String get hesapSilSonucSilindi => 'Ihr Konto wurde gelöscht.';
+
+  @override
+  String get hesapSilSonucAnonim =>
+      'Ihr Konto wurde gelöscht. Gesetzlich aufzubewahrende Belege wurden anonymisiert.';
+
+  @override
+  String get hesapSilParolaGerekli =>
+      'Geben Sie Ihr Passwort ein, um fortzufahren.';
+
+  @override
+  String get hesapSilSiliniyor => 'Wird gelöscht...';
 }

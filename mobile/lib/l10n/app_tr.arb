@@ -1922,5 +1922,17 @@
     }
   },
   "anketSonucKapali": "Sonuçlar anket kapanınca görünür.",
-  "modulAnketler": "Anketler"
+  "modulAnketler": "Anketler",
+  "hesapSilBolum": "Hesap",
+  "hesapSilBaslik": "Hesabımı sil",
+  "hesapSilAlt": "Hesabınızı ve kişisel verilerinizi kalıcı olarak silin",
+  "hesapSilOnayBaslik": "Hesabınızı silmek istiyor musunuz?",
+  "hesapSilOnayGovde": "Adınız, telefonunuz, e-postanız ve cihaz kayıtlarınız silinir; hesabınıza bir daha giriş yapamazsınız. Aidat ve ödeme kayıtları yasal saklama yükümlülüğü nedeniyle silinemez; bu kayıtlar adınızla değil, anonim olarak saklanmaya devam eder.",
+  "hesapSilParolaEtiket": "Parolanız",
+  "hesapSilParolaAciklama": "Güvenlik için parolanızı yeniden girin.",
+  "hesapSilOnayla": "Hesabımı kalıcı olarak sil",
+  "hesapSilSonucSilindi": "Hesabınız silindi.",
+  "hesapSilSonucAnonim": "Hesabınız silindi. Yasal olarak saklanması gereken kayıtlar anonim hâle getirildi.",
+  "hesapSilParolaGerekli": "Devam etmek için parolanızı girin.",
+  "hesapSilSiliniyor": "Siliniyor..."
 }

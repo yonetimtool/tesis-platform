@@ -4732,4 +4732,43 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get modulAnketler => 'الاستطلاعات';
+
+  @override
+  String get hesapSilBolum => 'الحساب';
+
+  @override
+  String get hesapSilBaslik => 'حذف حسابي';
+
+  @override
+  String get hesapSilAlt => 'احذف حسابك وبياناتك الشخصية نهائيًا';
+
+  @override
+  String get hesapSilOnayBaslik => 'هل تريد حذف حسابك؟';
+
+  @override
+  String get hesapSilOnayGovde =>
+      'سيتم حذف اسمك ورقم هاتفك وبريدك الإلكتروني وسجلات أجهزتك، ولن تتمكن من تسجيل الدخول مرة أخرى. لا يمكن حذف سجلات الرسوم والمدفوعات لأننا ملزمون قانونًا بحفظها؛ ستبقى مخزَّنة بشكل مجهول الهوية وغير مرتبطة باسمك.';
+
+  @override
+  String get hesapSilParolaEtiket => 'كلمة المرور';
+
+  @override
+  String get hesapSilParolaAciklama =>
+      'أدخل كلمة المرور مرة أخرى للتحقق من هويتك.';
+
+  @override
+  String get hesapSilOnayla => 'احذف حسابي نهائيًا';
+
+  @override
+  String get hesapSilSonucSilindi => 'تم حذف حسابك.';
+
+  @override
+  String get hesapSilSonucAnonim =>
+      'تم حذف حسابك. تم جعل السجلات التي يلزمنا القانون بحفظها مجهولة الهوية.';
+
+  @override
+  String get hesapSilParolaGerekli => 'أدخل كلمة المرور للمتابعة.';
+
+  @override
+  String get hesapSilSiliniyor => 'جارٍ الحذف...';
 }
