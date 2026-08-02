@@ -775,7 +775,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     // Form ACIK ve dugmeler ETKIN kalmali (yukleniyor gostergesi YOK).
-    expect(find.byType(BottomSheet), findsOneWidget);
+    // P22(a): form artik MERKEZ DIYALOG. Iddia "form ACIK kaldi"dir;
+    // pencerenin turu degil.
+    expect(find.byType(Dialog), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsNothing,
         reason: 'vazgecmede yukleme gostergesi kalmamali');
     final kameraDugmesi = tester.widget<TextButton>(

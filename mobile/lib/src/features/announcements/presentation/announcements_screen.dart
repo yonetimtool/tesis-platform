@@ -17,6 +17,7 @@ import '../data/announcement_api.dart';
 import '../domain/announcement_models.dart';
 import 'announcements_controller.dart';
 import '../../../core/ui/gorsel_cozme.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// "Duyurular" — tum roller okur; admin/yonetici olusturur/duzenler/siler
 /// (FAB + kart menusu yalniz onlarda gorunur; gercek yetki backend'de).
@@ -62,9 +63,8 @@ class AnnouncementsScreen extends ConsumerWidget {
     WidgetRef ref, {
     Announcement? edit,
   }) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => _AnnouncementForm(announcement: edit),
     );
     if (saved == true && context.mounted) {

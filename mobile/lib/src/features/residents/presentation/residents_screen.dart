@@ -7,6 +7,7 @@ import '../../../core/ui/temp_code_dialog.dart';
 import '../../../core/validators/password_rule.dart';
 import '../data/residents_api.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// Site Sakinleri — yonetici/admin: sakinleri listeler, yeni tasinani ekler
 /// (gecici kod), ayrilani cikarir (pasiflestir). Sakin KENDI kayit olamaz.
@@ -53,9 +54,8 @@ class ResidentsScreen extends ConsumerWidget {
   }
 
   Future<void> _openAddSheet(BuildContext context, WidgetRef ref) async {
-    final created = await showModalBottomSheet<String?>(
-      context: context,
-      isScrollControlled: true,
+    final created = await merkezSayfaAc<String?>(
+      context,
       builder: (_) => const _AddResidentSheet(),
     );
     if (created != null) ref.invalidate(residentsProvider);
@@ -117,9 +117,8 @@ class _ResidentTile extends StatelessWidget {
   }
 
   Future<void> _edit(BuildContext context) async {
-    final changed = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final changed = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => _EditResidentSheet(member: member),
     );
     if (changed == true) ref.invalidate(residentsProvider);

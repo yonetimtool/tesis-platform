@@ -583,8 +583,11 @@ void main() {
         await t.tap(dugme.first);
         await t.pump();
         await t.pump(const Duration(milliseconds: 400));
-        if (find.byType(BottomSheet).evaluate().isEmpty) {
-          throw StateError('atama alt sayfasi acilmadi');
+        // P22(a): pencere ALT SAYFA ya da MERKEZ DIYALOG olabilir; iddia
+        // "dokunma bir sey acti mi"dir.
+        if (find.byType(BottomSheet).evaluate().isEmpty &&
+            find.byType(Dialog).evaluate().isEmpty) {
+          throw StateError('atama penceresi acilmadi');
         }
       },
     );

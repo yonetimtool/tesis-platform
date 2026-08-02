@@ -21,6 +21,7 @@ import 'talep_hata_metni.dart';
 import 'complaints_controller.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../../../core/ui/gorsel_cozme.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// "Talep / Arıza" (İş Emri) — yasayan/calisandan yonetime kanal (auth.md §4
 /// kesin kurali, UX aynasi):
@@ -203,9 +204,8 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
     BuildContext context, {
     bool bildirKisayolu = false,
   }) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => const _ComplaintForm(),
     );
     // KISAYOL: gonderildiyse listede kalma, ana ekrana DON. Bilgi mesajini
@@ -435,9 +435,8 @@ Future<void> _showComplaintDetail(
   Complaint complaint, {
   required bool canRespond,
 }) async {
-  await showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  await merkezSayfaAc<void>(
+    context,
     builder: (_) =>
         _ComplaintDetail(complaint: complaint, canRespond: canRespond),
   );
@@ -812,8 +811,8 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
       ref.read(complaintFormControllerProvider.notifier);
 
   Future<void> _pickPhoto() async {
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
+    final source = await merkezSayfaAc<ImageSource>(
+      context,
       builder: (_) => SafeArea(
         child: Wrap(
           children: [
@@ -1297,9 +1296,8 @@ class _YoneticiActionBar extends ConsumerWidget {
   ) async {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    final ok = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final ok = await merkezSayfaAc<bool>(
+      context,
       builder: builder,
     );
     if (ok != true) return;

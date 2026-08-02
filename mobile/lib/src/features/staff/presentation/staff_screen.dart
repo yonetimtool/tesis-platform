@@ -15,6 +15,7 @@ import '../../tasks/presentation/task_complete_controller.dart'
 import '../data/staff_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/gorsel_cozme.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// Saha Personeli (Ozellik 3) — yonetici/admin: guvenlik + tesis gorevlisi
 /// hesaplarini listeler ve ekler. yonetici backend'de YALNIZ saha personeli
@@ -58,9 +59,8 @@ class StaffScreen extends ConsumerWidget {
   }
 
   Future<void> _openAddSheet(BuildContext context, WidgetRef ref) async {
-    final created = await showModalBottomSheet<String?>(
-      context: context,
-      isScrollControlled: true,
+    final created = await merkezSayfaAc<String?>(
+      context,
       builder: (_) => const _AddStaffSheet(),
     );
     if (created != null) {
@@ -131,9 +131,8 @@ class _StaffTile extends ConsumerWidget {
   }
 
   Future<void> _edit(BuildContext context, WidgetRef ref) async {
-    final saved = await showModalBottomSheet<String?>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<String?>(
+      context,
       builder: (_) => _AddStaffSheet(existing: member),
     );
     if (saved != null) ref.invalidate(fieldStaffProvider);
@@ -272,8 +271,8 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
   }
 
   void _fotoSecMenu() {
-    showModalBottomSheet<void>(
-      context: context,
+    merkezSayfaAc<void>(
+      context,
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
