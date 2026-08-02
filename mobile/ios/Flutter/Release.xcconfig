@@ -1,1 +1,21 @@
 #include "Generated.xcconfig"
+
+// NFC YETKILENDIRMESI — YEDEK KATMAN (P114 eki).
+//
+// Ayni ayar project.pbxproj'teki Runner hedefinin Release (ve Profile)
+// yapilandirmasinda da var ve ORASI ONCELIKLIDIR. Burada
+// TEKRARLANMASI bilincli bir YEDEKTIR:
+//
+// Xcode'un "Signing & Capabilities" ekrani ve Flutter'in zaman zaman
+// yaptigi "Upgrading project.pbxproj" gecisi pbxproj'u YENIDEN YAZAR.
+// Boyle bir yeniden yazimda ayar dustugu anda imzalanan uygulama NFC
+// yetkilendirmesi OLMADAN cikar ve cihazda "Missing required
+// entitlement" ile duser — hem de derleme BASARILI gorunerek.
+// Bu dosya Flutter tarafindan YENIDEN URETILMEZ (yalniz
+// Generated.xcconfig uretilir), dolayisiyla ayar burada kalir.
+//
+// KAPSAM DOGRULANDI: xcconfig'i YALNIZ Runner hedefinin uc
+// yapilandirmasi kullanir (Profile, Release.xcconfig'e bakar);
+// RunnerTests hicbir xcconfig'e bagli DEGILDIR — yani ayar test
+// paketine SIZMAZ (sizsaydi imzalama hatasi verirdi).
+CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements

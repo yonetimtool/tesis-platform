@@ -19,6 +19,42 @@ import 'package:flutter_test/flutter_test.dart';
 
 String _oku(String yol) => File(yol).readAsStringSync();
 
+/// Bir `XCBuildConfiguration` blogunun ozeti.
+class _Konfig {
+  const _Konfig(this.ad, this.bundle, this.yetkilendirme);
+  final String ad;
+  final String? bundle;
+  final bool yetkilendirme;
+}
+
+/// pbxproj'taki yapilandirma bloklarini AYRISTIRIR.
+///
+/// Neden ayristirma: dosyada bir dizginin KAC KEZ gectigini saymak,
+/// onun DOGRU hedefte olup olmadigini soylemez.
+List<_Konfig> _yapilandirmalar(String proje) {
+  final sonuc = <_Konfig>[];
+  final satirlar = proje.split('\n');
+  final bas = RegExp(r'^\t\t[0-9A-F]{24} /\* (\w+) \*/ = \{');
+  for (var i = 0; i < satirlar.length; i++) {
+    final m = bas.firstMatch(satirlar[i]);
+    if (m == null) continue;
+    final govde = <String>[];
+    for (var j = i; j < satirlar.length; j++) {
+      govde.add(satirlar[j]);
+      if (satirlar[j] == '\t\t};') break;
+    }
+    final metin = govde.join('\n');
+    if (!metin.contains('isa = XCBuildConfiguration')) continue;
+    final b = RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = ([^;]+);').firstMatch(metin);
+    sonuc.add(_Konfig(
+      m.group(1)!,
+      b?.group(1),
+      metin.contains('CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;'),
+    ));
+  }
+  return sonuc;
+}
+
 void main() {
   group('Info.plist', () {
     final plist = _oku('ios/Runner/Info.plist');
@@ -132,16 +168,62 @@ void main() {
       expect(proje, contains('TARGETED_DEVICE_FAMILY = 1;'));
     });
 
-    test('YETKILENDIRME Runner hedefinin UC yapilandirmasinda da bagli', () {
-      // Debug/Release/Profile. Birini atlamak, o yapilandirmada NFC'nin
-      // SESSIZCE calismamasi demekti (en sinsi hali: Debug'da calisir,
-      // TestFlight yapiminda calismaz).
+    test('YETKILENDIRME Runner hedefinin UC yapilandirmasina da BAGLI', () {
+      // ESKI HALI SAYIYORDU, YERI OLCMUYORDU: "uc kez geciyor" demek,
+      // ucunun de DOGRU hedefte oldugunu gostermez. Ayni uc satir
+      // RunnerTests'e dusseydi eski test YINE GECERDI ve imzalanan
+      // uygulama yetkilendirmesiz cikardi. Artik yapilandirma bloklari
+      // AYRISTIRILIP hedefe gore denetleniyor.
+      //
+      // Cihaz belirtisi: "Missing required entitlement" — derleme
+      // BASARILI gorunur, uygulama calismaz.
+      final konfigler = _yapilandirmalar(proje);
+      final runner = konfigler
+          .where((k) => k.bundle == 'site.yonetio.app')
+          .toList();
+      expect(runner.length, 3,
+          reason: 'Runner hedefinin Debug/Release/Profile yapilandirmasi');
+      for (final k in runner) {
+        expect(k.yetkilendirme, isTrue,
+            reason:
+                '${k.ad} yapilandirmasinda CODE_SIGN_ENTITLEMENTS yok — '
+                'o yapimda NFC SESSIZCE calismaz (en sinsi hali: '
+                'Debug\'da calisir, TestFlight yapiminda calismaz)');
+      }
+      // TEST PAKETINE SIZMAMALI: RunnerTests'in NFC yetenegi yoktur ve
+      // yetkilendirme oraya dusse imzalama hatasi verirdi.
+      for (final k in konfigler.where(
+        (k) => k.bundle == 'site.yonetio.app.RunnerTests',
+      )) {
+        expect(k.yetkilendirme, isFalse, reason: 'RunnerTests: ${k.ad}');
+      }
+    });
+
+    test('NFC YETENEGI proje ozniteliklerinde ACIK (Xcode ile ayni)', () {
+      // Xcode'un "Signing & Capabilities" ekrani yetenegi eklerken
+      // BUNU da yazar. Eksikse: (a) Xcode capability'yi "ekli
+      // gormez" ve gelistirici elle ekleyince pbxproj DEGISIR —
+      // her cekiste catisma; (b) otomatik imzalama akisi yetenegi
+      // profile islemeyebilir.
       expect(
-        'CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;'
-            .allMatches(proje)
-            .length,
-        3,
+        proje,
+        contains('com.apple.NearFieldCommunicationTagReading'),
+        reason: 'TargetAttributes > SystemCapabilities girdisi yok',
       );
+    });
+
+    test('YEDEK KATMAN: yetkilendirme xcconfig\'lerde de tanimli', () {
+      // pbxproj, Xcode ve Flutter'in "Upgrading project.pbxproj" gecisi
+      // tarafindan YENIDEN YAZILABILIR; ayar dustugu anda uygulama
+      // yetkilendirmesiz imzalanir. xcconfig Flutter tarafindan
+      // URETILMEZ, dolayisiyla ayar orada kalir.
+      for (final dosya in ['Debug', 'Release']) {
+        expect(
+          _oku('ios/Flutter/$dosya.xcconfig'),
+          contains('CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements'),
+          reason: '$dosya.xcconfig yedegi kayboldu',
+        );
+      }
     });
 
     test('YENI KAYNAKLAR hedefe bagli (yoksa pakete GIRMEZ)', () {

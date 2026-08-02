@@ -36,7 +36,13 @@ Xcode'da **gözle** doğrulanacaklar (pbxproj elle düzenlendi):
 
 - [ ] Proje açılıyor, "damaged project file" uyarısı **yok**
 - [ ] Runner → **Signing & Capabilities**: bundle `site.yonetio.app`,
-      **Near Field Communication Tag Reading** yeteneği listede
+      **Near Field Communication Tag Reading** yeteneği listede **ve
+      üstünde uyarı üçgeni yok** (üçgen varsa profil yetkiyi taşımıyor →
+      §0'daki App ID adımı eksik)
+- [ ] Runner → **Build Settings** → `CODE_SIGN_ENTITLEMENTS` =
+      `Runner/Runner.entitlements` (üç yapılandırmada da). Depoda hem
+      pbxproj'ta hem `Flutter/Debug|Release.xcconfig`te tanımlı; Xcode
+      yeniden yazsa bile xcconfig katmanı ayarı korur
 - [ ] Runner → **Build Settings** → `TARGETED_DEVICE_FAMILY = iPhone`
 - [ ] Runner → **Build Phases → Copy Bundle Resources** içinde
       **`PrivacyInfo.xcprivacy`** ve **`InfoPlist.strings`** var
@@ -70,7 +76,13 @@ sunucuya bağlanamaz** ve denetçi "çalışmıyor" der.
 | `CocoaPods not installed` | Pod aracı yok | `sudo gem install cocoapods` |
 | `Signing for "Runner" requires a development team` | Takım seçilmedi | Xcode → Signing → Team |
 | `Provisioning profile doesn't support NFC` | App ID'de yetenek kapalı | §0'daki NFC adımı |
+| **`Missing required entitlement`** (cihazda, kurulumda ya da ilk açılışta) | **Provisioning profile NFC yetkisini taşımıyor.** Yetkilendirme dosyası uygulamada var ama profil onu tanımıyor — yani sorun depoda değil, **Apple Developer portalındaki App ID'de**. | §0: App ID → Capabilities → **NFC Tag Reading** → sonra Xcode'da profili **yenile** (Signing → takımı bir kapatıp aç ya da `xcode-project use-profiles`). Depodaki `CODE_SIGN_ENTITLEMENTS` ve `SystemCapabilities` zaten yerinde (`flutter test test/ios_yapilandirma_test.dart` doğrular). |
 | `Invalid Info.plist key` | Elle düzenlemede yazım hatası | `plutil -lint ios/Runner/Info.plist` |
+
+> **`Missing required entitlement` neden derlemeyi düşürmez:** imzalama,
+> uygulamanın istediği yetkiyi profilin **vermediği** durumda da
+> tamamlanabilir; eksiklik **çalışma anında** ortaya çıkar. Bu yüzden
+> "derleme başarılı" bu hatayı elemez.
 
 ## 3. Arşiv + yükleme (Xcode)
 
