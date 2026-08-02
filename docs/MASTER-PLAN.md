@@ -6365,14 +6365,42 @@ koşulu; eksikse **yükleme adımında** reddedilir. İzleme yok; sekiz veri
 tipi + dört gerekçe-zorunlu API kategorisi. İçerik P115'teki App Privacy
 tablosuyla **birebir aynı** olacak (ayrışması tutarsızlık olarak okunur).
 
-**`Runner.entitlements`: NDEF *ve* TAG.** TAG olmadan NTAG424 SDM
-doğrulaması (ISO7816) yapılamaz; yalnız NDEF bırakmak o yolu **sessizce**
-kapatırdı. Yetkilendirme **üç** yapılandırmaya da bağlı — birini atlamak
-"Debug'da çalışır, TestFlight yapımında çalışmaz" gibi en sinsi hatayı
-üretirdi. **UYARI:** dosya tek başına yetmez, Apple Developer portalında
-App ID'ye "NFC Tag Reading" yeteneği de eklenmeli **[KEREM]**; ayrıca NFC
-tur okutma **iPhone 7+** ister ve SDM okuma yolu **cihazda doğrulanmalı
+**`Runner.entitlements`: YALNIZ `TAG`** *(2026-08-02'de düzeltildi;
+önce `NDEF, TAG` yazıyordu)*. Dizi, uygulamanın **açabileceği oturum
+türlerini** beyan eder — okuyabileceği veri türlerini değil. `TAG` =
+`NFCTagReaderSession` (açtığımız tek oturum); `NDEF` =
+`NFCNDEFReaderSession` (hiç açmıyoruz). NDEF içeriğini yine okuyoruz ama
+TAG oturumunun **içinden** (`NdefIos.from(tag)` → `tag.data.ndef`).
+Yetkilendirme **üç** yapılandırmaya da bağlı — birini atlamak "Debug'da
+çalışır, TestFlight yapımında çalışmaz" gibi en sinsi hatayı üretirdi.
+**UYARI:** dosya tek başına yetmez, Apple Developer portalında App ID'ye
+"NFC Tag Reading" yeteneği de eklenmeli **[KEREM]**; ayrıca NFC tur
+okutma **iPhone 7+** ister ve SDM okuma yolu **cihazda doğrulanmalı
 [KEREM]**.
+
+**CİHAZ BULGUSU (2026-08-02) — `Missing required entitlement`, tur 2.**
+Yetkilendirme imzalı ikilide **vardı**, profil `NDEF/TAG/PACE`
+taşıyordu, portalda yetenek **açıktı** — yine de okutma düşüyordu.
+`nfcd` günlüğünde alan algılama **var**, oturum/yetki satırı **yok**:
+ret `nfcd`ye ulaşmadan **uygulama içinde**, CoreNFC katmanında
+veriliyordu.
+
+**Eksik olan `Info.plist`teki
+`com.apple.developer.nfc.readersession.iso7816.select-identifiers`
+listesiymiş.** Etiketimiz NTAG424 DNA'dır ve iOS onu **MIFARE DESFire**
+(ISO7816) olarak görür — kendi kodumuz da öyle eşliyor
+(`MiFareFamilyIos.desfire => NfcTagType.ntag424`). CoreNFC, bir ISO7816
+etiketine `NFCTagReaderSession.connect(to:)` yaparken uygulamanın
+**seçebileceği uygulama kimliklerini önceden beyan etmiş** olmasını şart
+koşar; liste yoksa bağlantı reddedilir. Eklentideki çağrı
+`session.connect(to: tags.first!)` (`NfcManagerPlugin.swift:647`) ve
+hatanın kaynağı `okadan/flutter-nfc-manager#74`
+(`_connectTag:error:670`). Android'de böyle bir ön-beyan kuralı yok —
+bu yüzden orada hiç görülmedi.
+
+Liste: `D2760000850101` + `D2760000850100` (NFC Forum Type 4 NDEF
+uygulaması, v2 ve v1). Başka AID **eklenmedi**: alakasız kimlik yazmak
+beyanı gerçeğe aykırı kılar.
 
 **Simgeler markadan üretildi** (`flutter_launcher_icons ios: true`,
 `remove_alpha_ios`). Yer tutucu "F" simgesi tek başına ret sebebi

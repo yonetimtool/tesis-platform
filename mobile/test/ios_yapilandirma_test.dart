@@ -145,13 +145,45 @@ void main() {
   });
 
   group('Core NFC yetkilendirmesi', () {
-    test('NDEF ve TAG bicimlerinin IKISI de acik', () {
+    test('YALNIZ TAG bicimi — actigimiz TEK oturum turu', () {
+      // Dizi, uygulamanin ACABILECEGI OTURUM TURLERINI beyan eder;
+      // okuyabilecegi VERI turlerini degil.
+      //   TAG  -> NFCTagReaderSession  (actigimiz tek oturum)
+      //   NDEF -> NFCNDEFReaderSession (HIC acmiyoruz)
+      // NDEF icerigini yine okuyoruz ama TAG oturumunun ICINDEN
+      // (`NdefIos.from(tag)` -> tag.data.ndef), yani listeye NDEF
+      // koymaya gerek yok.
       final e = _oku('ios/Runner/Runner.entitlements');
       expect(e, contains('com.apple.developer.nfc.readersession.formats'));
-      expect(e, contains('<string>NDEF</string>'));
-      // TAG olmadan NTAG424 SDM dogrulamasi (ISO7816) yapilamaz —
-      // yalniz NDEF birakmak o yolu SESSIZCE kapatirdi.
-      expect(e, contains('<string>TAG</string>'));
+      expect(e, contains('<string>TAG</string>'),
+          reason: 'TAG olmadan NFCTagReaderSession hic acilamaz');
+      expect(
+        e.contains('<string>NDEF</string>'),
+        isFalse,
+        reason: 'kullanmadigimiz oturum turu icin yetki istenmemeli '
+            '(okadan/flutter-nfc-manager#91)',
+      );
+    });
+
+    test('ISO7816 AID listesi BEYAN EDILMIS (DESFire baglantisi icin sart)',
+        () {
+      // CIHAZDA BULUNAN HATA. Etiketimiz NTAG424 DNA'dir ve iOS onu
+      // MIFARE DESFire (ISO7816) olarak gorur. CoreNFC, bir ISO7816
+      // etiketine `connect(to:)` yaparken uygulamanin SECEBILECEGI
+      // uygulama kimliklerini ONCEDEN beyan etmis olmasini sart kosar;
+      // liste yoksa baglanti "Missing required entitlement" ile
+      // reddedilir — ret `nfcd`ye ULASMADAN, uygulama icinde olur.
+      final plist = _oku('ios/Runner/Info.plist');
+      expect(
+        plist,
+        contains(
+          'com.apple.developer.nfc.readersession.iso7816.select-identifiers',
+        ),
+        reason: 'AID listesi yok — DESFire/NTAG424 etiketine BAGLANILAMAZ',
+      );
+      // NFC Forum Type 4 NDEF uygulamasi (v2 ve v1).
+      expect(plist, contains('<string>D2760000850101</string>'));
+      expect(plist, contains('<string>D2760000850100</string>'));
     });
   });
 

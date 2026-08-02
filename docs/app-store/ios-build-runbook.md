@@ -79,6 +79,17 @@ sunucuya bağlanamaz** ve denetçi "çalışmıyor" der.
 | **`Missing required entitlement`** (cihazda, kurulumda ya da ilk açılışta) | **Provisioning profile NFC yetkisini taşımıyor.** Yetkilendirme dosyası uygulamada var ama profil onu tanımıyor — yani sorun depoda değil, **Apple Developer portalındaki App ID'de**. | §0: App ID → Capabilities → **NFC Tag Reading** → sonra Xcode'da profili **yenile** (Signing → takımı bir kapatıp aç ya da `xcode-project use-profiles`). Depodaki `CODE_SIGN_ENTITLEMENTS` ve `SystemCapabilities` zaten yerinde (`flutter test test/ios_yapilandirma_test.dart` doğrular). |
 | `Invalid Info.plist key` | Elle düzenlemede yazım hatası | `plutil -lint ios/Runner/Info.plist` |
 
+> **`Missing required entitlement` İKİ AYRI SEBEPTEN gelir — ayırt edin:**
+>
+> | Ne zaman | Sebep | Nerede düzeltilir |
+> |---|---|---|
+> | Kurulumda / uygulama **hiç açılmadan** | Provisioning profile NFC yetkisini taşımıyor | Apple Developer portalı → App ID → **NFC Tag Reading** |
+> | Okutma sırasında, **sistem sayfası açıldıktan sonra** (etikete değince) | CoreNFC, ISO7816/DESFire etiketine **bağlanırken** `select-identifiers` beyanını arıyor | **Depoda düzeltildi** (Info.plist, 2026-08-02): `com.apple.developer.nfc.readersession.iso7816.select-identifiers` |
+>
+> İkincisinin işareti: `nfcd` günlüğünde alan algılama trafiği **var**,
+> oturum/yetki satırı **yok** — çünkü ret `nfcd`ye ulaşmadan, CoreNFC
+> katmanında **uygulama içinde** veriliyor.
+>
 > **`Missing required entitlement` neden derlemeyi düşürmez:** imzalama,
 > uygulamanın istediği yetkiyi profilin **vermediği** durumda da
 > tamamlanabilir; eksiklik **çalışma anında** ortaya çıkar. Bu yüzden

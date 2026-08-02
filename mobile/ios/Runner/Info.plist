@@ -4,6 +4,38 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- ISO7816 UYGULAMA KIMLIKLERI (AID) — CIHAZDA BULUNAN EKSIK.
+	     BELIRTI: "Missing required entitlement", oturum BASLADIKTAN
+	     sonra, etikete BAGLANIRKEN. codesign yetkilendirmeyi gosteriyor,
+	     profil NDEF/TAG/PACE tasiyor, portalda yetenek acik — ama
+	     `nfcd` gunlugunde oturum/yetki satiri YOK. Cunku ret `nfcd`ye
+	     hic ULASMIYOR: CoreNFC uygulama icinde reddediyor.
+
+	     MEKANIZMA: bizim etiketimiz NTAG424 DNA'dir ve iOS onu MIFARE
+	     **DESFire** ailesi olarak gorur (bkz. nfc_service.dart:
+	     `MiFareFamilyIos.desfire => NfcTagType.ntag424`). DESFire bir
+	     ISO7816 uygulamasidir; CoreNFC bir ISO7816 etiketine
+	     `NFCTagReaderSession.connect(to:)` yaparken uygulamanin
+	     SECEBILECEGI uygulama kimliklerini burada BEYAN ETMIS olmasini
+	     sart kosar. Liste yoksa baglanti "Missing required entitlement"
+	     ile reddedilir — eklentideki cagri
+	     `session.connect(to: tags.first!)` (NfcManagerPlugin.swift:647)
+	     ve hatanin kaynagi da bu:
+	     okadan/flutter-nfc-manager#74 (`_connectTag:error:670`).
+
+	     NEDEN ANDROID'DE GORUNMEDI: Android'de boyle bir on-beyan
+	     kurali yoktur; etikete dogrudan baglanilir.
+
+	     LISTE: NTAG424 DNA bir NFC Forum Type 4 etiketidir; secilen
+	     uygulama NDEF uygulamasidir. Type 4 v2 = D2760000850101,
+	     v1 = D2760000850100. Baska AID EKLENMEDI: alakasiz kimlik
+	     yazmak (bazi ornek yapilandirmalarda goruldugu gibi) beyani
+	     gercege aykiri kilar ve denetimde aciklanamaz. -->
+	<key>com.apple.developer.nfc.readersession.iso7816.select-identifiers</key>
+	<array>
+		<string>D2760000850101</string>
+		<string>D2760000850100</string>
+	</array>
 	<!-- Core NFC: kullaniciya gosterilen NFC erisim aciklamasi. -->
 	<key>NFCReaderUsageDescription</key>
 	<string>Used to read the NFC tags at patrol checkpoints so a scan can be recorded as proof that the round was walked.</string>
