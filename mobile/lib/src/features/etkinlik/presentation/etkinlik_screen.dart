@@ -18,6 +18,7 @@ import 'etkinlik_controller.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../../../core/ui/gorsel_cozme.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// "Etkinlikler" — etkinlik + RSVP (auth.md §4 kesin kurali, UX aynasi):
 ///   * yonetim (admin/yonetici): "Yeni etkinlik" FAB'i + detayda duzenle/sil;
@@ -140,9 +141,8 @@ class _EtkinlikScreenState extends ConsumerState<EtkinlikScreen> {
   }
 
   Future<void> _openForm(BuildContext context, {Etkinlik? mevcut}) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => _EtkinlikForm(mevcut: mevcut),
     );
     if (saved == true && context.mounted) {
@@ -462,9 +462,8 @@ void _showDetail(
   required bool canRsvp,
   required bool canManage,
 }) {
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  merkezSayfaAc<void>(
+    context,
     builder: (sheetContext) {
       // "orijinali gör" gecisi durum tasir; alt sayfa fonksiyon oldugu icin
       // yerel kurucu ile sarilir (site kurali detayiyla ayni desen).
@@ -555,9 +554,8 @@ void _showDetail(
                             label: Text(context.l10n.ortakDuzenle),
                             onPressed: () async {
                               Navigator.of(sheetContext).pop();
-                              await showModalBottomSheet<bool>(
-                                context: context,
-                                isScrollControlled: true,
+                              await merkezSayfaAc<bool>(
+                                context,
                                 builder: (_) => _EtkinlikForm(mevcut: e),
                               );
                             },

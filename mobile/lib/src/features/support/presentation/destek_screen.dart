@@ -12,6 +12,7 @@ import '../domain/support_models.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/gorsel_cozme.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 const _green = Color(0xFF16A34A);
 const _amber = Color(0xFFD97706);
@@ -58,10 +59,8 @@ class DestekScreen extends ConsumerWidget {
   }
 
   void _yeniTalep(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
+    merkezSayfaAc<void>(
+      context,
       builder: (_) => const _YeniTalepSheet(),
     );
   }
@@ -134,8 +133,8 @@ class _YeniTalepSheetState extends ConsumerState<_YeniTalepSheet> {
   }
 
   void _fotoSecMenu() {
-    showModalBottomSheet<void>(
-      context: context,
+    merkezSayfaAc<void>(
+      context,
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -8,6 +8,7 @@ import 'rez_etiket.dart';
 import 'rezervasyon_controller.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// "Rezervasyon" — ortak alan rezervasyonu (auth.md §4 kesin kurali, UX aynasi).
 /// Iki sekme; ICERIK role gore degisir (slot izgarasi paylasilan bilesen):
@@ -143,9 +144,8 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
 /// Alan formunu (yeni/duzenle) alt sayfada acar; kaydedilirse snackbar gosterir.
 /// [alan] null → yeni alan; dolu → o alani duzenle (yonetim).
 Future<void> _showAreaForm(BuildContext context, {OrtakAlan? alan}) async {
-  final saved = await showModalBottomSheet<bool>(
-    context: context,
-    isScrollControlled: true,
+  final saved = await merkezSayfaAc<bool>(
+    context,
     builder: (_) => _AreaForm(alan: alan),
   );
   if (saved == true && context.mounted) {
@@ -395,9 +395,8 @@ class _CancelButtonState extends ConsumerState<_CancelButton> {
 /// Detay alt sayfasi — push tiklamasi ve kart dokunusuyla acilir.
 void _showDetail(BuildContext context, Rezervasyon r,
     {required bool canCancel}) {
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  merkezSayfaAc<void>(
+    context,
     builder: (sheetContext) => SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
@@ -814,9 +813,8 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
 ///   * admin/yonetici: dolu slotta rezerve eden DAIRE + kisi sayisi (denetim);
 ///     rezerve etmez (yalniz izler).
 void _openAmenitySlots(BuildContext context, OrtakAlan alan) {
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  merkezSayfaAc<void>(
+    context,
     builder: (_) => _AmenitySlotsSheet(alan: alan),
   );
 }
@@ -891,9 +889,8 @@ class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
   }
 
   Future<void> _book(Slot s) async {
-    final booked = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final booked = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => _BookSlotSheet(alan: widget.alan, tarih: _tarihStr, slot: s),
     );
     if (booked == true && mounted) {

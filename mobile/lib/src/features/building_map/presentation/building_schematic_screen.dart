@@ -13,6 +13,7 @@ import '../../unit_complaints/presentation/kategori_adi.dart';
 import '../../unit_complaints/presentation/sikayet_kuyrugu_controller.dart';
 import '../../../routing/app_router.dart';
 import '../domain/building_map_models.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 import 'building_map_controller.dart';
 
 /// "Şikayet Haritası" (D-viz Rev-1) — 2D bina semasi (kat plani), ROL-FARKINDA.
@@ -424,9 +425,8 @@ void showUnitDetailSheet(
   required BuildingMap map,
   required bool isResident,
 }) {
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  merkezSayfaAc<void>(
+    context,
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
       child: _UnitDetailSheet(
@@ -568,9 +568,8 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
   Future<void> _openFileForm(BuildContext context) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
-    final filed = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final filed = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => _FileComplaintForm(unit: widget.unit),
     );
     if (filed == true) {

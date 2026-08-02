@@ -7,6 +7,7 @@ import '../../../core/error/api_exception.dart';
 import '../../call/presentation/call_button.dart';
 import '../data/visitor_api.dart';
 import '../domain/visitor_models.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 import 'visitors_controller.dart';
 
 /// "Ziyaretciler" — kapi ZIYARETCI KAYDI (LOG-ONLY, auth.md §4 UX aynasi):
@@ -97,9 +98,8 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
 /// Ziyaretci formunu alt sayfada acar (yeni veya [existing] duzenleme).
 /// Kaydedildiyse true doner.
 Future<bool> _showVisitorForm(BuildContext context, {Visitor? existing}) async {
-  final saved = await showModalBottomSheet<bool>(
-    context: context,
-    isScrollControlled: true,
+  final saved = await merkezSayfaAc<bool>(
+    context,
     builder: (_) => _VisitorForm(existing: existing),
   );
   return saved == true;
@@ -225,9 +225,8 @@ void _showDetail(
   Visitor v, {
   required bool canRegister,
 }) {
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  merkezSayfaAc<void>(
+    context,
     builder: (sheetContext) {
       final l10n = sheetContext.l10n;
       final dil = sheetContext.dilKodu;

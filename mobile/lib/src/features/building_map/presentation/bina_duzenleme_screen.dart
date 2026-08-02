@@ -12,6 +12,7 @@ import '../../unit_tanimlari/domain/unit_tanim_models.dart';
 import '../domain/bina_duzenleme_models.dart';
 import 'bina_duzenleme_controller.dart';
 import '../../../core/theme/home_tokens.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// "Bina Düzenleme" (D-viz Rev-2) — yonetim GORSEL olarak binayi kurar:
 /// blok ekle → blok kutucugu belirir → icine gir → kat + daire ekle. Daireler
@@ -498,9 +499,8 @@ class _BlockDetail extends ConsumerWidget {
           0, (m, u) => (u.sira ?? 0) > m ? (u.sira ?? 0) : m);
       siraSuggestion = maxSira + 1;
     }
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
+    await merkezSayfaAc<void>(
+      context,
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: _UnitForm(
@@ -654,9 +654,8 @@ class _AddUnitCell extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 Future<void> _addBlock(BuildContext context, WidgetRef ref) async {
-  await showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  await merkezSayfaAc<void>(
+    context,
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
       child: const _BlockForm(),
@@ -666,8 +665,8 @@ Future<void> _addBlock(BuildContext context, WidgetRef ref) async {
 
 Future<void> _manageBlock(
     BuildContext context, WidgetRef ref, BuildingBlock block) async {
-  await showModalBottomSheet<void>(
-    context: context,
+  await merkezSayfaAc<void>(
+    context,
     builder: (ctx) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -677,9 +676,8 @@ Future<void> _manageBlock(
             title: Text(context.l10n.binaBlokDuzenleBaslik(block.ad)),
             onTap: () {
               Navigator.of(ctx).pop();
-              showModalBottomSheet<void>(
-                context: context,
-                isScrollControlled: true,
+              merkezSayfaAc<void>(
+                context,
                 builder: (c2) => Padding(
                   padding: EdgeInsets.only(bottom: MediaQuery.of(c2).viewInsets.bottom),
                   child: _BlockForm(existing: block),
@@ -1177,9 +1175,8 @@ Future<void> _showBulkUnitForm(
   WidgetRef ref, {
   required String? blok,
 }) async {
-  await showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  await merkezSayfaAc<void>(
+    context,
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
       child: _BulkUnitForm(blok: blok),
