@@ -618,6 +618,10 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P116 · Yer tutucu taraması (MOBİL, HER ROL).** Dört rolün ana
+  ekranında **her modül kartına** tek tek dokun → hepsi bir ekrana
+  gitmeli; **"Bu bölüm yakında"** mesajı **hiçbirinde çıkmamalı**. FAB
+  (+) menüsünde **pasif/"Yakında"** satır olmamalı.
 - [ ] **P115 · Demo tesisi (MOBİL, GÜVENLİK).** `scripts/demo_tenant.py`
   koşulduktan sonra demo hesabıyla gir → **Kontrol Noktaları** → bir
   satırın üç-nokta menüsü → **"Simüle okutma"** görünmeli ve dokununca
@@ -3337,6 +3341,77 @@ yeşil.
 <!-- HASH KURALI: bir commit kendi hash'ini iceremez. Satir once "(bu commit)"
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
+
+## FINAL REPORT — 2026-08-02 #2 (kural 13): App Store hazırlığı P112–P118
+
+Kerem'in App Store paketi (P112–P118) plana işlendi ve **sırayla**
+yürütüldü. **iOS derlemesinin kendisi [KEREM]'dedir**; ajanın işi, ilk
+Mac derlemesi denetime hazır olsun diye kod/yapılandırma/belge tarafıydı.
+
+### (A) YAPILAN İŞLER
+
+| # | İş | Commit |
+|---|---|---|
+| 1 | Plan: P112–P118 maddeleri açıldı (Sign in with Apple 4.8 = N/A notuyla) | `e141d46` |
+| 2 | **P112** — uygulama içi hesap silme (5.1.1(v)) + KVKK ayrımı; göç `0029` kalıcı kanıt | `8e20af1` |
+| 3 | P112 plan/CHANGELOG/cihaz testi | `909d173` |
+| 4 | **P113** — `/gizlilik` + `/kosullar` 7 dilde; yapay zekâ/çeviri beyanı ve kilidi | `4d0fa01` |
+| 5 | P113 plan/CHANGELOG/cihaz testi | `6157bc4` |
+| 6 | **P114** — iOS yapılandırması: bundle, izin metinleri (en+tr), Privacy Manifest, Core NFC, marka simgeleri | `29ab367` |
+| 7 | P114 plan/CHANGELOG | `8e52f41` |
+| 8 | **P115** — denetçi demo modu (göç `0030`) + simüle okutma + denetim paketi | `add6b02` |
+| 9 | P115 plan/CHANGELOG/cihaz testi | `f365206` |
+| 10 | **P116** — yer tutucu süpürmesi: ölçüldü, sıfır çıktı, kilitlendi | `3df2f8c` |
+| 11 | **P117 + P118** — ekran görüntüsü listesi + Mac derleme runbook'u + `codemagic.yaml` | `d229683` |
+
+**KAPILARIN YAKALADIĞI GERÇEK EKSİKLER (hepsi düzeltildi):** rol matrisi
+kilidi **iki kez** yeni ucu yakaladı · hata kataloğunda `uc_bulunamadi`
+yoktu · panel `middleware` matcher'ı yeni sayfayı kapı dışında bırakmıştı
+· sabit-metin ve erişilebilir-etiket taramaları · ikon aracı iki Xcode
+yapı ayarını bozdu.
+
+**MUTASYON DENETİMİ ÜÇ KİLİDİ DÜZELTTİ:** çeviri şeffaflığı kilidi
+yorumları saymıyordu (iki tur), yer tutucu kilidi **uydurma tip adları**
+tarıyordu (hiçbir şey ölçmüyordu), panel idempotency testleri.
+
+**TESTİN YAKALADIĞI ÜRÜN HATASI:** demo bayrağı `itemBuilder` içinde
+`ref.watch` ile okunuyordu; orada abonelik kurulmaz — düğme demo
+tesisinde bile **hiç görünmezdi**.
+
+### KAPILAR (son durum)
+
+`pytest` **1163 geçti / 1 atlandı** (tur başı 1151) · `goc-uyum` /
+`goc-tersinir` **bulgu 0** (0029 + 0030 dâhil) · `flutter analyze` temiz
+· `flutter test` **1598 geçti / 3 atlandı** (tur başı 1567) · apk ✓ ·
+`tsc` temiz · `vitest` **50 dosya / 308 test** · `npm run build` ✓.
+§15 i18n envanteri **değişmedi**: 8 string / 5 dosya.
+
+### KALAN — hepsi dış
+
+| # | Neden bekliyor | Kimde |
+|---|---|---|
+| P2 | Prod sunucuda koşum | Kerem |
+| P11 | Cihazda elle test (liste büyüdü) | Kerem |
+| P12 | Firebase kimliği yok | Dış |
+| P13 | iyzico/PayTR sandbox anahtarı yok | Dış |
+| P18 | Pilot site + donanım (ajan payı bitti) | Kerem + donanım |
+| P118 | macOS/CI (ajan payı bitti) | Kerem |
+
+**Ajanın yapabileceği iş kalmadı.**
+
+### (B) TEST EDİLECEKLER
+
+Bu turun cihaz-doğrulama maddeleri **P11'e eklendi** (12 yeni madde):
+hesap silme akışı ve son yönetici engeli, yasal belge bağlantıları ve
+dilleri, otomatik çeviri göstergesi, demo tesisinde simüle okutmanın
+çalışması **ve gerçek tesiste görünmemesi**, yer tutucu taraması.
+
+**iOS tarafı için sıra:** `docs/app-store/ios-build-runbook.md` §1'den
+başlayın — o belge, elle düzenlenen `ios/` yapılandırmasının Xcode'da
+gözle doğrulanacak altı maddesiyle açılıyor. Sonra §2 derleme, §4
+TestFlight, §5 denetime gönderme. Ekran görüntüleri için
+`docs/app-store/screenshots.md`.
+
 
 ### 2026-08-02 · P115 · add6b02 (+ bu commit)
 Denetçi demo modu: `tenant.demo_mod` (göç 0030) + `POST /scans/simule`
@@ -6367,28 +6442,90 @@ KAPILAR: `pytest` **1163 geçti / 1 atlandı** (taban 1159, +4) ·
 §15 envanteri **değişmedi** (8/5).
 
 ### P116 — Yer tutucu / boş ekran süpürmesi
-Status: SIRADA · Depends-on: P115
+Status: BITTI · Depends-on: P115
 Scope: Denetimi düşüren şeyler için her ekranı tara: **ölü düğmeler**, denetim
 tenant'ından erişilebilen **"Yakında"** rotaları, içeriksiz **boş durumlar**.
 DEMO tenant'ında görünen her şey ya **çalışmalı** ya da özellik bayrağıyla
 **gizlenmeli**. Listele + düzelt.
 Acceptance: ölçülmüş liste + her maddenin karşılığı (düzeltildi/gizlendi).
 
+Notes (2026-08-02) — **BİTTİ.** Commit: `3df2f8c`. Belge:
+`docs/app-store/yer-tutucu-supurmesi.md`; kilit:
+`test/yer_tutucu_supurmesi_test.dart` (3 test).
+
+**ÖLÇÜM: rotasız gezinme kartı 0 · "Yakında" işaretli menü girişi 0 ·
+boş gövdeli `onPressed`/`onTap` 0.** Yani **düzeltilecek bir şey
+çıkmadı** — ama bu, ölçüm yapılmadan bilinemezdi ve artık geri gitmesi
+de engelli.
+
+**"Yakında" metinleri duruyor, bilinçli:** ana ekranlardaki `_yakinda`
+dalları bir **savunmadır** — rotası eklenmeyi unutulmuş bir kart,
+sessizce hiçbir şey yapmayan bir düğme yerine dürüst bir mesaj gösterir.
+Bugün o dallar **erişilemez** ve test böyle kalmasını sağlıyor.
+
+**ÖLÇÜM ARACI İKİ KEZ DÜZELTİLDİ:** (1) ilk yazımda **uydurma tip
+adları** taranıyordu — tarama **hiçbir şey ölçmüyordu** ve yeşil renk
+yanıltıyordu (mutasyon denetimi yakaladı); (2) düzeltirken
+`HareketSatiri` kapsama alındı ve kırmızı verdi, oysa o "Son Hareketler"
+**günlük satırıdır** ve rotasız olması doğrudur. Son hâli mutasyonla
+sınandı: bir karttan `rota:` kaldırılınca test **düşüyor**.
+
+KAPILAR: `flutter analyze` temiz · `flutter test` **1598 geçti / 3
+atlandı** (taban 1595, +3).
+
 ### P117 — Ekran görüntüsü betiği
-Status: SIRADA · Depends-on: P116
+Status: BITTI · Depends-on: P116
 Scope: `docs/app-store/screenshots.md`: rol başına **tam ekran listesi**,
 6.7"/6.1" için (iPad gönderilecekse onun için de — **karar: ilk sürüm yalnız
 iPhone önerilir**; `UIDeviceFamily` P114'te ona göre ayarlanır), ekranlar
 gerçek görünsün diye **tohumlanmış veriyle**. Çekimin kendisi [KEREM].
 Acceptance: belge yazılı; her satır hangi hesapla, hangi rotadan, hangi veriyle.
 
+Notes (2026-08-02) — **BİTTİ.** Commit: `d229683`. Belge:
+`docs/app-store/screenshots.md` — **10 kare**, mağazada görünecek
+sırayla; her satırda hangi hesap, hangi rota, hangi verinin görünmesi
+gerektiği. Tohumlanmış demo tesisi (P115) üzerine kurulu: **boş liste**
+görüntüsü "ürün çalışmıyor" izlenimi verir ve tek başına ret sebebi
+olabilir.
+
+**KARAR YAZILI: ilk sürüm yalnız iPhone** — iPad'i açmak, göndermediğimiz
+bir cihaz için ayrı görüntü seti **ve** düzen doğrulaması istemek olurdu.
+Yani **iPad görüntüsü gerekmiyor**. Kaçınılacaklar da listeli (boş liste,
+fiyat vaadi, gerçek kişi verisi, simüle okutma menüsünün kareye girmesi).
+
+**Çekim [KEREM].**
+
 ### P118 — [KEREM] İlk Mac derlemesi + TestFlight
-Status: SIRADA · Depends-on: P114, P115
+Status: BLOKE(macOS/CI — AJANIN PAYI BİTTİ) · Depends-on: P114, P115
 Scope: Kerem tarafı runbook: `docs/app-store/ios-build-runbook.md` — Codemagic
 **ya da** yerel Xcode için tam adımlar: imzalama, yetenekler (NFC; P12 gelince
 Push), derleme, yükleme, TestFlight iç test. Ajan runbook'u ve varsa
 `codemagic.yaml`'ı yazar; **koşum Kerem'in**.
 Acceptance: runbook + CI dosyası commit'li; Kerem tek geçişte izleyebiliyor.
+
+Notes (2026-08-02) — **AJANIN PAYI BİTTİ.** Commit: `d229683`.
+`docs/app-store/ios-build-runbook.md` + `mobile/codemagic.yaml`.
+**Koşum Kerem'de** (macOS/CI) — statü bu yüzden BLOKE kalıyor.
+
+**Runbook'un ilk işi, P114'te ELLE yapılan yapılandırmayı
+DOĞRULAMAKTIR:** Xcode'da gözle bakılacak altı madde (proje açılıyor mu,
+NFC yeteneği, cihaz ailesi, Copy Bundle Resources'ta `PrivacyInfo` ve
+`InfoPlist.strings`, `en`/`tr` alt öğeleri, marka simgesi). pbxproj
+Mac'siz düzenlendiği için bu adım **atlanamaz**.
+
+**`--dart-define`ler zorunlu** ve nedeni yazılı: verilmezse `AppConfig`
+varsayılanları devreye girer (API adresi **Android emülatörü** adresidir)
+ve uygulama hiçbir sunucuya bağlanamaz — denetçi "çalışmıyor" der.
+
+**App ID'de NFC yeteneği ayrı bir adımdır:** entitlements dosyası tek
+başına yetmez; açılmazsa imzalama düşer ya da **daha kötüsü** uygulama
+derlenir ama NFC **sessizce çalışmaz**. iPhone 7+ sınırı ve SDM'in
+**gerçek cihazda** denenmesi gerektiği de not düşüldü.
+
+**`codemagic.yaml`:** kapılar (analyze + test) yapımdan **önce** koşuyor;
+`submit_to_app_store: false` bilinçli — denetim notları, gizlilik anketi
+ve ekran görüntüleri elle girilir, eksik biriyle göndermek reddedilip
+kuyruğa yeniden girmektir.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
