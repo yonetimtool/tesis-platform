@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
@@ -36,7 +36,7 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
  * anlatilir; tablo ve form bundan uretilir.
  */
 
-type AlanTip = "metin" | "sayi" | "kurus" | "tarih" | "bool" | "secim";
+type AlanTip = "metin" | "sayi" | "kurus" | "tarih" | "bool" | "secim" | "referans";
 
 interface Alan {
   ad: string;
@@ -48,12 +48,30 @@ interface Alan {
   secenekler?: string[];
   /** Listede sutun olarak gosterilsin mi (hepsi gosterilirse tablo tasar). */
   sutun?: boolean;
+
+  // --------------------------- referans (P111) ----------------------------
+  /** `referans` tipi icin: secenekleri yukleyecek BFF ucu. */
+  kaynakUcu?: string;
+  /** Secenek ETIKETI olarak okunacak alan (`no`, `ad`...). */
+  etiketAlani?: string;
+  /** TABLODA gosterilecek alan, formdakinden FARKLI olabilir: form
+   *  `unit_id` (kimlik) tutar, tablo sunucunun cozdugu `unit_no`yu
+   *  gosterir — tabloda ham UUID okumak kullaniciya hicbir sey anlatmaz. */
+  sutunAlani?: string;
+  /** YALNIZ olusturmada duzenlenebilir. Bolum sayacinin dairesi PATCH
+   *  govdesinde YOKTUR; gondermek sessizce yok sayilirdi ve kullanici
+   *  daireyi degistirdigini sanirdi. */
+  sadeceOlustur?: boolean;
 }
 
 interface Defter {
   kaynak: string;
   baslikAnahtari: SozlukAnahtari;
   alanlar: Alan[];
+  /** Deftere OZEL ek eylem (P111: toplu sayac uretimi). Tablonun ustunde
+   *  cizilir; is bitince [yenile] cagrilir. Bu kanca sayesinde
+   *  `DefterGorunumu` tek bir kaynagin adini bile bilmez. */
+  ekEylem?: (yenile: () => void) => ReactNode;
 }
 
 const DEFTERLER: Defter[] = [
@@ -166,6 +184,40 @@ const DEFTERLER: Defter[] = [
       { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool" },
     ],
   },
+  {
+    // (P111) BOLUM SAYACLARI — daire basina sayac. Bu defter, sayfanin
+    // veri-suruculu mimarisine yapilan ILK gercek genisletmedir: alanlarin
+    // ikisi baska bir uctan secenek yukleyen REFERANS alanlaridir.
+    kaynak: "sayaclar-bolum",
+    baslikAnahtari: "tanimSayaclarBolum",
+    alanlar: [
+      {
+        ad: "unit_id",
+        etiket: "tanimAlanDaire",
+        tip: "referans",
+        zorunlu: true,
+        sutun: true,
+        kaynakUcu: "/api/units?limit=200&aktif=true",
+        etiketAlani: "no",
+        sutunAlani: "unit_no",
+        // Sunucu PATCH govdesinde daire DEGISTIRILEMEZ (bkz. Alan.sadeceOlustur).
+        sadeceOlustur: true,
+      },
+      {
+        ad: "ana_sayac_id",
+        etiket: "tanimAlanAnaSayac",
+        tip: "referans",
+        sutun: true,
+        kaynakUcu: "/api/tanimlar/sayaclar-ana?limit=200",
+        etiketAlani: "ad",
+        sutunAlani: "ana_sayac_ad",
+      },
+      { ad: "tesisat_no", etiket: "tanimAlanTesisatNo", tip: "metin", sutun: true },
+      { ad: "ilk_okuma", etiket: "tanimAlanIlkOkuma", tip: "sayi" },
+      { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool", sutun: true },
+    ],
+    ekEylem: (yenile) => <OtomatikSayacUretimi onBitti={yenile} />,
+  },
 ];
 
 type Kayit = Record<string, unknown>;
@@ -194,6 +246,7 @@ const GIRIS_TIPI: Record<AlanTip, string> = {
   tarih: "date",
   bool: "checkbox",
   secim: "text",
+  referans: "text",
 };
 const GIRIS_MODU: Partial<Record<AlanTip, "decimal">> = {
   sayi: "decimal",
@@ -206,6 +259,138 @@ function girisTipi(tip: AlanTip): string {
 // sabit-metin taramasi onu da cevrilmemis metin sayardi.
 function girisModu(tip: AlanTip) {
   return GIRIS_MODU[tip];
+}
+
+/**
+ * (P111) REFERANS SECICI — secenekleri baska bir uctan yukler.
+ *
+ * NEDEN AYRI BILESEN: her referans alani KENDI `useSWR`ini kurar. Ust
+ * bilesende alanlar uzerinde donguyle kanca cagirmak, sekme degisince
+ * kanca SAYISINI degistirirdi (React'in kanca sirasi kurali).
+ *
+ * YUKLENEMEYEN LISTE SESSIZ KALMAZ: secici devre disi kalir ve durum
+ * metni yazar — bos bir acilir liste, kullaniciya "hic daire yok" der ki
+ * bu yanlistir.
+ */
+/** Secenek etiketi icin VARSAYILAN alan. JSX icinde `?? "ad"` yazmak,
+ *  sabit-metin taramasinin (tur 47) her dizgiyi cevrilmemis metin
+ *  saymasi demekti; teknik bir alan adi cevrilmez. */
+const REFERANS_VARSAYILAN_ETIKET = "ad";
+
+function ReferansSecici({
+  alan,
+  deger,
+  devre,
+  onDegis,
+}: {
+  alan: Alan;
+  deger: string;
+  devre: boolean;
+  onDegis: (v: string) => void;
+}) {
+  const t = useT();
+  const { data, error, isLoading } = useSWR<{ items: Kayit[] }>(
+    alan.kaynakUcu ?? null,
+    jsonFetcher,
+  );
+  const secenekler = data?.items ?? [];
+  return (
+    <select
+      aria-label={t(alan.etiket)}
+      className={inputCls}
+      disabled={devre || isLoading || error !== undefined}
+      value={deger}
+      onChange={(e) => onDegis(e.target.value)}
+    >
+      <option value="">
+        {isLoading
+          ? t("ortakYukleniyor")
+          : error
+            ? t("tanimReferansYuklenemedi")
+            : "—"}
+      </option>
+      {secenekler.map((s) => (
+        <option key={String(s.id)} value={String(s.id)}>
+          {String(s[alan.etiketAlani ?? REFERANS_VARSAYILAN_ETIKET] ?? s.id)}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/**
+ * (P111) TOPLU SAYAC URETIMI — bir ana sayac icin TUM aktif dairelere
+ * bolum sayaci acar.
+ *
+ * NEDEN VAR: 200 daireli bir sitede sayaclari tek tek acmak gercekci
+ * degil. Uc YENIDEN CALISTIRILABILIR — zaten sayaci olan daireler
+ * ATLANIR; sonuc metni kac tane acildigini VE kac tanesinin atlandigini
+ * ayri ayri soyler, yoksa kullanici ikinci tiklamada "hicbir sey olmadi"
+ * sanirdi.
+ */
+function OtomatikSayacUretimi({ onBitti }: { onBitti: () => void }) {
+  const t = useT();
+  const toast = useToast();
+  const { data } = useSWR<{ items: Kayit[] }>(
+    "/api/tanimlar/sayaclar-ana?limit=200",
+    jsonFetcher,
+  );
+  const [anaId, setAnaId] = useState("");
+  const [calisiyor, setCalisiyor] = useState(false);
+  const anaSayaclar = data?.items ?? [];
+
+  async function uret() {
+    if (!anaId) return;
+    setCalisiyor(true);
+    try {
+      const sonuc = (await apiSend("/api/tanimlar/sayaclar-bolum-otomatik", "POST", {
+        ana_sayac_id: anaId,
+      })) as { olusturulan?: number; atlanan?: number };
+      toast.success(
+        t("tanimSayacUretimSonuc", {
+          olusturulan: String(sonuc?.olusturulan ?? 0),
+          atlanan: String(sonuc?.atlanan ?? 0),
+        }),
+      );
+      onBitti();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCalisiyor(false);
+    }
+  }
+
+  return (
+    <div className={panelCls}>
+      <p className="mb-2 text-sm font-medium">{t("tanimSayacUretimBaslik")}</p>
+      <div className="flex flex-wrap items-end gap-2">
+        <Field label={t("tanimAlanAnaSayac")}>
+          <select
+            aria-label={t("tanimAlanAnaSayac")}
+            className={inputCls}
+            value={anaId}
+            onChange={(e) => setAnaId(e.target.value)}
+          >
+            <option value="">—</option>
+            {anaSayaclar.map((s) => (
+              <option key={String(s.id)} value={String(s.id)}>
+                {String(s.ad ?? s.id)}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <button
+          type="button"
+          className={btnPrimary}
+          disabled={!anaId || calisiyor}
+          onClick={() => void uret()}
+        >
+          {calisiyor ? t("ortakKaydediliyor") : t("tanimSayacUret")}
+        </button>
+      </div>
+      <p className="mt-2 text-sm opacity-70">{t("tanimSayacUretimNotu")}</p>
+    </div>
+  );
 }
 
 function formDegeri(alan: Alan, kayit: Kayit | null): string | boolean {
@@ -271,6 +456,10 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
   async function kaydet() {
     const govde: Record<string, unknown> = {};
     for (const a of defter.alanlar) {
+      // (P111) DUZENLEMEDE gonderilmez: sunucu bu alani PATCH govdesinde
+      // KABUL ETMEZ ve pydantic fazlaligi SESSIZCE yok sayar — kullanici
+      // daireyi tasidigini sanip kaydederdi.
+      if (a.sadeceOlustur && duzenlenen) continue;
       const v = form[a.ad];
       if (a.tip === "bool") {
         govde[a.ad] = Boolean(v);
@@ -348,6 +537,7 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
           {t("tanimYeniKayit")}
         </button>
       </div>
+      {defter.ekEylem?.(() => void mutate())}
       {/* (P60) `String(error)` "Error: " onekini de yazardi. */}
       {error instanceof Error ? <ErrorBox message={error.message} /> : null}
       {isLoading ? <p>{t("ortakYukleniyor")}</p> : null}
@@ -378,7 +568,12 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                         ? k[a.ad]
                           ? "✓"
                           : "—"
-                        : a.tip === "kurus"
+                        : // (P111) REFERANS sutunu: ham UUID degil, sunucunun
+                          // COZDUGU ad. Kimligi gostermek kullaniciya hicbir
+                          // sey anlatmaz.
+                          a.tip === "referans"
+                          ? String(k[a.sutunAlani ?? a.ad] ?? "—")
+                          : a.tip === "kurus"
                           ? // (P47) TABLODA `kurusToTL`, FORMDA `liraya`.
                             // Ikisi AYNI DEGILDIR ve olmamalidir: form girdisi
                             // AYRISTIRILABILIR olmali (`5000.00`), tablo ise
@@ -417,8 +612,22 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                     checked={Boolean(form[a.ad])}
                     onChange={(e) => setForm({ ...form, [a.ad]: e.target.checked })}
                   />
+                ) : a.tip === "referans" ? (
+                  <ReferansSecici
+                    alan={a}
+                    deger={String(form[a.ad] ?? "")}
+                    // Duzenlemede DEGISTIRILEMEZ olan alan pasif cizilir:
+                    // gizlemek, kullanicinin hangi daire oldugunu
+                    // gorememesi demekti.
+                    devre={Boolean(a.sadeceOlustur && duzenlenen)}
+                    onDegis={(v) => setForm({ ...form, [a.ad]: v })}
+                  />
                 ) : a.tip === "secim" ? (
+                  // (P63) ACIK `aria-label`: referans dali araya girince
+                  // `Field` sarmalayicisi 16 satirlik pencereden cikti ve
+                  // etiket kanitlanamaz oldu. Acik ad her hâlükârda dogru.
                   <select
+                    aria-label={t(a.etiket)}
                     className={inputCls}
                     value={String(form[a.ad] ?? "")}
                     onChange={(e) => setForm({ ...form, [a.ad]: e.target.value })}

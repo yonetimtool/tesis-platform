@@ -29,6 +29,7 @@ export const config = {
     "/units/:path*",
     "/building-editor/:path*",
     "/tanimlar/:path*",
+    "/sayac-okuma/:path*",
     "/dues/:path*",
     "/users/:path*",
     "/assets/:path*",

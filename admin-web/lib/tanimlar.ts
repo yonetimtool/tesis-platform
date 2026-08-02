@@ -18,6 +18,10 @@ export const TANIM_KAYNAKLARI: Record<string, string> = {
   "arac-kayitlari": "/arac-kayitlari",
   "sayaclar-ana": "/sayaclar/ana",
   "sayaclar-bolum": "/sayaclar/bolum",
+  // (P111) TOPLU URETIM — bir ana sayac icin TUM aktif dairelere sayac
+  // acar. Ayri bir `route.ts` yerine ayni beyaz listeye girer: guvenlik
+  // kurali (istemci yolu uydurmaz) tek yerde kalsin.
+  "sayaclar-bolum-otomatik": "/sayaclar/bolum/otomatik",
 };
 
 /** Kaynak basina ILETILEBILEN sorgu parametreleri (yine beyaz liste). */

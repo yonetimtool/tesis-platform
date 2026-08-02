@@ -31,6 +31,9 @@ const LINKS: { href: string; anahtar: SozlukAnahtari; icon: IconName }[] = [
   { href: "/building-editor", anahtar: "kabukBinaDuzenleme", icon: "edit" },
   { href: "/schematic", anahtar: "kabukSikayetHaritasi", icon: "pin" },
   { href: "/tanimlar", anahtar: "kabukTanimlar", icon: "box" },
+  // (P111) Sayac okuma, Tanimlar ile aidatin ARASINDA: tanimlardan
+  // beslenir ve ciktisi bir tahakkuktur.
+  { href: "/sayac-okuma", anahtar: "kabukSayacOkuma", icon: "chart" },
   { href: "/dues", anahtar: "kabukAidat", icon: "money" },
   // (P40) Finans: aidat TAHAKKUKUNUN yanindadir — kullanici borcu burada
   // olusturur, tahsilati ve kasayi yaninda gorur.
