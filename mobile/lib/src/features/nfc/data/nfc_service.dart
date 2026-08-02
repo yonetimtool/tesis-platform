@@ -29,8 +29,80 @@ String bytesToHex(Uint8List bytes) {
 /// METIN URETMEZ (README §15): hatalar [NfcHatasi] KIMLIGI olarak doner;
 /// iOS'un sistem sayfasinda gorunecek metinler [NfcIosMetinleri] ile CIZIM
 /// katmanindan gecirilir.
+/// NFC oturumunun durumu — TEK SAHIP `NfcService` (iOS oturum kacagi).
+///
+/// iOS TEK OTURUM kuralini SERT uygular: eklentinin native tarafinda
+/// `tagSession != nil` iken ikinci bir `begin`, `session_already_exists`
+/// firlatir. Android boyle bir kisit uygulamaz — bu yuzden asagidaki
+/// kacaklar Android'de HIC gorunmedi ve ilk iOS kosumunda ANINDA patladi.
+enum NfcOturum {
+  /// Acik oturum YOK.
+  bosta,
+
+  /// `startSession` cagrildi, platform yaniti bekleniyor.
+  basliyor,
+
+  /// Oturum acik; etiket ya da iptal bekleniyor.
+  acik,
+
+  /// `stopSession` cagrildi, kapanis bekleniyor.
+  duruyor,
+}
+
 class NfcService {
-  bool _sessionActive = false;
+  /// TEK SAHIP: oturum durumu YALNIZ burada degisir.
+  ///
+  /// Eskiden `bool _sessionActive` vardi ve UC AYRI kacagi vardi:
+  ///
+  /// 1. **`onSessionErrorIos` oturumu KAPATMIYORDU.** Kullanici sistem
+  ///    sayfasinda iptal ettigi, ~60 sn zaman asimi doldugu ya da
+  ///    uygulama arka plana gectigi anda iOS oturumu gecersiz kilar ve
+  ///    bu geri cagriyi tetikler. Eski kod yalniz `completer`i
+  ///    tamamliyordu; `stopSession` HIC cagrilmiyordu. Eklentinin iOS
+  ///    tarafinda `tagSession` **yalniz `stopSession`da** nil'lenir
+  ///    (`didInvalidateWithError` onu nil'LEMEZ) — yani native oturum
+  ///    referansi ASILI KALIYOR ve sonraki her okuma
+  ///    `session_already_exists` aliyordu. Uygulama yeniden acilana
+  ///    kadar NFC TAMAMEN oluyordu.
+  /// 2. **`readSingleTag` acik oturumu HIC DENETLEMIYORDU:** durumu
+  ///    okumadan `startSession` cagiriyordu. Servis UC ekran arasinda
+  ///    PAYLASILIR (NFC ekrani, gorev tamamlama, demirbas); her ekranin
+  ///    kendi "zaten okuyorum" bayragi var ama hicbiri OTEKI ekrani
+  ///    goremez.
+  /// 3. **`cancel` bayrak bozulunca ISE YARAMIYORDU:** `_safeStop`
+  ///    `!_sessionActive` ise ERKEN DONUYORDU. Yani (1) yuzunden bayrak
+  ///    ile gercek ayrisinca kurtarma yolu da kapaliydi.
+  NfcOturum _oturum = NfcOturum.bosta;
+
+  /// Oturum GECISLERI (baslat/durdur) tek siraya dizilir.
+  ///
+  /// Etiket BEKLEME suresi bu sirada TUTULMAZ: aksi halde `cancel` kilidi
+  /// beklerdi ve kullanici okumayi iptal edemezdi.
+  Future<void> _sira = Future<void>.value();
+
+  /// Bekleyen okuma — `cancel` bunu da sonlandirir.
+  Completer<NfcReadResult>? _bekleyen;
+
+  /// Testler icin durum penceresi; davranis kilidi buna bakar.
+  @visibleForTesting
+  NfcOturum get oturumDurumu => _oturum;
+
+  /// Gecisleri SIRAYA dizer: iki okuma ayni anda istense bile ikinci
+  /// `startSession`, birincinin kapanisi bittikten SONRA calisir.
+  Future<void> _siraya(Future<void> Function() gorev) {
+    final onceki = _sira;
+    final tamam = Completer<void>();
+    _sira = tamam.future;
+    return onceki.then((_) => gorev()).whenComplete(tamam.complete);
+  }
+
+  /// Bekleyen okumayi TEK KEZ sonlandirir.
+  void _tamamla(NfcReadResult sonuc) {
+    final c = _bekleyen;
+    if (c == null || c.isCompleted) return;
+    _bekleyen = null;
+    c.complete(sonuc);
+  }
 
   /// Cihazda NFC var mi / acik mi? Hata durumunda guvenli tarafta
   /// [NfcAvailability.unsupported] doner.
@@ -56,49 +128,63 @@ class NfcService {
     }
 
     final completer = Completer<NfcReadResult>();
-    try {
-      _sessionActive = true;
-      await NfcManager.instance.startSession(
-        // NTAG2xx/NTAG424 ISO 14443'tedir; digerlerini de tarayalim ki
-        // "yanlis kart" durumunu da algilayip anlamli sonuc dondurelim.
-        pollingOptions: {
-          NfcPollingOption.iso14443,
-          NfcPollingOption.iso15693,
-          NfcPollingOption.iso18092,
-        },
-        alertMessageIos: ios.yaklastir,
-        onDiscovered: (tag) async {
-          final result = _parseTag(tag);
-          await _safeStop(
-            successIos: result.isSuccess ? ios.okundu : null,
-            // Sistem sayfasinda TEK satir yer var; kimlige gore metin uretmek
-            // yerine genel "okunamadi" gecilir (ayrinti uygulama icinde).
-            errorIos: result.isSuccess ? null : ios.okunamadi,
-          );
-          if (!completer.isCompleted) completer.complete(result);
-        },
-        onSessionErrorIos: (error) {
-          if (!completer.isCompleted) {
-            completer.complete(
+    // YENI OKUMA ONCEKINI DEVRALIR. Servis TEK oturum sahibidir; iki
+    // bekleyen okuma olamaz. Onceki cagriyi ASILI birakmak, cagiranin
+    // `await`inin hic donmemesi demekti (kilit testi yakaladi) — ki bu,
+    // duzeltmeye calistigimiz "asili oturum" hatasinin cagiran
+    // tarafindaki ikizidir.
+    _tamamla(NfcReadResult.failure(NfcHatasi.okumaIptal));
+    _bekleyen = completer;
+
+    await _siraya(() async {
+      // ACIK OTURUM VARSA ONCE TEMIZ KAPAT (kacak 2'nin duzeltmesi).
+      if (_oturum != NfcOturum.bosta) await _durdurIc();
+      _oturum = NfcOturum.basliyor;
+      try {
+        await NfcManager.instance.startSession(
+          // NTAG2xx/NTAG424 ISO 14443'tedir; digerlerini de tarayalim ki
+          // "yanlis kart" durumunu da algilayip anlamli sonuc dondurelim.
+          pollingOptions: {
+            NfcPollingOption.iso14443,
+            NfcPollingOption.iso15693,
+            NfcPollingOption.iso18092,
+          },
+          alertMessageIos: ios.yaklastir,
+          onDiscovered: (tag) async {
+            final result = _parseTag(tag);
+            await _durdur(
+              successIos: result.isSuccess ? ios.okundu : null,
+              // Sistem sayfasinda TEK satir yer var; kimlige gore metin
+              // uretmek yerine genel "okunamadi" gecilir.
+              errorIos: result.isSuccess ? null : ios.okunamadi,
+            );
+            _tamamla(result);
+          },
+          onSessionErrorIos: (error) {
+            // KACAK 1'IN DUZELTMESI. iOS oturumu gecersiz kildi
+            // (kullanici iptali / zaman asimi / arka plan). Eklenti
+            // native tarafta `tagSession`i NIL'LEMEZ; `stopSession`
+            // cagrilmazsa referans asili kalir ve SONRAKI okuma
+            // `session_already_exists` alir.
+            _durdur().ignore();
+            _tamamla(
               NfcReadResult.failure(
                 NfcHatasi.okumaIptal,
                 detay: error.message,
               ),
             );
-          }
-        },
-      );
-    } catch (e) {
-      await _safeStop();
-      if (!completer.isCompleted) {
-        completer.complete(
-          NfcReadResult.failure(
-            NfcHatasi.oturumBaslatilamadi,
-            detay: '$e',
-          ),
+          },
+        );
+        _oturum = NfcOturum.acik;
+      } catch (e) {
+        // Baslatma dustu: durum KESINLIKLE bosalir, aksi halde bir daha
+        // hicbir okuma baslayamazdi.
+        _oturum = NfcOturum.bosta;
+        _tamamla(
+          NfcReadResult.failure(NfcHatasi.oturumBaslatilamadi, detay: '$e'),
         );
       }
-    }
+    });
     return completer.future;
   }
 
@@ -107,20 +193,35 @@ class NfcService {
   /// [iptalMetni] iOS sistem sayfasinda gorunur; cizim katmanindan gelir.
   /// `ref.onDispose` gibi context'siz yollardan cagrildiginda null gecilir —
   /// sayfa mesajsiz kapanir (kabul edilebilir: kullanici zaten ekrandan cikti).
-  Future<void> cancel({String? iptalMetni}) =>
-      _safeStop(errorIos: iptalMetni);
+  Future<void> cancel({String? iptalMetni}) async {
+    await _durdur(errorIos: iptalMetni);
+    // KACAK 3'UN DUZELTMESI: bekleyen okuma da sonlandirilir. Eskiden
+    // Android'de `cancel` sonrasi `readSingleTag`in Future'i HIC
+    // tamamlanmiyordu (iOS'ta tesadufen `onSessionErrorIos` tamamliyordu).
+    _tamamla(NfcReadResult.failure(NfcHatasi.okumaIptal));
+  }
 
-  Future<void> _safeStop({String? successIos, String? errorIos}) async {
-    if (!_sessionActive) return;
-    _sessionActive = false;
+  /// Kapanisi SIRAYA dizer (baslatmayla yarismasin).
+  Future<void> _durdur({String? successIos, String? errorIos}) =>
+      _siraya(() => _durdurIc(successIos: successIos, errorIos: errorIos));
+
+  /// Asil kapanis. ZATEN SIRADA cagrilir; kendini tekrar siraya dizmez
+  /// (kilitlenirdi).
+  Future<void> _durdurIc({String? successIos, String? errorIos}) async {
+    if (_oturum == NfcOturum.bosta) return;
+    _oturum = NfcOturum.duruyor;
     try {
       await NfcManager.instance.stopSession(
         alertMessageIos: successIos,
         errorMessageIos: errorIos,
       );
     } catch (_) {
-      // Oturum zaten kapanmis olabilir; yutmak guvenli.
+      // Oturum zaten gecersiz kilinmis olabilir (kullanici iptali, zaman
+      // asimi): eklenti `no_active_sessions` atar. Yutulur ama durum YINE
+      // DE bosalir — eski kod burada erken donup bayragi ACIK birakiyor ve
+      // kurtarma yolunu kapatiyordu.
     }
+    _oturum = NfcOturum.bosta;
   }
 
   /// Ham [NfcTag]'i platforma gore cozumler. Android ve iOS farkli sinif
