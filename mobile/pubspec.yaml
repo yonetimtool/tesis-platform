@@ -82,7 +82,14 @@ dev_dependencies:
 # applicationId/paket adi DEGISMEZ — yalniz ikon + (manifest'te) etiket.
 flutter_launcher_icons:
   android: true
-  ios: false
+  # (P114) iOS ACILDI. Uygulama simgesi App Store denetiminde bakilan ilk
+  # seydir ve Flutter'in varsayilan yer tutucusu ("F" harfi) tek basina
+  # reddedilme sebebi olabilir. Ayni master'dan uretiliyor — iki ayri
+  # kaynak, birinin guncellenip digerinin unutulmasi demekti.
+  ios: true
+  # iOS SIMGESI SAYDAMLIK KABUL ETMEZ (App Store yuklemede reddeder).
+  # Master saydam kenar tasiyor; alfa duzlestirilir.
+  remove_alpha_ios: true
   image_path: "assets/branding/icon_master.png"
   adaptive_icon_background: "assets/branding/icon_background.png"
   adaptive_icon_foreground: "assets/branding/icon_foreground.png"

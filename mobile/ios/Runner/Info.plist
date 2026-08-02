@@ -6,15 +6,15 @@
 	<true/>
 	<!-- Core NFC: kullaniciya gosterilen NFC erisim aciklamasi. -->
 	<key>NFCReaderUsageDescription</key>
-	<string>Devriye noktasi etiketlerini okumak icin NFC kullanilir.</string>
+	<string>Used to read the NFC tags at patrol checkpoints so a scan can be recorded as proof that the round was walked.</string>
 	<!-- image_picker: gorev tamamlama foto kaniti (kamera + galeri). -->
 	<key>NSCameraUsageDescription</key>
-	<string>Gorev tamamlama kaniti icin fotograf cekilir.</string>
+	<string>Used to take photos you attach to tasks, maintenance requests, events, parcels and site rules.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Gorev tamamlama kaniti icin galeriden fotograf secilebilir.</string>
+	<string>Used to pick existing photos to attach to tasks, maintenance requests, events and announcements.</string>
 	<!-- geolocator: acil durum alarmina konum eklemek icin (best-effort). -->
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Acil durum alarmina konumunuzu eklemek icin kullanilir.</string>
+	<string>Used while you are scanning a patrol checkpoint or sending an emergency alert, to record where it happened. The app never tracks your location in the background.</string>
 	<!-- url_launcher: tel: linkiyle yonetim numarasini arama. -->
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
@@ -33,10 +33,20 @@
 		<key>NSAllowsArbitraryLoadsForMedia</key>
 		<true/>
 	</dict>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>tr</string>
+		<string>ar</string>
+		<string>ru</string>
+		<string>de</string>
+		<string>fr</string>
+		<string>es</string>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Mobile</string>
+	<string>Yönetio</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -44,7 +54,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>mobile</string>
+	<string>Yonetio</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -85,13 +95,6 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
