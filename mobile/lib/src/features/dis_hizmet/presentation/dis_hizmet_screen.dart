@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/metin_iste_diyalogu.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../data/dis_hizmet_api.dart';
@@ -134,29 +135,13 @@ class _NoteCard extends ConsumerWidget {
 
   Future<void> _editNote(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
-    final ctrl = TextEditingController(text: note ?? '');
-    final result = await showDialog<String?>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        title: Text(l10n.disBolumNotu),
-        content: TextField(
-          controller: ctrl,
-          maxLines: 5,
-          minLines: 3,
-          decoration: InputDecoration(
-            hintText: l10n.disNotIpucu,
-            border: const OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(dctx).pop(null),
-              child: Text(l10n.ortakVazgec)),
-          FilledButton(
-              onPressed: () => Navigator.of(dctx).pop(ctrl.text.trim()),
-              child: Text(l10n.ortakKaydet)),
-        ],
-      ),
+    // (P110) Denetleyici diyalogun kendisine ait (bkz. P109 olcumu).
+    final result = await metinIste(
+      context,
+      baslik: l10n.disBolumNotu,
+      onayEtiketi: l10n.ortakKaydet,
+      baslangic: note ?? '',
+      satirlar: 3,
     );
     if (result == null || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);

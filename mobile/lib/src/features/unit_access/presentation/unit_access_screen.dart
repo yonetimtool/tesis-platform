@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/metin_iste_diyalogu.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../routing/app_router.dart';
 import '../domain/unit_access_models.dart';
@@ -134,30 +135,12 @@ class UnitAccessScreen extends ConsumerWidget {
   }
 
   Future<void> _newRequest(BuildContext context, WidgetRef ref) async {
-    final ctrl = TextEditingController();
-    final unitNo = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(context.l10n.izinIsteBaslik),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: InputDecoration(
-            labelText: context.l10n.izinDaireNo,
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(context.l10n.ortakVazgec),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: Text(context.l10n.izinIstekGonder),
-          ),
-        ],
-      ),
+    // (P110) Denetleyici diyalogun kendisine ait (bkz. P109 olcumu).
+    final unitNo = await metinIste(
+      context,
+      baslik: context.l10n.izinIsteBaslik,
+      onayEtiketi: context.l10n.izinIstekGonder,
+      etiket: context.l10n.izinDaireNo,
     );
     if (unitNo == null || unitNo.isEmpty) return;
     try {

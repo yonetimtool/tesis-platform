@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/metin_iste_diyalogu.dart';
 import '../../../core/error/api_exception.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_category_models.dart';
@@ -48,32 +49,15 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
 
   Future<void> _ekle() async {
     final l10n = context.l10n;
-    final ctrl = TextEditingController();
-    final ad = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.gorevKategoriYeni),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          maxLength: 100,
-          decoration: InputDecoration(
-            labelText: l10n.gorevKategoriAdi,
-            hintText: l10n.gorevKategoriAdiIpucu,
-            border: const OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.ortakVazgec),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: Text(l10n.ortakEkle),
-          ),
-        ],
-      ),
+    // (P110) Denetleyici artik DIYALOGUN KENDISINE ait; cikis
+    // animasyonu bitince atilir (bkz. `metin_iste_diyalogu.dart`).
+    final ad = await metinIste(
+      context,
+      baslik: l10n.gorevKategoriYeni,
+      onayEtiketi: l10n.ortakEkle,
+      etiket: l10n.gorevKategoriAdi,
+      ipucu: l10n.gorevKategoriAdiIpucu,
+      enFazla: 100,
     );
     if (ad == null || ad.isEmpty) return;
     try {
