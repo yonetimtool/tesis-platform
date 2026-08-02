@@ -9,6 +9,7 @@ import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/icerik_ceviri.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/ceviri_notu.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 // imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev/duyuru/talep/
 // kargo foto akisiyla ayni saglayici (testlerde tek noktadan override).
 import '../../tasks/presentation/task_complete_controller.dart'
@@ -85,9 +86,8 @@ class SiteKuraliScreen extends ConsumerWidget {
     BuildContext context, {
     SiteKurali? mevcut,
   }) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => _KuralForm(mevcut: mevcut),
     );
     if (saved == true && context.mounted) {
@@ -254,9 +254,8 @@ void _showDetail(
   SiteKurali k, {
   required bool canManage,
 }) {
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  merkezSayfaAc<void>(
+    context,
     builder: (sheetContext) {
       final l10n = sheetContext.l10n;
       // Alt sayfa bir FONKSIYONDUR; "orijinali gör" gecisi durum tasidigi
@@ -358,9 +357,8 @@ void _showDetail(
                             label: Text(l10n.ortakDuzenle),
                             onPressed: () async {
                               Navigator.of(sheetContext).pop();
-                              await showModalBottomSheet<bool>(
-                                context: context,
-                                isScrollControlled: true,
+                              await merkezSayfaAc<bool>(
+                                context,
                                 builder: (_) => _KuralForm(mevcut: k),
                               );
                             },

@@ -670,8 +670,12 @@ Future<void> fabAc(WidgetTester tester) async {
   // ACILDIGINI DOGRULA: dokunma bir sey acmadiysa surus sessizce LISTEYI
   // olcer ve "form temiz" raporu bos cikardi (tur 32/33'teki bos-surus
   // riskinin ayni sinifi).
-  if (find.byType(BottomSheet).evaluate().isEmpty) {
-    throw StateError('FAB\'a dokunuldu ama alt sayfa acilmadi.');
+  // P22(a): formlar ALT SAYFADAN MERKEZ DIYALOGA tasiniyor. Bu yardimcinin
+  // korudugu invaryant "dokunma BIR SEY acti mi"dir, "alt sayfa mi acti"
+  // degil; tur adiyla sinirlamak donusen ekranlarda DOGRU ekrani kirardi.
+  if (find.byType(BottomSheet).evaluate().isEmpty &&
+      find.byType(Dialog).evaluate().isEmpty) {
+    throw StateError('FAB\'a dokunuldu ama form (alt sayfa/diyalog) acilmadi.');
   }
 }
 
