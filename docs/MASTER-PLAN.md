@@ -618,6 +618,14 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P115 · Demo tesisi (MOBİL, GÜVENLİK).** `scripts/demo_tenant.py`
+  koşulduktan sonra demo hesabıyla gir → **Kontrol Noktaları** → bir
+  satırın üç-nokta menüsü → **"Simüle okutma"** görünmeli ve dokununca
+  "kaydedildi" mesajı çıkmalı. **Devriye takibi → Tarama günlüğü**nde o
+  okutma görünmeli.
+- [ ] **P115 · GERÇEK tesiste görünmemeli (MOBİL, GÜVENLİK).** Normal bir
+  tesiste aynı menüyü aç → **"Simüle okutma" OLMAMALI**. (Bu maddenin
+  düşmesi, tur kayıtlarının kanıt değerini yitirmesi demektir.)
 - [ ] **P113 · Yasal belgeler (MOBİL, HER ROL).** **Ayarlar → Yasal** →
   "Gizlilik Politikası" ve "Kullanım Koşulları" → her ikisi de
   **tarayıcıda açılmalı** (uygulama içinde değil). Uçak moduna alıp tekrar
@@ -3329,6 +3337,13 @@ yeşil.
 <!-- HASH KURALI: bir commit kendi hash'ini iceremez. Satir once "(bu commit)"
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
+
+### 2026-08-02 · P115 · add6b02 (+ bu commit)
+Denetçi demo modu: `tenant.demo_mod` (göç 0030) + `POST /scans/simule`
+(kapalıyken 404, gerçek `create_scan`ı çağırır, kayıt imzasız düşer) +
+mobil menü girişi + idempotent tohumlama betiği. Denetim notları ve App
+Privacy tablosu yazıldı. İki kapı gerçek eksik yakaladı (hata kataloğu,
+rol matrisi kilidi); mobil test de bir `ref.watch` hatasını yakaladı.
 
 ### 2026-08-02 · P114 · 29ab367 (+ bu commit)
 iOS yapılandırması denetime hazır: bundle `site.yonetio.app`, yalnız
@@ -6292,7 +6307,7 @@ atlandı** (taban 1577, +15) · `flutter build apk --debug` ✓ (Android
 etkilenmedi).
 
 ### P115 — Denetçi demo modu + denetim paketi
-Status: SIRADA · Depends-on: P114
+Status: BITTI · Depends-on: P114
 Scope: Apple denetçisi ne fiziksel NFC etiketimizi okutabilir ne de sahada
 durabilir. **Tenant kapsamlı DEMO MODU**: prod benzeri veriyle tohumlanmış bir
 **denetim tenant'ı**, her rol için bir demo hesabı ve **yalnız denetim
@@ -6305,6 +6320,51 @@ Connect için **App Privacy anketi cevap tablosu** (veri tipi → toplanıyor mu
 kimliğe bağlı mı? izleme mi?).
 Acceptance: demo tenant tohumlanabiliyor; simüle okutma YALNIZ o tenant'ta
 açılıyor (test); denetim notları ve gizlilik tablosu yazılı.
+
+Notes (2026-08-02) — **BİTTİ.** Commit: `add6b02`. Göç `0030`
+(`tenant.demo_mod`).
+
+**İKİ ALTERNATİF ELENDİ:** *istemci bayrağı* olsaydı herhangi bir
+kullanıcı **gerçek** bir tesiste sahte tur kaydı üretebilir ve tur
+kaydının **kanıt değeri sıfırlanırdı**; *ayrı demo yapımı* olsaydı
+denetçiye mağazadakinden **başka bir uygulama** gönderilmiş olurdu (Apple
+bunu açıkça yasaklar). Bayrak sunucuda durur, yazma yolu **yok** ve test
+bunu kilitliyor.
+
+**`POST /scans/simule`:** kapalıyken **404** (403 değil — "yetkin yok"
+demek ucun **varlığını** sızdırırdı). **Gerçek yoldan ayrılmaz:**
+`checkpoint_id`den etiket UID'si çözülür ve **aynı** `create_scan`
+çağrılır; ayrı bir yazma yolu, denetçiye ürünün gerçek akışını değil
+**taklidini** göstermek olurdu ve iki yolun ayrışması kaçınılmazdı. Kayıt
+`imza_dogrulandi = false` düşer — simüle okutma **ayırt edilebilir**.
+Gövdede `nfc_tag_uid` **yoktur**: etiket kimliğini istemciden almak, demo
+tesisinde bile "hangi etiket okutuldu"yu istemcinin uydurmasına bırakmak
+olurdu.
+
+**TEST BİR HATA YAKALADI:** bayrak önce `itemBuilder` içinde `ref.watch`
+ile okunuyordu; `itemBuilder` bir **geri çağrıdır** ve orada `watch`
+abonelik kurmaz — sağlayıcı hiç başlamaz, değer sürekli "yükleniyor"
+kalır ve düğme **demo tesisinde bile hiç görünmezdi**. Artık `build`
+içinde okunuyor.
+
+**TOHUMLAMA** `scripts/demo_tenant.py` (idempotent). **Dev seed'e
+eklenmedi:** demo modu her geliştiricinin veritabanında koşan bir betiğe
+girseydi, bir gün **prod'da açılmış bulmanın** en kısa yolu olurdu.
+
+**BELGELER:** `docs/app-store/review-notes.md` (sonunda App Store
+Connect'e aynen yapıştırılacak İngilizce blok) ve
+`docs/app-store/app-privacy.md` (anket tablosu — `PrivacyInfo.xcprivacy`
+ile **birebir aynı** olmak zorunda; bu kural belgeye yazıldı).
+
+**İKİ KAPI KIRMIZI VERDİ, ikisi de gerçek eksikti:** hata kataloğunda
+`uc_bulunamadi` yoktu (7 dil eklendi) ve **rol matrisi kilidi** yeni ucu
+yakaladı (tur okutabilen dört rol IZIN, yönetici ve sakin RED — `_SCANNER`
+ile birebir).
+
+KAPILAR: `pytest` **1163 geçti / 1 atlandı** (taban 1159, +4) ·
+`goc-uyum`/`goc-tersinir` **bulgu 0** · `flutter analyze` temiz ·
+`flutter test` **1595 geçti / 3 atlandı** (taban 1592, +3) · apk ✓.
+§15 envanteri **değişmedi** (8/5).
 
 ### P116 — Yer tutucu / boş ekran süpürmesi
 Status: SIRADA · Depends-on: P115
