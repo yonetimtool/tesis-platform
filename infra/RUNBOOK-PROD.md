@@ -287,7 +287,12 @@ $C logs migrate | tail -25
 ```bash
 # a) Revizyon head'te mi
 $C run --rm migrate sh -c 'alembic -c /contracts/db/alembic.ini current'
-#    -> 0010_devriye_okutma_indeksi (head)
+#    -> 0028_vezne_idempotency (head)
+#
+#    DIKKAT: buradaki ad SON revizyondur ve her yeni gocte DEGISIR. Sabit
+#    bir ada bakip "esit mi" diye kontrol etmeyin; onemli olan ciktinin
+#    "(head)" ile bitmesidir. (Bu satir bir kez 0010'da unutulmustu ve
+#    18 revizyon boyunca yaniltici kaldi.)
 
 # b) Eklenen TABLOLAR var mı (2 satır dönmeli)
 $C exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc \
@@ -295,6 +300,13 @@ $C exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc \
      and tablename in ('vehicle_pass','violation') order by 1;"
 
 # c) Eklenen KOLONLAR var mı (8 satır dönmeli)
+#    NOT: (b)-(d) maddeleri, bu runbook'un ILK yazildigi gocun (vehicle_pass/
+#    violation) spot-check'idir ve ORNEK olarak korunuyor. Her yeni gocte
+#    ONUN eklediklerine bakin; asagidaki liste otomatik guncellenmiyor.
+#    En son goc 0028 icin karsiligi:
+#      select count(*) from information_schema.columns
+#       where table_name='finansal_hareket'
+#         and column_name in ('idempotency_key','idem_satir');   -- 2 donmeli
 $C exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc \
   "select table_name||'.'||column_name from information_schema.columns
     where table_schema='public' and
