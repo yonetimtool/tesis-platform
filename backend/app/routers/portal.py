@@ -184,13 +184,13 @@ async def public_portal(slug: str) -> PortalPublicOut:
             duyurular = (
                 (await db.execute(
                     select(Announcement)
-                    .order_by(Announcement.created_at.desc()).limit(5)
+                    .order_by(Announcement.created_at.desc(), Announcement.id.desc()).limit(5)
                 )).scalars().all()
             )
             anketler = (
                 (await db.execute(
                     select(Anket).where(Anket.aktif.is_(True))
-                    .order_by(Anket.created_at.desc()).limit(5)
+                    .order_by(Anket.created_at.desc(), Anket.id.desc()).limit(5)
                 )).scalars().all()
             )
             # PUBLIC uc kimlik BILMEZ: `oy_verdim` None doner ve acik
@@ -368,7 +368,7 @@ async def iletisim_listesi(
     ).scalar_one()
     kayitlar = (
         (await db.execute(
-            select(IletisimMesaji).order_by(IletisimMesaji.created_at.desc())
+            select(IletisimMesaji).order_by(IletisimMesaji.created_at.desc(), IletisimMesaji.id.desc())
             .limit(limit).offset(offset)
         )).scalars().all()
     )
@@ -391,7 +391,7 @@ async def anket_listesi(
     ).scalar_one()
     kayitlar = (
         (await db.execute(
-            select(Anket).order_by(Anket.created_at.desc())
+            select(Anket).order_by(Anket.created_at.desc(), Anket.id.desc())
             .limit(limit).offset(offset)
         )).scalars().all()
     )

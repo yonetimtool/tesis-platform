@@ -41,6 +41,10 @@ _YAYINCI = require_role("admin", "yonetici")
 async def _guncel(db: AsyncSession) -> KvkkMetin | None:
     return (
         await db.execute(
+            # (P108) KUYRUK GEREKMEZ: `(tenant_id, surum)` BENZERSIZDIR
+            # (`uq_kvkk_metin_surum`), yani tenant icinde iki satir ayni
+            # `surum`u tasiyamaz ve siralama zaten kararlidir. Buraya `id`
+            # eklemek, var olmayan bir esitligi cozmek olurdu.
             select(KvkkMetin).order_by(KvkkMetin.surum.desc()).limit(1)
         )
     ).scalar_one_or_none()

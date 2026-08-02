@@ -47,7 +47,7 @@ async def liste(
             select(UnitUyari, Unit.no)
             .join(Unit, Unit.id == UnitUyari.unit_id)
             .where(*kosul)
-            .order_by(UnitUyari.created_at.desc())
+            .order_by(UnitUyari.created_at.desc(), UnitUyari.id.desc())
             .limit(limit).offset(offset)
         )
     ).all()

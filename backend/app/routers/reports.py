@@ -109,7 +109,11 @@ async def financial_summary(
             .join(BudgetCategory, BudgetCategory.id == BudgetEntry.kategori_id)
             .where(BudgetEntry.tip == "gider", *where)
             .group_by(BudgetCategory.ad)
-            .order_by(func.sum(BudgetEntry.tutar_kurus).desc())
+            # (P108) TOPLULASTIRMADA `id` EKLENEMEZ (GROUP BY'da yok).
+            # Kararli kuyruk GRUPLAMA ANAHTARIDIR: esit tutarli iki
+            # kategori her koşumda ayni sirada gelir.
+            .order_by(func.sum(BudgetEntry.tutar_kurus).desc(),
+                      BudgetCategory.ad)
             .limit(TOP_GIDER_LIMIT)
         )
     ).all()

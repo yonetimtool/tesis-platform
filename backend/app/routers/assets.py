@@ -124,7 +124,8 @@ async def list_assets(
     total = (await db.execute(select(func.count()).select_from(Asset).where(*where))).scalar_one()
     rows = (
         await db.execute(
-            select(Asset).where(*where).order_by(Asset.created_at).limit(limit).offset(offset)
+            select(Asset).where(*where).order_by(Asset.created_at, Asset.id)
+            .limit(limit).offset(offset)
         )
     ).scalars().all()
     acik = await _acik_zimmetler(db, [a.id for a in rows])
@@ -386,7 +387,10 @@ async def asset_history(
             .join(AppUser, AppUser.id == AssetCheckout.alan_user_id)
             .outerjoin(birakan, birakan.id == AssetCheckout.birakan_user_id)
             .where(base)
-            .order_by(sirala)
+            # (P108) Dinamik siralamaya KARARLI kuyruk: `sirala` esit
+            # degerler uretebilir; `id` yalniz esitligi cozer, sirayi
+            # degistirmez.
+            .order_by(sirala, AssetCheckout.id)
             .limit(limit)
             .offset(offset)
         )

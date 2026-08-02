@@ -239,7 +239,8 @@ async def hareket_listesi(
     rows = (
         (await db.execute(
             q.order_by(FinansalHareket.tarih.desc(),
-                       FinansalHareket.created_at.desc())
+                       FinansalHareket.created_at.desc(),
+                       FinansalHareket.id.desc())
             .limit(limit).offset(offset)
         )).scalars().all()
     )
@@ -543,7 +544,7 @@ async def icra_listesi(
     ).scalar_one()
     rows = (
         (await db.execute(
-            q.order_by(IcraDosyasi.created_at.desc()).limit(limit).offset(offset)
+            q.order_by(IcraDosyasi.created_at.desc(), IcraDosyasi.id.desc()).limit(limit).offset(offset)
         )).scalars().all()
     )
     return IcraDosyasiListResponse(

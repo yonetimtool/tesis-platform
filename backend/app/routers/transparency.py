@@ -137,7 +137,13 @@ async def _board(db: AsyncSession, ay: str, yayinlandi: bool) -> TransparencyBoa
             .join(BudgetCategory, BudgetCategory.id == BudgetEntry.kategori_id)
             .where(BudgetEntry.tip == "gider", *date_filters(ay, None, None))
             .group_by(BudgetCategory.ad)
-            .order_by(func.sum(BudgetEntry.tutar_kurus).desc())
+            # (P108) `reports.py` ile ayni: toplulastirmada `id` GROUP
+            # BY'da olmadigi icin eklenemez; kararli kuyruk GRUPLAMA
+            # ANAHTARIDIR. Bu pano SAKINE aciktir — esit tutarli iki
+            # kategorinin sirasi her yenilemede degisseydi, degismeyen bir
+            # veri degisiyormus gibi gorunurdu.
+            .order_by(func.sum(BudgetEntry.tutar_kurus).desc(),
+                      BudgetCategory.ad)
             .limit(_TOP_N)
         )
     ).all()

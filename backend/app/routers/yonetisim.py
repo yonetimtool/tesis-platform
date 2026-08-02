@@ -97,7 +97,7 @@ async def karar_listesi(
     ).scalar_one()
     kayitlar = (
         (await db.execute(
-            select(KararDefteri).order_by(KararDefteri.tarih.desc())
+            select(KararDefteri).order_by(KararDefteri.tarih.desc(), KararDefteri.id.desc())
             .limit(limit).offset(offset)
         )).scalars().all()
     )
@@ -243,7 +243,7 @@ async def dokuman_listesi(
     ).scalar_one()
     kayitlar = (
         (await db.execute(
-            select(TenantDokuman).order_by(TenantDokuman.created_at.desc())
+            select(TenantDokuman).order_by(TenantDokuman.created_at.desc(), TenantDokuman.id.desc())
             .limit(limit).offset(offset)
         )).scalars().all()
     )

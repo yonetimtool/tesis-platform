@@ -226,7 +226,8 @@ async def list_entries(
             select(BudgetEntry, BudgetCategory.ad)
             .join(BudgetCategory, BudgetCategory.id == BudgetEntry.kategori_id)
             .where(*where)
-            .order_by(BudgetEntry.tarih.desc(), BudgetEntry.created_at.desc())
+            .order_by(BudgetEntry.tarih.desc(), BudgetEntry.created_at.desc(),
+                      BudgetEntry.id.desc())
             .limit(limit)
             .offset(offset)
         )

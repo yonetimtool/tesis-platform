@@ -311,8 +311,12 @@ async def list_events(
         stmt = stmt.where(kosul)
     # aktif=true ana ekranin "yaklasan" bolumu: en YAKIN once (ASC).
     # Diger durumlarda geriye uyumlu: en YENI once (DESC).
+    # (P108) KARARLI KUYRUK: iki etkinlik ayni bitis/tarih degerini
+    # tasiyabilir (ayni gun iki toplanti). Kuyruk olmadan sayfalar arasi
+    # sira degisebilir ve ayni etkinlik iki kez gorunup baskasi kaybolur.
     stmt = stmt.order_by(
-        _bitis_ifadesi().asc() if aktif else Etkinlik.tarih.desc()
+        _bitis_ifadesi().asc() if aktif else Etkinlik.tarih.desc(),
+        Etkinlik.id,
     )
     total = (await db.execute(sayim)).scalar_one()
     rows = (await db.execute(stmt.limit(limit).offset(offset))).all()

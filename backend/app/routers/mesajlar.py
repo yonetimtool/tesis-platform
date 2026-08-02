@@ -112,7 +112,7 @@ async def sablon_listesi(
     ).scalar_one()
     kayitlar = (
         (await db.execute(
-            q.order_by(MesajSablonu.kanal, MesajSablonu.ad)
+            q.order_by(MesajSablonu.kanal, MesajSablonu.ad, MesajSablonu.id)
             .limit(limit).offset(offset)
         )).scalars().all()
     )
@@ -417,7 +417,7 @@ async def gecmis(
     ).scalar_one()
     kayitlar = (
         (await db.execute(
-            q.order_by(MesajGonderim.created_at.desc()).limit(limit).offset(offset)
+            q.order_by(MesajGonderim.created_at.desc(), MesajGonderim.id.desc()).limit(limit).offset(offset)
         )).scalars().all()
     )
     idler = {k.user_id for k in kayitlar if k.user_id}

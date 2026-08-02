@@ -13,12 +13,18 @@ tam olarak en çok satırın olduğu yerde ortaya çıkar.
 `ad`/`no`/`kod` gibi kolonlarda eşitlik **normaldir** (aynı isimli iki
 kategori, aynı numaralı iki daire farklı bloklarda).
 
-DURUM: iki turda 27 sorgu düzeltildi — P106'da ad/no/kod/plaka ile
-sıralananlar (12), P107'de **toplu üretimin yaşandığı** uçlar (15: aidat,
-talep, kargo, bildirim, duyuru, ziyaretçi, görev, rezervasyon…). Kalan
-39 sorgu düşük hacimli ya da zaten benzersiz kolonla sıralı uçlardır ve
-tek turda hepsine dokunmak orantısız olurdu. Bu yüzden bir **çırçır**:
-sayı ARTAMAZ; yeni uç eklerken kararlı sıralama zorunludur.
+DURUM: üç turda **tümü** ele alındı (P106: ad/no/kod, P107: toplu üretim
+uçları, P108: kalan hepsi). Geriye **3** satır kaldı ve üçü de
+`id` EKLENEMEYECEK ya da GEREKMEYEN durumlardır:
+
+* `reports.py` / `transparency.py` — **toplulaştırma**: `id` `GROUP BY`da
+  yok, eklenemez. Kararlı kuyruk **gruplama anahtarıdır**
+  (`BudgetCategory.ad`) ve eklendi.
+* `kvkk.py` — `(tenant_id, surum)` **benzersizdir**; sıralama zaten
+  kararlı. `id` eklemek, var olmayan bir eşitliği çözmek olurdu.
+
+Çırçır bu üçü için duruyor: sayı ARTAMAZ; yeni uç eklerken kararlı
+sıralama zorunludur.
 """
 import pathlib
 import re
@@ -26,7 +32,7 @@ import re
 KOK = pathlib.Path(__file__).resolve().parents[1] / "app" / "routers"
 
 #: Ölçülen kalan sayı. AZALTILABILIR, ARTIRILAMAZ.
-ESIK = 25
+ESIK = 3
 
 
 def _order_by_govde(metin: str, bas: int) -> str:

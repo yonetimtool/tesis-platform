@@ -310,7 +310,7 @@ async def list_requests(
     ).scalar_one()
     rows = (
         await db.execute(
-            stmt.order_by(UnitAccessPermission.requested_at.desc())
+            stmt.order_by(UnitAccessPermission.requested_at.desc(), UnitAccessPermission.id.desc())
             .limit(limit)
             .offset(offset)
         )

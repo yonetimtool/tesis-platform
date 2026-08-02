@@ -109,7 +109,7 @@ async def list_my_tickets(
     rows = (
         await db.execute(
             select(PlatformSupportTicket)
-            .order_by(PlatformSupportTicket.created_at.desc())
+            .order_by(PlatformSupportTicket.created_at.desc(), PlatformSupportTicket.id.desc())
             .limit(limit)
             .offset(offset)
         )

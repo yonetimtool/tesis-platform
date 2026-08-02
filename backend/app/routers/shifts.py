@@ -89,7 +89,8 @@ async def list_shifts(
     ).scalar_one()
     rows = (
         await db.execute(
-            select(Shift).where(*where).order_by(Shift.created_at).limit(limit).offset(offset)
+            select(Shift).where(*where).order_by(Shift.created_at, Shift.id)
+            .limit(limit).offset(offset)
         )
     ).scalars().all()
     pmap = await _personel_map(db, [r.id for r in rows])

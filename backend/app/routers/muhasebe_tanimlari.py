@@ -102,7 +102,7 @@ async def _sayfa(
         await db.execute(select(func.count()).select_from(base.subquery()))
     ).scalar_one()
     kayitlar = (
-        (await db.execute(base.order_by(sirala).limit(limit).offset(offset)))
+        (await db.execute(base.order_by(sirala, model.id).limit(limit).offset(offset)))
         .scalars()
         .all()
     )
@@ -835,7 +835,7 @@ async def list_sayac_bolum(
     ).scalar_one()
     kayitlar = (
         (await db.execute(
-            base.order_by(SayacBolum.created_at).limit(limit).offset(offset)
+            base.order_by(SayacBolum.created_at, SayacBolum.id).limit(limit).offset(offset)
         )).scalars().all()
     )
     return SayacBolumListResponse(

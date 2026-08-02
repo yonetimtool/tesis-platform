@@ -110,7 +110,7 @@ async def list_rules(
     rows = (
         await db.execute(
             # Blog sirasi: sira ASC (kucuk once), esitlikte eski once.
-            stmt.order_by(SiteKurali.sira, SiteKurali.created_at)
+            stmt.order_by(SiteKurali.sira, SiteKurali.created_at, SiteKurali.id)
             .limit(limit).offset(offset)
         )
     ).all()

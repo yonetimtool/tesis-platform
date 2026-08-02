@@ -127,7 +127,7 @@ async def _acik_gecis(db: AsyncSession, plaka: str) -> VehiclePass | None:
             select(VehiclePass)
             .where(VehiclePass.plaka == plaka)
             .where(VehiclePass.cikis_zamani.is_(None))
-            .order_by(VehiclePass.giris_zamani.desc())
+            .order_by(VehiclePass.giris_zamani.desc(), VehiclePass.id.desc())
             .limit(1)
         )
     ).scalar_one_or_none()
@@ -276,7 +276,7 @@ async def olay_listesi(
     ).scalar_one()
     satirlar = (
         await db.execute(
-            temel.order_by(AnprEvent.created_at.desc()).limit(limit).offset(offset)
+            temel.order_by(AnprEvent.created_at.desc(), AnprEvent.id.desc()).limit(limit).offset(offset)
         )
     ).scalars().all()
     return AnprEventListResponse(
