@@ -262,7 +262,7 @@ async def my_unit_complaints(
     ).scalar_one()
     rows = (
         await db.execute(
-            base.order_by(UnitComplaint.created_at.desc()).limit(limit).offset(offset)
+            base.order_by(UnitComplaint.created_at.desc(), UnitComplaint.id.desc()).limit(limit).offset(offset)
         )
     ).all()
     return UnitComplaintListResponse(
@@ -438,7 +438,7 @@ async def list_unit_complaints(
     ).scalar_one()
     rows = (
         await db.execute(
-            base.order_by(UnitComplaint.created_at.desc()).limit(limit).offset(offset)
+            base.order_by(UnitComplaint.created_at.desc(), UnitComplaint.id.desc()).limit(limit).offset(offset)
         )
     ).all()
     return UnitComplaintListResponse(

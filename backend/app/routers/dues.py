@@ -286,7 +286,7 @@ async def list_assessments(
     total = (await db.execute(select(func.count()).select_from(DuesAssessment).where(*where))).scalar_one()
     rows = (
         await db.execute(
-            select(DuesAssessment).where(*where).order_by(DuesAssessment.created_at.desc()).limit(limit).offset(offset)
+            select(DuesAssessment).where(*where).order_by(DuesAssessment.created_at.desc(), DuesAssessment.id.desc()).limit(limit).offset(offset)
         )
     ).scalars().all()
     return DuesAssessmentListResponse(
@@ -412,7 +412,7 @@ async def list_payments(
     total = (await db.execute(select(func.count()).select_from(DuesPayment).where(*where))).scalar_one()
     rows = (
         await db.execute(
-            select(DuesPayment).where(*where).order_by(DuesPayment.odeme_zamani.desc()).limit(limit).offset(offset)
+            select(DuesPayment).where(*where).order_by(DuesPayment.odeme_zamani.desc(), DuesPayment.id.desc()).limit(limit).offset(offset)
         )
     ).scalars().all()
     return DuesPaymentListResponse(meta={"limit": limit, "offset": offset, "total": total}, items=list(rows))

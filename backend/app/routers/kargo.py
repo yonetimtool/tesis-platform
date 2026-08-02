@@ -215,7 +215,7 @@ async def list_kargo(
     ).scalar_one()
     rows = (
         await db.execute(
-            stmt.order_by(Kargo.created_at.desc()).limit(limit).offset(offset)
+            stmt.order_by(Kargo.created_at.desc(), Kargo.id.desc()).limit(limit).offset(offset)
         )
     ).all()
     return KargoListResponse(

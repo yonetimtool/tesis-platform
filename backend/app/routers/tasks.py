@@ -212,7 +212,7 @@ async def list_tasks(
     total = (await db.execute(select(func.count()).select_from(Task).where(*where))).scalar_one()
     rows = (
         await db.execute(
-            select(Task).where(*where).order_by(Task.created_at).limit(limit).offset(offset)
+            select(Task).where(*where).order_by(Task.created_at, Task.id).limit(limit).offset(offset)
         )
     ).scalars().all()
     items = await _serialize_tasks(db, list(rows))
@@ -308,7 +308,7 @@ async def list_completions(
         await db.execute(
             select(TaskCompletion)
             .where(base)
-            .order_by(TaskCompletion.tamamlanma_zamani.desc())
+            .order_by(TaskCompletion.tamamlanma_zamani.desc(), TaskCompletion.id.desc())
             .limit(limit)
             .offset(offset)
         )

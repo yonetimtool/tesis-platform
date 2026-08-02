@@ -266,7 +266,7 @@ async def list_complaints(
     ).scalar_one()
     rows = (
         await db.execute(
-            stmt.order_by(Complaint.created_at.desc()).limit(limit).offset(offset)
+            stmt.order_by(Complaint.created_at.desc(), Complaint.id.desc()).limit(limit).offset(offset)
         )
     ).all()
     items = await _build_outs(db, [(c, ad) for c, ad in rows])

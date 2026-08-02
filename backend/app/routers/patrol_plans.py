@@ -105,7 +105,7 @@ async def list_plans(
     ).scalar_one()
     rows = (
         await db.execute(
-            select(PatrolPlan).where(*where).order_by(PatrolPlan.created_at).limit(limit).offset(offset)
+            select(PatrolPlan).where(*where).order_by(PatrolPlan.created_at, PatrolPlan.id).limit(limit).offset(offset)
         )
     ).scalars().all()
     return PatrolPlanListResponse(

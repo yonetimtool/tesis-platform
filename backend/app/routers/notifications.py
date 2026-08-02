@@ -52,7 +52,7 @@ async def list_notifications(
         await db.execute(
             select(Notification)
             .where(*where)
-            .order_by(Notification.created_at.desc())
+            .order_by(Notification.created_at.desc(), Notification.id.desc())
             .limit(limit)
             .offset(offset)
         )

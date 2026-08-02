@@ -262,7 +262,7 @@ async def list_reservations(
     ).scalar_one()
     rows = (
         await db.execute(
-            stmt.order_by(Rezervasyon.created_at.desc()).limit(limit).offset(offset)
+            stmt.order_by(Rezervasyon.created_at.desc(), Rezervasyon.id.desc()).limit(limit).offset(offset)
         )
     ).all()
     return RezervasyonListResponse(

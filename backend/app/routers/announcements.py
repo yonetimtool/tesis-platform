@@ -104,7 +104,7 @@ async def list_announcements(
         await db.execute(
             select(Announcement, AppUser.ad)
             .join(AppUser, AppUser.id == Announcement.olusturan_user_id)
-            .order_by(Announcement.created_at.desc())
+            .order_by(Announcement.created_at.desc(), Announcement.id.desc())
             .limit(limit)
             .offset(offset)
         )

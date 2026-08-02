@@ -94,7 +94,7 @@ async def list_devices(
     ).scalar_one()
     rows = (
         await db.execute(
-            select(UserDevice).order_by(UserDevice.created_at.desc()).limit(limit).offset(offset)
+            select(UserDevice).order_by(UserDevice.created_at.desc(), UserDevice.id.desc()).limit(limit).offset(offset)
         )
     ).scalars().all()
     return DeviceListResponse(

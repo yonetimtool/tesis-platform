@@ -61,7 +61,7 @@ async def list_checkpoints(
     ).scalar_one()
     rows = (
         await db.execute(
-            select(Checkpoint).where(*where).order_by(Checkpoint.created_at).limit(limit).offset(offset)
+            select(Checkpoint).where(*where).order_by(Checkpoint.created_at, Checkpoint.id).limit(limit).offset(offset)
         )
     ).scalars().all()
     return CheckpointListResponse(

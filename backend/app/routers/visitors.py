@@ -339,7 +339,7 @@ async def list_visitors(
     ).scalar_one()
     rows = (
         await db.execute(
-            stmt.order_by(Visitor.created_at.desc()).limit(limit).offset(offset)
+            stmt.order_by(Visitor.created_at.desc(), Visitor.id.desc()).limit(limit).offset(offset)
         )
     ).all()
     return VisitorListResponse(

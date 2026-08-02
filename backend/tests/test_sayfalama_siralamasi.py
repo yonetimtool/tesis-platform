@@ -13,10 +13,12 @@ tam olarak en çok satırın olduğu yerde ortaya çıkar.
 `ad`/`no`/`kod` gibi kolonlarda eşitlik **normaldir** (aynı isimli iki
 kategori, aynı numaralı iki daire farklı bloklarda).
 
-DURUM: 12 sorgu düzeltildi (ad/no/kod/plaka ile sıralananlar). Kalanlar
-`created_at`/zaman damgası ile sıralanıyor ve tek turda hepsine dokunmak
-40'tan fazla uç davranışını aynı anda değiştirmek olurdu. Bu yüzden bir
-**çırçır**: sayı ARTAMAZ; yeni uç eklerken kararlı sıralama zorunludur.
+DURUM: iki turda 27 sorgu düzeltildi — P106'da ad/no/kod/plaka ile
+sıralananlar (12), P107'de **toplu üretimin yaşandığı** uçlar (15: aidat,
+talep, kargo, bildirim, duyuru, ziyaretçi, görev, rezervasyon…). Kalan
+39 sorgu düşük hacimli ya da zaten benzersiz kolonla sıralı uçlardır ve
+tek turda hepsine dokunmak orantısız olurdu. Bu yüzden bir **çırçır**:
+sayı ARTAMAZ; yeni uç eklerken kararlı sıralama zorunludur.
 """
 import pathlib
 import re
@@ -24,7 +26,29 @@ import re
 KOK = pathlib.Path(__file__).resolve().parents[1] / "app" / "routers"
 
 #: Ölçülen kalan sayı. AZALTILABILIR, ARTIRILAMAZ.
-ESIK = 42
+ESIK = 25
+
+
+def _order_by_govde(metin: str, bas: int) -> str:
+    r"""`order_by(` acilisindan DENGELI kapanisa kadar olan govde.
+
+    (P107) NEDEN DUZ REGEX YETMEZ: ilk surum
+    `order_by\([^)]*\.id\b` kullaniyordu ve `[^)]*` **ilk parantezde
+    durur**. `order_by(X.created_at.desc(), X.id.desc())` satirinda
+    `desc()` icindeki `)` taramayi kesiyor ve `.id` HIC gorulmuyordu —
+    yani duzeltilmis sorgular "kararsiz" sayiliyordu. Olculdu: kusurlu
+    sayim 39, dengeli sayim 25. Ilk turdaki "54" da bu yuzden SISIKTI.
+    """
+    i = metin.index("(", bas)
+    derinlik = 0
+    for j in range(i, len(metin)):
+        if metin[j] == "(":
+            derinlik += 1
+        elif metin[j] == ")":
+            derinlik -= 1
+            if derinlik == 0:
+                return metin[i + 1 : j]
+    return metin[i + 1 :]
 
 
 def _kararsiz_sorgular() -> list[str]:
@@ -37,7 +61,8 @@ def _kararsiz_sorgular() -> list[str]:
             pencere = "\n".join(satirlar[i : i + 4])
             if ".limit(" not in pencere and ".offset(" not in pencere:
                 continue
-            if re.search(r"order_by\([^)]*\.id\b", pencere):
+            govde = _order_by_govde(pencere, pencere.index("order_by("))
+            if re.search(r"\.id\b", govde):
                 continue
             bulgu.append(f"{yol.name}:{i + 1}")
     return bulgu
