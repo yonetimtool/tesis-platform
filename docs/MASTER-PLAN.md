@@ -3330,6 +3330,13 @@ yeşil.
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+### 2026-08-02 · P114 · 29ab367 (+ bu commit)
+iOS yapılandırması denetime hazır: bundle `site.yonetio.app`, yalnız
+iPhone, gerçek kullanımı anlatan izin metinleri (en+tr), `PrivacyInfo.
+xcprivacy`, Core NFC yetkilendirmesi (NDEF+TAG), markadan üretilmiş
+simgeler. pbxproj elle düzenlendi ve yapısal doğrulamadan geçti; 15
+testlik kilit yapılandırmanın geri gitmesini engelliyor.
+
 ### 2026-08-02 · P113 · 4d0fa01 (+ bu commit)
 `/gizlilik` ve `/kosullar` sabit public adreslerde, 7 dilde, JS'siz sunucu
 bileşeni olarak yayında; mobil Ayarlar'dan bağlı. Bağlayıcı sürüm TR ve
@@ -6218,7 +6225,7 @@ KAPILAR: `tsc` temiz · `vitest` **50/308** · `npm run build` **39 sayfa**
 (taban 1573, +4) · apk ✓. §15 envanteri **değişmedi** (8/5).
 
 ### P114 — iOS proje hazırlığı (yalnız yapılandırma; derleme sonra Mac'te)
-Status: SIRADA · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: Depoda `ios/` Flutter iskelesini kur/tamamla: **bundle id kararı**
 (`site.yonetio.app` ya da eşdeğeri — kaydet), görünen ad, **dokunduğumuz HER
 İZİN için** Türkçe+İngilizce `Info.plist` kullanım metinleri (NFC okuyucu,
@@ -6231,6 +6238,58 @@ notları belgeli olsun (Core NFC yeteneği — **uyarı: NFC tur okutma iPhone 7
 ister; SDM okuma yolu cihazda doğrulanmalı [KEREM]**).
 Acceptance: `ios/` ağacı derlenebilir yapılandırmada; her izin dizesi iki dilde;
 manifest dosyası mevcut; UIDeviceFamily kararı yazılı.
+
+Notes (2026-08-02) — **BİTTİ.** Commit: `29ab367`. Kilit:
+`test/ios_yapilandirma_test.dart` (**15 test**) — Mac olmadan
+doğrulanabilen her şeyi ölçer ve yapılandırmanın **sessizce geri
+gitmemesini** sağlar (araçlar bu dosyalara dokunabiliyor; nitekim ikon
+aracı bu turda iki yapı ayarını bozdu).
+
+**KARARLAR:**
+* **Bundle kimliği `site.yonetio.app`** (ters DNS). iOS uygulaması henüz
+  yayınlanmadı → göçü yok. Android'in `applicationId`si **değişmedi**
+  (yayında; değiştirmek yeni uygulama demek) — iki platformda kimliklerin
+  farklı kalması bilinçli.
+* **Yalnız iPhone** (`TARGETED_DEVICE_FAMILY = 1`) + iPad yön anahtarı
+  kaldırıldı. iPad'i açık bırakmak, göndermediğimiz bir cihaz için ekran
+  görüntüsü ve düzen doğrulaması istemek olurdu (P117'nin kararı).
+
+**İZİN METİNLERİ YENİDEN YAZILDI — eskiler eksikti ve bu bir ret
+sebebidir:** kamera "görev tamamlama" diyordu ama talep/etkinlik/kargo/
+site kuralı da aynı izni kullanıyor; konum "acil durum" diyordu ama asıl
+kullanım **devriye turu okutmasında konumu kanıt olarak kaydetmek**
+(P34). Yeni konum metni **arka planda izleme olmadığını** açıkça söylüyor.
+`en` (temel) + `tr` — `InfoPlist.strings`, Xcode'a **PBXVariantGroup**
+olarak bağlı; iki ayrı dosya referansı `.lproj` yapısını kaybettirir ve
+metinler **hiçbir dilde** görünmezdi.
+
+**`PrivacyInfo.xcprivacy` eklendi** — Mayıs 2024'ten beri yüklemenin ön
+koşulu; eksikse **yükleme adımında** reddedilir. İzleme yok; sekiz veri
+tipi + dört gerekçe-zorunlu API kategorisi. İçerik P115'teki App Privacy
+tablosuyla **birebir aynı** olacak (ayrışması tutarsızlık olarak okunur).
+
+**`Runner.entitlements`: NDEF *ve* TAG.** TAG olmadan NTAG424 SDM
+doğrulaması (ISO7816) yapılamaz; yalnız NDEF bırakmak o yolu **sessizce**
+kapatırdı. Yetkilendirme **üç** yapılandırmaya da bağlı — birini atlamak
+"Debug'da çalışır, TestFlight yapımında çalışmaz" gibi en sinsi hatayı
+üretirdi. **UYARI:** dosya tek başına yetmez, Apple Developer portalında
+App ID'ye "NFC Tag Reading" yeteneği de eklenmeli **[KEREM]**; ayrıca NFC
+tur okutma **iPhone 7+** ister ve SDM okuma yolu **cihazda doğrulanmalı
+[KEREM]**.
+
+**Simgeler markadan üretildi** (`flutter_launcher_icons ios: true`,
+`remove_alpha_ios`). Yer tutucu "F" simgesi tek başına ret sebebi
+olabilir; App Store simgede **alfa kabul etmez** (1024 png artık RGB).
+
+**pbxproj elle düzenlendi** (Mac yok) ve betiğin **yapısal
+doğrulamasından** geçti: parantez dengesi, kimlik benzersizliği, her
+`PBXBuildFile`ın `fileRef`inin tanımlı olması, bölüm sınırları. İlk
+denemede betik **kendi denetimine takıldı** (`PBXVariantGroup` bölümü
+zaten vardı) — yeniden oluşturmak dosyayı bozardı.
+
+KAPILAR: `flutter analyze` temiz · `flutter test` **1592 geçti / 3
+atlandı** (taban 1577, +15) · `flutter build apk --debug` ✓ (Android
+etkilenmedi).
 
 ### P115 — Denetçi demo modu + denetim paketi
 Status: SIRADA · Depends-on: P114
