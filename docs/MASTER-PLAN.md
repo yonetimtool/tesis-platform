@@ -154,7 +154,7 @@ Kategoriler: **DOĞRULANDI-BİTTİ** · **KISMEN** · **HİÇ BAŞLANMADI** ·
 | P19 | BITTI | DOĞRULANDI-BİTTİ | `app/anpr.py` adaptörleri + `docs/anpr-kamera-kurulumu.md` |
 | P20 | BITTI | DOĞRULANDI-BİTTİ (kapsamı **not**) | `docs/face-recognition-v2-design.md`; Scope zaten "design note only" |
 | P21 | BITTI | DOĞRULANDI-BİTTİ (kapsamı **not**) | `docs/talep-uzerine-ceviri-notu.md`; Scope "evaluation note" |
-| **P22** | ~~BLOKE~~ | **KISMEN** | (b)–(g) kanıtlı ve testli. **(a) YOK**: iki deneme, iki geri alma; `merkez_diyalog.dart` depoda yok. Kalan iş P22 Notes'unda madde madde |
+| **P22** | ~~BLOKE~~ | **BITTI (2026-08-02, tur 3)** | (b)–(g) zaten kanıtlıydı; **(a) da bitti**: `showModalBottomSheet` 54 → 0, `merkez_diyalog.dart` + 5 testlik kilit. Denetim anındaki "KISMEN" satırı bu turda kapandı |
 | P23 | BITTI | DOĞRULANDI-BİTTİ | `features/residents`, `unit_access` uçları |
 | P24 | BITTI | DOĞRULANDI-BİTTİ | `0014_sikayet_okuma.py` + şikayet triyajı |
 | P25 | BITTI | DOĞRULANDI-BİTTİ | `0015_kamera_url_siniri.py` + `routers/cameras.py` |
@@ -249,7 +249,7 @@ Kategoriler: **DOĞRULANDI-BİTTİ** · **KISMEN** · **HİÇ BAŞLANMADI** ·
 | Kategori | Sayı | Maddeler |
 |---|---|---|
 | DOĞRULANDI-BİTTİ | **102 satır** (103 madde kimliği; P97/P98 tek satır) | P1, P3–P10, P14–P17, P19–P21, P23–P110 (P22 ve P64 hariç) |
-| KISMEN | **1** | P22 (yalnız (a) maddesi) |
+| KISMEN | ~~1~~ **0** | P22 — **denetimden sonra kapandı** (2026-08-02) |
 | BLOKE | **6** | P2, P11, P12, P13, P18, P64 |
 | SPEC-HAZIR-KOD-YOK | **1** | P111 |
 | HİÇ BAŞLANMADI | **0** | — |
@@ -618,6 +618,21 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P22(a) · Ortadan açılan pencereler (MOBİL, HER ROL).** Uygulamadaki
+  **bütün** form/detay pencereleri artık ekranın altından değil **ORTADAN**
+  açılır. Şu beş yerde aç-kapa yap: **Site Kuralları → karta dokun** (detay)
+  ve **+ Yeni kural**; **Duyurular → +**; **Talep/Arıza → +**; **Sakinler →
+  +** ve satırdaki **Düzenle**; **Rezervasyon → yeni rezervasyon**. Her
+  birinde: (1) pencere ortada açılmalı, (2) **perdeye dokununca kapanmalı**,
+  (3) uzun formda **kaydırma çalışmalı** (içerik kesilmemeli).
+- [ ] **P22(a) · Klavye açıkken form (MOBİL).** Uzun bir form aç (örn.
+  **Talep/Arıza → +**), bir metin alanına dokun ki klavye açılsın: pencere
+  **klavyenin üstünde** kalmalı ve formun altında **bir klavye boyu boş
+  alan OLMAMALI** (eski alt-sayfa dolgusundan kalma kusur; düzeltildi ama
+  cihazda göz kararı doğrulanmalı).
+- [ ] **P22(a) · Fotoğraf kaynağı seçimi (MOBİL).** Talep formunda
+  **fotoğraf ekle** → "Kamera / Galeri" seçimi de artık ortada bir pencere.
+  İki seçenek de çalışmalı, **vazgeçince form kilitlenmemeli**.
 - [ ] **P68 · Tesis yöneticileri (PANEL).** **Tesisler → Yeni**: üç
   yönetici ekle, adlarını doldur, **ortadaki** satırı kaldır → kalan iki
   satırın adları **kaymamalı** ve tarayıcının parola yöneticisi yanlış
@@ -1238,7 +1253,7 @@ içeriği kararı bunu KAPSAMAZ, ayrıca değerlendirilmelidir.
 Uygulama YOK.
 
 ### P22 — Mobile UX fix package
-Status: KISMEN((b)-(g) BITTI; (a) YAZILMADI) · Depends-on: —
+Status: BITTI · Depends-on: —
 <!-- DURUM DENETİMİ 2026-08-02: eski etiket BLOKE idi. YANLIŞTI — bloke eden
      bir dış bağımlılık yok, iş ajanın kendi elinde. BLOKE maddeleri kural 1
      gereği ATLANIR; bu etiket yapılabilir bir işi kalıcı görünmez kılıyordu.
@@ -1392,6 +1407,60 @@ soyma denendi ve **yetmedi**; aynı yolu tekrar denemek zaman kaybı olur.
 KARAR: kural 6 gereği yine geri alındı (suit yeşil bırakıldı). Pilot
 yaklaşımı doğru — bir sürüş dışında hepsi geçti; kalan tek sürüş için
 yukarıdaki eleme sonucu bir sonraki denemeyi kısaltır.
+
+---
+
+ÜÇÜNCÜ DENEME (2026-08-02) — **BİTTİ**. Fark: iş **beş commit'e** bölündü
+ve her adım arasında suit yeşile alındı (kural 10'un alt-adım kuralı).
+
+**TANI — İKİNCİ DENEMENİN ÖLÇÜMÜ YANILTICIYMIŞ.** Planın 1. adımı
+(ikonun hangi ağaçta olduğunu yazdır) koşuldu: geçici bir tanı testi
+silme ikonunun yaratıcı zincirini, bütün atalarının kutu/kısıt
+değerlerini, kaydırma alanlarının viewport'unu ve hit-test yığınını
+yazdırdı. Sonuç: 320×900'de ikon **y=511**'de, hit-test **doğrudan
+düğmeye** gidiyor, taşma yok. Yani "y=1154 / `_RenderTheater` /
+öğe başka bir ağaçta" tanısı **kabuğun kendisinden** geliyormuş —
+ikinci denemenin `merkezSayfaAc`ı dış kaydırma + `ConstrainedBox`
+kullanıyordu. Kabuk `Column(min)+Flexible` ile yazılınca sorun **hiç
+ortaya çıkmadı**. Ortada "ayrı ağaç" sorunu **yokmuş**; iki turdur
+kovalanan şey ölçüm aracının kendi gölgesiydi.
+
+**SÜRÜŞ YARDIMCISI** (`fabAc`) yine düzeltildi: koruduğu invaryant
+"dokunma BİR ŞEY açtı mı"dır; `BottomSheet` **ya da** `Dialog` kabul
+ediyor. Aynı sınıftan iki test iddiası daha tür-bağımsız yapıldı.
+
+**KAPSAM:** `showModalBottomSheet` çağrısı uygulamada **54 → 0**.
+28 dosya, dört partide (pilot 3 · duyuru/sakin/personel/talep 10 ·
+bina/kroki/rezervasyon/etkinlik/ziyaret/destek 18 · kalan 23).
+Dönüşüm metni koruyarak yapıldı: yalnız çağrı adı, `context:`in
+konumsal hâle gelmesi ve `isScrollControlled`/`showDragHandle`
+satırlarının silinmesi; **gövdelere hiç dokunulmadı** (tur 31/32'nin
+"gövde soyma" yolu bir daha denenmedi — gerekmedi).
+
+**YENİ TESTİN BULDUĞU İKİ GERÇEK KUSUR** (ikisi de düzeltildi):
+1. **Klavye boşluğu İKİ KEZ sayılıyordu.** `Dialog` gelen `viewInsets`i
+   `insetPadding`e ekler; gövdelerin çoğu alt-sayfa döneminden kalma
+   `viewInsets.bottom` dolgusunu taşıyor. Klavye açıkken formun altında
+   **bir klavye boyu** boş alan kalıyordu. Dolgu kabukta tek yerde
+   sıfırlanıyor (`MediaQuery.removeViewInsets`).
+2. **Kaldırma gövdeye ulaşmıyordu.** Kabuk gövdeyi hazır `Widget` olarak
+   alıyordu; dolguyu **kurucusunun içinde** hesaplayan gövdeler (örn.
+   `bina_duzenleme`) okumayı kabuğun dışında yapıyordu. Kabuk artık
+   `WidgetBuilder` alır ve kurucuyu kaldırmanın **altındaki** bağlamla
+   çağırır.
+
+**KİLİT:** `test/merkez_diyalog_test.dart` (5 test) — (i) kaynak
+taraması: `lib/src` içinde tek bir `showModalBottomSheet` **çağrısı**
+kalırsa düşer, (ii) pencere gerçekten **ortada** açılır (yüzeyin merkezi
+ekran merkezinde ±1 dp), (iii) uzun gövde **gerçekten kaydırır**
+(`viewport > 0` — tur 31'in "viewport 0" kusurunun kilidi), (iv) klavye
+boşluğu gövdeye **0** gider ve pencere klavyenin üstünde kalır,
+(v) `pop` değeri çağırana ulaşır.
+
+KAPILAR: `flutter analyze` temiz · `flutter test` **1567 geçti /
+3 atlandı / 0 düştü** · `flutter build apk --debug` ✓.
+Commit'ler: `f7d18c0` (kabuk) · `5316c95` (pilot) · `761c6d6` (1. parti)
+· `f3f3b0f` (2. parti) · `60cbd4c` (kalan + klavye + kilit).
 
 
 ### P23 — Resident lifecycle: unit assignment + full edit + malik/kiracı
@@ -3186,6 +3255,14 @@ yeşil.
 <!-- HASH KURALI: bir commit kendi hash'ini iceremez. Satir once "(bu commit)"
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
+
+### 2026-08-02 · P22 · f7d18c0 5316c95 761c6d6 f3f3b0f 60cbd4c (+ bu commit)
+(a) maddesi BİTTİ — uygulamadaki bütün açılır pencereler artık ORTADAN
+açılıyor (`showModalBottomSheet` çağrısı 54 → 0, 28 dosya). Üçüncü deneme
+beş alt-adıma bölündü; iki turdur kovalanan "öğe başka bir ağaçta" tanısı
+ölçüldü ve **eski kabuğun kendi kusuru** olduğu görüldü. Yeni kilit testi
+iki gerçek kusur buldu (klavye boşluğunun iki kez sayılması; kaldırmanın
+gövde kurucusuna ulaşmaması) — ikisi de düzeltildi. P22 tümüyle BITTI.
 
 ### P46 — Bildirim metinleri kör noktası + talep sayfası testleri
 Status: BITTI · Depends-on: P45
