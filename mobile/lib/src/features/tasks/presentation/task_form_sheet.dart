@@ -13,15 +13,15 @@ import '../domain/task_models.dart';
 import '../../auth/presentation/rol_adi.dart';
 import 'tasks_controller.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// Gorev olustur/duzenle formu (bottom sheet) — admin + yonetici.
 /// Atama secicisi YALNIZ aktif saha personelini listeler (security +
 /// tesis_gorevlisi); backend yonetici icin bunu zaten zorlar (422).
 /// Kaydedince `true` ile kapanir (cagiran snackbar gosterir).
 Future<bool?> showTaskFormSheet(BuildContext context, {Task? edit}) {
-  return showModalBottomSheet<bool>(
-    context: context,
-    isScrollControlled: true,
+  return merkezSayfaAc<bool>(
+    context,
     builder: (_) => _TaskFormSheet(task: edit),
   );
 }

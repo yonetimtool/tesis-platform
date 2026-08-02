@@ -6,6 +6,7 @@ import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../data/budget_api.dart';
 import '../domain/budget_models.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 import 'butce_tip_adi.dart';
 
 /// Butce ekrani (Wave 2A — yonetici):
@@ -325,9 +326,8 @@ class _EntriesTab extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'budget_new_entry',
         onPressed: () async {
-          final saved = await showModalBottomSheet<bool>(
-            context: context,
-            isScrollControlled: true,
+          final saved = await merkezSayfaAc<bool>(
+            context,
             builder: (_) => _EntryForm(
               categories: categories.where((c) => c.aktif).toList(),
             ),
@@ -576,9 +576,8 @@ class _CategoriesTab extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'budget_new_category',
         onPressed: () async {
-          final saved = await showModalBottomSheet<bool>(
-            context: context,
-            isScrollControlled: true,
+          final saved = await merkezSayfaAc<bool>(
+            context,
             builder: (_) => const _CategoryForm(),
           );
           if (saved == true) await onChanged();

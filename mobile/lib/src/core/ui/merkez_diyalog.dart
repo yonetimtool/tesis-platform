@@ -37,14 +37,20 @@ Future<T?> merkezSayfaAc<T>(
     context: context,
     barrierDismissible: kapatilabilir,
     useSafeArea: true,
-    builder: (dctx) => merkezSayfaGovdesi(dctx, builder(dctx)),
+    builder: (dctx) => merkezSayfaGovdesi(dctx, builder),
   );
 }
 
 /// Diyalog kabugunu tek yerde kurar — `merkezSayfaAc` ve dogrudan
 /// `showDialog` cagiran (donus degeri icin kendi rotasini kuran) yerler
 /// ayni kabugu paylassin diye ayri fonksiyon.
-Widget merkezSayfaGovdesi(BuildContext context, Widget cocuk) {
+///
+/// Govde WIDGET degil KURUCU alir: alt sayfa doneminden kalma govdelerin
+/// bir kismi dolgu hesabini KURUCUNUN ICINDE yapiyor
+/// (`EdgeInsets.only(bottom: MediaQuery.of(c).viewInsets.bottom)`). Hazir
+/// bir widget alsaydik o okuma kabugun DISINDA kalir ve asagidaki klavye
+/// duzeltmesi o govdelere hic ulasmazdi.
+Widget merkezSayfaGovdesi(BuildContext context, WidgetBuilder govde) {
   return Dialog(
     // (1) numarali karar: alt sayfayla AYNI yuzey.
     backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -57,9 +63,26 @@ Widget merkezSayfaGovdesi(BuildContext context, Widget cocuk) {
       constraints: const BoxConstraints(maxWidth: 560),
       // (2) numarali karar: min + Flexible → govdenin kendi kaydirma
       // alani SINIRLI yukseklik alir ve gercekten kaydirir.
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [Flexible(child: cocuk)],
+      // KLAVYE BOSLUGU BIR KEZ SAYILIR. `Dialog` gelen `viewInsets`i
+      // `insetPadding`e EKLER, yani pencere klavyenin ustunde durur.
+      // Govdelerin cogu ALT SAYFA doneminden kalma `viewInsets.bottom`
+      // dolgusunu tasiyor; ikisi ust uste binince klavye acikken formun
+      // altinda BIR KLAVYE BOYU bos alan kaliyor ve kullanici bosuna
+      // kaydiriyordu. Govdeleri tek tek duzenlemek yerine dolgu burada
+      // TEK YERDE sifirlanir (govdeler alt sayfada da calismaya devam
+      // edebilsin diye kodlari degismiyor).
+      // `Dialog` bosluğu DISARIDAN gorur (bu `context`), govde ICERIDEN
+      // gormez — bu yuzden `Builder` sart: kurucu, kaldirma isleminin
+      // ALTINDAKI baglamla cagrilmali.
+      child: MediaQuery.removeViewInsets(
+        context: context,
+        removeBottom: true,
+        child: Builder(
+          builder: (ictx) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [Flexible(child: govde(ictx))],
+          ),
+        ),
       ),
     ),
   );

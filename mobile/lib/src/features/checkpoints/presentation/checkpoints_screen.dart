@@ -7,6 +7,7 @@ import '../../../core/sayi.dart';
 import '../data/checkpoint_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// Kontrol noktalari (NFC) yonetimi — yonetici/admin ekler/duzenler/siler
 /// (Parca D). Guvenlik/tesis gorevlisi bu noktalari NFC ile okutur; okutmalar
@@ -55,9 +56,8 @@ class CheckpointsScreen extends ConsumerWidget {
   }
 
   Future<void> _openForm(BuildContext context, WidgetRef ref) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => const _CheckpointForm(),
     );
     if (saved == true) ref.invalidate(checkpointsProvider);
@@ -110,9 +110,8 @@ class _CheckpointTile extends ConsumerWidget {
   }
 
   Future<void> _edit(BuildContext context, WidgetRef ref) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => _CheckpointForm(existing: cp),
     );
     if (saved == true) ref.invalidate(checkpointsProvider);

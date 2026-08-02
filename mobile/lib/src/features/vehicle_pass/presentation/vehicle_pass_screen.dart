@@ -8,6 +8,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../../../routing/app_router.dart';
 import '../domain/vehicle_pass_models.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 import 'vehicle_pass_controller.dart';
 
 /// "Araç Geçişleri" (G1) — admin + security.
@@ -89,9 +90,8 @@ class VehiclePassScreen extends ConsumerWidget {
   }
 
   static Future<void> _formAc(BuildContext context, WidgetRef ref) async {
-    final kaydedildi = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final kaydedildi = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => const _GirisFormu(),
     );
     if (kaydedildi == true && context.mounted) {

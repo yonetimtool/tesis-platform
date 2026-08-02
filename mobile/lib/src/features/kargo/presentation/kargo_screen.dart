@@ -16,6 +16,7 @@ import '../domain/kargo_models.dart';
 import 'kargo_controller.dart';
 import 'kargo_durum_adi.dart';
 import '../../../core/ui/gorsel_cozme.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// "Kargo" — paket takibi (auth.md §4 kesin kurali, UX aynasi):
 ///   * security: "Yeni kargo" FAB'i (daire no + firma + opsiyonel foto/not,
@@ -126,9 +127,8 @@ class _KargoScreenState extends ConsumerState<KargoScreen> {
   }
 
   Future<void> _openForm(BuildContext context) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => const _KargoForm(),
     );
     if (saved == true && context.mounted) {
@@ -383,9 +383,8 @@ class _ReceiveButtonState extends ConsumerState<_ReceiveButton> {
 /// Detay alt sayfasi — push tiklamasi ve kart dokunusuyla acilir. Sakin +
 /// bekleyen pakette "Teslim aldim" burada da sunulur; foto buyuk gorunur.
 void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  merkezSayfaAc<void>(
+    context,
     builder: (sheetContext) {
       final l10n = sheetContext.l10n;
       final dil = sheetContext.dilKodu;

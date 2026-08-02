@@ -8,6 +8,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/para.dart';
 import '../data/unit_tanim_api.dart';
 import '../domain/unit_tanim_models.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// "Bağımsız Bölüm Tanımları" (P26) — TIPLER + GRUPLAR, iki sekme.
 ///
@@ -118,9 +119,8 @@ class _TanimListesi extends ConsumerWidget {
     WidgetRef ref, {
     UnitTanim? mevcut,
   }) async {
-    final kaydedildi = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final kaydedildi = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => _TanimFormu(tipMi: tipMi, mevcut: mevcut),
     );
     if (kaydedildi == true) _tazele(ref);

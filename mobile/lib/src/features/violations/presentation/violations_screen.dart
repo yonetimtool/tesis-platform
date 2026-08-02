@@ -6,6 +6,7 @@ import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../domain/violation_models.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 import 'violations_controller.dart';
 
 /// Durum/kaynak ADLARI — enum GORUNEN METIN TASIMAZ (README §15), etiket
@@ -77,9 +78,8 @@ class ViolationsScreen extends ConsumerWidget {
   }
 
   static Future<void> _formAc(BuildContext context) async {
-    final acildi = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final acildi = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => const _IhlalFormu(),
     );
     if (acildi == true && context.mounted) {

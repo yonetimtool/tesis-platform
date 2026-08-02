@@ -14,6 +14,7 @@ import '../data/profile_api.dart';
 import '../domain/profile.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/gorsel_cozme.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// Self-servis profil ekrani — kullanici KENDI parolasini ve telefon/arama
 /// rizasini gunceller (contracts/auth.md self-servis profil). Sag-ust profil
@@ -182,8 +183,8 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
   }
 
   void _kaynakSec() {
-    showModalBottomSheet<void>(
-      context: context,
+    merkezSayfaAc<void>(
+      context,
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,

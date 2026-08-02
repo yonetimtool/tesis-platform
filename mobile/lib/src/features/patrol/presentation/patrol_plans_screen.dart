@@ -10,6 +10,7 @@ import '../domain/patrol_hata.dart';
 import 'devriye_hata_metni.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// Devriye planlari yonetimi — yonetici/admin: her gun tekrar eden devriye
 /// planlari (ad + baslangic/bitis saati + tur sikligi + kontrol noktalari).
@@ -59,9 +60,8 @@ class PatrolPlansScreen extends ConsumerWidget {
   }
 
   Future<void> _openForm(BuildContext context, WidgetRef ref) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => const _PlanForm(),
     );
     if (saved == true) ref.invalidate(patrolPlansProvider);
@@ -117,9 +117,8 @@ class _PlanTile extends ConsumerWidget {
   }
 
   Future<void> _edit(BuildContext context, WidgetRef ref) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => _PlanForm(existing: plan),
     );
     if (saved == true) ref.invalidate(patrolPlansProvider);

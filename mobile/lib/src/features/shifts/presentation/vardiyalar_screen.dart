@@ -9,6 +9,7 @@ import '../data/shifts_api.dart';
 import '../domain/shift_models.dart';
 import 'gun_tipi_adi.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// Vardiyalar ekrani (WP-E) — tum vardiya tanimlari + atanan personel.
 /// admin/yonetici her vardiyaya "Personel Ata" ile saha personeli atar
@@ -102,9 +103,8 @@ class VardiyalarScreen extends ConsumerWidget {
   }
 
   void _atamaSheet(BuildContext context, WidgetRef ref, Shift vardiya) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
+    merkezSayfaAc<void>(
+      context,
       builder: (_) => _AtamaSheet(vardiya: vardiya),
     );
   }

@@ -14,6 +14,7 @@ import '../../kvkk/presentation/kvkk_onay_screen.dart'
 import '../../auth/domain/user_role.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// Ayarlar — kullanici tercihleri (DIL + tema modu) + yonetici'ye ozel tesis
 /// adlandirmasi. Iki tercih de kalicidir (guvenli depo) ve ANINDA uygulanir;
@@ -158,9 +159,8 @@ class _DilKarti extends ConsumerWidget {
   Future<void> _dilSec(BuildContext context, WidgetRef ref) async {
     final secili = ref.read(localeControllerProvider);
     final aktifKod = Localizations.localeOf(context).languageCode;
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
+    await merkezSayfaAc<void>(
+      context,
       builder: (sheetContext) => SafeArea(
         child: ListView(
           shrinkWrap: true,

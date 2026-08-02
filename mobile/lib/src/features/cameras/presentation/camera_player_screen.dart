@@ -5,6 +5,7 @@ import 'package:video_player/video_player.dart';
 import '../../../core/i18n/l10n.dart';
 import '../domain/camera_models.dart';
 import '../domain/yayin_hatasi.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 import 'yayin_hatasi_metni.dart';
 
 /// Tam ekran canli yayin oynatici — HLS (`.m3u8`) ve MP4 icin.
@@ -258,9 +259,8 @@ class CameraBilgiSheet extends StatelessWidget {
   final Camera kamera;
 
   static Future<void> ac(BuildContext context, Camera kamera) {
-    return showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
+    return merkezSayfaAc<void>(
+      context,
       builder: (_) => CameraBilgiSheet(kamera: kamera),
     );
   }

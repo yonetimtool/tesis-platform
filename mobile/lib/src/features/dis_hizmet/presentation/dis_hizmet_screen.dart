@@ -10,6 +10,7 @@ import '../../auth/domain/user_role.dart';
 import '../data/dis_hizmet_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// Dis Hizmetler — guvenilir esnaf/hizmet kisileri (cilingir/elektrik/tesisat)
 /// + yonetici notu. Yonetici/admin ekler/duzenler/siler + notu yazar; guvenlik
@@ -82,9 +83,8 @@ class DisHizmetScreen extends ConsumerWidget {
   }
 
   Future<void> _openForm(BuildContext context, WidgetRef ref) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => const _HizmetForm(),
     );
     if (saved == true) ref.invalidate(disHizmetlerProvider);
@@ -208,9 +208,8 @@ class _HizmetTile extends ConsumerWidget {
   }
 
   Future<void> _edit(BuildContext context, WidgetRef ref) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
+    final saved = await merkezSayfaAc<bool>(
+      context,
       builder: (_) => _HizmetForm(existing: hizmet),
     );
     if (saved == true) ref.invalidate(disHizmetlerProvider);

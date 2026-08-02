@@ -6,6 +6,7 @@ import '../../../core/i18n/l10n.dart';
 import '../data/cameras_api.dart';
 import '../domain/camera_models.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 /// Kamera ekle/duzenle formu (admin + yonetici) — alt sayfa.
 ///
@@ -24,10 +25,8 @@ class KameraFormSheet extends ConsumerStatefulWidget {
   final Camera? mevcut;
 
   static Future<bool?> ac(BuildContext context, {Camera? mevcut}) {
-    return showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
+    return merkezSayfaAc<bool>(
+      context,
       builder: (_) => KameraFormSheet(mevcut: mevcut),
     );
   }

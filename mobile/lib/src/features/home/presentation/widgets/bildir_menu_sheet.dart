@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/i18n/l10n.dart';
 
 import '../../../../core/branding/yonetio_logo.dart';
+import '../../../../core/ui/merkez_diyalog.dart';
 
 /// FAB olusturma menusunun tek girisi (WP2.4). [route] null + [comingSoon]
 /// true ise pasif "yakında" satiri cizilir.
@@ -27,9 +28,8 @@ Future<void> showBildirMenu(
   required List<BildirGiris> girisler,
   required ValueChanged<String> onSec,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
+  return merkezSayfaAc<void>(
+    context,
     builder: (ctx) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,

@@ -5,6 +5,7 @@ import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../domain/integration_models.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 import 'integrations_controller.dart';
 
 /// Entegrasyon yonetim ekrani (C1b) — YONETICI (mobil). Liste + ekle/duzenle/
@@ -70,9 +71,8 @@ class IntegrationsScreen extends ConsumerWidget {
     WidgetRef ref, {
     Integration? edit,
   }) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
+    return merkezSayfaAc<void>(
+      context,
       builder: (_) => _IntegrationForm(edit: edit),
     );
   }

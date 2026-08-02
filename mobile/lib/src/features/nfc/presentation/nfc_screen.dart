@@ -17,6 +17,7 @@ import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../domain/nfc_hatasi.dart';
 import '../domain/nfc_read_result.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 import 'nfc_hata_metni.dart';
 import 'nfc_controller.dart';
 
@@ -92,8 +93,8 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
     }
     final aktif = checkpoints.where((c) => c.aktif).toList();
     if (!mounted) return;
-    final secilen = await showModalBottomSheet<Checkpoint>(
-      context: context,
+    final secilen = await merkezSayfaAc<Checkpoint>(
+      context,
       builder: (_) => SafeArea(
         child: ListView(
           shrinkWrap: true,

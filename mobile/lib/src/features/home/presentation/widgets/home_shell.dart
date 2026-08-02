@@ -12,6 +12,7 @@ import '../../domain/home_tabs.dart';
 import 'home_drawer.dart';
 import 'home_marka.dart';
 import '../../../../core/ui/gorsel_cozme.dart';
+import '../../../../core/ui/merkez_diyalog.dart';
 
 
 
@@ -136,9 +137,8 @@ class HomeShell extends ConsumerWidget {
 
   /// Hesap menusu (referans: header avatari) — Profil + Çıkış Yap.
   void _hesapMenusu(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
+    merkezSayfaAc<void>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
