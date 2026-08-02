@@ -4771,4 +4771,17 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get hesapSilSiliniyor => 'جارٍ الحذف...';
+
+  @override
+  String get ayarlarHukuki => 'قانوني';
+
+  @override
+  String get ayarlarGizlilik => 'سياسة الخصوصية';
+
+  @override
+  String get ayarlarKosullar => 'شروط الاستخدام';
+
+  @override
+  String get ayarlarBelgeAcilamadi =>
+      'تعذّر فتح الصفحة. تحقّق من اتصالك بالإنترنت.';
 }

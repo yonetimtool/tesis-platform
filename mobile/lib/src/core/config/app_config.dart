@@ -22,4 +22,22 @@ class AppConfig {
     'API_BASE_URL',
     defaultValue: 'http://10.0.2.2:8000',
   );
+
+  /// (P113) Hukuki belgelerin yayinlandigi PUBLIC web kokü.
+  ///
+  /// NEDEN `apiBaseUrl`DAN AYRI: gizlilik politikasi ve kosullar API'de
+  /// degil PANELIN public rotalarinda yayinlaniyor (`/gizlilik`,
+  /// `/kosullar`) ve prod'da bunlar AYRI alt alanlardir
+  /// (`api.yonetio.site` vs `yonetio.site`). API kokunu kullanmak,
+  /// belgeyi acmaya calisan kullaniciyi 404'e goturur.
+  ///
+  /// Adresler SABITTIR: App Store Connect ve Google Play'e girilen URL'ler
+  /// bunlar; degismemeleri gerekir.
+  static const String webBaseUrl = String.fromEnvironment(
+    'WEB_BASE_URL',
+    defaultValue: 'https://yonetio.site',
+  );
+
+  static String get gizlilikUrl => '$webBaseUrl/gizlilik';
+  static String get kosullarUrl => '$webBaseUrl/kosullar';
 }

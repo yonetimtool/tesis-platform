@@ -4689,4 +4689,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hesapSilSiliniyor => 'Deleting...';
+
+  @override
+  String get ayarlarHukuki => 'Legal';
+
+  @override
+  String get ayarlarGizlilik => 'Privacy Policy';
+
+  @override
+  String get ayarlarKosullar => 'Terms of Use';
+
+  @override
+  String get ayarlarBelgeAcilamadi =>
+      'The page could not be opened. Check your internet connection.';
 }

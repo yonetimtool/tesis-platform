@@ -234,6 +234,16 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
         // Dil adlari HER ZAMAN kendi dilinde ("Türkçe", "Français") —
         // bilincli istisna, bkz. DIL_ADLARI.
         if (göreli.endsWith("i18n/diller.ts")) continue;
+        // (P113) HUKUKI BELGELER — sozlugun kardesi, ARAYUZ dizgesi degil.
+        //
+        // `lib/hukuki/*` gizlilik politikasi ve kullanim kosullarinin YEDI
+        // DILDEKI TAM METNIDIR ve tipi `Record<Dil, Belge>`dir: eksik bir
+        // dil DERLENMEZ. Yani bu taramanin korudugu sey (bir dilde kalmis
+        // metin) burada TIP SISTEMI tarafindan zaten engelleniyor.
+        // Istisna olmasaydi tarama, dogru cevrilmis Turkce paragraflari
+        // "sizinti" sayardi — sozlugun kendisi icin de ayni sebeple
+        // istisna var.
+        if (göreli.includes("lib/hukuki/")) continue;
         fs.readFileSync(tam, "utf8")
           .split("\n")
           .forEach((satir, i) => {

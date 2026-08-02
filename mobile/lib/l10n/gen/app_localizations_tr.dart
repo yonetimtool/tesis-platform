@@ -4502,4 +4502,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get hesapSilSiliniyor => 'Siliniyor...';
+
+  @override
+  String get ayarlarHukuki => 'Yasal';
+
+  @override
+  String get ayarlarGizlilik => 'Gizlilik Politikası';
+
+  @override
+  String get ayarlarKosullar => 'Kullanım Koşulları';
+
+  @override
+  String get ayarlarBelgeAcilamadi =>
+      'Sayfa açılamadı. İnternet bağlantınızı kontrol edin.';
 }

@@ -1393,5 +1393,9 @@
   "hesapSilSonucSilindi": "Votre compte a été supprimé.",
   "hesapSilSonucAnonim": "Votre compte a été supprimé. Les enregistrements que la loi nous oblige à conserver ont été anonymisés.",
   "hesapSilParolaGerekli": "Saisissez votre mot de passe pour continuer.",
-  "hesapSilSiliniyor": "Suppression..."
+  "hesapSilSiliniyor": "Suppression...",
+  "ayarlarHukuki": "Mentions légales",
+  "ayarlarGizlilik": "Politique de confidentialité",
+  "ayarlarKosullar": "Conditions d'utilisation",
+  "ayarlarBelgeAcilamadi": "La page n'a pas pu être ouverte. Vérifiez votre connexion Internet."
 }

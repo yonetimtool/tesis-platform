@@ -1393,5 +1393,9 @@
   "hesapSilSonucSilindi": "Your account has been deleted.",
   "hesapSilSonucAnonim": "Your account has been deleted. Records we are legally required to keep were made anonymous.",
   "hesapSilParolaGerekli": "Enter your password to continue.",
-  "hesapSilSiliniyor": "Deleting..."
+  "hesapSilSiliniyor": "Deleting...",
+  "ayarlarHukuki": "Legal",
+  "ayarlarGizlilik": "Privacy Policy",
+  "ayarlarKosullar": "Terms of Use",
+  "ayarlarBelgeAcilamadi": "The page could not be opened. Check your internet connection."
 }

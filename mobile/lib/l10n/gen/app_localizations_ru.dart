@@ -4760,4 +4760,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hesapSilSiliniyor => 'Удаление...';
+
+  @override
+  String get ayarlarHukuki => 'Правовая информация';
+
+  @override
+  String get ayarlarGizlilik => 'Политика конфиденциальности';
+
+  @override
+  String get ayarlarKosullar => 'Условия использования';
+
+  @override
+  String get ayarlarBelgeAcilamadi =>
+      'Не удалось открыть страницу. Проверьте подключение к интернету.';
 }

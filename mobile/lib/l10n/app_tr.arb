@@ -1934,5 +1934,9 @@
   "hesapSilSonucSilindi": "Hesabınız silindi.",
   "hesapSilSonucAnonim": "Hesabınız silindi. Yasal olarak saklanması gereken kayıtlar anonim hâle getirildi.",
   "hesapSilParolaGerekli": "Devam etmek için parolanızı girin.",
-  "hesapSilSiliniyor": "Siliniyor..."
+  "hesapSilSiliniyor": "Siliniyor...",
+  "ayarlarHukuki": "Yasal",
+  "ayarlarGizlilik": "Gizlilik Politikası",
+  "ayarlarKosullar": "Kullanım Koşulları",
+  "ayarlarBelgeAcilamadi": "Sayfa açılamadı. İnternet bağlantınızı kontrol edin."
 }

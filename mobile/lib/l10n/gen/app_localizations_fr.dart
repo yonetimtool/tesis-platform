@@ -4656,4 +4656,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get hesapSilSiliniyor => 'Suppression...';
+
+  @override
+  String get ayarlarHukuki => 'Mentions légales';
+
+  @override
+  String get ayarlarGizlilik => 'Politique de confidentialité';
+
+  @override
+  String get ayarlarKosullar => 'Conditions d\'utilisation';
+
+  @override
+  String get ayarlarBelgeAcilamadi =>
+      'La page n\'a pas pu être ouverte. Vérifiez votre connexion Internet.';
 }

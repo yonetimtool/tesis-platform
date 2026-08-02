@@ -7972,6 +7972,30 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Siliniyor...'**
   String get hesapSilSiliniyor;
+
+  /// No description provided for @ayarlarHukuki.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yasal'**
+  String get ayarlarHukuki;
+
+  /// No description provided for @ayarlarGizlilik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gizlilik Politikası'**
+  String get ayarlarGizlilik;
+
+  /// No description provided for @ayarlarKosullar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kullanım Koşulları'**
+  String get ayarlarKosullar;
+
+  /// No description provided for @ayarlarBelgeAcilamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sayfa açılamadı. İnternet bağlantınızı kontrol edin.'**
+  String get ayarlarBelgeAcilamadi;
 }
 
 class _AppLocalizationsDelegate

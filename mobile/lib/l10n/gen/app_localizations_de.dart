@@ -4669,4 +4669,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get hesapSilSiliniyor => 'Wird gelöscht...';
+
+  @override
+  String get ayarlarHukuki => 'Rechtliches';
+
+  @override
+  String get ayarlarGizlilik => 'Datenschutzerklärung';
+
+  @override
+  String get ayarlarKosullar => 'Nutzungsbedingungen';
+
+  @override
+  String get ayarlarBelgeAcilamadi =>
+      'Die Seite konnte nicht geöffnet werden. Prüfen Sie Ihre Internetverbindung.';
 }

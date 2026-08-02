@@ -1393,5 +1393,9 @@
   "hesapSilSonucSilindi": "Su cuenta ha sido eliminada.",
   "hesapSilSonucAnonim": "Su cuenta ha sido eliminada. Los registros que la ley nos obliga a conservar se han anonimizado.",
   "hesapSilParolaGerekli": "Introduzca su contraseña para continuar.",
-  "hesapSilSiliniyor": "Eliminando..."
+  "hesapSilSiliniyor": "Eliminando...",
+  "ayarlarHukuki": "Legal",
+  "ayarlarGizlilik": "Política de privacidad",
+  "ayarlarKosullar": "Condiciones de uso",
+  "ayarlarBelgeAcilamadi": "No se pudo abrir la página. Compruebe su conexión a Internet."
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../core/config/app_config.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
@@ -143,6 +146,17 @@ class SettingsScreen extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           const _HesapSilKarti(),
+          const SizedBox(height: 24),
+          // ------------------------ YASAL (P113) ------------------------ #
+          // App Store denetimi gizlilik politikasina ULASILABILIR bir
+          // baglanti ARAR; yalniz App Store Connect alanina URL yazmak
+          // yetmez. Belgeler tarayicida acilir (uygulama ici WebView
+          // DEGIL): guncellenen bir politika, uygulama guncellemesi
+          // beklemeden gecerli olmali.
+          Text(l10n.ayarlarHukuki,
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          const _YasalKarti(),
         ],
       ),
     );
@@ -569,5 +583,50 @@ class _HesapSilDiyaloguState extends ConsumerState<_HesapSilDiyalogu> {
         ),
       ),
     );
+  }
+}
+
+
+/// YASAL BELGELER karti (P113) — gizlilik politikasi + kullanim kosullari.
+///
+/// Adresler `AppConfig`te SABITTIR: ayni URL'ler App Store Connect ve
+/// Google Play'e de girilir.
+class _YasalKarti extends StatelessWidget {
+  const _YasalKarti();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Card(
+      child: Column(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: Text(l10n.ayarlarGizlilik),
+            trailing: const Icon(Icons.open_in_new),
+            onTap: () => _ac(context, AppConfig.gizlilikUrl),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.gavel_outlined),
+            title: Text(l10n.ayarlarKosullar),
+            trailing: const Icon(Icons.open_in_new),
+            onTap: () => _ac(context, AppConfig.kosullarUrl),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _ac(BuildContext context, String url) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final mesaj = context.l10n.ayarlarBelgeAcilamadi;
+    // SESSIZ BASARISIZLIK YOK: tarayici acilamazsa kullanici dokundugunu
+    // ama hicbir sey olmadigini gorurdu — denetimde "olu dugme" sayilir.
+    final acildi = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    ).catchError((_) => false);
+    if (!acildi) messenger.showSnackBar(SnackBar(content: Text(mesaj)));
   }
 }

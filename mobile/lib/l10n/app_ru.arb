@@ -1393,5 +1393,9 @@
   "hesapSilSonucSilindi": "Ваша учётная запись удалена.",
   "hesapSilSonucAnonim": "Ваша учётная запись удалена. Записи, которые мы обязаны хранить по закону, обезличены.",
   "hesapSilParolaGerekli": "Введите пароль, чтобы продолжить.",
-  "hesapSilSiliniyor": "Удаление..."
+  "hesapSilSiliniyor": "Удаление...",
+  "ayarlarHukuki": "Правовая информация",
+  "ayarlarGizlilik": "Политика конфиденциальности",
+  "ayarlarKosullar": "Условия использования",
+  "ayarlarBelgeAcilamadi": "Не удалось открыть страницу. Проверьте подключение к интернету."
 }

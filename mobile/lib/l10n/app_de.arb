@@ -1393,5 +1393,9 @@
   "hesapSilSonucSilindi": "Ihr Konto wurde gelöscht.",
   "hesapSilSonucAnonim": "Ihr Konto wurde gelöscht. Gesetzlich aufzubewahrende Belege wurden anonymisiert.",
   "hesapSilParolaGerekli": "Geben Sie Ihr Passwort ein, um fortzufahren.",
-  "hesapSilSiliniyor": "Wird gelöscht..."
+  "hesapSilSiliniyor": "Wird gelöscht...",
+  "ayarlarHukuki": "Rechtliches",
+  "ayarlarGizlilik": "Datenschutzerklärung",
+  "ayarlarKosullar": "Nutzungsbedingungen",
+  "ayarlarBelgeAcilamadi": "Die Seite konnte nicht geöffnet werden. Prüfen Sie Ihre Internetverbindung."
 }
