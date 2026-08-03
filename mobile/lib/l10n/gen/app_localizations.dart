@@ -1164,6 +1164,30 @@ abstract class AppLocalizations {
   /// **'Görüntü alınamıyor'**
   String get kameraKareYok;
 
+  /// No description provided for @kameraUrlWebSayfasi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu bir web sayfası adresi. Uygulama yalnız doğrudan yayın adreslerini oynatır: .m3u8 (HLS) veya .mp4.'**
+  String get kameraUrlWebSayfasi;
+
+  /// No description provided for @kameraKaynakYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnız doğrudan medya adresleri oynatılır: HLS (.m3u8) ve MP4. Web sayfaları (YouTube, Vimeo, belediye izleyici sayfaları) oynatılamaz. RTSP kaydedilir ama oynatmak için bir HLS geçidi gerekir.'**
+  String get kameraKaynakYardim;
+
+  /// No description provided for @kameraSnapshot.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anlık görüntü adresi'**
+  String get kameraSnapshot;
+
+  /// No description provided for @kameraSnapshotAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'İsteğe bağlı. Doldurulursa kamera listesinde canlı kare gösterilir (tek kare, JPEG).'**
+  String get kameraSnapshotAlt;
+
   /// No description provided for @kameraOynatilamiyor.
   ///
   /// In tr, this message translates to:

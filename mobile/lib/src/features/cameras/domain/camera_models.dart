@@ -27,6 +27,42 @@ enum CameraUrlHatasi {
   /// Adres [kCameraUrlUstSinir] karakteri asiyor (P25a). Sunucu da reddeder;
   /// istemci ONCE yakalar ki kullanici gonderip beklemesin.
   cokUzun,
+
+  /// (P121) Adres bir WEB SAYFASI — YouTube/Vimeo baglantisi, belediye
+  /// izleyici sayfasi, DVR'in web arayuzu...
+  ///
+  /// SUNUCU BUNU REDDETMEZ ve REDDEDEMEZ: sema kontrolu `https://` gorur ve
+  /// gecerli sayar. Oysa oynatici `video_player`dir; DOGRUDAN medya akisi
+  /// bekler (HLS `.m3u8` ya da MP4) ve bir HTML sayfasini oynatamaz.
+  /// Kullanici acisindan belirti "kaydettim ama acilmiyor"dur ve teshis
+  /// kamerada aranir — oysa hata KAYITTADIR. Bu yuzden istemci ACIKCA
+  /// reddeder, sessizce kabul edip sonra bos ekran gostermez.
+  webSayfasi,
+}
+
+/// Bilinen web sayfasi barindiricilari — bunlar bir MEDYA AKISI degil,
+/// icinde oynatici BULUNAN bir sayfa dondurur.
+///
+/// Liste TAM DEGIL ve olamaz; amaci sahada gercekten yapistirilan uc-bes
+/// adresi yakalamaktir. Genel kural [_medyaUzantisi] ile ayrica olculur:
+/// bir HTTP adresi ne `.m3u8` ne `.mp4` ile bitiyorsa ve bilinen bir
+/// barindiriciysa, oynatilamayacagi KESINDIR.
+const _webBarindiricilari = {
+  'youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be',
+  'vimeo.com', 'www.vimeo.com', 'player.vimeo.com',
+  'dailymotion.com', 'www.dailymotion.com',
+  'twitch.tv', 'www.twitch.tv',
+  'facebook.com', 'www.facebook.com', 'fb.watch',
+  'instagram.com', 'www.instagram.com',
+};
+
+/// Adres dogrudan bir medya dosyasina mi isaret ediyor?
+///
+/// Sorgu dizesi ATILIR: `.../stream.m3u8?token=abc` gecerli bir HLS
+/// adresidir ve sorguyu saymak onu reddederdi.
+bool _medyaUzantisi(Uri uri) {
+  final yol = uri.path.toLowerCase();
+  return yol.endsWith('.m3u8') || yol.endsWith('.mp4') || yol.endsWith('.m3u');
 }
 
 /// Yayin adresi UST SINIRI — sunucudaki `URL_UST_SINIR` ile AYNI sayi.
@@ -217,6 +253,17 @@ class CameraDraft {
   /// (bkz. kamera_form_sheet.dart).
   /// Restream adresi dogrulamasi — YALNIZ http(s) (sunucudaki kuralin
   /// aynisi). Bos/null gecerlidir (gecit yok demektir).
+  /// (P121) Anlik kare adresi dogrulamasi — YALNIZ http(s), web sayfasi
+  /// DEGIL. Sunucudaki `dogrula_snapshot` kuralinin istemci aynasi.
+  static CameraUrlHatasi? snapshotHatasi(String? url) {
+    final u = (url ?? '').trim();
+    if (u.isEmpty) return null;
+    if (u.length > kCameraUrlUstSinir) return CameraUrlHatasi.cokUzun;
+    if (webSayfasiMi(u)) return CameraUrlHatasi.webSayfasi;
+    if (u.startsWith('http://') || u.startsWith('https://')) return null;
+    return CameraUrlHatasi.httpSemasiGerekli;
+  }
+
   static CameraUrlHatasi? restreamHatasi(String? url) {
     final u = (url ?? '').trim();
     if (u.isEmpty) return null;
@@ -225,12 +272,30 @@ class CameraDraft {
     return CameraUrlHatasi.httpSemasiGerekli;
   }
 
+  /// (P121) Adres bir web SAYFASI mi (oynatilamaz)?
+  ///
+  /// YALNIZ http(s) icin anlamlidir; `rtsp://` zaten ayri bir yoldan
+  /// degerlendirilir.
+  static bool webSayfasiMi(String url) {
+    final u = url.trim();
+    if (!u.startsWith('http://') && !u.startsWith('https://')) return false;
+    final uri = Uri.tryParse(u);
+    if (uri == null || uri.host.isEmpty) return false;
+    if (_medyaUzantisi(uri)) return false;
+    return _webBarindiricilari.contains(uri.host.toLowerCase());
+  }
+
   static CameraUrlHatasi? urlHatasi(String url, CameraTur tur) {
     final u = url.trim();
     if (u.isEmpty) return CameraUrlHatasi.bos;
     // UZUNLUK SEMADAN ONCE: 3 KB'lik bir yapistirmada "https ile baslamali"
     // demek yaniltici olurdu — adres zaten https ile BASLIYOR olabilir.
     if (u.length > kCameraUrlUstSinir) return CameraUrlHatasi.cokUzun;
+    // (P121) WEB SAYFASI KONTROLU SEMA KONTROLUNDEN ONCE.
+    // `https://youtube.com/watch?v=…` sema kontrolunu GECER; once o
+    // calisirsa kullanici hicbir uyari almadan OYNAMAYAN bir kamera
+    // kaydeder ve hatayi kamerada arar — oysa hata kayittadir.
+    if (webSayfasiMi(u)) return CameraUrlHatasi.webSayfasi;
     if (tur.semalar.any(u.startsWith)) return null;
     return tur == CameraTur.rtsp
         ? CameraUrlHatasi.rtspSemasiGerekli

@@ -588,6 +588,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get kameraKareYok => 'Image indisponible';
 
   @override
+  String get kameraUrlWebSayfasi =>
+      'Il s’agit d’une adresse de page web. L’application ne lit que les URL de flux directes : .m3u8 (HLS) ou .mp4.';
+
+  @override
+  String get kameraKaynakYardim =>
+      'Seules les URL média directes sont lues : HLS (.m3u8) et MP4. Les pages web (YouTube, Vimeo, pages de visualisation municipales) ne peuvent pas être lues. Le RTSP est enregistré mais nécessite une passerelle HLS pour être lu.';
+
+  @override
+  String get kameraSnapshot => 'Adresse de l’instantané';
+
+  @override
+  String get kameraSnapshotAlt =>
+      'Facultatif. Si renseigné, la liste des caméras affiche une image fixe en direct (une image JPEG).';
+
+  @override
   String get kameraOynatilamiyor => 'Lecture impossible';
 
   @override

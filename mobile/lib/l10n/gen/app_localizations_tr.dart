@@ -584,6 +584,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get kameraKareYok => 'Görüntü alınamıyor';
 
   @override
+  String get kameraUrlWebSayfasi =>
+      'Bu bir web sayfası adresi. Uygulama yalnız doğrudan yayın adreslerini oynatır: .m3u8 (HLS) veya .mp4.';
+
+  @override
+  String get kameraKaynakYardim =>
+      'Yalnız doğrudan medya adresleri oynatılır: HLS (.m3u8) ve MP4. Web sayfaları (YouTube, Vimeo, belediye izleyici sayfaları) oynatılamaz. RTSP kaydedilir ama oynatmak için bir HLS geçidi gerekir.';
+
+  @override
+  String get kameraSnapshot => 'Anlık görüntü adresi';
+
+  @override
+  String get kameraSnapshotAlt =>
+      'İsteğe bağlı. Doldurulursa kamera listesinde canlı kare gösterilir (tek kare, JPEG).';
+
+  @override
   String get kameraOynatilamiyor => 'Oynatılamıyor';
 
   @override

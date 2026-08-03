@@ -586,6 +586,21 @@ class AppLocalizationsDe extends AppLocalizations {
   String get kameraKareYok => 'Kein Bild verfügbar';
 
   @override
+  String get kameraUrlWebSayfasi =>
+      'Das ist eine Webseiten-Adresse. Die App spielt nur direkte Stream-URLs ab: .m3u8 (HLS) oder .mp4.';
+
+  @override
+  String get kameraKaynakYardim =>
+      'Es werden nur direkte Medien-URLs abgespielt: HLS (.m3u8) und MP4. Webseiten (YouTube, Vimeo, städtische Viewer-Seiten) lassen sich nicht abspielen. RTSP wird gespeichert, benötigt zum Abspielen aber ein HLS-Gateway.';
+
+  @override
+  String get kameraSnapshot => 'Standbild-Adresse';
+
+  @override
+  String get kameraSnapshotAlt =>
+      'Optional. Wenn gesetzt, zeigt die Kameraliste ein Live-Standbild (einzelnes JPEG).';
+
+  @override
   String get kameraOynatilamiyor => 'Nicht abspielbar';
 
   @override

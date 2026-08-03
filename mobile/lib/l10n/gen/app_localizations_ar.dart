@@ -714,6 +714,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get kameraKareYok => 'تعذّر الحصول على الصورة';
 
   @override
+  String get kameraUrlWebSayfasi =>
+      'هذا عنوان صفحة ويب. يشغّل التطبيق روابط البث المباشرة فقط: ‎.m3u8‎ (HLS) أو ‎.mp4‎.';
+
+  @override
+  String get kameraKaynakYardim =>
+      'تُشغَّل روابط الوسائط المباشرة فقط: HLS ‏(.m3u8) وMP4. صفحات الويب (يوتيوب، فيميو، صفحات العرض البلدية) لا يمكن تشغيلها. يُحفظ RTSP لكنه يحتاج بوابة HLS للتشغيل.';
+
+  @override
+  String get kameraSnapshot => 'عنوان اللقطة';
+
+  @override
+  String get kameraSnapshotAlt =>
+      'اختياري. إذا حُدِّد، تعرض قائمة الكاميرات لقطة حيّة (إطار JPEG واحد).';
+
+  @override
   String get kameraOynatilamiyor => 'غير قابلة للتشغيل';
 
   @override

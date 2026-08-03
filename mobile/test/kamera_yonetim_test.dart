@@ -26,6 +26,10 @@ const _hls = Camera(
   ad: 'Ana Kapı',
   konum: 'Ana Kapı - Giriş',
   streamUrl: 'https://test/x.m3u8',
+  // (P121) Anlik kare adresi de ON-DOLU gelmeli: alan eklenip on-doldurma
+  // unutulursa duzenleme YOLU SESSIZCE ADRESI SILER (bos kutu kaydedilir
+  // ve sunucu acik null'i "kaldir" diye uygular).
+  snapshotUrl: 'https://test/kare.jpg',
   aktif: true,
   sakinGorebilir: true,
 );
@@ -273,7 +277,12 @@ void main() {
           .widgetList<TextField>(find.byType(TextField))
           .map((f) => f.controller?.text)
           .toList();
-      expect(degerler, ['Ana Kapı', 'Ana Kapı - Giriş', 'https://test/x.m3u8']);
+      expect(degerler, [
+        'Ana Kapı',
+        'Ana Kapı - Giriş',
+        'https://test/x.m3u8',
+        'https://test/kare.jpg',
+      ]);
       // "Site sakinleri görebilsin" acik gelir (kayitta true).
       final anahtar = tester.widgetList<SwitchListTile>(
         find.byType(SwitchListTile),

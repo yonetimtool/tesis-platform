@@ -691,6 +691,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get kameraKareYok => 'Изображение недоступно';
 
   @override
+  String get kameraUrlWebSayfasi =>
+      'Это адрес веб-страницы. Приложение воспроизводит только прямые адреса потока: .m3u8 (HLS) или .mp4.';
+
+  @override
+  String get kameraKaynakYardim =>
+      'Воспроизводятся только прямые медиа-адреса: HLS (.m3u8) и MP4. Веб-страницы (YouTube, Vimeo, муниципальные страницы просмотра) воспроизвести нельзя. RTSP сохраняется, но для воспроизведения нужен HLS-шлюз.';
+
+  @override
+  String get kameraSnapshot => 'Адрес снимка';
+
+  @override
+  String get kameraSnapshotAlt =>
+      'Необязательно. Если задано, в списке камер показывается живой стоп-кадр (один JPEG).';
+
+  @override
   String get kameraOynatilamiyor => 'Воспроизведение недоступно';
 
   @override

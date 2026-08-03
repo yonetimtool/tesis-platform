@@ -50,6 +50,10 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
   late final TextEditingController _restreamCtrl = TextEditingController(
     text: widget.mevcut?.restreamUrl ?? '',
   );
+  // P121: izgara karosunun cektigi TEK KARE adresi (Frigate latest.jpg).
+  late final TextEditingController _snapshotCtrl = TextEditingController(
+    text: widget.mevcut?.snapshotUrl ?? '',
+  );
 
   late CameraTur _tur = widget.mevcut?.tur ?? CameraTur.hls;
   late bool _aktif = widget.mevcut?.aktif ?? true;
@@ -64,6 +68,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
     _konumCtrl.dispose();
     _urlCtrl.dispose();
     _restreamCtrl.dispose();
+    _snapshotCtrl.dispose();
     super.dispose();
   }
 
@@ -81,6 +86,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
       aktif: _aktif,
       sakinGorebilir: _sakinGorebilir,
       restreamUrl: _restreamCtrl.text.trim(),
+      snapshotUrl: _snapshotCtrl.text.trim(),
     );
     try {
       final api = ref.read(camerasApiProvider);
@@ -116,6 +122,11 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
       CameraUrlHatasi.rtspSemasiGerekli => l10n.kameraUrlHataRtsp,
       CameraUrlHatasi.httpSemasiGerekli => l10n.kameraUrlHataHttp(_tur.label),
       CameraUrlHatasi.cokUzun => l10n.kameraUrlCokUzun(kCameraUrlUstSinir),
+      // (P121) SUNUCU BUNU YAKALAYAMAZ: sema kontrolu `https://` gorup
+      // gecerli sayar. Oynatici ise dogrudan medya akisi bekler; bir HTML
+      // sayfasini oynatamaz. Istemci reddetmezse kullanici "kaydettim ama
+      // acilmiyor" der ve hatayi kamerada arar — oysa hata KAYITTADIR.
+      CameraUrlHatasi.webSayfasi => l10n.kameraUrlWebSayfasi,
     };
   }
 
@@ -221,6 +232,25 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                 // gonderdigini bilmeli.
                 onChanged: (_) => setState(() {}),
               ),
+              // (P121) DESTEKLENEN KAYNAK KURALI — alanin hemen altinda.
+              // Kullanicinin YouTube/belediye izleyici adresi yapistirmasi
+              // sahada tekrar eden bir durum; kurali kaydettikten SONRA
+              // ogretmek, calismayan bir kamerayla bas basa birakmaktir.
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      l10n.kameraKaynakYardim,
+                      key: const Key('kamera-kaynak-yardim'),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
               if (_sifrelenmemis(_urlCtrl.text)) ...[
                 const SizedBox(height: 6),
                 Row(
@@ -262,6 +292,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                     // yaniltici olurdu.
                     CameraUrlHatasi.cokUzun =>
                       l10n.kameraUrlCokUzun(kCameraUrlUstSinir),
+                    CameraUrlHatasi.webSayfasi => l10n.kameraUrlWebSayfasi,
                     CameraUrlHatasi.bos ||
                     CameraUrlHatasi.httpSemasiGerekli ||
                     CameraUrlHatasi.rtspSemasiGerekli =>
@@ -269,6 +300,33 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                   },
                 ),
               ],
+              // (P121) ANLIK KARE — HER turde anlamlidir (rtsp kamera
+              // oynatilamasa da geciti bir kare ucu sunabilir), bu yuzden
+              // restream'in aksine tur suzgeci YOKTUR.
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _snapshotCtrl,
+                enabled: !_kaydediyor,
+                keyboardType: TextInputType.url,
+                autocorrect: false,
+                decoration: InputDecoration(
+                  labelText: l10n.kameraSnapshot,
+                  helperText: l10n.kameraSnapshotAlt,
+                  helperMaxLines: 3,
+                  hintText: 'https://... .jpg',
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (v) => switch (CameraDraft.snapshotHatasi(v)) {
+                  null => null,
+                  CameraUrlHatasi.cokUzun =>
+                    l10n.kameraUrlCokUzun(kCameraUrlUstSinir),
+                  CameraUrlHatasi.webSayfasi => l10n.kameraUrlWebSayfasi,
+                  CameraUrlHatasi.bos ||
+                  CameraUrlHatasi.httpSemasiGerekli ||
+                  CameraUrlHatasi.rtspSemasiGerekli =>
+                    l10n.kameraRestreamHata,
+                },
+              ),
               const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
