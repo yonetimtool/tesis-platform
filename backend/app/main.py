@@ -74,6 +74,43 @@ from .routers import visitors as visitors_router
 from .routers import weather as weather_router
 from .routers import webhooks as webhooks_router
 
+#: KODUN BEKLEDIGI Alembic revizyonu — goc dosyalarindan HESAPLANIR.
+#:
+#: ELLE YAZILMAZ: elle tutulan bir surum sabiti, goc eklendiginde
+#: guncellenmeyi unutulur ve kontrol sessizce yalan soylemeye baslar.
+#: `down_revision` zinciri, hicbir baska revizyonun `down_revision`i
+#: OLMAYAN tek dugumu verir; o da HEAD'dir.
+#:
+#: Dosyalar imajda yoksa (yalniz `api` imaji, `contracts/` bagli degil)
+#: bos doner ve kontrol KARAR VERMEZ — olcemedigimiz seyi "bozuk" ilan
+#: etmek, calisan bir sistemi hatali gostermek olurdu.
+def _goc_head() -> str:
+    import pathlib
+    import re
+
+    for kok in ("/contracts/db/migrations/versions",
+                "contracts/db/migrations/versions"):
+        d = pathlib.Path(kok)
+        if not d.is_dir():
+            continue
+        revizyonlar: set[str] = set()
+        oncekiler: set[str] = set()
+        for f in d.glob("*.py"):
+            govde = f.read_text(encoding="utf-8")
+            r = re.search(r'^revision = "([^"]+)"', govde, re.M)
+            p = re.search(r'^down_revision = "([^"]+)"', govde, re.M)
+            if r:
+                revizyonlar.add(r.group(1))
+            if p:
+                oncekiler.add(p.group(1))
+        uclar = revizyonlar - oncekiler
+        if len(uclar) == 1:
+            return uclar.pop()
+    return ""
+
+
+SEMA_BEKLENEN = _goc_head()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -191,11 +228,48 @@ async def health() -> JSONResponse:
     except Exception:
         redis_ok = False
 
+    # SEMA SURUMU (P124) — "kod yeni, sema eski" SESSIZ kalmasin.
+    #
+    # GERCEK OLAY: `snapshot_url` kolonu koda eklendi, prod'da `api` imaji
+    # yeniden derlendi ama `migrate` KOSULMADI (dagitim belgesindeki sira
+    # eksikti). SQLAlchemy her `SELECT camera` icin artik o kolonu istiyor;
+    # Postgres "column does not exist" diyor ve `GET /cameras` 500 veriyor.
+    # Belirti kamera modulunun TAMAMEN olmesiydi — liste bos, karo yok,
+    # oynatilacak bir sey yok — ama `/health` "ok" demeye devam ediyordu.
+    #
+    # Bu kontrol, ayrismayi ILK istekte ve TEK YERDE gorunur kilar. Ayrica
+    # `db_ok` gibi HAYATI sayilmaz: sema ileri/geri gitmis olsa da uygulama
+    # birçok uçta calismaya devam eder; 503 dondurmek calisan bir sistemi
+    # yuk dengeleyiciden dusururdu. Bu yuzden `status` DEGISMEZ, alan
+    # yalnizca RAPOR EDER.
+    sema = await _sema_surumu()
     healthy = db_ok and redis_ok
     return JSONResponse(
         status_code=200 if healthy else 503,
         content={
             "status": "ok" if healthy else "degraded",
             "checks": {"database": db_ok, "redis": redis_ok},
+            "schema": sema,
         },
     )
+
+
+async def _sema_surumu() -> dict[str, object]:
+    """Veritabanindaki Alembic revizyonu ile KODUN bekledigi revizyon.
+
+    `uyumlu` false ise: kod ile sema AYRISMIS demektir ve bazi uclar
+    500 verecektir. Dogru tepki `migrate` kosmaktir.
+    """
+    try:
+        async with engine.connect() as conn:
+            row = await conn.execute(text("SELECT version_num FROM alembic_version"))
+            veritabani = row.scalar_one_or_none()
+    except Exception:
+        return {"database": None, "beklenen": SEMA_BEKLENEN, "uyumlu": None}
+    return {
+        "database": veritabani,
+        "beklenen": SEMA_BEKLENEN,
+        # `beklenen` bos ise (goc dosyalari imajda yok) KARAR VERILMEZ:
+        # `false` demek, olcemedigimiz bir seyi "bozuk" ilan etmek olurdu.
+        "uyumlu": None if not SEMA_BEKLENEN else veritabani == SEMA_BEKLENEN,
+    }

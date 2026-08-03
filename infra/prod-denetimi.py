@@ -302,10 +302,42 @@ for svc, port in re.findall(r"reverse_proxy\s+([a-z][a-z0-9-]*):(\d+)", caddy_ko
                    f"`{svc}` servisinin taniminda hic gecmiyor -> 502 riski")
 
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# J — GOC-SIRASI
+# Dagitim komutlari belgelerde kod bloklarinda yasar. `api`yi ADIYLA hedefleyen
+# her blok, ayni blokta gocu de kosmalidir.
+import glob  # noqa: E402
+
+BELGELER = ["infra/RUNBOOK-PROD.md", *sorted(glob.glob("docs/*.md"))]
+API_HEDEF = re.compile(r"up\s+-d\b[^\n]*\bapi\b")
+GOC = re.compile(r"\bmigrate\b")
+
+for _yol in BELGELER:
+    _p = KOK / _yol
+    if not _p.is_file():
+        continue
+    _metin = _p.read_text(encoding="utf-8")
+    if DENEY == "7" and _yol == "docs/alan-adi-gecisi.md":
+        print("   (DENEY=7: dagitim blogundan `migrate` satiri siliniyor)")
+        _metin = _metin.replace("$C run --rm migrate\n", "", 1)
+    # ``` ile ayrilmis kod bloklari (cift indisliler blok ICIDIR).
+    for _i, _blok in enumerate(_metin.split("```")):
+        if _i % 2 == 0:
+            continue
+        if not API_HEDEF.search(_blok):
+            continue
+        if GOC.search(_blok):
+            continue
+        bulgu("J", f"{_yol}: bir dagitim blogu `api`yi tek basina ayaga "
+                   f"kaldiriyor ama ayni blokta `migrate` YOK — kod yeni "
+                   f"semayi isterse GET /cameras gibi uclar 500 verir "
+                   f"(P124'te gerceklesti)")
+
 BASLIK = {
     "A": "ENV-KAPSAM", "B": "OLU-ANAHTAR", "C": "SESSIZ-SIR",
     "D": "PORT-SIZINTISI", "E": "DEV-SAPMA", "F": "RUNBOOK-COZUK",
     "G": "ALAN-TUTARLI", "H": "SIR-SIZINTISI", "I": "UPSTREAM",
+    "J": "GOC-SIRASI",
 }
 print(f"== prod dagitim denetimi — {len(prod_servisler)} servis, "
       f"{len(ornek_anahtarlar)} env anahtari, {len(runbook_metin.splitlines())} satir runbook")

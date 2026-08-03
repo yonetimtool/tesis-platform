@@ -7148,6 +7148,62 @@ KAPILAR: `tsc` temiz · `vitest` (+19) · `npm run build` ✓ ·
 `flutter analyze` temiz · `flutter test` **1721 geçti / 3 atlandı**
 (taban 1687, +34) · apk ✓.
 
+### P124 — Kamera modülü prod'da öldü: kod yeni, şema eski
+Status: BITTI · Depends-on: P121
+Scope: Cihaz bildirimi "kamera oynatma bozuldu, canlı karolar da boş".
+Bisect + **yeniden üretim**, ardından kalıcı koruma.
+
+**BOZAN COMMIT: `130f014` (P121/1) — ama tek başına değil.** O commit
+`Camera.snapshot_url`u ORM modeline ekledi (göç `0031` ile birlikte).
+Kusur, commit'in kendisinde değil **dağıtım sırasında**: prod'a yeni `api`
+imajı gitti, **göç koşulmadı**. SQLAlchemy artık her `SELECT camera`
+sorgusuna `camera.snapshot_url` koyuyor; Postgres "column does not exist"
+diyor ve **`GET /cameras` 500** dönüyor. Kamera listesi hiç gelmediği için
+karo da yok, açılacak kamera da yok — **iki belirti, tek sebep**.
+
+**KUSURUN SAHİBİ BENİM:** `docs/alan-adi-gecisi.md`in dağıtım bölümünü ben
+yazdım ve `up -d --build api` dedim — **`migrate` adımı yoktu**. Aynı
+turun başka bir commit'i göç ekliyordu. `infra/RUNBOOK-PROD.md` doğruydu:
+orada `up -d --build` **servis adı olmadan** koşuluyor ve `migrate`
+servisi de ayağa kalkıyor. Tehlikeli olan **tek servisi hedeflemek**.
+
+**YENİDEN ÜRETİLDİ (tahmin değil):** dev'de `alembic downgrade 0030` →
+`GET /cameras` **500** → `upgrade head` → **200, 5 kamera**. Prod'un
+yeniden dağıtıldığı da ölçüldü (yeni alan adı 200 dönüyor).
+
+**OYNATMA KODU BOZULMADI.** `camera_player_screen.dart` P121'de **hiç**
+değişmedi (`git diff 756f94c..830431a` boş). Canlı karo işi oynatıcıyı
+öncelemiyor, atmıyor ya da yayın adresini yutmuyor — dört testle ölçüldü.
+İlk denememde "yeniden ürettim" sandığım başarısızlık **kendi test
+koşumumun** kusuruydu (dil temsilcileri eksikti, kart çizim sırasında
+patlıyor ve dokunma boşa gidiyordu); düzeltince dördü de geçti.
+**Bayrak arkasına alma / geri alma GEREKMEDİ.**
+
+**KALICI KORUMA 1 — `/health` artık şema sürümünü bildiriyor.**
+`{"schema": {"database": …, "beklenen": …, "uyumlu": …}}`. Beklenen
+revizyon **göç dosyalarından hesaplanır**, elle tutulmaz: elle tutulan bir
+sabit, göç eklendiğinde güncellenmeyi unutulur ve kontrol sessizce yalan
+söylemeye başlar (mutasyonla doğrulandı). `status` **değiştirilmedi** —
+şema ileri/geri gitse de uygulama birçok uçta çalışır; 503 döndürmek
+çalışan bir sistemi yük dengeleyiciden düşürürdü. Alan yalnızca **rapor
+eder**.
+
+**KALICI KORUMA 2 — `prod-denetimi.py` kontrol J (GOC-SIRASI).** Belgelerde
+`api`yi **adıyla** ayağa kaldıran her dağıtım bloğu, aynı blokta `migrate`
+de koşmalı. DENEY=7 ile doğrulandı.
+
+**CANLI KARO — MALİYET ÖLÇÜLDÜ, ÇAKIŞMA YOK.** Karolar bugün **tamamen
+atıl**: hiçbir kamerada `snapshot_url` yok → `etkin: false` → zamanlayıcı
+**hiç kurulmuyor**. `snapshot_url` dolduğunda (Frigate, P17) maliyet, 6
+kamera × 8 sn için Frigate'in tipik `latest.jpg` boyutuna göre
+**≈79–211 MB/saat** (30–80 KB/kare). Karşılaştırma: reddedilen (b) şıkkı
+(HLS parçası yakalama) **≈4,9 GiB/saat** ederdi — yaklaşık **25–60 kat**
+fark. Karo yolu bu yüzden ayakta kalıyor.
+
+Acceptance: dev'de downgrade→500→upgrade→200 üretildi; `/health` ayrışmayı
+raporluyor; kontrol J DENEY=7 ile kırmızı veriyor; dört oynatma gerileme
+testi geçiyor.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

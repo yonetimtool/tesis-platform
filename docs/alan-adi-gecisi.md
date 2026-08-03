@@ -183,15 +183,34 @@ cd /opt/yonetio            # prod sunucu
 git pull
 C="docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod"
 
-# 1) Caddy — YENI KONAKLAR + TLS.  --force-recreate ZORUNLU, aciklamasi asagida.
+# 1) GOC ONCE — ZORUNLU. Aciklama asagida.
+$C run --rm migrate
+
+# 2) Caddy — YENI KONAKLAR + TLS.  --force-recreate ZORUNLU, aciklamasi asagida.
 $C up -d --force-recreate caddy
 
-# 2) api — PORTAL_BASE_URL ve CORS normallestirmesi (imaj kodu BAKE eder)
+# 3) api — PORTAL_BASE_URL ve CORS normallestirmesi (imaj kodu BAKE eder)
 $C up -d --build api
+
+# 4) SEMA ILE KOD UYUSUYOR MU (P124) — `uyumlu: true` bekleniyor
+curl -s https://api.yonetio.site/health | python3 -m json.tool
 
 # 3) sertifikalar gerçekten alındı mı
 $C logs --since 5m caddy | grep -iE "certificate obtained|obtain|error|failed"
 ```
+
+> **⛔ GÖÇ ÖNCE ÇALIŞMALI — bu sıra atlanınca kamera modülü ÖLDÜ.**
+> Bu belgenin ilk hâli `migrate` adımını **içermiyordu** ve bu gerçek bir
+> arızaya yol açtı: aynı turda `camera.snapshot_url` kolonu koda eklendi,
+> `api` imajı yeniden derlendi, göç **koşulmadı**. SQLAlchemy artık her
+> `SELECT camera` sorgusuna o kolonu koyuyor; Postgres "column does not
+> exist" diyor ve **`GET /cameras` 500** dönüyor. Kullanıcının gördüğü şey
+> "kamera oynatmıyor"du — oysa liste hiç gelmiyordu. Kural: **kod yeni
+> şema istiyorsa göç önce koşar.** Yeni bir dağıtımda emin değilseniz
+> `run --rm migrate` zaten idempotenttir; boşuna koşmak zararsızdır.
+>
+> Dağıtımdan sonra `/health` çıktısındaki `schema.uyumlu` alanı **true**
+> olmalıdır; `false` ise göç eksiktir (bkz. P124).
 
 > **⚠️ `up -d caddy` TEK BAŞINA YETMEYEBİLİR — bu tuzağa dikkat.**
 > `Caddyfile` bir **bind mount**'tur; içeriğini değiştirmek servis
