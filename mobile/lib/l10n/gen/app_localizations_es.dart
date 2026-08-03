@@ -585,6 +585,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get kameraCanli => 'En directo';
 
   @override
+  String get kameraKareYok => 'Imagen no disponible';
+
+  @override
   String get kameraOynatilamiyor => 'No reproducible';
 
   @override

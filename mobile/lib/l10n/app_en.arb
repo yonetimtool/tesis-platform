@@ -176,6 +176,7 @@
   "kameraBosSakin": "No cameras are shared with you.",
   "kameraListeHata": "Cameras couldn't be loaded.",
   "kameraCanli": "Live",
+  "kameraKareYok": "No image available",
   "kameraOynatilamiyor": "Not playable",
   "kameraYayinAcilamadi": "Stream couldn't be opened",
   "kameraYayinAcilamadiAlt": "The camera may be off, or the network cannot reach the stream.",

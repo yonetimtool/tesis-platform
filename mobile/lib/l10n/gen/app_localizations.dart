@@ -1158,6 +1158,12 @@ abstract class AppLocalizations {
   /// **'Canlı'**
   String get kameraCanli;
 
+  /// No description provided for @kameraKareYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görüntü alınamıyor'**
+  String get kameraKareYok;
+
   /// No description provided for @kameraOynatilamiyor.
   ///
   /// In tr, this message translates to:

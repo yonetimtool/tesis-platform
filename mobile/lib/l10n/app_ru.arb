@@ -176,6 +176,7 @@
   "kameraBosSakin": "Вам не открыта ни одна камера.",
   "kameraListeHata": "Не удалось загрузить камеры.",
   "kameraCanli": "В эфире",
+  "kameraKareYok": "Изображение недоступно",
   "kameraOynatilamiyor": "Воспроизведение недоступно",
   "kameraYayinAcilamadi": "Не удалось открыть поток",
   "kameraYayinAcilamadiAlt": "Камера может быть выключена, или сеть не может получить поток.",

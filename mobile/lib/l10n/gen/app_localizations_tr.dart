@@ -581,6 +581,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get kameraCanli => 'Canlı';
 
   @override
+  String get kameraKareYok => 'Görüntü alınamıyor';
+
+  @override
   String get kameraOynatilamiyor => 'Oynatılamıyor';
 
   @override

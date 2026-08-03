@@ -176,6 +176,7 @@
   "kameraBosSakin": "Aucune caméra ne vous est accessible.",
   "kameraListeHata": "Impossible de charger les caméras.",
   "kameraCanli": "En direct",
+  "kameraKareYok": "Image indisponible",
   "kameraOynatilamiyor": "Lecture impossible",
   "kameraYayinAcilamadi": "Le flux n'a pas pu être ouvert",
   "kameraYayinAcilamadiAlt": "La caméra est peut-être éteinte ou le réseau n'atteint pas le flux.",

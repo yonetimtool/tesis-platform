@@ -182,6 +182,7 @@
   "kameraBosSakin": "Görüntülemenize açık kamera yok.",
   "kameraListeHata": "Kameralar yüklenemedi.",
   "kameraCanli": "Canlı",
+  "kameraKareYok": "Görüntü alınamıyor",
   "kameraOynatilamiyor": "Oynatılamıyor",
   "kameraYayinAcilamadi": "Yayın açılamadı",
   "kameraYayinAcilamadiAlt": "Kamera kapalı olabilir ya da ağ yayına ulaşamıyor.",

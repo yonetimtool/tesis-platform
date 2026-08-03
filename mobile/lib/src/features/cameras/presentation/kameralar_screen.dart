@@ -10,9 +10,11 @@ import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../data/cameras_api.dart';
 import '../domain/camera_models.dart';
+import '../../home/presentation/home_refresh.dart' show homeRouteObserver;
 import 'camera_player_screen.dart';
 import 'kamera_form_sheet.dart';
 import 'kamera_karti.dart';
+import 'kare_tazeleme.dart';
 import '../../../core/error/akis_hatasi.dart';
 
 /// Kameralar ekrani — 2'li IZGARA (ana ekran kart diliyle ayni).
@@ -71,7 +73,14 @@ class KameralarScreen extends ConsumerWidget {
                 ],
               );
             }
-            return GridView.builder(
+            // (P121) KARE TAZELEME KAPSAMI — izgara gorunurken calisir,
+            // baska ekran ustune acilinca ve arka planda DURUR.
+            // `etkin`: kare cekebilen kamera YOKSA zamanlayici hic kurulmaz
+            // (bugunku durum; Frigate P17'de `snapshot_url`i dolduracak).
+            return KareTazeleme(
+              rotaGozlemcisi: homeRouteObserver,
+              etkin: kameralar.any((k) => k.kareCekilebilir),
+              builder: (context, nesil) => GridView.builder(
               padding: const EdgeInsets.all(12),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
@@ -89,6 +98,7 @@ class KameralarScreen extends ConsumerWidget {
                     Expanded(
                       child: KameraKarti(
                         kamera: k,
+                        nesil: k.kareCekilebilir ? nesil : null,
                         onTap: () => kameraAc(context, k),
                       ),
                     ),
@@ -124,6 +134,7 @@ class KameralarScreen extends ConsumerWidget {
                   ],
                 );
               },
+              ),
             );
           },
         ),

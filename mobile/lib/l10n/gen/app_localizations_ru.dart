@@ -688,6 +688,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get kameraCanli => 'В эфире';
 
   @override
+  String get kameraKareYok => 'Изображение недоступно';
+
+  @override
   String get kameraOynatilamiyor => 'Воспроизведение недоступно';
 
   @override

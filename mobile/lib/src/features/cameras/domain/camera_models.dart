@@ -79,6 +79,7 @@ class Camera {
     this.aktif = true,
     this.sakinGorebilir = false,
     this.restreamUrl,
+    this.snapshotUrl,
     bool? oynatilabilir,
   }) : _oynatilabilir = oynatilabilir; // ignore: prefer_initializing_formals
 
@@ -93,6 +94,18 @@ class Camera {
   /// RTSP kamerayi oynatilabilir yapan HLS gecidi (P17); yoksa null.
   /// `streamUrl` KORUNUR — o kameranin KENDI adresidir.
   final String? restreamUrl;
+
+  /// (P121) TEK KARE dondüren adres (image/jpeg); yoksa null.
+  ///
+  /// Izgara karosu OYNATICI ACMADAN bunu periyodik ceker. Video DEGILDIR:
+  /// dolu olmasi kamerayi oynatilabilir YAPMAZ — kullanici karoda goruntu
+  /// gorup dokundugunda oynaticinin acilmamasi kabul edilebilir bir
+  /// tutarsizlik olurdu, bu yuzden iki kavram ayri tutulur.
+  final String? snapshotUrl;
+
+  /// Karo periyodik kare cekebilir mi?
+  bool get kareCekilebilir =>
+      snapshotUrl != null && snapshotUrl!.isNotEmpty;
 
   final CameraTur tur;
 
@@ -128,6 +141,7 @@ class Camera {
     aktif: json['aktif'] as bool? ?? true,
     sakinGorebilir: json['sakin_gorebilir'] as bool? ?? false,
     restreamUrl: json['restream_url'] as String?,
+    snapshotUrl: json['snapshot_url'] as String?,
     oynatilabilir: json['oynatilabilir'] as bool?,
   );
 }
@@ -142,6 +156,7 @@ class CameraDraft {
     required this.sakinGorebilir,
     this.konum,
     this.restreamUrl,
+    this.snapshotUrl,
   });
 
   final String ad;
@@ -157,6 +172,9 @@ class CameraDraft {
   /// Opsiyonel HLS gecidi (P17). Bos ise gonderilmez/temizlenir.
   final String? restreamUrl;
 
+  /// Opsiyonel anlik kare adresi (P121). Bos ise gonderilmez/temizlenir.
+  final String? snapshotUrl;
+
   /// Olusturma govdesi — bos konum HIC yazilmaz (sunucu minLength 1).
   Map<String, dynamic> toCreateJson() => {
     'ad': ad,
@@ -167,6 +185,8 @@ class CameraDraft {
     'sakin_gorebilir': sakinGorebilir,
     if (restreamUrl != null && restreamUrl!.isNotEmpty)
       'restream_url': restreamUrl,
+    if (snapshotUrl != null && snapshotUrl!.isNotEmpty)
+      'snapshot_url': snapshotUrl,
   };
 
   /// Guncelleme govdesi — tum alanlar gonderilir; bos konum ACIK null
@@ -182,6 +202,11 @@ class CameraDraft {
     'restream_url': (restreamUrl == null || restreamUrl!.isEmpty)
         ? null
         : restreamUrl,
+    // ACIK null: bos birakilirsa kare adresi KALDIRILIR (karo yer tutucuya
+    // doner) — `restream_url` ile ayni sozlesme.
+    'snapshot_url': (snapshotUrl == null || snapshotUrl!.isEmpty)
+        ? null
+        : snapshotUrl,
   };
 
   /// Istemci tarafi URL/tur tutarlilik kontrolu — sunucudaki 422 kuralinin

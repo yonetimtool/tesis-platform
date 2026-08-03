@@ -176,6 +176,7 @@
   "kameraBosSakin": "No hay cámaras disponibles para ti.",
   "kameraListeHata": "No se pudieron cargar las cámaras.",
   "kameraCanli": "En directo",
+  "kameraKareYok": "Imagen no disponible",
   "kameraOynatilamiyor": "No reproducible",
   "kameraYayinAcilamadi": "No se pudo abrir la emisión",
   "kameraYayinAcilamadiAlt": "La cámara puede estar apagada o la red no alcanza la emisión.",

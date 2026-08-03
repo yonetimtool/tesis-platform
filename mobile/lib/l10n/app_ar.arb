@@ -176,6 +176,7 @@
   "kameraBosSakin": "لا توجد كاميرات متاحة لك.",
   "kameraListeHata": "تعذّر تحميل الكاميرات.",
   "kameraCanli": "مباشر",
+  "kameraKareYok": "تعذّر الحصول على الصورة",
   "kameraOynatilamiyor": "غير قابلة للتشغيل",
   "kameraYayinAcilamadi": "تعذّر فتح البث",
   "kameraYayinAcilamadiAlt": "قد تكون الكاميرا مطفأة أو أن الشبكة لا تصل إلى البث.",

@@ -585,6 +585,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get kameraCanli => 'En direct';
 
   @override
+  String get kameraKareYok => 'Image indisponible';
+
+  @override
   String get kameraOynatilamiyor => 'Lecture impossible';
 
   @override

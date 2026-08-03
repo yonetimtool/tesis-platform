@@ -583,6 +583,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get kameraCanli => 'Live';
 
   @override
+  String get kameraKareYok => 'Kein Bild verfügbar';
+
+  @override
   String get kameraOynatilamiyor => 'Nicht abspielbar';
 
   @override

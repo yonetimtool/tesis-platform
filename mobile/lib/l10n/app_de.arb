@@ -176,6 +176,7 @@
   "kameraBosSakin": "Für Sie ist keine Kamera freigegeben.",
   "kameraListeHata": "Kameras konnten nicht geladen werden.",
   "kameraCanli": "Live",
+  "kameraKareYok": "Kein Bild verfügbar",
   "kameraOynatilamiyor": "Nicht abspielbar",
   "kameraYayinAcilamadi": "Stream konnte nicht geöffnet werden",
   "kameraYayinAcilamadiAlt": "Die Kamera ist möglicherweise aus oder das Netzwerk erreicht den Stream nicht.",

@@ -711,6 +711,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get kameraCanli => 'مباشر';
 
   @override
+  String get kameraKareYok => 'تعذّر الحصول على الصورة';
+
+  @override
   String get kameraOynatilamiyor => 'غير قابلة للتشغيل';
 
   @override
