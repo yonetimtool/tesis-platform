@@ -46,6 +46,7 @@ Kayıt sağlayıcıdan bağımsızdır; Hostinger, Cloudflare, hepsinde aynı.
 |---|---|---|---|---|
 | A | `@` (kök) | `185.248.57.150` | 300 | ✅ **girilmiş** |
 | A | `www` | `185.248.57.150` | 300 | ✅ **girilmiş** |
+| A | `app` | `185.248.57.150` | 300 | ✅ **girilmiş** |
 | A | `panel` | `185.248.57.150` | 300 | ✅ **girilmiş** |
 | A | `api` | — | — | ⛔ **AÇILMIYOR** (aşağıya bakın) |
 | A | `storage` | — | — | ⛔ **AÇILMIYOR** |
@@ -64,8 +65,8 @@ konak **imza doğrulamasını bozar**.
 
 | Tip | Ad / Host | Şu an | Olması gereken | Neden |
 |---|---|---|---|---|
-| A | `@` (kök) | `2.57.91.91` | **`185.248.57.150`** | ⚠️ aşağıdaki bulgu |
-| A | `www` | `2.57.91.91` | **`185.248.57.150`** | aynı |
+| A | `@` (kök) | `185.248.57.150` | ✅ **yapıldı** | aşağıdaki bulgu |
+| A | `www` | `185.248.57.150` (CNAME→kök) | ✅ **yapıldı** | aynı |
 | A | `panel` | `185.248.57.150` | değişmez | ✅ |
 | A | `api` | `185.248.57.150` | değişmez | ✅ |
 | A | `storage` | `185.248.57.150` | değişmez | ✅ |
@@ -181,46 +182,110 @@ yazmasanız da çalışır.
 cd /opt/yonetio            # prod sunucu
 git pull
 C="docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod"
-$C up -d caddy       # yeni konaklar + TLS
-$C up -d --build api # PORTAL_BASE_URL ve CORS normallestirmesi (imaj kodu bake eder)
-$C logs -f caddy | grep -i "certificate obtained"
+
+# 1) Caddy — YENI KONAKLAR + TLS.  --force-recreate ZORUNLU, aciklamasi asagida.
+$C up -d --force-recreate caddy
+
+# 2) api — PORTAL_BASE_URL ve CORS normallestirmesi (imaj kodu BAKE eder)
+$C up -d --build api
+
+# 3) sertifikalar gerçekten alındı mı
+$C logs --since 5m caddy | grep -iE "certificate obtained|obtain|error|failed"
 ```
+
+> **⚠️ `up -d caddy` TEK BAŞINA YETMEYEBİLİR — bu tuzağa dikkat.**
+> `Caddyfile` bir **bind mount**'tur; içeriğini değiştirmek servis
+> tanımını değiştirmez. Compose yalnız *tanım* değiştiğinde kabı yeniden
+> yaratır, dolayısıyla salt-Caddyfile değişikliğinde `up -d caddy`
+> **"Container caddy Running" yazıp hiçbir şey yapmaz** — ve komut
+> başarıyla döndüğü için dağıtım yapıldı sanılır. Bu turda servis
+> `environment`'ı da değiştiği için normalde yeniden yaratılır, ama
+> **gelecekteki salt-Caddyfile düzenlemelerinde bu geçerli olmaz.**
+> Bu yüzden `--force-recreate` yazıyoruz. Kesintisiz alternatif:
+> `$C exec caddy caddy reload --config /etc/caddy/Caddyfile` — önce
+> doğrular, hatalıysa çalışan sunucuyu düşürmeden yüksek sesle patlar.
 
 **`api` yeniden derlenmeli:** imajlar kodu içine alır (mount yok); yalnız
 `up -d api` demek eski kodu çalıştırmaya devam etmek olur.
 
 ---
 
-## 3) DOĞRULAMA — DNS yayıldıktan sonra
+## 3) DOĞRULAMA — üç aşamalı
+
+### 3a) SUNUCUDAN, TLS'e hiç girmeden (asıl teşhis burada)
+
+Uzaktan `000` görmek iki çok farklı şeyi aynı gösterir: "Caddy o konağı
+tanımıyor" ve "arkadaki uygulama düştü". Host başlığıyla **yerel** curl
+ikisini ayırır — sertifika, DNS ve ağ denklemden çıkar:
 
 ```bash
-# TLS: üç konak da kendi sertifikasını almış olmalı
-for h in xn--ynetiyor-n4a.com www.xn--ynetiyor-n4a.com panel.xn--ynetiyor-n4a.com \
-         yonetio.site www.yonetio.site; do
-  echo "== $h"
-  echo | openssl s_client -servername "$h" -connect "$h":443 2>/dev/null \
-    | openssl x509 -noout -subject -dates
-done
+C="docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod"
 
-# Gizlilik politikası GERÇEKTEN bizim sayfamız mı (park sayfası değil)
-for u in https://xn--ynetiyor-n4a.com/gizlilik https://yönetiyor.com/gizlilik \
-         https://yonetio.site/gizlilik; do
-  printf '%-45s %s\n' "$u" "$(curl -sS -m 20 -o /dev/null -w '%{http_code}' "$u")"
-done
-curl -sS https://xn--ynetiyor-n4a.com/gizlilik | grep -qi "Parked Domain" \
-  && echo "HALA PARK SAYFASI" || echo "gercek sayfa"
+# admin-web AYAKTA MI (Caddy'yi hiç kullanmadan)
+$C exec caddy wget -qO- --header='Host: panel.yonetio.site' \
+    http://admin-web:3000/gizlilik | head -c 120; echo
 
-# Unicode giriş de çalışmalı (curl/tarayıcı punycode'a kendisi çevirir)
-curl -sS -m 20 -o /dev/null -w 'unicode giris -> %{http_code}\n' https://yönetiyor.com/gizlilik
+# Caddy 80'de HANGI konakları tanıyor (ACME yönlendirmesi 308 döner;
+# TANIMSIZ konak 404 verir — ayırt edici olan budur)
+for h in yonetio.site www.yonetio.site panel.yonetio.site \
+         xn--ynetiyor-n4a.com www.xn--ynetiyor-n4a.com \
+         app.xn--ynetiyor-n4a.com panel.xn--ynetiyor-n4a.com; do
+  printf '%-32s %s\n' "$h" \
+    "$(curl -sS -m 10 -o /dev/null -w '%{http_code}' -H "Host: $h" http://127.0.0.1/gizlilik)"
+done
 ```
 
-Beklenen: hepsi `200` **ve** "Parked Domain" içermiyor.
+`308` (HTTPS'e yönlendirme) = konak **tanımlı**. `404` = Caddyfile'da
+**yok**, yani dağıtım yapılmamış ya da ad yanlış yazılmış.
 
-`ERR_CERT_COMMON_NAME_INVALID` görürseniz DNS henüz yayılmamıştır ya da
-Caddy sertifikayı almamıştır — `caddy` günlüğüne bakın; ACME hataları
-orada açık yazar.
+### 3b) Sertifikalar gerçekten alındı mı
 
----
+```bash
+$C logs --since 10m caddy | grep -iE "certificate obtained|trying to solve|error|failed|rate limit"
+# Caddy'nin deposunda duran sertifikalar:
+$C exec caddy ls /data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/
+```
+
+Beklenen: yedi konak da listede. Bir konak **eksikse** ACME o ad için
+düşmüştür; günlükte gerekçe yazar (en sık: DNS henüz yayılmamış, ya da
+80/443 o ada ulaşmıyor).
+
+### 3c) Dışarıdan, gerçek DNS ile
+
+```bash
+for h in yonetio.site www.yonetio.site panel.yonetio.site \
+         xn--ynetiyor-n4a.com www.xn--ynetiyor-n4a.com \
+         app.xn--ynetiyor-n4a.com panel.xn--ynetiyor-n4a.com; do
+  printf '%-32s TLS=%-28s /gizlilik=%s\n' "$h" \
+    "$(echo | openssl s_client -servername $h -connect $h:443 2>/dev/null \
+        | openssl x509 -noout -subject 2>/dev/null | sed 's/subject=//' || echo YOK)" \
+    "$(curl -sS -m 20 -o /dev/null -w '%{http_code}' https://$h/gizlilik)"
+done
+
+# Unicode giriş de çalışmalı (curl/tarayıcı punycode'a kendisi çevirir)
+curl -sS -m 20 -o /dev/null -w 'unicode -> %{http_code}\n' https://yönetiyor.com/gizlilik
+
+# Ve park sayfası KALMAMIŞ olmalı
+curl -sS -m 20 https://yonetio.site/gizlilik | grep -qi "Parked Domain" \
+  && echo "HALA PARK SAYFASI" || echo "gercek sayfa"
+```
+
+Beklenen: yedisinde de sertifika var, `/gizlilik` **200**, "Parked Domain"
+yok.
+
+### `000` NE DEMEK — ayırt etme tablosu
+
+`000` "sayfa yok" demek **değildir**; bağlantının HTTP'ye hiç gelemediğini
+söyler. En sık sebebi, o konak için Caddy'de **site bloğu olmamasıdır**:
+SNI eşleşmeyince TLS el sıkışması `tlsv1 alert internal error` ile düşer.
+
+| Belirti | Anlamı | Yapılacak |
+|---|---|---|
+| `000`, TLS `internal error` | Konak Caddyfile'da yok **ya da** yeni yapılandırma dağıtılmadı | §2 dağıtım, sonra 3a |
+| `000`, bağlantı reddedildi | 80/443 o adrese ulaşmıyor | pfSense yönlendirmesi |
+| Sertifika var ama `502` | TLS iyi, `admin-web` düşük | `$C logs admin-web` |
+| `404`, sertifika var | Konak tanımlı, rota yok | Next.js rotası |
+| `200` ama "Parked Domain" | DNS hâlâ park IP'sinde | A kaydı |
 
 ## 4) E-POSTA — destek@yönetiyor.com
 

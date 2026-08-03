@@ -31,11 +31,28 @@ OLCULENLER
                   alan adi. O alani elinde tutan biri icin hazir bir kimlik
                   avi yuzeyi. Bir harf farkli bir alan adi (`.app` / `.site`)
                   gozden kacar; bu kontrol onu her kosumda arar.
+  4 SUNULUYOR     uygulamalarimizin BAGLANTI VERDIGI her konak, Caddy'de
+                  gercekten tanimli mi?
+
+                  BULUNAN GERCEK HATA (P120 devami): mobil uygulamadaki
+                  hukuki belge baglantilari `yonetio.site` KOKUNE gidiyordu
+                  ama Caddy'de o konak icin site blogu YOKTU. Sonuc, temiz
+                  bir 404 DEGIL: SNI eslesmeyince TLS el sikismasi
+                  "internal error" ile duser ve istemci HTTP'ye hic gelemez
+                  (curl `000` doner). Yani "sayfa yok" degil "BAGLANTI
+                  KOPTU" — App Store denetcisi icin ayirt edilemez bir
+                  kirilma, bizim icin de teshisi zor.
+
+                  Bu kontrol iki tarafi birbirine baglar: bir uygulama
+                  koda gomulu bir adrese baglanti veriyorsa, o konak
+                  Caddyfile'da BULUNMAK ZORUNDA.
 
 DENEY MODU (arac kendini sinar):
   DENEY=1  yanlis punycode (`-vpb`) enjekte eder   -> 1
   DENEY=2  Caddyfile'a unicode konak enjekte eder  -> 2
   DENEY=3  bize ait olmayan bir adres enjekte eder -> 3
+  DENEY=4  Caddyfile'dan kok konagi siler          -> 4
+  DENEY=5  KORUNAN konagi (App Store adresi) dusurur -> 4
 
 KULLANIM:  python3 infra/alan-adi-denetimi.py
 """
@@ -46,6 +63,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 KOK = Path(__file__).resolve().parent.parent
 DENEY = os.environ.get("DENEY", "0")
@@ -55,7 +73,7 @@ DENEY = os.environ.get("DENEY", "0")
 UNICODE_ALANLAR = ["yönetiyor.com"]
 
 #: Punycode konabilecek alt alanlar (Caddyfile/compose'da gecenler).
-ALT_ALANLAR = ["", "www.", "panel.", "api.", "storage."]
+ALT_ALANLAR = ["", "www.", "app.", "panel.", "api.", "storage."]
 
 
 def ace(ad: str) -> str:
@@ -105,6 +123,18 @@ if DENEY == "3":
     print("   (DENEY=3: bize ait olmayan bir adres enjekte ediliyor)")
     metinler["infra/Caddyfile"] = (
         metinler["infra/Caddyfile"] + '\n# ornek: https://yonetio.app/ode\n')
+
+if DENEY == "4":
+    print("   (DENEY=4: Caddyfile'dan eski kok konagi siliniyor)")
+    metinler["infra/Caddyfile"] = metinler["infra/Caddyfile"].replace(
+        ", {$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI}", "", 1)
+
+if DENEY == "5":
+    print("   (DENEY=5: KORUNAN konak panel.yonetio.site dusuruluyor)")
+    metinler["infra/docker-compose.prod.yml"] = \
+        metinler["infra/docker-compose.prod.yml"].replace(
+            "PANEL_DOMAIN: ${PANEL_DOMAIN:-panel.yonetio.site}",
+            "PANEL_DOMAIN: ${PANEL_DOMAIN:-yonetim.yonetio.site}", 1)
 
 #: Taranmayan dosyalar. `.next/` ve kilit dosyalari URETILMIS yapilardir;
 #: bu betigin KENDISI ise KARSI ORNEK ICERIR — DENEY kipi, yanlis punycode'u
@@ -198,6 +228,98 @@ for yol, metin in sorted(metinler.items()):
             f"alanlardan degil ({', '.join(sorted(SAHIP))}). Kaynakta gecen "
             f"bir adres bize ait degilse, o adresi elinde tutan taraf bizim "
             f"gonderdigimiz baglantiyi devralir."
+        )
+
+# --------------------------------------------------------------------------- #
+# 4 — SUNULUYOR
+# Caddyfile'daki SITE ADRESLERI: girintisiz, `{` ile biten satirlar.
+# Global secenek blogu (`{`) ve snippet tanimi (`(ad) {`) haric.
+caddy = metinler["infra/Caddyfile"]
+compose = metinler["infra/docker-compose.prod.yml"]
+
+#: compose'daki `VAR: ${VAR:-varsayilan}` -> {"VAR": "varsayilan"}
+VARSAYILAN = dict(re.findall(r"\$\{([A-Z_][A-Z0-9_]*):-([^}]+)\}", compose))
+
+
+def coz(adres: str) -> str | None:
+    """`www.{$PORTAL_DOMAIN}` -> `www.xn--ynetiyor-n4a.com`."""
+    def yerine(m: re.Match[str]) -> str:
+        return VARSAYILAN.get(m.group(1), "\x00")
+    cikti = re.sub(r"\{\$([A-Z_][A-Z0-9_]*)\}", yerine, adres)
+    # Varsayilani BILINMEYEN degisken: sessizce yanlis bir konak uretmek
+    # yerine ATLA — yoksa kontrol, olmayan bir adi "sunuluyor" sayardi.
+    return None if "\x00" in cikti else cikti
+
+
+SUNULAN: set[str] = set()
+for satir in caddy.splitlines():
+    if not satir or satir[0].isspace() or satir.lstrip().startswith("#"):
+        continue
+    govde = satir.split("#", 1)[0].strip()
+    if not govde.endswith("{") or govde in ("{",) or govde.startswith("("):
+        continue
+    for parca in govde[:-1].split(","):
+        cozulen = coz(parca.strip())
+        if cozulen:
+            SUNULAN.add(cozulen.lower())
+
+#: DISARIYA VERILMIS, geri alinamayan konaklar — Caddyfile'dan DUSERSE
+#: kirilan sey bizim kontrolumuzde olmayan bir yerde durur:
+#:
+#:  * `panel.yonetio.site` — App Store Connect'in GIZLILIK POLITIKASI
+#:    alanina girilen adres. Apple bu baglantiyi elle acar; kirilirsa
+#:    uygulama reddedilir ve duzeltme yeni bir inceleme turu demektir.
+#:  * `api.yonetio.site` — magazadaki mobil yapimin ICINE GOMULU API
+#:    adresi. Yapim degistirilemez; bu ad sonsuza kadar cevap vermelidir.
+#:  * `yonetio.site` — incelemedeki yapimin hukuki belge baglantilarinin
+#:    KOKU (`AppConfig.webBaseUrl`).
+#:
+#: Yeni alan adi eklemek bunlari BIRAKMAK anlamina gelmez; "artik yeni
+#: alani kullaniyoruz" diyerek eskisini silmek, kontrolumuz disindaki
+#: kayitlari kirar.
+KORUNAN = {
+    "panel.yonetio.site": "App Store Connect gizlilik politikasi adresi",
+    "api.yonetio.site": "magazadaki yapimin icine gomulu API adresi",
+    "yonetio.site": "incelemedeki yapimin hukuki belge koku",
+}
+for ad, neden in sorted(KORUNAN.items()):
+    if ad not in SUNULAN:
+        bulgular.append(
+            f"4: KORUNAN konak `{ad}` Caddyfile'da YOK — {neden}. Bu adres "
+            f"disariya verildi ve geri alinamaz; dusmesi bizim "
+            f"duzeltemeyecegimiz bir yerde kirilma uretir."
+        )
+
+#: Uygulamalarin KODA GOMULU baglanti verdigi yerler: (dosya, regex).
+#: Deger degisken/ayar ise VARSAYILANI olculur — cihazdaki yapim onu tasir.
+BAGLANTI_KAYNAKLARI = [
+    ("mobile/lib/src/core/config/app_config.dart",
+     r"defaultValue:\s*'(https?://[^']+)'"),
+    ("backend/app/config.py",
+     r'portal_base_url:\s*str\s*=\s*"(https?://[^"]+)"'),
+]
+
+for yol, desen in BAGLANTI_KAYNAKLARI:
+    metin = metinler.get(yol)
+    if metin is None:
+        bulgular.append(f"4: {yol} okunamadi (yol degisti mi?)")
+        continue
+    for adres in set(re.findall(desen, metin)):
+        ad = urlsplit(adres).hostname or ""
+        if not ad or not MARKA.search(ad):
+            continue  # emulator/localhost gibi gelistirme adresleri
+        # Unicode yazilmis olabilir; Caddy punycode tutar.
+        try:
+            ad_ace = ace(ad)
+        except UnicodeError:
+            ad_ace = ad
+        if ad.lower() in SUNULAN or ad_ace.lower() in SUNULAN:
+            continue
+        bulgular.append(
+            f"4: {yol}: `{adres}` adresine baglanti veriliyor ama `{ad_ace}` "
+            f"Caddyfile'da TANIMLI DEGIL. Sonuc temiz bir 404 degil, TLS el "
+            f"sikismasinin dusmesidir (curl `000`). Sunulan konaklar: "
+            f"{', '.join(sorted(SUNULAN))}"
         )
 
 # --------------------------------------------------------------------------- #

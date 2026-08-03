@@ -56,7 +56,13 @@
 #
 # Kok, panelin KENDISINI sunar (ayri bir tanitim uygulamasi yok):
 # `/gizlilik` ve `/kosullar` zaten admin-web'in PUBLIC rotalaridir.
-{$PORTAL_DOMAIN}, www.{$PORTAL_DOMAIN}, {$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI} {
+#
+# `app.` DE BURADA (yeni alanda): DNS'te A kaydi ACILMIS ama hicbir site
+# blogu yoktu -> TLS el sikismasi "internal error" ile duser, istemci
+# HTTP'ye hic gelemez (Kerem'in gordugu `000` budur). Bir konagi DNS'te
+# acip Caddy'de tanimlamamak, "site yok" degil "BAGLANTI KOPTU" uretir;
+# ikisi cok farkli seylerdir ve ikincisi teshisi zorlastirir.
+{$PORTAL_DOMAIN}, www.{$PORTAL_DOMAIN}, app.{$PORTAL_DOMAIN}, {$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI} {
 	import security_headers
 	header X-Frame-Options "DENY"
 	encode gzip zstd

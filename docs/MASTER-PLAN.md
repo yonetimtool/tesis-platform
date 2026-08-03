@@ -6838,9 +6838,51 @@ KAPILAR: `depo-izlenmeyen` 0 · `depo-alan-adi` 0 · backend `pytest`
 `DB_POOL_SIZE`, `DB_MAX_OVERFLOW` dev'de var prod'da yok) — **bu turdan
 ÖNCE de vardı**, `git stash` ile doğrulandı; kapsam dışı bırakıldı.*
 
-Acceptance: Kerem `yonetio.site` kök+www A kayıtlarını prod IP'ye çevirir,
-`caddy`yi yeniden başlatır; `docs/alan-adi-gecisi.md` §3'teki doğrulama
-komutları beş konakta da 200 ve "Parked Domain" içermeyen sayfa verir.
+**TAKİP TURU — kök konaklar `000` dönüyordu.** Cihaz kanıtı:
+`panel.yonetio.site/gizlilik` **200**, ama `yonetio.site/gizlilik` **000**.
+Ölçüldü (dışarıdan, SNI ile): prod'da çalışan Caddy'nin sertifikası
+**yalnız `panel.yonetio.site` ve `api.yonetio.site`** için var; commit'li
+Caddyfile'da bulunan `panel.xn--ynetiyor-n4a.com` bile TLS'te
+`internal error` veriyor. Yani **Caddyfile bir kusur taşımıyordu — yeni
+yapılandırma prod'a hiç dağıtılmamıştı.** DNS ise Kerem tarafından
+tamamlanmış: `yonetio.site` kökü artık prod IP'de, ve **`app.` kaydı da
+açılmış** (benim bilmediğim dördüncü konak) — Caddyfile'a eklendi, artık
+**9 konak** sunuluyor (`caddy adapt` ile sayıldı).
+
+**`000`, "sayfa yok" DEĞİLDİR.** SNI eşleşmeyince TLS el sıkışması düşer;
+istemci HTTP'ye hiç gelemez. Tanımsız bir konak temiz bir 404 değil,
+**kopmuş bir bağlantı** üretir — App Store denetçisi için ayırt edilemez.
+Belgeye ayırt etme tablosu ve sunucudan Host başlıklı yerel curl'ler
+eklendi (TLS/DNS/ağ denklemden çıkar).
+
+**DAĞITIM KOMUTU DÜZELTİLDİ — sessiz no-op tuzağı.** Önceki tur
+`up -d caddy` diyordu. `Caddyfile` bir **bind mount**'tur: içeriğini
+değiştirmek servis *tanımını* değiştirmez, dolayısıyla salt-Caddyfile
+düzenlemesinde compose kabı yeniden yaratmaz — komut **"Container caddy
+Running" yazıp hiçbir şey yapmaz** ve başarıyla döndüğü için dağıtım
+yapıldı sanılır. Artık `--force-recreate` yazılı; kesintisiz alternatif
+(`caddy reload`) da belgede.
+
+**YENİ KİLİT — kontrol 4 (`SUNULUYOR`).** İki tarafı bağlar: (a)
+uygulamalarımızın **koda gömülü bağlantı verdiği** her konak Caddyfile'da
+tanımlı olmalı — mobilin `webBaseUrl`'ü `yonetio.site` kökünü gösteriyor
+ve o konak sunulmuyordu, kilit bunu yakalar; (b) **KORUNAN** konaklar
+(`panel.yonetio.site` = App Store'un gizlilik adresi,
+`api.yonetio.site` = mağazadaki yapımın gömülü API'si, `yonetio.site` =
+incelemedeki yapımın hukuki belge kökü) Caddyfile'dan **asla düşemez** —
+bunlar dışarıya verilmiş, geri alınamaz adreslerdir. DENEY=4 ve DENEY=5
+ile mutasyonla doğrulandı.
+
+**ÖNEMLİ AYRIM:** kök sunumu App Store *alanı* için ek bir güzellik ama
+**uygulama içi hukuki bağlantılar için ZORUNLU** — `AppConfig.webBaseUrl`
+kökü gösteriyor, yani dağıtım yapılana kadar uygulamadaki "Gizlilik
+Politikası" düğmesi park sayfası bile değil, **hiçbir şey** açmıyor.
+Mobil sabit **değiştirilmedi**: incelemedeki yapım zaten kökü taşıyor,
+sabiti değiştirmek onu kurtarmaz — kökü sunmak kurtarır.
+
+Acceptance: Kerem §2'deki `--force-recreate` dağıtımını yapar;
+`docs/alan-adi-gecisi.md` §3a/3b/3c doğrulaması yedi konakta da sertifika
++ `/gizlilik` 200 verir ve "Parked Domain" kalmaz.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
