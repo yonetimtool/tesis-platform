@@ -509,6 +509,12 @@ class Camera(Base):
     # true olur. `stream_url` kameranin KENDI adresidir ve korunur — restream
     # bozulunca gercek adres kaybolmasin.
     restream_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # SNAPSHOT (0031 / P121): TEK KARE dondüren adres (image/jpeg). Izgara
+    # karosu 5-10 sn'de bir BUNU ceker; oynatici acilmaz. Frigate'in
+    # `/api/<kamera>/latest.jpg` ucu tam olarak budur ve P17'de doldurulur.
+    # Uc adres UC AYRI SEYDIR: stream (kameranin kendisi), restream (gecidin
+    # oynatilabilir yayini), snapshot (tek kare).
+    snapshot_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     tur: Mapped[str] = mapped_column(
         CAMERA_TUR, nullable=False, server_default=text("'hls'")
     )

@@ -47,6 +47,7 @@ from ..schemas import (
     UrlCokUzun,
     UrlTurUyusmazligi,
     dogrula_restream,
+    dogrula_snapshot,
     dogrula_url_tur,
     oynatilabilir_mi,
 )
@@ -119,6 +120,24 @@ def _restream_dogrula(restream_url: str | None) -> None:
         ) from exc
 
 
+def _snapshot_dogrula(snapshot_url: str | None) -> None:
+    """Anlik kare adresi YALNIZ http(s) — katalog metniyle 422 (0031/P121).
+
+    `_restream_dogrula` ile ayni desen. Ayri bir mesaj anahtari var cunku
+    kullanici ayri bir ALANI doldurmustur; "restream adresi" diye uyarmak
+    onu yanlis alana bakmaya gonderirdi.
+    """
+    try:
+        dogrula_snapshot(snapshot_url)
+    except UrlCokUzun as exc:
+        raise _cok_uzun(exc) from exc
+    except UrlTurUyusmazligi as exc:
+        raise APIError(
+            422, "invalid_stream_url", "kamera_snapshot_semasi",
+            tur=exc.tur, semalar=" / ".join(exc.semalar),
+        ) from exc
+
+
 @router.get("", response_model=CameraListResponse)
 async def list_cameras(
     limit: int = Query(50, ge=1, le=200),
@@ -166,6 +185,7 @@ async def create_camera(
     # pydantic'in ham Ingilizce `validation_error`ini uretirdi.
     _url_tur_dogrula(body.stream_url, body.tur)
     _restream_dogrula(body.restream_url)
+    _snapshot_dogrula(body.snapshot_url)
     obj = Camera(tenant_id=user.tenant_id, **body.model_dump())
     db.add(obj)
     try:
@@ -197,6 +217,8 @@ async def update_camera(
     )
     if "restream_url" in alanlar:
         _restream_dogrula(alanlar["restream_url"])
+    if "snapshot_url" in alanlar:
+        _snapshot_dogrula(alanlar["snapshot_url"])
     for key, value in alanlar.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()

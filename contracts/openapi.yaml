@@ -12762,6 +12762,19 @@ components:
             `stream_url` KORUNUR: o kameranin KENDI adresidir (envanter, saha
             teshisi, Frigate yapilandirmasi) ve gecit yeniden kurulunca
             degisen adres bu alandir.
+        snapshot_url:
+          type: string
+          nullable: true
+          maxLength: 2048
+          example: "http://frigate.site.local:5000/api/kapi/latest.jpg"
+          description: >
+            (0031 / P121) TEK KARE dondüren adres (image/jpeg). Izgara karosu
+            oynatici ACMADAN 5-10 sn'de bir bunu ceker; `null` ise karo yer
+            tutucu gosterir (davranis degismez). Frigate'in
+            `/api/<kamera>/latest.jpg` ucu tam olarak budur.
+            YALNIZ http(s) — `rtsp://` bir kare adresi olamaz ve 422
+            `invalid_stream_url` (`kamera_snapshot_semasi`) verir.
+            Backend bu adresi de HIC cekmez; kareyi ISTEMCI ceker.
         tur:
           type: string
           enum: [hls, mp4, rtsp]
@@ -12817,6 +12830,15 @@ components:
             http(s) — `rtsp://` 422 verir. Dolu ise `oynatilabilir` true
             olur; `null` gonderilirse gecit kaldirilir ve rtsp kamera yeniden
             oynatilamaz hale gelir.
+        snapshot_url:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: >
+            (0031 / P121) Opsiyonel anlik kare adresi (image/jpeg). Izgara
+            karosu bunu periyodik ceker. YALNIZ http(s) — `rtsp://` 422
+            verir. `null` gonderilirse kare kaldirilir ve karo yer tutucuya
+            doner.
     CameraUpdate:
       type: object
       description: >
@@ -12839,3 +12861,12 @@ components:
             http(s) — `rtsp://` 422 verir. Dolu ise `oynatilabilir` true
             olur; `null` gonderilirse gecit kaldirilir ve rtsp kamera yeniden
             oynatilamaz hale gelir.
+        snapshot_url:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: >
+            (0031 / P121) Opsiyonel anlik kare adresi (image/jpeg). Izgara
+            karosu bunu periyodik ceker. YALNIZ http(s) — `rtsp://` 422
+            verir. `null` gonderilirse kare kaldirilir ve karo yer tutucuya
+            doner.

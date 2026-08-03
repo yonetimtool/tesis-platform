@@ -376,6 +376,120 @@ def test_hls_kamerada_restream_davranisi_bozmaz(client, world):
     assert r.json()["restream_url"] is None
 
 
+# ---------------------- P121 / 0031: anlik kare adresi ---------------------- #
+# Izgara karosu oynatici ACMADAN goruntu gosterir; kareyi bu adresten ceker.
+# Uc adres UC AYRI SEYDIR: stream (kameranin kendisi), restream (gecidin
+# oynatilabilir yayini), snapshot (tek kare). Testler ucunun BIRBIRINDEN
+# BAGIMSIZ oldugunu olcer — birini otekinin yerine kullanmak, karonun
+# sessizce bos kalmasiyla sonuclanirdi.
+
+_SNAP = "http://frigate.local:5000/api/kapi/latest.jpg"
+
+
+def test_snapshot_EKLEMELI_varsayilani_None(client, world):
+    """Alan opsiyoneldir: verilmezse davranis DEGISMEZ (geriye uyum)."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    cam = _mk_cam(client, admin)
+    assert cam["snapshot_url"] is None
+
+
+def test_snapshot_yazilir_ve_okunur(client, world):
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    cam = _mk_cam(client, admin, snapshot_url=_SNAP)
+    assert cam["snapshot_url"] == _SNAP
+    # Listede de gorunmeli: karo listeden cizilir, tekil GET'ten degil.
+    r = client.get("/cameras", headers=admin, params={"limit": 200})
+    kayit = next(x for x in r.json()["items"] if x["id"] == cam["id"])
+    assert kayit["snapshot_url"] == _SNAP
+
+
+def test_snapshot_SONRADAN_eklenip_kaldirilabilir(client, world):
+    """Frigate (P17) alani SONRADAN dolduracak; PATCH yolu calismali."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    cam = _mk_cam(client, admin)
+    r1 = client.patch(f"/cameras/{cam['id']}", headers=admin,
+                      json={"snapshot_url": _SNAP})
+    assert r1.status_code == 200, r1.text
+    assert r1.json()["snapshot_url"] == _SNAP
+    r2 = client.patch(f"/cameras/{cam['id']}", headers=admin,
+                      json={"snapshot_url": None})
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["snapshot_url"] is None
+
+
+def test_snapshot_YALNIZ_http_olabilir(client, world):
+    """`rtsp://` bir KARE adresi olamaz — istemci onu goruntu gibi cekemez.
+
+    Sema burada reddedilmezse belirti "kamera calismiyor" diye gorunur ve
+    teshis kamerada aranir, KAYITTA degil.
+    """
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post("/cameras", headers=admin, json={
+        "ad": f"kotu-kare-{uuid.uuid4().hex[:6]}",
+        "stream_url": _HLS, "tur": "hls",
+        "snapshot_url": "rtsp://10.0.0.7:554/kare.jpg",
+    })
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "invalid_stream_url"
+
+
+def test_snapshot_PATCH_te_de_dogrulanir(client, world):
+    """POST'ta reddedilip PATCH'te kabul edilen bir kural, kural degildir.
+
+    KOD OLCULUR, YALNIZ DURUM KODU DEGIL. Router dogrulamasi kaldirildiginda
+    istek YINE 422 doner — ama sema kisitindan (`ck_camera_snapshot_sema`),
+    ve o yol generik `validation_error` + "Değer kısıt ihlali." uretir.
+    Yani yalniz `422` beklemek router dogrulamasinin varligini HIC olcmez:
+    mutasyon denemesinde bu test tam olarak boyle sessiz kaldi (olculdu).
+    Kullanici acisindan fark buyuktur — hangi alanin yanlis oldugunu
+    soyleyen bir cumle ile "kisit ihlali" arasindaki fark.
+    """
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    cam = _mk_cam(client, admin)
+    r = client.patch(f"/cameras/{cam['id']}", headers=admin,
+                     json={"snapshot_url": "rtsp://10.0.0.7:554/k.jpg"})
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "invalid_stream_url", r.text
+    # Mesaj ALANI isaret etmeli (kullanici hangi kutuya bakacagini bilsin).
+    assert "http" in r.json()["error"]["message"], r.text
+
+
+def test_snapshot_OYNATILABILIRI_degistirmez(client, world):
+    """Kare adresi VIDEO degildir: rtsp kamerayi oynatilabilir YAPMAZ.
+
+    Aksi halde kullanici karoda goruntu gorup dokunur ve oynatici acilmaz —
+    kare ile yayin birbirinin yerine gecemez.
+    """
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post("/cameras", headers=admin, json={
+        "ad": f"rtsp-kare-{uuid.uuid4().hex[:6]}",
+        "stream_url": _RTSP, "tur": "rtsp", "snapshot_url": _SNAP,
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["oynatilabilir"] is False
+    assert r.json()["snapshot_url"] == _SNAP
+
+
+def test_snapshot_de_SINIRLI(client, world):
+    """P25a siniri bu alan icin de gecerli (listeyi sisiren yapistirma)."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post("/cameras", headers=admin, json={
+        "ad": f"uzun-kare-{uuid.uuid4().hex[:6]}",
+        "stream_url": _HLS, "snapshot_url": "https://o/" + "a" * 2049,
+    })
+    assert r.status_code == 422, r.text
+
+
+def test_snapshot_KVKK_suzgecini_delmez(client, world):
+    """Gizli kamera, kare adresi olsa bile sakine SIZMAZ."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    gizli = _mk_cam(client, admin, snapshot_url=_SNAP,
+                    aktif=True, sakin_gorebilir=False)
+    sakin = _headers(client, world["slug_a"], world["resident_a"])
+    r = client.get("/cameras", headers=sakin, params={"limit": 200})
+    assert gizli["id"] not in [x["id"] for x in r.json()["items"]]
+
+
 # ------------------------- P25a: adres UZUNLUK siniri ----------------------- #
 # Sinirsiz `text` sutunu, yapistirilan bir DVR yapilandirmasinin tamamini
 # kabul edip listeyi ve mobil kart cizimini sisiriyordu. Sinir UC katmanda:

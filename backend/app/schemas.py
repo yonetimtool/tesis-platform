@@ -473,6 +473,23 @@ def dogrula_restream(restream_url: str | None) -> None:
         raise UrlTurUyusmazligi("restream", ("http://", "https://"))
 
 
+def dogrula_snapshot(snapshot_url: str | None) -> None:
+    """Anlik kare adresi YALNIZ http(s) olabilir (0031 / P121).
+
+    `dogrula_restream` ile ayni gerekce, bir adim daha keskin: istemci bu
+    adresi bir GORSEL gibi ceker. `rtsp://` yazilirsa karo sessizce bos
+    kalir — hata da vermez, cunku istek hic kurulmaz. Sema burada
+    reddedilmezse belirti "kamera calismiyor" diye gorunur ve teshis
+    kamerada aranir, kayitta degil.
+    """
+    if snapshot_url is None:
+        return
+    if len(snapshot_url) > URL_UST_SINIR:
+        raise UrlCokUzun("snapshot_url", len(snapshot_url))
+    if not snapshot_url.startswith(("http://", "https://")):
+        raise UrlTurUyusmazligi("snapshot", ("http://", "https://"))
+
+
 def oynatilabilir_mi(tur: str, restream_url: str | None = None) -> bool:
     """Istemci bu kamerayi oynatabilir mi?
 
@@ -545,6 +562,9 @@ class CameraCreate(BaseModel):
     # Ingilizce bir cumle dondururdu; sinir `dogrula_url_tur`/`dogrula_restream`
     # icinde olculur ve router katalogdan istegin dilinde metin uretir.
     restream_url: str | None = None
+    # SNAPSHOT (0031 / P121): izgara karosunun cektigi TEK KARE adresi.
+    # Yalniz http(s); sinir/sema `dogrula_snapshot` icinde olculur.
+    snapshot_url: str | None = None
 
     # NOT: URL/tur ve uzunluk dogrulamasi BURADA YAPILMAZ — ROUTER'da yapilir.
     # (P25 bulgusu) Buradaki bir `model_validator`, ValueError'i pydantic'in
@@ -569,6 +589,8 @@ class CameraUpdate(BaseModel):
     # istemci HLS oynatir, rtsp gecit adresi anlamsizdir.
     # Sinir dogrulayicida olculur (bkz. CameraCreate notu).
     restream_url: str | None = None
+    # SNAPSHOT (0031 / P121) — bkz. CameraCreate.
+    snapshot_url: str | None = None
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "CameraUpdate":
@@ -587,6 +609,9 @@ class CameraOut(BaseModel):
     stream_url: str
     # Restream gecidi (0012). Dolu ise istemci BUNU oynatmalidir.
     restream_url: str | None = None
+    # Anlik kare adresi (0031). Dolu ise izgara karosu periyodik olarak
+    # BUNU ceker; bos ise karo yer tutucu gosterir (davranis degismez).
+    snapshot_url: str | None = None
     tur: CameraTur
     aktif: bool
     sakin_gorebilir: bool

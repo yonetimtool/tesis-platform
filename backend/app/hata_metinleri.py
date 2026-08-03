@@ -1322,6 +1322,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "L’adresse de rediffusion doit commencer par http:// ou https://.",
         "es": "La dirección de retransmisión debe empezar por http:// o https://.",
     },
+    "kamera_snapshot_semasi": {
+        "tr": "Anlık görüntü adresi http:// veya https:// ile başlamalı.",
+        "en": "The snapshot URL must start with http:// or https://.",
+        "ar": "يجب أن يبدأ عنوان اللقطة بـ http:// أو https://.",
+        "ru": "Адрес снимка должен начинаться с http:// или https://.",
+        "de": "Die Standbild-Adresse muss mit http:// oder https:// beginnen.",
+        "fr": "L’adresse de l’instantané doit commencer par http:// ou https://.",
+        "es": "La dirección de la instantánea debe empezar por http:// o https://.",
+    },
     # --- ANPR girisi (P16) ---
     "anpr_anahtar_gecersiz": {
         "tr": "ANPR anahtarı geçersiz.",
