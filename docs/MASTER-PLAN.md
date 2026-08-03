@@ -6933,6 +6933,68 @@ Acceptance: Kerem §2'deki `--force-recreate` dağıtımını yapar;
 sertifika + kök/`app.` 200 + `/gizlilik` 200 verir ve "Parked Domain"
 kalmaz.
 
+### P121 — Kamera ızgarasında canlı karo (oynatıcı açmadan)
+Status: ACIK · Depends-on: —
+> **NUMARA ÇAKIŞMASI:** Kerem bu üç maddeyi "P43–P45" diye istedi, ama o
+> numaralar **doludur** (P43/P44/P45 = panel bileşen testi altyapısı, üçü de
+> BITTI ve üç ayrı `Depends-on` onlara işaret ediyor). Var olan maddeleri
+> yeniden numaralamak her çapraz göndermeyi bozardı (kural 1 kimliğe göre
+> işler); bu yüzden sıradaki boş numaralar kullanıldı.
+> **İstenen etiket → gerçek:** P43→**P121**, P44→**P122**, P45→**P123**.
+
+Scope: Izgarada oynatıcı açmadan canlı görüntü. **N tane video oynatıcı
+otomatik oynatılmaz** (pil/ısı/bant genişliği; iOS eşzamanlı AVPlayer sayısını
+sınırlar). Anlık görüntü deseni: her karo 5–10 sn'de bir tazelenen **durağan
+kare** gösterir, **yalnız ızgara görünürken**; arka planda durur (ana ekranın
+tazeleme-kapsamı disiplini yeniden kullanılır).
+Kare kaynağı sırayla: (a) `camera.snapshot_url` — sözleşmeye/şemaya **YENİ bir
+revizyonda EKLEMELİ** değişiklik olarak eklenir, Frigate (P17) sonradan
+doldurur; (b) HLS için ucuz istemci-tarafı kare yakalama (kısa sessiz init /
+küçük resim) — **CPU/pil maliyeti ÖLÇÜLÜR**, sıçratıyorsa yol **reddedilir**;
+(c) geri düşüş: önbellekteki son kare + durağan yer tutucu.
+"CANLI" rozeti **yalnız kareler gerçekten tazelenirken**. Oynatılamayan
+(rtsp / `oynatilabilir=false`) karolar mevcut rozetlerini korur, tazelenmez.
+Kamera formundaki yardım metninde **desteklenen kaynak kuralı** yeniden
+doğrulanır ve yazılır: yalnız doğrudan medya akışı — HLS (`.m3u8`) ve MP4
+oynar; web sayfaları (YouTube, Vimeo, belediye izleyici sayfaları) **oynamaz**
+ve istemcide açık Türkçe hatayla reddedilir; RTSP saklanır ama yalnız
+gelecekteki Frigate restream'i (P15–P17) ile oynatılabilir. 7 dil ARB; kapılar.
+Acceptance: göç + sözleşme + şema eklemeli; ızgara görünürken tazeleme,
+arka planda durma ölçülür (test); rozet yalnız tazelerken; form reddi 7 dilde.
+
+### P122 — Bina tasarımcısı: ızgara hücresinde daire bilgisi
+Status: ACIK · Depends-on: P121
+Scope: Bina/kat tasarımcısında daire tipi atandıktan sonra **hücrenin kendisi**
+tipi göstermeli — yalnız yan panel değil. Hücre içeriği: kapı no + tip
+(örn. "12 · 2+1") ve bir katın bir bakışta okunmasını sağlayan **ince,
+tipe bağlı renk/rozet**. En küçük desteklenen ızgara boyutunda **okunur
+kalmalı** (kısalt/ölçekle; küçük ekran golden testiyle doğrula). Hem **panel**
+bina tasarımcısına hem de aynı ızgaranın çizildiği **mobil bina haritasına**
+uygulanır — ikisi de denetlenir, ızgara nerede varsa orada uygulanır.
+Depends-on daire tipleri işi (P26); P26 tamam değilse **var olan tip modeliyle**
+uygulanır ve takip notu yazılır. 7 dil ARB; kapılar (panel: `npm run build` de).
+Acceptance: hücre tipi gösterir; küçük ekran golden'ı geçer; iki yüzey de
+denetlenmiş ve nerede ızgara varsa uygulanmış.
+
+### P123 — Telefon girişi: maskeleme + doğrulama (HER YERDE)
+Status: ACIK · Depends-on: P122
+Scope: **Her** telefon alanı (mobil + panel: sakin/personel/kişi formları,
+giriş, personel, firma, demo/admin oluşturma):
+* yazarken gruplanarak çizilir: `0543 199 29 04` (TR biçimi);
+* yalnız rakam kabul eder, uzunluk **sert** sınırlanır (fazlası yazılamaz);
+* geçersiz TR mobil ön ekini açık Türkçe satır-içi mesajla reddeder;
+* API'ye **normalleştirilmiş** biçim gider (sunucudaki `normalize_phone` zaten
+  birden çok biçimi kabul ediyor — **tel biçimi DEĞİŞMEZ**, yalnız kullanıcı
+  deneyimi);
+* yapıştırma çalışmaya devam eder (`+905431992904` → `0543 199 29 04`).
+**TEK paylaşılan** bileşen/biçimlendirici olarak yazılır ve **bütün çağrı
+yerleri ona taşınır** (her telefon alanı grep'lenir; maskesiz kalan bir alan
+**başarısızlıktır**). Testler: biçimlendirici birim testleri (yazma,
+yapıştırma, geri silme, taşma, geçersiz ön ek) + platform başına bir widget
+testi. 7 dil ARB; kapılar.
+Acceptance: grep envanteri ile "maskesiz kalan alan yok" gösterilir;
+biçimlendirici testleri + widget testleri geçer.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız
