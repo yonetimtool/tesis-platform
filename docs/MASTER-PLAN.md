@@ -7204,6 +7204,74 @@ Acceptance: dev'de downgrade→500→upgrade→200 üretildi; `/health` ayrışm
 raporluyor; kontrol J DENEY=7 ile kırmızı veriyor; dört oynatma gerileme
 testi geçiyor.
 
+### P125 — Platform / tesis yüzeylerini AYIR (panel.* yalnız platform)
+Status: ACIK · Depends-on: P120
+> **NUMARA ÇAKIŞMASI:** Kerem bu üçünü "P40–P42" diye istedi, ama o numaralar
+> **doludur** (P40 panel finans/rapor bölümü, P41 yetki matrisi görünümü,
+> P42 içerik daraltma kapsamı — üçü de BITTI ve **üç ayrı `Depends-on`**
+> onlara işaret ediyor). Yeniden numaralamak her çapraz göndermeyi bozardı.
+> **İstenen etiket → gerçek:** P40→**P125**, P41→**P126**, P42→**P127**.
+
+Scope: `admin-web`in her sayfası PLATFORM / TESİS diye sınıflanır.
+`panel.yönetiyor.com` **yalnız platform** bölümlerini sunar (tesis yönetimi,
+platform ayarları, tesisler-arası görünümler, işlem geçmişi); tek bir sitenin
+işlemleri (sayaç okuma, aidat işlemleri…) oraya **girmez**. Zorlama
+**sunucu tarafındadır**, gizlenmiş menü değil: testler bir tesis rolünün
+platform uçlarında **403** aldığını ve tersini kanıtlar.
+
+**ÖLÇÜLEN BAŞLANGIÇ DURUMU (bu tur):** platform rolü **zaten var** —
+bugünkü `admin`, `/tenants*` uçlarını cross-tenant, owner-sahipli oturumla
+işletiyor ve `yonetici` oraya erişemiyor (rol matrisi: `POST /tenants` →
+admin IZIN, diğer beşi RED). Yani "tesis yöneticisi platform API'sine
+ulaşamamalı" şartı **bugün sağlanıyor**.
+
+**ASIL SORUN BAŞKA VE DAHA İNCE: `admin` AŞIRI YÜKLÜ.** Rol matrisinde
+"yalnız admin" olan **35 uç** iki farklı şeye ayrılıyor:
+* **Gerçek platform uçları (6):** `/tenants*` (5 uç), `/admin/overview`,
+  `/support/all`, `/integrations/anpr/keys*`, `/audit`, `/devices`.
+* **TESİS SEVİYESİ ama admin-only olanlar (~29):** `/finans/*`, `/dues/*`,
+  `/borclandirma/*`, `/assets`, `/checkpoints/{id}/sdm-key`,
+  `/unit-uyarilari/kuyruk-isle`…
+İkinci küme, Kerem'in "panel'de tek bir sitenin aidat işlemleri olmasın"
+dediği şeyin ta kendisidir. Ayrım bu yüzden yeni bir rol eklemekten
+ibaret değil: **`admin`in iki anlamını ayırmak** gerekiyor.
+
+**KARAR (uygulanacak):** `admin` **platform** rolü olarak kalır; ikinci
+kümedeki tesis-seviyesi uçlar `yonetici`ye açılır ve `admin` oralardan
+**çekilir**. Yeni bir `platform_admin` enum değeri **eklenmez**: aynı
+ayrımı üreten iki yoldan bu, göç gerektirmeyen ve var olan matrisi
+bozmayan olanıdır — ayrıca `admin` zaten dışarıya "platform" diye
+anlatılıyor. Karşı seçenek (yeni enum + göç + 317 uçluk matrisin yeniden
+üretimi) aynı sonucu daha pahalıya verirdi.
+
+Acceptance: `panel.*` yalnız platform bölümlerini gösterir; rol matrisi
+kilidi yeni ayrımı yansıtır; tesis rolü platform ucunda 403, platform rolü
+tesis-özel uçta 403; kapılar (`npm run build` dâhil).
+
+### P126 — app.yönetiyor.com: tüm tesis rolleri için web çalışma alanı
+Status: ACIK · Depends-on: P125
+Scope: Mobil uygulamanın **web ikizi**, rol kapılı, onaylanmış tasarım
+dilinde. Roller ve kapsamları görev metnindeki gibi (yönetici / sakin /
+güvenlik / tesis görevlisi; P35 gelince güvenlik amiri). Giriş: telefon
+**ya da** e-posta + tesis kodu (mevcut panel auth'u yeniden kullanılır).
+**ÖNCE boşluk tablosu** üretilir ve commit'lenir (mobil özellik → web
+sayfası var / yapılacak), **sonra** rol/modül başına alt-commit'lerle
+uygulanır. i18n: 7 dil.
+Acceptance: dört rol de `app.*`ta giriş yapıp günlük akışlarını
+tamamlayabiliyor; rol yalıtımı sunucu tarafında test edilmiş; kapılar.
+
+### P127 — www.yönetiyor.com: tanıtım sitesi (SEO)
+Status: ACIK · Depends-on: P126
+Scope: Geçici statik açılış sayfası (P120) gerçek tanıtım sitesiyle
+değişir: hero/değer önerisi (site yöneticisi ve sakin için **ayrı ayrı**),
+Özellikler, Hakkımızda, İletişim (form → mail/bildirim), App Store/Play
+rozetleri (yayınlanana kadar yer tutucu), gizlilik/koşullar bağlantıları.
+SSR/statik Next.js public rotaları, meta/OG etiketleri, `sitemap.xml`,
+`robots.txt`, Türkçe birincil + 6 dil için `hreflang`.
+**P38'den AYRIDIR:** P38 tesis-başına sakin portalıdır; bu **şirket**
+sitesidir.
+Acceptance: Lighthouse SEO ≥ 90; iletişim formu teslim ediyor; kapılar.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız
