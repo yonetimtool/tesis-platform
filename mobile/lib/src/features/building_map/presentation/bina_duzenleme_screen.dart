@@ -10,6 +10,7 @@ import '../../auth/domain/user_role.dart';
 import '../../unit_tanimlari/data/unit_tanim_api.dart';
 import '../../unit_tanimlari/domain/unit_tanim_models.dart';
 import '../domain/bina_duzenleme_models.dart';
+import 'daire_tipi_rengi.dart';
 import 'bina_duzenleme_controller.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -557,7 +558,7 @@ class _FloorRow extends StatelessWidget {
                 children: [
                   // Salt-okuma: daireye dokunmak duzenleme formu ACMAZ.
                   for (final u in units)
-                    _UnitCell(unit: u, onTap: readOnly ? null : () => onUnit(u)),
+                    UnitCell(unit: u, onTap: readOnly ? null : () => onUnit(u)),
                   // "daire ekle" hucresi: salt-okumada ve bloksuz kovada gizli.
                   if (canAdd) _AddUnitCell(onTap: onAddUnit),
                 ],
@@ -571,8 +572,15 @@ class _FloorRow extends StatelessWidget {
 }
 
 /// Sikayet Haritasi hucre stilini yansitir (58x46, yuvarlak, etiket).
-class _UnitCell extends StatelessWidget {
-  const _UnitCell({required this.unit, required this.onTap});
+/// Daire hucresi — (P122) kapi no + tip etiketi + tipe bagli renk.
+///
+/// `@visibleForTesting` PUBLIC: en kucuk izgara boyutunda ve buyuk yazi
+/// olceginde TASMADIGI olculebilsin diye. Ekranin tamami uzerinden test
+/// etmek, olcmek istedigimiz seyi (tek hucrenin siniri) veri kurulumunun
+/// altinda gomerdi.
+@visibleForTesting
+class UnitCell extends StatelessWidget {
+  const UnitCell({super.key, required this.unit, required this.onTap});
 
   final EditorUnit unit;
   // null → salt-okuma (dokunma etkisiz; duzenleme formu acilmaz).
@@ -583,18 +591,53 @@ class _UnitCell extends StatelessWidget {
     final active = unit.aktif;
     final scheme = Theme.of(context).colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final color = active ? const Color(0xFF3949AB) : Colors.blueGrey;
+    // (P122) TIP RENGI YALNIZ AKTIF dairede: pasif daire her tipte ayni
+    // soluk griyi tasimali, yoksa "pasif" durumu renk gurultusunde kaybolur.
+    final color = active
+        ? daireTipiRengi(unit.unitTipAd)
+        : Colors.blueGrey;
     // Seffaf dolgu koyu zeminde kaybolmasin diye koyu modda tinti belirginlestir;
     // etiket rengini de aciga cek (koyu indigo/blueGrey koyu modda okunmaz).
+    // Etiket rengi TIP RENGINDEN turer: koyu temada aciga, acik temada
+    // koyuya cekilir — sabit indigo, turuncu/yesil bir hucrede okunmazdi.
     final Color labelColor = active
-        ? (isDark ? const Color(0xFFC5CAE9) : const Color(0xFF283593))
+        ? (isDark
+            ? Color.lerp(color, Colors.white, 0.62)!
+            : Color.lerp(color, Colors.black, 0.35)!)
         : (isDark ? Colors.blueGrey.shade200 : Colors.blueGrey);
+    final tipKisa = active ? daireTipiKisa(unit.unitTipAd) : '';
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 58,
-        height: 46,
+      // ERISILEBILIRLIK: gorsel kisaltma ekran okuyucuya TAM adi vermeli;
+      // "Dubleks…" diye okumak isitilebilir arayuzu bozardi.
+      // `container` + `excludeSemantics` ZORUNLU: alt agactaki `Text`ler
+      // kendi etiketlerini uretir ve disaridaki etiket onlarin YANINA
+      // eklenir — ekran okuyucu "12, Dublek…, 12, Dubleks Bahce Kati" gibi
+      // okur. Ilk yazimda tam bu oldu ve test yakaladi.
+      child: Semantics(
+        container: true,
+        excludeSemantics: true,
+        label: unit.unitTipAd == null || !active
+            ? unit.no
+            : '${unit.no}, ${unit.unitTipAd}',
+        child: _hucreGovdesi(context, color, labelColor, tipKisa, scheme, isDark),
+      ),
+    );
+  }
+
+  Widget _hucreGovdesi(BuildContext context, Color color, Color labelColor,
+      String tipKisa, ColorScheme scheme, bool isDark) {
+    // (P122) YAZI OLCEGIYLE BUYU (tur 27 deseni — blok karosu da boyle).
+    // Kapi numarasinin yanina tip etiketi eklemek kutuya IKINCI BIR SATIR
+    // koymaktir; sabit 46 dp yukseklik, erisilebilirlik icin yaziyi
+    // buyuten kullanicida TASIYORDU (1.6x ve 2.0x'te olculdu). Metni
+    // `FittedBox` ile kucultmek yanlis cozum olurdu: kullanici yaziyi
+    // BUYUK istedi, biz de kutuyu buyutuyoruz.
+    final olcek = MediaQuery.textScalerOf(context);
+    return Container(
+        width: olcek.scale(58),
+        height: olcek.scale(46),
         decoration: BoxDecoration(
           color: color.withValues(alpha: isDark ? 0.28 : 0.10),
           borderRadius: BorderRadius.circular(8),
@@ -613,15 +656,30 @@ class _UnitCell extends StatelessWidget {
               ),
               overflow: TextOverflow.ellipsis,
             ),
-            if (unit.sira != null)
+            // (P122) TIP, SIRADAN ONCELIKLIDIR. Hucre 46 dp yuksektir; ucuncu
+            // bir satir yazi olcegi buyuyen cihazda TASAR. Tip atanmissa
+            // kullanici icin degerli olan odur ("12 · 2+1"); sira yalnizca
+            // yerlesim ayrintisidir ve tip yokken gosterilir.
+            if (tipKisa.isNotEmpty)
+              Text(
+                tipKisa,
+                key: const Key('daire-tip-etiketi'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: labelColor,
+                ),
+              )
+            else if (unit.sira != null)
               Text('#${unit.sira}',
                   style: TextStyle(
                       fontSize: 10,
                       color: scheme.onSurfaceVariant)),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 
