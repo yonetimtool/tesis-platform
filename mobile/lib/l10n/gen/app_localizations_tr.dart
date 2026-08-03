@@ -2760,6 +2760,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get ortakAdSoyad => 'Ad Soyad';
 
   @override
+  String get telefonHataEksik =>
+      'Numara eksik — 10 hane girin (örn. 0543 199 29 04).';
+
+  @override
+  String get telefonHataOnEk =>
+      'Cep telefonu 5 ile başlamalı (örn. 0543…). Sabit hat kabul edilmez.';
+
+  @override
   String get ortakCepTelefonu => 'Cep telefonu';
 
   @override

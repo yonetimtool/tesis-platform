@@ -12,6 +12,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { ROLE_OPTIONS as ROLES, ROLE_STYLE, rolAdi } from "@/lib/roles";
 import type { UserDetail, UserListResponse, UserRole, UserRow } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
+import { telefonGiris, telefonNormalle } from "@/lib/telefon";
 
 const LIMIT = 20;
 
@@ -103,7 +104,7 @@ export default function UsersPage() {
         const body: Record<string, unknown> = {
           ad: form.ad,
           email: form.email || null,
-          telefon: form.telefon || null,
+          telefon: telefonNormalle(form.telefon) || null,
           aranabilir: form.aranabilir,
           role: form.role,
         };
@@ -114,7 +115,7 @@ export default function UsersPage() {
         // Parola bossa backend TEK SEFERLIK gecici kod uretir (temp_code).
         const body: Record<string, unknown> = {
           ad: form.ad,
-          telefon: form.telefon,
+          telefon: telefonNormalle(form.telefon),
           aranabilir: form.aranabilir,
           role: form.role,
         };
@@ -228,8 +229,9 @@ export default function UsersPage() {
             >
               <input
                 className={inputCls}
-                value={form.telefon}
-                onChange={(e) => setForm({ ...form, telefon: e.target.value })}
+                value={telefonGiris(form.telefon)}
+                // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
+                onChange={(e) => setForm({ ...form, telefon: telefonGiris(e.target.value) })}
                 placeholder={t("kullaniciTelefonOrnek")}
                 required
               />

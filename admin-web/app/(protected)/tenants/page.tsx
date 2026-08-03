@@ -14,6 +14,7 @@ import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
 import { ApiHatasi } from "@/lib/client";
 import { tarihSaatUzun } from "@/lib/tarih";
+import { telefonGiris, telefonNormalle } from "@/lib/telefon";
 
 interface TenantRow {
   id: string;
@@ -115,7 +116,8 @@ export default function TenantsPage() {
       const body: TenantAdminCreate = {
         yoneticiler: form.yoneticiler.map((y) => ({
           ad: y.ad,
-          phone: y.phone,
+          // Sunucuya NORMALLESTIRILMIS gider (telefon GLOBAL BENZERSIZ).
+          phone: telefonNormalle(y.phone),
           ...(y.password ? { password: y.password } : {}),
         })),
       };
@@ -248,8 +250,9 @@ export default function TenantsPage() {
                   >
                     <input
                       className={inputCls}
-                      value={y.phone}
-                      onChange={(e) => setYonetici(i, { phone: e.target.value })}
+                      value={telefonGiris(y.phone)}
+                      // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
+                      onChange={(e) => setYonetici(i, { phone: telefonGiris(e.target.value) })}
                       placeholder={t("kullaniciTelefonOrnek")}
                       required
                     />

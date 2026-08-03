@@ -8,6 +8,7 @@ import '../../../core/validators/password_rule.dart';
 import '../data/residents_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/merkez_diyalog.dart';
+import '../../../core/ui/telefon_alani.dart';
 
 /// Site Sakinleri — yonetici/admin: sakinleri listeler, yeni tasinani ekler
 /// (gecici kod), ayrilani cikarir (pasiflestir). Sakin KENDI kayit olamaz.
@@ -256,7 +257,7 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
           .updateResident(
             widget.member.userId,
             ad: _adCtrl.text.trim(),
-            telefon: _phoneCtrl.text.trim(),
+            telefon: telefonNormalle(_phoneCtrl.text),
             email: _emailCtrl.text.trim(),
             emailTemizle: _emailTemizle,
             rolTipi: _rolTipi,
@@ -304,6 +305,9 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
               controller: _phoneCtrl,
               enabled: !_submitting,
               keyboardType: TextInputType.phone,
+              // (P123) TEK bicimlendirici: gruplar, rakam disini
+              // yutar, uzunlugu SERT sinirlar, yapistirmayi cozer.
+              inputFormatters: const [TelefonBicimlendirici()],
               decoration: InputDecoration(
                 labelText: l10n.sakinYeniTelefon,
                 hintText: l10n.ortakTelefonIpucu,
@@ -423,7 +427,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
           .read(residentsApiProvider)
           .addResident(
             ad: _adCtrl.text.trim(),
-            telefon: _phoneCtrl.text.trim(),
+            telefon: telefonNormalle(_phoneCtrl.text),
             unitNo: _unitCtrl.text.trim(),
             password: _passwordCtrl.text,
           );
@@ -478,6 +482,9 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
               controller: _phoneCtrl,
               enabled: !_submitting,
               keyboardType: TextInputType.phone,
+              // (P123) TEK bicimlendirici: gruplar, rakam disini
+              // yutar, uzunlugu SERT sinirlar, yapistirmayi cozer.
+              inputFormatters: const [TelefonBicimlendirici()],
               decoration: InputDecoration(
                 labelText: l10n.ortakCepTelefonu,
                 hintText: l10n.ortakTelefonIpucu,

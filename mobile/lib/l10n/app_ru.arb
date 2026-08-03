@@ -789,6 +789,8 @@
   "sakinBosBirakDegismez": "Оставьте пустым — не изменится",
   "sakinGuncellendi": "Обновлено ✓",
   "ortakAdSoyad": "Имя и фамилия",
+  "telefonHataEksik": "Номер неполный — введите 10 цифр (например, 0543 199 29 04).",
+  "telefonHataOnEk": "Мобильный номер должен начинаться с 5 (например, 0543…). Стационарные не принимаются.",
   "ortakCepTelefonu": "Мобильный номер",
   "ortakTelefonIpucu": "напр. 0532 111 22 03",
   "ortakTelefonZorunlu": "Телефон обязателен",

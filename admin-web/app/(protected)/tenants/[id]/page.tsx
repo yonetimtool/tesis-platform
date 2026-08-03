@@ -11,6 +11,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
+import { telefonGiris, telefonNormalle } from "@/lib/telefon";
 
 interface Yonetici {
   id: string;
@@ -96,7 +97,7 @@ export default function TenantDetailPage() {
     setFormErr(null);
     try {
       const body: Record<string, unknown> = { ad };
-      if (telefon.trim()) body.phone = telefon.trim();
+      if (telefonNormalle(telefon)) body.phone = telefonNormalle(telefon);
       await apiSend(`/api/tenants/${id}/yonetici`, "PATCH", body);
       setEditing(false);
       mutate();
@@ -289,8 +290,9 @@ export default function TenantDetailPage() {
                   <Field label={t("kullaniciTelefon")} hint={t("tesisGlobalBenzersiz")}>
                     <input
                       className={inputCls}
-                      value={telefon}
-                      onChange={(e) => setTelefon(e.target.value)}
+                      value={telefonGiris(telefon)}
+                      // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
+                      onChange={(e) => setTelefon(telefonGiris(e.target.value))}
                       placeholder={t("kullaniciTelefonOrnek")}
                     />
                   </Field>

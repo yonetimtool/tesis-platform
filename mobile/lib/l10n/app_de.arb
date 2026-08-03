@@ -789,6 +789,8 @@
   "sakinBosBirakDegismez": "Leer lassen, um es unverändert zu lassen",
   "sakinGuncellendi": "Aktualisiert ✓",
   "ortakAdSoyad": "Vor- und Nachname",
+  "telefonHataEksik": "Die Nummer ist unvollständig – geben Sie 10 Ziffern ein (z. B. 0543 199 29 04).",
+  "telefonHataOnEk": "Eine Mobilnummer muss mit 5 beginnen (z. B. 0543…). Festnetz wird nicht akzeptiert.",
   "ortakCepTelefonu": "Mobilnummer",
   "ortakTelefonIpucu": "z. B. 0532 111 22 03",
   "ortakTelefonZorunlu": "Telefon ist Pflicht",

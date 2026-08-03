@@ -19,6 +19,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { telefonGiris, telefonNormalle } from "@/lib/telefon";
 
 /**
  * P40 — PORTAL yonetimi (P38 API'si): icerik + yayin anahtari + anketler +
@@ -190,8 +191,10 @@ export default function PortalPage() {
             <Field label={t("portalTelefon")}>
               <input
                 className={inputCls}
-                value={form.iletisim_telefon ?? ""}
-                onChange={(e) => setForm({ ...form, iletisim_telefon: e.target.value })}
+                value={telefonGiris(form.iletisim_telefon ?? "")}
+                // (P123) TEK bicimlendirici: gruplar, rakam disini yutar,
+                // uzunlugu SERT sinirlar, yapistirmayi cozer.
+                onChange={(e) => setForm({ ...form, iletisim_telefon: telefonGiris(e.target.value) })}
               />
             </Field>
             <Field label={t("portalEposta")}>
@@ -217,7 +220,8 @@ export default function PortalPage() {
                 hero_alt: form.hero_alt,
                 hakkimizda: form.hakkimizda,
                 iletisim_adres: form.iletisim_adres,
-                iletisim_telefon: form.iletisim_telefon,
+                // Sunucuya NORMALLESTIRILMIS gider (ayni numara tek yazimla saklansin).
+                iletisim_telefon: telefonNormalle(form.iletisim_telefon ?? "") || null,
                 iletisim_email: form.iletisim_email,
               })
             }

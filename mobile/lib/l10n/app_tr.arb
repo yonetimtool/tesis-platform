@@ -1126,6 +1126,8 @@
   "sakinBosBirakDegismez": "Boş bırakırsanız değişmez",
   "sakinGuncellendi": "Güncellendi ✓",
   "ortakAdSoyad": "Ad Soyad",
+  "telefonHataEksik": "Numara eksik — 10 hane girin (örn. 0543 199 29 04).",
+  "telefonHataOnEk": "Cep telefonu 5 ile başlamalı (örn. 0543…). Sabit hat kabul edilmez.",
   "ortakCepTelefonu": "Cep telefonu",
   "ortakTelefonIpucu": "örn. 0532 111 22 03",
   "ortakTelefonZorunlu": "Telefon zorunludur",

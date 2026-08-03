@@ -2862,6 +2862,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get ortakAdSoyad => 'Vor- und Nachname';
 
   @override
+  String get telefonHataEksik =>
+      'Die Nummer ist unvollständig – geben Sie 10 Ziffern ein (z. B. 0543 199 29 04).';
+
+  @override
+  String get telefonHataOnEk =>
+      'Eine Mobilnummer muss mit 5 beginnen (z. B. 0543…). Festnetz wird nicht akzeptiert.';
+
+  @override
   String get ortakCepTelefonu => 'Mobilnummer';
 
   @override

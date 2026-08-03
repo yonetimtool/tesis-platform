@@ -789,6 +789,8 @@
   "sakinBosBirakDegismez": "Déjelo vacío para no cambiarlo",
   "sakinGuncellendi": "Actualizado ✓",
   "ortakAdSoyad": "Nombre y apellidos",
+  "telefonHataEksik": "El número está incompleto: introduzca 10 dígitos (p. ej. 0543 199 29 04).",
+  "telefonHataOnEk": "Un número móvil debe empezar por 5 (p. ej. 0543…). No se aceptan fijos.",
   "ortakCepTelefonu": "Móvil",
   "ortakTelefonIpucu": "ej. 0532 111 22 03",
   "ortakTelefonZorunlu": "El teléfono es obligatorio",

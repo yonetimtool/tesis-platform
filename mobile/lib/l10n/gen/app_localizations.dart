@@ -4847,6 +4847,18 @@ abstract class AppLocalizations {
   /// **'Ad Soyad'**
   String get ortakAdSoyad;
 
+  /// No description provided for @telefonHataEksik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Numara eksik — 10 hane girin (örn. 0543 199 29 04).'**
+  String get telefonHataEksik;
+
+  /// No description provided for @telefonHataOnEk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Cep telefonu 5 ile başlamalı (örn. 0543…). Sabit hat kabul edilmez.'**
+  String get telefonHataOnEk;
+
   /// No description provided for @ortakCepTelefonu.
   ///
   /// In tr, this message translates to:

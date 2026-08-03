@@ -2903,6 +2903,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ortakAdSoyad => 'Full name';
 
   @override
+  String get telefonHataEksik =>
+      'The number is incomplete — enter 10 digits (e.g. 0543 199 29 04).';
+
+  @override
+  String get telefonHataOnEk =>
+      'A mobile number must start with 5 (e.g. 0543…). Landlines are not accepted.';
+
+  @override
   String get ortakCepTelefonu => 'Mobile number';
 
   @override

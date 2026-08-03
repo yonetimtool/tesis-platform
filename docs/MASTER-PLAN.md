@@ -635,6 +635,13 @@ Device-verify (biriken liste — agent ekler, Kerem işaretler):
   formuna `https://www.youtube.com/watch?v=...` yapıştırın → kaydettirmemeli
   ve "Bu bir web sayfası adresi…" uyarısı çıkmalı; alanın altında
   desteklenen kaynak açıklaması görünmeli.
+- [ ] **P123 · Telefon maskesi (MOBİL + PANEL, HER FORM).** Şu alanların
+  **hepsinde** `5431992904` yazın → ekranda `0543 199 29 04` görünmeli:
+  mobil **giriş**, **profil**, **personel**, **sakin ekle/düzenle**, **dış
+  hizmet**; panelde **kullanıcılar**, **tesis oluştur**, **tesis detayı**,
+  **portal iletişim**. Fazladan rakam yazmayı deneyin → **yazılmamalı**.
+  `+905431992904` yapıştırın → `0543 199 29 04` olmalı. `0212 555 44 33`
+  yazın → "5 ile başlamalı" uyarısı çıkmalı.
 - [ ] **P122 · Hücrede daire tipi (PANEL + MOBİL, YÖNETİCİ).** Tanımlar'da
   bir daire tipi oluşturun (örn. `2+1`), bir daireye atayın → **Bina
   tasarımcısında** hücre `12` altında `2+1` göstermeli ve tipe özel renk
@@ -7081,7 +7088,7 @@ KAPILAR: `tsc` temiz · `vitest` (+15) · `npm run build` ✓ ·
 `flutter analyze` temiz · `flutter test` **1687 geçti / 3 atlandı** · apk ✓.
 
 ### P123 — Telefon girişi: maskeleme + doğrulama (HER YERDE)
-Status: ACIK · Depends-on: P122
+Status: BITTI · Depends-on: P122
 Scope: **Her** telefon alanı (mobil + panel: sakin/personel/kişi formları,
 giriş, personel, firma, demo/admin oluşturma):
 * yazarken gruplanarak çizilir: `0543 199 29 04` (TR biçimi);
@@ -7098,6 +7105,48 @@ yapıştırma, geri silme, taşma, geçersiz ön ek) + platform başına bir wid
 testi. 7 dil ARB; kapılar.
 Acceptance: grep envanteri ile "maskesiz kalan alan yok" gösterilir;
 biçimlendirici testleri + widget testleri geçer.
+
+Notes (2026-08-03) — **BİTTİ.** Tek biçimlendirici iki yüzeyde:
+`mobile/lib/src/core/ui/telefon_alani.dart` ve `admin-web/lib/telefon.ts`
+(aynı kurallar, **paylaşılan test tablosu** ile bağlı).
+
+**TEL BİÇİMİ DEĞİŞMEDİ.** Sunucuya giden değer yine `normalize_phone`in
+kabul ettiği bir biçimdir; artık **E.164** (`+905431992904`). Ham yazımı
+göndermek de çalışıyordu ama aynı numaranın iki farklı yazımla iki kayıt
+üretmesi, telefon **global benzersiz** olduğu için bir çakışma hatasına
+dönüşürdü.
+
+**ÖN EK KURALI KAPALI LİSTE DEĞİL.** "Bilinen operatör bloklarını" saymak,
+BTK yeni blok tahsis ettiğinde **gerçek bir numarayı** kaydettirmemek
+demekti. Kural `5` ile başlama zorunluluğudur; amacı **sabit hattı**
+ayırmaktır — `0212…` bir cep numarası değildir ve SMS gitmez.
+
+**AYRI BİR MASKE PAKETİ EKLENMEDİ.** İhtiyaç tek ülkenin tek kalıbı ve iki
+kural; genel bir paket yapıştırma/geri silme davranışını kendi kurallarıyla
+getirir ve TR ön ek doğrulaması yine bize kalırdı.
+
+**KAPSAM KİLİDİ İŞE YARADI — bir alanı gerçekten yakaladı.** Panelde
+`tenants/page.tsx`teki tesis-oluşturma telefonu göçten geride kalmıştı;
+kilit onu bulunca taşındı. Böyle bir göç her zaman aynı biçimde eksik
+kalır: altı alandan beşi taşınır, altıncısı gözden kaçar ve **hiçbir test
+düşmez** — çünkü o ekran zaten "çalışıyordur". İki kilit de kendi
+dedektör testini taşıyor (kasıtlı kusurlu örnek) ve **alan sayısını**
+ölçüyor: desen bozulup tarama hiçbir şey bulamazsa "geçti" demesin.
+
+**İMLEÇ HATASINI TEST BULDU:** biçimlendirici imleci n'inci hanenin
+*kendisine* koyuyordu, *ardına* değil — kullanıcı 5 hane yazınca altıncıyı
+bir önceki hanenin soluna yazardı.
+
+**VAR OLAN BİR TEST GÜNCELLENDİ:** `login_screen_phone_test.dart` ham
+yazımı (`05321112203`) sabitliyordu. Artık normalleştirilmiş değeri **ve**
+kullanıcının gördüğü gruplanmış biçimi ölçüyor.
+
+**MUTASYON:** mobil 4/4 (sert sınır, ön ek kuralı, `+90` soyma, bir alanı
+göçten geride bırakma).
+
+KAPILAR: `tsc` temiz · `vitest` (+19) · `npm run build` ✓ ·
+`flutter analyze` temiz · `flutter test` **1721 geçti / 3 atlandı**
+(taban 1687, +34) · apk ✓.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook

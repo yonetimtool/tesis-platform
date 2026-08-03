@@ -2980,6 +2980,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ortakAdSoyad => 'الاسم الكامل';
 
   @override
+  String get telefonHataEksik =>
+      'الرقم غير مكتمل — أدخل ١٠ أرقام (مثال: 0543 199 29 04).';
+
+  @override
+  String get telefonHataOnEk =>
+      'يجب أن يبدأ رقم الجوال بـ 5 (مثال: 0543…). الخطوط الأرضية غير مقبولة.';
+
+  @override
   String get ortakCepTelefonu => 'رقم الجوال';
 
   @override

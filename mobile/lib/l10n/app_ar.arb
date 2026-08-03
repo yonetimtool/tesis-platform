@@ -789,6 +789,8 @@
   "sakinBosBirakDegismez": "اتركه فارغاً ليبقى كما هو",
   "sakinGuncellendi": "تم التحديث ✓",
   "ortakAdSoyad": "الاسم الكامل",
+  "telefonHataEksik": "الرقم غير مكتمل — أدخل ١٠ أرقام (مثال: 0543 199 29 04).",
+  "telefonHataOnEk": "يجب أن يبدأ رقم الجوال بـ 5 (مثال: 0543…). الخطوط الأرضية غير مقبولة.",
   "ortakCepTelefonu": "رقم الجوال",
   "ortakTelefonIpucu": "مثال: 0532 111 22 03",
   "ortakTelefonZorunlu": "الهاتف إلزامي",

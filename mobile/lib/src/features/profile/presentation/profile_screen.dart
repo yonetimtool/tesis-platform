@@ -15,6 +15,7 @@ import '../domain/profile.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/ui/merkez_diyalog.dart';
+import '../../../core/ui/telefon_alani.dart';
 
 /// Self-servis profil ekrani — kullanici KENDI parolasini ve telefon/arama
 /// rizasini gunceller (contracts/auth.md self-servis profil). Sag-ust profil
@@ -457,7 +458,7 @@ class _ContactCardState extends ConsumerState<_ContactCard> {
     setState(() => _submitting = true);
     try {
       await ref.read(profileApiProvider).updateContact(
-            telefon: _telefonCtrl.text.trim(),
+            telefon: telefonNormalle(_telefonCtrl.text),
             aranabilir: _aranabilir,
           );
       if (!mounted) return;
@@ -489,6 +490,9 @@ class _ContactCardState extends ConsumerState<_ContactCard> {
               controller: _telefonCtrl,
               enabled: !_submitting,
               keyboardType: TextInputType.phone,
+              // (P123) TEK bicimlendirici: gruplar, rakam disini
+              // yutar, uzunlugu SERT sinirlar, yapistirmayi cozer.
+              inputFormatters: const [TelefonBicimlendirici()],
               decoration: InputDecoration(
                 labelText: l10n.profilTelefon,
                 hintText: l10n.profilTelefonIpucu,

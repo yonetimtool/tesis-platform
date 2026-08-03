@@ -2959,6 +2959,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ortakAdSoyad => 'Имя и фамилия';
 
   @override
+  String get telefonHataEksik =>
+      'Номер неполный — введите 10 цифр (например, 0543 199 29 04).';
+
+  @override
+  String get telefonHataOnEk =>
+      'Мобильный номер должен начинаться с 5 (например, 0543…). Стационарные не принимаются.';
+
+  @override
   String get ortakCepTelefonu => 'Мобильный номер';
 
   @override

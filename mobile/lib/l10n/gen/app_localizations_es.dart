@@ -2846,6 +2846,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get ortakAdSoyad => 'Nombre y apellidos';
 
   @override
+  String get telefonHataEksik =>
+      'El número está incompleto: introduzca 10 dígitos (p. ej. 0543 199 29 04).';
+
+  @override
+  String get telefonHataOnEk =>
+      'Un número móvil debe empezar por 5 (p. ej. 0543…). No se aceptan fijos.';
+
+  @override
   String get ortakCepTelefonu => 'Móvil';
 
   @override

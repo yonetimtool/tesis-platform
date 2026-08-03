@@ -100,9 +100,16 @@ void main() {
     await tester.pumpAndSettle();
 
     final call = repo.phoneLogins.single;
-    expect(call.phone, '05321112203');
+    // (P123) SUNUCUYA NORMALLESTIRILMIS gider. Tel BICIMI degismedi —
+    // `normalize_phone` hem `0532…` hem `+90532…` kabul eder — ama ayni
+    // numaranin iki farkli yazimla gitmesi, telefon GLOBAL BENZERSIZ
+    // oldugu icin ileride cakisma hatasina donusurdu. Ekranda kullanici
+    // yine yerel bicimi gorur (asagida olculuyor).
+    expect(call.phone, '+905321112203');
     expect(call.password, 'K7MR-2QWX');
     expect(call.rememberMe, isTrue);
+    // KULLANICININ GORDUGU sey gruplanmis yerel bicim.
+    expect(find.text('0532 111 22 03'), findsOneWidget);
   });
 
   testWidgets('bos alanlarla giris → dogrulama, cagri yapilmaz',

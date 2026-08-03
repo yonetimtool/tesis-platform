@@ -6,6 +6,8 @@ import '../../../core/i18n/l10n.dart';
 import '../data/auth_repository_impl.dart';
 import 'auth_controller.dart';
 import 'giris_hata_metni.dart';
+import '../../../core/ui/telefon_alani.dart';
+import '../../../core/ui/telefon_hata_metni.dart';
 
 /// Telefonla giris ekrani (contracts/auth.md §1): cep telefonu (global
 /// benzersiz) + parola/gecici kod. Tenant numaradan otomatik cozulur — tesis
@@ -54,7 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
     await ref.read(authControllerProvider.notifier).loginPhone(
-          phone: _phoneCtrl.text.trim(),
+          phone: telefonNormalle(_phoneCtrl.text),
           password: _passwordCtrl.text,
           rememberMe: _rememberMe,
         );
@@ -87,6 +89,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       enabled: !submitting,
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.phone,
+                      // (P123) TEK bicimlendirici: gruplar, rakam disini
+                      // yutar, uzunlugu SERT sinirlar, yapistirmayi cozer.
+                      inputFormatters: const [TelefonBicimlendirici()],
                       autocorrect: false,
                       decoration: InputDecoration(
                         labelText: l10n.ortakCepTelefonu,
@@ -94,9 +99,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         prefixIcon: const Icon(Icons.phone_outlined),
                         border: const OutlineInputBorder(),
                       ),
-                      validator: (v) => (v?.trim() ?? '').isEmpty
-                          ? l10n.ortakTelefonZorunlu
-                          : null,
+                      validator: (v) => telefonHataMetni(l10n, v ?? ''),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(

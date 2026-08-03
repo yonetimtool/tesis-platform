@@ -16,6 +16,7 @@ import '../data/staff_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/ui/merkez_diyalog.dart';
+import '../../../core/ui/telefon_alani.dart';
 
 /// Saha Personeli (Ozellik 3) — yonetici/admin: guvenlik + tesis gorevlisi
 /// hesaplarini listeler ve ekler. yonetici backend'de YALNIZ saha personeli
@@ -321,7 +322,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
               widget.existing!.id,
               ad: _adCtrl.text.trim(),
               role: _role,
-              telefon: _phoneCtrl.text.trim(),
+              telefon: telefonNormalle(_phoneCtrl.text),
             );
         // Yeni foto secildiyse ata (yalniz yonetici; sunucu zorlar).
         if (_fotoKey != null) {
@@ -336,7 +337,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
       }
       final created = await api.addStaff(
             ad: _adCtrl.text.trim(),
-            telefon: _phoneCtrl.text.trim(),
+            telefon: telefonNormalle(_phoneCtrl.text),
             role: _role,
             password: _passwordCtrl.text,
           );
@@ -443,6 +444,9 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
               controller: _phoneCtrl,
               enabled: !_submitting,
               keyboardType: TextInputType.phone,
+              // (P123) TEK bicimlendirici: gruplar, rakam disini
+              // yutar, uzunlugu SERT sinirlar, yapistirmayi cozer.
+              inputFormatters: const [TelefonBicimlendirici()],
               decoration: InputDecoration(
                 labelText: _isEdit
                     ? l10n.personelTelefonOpsiyonel
