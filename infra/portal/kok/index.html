@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Yönetio — site yönetim platformu</title>
+<meta name="description" content="Yönetio — site ve tesis yönetimi: aidat, arıza, güvenlik turu, duyuru.">
+<!--
+  (P120) GEÇİCİ TANITIM SAYFASI — kök ve www için.
+
+  NEDEN VAR: kök alan adı Caddy'de tanımsızdı ve TLS el sıkışması düşüyordu
+  (tarayıcıda ERR_SSL_PROTOCOL_ERROR, curl'de 000). Kökü panelin kendisine
+  bağlamak da çözüm değildi: admin-web'in `/` rotası `/dashboard`a, oradan
+  da `/login`e gider — yani markanın ana adresi bir YÖNETİCİ GİRİŞ EKRANI
+  olurdu. Ziyaretçinin ilk gördüğü şey kendisine ait olmayan bir giriş
+  formu olmamalı.
+
+  NEDEN STATİK: bu sayfa P40–P42 (gerçek tanıtım yüzeyleri) gelene kadar
+  yaşayacak. Next.js'e bir rota eklemek, o iş için tasarlanacak sayfayı
+  şimdiden yanlış yere kurmak olurdu; ayrıca kök sayfanın ayakta kalması
+  admin-web'in ayakta olmasına bağlanırdı.
+
+  HUKUKİ SAYFALAR BURADA DEĞİL: `/gizlilik` ve `/kosullar` Caddy tarafından
+  admin-web'e proxy'lenir (bkz. infra/Caddyfile). Tek kaynak: metinler
+  7 dilde `admin-web/lib/hukuki/` altındadır ve buraya KOPYALANMAZ —
+  kopyalanan bir gizlilik politikası, bir gün ötekiyle çelişir.
+-->
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    padding: 2rem 1.25rem;
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #f6f7f9; color: #16202c;
+  }
+  main { width: 100%; max-width: 34rem; text-align: center; }
+  .marka {
+    font-size: clamp(2rem, 7vw, 2.75rem); font-weight: 700;
+    letter-spacing: -0.02em; margin: 0;
+  }
+  .marka span { color: #0e7c86; }
+  .alt { margin: .75rem 0 0; font-size: 1.05rem; opacity: .75; }
+  .kutu {
+    margin-top: 2.25rem; padding: 1.25rem; border-radius: 14px;
+    background: #fff; border: 1px solid #e3e7ec; text-align: left;
+  }
+  .kutu h2 { margin: 0 0 .5rem; font-size: .95rem; letter-spacing: .04em;
+             text-transform: uppercase; opacity: .55; font-weight: 600; }
+  .kutu p { margin: 0; }
+  .baglar { margin-top: 2rem; display: flex; flex-wrap: wrap; gap: .625rem;
+            justify-content: center; }
+  a.dugme {
+    display: inline-block; padding: .65rem 1.15rem; border-radius: 10px;
+    text-decoration: none; font-weight: 600; border: 1px solid #cfd6de;
+    color: #16202c; background: #fff;
+  }
+  a.dugme.birincil { background: #0e7c86; border-color: #0e7c86; color: #fff; }
+  a.dugme:hover { border-color: #0e7c86; }
+  footer { margin-top: 2.5rem; font-size: .875rem; opacity: .6; }
+  footer a { color: inherit; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f1519; color: #e8edf2; }
+    .kutu { background: #161e24; border-color: #26313a; }
+    a.dugme { background: #161e24; border-color: #2e3b45; color: #e8edf2; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1 class="marka">Yönet<span>io</span></h1>
+  <p class="alt">Site ve tesis yönetimi — aidat, arıza, güvenlik turu, duyuru.</p>
+
+  <div class="kutu">
+    <h2>Bu sayfa hakkında</h2>
+    <p>Tanıtım sayfamız hazırlanıyor. Yönetici panelinize aşağıdaki
+       bağlantıdan ulaşabilirsiniz.</p>
+  </div>
+
+  <div class="baglar">
+    <a class="dugme birincil" href="https://panel.yonetio.site">Yönetim paneli</a>
+    <a class="dugme" href="/gizlilik">Gizlilik Politikası</a>
+    <a class="dugme" href="/kosullar">Kullanım Koşulları</a>
+  </div>
+
+  <footer>Yönetio · <a href="mailto:destek@yonetio.site">destek@yonetio.site</a></footer>
+</main>
+</body>
+</html>

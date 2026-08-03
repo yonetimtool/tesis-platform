@@ -50,6 +50,8 @@ services:
       - "443:443/udp"   # HTTP/3 (QUIC)
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # (P120) Kok ve `app.` icin GECICI statik sayfalar. Salt-okunur.
+      - ./portal:/srv/portal:ro
       - caddy_data:/data       # ACME sertifikalari/anahtarlari (KALICI olmali)
       - caddy_config:/config
     networks: [tesisnet]

@@ -6880,9 +6880,58 @@ Politikası" düğmesi park sayfası bile değil, **hiçbir şey** açmıyor.
 Mobil sabit **değiştirilmedi**: incelemedeki yapım zaten kökü taşıyor,
 sabiti değiştirmek onu kurtarmaz — kökü sunmak kurtarır.
 
+**ÜÇÜNCÜ TUR — "Caddyfile'da hiç yoktu" iddiası ölçüldü.** Sunucudaki
+`grep -n "xn--\|yonetiyor" infra/Caddyfile` **eşleşme vermiyordu**; bu
+doğru bir gözlem ama sebebi başkaydı. Depodaki HEAD'de o dize üç yorum
+satırında **var** (`git log -- infra/Caddyfile` → `38c211f`, `8185498`).
+Yani sunucudaki çalışma kopyası `38c211f`'ten **eski**. Ayrıca konak adları
+Caddyfile'da **literal değil**: `{$PORTAL_DOMAIN}` ile gelir, varsayılanı
+compose'dadır — bu yüzden güncel bir kopyada bile `grep xn--` yalnız
+yorumları bulur. Teşhis yolunun kendisi yanıltıcıydı; belgeye "hangi
+konaklar sunuluyor" sorusunun **doğru** cevaplanma yolu eklendi.
+
+**PUNYCODE — üçüncü kez ölçüldü, sonuç aynı.** Görev metni yine
+`-vpb` etiketini veriyordu. O ad **kayıtlı değil**: SOA yok, NS yok,
+dört etiketin (kök/www/panel/app) **hiçbiri** A kaydı döndürmüyor. Buna
+karşılık `xn--ynetiyor-n4a.com`ın dördü de `185.248.57.150`'de — yani
+"dört A kaydı doğrulandı" gözlemi doğru, sadece ACE dizesi yanlış
+kopyalanıyor. Yapılandırmaya `-vpb` yazmak, var olmayan bir ad için ACME
+denemesi ve **hâlâ açılmayan bir site** demekti.
+
+**KÖK ARTIK PANEL DEĞİL.** admin-web'in `/` rotası `/dashboard`a, oradan
+`/login`e gider; kök panele bağlansaydı markanın ana adresi bir **yönetici
+giriş ekranı** olurdu. Kök/www artık statik bir tanıtım sayfası sunuyor
+(`infra/portal/kok/`), `/gizlilik` + `/kosullar` + `/_next/*` admin-web'e
+proxy'leniyor. **Metinler kopyalanmadı** — tek kaynak
+`admin-web/lib/hukuki/` (7 dil); kopyalanan bir gizlilik politikası bir gün
+ötekiyle çelişir. `/_next/*` proxy'si atlanırsa sayfa **biçimsiz ama 200**
+döner, yani sessizce bozulur.
+
+**`app.` YER TUTUCUSU** (`infra/portal/app/`): DNS'te A kaydı vardı, site
+bloğu yoktu. `file_server` bilinçli — bilinmeyen yol **404** döner;
+`try_files` ile her yolu index'e düşürmek, Hostinger'ın park sayfasında
+eleştirdiğimiz catch-all'ın aynısını üretirdi.
+
+**GERÇEK CADDY İLE ÖLÇÜLDÜ, `validate` ile yetinilmedi.** Aynı Caddyfile
+yerelde `local_certs` (Caddy iç CA'sı, ağ/ACME yok) ile ayağa kaldırıldı,
+admin-web yerine yankı veren sahte bir upstream konuldu ve **8 konak × 4
+yol** SNI üzerinden ölçüldü: kök/www → tanıtım sayfası, `/gizlilik` ve
+`/_next/*` → upstream, bilinmeyen yol → **404**; `app.` → yer tutucu;
+`panel.*` → upstream (her yol). Kontrol grubu: `bilinmeyen.ornek` →
+**000** — Kerem'in gördüğü belirtinin **birebir aynısı**, yani `000`ın
+"konak Caddyfile'da yok" demek olduğu deneyle gösterildi.
+
+**YENİ KİLİT — kontrol 5 (BELGE-UYUMU).** İstenen "belge ile yapılandırma
+bir daha ayrışmasın" kapısı: `docs/alan-adi-gecisi.md` §2b'deki konak
+listesi ile Caddyfile'ın **çözülmüş** site adresleri karşılaştırılır, **iki
+yönde de**. Belgede vaat edilip sunulmayan ad da, sunulup belgeye
+yazılmayan ad da kapıyı kırmızı yapar. DENEY=6 ve ters yönde ek bir
+mutasyonla doğrulandı. Kapı artık altı deneyle sınanıyor (DENEY=1…6).
+
 Acceptance: Kerem §2'deki `--force-recreate` dağıtımını yapar;
-`docs/alan-adi-gecisi.md` §3a/3b/3c doğrulaması yedi konakta da sertifika
-+ `/gizlilik` 200 verir ve "Parked Domain" kalmaz.
+`docs/alan-adi-gecisi.md` §3a/3b/3c doğrulaması **dokuz** konakta da
+sertifika + kök/`app.` 200 + `/gizlilik` 200 verir ve "Parked Domain"
+kalmaz.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook

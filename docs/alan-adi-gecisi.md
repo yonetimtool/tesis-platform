@@ -210,6 +210,49 @@ $C logs --since 5m caddy | grep -iE "certificate obtained|obtain|error|failed"
 
 ---
 
+## 2b) SUNULAN KONAK LİSTESİ — tek kaynak
+
+Aşağıdaki liste **belge süsü değildir**: `infra/alan-adi-denetimi.py`
+(kontrol 5) bunu `infra/Caddyfile`'ın çözülmüş site adresleriyle
+**karşılaştırır** ve ayrışırlarsa `depo` kapısı kırmızı verir.
+
+Bu kapının varlık sebebi somut: önceki tur DNS belgesini ve Caddy
+yapılandırmasını birlikte gönderdi, ama sunucuya **yalnız belge ulaştı** —
+kimse "belgede yazan konaklar gerçekten sunuluyor mu?" diye ölçmediği için
+`yönetiyor.com` haftalarca `ERR_SSL_PROTOCOL_ERROR` verebilirdi. Aynı
+hata sınıfı `.gitignore` olayında da yaşandı: **yapılandırmanın vaat
+ettiği şey ile gerçekte olan şey ayrıştı ve hiçbir ölçüm bakmıyordu.**
+
+<!-- KONAK-LISTESI-BASLANGIC (infra/alan-adi-denetimi.py kontrol 5 okur;
+     elle düzenlerken Caddyfile ile birlikte değiştirin) -->
+```
+api.yonetio.site
+panel.yonetio.site
+storage.yonetio.site
+yonetio.site
+www.yonetio.site
+xn--ynetiyor-n4a.com
+www.xn--ynetiyor-n4a.com
+app.xn--ynetiyor-n4a.com
+panel.xn--ynetiyor-n4a.com
+```
+<!-- KONAK-LISTESI-BITIS -->
+
+| Konak | Ne sunar |
+|---|---|
+| `yonetio.site`, `www.` | Tanıtım sayfası (statik) + `/gizlilik`, `/kosullar` → admin-web |
+| `xn--ynetiyor-n4a.com`, `www.` | Aynısı (yeni birincil alan) |
+| `app.xn--ynetiyor-n4a.com` | Geçici "yakında" yer tutucu |
+| `panel.yonetio.site`, `panel.xn--…` | admin-web (yönetim paneli) |
+| `api.yonetio.site` | FastAPI |
+| `storage.yonetio.site` | MinIO (imzalı URL konağı) |
+
+**Kök neden panelin kendisi değil:** admin-web'in `/` rotası `/dashboard`a,
+oradan da `/login`e gider. Kök panele bağlansaydı markanın ana adresi bir
+**yönetici giriş ekranı** olurdu. Kök artık statik bir tanıtım sayfası
+sunar; hukuki sayfalar ve `/_next/*` varlıkları admin-web'e proxy'lenir
+(metinler **kopyalanmaz** — tek kaynak `admin-web/lib/hukuki/`).
+
 ## 3) DOĞRULAMA — üç aşamalı
 
 ### 3a) SUNUCUDAN, TLS'e hiç girmeden (asıl teşhis burada)

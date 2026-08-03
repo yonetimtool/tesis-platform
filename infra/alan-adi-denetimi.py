@@ -46,6 +46,17 @@ OLCULENLER
                   Bu kontrol iki tarafi birbirine baglar: bir uygulama
                   koda gomulu bir adrese baglanti veriyorsa, o konak
                   Caddyfile'da BULUNMAK ZORUNDA.
+  5 BELGE-UYUMU   `docs/alan-adi-gecisi.md`deki KONAK LISTESI ile
+                  Caddyfile'in cozulmus site adresleri AYNI mi?
+
+                  BULUNAN GERCEK HATA: onceki tur DNS belgesini ve Caddy
+                  yapilandirmasini birlikte gonderdi, ama sunucuya YALNIZ
+                  belge ulasti. Kimse "belgede yazan konaklar gercekten
+                  sunuluyor mu?" diye olcmedigi icin yönetiyor.com
+                  haftalarca ERR_SSL_PROTOCOL_ERROR verebilirdi. Ayni
+                  hata sinifi `.gitignore` olayinda da yasandi:
+                  YAPILANDIRMANIN VAAT ETTIGI SEY ILE GERCEKTE OLAN SEY
+                  AYRISTI ve hicbir olcum bakmiyordu.
 
 DENEY MODU (arac kendini sinar):
   DENEY=1  yanlis punycode (`-vpb`) enjekte eder   -> 1
@@ -53,6 +64,7 @@ DENEY MODU (arac kendini sinar):
   DENEY=3  bize ait olmayan bir adres enjekte eder -> 3
   DENEY=4  Caddyfile'dan kok konagi siler          -> 4
   DENEY=5  KORUNAN konagi (App Store adresi) dusurur -> 4
+  DENEY=6  belgedeki konak listesinden bir ad siler  -> 5
 
 KULLANIM:  python3 infra/alan-adi-denetimi.py
 """
@@ -128,6 +140,12 @@ if DENEY == "4":
     print("   (DENEY=4: Caddyfile'dan eski kok konagi siliniyor)")
     metinler["infra/Caddyfile"] = metinler["infra/Caddyfile"].replace(
         ", {$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI}", "", 1)
+
+if DENEY == "6":
+    print("   (DENEY=6: belgedeki konak listesinden bir ad siliniyor)")
+    metinler["docs/alan-adi-gecisi.md"] = \
+        metinler["docs/alan-adi-gecisi.md"].replace(
+            "app.xn--ynetiyor-n4a.com\n", "", 1)
 
 if DENEY == "5":
     print("   (DENEY=5: KORUNAN konak panel.yonetio.site dusuruluyor)")
@@ -321,6 +339,41 @@ for yol, desen in BAGLANTI_KAYNAKLARI:
             f"sikismasinin dusmesidir (curl `000`). Sunulan konaklar: "
             f"{', '.join(sorted(SUNULAN))}"
         )
+
+# --------------------------------------------------------------------------- #
+# 5 — BELGE-UYUMU
+BELGE = "docs/alan-adi-gecisi.md"
+belge = metinler.get(BELGE)
+if belge is None:
+    bulgular.append(f"5: {BELGE} okunamadi (yol degisti mi?)")
+else:
+    m = re.search(
+        r"KONAK-LISTESI-BASLANGIC.*?```\n(.*?)```.*?KONAK-LISTESI-BITIS",
+        belge, re.S)
+    if not m:
+        bulgular.append(
+            f"5: {BELGE} icinde KONAK-LISTESI blogu YOK. Belge ile "
+            f"yapilandirmayi bagli tutan tek sey o blok; kaldirilmasi "
+            f"kapiyi sessizce ise yaramaz hale getirir."
+        )
+    else:
+        belgede = {
+            satir.strip().lower()
+            for satir in m.group(1).splitlines() if satir.strip()
+        }
+        for ad in sorted(belgede - SUNULAN):
+            bulgular.append(
+                f"5: `{ad}` BELGEDE vaat ediliyor ama Caddyfile'da YOK. "
+                f"Ziyaretci temiz bir 404 degil, TLS el sikismasinin "
+                f"dusmesini gorur (ERR_SSL_PROTOCOL_ERROR / curl 000)."
+            )
+        for ad in sorted(SUNULAN - belgede):
+            bulgular.append(
+                f"5: `{ad}` Caddyfile'da SUNULUYOR ama belgedeki konak "
+                f"listesinde yok. Belge, hangi adreslerin ayakta oldugunun "
+                f"tek yazili kaydi; eksik kalmasi bir sonraki turda "
+                f"\"bu konak neden var?\" sorusunu uretir."
+            )
 
 # --------------------------------------------------------------------------- #
 if not bulgular:

@@ -62,11 +62,49 @@
 # HTTP'ye hic gelemez (Kerem'in gordugu `000` budur). Bir konagi DNS'te
 # acip Caddy'de tanimlamamak, "site yok" degil "BAGLANTI KOPTU" uretir;
 # ikisi cok farkli seylerdir ve ikincisi teshisi zorlastirir.
-{$PORTAL_DOMAIN}, www.{$PORTAL_DOMAIN}, app.{$PORTAL_DOMAIN}, {$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI} {
+{$PORTAL_DOMAIN}, www.{$PORTAL_DOMAIN}, {$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI} {
 	import security_headers
 	header X-Frame-Options "DENY"
 	encode gzip zstd
-	reverse_proxy admin-web:3000
+
+	# HUKUKI SAYFALAR GERCEK UYGULAMADAN gelir — TEK KAYNAK.
+	# Metinler 7 dilde `admin-web/lib/hukuki/` altindadir ve buraya
+	# KOPYALANMAZ: kopyalanan bir gizlilik politikasi bir gun otekiyle
+	# celisir ve hangisinin baglayici oldugu belirsizlesir.
+	# `/_next/*` DE PROXY'LENIR: sayfalar sunucuda cizilir ama bicimlendirme
+	# oradan gelir; unutulursa sayfa BICIMSIZ ama 200 doner — yani sessizce
+	# bozulur.
+	@uygulama path /gizlilik /gizlilik/* /kosullar /kosullar/* /_next/* /favicon.ico
+	handle @uygulama {
+		reverse_proxy admin-web:3000
+	}
+
+	# GERI KALAN HER SEY: gecici tanitim sayfasi.
+	#
+	# NEDEN PANELIN KENDISI DEGIL: admin-web'in `/` rotasi `/dashboard`a,
+	# oradan da `/login`e gider. Kok, panele baglansaydi markanin ana
+	# adresi bir YONETICI GIRIS EKRANI olurdu — ziyaretcinin ilk gordugu
+	# sey kendisine ait olmayan bir giris formu olmamali.
+	#
+	# `file_server` BILINCLI: bilinmeyen yol icin 404 doner. `try_files`
+	# ile her yolu index'e dusurmek, her adrese 200 donen bir catch-all
+	# uretirdi — tam da Hostinger'in park sayfasinda elestirdigimiz sey.
+	handle {
+		root * /srv/portal/kok
+		file_server
+	}
+}
+
+# --- app. — GECICI yer tutucu (P40-P42'ye kadar) -------------------------- #
+# DNS'te A kaydi vardi, site blogu YOKTU: SNI eslesmeyince TLS el sikismasi
+# duser ve ziyaretci ERR_SSL_PROTOCOL_ERROR gorur. Bir adres yayinlandiysa,
+# "henuz hazir degil" demek bile baglantinin KOPMUS gorunmesinden iyidir.
+app.{$PORTAL_DOMAIN} {
+	import security_headers
+	header X-Frame-Options "DENY"
+	encode gzip zstd
+	root * /srv/portal/app
+	file_server
 }
 
 # --- API ------------------------------------------------------------------ #
