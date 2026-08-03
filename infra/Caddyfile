@@ -5,9 +5,27 @@
 # docker-compose.prod.yml ortam degiskenlerinden gelir ({$VAR}).
 #
 # Alt-alanlar:
+#   kok/www. -> admin-web:3000  (genel portal + /gizlilik, /kosullar)
 #   api.     -> api:8000        (FastAPI)
 #   panel.   -> admin-web:3000  (Next.js BFF)
 #   storage. -> minio:9000      (foto presigned PUT/GET; Host KORUNUR => s3v4 imza gecerli)
+#
+# IKI ALAN ADI, IKISI DE GECERLI (P120):
+#   yönetiyor.com  -> MUSTERIYE DONUK BIRINCIL alan. IDN'dir; Caddy'de
+#                     PUNYCODE bicimiyle yazilir (xn--ynetiyor-n4a.com).
+#                     Tarayici ve TLS SNI zaten punycode gonderir; unicode
+#                     yazmak eslesmeyen bir site blogu birakirdi.
+#   yonetio.site   -> ESKI alan, CALISMAYA DEVAM EDER. Yonlendirme YOK:
+#                     App Store'a gonderilen yapim `api.yonetio.site`e
+#                     bakiyor ve hukuki belge adresleri `yonetio.site`
+#                     kokune bakiyor; bunlari kirmak, incelemedeki
+#                     uygulamayi kirmak olurdu.
+#
+# PUNYCODE'U KENDINIZ VARSAYMAYIN. Bu tura `xn--ynetiyor-vpb` etiketiyle
+# baslandi; oyle bir alan adi KAYITLI BILE DEGIL (SOA donmuyor). Dogru
+# etiket `xn--ynetiyor-n4a`. Goz karariyla ayirt EDILEMEZ; uretin:
+#   python3 -c "print('yönetiyor.com'.encode('idna').decode())"
+# `infra/alan-adi-denetimi.py` bunu her kosumda yeniden dogrular.
 {
 	# ACME kayit e-postasi (sertifika sona-erme uyarilari buraya gider).
 	email {$ACME_EMAIL}
@@ -27,7 +45,29 @@
 	}
 }
 
+# --- Genel portal: kok + www (HER IKI ALAN) ------------------------------- #
+# NEDEN VAR (P120): kok alan adi bugune kadar HIC sunulmuyordu — Caddy'de
+# yalniz api./panel./storage. bloklari vardi. Oysa mobil uygulamada
+# `AppConfig.webBaseUrl` = `https://yonetio.site` ve gizlilik/kosullar
+# baglantilari oraya gidiyor. OLCULDU: `https://yonetio.site/gizlilik`
+# 200 donuyordu ama icerik Hostinger'in "Parked Domain" sayfasiydi (her
+# yol 200 donuyor). Yani App Store'a verilen GIZLILIK POLITIKASI ADRESI
+# park sayfasi gosteriyordu — 5.1.1 icin tek basina ret sebebi.
+#
+# Kok, panelin KENDISINI sunar (ayri bir tanitim uygulamasi yok):
+# `/gizlilik` ve `/kosullar` zaten admin-web'in PUBLIC rotalaridir.
+{$PORTAL_DOMAIN}, www.{$PORTAL_DOMAIN}, {$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI} {
+	import security_headers
+	header X-Frame-Options "DENY"
+	encode gzip zstd
+	reverse_proxy admin-web:3000
+}
+
 # --- API ------------------------------------------------------------------ #
+# YENI ALANDA API ALT-ALANI ACILMADI (api.yönetiyor.com YOK): mobil yapimin
+# icine gomulu adres `api.yonetio.site` ve bu tur o adres DEGISMIYOR. Iki
+# API adresi acmak, hangisinin kanonik oldugunu belirsizlestirir ve CORS/
+# cerez yuzeyini bedelsiz buyuturdu.
 {$API_DOMAIN} {
 	import security_headers
 	encode gzip zstd
@@ -35,7 +75,9 @@
 }
 
 # --- Yonetim paneli (admin-web) ------------------------------------------- #
-{$PANEL_DOMAIN} {
+# IKI ADRES DE AYNI PANELI verir; eskisi AYNEN calismaya devam eder
+# (kayitli kullanicinin yer imi ve tarayici parola kasasi ona bagli).
+{$PANEL_DOMAIN}, {$PANEL_DOMAIN_YENI} {
 	import security_headers
 	# Panel clickjacking'e karsi cerceveye alinamaz.
 	header X-Frame-Options "DENY"

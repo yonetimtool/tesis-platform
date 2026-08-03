@@ -5,7 +5,15 @@ kurulumu. Tüm servisler Docker Compose ile çalışır; dışarıya yalnız **C
 açıktır ve otomatik Let's Encrypt TLS sağlar.
 
 **Alan adları (bu sunucunun genel IP'sine A kaydı):**
+
+*Servis alt alanları (yalnız eski alanda):*
 `api.yonetio.site` · `panel.yonetio.site` · `storage.yonetio.site`
+
+*Portal + panel (P120 — İKİ alan da geçerli, yönlendirme yok):*
+`xn--ynetiyor-n4a.com` (= `yönetiyor.com`) · `www.xn--ynetiyor-n4a.com` ·
+`panel.xn--ynetiyor-n4a.com` · `yonetio.site` · `www.yonetio.site`
+
+Ayrıntı, DNS tablosu ve e-posta kayıtları: **`docs/alan-adi-gecisi.md`**.
 
 ---
 
@@ -15,10 +23,20 @@ Kuruluma başlamadan **önce** üç A kaydı da sunucunun genel IP'sine çözül
 (Let's Encrypt HTTP-01 doğrulaması bunu gerektirir):
 
 ```
-api.yonetio.site       A   <SUNUCU_GENEL_IP>
-panel.yonetio.site     A   <SUNUCU_GENEL_IP>
-storage.yonetio.site   A   <SUNUCU_GENEL_IP>
+api.yonetio.site              A   <SUNUCU_GENEL_IP>
+panel.yonetio.site            A   <SUNUCU_GENEL_IP>
+storage.yonetio.site          A   <SUNUCU_GENEL_IP>
+yonetio.site                  A   <SUNUCU_GENEL_IP>   # kök — P120'de eklendi
+www.yonetio.site              A   <SUNUCU_GENEL_IP>
+xn--ynetiyor-n4a.com          A   <SUNUCU_GENEL_IP>   # = yönetiyor.com
+www.xn--ynetiyor-n4a.com      A   <SUNUCU_GENEL_IP>
+panel.xn--ynetiyor-n4a.com    A   <SUNUCU_GENEL_IP>
 ```
+
+**`yonetio.site` KÖKÜ ATLANMAMALI.** Mobil yapımın içindeki gizlilik
+politikası / kullanım koşulları bağlantıları oraya gider; kök A kaydı park
+sayfasında kalırsa App Store'a verilen politika adresi **park sayfası**
+gösterir (ölçüldü — bkz. `docs/alan-adi-gecisi.md` §1).
 
 pfSense'te WAN → bu sunucuya **yalnız 80 ve 443** (TCP) yönlendirmesi olmalı.
 Doğrulama: `dig +short api.yonetio.site` → sunucu IP'sini vermeli.

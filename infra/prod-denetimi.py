@@ -249,7 +249,9 @@ for vol in set(re.findall(r"-v ([a-z0-9_]+_[a-z0-9_]+):", belge)):
 
 # --------------------------------------------------------------------------- #
 # G — ALAN-TUTARLI
-ALAN = ("API_DOMAIN", "PANEL_DOMAIN", "STORAGE_DOMAIN")
+ALAN = ("API_DOMAIN", "PANEL_DOMAIN", "STORAGE_DOMAIN",
+        # (P120) yeni birincil alan + korunan eski kok.
+        "PORTAL_DOMAIN", "PANEL_DOMAIN_YENI", "PORTAL_DOMAIN_ESKI")
 for ad in ALAN:
     m = re.search(rf"\$\{{{ad}:-([^}}]+)\}}", prod_metin)
     o = re.search(rf"^{ad}=(.+)$", ornek_metin, re.M)

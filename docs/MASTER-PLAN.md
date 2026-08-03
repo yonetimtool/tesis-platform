@@ -6720,6 +6720,128 @@ atlandı** (taban 1615, +17) · apk ✓.
 Acceptance: Kerem `docs/ios-teshis-turu.md`deki tek koşumu yapar ve üç
 blok günlüğü yapıştırır; kamera kök nedeni o çıktıyla belirlenir.
 
+### P120 — Yeni birincil alan adı: yönetiyor.com
+Status: KISMEN(kod+belge BİTTİ · DNS/dağıtım Kerem'de) · Depends-on: P113
+Scope: `yönetiyor.com` müşteriye dönük birincil alan olur; `yonetio.site`
+**kapanmaz**. Kök/www genel portal, `panel.` yönetim paneli. Belge:
+`docs/alan-adi-gecisi.md` (DNS tablosu + e-posta kayıtları + doğrulama).
+
+**PUNYCODE DÜZELTİLDİ.** Görevde ACE etiketi `xn--ynetiyor-vpb` olarak
+verilmişti; **yanlış**. Doğrusu `xn--ynetiyor-n4a`. İki bağımsız kodlayıcı
+(IDNA2008 `idna` paketi ve stdlib IDNA2003 codec'i) aynı sonucu verdi ve
+DNS de doğruladı: `xn--ynetiyor-n4a.com` kayıtlı (NS Hostinger, A kaydı
+prod IP `185.248.57.150`), `-vpb` etiketli ad **hiç yok** — SOA bile
+dönmüyor. Yanlış biçimle devam edilseydi Caddy o ad için sertifika almaya
+çalışır, ACME sürekli düşer, site **hiç açılmazdı** — ve hata "sertifika
+alınamadı" derdi, "alan adını yanlış yazdınız" demezdi.
+
+**CANLI BULGU — App Store'u düşürecek durum.** `yonetio.site` **kökü
+bugüne kadar hiç sunulmuyordu**: Caddy'de yalnız `api.`/`panel.`/
+`storage.` blokları vardı. Oysa mobilde `AppConfig.webBaseUrl` =
+`https://yonetio.site` ve gizlilik/koşullar bağlantıları oraya gidiyor.
+Ölçüldü: `https://yonetio.site/gizlilik` **200 dönüyor ama içerik
+Hostinger'in "Parked Domain" sayfası** (her yol 200 — catch-all). Yani
+App Store Connect'e verilen **gizlilik politikası adresi park sayfası
+gösteriyor**; tek başına ret sebebi ve "sayfa açıldı mı" diye bakan bir
+cihaz testinden **geçer görünür**. Caddy'ye kök blokları eklendi; kök A
+kaydı prod IP'ye çevrilince düzelir — **uygulama yeniden derlenmeyecek**,
+gömülü adres doğruydu, altında sunucu yoktu.
+
+**YÖNLENDİRME YOK, İKİSİ DE KANONİK.** `yonetio.site` → `yönetiyor.com`
+301'i, incelemedeki yapımın hukuki belge bağlantılarını kırardı.
+`api.yönetiyor.com` ve `storage.yönetiyor.com` **açılmadı**: mobilin
+gömülü adresi `api.yonetio.site` ve bu tur değişmiyor; `storage.` için
+ikinci konak, imzalı URL doğrulamasını **bozar** (imza tek konakla
+yapılır).
+
+**İKİNCİ CANLI BULGU — BİZE AİT OLMAYAN ALAN, GİDEN MESAJLARDA.**
+`routers/mesajlar.py` içinde `"odeme_linki": "https://yonetio.app/ode"`
+sabit kodluydu. **`yonetio.app` bize ait değil** — NS'i Cloudflare, oysa
+sahip olduğumuz alanların hepsi Hostinger'da; fark tek bir sözcük
+(`.app`/`.site`). Bu bir örnek değil: aidat hatırlatma **SMS ve
+e-postalarındaki** `{odeme_linki}` etiketine giriyor. Yani **bizim
+gönderdiğimiz mesajda sakinlere üçüncü bir tarafın alan adına bağlantı**
+veriliyordu — o alanı elinde tutan biri için hazır bir kimlik avı yüzeyi.
+Artık `Settings.portal_base_url`dan üretiliyor (`PORTAL_BASE_URL`,
+varsayılan `https://yönetiyor.com`; unicode bilerek — bağlantı insanın
+okuduğu mesaja girer, `xn--…` SMS'te kimlik avı gibi görünür).
+**Açık kalan:** `/ode` rotası henüz yok, bağlantı 404 verir — ama **bizim**
+alanımızda.
+
+**CORS IDN NORMALLEŞTİRMESİ** (`backend/app/config.py`): tarayıcı `Origin`
+başlığını **daima punycode** gönderir; `allow_origins` tam eşleşme yapar.
+Yapılandırmaya unicode yazılırsa hiçbir istek geçmez ve belirti "CORS
+bozuk" diye görünür — alan adının yazım biçimi kimsenin aklına gelmez.
+Artık iki biçim de listede. Yeni bağımlılık **eklenmedi** (stdlib `idna`
+codec'i); port korunur, çözülemeyen değer ham bırakılır (tek yazım
+hatası yüzünden uygulamanın açılmaması, çözdüğünden büyük bir sorun
+olurdu).
+
+**PANEL/ADMIN-WEB'DE DEĞİŞİKLİK GEREKMEDİ** (denetlendi): `API_BASE` prod'da
+iç ağ adresidir (`http://api:8000`), yani panel→API çağrısı CORS'a hiç
+uğramaz; çerezlerde `domain` **set edilmiyor** → host-only, iki alan ayrı
+oturum tutar (sızıntı yok, beklenen davranış); `next.config.mjs`'te
+**host tabanlı yönlendirme yok** ve `middleware.ts` `host`/`origin`
+okumuyor — uygulama konaktan bağımsız, yeni adlarda olduğu gibi çalışır.
+
+**HUKUKİ BELGELERDEKİ E-POSTALAR DEĞİŞTİRİLMEDİ** (`kvkk@yonetio.site`,
+`destek@yonetio.site`; 7 dil). Yayınlanmış bir belgedeki iletişim adresini,
+kutu **açılmadan** değiştirmek KVKK başvurusu yapan birinin postasını
+boşluğa göndermek olur. Sıra belgede yazılı: kutular açılır → teslim test
+edilir → tek commit'te güncellenir, eskiler ≥1 yıl yönlendirmede kalır.
+
+**E-POSTA DNS'i BELGELENDİ, KURULMADI** (`docs/alan-adi-gecisi.md` §4):
+MX + SPF/DKIM/DMARC iskeleti, sağlayıcıdan bağımsız. Kendi kutumuzda mail
+sunucusu **yok ve olmayacak** (giden posta itibarı tam zamanlı iştir).
+DMARC `p=none` ile başlanır — doğrudan `p=reject`, sağlayıcı hizalaması
+eksikken **kendi meşru postamızı** çöpe attırır.
+
+**YENİ KAPI — `depo-alan-adi`** (`infra/alan-adi-denetimi.py`, `kapilar.sh`
+`depo` alanına eklendi), üç kontrol: (1) depodaki her `xn--` dizesi unicode
+kaynağından **yeniden üretilip** karşılaştırılır — punycode gözle
+doğrulanamaz; (2) yapılandırmada unicode konak aranır (unicode yazılan bir
+site bloğu **hiç eşleşmez**); (3) kaynakta geçen, markamıza **benzeyen** her
+adres sahip olduğumuz alanlar kümesinde mi — `yonetio.app` bulgusunu bulan
+kontrol budur.
+
+**KAPI İKİ KEZ KENDİ YAZDIĞIM HATAYI YAKALADI:** (a) uyarı yorumlarına
+yanlış punycode'u **tam alan adı olarak** yazmıştım — kopyalanabilir bir
+tuzak; artık her iki biçim de yalnızca ACE *etiketi* olarak anılıyor.
+(b) Kontrol 2, kendi eklediğim `PORTAL_BASE_URL=https://yönetiyor.com`
+satırını da işaretledi; haklı değildi — o bir **site adresi** değil, mesaj
+metnine giren bir **bağlantı**. Kural keskinleştirildi: şema taşıyan
+(`https://`) değerler kontrol 2'nin dışında (Caddy site adresleri ve
+`*_DOMAIN` değişkenleri şema taşımaz, kapsam dışı kalmazlar).
+(c) Kapı yalnız **izlenen** dosyaları tarıyordu; oysa commit'ten ÖNCE
+koşuyor — yani **yeni eklenen** bir dosya görünmezdi, ve hatayı getiren tam
+olarak yeni dosyalardır. Bulguyu *anlatan* yeni belge bu yüzden sessizce
+geçmişti. `--others --exclude-standard` eklendi. (d) O ekleme, aracın
+**kendi DENEY dizesini** yakalattı — kendini taramak, sınama verisini bulgu
+saymak olurdu; araç kendi dosyasını atlıyor, gerekçesi yazılı.
+Bize ait olmayan alanın **belgelerde** geçmesi için adıyla ve gerekçesiyle
+iki satırlık bir istisna var (belge kullanıcıya bağlantı göndermez; ürün
+kodu için kural mutlak).
+DENEY=1/2/3 ile üç kontrol de mutasyonla doğrulandı; `portal_base_url`
+testleri de iki mutasyonla (üçüncü-taraf alanı geri koymak / varsayılanı
+değiştirmek) doğrulandı.
+
+**CADDY YAPILANDIRMASI GERÇEKTEN ÖLÇÜLDÜ:** `caddy validate` → "Valid
+configuration"; `caddy adapt` çıktısındaki konak eşleştiricileri
+sayıldı → **8 konak** (api/panel/storage.yonetio.site + kök/www her iki
+alan + panel.xn--ynetiyor-n4a.com). `prod-denetimi.py` G kontrolü yeni üç
+değişkeni de kapsıyor (compose varsayılanı == .env.prod.example ==
+runbook).
+
+KAPILAR: `depo-izlenmeyen` 0 · `depo-alan-adi` 0 · backend `pytest`
+(+15 yeni birim testi) · `tsc`/`vitest`/`build` temiz.
+*`prod-denetimi.py` E kontrolünde 3 bulgu var (api'de `API_WORKERS`,
+`DB_POOL_SIZE`, `DB_MAX_OVERFLOW` dev'de var prod'da yok) — **bu turdan
+ÖNCE de vardı**, `git stash` ile doğrulandı; kapsam dışı bırakıldı.*
+
+Acceptance: Kerem `yonetio.site` kök+www A kayıtlarını prod IP'ye çevirir,
+`caddy`yi yeniden başlatır; `docs/alan-adi-gecisi.md` §3'teki doğrulama
+komutları beş konakta da 200 ve "Parked Domain" içermeyen sayfa verir.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

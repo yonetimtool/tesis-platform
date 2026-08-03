@@ -246,7 +246,9 @@ async def _degerler(
         "borcu_detayli": f"Kalan bakiye: {kurus_metin(bakiye)}",
         # Odeme linki sakinin uygulamadaki "Öde" ekranina isaret eder;
         # tenant basina ayri bir alan ACILMADI (bkz. P30 IBAN kararı).
-        "odeme_linki": "https://yonetio.app/ode",
+        # (P120) BIZE AIT OLMAYAN bir alan adi kullaniliyordu — bkz.
+        # `Settings.portal_base_url` gerekcesi.
+        "odeme_linki": f"{settings.portal_base_url}/ode",
     }
 
 

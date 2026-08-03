@@ -107,6 +107,12 @@ goc() {
 # derleme gerektirmez.
 depo() {
   kapi depo-izlenmeyen bash -c "cd '$KOK' && python3 infra/izlenmeyen-kaynak.py"
+  # (P120) IDN alan adi: punycode elle yazilir ve GOZLE DOGRULANAMAZ
+  # (`xn--ynetiyor-n4a` ile `xn--ynetiyor-vpb` ayni derecede inandiricidir).
+  # Yanlis bicim, ACME dogrulamasi surekli dusen ve HIC acilmayan bir site
+  # birakir; hata da "alan adini yanlis yazdiniz" demez. Yeniden uretip
+  # karsilastirir; saniyeler surer, ag/derleme istemez.
+  kapi depo-alan-adi bash -c "cd '$KOK' && python3 infra/alan-adi-denetimi.py"
 }
 
 ALANLAR=("$@")

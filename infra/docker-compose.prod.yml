@@ -36,6 +36,14 @@ services:
       API_DOMAIN: ${API_DOMAIN:-api.yonetio.site}
       PANEL_DOMAIN: ${PANEL_DOMAIN:-panel.yonetio.site}
       STORAGE_DOMAIN: ${STORAGE_DOMAIN:-storage.yonetio.site}
+      # (P120) YENI BIRINCIL ALAN — yönetiyor.com, PUNYCODE bicimiyle.
+      # Unicode yazmak eslesmeyen bir site blogu birakirdi: tarayici ve
+      # TLS SNI daima punycode gonderir.
+      PORTAL_DOMAIN: ${PORTAL_DOMAIN:-xn--ynetiyor-n4a.com}
+      PANEL_DOMAIN_YENI: ${PANEL_DOMAIN_YENI:-panel.xn--ynetiyor-n4a.com}
+      # ESKI kok alan — kapatilmadi. Mobil yapimin icindeki hukuki belge
+      # adresleri (`https://yonetio.site/gizlilik`) buraya bakiyor.
+      PORTAL_DOMAIN_ESKI: ${PORTAL_DOMAIN_ESKI:-yonetio.site}
     ports:
       - "80:80"
       - "443:443"
@@ -229,6 +237,10 @@ services:
       SDM_KEK: ${SDM_KEK}
       # CORS: panel origin'i (tarayici -> API dogrudan cagri; prod'da acilir).
       CORS_ORIGINS: ${CORS_ORIGINS}
+      # (P120) Sakine giden mesajlardaki `{odeme_linki}` etiketinin tabani.
+      # Eskiden BIZE AIT OLMAYAN bir alan adi sabit koduydu; bkz.
+      # backend/app/config.py -> portal_base_url.
+      PORTAL_BASE_URL: ${PORTAL_BASE_URL:-https://yönetiyor.com}
       # MinIO: presigned URL host'u PUBLIC storage adresi olmali (istemci erisir).
       # api sunucu-tarafi MinIO cagrisi YAPMAZ (presign yerel imzalanir).
       MINIO_ENDPOINT: ${MINIO_PUBLIC_URL}

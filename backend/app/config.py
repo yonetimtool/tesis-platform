@@ -6,7 +6,35 @@ tabidir. Owner/superuser baglantisi sadece migration ve testlerde kullanilir
 """
 from __future__ import annotations
 
+from urllib.parse import urlsplit, urlunsplit
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _punycode_origin(origin: str) -> str | None:
+    """`https://yönetiyor.com` -> `https://xn--ynetiyor-n4a.com`.
+
+    Zaten ASCII olan ya da cozulemeyen girdide `None` doner (cagiran o
+    zaman ham degeri kullanir). STDLIB `idna` codec'i yeterli: yeni bir
+    bagimlilik eklemek, tek bir alan adi icin tedarik zinciri yuzeyini
+    buyutmek olurdu.
+
+    PORT KORUNUR: `netloc` yalniz KONAK kismindan cevrilir; `:8000` gibi
+    bir son ek `idna` codec'ini hata verdirirdi.
+    """
+    try:
+        parca = urlsplit(origin)
+        konak = parca.hostname
+        if not konak or konak.isascii():
+            return None
+        ace = konak.encode("idna").decode("ascii")
+        netloc = f"{ace}:{parca.port}" if parca.port else ace
+        return urlunsplit((parca.scheme, netloc, parca.path, "", ""))
+    except (UnicodeError, ValueError):
+        # Bozuk/desteklenmeyen girdi: cagiran ham degeri kullanmaya devam
+        # eder. Burada patlamak, tek bir yazim hatasi yuzunden UYGULAMANIN
+        # ACILMAMASI demek olurdu.
+        return None
 
 
 class Settings(BaseSettings):
@@ -32,6 +60,25 @@ class Settings(BaseSettings):
     # SQLAlchemy engine echo (debug).
     sql_echo: bool = False
 
+    # --- PORTAL TABAN ADRESI (P120) ---
+    # Sakine GIDEN mesajlardaki `{odeme_linki}` etiketi bundan uretilir.
+    #
+    # NEDEN AYAR OLDU: burada `yonetio.app/ode` SABIT KODLUYDU ve
+    # **yonetio.app BIZE AIT DEGIL** (NS'i Cloudflare; bizim alanlarimizin
+    # hepsi Hostinger'da). Yani aidat hatirlatma SMS/e-postalarinda
+    # sakinlere UCUNCU BIR TARAFIN alan adina baglanti gonderiyorduk —
+    # o alani elinde tutan biri, BIZIM gonderdigimiz mesajdaki baglantiyla
+    # sakinlerimizi kimlik avina dusurebilirdi.
+    #
+    # UNICODE bilerek: baglanti insanin okudugu bir mesaj metnine girer;
+    # `xn--...` bicimi SMS'te kimlik avi gibi gorunur. Modern istemciler
+    # unicode adresi kendileri punycode'a cevirir.
+    #
+    # NOT: `/ode` rotasi HENUZ YOK (panelin public rotalari: /gizlilik,
+    # /kosullar, /login). Baglanti bugun 404 verir — ama BIZIM alanimizda
+    # 404 verir; yabancinin alaninda calisan bir sayfadan iyidir.
+    portal_base_url: str = "https://yönetiyor.com"
+
     # --- CORS (uretim) ---
     # Virgulle ayrilmis izinli tarayici kaynaklari (orn.
     # "https://panel.yonetio.site"). Bos (dev varsayilani) => CORS middleware
@@ -41,7 +88,30 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        """Izinli origin'ler — IDN alan adlari PUNYCODE'a normallestirilmis.
+
+        NEDEN (P120): birincil musteri alani `yönetiyor.com` bir IDN'dir.
+        Tarayici `Origin` basligini DAIMA punycode gonderir
+        (`https://panel.xn--ynetiyor-n4a.com`); yapilandirmaya unicode
+        yazilmissa `allow_origins` listesi TAM ESLESME yaptigi icin hicbir
+        istek gecmez ve belirti "CORS bozuk" diye gorunur — alan adinin
+        yazim bicimi kimsenin aklina gelmez.
+
+        Iki bicim de listede TUTULUR: hangisinin yazildigi onemsizlesir.
+        Cozulemeyen bir deger (IP, `localhost`, bozuk giris) OLDUGU GIBI
+        birakilir — sessizce dusurmek, calisan bir origin'i yok ederdi.
+        """
+        cikti: list[str] = []
+        for ham in self.cors_origins.split(","):
+            o = ham.strip()
+            if not o:
+                continue
+            if o not in cikti:
+                cikti.append(o)
+            ace = _punycode_origin(o)
+            if ace and ace not in cikti:
+                cikti.append(ace)
+        return cikti
 
     # --- NTAG424 SDM/SUN dogrulamasi ---
     # Checkpoint-basina AES-128 etiket anahtarlarini sifrelemekte kullanilan
