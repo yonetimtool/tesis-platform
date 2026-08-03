@@ -67,17 +67,33 @@ platform sahibini o tesisin muhasebecisi hâline getirir; ayrıca hangi
 tesiste olduğunuzu ekranda taşımayan bir arayüzde **yanlış tesise
 kaydetmek** an meselesidir.
 
-### KARAR
+### KARAR (düzeltildi)
 
-`admin` **platform** rolü olarak kalır. 1b kümesi `yonetici`ye açılır ve
-`admin` oralardan **çekilir**. Yeni bir `platform_admin` enum değeri
-**eklenmez** (göç + matris yeniden üretimi = aynı sonuç, daha pahalı).
+`admin` **platform** rolü olarak kalır. Yeni bir `platform_admin` enum
+değeri **eklenmez** (göç + 317 satırlık matrisin yeniden üretimi = aynı
+sonuç, daha pahalı).
 
-> **DİKKAT — bu bir davranış değişikliğidir.** Bugün `admin` ile finans
-> işlemi yapan bir kurulum varsa, o kullanıcı ilgili tesiste `yonetici`
-> olmalıdır. Prod'da tek `admin` hesabı platform sahibinindir (bkz.
-> `create_admin.py`), tesis işlemleri zaten tesis yöneticileri tarafından
-> yapılıyor — yine de göç notunda **açıkça** duyurulmalı.
+**1b kümesinden `admin` ÇEKİLMEZ.** İlk yazımda "çekilir" demiştim; bu
+**istenenin ötesindeydi ve risklidir**, düzeltiyorum. Görevin şartı şu:
+*"tests prove a tenant role gets 403 on platform endpoints and platform nav
+never renders for them, and vice-versa"* — yani **tesis rolü → platform ucu
+403** (bugün sağlanıyor) ve **menü karşı tarafta hiç çizilmez**. Platform
+rolünün tesis uçlarındaki yetkisini geri almak bunların hiçbiri için
+gerekli değil; buna karşılık bir tesiste hem platform sahibi hem yönetici
+olan bir kurulumda **çalışan bir akışı kırardı**.
+
+Ayrım bu yüzden **yüzey** ayrımıdır:
+
+| Katman | Ne yapar |
+|---|---|
+| `panel.*` **menüsü ve rotaları** | yalnız platform bölümleri — tesis sayfaları oraya **hiç konmaz** |
+| Sunucu (rol matrisi) | tesis rolü platform ucunda **403** (bugün var, kilitli) |
+| Test | platform menüsü tesis rolüne **çizilmez**; tesis menüsü platform yüzeyinde **çizilmez** |
+
+Yani "tek bir sitenin aidat işlemleri panelde olmasın" şartı, o sayfaları
+`panel.*`tan **kaldırarak** karşılanır — API yetkisini geri alarak değil.
+Bir gün gerçekten geri alınacaksa bu ayrı ve **duyurulması gereken** bir
+karardır; bu turda yapılmadı.
 
 ---
 
@@ -120,15 +136,17 @@ ve iki yönde de ölçülür:
 * tesis rolü → platform ucunda **403**,
 * platform rolü → tesis-özel uçta **403**.
 
-İkinci yön yeni: bugüne kadar `admin` her yere girebildiği için "platform
-rolü tesis işine karışmamalı" diye bir kural **yoktu**.
+İkinci yön **menü** düzeyindedir, yetki düzeyinde değil (bkz. yukarıdaki
+düzeltilmiş karar): platform yüzeyinde tesis menüsü çizilmez, tesis
+yüzeyinde platform menüsü çizilmez.
 
 ---
 
 ## 4) SIRA (uygulama planı)
 
-1. **1b kümesini `yonetici`ye aç, `admin`i çek** — router `require_role`
-   listeleri; rol matrisi kilidi yeniden üretilir ve fark gözden geçirilir.
+1. **Panel rotalarından tesis sayfalarını çıkar** — `panel.*` yalnız
+   platform bölümlerini sunar. Rol matrisine **dokunulmaz** (yetki geri
+   alınmıyor); eklenen şey menü/rota testleridir.
 2. **Panel navigasyonunu platform-only'ye indir**; tesis sayfaları `app.*`
    yapısına taşınır (P126).
 3. **Caddy**: `app.` bugün yer tutucu sunuyor; P126 landing ettiğinde
