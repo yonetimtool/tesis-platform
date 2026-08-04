@@ -4,6 +4,8 @@ import type { Sozluk } from "./tipler";
 
 export const en: Sozluk = {
   ortakYukleniyor: "Loading...",
+  tasarimTumunuGor: "See all ›",
+  ortakYenidenDene: "Try again",
   ortakKaydet: "Save",
   ortakKaydediliyor: "Saving...",
   ortakIptal: "Cancel",

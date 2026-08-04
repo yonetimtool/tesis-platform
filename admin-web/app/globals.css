@@ -194,3 +194,65 @@ textarea:focus-visible,
 .dark .border-red-300 { border-color: rgba(239, 68, 68, 0.4); }
 .dark .border-indigo-200 { border-color: rgba(99, 102, 241, 0.4); }
 .dark .border-amber-200 { border-color: rgba(245, 158, 11, 0.4); }
+
+/* ==========================================================================
+   (P132) MOBIL TASARIM SISTEMI — koyu tema karsiliklari + bilesen siniflari.
+
+   KAYNAK: mobile/lib/src/core/theme/home_tokens.dart. Acik tema degerleri
+   tailwind.config.ts'te; KOYU tema burada, cunku bu dosya koyu modun TEK
+   yeridir (sayfa basina `dark:` varyanti YAZILMAZ — mevcut kural).
+   ========================================================================== */
+
+/* Yuzey/metin — HomeSurface._dark ile birebir. */
+.dark .bg-yuzey-bg { background-color: #0f131a; }
+.dark .bg-yuzey-card { background-color: #171c25; }
+.dark .bg-yuzey-divider { background-color: #232a36; }
+.dark .bg-yuzey-placeholder { background-color: #232a36; }
+.dark .border-yuzey-divider { border-color: #232a36; }
+.dark .text-metin-heading { color: #f3f4f6; }
+.dark .text-metin-body { color: #d1d5db; }
+.dark .text-metin-muted { color: #9ca3af; }
+
+/* Kart kenarligi: acik temada %4 siyah, koyu temada %8 beyaz. Mobilde de
+   golge YOKTUR — ayirt edici cizgi bu 1px'tir. */
+.kart-kenar { border-color: rgba(0, 0, 0, 0.04); }
+.dark .kart-kenar { border-color: rgba(255, 255, 255, 0.08); }
+
+/* VURGU METNI KOYU TEMADA ACILIR — HomeTokens._koyuMetin haritasinin
+   birebir karsiligi. Gerekce oradaki olcumdur: 600-tonu vurgular koyu
+   zeminde WCAG AA'yi tutmaz (#2563EB / #0F131A = 3.60:1, esik 4.5).
+   Ayni ailenin acik tonu ANLAMI korur ve kontrasti tutar.
+   Ikon/dolgu/tint HAM renkte kalir — sorun yalniz METINDEDIR. */
+.dark .text-accent-blue { color: #7ca9ff; }
+.dark .text-accent-green { color: #4ade80; }
+.dark .text-accent-orange { color: #fbbf24; }
+.dark .text-accent-purple { color: #b69cfb; }
+.dark .text-accent-red { color: #fca5a5; }
+.dark .text-primary { color: #7ca9ff; }
+
+/* ODAK HALKASI ARTIK BIRINCIL RENKTE (mavi) — kabuk mavi vurguya gecti,
+   halkanin teal kalmasi tek basina "yarim gecis" gorunumu verirdi.
+   Kontrast korunur: #2563EB beyaz uzerinde 5.17:1 (WCAG 1.4.11 esigi 3). */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline-color: #2563eb;
+}
+.dark a:focus-visible,
+.dark button:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark textarea:focus-visible,
+.dark [role="button"]:focus-visible,
+.dark [tabindex]:focus-visible {
+  /* Koyu zeminde 600-tonu mavi halka 3.60:1 — esigin altinda; acik ton. */
+  outline-color: #7ca9ff;
+}
+.odak-ters:focus-visible,
+.dark .odak-ters:focus-visible {
+  outline-color: #ffffff;
+}

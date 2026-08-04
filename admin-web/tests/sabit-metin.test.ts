@@ -150,6 +150,12 @@ describe("sabit metin taramasi (tur 47)", () => {
           if (sinifMi(t)) continue;
           // URL/sorgu parcasi metin degildir: `?cascade=true`, `&x=1`.
           if (/^[?&]/.test(t) || /=/.test(t)) continue;
+          // (P132) TIP BILDIRIMI UCLU DEGILDIR. `as?: "div" | "section"`
+          // gibi OPSIYONEL BIR OZELLIGIN dizge-birlesim tipi, `?:` ikilisi
+          // yuzunden uclu sanilıyordu. Gercek bir uclunun `?` ile `:`
+          // arasinda bir IFADE vardir; burada `?` hemen `:` ile bitisiktir
+          // ya da satir bir tip bildirimidir (`ad?: "a" | "b";`).
+          if (/\w\s*\?\s*:/.test(l) && /;\s*$/.test(l.trim())) continue;
           // `t("anahtar")` argumani degil, DOGRUDAN dizge olmali.
           const onceki = l.slice(0, m.index);
           if (/\b(t|metin|ceviri)\s*\($/.test(onceki.trimEnd())) continue;

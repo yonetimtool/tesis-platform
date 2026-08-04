@@ -14,6 +14,8 @@
 export const tr = {
   // ------------------------------- ortak ---------------------------------
   ortakYukleniyor: "Yükleniyor...",
+  tasarimTumunuGor: "Tümünü Gör ›",
+  ortakYenidenDene: "Yeniden dene",
   ortakKaydet: "Kaydet",
   ortakKaydediliyor: "Kaydediliyor...",
   ortakIptal: "İptal",

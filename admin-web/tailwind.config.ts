@@ -15,7 +15,48 @@ const config: Config = {
     extend: {
       colors: {
         ink: "#0f172a",
-        muted: "#64748b",
+        // (P132) TEK GRI: eskiden `muted` #64748b (slate-500) idi ve mobil
+        // #6B7280 (gray-500) kullaniyordu — ayni rolde iki farkli gri, tam
+        // olarak "iki ayri urun" hissini ureten ayrinti. Token testi bunu
+        // yakaladi. Kontrast korunuyor: #6B7280 beyaz uzerinde 4.83:1
+        // (eskisi 4.76 — ikisi de AA'yi gecer, yenisi biraz daha iyi).
+        muted: "#6B7280",
+        // ------------------------------------------------------------------
+        // (P132) MOBIL TASARIM SISTEMI — kaynak: mobile/lib/src/core/theme/
+        // home_tokens.dart. Degerler ELLE UYDURULMADI, oradan kopyalandi;
+        // ikisi ayrisirsa `tests/tasarim-token.test.ts` duser (Dart dosyasini
+        // okuyup karsilastirir).
+        //
+        // NEDEN MOBIL KAYNAK: onaylanmis tasarim odur ve iki urunun ayni
+        // gorunmesi istendi. Web'in eski navy/teal accent'i MARKA olarak
+        // kalir (logo, giris ekrani gradyani); ETKILESIM rengi artik mavi.
+        // Iki farkli vurgu rengi, tam olarak sikayet edilen "yarim kalmis"
+        // hissini uretiyordu.
+        // ------------------------------------------------------------------
+        // Vurgu paleti — TEMA BAGIMSIZ (anlam tasir: yesil=olumlu,
+        // kirmizi=ihlal). Metin kullanimi icin koyu temada `.dark`
+        // karsiliklari globals.css'te degiskenle cozulur.
+        primary: "#2563EB",
+        accent: {
+          blue: "#2563EB",
+          green: "#16A34A",
+          orange: "#F59E0B",
+          purple: "#8B5CF6",
+          red: "#EF4444",
+        },
+        // Yuzey/metin — acik tema degerleri; koyu tema globals.css'te
+        // ayni degisken adlariyla yeniden tanimlanir (tek yer).
+        yuzey: {
+          bg: "#F4F6FA",
+          card: "#FFFFFF",
+          divider: "#F1F2F6",
+          placeholder: "#E5E7EB",
+        },
+        metin: {
+          heading: "#111827",
+          body: "#374151",
+          muted: "#6B7280",
+        },
         brand: {
           navy: "#1E3A5F",
           // MARKA teali (gradyan/dolgu). Metin ve dugme zemini icin
@@ -46,6 +87,30 @@ const config: Config = {
         lg: "0.5rem",
         xl: "0.75rem",
         "2xl": "1rem",
+        // (P132) Mobil token'lari: kart 16, ikon kutusu 14, chip 8.
+        kart: "16px",
+        ikon: "14px",
+        chip: "8px",
+      },
+      spacing: {
+        // (P132) Mobil olcu sabitleri — ayni adlarla.
+        kart: "16px",      // cardPadding
+        bolum: "20px",     // sectionGap
+        izgara: "12px",    // gridGap
+        ikonkutu: "56px",  // iconBox
+        satirikon: "40px", // rowIconBox
+      },
+      fontSize: {
+        // (P132) HomeText olcegi — mobil ile AYNI punto/agirlik.
+        selam: ["26px", { lineHeight: "1.15", fontWeight: "700" }],
+        bolum: ["18px", { lineHeight: "1.3", fontWeight: "700" }],
+        kartbaslik: ["14px", { lineHeight: "1.2", fontWeight: "600" }],
+        sayac: ["13px", { lineHeight: "1.3", fontWeight: "500" }],
+        satiralt: ["12px", { lineHeight: "1.35", fontWeight: "400" }],
+        chip: ["11px", { lineHeight: "1.2", fontWeight: "600", letterSpacing: "0.2px" }],
+        deger: ["20px", { lineHeight: "1.1", fontWeight: "700" }],
+        etiket: ["13px", { lineHeight: "1.3", fontWeight: "600" }],
+        para: ["22px", { lineHeight: "1.15", fontWeight: "700" }],
       },
       boxShadow: {
         // Yumusak, katmanli golgeler (sert dusum yok) — navy tonlu.
@@ -53,6 +118,10 @@ const config: Config = {
         card: "0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.08)",
         lift: "0 4px 10px -2px rgba(15, 23, 42, 0.08), 0 14px 28px -6px rgba(14, 149, 148, 0.16)",
         panel: "0 20px 60px -20px rgba(30, 58, 95, 0.45)",
+        // (P132) Mobil kartlarda GOLGE YOKTUR — 1px %4 siyah kenarlik
+        // kullanilir. Web'de de ayni: golge eklemek iki urunu ayristirirdi.
+        // Bu token yalniz YUZEN katmanlar icindir (cekmece, acilir menu).
+        yuzen: "0 10px 30px -10px rgba(17, 24, 39, 0.25)",
       },
       backgroundImage: {
         "brand-gradient": "linear-gradient(135deg, #1E3A5F 0%, #0E9594 100%)",
