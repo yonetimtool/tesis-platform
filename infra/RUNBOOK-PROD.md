@@ -216,8 +216,58 @@ git pull
 cd infra
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 # migrate her açılışta idempotent çalışır (alembic upgrade head).
+
+# CADDY'İ AYRICA YENİDEN YÜKLEYİN — yukarıdaki komut bunu YAPMAZ:
+docker compose -f docker-compose.prod.yml --env-file .env.prod \
+    exec caddy caddy reload --config /etc/caddy/Caddyfile
+
 docker image prune -f     # eski katmanları temizle (opsiyonel)
 ```
+
+### 11.1 ⚠️ Caddyfile bir BIND-MOUNT'tur: `up -d` onu yeniden yüklemez
+
+`docker-compose.prod.yml` Caddy'ye yapılandırmayı dosya olarak bağlar
+(`./Caddyfile:/etc/caddy/Caddyfile:ro`). Compose bir kabı **servis tanımı**
+değiştiğinde yeniden oluşturur; **bağlanan dosyanın içeriği** değiştiğinde
+değil. Sonuç: `git pull` + `up -d --build` API'yi ve paneli günceller, Caddy
+ise **eski yapılandırmayla** çalışmaya devam eder.
+
+**Bu bir kez gerçekten yaşandı (2026-08):** P126 dağıtıldıktan sonra
+`app.yönetiyor.com` günlerce P120 yer tutucusunu sundu. Depodaki `Caddyfile`
+doğruydu, testler ve alan adı denetimi yeşildi — hepsi **depoyu** ölçüyordu;
+kimse **koşan** yapılandırmayı ölçmüyordu.
+
+Yeniden yükleme **kesintisiz**tir (Caddy yapılandırmayı yerinde değiştirir).
+Emin olmak için:
+
+```bash
+$C exec caddy caddy validate --config /etc/caddy/Caddyfile   # önce doğrula
+$C exec caddy caddy reload   --config /etc/caddy/Caddyfile   # sonra yükle
+```
+
+`volumes:` listesine bir giriş **eklendiğinde** (dosya içeriği değil, servis
+tanımı değişir) ilgili servis yeniden oluşturulmalıdır — ve `migrate` **aynı
+blokta** koşar: `api`yi tek başına ayağa kaldırmak, kod yeni şemayı isterse
+uçların 500 vermesi demektir (P124'te tam olarak bu yaşandı; `prod-denetimi.py`
+[J] denetimi bu satırı yazarken beni yakaladı):
+
+```bash
+$C run --rm migrate                  # önce şema
+$C up -d --force-recreate api        # sonra kod
+```
+
+### 11.2 Dağıtım sonrası ZORUNLU doğrulama
+
+```bash
+bash infra/canli-yuzey-dogrula.sh
+# DNS yayılmasını beklemeden, sunucunun kendi üzerinden:
+SUNUCU_IP=185.248.57.150 bash infra/canli-yuzey-dogrula.sh
+```
+
+Betik her konağa gerçek istek atar ve **koşan** dağıtımın beklenen yüzeyi
+sunduğunu doğrular: `app.*` uygulamayı (yer tutucuyu değil), `panel.*`
+platform yüzeyini, kök alan tanıtım sayfasını + `/gizlilik`i, `api.*`
+`/health`te **şema uyumunu**. Çıkış kodu 0 değilse dağıtım tamamlanmamıştır.
 
 ## 12. Log inceleme
 

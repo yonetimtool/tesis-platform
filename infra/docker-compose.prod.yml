@@ -267,6 +267,14 @@ services:
     volumes:
       # Klasor mount (dosya yoksa da baslar); FCM json yoksa push unconfigured.
       - ./secrets:/secrets:ro
+      # GOC BASI OKUNABILSIN diye (P124 emniyet agi). `/health` semanin
+      # BEKLENEN basini goc dosyalarindan hesaplar; imaj yalniz `backend/`i
+      # kopyaladigi icin prod'da o dosyalar YOKTU ve alan bos donuyordu:
+      # "uyumlu": null — yani `migrate` kosulmadan `api` dagitildiginda
+      # emniyet agi SESSIZCE karar vermiyordu. Tam da korumasi gereken
+      # ortamda islevsizdi; canli dogrulama (infra/canli-yuzey-dogrula.sh)
+      # bunu olctu. SALT OKUNUR: goc dosyalari sir degildir, yazilmaz.
+      - ../contracts:/contracts:ro
     healthcheck:
       test:
         - CMD
