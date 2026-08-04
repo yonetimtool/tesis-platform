@@ -116,5 +116,6 @@ export const config = {
     "/kargolar/:path*",
     "/olaylar/:path*",
     "/arac-gecisleri/:path*",
+    "/gorevlerim/:path*",
   ],
 };

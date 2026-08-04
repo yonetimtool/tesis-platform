@@ -83,7 +83,15 @@ Sakinin web'de hiçbir şeyi yok; `app.*`ın varlık sebebi büyük ölçüde bu
 
 | Modül | Sayfa | Not |
 |---|---|---|
-| `unit_access` | Daire erişim/anahtar kayıtları | KVKK kısıtları korunur |
+| `tasks` (kendi görünümü) | **Görevlerim** ✅ | `/tasks` sunucuda saha rolü için zaten kendi-kapsamlı |
+
+> **⚠️ DÜZELTME — `unit_access` bu role AİT DEĞİL.** Ölçüldü
+> (`routers/unit_access.py`): `_REQUESTER = admin/yonetici`,
+> `_DECIDER = resident`, `_READER = admin/yonetici/resident`.
+> `tesis_gorevlisi` o akışta **hiç yok**. Modül, bir yöneticinin daireye
+> erişim **talep etmesi** ve sakinin **onaylaması** akışıdır — KVKK
+> tadında bir rıza akışı. Doğru yeri: **yönetici** (talep) + **sakin**
+> (karar) tarafı; ilk tablodaki atama yanlıştı.
 
 ## 2b) SONRADAN ÇIKAN BULGU — 25 "var" sayfa YÖNETİCİ görünümüdür
 
@@ -126,7 +134,7 @@ P126 **tek oturumluk bir iş değil**. Ölçülebilir parçalara bölünüşü:
 | P126.3 | **sakin çalışma alanı ✅ BİTTİ** — Profil, Aidatım, Taleplerim, Duyurular, Kurallar, Etkinlikler, Rezervasyonlarım, KVKK; `resident` `app.*`a **alındı** | ✅ **BİTTİ** |
 | P126.4 | **güvenlik çalışma alanı ✅ BİTTİ** — Ziyaretçiler, Kargolar, Olaylar, Araç geçişleri; `security` `app.*`a **alındı** | ✅ **BİTTİ** |
 | P126.5 | yönetici'nin 3 eksik sayfası (`cameras` dâhil) | orta |
-| P126.6 | tesis görevlisi `unit_access` | küçük |
+| P126.6 | **tesis görevlisi ✅ BİTTİ** — Görevlerim; `tesis_gorevlisi` `app.*`a **alındı** | ✅ **BİTTİ** |
 | P126.7 | 7 dil ARB + rol yalıtımı testleri + kapılar | orta |
 
 Her alt-adım kendi commit'idir (kural 2/10). **Hiçbiri yarım bırakılmaz**:

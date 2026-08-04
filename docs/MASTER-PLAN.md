@@ -7433,6 +7433,41 @@ kargo durumunu ham enum çiz).
 KAPILAR: `tsc` temiz · `vitest` **414 test** · `npm run build` ✓ ·
 depo kapıları 0.
 
+Notes (2026-08-04, P126.6) — **TESİS GÖREVLİSİ BİTTİ; rol `app.*`a
+ALINDI.** Sayfa: **Görevlerim** (+ Profil).
+
+**BOŞLUK TABLOSUNDA BİR ATAMA YANLIŞTI, DÜZELTİLDİ.** `unit_access`
+`tesis_gorevlisi`ne atanmıştı; ölçüldü (`routers/unit_access.py`):
+`_REQUESTER = admin/yonetici`, `_DECIDER = resident`. O akışta saha rolü
+**hiç yok** — bir yöneticinin daireye erişim **talep etmesi** ve sakinin
+**onaylaması** akışıdır. Doğru yeri yönetici + sakin tarafı; tabloya
+işlendi.
+
+**İKİ KISIT DÜRÜSTÇE GÖSTERİLDİ, GİZLENMEDİ:**
+* `foto_zorunlu` görevde **tamamla düğmesi yok** — sunucu fotoğrafsız
+  tamamlamayı 422 ile reddediyor (`gorev_foto_kaniti_zorunlu`). Düğmeyi
+  aktif bırakıp 422 aldırmak "bozuk" izlenimi verirdi.
+* Kontrol noktasına bağlı görevde **NFC kısıtı yazılı**: okutma kanıtı
+  yalnız mobilde oluşur. Gizlemek, kullanıcının oluşmayan bir kanıtı
+  oluştu sanması demekti.
+
+**`Idempotency-Key` İLETİLİYOR** — sunucu zorunlu tutuyor ve çift tıklama
+aynı görevi iki kez tamamlamamalı (mutasyonla doğrulandı).
+
+**ERİŞİLEBİLİRLİK KAPISI KODUMU YAKALADI:** not alanına yalnız
+`placeholder` koymuştum — o bir **erişilebilir ad değildir** (ekran
+okuyucu okumaz, yazı girilince kaybolur). Her görev kartına görünür
+etiket koymak listeyi gürültülü yapardı; `aria-label` eklendi.
+
+**DÖRT TESİS ROLÜNÜN DÖRDÜ DE `app.*`TA.** Kalan `guvenlik_amiri` (P35):
+rol backend'de var ama kendi ekran seti tanımlanmadı.
+
+**MUTASYON 4/4:** foto zorunlu görevde düğme göster · `Idempotency-Key`
+gönderme · NFC kısıtını gizle · pasif görevleri listele.
+
+KAPILAR: `tsc` temiz · `vitest` **419 test** · `npm run build` ✓ ·
+depo kapıları 0.
+
 ### P127 — www.yönetiyor.com: tanıtım sitesi (SEO)
 Status: ACIK · Depends-on: P126
 Scope: Geçici statik açılış sayfası (P120) gerçek tanıtım sitesiyle

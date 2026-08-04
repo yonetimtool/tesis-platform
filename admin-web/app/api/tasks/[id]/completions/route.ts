@@ -5,13 +5,23 @@ import { proxyJson } from "@/lib/backend";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(
+/**
+ * (P126.6) Gorev tamamlama.
+ *
+ * `Idempotency-Key` ILETILIR: sunucu onu ZORUNLU tutuyor (400
+ * `idempotency_key_zorunlu`). Cift tiklama ya da ag tekrari, ayni gorevi
+ * iki kez tamamlanmis gostermemeli.
+ */
+export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } },
 ): Promise<NextResponse> {
-  const sp = req.nextUrl.searchParams;
-  const qs = new URLSearchParams();
-  qs.set("limit", sp.get("limit") ?? "50");
-  qs.set("offset", sp.get("offset") ?? "0");
-  return proxyJson(`/tasks/${params.id}/completions?${qs.toString()}`, "GET");
+  const body = await req.json().catch(() => ({}));
+  const key = req.headers.get("Idempotency-Key");
+  return proxyJson(
+    `/tasks/${params.id}/completions`,
+    "POST",
+    body,
+    key ? { "Idempotency-Key": key } : undefined,
+  );
 }

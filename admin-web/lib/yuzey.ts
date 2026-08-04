@@ -80,6 +80,8 @@ export const TESIS_ROTALARI = [
   "/kargolar",
   "/olaylar",
   "/arac-gecisleri",
+  // (P126.6) Saha rolunun kendi gorevleri.
+  "/gorevlerim",
 ] as const;
 
 /**
@@ -142,10 +144,21 @@ const PLATFORM_ROLLERI = new Set(["admin"]);
  * `security` (P126.4 sonunda) EKLENDI: kapi seti tamamlandi —
  * Ziyaretciler, Kargolar, Olaylar, Arac gecisleri (+ Profil).
  *
- * `tesis_gorevlisi` HALA DISARIDA: "gorevlerim" ve daire erisim sayfalari
- * yok (bkz. `docs/app-web-bosluk-tablosu.md`); P126.6'da eklenecek.
+ * `tesis_gorevlisi` (P126.6 sonunda) EKLENDI: "Gorevlerim" + Profil.
+ * `unit_access` bu role ATANMAMISTI — olculdu: o akisin rolleri
+ * admin/yonetici (talep) ve resident (karar); bosluk tablosundaki atama
+ * yanlisti ve duzeltildi.
+ *
+ * `guvenlik_amiri` (P35) HENUZ DISARIDA: rol backend'de var ama kendi
+ * ekran seti tanimlanmadi.
  */
-const TESIS_ROLLERI = new Set(["yonetici", "admin", "resident", "security"]);
+const TESIS_ROLLERI = new Set([
+  "yonetici",
+  "admin",
+  "resident",
+  "security",
+  "tesis_gorevlisi",
+]);
 
 /** [rol] bu [yuzey]e girebilir mi? */
 export function rolYuzeyeGirebilir(rol: string | null, yuzey: Yuzey): boolean {
@@ -158,6 +171,6 @@ export function rolYuzeyeGirebilir(rol: string | null, yuzey: Yuzey): boolean {
 /** Henuz `app.*`a alinmamis tesis rolleri (giriste "yakinda" mesaji icin). */
 export function tesisYuzeyiBekleyenRol(rol: string | null): boolean {
   return (
-    !!rol && ["tesis_gorevlisi", "guvenlik_amiri"].includes(rol)
+    !!rol && ["guvenlik_amiri"].includes(rol)
   );
 }
