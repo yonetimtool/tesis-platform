@@ -57,6 +57,7 @@ from .routers import task_categories as task_categories_router
 from .routers import tasks as tasks_router
 from .routers import tenant as tenant_router
 from .routers import support as support_router
+from .routers import tanitim as tanitim_router
 from .routers import transparency as transparency_router
 from .routers import yonetici_iletisim as yonetici_iletisim_router
 from .routers import tenants as tenants_router
@@ -197,6 +198,8 @@ app.include_router(integrations_router.router)
 app.include_router(webhooks_router.router)
 app.include_router(audit_router.router)
 app.include_router(support_router.router)
+# (P127.2) Tanitim sitesi iletisim formu — public gonderim + admin okuma.
+app.include_router(tanitim_router.router)
 app.include_router(transparency_router.router)
 app.include_router(weather_router.router)
 app.include_router(cameras_router.router)

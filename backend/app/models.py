@@ -3201,6 +3201,36 @@ class AnketOy(Base):
     created_at = _created_at()
 
 
+class TanitimIletisim(Base):
+    """(P127.2) Tanitim sitesi iletisim formu — PLATFORM duzeyi.
+
+    `IletisimMesaji`den AYRI: o tablo bir TESISIN portalina gelen mesajdir
+    (tenant'a aittir). Burada yazan kisinin henuz bir tesisi YOKTUR; gelen
+    sey platforma gelen bir MUSTERI ADAYIDIR. Ikisini `tenant_id` nullable
+    yapip birlestirmek, her sorguda "bu satir hangi anlamda?" sorusunu
+    uretirdi.
+
+    ERISIM: tabloda RLS ACIK ve POLITIKA YOK — app_rw dogrudan
+    okuyamaz/yazamaz. Yazma `tanitim_iletisim_ekle`, okuma
+    `tanitim_iletisim_listele` SECURITY DEFINER fonksiyonlarindan gecer
+    (goc 0033). Bu model SEMAYI BELGELER; ORM ile sorgulanmaz.
+    """
+
+    __tablename__ = "tanitim_iletisim"
+
+    id: Mapped[uuid.UUID] = _pk()
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    email: Mapped[str | None] = mapped_column(Text, nullable=True)
+    telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    mesaj: Mapped[str] = mapped_column(Text, nullable=False)
+    #: Formun gonderildigi dil — donuste ayni dilde cevap yazilabilsin.
+    dil: Mapped[str | None] = mapped_column(Text, nullable=True)
+    okundu: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    created_at = _created_at()
+
+
 class IletisimMesaji(Base):
     """(P38) Portal iletisim formu.
 

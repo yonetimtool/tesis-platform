@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { DilSecici } from "@/components/DilSecici";
+import { TanitimForm } from "@/components/TanitimForm";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { DIL_ADLARI, yon, type Dil } from "@/lib/i18n/diller";
 import { APP_GIRIS, PANEL_GIRIS } from "@/lib/tanitim/adres";
@@ -76,8 +77,13 @@ export function TanitimSayfasi({ dil }: { dil: Dil }) {
         <section id="iletisim" className="py-8">
           <h2 className="text-xl font-semibold">{i.iletisimBaslik}</h2>
           <p className="mt-3 max-w-3xl text-slate-600">{i.iletisimMetin}</p>
-          <p className="mt-3">
-            <a className="font-medium text-brand-teal underline" href={`mailto:${i.iletisimEposta}`}>
+          {/* (P127.2) FORM ARTIK GERCEKTEN TESLIM EDIYOR: BFF -> API ->
+              veritabani (kayit once) -> e-posta denemesi. `mailto:`
+              baglantisi KALDI ama artik YEDEK: e-posta istemcisiyle
+              yazmayi tercih eden ziyaretci icin. */}
+          <TanitimForm />
+          <p className="mt-4 text-satiralt text-metin-mutedBg">
+            <a className="font-medium text-primary underline" href={`mailto:${i.iletisimEposta}`}>
               {i.iletisimEposta}
             </a>
           </p>

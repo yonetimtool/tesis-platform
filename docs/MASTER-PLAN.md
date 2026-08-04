@@ -7720,7 +7720,7 @@ kayıtlı tercihi ezmesine izin ver · yüzeyi yine pencereden oku.
 KAPILAR: `tsc` temiz · `vitest` **490 test** · `npm run build` ✓ · depo 0.
 
 ### P127 — www.yönetiyor.com: tanıtım sitesi (SEO)
-Status: KISMEN(site + SEO BİTTİ · iletişim FORMU ve Lighthouse ölçümü kaldı) · Depends-on: P126
+Status: KISMEN(AJANIN PAYI BİTTİ · yalnız Lighthouse puanı Kerem'de) · Depends-on: P126
 Scope: Geçici statik açılış sayfası (P120) gerçek tanıtım sitesiyle
 değişir: hero/değer önerisi (site yöneticisi ve sakin için **ayrı ayrı**),
 Özellikler, Hakkımızda, İletişim (form → mail/bildirim), App Store/Play
@@ -7782,13 +7782,78 @@ gösterebilirdi ve `infra/alan-adi-denetimi.py` zaten yapılandırmada unicode
 konak bırakmayı reddediyor — kod da aynı dili konuşsun.
 
 **KALAN İKİ İŞ (dürüstçe — bu yüzden KISMEN):**
-1. **İletişim FORMU yok**, `mailto:` bağlantısı var. Kabul kriteri "form
-   teslim ediyor" diyor; teslimat yolu (SMTP/bildirim) ayrı bir dilimdir
-   ve yarım bir form koymaktansa çalışan bir bağlantı bıraktım.
+1. **İletişim FORMU yok**, `mailto:` bağlantısı var. → **P127.2'de yapıldı**
+   (aşağıdaki notlar).
 2. **Lighthouse ≥ 90 sayısı ÜRETİLMEDİ:** bu ortamda tarayıcı yok.
    Lighthouse'un SEO denetiminin baktığı başlıklar tek tek ölçüldü
    (yukarıda) ama **puanın kendisi Kerem'in tarayıcısında** alınmalı —
    P11'e yazıldı.
+
+Notes (2026-08-04, P127.2) — **FORM ARTIK GERÇEKTEN TESLİM EDİYOR.**
+
+**AYRI TABLO, `iletisim_mesaji` DEĞİL.** O tablo bir **tesise** aittir
+(P38 portal formu: sitenin ziyaretçisi o sitenin yönetimine yazar).
+Buradaki form tanıtım sitesindedir ve yazan kişinin **henüz bir tesisi
+yoktur** — gelen şey platforma gelen bir müşteri adayıdır. `tenant_id`yi
+nullable yapıp iki anlamı tek tabloya doldurmak, her sorguda "bu satır
+hangi anlamda?" sorusunu üretirdi.
+
+**TENANT'SIZ TABLO + RLS — TASARIMIN ÇEKİRDEĞİ:** satırın sahibi bir tesis
+olmadığı için `app.current_tenant_id` üzerine politika yazılamaz. İki yol
+vardı: (a) RLS'i kapatıp app_rw'ye doğrudan INSERT vermek, (b) erişimi
+SECURITY DEFINER fonksiyonlarına kapatmak. **(b) seçildi** (0002
+`audit_log_list` / 0004 `support_ticket_*` deseni): app_rw tabloya
+**dokunamaz**; yazma bir fonksiyondan, okuma bir fonksiyondan geçer.
+Böylece **kimliksiz uç, tablonun tamamını okuyabilecek bir yetki
+taşımaz** — form dolduran biri başka adayların adını/telefonunu göremez.
+Bu iddia **davranışla** ölçülüyor (`app_rw` ile SELECT → 0 satır,
+INSERT → `InsufficientPrivilege`), katalog kontrolüyle değil.
+
+**RLS KAPSAM TESTİ GENİŞLETİLDİ:** o test "her tabloda tenant politikası
+olacak" diyordu ve haklıydı — ama bu tablo için **yanlış bir tasarımı
+zorlardı** (anlamsız bir `tenant_id` eklemek). Üçüncü bir sınıf tanımlandı:
+**platform tabloları** = `tenant_id` kolonu yok **ve** hiç politikası yok.
+Sınıf **katalogdan türetilir** (dosyanın "elle liste yok" ilkesi korundu),
+**tavanı vardır** (unutulmuş bir politika sınıfa sessizce kaçamasın) ve
+üyeleri davranışla doğrulanır.
+
+**KAYIT ÖNCE, BİLDİRİM SONRA** (portal formuyla aynı ilke): mesaj önce
+yazılır, sonra e-posta denenir. Tersi olsaydı SMTP yapılandırılmamış bir
+kurulumda müşteri adayı **sessizce kaybolurdu**. SMTP yoksa sağlayıcı
+log'a yazar; kayıt yine durur.
+
+**HIZ SINIRI** (uç kimliksiz, yani açık bir spam yüzeyi): IP başına 60
+dakikada 5 gönderim, aşılırsa 429. Redis erişilemezse istek
+**reddedilmez** — iletişim formunu bir önbellek arızası yüzünden kapatmak,
+korumanın kendisinden pahalı olurdu.
+
+**CANLI ÖLÇÜM (uçtan uca):** kök alan adında form sayfada · BFF üzerinden
+gönderim **201** · platform admini listede **görüyor** (dil `tr` ile) ·
+yönetici **403** · kimliksiz **401** · okundu işaretleme 200 ve okunmamış
+süzgecinden düşüyor.
+
+**SİLME YOK (bilinçli):** gelen ticari iletişim kaydını tek tıkla yok
+etmek "kim ne zaman yazdı" sorusunu cevapsız bırakırdı; liste `okundu`
+ile eritilir. **Saklama süresi bekleyen bir KARARDIR** — gecelik retention
+görevi tenant kapsamlı veriye çalışır; ticari kaydın süresi bir iş
+kararıdır ve Kerem'e sorulmadan sayı uydurmak, KVKK belgesinde
+savunulamayacak bir süre yazmak olurdu. Karar verilince tabloya bir madde
+eklemek tek satırlık iş.
+
+**DÖRT YAPISAL MUHAFIZ YENİ YÜZEYİ BEYAN ETTİRDİ** (hepsi haklıydı):
+`test_secdef_kapsam` üç yeni SECURITY DEFINER fonksiyonunu envantere rol
+kapısıyla yazdırdı · `test_denetci_salt_okuma` yeni **kapısız** mutasyon
+ucunu gerekçesiyle listeletti · `test_hata_i18n` `cok_fazla_istek`
+metnini 7 dile ekletti · rol matrisi kilidi **üç satır** ekletti ve
+sonuç tam da tasarım: `POST /public/tanitim-iletisim` yedi rolde de
+**IZIN** (public), `GET`/`PATCH /tanitim-iletisim` **yalnız admin**,
+diğer altı rolde **RED**.
+
+**KAPI BİR KUSURUMU YAKALADI:** BFF vekilinde `res.ok` denetlenmiyordu ve
+`sessiz-fetch` kilidi bunu bildirdi. Burada denetlememek **doğruydu** (vekil
+yukarı akışın durumunu aynen iletmeli; `res.ok` bakıp kendi hatamızı
+üretmek 429 ve 422 cümlelerini yutardı) — testin sunduğu
+`FETCH-DENETIMSIZ` işaretiyle **gerekçesi yazıldı**.
 
 KAPILAR: `tsc` temiz · `vitest` **559 test** (+17) · `npm run build` ✓ ·
 `caddy validate` **Valid configuration** · `depo-alan-adi` 0 bulgu.

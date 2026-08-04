@@ -4956,6 +4956,51 @@ class AnketOyIstek(BaseModel):
     secenek_id: uuid.UUID
 
 
+class TanitimIletisimIstek(BaseModel):
+    """(P127.2) Tanitim sitesi iletisim formu — PUBLIC, kimliksiz.
+
+    Portal formuyla AYNI "donus yolu" kurali: telefon VEYA e-posta zorunlu;
+    ikisi de yoksa gelen mesaja cevap verilemezdi.
+
+    `dil` istemciden gelir (sayfanin o anki dili) — cevabi ayni dilde
+    yazabilmek icin. Dogrulanir: bilinmeyen bir deger saklanmaz.
+    """
+
+    ad: str = Field(..., min_length=2, max_length=150)
+    email: str | None = Field(None, max_length=200)
+    telefon: str | None = Field(None, max_length=40)
+    mesaj: str = Field(..., min_length=5, max_length=5000)
+    dil: str | None = Field(None, max_length=5)
+
+    @model_validator(mode="after")
+    def _donus_yolu(self) -> "TanitimIletisimIstek":
+        if not (self.telefon or self.email):
+            raise ValueError("telefon veya email zorunlu")
+        return self
+
+
+class TanitimIletisimOut(BaseModel):
+    """Admin listesi ogesi — kisisel veri TASIR, yalniz platform admini gorur."""
+
+    id: uuid.UUID
+    ad: str
+    email: str | None = None
+    telefon: str | None = None
+    mesaj: str
+    dil: str | None = None
+    okundu: bool
+    created_at: datetime
+
+
+class TanitimIletisimListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[TanitimIletisimOut]
+
+
+class TanitimIletisimOkunduIstek(BaseModel):
+    okundu: bool = True
+
+
 class IletisimMesajIstek(BaseModel):
     """Portal iletisim formu — PUBLIC.
 

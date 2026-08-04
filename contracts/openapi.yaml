@@ -6455,6 +6455,104 @@ paths:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  /public/tanitim-iletisim:
+    post:
+      tags: [tanitim]
+      security: []
+      summary: (P127.2) Tanitim sitesi iletisim formu — PUBLIC
+      description: |
+        Kok alan adindaki (tanitim sitesi) iletisim formu. KIMLIK YOK.
+
+        KAYIT ONCE, BILDIRIM SONRA (portal formuyla ayni ilke): mesaj once
+        `tanitim_iletisim` tablosuna yazilir, sonra e-posta DENENIR. Tersi
+        yapilsaydi SMTP yapilandirilmamis bir kurulumda musteri adayi
+        SESSIZCE KAYBOLURDU.
+
+        TENANT YOK: yazan kisinin bir tesisi yoktur. Tabloda RLS acik ve
+        POLITIKA YOK; yazma/okuma SECURITY DEFINER fonksiyonlarindan gecer
+        (goc 0033) — yani bu PUBLIC uc, tablonun tamamini okuyabilecek bir
+        yetki TASIMAZ.
+
+        HIZ SINIRI: IP basina 60 dakikada 5 gonderim; asilirsa 429.
+        `X-Forwarded-For`un ilk degeri kullanilir (yalniz sayac anahtari —
+        yetki karari degildir).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TanitimIletisimIstek" }
+      responses:
+        "201":
+          description: Alindi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { ok: { type: boolean } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429":
+          description: Hiz siniri asildi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /tanitim-iletisim:
+    get:
+      tags: [tanitim]
+      summary: (P127.2) Gelen musteri adaylari — YALNIZ platform admini
+      description: |
+        Kayitlar KISISEL VERI tasir (ad + iletisim). Gonderim public ama
+        OKUMA degil: ayni ucun altinda olsalardi form dolduran biri butun
+        adaylari okuyabilirdi.
+      parameters:
+        - name: okundu
+          in: query
+          schema: { type: boolean }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/TanitimIletisimOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /tanitim-iletisim/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [tanitim]
+      summary: (P127.2) Okundu isaretle — YALNIZ platform admini
+      description: |
+        SILME YOK (bilincli): gelen bir ticari iletisim kaydini tek
+        tiklamayla yok etmek, "kim ne zaman yazdi" sorusunu cevapsiz
+        birakirdi. Listeyi eritmenin yolu `okundu`dur.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { okundu: { type: boolean, default: true } }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TanitimIletisimOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /users/acilabilir-roller:
     get:
       tags: [users]
@@ -8104,6 +8202,32 @@ components:
     GunTipi:
       type: string
       enum: [her_gun, hafta_ici, hafta_sonu, resmi_tatil]
+
+    TanitimIletisimIstek:
+      type: object
+      description: >
+        Telefon VEYA e-posta ZORUNLU: ikisi de yoksa gelen mesaja cevap
+        verilemezdi. `dil` sayfanin o anki dilidir (donuste ayni dilde
+        cevap yazilabilsin); bilinmeyen deger SAKLANMAZ.
+      required: [ad, mesaj]
+      properties:
+        ad: { type: string, minLength: 2, maxLength: 150 }
+        email: { type: string, maxLength: 200, nullable: true }
+        telefon: { type: string, maxLength: 40, nullable: true }
+        mesaj: { type: string, minLength: 5, maxLength: 5000 }
+        dil: { type: string, maxLength: 5, nullable: true }
+    TanitimIletisimOut:
+      type: object
+      required: [id, ad, mesaj, okundu, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string }
+        email: { type: string, nullable: true }
+        telefon: { type: string, nullable: true }
+        mesaj: { type: string }
+        dil: { type: string, nullable: true }
+        okundu: { type: boolean }
+        created_at: { type: string, format: date-time }
 
     UserRole:
       type: string

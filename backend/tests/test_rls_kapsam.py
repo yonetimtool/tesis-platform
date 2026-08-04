@@ -30,6 +30,21 @@ DEGISMEZLER
      olmayan yeni bir tablo davranissal testte de "sizinti yok" gorunurdu.
   6. TABAN SAYI: katalog sorgusu bos donerse yukaridaki her sey BOSA gecer.
      Bu yuzden tablo sayisinin bir alt siniri var.
+
+PLATFORM TABLOLARI (P127.2) — UCUNCU SINIF
+  Semada artik tenant'a AIT OLMAYAN bir tablo var: `tanitim_iletisim`
+  (tanitim sitesine gelen musteri adayi; yazan kisinin henuz bir tesisi
+  YOKTUR). Boyle bir tabloya `app.current_tenant_id` uzerine politika
+  yazilamaz — yazilsaydi anlamsiz olurdu.
+  Bu tablolar icin degismez FARKLI ama DAHA KATI:
+     * RLS ENABLE + FORCE (digerleriyle ayni),
+     * POLITIKA YOK  -> app_rw hicbir satiri goremez/yazamaz,
+     * erisim YALNIZ SECURITY DEFINER fonksiyonlarindan (goc 0033).
+  SINIF KATALOGDAN TURETILIR (elle liste YOK, bu dosyanin ilkesi): tablo
+  `tenant_id` kolonu TASIMIYOR **ve** hic politikasi YOKSA platform
+  tablosudur. Ayrica DAVRANISLA dogrulanir (app_rw ile SELECT/INSERT
+  denenir) ve sayisi SINIRLIDIR — unutulan bir politika bu sinifa
+  sessizce kacamasin.
 """
 from __future__ import annotations
 
@@ -47,6 +62,16 @@ import pytest
 TABAN_TABLO_SAYISI = int(os.getenv("RLS_TABAN_TABLO", "40"))
 
 TENANT_DEGISKENI = "app.current_tenant_id"
+
+#: Platform (tenant'siz) tablolarin UST SINIRI. Sinif katalogdan turetilir;
+#: bu tavan, "politikasi unutulmus" bir tablonun sinifa sessizce katilmasini
+#: gurultulu hale getirir. Bilincli olarak dar.
+PLATFORM_TABLO_TAVANI = int(os.getenv("RLS_PLATFORM_TAVAN", "2"))
+
+
+def _platform_tablolari(katalog) -> set[str]:
+    """tenant_id kolonu OLMAYAN ve hic politikasi OLMAYAN tablolar."""
+    return {ad for ad, _r, _f, pol, tid in katalog if not tid and pol == 0}
 
 
 @pytest.fixture
@@ -119,8 +144,25 @@ def test_her_tablo_rls_enable_ve_force(katalog):
 
 # --- 2. Politika var, TUM komutlar, USING + WITH CHECK ---------------------- #
 def test_her_tablonun_politikasi_var(katalog):
-    yok = [ad for ad, _rls, _frls, pol, _tid in katalog if pol == 0]
+    # PLATFORM TABLOLARI HARIC (bkz. modul notu): onlarda politika YOKLUGU
+    # BILINCLIDIR ve app_rw'nin hicbir satiri gorememesini saglar. Ayri
+    # testleri asagida — sayilari sinirli ve davranislari olculuyor.
+    platform = _platform_tablolari(katalog)
+    yok = [
+        ad for ad, _rls, _frls, pol, tid in katalog
+        if pol == 0 and not (ad in platform and not tid)
+    ]
     assert not yok, "Izolasyon politikasi OLMAYAN tablo(lar): " + ", ".join(yok)
+
+
+def test_platform_tablolari_SINIRLI_ve_beklenen(katalog):
+    """Sinif buyuyorsa GORUNSUN — unutulan politika buraya kacmasin."""
+    platform = _platform_tablolari(katalog)
+    assert len(platform) <= PLATFORM_TABLO_TAVANI, (
+        f"tenant_id'siz ve politikasiz tablo sayisi tavani asti: "
+        f"{sorted(platform)}. Yeni bir tablo eklendiyse ya tenant'a "
+        f"baglanmali ya da tavan BILINCLI olarak yukseltilmeli."
+    )
 
 
 def test_politikalar_tum_komutlari_ve_with_check_kapsiyor(politikalar):
@@ -158,7 +200,11 @@ def test_tenant_id_olmayan_tablo_id_uzerinden_izole(katalog, politikalar):
     eklenirse bu test onu ONE CIKARIR: ya tenant_id alacak ya da izolasyonu
     icin BILINCLI bir karar yazilacak.
     """
-    tidsiz = {ad for ad, _r, _f, _p, tid in katalog if not tid}
+    # Politikasi OLMAYAN tenant_id'siz tablolar PLATFORM sinifidir ve
+    # kendi testlerine tabidir; burada yalniz politikali olanlar olculur
+    # (semada `tenant` tablosu).
+    platform = _platform_tablolari(katalog)
+    tidsiz = {ad for ad, _r, _f, _p, tid in katalog if not tid} - platform
     ifadeler = {ad: (using or "") for ad, _pa, _c, using, _w in politikalar}
     for ad in sorted(tidsiz):
         using = ifadeler.get(ad, "")

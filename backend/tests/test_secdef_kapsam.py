@@ -72,6 +72,19 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     # (tenant_id, key_id) doner: satirin geri kalanini (ad, hash) sizdirmaz
     # ve `aktif=false` anahtari HIC dondurmez.
     "anpr_key_coz": ("public", None),
+    # --- (P127.2) TANITIM SITESI ILETISIM FORMU ---
+    # Tablo TENANT'SIZ: satirin sahibi bir tesis degil, PLATFORMDUR. Bu
+    # yuzden `app.current_tenant_id` uzerine politika yazilamaz ve tabloda
+    # POLITIKA YOKTUR — app_rw dogrudan okuyamaz/yazamaz. Erisimin TAMAMI
+    # bu uc fonksiyondan gecer.
+    #
+    # `ekle` PUBLIC (kimlik yok): formu dolduran ziyaretcinin hesabi
+    # yoktur. Fonksiyon YALNIZ yeni satirin id'sini doner — hicbir satir
+    # OKUTMAZ, yani public uc tabloyu goremez.
+    "tanitim_iletisim_ekle": ("public", None),
+    # Okuma ve isaretleme YALNIZ platform admini (kayitlar kisisel veri).
+    "tanitim_iletisim_listele": ("admin", ("get", "/tanitim-iletisim")),
+    "tanitim_iletisim_okundu": ("admin", ("patch", "/tanitim-iletisim/{tid}")),
 }
 
 

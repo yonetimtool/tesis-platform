@@ -516,6 +516,18 @@ METINLER: dict[str, dict[str, str]] = {
     # demek yanlis olurdu: yetki VARDI, SURESI gecti (ya da henuz
     # baslamadi) — kullanicinin yapacagi sey yoneticiden sureyi
     # uzatmasini istemektir, parolasini aramak degil.
+    # (P127.2) Tanitim formu hiz siniri. Metin SEBEBI soyler ve NE ZAMAN
+    # tekrar denenecegini ima eder; "yetkiniz yok" demek yanlis olurdu
+    # (yetki degil, sıklık sorunu).
+    "cok_fazla_istek": {
+        "tr": "Kısa sürede çok fazla mesaj gönderildi. Lütfen bir süre sonra tekrar deneyin.",
+        "en": "Too many messages in a short time. Please try again later.",
+        "ar": "تم إرسال رسائل كثيرة خلال وقت قصير. يرجى المحاولة لاحقًا.",
+        "ru": "Слишком много сообщений за короткое время. Повторите попытку позже.",
+        "de": "Zu viele Nachrichten in kurzer Zeit. Bitte später erneut versuchen.",
+        "fr": "Trop de messages en peu de temps. Veuillez réessayer plus tard.",
+        "es": "Demasiados mensajes en poco tiempo. Inténtelo de nuevo más tarde.",
+    },
     "gorev_suresi_disinda": {
         "tr": "Denetim göreviniz için tanımlı tarih aralığının dışındasınız; yöneticinizden süreyi güncellemesini isteyin.",
         "en": "You are outside the date range defined for your audit mandate; ask your site manager to update it.",

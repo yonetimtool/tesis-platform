@@ -66,6 +66,11 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # anahtar tenant basinadir. Denetcinin oturumu buradan gecmez —
     # anahtarsiz istek zaten reddedilir.
     ("POST", "/integrations/anpr/events"),
+    # --- (P127.2) tanitim sitesi iletisim formu: PUBLIC, kimlik YOK.
+    # Rol kapisi olamaz cunku yazan kisinin hesabi yoktur. Tesisin
+    # kayitlarina DOKUNMAZ: satir tenant'siz bir tabloya gider ve
+    # fonksiyon hicbir satir okutmaz (bkz. test_secdef_kapsam ENVANTER).
+    ("POST", "/public/tanitim-iletisim"),
 })
 
 #: Denetcinin OKUYABILDIGI uclardan ornekler (davranissal olcum).
