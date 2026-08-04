@@ -82,6 +82,11 @@ describe("sozluk butunlugu", () => {
     // cevirileri ayni oldugundan buradalar.
     "Admin", "Platform Admin", "Endpoint", "Endpoint URL", "Foto", "Kamera",
     "Kanal", "Meta", "Model", "Net", "Plan", "Rol", "Telefon", "Tema", "Test",
+    // (P131) Oynaticinin SECTIGI YOL — teknik kimlik, cumle degil.
+    // "HLS" bir bicim adi, "hls.js" bir kutuphane adidir; ikisi de
+    // cevrilmez. Etiketin varlik sebebi destek sorusudur ("bende
+    // acilmiyor"): hangi yolun secildigini soyler.
+    "HLS (hls.js)",
   ]);
 
   // KALAN ACIK (durustce): ne bu olcum ne `TR_HARF`, ic/ig/is harfi

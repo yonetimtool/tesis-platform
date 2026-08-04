@@ -6,13 +6,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * (P126.5) Kameralar — SALT OKUMA.
+ * (P126.5 · P131) Kameralar — okuma + YONETIM.
  *
- * YONETIM (ekle/duzenle/sil) BU DILIMDE ACILMADI: kamera kaydinin
- * desteklenen-kaynak kurali (HLS/MP4 evet, web sayfasi hayir) mobilde
- * `CameraDraft` icinde yasiyor (P121). Ayni kurali TS'e ikinci kez yazmak,
- * iki kopyanin zamanla ayrismasi demekti — ve ayrisirsa biri "kaydettim
- * ama acilmiyor" uretir. Yonetim mobilde kalir; web izler.
+ * P126.5'te yonetim ACILMAMISTI: desteklenen-kaynak kurali mobilde
+ * `CameraDraft` icinde yasiyordu ve TS'e ikinci kopya yazmak ayrisma
+ * demekti. P131'de kural ORTAK VAKA DOSYASIYLA kilitlendi
+ * (`contracts/kamera-url-kurali.json`; iki taraf da ayni dosyayi okuyan
+ * testlere sahip), yani ayrisma artik SESSIZ degil — o yuzden acildi.
+ *
+ * Yetki BURADA DEGIL sunucuda: `POST/PATCH/DELETE /cameras` admin+yonetici
+ * ister (routers/cameras.py). BFF yalniz iletir.
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const sp = req.nextUrl.searchParams;
@@ -21,4 +24,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     offset: sp.get("offset") ?? "0",
   });
   return proxyJson(`/cameras?${qs.toString()}`, "GET");
+}
+
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const body = await req.json().catch(() => ({}));
+  return proxyJson("/cameras", "POST", body);
 }
