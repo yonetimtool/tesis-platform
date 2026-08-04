@@ -676,3 +676,27 @@ export interface TransparencyAyOzet {
 export interface TransparencyList {
   items: TransparencyAyOzet[];
 }
+
+// -------------------------------- cameras ----------------------------------- #
+// (P131) Kamera yayin turu — sunucudaki `CameraTur` Literal'inin aynasi.
+export type CameraTur = "hls" | "mp4" | "rtsp";
+
+export interface Kamera {
+  id: string;
+  ad: string;
+  konum?: string | null;
+  stream_url: string;
+  tur: CameraTur;
+  aktif: boolean;
+  sakin_gorebilir: boolean;
+  restream_url?: string | null;
+  snapshot_url?: string | null;
+  // Sunucunun karari (restream varsa rtsp de oynatilabilir olur — P17).
+  oynatilabilir: boolean;
+  created_at?: string;
+}
+
+export interface KameraListResponse {
+  meta: PageMeta;
+  items: Kamera[];
+}

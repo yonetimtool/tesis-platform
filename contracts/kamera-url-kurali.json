@@ -1,0 +1,101 @@
+{
+  "_aciklama": [
+    "(P131) KAMERA ADRESI DOGRULAMA KURALI — ISTEMCI TARAFI, TEK KAYNAK.",
+    "",
+    "SORUN: ayni kural bugun UC yerde yasiyor — backend (schemas.py: uzunluk",
+    "+ sema), mobil (camera_models.dart: uzunluk + WEB SAYFASI + sema) ve",
+    "P131 ile web (lib/kamera-url.ts). Uc dil, uc dosya; kopyalarin",
+    "ayrismasi zaman meselesiydi ve ayrisma SESSIZ olurdu: kullanici",
+    "mobilde reddedilen bir adresi web'den kaydeder, sonra ikisinde de",
+    "oynamayan bir kamera kalir.",
+    "",
+    "COZUM: KURAL degil VAKALAR paylasilir. Her istemci kurali kendi",
+    "dilinde uygular ama DOGRULANMIS beklentiler bu dosyadadir; iki",
+    "taraftan biri ayrisirsa kendi testi duser.",
+    "  * mobil : test/features/cameras/url_kurali_sozlesme_test.dart",
+    "  * web   : admin-web/tests/kamera-url-kurali.test.ts",
+    "",
+    "BACKEND NEDEN AYRI: sunucu WEB SAYFASI kontrolu YAPMAZ ve yapamaz —",
+    "`https://youtube.com/watch?v=x` sema kontrolunu gecer, sunucu icin",
+    "gecerli bir HTTPS adresidir. Oynatilamayacagini bilen taraf OYNATAN",
+    "taraftir. Bu yuzden vakalar `sunucu_da_reddeder` bayragi tasir:",
+    "true olanlar sunucunun da 422 verdigi vakalardir.",
+    "",
+    "OZEL URETIM: `ozel: cokUzunUret` olan vakada adres calisma aninda",
+    "uretilir — 2100 karakterlik bir dizeyi JSON'a gomulemek dosyayi",
+    "okunamaz yapardi."
+  ],
+  "ust_sinir": 2048,
+  "kararlar": [
+    "gecerli",
+    "bos",
+    "cokUzun",
+    "webSayfasi",
+    "httpSemasiGerekli",
+    "rtspSemasiGerekli"
+  ],
+  "yayin": [
+    {
+      "not": "P131 gorevinde verilen DOGRULANMIS test yayini (Apple).",
+      "url": "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8",
+      "tur": "hls",
+      "beklenen": "gecerli",
+      "sunucu_da_reddeder": false
+    },
+    { "url": "http://kamera.ornek/live.m3u8", "tur": "hls", "beklenen": "gecerli", "sunucu_da_reddeder": false },
+    { "url": "", "tur": "hls", "beklenen": "bos", "sunucu_da_reddeder": true },
+    { "url": "   ", "tur": "hls", "beklenen": "bos", "sunucu_da_reddeder": true },
+    {
+      "not": "Sema uyusmazligi: hls alaninda rtsp adresi.",
+      "url": "rtsp://kamera.ornek/1", "tur": "hls",
+      "beklenen": "httpSemasiGerekli", "sunucu_da_reddeder": true
+    },
+    {
+      "not": "WEB SAYFASI — sunucu bunu GECIRIR; yalniz istemci yakalar.",
+      "url": "https://www.youtube.com/watch?v=abc123", "tur": "hls",
+      "beklenen": "webSayfasi", "sunucu_da_reddeder": false
+    },
+    { "url": "https://youtu.be/abc123", "tur": "hls", "beklenen": "webSayfasi", "sunucu_da_reddeder": false },
+    { "url": "https://player.vimeo.com/video/12345", "tur": "hls", "beklenen": "webSayfasi", "sunucu_da_reddeder": false },
+    {
+      "not": "MEDYA UZANTISI barindiriciyi YENER: sorgu dizesi atilir.",
+      "url": "https://player.vimeo.com/yayin/master.m3u8?token=abc", "tur": "hls",
+      "beklenen": "gecerli", "sunucu_da_reddeder": false
+    },
+    { "url": "https://kamera.ornek/kayit.mp4", "tur": "mp4", "beklenen": "gecerli", "sunucu_da_reddeder": false },
+    { "url": "rtsp://kamera.ornek/1", "tur": "mp4", "beklenen": "httpSemasiGerekli", "sunucu_da_reddeder": true },
+    { "url": "rtsp://kamera.ornek:554/stream1", "tur": "rtsp", "beklenen": "gecerli", "sunucu_da_reddeder": false },
+    {
+      "not": "rtsp alaninda https adresi — ters yon de olculur.",
+      "url": "https://kamera.ornek/1", "tur": "rtsp",
+      "beklenen": "rtspSemasiGerekli", "sunucu_da_reddeder": true
+    },
+    { "ozel": "cokUzunUret", "tur": "hls", "beklenen": "cokUzun", "sunucu_da_reddeder": true }
+  ],
+  "anlik_kare": [
+    { "not": "Bos = alan doldurulmadi; gecerlidir (kare ozelligi kapali).", "url": "", "beklenen": "gecerli", "sunucu_da_reddeder": false },
+    { "url": "https://kamera.ornek/kare.jpg", "beklenen": "gecerli", "sunucu_da_reddeder": false },
+    {
+      "not": "rtsp bir GORSEL adresi olamaz; karo sessizce bos kalirdi.",
+      "url": "rtsp://kamera.ornek/1", "beklenen": "httpSemasiGerekli", "sunucu_da_reddeder": true
+    },
+    { "url": "https://www.youtube.com/watch?v=abc123", "beklenen": "webSayfasi", "sunucu_da_reddeder": false },
+    { "ozel": "cokUzunUret", "beklenen": "cokUzun", "sunucu_da_reddeder": true }
+  ],
+  "restream": [
+    { "url": "", "beklenen": "gecerli", "sunucu_da_reddeder": false },
+    { "url": "https://gecit.ornek/hls/kamera1.m3u8", "beklenen": "gecerli", "sunucu_da_reddeder": false },
+    {
+      "not": "Gecidin kendisi rtsp olamaz: gecit HLS YAYINLAR.",
+      "url": "rtsp://gecit.ornek/1", "beklenen": "httpSemasiGerekli", "sunucu_da_reddeder": true
+    },
+    {
+      "not": "RESTREAM'DE WEB SAYFASI KONTROLU YOKTUR — bilincli. Gecit adresi",
+      "not2": "operator tarafindan uretilir (Frigate/go2rtc), yapistirilan bir",
+      "not3": "tarayici adresi degildir; kontrolu oraya tasimak, gecerli bir",
+      "not4": "gecidi (orn. dahili bir sayfa yolu) reddetme riski getirirdi.",
+      "url": "https://www.youtube.com/watch?v=abc123", "beklenen": "gecerli", "sunucu_da_reddeder": false
+    },
+    { "ozel": "cokUzunUret", "beklenen": "cokUzun", "sunucu_da_reddeder": true }
+  ]
+}
