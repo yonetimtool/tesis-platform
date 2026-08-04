@@ -130,9 +130,18 @@ describe("KVKK tercihleri", () => {
   it("UC KANAL AYRI AYRI gosterilir ve sunucudan gelen deger yuklenir", async () => {
     taklit({ "/api/me/pazarlama": { eposta: true, sms: false, arama: false } });
     ciz(KvkkPage);
+    // CIRCIR DUZELTMESI (P129 kapilarinda yakalandi, kod kusuru DEGIL):
+    // `findAllByRole` kutularin VAR OLMASINI bekler, `checked` degerinin
+    // sunucudan gelen yanitla GUNCELLENMESINI beklemez. Kutular ilk
+    // cizimde (varsayilan `false`) zaten vardir; yanit hizli geldiginde
+    // test geciyor, yavas geldiginde `false` okuyup dusuyordu — tam
+    // koşumda bir kez dustu, tek basina ve ikinci tam kosumda gecti.
+    // Beklenen DEGERIN kendisi beklenir.
     const kutular = await screen.findAllByRole("checkbox");
     expect(kutular).toHaveLength(3);
-    expect((kutular[0] as HTMLInputElement).checked).toBe(true);
+    await waitFor(() =>
+      expect((kutular[0] as HTMLInputElement).checked).toBe(true),
+    );
     expect((kutular[1] as HTMLInputElement).checked).toBe(false);
   });
 
