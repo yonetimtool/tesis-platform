@@ -83,7 +83,7 @@ export default function GorevlerimPage() {
       <PageHeader title={t("gorevimBaslik")} />
       {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
       ) : null}
       {!isLoading && !error && gorevler.length === 0 ? (
         <EmptyState title={t("gorevimYok")} />
@@ -93,14 +93,14 @@ export default function GorevlerimPage() {
         <article key={g.id} className={`${cardCls} space-y-2 p-4`}>
           <h2 className="font-medium">{g.ad}</h2>
           {g.sonraki_planlanan ? (
-            <p className="text-xs text-muted">
+            <p className="text-xs text-metin-muted">
               {tarihSaatUzun(g.sonraki_planlanan)}
             </p>
           ) : null}
           {g.aciklama ? <p className="text-sm">{g.aciklama}</p> : null}
 
           {g.checkpoint_id ? (
-            <p className="text-xs text-muted">{t("gorevimNfcNotu")}</p>
+            <p className="text-xs text-metin-muted">{t("gorevimNfcNotu")}</p>
           ) : null}
 
           {g.foto_zorunlu ? (

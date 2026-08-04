@@ -134,7 +134,7 @@ export default function ZiyaretcilerPage() {
         <h2 className="font-medium">{t("ziyaretciListe")}</h2>
         {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
         {isLoading ? (
-          <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
           <EmptyState title={t("ziyaretciYok")} />
@@ -143,9 +143,9 @@ export default function ZiyaretcilerPage() {
           <article key={z.id} className={`${cardCls} space-y-1 p-4`}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="font-medium">{z.ziyaretci_ad}</h3>
-              <span className="text-xs text-muted">{z.unit_no ?? "—"}</span>
+              <span className="text-xs text-metin-muted">{z.unit_no ?? "—"}</span>
             </div>
-            <p className="text-xs text-muted">
+            <p className="text-xs text-metin-muted">
               {tarihSaatUzun(z.giris_zamani)}
               {z.cikis_zamani ? ` → ${tarihSaatUzun(z.cikis_zamani)}` : ""}
             </p>

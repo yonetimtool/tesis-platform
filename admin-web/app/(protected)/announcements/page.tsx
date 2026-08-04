@@ -162,12 +162,12 @@ export default function AnnouncementsPage() {
     <div className="space-y-5">
       <PageHeader title={t("kabukDuyurular")} />
 
-      <p className="text-sm text-muted">
+      <p className="text-sm text-metin-muted">
         {t("duyuruPanelNotu")}
       </p>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
@@ -197,10 +197,10 @@ export default function AnnouncementsPage() {
                 <Foto
                   src={photo.previewUrl ?? editing?.foto_url ?? ""}
                   alt={t("duyuruGorseli")}
-                  className="h-40 w-full rounded-lg border border-slate-200 object-cover"
+                  className="h-40 w-full rounded-lg border kart-kenar object-cover"
                 />
               )}
-              {photo.uploading && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+              {photo.uploading && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
               {photo.error && <ErrorBox message={photo.error} />}
               <div className="flex items-center gap-2">
                 <input
@@ -245,18 +245,18 @@ export default function AnnouncementsPage() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <h3 className="font-medium">{a.baslik}</h3>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{a.govde}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-metin-body">{a.govde}</p>
                 {a.foto_url && (
                   // Presigned GET URL kisa omurlu — liste her yenilendiginde taze gelir.
                   <a href={a.foto_url} target="_blank" rel="noreferrer" className="mt-2 block w-fit">
                     <Foto
                       src={a.foto_url}
                       alt={t("gorselAlt", { baslik: a.baslik })}
-                      className="h-40 w-full rounded-lg border border-slate-200 object-cover"
+                      className="h-40 w-full rounded-lg border kart-kenar object-cover"
                     />
                   </a>
                 )}
-                <p className="mt-2 text-xs text-muted">
+                <p className="mt-2 text-xs text-metin-muted">
                   {a.olusturan_ad ?? "—"} · {formatDateTime(a.created_at)}
                   {a.updated_at !== a.created_at && ` ${t("duyuruDuzenlendiEki")}`}
                 </p>

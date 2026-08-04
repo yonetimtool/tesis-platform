@@ -133,7 +133,7 @@ export default function CheckpointsPage() {
       />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
@@ -200,10 +200,10 @@ export default function CheckpointsPage() {
         </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
+            <thead className="bg-yuzey-bg text-left text-metin-muted">
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("noktaUid")}</th>
@@ -214,10 +214,10 @@ export default function CheckpointsPage() {
             </thead>
             <tbody>
               {(data?.items ?? []).map((c) => (
-                <tr key={c.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                <tr key={c.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
                   <td className="px-4 py-2.5">{c.ad}</td>
-                  <td className="px-4 py-2.5 font-mono text-slate-600">{c.nfc_tag_uid}</td>
-                  <td className="px-4 py-2.5 text-slate-600">
+                  <td className="px-4 py-2.5 font-mono text-metin-body">{c.nfc_tag_uid}</td>
+                  <td className="px-4 py-2.5 text-metin-body">
                     {c.gps_lat != null && c.gps_lng != null
                       ? `${c.gps_lat}, ${c.gps_lng}`
                       : "—"}
@@ -225,7 +225,7 @@ export default function CheckpointsPage() {
                   <td className="px-4 py-2.5">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        c.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                        c.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-metin-body"
                       }`}
                     >
                       {c.aktif ? t("ortakAktif") : t("ortakPasif")}

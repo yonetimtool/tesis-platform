@@ -37,7 +37,7 @@ export default function DuyurularPage() {
       <PageHeader title={t("sakinDuyurularBaslik")} />
       {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
       ) : null}
       {!isLoading && !error && kayitlar.length === 0 ? (
         <EmptyState title={t("sakinDuyurularYok")} />
@@ -45,7 +45,7 @@ export default function DuyurularPage() {
       {kayitlar.map((d) => (
         <article key={d.id} className={`${cardCls} space-y-1 p-4`}>
           <h2 className="font-medium">{d.baslik}</h2>
-          <p className="text-xs text-muted">{tarihSaatUzun(d.created_at)}</p>
+          <p className="text-xs text-metin-muted">{tarihSaatUzun(d.created_at)}</p>
           <p className="whitespace-pre-line text-sm">{d.govde}</p>
         </article>
       ))}

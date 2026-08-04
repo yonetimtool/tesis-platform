@@ -9,8 +9,8 @@
 //
 // NE OLCULMEZ: gorunumun kendisi (ekran goruntusu karsilastirmasi bu
 // depoda yok). Olculen sey DEGERLERIN esitligi — ayrisma buradan baslar.
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
@@ -159,6 +159,70 @@ describe("(P132) tint opakligi %12", () => {
     const kit = readFileSync(resolve(KOK, "admin-web/components/tasarim.tsx"), "utf8");
     // Tailwind alfa sozdizimi: `/12`.
     expect(kit).toContain("bg-accent-blue/12");
+  });
+});
+
+describe("(P132.8) ELDEN GECIRILEN SINIFLAR GERI GELMESIN", () => {
+  // Sayfa ici tekil sinif temizligi (39 dosya + 110 `text-muted`) bir KEREYE
+  // MAHSUS ise degil: yeni yazilan bir sayfa refleksle `text-slate-600`
+  // yazarsa gorunum sessizce ikiye ayrilir. Bu test o temizligi KILITLER.
+  //
+  // NE OLCULMEZ: butun slate paletinin yasaklanmasi. Asagida SIFIRLANMIS
+  // olanlar var; `bg-slate-100` (27) ve `border-slate-300` (19) BILEREK
+  // durur — notrolan cip zeminleri ve girdi kenarliklaridir, tasarim
+  // sisteminde karsilik gelen bir token YOK ve ikisi de `globals.css`te
+  // koyu temaya devriliyor. Karsilik uretmek bu turun kapsami degildi.
+  const YASAK = [
+    "text-muted", // -> text-metin-muted (token kaldirildi)
+    "text-slate-700",
+    "text-slate-600",
+    "text-slate-500",
+    "text-slate-400", // -> text-metin-body / text-metin-muted
+    "bg-slate-50", // -> bg-yuzey-bg
+    "border-slate-200", // -> kart-kenar
+    "border-slate-100", // -> border-yuzey-divider
+    "rounded-2xl", // -> rounded-kart (ayni 16px, tek ad)
+    "shadow-card", // mobil kartlarda GOLGE yok
+  ];
+
+  function kaynaklar(): [string, string][] {
+    const cikti: [string, string][] = [];
+    for (const kok of ["app", "components"]) {
+      const yigin = [resolve(KOK, "admin-web", kok)];
+      while (yigin.length) {
+        const d = yigin.pop()!;
+        for (const ad of readdirSync(d)) {
+          const yol = join(d, ad);
+          if (statSync(yol).isDirectory()) yigin.push(yol);
+          else if (ad.endsWith(".tsx")) cikti.push([yol, readFileSync(yol, "utf8")]);
+        }
+      }
+    }
+    return cikti;
+  }
+
+  const DOSYALAR = kaynaklar();
+
+  it("sayfa/bilesen kaynaklarinda kalmadi", () => {
+    const bulunan: string[] = [];
+    for (const sinif of YASAK) {
+      // `dark:` onekli kullanim MESRU: koyu tema icin bilerek yazilmistir.
+      const kalip = new RegExp(`(dark:)?\\b${sinif}\\b`, "g");
+      for (const [yol, kaynak] of DOSYALAR) {
+        for (const m of kaynak.matchAll(kalip)) {
+          if (m[1]) continue;
+          bulunan.push(`${sinif} (${yol.split("admin-web/")[1]})`);
+        }
+      }
+    }
+    expect(bulunan, "tasarim sistemi disi eski sinif geri gelmis").toEqual([]);
+  });
+
+  it("kaynak taramasi GERCEKTEN dosya okuyor", () => {
+    // Yukaridaki test 0 dosya okusaydi da gecerdi — bu, kilidin en olasi
+    // sessiz bozulma bicimidir.
+    expect(DOSYALAR.length).toBeGreaterThan(40);
+    expect(DOSYALAR.some(([, s]) => s.includes("text-metin-muted"))).toBe(true);
   });
 });
 

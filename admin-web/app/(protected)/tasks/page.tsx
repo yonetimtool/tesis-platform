@@ -261,7 +261,7 @@ export default function TasksPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
@@ -369,10 +369,10 @@ export default function TasksPage() {
         </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
+          <thead className="bg-yuzey-bg text-left text-metin-muted">
             <tr>
               <th className="px-4 py-2.5 font-medium">{t("ortakBaslik")}</th>
               <th className="px-4 py-2.5 font-medium">{t("raporTabloTip")}</th>
@@ -385,7 +385,7 @@ export default function TasksPage() {
           </thead>
           <tbody>
             {(data?.items ?? []).map((gorev) => (
-              <tr key={gorev.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${gorev.aktif ? "" : "bg-slate-50"}`}>
+              <tr key={gorev.id} className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${gorev.aktif ? "" : "bg-yuzey-bg"}`}>
                 <td className="px-4 py-2.5">
                   {gorev.ad}
                   {gorev.foto_zorunlu && (
@@ -394,13 +394,13 @@ export default function TasksPage() {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-2.5 text-slate-600">{tipAdi(t, gorev.tip)}</td>
-                <td className="px-4 py-2.5 text-slate-600">{kategoriAd(gorev.kategori_id)}</td>
-                <td className="px-4 py-2.5 text-slate-600">{userName(gorev.atanan_user_id)}</td>
-                <td className="px-4 py-2.5 text-slate-600">
+                <td className="px-4 py-2.5 text-metin-body">{tipAdi(t, gorev.tip)}</td>
+                <td className="px-4 py-2.5 text-metin-body">{kategoriAd(gorev.kategori_id)}</td>
+                <td className="px-4 py-2.5 text-metin-body">{userName(gorev.atanan_user_id)}</td>
+                <td className="px-4 py-2.5 text-metin-body">
                   {gorev.sonraki_planlanan ? formatDateTime(gorev.sonraki_planlanan) : "—"}
                 </td>
-                <td className="px-4 py-2.5 text-slate-600">{gorev.aktif ? t("ortakEvet2") : t("ortakHayir2")}</td>
+                <td className="px-4 py-2.5 text-metin-body">{gorev.aktif ? t("ortakEvet2") : t("ortakHayir2")}</td>
                 <td className="px-4 py-2.5 text-right">
                   <div className="flex justify-end gap-2">
                     <button
@@ -434,10 +434,10 @@ export default function TasksPage() {
           <h2 className="text-lg font-medium">
             {t("gorevTamamlamaKayitlari", { ad: detail.ad })}
           </h2>
-          <div className="overflow-hidden rounded-lg border border-slate-200">
+          <div className="overflow-hidden rounded-lg border kart-kenar">
             <div className="odak-ic overflow-x-auto" tabIndex={0}>
               <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-slate-500">
+              <thead className="bg-yuzey-bg text-left text-metin-muted">
                 <tr>
                   <th className="px-4 py-2.5 font-medium">{t("raporTabloZaman")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("raporTabloTamamlayan")}</th>
@@ -447,8 +447,8 @@ export default function TasksPage() {
               </thead>
               <tbody>
                 {(completions?.items ?? []).map((c) => (
-                  <tr key={c.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
-                    <td className="px-4 py-2.5 text-slate-600">{formatDateTime(c.tamamlanma_zamani)}</td>
+                  <tr key={c.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
+                    <td className="px-4 py-2.5 text-metin-body">{formatDateTime(c.tamamlanma_zamani)}</td>
                     <td className="px-4 py-2.5">{userName(c.tamamlayan_user_id)}</td>
                     <td className="px-4 py-2.5">
                       {c.foto_url ? (
@@ -473,10 +473,10 @@ export default function TasksPage() {
                           {t("gorevFotoVarRozet")}
                         </span>
                       ) : (
-                        <span className="text-muted">{t("raporYok")}</span>
+                        <span className="text-metin-muted">{t("raporYok")}</span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-slate-600">{c.notlar ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-metin-body">{c.notlar ?? "—"}</td>
                   </tr>
                 ))}
                 {completions && completions.items.length === 0 && (

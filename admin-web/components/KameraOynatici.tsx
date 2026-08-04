@@ -123,7 +123,7 @@ export function KameraOynatici({ url, mp4, poster }: Props) {
         </p>
       )}
       {yol && !hata && (
-        <p className="text-xs text-muted" data-yol={yol}>
+        <p className="text-xs text-metin-muted" data-yol={yol}>
           {yolEtiketi[yol]}
         </p>
       )}

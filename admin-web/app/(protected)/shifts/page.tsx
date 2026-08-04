@@ -127,7 +127,7 @@ export default function ShiftsPage() {
       />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
@@ -190,10 +190,10 @@ export default function ShiftsPage() {
         </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
+            <thead className="bg-yuzey-bg text-left text-metin-muted">
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("ortakSaat")}</th>
@@ -203,12 +203,12 @@ export default function ShiftsPage() {
             </thead>
             <tbody>
               {(data?.items ?? []).map((s) => (
-                <tr key={s.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                <tr key={s.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
                   <td className="px-4 py-2.5">{s.ad}</td>
-                  <td className="px-4 py-2.5 text-slate-600 tabular-nums">
+                  <td className="px-4 py-2.5 text-metin-body tabular-nums">
                     {s.baslangic_saat} – {s.bitis_saat}
                   </td>
-                  <td className="px-4 py-2.5 text-slate-600">{gunTipiAdi(t, s.gun_tipi)}</td>
+                  <td className="px-4 py-2.5 text-metin-body">{gunTipiAdi(t, s.gun_tipi)}</td>
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex justify-end gap-2">
                       <button className={btnGhost} onClick={() => openEdit(s)}>

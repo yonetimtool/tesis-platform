@@ -265,10 +265,10 @@ export default function DuesReportPage() {
                 {t("raporCsvIndir")}
               </button>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+            <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
               <div className="odak-ic overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-left text-slate-500">
+                  <thead className="bg-yuzey-bg text-left text-metin-muted">
                     <tr>
                       <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("raporTabloTahakkuk")}</th>
@@ -279,12 +279,12 @@ export default function DuesReportPage() {
                   </thead>
                   <tbody>
                     {report.borclular.map((b) => (
-                      <tr key={b.unit_id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                      <tr key={b.unit_id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
                         <td className="px-4 py-2.5">{b.no}</td>
-                        <td className="px-4 py-2.5 text-slate-600 tabular-nums">{kurusToTL(b.tahakkuk)}</td>
-                        <td className="px-4 py-2.5 text-slate-600 tabular-nums">{kurusToTL(b.odenen)}</td>
+                        <td className="px-4 py-2.5 text-metin-body tabular-nums">{kurusToTL(b.tahakkuk)}</td>
+                        <td className="px-4 py-2.5 text-metin-body tabular-nums">{kurusToTL(b.odenen)}</td>
                         <td className="px-4 py-2.5 font-medium text-red-700 tabular-nums">{kurusToTL(b.kalan)}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{b.son_odeme ?? "—"}</td>
+                        <td className="px-4 py-2.5 text-metin-body">{b.son_odeme ?? "—"}</td>
                       </tr>
                     ))}
                     {report.borclular.length === 0 && (
@@ -303,10 +303,10 @@ export default function DuesReportPage() {
           {/* Odemeler */}
           <section className="space-y-2">
             <h2 className="text-lg font-medium">{t("raporDonemTahsilatlari")}</h2>
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+            <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
               <div className="odak-ic overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-left text-slate-500">
+                  <thead className="bg-yuzey-bg text-left text-metin-muted">
                     <tr>
                       <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("raporTabloTutar")}</th>
@@ -316,11 +316,11 @@ export default function DuesReportPage() {
                   </thead>
                   <tbody>
                     {report.odemeler.map((o) => (
-                      <tr key={o.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                      <tr key={o.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
                         <td className="px-4 py-2.5">{o.no}</td>
                         <td className="px-4 py-2.5 font-medium tabular-nums">{kurusToTL(o.tutar)}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{enumAdi(t, ODEME_YONTEM, o.yontem)}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{formatDateTime(o.zaman)}</td>
+                        <td className="px-4 py-2.5 text-metin-body">{enumAdi(t, ODEME_YONTEM, o.yontem)}</td>
+                        <td className="px-4 py-2.5 text-metin-body">{formatDateTime(o.zaman)}</td>
                       </tr>
                     ))}
                     {report.odemeler.length === 0 && (
@@ -355,10 +355,10 @@ function Card({
       ? "bg-red-50 text-red-700"
       : tone === "emerald"
         ? "bg-emerald-50 text-emerald-700"
-        : "bg-slate-50 text-slate-800";
+        : "bg-yuzey-bg text-slate-800";
   return (
     <div className={`rounded-xl p-4 ${cls}`}>
-      <div className="text-xs text-slate-600">{baslik}</div>
+      <div className="text-xs text-metin-body">{baslik}</div>
       <div className="text-xl font-semibold">{deger}</div>
     </div>
   );

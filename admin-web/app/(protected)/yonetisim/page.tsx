@@ -260,7 +260,7 @@ export default function YonetisimPage() {
         {kararlar && kararlar.items.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-slate-500">
+              <thead className="text-left text-metin-muted">
                 <tr>
                   <th className="px-3 py-2">{t("yonKararNo")}</th>
                   <th className="px-3 py-2">{t("yonKararTarih")}</th>
@@ -271,7 +271,7 @@ export default function YonetisimPage() {
               </thead>
               <tbody>
                 {kararlar.items.map((k) => (
-                  <tr key={k.id} className="border-t border-slate-100 dark:border-slate-800">
+                  <tr key={k.id} className="border-t border-yuzey-divider dark:border-slate-800">
                     <td className="px-3 py-2 font-mono text-xs">{k.karar_no}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(k.tarih)}</td>
                     <td className="px-3 py-2">{k.konu}</td>
@@ -340,7 +340,7 @@ export default function YonetisimPage() {
         {dokumanlar && dokumanlar.items.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-slate-500">
+              <thead className="text-left text-metin-muted">
                 <tr>
                   <th className="px-3 py-2">{t("yonDokumanAd")}</th>
                   <th className="px-3 py-2">{t("yonDokumanYukleyen")}</th>
@@ -350,7 +350,7 @@ export default function YonetisimPage() {
               </thead>
               <tbody>
                 {dokumanlar.items.map((d) => (
-                  <tr key={d.id} className="border-t border-slate-100 dark:border-slate-800">
+                  <tr key={d.id} className="border-t border-yuzey-divider dark:border-slate-800">
                     <td className="px-3 py-2">{d.ad}</td>
                     <td className="px-3 py-2">{d.yukleyen_ad ?? "—"}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(d.created_at)}</td>
@@ -368,7 +368,7 @@ export default function YonetisimPage() {
         {/* KAYIT SILINIR, DEPO OBJESI DURUR (P33): tek istekte depoyu da
             silmek, yanlislikla silinen bir yonetim planinin geri
             alinamamasi demekti. */}
-        <p className="mt-2 text-xs text-slate-500">{t("yonDokumanSilmeNotu")}</p>
+        <p className="mt-2 text-xs text-metin-muted">{t("yonDokumanSilmeNotu")}</p>
       </motion.section>
 
       {/* ------------------------- KVKK aydinlatma ------------------------- */}
@@ -385,12 +385,12 @@ export default function YonetisimPage() {
                 <span>
                   v{m.surum} · {m.baslik}
                 </span>
-                <span className="text-xs text-slate-500">{formatDateTime(m.created_at)}</span>
+                <span className="text-xs text-metin-muted">{formatDateTime(m.created_at)}</span>
               </li>
             ))}
           </ul>
         ) : null}
-        <p className="mb-2 text-xs text-slate-500">{t("yonKvkkNotu")}</p>
+        <p className="mb-2 text-xs text-metin-muted">{t("yonKvkkNotu")}</p>
         <Field label={t("yonKvkkBaslik")}>
           <input className={inputCls} value={kvBaslik} onChange={(e) => setKvBaslik(e.target.value)} />
         </Field>
@@ -416,7 +416,7 @@ export default function YonetisimPage() {
         {uyarilar && uyarilar.items.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-slate-500">
+              <thead className="text-left text-metin-muted">
                 <tr>
                   <th className="px-3 py-2">{t("yonUyariTarih")}</th>
                   <th className="px-3 py-2">{t("yonUyariDaire")}</th>
@@ -427,7 +427,7 @@ export default function YonetisimPage() {
               </thead>
               <tbody>
                 {uyarilar.items.map((u) => (
-                  <tr key={u.id} className="border-t border-slate-100 dark:border-slate-800">
+                  <tr key={u.id} className="border-t border-yuzey-divider dark:border-slate-800">
                     <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(u.created_at)}</td>
                     <td className="px-3 py-2">{u.unit_no ?? "—"}</td>
                     <td className="px-3 py-2 tabular-nums">
@@ -452,7 +452,7 @@ export default function YonetisimPage() {
       {/* ---------------------------- site aktarim ------------------------- */}
       <motion.section {...panelMotion} className={panelCls}>
         <h2 className="mb-3 text-sm font-semibold">{t("yonAktar")}</h2>
-        <p className="mb-2 text-xs text-slate-500">{t("yonAktarIpucu")}</p>
+        <p className="mb-2 text-xs text-metin-muted">{t("yonAktarIpucu")}</p>
         {/* (P63) Baslik gorsel olarak yakin ama BAGLI degil; ekran
             okuyucu metin kutusunu adsiz duyururdu. */}
         <textarea
@@ -477,7 +477,7 @@ export default function YonetisimPage() {
         </div>
         {aktarSonuc ? (
           <div className="mt-3 space-y-2 text-sm">
-            <div className="text-slate-600 dark:text-slate-400">
+            <div className="text-metin-body dark:text-slate-400">
               {t("yonAktarBlok")}: <b className="tabular-nums">{aktarSonuc.blok_olusan}</b> ·{" "}
               {t("yonAktarDaire")}: <b className="tabular-nums">{aktarSonuc.daire_olusan}</b> ·{" "}
               {t("yonAktarKisi")}: <b className="tabular-nums">{aktarSonuc.kisi_olusan}</b>

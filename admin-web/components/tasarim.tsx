@@ -29,7 +29,7 @@ const VURGU_IKON: Record<Vurgu, string> = {
 };
 
 // METIN RENGI — okunur ton (bkz. tailwind `vurguInk`). Koyu temada
-// globals.css `.dark .text-vurguInk-*` ile acik tona doner.
+// globals.css'teki ".dark" vurgu kurallariyla acik tona doner.
 const VURGU_METIN: Record<Vurgu, string> = {
   blue: "text-vurguInk-blue",
   green: "text-vurguInk-green",

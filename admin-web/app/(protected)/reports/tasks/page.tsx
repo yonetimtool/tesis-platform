@@ -176,9 +176,9 @@ export default function TaskReportPage() {
 
       )}
       {committed === null && (
-        <p className="text-sm text-muted">{t("raporFiltreSecin")}</p>
+        <p className="text-sm text-metin-muted">{t("raporFiltreSecin")}</p>
       )}
-      {isLoading && committed !== null && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && committed !== null && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {data && (
         <>
@@ -201,10 +201,10 @@ export default function TaskReportPage() {
                 {t("raporCsvIndir")}
               </button>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+            <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
               <div className="odak-ic overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-left text-slate-500">
+                  <thead className="bg-yuzey-bg text-left text-metin-muted">
                     <tr>
                       <th className="px-4 py-2.5 font-medium">{t("raporGorev")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("raporTabloTip")}</th>
@@ -217,32 +217,32 @@ export default function TaskReportPage() {
                   </thead>
                   <tbody>
                     {data.items.map((c) => (
-                      <tr key={c.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                      <tr key={c.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
                         <td className="px-4 py-2.5">{c.task_adi ?? "—"}</td>
                         <td className="px-4 py-2.5">
                           <span
-                            className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700"
+                            className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-metin-body"
                           >
                             {c.kategori_ad}
                           </span>
                         </td>
                         <td className="px-4 py-2.5">{userName(c.tamamlayan_user_id)}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{formatDateTime(c.tamamlanma_zamani)}</td>
+                        <td className="px-4 py-2.5 text-metin-body">{formatDateTime(c.tamamlanma_zamani)}</td>
                         <td className="px-4 py-2.5">
                           {c.foto_var ? (
                             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">{t("raporVar")}</span>
                           ) : (
-                            <span className="text-muted">{t("raporYok")}</span>
+                            <span className="text-metin-muted">{t("raporYok")}</span>
                           )}
                         </td>
                         <td className="px-4 py-2.5">
                           {c.nfc_dogrulandi ? (
                             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">✓</span>
                           ) : (
-                            <span className="text-muted">—</span>
+                            <span className="text-metin-muted">—</span>
                           )}
                         </td>
-                        <td className="px-4 py-2.5 text-slate-600">{c.notlar ?? "—"}</td>
+                        <td className="px-4 py-2.5 text-metin-body">{c.notlar ?? "—"}</td>
                       </tr>
                     ))}
                     {data.items.length === 0 && (
@@ -288,10 +288,10 @@ function Card({
           ? "bg-violet-50 text-violet-700"
           : tone === "emerald"
             ? "bg-emerald-50 text-emerald-700"
-            : "bg-slate-50 text-slate-800";
+            : "bg-yuzey-bg text-slate-800";
   return (
     <div className={`rounded-xl p-4 ${cls}`}>
-      <div className="text-xs text-slate-600">{baslik}</div>
+      <div className="text-xs text-metin-body">{baslik}</div>
       <div className="text-xl font-semibold">{deger}</div>
     </div>
   );

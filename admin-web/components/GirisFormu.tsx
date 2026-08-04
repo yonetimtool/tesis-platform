@@ -158,7 +158,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
 
   const field =
     "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/25";
-  const labelText = "mb-1.5 block text-sm font-medium text-slate-700";
+  const labelText = "mb-1.5 block text-sm font-medium text-metin-body";
 
   const container = {
     hidden: {},
@@ -238,13 +238,13 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
             variants={container}
             initial="hidden"
             animate="show"
-            className="w-full max-w-sm space-y-5 rounded-2xl border border-slate-200 bg-white p-8 shadow-card"
+            className="w-full max-w-sm space-y-5 rounded-kart border kart-kenar bg-white p-8"
           >
             <motion.div variants={item}>
               <h2 className="text-xl font-semibold tracking-tight break-words">
                 {telefonla ? t("girisCalismaAlani") : t("girisYonetimPaneli")}
               </h2>
-              <p className="mt-1 text-sm text-muted">
+              <p className="mt-1 text-sm text-metin-muted">
                 {telefonla ? t("girisTumRoller") : t("girisYalnizAdmin")}
               </p>
             </motion.div>
@@ -263,7 +263,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                   autoComplete="username"
                   required
                 />
-                <span className="mt-1.5 block text-xs text-muted">
+                <span className="mt-1.5 block text-xs text-metin-muted">
                   {t("girisTelefonYardim")}
                 </span>
               </motion.label>
@@ -318,7 +318,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 rounded border-slate-300 accent-brand-teal focus:ring-2 focus:ring-brand-teal/25"
               />
-              <span className="text-sm text-slate-700">{t("girisBeniHatirla")}</span>
+              <span className="text-sm text-metin-body">{t("girisBeniHatirla")}</span>
             </motion.label>
 
             {error && (

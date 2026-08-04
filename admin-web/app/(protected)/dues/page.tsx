@@ -91,7 +91,7 @@ export default function DuesPage() {
       <PageHeader title={t("aidatBaslik")} />
       {(aErr || pErr) && <ErrorBox message={(aErr ?? pErr).message} />}
       {(aYukleniyor || pYukleniyor) && (
-        <p role="status" className="text-sm text-muted">
+        <p role="status" className="text-sm text-metin-muted">
           {t("ortakYukleniyor")}
         </p>
       )}
@@ -158,10 +158,10 @@ export default function DuesPage() {
             </Field>
           </div>
         </div>
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
           <div className="odak-ic overflow-x-auto" tabIndex={0}>
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-slate-500">
+              <thead className="bg-yuzey-bg text-left text-metin-muted">
                 <tr>
                   <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("ortakDonem")}</th>
@@ -171,11 +171,11 @@ export default function DuesPage() {
               </thead>
               <tbody>
                 {(assessments?.items ?? []).map((a) => (
-                  <tr key={a.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
-                    <td className="px-4 py-2.5 font-mono text-slate-600">{a.unit_id.slice(0, 8)}</td>
+                  <tr key={a.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
+                    <td className="px-4 py-2.5 font-mono text-metin-body">{a.unit_id.slice(0, 8)}</td>
                     <td className="px-4 py-2.5">{a.donem}</td>
                     <td className="px-4 py-2.5 font-medium tabular-nums">{kurusToTL(a.tutar_kurus)}</td>
-                    <td className="px-4 py-2.5 text-slate-600">{a.son_odeme_tarihi ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-metin-body">{a.son_odeme_tarihi ?? "—"}</td>
                   </tr>
                 ))}
                 {assessments && assessments.items.length === 0 && (
@@ -203,10 +203,10 @@ export default function DuesPage() {
       {/* Odeme listesi */}
       <section className="space-y-3">
         <h2 className="text-lg font-medium">{t("aidatOdemeler")}</h2>
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
           <div className="odak-ic overflow-x-auto" tabIndex={0}>
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-slate-500">
+              <thead className="bg-yuzey-bg text-left text-metin-muted">
                 <tr>
                   <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("aidatYontem")}</th>
@@ -217,8 +217,8 @@ export default function DuesPage() {
               </thead>
               <tbody>
                 {(payments?.items ?? []).map((p) => (
-                  <tr key={p.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
-                    <td className="px-4 py-2.5 font-mono text-slate-600">{p.unit_id.slice(0, 8)}</td>
+                  <tr key={p.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
+                    <td className="px-4 py-2.5 font-mono text-metin-body">{p.unit_id.slice(0, 8)}</td>
                     <td className="px-4 py-2.5">{enumAdi(t, ODEME_YONTEM, p.yontem)}</td>
                     <td className="px-4 py-2.5">
                       <span
@@ -227,14 +227,14 @@ export default function DuesPage() {
                             ? "bg-emerald-100 text-emerald-800"
                             : p.durum === "bekliyor"
                               ? "bg-amber-100 text-amber-800"
-                              : "bg-slate-100 text-slate-600"
+                              : "bg-slate-100 text-metin-body"
                         }`}
                       >
                         {enumAdi(t, ODEME_DURUM, p.durum)}
                       </span>
                     </td>
                     <td className="px-4 py-2.5 font-medium tabular-nums">{kurusToTL(p.tutar_kurus)}</td>
-                    <td className="px-4 py-2.5 text-slate-600">{formatDateTime(p.odeme_zamani)}</td>
+                    <td className="px-4 py-2.5 text-metin-body">{formatDateTime(p.odeme_zamani)}</td>
                   </tr>
                 ))}
                 {payments && payments.items.length === 0 && (

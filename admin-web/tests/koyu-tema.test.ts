@@ -75,4 +75,59 @@ describe("koyu tema kapsami", () => {
       "koyu temada devrilmemis renk sinifi",
     ).toEqual([]);
   });
+
+  // (P132.8) TASARIM TOKEN'LARI DA AYNI KURALA TABI.
+  //
+  // Sayfalar bu turda `text-slate-600` gibi PALET siniflarindan token
+  // siniflarina (`text-metin-body`, `bg-yuzey-card`, `kart-kenar`...)
+  // gecirildi. Ustteki tarama YALNIZ palet ailelerine bakar — yani gecis,
+  // o elemanlari kilidin KAPSAMI DISINA cikardi. Bu tam olarak bu dosyanin
+  // onlemek icin var oldugu sessiz bosluktur: `globals.css`teki bir `.dark`
+  // kuralini silmek acik temada HICBIR SEYI bozmaz, koyu temada okunmaz
+  // metin birakirdi.
+  //
+  // KAPSAM: renk KONTRASTI tasiyan siniflar — metin renkleri ve yuzey
+  // zeminleri. Muaf olanlar asagida tek tek gerekcelendirildi; muafiyet
+  // "unuttum"un degil, bir KARARIN kaydi olmali.
+  const TOKEN_GEREKCELI = new Set([
+    // Dolu marka zemini + uzerinde BEYAZ metin: kontrast zeminden bagimsiz,
+    // iki temada da ayni (birincil dugme).
+    "bg-primary",
+    // Kenarlik renkleri metin tasimaz; secili/uyari durumunu iki temada da
+    // ayni anlamla isaretlerler.
+    "border-primary",
+    "border-accent-green",
+    "border-accent-red",
+  ]);
+
+  it("dark: oneksiz her TASARIM TOKEN'i da devrilmis", () => {
+    const css = readFileSync("app/globals.css", "utf8");
+    const devrilmisToken = new Set(
+      [...css.matchAll(/\.dark \.((?:text|bg|border)-[A-Za-z]+(?:-[A-Za-z]+)*|kart-kenar)\b/g)]
+        .map((m) => m[1]),
+    );
+
+    const kalip = new RegExp(
+      "(dark:)?\\b((?:text|bg|border)-(?:metin|yuzey|accent|vurguInk|primary)" +
+        "(?:-[A-Za-z]+)*|kart-kenar)\\b",
+      "g",
+    );
+    const eksik = new Map<string, string>();
+    for (const yol of [...dosyalar("app"), ...dosyalar("components")]) {
+      const kaynak = readFileSync(yol, "utf8");
+      for (const m of kaynak.matchAll(kalip)) {
+        if (m[1]) continue;
+        const sinif = m[2];
+        // Tint ZEMINLER (`bg-accent-blue/12`) anlam tasir ve iki temada da
+        // AYNI kalir; uzerlerindeki METIN (`text-vurguInk-*`) devrilir.
+        if (sinif.startsWith("bg-accent-")) continue;
+        if (TOKEN_GEREKCELI.has(sinif) || devrilmisToken.has(sinif)) continue;
+        if (!eksik.has(sinif)) eksik.set(sinif, yol);
+      }
+    }
+    expect(
+      [...eksik].map(([s, y]) => `${s} (${y})`),
+      "koyu temada devrilmemis TASARIM TOKEN'i",
+    ).toEqual([]);
+  });
 });

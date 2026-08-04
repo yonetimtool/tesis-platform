@@ -140,7 +140,7 @@ export default function SupportPage() {
       <ErrorBox message={hata} />
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
       ) : /* (P60) HATA VARKEN "TALEP YOK" YAZILMAZ. Eski kosul `!data ||
              ...` idi: istek dustugunde `data` tanimsiz olur ve sayfa
              **"Destek talebi yok"** derdi — hemen ustundeki hata kutusuyla
@@ -152,10 +152,10 @@ export default function SupportPage() {
           description={t("destekBiletYok")}
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700" tabIndex={0}>
+        <div className="overflow-x-auto rounded-xl border kart-kenar dark:border-slate-700" tabIndex={0}>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              <tr className="border-b kart-kenar text-left text-xs uppercase tracking-wide text-metin-muted dark:border-slate-700">
                 <th className="px-3 py-2">{t("ortakTarih")}</th>
                 <th className="px-3 py-2">{t("ortakTesis")}</th>
                 <th className="px-3 py-2">{t("destekKonu")}</th>
@@ -168,9 +168,9 @@ export default function SupportPage() {
               {data.items.map((bilet) => (
                 <tr
                   key={bilet.id}
-                  className="border-b border-slate-100 last:border-0 dark:border-slate-800"
+                  className="border-b border-yuzey-divider last:border-0 dark:border-slate-800"
                 >
-                  <td className="whitespace-nowrap px-3 py-2 text-slate-500">
+                  <td className="whitespace-nowrap px-3 py-2 text-metin-muted">
                     {formatDateTime(bilet.created_at)}
                   </td>
                   <td className="px-3 py-2">{bilet.tenant_ad ?? bilet.tenant_id.slice(0, 8)}</td>
@@ -183,7 +183,7 @@ export default function SupportPage() {
                         </span>
                       ) : null}
                     </div>
-                    <div className="truncate text-xs text-slate-500">{bilet.aciklama}</div>
+                    <div className="truncate text-xs text-metin-muted">{bilet.aciklama}</div>
                   </td>
                   <td className="px-3 py-2">
                     <span
@@ -196,12 +196,12 @@ export default function SupportPage() {
                       {bilet.durum === "cozuldu" ? t("destekCozuldu") : t("ortakAcik")}
                     </span>
                   </td>
-                  <td className="max-w-[16rem] truncate px-3 py-2 text-xs text-slate-500">
+                  <td className="max-w-[16rem] truncate px-3 py-2 text-xs text-metin-muted">
                     {bilet.admin_cevap ?? "—"}
                   </td>
                   <td className="px-3 py-2 text-right">
                     <button
-                      className="odak-ic rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                      className="odak-ic rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium hover:bg-yuzey-bg dark:border-slate-600 dark:hover:bg-slate-800"
                       onClick={() => {
                         setSecili(bilet);
                         setCevap(bilet.admin_cevap ?? "");
@@ -230,19 +230,19 @@ export default function SupportPage() {
 
       {secili ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900">
+          <div className="w-full max-w-lg rounded-kart bg-white p-5 shadow-xl dark:bg-slate-900">
             <h2 className="text-base font-semibold">{secili.konu}</h2>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-metin-muted">
               {secili.tenant_ad ?? secili.tenant_id} · {formatDateTime(secili.created_at)}
             </p>
-            <p className="mt-3 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-800">
+            <p className="mt-3 whitespace-pre-wrap rounded-lg bg-yuzey-bg p-3 text-sm dark:bg-slate-800">
               {secili.aciklama}
             </p>
             {secili.foto_url ? (
               <Foto
                 src={secili.foto_url}
                 alt={t("destekTalepGorseli")}
-                className="mt-3 h-48 w-full rounded-lg border border-slate-200 object-contain dark:border-slate-700"
+                className="mt-3 h-48 w-full rounded-lg border kart-kenar object-contain dark:border-slate-700"
               />
             ) : null}
             <Field label={t("destekYanit")}>
@@ -255,11 +255,11 @@ export default function SupportPage() {
             </Field>
             {secili.admin_cevap_foto_url ? (
               <div className="mb-2">
-                <p className="text-xs text-slate-500">{t("destekMevcutYanitGorseli")}</p>
+                <p className="text-xs text-metin-muted">{t("destekMevcutYanitGorseli")}</p>
                 <Foto
                   src={secili.admin_cevap_foto_url}
                   alt={t("destekYanitGorseli")}
-                  className="mt-1 h-40 w-full rounded-lg border border-slate-200 object-contain dark:border-slate-700"
+                  className="mt-1 h-40 w-full rounded-lg border kart-kenar object-contain dark:border-slate-700"
                 />
               </div>
             ) : null}

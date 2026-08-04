@@ -149,7 +149,7 @@ export default function TaleplerimPage() {
         <h2 className="font-medium">{t("talebimGecmis")}</h2>
         {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
         {isLoading ? (
-          <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
         ) : null}
         {!isLoading && !error && talepler.length === 0 ? (
           <EmptyState title={t("talebimYok")} />
@@ -162,7 +162,7 @@ export default function TaleplerimPage() {
                 {t(durumAnahtari(c.durum))}
               </span>
             </div>
-            <p className="text-xs text-muted">{tarihSaatUzun(c.created_at)}</p>
+            <p className="text-xs text-metin-muted">{tarihSaatUzun(c.created_at)}</p>
             <p className="text-sm">{c.mesaj}</p>
           </article>
         ))}

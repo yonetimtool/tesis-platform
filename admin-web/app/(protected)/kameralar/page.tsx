@@ -235,7 +235,7 @@ export default function KameralarPage() {
       />
       {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
       ) : null}
       {!isLoading && !error && gorunen.length === 0 ? (
         <EmptyState title={t("kameraYokWeb")} />
@@ -268,7 +268,7 @@ export default function KameralarPage() {
             </button>
           </div>
           {/* NEDEN AÇILMIYOR — teşhisi kullanıcıya bırakmıyoruz. */}
-          <p className="text-sm text-muted">{t("kameraRtspAciklama")}</p>
+          <p className="text-sm text-metin-muted">{t("kameraRtspAciklama")}</p>
         </section>
       )}
 
@@ -292,7 +292,7 @@ export default function KameralarPage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-muted">
+                    <div className="flex h-full items-center justify-center text-xs text-metin-muted">
                       {t("kameraKareYokWeb")}
                     </div>
                   )}
@@ -305,8 +305,8 @@ export default function KameralarPage() {
               </button>
               <div className="space-y-0.5 p-3">
                 <h2 className="font-medium">{k.ad}</h2>
-                {k.konum ? <p className="text-xs text-muted">{k.konum}</p> : null}
-                <p className="text-xs text-muted">
+                {k.konum ? <p className="text-xs text-metin-muted">{k.konum}</p> : null}
+                <p className="text-xs text-metin-muted">
                   {k.snapshot_url ? t("kameraCanliWeb") : t("kameraGoruntuYokWeb")}
                 </p>
                 <div className="flex gap-2 pt-2">

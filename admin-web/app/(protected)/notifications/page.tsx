@@ -69,7 +69,7 @@ export default function NotificationsPage() {
             key={label}
             onClick={() => setFilter(v)}
             className={`rounded-lg px-3 py-1.5 text-sm transition ${
-              okundu === v ? "bg-ink text-white" : "border border-slate-300 text-slate-700 hover:bg-slate-100"
+              okundu === v ? "bg-ink text-white" : "border border-slate-300 text-metin-body hover:bg-slate-100"
             }`}
           >
             {label}
@@ -78,7 +78,7 @@ export default function NotificationsPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       <ul className="space-y-2">
         {(data?.items ?? []).map((n: AppNotification) => (
@@ -88,7 +88,7 @@ export default function NotificationsPage() {
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500">{enumAdi(t, BILDIRIM_TIP, n.tip)}</span>
+                <span className="text-xs font-semibold text-metin-muted">{enumAdi(t, BILDIRIM_TIP, n.tip)}</span>
                 {!n.okundu && (
                   <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
                     {t("bildirimYeniRozet")}
@@ -96,12 +96,12 @@ export default function NotificationsPage() {
                 )}
               </div>
               <p className="text-sm text-slate-800">{n.mesaj}</p>
-              <span className="text-xs text-muted">{formatDateTime(n.created_at)}</span>
+              <span className="text-xs text-metin-muted">{formatDateTime(n.created_at)}</span>
             </div>
             {!n.okundu && (
               <button
                 onClick={() => markRead(n.id)}
-                className="shrink-0 rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
+                className="shrink-0 rounded-lg border border-slate-300 px-2 py-1 text-xs text-metin-body hover:bg-slate-100"
               >
                 {t("bildirimOkunduIsaretle")}
               </button>

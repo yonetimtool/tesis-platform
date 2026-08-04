@@ -135,7 +135,8 @@ textarea:focus-visible,
 .dark .text-slate-600 { color: #cbd5e1; }
 .dark .text-slate-500 { color: #94a3b8; }
 .dark .text-slate-400 { color: #94a3b8; }
-.dark .text-muted { color: #94a3b8; }
+/* `.dark .text-muted` (P132.8'de) KALDIRILDI — `muted` token'i artik yok,
+   kullanimlari `text-metin-muted`e gecti (bkz. tailwind.config.ts). */
 
 /* "ink" vurgusu (aktif nav pili + birincil buton) — koyu zeminde gorunur
    kalmasi icin acilir; bg-white kartlarla ayni renge dusmesin. */
@@ -212,6 +213,12 @@ textarea:focus-visible,
 .dark .text-metin-heading { color: #f3f4f6; }
 .dark .text-metin-body { color: #d1d5db; }
 .dark .text-metin-muted { color: #9ca3af; }
+/* `mutedBg` acik temada SAYFA ZEMININDE AA'yi tutmak icin koyulastirilmis
+   ikincil tondur (#636C7A). Koyu temada ayni deger kalirsa kontrast 3.5'e
+   duser (AA 4.5 degil) — bu yuzden `muted` ile AYNI acik tona doner
+   (#9ca3af: sayfada 7.3, kartta 6.7). Bu satiri (P132.8) token kilidi
+   buldu; acik temada hicbir belirtisi yoktu. */
+.dark .text-metin-mutedBg { color: #9ca3af; }
 
 /* Kart kenarligi: acik temada %4 siyah, koyu temada %8 beyaz. Mobilde de
    golge YOKTUR — ayirt edici cizgi bu 1px'tir. */

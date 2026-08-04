@@ -35,10 +35,10 @@ export default function AracGecisleriPage() {
   return (
     <div className="space-y-5">
       <PageHeader title={t("aracBaslik")} />
-      <p className="text-sm text-muted">{t("aracOtomatikNot")}</p>
+      <p className="text-sm text-metin-muted">{t("aracOtomatikNot")}</p>
       {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
       ) : null}
       {!isLoading && !error && kayitlar.length === 0 ? (
         <EmptyState title={t("aracYok")} />
@@ -47,9 +47,9 @@ export default function AracGecisleriPage() {
         <article key={g.id} className={`${cardCls} space-y-1 p-4`}>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-medium tabular-nums">{g.plaka}</h2>
-            <span className="text-xs text-muted">{g.unit_no ?? "—"}</span>
+            <span className="text-xs text-metin-muted">{g.unit_no ?? "—"}</span>
           </div>
-          <p className="text-xs text-muted">
+          <p className="text-xs text-metin-muted">
             {tarihSaatUzun(g.giris_zamani)}
             {g.cikis_zamani ? ` → ${tarihSaatUzun(g.cikis_zamani)}` : ""}
           </p>

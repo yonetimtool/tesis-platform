@@ -162,7 +162,7 @@ export default function FinansPage() {
         {kasalar && kasalar.items.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-slate-500">
+              <thead className="text-left text-metin-muted">
                 <tr>
                   <th className="px-3 py-2">{t("finansKasaKod")}</th>
                   <th className="px-3 py-2">{t("finansKasaAd")}</th>
@@ -171,13 +171,13 @@ export default function FinansPage() {
               </thead>
               <tbody>
                 {kasalar.items.map((k) => (
-                  <tr key={k.kasa_id} className="border-t border-slate-100 dark:border-slate-800">
+                  <tr key={k.kasa_id} className="border-t border-yuzey-divider dark:border-slate-800">
                     <td className="px-3 py-2 font-mono text-xs">{k.kod}</td>
                     <td className="px-3 py-2">{k.ad}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{kurusToTL(k.bakiye_kurus)}</td>
                   </tr>
                 ))}
-                <tr className="border-t-2 border-slate-200 font-semibold dark:border-slate-700">
+                <tr className="border-t-2 kart-kenar font-semibold dark:border-slate-700">
                   <td className="px-3 py-2" colSpan={2}>
                     {t("finansGenelToplam")}
                   </td>
@@ -278,7 +278,7 @@ export default function FinansPage() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-left text-slate-500">
+                <thead className="text-left text-metin-muted">
                   <tr>
                     <th className="px-3 py-2">{t("finansTarih")}</th>
                     <th className="px-3 py-2">{t("finansTip")}</th>
@@ -290,7 +290,7 @@ export default function FinansPage() {
                 </thead>
                 <tbody>
                   {hareketler.items.map((h) => (
-                    <tr key={h.id} className="border-t border-slate-100 dark:border-slate-800">
+                    <tr key={h.id} className="border-t border-yuzey-divider dark:border-slate-800">
                       <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(h.tarih)}</td>
                       <td className="px-3 py-2">{t(`finansTip_${h.tip}` as never)}</td>
                       <td className="px-3 py-2">{h.kasa_ad ?? "—"}</td>
@@ -328,7 +328,7 @@ export default function FinansPage() {
 function OzetKart({ etiket, deger }: { etiket: string; deger: string }) {
   return (
     <div className={`${panelCls} !p-4`}>
-      <div className="text-xs text-slate-500">{etiket}</div>
+      <div className="text-xs text-metin-muted">{etiket}</div>
       <div className="mt-1 text-lg font-semibold tabular-nums">{deger}</div>
     </div>
   );

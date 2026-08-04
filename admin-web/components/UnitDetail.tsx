@@ -200,18 +200,18 @@ export function UnitDetail({ unit }: { unit: Unit }) {
 
       {/* Bakiye ozeti */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg bg-slate-50 p-3">
-          <div className="text-xs text-muted">{t("raporToplamTahakkuk")}</div>
+        <div className="rounded-lg bg-yuzey-bg p-3">
+          <div className="text-xs text-metin-muted">{t("raporToplamTahakkuk")}</div>
           <div className="text-lg font-semibold">
             {kurusToTL(dues?.toplam_tahakkuk_kurus ?? 0)}
           </div>
         </div>
-        <div className="rounded-lg bg-slate-50 p-3">
-          <div className="text-xs text-muted">{t("raporOdenen")}</div>
+        <div className="rounded-lg bg-yuzey-bg p-3">
+          <div className="text-xs text-metin-muted">{t("raporOdenen")}</div>
           <div className="text-lg font-semibold">{kurusToTL(dues?.toplam_odenen_kurus ?? 0)}</div>
         </div>
         <div className={`rounded-lg p-3 ${bakiye > 0 ? "bg-red-50" : "bg-emerald-50"}`}>
-          <div className="text-xs text-muted">{t("raporBakiyeBorc")}</div>
+          <div className="text-xs text-metin-muted">{t("raporBakiyeBorc")}</div>
           <div className={`text-lg font-semibold ${bakiye > 0 ? "text-red-700" : "text-emerald-700"}`}>
             {kurusToTL(bakiye)}
           </div>
@@ -225,7 +225,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       </div>
 
       {pOpen && (
-        <form onSubmit={pay} className="space-y-3 rounded-lg border border-slate-200 p-4">
+        <form onSubmit={pay} className="space-y-3 rounded-lg border kart-kenar p-4">
           <h3 className="font-medium">{t("aidatManuelTahsilat")}</h3>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("aidatTutarTl")} hint={t("daireTutarOrnek")}>
@@ -307,7 +307,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
           <h3 className="mb-2 font-medium">{t("aidatTahakkuklar")}</h3>
           <ul className="space-y-1 text-sm">
             {(dues?.assessments ?? []).map((a) => (
-              <li key={a.id} className="flex justify-between rounded border border-slate-100 px-2 py-1">
+              <li key={a.id} className="flex justify-between rounded border border-yuzey-divider px-2 py-1">
                 <span>
                   {a.donem}
                   {a.aciklama ? ` · ${a.aciklama}` : ""}
@@ -316,7 +316,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               </li>
             ))}
             {dues && dues.assessments?.length === 0 && (
-              <li className="text-muted">{t("aidatTahakkukYokNokta")}</li>
+              <li className="text-metin-muted">{t("aidatTahakkukYokNokta")}</li>
             )}
           </ul>
         </div>
@@ -324,7 +324,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
           <h3 className="mb-2 font-medium">{t("aidatOdemeler")}</h3>
           <ul className="space-y-1 text-sm">
             {(dues?.payments ?? []).map((p) => (
-              <li key={p.id} className="flex justify-between rounded border border-slate-100 px-2 py-1">
+              <li key={p.id} className="flex justify-between rounded border border-yuzey-divider px-2 py-1">
                 <span>
                   {enumAdi(t, ODEME_YONTEM, p.yontem)} ·{" "}
                   {enumAdi(t, ODEME_DURUM, p.durum)}
@@ -333,13 +333,13 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                 <span className="font-medium">{kurusToTL(p.tutar_kurus)}</span>
               </li>
             ))}
-            {dues && dues.payments?.length === 0 && <li className="text-muted">{t("daireOdemeYok")}</li>}
+            {dues && dues.payments?.length === 0 && <li className="text-metin-muted">{t("daireOdemeYok")}</li>}
           </ul>
         </div>
       </div>
 
       {/* Tek daire tahakkuk ekle */}
-      <form onSubmit={addAssessment} className="space-y-3 rounded-lg border border-slate-200 p-4">
+      <form onSubmit={addAssessment} className="space-y-3 rounded-lg border kart-kenar p-4">
         <h3 className="font-medium">{t("aidatTahakkukEkleDaire")}</h3>
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("ortakDonem")} hint={t("daireDonemOrnek")}>
@@ -381,11 +381,11 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       </form>
 
       {/* Sakinler */}
-      <div className="space-y-3 rounded-lg border border-slate-200 p-4">
+      <div className="space-y-3 rounded-lg border kart-kenar p-4">
         <h3 className="font-medium">{t("sakinlerBaslik")}</h3>
         <ul className="space-y-1 text-sm">
           {aktifSakinler.map((r) => (
-            <li key={r.id} className="flex items-center justify-between rounded border border-slate-100 px-2 py-1">
+            <li key={r.id} className="flex items-center justify-between rounded border border-yuzey-divider px-2 py-1">
               <span className="font-mono">
                 {r.user_id.slice(0, 8)} · {r.rol_tipi ?? "—"}
               </span>
@@ -395,7 +395,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
             </li>
           ))}
           {residents && aktifSakinler.length === 0 && (
-            <li className="text-muted">{t("daireAktifSakinYok")}</li>
+            <li className="text-metin-muted">{t("daireAktifSakinYok")}</li>
           )}
         </ul>
         <form onSubmit={addResident} className="flex items-end gap-2">

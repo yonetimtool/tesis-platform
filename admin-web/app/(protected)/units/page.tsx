@@ -153,7 +153,7 @@ export default function UnitsPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
@@ -229,10 +229,10 @@ export default function UnitsPage() {
         </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
+            <thead className="bg-yuzey-bg text-left text-metin-muted">
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t("daireNoKisa")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("ortakBlok")}</th>
@@ -248,20 +248,20 @@ export default function UnitsPage() {
             </thead>
             <tbody>
               {(data?.items ?? []).map((u) => (
-                <tr key={u.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                <tr key={u.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
                   <td className="px-4 py-2.5">{u.no}</td>
-                  <td className="px-4 py-2.5 text-slate-600">{u.blok ?? t("daireBlokAtanmamis")}</td>
+                  <td className="px-4 py-2.5 text-metin-body">{u.blok ?? t("daireBlokAtanmamis")}</td>
                   {/* Tip ATANMAMISSA "-": bos hucre "veri gelmedi mi?"
                       sorusunu uretir, tire "atanmamis" der. */}
-                  <td className="px-4 py-2.5 text-slate-600">{u.unit_tip_ad ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-slate-600 tabular-nums">
+                  <td className="px-4 py-2.5 text-metin-body">{u.unit_tip_ad ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-metin-body tabular-nums">
                     {u.kat != null || u.sira != null ? `${u.kat ?? "—"} / ${u.sira ?? "—"}` : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-slate-600 tabular-nums">{sayiBicimi(u.metrekare)}</td>
+                  <td className="px-4 py-2.5 text-metin-body tabular-nums">{sayiBicimi(u.metrekare)}</td>
                   <td className="px-4 py-2.5">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        u.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                        u.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-metin-body"
                       }`}
                     >
                       {u.aktif ? t("ortakAktif") : t("ortakPasif")}

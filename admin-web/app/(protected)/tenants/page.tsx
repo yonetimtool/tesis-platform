@@ -173,7 +173,7 @@ export default function TenantsPage() {
       />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
@@ -207,7 +207,7 @@ export default function TenantsPage() {
 
           <div className="space-y-4">
             {form.yoneticiler.map((y, i) => (
-              <div key={y.anahtar} className="rounded-lg border border-slate-200 p-4">
+              <div key={y.anahtar} className="rounded-lg border kart-kenar p-4">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-medium">
@@ -216,7 +216,7 @@ export default function TenantsPage() {
                         : t("tesisYoneticiSira", { n: i + 1 })}
                     </h3>
                     {i === 0 && (
-                      <p className="text-xs text-muted">{t("tesisIlkGirisAdlandirir")}</p>
+                      <p className="text-xs text-metin-muted">{t("tesisIlkGirisAdlandirir")}</p>
                     )}
                   </div>
                   {i > 0 && (
@@ -296,10 +296,10 @@ export default function TenantsPage() {
         </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
+            <thead className="bg-yuzey-bg text-left text-metin-muted">
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t("ayarTesisAdi")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("tesisKimlikId")}</th>
@@ -310,13 +310,13 @@ export default function TenantsPage() {
             </thead>
             <tbody>
               {(data?.items ?? []).map((tesis) => (
-                <tr key={tesis.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                <tr key={tesis.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
                   <td className="px-4 py-2.5">
                     <Link href={`/tenants/${tesis.id}`} className="font-medium text-ink hover:underline">
                       {tesis.ad}
                     </Link>
                   </td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{tesis.id}</td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-metin-muted">{tesis.id}</td>
                   <td className="px-4 py-2.5">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -328,7 +328,7 @@ export default function TenantsPage() {
                       {tesis.kurulum_tamamlandi ? t("tesisTamamlandi") : t("tesisBekliyor")}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-600">{fmtDate(tesis.created_at)}</td>
+                  <td className="px-4 py-2.5 text-metin-body">{fmtDate(tesis.created_at)}</td>
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex justify-end gap-2">
                       <Link href={`/tenants/${tesis.id}`} className={btnGhost}>

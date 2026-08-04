@@ -32,17 +32,17 @@ export function TanitimSayfasi({ dil }: { dil: Dil }) {
         {/* IKI DEGER ONERISI YAN YANA: yonetici ve sakin ayni sayfaya bakar
             ama ayni seyi aramaz. */}
         <section className="grid gap-6 py-8 sm:grid-cols-2">
-          <article className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+          <article className="rounded-kart border kart-kenar bg-yuzey-bg p-6">
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               {i.yoneticiBaslik}
             </h1>
-            <p className="mt-3 text-slate-600">{i.yoneticiAlt}</p>
+            <p className="mt-3 text-metin-body">{i.yoneticiAlt}</p>
           </article>
-          <article className="rounded-2xl border border-slate-200 p-6">
+          <article className="rounded-kart border kart-kenar p-6">
             <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               {i.sakinBaslik}
             </h2>
-            <p className="mt-3 text-slate-600">{i.sakinAlt}</p>
+            <p className="mt-3 text-metin-body">{i.sakinAlt}</p>
           </article>
         </section>
 
@@ -50,9 +50,9 @@ export function TanitimSayfasi({ dil }: { dil: Dil }) {
           <h2 className="text-xl font-semibold">{i.ozelliklerBaslik}</h2>
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {i.ozellikler.map((o) => (
-              <article key={o.baslik} className="rounded-xl border border-slate-200 p-5">
+              <article key={o.baslik} className="rounded-xl border kart-kenar p-5">
                 <h3 className="font-medium">{o.baslik}</h3>
-                <p className="mt-2 text-sm text-slate-600">{o.metin}</p>
+                <p className="mt-2 text-sm text-metin-body">{o.metin}</p>
               </article>
             ))}
           </div>
@@ -61,7 +61,7 @@ export function TanitimSayfasi({ dil }: { dil: Dil }) {
         <section id="hakkimizda" className="py-8">
           <h2 className="text-xl font-semibold">{i.hakkimizdaBaslik}</h2>
           {i.hakkimizdaParagraflar.map((p) => (
-            <p key={p} className="mt-3 max-w-3xl text-slate-600">
+            <p key={p} className="mt-3 max-w-3xl text-metin-body">
               {p}
             </p>
           ))}
@@ -71,12 +71,12 @@ export function TanitimSayfasi({ dil }: { dil: Dil }) {
           <h2 className="text-xl font-semibold">{i.uygulamaBaslik}</h2>
           {/* MAGAZA ROZETI UYDURULMAZ (P129 ile ayni karar): uygulama henuz
               yayinda degil; sahte bir rozet 404'e giden bir sozdur. */}
-          <p className="mt-3 max-w-3xl text-slate-600">{i.uygulamaYakinda}</p>
+          <p className="mt-3 max-w-3xl text-metin-body">{i.uygulamaYakinda}</p>
         </section>
 
         <section id="iletisim" className="py-8">
           <h2 className="text-xl font-semibold">{i.iletisimBaslik}</h2>
-          <p className="mt-3 max-w-3xl text-slate-600">{i.iletisimMetin}</p>
+          <p className="mt-3 max-w-3xl text-metin-body">{i.iletisimMetin}</p>
           {/* (P127.2) FORM ARTIK GERCEKTEN TESLIM EDIYOR: BFF -> API ->
               veritabani (kayit once) -> e-posta denemesi. `mailto:`
               baglantisi KALDI ama artik YEDEK: e-posta istemcisiyle
@@ -110,8 +110,8 @@ export function TanitimSayfasi({ dil }: { dil: Dil }) {
         </section>
       </main>
 
-      <footer className="border-t border-slate-200">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-5 py-6 text-sm text-slate-600">
+      <footer className="border-t kart-kenar">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-5 py-6 text-sm text-metin-body">
           {/* HUKUKI SAYFALAR TEK KAYNAKTAN: `lib/hukuki/` — buraya
               KOPYALANMAZ (P113). */}
           <Link className="underline" href="/gizlilik">

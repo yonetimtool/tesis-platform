@@ -15,12 +15,11 @@ const config: Config = {
     extend: {
       colors: {
         ink: "#0f172a",
-        // (P132) TEK GRI: eskiden `muted` #64748b (slate-500) idi ve mobil
-        // #6B7280 (gray-500) kullaniyordu — ayni rolde iki farkli gri, tam
-        // olarak "iki ayri urun" hissini ureten ayrinti. Token testi bunu
-        // yakaladi. Kontrast korunuyor: #6B7280 beyaz uzerinde 4.83:1
-        // (eskisi 4.76 — ikisi de AA'yi gecer, yenisi biraz daha iyi).
-        muted: "#6B7280",
+        // (P132.8) `muted` KALDIRILDI. Acik temada `metin.muted` ile AYNI
+        // degerdeydi (#6B7280) ama koyu temasi ayrisimisti (#94a3b8, mobil
+        // kaynak #9CA3AF diyor) — yani ayni rol, iki ad, iki davranis.
+        // 110 kullanim `text-metin-muted`e gecirildi; ad burada birakilsaydi
+        // ayrisma sessizce geri gelirdi.
         // ------------------------------------------------------------------
         // (P132) MOBIL TASARIM SISTEMI — kaynak: mobile/lib/src/core/theme/
         // home_tokens.dart. Degerler ELLE UYDURULMADI, oradan kopyalandi;

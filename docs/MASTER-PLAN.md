@@ -8291,8 +8291,8 @@ Status: BITTI · Depends-on: P26, P122
 Acceptance: iki yüzeyde de tip görünür, atanmamışta "—"; kapılar.
 
 ### P132 — Web arayüz yenilemesi: mobil tasarım diline geçiş
-Status: KISMEN(sistem + kabuk + pano + başarım + erişim BİTTİ · kalan
-sayfaların kite taşınması sürüyor) · Depends-on: P126, P129, P131
+Status: BITTI(2026-08-04 · 7 madde + satır içi sınıf temizliği; kalan iki
+sınıf gerekçesiyle bırakıldı — P132.8) · Depends-on: P126, P129, P131
 Scope: **Tasarım turu, özellik turu DEĞİL** — iş mantığı ve backend
 davranışı DEĞİŞMEZ. `app.*` ve `panel.*`, mobil uygulamanın **onaylanmış**
 tasarım sistemine taşınır (kaynak: `mobile/lib/src/core/theme/
@@ -8415,6 +8415,67 @@ büyük kısmı ortak katmandan geldiği için bu artık **cila**, yapısal iş
 değil.
 
 KAPILAR: `tsc` temiz · `vitest` **594 test** (+52) · `npm run build` ✓.
+
+Notes (2026-08-04, P132.8) — **SATIR İÇİ SINIF TEMİZLİĞİ + KİLİDİN
+KAPSAM BOŞLUĞU.**
+
+Önceki notta "hâlâ kalan" diye yazdığım satır içi sınıflar temizlendi.
+Kör bir arama-değiştirme değil, **gerekçeli bir eşleme** uygulandı
+(`dark:` önekli kullanımlar korunarak): `rounded-2xl`→`rounded-kart`
+(aynı 16px, tek ad), `border-slate-200`→`kart-kenar`,
+`border-slate-100`→`border-yuzey-divider`, `text-slate-{700,600}`→
+`text-metin-body`, `text-slate-{500,400}`→`text-metin-muted`,
+`bg-slate-50`→`bg-yuzey-bg`, `shadow-card`→**kaldırıldı**.
+
+| eski sınıf | önce | sonra |
+|---|---:|---:|
+| `text-muted` | 110 | **0** |
+| `text-slate-600` | 73 | **0** |
+| `text-slate-500` | 60 | **0** |
+| `bg-slate-50` | 54 | **0** |
+| `border-slate-200` | 43 | **0** |
+| `border-slate-100` | 38 | **0** |
+| `rounded-2xl` | 21 | **0** |
+| `shadow-card` | 20 | **0** |
+| `text-slate-700` | 19 | **0** |
+| `bg-slate-100` | 28 | 27 *(bilerek kaldı)* |
+| `border-slate-300` | 19 | 19 *(bilerek kaldı)* |
+
+Kalan ikisi **bilerek** duruyor: nötr çip zeminleri ve girdi kenarlıkları;
+tasarım sisteminde karşılık gelen bir token **yok** ve ikisi de koyu
+temaya devriliyor. Karşılık uydurmak bu turun kapsamı değildi.
+
+**`muted` TOKEN'I KALDIRILDI.** Sweep sırasında çıktı: `muted` (#6B7280)
+açık temada `metin.muted` ile **birebir aynı** değerdi ama koyu teması
+ayrışmıştı (`#94a3b8`, mobil kaynak `#9CA3AF` diyor) — aynı rol, iki ad,
+**iki farklı davranış**. 110 kullanım `text-metin-muted`e geçti, token ve
+`.dark` kuralı silindi; ad bırakılsaydı ayrışma sessizce geri gelirdi.
+
+**ASIL BULGU — kilidin kapsam boşluğu.** Sweep 39 dosyayı değiştirdi ve
+609 testin hepsi yeşil kaldı; bu **iyi haber değildi**: `koyu-tema.test.ts`
+YALNIZ Tailwind palet ailelerine (`slate-600` gibi) bakıyordu, yani geçiş
+o elemanları kilidin **kapsamı dışına çıkarmıştı**. `globals.css`teki bir
+`.dark` kuralını silmek artık açık temada hiçbir şeyi bozmayacak, koyu
+temada okunmaz metin bırakacaktı. Token sınıfları için ikinci bir kilit
+yazıldı; mutasyonla doğrulandı (`.dark .text-metin-body`,
+`.dark .bg-yuzey-card`, `.dark .text-vurguInk-blue` tek tek silindi →
+**üçünde de yakalandı**).
+
+O kilit **hemen bir gerçek açık buldu**: `text-metin-mutedBg` (#636C7A)
+için `.dark` kuralı **yoktu** — koyu sayfa zemininde kontrast **3.5:1**,
+AA 4.5'in altında. Açık temada hiçbir belirtisi yoktu. `#9ca3af`e
+devrildi (sayfada 7.3, kartta 6.7).
+
+**GERİ DÖNMESİN:** `tasarim-token.test.ts`e ratchet eklendi — sıfırlanan
+10 sınıf sayfa/bileşen kaynaklarında yeniden görünürse test düşer
+(`dark:` önekli kullanım meşru sayılır). Taramanın **gerçekten dosya
+okuduğu** ayrıca ölçülüyor: 0 dosya okusa da geçerdi, kilidin en olası
+sessiz bozulma biçimi budur. Mutasyonla doğrulandı: bir sayfada
+`text-metin-muted`→`text-slate-500` → **yakalandı**.
+
+KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **609 test** (+15) ·
+`npm run build` ✓ (paylaşılan ilk yük **87.5 kB**, değişmedi — sweep saf
+sınıf adı işiydi).
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook

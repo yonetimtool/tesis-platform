@@ -187,7 +187,7 @@ export default function RezervasyonlarimPage() {
         <h2 className="font-medium">{t("rezervasyonListe")}</h2>
         {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
         {isLoading ? (
-          <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
           <EmptyState title={t("rezervasyonYok")} />
@@ -200,7 +200,7 @@ export default function RezervasyonlarimPage() {
                 {t(durumAnahtari(r.durum))}
               </span>
             </div>
-            <p className="text-sm text-muted">
+            <p className="text-sm text-metin-muted">
               {tarihBicimi(r.tarih)} · {r.baslangic}–{r.bitis} ·{" "}
               {t("rezervasyonKisiSayisi", { n: r.kisi_sayisi })}
             </p>

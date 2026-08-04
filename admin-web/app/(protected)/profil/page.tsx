@@ -94,15 +94,15 @@ export default function ProfilPage() {
       <section className={`${cardCls} space-y-4 p-5`}>
         <h2 className="font-medium">{t("profilKimlik")}</h2>
         {isLoading ? (
-          <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
         ) : (
           <dl className="grid gap-3 sm:grid-cols-2">
             <div>
-              <dt className="text-xs text-muted">{t("profilAd")}</dt>
+              <dt className="text-xs text-metin-muted">{t("profilAd")}</dt>
               <dd>{data?.ad ?? "—"}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted">{t("profilEposta")}</dt>
+              <dt className="text-xs text-metin-muted">{t("profilEposta")}</dt>
               <dd>{data?.email ?? "—"}</dd>
             </div>
           </dl>

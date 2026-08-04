@@ -86,7 +86,7 @@ export default async function SitePortali({
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
       {/* ---------------------------- hero ---------------------------- */}
-      <header className="rounded-2xl bg-slate-900 px-6 py-14 text-center text-white">
+      <header className="rounded-kart bg-slate-900 px-6 py-14 text-center text-white">
         <h1 className="text-3xl font-semibold sm:text-4xl">
           {portal.hero_baslik ?? portal.tesis_adi}
         </h1>
@@ -101,7 +101,7 @@ export default async function SitePortali({
           <h2 className="text-xl font-semibold">{portal.tesis_adi}</h2>
           {/* Duz metin olarak cizilir: HTML kabul etmek, yonetim panelinden
               gelen icerigi XSS yuzeyine cevirirdi. */}
-          <p className="mt-3 whitespace-pre-line leading-relaxed text-slate-700 dark:text-slate-300">
+          <p className="mt-3 whitespace-pre-line leading-relaxed text-metin-body dark:text-slate-300">
             {portal.hakkimizda}
           </p>
         </section>
@@ -133,11 +133,11 @@ export default async function SitePortali({
           {portal.duyurular.map((d) => (
             <article
               key={d.id}
-              className="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+              className="rounded-xl border kart-kenar p-4 dark:border-slate-700"
             >
               <h3 className="font-medium">{d.baslik}</h3>
               {/* Yalniz OZET: tam govde site ICINE yoneliktir. */}
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              <p className="mt-2 text-sm text-metin-body dark:text-slate-400">
                 {d.ozet}
               </p>
             </article>
@@ -145,11 +145,11 @@ export default async function SitePortali({
           {portal.anketler.map((a) => (
             <article
               key={a.id}
-              className="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+              className="rounded-xl border kart-kenar p-4 dark:border-slate-700"
             >
               <h3 className="font-medium">{a.baslik}</h3>
               {a.aciklama ? (
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-1 text-sm text-metin-body dark:text-slate-400">
                   {a.aciklama}
                 </p>
               ) : null}
@@ -160,7 +160,7 @@ export default async function SitePortali({
                     {/* Acik ankette sayi GELMEZ (surusel etki) — sunucu
                         `oy: null` doner ve burada hic cizilmez. */}
                     {s.oy != null ? (
-                      <span className="tabular-nums text-slate-500">{s.oy}</span>
+                      <span className="tabular-nums text-metin-muted">{s.oy}</span>
                     ) : null}
                   </li>
                 ))}
@@ -172,7 +172,7 @@ export default async function SitePortali({
 
       {/* --------------------------- iletisim -------------------------- */}
       <section className="mt-10 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 p-4 text-sm dark:border-slate-700">
+        <div className="rounded-xl border kart-kenar p-4 text-sm dark:border-slate-700">
           {portal.iletisim_adres ? <p>{portal.iletisim_adres}</p> : null}
           {portal.iletisim_telefon ? (
             <p className="mt-2">
@@ -188,7 +188,7 @@ export default async function SitePortali({
         {haritaVar ? (
           <iframe
             title={portal.tesis_adi}
-            className="h-56 w-full rounded-xl border border-slate-200 dark:border-slate-700"
+            className="h-56 w-full rounded-xl border kart-kenar dark:border-slate-700"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             // Anahtarsiz gomulu harita: API anahtarini public bir sayfaya

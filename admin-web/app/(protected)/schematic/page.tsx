@@ -29,7 +29,7 @@ const RENK_CLS: Record<DensityRenk, { cell: string; dot: string; text: string }>
 
 // Renk API'den gelir; null (yapi gorunumu) -> notr. admin/yonetici panelinde
 // harita hep yonetim modundadir (shows_density=true), yine de savunmaci.
-const NEUTRAL = { cell: "bg-slate-500 border-slate-600", dot: "bg-slate-300", text: "text-slate-600" };
+const NEUTRAL = { cell: "bg-slate-500 border-slate-600", dot: "bg-slate-300", text: "text-metin-body" };
 function cls(renk: DensityRenk | null | undefined) {
   return renk ? (RENK_CLS[renk] ?? RENK_CLS.yesil) : NEUTRAL;
 }
@@ -76,7 +76,7 @@ function Legend() {
   const item = (renk: DensityRenk, label: string) => (
     <span className="flex items-center gap-1.5">
       <span className={`inline-block h-3.5 w-3.5 rounded ${cls(renk).dot}`} />
-      <span className="text-sm text-slate-600">{label}</span>
+      <span className="text-sm text-metin-body">{label}</span>
     </span>
   );
   return (
@@ -112,44 +112,44 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
         </span>
       </div>
       {unit.blok != null && (
-        <p className="text-sm text-muted">
+        <p className="text-sm text-metin-muted">
           {t("haritaBlokKatSira", { blok: unit.blok })}
           {unit.kat != null ? ` · ${t("haritaKat", { kat: unit.kat })}` : ""}
           {unit.sira != null ? ` · ${t("haritaSira", { sira: unit.sira })}` : ""}
         </p>
       )}
       {error && <ErrorBox message={t("haritaYuklenemedi")} />}
-      {isLoading && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
       {/* (P61) `!error` SART. Eski kosul yalniz `!isLoading`e bakiyordu:
           istek dustugunde "Harita yuklenemedi" ile "Acik sikayet yok" YAN
           YANA cikiyordu — ustelik basliktaki sayac haritadan gelip "3 acik
           sikayet" yazarken. "Yuklenemedi" bir durumdur, "yok" bir
           IDDIADIR. */}
       {!isLoading && !error && items.length === 0 && (
-        <p className="text-sm text-muted">{t("haritaAcikSikayetYok")}</p>
+        <p className="text-sm text-metin-muted">{t("haritaAcikSikayetYok")}</p>
       )}
       <ul className="space-y-1 text-sm">
         {items.map((it) => (
-          <li key={it.id} className="rounded border border-slate-100 px-3 py-2">
+          <li key={it.id} className="rounded border border-yuzey-divider px-3 py-2">
             <div className="flex justify-between">
               <span className="font-medium">
                 {KATEGORI_ANAHTAR[it.kategori]
                   ? t(KATEGORI_ANAHTAR[it.kategori])
                   : it.kategori}
               </span>
-              <span className="text-muted">{fmtDate(it.created_at)}</span>
+              <span className="text-metin-muted">{fmtDate(it.created_at)}</span>
             </div>
             {/* Rev-1: sikayet eden kimligi YALNIZ yonetime (denetim). */}
             {it.complainant_ad && (
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-0.5 text-xs text-metin-muted">
                   {t("haritaSikayetEden", { kisi: it.complainant_ad })}
                 </p>
             )}
-            {it.notlar && <p className="mt-1 text-slate-600">{it.notlar}</p>}
+            {it.notlar && <p className="mt-1 text-metin-body">{it.notlar}</p>}
           </li>
         ))}
       </ul>
-      <p className="text-xs text-muted">
+      <p className="text-xs text-metin-muted">
         {t("haritaKimlikNotu")}
       </p>
     </div>
@@ -168,7 +168,7 @@ export default function SchematicPage() {
       <Legend />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         {/* Sema: blok -> kat (ust kat yukarida) -> renkli hucreler */}
@@ -182,7 +182,7 @@ export default function SchematicPage() {
               {/* building-map kat'i ARTAN doner; kat plani icin AZALAN goster */}
               {[...blok.katlar].reverse().map((kat) => (
                 <div key={kat.kat} className="flex items-start gap-3">
-                  <span className="w-14 shrink-0 pt-5 text-xs text-slate-500">
+                  <span className="w-14 shrink-0 pt-5 text-xs text-metin-muted">
                     {t("haritaKat", { kat: kat.kat })}
                   </span>
                   <div className="flex flex-wrap gap-2">
@@ -204,7 +204,7 @@ export default function SchematicPage() {
           {(data?.unplaced?.length ?? 0) > 0 && (
             <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-5">
               <h2 className="font-medium">{t("haritaYerlesimYok")}</h2>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-metin-muted">
                 {t("haritaYerlesimNotu")}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -221,7 +221,7 @@ export default function SchematicPage() {
           )}
 
           {data && data.bloklar.length === 0 && (data.unplaced?.length ?? 0) === 0 && (
-            <div className={`${cardCls} p-8 text-center text-muted`}>
+            <div className={`${cardCls} p-8 text-center text-metin-muted`}>
               {t("haritaDaireYok")}
             </div>
           )}
@@ -232,7 +232,7 @@ export default function SchematicPage() {
           {selected ? (
             <DetailPanel unit={selected} />
           ) : (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-muted">
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-metin-muted">
               {t("haritaDaireSecin")}
             </div>
           )}

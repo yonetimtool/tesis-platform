@@ -55,11 +55,11 @@ export default function YetkiPage() {
           value={ara}
           onChange={(e) => setAra(e.target.value)}
         />
-        <p className="mb-3 text-xs text-slate-500">{t("yetkiNotu")}</p>
+        <p className="mb-3 text-xs text-metin-muted">{t("yetkiNotu")}</p>
         {data ? (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
-              <thead className="text-left text-slate-500">
+              <thead className="text-left text-metin-muted">
                 <tr>
                   <th className="px-2 py-2">{t("yetkiMetot")}</th>
                   <th className="px-2 py-2">{t("yetkiYol")}</th>
@@ -76,7 +76,7 @@ export default function YetkiPage() {
                 {satirlar.map((s) => (
                   <tr
                     key={`${s.metot} ${s.yol}`}
-                    className="border-t border-slate-100 dark:border-slate-800"
+                    className="border-t border-yuzey-divider dark:border-slate-800"
                   >
                     <td className="px-2 py-1.5 font-mono">{s.metot}</td>
                     <td className="px-2 py-1.5 font-mono">
@@ -90,7 +90,7 @@ export default function YetkiPage() {
                     {data.roller.map((r) => (
                       <td key={r} className="px-2 py-1.5 text-center">
                         {s.roller === null ? (
-                          <span className="text-slate-400" title={t("yetkiKapisizIpucu")}>
+                          <span className="text-metin-muted" title={t("yetkiKapisizIpucu")}>
                             {t("yetkiKapisiz")}
                           </span>
                         ) : s.roller.includes(r) ? (

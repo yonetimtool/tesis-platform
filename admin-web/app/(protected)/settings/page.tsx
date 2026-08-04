@@ -169,18 +169,18 @@ export default function SettingsPage() {
       <PageHeader title={t("kabukAyarlar")} />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {data && (
         <>
           <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-            <div className="grid grid-cols-2 gap-3 text-sm text-muted">
+            <div className="grid grid-cols-2 gap-3 text-sm text-metin-muted">
               <div>
-                <span className="block font-medium text-slate-700">{t("ayarTesisKodu")}</span>
+                <span className="block font-medium text-metin-body">{t("ayarTesisKodu")}</span>
                 {data.slug}
               </div>
               <div>
-                <span className="block font-medium text-slate-700">{t("ayarTenantId")}</span>
+                <span className="block font-medium text-metin-body">{t("ayarTenantId")}</span>
                 <span className="font-mono">{data.tenant_id.slice(0, 8)}</span>
               </div>
             </div>
@@ -262,7 +262,7 @@ export default function SettingsPage() {
                 )}
               </Field>
             ))}
-            <p className="text-xs text-slate-500">{t("ayarGuvenlikModuAdminNotu")}</p>
+            <p className="text-xs text-metin-muted">{t("ayarGuvenlikModuAdminNotu")}</p>
             <button className={btnPrimary} disabled={saving} onClick={opKaydet}>
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
             </button>

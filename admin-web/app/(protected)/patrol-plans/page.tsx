@@ -220,7 +220,7 @@ export default function PatrolPlansPage() {
       />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form
@@ -281,7 +281,7 @@ export default function PatrolPlansPage() {
               />
             </Field>
           </div>
-          <p className="text-xs text-muted">
+          <p className="text-xs text-metin-muted">
             {t("planOnizleme", { sayi: previewWindows })}
           </p>
           <label className="flex items-center gap-2 text-sm">
@@ -307,7 +307,7 @@ export default function PatrolPlansPage() {
       {assignPlan && (
         <motion.div {...panelMotion} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">{t("planNoktalariBaslik", { ad: assignPlan.ad })}</h2>
-          <p className="text-xs text-muted">
+          <p className="text-xs text-metin-muted">
             {t("planSiraliListe")}
           </p>
 
@@ -315,10 +315,10 @@ export default function PatrolPlansPage() {
             {selected.map((cid, i) => (
               <li
                 key={cid}
-                className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="flex items-center justify-between rounded-lg border kart-kenar px-3 py-2 text-sm"
               >
                 <span>
-                  <span className="mr-2 text-muted">{i + 1}.</span>
+                  <span className="mr-2 text-metin-muted">{i + 1}.</span>
                   {cpName(cid)}
                 </span>
                 <span className="flex gap-1">
@@ -342,7 +342,7 @@ export default function PatrolPlansPage() {
               </li>
             ))}
             {selected.length === 0 && (
-              <li className="rounded-lg border border-dashed border-slate-300 px-3 py-4 text-center text-muted">
+              <li className="rounded-lg border border-dashed border-slate-300 px-3 py-4 text-center text-metin-muted">
                 {t("planNoktaYok")}
               </li>
             )}
@@ -389,10 +389,10 @@ export default function PatrolPlansPage() {
         </motion.div>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
+            <thead className="bg-yuzey-bg text-left text-metin-muted">
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("devriyeVardiya")}</th>
@@ -403,17 +403,17 @@ export default function PatrolPlansPage() {
             </thead>
             <tbody>
               {(data?.items ?? []).map((p) => (
-                <tr key={p.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                <tr key={p.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
                   <td className="px-4 py-2.5">{p.ad}</td>
-                  <td className="px-4 py-2.5 text-slate-600">{shiftName(p.shift_id)}</td>
-                  <td className="px-4 py-2.5 text-slate-600">
+                  <td className="px-4 py-2.5 text-metin-body">{shiftName(p.shift_id)}</td>
+                  <td className="px-4 py-2.5 text-metin-body">
                     {p.baslangic_saat}–{p.bitis_saat} ·{" "}
                     {t("devriyePeriyotN", { n: p.periyot_dakika })}
                   </td>
                   <td className="px-4 py-2.5">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        p.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                        p.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-metin-body"
                       }`}
                     >
                       {p.aktif ? t("ortakAktif") : t("ortakPasif")}

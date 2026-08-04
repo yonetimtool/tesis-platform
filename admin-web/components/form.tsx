@@ -58,7 +58,7 @@ export function PageHeader({
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0 space-y-1">
         <h1 className="text-selam text-metin-heading break-words">{title}</h1>
-        {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
+        {subtitle && <p className="text-sm text-metin-muted">{subtitle}</p>}
       </div>
       {action}
     </div>
@@ -78,7 +78,7 @@ export function Field({
     <label className="block text-sm">
       <span className="mb-1 block font-medium">{label}</span>
       {children}
-      {hint ? <span className="mt-1 block text-xs text-muted">{hint}</span> : null}
+      {hint ? <span className="mt-1 block text-xs text-metin-muted">{hint}</span> : null}
     </label>
   );
 }
@@ -117,7 +117,7 @@ export function Pager({
   const canNext = offset + limit < total;
   return (
     <div className="flex items-center justify-between text-sm">
-      <span className="text-muted">
+      <span className="text-metin-muted">
         {t("ortakSayfalayici", {
           toplam: total,
           bas: total === 0 ? 0 : offset + 1,

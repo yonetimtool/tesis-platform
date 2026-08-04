@@ -53,7 +53,7 @@ export default function AidatimPage() {
       {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
 
       {isLoading ? (
-        <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
       ) : null}
 
       {!isLoading && !error && daireler.length === 0 ? (
@@ -75,13 +75,13 @@ export default function AidatimPage() {
 
           <dl className="grid gap-3 sm:grid-cols-2">
             <div>
-              <dt className="text-xs text-muted">{t("aidatimTahakkuk")}</dt>
+              <dt className="text-xs text-metin-muted">{t("aidatimTahakkuk")}</dt>
               <dd className="tabular-nums">
                 {kurusToTL(d.toplam_tahakkuk_kurus)}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-muted">{t("aidatimOdenen")}</dt>
+              <dt className="text-xs text-metin-muted">{t("aidatimOdenen")}</dt>
               <dd className="tabular-nums">
                 {kurusToTL(d.toplam_odenen_kurus)}
               </dd>
@@ -93,7 +93,7 @@ export default function AidatimPage() {
               <table className="w-full text-sm">
                 <caption className="sr-only">{t("aidatimTahakkukListe")}</caption>
                 <thead>
-                  <tr className="text-left text-xs text-muted">
+                  <tr className="text-left text-xs text-metin-muted">
                     <th className="py-1.5">{t("aidatimDonem")}</th>
                     <th className="py-1.5">{t("aidatimTutar")}</th>
                     <th className="py-1.5">{t("aidatimSonOdeme")}</th>
@@ -101,7 +101,7 @@ export default function AidatimPage() {
                 </thead>
                 <tbody>
                   {d.assessments.map((a) => (
-                    <tr key={a.id} className="border-t border-slate-100">
+                    <tr key={a.id} className="border-t border-yuzey-divider">
                       <td className="py-2">{a.donem}</td>
                       <td className="py-2 tabular-nums">
                         {kurusToTL(a.tutar_kurus)}

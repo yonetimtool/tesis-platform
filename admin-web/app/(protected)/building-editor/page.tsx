@@ -237,7 +237,7 @@ export default function BuildingEditorPage() {
         }
       />
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600">
+      <div className="rounded-lg border kart-kenar bg-yuzey-bg px-4 py-2 text-xs text-metin-body">
         {t("binaYetkiNotu", { ekran: t("kabukBinaDuzenleme") })}
       </div>
 
@@ -246,7 +246,7 @@ export default function BuildingEditorPage() {
       {/* YUKLENIYOR: veri gelene kadar ekran BOS gorunuyordu ve kullanici
           "hic blok yok" saniyordu (tur 44 yavas-ag surusu). */}
       {(blocks.isLoading || units.isLoading) && (
-        <p role="status" className="text-sm text-muted">
+        <p role="status" className="text-sm text-metin-muted">
           {t("ortakYukleniyor")}
         </p>
       )}
@@ -286,7 +286,7 @@ export default function BuildingEditorPage() {
         <form onSubmit={saveUnit} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">
             {unitForm.editingId ? t("daireDuzenle") : t("daireYeni")}
-            <span className="ml-2 text-sm text-muted">
+            <span className="ml-2 text-sm text-metin-muted">
               {unitForm.blok
                 ? t("daireBlokEki", { ad: unitForm.blok })
                 : t("daireBloksuzEki")}
@@ -393,7 +393,7 @@ function BlockTiles({
             <span className="text-lg font-semibold text-indigo-900">
               {t("blokEtiketi", { ad: label })}
             </span>
-            <span className="text-xs text-slate-700">
+            <span className="text-xs text-metin-body">
               {t("daireSayisiN", { n: unitCountFor(label) })}
             </span>
             {!registeredFor(label) && (
@@ -402,7 +402,7 @@ function BlockTiles({
           </button>
           {registeredFor(label) && (
             <div className="flex justify-center gap-2">
-              <button className="text-xs text-slate-700 hover:underline" onClick={() => onEditBlock(label)}>
+              <button className="text-xs text-metin-body hover:underline" onClick={() => onEditBlock(label)}>
                 {t("ortakDuzenle")}
               </button>
               <button className="text-xs text-red-700 hover:underline" onClick={() => onRemoveBlock(label)}>{t("ortakSil")}</button>
@@ -417,10 +417,10 @@ function BlockTiles({
       {blocklessCount > 0 && (
         <button
           onClick={onOpenBlockless}
-          className="flex h-32 w-40 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50"
+          className="flex h-32 w-40 flex-col items-center justify-center rounded-xl border kart-kenar bg-yuzey-bg"
         >
-          <span className="text-lg font-semibold text-slate-700">{t("daireBlokAtanmamis")}</span>
-          <span className="text-xs text-slate-700">
+          <span className="text-lg font-semibold text-metin-body">{t("daireBlokAtanmamis")}</span>
+          <span className="text-xs text-metin-body">
             {t("daireSayisiN", { n: blocklessCount })}
           </span>
         </button>
@@ -428,7 +428,7 @@ function BlockTiles({
 
       <button
         onClick={onAddBlock}
-        className="flex h-32 w-40 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-500 hover:bg-slate-50"
+        className="flex h-32 w-40 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-metin-muted hover:bg-yuzey-bg"
       >
         <span className="text-3xl leading-none">+</span>
         <span className="text-sm">{t("binaBlokEkle")}</span>
@@ -483,7 +483,7 @@ function BlockDetail({
           derdi — hemen ustundeki "Veriler yuklenemedi" kutusuyla
           celiserek. */}
       {!yuklemeHatasi && !blockless && floors.length === 0 && katsiz.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted">
+        <p className="py-6 text-center text-sm text-metin-muted">
           {t("binaKatYok")}
         </p>
       )}
@@ -526,8 +526,8 @@ function FloorRow({
 }) {
   const t = useT();
   return (
-    <div className="flex items-start gap-3 border-t border-slate-100 pt-3">
-      <span className="w-16 shrink-0 pt-3 text-xs font-medium text-slate-500">{katLabel}</span>
+    <div className="flex items-start gap-3 border-t border-yuzey-divider pt-3">
+      <span className="w-16 shrink-0 pt-3 text-xs font-medium text-metin-muted">{katLabel}</span>
       <div className="flex flex-wrap gap-2">
         {units.map((u) => (
           <div
@@ -570,7 +570,7 @@ function FloorRow({
         {canAdd && (
           <button
             onClick={onAddUnit}
-            className="flex h-16 w-20 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-2xl text-slate-400 hover:bg-slate-100"
+            className="flex h-16 w-20 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-yuzey-bg text-2xl text-metin-muted hover:bg-slate-100"
           >
             +
           </button>

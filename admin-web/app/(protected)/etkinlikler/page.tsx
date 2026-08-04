@@ -36,7 +36,7 @@ export default function EtkinliklerPage() {
       <PageHeader title={t("sakinEtkinlikBaslik")} />
       {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
       ) : null}
       {!isLoading && !error && kayitlar.length === 0 ? (
         <EmptyState title={t("sakinEtkinlikYok")} />
@@ -44,7 +44,7 @@ export default function EtkinliklerPage() {
       {kayitlar.map((e) => (
         <article key={e.id} className={`${cardCls} space-y-1 p-4`}>
           <h2 className="font-medium">{e.baslik}</h2>
-          <p className="text-xs text-muted">
+          <p className="text-xs text-metin-muted">
             {tarihSaatUzun(e.tarih)}
             {e.konum ? ` · ${e.konum}` : ""}
           </p>

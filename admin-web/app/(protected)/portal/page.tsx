@@ -158,7 +158,7 @@ export default function PortalPage() {
             />
             {t("portalYayinda")}
           </label>
-          <p className="mt-1 text-xs text-slate-500">{t("portalYayinNotu")}</p>
+          <p className="mt-1 text-xs text-metin-muted">{t("portalYayinNotu")}</p>
         </motion.section>
       ) : null}
 
@@ -242,11 +242,11 @@ export default function PortalPage() {
           {(anketler?.items ?? []).map((a) => (
             <div
               key={a.id}
-              className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-700"
+              className="rounded-lg border kart-kenar p-3 text-sm dark:border-slate-700"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="font-medium">{a.baslik}</span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-metin-muted">
                   {a.acik ? t("portalAnketAcik") : t("portalAnketKapali")}
                   {a.toplam_oy != null ? ` · ${a.toplam_oy}` : ""}
                 </span>
@@ -301,7 +301,7 @@ export default function PortalPage() {
         {mesajlar && mesajlar.items.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-slate-500">
+              <thead className="text-left text-metin-muted">
                 <tr>
                   <th className="px-3 py-2">{t("portalMesajTarih")}</th>
                   <th className="px-3 py-2">{t("portalMesajAd")}</th>
@@ -311,7 +311,7 @@ export default function PortalPage() {
               </thead>
               <tbody>
                 {mesajlar.items.map((m) => (
-                  <tr key={m.id} className="border-t border-slate-100 dark:border-slate-800">
+                  <tr key={m.id} className="border-t border-yuzey-divider dark:border-slate-800">
                     <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(m.created_at)}</td>
                     <td className="px-3 py-2">{m.ad}</td>
                     <td className="px-3 py-2">{m.telefon ?? m.email}</td>

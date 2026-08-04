@@ -151,7 +151,7 @@ export default function OlaylarPage() {
         <h2 className="font-medium">{t("olayListe")}</h2>
         {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
         {isLoading ? (
-          <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
           <EmptyState title={t("olayYok")} />
@@ -164,7 +164,7 @@ export default function OlaylarPage() {
                 {t(durumAnahtari(o.durum))}
               </span>
             </div>
-            <p className="text-xs text-muted">
+            <p className="text-xs text-metin-muted">
               {tarihSaatUzun(o.created_at)} · {t(kaynakAnahtari(o.kaynak))}
               {o.konum ? ` · ${o.konum}` : ""}
             </p>

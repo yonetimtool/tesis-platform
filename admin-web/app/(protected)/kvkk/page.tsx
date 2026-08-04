@@ -70,9 +70,9 @@ export default function KvkkPage() {
 
       <section className={`${cardCls} space-y-4 p-5`}>
         <h2 className="font-medium">{t("kvkkPazarlama")}</h2>
-        <p className="text-sm text-muted">{t("kvkkPazarlamaAciklama")}</p>
+        <p className="text-sm text-metin-muted">{t("kvkkPazarlamaAciklama")}</p>
         {isLoading ? (
-          <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
         ) : (
           <div className="space-y-2">
             {KANALLAR.map((k) => (

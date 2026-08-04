@@ -35,7 +35,7 @@ const KATEGORI: { value: AssetKategori; anahtar: SozlukAnahtari }[] = [
 const DURUM_STYLE: Record<string, string> = {
   musait: "bg-emerald-100 text-emerald-800",
   zimmetli: "bg-amber-100 text-amber-800",
-  bakimda: "bg-slate-200 text-slate-700",
+  bakimda: "bg-slate-200 text-metin-body",
 };
 
 interface FormState {
@@ -188,7 +188,7 @@ export default function AssetsPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
@@ -253,10 +253,10 @@ export default function AssetsPage() {
         </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
+          <thead className="bg-yuzey-bg text-left text-metin-muted">
             <tr>
               <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
               <th className="px-4 py-2.5 font-medium">{t("gorevKategoriAlan")}</th>
@@ -268,18 +268,18 @@ export default function AssetsPage() {
           </thead>
           <tbody>
             {(data?.items ?? []).map((a) => (
-              <tr key={a.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${a.aktif ? "" : "bg-slate-50"}`}>
+              <tr key={a.id} className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${a.aktif ? "" : "bg-yuzey-bg"}`}>
                 <td className="px-4 py-2.5">{a.ad}</td>
-                <td className="px-4 py-2.5 text-slate-600">{enumAdi(t, DEMIRBAS_KATEGORI, a.kategori)}</td>
-                <td className="px-4 py-2.5 font-mono text-slate-600">{a.nfc_tag_uid ?? "—"}</td>
+                <td className="px-4 py-2.5 text-metin-body">{enumAdi(t, DEMIRBAS_KATEGORI, a.kategori)}</td>
+                <td className="px-4 py-2.5 font-mono text-metin-body">{a.nfc_tag_uid ?? "—"}</td>
                 <td className="px-4 py-2.5">
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[a.durum] ?? "bg-slate-100 text-slate-700"}`}
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[a.durum] ?? "bg-slate-100 text-metin-body"}`}
                   >
                     {enumAdi(t, DEMIRBAS_DURUM, a.durum)}
                   </span>
                 </td>
-                <td className="px-4 py-2.5 text-slate-600">{a.aktif ? t("ortakEvet2") : t("ortakHayir2")}</td>
+                <td className="px-4 py-2.5 text-metin-body">{a.aktif ? t("ortakEvet2") : t("ortakHayir2")}</td>
                 <td className="px-4 py-2.5 text-right">
                   <div className="flex justify-end gap-2">
                     <button
@@ -327,13 +327,13 @@ export default function AssetsPage() {
               <span className="text-emerald-700">{t("demirbasKimsedeDegil")}</span>
             )}
           </p>
-          <p className="text-xs text-muted">
+          <p className="text-xs text-metin-muted">
             {t("demirbasPanelNotu")}
           </p>
-          <div className="overflow-hidden rounded-lg border border-slate-200">
+          <div className="overflow-hidden rounded-lg border kart-kenar">
             <div className="odak-ic overflow-x-auto" tabIndex={0}>
               <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-slate-500">
+              <thead className="bg-yuzey-bg text-left text-metin-muted">
                 <tr>
                   <th className="px-4 py-2.5 font-medium">{t("demirbasAlan")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("demirbasAlma")}</th>
@@ -342,10 +342,10 @@ export default function AssetsPage() {
               </thead>
               <tbody>
                 {(history?.items ?? []).map((h) => (
-                  <tr key={h.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                  <tr key={h.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
                     <td className="px-4 py-2.5">{userName(h.alan_user_id)}</td>
-                    <td className="px-4 py-2.5 text-slate-600">{formatDateTime(h.alma_zamani)}</td>
-                    <td className="px-4 py-2.5 text-slate-600">
+                    <td className="px-4 py-2.5 text-metin-body">{formatDateTime(h.alma_zamani)}</td>
+                    <td className="px-4 py-2.5 text-metin-body">
                       {h.birakma_zamani ? formatDateTime(h.birakma_zamani) : t("demirbasAcik")}
                     </td>
                   </tr>

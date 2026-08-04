@@ -112,12 +112,12 @@ export default function AuditPage() {
       </div>
 
       {error && <ErrorBox message={t("denetimYuklenemedi")} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
+            <thead className="bg-yuzey-bg text-left text-metin-muted">
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t("denetimZaman")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("denetimIslem")}</th>
@@ -129,12 +129,12 @@ export default function AuditPage() {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-t border-slate-100 align-top">
-                  <td className="whitespace-nowrap px-4 py-2.5 text-slate-600 tabular-nums">
+                <tr key={r.id} className="border-t border-yuzey-divider align-top">
+                  <td className="whitespace-nowrap px-4 py-2.5 text-metin-body tabular-nums">
                     {formatDateTime(r.ts)}
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-metin-body">
                       {r.action}
                     </span>
                   </td>
@@ -143,10 +143,10 @@ export default function AuditPage() {
                       kalani `rolAdi` ile cevirir. Denetim kaydi "kim ne
                       yapti"nin kanitidir; orada kullanicinin taniyamadigi
                       bir jeton gostermek, kaydi okunamaz kilar. */}
-                  <td className="px-4 py-2.5 text-slate-600">
+                  <td className="px-4 py-2.5 text-metin-body">
                     {r.actor_rol ? rolAdi(t, r.actor_rol) : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-slate-600">
+                  <td className="px-4 py-2.5 text-metin-body">
                     {r.resource_type ? (
                       <span className="font-mono text-xs">
                         {r.resource_type}
@@ -156,11 +156,11 @@ export default function AuditPage() {
                       "—"
                     )}
                   </td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-slate-500">
+                  <td className="px-4 py-2.5 font-mono text-xs text-metin-muted">
                     {r.tenant_id ? `${r.tenant_id.slice(0, 8)}…` : "platform"}
                   </td>
                   <td className="max-w-xs px-4 py-2.5">
-                    <code className="block truncate text-xs text-slate-500">
+                    <code className="block truncate text-xs text-metin-muted">
                       {Object.keys(r.meta ?? {}).length ? JSON.stringify(r.meta) : "—"}
                     </code>
                   </td>

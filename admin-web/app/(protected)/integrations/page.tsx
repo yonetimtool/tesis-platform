@@ -184,7 +184,7 @@ export default function IntegrationsPage() {
       />
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
@@ -316,10 +316,10 @@ export default function IntegrationsPage() {
         </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
+            <thead className="bg-yuzey-bg text-left text-metin-muted">
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("entegKanal")}</th>
@@ -333,13 +333,13 @@ export default function IntegrationsPage() {
             {(data?.items ?? []).map((it) => {
               const tr = testResult[it.id];
               return (
-                <tr key={it.id} className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${it.aktif ? "" : "bg-slate-50"}`}>
+                <tr key={it.id} className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${it.aktif ? "" : "bg-yuzey-bg"}`}>
                   <td className="px-4 py-2.5">{it.ad}</td>
-                  <td className="px-4 py-2.5 text-slate-600">{it.channel_type}</td>
-                  <td className="px-4 py-2.5 text-slate-600 max-w-[280px] truncate">
+                  <td className="px-4 py-2.5 text-metin-body">{it.channel_type}</td>
+                  <td className="px-4 py-2.5 text-metin-body max-w-[280px] truncate">
                     {it.http_method} {it.endpoint_url}
                   </td>
-                  <td className="px-4 py-2.5 text-slate-600">
+                  <td className="px-4 py-2.5 text-metin-body">
                     {it.auth_type}
                     {it.auth_secret_set ? " 🔒" : ""}
                   </td>

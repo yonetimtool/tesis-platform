@@ -163,12 +163,12 @@ export default function RaporlarPage() {
               }}
               className={`rounded-lg border p-3 text-left text-sm transition ${
                 secili?.kod === r.kod
-                  ? "border-slate-900 bg-slate-50 dark:border-slate-200 dark:bg-slate-800"
-                  : "border-slate-200 hover:border-slate-400 dark:border-slate-700"
+                  ? "border-slate-900 bg-yuzey-bg dark:border-slate-200 dark:bg-slate-800"
+                  : "kart-kenar hover:border-slate-400 dark:border-slate-700"
               }`}
             >
               <div className="font-medium">{r.baslik}</div>
-              <div className="mt-1 text-xs text-slate-500">{r.aciklama}</div>
+              <div className="mt-1 text-xs text-metin-muted">{r.aciklama}</div>
             </button>
           ))}
         </div>
@@ -230,7 +230,7 @@ export default function RaporlarPage() {
           {tablo.metin ? (
             // Serbest metin bolumu (ihtar govdesi, denetim notu): duz metin
             // olarak cizilir — HTML kabul etmek XSS yuzeyi acardi.
-            <pre className="mb-3 whitespace-pre-wrap rounded bg-slate-50 p-3 text-xs dark:bg-slate-800">
+            <pre className="mb-3 whitespace-pre-wrap rounded bg-yuzey-bg p-3 text-xs dark:bg-slate-800">
               {tablo.metin}
             </pre>
           ) : null}
@@ -239,7 +239,7 @@ export default function RaporlarPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-left text-slate-500">
+                <thead className="text-left text-metin-muted">
                   <tr>
                     {tablo.sutunlar.map((s) => (
                       <th key={s.ad} className="px-3 py-2 whitespace-nowrap">
@@ -250,7 +250,7 @@ export default function RaporlarPage() {
                 </thead>
                 <tbody>
                   {tablo.satirlar.map((satir, i) => (
-                    <tr key={i} className="border-t border-slate-100 dark:border-slate-800">
+                    <tr key={i} className="border-t border-yuzey-divider dark:border-slate-800">
                       {tablo.sutunlar.map((s) => (
                         <td
                           key={s.ad}

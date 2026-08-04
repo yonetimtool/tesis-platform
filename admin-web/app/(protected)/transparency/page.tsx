@@ -62,7 +62,7 @@ export default function TransparencyPage() {
 
       {list.error && <ErrorBox message={t("seffafAylarYuklenemedi")} />}
       {list.isLoading && !list.data && (
-        <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
       )}
 
       {list.data && months.length === 0 && (
@@ -95,7 +95,7 @@ export default function TransparencyPage() {
           {b && (
             <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
               {/* Özet */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+              <div className="rounded-kart border kart-kenar bg-white p-5">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <h2 className="min-w-0 font-medium break-words">
                     {t("seffafOzetBasligi", { ay: ayBaslik(b.ay, dil) })}
@@ -104,7 +104,7 @@ export default function TransparencyPage() {
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       b.yayinlandi
                         ? "bg-emerald-100 text-emerald-800"
-                        : "bg-slate-100 text-slate-600"
+                        : "bg-slate-100 text-metin-body"
                     }`}
                   >
                     {b.yayinlandi ? t("seffafYayinda") : t("seffafTaslak")}
@@ -128,17 +128,17 @@ export default function TransparencyPage() {
                     gecersizdir. Ilk denemede `p`yi `div` yapmak yetmemisti;
                     ogeyi listenin DISINA almak gerekti (tur 30/31). */}
                 {b.onceki_ay_net_kurus != null && (
-                  <p className="pt-1 text-xs text-muted">
+                  <p className="pt-1 text-xs text-metin-muted">
                     {t("seffafOncekiAyNet", { tutar: tl(b.onceki_ay_net_kurus) })}
                   </p>
                 )}
               </div>
 
               {/* Aidat */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+              <div className="rounded-kart border kart-kenar bg-white p-5">
                 <h2 className="mb-3 font-medium">{t("seffafAidatToplama")}</h2>
                 {b.aidat.daire_orani_yuzde == null ? (
-                  <p className="text-sm text-muted">{t("seffafTahakkukYok")}</p>
+                  <p className="text-sm text-metin-muted">{t("seffafTahakkukYok")}</p>
                 ) : (
                   <>
                     <div className="mb-1 flex justify-between text-sm">
@@ -148,7 +148,7 @@ export default function TransparencyPage() {
                       <span className="font-semibold">%{b.aidat.daire_orani_yuzde}</span>
                     </div>
                     <Bar value={b.aidat.daire_orani_yuzde} />
-                    <p className="mt-2 text-xs text-muted">
+                    <p className="mt-2 text-xs text-metin-muted">
                       {t("seffafTahsilatOrani", {
                         tahsil: tl(b.aidat.tahsilat_kurus),
                         tahakkuk: tl(b.aidat.tahakkuk_kurus),
@@ -163,17 +163,17 @@ export default function TransparencyPage() {
               </div>
 
               {/* Gider dağılımı */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card lg:col-span-2">
+              <div className="rounded-kart border kart-kenar bg-white p-5 lg:col-span-2">
                 <h2 className="mb-3 font-medium">{t("seffafGiderDagilimi")}</h2>
                 {b.gider_dagilimi.length === 0 ? (
-                  <p className="text-sm text-muted">{t("seffafGiderYok")}</p>
+                  <p className="text-sm text-metin-muted">{t("seffafGiderYok")}</p>
                 ) : (
                   <div className="space-y-3">
                     {b.gider_dagilimi.map((k) => (
                       <div key={k.ad}>
                         <div className="mb-1 flex justify-between text-sm">
                           <span>{k.ad}</span>
-                          <span className="text-slate-500">
+                          <span className="text-metin-muted">
                             %{k.yuzde} · {tl(k.toplam_kurus)}
                           </span>
                         </div>
@@ -204,9 +204,9 @@ function Row({
 }) {
   return (
     <div
-      className={`flex justify-between${ayrac ? " mt-2 border-t border-slate-100 pt-2" : ""}`}
+      className={`flex justify-between${ayrac ? " mt-2 border-t border-yuzey-divider pt-2" : ""}`}
     >
-      <dt className="text-slate-600">{k}</dt>
+      <dt className="text-metin-body">{k}</dt>
       <dd className={cls}>{v}</dd>
     </div>
   );

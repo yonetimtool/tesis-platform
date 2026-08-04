@@ -164,7 +164,7 @@ export default function DisHizmetlerPage() {
         <h2 className="font-medium">{t("disHizmetListe")}</h2>
         {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
         {isLoading ? (
-          <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
           <EmptyState title={t("disHizmetYok")} />

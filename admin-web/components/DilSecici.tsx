@@ -48,7 +48,7 @@ export function DilSecici() {
         aria-label={t("dilSecici")}
         aria-haspopup="listbox"
         aria-expanded={acik}
-        className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100"
+        className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-metin-body transition hover:bg-slate-100"
       >
         <span aria-hidden>🌐</span> {DIL_ADLARI[dil]}
       </button>
@@ -58,7 +58,7 @@ export function DilSecici() {
           role="listbox"
           // `end-0`: RTL'de de dogru kenara yaslanir (`right-0` Arapcada
           // menuyu ekranin disina iterdi).
-          className="absolute end-0 z-50 mt-1 w-40 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lift"
+          className="absolute end-0 z-50 mt-1 w-40 overflow-hidden rounded-lg border kart-kenar bg-white py-1 shadow-lift"
         >
           {DILLER.map((d) => (
             <li key={d}>
@@ -67,7 +67,7 @@ export function DilSecici() {
                 aria-selected={d === dil}
                 onClick={() => sec(d)}
                 className={`block w-full px-3 py-1.5 text-start text-sm transition hover:bg-slate-100 ${
-                  d === dil ? "font-semibold text-brand-tealInk" : "text-slate-700"
+                  d === dil ? "font-semibold text-brand-tealInk" : "text-metin-body"
                 }`}
               >
                 {DIL_ADLARI[d]}

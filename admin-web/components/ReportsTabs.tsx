@@ -20,7 +20,7 @@ export function ReportsTabs() {
     // sarmamali (alt cizgi bozulur) — bu yuzden serit KENDI ICINDE
     // kaydirilir; sayfa govdesi sabit kalir.
     <div className="odak-ic -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" tabIndex={0}>
-      <div className="flex min-w-max gap-1 border-b border-slate-200">
+      <div className="flex min-w-max gap-1 border-b kart-kenar">
       {TABS.map((t) => {
         const active = pathname === t.href;
         return (
@@ -30,7 +30,7 @@ export function ReportsTabs() {
             className={`odak-ic -mb-px border-b-2 px-3 py-2 text-sm transition ${
               active
                 ? "border-brand-teal font-medium text-brand-tealInk"
-                : "border-transparent text-slate-600 hover:text-ink"
+                : "border-transparent text-metin-body hover:text-ink"
             }`}
           >
             {ceviri(t.anahtar)}

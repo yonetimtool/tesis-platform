@@ -88,7 +88,7 @@ export default function ComplaintsPage() {
                 className={`rounded-lg px-3 py-1.5 text-sm transition ${
                   durum === f.value
                     ? "bg-ink text-white"
-                    : "text-slate-600 hover:bg-slate-100"
+                    : "text-metin-body hover:bg-slate-100"
                 }`}
                 onClick={() => {
                   setDurum(f.value);
@@ -102,12 +102,12 @@ export default function ComplaintsPage() {
         }
       />
 
-      <p className="text-sm text-muted">
+      <p className="text-sm text-metin-muted">
         {t("talepPanelNotu", { coz: t("talepCoz"), reddet: t("talepReddet") })}
       </p>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       <ul className="space-y-3">
         {(data?.items ?? []).map((c) => (
@@ -157,11 +157,11 @@ function ComplaintCard({
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-medium">{c.baslik}</h3>
             <DurumBadge durum={c.durum} />
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-metin-body">
               {c.kategori_ad ?? t("ortakDiger")}
             </span>
           </div>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{c.mesaj}</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-metin-body">{c.mesaj}</p>
 
           {c.fotograflar.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -180,14 +180,14 @@ function ComplaintCard({
                     <Foto
                       src={f.foto_url ?? undefined}
                       alt={t("gorselAlt", { baslik: c.baslik })}
-                      className="h-24 w-24 rounded-lg border border-slate-200 object-cover"
+                      className="h-24 w-24 rounded-lg border kart-kenar object-cover"
                     />
                   </a>
                 ))}
             </div>
           )}
 
-          <p className="mt-2 text-xs text-muted">
+          <p className="mt-2 text-xs text-metin-muted">
             {c.acan_ad ?? t("rolSiteSakini")} · {formatDateTime(c.created_at)}
           </p>
 
@@ -233,8 +233,8 @@ function ComplaintCard({
 function Timeline({ gecmis }: { gecmis: ComplaintStatusHistory[] }) {
   const t = useT();
   return (
-    <div className="mt-3 border-t border-slate-100 pt-3">
-      <p className="mb-2 text-xs font-medium text-muted">{t("talepDurumGecmisi")}</p>
+    <div className="mt-3 border-t border-yuzey-divider pt-3">
+      <p className="mb-2 text-xs font-medium text-metin-muted">{t("talepDurumGecmisi")}</p>
       <ol className="space-y-3">
         {gecmis.map((g, i) => {
           const meta = DURUM_META[g.durum as ComplaintDurum];
@@ -242,19 +242,19 @@ function Timeline({ gecmis }: { gecmis: ComplaintStatusHistory[] }) {
             <li key={i} className="flex gap-3 text-sm">
               <span
                 className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
-                  meta?.cls ?? "bg-slate-100 text-slate-600"
+                  meta?.cls ?? "bg-slate-100 text-metin-body"
                 }`}
               />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-baseline gap-x-2">
                   <span className="font-medium">{meta ? t(meta.anahtar) : g.durum}</span>
-                  <span className="text-xs text-muted">
+                  <span className="text-xs text-metin-muted">
                     {ROLE_ANAHTAR[g.actor_role] ? t(ROLE_ANAHTAR[g.actor_role]) : g.actor_role} ·{" "}
                     {formatDateTime(g.created_at)}
                   </span>
                 </div>
                 {g.sebep && g.sebep.trim() && (
-                  <p className="mt-0.5 whitespace-pre-wrap text-slate-600">{g.sebep}</p>
+                  <p className="mt-0.5 whitespace-pre-wrap text-metin-body">{g.sebep}</p>
                 )}
               </div>
             </li>
@@ -312,7 +312,7 @@ function ActionForm({
   }
 
   return (
-    <form onSubmit={submit} className="mt-4 space-y-4 border-t border-slate-100 pt-4">
+    <form onSubmit={submit} className="mt-4 space-y-4 border-t border-yuzey-divider pt-4">
       <Field
         label={isReddet ? t("talepRedSebebi") : t("talepCozumNotu")}
         hint={

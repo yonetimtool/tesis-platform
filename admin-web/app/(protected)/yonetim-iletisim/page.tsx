@@ -34,7 +34,7 @@ export default function YonetimIletisimPage() {
       <PageHeader title={t("yonetimIletisimBaslik")} />
       {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
       ) : null}
 
       {data?.yonetim_email ? (
@@ -64,7 +64,7 @@ export default function YonetimIletisimPage() {
               {telefonGiris(y.telefon)}
             </a>
           ) : (
-            <p className="text-sm text-muted">{t("yonetimIletisimTelefonYok")}</p>
+            <p className="text-sm text-metin-muted">{t("yonetimIletisimTelefonYok")}</p>
           )}
         </article>
       ))}

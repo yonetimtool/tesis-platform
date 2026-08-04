@@ -165,7 +165,7 @@ export default function TenantDetailPage() {
       </div>
 
       {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {data && (
         <>
@@ -175,7 +175,7 @@ export default function TenantDetailPage() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <h1 className="text-2xl font-semibold break-words">{data.ad}</h1>
-                    <p className="mt-1 font-mono text-xs break-all text-slate-500">
+                    <p className="mt-1 font-mono text-xs break-all text-metin-muted">
                       {data.tenant_id}
                     </p>
                   </div>
@@ -192,7 +192,7 @@ export default function TenantDetailPage() {
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-metin-body">
                     {t("tesisOlusturulmaTarihi", { zaman: fmtDate(data.created_at) })}
                   </p>
                   <button className={btnGhost} onClick={openNameEdit}>
@@ -235,27 +235,27 @@ export default function TenantDetailPage() {
 
           <div className={`${cardCls} p-5`}>
             <h2 className="mb-3 font-medium">{t("rolYonetici")}</h2>
-            {!y && <p className="text-sm text-muted">{t("tesisYoneticiYok")}</p>}
+            {!y && <p className="text-sm text-metin-muted">{t("tesisYoneticiYok")}</p>}
 
             {y && !editing && (
               <div className="space-y-3">
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm [&>*]:min-w-0 [&>dd]:break-words">
-                  <dt className="text-slate-500">{t("ortakAd")}</dt>
+                  <dt className="text-metin-muted">{t("ortakAd")}</dt>
                   <dd>{y.ad}</dd>
-                  <dt className="text-slate-500">{t("tesisTelefonGiris")}</dt>
+                  <dt className="text-metin-muted">{t("tesisTelefonGiris")}</dt>
                   <dd>{y.telefon ?? "—"}</dd>
-                  <dt className="text-slate-500">{t("ortakDurum")}</dt>
+                  <dt className="text-metin-muted">{t("ortakDurum")}</dt>
                   <dd>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        y.is_active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-600"
+                        y.is_active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-metin-body"
                       }`}
                     >
                       {y.is_active ? t("ortakAktif") : t("ortakPasif")}
                     </span>
                   </dd>
-                  <dt className="text-slate-500">{t("tesisKimlik")}</dt>
-                  <dd className="text-slate-600">
+                  <dt className="text-metin-muted">{t("tesisKimlik")}</dt>
+                  <dd className="text-metin-body">
                     {y.password_set
                       ? t("tesisParolaBelirlendi")
                       : t("tesisGeciciKodAsamasi")}

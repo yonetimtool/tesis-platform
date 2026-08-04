@@ -161,9 +161,9 @@ export default function PatrolReportPage() {
 
       )}
       {committed === null && (
-        <p className="text-sm text-muted">{t("raporFiltreSecin")}</p>
+        <p className="text-sm text-metin-muted">{t("raporFiltreSecin")}</p>
       )}
-      {isLoading && committed !== null && !data && <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && committed !== null && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {data && (
         <>
@@ -182,10 +182,10 @@ export default function PatrolReportPage() {
                 {t("raporCsvIndir")}
               </button>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+            <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
               <div className="odak-ic overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-left text-slate-500">
+                  <thead className="bg-yuzey-bg text-left text-metin-muted">
                     <tr>
                       <th className="px-4 py-2.5 font-medium">{t("raporTabloPlan")}</th>
                       <th className="px-4 py-2.5 font-medium">{t("ortakBaslangic")}</th>
@@ -196,18 +196,18 @@ export default function PatrolReportPage() {
                   </thead>
                   <tbody>
                     {data.items.map((w) => (
-                      <tr key={w.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
+                      <tr key={w.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
                         <td className="px-4 py-2.5">{w.plan_adi ?? "—"}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{formatDateTime(w.pencere_baslangic)}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{formatDateTime(w.pencere_bitis)}</td>
+                        <td className="px-4 py-2.5 text-metin-body">{formatDateTime(w.pencere_baslangic)}</td>
+                        <td className="px-4 py-2.5 text-metin-body">{formatDateTime(w.pencere_bitis)}</td>
                         <td className="px-4 py-2.5">
                           <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[w.durum] ?? "bg-slate-100 text-slate-700"}`}
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[w.durum] ?? "bg-slate-100 text-metin-body"}`}
                           >
                             {enumAdi(t, TUR_DURUM, w.durum)}
                           </span>
                         </td>
-                        <td className="px-4 py-2.5 text-slate-600 tabular-nums">
+                        <td className="px-4 py-2.5 text-metin-body tabular-nums">
                           {w.okutulan_checkpoint_sayisi}/{w.beklenen_checkpoint_sayisi}
                         </td>
                       </tr>
@@ -253,10 +253,10 @@ function Card({
         ? "bg-emerald-50 text-emerald-700"
         : tone === "amber"
           ? "bg-amber-50 text-amber-700"
-          : "bg-slate-50 text-slate-800";
+          : "bg-yuzey-bg text-slate-800";
   return (
     <div className={`rounded-xl p-4 ${cls}`}>
-      <div className="text-xs text-slate-600">{baslik}</div>
+      <div className="text-xs text-metin-body">{baslik}</div>
       <div className="text-xl font-semibold">{deger}</div>
     </div>
   );

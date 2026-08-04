@@ -137,7 +137,7 @@ export default function KargolarPage() {
         <h2 className="font-medium">{t("kargoListe")}</h2>
         {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
         {isLoading ? (
-          <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
           <EmptyState title={t("kargoYok")} />
@@ -150,7 +150,7 @@ export default function KargolarPage() {
                 {t(durumAnahtari(k.durum))}
               </span>
             </div>
-            <p className="text-xs text-muted">
+            <p className="text-xs text-metin-muted">
               {tarihSaatUzun(k.created_at)}
               {k.firma ? ` · ${k.firma}` : ""}
             </p>

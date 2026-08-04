@@ -31,7 +31,7 @@ export default function SiteKurallariPage() {
       <PageHeader title={t("sakinKurallarBaslik")} />
       {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-muted">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
       ) : null}
       {!isLoading && !error && kurallar.length === 0 ? (
         <EmptyState title={t("sakinKurallarYok")} />
