@@ -143,21 +143,28 @@ describe("rol x yuzey kapisi (P126.1)", () => {
     }
   });
 
-  it("TESIS yuzeyine `yonetici` girer, `admin` de girebilir", () => {
-    // `admin`in app.*a girebilmesi bilincli: bir tesisin gordugu ekrani
-    // dogrulamak icin oraya bakabilmeli.
-    expect(rolYuzeyeGirebilir("yonetici", "tesis")).toBe(true);
-    expect(rolYuzeyeGirebilir("admin", "tesis")).toBe(true);
+  it("TESIS yuzeyine `yonetici`, `resident` ve `admin` girer", () => {
+    // `resident` P126.3 sonunda eklendi: gunluk isini web'den yapabilecegi
+    // set tamamlandi (aidat, talep, duyuru, kural, etkinlik, rezervasyon,
+    // KVKK, profil). `admin`in girebilmesi bilincli: bir tesisin gordugu
+    // ekrani dogrulamak icin oraya bakabilmeli.
+    for (const r of ["yonetici", "resident", "admin"]) {
+      expect(rolYuzeyeGirebilir(r, "tesis"), r).toBe(true);
+    }
   });
 
   it("SAYFALARI HENUZ OLMAYAN roller tesis yuzeyine ALINMAZ", () => {
     // Girer girmez her yerde 403 goren bir ekran vermek yerine "yakinda"
-    // demek daha durust (bkz. docs/app-web-bosluk-tablosu.md — 13 eksik
-    // modul). Her rol KENDI sayfalari landing ettikce eklenir.
-    for (const r of ["security", "tesis_gorevlisi", "resident", "guvenlik_amiri"]) {
+    // demek daha durust. `security`/`tesis_gorevlisi` icin ziyaretci,
+    // kargo, ihlal, arac gecisi ve gorevlerim sayfalari HENUZ YOK.
+    for (const r of ["security", "tesis_gorevlisi", "guvenlik_amiri"]) {
       expect(rolYuzeyeGirebilir(r, "tesis"), r).toBe(false);
       expect(tesisYuzeyiBekleyenRol(r), r).toBe(true);
     }
+  });
+
+  it("SAKIN artik BEKLEYEN rol DEGIL", () => {
+    expect(tesisYuzeyiBekleyenRol("resident")).toBe(false);
   });
 
   it("ROLSUZ/bilinmeyen token hicbir yuzeye giremez", () => {

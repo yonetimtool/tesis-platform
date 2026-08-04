@@ -73,6 +73,8 @@ export const TESIS_ROTALARI = [
   "/duyurular",
   "/kurallar",
   "/etkinlikler",
+  "/rezervasyonlarim",
+  "/kvkk",
 ] as const;
 
 /**
@@ -126,17 +128,18 @@ const PLATFORM_ROLLERI = new Set(["admin"]);
 /**
  * Tesis yuzeyine (`app.*`) girebilen roller.
  *
- * BUGUN YALNIZ `yonetici` ve `admin`. Gerekce: `app.*`in bugunku sayfa
- * kumesi paneldan devralinan 25 TESIS sayfasidir ve hepsi YONETICI isidir.
- * Sakin/guvenlik/tesis gorevlisi icin gereken sayfalar (rezervasyon, site
- * kurallari, ziyaretci, kargo, gorevlerim...) HENUZ YOK — bkz.
- * `docs/app-web-bosluk-tablosu.md`, 13 eksik modul.
+ * `resident` (P126.3 sonunda) EKLENDI: sakinin gunluk isini web'den
+ * yapabilecegi set TAMAMLANDI — Aidatim, Taleplerim, Duyurular, Kurallar,
+ * Etkinlikler, Rezervasyonlarim, KVKK tercihleri, Profil. Bir rolu ancak
+ * KENDI sayfalari hazir oldugunda iceri almak, girer girmez her yerde 403
+ * goren bir ekran vermemek icindi.
  *
- * O rolleri simdi iceri almak, girer girmez her yerde 403 goren bir ekran
- * vermek olurdu; "yakinda" demek daha durust. Her rol, KENDI sayfalari
- * landing ettikce (P126.3-.6) bu kumeye eklenir.
+ * `security` ve `tesis_gorevlisi` HALA DISARIDA: ziyaretci, kargo, ihlal,
+ * arac gecisi ve gorevlerim sayfalari yok (bkz.
+ * `docs/app-web-bosluk-tablosu.md`). Onlar da P126.4-.6'da kendi setleri
+ * bitince eklenecek.
  */
-const TESIS_ROLLERI = new Set(["yonetici", "admin"]);
+const TESIS_ROLLERI = new Set(["yonetici", "admin", "resident"]);
 
 /** [rol] bu [yuzey]e girebilir mi? */
 export function rolYuzeyeGirebilir(rol: string | null, yuzey: Yuzey): boolean {
@@ -149,7 +152,6 @@ export function rolYuzeyeGirebilir(rol: string | null, yuzey: Yuzey): boolean {
 /** Henuz `app.*`a alinmamis tesis rolleri (giriste "yakinda" mesaji icin). */
 export function tesisYuzeyiBekleyenRol(rol: string | null): boolean {
   return (
-    !!rol &&
-    ["security", "tesis_gorevlisi", "resident", "guvenlik_amiri"].includes(rol)
+    !!rol && ["security", "tesis_gorevlisi", "guvenlik_amiri"].includes(rol)
   );
 }

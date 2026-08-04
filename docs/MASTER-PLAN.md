@@ -7365,6 +7365,44 @@ dördü de düştü.
 KAPILAR: `tsc` temiz · `vitest` **370 test** (+8) · `npm run build` ✓ ·
 depo kapıları 0.
 
+Notes (2026-08-04, P126.3) — **SAKİN ÇALIŞMA ALANI BİTTİ; `resident`
+`app.*`a ALINDI.** Sekiz sayfa: Profil, Aidatım, Taleplerim, Duyurular,
+Site kuralları, Etkinlikler, Rezervasyonlarım, KVKK tercihleri.
+
+**"25 sayfanın karşılığı var" YANILTICIYDI** — ölçüldü: sakinin kendi
+verisi `/me/*` altında; paneldeki `dues`/`complaints`/`announcements`
+**yönetim** görünümleridir. Sakin için ayrı görünümler gerekti (boşluk
+tablosuna işlendi).
+
+**KURALLAR İSTEMCİYE KOPYALANMADI.** Rezervasyonun zamanlama kuralları
+(24 sa / günde bir / 10 dk) sunucuda ölçülür ve hata metni isteğin dilinde
+döner; kopyalansa iki kural zamanla ayrışır ve kullanıcı "ekran izin verdi,
+sunucu reddetti" çelişkisini yaşardı. Aynı gerekçeyle `taleplerim` ve
+`rezervasyonlarim` **istemci süzgeci kullanmaz** — sunucu zaten
+kendi-kapsamlı.
+
+**YAZMA DÜĞMESİ OLMAYAN EKRANLAR** (duyuru/kural/etkinlik) bilinçli:
+sunucu yönetici olmayanı reddeder, ama basıp 403 alacağı bir düğme
+göstermek "yetkim var sandım" demektir. Etkinlik **katılımı** da bu
+dilimde yok — yarım bir katılım düğmesi eklemektense listeyi dürüstçe
+salt-okuma bırakmak daha iyi.
+
+**ROTA ADI DEĞİŞTİ:** `/site-kurallari` → `/kurallar`. `portal-public`
+testi düştü çünkü matcher'da `/site` ile başlayan bir giriş arıyor —
+public tenant portalı `/site/[slug]`ta yaşıyor ve oturum kapısına asla
+girmemeli. Testi gevşetmek yerine rota adlandırıldı: **public bir rotayı
+koruyan kapı olabildiğince katı kalmalı.**
+
+**`security`/`tesis_gorevlisi` HÂLÂ DIŞARIDA** — ziyaretçi, kargo, ihlal,
+araç geçişi, görevlerim sayfaları yok (P126.4–.6).
+
+**MUTASYON:** bu dilimde 4/4 (pasif alan seçeneğe girsin · eksik alanla
+gönder · sunucu hatasını yut · KVKK'yı tek bayrağa indir); önceki
+dilimlerle birlikte P126.3 toplam **13/13**.
+
+KAPILAR: `tsc` temiz · `vitest` **400 test** · `npm run build` ✓ ·
+depo kapıları 0.
+
 ### P127 — www.yönetiyor.com: tanıtım sitesi (SEO)
 Status: ACIK · Depends-on: P126
 Scope: Geçici statik açılış sayfası (P120) gerçek tanıtım sitesiyle

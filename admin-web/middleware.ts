@@ -110,5 +110,7 @@ export const config = {
     // calisma alaninda zaten daha iyi bir adres).
     "/kurallar/:path*",
     "/etkinlikler/:path*",
+    "/rezervasyonlarim/:path*",
+    "/kvkk/:path*",
   ],
 };
