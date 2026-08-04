@@ -13,6 +13,7 @@ get_current_user ve endpoint ayni get_tenant_db oturumunu paylasir.
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from datetime import date, datetime, timezone
 from typing import Any
 
 import jwt
@@ -61,6 +62,26 @@ async def get_tenant_db(
             yield session
 
 
+def gorev_penceresi_disinda(user: AppUser, bugun: date | None = None) -> bool:
+    """(P128) Gorev suresi tanimliysa ve BUGUN o pencerenin disindaysa True.
+
+    Ikisi de NULL ise pencere YOKTUR (suresiz gorev) — bunu "gecersiz"
+    saymak, tarih girmeyen her denetciyi kilitlerdi.
+
+    TARIH UTC GUNUDUR: tenant saat dilimini okumak her istege bir sorgu
+    eklerdi ve pencere GUN cozunurlugunde bir yetki kaydidir; en fazla
+    birkac saatlik sinir farki, her istekte ek sorgudan iyi bir takas.
+    """
+    if user.gorev_baslangic is None and user.gorev_bitis is None:
+        return False
+    gun = bugun or datetime.now(timezone.utc).date()
+    if user.gorev_baslangic is not None and gun < user.gorev_baslangic:
+        return True
+    if user.gorev_bitis is not None and gun > user.gorev_bitis:
+        return True
+    return False
+
+
 async def get_current_user(
     claims: dict[str, Any] = Depends(get_access_claims),
     db: AsyncSession = Depends(get_tenant_db),
@@ -72,6 +93,13 @@ async def get_current_user(
     ).scalar_one_or_none()
     if user is None or not user.is_active:
         raise APIError(401, "invalid_token", "kullanici_bulunamadi_veya_pasif")
+    # (P128) GOREV PENCERESI HER ISTEKTE OLCULUR, yalniz giriste degil:
+    # access token 15 dakika yasar ve gorevi biten bir denetcinin ACIK
+    # oturumu, yalniz giriste olcseydik o sure boyunca gecerli kalirdi.
+    # Ayri bir hata kodu: "pasif hesap" ile "suresi dolmus gorev" farkli
+    # sorunlardir ve cozumleri de farkli (yeniden aktiflestir / sureyi uzat).
+    if gorev_penceresi_disinda(user):
+        raise APIError(403, "forbidden", "gorev_suresi_disinda")
     return user
 
 

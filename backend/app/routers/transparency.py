@@ -42,7 +42,11 @@ from .budget import date_filters
 
 router = APIRouter(prefix="/transparency", tags=["transparency"])
 
-_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi", "resident")
+_READER = require_role(
+    "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
+    # (P128) Seffaflik panosu zaten anonim ozet; denetci de OKUR.
+    "denetci",
+)
 _MANAGER = require_role("admin", "yonetici")
 _YONETIM = {"admin", "yonetici"}
 

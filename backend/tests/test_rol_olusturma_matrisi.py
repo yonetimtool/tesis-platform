@@ -26,6 +26,8 @@ TUM_ROLLER = (
     "tesis_gorevlisi",
     "resident",
     "guvenlik_amiri",
+    # (P128) Yedinci rol — salt-okuma mali denetci.
+    "denetci",
 )
 
 #: POST /users ile kimin hangi rolu acabildigi. Anahtar = acan, deger =
@@ -38,12 +40,15 @@ TUM_ROLLER = (
 #: amaciyla dairesiz hesap acabilir. Tesis yoneticisi icin ayni gerekce yok.
 IZINLI = {
     "admin": {"admin", "yonetici", "security", "tesis_gorevlisi", "resident",
-              "guvenlik_amiri"},
-    "yonetici": {"security", "tesis_gorevlisi"},
+              "guvenlik_amiri", "denetci"},
+    # (P128/P130b) Denetciyi ATAYAN denetlenen tesisin kendi yonetimidir.
+    "yonetici": {"security", "tesis_gorevlisi", "denetci"},
     "guvenlik_amiri": {"security"},
     "security": set(),
     "tesis_gorevlisi": set(),
     "resident": set(),
+    # Salt-okuma rol hesap ACMAZ.
+    "denetci": set(),
 }
 
 
@@ -68,6 +73,7 @@ def _acan(client, world, rol: str) -> dict[str, str]:
         "tesis_gorevlisi": "gorevli_a",
         "resident": "resident_a",
         "guvenlik_amiri": "amir_a",
+        "denetci": "denetci_a",
     }[rol]
     return _headers(client, world["slug_a"], world[anahtar])
 

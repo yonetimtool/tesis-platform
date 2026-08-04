@@ -27,6 +27,8 @@ TUM_ROLLER: tuple[str, ...] = (
     "tesis_gorevlisi",
     "resident",
     "guvenlik_amiri",
+    # (P128) Denetci — tesisin SALT-OKUMA mali gozetimi.
+    "denetci",
 )
 
 #: acan rol -> `POST /users` ile acabildigi roller.
@@ -45,7 +47,12 @@ ACILABILIR_ROLLER: dict[str, frozenset[str]] = {
     "admin": frozenset(TUM_ROLLER),
     # Site yoneticisi: kendi sahasi. `admin` ve `yonetici` YOK — ikisi de
     # yetki YUKSELTMEsidir (kendi rolunu cogaltmak dahil).
-    "yonetici": frozenset({"security", "tesis_gorevlisi"}),
+    # (P128/P130) `denetci` BURADA: denetciyi ATAYAN, denetlenen tesisin
+    # kendi yonetimidir (site yonetim planinda denetim kurulunu genel kurul
+    # secer; uygulamada onu tanimlayan kisi yonetici olur). Platform
+    # operatorune baglamak, her denetci degisikligi icin bizi arayan bir
+    # tesis demekti.
+    "yonetici": frozenset({"security", "tesis_gorevlisi", "denetci"}),
     # (P35) Dis guvenlik sirketinin amiri YALNIZ kendi ekibini acar;
     # `tesis_gorevlisi` bile degil (o site isidir, dis sirketin degil) ve
     # kendi rolunu de acamaz.
@@ -55,6 +62,9 @@ ACILABILIR_ROLLER: dict[str, frozenset[str]] = {
     "security": frozenset(),
     "tesis_gorevlisi": frozenset(),
     "resident": frozenset(),
+    # Denetci HICBIR hesap acmaz — salt-okuma rolun hesap acmasi, rolun
+    # tanimiyla celisirdi.
+    "denetci": frozenset(),
 }
 
 

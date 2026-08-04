@@ -7,7 +7,10 @@ import { ROLE_OPTIONS, ROLE_STYLE, SAHA_ROLLERI, rolAdi, roleAnahtari } from "@/
 import { SOZLUKLER } from "@/lib/i18n/sozluk";
 import type { UserRole } from "@/lib/types";
 
-/** Sozlesmedeki BILINEN 6 rol (auth.md §4; P35 ile guvenlik_amiri eklendi). */
+/** Sozlesmedeki BILINEN 7 rol (auth.md §4; P35 guvenlik_amiri, P128
+ *  denetci). Bu liste ELLE tutulur ve altindaki test onu backend
+ *  `USER_ROLE` enum'uyla karsilastirir — ikisi birden degismeden bir rol
+ *  eklenemez. */
 const BILINEN_ROLLER: UserRole[] = [
   "admin",
   "yonetici",
@@ -15,10 +18,11 @@ const BILINEN_ROLLER: UserRole[] = [
   "tesis_gorevlisi",
   "resident",
   "guvenlik_amiri",
+  "denetci",
 ];
 
 describe("ROLE_OPTIONS", () => {
-  it("bilinen 6 rolun TAMAMINI ve fazlasini DEGIL icerir", () => {
+  it("bilinen 7 rolun TAMAMINI ve fazlasini DEGIL icerir", () => {
     expect(ROLE_OPTIONS.map((r) => r.value).sort()).toEqual(
       [...BILINEN_ROLLER].sort(),
     );

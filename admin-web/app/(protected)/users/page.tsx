@@ -23,6 +23,9 @@ interface FormState {
   aranabilir: boolean;
   role: UserRole;
   password: string;
+  // (P128) Gorev penceresi — YALNIZ `denetci` rolunde gosterilir.
+  gorevBaslangic: string;
+  gorevBitis: string;
 }
 const EMPTY: FormState = {
   ad: "",
@@ -31,6 +34,8 @@ const EMPTY: FormState = {
   aranabilir: false,
   role: "security",
   password: "",
+  gorevBaslangic: "",
+  gorevBitis: "",
 };
 
 export default function UsersPage() {
@@ -106,6 +111,8 @@ export default function UsersPage() {
       aranabilir: u.aranabilir ?? false,
       role: (u.role as UserRole) ?? "security",
       password: "",
+      gorevBaslangic: u.gorev_baslangic ?? "",
+      gorevBitis: u.gorev_bitis ?? "",
     });
     setFormErr(null);
     setOpen(true);
@@ -134,6 +141,10 @@ export default function UsersPage() {
           telefon: telefonNormalle(form.telefon) || null,
           aranabilir: form.aranabilir,
           role: form.role,
+          // BOS = "pencere yok" (acik null); alani hic gondermemek
+          // "degistirme" demek olurdu ve gorev IPTALI yapilamazdi.
+          gorev_baslangic: form.gorevBaslangic || null,
+          gorev_bitis: form.gorevBitis || null,
         };
         if (form.password) body.password = form.password;
         await apiSend(`/api/users/${editingId}`, "PATCH", body);
@@ -146,6 +157,8 @@ export default function UsersPage() {
           aranabilir: form.aranabilir,
           role: form.role,
         };
+        if (form.gorevBaslangic) body.gorev_baslangic = form.gorevBaslangic;
+        if (form.gorevBitis) body.gorev_bitis = form.gorevBitis;
         if (form.email) body.email = form.email;
         if (form.password) body.password = form.password;
         const created = await apiSend<{ temp_code?: string | null }>(
@@ -287,6 +300,36 @@ export default function UsersPage() {
                 ))}
               </select>
             </Field>
+            {form.role === "denetci" ? (
+              // (P128) YALNIZ DENETCIDE GORUNUR: gorev penceresi bugun
+              // baska bir rolde anlam tasimiyor ve her role gostermek,
+              // doldurulunca hicbir sey yapmayan bir alan demekti.
+              <>
+                <Field
+                  label={t("kullaniciGorevBaslangic")}
+                  hint={t("kullaniciGorevIpucu")}
+                >
+                  <input
+                    type="date"
+                    className={inputCls}
+                    value={form.gorevBaslangic}
+                    onChange={(e) =>
+                      setForm({ ...form, gorevBaslangic: e.target.value })
+                    }
+                  />
+                </Field>
+                <Field label={t("kullaniciGorevBitis")}>
+                  <input
+                    type="date"
+                    className={inputCls}
+                    value={form.gorevBitis}
+                    onChange={(e) =>
+                      setForm({ ...form, gorevBitis: e.target.value })
+                    }
+                  />
+                </Field>
+              </>
+            ) : null}
             <Field
               label={
                 editingId

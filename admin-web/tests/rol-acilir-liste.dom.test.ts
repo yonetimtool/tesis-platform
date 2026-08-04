@@ -58,6 +58,32 @@ async function rolSecenekleri(): Promise<string[]> {
 
 afterEach(() => vi.restoreAllMocks());
 
+/** Formu acar, rolu secer ve gorunur tarih alanlarinin SAYISINI doner. */
+async function gorevTarihiAlanSayisi(rol: string): Promise<number> {
+  const kullanici = userEvent.setup();
+  await kullanici.click(await screen.findByRole("button", { name: /Yeni|Ekle/i }));
+  await screen.findByRole("button", { name: /Kaydet/i });
+  const secimler = screen.getAllByRole("combobox", { name: /Rol/i });
+  await kullanici.selectOptions(secimler[secimler.length - 1], rol);
+  return document.querySelectorAll('input[type="date"]').length;
+}
+
+describe("(P128) gorev penceresi alanlari", () => {
+  it("YALNIZ denetci secilince gorunur", async () => {
+    fetchTaklidi(["security", "tesis_gorevlisi", "denetci"]);
+    ciz(UsersPage);
+    // Saha rolunde alan YOK: doldurulunca hicbir sey yapmayan bir alan
+    // gostermek, kullaniciya olmayan bir yetenek vaat etmektir.
+    expect(await gorevTarihiAlanSayisi("security")).toBe(0);
+  });
+
+  it("denetci secilince IKI tarih alani gelir", async () => {
+    fetchTaklidi(["security", "tesis_gorevlisi", "denetci"]);
+    ciz(UsersPage);
+    expect(await gorevTarihiAlanSayisi("denetci")).toBe(2);
+  });
+});
+
 describe("kullanici formu — rol acilir listesi", () => {
   it("yonetici PLATFORM ADMIN'i GORMEZ, saha rollerini gorur", async () => {
     fetchTaklidi(["security", "tesis_gorevlisi"]);

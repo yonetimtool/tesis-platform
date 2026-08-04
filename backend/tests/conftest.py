@@ -189,6 +189,11 @@ PW_GOREVLI_A = "gorevlipassA1"
 PW_RESIDENT_A = "residentpassA1"
 AMIR_EMAIL = "amir@example.com"
 PW_AMIR_A = "amirpassA1"
+# (P128) Denetci — SALT-OKUMA mali gozetim rolu. Fixture'a eklenmezse rol
+# matrisi kilidinin YEDINCI sutunu hic surulmez ve yeni rolun yetkileri
+# OLCULMEDEN gecerdi (P35'te alti sutun icin ayni not dusulmustu).
+DENETCI_EMAIL = "denetci@example.com"
+PW_DENETCI_A = "denetcipassA1"
 PW_ADMIN_B = "passwordB1"
 PW_YONETICI_B = "yoneticipassB1"
 
@@ -286,7 +291,7 @@ def world(owner_conn, request):
         # (+90500000000x) kosumlar arasi CATISIYORDU: kesilmis bir kosumun
         # birakti tek satir, sonraki kosumun TUM testlerini dusuruyordu.
         # Numara artik tenant uuid'sinden turetilir — catisma imkansiz.
-        tel = _telefonlar(a)
+        tel = _telefonlar(a, adet=9)
         users = [
             (a, "Admin A", SHARED_EMAIL, PW_ADMIN_A, "admin", tel[0]),
             (a, "Yonetici A", YONETICI_EMAIL, PW_YONETICI_A, "yonetici", tel[1]),
@@ -298,6 +303,9 @@ def world(owner_conn, request):
             # (P35) Guvenlik amiri — rol matrisi kilidi ALTINCI sutunu bundan
             # surer; fixture'a eklenmezse yeni rol hic olculmezdi.
             (a, "Amir A", AMIR_EMAIL, PW_AMIR_A, "guvenlik_amiri", tel[7]),
+            # (P128) Gorev penceresi YOK (suresiz) — pencere davranisi kendi
+            # testinde acikca kurulur; buradaki hesap "normal" denetcidir.
+            (a, "Denetci A", DENETCI_EMAIL, PW_DENETCI_A, "denetci", tel[8]),
         ]
         # Dongu degiskeni `tel` OLAMAZ: listeyi golgeler ve `yield` sozlugu
         # numaralar yerine SON numaranin KARAKTERLERINI dagitirdi.
@@ -325,6 +333,9 @@ def world(owner_conn, request):
         # (kesilmis kosum artik satiri birakirsa global benzersizlik
         # sonraki kosumu dusuruyordu).
         "amir_a": {"email": AMIR_EMAIL, "password": PW_AMIR_A, "phone": tel[7]},
+        "denetci_a": {
+            "email": DENETCI_EMAIL, "password": PW_DENETCI_A, "phone": tel[8],
+        },
         "bos_telefonlar": _telefonlar(b, adet=4),
     }
 

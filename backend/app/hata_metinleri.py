@@ -512,6 +512,19 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "La notice a été mise à jour pendant votre lecture ; veuillez lire et approuver le nouveau texte.",
         "es": "El aviso se actualizó mientras leía; lea y apruebe el nuevo texto.",
     },
+    # (P128) Denetcinin GOREV PENCERESI disinda kalmasi. "Yetkiniz yok"
+    # demek yanlis olurdu: yetki VARDI, SURESI gecti (ya da henuz
+    # baslamadi) — kullanicinin yapacagi sey yoneticiden sureyi
+    # uzatmasini istemektir, parolasini aramak degil.
+    "gorev_suresi_disinda": {
+        "tr": "Denetim göreviniz için tanımlı tarih aralığının dışındasınız; yöneticinizden süreyi güncellemesini isteyin.",
+        "en": "You are outside the date range defined for your audit mandate; ask your site manager to update it.",
+        "ar": "أنت خارج النطاق الزمني المحدد لتكليفك بالتدقيق؛ اطلب من مدير الموقع تحديثه.",
+        "ru": "Вы вне срока, установленного для вашего аудиторского мандата; попросите управляющего обновить его.",
+        "de": "Sie befinden sich außerhalb des für Ihr Prüfmandat festgelegten Zeitraums; bitten Sie die Verwaltung um eine Aktualisierung.",
+        "fr": "Vous êtes en dehors de la période définie pour votre mandat d'audit ; demandez au gestionnaire de la mettre à jour.",
+        "es": "Está fuera del rango de fechas definido para su mandato de auditoría; pida al administrador que lo actualice.",
+    },
     "guvenlik_dis_sirkette": {
         "tr": "Bu tesiste güvenlik planlaması dış güvenlik şirketindedir; yalnız güvenlik amiri değiştirebilir.",
         "en": "Security planning at this site belongs to the external security company; only the security chief can change it.",

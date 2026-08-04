@@ -376,6 +376,10 @@ export const tr = {
   rolTesisGorevlisi: "Tesis Görevlisi",
   rolSiteSakini: "Site Sakini",
   rolGuvenlikAmiri: "Güvenlik Amiri",
+  rolDenetci: "Denetçi",
+  kullaniciGorevBaslangic: "Görev başlangıcı (opsiyonel)",
+  kullaniciGorevBitis: "Görev bitişi (opsiyonel)",
+  kullaniciGorevIpucu: "Boş bırakılırsa görev süresizdir. Bitiş tarihi geçince denetçi giriş yapamaz.",
 
   // ------------------------------ canli panel -----------------------------
   panelBugunkuTurlar: "Bugünkü Turlar",

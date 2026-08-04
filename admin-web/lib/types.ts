@@ -321,7 +321,9 @@ export type UserRole =
   | "tesis_gorevlisi"
   | "resident"
   // (P35) Guvenlik amiri — dis guvenlik sirketinin tur/vardiya sahibi.
-  | "guvenlik_amiri";
+  | "guvenlik_amiri"
+  // (P128) Denetci — tesisin SALT-OKUMA mali gozetimi.
+  | "denetci";
 
 // password_hash ASLA gelmez (backend User semasinda yok).
 // Liste ogesi — telefon YOK (KVKK: numaralar toplu listelenmez). aranabilir
@@ -333,6 +335,9 @@ export interface UserRow {
   aranabilir?: boolean;
   role: string;
   is_active: boolean;
+  // (P128) Gorev penceresi (YYYY-MM-DD) — denetci disi rollerde null.
+  gorev_baslangic?: string | null;
+  gorev_bitis?: string | null;
   created_at: string;
 }
 

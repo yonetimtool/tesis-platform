@@ -59,6 +59,10 @@ router = APIRouter(tags=["aidat"])
 
 _ADMIN = require_role("admin")
 _YONETIM = require_role("admin", "yonetici")
+# (P128) Gecikme (temerrut) AYARI okunur: tahakkuk ile tahsilat
+# arasindaki farkin ne kadarinin gecikme faizi oldugu bu ayardan
+# anlasilir. Ayari DEGISTIRMEK `_YONETIM`de kalir.
+_AYAR_OKUR = require_role("admin", "yonetici", "denetci")
 
 
 # --------------------------- ortak yardimcilar ------------------------------ #
@@ -442,7 +446,7 @@ async def ice_aktarim(
 @router.get("/borclandirma/gecikme-ayari", response_model=GecikmeAyarOut)
 async def gecikme_ayari(
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_YONETIM),
+    user: AppUser = Depends(_AYAR_OKUR),
 ) -> GecikmeAyarOut:
     obj = await get_or_404(db, Tenant, user.tenant_id)
     return GecikmeAyarOut(gecikme_aylik_yuzde=float(obj.gecikme_aylik_yuzde))

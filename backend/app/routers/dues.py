@@ -47,7 +47,10 @@ from ..schemas import (
 router = APIRouter(tags=["aidat"])
 
 _ADMIN = require_role("admin")
-_REPORT = require_role("admin", "yonetici")
+# (P128) Tahakkuk/tahsilat OKUMA — denetcinin "tahakkuk vs tahsilat"
+# karsilastirmasi bu iki listeden cikar. Tahakkuk URETME ve odeme ALMA
+# `_ADMIN`de kalir.
+_REPORT = require_role("admin", "yonetici", "denetci")
 _RESIDENT = require_role("resident")
 
 

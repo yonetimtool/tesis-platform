@@ -7650,7 +7650,7 @@ sitesidir.
 Acceptance: Lighthouse SEO ≥ 90; iletişim formu teslim ediyor; kapılar.
 
 ### P128 — DENETÇİ rolü: tesisin salt-okuma mali gözetimi
-Status: ACIK · Depends-on: P126
+Status: BITTI · Depends-on: P126
 Scope: Sistemde **altı** rol var (`admin`, `yonetici`, `security`,
 `tesis_gorevlisi`, `resident`, `guvenlik_amiri`); site **denetçisi** yok.
 Denetim kurulu / bağımsız denetçi bugün ya yönetici hesabıyla giriyor (yazma
@@ -7667,6 +7667,89 @@ Acceptance: `denetci` şema göçüyle eklenir (yeni revizyon, geri alınabilir)
 salt-okuma **iki yönde** test edilir (okuma uçları 200 **ve** mutasyon uçları
 403 — tek yön test edilse "her şeyi kapat" da geçerdi); yönetici açar/iptal
 eder; kapılar.
+
+Notes (2026-08-04, P128 + P130(b)) — **DENETÇİ ROLÜ AÇILDI: YÖNETİCİ AÇAR,
+DENETÇİ YALNIZCA OKUR.**
+
+**ROL YEDİNCİ** — göç `0032_denetci_rolu`. 0024'ün (güvenlik amiri) kararı
+aynen izlendi: PostgreSQL bir enum değerini **kaldıramaz** ve `user_role`a
+RLS politikaları bağlı; `downgrade` **etiketi bırakır**, onu *kullanan* her
+şeyi geri alır. Ama bir yerde 0024'ten **ayrıldım**: 0024 amiri `security`ye
+düşürüyordu ("en yakın rol"); denetçinin en yakını **yoktur** — her mevcut
+rol ona bugün sahip olmadığı bir **yazma** yetkisi verirdi. Düşürülen
+denetçi `resident` **+ `is_active=false`** olur: veri kaybolmaz, yetki de
+sessizce genişlemez.
+
+**GÖREV PENCERESİ ŞEMADA** (`app_user.gorev_baslangic/gorev_bitis` + ters
+pencereyi kapatan CHECK). Kolon adına rol gömülmedi (`denetci_*` değil):
+aynı pencere yarın başka bir geçici rol için de geçerli olabilir.
+
+**PENCERE HER İSTEKTE ÖLÇÜLÜR, YALNIZ GİRİŞTE DEĞİL.** Access token 15 dk
+yaşar; yalnız girişte ölçseydik görevi biten denetçinin **açık oturumu** o
+süre boyunca geçerli kalırdı. Ölçüldü: bitiş tarihi geçmişe çekilince
+**aynı token** ile `/finans/ozet` 200'den 403'e döndü. Girişte de ayrıca
+kesilir — yoksa kullanıcıya "giriş başarılı" deyip her ekranda 403
+göstermiş olurduk. Kod 401 değil **403**: kimlik doğru, kapalı olan
+**yetki penceresi**.
+
+**SALT-OKUMA İKİ KATMANDA YAZILDI:** (1) **yapısal** — FastAPI'nin rota
+ağacı gezilir, `denetci`ye açık GET-dışı her uç gerekçeli bir istisna
+listesinde olmak zorundadır; (2) **davranışsal** — 12 okuma ucu 200, 9
+mutasyon ucu 403. Örnek testi tek başına yetmezdi: yarın eklenen `POST
+/finans/bir-şey` ucuna `denetci` konsa hiçbir örnek test düşmezdi.
+
+**TEK İSTİSNA, GEREKÇELİ:** `POST /raporlar/{kod}` — rapor **üretimi bir
+okumadır** (`rapor_motoru.py`de tek bir `db.add` yok); POST seçilme sebebi
+parametrelerin gövde istemesi. Kural "fiil GET olsun" değil **"mutasyon
+olmasın"**. Katalogda zaten *"Denetçi biçimi"* raporu var; denetçiyi bu
+ucun dışında bırakmak ona görevinin ana aracını kapatmaktı.
+
+**YEDİNCİ SÜTUN, TESTİMDE BİR DELİK BULDU.** Rol matrisi kilidini denetçi
+sütunuyla üretince listede **rol kapısı hiç olmayan** mutasyon uçları
+göründü (`POST /devices`, `PATCH /me/password`, `POST /kvkk/onay`…).
+Yapısal testin ilk hâli bunları **göremiyordu**: yalnız "`izinli_roller`
+içinde denetçi var mı" diye bakıyordu, kapısı olmayan uç o kontrolden
+sessizce geçiyordu. İkinci bir kilit eklendi — kapısız mutasyon uçlarının
+kümesi **iki yönlü** sabitlendi; kural konmadan eklenen yeni bir uç artık
+testi düşürür. Kümedeki 14 ucun hepsi ya **public** ya **kişinin kendi
+hesabı** (parola, KVKK rızası, cihaz kaydı — bunlar yetki değil **kişinin
+hakkı**) ya da **cihaz kimliği** (`POST /integrations/anpr/events`,
+`X-ANPR-Key`; isteği bir kullanıcı değil kamera kutusu atar). Hiçbiri
+tesisin kayıtlarına yazmaz.
+
+**KVKK — DENETÇİ NE OKUMAZ:** personel kayıtları, araç kayıtları, firmalar
+ve sayaçlar **bilerek dışarıda**. İlk üçü kişisel veri taşır; denetim
+yetkisi **mali kayıttır**, personel dosyası değil (amaç sınırlılığı).
+
+**KONTROL GRUBU:** 403'ler "denetçi olduğu için" mi, yoksa uç zaten herkese
+kapalı mı? Aynı uçlarda yönetici kapıyı **geçiyor** (boş gövdeyle 422, ama
+403 değil) — yoksa "her şeyi kapat" da testi geçerdi.
+
+**P130(b) BURADA KAPANDI:** yönetici artık denetçi açıyor (`ACILABILIR_
+ROLLER`), ad + telefon + **opsiyonel** görev tarihleriyle; iptal iki yoldan
+— bitişi geçmişe çekmek (*görev bitti*) ya da `is_active=false` (*hesap
+kapatıldı*). İkisi denetim izinde **farklı** görünür ve bu bilinçli.
+
+**MOBİL ÇÖKMEZ, ÖLÇÜLDÜ:** `UserRole.fromClaim` bilinmeyen değeri
+`unknown`a düşürüyor (`orElse`), yani denetçi mobil uygulamayı açsa boş bir
+kabuk görür — kırılma yok. Denetçi bir **web** rolüdür (P129).
+
+**MUTASYON 6/6:** mutasyon ucuna denetçi ekle · her-istek pencere kapısını
+kaldır · denetçiyi okuma bağımlılığından çıkar · giriş kapısını kaldır ·
+yöneticiden denetçi açma yetkisini al · görev tarihi alanlarını her rolde
+göster. Altısı da yakalandı.
+
+**KAPI BİR ŞEY DAHA YAKALADI (ve haklıydı):** yeni hata metnini
+(`gorev_suresi_disinda`) çeviri kataloğuna koymamıştım;
+`test_hata_i18n.py` AST taramasıyla bunu **iki çağrı yerinde birden**
+buldu. 7 dile eklendi. Metin bilerek "yetkiniz yok" demiyor: yetki
+vardı, **süresi** geçti — kullanıcının yapacağı şey yöneticiden süreyi
+uzatmasını istemektir.
+
+KAPILAR: `tsc` temiz · `vitest` **495 test** (+2) · `npm run build` ✓ ·
+`backend-pytest` **1321 geçti / 0 düştü** (tam koşum, düzeltmeden sonra
+yeniden) · `goc-uyum` 0 bulgu · `goc-tersinirlik` 0 bulgu (33 sınır) ·
+sözleşme (`openapi.yaml` + `auth.md §4b`) güncellendi.
 
 ### P129 — app.* kapsamı DARALTILDI: yalnız yönetici + denetçi
 Status: ACIK · Depends-on: P126, P128
@@ -7685,7 +7768,7 @@ Acceptance: sakin/saha rolüyle `app.*` girişi **403 + mağaza yönlendirmesi**
 `panel.*` etkilenmez; kapılar.
 
 ### P130 — P0 yetki hataları: kim kimi açabilir + denetçiyi yönetici açar
-Status: KISMEN(a BİTTİ · b = P128, sıradaki) · Depends-on: —
+Status: BITTI · Depends-on: —
 Scope: İki hata, ikisi de yetki sınırında; **grubun İLK işi**.
 (a) **Yetki yükseltme iddiası:** bir tesis yöneticisi **platform admin**
 hesabı açabiliyor. Ölçülecek (`POST /users`, `PATCH /users/{id}`,

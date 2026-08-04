@@ -56,7 +56,11 @@ from ..schemas import (
 router = APIRouter(tags=["finans"])
 
 _ADMIN = require_role("admin")
-_OKUMA = require_role("admin", "yonetici")
+# (P128) `_OKUMA` YALNIZ GET uclarinda kullanilir (hareketler, kasa
+# bakiyeleri, ozet, icra dosyalari listesi); denetcinin mali gozetimi tam
+# olarak bu kayitlar uzerindedir. Yazan uclar `_ADMIN`dedir ve denetci
+# oraya HIC girmez.
+_OKUMA = require_role("admin", "yonetici", "denetci")
 
 
 async def _kasa_var(db: AsyncSession, kasa_id: uuid.UUID) -> None:

@@ -174,6 +174,9 @@ async def create_user(
         temp_code_hash=temp_code_hash,
         role=body.role,
         is_active=True,
+        # (P128) Gorev penceresi (denetci); diger rollerde None gelir.
+        gorev_baslangic=body.gorev_baslangic,
+        gorev_bitis=body.gorev_bitis,
     )
     db.add(obj)
     try:
@@ -185,7 +188,14 @@ async def create_user(
     await db.refresh(obj)
     await audit_user(
         db, user, Action.USER_CREATE, resource_type="app_user",
-        resource_id=obj.id, meta={"role": obj.role},
+        # meta'da KISISEL VERI DEGERI yok (ad/telefon/e-posta girmez):
+        # acilan ROL ve gorev penceresinin VARLIGI. Denetim izinde "kim,
+        # hangi rolde, kime hangi yetkiyi verdi" sorusuna bu yeter.
+        resource_id=obj.id,
+        meta={
+            "role": obj.role,
+            "gorev_penceresi": bool(obj.gorev_baslangic or obj.gorev_bitis),
+        },
     )
     return UserCreatedOut(
         id=obj.id,
@@ -195,6 +205,8 @@ async def create_user(
         aranabilir=obj.aranabilir,
         role=obj.role,
         is_active=obj.is_active,
+        gorev_baslangic=obj.gorev_baslangic,
+        gorev_bitis=obj.gorev_bitis,
         created_at=obj.created_at,
         temp_code=temp_code,
     )

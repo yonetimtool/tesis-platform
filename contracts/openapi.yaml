@@ -8113,8 +8113,23 @@ components:
         ziyaretci alanlari ona BILINCLI olarak KAPALIDIR (dis sirket = en az
         yetki, KVKK).
 
+
+        (P128) `denetci` YEDINCI roldur: tesisin SALT-OKUMA mali gozetimi
+        (raporlar, gelir/gider, tahakkuk-tahsilat, kasa/banka). HICBIR
+        mutasyon ucu bu role acik degildir — kural yapisal olarak test
+        edilir (`backend/tests/test_denetci_salt_okuma.py`): rota agacinda
+        `denetci`ye acik GET-disi her uc, gerekcesi yazili bir istisna
+        listesinde olmak ZORUNDADIR. Tek istisna `POST /raporlar/{kod}`:
+        rapor URETIMI bir okumadir, POST secilmesinin sebebi parametrelerin
+        bir govde istemesidir.
+
+
+        Gorev penceresi (`gorev_baslangic`/`gorev_bitis`) HER ISTEKTE
+        olculur; disinda kalan istek 403 `gorev_suresi_disinda` alir ve
+        giris de ayni kodla reddedilir.
       enum:
-        [admin, yonetici, security, tesis_gorevlisi, resident, guvenlik_amiri]
+        [admin, yonetici, security, tesis_gorevlisi, resident, guvenlik_amiri,
+         denetci]
 
     # --------------------------- devices --------------------------- #
     DevicePlatform:
@@ -8173,6 +8188,16 @@ components:
           description: Telefonla aranmaya riza (C1a). Yonetim girer; /call-target kapisi.
         role: { $ref: "#/components/schemas/UserRole" }
         is_active: { type: boolean }
+        gorev_baslangic:
+          type: string
+          format: date
+          nullable: true
+          description: (P128) Gorev penceresi basi — denetci disi rollerde null.
+        gorev_bitis:
+          type: string
+          format: date
+          nullable: true
+          description: (P128) Gorev penceresi sonu — denetci disi rollerde null.
         created_at: { type: string, format: date-time }
     UserListItem:
       type: object
@@ -8187,6 +8212,16 @@ components:
         aranabilir: { type: boolean }
         role: { $ref: "#/components/schemas/UserRole" }
         is_active: { type: boolean }
+        gorev_baslangic:
+          type: string
+          format: date
+          nullable: true
+          description: (P128) Gorev penceresi basi — denetci disi rollerde null.
+        gorev_bitis:
+          type: string
+          format: date
+          nullable: true
+          description: (P128) Gorev penceresi sonu — denetci disi rollerde null.
         created_at: { type: string, format: date-time }
     UserCreate:
       type: object
@@ -8210,6 +8245,21 @@ components:
           minLength: 8
           nullable: true
           description: Verilmezse gecici kod uretilir (temp password first)
+        gorev_baslangic:
+          type: string
+          format: date
+          nullable: true
+          description: >
+            (P128) Gorev penceresi basi — bugun yalniz `denetci` icin
+            anlamli. Ikisi de bos ise gorev SURESIZDIR.
+        gorev_bitis:
+          type: string
+          format: date
+          nullable: true
+          description: >
+            (P128) Gorev penceresi sonu. `gorev_baslangic`tan once olamaz
+            (422; semada da CHECK var — goc 0032). Bu tarih gecince
+            kullanici giris yapamaz ve ACIK oturumu da gecersizlesir.
     UserCreatedOut:
       type: object
       description: >
@@ -8237,6 +8287,11 @@ components:
         role: { $ref: "#/components/schemas/UserRole" }
         is_active: { type: boolean }
         password: { type: string, format: password, minLength: 8 }
+        # (P128) Gorev penceresi GUNCELLENEBILIR: uzatma ya da bitis
+        # tarihini gecmise cekerek FIILEN IPTAL. `null` gondermek pencereyi
+        # KALDIRIR (suresiz gorev) — alani hic gondermemekten farklidir.
+        gorev_baslangic: { type: string, format: date, nullable: true }
+        gorev_bitis: { type: string, format: date, nullable: true }
     UserContactUpdate:
       type: object
       description: >

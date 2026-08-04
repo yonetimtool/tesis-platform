@@ -52,6 +52,13 @@ from ..schemas import RaporKatalogOgesi, RaporKatalogResponse, RaporParametre, R
 router = APIRouter(tags=["raporlar"])
 
 _YONETIM = require_role("admin", "yonetici")
+# (P128) RAPOR URETIMI BIR OKUMADIR — HTTP fiili POST olsa da.
+# `POST /raporlar/{kod}` hicbir satir yazmaz (dosyada tek bir `db.add`
+# yoktur); POST secilmesinin sebebi rapor PARAMETRELERININ bir govde
+# istemesidir. Denetciyi bu ucun disinda birakmak, ona gorevinin ana
+# aracini (katalogdaki "Denetci bicimi" raporu dahil) kapatmak olurdu.
+# Kural "fiil GET olsun" degil "MUTASYON olmasin"dir.
+_RAPOR_OKUR = require_role("admin", "yonetici", "denetci")
 
 #: Donem anahtari (YYYY-MM). `func.to_char` BIND PARAMETRESI uretir ve
 #: Postgres GROUP BY'daki ifadeyle eslestiremez; `literal_column` ifadeyi
@@ -82,7 +89,7 @@ KATALOG: dict[str, tuple[str, str]] = {
 
 
 @router.get("/raporlar/katalog", response_model=RaporKatalogResponse)
-async def katalog(_: AppUser = Depends(_YONETIM)) -> RaporKatalogResponse:
+async def katalog(_: AppUser = Depends(_RAPOR_OKUR)) -> RaporKatalogResponse:
     return RaporKatalogResponse(items=[
         RaporKatalogOgesi(kod=k, baslik=v[0], aciklama=v[1])
         for k, v in KATALOG.items()
@@ -523,7 +530,7 @@ async def rapor_uret(
     body: RaporParametre,
     bicim: str = Query("tablo", description="tablo | excel | pdf"),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_YONETIM),
+    user: AppUser = Depends(_RAPOR_OKUR),
 ):
     """Raporu UC BICIMDEN biriyle uret.
 

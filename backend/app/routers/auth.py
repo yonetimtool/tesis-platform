@@ -17,7 +17,7 @@ from sqlalchemy import func, select, text
 from ..audit import Action, record_audit
 from ..config import settings
 from ..db import SessionLocal, set_tenant
-from ..deps import get_redis
+from ..deps import get_redis, gorev_penceresi_disinda
 from ..errors import APIError
 from ..models import AppUser
 from ..schemas import (
@@ -45,6 +45,10 @@ _INVALID_CREDS = APIError(401, "invalid_credentials", "giris_bilgileri_hatali_em
 # Telefon girisinde de hangi adimin patladigi sizdirilmaz (numara var mi, kod mu
 # parola mi yanlis vb. ayirt ettirilmez) — personel akisiyla ayni ilke.
 _INVALID_PHONE_CREDS = APIError(401, "invalid_credentials", "giris_bilgileri_hatali_telefon")
+# (P128) Gorev suresi disindaki denetci: 401 DEGIL 403 ve AYRI mesaj.
+# "Giris bilgileri hatali" demek, dogru parolayi giren kullaniciyi
+# parolasini aramaya gonderirdi; sorun kimlik degil YETKI penceresidir.
+_GOREV_SURESI_DISINDA = APIError(403, "forbidden", "gorev_suresi_disinda")
 
 
 def _refresh_ttl() -> int:
@@ -116,6 +120,12 @@ async def login(
             if not user.is_active:
                 await _audit_login_fail(tenant_id, method="email", user=user)
                 raise _INVALID_CREDS
+            # (P128) Gorev suresi disindaki denetci token ALMAZ. Kapiyi
+            # yalniz `get_current_user`a birakmak, kullaniciya "giris
+            # basarili" deyip ardindan her ekranda 403 gostermek olurdu.
+            if gorev_penceresi_disinda(user):
+                await _audit_login_fail(tenant_id, method="email", user=user)
+                raise _GOREV_SURESI_DISINDA
 
             await record_audit(
                 session, action=Action.LOGIN_OK, tenant_id=tenant_id,
@@ -198,6 +208,10 @@ async def login_phone(
             if user is None or not user.is_active:
                 await _audit_login_fail(tenant_id, method="phone", user=user)
                 raise _INVALID_PHONE_CREDS
+            # (P128) Gorev penceresi — e-posta girisiyle AYNI kural.
+            if gorev_penceresi_disinda(user):
+                await _audit_login_fail(tenant_id, method="phone", user=user)
+                raise _GOREV_SURESI_DISINDA
 
             if user.password_set:
                 if not verify_password(body.password, user.password_hash):

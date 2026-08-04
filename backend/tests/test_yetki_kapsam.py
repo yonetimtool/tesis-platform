@@ -15,7 +15,7 @@ elle liste tutmadan iki yonlu bir degismez verir:
 
 IKINCI OLCUM — ROL MATRISI KILIDI. Hangi rolun hangi uca erisebilecegi
 sozlesmede yazili DEGIL, dolayisiyla "dogru" cevabi bilemeyiz. Ama
-DEGISIKLIGI yakalayabiliriz: 6 rol (P35 ile guvenlik_amiri eklendi) x tum
+DEGISIKLIGI yakalayabiliriz: 7 rol (P35 guvenlik_amiri, P128 denetci) x tum
 operasyonlar surulur ve sonuc
 `tests/yetki/rol-matrisi.txt` dosyasindaki temel ile karsilastirilir. Yetki
 davranisi degistiginde diff cikar; kasitliysa kilit guncellenir. (Tur 60'taki
@@ -201,6 +201,9 @@ def test_rol_matrisi_kilidi(client, spec, world, owner_conn):
         # (P35) ALTINCI SUTUN. Yeni bir rol eklenip matrise konmazsa,
         # kilit "degismedi" der ve rolun tum yetkileri OLCULMEDEN gecerdi.
         ("guvenlik_amiri", world["amir_a"]),
+        # (P128) YEDINCI SUTUN — denetci. Ayni gerekce: olculmeyen rol,
+        # kilidin "degismedi" demesiyle sessizce her yetkiyi tasiyabilir.
+        ("denetci", world["denetci_a"]),
     ]
     tokenlar: dict[str, str] = {}
     for rol, hesap in hesaplar:

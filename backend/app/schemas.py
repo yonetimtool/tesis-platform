@@ -134,6 +134,8 @@ UserRoleLiteral = Literal[
     "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
     # (P35) Dis guvenlik sirketinin amiri.
     "guvenlik_amiri",
+    # (P128) Tesisin SALT-OKUMA mali denetcisi.
+    "denetci",
 ]
 GuvenlikModu = Literal["yonetim_ici", "dis_sirket"]
 
@@ -156,6 +158,9 @@ class UserAdminOut(BaseModel):
     birincil: bool = False
     # Saha personeli profil fotografi (presign GET URL; router doldurur).
     avatar_url: str | None = None
+    # (P128) Gorev penceresi — denetci disi rollerde NULL.
+    gorev_baslangic: date | None = None
+    gorev_bitis: date | None = None
     created_at: datetime
 
 
@@ -175,6 +180,9 @@ class UserAdminListItem(BaseModel):
     birincil: bool = False
     # Saha personeli profil fotografi (presign GET URL; router doldurur).
     avatar_url: str | None = None
+    # (P128) Gorev penceresi — denetci disi rollerde NULL.
+    gorev_baslangic: date | None = None
+    gorev_bitis: date | None = None
     created_at: datetime
 
 
@@ -198,6 +206,25 @@ class UserCreate(BaseModel):
     aranabilir: bool = False
     role: UserRoleLiteral
     password: str | None = Field(None, min_length=8)
+    # (P128) GOREV PENCERESI — bugun yalniz `denetci` icin anlamli, ikisi de
+    # opsiyonel (suresiz gorev gecerli bir durumdur). Rolle KISITLAMIYORUZ
+    # ki yarin baska bir gecici rol icin ayni alan yeniden turetilmesin;
+    # anlamsiz doldurulan bir pencere kimseye zarar vermez, eksik olan
+    # verirdi.
+    gorev_baslangic: date | None = None
+    gorev_bitis: date | None = None
+
+    @model_validator(mode="after")
+    def _pencere_tutarli(self) -> "UserCreate":
+        if (
+            self.gorev_baslangic is not None
+            and self.gorev_bitis is not None
+            and self.gorev_bitis < self.gorev_baslangic
+        ):
+            # Semada da CHECK var (goc 0032); burada kesmek kullaniciya
+            # veritabani hatasi yerine alan adiyla mesaj verir.
+            raise ValueError("gorev_bitis, gorev_baslangic'tan once olamaz")
+        return self
 
     @field_validator("telefon")
     @classmethod
@@ -229,6 +256,9 @@ class UserCreatedOut(BaseModel):
     # Tenant'in birincil yoneticisi mi? Mobil ilk-giris adlandirma kapisi
     # yalniz buna acilir (yonetici disi rollerde daima false).
     birincil: bool = False
+    # (P128) Gorev penceresi — olusturulan kayit ne dondugu gibi geri doner.
+    gorev_baslangic: date | None = None
+    gorev_bitis: date | None = None
     created_at: datetime
     temp_code: str | None = None
 
@@ -242,6 +272,12 @@ class UserUpdate(BaseModel):
     role: UserRoleLiteral | None = None
     is_active: bool | None = None
     password: str | None = Field(None, min_length=8)
+    # (P128) Gorev penceresi GUNCELLENEBILIR: yonetici gorevi uzatir ya da
+    # bitis tarihini bugune cekerek FIILEN IPTAL eder. `is_active=false` ile
+    # kapatmak da mumkundur; ikisi farkli seylerdir — biri "gorevi bitti",
+    # digeri "hesabi kapatildi" der ve denetim izinde de oyle gorunur.
+    gorev_baslangic: date | None = None
+    gorev_bitis: date | None = None
 
     # (P97) TELEFON NORMALIZE EDILMIYORDU. Olculdu:
     # `PATCH /users/{id} {"telefon": "//evil.example/x"}` -> **200** ve deger

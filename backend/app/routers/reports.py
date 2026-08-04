@@ -25,7 +25,9 @@ from .budget import date_filters
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 _READER = require_role(
-    "admin", "yonetici", "security", "tesis_gorevlisi", "resident"
+    "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
+    # (P128) Denetci mali ozeti OKUR — gorevinin ta kendisi.
+    "denetci",
 )
 _YONETIM = {"admin", "yonetici"}
 

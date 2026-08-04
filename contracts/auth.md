@@ -205,7 +205,8 @@ Roller: **admin** (platform admini — biz/gelistirici; TUM tesisler, panel),
 **yonetici** (site yoneticisi — musteri; KENDI tenant'i, mobil),
 **security** (guvenlik gorevlisi), **tesis_gorevlisi** (temizlik + bahcivan +
 teknik — birlesik saha rolu), **resident** (site sakini),
-**guvenlik_amiri** (P35 — dis guvenlik sirketinin amiri; bkz. §4a).
+**guvenlik_amiri** (P35 — dis guvenlik sirketinin amiri; bkz. §4a),
+**denetci** (P128 — tesisin SALT-OKUMA mali gozetimi; bkz. §4b).
 
 ### 4a. Guvenlik amiri ve ikili guvenlik mimarisi (P35)
 
@@ -971,6 +972,45 @@ Notlar:
     opsiyonel; `kategori_ad` join ile doldurulur) — Gorev kategorisiyle
     (`/task-categories`) AYNI havuzu paylasir, boylece `convert` sirasinda
     kategori is emrine dogrudan tasınır.
+
+
+### 4b. Denetci — SALT-OKUMA mali gozetim (P128)
+
+**Neden ayri bir rol:** denetim kurulu / bagimsiz denetci bugune kadar ya
+YONETICI hesabiyla giriyordu — yani denetledigi kayitlari DEGISTIREBILEN
+biri olarak; denetimin bagimsizligi tam burada biter — ya da hic giremiyor
+ve tesis kendi verisini disari dokum olarak tasiyordu.
+
+**Kural (fiil degil, ETKI):** `denetci` HICBIR mutasyon ucunda yer almaz.
+Bu bir uslup tercihi degil, **yapisal olarak** olculur: rota agacinda
+`denetci`ye acik GET-disi her uc, gerekcesi yazili bir istisna listesinde
+olmak ZORUNDADIR (`backend/tests/test_denetci_salt_okuma.py`). Bugunku tek
+istisna `POST /raporlar/{kod}`: rapor URETIMI bir okumadir (rapor motoru
+tek satir yazmaz), POST secilmesinin sebebi parametrelerin bir govde
+istemesidir.
+
+**Ne okur:** raporlar (`/reports/*`, `/raporlar/*`), gelir-gider defteri ve
+butce (`/budget/entries`, `/budget/categories`, `/budget/summary`),
+tahakkuk↔tahsilat (`/dues/assessments`, `/dues/payments`), kasa/banka ve
+mali tanimlar (`/finans/*` GET, `/kasalar`, `/gelir-gider-*`,
+`/muhasebe-ayarlari`), gecikme ayari, seffaflik panosu.
+
+**Ne OKUMAZ (KVKK — amac sinirliligi):** personel kayitlari, arac
+kayitlari, firmalar ve sayaclar. Denetim yetkisi MALI KAYITTIR; personel
+dosyasi degildir.
+
+**Gorev penceresi:** `app_user.gorev_baslangic` / `gorev_bitis` (ikisi de
+opsiyonel; ikisi de bossa gorev SURESIZDIR). Pencere HER ISTEKTE olculur —
+yalniz giriste olcmek, gorevi biten denetcinin acik oturumunu access token
+omru (15 dk) boyunca gecerli birakirdi. Disinda kalan istek **403
+`gorev_suresi_disinda`**; giris de ayni kodla reddedilir (401 DEGIL:
+kimlik dogru, YETKI penceresi kapali).
+
+**Kim acar:** site **yoneticisi** (ve admin). Denetciyi atayan, denetlenen
+tesisin kendi yonetimidir; platform operatorune baglamak her denetci
+degisikligi icin bizi arayan bir tesis demekti. Iptal iki yoldan olur —
+`gorev_bitis`i gecmise cekmek (gorev bitti) ya da `is_active=false`
+(hesap kapatildi); ikisi denetim izinde FARKLI gorunur.
 
 ## 5. Hata Davranisi
 

@@ -13,6 +13,7 @@ export const ROLE_OPTIONS: { value: UserRole; anahtar: SozlukAnahtari }[] = [
   { value: "tesis_gorevlisi", anahtar: "rolTesisGorevlisi" },
   { value: "resident", anahtar: "rolSiteSakini" },
   { value: "guvenlik_amiri", anahtar: "rolGuvenlikAmiri" },
+  { value: "denetci", anahtar: "rolDenetci" },
 ];
 
 export const ROLE_STYLE: Record<string, string> = {
@@ -22,6 +23,9 @@ export const ROLE_STYLE: Record<string, string> = {
   tesis_gorevlisi: "bg-teal-100 text-teal-800",
   resident: "bg-slate-100 text-slate-700",
   guvenlik_amiri: "bg-indigo-100 text-indigo-800",
+  // (P128) Denetci: mali gozetim — para ekranlarinin (finans) tonundan
+  // ayri bir renk secildi ki listede "yonetim" gibi okunmasin.
+  denetci: "bg-rose-100 text-rose-800",
 };
 
 /// Rol degerinin sozluk anahtari; taninmayan deger icin null (cagiran ham

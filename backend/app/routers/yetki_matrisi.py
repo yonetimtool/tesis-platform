@@ -35,6 +35,8 @@ router = APIRouter(tags=["yetki"])
 ROLLER: tuple[str, ...] = (
     "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
     "guvenlik_amiri",
+    # (P128) Denetci — panelin yetki tablosu da yedi sutunla cizilir.
+    "denetci",
 )
 
 #: FastAPI'nin kendi ekledigi ve sozlesmede olmayan yollar.

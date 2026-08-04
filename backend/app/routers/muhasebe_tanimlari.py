@@ -88,6 +88,16 @@ from ..schemas import (
 router = APIRouter(tags=["muhasebe-tanimlari"])
 
 _YONETIM = require_role("admin", "yonetici")
+# (P128) DENETCININ OKUDUGU TANIMLAR — YALNIZ mali olanlar: kasa/banka,
+# gelir-gider gruplari/tanimlari ve muhasebe ayarlari. Defterdeki bir
+# satirin ne anlama geldigi bu tanimlardan okunur; onlarsiz hareket
+# listesi cozulemeyen kodlardan ibaret kalirdi.
+#
+# BILEREK DISARIDA: personel kayitlari, arac kayitlari, firmalar ve
+# sayaclar. Ilk ucu KISISEL VERI tasir (KVKK amac-sinirliligi: denetim
+# yetkisi mali kayittir, personel dosyasi degil), sayaclar ise
+# operasyonel. Gerekirse ayri ve gerekcelendirilmis bir karar olur.
+_TANIM_OKUR = require_role("admin", "yonetici", "denetci")
 
 
 # --------------------------- ortak yardimcilar ------------------------------ #
@@ -146,7 +156,7 @@ async def list_kasalar(
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_YONETIM),
+    _: AppUser = Depends(_TANIM_OKUR),
 ) -> KasaListResponse:
     kayitlar, total = await _sayfa(
         db, Kasa, aktif=aktif, limit=limit, offset=offset, sirala=Kasa.kod
@@ -217,7 +227,7 @@ async def list_gg_gruplari(
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_YONETIM),
+    _: AppUser = Depends(_TANIM_OKUR),
 ) -> GelirGiderGrupListResponse:
     kayitlar, total = await _sayfa(
         db, GelirGiderGrup, aktif=aktif, limit=limit, offset=offset,
@@ -318,7 +328,7 @@ async def list_gg_tanimlari(
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_YONETIM),
+    _: AppUser = Depends(_TANIM_OKUR),
 ) -> GelirGiderTanimListResponse:
     base = select(GelirGiderTanim)
     if aktif is not None:
@@ -955,7 +965,7 @@ async def delete_sayac_bolum(
 @router.get("/muhasebe-ayarlari", response_model=MuhasebeAyarOut)
 async def get_muhasebe_ayarlari(
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_YONETIM),
+    user: AppUser = Depends(_TANIM_OKUR),
 ) -> MuhasebeAyarOut:
     obj = await get_or_404(db, Tenant, user.tenant_id)
     return MuhasebeAyarOut.model_validate(obj)

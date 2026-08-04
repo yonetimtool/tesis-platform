@@ -50,10 +50,15 @@ log = logging.getLogger(__name__)
 router = APIRouter(prefix="/budget", tags=["budget"])
 
 _MANAGER = require_role("admin", "yonetici")
+# (P128) Defter/kategori LISTELERI okunur; yazma _MANAGER'da kalir.
+_DEFTER_OKUR = require_role("admin", "yonetici", "denetci")
 # Ozet (agregat) Wave 2B'de SEFFAFLIK icin tum rollere acik — satir/kisi
 # verisi icermez; defter + kategori yonetimi _MANAGER'da kalir.
 _SUMMARY_READER = require_role(
-    "admin", "yonetici", "security", "tesis_gorevlisi", "resident"
+    "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
+    # (P128) Denetci butce ozetini OKUR; defter/kategori YAZMA _MANAGER'da
+    # kalir (denetci hicbir mutasyon ucunda yoktur).
+    "denetci",
 )
 
 # Otomatik aidat gelirlerinin toplandigi varsayilan kategori adi (seed'de de
@@ -116,7 +121,7 @@ async def list_categories(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_MANAGER),
+    _: AppUser = Depends(_DEFTER_OKUR),
 ) -> BudgetCategoryListResponse:
     where = []
     if tip is not None:
@@ -208,7 +213,7 @@ async def list_entries(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_MANAGER),
+    _: AppUser = Depends(_DEFTER_OKUR),
 ) -> BudgetEntryListResponse:
     where = date_filters(donem, baslangic, bitis)
     if tip is not None:

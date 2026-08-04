@@ -44,6 +44,10 @@ USER_ROLE = ENUM(
     # (P35) Guvenlik amiri: guvenligi DIS BIR SIRKET yurutuyorsa vardiya ve
     # tur penceresini kuran kisi site yoneticisi DEGIL bu roldur.
     "guvenlik_amiri",
+    # (P128, goc 0032) Denetci: tesisin mali gozetimi. SALT-OKUMA — hicbir
+    # mutasyon ucu bu role acik degildir (yapisal test: tests/
+    # test_denetci_salt_okuma.py).
+    "denetci",
     name="user_role", create_type=False,
 )
 GUVENLIK_MODU = ENUM(
@@ -413,6 +417,17 @@ class AppUser(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    #: (P128, goc 0032) GOREV PENCERESI — bugun YALNIZ `denetci` icin
+    #: anlamli. Ikisi de NULL olabilir: suresiz gorev (kucuk tesislerde
+    #: gercek durum). Pencere HER istekte olculur (deps.get_current_user);
+    #: yalniz giriste olcmek, gorevi biten denetcinin acik oturumunu
+    #: bitmemis sayardi.
+    # (Dosyanin diger `Date` kolonlari gibi ANNOTASYONSUZ: `Mapped[date]`
+    # yazmak `datetime.date`i modul ad alanina sokmayi gerektirir — SQLAlchemy
+    # 2.0 annotasyon metnini calisma aninda cozer ve import olmadan mapper
+    # kurulumu duser.)
+    gorev_baslangic = mapped_column(Date, nullable=True)
+    gorev_bitis = mapped_column(Date, nullable=True)
     # Personel profil fotografi (0005) — MinIO obje anahtari; yalniz personel
     # rolleri yazar (PATCH /me/avatar), resident'a 403.
     avatar_key: Mapped[str | None] = mapped_column(Text, nullable=True)

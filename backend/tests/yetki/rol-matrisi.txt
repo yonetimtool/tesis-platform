@@ -1,319 +1,319 @@
-# admin  yonetici security tesis_gorevlisi resident guvenlik_amiri
-GET    /activity                                            IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-GET    /admin/overview                                      IZIN   RED    RED    RED    RED    RED   
-GET    /anketler                                            IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-POST   /anketler                                            IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /anketler/{anket_id}                                 IZIN   IZIN   RED    RED    RED    RED   
-POST   /anketler/{anket_id}/oy                              RED    RED    RED    RED    IZIN   RED   
-GET    /announcements                                       IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-POST   /announcements                                       IZIN   IZIN   RED    RED    RED    RED   
-DELETE /announcements/{id}                                  IZIN   IZIN   RED    RED    RED    RED   
-GET    /announcements/{id}                                  IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-PATCH  /announcements/{id}                                  IZIN   IZIN   RED    RED    RED    RED   
-GET    /arac-kayitlari                                      IZIN   IZIN   RED    RED    RED    RED   
-POST   /arac-kayitlari                                      IZIN   IZIN   RED    RED    RED    RED   
-DELETE /arac-kayitlari/{id}                                 IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /arac-kayitlari/{id}                                 IZIN   IZIN   RED    RED    RED    RED   
-GET    /assets                                              IZIN   IZIN   IZIN   IZIN   RED    RED   
-POST   /assets                                              IZIN   RED    RED    RED    RED    RED   
-DELETE /assets/{id}                                         IZIN   RED    RED    RED    RED    RED   
-GET    /assets/{id}                                         IZIN   IZIN   IZIN   IZIN   RED    RED   
-PATCH  /assets/{id}                                         IZIN   RED    RED    RED    RED    RED   
-POST   /assets/{id}/checkin                                 IZIN   RED    IZIN   IZIN   RED    RED   
-POST   /assets/{id}/checkout                                IZIN   RED    IZIN   IZIN   RED    RED   
-GET    /assets/{id}/history                                 IZIN   IZIN   IZIN   IZIN   RED    RED   
-GET    /audit                                               IZIN   RED    RED    RED    RED    RED   
-POST   /auth/login                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-POST   /auth/login-phone                                    IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-POST   /auth/refresh                                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-POST   /auth/set-password                                   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /blocks                                              IZIN   IZIN   IZIN   IZIN   RED    RED   
-POST   /blocks                                              IZIN   IZIN   RED    RED    RED    RED   
-DELETE /blocks/{id}                                         IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /blocks/{id}                                         IZIN   IZIN   RED    RED    RED    RED   
-GET    /borclandirma/gecikme-ayari                          IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /borclandirma/gecikme-ayari                          IZIN   RED    RED    RED    RED    RED   
-POST   /borclandirma/ice-aktarim                            IZIN   RED    RED    RED    RED    RED   
-POST   /borclandirma/sayac                                  IZIN   RED    RED    RED    RED    RED   
-POST   /borclandirma/toplu                                  IZIN   RED    RED    RED    RED    RED   
-POST   /borclandirma/toplu/onizleme                         IZIN   RED    RED    RED    RED    RED   
-GET    /budget/categories                                   IZIN   IZIN   RED    RED    RED    RED   
-POST   /budget/categories                                   IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /budget/categories/{category_id}                     IZIN   IZIN   RED    RED    RED    RED   
-GET    /budget/entries                                      IZIN   IZIN   RED    RED    RED    RED   
-POST   /budget/entries                                      IZIN   IZIN   RED    RED    RED    RED   
-DELETE /budget/entries/{entry_id}                           IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /budget/entries/{entry_id}                           IZIN   IZIN   RED    RED    RED    RED   
-GET    /budget/summary                                      IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-GET    /call-target/{id}                                    RED    RED    IZIN   RED    IZIN   RED   
-GET    /cameras                                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-POST   /cameras                                             IZIN   IZIN   RED    RED    RED    RED   
-DELETE /cameras/{id}                                        IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /cameras/{id}                                        IZIN   IZIN   RED    RED    RED    RED   
-GET    /checkpoints                                         IZIN   IZIN   IZIN   IZIN   RED    IZIN  
-POST   /checkpoints                                         IZIN   IZIN   RED    RED    RED    RED   
-DELETE /checkpoints/{id}                                    IZIN   IZIN   RED    RED    RED    RED   
-GET    /checkpoints/{id}                                    IZIN   IZIN   IZIN   IZIN   RED    IZIN  
-PATCH  /checkpoints/{id}                                    IZIN   IZIN   RED    RED    RED    RED   
-PUT    /checkpoints/{id}/sdm-key                            IZIN   RED    RED    RED    RED    RED   
-GET    /common-areas                                        IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-POST   /common-areas                                        IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /common-areas/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
-GET    /common-areas/{id}/slots                             IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-GET    /complaints                                          IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-POST   /complaints                                          RED    RED    IZIN   IZIN   IZIN   RED   
-GET    /complaints/{id}                                     IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-PATCH  /complaints/{id}                                     IZIN   IZIN   RED    RED    RED    RED   
-POST   /complaints/{id}/convert                             IZIN   IZIN   RED    RED    RED    RED   
-POST   /complaints/{id}/decline                             IZIN   IZIN   RED    RED    RED    RED   
-POST   /complaints/{id}/resolve                             IZIN   IZIN   RED    RED    RED    RED   
-GET    /dashboard/live                                      IZIN   IZIN   IZIN   RED    RED    IZIN  
-GET    /devices                                             IZIN   RED    RED    RED    RED    RED   
-POST   /devices                                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-DELETE /devices/{fcm_token}                                 IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /dokumanlar                                          IZIN   IZIN   RED    RED    RED    RED   
-POST   /dokumanlar                                          IZIN   IZIN   RED    RED    RED    RED   
-DELETE /dokumanlar/{dokuman_id}                             IZIN   IZIN   RED    RED    RED    RED   
-GET    /dues/assessments                                    IZIN   IZIN   RED    RED    RED    RED   
-POST   /dues/assessments                                    IZIN   RED    RED    RED    RED    RED   
-GET    /dues/payments                                       IZIN   IZIN   RED    RED    RED    RED   
-POST   /dues/payments                                       IZIN   RED    RED    RED    RED    RED   
-GET    /events                                              IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-POST   /events                                              IZIN   IZIN   RED    RED    RED    RED   
-DELETE /events/{id}                                         IZIN   IZIN   RED    RED    RED    RED   
-GET    /events/{id}                                         IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-PATCH  /events/{id}                                         IZIN   IZIN   RED    RED    RED    RED   
-PUT    /events/{id}/rsvp                                    RED    RED    RED    RED    IZIN   RED   
-GET    /external-services                                   IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-POST   /external-services                                   IZIN   IZIN   RED    RED    RED    RED   
-PUT    /external-services/note                              IZIN   IZIN   RED    RED    RED    RED   
-DELETE /external-services/{id}                              IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /external-services/{id}                              IZIN   IZIN   RED    RED    RED    RED   
-POST   /finans/acilis                                       IZIN   RED    RED    RED    RED    RED   
-POST   /finans/banka-eslestir                               IZIN   RED    RED    RED    RED    RED   
-GET    /finans/hareketler                                   IZIN   IZIN   RED    RED    RED    RED   
-POST   /finans/hareketler                                   IZIN   RED    RED    RED    RED    RED   
-POST   /finans/iade                                         IZIN   RED    RED    RED    RED    RED   
-GET    /finans/icra-dosyalari                               IZIN   IZIN   RED    RED    RED    RED   
-POST   /finans/icra-dosyalari                               IZIN   RED    RED    RED    RED    RED   
-PATCH  /finans/icra-dosyalari/{id}                          IZIN   RED    RED    RED    RED    RED   
-GET    /finans/kasa-bakiyeleri                              IZIN   IZIN   RED    RED    RED    RED   
-GET    /finans/ozet                                         IZIN   IZIN   RED    RED    RED    RED   
-POST   /finans/tahsilat                                     IZIN   RED    RED    RED    RED    RED   
-POST   /finans/tahsilat/toplu                               IZIN   RED    RED    RED    RED    RED   
-POST   /finans/virman                                       IZIN   RED    RED    RED    RED    RED   
-GET    /firmalar                                            IZIN   IZIN   RED    RED    RED    RED   
-POST   /firmalar                                            IZIN   IZIN   RED    RED    RED    RED   
-DELETE /firmalar/{id}                                       IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /firmalar/{id}                                       IZIN   IZIN   RED    RED    RED    RED   
-GET    /gelir-gider-gruplari                                IZIN   IZIN   RED    RED    RED    RED   
-POST   /gelir-gider-gruplari                                IZIN   IZIN   RED    RED    RED    RED   
-DELETE /gelir-gider-gruplari/{id}                           IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /gelir-gider-gruplari/{id}                           IZIN   IZIN   RED    RED    RED    RED   
-GET    /gelir-gider-tanimlari                               IZIN   IZIN   RED    RED    RED    RED   
-POST   /gelir-gider-tanimlari                               IZIN   IZIN   RED    RED    RED    RED   
-DELETE /gelir-gider-tanimlari/{id}                          IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /gelir-gider-tanimlari/{id}                          IZIN   IZIN   RED    RED    RED    RED   
-GET    /health                                              IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /integrations                                        IZIN   IZIN   RED    RED    RED    RED   
-POST   /integrations                                        IZIN   IZIN   RED    RED    RED    RED   
-GET    /integrations/anpr/events                            IZIN   RED    IZIN   RED    RED    RED   
-POST   /integrations/anpr/events                            KIMLIK KIMLIK KIMLIK KIMLIK KIMLIK KIMLIK
-POST   /integrations/anpr/events/{event_id}/onay            IZIN   RED    IZIN   RED    RED    RED   
-GET    /integrations/anpr/keys                              IZIN   RED    RED    RED    RED    RED   
-POST   /integrations/anpr/keys                              IZIN   RED    RED    RED    RED    RED   
-DELETE /integrations/anpr/keys/{key_id}                     IZIN   RED    RED    RED    RED    RED   
-GET    /integrations/presets                                IZIN   IZIN   RED    RED    RED    RED   
-DELETE /integrations/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
-GET    /integrations/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /integrations/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
-POST   /integrations/{id}/trigger                           IZIN   IZIN   RED    RED    RED    RED   
-GET    /karar-defteri                                       IZIN   IZIN   RED    RED    RED    RED   
-POST   /karar-defteri                                       IZIN   IZIN   RED    RED    RED    RED   
-DELETE /karar-defteri/{karar_id}                            IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /karar-defteri/{karar_id}                            IZIN   IZIN   RED    RED    RED    RED   
-GET    /karar-defteri/{karar_id}/pdf                        IZIN   IZIN   RED    RED    RED    RED   
-GET    /kargo                                               RED    RED    IZIN   RED    IZIN   RED   
-POST   /kargo                                               RED    RED    IZIN   RED    RED    RED   
-GET    /kargo/{id}                                          RED    RED    IZIN   RED    IZIN   RED   
-PATCH  /kargo/{id}                                          RED    RED    RED    RED    IZIN   RED   
-GET    /kasalar                                             IZIN   IZIN   RED    RED    RED    RED   
-POST   /kasalar                                             IZIN   IZIN   RED    RED    RED    RED   
-DELETE /kasalar/{id}                                        IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /kasalar/{id}                                        IZIN   IZIN   RED    RED    RED    RED   
-GET    /kvkk/durum                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /kvkk/metin                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-POST   /kvkk/metin                                          IZIN   IZIN   RED    RED    RED    RED   
-GET    /kvkk/metinler                                       IZIN   IZIN   RED    RED    RED    RED   
-POST   /kvkk/onay                                           IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /me                                                  IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-PATCH  /me/avatar                                           RED    IZIN   RED    RED    IZIN   RED   
-GET    /me/checkpoints                                      IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-PATCH  /me/contact                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /me/dues                                             RED    RED    RED    RED    IZIN   RED   
-POST   /me/hesap-sil                                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /me/odeme-bilgileri                                  RED    RED    RED    RED    IZIN   RED   
-POST   /me/odeme/kart                                       RED    RED    RED    RED    IZIN   RED   
-PATCH  /me/password                                         IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /me/patrol-window                                    IZIN   RED    IZIN   RED    RED    IZIN  
-GET    /me/pazarlama-tercihleri                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-PATCH  /me/pazarlama-tercihleri                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /me/profile                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /mesaj-sablonlari                                    IZIN   IZIN   RED    RED    RED    RED   
-POST   /mesaj-sablonlari                                    IZIN   IZIN   RED    RED    RED    RED   
-DELETE /mesaj-sablonlari/{id}                               IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /mesaj-sablonlari/{id}                               IZIN   IZIN   RED    RED    RED    RED   
-GET    /mesajlar/gecmis                                     IZIN   IZIN   RED    RED    RED    RED   
-POST   /mesajlar/gonder                                     IZIN   IZIN   RED    RED    RED    RED   
-POST   /mesajlar/onizleme                                   IZIN   IZIN   RED    RED    RED    RED   
-GET    /muhasebe-ayarlari                                   IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /muhasebe-ayarlari                                   IZIN   IZIN   RED    RED    RED    RED   
-GET    /notifications                                       IZIN   IZIN   IZIN   RED    RED    IZIN  
-PATCH  /notifications/{id}                                  IZIN   IZIN   IZIN   RED    RED    IZIN  
-GET    /parking/occupancy                                   IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-GET    /patrol-plans                                        IZIN   IZIN   IZIN   IZIN   RED    IZIN  
-POST   /patrol-plans                                        IZIN   IZIN   RED    RED    RED    RED   
-DELETE /patrol-plans/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
-GET    /patrol-plans/{id}                                   IZIN   IZIN   IZIN   IZIN   RED    IZIN  
-PATCH  /patrol-plans/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
-GET    /patrol-plans/{id}/checkpoints                       IZIN   IZIN   IZIN   IZIN   RED    IZIN  
-PUT    /patrol-plans/{id}/checkpoints                       IZIN   IZIN   RED    RED    RED    RED   
-GET    /patrol-windows                                      IZIN   IZIN   IZIN   RED    RED    IZIN  
-GET    /personel-kayitlari                                  IZIN   IZIN   RED    RED    RED    RED   
-POST   /personel-kayitlari                                  IZIN   IZIN   RED    RED    RED    RED   
-DELETE /personel-kayitlari/{id}                             IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /personel-kayitlari/{id}                             IZIN   IZIN   RED    RED    RED    RED   
-GET    /portal                                              IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /portal                                              IZIN   IZIN   RED    RED    RED    RED   
-GET    /portal/galeri                                       IZIN   IZIN   RED    RED    RED    RED   
-POST   /portal/galeri                                       IZIN   IZIN   RED    RED    RED    RED   
-DELETE /portal/galeri/{galeri_id}                           IZIN   IZIN   RED    RED    RED    RED   
-GET    /portal/iletisim                                     IZIN   IZIN   RED    RED    RED    RED   
-GET    /public/{slug}                                       IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-POST   /public/{slug}/iletisim                              IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /raporlar/katalog                                    IZIN   IZIN   RED    RED    RED    RED   
-POST   /raporlar/{kod}                                      IZIN   IZIN   RED    RED    RED    RED   
-GET    /reports/financial-summary                           IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-GET    /reservations                                        IZIN   IZIN   RED    RED    IZIN   RED   
-POST   /reservations                                        RED    RED    RED    RED    IZIN   RED   
-GET    /reservations/{id}                                   IZIN   IZIN   RED    RED    IZIN   RED   
-POST   /reservations/{id}/cancel                            RED    RED    RED    RED    IZIN   RED   
-GET    /residents                                           IZIN   IZIN   RED    RED    RED    RED   
-POST   /residents                                           IZIN   IZIN   RED    RED    RED    RED   
-DELETE /residents/{id}                                      IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /residents/{id}                                      IZIN   IZIN   RED    RED    RED    RED   
-POST   /residents/{id}/reset-password                       IZIN   IZIN   RED    RED    RED    RED   
-GET    /sayaclar/ana                                        IZIN   IZIN   RED    RED    RED    RED   
-POST   /sayaclar/ana                                        IZIN   IZIN   RED    RED    RED    RED   
-DELETE /sayaclar/ana/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /sayaclar/ana/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
-GET    /sayaclar/bolum                                      IZIN   IZIN   RED    RED    RED    RED   
-POST   /sayaclar/bolum                                      IZIN   IZIN   RED    RED    RED    RED   
-POST   /sayaclar/bolum/otomatik                             IZIN   IZIN   RED    RED    RED    RED   
-DELETE /sayaclar/bolum/{id}                                 IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /sayaclar/bolum/{id}                                 IZIN   IZIN   RED    RED    RED    RED   
-GET    /scans                                               IZIN   IZIN   RED    RED    RED    IZIN  
-POST   /scans                                               IZIN   RED    IZIN   IZIN   RED    IZIN  
-POST   /scans/simule                                        IZIN   RED    IZIN   IZIN   RED    IZIN  
-GET    /shifts                                              IZIN   IZIN   IZIN   IZIN   RED    IZIN  
-POST   /shifts                                              IZIN   IZIN   RED    RED    RED    RED   
-DELETE /shifts/{id}                                         IZIN   IZIN   RED    RED    RED    RED   
-GET    /shifts/{id}                                         IZIN   IZIN   IZIN   IZIN   RED    IZIN  
-PATCH  /shifts/{id}                                         IZIN   IZIN   RED    RED    RED    RED   
-PUT    /shifts/{shift_id}/assignments                       IZIN   IZIN   RED    RED    RED    RED   
-POST   /site-aktar                                          IZIN   IZIN   RED    RED    RED    RED   
-GET    /site-aktar/sablon                                   IZIN   IZIN   RED    RED    RED    RED   
-GET    /site-rules                                          IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-POST   /site-rules                                          IZIN   IZIN   RED    RED    RED    RED   
-DELETE /site-rules/{id}                                     IZIN   IZIN   RED    RED    RED    RED   
-GET    /site-rules/{id}                                     IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-PATCH  /site-rules/{id}                                     IZIN   IZIN   RED    RED    RED    RED   
-GET    /support                                             RED    IZIN   RED    RED    RED    RED   
-POST   /support                                             RED    IZIN   RED    RED    RED    RED   
-GET    /support/all                                         IZIN   RED    RED    RED    RED    RED   
-PATCH  /support/{ticket_id}                                 IZIN   RED    RED    RED    RED    RED   
-GET    /task-categories                                     IZIN   IZIN   IZIN   IZIN   RED    RED   
-POST   /task-categories                                     IZIN   IZIN   RED    RED    RED    RED   
-DELETE /task-categories/{id}                                IZIN   IZIN   RED    RED    RED    RED   
-GET    /task-completions                                    IZIN   IZIN   IZIN   IZIN   RED    RED   
-GET    /tasks                                               IZIN   IZIN   IZIN   IZIN   RED    RED   
-POST   /tasks                                               IZIN   IZIN   RED    RED    RED    RED   
-DELETE /tasks/{id}                                          IZIN   IZIN   RED    RED    RED    RED   
-GET    /tasks/{id}                                          IZIN   IZIN   IZIN   IZIN   RED    RED   
-PATCH  /tasks/{id}                                          IZIN   IZIN   RED    RED    RED    RED   
-GET    /tasks/{id}/completions                              IZIN   IZIN   IZIN   IZIN   RED    RED   
-POST   /tasks/{id}/completions                              IZIN   RED    IZIN   IZIN   RED    RED   
-GET    /tenant/settings                                     IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-PATCH  /tenant/settings                                     IZIN   IZIN   RED    RED    RED    RED   
-POST   /tenant/setup                                        RED    IZIN   RED    RED    RED    RED   
-GET    /tenants                                             IZIN   RED    RED    RED    RED    RED   
-POST   /tenants                                             IZIN   RED    RED    RED    RED    RED   
-DELETE /tenants/{tenant_id}                                 IZIN   RED    RED    RED    RED    RED   
-GET    /tenants/{tenant_id}                                 IZIN   RED    RED    RED    RED    RED   
-PATCH  /tenants/{tenant_id}                                 IZIN   RED    RED    RED    RED    RED   
-PATCH  /tenants/{tenant_id}/yonetici                        IZIN   RED    RED    RED    RED    RED   
-POST   /tenants/{tenant_id}/yonetici/reset-credential       IZIN   RED    RED    RED    RED    RED   
-GET    /transparency                                        IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-GET    /transparency/{ay}                                   IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-PUT    /transparency/{ay}/publish                           IZIN   IZIN   RED    RED    RED    RED   
-GET    /unit-access-request                                 IZIN   IZIN   RED    RED    IZIN   RED   
-POST   /unit-access-request                                 IZIN   IZIN   RED    RED    RED    RED   
-POST   /unit-access-request/bulk                            IZIN   IZIN   RED    RED    RED    RED   
-GET    /unit-access-request/granted-units                   IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /unit-access-request/{id}                            RED    RED    RED    RED    IZIN   RED   
-GET    /unit-complaints                                     IZIN   IZIN   RED    RED    RED    RED   
-POST   /unit-complaints                                     RED    RED    RED    RED    IZIN   RED   
-GET    /unit-complaints/building-map                        IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-GET    /unit-complaints/density                             IZIN   IZIN   RED    RED    RED    RED   
-GET    /unit-complaints/mine                                RED    RED    RED    RED    IZIN   RED   
-PATCH  /unit-complaints/{id}                                IZIN   IZIN   RED    RED    RED    RED   
-POST   /unit-complaints/{id}/okundu                         IZIN   IZIN   RED    RED    RED    RED   
-GET    /unit-gruplari                                       IZIN   IZIN   IZIN   IZIN   RED    RED   
-POST   /unit-gruplari                                       IZIN   IZIN   RED    RED    RED    RED   
-DELETE /unit-gruplari/{id}                                  IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /unit-gruplari/{id}                                  IZIN   IZIN   RED    RED    RED    RED   
-GET    /unit-tipleri                                        IZIN   IZIN   IZIN   IZIN   RED    RED   
-POST   /unit-tipleri                                        IZIN   IZIN   RED    RED    RED    RED   
-DELETE /unit-tipleri/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /unit-tipleri/{id}                                   IZIN   IZIN   RED    RED    RED    RED   
-GET    /unit-uyarilari                                      IZIN   IZIN   RED    RED    RED    RED   
-POST   /unit-uyarilari/kuyruk-isle                          IZIN   RED    RED    RED    RED    RED   
-POST   /unit-uyarilari/{uyari_id}/yapildi                   IZIN   IZIN   RED    RED    RED    RED   
-GET    /units                                               IZIN   IZIN   IZIN   IZIN   RED    RED   
-POST   /units                                               IZIN   IZIN   RED    RED    RED    RED   
-POST   /units/bulk                                          IZIN   IZIN   RED    RED    RED    RED   
-GET    /units/by-no/{unit_no}/residents                     IZIN   IZIN   IZIN   RED    RED    RED   
-DELETE /units/{id}                                          IZIN   IZIN   RED    RED    RED    RED   
-GET    /units/{id}                                          IZIN   IZIN   IZIN   IZIN   RED    RED   
-PATCH  /units/{id}                                          IZIN   IZIN   RED    RED    RED    RED   
-GET    /units/{id}/dues                                     IZIN   IZIN   RED    RED    RED    RED   
-PATCH  /units/{id}/layout                                   IZIN   IZIN   RED    RED    RED    RED   
-GET    /units/{id}/residents                                IZIN   IZIN   RED    RED    RED    RED   
-POST   /units/{id}/residents                                IZIN   IZIN   RED    RED    RED    RED   
-DELETE /units/{id}/residents/{user_id}                      IZIN   IZIN   RED    RED    RED    RED   
-POST   /uploads/presign                                     IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-GET    /users                                               IZIN   IZIN   RED    RED    RED    IZIN  
-POST   /users                                               IZIN   IZIN   RED    RED    RED    IZIN  
-GET    /users/acilabilir-roller                             IZIN   IZIN   RED    RED    RED    IZIN  
-GET    /users/{id}                                          IZIN   IZIN   RED    RED    RED    IZIN  
-PATCH  /users/{id}                                          IZIN   IZIN   RED    RED    RED    IZIN  
-PATCH  /users/{id}/contact                                  IZIN   IZIN   RED    RED    RED    RED   
-POST   /users/{id}/reset-password                           IZIN   IZIN   RED    RED    RED    IZIN  
-PATCH  /users/{user_id}/avatar                              RED    IZIN   RED    RED    RED    RED   
-GET    /vehicle-passes                                      IZIN   RED    IZIN   RED    RED    RED   
-POST   /vehicle-passes                                      IZIN   RED    IZIN   RED    RED    RED   
-GET    /vehicle-passes/{id}                                 IZIN   RED    IZIN   RED    RED    RED   
-POST   /vehicle-passes/{id}/checkout                        IZIN   RED    IZIN   RED    RED    RED   
-GET    /violations                                          IZIN   IZIN   IZIN   RED    RED    RED   
-POST   /violations                                          IZIN   RED    IZIN   RED    RED    RED   
-GET    /violations/{id}                                     IZIN   IZIN   IZIN   RED    RED    RED   
-PATCH  /violations/{id}                                     IZIN   RED    IZIN   RED    RED    RED   
-GET    /visitors                                            RED    RED    IZIN   RED    IZIN   RED   
-POST   /visitors                                            RED    RED    IZIN   RED    RED    RED   
-GET    /visitors/{id}                                       RED    RED    IZIN   RED    IZIN   RED   
-PATCH  /visitors/{id}                                       RED    RED    IZIN   RED    RED    RED   
-POST   /visitors/{id}/checkout                              RED    RED    IZIN   RED    RED    RED   
-GET    /weather                                             IZIN   IZIN   IZIN   IZIN   IZIN   RED   
-POST   /webhooks/payments/{provider}                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
-GET    /yetki-matrisi                                       IZIN   IZIN   RED    RED    RED    RED   
-GET    /yonetici-iletisim                                   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+# admin  yonetici security tesis_gorevlisi resident guvenlik_amiri denetci
+GET    /activity                                            IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+GET    /admin/overview                                      IZIN   RED    RED    RED    RED    RED    RED   
+GET    /anketler                                            IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   RED   
+POST   /anketler                                            IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /anketler/{anket_id}                                 IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /anketler/{anket_id}/oy                              RED    RED    RED    RED    IZIN   RED    RED   
+GET    /announcements                                       IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+POST   /announcements                                       IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /announcements/{id}                                  IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /announcements/{id}                                  IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+PATCH  /announcements/{id}                                  IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /arac-kayitlari                                      IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /arac-kayitlari                                      IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /arac-kayitlari/{id}                                 IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /arac-kayitlari/{id}                                 IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /assets                                              IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+POST   /assets                                              IZIN   RED    RED    RED    RED    RED    RED   
+DELETE /assets/{id}                                         IZIN   RED    RED    RED    RED    RED    RED   
+GET    /assets/{id}                                         IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+PATCH  /assets/{id}                                         IZIN   RED    RED    RED    RED    RED    RED   
+POST   /assets/{id}/checkin                                 IZIN   RED    IZIN   IZIN   RED    RED    RED   
+POST   /assets/{id}/checkout                                IZIN   RED    IZIN   IZIN   RED    RED    RED   
+GET    /assets/{id}/history                                 IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+GET    /audit                                               IZIN   RED    RED    RED    RED    RED    RED   
+POST   /auth/login                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /auth/login-phone                                    IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /auth/refresh                                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /auth/set-password                                   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /blocks                                              IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+POST   /blocks                                              IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /blocks/{id}                                         IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /blocks/{id}                                         IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /borclandirma/gecikme-ayari                          IZIN   IZIN   RED    RED    RED    RED    IZIN  
+PATCH  /borclandirma/gecikme-ayari                          IZIN   RED    RED    RED    RED    RED    RED   
+POST   /borclandirma/ice-aktarim                            IZIN   RED    RED    RED    RED    RED    RED   
+POST   /borclandirma/sayac                                  IZIN   RED    RED    RED    RED    RED    RED   
+POST   /borclandirma/toplu                                  IZIN   RED    RED    RED    RED    RED    RED   
+POST   /borclandirma/toplu/onizleme                         IZIN   RED    RED    RED    RED    RED    RED   
+GET    /budget/categories                                   IZIN   IZIN   RED    RED    RED    RED    IZIN  
+POST   /budget/categories                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /budget/categories/{category_id}                     IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /budget/entries                                      IZIN   IZIN   RED    RED    RED    RED    IZIN  
+POST   /budget/entries                                      IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /budget/entries/{entry_id}                           IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /budget/entries/{entry_id}                           IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /budget/summary                                      IZIN   IZIN   IZIN   IZIN   IZIN   RED    IZIN  
+GET    /call-target/{id}                                    RED    RED    IZIN   RED    IZIN   RED    RED   
+GET    /cameras                                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   RED   
+POST   /cameras                                             IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /cameras/{id}                                        IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /cameras/{id}                                        IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /checkpoints                                         IZIN   IZIN   IZIN   IZIN   RED    IZIN   RED   
+POST   /checkpoints                                         IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /checkpoints/{id}                                    IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /checkpoints/{id}                                    IZIN   IZIN   IZIN   IZIN   RED    IZIN   RED   
+PATCH  /checkpoints/{id}                                    IZIN   IZIN   RED    RED    RED    RED    RED   
+PUT    /checkpoints/{id}/sdm-key                            IZIN   RED    RED    RED    RED    RED    RED   
+GET    /common-areas                                        IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+POST   /common-areas                                        IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /common-areas/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /common-areas/{id}/slots                             IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+GET    /complaints                                          IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+POST   /complaints                                          RED    RED    IZIN   IZIN   IZIN   RED    RED   
+GET    /complaints/{id}                                     IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+PATCH  /complaints/{id}                                     IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /complaints/{id}/convert                             IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /complaints/{id}/decline                             IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /complaints/{id}/resolve                             IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /dashboard/live                                      IZIN   IZIN   IZIN   RED    RED    IZIN   RED   
+GET    /devices                                             IZIN   RED    RED    RED    RED    RED    RED   
+POST   /devices                                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+DELETE /devices/{fcm_token}                                 IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /dokumanlar                                          IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /dokumanlar                                          IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /dokumanlar/{dokuman_id}                             IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /dues/assessments                                    IZIN   IZIN   RED    RED    RED    RED    IZIN  
+POST   /dues/assessments                                    IZIN   RED    RED    RED    RED    RED    RED   
+GET    /dues/payments                                       IZIN   IZIN   RED    RED    RED    RED    IZIN  
+POST   /dues/payments                                       IZIN   RED    RED    RED    RED    RED    RED   
+GET    /events                                              IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+POST   /events                                              IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /events/{id}                                         IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /events/{id}                                         IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+PATCH  /events/{id}                                         IZIN   IZIN   RED    RED    RED    RED    RED   
+PUT    /events/{id}/rsvp                                    RED    RED    RED    RED    IZIN   RED    RED   
+GET    /external-services                                   IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+POST   /external-services                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+PUT    /external-services/note                              IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /external-services/{id}                              IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /external-services/{id}                              IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /finans/acilis                                       IZIN   RED    RED    RED    RED    RED    RED   
+POST   /finans/banka-eslestir                               IZIN   RED    RED    RED    RED    RED    RED   
+GET    /finans/hareketler                                   IZIN   IZIN   RED    RED    RED    RED    IZIN  
+POST   /finans/hareketler                                   IZIN   RED    RED    RED    RED    RED    RED   
+POST   /finans/iade                                         IZIN   RED    RED    RED    RED    RED    RED   
+GET    /finans/icra-dosyalari                               IZIN   IZIN   RED    RED    RED    RED    IZIN  
+POST   /finans/icra-dosyalari                               IZIN   RED    RED    RED    RED    RED    RED   
+PATCH  /finans/icra-dosyalari/{id}                          IZIN   RED    RED    RED    RED    RED    RED   
+GET    /finans/kasa-bakiyeleri                              IZIN   IZIN   RED    RED    RED    RED    IZIN  
+GET    /finans/ozet                                         IZIN   IZIN   RED    RED    RED    RED    IZIN  
+POST   /finans/tahsilat                                     IZIN   RED    RED    RED    RED    RED    RED   
+POST   /finans/tahsilat/toplu                               IZIN   RED    RED    RED    RED    RED    RED   
+POST   /finans/virman                                       IZIN   RED    RED    RED    RED    RED    RED   
+GET    /firmalar                                            IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /firmalar                                            IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /firmalar/{id}                                       IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /firmalar/{id}                                       IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /gelir-gider-gruplari                                IZIN   IZIN   RED    RED    RED    RED    IZIN  
+POST   /gelir-gider-gruplari                                IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /gelir-gider-gruplari/{id}                           IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /gelir-gider-gruplari/{id}                           IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /gelir-gider-tanimlari                               IZIN   IZIN   RED    RED    RED    RED    IZIN  
+POST   /gelir-gider-tanimlari                               IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /gelir-gider-tanimlari/{id}                          IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /gelir-gider-tanimlari/{id}                          IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /health                                              IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /integrations                                        IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /integrations                                        IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /integrations/anpr/events                            IZIN   RED    IZIN   RED    RED    RED    RED   
+POST   /integrations/anpr/events                            KIMLIK KIMLIK KIMLIK KIMLIK KIMLIK KIMLIK KIMLIK
+POST   /integrations/anpr/events/{event_id}/onay            IZIN   RED    IZIN   RED    RED    RED    RED   
+GET    /integrations/anpr/keys                              IZIN   RED    RED    RED    RED    RED    RED   
+POST   /integrations/anpr/keys                              IZIN   RED    RED    RED    RED    RED    RED   
+DELETE /integrations/anpr/keys/{key_id}                     IZIN   RED    RED    RED    RED    RED    RED   
+GET    /integrations/presets                                IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /integrations/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /integrations/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /integrations/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /integrations/{id}/trigger                           IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /karar-defteri                                       IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /karar-defteri                                       IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /karar-defteri/{karar_id}                            IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /karar-defteri/{karar_id}                            IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /karar-defteri/{karar_id}/pdf                        IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /kargo                                               RED    RED    IZIN   RED    IZIN   RED    RED   
+POST   /kargo                                               RED    RED    IZIN   RED    RED    RED    RED   
+GET    /kargo/{id}                                          RED    RED    IZIN   RED    IZIN   RED    RED   
+PATCH  /kargo/{id}                                          RED    RED    RED    RED    IZIN   RED    RED   
+GET    /kasalar                                             IZIN   IZIN   RED    RED    RED    RED    IZIN  
+POST   /kasalar                                             IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /kasalar/{id}                                        IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /kasalar/{id}                                        IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /kvkk/durum                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /kvkk/metin                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /kvkk/metin                                          IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /kvkk/metinler                                       IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /kvkk/onay                                           IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /me                                                  IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+PATCH  /me/avatar                                           RED    IZIN   RED    RED    IZIN   RED    RED   
+GET    /me/checkpoints                                      IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+PATCH  /me/contact                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /me/dues                                             RED    RED    RED    RED    IZIN   RED    RED   
+POST   /me/hesap-sil                                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /me/odeme-bilgileri                                  RED    RED    RED    RED    IZIN   RED    RED   
+POST   /me/odeme/kart                                       RED    RED    RED    RED    IZIN   RED    RED   
+PATCH  /me/password                                         IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /me/patrol-window                                    IZIN   RED    IZIN   RED    RED    IZIN   RED   
+GET    /me/pazarlama-tercihleri                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+PATCH  /me/pazarlama-tercihleri                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /me/profile                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /mesaj-sablonlari                                    IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /mesaj-sablonlari                                    IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /mesaj-sablonlari/{id}                               IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /mesaj-sablonlari/{id}                               IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /mesajlar/gecmis                                     IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /mesajlar/gonder                                     IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /mesajlar/onizleme                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /muhasebe-ayarlari                                   IZIN   IZIN   RED    RED    RED    RED    IZIN  
+PATCH  /muhasebe-ayarlari                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /notifications                                       IZIN   IZIN   IZIN   RED    RED    IZIN   RED   
+PATCH  /notifications/{id}                                  IZIN   IZIN   IZIN   RED    RED    IZIN   RED   
+GET    /parking/occupancy                                   IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+GET    /patrol-plans                                        IZIN   IZIN   IZIN   IZIN   RED    IZIN   RED   
+POST   /patrol-plans                                        IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /patrol-plans/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /patrol-plans/{id}                                   IZIN   IZIN   IZIN   IZIN   RED    IZIN   RED   
+PATCH  /patrol-plans/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /patrol-plans/{id}/checkpoints                       IZIN   IZIN   IZIN   IZIN   RED    IZIN   RED   
+PUT    /patrol-plans/{id}/checkpoints                       IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /patrol-windows                                      IZIN   IZIN   IZIN   RED    RED    IZIN   RED   
+GET    /personel-kayitlari                                  IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /personel-kayitlari                                  IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /personel-kayitlari/{id}                             IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /personel-kayitlari/{id}                             IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /portal                                              IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /portal                                              IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /portal/galeri                                       IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /portal/galeri                                       IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /portal/galeri/{galeri_id}                           IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /portal/iletisim                                     IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /public/{slug}                                       IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /public/{slug}/iletisim                              IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /raporlar/katalog                                    IZIN   IZIN   RED    RED    RED    RED    IZIN  
+POST   /raporlar/{kod}                                      IZIN   IZIN   RED    RED    RED    RED    IZIN  
+GET    /reports/financial-summary                           IZIN   IZIN   IZIN   IZIN   IZIN   RED    IZIN  
+GET    /reservations                                        IZIN   IZIN   RED    RED    IZIN   RED    RED   
+POST   /reservations                                        RED    RED    RED    RED    IZIN   RED    RED   
+GET    /reservations/{id}                                   IZIN   IZIN   RED    RED    IZIN   RED    RED   
+POST   /reservations/{id}/cancel                            RED    RED    RED    RED    IZIN   RED    RED   
+GET    /residents                                           IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /residents                                           IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /residents/{id}                                      IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /residents/{id}                                      IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /residents/{id}/reset-password                       IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /sayaclar/ana                                        IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /sayaclar/ana                                        IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /sayaclar/ana/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /sayaclar/ana/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /sayaclar/bolum                                      IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /sayaclar/bolum                                      IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /sayaclar/bolum/otomatik                             IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /sayaclar/bolum/{id}                                 IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /sayaclar/bolum/{id}                                 IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /scans                                               IZIN   IZIN   RED    RED    RED    IZIN   RED   
+POST   /scans                                               IZIN   RED    IZIN   IZIN   RED    IZIN   RED   
+POST   /scans/simule                                        IZIN   RED    IZIN   IZIN   RED    IZIN   RED   
+GET    /shifts                                              IZIN   IZIN   IZIN   IZIN   RED    IZIN   RED   
+POST   /shifts                                              IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /shifts/{id}                                         IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /shifts/{id}                                         IZIN   IZIN   IZIN   IZIN   RED    IZIN   RED   
+PATCH  /shifts/{id}                                         IZIN   IZIN   RED    RED    RED    RED    RED   
+PUT    /shifts/{shift_id}/assignments                       IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /site-aktar                                          IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /site-aktar/sablon                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /site-rules                                          IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+POST   /site-rules                                          IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /site-rules/{id}                                     IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /site-rules/{id}                                     IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+PATCH  /site-rules/{id}                                     IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /support                                             RED    IZIN   RED    RED    RED    RED    RED   
+POST   /support                                             RED    IZIN   RED    RED    RED    RED    RED   
+GET    /support/all                                         IZIN   RED    RED    RED    RED    RED    RED   
+PATCH  /support/{ticket_id}                                 IZIN   RED    RED    RED    RED    RED    RED   
+GET    /task-categories                                     IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+POST   /task-categories                                     IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /task-categories/{id}                                IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /task-completions                                    IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+GET    /tasks                                               IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+POST   /tasks                                               IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /tasks/{id}                                          IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /tasks/{id}                                          IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+PATCH  /tasks/{id}                                          IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /tasks/{id}/completions                              IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+POST   /tasks/{id}/completions                              IZIN   RED    IZIN   IZIN   RED    RED    RED   
+GET    /tenant/settings                                     IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+PATCH  /tenant/settings                                     IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /tenant/setup                                        RED    IZIN   RED    RED    RED    RED    RED   
+GET    /tenants                                             IZIN   RED    RED    RED    RED    RED    RED   
+POST   /tenants                                             IZIN   RED    RED    RED    RED    RED    RED   
+DELETE /tenants/{tenant_id}                                 IZIN   RED    RED    RED    RED    RED    RED   
+GET    /tenants/{tenant_id}                                 IZIN   RED    RED    RED    RED    RED    RED   
+PATCH  /tenants/{tenant_id}                                 IZIN   RED    RED    RED    RED    RED    RED   
+PATCH  /tenants/{tenant_id}/yonetici                        IZIN   RED    RED    RED    RED    RED    RED   
+POST   /tenants/{tenant_id}/yonetici/reset-credential       IZIN   RED    RED    RED    RED    RED    RED   
+GET    /transparency                                        IZIN   IZIN   IZIN   IZIN   IZIN   RED    IZIN  
+GET    /transparency/{ay}                                   IZIN   IZIN   IZIN   IZIN   IZIN   RED    IZIN  
+PUT    /transparency/{ay}/publish                           IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /unit-access-request                                 IZIN   IZIN   RED    RED    IZIN   RED    RED   
+POST   /unit-access-request                                 IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /unit-access-request/bulk                            IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /unit-access-request/granted-units                   IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /unit-access-request/{id}                            RED    RED    RED    RED    IZIN   RED    RED   
+GET    /unit-complaints                                     IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /unit-complaints                                     RED    RED    RED    RED    IZIN   RED    RED   
+GET    /unit-complaints/building-map                        IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+GET    /unit-complaints/density                             IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /unit-complaints/mine                                RED    RED    RED    RED    IZIN   RED    RED   
+PATCH  /unit-complaints/{id}                                IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /unit-complaints/{id}/okundu                         IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /unit-gruplari                                       IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+POST   /unit-gruplari                                       IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /unit-gruplari/{id}                                  IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /unit-gruplari/{id}                                  IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /unit-tipleri                                        IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+POST   /unit-tipleri                                        IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /unit-tipleri/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /unit-tipleri/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /unit-uyarilari                                      IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /unit-uyarilari/kuyruk-isle                          IZIN   RED    RED    RED    RED    RED    RED   
+POST   /unit-uyarilari/{uyari_id}/yapildi                   IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /units                                               IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+POST   /units                                               IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /units/bulk                                          IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /units/by-no/{unit_no}/residents                     IZIN   IZIN   IZIN   RED    RED    RED    RED   
+DELETE /units/{id}                                          IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /units/{id}                                          IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
+PATCH  /units/{id}                                          IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /units/{id}/dues                                     IZIN   IZIN   RED    RED    RED    RED    IZIN  
+PATCH  /units/{id}/layout                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /units/{id}/residents                                IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /units/{id}/residents                                IZIN   IZIN   RED    RED    RED    RED    RED   
+DELETE /units/{id}/residents/{user_id}                      IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /uploads/presign                                     IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+GET    /users                                               IZIN   IZIN   RED    RED    RED    IZIN   RED   
+POST   /users                                               IZIN   IZIN   RED    RED    RED    IZIN   RED   
+GET    /users/acilabilir-roller                             IZIN   IZIN   RED    RED    RED    IZIN   RED   
+GET    /users/{id}                                          IZIN   IZIN   RED    RED    RED    IZIN   RED   
+PATCH  /users/{id}                                          IZIN   IZIN   RED    RED    RED    IZIN   RED   
+PATCH  /users/{id}/contact                                  IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /users/{id}/reset-password                           IZIN   IZIN   RED    RED    RED    IZIN   RED   
+PATCH  /users/{user_id}/avatar                              RED    IZIN   RED    RED    RED    RED    RED   
+GET    /vehicle-passes                                      IZIN   RED    IZIN   RED    RED    RED    RED   
+POST   /vehicle-passes                                      IZIN   RED    IZIN   RED    RED    RED    RED   
+GET    /vehicle-passes/{id}                                 IZIN   RED    IZIN   RED    RED    RED    RED   
+POST   /vehicle-passes/{id}/checkout                        IZIN   RED    IZIN   RED    RED    RED    RED   
+GET    /violations                                          IZIN   IZIN   IZIN   RED    RED    RED    RED   
+POST   /violations                                          IZIN   RED    IZIN   RED    RED    RED    RED   
+GET    /violations/{id}                                     IZIN   IZIN   IZIN   RED    RED    RED    RED   
+PATCH  /violations/{id}                                     IZIN   RED    IZIN   RED    RED    RED    RED   
+GET    /visitors                                            RED    RED    IZIN   RED    IZIN   RED    RED   
+POST   /visitors                                            RED    RED    IZIN   RED    RED    RED    RED   
+GET    /visitors/{id}                                       RED    RED    IZIN   RED    IZIN   RED    RED   
+PATCH  /visitors/{id}                                       RED    RED    IZIN   RED    RED    RED    RED   
+POST   /visitors/{id}/checkout                              RED    RED    IZIN   RED    RED    RED    RED   
+GET    /weather                                             IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
+POST   /webhooks/payments/{provider}                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+GET    /yetki-matrisi                                       IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /yonetici-iletisim                                   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
